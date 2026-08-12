@@ -944,3 +944,149 @@ mod test {
         );
     }
 }
+
+#[cfg(test)]
+mod issue_12582_end_to_end {
+    //! Does the runtime check actually catch the bug that motivated #12582?
+    //!
+    //! Drives the real `update_outbound_shipment` service path from #12574 - backdating a NEW
+    //! outbound shipment, which has to release the stock its lines had reserved - and then runs
+    //! the real scan over the result. Revert the `delete_stock_out_line` loop in
+    //! `invoice::outbound_shipment::update` and this test fails, which is the whole premise.
+    use super::*;
+    use crate::invoice::outbound_shipment::update::UpdateOutboundShipment;
+    use crate::service_provider::ServiceProvider;
+    use crate::test_helpers::{setup_all_with_data_and_service_provider, ServiceTestContext};
+    use chrono::{Duration, Utc};
+    use repository::{
+        mock::{
+            mock_item_a, mock_name_a, mock_store_a, test_helpers::make_movements, MockData,
+            MockDataInserts,
+        },
+        InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType,
+        KeyValueStoreRepository, PreferenceRow, PreferenceRowRepository, StockLineRow,
+    };
+
+    const STOCK_LINE: &str = "e2e_backdate_stock_line";
+
+    fn stock_line() -> StockLineRow {
+        StockLineRow {
+            id: STOCK_LINE.to_string(),
+            store_id: mock_store_a().id,
+            item_id: mock_item_a().id,
+            pack_size: 1.0,
+            // 2 of the 10 on hand are reserved by the shipment below
+            available_number_of_packs: 8.0,
+            total_number_of_packs: 10.0,
+            ..Default::default()
+        }
+    }
+
+    fn shipment() -> InvoiceRow {
+        InvoiceRow {
+            id: "e2e_backdate_shipment".to_string(),
+            name_id: mock_name_a().id,
+            store_id: mock_store_a().id,
+            r#type: InvoiceType::OutboundShipment,
+            status: InvoiceStatus::New,
+            ..Default::default()
+        }
+    }
+
+    fn allocated_line() -> InvoiceLineRow {
+        InvoiceLineRow {
+            id: "e2e_backdate_line".to_string(),
+            invoice_id: shipment().id,
+            stock_line_id: Some(STOCK_LINE.to_string()),
+            item_id: mock_item_a().id,
+            r#type: InvoiceLineType::StockOut,
+            number_of_packs: 2.0,
+            pack_size: 1.0,
+            ..Default::default()
+        }
+    }
+
+    #[actix_rt::test]
+    async fn ledger_check_catches_the_backdating_regression_from_12574() {
+        let ServiceTestContext {
+            connection,
+            connection_manager,
+            ..
+        } = setup_all_with_data_and_service_provider(
+            "ledger_check_catches_the_backdating_regression_from_12574",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![shipment()],
+                stock_lines: vec![stock_line()],
+                invoice_lines: vec![allocated_line()],
+                ..Default::default()
+            }
+            // A received inbound accounting for the 10 packs, so the ledger balances to start with
+            .join(make_movements(stock_line(), vec![(1, 10)])),
+        )
+        .await;
+
+        PreferenceRowRepository::new(&connection)
+            .upsert_one(&PreferenceRow {
+                id: "backdating_global".to_string(),
+                key: "backdating".to_string(),
+                value:
+                    r#"{"shipmentsEnabled":true,"inventoryAdjustmentsEnabled":false,"maxDays":30}"#
+                        .to_string(),
+                store_id: None,
+            })
+            .unwrap();
+        KeyValueStoreRepository::new(&connection)
+            .set_i32(KeyType::SettingsSyncSiteId, Some(mock_store_a().site_id))
+            .unwrap();
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let ctx = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+
+        // Sanity: this stock line is consistent before the operation. The rest of the shared mock
+        // data is not, so compare against *our* line only throughout.
+        let mut check = LedgerCheck::init(LedgerCheckSettings::for_test(
+            LedgerCheckMode::Stop,
+            std::time::Duration::from_secs(0),
+        ))
+        .1;
+        let before = reported_ids(&mut check, &service_provider);
+        assert!(
+            !before.contains(&STOCK_LINE.to_string()),
+            "fixture should start consistent, got {:?}",
+            before
+        );
+
+        // The operation from #12574: backdate a NEW outbound shipment that has allocated lines
+        let result = service_provider.invoice_service.update_outbound_shipment(
+            &ctx,
+            UpdateOutboundShipment {
+                id: shipment().id,
+                backdated_datetime: Some(Utc::now() - Duration::days(2)),
+                ..Default::default()
+            },
+        );
+        assert!(result.is_ok(), "backdating failed: {:#?}", result);
+
+        // With the #12578 fix in place the reserved stock is released and the ledger still adds
+        // up. Revert that fix and this stock line shows up here - which is #12582 working.
+        let after = reported_ids(&mut check, &service_provider);
+        assert!(
+            !after.contains(&STOCK_LINE.to_string()),
+            "ledger check reported {} after backdating - the #12574 regression is back",
+            STOCK_LINE
+        );
+    }
+
+    fn reported_ids(check: &mut LedgerCheck, service_provider: &ServiceProvider) -> Vec<String> {
+        match check
+            .run_once(service_provider, RunReason::Triggered)
+            .unwrap()
+        {
+            ScanOutcome::Discrepancies(ids) => ids,
+            other => panic!("expected a scan to run, got {:?}", other),
+        }
+    }
+}
