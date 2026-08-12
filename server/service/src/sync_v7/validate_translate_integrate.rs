@@ -598,14 +598,22 @@ mod test {
         .unwrap();
     }
 
+    /// The buffer row at `cursor` (the PK). The buffer holds a handful of rows
+    /// in these tests, so filtering `get_all` is cheaper than a bespoke query.
+    fn buffer_at_cursor(connection: &StorageConnection, cursor: i32) -> SyncBufferRow {
+        SyncBufferRepository::new(connection)
+            .get_all()
+            .unwrap()
+            .into_iter()
+            .find(|row| row.cursor == cursor)
+            .unwrap_or_else(|| panic!("no sync buffer row at cursor {}", cursor))
+    }
+
     fn buffer_result(
         connection: &StorageConnection,
         cursor: i32,
     ) -> (Option<IntegrationResult>, Option<String>) {
-        let row = SyncBufferRepository::new(connection)
-            .find_one_by_cursor(cursor)
-            .unwrap()
-            .unwrap();
+        let row = buffer_at_cursor(connection, cursor);
         (row.integration_result, row.integration_error)
     }
 
@@ -723,11 +731,7 @@ mod test {
         integrate(&connection, None);
         let (result, _) = buffer_result(&connection, 1);
         assert_eq!(result, Some(IntegrationResult::Success));
-        let row2 = SyncBufferRepository::new(&connection)
-            .find_one_by_cursor(2)
-            .unwrap()
-            .unwrap();
-        assert!(!row2.is_integrated);
+        assert!(!buffer_at_cursor(&connection, 2).is_integrated);
 
         // The reference run then integrates its own upsert.
         integrate(&connection, Some("ref-1"));
