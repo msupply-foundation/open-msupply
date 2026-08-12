@@ -260,17 +260,20 @@
   transform: rotate(90deg);
 }
 
-/* The collapse toggle: a disc centred ON the rail's inline-end border.
-   On the MARK's line (its optical centre, y 40 — the figure's weight is head,
-   hat and raised arm, so its box centre at 45 reads low). The two then read as
-   one row: mark, and the grip you pull the rail by. Sitting lower, at the head's
-   block-end, put it level with the page's toolbar instead — anchored to nothing
-   in the rail, since a disc on the edge is always beside SOMETHING the page
-   drew, and pairing with the mark is the only alignment the rail can own. */
+/* The collapse toggle: a disc centred ON the rail's inline-end border, halfway
+   down it.
+   A disc on this edge is always beside SOMETHING the page drew — the page
+   region begins flush at the rail, so there is no margin for it to hang in. Up
+   in the head it was level with the page title (13px from it, the largest text
+   on the screen); lower in the head, level with the toolbar. Halfway down, its
+   neighbours are table rows: quiet, repetitive, and nothing the eye is hunting
+   for. It also stops borrowing the head's alignment and takes the rail's own
+   midpoint instead — a grip in the middle of the edge you pull, which is where
+   a handle belongs. */
 .railToggle {
   position: absolute;
   inset-inline-end: -0.75rem;
-  inset-block-start: 2.5rem;
+  inset-block-start: 50%;
   z-index: 1;
   display: inline-flex;
   align-items: center;
