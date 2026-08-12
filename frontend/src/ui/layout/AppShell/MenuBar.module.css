@@ -111,55 +111,6 @@
   }
 }
 
-/* --- Rail toggle (foot of the rail) ------------------------------------- */
-/* Its inline padding lands the button's CENTRE on the nav icons' centre (list
-   padding --space-2 + button padding --space-3 + half a 1.25rem icon = 1.875rem;
-   less half this 1.75rem button = 1rem), so it sits in the same column the nav
-   reads down and shifts only the 10px those icons do when the rail narrows. */
-.railToggleRow {
-  display: flex;
-  flex-shrink: 0;
-  padding-inline-start: 1rem;
-  padding-block: var(--space-1) var(--space-3);
-}
-
-.menuBar[data-open='false'] .railToggleRow {
-  justify-content: center;
-  padding-inline-start: 0;
-}
-
-/* A bare glyph — no disc, no border, no fill at rest. It is the quietest thing
-   in the rail because it is the least important: --gray-main is 3.4:1 on the
-   chrome behind it, past the 3:1 WCAG 2.2 SC 1.4.11 asks of a findable control
-   and no more. Hover and focus bring it up. */
-.railToggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  inline-size: 1.75rem;
-  block-size: 1.75rem;
-  padding: 0;
-  border: none;
-  border-radius: var(--radius-sm);
-  background: none;
-  color: var(--gray-main);
-  font-size: 1.125rem;
-  cursor: pointer;
-  transition:
-    background var(--motion-fast) ease,
-    color var(--motion-fast) ease;
-}
-
-.railToggle:hover {
-  background: var(--surface-sunken);
-  color: var(--text-body);
-}
-
-.railToggle:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
-}
-
 /* --- Nav lists --------------------------------------------------------- */
 .navList {
   display: flex;
@@ -299,6 +250,37 @@
 
 :dir(rtl) .sectionChevron[data-open='false'] {
   transform: rotate(90deg);
+}
+
+/* --- Rail toggle (foot of the rail) ------------------------------------- */
+/* The row's own padding matches the nav lists', so the button lines up with
+   every row above it; the block padding is the only space it costs beyond the
+   40px row itself. */
+.railToggleRow {
+  flex-shrink: 0;
+  padding-inline: var(--space-2);
+  padding-block-end: var(--space-1);
+}
+
+/* Everything geometric comes from .navButton — height, padding, radius, the
+   collapsed-rail centring, the label hiding. This adds only the demotion:
+   subordinate ink for both glyph and label, since it is furniture rather than
+   a destination. --text-secondary is 6.9:1 (the destinations are 16:1, and the
+   bare glyph this replaces was 3.13:1). */
+.railToggle {
+  color: var(--text-secondary);
+}
+
+.railToggle .icon {
+  color: var(--text-secondary);
+}
+
+.railToggle:hover {
+  color: var(--text-body);
+}
+
+.railToggle:hover .icon {
+  color: var(--text-body);
 }
 
 .navButton[data-active='true'] .icon {
