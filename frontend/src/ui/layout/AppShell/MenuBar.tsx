@@ -8,7 +8,12 @@ import {
   onCleanup,
 } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
-import { ChevronDownIcon, SidebarIcon, AlertTriangleIcon } from '../../icons';
+import {
+  ChevronDownIcon,
+  ChevronsLeftIcon,
+  ChevronsRightIcon,
+  AlertTriangleIcon,
+} from '../../icons';
 import { AppLogo } from '../../branding/AppLogo';
 import { Badge } from '../../elements/feedback/Badge';
 import { t } from '../../../intl';
@@ -550,7 +555,18 @@ export const MenuBar = (props: MenuBarProps) => {
             }
             aria-expanded={!props.nav.railCollapsed()}
           >
-            <SidebarIcon />
+            {/* A DIRECTION, which is what a grip on the edge should show: the
+                disc is the handle you pull the rail by, so the chevron says
+                which way it will go. (The head-mounted alternative uses a panel
+                glyph instead — there the button names a region rather than a
+                movement.) Both mirror in RTL, where the rail sits on the
+                inline-end. */}
+            <Show
+              when={props.nav.railCollapsed()}
+              fallback={<ChevronsLeftIcon />}
+            >
+              <ChevronsRightIcon />
+            </Show>
           </button>
           {/* The rail's edge is a second explicit toggle (Linear's affordance).
               A click, so D3 is untouched — that rule forbids reacting to HOVER,
