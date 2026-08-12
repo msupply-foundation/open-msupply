@@ -9,7 +9,7 @@ import { TextField } from '../../../../ui/elements/inputs/TextField';
 import { NumberField } from '../../../../ui/elements/inputs/NumberField';
 import { DateField } from '../../../../ui/elements/inputs/DateField';
 import { localTodayIso } from '../../../../ui/elements/inputs/dateTimeConvert';
-import { ToggleSwitch } from '../../../../ui/elements/inputs/ToggleSwitch';
+import { Checkbox } from '../../../../ui/elements/inputs/Checkbox';
 import { Combobox } from '../../../../ui/elements/selectors/Combobox';
 import { FormColumns } from '../../../../ui/layout/Form/FormColumns';
 import { FormColumn } from '../../../../ui/layout/Form/FormColumn';
@@ -200,6 +200,12 @@ const Body: Component<InsuranceModalProps> = props => {
   return (
     <Dialog
       open
+      // The two-column form measure (as the site editor / create-patient
+      // modals): wide enough for the FormColumns row to sit side by side, and
+      // it opts the dialog into the full-screen treatment below the
+      // narrow-viewport line — where the columns wrap to a single stack on
+      // their own (FormColumn's min width, no breakpoint).
+      width="form"
       dismissable={!saving()}
       onClose={props.onClose}
       title={editing() ? t('title.edit-insurance') : t('title.new-insurance')}
@@ -266,7 +272,7 @@ const Body: Component<InsuranceModalProps> = props => {
             value={draft.policyType}
             onChange={o => o && setDraft('policyType', o.value)}
           />
-          <ToggleSwitch
+          <Checkbox
             label={t('label.insurance-active')}
             checked={draft.isActive}
             onChange={checked => setDraft('isActive', checked)}
