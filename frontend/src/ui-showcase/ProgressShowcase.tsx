@@ -205,17 +205,19 @@ export const ProgressShowcase = () => (
           outgoing connector at 100% — and a connector that newly fills plays a
           one-shot lightened sweep as the fill arrives. The in-flight step's
           elapsed time ticks live beneath its count (given{' '}
-          <code>startedAt</code>/<code>finishedAt</code>; it freezes at the
-          failure point on <code>error</code> — the second demo). A completed
-          step's final count and duration are a hover/focus popover on its
-          marker (hover or Tab to one below). <code>variant</code> picks the
-          tone (primary = the sync modal, secondary = initialisation);{' '}
-          <code>error</code> flags the in-flight step. Steps are position-keyed
-          (<code>&lt;Index&gt;</code>) and update in place, so consumers can
-          rebuild the step objects on every status tick. Both demos are genuine
-          phase sets: the v7 operational modal, and a v5/v6 remote-site
-          initialisation (which never pushes; its <em>Prepare</em> step has no
-          icon, so it shows its number).
+          <code>startedAt</code>/<code>finishedAt</code>; on <code>error</code>{' '}
+          it freezes at the failure point — and mounted only after the failure,
+          when that moment is unknowable, it's omitted, which is why the second
+          demo's failed pull shows its count alone). A completed step's final
+          count and duration are a hover/focus popover on its marker (hover or
+          Tab to one below). <code>variant</code> picks the tone (primary = the
+          sync modal, secondary = initialisation); <code>error</code> flags the
+          in-flight step. Steps are position-keyed (<code>&lt;Index&gt;</code>)
+          and update in place, so consumers can rebuild the step objects on
+          every status tick. Both demos are genuine phase sets: the v7
+          operational modal, and a v5/v6 remote-site initialisation (which never
+          pushes; its <em>Prepare</em> step has no icon, so it shows its
+          number).
         </Lead>
         <Stack gap="lg">
           <ProgressList
