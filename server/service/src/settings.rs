@@ -467,6 +467,29 @@ impl LedgerCheckMode {
     }
 }
 
+/// How long between ledger scans.
+///
+/// Deliberately *not* the shared `IntervalSettings`: that defaults `mins` to 30, so
+/// `interval: { secs: 30 }` would silently mean 30 minutes 30 seconds. That default is sensible
+/// for the changelog tasks it was written for, but here it would quietly turn the 30-second
+/// developer feedback loop into a half-hourly one. Every field here defaults to zero, so the
+/// yaml means what it says.
+#[derive(Deserialize, Serialize, Clone, Debug, Default, PartialEq)]
+pub struct LedgerCheckInterval {
+    #[serde(default)]
+    pub hours: u64,
+    #[serde(default)]
+    pub mins: u64,
+    #[serde(default)]
+    pub secs: u64,
+}
+
+impl LedgerCheckInterval {
+    pub fn as_duration(&self) -> std::time::Duration {
+        std::time::Duration::from_secs(self.hours * 3600 + self.mins * 60 + self.secs)
+    }
+}
+
 /// yaml-bound config for the periodic stock line ledger consistency check
 /// (`service::ledger_fix::ledger_check`).
 ///
@@ -482,7 +505,7 @@ pub struct LedgerCheckSettings {
     /// Absent means 30 seconds in a debug build, a day in a release build. `Option` because with
     /// a plain `#[serde(default)]` there is no way to tell "absent" from an explicit value.
     #[serde(default)]
-    interval: Option<IntervalSettings>,
+    interval: Option<LedgerCheckInterval>,
     /// Absent means `stop` in a debug build and `warn` in a release build. See `LedgerCheckMode`;
     /// `stop-on-new` is the one to reach for on a database that is already inconsistent.
     #[serde(default)]
@@ -509,20 +532,14 @@ impl Default for LedgerCheckSettings {
 impl LedgerCheckSettings {
     /// How long between scheduled scans. Short in a debug build so a developer finds out
     /// immediately; daily in a release build, which is the cadence #9552's report expects.
-    pub fn interval(&self) -> IntervalSettings {
-        self.interval.clone().unwrap_or(if is_develop() {
-            IntervalSettings {
-                hours: 0,
-                mins: 0,
-                secs: DEBUG_LEDGER_CHECK_INTERVAL_SECS,
+    pub fn interval(&self) -> std::time::Duration {
+        match &self.interval {
+            Some(interval) => interval.as_duration(),
+            None if is_develop() => {
+                std::time::Duration::from_secs(DEBUG_LEDGER_CHECK_INTERVAL_SECS)
             }
-        } else {
-            IntervalSettings {
-                hours: RELEASE_LEDGER_CHECK_INTERVAL_HOURS,
-                mins: 0,
-                secs: 0,
-            }
-        })
+            None => std::time::Duration::from_secs(RELEASE_LEDGER_CHECK_INTERVAL_HOURS * 3600),
+        }
     }
 
     /// What happens on a discrepancy - stop the server (debug) or just log it (release).
@@ -548,7 +565,7 @@ impl LedgerCheckSettings {
     pub(crate) fn for_test(mode: LedgerCheckMode, interval: std::time::Duration) -> Self {
         Self {
             enabled: true,
-            interval: Some(IntervalSettings {
+            interval: Some(LedgerCheckInterval {
                 hours: 0,
                 mins: 0,
                 secs: interval.as_secs(),
@@ -591,10 +608,10 @@ mod test {
 
         assert!(settings.enabled, "must run in every build profile");
         if is_develop() {
-            assert_eq!(settings.interval().as_duration().as_secs(), 30);
+            assert_eq!(settings.interval().as_secs(), 30);
             assert_eq!(settings.mode(), LedgerCheckMode::Stop);
         } else {
-            assert_eq!(settings.interval().as_duration().as_secs(), 24 * 60 * 60);
+            assert_eq!(settings.interval().as_secs(), 24 * 60 * 60);
             assert_eq!(settings.mode(), LedgerCheckMode::Warn);
         }
         assert!(settings.mode().stops_the_server() == is_develop());
@@ -608,8 +625,8 @@ mod test {
         assert!(from_yaml.enabled);
         assert_eq!(from_yaml.mode(), LedgerCheckMode::Warn);
         assert_eq!(
-            from_yaml.interval().as_duration(),
-            LedgerCheckSettings::default().interval().as_duration()
+            from_yaml.interval(),
+            LedgerCheckSettings::default().interval()
         );
     }
 
@@ -628,7 +645,23 @@ mod test {
 
         let slow: LedgerCheckSettings =
             serde_yaml::from_str("interval:\n  hours: 2\n  mins: 30\n  secs: 0").unwrap();
-        assert_eq!(slow.interval().as_duration().as_secs(), 2 * 3600 + 30 * 60);
+        assert_eq!(slow.interval().as_secs(), 2 * 3600 + 30 * 60);
+    }
+
+    /// A partially specified interval must mean what it says. Reusing the shared
+    /// `IntervalSettings` here was a trap: its `mins` defaults to 30, so `{ secs: 5 }` silently
+    /// became 30m5s and quietly turned the 30-second developer feedback loop half-hourly.
+    #[test]
+    fn ledger_check_partial_interval_does_not_pick_up_a_hidden_default() {
+        let only_secs: LedgerCheckSettings = serde_yaml::from_str("interval:\n  secs: 5").unwrap();
+        assert_eq!(only_secs.interval().as_secs(), 5);
+
+        let only_mins: LedgerCheckSettings = serde_yaml::from_str("interval:\n  mins: 2").unwrap();
+        assert_eq!(only_mins.interval().as_secs(), 120);
+
+        let only_hours: LedgerCheckSettings =
+            serde_yaml::from_str("interval:\n  hours: 1").unwrap();
+        assert_eq!(only_hours.interval().as_secs(), 3600);
     }
 
     /// The mode names are the yaml surface, so they are part of the config contract.

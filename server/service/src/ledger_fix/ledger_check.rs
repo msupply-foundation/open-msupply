@@ -37,7 +37,7 @@ use chrono::{NaiveDateTime, Utc};
 use repository::{
     stock_line_ledger::{StockLineLedgerFilter, StockLineLedgerRepository},
     system_log_row::SystemLogType,
-    ChangelogRepository, EqualFilter, KeyType, KeyValueStoreRepository, StockLineRowRepository,
+    EqualFilter, KeyType, KeyValueStoreRepository, StockLineRowRepository,
 };
 use tokio::sync::mpsc::{self, Receiver, Sender};
 
@@ -56,16 +56,17 @@ use crate::{
 const SLOW_SCAN_BACKOFF: u32 = 10;
 /// Ceiling for that backoff - beyond this a development build stops being a useful feedback loop.
 const MAX_INTERVAL: Duration = Duration::from_secs(60 * 10);
+/// How often an unchanged discrepancy set is re-recorded in the system log.
+const SYSTEM_LOG_MIN_INTERVAL: Duration = Duration::from_secs(60 * 60);
 
 pub struct LedgerCheck {
     settings: LedgerCheckSettings,
     receiver: Receiver<()>,
-    /// Changelog cursor as at the last completed scan. Nothing has been written while this holds
-    /// still, so the scan can be skipped for the cost of a `SELECT max(cursor)`.
-    last_cursor: Option<u64>,
+    /// The discrepancy set as at the last system log row, and when that row was written.
+    /// See [`Self::should_write_system_log`].
+    last_logged: Option<(HashSet<String>, Instant)>,
     /// Stock lines whose detail has already been dumped to the log, so a permanently broken line
-    /// doesn't re-print its whole ledger every interval. Deliberately does *not* gate the system
-    /// log - #9552 needs one row per run, and the daily release interval is the throttle there.
+    /// doesn't re-print its whole ledger every interval.
     reported: HashSet<String>,
     /// `StopOnNew` only: stock lines already broken when this process first looked, which are
     /// therefore not anyone's fault this session. `None` until that first scan completes -
@@ -118,7 +119,7 @@ impl LedgerCheck {
             LedgerCheck {
                 settings,
                 receiver,
-                last_cursor: None,
+                last_logged: None,
                 reported: HashSet::new(),
                 baseline: None,
             },
@@ -149,12 +150,6 @@ impl LedgerCheck {
             return Ok(ScanOutcome::Skipped("sync in progress"));
         }
 
-        // Nothing has been written since the last scan, so the answer cannot have changed.
-        let cursor = ChangelogRepository::new(&ctx.connection).max_cursor()?;
-        if self.last_cursor == Some(cursor) {
-            return Ok(ScanOutcome::Skipped("no changes since last check"));
-        }
-
         let stock_line_ids = match find_stock_line_ledger_discrepancies(&ctx.connection, None) {
             Ok(ids) => ids,
             // The site isn't initialised yet, so there are no stores to scan and nothing anyone
@@ -165,7 +160,6 @@ impl LedgerCheck {
             Err(error) => return Err(error),
         };
 
-        self.last_cursor = Some(cursor);
         self.record_run(&ctx);
 
         if stock_line_ids.is_empty() {
@@ -188,7 +182,7 @@ impl LedgerCheck {
             unreachable!("std::future::pending never resolves");
         }
 
-        let base_interval = self.settings.interval().as_duration();
+        let base_interval = self.settings.interval();
         log::info!(
             "Ledger consistency check enabled, every {}s; a discrepancy will {}",
             base_interval.as_secs(),
@@ -287,7 +281,7 @@ impl LedgerCheck {
             return true;
         };
 
-        match chrono::TimeDelta::from_std(self.settings.interval().as_duration()) {
+        match chrono::TimeDelta::from_std(self.settings.interval()) {
             Ok(interval) => (Utc::now().naive_utc() - last_run) >= interval,
             Err(_) => true,
         }
@@ -349,6 +343,24 @@ impl LedgerCheck {
         }
     }
 
+    /// Whether this scan's findings are worth another system log row.
+    ///
+    /// That row syncs to central and support reporting is built on the stream, so a persistent
+    /// problem has to keep showing up - a site broken for a month must not look like a site
+    /// broken once. But at the 30 second development cadence, one row per scan would be
+    /// thousands a day. So: write when the set of broken stock lines *changes*, and otherwise at
+    /// most hourly. At the daily release cadence every scan still writes, which is the cadence
+    /// the support report expects.
+    fn should_write_system_log(&self, discrepancies: &[String]) -> bool {
+        let Some((logged, at)) = &self.last_logged else {
+            return true;
+        };
+        if at.elapsed() >= SYSTEM_LOG_MIN_INTERVAL {
+            return true;
+        }
+        discrepancies.len() != logged.len() || discrepancies.iter().any(|id| !logged.contains(id))
+    }
+
     /// Decide what this session is answerable for. Separated from [`Self::report`] so the
     /// baseline logic can be tested without a test having to survive a panic.
     fn triage(&mut self, discrepancies: &[String]) -> Triage {
@@ -403,14 +415,18 @@ impl LedgerCheck {
         // per run to tell "still broken" from "was broken once". The release interval (a day) is
         // what keeps it from being noisy.
         if let Some(ctx) = &ctx {
-            let summary = format!(
-                "Ledger consistency check found {} stock line(s) with discrepancies: {:?}",
-                discrepancies.len(),
-                discrepancies
-            );
-            if let Err(error) = system_log(&ctx.connection, SystemLogType::LedgerFixError, &summary)
-            {
-                log::error!("Ledger consistency check: failed to write system log: {error:?}");
+            if self.should_write_system_log(&discrepancies) {
+                let summary = format!(
+                    "Ledger consistency check found {} stock line(s) with discrepancies: {:?}",
+                    discrepancies.len(),
+                    discrepancies
+                );
+                if let Err(error) =
+                    system_log(&ctx.connection, SystemLogType::LedgerFixError, &summary)
+                {
+                    log::error!("Ledger consistency check: failed to write system log: {error:?}");
+                }
+                self.last_logged = Some((discrepancies.iter().cloned().collect(), Instant::now()));
             }
         }
 
@@ -458,7 +474,7 @@ impl LedgerCheck {
                  ignore the pre-existing set but still catch anything you break.",
                 culprits.len(),
                 detail,
-                self.settings.interval().as_duration().as_secs(),
+                self.settings.interval().as_secs(),
             )
         );
     }
@@ -711,10 +727,15 @@ mod test {
         );
     }
 
-    /// The scan is expensive, so it must not run when nothing has been written since last time.
+    /// The scan deliberately has no "nothing changed" short-circuit. It used to key off the
+    /// changelog cursor, which was wrong twice over: writing the check's own system log row is
+    /// itself changelogged, so the gate re-armed every interval on exactly the dirty databases
+    /// it was meant to help; and any write that bypasses the changelog (a hand-edited database,
+    /// a repository path that forgets to log) made the check silently blind. Cost is bounded by
+    /// the adaptive backoff in `run` instead, which does not care how the database changed.
     #[actix_rt::test]
-    async fn ledger_check_skips_when_nothing_has_changed() {
-        let ctx = setup("ledger_check_skips_when_nothing_has_changed").await;
+    async fn ledger_check_rescans_even_when_the_changelog_has_not_moved() {
+        let ctx = setup("ledger_check_rescans_even_when_the_changelog_has_not_moved").await;
         set_site_id(&ctx);
 
         let mut check = check();
@@ -724,14 +745,15 @@ mod test {
                 .unwrap(),
             ScanOutcome::Clean
         );
+
+        // Nothing at all has changed - the scan must still run rather than short-circuit
         assert_eq!(
             check
                 .run_once(&ctx.service_provider, RunReason::Scheduled)
                 .unwrap(),
-            ScanOutcome::Skipped("no changes since last check")
+            ScanOutcome::Clean
         );
 
-        // A write advances the changelog cursor, so the next scan looks again
         break_the_ledger(&ctx);
 
         assert_eq!(

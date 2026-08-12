@@ -103,10 +103,11 @@
 ##     debug build   - every 30 seconds, mode: stop
 ##     release build - once a day, mode: warn
 #   enabled: true                # runs in both profiles by default; APP__LEDGER_CHECK__ENABLED also works
-#   interval:                    # omit for the profile default (30 seconds / 24 hours)
-#     hours: 0
-#     mins: 0
-#     secs: 30
+#   interval:                    # omit for the profile default (30 seconds / 24 hours).
+#     hours: 0                   # Each field defaults to 0, so a partial interval means what it
+#     mins: 0                    # says - 'interval: { secs: 30 }' really is 30 seconds. (Note
+#     secs: 30                   # this differs from the changelog tasks' interval, whose 'mins'
+#                                # defaults to 30.)
 ##   What happens when a discrepancy is found. Omit for the profile default.
 ##     stop         - STOP THE SERVER on any discrepancy
 ##     stop-on-new  - stop only for stock lines that were fine when the server started. Use this
