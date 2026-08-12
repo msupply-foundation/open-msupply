@@ -423,6 +423,12 @@ impl<'a> SyncBufferRepository<'a> {
         Ok(result)
     }
 
+    /// Every sync buffer row ever written, pending and integrated, ordered by cursor.
+    ///
+    /// SLOW and UNBOUNDED — a full-table scan that loads the whole buffer (millions of rows,
+    /// each carrying its `data` payload) into memory. Tests and offline CLI tooling only; never
+    /// call this from the server. To read the rows integration cares about, use
+    /// `pending_ordered_by_cursor` / `pending_keys`, which are backed by the pending index.
     pub fn get_all(&self) -> Result<Vec<SyncBufferRow>, RepositoryError> {
         Ok(sync_buffer::table
             .order(sync_buffer::cursor.asc())
