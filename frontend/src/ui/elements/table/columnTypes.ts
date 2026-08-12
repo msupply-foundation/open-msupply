@@ -102,6 +102,42 @@ declare module '@tanstack/solid-table' {
      */
     hideFromColumnSettings?: boolean;
     /**
+     * This field's width in CARD view. Card view otherwise lays a group's
+     * fields out as EQUAL auto-fit tracks, which gives a 1-digit Difference the
+     * same box as a manufacturer name — `repeat(N, 1fr)` is only right when
+     * every field holds comparably long data. Two forms, per
+     * ux-testing/header-field-width.html § "a field's column is sized by its
+     * data, never by its count":
+     *
+     *  • **a number (rem)** — a FIXED track, for a formatted scalar whose
+     *    longest value is known: a numeric quantity (7.5), a currency (10), a
+     *    date (8.5 — the measured intrinsic width of a formatted date; a sixth
+     *    of a strip is pure waste on one).
+     *  • **`{ min, max, weight }` (rem, rem, ratio)** — a WEIGHTED track, for
+     *    free text and name/lookup fields whose length is unpredictable. The
+     *    row's leftover width is shared between these in `weight` proportion,
+     *    from a `min` floor up to a `max` ceiling. Weight expresses expected
+     *    data length: a manufacturer ("Serum Institute of India Pvt. Ltd.")
+     *    outweighs a location code ("A1-03").
+     *
+     * `max` is not optional, and is what stops the last field on a wrapped line
+     * from stretching across the whole of it — the failure the weighted model
+     * replaced. Past its ceiling a field simply stops growing and the row ends
+     * in space, which is the honest result of sizing by data.
+     *
+     * Opt-in per GROUP: a group where NO column declares one keeps the equal
+     * tracks; in a group where at least one does, an undeclared column falls
+     * back to a `1fr`-ish sink. Fields still wrap intrinsically when the card
+     * narrows (CLAUDE.md #7) — a card body must wrap, so the reference doc's
+     * "rejected: let the row wrap" (which is protecting a fixed-height header
+     * strip) doesn't carry over; only its sizing model does.
+     *
+     * Distinct from the top-level `size`/`maxSize`, which are TanStack's TABLE
+     * column widths (px, drag-resizable) — card fields aren't table columns and
+     * aren't resizable, so they carry their own figure.
+     */
+    cardWidth?: number | { min: number; max: number; weight: number };
+    /**
      * The row label in the Columns settings popover, for a column whose grid
      * header deliberately renders EMPTY or iconic but stays user-hideable
      * (e.g. the line editor's auto-allocation tick — blank header in the

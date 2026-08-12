@@ -64,10 +64,25 @@ export const progressMetadata: PageMetadata = {
     {
       id: 'progress-sync',
       title: 'Sync progress',
-      searchTerms: ['sync', 'push', 'pull', 'integrate', 'done', 'total'],
+      searchTerms: [
+        'sync',
+        'push',
+        'pull',
+        'integrate',
+        'done',
+        'total',
+        'count',
+        'popover',
+      ],
     },
   ],
 };
+
+// Sync-demo phase timestamps, relative to page load: the in-flight steps'
+// elapsed time ticks live from these.
+const demoLoadedAt = Date.now();
+const demoAgo = (seconds: number): string =>
+  new Date(demoLoadedAt - seconds * 1000).toISOString();
 
 // A captioned demo row — the small grey label above one indicator.
 const Case = (props: { caption: string; children: JSX.Element }) => (
@@ -181,9 +196,22 @@ export const ProgressShowcase = () => (
         <Lead>
           The sync surfaces' phase list (<code>ui/sync</code>) is the same
           stepper with a marker <code>icon</code> per phase (a step without one
-          shows its number) and a <code>done</code>/<code>total</code> count
-          beneath. <code>variant</code> picks the tone (primary = the sync
-          modal, secondary = initialisation); <code>error</code> flags the
+          shows its number) and <strong>one</strong> <code>done</code>/
+          <code>total</code> count — beneath the in-flight step only, so the
+          live number is the only one on the row and the columns never shift as
+          digits grow. The in-flight marker's border doubles as a determinate
+          progress ring — the filled tone floods from the incoming connector
+          toward the far side, top and bottom halves in step, meeting the
+          outgoing connector at 100% — and a connector that newly fills plays a
+          one-shot lightened sweep as the fill arrives. The in-flight step's
+          elapsed time ticks live beneath its count (given{' '}
+          <code>startedAt</code>/<code>finishedAt</code>; on <code>error</code>{' '}
+          it freezes at the failure point — and mounted only after the failure,
+          when that moment is unknowable, it's omitted, which is why the second
+          demo's failed pull shows its count alone). A completed step's final
+          count and duration are a hover/focus popover on its marker (hover or
+          Tab to one below). <code>variant</code> picks the tone (primary = the
+          sync modal, secondary = initialisation); <code>error</code> flags the
           in-flight step. Steps are position-keyed (<code>&lt;Index&gt;</code>)
           and update in place, so consumers can rebuild the step objects on
           every status tick. Both demos are genuine phase sets: the v7
@@ -199,12 +227,18 @@ export const ProgressShowcase = () => (
                 icon: ChevronsUpIcon,
                 started: true,
                 finished: true,
+                done: 120,
+                total: 120,
+                startedAt: demoAgo(160),
+                finishedAt: demoAgo(148),
               },
               {
                 label: 'Waiting for integration',
                 icon: ClockIcon,
                 started: true,
                 finished: true,
+                startedAt: demoAgo(148),
+                finishedAt: demoAgo(42),
               },
               {
                 label: 'Pull',
@@ -213,6 +247,7 @@ export const ProgressShowcase = () => (
                 finished: false,
                 done: 5,
                 total: 10,
+                startedAt: demoAgo(42),
               },
               {
                 label: 'Integrate',
@@ -234,6 +269,8 @@ export const ProgressShowcase = () => (
                 finished: true,
                 done: 33568,
                 total: 33568,
+                startedAt: demoAgo(5045),
+                finishedAt: demoAgo(801),
               },
               {
                 label: 'Pull remote',
@@ -242,6 +279,7 @@ export const ProgressShowcase = () => (
                 finished: false,
                 done: 7260,
                 total: 80754,
+                startedAt: demoAgo(801),
               },
               {
                 label: 'Pull V6',

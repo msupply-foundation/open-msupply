@@ -29,7 +29,7 @@ import {
 } from '../../../ui/elements/buttons/SplitButton';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
-import { CloseIcon, SidebarIcon, TruckIcon } from '../../../ui/icons';
+import { CloseIcon, SidebarIcon } from '../../../ui/icons';
 import {
   DataTable,
   type Column,
@@ -79,7 +79,13 @@ import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePane
 import { createAddAction } from '../../../ui/utils/keyActions';
 import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import { InboundShipmentStatusFooter } from './InboundShipmentStatusFooter';
-import { canChangeStatus, isEditable, kindOf } from './inboundShipmentStatus';
+import {
+  canChangeStatus,
+  isEditable,
+  kindOf,
+  supplierIsStore,
+} from './inboundShipmentStatus';
+import { SupplierKindIcon } from '../SupplierKindIcon';
 import { InboundShipmentLogPanel } from './log/InboundShipmentLogPanel';
 import { InboundDocumentsPanel } from './tabs/InboundDocumentsPanel';
 import { InboundCurrencyPanel } from './tabs/InboundCurrencyPanel';
@@ -534,13 +540,20 @@ const InboundShipmentDetailView: Component = () => {
     { value: 'log', label: t('label.log') },
   ];
 
+  // The trail's leading glyph is the Replenishment section's, supplied by the
+  // shell for every page. The KIND icon (truck / house) is the RECORD's, so it
+  // rides the number crumb — before the number, as the current app shows it
+  // (spec S3 § breadcrumb).
   const crumbs = (node: InboundInfoFragment) => [
     {
       label: t('inbound-shipment'),
       onClick: () =>
         navigate(`/${params.storeId}/replenishment/inbound-shipment`),
     },
-    { label: String(node.invoiceNumber) },
+    {
+      label: String(node.invoiceNumber),
+      icon: <SupplierKindIcon isStore={supplierIsStore(node)} />,
+    },
   ];
 
   // Add-item split button options — master list & internal order gated (spec
@@ -900,7 +913,10 @@ const InboundShipmentDetailView: Component = () => {
               }
               header={
                 <Header>
-                  <Breadcrumb icon={<TruckIcon />} crumbs={crumbs(node())} />
+                  {/* No `icon` — the leading glyph is the Replenishment
+                      section's, from the shell. The kind icon rides the number
+                      crumb (see `crumbs`). */}
+                  <Breadcrumb crumbs={crumbs(node())} />
                   <HeaderButtons>
                     <Show when={!isDisabled()}>
                       <SplitButton

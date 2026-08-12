@@ -43,13 +43,18 @@
 }
 
 /* --- Menu ------------------------------------------------------------- */
+/* Sizes to its content (`max-content`) so a normal-length email sits on ONE
+   line — the values never wrap; an outlier ellipsises (see .rowValue, which
+   carries the full string in its title). The cap keeps a pathological address
+   from stretching the popup off the footer's end, and stays inside a narrow
+   viewport. Padding lives on the regions, not here, so the hairline above the
+   action and the header band meet the popup's edge. */
 .content {
   z-index: 1100; /* above the ShowcaseLauncher (1000) */
-  min-inline-size: 11rem;
-  /* A long email wraps (LabelledValue's value sets overflow-wrap) instead of
-     stretching the popup off the footer's end. */
-  max-inline-size: 18rem;
-  padding: var(--space-2);
+  inline-size: max-content;
+  min-inline-size: 13rem;
+  max-inline-size: min(26rem, calc(100vw - 2rem));
+  overflow: hidden; /* clip the full-bleed regions to the rounded corner */
   border: 1px solid var(--color-border-value);
   border-radius: var(--radius-md);
   background: var(--surface-raised);
@@ -58,23 +63,104 @@
   font-size: var(--text-sm);
 }
 
-/* The popup's title is the user's full display name (OMS-REG-FTR-01.2), so it
-   reads as a name rather than as a group label. */
-.heading {
-  padding: var(--space-1) var(--space-2) var(--space-2);
-  color: var(--text-body);
-  font-size: var(--text-sm);
-  font-weight: var(--weight-bold);
+/* Identity header: initials avatar + the display name (OMS-REG-FTR-01.2) with
+   the job title as its subtitle. */
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
 }
 
-/* Identity rows (username, email) between the name and the logout action. */
+.avatar {
+  display: grid;
+  flex: none;
+  place-items: center;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  border-radius: 50%;
+  background: var(--bg-group-main);
+  color: var(--text-secondary);
+  font-size: var(--input-font-sm);
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+}
+
+.names {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.name {
+  color: var(--text-body);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  line-height: 1.2;
+}
+
+.jobTitle {
+  color: var(--text-secondary);
+  font-size: var(--input-font-sm);
+  line-height: 1.2;
+}
+
+/* Contact facts (username, email) in a recessed block, so the identity reads as
+   one card region rather than as more menu rows. */
 .details {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  margin-block-end: var(--space-2);
-  padding: 0 var(--space-2) var(--space-2);
-  border-block-end: 1px solid var(--color-border-value);
+  margin: 0 var(--space-3) var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--bg-group-light);
+}
+
+.row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  min-inline-size: 0;
+  font-size: var(--input-font-sm);
+}
+
+.rowIcon {
+  flex: none;
+  inline-size: 1rem;
+  block-size: 1rem;
+  color: var(--text-secondary);
+  font-size: 1rem;
+}
+
+/* The field name — visually hidden, not dropped: the row still reads
+   "Email: …" to a screen reader, and the label still translates, without
+   spending a line of the popup on it (same technique as Button's collapsed
+   label). */
+.rowLabel {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.rowValue {
+  overflow: hidden;
+  color: var(--text-body);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Full-bleed hairline between the identity and the action (the app's dropdown
+   idiom — see SplitButton's menu); the item's hover pill stays inset. */
+.actions {
+  padding: var(--space-1);
+  border-block-start: 1px solid var(--color-border-value);
 }
 
 .item {
@@ -86,6 +172,16 @@
   cursor: pointer;
   user-select: none;
   outline: none;
+}
+
+/* The action's glyph carries the brand accent, as the current app's popup does
+   — the label stays body text. */
+.itemIcon {
+  flex: none;
+  inline-size: 1rem;
+  block-size: 1rem;
+  color: var(--primary-main);
+  font-size: 1rem;
 }
 
 .item[data-highlighted] {

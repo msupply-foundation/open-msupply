@@ -14,6 +14,12 @@ export interface TabDef {
   value: string;
   label: string;
   /**
+   * Disable the tab (Kobalte removes it from the roving tabindex and marks it
+   * aria-disabled) — e.g. the initialisation mode chooser locks its tabs while
+   * a submit is in flight, keeping the strip visible rather than hiding it.
+   */
+  disabled?: boolean;
+  /**
    * Override the auto `tab-<value>` test id (locale-stable e2e hook,
    * e2e/TESTIDS.md). Use when a strip already has a contracted id scheme of
    * its own — e.g. the location picker's `location-fullness-*` filter.
@@ -136,6 +142,7 @@ export const TabList = (props: {
         {tab => (
           <KTabs.Trigger
             value={tab.value}
+            disabled={tab.disabled}
             class={styles.trigger}
             // Custom id when the strip has its own contracted scheme; otherwise
             // tab-<value> per e2e/TESTIDS.md (value lowercased, spaces → '-').

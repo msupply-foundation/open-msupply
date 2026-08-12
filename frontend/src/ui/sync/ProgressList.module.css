@@ -1,10 +1,10 @@
 /*
- * Horizontal stepper look, faithful to the current app's HorizontalStepper:
+ * Horizontal stepper look, based on the current app's HorizontalStepper:
  * a circled icon marker per step, thick connector lines meeting the circles'
- * outer edges, label + done/total count beneath, and a pulse on the in-flight
- * marker. Geometry (30px circle, 3px border, 4px connector) is kept in rem
- * except the border hairlines, mirroring the reference constants so the
- * connectors stay centred on the circles.
+ * outer edges, label beneath (plus the in-flight step's count — D100), and a
+ * pulse on the in-flight marker. Geometry (28px circle, 4px border matching
+ * the 4px connector) is kept in rem except the border hairlines; the 36px
+ * outer size keeps the connectors centred on the circles.
  *
  * The tone variables map the semantic variant to palette tokens (never
  * colour-named): primary = brand, secondary = the initialisation screen's
@@ -13,7 +13,12 @@
  */
 
 .list {
-  --tone-light: var(--primary-light);
+  /* The unfilled track/border shade. The palette's own light shade
+     (--primary-light) is barely lighter than main, so an unreached segment
+     would read as filled — tint the main tone toward the surface instead,
+     landing at the same paleness the secondary variant gets from its
+     pale-grey token. */
+  --tone-light: color-mix(in srgb, var(--primary-main) 30%, var(--bg-white));
   --tone-main: var(--primary-main);
   --tone-dark: var(--primary-dark);
 
@@ -40,6 +45,12 @@
 .step {
   position: relative;
   flex: 1;
+  /* Equal columns whatever the content: flex-basis 0 shares the row evenly
+     only if no step's min-content size exceeds its share — a long nowrap
+     count would otherwise widen its column and shift every circle as the
+     digits grow (issue #971). A count wider than the column overflows it,
+     staying centred (align-items below). */
+  min-inline-size: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -66,24 +77,83 @@
   background: var(--tone-main);
 }
 
+/* When a connector newly fills — its step just became the in-flight one — a
+   soft lightened band with gradient edges sweeps along it once, inline-start
+   → inline-end, reading as the fill arriving. The band is a no-repeat
+   gradient layer over the filled colour; the animation fires when this rule
+   STARTS matching (pending → active), so each hand-off sweeps the next
+   connector exactly once. Its rest position parks the band past the far end.
+   One-shot and decorative, so --motion-sweep zeroes under reduced motion. */
+.step[data-state='active']::before {
+  background-image: linear-gradient(
+    to right,
+    transparent,
+    color-mix(in srgb, var(--tone-light) 70%, var(--tone-main)),
+    transparent
+  );
+  background-repeat: no-repeat;
+  background-size: 30% 100%;
+  background-position-x: 143%;
+  animation: connector-sweep var(--motion-sweep) ease-out;
+}
+
+/* The marker's popover trigger (a completed step with a count): the Popover
+   trigger reset does the rest; the round radius keeps the focus ring on the
+   circle, and the raise matches .circle's so the ring paints over the
+   connector. */
+.markerButton {
+  position: relative;
+  z-index: 1;
+  border-radius: 50%;
+}
+
 /* The circled marker. Sits above the connector. */
 .circle {
   position: relative;
   z-index: 1;
   display: grid;
   place-items: center;
-  inline-size: 2.25rem; /* 30px circle + 2 × 3px border */
+  inline-size: 2.25rem; /* 28px circle + 2 × 4px border (36px outer) */
   block-size: 2.25rem;
-  border: 3px solid var(--tone-light);
+  border: 4px solid var(--tone-light); /* matches the connector thickness */
   border-radius: 50%;
   background: var(--bg-white);
   color: var(--tone-main);
   font-size: 1.25rem;
 }
 
+/* The in-flight marker's border doubles as a determinate progress ring
+   (D100): as --ring-progress (0–1, set inline by the component when the step
+   is countable) advances, the filled tone floods the ring from where the
+   incoming connector meets the circle (inline-start) toward the far side —
+   the top and bottom half-arcs EACH represent the full range and grow in
+   step, so the fill front moves inline-start → inline-end, continuous with
+   the connectors, and the two fronts meet at the outgoing connector at 100%.
+   Painted as two half-arc conics (top clockwise, bottom its mirror) over the
+   pale full-ring track, all under a padding-box cover — the real border only
+   reserves the ring's thickness. At the default 0 the ring is the plain pale
+   border. */
 .step[data-state='active'] .circle {
+  --ring-progress: 0;
+
   color: var(--tone-dark);
   animation: progress-pulse var(--motion-pulse) infinite;
+  border-color: transparent;
+  background:
+    linear-gradient(var(--bg-white), var(--bg-white)) padding-box,
+    conic-gradient(
+        from 270deg,
+        var(--tone-main) calc(var(--ring-progress) * 0.5turn),
+        transparent 0
+      )
+      border-box,
+    conic-gradient(
+        from calc(270deg - var(--ring-progress) * 0.5turn),
+        var(--tone-main) calc(var(--ring-progress) * 0.5turn),
+        transparent 0
+      )
+      border-box,
+    linear-gradient(var(--tone-light), var(--tone-light)) border-box;
 }
 
 .step[data-state='completed'] .circle {
@@ -94,6 +164,37 @@
 
 .step[data-error] .circle {
   color: var(--error-main);
+}
+
+/* RTL mirror of the progress ring: the connector arrives at the circle's
+   inline-start (right) edge, so the flood runs right → left — the same two
+   half-arcs, anchored at the right point (top counterclockwise, bottom
+   clockwise). */
+:dir(rtl) .step[data-state='active'] .circle {
+  background:
+    linear-gradient(var(--bg-white), var(--bg-white)) padding-box,
+    conic-gradient(
+        from calc(90deg - var(--ring-progress) * 0.5turn),
+        var(--tone-main) calc(var(--ring-progress) * 0.5turn),
+        transparent 0
+      )
+      border-box,
+    conic-gradient(
+        from 90deg,
+        var(--tone-main) calc(var(--ring-progress) * 0.5turn),
+        transparent 0
+      )
+      border-box,
+    linear-gradient(var(--tone-light), var(--tone-light)) border-box;
+}
+
+/* RTL mirror of the connector sweep: the band travels inline-start →
+   inline-end, i.e. right → left, so the same keyframes run in reverse and
+   the band parks past the LEFT end. The band's gradient is symmetric, so
+   only the travel flips. */
+:dir(rtl) .step[data-state='active']::before {
+  background-position-x: -43%;
+  animation-direction: reverse;
 }
 
 /* Icon-less marker: the step's number (bold, as the current app renders it). */
@@ -116,13 +217,41 @@
   color: var(--error-main);
 }
 
-/* Done/total under the label; always rendered so rows keep an even height. */
+/* Done/total under the in-flight step's label (D100). The span renders on
+   every step (empty elsewhere) so rows keep an even height. */
 .count {
   min-block-size: 1em;
   font-size: var(--text-xs);
   color: var(--tone-muted-text);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+
+/* The in-flight step's elapsed time, on its own line under the count. */
+.elapsed {
+  min-block-size: 1em;
+  font-size: var(--text-xs);
+  color: var(--tone-muted-text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* A completed step's count bubble (the marker's hover/focus popover). */
+.countBubble {
+  padding: var(--space-2) var(--space-3);
+}
+
+.countBubbleText {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  text-align: center;
+}
+
+/* Count and duration stack in the bubble. */
+.countBubbleText + .countBubbleText {
+  margin-block-start: var(--space-1);
 }
 
 /* Meaning is never colour-alone: each step carries hidden status text. */
@@ -133,6 +262,20 @@
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
+}
+
+/* The band is 30% of the connector wide, so with background-position-x's
+   percentage mapping (P% aligns the band's P% point with the connector's),
+   fully-hidden is −30/70 ≈ −43% at the start edge and 100/70 ≈ 143% past the
+   far edge. */
+@keyframes connector-sweep {
+  from {
+    background-position-x: -43%;
+  }
+
+  to {
+    background-position-x: 143%;
+  }
 }
 
 @keyframes progress-pulse {

@@ -8,7 +8,7 @@ import {
 } from './stockMovementStatus';
 import type { StockMovementInfoFragment } from './stockMovementDetail.generated';
 
-// Anchors: spec/stock-movements/cases/OMS-REG-SMV-09.
+// Anchors: spec/stock-movements/cases/OMS-REG-SMV-10.
 //   .4 — any status change with zero lines is blocked in the UI, nothing submitted
 //   .6 — status never moves backwards
 // (rules.md § status lifecycle, § status changes and the zero-line gate)
@@ -28,7 +28,7 @@ const node = (
   ...over,
 });
 
-describe('OMS-REG-SMV-09.6 — status is strictly forward', () => {
+describe('OMS-REG-SMV-10.6 — status is strictly forward', () => {
   it('offers both forward targets from NEW (skip to FINALISED reachable)', () => {
     expect(nextStatuses('NEW')).toEqual(['CONFIRMED', 'FINALISED']);
   });
@@ -42,7 +42,7 @@ describe('OMS-REG-SMV-09.6 — status is strictly forward', () => {
   });
 });
 
-describe('OMS-REG-SMV-09.4 — the zero-line gate', () => {
+describe('OMS-REG-SMV-10.4 — the zero-line gate', () => {
   it('blocks any status change while the movement has no lines', () => {
     expect(blockedByZeroLines(node({ lineCount: 0 }))).toBe(true);
   });

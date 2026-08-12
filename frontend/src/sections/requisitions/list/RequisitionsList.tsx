@@ -23,7 +23,7 @@ import {
 } from '@/ui/elements/selectors/ColourTag';
 import { HStack } from '@/ui/layout/Stack/HStack';
 import { FilterBar } from '@/ui/elements/selectors/FilterBar';
-import { PlusCircleIcon, TruckIcon } from '@/ui/icons';
+import { PlusCircleIcon } from '@/ui/icons';
 import { createAddAction } from '@/ui/utils/keyActions';
 import { ALT_N } from '@/ui/utils/shortcuts';
 import { useUrlQueryState } from '@/list/urlQueryState';
@@ -46,10 +46,7 @@ import {
   statusColour,
   statusLabel,
 } from './requisitionStatus';
-import {
-  DeleteRequisitionsAction,
-  ExportRequisitionsAction,
-} from './actions';
+import { DeleteRequisitionsAction, ExportRequisitionsAction } from './actions';
 import { CreateRequisitionModal } from './create/CreateRequisitionModal';
 import { CreateOrderAction } from './create/CreateOrderAction';
 
@@ -182,8 +179,7 @@ const RequisitionsList: Component = () => {
     context.latest?.storePreferences.omProgramModule ?? false;
   const hasPrograms = () => context.latest?.hasCustomerPrograms ?? false;
   const canCreateOrder = () =>
-    context.latest?.preferences.canCreateInternalOrderFromARequisition ??
-    false;
+    context.latest?.preferences.canCreateInternalOrderFromARequisition ?? false;
 
   // New requisition (spec S1 page actions / OMS-FUN-DIS-03): opens the create
   // modal (S3a). The button waits for the context read — the modal's
@@ -225,9 +221,7 @@ const RequisitionsList: Component = () => {
   };
 
   const openRow = (row: Row) =>
-    navigate(
-      `/${params.storeId}/distribution/customer-requisition/${row.id}`
-    );
+    navigate(`/${params.storeId}/distribution/customer-requisition/${row.id}`);
 
   // Inline customer colour-tag edit (spec S1 col 1 / OMS-REG-DIST-05.27):
   // write the colour through the shared header update and refetch on success.
@@ -381,7 +375,9 @@ const RequisitionsList: Component = () => {
       fillBody
       header={
         <Header>
-          <Breadcrumb icon={<TruckIcon />} crumbs={crumbs()} />
+          {/* The Distribution truck (ui-surface S1) rides the shell's section
+              glyph — every page in the shell gets its nav group's icon. */}
+          <Breadcrumb crumbs={crumbs()} />
           <HeaderButtons>
             <Button
               icon={<PlusCircleIcon />}
