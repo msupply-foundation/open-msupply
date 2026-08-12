@@ -5,7 +5,7 @@ use std::{
 };
 
 use base64::{prelude::BASE64_STANDARD, Engine};
-use log::info;
+use log::{error, info};
 use repository::{
     migrations::Version, BackendPluginRowRepository, FrontendPluginFile, FrontendPluginRow,
     FrontendPluginRowRepository, HostRuntime, PluginType, RepositoryError,
@@ -208,14 +208,21 @@ pub enum InstalledPluginKind {
     Frontend,
 }
 
-/// Decode a stored row into a servable plugin, or `None` if this server may
-/// not serve it.
+/// Decode a stored row into a servable plugin, or `None` if this server cannot
+/// serve it — either because the compatibility gate rejects it or because the
+/// row does not decode.
 ///
-/// The one gate here is the server axis — the plugin's `version` against the
-/// binary's own, by (major, minor). It is deliberately the ONLY thing decided
-/// at load time: it depends on nothing but the server, so it can be settled
-/// once, whereas which host the bundle suits cannot be known until a host asks
-/// (`get_frontend_plugins_metadata`).
+/// The one *gate* here is the server axis — the plugin's `version` against the
+/// binary's own, by (major, minor). It is deliberately the ONLY compatibility
+/// question settled at load time: it depends on nothing but the server, so it
+/// can be answered once, whereas which host the bundle suits cannot be known
+/// until a host asks (`get_frontend_plugins_metadata`).
+///
+/// A row whose file contents are not valid base64 is dropped with an error
+/// rather than panicking. Its bundle is unservable either way, but the caller
+/// rebuilds the WHOLE cache from the table, so a panic here would take every
+/// other installed plugin down with it — and would do so again on every
+/// subsequent change to the table, since the bad row is still there.
 fn prepare_frontend_plugin(
     FrontendPluginRow {
         id,
@@ -239,10 +246,17 @@ fn prepare_frontend_plugin(
         file_content_base64,
     } in files.0.into_iter()
     {
-        files_content.insert(
-            file_name,
-            BASE64_STANDARD.decode(file_content_base64).unwrap(),
-        );
+        let content = match BASE64_STANDARD.decode(file_content_base64) {
+            Ok(content) => content,
+            Err(error) => {
+                error!(
+                    "Frontend plugin {id} ({code}@{version}) not loaded: file {file_name} is not valid base64: {error}"
+                );
+                return None;
+            }
+        };
+
+        files_content.insert(file_name, content);
     }
 
     // Hash all files (sorted by name for stability) so the URL token only
@@ -1083,6 +1097,71 @@ mod test {
                 &service_context,
                 &FrontendPluginFileRequest {
                     plugin_id: "solid".to_string(),
+                    filename: "civ_plugins.js".to_string(),
+                }
+            ),
+            Err(FrontendPluginFileRequestError::CannotFindPluginId)
+        ));
+    }
+
+    /// A row whose file content will not decode costs its own plugin and
+    /// nothing else. Because the cache is rebuilt whole from the table, the
+    /// alternative is that one unreadable row ends frontend plugin serving
+    /// altogether — and does so again on every later change to the table.
+    #[actix_rt::test]
+    async fn a_corrupt_bundle_does_not_take_the_cache_down() {
+        let ServiceTestContext {
+            service_provider,
+            service_context,
+            connection,
+            ..
+        } = setup_all_with_data_and_service_provider(
+            "a_corrupt_bundle_does_not_take_the_cache_down",
+            MockDataInserts::none(),
+            MockData::default(),
+        )
+        .await;
+
+        let mut corrupt = civ_bundle("corrupt", "3.0.1", "solid", 1);
+        corrupt.files = FrontendPluginFiles(vec![FrontendPluginFile {
+            file_name: "civ_plugins.js".to_string(),
+            file_content_base64: "not base64 at all!".to_string(),
+        }]);
+
+        let repo = FrontendPluginRowRepository::new(&connection);
+        repo.upsert_one(corrupt).unwrap();
+        // Lower version than the corrupt row, so it can only be discovered if
+        // the corrupt one was dropped rather than merely outranked.
+        repo.upsert_one(civ_bundle("solid", "3.0.0", "solid", 1))
+            .unwrap();
+
+        service_provider
+            .plugin_service
+            .reload_frontend_plugins(&service_context)
+            .unwrap();
+
+        assert_eq!(
+            discovered_ids(&service_provider, &service_context, &solid_ui(1, 1)),
+            vec!["solid".to_string()]
+        );
+        assert_eq!(
+            service_provider
+                .plugin_service
+                .get_frontend_plugin_file(
+                    &service_context,
+                    &FrontendPluginFileRequest {
+                        plugin_id: "solid".to_string(),
+                        filename: "civ_plugins.js".to_string(),
+                    }
+                )
+                .unwrap(),
+            b"nothing here".to_vec()
+        );
+        assert!(matches!(
+            service_provider.plugin_service.get_frontend_plugin_file(
+                &service_context,
+                &FrontendPluginFileRequest {
+                    plugin_id: "corrupt".to_string(),
                     filename: "civ_plugins.js".to_string(),
                 }
             ),
