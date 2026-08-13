@@ -31,11 +31,13 @@ const SEARCH_THRESHOLD = 7;
  * highlight falls back to default → last-used → first visible so Enter always
  * has a target.
  *
- * The checkbox (off by default) rides along on the confirm as onConfirm's
- * `alwaysOpen` flag: ticked, the store being confirmed is saved as the user's
- * always-open store (spec startup SL-9, OMS-REG-LGN-02.24) — a checkbox
- * before the pick, never a prompt after it, so choosing a store stays one
- * interaction.
+ * The checkbox rides along on the confirm as onConfirm's `alwaysOpen` flag —
+ * ticked, the store being confirmed is saved as the user's always-open store;
+ * unticked, the host clears any saved one (spec startup SL-9,
+ * OMS-REG-LGN-02.24/.32). A checkbox before the pick, never a prompt after
+ * it, so choosing a store stays one interaction. It arrives showing the
+ * device's saved opt-in: the host seeds it via `defaultAlwaysOpen` (.31),
+ * false on a fresh device.
  *
  * Colour independence: the Default / Last-used markers are StatusChips (dot +
  * label), never colour alone; the active row is a token tint AND
@@ -49,11 +51,22 @@ export const StoreSelector = (props: {
    * rendered above a divider (0/undefined: no divider). The caller pinned
    * them; only it knows how many rows are "the pins". */
   pinnedCount?: number;
+  /** Skip the panel's own <h2> — for a host whose chrome already carries the
+   * heading (the store-switch modal's Dialog title, spec startup S3). The
+   * list keeps its own aria-label either way. */
+  hideTitle?: boolean;
+  /** The always-open checkbox's starting state — the device's saved opt-in
+   * (spec SL-9, OMS-REG-LGN-02.31): true while an always-open store is saved
+   * for the user. Read once at mount; both hosts mount the panel fresh per
+   * show. */
+  defaultAlwaysOpen?: boolean;
   onConfirm: (storeId: string, alwaysOpen: boolean) => void;
 }) => {
   const [query, setQuery] = createSignal('');
   const [selected, setSelected] = createSignal<string | undefined>();
-  const [alwaysOpen, setAlwaysOpen] = createSignal(false);
+  const [alwaysOpen, setAlwaysOpen] = createSignal(
+    props.defaultAlwaysOpen ?? false
+  );
 
   const showSearch = () => props.stores.length >= SEARCH_THRESHOLD;
 
@@ -167,7 +180,9 @@ export const StoreSelector = (props: {
     >
       {/* h2: the hosting screen carries the page's h1 (the login frame's
           brand statement); this heads the panel region within it. */}
-      <h2 class={styles.title}>{t('heading.select-store')}</h2>
+      <Show when={!props.hideTitle}>
+        <h2 class={styles.title}>{t('heading.select-store')}</h2>
+      </Show>
 
       {/* The always-open save, decided BEFORE the pick (SL-9): ticked, the
           store clicked next is saved and sign-in skips this screen. At the

@@ -106,6 +106,16 @@ export const recordAlwaysOpenStoreId = (
   });
 };
 
+// Withdraw the opt-in (SL-9): confirming a store with the checkbox unticked
+// clears the saved store, so the box never shows an opt-in that isn't in
+// force.
+export const clearAlwaysOpenStoreId = (userId: string): void => {
+  const data = readAppData();
+  const next = { ...data.alwaysOpenStoreIdByUserId };
+  delete next[userId];
+  writeAppData({ ...data, alwaysOpenStoreIdByUserId: next });
+};
+
 // The user's saved column config for a table (the writable layer). `{}` when
 // the user has never customised it — resolution then falls through to
 // global/default/TanStack.
