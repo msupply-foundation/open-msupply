@@ -862,9 +862,6 @@ const StocktakeLineEditContent = (
             label={t('label.batch')}
             hideLabel
             size="small"
-            // Narrow: a batch code is short, and it's the card's inline header
-            // field (the FieldRow control cell is otherwise full-width).
-            width="compact"
             disabled={!line.countThisLine}
             value={line.batch ?? ''}
             onInput={e =>

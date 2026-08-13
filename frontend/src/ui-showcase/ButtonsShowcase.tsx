@@ -6,6 +6,8 @@ import { Button } from '../ui/elements/buttons/Button';
 import { CheckboxButton } from '../ui/elements/buttons/CheckboxButton';
 import { IconButton } from '../ui/elements/buttons/IconButton';
 import { SplitButton } from '../ui/elements/buttons/SplitButton';
+import { DisclosureToggle } from '../ui/elements/buttons/DisclosureToggle';
+import { NumberField } from '../ui/elements/inputs/NumberField';
 import {
   OkButton,
   CancelButton,
@@ -91,6 +93,11 @@ export const buttonsMetadata: PageMetadata = {
       title: 'Checkbox button',
       searchTerms: ['checkbox', 'toggle', 'pill'],
     },
+    {
+      id: 'buttons-disclosure',
+      title: 'Disclosure toggle',
+      searchTerms: ['disclosure', 'advanced options', 'chevron', 'expand'],
+    },
   ],
 };
 
@@ -101,6 +108,7 @@ export const ButtonsShowcase = () => {
     null
   );
   const [onHold, setOnHold] = createSignal(false);
+  const [showAdvanced, setShowAdvanced] = createSignal(false);
   const [lastStandard, setLastStandard] = createSignal<string | null>(null);
 
   // Demo of the busy → outcome cycle: CSV "succeeds", Excel "fails", each
@@ -575,6 +583,38 @@ export const ButtonsShowcase = () => {
             </CheckboxButton>
           </Row>
           <Note>The shipment is {onHold() ? 'on hold' : 'not on hold'}.</Note>
+        </DashboardCard>
+
+        <DashboardCard
+          id="buttons-disclosure"
+          title="Disclosure toggle — a form's advanced options"
+        >
+          <Lead>
+            A ghost <code>&lt;Button&gt;</code> whose chevron rotates to the
+            state it will move to — the accordion convention, so a disclosure
+            inside a form reads like a collapsible section around one. It
+            carries <code>aria-expanded</code> and <code>aria-controls</code>{' '}
+            but owns neither the state nor the revealed region: the caller keeps
+            those, which is the line against <code>Accordion</code>. Live in the
+            initialisation form and Synchronisation settings, both hiding the
+            optional sync batch size.
+          </Lead>
+          <Row>
+            <DisclosureToggle
+              expanded={showAdvanced()}
+              controls="showcase-advanced"
+              onClick={() => setShowAdvanced(previous => !previous)}
+            >
+              {showAdvanced()
+                ? 'Hide advanced options'
+                : 'Show advanced options'}
+            </DisclosureToggle>
+          </Row>
+          <Show when={showAdvanced()}>
+            <div id="showcase-advanced">
+              <NumberField label="Sync batch size" min={1} />
+            </div>
+          </Show>
         </DashboardCard>
       </CardGrid>
     </Stack>

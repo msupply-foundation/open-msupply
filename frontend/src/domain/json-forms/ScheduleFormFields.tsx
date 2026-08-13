@@ -125,7 +125,6 @@ export const ScheduleFormFields = (
       />
       <DateField
         label={t('label.from-date')}
-        width="full"
         value={instantToLocalDate(props.after) || null}
         error={props.errorFor?.('after')}
         onChange={value =>
@@ -136,7 +135,6 @@ export const ScheduleFormFields = (
       />
       <DateField
         label={t('label.to-date')}
-        width="full"
         value={instantToLocalDate(props.before) || null}
         error={props.errorFor?.('before')}
         onChange={value =>

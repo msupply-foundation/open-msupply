@@ -202,7 +202,6 @@ const PrescriptionDetailView: Component = () => {
           (a.batch ?? '').localeCompare(b.batch ?? '')
       )
   );
-  const existingItemIds = () => [...new Set(rows().map(line => line.itemId))];
 
   const tableConfig = createTableConfig({
     tableId: 'prescription-detail',
@@ -724,7 +723,6 @@ const PrescriptionDetailView: Component = () => {
                 invoiceId={node().id}
                 initialItemId={state.itemId}
                 initialItem={state.item}
-                existingItemIds={existingItemIds()}
                 programId={node().programId ?? undefined}
                 onClose={() => setEditState(undefined)}
                 onSaved={() => void refetch()}

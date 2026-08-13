@@ -1,5 +1,5 @@
 import { createSignal, Show, type Component } from 'solid-js';
-import { t } from '../../intl';
+import { t, type LocaleKey } from '../../intl';
 import {
   SplitButton,
   type SplitButtonOption,
@@ -42,9 +42,12 @@ import {
  * diagnose from, on the device or in a release build's suppressed console.
  *
  * Two failures stay silent by design: a cancelled save picker is the user
- * declining, not a failure; and a `failed` conversion has already reached the
- * global error modal through graphqlFetch, so reporting it again would double
- * up.
+ * declining, not a failure; and a conversion whose request never completed
+ * (`failed` — a connection failure, an unusable response) has already reached
+ * the global error modal, so reporting it again would double up. A conversion
+ * the server REJECTED is not in that set — the wrapper takes those errors
+ * itself (spec/reports AC-G6), so nothing global shows them and they land in
+ * the dialog below with the server's description.
  */
 
 export interface ListExportActionProps {
@@ -67,15 +70,17 @@ type Feedback = 'done' | 'failed';
 export const ListExportAction: Component<ListExportActionProps> = props => {
   const [busy, setBusy] = createSignal(false);
   const feedback = createFlash<Feedback>();
-  // The failure detail behind the dialog: undefined = closed. Held separately
-  // from `feedback` so the flash can revert on its timer while the dialog
-  // stays open until the user closes it.
-  const [errorDetail, setErrorDetail] = createSignal<string>();
+  // The failure behind the dialog — its headline key plus the raw detail;
+  // undefined = closed. Held separately from `feedback` so the flash can revert
+  // on its timer while the dialog stays open until the user closes it. The
+  // headline names WHICH half failed: converting the rows to a workbook, or
+  // handing the finished file to the platform.
+  const [error, setError] = createSignal<{ key: LocaleKey; detail: string }>();
 
   const flash = feedback.show;
-  const fail = (detail: string) => {
+  const fail = (key: LocaleKey, detail: string) => {
     flash('failed');
-    setErrorDetail(detail);
+    setError({ key, detail });
   };
 
   // An accessor read in JSX, so the labels re-translate on a language switch.
@@ -88,7 +93,8 @@ export const ListExportAction: Component<ListExportActionProps> = props => {
   // report what came back. A declined picker reverts with no flash at all.
   const deliver = async (blob: Blob, filename: string): Promise<void> => {
     const delivered = await saveBlob(blob, filename);
-    if (!delivered.ok) return fail(delivered.message);
+    if (!delivered.ok)
+      return fail('messages.cannot-save-file', delivered.message);
     if (delivered.saved) flash('done');
   };
 
@@ -108,15 +114,22 @@ export const ListExportAction: Component<ListExportActionProps> = props => {
           filename: listExportExcelFilename(storeCode, props.listName),
           sheetName: storeCode,
         });
-        // `failed` already reached the global error modal via graphqlFetch;
-        // `dataError` carries the server's own JSON and reached nothing.
+        // `failed` never reached the server and is already on the global
+        // modal; a fault the server returned reached nothing and is reported
+        // here — `dataError` carries its own JSON, `error` its description.
         if (generated.kind === 'failed') return;
         if (generated.kind === 'dataError') {
-          return fail(JSON.stringify(generated.errors, null, 2));
+          return fail(
+            'error.failed-to-generate-report',
+            JSON.stringify(generated.errors, null, 2)
+          );
+        }
+        if (generated.kind === 'error') {
+          return fail('error.failed-to-generate-report', generated.message);
         }
         const file = await fetchReportFile(generated.fileId);
         if (file.kind !== 'success') {
-          return fail(t('error.failed-to-generate-report'));
+          return fail('error.failed-to-generate-report', file.message);
         }
         await deliver(file.blob, file.filename);
       } else {
@@ -157,18 +170,18 @@ export const ListExportAction: Component<ListExportActionProps> = props => {
         mainLabel={mainLabel()}
         onAction={format => void run(format)}
       />
-      <Show when={errorDetail()}>
-        {detail => (
+      <Show when={error()}>
+        {shown => (
           <Dialog
             open
-            onClose={() => setErrorDetail(undefined)}
+            onClose={() => setError(undefined)}
             icon={<AlertCircleIcon />}
             testId="export-error-modal"
             title={t('message.export-failed')}
             description={
               <Alert severity="error">
-                {t('messages.cannot-save-file')}
-                <ErrorDetails detail={detail()} />
+                {t(shown().key)}
+                <ErrorDetails detail={shown().detail} />
               </Alert>
             }
             actions={
@@ -176,7 +189,7 @@ export const ListExportAction: Component<ListExportActionProps> = props => {
                 variant="secondary"
                 confirms="plain"
                 data-testid="export-error-modal-close"
-                onClick={() => setErrorDetail(undefined)}
+                onClick={() => setError(undefined)}
               >
                 {t('button.close')}
               </Button>
