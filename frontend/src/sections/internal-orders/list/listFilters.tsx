@@ -72,7 +72,7 @@ const FILTERS: Filter<InternalOrderFilter>[] =
         />
       ),
     },
-    // Status — multi-select "any of" (D101; Draft / Sent / Finalised). Ticks
+    // Status — multi-select "any of" (D110; Draft / Sent / Finalised). Ticks
     // accumulate into status.equalAny; none → null so the chip stays. The
     // values are the enum literals, so no cast is needed.
     status: {

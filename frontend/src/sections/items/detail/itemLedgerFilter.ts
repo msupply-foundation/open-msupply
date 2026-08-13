@@ -42,7 +42,7 @@ export const buildWireFilter = (
   const filter: NonNullable<ItemLedgerVariables['filter']> = {
     itemId: { equalTo: itemId },
   };
-  // Multi-select chips (D101) — the ticked values match as any-of.
+  // Multi-select chips (D110) — the ticked values match as any-of.
   if (f.invoiceType?.length) filter.invoiceType = { equalAny: f.invoiceType };
   if (f.invoiceStatus?.length)
     filter.invoiceStatus = { equalAny: f.invoiceStatus };
