@@ -1,13 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildSyncInput,
-  canSaveSyncSettings,
   initialSyncForm,
   normaliseBatchSize,
   normaliseInterval,
   SYNC_SAVE_FALLBACK_ERROR,
+  syncFieldErrors,
   syncSaveErrorKey,
 } from './syncForm';
+
+// The ids of the rules currently violated, in field order.
+const failing = (form: Parameters<typeof syncFieldErrors>[0]) =>
+  syncFieldErrors(form)
+    .filter(e => e.failed)
+    .map(e => e.id);
 
 const filled = {
   url: 'https://central.example',
@@ -17,22 +23,35 @@ const filled = {
   batchSize: undefined,
 };
 
-// OMS-REG-SET-02.7/.8 — Save disabled until all fields are filled: any one of
-// URL, site, password, or interval empty keeps Save disabled.
-describe('save disabled until all four fields are filled (SET-02.7/.8)', () => {
-  it('enables save only when every field has a value', () => {
-    expect(canSaveSyncSettings(filled)).toBe(true);
+// OMS-REG-SET-02.7/.8 — Save is always clickable and validates on click (D98):
+// a missing URL, site, password, or interval fails its own rule, which is what
+// blocks the save and names the field.
+describe('required-field rules (SET-02.7/.8)', () => {
+  it('reports nothing failing when every field has a value', () => {
+    expect(failing(filled)).toEqual([]);
   });
 
   it.each([
-    ['url', { ...filled, url: '' }],
-    ['url (whitespace)', { ...filled, url: '   ' }],
-    ['username', { ...filled, username: '' }],
-    ['password', { ...filled, password: '' }],
-    ['interval (empty)', { ...filled, intervalSeconds: undefined }],
-    ['interval (zero)', { ...filled, intervalSeconds: 0 }],
-  ])('stays disabled with %s missing', (_field, form) => {
-    expect(canSaveSyncSettings(form)).toBe(false);
+    ['url', { ...filled, url: '' }, 'url'],
+    ['url (whitespace)', { ...filled, url: '   ' }, 'url'],
+    ['username', { ...filled, username: '' }, 'username'],
+    ['password', { ...filled, password: '' }, 'password'],
+    [
+      'interval (empty)',
+      { ...filled, intervalSeconds: undefined },
+      'intervalSeconds',
+    ],
+    ['interval (zero)', { ...filled, intervalSeconds: 0 }, 'intervalSeconds'],
+  ])('fails the %s rule when it is missing', (_field, form, id) => {
+    expect(failing(form)).toEqual([id]);
+  });
+
+  // No message of their own — each shows the generic required message under
+  // its field, and only once Save has armed the form.
+  it('defers every rule to the first save attempt', () => {
+    expect(syncFieldErrors(filled).every(e => e.message === undefined)).toBe(
+      true
+    );
   });
 });
 
@@ -72,8 +91,9 @@ describe('password always starts blank (SET-02.12)', () => {
 // "use the server's own default", so it never gates Save and is sent as null
 // (rules § Synchronisation).
 describe('batch size is an optional override (SET-02.15/.16)', () => {
-  it('leaves Save enabled with no batch size entered', () => {
-    expect(canSaveSyncSettings({ ...filled, batchSize: undefined })).toBe(true);
+  it('carries no validation rule of its own', () => {
+    expect(failing({ ...filled, batchSize: undefined })).toEqual([]);
+    expect(syncFieldErrors(filled).map(e => e.id)).not.toContain('batchSize');
   });
 
   it('leaves the field empty when the server reports no override', () => {
