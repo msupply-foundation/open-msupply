@@ -1052,13 +1052,15 @@ const OutboundDetailView: Component = () => {
                   }
                   // Cards keep the held/expired treatment (title + border +
                   // badge — D110/D111); no info tone for placeholders.
+                  // Expired outranks held for the card tone (matching the
+                  // tint precedence); both badges still show.
                   cardTone={line =>
                     line.type === 'UNALLOCATED_STOCK'
                       ? undefined
-                      : lineOnHold(line)
-                        ? 'warning'
-                        : lineExpired(line)
-                          ? 'error'
+                      : lineExpired(line)
+                        ? 'error'
+                        : lineOnHold(line)
+                          ? 'warning'
                           : undefined
                   }
                   emptyMessage={t('error.no-outbound-items')}

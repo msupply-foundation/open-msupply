@@ -185,9 +185,11 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    * title + the warning/error border/shadow) from this instead of rowTone,
    * and rowTone is free to stay unset — for a page whose table view must NOT
    * colour row text (outbound's status-tinted tables, D110) but whose cards
-   * keep the tone treatment. Same vocabulary and CSS as rowTone's card half.
+   * keep the tone treatment. rowTone's vocabulary plus 'success': a green
+   * border + faint shadow ONLY (title untinted) — an affirmative state (a
+   * batch auto-allocation will use) whispers, where warning/error shout.
    */
-  cardTone?: (row: T) => 'info' | 'warning' | 'error' | undefined;
+  cardTone?: (row: T) => 'info' | 'success' | 'warning' | 'error' | undefined;
   /**
    * Semantic record-STATUS background tint, always on (unlike the rowState
    * tints, which show only while selected): 'success' for a satisfied row

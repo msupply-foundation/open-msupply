@@ -363,7 +363,7 @@ export function CardView<T, G extends string>(props: {
    * paints the card's IDENTITY title only (a whole-card repaint would
    * recolour field labels and controls). Stamps data-tone on the card row.
    */
-  rowTone?: (row: T) => 'info' | 'warning' | 'error' | undefined;
+  rowTone?: (row: T) => 'info' | 'success' | 'warning' | 'error' | undefined;
 }): JSX.Element {
   // The DataTable renders the empty state itself (before this view), so cards
   // always have ≥1 row here — no empty branch.

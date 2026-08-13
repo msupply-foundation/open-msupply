@@ -1067,7 +1067,10 @@ tr[data-selected][data-tint='error'] > .selectCell {
    very faint amber lift, so the card reads at a glance in the deck. After the
    selected rule (same specificity): the hold is a durable fact of the record,
    so its border survives transient selection (selection keeps its fill). An
-   error-toned card (an expired batch) gets the same treatment in red. */
+   error-toned card (an expired batch) gets the same treatment in red, and a
+   success-toned card (a batch auto-allocation will use) in green — border +
+   shadow ONLY: the affirmative state keeps its title untinted (the green
+   badge names it), where warning/error also tint the title (rules above). */
 .cardRow[data-tone='warning'] > .cardCell > .card {
   border-color: color-mix(in srgb, var(--warning-main) 50%, transparent);
   box-shadow: 0 2px 8px color-mix(in srgb, var(--warning-main) 35%, transparent);
@@ -1076,6 +1079,11 @@ tr[data-selected][data-tint='error'] > .selectCell {
 .cardRow[data-tone='error'] > .cardCell > .card {
   border-color: color-mix(in srgb, var(--error-main) 50%, transparent);
   box-shadow: 0 2px 8px color-mix(in srgb, var(--error-main) 35%, transparent);
+}
+
+.cardRow[data-tone='success'] > .cardCell > .card {
+  border-color: color-mix(in srgb, var(--success-main) 50%, transparent);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--success-main) 35%, transparent);
 }
 
 /* Header: selection checkbox, identity title and badge on one row, vertically
