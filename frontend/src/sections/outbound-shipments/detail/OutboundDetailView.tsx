@@ -28,7 +28,6 @@ import {
   type SortState,
 } from '../../../ui/elements/table/DataTable';
 import {
-  formatCurrencyCell,
   getCellDefinition,
   getNumberCell,
 } from '../../../ui/elements/table/tableHelpers';
@@ -37,7 +36,6 @@ import {
   type PaginationProps,
 } from '../../../ui/elements/table/Pagination';
 import { remToPx } from '../../../ui/utils/rem';
-import { formatNumber } from '../../../intl/formatNumber';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
 import { createAddAction } from '../../../ui/utils/keyActions';
@@ -263,6 +261,20 @@ const OutboundDetailView: Component = () => {
   // lines outrun one page, leaving the bar as it was and the height to the
   // rows. Paging still clears the selection (OMS-REG-DIST-03.34): the
   // bulk-action gates classify by rows in view.
+  // The shipment's totals (spec § line table, D45): whole-shipment SERVER
+  // aggregates off the entity's pricing stats — never a sum over the loaded
+  // rows, which would silently become a page total under server pagination
+  // (OMS-REG-DIST-03.28). Price = stockTotalBeforeTax (contract § detail line
+  // table): the sum of the Total column, pack sell price × packs before tax —
+  // the after-tax figure belongs to the side panel's stock-charges Total.
+  // Shown in the status footer rather than a pinned row beneath the table:
+  // being whole-shipment figures, a band under one page of rows would read as
+  // that page's column sums, and would cost a row to do it.
+  const shipmentTotals = () => ({
+    price: node()?.pricing?.stockTotalBeforeTax ?? 0,
+    volume: node()?.pricing?.totalVolume ?? 0,
+  });
+
   const linePagination = (): PaginationProps => ({
     offset: query().offset,
     pageSize: query().first,
@@ -587,24 +599,11 @@ const OutboundDetailView: Component = () => {
   // placeholder rows show the requested quantity. Sortable columns name a real
   // server sort key; the rest omit sortKey (no client-side fallback).
   const columns = (): Column<Line, SortKey>[] => {
-    // Footer totals (spec § line table, D45): whole-shipment SERVER aggregates
-    // off the entity's pricing stats — never a sum over the loaded rows, which
-    // would silently become a page total under server pagination
-    // (OMS-REG-DIST-03.28).
-    const pricing = node()?.pricing;
-    // Price footer = stockTotalBeforeTax (contract § detail line table): it
-    // sums the Total column (pack sell price × packs, before tax) — the
-    // after-tax figure belongs to the side panel's stock-charges Total.
-    const totals = {
-      price: pricing?.stockTotalBeforeTax ?? 0,
-      volume: pricing?.totalVolume ?? 0,
-    };
     return [
       {
         c: { key: 'itemCode' },
         sortKey: 'itemCode',
         header: () => t('label.code'),
-        footer: () => t('label.total'),
         // The `code` kind carries the monospace treatment the spec's line-table
         // column 1 asks for ("text (mono)"), plus the shared code width.
         ...getCellDefinition('itemCode'),
@@ -746,7 +745,6 @@ const OutboundDetailView: Component = () => {
           id: 'total',
         },
         header: () => t('label.total'),
-        footer: () => formatCurrencyCell(totals.price),
         ...getCellDefinition('total'),
       },
       {
@@ -761,7 +759,6 @@ const OutboundDetailView: Component = () => {
         // Same display rounding as the column's cells (ui-standards § tables'
         // 2-dp number cell) — a 5-dp footer under 2-dp cells reads as a
         // mismatch.
-        footer: () => formatNumber(totals.volume, { maximumFractionDigits: 2 }),
         ...getNumberCell(),
         // No CELL_DEF key; the "Volume (m³)" header is the binding constraint.
         size: remToPx(6),
@@ -909,6 +906,7 @@ const OutboundDetailView: Component = () => {
                       storeId={params.storeId}
                       node={current()}
                       pagination={linePagination()}
+                      totals={shipmentTotals}
                       preflight={preflight}
                       onSetHold={setHold}
                       // A status change can trim zero-quantity lines
@@ -918,11 +916,6 @@ const OutboundDetailView: Component = () => {
                         mutate(() => saved);
                         void refetchAfterSave();
                       }}
-                      onClose={() =>
-                        navigate(
-                          `/${params.storeId}/distribution/outbound-shipment`
-                        )
-                      }
                     />
                   }
                 >

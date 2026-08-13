@@ -1,7 +1,6 @@
 import { createSignal, Show, type Component } from 'solid-js';
 import { t } from '../../../intl';
 import { CheckboxButton } from '../../../ui/elements/buttons/CheckboxButton';
-import { CloseButton } from '../../../ui/elements/buttons/StandardButtons';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
@@ -9,6 +8,9 @@ import {
   Pagination,
   type PaginationProps,
 } from '../../../ui/elements/table/Pagination';
+import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
+import { formatCurrencyCell } from '../../../ui/elements/table/tableHelpers';
+import { formatNumber } from '../../../intl';
 import { StatusChangeAction, type StatusPreflight } from './actions';
 import { STATUS_LABELS, statusIndex, isEditable } from '../outboundStatus';
 import { allowedStatuses } from '../outboundStatusOptions';
@@ -36,6 +38,14 @@ export interface OutboundStatusFooterProps {
   /** Toggle hold (writes onHold via the field-save path). */
   onSetHold: (hold: boolean) => void;
   /**
+   * The shipment's whole-document totals (price before tax, volume), shown
+   * HERE rather than as a pinned row under the line table (D45 states what
+   * they are; ui-surface where they live). They are server aggregates over
+   * the WHOLE shipment, so a band under one page of rows both cost a row and
+   * read as that page's column sums — which is exactly what they are not.
+   */
+  totals: () => { price: number; volume: number };
+  /**
    * The line table's pager, hosted HERE rather than in a band of its own
    * (spec/ui-standards § tables → pagination): this bar is present at every
    * line count, so a shipment that pages gets its controls without a second
@@ -46,8 +56,6 @@ export interface OutboundStatusFooterProps {
   /** A status change saved — replace the entity in place (the view also
    * refetches the lines page: leaving NEW trims zero rows server-side). */
   onSaved: (node: OutboundNode) => void;
-  /** Close — navigate back to the list. */
-  onClose: () => void;
 }
 
 export const OutboundStatusFooter: Component<
@@ -109,26 +117,41 @@ export const OutboundStatusFooter: Component<
 
       <StatusIndicator steps={steps()} current={indicatorIndex()} />
 
+      {/* The shipment's totals — inline label/value pairs, so the pair costs
+          one line of a bar that already exists rather than a pinned band of
+          its own. Read-only reference, so they sit with the status reading
+          rather than among the actions. */}
+      <LabelledValue
+        layout="inline"
+        size="small"
+        label={t('label.total')}
+        data-testid="shipment-total-price"
+      >
+        {formatCurrencyCell(props.totals().price)}
+      </LabelledValue>
+      <LabelledValue
+        layout="inline"
+        size="small"
+        label={t('label.volume')}
+        data-testid="shipment-total-volume"
+      >
+        {formatNumber(props.totals().volume, { maximumFractionDigits: 2 })}
+      </LabelledValue>
+
       {/* The line pager, sharing this bar (`inBar` — it sizes to its cluster
           so a crowded bar wraps it whole rather than crushing it). Spread of
           the LIVE prop object, as DataTable does, so offset/total changes
           reach it. */}
       <Pagination {...props.pagination} inBar />
 
-      {/* Close (back to the list) + the status-change split button. The split
-          button hides entirely when read-only (spec S3 § status footer). */}
+      {/* The status-change split button, which hides entirely when read-only
+          (spec S3 § status footer). No Close beside it (D102): leaving the
+          shipment is the breadcrumb's job, as on every other screen. */}
       <StatusChangeAction
         storeId={props.storeId}
         node={props.node}
         preflight={props.preflight}
         onSaved={props.onSaved}
-        closeButton={
-          // The standard action-footer close (registry § buttons & status):
-          // secondary, close glyph, and LABELLED — a footer action is read as a
-          // verb. It sheds its label to the icon on phones by default, so the
-          // dense case is a width outcome, not a per-vertical choice.
-          <CloseButton data-testid="close-button" onClick={props.onClose} />
-        }
       />
 
       {/* Mounted only while open — its confirmation-modal test hook must not
