@@ -43,8 +43,6 @@ import { createTableConfig } from '../../../../api/createTableConfig';
 import {
   CheckIcon,
   InfoIcon,
-  MessageSquareIcon,
-  StockIcon,
 } from '../../../../ui/icons';
 import {
   DraftStockOutLines,
@@ -168,31 +166,25 @@ const VariantInfoTable = (props: {
 );
 
 // The batch grid presents as CARDS, not a table (the createTableConfig default
-// below) — the same shape as the inbound and stocktake line editors. Batch is
-// the card HEADER identity (meta.headerPosition), so it isn't itself a body
-// group; the issue quantity and the stock context it's judged against sit in the
-// always-shown batch panel, with pricing and ancillary detail behind
-// disclosures. Group keys/labels/icons match the sibling editors exactly, so one
-// card vocabulary reads the same across every line editor.
-type GroupKey = 'batch' | 'pricing' | 'other';
+// below) — the same shape as the inbound line editor, which this now matches
+// group-for-group. TWO groups, not three: `batch` is the always-shown primary
+// panel carrying the issue quantity and the stock context it is judged
+// against, and it is UNLABELLED — the card's own header field already reads
+// "Batch", so a captioned "Batch" subheader immediately under it spent a row
+// to repeat the word above it. Everything pre-filled or confirm-only collapses
+// into the single "Pricing & additional info" disclosure, the former separate
+// Pricing and Other groups merged. Batch is the card HEADER identity
+// (meta.headerPosition), so it isn't itself a body group.
+type GroupKey = 'batch' | 'pricing';
 const CARD_GROUPS: CardGroup<DraftLine, GroupKey>[] = [
   {
     key: 'batch',
-    labelKey: 'label.batch',
-    icon: () => <StockIcon />,
     panel: true,
   },
   {
     key: 'pricing',
-    labelKey: 'label.pricing',
+    labelKey: 'label.pricing-additional-info',
     icon: () => <InfoIcon />,
-    panel: true,
-    disclosure: 'closed',
-  },
-  {
-    key: 'other',
-    labelKey: 'heading.other',
-    icon: () => <MessageSquareIcon />,
     panel: true,
     disclosure: 'closed',
   },
@@ -352,6 +344,12 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // Dirty gate: OK is disabled until something changed (matches the e2e
   // expectation that OK saves a real change).
   const [dirty, setDirty] = createSignal(false);
+
+  // The header row's slot for the table's own controls (card/table view ·
+  // Columns · Settings), portalled there by DataTable.controlsMount. A ref
+  // SIGNAL, not a plain variable: the header renders before the table, so the
+  // table must re-read this once the element attaches.
+  const [tableControls, setTableControls] = createSignal<HTMLDivElement>();
 
   const tableConfig = createTableConfig({
     tableId: 'outbound-line-edit',
@@ -1014,7 +1012,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       // Wide enough that the two-word header doesn't wrap mid-word.
       size: remToPx(12.5),
       header: () => t('label.campaign'),
-      cardGroup: 'other',
+      cardGroup: 'pricing',
     },
     {
       c: { accessor: line => line.location?.code ?? '', id: 'location' },
@@ -1030,7 +1028,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               id: 'donor',
             },
             header: () => t('label.donor'),
-            cardGroup: 'other',
+            cardGroup: 'pricing',
             // No CELL_DEF key — a donor name is free text like a manufacturer.
             ...getCellDefinition('manufacturer'),
           } satisfies Column<DraftLine, never, GroupKey>,
@@ -1042,7 +1040,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         id: 'manufacturer',
       },
       header: () => t('label.manufacturer'),
-      cardGroup: 'other',
+      cardGroup: 'pricing',
       ...getCellDefinition('manufacturer'),
     },
     {
@@ -1231,7 +1229,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           {
             c: { key: 'receivedNumberOfPacks' },
             header: () => t('label.packs-received'),
-            cardGroup: 'other',
+            cardGroup: 'pricing',
             ...getCellDefinition('receivedNumberOfPacks'),
             cell: info => {
               const line = info.row.original;
@@ -1252,7 +1250,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           {
             c: { id: 'difference' },
             header: () => t('label.difference'),
-            cardGroup: 'other',
+            cardGroup: 'pricing',
             ...getCellDefinition('difference'),
             cell: info => {
               const line = info.row.original;
@@ -1277,7 +1275,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       // in place (see the canAllocate note above).
       c: { id: 'volume' },
       header: () => t('label.volume'),
-      cardGroup: 'other',
+      cardGroup: 'pricing',
       meta: { align: 'right' },
       // No CELL_DEF key — the "Volume (m³)" header is the binding constraint.
       size: remToPx(6),
@@ -1521,6 +1519,15 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               </div>
             </Show>
           </Show>
+          {/* The table's own controls (card/table view · Columns · Settings),
+              lifted onto this row by DataTable's controlsMount — they sat in a
+              toolbar of their own a few pixels above the cards, spending a
+              whole row of a modal whose scarce axis is vertical. Docked at the
+              row's inline end by its own auto margin, so it holds that edge
+              whether or not the placeholder notice is beside it, and empty
+              (invisible) until an item is picked, since the table only exists
+              then. */}
+          <div ref={setTableControls} class={styles.headerTableControls} />
         </div>
       </InsetPanel>
 
@@ -1548,6 +1555,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             cardGroups={CARD_GROUPS}
             showCardToggle
             showFullScreen={false}
+            // The controls ride the header row instead of a toolbar of their
+            // own a few pixels above the cards — a whole row of a modal whose
+            // scarce axis is vertical. With nothing else to put in it, the
+            // table's toolbar row then doesn't render at all.
+            controlsMount={tableControls()}
             rowState={line => (rowDisabled(line) ? 'disabled' : undefined)}
             emptyMessage={t('messages.no-stock-available')}
             config={tableConfig.config()}
