@@ -52,6 +52,7 @@ import {
 } from './outboundLineEdit.generated';
 import { ItemSearch } from '../../../../domain/item';
 import { VvmStatusSelect, type VvmStatus } from '@/domain/vvmStatus';
+import { StatusChip } from '../../../../ui/elements/feedback/StatusChip';
 import {
   createFocusTarget,
   createFocusTargets,
@@ -62,6 +63,7 @@ import {
   issuedUnits as sumIssuedUnits,
   distinctPackSizes as packSizesIn,
   autoAllocateBarReasons,
+  isExpired,
   barReasons,
   clampManualPacks,
   deriveIssueWarnings,
@@ -284,6 +286,7 @@ const FIELD_ORDER = [
   'unitsIssued',
   'inStorePacks',
   'location',
+  'expired',
   'onHold',
 ];
 
@@ -1323,6 +1326,31 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           </>
         );
       },
+    },
+    {
+      // EXPIRED — a chip in the card header's badge slot, beside On hold.
+      // A word, not a tone: the expiry date already reads red, but red covers
+      // both "expires soon" (often exactly what FEFO wants issued) and "past
+      // its date" (what you must not issue except deliberately), and colour
+      // cannot tell those apart — nor may it try (WCAG 1.4.1 / CLAUDE.md #9).
+      // Warning-toned, not error: an expired batch here is still manually
+      // issuable, and the card carries no frame or recolouring beyond this —
+      // one fact, one marker.
+      c: {
+        accessor: line => isExpired(line.expiryDate),
+        id: 'expired',
+      },
+      header: () => t('label.expired'),
+      meta: { headerPosition: 'badge' },
+      cell: info =>
+        info.getValue<boolean>() ? (
+          <StatusChip
+            label={t('label.expired')}
+            colour="var(--status-picked)"
+          />
+        ) : (
+          ''
+        ),
     },
     {
       // On-hold flag (the stock line or its location) — the row is already
