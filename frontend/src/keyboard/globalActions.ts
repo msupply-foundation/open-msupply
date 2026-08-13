@@ -30,7 +30,7 @@ export const createGlobalActions = (handlers: GlobalActionHandlers): void => {
    * NOT here, though the binding table lists them: DASHBOARD (`Alt+D`), HELP
    * (`Alt+H`) and SETTINGS. All three are destinations in the navigation
    * registry, so navActions registers them with the rest of the menu and
-   * carries their shortcuts (D102). Registering a destination in both places
+   * carries their shortcuts (D107). Registering a destination in both places
    * put two rows in the palette, one with the binding and one without.
    *
    * What is left here is what the menu cannot reach: an action on the app
