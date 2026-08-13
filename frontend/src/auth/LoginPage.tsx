@@ -2,6 +2,7 @@ import { createSignal, onMount, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { login } from './authContext';
 import { submitStateAfter, type SubmitState } from './submitState';
+import { hasLoginFieldError, loginFieldErrors } from './loginFieldErrors';
 import { getLastLoginUsername } from '../appData';
 import { serverVersion } from '../api/serverInfo';
 import { createFocusTarget } from '../ui/utils/createFocusTarget';
@@ -67,14 +68,13 @@ export const LoginPage: Component = () => {
 
   const submit = async (event: SubmitEvent) => {
     event.preventDefault();
-    // Spec (Authentication Logic): the button is always clickable; validation
-    // errors show on submit.
-    const errors = {
-      username: username().trim() === '' ? t('error.username-required') : '',
-      password: password().trim() === '' ? t('error.password-required') : '',
-    };
+    // Spec (rules § authentication, `OMS-REG-LGN-01.24` `.25`): the button is
+    // always clickable — the click is what validates, and each empty field
+    // answers with its own message. A deliberate divergence from the current
+    // app's disabled-until-filled button (D98), ruled to stand (#762).
+    const errors = loginFieldErrors(username(), password());
     setFieldErrors(errors);
-    if (errors.username !== '' || errors.password !== '') return;
+    if (hasLoginFieldError(errors)) return;
     setSubmitState({ kind: 'submitting' });
     const result = await login(username(), password());
     // Clear the password only on a rejected login (finding F6 — align with the
@@ -118,7 +118,7 @@ export const LoginPage: Component = () => {
       <main class={styles.panel}>
         <div class={styles.formArea}>
           <form
-            class={`${styles.form} ${styles.loginForm}`}
+            class={styles.form}
             aria-labelledby="login-heading"
             onSubmit={submit}
           >
@@ -181,7 +181,7 @@ export const LoginPage: Component = () => {
               >
                 {submitting() ? t('button.logging-in') : t('button.login')}
               </Button>
-              <div class={styles.loginActions}>
+              <div class={styles.formActions}>
                 {/* Sibling old UI, served at the server root /old-ui/
                     (dual-frontend transition — one cookie session spans both).
                     A plain anchor for a full document navigation, NOT router

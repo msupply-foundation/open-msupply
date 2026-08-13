@@ -27,6 +27,14 @@ import { NumberField } from '../ui/elements/inputs/NumberField';
 import { Button } from '../ui/elements/buttons/Button';
 import { Alert } from '../ui/elements/feedback/Alert';
 import { ErrorDetails } from '../ui/elements/feedback/ErrorDetails';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '../ui/elements/accordion/Accordion';
+import { useIsCompact } from '../ui/utils/createMediaQuery';
+import { FormSection } from '../ui/layout/Form/FormSection';
 import { Tabs, TabList, TabPanel } from '../ui/elements/tabs/Tabs';
 import { isAndroid } from '../platform';
 import { AppLogo } from '../ui/branding/AppLogo';
@@ -37,6 +45,10 @@ import {
   SYNC_POLL_INTERVAL_MS,
 } from '../config';
 import { changeLanguage, locale, t } from '../intl';
+import {
+  createFormValidation,
+  type FieldError,
+} from '../ui/layout/Form/formValidation';
 import { SaveServerLogLink } from '../platform/SaveServerLogLink';
 import styles from '../ui/styles/LoginInitLayout.module.css';
 import pageStyles from './Initialisation.module.css';
@@ -53,12 +65,6 @@ export const InitialisationPage: Component<{
     password: '',
     batchSize: undefined as number | undefined,
   });
-  const [fieldErrors, setFieldErrors] = createSignal({
-    url: '',
-    siteName: '',
-    password: '',
-  });
-  const [showAdvanced, setShowAdvanced] = createSignal(false);
   // Spec: distinct from submitting — sync has actually begun (the mutation
   // started it, or the page resumed into INITIALISING). A sync error before
   // this is true means initialisation never started, so Retry (which re-runs
@@ -195,17 +201,41 @@ export const InitialisationPage: Component<{
     return '';
   };
 
+  /*
+   * The three field rules, in field order. Each carries its own message but
+   * is held back until the first submit (`showOnSubmit`) — the form must open
+   * quiet, and the URL field's seeded "https://" is deliberately incomplete,
+   * so a message-carrying rule's default "show as soon as it trips" would
+   * greet the user with an error on a form they have not touched.
+   */
+  const fieldErrors = (): FieldError[] => [
+    {
+      id: 'url',
+      label: t('label.settings-url'),
+      failed: urlError(values().url) !== '',
+      message: urlError(values().url) || undefined,
+      showOnSubmit: true,
+    },
+    {
+      id: 'siteName',
+      label: t('label.settings-username'),
+      failed: values().siteName.trim() === '',
+      message: t('error.site-name-required'),
+      showOnSubmit: true,
+    },
+    {
+      id: 'password',
+      label: t('label.settings-password'),
+      failed: values().password.trim() === '',
+      message: t('error.password-required'),
+      showOnSubmit: true,
+    },
+  ];
+  const validation = createFormValidation(fieldErrors);
+
   const validate = (): boolean => {
-    const current = values();
-    const errors = {
-      url: urlError(current.url),
-      siteName:
-        current.siteName.trim() === '' ? t('error.site-name-required') : '',
-      password:
-        current.password.trim() === '' ? t('error.password-required') : '',
-    };
-    setFieldErrors(errors);
-    return Object.values(errors).every(message => message === '');
+    validation.arm();
+    return validation.valid();
   };
 
   // One initialise attempt. The user's own submit (retriesUsed 0) keeps the
@@ -303,6 +333,9 @@ export const InitialisationPage: Component<{
     watchProgress();
   };
 
+  // Only decides WHERE the version line renders — see versionLine() below.
+  const compact = useIsCompact();
+
   const showRetry = () => syncStarted() && syncError() != null;
   // Spec: fields lock while the request is in flight, and stay locked for the
   // whole time sync has actually started (including a watched-sync error —
@@ -311,6 +344,29 @@ export const InitialisationPage: Component<{
   // (OMS-REG-LGN-03.11).
   const locked = () => submitting() || syncStarted();
   const busy = () => locked() && syncError() == null;
+
+  // Spec (App version, OMS-REG-LGN-03.27–.29): the running build's version and
+  // — once the startup pass has fetched it, never as a placeholder — the
+  // server's, on one line at the bottom of the page's left half. Same line, and
+  // same reasoning, as the login page's.
+  //
+  // ONE element, rendered either in the hero or, below the compact breakpoint
+  // where the hero doesn't render at all, in the panel. Never both, so
+  // `init-version` stays a single match; a CSS-only move is impossible because
+  // a child of the hidden hero is hidden with it (CLAUDE.md #7 — a breakpoint
+  // decides which element renders).
+  const versionLine = (placement: string) => (
+    <p class={`${styles.versionBar} ${placement}`} data-testid="init-version">
+      <span>
+        <strong>{t('label.version-interface')}</strong> {APP_VERSION}
+      </span>
+      <Show when={serverVersion()}>
+        <span>
+          <strong>{t('label.version-server')}</strong> {serverVersion()}
+        </span>
+      </Show>
+    </p>
+  );
 
   // ——— Central-server initialisation (spec § initialisation, issue #895) ———
   //
@@ -399,15 +455,24 @@ export const InitialisationPage: Component<{
   // mode on a central one (OMS-REG-LGN-03.22). A closure component so its two
   // placements (bare, and as the chooser's first tab panel) share the page's
   // signals; only one renders at a time.
-  const LegacySyncForm = (formProps: { withLogo?: boolean }) => (
+  const LegacySyncForm = () => (
     <form
       class={styles.form}
-      aria-label={t('button.initialise')}
+      aria-labelledby="initialise-heading"
       onSubmit={submit}
     >
-      <Show when={formProps.withLogo}>
-        <AppLogo class={styles.logo} />
-      </Show>
+      {/* The form's heading, and its accessible name via aria-labelledby — the
+          form previously named itself after its button, which told a
+          screen-reader user what the control does, not what the region is. Not
+          displayed: the logo above and the hero's welcome already carry the
+          page's visible identity. h2, not h1, because the hero's welcome is the
+          page's h1 and this is the top of a region within it — a plain element
+          rather than the Text primitive, since an invisible heading has no type
+          style to set. First in the form so it is read before the fields it
+          names (matching the login page). */}
+      <h2 id="initialise-heading" class={styles.srOnly}>
+        {t('initialise.form-heading')}
+      </h2>
       <TextField
         // Spec (.22): a central server initialises against the LEGACY mSupply
         // central — same field, same submission, different name.
@@ -423,7 +488,7 @@ export const InitialisationPage: Component<{
           const url = e.currentTarget.value;
           setValues(previous => ({ ...previous, url }));
         }}
-        error={fieldErrors().url || undefined}
+        error={validation.errorFor('url')}
         disabled={locked()}
       />
       <TextField
@@ -435,7 +500,7 @@ export const InitialisationPage: Component<{
           const siteName = e.currentTarget.value;
           setValues(previous => ({ ...previous, siteName }));
         }}
-        error={fieldErrors().siteName || undefined}
+        error={validation.errorFor('siteName')}
         disabled={locked()}
       />
       <PasswordField
@@ -447,31 +512,38 @@ export const InitialisationPage: Component<{
           const password = e.currentTarget.value;
           setValues(previous => ({ ...previous, password }));
         }}
-        error={fieldErrors().password || undefined}
+        error={validation.errorFor('password')}
         disabled={locked()}
       />
-      <button
-        type="button"
-        class={pageStyles.advancedToggle}
-        onClick={() => setShowAdvanced(previous => !previous)}
-      >
-        {showAdvanced()
-          ? t('label.hide-advanced-options')
-          : t('label.show-advanced-options')}
-      </button>
-      <Show when={showAdvanced()}>
-        <NumberField
-          label={t('label.settings-batch-size')}
-          helperText={t('label.settings-batch-size-helper')}
-          width="full"
-          min={1}
-          value={values().batchSize}
-          onChange={batchSize =>
-            setValues(previous => ({ ...previous, batchSize }))
-          }
-          disabled={locked()}
-        />
-      </Show>
+      {/* The batch-size override behind the library disclosure
+          (OMS-REG-LGN-03.9/.30) — collapsed by default, `collapsible` so a
+          second activation closes it again, and uncontrolled: nothing on this
+          page reads the open state, so a signal here would only duplicate what
+          Kobalte already tracks. One fixed label whichever way it sits: the
+          rotating chevron and aria-expanded carry the state, so a label that
+          also flipped would say it twice. h3 — under the form's own h2 heading
+          above. Kobalte unmounts the closed content, but `values()` holds the
+          batch size, so collapsing after typing one still submits it. */}
+      <Accordion collapsible>
+        <AccordionItem value="advanced-options">
+          <AccordionTrigger as="h3" class={pageStyles.advancedTrigger}>
+            {t('label.advanced-options')}
+          </AccordionTrigger>
+          <AccordionContent class={pageStyles.advancedContent}>
+            <NumberField
+              label={t('label.settings-batch-size')}
+              helperText={t('label.settings-batch-size-helper')}
+              width="full"
+              min={1}
+              value={values().batchSize}
+              onChange={batchSize =>
+                setValues(previous => ({ ...previous, batchSize }))
+              }
+              disabled={locked()}
+            />
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
       {/* Spec (OMS-REG-LGN-03.19): informational, never an error — the
           wait is expected and self-healing (D98). Mutually exclusive
           with the error Alert below: syncError() stays unset for the
@@ -503,31 +575,34 @@ export const InitialisationPage: Component<{
       <Show when={busy() && !waitingForCentral()}>
         <SyncProgress overview={overview()} />
       </Show>
-      <div class={styles.buttonRow}>
-        <Show
-          when={showRetry()}
-          fallback={
-            <Button
-              type="submit"
-              disabled={busy()}
-              data-testid="initialise-button"
-            >
-              {busy() ? t('button.initialising') : t('button.initialise')}
-            </Button>
-          }
-        >
-          {/* Disabled while the retry call is in flight so it can't be
-              double-submitted; the error stays visible behind it
-              (OMS-REG-LGN-03.15). */}
+      {/* The primary action spans the form column (the login page's grouping);
+          the screen's secondary controls sit directly beneath it, outside the
+          form — see the render below. */}
+      <Show
+        when={showRetry()}
+        fallback={
           <Button
-            onClick={() => void retry()}
-            disabled={submitting()}
+            type="submit"
+            class={styles.submitButton}
+            disabled={busy()}
             data-testid="initialise-button"
           >
-            {submitting() ? t('button.initialising') : t('button.retry')}
+            {busy() ? t('button.initialising') : t('button.initialise')}
           </Button>
-        </Show>
-      </div>
+        }
+      >
+        {/* Disabled while the retry call is in flight so it can't be
+            double-submitted; the error stays visible behind it
+            (OMS-REG-LGN-03.15). */}
+        <Button
+          class={styles.submitButton}
+          onClick={() => void retry()}
+          disabled={submitting()}
+          data-testid="initialise-button"
+        >
+          {submitting() ? t('button.initialising') : t('button.retry')}
+        </Button>
+      </Show>
     </form>
   );
 
@@ -552,31 +627,38 @@ export const InitialisationPage: Component<{
         error={standaloneFieldErrors().storeName || undefined}
         disabled={standaloneSubmitting()}
       />
-      <p class={pageStyles.sectionHeading}>{t('heading.admin-user')}</p>
-      <TextField
-        label={t('heading.username')}
-        width="full"
-        data-testid="initialise-admin-username-input"
-        value={standaloneValues().username}
-        onInput={e => {
-          const username = e.currentTarget.value;
-          setStandaloneValues(previous => ({ ...previous, username }));
-        }}
-        error={standaloneFieldErrors().username || undefined}
-        disabled={standaloneSubmitting()}
-      />
-      <PasswordField
-        label={t('heading.password')}
-        width="full"
-        data-testid="initialise-admin-password-input"
-        value={standaloneValues().password}
-        onInput={e => {
-          const password = e.currentTarget.value;
-          setStandaloneValues(previous => ({ ...previous, password }));
-        }}
-        error={standaloneFieldErrors().password || undefined}
-        disabled={standaloneSubmitting()}
-      />
+      {/* The two credentials are a titled group, not two more loose fields —
+          the library FormSection, so the ruled heading (rather than a gap)
+          says where the admin user's part of the form starts and its own
+          tighter rhythm binds the pair to it. h2: the standalone panel carries
+          no heading of its own, so this is a top-level group under the hero's
+          h1. */}
+      <FormSection title={t('heading.admin-user')}>
+        <TextField
+          label={t('heading.username')}
+          width="full"
+          data-testid="initialise-admin-username-input"
+          value={standaloneValues().username}
+          onInput={e => {
+            const username = e.currentTarget.value;
+            setStandaloneValues(previous => ({ ...previous, username }));
+          }}
+          error={standaloneFieldErrors().username || undefined}
+          disabled={standaloneSubmitting()}
+        />
+        <PasswordField
+          label={t('heading.password')}
+          width="full"
+          data-testid="initialise-admin-password-input"
+          value={standaloneValues().password}
+          onInput={e => {
+            const password = e.currentTarget.value;
+            setStandaloneValues(previous => ({ ...previous, password }));
+          }}
+          error={standaloneFieldErrors().password || undefined}
+          disabled={standaloneSubmitting()}
+        />
+      </FormSection>
       {/* Spec (.26): only the structured union error is shown here — anything
           else already raised the global modal (contract § wire trap). */}
       <Show when={standaloneError()}>
@@ -586,19 +668,19 @@ export const InitialisationPage: Component<{
           </Alert>
         )}
       </Show>
-      <div class={styles.buttonRow}>
-        {/* Plain "Initialise", matching the legacy-sync tab — the active tab
-            already says which kind (D99; the current app spells it out). */}
-        <Button
-          type="submit"
-          disabled={standaloneSubmitting()}
-          data-testid="initialise-standalone-button"
-        >
-          {standaloneSubmitting()
-            ? t('button.initialising')
-            : t('button.initialise')}
-        </Button>
-      </div>
+      {/* Plain "Initialise", matching the legacy-sync tab — the active tab
+          already says which kind (D99; the current app spells it out) — and
+          spanning the form column, as that tab's does. */}
+      <Button
+        type="submit"
+        class={styles.submitButton}
+        disabled={standaloneSubmitting()}
+        data-testid="initialise-standalone-button"
+      >
+        {standaloneSubmitting()
+          ? t('button.initialising')
+          : t('button.initialise')}
+      </Button>
     </form>
   );
 
@@ -610,74 +692,81 @@ export const InitialisationPage: Component<{
       >
         <h1 class={styles.heroHeading}>{t('initialise.heading')}</h1>
         <p class={styles.heroBody}>{t('initialise.body')}</p>
+        <Show when={!compact()}>{versionLine(styles.versionBarHero)}</Show>
       </section>
 
       <main class={styles.panel}>
         <div class={styles.formArea}>
-          {/* Spec (OMS-REG-LGN-03.23): the mode chooser exists only on a
-              central server in a non-production, non-Android build —
-              everywhere else the legacy-sync form stands alone. */}
-          <Show when={showModeChoice()} fallback={<LegacySyncForm withLogo />}>
-            <div class={styles.form}>
-              <AppLogo class={styles.logo} />
-              <Tabs
-                value={mode()}
-                onValueChange={value =>
-                  setMode(value === 'standalone' ? 'standalone' : 'legacy-sync')
-                }
-              >
-                <TabList
-                  label={t('initialise.mode-label')}
-                  tabs={[
-                    {
-                      value: 'legacy-sync',
-                      label: t('initialise.legacy-sync'),
-                      disabled: modeLocked(),
-                    },
-                    {
-                      value: 'standalone',
-                      label: t('initialise.central-standalone'),
-                      disabled: modeLocked(),
-                    },
-                  ]}
+          {/* The screen's own pieces — the logo above and the secondary
+              controls below — sit outside the form(s), so the mode chooser
+              swapping one form for another leaves them where they are. */}
+          <div class={styles.form}>
+            <AppLogo class={styles.logo} />
+            <div class={styles.formWithActions}>
+              {/* Spec (OMS-REG-LGN-03.23): the mode chooser exists only on a
+                  central server in a non-production, non-Android build —
+                  everywhere else the legacy-sync form stands alone. */}
+              <Show when={showModeChoice()} fallback={<LegacySyncForm />}>
+                <Tabs
+                  value={mode()}
+                  onValueChange={value =>
+                    setMode(
+                      value === 'standalone' ? 'standalone' : 'legacy-sync'
+                    )
+                  }
+                >
+                  <TabList
+                    label={t('initialise.mode-label')}
+                    tabs={[
+                      {
+                        value: 'legacy-sync',
+                        label: t('initialise.legacy-sync'),
+                        disabled: modeLocked(),
+                      },
+                      {
+                        value: 'standalone',
+                        label: t('initialise.central-standalone'),
+                        disabled: modeLocked(),
+                      },
+                    ]}
+                  />
+                  {/* The strip sits inline in the form column, so the panel
+                      carries its own gap down to the first field — without it
+                      the underline all but touches the label below. */}
+                  <TabPanel value="legacy-sync" class={pageStyles.modePanel}>
+                    <LegacySyncForm />
+                  </TabPanel>
+                  <TabPanel value="standalone" class={pageStyles.modePanel}>
+                    <StandaloneCentralForm />
+                  </TabPanel>
+                </Tabs>
+              </Show>
+              {/* Grouped with the primary button rather than in a page footer —
+                  they belong to this setup, not to the page (the login page's
+                  grouping, OMS-REG-LGN-03.31). */}
+              <div class={styles.formActions}>
+                {/* Android only: save the embedded server's log for support
+                    before initialisation completes (issue #519.5). Renders
+                    nothing on the web — on which the row holds the language
+                    selector alone, pinned to its inline end either way. Shaped
+                    like the language trigger beside it, the same pairing the
+                    login page's old-UI switch has. */}
+                <SaveServerLogLink
+                  class={styles.secondaryAction}
+                  iconClass={styles.secondaryActionIcon}
+                  noticeClass={styles.actionNotice}
                 />
-                <TabPanel value="legacy-sync">
-                  <LegacySyncForm />
-                </TabPanel>
-                <TabPanel value="standalone">
-                  <StandaloneCentralForm />
-                </TabPanel>
-              </Tabs>
+                <div class={styles.languageAction}>
+                  <LanguageSelector
+                    language={locale()}
+                    onSelect={v => void changeLanguage(v)}
+                  />
+                </div>
+              </div>
             </div>
-          </Show>
-        </div>
-        <footer class={styles.panelFooter}>
-          {/* Android only: save the embedded server's log for support before
-              initialisation completes (issue #519.5). Renders nothing on the
-              web. Styled as the footer's secondary text link (like the login
-              screen's old-UI link), centered above the version. */}
-          <SaveServerLogLink
-            class={styles.switchLink}
-            noticeClass={styles.footerNotice}
-          />
-          <p class={styles.version}>
-            <strong>{t('label.app-version')}</strong> {APP_VERSION}
-          </p>
-          {/* Spec (App version, OMS-REG-LGN-01.20): absent until the startup pass has
-              fetched it — pre-initialisation that also needs a server carrying
-              open-msupply#12566. */}
-          <Show when={serverVersion()}>
-            <p class={styles.version}>
-              <strong>{t('label.server-version')}</strong> {serverVersion()}
-            </p>
-          </Show>
-          <div class={styles.languageRow}>
-            <LanguageSelector
-              language={locale()}
-              onSelect={v => void changeLanguage(v)}
-            />
           </div>
-        </footer>
+        </div>
+        <Show when={compact()}>{versionLine(styles.versionBarPanel)}</Show>
       </main>
     </div>
   );

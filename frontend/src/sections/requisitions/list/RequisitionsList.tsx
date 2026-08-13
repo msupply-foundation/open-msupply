@@ -27,6 +27,11 @@ import { PlusCircleIcon } from '@/ui/icons';
 import { createAddAction } from '@/ui/utils/keyActions';
 import { ALT_N } from '@/ui/utils/shortcuts';
 import { useUrlQueryState } from '@/list/urlQueryState';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '@/list/pageSize';
 import { stripEmpty } from '@/typeHelpers';
 import {
   Requisitions,
@@ -60,8 +65,6 @@ import { CreateOrderAction } from './create/CreateOrderAction';
 // variables so an empty filter chip doesn't reflash the list
 // (kdd/solid-reactivity-pitfalls). The page owns no CSS.
 
-const DEFAULT_PAGE_SIZE = 20;
-
 type Row = RequisitionRowFragment;
 
 // Sortable columns are typed to the generated sort-field union, so a column
@@ -92,7 +95,10 @@ const RequisitionsList: Component = () => {
   // StoreGuardLayout, which requires a resolved store before routing.
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
-  const { query, setQuery } = useUrlQueryState<ListState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<ListState>({
+    ...DEFAULT_STATE,
+    first: initialPageSize(),
+  });
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   const [createOpen, setCreateOpen] = createSignal(false);
 
@@ -483,7 +489,10 @@ const RequisitionsList: Component = () => {
           pageSize: query().first,
           total: totalCount(),
           onOffsetChange: offset => setQuery({ ...query(), offset }),
-          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+          onPageSizeChange: first => {
+            rememberPageSize(first);
+            setQuery({ ...query(), first, offset: 0 });
+          },
         }}
       />
     </Page>

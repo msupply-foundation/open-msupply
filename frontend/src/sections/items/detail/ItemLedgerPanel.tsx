@@ -20,6 +20,11 @@ import {
 import { createTableConfig } from '../../../api/createTableConfig';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
+import {
   ItemLedger,
   type ItemLedgerResult,
   type ItemLedgerVariables,
@@ -53,7 +58,6 @@ type LedgerRow = ItemLedgerResult['itemLedger']['nodes'][number];
 // Nested, the whole filter object survives as one value and both work.
 type LedgerState = { filter: LedgerFilter; offset: number; first: number };
 
-const DEFAULT_PAGE_SIZE = 20;
 // `datetime: null` SEEDS the date-time chip so it is on the bar from the first
 // render with no menu step — this app's way of expressing the reference app's
 // `isDefault: true` on that filter. A null bound never reaches the query, and
@@ -239,7 +243,10 @@ export const ItemLedgerPanel: Component<{
   itemId: string;
 }> = props => {
   const navigate = useNavigate();
-  const { query, setQuery } = useUrlQueryState<LedgerState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<LedgerState>({
+    ...DEFAULT_STATE,
+    first: initialPageSize(),
+  });
   const filters = buildLedgerFilters();
 
   // Column config (order/sizing/pinning/visibility/density), resolved default →
@@ -440,7 +447,10 @@ export const ItemLedgerPanel: Component<{
         pageSize: query().first,
         total: totalCount(),
         onOffsetChange: offset => setQuery({ ...query(), offset }),
-        onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+        onPageSizeChange: first => {
+          rememberPageSize(first);
+          setQuery({ ...query(), first, offset: 0 });
+        },
       }}
     />
   );

@@ -47,6 +47,16 @@ interface MenuBarProps {
   lower?: NavItem[];
   selectedId: string;
   onSelect: (leaf: NavLeaf) => void;
+  /**
+   * Activating the brand mark — the conventional "home" of an app's chrome
+   * (Jira, Confluence, Zendesk all send you home from the logo). Wiring it is
+   * what makes the mark a button: a host that doesn't (the showcase) gets a
+   * plain mark, never a button that does nothing — the FooterCell rule.
+   * Deliberately NOT the rail toggle: a mark that collapses the navigation
+   * contradicts what people click it expecting, and the rail has its own
+   * explicit toggle (spec/chrome § sidebar).
+   */
+  onHome?: () => void;
   /** Status badge for the Sync entry (spec/chrome § sync indicator). */
   syncBadge?: NavBadge;
   /** Dim the Sync entry's icon while the latest run is errored. */
@@ -93,12 +103,14 @@ const forwardKey = (el: HTMLElement) =>
   getComputedStyle(el).direction === 'rtl' ? 'ArrowLeft' : 'ArrowRight';
 
 /*
- * A selected item shows the brand-orange end chevron at the inline-end edge.
- * Nav item layout, matching the current app: [icon][chevron|slot][label][end].
+ * No end chevron on the selected row. The current app marks selection with a
+ * brand-orange chevron at the inline-end edge; with the brand tint and the bold
+ * weight both carrying it now (and the weight satisfying colour independence on
+ * its own), that chevron was a third cue costing every row ~1.5rem of label —
+ * which is what truncated "Outbound Shipments", the nav's longest label, at the
+ * exact moment selecting it made the text wider.
+ * Item layout is now [icon][chevron|slot][label].
  */
-const EndChevron = () => (
-  <ChevronDownIcon class={styles.endChevron} aria-hidden="true" />
-);
 
 /*
  * Collapsed, a rail button's label is display:none — out of the accessible
@@ -176,9 +188,6 @@ const TopLeaf = (props: {
           )}
         </Match>
       </Switch>
-      <Show when={props.selected}>
-        <EndChevron />
-      </Show>
     </button>
   </li>
 );
@@ -269,9 +278,6 @@ const NavSection = (props: {
                   onClick={() => props.onSelect(leaf)}
                 >
                   <span class={styles.label}>{t(leaf.labelKey)}</span>
-                  <Show when={leaf.id === props.selectedId}>
-                    <EndChevron />
-                  </Show>
                 </button>
               </li>
             )}
@@ -493,31 +499,29 @@ export const MenuBar = (props: MenuBarProps) => {
           aria-expanded={!props.nav.railCollapsed()}
           aria-label={t('label.menu')}
         >
+          {/* Brand mark and toggle share the rail's head: the mark leads, the
+              toggle sits at the inline-end beside it. Collapsed, the mark gives
+              its place up to the toggle (CSS hides it) — the pattern bud.app and
+              navbar.gallery use, and the one arrangement where the toggle costs
+              no row, collides with nothing, and is the most visible thing on the
+              rail exactly when the rail is hardest to read.
+              Losing the mark on the rail costs no route home: the Dashboard
+              entry directly below it goes to the same place. */}
           <div class={styles.logoArea}>
-            <AppLogo class={styles.logo} />
-            {/* The explicit collapse/expand toggle (spec/chrome § sidebar: an
-                explicit toggle only, never hover — D3). Beside the brand mark
-                when expanded; CSS stacks it under the mark on the rail, where
-                there is no room alongside. */}
-            <button
-              type="button"
-              class={styles.railToggle}
-              data-testid="drawer-toggle"
-              onClick={props.nav.toggleRail}
-              aria-label={
-                props.nav.railCollapsed()
-                  ? t('button.open-the-menu')
-                  : t('button.close-the-menu')
-              }
-              aria-expanded={!props.nav.railCollapsed()}
+            <Show
+              when={props.onHome}
+              fallback={<AppLogo class={styles.logo} />}
             >
-              <Show
-                when={props.nav.railCollapsed()}
-                fallback={<ChevronsLeftIcon />}
+              <button
+                type="button"
+                class={styles.logoButton}
+                data-testid="nav-home"
+                onClick={props.onHome}
+                aria-label={t('label.home')}
               >
-                <ChevronsRightIcon />
-              </Show>
-            </button>
+                <AppLogo class={styles.logo} />
+              </button>
+            </Show>
           </div>
           <NavLists
             upper={props.upper}
@@ -529,6 +533,62 @@ export const MenuBar = (props: MenuBarProps) => {
             rail={rail}
             syncBadge={props.syncBadge}
             syncIconDimmed={props.syncIconDimmed}
+          />
+          {/* The rail's collapse toggle — a disc straddling the rail's own
+              inline-end border, the handle-on-the-border pattern (spec/chrome
+              § sidebar: an explicit toggle only, never hover — D3).
+              Anchored to the RAIL rather than to the head, so it rides the edge
+              it moves: it travels with that edge through the width transition
+              instead of jumping the gap. Costing no row and living outside the
+              head is what lets the brand mark keep its place at BOTH widths
+              here — the trade this alternative makes against the head-mounted
+              version, which has to hide the mark on a 5rem rail. */}
+          <button
+            type="button"
+            class={styles.railToggle}
+            data-testid="drawer-toggle"
+            onClick={props.nav.toggleRail}
+            aria-label={
+              props.nav.railCollapsed()
+                ? t('button.open-the-menu')
+                : t('button.close-the-menu')
+            }
+            aria-expanded={!props.nav.railCollapsed()}
+          >
+            {/* A DIRECTION, which is what a grip on the edge should show: the
+                disc is the handle you pull the rail by, so the chevron says
+                which way it will go. (The head-mounted alternative uses a panel
+                glyph instead — there the button names a region rather than a
+                movement.) Both mirror in RTL, where the rail sits on the
+                inline-end. */}
+            <Show
+              when={props.nav.railCollapsed()}
+              fallback={<ChevronsLeftIcon />}
+            >
+              <ChevronsRightIcon />
+            </Show>
+          </button>
+          {/* The rail's edge is a second explicit toggle (Linear's affordance).
+              A click, so D3 is untouched — that rule forbids reacting to HOVER,
+              and what hover does here is light the strip up, advertising the
+              affordance rather than acting on it.
+              Pointer-only (see the CSS): a 5px strip beside a scrolling table is
+              a misfire magnet on touch, where the foot toggle already serves.
+              Hidden from assistive tech and out of the tab order deliberately —
+              it duplicates the button above it exactly, and two identical
+              controls in the a11y tree is noise, not access. */}
+          <button
+            type="button"
+            class={styles.railEdge}
+            data-testid="drawer-edge-toggle"
+            tabindex={-1}
+            aria-hidden="true"
+            title={
+              props.nav.railCollapsed()
+                ? t('button.open-the-menu')
+                : t('button.close-the-menu')
+            }
+            onClick={props.nav.toggleRail}
           />
           <NavFlyout
             target={flyout()}
