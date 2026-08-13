@@ -22,6 +22,7 @@ export const StoreSelectionScreen: Component<{
   lastUsedStoreId?: string;
   pinnedCount?: number;
   defaultAlwaysOpen?: boolean;
+  onAlwaysOpenChange?: (alwaysOpen: boolean) => void;
   onSelect: (storeId: string, alwaysOpen: boolean) => void;
 }> = props => (
   <div class={layout.page}>
@@ -36,6 +37,7 @@ export const StoreSelectionScreen: Component<{
         lastUsedStoreId={props.lastUsedStoreId}
         pinnedCount={props.pinnedCount}
         defaultAlwaysOpen={props.defaultAlwaysOpen}
+        onAlwaysOpenChange={props.onAlwaysOpenChange}
         onConfirm={props.onSelect}
       />
     </main>

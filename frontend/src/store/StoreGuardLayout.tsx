@@ -99,6 +99,7 @@ export const StoreGuardLayout: Component<RouteSectionProps> = props => {
           lastUsedStoreId={picker.lastUsedStoreId()}
           pinnedCount={picker.pinnedCount()}
           defaultAlwaysOpen={picker.alwaysOpenSaved()}
+          onAlwaysOpenChange={picker.alwaysOpenChanged}
           onSelect={picker.confirm}
         />
       }

@@ -54,6 +54,15 @@ export const createStorePicker = () => {
         ? getAlwaysOpenStoreId(currentUser.userId) !== undefined
         : false;
     },
+    // Every checkbox toggle, before any pick. An UNTICK withdraws the opt-in
+    // on the spot (SL-9) — it must not wait for a confirm that may never
+    // come (the panel dismissed). A tick saves nothing here: only the
+    // confirm knows which store to save.
+    alwaysOpenChanged: (alwaysOpen: boolean) => {
+      const currentUser = user();
+      if (!alwaysOpen && currentUser)
+        clearAlwaysOpenStoreId(currentUser.userId);
+    },
     confirm: (storeId: string, alwaysOpen: boolean) => {
       const currentUser = user();
       if (currentUser) {
