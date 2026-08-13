@@ -212,6 +212,42 @@ describe('re-login requirement persists across a reload (D69, OMS-REG-LGN-01.16/
   });
 });
 
+describe('the username is trimmed (OMS-REG-LGN-01.29)', () => {
+  it('sends the username without its surrounding whitespace', async () => {
+    const auth = await freshModule();
+    graphqlFetch.mockResolvedValueOnce(loginSuccess());
+
+    const result = await auth.login('  alice \t\n', 'pw');
+
+    expect(result.kind).toBe('success');
+    expect(graphqlFetch).toHaveBeenCalledWith(expect.anything(), {
+      username: 'alice',
+      password: 'pw',
+    });
+  });
+
+  it('leaves the password exactly as typed — whitespace is part of the secret', async () => {
+    const auth = await freshModule();
+    graphqlFetch.mockResolvedValueOnce(loginSuccess());
+
+    await auth.login('alice', '  pw  ');
+
+    expect(graphqlFetch).toHaveBeenCalledWith(expect.anything(), {
+      username: 'alice',
+      password: '  pw  ',
+    });
+  });
+
+  it('remembers the trimmed name', async () => {
+    const auth = await freshModule();
+    graphqlFetch.mockResolvedValueOnce(loginSuccess());
+
+    await auth.login(' alice ', 'pw');
+
+    expect((await import('../appData')).getLastLoginUsername()).toBe('alice');
+  });
+});
+
 describe('the device remembers the last username (OMS-REG-LGN-01.21/.22)', () => {
   const rememberedUsername = async () =>
     (await import('../appData')).getLastLoginUsername();
