@@ -299,6 +299,11 @@ export const selectorsMetadata: PageMetadata = {
       searchTerms: ['combobox', 'search', 'async', 'multi-select', 'typeahead'],
     },
     {
+      id: 'selectors-no-options',
+      title: 'No options',
+      searchTerms: ['empty', 'no options', 'blank', 'misconfigured'],
+    },
+    {
       id: 'selectors-in-dialog',
       title: 'In a dialog',
       searchTerms: ['modal', 'portal'],
@@ -316,11 +321,57 @@ export const selectorsMetadata: PageMetadata = {
   ],
 };
 
+/*
+ * The empty-option-set case for the two CHIP dropdowns — the shape #906 was
+ * reported as: a live chip whose option list is empty, so opening it used to
+ * show a blank box. Both keys are seeded present-as-null below, so both chips
+ * are on the bar from the start and can be opened without adding them first.
+ */
+interface EmptyOptionFilter {
+  category?: string | null;
+  categories?: string[] | null;
+}
+
+const EMPTY_OPTION_FILTERS: Filter<EmptyOptionFilter>[] = [
+  {
+    key: 'category',
+    label: () => 'Category',
+    render: props => (
+      <FilterSelect
+        label="Category"
+        testId={props.testId}
+        value={props.filter().category ?? ''}
+        options={[]}
+        onChange={value => props.setPartialFilter({ category: value || null })}
+      />
+    ),
+  },
+  {
+    key: 'categories',
+    label: () => 'Categories',
+    render: props => (
+      <FilterMultiSelect
+        label="Categories"
+        placeholder="Any"
+        testId={props.testId}
+        options={[]}
+        values={props.filter().categories ?? []}
+        onChange={values =>
+          props.setPartialFilter({ categories: values.length ? values : null })
+        }
+      />
+    ),
+  },
+];
+
 export const SelectorsShowcase = () => {
   const [status, setStatus] = createSignal('allocated');
   const [adjustmentType, setAdjustmentType] = createSignal<string | undefined>(
     'addition'
   );
+  // The no-options demo: both chips seeded present so they're openable on load.
+  const [emptyOptionFilter, setEmptyOptionFilter] =
+    createSignal<EmptyOptionFilter>({ category: null, categories: null });
   const [picked, setPicked] = createSignal<DemoItem | null>(null);
   // Seeded to the LAST item (not on the first page) to show AsyncCombobox
   // rendering a selected value whose row hasn't been loaded yet.
@@ -564,6 +615,63 @@ export const SelectorsShowcase = () => {
             placeholder="Search to add items…"
             helperText={`${multi().length} selected`}
           />
+        </DashboardCard>
+
+        <DashboardCard
+          id="selectors-no-options"
+          title="Nothing to choose from — the No options row"
+        >
+          <Lead>
+            Every selector can be handed an <strong>empty option set</strong> —
+            usually a misconfiguration rather than a bug (an option custom field
+            saved with no options, a reason list nobody populated). The control
+            still opens, because a trigger that silently does nothing reads as
+            broken; what it must not do is open a <em>blank box</em> (#906).
+            Open all four:
+          </Lead>
+          <Select label="Reason (none configured)" options={[]} />
+          <Combobox<DemoItem>
+            label="Item (empty list)"
+            items={[]}
+            itemToString={item => item.code}
+            onChange={() => {}}
+          />
+          <MultiSelect<DemoItem>
+            label="Items (empty list)"
+            items={[]}
+            itemToString={item => item.code}
+            selectedItems={[]}
+            onChange={() => {}}
+          />
+          <FilterBar
+            filters={EMPTY_OPTION_FILTERS}
+            filter={emptyOptionFilter()}
+            onChange={setEmptyOptionFilter}
+          />
+          <Note>
+            <strong>Not search copy.</strong> "No results" and "Start typing"
+            both invite the user to keep typing at a list that was never
+            populated, so the default becomes <code>label.no-options</code> — a
+            muted, non-interactive row. A caller's own{' '}
+            <code>noResultsMessage</code> / <code>emptyQueryMessage</code> still
+            wins, and a <em>server</em>-mode combobox is untouched (an empty{' '}
+            <code>items</code> there means the fetch hasn't landed or hasn't
+            matched, which those two already describe).
+          </Note>
+          <Note>
+            <strong>The drop-down needed a different trick.</strong> Combobox
+            and MultiSelect pass Kobalte's <code>allowsEmptyCollection</code>{' '}
+            and render a status row in the popup; the chip dropdowns are menus,
+            with no collection at all. But Kobalte <em>Select</em>'s{' '}
+            <code>open()</code> early-returns on{' '}
+            <code>options.length &lt;= 0</code> with no opt-out — the popup
+            never mounts, so a status row inside it is unreachable. So Select's
+            empty state <em>is</em> an option: one{' '}
+            <strong>disabled sentinel</strong>, which satisfies the length check
+            and arrives greyed and unselectable through the existing{' '}
+            <code>.item[data-disabled]</code> styling. Its value is never handed
+            back to the caller.
+          </Note>
         </DashboardCard>
 
         <DashboardCard

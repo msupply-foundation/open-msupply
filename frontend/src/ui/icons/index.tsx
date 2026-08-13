@@ -241,6 +241,21 @@ export const LockIcon = (props: IconProps) => (
   </Stroke>
 );
 
+/* Paused / on hold (the row-status badge's marker) */
+export const PauseIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M9 5.5V18.5" />
+    <path d="M15 5.5V18.5" />
+  </Stroke>
+);
+
+/* A slot not yet filled (the Unallocated row-status badge's marker) */
+export const CircleDashedIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M12 3a9 9 0 0 1 4.5 1.2M20.8 7.5A9 9 0 0 1 21 12c0 1.6-.4 3.1-1.2 4.5M16.5 19.8A9 9 0 0 1 12 21c-1.6 0-3.1-.4-4.5-1.2M3.2 16.5A9 9 0 0 1 3 12c0-1.6.4-3.1 1.2-4.5M7.5 3.2A9 9 0 0 1 12 3" />
+  </Stroke>
+);
+
 /* Location / place */
 /* Hugeicons: Location01Icon */
 export const MapPinIcon = (props: IconProps) => (

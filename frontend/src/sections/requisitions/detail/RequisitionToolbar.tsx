@@ -62,7 +62,6 @@ export const RequisitionToolbar: Component<RequisitionToolbarProps> = props => {
         <TextField
           label={t('label.customer-ref')}
           size="small"
-          width="full"
           data-testid="customer-reference-field"
           // A tooltip reveals an overflowing value (spec S2 § toolbar).
           title={props.edit.state.theirReference}

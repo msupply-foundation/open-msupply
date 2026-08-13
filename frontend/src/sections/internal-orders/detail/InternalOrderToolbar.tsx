@@ -187,7 +187,6 @@ export const InternalOrderToolbar: Component<
           role="supplier"
           label={t('label.supplier-name')}
           size="small"
-          width="full"
           storeBacked
           selected={supplierSeed()}
           disabled={fieldsLocked()}
@@ -202,7 +201,6 @@ export const InternalOrderToolbar: Component<
         <TextField
           label={t('label.supplier-reference')}
           size="small"
-          width="full"
           data-testid="supplier-reference-field"
           value={props.edit.state.theirReference}
           disabled={!props.editable}
@@ -223,7 +221,6 @@ export const InternalOrderToolbar: Component<
             role="customer"
             label={t('label.destination-customer')}
             size="small"
-            width="full"
             storeBacked
             excludeId={props.node.otherPartyId}
             selected={destinationSeed()}
@@ -238,7 +235,6 @@ export const InternalOrderToolbar: Component<
         <Select
           label={t('label.min-months-of-stock')}
           size="small"
-          width="full"
           options={thresholdOptions()}
           value={thresholdValue()}
           disabled={fieldsLocked()}
@@ -249,7 +245,6 @@ export const InternalOrderToolbar: Component<
         <Select
           label={t('label.max-months-of-stock')}
           size="small"
-          width="full"
           options={targetOptions()}
           value={targetValue()}
           disabled={fieldsLocked()}

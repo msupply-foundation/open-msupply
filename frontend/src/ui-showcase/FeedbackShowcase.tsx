@@ -5,6 +5,7 @@ import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
 import { Alert } from '../ui/elements/feedback/Alert';
 import { StatusMarker } from '../ui/elements/feedback/StatusMarker';
 import { Badge } from '../ui/elements/feedback/Badge';
+import { StatusBadge } from '../ui/elements/feedback/StatusBadge';
 import { StatusChip } from '../ui/elements/feedback/StatusChip';
 import { Popover } from '../ui/elements/feedback/Popover';
 import { Comment } from '../ui/elements/feedback/Comment';
@@ -14,10 +15,14 @@ import { Spinner } from '../ui/elements/feedback/Spinner';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { Checkbox } from '../ui/elements/inputs/Checkbox';
 import {
+  AlertCircleIcon,
   AlertTriangleIcon,
   CheckCircleIcon,
+  CircleDashedIcon,
   HelpIcon,
+  LockIcon,
   MessageSquareIcon,
+  PauseIcon,
 } from '../ui/icons';
 import { Lead, Note, Row, SectionTOC } from './common';
 import type { PageMetadata } from './metadata';
@@ -42,7 +47,18 @@ export const feedbackMetadata: PageMetadata = {
     {
       id: 'feedback-chips-badges',
       title: 'Chips & badges',
-      searchTerms: ['status chip', 'badge', 'count', 'pill'],
+      searchTerms: [
+        'status chip',
+        'badge',
+        'count',
+        'pill',
+        'status badge',
+        'row status',
+        'on hold',
+        'expired',
+        'near expiry',
+        'unallocated',
+      ],
     },
     {
       id: 'feedback-alerts',
@@ -112,6 +128,36 @@ export const FeedbackShowcase = () => {
             <Badge label="99+" title="250 records to push" />
             <Badge label="42" tone="warning" title="42 records to push" />
             <Badge label="!" tone="error" title="Sync error" />
+          </Row>
+        </DashboardCard>
+
+        <DashboardCard title="StatusBadge — inline row-status word chip">
+          <Lead>
+            The org standard's row-status badge (table interaction): the word
+            chip beside a record's name marking a line state. Meaning is the
+            label; the semantic <code>tone</code> tints it and the optional icon
+            reinforces it. <code>appearance="outline"</code> is the dashed
+            not-yet-filled look (an unallocated placeholder, whose name also
+            reads italic).
+          </Lead>
+          <Row gap="sm">
+            <StatusBadge label="On hold" tone="warning" icon={<PauseIcon />} />
+            <StatusBadge
+              label="Expired"
+              tone="error"
+              icon={<AlertCircleIcon />}
+            />
+            <StatusBadge
+              label="Near expiry"
+              tone="error"
+              icon={<AlertTriangleIcon />}
+            />
+            <StatusBadge
+              label="Unallocated"
+              appearance="outline"
+              icon={<CircleDashedIcon />}
+            />
+            <StatusBadge label="Disabled" icon={<LockIcon />} />
           </Row>
         </DashboardCard>
 

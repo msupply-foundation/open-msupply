@@ -3,12 +3,14 @@ import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import type { RouteSectionProps } from '@solidjs/router';
 import { authUser, loginableStores } from '../auth/authContext';
-import { getPreviousStoreId, recordPreviousStoreId } from '../appData';
+import { getAlwaysOpenStoreId, recordPreviousStoreId } from '../appData';
 import {
   currentStoreId,
   refetchStoreContext,
   storeContext,
 } from './storeContext';
+import { resolveStoreToEnter } from './resolveStoreToEnter';
+import { createStorePicker } from './storePicker';
 import { StoreSelectionScreen } from './StoreSelectionScreen';
 import { setHomeCurrency, t } from '../intl';
 import styles from '../ui/styles/shared.module.css';
@@ -26,9 +28,10 @@ export type StoreSummary = {
 };
 
 // Spec (Store Login, Guards 2 and 3), applied as common logic to whatever
-// first URL segment we are looking at. The store to enter is the URL's store,
-// or the only store the user has; otherwise there is none and we show the
-// store-selection screen ([D14]: a routed page at /resolve-store, not a modal).
+// first URL segment we are looking at. The store to enter is resolved by
+// resolveStoreToEnter above; otherwise there is none and we show the
+// store-selection screen ([D14]: the panel's ROUTED host, at /resolve-store —
+// its other host is the bottom bar's StoreSwitchModal).
 // Entering records the store and fetches its context; the routed section shows
 // a loading state until that context is loaded for this store and user (so
 // re-authenticating as a different user re-loads even for the same store).
@@ -41,9 +44,17 @@ export const StoreGuardLayout: Component<RouteSectionProps> = props => {
   // single-store auto-entry count alike.
   const stores = () => loginableStores(user());
 
+  // "Entered this session" gates the always-open auto-entry (SL-9): the
+  // context signal holds a store once one is entered and is cleared on logout,
+  // so a fresh sign-in auto-enters the saved store while an explicit switch
+  // (SL-6 — a store is already entered) always reaches the picker.
   const storeToEnter = () =>
-    stores().find(s => s.id === params.storeId) ??
-    (stores().length === 1 ? stores()[0] : undefined);
+    resolveStoreToEnter(
+      stores(),
+      params.storeId,
+      user() ? getAlwaysOpenStoreId(user()!.userId) : undefined,
+      currentStoreId() !== undefined
+    );
 
   // Loaded for THIS {store, user} (SL-5). Keyed on the id the context was
   // FETCHED with (currentStoreId), never the response's storePreferences.id —
@@ -74,29 +85,22 @@ export const StoreGuardLayout: Component<RouteSectionProps> = props => {
     if (!contextLoaded(store.id)) void refetchStoreContext(store.id);
   });
 
-  // Pin previous and default to the top of the picker.
-  const pickerStores = () => {
-    const currentUser = user();
-    if (!currentUser) return [];
-    const pinned = [
-      getPreviousStoreId(currentUser.userId),
-      currentUser.defaultStore?.id,
-    ];
-    const top = stores().filter(s => pinned.includes(s.id));
-    return [...top, ...stores().filter(s => !top.includes(s))];
-  };
+  // The panel's ordering + confirm wiring is shared with the store-switch
+  // modal (storePicker.ts — spec S3's two hosts, [D14]).
+  const picker = createStorePicker();
 
   return (
     <Show
       when={storeToEnter()}
       fallback={
         <StoreSelectionScreen
-          stores={pickerStores()}
-          defaultStoreId={user()?.defaultStore?.id}
-          lastUsedStoreId={
-            user() ? getPreviousStoreId(user()!.userId) : undefined
-          }
-          onSelect={id => navigate(`/${id}`)}
+          stores={picker.stores()}
+          defaultStoreId={picker.defaultStoreId()}
+          lastUsedStoreId={picker.lastUsedStoreId()}
+          pinnedCount={picker.pinnedCount()}
+          defaultAlwaysOpen={picker.alwaysOpenSaved()}
+          onAlwaysOpenChange={picker.alwaysOpenChanged}
+          onSelect={picker.confirm}
         />
       }
     >

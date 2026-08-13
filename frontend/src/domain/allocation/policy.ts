@@ -75,6 +75,17 @@ const expiredWithin = (
   expiryDate.slice(0, 10) <= dateToIsoDate(addDays(today, thresholdDays));
 
 /**
+ * Calendar-expired: the batch's expiry day has arrived, threshold-free — the
+ * guard comparison at threshold 0, so it shares the day-stable semantics
+ * above. For DISPLAY (an expired marker on a line), not for barring — the
+ * bar predicates below own the preference-gated threshold logic.
+ */
+export const isExpired = (
+  expiryDate: string,
+  today: Date = new Date()
+): boolean => expiredWithin(expiryDate, 0, today);
+
+/**
  * Every category BARRING a batch from issue entirely — manual entry included
  * (rules.md § barred batches › barred from all issue; AC-AL8/AC-AL9): on
  * hold (batch or location), expired within the guard threshold (only under

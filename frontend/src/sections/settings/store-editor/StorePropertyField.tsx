@@ -63,7 +63,6 @@ export const StorePropertyField = (props: {
           <NumberField
             label={label()}
             hideLabel
-            width="full"
             value={asNumber()}
             // A whole number stays whole; a fractional one gets the reference
             // client's five places.
@@ -82,7 +81,6 @@ export const StorePropertyField = (props: {
           <DateField
             label={label()}
             hideLabel
-            width="full"
             value={asText() === '' ? null : asText()}
             disabled={props.disabled}
             testId={testId()}
@@ -93,7 +91,6 @@ export const StorePropertyField = (props: {
           <Select
             label={label()}
             hideLabel
-            width="full"
             options={options().map(value => ({ value, label: value }))}
             value={asText()}
             disabled={props.disabled}
@@ -105,7 +102,6 @@ export const StorePropertyField = (props: {
           <TextField
             label={label()}
             hideLabel
-            width="full"
             value={asText()}
             disabled={props.disabled}
             data-testid={testId()}

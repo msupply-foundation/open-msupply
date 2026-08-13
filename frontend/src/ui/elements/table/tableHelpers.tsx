@@ -14,7 +14,11 @@ import {
   type CellSpec,
 } from './_globalColumnConfig';
 import { remToPx } from '../../utils/rem';
-import { differenceInMonths } from 'date-fns';
+import {
+  differenceInCalendarDays,
+  differenceInMonths,
+  parseISO,
+} from 'date-fns';
 import styles from './tableHelpers.module.css';
 
 // Shared helpers for the DataTable: cell fragments pages spread into their
@@ -138,15 +142,47 @@ export const getTimeCell = <T,>(meta?: Meta): CellFragment<T> => ({
 // MINIMUM_EXPIRY_MONTHS) renders in the error colour, matching the old app's
 // ExpiryDateCell.
 const EXPIRY_WARNING_MONTHS = 3;
+
+// A date-only wire string ('YYYY-MM-DD', GraphQL NaiveDate) must be read as
+// the LOCAL day: `new Date(string)` parses it as UTC midnight, which is the
+// PREVIOUS local day anywhere west of UTC — a batch would bold as "expired"
+// a day early there, while the domain's day-stable isExpired (string
+// comparison against the local day) still said "near expiry". parseISO
+// parses date-only strings at local midnight, keeping every calendar-day
+// comparison on the store's clock.
+const asLocalDay = (value: string | Date): Date =>
+  typeof value === 'string' ? parseISO(value) : value;
+
+/**
+ * Within the shared near-expiry warning window (or already past it) — the
+ * predicate behind getExpiryDateCell's reddening, exported so a consumer can
+ * pair the cell with a "Near expiry" row-status badge (ui-standards § table
+ * interaction) without restating the threshold.
+ */
+export const isNearOrPastExpiry = (value: string | Date): boolean =>
+  differenceInMonths(asLocalDay(value), new Date()) <= EXPIRY_WARNING_MONTHS;
 export const getExpiryDateCell = <T,>(meta?: Meta): CellFragment<T> => ({
   meta: { ...meta },
   cell: info => {
     const value = info.getValue<string | Date | null | undefined>();
     if (!value) return '';
-    const almostExpired =
-      differenceInMonths(new Date(value), new Date()) <= EXPIRY_WARNING_MONTHS;
+    const almostExpired = isNearOrPastExpiry(value);
+    // ACTUALLY expired (the expiry day has arrived — calendar-day comparison,
+    // stable across the day) steps up from the near-expiry red to red + bold.
+    // Same day semantics as domain/allocation's isExpired, so the cell's
+    // tier always agrees with the row's Expired/Near-expiry badge.
+    const expired =
+      differenceInCalendarDays(asLocalDay(value), new Date()) <= 0;
     return (
-      <span class={almostExpired ? styles.expiring : undefined}>
+      <span
+        class={
+          expired
+            ? `${styles.expiring} ${styles.expired}`
+            : almostExpired
+              ? styles.expiring
+              : undefined
+        }
+      >
         {localisedDate(value)}
       </span>
     );
@@ -166,13 +202,35 @@ export const getExpiryDateCell = <T,>(meta?: Meta): CellFragment<T> => ({
 // parity) — so the caller passes the label (e.g. t('label.deceased')).
 export const getFlagCell = <T,>(
   label: string,
-  meta?: Meta
+  meta?: Meta,
+  /**
+   * Semantic tone for the CARD badge (table view is untouched — the check
+   * stands under its named header there): 'success' tints the check + label
+   * green; 'warning' (amber) and 'error' (red) tint AND drop the check — a
+   * check connotes a positive state, so a caution flag shows its word alone.
+   * Untoned flags keep the neutral check + label.
+   */
+  tone?: 'success' | 'warning' | 'error'
 ): CellFragment<T> => ({
   meta: { align: 'center', ...meta },
+  // data-flag/-label: in table view the check stands alone under its column
+  // header; in a card's BADGE slot the header is gone and two flags are
+  // indistinguishable checks, so the label shows beside the check there
+  // (CSS-gated — see DataTable.module.css § flag cells). A body-slot card
+  // flag keeps its LabelledValue caption instead.
   cell: info =>
     info.getValue<boolean>() ? (
-      <span role="img" aria-label={label} title={label}>
+      <span
+        data-flag
+        data-flag-tone={tone}
+        role="img"
+        aria-label={label}
+        title={label}
+      >
         <CheckIcon />
+        <span data-flag-label aria-hidden="true">
+          {label}
+        </span>
       </span>
     ) : (
       ''

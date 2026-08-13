@@ -129,7 +129,6 @@ export const SupplierReturnSidePanel: Component<
           <TextArea
             label={t('heading.comment')}
             hideLabel
-            width="full"
             data-testid="comment-field"
             value={props.edit.state.comment}
             disabled={props.disabled}
@@ -198,7 +197,6 @@ export const SupplierReturnSidePanel: Component<
             label={t('label.reference')}
             hideLabel
             size="small"
-            width="full"
             data-testid="transport-reference-field"
             value={props.edit.state.transportReference}
             disabled={props.disabled}
