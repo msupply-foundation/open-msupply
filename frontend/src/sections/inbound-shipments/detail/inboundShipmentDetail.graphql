@@ -82,6 +82,7 @@ fragment InboundInfo on InvoiceNode {
       id
       fileName
       createdDatetime
+      totalBytes
     }
   }
   shippingMethod {
