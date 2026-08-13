@@ -76,7 +76,7 @@ const FILTERS: Filter<PrescriptionFilter>[] =
         />
       ),
     },
-    // Status — multi-select "any of" (D101): ticks accumulate into
+    // Status — multi-select "any of" (D110): ticks accumulate into
     // status.equalAny; none → null so the chip stays. NARROW, never assert:
     // the wire field spans every invoice status (a stale URL could carry
     // any), so keep only the prescription vocabulary.

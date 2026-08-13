@@ -47,7 +47,7 @@ const FILTERS: Filter<StockMovementFilter>[] =
         />
       ),
     },
-    // Status — multi-select "any of" (D101): ticks accumulate into
+    // Status — multi-select "any of" (D110): ticks accumulate into
     // status.equalAny; none → null so the (default) chip stays.
     status: {
       label: () => t('label.status'),

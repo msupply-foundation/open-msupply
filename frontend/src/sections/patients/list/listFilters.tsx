@@ -25,7 +25,7 @@ export type PatientFilter = NonNullable<PatientsVariables['filter']>;
  * Text filters match as substrings ({ like }); the Patient ID (identifier)
  * filter is the broad OR match across code / secondary code / name / program-
  * enrolment id (AC-L3); date of birth matches exactly ({ equalTo }) and
- * gender as any of the ticked values ({ equalAny }, D101).
+ * gender as any of the ticked values ({ equalAny }, D110).
  * Custom-field filtering rides on its own bar (the shared customFieldFilters →
  * dynamicFilter, spec/ui-standards/custom-fields), not a PatientFilter chip, so
  * `dynamicFilter` stays dismissed in this map.
@@ -94,7 +94,7 @@ const FILTERS: Filter<PatientFilter>[] = constructFilters<PatientFilter>({
   },
   // Gender — a multi-select over the store's configured subset (AC-G3),
   // matching any of the ticks via gender.equalAny (honoured — contract §
-  // listing; D101). None → null so the chip stays.
+  // listing; D110). None → null so the chip stays.
   gender: {
     label: () => t('label.gender'),
     render: props => (

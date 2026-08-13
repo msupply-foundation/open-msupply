@@ -192,7 +192,7 @@ const buildLedgerFilters = (): Filter<LedgerFilter>[] =>
         />
       ),
     } satisfies FilterDef<LedgerFilter>,
-    // Both enum chips are multi-select "any of" (D101). NARROW, never assert:
+    // Both enum chips are multi-select "any of" (D110). NARROW, never assert:
     // the URL-restored values are bare strings (a stale URL could carry
     // anything), so keep only known members rather than casting into the enum.
     invoiceType: {

@@ -19,7 +19,7 @@ export type ReturnsFilter = NonNullable<CustomerReturnsVariables['filter']>;
 // and not offered — further limited by the invoice-status-options preference
 // (rules § preference gates), read lazily per render via the accessor the
 // list passes in. Multi-select
-// "any of" over status.equalAny (D101; the shared invoices resolver honours
+// "any of" over status.equalAny (D110; the shared invoices resolver honours
 // the full equal-filter set).
 const STATUS_OPTIONS = [
   'NEW',
@@ -67,7 +67,7 @@ export const createFilters = (
         />
       ),
     },
-    // Status — multi-select "any of" (D101): ticks accumulate into
+    // Status — multi-select "any of" (D110): ticks accumulate into
     // status.equalAny; none → null so the chip stays. NARROW, never assert:
     // the wire field spans every invoice status (a stale URL could carry
     // any), so keep only this list's offered vocabulary.

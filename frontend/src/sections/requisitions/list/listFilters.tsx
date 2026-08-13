@@ -74,7 +74,7 @@ const FILTERS: Filter<RequisitionFilter>[] =
         />
       ),
     },
-    // Status — multi-select "any of" (D101; New / Finalised — the response
+    // Status — multi-select "any of" (D110; New / Finalised — the response
     // side's whole vocabulary; DRAFT and SENT are request-side only and never
     // offered, unlike the reference's stray column filter, captured as-is in
     // the spec). Ticks accumulate into status.equalAny; none → null so the
