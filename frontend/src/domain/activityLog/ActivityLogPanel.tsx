@@ -1,13 +1,15 @@
-import { createResource, Suspense, type Component, type JSX } from 'solid-js';
+import { createResource, type Component, type JSX } from 'solid-js';
 import { graphqlFetch } from '../../api/graphql';
 import { createTableConfig } from '../../api/createTableConfig';
 import { t } from '../../intl';
 import type { LocaleKey } from '../../intl/locales';
 import { dictionaries, locale } from '../../intl/intl';
-import { localisedTime } from '../../intl/formatDateTime';
-import { Spinner } from '../../ui/elements/feedback/Spinner';
 import { DataTable, type Column } from '../../ui/elements/table/DataTable';
-import { getDateCell } from '../../ui/elements/table/tableHelpers';
+import {
+  getCellDefinition,
+  getTextCell,
+} from '../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../ui/utils/rem';
 import {
   ActivityLog as ActivityLogDoc,
   type ActivityLogFragment,
@@ -21,8 +23,13 @@ import {
 // switching to the tab fetches it once. The log is append-only and short per
 // record, so — like OMS — we pull a generous single page and don't paginate.
 //
-// Consumed by any record's detail (spec/stock S2 › Log tab names it a "shared
-// activity-log surface"; the stocktakes vertical has its own equivalent).
+// THE Log tab for every vertical (kdd/domain-modules): stocktakes, inbound
+// shipments and both returns each grew their own copy while their verticals
+// were built separately, and the copies drifted — two lost the Columns/Settings
+// toolbar, two rendered no Details column, two labelled events from a
+// hand-written switch instead of the `log.*` catalogue, and one wire bug had to
+// be fixed in three places. A vertical that needs a different row ORDER passes
+// `order`; anything else it needs belongs here, not in a fifth copy.
 
 type Log = ActivityLogFragment;
 
@@ -165,8 +172,16 @@ export const ActivityLogPanel: Component<{
   // id sort scrambles the chronology (ids are UUIDs). The server hands us the
   // whole log datetime-ascending, so this is a reorder of a complete set, not a
   // re-sort of one page.
+  //
+  // The Log tab mounts fresh when selected (inactive TabPanels unmount), so
+  // this resource FIRST fetches on an interaction — it MUST be read
+  // non-suspending via the `.state` gate, never `resource()` or `.latest`
+  // alone, or it suspends the already-open detail screen's boundary and
+  // remounts it (kdd/solid-reactivity-pitfalls › No remounts on interaction).
+  // The table's own `loading` covers the wait.
   const rows = (): Log[] => {
-    const nodes = logData.latest?.nodes ?? [];
+    const ready = logData.state === 'ready' || logData.state === 'refreshing';
+    const nodes = ready ? (logData.latest?.nodes ?? []) : [];
     const direction = props.order === 'oldest-first' ? 1 : -1;
     return [...nodes].sort((a, b) =>
       a.datetime === b.datetime
@@ -175,46 +190,61 @@ export const ActivityLogPanel: Component<{
     );
   };
 
+  // Date / time / user take their cell-type presets (rendering AND width —
+  // ui/docs/CELL_TYPES.md); the accessors hand over the RAW instant and the
+  // presets localise it. Pre-formatting the time here would hand the `time`
+  // preset a clock string and throw "Invalid time value".
   const columns = (): Column<Log, never>[] => [
-    { c: { key: 'datetime' }, header: () => t('label.date'), ...getDateCell() },
     {
-      c: { accessor: log => localisedTime(log.datetime), id: 'time' },
+      c: { key: 'datetime' },
+      header: () => t('label.date'),
+      ...getCellDefinition('date'),
+    },
+    {
+      c: { accessor: log => log.datetime, id: 'time' },
       header: () => t('label.time'),
-      meta: { align: 'right' },
+      ...getCellDefinition('time'),
     },
     {
       c: { accessor: log => log.user?.username ?? '', id: 'user' },
       header: () => t('label.user'),
+      ...getCellDefinition('user'),
     },
+    // Event / details have no CELL_DEF key: the event name is a sentence-ish
+    // label and details is the run of changed fields, so both size here — with
+    // details the widest, as the table's sink column.
     {
       c: { accessor: log => eventLabel(log.type), id: 'event' },
       header: () => t('label.event'),
+      ...getTextCell(),
+      size: remToPx(12),
     },
     {
       c: { id: 'details' },
       header: () => t('label.details'),
+      ...getTextCell({ wrapLines: 3 }),
+      size: remToPx(20),
       cell: info => changeDetails(info.row.original.from, info.row.original.to),
     },
   ];
 
   return (
-    <Suspense fallback={<Spinner center />}>
-      <DataTable
-        columns={columns()}
-        rows={rows()}
-        rowKey={log => log.id}
-        emptyMessage={t('messages.no-log-entries')}
-        config={tableConfig.config()}
-        setConfig={tableConfig.setConfig}
-        configIsDefault={tableConfig.isConfigDefault()}
-        // Central-server admins (EDIT_CENTRAL_DATA) can promote their layout
-        // to the install-wide default; everyone else gets no action.
-        onSaveGlobalDefault={
-          tableConfig.canSaveGlobalDefault()
-            ? tableConfig.saveGlobalTableConfig
-            : undefined
-        }
-      />
-    </Suspense>
+    <DataTable
+      columns={columns()}
+      rows={rows()}
+      rowKey={log => log.id}
+      loading={logData.loading}
+      emptyMessage={t('messages.no-log-entries')}
+      config={tableConfig.config()}
+      setConfig={tableConfig.setConfig}
+      configIsDefault={tableConfig.isConfigDefault()}
+      // Central-server admins (EDIT_CENTRAL_DATA) can promote their layout
+      // to the install-wide default; everyone else gets no action.
+      onSaveGlobalDefault={
+        tableConfig.canSaveGlobalDefault()
+          ? tableConfig.saveGlobalTableConfig
+          : undefined
+      }
+    />
   );
 };
