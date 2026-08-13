@@ -4,7 +4,6 @@ import {
   clearUnexpectedError,
   forbiddenError,
   unexpectedError,
-  type UnexpectedErrorInfo,
 } from './api/graphql';
 import { authUser } from './auth/authContext';
 import { currentStoreId, currentStoreName } from './store/storeContext';
@@ -82,19 +81,24 @@ const storeLabel = (): string | undefined => {
   return `${currentStoreName()} (${shortId})`;
 };
 
+// Non-keyed <Show>: parallel calls failing together (the server going away
+// mid-screen) each set the signal, and a keyed Show would tear down and
+// re-show the open <dialog> per failure — focus reset, an expanded Show
+// details collapsing. Non-keyed, the dialog mounts once and later failures
+// update its copy in place.
 const UnexpectedError: Component = () => (
-  <Show when={unexpectedError()} keyed>
-    {(info: UnexpectedErrorInfo) => (
+  <Show when={unexpectedError()}>
+    {info => (
       <ErrorDialog
         open
-        condition={info.condition}
+        condition={info().condition}
         details={{
-          reference: info.reference,
-          cause: info.cause,
+          reference: info().reference,
+          cause: info().cause,
           store: storeLabel(),
-          request: info.request,
+          request: info().request,
         }}
-        duringEdit={info.duringEdit}
+        duringEdit={info().duringEdit}
         onClose={clearUnexpectedError}
         onRetry={() => location.reload()}
         onDashboard={

@@ -572,7 +572,7 @@ export const DialogShowcase = () => {
               reference: 'e2d0-2026-07-30T09:18Z',
               cause:
                 errorDemo() === 'server'
-                  ? 'server error (HTTP 503)'
+                  ? 'HTTP 503'
                   : 'unhandled — TypeError: undefined is not an object',
               store: 'CHC Ermera (5B28…5DF9)',
               request:

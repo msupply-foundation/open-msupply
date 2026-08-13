@@ -269,7 +269,7 @@ export async function graphqlFetch<TResult, TVariables>(
       return unexpected('timeout', `HTTP ${response.status}`);
     }
     if (response.status >= 500) {
-      return unexpected('server', `server error (HTTP ${response.status})`);
+      return unexpected('server', `HTTP ${response.status}`);
     }
     return unexpected('unknown', `HTTP ${response.status}`);
   }
