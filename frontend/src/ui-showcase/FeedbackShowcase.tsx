@@ -147,7 +147,11 @@ export const FeedbackShowcase = () => {
               tone="error"
               icon={<AlertCircleIcon />}
             />
-            <StatusBadge label="Near expiry" icon={<AlertTriangleIcon />} />
+            <StatusBadge
+              label="Near expiry"
+              tone="error"
+              icon={<AlertTriangleIcon />}
+            />
             <StatusBadge
               label="Unallocated"
               appearance="outline"

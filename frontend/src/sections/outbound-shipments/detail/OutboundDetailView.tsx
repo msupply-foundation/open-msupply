@@ -41,15 +41,8 @@ import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePane
 import { createAddAction } from '../../../ui/utils/keyActions';
 import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
-import { StatusBadge } from '../../../ui/elements/feedback/StatusBadge';
-import {
-  AlertCircleIcon,
-  AlertTriangleIcon,
-  InfoIcon,
-  MinusCircleIcon,
-  PauseIcon,
-  PlusCircleIcon,
-} from '../../../ui/icons';
+import { RowStatusBadges, uncapped } from './RowStatusBadges';
+import { InfoIcon, MinusCircleIcon, PlusCircleIcon } from '../../../ui/icons';
 import { isExpired } from '../../../domain/allocation';
 import { fetchLocations } from '../../../domain/location';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
@@ -147,38 +140,17 @@ const lineNearExpiry = (line: Line): boolean =>
   !lineExpired(line) &&
   isNearOrPastExpiry(line.expiryDate);
 
-// The row-status badges beside the item name (ui-standards § table
-// interaction; OMS-REG-DIST-03.37/.38, D111/D112): word chips carrying each
-// line state — Expired / Near expiry (tiered, both red), On hold (amber).
-// Every applicable badge shows (expired AND held → both); a placeholder
-// carries none — its Batch cell's "Placeholder" word is the flag. Table
-// view only — cards carry the same states as corner badges (the
-// [data-row-badges] CSS).
+// The row-status badges beside the item name (the shared RowStatusBadges
+// cluster — ui-standards § table interaction; OMS-REG-DIST-03.37/.38,
+// D111/D112). A placeholder carries none — its Batch cell's "Placeholder"
+// word is the flag.
 const LineStatusBadges = (props: { line: Line }) => (
   <Show when={props.line.type !== 'UNALLOCATED_STOCK'}>
-    <span data-row-badges>
-      <Show when={lineExpired(props.line)}>
-        <StatusBadge
-          label={t('label.expired')}
-          tone="error"
-          icon={<AlertCircleIcon />}
-        />
-      </Show>
-      <Show when={lineNearExpiry(props.line)}>
-        <StatusBadge
-          label={t('label.near-expiry')}
-          tone="error"
-          icon={<AlertTriangleIcon />}
-        />
-      </Show>
-      <Show when={lineOnHold(props.line)}>
-        <StatusBadge
-          label={t('label.on-hold')}
-          tone="warning"
-          icon={<PauseIcon />}
-        />
-      </Show>
-    </span>
+    <RowStatusBadges
+      expired={lineExpired(props.line)}
+      nearExpiry={lineNearExpiry(props.line)}
+      held={lineOnHold(props.line)}
+    />
   </Show>
 );
 
@@ -209,16 +181,6 @@ const lineCardTone = (line: Line): 'warning' | 'error' | undefined => {
   if (lineOnHold(line)) return 'warning';
   return undefined;
 };
-
-// Drop a preset's growth cap, keeping its cell + width floor: `maxSize` is a
-// HARD cap, so a column sitting at it can't be dragged wider at all. The shared
-// config expresses this as a per-key `maxSize: null`; at a call site the key has
-// to be removed outright — an explicit `maxSize: undefined` would override
-// TanStack's own default rather than fall back to it.
-const uncapped = <T,>({
-  maxSize: _cap,
-  ...rest
-}: ReturnType<typeof getCellDefinition<T>>) => rest;
 
 // The server sort-field union (from codegen) — a column can only ever name a
 // real server sort key (kdd/type-safety). Columns whose data the server can't

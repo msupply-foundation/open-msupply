@@ -42,15 +42,12 @@ import {
 import { remToPx } from '../../../../ui/utils/rem';
 import { createTableConfig } from '../../../../api/createTableConfig';
 import {
-  AlertCircleIcon,
-  AlertTriangleIcon,
   CheckIcon,
   InfoIcon,
   MessageSquareIcon,
-  PauseIcon,
   StockIcon,
 } from '../../../../ui/icons';
-import { StatusBadge } from '../../../../ui/elements/feedback/StatusBadge';
+import { RowStatusBadges, uncapped } from '../RowStatusBadges';
 import {
   DraftStockOutLines,
   ItemVariants,
@@ -181,15 +178,6 @@ const VariantInfoTable = (props: {
 // disclosures. Group keys/labels/icons match the sibling editors exactly, so one
 // card vocabulary reads the same across every line editor.
 type GroupKey = 'batch' | 'pricing' | 'other';
-// Drop the `code` preset's 7rem growth cap from the batch column: maxSize is
-// a HARD cap, and with the row-status chips beside the batch value the
-// content fills it exactly, pinning the column so it can't be dragged wider
-// at all — the same trap (and fix) as the detail table's batch column (#601).
-const uncappedBatch = <T,>({
-  maxSize: _cap,
-  ...rest
-}: ReturnType<typeof getCellDefinition<T>>) => rest;
-
 const CARD_GROUPS: CardGroup<DraftLine, GroupKey>[] = [
   {
     key: 'batch',
@@ -1003,7 +991,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       // The meta rides as getCellDefinition's second argument, NOT a sibling
       // `meta:` key — the spread returns its own `meta` and would overwrite one
       // declared beside it (which is exactly how this card lost its header).
-      ...uncappedBatch(
+      // Cap-less (the shared `uncapped` — the chips fill the code preset's
+      // 7rem cap and pin the column, the #601 trap the detail table hit too).
+      ...uncapped(
         getCellDefinition('batch', {
           headerPosition: 'primary',
           showLabel: true,
@@ -1041,29 +1031,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                 </Popover>
               )}
             </Show>
-            <span data-row-badges>
-              <Show when={lineExpired(line)}>
-                <StatusBadge
-                  label={t('label.expired')}
-                  tone="error"
-                  icon={<AlertCircleIcon />}
-                />
-              </Show>
-              <Show when={lineNearExpiry(line)}>
-                <StatusBadge
-                  label={t('label.near-expiry')}
-                  tone="error"
-                  icon={<AlertTriangleIcon />}
-                />
-              </Show>
-              <Show when={lineHeld(line)}>
-                <StatusBadge
-                  label={t('label.on-hold')}
-                  tone="warning"
-                  icon={<PauseIcon />}
-                />
-              </Show>
-            </span>
+            <RowStatusBadges
+              expired={lineExpired(line)}
+              nearExpiry={lineNearExpiry(line)}
+              held={lineHeld(line)}
+            />
           </span>
         );
       },
