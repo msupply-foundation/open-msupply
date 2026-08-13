@@ -107,7 +107,7 @@ export const OutboundStatusFooter: Component<
       <StatusIndicator steps={steps()} current={indicatorIndex()} />
 
       {/* The status-change split button, which hides entirely when read-only
-          (spec S3 § status footer). No Close beside it (D102): leaving the
+          (spec S3 § status footer). No Close beside it (D103): leaving the
           shipment is the breadcrumb's job, as on every other screen. */}
       <StatusChangeAction
         storeId={props.storeId}

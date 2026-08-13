@@ -546,7 +546,7 @@ export const InitialisationPage: Component<{
         </AccordionItem>
       </Accordion>
       {/* Spec (OMS-REG-LGN-03.19): informational, never an error — the
-          wait is expected and self-healing (D98). Mutually exclusive
+          wait is expected and self-healing (D99). Mutually exclusive
           with the error Alert below: syncError() stays unset for the
           whole wait. */}
       <Show when={waitingForCentral()}>
@@ -667,7 +667,7 @@ export const InitialisationPage: Component<{
         )}
       </Show>
       {/* Plain "Initialise", matching the legacy-sync tab — the active tab
-          already says which kind (D99; the current app spells it out) — and
+          already says which kind (D100; the current app spells it out) — and
           spanning the form column, as that tab's does. */}
       <Button
         type="submit"

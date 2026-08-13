@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { paginationState, type PaginationExtent } from './paginationState';
 
 // The conditional (earned) footer — spec/ui-standards § tables → pagination
-// (D101). This FE diverges from the current app here, so the shared e2e suites
+// (D102). This FE diverges from the current app here, so the shared e2e suites
 // stay loose and the rule is pinned by this test instead (e2e/AUTHORING.md §
 // divergences). Behaviours:
 //   OMS-REG-INV-05.24/.25  — stocktakes list: the pager exists only past one page
@@ -11,11 +11,12 @@ import { paginationState, type PaginationExtent } from './paginationState';
 //   OMS-REG-REPL-03.24     — inbound shipment detail
 //
 // Only these four values feed the rule.
-const props = (
-  total: number,
-  offset = 0,
-  pageSize = 20
-): PaginationExtent => ({ total, offset, pageSize, conditional: true });
+const props = (total: number, offset = 0, pageSize = 20): PaginationExtent => ({
+  total,
+  offset,
+  pageSize,
+  conditional: true,
+});
 
 /** No `conditional` at all — the stable-chrome default. */
 const stable = (total: number): PaginationExtent => ({
