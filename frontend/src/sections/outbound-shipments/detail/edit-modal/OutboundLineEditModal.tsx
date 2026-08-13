@@ -569,7 +569,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     nonAllocatableIds.has(line.id);
   const rowDisabled = (line: DraftLine): boolean =>
     isBarred(line) || isNonAllocatable(line);
-  // Calendar-expired batch (D103) — the card's error tone + Expired badge.
+  // Calendar-expired batch (D111) — the card's error tone + Expired badge.
   // Display-only; the bar predicates own the preference/threshold logic.
   const lineExpired = (line: DraftLine): boolean =>
     !!line.expiryDate && isExpired(line.expiryDate);
@@ -1326,7 +1326,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       ),
     },
     {
-      // Expired flag, CARD-ONLY (D103): the grid already reddens the Expiry
+      // Expired flag, CARD-ONLY (D111): the grid already reddens the Expiry
       // date cell under its header, but a card buries that in the body — the
       // badge puts the word in the card corner, with the row's error tone.
       c: { accessor: lineExpired, id: 'expired' },
@@ -1587,7 +1587,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             rowState={line => (rowDisabled(line) ? 'disabled' : undefined)}
             // A held batch reads in the warning tone, an expired one in the
             // error tone — the same indications as its detail-table row
-            // (OMS-REG-DIST-03.37/.38, D102/D103); the flag badges carry the
+            // (OMS-REG-DIST-03.37/.38, D110/D111); the flag badges carry the
             // words. Survives the disabled muting (the state is why the row
             // is disabled). Hold outranks expiry: it is the server-enforced
             // bar.

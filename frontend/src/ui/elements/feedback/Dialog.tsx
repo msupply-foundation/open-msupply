@@ -103,6 +103,21 @@ export interface DialogProps {
    */
   actionsLead?: JSX.Element;
   /**
+   * Draws a full-bleed hairline above the pinned bottom region (footer +
+   * actions) — the footer-divider treatment ui-standards › error dialogs
+   * specifies (`ErrorDialog` passes it). Off by default: the house dialog
+   * carries no divider.
+   */
+  actionsDivider?: boolean;
+  /**
+   * Horizontal placement of the footer buttons. The house default is
+   * `center` (the current app's modal DialogActions); `end` pins them to the
+   * inline-end — ui-standards › error dialogs' footer. With `actionsLead`
+   * present the row is space-between either way, so this only shows when
+   * there is no lead.
+   */
+  actionsAlign?: 'center' | 'end';
+  /**
    * Width as one of the shared content MEASURES — the same vocabulary
    * `ContentContainer` uses, so a dialog and an in-page form of the same kind
    * sit at the same width and neither restates the number:
@@ -311,7 +326,10 @@ const DialogContent = (local: DialogContentProps): JSX.Element => {
       {/* Footer + actions share one bottom region pinned under the scroll
           area, so they stay on the dialog's bottom edge together. */}
       <Show when={footer() || actions()}>
-        <div class={styles.bottom}>
+        <div
+          class={styles.bottom}
+          data-divider={c.actionsDivider ? '' : undefined}
+        >
           <Show when={footer()}>
             <div>{footer()}</div>
           </Show>
@@ -319,6 +337,7 @@ const DialogContent = (local: DialogContentProps): JSX.Element => {
             <div
               class={styles.actions}
               data-has-lead={actionsLead() ? '' : undefined}
+              data-align={c.actionsAlign === 'end' ? 'end' : undefined}
             >
               {/* Lead content sits at the inline-start; the buttons group at the
                   inline-end. */}

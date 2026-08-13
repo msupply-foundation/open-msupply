@@ -119,12 +119,12 @@ type Line = OutboundLineFragment;
 // A held line — its batch, or the batch's location, on hold — cannot be
 // issued (OMS-REG-DIST-03.18); the detail table says so where the user looks
 // first: warning-tone row text + a check in the On-hold flag column
-// (OMS-REG-DIST-03.37, D102 — the flag carries the fact, the tone only
+// (OMS-REG-DIST-03.37, D110 — the flag carries the fact, the tone only
 // restates it).
 const lineOnHold = (line: Line): boolean =>
   !!line.stockLine?.onHold || !!line.location?.onHold;
 
-// Calendar-expired line (D103) — the card's error tone + Expired badge; in
+// Calendar-expired line (D111) — the card's error tone + Expired badge; in
 // table view the Expiry-date cell's own reddening carries it.
 const lineExpired = (line: Line): boolean =>
   !!line.expiryDate && isExpired(line.expiryDate);
@@ -632,7 +632,7 @@ const OutboundDetailView: Component = () => {
       {
         // On-hold flag, right beside the batch it qualifies (spec § line
         // table col 4) — the same check the line editor's grid carries
-        // (OMS-REG-DIST-03.37, D102): the hold is a stock-line fact, so the
+        // (OMS-REG-DIST-03.37, D110): the hold is a stock-line fact, so the
         // column makes it scannable where the batch is read; the row's
         // warning tone restates it.
         c: { accessor: lineOnHold, id: 'onHold' },
@@ -646,7 +646,7 @@ const OutboundDetailView: Component = () => {
         ),
       },
       {
-        // Expired flag, CARD-ONLY (D103): the table's Expiry-date cell
+        // Expired flag, CARD-ONLY (D111): the table's Expiry-date cell
         // reddens under its header; a card buries that in the body, so the
         // badge puts the word in the card corner, with the row's error tone.
         c: { accessor: lineExpired, id: 'expired' },
@@ -1033,7 +1033,7 @@ const OutboundDetailView: Component = () => {
                   // tone, expired lines in the error tone — each beside its
                   // words (the flag badges; in table view the bold red
                   // Expiry-date cell) (ui-surface S3 line table,
-                  // OMS-REG-DIST-03.37/.38, D102/D103). Precedence is pinned
+                  // OMS-REG-DIST-03.37/.38, D110/D111). Precedence is pinned
                   // by .38: placeholder outranks everything (the row stays
                   // info; only the Expiry-date cell reddens/bolds), and hold
                   // outranks expiry (the server-enforced bar).

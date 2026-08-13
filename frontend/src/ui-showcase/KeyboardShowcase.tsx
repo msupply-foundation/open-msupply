@@ -8,6 +8,7 @@ import { CloseIcon } from '../ui/icons';
 import { CommandPaletteView } from '../ui/elements/keyboard/CommandPaletteView';
 import { startKeyboardDispatcher } from '../keyboard/keyboardDispatcher';
 import {
+  actionName,
   createAction,
   createAddAction,
   registeredActions,
@@ -269,7 +270,7 @@ export const KeyboardShowcase = () => {
                         <td>
                           {action.name === undefined
                             ? '— (unlisted)'
-                            : t(action.name)}
+                            : actionName(action)}
                         </td>
                         <td>
                           {action.shortcut

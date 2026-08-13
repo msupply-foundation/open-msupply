@@ -412,7 +412,10 @@
   content: '';
   position: absolute;
   inset-inline-start: 0;
-  inset-block-start: 2.5rem;
+  /* The row's own midpoint, paired with the -50% below — NOT a copy of
+     --nav-item-height, which is what put the bar a full row too low. Written as
+     a percentage so it stays centred if the row height token ever moves. */
+  inset-block-start: 50%;
   inline-size: 0.1875rem;
   block-size: 1.375rem;
   border-radius: var(--radius-sm);
