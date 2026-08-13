@@ -1,3 +1,4 @@
+import { DEFAULT_PAGE_SIZE } from '../../list/pageSize';
 import type { LocaleKey } from '../../intl/locales';
 import type {
   CliniciansVariables,
@@ -32,7 +33,6 @@ export const SORTABLE_KEYS: readonly SortKey[] = [
 
 // Pagination (rules › pagination; OMS-FUN-DIS-004.20): default 20, options
 // 10/20/50/100.
-export const DEFAULT_PAGE_SIZE = 20;
 export const PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const;
 
 // Active-only is the client's obligation: the server returns inactive

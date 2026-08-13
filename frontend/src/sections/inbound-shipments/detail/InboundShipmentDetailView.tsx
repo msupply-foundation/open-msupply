@@ -48,6 +48,11 @@ import { remToPx } from '../../../ui/utils/rem';
 import styles from './InboundShipmentDetailView.module.css';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { useUrlQueryState } from '../../../list/urlQueryState';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import {
   CustomFieldsEditTab,
@@ -90,7 +95,7 @@ import {
   supplierIsStore,
 } from './inboundShipmentStatus';
 import { SupplierKindIcon } from '../SupplierKindIcon';
-import { InboundShipmentLogPanel } from './log/InboundShipmentLogPanel';
+import { ActivityLogPanel } from '../../../domain/activityLog';
 import { InboundDocumentsPanel } from './tabs/InboundDocumentsPanel';
 import { InboundCurrencyPanel } from './tabs/InboundCurrencyPanel';
 import { InboundFinancialPanel } from './tabs/InboundFinancialPanel';
@@ -122,8 +127,6 @@ type Line = InboundLineFragment;
 type SortKey = NonNullable<
   InboundShipmentLinesVariables['sort']
 >[number]['key'];
-
-const DEFAULT_PAGE_SIZE = 20;
 
 type DetailUrlState = {
   sort: NonNullable<InboundShipmentLinesVariables['sort']>;
@@ -160,8 +163,10 @@ const DEFAULT_URL_STATE: DetailUrlState = {
 const InboundShipmentDetailView: Component = () => {
   const params = useParams<{ storeId: string; invoiceId: string }>();
   const navigate = useNavigate();
-  const { query, setQuery } =
-    useUrlQueryState<DetailUrlState>(DEFAULT_URL_STATE);
+  const { query, setQuery } = useUrlQueryState<DetailUrlState>({
+    ...DEFAULT_URL_STATE,
+    first: initialPageSize(),
+  });
   // The shipment's permission scope, carried by the route (inboundShipmentHref)
   // because the id alone can't reveal it. It selects `type` on the read below,
   // gates the mutate permission, and picks the plain-vs-`...External` mutation
@@ -1167,6 +1172,16 @@ const InboundShipmentDetailView: Component = () => {
                       ? tableConfig.saveGlobalTableConfig
                       : undefined
                   }
+                  pagination={{
+                    offset: query().offset,
+                    pageSize: query().first,
+                    total: totalCount(),
+                    onOffsetChange: offset => setQuery({ ...query(), offset }),
+                    onPageSizeChange: first => {
+                      rememberPageSize(first);
+                      setQuery({ ...query(), first, offset: 0 });
+                    },
+                  }}
                 />
               </TabPanel>
               <Show when={isExternal()}>
@@ -1206,9 +1221,9 @@ const InboundShipmentDetailView: Component = () => {
                 />
               </TabPanel>
               <TabPanel value="log">
-                <InboundShipmentLogPanel
+                <ActivityLogPanel
                   storeId={params.storeId}
-                  invoiceId={node().id}
+                  recordId={node().id}
                 />
               </TabPanel>
 

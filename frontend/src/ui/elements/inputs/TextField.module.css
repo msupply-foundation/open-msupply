@@ -12,10 +12,14 @@
   min-width: 0;
 }
 
-/* Spec max-widths. `compact` caps only the INPUT BOX (rule after the base
-   input rules below) — the field container keeps the `short` cap so the label
-   and helper/error text wrap at a readable width instead of being squeezed to
-   match the narrow box. */
+/* Spec max-widths — OPT-IN caps over the `full` default (see TextField.tsx).
+   THIS BLOCK IS THE REFERENCE the other input modules match: same four values,
+   same meanings, so a text field, a picker, a select and a date field stacked
+   in one form are the same width with nothing passed.
+
+   `compact` caps only the INPUT BOX (rule after the base input rules below) —
+   the field container keeps the `short` cap so the label and helper/error text
+   wrap at a readable width instead of being squeezed to match the narrow box. */
 .field[data-width='compact'] {
   max-width: var(--input-max-short);
 }
@@ -252,9 +256,13 @@
   color: var(--error-main);
 }
 
+/* The glyph takes the error text's own colour (inherited from .error) — it is
+   part of the error line, not a caution of its own. It used to be
+   --color-warning, which rendered an amber triangle above red text and read as
+   a second, milder severity sitting on the same message. */
 .errorIcon {
   font-size: 0.875em;
-  color: var(--color-warning);
+  color: inherit;
   flex-shrink: 0;
 }
 

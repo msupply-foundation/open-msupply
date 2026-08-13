@@ -1,6 +1,5 @@
 import { createEffect, createResource, createSignal, Show } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
-import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { PasswordField } from '../../../ui/elements/inputs/PasswordField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
@@ -11,24 +10,30 @@ import { SaveIcon } from '../../../ui/icons';
 import { t } from '../../../intl';
 import {
   buildSyncInput,
-  canSaveSyncSettings,
   initialSyncForm,
   SYNC_SAVE_FALLBACK_ERROR,
+  syncFieldErrors,
   syncSaveErrorKey,
   type SyncFormState,
 } from './syncForm';
 import { SyncSettings, UpdateSyncSettings } from './syncSettings.generated';
 import { Stack } from '../../../ui/layout/Stack/Stack';
 import { HStack } from '../../../ui/layout/Stack/HStack';
+import { createFormValidation } from '../../../ui/layout/Form/formValidation';
+import { DisclosureToggle } from '../../../ui/elements/buttons/DisclosureToggle';
+
+/** Ties the advanced disclosure's toggle to the region it reveals. */
+const ADVANCED_REGION_ID = 'sync-settings-advanced';
 
 /*
  * Synchronisation settings (spec/settings/ui-surface.md § Synchronisation) —
- * Server Admin only (gated by the page). Saving is not merely storing four
+ * Server Admin only (gated by the page). Saving is not merely storing the
  * fields: the SERVER performs a live authentication round-trip against the
  * target before persisting anything, unless url/site/password all evaluate as
  * unchanged (OMS-REG-SET-02.9, .13, .14 — server-enforced; this form just
- * reports the outcome). Save stays disabled until all four fields are filled
- * (OMS-REG-SET-02.7/.8) and the password always starts blank
+ * reports the outcome). Save is ALWAYS clickable and validates on click
+ * (OMS-REG-SET-02.7/.8, D98) — the batch size carries no rule, being optional
+ * (OMS-REG-SET-02.15) — and the password always starts blank
  * (OMS-REG-SET-02.12).
  */
 export const SyncSection = () => {
@@ -68,6 +73,12 @@ export const SyncSection = () => {
     if (settings && !touched) setForm(initialSyncForm(settings));
   });
 
+  // Quiet on open, full on Save (D98): every required rule is evaluated from
+  // the start but shows nothing until the first Save click arms them.
+  const validation = createFormValidation(() => syncFieldErrors(form()));
+
+  const [showAdvanced, setShowAdvanced] = createSignal(false);
+
   const edit = (patch: Partial<SyncFormState>) => {
     touched = true;
     setOutcome(undefined);
@@ -75,7 +86,11 @@ export const SyncSection = () => {
   };
 
   const save = async () => {
-    if (!canSaveSyncSettings(form()) || saving()) return;
+    if (saving()) return;
+    // Validate on click, never by disabling the button: an empty required
+    // field shows its own message and nothing is sent (OMS-REG-SET-02.7/.8).
+    validation.arm();
+    if (!validation.valid()) return;
     setSaving(true);
     setOutcome(undefined);
     // `background` keeps a plain network failure out of the global
@@ -91,9 +106,12 @@ export const SyncSection = () => {
       const payload = result.data.updateSyncSettings;
       if (payload.__typename === 'SyncSettingsNode') {
         // Persisted — confirm, re-read the stored settings, and blank the
-        // password again (OMS-REG-SET-02.12, OMS-REG-SET-02.13).
+        // password again (OMS-REG-SET-02.12, OMS-REG-SET-02.13). Disarm with
+        // it: the blanked password re-trips its own required rule, which must
+        // not surface as an error on a save that just succeeded.
         setOutcome('success');
         touched = false;
+        validation.reset();
         setForm({ ...form(), password: '' });
         await refetch();
       } else {
@@ -123,54 +141,72 @@ export const SyncSection = () => {
       }}
     >
       <Stack>
-        {/* Labelled field rows per the spec's Layout (ui-surface § Layout):
-          bold label inline-start, control inline-end, wrapped control's own
-          label hidden. */}
-        <FieldRow label={t('label.settings-url')}>
-          <TextField
-            label={t('label.settings-url')}
-            hideLabel
-            width="long"
-            value={form().url}
-            onInput={e => edit({ url: e.currentTarget.value })}
-            disabled={saving()}
-            data-testid="sync-settings-url"
-          />
-        </FieldRow>
-        <FieldRow label={t('label.settings-username')}>
-          <TextField
-            label={t('label.settings-username')}
-            hideLabel
-            width="long"
-            value={form().username}
-            onInput={e => edit({ username: e.currentTarget.value })}
-            disabled={saving()}
-            data-testid="sync-settings-username"
-          />
-        </FieldRow>
-        <FieldRow label={t('label.settings-password')}>
-          <PasswordField
-            label={t('label.settings-password')}
-            hideLabel
-            width="long"
-            autocomplete="off"
-            value={form().password}
-            onInput={e => edit({ password: e.currentTarget.value })}
-            disabled={saving()}
-            data-testid="sync-settings-password"
-          />
-        </FieldRow>
-        <FieldRow label={t('label.settings-interval')}>
-          <NumberField
-            label={t('label.settings-interval')}
-            hideLabel
-            min={1}
-            value={form().intervalSeconds}
-            onChange={intervalSeconds => edit({ intervalSeconds })}
-            disabled={saving()}
-            data-testid="sync-settings-interval"
-          />
-        </FieldRow>
+        {/* The standard form layout (kdd/form-layout): stacked full-width
+          fields carrying their own labels, with the two numbers paired in a
+          FormRow. The accordion header titles the group, so there is no
+          FormSection of its own. */}
+        <TextField
+          label={t('label.settings-url')}
+          value={form().url}
+          error={validation.errorFor('url')}
+          onInput={e => edit({ url: e.currentTarget.value })}
+          disabled={saving()}
+          data-testid="sync-settings-url"
+        />
+        <TextField
+          label={t('label.settings-username')}
+          value={form().username}
+          error={validation.errorFor('username')}
+          onInput={e => edit({ username: e.currentTarget.value })}
+          disabled={saving()}
+          data-testid="sync-settings-username"
+        />
+        <PasswordField
+          label={t('label.settings-password')}
+          autocomplete="off"
+          value={form().password}
+          error={validation.errorFor('password')}
+          onInput={e => edit({ password: e.currentTarget.value })}
+          disabled={saving()}
+          data-testid="sync-settings-password"
+        />
+        <NumberField
+          label={t('label.settings-interval')}
+          min={1}
+          value={form().intervalSeconds}
+          error={validation.errorFor('intervalSeconds')}
+          onChange={intervalSeconds => edit({ intervalSeconds })}
+          disabled={saving()}
+          data-testid="sync-settings-interval"
+        />
+        {/* The batch size is an optional override behind a collapsed advanced
+          disclosure — the same affordance, in the same place in the form, as
+          site initialisation's (spec/startup/rules § initialisation). */}
+        <HStack justify="end">
+          <DisclosureToggle
+            expanded={showAdvanced()}
+            controls={ADVANCED_REGION_ID}
+            onClick={() => setShowAdvanced(previous => !previous)}
+            data-testid="sync-settings-advanced-toggle"
+          >
+            {showAdvanced()
+              ? t('label.hide-advanced-options')
+              : t('label.show-advanced-options')}
+          </DisclosureToggle>
+        </HStack>
+        <Show when={showAdvanced()}>
+          <div id={ADVANCED_REGION_ID}>
+            <NumberField
+              label={t('label.settings-batch-size')}
+              helperText={t('label.settings-batch-size-helper')}
+              min={1}
+              value={form().batchSize}
+              onChange={batchSize => edit({ batchSize })}
+              disabled={saving()}
+              data-testid="sync-settings-batch-size"
+            />
+          </div>
+        </Show>
         <Show when={saved()}>
           <Alert severity="success">{t('success.sync-settings')}</Alert>
         </Show>
@@ -189,7 +225,6 @@ export const SyncSection = () => {
             type="submit"
             icon={<SaveIcon />}
             loading={saving()}
-            disabled={!canSaveSyncSettings(form())}
             data-testid="sync-settings-save"
           >
             {t('button.save')}

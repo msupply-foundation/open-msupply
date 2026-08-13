@@ -193,6 +193,13 @@
 .bareField input {
   field-sizing: content;
   min-inline-size: 3.5rem;
+  /* The same ceiling .input gives the plain text chip. The CHIP owns this, not
+     the component: a filter chip is a content-sized pill in a wrapping bar, so
+     whatever field is dropped in must stop growing at the same point. It used
+     to come from NumberField's `compact` DEFAULT capping its box at 10rem —
+     which was invisible, applied to nothing else in the bar, and vanished the
+     moment that default changed (2026-08-13). */
+  max-inline-size: 16rem;
 }
 
 /* Number-range boxes: the 3.5rem floor above is sized for dates and reads as
@@ -302,6 +309,15 @@
   flex: 1;
 }
 
+/* The "No options" row (see NoOptions) — a muted status, not a choice, so it
+   reads as the same greyed line the Combobox/MultiSelect listboxes use for
+   theirs. Sizing comes from .content's font-size. */
+.status {
+  padding: var(--space-2);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
 /* Kobalte's Separator renders an <hr> — flatten it to a token hairline. */
 .separator {
   height: 1px;
@@ -310,7 +326,7 @@
   background: var(--color-divider);
 }
 
-/* Selected-mark rows (single-select menu — the FilterSelect radio items) */
+/* Boxed checkbox rows (multi-select menu — the FilterMultiSelect items) */
 .checkbox {
   display: inline-flex;
   align-items: center;
@@ -326,6 +342,19 @@
 .checkboxItem[data-checked] .checkbox {
   background: var(--secondary-main);
   border-color: var(--secondary-main);
+}
+
+/* Single-select rows (FilterSelect): the chosen option carries a bare check
+   mark — a boxed checkbox is the multi-select affordance (spec ui-standards
+   tables › filtering). */
+.checkMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  color: var(--secondary-main);
 }
 
 .indicator {

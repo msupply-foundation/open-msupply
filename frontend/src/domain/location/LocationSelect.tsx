@@ -28,6 +28,8 @@ export interface LocationSelectProps {
   disabled?: boolean;
   error?: string;
   placeholder?: string;
+  /** Max-width cap — forwarded to the Combobox, opt-in (default `full`). */
+  width?: 'compact' | 'short' | 'long' | 'full';
   /**
    * A `createFocusTarget()` handle bound to the picker's input — for an owner
    * that focuses it after an action (e.g. a dialog opening on it).
@@ -62,6 +64,7 @@ export const LocationSelect = (props: LocationSelectProps): JSX.Element => (
     disabled={props.disabled}
     error={props.error}
     placeholder={props.placeholder}
+    width={props.width}
     focusTarget={props.focusTarget}
     onChange={l => props.onChange(l)}
     // Let the popup grow past a narrow field so a location's code + name stays

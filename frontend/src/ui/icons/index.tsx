@@ -102,8 +102,8 @@ export const ChevronsUpIcon = (props: IconProps) => (
 );
 
 // The sidebar collapse/expand pair — a double chevron pointing at the edge the
-// rail moves towards. Directional, so both mirror in RTL (where the rail sits
-// on the inline-end): data-flip-rtl, like ChevronLeft/Right.
+// rail moves towards. Directional, so both mirror in RTL (where the rail sits on
+// the inline-end): data-flip-rtl, like ChevronLeft/Right.
 /* Hugeicons: ArrowLeftDoubleIcon */
 export const ChevronsLeftIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" data-flip-rtl="" {...props}>
@@ -200,6 +200,19 @@ export const AlertTriangleIcon = (props: IconProps) => (
   </Stroke>
 );
 
+/* Offline / connection lost (the error dialog's "can't reach the server") */
+export const WifiOffIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M16.72 11.06C17.5387 11.4531 18.3037 11.9539 19 12.55" />
+    <path d="M5 12.55C6.47003 11.3364 8.26414 10.5074 10.17 10.16" />
+    <path d="M10.71 5.05C14.9432 4.66018 19.1541 5.99542 22.58 9" />
+    <path d="M1.42 9C2.80587 7.78412 4.39642 6.80707 6.12 6.12" />
+    <path d="M8.53 16.11C9.53718 15.3875 10.7599 14.9977 12 14.9977C13.2401 14.9977 14.4628 15.3875 15.47 16.11" />
+    <path d="M12 20H12.01" />
+    <path d="M2 2L22 22" />
+  </Stroke>
+);
+
 /* Delete */
 /* Hugeicons: Delete02Icon */
 export const TrashIcon = (props: IconProps) => (
@@ -225,6 +238,21 @@ export const LockIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
     <path d="M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" />
     <path d="M12 13C13.1046 13 14 12.1046 14 11C14 9.89543 13.1046 9 12 9C10.8954 9 10 9.89543 10 11C10 12.1046 10.8954 13 12 13ZM12 13L12 16" />
+  </Stroke>
+);
+
+/* Paused / on hold (the row-status badge's marker) */
+export const PauseIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M9 5.5V18.5" />
+    <path d="M15 5.5V18.5" />
+  </Stroke>
+);
+
+/* A slot not yet filled (the Unallocated row-status badge's marker) */
+export const CircleDashedIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M12 3a9 9 0 0 1 4.5 1.2M20.8 7.5A9 9 0 0 1 21 12c0 1.6-.4 3.1-1.2 4.5M16.5 19.8A9 9 0 0 1 12 21c-1.6 0-3.1-.4-4.5-1.2M3.2 16.5A9 9 0 0 1 3 12c0-1.6.4-3.1 1.2-4.5M7.5 3.2A9 9 0 0 1 12 3" />
   </Stroke>
 );
 

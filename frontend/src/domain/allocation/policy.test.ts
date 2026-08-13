@@ -111,6 +111,24 @@ describe('barReasons / isBarred', () => {
 // The old app's canAutoAllocate contract (ported from
 // client/packages/invoices/src/StockOut/utils.test.ts): auto-distribution's
 // exclusions are UNCONDITIONAL — the issue preferences only widen them.
+describe('isExpired (D112 — the display predicate)', () => {
+  // Threshold-free calendar comparison: a batch is expired ON its expiry day
+  // (the guard's threshold-0 semantics), the day before it is not, and the
+  // verdict cannot flip with the time of day the check runs.
+  it('flips exactly at the expiry day, at any time of day', () => {
+    for (const clock of [
+      '2026-08-13T00:00:01',
+      '2026-08-13T12:00:00',
+      '2026-08-13T23:59:59',
+    ]) {
+      const today = new Date(clock);
+      expect(isExpired('2026-08-14', today)).toBe(false); // day before expiry
+      expect(isExpired('2026-08-13', today)).toBe(true); // the expiry day
+      expect(isExpired('2026-08-12', today)).toBe(true); // day after
+    }
+  });
+});
+
 describe('autoAllocateBarReasons (AC-AL2/AL10)', () => {
   const today = new Date('2025-12-15T12:00:00');
 

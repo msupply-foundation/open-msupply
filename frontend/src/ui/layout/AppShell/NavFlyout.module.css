@@ -74,12 +74,25 @@
 /* --- Section heading ---------------------------------------------------- */
 /* The section name the children belong to — the rail can't show it while
    collapsed, so the flyout carries it. */
+/* The section name the children belong to. It reads as a caption for the group,
+   not as the group's first row — which is what a rule buys and extra emphasis
+   would not: the title competed with the destinations on the same axis (text in
+   a stack, differing only in case and size), so the eye took it for a row. A
+   boundary is a different KIND of thing, and it is the app's own idiom for this
+   (the rule under a table's header band, the divider above the nav's lower
+   cluster).
+   The type then RECEDES rather than shouts — medium instead of semibold, wider
+   tracking — because the destinations are what the flyout was opened for. Size
+   and colour hold: --text-xs is the smallest type token, and --text-secondary
+   is 6.9:1 where the greys start failing AA for text (--gray-main is 3.1:1). */
 .title {
-  padding: var(--space-2) var(--space-3) var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  margin-block-end: var(--space-1);
+  border-block-end: 1px solid var(--surface-edge);
   color: var(--text-secondary);
   font-size: var(--text-xs);
-  font-weight: var(--weight-semibold);
-  letter-spacing: 0.05em;
+  font-weight: var(--weight-medium);
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 

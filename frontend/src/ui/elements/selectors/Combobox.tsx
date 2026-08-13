@@ -142,8 +142,10 @@ interface ComboboxProps<T> {
   /**
    * The status text shown when a settled search matched nothing (server mode's
    * "no matches" state). Defaults to `control.search.no-results-label` ("No
-   * results"); a caller overrides it — already translated — with a
-   * domain-specific message, e.g. the patient picker's "No matching patients".
+   * results") — or, for a client-mode list whose `items` is empty, to
+   * `label.no-options` ("No options"), since nothing typed there could match. A
+   * caller overrides both — already translated — with a domain-specific
+   * message, e.g. the patient picker's "No matching patients".
    */
   noResultsMessage?: string;
   /**
@@ -239,10 +241,15 @@ interface ComboboxProps<T> {
    */
   matchTriggerWidth?: boolean;
   /**
-   * Max-width cap, TextField's vocabulary: `compact` (10rem), `short` (25rem),
-   * `long` (37.5rem — the default, since option text is often long) or `full`
-   * to fill the container. Set it to sit level with the text fields it's
-   * stacked among, whose own default is `short`.
+   * Max-width CAP — opt-in, TextField's vocabulary and TextField's default:
+   * `full` (fill the container). A picker stacked among text fields now sits
+   * level with them with nothing passed — it used to default to `long`
+   * (37.5rem) "because option text is often long", which made it the one
+   * control whose bare width disagreed with every neighbour's. Long option
+   * text is handled where it actually is a problem: the POPUP, which can
+   * outgrow the trigger via `matchTriggerWidth={false}`. Name a cap
+   * (`compact` 10rem / `short` 25rem / `long` 37.5rem) only when the data is
+   * short or the container unbounded.
    */
   width?: 'compact' | 'short' | 'long' | 'full';
   /**
@@ -429,13 +436,31 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
     serverMode() ? props.items.length === 0 : shown().total === 0
   );
 
-  // The empty-list copy splits in two (see emptyQueryMessage): nothing typed
-  // is a prompt, a settled search with no rows is an answer. Callers that pass
-  // one message get one — emptyQueryMessage falls back to noResultsMessage.
-  const emptyMessage = () =>
-    (filterText().trim() === ''
-      ? (props.emptyQueryMessage ?? props.noResultsMessage)
-      : props.noResultsMessage) ?? t('control.search.no-results-label');
+  // A client-mode list holding NO options at all — a third empty state, and
+  // the only one where searching is beside the point: the caller passed an
+  // empty `items`, so neither "No results" nor "Start typing" is true, and
+  // both invite the user to keep typing at a list that was never populated
+  // (#906 — an option custom field configured with zero options). Server mode
+  // is excluded: there an empty `items` means the fetch hasn't landed or hasn't
+  // matched, which the two messages below already describe correctly.
+  const noOptionsAtAll = () => !serverMode() && props.items.length === 0;
+
+  // The empty-list copy splits in three (see emptyQueryMessage): nothing typed
+  // is a prompt, a settled search with no rows is an answer, and no options at
+  // all is neither. A caller's own message always wins — only the DEFAULT
+  // varies — so a picker that supplies its own copy is unaffected.
+  const emptyMessage = () => {
+    const fromCaller =
+      filterText().trim() === ''
+        ? (props.emptyQueryMessage ?? props.noResultsMessage)
+        : props.noResultsMessage;
+    return (
+      fromCaller ??
+      (noOptionsAtAll()
+        ? t('label.no-options')
+        : t('control.search.no-results-label'))
+    );
+  };
 
   // Resolved once per change and read twice below (test + render).
   const footer = children(() => props.listboxFooter);
@@ -520,7 +545,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   return (
     <KCombobox.Root<T>
       class={props.class ? `${styles.field} ${props.class}` : styles.field}
-      data-width={props.width}
+      data-width={props.width ?? 'full'}
       data-size={props.size ?? 'default'}
       data-borderless={props.borderless ? '' : undefined}
       options={options()}

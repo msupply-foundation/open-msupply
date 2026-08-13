@@ -148,7 +148,6 @@ export const PatientDetailsForm: Component<PatientDetailsFormProps> = props => {
             <FormRow>
               <TextField
                 label={t('label.code')}
-                width="full"
                 required
                 error={errorFor('code')}
                 value={props.draft.code}
@@ -169,14 +168,12 @@ export const PatientDetailsForm: Component<PatientDetailsFormProps> = props => {
             </FormRow>
             <TextField
               label={t('label.code2')}
-              width="full"
               value={props.draft.code2}
               disabled={props.disabled}
               onInput={e => props.setField('code2', e.currentTarget.value)}
             />
             <TextField
               label={t('label.first-name')}
-              width="full"
               required
               error={errorFor('firstName')}
               value={props.draft.firstName}
@@ -185,7 +182,6 @@ export const PatientDetailsForm: Component<PatientDetailsFormProps> = props => {
             />
             <TextField
               label={t('label.last-name')}
-              width="full"
               required
               error={errorFor('lastName')}
               value={props.draft.lastName}
@@ -195,7 +191,6 @@ export const PatientDetailsForm: Component<PatientDetailsFormProps> = props => {
             <FormRow>
               <DateField
                 label={t('label.date-of-birth')}
-                width="full"
                 max={today}
                 value={props.draft.dateOfBirth}
                 disabled={props.disabled}
@@ -222,7 +217,6 @@ export const PatientDetailsForm: Component<PatientDetailsFormProps> = props => {
                 fallback={
                   <NumberField
                     label={t('label.age')}
-                    width="full"
                     max={MAX_AGE}
                     value={age()}
                     disabled={props.disabled}
@@ -248,7 +242,6 @@ export const PatientDetailsForm: Component<PatientDetailsFormProps> = props => {
             </FormRow>
             <Combobox<GenderOption>
               label={t('label.gender')}
-              width="full"
               items={genderOptions()}
               itemToString={o => o.label}
               itemToValue={o => o.value}
@@ -262,14 +255,12 @@ export const PatientDetailsForm: Component<PatientDetailsFormProps> = props => {
           <FormSection title={t('label.contact')}>
             <TextField
               label={t('label.address')}
-              width="full"
               value={props.draft.address1}
               disabled={props.disabled}
               onInput={e => props.setField('address1', e.currentTarget.value)}
             />
             <TextField
               label={t('label.phone')}
-              width="full"
               value={props.draft.phone}
               disabled={props.disabled}
               onInput={e => props.setField('phone', e.currentTarget.value)}
@@ -302,7 +293,6 @@ export const PatientDetailsForm: Component<PatientDetailsFormProps> = props => {
             <Show when={props.draft.isDeceased}>
               <DateField
                 label={t('label.date-of-death')}
-                width="full"
                 max={today}
                 value={props.draft.dateOfDeath}
                 disabled={props.disabled}

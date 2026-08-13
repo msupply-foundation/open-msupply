@@ -29,6 +29,11 @@ import {
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import { CloseIcon, PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
 import { stripEmpty } from '../../../typeHelpers';
 import {
   OutboundShipments,
@@ -59,8 +64,6 @@ import {
 // list (StocktakesList): URL-backed state, serialised resource source, library
 // components only, no CSS.
 
-const DEFAULT_PAGE_SIZE = 20;
-
 type ShipmentRow = OutboundShipmentsResult['invoices']['nodes'][number];
 
 type SortKey = NonNullable<OutboundShipmentsVariables['sort']>[number]['key'];
@@ -88,8 +91,10 @@ const DEFAULT_STATE: OutboundListState = {
 const OutboundShipmentsList: Component = () => {
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
-  const { query, setQuery } =
-    useUrlQueryState<OutboundListState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<OutboundListState>({
+    ...DEFAULT_STATE,
+    first: initialPageSize(),
+  });
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   const [createOpen, setCreateOpen] = createSignal(false);
 
@@ -419,6 +424,10 @@ const OutboundShipmentsList: Component = () => {
           // single page is every matching row already on screen. The band's
           // height goes to the rows.
           conditional: true,
+          onPageSizeChange: first => {
+            rememberPageSize(first);
+            setQuery({ ...query(), first, offset: 0 });
+          },
         }}
       />
       <CustomerSearchModal

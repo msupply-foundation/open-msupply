@@ -39,10 +39,18 @@ import {
   getCellDefinition,
   getFlagCell,
   getNumberCell,
+  isNearOrPastExpiry,
 } from '../../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../../ui/utils/rem';
 import { createTableConfig } from '../../../../api/createTableConfig';
 import { CheckIcon, InfoIcon } from '../../../../ui/icons';
+import {
+  CheckIcon,
+  InfoIcon,
+  MessageSquareIcon,
+  StockIcon,
+} from '../../../../ui/icons';
+import { RowStatusBadges, uncapped } from '../RowStatusBadges';
 import {
   DraftStockOutLines,
   ItemVariants,
@@ -58,6 +66,7 @@ import {
   createFocusTargets,
 } from '../../../../ui/utils/createFocusTarget';
 import { toSaveLineInputs } from './saveLineInputs';
+import { mirroredIssueValue, roundedLensValue } from './issueMirror';
 import {
   availableUnits as sumAvailableUnits,
   issuedUnits as sumIssuedUnits,
@@ -67,11 +76,11 @@ import {
   barReasons,
   clampManualPacks,
   deriveIssueWarnings,
+  isExpired,
   rowHasAllocatableStock,
   distributeIssue,
   fillOrderCompare,
   lensToUnits,
-  unitsToLens,
   packsToDoses,
   dosesToPacks,
   type AllocateUnit,
@@ -602,6 +611,47 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     nonAllocatableIds.has(line.id);
   const rowDisabled = (line: DraftLine): boolean =>
     isBarred(line) || isNonAllocatable(line);
+  // Calendar-expired batch (D112) — the card's error tone + Expired badge.
+  // Display-only; the bar predicates own the preference/threshold logic.
+  const lineExpired = (line: DraftLine): boolean =>
+    !!line.expiryDate && isExpired(line.expiryDate);
+  // Inside the shared near-expiry window but not yet expired — the "Near
+  // expiry" badge tier.
+  const lineNearExpiry = (line: DraftLine): boolean =>
+    !!line.expiryDate &&
+    !lineExpired(line) &&
+    isNearOrPastExpiry(line.expiryDate);
+  const lineHeld = (line: DraftLine): boolean =>
+    line.stockLineOnHold || !!line.location?.onHold;
+  // Row-STATUS background tint (OMS-REG-DIST-03.37–.39, D111). Precedence
+  // matches this grid's CARDS — expired red, then held amber, then allocated
+  // (packs issued) green — so a batch shows one colour whichever view
+  // renders it; the detail table alone runs allocated-first. The tint shows
+  // through the disabled grey (the status is why the row is disabled); the
+  // badges and the bold red expiry cell carry the words. Reads numberOfPacks
+  // from the draft store inside the prop function, so per-batch edits reflow
+  // the tint live.
+  const lineRowTint = (
+    line: DraftLine
+  ): 'success' | 'warning' | 'error' | undefined => {
+    if (lineExpired(line)) return 'error';
+    if (lineHeld(line)) return 'warning';
+    if (line.numberOfPacks > 0) return 'success';
+    return undefined;
+  };
+  // The card tone (title + border + corner badge — D111/D112): expired
+  // outranks held, matching the tint precedence; both corner badges still
+  // show. A batch auto-allocation will use gets the green border + shadow
+  // ('success' — border/shadow only, no title tint) beside its green badge;
+  // the auto-barred states can't co-occur with it.
+  const lineCardTone = (
+    line: DraftLine
+  ): 'success' | 'warning' | 'error' | undefined => {
+    if (lineExpired(line)) return 'error';
+    if (lineHeld(line)) return 'warning';
+    if (willAutoAllocate(line)) return 'success';
+    return undefined;
+  };
   const lineAutoBarReasons = (line: DraftLine) =>
     autoAllocateBarReasons(line, allocationPrefs());
   // The tick column's predicate ("will be used in auto-allocation"): auto-
@@ -662,7 +712,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     const v = issueValue();
     if (v == null) return;
     const units = lensToUnits(v, previous) ?? 0;
-    setIssueValue(Math.round(unitsToLens(units, next) * 100) / 100);
+    setIssueValue(roundedLensValue(units, next));
   };
 
   // FEFO auto-distribution across the grid (spec S4 issue field): the shared
@@ -717,6 +767,15 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     distribute(units ?? 0);
   };
 
+  // The Issue field mirrors a manual per-batch edit (AC-AL16,
+  // OMS-REG-DIST-03.40): the grid's new total — issued + placeholder, the
+  // same requested total the seed shows (D61) — in the current lens. A bare
+  // setIssueValue never re-distributes.
+  const syncIssueValue = () =>
+    setIssueValue(
+      mirroredIssueValue(issuedUnits(), placeholderUnits(), allocateIn())
+    );
+
   // Direct per-batch edit (OMS-REG-DIST-03.19/AC-AL6): whole packs — a
   // fractional entry rounds UP, an entry beyond availability clamps DOWN to the
   // whole-pack floor (rules.md § whole-pack arithmetic). An adjusted entry is
@@ -737,6 +796,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         : value;
     const applied = clampManualPacks(requestedPacks, line.availablePacks);
     setDraft(index, 'numberOfPacks', applied);
+    syncIssueValue();
     const appliedQuantity = inDoses
       ? packsToDoses(applied, line.packSize, line.dosesPerUnit)
       : applied;
@@ -778,7 +838,12 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     const index = draft.findIndex(line => line.id === id);
     if (index < 0) return;
     setDraft(index, 'vvmStatus', status);
-    if (status?.unusable) setDraft(index, 'numberOfPacks', 0);
+    if (status?.unusable) {
+      // The forced zero is a per-batch packs change like any other — the
+      // Issue field mirrors it (AC-AL16, OMS-REG-DIST-03.40).
+      setDraft(index, 'numberOfPacks', 0);
+      syncIssueValue();
+    }
     setDirty(true);
     // As in distribute()/setPacks() — the confirmations are re-earned against
     // the changed draft.
@@ -948,7 +1013,18 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       cell: info => (
         <Show when={willAutoAllocate(info.row.original)}>
           <Popover
-            trigger={<CheckIcon />}
+            // data-flag/-label: bare check in the grid; on a card badge the
+            // label shows beside it, or this tick and the On-hold flag read
+            // as the same anonymous check (see DataTable.module.css § flag
+            // cells).
+            trigger={
+              <span data-flag data-flag-tone="success">
+                <CheckIcon />
+                <span data-flag-label aria-hidden="true">
+                  {t('description.used-in-auto-allocation')}
+                </span>
+              </span>
+            }
             triggerLabel={t('description.used-in-auto-allocation')}
             openOnHover
             placement="top"
@@ -970,14 +1046,25 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       // The meta rides as getCellDefinition's second argument, NOT a sibling
       // `meta:` key — the spread returns its own `meta` and would overwrite one
       // declared beside it (which is exactly how this card lost its header).
-      ...getCellDefinition('batch', {
-        headerPosition: 'primary',
-        showLabel: true,
-        hideFromColumnSettings: true,
-      }),
+      // Cap-less (the shared `uncapped` — the chips fill the code preset's
+      // 7rem cap and pin the column, the #601 trap the detail table hit too).
+      ...uncapped(
+        getCellDefinition('batch', {
+          headerPosition: 'primary',
+          showLabel: true,
+          hideFromColumnSettings: true,
+        })
+      ),
+      // Room for the batch value AND its status chips by default; still
+      // user-resizable in both directions (no cap).
+      size: remToPx(13),
       // A batch backed by an ITEM VARIANT carries an info marker beside its
       // name — click reveals the item's variants with this batch's marked
       // (spec S4 § batch grid), matching the old app's variant-info icon.
+      // The row-status badges follow (Expired / Near expiry / On hold —
+      // ui-standards § table interaction, D111/D112): word chips in table
+      // view; cards hide them ([data-row-badges]) and carry the states as
+      // their corner badges instead.
       cell: info => {
         const line = info.row.original;
         return (
@@ -999,6 +1086,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                 </Popover>
               )}
             </Show>
+            <RowStatusBadges
+              expired={lineExpired(line)}
+              nearExpiry={lineNearExpiry(line)}
+              held={lineHeld(line)}
+            />
           </span>
         );
       },
@@ -1366,7 +1458,27 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       header: () => t('label.on-hold'),
       // A row-level status flag — the card's badge slot, like the inbound
       // editor's own status badge.
-      ...getFlagCell(t('label.on-hold'), { headerPosition: 'badge' }),
+      ...getFlagCell(
+        t('label.on-hold'),
+        { headerPosition: 'badge' },
+        'warning'
+      ),
+    },
+    {
+      // Expired flag, CARD-ONLY (D112): the grid already reddens the Expiry
+      // date cell under its header, but a card buries that in the body — the
+      // badge puts the word in the card corner, with the row's error tone.
+      c: { accessor: lineExpired, id: 'expired' },
+      header: () => t('label.expired'),
+      ...getFlagCell(
+        t('label.expired'),
+        {
+          headerPosition: 'badge',
+          hideOnTable: true,
+          hideFromColumnSettings: true,
+        },
+        'error'
+      ),
     },
   ];
 
@@ -1642,6 +1754,34 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               setConfig={tableConfig.setConfig}
             />
           </div>
+        {/* Batch grid: one row per available batch, FEFO-ordered; barred rows
+            disabled (AC-AL2 / AC-AL8). */}
+        <div class={styles.batchGrid}>
+          <DataTable
+            columns={columns()}
+            rows={draftRows()}
+            rowKey={line => line.id}
+            loading={loadingLines()}
+            cardGroups={CARD_GROUPS}
+            showCardToggle
+            showFullScreen={false}
+            rowState={line => (rowDisabled(line) ? 'disabled' : undefined)}
+            rowTint={lineRowTint}
+            cardTone={lineCardTone}
+            emptyMessage={t('messages.no-stock-available')}
+            config={tableConfig.config()}
+            setConfig={tableConfig.setConfig}
+          />
+        </div>
+
+        {/* Everything below the grid shares one vertical rhythm — the Stack's
+            gap replaces the per-block margins. The running total that used to
+            lead this stack now rides the footer's message slot. */}
+        <Stack gap="sm">
+          {/* Stacked warning banners (spec S4 § warnings). */}
+          <For each={warnings()}>
+            {message => <Alert severity="warning">{message}</Alert>}
+          </For>
 
           {/* ADVISORY messages — they inform, they don't gate the save, so they
               live in the flow after the last card and scroll away with it

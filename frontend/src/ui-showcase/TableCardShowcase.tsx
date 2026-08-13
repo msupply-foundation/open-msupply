@@ -957,7 +957,6 @@ const CardAdvancedDemo = () => {
             label="Note"
             hideLabel
             size="small"
-            width="full"
             value={notes[row.id]}
             onInput={e => setNotes(row.id, e.currentTarget.value)}
             onClick={e => e.stopPropagation()}

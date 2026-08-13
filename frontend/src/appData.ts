@@ -12,6 +12,12 @@ import type { LayeredConfig } from './ui/elements/table/tableConfig';
 // TableConfig) — the exact type DataTable resolves.
 type AppData = {
   previousStoreIdByUserId?: Record<string, string>;
+  // The store the user chose to ALWAYS open at sign-in (spec/startup rules
+  // § SL-9): saved when they answer Yes to the selection screen's "Always open
+  // this store?" prompt. Per user per device, like previousStoreIdByUserId —
+  // a machine in the pharmacy opens the pharmacy store, the warehouse machine
+  // the warehouse store, whoever's account is shared between them.
+  alwaysOpenStoreIdByUserId?: Record<string, string>;
   tableConfigByUserId?: Record<string, Record<string, LayeredConfig>>;
   // Label printer "print via USB" (spec/settings rules § Devices — label
   // printer): a DEVICE-local preference, deliberately not keyed by user and
@@ -28,6 +34,14 @@ type AppData = {
   // asked on the login page, before any user is known. The password is never
   // persisted.
   lastLoginUsername?: string;
+  // The rows-per-page a fresh visit starts at (spec/ui-standards/conventions.md
+  // § View state; issue #680): one value per user for the whole app — a "how
+  // much do I want to see at once" preference about the user, not about any one
+  // list. User-keyed like tableConfigByUserId so a shared device does not leak
+  // one user's choice to another (the reference app remembers device-wide;
+  // spec/DIVERGENCES.md records the delta). Every change is recorded, so an
+  // explicit choice survives even if the app-wide default ever moves.
+  pageSizeByUserId?: Record<string, number>;
 };
 
 const APP_DATA_KEY = 'open-mSupply-app-data';
@@ -70,6 +84,36 @@ export const recordPreviousStoreId = (
       [userId]: storeId,
     },
   });
+};
+
+// The user's always-open store on this device (spec/startup rules § SL-9), or
+// undefined when they have never answered Yes to the prompt. The store guard
+// treats a value that no longer names one of the user's stores as absent.
+export const getAlwaysOpenStoreId = (userId: string): string | undefined =>
+  readAppData().alwaysOpenStoreIdByUserId?.[userId];
+
+export const recordAlwaysOpenStoreId = (
+  userId: string,
+  storeId: string
+): void => {
+  const data = readAppData();
+  writeAppData({
+    ...data,
+    alwaysOpenStoreIdByUserId: {
+      ...data.alwaysOpenStoreIdByUserId,
+      [userId]: storeId,
+    },
+  });
+};
+
+// Withdraw the opt-in (SL-9): confirming a store with the checkbox unticked
+// clears the saved store, so the box never shows an opt-in that isn't in
+// force.
+export const clearAlwaysOpenStoreId = (userId: string): void => {
+  const data = readAppData();
+  const next = { ...data.alwaysOpenStoreIdByUserId };
+  delete next[userId];
+  writeAppData({ ...data, alwaysOpenStoreIdByUserId: next });
 };
 
 // The user's saved column config for a table (the writable layer). `{}` when
@@ -126,6 +170,22 @@ export const getLastLoginUsername = (): string | undefined =>
 
 export const recordLastLoginUsername = (username: string): void => {
   writeAppData({ ...readAppData(), lastLoginUsername: username });
+};
+
+// The user's remembered rows-per-page, or undefined when they have never
+// changed it — the caller (src/list/pageSize.ts) falls back to the app default.
+export const getPreferredPageSize = (userId: string): number | undefined =>
+  readAppData().pageSizeByUserId?.[userId];
+
+export const recordPreferredPageSize = (
+  userId: string,
+  pageSize: number
+): void => {
+  const data = readAppData();
+  writeAppData({
+    ...data,
+    pageSizeByUserId: { ...data.pageSizeByUserId, [userId]: pageSize },
+  });
 };
 
 // A LayeredConfig is empty when no band holds any (non-empty) TableConfig

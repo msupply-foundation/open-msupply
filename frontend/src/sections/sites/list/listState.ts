@@ -1,12 +1,11 @@
 import { stripEmpty } from '@/typeHelpers';
+import { DEFAULT_PAGE_SIZE } from '@/list/pageSize';
 import type { SitesVariables } from './sites.generated';
 
 // The register's URL-backed state and its mapping onto the GraphQL variables
 // (spec/sites/rules.md § the site register) — extracted from the view so the
 // sort / filter / pagination wiring is testable in node vitest. Filter and sort
 // are exactly the generated GraphQL shapes (kdd/type-safety: no remapping).
-
-export const DEFAULT_PAGE_SIZE = 20;
 
 /**
  * The sort keys the list may offer. `SiteSortFieldInput` declares three, but
