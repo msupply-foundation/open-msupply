@@ -25,6 +25,7 @@ import { TextField } from '../ui/elements/inputs/TextField';
 import { PasswordField } from '../ui/elements/inputs/PasswordField';
 import { NumberField } from '../ui/elements/inputs/NumberField';
 import { Button } from '../ui/elements/buttons/Button';
+import { DisclosureToggle } from '../ui/elements/buttons/DisclosureToggle';
 import { Alert } from '../ui/elements/feedback/Alert';
 import { ErrorDetails } from '../ui/elements/feedback/ErrorDetails';
 import { Tabs, TabList, TabPanel } from '../ui/elements/tabs/Tabs';
@@ -37,9 +38,16 @@ import {
   SYNC_POLL_INTERVAL_MS,
 } from '../config';
 import { changeLanguage, locale, t } from '../intl';
+import {
+  createFormValidation,
+  type FieldError,
+} from '../ui/layout/Form/formValidation';
 import { SaveServerLogLink } from '../platform/SaveServerLogLink';
 import styles from '../ui/styles/LoginInitLayout.module.css';
 import pageStyles from './Initialisation.module.css';
+
+/** Ties the advanced disclosure's toggle to the region it reveals. */
+const ADVANCED_REGION_ID = 'initialise-advanced';
 
 export const InitialisationPage: Component<{
   onComplete: () => void;
@@ -52,11 +60,6 @@ export const InitialisationPage: Component<{
     siteName: '',
     password: '',
     batchSize: undefined as number | undefined,
-  });
-  const [fieldErrors, setFieldErrors] = createSignal({
-    url: '',
-    siteName: '',
-    password: '',
   });
   const [showAdvanced, setShowAdvanced] = createSignal(false);
   // Spec: distinct from submitting — sync has actually begun (the mutation
@@ -195,17 +198,41 @@ export const InitialisationPage: Component<{
     return '';
   };
 
+  /*
+   * The three field rules, in field order. Each carries its own message but
+   * is held back until the first submit (`showOnSubmit`) — the form must open
+   * quiet, and the URL field's seeded "https://" is deliberately incomplete,
+   * so a message-carrying rule's default "show as soon as it trips" would
+   * greet the user with an error on a form they have not touched.
+   */
+  const fieldErrors = (): FieldError[] => [
+    {
+      id: 'url',
+      label: t('label.settings-url'),
+      failed: urlError(values().url) !== '',
+      message: urlError(values().url) || undefined,
+      showOnSubmit: true,
+    },
+    {
+      id: 'siteName',
+      label: t('label.settings-username'),
+      failed: values().siteName.trim() === '',
+      message: t('error.site-name-required'),
+      showOnSubmit: true,
+    },
+    {
+      id: 'password',
+      label: t('label.settings-password'),
+      failed: values().password.trim() === '',
+      message: t('error.password-required'),
+      showOnSubmit: true,
+    },
+  ];
+  const validation = createFormValidation(fieldErrors);
+
   const validate = (): boolean => {
-    const current = values();
-    const errors = {
-      url: urlError(current.url),
-      siteName:
-        current.siteName.trim() === '' ? t('error.site-name-required') : '',
-      password:
-        current.password.trim() === '' ? t('error.password-required') : '',
-    };
-    setFieldErrors(errors);
-    return Object.values(errors).every(message => message === '');
+    validation.arm();
+    return validation.valid();
   };
 
   // One initialise attempt. The user's own submit (retriesUsed 0) keeps the
@@ -423,7 +450,7 @@ export const InitialisationPage: Component<{
           const url = e.currentTarget.value;
           setValues(previous => ({ ...previous, url }));
         }}
-        error={fieldErrors().url || undefined}
+        error={validation.errorFor('url')}
         disabled={locked()}
       />
       <TextField
@@ -435,7 +462,7 @@ export const InitialisationPage: Component<{
           const siteName = e.currentTarget.value;
           setValues(previous => ({ ...previous, siteName }));
         }}
-        error={fieldErrors().siteName || undefined}
+        error={validation.errorFor('siteName')}
         disabled={locked()}
       />
       <PasswordField
@@ -447,30 +474,37 @@ export const InitialisationPage: Component<{
           const password = e.currentTarget.value;
           setValues(previous => ({ ...previous, password }));
         }}
-        error={fieldErrors().password || undefined}
+        error={validation.errorFor('password')}
         disabled={locked()}
       />
-      <button
-        type="button"
+      {/* The same disclosure affordance as the Synchronisation settings form's
+          (spec/settings/ui-surface § Synchronisation) — the class is placement
+          only. */}
+      <DisclosureToggle
+        expanded={showAdvanced()}
+        controls={ADVANCED_REGION_ID}
         class={pageStyles.advancedToggle}
         onClick={() => setShowAdvanced(previous => !previous)}
+        data-testid="initialise-advanced-toggle"
       >
         {showAdvanced()
           ? t('label.hide-advanced-options')
           : t('label.show-advanced-options')}
-      </button>
+      </DisclosureToggle>
       <Show when={showAdvanced()}>
-        <NumberField
-          label={t('label.settings-batch-size')}
-          helperText={t('label.settings-batch-size-helper')}
-          width="full"
-          min={1}
-          value={values().batchSize}
-          onChange={batchSize =>
-            setValues(previous => ({ ...previous, batchSize }))
-          }
-          disabled={locked()}
-        />
+        <div id={ADVANCED_REGION_ID}>
+          <NumberField
+            label={t('label.settings-batch-size')}
+            helperText={t('label.settings-batch-size-helper')}
+            width="full"
+            min={1}
+            value={values().batchSize}
+            onChange={batchSize =>
+              setValues(previous => ({ ...previous, batchSize }))
+            }
+            disabled={locked()}
+          />
+        </div>
       </Show>
       {/* Spec (OMS-REG-LGN-03.19): informational, never an error — the
           wait is expected and self-healing (D98). Mutually exclusive
