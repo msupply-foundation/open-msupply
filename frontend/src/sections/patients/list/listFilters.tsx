@@ -1,6 +1,6 @@
 import { t } from '../../../intl';
 import {
-  FilterSelect,
+  FilterMultiSelect,
   FilterTextInput,
   FilterDate,
   constructFilters,
@@ -24,7 +24,8 @@ export type PatientFilter = NonNullable<PatientsVariables['filter']>;
  *
  * Text filters match as substrings ({ like }); the Patient ID (identifier)
  * filter is the broad OR match across code / secondary code / name / program-
- * enrolment id (AC-L3); gender and date of birth match exactly ({ equalTo }).
+ * enrolment id (AC-L3); date of birth matches exactly ({ equalTo }) and
+ * gender as any of the ticked values ({ equalAny }, D101).
  * Custom-field filtering rides on its own bar (the shared customFieldFilters →
  * dynamicFilter, spec/ui-standards/custom-fields), not a PatientFilter chip, so
  * `dynamicFilter` stays dismissed in this map.
@@ -91,22 +92,22 @@ const FILTERS: Filter<PatientFilter>[] = constructFilters<PatientFilter>({
       />
     ),
   },
-  // Gender — a single-select over the store's configured subset (AC-G3), exact
-  // match. gender.equalAny is honoured too, but a single-select maps to
-  // equalTo.
+  // Gender — a multi-select over the store's configured subset (AC-G3),
+  // matching any of the ticks via gender.equalAny (honoured — contract §
+  // listing; D101). None → null so the chip stays.
   gender: {
     label: () => t('label.gender'),
     render: props => (
-      <FilterSelect<Gender>
+      <FilterMultiSelect<Gender>
         label={t('label.gender')}
         testId={props.testId}
-        value={props.filter().gender?.equalTo ?? ''}
-        options={[
-          { value: '', label: t('label.any') },
-          ...genderOptions().map(o => ({ value: o.value, label: o.label })),
-        ]}
-        onChange={value =>
-          props.setPartialFilter({ gender: value ? { equalTo: value } : null })
+        placeholder={t('label.any')}
+        values={props.filter().gender?.equalAny ?? []}
+        options={genderOptions().map(o => ({ value: o.value, label: o.label }))}
+        onChange={values =>
+          props.setPartialFilter({
+            gender: values.length ? { equalAny: values } : null,
+          })
         }
       />
     ),
