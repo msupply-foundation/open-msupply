@@ -38,7 +38,6 @@ import {
 import { createTableConfig } from '../../../../api/createTableConfig';
 import {
   CopyIcon,
-  InfoIcon,
   PlusCircleIcon,
   TrashIcon,
 } from '../../../../ui/icons';
@@ -274,7 +273,6 @@ const CARD_GROUPS: CardGroup<DraftBatch, GroupKey>[] = [
   {
     key: 'pricing',
     labelKey: 'label.pricing-additional-info',
-    icon: () => <InfoIcon />,
     panel: true,
     disclosure: 'closed',
   },

@@ -185,7 +185,6 @@ const CARD_GROUPS: CardGroup<DraftLine, GroupKey>[] = [
   {
     key: 'pricing',
     labelKey: 'label.pricing-additional-info',
-    icon: () => <InfoIcon />,
     panel: true,
     disclosure: 'closed',
   },
