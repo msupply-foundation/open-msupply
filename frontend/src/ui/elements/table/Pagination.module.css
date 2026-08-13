@@ -23,13 +23,14 @@
   color: var(--text-secondary);
 }
 
-/* The count face (the conditional footer's single-page state — see
-   Pagination.tsx `conditional`): the row count alone, at the bar's INLINE
-   START rather than the full bar's inline-end cluster. Nothing here navigates,
-   so there is no right-hand cluster to align to, and a lone number floating at
-   the far end reads as a stray. */
-.countOnly {
-  justify-content: flex-start;
+/* A pager SHARING a bar with other content (a detail view's status footer —
+   `inBar`): it sizes to its own cluster instead of claiming the bar's free
+   space. Without this the pager's flex: 1 above would let a crowded bar
+   squeeze the cluster below its content width, since flex shrinking beats the
+   nowrap inside it; at 0 0 auto the bar wraps the whole cluster onto the next
+   line instead, which is the intended narrow-screen behaviour. */
+.inBar {
+  flex: 0 0 auto;
 }
 
 /* The range "1–20 of 38" — body tone against the quiet bar text, and

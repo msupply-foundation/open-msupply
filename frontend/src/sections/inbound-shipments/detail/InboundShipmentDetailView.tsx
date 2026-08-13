@@ -40,6 +40,10 @@ import {
   getNumberCell,
   getTextCell,
 } from '../../../ui/elements/table/tableHelpers';
+import {
+  Pagination,
+  type PaginationProps,
+} from '../../../ui/elements/table/Pagination';
 import { remToPx } from '../../../ui/utils/rem';
 import styles from './InboundShipmentDetailView.module.css';
 import { createTableConfig } from '../../../api/createTableConfig';
@@ -181,6 +185,22 @@ const InboundShipmentDetailView: Component = () => {
     new Map()
   );
   const [activeTab, setActiveTab] = createSignal('details');
+
+  // The line table's pager. It lives in the screen's bottom bar — the status
+  // footer, or the selection footer while rows are ticked — rather than in a
+  // band of its own under the table (spec/ui-standards § tables → pagination):
+  // that bar is present at every line count, so hosting the pager there costs
+  // no extra row, and `conditional` means it renders nothing at all until the
+  // lines outrun one page, leaving the bar as it was and the height to the
+  // rows.
+  const linePagination = (): PaginationProps => ({
+    offset: query().offset,
+    pageSize: query().first,
+    total: totalCount(),
+    onOffsetChange: offset => setQuery({ ...query(), offset }),
+    onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+    conditional: true,
+  });
   // The line-edit modal open state: { itemId, lineId } to edit an item's
   // batches (lineId = the clicked batch, focused on open), {} to add a new
   // item, undefined = closed. Fixed for the whole "OK & next" walk — the modal
@@ -1006,6 +1026,7 @@ const InboundShipmentDetailView: Component = () => {
                       isExternal={isExternal()}
                       onSetHold={setHold}
                       onAdvanced={onAdvanced}
+                      pagination={linePagination()}
                     />
                   }
                 >
@@ -1083,6 +1104,9 @@ const InboundShipmentDetailView: Component = () => {
                       }
                       onDone={() => setSelectedIds([])}
                     />
+                    {/* The pager rides the selection face as well: ticking a
+                        row must not strip the way to the rest of the lines. */}
+                    <Pagination {...linePagination()} inBar />
                     <ContentFooterActions>
                       <Button
                         variant="secondary"
@@ -1143,22 +1167,6 @@ const InboundShipmentDetailView: Component = () => {
                       ? tableConfig.saveGlobalTableConfig
                       : undefined
                   }
-                  pagination={{
-                    offset: query().offset,
-                    pageSize: query().first,
-                    total: totalCount(),
-                    onOffsetChange: offset => setQuery({ ...query(), offset }),
-                    onPageSizeChange: first =>
-                      setQuery({ ...query(), first, offset: 0 }),
-                    // The footer earns its space (ui-standards § tables →
-                    // pagination). It matters most here: the status footer
-                    // below is always present, so a pager over a shipment with
-                    // no lines is a second bar of chrome navigating nowhere.
-                    // 'count' rather than the lists' 'nothing' — how many lines
-                    // a shipment has is a fact about the shipment, not a
-                    // restatement of the rows on screen.
-                    conditional: 'count',
-                  }}
                 />
               </TabPanel>
               <Show when={isExternal()}>
