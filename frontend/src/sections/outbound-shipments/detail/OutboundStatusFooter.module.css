@@ -1,10 +1,24 @@
 /* The shipment's totals, sharing the status bar with Hold, the status track,
-   the pager and the status button. ONE quiet reading in the pager's tone
-   (secondary, --text-sm, tabular-nums), not a pair of labelled fields: a
-   label/value pair stacks its label over its value the moment the bar
+   the pager and the status button. ONE quiet reading, not a pair of labelled
+   fields: a label/value pair stacks its label over its value the moment the bar
    tightens, spending two lines of a dense row on two numbers. No wrap, so a
-   crowded bar wraps the whole reading rather than splitting it. */
+   crowded bar wraps the whole reading rather than splitting it.
+
+   The GAP is what holds it apart from the status track it would otherwise read
+   as a fourth crumb of — wider than the bar's own --space-3, since equal gaps
+   make equal-looking groups. Colour can't do that job: measured against a real
+   track, --text-body is the exact tone of a REACHED stage, so the figures
+   became a continuation of the track's dark text on any part-progressed
+   document; --text-secondary is darker than the greyed stages ahead and
+   lighter than the reached ones behind, which reads as its own thing in both
+   states. Deliberately not a rule or a tint either: this bar wraps at narrow
+   widths, where a leading border reads as a stray tick, and a tinted pill
+   beside a real button reads as interactive. */
 .totals {
+  /* Both sides: the pager that follows carries body-tone numerals of its own
+     ("1–20 of 66"), and at the bar's default gap the two readings ran together
+     into one string of figures. */
+  margin-inline: var(--space-5);
   color: var(--text-secondary);
   font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
