@@ -580,7 +580,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     return lens.kind !== 'packs' || line.packSize === lens.size;
   };
 
-  // Available = units auto-distribution can draw from (AC-AL16, D102): held,
+  // Available = units auto-distribution can draw from (AC-AL16, D108): held,
   // expired, and unusable-VVM batches contribute nothing — the figure is the
   // Issue entry's headroom, so an item whose only stock is expired reads 0
   // (issue #945). The excluded rows still render in the grid, disabled.

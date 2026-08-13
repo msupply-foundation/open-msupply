@@ -357,9 +357,6 @@ const SupplierReturnDetailView: Component = () => {
     return undefined;
   };
 
-  const existingItemIds = (): string[] => [
-    ...new Set(rows().map(line => line.item.id)),
-  ];
   const existingLineIds = (): ReadonlySet<string> =>
     new Set(rows().map(line => line.id));
 
@@ -738,7 +735,6 @@ const SupplierReturnDetailView: Component = () => {
                   mode={editState()?.mode ?? 'update'}
                   initialItemId={editItemId()}
                   initialLineId={editLineId()}
-                  excludeItemIds={existingItemIds}
                   nextItem={nextItem}
                   itemById={itemById}
                   onSaved={onLinesChanged}

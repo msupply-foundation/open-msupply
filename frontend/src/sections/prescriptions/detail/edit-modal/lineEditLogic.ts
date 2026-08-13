@@ -70,7 +70,7 @@ export const seedDraftLines = (
 
 /**
  * Units available across the rows auto-distribution can draw from (AC-AL16,
- * D102) — judged on the AUTO bar, so expired and unusable-VVM stock never
+ * D108) — judged on the AUTO bar, so expired and unusable-VVM stock never
  * counts (preference or not; an item with only expired stock reads 0 — issue
  * #945), and neither does held stock: the editable held-with-allocation
  * exception row (AC-AL14) only adjusts what it already holds.
