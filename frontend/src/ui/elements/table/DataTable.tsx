@@ -170,11 +170,38 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
   rowState?: (row: T) => 'verified' | 'warning' | 'disabled' | undefined;
   /**
    * Semantic text tone for matching rows: 'info' for lines awaiting an action
-   * (placeholder / uncounted lines), 'error' for a line the server refused (a
-   * failed bulk operation). Stamps data-tone on the row, mapped to palette
-   * tokens in CSS. Semantic names only, never colours.
+   * (placeholder / uncounted lines), 'warning' for a line needing attention
+   * before it can proceed (a held batch on an outbound line), 'error' for a
+   * line in an error state (expired stock; a server-refused bulk line).
+   * Stamps data-tone on the row, mapped to palette tokens in CSS: table view
+   * paints the whole row's text, card view the card's identity title plus,
+   * for warning/error, a tinted border + faint shadow. Semantic names only,
+   * never colours — and never colour alone: the tone restates a fact some
+   * cell already states in words.
    */
-  rowTone?: (row: T) => 'info' | 'error' | undefined;
+  rowTone?: (row: T) => 'info' | 'warning' | 'error' | undefined;
+  /**
+   * Card-only tone override: when set, CARD view takes its tone (identity
+   * title + the warning/error border/shadow) from this instead of rowTone,
+   * and rowTone is free to stay unset — for a page whose table view must NOT
+   * colour row text (outbound's status-tinted tables, D111) but whose cards
+   * keep the tone treatment. rowTone's vocabulary plus 'success': a green
+   * border + faint shadow ONLY (title untinted) — an affirmative state (a
+   * batch auto-allocation will use) whispers, where warning/error shout.
+   */
+  cardTone?: (row: T) => 'info' | 'success' | 'warning' | 'error' | undefined;
+  /**
+   * Semantic record-STATUS background tint, always on (unlike the rowState
+   * tints, which show only while selected): 'success' for a satisfied row
+   * (an outbound line with stock allocated), 'error' for an error-state row
+   * (expired stock), 'warning' for a row needing attention (a held batch).
+   * One tint per row — the page encodes its own precedence. Table view only
+   * (cards carry status via cardTone + badges); stamps data-tint on the row,
+   * mapped to palette tokens in CSS; selection deepens the tint. Never
+   * colour alone: the tint restates a fact a cell states in words
+   * (spec D111).
+   */
+  rowTint?: (row: T) => 'success' | 'warning' | 'error' | undefined;
   /**
    * The data is being fetched. Drives the loading treatment so a slow fetch
    * never flashes the empty state (issues #160/#196): with NO rows yet
@@ -1169,6 +1196,9 @@ export function DataTable<T, K extends string, G extends string = never>(
                         enableSelection={props.enableSelection ?? false}
                         selectionDisabled={props.selectionDisabled ?? false}
                         onRowClick={props.onRowClick}
+                        rowTone={row =>
+                          (props.cardTone ?? props.rowTone)?.(row)
+                        }
                       />
                     </Match>
                     <Match when={viewMode() === 'table'}>
@@ -1181,6 +1211,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                             onRowClick={props.onRowClick}
                             rowState={props.rowState}
                             rowTone={props.rowTone}
+                            rowTint={props.rowTint}
                             pinnedStyle={pinnedStyle}
                             leadingPinnedStyle={leadingPinnedStyle}
                             frozenEdge={frozenEdge}

@@ -450,7 +450,6 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                 {textField => (
                   <TextField
                     label={textField.label}
-                    width="full"
                     value={textValue(textField.key)}
                     disabled={textField.readOnly}
                     required={textField.required}
@@ -470,7 +469,6 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                    */
                   <NumberField
                     label={numberField.label}
-                    width="full"
                     decimalLimit={2}
                     value={numberValue(numberField.key)}
                     disabled={numberField.readOnly}
@@ -497,7 +495,6 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                 {dateField => (
                   <DateField
                     label={dateField.label}
-                    width="full"
                     value={dateArgumentDay(values[dateField.key])}
                     min={
                       dateFieldBounds(dateField, values, localTodayIso()).min
@@ -533,7 +530,6 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                 {dateTimeField => (
                   <DateTimeField
                     label={dateTimeField.label}
-                    width="full"
                     value={textValue(dateTimeField.key) || null}
                     disabled={dateTimeField.readOnly}
                     required={dateTimeField.required}
@@ -560,10 +556,6 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                 {enumField => (
                   <Select
                     label={enumField.label}
-                    // Every row spans the dialog's full width (ui-surface S3
-                    // layout) — Select's default short cap would leave this
-                    // row narrower than its neighbours.
-                    width="full"
                     options={enumField.options}
                     value={selectValue(enumField.key)}
                     disabled={enumField.readOnly}
@@ -606,7 +598,6 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                  */}
                 <DateRangeField
                   label={field.label}
-                  width="full"
                   value={rangeValue(field.key)}
                   onChange={range => {
                     const start = range.start ?? '';
@@ -789,7 +780,6 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                     with its label so the form still lists the filter. */}
                 <TextField
                   label={field.label}
-                  width="full"
                   disabled
                   value=""
                   helperText={t('message.filter-not-supported')}

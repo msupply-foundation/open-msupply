@@ -1,6 +1,6 @@
 import { t } from '../../../intl';
 import {
-  FilterSelect,
+  FilterMultiSelect,
   FilterTextInput,
   constructFilters,
   type Filter,
@@ -18,8 +18,9 @@ export type ReturnsFilter = NonNullable<SupplierReturnsVariables['filter']>;
 // supplier return's forward sequence plus its transfer-counterpart display
 // stages — further limited by the invoice-status-options preference (rules
 // § preference gates), read lazily per render via the accessor the list passes
-// in. Single-select equalTo (the shared invoices resolver's honoured operator,
-// mirroring the stocktakes finding).
+// in. Multi-select
+// "any of" over status.equalAny (D110; the shared invoices resolver honours
+// the full equal-filter set).
 const STATUS_OPTIONS = [
   'NEW',
   'PICKED',
@@ -66,27 +67,32 @@ export const createFilters = (
         />
       ),
     },
+    // Status — multi-select "any of" (D110): ticks accumulate into
+    // status.equalAny; none → null so the chip stays. NARROW, never assert:
+    // the wire field spans every invoice status (a stale URL could carry
+    // any), so keep only this list's offered vocabulary.
     status: {
       label: () => t('label.status'),
       render: props => (
-        <FilterSelect
+        <FilterMultiSelect
           label={t('label.status')}
           testId={props.testId}
-          value={props.filter().status?.equalTo ?? ''}
-          options={[
-            { value: '', label: t('label.any') },
-            ...STATUS_OPTIONS.filter(
-              status =>
-                allowedStatuses().length === 0 ||
-                allowedStatuses().includes(status)
-            ).map(status => ({
-              value: status,
-              label: STATUS_LABELS[status],
-            })),
-          ]}
-          onChange={value =>
+          placeholder={t('label.any')}
+          values={(props.filter().status?.equalAny ?? []).filter(
+            (status): status is (typeof STATUS_OPTIONS)[number] =>
+              STATUS_OPTIONS.some(offered => offered === status)
+          )}
+          options={STATUS_OPTIONS.filter(
+            status =>
+              allowedStatuses().length === 0 ||
+              allowedStatuses().includes(status)
+          ).map(status => ({
+            value: status,
+            label: STATUS_LABELS[status],
+          }))}
+          onChange={values =>
             props.setPartialFilter({
-              status: value ? { equalTo: value } : null,
+              status: values.length ? { equalAny: values } : null,
             })
           }
         />

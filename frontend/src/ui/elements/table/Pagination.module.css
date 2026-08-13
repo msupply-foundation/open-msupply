@@ -34,12 +34,14 @@
 }
 
 /* The rows-per-page Select, laid out inline for the bar: label beside a compact
-   trigger (overrides the Select field's default stacked column + short max-width). */
+   trigger (overrides the Select field's default stacked column). No max-width
+   override: the field's own `[data-width]` rule outranks a bare class either
+   way, and none is needed — .pageSize is a content-sized flex item of the bar,
+   so the `full` default's `max-width: 100%` never stretches it. */
 .pageSize {
   flex-direction: row;
   align-items: center;
   gap: var(--space-2);
-  max-width: none;
   white-space: nowrap;
 }
 

@@ -87,7 +87,6 @@ const ReLoginForm: Component<{ currentUsername: string }> = props => {
       <form id={formId} class={styles.stack} onSubmit={e => void submit(e)}>
         <TextField
           label={t('heading.username')}
-          width="full"
           name="username"
           data-testid="re-login-username-input"
           autocomplete="username"
@@ -100,7 +99,6 @@ const ReLoginForm: Component<{ currentUsername: string }> = props => {
         />
         <PasswordField
           label={t('heading.password')}
-          width="full"
           name="password"
           data-testid="re-login-password-input"
           autocomplete="current-password"

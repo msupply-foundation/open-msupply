@@ -303,6 +303,20 @@ tr[data-tone='info'] > .td {
   color: var(--info-main);
 }
 
+/* 'warning' = a row needing attention before it can proceed (e.g. an outbound
+   line issued from a held batch — spec D111). Text only, like 'info'; the
+   fact itself is stated in words by a cell (never colour alone). */
+tr[data-tone='warning'] > .td {
+  color: var(--warning-main);
+}
+
+/* 'error' = a row in an error state (an expired batch — spec D112; a
+   server-refused bulk line). The expired row's bold red Expiry-date cell is
+   the words the tone restates. */
+tr[data-tone='error'] > .td {
+  color: var(--error-main);
+}
+
 /* Disabled rows: cursor follows TRUE interactivity — not-allowed only
    where a click does nothing; clickable read-only rows (spec AC-L3:
    they still open) keep the pointer. The grey fill + muted text live
@@ -633,6 +647,33 @@ tr[data-row-state='disabled'] > .selectCell {
   color: var(--text-secondary);
 }
 
+/* Record-STATUS tints (rowTint — spec D111): always-on backgrounds naming
+   the row's status (outbound lines: allocated green / expired red / held
+   amber), unlike the rowState tints above which show only while selected.
+   Same opaque color-mix recipe over --surface-raised so pinned cells cover
+   cleanly. AFTER the disabled rule (equal specificity): a disabled held/
+   expired row keeps its tint background under the disabled muted text — the
+   status is why the row is disabled. Selection deepens each tint (rules
+   with the selection block below). */
+tr[data-tint='success'] > .td,
+tr[data-tint='success'] > .selectCell {
+  background: color-mix(in srgb, var(--success-main) 8%, var(--surface-raised));
+}
+
+tr[data-tint='warning'] > .td,
+tr[data-tint='warning'] > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--warning-main) 10%,
+    var(--surface-raised)
+  );
+}
+
+tr[data-tint='error'] > .td,
+tr[data-tint='error'] > .selectCell {
+  background: color-mix(in srgb, var(--error-main) 8%, var(--surface-raised));
+}
+
 /* Row density (ui-standards § tables → row heights), keyed off the
    data-density the DataTable stamps on the <table> (chosen in the Settings
    popover; comfortable is the spec's ⭐ default, and the default grows to
@@ -687,6 +728,19 @@ tr[data-row-state='disabled'] > .selectCell {
   --th-pad-inline: 1.25rem; /* = body spacious inline padding */
 }
 
+/* A row both disabled and toned (a held or expired batch in a line editor's
+   grid — spec D111/D112) keeps the disabled grey fill but reads in its tone:
+   the state is WHY the row is disabled, so the tone must survive the muting.
+   Sits after the density block (higher specificity than its .td rules — the
+   lint's ascending order). */
+tr[data-row-state='disabled'][data-tone='warning'] > .td {
+  color: var(--warning-main);
+}
+
+tr[data-row-state='disabled'][data-tone='error'] > .td {
+  color: var(--error-main);
+}
+
 tr[data-selected]:not([data-row-state]) > .td,
 tr[data-selected]:not([data-row-state]) > .selectCell {
   background: color-mix(
@@ -712,6 +766,33 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
     var(--color-warning) 10%,
     var(--surface-raised)
   );
+}
+
+/* A selected STATUS-tinted row (rowTint, D111) deepens its own tint instead
+   of switching to the selection blue — the status is a durable fact of the
+   record; selection is transient. Same deepen ratios as the rules below.
+   After the selection rules (equal specificity) so the tint wins. */
+tr[data-selected][data-tint='success'] > .td,
+tr[data-selected][data-tint='success'] > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--success-main) 12%,
+    var(--surface-raised)
+  );
+}
+
+tr[data-selected][data-tint='warning'] > .td,
+tr[data-selected][data-tint='warning'] > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--warning-main) 15%,
+    var(--surface-raised)
+  );
+}
+
+tr[data-selected][data-tint='error'] > .td,
+tr[data-selected][data-tint='error'] > .selectCell {
+  background: color-mix(in srgb, var(--error-main) 12%, var(--surface-raised));
 }
 
 /* Hover deepens whichever selection tint is showing (spec: blue 8 → 12%,
@@ -741,6 +822,61 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
     var(--color-warning) 15%,
     var(--surface-raised)
   );
+}
+
+/* Selected + status-tinted rows keep their own deepened tint on hover too —
+   without these the blue hover rule above (same specificity, earlier… but
+   matching :not([data-row-state])) would flash blue over the status tint. */
+:where(tbody) tr[data-selected][data-tint='success']:hover > .td,
+:where(tbody) tr[data-selected][data-tint='success']:hover > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--success-main) 12%,
+    var(--surface-raised)
+  );
+}
+
+:where(tbody) tr[data-selected][data-tint='warning']:hover > .td,
+:where(tbody) tr[data-selected][data-tint='warning']:hover > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--warning-main) 15%,
+    var(--surface-raised)
+  );
+}
+
+:where(tbody) tr[data-selected][data-tint='error']:hover > .td,
+:where(tbody) tr[data-selected][data-tint='error']:hover > .selectCell {
+  background: color-mix(in srgb, var(--error-main) 12%, var(--surface-raised));
+}
+
+/* Hovering a CLICKABLE tinted row deepens its own tint (green → darker
+   green, etc.) — the hover affordance for rows that open something (the
+   detail table). Keyed off .rowClickable, so the line editors' grids (no
+   onRowClick) keep flat tints — hover means nothing there. Deeper than the
+   selected mixes above so the pointer's row stands out of a selection too;
+   AFTER them so the hover wins on a selected clickable row. */
+:where(tbody) tr.rowClickable[data-tint='success']:hover > .td,
+:where(tbody) tr.rowClickable[data-tint='success']:hover > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--success-main) 14%,
+    var(--surface-raised)
+  );
+}
+
+:where(tbody) tr.rowClickable[data-tint='warning']:hover > .td,
+:where(tbody) tr.rowClickable[data-tint='warning']:hover > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--warning-main) 17%,
+    var(--surface-raised)
+  );
+}
+
+:where(tbody) tr.rowClickable[data-tint='error']:hover > .td,
+:where(tbody) tr.rowClickable[data-tint='error']:hover > .selectCell {
+  background: color-mix(in srgb, var(--error-main) 14%, var(--surface-raised));
 }
 
 /* A frozen block's freeze cue, as ONE continuous shadow down the whole column:
@@ -956,6 +1092,29 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   );
 }
 
+/* A warning-toned card (rowTone 'warning' — a held batch): amber border + a
+   very faint amber lift, so the card reads at a glance in the deck. After the
+   selected rule (same specificity): the hold is a durable fact of the record,
+   so its border survives transient selection (selection keeps its fill). An
+   error-toned card (an expired batch) gets the same treatment in red, and a
+   success-toned card (a batch auto-allocation will use) in green — border +
+   shadow ONLY: the affirmative state keeps its title untinted (the green
+   badge names it), where warning/error also tint the title (rules above). */
+.cardRow[data-tone='warning'] > .cardCell > .card {
+  border-color: color-mix(in srgb, var(--warning-main) 50%, transparent);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--warning-main) 35%, transparent);
+}
+
+.cardRow[data-tone='error'] > .cardCell > .card {
+  border-color: color-mix(in srgb, var(--error-main) 50%, transparent);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--error-main) 35%, transparent);
+}
+
+.cardRow[data-tone='success'] > .cardCell > .card {
+  border-color: color-mix(in srgb, var(--success-main) 50%, transparent);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--success-main) 35%, transparent);
+}
+
 /* Header: selection checkbox, identity title and badge on one row, vertically
    centred so the checkbox, the identity's colour dot / icon / name and the badge
    all line up (the identity is single-line; a future code-beneath would move
@@ -1006,6 +1165,28 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   min-width: 0;
 }
 
+/* Card view's row tone (rowTone): the tone paints the card's IDENTITY title
+   only — a whole-card repaint would recolour field labels and controls. The
+   fact itself is stated in words by a cell (never colour alone). */
+.cardRow[data-tone='info'] .cardPrimary {
+  color: var(--info-main);
+}
+
+.cardRow[data-tone='warning'] .cardPrimary {
+  color: var(--warning-main);
+}
+
+.cardRow[data-tone='error'] .cardPrimary {
+  color: var(--error-main);
+}
+
+/* A toned identity's mono VALUE follows the tone — the `.card [data-mono]`
+   muting (issue #614) would otherwise pin it grey and the tone would only
+   ever reach the caption. */
+.cardRow[data-tone] .cardPrimary [data-mono] {
+  color: inherit;
+}
+
 .cardBadge {
   display: flex;
   align-items: center;
@@ -1013,6 +1194,71 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
      duplicate + delete buttons); harmless for a single chip. */
   gap: var(--space-1);
   flex-shrink: 0;
+}
+
+/* Flag cells (getFlagCell + the line editors' auto-allocation tick). In table
+   view the check stands alone — its column header names it — so the label
+   span stays hidden. In a card's BADGE slot there is no header, and two flags
+   on one card read as the same anonymous check (a held batch looked
+   auto-ticked), so the flag shows its label beside the check there. */
+[data-flag-label] {
+  display: none;
+}
+
+/* Inline row-status badges (StatusBadge cluster beside a name/batch value —
+   ui-standards § table interaction). TABLE VIEW ONLY: cards carry the same
+   states as their corner badges (the flag columns), so the inline cluster
+   hides there rather than saying everything twice. */
+[data-row-badges] {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-inline-start: var(--space-2);
+  vertical-align: middle;
+}
+
+.card [data-row-badges] {
+  display: none;
+}
+
+.cardBadge [data-flag] {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.cardBadge [data-flag] [data-flag-label] {
+  display: inline;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* Toned flags (getFlagCell's tone / data-flag-tone), card badges only —
+   table view keeps the neutral check under its named header. 'success' =
+   an affirmative flag (will auto-allocate): green check + label. 'warning'
+   (on hold, amber) and 'error' (expired, red) = caution flags: tinted, and
+   the CHECK is dropped — a check connotes a positive state, so the word
+   stands alone. */
+.cardBadge [data-flag][data-flag-tone='success'] {
+  color: var(--success-main);
+}
+
+.cardBadge [data-flag][data-flag-tone='warning'] {
+  color: var(--warning-main);
+}
+
+.cardBadge [data-flag][data-flag-tone='error'] {
+  color: var(--error-main);
+}
+
+.cardBadge [data-flag][data-flag-tone] [data-flag-label] {
+  color: inherit;
+}
+
+.cardBadge [data-flag][data-flag-tone='warning'] > :not([data-flag-label]),
+.cardBadge [data-flag][data-flag-tone='error'] > :not([data-flag-label]) {
+  display: none;
 }
 
 /* Card body — divided from the header by a hairline (ui-standards

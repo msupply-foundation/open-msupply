@@ -137,7 +137,6 @@ export const LoginPage: Component = () => {
             <AppLogo class={styles.logo} />
             <TextField
               label={t('heading.username')}
-              width="full"
               type="text"
               name="username"
               data-testid="login-username-input"
@@ -152,7 +151,6 @@ export const LoginPage: Component = () => {
             />
             <PasswordField
               label={t('heading.password')}
-              width="full"
               name="password"
               data-testid="login-password-input"
               autocomplete="current-password"

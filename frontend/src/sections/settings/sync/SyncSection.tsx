@@ -147,7 +147,6 @@ export const SyncSection = () => {
           FormSection of its own. */}
         <TextField
           label={t('label.settings-url')}
-          width="full"
           value={form().url}
           error={validation.errorFor('url')}
           onInput={e => edit({ url: e.currentTarget.value })}
@@ -156,7 +155,6 @@ export const SyncSection = () => {
         />
         <TextField
           label={t('label.settings-username')}
-          width="full"
           value={form().username}
           error={validation.errorFor('username')}
           onInput={e => edit({ username: e.currentTarget.value })}
@@ -165,7 +163,6 @@ export const SyncSection = () => {
         />
         <PasswordField
           label={t('label.settings-password')}
-          width="full"
           autocomplete="off"
           value={form().password}
           error={validation.errorFor('password')}
@@ -175,7 +172,6 @@ export const SyncSection = () => {
         />
         <NumberField
           label={t('label.settings-interval')}
-          width="full"
           min={1}
           value={form().intervalSeconds}
           error={validation.errorFor('intervalSeconds')}
@@ -203,7 +199,6 @@ export const SyncSection = () => {
             <NumberField
               label={t('label.settings-batch-size')}
               helperText={t('label.settings-batch-size-helper')}
-              width="full"
               min={1}
               value={form().batchSize}
               onChange={batchSize => edit({ batchSize })}

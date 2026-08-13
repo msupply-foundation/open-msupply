@@ -30,7 +30,9 @@ import {
 import {
   formatCurrencyCell,
   getCellDefinition,
+  getFlagCell,
   getNumberCell,
+  isNearOrPastExpiry,
 } from '../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../ui/utils/rem';
 import { formatNumber } from '../../../intl/formatNumber';
@@ -39,7 +41,9 @@ import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePane
 import { createAddAction } from '../../../ui/utils/keyActions';
 import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
+import { RowStatusBadges, uncapped } from './RowStatusBadges';
 import { InfoIcon, MinusCircleIcon, PlusCircleIcon } from '../../../ui/icons';
+import { isExpired } from '../../../domain/allocation';
 import { fetchLocations } from '../../../domain/location';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import { useUrlQueryState } from '../../../list/urlQueryState';
@@ -114,15 +118,69 @@ import {
 
 type Line = OutboundLineFragment;
 
-// Drop a preset's growth cap, keeping its cell + width floor: `maxSize` is a
-// HARD cap, so a column sitting at it can't be dragged wider at all. The shared
-// config expresses this as a per-key `maxSize: null`; at a call site the key has
-// to be removed outright — an explicit `maxSize: undefined` would override
-// TanStack's own default rather than fall back to it.
-const uncapped = <T,>({
-  maxSize: _cap,
-  ...rest
-}: ReturnType<typeof getCellDefinition<T>>) => rest;
+// A held line — its batch, or the batch's location, on hold — cannot be
+// issued (OMS-REG-DIST-03.18); the detail table says so where the user looks
+// first: the amber "On hold" badge beside the item name, an amber status
+// tint on an unallocated row, and the amber card treatment
+// (OMS-REG-DIST-03.37, D111 — the badge carries the fact, the tint only
+// restates it).
+const lineOnHold = (line: Line): boolean =>
+  !!line.stockLine?.onHold || !!line.location?.onHold;
+
+// Calendar-expired line (D112) — the bold red Expiry-date cell, a red status
+// tint on an unallocated row, and the red card treatment (title/border/
+// Expired badge).
+const lineExpired = (line: Line): boolean =>
+  !!line.expiryDate && isExpired(line.expiryDate);
+
+// Inside the shared near-expiry window but not yet expired — the "Near
+// expiry" badge tier (the expiry cell is red at this tier, not yet bold).
+const lineNearExpiry = (line: Line): boolean =>
+  !!line.expiryDate &&
+  !lineExpired(line) &&
+  isNearOrPastExpiry(line.expiryDate);
+
+// The row-status badges beside the item name (the shared RowStatusBadges
+// cluster — ui-standards § table interaction; OMS-REG-DIST-03.37/.38,
+// D111/D112). A placeholder carries none — its Batch cell's "Placeholder"
+// word is the flag.
+const LineStatusBadges = (props: { line: Line }) => (
+  <Show when={props.line.type !== 'UNALLOCATED_STOCK'}>
+    <RowStatusBadges
+      expired={lineExpired(props.line)}
+      nearExpiry={lineNearExpiry(props.line)}
+      held={lineOnHold(props.line)}
+    />
+  </Show>
+);
+
+// Line-STATUS background tint (ui-surface S3 line table,
+// OMS-REG-DIST-03.37–.39, D111): allocated green, expired red, held amber,
+// placeholder untinted (its blue text is gone too — D111 drops the current
+// app's treatment). Row text keeps the default colour; the badges and the
+// bold red Expiry-date cell carry the facts in words. Precedence (.39):
+// allocated > expired > held — a detail line always carries packs, so real
+// lines read green and the red/amber tints surface only on a zero-pack edge
+// case.
+const lineRowTint = (
+  line: Line
+): 'success' | 'warning' | 'error' | undefined => {
+  if (line.type === 'UNALLOCATED_STOCK') return undefined;
+  if (line.numberOfPacks > 0) return 'success';
+  if (lineExpired(line)) return 'error';
+  if (lineOnHold(line)) return 'warning';
+  return undefined;
+};
+
+// The card tone (title + border + corner badge — D111/D112); no info tone
+// for placeholders. Expired outranks held (matching the tint precedence);
+// both corner badges still show.
+const lineCardTone = (line: Line): 'warning' | 'error' | undefined => {
+  if (line.type === 'UNALLOCATED_STOCK') return undefined;
+  if (lineExpired(line)) return 'error';
+  if (lineOnHold(line)) return 'warning';
+  return undefined;
+};
 
 // The server sort-field union (from codegen) — a column can only ever name a
 // real server sort key (kdd/type-safety). Columns whose data the server can't
@@ -595,6 +653,13 @@ const OutboundDetailView: Component = () => {
           headerPosition: 'primary',
           wrapLines: 2,
         }),
+        // Name + the row-status badges (LineStatusBadges above).
+        cell: info => (
+          <>
+            {info.row.original.itemName}
+            <LineStatusBadges line={info.row.original} />
+          </>
+        ),
       },
       {
         c: {
@@ -613,6 +678,38 @@ const OutboundDetailView: Component = () => {
         // wider at all. Same reasoning (and fix) as the `locationCode` key's
         // "own size, NO cap" note in _globalColumnConfig (#601).
         ...uncapped(getCellDefinition<Line>('batch')),
+      },
+      {
+        // On-hold flag, CARD-ONLY (OMS-REG-DIST-03.37, D111): the table's
+        // amber "On hold" badge beside the item name carries the state, so
+        // the grid has no On-hold column; the card's corner badge is this.
+        c: { accessor: lineOnHold, id: 'onHold' },
+        header: () => t('label.on-hold'),
+        ...getFlagCell(
+          t('label.on-hold'),
+          {
+            headerPosition: 'badge',
+            hideOnTable: true,
+            hideFromColumnSettings: true,
+          },
+          'warning'
+        ),
+      },
+      {
+        // Expired flag, CARD-ONLY (D112): the table's Expiry-date cell
+        // reddens under its header; a card buries that in the body, so the
+        // badge puts the word in the card corner, with the row's error tone.
+        c: { accessor: lineExpired, id: 'expired' },
+        header: () => t('label.expired'),
+        ...getFlagCell(
+          t('label.expired'),
+          {
+            headerPosition: 'badge',
+            hideOnTable: true,
+            hideFromColumnSettings: true,
+          },
+          'error'
+        ),
       },
       {
         c: { key: 'expiryDate' },
@@ -981,11 +1078,8 @@ const OutboundDetailView: Component = () => {
                   sort={currentSort()}
                   onSort={onSort}
                   onRowClick={editable() ? openRow : undefined}
-                  // Placeholder lines read in the info tone — whole-row blue
-                  // text, matching the current app (ui-surface S3 line table).
-                  rowTone={line =>
-                    line.type === 'UNALLOCATED_STOCK' ? 'info' : undefined
-                  }
+                  rowTint={lineRowTint}
+                  cardTone={lineCardTone}
                   emptyMessage={t('error.no-outbound-items')}
                   empty={
                     editable() ? (
