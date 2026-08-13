@@ -31,13 +31,14 @@ const SEARCH_THRESHOLD = 7;
  * highlight falls back to default → last-used → first visible so Enter always
  * has a target.
  *
- * The checkbox rides along on the confirm as onConfirm's `alwaysOpen` flag —
- * ticked, the store being confirmed is saved as the user's always-open store;
- * unticked, the host clears any saved one (spec startup SL-9,
- * OMS-REG-LGN-02.24/.32). A checkbox before the pick, never a prompt after
- * it, so choosing a store stays one interaction. It arrives showing the
- * device's saved opt-in: the host seeds it via `defaultAlwaysOpen` (.31),
- * false on a fresh device.
+ * The checkbox's two directions reach the host at different moments (spec
+ * startup SL-9): ticked, it rides the confirm as onConfirm's `alwaysOpen`
+ * flag — the store being confirmed is what gets saved (.24) — while every
+ * toggle is also reported at once via onAlwaysOpenChange, which is how an
+ * UNTICK clears the saved store immediately, pick or no pick (.32). A
+ * checkbox before the pick, never a prompt after it, so choosing a store
+ * stays one interaction. It arrives showing the device's saved opt-in: the
+ * host seeds it via `defaultAlwaysOpen` (.31), false on a fresh device.
  *
  * Colour independence: the Default / Last-used markers are StatusChips (dot +
  * label), never colour alone; the active row is a token tint AND
@@ -60,6 +61,10 @@ export const StoreSelector = (props: {
    * for the user. Read once at mount; both hosts mount the panel fresh per
    * show. */
   defaultAlwaysOpen?: boolean;
+  /** Fired on every checkbox toggle, before any pick. The host persists the
+   * UNTICK from here — withdrawing the opt-in needs no store, so it must not
+   * wait for a confirm that may never come (spec SL-9, OMS-REG-LGN-02.32). */
+  onAlwaysOpenChange?: (alwaysOpen: boolean) => void;
   onConfirm: (storeId: string, alwaysOpen: boolean) => void;
 }) => {
   const [query, setQuery] = createSignal('');
@@ -192,7 +197,10 @@ export const StoreSelector = (props: {
       <Checkbox
         label={t('message.remember-store-choice')}
         checked={alwaysOpen()}
-        onChange={setAlwaysOpen}
+        onChange={on => {
+          setAlwaysOpen(on);
+          props.onAlwaysOpenChange?.(on);
+        }}
         testId="store-always-open-checkbox"
       />
 

@@ -34,6 +34,7 @@ export const StoreSwitchModal: Component<{
         lastUsedStoreId={picker.lastUsedStoreId()}
         pinnedCount={picker.pinnedCount()}
         defaultAlwaysOpen={picker.alwaysOpenSaved()}
+        onAlwaysOpenChange={picker.alwaysOpenChanged}
         hideTitle
         onConfirm={(storeId, alwaysOpen) => {
           picker.confirm(storeId, alwaysOpen);
