@@ -15,6 +15,7 @@ import { ArrowRightIcon, ClockIcon } from '../ui/icons';
 import { AppLogo } from '../ui/branding/AppLogo';
 import { LanguageSelector } from '../ui/layout/AppShell/LanguageSelector';
 import { changeLanguage, locale, t } from '../intl';
+import { createDocumentTitle } from '../documentTitle';
 import styles from '../ui/styles/LoginInitLayout.module.css';
 
 // The login screen: the design-system Login (gradient hero + form panel,
@@ -25,6 +26,11 @@ import styles from '../ui/styles/LoginInitLayout.module.css';
 // signal and the app (App.tsx) reacts, continuing to the preserved destination
 // URL (spec, Startup Flow). Document dir/lang is owned once by App.tsx.
 export const LoginPage: Component = () => {
+  // The tab names this screen too (spec/chrome § document title) — and, since
+  // logging out swaps the shell back for this page, it replaces the title of
+  // whatever screen the session ended on.
+  createDocumentTitle(() => 'app.login');
+
   // Spec (Authentication): prefilled from the device's remembered username, so
   // the returning user only retypes the password. Read once as the signal's
   // initial value — the page is remounted whenever authUser() clears, so it
