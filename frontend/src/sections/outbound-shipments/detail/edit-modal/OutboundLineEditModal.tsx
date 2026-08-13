@@ -1346,7 +1346,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         info.getValue<boolean>() ? (
           <StatusChip
             label={t('label.expired')}
-            colour="var(--status-picked)"
+            // The warning SEVERITY token, not a --status-* one: expired is a
+            // condition of the batch, not a stage of a workflow, and borrowing
+            // "picked"'s amber for it would tie this chip to an unrelated
+            // status's colour.
+            colour="var(--warning-main)"
           />
         ) : (
           ''
