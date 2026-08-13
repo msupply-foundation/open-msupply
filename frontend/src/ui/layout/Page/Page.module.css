@@ -189,9 +189,15 @@
    table loses its frame, not another fill-body child (a documents list, an
    EmptyState). Cross-module: .bodyFill and the table's .root are hashed in
    separate CSS Modules, so this reaches the table via its unhashed
-   data-datatable attribute rather than a class. Tables in modals /
-   DashboardCards sit outside .bodyFill and keep their frame. */
-.bodyFill [data-datatable] {
+   data-datatable attribute rather than a class.
+
+   `:not(dialog *)` holds the rule to the region itself. A modal's table is a
+   card in a dialog and keeps its frame — but a Dialog mounted in the body
+   subtree (a vertical's line editor, rendered beside the table it edits) is a
+   DOM descendant of .bodyFill, so without this it lost the frame while the same
+   modal mounted from a footer slot kept it (issue #1002). Frame is a property of
+   the table's own context, not of where its host chose to mount the dialog. */
+.bodyFill [data-datatable]:not(dialog *) {
   border: none;
   border-radius: 0;
 }
