@@ -1,8 +1,14 @@
-import { createSignal, type JSX } from 'solid-js';
+import { createSignal, Show, type JSX } from 'solid-js';
+import { createStore } from 'solid-js/store';
 import { AsyncCombobox } from '../../ui/elements/selectors/AsyncCombobox';
+import { StatusBadge } from '../../ui/elements/feedback/StatusBadge';
 import { formatNumber } from '../../intl/formatNumber';
 import { t } from '../../intl';
-import { itemPageFetcher, type ItemOption } from './itemResource';
+import {
+  itemPageFetcher,
+  presencePatch,
+  type ItemOption,
+} from './itemResource';
 import type { FocusTarget } from '../../ui/utils/createFocusTarget';
 import styles from './ItemSearch.module.css';
 
@@ -67,26 +73,20 @@ export interface ItemSearchProps {
    * combobox (`full` = fill the container, e.g. a line editor's item row).
    */
   width?: 'compact' | 'short' | 'long' | 'full';
+  /**
+   * Mark options for items the caller's document already holds
+   * (spec/ui-standards/controls.md § async lookup, D115): after each fetched
+   * page, `probe` receives that page's item ids and resolves the subset
+   * already on the document (undefined on a failed fetch → that page just
+   * goes unmarked). A present item's row carries `label` as a textual
+   * end-of-row badge and stays fully selectable — picking it loads the
+   * existing entry.
+   */
+  presentInDocument?: {
+    probe: (itemIds: string[]) => Promise<string[] | undefined>;
+    label: string;
+  };
 }
-
-// One option row: "code - name" at the inline-start, "{total} Units" at the
-// end — a fixed, localised "Units" label for every item (see the note below).
-// Code and name are separately-marked nodes (e2e/TESTIDS.md item-option-code /
-// -name) so the suites can read either regardless of the datafile's format.
-const renderRow = (item: ItemOption): JSX.Element => (
-  <span class={styles.row}>
-    <span class={styles.label}>
-      <span data-testid="item-option-code">{item.code}</span>
-      {' - '}
-      <span data-testid="item-option-name">{item.name}</span>
-    </span>
-    <span class={styles.total}>
-      {/* Fixed, localised "Units" label for every item (old-app parity — the
-          item's own unitName is untranslatable catalogue data). */}
-      {formatNumber(item.availableUnits)} {t('label.units')}
-    </span>
-  </span>
-);
 
 /**
  * Reusable server-side-filtered, infinite-scroll item picker (add-item flow) —
@@ -98,12 +98,60 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
   // The fetcher reads the exclusions accessor per call, so a later change is
   // picked up on the next fetch. excludeItemIds is optional — every line
   // editor omits it → default to [].
-  const fetchPage = itemPageFetcher(
+  const basePage = itemPageFetcher(
     props.storeId,
     () => props.excludeItemIds ?? [],
     PAGE_SIZE,
     () => props.hasStockOnHand,
     () => props.masterListId
+  );
+
+  // itemId → already-on-document, filled page-by-page by the caller's
+  // presentInDocument probe. Accumulates across pages; each probe answer
+  // overwrites its own page's ids wholesale (presencePatch), so a mark that
+  // no longer holds (lines deleted since) clears on that page's next probe.
+  const [present, setPresent] = createStore<Record<string, boolean>>({});
+
+  // The probe rides the page fetch — awaited before the page is handed to the
+  // combobox — so a page's marks land together with its rows (no badge
+  // pop-in a beat after the list renders).
+  const fetchPage = async (search: string, offset: number) => {
+    const page = await basePage(search, offset);
+    const presence = props.presentInDocument;
+    if (page && presence && page.nodes.length > 0) {
+      const ids = page.nodes.map(node => node.id);
+      const found = await presence.probe(ids);
+      if (found) setPresent(presencePatch(ids, found));
+    }
+    return page;
+  };
+
+  // One option row: "code - name" at the inline-start, "{total} Units" at the
+  // end — a fixed, localised "Units" label for every item (see the note
+  // below). Code and name are separately-marked nodes (e2e/TESTIDS.md
+  // item-option-code / -name) so the suites can read either regardless of the
+  // datafile's format. Between them, the already-on-document badge (D115) for
+  // rows the presence probe marked.
+  const renderRow = (item: ItemOption): JSX.Element => (
+    <span class={styles.row}>
+      <span class={styles.label}>
+        <span data-testid="item-option-code">{item.code}</span>
+        {' - '}
+        <span data-testid="item-option-name">{item.name}</span>
+      </span>
+      <Show when={present[item.id] ? props.presentInDocument : undefined}>
+        {presence => (
+          <span class={styles.present} data-testid="item-option-present">
+            <StatusBadge label={presence().label} tone="neutral" />
+          </span>
+        )}
+      </Show>
+      <span class={styles.total}>
+        {/* Fixed, localised "Units" label for every item (old-app parity — the
+            item's own unitName is untranslatable catalogue data). */}
+        {formatNumber(item.availableUnits)} {t('label.units')}
+      </span>
+    </span>
   );
 
   // Remember the last full option the user picked. Once an item is selected the
