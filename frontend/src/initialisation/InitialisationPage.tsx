@@ -45,6 +45,7 @@ import {
   SYNC_POLL_INTERVAL_MS,
 } from '../config';
 import { changeLanguage, locale, t } from '../intl';
+import { createDocumentTitle } from '../documentTitle';
 import {
   createFormValidation,
   type FieldError,
@@ -56,6 +57,10 @@ import pageStyles from './Initialisation.module.css';
 export const InitialisationPage: Component<{
   onComplete: () => void;
 }> = props => {
+  // The tab names this screen too (spec/chrome § document title): an
+  // un-initialised site is the whole app until it finishes.
+  createDocumentTitle(() => 'initialise.form-heading');
+
   const [values, setValues] = createSignal({
     // Spec (issue #519.2): pre-fill the scheme so the user only types the host
     // — the central server is always reached over https. Matches the current
