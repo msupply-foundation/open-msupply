@@ -573,7 +573,10 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                     helperText={requiredError(enumField)}
                     // A picked choice must be emptiable again unless required
                     // (AC-R19); the cleared key is omitted on submit (AC-R8).
-                    clearable={!enumField.required}
+                    // A read-only field (AC-R6: shown disabled, seeded value
+                    // still submitted) gets no clear affordance — it could
+                    // never be used.
+                    clearable={!enumField.required && !enumField.readOnly}
                     onClear={() => setValues(enumField.key, undefined)}
                     onValueChange={value => setValues(enumField.key, value)}
                   />
