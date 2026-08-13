@@ -28,6 +28,7 @@ import {
   type SortState,
 } from '../../../ui/elements/table/DataTable';
 import {
+  formatCurrencyCell,
   getCellDefinition,
   getNumberCell,
 } from '../../../ui/elements/table/tableHelpers';
@@ -36,6 +37,7 @@ import {
   type PaginationProps,
 } from '../../../ui/elements/table/Pagination';
 import { remToPx } from '../../../ui/utils/rem';
+import { formatNumber } from '../../../intl/formatNumber';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
 import { createAddAction } from '../../../ui/utils/keyActions';
@@ -906,7 +908,6 @@ const OutboundDetailView: Component = () => {
                       storeId={params.storeId}
                       node={current()}
                       pagination={linePagination()}
-                      totals={totalCount() > 0 ? shipmentTotals : undefined}
                       preflight={preflight}
                       onSetHold={setHold}
                       // A status change can trim zero-quantity lines
@@ -1023,11 +1024,22 @@ const OutboundDetailView: Component = () => {
                   onSelectionChange={setSelectedIds}
                   config={tableConfig.config()}
                   setConfig={tableConfig.setConfig}
-                  // The line count sits in the toolbar, beside the view
-                  // controls — no height, and it stays put whether or not the
-                  // lines run to a second page. The pager itself lives in the
-                  // status footer (see linePagination).
+                  // The toolbar's reading, beside the view controls: the line
+                  // count and the shipment's roll-ups together, above the rows
+                  // they summarise. Costs no height (that row is always
+                  // there), and keeps the status footer to state + action. The
+                  // pager itself lives in that footer (see linePagination).
                   totalCount={totalCount()}
+                  summary={
+                    totalCount() > 0
+                      ? t('label.shipment-totals', {
+                          price: formatCurrencyCell(shipmentTotals().price),
+                          volume: formatNumber(shipmentTotals().volume, {
+                            maximumFractionDigits: 2,
+                          }),
+                        })
+                      : undefined
+                  }
                 />
               </TabPanel>
               <TabPanel value="custom-fields">
