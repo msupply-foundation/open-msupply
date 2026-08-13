@@ -113,6 +113,18 @@
   inline-size: 100%;
 }
 
+/* Initialisation's counterpart to `.submitGroup`. Its secondary controls sit
+   OUTSIDE the form — the mode chooser can swap one form for another beneath
+   them (spec S2 § layout), so they belong to the panel's column, not to
+   whichever form is showing. This wrapper gives the pair the same tight
+   spacing `.submitGroup` gives login's, instead of the column's field
+   rhythm. */
+.formWithActions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
 /* The small inline padding keeps both controls' hover/focus boxes clear of the
    button's edges rather than flush with them. Wraps on a long language name;
    `.languageAction` keeps the selector at the inline end when it does.

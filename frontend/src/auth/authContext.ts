@@ -70,6 +70,18 @@ const reLoginRequiredWasPersisted = (): boolean => {
   }
 };
 
+// Spec (Store Login, SL-8): the stores a user can actually log into. A store
+// the site has disabled is not one of them, so it is never listed, never
+// resolves from a URL segment, and never counts towards single-store
+// auto-entry. The front end owns this end to end — the server neither filters
+// `stores` nor refuses a login into a disabled one (contract § login errors).
+// Takes the user rather than reading the signal so callers stay reactive on
+// their own read of it.
+export const loginableStores = (
+  u: AuthUser | undefined
+): AuthUser['stores']['nodes'] =>
+  u?.stores.nodes.filter(store => !store.isDisabled) ?? [];
+
 // The store code for a store id, from the logged-in user's store list — the
 // list StoreGuardLayout itself resolves stores from, so any routed storeId is
 // present. Used by the shared list-export filenames
@@ -148,9 +160,11 @@ export const login = async (
   if (auth.__typename === 'AuthTokenError') {
     return { kind: 'error', message: auth.error.description };
   }
-  // Spec (Store Login): a user with no stores cannot log in. The backend
-  // enforces this (NoSiteAccess); this is a defensive check only.
-  if (auth.user.stores.nodes.length === 0) {
+  // Spec (Store Login): a user with no store to log into cannot log in. The
+  // backend enforces the zero-store case (NoSiteAccess), so that half is
+  // defensive — but it counts store rows without regard to isDisabled, so the
+  // all-disabled case (SL-8) reaches us and is ours alone to refuse.
+  if (loginableStores(auth.user).length === 0) {
     return { kind: 'error', message: 'You have no stores to log into' };
   }
   setUser(auth.user);

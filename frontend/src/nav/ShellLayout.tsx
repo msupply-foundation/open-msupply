@@ -16,9 +16,11 @@ import { t } from '../intl';
 import {
   findLeafByPath,
   lowerNav,
+  sectionIconForPath,
   upperNav,
   type NavLeaf,
 } from '../ui/layout/AppShell/navModel';
+import { ShellSectionContext } from '../ui/layout/AppShell/shellContext';
 import { authUser, logout, userDisplayName } from '../auth/authContext';
 import { isCentralServer } from '../api/serverInfo';
 import { reportPermissionDenied } from '../api/graphql';
@@ -74,6 +76,14 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   const NO_SELECTION: NavLeaf = { id: '', labelKey: 'dashboard', to: '' };
   const selected = (): NavLeaf =>
     findLeafByPath(relativePath() || 'dashboard') ?? NO_SELECTION;
+
+  // The nav group's glyph for wherever we are — handed to every page's
+  // breadcrumb through the shell-section context, since the group a screen sits
+  // under is the route's business, not the page's (spec/ui-standards › layout,
+  // page regions; shellContext › ShellSection). Record screens inherit their
+  // list's section, the store root is the dashboard, and an off-registry path
+  // (the not-found catch-all) simply has none.
+  const sectionIcon = () => sectionIconForPath(relativePath() || 'dashboard');
 
   // A permission-gated destination stays in the menu, but activating it
   // refuses instead of navigating: the permission-denied dialog opens, naming
@@ -177,6 +187,11 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
         selected={selected()}
         onNavigate={onNavigate}
         onSyncOpen={openSync}
+        /* The brand mark goes home — the store root, which IS the dashboard
+           (see relativePath above, where an empty path resolves to it). The
+           conventional job for a logo in app chrome, and the reason it is not
+           wired to the rail toggle instead. */
+        onHome={() => navigate(`/${params.storeId}`)}
         syncBadge={syncIndicator.badge()}
         syncIconDimmed={syncIndicator.dimmed()}
         storeName={storeName()}
@@ -185,6 +200,7 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
         username={username()}
         displayName={userDisplayName()}
         email={authUser()?.email}
+        jobTitle={authUser()?.jobTitle}
         onLogout={() => setLogoutConfirmOpen(true)}
         isCentralServer={isCentralServer()}
         updateAvailable={updateAvailable()}
@@ -198,7 +214,11 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
           when={access().kind === 'ok'}
           fallback={<Navigate href={`/${params.storeId}`} />}
         >
-          {props.children}
+          {/* Wraps the PAGE, not the shell chrome: the only consumer is the
+              page header's breadcrumb. */}
+          <ShellSectionContext.Provider value={{ icon: sectionIcon }}>
+            {props.children}
+          </ShellSectionContext.Provider>
         </Show>
       </AppShell>
       <Show when={syncEverOpened()}>

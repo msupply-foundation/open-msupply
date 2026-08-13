@@ -142,6 +142,8 @@ export const SyncModal: Component<{
       finished: s.finished,
       done: s.done,
       total: s.total,
+      startedAt: s.startedAt,
+      finishedAt: s.finishedAt,
       icon: syncStepIcon[s.kind],
     })) ?? [];
 

@@ -37,6 +37,10 @@ export type SyncStep = {
   finished: boolean;
   done?: number;
   total?: number;
+  // The wire's phase timestamps, passed through for the per-step elapsed time
+  // (ProgressList ticks the in-flight step's against a live clock).
+  startedAt?: string;
+  finishedAt?: string;
 };
 
 export type SyncError = { variant: SyncErrorVariant; fullError: string };
@@ -102,6 +106,8 @@ const step = (
   finished: part?.finished != null,
   done: part?.total ? (part.done ?? 0) : undefined,
   total: part?.total || undefined,
+  startedAt: part?.started,
+  finishedAt: part?.finished ?? undefined,
 });
 
 // spec/sync-modal/rules.md § Phase visibility — the displayed phases, in

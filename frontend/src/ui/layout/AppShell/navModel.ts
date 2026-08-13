@@ -89,6 +89,19 @@ const SECTION_ICONS: Record<string, Component<IconProps>> = {
   help: HelpIcon,
 };
 
+/**
+ * The section glyph for a store-relative path ('inventory/stocktakes',
+ * 'distribution/customer-requisition/{id}', '' for the store root) — the
+ * leading icon every page's breadcrumb shows (spec/ui-standards › layout, page
+ * regions: the nav group is never a crumb, its glyph takes the trail's
+ * leading-icon slot instead). Keyed by the FIRST path segment, so a section's
+ * children and their record screens all resolve to their group's icon.
+ */
+export const sectionIconForPath = (
+  relativePath: string
+): Component<IconProps> | undefined =>
+  SECTION_ICONS[relativePath.split('/')[0] ?? ''];
+
 // Sections pinned to the block-end lower cluster (matching the current app);
 // everything else scrolls in the upper list. Reports stays in the upper list,
 // as its last entry (spec/chrome § sidebar order: … Dispensary · Reports ·
@@ -158,5 +171,21 @@ export const navLeaves: NavLeaf[] = items.flatMap(item =>
       ]
 );
 
+/**
+ * The menu entry a route belongs to — its own, or the one it sits beneath.
+ *
+ * A record screen has no menu entry of its own: `inventory/stocktakes/{id}` is
+ * reached from Stocktakes and its breadcrumb trail starts there
+ * (ui-standards/layout § app bar), so the menu must keep showing Stocktakes.
+ * Matching the path exactly left every detail screen in the app with nothing
+ * highlighted at all — no entry, and no section either.
+ *
+ * The `/` in the prefix test keeps it on segment boundaries (`inventory/stock`
+ * must not claim `inventory/stocktakes/1`), and the longest match wins so a
+ * deeper entry beats the shallower one it nests under.
+ */
 export const findLeafByPath = (relativePath: string): NavLeaf | undefined =>
-  navLeaves.find(leaf => leaf.to === relativePath);
+  navLeaves.find(leaf => leaf.to === relativePath) ??
+  navLeaves
+    .filter(leaf => relativePath.startsWith(`${leaf.to}/`))
+    .sort((a, b) => b.to.length - a.to.length)[0];

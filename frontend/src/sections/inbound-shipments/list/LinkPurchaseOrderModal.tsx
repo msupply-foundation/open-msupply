@@ -1,5 +1,6 @@
 import { createSignal, Show, type Component } from 'solid-js';
 import { t } from '../../../intl';
+import { initialPageSize, rememberPageSize } from '../../../list/pageSize';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Button } from '../../../ui/elements/buttons/Button';
@@ -22,8 +23,6 @@ import type { LinkPurchaseOrderRowFragment } from './createInboundShipment.gener
 // chosen order (no separate supplier step). Presentational — the parent owns
 // the data + the create mutation and acts on onSelect(purchaseOrderId,
 // addLines).
-
-const PAGE_SIZE = 20;
 
 export interface LinkPurchaseOrderModalProps {
   open: boolean;
@@ -48,7 +47,7 @@ export const LinkPurchaseOrderModal: Component<
   const selectedId = () => selectedIds()[0];
 
   const [offset, setOffset] = createSignal(0);
-  const [pageSize, setPageSize] = createSignal(PAGE_SIZE);
+  const [pageSize, setPageSize] = createSignal(initialPageSize());
   const page = () => props.orders.slice(offset(), offset() + pageSize());
 
   const columns = (): Column<LinkPurchaseOrderRowFragment, never>[] => [
@@ -142,6 +141,7 @@ export const LinkPurchaseOrderModal: Component<
           total: props.orders.length,
           onOffsetChange: setOffset,
           onPageSizeChange: size => {
+            rememberPageSize(size);
             setPageSize(size);
             setOffset(0);
           },

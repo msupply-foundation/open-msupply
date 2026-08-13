@@ -32,10 +32,28 @@ const user: UserInfoFragment = {
         name: 'Store 1',
         storeMode: 'STORE',
         homeCurrencyCode: 'USD',
+        isDisabled: false,
       },
     ],
   },
 };
+
+type StoreNode = UserInfoFragment['stores']['nodes'][number];
+
+const store = (id: string, isDisabled: boolean): StoreNode => ({
+  id,
+  code: id.toUpperCase(),
+  nameId: `n-${id}`,
+  name: `Store ${id}`,
+  storeMode: 'STORE',
+  homeCurrencyCode: 'USD',
+  isDisabled,
+});
+
+const userWithStores = (...nodes: StoreNode[]): UserInfoFragment => ({
+  ...user,
+  stores: { nodes },
+});
 
 const meSuccess = (): GraphqlResult<{ me: UserInfoFragment }> => ({
   kind: 'success',
@@ -265,5 +283,89 @@ describe('the device remembers the last username (OMS-REG-LGN-01.21/.22)', () =>
     await auth.login('bob', 'pw');
 
     expect(await rememberedUsername()).toBe('bob');
+  });
+});
+
+/*
+ * Disabled stores (spec/startup § SL-8, OMS-REG-LGN-02.20–.22,
+ * OMS-REG-LGN-01.27).
+ *
+ * loginableStores is the single list every store guard reads — the picker's
+ * contents, the URL-segment match, and the single-store auto-entry count all
+ * derive from it, so filtering here is what makes a disabled store unlisted,
+ * unreachable by URL, and invisible to auto-entry. The guards' own resolution
+ * (URL match, auto-entry) is exercised end-to-end by e2e/specs/login-regression.
+ */
+describe('disabled stores are never offered (SL-8)', () => {
+  it('drops disabled stores from the list the guards read', async () => {
+    const auth = await freshModule();
+    const nodes = [store('a', false), store('b', true), store('c', false)];
+
+    expect(
+      auth.loginableStores(userWithStores(...nodes)).map(s => s.id)
+    ).toEqual(['a', 'c']);
+  });
+
+  it('leaves one store to auto-enter when the others are disabled', async () => {
+    const auth = await freshModule();
+    const enabled = auth.loginableStores(
+      userWithStores(store('a', true), store('b', false), store('c', true))
+    );
+
+    // What StoreGuardLayout's single-store auto-entry counts (.22).
+    expect(enabled).toHaveLength(1);
+    expect(enabled[0]?.id).toBe('b');
+  });
+
+  it('does not resolve a disabled store from a URL segment', async () => {
+    const auth = await freshModule();
+    const enabled = auth.loginableStores(
+      userWithStores(store('a', false), store('b', true))
+    );
+
+    // The guard matches params.storeId against this list, so a disabled id
+    // finds nothing and falls through to ordinary resolution (.21).
+    expect(enabled.find(s => s.id === 'b')).toBeUndefined();
+  });
+
+  it('is empty for no user', async () => {
+    const auth = await freshModule();
+    expect(auth.loginableStores(undefined)).toEqual([]);
+  });
+
+  it('refuses login when every store is disabled (OMS-REG-LGN-01.27)', async () => {
+    const auth = await freshModule();
+    graphqlFetch.mockResolvedValueOnce({
+      kind: 'success',
+      data: {
+        authToken: {
+          __typename: 'AuthToken',
+          user: userWithStores(store('a', true), store('b', true)),
+        },
+      },
+    });
+
+    const result = await auth.login('alice', 'pw');
+
+    expect(result.kind).toBe('error');
+    expect(auth.authUser()).toBeUndefined();
+  });
+
+  it('admits login when one store survives the filter', async () => {
+    const auth = await freshModule();
+    graphqlFetch.mockResolvedValueOnce({
+      kind: 'success',
+      data: {
+        authToken: {
+          __typename: 'AuthToken',
+          user: userWithStores(store('a', true), store('b', false)),
+        },
+      },
+    });
+
+    const result = await auth.login('alice', 'pw');
+
+    expect(result.kind).toBe('success');
+    expect(auth.authUser()?.userId).toBe('u1');
   });
 });

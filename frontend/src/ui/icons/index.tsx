@@ -101,6 +101,25 @@ export const ChevronsUpIcon = (props: IconProps) => (
   </Stroke>
 );
 
+// The sidebar collapse/expand pair — a double chevron pointing at the edge the
+// rail moves towards. Directional, so both mirror in RTL (where the rail sits on
+// the inline-end): data-flip-rtl, like ChevronLeft/Right.
+/* Hugeicons: ArrowLeftDoubleIcon */
+export const ChevronsLeftIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" data-flip-rtl="" {...props}>
+    <path d="M18.5 6C18.5 6 12.5 10.4189 12.5 12C12.5 13.5812 18.5 18 18.5 18" />
+    <path d="M11.5 6C11.5 6 5.5 10.4189 5.5 12C5.5 13.5812 11.5 18 11.5 18" />
+  </Stroke>
+);
+
+/* Hugeicons: ArrowRightDoubleIcon */
+export const ChevronsRightIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" data-flip-rtl="" {...props}>
+    <path d="M5.5 6C5.5 6 11.5 10.4189 11.5 12C11.5 13.5812 5.5 18 5.5 18" />
+    <path d="M12.5 6C12.5 6 18.5 10.4189 18.5 12C18.5 13.5812 12.5 18 12.5 18" />
+  </Stroke>
+);
+
 /* Hugeicons: Search01Icon */
 export const SearchIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
@@ -178,6 +197,19 @@ export const AlertTriangleIcon = (props: IconProps) => (
     <path d="M13.9248 21H10.0752C5.44476 21 3.12955 21 2.27636 19.4939C1.42317 17.9879 2.60736 15.9914 4.97574 11.9985L6.90057 8.75333C9.17559 4.91778 10.3131 3 12 3C13.6869 3 14.8244 4.91777 17.0994 8.75332L19.0243 11.9985C21.3926 15.9914 22.5768 17.9879 21.7236 19.4939C20.8704 21 18.5552 21 13.9248 21Z" />
     <path d="M12 9V13" />
     <path d="M12.125 16.75H12M12.25 16.75C12.25 16.8881 12.1381 17 12 17C11.8619 17 11.75 16.8881 11.75 16.75C11.75 16.6119 11.8619 16.5 12 16.5C12.1381 16.5 12.25 16.6119 12.25 16.75Z" />
+  </Stroke>
+);
+
+/* Offline / connection lost (the error dialog's "can't reach the server") */
+export const WifiOffIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M16.72 11.06C17.5387 11.4531 18.3037 11.9539 19 12.55" />
+    <path d="M5 12.55C6.47003 11.3364 8.26414 10.5074 10.17 10.16" />
+    <path d="M10.71 5.05C14.9432 4.66018 19.1541 5.99542 22.58 9" />
+    <path d="M1.42 9C2.80587 7.78412 4.39642 6.80707 6.12 6.12" />
+    <path d="M8.53 16.11C9.53718 15.3875 10.7599 14.9977 12 14.9977C13.2401 14.9977 14.4628 15.3875 15.47 16.11" />
+    <path d="M12 20H12.01" />
+    <path d="M2 2L22 22" />
   </Stroke>
 );
 
@@ -530,6 +562,22 @@ export const UserIcon = (props: IconProps) => (
     <path d="M4.69141 20.7066C5.51196 18.1017 8.10493 16.18 11.0037 16.0379C11.3163 16.0226 11.6475 16.0097 12.0029 16L12.998 16.0663C15.924 16.2614 18.494 18.1152 19.3109 20.7066" />
     <path d="M2.5 12C2.5 7.52166 2.5 5.28249 3.89124 3.89124C5.28249 2.5 7.52166 2.5 12 2.5C16.4783 2.5 18.7175 2.5 20.1088 3.89124C21.5 5.28249 21.5 7.52166 21.5 12C21.5 16.4783 21.5 18.7175 20.1088 20.1088C18.7175 21.5 16.4783 21.5 12 21.5C7.52166 21.5 5.28249 21.5 3.89124 20.1088C2.5 18.7175 2.5 16.4783 2.5 12Z" />
     <path d="M14.9961 10C14.9961 11.6569 13.6529 13 11.9961 13C10.3392 13 8.99609 11.6569 8.99609 10C8.99609 8.34315 10.3392 7 11.9961 7C13.6529 7 14.9961 8.34315 14.9961 10Z" />
+  </Stroke>
+);
+
+/* Envelope — the user popup's email row. */
+export const MailIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M2.5 7.5C2.5 5.84315 3.84315 4.5 5.5 4.5H18.5C20.1569 4.5 21.5 5.84315 21.5 7.5V16.5C21.5 18.1569 20.1569 19.5 18.5 19.5H5.5C3.84315 19.5 2.5 18.1569 2.5 16.5V7.5Z" />
+    <path d="M3.5 8L10.2 12.4C11.3 13.1 12.7 13.1 13.8 12.4L20.5 8" />
+  </Stroke>
+);
+
+/* Power symbol — the logout action (the current app's PowerIcon). */
+export const PowerIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M12 2.5V11.5" />
+    <path d="M6.34 6.34A8 8 0 1 0 17.66 6.34" />
   </Stroke>
 );
 

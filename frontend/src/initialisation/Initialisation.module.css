@@ -44,3 +44,11 @@
 .advancedContent.advancedContent {
   padding-block: var(--space-2) 0;
 }
+
+/* The mode chooser's panels. The strip is inline in the form column rather
+   than claiming a header's bottom edge, so the panel owns the gap down to its
+   first field: at the column's own tight spacing the underline sat all but on
+   top of the label below it. */
+.modePanel {
+  padding-block-start: var(--space-4);
+}
