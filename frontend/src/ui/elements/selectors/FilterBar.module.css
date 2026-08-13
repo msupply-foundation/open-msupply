@@ -310,7 +310,7 @@
   background: var(--color-divider);
 }
 
-/* Selected-mark rows (single-select menu — the FilterSelect radio items) */
+/* Boxed checkbox rows (multi-select menu — the FilterMultiSelect items) */
 .checkbox {
   display: inline-flex;
   align-items: center;
@@ -326,6 +326,19 @@
 .checkboxItem[data-checked] .checkbox {
   background: var(--secondary-main);
   border-color: var(--secondary-main);
+}
+
+/* Single-select rows (FilterSelect): the chosen option carries a bare check
+   mark — a boxed checkbox is the multi-select affordance (spec ui-standards
+   tables › filtering). */
+.checkMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  color: var(--secondary-main);
 }
 
 .indicator {
