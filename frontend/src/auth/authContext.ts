@@ -149,9 +149,17 @@ export type LoginResult =
   | { kind: 'pending' };
 
 export const login = async (
-  username: string,
+  typedUsername: string,
   password: string
 ): Promise<LoginResult> => {
+  // Spec (rules § authentication): leading and trailing whitespace around the
+  // username is not part of the credential — a name typed with a stray space,
+  // pasted, or autofilled with padding is the same user, and the server would
+  // otherwise reject it. Trimmed here, at the one place both login forms (the
+  // login page and the re-login modal) go through, so what is sent and what is
+  // remembered are the same trimmed name. The password is NEVER trimmed:
+  // whitespace in it is a real character of the secret.
+  const username = typedUsername.trim();
   const result = await graphqlFetch(AuthToken, { username, password });
   if (result.kind !== 'success') {
     return { kind: 'pending' };
