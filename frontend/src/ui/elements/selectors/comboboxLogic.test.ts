@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { visibleOptions } from './comboboxLogic';
+import { typedQuery, visibleOptions } from './comboboxLogic';
 
 // A location-picker-shaped list: the case the cap exists for (a whole-store
 // location list, ~5,000 rows on the tablet that prompted it).
@@ -66,5 +66,37 @@ describe('visibleOptions', () => {
     const { items, total } = visibleOptions(locations, all, 0);
     expect(items).toEqual([]);
     expect(total).toBe(500);
+  });
+});
+
+// The rule the whole reopen behaviour hangs on (#985): the input holds a query
+// while the user is typing and the selection's label once one is committed, and
+// only the first is a search.
+describe('typedQuery', () => {
+  const item = { id: 'i1', code: 'ABC', name: 'Amoxicillin' };
+  const label = (i: { code: string; name: string }) => `${i.code} - ${i.name}`;
+
+  it('is the typed text while nothing is selected', () => {
+    expect(typedQuery('amox', null, label)).toBe('amox');
+    expect(typedQuery('amox', undefined, label)).toBe('amox');
+    expect(typedQuery('', null, label)).toBe('');
+  });
+
+  it('is the typed text while a selection is being searched past', () => {
+    // The committed item is ABC - Amoxicillin; the user is typing at something
+    // else. Nothing here may be mistaken for a label echo.
+    expect(typedQuery('para', item, label)).toBe('para');
+    expect(typedQuery('ABC', item, label)).toBe('ABC');
+    expect(typedQuery('ABC - Amoxicillin ', item, label)).toBe(
+      'ABC - Amoxicillin '
+    );
+  });
+
+  it('is empty when the text IS the committed selection label', () => {
+    // Kobalte's resync writes exactly this back into the input whenever the
+    // selection (re)emits — searching for it finds the item at best and, on a
+    // server-backed lookup whose source can't match a composed label, nothing
+    // at all. It is not a search.
+    expect(typedQuery('ABC - Amoxicillin', item, label)).toBe('');
   });
 });

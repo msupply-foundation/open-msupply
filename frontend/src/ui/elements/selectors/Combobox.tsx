@@ -18,7 +18,11 @@ import { t, tPlural } from '../../../intl';
 import { usePortalMount } from '../../utils/portalMount';
 import type { FocusTarget } from '../../utils/createFocusTarget';
 import { keepPopupOpenOnInsideContent } from './dismissInsideGuard';
-import { visibleOptions, type VisibleOptions } from './comboboxLogic';
+import {
+  typedQuery,
+  visibleOptions,
+  type VisibleOptions,
+} from './comboboxLogic';
 import styles from './Combobox.module.css';
 
 // Server-mode infinite scroll: fetch the next page once the listbox is scrolled
@@ -284,7 +288,17 @@ interface ComboboxProps<T> {
  * already handled by Kobalte itself (Escape clears it, blur reverts it).
  */
 export const Combobox = <T,>(props: ComboboxProps<T>) => {
-  const [selected, setSelected] = createSignal<T | null>(null);
+  // `equals: false` — a set ALWAYS emits, including one landing on the
+  // selection already held. Kobalte restores the input's text off this signal
+  // re-emitting (its `on(selectedKeys, resetInputValue)`, reached through the
+  // controlled `value` below), so a plain signal — which drops a set to the
+  // same object reference — would leave a re-picked field showing whatever was
+  // typed to find the option instead of the option's own label. The two
+  // writers below are unaffected: `handleChange` is a pick, which SHOULD
+  // re-assert, and the controlled-value effect guards by key before it writes.
+  const [selected, setSelected] = createSignal<T | null>(null, {
+    equals: false,
+  });
   const [inputValue, setInputValue] = createSignal('');
   let inputEl: HTMLInputElement | undefined;
   let contentEl: HTMLElement | undefined;
@@ -392,15 +406,20 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
           .toLocaleLowerCase()
           .includes(input.toLocaleLowerCase());
 
-  // The input text ONLY filters while it's something the user typed: when it
-  // just mirrors the committed selection's label, reopening the popup shows
-  // the FULL list (matching the platform autocompletes users expect — and the
-  // shared e2e suites, whose pickers reopen to browse all options).
-  const filterText = () => {
-    const current = selected();
-    const input = inputValue();
-    return current && input === props.itemToString(current) ? '' : input;
-  };
+  // What this combobox is searching for: the input text ONLY counts while it's
+  // something the user typed, never when it just mirrors the committed
+  // selection's label (see typedQuery). So reopening the popup on a selection
+  // shows the FULL list — matching the platform autocompletes users expect, and
+  // the shared e2e suites, whose pickers reopen to browse all options.
+  //
+  // BOTH modes obey it, off this one derivation: client mode filters `items` by
+  // it, server mode sends it to the caller (see handleInputChange). It has to
+  // live here rather than in the server-mode caller, because judging a label
+  // echo needs the selection the WIDGET currently holds — which it has the
+  // instant a pick commits, while the caller's controlled `value` only comes
+  // back a round trip later.
+  const queryText = () =>
+    typedQuery(inputValue(), selected(), props.itemToString);
 
   /*
    * Client mode: the matching options, capped at maxVisibleOptions, plus the
@@ -414,7 +433,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
    */
   const shown = createMemo<VisibleOptions<T>>(() => {
     if (serverMode()) return { items: props.items, total: props.items.length };
-    const text = filterText();
+    const text = queryText();
     return visibleOptions(
       props.items,
       item => matches(item, text),
@@ -451,7 +470,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   // varies — so a picker that supplies its own copy is unaffected.
   const emptyMessage = () => {
     const fromCaller =
-      filterText().trim() === ''
+      queryText().trim() === ''
         ? (props.emptyQueryMessage ?? props.noResultsMessage)
         : props.noResultsMessage;
     return (
@@ -467,12 +486,32 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
 
   const handleInputChange = (value: string) => {
     setInputValue(value);
-    props.onInputChange?.(value);
+    // What a server-mode caller is handed is the QUERY, not the raw input text
+    // — the same rule the client filter runs on. Kobalte routes its own input
+    // resyncs through here too, echoing the committed selection's label back
+    // whenever that selection (re)emits, and those are not searches. Read after
+    // the set above so queryText() judges this very value.
+    props.onInputChange?.(queryText());
   };
 
   const handleChange = (item: T | null) => {
+    const current = selected();
+    // Always re-asserted, even onto the option already held: `selected`
+    // re-emits on every set (see its `equals: false`), and that emission is
+    // what puts the option's own label back in the input after a pick made
+    // through a typed query.
     setSelected(() => item);
-    props.onChange?.(item);
+    // Choosing the option already selected is not a CHANGE, so the caller never
+    // hears about it — "re-committing an unchanged value issues no new request"
+    // (spec/ui-standards/inputs.md § server-bound input). It is not merely a
+    // wasted call: a picker's onChange handler rebuilds the editor it opened
+    // from the chosen record, so announcing a no-op pick silently discarded
+    // whatever the user had already typed into that editor.
+    const unchanged =
+      item === null
+        ? current === null
+        : current !== null && keyOf(item) === keyOf(current);
+    if (!unchanged) props.onChange?.(item);
   };
 
   // The pinned selection. Kobalte resolves a selected value against its options
@@ -562,7 +601,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
       defaultFilter={
         serverMode()
           ? item => keyOf(item as T) !== pinnedKey()
-          : item => matches(item as T, filterText())
+          : item => matches(item as T, queryText())
       }
       value={selected()}
       onChange={handleChange}
@@ -572,10 +611,19 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
       // (bounded by .contentGrow below). See matchTriggerWidth.
       sameWidth={props.matchTriggerWidth ?? true}
       allowsEmptyCollection
+      // Choosing an option always SELECTS it. Kobalte's listbox otherwise
+      // TOGGLES, so choosing the option already selected deselected it — and a
+      // reopened picker offers the current selection at the top of the list,
+      // making the row most likely to be clicked the one that emptied the
+      // field. It also walked a `clearable={false}` field straight past the one
+      // rule it has (an outbound shipment's customer can be changed, never
+      // emptied). Clearing keeps its own affordances: the clear button, and the
+      // caller's own value.
+      disallowEmptySelection
       // Open the listbox as soon as the input is focused/clicked (not only once
       // the user types) — the options appear on interaction, matching the
       // platform autocompletes users expect. Reopening a committed selection
-      // still shows the full list (see filterText).
+      // still shows the full list (see queryText).
       triggerMode="focus"
       disabled={props.disabled}
       placeholder={props.placeholder}
