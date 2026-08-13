@@ -67,8 +67,6 @@ export interface ReturnItemsModalProps {
    * "Save & next" advance (which focuses the new item's first row).
    */
   initialLineId?: string;
-  /** ADD mode: item ids already on the return, excluded from the search. */
-  excludeItemIds: () => string[];
   /**
    * UPDATE mode: the item AFTER this one in the current on-screen order —
    * drives "Save & next". undefined = last item (Save only).
@@ -110,7 +108,6 @@ export const ReturnItemsModal = (props: ReturnItemsModalProps): JSX.Element => (
         mode={props.mode}
         initialItemId={props.mode === 'update' ? openKey : undefined}
         initialLineId={props.initialLineId}
-        excludeItemIds={props.excludeItemIds}
         nextItem={props.nextItem}
         itemById={props.itemById}
         onSaved={props.onSaved}
@@ -297,8 +294,8 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
   };
 
   // Save & next: save, then advance without closing — update mode steps to the
-  // next item; add mode returns to the search (the saved item drops out via the
-  // live excludeItemIds).
+  // next item; add mode returns to the empty search (the saved item is still
+  // offered there — re-picking it reloads its batch set to edit).
   const onSaveNext = async () => {
     if (!(await save())) return;
     if (props.mode === 'add') {
@@ -329,13 +326,19 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
       // treatment): live in add mode — ALL available items, not narrowed to the
       // supplier (SRN-001 .1) — and locked to the row's item in update mode.
       // The dialog keeps its accessible name through `ariaLabel`.
+      //
+      // NO excludeItemIds: the search offers the whole addable catalogue,
+      // including items already on the return (issue #985 / #428 — the
+      // customer-returns twin does the same). Picking one goes through
+      // seedItem like any other, and GenerateSupplierReturnLines carries the
+      // returnId, so that item's EXISTING lines come back seeded with their
+      // saved quantities — a second visit edits rather than duplicating.
       title={
         <ItemSearch
           label={t('label.item')}
           hideLabel
           storeId={props.storeId}
           focusTarget={itemSearch}
-          excludeItemIds={props.excludeItemIds()}
           value={currentItem()?.id}
           selectedItem={currentItem()}
           disabled={props.mode !== 'add'}
