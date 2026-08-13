@@ -5,12 +5,15 @@
 // writes the returned value into the field without distributing.
 import { unitsToLens, type AllocateUnit } from '../../../../domain/allocation';
 
+// A units quantity re-expressed in the lens at 2 dp — the Issue field's
+// display rounding, shared by the mirror below and the modal's lens switch. A
+// units total that isn't whole packs of the lens size would otherwise carry
+// repeating decimals into the field.
+export const roundedLensValue = (units: number, lens: AllocateUnit): number =>
+  Math.round(unitsToLens(units, lens) * 100) / 100;
+
 export const mirroredIssueValue = (
   issuedUnits: number,
   placeholderUnits: number,
   lens: AllocateUnit
-): number =>
-  // 2 dp display rounding, as the lens switch applies — a units total that
-  // isn't whole packs of the lens size would otherwise carry repeating
-  // decimals into the field.
-  Math.round(unitsToLens(issuedUnits + placeholderUnits, lens) * 100) / 100;
+): number => roundedLensValue(issuedUnits + placeholderUnits, lens);

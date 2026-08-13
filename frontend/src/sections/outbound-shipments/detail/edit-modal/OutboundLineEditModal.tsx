@@ -62,7 +62,7 @@ import {
   createFocusTargets,
 } from '../../../../ui/utils/createFocusTarget';
 import { toSaveLineInputs } from './saveLineInputs';
-import { mirroredIssueValue } from './issueMirror';
+import { mirroredIssueValue, roundedLensValue } from './issueMirror';
 import {
   availableUnits as sumAvailableUnits,
   issuedUnits as sumIssuedUnits,
@@ -76,7 +76,6 @@ import {
   distributeIssue,
   fillOrderCompare,
   lensToUnits,
-  unitsToLens,
   packsToDoses,
   dosesToPacks,
   type AllocateUnit,
@@ -673,7 +672,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     const v = issueValue();
     if (v == null) return;
     const units = lensToUnits(v, previous) ?? 0;
-    setIssueValue(Math.round(unitsToLens(units, next) * 100) / 100);
+    setIssueValue(roundedLensValue(units, next));
   };
 
   // FEFO auto-distribution across the grid (spec S4 issue field): the shared
