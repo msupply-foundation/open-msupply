@@ -414,6 +414,11 @@ const OutboundShipmentsList: Component = () => {
           total: totalCount(),
           onOffsetChange: offset => setQuery({ ...query(), offset }),
           onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+          // The footer earns its space (ui-standards § tables → pagination):
+          // no footer at all until the shipments outrun one page, since a
+          // single page is every matching row already on screen. The band's
+          // height goes to the rows.
+          conditional: true,
         }}
       />
       <CustomerSearchModal
