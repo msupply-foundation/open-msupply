@@ -1,7 +1,7 @@
 import { children, Show, type JSX } from 'solid-js';
 import * as KSelect from '@kobalte/core/select';
 import { keepPopupOpenOnInsideContent } from './dismissInsideGuard';
-import { CheckIcon, ChevronDownIcon } from '../../icons';
+import { CheckIcon, ChevronDownIcon, CloseIcon } from '../../icons';
 import { usePortalMount } from '../../utils/portalMount';
 import type { FocusTarget } from '../../utils/createFocusTarget';
 import styles from './Select.module.css';
@@ -36,6 +36,18 @@ interface SelectProps {
   value?: string;
   defaultValue?: string;
   onValueChange?: (value: string) => void;
+  /**
+   * Offer a clear (✕) affordance beside the chevron while a value is
+   * selected — for an OPTIONAL pick the user must be able to empty again (a
+   * report filter's enum argument). Clearing calls `onClear`; the owner
+   * empties its bound state. Requires controlled usage (`value`): under
+   * `clearable` an absent `value` reads as "no selection" rather than
+   * uncontrolled. Default false — most selects are a must-have pick (a
+   * direction, a rows-per-page count) where emptiness is meaningless.
+   */
+  clearable?: boolean;
+  /** Called when the clear affordance is activated (see `clearable`). */
+  onClear?: () => void;
   placeholder?: string;
   helperText?: string;
   disabled?: boolean;
@@ -99,6 +111,14 @@ export const Select = (props: SelectProps) => {
     value === undefined
       ? undefined
       : (props.options.find(o => o.value === value) ?? null);
+  // Under `clearable`, an absent value is a real controlled state — Kobalte's
+  // null ("no selection"). Left undefined, Kobalte flips to uncontrolled and a
+  // cleared pick would keep rendering from its internal state.
+  const controlledValue = () =>
+    props.clearable
+      ? (findOption(props.value) ?? null)
+      : findOption(props.value);
+  const showClear = () => Boolean(props.clearable) && !!findOption(props.value);
 
   // The label element itself (text + required asterisk). A local component so
   // it renders fresh in either branch (bare, or beside labelInfo) — reusing
@@ -127,7 +147,7 @@ export const Select = (props: SelectProps) => {
       optionValue="value"
       optionTextValue="label"
       optionDisabled="disabled"
-      value={findOption(props.value)}
+      value={controlledValue()}
       defaultValue={findOption(props.defaultValue) ?? undefined}
       onChange={option => option && props.onValueChange?.(option.value)}
       placeholder={props.placeholder ?? 'Select…'}
@@ -166,23 +186,44 @@ export const Select = (props: SelectProps) => {
           </span>
         </Show>
       </Show>
-      <KSelect.Trigger
-        // Always a real callback: Kobalte forwards `ref` into its own
-        // polymorphic element props, where a bare `undefined` is not the same
-        // as an absent ref.
-        ref={(el: HTMLButtonElement) => props.focusTarget?.ref(el)}
-        class={styles.trigger}
-        data-testid={props.testId}
-        aria-label={props.hideLabel ? props.label : undefined}
-        aria-required={props.required ? 'true' : undefined}
-      >
-        <KSelect.Value<SelectOption> class={styles.value}>
-          {state => state.selectedOption().label}
-        </KSelect.Value>
-        <KSelect.Icon class={styles.triggerIcon}>
-          <ChevronDownIcon />
-        </KSelect.Icon>
-      </KSelect.Trigger>
+      {/* The clear affordance keeps its OWN slot beside the chevron (as
+          Combobox — never swap it onto the pixel the benign chevron occupied).
+          The trigger is a real <button>, so the ✕ can't nest inside it: a
+          spacer reserves the slot in the trigger's flex row and the button
+          overlays it from this wrapper. */}
+      <div class={styles.control}>
+        <KSelect.Trigger
+          // Always a real callback: Kobalte forwards `ref` into its own
+          // polymorphic element props, where a bare `undefined` is not the same
+          // as an absent ref.
+          ref={(el: HTMLButtonElement) => props.focusTarget?.ref(el)}
+          class={styles.trigger}
+          data-testid={props.testId}
+          aria-label={props.hideLabel ? props.label : undefined}
+          aria-required={props.required ? 'true' : undefined}
+        >
+          <KSelect.Value<SelectOption> class={styles.value}>
+            {state => state.selectedOption().label}
+          </KSelect.Value>
+          <Show when={showClear()}>
+            <span class={styles.clearSlot} aria-hidden="true" />
+          </Show>
+          <KSelect.Icon class={styles.triggerIcon}>
+            <ChevronDownIcon />
+          </KSelect.Icon>
+        </KSelect.Trigger>
+        <Show when={showClear()}>
+          <button
+            type="button"
+            class={styles.clear}
+            disabled={props.disabled}
+            aria-label="Clear selection"
+            onClick={() => props.onClear?.()}
+          >
+            <CloseIcon />
+          </button>
+        </Show>
+      </div>
       <Show when={props.helperText}>
         <KSelect.Description class={styles.helper}>
           {props.helperText}

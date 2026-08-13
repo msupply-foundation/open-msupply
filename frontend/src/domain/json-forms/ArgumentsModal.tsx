@@ -560,6 +560,10 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                 {enumField => (
                   <Select
                     label={enumField.label}
+                    // Every row spans the dialog's full width (ui-surface S3
+                    // layout) — Select's default short cap would leave this
+                    // row narrower than its neighbours.
+                    width="full"
                     options={enumField.options}
                     value={selectValue(enumField.key)}
                     disabled={enumField.readOnly}
@@ -567,6 +571,10 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                     // OK (AC-R7) and this text says why. No shipped schema
                     // marks an enum required today.
                     helperText={requiredError(enumField)}
+                    // A picked choice must be emptiable again unless required
+                    // (AC-R19); the cleared key is omitted on submit (AC-R8).
+                    clearable={!enumField.required}
+                    onClear={() => setValues(enumField.key, undefined)}
                     onValueChange={value => setValues(enumField.key, value)}
                   />
                 )}
