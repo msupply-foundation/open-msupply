@@ -132,12 +132,24 @@
   white-space: nowrap;
 }
 
-/* ≤480px (spec § pagination responsive): the pager collapses to prev/next +
-   the range — the rows-per-page selector and the NUMBER slots hide (the
-   .numberSlot class rides on the first/middle/last buttons and the
+/* The COMPACT face (spec § pagination responsive): the pager collapses to
+   prev/next + the range — the rows-per-page selector and the NUMBER slots hide
+   (the .numberSlot class rides on the first/middle/last buttons and the
    current-page pill; the arrows keep only themselves), with the page position
    taking the slots' place between the arrows. The page size stays whatever was
-   last chosen (default 20). */
+   last chosen (default 20).
+
+   Three triggers, because "too narrow" has three meanings and the rules are
+   identical in each:
+     1. a narrow VIEWPORT (≤480px) — a phone, whatever the pager sits in;
+     2. a narrow CONTAINER (≤30rem) — the pager owns its bar but that bar is
+        itself narrow (a table in a split layout, a card);
+     3. a SHARED bar (`inBar`) narrower than 48rem — the pager is one of four
+        clusters in a detail screen's status footer, so it must give way long
+        before it would if it had the bar to itself. This is the case the
+        viewport query kept missing: a 565px-wide screen is not ≤480px, but
+        the pager was still sharing ~530px with Hold, the status track and the
+        status button, and the bar wrapped to three rows. */
 @media (max-width: 480px) {
   .pageSize,
   .numberSlot {
@@ -145,6 +157,28 @@
   }
 
   .position {
+    display: inline-block;
+  }
+}
+
+@container content-footer (max-width: 30rem) {
+  .pageSize,
+  .numberSlot {
+    display: none;
+  }
+
+  .position {
+    display: inline-block;
+  }
+}
+
+@container content-footer (max-width: 48rem) {
+  .inBar .pageSize,
+  .inBar .numberSlot {
+    display: none;
+  }
+
+  .inBar .position {
     display: inline-block;
   }
 }
