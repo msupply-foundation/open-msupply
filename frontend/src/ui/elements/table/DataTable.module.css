@@ -304,13 +304,13 @@ tr[data-tone='info'] > .td {
 }
 
 /* 'warning' = a row needing attention before it can proceed (e.g. an outbound
-   line issued from a held batch — spec D110). Text only, like 'info'; the
+   line issued from a held batch — spec D111). Text only, like 'info'; the
    fact itself is stated in words by a cell (never colour alone). */
 tr[data-tone='warning'] > .td {
   color: var(--warning-main);
 }
 
-/* 'error' = a row in an error state (an expired batch — spec D111; a
+/* 'error' = a row in an error state (an expired batch — spec D112; a
    server-refused bulk line). The expired row's bold red Expiry-date cell is
    the words the tone restates. */
 tr[data-tone='error'] > .td {
@@ -647,7 +647,7 @@ tr[data-row-state='disabled'] > .selectCell {
   color: var(--text-secondary);
 }
 
-/* Record-STATUS tints (rowTint — spec D110): always-on backgrounds naming
+/* Record-STATUS tints (rowTint — spec D111): always-on backgrounds naming
    the row's status (outbound lines: allocated green / expired red / held
    amber), unlike the rowState tints above which show only while selected.
    Same opaque color-mix recipe over --surface-raised so pinned cells cover
@@ -729,7 +729,7 @@ tr[data-tint='error'] > .selectCell {
 }
 
 /* A row both disabled and toned (a held or expired batch in a line editor's
-   grid — spec D110/D111) keeps the disabled grey fill but reads in its tone:
+   grid — spec D111/D112) keeps the disabled grey fill but reads in its tone:
    the state is WHY the row is disabled, so the tone must survive the muting.
    Sits after the density block (higher specificity than its .td rules — the
    lint's ascending order). */
@@ -768,7 +768,7 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   );
 }
 
-/* A selected STATUS-tinted row (rowTint, D110) deepens its own tint instead
+/* A selected STATUS-tinted row (rowTint, D111) deepens its own tint instead
    of switching to the selection blue — the status is a durable fact of the
    record; selection is transient. Same deepen ratios as the rules below.
    After the selection rules (equal specificity) so the tint wins. */

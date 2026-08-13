@@ -53,7 +53,7 @@ import { StocktakeDetailToolbar } from './StocktakeDetailToolbar';
 import { StocktakeLineFilters } from './StocktakeLineFilters';
 import { StocktakeSidePanel } from './StocktakeSidePanel';
 import { createSidePanelOpen } from '@/ui/layout/SidePanel/createSidePanelOpen';
-import { StocktakeLogPanel } from './log/StocktakeLogPanel';
+import { ActivityLogPanel } from '@/domain/activityLog';
 import { StocktakeDocumentsTab } from './StocktakeDocumentsTab';
 import {
   DeleteLinesAction,
@@ -1118,9 +1118,9 @@ const StocktakeDetailView: Component = () => {
               parity), mounted only while this tab is active (Kobalte unmounts
               inactive panels), so it fetches on first visit. */}
               <TabPanel value="log">
-                <StocktakeLogPanel
+                <ActivityLogPanel
                   storeId={params.storeId}
-                  stocktakeId={node().id}
+                  recordId={node().id}
                 />
               </TabPanel>
               {/* The line-edit modal is an overlay, not tab content: it stays a

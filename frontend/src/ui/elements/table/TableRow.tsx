@@ -88,7 +88,7 @@ export function TableRow<T>(props: {
   rowTone?: (row: T) => 'info' | 'warning' | 'error' | undefined;
   /**
    * Semantic record-status BACKGROUND tint, always on (see DataTable's prop
-   * doc — spec D110). Stamps data-tint, styled in CSS.
+   * doc — spec D111). Stamps data-tint, styled in CSS.
    */
   rowTint?: (row: T) => 'success' | 'warning' | 'error' | undefined;
   /**

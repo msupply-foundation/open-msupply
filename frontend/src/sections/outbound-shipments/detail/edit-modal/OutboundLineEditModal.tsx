@@ -583,7 +583,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     nonAllocatableIds.has(line.id);
   const rowDisabled = (line: DraftLine): boolean =>
     isBarred(line) || isNonAllocatable(line);
-  // Calendar-expired batch (D111) — the card's error tone + Expired badge.
+  // Calendar-expired batch (D112) — the card's error tone + Expired badge.
   // Display-only; the bar predicates own the preference/threshold logic.
   const lineExpired = (line: DraftLine): boolean =>
     !!line.expiryDate && isExpired(line.expiryDate);
@@ -595,7 +595,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     isNearOrPastExpiry(line.expiryDate);
   const lineHeld = (line: DraftLine): boolean =>
     line.stockLineOnHold || !!line.location?.onHold;
-  // Row-STATUS background tint (OMS-REG-DIST-03.37–.39, D110). Precedence
+  // Row-STATUS background tint (OMS-REG-DIST-03.37–.39, D111). Precedence
   // matches this grid's CARDS — expired red, then held amber, then allocated
   // (packs issued) green — so a batch shows one colour whichever view
   // renders it; the detail table alone runs allocated-first. The tint shows
@@ -611,7 +611,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     if (line.numberOfPacks > 0) return 'success';
     return undefined;
   };
-  // The card tone (title + border + corner badge — D110/D111): expired
+  // The card tone (title + border + corner badge — D111/D112): expired
   // outranks held, matching the tint precedence; both corner badges still
   // show. A batch auto-allocation will use gets the green border + shadow
   // ('success' — border/shadow only, no title tint) beside its green badge;
@@ -1017,7 +1017,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       // name — click reveals the item's variants with this batch's marked
       // (spec S4 § batch grid), matching the old app's variant-info icon.
       // The row-status badges follow (Expired / Near expiry / On hold —
-      // ui-standards § table interaction, D110/D111): word chips in table
+      // ui-standards § table interaction, D111/D112): word chips in table
       // view; cards hide them ([data-row-badges]) and carry the states as
       // their corner badges instead.
       cell: info => {
@@ -1409,7 +1409,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       ),
     },
     {
-      // Expired flag, CARD-ONLY (D111): the grid already reddens the Expiry
+      // Expired flag, CARD-ONLY (D112): the grid already reddens the Expiry
       // date cell under its header, but a card buries that in the body — the
       // badge puts the word in the card corner, with the row's error tone.
       c: { accessor: lineExpired, id: 'expired' },

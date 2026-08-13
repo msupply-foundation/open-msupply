@@ -231,10 +231,9 @@ export const FormLayoutShowcase = () => (
         </Lead>
         <FormPreview>
           <FormSection title="Batch & Dates">
-            <TextField label="Batch number" width="full" />
+            <TextField label="Batch number" />
             <TextField
               label="Barcode"
-              width="full"
               placeholder="Scan or enter barcode"
             />
           </FormSection>
@@ -249,17 +248,17 @@ export const FormLayoutShowcase = () => (
         </Note>
         <FormPreview>
           <FormSection title="Group (h2, default)">
-            <TextField label="Batch number" width="full" />
+            <TextField label="Batch number" />
           </FormSection>
           <FormSection
             title="Group at h3 (heading=group)"
             headingLevel="h3"
             heading="group"
           >
-            <TextField label="Batch number" width="full" />
+            <TextField label="Batch number" />
           </FormSection>
           <FormSection title="Sub-group (h3, default)" headingLevel="h3">
-            <TextField label="Batch number" width="full" />
+            <TextField label="Batch number" />
           </FormSection>
         </FormPreview>
       </DashboardCard>
@@ -282,10 +281,10 @@ export const FormLayoutShowcase = () => (
         </Lead>
         <FormPreview>
           <FormSection title="Pricing">
-            <TextField label="Price note" width="full" />
+            <TextField label="Price note" />
             <FormRow>
-              <TextField label="Cost price" width="full" />
-              <TextField label="Sell price" width="full" />
+              <TextField label="Cost price" />
+              <TextField label="Sell price" />
             </FormRow>
           </FormSection>
         </FormPreview>
@@ -325,13 +324,13 @@ export const FormLayoutShowcase = () => (
           <FormSection title="Batch & Expiry">
             <FormRow>
               <FormRowItem weight={2}>
-                <TextField label="Manufacturer" width="full" />
+                <TextField label="Manufacturer" />
               </FormRowItem>
               <FormRowItem weight={1} minWidth="7rem">
-                <TextField label="Batch number" width="full" />
+                <TextField label="Batch number" />
               </FormRowItem>
               <FormRowItem weight={0} minWidth="9rem">
-                <DateField label="Expiry" width="full" value="2027-03-31" />
+                <DateField label="Expiry" value="2027-03-31" />
               </FormRowItem>
             </FormRow>
           </FormSection>

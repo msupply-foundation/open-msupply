@@ -1,7 +1,7 @@
 /* An almost-expired / expired date cell (getExpiryDateCell): the date text in
    the error tone, matching the old app's ExpiryDateCell (error.main). An
    ACTUALLY expired date (its day has arrived) additionally reads bold — the
-   step up from "expiring soon" to "expired" (spec D111). */
+   step up from "expiring soon" to "expired" (spec D112). */
 .expiring {
   color: var(--error-main);
 }

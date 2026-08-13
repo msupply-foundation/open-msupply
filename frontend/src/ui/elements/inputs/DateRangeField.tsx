@@ -21,8 +21,8 @@ export interface IsoDateRange {
 
 export interface DateRangeFieldProps {
   label: string;
-  /** Max-width cap: `short` (default) or `full` (see FieldShell). */
-  width?: 'short' | 'full';
+  /** Max-width cap — opt-in; defaults to `full` (see FieldShell). */
+  width?: 'compact' | 'short' | 'long' | 'full';
   value?: IsoDateRange;
   /** Fired as the range is picked (start first, then end). */
   onChange?: (value: IsoDateRange) => void;

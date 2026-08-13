@@ -782,7 +782,9 @@ export const FilterSelect = <V extends string>(props: {
                   }
                   closeOnSelect={false}
                 >
-                  <span class={styles.checkbox}>
+                  {/* A bare check mark, never a boxed checkbox — the box is
+                      the multi-select affordance (tables › filtering). */}
+                  <span class={styles.checkMark}>
                     <DropdownMenu.ItemIndicator class={styles.indicator}>
                       <CheckIcon />
                     </DropdownMenu.ItemIndicator>
