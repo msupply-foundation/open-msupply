@@ -1604,13 +1604,19 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                     : undefined
             }
             // Cards keep the held/expired treatment (title + border + badge
-            // — D110/D111).
+            // — D110/D111). Expired outranks held for the card tone
+            // (matching the tint precedence); both badges still show. A
+            // batch auto-allocation will use gets the green border + shadow
+            // ('success' — border/shadow only, no title tint) beside its
+            // green badge; auto-barred states can't co-occur with it.
             cardTone={line =>
-              line.stockLineOnHold || line.location?.onHold
-                ? 'warning'
-                : lineExpired(line)
-                  ? 'error'
-                  : undefined
+              lineExpired(line)
+                ? 'error'
+                : line.stockLineOnHold || line.location?.onHold
+                  ? 'warning'
+                  : willAutoAllocate(line)
+                    ? 'success'
+                    : undefined
             }
             emptyMessage={t('messages.no-stock-available')}
             config={tableConfig.config()}
