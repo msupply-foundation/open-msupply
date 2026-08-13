@@ -58,16 +58,24 @@ describe('itemLedgerFilter — Ledger tab chip state → wire filter', () => {
     });
   });
 
-  it('applies the type and status chips as equality matches', () => {
+  it('applies the type and status chips as any-of matches', () => {
     expect(
       buildWireFilter(ITEM, {
-        invoiceType: 'CUSTOMER_RETURN',
-        invoiceStatus: 'VERIFIED',
+        invoiceType: ['CUSTOMER_RETURN', 'SUPPLIER_RETURN'],
+        invoiceStatus: ['VERIFIED'],
       })
     ).toEqual({
       itemId: { equalTo: ITEM },
-      invoiceType: { equalTo: 'CUSTOMER_RETURN' },
-      invoiceStatus: { equalTo: 'VERIFIED' },
+      invoiceType: { equalAny: ['CUSTOMER_RETURN', 'SUPPLIER_RETURN'] },
+      invoiceStatus: { equalAny: ['VERIFIED'] },
     });
+  });
+
+  // A multi-select chip whose ticks were all removed holds an empty array —
+  // as empty as null, so it must contribute no filter either.
+  it('a multi-select chip with no ticks contributes no filter', () => {
+    expect(
+      buildWireFilter(ITEM, { invoiceType: [], invoiceStatus: [] })
+    ).toEqual({ itemId: { equalTo: ITEM } });
   });
 });

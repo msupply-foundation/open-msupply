@@ -11,7 +11,7 @@ import {
 import { remToPx } from '../../../ui/utils/rem';
 import {
   FilterBar,
-  FilterSelect,
+  FilterMultiSelect,
   FilterDateTimeRange,
   constructFilters,
   type Filter,
@@ -192,23 +192,23 @@ const buildLedgerFilters = (): Filter<LedgerFilter>[] =>
         />
       ),
     } satisfies FilterDef<LedgerFilter>,
+    // Both enum chips are multi-select "any of" (D110). NARROW, never assert:
+    // the URL-restored values are bare strings (a stale URL could carry
+    // anything), so keep only known members rather than casting into the enum.
     invoiceType: {
       label: () => t('label.type'),
       render: props => (
-        <FilterSelect
+        <FilterMultiSelect
           label={t('label.type')}
           testId={props.testId}
-          value={props.filter().invoiceType ?? ''}
-          options={[
-            { value: '', label: t('label.any') },
-            ...INVOICE_TYPES.map(v => ({ value: v, label: TYPE_LABEL[v] })),
-          ]}
-          // NARROW, never assert: the chip hands back a bare string (a stale
-          // URL could carry anything), so match it against the known members
-          // rather than casting it into the enum.
-          onChange={value =>
+          placeholder={t('label.any')}
+          values={(props.filter().invoiceType ?? []).filter(value =>
+            INVOICE_TYPES.some(v => v === value)
+          )}
+          options={INVOICE_TYPES.map(v => ({ value: v, label: TYPE_LABEL[v] }))}
+          onChange={values =>
             props.setPartialFilter({
-              invoiceType: INVOICE_TYPES.find(v => v === value) ?? null,
+              invoiceType: values.length ? values : null,
             })
           }
         />
@@ -217,21 +217,20 @@ const buildLedgerFilters = (): Filter<LedgerFilter>[] =>
     invoiceStatus: {
       label: () => t('label.status'),
       render: props => (
-        <FilterSelect
+        <FilterMultiSelect
           label={t('label.status')}
           testId={props.testId}
-          value={props.filter().invoiceStatus ?? ''}
-          options={[
-            { value: '', label: t('label.any') },
-            ...INVOICE_STATUSES.map(v => ({
-              value: v,
-              label: STATUS_LABEL[v],
-            })),
-          ]}
-          // Narrowed, not asserted — as with the type chip above.
-          onChange={value =>
+          placeholder={t('label.any')}
+          values={(props.filter().invoiceStatus ?? []).filter(value =>
+            INVOICE_STATUSES.some(v => v === value)
+          )}
+          options={INVOICE_STATUSES.map(v => ({
+            value: v,
+            label: STATUS_LABEL[v],
+          }))}
+          onChange={values =>
             props.setPartialFilter({
-              invoiceStatus: INVOICE_STATUSES.find(v => v === value) ?? null,
+              invoiceStatus: values.length ? values : null,
             })
           }
         />
