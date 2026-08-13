@@ -1124,6 +1124,10 @@ const InboundShipmentDetailView: Component = () => {
                 <DataTable
                   columns={columns()}
                   rows={rows()}
+                  // The line count sits in the toolbar, beside the view
+                  // controls — no height, and it stays put whether or not
+                  // the lines run to a second page.
+                  totalCount={totalCount()}
                   rowKey={line => line.id}
                   loading={linesData.loading}
                   sort={currentSort()}

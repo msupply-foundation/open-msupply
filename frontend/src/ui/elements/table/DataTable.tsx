@@ -68,7 +68,7 @@ import { ColumnSettings } from './ColumnSettings';
 import { TableSettings } from './TableSettings';
 import { Pagination, type PaginationProps } from './Pagination';
 import { paginationState } from './paginationState';
-import { isRtl, t } from '../../../intl';
+import { isRtl, t, tPlural } from '../../../intl';
 import styles from './DataTable.module.css';
 
 // The column model
@@ -284,6 +284,18 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    * no-op reset at default is harmless).
    */
   configIsDefault?: boolean;
+
+  /**
+   * The size of the full (server-filtered) result set — shown as a quiet
+   * count ("38 items") in the toolbar, beside the icon controls
+   * (spec/ui-standards § tables → toolbar). It belongs there rather than in
+   * the footer: it is a property of the result set the filters just produced,
+   * not of navigation, and the toolbar row exists at every row count, so the
+   * count costs no height. Pass the SAME total the pager gets — `rows` is one
+   * page, which is not what "38 items" means. Omit for a table whose row
+   * count says nothing a user wants (a modal's sub-table).
+   */
+  totalCount?: number;
 
   // --- Pagination (optional), STATE owned by the page. --- When set, the
   // table's footer bar shows the Pagination control (its default face — the
@@ -875,7 +887,8 @@ export function DataTable<T, K extends string, G extends string = never>(
   // table then loses the hairline that row carried along its bottom edge, which
   // is what separated the header from whatever sits above it. The seam moves to
   // the table area instead (see .root[data-no-toolbar] in the CSS).
-  const hasToolbar = () => !!filters() || !props.controlsMount;
+  const hasToolbar = () =>
+    !!filters() || props.totalCount !== undefined || !props.controlsMount;
 
   const controls = (): JSX.Element => (
     <div class={styles.toolbarControls}>
@@ -1058,6 +1071,14 @@ export function DataTable<T, K extends string, G extends string = never>(
               placement: filter state stays page-owned. */}
           <Show when={filters()}>
             <div class={styles.toolbarFilters}>{filters()}</div>
+          </Show>
+          {/* The result count — quiet, tabular, docked at the inline end
+              beside the icon controls (and holding that edge on its own when
+              the controls are portalled away). */}
+          <Show when={props.totalCount !== undefined}>
+            <span class={styles.toolbarCount} data-testid="table-count">
+              {tPlural('table.count', props.totalCount!)}
+            </span>
           </Show>
           <Show when={!props.controlsMount}>{controls()}</Show>
         </div>

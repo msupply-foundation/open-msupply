@@ -10,9 +10,8 @@ import { CheckboxButton } from '../../../ui/elements/buttons/CheckboxButton';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
-import { IconButton } from '../../../ui/elements/buttons/IconButton';
 import { Alert } from '../../../ui/elements/feedback/Alert';
-import { ArrowRightIcon, CloseIcon } from '../../../ui/icons';
+import { ArrowRightIcon } from '../../../ui/icons';
 import type { InboundInfoFragment } from './inboundShipmentDetail.generated';
 import { updateInboundShipment } from './inboundShipmentUpdate';
 import {
@@ -129,13 +128,6 @@ export const InboundShipmentStatusFooter: Component<
       </Show>
 
       <ContentFooterActions>
-        {/* Small Close button beside the status control (distinct from the
-            app-bar back-to-list button). */}
-        <IconButton
-          icon={<CloseIcon />}
-          label={t('button.close')}
-          onClick={() => history.back()}
-        />
         <Show when={!props.disabled && reachable().length > 0}>
           <SplitButton
             icon={<ArrowRightIcon />}

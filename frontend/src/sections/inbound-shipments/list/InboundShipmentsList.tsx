@@ -502,6 +502,9 @@ const InboundShipmentsList: Component = () => {
             ? tableConfig.saveGlobalTableConfig
             : undefined
         }
+        // The result count sits in the toolbar, not the footer — it belongs
+        // with the filters that produced it and costs no height there.
+        totalCount={totalCount()}
         pagination={{
           offset: query().offset,
           pageSize: query().first,
