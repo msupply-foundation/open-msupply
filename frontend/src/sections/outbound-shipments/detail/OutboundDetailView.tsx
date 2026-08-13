@@ -118,14 +118,15 @@ type Line = OutboundLineFragment;
 
 // A held line — its batch, or the batch's location, on hold — cannot be
 // issued (OMS-REG-DIST-03.18); the detail table says so where the user looks
-// first: warning-tone row text + a check in the On-hold flag column
-// (OMS-REG-DIST-03.37, D110 — the flag carries the fact, the tone only
-// restates it).
+// first: a check in the On-hold flag column, an amber status tint on an
+// unallocated row, and the amber card treatment (OMS-REG-DIST-03.37, D110 —
+// the flag carries the fact, the tint only restates it).
 const lineOnHold = (line: Line): boolean =>
   !!line.stockLine?.onHold || !!line.location?.onHold;
 
-// Calendar-expired line (D111) — the card's error tone + Expired badge; in
-// table view the Expiry-date cell's own reddening carries it.
+// Calendar-expired line (D111) — the bold red Expiry-date cell, a red status
+// tint on an unallocated row, and the red card treatment (title/border/
+// Expired badge).
 const lineExpired = (line: Line): boolean =>
   !!line.expiryDate && isExpired(line.expiryDate);
 
@@ -1028,18 +1029,32 @@ const OutboundDetailView: Component = () => {
                   sort={currentSort()}
                   onSort={onSort}
                   onRowClick={editable() ? openRow : undefined}
-                  // Placeholder lines read in the info tone — whole-row blue
-                  // text, matching the current app; held lines in the warning
-                  // tone, expired lines in the error tone — each beside its
-                  // words (the flag badges; in table view the bold red
-                  // Expiry-date cell) (ui-surface S3 line table,
-                  // OMS-REG-DIST-03.37/.38, D110/D111). Precedence is pinned
-                  // by .38: placeholder outranks everything (the row stays
-                  // info; only the Expiry-date cell reddens/bolds), and hold
-                  // outranks expiry (the server-enforced bar).
-                  rowTone={line =>
+                  // Line-STATUS background tints (ui-surface S3 line table,
+                  // OMS-REG-DIST-03.37–.39, D110): allocated green, expired
+                  // red, held amber, placeholder untinted (its blue text is
+                  // gone too — D110 drops the current app's treatment). Row
+                  // text keeps the default colour; the On-hold flag column
+                  // and the bold red Expiry-date cell carry the facts in
+                  // words. Precedence (.39): allocated > expired > held —
+                  // a detail line always carries packs, so real lines read
+                  // green and the red/amber tints surface only on a
+                  // zero-pack edge case.
+                  rowTint={line =>
                     line.type === 'UNALLOCATED_STOCK'
-                      ? 'info'
+                      ? undefined
+                      : line.numberOfPacks > 0
+                        ? 'success'
+                        : lineExpired(line)
+                          ? 'error'
+                          : lineOnHold(line)
+                            ? 'warning'
+                            : undefined
+                  }
+                  // Cards keep the held/expired treatment (title + border +
+                  // badge — D110/D111); no info tone for placeholders.
+                  cardTone={line =>
+                    line.type === 'UNALLOCATED_STOCK'
+                      ? undefined
                       : lineOnHold(line)
                         ? 'warning'
                         : lineExpired(line)

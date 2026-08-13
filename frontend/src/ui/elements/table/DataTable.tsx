@@ -181,6 +181,26 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    */
   rowTone?: (row: T) => 'info' | 'warning' | 'error' | undefined;
   /**
+   * Card-only tone override: when set, CARD view takes its tone (identity
+   * title + the warning/error border/shadow) from this instead of rowTone,
+   * and rowTone is free to stay unset — for a page whose table view must NOT
+   * colour row text (outbound's status-tinted tables, D110) but whose cards
+   * keep the tone treatment. Same vocabulary and CSS as rowTone's card half.
+   */
+  cardTone?: (row: T) => 'info' | 'warning' | 'error' | undefined;
+  /**
+   * Semantic record-STATUS background tint, always on (unlike the rowState
+   * tints, which show only while selected): 'success' for a satisfied row
+   * (an outbound line with stock allocated), 'error' for an error-state row
+   * (expired stock), 'warning' for a row needing attention (a held batch).
+   * One tint per row — the page encodes its own precedence. Table view only
+   * (cards carry status via cardTone + badges); stamps data-tint on the row,
+   * mapped to palette tokens in CSS; selection deepens the tint. Never
+   * colour alone: the tint restates a fact a cell states in words
+   * (spec D110).
+   */
+  rowTint?: (row: T) => 'success' | 'warning' | 'error' | undefined;
+  /**
    * The data is being fetched. Drives the loading treatment so a slow fetch
    * never flashes the empty state (issues #160/#196): with NO rows yet
    * (initial load) a centred spinner replaces the empty state; with rows
@@ -1174,7 +1194,9 @@ export function DataTable<T, K extends string, G extends string = never>(
                         enableSelection={props.enableSelection ?? false}
                         selectionDisabled={props.selectionDisabled ?? false}
                         onRowClick={props.onRowClick}
-                        rowTone={props.rowTone}
+                        rowTone={row =>
+                          (props.cardTone ?? props.rowTone)?.(row)
+                        }
                       />
                     </Match>
                     <Match when={viewMode() === 'table'}>
@@ -1187,6 +1209,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                             onRowClick={props.onRowClick}
                             rowState={props.rowState}
                             rowTone={props.rowTone}
+                            rowTint={props.rowTint}
                             pinnedStyle={pinnedStyle}
                             leadingPinnedStyle={leadingPinnedStyle}
                             frozenEdge={frozenEdge}

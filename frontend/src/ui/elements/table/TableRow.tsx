@@ -87,6 +87,11 @@ export function TableRow<T>(props: {
    */
   rowTone?: (row: T) => 'info' | 'warning' | 'error' | undefined;
   /**
+   * Semantic record-status BACKGROUND tint, always on (see DataTable's prop
+   * doc — spec D110). Stamps data-tint, styled in CSS.
+   */
+  rowTint?: (row: T) => 'success' | 'warning' | 'error' | undefined;
+  /**
    * Sticky-pin style for a pinned data column's cell
    * (position/offset/z-index), else undefined.
    */
@@ -128,6 +133,11 @@ export function TableRow<T>(props: {
       data-tone={
         !props.row.getIsGrouped()
           ? props.rowTone?.(props.row.original)
+          : undefined
+      }
+      data-tint={
+        !props.row.getIsGrouped()
+          ? props.rowTint?.(props.row.original)
           : undefined
       }
       // Selected rows get the same brand tint as selected cards (consistent
