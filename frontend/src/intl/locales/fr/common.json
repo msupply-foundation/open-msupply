@@ -1608,7 +1608,6 @@
   "label.picked": "Prélevé",
   "label.picked-date": "Date de prélèvement",
   "label.picking-slip": "Bon de préparation",
-  "label.placeholder": "En attente",
   "label.po-currency": "Monnaie BC",
   "label.po-num": "BC-{{number}}",
   "label.po-price-per-pack": "Prix / cond. dans BC",

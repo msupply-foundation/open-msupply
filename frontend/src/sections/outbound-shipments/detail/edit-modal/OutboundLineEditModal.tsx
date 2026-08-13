@@ -1351,7 +1351,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             <Show when={item()}>
               <HStack gap="md">
                 <span>
-                  {t('label.placeholder')}: {formatNumber(placeholderUnits())}
+                  {t('label.unallocated')}: {formatNumber(placeholderUnits())}
                 </span>
                 <span>
                   {t('label.total-units')}:{' '}
