@@ -107,7 +107,6 @@ export const InboundShipmentLogPanel: Component<{
     storeId: props.storeId,
     recordId: props.invoiceId,
     page: { first: LOG_PAGE_SIZE, offset: 0 },
-    sort: [{ key: 'id', desc: true }],
   });
   const [logData] = createResource(
     () => JSON.stringify(variables()),
@@ -121,7 +120,14 @@ export const InboundShipmentLogPanel: Component<{
     }
   );
 
-  const rows = (): Log[] => logData.latest?.nodes ?? [];
+  // Newest first, ordered by datetime client-side: the wire has no datetime
+  // sort key, and an id sort scrambles the chronology (ids are UUIDs). The
+  // server hands us the whole log datetime-ascending, so this reorders a
+  // complete set rather than re-sorting one page.
+  const rows = (): Log[] =>
+    [...(logData.latest?.nodes ?? [])].sort((a, b) =>
+      a.datetime === b.datetime ? 0 : a.datetime < b.datetime ? 1 : -1
+    );
 
   const columns = (): Column<Log, never>[] => [
     {

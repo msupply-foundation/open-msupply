@@ -20,10 +20,6 @@ export type StocktakeLogVariables = {
     first?: number | null;
     offset?: number | null;
   } | null;
-  sort?: Array<{
-    key: "id" | "activityLogType" | "userId" | "recordId";
-    desc?: boolean | null;
-  }> | null;
 };
 
 export type StocktakeLogResult = {
@@ -36,5 +32,5 @@ export type StocktakeLogResult = {
 };
 
 export const StocktakeLog = {
-  query: "query stocktakeLog($storeId: String!, $recordId: String!, $page: PaginationInput, $sort: [ActivityLogSortInput!]) {\n  activityLogs(\n    storeId: $storeId\n    filter: {recordId: {equalTo: $recordId}}\n    page: $page\n    sort: $sort\n  ) {\n    ... on ActivityLogConnector {\n      __typename\n      totalCount\n      nodes {\n        ...StocktakeLog\n      }\n    }\n  }\n}\n\nfragment StocktakeLog on ActivityLogNode {\n  id\n  datetime\n  type\n  to\n  from\n  user {\n    username\n  }\n}",
+  query: "query stocktakeLog($storeId: String!, $recordId: String!, $page: PaginationInput) {\n  activityLogs(\n    storeId: $storeId\n    filter: {recordId: {equalTo: $recordId}}\n    page: $page\n  ) {\n    ... on ActivityLogConnector {\n      __typename\n      totalCount\n      nodes {\n        ...StocktakeLog\n      }\n    }\n  }\n}\n\nfragment StocktakeLog on ActivityLogNode {\n  id\n  datetime\n  type\n  to\n  from\n  user {\n    username\n  }\n}",
 } as TypedDocument<StocktakeLogResult, StocktakeLogVariables>;

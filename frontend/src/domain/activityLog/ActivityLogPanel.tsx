@@ -121,10 +121,11 @@ export const ActivityLogPanel: Component<{
   storeId: string;
   recordId: string;
   /**
-   * Row order. The consuming vertical's spec decides: items/patients mandate
-   * most-recent-first (the default), requisitions/internal-orders mandate
-   * oldest-first (AC-LG1 / AC-AL1 — matching the real OMS ActivityLogList,
-   * which sends no sort and gets the server's datetime-ascending default).
+   * Row order, by datetime. The consuming vertical's spec decides:
+   * items/patients mandate most-recent-first (the default),
+   * requisitions/internal-orders mandate oldest-first (AC-LG1 / AC-AL1 —
+   * matching the real OMS ActivityLogList, which sends no sort and gets the
+   * server's datetime-ascending default).
    */
   order?: 'newest-first' | 'oldest-first';
 }> = props => {
@@ -141,14 +142,12 @@ export const ActivityLogPanel: Component<{
   const tableConfig = createTableConfig({ tableId: 'activity-log' });
 
   // Keyed on serialised variables (stable string) so identical content doesn't
-  // refetch (kdd/solid-reactivity-pitfalls). Sorted by id (activity-log ids
-  // are monotonic): descending = most recent first (the default), ascending
-  // when the consumer asks for oldest-first — see the `order` prop.
+  // refetch (kdd/solid-reactivity-pitfalls). No sort — the row order is a
+  // client-side concern (see `rows`).
   const variables = (): ActivityLogVariables => ({
     storeId: props.storeId,
     recordId: props.recordId,
     page: { first: LOG_PAGE_SIZE, offset: 0 },
-    sort: [{ key: 'id', desc: props.order !== 'oldest-first' }],
   });
   const [logData] = createResource(
     () => JSON.stringify(variables()),
@@ -162,7 +161,19 @@ export const ActivityLogPanel: Component<{
     }
   );
 
-  const rows = (): Log[] => logData.latest?.nodes ?? [];
+  // Ordered by datetime client-side: the wire has no datetime sort key, and an
+  // id sort scrambles the chronology (ids are UUIDs). The server hands us the
+  // whole log datetime-ascending, so this is a reorder of a complete set, not a
+  // re-sort of one page.
+  const rows = (): Log[] => {
+    const nodes = logData.latest?.nodes ?? [];
+    const direction = props.order === 'oldest-first' ? 1 : -1;
+    return [...nodes].sort((a, b) =>
+      a.datetime === b.datetime
+        ? 0
+        : direction * (a.datetime < b.datetime ? -1 : 1)
+    );
+  };
 
   const columns = (): Column<Log, never>[] => [
     { c: { key: 'datetime' }, header: () => t('label.date'), ...getDateCell() },

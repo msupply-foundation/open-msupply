@@ -20,10 +20,6 @@ export type InboundShipmentLogVariables = {
     first?: number | null;
     offset?: number | null;
   } | null;
-  sort?: Array<{
-    key: "id" | "activityLogType" | "userId" | "recordId";
-    desc?: boolean | null;
-  }> | null;
 };
 
 export type InboundShipmentLogResult = {
@@ -36,5 +32,5 @@ export type InboundShipmentLogResult = {
 };
 
 export const InboundShipmentLog = {
-  query: "query inboundShipmentLog($storeId: String!, $recordId: String!, $page: PaginationInput, $sort: [ActivityLogSortInput!]) {\n  activityLogs(\n    storeId: $storeId\n    filter: {recordId: {equalTo: $recordId}}\n    page: $page\n    sort: $sort\n  ) {\n    ... on ActivityLogConnector {\n      __typename\n      totalCount\n      nodes {\n        ...InboundLog\n      }\n    }\n  }\n}\n\nfragment InboundLog on ActivityLogNode {\n  id\n  datetime\n  type\n  to\n  from\n  user {\n    username\n  }\n}",
+  query: "query inboundShipmentLog($storeId: String!, $recordId: String!, $page: PaginationInput) {\n  activityLogs(\n    storeId: $storeId\n    filter: {recordId: {equalTo: $recordId}}\n    page: $page\n  ) {\n    ... on ActivityLogConnector {\n      __typename\n      totalCount\n      nodes {\n        ...InboundLog\n      }\n    }\n  }\n}\n\nfragment InboundLog on ActivityLogNode {\n  id\n  datetime\n  type\n  to\n  from\n  user {\n    username\n  }\n}",
 } as TypedDocument<InboundShipmentLogResult, InboundShipmentLogVariables>;
