@@ -44,12 +44,6 @@ import {
 import { remToPx } from '../../../../ui/utils/rem';
 import { createTableConfig } from '../../../../api/createTableConfig';
 import { CheckIcon, InfoIcon } from '../../../../ui/icons';
-import {
-  CheckIcon,
-  InfoIcon,
-  MessageSquareIcon,
-  StockIcon,
-} from '../../../../ui/icons';
 import { RowStatusBadges, uncapped } from '../RowStatusBadges';
 import {
   DraftStockOutLines,
@@ -60,7 +54,6 @@ import {
 } from './outboundLineEdit.generated';
 import { ItemSearch } from '../../../../domain/item';
 import { VvmStatusSelect, type VvmStatus } from '@/domain/vvmStatus';
-import { StatusChip } from '../../../../ui/elements/feedback/StatusChip';
 import {
   createFocusTarget,
   createFocusTargets,
@@ -72,7 +65,6 @@ import {
   issuedUnits as sumIssuedUnits,
   distinctPackSizes as packSizesIn,
   autoAllocateBarReasons,
-  isExpired,
   barReasons,
   clampManualPacks,
   deriveIssueWarnings,
@@ -1419,35 +1411,6 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       },
     },
     {
-      // EXPIRED — a chip in the card header's badge slot, beside On hold.
-      // A word, not a tone: the expiry date already reads red, but red covers
-      // both "expires soon" (often exactly what FEFO wants issued) and "past
-      // its date" (what you must not issue except deliberately), and colour
-      // cannot tell those apart — nor may it try (WCAG 1.4.1 / CLAUDE.md #9).
-      // Warning-toned, not error: an expired batch here is still manually
-      // issuable, and the card carries no frame or recolouring beyond this —
-      // one fact, one marker.
-      c: {
-        accessor: line => isExpired(line.expiryDate),
-        id: 'expired',
-      },
-      header: () => t('label.expired'),
-      meta: { headerPosition: 'badge' },
-      cell: info =>
-        info.getValue<boolean>() ? (
-          <StatusChip
-            label={t('label.expired')}
-            // The warning SEVERITY token, not a --status-* one: expired is a
-            // condition of the batch, not a stage of a workflow, and borrowing
-            // "picked"'s amber for it would tie this chip to an unrelated
-            // status's colour.
-            colour="var(--warning-main)"
-          />
-        ) : (
-          ''
-        ),
-    },
-    {
       // On-hold flag (the stock line or its location) — the row is already
       // disabled and its Available shows 0; the check names WHY (old-app
       // parity).
@@ -1749,39 +1712,13 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               // as one. Card view only — see the prop.
               fitContent
               rowState={line => (rowDisabled(line) ? 'disabled' : undefined)}
+              rowTint={lineRowTint}
+              cardTone={lineCardTone}
               emptyMessage={t('messages.no-stock-available')}
               config={tableConfig.config()}
               setConfig={tableConfig.setConfig}
             />
           </div>
-        {/* Batch grid: one row per available batch, FEFO-ordered; barred rows
-            disabled (AC-AL2 / AC-AL8). */}
-        <div class={styles.batchGrid}>
-          <DataTable
-            columns={columns()}
-            rows={draftRows()}
-            rowKey={line => line.id}
-            loading={loadingLines()}
-            cardGroups={CARD_GROUPS}
-            showCardToggle
-            showFullScreen={false}
-            rowState={line => (rowDisabled(line) ? 'disabled' : undefined)}
-            rowTint={lineRowTint}
-            cardTone={lineCardTone}
-            emptyMessage={t('messages.no-stock-available')}
-            config={tableConfig.config()}
-            setConfig={tableConfig.setConfig}
-          />
-        </div>
-
-        {/* Everything below the grid shares one vertical rhythm — the Stack's
-            gap replaces the per-block margins. The running total that used to
-            lead this stack now rides the footer's message slot. */}
-        <Stack gap="sm">
-          {/* Stacked warning banners (spec S4 § warnings). */}
-          <For each={warnings()}>
-            {message => <Alert severity="warning">{message}</Alert>}
-          </For>
 
           {/* ADVISORY messages — they inform, they don't gate the save, so they
               live in the flow after the last card and scroll away with it

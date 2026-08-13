@@ -1,5 +1,5 @@
 // The initialisation screen's silent wait for the central server
-// (spec/startup/rules.md § Initialisation, D98, issue #504;
+// (spec/startup/rules.md § Initialisation, D99, issue #504;
 // OMS-REG-LGN-03.18–.21). Pure — no framework, no I/O — so the two rules that
 // would otherwise silently regress (ONLY the one transient variant is waited
 // on; the retry budget terminates) are unit-testable.
