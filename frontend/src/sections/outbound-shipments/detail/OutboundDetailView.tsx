@@ -622,7 +622,7 @@ const OutboundDetailView: Component = () => {
         c: {
           accessor: line =>
             line.type === 'UNALLOCATED_STOCK'
-              ? t('label.placeholder')
+              ? t('label.unallocated')
               : (line.batch ?? '—'),
           id: 'batch',
         },

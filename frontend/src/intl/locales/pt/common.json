@@ -1524,7 +1524,6 @@
   "label.picked": "Retirados",
   "label.picked-date": "Data escolhida",
   "label.picking-slip": "Guia de recolha",
-  "label.placeholder": "Marcador de posição",
   "label.po-currency": "Câmbio da Ordem de Compra",
   "label.po-num": "Ordem de Compra-{{number}}",
   "label.po-price-per-pack": "Preço por pacote da Ordem de Compra",
