@@ -62,6 +62,7 @@ import {
   createFocusTargets,
 } from '../../../../ui/utils/createFocusTarget';
 import { toSaveLineInputs } from './saveLineInputs';
+import { mirroredIssueValue } from './issueMirror';
 import {
   availableUnits as sumAvailableUnits,
   issuedUnits as sumIssuedUnits,
@@ -727,6 +728,15 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     distribute(units ?? 0);
   };
 
+  // The Issue field mirrors a manual per-batch edit (AC-AL16,
+  // OMS-REG-DIST-03.40): the grid's new total — issued + placeholder, the
+  // same requested total the seed shows (D61) — in the current lens. A bare
+  // setIssueValue never re-distributes.
+  const syncIssueValue = () =>
+    setIssueValue(
+      mirroredIssueValue(issuedUnits(), placeholderUnits(), allocateIn())
+    );
+
   // Direct per-batch edit (OMS-REG-DIST-03.19/AC-AL6): whole packs — a
   // fractional entry rounds UP, an entry beyond availability clamps DOWN to the
   // whole-pack floor (rules.md § whole-pack arithmetic). An adjusted entry is
@@ -747,6 +757,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         : value;
     const applied = clampManualPacks(requestedPacks, line.availablePacks);
     setDraft(index, 'numberOfPacks', applied);
+    syncIssueValue();
     const appliedQuantity = inDoses
       ? packsToDoses(applied, line.packSize, line.dosesPerUnit)
       : applied;
@@ -788,7 +799,12 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     const index = draft.findIndex(line => line.id === id);
     if (index < 0) return;
     setDraft(index, 'vvmStatus', status);
-    if (status?.unusable) setDraft(index, 'numberOfPacks', 0);
+    if (status?.unusable) {
+      // The forced zero is a per-batch packs change like any other — the
+      // Issue field mirrors it (AC-AL16, OMS-REG-DIST-03.40).
+      setDraft(index, 'numberOfPacks', 0);
+      syncIssueValue();
+    }
     setDirty(true);
     // As in distribute()/setPacks() — the confirmations are re-earned against
     // the changed draft.
