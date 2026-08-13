@@ -148,9 +148,14 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
 
   // Spec OMS-REG-FTR-01.9/.10: Logout is gated by a confirmation modal, and
   // confirming ends the session — clearing the user swaps the whole shell for
-  // the login screen (App's <Show when={authUser()}>), so nothing here
-  // navigates.
+  // the login screen (App's <Show when={authUser()}>). The URL is then reset
+  // to the root (spec § explicit logout, OMS-REG-LGN-01.28) so the next
+  // sign-in resolves the store from scratch instead of silently re-entering
+  // the one the logged-out screen's URL still named. AFTER the user clears —
+  // navigating first would route a still-authenticated app through the
+  // /resolve-store guard and flash the picker for the server round-trip.
   const [logoutConfirmOpen, setLogoutConfirmOpen] = createSignal(false);
+  const logoutAndReset = () => void logout().then(() => navigate('/'));
 
   // Spec (sync-modal; chrome › sync indicator): the chrome's sync affordance
   // opens the modal; the shared sync watch (substrate) runs for the whole
@@ -238,7 +243,7 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
         onClose={() => setLogoutConfirmOpen(false)}
         title={t('heading.logout-confirm')}
         message={t('messages.logout-confirm')}
-        onConfirm={() => void logout()}
+        onConfirm={logoutAndReset}
       />
       <ConfirmDialog
         open={updateConfirmOpen()}
