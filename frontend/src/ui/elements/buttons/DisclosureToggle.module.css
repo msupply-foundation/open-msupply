@@ -1,0 +1,14 @@
+/*
+ * The disclosure chevron rotates between its two states — the same accordion
+ * convention as Accordion/SidePanel (up/down, never mirrored for RTL). The
+ * duration is a --motion-* token, so prefers-reduced-motion zeroes it without
+ * a media query here (src/ui/CLAUDE.md #9).
+ */
+.chevron {
+  flex-shrink: 0;
+  transition: transform var(--motion-fast) ease;
+}
+
+.expanded {
+  transform: rotate(180deg);
+}

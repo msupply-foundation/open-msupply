@@ -13,7 +13,7 @@ import {
   SyncIcon,
   type IconProps,
 } from '../../icons';
-import { useIsNavOverlay } from '../../utils/createMediaQuery';
+import { useIsNavOverlay, useIsRailWide } from '../../utils/createMediaQuery';
 import { createAction } from '../../utils/keyActions';
 import { MenuBar, type MenuBarState } from './MenuBar';
 import { LanguageSelector } from './LanguageSelector';
@@ -163,6 +163,13 @@ const FooterCell = (props: {
 );
 
 /*
+ * The rail's collapsed state, when the user has set it explicitly. One shared
+ * key, not per-user, matching side-panel-open: the state is cosmetic. Absent =
+ * no choice made, so the width default applies.
+ */
+const RAIL_COLLAPSED_KEY = 'rail-collapsed';
+
+/*
  * Application shell — the APP-LEVEL container, not the page frame: docked
  * menu bar (the main menu), the orange app footer, and the content slot
  * between them where the current page renders. App chrome lives here
@@ -174,13 +181,46 @@ const FooterCell = (props: {
  * routing is decided the host owning `selected`/`onNavigate` is the router
  * stand-in; a root layout route takes both over later.
  *
- * The one responsive decision — docked rail vs. hamburger overlay — is
- * driven by useIsNavOverlay; everything else is intrinsic layout. The shell
+ * Two responsive decisions, and only two: WHICH nav renders — docked rail vs.
+ * hamburger overlay — from useIsNavOverlay, and what the docked rail DEFAULTS
+ * to — expanded vs. mini rail — from useIsRailWide. The second changes no
+ * element, only a starting state the user can overrule; everything else is
+ * intrinsic layout. The shell
  * renders no header of its own: the page's <Header> hosts the overlay
  * hamburger via ShellNavContext. Adapted from the RnD prototype's App shell.
  */
 export const AppShell = (props: AppShellProps) => {
-  const [railCollapsed, setRailCollapsed] = createSignal(false);
+  /*
+   * The rail is DOCKED at every width from navOverlay up; what railDefaultExpanded
+   * changes is only its DEFAULT state — expanded on a desktop, the mini rail on a
+   * 1024–1439 laptop or landscape tablet where width is scarce. Hiding the nav
+   * outright in that band was the alternative, and it would have traded permanent
+   * wayfinding for the ~80px the mini rail already gives back.
+   *
+   * An explicit toggle outranks the default and persists across reloads — the
+   * same choice-over-responsive-default shape as createSidePanelOpen, and for the
+   * same reason: a default the user has overruled should stay overruled, at every
+   * width, rather than springing back when they resize.
+   */
+  let storedRail: boolean | null = null;
+  try {
+    const raw = localStorage.getItem(RAIL_COLLAPSED_KEY);
+    if (raw === 'true' || raw === 'false') storedRail = raw === 'true';
+  } catch {
+    // Storage unavailable (private mode) — fall through to the width default.
+  }
+  const railWide = useIsRailWide();
+  const [railChoice, setRailChoice] = createSignal<boolean | null>(storedRail);
+  const railCollapsed = () => railChoice() ?? !railWide();
+  const setRailCollapsed = (next: boolean) => {
+    setRailChoice(next);
+    try {
+      localStorage.setItem(RAIL_COLLAPSED_KEY, String(next));
+    } catch {
+      // Best effort — the in-session signal still works.
+    }
+  };
+
   const [overlayOpen, setOverlayOpen] = createSignal(false);
   const [fullScreen, setFullScreen] = createSignal(false);
   // A page's slide-over panel is covering the viewport (KB-X2). Set by Page
@@ -198,7 +238,7 @@ export const AppShell = (props: AppShellProps) => {
 
   const nav: MenuBarState = {
     railCollapsed,
-    toggleRail: () => setRailCollapsed(c => !c),
+    toggleRail: () => setRailCollapsed(!railCollapsed()),
     overlayOpen,
     openOverlay: () => setOverlayOpen(true),
     closeOverlay: () => setOverlayOpen(false),

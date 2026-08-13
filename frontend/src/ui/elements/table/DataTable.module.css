@@ -304,13 +304,13 @@ tr[data-tone='info'] > .td {
 }
 
 /* 'warning' = a row needing attention before it can proceed (e.g. an outbound
-   line issued from a held batch — spec D102). Text only, like 'info'; the
+   line issued from a held batch — spec D110). Text only, like 'info'; the
    fact itself is stated in words by a cell (never colour alone). */
 tr[data-tone='warning'] > .td {
   color: var(--warning-main);
 }
 
-/* 'error' = a row in an error state (an expired batch — spec D103; a
+/* 'error' = a row in an error state (an expired batch — spec D111; a
    server-refused bulk line). The expired row's bold red Expiry-date cell is
    the words the tone restates. */
 tr[data-tone='error'] > .td {
@@ -702,7 +702,7 @@ tr[data-row-state='disabled'] > .selectCell {
 }
 
 /* A row both disabled and toned (a held or expired batch in a line editor's
-   grid — spec D102/D103) keeps the disabled grey fill but reads in its tone:
+   grid — spec D110/D111) keeps the disabled grey fill but reads in its tone:
    the state is WHY the row is disabled, so the tone must survive the muting.
    Sits after the density block (higher specificity than its .td rules — the
    lint's ascending order). */

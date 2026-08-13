@@ -6,25 +6,11 @@
  * page-local rather than cross-importing a sync-modal-scoped module.
  */
 
+/* Placement only for the advanced-options disclosure — its look is the ghost
+   Button's, the same affordance the Synchronisation settings form uses. */
 .advancedToggle {
   align-self: flex-end;
-  margin-block-start: -1.5rem; /* pulls up under the interval field's gap */
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-  cursor: pointer;
-}
-
-.advancedToggle:hover,
-.advancedToggle:focus-visible {
-  color: var(--primary-main);
-}
-
-.advancedToggle:focus-visible {
-  outline: 2px solid var(--primary-main);
-  outline-offset: 0.125rem;
+  margin-block-start: -1.5rem; /* pulls up under the password field's gap */
 }
 
 /* The standalone-central form's small section heading over the admin
