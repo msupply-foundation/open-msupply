@@ -200,6 +200,19 @@ export const AlertTriangleIcon = (props: IconProps) => (
   </Stroke>
 );
 
+/* Offline / connection lost (the error dialog's "can't reach the server") */
+export const WifiOffIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M16.72 11.06C17.5387 11.4531 18.3037 11.9539 19 12.55" />
+    <path d="M5 12.55C6.47003 11.3364 8.26414 10.5074 10.17 10.16" />
+    <path d="M10.71 5.05C14.9432 4.66018 19.1541 5.99542 22.58 9" />
+    <path d="M1.42 9C2.80587 7.78412 4.39642 6.80707 6.12 6.12" />
+    <path d="M8.53 16.11C9.53718 15.3875 10.7599 14.9977 12 14.9977C13.2401 14.9977 14.4628 15.3875 15.47 16.11" />
+    <path d="M12 20H12.01" />
+    <path d="M2 2L22 22" />
+  </Stroke>
+);
+
 /* Delete */
 /* Hugeicons: Delete02Icon */
 export const TrashIcon = (props: IconProps) => (
