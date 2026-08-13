@@ -12,6 +12,12 @@ import type { LayeredConfig } from './ui/elements/table/tableConfig';
 // TableConfig) — the exact type DataTable resolves.
 type AppData = {
   previousStoreIdByUserId?: Record<string, string>;
+  // The store the user chose to ALWAYS open at sign-in (spec/startup rules
+  // § SL-9): saved when they answer Yes to the selection screen's "Always open
+  // this store?" prompt. Per user per device, like previousStoreIdByUserId —
+  // a machine in the pharmacy opens the pharmacy store, the warehouse machine
+  // the warehouse store, whoever's account is shared between them.
+  alwaysOpenStoreIdByUserId?: Record<string, string>;
   tableConfigByUserId?: Record<string, Record<string, LayeredConfig>>;
   // Label printer "print via USB" (spec/settings rules § Devices — label
   // printer): a DEVICE-local preference, deliberately not keyed by user and
@@ -75,6 +81,26 @@ export const recordPreviousStoreId = (
     ...data,
     previousStoreIdByUserId: {
       ...data.previousStoreIdByUserId,
+      [userId]: storeId,
+    },
+  });
+};
+
+// The user's always-open store on this device (spec/startup rules § SL-9), or
+// undefined when they have never answered Yes to the prompt. The store guard
+// treats a value that no longer names one of the user's stores as absent.
+export const getAlwaysOpenStoreId = (userId: string): string | undefined =>
+  readAppData().alwaysOpenStoreIdByUserId?.[userId];
+
+export const recordAlwaysOpenStoreId = (
+  userId: string,
+  storeId: string
+): void => {
+  const data = readAppData();
+  writeAppData({
+    ...data,
+    alwaysOpenStoreIdByUserId: {
+      ...data.alwaysOpenStoreIdByUserId,
       [userId]: storeId,
     },
   });

@@ -593,17 +593,19 @@ export const DialogShowcase = () => {
           title="Store selector — in a blocking Dialog"
         >
           <Lead>
-            The <code>StoreSelector</code> library component styled after the
-            current app's login store-selector — <code>TextField</code> search,
-            a bordered selectable list with <code>Default</code> /{' '}
-            <code>Last used</code> StatusChips, and a <code>Continue</code>{' '}
-            button (select-then-confirm; double-click a row to confirm
-            directly). Here it fills a{' '}
+            The <code>StoreSelector</code> library component — card rows with{' '}
+            <code>Default</code> / <code>Last used</code> StatusChips, a{' '}
+            <code>TextField</code> search only for long lists (7+ stores), and
+            the "Always open" <code>Checkbox</code> at the top. Clicking a row
+            enters it directly (no Continue button, no follow-up prompt — issue
+            #193); arrow keys move the highlight and Enter confirms it; the
+            checkbox state rides along as <code>onConfirm</code>'s{' '}
+            <code>alwaysOpen</code> flag. Here it fills a{' '}
             <code>
               dismissable={'{'}false{'}'}
             </code>{' '}
-            Dialog — blocking (no scrim/Escape dismiss, an answer is required),
-            exactly as the app's store login uses it.
+            Dialog — blocking (no scrim/Escape dismiss, an answer is required);
+            in the app it fills the routed store-selection screen's login frame.
           </Lead>
           <Row>
             <Button onClick={() => setStoreOpen(true)}>
@@ -623,9 +625,14 @@ export const DialogShowcase = () => {
               stores={STORES}
               defaultStoreId="AFCA0C9F0743AB43B779FB9EA2E64EAF"
               lastUsedStoreId="5B28901C52396E4BB098B9862CCF5DF9"
-              onConfirm={id => {
+              pinnedCount={2}
+              onConfirm={(id, alwaysOpen) => {
                 const store = STORES.find(s => s.id === id);
-                setChosen(store ? `Entered ${store.name}` : '');
+                setChosen(
+                  store
+                    ? `Entered ${store.name}${alwaysOpen ? ' (always open)' : ''}`
+                    : ''
+                );
                 setStoreOpen(false);
               }}
             />
