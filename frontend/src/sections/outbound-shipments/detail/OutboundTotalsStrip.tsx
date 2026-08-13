@@ -24,10 +24,13 @@ export const OutboundTotalsStrip: Component<OutboundTotalsStripProps> = props =>
   <Show when={props.totals?.()}>
     {totals => (
       <div class={styles.strip} data-testid="shipment-totals">
-        {t('label.shipment-totals', {
-          price: formatCurrencyCell(totals().price),
-          volume: formatNumber(totals().volume, { maximumFractionDigits: 2 }),
-        })}
+        <span class={styles.label}>{t('label.total')}</span>
+        <span class={styles.figures}>
+          {t('label.shipment-totals', {
+            price: formatCurrencyCell(totals().price),
+            volume: formatNumber(totals().volume, { maximumFractionDigits: 2 }),
+          })}
+        </span>
       </div>
     )}
   </Show>
