@@ -32,6 +32,7 @@ import {
   getCellDefinition,
   getFlagCell,
   getNumberCell,
+  isNearOrPastExpiry,
 } from '../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../ui/utils/rem';
 import { formatNumber } from '../../../intl/formatNumber';
@@ -40,7 +41,16 @@ import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePane
 import { createAddAction } from '../../../ui/utils/keyActions';
 import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
-import { InfoIcon, MinusCircleIcon, PlusCircleIcon } from '../../../ui/icons';
+import { StatusBadge } from '../../../ui/elements/feedback/StatusBadge';
+import {
+  AlertCircleIcon,
+  AlertTriangleIcon,
+  CircleDashedIcon,
+  InfoIcon,
+  MinusCircleIcon,
+  PauseIcon,
+  PlusCircleIcon,
+} from '../../../ui/icons';
 import { isExpired } from '../../../domain/allocation';
 import { fetchLocations } from '../../../domain/location';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
@@ -129,6 +139,53 @@ const lineOnHold = (line: Line): boolean =>
 // Expired badge).
 const lineExpired = (line: Line): boolean =>
   !!line.expiryDate && isExpired(line.expiryDate);
+
+// Inside the shared near-expiry window but not yet expired — the "Near
+// expiry" badge tier (the expiry cell is red at this tier, not yet bold).
+const lineNearExpiry = (line: Line): boolean =>
+  !!line.expiryDate &&
+  !lineExpired(line) &&
+  isNearOrPastExpiry(line.expiryDate);
+
+// The row-status badges beside the item name (ui-standards § table
+// interaction; OMS-REG-DIST-03.37/.38, D110/D111): word chips carrying each
+// line state — Unallocated (outlined, with the italic name), Expired / Near
+// expiry (tiered), On hold. Every applicable badge shows (expired AND held →
+// both). Table view only — cards carry the same states as corner badges
+// (the [data-row-badges] CSS).
+const LineStatusBadges = (props: { line: Line }) => (
+  <span data-row-badges>
+    <Show when={props.line.type === 'UNALLOCATED_STOCK'}>
+      <StatusBadge
+        label={t('label.unallocated')}
+        appearance="outline"
+        icon={<CircleDashedIcon />}
+      />
+    </Show>
+    <Show when={props.line.type !== 'UNALLOCATED_STOCK'}>
+      <Show when={lineExpired(props.line)}>
+        <StatusBadge
+          label={t('label.expired')}
+          tone="error"
+          icon={<AlertCircleIcon />}
+        />
+      </Show>
+      <Show when={lineNearExpiry(props.line)}>
+        <StatusBadge
+          label={t('label.near-expiry')}
+          icon={<AlertTriangleIcon />}
+        />
+      </Show>
+      <Show when={lineOnHold(props.line)}>
+        <StatusBadge
+                label={t('label.on-hold')}
+                tone="warning"
+                icon={<PauseIcon />}
+              />
+      </Show>
+    </Show>
+  </span>
+);
 
 // Drop a preset's growth cap, keeping its cell + width floor: `maxSize` is a
 // HARD cap, so a column sitting at it can't be dragged wider at all. The shared
@@ -611,23 +668,36 @@ const OutboundDetailView: Component = () => {
           headerPosition: 'primary',
           wrapLines: 2,
         }),
+        // Name + the row-status badges (LineStatusBadges above). A
+        // placeholder's name reads italic beside its outlined Unallocated
+        // badge (ui-standards § table interaction).
+        cell: info => (
+          <>
+            <span
+              data-unallocated-name={
+                info.row.original.type === 'UNALLOCATED_STOCK' ? '' : undefined
+              }
+            >
+              {info.row.original.itemName}
+            </span>
+            <LineStatusBadges line={info.row.original} />
+          </>
+        ),
       },
       {
         c: {
-          accessor: line =>
-            line.type === 'UNALLOCATED_STOCK'
-              ? t('label.placeholder')
-              : (line.batch ?? '—'),
+          // A placeholder has no batch — the Name cell's outlined
+          // Unallocated badge carries the state (D110), so this cell shows
+          // the same em dash as any batch-less line.
+          accessor: line => line.batch ?? '—',
           id: 'batch',
         },
         sortKey: 'batch',
         header: () => t('label.batch'),
         // Mono, per the spec's line-table column 3 — but WITHOUT the `code`
-        // kind's 7rem growth cap: this column doesn't only hold a code, it
-        // renders the word "Placeholder" for an unallocated line, which fills
-        // the cap exactly and pins the column there so it can't be dragged
-        // wider at all. Same reasoning (and fix) as the `locationCode` key's
-        // "own size, NO cap" note in _globalColumnConfig (#601).
+        // kind's 7rem growth cap, so a long batch string can still be
+        // dragged wider. Same reasoning (and fix) as the `locationCode`
+        // key's "own size, NO cap" note in _globalColumnConfig (#601).
         ...uncapped(getCellDefinition<Line>('batch')),
       },
       {
