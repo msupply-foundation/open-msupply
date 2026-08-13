@@ -28,6 +28,7 @@ import { createMediaQuery } from '../ui/utils/createMediaQuery';
 import { mediaQuery } from '../ui/styles/breakpoints';
 import { deniedPermission, gateNav, mobileNav, routeAccess } from './navGates';
 import { KeyboardHost } from '../keyboard/KeyboardHost';
+import { createDocumentTitle, screenTitleKey } from '../documentTitle';
 import { startSyncWatch, stopSyncWatch } from '../api/syncStore';
 import { createSyncIndicator } from '../sections/sync-modal/syncIndicator';
 import { StoreSwitchModal } from '../store/StoreSwitchModal';
@@ -76,6 +77,12 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   const NO_SELECTION: NavLeaf = { id: '', labelKey: 'dashboard', to: '' };
   const selected = (): NavLeaf =>
     findLeafByPath(relativePath() || 'dashboard') ?? NO_SELECTION;
+
+  // The browser tab names the screen the URL points at (spec/chrome § document
+  // title) — the registry's label for the destination, the list entry for a
+  // record screen beneath it. Every in-store screen is inside this shell, so
+  // one effect here titles them all.
+  createDocumentTitle(() => screenTitleKey(relativePath()));
 
   // The nav group's glyph for wherever we are — handed to every page's
   // breadcrumb through the shell-section context, since the group a screen sits
