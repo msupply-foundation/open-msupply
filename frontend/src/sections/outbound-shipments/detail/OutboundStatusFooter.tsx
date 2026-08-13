@@ -117,28 +117,6 @@ export const OutboundStatusFooter: Component<
 
       <StatusIndicator steps={steps()} current={indicatorIndex()} />
 
-      {/* The shipment's totals — ONE quiet reading in the pager's tone, so two
-          figures cost no more of this bar than they must. Reference, not
-          action, so they sit with the status reading rather than the buttons. */}
-      <Show when={props.totals?.()}>
-        {totals => (
-          <span class={styles.totals} data-testid="shipment-totals">
-            {t('label.shipment-totals', {
-              price: formatCurrencyCell(totals().price),
-              volume: formatNumber(totals().volume, {
-                maximumFractionDigits: 2,
-              }),
-            })}
-          </span>
-        )}
-      </Show>
-
-      {/* The line pager, sharing this bar (`inBar` — it sizes to its cluster
-          so a crowded bar wraps it whole rather than crushing it). Spread of
-          the LIVE prop object, as DataTable does, so offset/total changes
-          reach it. */}
-      <Pagination {...props.pagination} inBar />
-
       {/* The status-change split button, which hides entirely when read-only
           (spec S3 § status footer). No Close beside it (D102): leaving the
           shipment is the breadcrumb's job, as on every other screen. */}
@@ -147,6 +125,31 @@ export const OutboundStatusFooter: Component<
         node={props.node}
         preflight={props.preflight}
         onSaved={props.onSaved}
+        leading={
+          <>
+            {/* The shipment's totals — ONE quiet reading, docked at the bar's
+                inline end (see `leading`) so the bar's free space falls to
+                their LEFT rather than stranding them mid-row. */}
+            <Show when={props.totals?.()}>
+              {totals => (
+                <span class={styles.totals} data-testid="shipment-totals">
+                  {t('label.shipment-totals', {
+                    price: formatCurrencyCell(totals().price),
+                    volume: formatNumber(totals().volume, {
+                      maximumFractionDigits: 2,
+                    }),
+                  })}
+                </span>
+              )}
+            </Show>
+
+            {/* The line pager, docked with them (`inBar` — it sizes to its
+                cluster, so a crowded bar wraps the cluster whole rather than
+                crushing the pager). Spread of the LIVE prop object, as
+                DataTable does, so offset/total changes reach it. */}
+            <Pagination {...props.pagination} inBar />
+          </>
+        }
       />
 
       {/* Mounted only while open — its confirmation-modal test hook must not
