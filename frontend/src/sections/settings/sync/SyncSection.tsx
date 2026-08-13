@@ -1,6 +1,5 @@
 import { createEffect, createResource, createSignal, Show } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
-import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { PasswordField } from '../../../ui/elements/inputs/PasswordField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
@@ -20,15 +19,17 @@ import {
 import { SyncSettings, UpdateSyncSettings } from './syncSettings.generated';
 import { Stack } from '../../../ui/layout/Stack/Stack';
 import { HStack } from '../../../ui/layout/Stack/HStack';
+import { FormRow } from '../../../ui/layout/Form/FormRow';
 
 /*
  * Synchronisation settings (spec/settings/ui-surface.md § Synchronisation) —
- * Server Admin only (gated by the page). Saving is not merely storing four
+ * Server Admin only (gated by the page). Saving is not merely storing the
  * fields: the SERVER performs a live authentication round-trip against the
  * target before persisting anything, unless url/site/password all evaluate as
  * unchanged (OMS-REG-SET-02.9, .13, .14 — server-enforced; this form just
- * reports the outcome). Save stays disabled until all four fields are filled
- * (OMS-REG-SET-02.7/.8) and the password always starts blank
+ * reports the outcome). Save stays disabled until the four required fields are
+ * filled (OMS-REG-SET-02.7/.8) — the batch size is optional and never gates it
+ * (OMS-REG-SET-02.15) — and the password always starts blank
  * (OMS-REG-SET-02.12).
  */
 export const SyncSection = () => {
@@ -123,54 +124,59 @@ export const SyncSection = () => {
       }}
     >
       <Stack>
-        {/* Labelled field rows per the spec's Layout (ui-surface § Layout):
-          bold label inline-start, control inline-end, wrapped control's own
-          label hidden. */}
-        <FieldRow label={t('label.settings-url')}>
-          <TextField
-            label={t('label.settings-url')}
-            hideLabel
-            width="long"
-            value={form().url}
-            onInput={e => edit({ url: e.currentTarget.value })}
-            disabled={saving()}
-            data-testid="sync-settings-url"
-          />
-        </FieldRow>
-        <FieldRow label={t('label.settings-username')}>
-          <TextField
-            label={t('label.settings-username')}
-            hideLabel
-            width="long"
-            value={form().username}
-            onInput={e => edit({ username: e.currentTarget.value })}
-            disabled={saving()}
-            data-testid="sync-settings-username"
-          />
-        </FieldRow>
-        <FieldRow label={t('label.settings-password')}>
-          <PasswordField
-            label={t('label.settings-password')}
-            hideLabel
-            width="long"
-            autocomplete="off"
-            value={form().password}
-            onInput={e => edit({ password: e.currentTarget.value })}
-            disabled={saving()}
-            data-testid="sync-settings-password"
-          />
-        </FieldRow>
-        <FieldRow label={t('label.settings-interval')}>
+        {/* The standard form layout (kdd/form-layout): stacked full-width
+          fields carrying their own labels, with the two numbers paired in a
+          FormRow. The accordion header titles the group, so there is no
+          FormSection of its own. */}
+        <TextField
+          label={t('label.settings-url')}
+          width="full"
+          value={form().url}
+          onInput={e => edit({ url: e.currentTarget.value })}
+          disabled={saving()}
+          data-testid="sync-settings-url"
+        />
+        <TextField
+          label={t('label.settings-username')}
+          width="full"
+          value={form().username}
+          onInput={e => edit({ username: e.currentTarget.value })}
+          disabled={saving()}
+          data-testid="sync-settings-username"
+        />
+        <PasswordField
+          label={t('label.settings-password')}
+          width="full"
+          autocomplete="off"
+          value={form().password}
+          onInput={e => edit({ password: e.currentTarget.value })}
+          disabled={saving()}
+          data-testid="sync-settings-password"
+        />
+        <FormRow>
           <NumberField
             label={t('label.settings-interval')}
-            hideLabel
+            width="full"
             min={1}
             value={form().intervalSeconds}
             onChange={intervalSeconds => edit({ intervalSeconds })}
             disabled={saving()}
             data-testid="sync-settings-interval"
           />
-        </FieldRow>
+          {/* Optional — left empty the server applies its own batch size, so
+            it never gates Save (OMS-REG-SET-02.15); the helper text is what
+            says so. */}
+          <NumberField
+            label={t('label.settings-batch-size')}
+            helperText={t('label.settings-batch-size-helper')}
+            width="full"
+            min={1}
+            value={form().batchSize}
+            onChange={batchSize => edit({ batchSize })}
+            disabled={saving()}
+            data-testid="sync-settings-batch-size"
+          />
+        </FormRow>
         <Show when={saved()}>
           <Alert severity="success">{t('success.sync-settings')}</Alert>
         </Show>

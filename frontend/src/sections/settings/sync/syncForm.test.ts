@@ -3,6 +3,7 @@ import {
   buildSyncInput,
   canSaveSyncSettings,
   initialSyncForm,
+  normaliseBatchSize,
   normaliseInterval,
   SYNC_SAVE_FALLBACK_ERROR,
   syncSaveErrorKey,
@@ -13,6 +14,7 @@ const filled = {
   username: 'site-1',
   password: 'secret',
   intervalSeconds: 300,
+  batchSize: undefined,
 };
 
 // OMS-REG-SET-02.7/.8 — Save disabled until all fields are filled: any one of
@@ -38,18 +40,20 @@ describe('save disabled until all four fields are filled (SET-02.7/.8)', () => {
 // existing settings pre-fills url/site/interval but never the password (the
 // query cannot return it — the server stores only a hash).
 describe('password always starts blank (SET-02.12)', () => {
-  it('pre-fills url, site, and interval from stored settings, password empty', () => {
+  it('pre-fills url, site, interval, and batch size from stored settings, password empty', () => {
     expect(
       initialSyncForm({
         url: 'https://central.example',
         username: 'site-1',
         intervalSeconds: 60,
+        batchSize: 50,
       })
     ).toEqual({
       url: 'https://central.example',
       username: 'site-1',
       password: '',
       intervalSeconds: 60,
+      batchSize: 50,
     });
   });
 
@@ -59,7 +63,45 @@ describe('password always starts blank (SET-02.12)', () => {
       username: '',
       password: '',
       intervalSeconds: undefined,
+      batchSize: undefined,
     });
+  });
+});
+
+// OMS-REG-SET-02.15/.16 — the batch size is an OPTIONAL override: empty means
+// "use the server's own default", so it never gates Save and is sent as null
+// (rules § Synchronisation).
+describe('batch size is an optional override (SET-02.15/.16)', () => {
+  it('leaves Save enabled with no batch size entered', () => {
+    expect(canSaveSyncSettings({ ...filled, batchSize: undefined })).toBe(true);
+  });
+
+  it('leaves the field empty when the server reports no override', () => {
+    expect(
+      initialSyncForm({
+        url: 'https://central.example',
+        username: 'site-1',
+        intervalSeconds: 60,
+        batchSize: null,
+      }).batchSize
+    ).toBeUndefined();
+  });
+
+  it('sends null for an empty field', () => {
+    expect(buildSyncInput({ ...filled, batchSize: undefined }).batchSize).toBe(
+      null
+    );
+    expect(normaliseBatchSize(undefined)).toBe(null);
+  });
+
+  it('sends a whole positive number for an entered value', () => {
+    expect(buildSyncInput({ ...filled, batchSize: 20 }).batchSize).toBe(20);
+    expect(normaliseBatchSize(20.4)).toBe(20);
+  });
+
+  it('never sends a non-positive size — the server rejects zero', () => {
+    expect(normaliseBatchSize(0)).toBe(null);
+    expect(normaliseBatchSize(-5)).toBe(null);
   });
 });
 
