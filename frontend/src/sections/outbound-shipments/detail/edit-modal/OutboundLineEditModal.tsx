@@ -37,15 +37,20 @@ import {
   getCellDefinition,
   getFlagCell,
   getNumberCell,
+  isNearOrPastExpiry,
 } from '../../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../../ui/utils/rem';
 import { createTableConfig } from '../../../../api/createTableConfig';
 import {
+  AlertCircleIcon,
+  AlertTriangleIcon,
   CheckIcon,
   InfoIcon,
   MessageSquareIcon,
+  PauseIcon,
   StockIcon,
 } from '../../../../ui/icons';
+import { StatusBadge } from '../../../../ui/elements/feedback/StatusBadge';
 import {
   DraftStockOutLines,
   ItemVariants,
@@ -573,6 +578,12 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // Display-only; the bar predicates own the preference/threshold logic.
   const lineExpired = (line: DraftLine): boolean =>
     !!line.expiryDate && isExpired(line.expiryDate);
+  // Inside the shared near-expiry window but not yet expired — the "Near
+  // expiry" badge tier.
+  const lineNearExpiry = (line: DraftLine): boolean =>
+    !!line.expiryDate &&
+    !lineExpired(line) &&
+    isNearOrPastExpiry(line.expiryDate);
   const lineAutoBarReasons = (line: DraftLine) =>
     autoAllocateBarReasons(line, allocationPrefs());
   // The tick column's predicate ("will be used in auto-allocation"): auto-
@@ -960,6 +971,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       // A batch backed by an ITEM VARIANT carries an info marker beside its
       // name — click reveals the item's variants with this batch's marked
       // (spec S4 § batch grid), matching the old app's variant-info icon.
+      // The row-status badges follow (Expired / Near expiry / On hold —
+      // ui-standards § table interaction, D110/D111): word chips in table
+      // view; cards hide them ([data-row-badges]) and carry the states as
+      // their corner badges instead.
       cell: info => {
         const line = info.row.original;
         return (
@@ -981,6 +996,28 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                 </Popover>
               )}
             </Show>
+            <span data-row-badges>
+              <Show when={lineExpired(line)}>
+                <StatusBadge
+                  label={t('label.expired')}
+                  tone="error"
+                  icon={<AlertCircleIcon />}
+                />
+              </Show>
+              <Show when={lineNearExpiry(line)}>
+                <StatusBadge
+                  label={t('label.near-expiry')}
+                  icon={<AlertTriangleIcon />}
+                />
+              </Show>
+              <Show when={line.stockLineOnHold || line.location?.onHold}>
+                <StatusBadge
+                label={t('label.on-hold')}
+                tone="warning"
+                icon={<PauseIcon />}
+              />
+              </Show>
+            </span>
           </span>
         );
       },

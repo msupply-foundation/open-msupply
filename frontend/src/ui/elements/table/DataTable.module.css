@@ -1205,6 +1205,29 @@ tr[data-selected][data-tint='error'] > .selectCell {
   display: none;
 }
 
+/* Inline row-status badges (StatusBadge cluster beside a name/batch value —
+   ui-standards § table interaction). TABLE VIEW ONLY: cards carry the same
+   states as their corner badges (the flag columns), so the inline cluster
+   hides there rather than saying everything twice. */
+[data-row-badges] {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-inline-start: var(--space-2);
+  vertical-align: middle;
+}
+
+.card [data-row-badges] {
+  display: none;
+}
+
+/* The Unallocated (placeholder) name reads italic beside its outlined badge
+   (ui-standards § table interaction — the only state with no tint; the
+   italic + the badge carry it). */
+[data-unallocated-name] {
+  font-style: italic;
+}
+
 .cardBadge [data-flag] {
   display: inline-flex;
   align-items: center;

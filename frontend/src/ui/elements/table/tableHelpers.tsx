@@ -138,13 +138,21 @@ export const getTimeCell = <T,>(meta?: Meta): CellFragment<T> => ({
 // MINIMUM_EXPIRY_MONTHS) renders in the error colour, matching the old app's
 // ExpiryDateCell.
 const EXPIRY_WARNING_MONTHS = 3;
+
+/**
+ * Within the shared near-expiry warning window (or already past it) — the
+ * predicate behind getExpiryDateCell's reddening, exported so a consumer can
+ * pair the cell with a "Near expiry" row-status badge (ui-standards § table
+ * interaction) without restating the threshold.
+ */
+export const isNearOrPastExpiry = (value: string | Date): boolean =>
+  differenceInMonths(new Date(value), new Date()) <= EXPIRY_WARNING_MONTHS;
 export const getExpiryDateCell = <T,>(meta?: Meta): CellFragment<T> => ({
   meta: { ...meta },
   cell: info => {
     const value = info.getValue<string | Date | null | undefined>();
     if (!value) return '';
-    const almostExpired =
-      differenceInMonths(new Date(value), new Date()) <= EXPIRY_WARNING_MONTHS;
+    const almostExpired = isNearOrPastExpiry(value);
     // ACTUALLY expired (the expiry day has arrived — calendar-day comparison,
     // stable across the day) steps up from the near-expiry red to red + bold.
     const expired = differenceInCalendarDays(new Date(value), new Date()) <= 0;
