@@ -1,4 +1,5 @@
 import { stripEmpty } from '../../../typeHelpers';
+import { DEFAULT_PAGE_SIZE } from '../../../list/pageSize';
 import type { CustomFieldFilterState } from '../../../domain/customFields';
 import type { NamesVariables, NamesResult } from '../names.generated';
 
@@ -21,7 +22,6 @@ export type NameRow = NamesResult['names']['nodes'][number];
 export type SortKey = NonNullable<NamesVariables['sort']>[number]['key'];
 
 // Pagination (rules › pagination): default 20, options 10/20/50/100.
-export const DEFAULT_PAGE_SIZE = 20;
 export const PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const;
 
 // Role → the per-store relationship flag that selects that list. The server

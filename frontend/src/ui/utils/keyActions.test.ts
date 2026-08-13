@@ -63,11 +63,12 @@ describe('createAction lifetime', () => {
 /*
  * An action declared inside a surface that stays MOUNTED while hidden — dialog
  * content — must stop answering its keys when the surface closes. `onCleanup`
- * cannot carry it, because nothing cleans up when a mounted dialog merely closes,
- * so `createAction` folds the surface's own flag into `disabled`
+ * cannot carry it, because nothing cleans up when a mounted dialog merely
+ * closes, so `createAction` folds the surface's own flag into `disabled`
  * (utils/surfaceActive.ts). Left to a call site this fails silently, and for an
- * `always`-tier bare character (the line editor's `+`) it fails app-wide: the key
- * fires on every screen, inside every text field, for a dialog nobody can see.
+ * `always`-tier bare character (the line editor's `+`) it fails app-wide: the
+ * key fires on every screen, inside every text field, for a dialog nobody can
+ * see.
  */
 describe('a surface that is not showing', () => {
   const inSurface = <T>(open: () => boolean, body: () => T): T => {
@@ -86,6 +87,9 @@ describe('a surface that is not showing', () => {
     createRoot(dispose => {
       const [open, setOpen] = createSignal(false);
       const run = vi.fn();
+      // `open` is handed over as the accessor it is — the surface flag, not a
+      // read of it. eslint-plugin-solid cannot see that through the helper.
+      // eslint-disable-next-line solid/reactivity
       inSurface(open, () =>
         createAction({ name: 'button.save', shortcut: ALT_M, run })
       );
@@ -166,7 +170,7 @@ describe('resolveShortcut', () => {
   });
 
   it('ignores an action that carries no shortcut', () => {
-    createAction({ name: 'cmdk.goto-dashboard', run: () => {} });
+    createAction({ name: 'cmdk.goto', run: () => {} });
     expect(resolveShortcut(press('KeyD'))).toBeUndefined();
     expect(registeredActions()).toHaveLength(1);
   });

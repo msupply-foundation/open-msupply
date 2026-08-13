@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_PAGE_SIZE } from '../../list/pageSize';
 import {
   ACTIVE_ONLY_FILTER,
   buildVariables,
   cliniciansListPath,
-  DEFAULT_PAGE_SIZE,
   DEFAULT_STATE,
   genderLabelKey,
   PAGE_SIZE_OPTIONS,

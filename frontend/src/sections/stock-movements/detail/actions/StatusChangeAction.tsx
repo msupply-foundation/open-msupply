@@ -30,7 +30,7 @@ export interface StatusChangeActionProps {
 // § status changes and the zero-line gate — ANY status change is blocked
 // with a notice while the movement has no lines; the button stays
 // active-and-explaining rather than dead-ending greyed-out, D39).
-// OMS-REG-SMV-09 .4/.6 (unit-anchored in stockMovementStatus.test.ts);
+// OMS-REG-SMV-10 .4/.6 (unit-anchored in stockMovementStatus.test.ts);
 // .17/.23/.24 own the server-rejection outcomes end-to-end.
 //
 // NO success phase: a successful advance CLOSES the dialog — closure is the
@@ -154,7 +154,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
       </Show>
 
       {/* The zero-line gate's explainer (rules § status changes and the
-          zero-line gate; OMS-REG-SMV-09.4) — info only; adding a line lifts
+          zero-line gate; OMS-REG-SMV-10.4) — info only; adding a line lifts
           the block. Mounted only while open. */}
       <Show when={noLinesBlocked()}>
         <Dialog

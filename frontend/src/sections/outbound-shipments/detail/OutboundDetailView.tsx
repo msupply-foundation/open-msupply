@@ -43,6 +43,11 @@ import { InfoIcon, MinusCircleIcon, PlusCircleIcon } from '../../../ui/icons';
 import { fetchLocations } from '../../../domain/location';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import { useUrlQueryState } from '../../../list/urlQueryState';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
 import { stripEmpty } from '../../../typeHelpers';
 import { CustomFieldsEditTab } from '../../../domain/customFields';
 import {
@@ -125,8 +130,6 @@ const uncapped = <T,>({
 // spec contract § detail line table) simply omit `sortKey`.
 type SortKey = NonNullable<OutboundLinesVariables['sort']>[number]['key'];
 
-const DEFAULT_PAGE_SIZE = 20;
-
 // The URL-backed view state (kdd/url-structure): filter + sort + pagination in
 // the single `?query=` JSON param, so a filtered/sorted/paged view is
 // shareable and survives reload + back-nav (OMS-REG-DIST-03.28). All three
@@ -156,8 +159,10 @@ const OutboundDetailView: Component = () => {
   const navigate = useNavigate();
   // Filter + sort + pagination are URL-backed (shareable, survive reload/back-
   // nav) in one `?query=` param. Thin accessors over that single query.
-  const { query, setQuery } =
-    useUrlQueryState<DetailUrlState>(DEFAULT_URL_STATE);
+  const { query, setQuery } = useUrlQueryState<DetailUrlState>({
+    ...DEFAULT_URL_STATE,
+    first: initialPageSize(),
+  });
   const filter = () => query().filter;
   const currentSort = (): SortState<SortKey> | undefined => {
     const s = query().sort[0];
@@ -1011,6 +1016,7 @@ const OutboundDetailView: Component = () => {
                       setSelectedIds([]);
                     },
                     onPageSizeChange: first => {
+                      rememberPageSize(first);
                       setQuery({ ...query(), first, offset: 0 });
                       setSelectedIds([]);
                     },

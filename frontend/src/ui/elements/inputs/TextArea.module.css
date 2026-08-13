@@ -36,6 +36,20 @@
   align-items: center;
 }
 
+/* The row's height is the LABEL's, never the affordance's. An InfoTooltip
+   trigger is taller than the label's line box, and a flex row sized by its
+   tallest child pushes this field's control below its neighbours' — so a field
+   with help text stops lining up in a header cluster or a card row, both of
+   which top-align their items. Giving the affordance zero block-size takes it
+   out of that calculation entirely (it still paints — nothing clips it — and
+   centres on the label's midline), so the field's geometry is identical with
+   and without labelInfo, whatever the label tokens are set to. */
+.labelRow > :not(.label) {
+  display: flex;
+  align-items: center;
+  block-size: 0;
+}
+
 .label {
   /* Shared field-label token — see --field-label-* in tokens.css. */
   font-size: var(--field-label-font-size);
@@ -144,9 +158,13 @@
   color: var(--error-main);
 }
 
+/* The glyph takes the error text's own colour (inherited from .error) — it is
+   part of the error line, not a caution of its own. It used to be
+   --color-warning, which rendered an amber triangle above red text and read as
+   a second, milder severity sitting on the same message. */
 .errorIcon {
   font-size: 0.875em;
-  color: var(--color-warning);
+  color: inherit;
   flex-shrink: 0;
 }
 

@@ -60,4 +60,11 @@ export const SYNC_POLL_INTERVAL_MS = 2000;
 // the minutely staleness re-evaluation, doubling as its fallback-poll interval
 // while the live channel is down. The modal owns the fast poll while open.
 export const SYNC_INDICATOR_REFRESH_MS = 60_000;
+// The initialisation screen's silent wait for the central server to prepare a
+// fresh site (spec/startup/rules.md § Initialisation, D98, issue #504): after
+// the user's own submit returns the one transient error, the submit is
+// repeated on this cadence, this many more times (~1 min in all), before the
+// error is shown.
+export const INITIALISE_RETRY_INTERVAL_MS = 5000;
+export const INITIALISE_RETRY_ATTEMPTS = 12;
 export const ACTIVITY_CHECK_INTERVAL_MS = 1000;

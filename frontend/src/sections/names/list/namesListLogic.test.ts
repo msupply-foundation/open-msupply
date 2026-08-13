@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_PAGE_SIZE } from '../../../list/pageSize';
 import {
   buildFilter,
   buildVariables,
   customersListPath,
-  DEFAULT_PAGE_SIZE,
   DEFAULT_STATE,
   isStoreName,
   PAGE_SIZE_OPTIONS,
