@@ -2,9 +2,11 @@ import {
   createMemo,
   createSignal,
   For,
+  Match,
   onCleanup,
   onMount,
   Show,
+  Switch,
   type JSX,
 } from 'solid-js';
 import { createStore, reconcile } from 'solid-js/store';
@@ -40,10 +42,7 @@ import {
 } from '../../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../../ui/utils/rem';
 import { createTableConfig } from '../../../../api/createTableConfig';
-import {
-  CheckIcon,
-  InfoIcon,
-} from '../../../../ui/icons';
+import { CheckIcon, InfoIcon } from '../../../../ui/icons';
 import {
   DraftStockOutLines,
   ItemVariants,
@@ -1341,11 +1340,13 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       titleHidden
       actionsLead={
         // The footer's message slot, sharing the buttons' row rather than
-        // spending one of its own. It states the consequence of Save — the
-        // running total and any placeholder — and yields to a save rejection
-        // while there is one, which is the more urgent thing to read (#872).
-        <Show
-          when={errorMessage()}
+        // spending one of its own. It carries everything that GATES the save,
+        // pinned beside the button it blocks — a rejection first, then the two
+        // press-again confirmations — and falls back to the consequence of
+        // Save (the running total and any placeholder) when nothing is in the
+        // way (#872). Advisories don't belong here: they inform rather than
+        // block, so they sit in the work area with the cards they describe.
+        <Switch
           fallback={
             <Show when={item()}>
               <HStack gap="md">
@@ -1360,8 +1361,22 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             </Show>
           }
         >
-          {message => <Alert severity="error">{message()}</Alert>}
-        </Show>
+          <Match when={errorMessage()}>
+            {message => <Alert severity="error">{message()}</Alert>}
+          </Match>
+          {/* A zero-packs line's VVM change won't survive the save — its own
+              distinct confirmation, taking precedence over the zero-allocation
+              one (spec S4 § save). */}
+          <Match when={vvmConfirm()}>
+            <Alert severity="warning">
+              {t('messages.unsaved-outbound-vvm-status')}
+            </Alert>
+          </Match>
+          {/* Zero-allocation second confirmation (spec S4 § save). */}
+          <Match when={zeroConfirm()}>
+            <Alert severity="info">{t('messages.confirm-zero-quantity')}</Alert>
+          </Match>
+        </Switch>
       }
       actions={
         <>
@@ -1504,20 +1519,6 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                 </span>
               </LabelledValue>
             </div>
-            {/* Placeholder notice (info) — fills the rest of the header row,
-              matching the old app; shown when a shortfall became a placeholder. */}
-            <Show when={placeholderUnits() > 0}>
-              <div class={styles.placeholderNotice}>
-                <Alert severity="info">
-                  {t('messages.placeholder-allocated-units', {
-                    requestedQuantity: formatNumber(
-                      issuedUnits() + placeholderUnits()
-                    ),
-                    placeholderQuantity: formatNumber(placeholderUnits()),
-                  })}
-                </Alert>
-              </div>
-            </Show>
           </Show>
           {/* The table's own controls (card/table view · Columns · Settings),
               lifted onto this row by DataTable's controlsMount — they sat in a
@@ -1544,51 +1545,66 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           />
         }
       >
-        {/* Batch grid: one row per available batch, FEFO-ordered; barred rows
-            disabled (AC-AL2 / AC-AL8). */}
-        <div class={styles.batchGrid}>
-          <DataTable
-            columns={columns()}
-            rows={draftRows()}
-            rowKey={line => line.id}
-            loading={loadingLines()}
-            cardGroups={CARD_GROUPS}
-            showCardToggle
-            showFullScreen={false}
-            // The controls ride the header row instead of a toolbar of their
-            // own a few pixels above the cards — a whole row of a modal whose
-            // scarce axis is vertical. With nothing else to put in it, the
-            // table's toolbar row then doesn't render at all.
-            controlsMount={tableControls()}
-            rowState={line => (rowDisabled(line) ? 'disabled' : undefined)}
-            emptyMessage={t('messages.no-stock-available')}
-            config={tableConfig.config()}
-            setConfig={tableConfig.setConfig}
-          />
+        {/* The working area: the batch grid and the advisories under it scroll
+            TOGETHER, so a message costs nothing until you reach the end of the
+            cards (the table lays out at content height here — DataTable's
+            `fitContent` — instead of owning a scroll box of its own). */}
+        <div class={styles.workArea}>
+          {/* Batch grid: one row per available batch, FEFO-ordered; barred rows
+              disabled (AC-AL2 / AC-AL8). */}
+          <div class={styles.batchGrid}>
+            <DataTable
+              columns={columns()}
+              rows={draftRows()}
+              rowKey={line => line.id}
+              loading={loadingLines()}
+              cardGroups={CARD_GROUPS}
+              showCardToggle
+              showFullScreen={false}
+              // The controls ride the header row instead of a toolbar of their
+              // own a few pixels above the cards — a whole row of a modal whose
+              // scarce axis is vertical. With nothing else to put in it, the
+              // table's toolbar row then doesn't render at all.
+              controlsMount={tableControls()}
+              // Lay out at content height so THIS modal's scroll area (the work
+              // area around us) scrolls the cards and the advisories under them
+              // as one. Card view only — see the prop.
+              fitContent
+              rowState={line => (rowDisabled(line) ? 'disabled' : undefined)}
+              emptyMessage={t('messages.no-stock-available')}
+              config={tableConfig.config()}
+              setConfig={tableConfig.setConfig}
+            />
+          </div>
+
+          {/* ADVISORY messages — they inform, they don't gate the save, so they
+              live in the flow after the last card and scroll away with it
+              rather than holding pinned height over the grid. Anything that
+              gates Save (a rejection, the zero-allocation and VVM
+              confirmations) is in the footer's message slot instead, pinned
+              beside the button it blocks. */}
+          <Stack gap="sm">
+            {/* The shortfall that became a placeholder — a consequence of the
+                Issue entry, so it reads with the batches it failed to fill,
+                not up in the header row where it reflowed the inputs as the
+                user typed. */}
+            <Show when={placeholderUnits() > 0}>
+              <Alert severity="info">
+                {t('messages.placeholder-allocated-units', {
+                  requestedQuantity: formatNumber(
+                    issuedUnits() + placeholderUnits()
+                  ),
+                  placeholderQuantity: formatNumber(placeholderUnits()),
+                })}
+              </Alert>
+            </Show>
+
+            {/* Stacked warning banners (spec S4 § warnings). */}
+            <For each={warnings()}>
+              {message => <Alert severity="warning">{message}</Alert>}
+            </For>
+          </Stack>
         </div>
-
-        {/* Everything below the grid shares one vertical rhythm — the Stack's
-            gap replaces the per-block margins. The running total that used to
-            lead this stack now rides the footer's message slot. */}
-        <Stack gap="sm">
-          {/* Stacked warning banners (spec S4 § warnings). */}
-          <For each={warnings()}>
-            {message => <Alert severity="warning">{message}</Alert>}
-          </For>
-
-          {/* Zero-allocation second confirmation (spec S4 § save). */}
-          <Show when={zeroConfirm()}>
-            <Alert severity="info">{t('messages.confirm-zero-quantity')}</Alert>
-          </Show>
-
-          {/* A zero-packs line's VVM change won't survive the save — its own
-              distinct confirmation, taking precedence (spec S4 § save). */}
-          <Show when={vvmConfirm()}>
-            <Alert severity="warning">
-              {t('messages.unsaved-outbound-vvm-status')}
-            </Alert>
-          </Show>
-        </Stack>
       </Show>
     </Dialog>
   );
