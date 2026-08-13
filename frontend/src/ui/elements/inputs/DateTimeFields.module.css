@@ -12,13 +12,23 @@
   flex-direction: column;
   gap: var(--input-field-gap);
   min-width: 0;
-  max-width: var(--input-max-short);
   position: relative;
 }
 
-/* Width caps, TextField's data-width vocabulary (FieldShell `width`). The
-   compact cap narrows only the control box; it lives after the base .control
-   rules below (to satisfy no-descending-specificity). */
+/* Width caps — TextField's data-width vocabulary AND its meanings, rule for
+   rule (see TextField.module.css, the reference block). The base carried a
+   `short` cap until 2026-08-13, and `long` had no rule at all, so a date field
+   silently ignored it. `compact` caps only the control box; that rule lives
+   after the base .control rules below (no-descending-specificity). */
+.field[data-width='compact'],
+.field[data-width='short'] {
+  max-width: var(--input-max-short);
+}
+
+.field[data-width='long'] {
+  max-width: var(--input-max-long);
+}
+
 .field[data-width='full'] {
   max-width: 100%;
 }
