@@ -32,6 +32,10 @@ import {
   getCellDefinition,
   getNumberCell,
 } from '../../../ui/elements/table/tableHelpers';
+import {
+  Pagination,
+  type PaginationProps,
+} from '../../../ui/elements/table/Pagination';
 import { remToPx } from '../../../ui/utils/rem';
 import { formatNumber } from '../../../intl/formatNumber';
 import { createTableConfig } from '../../../api/createTableConfig';
@@ -250,6 +254,29 @@ const OutboundDetailView: Component = () => {
   // page (keeps rows in place, no remount); undefined before the first load.
   const rows = (): Line[] => linesData.latest?.nodes ?? [];
   const totalCount = (): number => linesData.latest?.totalCount ?? 0;
+
+  // The line table's pager. It lives in the screen's bottom bar — the status
+  // footer, or the selection footer while rows are ticked — rather than in a
+  // band of its own under the table (spec/ui-standards § tables → pagination):
+  // that bar is present at every line count, so hosting the pager there costs
+  // no extra row, and `conditional` means it renders nothing at all until the
+  // lines outrun one page, leaving the bar as it was and the height to the
+  // rows. Paging still clears the selection (OMS-REG-DIST-03.34): the
+  // bulk-action gates classify by rows in view.
+  const linePagination = (): PaginationProps => ({
+    offset: query().offset,
+    pageSize: query().first,
+    total: totalCount(),
+    onOffsetChange: offset => {
+      setQuery({ ...query(), offset });
+      setSelectedIds([]);
+    },
+    onPageSizeChange: first => {
+      setQuery({ ...query(), first, offset: 0 });
+      setSelectedIds([]);
+    },
+    conditional: true,
+  });
   // Deleting the last page's rows can leave the offset past the end (an
   // empty "41–40 of 40" page) — clamp back to the last real page when a
   // resolved page proves the offset overshot. Idempotent: the clamped offset
@@ -881,6 +908,7 @@ const OutboundDetailView: Component = () => {
                     <OutboundStatusFooter
                       storeId={params.storeId}
                       node={current()}
+                      pagination={linePagination()}
                       preflight={preflight}
                       onSetHold={setHold}
                       // A status change can trim zero-quantity lines
@@ -939,6 +967,9 @@ const OutboundDetailView: Component = () => {
                     >
                       {t('button.return-lines')}
                     </Button>
+                    {/* The pager rides the selection face as well: ticking a
+                        row must not strip the way to the rest of the lines. */}
+                    <Pagination {...linePagination()} inBar />
                     <ContentFooterActions>
                       <Button
                         variant="secondary"
@@ -999,22 +1030,11 @@ const OutboundDetailView: Component = () => {
                   onSelectionChange={setSelectedIds}
                   config={tableConfig.config()}
                   setConfig={tableConfig.setConfig}
-                  // Page navigation clears the selection (OMS-REG-DIST-03.34):
-                  // the bulk-action gates classify by rows in view, so a
-                  // selection must never carry ids the user can no longer see.
-                  pagination={{
-                    offset: query().offset,
-                    pageSize: query().first,
-                    total: totalCount(),
-                    onOffsetChange: offset => {
-                      setQuery({ ...query(), offset });
-                      setSelectedIds([]);
-                    },
-                    onPageSizeChange: first => {
-                      setQuery({ ...query(), first, offset: 0 });
-                      setSelectedIds([]);
-                    },
-                  }}
+                  // The line count sits in the toolbar, beside the view
+                  // controls — no height, and it stays put whether or not the
+                  // lines run to a second page. The pager itself lives in the
+                  // status footer (see linePagination).
+                  totalCount={totalCount()}
                 />
               </TabPanel>
               <TabPanel value="custom-fields">

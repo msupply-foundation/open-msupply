@@ -294,10 +294,10 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    * the count costs no height. Pass the SAME total the pager gets — `rows` is
    * one page, which is not what "38 items" means.
    *
-   * A total of 0 shows nothing: the empty state already says the table is
-   * empty, and "0 items" beside it is the same sentence twice. Omit the prop
-   * entirely for a table whose row count answers nothing a user would ask (a
-   * modal's sub-table, or a list whose rows are their own count).
+   * Below two rows nothing shows: an empty table's empty state already says
+   * it is empty, and "1 item" labels a single visible row with its own count.
+   * Omit the prop entirely for a table whose row count answers nothing a user
+   * would ask (a modal's sub-table, or a list whose rows are their own count).
    */
   totalCount?: number;
 
@@ -891,9 +891,10 @@ export function DataTable<T, K extends string, G extends string = never>(
   // table then loses the hairline that row carried along its bottom edge, which
   // is what separated the header from whatever sits above it. The seam moves to
   // the table area instead (see .root[data-no-toolbar] in the CSS).
-  // The count is shown only when there IS one (see `totalCount`) — a zero
-  // total renders nothing, and can't be the reason the toolbar row exists.
-  const showCount = () => (props.totalCount ?? 0) > 0;
+  // The count is shown only where it says something (see `totalCount`) — one
+  // row, or none, renders nothing, and can't be the reason the toolbar row
+  // exists.
+  const showCount = () => (props.totalCount ?? 0) > 1;
 
   const hasToolbar = () => !!filters() || showCount() || !props.controlsMount;
 

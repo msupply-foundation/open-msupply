@@ -5,6 +5,10 @@ import { CloseButton } from '../../../ui/elements/buttons/StandardButtons';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
+import {
+  Pagination,
+  type PaginationProps,
+} from '../../../ui/elements/table/Pagination';
 import { StatusChangeAction, type StatusPreflight } from './actions';
 import { STATUS_LABELS, statusIndex, isEditable } from '../outboundStatus';
 import { allowedStatuses } from '../outboundStatusOptions';
@@ -31,6 +35,14 @@ export interface OutboundStatusFooterProps {
   preflight: () => Promise<StatusPreflight | undefined>;
   /** Toggle hold (writes onHold via the field-save path). */
   onSetHold: (hold: boolean) => void;
+  /**
+   * The line table's pager, hosted HERE rather than in a band of its own
+   * (spec/ui-standards § tables → pagination): this bar is present at every
+   * line count, so a shipment that pages gets its controls without a second
+   * row of chrome. The pager renders itself away when there is nowhere to page
+   * to, leaving this bar exactly as it was.
+   */
+  pagination: PaginationProps;
   /** A status change saved — replace the entity in place (the view also
    * refetches the lines page: leaving NEW trims zero rows server-side). */
   onSaved: (node: OutboundNode) => void;
@@ -96,6 +108,12 @@ export const OutboundStatusFooter: Component<
       </Show>
 
       <StatusIndicator steps={steps()} current={indicatorIndex()} />
+
+      {/* The line pager, sharing this bar (`inBar` — it sizes to its cluster
+          so a crowded bar wraps it whole rather than crushing it). Spread of
+          the LIVE prop object, as DataTable does, so offset/total changes
+          reach it. */}
+      <Pagination {...props.pagination} inBar />
 
       {/* Close (back to the list) + the status-change split button. The split
           button hides entirely when read-only (spec S3 § status footer). */}
