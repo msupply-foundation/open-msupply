@@ -14,7 +14,11 @@ import {
   type CellSpec,
 } from './_globalColumnConfig';
 import { remToPx } from '../../utils/rem';
-import { differenceInCalendarDays, differenceInMonths } from 'date-fns';
+import {
+  differenceInCalendarDays,
+  differenceInMonths,
+  parseISO,
+} from 'date-fns';
 import styles from './tableHelpers.module.css';
 
 // Shared helpers for the DataTable: cell fragments pages spread into their
@@ -139,6 +143,16 @@ export const getTimeCell = <T,>(meta?: Meta): CellFragment<T> => ({
 // ExpiryDateCell.
 const EXPIRY_WARNING_MONTHS = 3;
 
+// A date-only wire string ('YYYY-MM-DD', GraphQL NaiveDate) must be read as
+// the LOCAL day: `new Date(string)` parses it as UTC midnight, which is the
+// PREVIOUS local day anywhere west of UTC — a batch would bold as "expired"
+// a day early there, while the domain's day-stable isExpired (string
+// comparison against the local day) still said "near expiry". parseISO
+// parses date-only strings at local midnight, keeping every calendar-day
+// comparison on the store's clock.
+const asLocalDay = (value: string | Date): Date =>
+  typeof value === 'string' ? parseISO(value) : value;
+
 /**
  * Within the shared near-expiry warning window (or already past it) — the
  * predicate behind getExpiryDateCell's reddening, exported so a consumer can
@@ -146,7 +160,7 @@ const EXPIRY_WARNING_MONTHS = 3;
  * interaction) without restating the threshold.
  */
 export const isNearOrPastExpiry = (value: string | Date): boolean =>
-  differenceInMonths(new Date(value), new Date()) <= EXPIRY_WARNING_MONTHS;
+  differenceInMonths(asLocalDay(value), new Date()) <= EXPIRY_WARNING_MONTHS;
 export const getExpiryDateCell = <T,>(meta?: Meta): CellFragment<T> => ({
   meta: { ...meta },
   cell: info => {
@@ -155,7 +169,10 @@ export const getExpiryDateCell = <T,>(meta?: Meta): CellFragment<T> => ({
     const almostExpired = isNearOrPastExpiry(value);
     // ACTUALLY expired (the expiry day has arrived — calendar-day comparison,
     // stable across the day) steps up from the near-expiry red to red + bold.
-    const expired = differenceInCalendarDays(new Date(value), new Date()) <= 0;
+    // Same day semantics as domain/allocation's isExpired, so the cell's
+    // tier always agrees with the row's Expired/Near-expiry badge.
+    const expired =
+      differenceInCalendarDays(asLocalDay(value), new Date()) <= 0;
     return (
       <span
         class={
