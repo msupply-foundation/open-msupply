@@ -43,6 +43,11 @@ import {
 } from '../../../ui/elements/table/DataTable';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
+import {
   getCellDefinition,
   getNumberCell,
 } from '../../../ui/elements/table/tableHelpers';
@@ -89,8 +94,6 @@ type Line = SupplierReturnLineFragment;
 // change is a compile error rather than a silently-ignored sort.
 type SortKey = NonNullable<SupplierReturnLinesVariables['sort']>[number]['key'];
 
-const DEFAULT_PAGE_SIZE = 20;
-
 // The URL-backed view state (kdd/url-structure): sort + pagination in the one
 // `?query=` JSON param, so a sorted/paged table is shareable and survives a
 // reload or back-nav. Conforms to the generated supplierReturnLines variables
@@ -124,8 +127,10 @@ const SupplierReturnDetailView: Component = () => {
   const navigate = useNavigate();
   // Sort + pagination are URL-backed in one `?query=` param (spec rules §
   // server-paginated line table).
-  const { query, setQuery } =
-    useUrlQueryState<DetailUrlState>(DEFAULT_URL_STATE);
+  const { query, setQuery } = useUrlQueryState<DetailUrlState>({
+    ...DEFAULT_URL_STATE,
+    first: initialPageSize(),
+  });
   const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen();
   const [supplierError, setSupplierError] = createSignal<string | undefined>();
   // Line selection (transient UI, like every other detail screen's): drives the
@@ -706,6 +711,7 @@ const SupplierReturnDetailView: Component = () => {
                         setSelectedIds([]);
                       },
                       onPageSizeChange: first => {
+                        rememberPageSize(first);
                         setQuery({ ...query(), first, offset: 0 });
                         setSelectedIds([]);
                       },

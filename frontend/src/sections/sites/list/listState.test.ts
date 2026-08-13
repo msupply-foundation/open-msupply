@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_PAGE_SIZE } from '@/list/pageSize';
 import {
-  DEFAULT_PAGE_SIZE,
   DEFAULT_STATE,
   buildListVariables,
   nameSearchFilter,

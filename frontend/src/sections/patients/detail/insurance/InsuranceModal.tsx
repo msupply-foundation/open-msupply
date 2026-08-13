@@ -9,7 +9,7 @@ import { TextField } from '../../../../ui/elements/inputs/TextField';
 import { NumberField } from '../../../../ui/elements/inputs/NumberField';
 import { DateField } from '../../../../ui/elements/inputs/DateField';
 import { localTodayIso } from '../../../../ui/elements/inputs/dateTimeConvert';
-import { ToggleSwitch } from '../../../../ui/elements/inputs/ToggleSwitch';
+import { Checkbox } from '../../../../ui/elements/inputs/Checkbox';
 import { Combobox } from '../../../../ui/elements/selectors/Combobox';
 import { FormColumns } from '../../../../ui/layout/Form/FormColumns';
 import { FormColumn } from '../../../../ui/layout/Form/FormColumn';
@@ -61,7 +61,8 @@ type Draft = {
   isActive: boolean;
   expiryDate: string | null;
   insuranceProviderId: string | null;
-  discountPercentage: number;
+  /** `undefined` = no rate entered — the required field is genuinely empty. */
+  discountPercentage: number | undefined;
 };
 
 const Body: Component<InsuranceModalProps> = props => {
@@ -88,7 +89,7 @@ const Body: Component<InsuranceModalProps> = props => {
           isActive: true,
           expiryDate: null,
           insuranceProviderId: null,
-          discountPercentage: 0,
+          discountPercentage: undefined,
         }
   );
 
@@ -108,13 +109,15 @@ const Body: Component<InsuranceModalProps> = props => {
     draft.policyNumberPerson.trim() !== '';
   const expiryInPast = () =>
     draft.expiryDate !== null && draft.expiryDate < today;
-  // An active policy must carry a non-zero coverage rate (spec AC-I4).
+  // An active policy must carry a non-zero coverage rate (spec AC-I4). Only an
+  // entered 0 trips this — an empty field is the required rule's business.
   const activeNeedsCoverage = () =>
-    draft.isActive && draft.discountPercentage <= 0;
+    draft.isActive && draft.discountPercentage === 0;
 
   // Validation (AC-I3/I4). Required errors + the active-needs-coverage rule
-  // (which trips on the default 0 rate) stay quiet until Save; the past-expiry
-  // rule surfaces immediately. The Body remounts per open, so state is fresh.
+  // (which trips on a policy being edited that already carries 0) stay quiet
+  // until Save; the past-expiry rule surfaces immediately. The Body remounts
+  // per open, so state is fresh.
   const validation = createFormValidation(() => [
     {
       id: 'policyNumberFamily',
@@ -145,6 +148,11 @@ const Body: Component<InsuranceModalProps> = props => {
     {
       id: 'discountPercentage',
       label: t('label.coverage-rate'),
+      failed: draft.discountPercentage === undefined,
+    },
+    {
+      id: 'discountPercentage',
+      label: t('label.coverage-rate'),
       failed: activeNeedsCoverage(),
       message: t('messages.active-policy-needs-coverage'),
       showOnSubmit: true,
@@ -162,7 +170,7 @@ const Body: Component<InsuranceModalProps> = props => {
           id: props.policy.id,
           insuranceProviderId: draft.insuranceProviderId,
           policyType: draft.policyType,
-          discountPercentage: draft.discountPercentage,
+          discountPercentage: draft.discountPercentage!,
           expiryDate: draft.expiryDate,
           isActive: draft.isActive,
           nameOfInsured: draft.nameOfInsured,
@@ -174,7 +182,7 @@ const Body: Component<InsuranceModalProps> = props => {
           policyNumberFamily: draft.policyNumberFamily,
           policyNumberPerson: draft.policyNumberPerson,
           policyType: draft.policyType,
-          discountPercentage: draft.discountPercentage,
+          discountPercentage: draft.discountPercentage!,
           expiryDate: draft.expiryDate!,
           isActive: draft.isActive,
           nameOfInsured: draft.nameOfInsured,
@@ -192,6 +200,12 @@ const Body: Component<InsuranceModalProps> = props => {
   return (
     <Dialog
       open
+      // The two-column form measure (as the site editor / create-patient
+      // modals): wide enough for the FormColumns row to sit side by side, and
+      // it opts the dialog into the full-screen treatment below the
+      // narrow-viewport line — where the columns wrap to a single stack on
+      // their own (FormColumn's min width, no breakpoint).
+      width="form"
       dismissable={!saving()}
       onClose={props.onClose}
       title={editing() ? t('title.edit-insurance') : t('title.new-insurance')}
@@ -258,7 +272,7 @@ const Body: Component<InsuranceModalProps> = props => {
             value={draft.policyType}
             onChange={o => o && setDraft('policyType', o.value)}
           />
-          <ToggleSwitch
+          <Checkbox
             label={t('label.insurance-active')}
             checked={draft.isActive}
             onChange={checked => setDraft('isActive', checked)}
@@ -293,7 +307,7 @@ const Body: Component<InsuranceModalProps> = props => {
             endAdornment="%"
             value={draft.discountPercentage}
             error={validation.errorFor('discountPercentage')}
-            onChange={value => setDraft('discountPercentage', value ?? 0)}
+            onChange={value => setDraft('discountPercentage', value)}
           />
         </FormColumn>
       </FormColumns>
