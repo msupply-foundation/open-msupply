@@ -1,6 +1,8 @@
 # The inbound-shipment detail "Log" tab: activity-log entries for THIS shipment,
 # its own server-paginated query (mirrors the stocktake log). Scoped by
-# recordId; sorted by id descending so the newest entry is first.
+# recordId; NO sort — `datetime` is not a sortable key on the wire and an id
+# sort scrambles the chronology (ids are UUIDs), so we take the server's no-sort
+# default (datetime ascending) and order for display client-side.
 fragment InboundLog on ActivityLogNode {
   id
   datetime
@@ -16,13 +18,11 @@ query inboundShipmentLog(
   $storeId: String!
   $recordId: String!
   $page: PaginationInput
-  $sort: [ActivityLogSortInput!]
 ) {
   activityLogs(
     storeId: $storeId
     filter: { recordId: { equalTo: $recordId } }
     page: $page
-    sort: $sort
   ) {
     ... on ActivityLogConnector {
       __typename

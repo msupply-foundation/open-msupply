@@ -118,14 +118,12 @@ export const StocktakeLogPanel: Component<{
 }> = props => {
   // The log entries for this record. Keyed on the serialised variables (a
   // stable string) so identical content doesn't refetch
-  // (kdd/solid-reactivity-pitfalls), like the other stocktake resources. Sorted
-  // by id descending = most recent first (activity-log ids are monotonic; OMS
-  // orders the same way).
+  // (kdd/solid-reactivity-pitfalls), like the other stocktake resources. No
+  // sort — the row order is a client-side concern (see `rows`).
   const variables = (): StocktakeLogVariables => ({
     storeId: props.storeId,
     recordId: props.stocktakeId,
     page: { first: LOG_PAGE_SIZE, offset: 0 },
-    sort: [{ key: 'id', desc: true }],
   });
   const [logData] = createResource(
     () => JSON.stringify(variables()),
@@ -139,7 +137,14 @@ export const StocktakeLogPanel: Component<{
     }
   );
 
-  const rows = (): Log[] => logData.latest?.nodes ?? [];
+  // Most recent first, ordered by datetime client-side: the wire has no
+  // datetime sort key, and an id sort scrambles the chronology (ids are
+  // UUIDs). The server hands us the whole log datetime-ascending, so this
+  // reorders a complete set rather than re-sorting one page.
+  const rows = (): Log[] =>
+    [...(logData.latest?.nodes ?? [])].sort((a, b) =>
+      a.datetime === b.datetime ? 0 : a.datetime < b.datetime ? 1 : -1
+    );
 
   const columns = (): Column<Log, never>[] => [
     {

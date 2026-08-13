@@ -4,8 +4,9 @@
 #
 # The log is scoped to one record via `filter: { recordId: { equalTo: <stocktakeId> } }` — every
 # entry the backend has written against this stocktake (created / edited / finalised, plus the
-# stock-level changes its lines produced). Sorted by `id` descending so the most recent entry is
-# first (activity-log ids are monotonic; the upstream OMS app orders the same way). `to`/`from`
+# stock-level changes its lines produced). NO sort is sent: `datetime` is not a sortable key on the
+# wire and an id sort scrambles the chronology (ids are UUIDs), so we take the server's no-sort
+# default (datetime ascending) and put the most recent entry first client-side. `to`/`from`
 # carry the change detail (a scalar or a JSON blob) surfaced in the Details column; `type` maps to
 # a `log.*` translation key (Formatter.logTypeTranslation parity: TYPE → `log.<kebab>`).
 fragment StocktakeLog on ActivityLogNode {
@@ -23,13 +24,11 @@ query stocktakeLog(
   $storeId: String!
   $recordId: String!
   $page: PaginationInput
-  $sort: [ActivityLogSortInput!]
 ) {
   activityLogs(
     storeId: $storeId
     filter: { recordId: { equalTo: $recordId } }
     page: $page
-    sort: $sort
   ) {
     ... on ActivityLogConnector {
       __typename
