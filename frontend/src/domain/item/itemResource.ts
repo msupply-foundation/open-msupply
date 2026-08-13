@@ -4,7 +4,7 @@ import type { Page } from '../../ui/utils/createPaginatedSearch';
 
 // One item option: the fields the search selector shows/needs. The row shows
 // "code - name" and available stock (Σ available batch packs * packSize) +
-// unit; id feeds the selection and the exclude-already-added logic.
+// unit; id feeds the selection.
 export type ItemOption = {
   id: string;
   code: string;
@@ -46,17 +46,20 @@ const availableUnitsOf = (node: ItemNode): number =>
 
 /**
  * Fetch one page of stock items for the search selector: server-side filtered
- * by `search` (codeOrName) and excluding `excludeItemIds` (items already in the
- * caller's context, e.g. already on the stocktake). Returns the page's rows +
- * the grand total (so the caller knows when to stop paging), or undefined on a
- * failed fetch (graphqlFetch already surfaced it).
+ * by `search` (codeOrName) and excluding `excludeItemIds`. Returns the page's
+ * rows + the grand total (so the caller knows when to stop paging), or
+ * undefined on a failed fetch (graphqlFetch already surfaced it).
+ *
+ * NOTE no line editor passes exclusions: an add-item lookup offers items the
+ * document already holds, and picking one loads that item's existing entry
+ * (spec/ui-standards/controls.md § async lookup). The remaining callers are
+ * the item-catalogue admin modals, whose exclusions are structural rather than
+ * already-added — an item cannot be its own bundled/ancillary variant.
  *
  * A curried factory so the selector binds storeId + a live exclusions accessor
  * once and hands createPaginatedSearch a plain (search, offset) => Page
  * fetcher. excludeItemIds is an accessor (not a snapshot) so each fetch uses
- * the current exclusions — e.g. after "OK & next" adds an item, the next
- * search excludes
- * it — without recreating the search primitive.
+ * the current exclusions without recreating the search primitive.
  */
 /**
  * Resolve one item by id — the label restore for a picker reopened with only a

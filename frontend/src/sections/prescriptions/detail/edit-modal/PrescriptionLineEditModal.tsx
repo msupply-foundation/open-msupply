@@ -73,7 +73,8 @@ import {
 
 // The prescription line editor (spec/prescriptions/ui-surface.md S4 — the
 // D53 modal replacing the real app's full-page route): item lookup (locked in
-// edit mode, existing items excluded in add mode), the allocation editor body
+// edit mode, EVERY item offered in add mode — an already-dispensed item loads
+// its existing allocation, never a duplicate), the allocation editor body
 // with the prescription deltas — partial packs (AC-A1), no placeholder,
 // nothing allocated on open (AC-A2) — the preference-gated prescribed
 // quantity (AC-Q1–Q3), and the directions block (AC-R1–R3). Save is the item
@@ -91,8 +92,6 @@ export interface PrescriptionLineEditModalProps {
    * (which carries the full item info) resolves.
    */
   initialItem?: { id: string; code: string; name: string };
-  /** Items already dispensed — excluded from the add-mode picker (FL3). */
-  existingItemIds: string[];
   /**
    * The prescription's assigned program, if any — scopes the add-mode item
    * picker to the program's master list (rules.md: choosing a program scopes
@@ -738,7 +737,12 @@ const Body = (props: PrescriptionLineEditModalProps) => {
                 return { id: item.id, code: item.code, name: item.name };
               return props.initialItem;
             })()}
-            excludeItemIds={props.existingItemIds}
+            // NO excludeItemIds: the search offers the whole addable catalogue,
+            // including items already dispensed on this prescription (issue
+            // #985 / #428). Picking one goes through the same gridData fetch as
+            // any other item, and `draftStockOutLines` returns that item's
+            // EXISTING allocation for this invoice — so a second visit edits
+            // (and lands on its batches) rather than duplicating.
             masterListId={props.programId}
             disabled={isEdit}
             onSelect={item => {

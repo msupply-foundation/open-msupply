@@ -46,6 +46,11 @@ import {
 import { remToPx } from '../../../ui/utils/rem';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { useUrlQueryState } from '../../../list/urlQueryState';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import {
   CustomFieldsEditTab,
@@ -98,8 +103,6 @@ type Line = CustomerReturnLineFragment;
 // backend gaps).
 type SortKey = NonNullable<CustomerReturnLinesVariables['sort']>[number]['key'];
 
-const DEFAULT_PAGE_SIZE = 20;
-
 // The URL-backed view state (kdd/url-structure): sort + pagination in the one
 // `?query=` JSON param, so a sorted/paged table is shareable and survives a
 // reload or back-nav. Conforms to the generated customerReturnLines variables
@@ -133,8 +136,10 @@ const CustomerReturnDetailView: Component = () => {
   const navigate = useNavigate();
   // Sort + pagination are URL-backed in one `?query=` param (spec rules §
   // server-paginated line table).
-  const { query, setQuery } =
-    useUrlQueryState<DetailUrlState>(DEFAULT_URL_STATE);
+  const { query, setQuery } = useUrlQueryState<DetailUrlState>({
+    ...DEFAULT_URL_STATE,
+    first: initialPageSize(),
+  });
   // The shared side-panel open state: responsive default (open on a wide
   // viewport) with the user's explicit choice persisted — the same helper every
   // other detail screen uses.
@@ -794,6 +799,7 @@ const CustomerReturnDetailView: Component = () => {
                         setSelectedIds([]);
                       },
                       onPageSizeChange: first => {
+                        rememberPageSize(first);
                         setQuery({ ...query(), first, offset: 0 });
                         setSelectedIds([]);
                       },

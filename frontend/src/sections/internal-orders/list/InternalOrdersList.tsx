@@ -27,6 +27,11 @@ import { HStack } from '../../../ui/layout/Stack/HStack';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import { PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
 import { stripEmpty } from '../../../typeHelpers';
 import {
   InternalOrders,
@@ -59,8 +64,6 @@ import { recentStocktakeIsInsufficient } from './create/createInternalOrder';
 // SERIALISED variables so an empty filter chip doesn't reflash the list
 // (kdd/solid-reactivity-pitfalls). The page owns no CSS.
 
-const DEFAULT_PAGE_SIZE = 20;
-
 type Row = InternalOrderRowFragment;
 
 // Sortable columns are typed to the generated sort-field union, so a column can
@@ -91,7 +94,10 @@ const InternalOrdersList: Component = () => {
   // StoreGuardLayout, which requires a resolved store before routing.
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
-  const { query, setQuery } = useUrlQueryState<ListState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<ListState>({
+    ...DEFAULT_STATE,
+    first: initialPageSize(),
+  });
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   // Create-flow state: the modal, the recent-stocktake warning gate, and the
   // in-flight stocktake check that decides between them (spec S2 / AC-C5).
@@ -497,7 +503,10 @@ const InternalOrdersList: Component = () => {
           pageSize: query().first,
           total: totalCount(),
           onOffsetChange: offset => setQuery({ ...query(), offset }),
-          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+          onPageSizeChange: first => {
+            rememberPageSize(first);
+            setQuery({ ...query(), first, offset: 0 });
+          },
         }}
       />
     </Page>

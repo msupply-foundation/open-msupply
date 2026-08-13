@@ -44,6 +44,11 @@ import { remToPx } from '../../../ui/utils/rem';
 import styles from './InboundShipmentDetailView.module.css';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { useUrlQueryState } from '../../../list/urlQueryState';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import {
   CustomFieldsEditTab,
@@ -119,8 +124,6 @@ type SortKey = NonNullable<
   InboundShipmentLinesVariables['sort']
 >[number]['key'];
 
-const DEFAULT_PAGE_SIZE = 20;
-
 type DetailUrlState = {
   sort: NonNullable<InboundShipmentLinesVariables['sort']>;
   offset: number;
@@ -156,8 +159,10 @@ const DEFAULT_URL_STATE: DetailUrlState = {
 const InboundShipmentDetailView: Component = () => {
   const params = useParams<{ storeId: string; invoiceId: string }>();
   const navigate = useNavigate();
-  const { query, setQuery } =
-    useUrlQueryState<DetailUrlState>(DEFAULT_URL_STATE);
+  const { query, setQuery } = useUrlQueryState<DetailUrlState>({
+    ...DEFAULT_URL_STATE,
+    first: initialPageSize(),
+  });
   // The shipment's permission scope, carried by the route (inboundShipmentHref)
   // because the id alone can't reveal it. It selects `type` on the read below,
   // gates the mutate permission, and picks the plain-vs-`...External` mutation
@@ -1148,8 +1153,10 @@ const InboundShipmentDetailView: Component = () => {
                     pageSize: query().first,
                     total: totalCount(),
                     onOffsetChange: offset => setQuery({ ...query(), offset }),
-                    onPageSizeChange: first =>
-                      setQuery({ ...query(), first, offset: 0 }),
+                    onPageSizeChange: first => {
+                      rememberPageSize(first);
+                      setQuery({ ...query(), first, offset: 0 });
+                    },
                   }}
                 />
               </TabPanel>
