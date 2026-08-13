@@ -162,7 +162,6 @@ export const CommandPaletteView = (props: CommandPaletteViewProps) => {
           ref={search.ref}
           label={t('heading.keyboard-shortcuts')}
           hideLabel
-          width="full"
           placeholder={t('cmdk.placeholder')}
           value={query()}
           onInput={event => {

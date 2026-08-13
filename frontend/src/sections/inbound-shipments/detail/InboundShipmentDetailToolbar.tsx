@@ -97,7 +97,6 @@ export const InboundShipmentDetailToolbar: Component<
         label={t('label.reference')}
         size="small"
         rows={1}
-        width="full"
         data-testid="supplier-reference-field"
         value={props.edit.state.theirReference}
         disabled={props.disabled}
@@ -110,7 +109,6 @@ export const InboundShipmentDetailToolbar: Component<
       <DateField
         label={t('label.received')}
         size="small"
-        width="full"
         value={utcToLocalDay(props.node.receivedDatetime)}
         disabled={!receivedDateEditable()}
         // The blocking reason is a TOOLTIP on the label, per spec S3 ("disabled

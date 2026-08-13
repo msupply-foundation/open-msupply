@@ -151,7 +151,6 @@ export const InternalOrderSidePanel: Component<
           <TextArea
             label={t('heading.comment')}
             hideLabel
-            width="full"
             data-testid="comment-field"
             value={props.edit.state.comment}
             disabled={!props.editable}

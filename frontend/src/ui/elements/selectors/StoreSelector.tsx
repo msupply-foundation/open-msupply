@@ -129,7 +129,6 @@ export const StoreSelector = (props: {
         ref={searchInput}
         label={t('placeholder.search-by-name')}
         hideLabel
-        width="full"
         value={query()}
         placeholder={t('placeholder.search-by-name-or-code')}
         onInput={e => setQuery(e.currentTarget.value)}

@@ -443,7 +443,6 @@ export const InitialisationPage: Component<{
             ? t('label.settings-legacy-url')
             : t('label.settings-url')
         }
-        width="full"
         data-testid="initialise-url-input"
         value={values().url}
         onInput={e => {
@@ -455,7 +454,6 @@ export const InitialisationPage: Component<{
       />
       <TextField
         label={t('label.settings-username')}
-        width="full"
         data-testid="initialise-site-name-input"
         value={values().siteName}
         onInput={e => {
@@ -467,7 +465,6 @@ export const InitialisationPage: Component<{
       />
       <PasswordField
         label={t('label.settings-password')}
-        width="full"
         data-testid="initialise-password-input"
         value={values().password}
         onInput={e => {
@@ -496,7 +493,6 @@ export const InitialisationPage: Component<{
           <NumberField
             label={t('label.settings-batch-size')}
             helperText={t('label.settings-batch-size-helper')}
-            width="full"
             min={1}
             value={values().batchSize}
             onChange={batchSize =>
@@ -576,7 +572,6 @@ export const InitialisationPage: Component<{
     >
       <TextField
         label={t('label.store-name')}
-        width="full"
         data-testid="initialise-store-name-input"
         value={standaloneValues().storeName}
         onInput={e => {
@@ -589,7 +584,6 @@ export const InitialisationPage: Component<{
       <p class={pageStyles.sectionHeading}>{t('heading.admin-user')}</p>
       <TextField
         label={t('heading.username')}
-        width="full"
         data-testid="initialise-admin-username-input"
         value={standaloneValues().username}
         onInput={e => {
@@ -601,7 +595,6 @@ export const InitialisationPage: Component<{
       />
       <PasswordField
         label={t('heading.password')}
-        width="full"
         data-testid="initialise-admin-password-input"
         value={standaloneValues().password}
         onInput={e => {

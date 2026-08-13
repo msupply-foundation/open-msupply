@@ -25,6 +25,12 @@ interface MultiSelectProps<T> {
    */
   size?: 'default' | 'small';
   /**
+   * Max-width CAP — opt-in, TextField's vocabulary and TextField's default:
+   * `full` (fill the container). `compact` (10rem) narrows only the control
+   * box; `short` (25rem) / `long` (37.5rem) cap the whole field.
+   */
+  width?: 'compact' | 'short' | 'long' | 'full';
+  /**
    * An affordance rendered inline after the label text — the InfoTooltip help
    * icon whose bubble explains the field. Kept outside the label element so it
    * isn't part of the control's accessible name. As TextField.
@@ -65,6 +71,7 @@ export const MultiSelect = <T,>(props: MultiSelectProps<T>) => {
     <KCombobox.Root<T>
       multiple
       class={props.class ? `${styles.field} ${props.class}` : styles.field}
+      data-width={props.width ?? 'full'}
       data-size={props.size ?? 'default'}
       options={props.items}
       optionValue={item => (props.itemToValue ?? props.itemToString)(item as T)}

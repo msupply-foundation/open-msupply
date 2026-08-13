@@ -284,14 +284,14 @@ export const DialogShowcase = () => {
             <FormColumns>
               <FormColumn>
                 <FormSection title="Patient details">
-                  <TextField label="First name" width="full" />
-                  <TextField label="Last name" width="full" />
+                  <TextField label="First name" />
+                  <TextField label="Last name" />
                 </FormSection>
               </FormColumn>
               <FormColumn>
                 <FormSection title="Contact">
-                  <TextField label="Address" width="full" />
-                  <TextField label="Phone" width="full" />
+                  <TextField label="Address" />
+                  <TextField label="Phone" />
                 </FormSection>
               </FormColumn>
             </FormColumns>
@@ -455,14 +455,14 @@ export const DialogShowcase = () => {
                 <FormColumns>
                   <FormColumn>
                     <FormSection title="Patient details">
-                      <TextField label="First name" width="full" />
-                      <TextField label="Last name" width="full" />
+                      <TextField label="First name" />
+                      <TextField label="Last name" />
                     </FormSection>
                   </FormColumn>
                   <FormColumn>
                     <FormSection title="Contact">
-                      <TextField label="Address" width="full" />
-                      <TextField label="Phone" width="full" />
+                      <TextField label="Address" />
+                      <TextField label="Phone" />
                     </FormSection>
                   </FormColumn>
                 </FormColumns>

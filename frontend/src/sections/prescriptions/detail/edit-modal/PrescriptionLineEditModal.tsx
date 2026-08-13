@@ -953,7 +953,6 @@ const Body = (props: PrescriptionLineEditModalProps) => {
                 <Select
                   label={t('placeholder.item-directions')}
                   hideLabel
-                  width="full"
                   value=""
                   options={(itemInfo()?.itemDirections ?? [])
                     .slice()
@@ -989,7 +988,6 @@ const Body = (props: PrescriptionLineEditModalProps) => {
               <TextArea
                 label={t('label.directions')}
                 hideLabel
-                width="full"
                 rows={2}
                 value={note()}
                 onInput={e => {

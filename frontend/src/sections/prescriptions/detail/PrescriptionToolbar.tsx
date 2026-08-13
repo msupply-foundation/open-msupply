@@ -103,7 +103,6 @@ export const PrescriptionToolbar: Component<
         <PatientSearch
           label={t('label.patient')}
           size="small"
-          width="full"
           storeId={props.storeId}
           selected={patientOption()}
           disabled={props.disabled}
@@ -132,7 +131,6 @@ export const PrescriptionToolbar: Component<
         <ClinicianSelect
           label={t('label.clinician')}
           size="small"
-          width="full"
           inputTestId="clinician-select"
           // The create-clinician side flow (ui-surface S8), under this cluster's
           // editability gate — the picker withholds it while disabled.
@@ -149,7 +147,6 @@ export const PrescriptionToolbar: Component<
         <DateField
           label={t('label.date')}
           size="small"
-          width="full"
           testId="date-field"
           value={shownDay()}
           max={localTodayIso()}
@@ -164,7 +161,6 @@ export const PrescriptionToolbar: Component<
         <ProgramNameSelect
           label={t('label.program')}
           size="small"
-          width="full"
           testId="program-select"
           value={props.node.programId ?? undefined}
           disabled={props.disabled}

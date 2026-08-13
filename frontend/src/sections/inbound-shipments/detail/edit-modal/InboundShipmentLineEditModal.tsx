@@ -787,9 +787,6 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             label={t('label.batch')}
             hideLabel
             size="small"
-            // Narrow: a batch code is short, and it's the card's inline header
-            // field (the FieldRow control cell is otherwise full-width).
-            width="compact"
             value={b.batch}
             onInput={e => updateBatch(b.id, 'batch', e.currentTarget.value)}
           />
@@ -810,7 +807,6 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
               label={t('label.packs-received')}
               hideLabel
               size="small"
-              width="full"
               value={b.numberOfPacks}
               min={0}
               // Packs are received in fractions (a part-full pack) —
@@ -848,7 +844,6 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                   label={t('label.shipped-number-of-packs')}
                   hideLabel
                   size="small"
-                  width="full"
                   value={b.shippedNumberOfPacks}
                   min={0}
                   decimalLimit={2}
@@ -925,7 +920,6 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             label={t('label.received-pack-size')}
             hideLabel
             size="small"
-            width="full"
             value={b.packSize}
             // Don't clamp below 1 — a pack size < 1 is a server rule
             // (PackSizeBelowOne, untyped); submit it and surface the rejection
@@ -955,7 +949,6 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                   label={t('label.shipped-pack-size')}
                   hideLabel
                   size="small"
-                  width="full"
                   value={b.shippedPackSize}
                   min={0}
                   decimalLimit={2}
@@ -1135,7 +1128,6 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                 label={t('label.doses-per-unit')}
                 hideLabel
                 size="small"
-                width="full"
                 value={item()?.doses ?? 0}
                 disabled
               />
@@ -1181,7 +1173,6 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             label={t('label.pack-cost-price')}
             hideLabel
             size="small"
-            width="full"
             value={b.costPricePerPack}
             disabled={props.costLocked}
             onChange={v => changeCost(b.id, v ?? 0)}
@@ -1201,7 +1192,6 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             label={t('label.pack-sell-price')}
             hideLabel
             size="small"
-            width="full"
             value={b.sellPricePerPack}
             onChange={v => changeSell(b.id, v ?? 0)}
           />
@@ -1325,7 +1315,6 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             hideLabel
             decimalLimit={10}
             size="small"
-            width="full"
             value={b.volumePerPack}
             min={0}
             onChange={v => updateBatch(b.id, 'volumePerPack', v ?? 0)}
@@ -1345,7 +1334,6 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             label={t('label.note')}
             hideLabel
             size="small"
-            width="full"
             value={b.note}
             onInput={e => updateBatch(b.id, 'note', e.currentTarget.value)}
           />
@@ -1451,7 +1439,6 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
               <ItemSearch
                 label={t('label.item')}
                 hideLabel
-                width="full"
                 storeId={props.storeId}
                 focusTarget={topSelector}
                 value={item()?.id}

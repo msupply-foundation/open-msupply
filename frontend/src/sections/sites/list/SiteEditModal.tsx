@@ -345,7 +345,6 @@ export const SiteEditModal: Component<SiteEditModalProps> = props => {
             ref={codeField.ref}
             hideLabel
             label={t('label.code')}
-            width="full"
             data-testid="site-code-input"
             // Read-only mode renders the identity inputs disabled-with-value,
             // so the site's code and name stay readable (ui-surface §
@@ -367,7 +366,6 @@ export const SiteEditModal: Component<SiteEditModalProps> = props => {
           <TextField
             hideLabel
             label={t('label.name')}
-            width="full"
             data-testid="site-name-input"
             disabled={!gates().identityEditable || saving()}
             value={form().name}
@@ -386,7 +384,6 @@ export const SiteEditModal: Component<SiteEditModalProps> = props => {
             <PasswordField
               hideLabel
               label={t('label.settings-password')}
-              width="full"
               data-testid="site-password-input"
               placeholder={isEdit ? '••••••••' : undefined}
               disabled={saving()}
