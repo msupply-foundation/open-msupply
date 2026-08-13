@@ -284,6 +284,11 @@ export const selectorsMetadata: PageMetadata = {
       searchTerms: ['select', 'status', 'enum'],
     },
     {
+      id: 'selectors-select-clearable',
+      title: 'Clearable drop-down',
+      searchTerms: ['clearable', 'clear', 'cross', 'empty', 'optional'],
+    },
+    {
       id: 'selectors-label-info',
       title: 'Label help tooltip',
       searchTerms: ['labelInfo', 'tooltip', 'info', 'help', 'explanation'],
@@ -313,6 +318,9 @@ export const selectorsMetadata: PageMetadata = {
 
 export const SelectorsShowcase = () => {
   const [status, setStatus] = createSignal('allocated');
+  const [adjustmentType, setAdjustmentType] = createSignal<string | undefined>(
+    'addition'
+  );
   const [picked, setPicked] = createSignal<DemoItem | null>(null);
   // Seeded to the LAST item (not on the first page) to show AsyncCombobox
   // rendering a selected value whose row hasn't been loaded yet.
@@ -390,6 +398,38 @@ export const SelectorsShowcase = () => {
             }))}
             helperText="Coloured dots + check indicator — styled, still accessible"
           />
+        </DashboardCard>
+
+        <DashboardCard
+          id="selectors-select-clearable"
+          title="Clearable drop-down — an optional pick"
+        >
+          <Lead>
+            An <em>optional</em> pick — a report filter's enum argument — must
+            be emptiable again without cancelling the whole form.{' '}
+            <code>clearable</code> puts a ✕ in its own slot beside the chevron
+            while a value is selected; it calls <code>onClear</code> and the
+            owner empties its bound state. Requires controlled usage (
+            <code>value</code>).
+          </Lead>
+          <Select
+            label="Adjustment type"
+            clearable
+            value={adjustmentType()}
+            onClear={() => setAdjustmentType(undefined)}
+            onValueChange={setAdjustmentType}
+            options={[
+              { value: 'addition', label: 'Addition' },
+              { value: 'reduction', label: 'Reduction' },
+            ]}
+            helperText="Pick a value to see the clear affordance"
+          />
+          <Note>
+            Default off — most selects are a must-have pick (a direction, a
+            rows-per-page count) where emptiness is meaningless. The ✕ keeps its
+            own slot rather than replacing the chevron on hover, exactly as the
+            Combobox's clear.
+          </Note>
         </DashboardCard>
 
         <DashboardCard

@@ -60,6 +60,13 @@
   color: var(--error-main);
 }
 
+/* Positioning context for the clear affordance — the trigger is a real
+   <button>, so the ✕ can't nest inside it; it overlays the slot the
+   .clearSlot spacer reserves in the trigger's flex row. */
+.control {
+  position: relative;
+}
+
 .trigger {
   display: flex;
   align-items: center;
@@ -118,6 +125,50 @@
   display: inline-flex;
   font-size: 1.25rem;
   color: var(--gray-dark);
+}
+
+/* The slot the clear button occupies: reserved INSIDE the trigger by the
+   spacer (so a long value ellipsises before it, never running under the ✕),
+   filled from outside by the absolutely-positioned button. The ✕ keeps its
+   own slot beside the chevron rather than replacing it on hover — swapping
+   the two puts a destructive control on the pixel a benign one occupied a
+   moment earlier, and relies on hover, which a tablet doesn't have (as
+   Combobox). Muted at rest so it reads as secondary to the value. */
+.clearSlot {
+  inline-size: 1.75rem;
+  flex-shrink: 0;
+}
+
+.clear {
+  position: absolute;
+  /* Align over the reserved slot: end padding + chevron + the flex gap. */
+  inset-inline-end: calc(var(--input-padding-x) + 1.25rem + var(--space-2));
+  inset-block-start: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.75rem;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  color: var(--gray-main);
+  cursor: pointer;
+}
+
+/* Disabled field: the clear button stays inert and dimmed (the field is
+   read-only, so its value can't be cleared). As Combobox. */
+.clear:disabled {
+  opacity: var(--disabled-opacity);
+  cursor: default;
+}
+
+/* Brought up to full strength once engaged. Last of the .clear rules, so it
+   out-specifies the resting colour without descending-specificity juggling. */
+.clear:hover,
+.clear:focus-visible {
+  color: var(--text-body);
 }
 
 .content {
@@ -233,4 +284,10 @@
 
 .field[data-size='small'] .triggerIcon {
   font-size: 1rem;
+}
+
+/* The small variant's chevron is 1rem, so the clear slot sits nearer the
+   end edge. */
+.field[data-size='small'] .clear {
+  inset-inline-end: calc(var(--input-padding-x) + 1rem + var(--space-2));
 }
