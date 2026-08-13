@@ -71,7 +71,6 @@ export const OutboundDetailToolbar: Component<
       <TextField
         label={t('label.customer-ref')}
         size="small"
-        width="full"
         data-testid="customer-reference-field"
         value={props.edit.state.theirReference}
         disabled={props.disabled}

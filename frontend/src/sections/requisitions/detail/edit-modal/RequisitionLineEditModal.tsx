@@ -617,7 +617,6 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
           <NumberField
             label={t('label.supply')}
             hideLabel
-            width="full"
             min={0}
             decimalLimit={2}
             data-testid="supply-quantity-input"
@@ -641,7 +640,6 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
           <Select
             label={t('label.units')}
             hideLabel
-            width="full"
             value={entryMode()}
             options={entryOptions()}
             disabled={disabled()}
@@ -781,7 +779,6 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
         fallback={
           <ItemSearch
             label={t('label.item')}
-            width="full"
             storeId={props.storeId}
             focusTarget={itemSearch}
             placeholder={t('placeholder.enter-an-item-code-or-name')}
@@ -805,7 +802,6 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
       >
         <TextField
           label={t('label.item')}
-          width="full"
           disabled
           value={`${current()?.itemCode ?? ''} - ${current()?.itemName ?? ''}`}
         />

@@ -241,13 +241,11 @@ const Body: Component<InsuranceModalProps> = props => {
         <FormColumn>
           <TextField
             label={t('label.name-of-the-insured')}
-            width="full"
             value={draft.nameOfInsured}
             onInput={e => setDraft('nameOfInsured', e.currentTarget.value)}
           />
           <TextField
             label={t('label.policy-number-family')}
-            width="full"
             required={!editing() && draft.policyNumberPerson.trim() === ''}
             disabled={editing()}
             error={validation.errorFor('policyNumberFamily')}
@@ -256,7 +254,6 @@ const Body: Component<InsuranceModalProps> = props => {
           />
           <TextField
             label={t('label.policy-number-person')}
-            width="full"
             required={!editing() && draft.policyNumberFamily.trim() === ''}
             disabled={editing()}
             error={validation.errorFor('policyNumberPerson')}
@@ -281,7 +278,6 @@ const Body: Component<InsuranceModalProps> = props => {
         <FormColumn>
           <DateField
             label={t('label.insurance-expiry-date')}
-            width="full"
             min={today}
             value={draft.expiryDate}
             error={validation.errorFor('expiryDate')}
@@ -299,7 +295,6 @@ const Body: Component<InsuranceModalProps> = props => {
           />
           <NumberField
             label={t('label.coverage-rate')}
-            width="full"
             required
             min={0}
             max={100}

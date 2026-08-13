@@ -193,6 +193,13 @@
 .bareField input {
   field-sizing: content;
   min-inline-size: 3.5rem;
+  /* The same ceiling .input gives the plain text chip. The CHIP owns this, not
+     the component: a filter chip is a content-sized pill in a wrapping bar, so
+     whatever field is dropped in must stop growing at the same point. It used
+     to come from NumberField's `compact` DEFAULT capping its box at 10rem —
+     which was invisible, applied to nothing else in the bar, and vanished the
+     moment that default changed (2026-08-13). */
+  max-inline-size: 16rem;
 }
 
 /* Number-range boxes: the 3.5rem floor above is sized for dates and reads as

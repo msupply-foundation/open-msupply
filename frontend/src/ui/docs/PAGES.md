@@ -212,16 +212,16 @@ A detail page's **header fields** — a document's editable + read-only meta (su
     </Alert>
   }
 >
-  <Select label="Supplier name" size="small" width="full" … />
-  <TextField label="Reference" size="small" width="full" … />
-  <DateField label="Received" size="small" width="full" disabled … />
+  <Select label="Supplier name" size="small" … />
+  <TextField label="Reference" size="small" … />
+  <DateField label="Received" size="small" disabled … />
   <LabelledValue label="Status" variant="field" size="small">
     <StatusChip label="Received" colour="var(--status-received)" />
   </LabelledValue>
 </HeaderToolbar>
 ```
 
-- **Fields** flow into a `FormRow` — equal shares at a 10rem min (`minFieldWidth`), growing to fill and wrapping as a unit. Give each the **`small`** size and **`width="full"`** — that's what makes the control fill the share the row hands it.
+- **Fields** flow into a `FormRow` — equal shares at a 10rem min (`minFieldWidth`), growing to fill and wrapping as a unit. Give each the **`small`** size and no width: filling the share the row hands it is the default (see [`kdd/form-layout`](../../../kdd/form-layout/draft-kdd.md) § input widths).
 - **Weight the fields whose data doesn't fit an equal share.** A field's column is sized by its data, never by its count, so equal shares are only right when every field holds comparably long data. Wrap the exceptions in a **`<FormRowItem>`** (`ui/layout/Form/FormRowItem`) — the row's `minmax(min, Nfr)`: `weight` is the item's **`fr` share of the whole row**, so `1.9` beside `0.9` takes a bit over twice the width (`1` everywhere is the equal-shares default, unchanged), and `minWidth` is the floor **that** item never shrinks below, overriding `minFieldWidth` for the one slot. A fixed-format scalar is pinned with **`weight={0}`**: a formatted date can never use more room, so it sits at its floor and hands every spare pixel to its siblings. **`maxWidth`** is the other half of the `minmax()` — a ceiling for a field that has no use for more width, which both keeps a wide screen's surplus flowing past it to the name fields and stops it filling a whole line to itself if it wraps (a lone flex item with any weight otherwise stretches the full width, which reads as the header promoting its least important field).
 - **The floors carry two jobs, so budget them.** They decide who gives up width as the row narrows — a field that reaches its floor stops shrinking and its siblings absorb the rest, so a real floor is what protects a name field — _and_ they set the wrap point (the row wraps when the floors + gaps stop fitting). Which fields drop to the next line is document order, not floor size: the trailing ones go first, so order the cluster identity-first. Keep the cluster's floors summing to **no more than the unweighted row's would** (`fields × minFieldWidth`), or the header gains a line on a narrower screen than it used to — which is the one thing this layout must never do. Weight the whole cluster or none of it: an unwrapped sibling keeps a `minFieldWidth` basis and an equal share of what's left, which reads oddly next to weighted ones.
 
@@ -232,17 +232,17 @@ A detail page's **header fields** — a document's editable + read-only meta (su
       value room. Floors: 11 + 10 + 9 + 10 + 9.5 + 9.5 = 59rem, under the
       6 × 10rem the unweighted row already took, so the wrap point holds. */}
   <FormRowItem weight={1.9} minWidth="11rem">
-    <PatientSearch label="Patient" size="small" width="full" … />
+    <PatientSearch label="Patient" size="small" … />
   </FormRowItem>
   {/* No minWidth: Clinician and Program keep the row's own 10rem floor. */}
   <FormRowItem weight={1.55}>
-    <ClinicianSelect label="Clinician" size="small" width="full" … />
+    <ClinicianSelect label="Clinician" size="small" … />
   </FormRowItem>
   <FormRowItem weight={0} minWidth="9rem">
-    <DateField label="Date" size="small" width="full" … />
+    <DateField label="Date" size="small" … />
   </FormRowItem>
   <FormRowItem weight={1.2}>
-    <ProgramNameSelect label="Program" size="small" width="full" … />
+    <ProgramNameSelect label="Program" size="small" … />
   </FormRowItem>
   ```
 

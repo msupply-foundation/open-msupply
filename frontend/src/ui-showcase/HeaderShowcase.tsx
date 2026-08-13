@@ -270,7 +270,6 @@ export const HeaderShowcase = () => {
                 <Select
                   label="Supplier name"
                   size="small"
-                  width="full"
                   options={SUPPLIERS}
                   value={supplier()}
                   onValueChange={setSupplier}
@@ -278,14 +277,12 @@ export const HeaderShowcase = () => {
                 <TextField
                   label="Reference"
                   size="small"
-                  width="full"
                   value={reference()}
                   onInput={e => setReference(e.currentTarget.value)}
                 />
                 <DateField
                   label="Received"
                   size="small"
-                  width="full"
                   format="dd MMM yyyy"
                   value="2026-05-19"
                   disabled
@@ -362,7 +359,6 @@ export const HeaderShowcase = () => {
                   <Combobox<string>
                     label="Patient"
                     size="small"
-                    width="full"
                     items={PATIENTS}
                     itemToString={name => name}
                     value={patient()}
@@ -375,7 +371,6 @@ export const HeaderShowcase = () => {
                   <Combobox<string>
                     label="Clinician"
                     size="small"
-                    width="full"
                     items={CLINICIANS}
                     itemToString={name => name}
                     value={clinician()}
@@ -386,7 +381,6 @@ export const HeaderShowcase = () => {
                   <DateField
                     label="Date"
                     size="small"
-                    width="full"
                     format="dd MMM yyyy"
                     value={prescribed()}
                     onChange={setPrescribed}
@@ -396,7 +390,6 @@ export const HeaderShowcase = () => {
                   <Combobox<string>
                     label="Program"
                     size="small"
-                    width="full"
                     items={PROGRAMS}
                     itemToString={name => name}
                     value={program()}
@@ -410,7 +403,6 @@ export const HeaderShowcase = () => {
                   <Combobox<string>
                     label="Priority"
                     size="small"
-                    width="full"
                     items={PRIORITIES}
                     itemToString={name => name}
                     value={priority()}
@@ -469,7 +461,6 @@ export const HeaderShowcase = () => {
                 <Select
                   label="Supplier name"
                   size="small"
-                  width="full"
                   options={SUPPLIERS}
                   value={errorSupplier()}
                   onValueChange={setErrorSupplier}
@@ -477,14 +468,12 @@ export const HeaderShowcase = () => {
                 <TextField
                   label="Reference"
                   size="small"
-                  width="full"
                   value={errorReference()}
                   onInput={e => setErrorReference(e.currentTarget.value)}
                 />
                 <DateField
                   label="Received"
                   size="small"
-                  width="full"
                   format="dd MMM yyyy"
                   value={received()}
                   error={receivedError()}
@@ -493,7 +482,6 @@ export const HeaderShowcase = () => {
                 <Select
                   label="Category"
                   size="small"
-                  width="full"
                   options={CATEGORIES}
                   value={category()}
                   onValueChange={setCategory}
@@ -531,7 +519,6 @@ export const HeaderShowcase = () => {
                 <Select
                   label="Supplier name"
                   size="small"
-                  width="full"
                   options={STORE_OPTIONS}
                   value="android"
                   disabled
@@ -539,14 +526,12 @@ export const HeaderShowcase = () => {
                 <TextField
                   label="Supplier reference"
                   size="small"
-                  width="full"
                   value=""
                   disabled
                 />
                 <Select
                   label="Reorder threshold MOS"
                   size="small"
-                  width="full"
                   options={MOS_OPTIONS}
                   value={reorderMos()}
                   onValueChange={setReorderMos}
@@ -554,7 +539,6 @@ export const HeaderShowcase = () => {
                 <Select
                   label="Target MOS"
                   size="small"
-                  width="full"
                   options={MOS_OPTIONS}
                   value={targetMos()}
                   onValueChange={setTargetMos}
