@@ -1,6 +1,7 @@
-import { children, Show, type JSX } from 'solid-js';
+import { children, createMemo, Show, type JSX } from 'solid-js';
 import * as KSelect from '@kobalte/core/select';
 import { keepPopupOpenOnInsideContent } from './dismissInsideGuard';
+import { t } from '../../../intl';
 import { CheckIcon, ChevronDownIcon } from '../../icons';
 import { usePortalMount } from '../../utils/portalMount';
 import type { FocusTarget } from '../../utils/createFocusTarget';
@@ -76,6 +77,25 @@ interface SelectProps {
 }
 
 /*
+ * The empty-option-set case. Kobalte's Select REFUSES to open on an empty
+ * collection — its `open()` early-returns on `options.length <= 0`, and unlike
+ * Combobox (`allowsEmptyCollection`) there is no prop to opt out. So a status
+ * row inside the popup can never render: the popup never mounts, and the
+ * trigger silently does nothing, which reads as a broken control (#906).
+ *
+ * The fix has to satisfy that length check, so the empty state IS an option: a
+ * single DISABLED sentinel. Kobalte lists disabled options but won't select
+ * them (`optionDisabled` below → `aria-disabled`, skipped by the selection
+ * manager and by typeahead), and `.item[data-disabled]` already greys them —
+ * so the row arrives muted and unselectable, with a screen reader announcing
+ * "No options, dimmed". The value is never handed to a caller (see onChange).
+ *
+ * There is no search here, so the copy is not search-shaped: nothing the user
+ * could type would populate this list.
+ */
+const NO_OPTIONS_VALUE = '__no-options__';
+
+/*
  * Styled drop-down — Kobalte Select (headless). Same job as a native <select>
  * (pick one from a fixed list) but for when the closed control and the options
  * need RICH content the native <option> can't render: a status colour-dot, an
@@ -101,6 +121,22 @@ export const Select = (props: SelectProps) => {
       ? undefined
       : (props.options.find(o => o.value === value) ?? null);
 
+  // What Kobalte sees: the caller's options, or the disabled sentinel when it
+  // has none (see NO_OPTIONS_VALUE). Resolution of `value` still runs against
+  // the CALLER's options via findOption, so the sentinel can never become the
+  // selection or be read back as a label.
+  const options = createMemo<SelectOption[]>(() =>
+    props.options.length === 0
+      ? [
+          {
+            value: NO_OPTIONS_VALUE,
+            label: t('label.no-options'),
+            disabled: true,
+          },
+        ]
+      : props.options
+  );
+
   // The label element itself (text + required asterisk). A local component so
   // it renders fresh in either branch (bare, or beside labelInfo) — reusing
   // one JSX node across both would try to mount it in two places. As
@@ -124,13 +160,19 @@ export const Select = (props: SelectProps) => {
       class={props.class ? `${styles.field} ${props.class}` : styles.field}
       data-size={props.size ?? 'default'}
       data-width={props.width ?? 'full'}
-      options={props.options}
+      options={options()}
       optionValue="value"
       optionTextValue="label"
       optionDisabled="disabled"
       value={findOption(props.value)}
       defaultValue={findOption(props.defaultValue) ?? undefined}
-      onChange={option => option && props.onValueChange?.(option.value)}
+      // The sentinel is disabled, so Kobalte won't select it — the guard keeps
+      // that internal value from ever reaching a caller regardless.
+      onChange={option =>
+        option &&
+        option.value !== NO_OPTIONS_VALUE &&
+        props.onValueChange?.(option.value)
+      }
       placeholder={props.placeholder ?? 'Select…'}
       disabled={props.disabled}
       itemComponent={itemProps => (

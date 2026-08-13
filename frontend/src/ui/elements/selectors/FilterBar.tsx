@@ -729,6 +729,23 @@ export const FilterNumberRange = (props: {
   );
 };
 
+/*
+ * The empty-list row for the two chip dropdowns (`FilterSelect`,
+ * `FilterMultiSelect`). A filter whose option set is EMPTY still opens — the
+ * chip is live, so refusing to open would look broken — and an open menu must
+ * never be a blank box (#906: an option custom field configured with no
+ * options opened one, on every list that offers custom-field filters).
+ *
+ * The copy is deliberately not search-shaped: unlike Combobox's "No results",
+ * nothing the user types can populate this list, so the row states the fact
+ * ("No options") and stops. Muted and non-interactive — it is a status, not a
+ * choice — so it is a plain div, outside the menu's item collection, and
+ * Kobalte's keyboard navigation skips it rather than landing focus on nothing.
+ */
+const NoOptions = () => (
+  <div class={styles.status}>{t('label.no-options')}</div>
+);
+
 /**
  * A single-select dropdown. Generic over its option-value union `V`, so
  * `onChange` hands back exactly one of the option values (recovered by
@@ -765,35 +782,37 @@ export const FilterSelect = <V extends string>(props: {
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content class={styles.content}>
-          <DropdownMenu.RadioGroup
-            value={props.value}
-            onChange={emitted => {
-              const chosen = props.options.find(o => o.value === emitted);
-              if (chosen) props.onChange(chosen.value);
-            }}
-          >
-            <For each={props.options}>
-              {option => (
-                <DropdownMenu.RadioItem
-                  value={option.value}
-                  class={`${styles.item} ${styles.checkboxItem}`}
-                  data-testid={
-                    option.value ? `filter-option-${option.value}` : undefined
-                  }
-                  closeOnSelect={false}
-                >
-                  {/* A bare check mark, never a boxed checkbox — the box is
-                      the multi-select affordance (tables › filtering). */}
-                  <span class={styles.checkMark}>
-                    <DropdownMenu.ItemIndicator class={styles.indicator}>
-                      <CheckIcon />
-                    </DropdownMenu.ItemIndicator>
-                  </span>
-                  <span class={styles.itemLabel}>{option.label}</span>
-                </DropdownMenu.RadioItem>
-              )}
-            </For>
-          </DropdownMenu.RadioGroup>
+          <Show when={props.options.length > 0} fallback={<NoOptions />}>
+            <DropdownMenu.RadioGroup
+              value={props.value}
+              onChange={emitted => {
+                const chosen = props.options.find(o => o.value === emitted);
+                if (chosen) props.onChange(chosen.value);
+              }}
+            >
+              <For each={props.options}>
+                {option => (
+                  <DropdownMenu.RadioItem
+                    value={option.value}
+                    class={`${styles.item} ${styles.checkboxItem}`}
+                    data-testid={
+                      option.value ? `filter-option-${option.value}` : undefined
+                    }
+                    closeOnSelect={false}
+                  >
+                    {/* A bare check mark, never a boxed checkbox — the box is
+                        the multi-select affordance (tables › filtering). */}
+                    <span class={styles.checkMark}>
+                      <DropdownMenu.ItemIndicator class={styles.indicator}>
+                        <CheckIcon />
+                      </DropdownMenu.ItemIndicator>
+                    </span>
+                    <span class={styles.itemLabel}>{option.label}</span>
+                  </DropdownMenu.RadioItem>
+                )}
+              </For>
+            </DropdownMenu.RadioGroup>
+          </Show>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
@@ -896,24 +915,26 @@ export const FilterMultiSelect = <V extends string>(props: {
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal>
         <DropdownMenu.Content class={styles.content}>
-          <For each={props.options}>
-            {option => (
-              <DropdownMenu.CheckboxItem
-                checked={props.values.includes(option.value)}
-                onChange={checked => toggle(option.value, checked)}
-                class={`${styles.item} ${styles.checkboxItem}`}
-                data-testid={`filter-option-${option.value}`}
-                closeOnSelect={false}
-              >
-                <span class={styles.checkbox}>
-                  <DropdownMenu.ItemIndicator class={styles.indicator}>
-                    <CheckIcon />
-                  </DropdownMenu.ItemIndicator>
-                </span>
-                <span class={styles.itemLabel}>{option.label}</span>
-              </DropdownMenu.CheckboxItem>
-            )}
-          </For>
+          <Show when={props.options.length > 0} fallback={<NoOptions />}>
+            <For each={props.options}>
+              {option => (
+                <DropdownMenu.CheckboxItem
+                  checked={props.values.includes(option.value)}
+                  onChange={checked => toggle(option.value, checked)}
+                  class={`${styles.item} ${styles.checkboxItem}`}
+                  data-testid={`filter-option-${option.value}`}
+                  closeOnSelect={false}
+                >
+                  <span class={styles.checkbox}>
+                    <DropdownMenu.ItemIndicator class={styles.indicator}>
+                      <CheckIcon />
+                    </DropdownMenu.ItemIndicator>
+                  </span>
+                  <span class={styles.itemLabel}>{option.label}</span>
+                </DropdownMenu.CheckboxItem>
+              )}
+            </For>
+          </Show>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>

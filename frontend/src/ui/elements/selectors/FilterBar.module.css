@@ -309,6 +309,15 @@
   flex: 1;
 }
 
+/* The "No options" row (see NoOptions) — a muted status, not a choice, so it
+   reads as the same greyed line the Combobox/MultiSelect listboxes use for
+   theirs. Sizing comes from .content's font-size. */
+.status {
+  padding: var(--space-2);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
 /* Kobalte's Separator renders an <hr> — flatten it to a token hairline. */
 .separator {
   height: 1px;
