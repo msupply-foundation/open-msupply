@@ -2,6 +2,7 @@ import { createSignal, createUniqueId, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { authUser, login, reLoginRequired } from './authContext';
 import { submitStateAfter, type SubmitState } from './submitState';
+import { hasLoginFieldError, loginFieldErrors } from './loginFieldErrors';
 import { Dialog } from '../ui/elements/feedback/Dialog';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { PasswordField } from '../ui/elements/inputs/PasswordField';
@@ -45,15 +46,11 @@ const ReLoginForm: Component<{ currentUsername: string }> = props => {
 
   const submit = async (event: SubmitEvent) => {
     event.preventDefault();
-    // Spec: the button is always clickable; validation errors show on click.
-    const errors = {
-      username:
-        values().username.trim() === '' ? t('error.username-required') : '',
-      password:
-        values().password.trim() === '' ? t('error.password-required') : '',
-    };
+    // Spec: the button is always clickable; validation errors show on click —
+    // the same rule as the login page (S1, D98), so the same helper.
+    const errors = loginFieldErrors(values().username, values().password);
     setFieldErrors(errors);
-    if (errors.username !== '' || errors.password !== '') return;
+    if (hasLoginFieldError(errors)) return;
     setSubmitState({ kind: 'submitting' });
     const result = await login(values().username, values().password);
     // Success closes the modal reactively (this component unmounts); a rejected

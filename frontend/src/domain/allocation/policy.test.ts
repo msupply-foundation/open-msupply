@@ -365,7 +365,7 @@ describe('autoAllocatableUnits (AC-AL16 — the available figure)', () => {
     expect(autoAllocatableUnits(batches, prefs(), today)).toBe(35);
   });
 
-  // D102 (issue #945) — an item whose only stock is expired reads 0, never a
+  // D108 (issue #945) — an item whose only stock is expired reads 0, never a
   // figure distribution then refuses to issue. Preference off or on.
   it('expired stock never counts, preference off or on', () => {
     const expired = {

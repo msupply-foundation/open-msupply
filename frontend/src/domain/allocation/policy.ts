@@ -143,7 +143,7 @@ export const autoAllocateBarReasons = (
 };
 
 /**
- * The editor's available figure (AC-AL16, D102): units summed over exactly
+ * The editor's available figure (AC-AL16, D108): units summed over exactly
  * the batches auto-distribution may fill — a never-auto-allocated batch
  * (autoAllocateBarReasons above) contributes nothing, so the figure is the
  * Issue entry's real headroom, never a total distribution then refuses to
