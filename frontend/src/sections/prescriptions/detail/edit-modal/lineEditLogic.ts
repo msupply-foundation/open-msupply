@@ -69,16 +69,16 @@ export const seedDraftLines = (
     }));
 
 /**
- * Units available across usable rows. Held stock never counts — the editable
- * held-with-allocation exception row (AC-AL14) only adjusts what it already
- * holds, so its availability is excluded alongside the barred rows'.
+ * Units available across the rows auto-distribution can draw from (AC-AL16,
+ * D102) — judged on the AUTO bar, so expired and unusable-VVM stock never
+ * counts (preference or not; an item with only expired stock reads 0 — issue
+ * #945), and neither does held stock: the editable held-with-allocation
+ * exception row (AC-AL14) only adjusts what it already holds.
  */
 export const draftAvailableUnits = (lines: readonly DraftLine[]): number =>
   lines.reduce(
     (sum, line) =>
-      line.barred.length > 0 ||
-      line.stockLineOnHold ||
-      (line.location?.onHold ?? false)
+      line.autoBarred.length > 0
         ? sum
         : sum + line.availablePacks * line.packSize,
     0

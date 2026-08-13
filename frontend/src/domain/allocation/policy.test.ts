@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  autoAllocatableUnits,
   autoAllocateBarReasons,
   barReasons,
   fefoCompare,
@@ -8,13 +9,7 @@ import {
   rowHasAllocatableStock,
   type AllocationPreferences,
 } from './policy';
-import {
-  clampManualPacks,
-  lensToUnits,
-  unitsToLens,
-  availableUnits,
-  distinctPackSizes,
-} from './units';
+import { clampManualPacks, lensToUnits, unitsToLens } from './units';
 import { deriveIssueWarnings } from './warnings';
 
 // The shared barred-batch policy, FEFO comparator, lens conversion, and
@@ -359,36 +354,85 @@ describe('lensToUnits', () => {
   });
 });
 
-describe('unit sums', () => {
-  it('sums available units and lists distinct pack sizes', () => {
+describe('autoAllocatableUnits (AC-AL16 — the available figure)', () => {
+  const today = new Date('2026-07-17T09:30:00');
+
+  it('sums exactly the batches auto-distribution may fill', () => {
     const batches = [
-      { packSize: 10, availablePacks: 2, numberOfPacks: 0 },
-      { packSize: 5, availablePacks: 3, numberOfPacks: 1 },
-      { packSize: 10, availablePacks: 1, numberOfPacks: 0 },
+      { stockLineOnHold: false, packSize: 10, availablePacks: 2 },
+      { stockLineOnHold: false, packSize: 5, availablePacks: 3 },
     ];
-    expect(availableUnits(batches)).toBe(45);
-    expect(distinctPackSizes(batches)).toEqual([10, 5]);
+    expect(autoAllocatableUnits(batches, prefs(), today)).toBe(35);
   });
 
-  it('excludes on-hold batches from available units (old-app parity)', () => {
-    // On-hold stock line or on-hold location → not counted; expired/unusable
-    // are still counted (only hold is excluded).
+  // D102 (issue #945) — an item whose only stock is expired reads 0, never a
+  // figure distribution then refuses to issue. Preference off or on.
+  it('expired stock never counts, preference off or on', () => {
+    const expired = {
+      stockLineOnHold: false,
+      expiryDate: '2026-01-01',
+      packSize: 100,
+      availablePacks: 24,
+    };
+    expect(autoAllocatableUnits([expired], prefs(), today)).toBe(0);
+    expect(
+      autoAllocatableUnits(
+        [expired],
+        prefs({
+          expiredStockPreventIssue: true,
+          expiredStockIssueThreshold: 30,
+        }),
+        today
+      )
+    ).toBe(0);
+  });
+
+  it('the guard threshold widens what the figure excludes', () => {
+    const nearExpiry = {
+      stockLineOnHold: false,
+      expiryDate: '2026-07-22',
+      packSize: 10,
+      availablePacks: 1,
+    };
+    expect(autoAllocatableUnits([nearExpiry], prefs(), today)).toBe(10);
+    expect(
+      autoAllocatableUnits(
+        [nearExpiry],
+        prefs({
+          expiredStockPreventIssue: true,
+          expiredStockIssueThreshold: 30,
+        }),
+        today
+      )
+    ).toBe(0);
+  });
+
+  it('held and unusable-VVM stock never counts — the AC-AL14 exception row included', () => {
     const batches = [
-      { packSize: 10, availablePacks: 2, numberOfPacks: 0 },
+      { stockLineOnHold: true, packSize: 10, availablePacks: 2 },
       {
-        packSize: 10,
-        availablePacks: 5,
-        numberOfPacks: 0,
-        stockLineOnHold: true,
-      },
-      {
+        stockLineOnHold: false,
+        location: { onHold: true },
         packSize: 10,
         availablePacks: 3,
-        numberOfPacks: 0,
-        location: { onHold: true },
       },
+      // Held WITH a seeded allocation: manually adjustable (AC-AL14) but
+      // still never filled by distribution — no headroom to count.
+      {
+        stockLineOnHold: true,
+        numberOfPacks: 1,
+        packSize: 10,
+        availablePacks: 4,
+      },
+      {
+        stockLineOnHold: false,
+        vvmStatus: { unusable: true },
+        packSize: 10,
+        availablePacks: 5,
+      },
+      { stockLineOnHold: false, packSize: 10, availablePacks: 6 },
     ];
-    expect(availableUnits(batches)).toBe(20);
+    expect(autoAllocatableUnits(batches, prefs(), today)).toBe(60);
   });
 });
 
