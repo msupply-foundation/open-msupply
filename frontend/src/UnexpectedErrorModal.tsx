@@ -1,28 +1,34 @@
 import { Show, type Component } from 'solid-js';
 import {
   clearForbiddenError,
+  clearUnexpectedError,
   forbiddenError,
   unexpectedError,
+  type UnexpectedErrorInfo,
 } from './api/graphql';
 import { authUser } from './auth/authContext';
+import { currentStoreId, currentStoreName } from './store/storeContext';
 import { humanisePermission } from './auth/permissionLabels';
 import { t } from './intl';
 import { Dialog } from './ui/elements/feedback/Dialog';
+import { ErrorDialog } from './ui/elements/feedback/ErrorDialog';
 import { Button } from './ui/elements/buttons/Button';
-import { AlertCircleIcon, LockIcon } from './ui/icons';
+import { LockIcon } from './ui/icons';
 
 // Spec (Unexpected API Errors + Permission denied): one global modal, on top of
 // everything else, for the two failure classes the query method routes here.
 // The flow that hit the error stays in its loading phase either way.
 //
-// - Unexpected error: the description, and up to two recovery actions that are
-//   each a full-page navigation (reload in place, or go to the root/dashboard)
-//   — the app restarts from a clean state, so the modal is not otherwise
-//   dismissable. The Dashboard action only appears once the user is
-//   authenticated and operational (authUser is set): during startup, on the
-//   initialisation screen, and on the login screen there is no dashboard to
-//   reach, and reloading via Dashboard would only wipe entered credentials
-//   (issue #519.1) — so those phases show Try again alone.
+// - Unexpected error: the condition-mapped error dialog (D109, ui-standards ›
+//   error dialogs). Close dismisses in place — the flow behind released its
+//   busy state, so the action can simply be repeated; the primary
+//   (Retry / Try again) reloads the current URL in place. Go to dashboard is a
+//   quiet tertiary affordance, only once the user is authenticated and
+//   operational (authUser is set): during startup, on the initialisation
+//   screen, and on the login screen there is no dashboard to reach, and
+//   reloading via Dashboard would only wipe entered credentials (issue
+//   #519.1). An edit failure (a mutation) never offers it — leaving the
+//   screen would discard the entry.
 // - Permission denied (Forbidden): the user is authenticated but lacks the
 //   permission. Nothing is broken, so recovery is NOT a reload — the modal
 //   names the missing permission(s) and its single OK just clears the signal,
@@ -66,41 +72,38 @@ const PermissionDenied: Component<{ permissions: string[] }> = props => {
   );
 };
 
+// The current store for the support block, e.g. "CHC Ermera (5B28…5DF9)" —
+// name for the human, abbreviated id for support. Empty before a store is
+// entered (startup, login), where the row is simply omitted.
+const storeLabel = (): string | undefined => {
+  const id = currentStoreId();
+  if (!id) return undefined;
+  const shortId = id.length > 12 ? `${id.slice(0, 4)}…${id.slice(-4)}` : id;
+  return `${currentStoreName()} (${shortId})`;
+};
+
 const UnexpectedError: Component = () => (
-  <Dialog
-    open={Boolean(unexpectedError())}
-    dismissable={false}
-    onClose={() => {}}
-    title={t('error.something-wrong')}
-    icon={<AlertCircleIcon />}
-    description={unexpectedError()}
-    /*
-     * No submit key here (spec/keyboard KB-E2's "a dialog MAY opt out of
-     * Enter-to-confirm entirely"). Both actions are full-page navigations and
-     * neither is "the" confirm — Try again reloads, Dashboard leaves — so a
-     * stray Enter must not pick one. Declared rather than left implicit, so this
-     * reads as a decision rather than a forgotten claim.
-     */
-    enterConfirms={false}
-    actions={
-      <>
-        <Button
-          variant="secondary"
-          data-testid="unexpected-error-retry"
-          onClick={() => location.reload()}
-        >
-          {t('button.try-again')}
-        </Button>
-        <Show when={authUser()}>
-          <Button
-            variant="secondary"
-            data-testid="unexpected-error-dashboard"
-            onClick={() => (location.href = import.meta.env.BASE_URL)}
-          >
-            {t('button.dashboard')}
-          </Button>
-        </Show>
-      </>
-    }
-  />
+  <Show when={unexpectedError()} keyed>
+    {(info: UnexpectedErrorInfo) => (
+      <ErrorDialog
+        open
+        condition={info.condition}
+        details={{
+          reference: info.reference,
+          cause: info.cause,
+          store: storeLabel(),
+          request: info.request,
+        }}
+        duringEdit={info.duringEdit}
+        onClose={clearUnexpectedError}
+        onRetry={() => location.reload()}
+        onDashboard={
+          authUser()
+            ? () => (location.href = import.meta.env.BASE_URL)
+            : undefined
+        }
+        testId="unexpected-error-modal"
+      />
+    )}
+  </Show>
 );
