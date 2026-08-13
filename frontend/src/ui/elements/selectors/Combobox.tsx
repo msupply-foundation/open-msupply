@@ -239,10 +239,15 @@ interface ComboboxProps<T> {
    */
   matchTriggerWidth?: boolean;
   /**
-   * Max-width cap, TextField's vocabulary: `compact` (10rem), `short` (25rem),
-   * `long` (37.5rem — the default, since option text is often long) or `full`
-   * to fill the container. Set it to sit level with the text fields it's
-   * stacked among, whose own default is `short`.
+   * Max-width CAP — opt-in, TextField's vocabulary and TextField's default:
+   * `full` (fill the container). A picker stacked among text fields now sits
+   * level with them with nothing passed — it used to default to `long`
+   * (37.5rem) "because option text is often long", which made it the one
+   * control whose bare width disagreed with every neighbour's. Long option
+   * text is handled where it actually is a problem: the POPUP, which can
+   * outgrow the trigger via `matchTriggerWidth={false}`. Name a cap
+   * (`compact` 10rem / `short` 25rem / `long` 37.5rem) only when the data is
+   * short or the container unbounded.
    */
   width?: 'compact' | 'short' | 'long' | 'full';
   /**
@@ -520,7 +525,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   return (
     <KCombobox.Root<T>
       class={props.class ? `${styles.field} ${props.class}` : styles.field}
-      data-width={props.width}
+      data-width={props.width ?? 'full'}
       data-size={props.size ?? 'default'}
       data-borderless={props.borderless ? '' : undefined}
       options={options()}

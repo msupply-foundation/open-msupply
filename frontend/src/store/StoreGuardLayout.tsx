@@ -2,7 +2,7 @@ import { createEffect, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import type { RouteSectionProps } from '@solidjs/router';
-import { authUser } from '../auth/authContext';
+import { authUser, loginableStores } from '../auth/authContext';
 import { getPreviousStoreId, recordPreviousStoreId } from '../appData';
 import {
   currentStoreId,
@@ -36,7 +36,10 @@ export const StoreGuardLayout: Component<RouteSectionProps> = props => {
   const params = useParams();
   const navigate = useNavigate();
   const user = () => authUser();
-  const stores = () => user()?.stores.nodes ?? [];
+  // Spec (SL-8): disabled stores are not offered, so they are absent from the
+  // list every guard below reads — the picker, the URL match, and the
+  // single-store auto-entry count alike.
+  const stores = () => loginableStores(user());
 
   const storeToEnter = () =>
     stores().find(s => s.id === params.storeId) ??

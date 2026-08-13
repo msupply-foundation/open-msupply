@@ -61,7 +61,7 @@ export interface AsyncComboboxProps<T> {
   /** Control size, forwarded to the Combobox — `small` for a header field
    * cluster's compact row (see ui/layout/Header/HeaderToolbar). */
   size?: 'default' | 'small';
-  /** Width cap — the Combobox's own vocabulary (default `long`). */
+  /** Width cap — the Combobox's own vocabulary, opt-in (default `full`). */
   width?: 'compact' | 'short' | 'long' | 'full';
   class?: string;
   /** `data-testid` for the text input (locale-stable test hook). */

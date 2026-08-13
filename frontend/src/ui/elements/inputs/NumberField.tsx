@@ -325,9 +325,15 @@ export const NumberField = (props: NumberFieldProps) => {
     <TextField
       {...rest}
       class={local.class ? `${styles.numeric} ${local.class}` : styles.numeric}
-      // Numbers are short: default to the compact width cap (old OMS's
-      // numeric input defaulted narrow too, at 75px). Overridable per field.
-      width={local.width ?? 'compact'}
+      // No numeric-specific default: a number field fills its container like
+      // every other input. Numbers ARE short, but the container a number sits
+      // in is nearly always already narrow — a table cell sized by its column,
+      // a FormRow share, a side-panel value track — and there the old
+      // `compact` default only ever under-filled it. Where the container is
+      // genuinely unbounded (a full-width settings page), the field says
+      // `width="compact"` itself. Measured: 20 call sites overrode this to
+      // `full`, 1 asked for `compact`.
+      width={local.width}
       type="text"
       inputmode={inputMode()}
       autocomplete="off"

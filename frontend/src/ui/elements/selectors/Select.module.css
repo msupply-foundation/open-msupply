@@ -12,8 +12,10 @@
   min-width: 0;
 }
 
-/* Max-width caps, mirroring TextField's `width` prop (default short). `full`
-   lets the dropdown fill its container — e.g. a detail row's value column. */
+/* Max-width caps — opt-in over the `full` default, mirroring TextField's
+   `width` prop rule for rule (see TextField.module.css, the reference block).
+   `full` lets the dropdown fill its container — a detail row's value column, a
+   form field, a table cell — so it aligns with the fields beside it. */
 .field[data-width='short'] {
   max-width: var(--input-max-short);
 }

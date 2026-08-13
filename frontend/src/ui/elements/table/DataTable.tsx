@@ -184,7 +184,7 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    * Card-only tone override: when set, CARD view takes its tone (identity
    * title + the warning/error border/shadow) from this instead of rowTone,
    * and rowTone is free to stay unset — for a page whose table view must NOT
-   * colour row text (outbound's status-tinted tables, D110) but whose cards
+   * colour row text (outbound's status-tinted tables, D111) but whose cards
    * keep the tone treatment. rowTone's vocabulary plus 'success': a green
    * border + faint shadow ONLY (title untinted) — an affirmative state (a
    * batch auto-allocation will use) whispers, where warning/error shout.
@@ -199,7 +199,7 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    * (cards carry status via cardTone + badges); stamps data-tint on the row,
    * mapped to palette tokens in CSS; selection deepens the tint. Never
    * colour alone: the tint restates a fact a cell states in words
-   * (spec D110).
+   * (spec D111).
    */
   rowTint?: (row: T) => 'success' | 'warning' | 'error' | undefined;
   /**

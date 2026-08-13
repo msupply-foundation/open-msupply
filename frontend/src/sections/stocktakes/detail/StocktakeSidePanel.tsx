@@ -69,7 +69,6 @@ export const StocktakeSidePanel: Component<StocktakeSidePanelProps> = props => (
           label={t('label.counted-by')}
           hideLabel
           size="small"
-          width="full"
           value={props.edit.state.countedBy}
           disabled={props.disabled}
           onInput={e => props.edit.setField('countedBy', e.currentTarget.value)}
@@ -81,7 +80,6 @@ export const StocktakeSidePanel: Component<StocktakeSidePanelProps> = props => (
           label={t('label.verified-by')}
           hideLabel
           size="small"
-          width="full"
           value={props.edit.state.verifiedBy}
           disabled={props.disabled}
           onInput={e =>
@@ -94,7 +92,6 @@ export const StocktakeSidePanel: Component<StocktakeSidePanelProps> = props => (
         <TextArea
           label={t('heading.comment')}
           hideLabel
-          width="full"
           data-testid="comment-field"
           value={props.edit.state.comment}
           disabled={props.disabled}

@@ -84,6 +84,10 @@ fragment UserInfo on UserNode {
       # me/login response — no extra query.
       storeMode
       homeCurrencyCode
+      # Spec (Store Login, SL-8): a disabled store cannot be logged into, and
+      # the front end owns that rule end to end — the server neither filters
+      # `stores` nor rejects a login into one.
+      isDisabled
     }
   }
 }

@@ -129,12 +129,12 @@ type Line = OutboundLineFragment;
 // issued (OMS-REG-DIST-03.18); the detail table says so where the user looks
 // first: the amber "On hold" badge beside the item name, an amber status
 // tint on an unallocated row, and the amber card treatment
-// (OMS-REG-DIST-03.37, D110 — the badge carries the fact, the tint only
+// (OMS-REG-DIST-03.37, D111 — the badge carries the fact, the tint only
 // restates it).
 const lineOnHold = (line: Line): boolean =>
   !!line.stockLine?.onHold || !!line.location?.onHold;
 
-// Calendar-expired line (D111) — the bold red Expiry-date cell, a red status
+// Calendar-expired line (D112) — the bold red Expiry-date cell, a red status
 // tint on an unallocated row, and the red card treatment (title/border/
 // Expired badge).
 const lineExpired = (line: Line): boolean =>
@@ -148,7 +148,7 @@ const lineNearExpiry = (line: Line): boolean =>
   isNearOrPastExpiry(line.expiryDate);
 
 // The row-status badges beside the item name (ui-standards § table
-// interaction; OMS-REG-DIST-03.37/.38, D110/D111): word chips carrying each
+// interaction; OMS-REG-DIST-03.37/.38, D111/D112): word chips carrying each
 // line state — Expired / Near expiry (tiered, both red), On hold (amber).
 // Every applicable badge shows (expired AND held → both); a placeholder
 // carries none — its Batch cell's "Placeholder" word is the flag. Table
@@ -183,8 +183,8 @@ const LineStatusBadges = (props: { line: Line }) => (
 );
 
 // Line-STATUS background tint (ui-surface S3 line table,
-// OMS-REG-DIST-03.37–.39, D110): allocated green, expired red, held amber,
-// placeholder untinted (its blue text is gone too — D110 drops the current
+// OMS-REG-DIST-03.37–.39, D111): allocated green, expired red, held amber,
+// placeholder untinted (its blue text is gone too — D111 drops the current
 // app's treatment). Row text keeps the default colour; the badges and the
 // bold red Expiry-date cell carry the facts in words. Precedence (.39):
 // allocated > expired > held — a detail line always carries packs, so real
@@ -200,7 +200,7 @@ const lineRowTint = (
   return undefined;
 };
 
-// The card tone (title + border + corner badge — D110/D111); no info tone
+// The card tone (title + border + corner badge — D111/D112); no info tone
 // for placeholders. Expired outranks held (matching the tint precedence);
 // both corner badges still show.
 const lineCardTone = (line: Line): 'warning' | 'error' | undefined => {
@@ -718,7 +718,7 @@ const OutboundDetailView: Component = () => {
         ...uncapped(getCellDefinition<Line>('batch')),
       },
       {
-        // On-hold flag, CARD-ONLY (OMS-REG-DIST-03.37, D110): the table's
+        // On-hold flag, CARD-ONLY (OMS-REG-DIST-03.37, D111): the table's
         // amber "On hold" badge beside the item name carries the state, so
         // the grid has no On-hold column; the card's corner badge is this.
         c: { accessor: lineOnHold, id: 'onHold' },
@@ -734,7 +734,7 @@ const OutboundDetailView: Component = () => {
         ),
       },
       {
-        // Expired flag, CARD-ONLY (D111): the table's Expiry-date cell
+        // Expired flag, CARD-ONLY (D112): the table's Expiry-date cell
         // reddens under its header; a card buries that in the body, so the
         // badge puts the word in the card corner, with the row's error tone.
         c: { accessor: lineExpired, id: 'expired' },
