@@ -1,5 +1,5 @@
 import { getOwner, onCleanup } from 'solid-js';
-import type { LocaleKey } from '../../intl';
+import { t, type LocaleKey } from '../../intl';
 import { ALT_N, matches, type Shortcut } from './shortcuts';
 import { useSurfaceActive } from './surfaceActive';
 
@@ -31,11 +31,18 @@ import { useSurfaceActive } from './surfaceActive';
 
 export interface KeyAction {
   /**
-   * The palette entry's name, as a locale key so it re-translates on a language
+   * The palette entry's name. A locale key, or an ACCESSOR that resolves one —
+   * either way it is read at render time, so it re-translates on a language
    * switch. Absent for an unlisted action (AC-KB11) — one that exists to own a
    * shortcut, not to be found by browsing.
+   *
+   * The accessor form exists for the go-to-destination actions, whose names are
+   * COMPOSED — `cmdk.goto` interpolated with the destination's own menu label —
+   * rather than one key per row (spec/keyboard ui-surface S1 § Action names).
+   * That composition is what lets the palette derive itself from the navigation
+   * registry instead of an enumeration; see src/keyboard/navActions.
    */
-  readonly name?: LocaleKey;
+  readonly name?: LocaleKey | (() => string);
   /** Extra terms the palette filters on besides the name (KB-P3). */
   readonly keywords?: readonly LocaleKey[];
   readonly shortcut?: Shortcut;
@@ -58,7 +65,7 @@ export interface KeyAction {
  * shortcut.
  */
 interface ListedSpec {
-  name: LocaleKey;
+  name: LocaleKey | (() => string);
   keywords?: readonly LocaleKey[];
   unlisted?: never;
 }
@@ -130,6 +137,21 @@ export const createAction = (spec: KeyActionSpec): KeyAction => {
   if (getOwner()) onCleanup(action.dispose);
   return action;
 };
+
+/**
+ * An action's name as text, resolved against the active catalog — empty for an
+ * unlisted one. Both `name` forms land here, so a caller never has to know
+ * which one an action carries.
+ *
+ * Reads the catalog, so call it from a render (or the palette's per-open
+ * snapshot) and it re-translates on a language switch.
+ */
+export const actionName = (action: KeyAction): string =>
+  action.name === undefined
+    ? ''
+    : typeof action.name === 'function'
+      ? action.name()
+      : t(action.name);
 
 /**
  * Every currently-registered action, in registration order. An untracked
@@ -209,7 +231,7 @@ if (import.meta.env.DEV && typeof window !== 'undefined') {
     window as unknown as { __keyActions?: () => readonly unknown[] }
   ).__keyActions = () =>
     [...registry].reverse().map(action => ({
-      name: action.name ?? '(unlisted)',
+      name: action.name === undefined ? '(unlisted)' : actionName(action),
       shortcut: action.shortcut,
       disabled: action.disabled?.() === true,
       run: action.run,
