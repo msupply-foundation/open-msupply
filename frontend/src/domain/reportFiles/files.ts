@@ -30,24 +30,33 @@ const filenameFromDisposition = (
 
 // Fetch a generated report file by its handle. The endpoint is unauthenticated
 // (spec/reports: handles are bearer secrets, 1-hour expiry) but we still send
-// credentials same-origin to match the rest of the app. Never throws.
+// credentials same-origin to match the rest of the app. Never throws. A failure
+// carries its description: fetching the handle is the second half of a
+// generation the user asked for, and its fault reaches no global surface, so
+// the caller needs something to show behind the inline error (spec/reports S5).
 export const fetchReportFile = async (
   fileId: string
 ): Promise<
-  { kind: 'success'; blob: Blob; filename: string } | { kind: 'error' }
+  | { kind: 'success'; blob: Blob; filename: string }
+  | { kind: 'error'; message: string }
 > => {
   try {
     const response = await fetch(
       `${FILES_URL}?id=${encodeURIComponent(fileId)}`,
       { credentials: 'same-origin' }
     );
-    if (!response.ok) return { kind: 'error' };
+    if (!response.ok) {
+      return { kind: 'error', message: `HTTP ${response.status}` };
+    }
     const blob = await response.blob();
     const filename =
       filenameFromDisposition(response.headers.get('content-disposition')) ??
       fileId;
     return { kind: 'success', blob, filename };
-  } catch {
-    return { kind: 'error' };
+  } catch (e) {
+    return {
+      kind: 'error',
+      message: e instanceof Error ? e.message : String(e),
+    };
   }
 };

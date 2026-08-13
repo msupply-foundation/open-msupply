@@ -102,8 +102,8 @@ export const ChevronsUpIcon = (props: IconProps) => (
 );
 
 // The sidebar collapse/expand pair — a double chevron pointing at the edge the
-// rail moves towards. Directional, so both mirror in RTL (where the rail sits
-// on the inline-end): data-flip-rtl, like ChevronLeft/Right.
+// rail moves towards. Directional, so both mirror in RTL (where the rail sits on
+// the inline-end): data-flip-rtl, like ChevronLeft/Right.
 /* Hugeicons: ArrowLeftDoubleIcon */
 export const ChevronsLeftIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" data-flip-rtl="" {...props}>

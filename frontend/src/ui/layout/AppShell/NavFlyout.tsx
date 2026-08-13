@@ -15,8 +15,12 @@ export interface FlyoutTarget {
 /* Measured geometry (like Popover's GAP/EDGE): the gap between the rail button
    and the panel, and the viewport margin the panel never crosses. Pixels
    because these are measurements written to style.top/left, not layout
-   spacing. */
-const GAP = 10;
+   spacing.
+   GAP has to clear the RAIL TOGGLE, which straddles the same edge and hangs
+   12px past it (MenuBar.module.css .railToggle). At 10 the panel opened inside
+   that overhang, so a tall flyout — one pushed up the viewport by the clamp
+   below — covered the toggle. 20 leaves the disc a visible 8px. */
+const GAP = 20;
 const EDGE = 8;
 
 /*
@@ -57,10 +61,17 @@ export const NavFlyout = (props: {
     // translates the panel while it plays, which would mis-place it).
     const width = panel.offsetWidth;
     const height = panel.offsetHeight;
+    // The panel clears the RAIL, not the button. The button is inset by the nav
+    // list's padding, so measuring from it put the panel 8px nearer the page
+    // than GAP claimed — and inside the rail toggle's overhang, which is what
+    // let a flyout cover the toggle. The rail's own edge is the thing the panel
+    // has to stand off from; falling back to the anchor keeps a host that
+    // mounts these buttons outside a <nav> working.
+    const rail = anchor.closest('nav')?.getBoundingClientRect() ?? a;
     // The rail sits on the inline-start, so the panel opens away from it —
     // physically right in LTR, left in RTL.
     const rtl = getComputedStyle(anchor).direction === 'rtl';
-    const inlineOffset = rtl ? a.left - GAP - width : a.right + GAP;
+    const inlineOffset = rtl ? rail.left - GAP - width : rail.right + GAP;
     const left = Math.max(
       EDGE,
       Math.min(inlineOffset, window.innerWidth - width - EDGE)
