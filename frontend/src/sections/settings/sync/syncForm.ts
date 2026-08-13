@@ -1,11 +1,12 @@
 // Synchronisation form logic (spec/settings/rules.md § Synchronisation), pure
-// for the unit tests: the all-four-filled Save gate (OMS-REG-SET-02.7/.8), the
-// always-blank password seed (OMS-REG-SET-02.12), the positive-whole-second
-// interval normalisation, and the failure-message resolution
-// (OMS-REG-SET-02.9's reason-specific message with the unstructured-failure
-// fallback).
+// for the unit tests: the required-field rules Save validates on click
+// (OMS-REG-SET-02.7/.8), the always-blank password seed (OMS-REG-SET-02.12),
+// the positive-whole-second interval normalisation, and the failure-message
+// resolution (OMS-REG-SET-02.9's reason-specific message with the
+// unstructured-failure fallback).
 
-import type { LocaleKey } from '../../../intl';
+import { t, type LocaleKey } from '../../../intl';
+import type { FieldError } from '../../../ui/layout/Form/formValidation';
 import { syncErrorSummary } from '../../sync-modal/syncErrors';
 import type {
   SyncSettingsResult,
@@ -37,15 +38,36 @@ export const initialSyncForm = (
   batchSize: stored?.batchSize ?? undefined,
 });
 
-// Save stays disabled until every one of the four REQUIRED fields has a value
-// (OMS-REG-SET-02.7/.8). The batch size is optional and never gates Save
-// (OMS-REG-SET-02.15).
-export const canSaveSyncSettings = (form: SyncFormState): boolean =>
-  form.url.trim() !== '' &&
-  form.username.trim() !== '' &&
-  form.password !== '' &&
-  form.intervalSeconds != null &&
-  form.intervalSeconds > 0;
+/*
+ * The four required-field rules, in field order — the form's whole validity
+ * gate, checked when Save is CLICKED rather than used to disable it
+ * (OMS-REG-SET-02.7/.8, D98). Every rule is a plain required check with no
+ * message of its own, so each stays quiet until the first Save attempt and
+ * then shows the generic required message under its own field. The batch size
+ * has no rule here at all — it is optional (OMS-REG-SET-02.15).
+ */
+export const syncFieldErrors = (form: SyncFormState): FieldError[] => [
+  {
+    id: 'url',
+    label: t('label.settings-url'),
+    failed: form.url.trim() === '',
+  },
+  {
+    id: 'username',
+    label: t('label.settings-username'),
+    failed: form.username.trim() === '',
+  },
+  {
+    id: 'password',
+    label: t('label.settings-password'),
+    failed: form.password === '',
+  },
+  {
+    id: 'intervalSeconds',
+    label: t('label.settings-interval'),
+    failed: form.intervalSeconds == null || form.intervalSeconds <= 0,
+  },
+];
 
 // The interval must be a positive whole number — rounded and floored to at
 // least one second before it can be sent (rules § Synchronisation).
