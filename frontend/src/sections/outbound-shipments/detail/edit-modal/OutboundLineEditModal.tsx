@@ -1585,22 +1585,22 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             showCardToggle
             showFullScreen={false}
             rowState={line => (rowDisabled(line) ? 'disabled' : undefined)}
-            // Row-STATUS background tints (OMS-REG-DIST-03.37–.39, D110):
-            // a batch with packs issued tints green (allocated — even when
-            // expired/held: it is already in the shipment, and the warning
-            // banners cover the fact); otherwise expired red, then held
-            // amber. The tint shows through the disabled grey (the status
-            // is why the row is disabled); the flag badges and the bold
-            // red expiry cell carry the words. Reads numberOfPacks from
-            // the draft store in the prop function, so per-batch edits
+            // Row-STATUS background tints (OMS-REG-DIST-03.37–.39, D110).
+            // Precedence matches this grid's CARDS — expired red, then held
+            // amber, then allocated (packs issued) green — so a batch shows
+            // one colour whichever view renders it; the detail table alone
+            // runs allocated-first. The tint shows through the disabled grey
+            // (the status is why the row is disabled); the flag badges and
+            // the bold red expiry cell carry the words. Reads numberOfPacks
+            // from the draft store in the prop function, so per-batch edits
             // reflow the tint live.
             rowTint={line =>
-              line.numberOfPacks > 0
-                ? 'success'
-                : lineExpired(line)
-                  ? 'error'
-                  : line.stockLineOnHold || line.location?.onHold
-                    ? 'warning'
+              lineExpired(line)
+                ? 'error'
+                : line.stockLineOnHold || line.location?.onHold
+                  ? 'warning'
+                  : line.numberOfPacks > 0
+                    ? 'success'
                     : undefined
             }
             // Cards keep the held/expired treatment (title + border + badge

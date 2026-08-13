@@ -850,6 +850,35 @@ tr[data-selected][data-tint='error'] > .selectCell {
   background: color-mix(in srgb, var(--error-main) 12%, var(--surface-raised));
 }
 
+/* Hovering a CLICKABLE tinted row deepens its own tint (green → darker
+   green, etc.) — the hover affordance for rows that open something (the
+   detail table). Keyed off .rowClickable, so the line editors' grids (no
+   onRowClick) keep flat tints — hover means nothing there. Deeper than the
+   selected mixes above so the pointer's row stands out of a selection too;
+   AFTER them so the hover wins on a selected clickable row. */
+:where(tbody) tr.rowClickable[data-tint='success']:hover > .td,
+:where(tbody) tr.rowClickable[data-tint='success']:hover > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--success-main) 14%,
+    var(--surface-raised)
+  );
+}
+
+:where(tbody) tr.rowClickable[data-tint='warning']:hover > .td,
+:where(tbody) tr.rowClickable[data-tint='warning']:hover > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--warning-main) 17%,
+    var(--surface-raised)
+  );
+}
+
+:where(tbody) tr.rowClickable[data-tint='error']:hover > .td,
+:where(tbody) tr.rowClickable[data-tint='error']:hover > .selectCell {
+  background: color-mix(in srgb, var(--error-main) 14%, var(--surface-raised));
+}
+
 /* A frozen block's freeze cue, as ONE continuous shadow down the whole column:
    a full-row-height gradient strip just past the block's outer edge, uniform
    vertically, so each row's strip abuts the next into an unbroken band. A real
