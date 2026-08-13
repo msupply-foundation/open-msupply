@@ -142,7 +142,12 @@
      shrinks and takes over when content is over-tall), so the header and the footer/actions
      hold perfectly still: no shift when a scrollbar appears, no drift with overscroll. */
   max-block-size: calc(100vh - 2rem);
-  padding: var(--space-6);
+  /* Tightened from the old --space-6 (issue #840 review, Aneesh 2026-08-13):
+     the standards site's modal chrome runs 1.25–1.5rem; we take --space-4, the
+     nearest step ON the scale rather than an off-scale literal. The workbench
+     sizes already dropped their own padding for the same empty-margin reason
+     (#872). Mirrored by the .bottom[data-divider] margins below. */
+  padding: var(--space-4);
 }
 
 /* The scrolling middle — description + children. The only scroll container in the dialog;
@@ -173,11 +178,11 @@
   flex: 1;
   min-block-size: 0;
   max-block-size: none;
-  /* Tighter inset than an `auto` dialog's even --space-6. A workbench modal's
+  /* Tighter block inset than an `auto` dialog's. A workbench modal's
      content IS the screen — a line editor's batch cards, a picker's table — so
      the block padding is the one part of its chrome that buys nothing, and at
-     --space-6 it spent 4rem of a ~90vh box on empty margin (#872). Inline stays
-     generous: the cards' own edges want room from the panel. */
+     the old --space-6 it spent 4rem of a ~90vh box on empty margin (#872).
+     Inline stays generous: the cards' own edges want room from the panel. */
   padding: var(--space-4) var(--space-5);
 }
 
@@ -273,6 +278,17 @@
   flex-shrink: 0;
 }
 
+/* Opt-in (actionsDivider) hairline above the bottom region — ui-standards ›
+   error dialogs' footer divider. Full-bleed: the negative inline margins
+   cancel the body's padding so the line spans the dialog edge to edge. */
+.bottom[data-divider] {
+  border-block-start: 1px solid var(--color-divider);
+  /* Must mirror the .body padding above so the line is exactly full-bleed. */
+  margin-inline: calc(-1 * var(--space-4));
+  padding-inline: var(--space-4);
+  padding-block-start: var(--space-3);
+}
+
 .actions {
   display: flex;
   /* Footer buttons are centred (matching the current app's modal DialogActions). */
@@ -287,6 +303,13 @@
    at the inline-end. Without it, the centred buttons group applies (above). */
 .actions[data-has-lead] {
   justify-content: space-between;
+}
+
+/* Opt-in (actionsAlign="end") inline-end placement — ui-standards › error
+   dialogs' footer. Equivalent to space-between when a lead is present (the
+   lead's flex-grow takes the free space either way). */
+.actions[data-align='end'] {
+  justify-content: flex-end;
 }
 
 /* The lead content (e.g. a validation message) — takes the free inline-start space, wrapping if

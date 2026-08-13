@@ -137,19 +137,49 @@ const describeError = (e: GraphqlErrorItem): string => {
 export const describeErrors = (errors: GraphqlErrorItem[]): string =>
   errors.map(describeError).join(', ');
 
+// Spec (Unexpected API Errors, D109): the failure condition the global error
+// dialog maps to its fixed title/guidance. Classified at the transport
+// (spec/startup/contract.md): a rejected fetch → 'unreachable'; HTTP 408 →
+// 'timeout'; HTTP 5xx → 'server'; everything else — any other non-OK status,
+// an unusable body, unexpected GraphQL errors, a promoted payload value →
+// 'unknown'.
+export type UnexpectedErrorCondition =
+  'unreachable' | 'timeout' | 'server' | 'unknown';
+
+export type UnexpectedErrorInfo = {
+  condition: UnexpectedErrorCondition;
+  /** The raw technical string — support-facing, shown only in Show details. */
+  cause: string;
+  /** The failed operation, e.g. "mutation upsertStocktakeLines". */
+  request: string;
+  /** Quotable, timestamp-based support reference (spec/startup/contract.md). */
+  reference: string;
+  /** The failing operation was a mutation — the error interrupted an edit. */
+  duringEdit: boolean;
+};
+
 // Spec (Unexpected API Errors): one global failure state for any request that
 // fails outside the expected, structured union results — connection failures,
-// unusable responses, and unexpected GraphQL errors. A modal shows the
-// description on top of everything; its only action reloads the whole app, so
-// nothing clears it during normal use. The flow that made the request stays in
-// its loading phase.
-const [unexpectedError, setUnexpectedError] = createSignal<string | undefined>(
-  undefined
-);
+// unusable responses, and unexpected GraphQL errors. The global error dialog
+// shows the condition-mapped copy on top of everything (D109); the flow that
+// made the request stays in its loading phase.
+const [unexpectedError, setUnexpectedError] = createSignal<
+  UnexpectedErrorInfo | undefined
+>(undefined);
 export { unexpectedError };
-// For tests only — the app recovers via full reload.
+// The dialog's Close path: dismisses in place — the flow behind has released
+// its busy state, so the action can simply be repeated (spec, Unexpected API
+// errors).
 export const clearUnexpectedError = (): void => {
   setUnexpectedError(undefined);
+};
+
+// A quotable, timestamp-based support reference, e.g. "3f9a-2026-08-13T02:41Z"
+// — matchable in server access logs by time, where the raw cause alone
+// ("Failed to fetch") gives support nothing to look up.
+const mintReference = (): string => {
+  const prefix = Math.random().toString(16).slice(2, 6).padEnd(4, '0');
+  return `${prefix}-${new Date().toISOString().slice(0, 16)}Z`;
 };
 
 // Spec (Permission denied): a separate global signal for the authorised-but-
@@ -184,13 +214,18 @@ type ResponseBody<TResult> = {
   errors?: GraphqlErrorItem[];
 };
 
-// Best-effort operation name, parsed off the query string — purely cosmetic
-// metadata appended to the request URL (below) so the operation is
+// Best-effort operation kind + name, parsed off the query string. The name is
+// cosmetic metadata appended to the request URL (below) so the operation is
 // identifiable in the browser network tab / server access logs without
-// opening the POST body. The GraphQL server ignores unknown query params; the
-// actual operation is still driven entirely by the body.
+// opening the POST body — the GraphQL server ignores unknown query params; the
+// actual operation is still driven entirely by the body. The kind decides the
+// error dialog's edit modifier: a mutation failure interrupted an edit
+// (spec/startup/contract.md).
+const OPERATION_RE = /(query|mutation)\s+(\w+)/;
 const operationName = (query: string): string =>
-  /(?:query|mutation)\s+(\w+)/.exec(query)?.[1] ?? 'anonymous';
+  OPERATION_RE.exec(query)?.[2] ?? 'anonymous';
+const isMutation = (query: string): boolean =>
+  OPERATION_RE.exec(query)?.[1] === 'mutation';
 
 export async function graphqlFetch<TResult, TVariables>(
   document: TypedDocument<TResult, TVariables>,
@@ -198,8 +233,18 @@ export async function graphqlFetch<TResult, TVariables>(
   options: FetchOptions<TResult> = {}
 ): Promise<GraphqlResult<TResult>> {
   lastCallAt = Date.now();
-  const unexpected = (message: string): GraphqlFailure => {
-    if (!options.background) setUnexpectedError(message);
+  const unexpected = (
+    condition: UnexpectedErrorCondition,
+    cause: string
+  ): GraphqlFailure => {
+    if (!options.background)
+      setUnexpectedError({
+        condition,
+        cause,
+        request: `${isMutation(document.query) ? 'mutation' : 'query'} ${operationName(document.query)}`,
+        reference: mintReference(),
+        duringEdit: isMutation(document.query),
+      });
     return { kind: 'unexpectedError' };
   };
   const requestUrl = `${options.endpoint ?? GRAPHQL_URL}?opName=${encodeURIComponent(operationName(document.query))}`;
@@ -213,16 +258,26 @@ export async function graphqlFetch<TResult, TVariables>(
       body: JSON.stringify({ query: document.query, variables }),
     });
   } catch (e) {
-    return unexpected(e instanceof Error ? e.message : String(e));
+    // The fetch itself rejected — no response reached us at all.
+    return unexpected(
+      'unreachable',
+      e instanceof Error ? e.message : String(e)
+    );
   }
   if (!response.ok) {
-    return unexpected(`HTTP ${response.status}`);
+    if (response.status === 408) {
+      return unexpected('timeout', `HTTP ${response.status}`);
+    }
+    if (response.status >= 500) {
+      return unexpected('server', `server error (HTTP ${response.status})`);
+    }
+    return unexpected('unknown', `HTTP ${response.status}`);
   }
   let body: ResponseBody<TResult>;
   try {
     body = (await response.json()) as ResponseBody<TResult>;
   } catch (e) {
-    return unexpected(e instanceof Error ? e.message : String(e));
+    return unexpected('unknown', e instanceof Error ? e.message : String(e));
   }
   if (body.errors && body.errors.length > 0) {
     if (isUnauthenticated(body.errors)) {
@@ -241,17 +296,17 @@ export async function graphqlFetch<TResult, TVariables>(
     if (options.returnGraphqlErrors) {
       return { kind: 'graphqlError', message, errors: body.errors };
     }
-    return unexpected(message);
+    return unexpected('unknown', message);
   }
   if (body.data == null) {
-    return unexpected('Response contained neither data nor errors');
+    return unexpected('unknown', 'Response contained neither data nor errors');
   }
   // A well-formed success: give the caller a last chance to promote a bad
   // payload value to the global unexpected-error modal (e.g. a union NodeError
   // branch).
   const mapped = options.mapSuccessToError?.(body.data);
   if (mapped !== undefined) {
-    return unexpected(mapped);
+    return unexpected('unknown', mapped);
   }
   return { kind: 'success', data: body.data };
 }
