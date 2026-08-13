@@ -285,6 +285,20 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    */
   configIsDefault?: boolean;
 
+  /**
+   * Lay out at CONTENT height instead of owning a scroll box: the table grows
+   * to fit its rows and whatever scroller the host provides scrolls it — so
+   * content the host puts BELOW the table (a modal's advisory messages) scrolls
+   * with the rows instead of being pinned under a table that scrolls
+   * internally.
+   *
+   * Card view only, and deliberately: a row-view table scrolls HORIZONTALLY in
+   * that same box (20 columns is normal here), and CSS cannot give one axis
+   * `auto` while the other is `visible` — asking for it silently makes both
+   * scroll. So in row view the table keeps its box, whatever this says.
+   */
+  fitContent?: boolean;
+
   // --- Pagination (optional), STATE owned by the page. --- When set, the
   // table's footer bar shows the Pagination control (its default face — the
   // selection action bar replaces it while rows are selected, see
@@ -1043,6 +1057,12 @@ export function DataTable<T, K extends string, G extends string = never>(
           : undefined
       }
       data-no-toolbar={hasToolbar() ? undefined : ''}
+      // Content height, for a host that scrolls the table together with what
+      // sits below it (see `fitContent`). Card view only — a row view's
+      // horizontal scrolling needs the box.
+      data-fit-content={
+        props.fitContent && viewMode() === 'card' ? '' : undefined
+      }
     >
       {/* The table toolbar (ui-standards § tables): one bar above the scroll
           area — the page-composed filter bar inline-start, the control cluster

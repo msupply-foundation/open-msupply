@@ -71,6 +71,21 @@
   overflow: auto;
 }
 
+/* fitContent (card view only): the table stops owning a scroll box and lays
+   out at its content height, so the HOST's scroller moves the cards and
+   anything the host renders beneath them as one. `overflow: clip` on the root
+   has to go with it — it would clip the cards this mode lets grow past the
+   old box — and the scroll region becomes a plain block. */
+.root[data-fit-content] {
+  flex: 0 0 auto;
+  overflow: visible;
+}
+
+.root[data-fit-content] .tableScroll {
+  flex: 0 0 auto;
+  overflow: visible;
+}
+
 /* Empty (or initial-loading) table: become a flex column so the empty state /
    spinner fills the space BELOW the still-visible column headers. (The old
    borderless-when-empty look predates the framed card — the frame now stays,
