@@ -8,9 +8,6 @@ import {
   Pagination,
   type PaginationProps,
 } from '../../../ui/elements/table/Pagination';
-import { formatCurrencyCell } from '../../../ui/elements/table/tableHelpers';
-import { formatNumber } from '../../../intl';
-import styles from './OutboundStatusFooter.module.css';
 import { StatusChangeAction, type StatusPreflight } from './actions';
 import { STATUS_LABELS, statusIndex, isEditable } from '../outboundStatus';
 import { allowedStatuses } from '../outboundStatusOptions';
@@ -37,14 +34,6 @@ export interface OutboundStatusFooterProps {
   preflight: () => Promise<StatusPreflight | undefined>;
   /** Toggle hold (writes onHold via the field-save path). */
   onSetHold: (hold: boolean) => void;
-  /**
-   * The shipment's whole-document totals (price before tax, volume) — read
-   * here, at the document's own bar, where a total belongs on an invoice-like
-   * screen (D45 states what they are; ui-surface where they live). Undefined
-   * on a shipment with no lines: a total of nothing, beside an empty state
-   * that has already said so.
-   */
-  totals?: () => { price: number; volume: number };
   /**
    * The line table's pager, hosted HERE rather than in a band of its own
    * (spec/ui-standards § tables → pagination): this bar is present at every
@@ -127,26 +116,10 @@ export const OutboundStatusFooter: Component<
         onSaved={props.onSaved}
         leading={
           <>
-            {/* The shipment's totals — ONE quiet reading, docked at the bar's
-                inline end (see `leading`) so the bar's free space falls to
-                their LEFT rather than stranding them mid-row. */}
-            <Show when={props.totals?.()}>
-              {totals => (
-                <span class={styles.totals} data-testid="shipment-totals">
-                  {t('label.shipment-totals', {
-                    price: formatCurrencyCell(totals().price),
-                    volume: formatNumber(totals().volume, {
-                      maximumFractionDigits: 2,
-                    }),
-                  })}
-                </span>
-              )}
-            </Show>
-
-            {/* The line pager, docked with them (`inBar` — it sizes to its
-                cluster, so a crowded bar wraps the cluster whole rather than
-                crushing the pager). Spread of the LIVE prop object, as
-                DataTable does, so offset/total changes reach it. */}
+            {/* The line pager, docked in the action cluster (`inBar` — it
+                sizes to its cluster, so a crowded bar wraps the cluster whole
+                rather than crushing the pager). Spread of the LIVE prop
+                object, as DataTable does, so offset/total changes reach it. */}
             <Pagination {...props.pagination} inBar />
           </>
         }

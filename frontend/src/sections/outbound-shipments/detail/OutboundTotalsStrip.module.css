@@ -1,0 +1,24 @@
+/* The shipment's totals as their own band, sitting directly on top of the
+   status footer. Deliberately SHORT — 0.125rem of block padding around 12px
+   text, so the row costs about a line of type and no more: it is reference
+   the eye visits occasionally, not chrome that should hold a bar's worth of
+   height on a tablet.
+
+   It reads at the inline end, above the status bar's own end cluster (the
+   pager and the status button), so the screen's figures line up in one
+   column down the bottom-right rather than scattering. Its own hairline is
+   what makes it a defined band rather than text floating over the table's
+   bottom edge; the footer below draws the next one. */
+.strip {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: flex-end;
+  padding-block: 0.125rem;
+  padding-inline: var(--space-5);
+  border-block-start: 1px solid var(--color-border-value);
+  background: var(--bg-white);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

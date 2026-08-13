@@ -64,6 +64,7 @@ import { isEditable, canReturnLines } from '../outboundStatus';
 import { outboundShipmentPreferences } from '@/store/storeContext';
 import { OutboundDetailToolbar } from './OutboundDetailToolbar';
 import { OutboundStatusFooter } from './OutboundStatusFooter';
+import { OutboundTotalsStrip } from './OutboundTotalsStrip';
 import { OutboundSidePanel } from './OutboundSidePanel';
 import { ActivityLogPanel } from '../../../domain/activityLog';
 import {
@@ -899,14 +900,19 @@ const OutboundDetailView: Component = () => {
                 </Header>
               }
               contentFooter={
-                <Show
+                <>
+                  {/* The totals band, above BOTH footer faces — a document
+                      fact, so a live row selection doesn't take it away. */}
+                  <OutboundTotalsStrip
+                    totals={totalCount() > 0 ? shipmentTotals : undefined}
+                  />
+                  <Show
                   when={selectedIds().length > 0}
                   fallback={
                     <OutboundStatusFooter
                       storeId={params.storeId}
                       node={current()}
                       pagination={linePagination()}
-                      totals={totalCount() > 0 ? shipmentTotals : undefined}
                       preflight={preflight}
                       onSetHold={setHold}
                       // A status change can trim zero-quantity lines
@@ -973,7 +979,8 @@ const OutboundDetailView: Component = () => {
                       </Button>
                     </ContentFooterActions>
                   </ContentFooter>
-                </Show>
+                  </Show>
+                </>
               }
             >
               <TabPanel value="details">
