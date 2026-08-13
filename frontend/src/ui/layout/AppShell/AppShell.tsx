@@ -303,11 +303,11 @@ export const AppShell = (props: AppShellProps) => {
               <div class={styles.content}>{props.children}</div>
 
               {/* Bottom bar (spec chrome › bottom bar), left to right: the store
-                selector (routes to the store-selection screen), the store Edit
-                cell, a spacer, the signed-in user (menu: logout), then the
-                language selector. The store name is shown as text, so the store
-                colour is never the sole active-store indicator (colour
-                independence / D14). Hidden in full-screen mode, like the menu
+                selector (opens the store-switch modal — spec SL-6 / D14), the
+                store Edit cell, a spacer, the signed-in user (menu: logout),
+                then the language selector. The store name is shown as text, so
+                the store colour is never the sole active-store indicator
+                (colour independence). Hidden in full-screen mode, like the menu
                 bar. */}
               <Show when={!fullScreen()}>
                 <footer
