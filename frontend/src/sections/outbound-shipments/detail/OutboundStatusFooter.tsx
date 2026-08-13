@@ -8,8 +8,8 @@ import {
   Pagination,
   type PaginationProps,
 } from '../../../ui/elements/table/Pagination';
-import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
 import { formatCurrencyCell } from '../../../ui/elements/table/tableHelpers';
+import styles from './OutboundStatusFooter.module.css';
 import { formatNumber } from '../../../intl';
 import { StatusChangeAction, type StatusPreflight } from './actions';
 import { STATUS_LABELS, statusIndex, isEditable } from '../outboundStatus';
@@ -43,8 +43,11 @@ export interface OutboundStatusFooterProps {
    * they are; ui-surface where they live). They are server aggregates over
    * the WHOLE shipment, so a band under one page of rows both cost a row and
    * read as that page's column sums — which is exactly what they are not.
+   *
+   * Omitted (undefined) on a shipment with no lines: "$0.00 · 0 m³" is a
+   * total of nothing, sitting beside an empty state that has already said so.
    */
-  totals: () => { price: number; volume: number };
+  totals?: () => { price: number; volume: number };
   /**
    * The line table's pager, hosted HERE rather than in a band of its own
    * (spec/ui-standards § tables → pagination): this bar is present at every
@@ -117,26 +120,22 @@ export const OutboundStatusFooter: Component<
 
       <StatusIndicator steps={steps()} current={indicatorIndex()} />
 
-      {/* The shipment's totals — inline label/value pairs, so the pair costs
-          one line of a bar that already exists rather than a pinned band of
-          its own. Read-only reference, so they sit with the status reading
-          rather than among the actions. */}
-      <LabelledValue
-        layout="inline"
-        size="small"
-        label={t('label.total')}
-        data-testid="shipment-total-price"
-      >
-        {formatCurrencyCell(props.totals().price)}
-      </LabelledValue>
-      <LabelledValue
-        layout="inline"
-        size="small"
-        label={t('label.volume')}
-        data-testid="shipment-total-volume"
-      >
-        {formatNumber(props.totals().volume, { maximumFractionDigits: 2 })}
-      </LabelledValue>
+      {/* The shipment's totals — ONE quiet reading, in the pager's tone, so
+          two figures cost one line of a bar that already exists rather than a
+          band of their own. Reference, not action, so they sit with the status
+          reading rather than among the buttons. */}
+      <Show when={props.totals?.()}>
+        {totals => (
+          <span class={styles.totals} data-testid="shipment-totals">
+            {t('label.shipment-totals', {
+              price: formatCurrencyCell(totals().price),
+              volume: formatNumber(totals().volume, {
+                maximumFractionDigits: 2,
+              }),
+            })}
+          </span>
+        )}
+      </Show>
 
       {/* The line pager, sharing this bar (`inBar` — it sizes to its cluster
           so a crowded bar wraps it whole rather than crushing it). Spread of

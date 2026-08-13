@@ -906,7 +906,7 @@ const OutboundDetailView: Component = () => {
                       storeId={params.storeId}
                       node={current()}
                       pagination={linePagination()}
-                      totals={shipmentTotals}
+                      totals={totalCount() > 0 ? shipmentTotals : undefined}
                       preflight={preflight}
                       onSetHold={setHold}
                       // A status change can trim zero-quantity lines
