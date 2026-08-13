@@ -647,6 +647,33 @@ tr[data-row-state='disabled'] > .selectCell {
   color: var(--text-secondary);
 }
 
+/* Record-STATUS tints (rowTint — spec D110): always-on backgrounds naming
+   the row's status (outbound lines: allocated green / expired red / held
+   amber), unlike the rowState tints above which show only while selected.
+   Same opaque color-mix recipe over --surface-raised so pinned cells cover
+   cleanly. AFTER the disabled rule (equal specificity): a disabled held/
+   expired row keeps its tint background under the disabled muted text — the
+   status is why the row is disabled. Selection deepens each tint (rules
+   with the selection block below). */
+tr[data-tint='success'] > .td,
+tr[data-tint='success'] > .selectCell {
+  background: color-mix(in srgb, var(--success-main) 8%, var(--surface-raised));
+}
+
+tr[data-tint='warning'] > .td,
+tr[data-tint='warning'] > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--warning-main) 10%,
+    var(--surface-raised)
+  );
+}
+
+tr[data-tint='error'] > .td,
+tr[data-tint='error'] > .selectCell {
+  background: color-mix(in srgb, var(--error-main) 8%, var(--surface-raised));
+}
+
 /* Row density (ui-standards § tables → row heights), keyed off the
    data-density the DataTable stamps on the <table> (chosen in the Settings
    popover; comfortable is the spec's ⭐ default, and the default grows to
@@ -741,6 +768,33 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   );
 }
 
+/* A selected STATUS-tinted row (rowTint, D110) deepens its own tint instead
+   of switching to the selection blue — the status is a durable fact of the
+   record; selection is transient. Same deepen ratios as the rules below.
+   After the selection rules (equal specificity) so the tint wins. */
+tr[data-selected][data-tint='success'] > .td,
+tr[data-selected][data-tint='success'] > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--success-main) 12%,
+    var(--surface-raised)
+  );
+}
+
+tr[data-selected][data-tint='warning'] > .td,
+tr[data-selected][data-tint='warning'] > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--warning-main) 15%,
+    var(--surface-raised)
+  );
+}
+
+tr[data-selected][data-tint='error'] > .td,
+tr[data-selected][data-tint='error'] > .selectCell {
+  background: color-mix(in srgb, var(--error-main) 12%, var(--surface-raised));
+}
+
 /* Hover deepens whichever selection tint is showing (spec: blue 8 → 12%,
    verified 8 → 12%, warning 10 → 15%). Disabled has no deepen — flat. */
 :where(tbody) tr[data-selected]:not([data-row-state]):hover > .td,
@@ -768,6 +822,32 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
     var(--color-warning) 15%,
     var(--surface-raised)
   );
+}
+
+/* Selected + status-tinted rows keep their own deepened tint on hover too —
+   without these the blue hover rule above (same specificity, earlier… but
+   matching :not([data-row-state])) would flash blue over the status tint. */
+:where(tbody) tr[data-selected][data-tint='success']:hover > .td,
+:where(tbody) tr[data-selected][data-tint='success']:hover > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--success-main) 12%,
+    var(--surface-raised)
+  );
+}
+
+:where(tbody) tr[data-selected][data-tint='warning']:hover > .td,
+:where(tbody) tr[data-selected][data-tint='warning']:hover > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--warning-main) 15%,
+    var(--surface-raised)
+  );
+}
+
+:where(tbody) tr[data-selected][data-tint='error']:hover > .td,
+:where(tbody) tr[data-selected][data-tint='error']:hover > .selectCell {
+  background: color-mix(in srgb, var(--error-main) 12%, var(--surface-raised));
 }
 
 /* A frozen block's freeze cue, as ONE continuous shadow down the whole column:

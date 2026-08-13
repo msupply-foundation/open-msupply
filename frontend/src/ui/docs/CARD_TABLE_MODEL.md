@@ -99,6 +99,8 @@ Passed to `<DataTable>`.
 | `onRowClick`           | `(row) => void`                                  | Click-through on a row/card. Disclosure and inline-editing controls stop propagation so they don't trigger it.                                                                               |
 | `rowState`             | `(row) => 'verified' \| 'warning' \| 'disabled'` | The row's **background** tint, mapped from the row's own facts — see [Row states & backgrounds](#row-states--backgrounds). **Table view only.**                                              |
 | `rowTone`              | `(row) => 'info' \| 'warning' \| 'error'`        | The row's **text** colour (info / warning / error) — same section. Table view paints the whole row's text; card view the card's **identity title** only.                                     |
+| `cardTone`             | `(row) => 'info' \| 'warning' \| 'error'`        | CARD-ONLY tone override: cards take their tone from this when set, leaving table text unpainted (`rowTone` unset) — for status-tinted tables (spec D110).                                    |
+| `rowTint`              | `(row) => 'success' \| 'warning' \| 'error'`     | The row's record-STATUS **background**, always on (unlike `rowState`'s selection-gated tints) — see [rowTint](#rowtint--the-status-background). **Table view only.**                         |
 
 ### `CardGroup<T, G>`
 
@@ -148,9 +150,15 @@ Three things that trip people up:
 
 Hover deepens whichever tint is showing by a couple of points; `disabled` stays flat.
 
+### `rowTint` — the status background
+
+`rowTint={(row) => 'success' | 'warning' | 'error' | undefined}` is the record-STATUS background channel, **always on** — unlike `rowState`'s selection-gated tints: `success` (green) for a satisfied row (an outbound line with stock allocated), `error` (red) for an error-state row (expired stock), `warning` (amber) for a row needing attention (a held batch). One tint per row; the page encodes its own precedence (outbound: allocated > expired > held — spec D110). Table view only — cards carry status via `cardTone` + badges. It shows through the `disabled` grey (the status is why the row is disabled; the muted text stays), and selection deepens the tint instead of switching to the selection blue. Never colour alone: the tint restates a fact a cell states in words. A prop function reading a store field (the outbound editor's `numberOfPacks`) re-evaluates on in-place edits — the tint flips live, with none of the TanStack accessor-caching trouble.
+
 ### `rowTone` — the text colour
 
 `rowTone={(row) => 'info' | 'warning' | 'error' | undefined}` is the orthogonal **text-colour** channel (not a background): `info` paints the row's text in the action-blue tone (a record awaiting an action — a placeholder / uncounted line), `warning` in the warning tone (a record needing attention before it can proceed — an outbound line issued from a held batch, spec D110), `error` in the error tone (a line the server refused). It composes on top of any `rowState` background. In table view the tone paints the whole row's text (surviving the disabled muting); in card view it paints the card's **identity title** only — a whole-card repaint would recolour field labels and controls — and a `'warning'` / `'error'` card additionally gets a matching (amber / red) border + very faint shadow, which survive selection. Never colour alone: a tone restates a fact some cell already states in words.
+
+A page whose table rows must stay plain-text (a status-tinted table — spec D110) sets **`cardTone`** instead of `rowTone`: cards take the tone treatment from it, table text stays unpainted. When both are set, cards prefer `cardTone`.
 
 ### Flag cells in the badge slot
 
