@@ -1096,8 +1096,10 @@ const StocktakeDetailView: Component = () => {
                     // pagination). It matters most here: the status footer
                     // below is always present, so a pager over a stocktake
                     // with no lines is a second bar of chrome navigating
-                    // nowhere.
-                    conditional: true,
+                    // nowhere. 'count' rather than the lists' 'nothing' — how
+                    // many lines a stocktake has is a fact about the stocktake,
+                    // not a restatement of the rows on screen.
+                    conditional: 'count',
                   }}
                 />
               </TabPanel>

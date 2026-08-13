@@ -1154,7 +1154,10 @@ const InboundShipmentDetailView: Component = () => {
                     // pagination). It matters most here: the status footer
                     // below is always present, so a pager over a shipment with
                     // no lines is a second bar of chrome navigating nowhere.
-                    conditional: true,
+                    // 'count' rather than the lists' 'nothing' — how many lines
+                    // a shipment has is a fact about the shipment, not a
+                    // restatement of the rows on screen.
+                    conditional: 'count',
                   }}
                 />
               </TabPanel>

@@ -30,14 +30,18 @@ export interface PaginationProps {
    *   0 rows            → nothing at all (the host drops the footer bar too:
    *                       DataTable reads `./paginationState` for exactly
    *                       that);
-   *   one page          → the row count alone, inline-start ("14 items"): no
-   *                       rows-per-page selector and no pager, since there is
-   *                       nowhere to navigate to;
+   *   one page          → this prop's value decides — 'count' shows the row
+   *                       count alone, inline-start ("14 items"), with no
+   *                       pager since there is nowhere to navigate to;
+   *                       'nothing' drops the bar as at 0 rows;
    *   more than a page  → the full bar (unchanged).
-   * Omit and the bar always renders in full ("0–0 of 0" over an empty table) —
-   * the stable-chrome default the verticals that have not adopted this keep.
+   * Pass 'count' where the row count is a fact about the record the table
+   * belongs to (a shipment's lines) and 'nothing' for a list, where one page
+   * means every row is already on screen. Omit the prop entirely and the bar
+   * always renders in full ("0–0 of 0" over an empty table) — the
+   * stable-chrome default the verticals that have not adopted this keep.
    */
-  conditional?: boolean;
+  conditional?: 'count' | 'nothing';
 }
 
 /*

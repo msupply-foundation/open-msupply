@@ -1358,11 +1358,12 @@ const PaginationDemo = () => {
   );
 };
 
-// The `conditional` footer's three states stacked, each over a fixed row count
-// so the state is the thing on show: 0 rows renders nothing at all (its label
-// stands alone), 8 rows the count alone, 38 the full bar. Paging within the
-// last one stays on the full bar — the row count decides the state, not where
-// you are in it.
+// The `conditional` footer's states stacked, each over a fixed row count so the
+// state is the thing on show: 0 rows renders nothing at all (its label stands
+// alone), then the two single-page faces the prop chooses between — 'count'
+// (a record's line table) and 'nothing' (a list) — then the full bar, which
+// both share. Paging within the last one stays on the full bar: the row count
+// decides the state, not where you are in it.
 const ConditionalPaginationDemo = () => {
   const [offset, setOffset] = createSignal(0);
   return (
@@ -1373,29 +1374,44 @@ const ConditionalPaginationDemo = () => {
           offset={0}
           pageSize={20}
           total={0}
-          conditional
+          conditional="count"
           onOffsetChange={() => {}}
           onPageSizeChange={() => {}}
         />
       </div>
       <div>
-        <Text variant="subtitle">8 rows — the count alone</Text>
+        <Text variant="subtitle">
+          8 rows, conditional="count" — the count alone
+        </Text>
         <Pagination
           offset={0}
           pageSize={20}
           total={8}
-          conditional
+          conditional="count"
           onOffsetChange={() => {}}
           onPageSizeChange={() => {}}
         />
       </div>
       <div>
-        <Text variant="subtitle">38 rows — the full bar</Text>
+        <Text variant="subtitle">
+          8 rows, conditional="nothing" — no footer
+        </Text>
+        <Pagination
+          offset={0}
+          pageSize={20}
+          total={8}
+          conditional="nothing"
+          onOffsetChange={() => {}}
+          onPageSizeChange={() => {}}
+        />
+      </div>
+      <div>
+        <Text variant="subtitle">38 rows — the full bar, either way</Text>
         <Pagination
           offset={offset()}
           pageSize={20}
           total={38}
-          conditional
+          conditional="count"
           onOffsetChange={setOffset}
           onPageSizeChange={() => setOffset(0)}
         />
@@ -1580,13 +1596,17 @@ export const TableCardShowcase = () => (
           <Lead>
             Pass <code>conditional</code> and the bar earns its space instead of
             standing as fixed chrome (spec/ui-standards § tables → pagination):
-            nothing at all with no rows, the row count alone at the footer's
-            inline start while everything fits one page, the full bar once there
-            is a second page. The rows-per-page selector survives the count
-            state only where a smaller offered size would split the set — it is
-            the only way back to a pager. The host drops the footer band with
-            the pager in the zero state (DataTable does this from{' '}
-            <code>paginationState</code>), so no empty strip is left behind.
+            nothing at all with no rows, the full bar once there is a second
+            page, and on a single page whichever face the value names —{' '}
+            <code>"count"</code> for the row count alone at the footer's inline
+            start (a record's line table, where the count is a fact about the
+            record), <code>"nothing"</code> for no footer at all (a list, where
+            one page means every row is already on screen). The rows-per-page
+            selector survives the count face only where a smaller offered size
+            would split the set — it is the only way back to a pager. The host
+            drops the footer band along with the pager (DataTable does this
+            from <code>paginationState</code>), so no empty strip is left
+            behind.
           </Lead>
           <ConditionalPaginationDemo />
         </DashboardCard>

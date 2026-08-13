@@ -15,15 +15,27 @@ const props = (
   total: number,
   offset = 0,
   pageSize = 20,
-  conditional = true
+  conditional: PaginationExtent['conditional'] = 'count'
 ): PaginationExtent => ({ total, offset, pageSize, conditional });
+
+/** The list flavour: the single-page state shows nothing rather than a count. */
+const list = (total: number, offset = 0, pageSize = 20): PaginationExtent =>
+  props(total, offset, pageSize, 'nothing');
+
+/** No `conditional` at all — the stable-chrome default. Spelled out rather
+ * than passed as undefined, which the default parameter above would swallow. */
+const stable = (total: number): PaginationExtent => ({
+  total,
+  offset: 0,
+  pageSize: 20,
+});
 
 describe('paginationState', () => {
   describe('the stable-chrome default (no `conditional`)', () => {
     it('is the full bar at every row count, including zero', () => {
-      expect(paginationState(props(0, 0, 20, false))).toBe('full');
-      expect(paginationState(props(14, 0, 20, false))).toBe('full');
-      expect(paginationState(props(143, 0, 20, false))).toBe('full');
+      expect(paginationState(stable(0))).toBe('full');
+      expect(paginationState(stable(14))).toBe('full');
+      expect(paginationState(stable(143))).toBe('full');
     });
   });
 
@@ -49,12 +61,22 @@ describe('paginationState', () => {
       expect(paginationState(props(45, 0, 10))).toBe('full');
     });
 
+    it("shows nothing on a single page where the host asked for 'nothing'", () => {
+      // A list: one page means every matching row is already on screen, so
+      // there is no footer at all until a second page exists.
+      expect(paginationState(list(0))).toBe('hidden');
+      expect(paginationState(list(14))).toBe('hidden');
+      expect(paginationState(list(20))).toBe('hidden');
+      expect(paginationState(list(21))).toBe('full');
+    });
+
     it('keeps the full bar when a stale offset sits past the only page', () => {
       // A shared URL (or rows deleted since it was made) can ask for page 3 of
       // a set that now fits one page. The count face has no pager, so
       // collapsing to it would strand the user on an empty page — the full bar
       // is what offers the way back to page 1.
       expect(paginationState(props(14, 40))).toBe('full');
+      expect(paginationState(list(14, 40))).toBe('full');
     });
   });
 });
