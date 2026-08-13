@@ -421,10 +421,11 @@ const StocktakesList: Component = () => {
           onOffsetChange: offset => setQuery({ ...query(), offset }),
           onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
           // The footer earns its space (ui-standards § tables → pagination):
-          // gone entirely on an empty list, the count alone when everything
-          // fits one page, the full bar only once there is somewhere to page
-          // to.
-          conditional: true,
+          // no footer at all until the stocktakes outrun one page. A single
+          // page is every matching row on screen, so a count would restate
+          // what the user can already see — and the total comes back with the
+          // full bar the moment rows go off-screen.
+          conditional: 'nothing',
         }}
       />
       {/* Mounted only while open: the modal's resources (locations + the
