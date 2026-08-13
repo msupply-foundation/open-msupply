@@ -593,6 +593,37 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     !!line.expiryDate &&
     !lineExpired(line) &&
     isNearOrPastExpiry(line.expiryDate);
+  const lineHeld = (line: DraftLine): boolean =>
+    line.stockLineOnHold || !!line.location?.onHold;
+  // Row-STATUS background tint (OMS-REG-DIST-03.37–.39, D110). Precedence
+  // matches this grid's CARDS — expired red, then held amber, then allocated
+  // (packs issued) green — so a batch shows one colour whichever view
+  // renders it; the detail table alone runs allocated-first. The tint shows
+  // through the disabled grey (the status is why the row is disabled); the
+  // badges and the bold red expiry cell carry the words. Reads numberOfPacks
+  // from the draft store inside the prop function, so per-batch edits reflow
+  // the tint live.
+  const lineRowTint = (
+    line: DraftLine
+  ): 'success' | 'warning' | 'error' | undefined => {
+    if (lineExpired(line)) return 'error';
+    if (lineHeld(line)) return 'warning';
+    if (line.numberOfPacks > 0) return 'success';
+    return undefined;
+  };
+  // The card tone (title + border + corner badge — D110/D111): expired
+  // outranks held, matching the tint precedence; both corner badges still
+  // show. A batch auto-allocation will use gets the green border + shadow
+  // ('success' — border/shadow only, no title tint) beside its green badge;
+  // the auto-barred states can't co-occur with it.
+  const lineCardTone = (
+    line: DraftLine
+  ): 'success' | 'warning' | 'error' | undefined => {
+    if (lineExpired(line)) return 'error';
+    if (lineHeld(line)) return 'warning';
+    if (willAutoAllocate(line)) return 'success';
+    return undefined;
+  };
   const lineAutoBarReasons = (line: DraftLine) =>
     autoAllocateBarReasons(line, allocationPrefs());
   // The tick column's predicate ("will be used in auto-allocation"): auto-
@@ -1025,7 +1056,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                   icon={<AlertTriangleIcon />}
                 />
               </Show>
-              <Show when={line.stockLineOnHold || line.location?.onHold}>
+              <Show when={lineHeld(line)}>
                 <StatusBadge
                   label={t('label.on-hold')}
                   tone="warning"
@@ -1637,39 +1668,8 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             showCardToggle
             showFullScreen={false}
             rowState={line => (rowDisabled(line) ? 'disabled' : undefined)}
-            // Row-STATUS background tints (OMS-REG-DIST-03.37–.39, D110).
-            // Precedence matches this grid's CARDS — expired red, then held
-            // amber, then allocated (packs issued) green — so a batch shows
-            // one colour whichever view renders it; the detail table alone
-            // runs allocated-first. The tint shows through the disabled grey
-            // (the status is why the row is disabled); the flag badges and
-            // the bold red expiry cell carry the words. Reads numberOfPacks
-            // from the draft store in the prop function, so per-batch edits
-            // reflow the tint live.
-            rowTint={line =>
-              lineExpired(line)
-                ? 'error'
-                : line.stockLineOnHold || line.location?.onHold
-                  ? 'warning'
-                  : line.numberOfPacks > 0
-                    ? 'success'
-                    : undefined
-            }
-            // Cards keep the held/expired treatment (title + border + badge
-            // — D110/D111). Expired outranks held for the card tone
-            // (matching the tint precedence); both badges still show. A
-            // batch auto-allocation will use gets the green border + shadow
-            // ('success' — border/shadow only, no title tint) beside its
-            // green badge; auto-barred states can't co-occur with it.
-            cardTone={line =>
-              lineExpired(line)
-                ? 'error'
-                : line.stockLineOnHold || line.location?.onHold
-                  ? 'warning'
-                  : willAutoAllocate(line)
-                    ? 'success'
-                    : undefined
-            }
+            rowTint={lineRowTint}
+            cardTone={lineCardTone}
             emptyMessage={t('messages.no-stock-available')}
             config={tableConfig.config()}
             setConfig={tableConfig.setConfig}

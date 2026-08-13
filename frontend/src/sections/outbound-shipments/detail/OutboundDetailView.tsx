@@ -182,6 +182,34 @@ const LineStatusBadges = (props: { line: Line }) => (
   </Show>
 );
 
+// Line-STATUS background tint (ui-surface S3 line table,
+// OMS-REG-DIST-03.37–.39, D110): allocated green, expired red, held amber,
+// placeholder untinted (its blue text is gone too — D110 drops the current
+// app's treatment). Row text keeps the default colour; the badges and the
+// bold red Expiry-date cell carry the facts in words. Precedence (.39):
+// allocated > expired > held — a detail line always carries packs, so real
+// lines read green and the red/amber tints surface only on a zero-pack edge
+// case.
+const lineRowTint = (
+  line: Line
+): 'success' | 'warning' | 'error' | undefined => {
+  if (line.type === 'UNALLOCATED_STOCK') return undefined;
+  if (line.numberOfPacks > 0) return 'success';
+  if (lineExpired(line)) return 'error';
+  if (lineOnHold(line)) return 'warning';
+  return undefined;
+};
+
+// The card tone (title + border + corner badge — D110/D111); no info tone
+// for placeholders. Expired outranks held (matching the tint precedence);
+// both corner badges still show.
+const lineCardTone = (line: Line): 'warning' | 'error' | undefined => {
+  if (line.type === 'UNALLOCATED_STOCK') return undefined;
+  if (lineExpired(line)) return 'error';
+  if (lineOnHold(line)) return 'warning';
+  return undefined;
+};
+
 // Drop a preset's growth cap, keeping its cell + width floor: `maxSize` is a
 // HARD cap, so a column sitting at it can't be dragged wider at all. The shared
 // config expresses this as a per-key `maxSize: null`; at a call site the key has
@@ -1088,40 +1116,8 @@ const OutboundDetailView: Component = () => {
                   sort={currentSort()}
                   onSort={onSort}
                   onRowClick={editable() ? openRow : undefined}
-                  // Line-STATUS background tints (ui-surface S3 line table,
-                  // OMS-REG-DIST-03.37–.39, D110): allocated green, expired
-                  // red, held amber, placeholder untinted (its blue text is
-                  // gone too — D110 drops the current app's treatment). Row
-                  // text keeps the default colour; the On-hold flag column
-                  // and the bold red Expiry-date cell carry the facts in
-                  // words. Precedence (.39): allocated > expired > held —
-                  // a detail line always carries packs, so real lines read
-                  // green and the red/amber tints surface only on a
-                  // zero-pack edge case.
-                  rowTint={line =>
-                    line.type === 'UNALLOCATED_STOCK'
-                      ? undefined
-                      : line.numberOfPacks > 0
-                        ? 'success'
-                        : lineExpired(line)
-                          ? 'error'
-                          : lineOnHold(line)
-                            ? 'warning'
-                            : undefined
-                  }
-                  // Cards keep the held/expired treatment (title + border +
-                  // badge — D110/D111); no info tone for placeholders.
-                  // Expired outranks held for the card tone (matching the
-                  // tint precedence); both badges still show.
-                  cardTone={line =>
-                    line.type === 'UNALLOCATED_STOCK'
-                      ? undefined
-                      : lineExpired(line)
-                        ? 'error'
-                        : lineOnHold(line)
-                          ? 'warning'
-                          : undefined
-                  }
+                  rowTint={lineRowTint}
+                  cardTone={lineCardTone}
                   emptyMessage={t('error.no-outbound-items')}
                   empty={
                     editable() ? (
