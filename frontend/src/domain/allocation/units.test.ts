@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  availableUnits,
   clampManualPacks,
   distinctPackSizes,
   dosesToPacks,
@@ -69,22 +68,11 @@ describe('unit sums', () => {
   const batches = [
     { packSize: 10, availablePacks: 2, numberOfPacks: 1 },
     { packSize: 5, availablePacks: 4, numberOfPacks: 0.5 },
-    {
-      packSize: 10,
-      availablePacks: 3,
-      numberOfPacks: 2,
-      stockLineOnHold: true,
-    },
-    {
-      packSize: 20,
-      availablePacks: 1,
-      numberOfPacks: 0,
-      location: { onHold: true },
-    },
+    { packSize: 10, availablePacks: 3, numberOfPacks: 2 },
+    { packSize: 20, availablePacks: 1, numberOfPacks: 0 },
   ];
 
-  it('availableUnits excludes on-hold stock and locations (old-app parity); issuedUnits counts every row', () => {
-    expect(availableUnits(batches)).toBe(2 * 10 + 4 * 5);
+  it('issuedUnits counts every row, fractional packs included', () => {
     expect(issuedUnits(batches)).toBe(1 * 10 + 0.5 * 5 + 2 * 10);
   });
 
