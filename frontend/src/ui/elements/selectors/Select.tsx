@@ -53,12 +53,13 @@ interface SelectProps {
    */
   size?: 'default' | 'small';
   /**
-   * Max-width cap (the container can always be narrower), mirroring
-   * {@link TextField}: `compact` (10rem — the trigger box only, for a dense
-   * row like a page-header toolbar; the selected value ellipsises if it
-   * overruns), `short` (default) / `long` for form fields, `full` to fill the
-   * available width — e.g. a detail row's value column so the dropdown aligns
-   * with the text fields beside it.
+   * Max-width CAP — opt-in, mirroring {@link TextField}. The default is `full`
+   * (fill the container), so a select in a detail row, a form column or a
+   * table cell aligns with the text fields beside it with nothing to pass.
+   * Name a cap only when the data is short or the container is unbounded:
+   * `compact` (10rem — the trigger box only, for a dense row like a page-header
+   * toolbar or the pagination rows-per-page control; the selected value
+   * ellipsises if it overruns), `short` (25rem) / `long` (37.5rem).
    */
   width?: 'compact' | 'short' | 'long' | 'full';
   class?: string;
@@ -158,7 +159,7 @@ export const Select = (props: SelectProps) => {
     <KSelect.Root<SelectOption>
       class={props.class ? `${styles.field} ${props.class}` : styles.field}
       data-size={props.size ?? 'default'}
-      data-width={props.width ?? 'short'}
+      data-width={props.width ?? 'full'}
       options={options()}
       optionValue="value"
       optionTextValue="label"

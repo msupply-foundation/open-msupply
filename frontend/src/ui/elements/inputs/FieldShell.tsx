@@ -7,12 +7,12 @@ export interface FieldShellProps {
   /** Visually hide the label (kept for a11y) — for use inside a FieldRow. */
   hideLabel?: boolean;
   /**
-   * Max-width cap, TextField's vocabulary: `compact` (10rem — narrows only the
-   * control box, for a dense row like a page-header toolbar), `short`
-   * (default — dates are short) or `full` to fill the container (e.g. the
-   * report argument form, where every row spans the modal).
+   * Max-width CAP — opt-in, TextField's vocabulary and TextField's default:
+   * `full` (fill the container). `compact` (10rem) narrows only the control
+   * box, for a dense row like a page-header toolbar; `short` (25rem) / `long`
+   * (37.5rem) cap the whole field.
    */
-  width?: 'compact' | 'short' | 'full';
+  width?: 'compact' | 'short' | 'long' | 'full';
   required?: boolean;
   /** Error message — presence switches the field to the error state. */
   error?: string;
@@ -77,7 +77,7 @@ export const FieldShell = (props: FieldShellProps) => {
   );
 
   return (
-    <div class={styles.field} data-width={props.width}>
+    <div class={styles.field} data-width={props.width ?? 'full'}>
       <Show when={labelInfo() && !props.hideLabel} fallback={<Label />}>
         {/* labelInfo sits OUTSIDE the <label for>, as a sibling: nested in the
             label its accessible name would leak into the control's (the

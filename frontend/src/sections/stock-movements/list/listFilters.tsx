@@ -1,8 +1,8 @@
 import { t } from '@/intl';
 import {
   FilterDateRange,
+  FilterMultiSelect,
   FilterNumberInput,
-  FilterSelect,
   FilterTextInput,
   constructFilters,
   type Filter,
@@ -47,22 +47,24 @@ const FILTERS: Filter<StockMovementFilter>[] =
         />
       ),
     },
+    // Status — multi-select "any of" (D110): ticks accumulate into
+    // status.equalAny; none → null so the (default) chip stays.
     status: {
       label: () => t('label.status'),
       render: props => (
-        <FilterSelect
+        <FilterMultiSelect
           label={t('label.status')}
           testId={props.testId}
-          value={props.filter().status?.equalTo ?? ''}
+          placeholder={t('label.any')}
+          values={props.filter().status?.equalAny ?? []}
           options={[
-            { value: '', label: t('label.any') },
             { value: 'NEW', label: STATUS_LABELS.NEW ?? 'NEW' },
             { value: 'CONFIRMED', label: STATUS_LABELS.CONFIRMED ?? '' },
             { value: 'FINALISED', label: STATUS_LABELS.FINALISED ?? '' },
           ]}
-          onChange={value =>
+          onChange={values =>
             props.setPartialFilter({
-              status: value ? { equalTo: value } : null,
+              status: values.length ? { equalAny: values } : null,
             })
           }
         />

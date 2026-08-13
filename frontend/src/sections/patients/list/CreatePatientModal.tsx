@@ -497,7 +497,6 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
             <FormSection title={t('heading.patient-details')}>
               <TextField
                 label={t('label.first-name')}
-                width="full"
                 required
                 data-testid="input-firstName"
                 value={search.firstName}
@@ -505,7 +504,6 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
               />
               <TextField
                 label={t('label.last-name')}
-                width="full"
                 required
                 data-testid="input-lastName"
                 value={search.lastName}
@@ -513,14 +511,12 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
               />
               <DateField
                 label={t('label.date-of-birth')}
-                width="full"
                 max={localTodayIso()}
                 value={search.dateOfBirth}
                 onChange={value => setSearch('dateOfBirth', value)}
               />
               <Combobox<GenderOption>
                 label={t('label.gender')}
-                width="full"
                 items={genderOptions()}
                 itemToString={o => o.label}
                 itemToValue={o => o.value}
@@ -529,13 +525,11 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
               />
               <TextField
                 label={t('label.address')}
-                width="full"
                 value={search.address}
                 onInput={e => setSearch('address', e.currentTarget.value)}
               />
               <TextField
                 label={t('label.phone')}
-                width="full"
                 value={search.phone}
                 onInput={e => setSearch('phone', e.currentTarget.value)}
               />
