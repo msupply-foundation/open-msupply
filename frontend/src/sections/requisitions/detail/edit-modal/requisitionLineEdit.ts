@@ -269,7 +269,7 @@ const updateLine = async (
 // side, BatchResponseRequisitionInput carries only deletes (contract › line
 // editing), so there is no one-call batch. A typed insert error gets the
 // generic failure surface (the picker loads an existing item's line rather
-// than inserting a duplicate — D74 — so it is not normally reachable).
+// than inserting a duplicate — D60 — so it is not normally reachable).
 export const saveNewLine = async (
   storeId: string,
   requisitionId: string,
