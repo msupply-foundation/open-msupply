@@ -91,7 +91,7 @@ import {
   supplierIsStore,
 } from './inboundShipmentStatus';
 import { SupplierKindIcon } from '../SupplierKindIcon';
-import { InboundShipmentLogPanel } from './log/InboundShipmentLogPanel';
+import { ActivityLogPanel } from '../../../domain/activityLog';
 import { InboundDocumentsPanel } from './tabs/InboundDocumentsPanel';
 import { InboundCurrencyPanel } from './tabs/InboundCurrencyPanel';
 import { InboundFinancialPanel } from './tabs/InboundFinancialPanel';
@@ -1197,9 +1197,9 @@ const InboundShipmentDetailView: Component = () => {
                 />
               </TabPanel>
               <TabPanel value="log">
-                <InboundShipmentLogPanel
+                <ActivityLogPanel
                   storeId={params.storeId}
-                  invoiceId={node().id}
+                  recordId={node().id}
                 />
               </TabPanel>
 
