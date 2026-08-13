@@ -3645,8 +3645,6 @@
   "table.move": "Move",
   "table.move-down": "Move down",
   "table.move-up": "Move up",
-  "table.count_one": "1 item",
-  "table.count_other": "{{count}} items",
   "table.no-results": "No results.",
   "table.pin": "Pin",
   "table.pin-left": "Pin left",
