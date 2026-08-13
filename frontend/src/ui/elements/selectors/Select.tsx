@@ -107,6 +107,7 @@ export const Select = (props: SelectProps) => {
   // portal is used.
   const portalMount = usePortalMount();
   let contentEl: HTMLElement | undefined;
+  let triggerEl: HTMLButtonElement | undefined;
   const findOption = (value: string | undefined) =>
     value === undefined
       ? undefined
@@ -195,8 +196,13 @@ export const Select = (props: SelectProps) => {
         <KSelect.Trigger
           // Always a real callback: Kobalte forwards `ref` into its own
           // polymorphic element props, where a bare `undefined` is not the same
-          // as an absent ref.
-          ref={(el: HTMLButtonElement) => props.focusTarget?.ref(el)}
+          // as an absent ref. Also held locally: the clear button removes
+          // itself on activation, so it hands focus here (as Combobox's clear
+          // refocuses its input).
+          ref={(el: HTMLButtonElement) => {
+            triggerEl = el;
+            props.focusTarget?.ref(el);
+          }}
           class={styles.trigger}
           data-testid={props.testId}
           aria-label={props.hideLabel ? props.label : undefined}
@@ -218,7 +224,13 @@ export const Select = (props: SelectProps) => {
             class={styles.clear}
             disabled={props.disabled}
             aria-label="Clear selection"
-            onClick={() => props.onClear?.()}
+            // Clearing removes this button (showClear turns false), so focus
+            // must be handed to the trigger — dropped, it falls to <body> and
+            // a keyboard user's next Tab restarts from the document top.
+            onClick={() => {
+              props.onClear?.();
+              triggerEl?.focus();
+            }}
           >
             <CloseIcon />
           </button>
