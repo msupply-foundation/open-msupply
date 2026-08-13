@@ -5,6 +5,7 @@ import {
   fefoCompare,
   fillOrderCompare,
   isBarred,
+  isExpired,
   rowHasAllocatableStock,
   type AllocationPreferences,
 } from './policy';
@@ -418,5 +419,40 @@ describe('deriveIssueWarnings', () => {
         warning => warning.kind
       )
     ).toEqual(['over-allocated', 'skipped-barred']);
+  });
+});
+
+// isExpired — what the line editor's "Expired" badge asks. Its whole reason to
+// exist apart from the `expired` bar reason is that NO preference widens it: a
+// badge that says "Expired" on stock with a fortnight left would be a lie.
+describe('isExpired', () => {
+  const today = new Date('2026-08-13T09:00:00Z');
+
+  it('is true only once the date has passed', () => {
+    expect(isExpired('2026-08-12', today)).toBe(true);
+    // The whole-day comparison: expiring TODAY reads expired all day, rather
+    // than flipping partway through it.
+    expect(isExpired('2026-08-13', today)).toBe(true);
+    expect(isExpired('2026-08-14', today)).toBe(false);
+  });
+
+  it('ignores the prevent-issue threshold that widens the bar reason', () => {
+    const soon = '2026-08-20';
+    // Barred from issue under the preference — a week out, inside a 14-day
+    // guard — and yet not expired. The badge must say nothing here.
+    expect(
+      autoAllocateBarReasons(
+        { stockLineOnHold: false, expiryDate: soon },
+        prefs({ expiredStockPreventIssue: true, expiredStockIssueThreshold: 14 }),
+        today
+      )
+    ).toContain('expired');
+    expect(isExpired(soon, today)).toBe(false);
+  });
+
+  it('treats a batch with no expiry date as never expired', () => {
+    expect(isExpired(undefined, today)).toBe(false);
+    expect(isExpired(null, today)).toBe(false);
+    expect(isExpired('', today)).toBe(false);
   });
 });

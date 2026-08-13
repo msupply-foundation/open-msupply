@@ -12,6 +12,7 @@ export {
   autoAllocateBarReasons,
   barReasons,
   isBarred,
+  isExpired,
   rowHasAllocatableStock,
   fillOrderCompare,
   type AllocationPreferences,
