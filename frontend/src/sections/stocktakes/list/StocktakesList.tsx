@@ -414,9 +414,6 @@ const StocktakesList: Component = () => {
         // (bottom-inline-end), not in a page footer band — consistent with the
         // stocktake detail view (kdd/table-state). State stays
         // page-owned/URL-backed.
-        // The result count sits in the toolbar, not the footer — it belongs
-        // with the filters that produced it and costs no height there.
-        totalCount={totalCount()}
         pagination={{
           offset: query().offset,
           pageSize: query().first,

@@ -290,10 +290,14 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    * count ("38 items") in the toolbar, beside the icon controls
    * (spec/ui-standards § tables → toolbar). It belongs there rather than in
    * the footer: it is a property of the result set the filters just produced,
-   * not of navigation, and the toolbar row exists at every row count, so the
-   * count costs no height. Pass the SAME total the pager gets — `rows` is one
-   * page, which is not what "38 items" means. Omit for a table whose row
-   * count says nothing a user wants (a modal's sub-table).
+   * not of navigation, and the toolbar row exists whatever the data does, so
+   * the count costs no height. Pass the SAME total the pager gets — `rows` is
+   * one page, which is not what "38 items" means.
+   *
+   * A total of 0 shows nothing: the empty state already says the table is
+   * empty, and "0 items" beside it is the same sentence twice. Omit the prop
+   * entirely for a table whose row count answers nothing a user would ask (a
+   * modal's sub-table, or a list whose rows are their own count).
    */
   totalCount?: number;
 
@@ -887,8 +891,11 @@ export function DataTable<T, K extends string, G extends string = never>(
   // table then loses the hairline that row carried along its bottom edge, which
   // is what separated the header from whatever sits above it. The seam moves to
   // the table area instead (see .root[data-no-toolbar] in the CSS).
-  const hasToolbar = () =>
-    !!filters() || props.totalCount !== undefined || !props.controlsMount;
+  // The count is shown only when there IS one (see `totalCount`) — a zero
+  // total renders nothing, and can't be the reason the toolbar row exists.
+  const showCount = () => (props.totalCount ?? 0) > 0;
+
+  const hasToolbar = () => !!filters() || showCount() || !props.controlsMount;
 
   const controls = (): JSX.Element => (
     <div class={styles.toolbarControls}>
@@ -1075,7 +1082,7 @@ export function DataTable<T, K extends string, G extends string = never>(
           {/* The result count — quiet, tabular, docked at the inline end
               beside the icon controls (and holding that edge on its own when
               the controls are portalled away). */}
-          <Show when={props.totalCount !== undefined}>
+          <Show when={showCount()}>
             <span class={styles.toolbarCount} data-testid="table-count">
               {tPlural('table.count', props.totalCount!)}
             </span>

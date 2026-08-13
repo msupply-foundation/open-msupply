@@ -1044,8 +1044,9 @@ const StocktakeDetailView: Component = () => {
                   cardGroups={CARD_GROUPS}
                   rows={rows()}
                   // The line count sits in the toolbar, beside the view
-                  // controls — no height, and it stays put whether or not
-                  // the lines run to a second page.
+                  // controls — no height, and it stays put whether or not the
+                  // lines run to a second page. Nothing shows on an empty
+                  // record: the empty state below already says that.
                   totalCount={totalCount()}
                   rowKey={line => line.id}
                   // Filters live in the table's own toolbar (ui-standards §
