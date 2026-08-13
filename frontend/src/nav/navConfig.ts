@@ -2,7 +2,7 @@
 // registry tables there are the source of truth this file transcribes). One
 // source: the left menu renders from it, the router generates a route per
 // destination from it, and the command palette lists every destination in it
-// (D102 — `cmdkKey` only renames a row, it never decides whether there is one).
+// (D107 — `cmdkKey` only renames a row, it never decides whether there is one).
 //
 // Paths are relative to the store root (/{storeId}). A section's own `path` is
 // a landing destination; its `children` are the inner sub-menu entries.
@@ -65,7 +65,7 @@ export type NavItem = {
    * ABSENCE IS THE NORM: every destination is in the palette, named "Go to:"
    * plus its own `labelKey` — so a destination added here (a plugin-contributed
    * page included) is browsable with no second registration to remember, which
-   * is the whole point of the palette deriving from this file (D102). Set this
+   * is the whole point of the palette deriving from this file (D107). Set this
    * only where the menu's label does not stand up outside the menu, which is
    * where the menu's column supplies context the palette row lacks: "Stock"
    * under Inventory reads as "View Stock", "Equipment" under Cold chain needs

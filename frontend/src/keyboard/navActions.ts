@@ -13,7 +13,7 @@ import { ALT_D, ALT_H, type Shortcut } from '../ui/utils/shortcuts';
  * offers gets a row, named "Go to:" plus the menu's own label. There is no
  * opt-in list to keep in step, so a destination added to the menu — including
  * one a plugin contributes once plugin navigation lands — is browsable in the
- * palette by construction (D102). It previously carried a hand-listed allowlist
+ * palette by construction (D107). It previously carried a hand-listed allowlist
  * beside the derived tree, which had drifted exactly as you would expect:
  * customer returns was reachable by menu only.
  *
