@@ -301,16 +301,6 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    */
   totalCount?: number;
 
-  /**
-   * Extra roll-ups for this result set, appended to the count in the toolbar
-   * with a middot ("12 items · $1,234.56 · 12.4 m³"). For a vertical whose
-   * table has figures worth reading beside the count — a shipment's price and
-   * volume totals. Already-formatted text, since only the vertical knows what
-   * its numbers mean; it renders in the same quiet tone as the count and
-   * shows with or without one.
-   */
-  summary?: string;
-
   // --- Pagination (optional), STATE owned by the page. --- When set, the
   // table's footer bar shows the Pagination control (its default face — the
   // selection action bar replaces it while rows are selected, see
@@ -906,19 +896,7 @@ export function DataTable<T, K extends string, G extends string = never>(
   // exists.
   const showCount = () => (props.totalCount ?? 0) > 1;
 
-  // The toolbar's reading: the count, the host's roll-ups, or both joined.
-  // Empty when there is neither, which is also what keeps it from holding a
-  // toolbar row open on its own.
-  const summaryText = () =>
-    [
-      showCount() ? tPlural('table.count', props.totalCount!) : '',
-      props.summary ?? '',
-    ]
-      .filter(Boolean)
-      .join(' · ');
-
-  const hasToolbar = () =>
-    !!filters() || !!summaryText() || !props.controlsMount;
+  const hasToolbar = () => !!filters() || showCount() || !props.controlsMount;
 
   const controls = (): JSX.Element => (
     <div class={styles.toolbarControls}>
@@ -1102,13 +1080,12 @@ export function DataTable<T, K extends string, G extends string = never>(
           <Show when={filters()}>
             <div class={styles.toolbarFilters}>{filters()}</div>
           </Show>
-          {/* The result count and any roll-ups the host added — quiet,
-              tabular, docked at the inline end beside the icon controls (and
-              holding that edge on its own when the controls are portalled
-              away). */}
-          <Show when={summaryText()}>
+          {/* The result count — quiet, tabular, docked at the inline end
+              beside the icon controls (and holding that edge on its own when
+              the controls are portalled away). */}
+          <Show when={showCount()}>
             <span class={styles.toolbarCount} data-testid="table-count">
-              {summaryText()}
+              {tPlural('table.count', props.totalCount!)}
             </span>
           </Show>
           <Show when={!props.controlsMount}>{controls()}</Show>
