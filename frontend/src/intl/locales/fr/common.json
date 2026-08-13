@@ -2673,7 +2673,6 @@
   "messages.select-rows-to-pending": "Sélectionnez les lignes à mettre en attente",
   "messages.select-rows-to-reject": "Sélectionnez les lignes à rejeter",
   "messages.select-rows-to-return": "Sélectionner les lignes pour les retourner",
-  "messages.select-store-instructions": "Choisissez le magasin dans lequel travailler. Vous pouvez changer de magasin à tout moment depuis la barre inférieure.",
   "messages.service-charges-description": "Les frais additionnels sont calculés taxe comprise en fonction du pourcentage de taxe renseigné.",
   "messages.shipment-saved": "Livraison sauvegardée 🥳",
   "messages.skip-dose-warning": "Si vous donnez cette dose, une ou plusieurs doses précédentes seront ignorées et indiquées comme non données.",

@@ -2563,7 +2563,6 @@
   "messages.select-rows-to-reject": "Selecione as linha para rejeitá-las",
   "messages.select-rows-to-return": "Selecione as linhas para devolvê-las",
   "messages.select-single-shipment-to-copy": "Selecione apenas uma remessa para fazer uma cópia",
-  "messages.select-store-instructions": "Clique numa unidade de saúde para a destacar ou utilize as <bold>teclas de seta para cima/para baixo</bold> e, em seguida, prima <bold>Continuar</bold> ou <bold>Enter</bold>. Também pode assinalar a caixa abaixo para ignorar esta seleção no futuro, caso utilize sempre a mesma unidade de saúde.",
   "messages.service-charges-description": "Quantidade total do custo dos serviços. O valor do imposto calculado é uma taxa efetiva calculada com base no total de imposto pago sobre o subtotal de todos os custos de serviço.",
   "messages.shipment-copied": "A remessa n.º {{newNumber}} foi criada como uma cópia da remessa n.º {{sourceNumber}}.",
   "messages.shipment-copied-skipped-items_one": "{{count}} artigos não foram copiado porque já não constam no catálogo.",
