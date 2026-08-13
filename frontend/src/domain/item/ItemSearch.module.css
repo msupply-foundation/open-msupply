@@ -17,6 +17,12 @@
   white-space: nowrap;
 }
 
+/* The already-on-document badge (D115) sits between the label and the total;
+   the label is the flexible, truncating part, so the badge never shrinks. */
+.present {
+  flex-shrink: 0;
+}
+
 .total {
   flex-shrink: 0;
   color: var(--text-secondary);

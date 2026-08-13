@@ -1458,6 +1458,7 @@
   "label.in-progress": "In progress",
   "label.in-stock": "In stock",
   "label.in-stock-with-recent-consumption": "In stock (with recent consumption)",
+  "label.in-stocktake": "In stocktake",
   "label.in-store": "In store (packs)",
   "label.in-store-doses": "In store (doses)",
   "label.in-transit": "In transit",
