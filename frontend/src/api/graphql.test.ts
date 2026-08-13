@@ -107,7 +107,7 @@ describe('graphqlFetch', () => {
     });
     expect(unexpectedError()).toMatchObject({
       condition: 'server',
-      cause: 'server error (HTTP 500)',
+      cause: 'HTTP 500',
     });
   });
 

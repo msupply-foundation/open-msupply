@@ -146,8 +146,11 @@
      the standards site's modal chrome runs 1.25–1.5rem; we take --space-4, the
      nearest step ON the scale rather than an off-scale literal. The workbench
      sizes already dropped their own padding for the same empty-margin reason
-     (#872). Mirrored by the .bottom[data-divider] margins below. */
-  padding: var(--space-4);
+     (#872). The inline inset is a custom property so .bottom[data-divider]'s
+     full-bleed margins track it exactly, whichever .body variant applies. */
+  --dialog-pad-inline: var(--space-4);
+
+  padding: var(--space-4) var(--dialog-pad-inline);
 }
 
 /* The scrolling middle — description + children. The only scroll container in the dialog;
@@ -183,7 +186,9 @@
      the block padding is the one part of its chrome that buys nothing, and at
      the old --space-6 it spent 4rem of a ~90vh box on empty margin (#872).
      Inline stays generous: the cards' own edges want room from the panel. */
-  padding: var(--space-4) var(--space-5);
+  --dialog-pad-inline: var(--space-5);
+
+  padding: var(--space-4) var(--dialog-pad-inline);
 }
 
 /* No surface means no inset either — the children sit against the dialog box, so
@@ -191,6 +196,8 @@
 
    Placed after .body to satisfy stylelint no-descending-specificity. */
 .chromeless .body {
+  --dialog-pad-inline: 0rem;
+
   padding: 0;
 }
 
@@ -283,9 +290,10 @@
    cancel the body's padding so the line spans the dialog edge to edge. */
 .bottom[data-divider] {
   border-block-start: 1px solid var(--color-divider);
-  /* Must mirror the .body padding above so the line is exactly full-bleed. */
-  margin-inline: calc(-1 * var(--space-4));
-  padding-inline: var(--space-4);
+  /* --dialog-pad-inline is the .body variant's own inline padding, so the
+     line is exactly full-bleed under every variant. */
+  margin-inline: calc(-1 * var(--dialog-pad-inline));
+  padding-inline: var(--dialog-pad-inline);
   padding-block-start: var(--space-3);
 }
 
