@@ -834,20 +834,6 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   align-items: center;
 }
 
-/* The result count ("38 items") — quiet text at the toolbar's inline end,
-   just before the icon controls. It takes the auto margin that would
-   otherwise sit on the controls, so the pair travels together to that edge;
-   two auto margins would instead split the free space and strand the count
-   mid-row. tabular-nums keeps the digits from jittering as a filter narrows
-   the set. */
-.toolbarCount {
-  margin-inline-start: auto;
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
 /* The icon-control cluster — held at the inline-end by its own auto margin
    (lands correctly whether or not filters/tabs sit at the start, and hugs the
    same edge when it wraps onto its own line). */
@@ -857,12 +843,6 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   align-self: stretch;
   gap: var(--space-1);
   margin-inline-start: auto;
-}
-
-/* With a count present, IT holds the inline-end margin (see above) and the
-   controls simply follow it. */
-.toolbarCount + .toolbarControls {
-  margin-inline-start: 0;
 }
 
 /* Inline loading spinner sitting just left of the toolbar's icon controls (a

@@ -630,9 +630,6 @@ const WorkingTable = () => {
       setConfig={setConfig}
       configIsDefault={configIsDefault()}
       emptyMessage="No items"
-      // The result count, in the toolbar beside the icon controls — the same
-      // total the pager below is paging through.
-      totalCount={DATA.length}
       pagination={{
         offset: offset(),
         pageSize: pageSize(),
@@ -1540,11 +1537,9 @@ export const TableCardShowcase = () => (
             <code>filters</code> — add a Search or Status chip), sortable
             headers (<code>sort</code> / <code>onSort</code>), a selection
             checkbox + action footer (<code>enableSelection</code> /{' '}
-            <code>selectionActions</code>), the result count in the toolbar
-            (<code>totalCount</code> — the whole filtered set, not the page),
-            the pager (<code>pagination</code>) and the Settings popover
-            (<code>config</code> / <code>setConfig</code> — show/hide, reorder,
-            pin). The page owns the
+            <code>selectionActions</code>), the pager (<code>pagination</code>)
+            and the Settings popover (<code>config</code> /{' '}
+            <code>setConfig</code> — show/hide, reorder, pin). The page owns the
             state; the table is presentation over the page of rows it's handed.
           </Lead>
           <WorkingTable />

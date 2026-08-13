@@ -1023,12 +1023,6 @@ const OutboundDetailView: Component = () => {
                   onSelectionChange={setSelectedIds}
                   config={tableConfig.config()}
                   setConfig={tableConfig.setConfig}
-                  // The toolbar's reading, beside the view controls: the line
-                  // count and the shipment's roll-ups together, above the rows
-                  // they summarise. Costs no height (that row is always
-                  // there), and keeps the status footer to state + action. The
-                  // pager itself lives in that footer (see linePagination).
-                  totalCount={totalCount()}
                 />
               </TabPanel>
               <TabPanel value="custom-fields">
