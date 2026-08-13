@@ -260,6 +260,33 @@ interface OutboundLineEditModalProps {
 // (advancing via "OK & next" is imperative — seedItem — not a prop change).
 // The keyed `when` is the OPEN identity: the initial item id when opened from
 // a row, or the literal 'add' when opened from "Add item".
+// The order the batch panel reads in — a decision, front to back: WHICH batch
+// (expiry, VVM), in WHAT unit (pack size, doses), HOW MUCH is there
+// (available), and HOW MANY am I taking (packs issued, and its unit echo).
+// Location and in-store follow: context a user consults occasionally, not part
+// of the choice. Available and the issued field sit beside expiry because
+// those three ARE the decision — the eye should not travel past stock-on-hand
+// and a location code to get from "is this the right batch?" to "how many?".
+//
+// Declared as the table's default column ORDER rather than by reordering the
+// columns array: the array is threaded with preference-gated spreads, so its
+// source order is about what renders, and this is about what reads first. The
+// user's own reordering (the Columns popover) still overrides it.
+const FIELD_ORDER = [
+  'canAllocate',
+  'batch',
+  'expiryDate',
+  'vvmStatus',
+  'packSize',
+  'dosesPerUnit',
+  'availablePacks',
+  'numberOfPacks',
+  'unitsIssued',
+  'inStorePacks',
+  'location',
+  'onHold',
+];
+
 export const OutboundLineEditModal = (
   props: OutboundLineEditModalProps
 ): JSX.Element => (
@@ -358,8 +385,16 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     // hidden (the old app's defaultHidden) — declared per band, since bands
     // don't share; the Columns popover restores it.
     defaultConfig: {
-      base: { viewMode: 'card', columnVisibility: { manufacturer: false } },
-      compact: { viewMode: 'card', columnVisibility: { manufacturer: false } },
+      base: {
+        viewMode: 'card',
+        columnVisibility: { manufacturer: false },
+        columnOrder: FIELD_ORDER,
+      },
+      compact: {
+        viewMode: 'card',
+        columnVisibility: { manufacturer: false },
+        columnOrder: FIELD_ORDER,
+      },
     },
   });
   const prefs = () => outboundShipmentPreferences();
