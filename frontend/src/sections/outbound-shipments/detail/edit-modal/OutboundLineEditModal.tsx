@@ -181,6 +181,15 @@ const VariantInfoTable = (props: {
 // disclosures. Group keys/labels/icons match the sibling editors exactly, so one
 // card vocabulary reads the same across every line editor.
 type GroupKey = 'batch' | 'pricing' | 'other';
+// Drop the `code` preset's 7rem growth cap from the batch column: maxSize is
+// a HARD cap, and with the row-status chips beside the batch value the
+// content fills it exactly, pinning the column so it can't be dragged wider
+// at all — the same trap (and fix) as the detail table's batch column (#601).
+const uncappedBatch = <T,>({
+  maxSize: _cap,
+  ...rest
+}: ReturnType<typeof getCellDefinition<T>>) => rest;
+
 const CARD_GROUPS: CardGroup<DraftLine, GroupKey>[] = [
   {
     key: 'batch',
@@ -963,11 +972,16 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       // The meta rides as getCellDefinition's second argument, NOT a sibling
       // `meta:` key — the spread returns its own `meta` and would overwrite one
       // declared beside it (which is exactly how this card lost its header).
-      ...getCellDefinition('batch', {
-        headerPosition: 'primary',
-        showLabel: true,
-        hideFromColumnSettings: true,
-      }),
+      ...uncappedBatch(
+        getCellDefinition('batch', {
+          headerPosition: 'primary',
+          showLabel: true,
+          hideFromColumnSettings: true,
+        })
+      ),
+      // Room for the batch value AND its status chips by default; still
+      // user-resizable in both directions (no cap).
+      size: remToPx(13),
       // A batch backed by an ITEM VARIANT carries an info marker beside its
       // name — click reveals the item's variants with this batch's marked
       // (spec S4 § batch grid), matching the old app's variant-info icon.
@@ -1007,15 +1021,16 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               <Show when={lineNearExpiry(line)}>
                 <StatusBadge
                   label={t('label.near-expiry')}
+                  tone="error"
                   icon={<AlertTriangleIcon />}
                 />
               </Show>
               <Show when={line.stockLineOnHold || line.location?.onHold}>
                 <StatusBadge
-                label={t('label.on-hold')}
-                tone="warning"
-                icon={<PauseIcon />}
-              />
+                  label={t('label.on-hold')}
+                  tone="warning"
+                  icon={<PauseIcon />}
+                />
               </Show>
             </span>
           </span>

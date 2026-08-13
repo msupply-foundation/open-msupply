@@ -1221,13 +1221,6 @@ tr[data-selected][data-tint='error'] > .selectCell {
   display: none;
 }
 
-/* The Unallocated (placeholder) name reads italic beside its outlined badge
-   (ui-standards § table interaction — the only state with no tint; the
-   italic + the badge carry it). */
-[data-unallocated-name] {
-  font-style: italic;
-}
-
 .cardBadge [data-flag] {
   display: inline-flex;
   align-items: center;
