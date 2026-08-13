@@ -8,9 +8,6 @@ import {
   Pagination,
   type PaginationProps,
 } from '../../../ui/elements/table/Pagination';
-import { formatCurrencyCell } from '../../../ui/elements/table/tableHelpers';
-import styles from './OutboundStatusFooter.module.css';
-import { formatNumber } from '../../../intl';
 import { StatusChangeAction, type StatusPreflight } from './actions';
 import { STATUS_LABELS, statusIndex, isEditable } from '../outboundStatus';
 import { allowedStatuses } from '../outboundStatusOptions';
@@ -37,17 +34,6 @@ export interface OutboundStatusFooterProps {
   preflight: () => Promise<StatusPreflight | undefined>;
   /** Toggle hold (writes onHold via the field-save path). */
   onSetHold: (hold: boolean) => void;
-  /**
-   * The shipment's whole-document totals (price before tax, volume), shown
-   * HERE rather than as a pinned row under the line table (D45 states what
-   * they are; ui-surface where they live). They are server aggregates over
-   * the WHOLE shipment, so a band under one page of rows both cost a row and
-   * read as that page's column sums — which is exactly what they are not.
-   *
-   * Omitted (undefined) on a shipment with no lines: "$0.00 · 0 m³" is a
-   * total of nothing, sitting beside an empty state that has already said so.
-   */
-  totals?: () => { price: number; volume: number };
   /**
    * The line table's pager, hosted HERE rather than in a band of its own
    * (spec/ui-standards § tables → pagination): this bar is present at every
@@ -119,23 +105,6 @@ export const OutboundStatusFooter: Component<
       </Show>
 
       <StatusIndicator steps={steps()} current={indicatorIndex()} />
-
-      {/* The shipment's totals — ONE quiet reading, in the pager's tone, so
-          two figures cost one line of a bar that already exists rather than a
-          band of their own. Reference, not action, so they sit with the status
-          reading rather than among the buttons. */}
-      <Show when={props.totals?.()}>
-        {totals => (
-          <span class={styles.totals} data-testid="shipment-totals">
-            {t('label.shipment-totals', {
-              price: formatCurrencyCell(totals().price),
-              volume: formatNumber(totals().volume, {
-                maximumFractionDigits: 2,
-              }),
-            })}
-          </span>
-        )}
-      </Show>
 
       {/* The line pager, sharing this bar (`inBar` — it sizes to its cluster
           so a crowded bar wraps it whole rather than crushing it). Spread of
