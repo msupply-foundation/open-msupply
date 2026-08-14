@@ -1145,6 +1145,16 @@ tr[data-selected][data-tint='error'] > .selectCell {
   gap: var(--space-1) var(--space-3);
 }
 
+/* STATUS flag badges sit directly after the title, not in the far corner
+   (ui-surface: "the same word-only badges directly after the title"): when
+   the header's badges are flags, the identity stops absorbing the space
+   between them, so the header reads title · statuses, left-aligned. Keyed on
+   [data-flag], so an action-bearing badge slot (row buttons) keeps the
+   corner. */
+.cardHeader:has(.cardBadge [data-flag]) .cardIdentity {
+  flex: 0 1 auto;
+}
+
 /* Identity title (ui-standards `.card-table-card-primary`). No line-height
    override — it's box-centred by .cardHeader's align-items, and every box
    centre (checkbox, colour dot, icon, title, badge) is identical, verified in

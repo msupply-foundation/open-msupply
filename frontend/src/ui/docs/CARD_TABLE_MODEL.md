@@ -30,7 +30,7 @@ A value that must look different in each view is simply **two columns** — one 
 └─────────────────────────────────────────────┘
 ```
 
-- **Header** — the card's top row. `primary` cells sit inline-start (the identity/title; multiple primaries sit inline, in column order); `badge` cells sit inline-end (a chip/status). Header cells are **unlabelled by default**. A selection checkbox leads the row when `enableSelection`.
+- **Header** — the card's top row. `primary` cells sit inline-start (the identity/title; multiple primaries sit inline, in column order); `badge` cells follow — **status flags (`data-flag`) directly after the title**, anything else (an actions cluster) pushed to the inline-end corner. Header cells are **unlabelled by default**. A selection checkbox leads the row when `enableSelection`.
 - **Body** — divided from the header by a hairline. Renders the **default (ungrouped) group first** (unpanelled, always shown), then each declared group in `cardGroups` list order. Body cells are **labelled by default** (label above value).
 - **Groups** — a body group is a captioned block of its columns' fields. It can be boxed (`panel`) and/or wrapped in a disclosure/accordion (`disclosure`).
 
