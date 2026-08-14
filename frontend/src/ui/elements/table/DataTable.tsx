@@ -68,7 +68,7 @@ import { ColumnSettings } from './ColumnSettings';
 import { TableSettings } from './TableSettings';
 import { Pagination, type PaginationProps } from './Pagination';
 import { paginationState } from './paginationState';
-import { isRtl, t } from '../../../intl';
+import { isRtl, t, tPlural } from '../../../intl';
 import styles from './DataTable.module.css';
 
 // The column model
@@ -916,7 +916,8 @@ export function DataTable<T, K extends string, G extends string = never>(
   // table then loses the hairline that row carried along its bottom edge, which
   // is what separated the header from whatever sits above it. The seam moves to
   // the table area instead (see .root[data-no-toolbar] in the CSS).
-  const hasToolbar = () => !!filters() || !props.controlsMount;
+  const hasToolbar = () =>
+    !!filters() || !!props.pagination || !props.controlsMount;
 
   const controls = (): JSX.Element => (
     <div class={styles.toolbarControls}>
@@ -1050,6 +1051,12 @@ export function DataTable<T, K extends string, G extends string = never>(
             anyColumnSized={anyColumnSized()}
             anyColumnPinned={anyColumnPinned()}
             onSaveGlobalDefault={props.onSaveGlobalDefault}
+            // Rows per page lives here now, not in the footer (which is the
+            // pager alone). Passed straight through from the page's pagination
+            // state — the table owns no page state of its own.
+            pageSize={props.pagination?.pageSize}
+            pageSizes={props.pagination?.pageSizes}
+            onPageSizeChange={props.pagination?.onPageSizeChange}
           />
         </Popover>
       </Show>
@@ -1105,6 +1112,18 @@ export function DataTable<T, K extends string, G extends string = never>(
               placement: filter state stays page-owned. */}
           <Show when={filters()}>
             <div class={styles.toolbarFilters}>{filters()}</div>
+          </Show>
+          {/* The row count — the one fact the visible rows cannot supply once a
+              set runs past a page, and free here: this row exists whatever the
+              data does, and it sits beside the filters that change the number.
+              Read from `pagination.total`, so any paginated table shows it
+              without the host passing anything extra. */}
+          <Show when={props.pagination}>
+            {pagination => (
+              <span class={styles.toolbarCount} data-testid="table-row-count">
+                {tPlural('pagination.rows-total', pagination().total)}
+              </span>
+            )}
           </Show>
           <Show when={!props.controlsMount}>{controls()}</Show>
         </div>

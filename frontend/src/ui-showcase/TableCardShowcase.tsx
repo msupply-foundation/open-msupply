@@ -1347,7 +1347,10 @@ const PaginationDemo = () => {
     <Pagination
       offset={offset()}
       pageSize={pageSize()}
-      total={38}
+      // Enough pages to show what the pager does with a long set: a window
+      // around the current page, an ellipsis for each break, and the number
+      // box behind it.
+      total={380}
       onOffsetChange={setOffset}
       onPageSizeChange={size => {
         setPageSize(size);
@@ -1373,7 +1376,6 @@ const ConditionalPaginationDemo = () => {
           offset={0}
           pageSize={20}
           total={8}
-          conditional
           onOffsetChange={() => {}}
           onPageSizeChange={() => {}}
         />
@@ -1384,7 +1386,6 @@ const ConditionalPaginationDemo = () => {
           offset={offset()}
           pageSize={20}
           total={38}
-          conditional
           onOffsetChange={setOffset}
           onPageSizeChange={() => setOffset(0)}
         />
@@ -1397,7 +1398,6 @@ const ConditionalPaginationDemo = () => {
           offset={offset()}
           pageSize={20}
           total={38}
-          conditional
           inBar
           onOffsetChange={setOffset}
           onPageSizeChange={() => setOffset(0)}
@@ -1581,8 +1581,7 @@ export const TableCardShowcase = () => (
           </Lead>
           <PaginationDemo />
           <Lead>
-            Pass <code>conditional</code> and the bar earns its space instead of
-            standing as fixed chrome (spec/ui-standards § tables → pagination):
+            The bar earns its space rather than standing as fixed chrome (spec/ui-standards § tables → pagination):
             it renders only when there is somewhere to page to. No rows, or a
             single page of them, and there is nothing here at all — the host
             drops the footer band with it (DataTable does this from{' '}
