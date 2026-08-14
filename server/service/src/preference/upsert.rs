@@ -32,6 +32,7 @@ pub struct UpsertPreferences {
     pub expired_stock_prevent_issue: Option<bool>,
     pub expired_stock_issue_threshold: Option<i32>,
     pub item_margin_overrides_supplier_margin: Option<bool>,
+    pub transfer_stock_to_internal_customers_at_cost_price: Option<bool>,
     pub is_gaps: Option<bool>,
     pub display_population_based_forecasting: Option<bool>,
     pub global_table_configs: Option<serde_json::Value>,
@@ -86,6 +87,8 @@ pub fn upsert_preferences(
         expired_stock_prevent_issue: expired_stock_prevent_issue_input,
         expired_stock_issue_threshold: expired_stock_issue_threshold_input,
         item_margin_overrides_supplier_margin: item_margin_overrides_supplier_margin_input,
+        transfer_stock_to_internal_customers_at_cost_price:
+            transfer_stock_to_internal_customers_at_cost_price_input,
         is_gaps: is_gaps_input,
         display_population_based_forecasting: display_population_based_forecasting_input,
         global_table_configs: global_table_configs_input,
@@ -139,6 +142,7 @@ pub fn upsert_preferences(
         expired_stock_prevent_issue,
         expired_stock_issue_threshold,
         item_margin_overrides_supplier_margin,
+        transfer_stock_to_internal_customers_at_cost_price,
         is_gaps,
         display_population_based_forecasting,
         global_table_configs,
@@ -235,6 +239,10 @@ pub fn upsert_preferences(
             
             if let Some(input) = item_margin_overrides_supplier_margin_input {
                 item_margin_overrides_supplier_margin.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = transfer_stock_to_internal_customers_at_cost_price_input {
+                transfer_stock_to_internal_customers_at_cost_price.upsert(connection, input, None)?;
             }
 
             if let Some(input) = display_population_based_forecasting_input {

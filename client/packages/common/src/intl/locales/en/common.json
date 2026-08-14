@@ -2765,6 +2765,7 @@
   "preference.sortByVvmStatusThenExpiry": "Sort available batches by VVM status then expiry",
   "preference.storeCustomColour": "Custom colour of page footer (hex code, e.g. #000000 for black)",
   "preference.syncRecordsDisplayThreshold": "Sync records display threshold",
+  "preference.transferStockToInternalCustomersAtCostPrice": "Transfer stock to internal customers at cost price",
   "preference.useProcurementFunctionality": "Use procurement functionality",
   "preference.useSimplifiedMobileUi": "Use simplified mobile UI",
   "preference.warnWhenMissingRecentStocktake": "Warn users when creating internal order if there is no recent stocktake",
