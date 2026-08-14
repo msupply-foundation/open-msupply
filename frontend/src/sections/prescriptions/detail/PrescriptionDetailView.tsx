@@ -578,7 +578,7 @@ const PrescriptionDetailView: Component = () => {
                     node={node()}
                     disabled={disabled()}
                     onSave={input => void saveField(input)}
-                    onClearLinesAndSave={input => void clearLinesAndSave(input)}
+                    onClearLinesAndSave={clearLinesAndSave}
                   />
                 </HeaderToolbar>
                 <TabList tabs={tabs()} />
