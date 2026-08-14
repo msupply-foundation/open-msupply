@@ -101,6 +101,7 @@ Passed to `<DataTable>`.
 | `rowTone`              | `(row) => 'info' \| 'warning' \| 'error'`              | The row's **text** colour (info / warning / error) — same section. Table view paints the whole row's text; card view the card's **identity title** only.                                          |
 | `cardTone`             | `(row) => 'info' \| 'warning' \| 'error'`        | CARD-ONLY tone override: cards take their tone from this when set, leaving table text unpainted (`rowTone` unset) — for status-tinted tables (spec D111).                                    |
 | `rowTint`              | `(row) => 'success' \| 'warning' \| 'error'`           | The row's record-STATUS **background**, always on (unlike `rowState`'s selection-gated tints) — see [rowTint](#rowtint--the-status-background). **Table view only.**                              |
+| `rowAccent`            | `(row) => 'success' \| 'warning' \| 'error'`           | A bar down the row's **leading edge** — see [rowAccent](#rowaccent--the-leading-edge-bar). Normally the same predicate as `rowTint`. **Table view only.**                                         |
 
 ### `CardGroup<T, G>`
 
@@ -153,6 +154,12 @@ Hover deepens whichever tint is showing by a couple of points; `disabled` stays 
 ### `rowTint` — the status background
 
 `rowTint={(row) => 'success' | 'warning' | 'error' | undefined}` is the record-STATUS background channel, **always on** — unlike `rowState`'s selection-gated tints: `success` (green) for a satisfied row (an outbound line with stock allocated), `error` (red) for an error-state row (expired stock), `warning` (amber) for a row needing attention (a held batch). One tint per row; the page encodes its own precedence (outbound: allocated > expired > held — spec D111). Table view only — cards carry status via `cardTone` + badges. It shows through the `disabled` grey (the status is why the row is disabled; the muted text stays), and selection deepens the tint instead of switching to the selection blue. On **clickable** rows (`onRowClick` set — the detail tables) hover deepens the tint further; non-clickable grids (the line editors) have no hover response. Never colour alone: the tint restates a fact a cell states in words. A prop function reading a store field (the outbound editor's `numberOfPacks`) re-evaluates on in-place edits — the tint flips live, with none of the TanStack accessor-caching trouble.
+
+### `rowAccent` — the leading-edge bar
+
+`rowAccent={(row) => 'success' | 'warning' | 'error' | undefined}` draws a solid 3px bar down the row's **inline-start edge**, in the same tone vocabulary as `rowTint`. It answers a different question from the tint: the tint says what a row _is_, the bar makes a set of rows countable — with the accented rows aligned on one edge, "how much is left?" is answered by running the eye down that edge instead of reading every row (the outbound detail table's unissued lines). Pass it the **same predicate as `rowTint`**, so the whole row and its edge say one thing; a page using the bar alone is fine too, but the two are not independent channels to spend on different facts.
+
+Table view only (cards carry status via `cardTone` + badges). It's drawn as an overlay on the row's leading cell — the selection cell where the table has one, else the first data cell — so an accented row is exactly as wide as an unaccented one and nothing shifts sideways when a row flips state mid-edit. Logical inset, so it follows the reading direction in RTL. Never colour alone: as with the tint, a cell or badge in the row states the same fact in words.
 
 ### `rowTone` — the text colour
 

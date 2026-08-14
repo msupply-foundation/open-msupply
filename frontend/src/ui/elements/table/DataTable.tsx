@@ -202,6 +202,19 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    */
   rowTint?: (row: T) => 'success' | 'warning' | 'error' | undefined;
   /**
+   * Semantic LEFT-EDGE accent: a solid bar down the row's leading edge,
+   * marking the rows that still need work in a list the user is working
+   * through (an outbound line with nothing issued yet). Same tone vocabulary
+   * as rowTint and normally paired with it — the tint colours the whole row,
+   * the bar makes a half-finished list legible from across the room while the
+   * eye runs down one edge. Table view only (cards carry status via cardTone +
+   * badges); stamps data-accent on the row, drawn in CSS on the leading cell
+   * as an overlay, so an accented row is exactly as wide as an unaccented one
+   * and nothing shifts sideways when a row flips state. Never colour alone:
+   * a cell or badge in the row states the same fact in words.
+   */
+  rowAccent?: (row: T) => 'success' | 'warning' | 'error' | undefined;
+  /**
    * The data is being fetched. Drives the loading treatment so a slow fetch
    * never flashes the empty state (issues #160/#196): with NO rows yet
    * (initial load) a centred spinner replaces the empty state; with rows
@@ -1257,6 +1270,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                             rowState={props.rowState}
                             rowTone={props.rowTone}
                             rowTint={props.rowTint}
+                            rowAccent={props.rowAccent}
                             pinnedStyle={pinnedStyle}
                             leadingPinnedStyle={leadingPinnedStyle}
                             frozenEdge={frozenEdge}

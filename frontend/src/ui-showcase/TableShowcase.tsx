@@ -585,6 +585,13 @@ const TableShowcaseDemo = () => {
                 ? 'disabled'
                 : undefined
         }
+        // The needs-action marking (rowTint + rowAccent on ONE predicate —
+        // the outbound detail table's pattern): the rows still to be worked
+        // carry the amber tint and a bar down the leading edge, so what's
+        // left reads down one edge. NEW stands in for "not yet actioned"
+        // here; the two props always take the same predicate.
+        rowTint={row => (row.status === 'NEW' ? 'warning' : undefined)}
+        rowAccent={row => (row.status === 'NEW' ? 'warning' : undefined)}
         emptyMessage={t('error.no-inbound-shipments')}
         enableSelection
         selectedIds={selectedIds()}
