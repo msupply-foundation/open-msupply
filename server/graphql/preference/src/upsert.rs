@@ -81,6 +81,7 @@ pub struct UpsertPreferencesInput {
     pub expired_stock_prevent_issue: Option<bool>,
     pub expired_stock_issue_threshold: Option<i32>,
     pub item_margin_overrides_supplier_margin: Option<bool>,
+    pub transfer_stock_to_internal_customers_at_cost_price: Option<bool>,
     pub is_gaps: Option<bool>,
     pub display_population_based_forecasting: Option<bool>,
     pub global_table_configs: Option<serde_json::Value>,
@@ -157,6 +158,7 @@ impl UpsertPreferencesInput {
             expired_stock_prevent_issue,
             expired_stock_issue_threshold,
             item_margin_overrides_supplier_margin,
+            transfer_stock_to_internal_customers_at_cost_price,
             is_gaps,
             display_population_based_forecasting,
             global_table_configs,
@@ -209,6 +211,8 @@ impl UpsertPreferencesInput {
             expired_stock_prevent_issue: *expired_stock_prevent_issue,
             expired_stock_issue_threshold: *expired_stock_issue_threshold,
             item_margin_overrides_supplier_margin: *item_margin_overrides_supplier_margin,
+            transfer_stock_to_internal_customers_at_cost_price:
+                *transfer_stock_to_internal_customers_at_cost_price,
             is_gaps: *is_gaps,
             display_population_based_forecasting: *display_population_based_forecasting,
 

@@ -42,6 +42,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             expired_stock_issue_threshold,
             show_indicative_price_in_requisitions,
             item_margin_overrides_supplier_margin,
+            transfer_stock_to_internal_customers_at_cost_price,
             is_gaps,
             display_population_based_forecasting,
             global_table_configs: _, // Not included in preference descriptions UI
@@ -102,6 +103,11 @@ pub trait PreferenceServiceTrait: Sync + Send {
         append_if_type(expired_stock_issue_threshold, &mut prefs, &input)?;
         append_if_type(show_indicative_price_in_requisitions, &mut prefs, &input)?;
         append_if_type(item_margin_overrides_supplier_margin, &mut prefs, &input)?;
+        append_if_type(
+            transfer_stock_to_internal_customers_at_cost_price,
+            &mut prefs,
+            &input,
+        )?;
         append_if_type(is_gaps, &mut prefs, &input)?;
         append_if_type(display_population_based_forecasting, &mut prefs, &input)?;
         append_if_type(backdating, &mut prefs, &input)?;

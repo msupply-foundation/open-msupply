@@ -2726,6 +2726,7 @@
   "preference.sortByVvmStatusThenExpiry": "Classer les lots utilisables par statut PCV, puis par date d'expiration",
   "preference.storeCustomColour": "Couleur personnalisée du pied de page (code hexadécimal, ex. #000000 pour le noir)",
   "preference.syncRecordsDisplayThreshold": "Nombre maximum d'enregistrements synchronisés à afficher",
+  "preference.transferStockToInternalCustomersAtCostPrice": "Transférer le stock aux clients internes au prix coûtant",
   "preference.useProcurementFunctionality": "Utiliser la fonction d'achat",
   "preference.useSimplifiedMobileUi": "Utiliser l'interface mobile simplifiée",
   "preference.warnWhenMissingRecentStocktake": "Avertir les utilisateurs lors de la création d'une commande interne s'il n'y a pas eu d'inventaire récent",

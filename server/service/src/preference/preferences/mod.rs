@@ -66,6 +66,8 @@ pub mod invoice_status_options;
 pub use invoice_status_options::*;
 pub mod item_margin_overrides_supplier_margin;
 pub use item_margin_overrides_supplier_margin::*;
+pub mod transfer_stock_to_internal_customers_at_cost_price;
+pub use transfer_stock_to_internal_customers_at_cost_price::*;
 pub mod is_gaps;
 pub use is_gaps::*;
 pub mod display_population_based_forecasting;
@@ -97,6 +99,8 @@ pub struct PreferenceProvider {
     pub expired_stock_prevent_issue: ExpiredStockPreventIssue,
     pub expired_stock_issue_threshold: ExpiredStockIssueThreshold,
     pub item_margin_overrides_supplier_margin: ItemMarginOverridesSupplierMargin,
+    pub transfer_stock_to_internal_customers_at_cost_price:
+        TransferStockToInternalCustomersAtCostPrice,
     pub is_gaps: IsGaps,
     pub display_population_based_forecasting: DisplayPopulationBasedForecasting,
     pub global_table_configs: GlobalTableConfigs,
@@ -150,6 +154,8 @@ pub fn get_preference_provider() -> PreferenceProvider {
         expired_stock_prevent_issue: ExpiredStockPreventIssue,
         expired_stock_issue_threshold: ExpiredStockIssueThreshold,
         item_margin_overrides_supplier_margin: ItemMarginOverridesSupplierMargin,
+        transfer_stock_to_internal_customers_at_cost_price:
+            TransferStockToInternalCustomersAtCostPrice,
         is_gaps: IsGaps,
         display_population_based_forecasting: DisplayPopulationBasedForecasting,
         global_table_configs: GlobalTableConfigs,
