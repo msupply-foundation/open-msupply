@@ -1050,6 +1050,12 @@ export function DataTable<T, K extends string, G extends string = never>(
             anyColumnSized={anyColumnSized()}
             anyColumnPinned={anyColumnPinned()}
             onSaveGlobalDefault={props.onSaveGlobalDefault}
+            // Rows per page lives here now, not in the footer (which is the
+            // pager alone). Passed straight through from the page's pagination
+            // state — the table owns no page state of its own.
+            pageSize={props.pagination?.pageSize}
+            pageSizes={props.pagination?.pageSizes}
+            onPageSizeChange={props.pagination?.onPageSizeChange}
           />
         </Popover>
       </Show>
