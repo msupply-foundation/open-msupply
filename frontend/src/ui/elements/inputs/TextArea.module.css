@@ -168,12 +168,29 @@
   flex-shrink: 0;
 }
 
-/* Touch font bump — see --input-font-touch (stops iOS zoom-on-focus). */
 @media (pointer: coarse) {
-  /* Both size variants take the touch font — the iOS zoom threshold is
-     absolute and ignores our size variant (as TextField.module.css). */
+  /* Touch font bump — see --input-font-touch. Both size variants, as every
+     other input module (a small field beside a default one must not read at a
+     different size on the same touch surface). */
   .textarea,
   .textarea[data-size='small'] {
     font-size: var(--input-font-touch);
+  }
+
+  /* Touch heights. The block-padding derivation switches to the TOUCH tokens,
+     so a rows={1} box lands exactly on the inputs beside it (48 / 44) the way
+     the rest-mode rules land on 40 / 36, and rows={n} keeps the n-line rhythm
+     on the touch token. min-block-size is deliberately NOT the mechanism here,
+     though it is what every sibling input uses: on a textarea it would seat the
+     single line at the TOP of a taller box instead of centring it. Without
+     this, the box stayed pinned at the rest height on touch — the font bump
+     grows 1lh and the rest-mode formula shrinks the padding by exactly as
+     much, so a small rows={1} sat at 36px against its 44px neighbours. */
+  .textarea {
+    padding-block: calc((var(--input-height-touch) - 1lh) / 2 - 1px);
+  }
+
+  .textarea[data-size='small'] {
+    padding-block: calc((var(--input-height-sm-touch) - 1lh) / 2 - 1px);
   }
 }
