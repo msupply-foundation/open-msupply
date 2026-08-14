@@ -1,8 +1,9 @@
 /*
  * Store selector panel (issue #193): a title, the always-open checkbox, a
  * search field (long lists only), and the stores as LIST rows — each group one
- * bordered box with hairlines between its rows, under its own heading. All
- * colours from tokens, rem sizing, logical properties for RTL.
+ * bordered box with hairlines between its rows, under its own heading; a row
+ * names its store and nothing else. All colours from tokens, rem sizing,
+ * logical properties for RTL.
  *
  * Rows were separate cards, which put a border and a gap around every store: a
  * list of eight drew nine borders and seven gaps beside a scroll rail, and the
@@ -126,17 +127,14 @@
 }
 
 /* A row is a grid, not a flex line, so the chip can change WHICH cell it sits
-   in without changing the markup — see the container query below. Wide: the
-   name and code stack in column 1, the chips hold their own column beside
-   them, the chevron closes the row.
+   in without changing the markup — see the container query below. Wide, it is
+   one line:
 
        name          tags  chevron
-       code          tags  chevron
 
-   min-block-size floors the touch target on tablets; the two-line row already
-   clears it, so it only engages for a store with a very short name at a large
-   text scale (ui-standards § accessibility: list rows keep their natural
-   height rather than inflating). */
+   min-block-size floors the touch target: a single-line row does not reach 3rem
+   on its own padding, and this is a list row, which keeps its natural height
+   rather than inflating to 48px (ui-standards § accessibility). */
 .row {
   position: relative;
   isolation: isolate;
@@ -144,12 +142,10 @@
   min-block-size: 3rem;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
-  grid-template-areas:
-    'name tags chevron'
-    'code tags chevron';
+  grid-template-areas: 'name tags chevron';
   align-items: center;
   column-gap: var(--space-3);
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-2) var(--space-4);
   border: none;
   background: transparent;
   color: var(--text-body);
@@ -167,17 +163,17 @@
 
 /* Narrow columns (tablet portrait's login panel is ~20rem of content once the
    hero takes its half): the name gets the row's full width instead of
-   truncating early against the chips, and the chips drop to sit beside the
-   code, which is short enough to share its line.
+   truncating early against the chips, and the chip drops to a second line.
 
-       name          name  chevron
-       code  tags          chevron */
+       name  name  chevron
+       tags  tags  chevron */
 @container (max-width: 24rem) {
   .row {
-    grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-areas:
       'name name chevron'
-      'code tags chevron';
+      'tags tags chevron';
+    row-gap: var(--space-1);
+    padding-block: var(--space-3);
   }
 
   .tags {
@@ -216,23 +212,11 @@
   box-shadow: inset 0 0 0 0.125rem var(--primary-main);
 }
 
-/* Name over code: the code is what the search matches on and what tells two
-   similarly-named stores apart, so it is on the row rather than only in the
-   data. */
+/* The row's whole label: the store's name. The code is a search key only, not
+   displayed (spec S3). */
 .storeName {
   grid-area: name;
   min-inline-size: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.storeCode {
-  grid-area: code;
-  min-inline-size: 0;
-  font-size: var(--text-xs);
-  line-height: 1.4;
-  color: var(--text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
