@@ -40,6 +40,7 @@ import { reportsRoutes } from './sections/reports';
 import { settingsRoutes } from './sections/settings';
 import { sitesRoutes } from './sections/sites';
 import { helpRoutes, helpDocumentsRoutes } from './sections/help';
+import { globalPreferencesRoutes } from './sections/global-preferences';
 import { ShellLayout } from './nav/ShellLayout';
 import { EntryPage } from './nav/EntryPage';
 import { LoginPage } from './auth/LoginPage';
@@ -88,6 +89,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   reports: reportsRoutes,
   settings: settingsRoutes,
   'manage/sites': sitesRoutes,
+  'manage/global-preferences': globalPreferencesRoutes,
   help: helpRoutes,
   'manage/help-documents': helpDocumentsRoutes,
 };
