@@ -3,7 +3,7 @@ import { itemsForMasterListHref } from './itemsListLink';
 
 // The row-select destination (spec/master-lists S1, OMS-REG-CAT-07.32): the
 // items list scoped to the master list, replacing the retired detail screen
-// (spec/DIVERGENCES D80).
+// (issue #776).
 
 const decode = (href: string) =>
   JSON.parse(

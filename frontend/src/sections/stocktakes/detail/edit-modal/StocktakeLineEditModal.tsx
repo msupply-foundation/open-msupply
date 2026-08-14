@@ -170,7 +170,7 @@ const fetchExistingLines = async (
 // ~30 items at a handful of batches each, so this is never expected to bind.
 const PRESENCE_PROBE_PAGE = 1000;
 
-// The add-item search's already-on-stocktake probe (D115 — the "In stocktake"
+// The add-item search's already-on-stocktake probe (the "In stocktake"
 // option badge): one membership query per fetched page of options — the same
 // stocktakeLines query the editor loads items with, filtered to that page's
 // item ids; the distinct item ids of the returned lines are the hits.
@@ -1478,8 +1478,8 @@ const StocktakeLineEditContent = (
             focusTarget={itemSearch}
             value={currentItem()?.id}
             selectedItem={currentItem()}
-            // Mark items already on this stocktake in the results (D115,
-            // OMS-REG-INV-03.78) — picking one still loads its existing count.
+            // Mark items already on this stocktake in the results
+            // (OMS-REG-INV-03.78) — picking one still loads its existing count.
             presentInDocument={{
               probe: ids =>
                 probePresentItems(props.storeId, props.stocktakeId, ids),

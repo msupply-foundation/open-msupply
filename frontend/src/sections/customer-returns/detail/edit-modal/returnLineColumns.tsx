@@ -48,27 +48,45 @@ const targetFor = (targets: KeyedFocusTargets, key: string): FocusTarget => ({
   cancel: targets.cancel,
 });
 
+// Whose rows are these? The from-shipment host's drafts span SEVERAL items, so
+// its grids must name each row's item; the per-item host's rows are all the one
+// item the dialog title already names, so they don't — repeating it per row
+// says nothing and costs the width the quantity field needs (issue #1002). The
+// same rule every other per-item line editor follows (stocktake, inbound), and
+// the supplier-returns twin.
+export type ItemIdentity = { showItem: boolean };
+
+const itemColumns = ({
+  showItem,
+}: ItemIdentity): Column<DraftReturnLine, never>[] =>
+  showItem
+    ? [
+        {
+          c: { key: 'itemCode' },
+          header: () => t('label.code'),
+          ...getCellDefinition('itemCode'),
+        },
+        {
+          c: { key: 'itemName' },
+          header: () => t('label.name'),
+          ...getCellDefinition('itemName', {
+            headerPosition: 'primary',
+            wrapLines: 2,
+          }),
+        },
+      ]
+    : [];
+
 // Each column takes its cell-type width preset (docs/CELL_TYPES.md) — spread
 // BEFORE any editable `cell` override, so the preset supplies the width and
 // alignment while the override supplies the control (the documented order).
 // ---- Step 1: the quantity grid (ui-surface S4 § step 1) ----
 export const quantityColumns = (
   update: UpdateLine,
-  quantityFields: KeyedFocusTargets
+  quantityFields: KeyedFocusTargets,
+  identity: ItemIdentity
 ): Column<DraftReturnLine, never>[] => [
-  {
-    c: { key: 'itemCode' },
-    header: () => t('label.code'),
-    ...getCellDefinition('itemCode'),
-  },
-  {
-    c: { key: 'itemName' },
-    header: () => t('label.name'),
-    ...getCellDefinition('itemName', {
-      headerPosition: 'primary',
-      wrapLines: 2,
-    }),
-  },
+  ...itemColumns(identity),
   {
     c: { key: 'batch' },
     header: () => t('label.batch'),
@@ -195,21 +213,10 @@ export const quantityColumns = (
 // line rules, OMS-REG-DIST-07.30). ----
 export const reasonColumns = (
   update: UpdateLine,
-  reasonFields: KeyedFocusTargets
+  reasonFields: KeyedFocusTargets,
+  identity: ItemIdentity
 ): Column<DraftReturnLine, never>[] => [
-  {
-    c: { key: 'itemCode' },
-    header: () => t('label.code'),
-    ...getCellDefinition('itemCode'),
-  },
-  {
-    c: { key: 'itemName' },
-    header: () => t('label.name'),
-    ...getCellDefinition('itemName', {
-      headerPosition: 'primary',
-      wrapLines: 2,
-    }),
-  },
+  ...itemColumns(identity),
   {
     c: { key: 'batch' },
     header: () => t('label.batch'),

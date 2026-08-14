@@ -38,8 +38,7 @@ type AppData = {
   // § View state; issue #680): one value per user for the whole app — a "how
   // much do I want to see at once" preference about the user, not about any one
   // list. User-keyed like tableConfigByUserId so a shared device does not leak
-  // one user's choice to another (the reference app remembers device-wide;
-  // spec/DIVERGENCES.md records the delta). Every change is recorded, so an
+  // one user's choice to another (the reference app remembers device-wide). Every change is recorded, so an
   // explicit choice survives even if the app-wide default ever moves.
   pageSizeByUserId?: Record<string, number>;
 };

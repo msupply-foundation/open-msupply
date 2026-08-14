@@ -157,8 +157,17 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
 
   const noItemYet = () => mode() === 'add' && currentItem() === undefined;
 
+  // Quantity returned is the one figure this grid exists for, so it is PINNED
+  // to the inline-end by default: at any width where the grid scrolls it stays
+  // on screen, rather than being carried off by a resize (issue #1002). It
+  // therefore sits after Volume per pack, which it precedes in declaration
+  // order. Base band only — the compact band renders as cards, where pinning is
+  // meaningless.
   const tableConfig = createTableConfig({
     tableId: 'customer-return-line-edit',
+    defaultConfig: {
+      base: { columnPinning: { right: ['numberOfPacksReturned'] } },
+    },
   });
 
   // Seed the draft for one item: the return's existing lines for it (via
@@ -413,6 +422,10 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
         <ItemSearch
           label={t('label.item')}
           hideLabel
+          // Fills the title row, as in every other line editor's item search:
+          // it IS the dialog's heading, so a short cap leaves it stranded
+          // against a wide dialog (issue #1002).
+          width="full"
           storeId={props.storeId}
           focusTarget={itemSearch}
           value={currentItem()?.id}
@@ -599,7 +612,9 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
           when={step() === 'reason'}
           fallback={
             <DataTable
-              columns={quantityColumns(update, quantityFields)}
+              columns={quantityColumns(update, quantityFields, {
+                showItem: false,
+              })}
               rows={draft.filter(() => true)}
               rowKey={line => line.id}
               loading={loadingLines()}
@@ -612,7 +627,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
           }
         >
           <DataTable
-            columns={reasonColumns(update, reasonFields)}
+            columns={reasonColumns(update, reasonFields, { showItem: false })}
             rows={reasonRows()}
             rowKey={line => line.id}
             showFullScreen={false}

@@ -70,6 +70,10 @@
   border: none;
   border-radius: var(--radius-sm);
   background: none;
+  /* The mark's jar paints with currentColor, and a <button> does NOT inherit
+     colour — the UA gives it `buttontext`. Without this the jar would take the
+     browser's own button colour rather than the app's text colour. */
+  color: inherit;
   cursor: pointer;
 }
 

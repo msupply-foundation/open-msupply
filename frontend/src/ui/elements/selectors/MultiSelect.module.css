@@ -180,6 +180,12 @@
 }
 
 .item {
+  /* Never shrink below the row's own text — see Combobox.module.css `.item` for
+     the full account: a scrolling column flex box shrinks its rows, and the
+     coarse-pointer touch floor below replaces the `min-height: auto` that
+     otherwise holds them open, so on a tablet a wrapped option collapsed into
+     44px and overlapped its neighbour (#1039). The touch floor still applies. */
+  flex: none;
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -188,6 +194,10 @@
   cursor: pointer;
   user-select: none;
   outline: none;
+  /* A wrapping row must be allowed to be narrower than its longest word, or the
+     overrun becomes a horizontal scrollbar over the options (#1041) — see
+     Combobox.module.css for why `anywhere` and not `break-word`. */
+  overflow-wrap: anywhere;
 }
 
 .item[data-highlighted] {
