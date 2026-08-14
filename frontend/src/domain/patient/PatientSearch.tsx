@@ -103,9 +103,10 @@ const renderRow = (patient: PatientOption): JSX.Element => (
  * Consumed by other surfaces (prescriptions, next-of-kin). Its allow-edit
  * affordance (spec/patients S4) is `onEditPatient`: an edit button at the end
  * of the field — the current app's placement — so it costs the label row
- * nothing and stays live while the picker itself is disabled. (S4's fuller
- * two-tab edit modal is not built; the consumer decides where the affordance
- * leads.)
+ * nothing and stays live while the picker itself is disabled. The consumer
+ * decides where the affordance leads — prescriptions opens the S4 two-tab edit
+ * modal (`EditPatientModal`, `src/sections/patients`) in place, never a
+ * navigate-away (#1038).
  */
 export const PatientSearch = (props: PatientSearchProps): JSX.Element => (
   <AsyncCombobox<PatientOption>

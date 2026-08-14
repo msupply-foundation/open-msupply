@@ -84,6 +84,7 @@ import {
 import { PrescriptionStatusFooter } from './PrescriptionStatusFooter';
 import { HistoryModal } from './HistoryModal';
 import { PrescriptionLineEditModal } from './edit-modal/PrescriptionLineEditModal';
+import { EditPatientModal } from '../../patients';
 
 // The prescription detail (spec/prescriptions/ui-surface.md S3): toolbar
 // (patient / clinician / date / program), Details + Log tabs over the flat
@@ -104,6 +105,10 @@ const PrescriptionDetailView: Component = () => {
     itemId?: string;
     item?: { id: string; code: string; name: string };
   }>();
+  // The patient picker's edit-patient modal (#1038) — the id it's currently
+  // open for; undefined = closed. Mounted fresh per open (below), like
+  // editState's line editor.
+  const [editPatientId, setEditPatientId] = createSignal<string>();
   const [historyOpen, setHistoryOpen] = createSignal(false);
   const [reportOpen, setReportOpen] = createSignal(false);
   const [deleteLinesConfirm, setDeleteLinesConfirm] = createSignal(false);
@@ -578,7 +583,8 @@ const PrescriptionDetailView: Component = () => {
                     node={node()}
                     disabled={disabled()}
                     onSave={input => void saveField(input)}
-                    onClearLinesAndSave={input => void clearLinesAndSave(input)}
+                    onClearLinesAndSave={clearLinesAndSave}
+                    onEditPatient={setEditPatientId}
                   />
                 </HeaderToolbar>
                 <TabList tabs={tabs()} />
@@ -725,6 +731,22 @@ const PrescriptionDetailView: Component = () => {
                 initialItem={state.item}
                 programId={node().programId ?? undefined}
                 onClose={() => setEditState(undefined)}
+                onSaved={() => void refetch()}
+              />
+            )}
+          </Show>
+
+          {/* The patient picker's edit-patient modal (spec/patients S4,
+              #1038) — in place over this screen, never a navigate-away;
+              mounted fresh per open like the line editor above. A save
+              refetches so the toolbar/side panel show the patient's current
+              name. */}
+          <Show when={editPatientId()} keyed>
+            {patientId => (
+              <EditPatientModal
+                storeId={params.storeId}
+                patientId={patientId}
+                onClose={() => setEditPatientId(undefined)}
                 onSaved={() => void refetch()}
               />
             )}

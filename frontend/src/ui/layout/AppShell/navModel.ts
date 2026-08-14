@@ -39,8 +39,6 @@ export interface NavLeaf {
   gate?: NavCapability;
   /** Permission-gated read — visible, refused on activation (navConfig). */
   permission?: NavConfigItem['permission'];
-  /** Offered at phone width (see navConfig NavItem.mobileFriendly). */
-  mobileFriendly?: true;
 }
 
 export interface NavItem {
@@ -52,8 +50,6 @@ export interface NavItem {
   gate?: NavCapability;
   /** Permission-gated read — visible, refused on activation (navConfig). */
   permission?: NavConfigItem['permission'];
-  /** Offered at phone width (see navConfig NavItem.mobileFriendly). */
-  mobileFriendly?: true;
   /** Present → expandable parent section. Absent → a leaf link. */
   children?: NavLeaf[];
 }
@@ -101,14 +97,12 @@ const toNavItem = (item: NavConfigItem): NavItem => ({
   icon: SECTION_ICONS[item.path] ?? FileIcon,
   gate: item.gate,
   permission: item.permission,
-  mobileFriendly: item.mobileFriendly,
   children: item.children?.map(child => ({
     id: child.path,
     labelKey: child.labelKey,
     to: child.path,
     gate: child.gate,
     permission: child.permission,
-    mobileFriendly: child.mobileFriendly,
   })),
 });
 
@@ -134,7 +128,6 @@ export const navLeaves: NavLeaf[] = items.flatMap(item =>
           to: item.to,
           gate: item.gate,
           permission: item.permission,
-          mobileFriendly: item.mobileFriendly,
         },
       ]
 );

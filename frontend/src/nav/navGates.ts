@@ -102,30 +102,6 @@ export const gateNav = <
     .filter(item => !item.children || item.children.length > 0);
 
 /**
- * The phone-width menu: only mobile-friendly destinations survive, and a
- * section with none left disappears (spec/navigation § mobile-friendly, D95).
- * Applied AFTER gateNav, only while the viewport is phone-width; routes are
- * untouched — the marker is presentation, not reachability.
- */
-export const mobileNav = <
-  T extends { mobileFriendly?: true; children?: C[] },
-  C extends { mobileFriendly?: true },
->(
-  items: T[]
-): T[] =>
-  items
-    .map(item => {
-      if (!item.children) return item;
-      const kept = item.children.filter(child => child.mobileFriendly === true);
-      return kept.length === item.children.length
-        ? item
-        : { ...item, children: kept };
-    })
-    .filter(item =>
-      item.children ? item.children.length > 0 : item.mobileFriendly === true
-    );
-
-/**
  * Route-guard verdict for a store-relative path (spec/navigation: the router
  * is the registry's third surface). Matches the deepest destination whose path
  * is a segment-prefix of the given path — 'inventory/stocktakes/123' is judged
