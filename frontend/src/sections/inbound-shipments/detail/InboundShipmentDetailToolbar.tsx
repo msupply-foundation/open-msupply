@@ -1,5 +1,6 @@
 import { createSignal, Show, type Component } from 'solid-js';
 import { t } from '../../../intl';
+import { localisedDate } from '../../../intl/formatDateTime';
 import { TextArea } from '../../../ui/elements/inputs/TextArea';
 import { DateField } from '../../../ui/elements/inputs/DateField';
 import {
@@ -8,6 +9,7 @@ import {
   localTodayIso,
   utcToLocalDay,
 } from '../../../ui/elements/inputs/dateTimeConvert';
+import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
 import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
 import { RecordLink } from '../../../ui/elements/typography/RecordLink';
@@ -52,6 +54,22 @@ export const InboundShipmentDetailToolbar: Component<
   // DateField's own `error` rather than a sibling Alert so the cluster's row
   // stays a row of fields.
   const [receivedError, setReceivedError] = createSignal<string>();
+
+  // The chosen backdate awaiting confirmation (the picked day + the instant
+  // to save) — the re-stamp it causes can't be undone (rules § backdating
+  // the received date), so it's confirmed first; undefined when no
+  // confirmation is open.
+  const [pendingReceived, setPendingReceived] = createSignal<{
+    day: string;
+    received: string;
+  }>();
+  // The user's un-saved picked day, so a cancelled pick reverts the input —
+  // the node hasn't changed, so the controlled `value` alone wouldn't
+  // (mirrors PickedDateField.tsx's fix for the same class of bug).
+  const [draftReceivedDay, setDraftReceivedDay] = createSignal<string>();
+  // A confirmed backdate is saving — onClose (which always follows
+  // onConfirm) must not revert the draft while it is.
+  let confirmInFlight = false;
 
   // Supplier is editable only on a manual shipment that isn't Verified — never
   // on a transfer or a PO-linked shipment (spec S3 header fields).
@@ -109,7 +127,7 @@ export const InboundShipmentDetailToolbar: Component<
       <DateField
         label={t('label.received')}
         size="small"
-        value={utcToLocalDay(props.node.receivedDatetime)}
+        value={draftReceivedDay() ?? utcToLocalDay(props.node.receivedDatetime)}
         disabled={!receivedDateEditable()}
         // The blocking reason is a TOOLTIP on the label, per spec S3 ("disabled
         // state carries an explanatory tooltip for each blocking reason") — not
@@ -126,7 +144,7 @@ export const InboundShipmentDetailToolbar: Component<
         max={utcToLocalDay(props.node.receivedDatetime) ?? undefined}
         onChange={value => {
           const picked = isoDateToDate(value);
-          if (!picked) return;
+          if (!value || !picked) return;
           setReceivedError(undefined);
           // Offset-preserving so the server's backdating log records the
           // picked local day (input is DateTime<FixedOffset>; #456). Today
@@ -136,11 +154,38 @@ export const InboundShipmentDetailToolbar: Component<
             value === localTodayIso()
               ? dateToOffsetIso(new Date())
               : dateToOffsetIso(picked);
-          void props
-            .onSaveField({ receivedDatetime: received })
-            .then(r => setReceivedError(r.ok ? undefined : r.message));
+          // The re-stamp this causes can't be undone (rules § backdating the
+          // received date), so it's confirmed before saving — not applied
+          // straight away like the rest of this cluster's fields.
+          setDraftReceivedDay(value);
+          setPendingReceived({ day: value, received });
         }}
       />
+      <Show when={pendingReceived()}>
+        {info => (
+          <ConfirmDialog
+            open
+            onClose={() => {
+              setPendingReceived(undefined);
+              if (!confirmInFlight) setDraftReceivedDay(undefined);
+            }}
+            title={t('heading.are-you-sure')}
+            message={t('messages.confirm-backdate-received-date', {
+              date: localisedDate(info().received),
+            })}
+            onConfirm={() => {
+              confirmInFlight = true;
+              void props
+                .onSaveField({ receivedDatetime: info().received })
+                .then(r => {
+                  confirmInFlight = false;
+                  setDraftReceivedDay(undefined);
+                  setReceivedError(r.ok ? undefined : r.message);
+                });
+            }}
+          />
+        )}
+      </Show>
 
       {/* PO-linked: PO number (links to the order) + read-only reference (spec
           S3 header fields). Never-editable facts, so they're read-only
