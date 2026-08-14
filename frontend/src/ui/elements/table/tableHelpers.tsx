@@ -1,7 +1,9 @@
+import type { JSX } from 'solid-js';
 import type { ColumnDefBase, ColumnMeta } from '@tanstack/solid-table';
 import { localisedDate, localisedTime } from '../../../intl/formatDateTime';
 import { formatNumber } from '../../../intl/formatNumber';
 import { Comment } from '../feedback/Comment';
+import { StatusBadge } from '../feedback/StatusBadge';
 import { CheckIcon } from '../../icons';
 import type { Column } from './columnTypes';
 import { getChipListCell } from './ChipListCell';
@@ -204,34 +206,36 @@ export const getFlagCell = <T,>(
   label: string,
   meta?: Meta,
   /**
-   * Semantic tone for the CARD badge (table view is untouched — the check
-   * stands under its named header there): 'success' tints the check + label
-   * green; 'warning' (amber) and 'error' (red) tint AND drop the check — a
-   * check connotes a positive state, so a caution flag shows its word alone.
-   * Untoned flags keep the neutral check + label.
+   * Semantic tone for the CARD chip (table view is untouched — the check
+   * stands under its named header there): the card badge slot renders the
+   * flag as a StatusBadge chip in this tone. Untoned flags chip neutrally.
    */
-  tone?: 'success' | 'warning' | 'error'
+  tone?: 'success' | 'warning' | 'error',
+  /**
+   * Optional marker icon for the card chip (see StatusBadge.icon) — a THUNK,
+   * called per row. A bare JSX element would be evaluated once into a single
+   * DOM node shared by every flagged row, so mounting one row's chip would
+   * steal the icon from the previous (kdd/solid-reactivity-pitfalls).
+   */
+  icon?: () => JSX.Element
 ): CellFragment<T> => ({
   meta: { align: 'center', ...meta },
-  // data-flag/-label: in table view the check stands alone under its column
-  // header; in a card's BADGE slot the header is gone and two flags are
-  // indistinguishable checks, so the label shows beside the check there
-  // (CSS-gated — see DataTable.module.css § flag cells). A body-slot card
-  // flag keeps its LabelledValue caption instead.
+  // TWO renderings, CSS-gated per view (DataTable.module.css § flag cells):
+  // in table view the bare check ([data-flag]) stands alone under its named
+  // column header; in a card's BADGE slot the header is gone and two flags
+  // are indistinguishable checks, so the flag renders as a StatusBadge CHIP
+  // ([data-flag-chip]) instead. A body-slot card flag keeps its check +
+  // LabelledValue caption.
   cell: info =>
     info.getValue<boolean>() ? (
-      <span
-        data-flag
-        data-flag-tone={tone}
-        role="img"
-        aria-label={label}
-        title={label}
-      >
-        <CheckIcon />
-        <span data-flag-label aria-hidden="true">
-          {label}
+      <>
+        <span data-flag role="img" aria-label={label} title={label}>
+          <CheckIcon />
         </span>
-      </span>
+        <span data-flag-chip>
+          <StatusBadge label={label} tone={tone} icon={icon?.()} />
+        </span>
+      </>
     ) : (
       ''
     ),

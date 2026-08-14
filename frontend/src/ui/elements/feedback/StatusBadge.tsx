@@ -17,7 +17,7 @@ import styles from './StatusBadge.module.css';
 export interface StatusBadgeProps {
   /** The state, as a word — "On hold", "Expired"… Already translated. */
   label: string;
-  tone?: 'neutral' | 'warning' | 'error';
+  tone?: 'neutral' | 'success' | 'warning' | 'error';
   /** 'solid' (default) = tone-tinted fill; 'outline' = dashed border, no fill. */
   appearance?: 'solid' | 'outline';
   /** Optional marker icon, decorative (the label carries the meaning). */

@@ -1,11 +1,13 @@
 /* An almost-expired / expired date cell (getExpiryDateCell): the date text in
    the error tone, matching the old app's ExpiryDateCell (error.main). An
-   ACTUALLY expired date (its day has arrived) additionally reads bold — the
-   step up from "expiring soon" to "expired" (spec D112). */
+   ACTUALLY expired date (its day has arrived) additionally steps up to
+   medium weight — the "expiring soon" → "expired" tier (spec D112). Medium,
+   not bold: 700 read too heavy against the table's regular text (design
+   review, 2026-08-14). */
 .expiring {
   color: var(--error-main);
 }
 
 .expired {
-  font-weight: var(--weight-bold);
+  font-weight: var(--weight-medium);
 }
