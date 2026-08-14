@@ -6,7 +6,7 @@
    simple. */
 
 /* Dot (default) — a small filled circle: the reference app's boolean glyph,
-   kept by DIVERGENCES D8 (which diverges only on accessibility, not the glyph).
+   kept as-is; only the accessible name differs, not the glyph.
    Sized to the cell font; colour follows the body-text token so it clears AA
    contrast in both themes — the meaning is the dot's presence, not its
    colour. */

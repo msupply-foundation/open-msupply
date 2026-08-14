@@ -11,30 +11,14 @@ import { paginationState, type PaginationExtent } from './paginationState';
 //   OMS-REG-REPL-03.24     — inbound shipment detail
 //
 // Only these four values feed the rule.
-const props = (total: number, offset = 0, pageSize = 20): PaginationExtent => ({
+const props = (total: number, offset = 0, pageSize = 50): PaginationExtent => ({
   total,
   offset,
   pageSize,
-  conditional: true,
-});
-
-/** No `conditional` at all — the stable-chrome default. */
-const stable = (total: number): PaginationExtent => ({
-  total,
-  offset: 0,
-  pageSize: 20,
 });
 
 describe('paginationState', () => {
-  describe('the stable-chrome default (no `conditional`)', () => {
-    it('is the full bar at every row count, including zero', () => {
-      expect(paginationState(stable(0))).toBe('full');
-      expect(paginationState(stable(14))).toBe('full');
-      expect(paginationState(stable(143))).toBe('full');
-    });
-  });
-
-  describe('the conditional footer', () => {
+  describe('the pager, which exists only when there is somewhere to page to', () => {
     it('renders nothing with no rows', () => {
       expect(paginationState(props(0))).toBe('hidden');
     });
@@ -43,11 +27,11 @@ describe('paginationState', () => {
       expect(paginationState(props(1))).toBe('hidden');
       expect(paginationState(props(14))).toBe('hidden');
       // Exactly one full page is still one page.
-      expect(paginationState(props(20))).toBe('hidden');
+      expect(paginationState(props(50))).toBe('hidden');
     });
 
     it('appears as soon as there is a second page', () => {
-      expect(paginationState(props(21))).toBe('full');
+      expect(paginationState(props(51))).toBe('full');
       expect(paginationState(props(143))).toBe('full');
     });
 

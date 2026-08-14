@@ -54,8 +54,7 @@ import { ExportStockAction } from './actions/ExportStockAction';
 // (TanStack gates header sort on the accessorFn; a pure display column never
 // sorts — this is why the old id-only columns were dead, kdd/table-state).
 //
-// The grouped-by-item view is deferred this iteration (spec/stock DIVERGENCES
-// D63) — the list is the flat stock-line list only.
+// The grouped-by-item view is deferred this iteration — the list is the flat stock-line list only.
 
 type Row = StockLineRowFragment;
 

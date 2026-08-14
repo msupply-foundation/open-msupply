@@ -348,10 +348,13 @@ const OutboundDetailView: Component = () => {
       setSelectedIds([]);
     },
     onPageSizeChange: first => {
+      // The remembered page size (D106) — it rode the DataTable's own
+      // pagination prop, which this accessor replaced when the pager moved
+      // into the status footer, so it has to travel with the handler.
+      rememberPageSize(first);
       setQuery({ ...query(), first, offset: 0 });
       setSelectedIds([]);
     },
-    conditional: true,
   });
   // Deleting the last page's rows can leave the offset past the end (an
   // empty "41–40 of 40" page) — clamp back to the last real page when a
@@ -1129,23 +1132,6 @@ const OutboundDetailView: Component = () => {
                   onSelectionChange={setSelectedIds}
                   config={tableConfig.config()}
                   setConfig={tableConfig.setConfig}
-                  // Page navigation clears the selection (OMS-REG-DIST-03.34):
-                  // the bulk-action gates classify by rows in view, so a
-                  // selection must never carry ids the user can no longer see.
-                  pagination={{
-                    offset: query().offset,
-                    pageSize: query().first,
-                    total: totalCount(),
-                    onOffsetChange: offset => {
-                      setQuery({ ...query(), offset });
-                      setSelectedIds([]);
-                    },
-                    onPageSizeChange: first => {
-                      rememberPageSize(first);
-                      setQuery({ ...query(), first, offset: 0 });
-                      setSelectedIds([]);
-                    },
-                  }}
                 />
               </TabPanel>
               <TabPanel value="custom-fields">
