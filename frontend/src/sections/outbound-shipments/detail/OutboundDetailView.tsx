@@ -131,8 +131,8 @@ const lineOnHold = (line: Line): boolean =>
   !!line.stockLine?.onHold || !!line.location?.onHold;
 
 // Calendar-expired line (D112) — the bold red Expiry-date cell, a red status
-// tint on an unallocated row, and the red card treatment (title/border/
-// Expired badge).
+// tint on an unallocated row, and the red card treatment (tinted title +
+// Expired corner badge).
 const lineExpired = (line: Line): boolean =>
   !!line.expiryDate && isExpired(line.expiryDate);
 
@@ -175,7 +175,7 @@ const lineRowTint = (
   return undefined;
 };
 
-// The card tone (title + border + corner badge — D111/D112); no info tone
+// The card tone (tinted title + corner badge — D111/D112); no info tone
 // for placeholders. Expired outranks held (matching the tint precedence);
 // both corner badges still show.
 const lineCardTone = (line: Line): 'warning' | 'error' | undefined => {
