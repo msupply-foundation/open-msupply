@@ -9,8 +9,9 @@ import type { getCellDefinition } from '@/ui/elements/table/tableHelpers';
 // item name) and the line editor's grid (beside the batch value): word chips
 // carrying each line state — Expired / Near expiry (tiered, both red), On
 // hold (amber). Every applicable badge shows (expired AND held → both).
-// Table view only — cards carry the same states as their corner badges (the
-// [data-row-badges] CSS in DataTable.module.css hides the cluster there).
+// Table view only — cards carry the same states as their after-the-title
+// chips (the [data-row-badges] CSS in DataTable.module.css hides the
+// cluster there).
 // The caller owns the predicates (its own line shape) and any gate — a
 // placeholder carries no badge; its Batch cell's "Placeholder" word is the
 // flag.

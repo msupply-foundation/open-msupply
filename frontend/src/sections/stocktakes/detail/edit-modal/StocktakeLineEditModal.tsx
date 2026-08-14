@@ -170,6 +170,33 @@ const fetchExistingLines = async (
   return result.kind === 'success' ? result.data.stocktakeLines.nodes : [];
 };
 
+// How many lines one presence probe may return: a page of search results is
+// ~30 items at a handful of batches each, so this is never expected to bind.
+const PRESENCE_PROBE_PAGE = 1000;
+
+// The add-item search's already-on-stocktake probe (the "In stocktake"
+// option badge): one membership query per fetched page of options — the same
+// stocktakeLines query the editor loads items with, filtered to that page's
+// item ids; the distinct item ids of the returned lines are the hits.
+// undefined on a failed fetch → that page just goes unmarked (graphqlFetch
+// already surfaced the error).
+const probePresentItems = async (
+  storeId: string,
+  stocktakeId: string,
+  itemIds: string[]
+): Promise<string[] | undefined> => {
+  const result = await graphqlFetch(StocktakeLines, {
+    storeId,
+    stocktakeId,
+    filter: { itemId: { equalAny: itemIds } },
+    page: { first: PRESENCE_PROBE_PAGE },
+  });
+  if (result.kind !== 'success') return undefined;
+  return [
+    ...new Set(result.data.stocktakeLines.nodes.map(line => line.item.id)),
+  ];
+};
+
 // Fetch the item's other batches (stock lines NOT already on the stocktake) and
 // build the draft rows: the existing lines (counted-in → countThisLine true)
 // PLUS those stock lines (linked to their stockLineId — ticking one inserts
@@ -1473,6 +1500,13 @@ const StocktakeLineEditContent = (
               focusTarget={itemSearch}
               value={currentItem()?.id}
               selectedItem={currentItem()}
+              // Mark items already on this stocktake in the results
+              // (OMS-REG-INV-03.78) — picking one still loads its existing count.
+              presentInDocument={{
+                probe: ids =>
+                  probePresentItems(props.storeId, props.stocktakeId, ids),
+                label: t('label.in-stocktake'),
+              }}
               // Pick an item → load it; clear (×) → back to the search state.
               onSelect={item => (item ? selectItem(item) : backToSearch())}
               placeholder={t('placeholder.enter-an-item-code-or-name')}

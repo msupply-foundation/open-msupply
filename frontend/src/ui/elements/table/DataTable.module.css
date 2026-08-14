@@ -985,6 +985,19 @@ tr[data-selected][data-tint='error'] > .selectCell {
   align-items: center;
 }
 
+/* The row count — quiet text at the toolbar's inline end, just before the
+   icon controls. It takes the auto margin that would otherwise sit on the
+   controls, so the pair travels together to that edge; two auto margins would
+   split the free space and strand the count mid-row. tabular-nums keeps the
+   digits from jittering as a filter narrows the set. */
+.toolbarCount {
+  margin-inline-start: auto;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 /* The icon-control cluster — held at the inline-end by its own auto margin
    (lands correctly whether or not filters/tabs sit at the start, and hugs the
    same edge when it wraps onto its own line). */
@@ -994,6 +1007,12 @@ tr[data-selected][data-tint='error'] > .selectCell {
   align-self: stretch;
   gap: var(--space-1);
   margin-inline-start: auto;
+}
+
+/* With a count present, IT holds the inline-end margin and the controls simply
+   follow it. */
+.toolbarCount + .toolbarControls {
+  margin-inline-start: 0;
 }
 
 /* Inline loading spinner sitting just left of the toolbar's icon controls (a
@@ -1107,28 +1126,10 @@ tr[data-selected][data-tint='error'] > .selectCell {
   );
 }
 
-/* A warning-toned card (rowTone 'warning' — a held batch): amber border + a
-   very faint amber lift, so the card reads at a glance in the deck. After the
-   selected rule (same specificity): the hold is a durable fact of the record,
-   so its border survives transient selection (selection keeps its fill). An
-   error-toned card (an expired batch) gets the same treatment in red, and a
-   success-toned card (a batch auto-allocation will use) in green — border +
-   shadow ONLY: the affirmative state keeps its title untinted (the green
-   badge names it), where warning/error also tint the title (rules above). */
-.cardRow[data-tone='warning'] > .cardCell > .card {
-  border-color: color-mix(in srgb, var(--warning-main) 50%, transparent);
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--warning-main) 35%, transparent);
-}
-
-.cardRow[data-tone='error'] > .cardCell > .card {
-  border-color: color-mix(in srgb, var(--error-main) 50%, transparent);
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--error-main) 35%, transparent);
-}
-
-.cardRow[data-tone='success'] > .cardCell > .card {
-  border-color: color-mix(in srgb, var(--success-main) 50%, transparent);
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--success-main) 35%, transparent);
-}
+/* Toned cards carry NO border/shadow treatment — the tinted identity title
+   (below) and the corner badges are the whole card-status vocabulary; the
+   coloured borders tried here read as selection/error field states and were
+   removed (design review, 2026-08-14). */
 
 /* Header: selection checkbox, identity title and badge on one row, vertically
    centred so the checkbox, the identity's colour dot / icon / name and the badge
@@ -1161,6 +1162,16 @@ tr[data-selected][data-tint='error'] > .selectCell {
   align-items: center;
   flex-wrap: wrap;
   gap: var(--space-1) var(--space-3);
+}
+
+/* STATUS flag badges sit directly after the title, not in the far corner
+   (ui-surface: "the same word-only badges directly after the title"): when
+   the header's badges are flags, the identity stops absorbing the space
+   between them, so the header reads title · statuses, left-aligned. Keyed on
+   [data-flag], so an action-bearing badge slot (row buttons) keeps the
+   corner. */
+.cardHeader:has(.cardBadge [data-flag]) .cardIdentity {
+  flex: 0 1 auto;
 }
 
 /* Identity title (ui-standards `.card-table-card-primary`). No line-height
@@ -1211,19 +1222,27 @@ tr[data-selected][data-tint='error'] > .selectCell {
   flex-shrink: 0;
 }
 
-/* Flag cells (getFlagCell + the line editors' auto-allocation tick). In table
-   view the check stands alone — its column header names it — so the label
-   span stays hidden. In a card's BADGE slot there is no header, and two flags
-   on one card read as the same anonymous check (a held batch looked
-   auto-ticked), so the flag shows its label beside the check there. */
-[data-flag-label] {
+/* Flag cells (getFlagCell + the line editors' auto-allocation tick) render
+   TWO representations, one shown per view: the bare check ([data-flag]) in
+   table view, where its named column header carries the meaning; the
+   StatusBadge CHIP ([data-flag-chip]) in a card's BADGE slot, where there is
+   no header and two flags would read as the same anonymous check. */
+[data-flag-chip] {
   display: none;
+}
+
+.cardBadge [data-flag] {
+  display: none;
+}
+
+.cardBadge [data-flag-chip] {
+  display: inline-flex;
 }
 
 /* Inline row-status badges (StatusBadge cluster beside a name/batch value —
    ui-standards § table interaction). TABLE VIEW ONLY: cards carry the same
-   states as their corner badges (the flag columns), so the inline cluster
-   hides there rather than saying everything twice. */
+   states as their after-the-title chips (the flag columns), so the inline
+   cluster hides there rather than saying everything twice. */
 [data-row-badges] {
   display: inline-flex;
   align-items: center;
@@ -1233,46 +1252,6 @@ tr[data-selected][data-tint='error'] > .selectCell {
 }
 
 .card [data-row-badges] {
-  display: none;
-}
-
-.cardBadge [data-flag] {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-}
-
-.cardBadge [data-flag] [data-flag-label] {
-  display: inline;
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-  white-space: nowrap;
-}
-
-/* Toned flags (getFlagCell's tone / data-flag-tone), card badges only —
-   table view keeps the neutral check under its named header. 'success' =
-   an affirmative flag (will auto-allocate): green check + label. 'warning'
-   (on hold, amber) and 'error' (expired, red) = caution flags: tinted, and
-   the CHECK is dropped — a check connotes a positive state, so the word
-   stands alone. */
-.cardBadge [data-flag][data-flag-tone='success'] {
-  color: var(--success-main);
-}
-
-.cardBadge [data-flag][data-flag-tone='warning'] {
-  color: var(--warning-main);
-}
-
-.cardBadge [data-flag][data-flag-tone='error'] {
-  color: var(--error-main);
-}
-
-.cardBadge [data-flag][data-flag-tone] [data-flag-label] {
-  color: inherit;
-}
-
-.cardBadge [data-flag][data-flag-tone='warning'] > :not([data-flag-label]),
-.cardBadge [data-flag][data-flag-tone='error'] > :not([data-flag-label]) {
   display: none;
 }
 

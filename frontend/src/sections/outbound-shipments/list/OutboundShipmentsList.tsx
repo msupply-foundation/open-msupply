@@ -134,13 +134,14 @@ const OutboundShipmentsList: Component = () => {
     setSelectedIds([]);
   };
 
-  // GraphQL variables from URL state; the type filter is PINNED here — it is
-  // not part of the user-facing filter state (contract.md § the list).
+  // GraphQL variables from URL state. The type pin is NOT here: the query's
+  // top-level `type` argument both selects the permission and overwrites
+  // `filter.type` server-side, so a filter pin would be silently discarded
+  // (contract.md § the list).
   const variables = createMemo<OutboundShipmentsVariables>(() => ({
     storeId: params.storeId,
     filter: {
       ...stripEmpty(query().filter),
-      type: { equalTo: 'OUTBOUND_SHIPMENT' },
       // Custom-field filters become the dynamicFilter AST (undefined = no-op).
       dynamicFilter: buildCustomFieldDynamicFilter(query().cf),
     },
@@ -418,11 +419,6 @@ const OutboundShipmentsList: Component = () => {
           pageSize: query().first,
           total: totalCount(),
           onOffsetChange: offset => setQuery({ ...query(), offset }),
-          // The footer earns its space (ui-standards § tables → pagination):
-          // no footer at all until the shipments outrun one page, since a
-          // single page is every matching row already on screen. The band's
-          // height goes to the rows.
-          conditional: true,
           // The chosen size is remembered for the next visit (D106).
           onPageSizeChange: first => {
             rememberPageSize(first);

@@ -68,7 +68,7 @@ import { ColumnSettings } from './ColumnSettings';
 import { TableSettings } from './TableSettings';
 import { Pagination, type PaginationProps } from './Pagination';
 import { paginationState } from './paginationState';
-import { isRtl, t } from '../../../intl';
+import { isRtl, t, tPlural } from '../../../intl';
 import styles from './DataTable.module.css';
 
 // The column model
@@ -182,15 +182,13 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    */
   rowTone?: (row: T) => 'info' | 'warning' | 'error' | undefined;
   /**
-   * Card-only tone override: when set, CARD view takes its tone (identity
-   * title + the warning/error border/shadow) from this instead of rowTone,
-   * and rowTone is free to stay unset — for a page whose table view must NOT
-   * colour row text (outbound's status-tinted tables, D111) but whose cards
-   * keep the tone treatment. rowTone's vocabulary plus 'success': a green
-   * border + faint shadow ONLY (title untinted) — an affirmative state (a
-   * batch auto-allocation will use) whispers, where warning/error shout.
+   * Card-only tone override: when set, CARD view takes its tone (the tinted
+   * identity title) from this instead of rowTone, and rowTone is free to
+   * stay unset — for a page whose table view must NOT colour row text
+   * (outbound's status-tinted tables, D111) but whose cards keep the tone
+   * treatment. Same vocabulary and CSS as rowTone's card half.
    */
-  cardTone?: (row: T) => 'info' | 'success' | 'warning' | 'error' | undefined;
+  cardTone?: (row: T) => 'info' | 'warning' | 'error' | undefined;
   /**
    * Semantic record-STATUS background tint, always on (unlike the rowState
    * tints, which show only while selected): 'success' for a satisfied row
@@ -916,7 +914,8 @@ export function DataTable<T, K extends string, G extends string = never>(
   // table then loses the hairline that row carried along its bottom edge, which
   // is what separated the header from whatever sits above it. The seam moves to
   // the table area instead (see .root[data-no-toolbar] in the CSS).
-  const hasToolbar = () => !!filters() || !props.controlsMount;
+  const hasToolbar = () =>
+    !!filters() || !!props.pagination || !props.controlsMount;
 
   const controls = (): JSX.Element => (
     <div class={styles.toolbarControls}>
@@ -1050,6 +1049,12 @@ export function DataTable<T, K extends string, G extends string = never>(
             anyColumnSized={anyColumnSized()}
             anyColumnPinned={anyColumnPinned()}
             onSaveGlobalDefault={props.onSaveGlobalDefault}
+            // Rows per page lives here now, not in the footer (which is the
+            // pager alone). Passed straight through from the page's pagination
+            // state — the table owns no page state of its own.
+            pageSize={props.pagination?.pageSize}
+            pageSizes={props.pagination?.pageSizes}
+            onPageSizeChange={props.pagination?.onPageSizeChange}
           />
         </Popover>
       </Show>
@@ -1105,6 +1110,18 @@ export function DataTable<T, K extends string, G extends string = never>(
               placement: filter state stays page-owned. */}
           <Show when={filters()}>
             <div class={styles.toolbarFilters}>{filters()}</div>
+          </Show>
+          {/* The row count — the one fact the visible rows cannot supply once a
+              set runs past a page, and free here: this row exists whatever the
+              data does, and it sits beside the filters that change the number.
+              Read from `pagination.total`, so any paginated table shows it
+              without the host passing anything extra. */}
+          <Show when={props.pagination}>
+            {pagination => (
+              <span class={styles.toolbarCount} data-testid="table-row-count">
+                {tPlural('pagination.rows-total', pagination().total)}
+              </span>
+            )}
           </Show>
           <Show when={!props.controlsMount}>{controls()}</Show>
         </div>
