@@ -514,7 +514,6 @@ const TableShowcaseDemo = () => {
             label="Note"
             hideLabel
             size="small"
-            width="full"
             value={notes[row.id]}
             onInput={e => setNotes(row.id, e.currentTarget.value)}
             // Don't let typing/clicking the input open the row.

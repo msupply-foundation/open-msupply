@@ -179,7 +179,7 @@ const patientPreferences = () => {
 // Same safe defaults while unresolved as the other *Preferences accessors —
 // OFF for gated columns/fields, but `invoiceStatusOptions` empty means
 // UNRESTRICTED (every status offered until the real value resolves — the
-// permissive default, DIVERGENCES D7's precedent via AC-PR2). Reactive — a
+// permissive default, per AC-PR2). Reactive — a
 // post-sync refetch re-gates in place.
 const prescriptionPreferences = () => {
   const prefs = storeContext()?.preferences;

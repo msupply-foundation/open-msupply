@@ -1,15 +1,14 @@
 /*
- * Store selector panel. Mirrors the current app's login store-selector:
- * instructions, a search field, a bordered scrollable list of selectable rows
- * with an active/hover tint derived from the primary token, and a Continue
- * button in the footer. All colours from tokens, rem sizing, logical properties
- * for RTL.
+ * Store selector panel (issue #193): a title, the always-open checkbox, a
+ * search field (long lists only), and store rows as separate cards — the
+ * pinned previous/default group divided from the rest. All colours from
+ * tokens, rem sizing, logical properties for RTL.
  */
 .panel {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
-  inline-size: 26rem;
+  gap: var(--space-4);
+  inline-size: 30rem;
   max-inline-size: 100%;
 }
 
@@ -21,28 +20,22 @@
   color: var(--text-body);
 }
 
-.instructions {
-  margin: 0;
-  font-size: var(--text-sm);
-  line-height: 1.6;
-  color: var(--text-secondary);
-}
-
-/* Bordered list container — paper surface, rounded, scrolls when tall. */
-.listPanel {
-  border: 1px solid var(--color-border-value);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  max-block-size: 17rem;
+.list {
   display: flex;
   flex-direction: column;
-}
-
-.list {
+  gap: var(--space-3);
   margin: 0;
   padding: 0;
   list-style: none;
   overflow-y: auto;
+  max-block-size: min(28rem, 55vh);
+}
+
+/* The divider closing the pinned previous/default group (issue #193 mock's
+   "last used" band): drawn by the last pinned row's list item. */
+.dividedRow {
+  border-block-end: 1px solid var(--color-border-value);
+  padding-block-end: var(--space-3);
 }
 
 .row {
@@ -53,9 +46,10 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-2);
-  padding: 0.875rem 1.125rem;
-  border: none;
-  background: transparent;
+  padding: 1rem 1.125rem;
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
   color: var(--text-body);
   font: inherit;
   font-size: var(--text-sm);
@@ -63,19 +57,15 @@
   cursor: pointer;
 }
 
-/*
- * Hover/selection tint. Not `background: color-mix(...)` — engines before
- * Chromium 111 (older Android WebViews in the tablet fleet) drop the whole
- * declaration and the selected row loses its only visual marker. An overlay
- * carrying the bare token at low element opacity renders identically and
- * works everywhere the app does.
- */
+/* Hover/selection tint: an overlay carrying the bare token at low element
+   opacity over the card's own surface. */
 .row::before {
   content: '';
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: var(--secondary-main);
+  border-radius: inherit;
+  background: var(--primary-main);
   opacity: 0;
   transition: opacity var(--motion-fast);
   pointer-events: none;
@@ -95,7 +85,7 @@
 
 .row:focus-visible {
   outline: none;
-  box-shadow: inset 0 0 0 0.125rem var(--secondary-main);
+  box-shadow: inset 0 0 0 0.125rem var(--primary-main);
 }
 
 .storeName {
@@ -108,6 +98,7 @@
 
 .tags {
   display: inline-flex;
+  align-items: center;
   gap: var(--space-2);
   flex-shrink: 0;
 }
@@ -117,11 +108,7 @@
   text-align: center;
   color: var(--text-secondary);
   font-size: var(--text-sm);
-}
-
-.footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--space-3);
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
 }

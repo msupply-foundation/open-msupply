@@ -21,9 +21,10 @@ export interface TextAreaProps extends JSX.TextareaHTMLAttributes<HTMLTextAreaEl
    */
   rows?: number;
   /**
-   * Spec max-widths, as TextField. Defaults to `full` (fill the container) —
-   * OMS's TextArea behaviour, and multi-line fields are usually a
-   * dialog/panel's wide field.
+   * Max-width cap — opt-in, as TextField, and the same `full` default. No
+   * `compact`: 10rem is a cap for a short VALUE (a number, a code), and a
+   * multi-line field by definition doesn't hold one — the value in the union
+   * would only ever be a mistake.
    */
   width?: 'short' | 'long' | 'full';
   /**
