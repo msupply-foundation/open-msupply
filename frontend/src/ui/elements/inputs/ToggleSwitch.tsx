@@ -23,6 +23,13 @@ export interface ToggleSwitchProps {
    * `class`); without one the DOM is unchanged. As TextField.
    */
   labelInfo?: JSX.Element;
+  /**
+   * Visually hide the label (kept as the input's accessible name) — for use
+   * inside a row that shows it (the FieldRow contract: the wrapped control
+   * must not render its own visible label). As TextField's `hideLabel`.
+   * `labelInfo` is ignored with it (no visible label to sit beside).
+   */
+  hideLabel?: boolean;
   id?: string;
   class?: string;
   /** Test id on the native input (cross-FE test-id contract). */
@@ -69,18 +76,21 @@ export const ToggleSwitch = (props: ToggleSwitchProps) => {
         class={styles.input}
         checked={props.checked}
         disabled={props.disabled}
+        aria-label={props.hideLabel ? props.label : undefined}
         data-testid={props.testId}
         onChange={event => props.onChange?.(event.currentTarget.checked)}
       />
       <span class={styles.track} aria-hidden="true">
         <span class={styles.thumb} />
       </span>
-      <span class={styles.label}>{props.label}</span>
+      <Show when={!props.hideLabel}>
+        <span class={styles.label}>{props.label}</span>
+      </Show>
     </label>
   );
 
   return (
-    <Show when={labelInfo()} fallback={<Label />}>
+    <Show when={!props.hideLabel && labelInfo()} fallback={<Label />}>
       <span
         class={
           props.class ? `${styles.labelRow} ${props.class}` : styles.labelRow

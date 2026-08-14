@@ -32,6 +32,7 @@ import {
   type NavLeaf,
 } from './navModel';
 import { locale, changeLanguage, t } from '../../../intl';
+import { footerColourStyle } from './footerColour';
 import styles from './AppShell.module.css';
 
 export interface AppShellProps {
@@ -116,6 +117,13 @@ export interface AppShellProps {
    * reload) — without it the cell never renders, so it is never a dead button.
    */
   onUpdateClick?: () => void;
+  /**
+   * The store's custom bottom-bar colour (spec/chrome § bottom bar) — the raw
+   * store-custom-colour preference value. A parseable hex colour replaces the
+   * bar's background (central or not) with contrast-derived text; anything
+   * else, or unset, leaves the default. A DATA colour, not a theme value.
+   */
+  footerColour?: string;
   /** On a central server the bottom bar is brand orange; otherwise neutral.
    *  From the isCentralServer global, queried unauthenticated at startup. */
   isCentralServer?: boolean;
@@ -263,6 +271,17 @@ export const AppShell = (props: AppShellProps) => {
   // the real i18n locale — not here — so there is a single dir effect. The
   // footer LanguageSelector drives that locale via changeLanguage.
 
+  // The store's custom footer colour, when it parses as hex: the footer's two
+  // colour knobs set inline (a data colour, as ColourTag's --tag-colour); the
+  // module CSS consumes them, so its rules stay the single source of the
+  // bar's colouring. Undefined (unset/unparseable) keeps the variant default.
+  const customFooterVars = () => {
+    const custom = footerColourStyle(props.footerColour);
+    return custom
+      ? { '--footer-bg': custom.background, '--footer-fg': custom.text }
+      : undefined;
+  };
+
   return (
     <ShellNavContext.Provider value={{ isOverlay, openNav: nav.openOverlay }}>
       <ShellOverlayContext.Provider value={{ setPanelOverlay }}>
@@ -315,6 +334,11 @@ export const AppShell = (props: AppShellProps) => {
                   inert={panelOverlay()}
                   data-testid="app-footer"
                   data-central={props.isCentralServer ? '' : undefined}
+                  // The store's custom colour, when it parses: set as the
+                  // footer's two colour knobs (as ColourTag's --tag-colour),
+                  // so the stylesheet stays the one place the bar's colouring
+                  // — variants included — is decided.
+                  style={customFooterVars()}
                 >
                   <FooterCell
                     icon={HomeIcon}
