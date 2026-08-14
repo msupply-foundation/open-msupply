@@ -188,7 +188,7 @@ const Body: Component<InsuranceModalProps> = props => {
           nameOfInsured: draft.nameOfInsured,
         });
     setSaving(false);
-    if (!outcome) return props.onClose(); // handled globally
+    if (!outcome) return; // handled globally
     if (outcome.kind === 'error') {
       setSaveError(outcome.message);
       return;
