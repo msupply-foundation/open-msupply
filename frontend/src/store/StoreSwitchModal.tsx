@@ -2,6 +2,7 @@ import type { Component } from 'solid-js';
 import { Dialog } from '../ui/elements/feedback/Dialog';
 import { StoreSelector } from '../ui/elements/selectors/StoreSelector';
 import { createStorePicker } from './storePicker';
+import { currentStoreId } from './storeContext';
 import { t } from '../intl';
 
 // Spec (startup S3 › store switch, SL-6, [D14]): the store-selection panel's
@@ -15,6 +16,12 @@ import { t } from '../intl';
 // The Dialog heading carries the panel's title, so the selector's own is
 // hidden; the host mounts this fresh per open (ShellLayout), so the panel's
 // search/checkbox state never leaks between opens.
+//
+// This is the only host with a store to call CURRENT (OMS-REG-LGN-02.35): at
+// sign-in none is entered yet. Passing it marks the row the user is standing
+// in and suppresses its Last-used chip — entering a store records it as the
+// previous one (SL-4), so without this the current store always carries a
+// marker pointing at where the user already is.
 export const StoreSwitchModal: Component<{
   open: boolean;
   onClose: () => void;
@@ -32,6 +39,7 @@ export const StoreSwitchModal: Component<{
         stores={picker.stores()}
         defaultStoreId={picker.defaultStoreId()}
         lastUsedStoreId={picker.lastUsedStoreId()}
+        currentStoreId={currentStoreId()}
         pinnedCount={picker.pinnedCount()}
         defaultAlwaysOpen={picker.alwaysOpenSaved()}
         onAlwaysOpenChange={picker.alwaysOpenChanged}

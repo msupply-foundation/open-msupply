@@ -53,6 +53,13 @@ const STORES: StoreOption[] = [
   { id: 'demo-3', code: 'dili-central', name: 'Dili Central Warehouse' },
   { id: 'demo-4', code: 'baucau-hp', name: 'Baucau Health Post' },
   { id: 'demo-5', code: 'maliana-rh', name: 'Maliana Referral Hospital' },
+  // Accented names, and enough rows to cross the 7-store search threshold —
+  // together they exercise the accent-insensitive match (typing `depot` finds
+  // `Dépôt Régional`, OMS-REG-LGN-02.33), which is exactly what a list of
+  // unaccented demo names could never show.
+  { id: 'demo-6', code: 'depot-reg', name: 'Dépôt Régional' },
+  { id: 'demo-7', code: 'cs-menara', name: 'Centre de Santé el Menara' },
+  { id: 'demo-8', code: 'zenith-1', name: 'Myanmar Zenith Store 1' },
 ];
 
 export const dialogMetadata: PageMetadata = {
@@ -593,13 +600,21 @@ export const DialogShowcase = () => {
           title="Store selector — in a blocking Dialog"
         >
           <Lead>
-            The <code>StoreSelector</code> library component — card rows with{' '}
-            <code>Default</code> / <code>Last used</code> StatusChips, a{' '}
-            <code>TextField</code> search only for long lists (7+ stores), and
-            the "Always open" <code>Checkbox</code> at the top. Clicking a row
-            enters it directly (no Continue button, no follow-up prompt — issue
-            #193); arrow keys move the highlight and Enter confirms it; the
-            checkbox state rides along as <code>onConfirm</code>'s{' '}
+            The <code>StoreSelector</code> library component — card rows
+            stacking each store's name over its code, with <code>Current</code>{' '}
+            / <code>Default</code> / <code>Last used</code> StatusChips, the
+            pinned rows under a <em>Recent stores</em> heading and the rest
+            under <em>All stores</em>, a <code>TextField</code> search only for
+            long lists (7+ stores), and a quiet always-open opt-in on one line
+            BELOW the list (a pressed-state button, not a checkbox — it is a
+            once-ever preference, so it does not hold the slot above the search
+            that the panel's actual task needs). Search matches name or code
+            ignoring case and accents — type <code>depot</code> to find{' '}
+            <em>Dépôt Régional</em>; a query that matches nothing names itself
+            in the empty state and offers to clear. Clicking a row enters it
+            directly (no Continue button, no follow-up prompt — issue #193);
+            arrow keys move the highlight and Enter confirms it; the checkbox
+            state rides along as <code>onConfirm</code>'s{' '}
             <code>alwaysOpen</code> flag. Here it fills a{' '}
             <code>
               dismissable={'{'}false{'}'}
@@ -621,10 +636,15 @@ export const DialogShowcase = () => {
             dismissable={false}
             title="Select a store"
           >
+            {/* hideTitle: the Dialog's heading carries the title here, exactly
+                as the app's store-switch modal does — without it the panel's
+                own <h2> repeats it. */}
             <StoreSelector
               stores={STORES}
+              hideTitle
               defaultStoreId="AFCA0C9F0743AB43B779FB9EA2E64EAF"
               lastUsedStoreId="5B28901C52396E4BB098B9862CCF5DF9"
+              currentStoreId="5B28901C52396E4BB098B9862CCF5DF9"
               pinnedCount={2}
               onConfirm={(id, alwaysOpen) => {
                 const store = STORES.find(s => s.id === id);
