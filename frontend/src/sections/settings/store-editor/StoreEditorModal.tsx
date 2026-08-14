@@ -38,9 +38,9 @@ import {
 
 /*
  * S5 — the store editor (spec/settings/ui-surface.md § S5), opened from the
- * app footer's Edit cell on every screen, by every signed-in user
- * (OMS-REG-SET-05.17/.18): no permission gates OPENING it — permissions govern
- * what is editable inside.
+ * store-selection panel's Edit action, reachable on every screen, by every
+ * signed-in user (OMS-REG-SET-05.17/.18): no permission gates OPENING it —
+ * permissions govern what is editable inside.
  *
  * It edits the store's FACILITY record: name, code, GPS coordinates, and the
  * property values recorded against Configuration's seeded definitions. A save
