@@ -279,9 +279,22 @@
     min-height: var(--input-height-sm-touch);
   }
 
-  /* Touch font bump — see --input-font-touch (stops iOS zoom-on-focus). BOTH
-     sizes: the iOS zoom threshold is absolute and ignores our size variant. */
-  .input {
+  /* Touch font bump — see --input-font-touch. BOTH sizes: a small field beside
+     a default one must not read at a different size on the same touch surface.
+     The small selector has to be REPEATED here — a media query adds no
+     specificity, so the bare `.input` (0,1,0) loses to `.input[data-size=
+     'small']` (0,2,0) above and the bump silently never lands on small. */
+  .input,
+  .input[data-size='small'] {
+    font-size: var(--input-font-touch);
+  }
+
+  /* The adornment tracks its value, at both sizes (same specificity trap).
+     Labels are deliberately NOT bumped, here or in any other input module: the
+     touch size is about the editable value, and a label at input size flattens
+     the label → value hierarchy. */
+  .adornment,
+  .field[data-size='small'] .adornment {
     font-size: var(--input-font-touch);
   }
 

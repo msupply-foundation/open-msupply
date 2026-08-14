@@ -33,7 +33,9 @@ export interface TextAreaProps extends JSX.TextareaHTMLAttributes<HTMLTextAreaEl
    * the small inputs beside it in a header field cluster (see
    * ui/layout/Header/HeaderToolbar). The box is still `rows` tall, but block
    * padding is derived from the size's input-height token, so `rows={1}` is
-   * exactly a TextField's height and `rows={n}` is n lines on that rhythm.
+   * exactly a TextField's height and `rows={n}` is n lines on that rhythm — in
+   * both rest and touch modes (on a coarse pointer the derivation switches to
+   * the touch tokens, and the text takes --input-font-touch at BOTH sizes).
    */
   size?: 'default' | 'small';
   /**
@@ -58,8 +60,9 @@ export interface TextAreaProps extends JSX.TextareaHTMLAttributes<HTMLTextAreaEl
  * only what multi-line forces: height comes from the `rows` prop (default 4, as
  * OMS) rather than being set outright, vertical padding joins the horizontal,
  * and line-height opens to 1.5 for wrapped text. That padding is still DERIVED
- * from the size's input-height token (see the CSS), so `rows={1}` lands exactly
- * on a TextField's height instead of ~1.5px over it. The box is fixed at `rows`
+ * from the size's input-height token (see the CSS — from the TOUCH token on a
+ * coarse pointer), so `rows={1}` lands exactly on a TextField's height instead
+ * of ~1.5px over it, at rest and on touch alike. The box is fixed at `rows`
  * — content scrolls, no resize grip — matching the old OMS TextArea (MUI
  * multiline).
  */
