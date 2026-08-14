@@ -67,16 +67,28 @@ export interface PrescriptionToolbarProps {
   disabled: boolean;
   /** A plain header save (no line implications). */
   onSave: (input: Omit<UpdateInput, 'id'>) => void;
-  /** Delete ALL lines, then save (the AC-B2 flow). */
-  onClearLinesAndSave: (input: Omit<UpdateInput, 'id'>) => void;
+  /** Delete ALL lines, then save (the AC-B2 flow). Resolves once the node
+   *  reflects the save (or the save failed) — the fields keep showing the
+   *  chosen values until then, so a confirmed pick never flickers back to
+   *  the old ones for the save round-trip. */
+  onClearLinesAndSave: (input: Omit<UpdateInput, 'id'>) => Promise<void>;
 }
 
 export const PrescriptionToolbar: Component<
   PrescriptionToolbarProps
 > = props => {
   const navigate = useNavigate();
-  // A pending date/program change awaiting the clear-lines confirmation.
+  // A pending date/program change awaiting the clear-lines confirmation. Also
+  // doubles as the "draft" the date/program fields show while it's pending —
+  // the node hasn't changed yet, so their own controlled `value` alone
+  // wouldn't revert a cancelled pick (DateField/Combobox each keep their own
+  // optimistic echo of what was picked, resynced only when `value` itself
+  // changes — see PickedDateField.tsx for the reference shape of this fix).
   const [pending, setPending] = createSignal<Omit<UpdateInput, 'id'>>();
+  // A confirmed change is saving — onClose (which always follows onConfirm,
+  // per ConfirmDialog) must not revert the draft while it is, else the field
+  // flashes back to the old value until the node catches up.
+  let confirmInFlight = false;
 
   const hasLines = () => props.node.lines.totalCount > 0;
 
@@ -88,9 +100,23 @@ export const PrescriptionToolbar: Component<
     return patient ? minimalPatientOption(patient.id, patient.name) : undefined;
   });
 
-  // The shown day: the prescription date's LOCAL calendar day.
-  const shownDay = () =>
-    utcToLocalParts(prescriptionDateOf(props.node))?.date ?? null;
+  // The shown day: a pending pick while one awaits confirmation, else the
+  // prescription date's LOCAL calendar day.
+  const shownDay = () => {
+    const input = pending();
+    if (input?.prescriptionDate)
+      return utcToLocalParts(input.prescriptionDate)?.date ?? null;
+    return utcToLocalParts(prescriptionDateOf(props.node))?.date ?? null;
+  };
+
+  // The shown program: same reasoning as shownDay — a pending pick while one
+  // awaits confirmation, else the prescription's own program.
+  const shownProgramId = () => {
+    const input = pending();
+    if (input && 'programId' in input)
+      return input.programId?.value ?? undefined;
+    return props.node.programId ?? undefined;
+  };
 
   const applyOrConfirm = (input: Omit<UpdateInput, 'id'>) => {
     if (hasLines()) setPending(input);
@@ -162,7 +188,7 @@ export const PrescriptionToolbar: Component<
           label={t('label.program')}
           size="small"
           testId="program-select"
-          value={props.node.programId ?? undefined}
+          value={shownProgramId()}
           disabled={props.disabled}
           onChange={programId => {
             // Clearing the program keeps the lines (the catalogue only
@@ -191,13 +217,18 @@ export const PrescriptionToolbar: Component<
         {input => (
           <ConfirmDialog
             open
-            onClose={() => setPending(undefined)}
+            onClose={() => {
+              if (!confirmInFlight) setPending(undefined);
+            }}
             title={t('heading.are-you-sure')}
             message={t('messages.confirm-delete-prescription-lines')}
             confirmVariant="danger"
             onConfirm={() => {
-              props.onClearLinesAndSave(input());
-              setPending(undefined);
+              confirmInFlight = true;
+              void props.onClearLinesAndSave(input()).finally(() => {
+                confirmInFlight = false;
+                setPending(undefined);
+              });
             }}
           />
         )}
