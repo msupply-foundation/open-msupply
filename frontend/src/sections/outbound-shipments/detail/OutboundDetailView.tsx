@@ -38,6 +38,7 @@ import {
   type PaginationProps,
 } from '../../../ui/elements/table/Pagination';
 import { remToPx } from '../../../ui/utils/rem';
+import { useIsNavOverlay } from '../../../ui/utils/createMediaQuery';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
 import { createAddAction } from '../../../ui/utils/keyActions';
@@ -344,6 +345,23 @@ const OutboundDetailView: Component = () => {
     price: node()?.pricing?.stockTotalBeforeTax ?? 0,
     volume: node()?.pricing?.totalVolume ?? 0,
   });
+
+  // Where the totals live is a "which element renders" decision, so it is the
+  // one responsive mechanism that touches JS (src/ui/CLAUDE.md #7): a band of
+  // its own above the bar on a wide screen, and ON the bar below the
+  // navOverlay line — tablet portrait and down, where the shipment's lines are
+  // worth more than a row of chrome and the bar has the room. Rendered by a
+  // function, not a stored element: the two footer faces each need their own
+  // instance, and one element can't be in two places.
+  const narrowViewport = useIsNavOverlay();
+  const inlineTotals = () => (
+    <Show when={narrowViewport()}>
+      <OutboundTotalsStrip
+        inline
+        totals={totalCount() > 0 ? shipmentTotals : undefined}
+      />
+    </Show>
+  );
 
   const linePagination = (): PaginationProps => ({
     offset: query().offset,
@@ -943,11 +961,21 @@ const OutboundDetailView: Component = () => {
               header={
                 <Header>
                   <Breadcrumb crumbs={crumbs(current())} />
+                  {/* Every button here collapses to its icon on a narrow
+                      viewport (`collapsible="narrow"`, with the label kept as
+                      the accessible name and repeated as a tooltip): four
+                      labelled buttons need ~38rem, which is more than a
+                      tablet's header has left beside the breadcrumb, so the
+                      cluster wrapped onto a row of its own. Icon-only they fit
+                      on the breadcrumb's line, and the screen keeps that row's
+                      height for table rows. */}
                   <HeaderButtons>
                     <Show when={editable()}>
                       <Button
                         icon={<PlusCircleIcon />}
                         shortcut={ALT_N}
+                        collapsible="narrow"
+                        title={t('button.add-item')}
                         data-testid="add-item-button"
                         onClick={openAdd}
                       >
@@ -970,6 +998,8 @@ const OutboundDetailView: Component = () => {
                       <Button
                         variant="secondary"
                         icon={<InfoIcon />}
+                        collapsible="narrow"
+                        title={t('button.more')}
                         data-testid="open-detail-panel-button"
                         // createSidePanelOpen registers Alt+M; this is the
                         // control that advertises it (ui-surface S2).
@@ -1016,10 +1046,15 @@ const OutboundDetailView: Component = () => {
               contentFooter={
                 <>
                   {/* The totals band, above BOTH footer faces — a document
-                      fact, so a live row selection doesn't take it away. */}
-                  <OutboundTotalsStrip
-                    totals={totalCount() > 0 ? shipmentTotals : undefined}
-                  />
+                      fact, so a live row selection doesn't take it away.
+                      WIDE viewports only: on a narrow one the same figures
+                      ride the bar itself (below), because a row of height is
+                      the scarcer resource there. */}
+                  <Show when={!narrowViewport()}>
+                    <OutboundTotalsStrip
+                      totals={totalCount() > 0 ? shipmentTotals : undefined}
+                    />
+                  </Show>
                   <Show
                     when={selectedIds().length > 0}
                     fallback={
@@ -1029,6 +1064,7 @@ const OutboundDetailView: Component = () => {
                         pagination={linePagination()}
                         preflight={preflight}
                         onSetHold={setHold}
+                        totals={inlineTotals()}
                         // A status change can trim zero-quantity lines
                         // server-side — refetch the lines page alongside the
                         // in-place entity splice.
@@ -1040,6 +1076,9 @@ const OutboundDetailView: Component = () => {
                     }
                   >
                     <ContentFooter testId="actions-footer">
+                      {/* Same on the selection face: the totals stay on screen
+                          while rows are ticked, on the bar itself when narrow. */}
+                      {inlineTotals()}
                       <strong data-testid="selected-rows-count">
                         {tPlural('label.items-selected', selectedIds().length)}
                       </strong>

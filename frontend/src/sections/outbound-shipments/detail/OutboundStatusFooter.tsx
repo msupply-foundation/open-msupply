@@ -1,4 +1,4 @@
-import { createSignal, Show, type Component } from 'solid-js';
+import { createSignal, Show, type Component, type JSX } from 'solid-js';
 import { t } from '../../../intl';
 import { CheckboxButton } from '../../../ui/elements/buttons/CheckboxButton';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
@@ -42,6 +42,13 @@ export interface OutboundStatusFooterProps {
    * to, leaving this bar exactly as it was.
    */
   pagination: PaginationProps;
+  /**
+   * The shipment totals, when the screen is too short of height to give them a
+   * band of their own (narrow viewports — see OutboundTotalsStrip's `inline`).
+   * Rendered as this bar's first item; nothing at all on a wide screen, where
+   * the band above the bar is still where they live.
+   */
+  totals?: JSX.Element;
   /** A status change saved — replace the entity in place (the view also
    * refetches the lines page: leaving NEW trims zero rows server-side). */
   onSaved: (node: OutboundNode) => void;
@@ -92,6 +99,10 @@ export const OutboundStatusFooter: Component<
 
   return (
     <ContentFooter>
+      {/* The totals, on the bar itself rather than above it (narrow
+          viewports only — the prop is undefined on a wide screen). */}
+      {props.totals}
+
       {/* Hold: blocks status changes only, not edits (rules.md § on hold).
           Editable while the shipment is editable; hidden from SHIPPED. */}
       <Show when={editable()}>

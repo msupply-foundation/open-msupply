@@ -11,6 +11,14 @@ export interface OutboundTotalsStripProps {
    * already said so, and the strip then costs nothing at all.
    */
   totals?: () => { price: number; volume: number };
+  /**
+   * Ride INSIDE the footer bar as a pair of plain items instead of taking a
+   * band of its own — the narrow-viewport form. A row of type is cheap on a
+   * desktop and expensive on a tablet, where the same figures fit in the
+   * space the status bar already has; the band's own surface (tint, rule,
+   * padding) is what a row of its own buys, so the inline form drops it.
+   */
+  inline?: boolean;
 }
 
 /*
@@ -20,10 +28,15 @@ export interface OutboundTotalsStripProps {
  * row is kept to about a line of type, so having its own row costs a fraction
  * of what the old pinned table-footer band did.
  */
-export const OutboundTotalsStrip: Component<OutboundTotalsStripProps> = props => (
+export const OutboundTotalsStrip: Component<
+  OutboundTotalsStripProps
+> = props => (
   <Show when={props.totals?.()}>
     {totals => (
-      <div class={styles.strip} data-testid="shipment-totals">
+      <div
+        class={props.inline ? styles.inline : styles.strip}
+        data-testid="shipment-totals"
+      >
         <span class={styles.label}>{t('label.total')}</span>
         <span class={styles.figures}>
           {t('label.shipment-totals', {
