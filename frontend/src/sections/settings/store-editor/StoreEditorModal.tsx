@@ -244,7 +244,11 @@ export const StoreEditorModal = (props: {
       title={<></>}
       ariaLabel={facility()?.name ?? t('label.edit-store-properties')}
       titleHidden
-      width="prose"
+      // The form measure, not prose: the Preferences rows put a long label and
+      // its control on ONE line (ui-surface § S5 layout), and the catalogue's
+      // longest labels don't fit that beside a compact input at the prose
+      // measure — they'd wrap the control onto its own line.
+      width="form"
       testId="store-editor"
       dismissable={!saving()}
       actions={

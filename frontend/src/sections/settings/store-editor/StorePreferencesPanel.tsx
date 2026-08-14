@@ -1,10 +1,9 @@
-import { createSignal, For, Match, Show, Switch } from 'solid-js';
+import { createSignal, For, Match, Show, Switch, type JSX } from 'solid-js';
 import { t, type LocaleKey } from '../../../intl';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { Checkbox } from '../../../ui/elements/inputs/Checkbox';
 import { ToggleSwitch } from '../../../ui/elements/inputs/ToggleSwitch';
-import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { IconButton } from '../../../ui/elements/buttons/IconButton';
 import {
   ColourTagDot,
@@ -37,19 +36,21 @@ import {
   type PreferenceDraft,
   type StorePreference,
 } from './storeEditorLogic';
+import styles from './StorePreferencesPanel.module.css';
 
 /*
  * S5 › the Preferences panel (spec/settings/ui-surface.md § S5): a text filter,
- * then one field per store preference in the SERVED order — the server's
- * catalogue order is the display order (contract § The store editor). Each
- * field follows the Properties panel's rhythm: full width, the control's own
- * label above it, a switch being the label-beside exception (D114). Every
- * control is disabled unless this is a central server and the session holds
- * the central-data permission (OMS-REG-SET-05.36); the filter stays enabled.
+ * then one labelled row per store preference in the SERVED order — the
+ * server's catalogue order is the display order (contract § The store
+ * editor). Each row is label inline-start, control inline-end, on the
+ * hairline row rhythm (the module CSS); the two composites — the
+ * recent-stocktake group and the invoice-status choice — take a full-width
+ * block each. Every control is disabled unless this is a central server and
+ * the session holds the central-data permission (OMS-REG-SET-05.36); the
+ * filter stays enabled.
  *
  * Controls are written out per kind rather than resolved from a config map
- * (kdd/explicit-composition) — the composite recent-stocktake group and the
- * invoice-status choice each get their own explicit block below.
+ * (kdd/explicit-composition).
  */
 export const StorePreferencesPanel = (props: {
   preferences: StorePreference[];
@@ -102,6 +103,15 @@ export const StorePreferencesPanel = (props: {
       status
     );
 
+  // One preference row: the visible label inline-start, the control hugging
+  // the inline-end (the control hides its own label — FieldRow contract).
+  const Row = (rowProps: { label: string; children: JSX.Element }) => (
+    <div class={styles.row}>
+      <span class={styles.label}>{rowProps.label}</span>
+      {rowProps.children}
+    </div>
+  );
+
   const StatusGroup = (groupProps: {
     heading: string;
     /** Distinguishes the two groups' testids (NEW appears in both). */
@@ -111,19 +121,21 @@ export const StorePreferencesPanel = (props: {
   }) => (
     <Stack gap="sm">
       <Text variant="subtitle">{groupProps.heading}</Text>
-      <For each={groupProps.options}>
-        {status => (
-          <Checkbox
-            label={t(`status.${status.toLowerCase()}` as LocaleKey)}
-            checked={groupProps.current.includes(status)}
-            disabled={props.disabled || isImmutableStatus(status)}
-            testId={`store-preference-invoice-status-${groupProps.idPrefix}-${status.toLowerCase()}`}
-            onChange={checked =>
-              stageStatusToggle(groupProps.current, status, checked)
-            }
-          />
-        )}
-      </For>
+      <div class={styles.statusGrid}>
+        <For each={groupProps.options}>
+          {status => (
+            <Checkbox
+              label={t(`status.${status.toLowerCase()}` as LocaleKey)}
+              checked={groupProps.current.includes(status)}
+              disabled={props.disabled || isImmutableStatus(status)}
+              testId={`store-preference-invoice-status-${groupProps.idPrefix}-${status.toLowerCase()}`}
+              onChange={checked =>
+                stageStatusToggle(groupProps.current, status, checked)
+              }
+            />
+          )}
+        </For>
+      </div>
     </Stack>
   );
 
@@ -157,20 +169,23 @@ export const StorePreferencesPanel = (props: {
           </Show>
         }
       >
-        <Stack>
+        <div class={styles.rows}>
           <For each={visible()}>
             {preference => (
               <Switch>
                 <Match when={preference.valueType === 'BOOLEAN'}>
-                  {/* A switch is the label-beside exception, as the Properties
-                      panel's checkbox (D114). */}
-                  <ToggleSwitch
-                    label={label(preference)}
-                    checked={asBool(value(preference))}
-                    disabled={props.disabled}
-                    testId={`store-preference-${preference.key}`}
-                    onChange={checked => props.onStage(preference.key, checked)}
-                  />
+                  <Row label={label(preference)}>
+                    <ToggleSwitch
+                      label={label(preference)}
+                      hideLabel
+                      checked={asBool(value(preference))}
+                      disabled={props.disabled}
+                      testId={`store-preference-${preference.key}`}
+                      onChange={checked =>
+                        props.onStage(preference.key, checked)
+                      }
+                    />
+                  </Row>
                 </Match>
                 <Match
                   when={
@@ -178,23 +193,27 @@ export const StorePreferencesPanel = (props: {
                     preference.valueType === 'FLOAT'
                   }
                 >
-                  <NumberField
-                    label={label(preference)}
-                    value={asNumber(value(preference))}
-                    // A whole number stays whole; a fractional threshold gets
-                    // two places, as the reference app.
-                    decimalLimit={preference.valueType === 'FLOAT' ? 2 : 0}
-                    disabled={props.disabled}
-                    data-testid={`store-preference-${preference.key}`}
-                    // The wire has no "unset" — a cleared field stages the
-                    // kind's zero (rules § The store editor › Preferences).
-                    onChange={next => props.onStage(preference.key, next ?? 0)}
-                  />
+                  <Row label={label(preference)}>
+                    <NumberField
+                      label={label(preference)}
+                      hideLabel
+                      width="compact"
+                      value={asNumber(value(preference))}
+                      // A whole number stays whole; a fractional threshold
+                      // gets two places, as the reference app.
+                      decimalLimit={preference.valueType === 'FLOAT' ? 2 : 0}
+                      disabled={props.disabled}
+                      data-testid={`store-preference-${preference.key}`}
+                      // The wire has no "unset" — a cleared field stages the
+                      // kind's zero (rules § The store editor › Preferences).
+                      onChange={next =>
+                        props.onStage(preference.key, next ?? 0)
+                      }
+                    />
+                  </Row>
                 </Match>
                 <Match when={preference.valueType === 'COLOUR'}>
-                  {/* Label beside the dot — a label above an isolated dot
-                      reads as a heading over nothing, as the checkbox rule. */}
-                  <FieldRow label={label(preference)} labelWidth="auto">
+                  <Row label={label(preference)}>
                     <Show
                       when={!props.disabled}
                       fallback={
@@ -212,7 +231,7 @@ export const StorePreferencesPanel = (props: {
                         }
                       />
                     </Show>
-                  </FieldRow>
+                  </Row>
                 </Match>
                 <Match
                   when={
@@ -223,105 +242,138 @@ export const StorePreferencesPanel = (props: {
                   {/* ONE preference of three parts, presented as a collapsible
                       group, closed by default (SET-05.39). Any part's edit
                       stages the whole three-part value. */}
-                  <Accordion multiple>
-                    <AccordionItem value="warn-when-missing-recent-stocktake">
-                      <AccordionTrigger>{label(preference)}</AccordionTrigger>
-                      <AccordionContent>
-                        <Stack>
-                          <Text variant="bodySmall">
-                            {t(
-                              'preference.warnWhenMissingRecentStocktake.description'
-                            )}
-                          </Text>
-                          <ToggleSwitch
-                            label={t(
-                              'preference.warnWhenMissingRecentStocktake.enabled'
-                            )}
-                            checked={asWarnParts(value(preference)).enabled}
-                            disabled={props.disabled}
-                            testId="store-preference-warn-stocktake-enabled"
-                            onChange={enabled =>
-                              props.onStage(preference.key, {
-                                ...asWarnParts(value(preference)),
-                                enabled,
-                              })
-                            }
-                          />
-                          <NumberField
-                            label={t(
-                              'preference.warnWhenMissingRecentStocktake.maxAge'
-                            )}
-                            value={asWarnParts(value(preference)).maxAge}
-                            decimalLimit={0}
-                            disabled={
-                              props.disabled ||
-                              !asWarnParts(value(preference)).enabled
-                            }
-                            data-testid="store-preference-warn-stocktake-max-age"
-                            onChange={maxAge =>
-                              props.onStage(preference.key, {
-                                ...asWarnParts(value(preference)),
-                                maxAge: maxAge ?? 0,
-                              })
-                            }
-                          />
-                          <NumberField
-                            label={t(
-                              'preference.warnWhenMissingRecentStocktake.minItems'
-                            )}
-                            value={asWarnParts(value(preference)).minItems}
-                            decimalLimit={0}
-                            disabled={
-                              props.disabled ||
-                              !asWarnParts(value(preference)).enabled
-                            }
-                            data-testid="store-preference-warn-stocktake-min-items"
-                            onChange={minItems =>
-                              props.onStage(preference.key, {
-                                ...asWarnParts(value(preference)),
-                                minItems: minItems ?? 0,
-                              })
-                            }
-                          />
-                        </Stack>
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
+                  <div class={styles.block}>
+                    <Accordion multiple>
+                      <AccordionItem value="warn-when-missing-recent-stocktake">
+                        <AccordionTrigger>{label(preference)}</AccordionTrigger>
+                        <AccordionContent>
+                          <Stack>
+                            <Text variant="bodySmall">
+                              {t(
+                                'preference.warnWhenMissingRecentStocktake.description'
+                              )}
+                            </Text>
+                            <div class={styles.rows}>
+                              <Row
+                                label={t(
+                                  'preference.warnWhenMissingRecentStocktake.enabled'
+                                )}
+                              >
+                                <ToggleSwitch
+                                  label={t(
+                                    'preference.warnWhenMissingRecentStocktake.enabled'
+                                  )}
+                                  hideLabel
+                                  checked={
+                                    asWarnParts(value(preference)).enabled
+                                  }
+                                  disabled={props.disabled}
+                                  testId="store-preference-warn-stocktake-enabled"
+                                  onChange={enabled =>
+                                    props.onStage(preference.key, {
+                                      ...asWarnParts(value(preference)),
+                                      enabled,
+                                    })
+                                  }
+                                />
+                              </Row>
+                              <Row
+                                label={t(
+                                  'preference.warnWhenMissingRecentStocktake.maxAge'
+                                )}
+                              >
+                                <NumberField
+                                  label={t(
+                                    'preference.warnWhenMissingRecentStocktake.maxAge'
+                                  )}
+                                  hideLabel
+                                  width="compact"
+                                  value={asWarnParts(value(preference)).maxAge}
+                                  decimalLimit={0}
+                                  disabled={
+                                    props.disabled ||
+                                    !asWarnParts(value(preference)).enabled
+                                  }
+                                  data-testid="store-preference-warn-stocktake-max-age"
+                                  onChange={maxAge =>
+                                    props.onStage(preference.key, {
+                                      ...asWarnParts(value(preference)),
+                                      maxAge: maxAge ?? 0,
+                                    })
+                                  }
+                                />
+                              </Row>
+                              <Row
+                                label={t(
+                                  'preference.warnWhenMissingRecentStocktake.minItems'
+                                )}
+                              >
+                                <NumberField
+                                  label={t(
+                                    'preference.warnWhenMissingRecentStocktake.minItems'
+                                  )}
+                                  hideLabel
+                                  width="compact"
+                                  value={
+                                    asWarnParts(value(preference)).minItems
+                                  }
+                                  decimalLimit={0}
+                                  disabled={
+                                    props.disabled ||
+                                    !asWarnParts(value(preference)).enabled
+                                  }
+                                  data-testid="store-preference-warn-stocktake-min-items"
+                                  onChange={minItems =>
+                                    props.onStage(preference.key, {
+                                      ...asWarnParts(value(preference)),
+                                      minItems: minItems ?? 0,
+                                    })
+                                  }
+                                />
+                              </Row>
+                            </div>
+                          </Stack>
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
+                  </div>
                 </Match>
                 <Match when={preference.valueType === 'MULTI_CHOICE'}>
                   {/* The invoice-status choice: two labelled groups over ONE
                       stored set; bookends immutable; the Delivered/Received
                       pair can never both be off (SET-05.38). */}
-                  <Stack gap="sm">
-                    <Text>{label(preference)}</Text>
-                    <StatusGroup
-                      heading={`${t('label.outbound-shipment')} / ${t('supplier-return')}`}
-                      idPrefix="outbound"
-                      options={OUTBOUND_STATUS_OPTIONS}
-                      current={asStatusList(value(preference))}
-                    />
-                    <StatusGroup
-                      heading={`${t('label.inbound-shipment')} / ${t('customer-return')}`}
-                      idPrefix="inbound"
-                      options={INBOUND_STATUS_OPTIONS}
-                      current={asStatusList(value(preference))}
-                    />
-                    <Show when={statusGuardMessage()}>
-                      {message => (
-                        <Alert
-                          severity="error"
-                          testId="store-preference-invoice-status-error"
-                        >
-                          {message()}
-                        </Alert>
-                      )}
-                    </Show>
-                  </Stack>
+                  <div class={styles.block}>
+                    <Stack gap="sm">
+                      <span class={styles.label}>{label(preference)}</span>
+                      <StatusGroup
+                        heading={`${t('label.outbound-shipment')} / ${t('supplier-return')}`}
+                        idPrefix="outbound"
+                        options={OUTBOUND_STATUS_OPTIONS}
+                        current={asStatusList(value(preference))}
+                      />
+                      <StatusGroup
+                        heading={`${t('label.inbound-shipment')} / ${t('customer-return')}`}
+                        idPrefix="inbound"
+                        options={INBOUND_STATUS_OPTIONS}
+                        current={asStatusList(value(preference))}
+                      />
+                      <Show when={statusGuardMessage()}>
+                        {message => (
+                          <Alert
+                            severity="error"
+                            testId="store-preference-invoice-status-error"
+                          >
+                            {message()}
+                          </Alert>
+                        )}
+                      </Show>
+                    </Stack>
+                  </div>
                 </Match>
               </Switch>
             )}
           </For>
-        </Stack>
+        </div>
       </Show>
     </Stack>
   );
