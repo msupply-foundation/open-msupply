@@ -34,7 +34,10 @@ import {
   getExpiryDateCell,
   getNumberCell,
 } from '@/ui/elements/table/tableHelpers';
-import { Pagination, type PaginationProps } from '@/ui/elements/table/Pagination';
+import {
+  Pagination,
+  type PaginationProps,
+} from '@/ui/elements/table/Pagination';
 import { createTableConfig } from '@/api/createTableConfig';
 import {
   StocktakeDetail,
@@ -590,6 +593,7 @@ const StocktakeDetailView: Component = () => {
           name: line.itemName,
           isVaccine: line.item.isVaccine,
           doses: line.item.doses,
+          unitName: line.item.unitName,
         };
       }
       return undefined;

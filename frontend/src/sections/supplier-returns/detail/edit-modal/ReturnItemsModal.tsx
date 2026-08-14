@@ -34,6 +34,7 @@ import {
   type DraftReturnLine,
 } from './returnLineLogic';
 import { quantityColumns, reasonColumns } from './returnLineColumns';
+import styles from './ReturnItemsModal.module.css';
 
 // S4 — the return-items modal (spec/supplier-returns/ui-surface.md S4): the
 // single surface for entering what goes back, per item on an existing return. A
@@ -152,6 +153,13 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
   // The item lookup — live only in add mode, where it is the editor's starting
   // control (ui/utils/createFocusTarget).
   const itemSearch = createFocusTarget();
+
+  // The slot the DataTable portals its toolbar controls into
+  // (DataTable.controlsMount) — a ref SIGNAL, not a plain variable: the row it
+  // mounts into renders before the table, so the table must re-read this once
+  // the element attaches. Shared by both steps' tables (only one is ever
+  // mounted at a time).
+  const [tableControls, setTableControls] = createSignal<HTMLDivElement>();
   // One target per DRAFT ROW, per step: focus follows the user to the control
   // they came to change (the stocktake / inbound line-editor rule).
   const quantityFields = createFocusTargets();
@@ -482,24 +490,36 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
             `short` cap) and the pair hugs the inline-start, wrapping when the
             dialog goes full-screen (ui-standards components § layout — dialog
             context row). The reference edits through the shared debounced
-            buffer, the same save path as the detail toolbar. */}
-        <HStack gap="lg" align="start" wrap>
-          <LabelledValue
-            label={t('label.return-to')}
-            variant="field"
-            size="small"
-          >
-            {props.returnToName}
-          </LabelledValue>
-          <TextField
-            label={t('label.supplier-reference')}
-            size="small"
-            value={props.edit.state.theirReference}
-            onInput={e =>
-              props.edit.setField('theirReference', e.currentTarget.value)
-            }
-            onBlur={() => props.edit.flush()}
-          />
+            buffer, the same save path as the detail toolbar.
+
+            The table's own controls (Columns · Settings) ride the far end of
+            this SAME row via DataTable's controlsMount, rather than the
+            dialog's title row: the title is two steps and a field cluster
+            away from the grid, so controls placed there would no longer read
+            as "for the table below". This row sits immediately above the
+            grid, so it keeps that adjacency while still removing the table's
+            own toolbar strip — the same vertical-space win the other line
+            editors get from their (adjacent) header row. */}
+        <HStack justify="between" align="start" wrap>
+          <HStack gap="lg" align="start" wrap>
+            <LabelledValue
+              label={t('label.return-to')}
+              variant="field"
+              size="small"
+            >
+              {props.returnToName}
+            </LabelledValue>
+            <TextField
+              label={t('label.supplier-reference')}
+              size="small"
+              value={props.edit.state.theirReference}
+              onInput={e =>
+                props.edit.setField('theirReference', e.currentTarget.value)
+              }
+              onBlur={() => props.edit.flush()}
+            />
+          </HStack>
+          <div ref={setTableControls} class={styles.headerTableControls} />
         </HStack>
         {/* No Add-batch action — supplier-return lines are existing stock lines,
             not invented batches (ui-surface S4). */}
@@ -517,6 +537,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
               minBodyRem={20}
               config={tableConfig.config()}
               setConfig={tableConfig.setConfig}
+              controlsMount={tableControls()}
               emptyMessage={t('error.no-supplier-return-items')}
             />
           }
@@ -529,6 +550,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
             minBodyRem={20}
             config={tableConfig.config()}
             setConfig={tableConfig.setConfig}
+            controlsMount={tableControls()}
             emptyMessage={t('error.no-supplier-return-items')}
           />
         </Show>
