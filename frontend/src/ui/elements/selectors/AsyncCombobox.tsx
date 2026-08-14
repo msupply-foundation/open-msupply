@@ -63,6 +63,13 @@ export interface AsyncComboboxProps<T> {
   size?: 'default' | 'small';
   /** Width cap — the Combobox's own vocabulary, opt-in (default `full`). */
   width?: 'compact' | 'short' | 'long' | 'full';
+  /**
+   * Popup width — the Combobox's own prop, forwarded. `false` lets the popup
+   * size to its content (floored at the trigger's width, capped so it stays on
+   * screen) instead of matching the trigger, for a picker whose option text can
+   * outrun a narrow field. See Combobox's `matchTriggerWidth`.
+   */
+  matchTriggerWidth?: boolean;
   class?: string;
   /** `data-testid` for the text input (locale-stable test hook). */
   inputTestId?: string;
@@ -238,6 +245,7 @@ export const AsyncCombobox = <T,>(
       clearable={props.clearable}
       size={props.size}
       width={props.width}
+      matchTriggerWidth={props.matchTriggerWidth}
       placeholder={props.placeholder}
       inputTestId={props.inputTestId}
       focusTarget={props.focusTarget}
