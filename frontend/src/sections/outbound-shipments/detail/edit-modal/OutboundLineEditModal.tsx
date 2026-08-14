@@ -631,17 +631,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     if (line.numberOfPacks > 0) return 'success';
     return undefined;
   };
-  // The card tone (title + border + corner badge — D111/D112): expired
-  // outranks held, matching the tint precedence; both corner badges still
-  // show. A batch auto-allocation will use gets the green border + shadow
-  // ('success' — border/shadow only, no title tint) beside its green badge;
-  // the auto-barred states can't co-occur with it.
-  const lineCardTone = (
-    line: DraftLine
-  ): 'success' | 'warning' | 'error' | undefined => {
+  // The card tone (tinted title + the badges after it — D111/D112): expired
+  // outranks held, matching the tint precedence; both badges still show.
+  const lineCardTone = (line: DraftLine): 'warning' | 'error' | undefined => {
     if (lineExpired(line)) return 'error';
     if (lineHeld(line)) return 'warning';
-    if (willAutoAllocate(line)) return 'success';
     return undefined;
   };
   const lineAutoBarReasons = (line: DraftLine) =>
