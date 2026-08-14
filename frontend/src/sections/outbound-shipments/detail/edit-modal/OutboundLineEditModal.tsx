@@ -43,8 +43,14 @@ import {
 } from '../../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../../ui/utils/rem';
 import { createTableConfig } from '../../../../api/createTableConfig';
-import { CheckIcon, InfoIcon } from '../../../../ui/icons';
+import {
+  AlertCircleIcon,
+  CheckIcon,
+  InfoIcon,
+  PauseIcon,
+} from '../../../../ui/icons';
 import { RowStatusBadges, uncapped } from '../RowStatusBadges';
+import { StatusBadge } from '@/ui/elements/feedback/StatusBadge';
 import {
   DraftStockOutLines,
   ItemVariants,
@@ -631,17 +637,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     if (line.numberOfPacks > 0) return 'success';
     return undefined;
   };
-  // The card tone (title + border + corner badge — D111/D112): expired
-  // outranks held, matching the tint precedence; both corner badges still
-  // show. A batch auto-allocation will use gets the green border + shadow
-  // ('success' — border/shadow only, no title tint) beside its green badge;
-  // the auto-barred states can't co-occur with it.
-  const lineCardTone = (
-    line: DraftLine
-  ): 'success' | 'warning' | 'error' | undefined => {
+  // The card tone (tinted title + the badges after it — D111/D112): expired
+  // outranks held, matching the tint precedence; both badges still show.
+  const lineCardTone = (line: DraftLine): 'warning' | 'error' | undefined => {
     if (lineExpired(line)) return 'error';
     if (lineHeld(line)) return 'warning';
-    if (willAutoAllocate(line)) return 'success';
     return undefined;
   };
   const lineAutoBarReasons = (line: DraftLine) =>
@@ -1005,17 +1005,23 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       cell: info => (
         <Show when={willAutoAllocate(info.row.original)}>
           <Popover
-            // data-flag/-label: bare check in the grid; on a card badge the
-            // label shows beside it, or this tick and the On-hold flag read
-            // as the same anonymous check (see DataTable.module.css § flag
-            // cells).
+            // Two renderings, one per view (DataTable.module.css § flag
+            // cells): the bare check in the grid, a green StatusBadge chip
+            // on a card — else this tick and the On-hold flag would read as
+            // the same anonymous check there.
             trigger={
-              <span data-flag data-flag-tone="success">
-                <CheckIcon />
-                <span data-flag-label aria-hidden="true">
-                  {t('description.used-in-auto-allocation')}
+              <>
+                <span data-flag>
+                  <CheckIcon />
                 </span>
-              </span>
+                <span data-flag-chip>
+                  <StatusBadge
+                    label={t('description.used-in-auto-allocation')}
+                    tone="success"
+                    icon={<CheckIcon />}
+                  />
+                </span>
+              </>
             }
             triggerLabel={t('description.used-in-auto-allocation')}
             openOnHover
@@ -1056,7 +1062,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       // The row-status badges follow (Expired / Near expiry / On hold —
       // ui-standards § table interaction, D111/D112): word chips in table
       // view; cards hide them ([data-row-badges]) and carry the states as
-      // their corner badges instead.
+      // their after-the-title chips instead.
       cell: info => {
         const line = info.row.original;
         return (
@@ -1424,13 +1430,14 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       ...getFlagCell(
         t('label.on-hold'),
         { headerPosition: 'badge' },
-        'warning'
+        'warning',
+        () => <PauseIcon />
       ),
     },
     {
       // Expired flag, CARD-ONLY (D112): the grid already reddens the Expiry
       // date cell under its header, but a card buries that in the body — the
-      // badge puts the word in the card corner, with the row's error tone.
+      // chip puts the word after the card title, with the row's error tone.
       c: { accessor: lineExpired, id: 'expired' },
       header: () => t('label.expired'),
       ...getFlagCell(
@@ -1440,7 +1447,8 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           hideOnTable: true,
           hideFromColumnSettings: true,
         },
-        'error'
+        'error',
+        () => <AlertCircleIcon />
       ),
     },
   ];
