@@ -355,7 +355,6 @@ const OutboundDetailView: Component = () => {
       setQuery({ ...query(), first, offset: 0 });
       setSelectedIds([]);
     },
-    conditional: true,
   });
   // Deleting the last page's rows can leave the offset past the end (an
   // empty "41–40 of 40" page) — clamp back to the last real page when a

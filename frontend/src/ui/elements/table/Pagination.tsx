@@ -24,17 +24,6 @@ export interface PaginationProps {
   /** Selectable rows-per-page options. Unrendered — see `onPageSizeChange`. */
   pageSizes?: number[];
   /**
-   * Opt in to the CONDITIONAL footer (spec/ui-standards § tables →
-   * pagination): the bar earns its space instead of being stable chrome. It
-   * renders only when there is somewhere to page to — no rows, or a single
-   * page of them, and there is nothing here at all (the host drops the footer
-   * band too: DataTable reads `./paginationState` for exactly that, and the
-   * space goes to the table). Omit and the bar always renders in full
-   * ("0–0 of 0" over an empty table) — the stable-chrome default the verticals
-   * that have not adopted this keep.
-   */
-  conditional?: boolean;
-  /**
    * This pager SHARES its bar with other content — a detail view's status
    * footer, where it sits between the lifecycle stepper and the status
    * buttons instead of owning a band of its own (spec/ui-standards § tables →

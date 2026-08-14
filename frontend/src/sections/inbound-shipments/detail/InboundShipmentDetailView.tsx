@@ -210,7 +210,6 @@ const InboundShipmentDetailView: Component = () => {
       rememberPageSize(first);
       setQuery({ ...query(), first, offset: 0 });
     },
-    conditional: true,
   });
   // The line-edit modal open state: { itemId, lineId } to edit an item's
   // batches (lineId = the clicked batch, focused on open), {} to add a new

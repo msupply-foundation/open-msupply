@@ -267,7 +267,6 @@ const StocktakeDetailView: Component = () => {
       rememberPageSize(first);
       setQuery({ ...query(), first, offset: 0 });
     },
-    conditional: true,
   });
   const tabs = (): TabDef[] => [
     { value: 'details', label: t('label.details') },
