@@ -40,8 +40,6 @@ export interface NavLeaf {
   gate?: NavCapability;
   /** Permission-gated read — visible, refused on activation (navConfig). */
   permission?: NavConfigItem['permission'];
-  /** Offered at phone width (see navConfig NavItem.mobileFriendly). */
-  mobileFriendly?: true;
 }
 
 // A small status marker on a nav entry (the sync indicator). A count rides a
@@ -66,8 +64,6 @@ export interface NavItem {
   gate?: NavCapability;
   /** Permission-gated read — visible, refused on activation (navConfig). */
   permission?: NavConfigItem['permission'];
-  /** Offered at phone width (see navConfig NavItem.mobileFriendly). */
-  mobileFriendly?: true;
   /** Present → expandable parent section. Absent → a leaf link. */
   children?: NavLeaf[];
 }
@@ -115,14 +111,12 @@ const toNavItem = (item: NavConfigItem): NavItem => ({
   icon: SECTION_ICONS[item.path] ?? FileIcon,
   gate: item.gate,
   permission: item.permission,
-  mobileFriendly: item.mobileFriendly,
   children: item.children?.map(child => ({
     id: child.path,
     labelKey: child.labelKey,
     to: child.path,
     gate: child.gate,
     permission: child.permission,
-    mobileFriendly: child.mobileFriendly,
   })),
 });
 
@@ -138,9 +132,6 @@ const syncNavItem: NavItem = {
   labelKey: 'sync',
   to: 'sync',
   icon: SyncIcon,
-  // Offered at phone width (spec/navigation › registry: the Sync entry is
-  // mobile-friendly — it opens the modal, no screen of its own).
-  mobileFriendly: true,
 };
 
 export const upperNav: NavItem[] = items.filter(
@@ -166,7 +157,6 @@ export const navLeaves: NavLeaf[] = items.flatMap(item =>
           to: item.to,
           gate: item.gate,
           permission: item.permission,
-          mobileFriendly: item.mobileFriendly,
         },
       ]
 );
