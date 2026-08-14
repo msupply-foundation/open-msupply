@@ -4,6 +4,10 @@
 // composes these.
 
 import type { NamePropertiesResult } from '../configuration/nameProperties.generated';
+import type {
+  StorePreferencesResult,
+  UpsertStorePreferencesVariables,
+} from './storeEditor.generated';
 
 /** One property definition as the nameProperties catalogue serves it. */
 export type PropertyDefinition =
@@ -203,4 +207,235 @@ export const geolocationErrorKey = (
     default:
       return 'error.unknown-geolocation-error';
   }
+};
+
+// ---------------------------------------------------------------------------
+// The Preferences tab (rules § The store editor › Preferences, ui-surface § S5)
+
+/** One preference as `preferenceDescriptions` serves it — the served order IS
+ *  the display order (contract § The store editor). */
+export type StorePreference =
+  StorePreferencesResult['preferenceDescriptions'][number];
+
+export type UpsertPreferencesInput = UpsertStorePreferencesVariables['input'];
+
+/*
+ * Staged preference edits, keyed by preference key — staged values ONLY (the
+ * write is per-preference, unlike the properties document, so an untouched
+ * preference never rides along). Values are `unknown` for the same reason the
+ * served `value` is: the wire declares its own type loss, so every read is
+ * defensive rather than cast.
+ */
+export type PreferenceDraft = Record<string, unknown>;
+
+/** The value a control shows: the staged edit, else what the server holds. */
+export const preferenceValue = (
+  preference: StorePreference,
+  draft: PreferenceDraft
+): unknown =>
+  preference.key in draft ? draft[preference.key] : preference.value;
+
+// Defensive readers from the untyped value — a wrong-typed value reads as the
+// kind's zero, which is also what the server fabricates for "unset".
+export const asBool = (value: unknown): boolean => value === true;
+export const asNumber = (value: unknown): number =>
+  typeof value === 'number' && Number.isFinite(value) ? value : 0;
+export const asColour = (value: unknown): string =>
+  typeof value === 'string' ? value : '';
+
+/** The three parts of the recent-stocktake warning composite. */
+export interface WarnStocktakeParts {
+  enabled: boolean;
+  maxAge: number;
+  minItems: number;
+}
+export const asWarnParts = (value: unknown): WarnStocktakeParts => {
+  const parts =
+    typeof value === 'object' && value !== null
+      ? (value as Record<string, unknown>)
+      : {};
+  return {
+    enabled: asBool(parts.enabled),
+    maxAge: asNumber(parts.maxAge),
+    minItems: asNumber(parts.minItems),
+  };
+};
+
+/** One offered invoice status — the generated input's own member type. */
+export type InvoiceStatusOption = NonNullable<
+  UpsertPreferencesInput['invoiceStatusOptions']
+>[number]['value'][number];
+
+/*
+ * The offered statuses, in the canonical (default-set) order. Two labelled
+ * groups over ONE stored set; the bookends are offered but immutable
+ * (ui-surface § S5 row 22). CANCELLED exists on the wire but is never offered
+ * — as the reference app.
+ */
+export const OUTBOUND_STATUS_OPTIONS = [
+  'NEW',
+  'ALLOCATED',
+  'PICKED',
+  'SHIPPED',
+] as const satisfies readonly InvoiceStatusOption[];
+export const INBOUND_STATUS_OPTIONS = [
+  'NEW',
+  'DELIVERED',
+  'RECEIVED',
+  'VERIFIED',
+] as const satisfies readonly InvoiceStatusOption[];
+export const IMMUTABLE_INVOICE_STATUSES = [
+  'NEW',
+  'SHIPPED',
+  'VERIFIED',
+] as const satisfies readonly InvoiceStatusOption[];
+const ALL_INVOICE_STATUS_OPTIONS = [
+  'NEW',
+  'ALLOCATED',
+  'PICKED',
+  'SHIPPED',
+  'RECEIVED',
+  'DELIVERED',
+  'VERIFIED',
+] as const satisfies readonly InvoiceStatusOption[];
+
+export const asStatusList = (value: unknown): InvoiceStatusOption[] =>
+  ALL_INVOICE_STATUS_OPTIONS.filter(
+    status => Array.isArray(value) && value.includes(status)
+  );
+
+/*
+ * Apply one checkbox toggle to the stored set, keeping canonical order.
+ * Returns null when the edit must be refused: unchecking the LAST selected of
+ * Delivered/Received (OMS-REG-SET-05.38) — the app's guard, the server accepts
+ * any set (contract wire trap). Only that specific uncheck refuses, so a set
+ * already violating the rule (written by another client) doesn't block
+ * unrelated edits.
+ */
+export const toggleInvoiceStatus = (
+  current: readonly InvoiceStatusOption[],
+  status: InvoiceStatusOption,
+  checked: boolean
+): InvoiceStatusOption[] | null => {
+  const next = ALL_INVOICE_STATUS_OPTIONS.filter(option =>
+    option === status ? checked : current.includes(option)
+  );
+  if (
+    !checked &&
+    (status === 'DELIVERED' || status === 'RECEIVED') &&
+    !next.includes('DELIVERED') &&
+    !next.includes('RECEIVED')
+  ) {
+    return null;
+  }
+  return next;
+};
+
+/** Case-insensitive substring match on the displayed label (SET-05.35). */
+export const matchesPreferenceFilter = (label: string, term: string): boolean =>
+  term.trim() === '' || label.toLowerCase().includes(term.trim().toLowerCase());
+
+/*
+ * Preferences are editable only on the central server by a session holding the
+ * central-data permission (rules § The store editor › Preferences) — the same
+ * two facts the server enforces (central-server root gate + EDIT_CENTRAL_DATA),
+ * mirrored as a UI gate.
+ */
+export const canEditPreferences = (session: {
+  canEditCentralData: boolean;
+  isCentralServer: boolean;
+}): boolean => session.canEditCentralData && session.isCentralServer;
+
+/*
+ * The staged edits as the mutation input — one `{ storeId, value }` array per
+ * staged preference, every entry naming the EDITED store (the server honours
+ * the ids inside the payload, not the auth-checked one — contract wire trap).
+ * Undefined when nothing is staged, so the save can skip the call. Written out
+ * per key (kdd/explicit-composition): each line is one preference with its own
+ * coercion, checked field-by-field against the generated input type.
+ */
+export const buildPreferencesInput = (
+  draft: PreferenceDraft,
+  storeId: string
+): UpsertPreferencesInput | undefined => {
+  const input: UpsertPreferencesInput = {};
+  const bool = (key: string) => [{ storeId, value: asBool(draft[key]) }];
+  const number = (key: string) => [{ storeId, value: asNumber(draft[key]) }];
+
+  if ('showIndicativePriceInRequisitions' in draft)
+    input.showIndicativePriceInRequisitions = bool(
+      'showIndicativePriceInRequisitions'
+    );
+  if ('blindStocktake' in draft) input.blindStocktake = bool('blindStocktake');
+  if ('orderInPacks' in draft) input.orderInPacks = bool('orderInPacks');
+  if ('useProcurementFunctionality' in draft)
+    input.useProcurementFunctionality = bool('useProcurementFunctionality');
+  if ('sortByVvmStatusThenExpiry' in draft)
+    input.sortByVvmStatusThenExpiry = bool('sortByVvmStatusThenExpiry');
+  if ('useSimplifiedMobileUi' in draft)
+    input.useSimplifiedMobileUi = bool('useSimplifiedMobileUi');
+  if ('disableManualReturns' in draft)
+    input.disableManualReturns = bool('disableManualReturns');
+  if ('requisitionAutoFinalise' in draft)
+    input.requisitionAutoFinalise = bool('requisitionAutoFinalise');
+  if ('inboundShipmentAutoVerify' in draft)
+    input.inboundShipmentAutoVerify = bool('inboundShipmentAutoVerify');
+  if ('manageVvmStatusForStock' in draft)
+    input.manageVvmStatusForStock = bool('manageVvmStatusForStock');
+  if ('manageVaccinesInDoses' in draft)
+    input.manageVaccinesInDoses = bool('manageVaccinesInDoses');
+  if ('canCreateInternalOrderFromARequisition' in draft)
+    input.canCreateInternalOrderFromARequisition = bool(
+      'canCreateInternalOrderFromARequisition'
+    );
+  if ('selectDestinationStoreForAnInternalOrder' in draft)
+    input.selectDestinationStoreForAnInternalOrder = bool(
+      'selectDestinationStoreForAnInternalOrder'
+    );
+  if ('externalInboundShipmentLinesMustBeAuthorised' in draft)
+    input.externalInboundShipmentLinesMustBeAuthorised = bool(
+      'externalInboundShipmentLinesMustBeAuthorised'
+    );
+  if ('doNotPrintPlaceholderLineLabels' in draft)
+    input.doNotPrintPlaceholderLineLabels = bool(
+      'doNotPrintPlaceholderLineLabels'
+    );
+  if (
+    'numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts' in
+    draft
+  )
+    input.numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts =
+      number(
+        'numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts'
+      );
+  if ('numberOfMonthsThresholdToShowLowStockAlertsForProducts' in draft)
+    input.numberOfMonthsThresholdToShowLowStockAlertsForProducts = number(
+      'numberOfMonthsThresholdToShowLowStockAlertsForProducts'
+    );
+  if ('numberOfMonthsThresholdToShowOverStockAlertsForProducts' in draft)
+    input.numberOfMonthsThresholdToShowOverStockAlertsForProducts = number(
+      'numberOfMonthsThresholdToShowOverStockAlertsForProducts'
+    );
+  if ('firstThresholdForExpiringItems' in draft)
+    input.firstThresholdForExpiringItems = number(
+      'firstThresholdForExpiringItems'
+    );
+  if ('secondThresholdForExpiringItems' in draft)
+    input.secondThresholdForExpiringItems = number(
+      'secondThresholdForExpiringItems'
+    );
+  if ('storeCustomColour' in draft)
+    input.storeCustomColour = [
+      { storeId, value: asColour(draft.storeCustomColour) },
+    ];
+  if ('warnWhenMissingRecentStocktake' in draft)
+    input.warnWhenMissingRecentStocktake = [
+      { storeId, value: asWarnParts(draft.warnWhenMissingRecentStocktake) },
+    ];
+  if ('invoiceStatusOptions' in draft)
+    input.invoiceStatusOptions = [
+      { storeId, value: asStatusList(draft.invoiceStatusOptions) },
+    ];
+
+  return Object.keys(input).length > 0 ? input : undefined;
 };
