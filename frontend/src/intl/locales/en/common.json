@@ -3060,6 +3060,8 @@
   "pagination.last": "Last page",
   "pagination.next": "Next page",
   "pagination.of": "of",
+  "pagination.rows-total_one": "{{count}} row",
+  "pagination.rows-total_other": "{{count}} rows",
   "pagination.previous": "Previous page",
   "pagination.range": "{{ from }}–{{ to }} of {{ total }}",
   "pagination.rows": "Rows per page",

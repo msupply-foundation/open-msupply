@@ -37,6 +37,14 @@
    tabular-nums so the digits keep constant width while paging (the spec's
    .mrt-page-range). No bold (unit 10 — the old emphasised summary is
    retired). */
+/* The total ("of 380") — quiet, tabular so the digits hold still as pages
+   change, and never wrapping away from the pager it belongs to. */
+.total {
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 .range {
   color: var(--text-body);
   font-variant-numeric: tabular-nums;
