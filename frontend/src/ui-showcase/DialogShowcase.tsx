@@ -600,9 +600,9 @@ export const DialogShowcase = () => {
           title="Store selector — in a blocking Dialog"
         >
           <Lead>
-            The <code>StoreSelector</code> library component — card rows
-            stacking each store's name over its code, with <code>Current</code>{' '}
-            / <code>Default</code> / <code>Last used</code> StatusChips, the
+            The <code>StoreSelector</code> library component — hairline-divided
+            list rows naming each store, with <code>Current</code> /{' '}
+            <code>Default</code> / <code>Last used</code> StatusChips, the
             pinned rows under a <em>Recent stores</em> heading and the rest
             under <em>All stores</em>, a <code>TextField</code> search only for
             long lists (7+ stores), and a quiet always-open opt-in on one line
@@ -610,10 +610,11 @@ export const DialogShowcase = () => {
             once-ever preference, so it does not hold the slot above the search
             that the panel's actual task needs). Search matches name or code
             ignoring case and accents — type <code>depot</code> to find{' '}
-            <em>Dépôt Régional</em>; a query that matches nothing names itself
-            in the empty state and offers to clear. Clicking a row enters it
+            <em>Dépôt Régional</em>, or <code>cs-men</code> to match a code the
+            row does not display; a query that matches nothing names itself in
+            the empty state and offers to clear. Clicking a row enters it
             directly (no Continue button, no follow-up prompt — issue #193);
-            arrow keys move the highlight and Enter confirms it; the checkbox
+            arrow keys move the highlight and Enter confirms it; the toggle
             state rides along as <code>onConfirm</code>'s{' '}
             <code>alwaysOpen</code> flag. Here it fills a{' '}
             <code>

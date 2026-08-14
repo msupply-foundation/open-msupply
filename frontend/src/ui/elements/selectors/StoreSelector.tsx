@@ -38,9 +38,9 @@ const SEARCH_THRESHOLD = 7;
  * has a target, and is scrolled into view on open so a pinned row below the
  * list's fold is never hidden (.37).
  *
- * Each row names its store's code under the name (spec S3, .34): the search
- * matches on code, so a result set filtered by one has to be able to show why
- * it matched — and codes are how similarly-named stores are told apart.
+ * A row shows the store's NAME only (spec S3) — the name is what a user picks
+ * a store by. The code stays a matching key for the search, so a code search
+ * still narrows the list even though the matched code is not on the row.
  * Matching is case- AND accent-insensitive (.33, ui/utils/searchText), without
  * which an accented list is unsearchable to anyone typing plain letters.
  *
@@ -322,7 +322,6 @@ export const StoreSelector = (props: {
                         onClick={() => confirm(store)}
                       >
                         <span class={styles.storeName}>{store.name}</span>
-                        <span class={styles.storeCode}>{store.code}</span>
                         <span class={styles.tags}>
                           <Show when={store.id === props.currentStoreId}>
                             <StatusChip
