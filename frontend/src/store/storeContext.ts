@@ -199,6 +199,15 @@ const prescriptionPreferences = () => {
   };
 };
 
+// The bottom bar's store colour (spec/chrome § bottom bar): the store's
+// custom-colour preference, raw as stored — the shell derives contrast text
+// and ignores an unparseable value (AppShell's footerColourStyle). Empty
+// while unresolved, so the bar shows its default until the preference is
+// known. Reactive — the store editor's preferences save refetches this
+// context, so a saved colour applies without a reload.
+const storeCustomColour = (): string =>
+  storeContext()?.preferences?.storeCustomColour ?? '';
+
 // The entered store's dispensary gate (spec/patients § configuration gates ›
 // AC-G1). Dispensary mode gates the WHOLE patient surface — the Dispensary nav
 // group (ShellLayout) and its routes (the patients section's route guard). The
@@ -286,6 +295,7 @@ export {
   patientPreferences,
   prescriptionPreferences,
   isDispensary,
+  storeCustomColour,
   hasVaccineModule,
   hasProgramModule,
   hasProcurement,

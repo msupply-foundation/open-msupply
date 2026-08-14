@@ -22,6 +22,7 @@ import {
 } from '../ui/layout/AppShell/navModel';
 import { ShellSectionContext } from '../ui/layout/AppShell/shellContext';
 import { authUser, logout, userDisplayName } from '../auth/authContext';
+import { storeCustomColour } from '../store/storeContext';
 import { isCentralServer } from '../api/serverInfo';
 import { reportPermissionDenied } from '../api/graphql';
 import { createMediaQuery } from '../ui/utils/createMediaQuery';
@@ -220,6 +221,10 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
         email={authUser()?.email}
         jobTitle={authUser()?.jobTitle}
         onLogout={() => setLogoutConfirmOpen(true)}
+        /* The store's custom bottom-bar colour (spec/chrome § bottom bar) —
+           guard-3 global state, so a preferences save (which refetches it)
+           re-colours the bar without a reload. */
+        footerColour={storeCustomColour()}
         isCentralServer={isCentralServer()}
         updateAvailable={updateAvailable()}
         onUpdateClick={() => setUpdateConfirmOpen(true)}
