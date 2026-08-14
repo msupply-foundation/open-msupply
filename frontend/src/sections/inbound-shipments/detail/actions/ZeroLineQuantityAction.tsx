@@ -45,7 +45,7 @@ const Body = (props: LineActionProps & { onClose: () => void }) => {
         .selectedIds()
         .map(id => ({ id, numberOfPacks: 0 })),
     });
-    if (!outcome) return props.onClose();
+    if (!outcome) return setPhase('confirm'); // handled globally
     if (outcome.errors.size > 0) {
       props.onError(outcome.errors);
       setErrorMessage([...outcome.errors.values()][0]);
