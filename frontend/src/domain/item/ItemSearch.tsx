@@ -77,10 +77,19 @@ export interface ItemSearchProps {
    * Mark options for items the caller's document already holds
    * (spec/ui-standards/controls.md § async lookup, D115): after each fetched
    * page, `probe` receives that page's item ids and resolves the subset
-   * already on the document (undefined on a failed fetch → that page just
-   * goes unmarked). A present item's row carries `label` as a textual
-   * end-of-row badge and stays fully selectable — picking it loads the
-   * existing entry.
+   * already on the document (undefined on a failed fetch — or a rejection —
+   * → that page just goes unmarked). A present item's row carries `label` as
+   * a textual end-of-row badge and stays fully selectable — picking it loads
+   * the existing entry.
+   *
+   * Known limit: marks are only as fresh as each page's last probe. The
+   * empty-query first page is fetched once per mount and reused across
+   * dropdown reopens (AsyncCombobox only refetches on typing or after an
+   * abandoned search), so if the document's line set changes while this
+   * picker stays mounted — e.g. a line-editor "Save & next" adds the item
+   * just counted — that cached page's badges go stale until a search
+   * refetches it. Picking a stale row is still safe (D60 loads the existing
+   * entry); this is a display-freshness limit, not a correctness one.
    */
   presentInDocument?: {
     probe: (itemIds: string[]) => Promise<string[] | undefined>;
@@ -114,13 +123,15 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
 
   // The probe rides the page fetch — awaited before the page is handed to the
   // combobox — so a page's marks land together with its rows (no badge
-  // pop-in a beat after the list renders).
+  // pop-in a beat after the list renders). A rejected probe is treated as a
+  // failed one (undefined → page unmarked): the badges are an annotation, so
+  // a probe fault must never take the option list down with it.
   const fetchPage = async (search: string, offset: number) => {
     const page = await basePage(search, offset);
     const presence = props.presentInDocument;
     if (page && presence && page.nodes.length > 0) {
       const ids = page.nodes.map(node => node.id);
-      const found = await presence.probe(ids);
+      const found = await presence.probe(ids).catch(() => undefined);
       if (found) setPresent(presencePatch(ids, found));
     }
     return page;
