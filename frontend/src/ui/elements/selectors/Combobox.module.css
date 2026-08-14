@@ -286,6 +286,17 @@
 }
 
 .item {
+  /* A row must never shrink below its own text. `.listbox` is a scrolling
+     COLUMN flex box, so its rows are shrink candidates the moment the options
+     outgrow `.content`'s max-height. On a fine pointer nothing happens: the
+     automatic minimum size (`min-height: auto` resolves to the content height)
+     holds them open. The coarse-pointer touch floor below replaces that `auto`
+     with a definite 44px and takes the protection with it — so on a TABLET a
+     wrapped option was squashed into 44px and spilled over its neighbour, which
+     is the overlapping program list in #1039 (desktop, same data, was fine).
+     `flex: none` takes the row out of shrinking outright; the touch floor still
+     applies to short rows. */
+  flex: none;
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -294,6 +305,16 @@
   cursor: pointer;
   user-select: none;
   outline: none;
+  /* Free to wrap means free to be NARROWER than its longest word. An option's
+     text is an anonymous flex item, whose automatic minimum size is its
+     min-content width — the longest unbreakable token — so a long code or an
+     unspaced name overran the panel; and since `.listbox` sets `overflow-y:
+     auto` the other axis computes to `auto` too, which turned the overrun into a
+     horizontal scrollbar over the results (#1041). `anywhere` (not
+     `break-word`) is the one that also shrinks that min-content contribution,
+     so it fixes the minimum rather than just the painting. Measured on a 127px
+     panel: scrollWidth 340px -> 127px. */
+  overflow-wrap: anywhere;
 }
 
 .item[data-highlighted] {
