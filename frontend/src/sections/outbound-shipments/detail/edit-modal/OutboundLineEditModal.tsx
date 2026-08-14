@@ -1062,7 +1062,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       // The row-status badges follow (Expired / Near expiry / On hold —
       // ui-standards § table interaction, D111/D112): word chips in table
       // view; cards hide them ([data-row-badges]) and carry the states as
-      // their corner badges instead.
+      // their after-the-title chips instead.
       cell: info => {
         const line = info.row.original;
         return (
@@ -1431,13 +1431,13 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         t('label.on-hold'),
         { headerPosition: 'badge' },
         'warning',
-        <PauseIcon />
+        () => <PauseIcon />
       ),
     },
     {
       // Expired flag, CARD-ONLY (D112): the grid already reddens the Expiry
       // date cell under its header, but a card buries that in the body — the
-      // badge puts the word in the card corner, with the row's error tone.
+      // chip puts the word after the card title, with the row's error tone.
       c: { accessor: lineExpired, id: 'expired' },
       header: () => t('label.expired'),
       ...getFlagCell(
@@ -1448,7 +1448,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           hideFromColumnSettings: true,
         },
         'error',
-        <AlertCircleIcon />
+        () => <AlertCircleIcon />
       ),
     },
   ];
