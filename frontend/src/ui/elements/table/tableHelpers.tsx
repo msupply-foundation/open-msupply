@@ -211,8 +211,13 @@ export const getFlagCell = <T,>(
    * flag as a StatusBadge chip in this tone. Untoned flags chip neutrally.
    */
   tone?: 'success' | 'warning' | 'error',
-  /** Optional marker icon for the card chip (see StatusBadge.icon). */
-  icon?: JSX.Element
+  /**
+   * Optional marker icon for the card chip (see StatusBadge.icon) — a THUNK,
+   * called per row. A bare JSX element would be evaluated once into a single
+   * DOM node shared by every flagged row, so mounting one row's chip would
+   * steal the icon from the previous (kdd/solid-reactivity-pitfalls).
+   */
+  icon?: () => JSX.Element
 ): CellFragment<T> => ({
   meta: { align: 'center', ...meta },
   // TWO renderings, CSS-gated per view (DataTable.module.css § flag cells):
@@ -228,7 +233,7 @@ export const getFlagCell = <T,>(
           <CheckIcon />
         </span>
         <span data-flag-chip>
-          <StatusBadge label={label} tone={tone} icon={icon} />
+          <StatusBadge label={label} tone={tone} icon={icon?.()} />
         </span>
       </>
     ) : (

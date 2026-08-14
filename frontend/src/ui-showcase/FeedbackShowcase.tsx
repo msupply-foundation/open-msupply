@@ -18,6 +18,7 @@ import {
   AlertCircleIcon,
   AlertTriangleIcon,
   CheckCircleIcon,
+  CheckIcon,
   CircleDashedIcon,
   HelpIcon,
   LockIcon,
@@ -156,6 +157,11 @@ export const FeedbackShowcase = () => {
               label="Unallocated"
               appearance="outline"
               icon={<CircleDashedIcon />}
+            />
+            <StatusBadge
+              label="Will auto-allocate"
+              tone="success"
+              icon={<CheckIcon />}
             />
             <StatusBadge label="Disabled" icon={<LockIcon />} />
           </Row>
