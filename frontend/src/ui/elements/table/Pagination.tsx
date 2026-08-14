@@ -1,11 +1,8 @@
 import { createSignal, For, Show } from 'solid-js';
 import { NavigateBeforeIcon, NavigateNextIcon } from '../../icons';
-import { Select } from '../selectors/Select';
 import { t } from '../../../intl';
 import { paginationState } from './paginationState';
 import styles from './Pagination.module.css';
-
-const DEFAULT_PAGE_SIZES = [10, 20, 50, 100];
 
 export interface PaginationProps {
   /** Zero-based row offset of the current page. */
@@ -17,11 +14,14 @@ export interface PaginationProps {
   /** Requests a new offset — the parent owns the page state (URL params). */
   onOffsetChange: (offset: number) => void;
   /**
-   * Requests a new page size. When given, a rows-per-page selector is shown;
-   * the
-   *  parent resets to the first page on change. Omit to hide the selector. */
+   * Requests a new page size. **Currently unrendered** — the bar shows the
+   * pager alone, so nothing in it offers a size change; the page size is still
+   * live state (URL-backed, remembered per user) and hosts still pass this, so
+   * it is kept for the control's return rather than deleted along with the
+   * plumbing behind it.
+   */
   onPageSizeChange?: (pageSize: number) => void;
-  /** Selectable rows-per-page options (default 20 / 50 / 100). */
+  /** Selectable rows-per-page options. Unrendered — see `onPageSizeChange`. */
   pageSizes?: number[];
   /**
    * Opt in to the CONDITIONAL footer (spec/ui-standards § tables →
@@ -126,13 +126,10 @@ const PageJump = (props: { onJump: (page: number) => void; max: number }) => {
 };
 
 export const Pagination = (props: PaginationProps) => {
-  const from = () => (props.total === 0 ? 0 : props.offset + 1);
-  const to = () => Math.min(props.offset + props.pageSize, props.total);
   const pageCount = () => Math.max(1, Math.ceil(props.total / props.pageSize));
   const currentPage = () => Math.floor(props.offset / props.pageSize) + 1; // 1-based
   const hasPrev = () => currentPage() > 1;
   const hasNext = () => currentPage() < pageCount();
-  const pageSizes = () => props.pageSizes ?? DEFAULT_PAGE_SIZES;
 
   // The page list the spec asks for (ui-standards § tables → pagination):
   // 1 2 3 … 7 8 9 — the first page, a window around the current one, the last
@@ -167,33 +164,6 @@ export const Pagination = (props: PaginationProps) => {
   // freeze the footer at its first state.
   const state = () => paginationState(props);
 
-  // The rows-per-page control, shared by both faces that can carry it.
-  const RowsPerPage = () => (
-    <Show when={props.onPageSizeChange}>
-      <Select
-        class={styles.pageSize}
-        size="small"
-        label={t('pagination.rows')}
-        testId="rows-per-page-select"
-        value={String(props.pageSize)}
-        options={pageSizes().map(size => ({
-          value: String(size),
-          label: String(size),
-        }))}
-        // Guard against no-op emissions: the Select re-fires onValueChange
-        // when it re-mounts (e.g. this pager now lives inside the DataTable
-        // overlay, which re-renders on data change), and onPageSizeChange
-        // resets the page to 0 — so an unguarded no-op would snap the page
-        // back to 1 right after the user navigated. Only fire on a REAL size
-        // change.
-        onValueChange={v => {
-          const next = Number(v);
-          if (next !== props.pageSize) props.onPageSizeChange!(next);
-        }}
-      />
-    </Show>
-  );
-
   return (
     <Show when={state() === 'full'}>
       {/* The bar. Under the stable-chrome default (no `conditional`) it renders
@@ -205,12 +175,6 @@ export const Pagination = (props: PaginationProps) => {
         aria-label={t('pagination.label')}
         data-testid="table-pagination"
       >
-        <RowsPerPage />
-        {/* The range "1–20 of 38" — quiet body-tone text (no bold; unit 10),
-          tabular-nums so the digits keep constant width while paging. */}
-        <span class={styles.range} aria-live="polite">
-          {from()}–{to()} {t('pagination.of')} {props.total}
-        </span>
         {/* The pager: first · window around current · last, ellipses where the
             run breaks, prev/next at the ends and disabled at the boundaries.
             An ellipsis is a BUTTON — pressing it swaps in a number box, which
