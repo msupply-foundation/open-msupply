@@ -14,7 +14,7 @@ import { getPreferredPageSize, recordPreferredPageSize } from '@/appData';
 // module-level read would freeze the preference at import time, so a change
 // made on one list would not reach an already-imported one until reload.
 
-export const DEFAULT_PAGE_SIZE = 20;
+export const DEFAULT_PAGE_SIZE = 50;
 
 /**
  * The page size a fresh visit starts at. Call it where the view builds its

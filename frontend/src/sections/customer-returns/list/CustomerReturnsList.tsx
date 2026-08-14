@@ -145,14 +145,15 @@ const CustomerReturnsList: Component = () => {
     setSelectedIds([]);
   };
 
-  // GraphQL variables from URL state. The type pin lives HERE (not in the URL
-  // filter) so the list can never escape the vertical
+  // GraphQL variables from URL state. The type pin lives in the QUERY's
+  // top-level `type` argument, which both selects the permission and overwrites
+  // `filter.type` server-side — so the list can never escape the vertical, and
+  // a filter pin here would be silently discarded
   // (spec/customer-returns/contract.md § list & lookups).
   const variables = createMemo<CustomerReturnsVariables>(() => ({
     storeId: params.storeId,
     filter: {
       ...stripEmpty(query().filter),
-      type: { equalTo: 'CUSTOMER_RETURN' },
       // Custom-field filters become the dynamicFilter AST (undefined = no-op).
       dynamicFilter: buildCustomFieldDynamicFilter(query().cf),
     },

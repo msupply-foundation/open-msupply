@@ -44,7 +44,13 @@ import { createAddAction } from '../../../ui/utils/keyActions';
 import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { RowStatusBadges, uncapped } from './RowStatusBadges';
-import { InfoIcon, MinusCircleIcon, PlusCircleIcon } from '../../../ui/icons';
+import {
+  AlertCircleIcon,
+  InfoIcon,
+  MinusCircleIcon,
+  PauseIcon,
+  PlusCircleIcon,
+} from '../../../ui/icons';
 import { isExpired } from '../../../domain/allocation';
 import { fetchLocations } from '../../../domain/location';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
@@ -130,14 +136,14 @@ type Line = OutboundLineFragment;
 const lineOnHold = (line: Line): boolean =>
   !!line.stockLine?.onHold || !!line.location?.onHold;
 
-// Calendar-expired line (D112) — the bold red Expiry-date cell, a red status
-// tint on an unallocated row, and the red card treatment (title/border/
-// Expired badge).
+// Calendar-expired line (D112) — the medium-weight red Expiry-date cell, a
+// red status tint on an unallocated row, and the red card treatment (tinted
+// title + the Expired chip after it).
 const lineExpired = (line: Line): boolean =>
   !!line.expiryDate && isExpired(line.expiryDate);
 
 // Inside the shared near-expiry window but not yet expired — the "Near
-// expiry" badge tier (the expiry cell is red at this tier, not yet bold).
+// expiry" badge tier (the expiry cell is red at this tier, regular weight).
 const lineNearExpiry = (line: Line): boolean =>
   !!line.expiryDate &&
   !lineExpired(line) &&
@@ -161,7 +167,7 @@ const LineStatusBadges = (props: { line: Line }) => (
 // OMS-REG-DIST-03.37–.39, D111): allocated green, expired red, held amber,
 // placeholder untinted (its blue text is gone too — D111 drops the current
 // app's treatment). Row text keeps the default colour; the badges and the
-// bold red Expiry-date cell carry the facts in words. Precedence (.39):
+// reddened Expiry-date cell carry the facts in words. Precedence (.39):
 // allocated > expired > held — a detail line always carries packs, so real
 // lines read green and the red/amber tints surface only on a zero-pack edge
 // case.
@@ -175,9 +181,9 @@ const lineRowTint = (
   return undefined;
 };
 
-// The card tone (title + border + corner badge — D111/D112); no info tone
-// for placeholders. Expired outranks held (matching the tint precedence);
-// both corner badges still show.
+// The card tone (tinted title + the chips after it — D111/D112); no info
+// tone for placeholders. Expired outranks held (matching the tint
+// precedence); both chips still show.
 const lineCardTone = (line: Line): 'warning' | 'error' | undefined => {
   if (line.type === 'UNALLOCATED_STOCK') return undefined;
   if (lineExpired(line)) return 'error';
@@ -348,10 +354,13 @@ const OutboundDetailView: Component = () => {
       setSelectedIds([]);
     },
     onPageSizeChange: first => {
+      // The remembered page size (D106) — it rode the DataTable's own
+      // pagination prop, which this accessor replaced when the pager moved
+      // into the status footer, so it has to travel with the handler.
+      rememberPageSize(first);
       setQuery({ ...query(), first, offset: 0 });
       setSelectedIds([]);
     },
-    conditional: true,
   });
   // Deleting the last page's rows can leave the offset past the end (an
   // empty "41–40 of 40" page) — clamp back to the last real page when a
@@ -709,7 +718,8 @@ const OutboundDetailView: Component = () => {
       {
         // On-hold flag, CARD-ONLY (OMS-REG-DIST-03.37, D111): the table's
         // amber "On hold" badge beside the item name carries the state, so
-        // the grid has no On-hold column; the card's corner badge is this.
+        // the grid has no On-hold column; the card's after-the-title chip
+        // is this.
         c: { accessor: lineOnHold, id: 'onHold' },
         header: () => t('label.on-hold'),
         ...getFlagCell(
@@ -719,13 +729,14 @@ const OutboundDetailView: Component = () => {
             hideOnTable: true,
             hideFromColumnSettings: true,
           },
-          'warning'
+          'warning',
+          () => <PauseIcon />
         ),
       },
       {
         // Expired flag, CARD-ONLY (D112): the table's Expiry-date cell
         // reddens under its header; a card buries that in the body, so the
-        // badge puts the word in the card corner, with the row's error tone.
+        // chip puts the word after the card title, with the row's error tone.
         c: { accessor: lineExpired, id: 'expired' },
         header: () => t('label.expired'),
         ...getFlagCell(
@@ -735,7 +746,8 @@ const OutboundDetailView: Component = () => {
             hideOnTable: true,
             hideFromColumnSettings: true,
           },
-          'error'
+          'error',
+          () => <AlertCircleIcon />
         ),
       },
       {
@@ -1009,78 +1021,78 @@ const OutboundDetailView: Component = () => {
                     totals={totalCount() > 0 ? shipmentTotals : undefined}
                   />
                   <Show
-                  when={selectedIds().length > 0}
-                  fallback={
-                    <OutboundStatusFooter
-                      storeId={params.storeId}
-                      node={current()}
-                      pagination={linePagination()}
-                      preflight={preflight}
-                      onSetHold={setHold}
-                      // A status change can trim zero-quantity lines
-                      // server-side — refetch the lines page alongside the
-                      // in-place entity splice.
-                      onSaved={saved => {
-                        mutate(() => saved);
-                        void refetchAfterSave();
-                      }}
-                    />
-                  }
-                >
-                  <ContentFooter testId="actions-footer">
-                    <strong data-testid="selected-rows-count">
-                      {tPlural('label.items-selected', selectedIds().length)}
-                    </strong>
-                    {/* Delete: hidden (not disabled) when read-only — editable
+                    when={selectedIds().length > 0}
+                    fallback={
+                      <OutboundStatusFooter
+                        storeId={params.storeId}
+                        node={current()}
+                        pagination={linePagination()}
+                        preflight={preflight}
+                        onSetHold={setHold}
+                        // A status change can trim zero-quantity lines
+                        // server-side — refetch the lines page alongside the
+                        // in-place entity splice.
+                        onSaved={saved => {
+                          mutate(() => saved);
+                          void refetchAfterSave();
+                        }}
+                      />
+                    }
+                  >
+                    <ContentFooter testId="actions-footer">
+                      <strong data-testid="selected-rows-count">
+                        {tPlural('label.items-selected', selectedIds().length)}
+                      </strong>
+                      {/* Delete: hidden (not disabled) when read-only — editable
                         only (NEW/ALLOCATED/PICKED). S3 bulk-action matrix. */}
-                    <Show when={editable()}>
-                      <DeleteLinesAction
-                        storeId={params.storeId}
-                        selectedLines={selectedLines}
-                        disabled={false}
-                        onCommitted={onLineOpsCommitted}
-                      />
-                    </Show>
-                    {/* Allocate placeholder lines: only while editable AND a
+                      <Show when={editable()}>
+                        <DeleteLinesAction
+                          storeId={params.storeId}
+                          selectedLines={selectedLines}
+                          disabled={false}
+                          onCommitted={onLineOpsCommitted}
+                        />
+                      </Show>
+                      {/* Allocate placeholder lines: only while editable AND a
                         placeholder line is in the selection. */}
-                    <Show when={editable() && hasSelectedPlaceholder()}>
-                      <AllocateLinesAction
-                        storeId={params.storeId}
-                        selectedLines={selectedLines}
-                        disabled={false}
-                        onCommitted={onLineOpsCommitted}
-                      />
-                    </Show>
-                    {/* Return selected lines (OMS-REG-DIST-04.21): shown at EVERY status (not
+                      <Show when={editable() && hasSelectedPlaceholder()}>
+                        <AllocateLinesAction
+                          storeId={params.storeId}
+                          selectedLines={selectedLines}
+                          disabled={false}
+                          onCommitted={onLineOpsCommitted}
+                        />
+                      </Show>
+                      {/* Return selected lines (OMS-REG-DIST-04.21): shown at EVERY status (not
                         hidden, not disabled). At SHIPPED / DELIVERED / VERIFIED
                         it opens the customer-return create flow (owned by the
                         returns vertical, over this shipment); any other status
                         (RECEIVED included) gets the explanatory notice. See the
                         S3 bulk-action matrix. */}
-                    <Button
-                      variant="secondary"
-                      data-testid="return-lines-button"
-                      onClick={() =>
-                        canReturnLines(current().status)
-                          ? setReturnModalOpen(true)
-                          : setReturnNoticeOpen(true)
-                      }
-                    >
-                      {t('button.return-lines')}
-                    </Button>
-                    {/* The pager rides the selection face as well: ticking a
-                        row must not strip the way to the rest of the lines. */}
-                    <Pagination {...linePagination()} inBar />
-                    <ContentFooterActions>
                       <Button
                         variant="secondary"
-                        icon={<MinusCircleIcon />}
-                        onClick={() => setSelectedIds([])}
+                        data-testid="return-lines-button"
+                        onClick={() =>
+                          canReturnLines(current().status)
+                            ? setReturnModalOpen(true)
+                            : setReturnNoticeOpen(true)
+                        }
                       >
-                        {t('label.clear-selection')}
+                        {t('button.return-lines')}
                       </Button>
-                    </ContentFooterActions>
-                  </ContentFooter>
+                      {/* The pager rides the selection face as well: ticking a
+                        row must not strip the way to the rest of the lines. */}
+                      <Pagination {...linePagination()} inBar />
+                      <ContentFooterActions>
+                        <Button
+                          variant="secondary"
+                          icon={<MinusCircleIcon />}
+                          onClick={() => setSelectedIds([])}
+                        >
+                          {t('label.clear-selection')}
+                        </Button>
+                      </ContentFooterActions>
+                    </ContentFooter>
                   </Show>
                 </>
               }
@@ -1129,23 +1141,6 @@ const OutboundDetailView: Component = () => {
                   onSelectionChange={setSelectedIds}
                   config={tableConfig.config()}
                   setConfig={tableConfig.setConfig}
-                  // Page navigation clears the selection (OMS-REG-DIST-03.34):
-                  // the bulk-action gates classify by rows in view, so a
-                  // selection must never carry ids the user can no longer see.
-                  pagination={{
-                    offset: query().offset,
-                    pageSize: query().first,
-                    total: totalCount(),
-                    onOffsetChange: offset => {
-                      setQuery({ ...query(), offset });
-                      setSelectedIds([]);
-                    },
-                    onPageSizeChange: first => {
-                      rememberPageSize(first);
-                      setQuery({ ...query(), first, offset: 0 });
-                      setSelectedIds([]);
-                    },
-                  }}
                 />
               </TabPanel>
               <TabPanel value="custom-fields">
