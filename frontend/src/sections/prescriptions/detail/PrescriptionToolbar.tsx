@@ -1,5 +1,4 @@
 import { createMemo, createSignal, Show, type Component } from 'solid-js';
-import { useNavigate } from '@solidjs/router';
 import { FormRowItem } from '@/ui/layout/Form/FormRowItem';
 import { t } from '../../../intl';
 import { DateField } from '../../../ui/elements/inputs/DateField';
@@ -69,12 +68,17 @@ export interface PrescriptionToolbarProps {
   onSave: (input: Omit<UpdateInput, 'id'>) => void;
   /** Delete ALL lines, then save (the AC-B2 flow). */
   onClearLinesAndSave: (input: Omit<UpdateInput, 'id'>) => void;
+  /**
+   * The picker's edit-patient affordance (spec/patients S4 allow-edit): opens
+   * the patient in the edit modal, in place over this screen (#1038) — routing
+   * is the page's concern, not this toolbar's.
+   */
+  onEditPatient: (patientId: string) => void;
 }
 
 export const PrescriptionToolbar: Component<
   PrescriptionToolbarProps
 > = props => {
-  const navigate = useNavigate();
   // A pending date/program change awaiting the clear-lines confirmation.
   const [pending, setPending] = createSignal<Omit<UpdateInput, 'id'>>();
 
@@ -112,13 +116,11 @@ export const PrescriptionToolbar: Component<
           // D5; the current app's patient input is likewise not clearable).
           clearable={false}
           // The picker's edit-patient affordance (spec/patients S4 allow-edit),
-          // available whatever the prescription's own editability — it edits the
-          // patient, not the prescription (ui-surface S3 § header fields). It
-          // opens the patient's own screen, which holds the details form and the
-          // Insurance tab; S4's two-tab edit modal is not built.
-          onEditPatient={patientId =>
-            navigate(`/${props.storeId}/dispensary/patients/${patientId}`)
-          }
+          // available whatever the prescription's own editability — it edits
+          // the patient, not the prescription (ui-surface S3 § header fields).
+          // Opens the S4 edit modal in place over this screen (#1038), owned by
+          // the detail view alongside its other modals.
+          onEditPatient={props.onEditPatient}
           // A prescription always has a patient: the picker never clears
           // (null selections are ignored), it only swaps (AC-N1).
           onSelect={patient =>
