@@ -7,7 +7,10 @@ import {
   Show,
 } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
-import { hasPermission } from '../../../store/storeContext';
+import {
+  hasPermission,
+  refetchStoreContext,
+} from '../../../store/storeContext';
 import { isCentralServer } from '../../../api/serverInfo';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import {
@@ -228,6 +231,11 @@ export const StoreEditorModal = (props: {
     if (failed) {
       setSaveFailed(true);
     } else {
+      // A saved preference feeds live surfaces — the guard-3 gates and the
+      // bottom bar's store colour — so refresh the global store context by
+      // direct call (kdd/state-management: no cache keys). Fire-and-forget:
+      // the editor's own job is done.
+      if (preferencesInput) void refetchStoreContext(props.storeId);
       props.onClose();
     }
   };

@@ -32,6 +32,7 @@ import {
   type NavLeaf,
 } from './navModel';
 import { locale, changeLanguage, t } from '../../../intl';
+import { footerColourStyle } from './footerColour';
 import styles from './AppShell.module.css';
 
 export interface AppShellProps {
@@ -116,6 +117,13 @@ export interface AppShellProps {
    * reload) — without it the cell never renders, so it is never a dead button.
    */
   onUpdateClick?: () => void;
+  /**
+   * The store's custom bottom-bar colour (spec/chrome § bottom bar) — the raw
+   * store-custom-colour preference value. A parseable hex colour replaces the
+   * bar's background (central or not) with contrast-derived text; anything
+   * else, or unset, leaves the default. A DATA colour, not a theme value.
+   */
+  footerColour?: string;
   /** On a central server the bottom bar is brand orange; otherwise neutral.
    *  From the isCentralServer global, queried unauthenticated at startup. */
   isCentralServer?: boolean;
@@ -315,6 +323,19 @@ export const AppShell = (props: AppShellProps) => {
                   inert={panelOverlay()}
                   data-testid="app-footer"
                   data-central={props.isCentralServer ? '' : undefined}
+                  // The store's custom colour, when it parses: background +
+                  // contrast text inline, --footer-accent following the text
+                  // so the divider/hover sub-rules keep reading one knob.
+                  style={(() => {
+                    const custom = footerColourStyle(props.footerColour);
+                    return custom
+                      ? {
+                          background: custom.background,
+                          color: custom.text,
+                          '--footer-accent': custom.text,
+                        }
+                      : undefined;
+                  })()}
                 >
                   <FooterCell
                     icon={HomeIcon}
