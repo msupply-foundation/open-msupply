@@ -261,22 +261,6 @@
   color: var(--text-secondary);
 }
 
-@media (pointer: coarse) {
-  /* Standard 48 / small 44 (both WCAG 2.5.5 AAA), matching every other input.
-     Dropdown .item rows keep the generic --touch-target tap floor. */
-  .trigger {
-    min-height: var(--input-height-touch);
-  }
-
-  .field[data-size='small'] .trigger {
-    min-height: var(--input-height-sm-touch);
-  }
-
-  .item {
-    min-height: var(--touch-target);
-  }
-}
-
 /* Small variant: denser height + 13px text, matching the shared input scale
    (36px / --input-font-sm — NOT a bespoke size). Placed after the base rules so
    specificity ascends. ONLY height and font-size change here: the label→control
@@ -302,4 +286,33 @@
    end edge. */
 .field[data-size='small'] .clear {
   inset-inline-end: calc(var(--input-padding-x) + 1rem + var(--space-2));
+}
+
+/* Touch. Placed LAST, after the small variant above, for the same reason that
+   variant is placed after the base rules — a media query adds no specificity,
+   so the block has to come later in source order or its rules tie with
+   `.field[data-size='small'] .trigger` (0,3,0) and lose. */
+@media (pointer: coarse) {
+  /* Standard 48 / small 44 (both WCAG 2.5.5 AAA), matching every other input.
+     Dropdown .item rows keep the generic --touch-target tap floor.
+
+     The font is set on BOTH rules rather than once on a shared `.trigger`
+     selector: the size rule has to repeat it, and a later bare `.trigger` would
+     descend in specificity (stylelint no-descending-specificity). The trigger
+     is a button, not a text input, so the zoom threshold never applied to it —
+     it bumps so a Select in a row of fields reads at the same size as the text
+     field beside it. */
+  .trigger {
+    min-height: var(--input-height-touch);
+    font-size: var(--input-font-touch);
+  }
+
+  .field[data-size='small'] .trigger {
+    min-height: var(--input-height-sm-touch);
+    font-size: var(--input-font-touch);
+  }
+
+  .item {
+    min-height: var(--touch-target);
+  }
 }

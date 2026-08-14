@@ -252,8 +252,13 @@
     min-height: var(--input-height-sm-touch);
   }
 
-  /* Touch font bump — see --input-font-touch (stops iOS zoom-on-focus). */
-  .input {
+  /* Touch font bump — see --input-font-touch. BOTH sizes: a small field beside
+     a default one must not read at a different size on the same touch surface.
+     The small selector has to be REPEATED here — a media query adds no
+     specificity, so a bare `.input` (0,1,0) loses to `.field[data-size='small']
+     .input` (0,3,0) above and the bump silently never lands on small. */
+  .input,
+  .field[data-size='small'] .input {
     font-size: var(--input-font-touch);
   }
 
