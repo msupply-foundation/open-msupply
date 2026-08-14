@@ -79,9 +79,9 @@ describe('OMS-FUN-SYC-002.11 — page, page size, sort and the name search are c
   });
 
   it('paginates server-side at the spec default page size', () => {
-    expect(DEFAULT_PAGE_SIZE).toBe(20);
+    expect(DEFAULT_PAGE_SIZE).toBe(50);
     expect(buildListVariables(DEFAULT_STATE).page).toEqual({
-      first: 20,
+      first: 50,
       offset: 0,
     });
   });

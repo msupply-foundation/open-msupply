@@ -1,4 +1,4 @@
-import { Show } from 'solid-js';
+import { createSignal, For, Show } from 'solid-js';
 import { NavigateBeforeIcon, NavigateNextIcon } from '../../icons';
 import { Select } from '../selectors/Select';
 import { t } from '../../../intl';
@@ -63,6 +63,68 @@ export interface PaginationProps {
  * are ported verbatim from the current app's MUI icons so they pixel-match;
  * RTL mirrors via the icons' data-flip-rtl.
  */
+/*
+ * The ellipsis that becomes a page box. Idle it is a "…" button standing for
+ * the pages the window hides; pressed, it swaps to a small number input,
+ * focused and ready to type. Enter jumps, Escape and blur put the ellipsis
+ * back — so a mis-click costs nothing and the pager keeps its width either
+ * way (the input is sized to the same slot).
+ *
+ * A button rather than a bare "…" because it IS the affordance for reaching a
+ * hidden page; screen readers get the same offer, since the label says what
+ * pressing it does rather than describing three dots.
+ */
+const PageJump = (props: { onJump: (page: number) => void; max: number }) => {
+  const [editing, setEditing] = createSignal(false);
+  let input: HTMLInputElement | undefined;
+
+  const commit = () => {
+    const page = Number(input?.value);
+    setEditing(false);
+    // Ignore an empty or non-numeric entry: nothing was asked for, so nothing
+    // moves. goToPage clamps a number outside 1..max.
+    if (Number.isFinite(page) && page > 0) props.onJump(page);
+  };
+
+  return (
+    <Show
+      when={editing()}
+      fallback={
+        <button
+          type="button"
+          class={`${styles.pageEllipsis} ${styles.numberSlot}`}
+          data-testid="pagination-jump"
+          aria-label={t('pagination.jump-to-page')}
+          onClick={() => setEditing(true)}
+        >
+          …
+        </button>
+      }
+    >
+      <input
+        ref={element => {
+          input = element;
+          // Focus once attached, so pressing the ellipsis lands the caret in
+          // the box rather than making the user click twice.
+          queueMicrotask(() => element.focus());
+        }}
+        class={`${styles.pageInput} ${styles.numberSlot}`}
+        type="number"
+        min="1"
+        max={props.max}
+        inputmode="numeric"
+        data-testid="pagination-jump-input"
+        aria-label={t('pagination.jump-to-page')}
+        onKeyDown={event => {
+          if (event.key === 'Enter') commit();
+          if (event.key === 'Escape') setEditing(false);
+        }}
+        onBlur={() => setEditing(false)}
+      />
+    </Show>
+  );
+};
+
 export const Pagination = (props: PaginationProps) => {
   const from = () => (props.total === 0 ? 0 : props.offset + 1);
   const to = () => Math.min(props.offset + props.pageSize, props.total);
@@ -72,29 +134,28 @@ export const Pagination = (props: PaginationProps) => {
   const hasNext = () => currentPage() < pageCount();
   const pageSizes = () => props.pageSizes ?? DEFAULT_PAGE_SIZES;
 
-  // The pager is a FIXED set of five slots so nothing appears/disappears as you
-  // page (no reflow): [first] ‹ [middle] › [last].
-  // - first(1) / last(N) are jump buttons, EXCEPT when you're on that page —
-  //   then that slot renders the current-page (non-interactive) style instead.
-  // - prev / next stay put and just disable at the boundaries.
-  // - the MIDDLE slot always shows a number, so the row width is constant: the
-  //   current page (current-style) on in-between pages, but the neighbour
-  //   towards the middle at the ends (page 2 on the first page, page N-1 on the
-  //   last) as a clickable jump — so the slot is never empty. e.g.
-  //     page 1 → (1) ‹ 2 › N
-  //     page k → 1 ‹ (k) › N
-  //     page N → 1 ‹ N-1 › (N)
-  const onFirst = () => currentPage() === 1;
-  const onLast = () => currentPage() === pageCount();
-  // The number the middle slot shows, and whether that IS the current page (→
-  // current-style, non-clickable) or a neighbour to jump to (→ a button).
-  const middlePage = () =>
-    onFirst()
-      ? Math.min(2, pageCount())
-      : onLast()
-        ? Math.max(pageCount() - 1, 1)
-        : currentPage();
-  const middleIsCurrent = () => !onFirst() && !onLast();
+  // The page list the spec asks for (ui-standards § tables → pagination):
+  // 1 2 3 … 7 8 9 — the first page, a window around the current one, the last
+  // page, with an ellipsis wherever the run breaks. Clicking an ellipsis turns
+  // it into a number box (see below), which is how you reach a page the window
+  // doesn't show without stepping there.
+  //
+  // Returns page numbers and 'gap' markers; a gap only appears where it stands
+  // for MORE THAN ONE hidden page, since an ellipsis covering a single page
+  // costs the same room as the page itself.
+  const pageList = (): (number | 'gap')[] => {
+    const total = pageCount();
+    const current = currentPage();
+    if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+    const out: (number | 'gap')[] = [1];
+    const from = Math.max(2, current - 1);
+    const to = Math.min(total - 1, current + 1);
+    if (from > 2) out.push(from === 3 ? 2 : 'gap');
+    for (let page = from; page <= to; page++) out.push(page);
+    if (to < total - 1) out.push(to === total - 2 ? total - 1 : 'gap');
+    out.push(total);
+    return out;
+  };
 
   const goToPage = (page: number) => {
     const clamped = Math.min(Math.max(1, page), pageCount());
@@ -150,41 +211,12 @@ export const Pagination = (props: PaginationProps) => {
         <span class={styles.range} aria-live="polite">
           {from()}–{to()} {t('pagination.of')} {props.total}
         </span>
-        {/* Compact pager, fixed slots so nothing shifts as you page within a
-                dataset: [first] ‹ [middle] › [last]. first(1)/last(N) are jump
-                buttons that render as the current-page style when you're ON that
-                page; prev/next stay put and disable at the boundaries; the middle
-                always shows a number (current on in-between pages, else the
-                neighbour towards the middle) so the row width is constant. So for
-                N > 2:  page 1 → (1) ‹ 2 › N   ·   page k → 1 ‹ (k) › N   ·
-                page N → 1 ‹ N-1 › (N). The middle only exists when N > 2 (with ≤ 2
-                pages first/last already cover them); the last slot only when N > 1
-                (a single page is just the "(1)" first slot + disabled arrows). */}
+        {/* The pager: first · window around current · last, ellipses where the
+            run breaks, prev/next at the ends and disabled at the boundaries.
+            An ellipsis is a BUTTON — pressing it swaps in a number box, which
+            is how a page outside the window is reached without stepping there
+            (ui-standards § tables → pagination). */}
         <div class={styles.pager}>
-          {/* First slot — the current-page display when on page 1, else a
-                  jump-to-first button. */}
-          <Show
-            when={!onFirst()}
-            fallback={
-              <span
-                class={`${styles.pageCurrent} ${styles.numberSlot}`}
-                data-testid="pagination-current-page"
-                aria-current="page"
-              >
-                1
-              </span>
-            }
-          >
-            <button
-              type="button"
-              class={`${styles.pageButton} ${styles.numberSlot}`}
-              onClick={() => goToPage(1)}
-              data-testid="pagination-first"
-              aria-label={t('pagination.first')}
-            >
-              1
-            </button>
-          </Show>
           <button
             type="button"
             class={styles.pageButton}
@@ -195,46 +227,46 @@ export const Pagination = (props: PaginationProps) => {
           >
             <NavigateBeforeIcon />
           </button>
-          {/* Page position "1 / 8" — the narrow-screen stand-in for the
-                number slots, which hide at ≤480px and would otherwise leave
-                two bare arrows with no sense of where you are. CSS-gated to
-                that width (hidden above it, where the slots do the job), and
-                aria-hidden because the range beside it already announces the
-                position to a screen reader at every width. */}
+          {/* Page position "1 / 8" — the narrow-screen stand-in for the number
+              buttons, which hide when the bar is tight and would otherwise
+              leave two bare arrows with no sense of where you are.
+              aria-hidden: the range beside it already announces the position. */}
           <span class={styles.position} aria-hidden="true">
             {currentPage()} / {pageCount()}
           </span>
-          {/* Middle slot — only meaningful with > 2 pages (with ≤ 2, the
-                  first/last slots already show every page). Always a number so the
-                  row width is constant: the current page (current-style) on
-                  in-between pages, else a clickable jump to the neighbour towards
-                  the middle (page 2 on the first page, page N-1 on the last). */}
-          <Show when={pageCount() > 2}>
-            <Show
-              when={middleIsCurrent()}
-              fallback={
-                <button
-                  type="button"
-                  class={`${styles.pageButton} ${styles.numberSlot}`}
-                  onClick={() => goToPage(middlePage())}
-                  data-testid="pagination-middle"
-                  aria-label={t('pagination.go-to-page', {
-                    page: middlePage(),
-                  })}
-                >
-                  {middlePage()}
-                </button>
-              }
-            >
-              <span
-                class={`${styles.pageCurrent} ${styles.numberSlot}`}
-                data-testid="pagination-current-page"
-                aria-current="page"
+          <For each={pageList()}>
+            {entry => (
+              <Show
+                when={entry !== 'gap'}
+                fallback={<PageJump onJump={goToPage} max={pageCount()} />}
               >
-                {currentPage()}
-              </span>
-            </Show>
-          </Show>
+                <Show
+                  when={entry !== currentPage()}
+                  fallback={
+                    <span
+                      class={`${styles.pageCurrent} ${styles.numberSlot}`}
+                      data-testid="pagination-current-page"
+                      aria-current="page"
+                    >
+                      {entry as number}
+                    </span>
+                  }
+                >
+                  <button
+                    type="button"
+                    class={`${styles.pageButton} ${styles.numberSlot}`}
+                    onClick={() => goToPage(entry as number)}
+                    data-testid={`pagination-page-${entry as number}`}
+                    aria-label={t('pagination.go-to-page', {
+                      page: entry as number,
+                    })}
+                  >
+                    {entry as number}
+                  </button>
+                </Show>
+              </Show>
+            )}
+          </For>
           <button
             type="button"
             class={styles.pageButton}
@@ -245,33 +277,6 @@ export const Pagination = (props: PaginationProps) => {
           >
             <NavigateNextIcon />
           </button>
-          {/* Last slot — only when there's more than one page (a single page is
-                  just the "(1)" first slot). The current-page display when on the
-                  last page, else a jump-to-last button. */}
-          <Show when={pageCount() > 1}>
-            <Show
-              when={!onLast()}
-              fallback={
-                <span
-                  class={`${styles.pageCurrent} ${styles.numberSlot}`}
-                  data-testid="pagination-current-page"
-                  aria-current="page"
-                >
-                  {pageCount()}
-                </span>
-              }
-            >
-              <button
-                type="button"
-                class={`${styles.pageButton} ${styles.numberSlot}`}
-                onClick={() => goToPage(pageCount())}
-                data-testid="pagination-last"
-                aria-label={t('pagination.last')}
-              >
-                {pageCount()}
-              </button>
-            </Show>
-          </Show>
         </div>
       </nav>
     </Show>

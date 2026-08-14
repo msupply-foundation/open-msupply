@@ -1347,7 +1347,10 @@ const PaginationDemo = () => {
     <Pagination
       offset={offset()}
       pageSize={pageSize()}
-      total={38}
+      // Enough pages to show what the pager does with a long set: a window
+      // around the current page, an ellipsis for each break, and the number
+      // box behind it.
+      total={380}
       onOffsetChange={setOffset}
       onPageSizeChange={size => {
         setPageSize(size);
