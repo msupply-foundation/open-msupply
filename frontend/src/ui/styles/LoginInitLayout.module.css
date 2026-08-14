@@ -17,8 +17,18 @@
   block-size: 100%;
 }
 
+/* `min-inline-size: 0` on both halves, because `flex: 1 0 50%` cannot shrink
+   and `min-width: auto` would otherwise floor each half at its min-content
+   width — here, the heading's longest word. Android applies the system font
+   scale as WebView text zoom, which multiplies font sizes but NOT the vw/rem
+   lengths around them, so at 1.1x "Pharmaceutical" outgrows the hero's 40%
+   column (50% less its 5% padding either side) and pushes the page past 100%.
+   The WebView then shrink-to-fits the whole page, which leaves a band of empty
+   viewport below it. Flooring the minimum at 0 holds the split at exactly
+   50/50 whatever the text scale. */
 .hero {
   flex: 1 0 50%;
+  min-inline-size: 0;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -39,6 +49,11 @@
   font-weight: var(--weight-bold);
   line-height: normal;
   white-space: pre-line; /* line breaks are in the copy itself */
+  /* The safety valve behind .hero's `min-inline-size: 0`: a word that outgrows
+     the column wraps rather than spilling over the panel beside it. At the text
+     scales seen in practice the word still fits inside the hero's 5% padding,
+     so this only engages at extreme ones. */
+  overflow-wrap: break-word;
 }
 
 /* Original: 45px below the heading, 14→20px, semibold */
@@ -51,6 +66,7 @@
 
 .panel {
   flex: 1 0 50%;
+  min-inline-size: 0; /* see .hero */
   display: flex;
   flex-direction: column;
   align-items: center;
