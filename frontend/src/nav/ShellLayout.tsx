@@ -42,7 +42,7 @@ const SyncModal = lazy(() =>
 );
 
 // The store editor is the settings vertical's chunk (spec/settings § S5) —
-// loaded on first open from the footer's Edit cell, not with the shell.
+// loaded on first open from the store picker's Edit action, not with the shell.
 const StoreEditorModal = lazy(() =>
   import('../sections/settings/store-editor/StoreEditorModal').then(m => ({
     default: m.StoreEditorModal,
@@ -157,11 +157,12 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   const [logoutConfirmOpen, setLogoutConfirmOpen] = createSignal(false);
   const logoutAndReset = () => void logout().then(() => navigate('/'));
 
-  // Spec (sync-modal; chrome › sync indicator): the chrome's sync affordance
-  // opens the modal; the shared sync watch (substrate) runs for the whole
-  // signed-in session — it also drives the post-sync refresh (spec/sync-modal
-  // § After a run completes). Badge/dim derivation is the sync-modal
-  // vertical's, consumed through its host module (the generated seam).
+  // Spec (sync-modal; chrome › sync status): the bottom bar's sync cell starts
+  // a run on one click and opens the modal from its details button; the shared
+  // sync watch (substrate) runs for the whole signed-in session — it also
+  // drives the post-sync refresh (spec/sync-modal § After a run completes). The
+  // status-line derivation is the sync-modal vertical's, consumed through its
+  // host module (the generated seam).
   const [syncOpen, setSyncOpen] = createSignal(false);
   const [syncEverOpened, setSyncEverOpened] = createSignal(false);
   onMount(startSyncWatch);
@@ -171,15 +172,29 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
     setSyncEverOpened(true);
     setSyncOpen(true);
   };
+  // One-click sync (issue #9229): the trigger belongs to the indicator, not to
+  // this shell, because starting a run also ARMS the cell's busy state — a run
+  // that fails fast (an unreachable central server) can begin and end between
+  // two status frames, and without the armed state a click would produce no
+  // visible response at all.
+  const syncNow = syncIndicator.syncNow;
 
-  // The store editor (spec/settings § S5, OMS-REG-SET-05.17/.18): the footer's
-  // Edit cell opens it on its Properties tab, on every screen and for every
-  // signed-in user — no permission gates OPENING it; permissions govern what is
-  // editable inside. Mounted only once opened, like the sync modal above, so
-  // its chunk (and its two queries) cost nothing until asked for.
+  // The store editor (spec/settings § S5, OMS-REG-SET-05.17/.18): the store
+  // picker's Edit action opens it on its Properties tab, for every signed-in
+  // user — no permission gates OPENING it; permissions govern what is editable
+  // inside. It moved off the bottom bar (issue #9229): editing a store is a
+  // thing you do TO the store you are looking at, so it belongs with the store
+  // name, not as a standing cell of its own. Mounted only once opened, like the
+  // sync modal above, so its chunk (and its two queries) cost nothing until
+  // asked for.
   const [storeEditOpen, setStoreEditOpen] = createSignal(false);
   const [storeEditEverOpened, setStoreEditEverOpened] = createSignal(false);
+  // Reached from the store picker, which closes as the editor opens: two
+  // stacked modals would leave the user editing a store through a list of
+  // stores, and dismissing the editor would land them back in the picker
+  // rather than where they started.
   const openStoreEdit = () => {
+    setStoreSwitchOpen(false);
     setStoreEditEverOpened(true);
     setStoreEditOpen(true);
   };
@@ -197,17 +212,17 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
         lower={menuLower()}
         selected={selected()}
         onNavigate={onNavigate}
-        onSyncOpen={openSync}
         /* The brand mark goes home — the store root, which IS the dashboard
            (see relativePath above, where an empty path resolves to it). The
            conventional job for a logo in app chrome, and the reason it is not
            wired to the rail toggle instead. */
         onHome={() => navigate(`/${params.storeId}`)}
-        syncBadge={syncIndicator.badge()}
-        syncIconDimmed={syncIndicator.dimmed()}
+        syncStatus={syncIndicator.status()}
+        syncing={syncIndicator.syncing()}
+        onSyncNow={syncNow}
+        onSyncDetails={openSync}
         storeName={storeName()}
         onStoreClick={() => setStoreSwitchOpen(true)}
-        onStoreEdit={openStoreEdit}
         username={username()}
         displayName={userDisplayName()}
         email={authUser()?.email}
@@ -222,6 +237,7 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
         onUpdateClick={() => setUpdateConfirmOpen(true)}
       >
         <KeyboardHost
+          onSyncNow={syncNow}
           onSyncOpen={openSync}
           onLogoutRequest={() => setLogoutConfirmOpen(true)}
         />
@@ -240,7 +256,11 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
         <SyncModal open={syncOpen()} onClose={() => setSyncOpen(false)} />
       </Show>
       <Show when={storeSwitchOpen()}>
-        <StoreSwitchModal open onClose={() => setStoreSwitchOpen(false)} />
+        <StoreSwitchModal
+          open
+          onClose={() => setStoreSwitchOpen(false)}
+          onEditStore={openStoreEdit}
+        />
       </Show>
       <ConfirmDialog
         open={logoutConfirmOpen()}

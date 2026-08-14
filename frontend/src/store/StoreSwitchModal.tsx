@@ -1,7 +1,9 @@
-import type { Component } from 'solid-js';
+import { Show, type Component } from 'solid-js';
 import { Dialog } from '../ui/elements/feedback/Dialog';
+import { Button } from '../ui/elements/buttons/Button';
 import { StoreSelector } from '../ui/elements/selectors/StoreSelector';
 import { CancelButton } from '../ui/elements/buttons/StandardButtons';
+import { EditIcon } from '../ui/icons';
 import { createStorePicker } from './storePicker';
 import { currentStoreId } from './storeContext';
 import { t } from '../intl';
@@ -26,6 +28,19 @@ import { t } from '../intl';
 export const StoreSwitchModal: Component<{
   open: boolean;
   onClose: () => void;
+  /**
+   * Open the store editor for the store the app is currently in (spec/settings
+   * OMS-REG-SET-05.17/.18). This is where editing a store now lives — it left
+   * the bottom bar in issue #9229, because a standing Edit cell there said
+   * nothing about WHAT it edits, while here the store it acts on is the subject
+   * of the whole panel. Absent → no Edit action (a host with no editor to open,
+   * e.g. the login flow's picker, gets none rather than a dead button).
+   *
+   * It rides the dialog HEADER rather than a row inside the list: the list is a
+   * `role="listbox"`, whose children must be options — a second button inside a
+   * row would be unreachable to assistive tech.
+   */
+  onEditStore?: () => void;
 }> = props => {
   const picker = createStorePicker();
   return (
@@ -33,6 +48,19 @@ export const StoreSwitchModal: Component<{
       open={props.open}
       onClose={props.onClose}
       title={t('heading.select-store')}
+      headerActions={
+        <Show when={props.onEditStore}>
+          <Button
+            variant="secondary"
+            size="small"
+            icon={<EditIcon />}
+            onClick={() => props.onEditStore?.()}
+            data-testid="store-edit-current"
+          >
+            {t('button.edit-current-store')}
+          </Button>
+        </Show>
+      }
       closeButton
       testId="store-switch-modal"
       // The panel confirms by activating a store row, so the footer holds only
