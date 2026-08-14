@@ -46,3 +46,39 @@ mutation updateNameProperties(
     }
   }
 }
+
+# The store's 23 preference descriptions, served in the order the panel shows
+# them (contract § The store editor). The server fabricates a default for an
+# unset preference — there is no is-set flag — and `value` is untyped JSON
+# (the schema's own declared type loss).
+query storePreferences($storeId: String!) {
+  preferenceDescriptions(
+    storeId: $storeId
+    prefType: STORE
+    prefContext: { storeId: $storeId }
+  ) {
+    key
+    valueType
+    value
+  }
+}
+
+# Per-preference write (unlike the wholesale properties save): each staged
+# preference rides as a one-element `{ storeId, value }` array naming the
+# edited store — the server honours the ids INSIDE the payload, not the
+# auth-checked top-level one (contract § The store editor, wire traps).
+# Central-server-only (the centralServer root gate), EDIT_CENTRAL_DATA;
+# a bare OkResponse with no error union, so a failure is a top-level GraphQL
+# error the caller opts into reading (returnGraphqlErrors), keeping the draft.
+mutation upsertStorePreferences(
+  $storeId: String!
+  $input: UpsertPreferencesInput!
+) {
+  centralServer {
+    preferences {
+      upsertPreferences(storeId: $storeId, input: $input) {
+        ok
+      }
+    }
+  }
+}

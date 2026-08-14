@@ -22,11 +22,10 @@ import {
 } from '../ui/layout/AppShell/navModel';
 import { ShellSectionContext } from '../ui/layout/AppShell/shellContext';
 import { authUser, logout, userDisplayName } from '../auth/authContext';
+import { storeCustomColour } from '../store/storeContext';
 import { isCentralServer } from '../api/serverInfo';
 import { reportPermissionDenied } from '../api/graphql';
-import { createMediaQuery } from '../ui/utils/createMediaQuery';
-import { mediaQuery } from '../ui/styles/breakpoints';
-import { deniedPermission, gateNav, mobileNav, routeAccess } from './navGates';
+import { deniedPermission, gateNav, routeAccess } from './navGates';
 import { KeyboardHost } from '../keyboard/KeyboardHost';
 import { createDocumentTitle, screenTitleKey } from '../documentTitle';
 import { startSyncWatch, stopSyncWatch } from '../api/syncStore';
@@ -107,20 +106,14 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
 
   // Nav visibility gates live in src/nav/navGates.ts, shared with the command
   // palette so the menu and the palette can never disagree about where the user
-  // can go (spec/keyboard AC-KB4). At phone width the menu narrows further to
-  // the registry's mobile-friendly subset (spec/navigation § mobile-friendly,
-  // D95; OMS-REG-NAV-01.21) — presentation only, routes stay untouched.
+  // can go (spec/keyboard AC-KB4). The menu offers the same gated destinations
+  // at every viewport width, phone included (spec/navigation § mobile-friendly).
   // Memoised so the gated arrays — and the section objects rebuilt when a
   // child is dropped — keep stable references; otherwise MenuBar's <For> would
   // remount nav sections on every shell re-render
   // (kdd/solid-reactivity-pitfalls).
-  const isPhone = createMediaQuery(mediaQuery.compact);
-  const menuUpper = createMemo(() =>
-    isPhone() ? mobileNav(gateNav(upperNav)) : gateNav(upperNav)
-  );
-  const menuLower = createMemo(() =>
-    isPhone() ? mobileNav(gateNav(lowerNav)) : gateNav(lowerNav)
-  );
+  const menuUpper = createMemo(() => gateNav(upperNav));
+  const menuLower = createMemo(() => gateNav(lowerNav));
 
   // The router is the registry's third surface (spec/navigation § one
   // registry): a capability-gated destination's URL is unreachable — it lands
@@ -235,6 +228,10 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
         email={authUser()?.email}
         jobTitle={authUser()?.jobTitle}
         onLogout={() => setLogoutConfirmOpen(true)}
+        /* The store's custom bottom-bar colour (spec/chrome § bottom bar) —
+           guard-3 global state, so a preferences save (which refetches it)
+           re-colours the bar without a reload. */
+        footerColour={storeCustomColour()}
         isCentralServer={isCentralServer()}
         updateAvailable={updateAvailable()}
         onUpdateClick={() => setUpdateConfirmOpen(true)}
