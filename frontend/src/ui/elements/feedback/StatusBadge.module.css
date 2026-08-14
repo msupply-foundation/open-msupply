@@ -12,7 +12,9 @@
   gap: 0.3em;
   padding: 0.125em 0.55em;
   border: 1px solid transparent;
-  border-radius: 999px;
+  /* Squarish, per the org standard's badge look — a soft rounded rect, not a
+     pill. */
+  border-radius: var(--radius-sm);
   font-family: var(--font-sans);
   font-size: var(--text-xs);
   font-weight: var(--weight-medium);
