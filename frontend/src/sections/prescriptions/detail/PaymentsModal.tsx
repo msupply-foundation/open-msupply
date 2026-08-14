@@ -17,10 +17,11 @@ import { graphqlFetch } from '../../../api/graphql';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Button } from '../../../ui/elements/buttons/Button';
-import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { localTodayIso } from '../../../ui/elements/inputs/dateTimeConvert';
 import { CurrencyField } from '../../../ui/elements/inputs/CurrencyField';
-import { Text } from '../../../ui/elements/typography/Text';
+import { TextField } from '../../../ui/elements/inputs/TextField';
+import { FormColumns } from '../../../ui/layout/Form/FormColumns';
+import { FormColumn } from '../../../ui/layout/Form/FormColumn';
 import { Combobox } from '../../../ui/elements/selectors/Combobox';
 import { createSaveCoordinator } from '../../../plugins/formParticipation';
 import { PrescriptionPaymentSlot } from '../../../plugins/PrescriptionPaymentSlot';
@@ -216,6 +217,11 @@ export const PaymentsModal: Component<PaymentsModalProps> = props => {
   return (
     <Dialog
       open
+      // The single-column measure: four short fields read down one column,
+      // and it holds a plugin contribution's own columns to one stack too
+      // (they fall below FormColumn's min width here), so the whole window
+      // is one list of fields rather than a grid.
+      width="prose"
       dismissable={!busy()}
       onClose={props.onClose}
       title={t('title.payment')}
@@ -265,45 +271,64 @@ export const PaymentsModal: Component<PaymentsModalProps> = props => {
         </>
       }
     >
-      <FieldRow label={t('label.total-to-be-paid')}>
-        <CurrencyField
-          label={t('label.total-to-be-paid')}
-          hideLabel
-          value={total()}
-          readonly
-          onChange={() => undefined}
-        />
-      </FieldRow>
-      <FieldRow label={t('label.insurance-policy')}>
-        <Combobox<Policy>
-          label={t('label.insurance-policy')}
-          hideLabel
-          items={policies()}
-          loading={policiesData.loading}
-          itemToString={policy => policy.policyNumber}
-          itemToValue={policy => policy.id}
-          value={policyId()}
-          clearable
-          onChange={policy => setPolicyId(policy?.id)}
-        />
-      </FieldRow>
-      <FieldRow label={t('label.discount-rate')}>
-        <Text variant="body">
-          {(policy =>
-            policy ? `${formatNumber(policy.discountPercentage)}%` : '—')(
-            selected()
-          )}
-        </Text>
-      </FieldRow>
-      <FieldRow label={t('label.paid-by-insurance')}>
-        <CurrencyField
-          label={t('label.paid-by-insurance')}
-          hideLabel
-          value={covered()}
-          readonly
-          onChange={() => undefined}
-        />
-      </FieldRow>
+      {/* One column of stacked fields, in the order S5 lists them, each
+          control carrying its own label ABOVE it (ui-standards § inputs: a
+          field standing alone uses the control's built-in label, no
+          FieldRow). The FormColumns wrapper stays so the plugin slot below
+          and these fields share one layout vocabulary. */}
+      <FormColumns>
+        <FormColumn>
+          <CurrencyField
+            label={t('label.total-to-be-paid')}
+            value={total()}
+            readonly
+            onChange={() => undefined}
+          />
+          <Combobox<Policy>
+            label={t('label.insurance-policy')}
+            items={policies()}
+            loading={policiesData.loading}
+            /* Number AND provider — a policy number alone doesn't say who
+             * the insurer is, and a patient can hold policies with several
+             * (#1042; the field's own label reads "Policy / Insurance name").
+             * The provider is nullable on the wire, so a policy without one
+             * still reads as its bare number. Combobox filters on this string
+             * too, so provider name is searchable.
+             */
+            itemToString={policy =>
+              policy.insuranceProviders
+                ? `${policy.policyNumber} - ${policy.insuranceProviders.providerName}`
+                : policy.policyNumber
+            }
+            itemToValue={policy => policy.id}
+            value={policyId()}
+            clearable
+            /* Composed labels outrun a dialog-width popup — let it size to
+             * its content (as the patient and location pickers do).
+             */
+            matchTriggerWidth={false}
+            onChange={policy => setPolicyId(policy?.id)}
+          />
+          {/* A read-only FIELD, not bare text: with the label above, a lone
+              value would float unaligned beside its boxed siblings. The dash
+              stays for "no policy chosen" — an empty box would read as a
+              field waiting for input. */}
+          <TextField
+            label={t('label.discount-rate')}
+            readonly
+            value={(policy =>
+              policy ? `${formatNumber(policy.discountPercentage)}%` : '—')(
+              selected()
+            )}
+          />
+          <CurrencyField
+            label={t('label.paid-by-insurance')}
+            value={covered()}
+            readonly
+            onChange={() => undefined}
+          />
+        </FormColumn>
+      </FormColumns>
 
       {/* The plugin slot region — nothing, and no space, when unfilled. The
           prescription DTO is a getter-bearing object so the numbers stay
