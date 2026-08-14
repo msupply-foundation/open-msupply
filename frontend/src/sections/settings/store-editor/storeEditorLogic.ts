@@ -284,11 +284,11 @@ export const INBOUND_STATUS_OPTIONS = [
   'RECEIVED',
   'VERIFIED',
 ] as const satisfies readonly InvoiceStatusOption[];
-export const IMMUTABLE_INVOICE_STATUSES = [
+export const IMMUTABLE_INVOICE_STATUSES: readonly InvoiceStatusOption[] = [
   'NEW',
   'SHIPPED',
   'VERIFIED',
-] as const satisfies readonly InvoiceStatusOption[];
+];
 const ALL_INVOICE_STATUS_OPTIONS = [
   'NEW',
   'ALLOCATED',
@@ -300,9 +300,9 @@ const ALL_INVOICE_STATUS_OPTIONS = [
 ] as const satisfies readonly InvoiceStatusOption[];
 
 export const asStatusList = (value: unknown): InvoiceStatusOption[] =>
-  ALL_INVOICE_STATUS_OPTIONS.filter(
-    status => Array.isArray(value) && value.includes(status)
-  );
+  Array.isArray(value)
+    ? ALL_INVOICE_STATUS_OPTIONS.filter(status => value.includes(status))
+    : [];
 
 /*
  * Apply one checkbox toggle to the stored set, keeping canonical order.
@@ -331,9 +331,10 @@ export const toggleInvoiceStatus = (
   return next;
 };
 
-/** Case-insensitive substring match on the displayed label (SET-05.35). */
+/** Case-insensitive substring match on the displayed label (SET-05.35) — a
+ *  blank term matches everything (`includes('')` is always true). */
 export const matchesPreferenceFilter = (label: string, term: string): boolean =>
-  term.trim() === '' || label.toLowerCase().includes(term.trim().toLowerCase());
+  label.toLowerCase().includes(term.trim().toLowerCase());
 
 /*
  * Preferences are editable only on the central server by a session holding the
@@ -346,84 +347,82 @@ export const canEditPreferences = (session: {
   isCentralServer: boolean;
 }): boolean => session.canEditCentralData && session.isCentralServer;
 
+/** The generated input's store-scoped keys (its `{ storeId, value }`-array
+ *  members) whose entry value has the given type. */
+type PreferenceKeyOf<V> = {
+  [K in keyof UpsertPreferencesInput]-?: NonNullable<
+    UpsertPreferencesInput[K]
+  > extends Array<{ storeId: string; value: V }>
+    ? K
+    : never;
+}[keyof UpsertPreferencesInput];
+
+/*
+ * The uniform preferences, one key list per coercion — each key written once,
+ * with `satisfies` refusing any key whose generated wire type isn't a
+ * boolean/number entry array. Twenty identical branches is the "genuinely
+ * large, uniform surface" kdd/explicit-composition's re-open clause accepts a
+ * flat key list for; the three composites keep explicit branches below.
+ */
+const BOOL_PREFERENCE_KEYS = [
+  'showIndicativePriceInRequisitions',
+  'blindStocktake',
+  'orderInPacks',
+  'useProcurementFunctionality',
+  'sortByVvmStatusThenExpiry',
+  'useSimplifiedMobileUi',
+  'disableManualReturns',
+  'requisitionAutoFinalise',
+  'inboundShipmentAutoVerify',
+  'manageVvmStatusForStock',
+  'manageVaccinesInDoses',
+  'canCreateInternalOrderFromARequisition',
+  'selectDestinationStoreForAnInternalOrder',
+  'externalInboundShipmentLinesMustBeAuthorised',
+  'doNotPrintPlaceholderLineLabels',
+] as const satisfies readonly PreferenceKeyOf<boolean>[];
+const NUMBER_PREFERENCE_KEYS = [
+  'numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts',
+  'numberOfMonthsThresholdToShowLowStockAlertsForProducts',
+  'numberOfMonthsThresholdToShowOverStockAlertsForProducts',
+  'firstThresholdForExpiringItems',
+  'secondThresholdForExpiringItems',
+] as const satisfies readonly PreferenceKeyOf<number>[];
+
+/**
+ * Compile-time exhaustiveness net: `pnpm codegen` flows a new server store
+ * preference into the generated input, and the panel then renders it a live
+ * control — so a key missing from buildPreferencesInput would mean the save
+ * reports success while silently dropping that edit. This alias fails to
+ * compile (the default doesn't satisfy `never`) until the new key joins a
+ * list above or gets a composite branch below.
+ */
+export type EveryStorePreferenceHandled<
+  Unhandled extends never = Exclude<
+    PreferenceKeyOf<unknown>,
+    | (typeof BOOL_PREFERENCE_KEYS)[number]
+    | (typeof NUMBER_PREFERENCE_KEYS)[number]
+    | 'storeCustomColour'
+    | 'warnWhenMissingRecentStocktake'
+    | 'invoiceStatusOptions'
+  >,
+> = Unhandled;
+
 /*
  * The staged edits as the mutation input — one `{ storeId, value }` array per
  * staged preference, every entry naming the EDITED store (the server honours
  * the ids inside the payload, not the auth-checked one — contract wire trap).
- * Undefined when nothing is staged, so the save can skip the call. Written out
- * per key (kdd/explicit-composition): each line is one preference with its own
- * coercion, checked field-by-field against the generated input type.
+ * Undefined when nothing is staged, so the save can skip the call.
  */
 export const buildPreferencesInput = (
   draft: PreferenceDraft,
   storeId: string
 ): UpsertPreferencesInput | undefined => {
   const input: UpsertPreferencesInput = {};
-  const bool = (key: string) => [{ storeId, value: asBool(draft[key]) }];
-  const number = (key: string) => [{ storeId, value: asNumber(draft[key]) }];
-
-  if ('showIndicativePriceInRequisitions' in draft)
-    input.showIndicativePriceInRequisitions = bool(
-      'showIndicativePriceInRequisitions'
-    );
-  if ('blindStocktake' in draft) input.blindStocktake = bool('blindStocktake');
-  if ('orderInPacks' in draft) input.orderInPacks = bool('orderInPacks');
-  if ('useProcurementFunctionality' in draft)
-    input.useProcurementFunctionality = bool('useProcurementFunctionality');
-  if ('sortByVvmStatusThenExpiry' in draft)
-    input.sortByVvmStatusThenExpiry = bool('sortByVvmStatusThenExpiry');
-  if ('useSimplifiedMobileUi' in draft)
-    input.useSimplifiedMobileUi = bool('useSimplifiedMobileUi');
-  if ('disableManualReturns' in draft)
-    input.disableManualReturns = bool('disableManualReturns');
-  if ('requisitionAutoFinalise' in draft)
-    input.requisitionAutoFinalise = bool('requisitionAutoFinalise');
-  if ('inboundShipmentAutoVerify' in draft)
-    input.inboundShipmentAutoVerify = bool('inboundShipmentAutoVerify');
-  if ('manageVvmStatusForStock' in draft)
-    input.manageVvmStatusForStock = bool('manageVvmStatusForStock');
-  if ('manageVaccinesInDoses' in draft)
-    input.manageVaccinesInDoses = bool('manageVaccinesInDoses');
-  if ('canCreateInternalOrderFromARequisition' in draft)
-    input.canCreateInternalOrderFromARequisition = bool(
-      'canCreateInternalOrderFromARequisition'
-    );
-  if ('selectDestinationStoreForAnInternalOrder' in draft)
-    input.selectDestinationStoreForAnInternalOrder = bool(
-      'selectDestinationStoreForAnInternalOrder'
-    );
-  if ('externalInboundShipmentLinesMustBeAuthorised' in draft)
-    input.externalInboundShipmentLinesMustBeAuthorised = bool(
-      'externalInboundShipmentLinesMustBeAuthorised'
-    );
-  if ('doNotPrintPlaceholderLineLabels' in draft)
-    input.doNotPrintPlaceholderLineLabels = bool(
-      'doNotPrintPlaceholderLineLabels'
-    );
-  if (
-    'numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts' in
-    draft
-  )
-    input.numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts =
-      number(
-        'numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts'
-      );
-  if ('numberOfMonthsThresholdToShowLowStockAlertsForProducts' in draft)
-    input.numberOfMonthsThresholdToShowLowStockAlertsForProducts = number(
-      'numberOfMonthsThresholdToShowLowStockAlertsForProducts'
-    );
-  if ('numberOfMonthsThresholdToShowOverStockAlertsForProducts' in draft)
-    input.numberOfMonthsThresholdToShowOverStockAlertsForProducts = number(
-      'numberOfMonthsThresholdToShowOverStockAlertsForProducts'
-    );
-  if ('firstThresholdForExpiringItems' in draft)
-    input.firstThresholdForExpiringItems = number(
-      'firstThresholdForExpiringItems'
-    );
-  if ('secondThresholdForExpiringItems' in draft)
-    input.secondThresholdForExpiringItems = number(
-      'secondThresholdForExpiringItems'
-    );
+  for (const key of BOOL_PREFERENCE_KEYS)
+    if (key in draft) input[key] = [{ storeId, value: asBool(draft[key]) }];
+  for (const key of NUMBER_PREFERENCE_KEYS)
+    if (key in draft) input[key] = [{ storeId, value: asNumber(draft[key]) }];
   if ('storeCustomColour' in draft)
     input.storeCustomColour = [
       { storeId, value: asColour(draft.storeCustomColour) },

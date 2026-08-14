@@ -271,6 +271,17 @@ export const AppShell = (props: AppShellProps) => {
   // the real i18n locale — not here — so there is a single dir effect. The
   // footer LanguageSelector drives that locale via changeLanguage.
 
+  // The store's custom footer colour, when it parses as hex: the footer's two
+  // colour knobs set inline (a data colour, as ColourTag's --tag-colour); the
+  // module CSS consumes them, so its rules stay the single source of the
+  // bar's colouring. Undefined (unset/unparseable) keeps the variant default.
+  const customFooterVars = () => {
+    const custom = footerColourStyle(props.footerColour);
+    return custom
+      ? { '--footer-bg': custom.background, '--footer-fg': custom.text }
+      : undefined;
+  };
+
   return (
     <ShellNavContext.Provider value={{ isOverlay, openNav: nav.openOverlay }}>
       <ShellOverlayContext.Provider value={{ setPanelOverlay }}>
@@ -323,19 +334,11 @@ export const AppShell = (props: AppShellProps) => {
                   inert={panelOverlay()}
                   data-testid="app-footer"
                   data-central={props.isCentralServer ? '' : undefined}
-                  // The store's custom colour, when it parses: background +
-                  // contrast text inline, --footer-accent following the text
-                  // so the divider/hover sub-rules keep reading one knob.
-                  style={(() => {
-                    const custom = footerColourStyle(props.footerColour);
-                    return custom
-                      ? {
-                          background: custom.background,
-                          color: custom.text,
-                          '--footer-accent': custom.text,
-                        }
-                      : undefined;
-                  })()}
+                  // The store's custom colour, when it parses: set as the
+                  // footer's two colour knobs (as ColourTag's --tag-colour),
+                  // so the stylesheet stays the one place the bar's colouring
+                  // — variants included — is decided.
+                  style={customFooterVars()}
                 >
                   <FooterCell
                     icon={HomeIcon}
