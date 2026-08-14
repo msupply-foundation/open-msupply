@@ -33,6 +33,7 @@ export const StoreSelectionScreen: Component<{
     <main class={`${layout.panel} ${styles.storeSelectArea}`}>
       <StoreSelector
         stores={props.stores}
+        fillHeight
         defaultStoreId={props.defaultStoreId}
         lastUsedStoreId={props.lastUsedStoreId}
         pinnedCount={props.pinnedCount}
