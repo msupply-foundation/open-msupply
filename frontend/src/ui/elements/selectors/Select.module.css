@@ -12,8 +12,10 @@
   min-width: 0;
 }
 
-/* Max-width caps, mirroring TextField's `width` prop (default short). `full`
-   lets the dropdown fill its container — e.g. a detail row's value column. */
+/* Max-width caps — opt-in over the `full` default, mirroring TextField's
+   `width` prop rule for rule (see TextField.module.css, the reference block).
+   `full` lets the dropdown fill its container — a detail row's value column, a
+   form field, a table cell — so it aligns with the fields beside it. */
 .field[data-width='short'] {
   max-width: var(--input-max-short);
 }
@@ -58,6 +60,13 @@
 .required {
   margin-inline-start: 0.125em;
   color: var(--error-main);
+}
+
+/* Positioning context for the clear affordance — the trigger is a real
+   <button>, so the ✕ can't nest inside it; it overlays the slot the
+   .clearSlot spacer reserves in the trigger's flex row. */
+.control {
+  position: relative;
 }
 
 .trigger {
@@ -120,6 +129,50 @@
   color: var(--gray-dark);
 }
 
+/* The slot the clear button occupies: reserved INSIDE the trigger by the
+   spacer (so a long value ellipsises before it, never running under the ✕),
+   filled from outside by the absolutely-positioned button. The ✕ keeps its
+   own slot beside the chevron rather than replacing it on hover — swapping
+   the two puts a destructive control on the pixel a benign one occupied a
+   moment earlier, and relies on hover, which a tablet doesn't have (as
+   Combobox). Muted at rest so it reads as secondary to the value. */
+.clearSlot {
+  inline-size: 1.75rem;
+  flex-shrink: 0;
+}
+
+.clear {
+  position: absolute;
+  /* Align over the reserved slot: end padding + chevron + the flex gap. */
+  inset-inline-end: calc(var(--input-padding-x) + 1.25rem + var(--space-2));
+  inset-block-start: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.75rem;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 1rem;
+  color: var(--gray-main);
+  cursor: pointer;
+}
+
+/* Disabled field: the clear button stays inert and dimmed (the field is
+   read-only, so its value can't be cleared). As Combobox. */
+.clear:disabled {
+  opacity: var(--disabled-opacity);
+  cursor: default;
+}
+
+/* Brought up to full strength once engaged. Last of the .clear rules, so it
+   out-specifies the resting colour without descending-specificity juggling. */
+.clear:hover,
+.clear:focus-visible {
+  color: var(--text-body);
+}
+
 .content {
   display: flex;
   flex-direction: column;
@@ -146,6 +199,12 @@
 }
 
 .item {
+  /* Never shrink below the row's own text — see Combobox.module.css `.item` for
+     the full account: a scrolling column flex box shrinks its rows, and the
+     coarse-pointer touch floor below replaces the `min-height: auto` that
+     otherwise holds them open, so on a tablet a wrapped option collapsed into
+     44px and overlapped its neighbour (#1039). The touch floor still applies. */
+  flex: none;
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -155,6 +214,10 @@
   cursor: pointer;
   user-select: none;
   outline: none;
+  /* A wrapping row must be allowed to be narrower than its longest word, or the
+     overrun becomes a horizontal scrollbar over the options (#1041) — see
+     Combobox.module.css for why `anywhere` and not `break-word`. */
+  overflow-wrap: anywhere;
 }
 
 .item[data-highlighted] {
@@ -233,4 +296,10 @@
 
 .field[data-size='small'] .triggerIcon {
   font-size: 1rem;
+}
+
+/* The small variant's chevron is 1rem, so the clear slot sits nearer the
+   end edge. */
+.field[data-size='small'] .clear {
+  inset-inline-end: calc(var(--input-padding-x) + 1rem + var(--space-2));
 }

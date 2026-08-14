@@ -70,7 +70,7 @@ import { SupplierReturnPreferences } from '../preferences.generated';
 import { SupplierReturnToolbar } from './SupplierReturnToolbar';
 import { SupplierReturnSidePanel } from './SupplierReturnSidePanel';
 import { SupplierReturnStatusFooter } from './SupplierReturnStatusFooter';
-import { LogTab } from './LogTab';
+import { ActivityLogPanel } from '../../../domain/activityLog';
 import {
   ReturnItemsModal,
   type ReturnItem,
@@ -357,9 +357,6 @@ const SupplierReturnDetailView: Component = () => {
     return undefined;
   };
 
-  const existingItemIds = (): string[] => [
-    ...new Set(rows().map(line => line.item.id)),
-  ];
   const existingLineIds = (): ReadonlySet<string> =>
     new Set(rows().map(line => line.id));
 
@@ -728,7 +725,10 @@ const SupplierReturnDetailView: Component = () => {
                   />
                 </TabPanel>
                 <TabPanel value="log">
-                  <LogTab storeId={params.storeId} recordId={node().id} />
+                  <ActivityLogPanel
+                    storeId={params.storeId}
+                    recordId={node().id}
+                  />
                 </TabPanel>
                 <ReturnItemsModal
                   open={editState() != null}
@@ -738,7 +738,6 @@ const SupplierReturnDetailView: Component = () => {
                   mode={editState()?.mode ?? 'update'}
                   initialItemId={editItemId()}
                   initialLineId={editLineId()}
-                  excludeItemIds={existingItemIds}
                   nextItem={nextItem}
                   itemById={itemById}
                   onSaved={onLinesChanged}

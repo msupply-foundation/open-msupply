@@ -171,7 +171,16 @@ export const TabList = (props: {
   );
 };
 
-export const TabPanel = (props: { value: string; children: JSX.Element }) => {
+export const TabPanel = (props: {
+  value: string;
+  /**
+   * Extra class for the panel box — e.g. the initialisation chooser, whose
+   * strip sits inline in a form column and needs its own gap to the fields
+   * below rather than the surrounding page frame's.
+   */
+  class?: string;
+  children: JSX.Element;
+}) => {
   const context = KTabs.useTabsContext();
   return (
     // aria-labelledby is passed explicitly: Kobalte fills its trigger-id map
@@ -182,7 +191,7 @@ export const TabPanel = (props: { value: string; children: JSX.Element }) => {
     <KTabs.Content
       value={props.value}
       aria-labelledby={context.generateTriggerId(props.value)}
-      class={styles.panel}
+      class={props.class ? `${styles.panel} ${props.class}` : styles.panel}
     >
       {props.children}
     </KTabs.Content>

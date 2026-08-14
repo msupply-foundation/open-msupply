@@ -149,7 +149,6 @@ const Body: Component<CreateClinicianModalProps> = props => {
         <TextField
           ref={codeField.ref}
           label={t('label.code')}
-          width="full"
           required
           data-testid="input-clinician-code"
           error={validation.errorFor('code')}
@@ -160,14 +159,12 @@ const Body: Component<CreateClinicianModalProps> = props => {
         />
         <TextField
           label={t('label.first-name')}
-          width="full"
           data-testid="input-clinician-firstName"
           value={draft.firstName}
           onInput={e => setDraft('firstName', e.currentTarget.value)}
         />
         <TextField
           label={t('label.last-name')}
-          width="full"
           required
           data-testid="input-clinician-lastName"
           error={validation.errorFor('lastName')}
@@ -176,7 +173,6 @@ const Body: Component<CreateClinicianModalProps> = props => {
         />
         <TextField
           label={t('label.initials')}
-          width="full"
           required
           data-testid="input-clinician-initials"
           error={validation.errorFor('initials')}
@@ -185,7 +181,6 @@ const Body: Component<CreateClinicianModalProps> = props => {
         />
         <TextField
           label={t('label.mobile')}
-          width="full"
           inputmode="tel"
           data-testid="input-clinician-mobile"
           value={draft.mobile}
@@ -195,7 +190,6 @@ const Body: Component<CreateClinicianModalProps> = props => {
         />
         <Combobox<GenderOption>
           label={t('label.gender')}
-          width="full"
           items={genderOptions()}
           itemToString={option => option.label}
           itemToValue={option => option.value}

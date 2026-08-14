@@ -400,7 +400,7 @@ const RequisitionDetailView: Component = () => {
   };
 
   // The requisition's existing line for an item (add mode loads it rather
-  // than duplicating — D74, AC-LE3).
+  // than duplicating — D60, AC-LE3).
   const findLineForItem = (itemId: string): Line | undefined =>
     info()?.lines.nodes.find(line => line.itemId === itemId);
 

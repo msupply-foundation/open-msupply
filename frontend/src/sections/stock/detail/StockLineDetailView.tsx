@@ -548,7 +548,6 @@ const StockLineDetailView: Component = () => {
                         <FormSection title={t('heading.batches-and-dates')}>
                           <TextField
                             label={t('label.batch')}
-                            width="full"
                             value={edit.batch}
                             onInput={e =>
                               setEdit('batch', e.currentTarget.value)
@@ -556,7 +555,6 @@ const StockLineDetailView: Component = () => {
                           />
                           <TextField
                             label={t('label.barcode')}
-                            width="full"
                             value={edit.barcode}
                             onInput={e =>
                               setEdit('barcode', e.currentTarget.value)
@@ -565,13 +563,11 @@ const StockLineDetailView: Component = () => {
                           <FormRow>
                             <DateField
                               label={t('label.expiry-date')}
-                              width="full"
                               value={edit.expiryDate}
                               onChange={v => setEdit('expiryDate', v)}
                             />
                             <DateField
                               label={t('label.manufacture-date')}
-                              width="full"
                               max={localTodayIso()}
                               value={edit.manufactureDate}
                               onChange={v => setEdit('manufactureDate', v)}
@@ -593,7 +589,6 @@ const StockLineDetailView: Component = () => {
                           <FormRow>
                             <CurrencyField
                               label={t('label.cost-price')}
-                              width="full"
                               value={edit.costPricePerPack}
                               onChange={v =>
                                 setEdit('costPricePerPack', v ?? 0)
@@ -601,7 +596,6 @@ const StockLineDetailView: Component = () => {
                             />
                             <CurrencyField
                               label={t('label.sell-price')}
-                              width="full"
                               value={edit.sellPricePerPack}
                               onChange={v =>
                                 setEdit('sellPricePerPack', v ?? 0)
@@ -660,7 +654,6 @@ const StockLineDetailView: Component = () => {
                           <FormRow>
                             <NumberField
                               label={t('label.volume-per-pack')}
-                              width="full"
                               decimalLimit={10}
                               value={edit.volumePerPack}
                               onChange={v => setEdit('volumePerPack', v ?? 0)}

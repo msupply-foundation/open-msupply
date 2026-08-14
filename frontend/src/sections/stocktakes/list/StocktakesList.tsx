@@ -424,6 +424,12 @@ const StocktakesList: Component = () => {
           pageSize: query().first,
           total: totalCount(),
           onOffsetChange: offset => setQuery({ ...query(), offset }),
+          // The footer earns its space (ui-standards § tables → pagination):
+          // no footer at all until the stocktakes outrun one page, since a single
+          // page is every matching row already on screen. The band's height
+          // goes to the rows.
+          conditional: true,
+          // The chosen size is remembered for the next visit (D106).
           onPageSizeChange: first => {
             rememberPageSize(first);
             setQuery({ ...query(), first, offset: 0 });

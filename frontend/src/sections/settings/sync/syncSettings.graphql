@@ -6,6 +6,7 @@ query syncSettings {
     url
     username
     intervalSeconds
+    batchSize
   }
 }
 

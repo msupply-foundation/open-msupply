@@ -224,28 +224,5 @@ query generateCustomerReturnLines(
   }
 }
 
-# The Log tab (spec/customer-returns/cases OMS-REG-DIST-07.45): the return's activity
-# history — creation, status changes, deletion — keyed by recordId. Sorted
-# client-side by datetime (no server sort dependency).
-query customerReturnLog($storeId: String!, $recordId: String!) {
-  activityLogs(
-    storeId: $storeId
-    filter: { recordId: { equalTo: $recordId } }
-    page: { first: 1000 }
-  ) {
-    ... on ActivityLogConnector {
-      __typename
-      totalCount
-      nodes {
-        id
-        type
-        datetime
-        to
-        from
-        user {
-          username
-        }
-      }
-    }
-  }
-}
+# The Log tab (spec/customer-returns/cases OMS-REG-DIST-07.45) reads the shared
+# activity-log query (src/domain/activityLog), not one of its own.

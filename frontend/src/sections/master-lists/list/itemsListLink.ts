@@ -1,7 +1,6 @@
 import type { ItemsListFilter } from '@/sections/items/list/itemFilter';
 
-// Selecting a master list opens the ITEMS list scoped to it (spec/DIVERGENCES
-// D80, issue #776) — the richer view of the same membership fact, with
+// Selecting a master list opens the ITEMS list scoped to it (issue #776) — the richer view of the same membership fact, with
 // drill-down into each item, replacing the read-only detail screen this
 // vertical used to own.
 //

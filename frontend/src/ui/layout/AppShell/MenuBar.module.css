@@ -18,7 +18,10 @@
   flex-shrink: 0;
   inline-size: var(--drawer-width);
   block-size: 100%;
-  overflow: hidden;
+  /* NOT clipped: the toggle straddles the inline-end border, so half of it sits
+     outside this box. The clipping that matters — labels spilling while the rail
+     narrows — moves to .scroll's overflow-x. */
+  overflow: visible;
   /* L1 chrome (tokens.css § "Warm stone"): the rail is the persistent frame, so
      it reads as the frame — white, with the canvas the page sits on stepping
      down from it, rather than a grey panel beside a white page. (Not the old
@@ -46,12 +49,11 @@
   inline-size: var(--drawer-closed-width);
 }
 
-/* --- Logo + rail toggle ------------------------------------------------- */
-/* Expanded: the brand mark centred with the collapse toggle at the inline-end.
-   Collapsed: no room beside a 5rem rail, so the two stack (see the collapsed
-   block below). */
+/* --- Logo ---------------------------------------------------------------- */
+/* The mark has the head to itself here — the toggle lives on the rail's edge,
+   so nothing competes with it and it KEEPS ITS PLACE when the rail narrows,
+   which the head-mounted alternative cannot do at 5rem. */
 .logoArea {
-  position: relative;
   display: flex;
   flex-shrink: 0;
   align-items: center;
@@ -59,42 +61,64 @@
   block-size: var(--logo-area-height);
 }
 
+/* The mark as a link home (the app's chrome convention), when the host wires
+   one. Bare: the mark is already the affordance, so the button adds no box of
+   its own — only a focus ring and a pointer. */
+.logoButton {
+  display: inline-flex;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  /* The mark's jar paints with currentColor, and a <button> does NOT inherit
+     colour — the UA gives it `buttontext`. Without this the jar would take the
+     browser's own button colour rather than the app's text colour. */
+  color: inherit;
+  cursor: pointer;
+}
+
+.logoButton:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
 .logo {
   inline-size: auto;
   block-size: 3.5rem;
 }
 
-/* The explicit collapse/expand toggle — the ONLY way the rail changes width
-   (spec/chrome § sidebar, D3: it must never react to hover). */
-.railToggle {
-  position: absolute;
-  inset-inline-end: var(--space-3);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  inline-size: 1.75rem;
-  block-size: 1.75rem;
-  padding: 0;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  background: none;
-  color: var(--gray-main);
-  font-size: 1rem;
-  cursor: pointer;
-  transition:
-    background var(--motion-fast) ease,
-    color var(--motion-fast) ease;
+/* --- Rail edge (a second, pointer-only toggle) -------------------------- */
+/* Click the rail's own edge to collapse or expand it. Off by default: on a
+   coarse pointer this strip sits between the nav and a scrolling table, where
+   it would be caught by accident far more often than on purpose, and the button
+   at the foot already serves. */
+.railEdge {
+  display: none;
 }
 
-.railToggle:hover {
-  border-color: var(--surface-edge);
-  background: var(--surface-sunken);
-  color: var(--text-body);
-}
+@media (pointer: fine) {
+  .railEdge {
+    position: absolute;
+    z-index: 1;
+    inset-block: 0;
+    inset-inline-end: 0;
+    display: block;
+    inline-size: 0.3125rem;
+    padding: 0;
+    border: none;
+    background: transparent;
+    /* Not col-resize: this snaps between two states, and a resize cursor would
+       promise a width the rail does not have. */
+    cursor: pointer;
+    transition: background var(--motion-fast) ease;
+  }
 
-.railToggle:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
+  /* Hover LIGHTS the strip; it does not act. That distinction is the whole of
+     D3 — the current app peeks the drawer open on hover, and this advertises an
+     affordance instead. */
+  .railEdge:hover {
+    background: color-mix(in srgb, var(--primary-main) 35%, transparent);
+  }
 }
 
 /* --- Nav lists --------------------------------------------------------- */
@@ -116,7 +140,9 @@
   flex: 1;
   flex-direction: column;
   min-block-size: 0; /* allow the flex child to shrink below content height so it scrolls */
-  overflow-y: auto;
+  /* x clips (the rail itself cannot, with the toggle on its edge); y scrolls
+     when the two lists outgrow the rail. */
+  overflow: hidden auto;
   scrollbar-width: none;
 }
 
@@ -183,8 +209,10 @@
 
 /* "You are here", in the brand tint. The label stays --text-body: brand-
    coloured text on this tint reaches only ~2.9:1, short of the AA floor every
-   component holds to — so the highlight is carried by the tint, the bold
-   weight, and the orange icon + end chevron, none of which is text. */
+   component holds to — so the highlight is carried by the tint, the bold weight
+   and the orange icon, none of which is text. The bold weight is also what
+   satisfies colour independence on its own, which is why the selected row needs
+   no end chevron. */
 .navButton[data-selected='true'] {
   background: color-mix(in srgb, var(--primary-main) 16%, transparent);
   color: var(--text-body);
@@ -236,18 +264,71 @@
   transform: rotate(90deg);
 }
 
-/* Selected-item indicator — brand orange, pinned to the inline-end edge. */
-.endChevron {
-  flex-shrink: 0;
-  inline-size: 1rem;
-  margin-inline-start: auto;
-  font-size: 1rem;
-  color: var(--primary-main);
-  transform: rotate(-90deg);
+/* The collapse toggle: a disc centred ON the rail's inline-end border, up in the
+   head — inside the app bar's band, so it reads as part of the top chrome
+   rather than floating halfway down an edge.
+   Its line is the MARK's optical centre (y 40; the figure's weight is head, hat
+   and raised arm, so the box centre at 45 reads low), which is rail-owned — the
+   page header's own height is not a fixture to align to, running 65px on a list
+   screen and 159px on a detail one.
+   The trade, measured: it sits ~13px from the page title, because the page
+   region begins flush at the rail and the disc's overhang has no margin to hang
+   in. Halfway down the rail its neighbours were quieter, but it was then the
+   only thing in the rail not at the top, and people look for chrome controls
+   there. */
+.railToggle {
+  position: absolute;
+  inset-inline-end: -0.75rem;
+  inset-block-start: 2.5rem;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  padding: 0;
+  /* A faint ring — the edge token thinned toward the chrome behind it. With no
+     ring the disc's white bleeds into the rail on one side and bulges into the
+     canvas on the other, reading as a smear rather than a control; at full
+     --surface-edge it is a second edge, as dark as the hairline it interrupts.
+     The FILL has to stay either way: it is what breaks that hairline. Drop it
+     and the 1px line runs straight through the glyph (rendered and checked). */
+  border: 1px solid
+    color-mix(in srgb, var(--surface-edge) 55%, var(--surface-chrome));
+  border-radius: 50%;
+  background: var(--surface-chrome);
+  /* --gray-main is the floor, not a preference: 3.1:1 on white, just past WCAG
+     2.2 SC 1.4.11's 3:1 for a control that has to be findable. */
+  color: var(--gray-main);
+  font-size: 0.75rem;
+  cursor: pointer;
+  transform: translateY(-50%);
+  transition:
+    background var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
+    color var(--motion-fast) ease;
 }
 
-:dir(rtl) .endChevron {
-  transform: rotate(90deg);
+.railToggle:hover {
+  border-color: var(--surface-edge);
+  background: var(--surface-sunken);
+  color: var(--text-body);
+}
+
+.railToggle:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* The hit area, grown past what the disc draws — 1.5rem is EXACTLY SC 2.5.8's
+   24x24 floor. Asymmetric: it grows into the RAIL, not into the page, where a
+   uniform ring reached within 5px of the page title and would swallow clicks
+   aimed just short of it. 34x40, still well past the floor. */
+.railToggle::before {
+  content: '';
+  position: absolute;
+  inset-block: -0.5rem;
+  inset-inline: -0.5rem -0.125rem;
 }
 
 .navButton[data-active='true'] .icon {
@@ -290,29 +371,19 @@
 }
 
 /* --- Collapsed (icon-only) rail ---------------------------------------- */
-/* The toggle can't sit beside the mark on a 5rem rail, so the two stack —
-   the expand affordance stays visible, which is the whole point of it being
-   explicit. */
-.menuBar[data-open='false'] .logoArea {
-  flex-direction: column;
-  gap: var(--space-1);
-  block-size: auto;
-  min-block-size: var(--logo-area-height);
-  padding-block: var(--space-2);
-}
-
-.menuBar[data-open='false'] .railToggle {
-  position: static;
-}
-
+/* The mark stands down and the toggle takes the head. Nothing here is a loss:
+   the Dashboard entry below goes where the mark went, and a 5rem rail cannot
+   hold a centred mark and a button both — which is what defeated every earlier
+   attempt to put the toggle up here. */
+/* The mark STAYS on the collapsed rail — the whole point of putting the toggle
+   on the edge. It comes down to 2.75rem to sit comfortably in 5rem. */
 .menuBar[data-open='false'] .logo {
   block-size: 2.75rem;
 }
 
 .menuBar[data-open='false'] .label,
 .menuBar[data-open='false'] .sectionChevron,
-.menuBar[data-open='false'] .chevronSlot,
-.menuBar[data-open='false'] .endChevron {
+.menuBar[data-open='false'] .chevronSlot {
   display: none;
 }
 
@@ -345,6 +416,9 @@
   content: '';
   position: absolute;
   inset-inline-start: 0;
+  /* The row's own midpoint, paired with the -50% below — NOT a copy of
+     --nav-item-height, which is what put the bar a full row too low. Written as
+     a percentage so it stays centred if the row height token ever moves. */
   inset-block-start: 50%;
   inline-size: 0.1875rem;
   block-size: 1.375rem;

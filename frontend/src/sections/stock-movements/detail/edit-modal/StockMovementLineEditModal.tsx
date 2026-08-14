@@ -295,7 +295,6 @@ export const StockMovementLineEditModal: Component<
           hideLabel
           storeId={props.storeId}
           hasStockOnHand
-          width="full"
           disabled={isUpdate()}
           value={itemId()}
           selectedItem={selectedItemSeed()}
