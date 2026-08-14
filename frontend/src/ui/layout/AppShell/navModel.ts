@@ -73,7 +73,7 @@ export interface NavItem {
 }
 
 // Section icons, keyed by the top-level navConfig path. Cosmetic; one icon set
-// only (spec DIVERGENCES D4).
+// only.
 const SECTION_ICONS: Record<string, Component<IconProps>> = {
   dashboard: DashboardIcon,
   replenishment: ReplenishmentIcon,
