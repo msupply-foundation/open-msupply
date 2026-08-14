@@ -346,30 +346,3 @@ export type GenerateSupplierReturnLinesResult = {
 export const GenerateSupplierReturnLines = {
   query: "query generateSupplierReturnLines($storeId: String!, $input: GenerateSupplierReturnLinesInput!) {\n  generateSupplierReturnLines(storeId: $storeId, input: $input) {\n    ... on SupplierReturnLineConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        stockLineId\n        batch\n        expiryDate\n        packSize\n        numberOfPacksToReturn\n        availableNumberOfPacks\n        onHold\n        itemCode\n        itemName\n        item {\n          id\n          code\n          unitName\n        }\n        reasonId\n        reasonOption {\n          id\n          type\n          reason\n        }\n        note\n      }\n    }\n  }\n}",
 } as TypedDocument<GenerateSupplierReturnLinesResult, GenerateSupplierReturnLinesVariables>;
-
-export type SupplierReturnLogVariables = {
-  storeId: string;
-  recordId: string;
-};
-
-export type SupplierReturnLogResult = {
-  activityLogs: ({
-  __typename: "ActivityLogConnector";
-} & {
-  totalCount: number;
-  nodes: Array<{
-  id: string;
-  type: "USER_LOGGED_IN" | "INVOICE_CREATED" | "INVOICE_DELETED" | "INVOICE_NUMBER_ALLOCATED" | "INVOICE_STATUS_ALLOCATED" | "INVOICE_STATUS_PICKED" | "INVOICE_STATUS_SHIPPED" | "INVOICE_STATUS_DELIVERED" | "INVOICE_STATUS_RECEIVED" | "INVOICE_STATUS_VERIFIED" | "INVENTORY_ADJUSTMENT" | "STOCKTAKE_CREATED" | "STOCKTAKE_DELETED" | "STOCKTAKE_STATUS_FINALISED" | "STOCKTAKE_EDITED" | "REQUISITION_CREATED" | "REQUISITION_DELETED" | "REQUISITION_NUMBER_ALLOCATED" | "REQUISITION_APPROVED" | "REQUISITION_STATUS_SENT" | "REQUISITION_STATUS_FINALISED" | "STOCK_LOCATION_CHANGE" | "STOCK_COST_PRICE_CHANGE" | "STOCK_SELL_PRICE_CHANGE" | "STOCK_EXPIRY_DATE_CHANGE" | "STOCK_BATCH_CHANGE" | "STOCK_ON_HOLD" | "STOCK_OFF_HOLD" | "REPACK" | "PRESCRIPTION_CREATED" | "PRESCRIPTION_DELETED" | "PRESCRIPTION_STATUS_PICKED" | "PRESCRIPTION_STATUS_VERIFIED" | "PRESCRIPTION_STATUS_CANCELLED" | "SENSOR_LOCATION_CHANGED" | "ASSET_CREATED" | "ASSET_UPDATED" | "ASSET_DELETED" | "ASSET_LOG_CREATED" | "ASSET_CATALOGUE_ITEM_CREATED" | "QUANTITY_FOR_LINE_HAS_BEEN_SET_TO_ZERO" | "ASSET_CATALOGUE_ITEM_PROPERTY_CREATED" | "ASSET_LOG_REASON_CREATED" | "ASSET_LOG_REASON_DELETED" | "ASSET_PROPERTY_CREATED" | "VACCINE_COURSE_CREATED" | "PROGRAM_CREATED" | "PROGRAM_UPDATED" | "VACCINE_COURSE_UPDATED" | "RNR_FORM_CREATED" | "RNR_FORM_UPDATED" | "RNR_FORM_DELETED" | "RNR_FORM_FINALISED" | "VACCINATION_CREATED" | "VACCINATION_UPDATED" | "VACCINATION_DELETED" | "DEMOGRAPHIC_INDICATOR_CREATED" | "DEMOGRAPHIC_INDICATOR_UPDATED" | "DEMOGRAPHIC_PROJECTION_CREATED" | "DEMOGRAPHIC_PROJECTION_UPDATED" | "INVOICE_STATUS_CANCELLED" | "ITEM_VARIANT_CREATED" | "ITEM_VARIANT_UPDATED" | "ITEM_VARIANT_DELETED" | "ITEM_VARIANT_UPDATED_NAME" | "ITEM_VARIANT_UPDATE_LOCATION_TYPE" | "ITEM_VARIANT_UPDATE_MANUFACTURER" | "ITEM_VARIANT_UPDATE_DOSE_PER_UNIT" | "ITEM_VARIANT_UPDATE_VVM_TYPE" | "VVM_STATUS_LOG_UPDATED" | "VOLUME_PER_PACK_CHANGED" | "STOCK_LINE_EDIT" | "PURCHASE_ORDER_CREATED" | "PURCHASE_ORDER_REQUEST_APPROVAL" | "PURCHASE_ORDER_UNAUTHORISED" | "PURCHASE_ORDER_SENT" | "PURCHASE_ORDER_CONFIRMED" | "PURCHASE_ORDER_FINALISED" | "PURCHASE_ORDER_DELETED" | "PURCHASE_ORDER_LINE_CREATED" | "PURCHASE_ORDER_LINE_UPDATED" | "PURCHASE_ORDER_LINE_DELETED" | "PURCHASE_ORDER_STATUS_CHANGED_FROM_SENT_TO_CONFIRMED" | "PURCHASE_ORDER_LINE_STATUS_CLOSED" | "PURCHASE_ORDER_LINE_STATUS_CHANGED_FROM_SENT_TO_NEW" | "PATIENT_CREATED" | "PATIENT_UPDATED" | "INVOICE_DATE_BACKDATED" | "PACKAGING_VARIANT_CREATED" | "PACKAGING_VARIANT_UPDATED" | "PACKAGING_VARIANT_DELETED" | "BUNDLED_ITEM_CREATED" | "BUNDLED_ITEM_UPDATED" | "BUNDLED_ITEM_DELETED" | "INVOICE_RECEIVED_QTY_UPDATED";
-  datetime: string;
-  to: string | null;
-  from: string | null;
-  user: {
-  username: string;
-} | null;
-}>;
-});
-};
-
-export const SupplierReturnLog = {
-  query: "query supplierReturnLog($storeId: String!, $recordId: String!) {\n  activityLogs(\n    storeId: $storeId\n    filter: {recordId: {equalTo: $recordId}}\n    page: {first: 1000}\n  ) {\n    ... on ActivityLogConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        type\n        datetime\n        to\n        from\n        user {\n          username\n        }\n      }\n    }\n  }\n}",
-} as TypedDocument<SupplierReturnLogResult, SupplierReturnLogVariables>;

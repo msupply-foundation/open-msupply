@@ -73,7 +73,7 @@ export interface NavItem {
 }
 
 // Section icons, keyed by the top-level navConfig path. Cosmetic; one icon set
-// only (spec DIVERGENCES D4).
+// only.
 const SECTION_ICONS: Record<string, Component<IconProps>> = {
   dashboard: DashboardIcon,
   replenishment: ReplenishmentIcon,
@@ -171,5 +171,21 @@ export const navLeaves: NavLeaf[] = items.flatMap(item =>
       ]
 );
 
+/**
+ * The menu entry a route belongs to — its own, or the one it sits beneath.
+ *
+ * A record screen has no menu entry of its own: `inventory/stocktakes/{id}` is
+ * reached from Stocktakes and its breadcrumb trail starts there
+ * (ui-standards/layout § app bar), so the menu must keep showing Stocktakes.
+ * Matching the path exactly left every detail screen in the app with nothing
+ * highlighted at all — no entry, and no section either.
+ *
+ * The `/` in the prefix test keeps it on segment boundaries (`inventory/stock`
+ * must not claim `inventory/stocktakes/1`), and the longest match wins so a
+ * deeper entry beats the shallower one it nests under.
+ */
 export const findLeafByPath = (relativePath: string): NavLeaf | undefined =>
-  navLeaves.find(leaf => leaf.to === relativePath);
+  navLeaves.find(leaf => leaf.to === relativePath) ??
+  navLeaves
+    .filter(leaf => relativePath.startsWith(`${leaf.to}/`))
+    .sort((a, b) => b.to.length - a.to.length)[0];

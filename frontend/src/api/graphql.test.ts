@@ -58,7 +58,10 @@ describe('graphqlFetch', () => {
     });
     const result = await graphqlFetch(document, {});
     expect(result).toEqual({ kind: 'unexpectedError' });
-    expect(unexpectedError()).toBe('Something failed, Also this');
+    expect(unexpectedError()).toMatchObject({
+      condition: 'unknown',
+      cause: 'Something failed, Also this',
+    });
   });
 
   it('surfaces extensions.details in the description when it adds detail', async () => {
@@ -77,7 +80,7 @@ describe('graphqlFetch', () => {
     });
     const result = await graphqlFetch(document, {});
     expect(result).toEqual({ kind: 'unexpectedError' });
-    expect(unexpectedError()).toBe(
+    expect(unexpectedError()?.cause).toBe(
       'Bad user input: DatabaseError("connection reset"), Plain, NoDetail'
     );
   });
@@ -102,7 +105,55 @@ describe('graphqlFetch', () => {
     expect(await graphqlFetch(document, {})).toEqual({
       kind: 'unexpectedError',
     });
-    expect(unexpectedError()).toBe('HTTP 500');
+    expect(unexpectedError()).toMatchObject({
+      condition: 'server',
+      cause: 'HTTP 500',
+    });
+  });
+
+  it('classifies HTTP 408 as the timed-out condition', async () => {
+    mockFetch({}, false, 408);
+    expect(await graphqlFetch(document, {})).toEqual({
+      kind: 'unexpectedError',
+    });
+    expect(unexpectedError()).toMatchObject({
+      condition: 'timeout',
+      cause: 'HTTP 408',
+    });
+  });
+
+  it('classifies other non-OK statuses as the unmapped fallback', async () => {
+    mockFetch({}, false, 418);
+    await graphqlFetch(document, {});
+    expect(unexpectedError()).toMatchObject({
+      condition: 'unknown',
+      cause: 'HTTP 418',
+    });
+  });
+
+  // Spec (startup › contract § unexpected API errors): the support block names
+  // the failed operation, carries a quotable timestamp-based reference, and a
+  // mutation failure is flagged as interrupting an edit.
+  it('names the request, mints a quotable reference, and flags a mutation as an edit', async () => {
+    mockFetch({}, false, 500);
+    await graphqlFetch(document, {});
+    expect(unexpectedError()).toMatchObject({
+      request: 'query thing',
+      duringEdit: false,
+    });
+    expect(unexpectedError()?.reference).toMatch(
+      /^[0-9a-f]{4}-\d{4}-\d{2}-\d{2}T\d{2}:\d{2}Z$/
+    );
+
+    const mutationDocument: TypedDocument<Result, Record<string, never>> = {
+      query: 'mutation saveThing { thing { id } }',
+    };
+    mockFetch({}, false, 500);
+    await graphqlFetch(mutationDocument, {});
+    expect(unexpectedError()).toMatchObject({
+      request: 'mutation saveThing',
+      duringEdit: true,
+    });
   });
 
   it('returns unexpectedError when fetch rejects', async () => {
@@ -113,7 +164,10 @@ describe('graphqlFetch', () => {
     expect(await graphqlFetch(document, {})).toEqual({
       kind: 'unexpectedError',
     });
-    expect(unexpectedError()).toBe('Network down');
+    expect(unexpectedError()).toMatchObject({
+      condition: 'unreachable',
+      cause: 'Network down',
+    });
   });
 
   it('returns unexpectedError when the body is not JSON', async () => {
@@ -130,7 +184,10 @@ describe('graphqlFetch', () => {
     expect(await graphqlFetch(document, {})).toEqual({
       kind: 'unexpectedError',
     });
-    expect(unexpectedError()).toBe('Unexpected token < in JSON');
+    expect(unexpectedError()).toMatchObject({
+      condition: 'unknown',
+      cause: 'Unexpected token < in JSON',
+    });
   });
 
   it('returns unexpectedError when the body has neither data nor errors', async () => {
@@ -138,9 +195,10 @@ describe('graphqlFetch', () => {
     expect(await graphqlFetch(document, {})).toEqual({
       kind: 'unexpectedError',
     });
-    expect(unexpectedError()).toBe(
-      'Response contained neither data nor errors'
-    );
+    expect(unexpectedError()).toMatchObject({
+      condition: 'unknown',
+      cause: 'Response contained neither data nor errors',
+    });
   });
 
   it('promotes a mapped success payload to unexpectedError, description on the signal', async () => {
@@ -154,7 +212,10 @@ describe('graphqlFetch', () => {
       }
     );
     expect(result).toEqual({ kind: 'unexpectedError' });
-    expect(unexpectedError()).toBe('Record does not exist');
+    expect(unexpectedError()).toMatchObject({
+      condition: 'unknown',
+      cause: 'Record does not exist',
+    });
   });
 
   it('passes success through when the mapper returns undefined', async () => {

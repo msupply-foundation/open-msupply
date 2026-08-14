@@ -80,11 +80,17 @@ export function TableRow<T>(props: {
   rowState?: (row: T) => 'verified' | 'warning' | 'disabled' | undefined;
   /**
    * Semantic text tone for this row: 'info' for records awaiting an action
-   * (placeholder / uncounted lines), 'error' for a line the server refused
-   * (a failed bulk operation). Stamps data-tone, styled in CSS. Semantic
-   * names only, mapped to palette tokens by the CSS — never colours.
+   * (placeholder / uncounted lines), 'warning' for a record needing attention
+   * before it can proceed (a held batch), 'error' for a line the server
+   * refused (a failed bulk operation). Stamps data-tone, styled in CSS.
+   * Semantic names only, mapped to palette tokens by the CSS — never colours.
    */
-  rowTone?: (row: T) => 'info' | 'error' | undefined;
+  rowTone?: (row: T) => 'info' | 'warning' | 'error' | undefined;
+  /**
+   * Semantic record-status BACKGROUND tint, always on (see DataTable's prop
+   * doc — spec D111). Stamps data-tint, styled in CSS.
+   */
+  rowTint?: (row: T) => 'success' | 'warning' | 'error' | undefined;
   /**
    * Sticky-pin style for a pinned data column's cell
    * (position/offset/z-index), else undefined.
@@ -127,6 +133,11 @@ export function TableRow<T>(props: {
       data-tone={
         !props.row.getIsGrouped()
           ? props.rowTone?.(props.row.original)
+          : undefined
+      }
+      data-tint={
+        !props.row.getIsGrouped()
+          ? props.rowTint?.(props.row.original)
           : undefined
       }
       // Selected rows get the same brand tint as selected cards (consistent

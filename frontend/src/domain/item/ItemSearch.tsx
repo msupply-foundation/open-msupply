@@ -12,9 +12,11 @@ export interface ItemSearchProps {
   label: string;
   storeId: string;
   /**
-   * Item ids to hide from the results. Optional — omit to show every item (e.g.
-   * the stocktake line editor now shows all items, even ones already counted,
-   * and loads that item's existing lines when picked).
+   * Item ids to hide from the results. Optional, and NOT for hiding items the
+   * document already holds — every line editor omits it, so an add-item lookup
+   * offers those items and picking one loads their existing entry
+   * (spec/ui-standards/controls.md § async lookup). Reserved for structural
+   * exclusions, e.g. an item cannot be its own bundled/ancillary variant.
    */
   excludeItemIds?: string[];
   /**
@@ -93,9 +95,9 @@ const renderRow = (item: ItemOption): JSX.Element => (
  * AsyncCombobox owns the combobox + pagination.
  */
 export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
-  // The fetcher reads the exclusions accessor per call, so a later change (an
-  // item added via "OK & next") is picked up on the next fetch. excludeItemIds
-  // is optional (the stocktake editor shows all items) → default to [].
+  // The fetcher reads the exclusions accessor per call, so a later change is
+  // picked up on the next fetch. excludeItemIds is optional — every line
+  // editor omits it → default to [].
   const fetchPage = itemPageFetcher(
     props.storeId,
     () => props.excludeItemIds ?? [],

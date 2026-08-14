@@ -17,7 +17,6 @@ import {
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Text } from '../../../ui/elements/typography/Text';
 import { Stack } from '../../../ui/layout/Stack/Stack';
-import { HStack } from '../../../ui/layout/Stack/HStack';
 import { Tabs, TabList, TabPanel } from '../../../ui/elements/tabs/Tabs';
 import { t } from '../../../intl';
 import { NameProperties } from '../configuration/nameProperties.generated';
@@ -177,7 +176,7 @@ export const StoreEditorModal = (props: {
       title={<></>}
       ariaLabel={facility()?.name ?? t('label.edit-store-properties')}
       titleHidden
-      widthRem={44}
+      width="prose"
       testId="store-editor"
       dismissable={!saving()}
       actions={
@@ -199,31 +198,37 @@ export const StoreEditorModal = (props: {
       }
     >
       <Stack>
+        {/* The identity block: the record's name as the form's heading, its
+            code the muted line of secondary identity beneath — an identity
+            header's shape, composed here rather than taken from IdentityHeader,
+            whose <header> element would sit a SECOND banner landmark inside the
+            dialog's own header row. The code's test id stays on the VALUE, the
+            text the e2e contract reads from it. */}
         <Stack gap="sm">
           <Text variant="heading" level={2} data-testid="store-editor-name">
             {facility()?.name ?? ''}
           </Text>
-          <HStack gap="sm">
-            <Text variant="subtitle">{t('label.code')}:</Text>
-            <Text data-testid="store-editor-code">
+          <Text variant="subtitle">
+            {t('label.code')}:{' '}
+            <span data-testid="store-editor-code">
               {facility()?.code ?? ''}
-            </Text>
-          </HStack>
-          <StoreGpsBlock
-            latitude={coordinate(draft(), LATITUDE_KEY)}
-            longitude={coordinate(draft(), LONGITUDE_KEY)}
-            disabled={!canEdit()}
-            onCapture={(latitude, longitude) =>
-              setDraft(current =>
-                setProperty(
-                  setProperty(current, LATITUDE_KEY, latitude),
-                  LONGITUDE_KEY,
-                  longitude
-                )
-              )
-            }
-          />
+            </span>
+          </Text>
         </Stack>
+        <StoreGpsBlock
+          latitude={coordinate(draft(), LATITUDE_KEY)}
+          longitude={coordinate(draft(), LONGITUDE_KEY)}
+          disabled={!canEdit()}
+          onCapture={(latitude, longitude) =>
+            setDraft(current =>
+              setProperty(
+                setProperty(current, LATITUDE_KEY, latitude),
+                LONGITUDE_KEY,
+                longitude
+              )
+            )
+          }
+        />
 
         {/* Properties alone for now — the Preferences tab is deferred to its
             own capture pass (spec/settings README § Status). */}
@@ -245,7 +250,9 @@ export const StoreEditorModal = (props: {
                 </Show>
               }
             >
-              <Stack gap="sm">
+              {/* One column of full-width fields, on the form's own field
+                  rhythm — the default Stack gap matches FormSection's. */}
+              <Stack>
                 <For each={fields()}>
                   {definition => (
                     <StorePropertyField

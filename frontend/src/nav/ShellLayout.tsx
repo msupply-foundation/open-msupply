@@ -28,9 +28,10 @@ import { createMediaQuery } from '../ui/utils/createMediaQuery';
 import { mediaQuery } from '../ui/styles/breakpoints';
 import { deniedPermission, gateNav, mobileNav, routeAccess } from './navGates';
 import { KeyboardHost } from '../keyboard/KeyboardHost';
+import { createDocumentTitle, screenTitleKey } from '../documentTitle';
 import { startSyncWatch, stopSyncWatch } from '../api/syncStore';
 import { createSyncIndicator } from '../sections/sync-modal/syncIndicator';
-import { resolveStorePath } from '../store/StoreGuardLayout';
+import { StoreSwitchModal } from '../store/StoreSwitchModal';
 import { reloadForUpdate, updateAvailable } from '../appUpdate';
 
 // The sync modal is the sync-modal vertical's chunk — loaded on first open,
@@ -76,6 +77,12 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   const NO_SELECTION: NavLeaf = { id: '', labelKey: 'dashboard', to: '' };
   const selected = (): NavLeaf =>
     findLeafByPath(relativePath() || 'dashboard') ?? NO_SELECTION;
+
+  // The browser tab names the screen the URL points at (spec/chrome § document
+  // title) — the registry's label for the destination, the list entry for a
+  // record screen beneath it. Every in-store screen is inside this shell, so
+  // one effect here titles them all.
+  createDocumentTitle(() => screenTitleKey(relativePath()));
 
   // The nav group's glyph for wherever we are — handed to every page's
   // breadcrumb through the shell-section context, since the group a screen sits
@@ -132,19 +139,30 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
 
   // The active store + signed-in user shown in the bottom bar. The store list
   // and user come from the me/login response (authContext); the active store is
-  // the one named by the URL. Activating the store selector routes to the
-  // store-selection screen (spec SL-6 / OMS-REG-LGN-02.11); the user menu logs
-  // out (spec: explicit logout).
+  // the one named by the URL. Activating the store selector opens the
+  // store-switch modal over the current screen (spec SL-6 / D14 /
+  // OMS-REG-LGN-02.11); the user menu logs out (spec: explicit logout).
   const activeStore = () =>
     authUser()?.stores.nodes.find(s => s.id === params.storeId);
   const storeName = () => activeStore()?.name ?? '';
   const username = () => authUser()?.username ?? '';
 
+  // Mounted fresh per open (the <Show> below), so the panel's search and
+  // checkbox state reset between opens; closing (dismiss or a confirmed
+  // switch) unmounts it, and the native <dialog> returns focus to the trigger
+  // (OMS-REG-LGN-02.29/.30).
+  const [storeSwitchOpen, setStoreSwitchOpen] = createSignal(false);
+
   // Spec OMS-REG-FTR-01.9/.10: Logout is gated by a confirmation modal, and
   // confirming ends the session — clearing the user swaps the whole shell for
-  // the login screen (App's <Show when={authUser()}>), so nothing here
-  // navigates.
+  // the login screen (App's <Show when={authUser()}>). The URL is then reset
+  // to the root (spec § explicit logout, OMS-REG-LGN-01.28) so the next
+  // sign-in resolves the store from scratch instead of silently re-entering
+  // the one the logged-out screen's URL still named. AFTER the user clears —
+  // navigating first would route a still-authenticated app through the
+  // /resolve-store guard and flash the picker for the server round-trip.
   const [logoutConfirmOpen, setLogoutConfirmOpen] = createSignal(false);
+  const logoutAndReset = () => void logout().then(() => navigate('/'));
 
   // Spec (sync-modal; chrome › sync indicator): the chrome's sync affordance
   // opens the modal; the shared sync watch (substrate) runs for the whole
@@ -187,10 +205,15 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
         selected={selected()}
         onNavigate={onNavigate}
         onSyncOpen={openSync}
+        /* The brand mark goes home — the store root, which IS the dashboard
+           (see relativePath above, where an empty path resolves to it). The
+           conventional job for a logo in app chrome, and the reason it is not
+           wired to the rail toggle instead. */
+        onHome={() => navigate(`/${params.storeId}`)}
         syncBadge={syncIndicator.badge()}
         syncIconDimmed={syncIndicator.dimmed()}
         storeName={storeName()}
-        onStoreClick={() => navigate(resolveStorePath)}
+        onStoreClick={() => setStoreSwitchOpen(true)}
         onStoreEdit={openStoreEdit}
         username={username()}
         displayName={userDisplayName()}
@@ -219,12 +242,15 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
       <Show when={syncEverOpened()}>
         <SyncModal open={syncOpen()} onClose={() => setSyncOpen(false)} />
       </Show>
+      <Show when={storeSwitchOpen()}>
+        <StoreSwitchModal open onClose={() => setStoreSwitchOpen(false)} />
+      </Show>
       <ConfirmDialog
         open={logoutConfirmOpen()}
         onClose={() => setLogoutConfirmOpen(false)}
         title={t('heading.logout-confirm')}
         message={t('messages.logout-confirm')}
-        onConfirm={() => void logout()}
+        onConfirm={logoutAndReset}
       />
       <ConfirmDialog
         open={updateConfirmOpen()}

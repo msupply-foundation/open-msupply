@@ -69,7 +69,6 @@ const PickerContent = (props: MasterListPickerModalProps): JSX.Element => {
       <TextField
         label={t('placeholder.search-by-name')}
         hideLabel
-        width="full"
         placeholder={t('placeholder.search-by-name')}
         value={search()}
         onInput={e => setSearch(e.currentTarget.value)}

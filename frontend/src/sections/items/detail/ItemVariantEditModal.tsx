@@ -231,7 +231,6 @@ export const ItemVariantEditModal: Component<
               data-testid="item-variant-name-input"
               label={t('label.name')}
               required
-              width="full"
               disabled={saving()}
               value={form().name}
               onInput={e => setForm({ ...form(), name: e.currentTarget.value })}
@@ -263,7 +262,6 @@ export const ItemVariantEditModal: Component<
             <Show when={props.isVaccine}>
               <TextField
                 label={t('label.vvm-type')}
-                width="full"
                 disabled={saving()}
                 value={form().vvmType}
                 onInput={e =>

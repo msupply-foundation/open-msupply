@@ -92,7 +92,7 @@ export interface RequisitionLineEditModalProps {
   ) => RequisitionDetailLineFragment | undefined;
   /**
    * The requisition's existing line for an item, if any — add mode loads it
-   * for editing rather than starting a duplicate (D74, AC-LE3).
+   * for editing rather than starting a duplicate (D60, AC-LE3).
    */
   findLineForItem: (
     itemId: string
@@ -210,7 +210,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
 
   const pickItem = async (itemId: string) => {
     // An item already on the requisition loads its EXISTING line to edit — no
-    // duplicate (D74, AC-LE3). The picker stays live (mode stays 'add'), but
+    // duplicate (D60, AC-LE3). The picker stays live (mode stays 'add'), but
     // the loaded line's isNew=false makes the save an update, not an insert.
     const existing = props.findLineForItem(itemId);
     if (existing) {
@@ -617,7 +617,6 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
           <NumberField
             label={t('label.supply')}
             hideLabel
-            width="full"
             min={0}
             decimalLimit={2}
             data-testid="supply-quantity-input"
@@ -641,7 +640,6 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
           <Select
             label={t('label.units')}
             hideLabel
-            width="full"
             value={entryMode()}
             options={entryOptions()}
             disabled={disabled()}
@@ -775,13 +773,12 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
     >
       {/* Item header (spec S4 § layout): the catalogue lookup in add mode —
           offering EVERY visible item, an already-present pick loading its
-          line (D74) — or the item read-only in edit mode. */}
+          line (D60) — or the item read-only in edit mode. */}
       <Show
         when={updateMode()}
         fallback={
           <ItemSearch
             label={t('label.item')}
-            width="full"
             storeId={props.storeId}
             focusTarget={itemSearch}
             placeholder={t('placeholder.enter-an-item-code-or-name')}
@@ -805,7 +802,6 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
       >
         <TextField
           label={t('label.item')}
-          width="full"
           disabled
           value={`${current()?.itemCode ?? ''} - ${current()?.itemName ?? ''}`}
         />

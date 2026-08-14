@@ -28,18 +28,24 @@ import {
   type SortState,
 } from '../../../ui/elements/table/DataTable';
 import {
-  formatCurrencyCell,
   getCellDefinition,
+  getFlagCell,
   getNumberCell,
+  isNearOrPastExpiry,
 } from '../../../ui/elements/table/tableHelpers';
+import {
+  Pagination,
+  type PaginationProps,
+} from '../../../ui/elements/table/Pagination';
 import { remToPx } from '../../../ui/utils/rem';
-import { formatNumber } from '../../../intl/formatNumber';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
 import { createAddAction } from '../../../ui/utils/keyActions';
 import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
+import { RowStatusBadges, uncapped } from './RowStatusBadges';
 import { InfoIcon, MinusCircleIcon, PlusCircleIcon } from '../../../ui/icons';
+import { isExpired } from '../../../domain/allocation';
 import { fetchLocations } from '../../../domain/location';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import { useUrlQueryState } from '../../../list/urlQueryState';
@@ -67,6 +73,7 @@ import { isEditable, canReturnLines } from '../outboundStatus';
 import { outboundShipmentPreferences } from '@/store/storeContext';
 import { OutboundDetailToolbar } from './OutboundDetailToolbar';
 import { OutboundStatusFooter } from './OutboundStatusFooter';
+import { OutboundTotalsStrip } from './OutboundTotalsStrip';
 import { OutboundSidePanel } from './OutboundSidePanel';
 import { ActivityLogPanel } from '../../../domain/activityLog';
 import {
@@ -114,15 +121,69 @@ import {
 
 type Line = OutboundLineFragment;
 
-// Drop a preset's growth cap, keeping its cell + width floor: `maxSize` is a
-// HARD cap, so a column sitting at it can't be dragged wider at all. The shared
-// config expresses this as a per-key `maxSize: null`; at a call site the key has
-// to be removed outright — an explicit `maxSize: undefined` would override
-// TanStack's own default rather than fall back to it.
-const uncapped = <T,>({
-  maxSize: _cap,
-  ...rest
-}: ReturnType<typeof getCellDefinition<T>>) => rest;
+// A held line — its batch, or the batch's location, on hold — cannot be
+// issued (OMS-REG-DIST-03.18); the detail table says so where the user looks
+// first: the amber "On hold" badge beside the item name, an amber status
+// tint on an unallocated row, and the amber card treatment
+// (OMS-REG-DIST-03.37, D111 — the badge carries the fact, the tint only
+// restates it).
+const lineOnHold = (line: Line): boolean =>
+  !!line.stockLine?.onHold || !!line.location?.onHold;
+
+// Calendar-expired line (D112) — the bold red Expiry-date cell, a red status
+// tint on an unallocated row, and the red card treatment (title/border/
+// Expired badge).
+const lineExpired = (line: Line): boolean =>
+  !!line.expiryDate && isExpired(line.expiryDate);
+
+// Inside the shared near-expiry window but not yet expired — the "Near
+// expiry" badge tier (the expiry cell is red at this tier, not yet bold).
+const lineNearExpiry = (line: Line): boolean =>
+  !!line.expiryDate &&
+  !lineExpired(line) &&
+  isNearOrPastExpiry(line.expiryDate);
+
+// The row-status badges beside the item name (the shared RowStatusBadges
+// cluster — ui-standards § table interaction; OMS-REG-DIST-03.37/.38,
+// D111/D112). A placeholder carries none — its Batch cell's "Placeholder"
+// word is the flag.
+const LineStatusBadges = (props: { line: Line }) => (
+  <Show when={props.line.type !== 'UNALLOCATED_STOCK'}>
+    <RowStatusBadges
+      expired={lineExpired(props.line)}
+      nearExpiry={lineNearExpiry(props.line)}
+      held={lineOnHold(props.line)}
+    />
+  </Show>
+);
+
+// Line-STATUS background tint (ui-surface S3 line table,
+// OMS-REG-DIST-03.37–.39, D111): allocated green, expired red, held amber,
+// placeholder untinted (its blue text is gone too — D111 drops the current
+// app's treatment). Row text keeps the default colour; the badges and the
+// bold red Expiry-date cell carry the facts in words. Precedence (.39):
+// allocated > expired > held — a detail line always carries packs, so real
+// lines read green and the red/amber tints surface only on a zero-pack edge
+// case.
+const lineRowTint = (
+  line: Line
+): 'success' | 'warning' | 'error' | undefined => {
+  if (line.type === 'UNALLOCATED_STOCK') return undefined;
+  if (line.numberOfPacks > 0) return 'success';
+  if (lineExpired(line)) return 'error';
+  if (lineOnHold(line)) return 'warning';
+  return undefined;
+};
+
+// The card tone (title + border + corner badge — D111/D112); no info tone
+// for placeholders. Expired outranks held (matching the tint precedence);
+// both corner badges still show.
+const lineCardTone = (line: Line): 'warning' | 'error' | undefined => {
+  if (line.type === 'UNALLOCATED_STOCK') return undefined;
+  if (lineExpired(line)) return 'error';
+  if (lineOnHold(line)) return 'warning';
+  return undefined;
+};
 
 // The server sort-field union (from codegen) — a column can only ever name a
 // real server sort key (kdd/type-safety). Columns whose data the server can't
@@ -255,6 +316,43 @@ const OutboundDetailView: Component = () => {
   // page (keeps rows in place, no remount); undefined before the first load.
   const rows = (): Line[] => linesData.latest?.nodes ?? [];
   const totalCount = (): number => linesData.latest?.totalCount ?? 0;
+
+  // The line table's pager. It lives in the screen's bottom bar — the status
+  // footer, or the selection footer while rows are ticked — rather than in a
+  // band of its own under the table (spec/ui-standards § tables → pagination):
+  // that bar is present at every line count, so hosting the pager there costs
+  // no extra row, and `conditional` means it renders nothing at all until the
+  // lines outrun one page, leaving the bar as it was and the height to the
+  // rows. Paging still clears the selection (OMS-REG-DIST-03.34): the
+  // bulk-action gates classify by rows in view.
+  // The shipment's totals (spec § line table, D45): whole-shipment SERVER
+  // aggregates off the entity's pricing stats — never a sum over the loaded
+  // rows, which would silently become a page total under server pagination
+  // (OMS-REG-DIST-03.28). Price = stockTotalBeforeTax (contract § detail line
+  // table): the sum of the Total column, pack sell price × packs before tax —
+  // the after-tax figure belongs to the side panel's stock-charges Total.
+  // Shown in the status footer rather than a pinned row beneath the table:
+  // being whole-shipment figures, a band under one page of rows would read as
+  // that page's column sums, and would cost a row to do it.
+  const shipmentTotals = () => ({
+    price: node()?.pricing?.stockTotalBeforeTax ?? 0,
+    volume: node()?.pricing?.totalVolume ?? 0,
+  });
+
+  const linePagination = (): PaginationProps => ({
+    offset: query().offset,
+    pageSize: query().first,
+    total: totalCount(),
+    onOffsetChange: offset => {
+      setQuery({ ...query(), offset });
+      setSelectedIds([]);
+    },
+    onPageSizeChange: first => {
+      setQuery({ ...query(), first, offset: 0 });
+      setSelectedIds([]);
+    },
+    conditional: true,
+  });
   // Deleting the last page's rows can leave the offset past the end (an
   // empty "41–40 of 40" page) — clamp back to the last real page when a
   // resolved page proves the offset overshot. Idempotent: the clamped offset
@@ -565,24 +663,11 @@ const OutboundDetailView: Component = () => {
   // placeholder rows show the requested quantity. Sortable columns name a real
   // server sort key; the rest omit sortKey (no client-side fallback).
   const columns = (): Column<Line, SortKey>[] => {
-    // Footer totals (spec § line table, D45): whole-shipment SERVER aggregates
-    // off the entity's pricing stats — never a sum over the loaded rows, which
-    // would silently become a page total under server pagination
-    // (OMS-REG-DIST-03.28).
-    const pricing = node()?.pricing;
-    // Price footer = stockTotalBeforeTax (contract § detail line table): it
-    // sums the Total column (pack sell price × packs, before tax) — the
-    // after-tax figure belongs to the side panel's stock-charges Total.
-    const totals = {
-      price: pricing?.stockTotalBeforeTax ?? 0,
-      volume: pricing?.totalVolume ?? 0,
-    };
     return [
       {
         c: { key: 'itemCode' },
         sortKey: 'itemCode',
         header: () => t('label.code'),
-        footer: () => t('label.total'),
         // The `code` kind carries the monospace treatment the spec's line-table
         // column 1 asks for ("text (mono)"), plus the shared code width.
         ...getCellDefinition('itemCode'),
@@ -595,12 +680,19 @@ const OutboundDetailView: Component = () => {
           headerPosition: 'primary',
           wrapLines: 2,
         }),
+        // Name + the row-status badges (LineStatusBadges above).
+        cell: info => (
+          <>
+            {info.row.original.itemName}
+            <LineStatusBadges line={info.row.original} />
+          </>
+        ),
       },
       {
         c: {
           accessor: line =>
             line.type === 'UNALLOCATED_STOCK'
-              ? t('label.placeholder')
+              ? t('label.unallocated')
               : (line.batch ?? '—'),
           id: 'batch',
         },
@@ -613,6 +705,38 @@ const OutboundDetailView: Component = () => {
         // wider at all. Same reasoning (and fix) as the `locationCode` key's
         // "own size, NO cap" note in _globalColumnConfig (#601).
         ...uncapped(getCellDefinition<Line>('batch')),
+      },
+      {
+        // On-hold flag, CARD-ONLY (OMS-REG-DIST-03.37, D111): the table's
+        // amber "On hold" badge beside the item name carries the state, so
+        // the grid has no On-hold column; the card's corner badge is this.
+        c: { accessor: lineOnHold, id: 'onHold' },
+        header: () => t('label.on-hold'),
+        ...getFlagCell(
+          t('label.on-hold'),
+          {
+            headerPosition: 'badge',
+            hideOnTable: true,
+            hideFromColumnSettings: true,
+          },
+          'warning'
+        ),
+      },
+      {
+        // Expired flag, CARD-ONLY (D112): the table's Expiry-date cell
+        // reddens under its header; a card buries that in the body, so the
+        // badge puts the word in the card corner, with the row's error tone.
+        c: { accessor: lineExpired, id: 'expired' },
+        header: () => t('label.expired'),
+        ...getFlagCell(
+          t('label.expired'),
+          {
+            headerPosition: 'badge',
+            hideOnTable: true,
+            hideFromColumnSettings: true,
+          },
+          'error'
+        ),
       },
       {
         c: { key: 'expiryDate' },
@@ -724,7 +848,6 @@ const OutboundDetailView: Component = () => {
           id: 'total',
         },
         header: () => t('label.total'),
-        footer: () => formatCurrencyCell(totals.price),
         ...getCellDefinition('total'),
       },
       {
@@ -739,7 +862,6 @@ const OutboundDetailView: Component = () => {
         // Same display rounding as the column's cells (ui-standards § tables'
         // 2-dp number cell) — a 5-dp footer under 2-dp cells reads as a
         // mismatch.
-        footer: () => formatNumber(totals.volume, { maximumFractionDigits: 2 }),
         ...getNumberCell(),
         // No CELL_DEF key; the "Volume (m³)" header is the binding constraint.
         size: remToPx(6),
@@ -880,12 +1002,19 @@ const OutboundDetailView: Component = () => {
                 </Header>
               }
               contentFooter={
-                <Show
+                <>
+                  {/* The totals band, above BOTH footer faces — a document
+                      fact, so a live row selection doesn't take it away. */}
+                  <OutboundTotalsStrip
+                    totals={totalCount() > 0 ? shipmentTotals : undefined}
+                  />
+                  <Show
                   when={selectedIds().length > 0}
                   fallback={
                     <OutboundStatusFooter
                       storeId={params.storeId}
                       node={current()}
+                      pagination={linePagination()}
                       preflight={preflight}
                       onSetHold={setHold}
                       // A status change can trim zero-quantity lines
@@ -895,11 +1024,6 @@ const OutboundDetailView: Component = () => {
                         mutate(() => saved);
                         void refetchAfterSave();
                       }}
-                      onClose={() =>
-                        navigate(
-                          `/${params.storeId}/distribution/outbound-shipment`
-                        )
-                      }
                     />
                   }
                 >
@@ -944,6 +1068,9 @@ const OutboundDetailView: Component = () => {
                     >
                       {t('button.return-lines')}
                     </Button>
+                    {/* The pager rides the selection face as well: ticking a
+                        row must not strip the way to the rest of the lines. */}
+                    <Pagination {...linePagination()} inBar />
                     <ContentFooterActions>
                       <Button
                         variant="secondary"
@@ -954,7 +1081,8 @@ const OutboundDetailView: Component = () => {
                       </Button>
                     </ContentFooterActions>
                   </ContentFooter>
-                </Show>
+                  </Show>
+                </>
               }
             >
               <TabPanel value="details">
@@ -981,11 +1109,8 @@ const OutboundDetailView: Component = () => {
                   sort={currentSort()}
                   onSort={onSort}
                   onRowClick={editable() ? openRow : undefined}
-                  // Placeholder lines read in the info tone — whole-row blue
-                  // text, matching the current app (ui-surface S3 line table).
-                  rowTone={line =>
-                    line.type === 'UNALLOCATED_STOCK' ? 'info' : undefined
-                  }
+                  rowTint={lineRowTint}
+                  cardTone={lineCardTone}
                   emptyMessage={t('error.no-outbound-items')}
                   empty={
                     editable() ? (
