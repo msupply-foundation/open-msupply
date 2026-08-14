@@ -203,8 +203,13 @@ const InboundShipmentDetailView: Component = () => {
     pageSize: query().first,
     total: totalCount(),
     onOffsetChange: offset => setQuery({ ...query(), offset }),
-    onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
-    conditional: true,
+    onPageSizeChange: first => {
+      // The remembered page size (D106) — it rode the DataTable's own
+      // pagination prop, which this accessor replaced when the pager moved
+      // into the status footer, so it has to travel with the handler.
+      rememberPageSize(first);
+      setQuery({ ...query(), first, offset: 0 });
+    },
   });
   // The line-edit modal open state: { itemId, lineId } to edit an item's
   // batches (lineId = the clicked batch, focused on open), {} to add a new
@@ -1172,16 +1177,6 @@ const InboundShipmentDetailView: Component = () => {
                       ? tableConfig.saveGlobalTableConfig
                       : undefined
                   }
-                  pagination={{
-                    offset: query().offset,
-                    pageSize: query().first,
-                    total: totalCount(),
-                    onOffsetChange: offset => setQuery({ ...query(), offset }),
-                    onPageSizeChange: first => {
-                      rememberPageSize(first);
-                      setQuery({ ...query(), first, offset: 0 });
-                    },
-                  }}
                 />
               </TabPanel>
               <Show when={isExternal()}>
