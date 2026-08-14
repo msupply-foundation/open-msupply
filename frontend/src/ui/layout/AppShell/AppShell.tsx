@@ -9,29 +9,21 @@ import { Dynamic } from 'solid-js/web';
 import {
   HomeIcon,
   CentralIcon,
-  EditIcon,
-  SyncIcon,
+  RefreshIcon,
   type IconProps,
 } from '../../icons';
 import { useIsNavOverlay, useIsRailWide } from '../../utils/createMediaQuery';
 import { createAction } from '../../utils/keyActions';
 import { MenuBar, type MenuBarState } from './MenuBar';
-import { LanguageSelector } from './LanguageSelector';
+import { SyncStatus } from './SyncStatus';
 import { UserMenu } from './UserMenu';
 import {
   ShellNavContext,
   ShellFullScreenContext,
   ShellOverlayContext,
 } from './shellContext';
-import {
-  upperNav,
-  lowerNav,
-  SYNC_NAV_ID,
-  type NavBadge,
-  type NavItem,
-  type NavLeaf,
-} from './navModel';
-import { locale, changeLanguage, t } from '../../../intl';
+import { upperNav, lowerNav, type NavItem, type NavLeaf } from './navModel';
+import { t } from '../../../intl';
 import styles from './AppShell.module.css';
 
 export interface AppShellProps {
@@ -55,23 +47,30 @@ export interface AppShellProps {
   upper?: NavItem[];
   lower?: NavItem[];
   /**
-   * The user activated the sidebar's Sync entry — the chrome's sync affordance
-   * (spec/chrome § sync indicator: opens the sync modal in place, no
-   * navigation). Wiring this prop is what makes the Sync id special: a host
-   * that doesn't (the showcase) navigates every leaf normally, even one with
-   * the same id.
-   */
-  onSyncOpen?: () => void;
-  /**
    * Activating the brand mark — chrome's conventional route home. Optional for
    * the same reason as the cells above: a host that doesn't wire it gets a
    * plain mark rather than a button that does nothing.
    */
   onHome?: () => void;
-  /** The Sync entry's status badge (spec/chrome § sync indicator). */
-  syncBadge?: NavBadge;
-  /** Dim the Sync entry's icon while the latest run is errored. */
-  syncIconDimmed?: boolean;
+  /**
+   * The bottom bar's sync cell (spec/chrome § sync status) — the resolved
+   * status line, its tone, and whether a run is in flight. Absent → no cell:
+   * a host with no session (the showcase) has no sync state to show, and an
+   * empty cell would be a dead control.
+   */
+  syncStatus?: { label: string; tone: 'neutral' | 'warning' | 'error' };
+  /** A sync run is in flight — the cell's glyph animates while true. */
+  syncing?: boolean;
+  /**
+   * Start a manual sync from the bottom bar's status line — one click, no
+   * dialog. Required alongside `syncStatus`; without both, no cell renders.
+   */
+  onSyncNow?: () => void;
+  /**
+   * Open the sync modal, from the status cell's details button (spec/chrome §
+   * sync status: it opens in place and MUST NOT navigate).
+   */
+  onSyncDetails?: () => void;
   /**
    * The active store's name, shown in the bottom bar (spec: store selector).
    */
@@ -81,13 +80,6 @@ export interface AppShellProps {
    * SL-6).
    */
   onStoreClick: () => void;
-  /**
-   * Activating the store Edit cell — opens the store editor on its Properties
-   * tab (spec/settings OMS-REG-SET-05.18). Optional: the editor doesn't exist
-   * yet, and a host that hasn't wired it gets the cell as static text (never a
-   * button that does nothing).
-   */
-  onStoreEdit?: () => void;
   /**
    * The signed-in user's name, shown in the bottom bar (spec: signed-in user).
    */
@@ -174,7 +166,7 @@ const RAIL_COLLAPSED_KEY = 'rail-collapsed';
  * menu bar (the main menu), the orange app footer, and the content slot
  * between them where the current page renders. App chrome lives here
  * because it's identical on every page and its state (rail collapse,
- * overlay open, language) must survive navigation — so the shell mounts
+ * overlay open) must survive navigation — so the shell mounts
  * ONCE per app host and pages swap inside it; per-page geometry (pinned
  * header, scrolling body, side panel, content footer) belongs to the <Page>
  * frame the page itself composes (see kdd/page-composition). Until
@@ -261,7 +253,8 @@ export const AppShell = (props: AppShellProps) => {
 
   // Document direction (RTL for ar/prs/ps) is owned once by App.tsx, driven by
   // the real i18n locale — not here — so there is a single dir effect. The
-  // footer LanguageSelector drives that locale via changeLanguage.
+  // language control that drives that locale lives in Settings › Display; the
+  // shell no longer carries one.
 
   return (
     <ShellNavContext.Provider value={{ isOverlay, openNav: nav.openOverlay }}>
@@ -285,30 +278,21 @@ export const AppShell = (props: AppShellProps) => {
                 lower={menuLower()}
                 selectedId={props.selected.id}
                 onHome={props.onHome}
-                // The Sync entry opens the modal in place — never navigates
-                // (spec/chrome OMS-REG-FTR-03.1). Chrome behaviour, so it
-                // applies only when the host wired onSyncOpen: one that didn't
-                // (the showcase) may use the same id as an ordinary destination.
-                onSelect={leaf => {
-                  const openSync =
-                    leaf.id === SYNC_NAV_ID ? props.onSyncOpen : undefined;
-                  if (openSync) openSync();
-                  else props.onNavigate(leaf);
-                }}
-                syncBadge={props.syncBadge}
-                syncIconDimmed={props.syncIconDimmed}
+                onSelect={props.onNavigate}
               />
             </Show>
             <div class={styles.main}>
               <div class={styles.content}>{props.children}</div>
 
-              {/* Bottom bar (spec chrome › bottom bar), left to right: the store
-                selector (opens the store-switch modal — spec SL-6 / D14), the
-                store Edit cell, a spacer, the signed-in user (menu: logout),
-                then the language selector. The store name is shown as text, so
-                the store colour is never the sole active-store indicator
-                (colour independence). Hidden in full-screen mode, like the menu
-                bar. */}
+              {/* Bottom bar (spec chrome › bottom bar), left to right: the
+                store selector (opens the store-switch modal — spec SL-6 / D14)
+                and the signed-in user beside it, a spacer, then the inline-end
+                cluster — the update prompt, the central-server marker, and the
+                sync status last. Identity on one side, site/system state on the
+                other; the language selector left the bar entirely and now lives
+                in Settings › Display. The store name is shown as text, so the
+                store colour is never the sole active-store indicator (colour
+                independence). Hidden in full-screen mode, like the menu bar. */}
               <Show when={!fullScreen()}>
                 <footer
                   class={styles.footer}
@@ -322,17 +306,17 @@ export const AppShell = (props: AppShellProps) => {
                     onClick={props.onStoreClick}
                     testId="store-selector-trigger"
                   />
-                  {/* Store Edit, beside the store name (spec/settings
-                    OMS-REG-SET-05.17). Activating it opens the store editor on
-                    its Properties tab (.18) — that editor isn't built here yet,
-                    so until a host wires `onStoreEdit` the cell renders in
-                    FooterCell's static (non-interactive) form rather than as a
-                    button that does nothing. */}
-                  <FooterCell
-                    icon={EditIcon}
-                    label={t('label.edit')}
-                    onClick={props.onStoreEdit}
-                    testId="footer-store-edit"
+                  <span class={styles.footerDivider} aria-hidden="true" />
+                  {/* The signed-in user sits beside the store, not opposite it:
+                    the two together answer "who am I, and where am I working" —
+                    one question, so one cluster — divided from it by the same
+                    hairline the inline-end cells use. */}
+                  <UserMenu
+                    username={props.username}
+                    displayName={props.displayName}
+                    email={props.email}
+                    jobTitle={props.jobTitle}
+                    onLogout={props.onLogout}
                   />
                   <span class={styles.footerSpacer} aria-hidden="true" />
                   {/* Update prompt (spec/chrome § update prompt,
@@ -342,33 +326,41 @@ export const AppShell = (props: AppShellProps) => {
                     divider goes with it, so nothing dangles while it's away. */}
                   <Show when={props.updateAvailable && props.onUpdateClick}>
                     <FooterCell
-                      icon={SyncIcon}
+                      icon={RefreshIcon}
                       label={t('label.new-version-available')}
                       onClick={props.onUpdateClick}
                       testId="footer-update-available"
                     />
                     <span class={styles.footerDivider} aria-hidden="true" />
                   </Show>
-                  <UserMenu
-                    username={props.username}
-                    displayName={props.displayName}
-                    email={props.email}
-                    jobTitle={props.jobTitle}
-                    onLogout={props.onLogout}
-                  />
-                  <span class={styles.footerDivider} aria-hidden="true" />
-                  <LanguageSelector
-                    language={locale()}
-                    onSelect={v => void changeLanguage(v)}
-                    testId="language-selector"
-                  />
-                  {/* Central-server cell: only on a central server (its divider
-                    goes with it, so nothing dangles on a remote site). */}
+                  {/* Central-server marker: only on a central server (its
+                    divider goes with it, so nothing dangles on a remote site).
+                    Immediately before the sync cell — both describe the SITE
+                    rather than the session, and which role this server plays is
+                    the first thing that qualifies what its sync line means. */}
                   <Show when={props.isCentralServer}>
-                    <span class={styles.footerDivider} aria-hidden="true" />
                     <FooterCell
                       icon={CentralIcon}
                       label={t('label.central-server')}
+                      testId="footer-central-server"
+                    />
+                    <span class={styles.footerDivider} aria-hidden="true" />
+                  </Show>
+                  {/* Sync status, pinned last (issue #9229): the bar's
+                    inline-end is where a standing system signal belongs, and
+                    it is the one cell that changes on its own. */}
+                  <Show when={props.syncStatus && props.onSyncNow}>
+                    {/* Read through the ACCESSOR, not the narrowed value: the
+                        <Show> child runs once per truthiness flip, so a label
+                        or tone read outside a tracked position would freeze at
+                        whatever the cell first rendered
+                        (kdd/solid-reactivity-pitfalls §3). */}
+                    <SyncStatus
+                      label={props.syncStatus?.label ?? ''}
+                      tone={props.syncStatus?.tone ?? 'neutral'}
+                      syncing={props.syncing}
+                      onSync={() => props.onSyncNow?.()}
+                      onDetails={() => props.onSyncDetails?.()}
                     />
                   </Show>
                 </footer>

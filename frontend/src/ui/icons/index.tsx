@@ -522,13 +522,23 @@ export const SettingsIcon = (props: IconProps) => (
 
 /* Sync */
 /* Hugeicons: LiveStreaming02Icon */
+/*
+ * The two broadcast arc PAIRS are grouped and tagged `data-sync-arc` so a
+ * consumer can animate them outward from the hub — the footer's sync cell
+ * pulses them while a run is in flight (issue #9229's animated glyph). The
+ * groups are inert markup otherwise; the static icon renders identically.
+ */
 export const SyncIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
     <circle cx="12" cy="12" r="2" />
-    <path d="M7.5 8C6.5 9 6 10.5 6 12C6 13.5 6.5 15 7.5 16" />
-    <path d="M4.5 6C3 7.5 2 9.5 2 12C2 14.5 3 16.5 4.5 18" />
-    <path d="M16.5 16C17.5 15 18 13.5 18 12C18 10.5 17.5 9 16.5 8" />
-    <path d="M19.5 18C21 16.5 22 14.5 22 12C22 9.5 21 7.5 19.5 6" />
+    <g data-sync-arc="inner">
+      <path d="M7.5 8C6.5 9 6 10.5 6 12C6 13.5 6.5 15 7.5 16" />
+      <path d="M16.5 16C17.5 15 18 13.5 18 12C18 10.5 17.5 9 16.5 8" />
+    </g>
+    <g data-sync-arc="outer">
+      <path d="M4.5 6C3 7.5 2 9.5 2 12C2 14.5 3 16.5 4.5 18" />
+      <path d="M19.5 18C21 16.5 22 14.5 22 12C22 9.5 21 7.5 19.5 6" />
+    </g>
   </Stroke>
 );
 
