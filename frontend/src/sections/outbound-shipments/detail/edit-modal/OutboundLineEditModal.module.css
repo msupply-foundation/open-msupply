@@ -18,6 +18,17 @@
   gap: var(--space-3) var(--space-4);
 }
 
+/* The header row's slot for the table's controls (DataTable.controlsMount).
+   Its auto margin docks the cluster at the row's inline end, so it keeps that
+   edge whether the placeholder notice is present or not; flex-shrink: 0 keeps
+   the icon buttons at size when the row tightens, and the row wraps instead. */
+.headerTableControls {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  margin-inline-start: auto;
+}
+
 /* The item picker: a bounded width (it holds "code - name" labels), NOT a
    greedy fill — the Available text and Issue fields sit immediately beside
    it, left-packed, rather than being pushed to the row's far edge. It may
@@ -59,8 +70,20 @@
 
 /* The "placeholder added" info notice fills what's left of the row, wrapping
    to its own full row when the header is tight. */
-.placeholderNotice {
-  flex: 1 1 20rem;
+/* The working area — the ONE scroll box between the header panel and the
+   footer, holding the batch grid and the advisory messages under it. They
+   scroll together, so a message costs nothing while the user is working in the
+   cards and is met at the end of them; a pinned band would have spent that
+   height on every screen, which on a tablet is most of a card. The table lays
+   out at content height inside it (DataTable's fitContent), so this is the
+   only scroller — no box inside a box. */
+.workArea {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-block-size: 0;
+  overflow-y: auto;
 }
 
 /* The batch grid's flex region. The DataTable is flex: 1; min-block-size: 0 (it
@@ -74,8 +97,8 @@
    still grows to fill the full height in the normal (tall) case. */
 .batchGrid {
   display: flex;
+  flex: 0 0 auto;
   flex-direction: column;
-  flex: 1;
   min-block-size: 16rem;
 }
 

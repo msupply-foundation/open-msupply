@@ -34,6 +34,7 @@ import {
   getExpiryDateCell,
   getNumberCell,
 } from '@/ui/elements/table/tableHelpers';
+import { Pagination, type PaginationProps } from '@/ui/elements/table/Pagination';
 import { createTableConfig } from '@/api/createTableConfig';
 import {
   StocktakeDetail,
@@ -53,7 +54,7 @@ import { StocktakeDetailToolbar } from './StocktakeDetailToolbar';
 import { StocktakeLineFilters } from './StocktakeLineFilters';
 import { StocktakeSidePanel } from './StocktakeSidePanel';
 import { createSidePanelOpen } from '@/ui/layout/SidePanel/createSidePanelOpen';
-import { StocktakeLogPanel } from './log/StocktakeLogPanel';
+import { ActivityLogPanel } from '@/domain/activityLog';
 import { StocktakeDocumentsTab } from './StocktakeDocumentsTab';
 import {
   DeleteLinesAction,
@@ -246,6 +247,22 @@ const StocktakeDetailView: Component = () => {
   // The Documents tab reads the node's `documents` list; the Log tab
   // self-queries its own activity log.
   const [activeTab, setActiveTab] = createSignal('details');
+
+  // The line table's pager. It lives in the screen's bottom bar — the status
+  // footer, or the selection footer while rows are ticked — rather than in a
+  // band of its own under the table (spec/ui-standards § tables → pagination):
+  // that bar is present at every line count, so hosting the pager there costs
+  // no extra row, and `conditional` means it renders nothing at all until the
+  // lines outrun one page, leaving the bar as it was and the height to the
+  // rows.
+  const linePagination = (): PaginationProps => ({
+    offset: query().offset,
+    pageSize: query().first,
+    total: totalCount(),
+    onOffsetChange: offset => setQuery({ ...query(), offset }),
+    onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+    conditional: true,
+  });
   const tabs = (): TabDef[] => [
     { value: 'details', label: t('label.details') },
     { value: 'documents', label: t('label.documents') },
@@ -956,6 +973,7 @@ const StocktakeDetailView: Component = () => {
                       storeId={params.storeId}
                       node={node()}
                       disabled={isDisabled(node())}
+                      pagination={linePagination()}
                       onSetHold={setHold}
                       onFinalised={onFinalised}
                       onError={lineIds =>
@@ -1008,6 +1026,9 @@ const StocktakeDetailView: Component = () => {
                       onError={stampErrors}
                       onShowErrors={showErrors}
                     />
+                    {/* The pager rides the selection face as well: ticking a
+                        row must not strip the way to the rest of the lines. */}
+                    <Pagination {...linePagination()} inBar />
                     <ContentFooterActions>
                       <Button
                         variant="secondary"
@@ -1118,9 +1139,9 @@ const StocktakeDetailView: Component = () => {
               parity), mounted only while this tab is active (Kobalte unmounts
               inactive panels), so it fetches on first visit. */}
               <TabPanel value="log">
-                <StocktakeLogPanel
+                <ActivityLogPanel
                   storeId={params.storeId}
-                  stocktakeId={node().id}
+                  recordId={node().id}
                 />
               </TabPanel>
               {/* The line-edit modal is an overlay, not tab content: it stays a

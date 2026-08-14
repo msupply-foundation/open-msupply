@@ -46,5 +46,10 @@ export const ProgramNameSelect = (
     placeholder={props.placeholder}
     inputTestId={props.testId}
     onChange={program => props.onChange(program?.id ?? null)}
+    // Let the popup grow past a narrow field so a program's full name stays
+    // readable. The prescription header's slot collapses to the row's 10rem
+    // floor on a crowded line, which left the names unreadable (#1039). Same
+    // treatment as the location pickers.
+    matchTriggerWidth={false}
   />
 );

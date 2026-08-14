@@ -250,28 +250,5 @@ query generateSupplierReturnLines(
   }
 }
 
-# The Log tab (spec/supplier-returns/cases OMS-REG-REPL-06.46): the return's
-# activity history — creation, status changes — keyed by recordId. Sorted
-# client-side by datetime (no server sort dependency).
-query supplierReturnLog($storeId: String!, $recordId: String!) {
-  activityLogs(
-    storeId: $storeId
-    filter: { recordId: { equalTo: $recordId } }
-    page: { first: 1000 }
-  ) {
-    ... on ActivityLogConnector {
-      __typename
-      totalCount
-      nodes {
-        id
-        type
-        datetime
-        to
-        from
-        user {
-          username
-        }
-      }
-    }
-  }
-}
+# The Log tab (spec/supplier-returns/cases OMS-REG-REPL-06.46) reads the shared
+# activity-log query (src/domain/activityLog), not one of its own.

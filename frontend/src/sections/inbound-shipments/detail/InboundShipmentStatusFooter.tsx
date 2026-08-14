@@ -1,14 +1,17 @@
 import { createSignal, Show, type Component } from 'solid-js';
 import { t } from '../../../intl';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
+import {
+  Pagination,
+  type PaginationProps,
+} from '../../../ui/elements/table/Pagination';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { CheckboxButton } from '../../../ui/elements/buttons/CheckboxButton';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
-import { IconButton } from '../../../ui/elements/buttons/IconButton';
 import { Alert } from '../../../ui/elements/feedback/Alert';
-import { ArrowRightIcon, CloseIcon } from '../../../ui/icons';
+import { ArrowRightIcon } from '../../../ui/icons';
 import type { InboundInfoFragment } from './inboundShipmentDetail.generated';
 import { updateInboundShipment } from './inboundShipmentUpdate';
 import {
@@ -32,6 +35,14 @@ export interface InboundShipmentStatusFooterProps {
   /** Which update twin the advance writes through — the route's scope. */
   isExternal: boolean;
   onSetHold: (hold: boolean) => void;
+  /**
+   * The line table's pager, hosted HERE rather than in a band of its own
+   * (spec/ui-standards § tables → pagination): this bar is present at every
+   * line count, so a shipment that pages gets its controls without a second
+   * row of chrome. The pager renders itself away when there is nowhere to page
+   * to, leaving this bar exactly as it was.
+   */
+  pagination: PaginationProps;
   /**
    * A status advance committed — the view merges the returned node in place.
    */
@@ -103,6 +114,12 @@ export const InboundShipmentStatusFooter: Component<
         current={statusIndex(flow(), props.node.status)}
       />
 
+      {/* The line pager, sharing this bar (`inBar` — it sizes to its cluster
+          so a crowded bar wraps it whole rather than crushing it). Spread of
+          the LIVE prop object, as DataTable does, so offset/total changes
+          reach it. */}
+      <Pagination {...props.pagination} inBar />
+
       {/* A rejected advance shows here, at the control, request preserved. */}
       <Show when={errorMessage()}>
         <Alert severity="error" testId="status-error">
@@ -111,13 +128,6 @@ export const InboundShipmentStatusFooter: Component<
       </Show>
 
       <ContentFooterActions>
-        {/* Small Close button beside the status control (distinct from the
-            app-bar back-to-list button). */}
-        <IconButton
-          icon={<CloseIcon />}
-          label={t('button.close')}
-          onClick={() => history.back()}
-        />
         <Show when={!props.disabled && reachable().length > 0}>
           <SplitButton
             icon={<ArrowRightIcon />}

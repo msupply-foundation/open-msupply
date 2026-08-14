@@ -108,7 +108,6 @@ export const PrescriptionSidePanel: Component<
           <TextField
             label={t('label.reference')}
             hideLabel
-            width="full"
             data-testid="customer-reference-field"
             value={props.edit.state.theirReference}
             disabled={props.disabled}
@@ -154,7 +153,6 @@ export const PrescriptionSidePanel: Component<
           <TextArea
             label={t('heading.comment')}
             hideLabel
-            width="full"
             data-testid="comment-field"
             rows={3}
             value={props.edit.state.comment}

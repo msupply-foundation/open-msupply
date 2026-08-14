@@ -120,10 +120,11 @@ export const internalOrderListHref = (storeId: string): string =>
   listHref(storeId, 'replenishment/internal-order');
 
 // Draft = request requisitions still in Draft (rules.md § internal orders;
-// OMS-REG-DB-01.40) — the internal-order list's single-select status filter.
+// OMS-REG-DB-01.40) — the internal-order list's multi-select status filter,
+// one value ticked.
 export const internalOrderDraftHref = (storeId: string): string =>
   listHref(storeId, 'replenishment/internal-order', {
-    status: { equalTo: 'DRAFT' },
+    status: { equalAny: ['DRAFT'] },
   } satisfies InternalOrderFilter);
 
 // ── Distribution ─────────────────────────────────────────────────────────────
@@ -145,10 +146,11 @@ export const customerRequisitionListHref = (storeId: string): string =>
   listHref(storeId, 'distribution/customer-requisition');
 
 // New = response requisitions in New (rules.md § customer requisitions;
-// OMS-REG-DB-01.38, .59) — the list's single-select status filter.
+// OMS-REG-DB-01.38, .59) — the list's multi-select status filter, one value
+// ticked.
 export const customerRequisitionNewHref = (storeId: string): string =>
   listHref(storeId, 'distribution/customer-requisition', {
-    status: { equalTo: 'NEW' },
+    status: { equalAny: ['NEW'] },
   } satisfies RequisitionFilter);
 
 // Emergency (new) = the New set narrowed to emergency — a subset of the stat
@@ -157,7 +159,7 @@ export const customerRequisitionNewHref = (storeId: string): string =>
 // carries a filter the target list would hide.
 export const customerRequisitionEmergencyHref = (storeId: string): string =>
   listHref(storeId, 'distribution/customer-requisition', {
-    status: { equalTo: 'NEW' },
+    status: { equalAny: ['NEW'] },
     isEmergency: true,
   } satisfies RequisitionFilter);
 

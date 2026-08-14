@@ -15,6 +15,7 @@ import { ArrowRightIcon, ClockIcon } from '../ui/icons';
 import { AppLogo } from '../ui/branding/AppLogo';
 import { LanguageSelector } from '../ui/layout/AppShell/LanguageSelector';
 import { changeLanguage, locale, t } from '../intl';
+import { createDocumentTitle } from '../documentTitle';
 import styles from '../ui/styles/LoginInitLayout.module.css';
 
 // The login screen: the design-system Login (gradient hero + form panel,
@@ -25,6 +26,11 @@ import styles from '../ui/styles/LoginInitLayout.module.css';
 // signal and the app (App.tsx) reacts, continuing to the preserved destination
 // URL (spec, Startup Flow). Document dir/lang is owned once by App.tsx.
 export const LoginPage: Component = () => {
+  // The tab names this screen too (spec/chrome § document title) — and, since
+  // logging out swaps the shell back for this page, it replaces the title of
+  // whatever screen the session ended on.
+  createDocumentTitle(() => 'app.login');
+
   // Spec (Authentication): prefilled from the device's remembered username, so
   // the returning user only retypes the password. Read once as the signal's
   // initial value — the page is remounted whenever authUser() clears, so it
@@ -118,7 +124,7 @@ export const LoginPage: Component = () => {
       <main class={styles.panel}>
         <div class={styles.formArea}>
           <form
-            class={`${styles.form} ${styles.loginForm}`}
+            class={styles.form}
             aria-labelledby="login-heading"
             onSubmit={submit}
           >
@@ -137,7 +143,6 @@ export const LoginPage: Component = () => {
             <AppLogo class={styles.logo} />
             <TextField
               label={t('heading.username')}
-              width="full"
               type="text"
               name="username"
               data-testid="login-username-input"
@@ -152,7 +157,6 @@ export const LoginPage: Component = () => {
             />
             <PasswordField
               label={t('heading.password')}
-              width="full"
               name="password"
               data-testid="login-password-input"
               autocomplete="current-password"
@@ -181,7 +185,7 @@ export const LoginPage: Component = () => {
               >
                 {submitting() ? t('button.logging-in') : t('button.login')}
               </Button>
-              <div class={styles.loginActions}>
+              <div class={styles.formActions}>
                 {/* Sibling old UI, served at the server root /old-ui/
                     (dual-frontend transition — one cookie session spans both).
                     A plain anchor for a full document navigation, NOT router
