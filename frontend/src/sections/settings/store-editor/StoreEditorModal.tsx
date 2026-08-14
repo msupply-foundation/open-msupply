@@ -20,11 +20,19 @@ import { Stack } from '../../../ui/layout/Stack/Stack';
 import { Tabs, TabList, TabPanel } from '../../../ui/elements/tabs/Tabs';
 import { t } from '../../../intl';
 import { NameProperties } from '../configuration/nameProperties.generated';
-import { StoreFacility, UpdateNameProperties } from './storeEditor.generated';
+import {
+  StoreFacility,
+  StorePreferences,
+  UpdateNameProperties,
+  UpsertStorePreferences,
+} from './storeEditor.generated';
 import { StoreGpsBlock } from './StoreGpsBlock';
 import { StorePropertyField } from './StorePropertyField';
+import { StorePreferencesPanel } from './StorePreferencesPanel';
 import {
+  buildPreferencesInput,
   canEditAnything,
+  canEditPreferences,
   coordinate,
   isDefinitionEditable,
   LATITUDE_KEY,
@@ -33,6 +41,7 @@ import {
   propertyFields,
   serialiseProperties,
   setProperty,
+  type PreferenceDraft,
   type PropertyDraft,
 } from './storeEditorLogic';
 
@@ -50,10 +59,13 @@ import {
  * the draft intact, and Save is disabled while the session can edit nothing
  * (D79).
  *
- * The Preferences tab is a known gap (spec/settings README § Status): the tab
- * group renders Properties alone until that capture pass lands.
+ * The Preferences tab lists the store's 23 operational preferences —
+ * editable only on a central server with the central-data permission
+ * (rules § The store editor › Preferences, OMS-REG-SET-05.33–.39). Its edits
+ * stage per-preference (the write is per-preference, unlike the wholesale
+ * properties document) and the one Save persists both tabs' staged edits.
  *
- * Reactivity: BOTH resources first fetch on an interaction — the footer click
+ * Reactivity: ALL THREE resources first fetch on an interaction — the footer click
  * that opens this dialog — under an already-open screen's Suspense boundary,
  * so each is read through the `.state` gate and never suspends. A suspending
  * read would remount the whole page inside that boundary, detaching the open
@@ -67,6 +79,7 @@ export const StoreEditorModal = (props: {
   onClose: () => void;
 }) => {
   const [draft, setDraft] = createSignal<PropertyDraft>({});
+  const [prefDraft, setPrefDraft] = createSignal<PreferenceDraft>({});
   const [saving, setSaving] = createSignal(false);
   const [saveFailed, setSaveFailed] = createSignal(false);
 
@@ -110,6 +123,28 @@ export const StoreEditorModal = (props: {
       ? (definitionsData.latest ?? [])
       : [];
 
+  // The store's 23 preference descriptions — served in display order, with a
+  // fabricated default standing in for any unset preference (contract § The
+  // store editor). Same interaction-opened read as the two above, so the same
+  // non-suspending `.state` gate.
+  const [preferencesData] = createResource(
+    () => (props.open && props.storeId ? props.storeId : undefined),
+    async storeId => {
+      const result = await graphqlFetch(
+        StorePreferences,
+        { storeId },
+        { background: true }
+      );
+      return result.kind === 'success'
+        ? result.data.preferenceDescriptions
+        : [];
+    }
+  );
+  const preferences = () =>
+    preferencesData.state === 'ready' || preferencesData.state === 'refreshing'
+      ? (preferencesData.latest ?? [])
+      : [];
+
   // Seed the draft from the record each time one lands — the whole stored
   // document, including keys no definition covers, so the save can round-trip
   // them. A cancelled edit never leaks into the next open: reopening refetches
@@ -120,16 +155,25 @@ export const StoreEditorModal = (props: {
     })
   );
 
-  // Reopening starts clean of the previous attempt's failure.
+  // Reopening starts clean of the previous attempt's failure and the previous
+  // open's staged preference edits (the property draft re-seeds from the
+  // refetched record above).
   createEffect(() => {
-    if (props.open) setSaveFailed(false);
+    if (props.open) {
+      setSaveFailed(false);
+      setPrefDraft({});
+    }
   });
 
   const session = () => ({
     canMutate: hasPermission('NAME_PROPERTIES_MUTATE'),
+    canEditCentralData: hasPermission('EDIT_CENTRAL_DATA'),
     isCentralServer: isCentralServer(),
   });
-  const canEdit = () => canEditAnything(definitions(), session());
+  const canEditProperties = () => canEditAnything(definitions(), session());
+  const canEditPrefs = () =>
+    canEditPreferences(session()) && preferences().length > 0;
+  const canEdit = () => canEditProperties() || canEditPrefs();
 
   const fields = () => propertyFields(definitions());
 
@@ -142,25 +186,49 @@ export const StoreEditorModal = (props: {
     setSaving(true);
     setSaveFailed(false);
     // Local error handling (returnGraphqlErrors): a Forbidden or any other
-    // failure keeps the editor open with the draft intact and its own inline
+    // failure keeps the editor open with BOTH drafts intact and its own inline
     // message, rather than the global surfaces closing over it (D79).
-    const result = await graphqlFetch(
-      UpdateNameProperties,
-      {
-        storeId: props.storeId,
-        id: props.nameId,
-        properties: serialiseProperties(draft()),
-      },
-      { background: true, returnGraphqlErrors: true }
-    );
+    let failed = false;
+    // The whole properties document — but only when the session can actually
+    // edit properties: a preferences-only session firing it could only be
+    // refused.
+    if (canEditProperties()) {
+      const result = await graphqlFetch(
+        UpdateNameProperties,
+        {
+          storeId: props.storeId,
+          id: props.nameId,
+          properties: serialiseProperties(draft()),
+        },
+        { background: true, returnGraphqlErrors: true }
+      );
+      failed = !(
+        result.kind === 'success' &&
+        result.data.updateNameProperties.__typename === 'NameNode'
+      );
+    }
+    // The per-preference write — staged preferences only, each entry naming
+    // the edited store (contract § The store editor, wire traps). Skipped
+    // entirely when nothing is staged.
+    const preferencesInput = canEditPrefs()
+      ? buildPreferencesInput(prefDraft(), props.storeId)
+      : undefined;
+    if (!failed && preferencesInput) {
+      const result = await graphqlFetch(
+        UpsertStorePreferences,
+        { storeId: props.storeId, input: preferencesInput },
+        { background: true, returnGraphqlErrors: true }
+      );
+      failed = !(
+        result.kind === 'success' &&
+        result.data.centralServer.preferences.upsertPreferences.ok
+      );
+    }
     setSaving(false);
-    if (
-      result.kind === 'success' &&
-      result.data.updateNameProperties.__typename === 'NameNode'
-    ) {
-      props.onClose();
-    } else {
+    if (failed) {
       setSaveFailed(true);
+    } else {
+      props.onClose();
     }
   };
 
@@ -218,7 +286,10 @@ export const StoreEditorModal = (props: {
         <StoreGpsBlock
           latitude={coordinate(draft(), LATITUDE_KEY)}
           longitude={coordinate(draft(), LONGITUDE_KEY)}
-          disabled={!canEdit()}
+          // GPS coordinates are property values, so they follow the
+          // PROPERTIES editability — a preferences-only session must not
+          // stage a position it can never save.
+          disabled={!canEditProperties()}
           onCapture={(latitude, longitude) =>
             setDraft(current =>
               setProperty(
@@ -230,11 +301,12 @@ export const StoreEditorModal = (props: {
           }
         />
 
-        {/* Properties alone for now — the Preferences tab is deferred to its
-            own capture pass (spec/settings README § Status). */}
         <Tabs defaultValue="properties">
           <TabList
-            tabs={[{ value: 'properties', label: t('label.properties') }]}
+            tabs={[
+              { value: 'properties', label: t('label.properties') },
+              { value: 'preferences', label: t('label.preferences') },
+            ]}
           />
           <TabPanel value="properties">
             <Show
@@ -265,6 +337,17 @@ export const StoreEditorModal = (props: {
                 </For>
               </Stack>
             </Show>
+          </TabPanel>
+          <TabPanel value="preferences">
+            <StorePreferencesPanel
+              preferences={preferences()}
+              draft={prefDraft()}
+              disabled={!canEditPreferences(session())}
+              loading={preferencesData.loading}
+              onStage={(key, value) =>
+                setPrefDraft(current => ({ ...current, [key]: value }))
+              }
+            />
           </TabPanel>
         </Tabs>
 
