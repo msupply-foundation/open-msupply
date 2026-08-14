@@ -95,9 +95,9 @@ export const fetchItemById = async (
 
 /**
  * Fold one already-on-document probe answer into the search's presence map
- * (the D115 option-row marker). Every probed id gets an explicit true/false —
- * not just the hits — so re-probing an item whose lines were since deleted
- * clears its stale mark instead of leaving it stuck true.
+ * (the option-row marker's backing state). Every probed id gets an explicit
+ * true/false — not just the hits — so re-probing an item whose lines were
+ * since deleted clears its stale mark instead of leaving it stuck true.
  */
 export const presencePatch = (
   probedIds: string[],

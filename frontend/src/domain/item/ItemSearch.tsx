@@ -75,7 +75,7 @@ export interface ItemSearchProps {
   width?: 'compact' | 'short' | 'long' | 'full';
   /**
    * Mark options for items the caller's document already holds
-   * (spec/ui-standards/controls.md § async lookup, D115): after each fetched
+   * (spec/ui-standards/controls.md § async lookup): after each fetched
    * page, `probe` receives that page's item ids and resolves the subset
    * already on the document (undefined on a failed fetch — or a rejection —
    * → that page just goes unmarked). A present item's row carries `label` as
@@ -88,8 +88,9 @@ export interface ItemSearchProps {
    * abandoned search), so if the document's line set changes while this
    * picker stays mounted — e.g. a line-editor "Save & next" adds the item
    * just counted — that cached page's badges go stale until a search
-   * refetches it. Picking a stale row is still safe (D60 loads the existing
-   * entry); this is a display-freshness limit, not a correctness one.
+   * refetches it. Picking a stale row is still safe (it loads the existing
+   * entry, never a duplicate); this is a display-freshness limit, not a
+   * correctness one.
    */
   presentInDocument?: {
     probe: (itemIds: string[]) => Promise<string[] | undefined>;
@@ -141,8 +142,8 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
   // end — a fixed, localised "Units" label for every item (see the note
   // below). Code and name are separately-marked nodes (e2e/TESTIDS.md
   // item-option-code / -name) so the suites can read either regardless of the
-  // datafile's format. Between them, the already-on-document badge (D115) for
-  // rows the presence probe marked.
+  // datafile's format. Between them, the already-on-document badge for rows
+  // the presence probe marked.
   const renderRow = (item: ItemOption): JSX.Element => (
     <span class={styles.row}>
       <span class={styles.label}>

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { presencePatch } from './itemResource';
 
-describe('presencePatch — already-on-document option marking (D115)', () => {
+describe('presencePatch — already-on-document option marking', () => {
   // OMS-REG-INV-03.78 — an item already on the stocktake is marked in the
   // "Add item" results; an item not on it carries no marker.
   it('marks probe hits true and the rest of the probed page false (INV-03.78)', () => {

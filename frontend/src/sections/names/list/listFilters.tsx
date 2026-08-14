@@ -19,8 +19,7 @@ import type { NamesFilter } from './namesListLogic';
  * accident, and this map is BOTH the definition and the completeness proof.
  *
  * Only `codeOrName` is exposed: a single free-text box that the server matches
- * against BOTH name and code (contract › filtering & search; AC-N13;
- * DIVERGENCES D18). Everything else is dismissed — role/type/visibility are
+ * against BOTH name and code (contract › filtering & search; AC-N13). Everything else is dismissed — role/type/visibility are
  * applied by the page (not user chips), and the rest are programmatic.
  *
  * NB: ui-surface asks for an always-present dedicated search FIELD; that role
