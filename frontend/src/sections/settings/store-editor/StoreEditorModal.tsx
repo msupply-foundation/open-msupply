@@ -82,6 +82,9 @@ export const StoreEditorModal = (props: {
   onClose: () => void;
 }) => {
   const [draft, setDraft] = createSignal<PropertyDraft>({});
+  // Whether the user has actually edited a property this open — a prefs-only
+  // save skips the wholesale properties write entirely.
+  const [propertiesDirty, setPropertiesDirty] = createSignal(false);
   const [prefDraft, setPrefDraft] = createSignal<PreferenceDraft>({});
   const [saving, setSaving] = createSignal(false);
   const [saveFailed, setSaveFailed] = createSignal(false);
@@ -154,7 +157,10 @@ export const StoreEditorModal = (props: {
   // and re-seeds.
   createEffect(
     on(facility, record => {
-      if (record) setDraft(parseProperties(record.properties));
+      if (record) {
+        setDraft(parseProperties(record.properties));
+        setPropertiesDirty(false);
+      }
     })
   );
 
@@ -174,8 +180,10 @@ export const StoreEditorModal = (props: {
     isCentralServer: isCentralServer(),
   });
   const canEditProperties = () => canEditAnything(definitions(), session());
-  const canEditPrefs = () =>
-    canEditPreferences(session()) && preferences().length > 0;
+  const prefsEditable = () => canEditPreferences(session());
+  // Save enablement additionally waits for the catalogue — a Save that could
+  // only no-op stays disabled.
+  const canEditPrefs = () => prefsEditable() && preferences().length > 0;
   const canEdit = () => canEditProperties() || canEditPrefs();
 
   const fields = () => propertyFields(definitions());
@@ -183,7 +191,10 @@ export const StoreEditorModal = (props: {
   const stage = (
     key: string,
     value: string | number | boolean | null | undefined
-  ) => setDraft(current => setProperty(current, key, value));
+  ) => {
+    setDraft(current => setProperty(current, key, value));
+    setPropertiesDirty(true);
+  };
 
   const save = async () => {
     setSaving(true);
@@ -192,10 +203,11 @@ export const StoreEditorModal = (props: {
     // failure keeps the editor open with BOTH drafts intact and its own inline
     // message, rather than the global surfaces closing over it (D79).
     let failed = false;
-    // The whole properties document — but only when the session can actually
-    // edit properties: a preferences-only session firing it could only be
-    // refused.
-    if (canEditProperties()) {
+    // The whole properties document — but only when the session can edit
+    // properties (a preferences-only session firing it could only be refused)
+    // AND a property was actually edited (a prefs-only save shouldn't re-write
+    // an untouched document).
+    if (canEditProperties() && propertiesDirty()) {
       const result = await graphqlFetch(
         UpdateNameProperties,
         {
@@ -302,15 +314,16 @@ export const StoreEditorModal = (props: {
           // PROPERTIES editability — a preferences-only session must not
           // stage a position it can never save.
           disabled={!canEditProperties()}
-          onCapture={(latitude, longitude) =>
+          onCapture={(latitude, longitude) => {
             setDraft(current =>
               setProperty(
                 setProperty(current, LATITUDE_KEY, latitude),
                 LONGITUDE_KEY,
                 longitude
               )
-            )
-          }
+            );
+            setPropertiesDirty(true);
+          }}
         />
 
         <Tabs defaultValue="properties">
@@ -354,7 +367,7 @@ export const StoreEditorModal = (props: {
             <StorePreferencesPanel
               preferences={preferences()}
               draft={prefDraft()}
-              disabled={!canEditPreferences(session())}
+              disabled={!prefsEditable()}
               loading={preferencesData.loading}
               onStage={(key, value) =>
                 setPrefDraft(current => ({ ...current, [key]: value }))
