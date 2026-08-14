@@ -44,7 +44,13 @@ import { createAddAction } from '../../../ui/utils/keyActions';
 import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { RowStatusBadges, uncapped } from './RowStatusBadges';
-import { InfoIcon, MinusCircleIcon, PlusCircleIcon } from '../../../ui/icons';
+import {
+  AlertCircleIcon,
+  InfoIcon,
+  MinusCircleIcon,
+  PauseIcon,
+  PlusCircleIcon,
+} from '../../../ui/icons';
 import { isExpired } from '../../../domain/allocation';
 import { fetchLocations } from '../../../domain/location';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
@@ -723,7 +729,8 @@ const OutboundDetailView: Component = () => {
             hideOnTable: true,
             hideFromColumnSettings: true,
           },
-          'warning'
+          'warning',
+          <PauseIcon />
         ),
       },
       {
@@ -739,7 +746,8 @@ const OutboundDetailView: Component = () => {
             hideOnTable: true,
             hideFromColumnSettings: true,
           },
-          'error'
+          'error',
+          <AlertCircleIcon />
         ),
       },
       {

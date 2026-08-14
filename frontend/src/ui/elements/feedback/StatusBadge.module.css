@@ -26,6 +26,11 @@
   color: var(--text-body);
 }
 
+.badge[data-tone='success'] {
+  background: color-mix(in srgb, var(--success-main) 15%, var(--bg-white));
+  color: color-mix(in srgb, var(--success-main) 45%, var(--text-body));
+}
+
 .badge[data-tone='warning'] {
   background: color-mix(in srgb, var(--warning-main) 15%, var(--bg-white));
   color: color-mix(in srgb, var(--warning-main) 40%, var(--text-body));

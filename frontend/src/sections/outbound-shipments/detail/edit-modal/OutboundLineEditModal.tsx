@@ -43,8 +43,14 @@ import {
 } from '../../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../../ui/utils/rem';
 import { createTableConfig } from '../../../../api/createTableConfig';
-import { CheckIcon, InfoIcon } from '../../../../ui/icons';
+import {
+  AlertCircleIcon,
+  CheckIcon,
+  InfoIcon,
+  PauseIcon,
+} from '../../../../ui/icons';
 import { RowStatusBadges, uncapped } from '../RowStatusBadges';
+import { StatusBadge } from '@/ui/elements/feedback/StatusBadge';
 import {
   DraftStockOutLines,
   ItemVariants,
@@ -999,17 +1005,23 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       cell: info => (
         <Show when={willAutoAllocate(info.row.original)}>
           <Popover
-            // data-flag/-label: bare check in the grid; on a card badge the
-            // label shows beside it, or this tick and the On-hold flag read
-            // as the same anonymous check (see DataTable.module.css § flag
-            // cells).
+            // Two renderings, one per view (DataTable.module.css § flag
+            // cells): the bare check in the grid, a green StatusBadge chip
+            // on a card — else this tick and the On-hold flag would read as
+            // the same anonymous check there.
             trigger={
-              <span data-flag data-flag-tone="success">
-                <CheckIcon />
-                <span data-flag-label aria-hidden="true">
-                  {t('description.used-in-auto-allocation')}
+              <>
+                <span data-flag>
+                  <CheckIcon />
                 </span>
-              </span>
+                <span data-flag-chip>
+                  <StatusBadge
+                    label={t('description.used-in-auto-allocation')}
+                    tone="success"
+                    icon={<CheckIcon />}
+                  />
+                </span>
+              </>
             }
             triggerLabel={t('description.used-in-auto-allocation')}
             openOnHover
@@ -1418,7 +1430,8 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       ...getFlagCell(
         t('label.on-hold'),
         { headerPosition: 'badge' },
-        'warning'
+        'warning',
+        <PauseIcon />
       ),
     },
     {
@@ -1434,7 +1447,8 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           hideOnTable: true,
           hideFromColumnSettings: true,
         },
-        'error'
+        'error',
+        <AlertCircleIcon />
       ),
     },
   ];

@@ -1203,19 +1203,27 @@ tr[data-selected][data-tint='error'] > .selectCell {
   flex-shrink: 0;
 }
 
-/* Flag cells (getFlagCell + the line editors' auto-allocation tick). In table
-   view the check stands alone — its column header names it — so the label
-   span stays hidden. In a card's BADGE slot there is no header, and two flags
-   on one card read as the same anonymous check (a held batch looked
-   auto-ticked), so the flag shows its label beside the check there. */
-[data-flag-label] {
+/* Flag cells (getFlagCell + the line editors' auto-allocation tick) render
+   TWO representations, one shown per view: the bare check ([data-flag]) in
+   table view, where its named column header carries the meaning; the
+   StatusBadge CHIP ([data-flag-chip]) in a card's BADGE slot, where there is
+   no header and two flags would read as the same anonymous check. */
+[data-flag-chip] {
   display: none;
+}
+
+.cardBadge [data-flag] {
+  display: none;
+}
+
+.cardBadge [data-flag-chip] {
+  display: inline-flex;
 }
 
 /* Inline row-status badges (StatusBadge cluster beside a name/batch value —
    ui-standards § table interaction). TABLE VIEW ONLY: cards carry the same
-   states as their corner badges (the flag columns), so the inline cluster
-   hides there rather than saying everything twice. */
+   states as their after-the-title chips (the flag columns), so the inline
+   cluster hides there rather than saying everything twice. */
 [data-row-badges] {
   display: inline-flex;
   align-items: center;
@@ -1225,46 +1233,6 @@ tr[data-selected][data-tint='error'] > .selectCell {
 }
 
 .card [data-row-badges] {
-  display: none;
-}
-
-.cardBadge [data-flag] {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-}
-
-.cardBadge [data-flag] [data-flag-label] {
-  display: inline;
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-  white-space: nowrap;
-}
-
-/* Toned flags (getFlagCell's tone / data-flag-tone), card badges only —
-   table view keeps the neutral check under its named header. 'success' =
-   an affirmative flag (will auto-allocate): green check + label. 'warning'
-   (on hold, amber) and 'error' (expired, red) = caution flags: tinted, and
-   the CHECK is dropped — a check connotes a positive state, so the word
-   stands alone. */
-.cardBadge [data-flag][data-flag-tone='success'] {
-  color: var(--success-main);
-}
-
-.cardBadge [data-flag][data-flag-tone='warning'] {
-  color: var(--warning-main);
-}
-
-.cardBadge [data-flag][data-flag-tone='error'] {
-  color: var(--error-main);
-}
-
-.cardBadge [data-flag][data-flag-tone] [data-flag-label] {
-  color: inherit;
-}
-
-.cardBadge [data-flag][data-flag-tone='warning'] > :not([data-flag-label]),
-.cardBadge [data-flag][data-flag-tone='error'] > :not([data-flag-label]) {
   display: none;
 }
 
