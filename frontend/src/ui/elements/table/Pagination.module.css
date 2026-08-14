@@ -123,6 +123,52 @@
   font-weight: var(--weight-semibold);
 }
 
+/* The ellipsis standing for hidden pages — a button, styled as the quiet
+   page slots are so the run reads as one row of pages rather than a control
+   dropped among them. Same footprint as a page button, so swapping it for the
+   input below shifts nothing. */
+.pageEllipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 var(--space-1);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.pageEllipsis:hover {
+  background: color-mix(in srgb, var(--text-body) 6%, transparent);
+}
+
+/* The page box the ellipsis becomes. Sized to the slot it replaces so the
+   pager keeps its width while you type; the spinners go because the pager's
+   own arrows already step a page and a 2rem box has no room for them. */
+.pageInput {
+  inline-size: 3rem;
+  block-size: 2rem;
+  padding-inline: var(--space-1);
+  border: 1px solid var(--secondary-main);
+  border-radius: var(--radius-sm);
+  background: var(--bg-white);
+  color: var(--text-body);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.pageInput::-webkit-inner-spin-button,
+.pageInput::-webkit-outer-spin-button {
+  margin: 0;
+  appearance: none;
+}
+
 /* Page position "1 / 8" — the narrow-screen stand-in for the number slots.
    Hidden at every width where those slots render (they say the same thing,
    better); the media query below turns it on as they go. */
