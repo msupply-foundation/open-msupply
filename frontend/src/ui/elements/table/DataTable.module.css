@@ -51,6 +51,12 @@
      cell must reopen exactly this much room for it (.td[data-frozen-edge]) — if
      the two drifted apart the shadow would come back cropped. */
   --table-frozen-shadow: 0.5rem;
+
+  /* Width of the row's leading accent bar (rowAccent — tr[data-accent]). A
+     rule width, so px like the hairlines and the radii (styling principle 6);
+     3px is the smallest that still reads as a bar rather than a border at a
+     glance down a long list. */
+  --table-accent-bar: 3px;
 }
 
 /* Fills the remaining height between the toolbar and the footer bar, so the
@@ -941,6 +947,55 @@ tr[data-selected][data-tint='error'] > .selectCell {
 .tableScroll[data-hidden-left] [data-frozen-edge='left']::after,
 .tableScroll[data-hidden-right] [data-frozen-edge='right']::after {
   opacity: 1;
+}
+
+/* The row's LEADING ACCENT BAR (rowAccent): a solid bar down the inline-start
+   edge of the rows that still need work, so a half-finished list reads at a
+   glance from one edge instead of from each row's contents. Drawn as an
+   OVERLAY on the leading cell (an absolutely-positioned ::before), never as a
+   border or an inline box: a border would widen the accented rows only, so
+   every cell in them would sit 3px across from its neighbours' and the whole
+   row would twitch sideways the moment it flipped state — and reserving a
+   transparent border on every row instead would push every table in the app
+   off its header alignment.
+
+   The leading cell is whatever comes first — the selection cell where the
+   table has one (fixed-width and pinned, so the bar sits in the dead space
+   beside the checkbox), else the first data cell. Only that non-pinned case
+   needs a containing block: a pinned cell is already `position: sticky`, and
+   re-declaring it relative would unstick it.
+
+   Logical inset, so the bar follows the reading direction in RTL. The frozen
+   edge's own ::after is untouched (different pseudo, different cell edge), and
+   pointer-events stay off so the bar never eats a row click. */
+tr[data-accent] > :first-child:not([data-pinned]) {
+  position: relative;
+}
+
+tr[data-accent] > :first-child::before {
+  content: '';
+  position: absolute;
+  /* The block-end overhang closes the collapsed row divider (an absolutely
+     positioned child spans the PADDING box, so `0` would stop 1px short of
+     it): two adjacent marked rows then read as one unbroken band down the
+     edge, which is the whole point of the bar. Same trick, same reason, as
+     the frozen-edge shadow strip above. */
+  inset-block: 0 -1px;
+  inset-inline-start: 0;
+  inline-size: var(--table-accent-bar);
+  pointer-events: none;
+}
+
+tr[data-accent='success'] > :first-child::before {
+  background: var(--success-main);
+}
+
+tr[data-accent='warning'] > :first-child::before {
+  background: var(--warning-main);
+}
+
+tr[data-accent='error'] > :first-child::before {
+  background: var(--error-main);
 }
 
 /* ==========================================================================

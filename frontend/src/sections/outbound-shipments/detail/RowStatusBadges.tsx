@@ -1,14 +1,21 @@
 import { Show } from 'solid-js';
 import { t } from '@/intl';
 import { StatusBadge } from '@/ui/elements/feedback/StatusBadge';
-import { AlertCircleIcon, AlertTriangleIcon, PauseIcon } from '@/ui/icons';
+import {
+  AlertCircleIcon,
+  AlertTriangleIcon,
+  CircleDashedIcon,
+  PauseIcon,
+} from '@/ui/icons';
 import type { getCellDefinition } from '@/ui/elements/table/tableHelpers';
 
 // The row-status badge cluster (ui-standards § table interaction;
 // OMS-REG-DIST-03.37/.38, D111/D112), shared by the detail table (beside the
 // item name) and the line editor's grid (beside the batch value): word chips
 // carrying each line state — Expired / Near expiry (tiered, both red), On
-// hold (amber). Every applicable badge shows (expired AND held → both).
+// hold (amber), and — on the detail table — Not issued (amber, the row the
+// screen marks as still needing work). Every applicable badge shows (expired
+// AND held → both).
 // Table view only — cards carry the same states as their after-the-title
 // chips (the [data-row-badges] CSS in DataTable.module.css hides the
 // cluster there).
@@ -19,8 +26,22 @@ export const RowStatusBadges = (props: {
   expired: boolean;
   nearExpiry: boolean;
   held: boolean;
+  /**
+   * Nothing issued on this line yet — the row the detail table marks as still
+   * needing work (amber tint + leading accent bar). The badge is the WORD that
+   * marking is never allowed to go without; a placeholder is left to its Batch
+   * cell's "Unallocated", which says the same thing in the same row.
+   */
+  notIssued?: boolean;
 }) => (
   <span data-row-badges>
+    <Show when={props.notIssued}>
+      <StatusBadge
+        label={t('label.not-issued')}
+        tone="warning"
+        icon={<CircleDashedIcon />}
+      />
+    </Show>
     <Show when={props.expired}>
       <StatusBadge
         label={t('label.expired')}

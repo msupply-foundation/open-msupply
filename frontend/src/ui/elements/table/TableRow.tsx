@@ -92,6 +92,11 @@ export function TableRow<T>(props: {
    */
   rowTint?: (row: T) => 'success' | 'warning' | 'error' | undefined;
   /**
+   * Semantic LEFT-EDGE accent bar (see DataTable's prop doc). Stamps
+   * data-accent, drawn in CSS on the row's leading cell.
+   */
+  rowAccent?: (row: T) => 'success' | 'warning' | 'error' | undefined;
+  /**
    * Sticky-pin style for a pinned data column's cell
    * (position/offset/z-index), else undefined.
    */
@@ -138,6 +143,11 @@ export function TableRow<T>(props: {
       data-tint={
         !props.row.getIsGrouped()
           ? props.rowTint?.(props.row.original)
+          : undefined
+      }
+      data-accent={
+        !props.row.getIsGrouped()
+          ? props.rowAccent?.(props.row.original)
           : undefined
       }
       // Selected rows get the same brand tint as selected cards (consistent

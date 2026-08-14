@@ -130,16 +130,15 @@ type Line = OutboundLineFragment;
 
 // A held line — its batch, or the batch's location, on hold — cannot be
 // issued (OMS-REG-DIST-03.18); the detail table says so where the user looks
-// first: the amber "On hold" badge beside the item name, an amber status
-// tint on an unallocated row, and the amber card treatment
-// (OMS-REG-DIST-03.37, D111 — the badge carries the fact, the tint only
-// restates it).
+// first: the amber "On hold" badge beside the item name and the amber card
+// treatment (OMS-REG-DIST-03.37). A held line is also, necessarily, a line
+// with nothing issued, so it takes the needs-action marking below as well.
 const lineOnHold = (line: Line): boolean =>
   !!line.stockLine?.onHold || !!line.location?.onHold;
 
-// Calendar-expired line (D112) — the medium-weight red Expiry-date cell, a
-// red status tint on an unallocated row, and the red card treatment (tinted
-// title + the Expired chip after it).
+// Calendar-expired line (D112) — the medium-weight red Expiry-date cell, the
+// red "Expired" badge, and the red card treatment (tinted title + the Expired
+// chip after it).
 const lineExpired = (line: Line): boolean =>
   !!line.expiryDate && isExpired(line.expiryDate);
 
@@ -150,46 +149,57 @@ const lineNearExpiry = (line: Line): boolean =>
   !lineExpired(line) &&
   isNearOrPastExpiry(line.expiryDate);
 
+// A line the user still has to act on before this shipment can go anywhere:
+// a PLACEHOLDER (the requested quantity has no batch behind it yet) or a
+// stock line with nothing issued on it. Everything else is done work.
+const lineNeedsAction = (line: Line): boolean =>
+  line.type === 'UNALLOCATED_STOCK' || line.numberOfPacks === 0;
+
 // The row-status badges beside the item name (the shared RowStatusBadges
 // cluster — ui-standards § table interaction; OMS-REG-DIST-03.37/.38,
-// D111/D112). A placeholder carries none — its Batch cell's "Placeholder"
-// word is the flag.
+// D111/D112). A placeholder carries none — its Batch cell's "Unallocated"
+// word is the flag, and it is the word the needs-action marking below leans
+// on; a stock line with nothing issued has no such cell, so it takes the
+// "Not issued" badge instead.
 const LineStatusBadges = (props: { line: Line }) => (
   <Show when={props.line.type !== 'UNALLOCATED_STOCK'}>
     <RowStatusBadges
       expired={lineExpired(props.line)}
       nearExpiry={lineNearExpiry(props.line)}
       held={lineOnHold(props.line)}
+      notIssued={lineNeedsAction(props.line)}
     />
   </Show>
 );
 
-// Line-STATUS background tint (ui-surface S3 line table,
-// OMS-REG-DIST-03.37–.39, D111): allocated green, expired red, held amber,
-// placeholder untinted (its blue text is gone too — D111 drops the current
-// app's treatment). Row text keeps the default colour; the badges and the
-// reddened Expiry-date cell carry the facts in words. Precedence (.39):
-// allocated > expired > held — a detail line always carries packs, so real
-// lines read green and the red/amber tints surface only on a zero-pack edge
-// case.
+// The ACTIONED / UNACTIONED marking (ui-surface S3 line table): the lines
+// still needing work carry an amber background tint AND an amber bar down
+// the row's leading edge; a done line carries nothing at all. One channel,
+// one question — "what is left?" — answered by running the eye down one
+// edge rather than reading every row.
+//
+// This replaces the earlier status-per-tint scheme (allocated green /
+// expired red / held amber, D111): colouring every done row green left the
+// unfinished ones no louder than the rest, and it spent the row background —
+// the screen's one at-a-glance channel — on a fact each row already states.
+// The expiry and hold facts keep their own words: the row-status badges
+// beside the item name and the reddened Expiry-date cell, plus the card
+// tones below.
 const lineRowTint = (
   line: Line
-): 'success' | 'warning' | 'error' | undefined => {
-  if (line.type === 'UNALLOCATED_STOCK') return undefined;
-  if (line.numberOfPacks > 0) return 'success';
-  if (lineExpired(line)) return 'error';
-  if (lineOnHold(line)) return 'warning';
-  return undefined;
-};
+): 'success' | 'warning' | 'error' | undefined =>
+  lineNeedsAction(line) ? 'warning' : undefined;
 
-// The card tone (tinted title + the chips after it — D111/D112); no info
-// tone for placeholders. Expired outranks held (matching the tint
-// precedence); both chips still show.
+// The card tone (tinted title + the chips after it — D111/D112). Expired
+// outranks held, which outranks needs-action — the amber a card takes for a
+// held batch and for an unissued line is the same amber, and a held line is
+// unissued by definition, so the order only decides which chip tone leads;
+// both chips still show. A placeholder has nothing but its needs-action
+// state, so it now reads amber where D111 left it plain.
 const lineCardTone = (line: Line): 'warning' | 'error' | undefined => {
-  if (line.type === 'UNALLOCATED_STOCK') return undefined;
-  if (lineExpired(line)) return 'error';
-  if (lineOnHold(line)) return 'warning';
-  return undefined;
+  if (line.type !== 'UNALLOCATED_STOCK' && lineExpired(line)) return 'error';
+  if (line.type !== 'UNALLOCATED_STOCK' && lineOnHold(line)) return 'warning';
+  return lineNeedsAction(line) ? 'warning' : undefined;
 };
 
 // The server sort-field union (from codegen) — a column can only ever name a
@@ -769,6 +779,25 @@ const OutboundDetailView: Component = () => {
         ),
       },
       {
+        // Needs-action flag, CARD-ONLY: in the table the amber tint, the
+        // leading bar and the "Not issued" badge beside the item name carry
+        // it; a card has none of those, and its Batch field ("Unallocated")
+        // sits in the body where nothing distinguishes it — so the corner
+        // badge is where the fact lands. Shown for placeholders too, unlike
+        // the table badge.
+        c: { accessor: lineNeedsAction, id: 'notIssued' },
+        header: () => t('label.not-issued'),
+        ...getFlagCell(
+          t('label.not-issued'),
+          {
+            headerPosition: 'badge',
+            hideOnTable: true,
+            hideFromColumnSettings: true,
+          },
+          'warning'
+        ),
+      },
+      {
         c: { key: 'expiryDate' },
         sortKey: 'expiryDate',
         header: () => t('label.expiry-date'),
@@ -1161,6 +1190,10 @@ const OutboundDetailView: Component = () => {
                   onSort={onSort}
                   onRowClick={editable() ? openRow : undefined}
                   rowTint={lineRowTint}
+                  // Same predicate on both channels: the tint colours the
+                  // row, the bar makes the unfinished lines legible down one
+                  // edge as the user scrolls.
+                  rowAccent={lineRowTint}
                   cardTone={lineCardTone}
                   emptyMessage={t('error.no-outbound-items')}
                   empty={
