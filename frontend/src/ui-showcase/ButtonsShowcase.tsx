@@ -359,6 +359,33 @@ export const ButtonsShowcase = () => {
             </Button>
             <Button icon={<SaveIcon />}>Save changes</Button>
           </Row>
+          <Lead>
+            <code>collapsible="narrow"</code> collapses over the whole
+            narrow-viewport range (≤1023px) instead — for a page header whose
+            action cluster would otherwise wrap onto a row of its own on a
+            tablet, where a row of height costs more than the labels are worth.
+            A tablet hovers, so pass <code>title</code> as well, and keep the
+            icons in one cluster distinguishable.{' '}
+            <strong>Resize below 1024px</strong> to see this pair collapse while
+            the row above keeps its labels.
+          </Lead>
+          <Row>
+            <Button
+              collapsible="narrow"
+              title="New shipment"
+              icon={<PlusCircleIcon />}
+            >
+              New shipment
+            </Button>
+            <Button
+              collapsible="narrow"
+              title="Export"
+              variant="secondary"
+              icon={<DownloadIcon />}
+            >
+              Export
+            </Button>
+          </Row>
         </DashboardCard>
 
         <DashboardCard

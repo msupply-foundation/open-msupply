@@ -28,6 +28,20 @@
   font-size: var(--text-sm);
 }
 
+/* The inline form (narrow viewports) — the same label + figures, contributed
+   straight into the status/selection bar's own flex flow rather than a band
+   above it. Everything the band was is dropped: no tint, no rule, no padding
+   of its own, since the bar already provides all three. What is left is a pair
+   of items the size of one, which the bar absorbs in space it already had —
+   and the screen gets that row of height back for table rows, which is the
+   whole point on a tablet. */
+.inline {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+
 /* "Total" — quiet, so it names the figures without competing with them. It IS
    displayed: two bare numbers at a screen's foot are only conventionally a
    total, and the word is the whole of what a screen reader would otherwise be
