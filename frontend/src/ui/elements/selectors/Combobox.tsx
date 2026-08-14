@@ -516,19 +516,27 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
 
   // The pinned selection. Kobalte resolves a selected value against its options
   // collection — that's where it reads the label from, and a key missing from
-  // it blanks the input — so whenever `items` doesn't hold the resolved
-  // selection we put it in the collection ourselves: a selection from outside
-  // the loaded page, or (server mode) one that simply isn't a match for what
-  // the user is typing.
+  // it blanks the input — so whenever the collection we pass (`options` below)
+  // wouldn't hold the resolved selection we put it in ourselves: a selection
+  // from outside the loaded page, (server mode) one that simply isn't a match
+  // for what the user is typing, or (client mode) one the CURRENT filter text
+  // excludes. That last case is the moment of a pick itself: choosing "Going
+  // bad" while the input still reads the old selection's "Good" re-emits the
+  // selection while the collection is still filtered by "Good" — Kobalte's
+  // resetInputValue then can't resolve the new key and blanks the field
+  // (#1020). So the pin is judged against the FILTERED list (`shown`), never
+  // the caller's full `items`; once the input resyncs to the new label the
+  // filter relaxes and the pin dissolves back into the list.
   //
   // A pin is in the collection for RESOLUTION, not for display: in server mode
   // it is filtered back out of the listbox (see defaultFilter), so searching
   // for a different party is never masked by the current one sitting above the
-  // real matches (#549).
+  // real matches (#549); in client mode the same defaultFilter hides it while
+  // it doesn't match the typed text.
   const pinned = createMemo<T | undefined>(() => {
     const sel = selected();
     if (!sel) return undefined;
-    const base = props.loading ? [] : props.items;
+    const base = props.loading ? [] : shown().items;
     return base.some(item => keyOf(item) === keyOf(sel)) ? undefined : sel;
   });
   const pinnedKey = () => {
