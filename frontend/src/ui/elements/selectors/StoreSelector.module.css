@@ -1,21 +1,26 @@
 /*
- * Store selector panel (issue #193): a title, the always-open checkbox, a
- * search field (long lists only), and the stores as LIST rows — each group one
- * bordered box with hairlines between its rows, under its own heading; a row
- * names its store and nothing else. All colours from tokens, rem sizing,
- * logical properties for RTL.
+ * Store selector panel (issue #193): a title, a search field (long lists
+ * only), the stores as LIST rows — each group one bordered box with hairlines
+ * between its rows, under its own heading; a row names its store and nothing
+ * else — and the always-open toggle on one quiet line beneath. All colours
+ * from tokens, rem sizing, logical properties for RTL.
  *
  * Rows were separate cards, which put a border and a gap around every store: a
  * list of eight drew nine borders and seven gaps beside a scroll rail, and the
  * repetition read as the loudest thing on the panel. One box per group draws
- * two, closes the gaps, and fits about three more stores in the same height —
- * so the scrollbar itself turns up less often, which is most of what made the
- * list feel heavy.
+ * two and closes the gaps.
+ *
+ * The weight that survived that change was in the details, and measuring the
+ * panel is what found it: a 3rem min-height adding 12px to every row, a 20px
+ * chevron level with the store name, an uppercase letter-spaced heading
+ * shouting over the names under it, and 24px between the groups. Each is cut
+ * at its own rule below. Rows are ~36px rather than 48px, so the eight-store
+ * demo list now fits without scrolling at all.
  */
 .panel {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-3);
   inline-size: 30rem;
   max-inline-size: 100%;
 }
@@ -31,7 +36,7 @@
 .list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--space-4);
   overflow-y: auto;
   /* The modal's allowance. A dialog is a box over the screen, so its list has
      to stop somewhere short of the viewport. */
@@ -105,8 +110,9 @@
 .group {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--color-border-value);
-  border-radius: var(--radius-md);
+  border: 1px solid
+    color-mix(in srgb, var(--color-border-value) 70%, transparent);
+  border-radius: var(--radius-sm);
   background: var(--surface-raised);
   overflow: hidden;
   container-type: inline-size;
@@ -116,13 +122,15 @@
    competing title: the panel's own heading is the loud one. It replaces the
    bare rule the pinned group used to be divided by, which with a single pin
    read as an accidental gap and carried nothing to a screen reader (the
-   group's aria-label does that now). */
+   group's aria-label does that now).
+
+   Sentence case at normal tracking: uppercase + letter-spacing + 600 made a
+   12px label shout louder than the store names under it, and the heading only
+   has to separate two runs of rows, not compete with them. */
 .groupLabel {
   font-size: var(--text-xs);
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1.4;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
   color: var(--text-secondary);
 }
 
@@ -132,20 +140,26 @@
 
        name          tags  chevron
 
-   min-block-size floors the touch target: a single-line row does not reach 3rem
-   on its own padding, and this is a list row, which keeps its natural height
-   rather than inflating to 48px (ui-standards § accessibility). */
+   The row takes its NATURAL height — 2.25rem is a floor for an odd case (a
+   chip taller than the name), not a target. ui-standards § accessibility is
+   explicit that dense list rows keep their natural height rather than
+   inflating to 48px, because "the full-height bump stacks up in a list": an
+   earlier 3rem floor added 12px to every row for nothing, which is most of
+   what made the list read as chunky. 36px still clears the WCAG 2.5.8
+   minimum of 24x24 several times over, with the whole row as the hit area —
+   and the narrow layout below is roomier again, so the finger-sized case
+   stays finger-sized. */
 .row {
   position: relative;
   isolation: isolate;
   inline-size: 100%;
-  min-block-size: 3rem;
+  min-block-size: 2.25rem;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto auto;
   grid-template-areas: 'name tags chevron';
   align-items: center;
   column-gap: var(--space-3);
-  padding: var(--space-2) var(--space-4);
+  padding: var(--space-2) var(--space-3);
   border: none;
   background: transparent;
   color: var(--text-body);
@@ -158,7 +172,8 @@
 /* The hairline between rows — one border per boundary, drawn by the row that
    follows, so the group's own border is never doubled at the ends. */
 .row + .row {
-  border-block-start: 1px solid var(--color-border-value);
+  border-block-start: 1px solid
+    color-mix(in srgb, var(--color-border-value) 60%, transparent);
 }
 
 /* Narrow columns (tablet portrait's login panel is ~20rem of content once the
@@ -233,11 +248,14 @@
 /* The forward indicator: the row is an entry point, not a checkbox — clicking
    it enters the store rather than staging a selection, and there is no
    Continue button to say so. Quiet enough not to compete with the chips. */
+/* Sized BELOW the row's text, not level with it: at --text-lg the indicator
+   matched the store name for weight and read as a second piece of content
+   rather than a hint about where the row goes. */
 .chevron {
   grid-area: chevron;
-  font-size: var(--text-lg);
+  font-size: var(--text-sm);
   color: var(--text-secondary);
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
 :dir(rtl) .chevron {
