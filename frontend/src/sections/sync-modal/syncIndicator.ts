@@ -58,7 +58,7 @@ export const createSyncIndicator = (): {
     // entry's own "Sync" label rather than a dedicated accessible string.
     if (model.kind === 'alert') return { kind: 'alert', title: t('sync') };
     // Counts above 99 display as "99+"; the hover/accessible text keeps the
-    // exact count (spec DIVERGENCES D9).
+    // exact count.
     return {
       kind: 'count',
       label: model.count > 99 ? '99+' : String(model.count),
