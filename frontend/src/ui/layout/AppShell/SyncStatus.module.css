@@ -44,11 +44,14 @@
   outline-offset: -0.125rem;
 }
 
-.cell:disabled {
+/* In flight the line is aria-disabled, never disabled — a disabled control
+   would drop keyboard focus and leave the tab order mid-run (the component
+   guards the click instead). */
+.cell[aria-disabled='true'] {
   cursor: default;
 }
 
-.cell:disabled:hover {
+.cell[aria-disabled='true']:hover {
   background: transparent;
 }
 
