@@ -117,6 +117,10 @@ export const BundledItemModal: Component<BundledItemModalProps> = props => {
       title={t('title.bundle-with')}
       dismissable={!saving()}
       onClose={props.onClose}
+      // Room for the item search's open listbox inside the dialog (#1029) —
+      // it opens with the dialog (initialFocus) and is the bottom-most field:
+      // header + field + the listbox's 18rem cap + padding.
+      minBodyHeightRem={27}
       footer={
         <Show when={failed()}>
           <Alert severity="error" testId="bundled-item-save-error">

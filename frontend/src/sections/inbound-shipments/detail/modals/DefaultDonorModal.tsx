@@ -84,6 +84,9 @@ const Body: Component<DefaultDonorModalProps> = props => {
       onClose={props.onClose}
       title={t('label.donor')}
       testId="default-donor-modal"
+      // Room for the donor lookup's open listbox inside the dialog (#1029):
+      // header + field + the listbox's 18rem cap + padding.
+      minBodyHeightRem={27}
       actionsLead={
         <Show when={errorMessage()}>
           <Alert severity="error">{errorMessage()}</Alert>
