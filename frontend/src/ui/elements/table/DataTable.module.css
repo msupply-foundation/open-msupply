@@ -690,6 +690,19 @@ tr[data-tint='warning'] > .selectCell {
   );
 }
 
+/* 'unfinished' — a row still awaiting a step the user must take (an outbound
+   placeholder line). Its own hue, not the caution amber: see
+   --marking-unfinished in tokens.css for why none of the existing severities
+   would do. Same recipe and the same selection/hover matrix as the others. */
+tr[data-tint='unfinished'] > .td,
+tr[data-tint='unfinished'] > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--marking-unfinished) 10%,
+    var(--surface-raised)
+  );
+}
+
 tr[data-tint='error'] > .td,
 tr[data-tint='error'] > .selectCell {
   background: color-mix(in srgb, var(--error-main) 8%, var(--surface-raised));
@@ -811,6 +824,15 @@ tr[data-selected][data-tint='warning'] > .selectCell {
   );
 }
 
+tr[data-selected][data-tint='unfinished'] > .td,
+tr[data-selected][data-tint='unfinished'] > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--marking-unfinished) 15%,
+    var(--surface-raised)
+  );
+}
+
 tr[data-selected][data-tint='error'] > .td,
 tr[data-selected][data-tint='error'] > .selectCell {
   background: color-mix(in srgb, var(--error-main) 12%, var(--surface-raised));
@@ -866,6 +888,15 @@ tr[data-selected][data-tint='error'] > .selectCell {
   );
 }
 
+:where(tbody) tr[data-selected][data-tint='unfinished']:hover > .td,
+:where(tbody) tr[data-selected][data-tint='unfinished']:hover > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--marking-unfinished) 20%,
+    var(--surface-raised)
+  );
+}
+
 :where(tbody) tr[data-selected][data-tint='error']:hover > .td,
 :where(tbody) tr[data-selected][data-tint='error']:hover > .selectCell {
   background: color-mix(in srgb, var(--error-main) 12%, var(--surface-raised));
@@ -891,6 +922,15 @@ tr[data-selected][data-tint='error'] > .selectCell {
   background: color-mix(
     in srgb,
     var(--warning-main) 17%,
+    var(--surface-raised)
+  );
+}
+
+:where(tbody) tr.rowClickable[data-tint='unfinished']:hover > .td,
+:where(tbody) tr.rowClickable[data-tint='unfinished']:hover > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--marking-unfinished) 15%,
     var(--surface-raised)
   );
 }
@@ -984,6 +1024,10 @@ tr[data-accent] > :first-child::before {
   inset-inline-start: 0;
   inline-size: var(--table-accent-bar);
   pointer-events: none;
+}
+
+tr[data-accent='unfinished'] > :first-child::before {
+  background: var(--marking-unfinished);
 }
 
 tr[data-accent='success'] > :first-child::before {

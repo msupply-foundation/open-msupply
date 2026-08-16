@@ -200,7 +200,9 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    * colour alone: the tint restates a fact a cell states in words
    * (spec D111).
    */
-  rowTint?: (row: T) => 'success' | 'warning' | 'error' | undefined;
+  rowTint?: (
+    row: T
+  ) => 'unfinished' | 'success' | 'warning' | 'error' | undefined;
   /**
    * Semantic LEFT-EDGE accent: a solid bar down the row's leading edge,
    * marking the rows that still need work in a list the user is working
@@ -213,7 +215,9 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    * and nothing shifts sideways when a row flips state. Never colour alone:
    * a cell or badge in the row states the same fact in words.
    */
-  rowAccent?: (row: T) => 'success' | 'warning' | 'error' | undefined;
+  rowAccent?: (
+    row: T
+  ) => 'unfinished' | 'success' | 'warning' | 'error' | undefined;
   /**
    * The data is being fetched. Drives the loading treatment so a slow fetch
    * never flashes the empty state (issues #160/#196): with NO rows yet

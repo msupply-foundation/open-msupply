@@ -90,12 +90,16 @@ export function TableRow<T>(props: {
    * Semantic record-status BACKGROUND tint, always on (see DataTable's prop
    * doc — spec D111). Stamps data-tint, styled in CSS.
    */
-  rowTint?: (row: T) => 'success' | 'warning' | 'error' | undefined;
+  rowTint?: (
+    row: T
+  ) => 'unfinished' | 'success' | 'warning' | 'error' | undefined;
   /**
    * Semantic LEFT-EDGE accent bar (see DataTable's prop doc). Stamps
    * data-accent, drawn in CSS on the row's leading cell.
    */
-  rowAccent?: (row: T) => 'success' | 'warning' | 'error' | undefined;
+  rowAccent?: (
+    row: T
+  ) => 'unfinished' | 'success' | 'warning' | 'error' | undefined;
   /**
    * Sticky-pin style for a pinned data column's cell
    * (position/offset/z-index), else undefined.

@@ -174,8 +174,8 @@ const LineStatusBadges = (props: { line: Line }) => (
 );
 
 // The ACTIONED / UNACTIONED marking (ui-surface S3 line table): the lines
-// still needing work carry an amber background tint AND an amber bar down
-// the row's leading edge; a done line carries nothing at all. One channel,
+// still needing work carry the unfinished-work tint AND a bar of the same
+// colour down the row's leading edge; a done line carries nothing at all. One channel,
 // one question — "what is left?" — answered by running the eye down one
 // edge rather than reading every row.
 //
@@ -188,8 +188,8 @@ const LineStatusBadges = (props: { line: Line }) => (
 // tones below.
 const lineRowTint = (
   line: Line
-): 'success' | 'warning' | 'error' | undefined =>
-  lineNeedsAction(line) ? 'warning' : undefined;
+): 'unfinished' | 'success' | 'warning' | 'error' | undefined =>
+  lineNeedsAction(line) ? 'unfinished' : undefined;
 
 // The card tone (tinted title + the chips after it — D111/D112). Expired
 // outranks held, which outranks needs-action — the amber a card takes for a
