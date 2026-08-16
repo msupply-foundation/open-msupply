@@ -590,8 +590,8 @@ const TableShowcaseDemo = () => {
         // carry the amber tint and a bar down the leading edge, so what's
         // left reads down one edge. NEW stands in for "not yet actioned"
         // here; the two props always take the same predicate.
-        rowTint={row => (row.status === 'NEW' ? 'warning' : undefined)}
-        rowAccent={row => (row.status === 'NEW' ? 'warning' : undefined)}
+        rowTint={row => (row.status === 'NEW' ? 'unfinished' : undefined)}
+        rowAccent={row => (row.status === 'NEW' ? 'unfinished' : undefined)}
         emptyMessage={t('error.no-inbound-shipments')}
         enableSelection
         selectedIds={selectedIds()}

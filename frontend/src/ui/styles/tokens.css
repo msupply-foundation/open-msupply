@@ -212,6 +212,23 @@
   --warning-main: #ed6c02;
   --success-main: #2e7d32;
 
+  /* UNFINISHED WORK — the marking for a record still awaiting a step the user
+     must take (an outbound placeholder line: a requested quantity with no
+     batch behind it yet). Deliberately its own hue rather than a reuse:
+     - not the warning amber, because a placeholder is unfinished, not wrong,
+       and #ed6c02 sits almost on the brand orange (#e95c30) besides;
+     - not the action blue, because row SELECTION is that blue at 8% — a
+       marked row and a selected row would be the same colour;
+     - not red/amber/orange at all, the family that collapses under the common
+       colour-blindness types, which is the family this very table already
+       spends on expired and on-hold.
+     A calm teal separates from every one of those in normal and dichromatic
+     vision, and stays readable as a whole-table field on a shipment raised
+     from a requisition, where EVERY line starts unallocated. Deeper and less
+     saturated than --status-shipped's teal, so the two don't read as the same
+     thing on different screens. */
+  --marking-unfinished: #0f8b8d;
+
   /* @theme-contract:end */
 
   /* Disabled dimming — one opacity for whole-control widgets that fade as a
@@ -580,6 +597,7 @@
 
   /* Feedback severities — same lift as the rest of the dark palette */
   --info-main: var(--secondary-main);
+  --marking-unfinished: #2fb3b5;
   --warning-main: #ff8f33;
   --success-main: #4caf50;
 }
