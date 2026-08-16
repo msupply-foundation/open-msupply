@@ -742,7 +742,17 @@ const OutboundDetailView: Component = () => {
         // the cap exactly and pins the column there so it can't be dragged
         // wider at all. Same reasoning (and fix) as the `locationCode` key's
         // "own size, NO cap" note in _globalColumnConfig (#601).
-        ...uncapped(getCellDefinition<Line>('batch')),
+        //
+        // NOT user-hideable (hideFromColumnSettings), unlike every other data
+        // column here: this cell carries the WORD behind the placeholder
+        // marking, and the tint and bar beside it are colour. Hide the column
+        // from the Columns popover and a placeholder row would be marked by
+        // colour alone — the one thing the marking is never allowed to be
+        // (styling principle 9 / WCAG 1.4.1). The column stays draggable and
+        // sortable; it just can't be switched off.
+        ...uncapped(
+          getCellDefinition<Line>('batch', { hideFromColumnSettings: true })
+        ),
         // A placeholder has no batch, and the word standing in for one must
         // not be readable AS one: in this mono column "Unallocated" set in
         // Monaco alongside e2e-030062-a is just another code at a glance. The
