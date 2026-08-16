@@ -206,6 +206,10 @@ const AdjustContent = (props: {
       widthRem={34}
       testId="adjust-modal"
       title={t('heading.stock-adjustment')}
+      // Room for the reason picker's open listbox inside the dialog (#1029) —
+      // it is the bottom row whenever backdating is off, so its list (commonly
+      // 5–10 reasons) would otherwise hang below the dialog.
+      minBodyHeightRem={30}
       actionsLead={
         <Show when={error() || belowZero()}>
           <Alert severity="error">

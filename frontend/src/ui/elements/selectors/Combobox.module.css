@@ -229,6 +229,9 @@
   inline-size: 100%;
   min-inline-size: 0;
   max-inline-size: var(--kb-popper-anchor-width, none);
+  /* The 18rem cap is load-bearing beyond this file: dialogs size their
+     minBodyHeightRem reservations to it (#1029 — "header + field + the
+     listbox's 18rem cap + padding"), so changing it means re-measuring those. */
   max-height: min(18rem, var(--kb-popper-content-available-height));
   padding: var(--space-2);
   background: var(--surface-raised);
