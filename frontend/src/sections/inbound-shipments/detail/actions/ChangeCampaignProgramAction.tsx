@@ -103,6 +103,9 @@ const Body = (props: LineActionProps & { onClose: () => void }) => {
       icon={<EditIcon />}
       testId="change-campaign-modal"
       title={t('label.campaign-program')}
+      // Room for the two selects' open listboxes inside the dialog (#1029) —
+      // the program select is the bottom-most field.
+      minBodyHeightRem={20}
       actionsLead={
         <Show when={phase() === 'error'}>
           <Alert severity="error">{errorMessage()}</Alert>

@@ -210,6 +210,10 @@ const Body: Component<InsuranceModalProps> = props => {
       onClose={props.onClose}
       title={editing() ? t('title.edit-insurance') : t('title.new-insurance')}
       testId="insurance-modal"
+      // Room for the provider-name picker's open listbox inside the dialog
+      // (#1029) — it sits ~8rem down in the right column and its list (the
+      // site's providers) can reach the 18rem cap.
+      minBodyHeightRem={28}
       actionsLead={
         <Show when={saveError()}>
           <Alert severity="error">{saveError()}</Alert>
