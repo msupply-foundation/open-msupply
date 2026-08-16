@@ -3,6 +3,13 @@ import { inboundShipmentHref } from '@/sections/inbound-shipments/inboundShipmen
 
 type LedgerRow = ItemLedgerResult['itemLedger']['nodes'][number];
 
+// The item detail's Ledger-tab deep link (ui-surface S2 — a tab is
+// deep-linkable via ?tab=; the value is the tab's id in itemDetailTabs.ts).
+// Owned here so outside verticals never spell this route themselves — a
+// read-only prescription's row selection lands on it (OMS-REG-DIS-03.72).
+export const itemLedgerHref = (storeId: string, itemId: string): string =>
+  `/${storeId}/catalogue/items/${itemId}?tab=ledger`;
+
 // A ledger row's source-document route, by invoice type (spec/items
 // OMS-REG-CAT-04.23/.43, rules.md § the detail record). Pure so the mapping
 // is unit-tested without a router.

@@ -63,8 +63,8 @@ import {
   asPrescriptionStatus,
   isReadOnly,
   isRenderableLine,
-  lineRowLedgerHref,
 } from '../prescriptionStatus';
+import { itemLedgerHref } from '@/sections/items/detail/itemLedgerNav';
 import {
   PrescriptionDetail,
   LabelPrinterSettings,
@@ -358,12 +358,10 @@ const PrescriptionDetailView: Component = () => {
         ? t('message.print-failed')
         : undefined;
 
-  // Row selection: the line editor while editable (.55); once read-only, the
-  // item's catalogue ledger (.72) — the click-through the old app offers from
-  // a finalised prescription (#998).
+  // Row selection: the line editor while editable (.55); the item's catalogue
+  // ledger once read-only (.72).
   const openRow = (line: Line) => {
-    const ledgerHref = lineRowLedgerHref(status(), params.storeId, line.itemId);
-    if (ledgerHref) navigate(ledgerHref);
+    if (disabled()) navigate(itemLedgerHref(params.storeId, line.itemId));
     else
       setEditState({
         itemId: line.itemId,
