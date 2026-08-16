@@ -272,9 +272,11 @@ const NewStockContent = (props: {
       // two-column form needs, growing downward as the sections reveal once an
       // item is chosen. The body reserves enough height to OWN the item
       // search's open suggestions list (the create/search-modal convention —
-      // CustomerSearchModal et al), which otherwise dangles past the card.
+      // CustomerSearchModal et al), which otherwise dangles past the card:
+      // header + field + the listbox's 18rem cap + padding (#1029 — the old 24
+      // left the bottom ~2rem of a full listbox hanging past the dialog).
       widthRem={56}
-      minBodyHeightRem={24}
+      minBodyHeightRem={27}
       testId="new-stock-modal"
       initialFocus={itemSearch}
       title={t('heading.stock-line-details')}
