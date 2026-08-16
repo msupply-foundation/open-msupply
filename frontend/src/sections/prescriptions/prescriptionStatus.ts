@@ -45,6 +45,21 @@ export const isReadOnly = (status: PrescriptionStatus): boolean =>
   status === 'VERIFIED' || status === 'CANCELLED';
 
 /**
+ * Where a detail-table row selection leads once the prescription is read-only:
+ * the item's catalogue detail on its Ledger tab (OMS-REG-DIS-03.72). While
+ * editable there is no href — the selection opens the line editor instead
+ * (.55).
+ */
+export const lineRowLedgerHref = (
+  status: PrescriptionStatus,
+  storeId: string,
+  itemId: string
+): string | undefined =>
+  isReadOnly(status)
+    ? `/${storeId}/catalogue/items/${itemId}?tab=ledger`
+    : undefined;
+
+/**
  * Deletable while editable — NEW/PICKED only (rules § deletion; AC-D1/D2).
  * The list's bulk delete pre-checks every selected row with this (AC-D3):
  * load-bearing, because the server batch is all-or-nothing AND misreports

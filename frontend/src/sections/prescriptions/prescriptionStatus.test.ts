@@ -6,6 +6,7 @@ import {
   hasDispensedLines,
   isReadOnly,
   isRenderableLine,
+  lineRowLedgerHref,
   nextStatuses,
   prescriptionDateOf,
   statusSteps,
@@ -35,6 +36,22 @@ describe('nextStatuses (D40 — forward transitions only; AC-S4 — the skip is 
   it('offers nothing once read-only (the button is hidden, D39)', () => {
     expect(nextStatuses('VERIFIED')).toEqual([]);
     expect(nextStatuses('CANCELLED')).toEqual([]);
+  });
+});
+
+describe('lineRowLedgerHref (.55/.72 — editable rows edit, read-only rows lead to the item ledger)', () => {
+  it('yields no href while editable — the row opens the line editor instead', () => {
+    expect(lineRowLedgerHref('NEW', 'store-a', 'item-1')).toBeUndefined();
+    expect(lineRowLedgerHref('PICKED', 'store-a', 'item-1')).toBeUndefined();
+  });
+
+  it('targets the item catalogue detail Ledger tab once read-only', () => {
+    expect(lineRowLedgerHref('VERIFIED', 'store-a', 'item-1')).toBe(
+      '/store-a/catalogue/items/item-1?tab=ledger'
+    );
+    expect(lineRowLedgerHref('CANCELLED', 'store-a', 'item-1')).toBe(
+      '/store-a/catalogue/items/item-1?tab=ledger'
+    );
   });
 });
 
