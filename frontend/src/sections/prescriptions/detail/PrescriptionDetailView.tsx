@@ -64,6 +64,7 @@ import {
   isReadOnly,
   isRenderableLine,
 } from '../prescriptionStatus';
+import { itemLedgerHref } from '@/sections/items/detail/itemLedgerNav';
 import {
   PrescriptionDetail,
   LabelPrinterSettings,
@@ -90,7 +91,8 @@ import { EditPatientModal } from '../../patients';
 // (patient / clinician / date / program), Details + Log tabs over the flat
 // line table (one row per dispensed line; carriers never render — AC-Q1/V1),
 // the side panel, and the status footer. Dispensing happens in the S4 modal
-// (D53). Read-only from VERIFIED: dead affordances are hidden (D39).
+// (D53). Read-only from VERIFIED: dead affordances are hidden (D39) and a row
+// selection leads to the item's catalogue ledger instead of S4 (.72).
 
 type Line = PrescriptionFieldsFragment['lines']['nodes'][number];
 
@@ -356,8 +358,11 @@ const PrescriptionDetailView: Component = () => {
         ? t('message.print-failed')
         : undefined;
 
+  // Row selection: the line editor while editable (.55); the item's catalogue
+  // ledger once read-only (.72).
   const openRow = (line: Line) => {
-    if (!disabled())
+    if (disabled()) navigate(itemLedgerHref(params.storeId, line.itemId));
+    else
       setEditState({
         itemId: line.itemId,
         item: { id: line.itemId, code: line.itemCode, name: line.itemName },
