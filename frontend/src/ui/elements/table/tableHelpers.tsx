@@ -244,6 +244,17 @@ export const getFlagCell = <T,>(
 // Comment: the resolved string value behind a comment icon + popover (blank →
 // nothing). The Comment component renders null when there's no value, so an
 // empty cell stays empty. Centre-aligned — the icon is the whole cell.
+/**
+ * The word standing in for a value the row hasn't got yet — an outbound
+ * placeholder line's Batch, an unassigned owner. Not a chip: a chip is a
+ * row-STATUS object, and putting one in a value column reclassifies the
+ * column and makes the cell with no data the loudest in it. This is the same
+ * word, typed so it cannot be mistaken for a value (see the CSS).
+ */
+export const AbsentValue = (props: { label: string }) => (
+  <span class={styles.absentValue}>{props.label}</span>
+);
+
 export const getCommentCell = <T,>(meta?: Meta): CellFragment<T> => ({
   meta: { align: 'center', ...meta },
   cell: info => <Comment comment={info.getValue<string | null>()} />,
