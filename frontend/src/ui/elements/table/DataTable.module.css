@@ -698,7 +698,7 @@ tr[data-tint='unfinished'] > .td,
 tr[data-tint='unfinished'] > .selectCell {
   background: color-mix(
     in srgb,
-    var(--marking-unfinished) 10%,
+    var(--marking-unfinished) 7%,
     var(--surface-raised)
   );
 }
@@ -828,7 +828,7 @@ tr[data-selected][data-tint='unfinished'] > .td,
 tr[data-selected][data-tint='unfinished'] > .selectCell {
   background: color-mix(
     in srgb,
-    var(--marking-unfinished) 15%,
+    var(--marking-unfinished) 12%,
     var(--surface-raised)
   );
 }
@@ -892,7 +892,7 @@ tr[data-selected][data-tint='error'] > .selectCell {
 :where(tbody) tr[data-selected][data-tint='unfinished']:hover > .selectCell {
   background: color-mix(
     in srgb,
-    var(--marking-unfinished) 20%,
+    var(--marking-unfinished) 17%,
     var(--surface-raised)
   );
 }
@@ -930,7 +930,7 @@ tr[data-selected][data-tint='error'] > .selectCell {
 :where(tbody) tr.rowClickable[data-tint='unfinished']:hover > .selectCell {
   background: color-mix(
     in srgb,
-    var(--marking-unfinished) 15%,
+    var(--marking-unfinished) 12%,
     var(--surface-raised)
   );
 }

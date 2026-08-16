@@ -227,7 +227,15 @@
      from a requisition, where EVERY line starts unallocated. Deeper and less
      saturated than --status-shipped's teal, so the two don't read as the same
      thing on different screens. */
-  --marking-unfinished: #0f8b8d;
+  /* Lightened one step from the first value (#0f8b8d) after a design review:
+     softer rows without losing the bar. That step is bounded — the bar is a
+     meaningful graphic, so WCAG 2.2 SC 1.4.11 wants 3:1 against the page, and
+     this sits at 3.51:1. One more step (#17a2a4) reaches 3.12:1 and is the
+     last that passes; the pale teals past it (including --status-shipped's
+     #1fb6b6, 2.49:1) do not. Lighten the ROWS by the color-mix percentage in
+     DataTable.module.css instead — a background carries no such floor while
+     the text on it stays dark. */
+  --marking-unfinished: #14989a;
 
   /* @theme-contract:end */
 
