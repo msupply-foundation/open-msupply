@@ -28,6 +28,7 @@ import {
   type SortState,
 } from '../../../ui/elements/table/DataTable';
 import {
+  AbsentValue,
   getCellDefinition,
   getFlagCell,
   getNumberCell,
@@ -737,11 +738,31 @@ const OutboundDetailView: Component = () => {
         header: () => t('label.batch'),
         // Mono, per the spec's line-table column 3 — but WITHOUT the `code`
         // kind's 7rem growth cap: this column doesn't only hold a code, it
-        // renders the word "Placeholder" for an unallocated line, which fills
+        // renders the word "Unallocated" for a placeholder line, which fills
         // the cap exactly and pins the column there so it can't be dragged
         // wider at all. Same reasoning (and fix) as the `locationCode` key's
         // "own size, NO cap" note in _globalColumnConfig (#601).
         ...uncapped(getCellDefinition<Line>('batch')),
+        // A placeholder has no batch, and the word standing in for one must
+        // not be readable AS one: in this mono column "Unallocated" set in
+        // Monaco alongside e2e-030062-a is just another code at a glance. The
+        // absent-value treatment types it as prose instead — the UI face,
+        // italic, muted.
+        //
+        // A word, not a chip: this row already carries the amber tint AND the
+        // leading bar, so nothing more is needed to FIND it. The cell's one
+        // remaining job is to say WHICH value is missing, and a chip on a
+        // tinted row adds a fourth marker for a fact three already carry (and
+        // shows the tint through its own transparent fill).
+        //
+        // The accessor above keeps the plain word as the cell's VALUE, so
+        // sorting, the hover-reveal and any export are unchanged.
+        cell: info =>
+          info.row.original.type === 'UNALLOCATED_STOCK' ? (
+            <AbsentValue label={t('label.unallocated')} />
+          ) : (
+            (info.row.original.batch ?? '—')
+          ),
       },
       {
         // On-hold flag, CARD-ONLY (OMS-REG-DIST-03.37, D111): the table's

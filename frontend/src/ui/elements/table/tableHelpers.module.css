@@ -11,3 +11,16 @@
 .expired {
   font-weight: var(--weight-medium);
 }
+
+/* An ABSENT value that has a name (AbsentValue): the word standing in for a
+   value the record hasn't got yet — an outbound placeholder line's Batch. It
+   must not impersonate the values around it, and in a `code` column it would:
+   the same monospace face at the same size reads as a batch code called
+   "Unallocated". So the family reverts to the UI face and the word leans —
+   typography saying "this is a state, not a value", where a chip would put a
+   status object in a value column and out-shout every real value in it. */
+.absentValue {
+  font-family: var(--font-sans);
+  font-style: italic;
+  color: var(--text-secondary);
+}
