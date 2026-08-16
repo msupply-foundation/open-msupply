@@ -1,23 +1,17 @@
-import { createEffect, createSignal, onCleanup } from 'solid-js';
+import { createSignal, onCleanup } from 'solid-js';
 import {
   syncStatus,
   pushQueueCount,
   liveConnected,
   pollSyncStatus,
-  triggerSync,
 } from '../../api/syncStore';
 import { isCentralServer } from '../../api/serverInfo';
 import { storeContext } from '../../store/storeContext';
 import { SYNC_INDICATOR_REFRESH_MS } from '../../config';
 import { localisedDistanceToNow, t, tPlural } from '../../intl';
-import {
-  advanceTriggerState,
-  armTrigger,
-  IDLE_TRIGGER,
-  toSyncOverview,
-  syncFooterStatus,
-} from './syncStatus';
-import type { SyncFooterTone, TriggerState } from './syncStatus';
+import { toSyncOverview, syncFooterStatus } from './syncStatus';
+import type { SyncFooterTone } from './syncStatus';
+import { syncNow, triggerActive } from './syncTrigger';
 
 // Host-contract factory (spec/sync-modal/contract.md § Substrate): the bottom
 // bar's sync cell — its status line, tone, in-flight flag, and the one-click
@@ -53,8 +47,8 @@ export const createSyncIndicator = (): {
     });
 
   /*
-   * SYNC-03.25's busy machine, the same one the modal's Sync-now button runs,
-   * and the reason the trigger lives HERE rather than in the shell.
+   * SYNC-03.25's busy machine — the SHARED one (syncTrigger.ts), so a run
+   * started from the modal's Sync-now reads as in-flight here too.
    *
    * `isSyncing` alone is not enough to drive the cell: a run that fails fast —
    * an unreachable central server being the everyday case — can start and end
@@ -63,25 +57,10 @@ export const createSyncIndicator = (): {
    * holding until the run SIGNATURE changes covers that gap, and releases even
    * when the run errors before any in-progress frame arrives.
    */
-  const [trigger, setTrigger] = createSignal<TriggerState>(IDLE_TRIGGER);
-  createEffect(() => {
-    const status = syncStatus();
-    setTrigger(prev => advanceTriggerState(prev, status));
-  });
-
-  const syncNow = () => {
-    setTrigger(armTrigger(syncStatus()));
-    // Fire-and-forget; a request that itself fails releases the busy state (the
-    // failure surfaces through the global unexpected-error handling).
-    void triggerSync().then(ok => {
-      if (!ok) setTrigger(IDLE_TRIGGER);
-    });
-  };
-
   const model = () => {
     // Armed but not yet reported as running — still "in flight" as far as the
     // user is concerned, and the only feedback their click gets.
-    if (trigger().active) return { kind: 'syncing', tone: 'neutral' } as const;
+    if (triggerActive()) return { kind: 'syncing', tone: 'neutral' } as const;
     // Count gate: the store's sync-records display threshold (default 0 → any
     // non-zero count shows) — a consumed read owned by preferences.
     const displayThreshold =
