@@ -68,11 +68,18 @@ const toneIcon = {
 };
 export const SyncStatus = (props: SyncStatusProps) => (
   <div class={styles.group} data-tone={props.tone} data-testid="footer-sync">
+    {/* aria-disabled, not disabled: a disabled control drops keyboard focus to
+        the body at the very moment it was activated, and vanishes from the tab
+        order mid-run. The guard below makes the in-flight no-op real; the
+        shared trigger machine behind onSync additionally ignores re-fires
+        (e.g. the keyboard binding), so the gate isn't only presentational. */}
     <button
       type="button"
       class={styles.cell}
-      onClick={() => props.onSync()}
-      disabled={props.syncing}
+      onClick={() => {
+        if (!props.syncing) props.onSync();
+      }}
+      aria-disabled={props.syncing ? 'true' : undefined}
       data-testid="footer-sync-now"
     >
       {/* The animated state rides a wrapper rather than the <svg> itself:
@@ -90,6 +97,13 @@ export const SyncStatus = (props: SyncStatusProps) => (
       <span class={styles.srOnly}>{`${t('button.sync-now')}: `}</span>
       <span class={styles.label}>{props.label}</span>
     </button>
+    {/* Announce the run starting (the visible response a sighted user gets from
+        the glyph). Populated ONLY while in flight — a live region on the label
+        itself would also announce every minutely re-age of "Synced … ago",
+        turning a status line into a metronome. */}
+    <span class={styles.srOnly} role="status">
+      {props.syncing ? props.label : ''}
+    </span>
     <button
       type="button"
       class={`${styles.cell} ${styles.details}`}
