@@ -88,7 +88,7 @@ const Body: Component<AddFromInternalOrderModalProps> = props => {
       })),
     });
     setSaving(false);
-    if (!outcome) return props.onClose();
+    if (!outcome) return; // handled globally
     if (outcome.errors.size > 0) {
       setErrorMessage([...outcome.errors.values()][0]);
       return;
