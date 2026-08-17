@@ -141,37 +141,51 @@ impl diesel::r2d2::CustomizeConnection<diesel::SqliteConnection, diesel::r2d2::E
 #[cfg(feature = "postgres")]
 pub fn get_storage_connection_manager(settings: &DatabaseSettings) -> StorageConnectionManager {
     use crate::diesel::r2d2::ManageConnection;
+    use crate::diesel_helper_types::Count;
+    use diesel::{sql_query, sql_types::Text, RunQueryDsl};
+
     let connection_manager =
-        ConnectionManager::<DBBackendConnection>::new(&settings.connection_string());
+        ConnectionManager::<DBBackendConnection>::new(settings.connection_string());
 
     // Check the database connection, and attempt to create the database if required
     // Note: the build() call isn't failing when you have an incorrect server or database name
     // so we need to explicitly call connect() to test the connection
-    if let Err(e) = connection_manager.connect() {
-        if e.to_string()
-            .contains(format!("database \"{}\" does not exist", &settings.database_name).as_str())
-        {
-            info!(
-                "Database {} does not exist. Attempting to create it.",
-                &settings.database_name
-            );
-            let root_connection_manager = ConnectionManager::<DBBackendConnection>::new(
-                &settings.connection_string_without_db(),
-            );
+    if let Err(connect_error) = connection_manager.connect() {
+        // The connect error text is localised by the postgres server (lc_messages), so it
+        // can't be used to detect a missing database. Connect to the base database and
+        // check pg_database instead.
+        let root_connection_manager =
+            ConnectionManager::<DBBackendConnection>::new(settings.connection_string_without_db());
 
-            match root_connection_manager.connect() {
-                Ok(mut root_connection) => {
-                    root_connection
-                        .batch_execute(&format!("CREATE DATABASE \"{}\";", &settings.database_name))
-                        .expect("Failed to create database");
-                }
-                Err(e) => {
-                    panic!("Failed to connect to postgres root: {}", e);
-                }
+        let mut root_connection = match root_connection_manager.connect() {
+            Ok(connection) => connection,
+            Err(root_error) => {
+                panic!(
+                    "Failed to connect to database: {} (also failed to connect to the base database to check whether it exists: {})",
+                    connect_error, root_error
+                );
             }
-        } else {
-            panic!("Failed to connect to database: {}", e);
+        };
+
+        let count =
+            sql_query("SELECT count(*)::bigint AS count FROM pg_database WHERE datname = $1")
+                .bind::<Text, _>(&settings.database_name)
+                .get_result::<Count>(&mut root_connection)
+                .expect("Failed to check whether database exists")
+                .count;
+
+        if count > 0 {
+            // Database exists, the original connection failure was something else
+            panic!("Failed to connect to database: {}", connect_error);
         }
+
+        info!(
+            "Database {} does not exist. Attempting to create it.",
+            &settings.database_name
+        );
+        root_connection
+            .batch_execute(&format!("CREATE DATABASE \"{}\";", &settings.database_name))
+            .expect("Failed to create database");
     }
     info!("Connecting to database '{}'", settings.database_name);
     let pool = Pool::builder()
@@ -258,6 +272,41 @@ mod database_setting_test {
             settings.connection_string(),
             "postgres://user:pass@localhost:5432/testdb?application_name=open-msupply"
         );
+    }
+
+    // feature postgres
+    #[cfg(feature = "postgres")]
+    #[test]
+    fn test_creates_missing_database() {
+        use crate::database_settings::get_storage_connection_manager;
+        use crate::test_db::get_test_db_settings;
+        use diesel::r2d2::ManageConnection;
+        use diesel::{r2d2::ConnectionManager, sql_query, PgConnection, RunQueryDsl};
+
+        let settings = get_test_db_settings("auto_create_db_test");
+
+        let root_connection_manager =
+            ConnectionManager::<PgConnection>::new(settings.connection_string_without_db());
+        let mut root_connection = root_connection_manager
+            .connect()
+            .expect("Failed to connect to base database");
+
+        sql_query(format!(
+            "DROP DATABASE IF EXISTS \"{}\";",
+            settings.database_name
+        ))
+        .execute(&mut root_connection)
+        .unwrap();
+
+        // Database is missing, so this should create it rather than panic
+        let connection_manager = get_storage_connection_manager(&settings);
+        connection_manager
+            .connection()
+            .expect("Failed to connect to the newly created database");
+
+        // Best-effort cleanup (fails while the pool above holds connections open, which is fine)
+        let _ = sql_query(format!("DROP DATABASE \"{}\";", settings.database_name))
+            .execute(&mut root_connection);
     }
 
     // feature sqlite
