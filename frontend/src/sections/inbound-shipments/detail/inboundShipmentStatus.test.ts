@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   canChangeStatus,
+  currentStep,
+  filterByStatusPreference,
   isEditable,
   kindOf,
+  offeredFlow,
   statusDatetime,
   statusFlow,
 } from './inboundShipmentStatus';
@@ -109,5 +112,70 @@ describe('statusDatetime (REPL-03.23 — a date per reached step)', () => {
     expect(
       statusFlow(kindOf({ inboundType: 'MANUAL_EXTERNAL' }), 'NEW')
     ).not.toContain('PICKED');
+  });
+});
+
+// The invoice-status-options display gate (spec § preference gates;
+// behaviours OMS-REG-REPL-01.28, OMS-REG-REPL-03.25/.26).
+describe('offeredFlow (OMS-REG-REPL-03.25 — the track offers only preference-allowed stages)', () => {
+  it('offers the kind’s full flow while the preference is empty / not yet loaded', () => {
+    expect(offeredFlow('manual', 'NEW', [])).toEqual([
+      'NEW',
+      'DELIVERED',
+      'RECEIVED',
+      'VERIFIED',
+    ]);
+  });
+
+  it('drops the stages the preference excludes, keeping flow order', () => {
+    expect(
+      offeredFlow('manual', 'NEW', ['NEW', 'RECEIVED', 'VERIFIED'])
+    ).toEqual(['NEW', 'RECEIVED', 'VERIFIED']);
+  });
+
+  it('narrows a transfer’s track the same way (Picked ships with group one)', () => {
+    expect(
+      offeredFlow('transfer', 'NEW', [
+        'NEW',
+        'SHIPPED',
+        'DELIVERED',
+        'RECEIVED',
+        'VERIFIED',
+      ])
+    ).toEqual(['NEW', 'SHIPPED', 'DELIVERED', 'RECEIVED', 'VERIFIED']);
+  });
+});
+
+describe('currentStep (OMS-REG-REPL-03.26 — an excluded current status marks the nearest included earlier stage)', () => {
+  const allowed = ['NEW', 'RECEIVED', 'VERIFIED'];
+
+  it('marks the current status itself when the preference includes it', () => {
+    expect(currentStep('manual', 'RECEIVED', allowed)).toBe(1);
+  });
+
+  it('marks the nearest included earlier stage when the current one is excluded', () => {
+    // DELIVERED is excluded → NEW (step 0) lights up.
+    expect(currentStep('manual', 'DELIVERED', allowed)).toBe(0);
+  });
+
+  it('tracks the plain flow index while the preference is unrestrictive', () => {
+    expect(currentStep('manual', 'DELIVERED', [])).toBe(1);
+  });
+});
+
+describe('filterByStatusPreference (OMS-REG-REPL-03.25 — advance choices limited)', () => {
+  it('passes every target through while the preference is empty', () => {
+    expect(
+      filterByStatusPreference(['DELIVERED', 'RECEIVED', 'VERIFIED'], [])
+    ).toEqual(['DELIVERED', 'RECEIVED', 'VERIFIED']);
+  });
+
+  it('drops the targets the preference excludes', () => {
+    expect(
+      filterByStatusPreference(
+        ['DELIVERED', 'RECEIVED', 'VERIFIED'],
+        ['NEW', 'RECEIVED', 'VERIFIED']
+      )
+    ).toEqual(['RECEIVED', 'VERIFIED']);
   });
 });
