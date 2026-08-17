@@ -20,6 +20,7 @@ import {
   AuthError,
   createBrowserRouter,
   createRoutesFromElements,
+  Navigate,
   RouterProvider,
   initialiseI18n,
   KBarProvider,
@@ -75,6 +76,34 @@ const PreInit: React.FC<React.PropsWithChildren> = ({ children }) => {
   clearAuthState();
 
   return null;
+};
+
+/**
+ * Guards the /login route while the server is still uninitialised.
+ *
+ * Until initialisation completes the server only serves the reduced
+ * `InitialisationQueries` schema — there is no `me` field and no `UserStoreNode` type — so
+ * Login's mount-time `logout()` fails schema validation and arms the ServerError alert.
+ *
+ * Redirecting *before* Login can mount matters as much as the redirect itself. Letting it
+ * mount and bounce itself away via useLoginForm raced `useLogout`'s post-await navigate back
+ * to /login, and the two redirects chased each other indefinitely. Each lap remounted the
+ * Initialise form, whose username field re-fired its `autoFocus`, so the Android soft keyboard
+ * flapped open/closed several times a second on the initialisation screen.
+ */
+const RequireInitialised: React.FC<React.PropsWithChildren> = ({
+  children,
+}) => {
+  const { data } = useInitialisationStatus();
+
+  // Status unknown — render nothing rather than guessing; a wrong guess either flashes the
+  // login form or bounces a legitimate login attempt.
+  if (!data) return null;
+
+  if (data.status !== InitialisationStatusType.Initialised)
+    return <Navigate to={`/${AppRoute.Initialise}`} replace />;
+
+  return children;
 };
 
 /**
@@ -144,7 +173,11 @@ const router = createBrowserRouter(
                 />
                 <Route
                   path={RouteBuilder.create(AppRoute.Login).build()}
-                  element={<Login />}
+                  element={
+                    <RequireInitialised>
+                      <Login />
+                    </RequireInitialised>
+                  }
                 />
                 <Route
                   path={RouteBuilder.create(AppRoute.Discovery).build()}
