@@ -39,6 +39,17 @@
   color: var(--text-body);
 }
 
+/* Kobalte marks a disabled trigger with data-disabled (and disables the
+   button); mirror every other disabled control — dimmed, no pointer. */
+.trigger[data-disabled] {
+  color: var(--text-disabled);
+  cursor: default;
+}
+
+.trigger[data-disabled]:hover {
+  color: var(--text-disabled);
+}
+
 .trigger[data-selected] {
   color: var(--primary-main);
   font-weight: var(--weight-bold);

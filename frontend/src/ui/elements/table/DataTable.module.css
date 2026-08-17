@@ -51,6 +51,12 @@
      cell must reopen exactly this much room for it (.td[data-frozen-edge]) — if
      the two drifted apart the shadow would come back cropped. */
   --table-frozen-shadow: 0.5rem;
+
+  /* Width of the row's leading accent bar (rowAccent — tr[data-accent]). A
+     rule width, so px like the hairlines and the radii (styling principle 6);
+     3px is the smallest that still reads as a bar rather than a border at a
+     glance down a long list. */
+  --table-accent-bar: 3px;
 }
 
 /* Fills the remaining height between the toolbar and the footer bar, so the
@@ -69,6 +75,21 @@
   flex: 1;
   min-block-size: 0;
   overflow: auto;
+}
+
+/* fitContent (card view only): the table stops owning a scroll box and lays
+   out at its content height, so the HOST's scroller moves the cards and
+   anything the host renders beneath them as one. `overflow: clip` on the root
+   has to go with it — it would clip the cards this mode lets grow past the
+   old box — and the scroll region becomes a plain block. */
+.root[data-fit-content] {
+  flex: 0 0 auto;
+  overflow: visible;
+}
+
+.root[data-fit-content] .tableScroll {
+  flex: 0 0 auto;
+  overflow: visible;
 }
 
 /* Empty (or initial-loading) table: become a flex column so the empty state /
@@ -301,6 +322,20 @@
    colours. */
 tr[data-tone='info'] > .td {
   color: var(--info-main);
+}
+
+/* 'warning' = a row needing attention before it can proceed (e.g. an outbound
+   line issued from a held batch — spec D111). Text only, like 'info'; the
+   fact itself is stated in words by a cell (never colour alone). */
+tr[data-tone='warning'] > .td {
+  color: var(--warning-main);
+}
+
+/* 'error' = a row in an error state (an expired batch — spec D112; a
+   server-refused bulk line). The expired row's bold red Expiry-date cell is
+   the words the tone restates. */
+tr[data-tone='error'] > .td {
+  color: var(--error-main);
 }
 
 /* Disabled rows: cursor follows TRUE interactivity — not-allowed only
@@ -633,6 +668,46 @@ tr[data-row-state='disabled'] > .selectCell {
   color: var(--text-secondary);
 }
 
+/* Record-STATUS tints (rowTint — spec D111): always-on backgrounds naming
+   the row's status (outbound lines: allocated green / expired red / held
+   amber), unlike the rowState tints above which show only while selected.
+   Same opaque color-mix recipe over --surface-raised so pinned cells cover
+   cleanly. AFTER the disabled rule (equal specificity): a disabled held/
+   expired row keeps its tint background under the disabled muted text — the
+   status is why the row is disabled. Selection deepens each tint (rules
+   with the selection block below). */
+tr[data-tint='success'] > .td,
+tr[data-tint='success'] > .selectCell {
+  background: color-mix(in srgb, var(--success-main) 8%, var(--surface-raised));
+}
+
+tr[data-tint='warning'] > .td,
+tr[data-tint='warning'] > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--warning-main) 10%,
+    var(--surface-raised)
+  );
+}
+
+/* 'unfinished' — a row still awaiting a step the user must take (an outbound
+   placeholder line). Its own hue, not the caution amber: see
+   --marking-unfinished in tokens.css for why none of the existing severities
+   would do. Same recipe and the same selection/hover matrix as the others. */
+tr[data-tint='unfinished'] > .td,
+tr[data-tint='unfinished'] > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--marking-unfinished) 7%,
+    var(--surface-raised)
+  );
+}
+
+tr[data-tint='error'] > .td,
+tr[data-tint='error'] > .selectCell {
+  background: color-mix(in srgb, var(--error-main) 8%, var(--surface-raised));
+}
+
 /* Row density (ui-standards § tables → row heights), keyed off the
    data-density the DataTable stamps on the <table> (chosen in the Settings
    popover; comfortable is the spec's ⭐ default, and the default grows to
@@ -687,6 +762,19 @@ tr[data-row-state='disabled'] > .selectCell {
   --th-pad-inline: 1.25rem; /* = body spacious inline padding */
 }
 
+/* A row both disabled and toned (a held or expired batch in a line editor's
+   grid — spec D111/D112) keeps the disabled grey fill but reads in its tone:
+   the state is WHY the row is disabled, so the tone must survive the muting.
+   Sits after the density block (higher specificity than its .td rules — the
+   lint's ascending order). */
+tr[data-row-state='disabled'][data-tone='warning'] > .td {
+  color: var(--warning-main);
+}
+
+tr[data-row-state='disabled'][data-tone='error'] > .td {
+  color: var(--error-main);
+}
+
 tr[data-selected]:not([data-row-state]) > .td,
 tr[data-selected]:not([data-row-state]) > .selectCell {
   background: color-mix(
@@ -712,6 +800,42 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
     var(--color-warning) 10%,
     var(--surface-raised)
   );
+}
+
+/* A selected STATUS-tinted row (rowTint, D111) deepens its own tint instead
+   of switching to the selection blue — the status is a durable fact of the
+   record; selection is transient. Same deepen ratios as the rules below.
+   After the selection rules (equal specificity) so the tint wins. */
+tr[data-selected][data-tint='success'] > .td,
+tr[data-selected][data-tint='success'] > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--success-main) 12%,
+    var(--surface-raised)
+  );
+}
+
+tr[data-selected][data-tint='warning'] > .td,
+tr[data-selected][data-tint='warning'] > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--warning-main) 15%,
+    var(--surface-raised)
+  );
+}
+
+tr[data-selected][data-tint='unfinished'] > .td,
+tr[data-selected][data-tint='unfinished'] > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--marking-unfinished) 12%,
+    var(--surface-raised)
+  );
+}
+
+tr[data-selected][data-tint='error'] > .td,
+tr[data-selected][data-tint='error'] > .selectCell {
+  background: color-mix(in srgb, var(--error-main) 12%, var(--surface-raised));
 }
 
 /* Hover deepens whichever selection tint is showing (spec: blue 8 → 12%,
@@ -741,6 +865,79 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
     var(--color-warning) 15%,
     var(--surface-raised)
   );
+}
+
+/* Selected + status-tinted rows keep their own deepened tint on hover too —
+   without these the blue hover rule above (same specificity, earlier… but
+   matching :not([data-row-state])) would flash blue over the status tint. */
+:where(tbody) tr[data-selected][data-tint='success']:hover > .td,
+:where(tbody) tr[data-selected][data-tint='success']:hover > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--success-main) 12%,
+    var(--surface-raised)
+  );
+}
+
+:where(tbody) tr[data-selected][data-tint='warning']:hover > .td,
+:where(tbody) tr[data-selected][data-tint='warning']:hover > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--warning-main) 15%,
+    var(--surface-raised)
+  );
+}
+
+:where(tbody) tr[data-selected][data-tint='unfinished']:hover > .td,
+:where(tbody) tr[data-selected][data-tint='unfinished']:hover > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--marking-unfinished) 17%,
+    var(--surface-raised)
+  );
+}
+
+:where(tbody) tr[data-selected][data-tint='error']:hover > .td,
+:where(tbody) tr[data-selected][data-tint='error']:hover > .selectCell {
+  background: color-mix(in srgb, var(--error-main) 12%, var(--surface-raised));
+}
+
+/* Hovering a CLICKABLE tinted row deepens its own tint (green → darker
+   green, etc.) — the hover affordance for rows that open something (the
+   detail table). Keyed off .rowClickable, so the line editors' grids (no
+   onRowClick) keep flat tints — hover means nothing there. Deeper than the
+   selected mixes above so the pointer's row stands out of a selection too;
+   AFTER them so the hover wins on a selected clickable row. */
+:where(tbody) tr.rowClickable[data-tint='success']:hover > .td,
+:where(tbody) tr.rowClickable[data-tint='success']:hover > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--success-main) 14%,
+    var(--surface-raised)
+  );
+}
+
+:where(tbody) tr.rowClickable[data-tint='warning']:hover > .td,
+:where(tbody) tr.rowClickable[data-tint='warning']:hover > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--warning-main) 17%,
+    var(--surface-raised)
+  );
+}
+
+:where(tbody) tr.rowClickable[data-tint='unfinished']:hover > .td,
+:where(tbody) tr.rowClickable[data-tint='unfinished']:hover > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--marking-unfinished) 12%,
+    var(--surface-raised)
+  );
+}
+
+:where(tbody) tr.rowClickable[data-tint='error']:hover > .td,
+:where(tbody) tr.rowClickable[data-tint='error']:hover > .selectCell {
+  background: color-mix(in srgb, var(--error-main) 14%, var(--surface-raised));
 }
 
 /* A frozen block's freeze cue, as ONE continuous shadow down the whole column:
@@ -792,6 +989,59 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   opacity: 1;
 }
 
+/* The row's LEADING ACCENT BAR (rowAccent): a solid bar down the inline-start
+   edge of the rows that still need work, so a half-finished list reads at a
+   glance from one edge instead of from each row's contents. Drawn as an
+   OVERLAY on the leading cell (an absolutely-positioned ::before), never as a
+   border or an inline box: a border would widen the accented rows only, so
+   every cell in them would sit 3px across from its neighbours' and the whole
+   row would twitch sideways the moment it flipped state — and reserving a
+   transparent border on every row instead would push every table in the app
+   off its header alignment.
+
+   The leading cell is whatever comes first — the selection cell where the
+   table has one (fixed-width and pinned, so the bar sits in the dead space
+   beside the checkbox), else the first data cell. Only that non-pinned case
+   needs a containing block: a pinned cell is already `position: sticky`, and
+   re-declaring it relative would unstick it.
+
+   Logical inset, so the bar follows the reading direction in RTL. The frozen
+   edge's own ::after is untouched (different pseudo, different cell edge), and
+   pointer-events stay off so the bar never eats a row click. */
+tr[data-accent] > :first-child:not([data-pinned]) {
+  position: relative;
+}
+
+tr[data-accent] > :first-child::before {
+  content: '';
+  position: absolute;
+  /* The block-end overhang closes the collapsed row divider (an absolutely
+     positioned child spans the PADDING box, so `0` would stop 1px short of
+     it): two adjacent marked rows then read as one unbroken band down the
+     edge, which is the whole point of the bar. Same trick, same reason, as
+     the frozen-edge shadow strip above. */
+  inset-block: 0 -1px;
+  inset-inline-start: 0;
+  inline-size: var(--table-accent-bar);
+  pointer-events: none;
+}
+
+tr[data-accent='unfinished'] > :first-child::before {
+  background: var(--marking-unfinished);
+}
+
+tr[data-accent='success'] > :first-child::before {
+  background: var(--success-main);
+}
+
+tr[data-accent='warning'] > :first-child::before {
+  background: var(--warning-main);
+}
+
+tr[data-accent='error'] > :first-child::before {
+  background: var(--error-main);
+}
+
 /* ==========================================================================
  * PLACEHOLDER — the full-screen surface + the toolbar's control-button look
  * below await their design pass (the buttons/popovers are unit 13; the
@@ -834,6 +1084,19 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   align-items: center;
 }
 
+/* The row count — quiet text at the toolbar's inline end, just before the
+   icon controls. It takes the auto margin that would otherwise sit on the
+   controls, so the pair travels together to that edge; two auto margins would
+   split the free space and strand the count mid-row. tabular-nums keeps the
+   digits from jittering as a filter narrows the set. */
+.toolbarCount {
+  margin-inline-start: auto;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 /* The icon-control cluster — held at the inline-end by its own auto margin
    (lands correctly whether or not filters/tabs sit at the start, and hugs the
    same edge when it wraps onto its own line). */
@@ -843,6 +1106,12 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   align-self: stretch;
   gap: var(--space-1);
   margin-inline-start: auto;
+}
+
+/* With a count present, IT holds the inline-end margin and the controls simply
+   follow it. */
+.toolbarCount + .toolbarControls {
+  margin-inline-start: 0;
 }
 
 /* Inline loading spinner sitting just left of the toolbar's icon controls (a
@@ -956,6 +1225,11 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   );
 }
 
+/* Toned cards carry NO border/shadow treatment — the tinted identity title
+   (below) and the corner badges are the whole card-status vocabulary; the
+   coloured borders tried here read as selection/error field states and were
+   removed (design review, 2026-08-14). */
+
 /* Header: selection checkbox, identity title and badge on one row, vertically
    centred so the checkbox, the identity's colour dot / icon / name and the badge
    all line up (the identity is single-line; a future code-beneath would move
@@ -989,6 +1263,16 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   gap: var(--space-1) var(--space-3);
 }
 
+/* STATUS flag badges sit directly after the title, not in the far corner
+   (ui-surface: "the same word-only badges directly after the title"): when
+   the header's badges are flags, the identity stops absorbing the space
+   between them, so the header reads title · statuses, left-aligned. Keyed on
+   [data-flag], so an action-bearing badge slot (row buttons) keeps the
+   corner. */
+.cardHeader:has(.cardBadge [data-flag]) .cardIdentity {
+  flex: 0 1 auto;
+}
+
 /* Identity title (ui-standards `.card-table-card-primary`). No line-height
    override — it's box-centred by .cardHeader's align-items, and every box
    centre (checkbox, colour dot, icon, title, badge) is identical, verified in
@@ -1006,6 +1290,28 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   min-width: 0;
 }
 
+/* Card view's row tone (rowTone): the tone paints the card's IDENTITY title
+   only — a whole-card repaint would recolour field labels and controls. The
+   fact itself is stated in words by a cell (never colour alone). */
+.cardRow[data-tone='info'] .cardPrimary {
+  color: var(--info-main);
+}
+
+.cardRow[data-tone='warning'] .cardPrimary {
+  color: var(--warning-main);
+}
+
+.cardRow[data-tone='error'] .cardPrimary {
+  color: var(--error-main);
+}
+
+/* A toned identity's mono VALUE follows the tone — the `.card [data-mono]`
+   muting (issue #614) would otherwise pin it grey and the tone would only
+   ever reach the caption. */
+.cardRow[data-tone] .cardPrimary [data-mono] {
+  color: inherit;
+}
+
 .cardBadge {
   display: flex;
   align-items: center;
@@ -1013,6 +1319,39 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
      duplicate + delete buttons); harmless for a single chip. */
   gap: var(--space-1);
   flex-shrink: 0;
+}
+
+/* Flag cells (getFlagCell + the line editors' auto-allocation tick) render
+   TWO representations, one shown per view: the bare check ([data-flag]) in
+   table view, where its named column header carries the meaning; the
+   StatusBadge CHIP ([data-flag-chip]) in a card's BADGE slot, where there is
+   no header and two flags would read as the same anonymous check. */
+[data-flag-chip] {
+  display: none;
+}
+
+.cardBadge [data-flag] {
+  display: none;
+}
+
+.cardBadge [data-flag-chip] {
+  display: inline-flex;
+}
+
+/* Inline row-status badges (StatusBadge cluster beside a name/batch value —
+   ui-standards § table interaction). TABLE VIEW ONLY: cards carry the same
+   states as their after-the-title chips (the flag columns), so the inline
+   cluster hides there rather than saying everything twice. */
+[data-row-badges] {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-inline-start: var(--space-2);
+  vertical-align: middle;
+}
+
+.card [data-row-badges] {
+  display: none;
 }
 
 /* Card body — divided from the header by a hairline (ui-standards
@@ -1042,6 +1381,54 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
    need more room than a read-only value — so give panel tracks a wider floor. */
 .cardPanel .cardFields {
   grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+}
+
+/* The shell around a width-declaring group's grid (CardView's FieldFlow).
+   Size containment does two jobs: it stops the declared template's track minima
+   counting toward the card's min-content width — without it a 75rem template
+   widens the whole DataTable and the table scrolls sideways instead of the
+   fields reflowing — and it gives the observer a width that holds still while
+   the template inside it is swapped. */
+.cardFieldsShell {
+  container-type: inline-size;
+}
+
+/* Declared field widths (opt-in, ColumnMeta.cardWidth — see CardView's
+   FieldFlow). Equal auto-fit tracks give every field the same box, so a 1-digit
+   Difference is padded to a manufacturer name's width and a wide row runs out
+   of line before its last field. A group whose columns declare widths supplies
+   its own template instead: fixed `rem` tracks for the formatted scalars, and
+   an `fr` share per free-text field, so the width left over once the fixed
+   tracks and gaps are paid for is split in the declared ratio rather than
+   evenly (ux-testing/header-field-width.html § weighted columns). */
+.cardFields[data-field-widths] {
+  /* Both declared here (with the unsized defaults as fallbacks) so they're
+     known custom properties to the value-no-unknown-custom-properties check —
+     CardView overrides them inline per group from the columns' meta.cardWidth. */
+  --card-field-cols: repeat(auto-fit, minmax(10rem, 1fr));
+  --card-field-max: none;
+
+  grid-template-columns: var(--card-field-cols);
+
+  /* The group's ceiling: past the width at which every track is at its declared
+     max, the row stops growing and the slack becomes trailing space. Capping
+     the GRID rather than each field keeps the tracks proportional — a per-field
+     cap left its track's remainder as a hole mid-row. */
+  max-inline-size: var(--card-field-max);
+}
+
+/* Below the sum of the template's own minima an explicit grid would overflow
+   the card rather than wrap, so CardView measures and flips this on: back to
+   the equal auto-fit tracks, which do wrap. */
+.cardFields[data-field-widths][data-narrow] {
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+}
+
+/* Every field may shrink inside its track: a grid item's automatic minimum is
+   its content's min-width, which for an input is its intrinsic size, and that
+   would push the row past the card. */
+.cardFields[data-field-widths] > * {
+  min-inline-size: 0;
 }
 
 /* --- Card body groups ------------------------------------------------------- */

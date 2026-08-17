@@ -51,8 +51,9 @@ export interface FormRowItemProps extends JSX.HTMLAttributes<HTMLDivElement> {
  * `minmax()` does). The floor is capped at `100%` so a single item on a line
  * narrower than its floor still shrinks instead of overflowing.
  *
- * Pure layout — it never styles the control inside; give that control
- * `width="full"` so it fills the slot the row hands it. Hand-rolled CSS.
+ * Pure layout — it never styles the control inside. The control fills the slot
+ * the row hands it because that is every input's default, not because the slot
+ * made it. Hand-rolled CSS.
  */
 export const FormRowItem = (props: FormRowItemProps) => {
   const [local, rest] = splitProps(props, [

@@ -2,7 +2,7 @@ import { t } from '../../../intl';
 import {
   FilterTextInput,
   FilterNumberInput,
-  FilterSelect,
+  FilterMultiSelect,
   FilterDateRange,
   constructFilters,
   type Filter,
@@ -72,25 +72,25 @@ const FILTERS: Filter<InternalOrderFilter>[] =
         />
       ),
     },
-    // Status — single-select equals (Draft / Sent / Finalised). '' clears (→
-    // null so the chip stays); the value is one of the enum literals, so no
-    // cast is needed.
+    // Status — multi-select "any of" (D110; Draft / Sent / Finalised). Ticks
+    // accumulate into status.equalAny; none → null so the chip stays. The
+    // values are the enum literals, so no cast is needed.
     status: {
       label: () => t('label.status'),
       render: props => (
-        <FilterSelect
+        <FilterMultiSelect
           label={t('label.status')}
           testId={props.testId}
-          value={props.filter().status?.equalTo ?? ''}
+          placeholder={t('label.any')}
+          values={props.filter().status?.equalAny ?? []}
           options={[
-            { value: '', label: t('label.any') },
             { value: 'DRAFT', label: t('label.draft') },
             { value: 'SENT', label: t('label.sent') },
             { value: 'FINALISED', label: t('label.finalised') },
           ]}
-          onChange={value =>
+          onChange={values =>
             props.setPartialFilter({
-              status: value ? { equalTo: value } : null,
+              status: values.length ? { equalAny: values } : null,
             })
           }
         />

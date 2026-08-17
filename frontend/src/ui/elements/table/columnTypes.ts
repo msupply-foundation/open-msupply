@@ -85,6 +85,35 @@ declare module '@tanstack/solid-table' {
      */
     hideOnCard?: boolean;
     /**
+     * Omit this field from the cards of the ROWS this predicate answers true
+     * for — the per-row counterpart of `hideOnCard`, which is all-or-nothing
+     * per column.
+     *
+     * For a field that is meaningless for SOME records rather than for the
+     * whole table: the stocktake line editor's Reason, which applies only to a
+     * batch whose count differs from its snapshot. Returning null from such a
+     * cell is NOT the same thing — the card still renders the field's caption
+     * around the empty cell, so the row shows a label over blank space. This
+     * withdraws the whole field, caption included, and its neighbours close up.
+     *
+     * CARD VIEW ONLY, deliberately. A table column is a property of the column,
+     * not the row: blanking one row's cell keeps the grid aligned, whereas
+     * removing it would not. So a table row simply renders the cell as usual —
+     * use the cell's own renderer to blank it there if that is wanted.
+     *
+     * Whole-column conditions stay where they belong: build the column
+     * conditionally (a store preference, a non-vaccine item) rather than
+     * declaring it and hiding it on every row.
+     *
+     * Declared METHOD-style, not as a property holding an arrow type: the
+     * helpers in tableHelpers build their metas against the row-erased
+     * `ColumnMeta<never, unknown>`, and a property-style parameter is
+     * contravariant under strictFunctionTypes, so `(row: never) => boolean`
+     * would not assign to `(row: T) => boolean`. A method parameter is
+     * bivariant, which is what lets one erased meta serve every row type.
+     */
+    hideOnCardWhen?(row: TData): boolean;
+    /**
      * An explanation of what this column's figure means, as ALREADY-TRANSLATED
      * text — the header's tooltip content (spec/internal-orders § S3 lists the
      * `description.*` key per column; a plugin column carries its own key,
@@ -101,6 +130,42 @@ declare module '@tanstack/solid-table' {
      * (headerPosition 'primary') or its row-actions column.
      */
     hideFromColumnSettings?: boolean;
+    /**
+     * This field's width in CARD view. Card view otherwise lays a group's
+     * fields out as EQUAL auto-fit tracks, which gives a 1-digit Difference the
+     * same box as a manufacturer name — `repeat(N, 1fr)` is only right when
+     * every field holds comparably long data. Two forms, per
+     * ux-testing/header-field-width.html § "a field's column is sized by its
+     * data, never by its count":
+     *
+     *  • **a number (rem)** — a FIXED track, for a formatted scalar whose
+     *    longest value is known: a numeric quantity (7.5), a currency (10), a
+     *    date (8.5 — the measured intrinsic width of a formatted date; a sixth
+     *    of a strip is pure waste on one).
+     *  • **`{ min, max, weight }` (rem, rem, ratio)** — a WEIGHTED track, for
+     *    free text and name/lookup fields whose length is unpredictable. The
+     *    row's leftover width is shared between these in `weight` proportion,
+     *    from a `min` floor up to a `max` ceiling. Weight expresses expected
+     *    data length: a manufacturer ("Serum Institute of India Pvt. Ltd.")
+     *    outweighs a location code ("A1-03").
+     *
+     * `max` is not optional, and is what stops the last field on a wrapped line
+     * from stretching across the whole of it — the failure the weighted model
+     * replaced. Past its ceiling a field simply stops growing and the row ends
+     * in space, which is the honest result of sizing by data.
+     *
+     * Opt-in per GROUP: a group where NO column declares one keeps the equal
+     * tracks; in a group where at least one does, an undeclared column falls
+     * back to a `1fr`-ish sink. Fields still wrap intrinsically when the card
+     * narrows (CLAUDE.md #7) — a card body must wrap, so the reference doc's
+     * "rejected: let the row wrap" (which is protecting a fixed-height header
+     * strip) doesn't carry over; only its sizing model does.
+     *
+     * Distinct from the top-level `size`/`maxSize`, which are TanStack's TABLE
+     * column widths (px, drag-resizable) — card fields aren't table columns and
+     * aren't resizable, so they carry their own figure.
+     */
+    cardWidth?: number | { min: number; max: number; weight: number };
     /**
      * The row label in the Columns settings popover, for a column whose grid
      * header deliberately renders EMPTY or iconic but stays user-hideable

@@ -97,7 +97,6 @@ const IndicatorCellInput: Component<{
       fallback={
         <TextField
           label={props.cell.label}
-          width="full"
           autofocus={props.autofocus}
           data-testid={testId()}
           value={value()}
@@ -113,7 +112,6 @@ const IndicatorCellInput: Component<{
           than the rule it mirrors, so it takes both. */}
       <NumberField
         label={props.cell.label}
-        width="full"
         autofocus={props.autofocus}
         allowNegative
         decimalLimit={10}

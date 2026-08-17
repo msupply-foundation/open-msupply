@@ -34,6 +34,10 @@ import {
   getExpiryDateCell,
   getNumberCell,
 } from '@/ui/elements/table/tableHelpers';
+import {
+  Pagination,
+  type PaginationProps,
+} from '@/ui/elements/table/Pagination';
 import { createTableConfig } from '@/api/createTableConfig';
 import {
   StocktakeDetail,
@@ -53,7 +57,7 @@ import { StocktakeDetailToolbar } from './StocktakeDetailToolbar';
 import { StocktakeLineFilters } from './StocktakeLineFilters';
 import { StocktakeSidePanel } from './StocktakeSidePanel';
 import { createSidePanelOpen } from '@/ui/layout/SidePanel/createSidePanelOpen';
-import { StocktakeLogPanel } from './log/StocktakeLogPanel';
+import { ActivityLogPanel } from '@/domain/activityLog';
 import { StocktakeDocumentsTab } from './StocktakeDocumentsTab';
 import {
   DeleteLinesAction,
@@ -71,6 +75,11 @@ import {
 } from '@/domain/location';
 import type { StocktakeEditFields } from './stocktakeEdit';
 import { useUrlQueryState } from '@/list/urlQueryState';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '@/list/pageSize';
 import { stripEmpty } from '@/typeHelpers';
 import { stocktakePreferences } from '@/store/storeContext';
 import { dosesCounted, dosesPerUnit } from './lines/doses';
@@ -125,8 +134,6 @@ const CARD_GROUPS: CardGroup<Line, GroupKey>[] = [
 const isDisabled = (node: StocktakeInfoFragment) =>
   node.status !== 'NEW' || node.isLocked;
 
-const DEFAULT_PAGE_SIZE = 20;
-
 // The URL-backed view state (kdd/url-structure): filter + sort + pagination in
 // the single `?query=` JSON param, so a filtered/sorted/paged view is shareable
 // and survives reload + back-nav. All three conform to the generated
@@ -163,8 +170,10 @@ const StocktakeDetailView: Component = () => {
   const navigate = useNavigate();
   // Filter + sort + pagination are URL-backed (shareable, survive reload/back-
   // nav) in one `?query=` param. Thin accessors over that single query.
-  const { query, setQuery } =
-    useUrlQueryState<DetailUrlState>(DEFAULT_URL_STATE);
+  const { query, setQuery } = useUrlQueryState<DetailUrlState>({
+    ...DEFAULT_URL_STATE,
+    first: initialPageSize(),
+  });
   const filter = () => query().filter;
   const currentSort = (): SortState<SortKey> | undefined => {
     const s = query().sort[0];
@@ -241,6 +250,27 @@ const StocktakeDetailView: Component = () => {
   // The Documents tab reads the node's `documents` list; the Log tab
   // self-queries its own activity log.
   const [activeTab, setActiveTab] = createSignal('details');
+
+  // The line table's pager. It lives in the screen's bottom bar — the status
+  // footer, or the selection footer while rows are ticked — rather than in a
+  // band of its own under the table (spec/ui-standards § tables → pagination):
+  // that bar is present at every line count, so hosting the pager there costs
+  // no extra row, and `conditional` means it renders nothing at all until the
+  // lines outrun one page, leaving the bar as it was and the height to the
+  // rows.
+  const linePagination = (): PaginationProps => ({
+    offset: query().offset,
+    pageSize: query().first,
+    total: totalCount(),
+    onOffsetChange: offset => setQuery({ ...query(), offset }),
+    onPageSizeChange: first => {
+      // The remembered page size (D106) — it rode the DataTable's own
+      // pagination prop, which this accessor replaced when the pager moved
+      // into the status footer, so it has to travel with the handler.
+      rememberPageSize(first);
+      setQuery({ ...query(), first, offset: 0 });
+    },
+  });
   const tabs = (): TabDef[] => [
     { value: 'details', label: t('label.details') },
     { value: 'documents', label: t('label.documents') },
@@ -568,6 +598,7 @@ const StocktakeDetailView: Component = () => {
           name: line.itemName,
           isVaccine: line.item.isVaccine,
           doses: line.item.doses,
+          unitName: line.item.unitName,
         };
       }
       return undefined;
@@ -951,6 +982,7 @@ const StocktakeDetailView: Component = () => {
                       storeId={params.storeId}
                       node={node()}
                       disabled={isDisabled(node())}
+                      pagination={linePagination()}
                       onSetHold={setHold}
                       onFinalised={onFinalised}
                       onError={lineIds =>
@@ -1003,6 +1035,9 @@ const StocktakeDetailView: Component = () => {
                       onError={stampErrors}
                       onShowErrors={showErrors}
                     />
+                    {/* The pager rides the selection face as well: ticking a
+                        row must not strip the way to the rest of the lines. */}
+                    <Pagination {...linePagination()} inBar />
                     <ContentFooterActions>
                       <Button
                         variant="secondary"
@@ -1085,14 +1120,6 @@ const StocktakeDetailView: Component = () => {
                       ? tableConfig.saveGlobalTableConfig
                       : undefined
                   }
-                  pagination={{
-                    offset: query().offset,
-                    pageSize: query().first,
-                    total: totalCount(),
-                    onOffsetChange: offset => setQuery({ ...query(), offset }),
-                    onPageSizeChange: first =>
-                      setQuery({ ...query(), first, offset: 0 }),
-                  }}
                 />
               </TabPanel>
               {/* Documents tab: files attached to this stocktake (OMS parity).
@@ -1111,9 +1138,9 @@ const StocktakeDetailView: Component = () => {
               parity), mounted only while this tab is active (Kobalte unmounts
               inactive panels), so it fetches on first visit. */}
               <TabPanel value="log">
-                <StocktakeLogPanel
+                <ActivityLogPanel
                   storeId={params.storeId}
-                  stocktakeId={node().id}
+                  recordId={node().id}
                 />
               </TabPanel>
               {/* The line-edit modal is an overlay, not tab content: it stays a

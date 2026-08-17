@@ -6,13 +6,29 @@
 # PaginationInput) so URL state maps straight onto them (kdd/type-safety).
 # Read-only rows are driven by status (SHIPPED is terminal for this store —
 # spec/supplier-returns/rules.md § editability), not by any transfer link.
+#
+# The top-level `type` argument does BOTH jobs, so it is the only type pin here.
+# It selects the PERMISSION — the server authorises this read against
+# SupplierReturnQuery alone because it is named; omitted, it falls back to a
+# deprecated combined resource demanding all six invoice query permissions at
+# once. It also OVERWRITES `filter.type` server-side, so a `filter.type` sent
+# alongside is dead weight (spec/navigation/contract.md § wire traps). A literal,
+# not a variable: this query serves one screen pinned to one type, so no caller
+# can forget it — and forgetting it would now widen the rows, not just the
+# permission.
 query supplierReturns(
   $storeId: String!
   $filter: InvoiceFilterInput
   $sort: [InvoiceSortInput!]
   $page: PaginationInput
 ) {
-  invoices(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {
+  invoices(
+    storeId: $storeId
+    filter: $filter
+    sort: $sort
+    page: $page
+    type: [SUPPLIER_RETURN]
+  ) {
     ... on InvoiceConnector {
       __typename
       totalCount

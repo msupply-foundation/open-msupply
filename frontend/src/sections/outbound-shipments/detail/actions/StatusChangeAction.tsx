@@ -59,8 +59,15 @@ export interface StatusChangeActionProps {
    * global error modal is already up) → the open aborts. */
   preflight: () => Promise<StatusPreflight | undefined>;
   onSaved: (node: OutboundNode) => void;
-  /** The Close button, rendered inside the footer's action cluster. */
-  closeButton?: JSX.Element;
+  /**
+   * Content rendered INSIDE the footer's action cluster, before the status
+   * button — the cluster the bar's free space is pushed against, so whatever
+   * goes here is docked to the inline end rather than left floating in the
+   * middle of the bar with a void beside it (which is what happens to a plain
+   * child of the footer: this cluster's auto margin eats the free space).
+   * The shipment's totals and the line pager live here for that reason.
+   */
+  leading?: JSX.Element;
 }
 
 type Phase = 'confirm' | 'working';
@@ -211,7 +218,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
   return (
     <>
       <ContentFooterActions>
-        {props.closeButton}
+        {props.leading}
         <Show when={editable() && selectedStatus()}>
           {selected => (
             <SplitButton
