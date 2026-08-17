@@ -236,8 +236,22 @@ export const DialogShowcase = () => {
             jump as content changes — the slack falls above the footer, so
             footer + actions stay on the bottom edge. The browser moves focus to
             the first control and Tab cycles inside while the page behind is
-            inert. (Opening a Combobox / Select <em>inside</em> a dialog needs
-            extra care — see the "in a dialog" card under Selectors.)
+            inert.
+          </Lead>
+          <Lead>
+            The <strong>chrome is not a choice</strong> (#837): every dialog
+            draws a full-bleed rule under the heading and another above the
+            actions, with the buttons grouped at the <strong>inline-end</strong>{' '}
+            — dismiss first, emphasised confirm last. Nothing is passed to get
+            it, and there is no prop to opt out; what the error modal introduced
+            is now simply what a <code>Dialog</code> is. Two edges worth
+            knowing: a <code>footer</code> band sits <em>above</em> the actions
+            rule (it is the content's last word, not part of the button row),
+            and <code>titleHidden</code> drops the heading rule with the heading
+            while <code>chromeless</code> drops both — a hairline needs a
+            surface to divide. (Opening a Combobox / Select <em>inside</em> a
+            dialog needs extra care — see the "in a dialog" card under
+            Selectors.)
           </Lead>
           <Row>
             <Button
