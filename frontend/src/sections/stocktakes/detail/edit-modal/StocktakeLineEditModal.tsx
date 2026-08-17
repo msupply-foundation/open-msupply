@@ -1371,7 +1371,24 @@ const StocktakeLineEditContent = (
             c: { id: 'inventoryAdjustmentReasonInput' },
             header: () => t('label.reason'),
             cardGroup: 'batch',
-            meta: { cardWidth: { min: 9, max: 20, weight: 1.2 } },
+            meta: {
+              cardWidth: { min: 9, max: 20, weight: 1.2 },
+              // The card shows Reason only on a batch that can actually take
+              // one: counted, and counted to something other than its
+              // snapshot. A level batch takes no reason at all (rules.md
+              // §reason rules — "a zero adjustment never requires a reason"),
+              // and an uncounted line has no direction yet, so the field is
+              // withdrawn rather than shown inert. It reappears the moment the
+              // count moves off the snapshot, because the predicate reads the
+              // draft store.
+              //
+              // Card-only. TABLE view keeps the column on every row (below:
+              // `disabled` when there is no direction) — a column is a
+              // property of the grid there, and blanking one row's cell is
+              // what keeps the rows aligned.
+              hideOnCardWhen: (line: DraftLine) =>
+                !line.countThisLine || adjustmentDirection(line) === null,
+            },
             cell: info => {
               const line = info.row.original;
               const error = () => {
@@ -1382,12 +1399,13 @@ const StocktakeLineEditContent = (
                   return t('error.provide-valid-reason');
                 return undefined;
               };
-              // Offer only reasons valid for the line's adjustment direction;
-              // a zero variance (or uncounted) line has no direction, so the
-              // picker is disabled — a zero adjustment never takes a reason
-              // (rules.md §reason rules). setCounted clears a now-mismatched
-              // reason when the count changes direction, so the disabled
-              // default 'positive' is never read.
+              // Offer only reasons valid for the line's adjustment direction.
+              // A zero-variance (or uncounted) line has no direction: the CARD
+              // drops the field entirely (meta.hideOnCardWhen above), and the
+              // TABLE — which keeps its columns row-invariant — shows it
+              // disabled. setCounted clears a now-mismatched reason when the
+              // count changes direction, so the fallback 'positive' kind is
+              // never read for a real selection.
               const direction = () => adjustmentDirection(line);
               return (
                 <ReasonSelect
