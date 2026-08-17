@@ -35,8 +35,12 @@
   gap: var(--space-1);
 }
 
+/* A row of options WRAPS: an option is an unshrinkable flex item (its label sets
+   its width), so on a narrow control column — the include-all choice in the
+   create-stocktake modal's FieldRow, on a phone — an unwrapped row would push
+   past the column and scroll the dialog body sideways. */
 .items[data-orientation='horizontal'] {
-  flex-direction: row;
+  flex-flow: row wrap;
   gap: var(--space-4);
 }
 
@@ -116,15 +120,17 @@
  * one 1.125rem dot.
  *
  * Cards need room to breathe between them; the plain list's --space-1 is for
- * rows that read as one block. Placed after the base rules (and matched on the
- * data attribute, not a compound class) so specificity ascends — stylelint's
- * no-descending-specificity.
+ * rows that read as one block. The appearance is declared ONCE, on the group —
+ * every rule below reaches its options as descendants, so an option carries no
+ * attribute of its own. Placed after the base rules so specificity ascends
+ * (a descendant of the group always outweighs the bare .item / .text / .label
+ * it overrides) — stylelint's no-descending-specificity.
  */
 .items[data-appearance='card'] {
   gap: var(--space-2);
 }
 
-.item[data-appearance='card'] {
+.items[data-appearance='card'] .item {
   padding: var(--space-3) var(--space-4);
   border: 1px solid var(--color-divider);
   border-radius: var(--radius-md);
@@ -134,13 +140,13 @@
     background var(--motion-fast) ease;
 }
 
-.item[data-appearance='card']:hover:not([data-disabled]) {
+.items[data-appearance='card'] .item:hover:not([data-disabled]) {
   border-color: var(--gray-light);
 }
 
 /* Selected. :has() on the native radio — no JS mirror of the checked state, so
    the box and the dot can never disagree. */
-.item[data-appearance='card']:has(.input:checked) {
+.items[data-appearance='card'] .item:has(.input:checked) {
   border-color: var(--secondary-main);
   background: color-mix(
     in srgb,
@@ -152,15 +158,15 @@
 /* The card's text runs as ONE sentence: a bold label with the description
    flowing inline after it (and wrapping under it), rather than the plain
    appearance's stacked two lines. */
-.item[data-appearance='card'] .text {
+.items[data-appearance='card'] .text {
   display: block;
 }
 
-.item[data-appearance='card'] .label {
+.items[data-appearance='card'] .label {
   font-weight: var(--weight-bold);
 }
 
-.item[data-appearance='card'] .description {
+.items[data-appearance='card'] .description {
   margin-inline-start: 0.35em;
   font-size: var(--text-sm);
 }

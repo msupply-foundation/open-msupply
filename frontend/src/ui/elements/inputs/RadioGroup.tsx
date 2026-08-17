@@ -99,7 +99,6 @@ export const RadioGroup = (props: RadioGroupProps): JSX.Element => {
           {option => (
             <label
               class={styles.item}
-              data-appearance={props.appearance ?? 'plain'}
               data-disabled={props.disabled || option.disabled ? '' : undefined}
             >
               <input

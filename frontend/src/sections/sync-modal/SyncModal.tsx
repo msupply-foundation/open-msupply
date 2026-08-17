@@ -174,7 +174,10 @@ export const SyncModal: Component<{
       // action last, under the hairline) like every other modal's buttons.
       actions={
         <>
-          <CancelButton onClick={props.onClose} />
+          <CancelButton
+            data-testid="dialog-button-cancel"
+            onClick={props.onClose}
+          />
           <Show when={hasPermission('SERVER_ADMIN')}>
             <Button
               variant="secondary"
