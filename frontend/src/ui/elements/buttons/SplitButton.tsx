@@ -5,6 +5,8 @@ import { createRipple } from '../../utils/createRipple';
 import { Ripple } from './Ripple';
 import { ShortcutBadge } from '../keyboard/ShortcutBadge';
 import { ariaKeyshortcuts, type Shortcut } from '../../utils/shortcuts';
+// The collapse tiers, shared with <Button> so the two can't drift.
+import { collapseTier, type Collapsible } from './collapsible';
 import styles from './SplitButton.module.css';
 
 export interface SplitButtonOption {
@@ -84,6 +86,18 @@ interface SplitButtonProps {
    */
   disabledTitle?: string;
   /**
+   * Collapse the MAIN half to just its icon to save space (the `<Button>`
+   * `collapsible` contract, same two tiers — `true` for phone widths ≤767px,
+   * `'narrow'` for the whole narrow-viewport range ≤1023px). Only meaningful
+   * with an `icon`. The caret half never collapses: it is already icon-only,
+   * and its menu keeps every option's full label, so the collapsed control
+   * still names what it does. The main label stays in the DOM (visually
+   * hidden) as the accessible name, and doubles as the button's tooltip —
+   * unlike `<Button>`, no `title` to pass, since the label is the control's
+   * own selected option.
+   */
+  collapsible?: Collapsible;
+  /**
    * Test-hook prefix (e2e/TESTIDS.md): stamps `<testId>-main` on the main
    * button, `<testId>-dropdown` on the caret, and `<testId>-option-<value>`
    * on each menu item (e.g. `status-change-button`, `export-csv`).
@@ -140,6 +154,14 @@ export const SplitButton = (props: SplitButtonProps) => {
   // twice per evaluation. Resolve once, as <Button> does
   // (kdd/solid-reactivity-pitfalls §3).
   const icon = children(() => props.icon);
+  // The main half's tooltip: the unavailability reason while disabled, else
+  // the label it is currently wearing — but only when collapsing is on, since
+  // a visible label needs no tooltip repeating it.
+  const mainTitle = () => {
+    if (props.disabled) return props.disabledTitle;
+    if (collapseTier(props.collapsible) === undefined) return undefined;
+    return props.mainLabel ?? selectedOption()?.label;
+  };
 
   return (
     <div class={styles.split} data-variant={variant()}>
@@ -151,6 +173,10 @@ export const SplitButton = (props: SplitButtonProps) => {
         class={styles.main}
         data-variant={variant()}
         data-testid={props.testId ? `${props.testId}-main` : undefined}
+        // '' = the phone tier, 'narrow' = the whole narrow-viewport range; the
+        // CSS matches the bare attribute for the first and the value for the
+        // second, so 'narrow' collapses at both widths (see ./collapsible).
+        data-collapsible={collapseTier(props.collapsible)}
         disabled={inert()}
         aria-busy={props.loading || undefined}
         aria-live="polite"
@@ -159,7 +185,7 @@ export const SplitButton = (props: SplitButtonProps) => {
         aria-keyshortcuts={
           props.shortcut ? ariaKeyshortcuts(props.shortcut) : undefined
         }
-        title={props.disabled ? props.disabledTitle : undefined}
+        title={mainTitle()}
         onClick={() => {
           if (!inert()) props.onAction?.(selectedValue());
         }}
