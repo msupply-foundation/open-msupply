@@ -236,7 +236,11 @@ pub(crate) fn related_indicator_schema(
     })
 }
 
-pub(crate) fn indicator_value_type<'a>(
+/// A cell's effective value type: the column's configured type, falling back to
+/// the line's when the column declares none (`var` in mSupply). This is what an
+/// edit is validated against, and what `IndicatorColumnNode.value_type` reports,
+/// so the input a client renders matches what the update will accept.
+pub fn indicator_value_type<'a>(
     line: &'a IndicatorLineRow,
     column: &'a IndicatorColumnRow,
 ) -> &'a Option<IndicatorValueType> {

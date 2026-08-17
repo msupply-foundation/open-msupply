@@ -2,7 +2,7 @@ use base64::{prelude::BASE64_STANDARD, Engine};
 use log::{info, warn};
 use repository::{
     BackendPluginRow, FrontendPluginFile, FrontendPluginFiles, FrontendPluginRow,
-    FrontendPluginTypes, PluginTypes, PluginVariantType,
+    FrontendPluginTypes, HostRuntime, PluginTypes, PluginVariantType,
 };
 use reqwest::Url;
 use serde::Deserialize;
@@ -133,7 +133,14 @@ enum PluginDescription {
         variant_type: PluginVariantType,
     },
     #[serde(rename = "frontend")]
-    FrontEnd { types: FrontendPluginTypes },
+    FrontEnd {
+        types: FrontendPluginTypes,
+        /// The front end this bundle is built for (`react`, `solid`, ...).
+        /// Defaults to React, so every plugin manifest written before this
+        /// existed still describes itself correctly.
+        #[serde(default)]
+        host_runtime: HostRuntime,
+    },
 }
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -249,9 +256,10 @@ fn process_manifest(bundle: &mut PluginBundle, path: &PathBuf) -> Result<(), Err
             types,
             variant_type,
         } => bundle_backend_plugin(bundle, code, types, variant_type, plugin_root, version)?,
-        PluginDescription::FrontEnd { types } => {
-            bundle_frontend_plugin(bundle, code, types, plugin_root, version)?
-        }
+        PluginDescription::FrontEnd {
+            types,
+            host_runtime,
+        } => bundle_frontend_plugin(bundle, code, types, plugin_root, version, host_runtime)?,
     }
 
     Ok(())
@@ -291,6 +299,7 @@ fn bundle_frontend_plugin(
     types: FrontendPluginTypes,
     plugin_root: &Path,
     version: String,
+    host_runtime: HostRuntime,
 ) -> Result<(), Error> {
     // Frontend plugin bundle will be in {plugindir}/dist/ folder, consisting of one or many files
     // with entry point starting with plugin code. Any files starting with 'main' or having 'LICENSE' in their name
@@ -348,13 +357,25 @@ fn bundle_frontend_plugin(
 
     let version_id = str::replace(&version, ".", "_");
 
+    // The id carries the runtime as well as the code and version, because one
+    // plugin ships a bundle per host and they can share a version number: a
+    // React and a SolidJS civ_plugins 3.0.0 are two rows, and an id of
+    // code+version alone would make the second install silently upsert over the
+    // first. It stays derived rather than random so that re-packing and
+    // re-installing an unchanged code/runtime/version replaces its row instead
+    // of adding a second one — install is a blind upsert, so the primary key is
+    // the only thing standing in for a uniqueness check, and two rows tied on
+    // version leave discovery breaking the tie on the id itself.
+    let runtime_id = str::replace(&host_runtime.0, ".", "_");
+
     bundle.frontend_plugins.push(FrontendPluginRow {
-        id: format!("frontend_{code}_{version_id}"),
+        id: format!("frontend_{code}_{runtime_id}_{version_id}"),
         code,
         entry_point,
         files: FrontendPluginFiles(files),
         types,
         version,
+        host_runtime,
     });
 
     Ok(())
