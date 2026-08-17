@@ -54,6 +54,48 @@ export const statusFlow = (
 export const statusIndex = (flow: InboundStatus[], status: string): number =>
   flow.indexOf(status as InboundStatus);
 
+// The kind's flow narrowed to the statuses the invoice-status-options
+// preference offers (spec § preference gates — a display gate on EVERY status
+// surface, the lifecycle indicator included). Empty = no restriction (the
+// permissive not-yet-loaded default). Same shape as the returns verticals'
+// offeredFlow.
+export const offeredFlow = (
+  kind: ShipmentKind,
+  current: string,
+  allowed: readonly string[]
+): InboundStatus[] =>
+  statusFlow(kind, current).filter(
+    s => allowed.length === 0 || allowed.includes(s)
+  );
+
+// The indicator's current stage within the OFFERED flow. When the preference
+// hides the actual status, the current stage falls back to the nearest
+// offered status at-or-before it (OMS-REG-REPL-03.26 — the current app's
+// getPreviousStatus fallback). −1 when nothing at-or-before is offered.
+export const currentStep = (
+  kind: ShipmentKind,
+  status: string,
+  allowed: readonly string[]
+): number => {
+  const flow = statusFlow(kind, status);
+  const actual = statusIndex(flow, status);
+  const offered = offeredFlow(kind, status, allowed);
+  let current = -1;
+  offered.forEach((s, i) => {
+    if (statusIndex(flow, s) <= actual) current = i;
+  });
+  return current;
+};
+
+// Filter the advance targets by the invoice-status-options preference (spec §
+// preference gates — a display gate only; the server accepts a status the
+// preference hides). Empty = no restriction.
+export const filterByStatusPreference = (
+  targets: InboundStatus[],
+  allowed: readonly string[]
+): InboundStatus[] =>
+  allowed.length === 0 ? targets : targets.filter(s => allowed.includes(s));
+
 export const STATUS_LABELS: Record<InboundStatus, string> = {
   get NEW() {
     return t('label.new');
