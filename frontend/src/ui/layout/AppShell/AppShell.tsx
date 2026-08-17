@@ -55,11 +55,16 @@ export interface AppShellProps {
   onHome?: () => void;
   /**
    * The bottom bar's sync cell (spec/chrome § sync status) — the resolved
-   * status line, its tone, and whether a run is in flight. Absent → no cell:
-   * a host with no session (the showcase) has no sync state to show, and an
-   * empty cell would be a dead control.
+   * status line (state + the quieter timing behind it), its escalation tone and
+   * its mark's hue. Absent → no cell: a host with no session (the showcase) has
+   * no sync state to show, and an empty cell would be a dead control.
    */
-  syncStatus?: { label: string; tone: 'neutral' | 'warning' | 'error' };
+  syncStatus?: {
+    label: string;
+    detail?: string;
+    tone: 'neutral' | 'warning' | 'error';
+    signal: 'success' | 'warning' | 'error' | 'muted';
+  };
   /** A sync run is in flight — the cell's glyph animates while true. */
   syncing?: boolean;
   /**
@@ -381,7 +386,9 @@ export const AppShell = (props: AppShellProps) => {
                         (kdd/solid-reactivity-pitfalls §3). */}
                     <SyncStatus
                       label={props.syncStatus?.label ?? ''}
+                      detail={props.syncStatus?.detail}
                       tone={props.syncStatus?.tone ?? 'neutral'}
+                      signal={props.syncStatus?.signal ?? 'muted'}
                       syncing={props.syncing}
                       onSync={() => props.onSyncNow?.()}
                       onDetails={() => props.onSyncDetails?.()}

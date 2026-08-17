@@ -3,14 +3,26 @@
  * visual group: the status line itself, which starts a sync, and a small
  * details button that opens the sync modal.
  *
- * NO TONE COLOUR here, deliberately. The bar is brand orange on a central
- * server and menu-grey elsewhere, and neither --error-main nor --warning-main
- * clears AA against the orange — a red status line was unreadable on exactly
- * the sites that most need to read it. The escalation is carried by the GLYPH
- * instead (SyncStatus.tsx `toneIcon`), while text and icon keep the bar's own
- * contrast-checked content colour at every tone. That also means the state is
- * never signalled by colour at all, so colour independence holds by
- * construction rather than resting on the label.
+ * COLOUR NEVER TOUCHES THE BAR'S OWN GROUND. That ground is store data — brand
+ * orange on a central server, menu-grey elsewhere, an arbitrary hex wherever a
+ * store sets one — so nothing drawn straight onto it can be held to a contrast
+ * ratio: --error-main on the orange measures 1.23:1, and a store's own colour
+ * is unbounded. Two rules follow, and between them the cell carries state by
+ * colour without ever depending on it:
+ *
+ *   1. An escalated cell brings its OWN surface (.group[data-tone]) — the house
+ *      tint recipe (severity over --bg-white, severity mixed into the body
+ *      text) that Badge and StatusBadge already use, which is AA at this size
+ *      whatever the bar underneath is doing. This is also what makes a failed
+ *      run unmissable: the whole segment tints, not one glyph inside it.
+ *   2. At rest the mark is a dot, and a dot on an unknown ground is a dot that
+ *      might vanish — so it carries a hairline ring in `currentcolor`, i.e. the
+ *      bar's own already-contrast-checked content colour. The ring guarantees
+ *      the mark is SEEN; the fill says which state it is.
+ *
+ * Colour independence holds regardless (ui-standards › accessibility): the
+ * label states the state in words, and the mark's SHAPE — dot, triangle,
+ * crossed circle — escalates with the tone.
  */
 
 .group {
@@ -18,6 +30,61 @@
   flex-shrink: 0;
   align-items: center;
   gap: var(--space-1);
+  border-radius: var(--radius-sm);
+}
+
+/* A cell that shouts takes a ground of its own (see 1. above). The cells inside
+   inherit this colour, so label, detail, mark and the details glyph all move
+   together — the segment escalates as one object rather than as a coloured
+   speck inside a bar-coloured row.
+
+   Gated on `data-loud`, not on the tone alone: an unreachable server warns by
+   the precedence ladder yet stays quiet on the bar (SyncStatus.tsx `isLoud`). */
+.group[data-loud][data-tone='warning'] {
+  background: color-mix(in srgb, var(--warning-main) 15%, var(--bg-white));
+  color: color-mix(in srgb, var(--warning-main) 40%, var(--text-body));
+}
+
+.group[data-loud][data-tone='error'] {
+  background: color-mix(in srgb, var(--error-main) 15%, var(--bg-white));
+  color: color-mix(in srgb, var(--error-main) 40%, var(--text-body));
+}
+
+/*
+ * The at-rest mark. Sized off the text so it scales with the root font-size,
+ * and ringed at FULL currentcolor — the bar's own content colour, which is the
+ * best any mark here can do: the ring then reads exactly as well as the store
+ * name beside it, whatever colour the store has chosen for the bar. It is not a
+ * compliance mechanism (the footer palette itself measures 2.8:1 on the remote
+ * grey and 3.5:1 on the central orange, so nothing drawn in it clears 3:1) —
+ * it is what stops a hue that happens to sit near the bar's own from vanishing.
+ * The MEANING never rests on it: the label states the state in words.
+ */
+.dot {
+  inline-size: 0.5em;
+  block-size: 0.5em;
+  border-radius: 999px;
+  box-shadow: 0 0 0 1px currentcolor;
+  background: currentcolor;
+}
+
+/* The hues (see the header). Every one is redundant with the label beside it. */
+.group[data-signal='success'] .dot {
+  background: var(--success-main);
+}
+
+.group[data-signal='warning'] .dot {
+  background: var(--warning-main);
+}
+
+.group[data-signal='error'] .dot {
+  background: var(--error-main);
+}
+
+/* Nothing to report, or nothing reportable yet: the bar's own colour, dimmed —
+   present but not asking to be read. */
+.group[data-signal='muted'] .dot {
+  background: color-mix(in srgb, currentcolor 55%, transparent);
 }
 
 .cell {
@@ -63,10 +130,32 @@
   color: inherit;
 }
 
+/* The state itself, which is what the eye should land on — set a step heavier
+   than the timing behind it. */
 .label {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  font-weight: var(--weight-medium);
+}
+
+/*
+ * The timing behind the state. Quieter by WEIGHT ALONE — not by dimming the
+ * colour, which is the obvious way to do this and the wrong one here: the bar's
+ * own content sits at 3.48:1 on the central-server orange and 2.80:1 on the
+ * remote grey (the current app's footer palette, inherited), so there is no
+ * contrast to spend. A 70%-alpha tail measured 2.42:1 and 1.97:1 — a second
+ * half of the line that some users simply could not read. Weight costs nothing
+ * and says the same thing.
+ *
+ * First to be given up when the bar runs out of room: the state is the message,
+ * the age only qualifies it.
+ */
+.detail {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-weight: var(--weight-regular);
 }
 
 /* The action the status line performs, for the accessible name — the visible

@@ -382,3 +382,42 @@ export const syncFooterStatus = (
     ? { kind: 'synced', tone: 'neutral', finished }
     : { kind: 'never-synced', tone: 'neutral' };
 };
+
+/*
+ * The mark's COLOUR (issue #1087) — a state cue that lands before the words are
+ * read, so a user crossing the screen registers the site's health without
+ * stopping on it.
+ *
+ * A SEPARATE axis from `tone`, because the two disagree in both directions and
+ * collapsing them would misreport one of them:
+ *
+ *   - a queue is amber but escalates nothing — a backlog is worth noticing, and
+ *     is not a fault;
+ *   - an unreachable server warns but reads MUTED — the outage is honest news
+ *     rather than an alarm, and nothing is lost while it lasts.
+ *
+ * `tone` still owns the escalation (the mark's shape and the cell's ground);
+ * this only picks a hue for the mark, and never carries meaning alone.
+ */
+export type SyncFooterSignal = 'success' | 'warning' | 'error' | 'muted';
+
+export const syncFooterSignal = (
+  kind: SyncFooterStatus['kind']
+): SyncFooterSignal => {
+  switch (kind) {
+    case 'error':
+      return 'error';
+    case 'warning':
+    case 'records-queued':
+      return 'warning';
+    case 'synced':
+      return 'success';
+    // In flight the mark is the animating glyph, not a dot; the rest have
+    // nothing to report yet, or nothing to report at all.
+    case 'waiting':
+    case 'syncing':
+    case 'unreachable':
+    case 'never-synced':
+      return 'muted';
+  }
+};

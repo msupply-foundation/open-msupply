@@ -163,6 +163,42 @@ export function ShowcaseApp() {
   };
   onCleanup(() => clearTimeout(demoSyncTimer));
 
+  /*
+   * The sync cell's states, cycled by the details button — the real app derives
+   * these from live sync status, which the standalone showcase has none of, and
+   * the escalated ones are exactly the ones worth eyeballing against both bar
+   * colours (dark mode flips this shell's footer to the remote grey).
+   */
+  const demoStates = [
+    {
+      label: 'Synced',
+      detail: '3 minutes ago',
+      tone: 'neutral',
+      signal: 'success',
+    },
+    { label: '14 records queued', tone: 'neutral', signal: 'warning' },
+    {
+      label: 'No connection',
+      detail: 'last synced 2 hours ago',
+      tone: 'warning',
+      signal: 'muted',
+    },
+    {
+      label: 'Sync warning',
+      detail: 'last synced 2 days ago',
+      tone: 'warning',
+      signal: 'warning',
+    },
+    {
+      label: 'Sync error',
+      detail: 'last synced 6 days ago',
+      tone: 'error',
+      signal: 'error',
+    },
+  ] as const;
+  const [demoState, setDemoState] = createSignal(0);
+  const cycleDemoState = () => setDemoState(i => (i + 1) % demoStates.length);
+
   return (
     <AppShell
       // The showcase's own menu (section registry) replaces the app's navModel;
@@ -172,17 +208,19 @@ export function ShowcaseApp() {
       onNavigate={select}
       // The footer's store/user cells are inert demo placeholders — there is no
       // store or session in the standalone showcase. The sync cell is the one
-      // exception: it has real state to show off (the glyph's in-flight
-      // animation), so "Sync now" runs a fake three-second run.
+      // exception: it has real state to show off, so "Sync now" runs a fake
+      // three-second run and the details button steps through the states
+      // instead of opening a modal there is no sync status to fill.
       storeName="Demo store"
       onStoreClick={() => {}}
-      syncStatus={{
-        label: demoSyncing() ? 'Synchronising…' : 'Synced 3 minutes ago',
-        tone: 'neutral',
-      }}
+      syncStatus={
+        demoSyncing()
+          ? { label: 'Synchronising…', tone: 'neutral', signal: 'muted' }
+          : demoStates[demoState()]
+      }
       syncing={demoSyncing()}
       onSyncNow={runDemoSync}
-      onSyncDetails={() => {}}
+      onSyncDetails={cycleDemoState}
       username="Developer"
       displayName="Dev Eloper"
       email="dev.eloper@msupply.foundation"
