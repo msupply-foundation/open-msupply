@@ -10,17 +10,9 @@ import {
 } from '../../utils/shortcuts';
 import { createConfirmClaim } from './createConfirmClaim';
 import type { ConfirmRole } from '../feedback/dialogConfirm';
+// The collapse tiers, shared with <SplitButton> so the two can't drift.
+import { collapseTier, type Collapsible } from './collapsible';
 import styles from './Button.module.css';
-
-/*
- * Whether a labelled Button sheds its label down to just the icon on phone
- * widths (≤767px, ui-standards #btn-icons) WITHOUT an explicit `collapsible`
- * prop. Off for now — collapsing is opt-in per button. This is the single
- * switch to make collapse the app-wide default later: flip it to `true` and
- * every labelled button collapses on phones unless it passes
- * `collapsible={false}`.
- */
-const COLLAPSIBLE_BY_DEFAULT = false;
 
 export interface ButtonProps extends JSX.ButtonHTMLAttributes<HTMLButtonElement> {
   icon?: JSX.Element;
@@ -63,7 +55,7 @@ export interface ButtonProps extends JSX.ButtonHTMLAttributes<HTMLButtonElement>
    * Omit to use the app default (COLLAPSIBLE_BY_DEFAULT, currently off);
    * `collapsible={false}` always opts out even if that default flips.
    */
-  collapsible?: boolean | 'narrow';
+  collapsible?: Collapsible;
   /**
    * The key binding this button answers (spec/keyboard KB-H1, S2). ONE prop
    * drives both the accessible name of the binding (`aria-keyshortcuts`) and
@@ -153,12 +145,6 @@ export const Button = (props: ButtonProps) => {
     if (local.confirms === 'cancel') return ESCAPE;
     return undefined;
   };
-  // Which collapse tier this button opted into, as the data attribute's value.
-  const collapseTier = (): string | undefined => {
-    const collapsible = local.collapsible ?? COLLAPSIBLE_BY_DEFAULT;
-    if (collapsible === 'narrow') return 'narrow';
-    return collapsible ? '' : undefined;
-  };
   const ripple = createRipple();
   // JSX-element props are lazy getters: each is read twice below (the <Show>
   // test + the insertion), and raw reads would create the passed element twice
@@ -181,7 +167,7 @@ export const Button = (props: ButtonProps) => {
       // '' = the phone tier, 'narrow' = the whole narrow-viewport range; the
       // CSS matches the bare attribute for the first and the value for the
       // second, so 'narrow' collapses at both widths.
-      data-collapsible={collapseTier()}
+      data-collapsible={collapseTier(local.collapsible)}
       disabled={local.disabled || local.loading}
       aria-busy={local.loading || undefined}
       // The ARIA grammar, not the platform spelling — the badge renders the
