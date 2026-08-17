@@ -9,6 +9,7 @@ import {
   type Filter,
 } from '../../../ui/elements/selectors/FilterBar';
 import { stripEmpty } from '../../../typeHelpers';
+import { inboundShipmentPreferences } from '../../../store/storeContext';
 import type { InboundScope } from '../inboundShipmentScope';
 import type { InboundShipmentsVariables } from './inboundShipments.generated';
 
@@ -79,6 +80,21 @@ const STATUS_OPTIONS: readonly { value: string; label: string }[] = [
   { value: 'RECEIVED', label: t('label.received') },
   { value: 'VERIFIED', label: t('label.verified') },
 ];
+
+// The offered subset of STATUS_OPTIONS: limited by the invoice-status-options
+// preference (spec § preference gates — OMS-REG-REPL-01.28); empty/unresolved
+// = every status. Read inside the filter's render closure, so the options
+// narrow in place when the preference resolves.
+const offeredStatusOptions = (): readonly {
+  value: string;
+  label: string;
+}[] => {
+  const allowed: readonly string[] =
+    inboundShipmentPreferences().invoiceStatusOptions;
+  return allowed.length === 0
+    ? STATUS_OPTIONS
+    : STATUS_OPTIONS.filter(option => allowed.includes(option.value));
+};
 
 // Origin (Type) values offered in the single-select (spec S1 filters). '' is
 // the "Any" clear choice, matching the stocktakes status select.
@@ -161,7 +177,7 @@ const FILTERS: Filter<InboundListFilter>[] =
           // InvoiceNodeStatus union, so the string values narrow at the
           // boundary.
           values={props.filter().status?.equalAny ?? []}
-          options={STATUS_OPTIONS}
+          options={offeredStatusOptions()}
           onChange={values =>
             props.setPartialFilter({
               status: values.length
