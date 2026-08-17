@@ -373,19 +373,11 @@ export function CardView<T, G extends string>(props: {
     <For each={rows()}>
       {row => {
         // Card view drops table-only columns (meta.hideOnCard) at the source,
-        // so they appear in neither the header nor the body — and, per ROW,
-        // any column whose meta.hideOnCardWhen answers true for it (a field
-        // meaningless for this record: a stocktake batch counted level has no
-        // adjustment reason). Filtering HERE, at the one source every later
-        // split reads, is what makes the withdrawal complete: the field leaves
-        // its group, its caption goes with it, and the group's width template
-        // and narrow-fallback threshold are computed without it, so the
-        // neighbours close up instead of leaving a hole.
+        // so they appear in neither the header nor the body.
         const cells = () =>
-          row.getVisibleCells().filter(c => {
-            const meta = c.column.columnDef.meta;
-            return !meta?.hideOnCard && !meta?.hideOnCardWhen?.(row.original);
-          });
+          row
+            .getVisibleCells()
+            .filter(c => !c.column.columnDef.meta?.hideOnCard);
         const inHeader = (slot: 'primary' | 'badge') =>
           cells().filter(c => headerSlot(c) === slot);
         // Body cells = everything not in the header row.
