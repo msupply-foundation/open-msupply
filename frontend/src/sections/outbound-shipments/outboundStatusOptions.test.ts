@@ -16,8 +16,9 @@ vi.mock('@/store/storeContext', () => ({
   }),
 }));
 
+import { currentStep } from '@/domain/invoice/statusGate';
 import { STATUS_FLOW } from './outboundStatus';
-import { allowedStatuses, indicatorStep } from './outboundStatusOptions';
+import { allowedStatuses } from './outboundStatusOptions';
 
 describe('allowedStatuses (rules.md § preference gates)', () => {
   it('offers the full flow while the preference is empty / not yet loaded', () => {
@@ -41,27 +42,25 @@ describe('allowedStatuses (rules.md § preference gates)', () => {
   });
 });
 
-describe('indicatorStep (OMS-REG-DIST-04.22 — excluded current status shows the nearest included earlier one)', () => {
+describe('currentStep (OMS-REG-DIST-04.22 — excluded current status shows the nearest included earlier one)', () => {
   const allowed = ['NEW', 'PICKED', 'SHIPPED'] as const;
 
   it('marks the current status itself when the preference includes it', () => {
-    expect(indicatorStep(allowed, STATUS_FLOW.indexOf('PICKED'))).toBe(1);
+    expect(currentStep(STATUS_FLOW, allowed, 'PICKED')).toBe(1);
   });
 
   it('marks the nearest included earlier status when the current one is excluded', () => {
     // ALLOCATED is excluded → NEW (step 0) lights up.
-    expect(indicatorStep(allowed, STATUS_FLOW.indexOf('ALLOCATED'))).toBe(0);
+    expect(currentStep(STATUS_FLOW, allowed, 'ALLOCATED')).toBe(0);
     // VERIFIED is excluded → SHIPPED (step 2), the last included stage.
-    expect(indicatorStep(allowed, STATUS_FLOW.indexOf('VERIFIED'))).toBe(2);
+    expect(currentStep(STATUS_FLOW, allowed, 'VERIFIED')).toBe(2);
   });
 
   it('marks nothing when the current status precedes every included stage', () => {
-    expect(
-      indicatorStep(['PICKED', 'SHIPPED'], STATUS_FLOW.indexOf('NEW'))
-    ).toBe(-1);
+    expect(currentStep(STATUS_FLOW, ['PICKED', 'SHIPPED'], 'NEW')).toBe(-1);
   });
 
   it('marks nothing for a non-flow status (CANCELLED indexes at −1)', () => {
-    expect(indicatorStep(allowed, -1)).toBe(-1);
+    expect(currentStep(STATUS_FLOW, allowed, 'CANCELLED')).toBe(-1);
   });
 });

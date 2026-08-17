@@ -85,10 +85,7 @@ const STATUS_OPTIONS: readonly { value: string; label: string }[] = [
 // preference (spec § preference gates — OMS-REG-REPL-01.28); empty/unresolved
 // = every status. Read inside the filter's render closure, so the options
 // narrow in place when the preference resolves.
-const offeredStatusOptions = (): readonly {
-  value: string;
-  label: string;
-}[] => {
+const offeredStatusOptions = () => {
   const allowed: readonly string[] =
     inboundShipmentPreferences().invoiceStatusOptions;
   return allowed.length === 0
