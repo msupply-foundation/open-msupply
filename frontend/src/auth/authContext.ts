@@ -1,4 +1,5 @@
 import { createSignal } from 'solid-js';
+import { sameFetchedValue } from '../typeHelpers';
 import { graphqlFetch, msSinceLastGqlCall } from '../api/graphql';
 import {
   AuthToken,
@@ -19,7 +20,15 @@ import { ACTIVITY_CHECK_INTERVAL_MS } from '../config';
 // (spec, Guard 1).
 export type AuthUser = UserInfoFragment;
 
-const [user, setUser] = createSignal<AuthUser | undefined>(undefined);
+// `equals: sameFetchedValue` — the post-sync refresh re-reads `me` on every
+// completed sync run (api/syncStore § onRunCompleted), and that response is
+// almost always identical to the one already held. Without the comparator each
+// re-read published a fresh object, waking every consumer of authUser and
+// rebuilding whatever their memos feed — including a table's column set, which
+// remounts every input in it.
+const [user, setUser] = createSignal<AuthUser | undefined>(undefined, {
+  equals: sameFetchedValue,
+});
 export const authUser = user;
 
 // A human display name for the current user: first + last name when set,
