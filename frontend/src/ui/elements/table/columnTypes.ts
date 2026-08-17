@@ -85,6 +85,35 @@ declare module '@tanstack/solid-table' {
      */
     hideOnCard?: boolean;
     /**
+     * Omit this field from the cards of the ROWS this predicate answers true
+     * for — the per-row counterpart of `hideOnCard`, which is all-or-nothing
+     * per column.
+     *
+     * For a field that is meaningless for SOME records rather than for the
+     * whole table: the stocktake line editor's Reason, which applies only to a
+     * batch whose count differs from its snapshot. Returning null from such a
+     * cell is NOT the same thing — the card still renders the field's caption
+     * around the empty cell, so the row shows a label over blank space. This
+     * withdraws the whole field, caption included, and its neighbours close up.
+     *
+     * CARD VIEW ONLY, deliberately. A table column is a property of the column,
+     * not the row: blanking one row's cell keeps the grid aligned, whereas
+     * removing it would not. So a table row simply renders the cell as usual —
+     * use the cell's own renderer to blank it there if that is wanted.
+     *
+     * Whole-column conditions stay where they belong: build the column
+     * conditionally (a store preference, a non-vaccine item) rather than
+     * declaring it and hiding it on every row.
+     *
+     * Declared METHOD-style, not as a property holding an arrow type: the
+     * helpers in tableHelpers build their metas against the row-erased
+     * `ColumnMeta<never, unknown>`, and a property-style parameter is
+     * contravariant under strictFunctionTypes, so `(row: never) => boolean`
+     * would not assign to `(row: T) => boolean`. A method parameter is
+     * bivariant, which is what lets one erased meta serve every row type.
+     */
+    hideOnCardWhen?(row: TData): boolean;
+    /**
      * An explanation of what this column's figure means, as ALREADY-TRANSLATED
      * text — the header's tooltip content (spec/internal-orders § S3 lists the
      * `description.*` key per column; a plugin column carries its own key,
