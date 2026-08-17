@@ -14,6 +14,8 @@ interface UploadButtonProps {
   icon?: ReactNode;
   accept?: string;
   multiple: boolean;
+  /** Stamped on the hidden file input for e2e locators. */
+  testId?: string;
 }
 
 export const UploadButton = ({
@@ -23,6 +25,7 @@ export const UploadButton = ({
   icon,
   accept,
   multiple,
+  testId,
 }: UploadButtonProps) => {
   const t = useTranslation();
   const elementId = FnUtils.generateUUID();
@@ -60,6 +63,7 @@ export const UploadButton = ({
         multiple={multiple}
         onChange={handleFileChange}
         style={{ display: 'none' }}
+        data-testid={testId}
       ></input>
     </Box>
   );
