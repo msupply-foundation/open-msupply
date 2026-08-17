@@ -2,7 +2,7 @@ import { generateUUID } from '@/uuid';
 import { createMemo, createSignal, onMount, Show, type JSX } from 'solid-js';
 import { createStore, produce, reconcile, unwrap } from 'solid-js/store';
 import { graphqlFetch } from '@/api/graphql';
-import { formatNumber, t, tPlural } from '@/intl';
+import { t, tPlural } from '@/intl';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import {
   createFocusTarget,
@@ -45,9 +45,6 @@ import { NameSearch } from '@/domain/name';
 import { CampaignOrProgramSelect } from '@/domain/campaign';
 import { stocktakePreferences } from '@/store/storeContext';
 import { dosesCounted } from '../lines/doses';
-// The detail table's own count arithmetic, shared so S3 and this editor cannot
-// disagree on the sign or on what counts as "uncounted".
-import { lineDifference } from '../lines/stocktakeLine';
 import { PlusCircleIcon, TrashIcon, CopyIcon } from '@/ui/icons';
 import {
   StockLinesByItem,
@@ -972,88 +969,32 @@ const StocktakeLineEditContent = (
       ...getNumberCell({ cardWidth: 7.5 }),
       cell: info => {
         const line = info.row.original;
-        // A getter, not a hoisted const: read inside JSX it stays tracked, so
-        // the hint follows the draft store as the counter types
-        // (kdd/solid-reactivity-pitfalls). null = nothing to say — the line is
-        // uncounted, or blind stocktake has taken Snapshot away and a
-        // difference would hand the theoretical stock back.
-        const diff = () => (hideSnapshotStock() ? null : lineDifference(line));
         return (
-          <>
-            <NumberField
-              ref={batchFields.ref(line.id)}
-              label={t('label.counted-num-of-packs')}
-              hideLabel
-              size="small"
-              // Packs can be counted in fractions (a part-full pack); the doses
-              // formula multiplies packSize by this, so keep the same 2-dp room.
-              decimalLimit={2}
-              disabled={!line.countThisLine}
-              value={line.countedNumberOfPacks ?? undefined}
-              error={
-                lineErrors().get(line.id) === 'StockLineReducedBelowZero'
-                  ? t('error.reduced-below-zero')
-                  : undefined
-              }
-              errorTestId="stocktake-line-error"
-              // NumberField commits a real number (or undefined when cleared);
-              // the draft stores null for empty, so map undefined → null.
-              // setCounted also drops a now-mismatched reason when the count
-              // changes adjustment direction.
-              onChange={value => setCounted(line, value ?? null)}
-            />
-            {/* The difference, as a HINT under the counted figure rather than a
-                field of its own (inbound's units hint does the same under Packs
-                received). It is counted − snapshot — derived, never typed — so
-                a whole labelled field for it would cost the panel a tenth slot
-                and push every neighbour narrower, for one short number that
-                belongs to the box above it anyway.
-
-                Rendered UNCONDITIONALLY, empty when there is nothing to say
-                (uncounted, or blind stocktake), and the CSS reserves its line:
-                the row height is then constant, so the figure appearing as you
-                type never makes the card jump. */}
-            <span
-              class={styles.diffHint}
-              // Weighted only where there IS a discrepancy — the batch worth a
-              // second look. Zero, and "not counted yet", stay quiet.
-              data-signal={diff() ? '' : undefined}
-            >
-              {diff() === null
-                ? ''
-                : // Explicit + on a positive adjustment (a negative carries its
-                  // own sign), so direction reads without colour doing the work.
-                  `${diff()! > 0 ? '+' : ''}${formatNumber(diff()!, {
-                    maximumFractionDigits: 2,
-                  })}`}
-            </span>
-          </>
+          <NumberField
+            ref={batchFields.ref(line.id)}
+            label={t('label.counted-num-of-packs')}
+            hideLabel
+            size="small"
+            // Packs can be counted in fractions (a part-full pack); the doses
+            // formula multiplies packSize by this, so keep the same 2-dp room.
+            decimalLimit={2}
+            disabled={!line.countThisLine}
+            value={line.countedNumberOfPacks ?? undefined}
+            error={
+              lineErrors().get(line.id) === 'StockLineReducedBelowZero'
+                ? t('error.reduced-below-zero')
+                : undefined
+            }
+            errorTestId="stocktake-line-error"
+            // NumberField commits a real number (or undefined when cleared);
+            // the draft stores null for empty, so map undefined → null.
+            // setCounted also drops a now-mismatched reason when the count
+            // changes adjustment direction.
+            onChange={value => setCounted(line, value ?? null)}
+          />
         );
       },
     },
-    // Difference = counted − snapshot. On the CARD it rides as the hint under
-    // Counted (above), so it costs the panel no slot; this column is the TABLE
-    // face of the same figure — hideOnCard, because a table row has nowhere to
-    // put a hint under a cell, and a column there costs the card nothing. The
-    // same split inbound uses for Units received.
-    //
-    // Omitted alongside Snapshot under blind stocktake: a difference hands back
-    // the theoretical stock the preference exists to hide (rules.md
-    // § store-preference gates gates the pair together).
-    ...(hideSnapshotStock()
-      ? []
-      : [
-          {
-            c: {
-              accessor: line => lineDifference(line) ?? '',
-              id: 'difference',
-            },
-            header: () => t('label.difference'),
-            // Same shape as the detail table's own Difference column — an
-            // accessor + the number cell, derived so unsortable.
-            ...getNumberCell({ hideOnCard: true }),
-          } satisfies Column<DraftLine, never, GroupKey>,
-        ]),
     {
       c: { key: 'packSize' },
       header: () => t('label.pack-size'),
