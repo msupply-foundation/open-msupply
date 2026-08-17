@@ -85,7 +85,7 @@ pub fn export_html_report_to_excel(
         ))?;
 
     // Parse HTML report and apply it to the sheet
-    apply_report(sheet, report);
+    apply_report(sheet, report, &report_name);
 
     // Save the report to tmp dir, for download
     xlsx::write(&book, reserved_file.path)
@@ -159,7 +159,7 @@ fn get_workbook(
 }
 
 /// Maps a generated HTML report to an Excel worksheet
-fn apply_report(sheet: &mut Worksheet, report: GeneratedReport) {
+fn apply_report(sheet: &mut Worksheet, report: GeneratedReport, report_name: &str) {
     let mut row_idx: u32 = 1;
 
     // HEADER
@@ -185,6 +185,15 @@ fn apply_report(sheet: &mut Worksheet, report: GeneratedReport) {
 
     // Table headers
     let index_to_column_map = apply_data_table_headers(&body, sheet, row_idx);
+
+    // Every data cell is placed by looking its index up in this map, so an empty
+    // one drops the lot and still writes a perfectly valid — but empty — sheet.
+    // That is how the repack slip shipped without a <thead>, and it stayed unnoticed
+    // until a user reported it. Say so in the log rather than failing quietly.
+    if index_to_column_map.is_empty() {
+        warn_no_columns_mapped(&body, report_name);
+    }
+
     // Data rows
     // remove _ when idx needed for footer
     let _row_idx = apply_data_rows(&body, sheet, row_idx + 1, &index_to_column_map);
@@ -254,6 +263,27 @@ fn apply_data_table_headers(
     }
 
     index_to_column_map
+}
+
+/// Warns that a report has rows to export but no columns to place them in.
+///
+/// Only called once the header has already resolved to nothing, so the extra
+/// selector runs cost nothing on the normal path. A report with no rows at all
+/// is left alone — an empty sheet is the honest answer for one of those.
+fn warn_no_columns_mapped(body: &Selectors, report_name: &str) {
+    let data_rows = body.rows_and_cells().len();
+    let total_rows = body.total_rows().len();
+
+    if data_rows + total_rows == 0 {
+        return;
+    }
+
+    log::warn!(
+        "Excel export of '{report_name}' dropped every row: {data_rows} data row(s) and \
+         {total_rows} total row(s) had no column to go in, because the table header resolved \
+         to no columns. Check the template's table has a <thead> holding a row of cells, and \
+         that any excel-column attributes are on that row."
+    );
 }
 
 /// Maps each row of data to the worksheet
@@ -590,7 +620,7 @@ mod report_to_excel_test {
         book.set_sheet_name(0, "test").unwrap();
         let sheet = book.get_sheet_by_name_mut("test").unwrap();
 
-        apply_report(sheet, report);
+        apply_report(sheet, report, "test");
 
         let get_value = |coord: &str| get_value(sheet, coord);
 
@@ -653,7 +683,7 @@ mod report_to_excel_test {
 
         let sheet = book.get_sheet_by_name_mut("test").unwrap();
 
-        apply_report(sheet, report);
+        apply_report(sheet, report, "test");
 
         let get_value = |coord: &str| get_value(sheet, coord);
 
@@ -714,7 +744,7 @@ mod report_to_excel_test {
         book.set_sheet_name(0, "test").unwrap();
         let sheet = book.get_sheet_by_name_mut("test").unwrap();
 
-        apply_report(sheet, report);
+        apply_report(sheet, report, "test");
 
         let get_value = |coord: &str| get_value(sheet, coord);
 
@@ -771,7 +801,7 @@ mod report_to_excel_test {
         book.set_sheet_name(0, "test").unwrap();
         let sheet = book.get_sheet_by_name_mut("test").unwrap();
 
-        apply_report(sheet, report);
+        apply_report(sheet, report, "test");
 
         let get_value = |coord: &str| get_value(sheet, coord);
 
@@ -819,7 +849,7 @@ mod report_to_excel_test {
         book.set_sheet_name(0, "test").unwrap();
         let sheet = book.get_sheet_by_name_mut("test").unwrap();
 
-        apply_report(sheet, report);
+        apply_report(sheet, report, "test");
 
         let get_value = |coord: &str| get_value(sheet, coord);
 
@@ -874,7 +904,7 @@ mod report_to_excel_test {
         book.set_sheet_name(0, "test").unwrap();
         let sheet = book.get_sheet_by_name_mut("test").unwrap();
 
-        apply_report(sheet, report);
+        apply_report(sheet, report, "test");
 
         let get_value = |coord: &str| get_value(sheet, coord);
 
@@ -982,6 +1012,34 @@ mod report_to_excel_test {
         );
     }
 
+    /// The shape the repack slip shipped in: `<tr>`s sitting straight in the
+    /// `<table>`, no row groups. There is no header to resolve, so no column is
+    /// mapped and every row is dropped — a valid, empty workbook. Pinned here as
+    /// the condition `warn_no_columns_mapped` exists to report, so the export
+    /// says something instead of quietly handing back an empty sheet.
+    #[test]
+    fn test_table_without_row_groups_maps_no_columns() {
+        let selectors = Selectors::new(
+            r#"
+              <table>
+                <tr>
+                  <th>Location</th>
+                  <th>Quantity</th>
+                </tr>
+                <tr>
+                  <td>A1</td>
+                  <td>100</td>
+                </tr>
+              </table>
+        "#,
+        );
+
+        // No <thead>, so nothing to map the data cells onto
+        assert_eq!(selectors.data_headers(), vec![]);
+        // ...and rows that would have been exported had there been
+        assert!(!selectors.rows_and_cells().is_empty());
+    }
+
     #[tokio::test]
     async fn test_generate_excel_performance() {
         // We want to ensure that excel export takes a sensible amount of time.
@@ -1034,7 +1092,7 @@ mod report_to_excel_test {
         let handle = tokio::spawn(async move {
             let sheet = book.get_sheet_by_name_mut("test").unwrap();
             let start = std::time::Instant::now();
-            apply_report(sheet, report);
+            apply_report(sheet, report, "test");
             start.elapsed().as_millis()
         });
 
@@ -1358,7 +1416,7 @@ mod report_to_excel_test {
         book.set_sheet_name(0, "test").unwrap();
         let sheet = book.get_sheet_by_name_mut("test").unwrap();
 
-        apply_report(sheet, report);
+        apply_report(sheet, report, "test");
 
         let get_value = |coord: &str| get_value(sheet, coord);
 
