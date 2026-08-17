@@ -172,7 +172,7 @@
 
 /* --- Nav button (leaves + section triggers share this) ----------------- */
 .navButton {
-  /* Anchor for the collapsed-rail badge docking (sync indicator). */
+  /* Anchor for the selected-parent accent bar. */
   position: relative;
   display: flex;
   align-items: center;
@@ -481,31 +481,3 @@
    narrow viewports). The natural 2.5rem section / 1.875rem child heights already
    clear WCAG 2.5.8 (24px min), so we keep them. */
 
-/* --- Sync-entry status badge (spec/chrome § sync indicator) -------------- */
-/* The pill itself is the shared Badge component; the MenuBar owns only its
-   placement — inline-end of the row, docking onto the icon when collapsed. */
-.badge {
-  margin-inline-start: auto;
-}
-
-/* The alert marker: the error-coloured glyph, as the current app renders it. */
-.alertBadge {
-  display: inline-flex;
-  font-size: 1rem;
-  color: var(--error-main);
-}
-
-/* Collapsed rail: labels hide, so the badge docks onto the icon's corner to
-   stay visible. */
-.menuBar[data-open='false'] .badge {
-  position: absolute;
-  inset-block-start: 0.2rem;
-  inset-inline-end: 0.2rem;
-}
-
-/* The Sync entry's icon dims while the latest run is errored; the badge (not
-   the dimming) carries the meaning. Grey, as in the current app — not a paler
-   brand tint. */
-.icon[data-dimmed='true'] {
-  color: var(--gray-main);
-}

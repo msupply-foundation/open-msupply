@@ -1,7 +1,6 @@
 import {
   createEffect,
   createMemo,
-  createSignal,
   For,
   Match,
   onCleanup,
@@ -23,22 +22,18 @@ import {
   pushQueueCount,
   liveConnected,
   pollSyncStatus,
-  triggerSync,
 } from '../../api/syncStore';
 import { isCentralServer } from '../../api/serverInfo';
 import { hasPermission } from '../../store/storeContext';
 import { SYNC_POLL_INTERVAL_MS } from '../../config';
 import {
-  advanceTriggerState,
-  armTrigger,
   durationUnits,
-  IDLE_TRIGGER,
   statusLineKind,
   syncDurationParts,
   toSyncOverview,
   type SyncBackfill,
-  type TriggerState,
 } from './syncStatus';
+import { syncNow, triggerActive } from './syncTrigger';
 import { syncErrorSummary } from './syncErrors';
 import { syncStepIcon } from './syncStepIcons';
 import styles from './SyncModal.module.css';
@@ -96,26 +91,15 @@ export const SyncModal: Component<{
   // SYNC-03.25: Sync-now busy state — held from the click, through the pre-run
   // gap, until the run ends. Keyed on the run-status signature (not the
   // isSyncing transition), so a run that errors before any in-progress frame is
-  // observed still releases the button for a retry.
-  const [trigger, setTrigger] = createSignal<TriggerState>(IDLE_TRIGGER);
-  createEffect(() => {
-    const status = syncStatus();
-    setTrigger(prev => advanceTriggerState(prev, status));
-  });
+  // observed still releases the button for a retry. The machine is the SHARED
+  // one (syncTrigger.ts): the bottom bar's status line runs the same, so a run
+  // armed on either surface reads as in-flight on both.
   const busy = createMemo(
     () =>
-      trigger().active ||
+      triggerActive() ||
       (overview()?.isSyncing ?? false) ||
       overview() === undefined
   );
-
-  const onSyncNow = async () => {
-    setTrigger(armTrigger(syncStatus()));
-    // Fire-and-forget; a request that itself fails releases the busy state (the
-    // failure surfaces through the global unexpected-error handling).
-    const ok = await triggerSync();
-    if (!ok) setTrigger(IDLE_TRIGGER);
-  };
 
   // Server-admin only: closes the modal and navigates to sync settings. The
   // sync-settings screen is owned elsewhere (spec/sync-modal/README § scope),
@@ -176,7 +160,7 @@ export const SyncModal: Component<{
             variant="primary"
             icon={<SyncIcon />}
             loading={busy()}
-            onClick={() => void onSyncNow()}
+            onClick={syncNow}
           >
             {t('button.sync-now')}
           </Button>
