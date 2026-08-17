@@ -1,0 +1,84 @@
+/* The requisition line editor's figure grid (spec/requisitions S4 § layout):
+   even full-width columns — two for a general requisition, three for an
+   extra-fields program one — each stacking labelled figure rows; they wrap to
+   stacked on narrow viewports. */
+.grid {
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
+  flex-wrap: wrap;
+  margin-block-start: var(--space-3);
+}
+
+.column {
+  flex: 1 1 16rem;
+  min-inline-size: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* A grouping panel's rows stack a little tighter than the column's blocks. */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Every figure box sits right-aligned at its row's inline-end, all the same
+   width (spec S4 § layout), the value right-aligned within the box. The
+   doubled class outranks the input's own width cap. */
+.figure {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.figure.figure input {
+  text-align: end;
+}
+
+/* The plain caption figures at the head of the first column (default pack
+   size, doses per unit) — not boxed rows. Typography only; the row itself is
+   the generic HStack. */
+.caption {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+/* A never-editable figure's value — plain right-aligned text at the row's
+   inline-end, never a disabled input (ui-standards › detail-views §
+   never-editable fields; the internal-order editor's StatRow). */
+.statValue {
+  display: block;
+  text-align: end;
+  inline-size: 100%;
+}
+
+.captionValue {
+  font-weight: var(--weight-bold);
+  color: var(--text-body);
+}
+
+/* The supply number + representation select share one row at equal widths
+   (spec S4 § supply entry); both are width="full" so neither keeps its default
+   max-width cap. */
+.supplyRow {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  inline-size: 100%;
+}
+
+.supplyRow > * {
+  flex: 1 1 0;
+  min-inline-size: 0;
+}
+
+/* The dose-equivalent caption beneath the supply entry, right-aligned under
+   the number. */
+.doseCaption {
+  text-align: end;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+

@@ -28,6 +28,8 @@ export interface LocationSelectProps {
   disabled?: boolean;
   error?: string;
   placeholder?: string;
+  /** Max-width cap — forwarded to the Combobox, opt-in (default `full`). */
+  width?: 'compact' | 'short' | 'long' | 'full';
   /**
    * A `createFocusTarget()` handle bound to the picker's input — for an owner
    * that focuses it after an action (e.g. a dialog opening on it).
@@ -39,16 +41,16 @@ export interface LocationSelectProps {
  * The reusable **volume-blind** Location picker — a Combobox labelled by a
  * location's "code — name", used where a location is merely *referenced*
  * (scoping a stocktake count, a list filter) so capacity is irrelevant. For
- * surfaces that *associate stock* with a location — the stocktake / inbound line
- * editors, bulk change-location — use LocationVolumeSelect instead, which shows
- * each option's % used and offers the fullness filter.
+ * surfaces that *associate stock* with a location — the stocktake / inbound
+ * line editors, bulk change-location — use LocationVolumeSelect instead, which
+ * shows each option's % used and offers the fullness filter.
  *
- * A domain widget (src/domain): it knows the app's data shape (labels locations
- * by code) but is composed from the pure ui/ Combobox, and — per
+ * A domain widget (src/domain): it knows the app's data shape (labels
+ * locations by code) but is composed from the pure ui/ Combobox, and — per
  * spec/ui-standards/components.md — owns NO cache: the parent fetches the list
  * (fetchLocations) and passes it in, so there is one obvious fetch per view
- * rather than a hidden global. Reports the full Location node (id + code + name)
- * so callers can store the code/name for display without a re-lookup.
+ * rather than a hidden global. Reports the full Location node (id + code +
+ * name) so callers can store the code/name for display without a re-lookup.
  */
 export const LocationSelect = (props: LocationSelectProps): JSX.Element => (
   <Combobox<Location>
@@ -62,6 +64,7 @@ export const LocationSelect = (props: LocationSelectProps): JSX.Element => (
     disabled={props.disabled}
     error={props.error}
     placeholder={props.placeholder}
+    width={props.width}
     focusTarget={props.focusTarget}
     onChange={l => props.onChange(l)}
     // Let the popup grow past a narrow field so a location's code + name stays

@@ -11,7 +11,9 @@ import styles from './UploadZone.module.css';
 export interface UploadZoneProps extends PartitionOptions {
   /** Called with the files that pass `accept`/`maxSize`. */
   onFiles: (files: File[]) => void;
-  /** Called with files rejected by `accept`/`maxSize`, so they can be surfaced. */
+  /**
+   * Called with files rejected by `accept`/`maxSize`, so they can be surfaced.
+   */
   onRejected?: (rejections: FileRejection<File>[]) => void;
   /** Allow selecting/dropping more than one file at once (default true). */
   multiple?: boolean;

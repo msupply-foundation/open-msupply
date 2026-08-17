@@ -22,15 +22,15 @@ export type InvoiceStatus = LedgerRow['invoiceStatus'];
  * are one chip (the reference app groups them under a single "Date/time" filter
  * too).
  *
- * This object is always carried as a SINGLE nested value in the URL state, never
- * spread across its top level: FilterBar expresses a chip removal as the key's
- * absence, so the filter must be replaced wholesale rather than merged, and
- * useUrlQueryState strips top-level nulls when parsing a URL (which would erase
- * an added-but-empty chip on the round trip).
+ * This object is always carried as a SINGLE nested value in the URL state,
+ * never spread across its top level: FilterBar expresses a chip removal as the
+ * key's absence, so the filter must be replaced wholesale rather than merged,
+ * and useUrlQueryState strips top-level nulls when parsing a URL (which would
+ * erase an added-but-empty chip on the round trip).
  */
 export type LedgerFilter = {
-  invoiceType?: InvoiceType | null;
-  invoiceStatus?: InvoiceStatus | null;
+  invoiceType?: InvoiceType[] | null;
+  invoiceStatus?: InvoiceStatus[] | null;
   datetime?: IsoDateTimeRange | null;
 };
 
@@ -42,8 +42,10 @@ export const buildWireFilter = (
   const filter: NonNullable<ItemLedgerVariables['filter']> = {
     itemId: { equalTo: itemId },
   };
-  if (f.invoiceType) filter.invoiceType = { equalTo: f.invoiceType };
-  if (f.invoiceStatus) filter.invoiceStatus = { equalTo: f.invoiceStatus };
+  // Multi-select chips (D110) — the ticked values match as any-of.
+  if (f.invoiceType?.length) filter.invoiceType = { equalAny: f.invoiceType };
+  if (f.invoiceStatus?.length)
+    filter.invoiceStatus = { equalAny: f.invoiceStatus };
   // An added-but-empty chip (null, or a range with neither bound set) applies
   // nothing — so seeding the chip present never perturbs the query.
   const range = f.datetime;

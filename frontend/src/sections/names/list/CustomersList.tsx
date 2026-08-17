@@ -18,10 +18,7 @@ const CustomersList: Component = () => {
         role="customer"
         scope="customer"
         tableId="names-customers"
-        crumbs={() => [
-          { label: t('nav.distribution') },
-          { label: t('nav.distribution.customers') },
-        ]}
+        crumbs={() => [{ label: t('nav.distribution.customers') }]}
         onRowClick={row => setSelectedId(row.id)}
       />
       <CustomerDetailModal

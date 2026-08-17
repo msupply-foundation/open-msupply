@@ -2,12 +2,11 @@ import { createSignal, Show, type Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { t } from '../../../intl';
 import { CheckboxButton } from '../../../ui/elements/buttons/CheckboxButton';
-import { Button } from '../../../ui/elements/buttons/Button';
+import { CloseButton } from '../../../ui/elements/buttons/StandardButtons';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
-import { XCircleIcon } from '../../../ui/icons';
 import { StatusChangeAction } from './actions/StatusChangeAction';
 import { currentStep, returnKind, statusSteps } from './returnStatus';
 import type { CustomerReturnInfoFragment } from './customerReturnDetail.generated';
@@ -17,7 +16,8 @@ import type { CustomerReturnInfoFragment } from './customerReturnDetail.generate
 // hover) · spacer · Close · the status-advance split button. Shown only when
 // nothing is selected — the selection action bar replaces it.
 //
-// Hold is a soft pause on status change only (rules § header; AC-S5): the
+// Hold is a soft pause on status change only (rules § header;
+// OMS-REG-DIST-07.7/.32/.33): the
 // toggle stays available while the return is editable, confirms before
 // flipping, and the messages flip with direction.
 
@@ -26,7 +26,7 @@ export interface CustomerReturnStatusFooterProps {
   node: CustomerReturnInfoFragment;
   /** The standing editability gate (rules § editability). */
   disabled: boolean;
-  /** ≥1 line (gates the advance — AC-S4). */
+  /** ≥1 line (gates the advance — OMS-REG-DIST-07.38). */
   hasLines: boolean;
   /** The invoice-status-options preference (empty = no restriction). */
   statusOptions: readonly string[];
@@ -68,16 +68,12 @@ export const CustomerReturnStatusFooter: Component<
       {/* One inline-end cluster (the current app's footer): Close sits right
           beside the Confirm-status split button. */}
       <ContentFooterActions>
-        <Button
-          variant="secondary"
-          icon={<XCircleIcon />}
+        <CloseButton
           data-testid="close-button"
           onClick={() =>
             navigate(`/${params.storeId}/distribution/customer-return`)
           }
-        >
-          {t('button.close')}
-        </Button>
+        />
         <StatusChangeAction
           storeId={props.storeId}
           node={props.node}
@@ -87,19 +83,28 @@ export const CustomerReturnStatusFooter: Component<
         />
       </ContentFooterActions>
 
-      {/* Hold confirm: message flips with direction (AC-S5's reversible pause;
-          the copy is the current app's on/off-hold confirmations). */}
-      <ConfirmDialog
-        open={holdConfirm()}
-        onClose={() => setHoldConfirm(false)}
-        title={t('heading.are-you-sure')}
-        message={
-          holding()
-            ? t('messages.off-hold-confirmation')
-            : t('messages.on-hold-confirmation')
-        }
-        onConfirm={() => props.onSetHold(!holding())}
-      />
+      {/* Hold confirm: message flips with direction (the reversible pause,
+          OMS-REG-DIST-07.32;
+          the copy is the current app's on/off-hold confirmations).
+
+          Mounted only while open (kdd/action-modal). A closed <dialog> is still
+          in the document, just hidden, so a permanently-mounted one keeps its
+          `confirmation-modal` + footer ids matchable — three of them coexist on
+          this screen, which is what forced the e2e suite's `.last()` workaround
+          (e2e/TESTIDS.md). */}
+      <Show when={holdConfirm()}>
+        <ConfirmDialog
+          open
+          onClose={() => setHoldConfirm(false)}
+          title={t('heading.are-you-sure')}
+          message={
+            holding()
+              ? t('messages.off-hold-confirmation')
+              : t('messages.on-hold-confirmation')
+          }
+          onConfirm={() => props.onSetHold(!holding())}
+        />
+      </Show>
     </ContentFooter>
   );
 };

@@ -1,12 +1,12 @@
 import { For, Show } from 'solid-js';
 import type { JSX } from 'solid-js';
 import {
-  flexRender,
   type Cell as TanCell,
   type Column as TanColumn,
   type Row as TanRow,
 } from '@tanstack/solid-table';
 import { t } from '../../../intl';
+import { renderTemplate } from './renderTemplate';
 import { BareCheckbox } from '../inputs/BareCheckbox';
 import styles from './DataTable.module.css';
 
@@ -47,13 +47,14 @@ const cellTitle = <T,>(cell: TanCell<T, unknown>): string | undefined => {
   return typeof value === 'string' && value !== '' ? value : undefined;
 };
 
-// Native hover-reveal, gated on ACTUAL clipping (issue #432 follow-up, PR #638):
-// a single-line cell overflows exactly when its content is wider than its box,
-// so expose the full value as a `title` only then — a short value that fits
-// gets no tooltip. Measured lazily on pointer-enter: one scrollWidth read on the
-// single hovered cell, set well before the native tooltip's hover delay elapses
-// — no render-time pass and no whole-table measurement, so the width model's
-// perf posture is unchanged. Applies to every list table (shared row renderer).
+// Native hover-reveal, gated on ACTUAL clipping (issue #432 follow-up, PR
+// #638): a single-line cell overflows exactly when its content is wider than
+// its box, so expose the full value as a `title` only then — a short value that
+// fits gets no tooltip. Measured lazily on pointer-enter: one scrollWidth read
+// on the single hovered cell, set well before the native tooltip's hover delay
+// elapses — no render-time pass and no whole-table measurement, so the width
+// model's perf posture is unchanged. Applies to every list table (shared row
+// renderer).
 const revealIfClipped = <T,>(
   td: HTMLTableCellElement,
   cell: TanCell<T, unknown>
@@ -79,11 +80,26 @@ export function TableRow<T>(props: {
   rowState?: (row: T) => 'verified' | 'warning' | 'disabled' | undefined;
   /**
    * Semantic text tone for this row: 'info' for records awaiting an action
-   * (placeholder / uncounted lines), 'error' for a line the server refused
-   * (a failed bulk operation). Stamps data-tone, styled in CSS. Semantic
-   * names only, mapped to palette tokens by the CSS — never colours.
+   * (placeholder / uncounted lines), 'warning' for a record needing attention
+   * before it can proceed (a held batch), 'error' for a line the server
+   * refused (a failed bulk operation). Stamps data-tone, styled in CSS.
+   * Semantic names only, mapped to palette tokens by the CSS — never colours.
    */
-  rowTone?: (row: T) => 'info' | 'error' | undefined;
+  rowTone?: (row: T) => 'info' | 'warning' | 'error' | undefined;
+  /**
+   * Semantic record-status BACKGROUND tint, always on (see DataTable's prop
+   * doc — spec D111). Stamps data-tint, styled in CSS.
+   */
+  rowTint?: (
+    row: T
+  ) => 'unfinished' | 'success' | 'warning' | 'error' | undefined;
+  /**
+   * Semantic LEFT-EDGE accent bar (see DataTable's prop doc). Stamps
+   * data-accent, drawn in CSS on the row's leading cell.
+   */
+  rowAccent?: (
+    row: T
+  ) => 'unfinished' | 'success' | 'warning' | 'error' | undefined;
   /**
    * Sticky-pin style for a pinned data column's cell
    * (position/offset/z-index), else undefined.
@@ -128,6 +144,16 @@ export function TableRow<T>(props: {
           ? props.rowTone?.(props.row.original)
           : undefined
       }
+      data-tint={
+        !props.row.getIsGrouped()
+          ? props.rowTint?.(props.row.original)
+          : undefined
+      }
+      data-accent={
+        !props.row.getIsGrouped()
+          ? props.rowAccent?.(props.row.original)
+          : undefined
+      }
       // Selected rows get the same brand tint as selected cards (consistent
       // selection signal across both views); styled on the cells
       // (data-selected) in CSS.
@@ -160,9 +186,10 @@ export function TableRow<T>(props: {
               // Cross-FE test-id contract (e2e/TESTIDS.md): `cell-<columnId>`,
               // scoped by row (row.getByTestId('cell-batch')).
               data-testid={`cell-${cell.column.id}`}
-              // Hover-reveal for an ellipsised value — set only when the cell is
-              // actually clipped, measured on pointer-enter (issue #432 follow-up,
-              // PR #638). No static `title`, so cells that fit show no tooltip.
+              // Hover-reveal for an ellipsised value — set only when the cell
+              // is actually clipped, measured on pointer-enter (issue #432
+              // follow-up, PR #638). No static `title`, so cells that fit show
+              // no tooltip.
               onMouseEnter={event => revealIfClipped(event.currentTarget, cell)}
               data-align={cellAlign(cell)}
               data-mono={cellMono(cell) ? '' : undefined}
@@ -175,7 +202,8 @@ export function TableRow<T>(props: {
               // the growth cap, applied as max-width (docs/CELL_TYPES.md).
               // TanStack merges its default maxSize (MAX_SAFE_INTEGER) into
               // every columnDef, so only a value below that sentinel is a real
-              // cap. A pinned column additionally gets sticky position + offset.
+              // cap. A pinned column additionally gets sticky position +
+              // offset.
               data-wrap={cellWrapLines(cell) ? '' : undefined}
               style={{
                 'min-width': `${cell.column.getSize()}px`,
@@ -188,9 +216,11 @@ export function TableRow<T>(props: {
                 ...props.pinnedStyle(cell.column),
               }}
             >
-              {/* Just flexRender the column's cell — TanStack's merged default cell renders the
-                  leaf value (a column's custom `cell` overrides). */}
-              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+              {/* Just render the column's cell — TanStack's merged default cell renders the
+                  leaf value (a column's custom `cell` overrides). renderTemplate, not
+                  TanStack's flexRender: the latter untracks the call, freezing every
+                  locale-derived value (numbers, dates, money) until a reload. */}
+              {renderTemplate(cell.column.columnDef.cell, cell.getContext())}
             </td>
           </Show>
         )}

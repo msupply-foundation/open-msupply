@@ -38,6 +38,11 @@ export interface CampaignOrProgramSelectProps {
   hideLabel?: boolean;
   disabled?: boolean;
   placeholder?: string;
+  /**
+   * Control size, forwarded to the Combobox — `small` matches the compact
+   * inputs a dense row (a line editor's batch card) puts beside it.
+   */
+  size?: 'default' | 'small';
 }
 
 /*
@@ -66,12 +71,13 @@ export const CampaignOrProgramSelect = (
   // whole page subtree, which detaches the open <dialog>: it loses the top
   // layer (no backdrop, background not inert), so the modal looks broken on the
   // Other tab (kdd/solid-reactivity-pitfalls › No remounts on interaction,
-  // rule 1). Crucially `programs.latest` is NOT enough: `.latest` STILL suspends
-  // on the FIRST pending read (before any value exists) — the exact case here,
-  // since this per-item resource first fetches when the Other tab mounts. So we
-  // gate on `.state` (reading state/latest never suspends): only surface a value
-  // once ready/refreshing, else `[]`. Same technique as storeScopedResource's
-  // noSuspense(). `programs.loading` still drives the Combobox spinner below.
+  // rule 1). Crucially `programs.latest` is NOT enough: `.latest` STILL
+  // suspends on the FIRST pending read (before any value exists) — the exact
+  // case here, since this per-item resource first fetches when the Other tab
+  // mounts. So we gate on `.state` (reading state/latest never suspends): only
+  // surface a value once ready/refreshing, else `[]`. Same technique as
+  // storeScopedResource's noSuspense(). `programs.loading` still drives the
+  // Combobox spinner below.
   const programList = (): ItemProgram[] =>
     programs.state === 'ready' || programs.state === 'refreshing'
       ? (programs.latest ?? [])
@@ -95,6 +101,7 @@ export const CampaignOrProgramSelect = (
     <Combobox<Option>
       label={props.label}
       hideLabel={props.hideLabel}
+      size={props.size}
       items={options()}
       loading={campaignsResource.loading() || programs.loading}
       itemToString={o => o.node.name}

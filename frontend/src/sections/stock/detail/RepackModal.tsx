@@ -17,7 +17,7 @@ import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../ui/utils/rem';
-import { LocationSelect } from '../../../domain/location';
+import { LocationVolumeSelect } from '../../../domain/location';
 import { SelectReportModal } from '../../../domain/reports';
 import {
   PlusCircleIcon,
@@ -43,9 +43,9 @@ import {
 // (all packs) offers navigation to the new line. Export/Print generates the
 // repack report for the selected/saved repack (owned by reporting).
 //
-// The "created by a repack" source-batch note (spec/stock S5 header) is omitted:
-// finding the repack that CREATED this line is not directly queryable (the
-// history lists repacks FROM a line, not the one that produced it).
+// The "created by a repack" source-batch note (spec/stock S5 header) is
+// omitted: finding the repack that CREATED this line is not directly queryable
+// (the history lists repacks FROM a line, not the one that produced it).
 
 type RepackNode =
   RepacksByStockLineResult['repacksByStockLine']['nodes'][number];
@@ -277,6 +277,7 @@ const RepackContent = (props: {
             <Button
               variant="secondary"
               icon={<XCircleIcon />}
+              confirms="cancel"
               disabled={saving()}
               data-testid="dialog-button-cancel"
               onClick={props.onClose}
@@ -286,6 +287,7 @@ const RepackContent = (props: {
             <Button
               icon={<SaveIcon />}
               loading={saving()}
+              confirms="plain"
               disabled={!canSave()}
               data-testid="dialog-button-save"
               onClick={() => void onSave()}
@@ -428,13 +430,26 @@ const RepackContent = (props: {
                   />
                 </FieldRow>
                 <FieldRow label={t('label.new-location')}>
-                  <LocationSelect
+                  <LocationVolumeSelect
                     label={t('label.new-location')}
                     hideLabel
                     locations={locations()}
                     loading={allLocations.loading}
                     value={newLocation()?.id}
                     placeholder={t('label.none')}
+                    // A repack conserves volume across the split, so what the
+                    // new location must hold is the volume LEAVING the original
+                    // line: its volume per pack × the packs being repacked
+                    // (spec/stock/rules.md › location fields).
+                    requiredVolume={
+                      (props.line.volumePerPack ?? 0) * (numberToRepack() ?? 0)
+                    }
+                    // This field is a DESTINATION, distinct from where the
+                    // stock sits now, so the origin needs naming explicitly —
+                    // repacking back into it is valid (a same-location repack
+                    // is a pure relocation, AC-R7) and its headroom already
+                    // accounts for this volume.
+                    originalLocationId={props.line.location?.id}
                     onChange={l =>
                       setNewLocation(
                         l ? { id: l.id, code: l.code, name: l.name } : null

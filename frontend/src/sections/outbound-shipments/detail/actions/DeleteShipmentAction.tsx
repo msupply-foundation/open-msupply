@@ -5,7 +5,8 @@ import { graphqlFetch } from '../../../../api/graphql';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
-import { CheckIcon, TrashIcon, XCircleIcon } from '../../../../ui/icons';
+import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
+import { TrashIcon } from '../../../../ui/icons';
 import { DeleteOutboundShipment } from '../outboundDetail.generated';
 
 export interface DeleteShipmentActionProps {
@@ -14,10 +15,11 @@ export interface DeleteShipmentActionProps {
   disabled: boolean;
 }
 
-// The side panel's record delete (spec S3 § record actions, OMS-REG-DIST-01.7/.8):
-// confirm → delete → back to the list. Disabled (with the shared gate) once
-// SHIPPED; a server rejection keeps the dialog open with the error inline
-// (controls › dialogs, D20). Success navigates — the list is the confirmation.
+// The side panel's record delete (spec S3 § record actions,
+// OMS-REG-DIST-01.7/.8): confirm → delete → back to the list. Disabled (with
+// the shared gate) once SHIPPED; a server rejection keeps the dialog open with
+// the error inline (controls › dialogs, D20). Success navigates — the list is
+// the confirmation.
 type Phase = 'confirm' | 'working' | 'error';
 
 export const DeleteShipmentAction: Component<
@@ -56,7 +58,7 @@ export const DeleteShipmentAction: Component<
   return (
     <>
       <Button
-        variant="secondary"
+        variant="danger"
         icon={<TrashIcon />}
         data-testid="delete-shipment-button"
         disabled={props.disabled}
@@ -83,34 +85,23 @@ export const DeleteShipmentAction: Component<
           actions={
             <Show
               when={phase() !== 'error'}
-              fallback={
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
-                  onClick={close}
-                >
-                  {t('button.cancel')}
-                </Button>
-              }
+              fallback={<CancelButton onClick={close} />}
             >
               <Show when={phase() === 'confirm'}>
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
+                <CancelButton
                   data-testid="dialog-button-cancel"
                   onClick={close}
-                >
-                  {t('button.cancel')}
-                </Button>
+                />
               </Show>
+              {/* Destructive confirm — danger tone, named for what it does. */}
               <Button
-                variant="secondary"
-                icon={<CheckIcon />}
+                variant="danger"
+                confirms="plain"
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'working'}
                 onClick={() => void run()}
               >
-                {t('button.ok')}
+                {t('label.delete')}
               </Button>
             </Show>
           }

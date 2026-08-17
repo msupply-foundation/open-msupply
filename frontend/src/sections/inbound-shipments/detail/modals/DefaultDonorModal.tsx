@@ -2,10 +2,12 @@ import { createSignal, Show, type Component } from 'solid-js';
 import { t } from '../../../../intl';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
-import { Button } from '../../../../ui/elements/buttons/Button';
+import {
+  CancelButton,
+  DialogSaveButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
 import { RadioGroup } from '../../../../ui/elements/inputs/RadioGroup';
 import { NameSearch, type NameOption } from '../../../../domain/name';
-import { XCircleIcon } from '../../../../ui/icons';
 import { updateInboundShipment } from '../inboundShipmentUpdate';
 import type { InboundInfoFragment } from '../inboundShipmentDetail.generated';
 
@@ -82,27 +84,26 @@ const Body: Component<DefaultDonorModalProps> = props => {
       onClose={props.onClose}
       title={t('label.donor')}
       testId="default-donor-modal"
+      // Room for the donor lookup's open listbox inside the dialog (#1029):
+      // header + field + the listbox's 18rem cap + padding.
+      minBodyHeightRem={27}
       actionsLead={
         <Show when={errorMessage()}>
           <Alert severity="error">{errorMessage()}</Alert>
         </Show>
       }
       actions={
+        // Cancel · Save (spec S5 layout), icon-less (D55).
         <>
-          <Button
-            variant="secondary"
-            icon={<XCircleIcon />}
+          <CancelButton
+            data-testid="dialog-button-cancel"
             onClick={props.onClose}
-          >
-            {t('button.cancel')}
-          </Button>
-          <Button
+          />
+          <DialogSaveButton
             data-testid="dialog-button-ok"
             loading={saving()}
             onClick={() => void save()}
-          >
-            {t('button.ok')}
-          </Button>
+          />
         </>
       }
     >

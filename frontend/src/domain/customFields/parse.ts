@@ -68,8 +68,9 @@ export const optionAndDescendantIds = (
 };
 
 // The id's ancestor chain (its parent, grandparent, …), nearest first. Used
-// when deselecting: removing a node also deselects its ancestors, since a parent
-// is only "fully selected" while every descendant is (spec › option fields).
+// when deselecting: removing a node also deselects its ancestors, since a
+// parent is only "fully selected" while every descendant is (spec › option
+// fields).
 export const ancestorIds = (
   options: CustomFieldOption[],
   id: string
@@ -136,9 +137,9 @@ export const shownCustomFields = (
 ): CustomFieldDef[] => (defs ?? []).filter(isShown);
 
 // Split shown fields by where they render: VISIBLE → the tab; PROMINENT →
-// promoted to the detail toolbar and NOT repeated in the tab (spec › placement).
-// A read-only surface has no toolbar, so it passes `promote: false` to show
-// every shown field in the tab.
+// promoted to the detail toolbar and NOT repeated in the tab (spec ›
+// placement). A read-only surface has no toolbar, so it passes `promote: false`
+// to show every shown field in the tab.
 export interface PartitionedCustomFields {
   tab: CustomFieldDef[];
   prominent: CustomFieldDef[];
@@ -155,9 +156,21 @@ export const partitionCustomFields = (
   };
 };
 
+// The tab's two-column split (spec/ui-standards/custom-fields › the tab), shared
+// by the read-only and editable tabs so they lay out identically. The fields are
+// RUNTIME DATA, so the split can't name particular fields: the first half goes
+// down column one and the rest down column two, which means reading down column
+// one then column two preserves the configured order. The taller half LEADS, so
+// an odd count puts the extra field in column one rather than leaving column two
+// longer than the one beside it.
+export const splitIntoColumns = <T>(fields: T[]): [T[], T[]] => {
+  const split = Math.ceil(fields.length / 2);
+  return [fields.slice(0, split), fields.slice(split)];
+};
+
 // The single JSON-scalar boundary: `customFields` is typed `unknown` by codegen
-// (honest for arbitrary JSON). At runtime the server sends a JSON object (a JSON
-// string is also accepted). Narrow it to a plain record here, once.
+// (honest for arbitrary JSON). At runtime the server sends a JSON object (a
+// JSON string is also accepted). Narrow it to a plain record here, once.
 export const parseCustomFields = (raw: unknown): Record<string, unknown> => {
   if (raw == null) return {};
   if (typeof raw === 'object') return raw as Record<string, unknown>;

@@ -17,6 +17,10 @@ export interface FormRowProps extends JSX.HTMLAttributes<HTMLDivElement> {
  * child takes an equal share and the row WRAPS to stacked when it can't hold
  * them at their min width — intrinsically, no breakpoint (CLAUDE.md #7).
  *
+ * A field whose data needs more (or less) room than its neighbours' — a name
+ * against a formatted date, in a header field cluster — wraps in a
+ * <FormRowItem> to declare its weight instead. Equal shares stay the default.
+ *
  * Opt-in per row: a single field sits directly in the FormSection at full
  * width and needs no FormRow. Pure layout — never styles the controls; they
  * keep their own look and fill the slot the row hands them. Hand-rolled CSS.

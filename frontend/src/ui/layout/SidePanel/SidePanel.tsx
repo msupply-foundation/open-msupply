@@ -8,6 +8,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '../../elements/accordion/Accordion';
+import { ALT_SHIFT_M } from '../../utils/shortcuts';
 import styles from './SidePanel.module.css';
 
 export interface SidePanelProps {
@@ -22,22 +23,32 @@ export interface SidePanelProps {
   onClose?: () => void;
   /** The panel's content — a stack of <SidePanelSection>s, page-owned. */
   children: JSX.Element;
+  /**
+   * The panel element. `Page` binds a focus target here so that when the panel
+   * takes over the viewport in overlay mode, focus moves INTO it rather than
+   * staying parked behind the trap (spec/keyboard KB-X2).
+   */
+  ref?: (el: HTMLElement) => void;
 }
 
 /*
  * Details panel — the detail-view right-hand panel (the current app's
  * DetailPanel): additional info, related documents, comments. Pinned to the
- * inline-end edge of the Page's middle region; the Page frame owns how it docks
- * (a column that slides in and pushes the body at navOverlay and above, an
- * off-canvas drawer + scrim below it, with a drop shadow — see Page.module.css).
- * Pure layout + look, no open state of its own: the page composes
- * <SidePanelSection>s, hands the panel to Page's `sidePanel` slot, and passes
- * `onClose` (→ the close button, top inline-end). Scrolls independently of the
- * body.
+ * inline-end edge of the Page's middle region; the Page frame owns how it
+ * docks (a column that slides in and pushes the body at navOverlay and above,
+ * an off-canvas drawer + scrim below it, with a drop shadow — see
+ * Page.module.css). Pure layout + look, no open state of its own: the page
+ * composes <SidePanelSection>s, hands the panel to Page's `sidePanel` slot,
+ * and passes `onClose` (→ the close button, top inline-end). Scrolls
+ * independently of the body.
  */
 export const SidePanel = (props: SidePanelProps) => (
   <aside
+    ref={el => props.ref?.(el)}
     class={styles.panel}
+    // Programmatically focusable so Page can move focus into the panel when it
+    // becomes an overlay; never a Tab stop of its own (KB-T1 allows only 0/-1).
+    tabindex="-1"
     data-testid="detail-panel"
     aria-label={props.label ?? 'Details'}
   >
@@ -47,6 +58,11 @@ export const SidePanel = (props: SidePanelProps) => (
         <IconButton
           label={t('button.close')}
           icon={<CloseIcon />}
+          // createSidePanelOpen (beside this file) registers Alt+Shift+M as
+          // "hide the more-info panel"; this button is the control that
+          // advertises it, the mirror of the app bar's More carrying Alt+M
+          // (ui-surface S2 lists both sides of the pair).
+          shortcut={ALT_SHIFT_M}
           onClick={props.onClose}
         />
       )}
@@ -123,6 +139,30 @@ export const SidePanelSection = (props: SidePanelSectionProps) => {
     </section>
   );
 };
+
+export interface SidePanelSubheadingProps {
+  /** The sub-heading text — an `<h3>` within the section's `<h2>`. */
+  children: JSX.Element;
+  /**
+   * An optional control pinned to the heading's inline-end — a group action
+   * such as an Edit button (e.g. the Charges panel's Service-charges editor).
+   */
+  action?: JSX.Element;
+}
+
+/**
+ * A sub-heading grouping fields within a SidePanelSection — the pricing-group
+ * headings inside a shipment's Charges panel ("Stock charges", "Service
+ * charges"). A bold `<h3>` under the section's `<h2>`, with a gap below
+ * separating it from its group's rows; an optional `action` pins to the
+ * inline-end (centred against the heading).
+ */
+export const SidePanelSubheading = (props: SidePanelSubheadingProps) => (
+  <div class={styles.subheading}>
+    <h3 class={styles.subheadingTitle}>{props.children}</h3>
+    {props.action}
+  </div>
+);
 
 /**
  * The record-actions cluster inside a panel section (the registry's

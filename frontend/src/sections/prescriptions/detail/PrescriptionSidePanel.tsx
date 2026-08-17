@@ -9,6 +9,7 @@ import {
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { TextArea } from '../../../ui/elements/inputs/TextArea';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
+import { UserLabel } from '../../../ui/elements/typography/UserLabel';
 import { Text } from '../../../ui/elements/typography/Text';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
@@ -107,7 +108,6 @@ export const PrescriptionSidePanel: Component<
           <TextField
             label={t('label.reference')}
             hideLabel
-            width="full"
             data-testid="customer-reference-field"
             value={props.edit.state.theirReference}
             disabled={props.disabled}
@@ -125,7 +125,12 @@ export const PrescriptionSidePanel: Component<
         collapsible
       >
         <FieldRow label={t('label.entered-by')}>
-          <Text variant="body">{props.node.user?.username ?? '—'}</Text>
+          <UserLabel
+            username={props.node.user?.username}
+            email={props.node.user?.email}
+            label={t('label.entered-by')}
+            testId="entered-by-field"
+          />
         </FieldRow>
         <FieldRow label={t('label.created')}>
           <Text variant="body">
@@ -148,7 +153,6 @@ export const PrescriptionSidePanel: Component<
           <TextArea
             label={t('heading.comment')}
             hideLabel
-            width="full"
             data-testid="comment-field"
             rows={3}
             value={props.edit.state.comment}
@@ -278,10 +282,13 @@ export const PrescriptionSidePanel: Component<
               {t('label.delete')}
             </Button>
           </Show>
-          {/* Cancel — VERIFIED only; the permission gate withholds with its
-              explanation through the affordance (AC-X4). Danger tone: voiding
-              a verified prescription is destructive. */}
-          <Show when={canCancelPrescription(status())}>
+          {/* Cancel — VERIFIED only, never on a cancellation reversal; the
+              permission gate withholds with its explanation through the
+              affordance (AC-X4). Danger tone: voiding a verified prescription
+              is destructive. */}
+          <Show
+            when={canCancelPrescription(status(), props.node.isCancellation)}
+          >
             <Button
               variant="danger"
               icon={<MinusCircleIcon />}

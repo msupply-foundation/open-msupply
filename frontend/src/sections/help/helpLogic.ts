@@ -31,8 +31,9 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export const isValidEmail = (email: string): boolean =>
   EMAIL_RE.test(email.trim());
 
-// Send is enabled exactly when the email passes the client check AND the message
-// is non-empty; it disables again whenever either stops holding (OMS-REG-HLP-01.2-.7).
+// Send is enabled exactly when the email passes the client check AND the
+// message is non-empty; it disables again whenever either stops holding
+// (OMS-REG-HLP-01.2-.7).
 export const canSendContactForm = (email: string, message: string): boolean =>
   isValidEmail(email) && message.trim().length > 0;
 

@@ -43,7 +43,7 @@ export interface ChangeLocationActionProps {
 }
 
 // The Change-location selection action: its footer button + a confirm →
-// working → success | error modal holding a LocationVolumeSelect picker,
+// working → error modal holding a LocationVolumeSelect picker,
 // applying the chosen location to every selected line.
 //
 // Written inline (not via a shared ActionModal) so the whole flow is readable
@@ -74,7 +74,10 @@ export const ChangeLocationAction: Component<
   );
 };
 
-type Phase = 'confirm' | 'working' | 'success' | 'error';
+// No success phase: a clean apply CLOSES the dialog — closure is the
+// confirmation and the rows' new location behind it is the visible result
+// (spec/ui-standards/controls.md § dialogs, D22; § action feedback, D21).
+type Phase = 'confirm' | 'working' | 'error';
 
 const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
   const [locationId, setLocationId] = createSignal<string | null>(null);
@@ -89,9 +92,10 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
         .selectedIds()
         .map(id => ({ id, location: { value: locationId() } })),
     });
-    if (!outcome) return props.onClose();
+    if (!outcome) return setPhase('confirm'); // handled globally
     props.onCommit(outcome.commit);
-    if (outcome.errors.size === 0) return setPhase('success');
+    // Clean apply: close — the rows already show their new location.
+    if (outcome.errors.size === 0) return props.onClose();
     props.onError(outcome.errors); // stamp so the rows show the errors too
     setErrorCount(outcome.errors.size);
     setPhase('error');
@@ -129,9 +133,6 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
             </>
           }
         >
-          <Match when={phase() === 'success'}>
-            {tPlural('messages.changed-location', props.selectedIds().length)}
-          </Match>
           <Match when={phase() === 'error'}>
             <Alert severity="error">
               {tPlural('messages.line-errors', errorCount())}
@@ -154,6 +155,7 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
               <Button
                 variant="primary"
                 loading={phase() === 'working'}
+                confirms="plain"
                 data-testid="dialog-button-ok"
                 onClick={() => void run()}
               >
@@ -162,15 +164,6 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
             </>
           }
         >
-          <Match when={phase() === 'success'}>
-            <Button
-              variant="secondary"
-              data-testid="dialog-button-ok"
-              onClick={props.onClose}
-            >
-              {t('button.ok')}
-            </Button>
-          </Match>
           <Match when={phase() === 'error'}>
             <CancelButton
               data-testid="dialog-button-cancel"

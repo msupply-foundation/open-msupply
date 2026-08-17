@@ -45,12 +45,28 @@ export interface PaginatedSearch<T> {
    * applied (stale responses are discarded and don't settle it).
    */
   pending: () => boolean;
-  /** A subsequent page is in flight (append a spinner row, don't blank the list). */
+  /**
+   * A subsequent page is in flight (append a spinner row, don't blank the
+   * list).
+   */
   loadingMore: () => boolean;
   /** More pages exist for the current search (accumulated < totalCount). */
   hasMore: () => boolean;
   /** Set the search text — debounced; resets to page 0 once it settles. */
   setSearch: (value: string) => void;
+  /**
+   * Abandon the current search: forget the typed text AND the pages fetched for
+   * it, dropping anything in flight or waiting on the debounce, and re-arm the
+   * deferred first fetch so the next `ensure()` fetches page 0 for the empty
+   * search. Issues no request itself — closing a popup makes no network call.
+   *
+   * The counterpart to `ensure()`, and what keeps a reopened selector honest:
+   * without it `items()` goes on answering a query the user can no longer see
+   * (#985 — a picker reopened after a search offered only its own last result).
+   * No-op when the text is already empty, so reopening a selector nobody typed
+   * into is instant.
+   */
+  reset: () => void;
   /** Fetch the next page (call when the list scrolls near the bottom). No-op
    * while a fetch is in flight or when there are no more pages. */
   loadMore: () => void;
@@ -150,6 +166,31 @@ export const createPaginatedSearch = <T>(
     runSearch(value);
   };
 
+  // Abandon the search (see `reset` in the interface). Everything the old text
+  // produced goes: the debounced call that hasn't fired, any response still in
+  // flight (bumping the request id makes the guard in fetchAt drop it), and the
+  // rows themselves — they answer a query that no longer exists, and leaving
+  // them behind is precisely how a reopened picker ends up presenting one
+  // stale search as the whole list. `settled` goes back to undefined, so
+  // `pending()` correctly says nothing answers the empty search yet.
+  const reset = () => {
+    // Nothing to abandon: the held rows — or the fetch on its way — already
+    // answer the empty search.
+    if (search() === '') return;
+    requestId++;
+    runSearch.cancel();
+    fetching = false;
+    armed = false;
+    batch(() => {
+      setSearchSignal('');
+      setItems([]);
+      setTotalCount(0);
+      setSettled(undefined);
+      setLoading(false);
+      setLoadingMore(false);
+    });
+  };
+
   const loadMore = () => {
     if (fetching || !hasMore()) return;
     void fetchAt(search(), items().length);
@@ -178,6 +219,7 @@ export const createPaginatedSearch = <T>(
     loadingMore,
     hasMore,
     setSearch,
+    reset,
     loadMore,
     ensure,
   };

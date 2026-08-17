@@ -39,5 +39,11 @@ e2e/playwright-report
 # Local git worktrees (multi-worktree dev flow)
 /.worktrees/
 
+# Deploy bookkeeping, written by deploy/build-and-deploy.sh into the server's
+# build checkout (untracked so `git reset --hard` in the poller leaves it be)
+/.deploy-state
+/.deploy-last-success
+
 # Per-developer Claude Code notes
 CLAUDE.local.md
+__pycache__/

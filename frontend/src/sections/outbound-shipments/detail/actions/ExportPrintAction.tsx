@@ -5,15 +5,15 @@ import { PrinterIcon } from '../../../../ui/icons';
 import { SelectReportModal } from '../../../../domain/reports';
 
 // The outbound-shipment detail Export/Print action (spec S3 → reports S4,
-// OMS-REG-DIST-04.9–E3): the header trigger button + the shared "Select a form" dialog
-// (owned by the reports vertical). Peer of the other detail actions
-// (self-contained button + modal, kdd/action-modal) and a static mirror of the
-// inbound / customer-return / stocktake ExportPrintAction. The selector is
-// imported STATICALLY (it is already a shared chunk across those verticals), so
-// the dialog opens instantly with its own loading spinner — a lazy import here
-// added an extra chunk-load beat on first open (the reported flicker) for no
-// bundle saving, since the chunk ships regardless. Available at every status;
-// this only names the trigger and passes the shipment id.
+// OMS-REG-DIST-04.9–E3): the header trigger button + the shared "Select a
+// form" dialog (owned by the reports vertical). Peer of the other detail
+// actions (self-contained button + modal, kdd/action-modal) and a static mirror
+// of the inbound / customer-return / stocktake ExportPrintAction. The selector
+// is imported STATICALLY (it is already a shared chunk across those verticals),
+// so the dialog opens instantly with its own loading spinner — a lazy import
+// here added an extra chunk-load beat on first open (the reported flicker) for
+// no bundle saving, since the chunk ships regardless. Available at every
+// status; this only names the trigger and passes the shipment id.
 export interface ExportPrintActionProps {
   shipmentId: string;
 }
@@ -25,6 +25,10 @@ export const ExportPrintAction: Component<ExportPrintActionProps> = props => {
       <Button
         variant="secondary"
         icon={<PrinterIcon />}
+        // Icon-only on a narrow viewport, so the header's action cluster fits
+        // beside the breadcrumb instead of taking a row of its own.
+        collapsible="narrow"
+        title={t('button.export-or-print')}
         data-testid="export-print-button"
         onClick={() => setOpen(true)}
       >

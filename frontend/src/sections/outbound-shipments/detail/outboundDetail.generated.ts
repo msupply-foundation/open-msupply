@@ -99,9 +99,11 @@ export type OutboundLineFragment = {
   location: {
   id: string;
   code: string;
+  onHold: boolean;
 } | null;
   stockLine: {
   id: string;
+  onHold: boolean;
 } | null;
   vvmStatus: {
   id: string;
@@ -139,12 +141,12 @@ export type FullOutboundVariables = {
 export type FullOutboundResult = {
   invoice: ({
   __typename: "InvoiceNode";
-} & OutboundInfoFragment & {
+} & {
   lines: {
   totalCount: number;
   nodes: Array<OutboundLineFragment>;
 };
-}) | ({
+} & OutboundInfoFragment) | ({
   __typename: "NodeError";
 } & {
   error: {
@@ -154,7 +156,7 @@ export type FullOutboundResult = {
 };
 
 export const FullOutbound = {
-  query: "query fullOutbound($storeId: String!, $id: String!) {\n  invoice(storeId: $storeId, id: $id, type: OUTBOUND_SHIPMENT) {\n    __typename\n    ... on InvoiceNode {\n      ...OutboundInfo\n      lines {\n        totalCount\n        nodes {\n          ...OutboundLine\n        }\n      }\n    }\n    ... on NodeError {\n      error {\n        description\n      }\n    }\n  }\n}\n\nfragment OutboundInfo on InvoiceNode {\n  id\n  status\n  invoiceNumber\n  onHold\n  createdDatetime\n  allocatedDatetime\n  pickedDatetime\n  backdatedDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  colour\n  comment\n  theirReference\n  transportReference\n  expectedDeliveryDate\n  taxPercentage\n  currencyRate\n  currency {\n    id\n    code\n    isHomeCurrency\n  }\n  shippingMethod {\n    id\n    method\n  }\n  user {\n    username\n    email\n  }\n  requisition {\n    id\n    requisitionNumber\n    createdDatetime\n    user {\n      username\n    }\n  }\n  linkedShipment {\n    id\n  }\n  otherParty(storeId: $storeId) {\n    id\n    name\n    code\n    isOnHold\n    store {\n      id\n    }\n  }\n  pricing {\n    totalBeforeTax\n    totalAfterTax\n    foreignCurrencyTotalAfterTax\n    stockTotalBeforeTax\n    stockTotalAfterTax\n    serviceTotalBeforeTax\n    serviceTotalAfterTax\n    taxPercentage\n    totalVolume\n  }\n  customFields\n}\n\nfragment OutboundLine on InvoiceLineNode {\n  id\n  type\n  itemId\n  itemName\n  itemCode\n  item {\n    id\n    code\n    name\n    unitName\n    isVaccine\n    doses\n  }\n  packSize\n  numberOfPacks\n  shippedNumberOfPacks\n  receivedNumberOfPacks\n  batch\n  expiryDate\n  sellPricePerPack\n  totalBeforeTax\n  totalAfterTax\n  taxPercentage\n  foreignCurrencyPriceBeforeTax\n  note\n  locationName\n  location {\n    id\n    code\n  }\n  stockLine {\n    id\n  }\n  vvmStatus {\n    id\n    description\n  }\n  volumePerPack\n}",
+  query: "query fullOutbound($storeId: String!, $id: String!) {\n  invoice(storeId: $storeId, id: $id, type: OUTBOUND_SHIPMENT) {\n    __typename\n    ... on InvoiceNode {\n      ...OutboundInfo\n      lines {\n        totalCount\n        nodes {\n          ...OutboundLine\n        }\n      }\n    }\n    ... on NodeError {\n      error {\n        description\n      }\n    }\n  }\n}\n\nfragment OutboundInfo on InvoiceNode {\n  id\n  status\n  invoiceNumber\n  onHold\n  createdDatetime\n  allocatedDatetime\n  pickedDatetime\n  backdatedDatetime\n  shippedDatetime\n  deliveredDatetime\n  receivedDatetime\n  verifiedDatetime\n  colour\n  comment\n  theirReference\n  transportReference\n  expectedDeliveryDate\n  taxPercentage\n  currencyRate\n  currency {\n    id\n    code\n    isHomeCurrency\n  }\n  shippingMethod {\n    id\n    method\n  }\n  user {\n    username\n    email\n  }\n  requisition {\n    id\n    requisitionNumber\n    createdDatetime\n    user {\n      username\n    }\n  }\n  linkedShipment {\n    id\n  }\n  otherParty(storeId: $storeId) {\n    id\n    name\n    code\n    isOnHold\n    store {\n      id\n    }\n  }\n  pricing {\n    totalBeforeTax\n    totalAfterTax\n    foreignCurrencyTotalAfterTax\n    stockTotalBeforeTax\n    stockTotalAfterTax\n    serviceTotalBeforeTax\n    serviceTotalAfterTax\n    taxPercentage\n    totalVolume\n  }\n  customFields\n}\n\nfragment OutboundLine on InvoiceLineNode {\n  id\n  type\n  itemId\n  itemName\n  itemCode\n  item {\n    id\n    code\n    name\n    unitName\n    isVaccine\n    doses\n  }\n  packSize\n  numberOfPacks\n  shippedNumberOfPacks\n  receivedNumberOfPacks\n  batch\n  expiryDate\n  sellPricePerPack\n  totalBeforeTax\n  totalAfterTax\n  taxPercentage\n  foreignCurrencyPriceBeforeTax\n  note\n  locationName\n  location {\n    id\n    code\n    onHold\n  }\n  stockLine {\n    id\n    onHold\n  }\n  vvmStatus {\n    id\n    description\n  }\n  volumePerPack\n}",
 } as TypedDocument<FullOutboundResult, FullOutboundVariables>;
 
 export type OutboundLinesVariables = {
@@ -279,7 +281,7 @@ export type OutboundLinesResult = {
 };
 
 export const OutboundLines = {
-  query: "query outboundLines($storeId: String!, $page: PaginationInput, $filter: InvoiceLineFilterInput, $sort: [InvoiceLineSortInput!]) {\n  invoiceLines(storeId: $storeId, page: $page, filter: $filter, sort: $sort) {\n    ... on InvoiceLineConnector {\n      __typename\n      totalCount\n      nodes {\n        ...OutboundLine\n      }\n    }\n  }\n}\n\nfragment OutboundLine on InvoiceLineNode {\n  id\n  type\n  itemId\n  itemName\n  itemCode\n  item {\n    id\n    code\n    name\n    unitName\n    isVaccine\n    doses\n  }\n  packSize\n  numberOfPacks\n  shippedNumberOfPacks\n  receivedNumberOfPacks\n  batch\n  expiryDate\n  sellPricePerPack\n  totalBeforeTax\n  totalAfterTax\n  taxPercentage\n  foreignCurrencyPriceBeforeTax\n  note\n  locationName\n  location {\n    id\n    code\n  }\n  stockLine {\n    id\n  }\n  vvmStatus {\n    id\n    description\n  }\n  volumePerPack\n}",
+  query: "query outboundLines($storeId: String!, $page: PaginationInput, $filter: InvoiceLineFilterInput, $sort: [InvoiceLineSortInput!]) {\n  invoiceLines(storeId: $storeId, page: $page, filter: $filter, sort: $sort) {\n    ... on InvoiceLineConnector {\n      __typename\n      totalCount\n      nodes {\n        ...OutboundLine\n      }\n    }\n  }\n}\n\nfragment OutboundLine on InvoiceLineNode {\n  id\n  type\n  itemId\n  itemName\n  itemCode\n  item {\n    id\n    code\n    name\n    unitName\n    isVaccine\n    doses\n  }\n  packSize\n  numberOfPacks\n  shippedNumberOfPacks\n  receivedNumberOfPacks\n  batch\n  expiryDate\n  sellPricePerPack\n  totalBeforeTax\n  totalAfterTax\n  taxPercentage\n  foreignCurrencyPriceBeforeTax\n  note\n  locationName\n  location {\n    id\n    code\n    onHold\n  }\n  stockLine {\n    id\n    onHold\n  }\n  vvmStatus {\n    id\n    description\n  }\n  volumePerPack\n}",
 } as TypedDocument<OutboundLinesResult, OutboundLinesVariables>;
 
 export type UpdateOutboundShipmentVariables = {
@@ -609,28 +611,3 @@ export type OutboundStocktakeConflictResult = {
 export const OutboundStocktakeConflict = {
   query: "query outboundStocktakeConflict($storeId: String!, $onOrAfter: NaiveDate) {\n  stocktakes(\n    storeId: $storeId\n    filter: {stocktakeDate: {afterOrEqualTo: $onOrAfter}}\n  ) {\n    ... on StocktakeConnector {\n      __typename\n      totalCount\n    }\n  }\n}",
 } as TypedDocument<OutboundStocktakeConflictResult, OutboundStocktakeConflictVariables>;
-
-export type OutboundActivityLogsVariables = {
-  storeId: string;
-  recordId: string;
-};
-
-export type OutboundActivityLogsResult = {
-  activityLogs: ({
-  __typename: "ActivityLogConnector";
-} & {
-  nodes: Array<{
-  id: string;
-  type: "USER_LOGGED_IN" | "INVOICE_CREATED" | "INVOICE_DELETED" | "INVOICE_NUMBER_ALLOCATED" | "INVOICE_STATUS_ALLOCATED" | "INVOICE_STATUS_PICKED" | "INVOICE_STATUS_SHIPPED" | "INVOICE_STATUS_DELIVERED" | "INVOICE_STATUS_RECEIVED" | "INVOICE_STATUS_VERIFIED" | "INVENTORY_ADJUSTMENT" | "STOCKTAKE_CREATED" | "STOCKTAKE_DELETED" | "STOCKTAKE_STATUS_FINALISED" | "STOCKTAKE_EDITED" | "REQUISITION_CREATED" | "REQUISITION_DELETED" | "REQUISITION_NUMBER_ALLOCATED" | "REQUISITION_APPROVED" | "REQUISITION_STATUS_SENT" | "REQUISITION_STATUS_FINALISED" | "STOCK_LOCATION_CHANGE" | "STOCK_COST_PRICE_CHANGE" | "STOCK_SELL_PRICE_CHANGE" | "STOCK_EXPIRY_DATE_CHANGE" | "STOCK_BATCH_CHANGE" | "STOCK_ON_HOLD" | "STOCK_OFF_HOLD" | "REPACK" | "PRESCRIPTION_CREATED" | "PRESCRIPTION_DELETED" | "PRESCRIPTION_STATUS_PICKED" | "PRESCRIPTION_STATUS_VERIFIED" | "PRESCRIPTION_STATUS_CANCELLED" | "SENSOR_LOCATION_CHANGED" | "ASSET_CREATED" | "ASSET_UPDATED" | "ASSET_DELETED" | "ASSET_LOG_CREATED" | "ASSET_CATALOGUE_ITEM_CREATED" | "QUANTITY_FOR_LINE_HAS_BEEN_SET_TO_ZERO" | "ASSET_CATALOGUE_ITEM_PROPERTY_CREATED" | "ASSET_LOG_REASON_CREATED" | "ASSET_LOG_REASON_DELETED" | "ASSET_PROPERTY_CREATED" | "VACCINE_COURSE_CREATED" | "PROGRAM_CREATED" | "PROGRAM_UPDATED" | "VACCINE_COURSE_UPDATED" | "RNR_FORM_CREATED" | "RNR_FORM_UPDATED" | "RNR_FORM_DELETED" | "RNR_FORM_FINALISED" | "VACCINATION_CREATED" | "VACCINATION_UPDATED" | "VACCINATION_DELETED" | "DEMOGRAPHIC_INDICATOR_CREATED" | "DEMOGRAPHIC_INDICATOR_UPDATED" | "DEMOGRAPHIC_PROJECTION_CREATED" | "DEMOGRAPHIC_PROJECTION_UPDATED" | "INVOICE_STATUS_CANCELLED" | "ITEM_VARIANT_CREATED" | "ITEM_VARIANT_UPDATED" | "ITEM_VARIANT_DELETED" | "ITEM_VARIANT_UPDATED_NAME" | "ITEM_VARIANT_UPDATE_LOCATION_TYPE" | "ITEM_VARIANT_UPDATE_MANUFACTURER" | "ITEM_VARIANT_UPDATE_DOSE_PER_UNIT" | "ITEM_VARIANT_UPDATE_VVM_TYPE" | "VVM_STATUS_LOG_UPDATED" | "VOLUME_PER_PACK_CHANGED" | "STOCK_LINE_EDIT" | "PURCHASE_ORDER_CREATED" | "PURCHASE_ORDER_REQUEST_APPROVAL" | "PURCHASE_ORDER_UNAUTHORISED" | "PURCHASE_ORDER_SENT" | "PURCHASE_ORDER_CONFIRMED" | "PURCHASE_ORDER_FINALISED" | "PURCHASE_ORDER_DELETED" | "PURCHASE_ORDER_LINE_CREATED" | "PURCHASE_ORDER_LINE_UPDATED" | "PURCHASE_ORDER_LINE_DELETED" | "PURCHASE_ORDER_STATUS_CHANGED_FROM_SENT_TO_CONFIRMED" | "PURCHASE_ORDER_LINE_STATUS_CLOSED" | "PURCHASE_ORDER_LINE_STATUS_CHANGED_FROM_SENT_TO_NEW" | "PATIENT_CREATED" | "PATIENT_UPDATED" | "INVOICE_DATE_BACKDATED" | "PACKAGING_VARIANT_CREATED" | "PACKAGING_VARIANT_UPDATED" | "PACKAGING_VARIANT_DELETED" | "BUNDLED_ITEM_CREATED" | "BUNDLED_ITEM_UPDATED" | "BUNDLED_ITEM_DELETED" | "INVOICE_RECEIVED_QTY_UPDATED";
-  datetime: string;
-  to: string | null;
-  user: {
-  username: string;
-} | null;
-}>;
-});
-};
-
-export const OutboundActivityLogs = {
-  query: "query outboundActivityLogs($storeId: String!, $recordId: String!) {\n  activityLogs(storeId: $storeId, filter: {recordId: {equalTo: $recordId}}) {\n    ... on ActivityLogConnector {\n      __typename\n      nodes {\n        id\n        type\n        datetime\n        to\n        user {\n          username\n        }\n      }\n    }\n  }\n}",
-} as TypedDocument<OutboundActivityLogsResult, OutboundActivityLogsVariables>;

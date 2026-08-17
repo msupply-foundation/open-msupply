@@ -1,6 +1,6 @@
 import { t } from '../../../intl';
 import {
-  FilterSelect,
+  FilterMultiSelect,
   FilterTextInput,
   FilterDate,
   constructFilters,
@@ -15,16 +15,17 @@ import type { PatientsVariables } from './patients.generated';
 export type PatientFilter = NonNullable<PatientsVariables['filter']>;
 
 /*
- * Type-driven, EXHAUSTIVE filter definitions for the patient list (spec/patients
- * S1 › Filters, AC-L2/L3). The map passed to constructFilters is keyed by EVERY
- * key of PatientFilterInput: a definition to expose, or `null` to dismiss — so
- * codegen adding a filter key breaks compilation until it is classified, and
- * this one map is both the definitions and the completeness proof. Map key order
- * is the toolbar display order.
+ * Type-driven, EXHAUSTIVE filter definitions for the patient list
+ * (spec/patients S1 › Filters, AC-L2/L3). The map passed to constructFilters
+ * is keyed by EVERY key of PatientFilterInput: a definition to expose, or
+ * `null` to dismiss — so codegen adding a filter key breaks compilation until
+ * it is classified, and this one map is both the definitions and the
+ * completeness proof. Map key order is the toolbar display order.
  *
  * Text filters match as substrings ({ like }); the Patient ID (identifier)
  * filter is the broad OR match across code / secondary code / name / program-
- * enrolment id (AC-L3); gender and date of birth match exactly ({ equalTo }).
+ * enrolment id (AC-L3); date of birth matches exactly ({ equalTo }) and
+ * gender as any of the ticked values ({ equalAny }, D110).
  * Custom-field filtering rides on its own bar (the shared customFieldFilters →
  * dynamicFilter, spec/ui-standards/custom-fields), not a PatientFilter chip, so
  * `dynamicFilter` stays dismissed in this map.
@@ -37,7 +38,7 @@ const FILTERS: Filter<PatientFilter>[] = constructFilters<PatientFilter>({
       <FilterTextInput
         label={t('label.first-name')}
         testId={props.testId}
-        placeholder={t('placeholder.search-by-first-name')}
+        placeholder={t('placeholder.search')}
         value={props.filter().firstName?.like ?? ''}
         onInput={value =>
           props.setPartialFilter({ firstName: value ? { like: value } : null })
@@ -51,7 +52,7 @@ const FILTERS: Filter<PatientFilter>[] = constructFilters<PatientFilter>({
       <FilterTextInput
         label={t('label.last-name')}
         testId={props.testId}
-        placeholder={t('placeholder.search-by-last-name')}
+        placeholder={t('placeholder.search')}
         value={props.filter().lastName?.like ?? ''}
         onInput={value =>
           props.setPartialFilter({ lastName: value ? { like: value } : null })
@@ -66,7 +67,7 @@ const FILTERS: Filter<PatientFilter>[] = constructFilters<PatientFilter>({
       <FilterTextInput
         label={t('label.patient-id')}
         testId={props.testId}
-        placeholder={t('placeholder.search-by-identifier')}
+        placeholder={t('placeholder.search')}
         value={props.filter().identifier?.like ?? ''}
         onInput={value =>
           props.setPartialFilter({ identifier: value ? { like: value } : null })
@@ -91,21 +92,22 @@ const FILTERS: Filter<PatientFilter>[] = constructFilters<PatientFilter>({
       />
     ),
   },
-  // Gender — a single-select over the store's configured subset (AC-G3), exact
-  // match. gender.equalAny is honoured too, but a single-select maps to equalTo.
+  // Gender — a multi-select over the store's configured subset (AC-G3),
+  // matching any of the ticks via gender.equalAny (honoured — contract §
+  // listing; D110). None → null so the chip stays.
   gender: {
     label: () => t('label.gender'),
     render: props => (
-      <FilterSelect<Gender>
+      <FilterMultiSelect<Gender>
         label={t('label.gender')}
         testId={props.testId}
-        value={props.filter().gender?.equalTo ?? ''}
-        options={[
-          { value: '', label: t('label.any') },
-          ...genderOptions().map(o => ({ value: o.value, label: o.label })),
-        ]}
-        onChange={value =>
-          props.setPartialFilter({ gender: value ? { equalTo: value } : null })
+        placeholder={t('label.any')}
+        values={props.filter().gender?.equalAny ?? []}
+        options={genderOptions().map(o => ({ value: o.value, label: o.label }))}
+        onChange={values =>
+          props.setPartialFilter({
+            gender: values.length ? { equalAny: values } : null,
+          })
         }
       />
     ),
@@ -116,7 +118,7 @@ const FILTERS: Filter<PatientFilter>[] = constructFilters<PatientFilter>({
       <FilterTextInput
         label={t('label.next-of-kin')}
         testId={props.testId}
-        placeholder={t('placeholder.search-by-name')}
+        placeholder={t('placeholder.search')}
         value={props.filter().nextOfKinName?.like ?? ''}
         onInput={value =>
           props.setPartialFilter({
@@ -134,7 +136,7 @@ const FILTERS: Filter<PatientFilter>[] = constructFilters<PatientFilter>({
       <FilterTextInput
         label={t('label.program-enrolment')}
         testId={props.testId}
-        placeholder={t('label.program-enrolment')}
+        placeholder={t('placeholder.search')}
         value={props.filter().programEnrolmentName?.like ?? ''}
         onInput={value =>
           props.setPartialFilter({

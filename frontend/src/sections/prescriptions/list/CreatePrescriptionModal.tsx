@@ -123,12 +123,14 @@ export const CreatePrescriptionModal: Component<
         <>
           <Button
             variant="secondary"
+            confirms="cancel"
             data-testid="dialog-button-cancel"
             onClick={close}
           >
             {t('button.cancel')}
           </Button>
           <Button
+            confirms="plain"
             data-testid="dialog-button-ok"
             disabled={!patient()}
             loading={busy()}
@@ -175,6 +177,10 @@ export const CreatePrescriptionModal: Component<
           hideLabel
           inputTestId="clinician-select"
           value={clinicianId()}
+          // The create-clinician side flow (S8): the picker owns it, and a
+          // clinician created here comes back selected.
+          allowCreate
+          storeId={params.storeId}
           onChange={clinician => setClinicianId(clinician?.id)}
         />
       </FieldRow>
