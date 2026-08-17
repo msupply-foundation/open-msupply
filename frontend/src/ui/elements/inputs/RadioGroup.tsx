@@ -4,7 +4,11 @@ import styles from './RadioGroup.module.css';
 export interface RadioOption {
   value: string;
   label: string;
-  /** Optional muted second line under the label. */
+  /**
+   * Optional muted description. A second line under the label in the default
+   * appearance; in `card` it runs INLINE after the label, so the option reads
+   * as one sentence ("Full stocktake — count every item in your store").
+   */
   description?: string;
   disabled?: boolean;
   /**
@@ -32,6 +36,17 @@ interface RadioGroupProps {
   disabled?: boolean;
   /** Lay the options out in a row instead of the default column. */
   orientation?: 'vertical' | 'horizontal';
+  /**
+   * How each option is drawn. `plain` (default) is the bare radio beside its
+   * label. `card` gives every option its own bordered box — the whole box is
+   * the click target, the label goes bold with its description running inline
+   * after it, and the chosen one takes a brand rim and a wash of the same
+   * colour, so the selection reads from across the dialog rather than from one
+   * small dot. For a short set of MUTUALLY EXCLUSIVE MODES that reshape the
+   * screen (the stocktake create modal's full / filtered / blank); an ordinary
+   * yes/no or a long option list stays `plain`.
+   */
+  appearance?: 'plain' | 'card';
   /**
    * Inline-start indent, in rem — to line the options up under a sibling
    * control's text (e.g. the include-all radios sitting beneath a Combobox
@@ -78,11 +93,13 @@ export const RadioGroup = (props: RadioGroupProps): JSX.Element => {
       <div
         class={styles.items}
         data-orientation={props.orientation ?? 'vertical'}
+        data-appearance={props.appearance ?? 'plain'}
       >
         <For each={props.options}>
           {option => (
             <label
               class={styles.item}
+              data-appearance={props.appearance ?? 'plain'}
               data-disabled={props.disabled || option.disabled ? '' : undefined}
             >
               <input
