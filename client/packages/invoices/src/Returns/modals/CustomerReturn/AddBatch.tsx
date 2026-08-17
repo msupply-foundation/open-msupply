@@ -20,6 +20,7 @@ export const AddBatchButton = ({
   return (
     <Box flex={1} justifyContent="flex-end" display="flex" pb={0.5}>
       <ButtonWithIcon
+        data-testid="add-batch-button"
         disabled={disabled || returnIsDisabled}
         color="primary"
         variant="outlined"
