@@ -38,7 +38,12 @@ export const StoreSwitchModal: Component<{
       // The panel confirms by activating a store row, so the footer holds only
       // the way OUT — the house Cancel every modal offers (ui-standards ›
       // dialogs § chrome). Dismissing changes nothing (.29).
-      actions={<CancelButton onClick={props.onClose} />}
+      actions={
+        <CancelButton
+          data-testid="dialog-button-cancel"
+          onClick={props.onClose}
+        />
+      }
     >
       <StoreSelector
         stores={picker.stores()}

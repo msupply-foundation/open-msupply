@@ -223,7 +223,12 @@ const Body: Component<CreateInboundShipmentModalProps> = props => {
         minBodyHeightRem={27}
         // Picking a supplier is what confirms this step, so the footer holds
         // only the way out (ui-standards › dialogs § chrome).
-        actions={<CancelButton onClick={props.onClose} />}
+        actions={
+          <CancelButton
+            data-testid="dialog-button-cancel"
+            onClick={props.onClose}
+          />
+        }
       >
         <Show when={errorMessage()}>
           <Alert severity="error">{errorMessage()}</Alert>

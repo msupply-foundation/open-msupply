@@ -796,9 +796,14 @@ export const InputsShowcase = () => {
             rim + dot, the gap between them transparent —{' '}
             <code>accent-color</code> painted it white in both themes) and lay
             the label — with an optional muted description — beside it. Options
-            can be individually <code>disabled</code>, and{' '}
-            <code>indentRem</code> lines a sub-group up under a sibling control.
-            This is the create-stocktake type + include-all choice.
+            can be individually <code>disabled</code>;{' '}
+            <code>orientation="horizontal"</code> lays them in a row that{' '}
+            <em>wraps</em>, so a long pair still fits a narrow control column;
+            and <code>indentRem</code> lines a sub-group up under a sibling
+            control's text, past a leading icon. The <em>Which items</em> group
+            below is <code>indentRem</code>'s only remaining use — the
+            create-stocktake modal it was built for now labels that choice{' '}
+            <em>Include</em> and gives it a row of its own (#837).
           </Lead>
           <Lead>
             <code>appearance="card"</code> is the same group drawn as selectable
