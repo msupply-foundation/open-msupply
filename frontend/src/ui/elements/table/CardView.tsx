@@ -17,7 +17,7 @@ import {
   useAccordionItemExpanded,
 } from '../accordion/Accordion';
 import { t } from '../../../intl';
-import type { CardGroup } from './columnTypes';
+import { visibleOnCard, type CardGroup } from './columnTypes';
 import styles from './DataTable.module.css';
 
 // A cell's card HEADER slot, or undefined when it belongs to the body.
@@ -382,10 +382,9 @@ export function CardView<T, G extends string>(props: {
         // and narrow-fallback threshold are computed without it, so the
         // neighbours close up instead of leaving a hole.
         const cells = () =>
-          row.getVisibleCells().filter(c => {
-            const meta = c.column.columnDef.meta;
-            return !meta?.hideOnCard && !meta?.hideOnCardWhen?.(row.original);
-          });
+          row
+            .getVisibleCells()
+            .filter(c => visibleOnCard(c.column.columnDef.meta, row.original));
         const inHeader = (slot: 'primary' | 'badge') =>
           cells().filter(c => headerSlot(c) === slot);
         // Body cells = everything not in the header row.

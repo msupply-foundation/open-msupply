@@ -1,6 +1,7 @@
 import type { JSX } from 'solid-js';
 import type {
   ColumnDef,
+  ColumnMeta,
   HeaderContext,
   IdentifiedColumnDef,
   RowData,
@@ -179,6 +180,17 @@ declare module '@tanstack/solid-table' {
 }
 
 export type SortState<K extends string> = { key: K; desc: boolean };
+
+// Card view's per-cell visibility — the ONE filter CardView applies at its
+// cell source, which every later split (header slots, body groups, each
+// group's width template and narrow-fallback threshold) reads: the column-wide
+// `hideOnCard`, then the per-row `hideOnCardWhen` (both documented on the meta
+// above). Pure so it's testable in the node environment; CardView owns the
+// tracking scope it runs in.
+export const visibleOnCard = <T>(
+  meta: ColumnMeta<T, unknown> | undefined,
+  row: T
+): boolean => !meta?.hideOnCard && !meta?.hideOnCardWhen?.(row);
 
 // How a column identifies itself — a discriminated union of the three real
 // scenarios, replacing TanStack's raw accessorKey/accessorFn/id fields (which
