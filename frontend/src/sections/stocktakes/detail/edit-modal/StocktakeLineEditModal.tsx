@@ -972,80 +972,86 @@ const StocktakeLineEditContent = (
       ...getNumberCell({ cardWidth: 7.5 }),
       cell: info => {
         const line = info.row.original;
+        // A getter, not a hoisted const: read inside JSX it stays tracked, so
+        // the hint follows the draft store as the counter types
+        // (kdd/solid-reactivity-pitfalls). null = nothing to say — the line is
+        // uncounted, or blind stocktake has taken Snapshot away and a
+        // difference would hand the theoretical stock back.
+        const diff = () => (hideSnapshotStock() ? null : lineDifference(line));
         return (
-          <NumberField
-            ref={batchFields.ref(line.id)}
-            label={t('label.counted-num-of-packs')}
-            hideLabel
-            size="small"
-            // Packs can be counted in fractions (a part-full pack); the doses
-            // formula multiplies packSize by this, so keep the same 2-dp room.
-            decimalLimit={2}
-            disabled={!line.countThisLine}
-            value={line.countedNumberOfPacks ?? undefined}
-            error={
-              lineErrors().get(line.id) === 'StockLineReducedBelowZero'
-                ? t('error.reduced-below-zero')
-                : undefined
-            }
-            errorTestId="stocktake-line-error"
-            // NumberField commits a real number (or undefined when cleared);
-            // the draft stores null for empty, so map undefined → null.
-            // setCounted also drops a now-mismatched reason when the count
-            // changes adjustment direction.
-            onChange={value => setCounted(line, value ?? null)}
-          />
+          <>
+            <NumberField
+              ref={batchFields.ref(line.id)}
+              label={t('label.counted-num-of-packs')}
+              hideLabel
+              size="small"
+              // Packs can be counted in fractions (a part-full pack); the doses
+              // formula multiplies packSize by this, so keep the same 2-dp room.
+              decimalLimit={2}
+              disabled={!line.countThisLine}
+              value={line.countedNumberOfPacks ?? undefined}
+              error={
+                lineErrors().get(line.id) === 'StockLineReducedBelowZero'
+                  ? t('error.reduced-below-zero')
+                  : undefined
+              }
+              errorTestId="stocktake-line-error"
+              // NumberField commits a real number (or undefined when cleared);
+              // the draft stores null for empty, so map undefined → null.
+              // setCounted also drops a now-mismatched reason when the count
+              // changes adjustment direction.
+              onChange={value => setCounted(line, value ?? null)}
+            />
+            {/* The difference, as a HINT under the counted figure rather than a
+                field of its own (inbound's units hint does the same under Packs
+                received). It is counted − snapshot — derived, never typed — so
+                a whole labelled field for it would cost the panel a tenth slot
+                and push every neighbour narrower, for one short number that
+                belongs to the box above it anyway.
+
+                Rendered UNCONDITIONALLY, empty when there is nothing to say
+                (uncounted, or blind stocktake), and the CSS reserves its line:
+                the row height is then constant, so the figure appearing as you
+                type never makes the card jump. */}
+            <span
+              class={styles.diffHint}
+              // Weighted only where there IS a discrepancy — the batch worth a
+              // second look. Zero, and "not counted yet", stay quiet.
+              data-signal={diff() ? '' : undefined}
+            >
+              {diff() === null
+                ? ''
+                : // Explicit + on a positive adjustment (a negative carries its
+                  // own sign), so direction reads without colour doing the work.
+                  `${diff()! > 0 ? '+' : ''}${formatNumber(diff()!, {
+                    maximumFractionDigits: 2,
+                  })}`}
+            </span>
+          </>
         );
       },
     },
-    // Difference = counted − snapshot, immediately after the two figures it is
-    // drawn from — the comparison the counter is actually making. Shares the
-    // detail table's `lineDifference` (../lines/stocktakeLine), so the editor
-    // and S3 can never disagree on the sign or on what "uncounted" means.
+    // Difference = counted − snapshot. On the CARD it rides as the hint under
+    // Counted (above), so it costs the panel no slot; this column is the TABLE
+    // face of the same figure — hideOnCard, because a table row has nowhere to
+    // put a hint under a cell, and a column there costs the card nothing. The
+    // same split inbound uses for Units received.
     //
-    // A read-only VALUE, not a disabled input: the absence of a box is what
-    // says read-only, and a difference is arithmetic that is never typed
-    // (kdd/form-layout; inbound's Difference and Line total do the same).
-    //
-    // Omitted alongside Snapshot under blind stocktake — the same gate, since
-    // a difference would hand back the theoretical stock the preference exists
-    // to hide (rules.md § store-preference gates names Snapshot and Difference
-    // together, for the detail table AND this editor).
+    // Omitted alongside Snapshot under blind stocktake: a difference hands back
+    // the theoretical stock the preference exists to hide (rules.md
+    // § store-preference gates gates the pair together).
     ...(hideSnapshotStock()
       ? []
       : [
           {
-            c: { id: 'difference' },
-            header: () => t('label.difference'),
-            cardGroup: 'batch',
-            ...getNumberCell({ cardWidth: 5 }),
-            cell: info => {
-              const line = info.row.original;
-              // A getter, not a hoisted const: read inside JSX it stays
-              // tracked, so the figure follows the draft store as the counter
-              // types (kdd/solid-reactivity-pitfalls).
-              const diff = () => lineDifference(line);
-              return (
-                <span
-                  class={styles.statValue}
-                  // Weight only when there IS a discrepancy — that is the
-                  // batch worth looking at. Zero, and "not counted yet", are
-                  // non-events.
-                  data-signal={diff() ? '' : undefined}
-                >
-                  {/* Uncounted ⇒ nothing to compare against. An em dash, as
-                      every other read-only "no value" in the vertical uses. */}
-                  {diff() === null
-                    ? '—'
-                    : // Explicit + on a positive adjustment (a negative
-                      // carries its own sign), so the direction reads without
-                      // colour doing the work.
-                      `${diff()! > 0 ? '+' : ''}${formatNumber(diff()!, {
-                        maximumFractionDigits: 2,
-                      })}`}
-                </span>
-              );
+            c: {
+              accessor: line => lineDifference(line) ?? '',
+              id: 'difference',
             },
+            header: () => t('label.difference'),
+            // Same shape as the detail table's own Difference column — an
+            // accessor + the number cell, derived so unsortable.
+            ...getNumberCell({ hideOnCard: true }),
           } satisfies Column<DraftLine, never, GroupKey>,
         ]),
     {
