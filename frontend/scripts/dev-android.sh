@@ -53,14 +53,33 @@ fi
 # wait, the tunnel and capacitor's server.url all agree with the port vite
 # actually binds. (Hardcoding 3005 against a checkout locked to another port
 # hangs the script forever in the "wait for vite" loop below.)
-DEV_PORT="${DEV_SERVER_PORT:-$(sed -n 's/^[[:space:]]*DEV_SERVER_PORT[[:space:]]*=[[:space:]]*\([^[:space:]#]*\).*/\1/p' .env.local 2>/dev/null | tr -d "\"'" | head -1)}"
-DEV_PORT="${DEV_PORT:-3005}"
+#
+# .env.local is gitignored and a fresh checkout has none, so its absence is the
+# NORMAL case, not an error — guard the read with a -f test rather than letting
+# a failing sed speak for it. (Under `set -e -o pipefail` the exit status of a
+# sed that can't open the file propagates out of the command substitution and
+# aborts the whole script, and with sed's stderr sent to /dev/null it aborts
+# without printing anything at all.)
+DEV_PORT="${DEV_SERVER_PORT:-}"
+if [ -z "$DEV_PORT" ] && [ -f .env.local ]; then
+  DEV_PORT="$(sed -n 's/^[[:space:]]*DEV_SERVER_PORT[[:space:]]*=[[:space:]]*\([^[:space:]#]*\).*/\1/p' .env.local | tr -d "\"'" | head -1)"
+fi
+DEV_PORT_LOCKED=1
+if [ -z "$DEV_PORT" ]; then
+  DEV_PORT=3005
+  DEV_PORT_LOCKED=0
+fi
 case "$DEV_PORT" in
   '' | *[!0-9]*)
     echo "DEV_SERVER_PORT is not a port number: '$DEV_PORT' (shell env, or .env.local)" >&2
     exit 1
     ;;
 esac
+if [ "$DEV_PORT_LOCKED" = 1 ]; then
+  echo "Dev server port: $DEV_PORT"
+else
+  echo "Dev server port: $DEV_PORT (default — no DEV_SERVER_PORT set, no .env.local)"
+fi
 export DEV_SERVER_PORT="$DEV_PORT" # read by capacitor.config.ts for server.url
 
 # Resolve the SDK once and EXPORT it: gradle reads ANDROID_HOME (or a
@@ -106,7 +125,10 @@ if [ -n "$DEVICE_VC" ] && [ -n "$OUR_VC" ] && [ "$DEVICE_VC" -gt "$OUR_VC" ]; th
 fi
 
 # vite in the background unless something already listens on this checkout's
-# dev port (DEV_PORT above)
+# dev port (DEV_PORT above). Reuse is the point when the port is locked to this
+# checkout — but on the unconfigured default it may well be ANOTHER checkout's
+# dev server, and the device would then silently show that checkout's UI. Say
+# so, since the port lock isn't there to rule it out.
 if ! nc -z localhost "$DEV_PORT" 2>/dev/null; then
   pnpm dev &
   VITE_PID=$!
@@ -121,6 +143,10 @@ if ! nc -z localhost "$DEV_PORT" 2>/dev/null; then
     }
     sleep 0.3
   done
+elif [ "$DEV_PORT_LOCKED" = 0 ]; then
+  echo "NOTE: something already serves :$DEV_PORT — using it as the UI source." >&2
+  echo "      If that's another checkout's dev server, the device will show ITS UI." >&2
+  echo "      Lock this checkout's port to avoid the clash: echo DEV_SERVER_PORT=3010 >> .env.local" >&2
 fi
 
 # fail fast on the host backend (mode 2, the default): the app's startup me

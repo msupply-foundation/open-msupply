@@ -1,0 +1,21 @@
+/*
+ * Reach-for order step 4 — scoped to this vertical, tokens only.
+ *
+ * The kind icon is TONED to say what the supplier is (spec S1 column 1, S3
+ * breadcrumb): a house in the primary colour when the supplier is itself
+ * another store in the system, a truck in the secondary colour for an external
+ * one. The icon set has no semantic tone prop — icons paint with
+ * `currentColor` — so the tone is set here. A `tone` prop (or a library-level
+ * party-kind icon) remains the gap this covers; `src/domain/name/NameSearch.tsx`
+ * still inlines the same two colours for its option rows.
+ *
+ * Colour is redundant here, never the only cue: the two kinds use different
+ * glyphs.
+ */
+.internal {
+  color: var(--primary-main);
+}
+
+.external {
+  color: var(--secondary-main);
+}

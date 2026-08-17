@@ -137,7 +137,6 @@ export const UploadHelpDocumentModal: Component<{
           onInput={e => setTitle(e.currentTarget.value)}
           required
           disabled={uploading()}
-          width="full"
         />
         {/* Supplying a file starts the publish; the dropzone is replaced by a
             busy indicator while it runs (spec/help S3). */}

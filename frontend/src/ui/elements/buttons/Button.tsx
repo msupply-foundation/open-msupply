@@ -48,14 +48,22 @@ export interface ButtonProps extends JSX.ButtonHTMLAttributes<HTMLButtonElement>
    *  aria-busy (so a click can't re-fire an in-flight action). */
   loading?: boolean;
   /**
-   * Collapse to just the icon on phone widths (≤767px) to save toolbar space
-   * (ui-standards #btn-icons). Opt-in, and only meaningful with an `icon`. The
-   * label stays in the DOM (visually hidden), so the button keeps its
-   * accessible name — no aria-label needed. Omit to use the app default
-   * (COLLAPSIBLE_BY_DEFAULT, currently off); `collapsible={false}` always opts
-   * out even if that default flips.
+   * Collapse to just the icon to save toolbar space (ui-standards #btn-icons).
+   * Opt-in, and only meaningful with an `icon`. The label stays in the DOM
+   * (visually hidden), so the button keeps its accessible name — no aria-label
+   * needed; pass `title` too, since the standard asks an icon-only button to
+   * carry a tooltip.
+   *
+   *   true     — phone widths (≤767px).
+   *   'narrow' — the whole narrow-viewport range (≤1023px, breakpoints
+   *              .navOverlay). For a header whose action cluster would
+   *              otherwise wrap onto a row of its own on a tablet: a row of
+   *              chrome costs more there than the labels are worth.
+   *
+   * Omit to use the app default (COLLAPSIBLE_BY_DEFAULT, currently off);
+   * `collapsible={false}` always opts out even if that default flips.
    */
-  collapsible?: boolean;
+  collapsible?: boolean | 'narrow';
   /**
    * The key binding this button answers (spec/keyboard KB-H1, S2). ONE prop
    * drives both the accessible name of the binding (`aria-keyshortcuts`) and
@@ -145,6 +153,12 @@ export const Button = (props: ButtonProps) => {
     if (local.confirms === 'cancel') return ESCAPE;
     return undefined;
   };
+  // Which collapse tier this button opted into, as the data attribute's value.
+  const collapseTier = (): string | undefined => {
+    const collapsible = local.collapsible ?? COLLAPSIBLE_BY_DEFAULT;
+    if (collapsible === 'narrow') return 'narrow';
+    return collapsible ? '' : undefined;
+  };
   const ripple = createRipple();
   // JSX-element props are lazy getters: each is read twice below (the <Show>
   // test + the insertion), and raw reads would create the passed element twice
@@ -164,9 +178,10 @@ export const Button = (props: ButtonProps) => {
       data-variant={local.variant ?? 'primary'}
       data-size={local.size ?? 'medium'}
       data-icon-position={local.iconPosition ?? 'start'}
-      data-collapsible={
-        (local.collapsible ?? COLLAPSIBLE_BY_DEFAULT) ? '' : undefined
-      }
+      // '' = the phone tier, 'narrow' = the whole narrow-viewport range; the
+      // CSS matches the bare attribute for the first and the value for the
+      // second, so 'narrow' collapses at both widths.
+      data-collapsible={collapseTier()}
       disabled={local.disabled || local.loading}
       aria-busy={local.loading || undefined}
       // The ARIA grammar, not the platform spelling — the badge renders the

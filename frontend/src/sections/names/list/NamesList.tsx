@@ -17,6 +17,7 @@ import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
 import { HomeIcon } from '../../../ui/icons';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { useUrlQueryState } from '../../../list/urlQueryState';
+import { initialPageSize, rememberPageSize } from '../../../list/pageSize';
 import { Names } from '../names.generated';
 import type { NamesVariables } from '../names.generated';
 import {
@@ -67,7 +68,10 @@ export const NamesList: Component<NamesListProps> = props => {
   // StoreGuardLayout, which requires a resolved, authorised store before
   // routing (AC-N17 — the list cannot be shown without an active store).
   const params = useParams<{ storeId: string }>();
-  const { query, setQuery } = useUrlQueryState<NamesListState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<NamesListState>({
+    ...DEFAULT_STATE,
+    first: initialPageSize(),
+  });
 
   const tableConfig = createTableConfig({ tableId: props.tableId });
 
@@ -227,7 +231,10 @@ export const NamesList: Component<NamesListProps> = props => {
           total: totalCount(),
           pageSizes: [...PAGE_SIZE_OPTIONS],
           onOffsetChange: offset => setQuery({ ...query(), offset }),
-          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+          onPageSizeChange: first => {
+            rememberPageSize(first);
+            setQuery({ ...query(), first, offset: 0 });
+          },
         }}
       />
     </Page>

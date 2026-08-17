@@ -2,17 +2,20 @@ import { createSignal, onMount, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { login } from './authContext';
 import { submitStateAfter, type SubmitState } from './submitState';
+import { hasLoginFieldError, loginFieldErrors } from './loginFieldErrors';
 import { getLastLoginUsername } from '../appData';
 import { serverVersion } from '../api/serverInfo';
 import { createFocusTarget } from '../ui/utils/createFocusTarget';
+import { useIsCompact } from '../ui/utils/createMediaQuery';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { PasswordField } from '../ui/elements/inputs/PasswordField';
 import { Button } from '../ui/elements/buttons/Button';
 import { Alert } from '../ui/elements/feedback/Alert';
-import { ArrowRightIcon } from '../ui/icons';
+import { ArrowRightIcon, ClockIcon } from '../ui/icons';
 import { AppLogo } from '../ui/branding/AppLogo';
 import { LanguageSelector } from '../ui/layout/AppShell/LanguageSelector';
 import { changeLanguage, locale, t } from '../intl';
+import { createDocumentTitle } from '../documentTitle';
 import styles from '../ui/styles/LoginInitLayout.module.css';
 
 // The login screen: the design-system Login (gradient hero + form panel,
@@ -23,6 +26,11 @@ import styles from '../ui/styles/LoginInitLayout.module.css';
 // signal and the app (App.tsx) reacts, continuing to the preserved destination
 // URL (spec, Startup Flow). Document dir/lang is owned once by App.tsx.
 export const LoginPage: Component = () => {
+  // The tab names this screen too (spec/chrome § document title) — and, since
+  // logging out swaps the shell back for this page, it replaces the title of
+  // whatever screen the session ended on.
+  createDocumentTitle(() => 'app.login');
+
   // Spec (Authentication): prefilled from the device's remembered username, so
   // the returning user only retypes the password. Read once as the signal's
   // initial value — the page is remounted whenever authUser() clears, so it
@@ -55,6 +63,9 @@ export const LoginPage: Component = () => {
     kind: 'idle',
   });
 
+  // Only decides WHERE the version line renders — see versionLine() below.
+  const compact = useIsCompact();
+
   const submitting = () => submitState().kind === 'submitting';
   const submitError = () => {
     const state = submitState();
@@ -63,14 +74,13 @@ export const LoginPage: Component = () => {
 
   const submit = async (event: SubmitEvent) => {
     event.preventDefault();
-    // Spec (Authentication Logic): the button is always clickable; validation
-    // errors show on submit.
-    const errors = {
-      username: username().trim() === '' ? t('error.username-required') : '',
-      password: password().trim() === '' ? t('error.password-required') : '',
-    };
+    // Spec (rules § authentication, `OMS-REG-LGN-01.24` `.25`): the button is
+    // always clickable — the click is what validates, and each empty field
+    // answers with its own message. A deliberate divergence from the current
+    // app's disabled-until-filled button (D98), ruled to stand (#762).
+    const errors = loginFieldErrors(username(), password());
     setFieldErrors(errors);
-    if (errors.username !== '' || errors.password !== '') return;
+    if (hasLoginFieldError(errors)) return;
     setSubmitState({ kind: 'submitting' });
     const result = await login(username(), password());
     // Clear the password only on a rejected login (finding F6 — align with the
@@ -81,24 +91,58 @@ export const LoginPage: Component = () => {
     setSubmitState(submitStateAfter(result));
   };
 
+  // Spec (App version, OMS-REG-LGN-01.18/.20): the running build's version and
+  // — once the startup pass has fetched it, never as a placeholder — the
+  // server's, on one line at the bottom of the page's left half.
+  //
+  // ONE element, rendered either in the hero or, below the compact breakpoint
+  // where the hero doesn't render at all, in the panel. Never both, so
+  // `login-version` stays a single match; a CSS-only move is impossible
+  // because a child of the hidden hero is hidden with it (CLAUDE.md #7 — a
+  // breakpoint decides which element renders).
+  const versionLine = (placement: string) => (
+    <p class={`${styles.versionBar} ${placement}`} data-testid="login-version">
+      <span>
+        <strong>{t('label.version-interface')}</strong> {APP_VERSION}
+      </span>
+      <Show when={serverVersion()}>
+        <span>
+          <strong>{t('label.version-server')}</strong> {serverVersion()}
+        </span>
+      </Show>
+    </p>
+  );
+
   return (
     <div class={styles.page}>
       <section class={styles.hero} aria-label={t('label.about-open-msupply')}>
         <h1 class={styles.heroHeading}>{t('login.heading')}</h1>
         <p class={styles.heroBody}>{t('login.body')}</p>
+        <Show when={!compact()}>{versionLine(styles.versionBarHero)}</Show>
       </section>
 
       <main class={styles.panel}>
         <div class={styles.formArea}>
           <form
             class={styles.form}
-            aria-label={t('button.login')}
+            aria-labelledby="login-heading"
             onSubmit={submit}
           >
+            {/* The form's heading, and its accessible name via aria-labelledby
+                — the login form had no heading of its own before, so nothing
+                named this landmark's content to a screen reader. Not displayed:
+                the logo below and the hero's statement already carry the page's
+                visible identity. h2, not h1, because the hero's brand statement
+                is the page's h1 and this is the top of a region within it — a
+                plain element rather than the Text primitive, since an invisible
+                heading has no type style to set. First in the form so it is
+                read before the fields it names. */}
+            <h2 id="login-heading" class={styles.srOnly}>
+              {t('login.form-heading')}
+            </h2>
             <AppLogo class={styles.logo} />
             <TextField
               label={t('heading.username')}
-              width="full"
               type="text"
               name="username"
               data-testid="login-username-input"
@@ -113,7 +157,6 @@ export const LoginPage: Component = () => {
             />
             <PasswordField
               label={t('heading.password')}
-              width="full"
               name="password"
               data-testid="login-password-input"
               autocomplete="current-password"
@@ -128,9 +171,13 @@ export const LoginPage: Component = () => {
                 {submitError()}
               </Alert>
             </Show>
-            <div class={styles.buttonRow}>
+            {/* The primary action spans the form column, with both secondary
+                controls directly beneath it rather than in a page footer —
+                they belong to the login decision, not to the page. */}
+            <div class={styles.submitGroup}>
               <Button
                 type="submit"
+                class={styles.submitButton}
                 icon={<ArrowRightIcon />}
                 iconPosition="end"
                 data-testid="login-button"
@@ -138,41 +185,35 @@ export const LoginPage: Component = () => {
               >
                 {submitting() ? t('button.logging-in') : t('button.login')}
               </Button>
+              <div class={styles.formActions}>
+                {/* Sibling old UI, served at the server root /old-ui/
+                    (dual-frontend transition — one cookie session spans both).
+                    A plain anchor for a full document navigation, NOT router
+                    navigation: it's a different app. The href is root-relative
+                    on purpose — /old-ui/ is a sibling of this app's BASE_URL
+                    mount, never nested under it (e.g. the /spec demo track
+                    still points at the root /old-ui/). Shaped like the language
+                    trigger opposite it, but still a link — see
+                    `.secondaryAction`. */}
+                <a
+                  class={styles.secondaryAction}
+                  href="/old-ui/"
+                  data-testid="login-switch-to-old-ui"
+                >
+                  <ClockIcon class={styles.secondaryActionIcon} />
+                  {t('login.use-old-interface')}
+                </a>
+                <div class={styles.languageAction}>
+                  <LanguageSelector
+                    language={locale()}
+                    onSelect={v => void changeLanguage(v)}
+                  />
+                </div>
+              </div>
             </div>
           </form>
         </div>
-        <footer class={styles.panelFooter}>
-          {/* Sibling old UI, served at the server root /old-ui/ (dual-frontend
-              transition — one cookie session spans both). A plain anchor for a
-              full document navigation, NOT router navigation: it's a different
-              app. The href is root-relative on purpose — /old-ui/ is a sibling
-              of this app's BASE_URL mount, never nested under it (e.g. the /spec
-              demo track still points at the root /old-ui/). Centered above the
-              version, matching the initialisation screen's Save-log link. */}
-          <a
-            class={styles.switchLink}
-            href="/old-ui/"
-            data-testid="login-switch-to-old-ui"
-          >
-            {t('login.switch-to-old-ui')}
-          </a>
-          <p class={styles.version} data-testid="login-version">
-            <strong>{t('label.app-version')}</strong> {APP_VERSION}
-          </p>
-          {/* Spec (App version, OMS-REG-LGN-01.20): absent until the startup pass has
-              fetched it — never a placeholder. */}
-          <Show when={serverVersion()}>
-            <p class={styles.version}>
-              <strong>{t('label.server-version')}</strong> {serverVersion()}
-            </p>
-          </Show>
-          <div class={styles.languageRow}>
-            <LanguageSelector
-              language={locale()}
-              onSelect={v => void changeLanguage(v)}
-            />
-          </div>
-        </footer>
+        <Show when={compact()}>{versionLine(styles.versionBarPanel)}</Show>
       </main>
     </div>
   );

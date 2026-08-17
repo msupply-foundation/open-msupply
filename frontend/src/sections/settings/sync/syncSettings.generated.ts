@@ -9,11 +9,12 @@ export type SyncSettingsResult = {
   url: string;
   username: string;
   intervalSeconds: number;
+  batchSize: number | null;
 } | null;
 };
 
 export const SyncSettings = {
-  query: "query syncSettings {\n  syncSettings {\n    url\n    username\n    intervalSeconds\n  }\n}",
+  query: "query syncSettings {\n  syncSettings {\n    url\n    username\n    intervalSeconds\n    batchSize\n  }\n}",
 } as TypedDocument<SyncSettingsResult, SyncSettingsVariables>;
 
 export type UpdateSyncSettingsVariables = {

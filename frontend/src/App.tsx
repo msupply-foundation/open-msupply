@@ -21,6 +21,7 @@ import { resolveStorePath, StoreGuardLayout } from './store/StoreGuardLayout';
 import { navDestinations } from './nav/navConfig';
 import { DashboardPage, dashboardRoutes } from './sections/dashboard';
 import { stocktakesRoutes } from './sections/stocktakes';
+import { stockMovementsRoutes } from './sections/stock-movements';
 import { customersRoutes, suppliersRoutes } from './sections/names';
 import { locationsRoutes } from './sections/locations';
 import { customerReturnsRoutes } from './sections/customer-returns';
@@ -37,6 +38,7 @@ import { prescriptionsRoutes } from './sections/prescriptions';
 import { masterListsRoutes } from './sections/master-lists';
 import { reportsRoutes } from './sections/reports';
 import { settingsRoutes } from './sections/settings';
+import { sitesRoutes } from './sections/sites';
 import { helpRoutes, helpDocumentsRoutes } from './sections/help';
 import { ShellLayout } from './nav/ShellLayout';
 import { EntryPage } from './nav/EntryPage';
@@ -67,6 +69,7 @@ type Phase = 'loading' | 'failed' | 'initialisation' | 'operational';
 const sectionRoutes: Record<string, () => JSX.Element> = {
   dashboard: dashboardRoutes,
   'inventory/stocktakes': stocktakesRoutes,
+  'inventory/stock-movement': stockMovementsRoutes,
   'distribution/customers': customersRoutes,
   'replenishment/suppliers': suppliersRoutes,
   'inventory/locations': locationsRoutes,
@@ -84,6 +87,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'dispensary/prescription': prescriptionsRoutes,
   reports: reportsRoutes,
   settings: settingsRoutes,
+  'manage/sites': sitesRoutes,
   help: helpRoutes,
   'manage/help-documents': helpDocumentsRoutes,
 };

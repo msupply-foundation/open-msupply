@@ -156,7 +156,6 @@ const LineEditContent = (
   const [requestedUnits, setRequestedUnits] = createSignal(0);
   const [comment, setComment] = createSignal('');
   const [reasonId, setReasonId] = createSignal<string | null>(null);
-  const [dirty, setDirty] = createSignal(false);
   const [saving, setSaving] = createSignal(false);
   const [advancing, setAdvancing] = createSignal(false);
   const [loading, setLoading] = createSignal(false);
@@ -226,7 +225,6 @@ const LineEditContent = (
     setRequestedUnits(editorLine.requestedQuantity);
     setComment(editorLine.comment);
     setReasonId(editorLine.reasonId);
-    setDirty(false);
     setErrorMessage(undefined);
   };
 
@@ -264,7 +262,6 @@ const LineEditContent = (
     setRequestedUnits(0);
     setComment('');
     setReasonId(null);
-    setDirty(false);
     setErrorMessage(undefined);
   };
 
@@ -309,7 +306,6 @@ const LineEditContent = (
         ? 0
         : modeToUnits(value, entryMode(), packSize(), doses())
     );
-    setDirty(true);
   };
 
   // A variance from the suggestion demands a reason on a customer-statistics
@@ -510,7 +506,7 @@ const LineEditContent = (
           />
           <DialogSaveButton
             data-testid="dialog-button-ok"
-            disabled={!current() || !dirty() || saving() || !props.editable}
+            disabled={!current() || saving() || !props.editable}
             loading={saving()}
             onClick={onOk}
           />
@@ -533,7 +529,6 @@ const LineEditContent = (
         fallback={
           <ItemSearch
             label={t('label.item')}
-            width="full"
             storeId={props.storeId}
             focusTarget={itemSearch}
             placeholder={t('placeholder.enter-an-item-code-or-name')}
@@ -557,7 +552,6 @@ const LineEditContent = (
       >
         <TextField
           label={t('label.item')}
-          width="full"
           disabled
           value={`${current()?.itemCode ?? ''} - ${current()?.itemName ?? ''}`}
         />
@@ -682,7 +676,6 @@ const LineEditContent = (
                     <NumberField
                       label={t('label.requested')}
                       hideLabel
-                      width="full"
                       min={0}
                       decimalLimit={2}
                       data-testid="requested-quantity-input"
@@ -693,7 +686,6 @@ const LineEditContent = (
                     <Select
                       label={t('label.units')}
                       hideLabel
-                      width="full"
                       value={entryMode()}
                       options={entryOptions()}
                       disabled={disabled() || saving()}
@@ -740,10 +732,7 @@ const LineEditContent = (
                       hideLabel
                       disabled={disabled() || saving() || !variance()}
                       value={variance() ? (reasonId() ?? undefined) : undefined}
-                      onChange={reason => {
-                        setReasonId(reason?.id ?? null);
-                        setDirty(true);
-                      }}
+                      onChange={reason => setReasonId(reason?.id ?? null)}
                     />
                   </FieldRow>
                 </Show>
@@ -755,10 +744,7 @@ const LineEditContent = (
                     rows={3}
                     disabled={disabled() || saving()}
                     value={comment()}
-                    onInput={e => {
-                      setComment(e.currentTarget.value);
-                      setDirty(true);
-                    }}
+                    onInput={e => setComment(e.currentTarget.value)}
                   />
                 </FieldRow>
               </InsetPanel>

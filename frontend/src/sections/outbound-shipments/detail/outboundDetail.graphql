@@ -108,9 +108,11 @@ fragment OutboundLine on InvoiceLineNode {
   location {
     id
     code
+    onHold
   }
   stockLine {
     id
+    onHold
   }
   vvmStatus {
     id

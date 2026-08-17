@@ -106,8 +106,15 @@ const Body = (props: BodyProps): JSX.Element => {
     { severity: 'error' | 'warning'; text: string } | undefined
   >();
 
+  // Quantity to return pinned to the inline-end, as in the per-item modal — the
+  // one control the grid exists for stays on screen at any width (issue #1002).
+  // It matters more here: these drafts span items, so the grid carries the item
+  // columns too and scrolls sooner.
   const tableConfig = createTableConfig({
     tableId: 'supplier-return-from-shipment-edit',
+    defaultConfig: {
+      base: { columnPinning: { right: ['numberOfPacksToReturn'] } },
+    },
   });
 
   // One target per DRAFT ROW, per step: focus follows the user to the control
@@ -223,7 +230,11 @@ const Body = (props: BodyProps): JSX.Element => {
       open
       onClose={props.onClose}
       dismissable={!saving()}
-      size="large"
+      // A SHEET, not the per-item modal's card: this draft set spans the whole
+      // shipment selection, so it carries the item columns as well and can run
+      // to many rows — a row count that wants every row it can show before
+      // scrolling. The per-item editor stays a card; one item's batches fit one.
+      size="full"
       testId="return-from-shipment-modal"
       title={t('heading.return-items')}
       actionsLead={
@@ -323,7 +334,9 @@ const Body = (props: BodyProps): JSX.Element => {
         when={step() === 'reason'}
         fallback={
           <DataTable
-            columns={quantityColumns(update, quantityFields)}
+            columns={quantityColumns(update, quantityFields, {
+              showItem: true,
+            })}
             rows={draft.filter(() => true)}
             rowKey={line => line.id}
             loading={loadingLines()}
@@ -336,7 +349,7 @@ const Body = (props: BodyProps): JSX.Element => {
         }
       >
         <DataTable
-          columns={reasonColumns(update, reasonFields)}
+          columns={reasonColumns(update, reasonFields, { showItem: true })}
           rows={reasonRows()}
           rowKey={line => line.id}
           showFullScreen={false}
