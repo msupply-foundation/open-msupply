@@ -361,29 +361,35 @@ impl Selectors {
         self.html.select(&cell_selector).next().is_some()
     }
 
-    /// The column labels, taken from the LAST row of the header.
+    /// One column label per column of data, in the order the data cells come in.
     ///
-    /// Data cells are matched to columns by their index within their own row,
-    /// so the header row that defines the columns must line up with a data row
-    /// cell for cell. In a grouped header — a banner row spanning several
-    /// columns above the labels that name them, as the repack slip has — that
-    /// is the bottom row; the rows above it span groups and would otherwise
-    /// shift every column. A single-row header is its own last row, so this
-    /// leaves every other form untouched.
+    /// A data cell is placed by its index within its own `<tbody>` row, so the
+    /// header has to be flattened to exactly one label per data column. Most
+    /// forms have a single header row, where flattening is the identity.
+    ///
+    /// A grouped header is not: a banner row spanning several columns sits above
+    /// the row that names them (the repack slip's Original/New), and outer
+    /// columns may instead span downwards past the labels (`rowspan`, as some
+    /// custom reports do). Taking every cell of every header row would count the
+    /// banners as columns of their own and shift the data; taking only the bottom
+    /// row would drop the spanning outer columns. So the header is resolved as a
+    /// grid, and each column's label is whichever cell occupies it in the bottom
+    /// row — the one that lines up with the data. A cell spanning several columns
+    /// is one label, not one per column it covers.
+    ///
+    /// Header rows of separate tables are concatenated, as they always have been.
     fn data_headers(&self) -> Vec<(Option<&str>, &str)> {
-        let row_selector = Selector::parse("thead tr").unwrap();
+        let thead_selector = Selector::parse("thead").unwrap();
+        let row_selector = Selector::parse("tr").unwrap();
         let cell_selector = Selector::parse("td,th").unwrap();
-        let Some(label_row) = self.html.select(&row_selector).last() else {
-            return Vec::new();
-        };
-        label_row
-            .select(&cell_selector)
-            .map(|element| {
-                let custom_column = element.attr("excel-column");
-                let header_text = inner_text(element);
 
-                (custom_column, header_text)
+        self.html
+            .select(&thead_selector)
+            .flat_map(|thead| {
+                let rows: Vec<ElementRef> = thead.select(&row_selector).collect();
+                header_columns(&rows, &cell_selector)
             })
+            .map(|element| (element.attr("excel-column"), inner_text(element)))
             .collect()
     }
 
@@ -404,6 +410,68 @@ impl Selectors {
             .map(|row| row.select(&cells_selector).map(inner_text).collect())
             .collect()
     }
+}
+
+/// Lays the header rows out as a grid, honouring `colspan`/`rowspan`, and
+/// returns the cell occupying each column of the bottom row — the row the data
+/// cells line up with. A cell covering several columns is returned once.
+fn header_columns<'a>(rows: &[ElementRef<'a>], cell_selector: &Selector) -> Vec<ElementRef<'a>> {
+    // grid[row][column] = the cell covering that slot, and the column it starts
+    // in — so a cell covering several columns can be recognised as one column.
+    let mut grid: Vec<Vec<Option<(ElementRef<'a>, usize)>>> = vec![Vec::new(); rows.len()];
+
+    for (row_index, row) in rows.iter().enumerate() {
+        let mut column = 0;
+
+        for cell in row.select(cell_selector) {
+            // Step over slots already covered by a rowspan from a row above
+            while grid[row_index]
+                .get(column)
+                .is_some_and(|slot| slot.is_some())
+            {
+                column += 1;
+            }
+
+            let colspan = span(cell, "colspan");
+            // A rowspan reaching past the last header row simply stops there
+            let last_row = (row_index + span(cell, "rowspan")).min(rows.len());
+
+            for covered_row in grid[row_index..last_row].iter_mut() {
+                if covered_row.len() < column + colspan {
+                    covered_row.resize(column + colspan, None);
+                }
+                for slot in covered_row[column..column + colspan].iter_mut() {
+                    *slot = Some((cell, column));
+                }
+            }
+
+            column += colspan;
+        }
+    }
+
+    let Some(bottom_row) = grid.last() else {
+        return Vec::new();
+    };
+
+    bottom_row
+        .iter()
+        .enumerate()
+        .filter_map(|(column, slot)| match slot {
+            // Only where the cell starts, so a cell spanning columns counts once
+            Some((cell, start_column)) if *start_column == column => Some(*cell),
+            _ => None,
+        })
+        .collect()
+}
+
+/// A `colspan`/`rowspan`, defaulting to the one row/column the cell itself
+/// occupies. HTML's "span to the end of the section" (`rowspan="0"`) is not
+/// used by any form, and is read as a single row.
+fn span(cell: ElementRef, attribute: &str) -> usize {
+    cell.attr(attribute)
+        .and_then(|value| value.trim().parse::<usize>().ok())
+        .unwrap_or(1)
+        .max(1)
 }
 
 fn inner_text<'a>(element_ref: ElementRef<'a>) -> &'a str {
@@ -661,6 +729,165 @@ mod report_to_excel_test {
         assert_eq!(get_value("B2"), "100");
         assert_eq!(get_value("D2"), "B2");
         assert_eq!(get_value("E2"), "10");
+    }
+
+    /// A grouped header whose outer columns span *downwards* past the labels
+    /// rather than sitting above them, as custom reports with an Excel template
+    /// do: Date and Sign are one column each across both header rows, and only
+    /// the Received group is subdivided. Every column the data has must be
+    /// mapped — the spanning outer columns are as real as the subdivided ones.
+    #[test]
+    fn test_generate_excel_grouped_header_with_spanned_columns() {
+        let report: GeneratedReport = GeneratedReport {
+            document: r#"
+          <table>
+            <thead>
+              <tr>
+                <th rowspan="2" excel-column="A">Date</th>
+                <th colspan="2" excel-column="B">Received</th>
+                <th rowspan="2" excel-column="D">Sign</th>
+              </tr>
+              <tr>
+                <th excel-column="B">From</th>
+                <th excel-column="C">Quantity</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>01/01/2026</td>
+                <td>Supplier</td>
+                <td>50</td>
+                <td>EH</td>
+              </tr>
+            </tbody>
+          </table>
+        "#
+            .to_string(),
+            header: None,
+            footer: None,
+        };
+
+        let mut book = umya_spreadsheet::new_file();
+        book.set_sheet_name(0, "test").unwrap();
+        let sheet = book.get_sheet_by_name_mut("test").unwrap();
+
+        apply_report(sheet, report);
+
+        let get_value = |coord: &str| get_value(sheet, coord);
+
+        // Four columns of labels: the two that span both rows, and the two the
+        // "Received" group is subdivided into. The group banner is not a column.
+        assert_eq!(get_value("A1"), "Date");
+        assert_eq!(get_value("B1"), "From");
+        assert_eq!(get_value("C1"), "Quantity");
+        assert_eq!(get_value("D1"), "Sign");
+        // Every data cell lands under its own label — none is dropped.
+        assert_eq!(get_value("A2"), "01/01/2026");
+        assert_eq!(get_value("B2"), "Supplier");
+        assert_eq!(get_value("C2"), "50");
+        assert_eq!(get_value("D2"), "EH");
+    }
+
+    /// A single header row is flattened as-is, and a cell spanning columns is
+    /// one column, not one per column it covers — otherwise the data behind it
+    /// would be shifted right.
+    #[test]
+    fn test_generate_excel_single_header_row_with_colspan() {
+        let report: GeneratedReport = GeneratedReport {
+            document: r#"
+          <table>
+            <thead>
+              <tr>
+                <th colspan="2">Item</th>
+                <th>Unit</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Ibuprofen 200mg tabs</td>
+                <td>Tablets</td>
+              </tr>
+            </tbody>
+          </table>
+        "#
+            .to_string(),
+            header: None,
+            footer: None,
+        };
+
+        let mut book = umya_spreadsheet::new_file();
+        book.set_sheet_name(0, "test").unwrap();
+        let sheet = book.get_sheet_by_name_mut("test").unwrap();
+
+        apply_report(sheet, report);
+
+        let get_value = |coord: &str| get_value(sheet, coord);
+
+        assert_eq!(get_value("A1"), "Item");
+        assert_eq!(get_value("B1"), "Unit");
+        assert_eq!(get_value("A2"), "Ibuprofen 200mg tabs");
+        assert_eq!(get_value("B2"), "Tablets");
+    }
+
+    /// A report of two tables, each with its own header. Their headers are
+    /// concatenated, so the wider table's later columns stay mapped — reading
+    /// only the last table's header would silently drop them.
+    #[test]
+    fn test_generate_excel_headers_from_separate_tables() {
+        let report: GeneratedReport = GeneratedReport {
+            document: r#"
+          <table>
+            <thead>
+              <tr>
+                <th>Vaccine</th>
+                <th>Batch</th>
+                <th>Doses used</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>BCG</td>
+                <td>B1</td>
+                <td>20</td>
+              </tr>
+            </tbody>
+          </table>
+          <table>
+            <thead>
+              <tr>
+                <th>Supply item</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Syringes</td>
+              </tr>
+            </tbody>
+          </table>
+        "#
+            .to_string(),
+            header: None,
+            footer: None,
+        };
+
+        let mut book = umya_spreadsheet::new_file();
+        book.set_sheet_name(0, "test").unwrap();
+        let sheet = book.get_sheet_by_name_mut("test").unwrap();
+
+        apply_report(sheet, report);
+
+        let get_value = |coord: &str| get_value(sheet, coord);
+
+        // Both headers, one after the other, as before
+        assert_eq!(get_value("A1"), "Vaccine");
+        assert_eq!(get_value("C1"), "Doses used");
+        assert_eq!(get_value("D1"), "Supply item");
+        // The first table keeps all three of its columns
+        assert_eq!(get_value("A2"), "BCG");
+        assert_eq!(get_value("B2"), "B1");
+        assert_eq!(get_value("C2"), "20");
+        // The second table's rows follow, from column A again
+        assert_eq!(get_value("A3"), "Syringes");
     }
 
     #[test]
