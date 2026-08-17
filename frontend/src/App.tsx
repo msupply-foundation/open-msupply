@@ -93,21 +93,20 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'manage/help-documents': helpDocumentsRoutes,
 };
 
-// The login fallback (issue #1075): every unauthenticated path — cold boot,
-// explicit logout, session expiry — converges on the `Show` below clearing
-// `authUser()` and swapping this in, so it's the one place that needs to
-// honour a stored "always show old UI" choice rather than each call site
-// redirecting individually. A stale choice bounces the user straight to the
-// sibling old UI instead of flashing this app's own login form.
-const LoginOrRedirectToOldUi: Component = () => {
+export const App: Component = () => {
+  // Issue #1075: checked before ANY startup work, including the auth check —
+  // the two UIs share one session cookie, so a device that switched to old UI
+  // is very often still authenticated here too. Gating only the unauthenticated
+  // login fallback would never fire in that case: this app would happily render
+  // its own authenticated shell (store selection, dashboard, ...) instead of
+  // bouncing to the sibling old UI. A Solid component's setup body runs once,
+  // so bailing out here before creating any signal is safe — there's no
+  // re-render to skip a hook on.
   if (prefersOldUi()) {
     location.replace('/old-ui/');
     return null;
   }
-  return <LoginPage />;
-};
 
-export const App: Component = () => {
   const [phase, setPhase] = createSignal<Phase>('loading');
 
   // Spec (Startup Flow): initialisation status → me check → login or routing.
@@ -199,7 +198,7 @@ export const App: Component = () => {
           <InitialisationPage onComplete={() => void runStartup()} />
         </Match>
         <Match when={phase() === 'operational'}>
-          <Show when={authUser()} fallback={<LoginOrRedirectToOldUi />}>
+          <Show when={authUser()} fallback={<LoginPage />}>
             {/* Installed frontend plugins load here (spec/plugins/rules.md §
                 lifecycle): a session exists, and nothing operational has
                 rendered yet, so a contribution can never pop into an
