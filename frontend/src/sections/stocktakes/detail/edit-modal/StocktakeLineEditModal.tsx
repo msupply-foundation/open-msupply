@@ -617,9 +617,9 @@ const StocktakeLineEditContent = (
    * is why the binding is declared here and nowhere else (AC-KB45).
    *
    * Unlisted: the palette already offers the action under its own name via the
-   * header control, and the label names the key inline, so a second entry would
-   * be noise. Disabled until an item is picked, matching the button's own
-   * `<Show>` — the key must not add a batch to nothing.
+   * header control, so a second entry would be noise. Disabled until an item is
+   * picked, matching the button's own `<Show>` — the key must not add a batch
+   * to nothing.
    */
   createAction({
     unlisted: true,
