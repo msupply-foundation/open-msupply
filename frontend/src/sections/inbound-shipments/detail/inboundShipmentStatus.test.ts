@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
-  canChangeStatus,
   currentStep,
   filterByStatusPreference,
+} from '@/domain/invoice/statusGate';
+import {
+  canChangeStatus,
   isEditable,
   kindOf,
-  offeredFlow,
   statusDatetime,
   statusFlow,
 } from './inboundShipmentStatus';
@@ -116,8 +117,16 @@ describe('statusDatetime (REPL-03.23 — a date per reached step)', () => {
 });
 
 // The invoice-status-options display gate (spec § preference gates;
-// behaviours OMS-REG-REPL-01.28, OMS-REG-REPL-03.25/.26).
-describe('offeredFlow (OMS-REG-REPL-03.25 — the track offers only preference-allowed stages)', () => {
+// behaviours OMS-REG-REPL-01.28, OMS-REG-REPL-03.25/.26), applied through the
+// shared @/domain/invoice helpers exactly as the status footer composes them:
+// the offered track is the kind's flow narrowed by the preference.
+const offeredFlow = (
+  kind: Parameters<typeof statusFlow>[0],
+  current: string,
+  allowed: readonly string[]
+) => filterByStatusPreference(statusFlow(kind, current), allowed);
+
+describe('offered flow (OMS-REG-REPL-03.25 — the track offers only preference-allowed stages)', () => {
   it('offers the kind’s full flow while the preference is empty / not yet loaded', () => {
     expect(offeredFlow('manual', 'NEW', [])).toEqual([
       'NEW',
@@ -148,18 +157,24 @@ describe('offeredFlow (OMS-REG-REPL-03.25 — the track offers only preference-a
 
 describe('currentStep (OMS-REG-REPL-03.26 — an excluded current status marks the nearest included earlier stage)', () => {
   const allowed = ['NEW', 'RECEIVED', 'VERIFIED'];
+  const step = (status: string, allowedList: readonly string[]) =>
+    currentStep(
+      statusFlow('manual', status),
+      offeredFlow('manual', status, allowedList),
+      status
+    );
 
   it('marks the current status itself when the preference includes it', () => {
-    expect(currentStep('manual', 'RECEIVED', allowed)).toBe(1);
+    expect(step('RECEIVED', allowed)).toBe(1);
   });
 
   it('marks the nearest included earlier stage when the current one is excluded', () => {
     // DELIVERED is excluded → NEW (step 0) lights up.
-    expect(currentStep('manual', 'DELIVERED', allowed)).toBe(0);
+    expect(step('DELIVERED', allowed)).toBe(0);
   });
 
   it('tracks the plain flow index while the preference is unrestrictive', () => {
-    expect(currentStep('manual', 'DELIVERED', [])).toBe(1);
+    expect(step('DELIVERED', [])).toBe(1);
   });
 });
 
