@@ -30,7 +30,13 @@ impl error::ResponseError for FetchFileError {}
 // given URL are therefore safe to mark immutable.
 const CACHE_CONTROL_VALUE: &str = "public, max-age=31536000, immutable";
 
-#[get(r#"/frontend_plugins/{plugin_code}/{filename:.*\..+$}"#)]
+// Keyed on the plugin ROW ID, not its code: while the new front end rolls out
+// a site holds two bundles of one plugin — a React one and an ESM one — whose
+// entry files can both be `<code>.js`, so the code no longer identifies a
+// bundle. Clients never assemble this themselves; they use the `path` that
+// `frontendPluginMetadata` hands back, which is why the change is invisible to
+// both the old UI and the new front end.
+#[get(r#"/frontend_plugins/{plugin_id}/{filename:.*\..+$}"#)]
 async fn serve(
     service_provider: Data<ServiceProvider>,
     plugin_info: web::Path<FrontendPluginFileRequest>,

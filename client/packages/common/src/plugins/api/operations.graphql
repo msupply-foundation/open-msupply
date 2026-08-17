@@ -1,5 +1,14 @@
+# This UI declares itself: the React module-federation host. The server answers
+# with `react` bundles and no others.
+#
+# A literal rather than a variable because it is not a runtime choice: it is
+# what this bundle IS. The SolidJS front end, served by the same backend at `/`,
+# declares `solid` and is answered with its own bundles, which we could not
+# evaluate. Whether a bundle is new enough for the server is a separate question
+# and is not asked here — the server settles that against the plugin's version
+# when it loads it.
 query frontendPluginMetadata {
-  frontendPluginMetadata {
+  frontendPluginMetadata(hostRuntime: "react") {
     code
     path
     hash

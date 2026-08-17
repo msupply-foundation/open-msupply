@@ -404,8 +404,15 @@ impl GeneralQueries {
     pub async fn frontend_plugin_metadata(
         &self,
         ctx: &Context<'_>,
+        #[graphql(
+            desc = "Which front end this client is (`react`, `solid`, ...), so it \
+                    is served only the bundles it can load. Omit only from a \
+                    pre-existing old-UI build: absent means the React \
+                    module-federation UI."
+        )]
+        host_runtime: Option<String>,
     ) -> Result<Vec<FrontendPluginMetadataNode>> {
-        frontend_plugin_metadata(ctx)
+        frontend_plugin_metadata(ctx, host_runtime)
     }
 
     pub async fn currencies(
