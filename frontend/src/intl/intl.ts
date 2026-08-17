@@ -21,8 +21,9 @@ const [locale, setLocale] = createSignal<SupportedLocale>(DEFAULT_LOCALE);
 // loadDictionary republishes with a spread, so the object identity always
 // changed even when no string did. t() is called inside cell renderers, so every
 // consumer re-ran: table cells re-rendered and their inputs were replaced,
-// losing focus and any half-typed value. Comparing the flattened catalogues costs
-// one serialisation per load and saves a full UI re-render per sync.
+// losing focus and any half-typed value. The compare serialises the whole
+// multi-locale record — both sides — once per load, and saves a full UI
+// re-render per sync.
 const [dictionaries, setDictionaries] = createSignal<
   Partial<Record<SupportedLocale, FlatDict>>
 >({}, { equals: sameFetchedValue });
