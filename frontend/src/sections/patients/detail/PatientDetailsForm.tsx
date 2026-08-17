@@ -15,6 +15,7 @@ import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { Button } from '../../../ui/elements/buttons/Button';
 import {
   PatientSearch,
+  genderLabel,
   genderOptions,
   minimalPatientOption,
   type GenderOption,
@@ -246,6 +247,14 @@ export const PatientDetailsForm: Component<PatientDetailsFormProps> = props => {
               itemToString={o => o.label}
               itemToValue={o => o.value}
               value={props.draft.gender ?? undefined}
+              selectedItem={
+                props.draft.gender
+                  ? {
+                      value: props.draft.gender,
+                      label: genderLabel(props.draft.gender),
+                    }
+                  : undefined
+              }
               disabled={props.disabled}
               onChange={o => props.setField('gender', o?.value ?? null)}
             />
