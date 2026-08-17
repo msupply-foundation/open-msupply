@@ -1,10 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { ledgerRowHref } from './itemLedgerNav';
+import { itemLedgerHref, ledgerRowHref } from './itemLedgerNav';
 
 const row = (invoiceType: string, isExternal = false) => ({
   invoiceType: invoiceType as never,
   invoiceId: 'inv-1',
   isExternal,
+});
+
+// The Ledger tab's own deep link (?tab= — ui-surface S2); what a read-only
+// prescription's row selection navigates to (OMS-REG-DIS-03.72).
+describe('itemLedgerHref (DIS-03.72 consumer)', () => {
+  it('targets the item catalogue detail on its Ledger tab', () => {
+    expect(itemLedgerHref('store-a', 'item-1')).toBe(
+      '/store-a/catalogue/items/item-1?tab=ledger'
+    );
+  });
 });
 
 // OMS-REG-CAT-04.23/.43 — a ledger row navigates to its source document's own

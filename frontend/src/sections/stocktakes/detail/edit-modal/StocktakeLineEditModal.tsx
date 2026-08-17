@@ -19,6 +19,8 @@ import {
   DialogSaveButton,
   SaveAndNextButton,
 } from '@/ui/elements/buttons/StandardButtons';
+import { HStack } from '@/ui/layout/Stack/HStack';
+import { LabelledValue } from '@/ui/elements/typography/LabelledValue';
 import { TextField } from '@/ui/elements/inputs/TextField';
 import { DateField } from '@/ui/elements/inputs/DateField';
 import { localTodayIso } from '@/ui/elements/inputs/dateTimeConvert';
@@ -100,6 +102,8 @@ export type StocktakeLineEditItem = {
   // (addBatch) and a new-item pick both know them without a re-fetch.
   isVaccine: boolean;
   doses: number;
+  /** Read-only, shown beside the header item picker (inbound's Unit field). */
+  unitName: string | null;
 };
 
 // One of the item's stock lines (from stockLinesByItem).
@@ -164,6 +168,33 @@ const fetchExistingLines = async (
     page: { first: ITEM_LINES_PAGE },
   });
   return result.kind === 'success' ? result.data.stocktakeLines.nodes : [];
+};
+
+// How many lines one presence probe may return: a page of search results is
+// ~30 items at a handful of batches each, so this is never expected to bind.
+const PRESENCE_PROBE_PAGE = 1000;
+
+// The add-item search's already-on-stocktake probe (the "In stocktake"
+// option badge): one membership query per fetched page of options — the same
+// stocktakeLines query the editor loads items with, filtered to that page's
+// item ids; the distinct item ids of the returned lines are the hits.
+// undefined on a failed fetch → that page just goes unmarked (graphqlFetch
+// already surfaced the error).
+const probePresentItems = async (
+  storeId: string,
+  stocktakeId: string,
+  itemIds: string[]
+): Promise<string[] | undefined> => {
+  const result = await graphqlFetch(StocktakeLines, {
+    storeId,
+    stocktakeId,
+    filter: { itemId: { equalAny: itemIds } },
+    page: { first: PRESENCE_PROBE_PAGE },
+  });
+  if (result.kind !== 'success') return undefined;
+  return [
+    ...new Set(result.data.stocktakeLines.nodes.map(line => line.item.id)),
+  ];
 };
 
 // Fetch the item's other batches (stock lines NOT already on the stocktake) and
@@ -397,6 +428,12 @@ const StocktakeLineEditContent = (
   // (ui/utils/createFocusTarget).
   const itemSearch = createFocusTarget();
 
+  // The header slot the DataTable portals its toolbar controls into
+  // (DataTable.controlsMount) — a ref SIGNAL, not a plain variable: the header
+  // renders before the table, so the table must re-read this once the element
+  // attaches.
+  const [tableControls, setTableControls] = createSignal<HTMLDivElement>();
+
   // Store-preference display gates (spec/stocktakes › store-preference gates),
   // read reactively. Each gated column is built into the column set only when
   // its preference is on. The VVM/doses cells additionally render only for a
@@ -506,6 +543,7 @@ const StocktakeLineEditContent = (
         name: first.itemName,
         isVaccine: first.item.isVaccine,
         doses: first.item.doses,
+        unitName: first.item.unitName,
       },
       // Focus the clicked batch (falls back to the first row if it's not among
       // this item's lines, e.g. the id went stale).
@@ -862,9 +900,6 @@ const StocktakeLineEditContent = (
             label={t('label.batch')}
             hideLabel
             size="small"
-            // Narrow: a batch code is short, and it's the card's inline header
-            // field (the FieldRow control cell is otherwise full-width).
-            width="compact"
             disabled={!line.countThisLine}
             value={line.batch ?? ''}
             onInput={e =>
@@ -1443,42 +1478,84 @@ const StocktakeLineEditContent = (
       // `selectedItem` gives the combobox the current item's label directly, so
       // it displays even in update mode where the row-opened item isn't in the
       // search's own paginated result list.
+      //
+      // Bounded, not full-width (inbound's treatment): once picked, an item's
+      // "code - name" label doesn't need the whole header row, and the Unit
+      // fact reads better grouped beside the picker than stranded at the far
+      // edge. Keyed off the size latch (not "an item is picked"), so the
+      // header doesn't resize under the user mid-walk.
       title={
-        <span class={styles.addTitle}>
-          <ItemSearch
-            label={t('heading.add-item')}
-            hideLabel
-            class={styles.addSelect}
-            storeId={props.storeId}
-            disabled={mode() === 'update'}
-            focusTarget={itemSearch}
-            value={currentItem()?.id}
-            selectedItem={currentItem()}
-            // Pick an item → load it; clear (×) → back to the search state.
-            onSelect={item => (item ? selectItem(item) : backToSearch())}
-            placeholder={t('placeholder.enter-an-item-code-or-name')}
-          />
-        </span>
+        <HStack gap="md" align="center">
+          <div
+            class={styles.headerPicker}
+            classList={{
+              [styles.headerPickerBounded ?? '']: workingSize(),
+            }}
+          >
+            <ItemSearch
+              label={t('heading.add-item')}
+              hideLabel
+              storeId={props.storeId}
+              disabled={mode() === 'update'}
+              focusTarget={itemSearch}
+              value={currentItem()?.id}
+              selectedItem={currentItem()}
+              // Mark items already on this stocktake in the results
+              // (OMS-REG-INV-03.78) — picking one still loads its existing count.
+              presentInDocument={{
+                probe: ids =>
+                  probePresentItems(props.storeId, props.stocktakeId, ids),
+                label: t('label.in-stocktake'),
+              }}
+              // Pick an item → load it; clear (×) → back to the search state.
+              onSelect={item => (item ? selectItem(item) : backToSearch())}
+              placeholder={t('placeholder.enter-an-item-code-or-name')}
+            />
+          </div>
+          <Show when={currentItem()?.unitName}>
+            {unitName => (
+              <LabelledValue
+                class={styles.headerUnit}
+                label={t('label.unit')}
+                variant="field"
+                layout="inline"
+                size="small"
+              >
+                {unitName()}
+              </LabelledValue>
+            )}
+          </Show>
+        </HStack>
       }
       ariaLabel={t('heading.add-item')}
       // Add batch lives at the inline-end of the header row. Hidden until an
       // item is picked.
       headerActions={
-        <Show when={!noItemYet()}>
-          <Button
-            variant="secondary"
-            icon={<PlusCircleIcon />}
-            data-testid="add-batch-button"
-            onClick={addBatch}
-          >
-            {/* The key is named INLINE in the label rather than shown as a badge
-                (spec/keyboard ui-surface S2: "A control MAY instead name its key
-                in its own label, where the key is not a modifier combination…
-                Such a control gets no badge"). Hence no `shortcut` prop here —
-                a badge would be the second copy AC-KB15 forbids. */}
-            {t('label.add-batch')} (+)
-          </Button>
-        </Show>
+        <>
+          {/* The table's own controls (Columns · Settings), lifted onto this
+              row by DataTable's controlsMount — they sat in a toolbar of their
+              own a few pixels above the cards, spending a whole row of a
+              modal whose vertical space is the scarce axis. Inline-start of
+              Add batch: view/column plumbing before the action that changes
+              the data. Empty (and invisible) until an item is picked, since
+              the table only exists then. */}
+          <div ref={setTableControls} class={styles.headerTableControls} />
+          <Show when={!noItemYet()}>
+            <Button
+              variant="secondary"
+              icon={<PlusCircleIcon />}
+              data-testid="add-batch-button"
+              onClick={addBatch}
+            >
+              {/* The key is named INLINE in the label rather than shown as a badge
+                  (spec/keyboard ui-surface S2: "A control MAY instead name its key
+                  in its own label, where the key is not a modifier combination…
+                  Such a control gets no badge"). Hence no `shortcut` prop here —
+                  a badge would be the second copy AC-KB15 forbids. */}
+              {t('label.add-batch')} (+)
+            </Button>
+          </Show>
+        </>
       }
       actionsLead={
         <Show when={footerError()}>
@@ -1533,6 +1610,7 @@ const StocktakeLineEditContent = (
           showFullScreen={false}
           config={tableConfig.config()}
           setConfig={tableConfig.setConfig}
+          controlsMount={tableControls()}
           emptyMessage={t('label.add-new-line')}
         />
       </Show>

@@ -1,8 +1,9 @@
 import { createEffect, createSignal, Show } from 'solid-js';
 import { Button } from '../../../ui/elements/buttons/Button';
-import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Text } from '../../../ui/elements/typography/Text';
+import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
+import { FormSection } from '../../../ui/layout/Form/FormSection';
 import { Stack } from '../../../ui/layout/Stack/Stack';
 import { HStack } from '../../../ui/layout/Stack/HStack';
 import { MapPinIcon } from '../../../ui/icons';
@@ -98,8 +99,16 @@ export const StoreGpsBlock = (props: {
   });
 
   return (
-    <Stack gap="sm">
-      <Text variant="subtitle">{t('label.gps-coordinates')}:</Text>
+    // A titled field group of the store editor's form — its heading is the
+    // section's, and each recorded coordinate is a read-only labelled value
+    // (label above, no input chrome), so the group lines up with the property
+    // fields below it (D114). The dialog's identity header owns the h2, so this
+    // top-level group takes h3 while keeping the group treatment.
+    <FormSection
+      title={t('label.gps-coordinates')}
+      headingLevel="h3"
+      heading="group"
+    >
       <Show
         when={!fetching()}
         fallback={<Text>{t('label.fetching-coordinates')}</Text>}
@@ -121,16 +130,19 @@ export const StoreGpsBlock = (props: {
         </Show>
         <HStack align="end" justify="between">
           <Stack gap="sm">
-            <FieldRow label={`${t('label.latitude')}:`}>
-              <Text data-testid="store-editor-latitude">
+            {/* The test id stays on the VALUE, not the labelled block: the
+                e2e contract reads this node's text as the coordinate alone
+                (e2e/TESTIDS.md), and the block's text now includes its label. */}
+            <LabelledValue variant="field" label={t('label.latitude')}>
+              <span data-testid="store-editor-latitude">
                 {formatCoordinate(props.latitude, 'latitude')}
-              </Text>
-            </FieldRow>
-            <FieldRow label={`${t('label.longitude')}:`}>
-              <Text data-testid="store-editor-longitude">
+              </span>
+            </LabelledValue>
+            <LabelledValue variant="field" label={t('label.longitude')}>
+              <span data-testid="store-editor-longitude">
                 {formatCoordinate(props.longitude, 'longitude')}
-              </Text>
-            </FieldRow>
+              </span>
+            </LabelledValue>
           </Stack>
           <Button
             variant="secondary"
@@ -155,18 +167,18 @@ export const StoreGpsBlock = (props: {
           </Button>
         </HStack>
       </Show>
-      <FieldRow label={`${t('label.distance')}:`}>
+      <LabelledValue variant="field" label={t('label.distance')}>
         {/* Nothing recorded → nothing to be distant from, so the measurement
             reads 0 rather than lingering from a discarded draft (a capture
             staged and then cancelled). A measurement against coordinates that
             ARE recorded is kept even when a later read fails — the stale
             distance remains, by design (rules § GPS coordinates). */}
-        <Text data-testid="store-editor-distance">
+        <span data-testid="store-editor-distance">
           {hasCoordinates(props.latitude, props.longitude)
             ? (distanceKm() ?? 0)
             : 0}
-        </Text>
-      </FieldRow>
-    </Stack>
+        </span>
+      </LabelledValue>
+    </FormSection>
   );
 };

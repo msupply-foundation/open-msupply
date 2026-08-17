@@ -16,19 +16,21 @@ import { t } from '../intl';
 import {
   findLeafByPath,
   lowerNav,
+  sectionIconForPath,
   upperNav,
   type NavLeaf,
 } from '../ui/layout/AppShell/navModel';
+import { ShellSectionContext } from '../ui/layout/AppShell/shellContext';
 import { authUser, logout, userDisplayName } from '../auth/authContext';
+import { storeCustomColour } from '../store/storeContext';
 import { isCentralServer } from '../api/serverInfo';
 import { reportPermissionDenied } from '../api/graphql';
-import { createMediaQuery } from '../ui/utils/createMediaQuery';
-import { mediaQuery } from '../ui/styles/breakpoints';
-import { deniedPermission, gateNav, mobileNav, routeAccess } from './navGates';
+import { deniedPermission, gateNav, routeAccess } from './navGates';
 import { KeyboardHost } from '../keyboard/KeyboardHost';
+import { createDocumentTitle, screenTitleKey } from '../documentTitle';
 import { startSyncWatch, stopSyncWatch } from '../api/syncStore';
 import { createSyncIndicator } from '../sections/sync-modal/syncIndicator';
-import { resolveStorePath } from '../store/StoreGuardLayout';
+import { StoreSwitchModal } from '../store/StoreSwitchModal';
 import { reloadForUpdate, updateAvailable } from '../appUpdate';
 
 // The sync modal is the sync-modal vertical's chunk — loaded on first open,
@@ -75,6 +77,20 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   const selected = (): NavLeaf =>
     findLeafByPath(relativePath() || 'dashboard') ?? NO_SELECTION;
 
+  // The browser tab names the screen the URL points at (spec/chrome § document
+  // title) — the registry's label for the destination, the list entry for a
+  // record screen beneath it. Every in-store screen is inside this shell, so
+  // one effect here titles them all.
+  createDocumentTitle(() => screenTitleKey(relativePath()));
+
+  // The nav group's glyph for wherever we are — handed to every page's
+  // breadcrumb through the shell-section context, since the group a screen sits
+  // under is the route's business, not the page's (spec/ui-standards › layout,
+  // page regions; shellContext › ShellSection). Record screens inherit their
+  // list's section, the store root is the dashboard, and an off-registry path
+  // (the not-found catch-all) simply has none.
+  const sectionIcon = () => sectionIconForPath(relativePath() || 'dashboard');
+
   // A permission-gated destination stays in the menu, but activating it
   // refuses instead of navigating: the permission-denied dialog opens, naming
   // the missing permission, and the user stays where they were
@@ -90,20 +106,14 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
 
   // Nav visibility gates live in src/nav/navGates.ts, shared with the command
   // palette so the menu and the palette can never disagree about where the user
-  // can go (spec/keyboard AC-KB4). At phone width the menu narrows further to
-  // the registry's mobile-friendly subset (spec/navigation § mobile-friendly,
-  // D95; OMS-REG-NAV-01.21) — presentation only, routes stay untouched.
+  // can go (spec/keyboard AC-KB4). The menu offers the same gated destinations
+  // at every viewport width, phone included (spec/navigation § mobile-friendly).
   // Memoised so the gated arrays — and the section objects rebuilt when a
   // child is dropped — keep stable references; otherwise MenuBar's <For> would
   // remount nav sections on every shell re-render
   // (kdd/solid-reactivity-pitfalls).
-  const isPhone = createMediaQuery(mediaQuery.compact);
-  const menuUpper = createMemo(() =>
-    isPhone() ? mobileNav(gateNav(upperNav)) : gateNav(upperNav)
-  );
-  const menuLower = createMemo(() =>
-    isPhone() ? mobileNav(gateNav(lowerNav)) : gateNav(lowerNav)
-  );
+  const menuUpper = createMemo(() => gateNav(upperNav));
+  const menuLower = createMemo(() => gateNav(lowerNav));
 
   // The router is the registry's third surface (spec/navigation § one
   // registry): a capability-gated destination's URL is unreachable — it lands
@@ -122,19 +132,30 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
 
   // The active store + signed-in user shown in the bottom bar. The store list
   // and user come from the me/login response (authContext); the active store is
-  // the one named by the URL. Activating the store selector routes to the
-  // store-selection screen (spec SL-6 / OMS-REG-LGN-02.11); the user menu logs
-  // out (spec: explicit logout).
+  // the one named by the URL. Activating the store selector opens the
+  // store-switch modal over the current screen (spec SL-6 / D14 /
+  // OMS-REG-LGN-02.11); the user menu logs out (spec: explicit logout).
   const activeStore = () =>
     authUser()?.stores.nodes.find(s => s.id === params.storeId);
   const storeName = () => activeStore()?.name ?? '';
   const username = () => authUser()?.username ?? '';
 
+  // Mounted fresh per open (the <Show> below), so the panel's search and
+  // checkbox state reset between opens; closing (dismiss or a confirmed
+  // switch) unmounts it, and the native <dialog> returns focus to the trigger
+  // (OMS-REG-LGN-02.29/.30).
+  const [storeSwitchOpen, setStoreSwitchOpen] = createSignal(false);
+
   // Spec OMS-REG-FTR-01.9/.10: Logout is gated by a confirmation modal, and
   // confirming ends the session — clearing the user swaps the whole shell for
-  // the login screen (App's <Show when={authUser()}>), so nothing here
-  // navigates.
+  // the login screen (App's <Show when={authUser()}>). The URL is then reset
+  // to the root (spec § explicit logout, OMS-REG-LGN-01.28) so the next
+  // sign-in resolves the store from scratch instead of silently re-entering
+  // the one the logged-out screen's URL still named. AFTER the user clears —
+  // navigating first would route a still-authenticated app through the
+  // /resolve-store guard and flash the picker for the server round-trip.
   const [logoutConfirmOpen, setLogoutConfirmOpen] = createSignal(false);
+  const logoutAndReset = () => void logout().then(() => navigate('/'));
 
   // Spec (sync-modal; chrome › sync indicator): the chrome's sync affordance
   // opens the modal; the shared sync watch (substrate) runs for the whole
@@ -177,15 +198,25 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
         selected={selected()}
         onNavigate={onNavigate}
         onSyncOpen={openSync}
+        /* The brand mark goes home — the store root, which IS the dashboard
+           (see relativePath above, where an empty path resolves to it). The
+           conventional job for a logo in app chrome, and the reason it is not
+           wired to the rail toggle instead. */
+        onHome={() => navigate(`/${params.storeId}`)}
         syncBadge={syncIndicator.badge()}
         syncIconDimmed={syncIndicator.dimmed()}
         storeName={storeName()}
-        onStoreClick={() => navigate(resolveStorePath)}
+        onStoreClick={() => setStoreSwitchOpen(true)}
         onStoreEdit={openStoreEdit}
         username={username()}
         displayName={userDisplayName()}
         email={authUser()?.email}
+        jobTitle={authUser()?.jobTitle}
         onLogout={() => setLogoutConfirmOpen(true)}
+        /* The store's custom bottom-bar colour (spec/chrome § bottom bar) —
+           guard-3 global state, so a preferences save (which refetches it)
+           re-colours the bar without a reload. */
+        footerColour={storeCustomColour()}
         isCentralServer={isCentralServer()}
         updateAvailable={updateAvailable()}
         onUpdateClick={() => setUpdateConfirmOpen(true)}
@@ -198,18 +229,25 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
           when={access().kind === 'ok'}
           fallback={<Navigate href={`/${params.storeId}`} />}
         >
-          {props.children}
+          {/* Wraps the PAGE, not the shell chrome: the only consumer is the
+              page header's breadcrumb. */}
+          <ShellSectionContext.Provider value={{ icon: sectionIcon }}>
+            {props.children}
+          </ShellSectionContext.Provider>
         </Show>
       </AppShell>
       <Show when={syncEverOpened()}>
         <SyncModal open={syncOpen()} onClose={() => setSyncOpen(false)} />
+      </Show>
+      <Show when={storeSwitchOpen()}>
+        <StoreSwitchModal open onClose={() => setStoreSwitchOpen(false)} />
       </Show>
       <ConfirmDialog
         open={logoutConfirmOpen()}
         onClose={() => setLogoutConfirmOpen(false)}
         title={t('heading.logout-confirm')}
         message={t('messages.logout-confirm')}
-        onConfirm={() => void logout()}
+        onConfirm={logoutAndReset}
       />
       <ConfirmDialog
         open={updateConfirmOpen()}

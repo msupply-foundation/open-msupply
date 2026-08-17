@@ -13,7 +13,7 @@ import {
   SyncIcon,
   type IconProps,
 } from '../../icons';
-import { useIsNavOverlay } from '../../utils/createMediaQuery';
+import { useIsNavOverlay, useIsRailWide } from '../../utils/createMediaQuery';
 import { createAction } from '../../utils/keyActions';
 import { MenuBar, type MenuBarState } from './MenuBar';
 import { LanguageSelector } from './LanguageSelector';
@@ -32,6 +32,7 @@ import {
   type NavLeaf,
 } from './navModel';
 import { locale, changeLanguage, t } from '../../../intl';
+import { footerColourStyle } from './footerColour';
 import styles from './AppShell.module.css';
 
 export interface AppShellProps {
@@ -62,6 +63,12 @@ export interface AppShellProps {
    * the same id.
    */
   onSyncOpen?: () => void;
+  /**
+   * Activating the brand mark — chrome's conventional route home. Optional for
+   * the same reason as the cells above: a host that doesn't wire it gets a
+   * plain mark rather than a button that does nothing.
+   */
+  onHome?: () => void;
   /** The Sync entry's status badge (spec/chrome § sync indicator). */
   syncBadge?: NavBadge;
   /** Dim the Sync entry's icon while the latest run is errored. */
@@ -94,6 +101,9 @@ export interface AppShellProps {
   /** The signed-in user's email address, shown in the user popup
    *  (OMS-REG-FTR-01.4). Absent when the user record records none. */
   email?: string | null;
+  /** The signed-in user's job title, the subtitle under the display name in the
+   *  user popup. Absent when the user record records none. */
+  jobTitle?: string | null;
   /** Explicit logout, from the user menu (spec: user menu / logout). */
   onLogout: () => void;
   /**
@@ -107,6 +117,13 @@ export interface AppShellProps {
    * reload) — without it the cell never renders, so it is never a dead button.
    */
   onUpdateClick?: () => void;
+  /**
+   * The store's custom bottom-bar colour (spec/chrome § bottom bar) — the raw
+   * store-custom-colour preference value. A parseable hex colour replaces the
+   * bar's background (central or not) with contrast-derived text; anything
+   * else, or unset, leaves the default. A DATA colour, not a theme value.
+   */
+  footerColour?: string;
   /** On a central server the bottom bar is brand orange; otherwise neutral.
    *  From the isCentralServer global, queried unauthenticated at startup. */
   isCentralServer?: boolean;
@@ -154,6 +171,13 @@ const FooterCell = (props: {
 );
 
 /*
+ * The rail's collapsed state, when the user has set it explicitly. One shared
+ * key, not per-user, matching side-panel-open: the state is cosmetic. Absent =
+ * no choice made, so the width default applies.
+ */
+const RAIL_COLLAPSED_KEY = 'rail-collapsed';
+
+/*
  * Application shell — the APP-LEVEL container, not the page frame: docked
  * menu bar (the main menu), the orange app footer, and the content slot
  * between them where the current page renders. App chrome lives here
@@ -165,13 +189,46 @@ const FooterCell = (props: {
  * routing is decided the host owning `selected`/`onNavigate` is the router
  * stand-in; a root layout route takes both over later.
  *
- * The one responsive decision — docked rail vs. hamburger overlay — is
- * driven by useIsNavOverlay; everything else is intrinsic layout. The shell
+ * Two responsive decisions, and only two: WHICH nav renders — docked rail vs.
+ * hamburger overlay — from useIsNavOverlay, and what the docked rail DEFAULTS
+ * to — expanded vs. mini rail — from useIsRailWide. The second changes no
+ * element, only a starting state the user can overrule; everything else is
+ * intrinsic layout. The shell
  * renders no header of its own: the page's <Header> hosts the overlay
  * hamburger via ShellNavContext. Adapted from the RnD prototype's App shell.
  */
 export const AppShell = (props: AppShellProps) => {
-  const [railCollapsed, setRailCollapsed] = createSignal(false);
+  /*
+   * The rail is DOCKED at every width from navOverlay up; what railDefaultExpanded
+   * changes is only its DEFAULT state — expanded on a desktop, the mini rail on a
+   * 1024–1439 laptop or landscape tablet where width is scarce. Hiding the nav
+   * outright in that band was the alternative, and it would have traded permanent
+   * wayfinding for the ~80px the mini rail already gives back.
+   *
+   * An explicit toggle outranks the default and persists across reloads — the
+   * same choice-over-responsive-default shape as createSidePanelOpen, and for the
+   * same reason: a default the user has overruled should stay overruled, at every
+   * width, rather than springing back when they resize.
+   */
+  let storedRail: boolean | null = null;
+  try {
+    const raw = localStorage.getItem(RAIL_COLLAPSED_KEY);
+    if (raw === 'true' || raw === 'false') storedRail = raw === 'true';
+  } catch {
+    // Storage unavailable (private mode) — fall through to the width default.
+  }
+  const railWide = useIsRailWide();
+  const [railChoice, setRailChoice] = createSignal<boolean | null>(storedRail);
+  const railCollapsed = () => railChoice() ?? !railWide();
+  const setRailCollapsed = (next: boolean) => {
+    setRailChoice(next);
+    try {
+      localStorage.setItem(RAIL_COLLAPSED_KEY, String(next));
+    } catch {
+      // Best effort — the in-session signal still works.
+    }
+  };
+
   const [overlayOpen, setOverlayOpen] = createSignal(false);
   const [fullScreen, setFullScreen] = createSignal(false);
   // A page's slide-over panel is covering the viewport (KB-X2). Set by Page
@@ -189,7 +246,7 @@ export const AppShell = (props: AppShellProps) => {
 
   const nav: MenuBarState = {
     railCollapsed,
-    toggleRail: () => setRailCollapsed(c => !c),
+    toggleRail: () => setRailCollapsed(!railCollapsed()),
     overlayOpen,
     openOverlay: () => setOverlayOpen(true),
     closeOverlay: () => setOverlayOpen(false),
@@ -214,6 +271,17 @@ export const AppShell = (props: AppShellProps) => {
   // the real i18n locale — not here — so there is a single dir effect. The
   // footer LanguageSelector drives that locale via changeLanguage.
 
+  // The store's custom footer colour, when it parses as hex: the footer's two
+  // colour knobs set inline (a data colour, as ColourTag's --tag-colour); the
+  // module CSS consumes them, so its rules stay the single source of the
+  // bar's colouring. Undefined (unset/unparseable) keeps the variant default.
+  const customFooterVars = () => {
+    const custom = footerColourStyle(props.footerColour);
+    return custom
+      ? { '--footer-bg': custom.background, '--footer-fg': custom.text }
+      : undefined;
+  };
+
   return (
     <ShellNavContext.Provider value={{ isOverlay, openNav: nav.openOverlay }}>
       <ShellOverlayContext.Provider value={{ setPanelOverlay }}>
@@ -235,6 +303,7 @@ export const AppShell = (props: AppShellProps) => {
                 upper={menuUpper()}
                 lower={menuLower()}
                 selectedId={props.selected.id}
+                onHome={props.onHome}
                 // The Sync entry opens the modal in place — never navigates
                 // (spec/chrome OMS-REG-FTR-03.1). Chrome behaviour, so it
                 // applies only when the host wired onSyncOpen: one that didn't
@@ -253,11 +322,11 @@ export const AppShell = (props: AppShellProps) => {
               <div class={styles.content}>{props.children}</div>
 
               {/* Bottom bar (spec chrome › bottom bar), left to right: the store
-                selector (routes to the store-selection screen), the store Edit
-                cell, a spacer, the signed-in user (menu: logout), then the
-                language selector. The store name is shown as text, so the store
-                colour is never the sole active-store indicator (colour
-                independence / D14). Hidden in full-screen mode, like the menu
+                selector (opens the store-switch modal — spec SL-6 / D14), the
+                store Edit cell, a spacer, the signed-in user (menu: logout),
+                then the language selector. The store name is shown as text, so
+                the store colour is never the sole active-store indicator
+                (colour independence). Hidden in full-screen mode, like the menu
                 bar. */}
               <Show when={!fullScreen()}>
                 <footer
@@ -265,6 +334,11 @@ export const AppShell = (props: AppShellProps) => {
                   inert={panelOverlay()}
                   data-testid="app-footer"
                   data-central={props.isCentralServer ? '' : undefined}
+                  // The store's custom colour, when it parses: set as the
+                  // footer's two colour knobs (as ColourTag's --tag-colour),
+                  // so the stylesheet stays the one place the bar's colouring
+                  // — variants included — is decided.
+                  style={customFooterVars()}
                 >
                   <FooterCell
                     icon={HomeIcon}
@@ -303,6 +377,7 @@ export const AppShell = (props: AppShellProps) => {
                     username={props.username}
                     displayName={props.displayName}
                     email={props.email}
+                    jobTitle={props.jobTitle}
                     onLogout={props.onLogout}
                   />
                   <span class={styles.footerDivider} aria-hidden="true" />

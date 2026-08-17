@@ -10,7 +10,7 @@ import {
   CancelButton,
   DialogSaveButton,
 } from '../../../../ui/elements/buttons/StandardButtons';
-import { PlusCircleIcon } from '../../../../ui/icons';
+import { CatalogueIcon } from '../../../../ui/icons';
 import {
   AddToOutboundFromMasterList,
   CustomerMasterLists,
@@ -90,7 +90,12 @@ export const AddFromMasterListAction: Component<
   return (
     <Show when={props.visible}>
       <Button
-        icon={<PlusCircleIcon />}
+        // A catalogue, not a bare plus: this button collapses to its icon
+        // beside "Add item" on a narrow viewport, and two identical plus
+        // circles there would be two unlabelled buttons that look the same.
+        icon={<CatalogueIcon />}
+        collapsible="narrow"
+        title={t('button.add-from-master-list')}
         data-testid="add-from-master-list-button"
         onClick={() => {
           setError(undefined);

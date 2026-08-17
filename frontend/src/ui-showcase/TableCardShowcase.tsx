@@ -957,7 +957,6 @@ const CardAdvancedDemo = () => {
             label="Note"
             hideLabel
             size="small"
-            width="full"
             value={notes[row.id]}
             onInput={e => setNotes(row.id, e.currentTarget.value)}
             onClick={e => e.stopPropagation()}
@@ -1348,13 +1347,63 @@ const PaginationDemo = () => {
     <Pagination
       offset={offset()}
       pageSize={pageSize()}
-      total={38}
+      // Enough pages to show what the pager does with a long set: a window
+      // around the current page, an ellipsis for each break, and the number
+      // box behind it.
+      total={380}
       onOffsetChange={setOffset}
       onPageSizeChange={size => {
         setPageSize(size);
         setOffset(0);
       }}
     />
+  );
+};
+
+// The `conditional` footer's two states, each over a fixed row count so the
+// state is the thing on show: 8 rows (one page) renders nothing at all — its
+// label stands alone and the space goes to the table — while 38 rows brings the
+// bar. Paging within the second stays on the bar: the row count decides the
+// state, not where you are in it. The third demo is the same bar with `inBar`,
+// the face a detail view's status footer hosts.
+const ConditionalPaginationDemo = () => {
+  const [offset, setOffset] = createSignal(0);
+  return (
+    <Stack gap="md">
+      <div>
+        <Text variant="subtitle">8 rows (one page) — no footer</Text>
+        <Pagination
+          offset={0}
+          pageSize={20}
+          total={8}
+          onOffsetChange={() => {}}
+          onPageSizeChange={() => {}}
+        />
+      </div>
+      <div>
+        <Text variant="subtitle">38 rows — the bar</Text>
+        <Pagination
+          offset={offset()}
+          pageSize={20}
+          total={38}
+          onOffsetChange={setOffset}
+          onPageSizeChange={() => setOffset(0)}
+        />
+      </div>
+      <div>
+        <Text variant="subtitle">
+          38 rows, inBar — sized to its cluster, for a shared bar
+        </Text>
+        <Pagination
+          offset={offset()}
+          pageSize={20}
+          total={38}
+          inBar
+          onOffsetChange={setOffset}
+          onPageSizeChange={() => setOffset(0)}
+        />
+      </div>
+    </Stack>
   );
 };
 
@@ -1527,9 +1576,22 @@ export const TableCardShowcase = () => (
             parent owns <code>offset</code>/<code>pageSize</code> (bound for URL
             params); the component is pure presentation over them and resets to
             the first page on a size change. Below 480px the selector and number
-            slots collapse to <code>‹ ›</code> + the range.
+            slots collapse to <code>‹ ›</code> + the page position and the
+            range.
           </Lead>
           <PaginationDemo />
+          <Lead>
+            The bar earns its space rather than standing as fixed chrome (spec/ui-standards § tables → pagination):
+            it renders only when there is somewhere to page to. No rows, or a
+            single page of them, and there is nothing here at all — the host
+            drops the footer band with it (DataTable does this from{' '}
+            <code>paginationState</code>), so no empty strip is left behind and
+            the height goes to the rows. A detail view goes further and hosts
+            the bar's contents in its status footer, where{' '}
+            <code>inBar</code> keeps the cluster at its content width so a
+            crowded bar wraps it whole.
+          </Lead>
+          <ConditionalPaginationDemo />
         </DashboardCard>
 
         <Text variant="heading">Cards</Text>
