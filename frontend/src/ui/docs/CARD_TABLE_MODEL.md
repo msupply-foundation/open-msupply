@@ -47,6 +47,7 @@ Set on each column literal in your `columns()` array. Anything not about the car
 | `meta.headerPosition`           | `'primary' \| 'badge'` | — (body)      | Puts the column in the card **header** — `primary` (title, inline-start) or `badge` (chip, inline-end). Omit → the column is a body cell.                                                      |
 | `meta.showLabel`                | `boolean`              | slot-based    | Override the card label. Default: header cells **unlabelled**, body cells **labelled**. Set `true` to caption a header cell, `false` to drop a body label.                                     |
 | `meta.hideOnCard`               | `boolean`              | `false`       | Omit the column from **card** view entirely (a table-only column).                                                                                                                             |
+| `meta.hideOnCardWhen`           | `(row) => boolean`     | —             | Omit this field from the cards of the **rows** it answers true for — the per-row counterpart of `hideOnCard`. Card view only; see [Withdrawing a field per row](#withdrawing-a-field-per-row). |
 | `meta.hideOnTable`              | `boolean`              | `false`       | Omit the column from **table** view entirely (a card-only column).                                                                                                                             |
 | `meta.hideFromColumnSettings`   | `boolean`              | `false`       | Keep the column out of the **Columns popover** (stays on screen, just not user show/hide/move/pin). For structural columns — the card identity, a row-actions column.                          |
 | `meta.cardWidth`                | `number` (rem)         | — (equal)     | This field's resting width in **card** view, per ui-standards § _Field Widths by Context_ (numeric quantity `7.5`, currency / date `10`, location `8.75`). See below.                          |
@@ -279,6 +280,29 @@ const CARD_GROUPS: CardGroup<Draft, GroupKey>[] = [
   },
 ];
 ```
+
+### Withdrawing a field per row
+
+`hideOnCard` is all-or-nothing per column. `meta.hideOnCardWhen: (row) => boolean` is the per-**row** version, for a field that is meaningless for some records rather than for the whole table — the stocktake line editor's Reason, which applies only to a batch counted to something other than its snapshot.
+
+```ts
+{
+  c: { id: 'inventoryAdjustmentReasonInput' },
+  header: () => t('label.reason'),
+  cardGroup: 'batch',
+  meta: {
+    cardWidth: { min: 9, max: 20, weight: 1.2 },
+    hideOnCardWhen: line => !line.countThisLine || adjustmentDirection(line) === null,
+  },
+  cell: /* … disabled when there is no direction — that governs TABLE view */
+}
+```
+
+**Returning `null` from the cell is not the same thing.** The card wraps every body cell in its caption, so a nulled cell leaves a label standing over blank space — the field looks broken rather than absent. `hideOnCardWhen` is applied where `hideOnCard` is, at the single cell list every later split reads, so the field leaves its group, takes its caption with it, and is excluded from the group's width template and narrow-fallback threshold. The neighbours close up instead of leaving a hole.
+
+**Card view only, deliberately.** A table column is a property of the grid, not the row: blanking one row's cell keeps the columns aligned, removing it would not. Give the cell renderer whatever blank/disabled treatment the table face needs.
+
+Reach for it only for genuinely per-row conditions. A whole-column condition — a store preference, or an item attribute on a one-item editor — should build the column conditionally instead, so it never enters the column list at all.
 
 ## Rules of thumb
 
