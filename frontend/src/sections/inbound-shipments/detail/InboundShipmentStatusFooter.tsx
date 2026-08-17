@@ -14,14 +14,13 @@ import { Alert } from '../../../ui/elements/feedback/Alert';
 import { ArrowRightIcon } from '../../../ui/icons';
 import type { InboundInfoFragment } from './inboundShipmentDetail.generated';
 import { inboundShipmentPreferences } from '../../../store/storeContext';
+import { currentStep, filterByStatusPreference } from '@/domain/invoice';
 import { updateInboundShipment } from './inboundShipmentUpdate';
 import {
-  currentStep,
-  filterByStatusPreference,
   kindOf,
-  offeredFlow,
   reachableStatuses,
   statusDatetime,
+  statusFlow,
   STATUS_LABELS,
 } from './inboundShipmentStatus';
 
@@ -68,8 +67,10 @@ export const InboundShipmentStatusFooter: Component<
   // Every status surface is limited by the invoice-status-options preference
   // (spec § preference gates — OMS-REG-REPL-03.25); empty = unrestricted.
   const allowed = () => inboundShipmentPreferences().invoiceStatusOptions;
+  const flow = () => statusFlow(kind(), props.node.status);
+  const offered = () => filterByStatusPreference(flow(), allowed());
   const steps = () =>
-    offeredFlow(kind(), props.node.status, allowed()).map(status => ({
+    offered().map(status => ({
       label: STATUS_LABELS[status],
       date: statusDatetime(props.node, status),
     }));
@@ -121,7 +122,7 @@ export const InboundShipmentStatusFooter: Component<
           stage (OMS-REG-REPL-03.26). */}
       <StatusIndicator
         steps={steps()}
-        current={currentStep(kind(), props.node.status, allowed())}
+        current={currentStep(flow(), offered(), props.node.status)}
       />
 
       {/* The line pager, sharing this bar (`inBar` — it sizes to its cluster
