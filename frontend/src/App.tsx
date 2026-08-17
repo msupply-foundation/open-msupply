@@ -43,6 +43,7 @@ import { helpRoutes, helpDocumentsRoutes } from './sections/help';
 import { ShellLayout } from './nav/ShellLayout';
 import { EntryPage } from './nav/EntryPage';
 import { LoginPage } from './auth/LoginPage';
+import { prefersOldUi } from './preferredFrontend';
 import { ReLoginModal } from './auth/ReLoginModal';
 import { Alert } from './ui/elements/feedback/Alert';
 import { Button } from './ui/elements/buttons/Button';
@@ -90,6 +91,20 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'manage/sites': sitesRoutes,
   help: helpRoutes,
   'manage/help-documents': helpDocumentsRoutes,
+};
+
+// The login fallback (issue #1075): every unauthenticated path — cold boot,
+// explicit logout, session expiry — converges on the `Show` below clearing
+// `authUser()` and swapping this in, so it's the one place that needs to
+// honour a stored "always show old UI" choice rather than each call site
+// redirecting individually. A stale choice bounces the user straight to the
+// sibling old UI instead of flashing this app's own login form.
+const LoginOrRedirectToOldUi: Component = () => {
+  if (prefersOldUi()) {
+    location.replace('/old-ui/');
+    return null;
+  }
+  return <LoginPage />;
 };
 
 export const App: Component = () => {
@@ -184,7 +199,7 @@ export const App: Component = () => {
           <InitialisationPage onComplete={() => void runStartup()} />
         </Match>
         <Match when={phase() === 'operational'}>
-          <Show when={authUser()} fallback={<LoginPage />}>
+          <Show when={authUser()} fallback={<LoginOrRedirectToOldUi />}>
             {/* Installed frontend plugins load here (spec/plugins/rules.md §
                 lifecycle): a session exists, and nothing operational has
                 rendered yet, so a contribution can never pop into an
