@@ -2,10 +2,11 @@ import { describe, expect, it } from 'vitest';
 import {
   currentStep,
   filterByStatusPreference,
+} from '@/domain/invoice/statusGate';
+import {
   hasOriginalShipment,
   isReturnDisabled,
   nextStatuses,
-  offeredFlow,
   statusIndex,
   statusSteps,
   STATUS_FLOW,
@@ -97,6 +98,7 @@ describe('hasOriginalShipment — the supplier field freeze (rules § header rul
 describe('statusSteps — the lifecycle indicator', () => {
   it('maps each reached stage to its datetime', () => {
     const steps = statusSteps(
+      STATUS_FLOW,
       node({ status: 'PICKED', pickedDatetime: '2026-01-02T00:00:00Z' })
     );
     expect(steps).toHaveLength(5);
@@ -107,15 +109,22 @@ describe('statusSteps — the lifecycle indicator', () => {
   });
 });
 
-describe('offeredFlow / currentStep — pref-filtered lifecycle indicator (rules § preference gates)', () => {
+describe('offered flow / currentStep — pref-filtered lifecycle indicator (rules § preference gates)', () => {
+  // Composed through the shared @/domain/invoice helpers exactly as the
+  // footer does.
+  const offered = (allowed: readonly string[]) =>
+    filterByStatusPreference(STATUS_FLOW, allowed);
+  const step = (status: string, allowed: readonly string[]) =>
+    currentStep(STATUS_FLOW, offered(allowed), status);
+
   it('filters the indicator to the offered statuses and keeps a sensible current stage', () => {
-    expect(offeredFlow([])).toEqual(STATUS_FLOW);
-    expect(offeredFlow(['NEW', 'SHIPPED'])).toEqual(['NEW', 'SHIPPED']);
+    expect(offered([])).toEqual(STATUS_FLOW);
+    expect(offered(['NEW', 'SHIPPED'])).toEqual(['NEW', 'SHIPPED']);
     // Actual status PICKED is hidden by the pref → current falls back to NEW
     // (the nearest offered stage at-or-before).
-    expect(currentStep('PICKED', ['NEW', 'SHIPPED'])).toBe(0);
-    expect(currentStep('PICKED', [])).toBe(1);
-    expect(currentStep('SHIPPED', ['NEW', 'SHIPPED'])).toBe(1);
+    expect(step('PICKED', ['NEW', 'SHIPPED'])).toBe(0);
+    expect(step('PICKED', [])).toBe(1);
+    expect(step('SHIPPED', ['NEW', 'SHIPPED'])).toBe(1);
   });
 });
 
