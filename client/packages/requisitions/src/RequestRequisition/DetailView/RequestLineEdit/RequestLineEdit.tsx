@@ -182,7 +182,11 @@ export const RequestLineEdit = ({
             setIsEditingRequested={setIsEditingRequested}
           />
           {showExcessRequestWarning && (
-            <Alert severity="warning" sx={{ mt: 1 }}>
+            <Alert
+              severity="warning"
+              sx={{ mt: 1 }}
+              data-testid="excess-request-warning"
+            >
               {t('warning.requested-exceeds-suggested')}
             </Alert>
           )}
@@ -195,6 +199,7 @@ export const RequestLineEdit = ({
                   update({ reason: value });
                 }}
                 fullWidth
+                inputTestId="variance-reason-input"
                 type={ReasonOptionNodeType.RequisitionLineVariance}
                 disabled={disableReasons}
                 textSx={
@@ -219,6 +224,7 @@ export const RequestLineEdit = ({
             value={draft?.comment ?? ''}
             onChange={(value?: string) => update({ comment: value })}
             disabled={disabled}
+            testId="line-comment-field"
           />
         </ModalPanelArea>
       </>
