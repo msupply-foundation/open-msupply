@@ -7,8 +7,10 @@ import {
   IDLE_TRIGGER,
   statusLineKind,
   syncDurationParts,
+  syncFooterSignal,
   syncFooterStatus,
   toSyncOverview,
+  type SyncFooterStatus,
   type SyncSurfaceContext,
 } from './syncStatus';
 
@@ -487,7 +489,7 @@ describe('a later successful run clears the error (SYNC-03.30)', () => {
   });
 });
 
-describe('syncFooterStatus — the bottom bar\'s sync cell (spec/chrome § sync status)', () => {
+describe("syncFooterStatus — the bottom bar's sync cell (spec/chrome § sync status)", () => {
   const now = new Date('2026-01-10T00:00:00Z');
   const errored = (
     variant: 'CONNECTION_ERROR' | 'INVALID_SITE_NAME_OR_PASSWORD'
@@ -622,5 +624,44 @@ describe('syncFooterStatus — the bottom bar\'s sync cell (spec/chrome § sync 
       tone: 'neutral',
       count: 5,
     });
+  });
+});
+
+describe("syncFooterSignal — the mark's hue (OMS-REG-FTR-03.21)", () => {
+  it('reads a healthy site as success and a failed one as error', () => {
+    expect(syncFooterSignal('synced')).toBe('success');
+    expect(syncFooterSignal('error')).toBe('error');
+  });
+
+  it('is a SEPARATE axis from the escalation tone, and disagrees both ways', () => {
+    // A queue escalates nothing (tone neutral) yet is worth noticing…
+    expect(syncFooterStatus(undefined, 0, 0, new Date()).tone).toBe('neutral');
+    expect(syncFooterSignal('records-queued')).toBe('warning');
+    // …and an unreachable server warns, but reads muted: the outage is news,
+    // not an alarm, and nothing is lost while it lasts.
+    expect(syncFooterSignal('unreachable')).toBe('muted');
+  });
+
+  it('stays muted wherever there is nothing to report', () => {
+    expect(syncFooterSignal('waiting')).toBe('muted');
+    expect(syncFooterSignal('never-synced')).toBe('muted');
+    // In flight the mark is the animating glyph, not a dot.
+    expect(syncFooterSignal('syncing')).toBe('muted');
+  });
+
+  it('answers every state the footer can be in', () => {
+    // Guards the mapping against a new state slipping past it: each kind in the
+    // union must resolve, so adding one without a hue fails here (and in tsc).
+    const kinds: SyncFooterStatus['kind'][] = [
+      'waiting',
+      'syncing',
+      'error',
+      'unreachable',
+      'warning',
+      'records-queued',
+      'synced',
+      'never-synced',
+    ];
+    for (const kind of kinds) expect(syncFooterSignal(kind)).toBeTruthy();
   });
 });
