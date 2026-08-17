@@ -1,28 +1,22 @@
 /*
  * The bottom bar's sync cell (spec/chrome § sync status). Two controls in one
  * visual group: the status line itself, which starts a sync, and a small
- * details button that opens the sync modal.
+ * details button that raises the sync modal.
  *
- * COLOUR NEVER TOUCHES THE BAR'S OWN GROUND. That ground is store data — brand
+ * NO TONE COLOUR here, deliberately. The bar's ground is store DATA — brand
  * orange on a central server, menu-grey elsewhere, an arbitrary hex wherever a
- * store sets one — so nothing drawn straight onto it can be held to a contrast
- * ratio: --error-main on the orange measures 1.23:1, and a store's own colour
- * is unbounded. Two rules follow, and between them the cell carries state by
- * colour without ever depending on it:
+ * store sets one — so nothing drawn onto it can be held to a contrast ratio
+ * (--error-main measures 1.23:1 on the orange), and worse, a hue that lands
+ * near the store's own simply disappears: on a green bar a green mark is a
+ * mark you cannot see. Escalation is carried by the GLYPH instead
+ * (SyncStatus.tsx `toneIcon`), while text and glyph keep the bar's own
+ * contrast-checked content colour at every tone. The state is then never
+ * signalled by colour at all, so colour independence holds by construction
+ * rather than resting on the label.
  *
- *   1. An escalated cell brings its OWN surface (.group[data-tone]) — the house
- *      tint recipe (severity over --bg-white, severity mixed into the body
- *      text) that Badge and StatusBadge already use, which is AA at this size
- *      whatever the bar underneath is doing. This is also what makes a failed
- *      run unmissable: the whole segment tints, not one glyph inside it.
- *   2. At rest the mark is a dot, and a dot on an unknown ground is a dot that
- *      might vanish — so it carries a hairline ring in `currentcolor`, i.e. the
- *      bar's own already-contrast-checked content colour. The ring guarantees
- *      the mark is SEEN; the fill says which state it is.
- *
- * Colour independence holds regardless (ui-standards › accessibility): the
- * label states the state in words, and the mark's SHAPE — dot, triangle,
- * crossed circle — escalates with the tone.
+ * The one level below the tones is DIM (issue #1087): sync is not running and
+ * cannot. Dimming is not a hue, so it survives an unknown ground — it reads as
+ * "switched off" against a bar of any colour.
  */
 
 .group {
@@ -30,61 +24,6 @@
   flex-shrink: 0;
   align-items: center;
   gap: var(--space-1);
-  border-radius: var(--radius-sm);
-}
-
-/* A cell that shouts takes a ground of its own (see 1. above). The cells inside
-   inherit this colour, so label, detail, mark and the details glyph all move
-   together — the segment escalates as one object rather than as a coloured
-   speck inside a bar-coloured row.
-
-   Gated on `data-loud`, not on the tone alone: an unreachable server warns by
-   the precedence ladder yet stays quiet on the bar (SyncStatus.tsx `isLoud`). */
-.group[data-loud][data-tone='warning'] {
-  background: color-mix(in srgb, var(--warning-main) 15%, var(--bg-white));
-  color: color-mix(in srgb, var(--warning-main) 40%, var(--text-body));
-}
-
-.group[data-loud][data-tone='error'] {
-  background: color-mix(in srgb, var(--error-main) 15%, var(--bg-white));
-  color: color-mix(in srgb, var(--error-main) 40%, var(--text-body));
-}
-
-/*
- * The at-rest mark. Sized off the text so it scales with the root font-size,
- * and ringed at FULL currentcolor — the bar's own content colour, which is the
- * best any mark here can do: the ring then reads exactly as well as the store
- * name beside it, whatever colour the store has chosen for the bar. It is not a
- * compliance mechanism (the footer palette itself measures 2.8:1 on the remote
- * grey and 3.5:1 on the central orange, so nothing drawn in it clears 3:1) —
- * it is what stops a hue that happens to sit near the bar's own from vanishing.
- * The MEANING never rests on it: the label states the state in words.
- */
-.dot {
-  inline-size: 0.5em;
-  block-size: 0.5em;
-  border-radius: 999px;
-  box-shadow: 0 0 0 1px currentcolor;
-  background: currentcolor;
-}
-
-/* The hues (see the header). Every one is redundant with the label beside it. */
-.group[data-signal='success'] .dot {
-  background: var(--success-main);
-}
-
-.group[data-signal='warning'] .dot {
-  background: var(--warning-main);
-}
-
-.group[data-signal='error'] .dot {
-  background: var(--error-main);
-}
-
-/* Nothing to report, or nothing reportable yet: the bar's own colour, dimmed —
-   present but not asking to be read. */
-.group[data-signal='muted'] .dot {
-  background: color-mix(in srgb, currentcolor 55%, transparent);
 }
 
 .cell {
@@ -175,47 +114,33 @@
 }
 
 /*
- * Broadcast animation while a run is in flight (issue #9229): the two arc
- * pairs fade outward from the hub, the inner pair leading. Targets the
- * `data-sync-arc` groups SyncIcon tags for exactly this. --motion-pulse is the
- * shared 2s looping-indicator token (see tokens.css).
+ * Dimmed: sync is not running and cannot (issue #1087). Applied to the whole
+ * group so the glyph, the state, its timing and the details control all recede
+ * together — a cell where only the glyph dimmed would read as a broken icon
+ * rather than a quiet state. Mixed toward the bar's ground rather than given a
+ * fixed grey, so it dims correctly against a bar of any colour.
  */
-@keyframes sync-arc-inner {
-  0%,
-  25% {
-    opacity: 0;
-  }
+.group[data-dimmed] {
+  color: color-mix(in srgb, currentcolor 65%, transparent);
+}
 
-  100% {
-    opacity: 1;
+/*
+ * A run in flight spins the sync glyph (issue #1087) — the reload ring's own
+ * idiom, where the former broadcast mark needed a bespoke arc fade its shape
+ * never motivated.
+ *
+ * --motion-spin is the shared indeterminate-progress token the Spinner uses,
+ * and it is deliberately NOT one of the decorative tiers zeroed under reduced
+ * motion: it slows to a crawl instead of stopping, because a frozen indicator
+ * reads as a hung app (tokens.css). So there is no reduce block here — the
+ * token carries the preference, which is also what the motion check enforces.
+ */
+@keyframes sync-spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 
-@keyframes sync-arc-outer {
-  0%,
-  50% {
-    opacity: 0;
-  }
-
-  100% {
-    opacity: 1;
-  }
-}
-
-.icon[data-syncing] [data-sync-arc='inner'] {
-  animation: sync-arc-inner var(--motion-pulse) ease-in-out infinite;
-}
-
-.icon[data-syncing] [data-sync-arc='outer'] {
-  animation: sync-arc-outer var(--motion-pulse) ease-in-out infinite;
-}
-
-/* A looping animation can't be zeroed (0s would pin it to one keyframe), so
-   --motion-pulse is excluded from the reduce block in tokens.css and stopped
-   here instead. Safe to stop outright: the in-flight state is also carried by
-   the cell's own text ("Syncing…"), which is what a reader relies on. */
-@media (prefers-reduced-motion: reduce) {
-  .icon[data-syncing] [data-sync-arc] {
-    animation: none;
-  }
+.icon[data-syncing] svg {
+  animation: sync-spin var(--motion-spin) linear infinite;
 }

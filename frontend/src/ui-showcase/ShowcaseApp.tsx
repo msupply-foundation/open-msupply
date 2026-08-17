@@ -170,31 +170,20 @@ export function ShowcaseApp() {
    * colours (dark mode flips this shell's footer to the remote grey).
    */
   const demoStates = [
-    {
-      label: 'Synced',
-      detail: '3 minutes ago',
-      tone: 'neutral',
-      signal: 'success',
-    },
-    { label: '14 records queued', tone: 'neutral', signal: 'warning' },
+    { label: 'Synced', detail: 'just now', tone: 'neutral' },
+    { label: 'Synced', detail: '2 min ago', tone: 'neutral' },
+    { label: 'Synced', detail: '3 hr ago', tone: 'neutral' },
+    { label: 'Synced', detail: 'yesterday', tone: 'neutral' },
+    { label: 'Synced', detail: '14 Aug', tone: 'neutral' },
+    { label: '14 records queued', tone: 'neutral' },
     {
       label: 'No connection',
-      detail: 'last synced 2 hours ago',
+      detail: 'last synced 3 hr ago',
       tone: 'warning',
-      signal: 'muted',
+      dimmed: true,
     },
-    {
-      label: 'Sync warning',
-      detail: 'last synced 2 days ago',
-      tone: 'warning',
-      signal: 'warning',
-    },
-    {
-      label: 'Sync error',
-      detail: 'last synced 6 days ago',
-      tone: 'error',
-      signal: 'error',
-    },
+    { label: 'Sync warning', detail: 'last synced yesterday', tone: 'warning' },
+    { label: 'Sync error', detail: 'last synced 14 Aug', tone: 'error' },
   ] as const;
   const [demoState, setDemoState] = createSignal(0);
   const cycleDemoState = () => setDemoState(i => (i + 1) % demoStates.length);
@@ -215,7 +204,7 @@ export function ShowcaseApp() {
       onStoreClick={() => {}}
       syncStatus={
         demoSyncing()
-          ? { label: 'Synchronising…', tone: 'neutral', signal: 'muted' }
+          ? { label: 'Syncing…', tone: 'neutral' }
           : demoStates[demoState()]
       }
       syncing={demoSyncing()}

@@ -1,8 +1,8 @@
-import { Match, Show, Switch } from 'solid-js';
+import { Show } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import {
   AlertTriangleIcon,
-  InfoIcon,
+  ChevronsUpIcon,
   SyncIcon,
   XCircleIcon,
 } from '../../icons';
@@ -25,22 +25,24 @@ export interface SyncStatusProps {
    */
   detail?: string;
   /**
-   * How loudly the cell reads — the escalation axis. It picks the mark's SHAPE
-   * and, above neutral, gives the cell a tinted ground of its own. Escalation
-   * never rides on the bar's ground: that ground is store data (brand orange on
-   * a central server, an arbitrary hex where a store sets one), so no colour
-   * placed straight on it can be held to a contrast ratio. A cell that needs to
-   * shout brings its own surface, on which the house tint recipe holds AA.
+   * How loudly the cell reads. It picks the GLYPH, not a colour: the bar's
+   * ground is store data — brand orange on a central server, an arbitrary hex
+   * wherever a store sets one — so no colour drawn on it can be held to a
+   * contrast ratio, and a hue that lands near the store's own simply
+   * disappears. Text and glyph keep the bar's own contrast-checked content
+   * colour at every tone, and the escalation shows as a different mark — which
+   * also satisfies colour independence outright rather than leaning on the
+   * label to carry it.
    */
   tone: 'neutral' | 'warning' | 'error';
   /**
-   * The mark's hue — the cue that arrives before the words are read. Redundant
-   * by construction: the label states the state and the mark's shape escalates
-   * with `tone`, so nothing here is carried by colour alone (ui-standards ›
-   * accessibility § colour independence).
+   * Sync is not running and cannot: the cell dims to say so (issue #1087). Its
+   * own level, below the tones — an outage is not a fault to answer but a fact
+   * to report, and nothing is lost while it lasts. A dimmed cell keeps the
+   * ordinary sync glyph rather than taking a tone's alarm mark.
    */
-  signal: 'success' | 'warning' | 'error' | 'muted';
-  /** A run is in flight — the glyph's arcs pulse outward while true. */
+  dimmed?: boolean;
+  /** A run is in flight — the sync glyph spins while true. */
   syncing?: boolean;
   /**
    * Start a manual sync. One click, no dialog (issue #9229): the status line
@@ -68,14 +70,13 @@ export interface SyncStatusProps {
  */
 
 /*
- * The glyph an escalated tone takes. Error is the crossed circle, not the
- * exclamation circle: at 16px the latter is barely distinguishable from the
- * details button's info circle sitting immediately beside it, which is the one
- * comparison a reader actually makes.
+ * The mark an escalated tone takes, in place of the sync glyph. Error is the
+ * crossed circle rather than the exclamation circle: the two are barely
+ * separable at 16px, and the crossed circle also says "did not happen", which
+ * is what a failed run means.
  *
- * At rest the mark is a plain dot instead — the state is quiet, so the cell
- * shows the smallest thing that can still carry a hue. Escalation is a change
- * of SHAPE first, which is what keeps the ladder readable without colour.
+ * Escalation is a change of SHAPE — that is what keeps the ladder readable
+ * without colour, on a bar whose own colour is not ours to predict.
  */
 const toneIcon = {
   warning: AlertTriangleIcon,
@@ -83,32 +84,28 @@ const toneIcon = {
 };
 
 /*
- * Whether the cell RAISES ITS VOICE — takes a ground of its own and swaps the
- * dot for the tone's glyph. Not simply `tone !== 'neutral'`: a muted signal
- * holds the cell quiet however the tone reads, which is what keeps an
- * unreachable server (a warning, by the precedence ladder) from shouting like
- * a stale site. The outage is news to report, and nothing is lost while it
- * lasts — so it stays a dot on the bar's own ground, and the words carry it.
- *
- * One derivation, read by both the glyph below and the CSS via `data-loud`, so
- * the two can never disagree about which state is shouting.
+ * Whether the cell takes a tone's ALARM MARK. Not simply `tone !== 'neutral'`:
+ * a dimmed cell stays on the ordinary sync glyph however the tone reads, which
+ * is what keeps an unreachable server (a warning, by the precedence ladder)
+ * from wearing the same mark as a site that has gone stale. One is "sync is not
+ * happening"; the other is "sync is behind". Same words either way — only the
+ * mark differs, and only where there is something to answer.
  *
  * Takes the two values rather than `props`: every call site is already a
  * tracked position, so both forms are reactive — but passing the object hides
  * the property reads from the reactivity lint, which then reports the calls as
  * untracked. Passing the values keeps the reads where the rule can see them.
  */
-const isLoud = (
+const isAlarmed = (
   tone: SyncStatusProps['tone'],
-  signal: SyncStatusProps['signal']
-): boolean => tone !== 'neutral' && signal !== 'muted';
+  dimmed: SyncStatusProps['dimmed']
+): boolean => tone !== 'neutral' && !dimmed;
 
 export const SyncStatus = (props: SyncStatusProps) => (
   <div
     class={styles.group}
     data-tone={props.tone}
-    data-signal={props.signal}
-    data-loud={isLoud(props.tone, props.signal) ? '' : undefined}
+    data-dimmed={props.dimmed ? '' : undefined}
     data-testid="footer-sync"
   >
     {/* aria-disabled, not disabled: a disabled control drops keyboard focus to
@@ -133,18 +130,18 @@ export const SyncStatus = (props: SyncStatusProps) => (
         data-syncing={props.syncing ? '' : undefined}
         aria-hidden="true"
       >
-        {/* A run in flight always keeps the broadcast glyph — it is the one
-            that animates, and "syncing" is not a fault state. */}
-        <Switch fallback={<span class={styles.dot} />}>
-          <Match when={props.syncing}>
-            <SyncIcon />
-          </Match>
-          <Match when={isLoud(props.tone, props.signal)}>
-            <Dynamic
-              component={toneIcon[props.tone === 'error' ? 'error' : 'warning']}
-            />
-          </Match>
-        </Switch>
+        {/* A run in flight always keeps the sync glyph: it is the one that can
+            spin, and "syncing" is not a fault state. Today no state is both
+            in-flight and escalated (arming a run resets the tone to neutral),
+            but the animation contract shouldn't rest on that holding. */}
+        <Show
+          when={!props.syncing && isAlarmed(props.tone, props.dimmed)}
+          fallback={<SyncIcon />}
+        >
+          <Dynamic
+            component={toneIcon[props.tone === 'error' ? 'error' : 'warning']}
+          />
+        </Show>
       </span>
       <span class={styles.srOnly}>{`${t('button.sync-now')}: `}</span>
       <span class={styles.label}>{props.label}</span>
@@ -173,7 +170,7 @@ export const SyncStatus = (props: SyncStatusProps) => (
       data-testid="footer-sync-details"
     >
       <span class={styles.icon} aria-hidden="true">
-        <InfoIcon />
+        <ChevronsUpIcon />
       </span>
     </button>
   </div>
