@@ -29,7 +29,7 @@ import {
 } from '../../../ui/elements/buttons/SplitButton';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
-import { CloseIcon, SidebarIcon } from '../../../ui/icons';
+import { CloseIcon, PlusCircleIcon, SidebarIcon } from '../../../ui/icons';
 import {
   DataTable,
   type Column,
@@ -947,9 +947,20 @@ const InboundShipmentDetailView: Component = () => {
                       section's, from the shell. The kind icon rides the number
                       crumb (see `crumbs`). */}
                   <Breadcrumb crumbs={crumbs(node())} />
+                  {/* Every control here collapses to its icon on a narrow
+                      viewport (`collapsible="narrow"`, label kept as the
+                      accessible name and repeated as a tooltip — the outbound
+                      header's tier). Labelled, this cluster needs more width
+                      than a tablet's header has left beside the breadcrumb, so
+                      it wrapped onto a row of its own — and on a short screen
+                      that row costs table rows, which are worth more. The
+                      split button gains an icon for the same reason: collapsed
+                      it is nothing but its icon. */}
                   <HeaderButtons>
                     <Show when={!isDisabled()}>
                       <SplitButton
+                        icon={<PlusCircleIcon />}
+                        collapsible="narrow"
                         options={addOptions()}
                         value="item"
                         testId="add-item-button"
@@ -971,6 +982,8 @@ const InboundShipmentDetailView: Component = () => {
                       <Button
                         variant="secondary"
                         icon={<SidebarIcon />}
+                        collapsible="narrow"
+                        title={t('button.more')}
                         data-testid="open-detail-panel-button"
                         // createSidePanelOpen registers Alt+M; this is the
                         // control that advertises it (ui-surface S2).
