@@ -1,9 +1,10 @@
-import { Show } from 'solid-js';
+import { Match, Show, Switch } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import {
   AlertTriangleIcon,
   ChevronsUpIcon,
   SyncIcon,
+  WifiOffIcon,
   XCircleIcon,
 } from '../../icons';
 import { t } from '../../../intl';
@@ -36,10 +37,11 @@ export interface SyncStatusProps {
    */
   tone: 'neutral' | 'warning' | 'error';
   /**
-   * Sync is not running and cannot: the cell dims to say so (issue #1087). Its
-   * own level, below the tones — an outage is not a fault to answer but a fact
-   * to report, and nothing is lost while it lasts. A dimmed cell keeps the
-   * ordinary sync glyph rather than taking a tone's alarm mark.
+   * Sync is not running and cannot, because the server is out of reach (issue
+   * #1087). Its own level, below the tones — an outage is not a fault to answer
+   * but a fact to report, and nothing is lost while it lasts. The cell dims AND
+   * takes the disconnected mark, which outranks any tone glyph: naming the
+   * cause is more use than an alarm the user can do nothing about.
    */
   dimmed?: boolean;
   /** A run is in flight — the sync glyph spins while true. */
@@ -83,24 +85,6 @@ const toneIcon = {
   error: XCircleIcon,
 };
 
-/*
- * Whether the cell takes a tone's ALARM MARK. Not simply `tone !== 'neutral'`:
- * a dimmed cell stays on the ordinary sync glyph however the tone reads, which
- * is what keeps an unreachable server (a warning, by the precedence ladder)
- * from wearing the same mark as a site that has gone stale. One is "sync is not
- * happening"; the other is "sync is behind". Same words either way — only the
- * mark differs, and only where there is something to answer.
- *
- * Takes the two values rather than `props`: every call site is already a
- * tracked position, so both forms are reactive — but passing the object hides
- * the property reads from the reactivity lint, which then reports the calls as
- * untracked. Passing the values keeps the reads where the rule can see them.
- */
-const isAlarmed = (
-  tone: SyncStatusProps['tone'],
-  dimmed: SyncStatusProps['dimmed']
-): boolean => tone !== 'neutral' && !dimmed;
-
 export const SyncStatus = (props: SyncStatusProps) => (
   <div
     class={styles.group}
@@ -130,18 +114,31 @@ export const SyncStatus = (props: SyncStatusProps) => (
         data-syncing={props.syncing ? '' : undefined}
         aria-hidden="true"
       >
-        {/* A run in flight always keeps the sync glyph: it is the one that can
+        {/* Order is the rule here, so read it top-down.
+
+            A run in flight always keeps the sync glyph: it is the one that can
             spin, and "syncing" is not a fault state. Today no state is both
             in-flight and escalated (arming a run resets the tone to neutral),
-            but the animation contract shouldn't rest on that holding. */}
-        <Show
-          when={!props.syncing && isAlarmed(props.tone, props.dimmed)}
-          fallback={<SyncIcon />}
-        >
-          <Dynamic
-            component={toneIcon[props.tone === 'error' ? 'error' : 'warning']}
-          />
-        </Show>
+            but the animation contract shouldn't rest on that holding.
+
+            DIMMED OUTRANKS THE TONE. An unreachable server is a warning by the
+            precedence ladder, yet it must not wear the same mark as a site that
+            has gone stale: one says sync cannot happen, the other that sync is
+            behind. Naming the cause outright — no connection — is more use than
+            an alarm the user can do nothing about. */}
+        <Switch fallback={<SyncIcon />}>
+          <Match when={props.syncing}>
+            <SyncIcon />
+          </Match>
+          <Match when={props.dimmed}>
+            <WifiOffIcon />
+          </Match>
+          <Match when={props.tone !== 'neutral'}>
+            <Dynamic
+              component={toneIcon[props.tone === 'error' ? 'error' : 'warning']}
+            />
+          </Match>
+        </Switch>
       </span>
       <span class={styles.srOnly}>{`${t('button.sync-now')}: `}</span>
       <span class={styles.label}>{props.label}</span>
