@@ -359,6 +359,10 @@ const InternalOrderDetailView: Component = () => {
     prefs()?.selectDestinationStoreForAnInternalOrder ?? false;
   const requiresAuth = () =>
     storePrefs()?.requestRequisitionRequiresAuthorisation ?? false;
+  // The empty-send guard's keep-zero-lines arm (AC-S4, D20).
+  const keepZeroLines = () =>
+    storePrefs()?.keepRequisitionLinesWithZeroRequestedQuantityOnFinalised ??
+    false;
   // The extended consumption columns / Area-AMC header: a program order on a
   // customer-statistics store.
   const showExtended = () =>
@@ -1200,6 +1204,7 @@ const InternalOrderDetailView: Component = () => {
                       node={node()}
                       editable={editable()}
                       requiresAuthorisation={requiresAuth()}
+                      keepZeroLines={keepZeroLines()}
                       onSent={onSent}
                       onReasonsNotProvided={ids =>
                         setReasonFlaggedIds(new Set(ids))
