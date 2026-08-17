@@ -88,8 +88,8 @@ const HelpDocumentsManagement: Component = () => {
     }
   };
 
-  // Per-document independent deletion (OMS-REG-HLP-01.34): each runs on its own,
-  // one failure not undoing the others. returnGraphqlErrors keeps a
+  // Per-document independent deletion (OMS-REG-HLP-01.34): each runs on its
+  // own, one failure not undoing the others. returnGraphqlErrors keeps a
   // RecordNotFound (already-gone, .35) from tripping the global modal — the row
   // vanishes on the refetch regardless. Best-effort, then re-read the list.
   const confirmDelete = async () => {
@@ -115,23 +115,24 @@ const HelpDocumentsManagement: Component = () => {
       header: () => t('label.title'),
     },
     {
-      // A display column: the value is the first file's name, rendered as a link
-      // that opens it inline; empty for a fileless record (OMS-REG-HLP-01.32).
+      // A display column: the value is the first file's name, rendered as a
+      // link that opens it inline; empty for a fileless record
+      // (OMS-REG-HLP-01.32).
       c: { id: 'filename' },
       header: () => t('label.filename'),
       cell: info => {
         const doc = info.row.original;
         const file = fileOf(doc);
-        return file ? (
-          <a
-            href={syncFileUrl(TABLE_NAME, doc.id, file.id)}
-            target="_blank"
-            rel="noreferrer"
-          >
-            {file.fileName}
-          </a>
-        ) : (
-          ''
+        return (
+          <Show when={file}>
+            <a
+              href={syncFileUrl(TABLE_NAME, doc.id, file.id)}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {file.fileName}
+            </a>
+          </Show>
         );
       },
     },
@@ -142,7 +143,7 @@ const HelpDocumentsManagement: Component = () => {
     },
   ];
 
-  const crumbs = () => [{ label: t('manage') }, { label: t('help-documents') }];
+  const crumbs = () => [{ label: t('help-documents') }];
 
   const uploadButton = () => (
     <Button icon={<PlusCircleIcon />} onClick={() => setUploadOpen(true)}>

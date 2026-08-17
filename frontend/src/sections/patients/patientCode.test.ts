@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { composePatientCode } from './patientCode';
 
-// spec/patients § generating a code — DIS-02 `.54`: the store name's first three
-// letters upper-cased + the counter value padded to four digits.
+// spec/patients § generating a code — DIS-02 `.54`: the store name's first
+// three letters upper-cased + the counter value padded to four digits.
 describe('composePatientCode (DIS-02 .54 — generated code composition)', () => {
   it('takes the first three letters of the store name, upper-cased', () => {
     expect(composePatientCode('General Warehouse', 1)).toBe('GEN0001');

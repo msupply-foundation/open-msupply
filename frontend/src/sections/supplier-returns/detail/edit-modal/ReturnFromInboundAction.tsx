@@ -2,8 +2,9 @@ import { createSignal, lazy, Show, Suspense, type Component } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { t } from '../../../../intl';
 import { Button } from '../../../../ui/elements/buttons/Button';
+import { OkButton } from '../../../../ui/elements/buttons/StandardButtons';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
-import { InfoIcon, CheckIcon } from '../../../../ui/icons';
+import { InfoIcon } from '../../../../ui/icons';
 
 // The inbound-shipment detail's "Return selected lines" entry point into the
 // supplier-return from-shipment flow (spec/supplier-returns/rules.md § from an
@@ -62,22 +63,24 @@ export const ReturnFromInboundAction: Component<
         {t('button.return-lines')}
       </Button>
 
-      <Dialog
-        open={noticeOpen()}
-        onClose={() => setNoticeOpen(false)}
-        icon={<InfoIcon />}
-        title={t('heading.cannot-do-that')}
-        description={t('messages.cant-return-inbound')}
-        actions={
-          <Button
-            variant="secondary"
-            icon={<CheckIcon />}
-            onClick={() => setNoticeOpen(false)}
-          >
-            {t('button.ok')}
-          </Button>
-        }
-      />
+      {/* Mounted only while open, like the return modal below
+          (kdd/action-modal) — a closed-but-mounted Dialog leaves its footer
+          button, and so its shared `dialog-button-ok` id, in the DOM. */}
+      <Show when={noticeOpen()}>
+        <Dialog
+          open
+          onClose={() => setNoticeOpen(false)}
+          icon={<InfoIcon />}
+          title={t('heading.cannot-do-that')}
+          description={t('messages.cant-return-inbound')}
+          actions={
+            <OkButton
+              data-testid="dialog-button-ok"
+              onClick={() => setNoticeOpen(false)}
+            />
+          }
+        />
+      </Show>
 
       <Show when={modalOpen()}>
         <Suspense>

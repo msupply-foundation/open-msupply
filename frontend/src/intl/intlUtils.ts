@@ -13,9 +13,16 @@ type StringOrEmpty = string | null | undefined;
 // under `language.name`, but for the switcher we need every language's own name
 // regardless of the active locale, so keep a static endonym map here.
 const LANGUAGE_ENDONYM: Record<SupportedLocale, string> = {
-  en: 'English',
-  fr: 'Français',
   ar: 'العربية',
+  prs: 'دری',
+  en: 'English',
+  es: 'Español',
+  fr: 'Français',
+  'fr-DJ': 'Français (Djibouti)',
+  ps: 'پښتو',
+  pt: 'Português',
+  ru: 'Русский',
+  tet: 'Tetum',
 };
 
 export const languageOptions = SUPPORTED_LOCALES.map(value => ({

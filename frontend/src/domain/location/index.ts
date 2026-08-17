@@ -13,4 +13,9 @@ export {
   LocationVolumeSelect,
   type LocationVolumeSelectProps,
 } from './LocationVolumeSelect';
-export { getVolumeUsedPercentage, availableVolume } from './volume';
+export {
+  getVolumeUsedPercentage,
+  availableVolume,
+  passesFullness,
+  type Fullness,
+} from './volume';

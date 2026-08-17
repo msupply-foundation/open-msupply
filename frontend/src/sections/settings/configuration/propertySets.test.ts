@@ -11,8 +11,9 @@ import {
   supplyLevelsInUse,
 } from './propertySets';
 
-// OMS-REG-SET-05.15/.16 — the button reads Initialise until the set exists, Re-initialise
-// after: "configured" means any existing property key belongs to the set.
+// OMS-REG-SET-05.15/.16 — the button reads Initialise until the set exists,
+// Re-initialise after: "configured" means any existing property key belongs to
+// the set.
 describe('configured checks flip Initialise to Re-initialise (SET-05.15/.16)', () => {
   it('reports GAPS unconfigured with no properties', () => {
     expect(gapsConfigured([])).toBe(false);
@@ -42,8 +43,8 @@ describe('configured checks flip Initialise to Re-initialise (SET-05.15/.16)', (
   });
 });
 
-// OMS-REG-SET-05.16 — re-initialise is the same action: the fixed input sets are
-// deterministic, so a repeat sends the identical upsert (idempotence itself
+// OMS-REG-SET-05.16 — re-initialise is the same action: the fixed input sets
+// are deterministic, so a repeat sends the identical upsert (idempotence itself
 // is server-enforced; C2's real-backend leg covers it).
 describe('the fixed sets are deterministic (SET-05.16)', () => {
   it('produces the same GAPS set on every call', () => {

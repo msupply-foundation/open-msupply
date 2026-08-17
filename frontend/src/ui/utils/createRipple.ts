@@ -1,4 +1,5 @@
 import { createSignal } from 'solid-js';
+import { prefersReducedMotion } from './createMediaQuery';
 
 export interface RippleInstance {
   id: number;
@@ -31,7 +32,9 @@ export function createRipple() {
   const onPointerDown = (
     event: PointerEvent & { currentTarget: HTMLElement }
   ) => {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    // Reduced motion: spawn nothing at all. The ripple is decorative and its
+    // whole point is the expansion, so a zero-duration one is just DOM churn.
+    if (prefersReducedMotion()) return;
     const rect = event.currentTarget.getBoundingClientRect();
     const size = Math.max(rect.width, rect.height) * 2;
     setRipples(current => [

@@ -1,5 +1,4 @@
 import { createSignal, onCleanup } from 'solid-js';
-import type { NavBadge } from '../../ui/layout/AppShell/navModel';
 import {
   syncStatus,
   pushQueueCount,
@@ -9,24 +8,29 @@ import {
 import { isCentralServer } from '../../api/serverInfo';
 import { storeContext } from '../../store/storeContext';
 import { SYNC_INDICATOR_REFRESH_MS } from '../../config';
-import { t } from '../../intl';
-import { toSyncOverview, syncIndicatorBadge } from './syncStatus';
+import { localisedDistanceToNow, t, tPlural } from '../../intl';
+import { toSyncOverview, syncFooterStatus } from './syncStatus';
+import type { SyncFooterTone } from './syncStatus';
+import { syncNow, triggerActive } from './syncTrigger';
 
-// Host-contract factory (spec/sync-modal/contract.md § Substrate): the chrome
-// Sync entry's badge + errored-run icon dim, derived from the shared substrate
-// store. Called in component scope by the shell (src/nav/ShellLayout.tsx).
+// Host-contract factory (spec/sync-modal/contract.md § Substrate): the bottom
+// bar's sync cell — its status line, tone, in-flight flag, and the one-click
+// sync itself — derived from the shared substrate store. Called in component
+// scope by the shell (src/nav/ShellLayout.tsx).
 //
-// Owns the indicator's SLOW cadence (spec/chrome § sync indicator): an
-// immediate first read at session start (the badge must not wait out the first
-// interval), then a minutely staleness re-evaluation that doubles as the slow
-// fallback poll while the live channel is down. The modal owns the fast/live
-// cadence; the subscription + reconnection live in the substrate store.
+// Owns the indicator's SLOW cadence (spec/chrome § sync status): an immediate
+// first read at session start (the cell must not wait out the first interval),
+// then a minutely re-evaluation that both re-ages the "Synced …" line and
+// doubles as the slow fallback poll while the live channel is down. The modal
+// owns the fast/live cadence; the subscription + reconnection live in the
+// substrate store.
 export const createSyncIndicator = (): {
-  badge: () => NavBadge | undefined;
-  dimmed: () => boolean;
+  status: () => { label: string; tone: SyncFooterTone };
+  syncing: () => boolean;
+  syncNow: () => void;
 } => {
-  // A reactive `now`, ticked minutely, so the staleness tone re-evaluates as
-  // days pass while the app stays open.
+  // A reactive `now`, ticked minutely, so both the staleness tone and the
+  // "Synced 3 minutes ago" line re-evaluate while the app stays open.
   const [now, setNow] = createSignal(new Date());
 
   void pollSyncStatus();
@@ -42,35 +46,63 @@ export const createSyncIndicator = (): {
       centralServer: isCentralServer(),
     });
 
-  const badge = (): NavBadge | undefined => {
-    // Count-badge gate: the store's sync-records display threshold (default 0 →
-    // any non-zero count shows) — a consumed read owned by preferences.
+  /*
+   * SYNC-03.25's busy machine — the SHARED one (syncTrigger.ts), so a run
+   * started from the modal's Sync-now reads as in-flight here too.
+   *
+   * `isSyncing` alone is not enough to drive the cell: a run that fails fast —
+   * an unreachable central server being the everyday case — can start and end
+   * between two status frames, so the in-flight state is never observed and the
+   * cell would answer a click with nothing at all. Arming at the click and
+   * holding until the run SIGNATURE changes covers that gap, and releases even
+   * when the run errors before any in-progress frame arrives.
+   */
+  const model = () => {
+    // Armed but not yet reported as running — still "in flight" as far as the
+    // user is concerned, and the only feedback their click gets.
+    if (triggerActive()) return { kind: 'syncing', tone: 'neutral' } as const;
+    // Count gate: the store's sync-records display threshold (default 0 → any
+    // non-zero count shows) — a consumed read owned by preferences.
     const displayThreshold =
       storeContext()?.preferences?.syncRecordsDisplayThreshold ?? 0;
-    const model = syncIndicatorBadge(
+    return syncFooterStatus(
       overview(),
       pushQueueCount(),
       displayThreshold,
       now()
     );
-    if (!model) return undefined;
-    // The error glyph is a bare marker (as the current app); it reuses the
-    // entry's own "Sync" label rather than a dedicated accessible string.
-    if (model.kind === 'alert') return { kind: 'alert', title: t('sync') };
-    // Counts above 99 display as "99+"; the hover/accessible text keeps the
-    // exact count (spec DIVERGENCES D9).
-    return {
-      kind: 'count',
-      label: model.count > 99 ? '99+' : String(model.count),
-      tone: model.tone,
-      title: String(model.count),
-    };
   };
 
-  // The icon dims while the latest run is errored (spec/chrome § sync
-  // indicator); no required meaning rides on the dim alone — the durable
-  // signals are the alert marker and the staleness colouring.
-  const dimmed = () => overview()?.error != null;
+  // The one line the cell shows. Resolved here rather than in the shell so the
+  // chrome stays presentational — and so it re-translates on a language switch,
+  // since t() and localisedDistanceToNow are both read at render.
+  const label = (): string => {
+    const state = model();
+    switch (state.kind) {
+      case 'waiting':
+        return t('sync.waiting');
+      case 'syncing':
+        return t('sync-status.footer-syncing');
+      case 'unreachable':
+        return t('error.connection-error');
+      case 'error':
+        return t('sync-status.footer-error');
+      case 'warning':
+        return t('sync-status.footer-warning');
+      case 'records-queued':
+        return tPlural('sync-status.footer-records-queued', state.count);
+      case 'synced':
+        return t('sync-status.footer-synced', {
+          distance: localisedDistanceToNow(state.finished),
+        });
+      case 'never-synced':
+        return t('sync-status.footer-never-synced');
+    }
+  };
 
-  return { badge, dimmed };
+  return {
+    status: () => ({ label: label(), tone: model().tone }),
+    syncing: () => model().kind === 'syncing',
+    syncNow,
+  };
 };

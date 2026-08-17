@@ -2,11 +2,12 @@ import { t } from '../../../intl';
 import type { LocaleKey } from '../../../intl';
 import type { SupplierPurchaseOrdersResult } from '../names.generated';
 
-// Pure purchase-order status logic for the supplier detail's Purchase Orders tab
-// (spec/names ui-surface.md S4 — the status column is translated; contract.md
-// names PurchaseOrderNodeStatus). Kept free of components so the mapping + its
-// fallback are unit-tested directly. The data is owned by the purchase-order
-// vertical (cross-vertical, named not owned); this only labels its status enum.
+// Pure purchase-order status logic for the supplier detail's Purchase Orders
+// tab (spec/names ui-surface.md S4 — the status column is translated;
+// contract.md names PurchaseOrderNodeStatus). Kept free of components so the
+// mapping + its fallback are unit-tested directly. The data is owned by the
+// purchase-order vertical (cross-vertical, named not owned); this only labels
+// its status enum.
 
 export type PurchaseOrderStatus =
   SupplierPurchaseOrdersResult['purchaseOrders']['nodes'][number]['status'];

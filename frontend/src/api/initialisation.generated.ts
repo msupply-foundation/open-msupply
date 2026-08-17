@@ -184,6 +184,33 @@ export const ManualSync = {
   query: "mutation manualSync {\n  manualSync\n}",
 } as TypedDocument<ManualSyncResult, ManualSyncVariables>;
 
+export type InitialiseAsCentralServerVariables = {
+  input: {
+    storeName: string;
+    adminUsername: string;
+    adminPassword: string;
+  };
+};
+
+export type InitialiseAsCentralServerResult = {
+  initialiseAsCentralServer: ({
+  __typename: "StandaloneCentralInitialisedNode";
+} & {
+  success: boolean;
+}) | ({
+  __typename: "InitialiseAsCentralServerError";
+} & {
+  error: {
+    __typename: "AlreadyInitialised" | "NotSupportedOnAndroid" | "StoreNameRequired" | "AdminUsernameRequired" | "AdminPasswordRequired" | "AdminUserCreationFailed";
+    description: string;
+  };
+});
+};
+
+export const InitialiseAsCentralServer = {
+  query: "mutation initialiseAsCentralServer($input: InitialiseAsCentralServerInputNode!) {\n  initialiseAsCentralServer(input: $input) {\n    ... on StandaloneCentralInitialisedNode {\n      __typename\n      success\n    }\n    ... on InitialiseAsCentralServerError {\n      __typename\n      error {\n        __typename\n        description\n      }\n    }\n  }\n}",
+} as TypedDocument<InitialiseAsCentralServerResult, InitialiseAsCentralServerVariables>;
+
 export type LatestSyncStatusVariables = Record<string, never>;
 
 export type LatestSyncStatusResult = {

@@ -22,6 +22,14 @@
  */
 html {
   font-size: 100%; /* = 16px default */
+  /* Opt out of the mobile engines' text autosizing ("font boosting"), which
+     inflates the type in a block it decides is too wide — per block, so it
+     scales some of the UI and not the rest, and only on a real device (it never
+     fires under desktop tablet emulation, which is why the two disagree). The
+     root font-size above is the one density knob; this keeps it that way. It
+     does NOT disable the user's own device font-size setting, which still
+     scales the rem scale uniformly — see the touch tokens in tokens.css. */
+  text-size-adjust: 100%;
 }
 
 @media (max-width: 599px) {

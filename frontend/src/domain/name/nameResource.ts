@@ -126,10 +126,10 @@ export const namePageFetcher =
       filter: {
         ...roleFilter(role),
         isVisible: true,
-        // A store-backed narrowing (isStore) — a supplier that is itself another
-        // store in the system. The internal-order create picker needs it: the
-        // create resolver rejects a non-store supplier, so offering only
-        // store-backed ones keeps that rejection unreachable from the UI
+        // A store-backed narrowing (isStore) — a supplier that is itself
+        // another store in the system. The internal-order create picker needs
+        // it: the create resolver rejects a non-store supplier, so offering
+        // only store-backed ones keeps that rejection unreachable from the UI
         // (spec/internal-orders AC-C3).
         ...(storeBacked ? { isStore: true } : {}),
         // Withhold one party — the internal-order destination-customer picker

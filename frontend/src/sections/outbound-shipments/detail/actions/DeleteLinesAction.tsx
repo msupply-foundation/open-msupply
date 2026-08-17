@@ -12,7 +12,10 @@ export interface DeleteLinesActionProps {
   /** The selected LINE rows (leaves — the view resolves group selections). */
   selectedLines: () => OutboundLineFragment[];
   disabled: boolean;
-  /** Something committed — the view refetches (stock released, OMS-REG-SMV-03.13). */
+  /**
+   * Something committed — the view refetches (stock released,
+   * OMS-REG-SMV-03.13).
+   */
   onCommitted: () => void;
 }
 
@@ -39,7 +42,7 @@ export const DeleteLinesAction: Component<DeleteLinesActionProps> = props => {
   return (
     <>
       <Button
-        variant="secondary"
+        variant="danger"
         icon={<TrashIcon />}
         data-testid="delete-lines-button"
         disabled={props.disabled}

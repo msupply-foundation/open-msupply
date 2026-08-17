@@ -1,8 +1,8 @@
-// Pure logic for the master-lists list-index export (spec/master-lists § export,
-// OMS-REG-CAT-07.26/.29). Export is ENTIRELY client-side over the already-loaded
-// page — the file therefore covers the current page only (.26). Colocated and
-// pure so the column set, CSV escaping, and filename shape are unit-tested
-// without a screen.
+// Pure logic for the master-lists list-index export (spec/master-lists §
+// export, OMS-REG-CAT-07.26/.29). Export is ENTIRELY client-side over the
+// already-loaded page — the file therefore covers the current page only (.26).
+// Colocated and pure so the column set, CSV escaping, and filename shape are
+// unit-tested without a screen.
 
 export type MasterListExportRow = {
   id: string;

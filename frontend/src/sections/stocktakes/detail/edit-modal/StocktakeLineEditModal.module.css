@@ -1,16 +1,35 @@
-/* The inline item selector sits on the title row (no "Add"/"Edit" label — one
-   combined flow). It takes the full width so it reads as one heading-level
-   control; min-inline-size:0 lets it shrink rather than push Add batch off. */
-.addTitle {
-  display: flex;
-  align-items: center;
-  inline-size: 100%;
-  min-inline-size: 0;
-  font-weight: var(--weight-regular);
-}
-
-.addSelect {
+/* The dialog's title row selector (matches the inbound line editor's
+   treatment). In the PRE-PICK state it fills: the search is the whole card
+   there (a command-palette box owning its open suggestion list, sized to its
+   trigger), so anything narrower leaves the card lopsided. */
+.headerPicker {
   flex: 1 1 auto;
   min-inline-size: 0;
-  max-inline-size: 60rem;
+}
+
+/* Once the dialog has grown to the working size, the same fill stretched a
+   "code - name" label across a header many times wider than the label needs.
+   Bound it there, matching inbound's cap, so the item, its unit, and Add
+   batch group left-to-right instead of the unit/button being shoved to the
+   far edge. Keyed off the size latch, not "an item is picked", so the header
+   doesn't resize under the user mid-walk. */
+.headerPickerBounded {
+  flex: 0 1 32rem;
+  min-inline-size: min(22rem, 100%);
+}
+
+/* Unit sits between the selector and the header's action slot — set off with
+   the same hairline + inset inbound uses, so the two line editors present
+   their read-only header fact the same way. */
+.headerUnit {
+  flex: 0 0 auto;
+  padding-inline-start: var(--space-4);
+  margin-inline-end: var(--space-2);
+  border-inline-start: 1px solid var(--color-border-value);
+}
+
+.headerTableControls {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
 }

@@ -1,25 +1,10 @@
-# The master-list add path (spec/internal-orders S7 + contract › editing lines).
-#
-# The picker offers the store's OWN, NON-program master lists (isProgram:false
-# excludes program lists); addFromMasterList then inserts one line per stock
-# item on the chosen list not already on the order, returning the order's
-# ENTIRE line set on success (the client refetches the page regardless, so only
-# the outcome is needed here). A rejection carries a description.
-
-query internalOrderMasterLists($storeId: String!) {
-  masterLists(
-    storeId: $storeId
-    filter: { existsForStoreId: { equalTo: $storeId }, isProgram: false }
-  ) {
-    ... on MasterListConnector {
-      __typename
-      nodes {
-        id
-        name
-      }
-    }
-  }
-}
+# The master-list add path (spec/internal-orders S7 + contract › editing
+# lines). The picker (and its store's-own-non-program-lists read) is the shared
+# domain/masterList MasterListPickerModal; addFromMasterList then inserts one
+# line per stock item on the chosen list not already on the order, returning
+# the order's ENTIRE line set on success (the client refetches the page
+# regardless, so only the outcome is needed here). A rejection carries a
+# description.
 
 mutation addInternalOrderFromMasterList(
   $storeId: String!

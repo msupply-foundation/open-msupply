@@ -6,8 +6,8 @@ import type { PatientsResult } from './patients.generated';
 type PatientRow = PatientsResult['patients']['nodes'][number];
 
 // The patient list → CSV (spec/patients S1 "Export CSV"). Columns match the
-// list's visible fields; headers are translated, dates localised, gender via the
-// fixed gender labels, booleans Yes/No. Feeds a direct .csv download or the
+// list's visible fields; headers are translated, dates localised, gender via
+// the fixed gender labels, booleans Yes/No. Feeds a direct .csv download or the
 // server's csvToExcel conversion (domain/reportFiles).
 export const patientsToCsv = (rows: PatientRow[]): string => {
   const fields = [

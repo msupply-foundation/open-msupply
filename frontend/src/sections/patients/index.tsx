@@ -19,6 +19,14 @@ export {
   type CreatePatientModalProps,
 } from './list/CreatePatientModal';
 
+// The edit-patient modal (spec/patients S4 allow-edit) is likewise reused by
+// any surface holding a patient — the prescription header's picker
+// (PatientSearch's `onEditPatient`, #1038) today.
+export {
+  EditPatientModal,
+  type EditPatientModalProps,
+} from './detail/EditPatientModal';
+
 // Dispensary-mode gate (spec/patients AC-G1): the whole patient surface is
 // reachable only in dispensary mode. The Dispensary nav group is hidden in
 // other modes (ShellLayout); this layout route blocks direct-URL entry so no

@@ -33,6 +33,8 @@ export interface NameSearchProps {
   hideLabel?: boolean;
   /** Control size — `small` for a header field cluster's compact row. */
   size?: 'default' | 'small';
+  /** Width cap — `full` to fill the slot a layout hands it (header clusters). */
+  width?: 'compact' | 'short' | 'long' | 'full';
   disabled?: boolean;
   /** Inline error text shown under the field. */
   error?: string;
@@ -57,6 +59,12 @@ export interface NameSearchProps {
    * excludes the chosen supplier (spec/internal-orders › header fields).
    */
   excludeId?: string;
+  /**
+   * Empty-dropdown text override — for a caller whose spec names its own copy
+   * (e.g. the requisition create modal's "Not configured", spec/requisitions
+   * S3a). Defaults to the combobox's standard no-results message.
+   */
+  noResultsMessage?: string;
   class?: string;
 }
 
@@ -102,6 +110,7 @@ export const NameSearch = (props: NameSearchProps): JSX.Element => (
     label={props.label}
     hideLabel={props.hideLabel}
     size={props.size}
+    width={props.width}
     class={props.class}
     disabled={props.disabled}
     error={props.error}
@@ -109,6 +118,7 @@ export const NameSearch = (props: NameSearchProps): JSX.Element => (
     inputTestId={props.inputTestId ?? 'name-search-input'}
     focusTarget={props.focusTarget}
     clearable={props.clearable}
+    noResultsMessage={props.noResultsMessage}
     fetchPage={namePageFetcher(
       props.storeId,
       props.role ?? 'supplier',

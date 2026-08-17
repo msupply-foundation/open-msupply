@@ -103,12 +103,12 @@ const FILTERS: Filter<InboundListFilter>[] =
   constructFilters<InboundListFilter>({
     // ─ user-facing, in display order ────────────────────────────────────────
     otherPartyName: {
-      label: () => t('label.name'),
+      label: () => t('label.supplier'),
       render: props => (
         <FilterTextInput
-          label={t('label.name')}
+          label={t('label.supplier')}
           testId={props.testId}
-          placeholder={t('label.name')}
+          placeholder={t('placeholder.search')}
           value={props.filter().otherPartyName?.like ?? ''}
           onInput={value =>
             props.setPartialFilter({
@@ -124,7 +124,7 @@ const FILTERS: Filter<InboundListFilter>[] =
         <FilterNumberInput
           label={t('label.invoice-number')}
           testId={props.testId}
-          placeholder={t('label.invoice-number')}
+          placeholder={t('placeholder.search')}
           value={props.filter().invoiceNumber?.equalTo ?? undefined}
           onChange={value =>
             props.setPartialFilter({
@@ -156,9 +156,10 @@ const FILTERS: Filter<InboundListFilter>[] =
           label={t('label.status')}
           testId={props.testId}
           placeholder={t('label.any')}
-          // Multi-select → status.equalAny (spec AC-L1: matches ANY of the chosen
-          // statuses). The generated element type is the InvoiceNodeStatus union,
-          // so the string values narrow at the boundary.
+          // Multi-select → status.equalAny (spec AC-L1: matches ANY of the
+          // chosen statuses). The generated element type is the
+          // InvoiceNodeStatus union, so the string values narrow at the
+          // boundary.
           values={props.filter().status?.equalAny ?? []}
           options={STATUS_OPTIONS}
           onChange={values =>
@@ -181,7 +182,7 @@ const FILTERS: Filter<InboundListFilter>[] =
         <FilterTextInput
           label={t('label.reference')}
           testId={props.testId}
-          placeholder={t('label.reference')}
+          placeholder={t('placeholder.search')}
           value={props.filter().theirReference?.like ?? ''}
           onInput={value =>
             props.setPartialFilter({
@@ -199,7 +200,7 @@ const FILTERS: Filter<InboundListFilter>[] =
         <FilterNumberInput
           label={t('label.linked-order')}
           testId={props.testId}
-          placeholder={t('label.linked-order')}
+          placeholder={t('placeholder.search')}
           value={props.filter().linkedOrderNumber?.equalTo ?? undefined}
           onChange={value =>
             props.setPartialFilter({
@@ -239,9 +240,10 @@ const FILTERS: Filter<InboundListFilter>[] =
       ),
     },
 
-    // ─ dismissed (not user-facing) ────────────────────────────────────────────
-    // Identity / relational / programmatic filters — the store scope and type are
-    // forced by the query, never a user filter.
+    // ─ dismissed (not user-facing)
+    // ──────────────────────────────────────────── Identity / relational /
+    // programmatic filters — the store scope and type are forced by the query,
+    // never a user filter.
     id: null,
     nameId: null,
     invoiceNumberOrStatus: null,

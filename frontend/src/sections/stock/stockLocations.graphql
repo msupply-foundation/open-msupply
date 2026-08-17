@@ -1,8 +1,14 @@
-# The store's locations WITH their location type, shared by the stock detail
-# (S2) and new-stock (S3) location pickers so the picker can be restricted to
-# the item's location type when the item sets one (spec/stock S2/S3 › location
-# lookup restricted to the item's location type). The domain plain-location
-# fetch is code+name only (volume-blind, no type), so stock reads its own shape.
+# The store's locations for this vertical's three location fields — the detail
+# screen (S2), the new-stock modal (S3) and the repack modal's new location (S5).
+# All three PLACE stock at a location, so all three use the volume-aware picker
+# (spec/stock/rules.md › location fields: which picker where): hence `onHold` /
+# `volume` / `volumeUsed` / `stock.totalCount` for its "% used" and its
+# All / Empty / Available filter. `locationType` is stock's own addition — the
+# picker is narrowed to the item's restricted location type when the item sets
+# one — which is why this vertical reads its own shape rather than the domain's
+# locationsWithVolume. `volumeUsed` is server-computed and shifts as stock moves,
+# so each consuming view re-reads it rather than caching (spec/stock/contract.md
+# › consumed reads).
 query stockLocations($storeId: String!) {
   locations(storeId: $storeId) {
     ... on LocationConnector {
@@ -11,6 +17,15 @@ query stockLocations($storeId: String!) {
         id
         code
         name
+        onHold
+        volume
+        volumeUsed
+        stock {
+          ... on StockLineConnector {
+            __typename
+            totalCount
+          }
+        }
         locationType {
           id
         }

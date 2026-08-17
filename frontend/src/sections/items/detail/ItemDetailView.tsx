@@ -116,7 +116,8 @@ const ItemDetailView: Component = () => {
       : undefined;
 
   const backToList = () => {
-    // Replace history so Back can't return to the missing record (OMS-REG-CAT-04.32).
+    // Replace history so Back can't return to the missing record
+    // (OMS-REG-CAT-04.32).
     navigate(`/${params.storeId}/catalogue/items`, { replace: true });
   };
 

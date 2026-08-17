@@ -44,9 +44,10 @@ export type ProcessedInput =
  */
 export type CommitResult = { value: number | undefined; adjustedFrom?: number };
 
-// Matches Latin + Arabic-Indic digits — the two digit systems our locales
-// produce (LOCALE_META numberLocale; parseNumber converts the latter).
-const DIGIT = '[0-9٠-٩]';
+// Matches Latin, Arabic-Indic and extended-Arabic digits — the three digit
+// systems our locales produce (LOCALE_META numberLocale: Arabic-Indic for
+// Arabic, extended-Arabic for Dari and Pashto; parseNumber converts both back).
+const DIGIT = '[0-9٠-٩۰-۹]';
 const HAS_DIGIT = new RegExp(DIGIT);
 
 const escapeRegex = (s: string): string =>
@@ -60,7 +61,10 @@ const BIDI_MARKS = /[\u061C\u200E\u200F\u200B]/g;
  * Reduce a raw input string to candidate numeric text: drop whitespace,
  * grouping separators and bidi marks; normalise minus variants to ASCII `-`;
  * alias `.` to the locale decimal separator (numpads emit `.` regardless of
- * locale — safe because no supported locale groups with `.`).
+ * locale). The alias is skipped where the locale groups with `.` (Spanish,
+ * Portuguese) — there a typed `.` is a grouping separator and has already been
+ * dropped above; treating it as a decimal point would silently read "1.234" as
+ * one-point-two-three-four.
  */
 const normalize = (raw: string, symbols: NumberSymbols): string => {
   let s = raw.replace(BIDI_MARKS, '').replace(/\s/g, '');

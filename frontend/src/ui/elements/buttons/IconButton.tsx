@@ -1,4 +1,6 @@
-import { splitProps, type JSX } from 'solid-js';
+import { Show, splitProps, type JSX } from 'solid-js';
+import { ShortcutBadge } from '../keyboard/ShortcutBadge';
+import { ariaKeyshortcuts, type Shortcut } from '../../utils/shortcuts';
 import styles from './IconButton.module.css';
 
 export interface IconButtonProps extends Omit<
@@ -24,6 +26,22 @@ export interface IconButtonProps extends Omit<
   bordered?: boolean;
   /** Size: 'small' (dense, e.g. a table row action) or 'medium' (default). */
   size?: 'small' | 'medium';
+  /**
+   * The key binding this button answers (spec/keyboard KB-H1, S2) — the same
+   * ONE prop `Button` takes, driving both `aria-keyshortcuts` and the hint
+   * badge revealed while Alt or Ctrl is held, so the two cannot drift
+   * (AC-KB15).
+   *
+   * An icon-only control needs it as much as a labelled one: the more-info
+   * panel's show/hide pair is a `Button` on the way in (the app bar's _More_,
+   * `Alt+M`) and an IconButton on the way out (the panel's close,
+   * `Alt+Shift+M`), and a badge on only one of them advertises half the
+   * binding.
+   *
+   * As with `Button`, the control does NOT dispatch the key — the screen
+   * registers the action and the dispatcher runs it (kdd/keyboard-layer).
+   */
+  shortcut?: Shortcut;
 }
 
 /*
@@ -48,6 +66,7 @@ export const IconButton = (props: IconButtonProps): JSX.Element => {
     'size',
     'class',
     'type',
+    'shortcut',
   ]);
   return (
     <button
@@ -60,9 +79,23 @@ export const IconButton = (props: IconButtonProps): JSX.Element => {
       data-size={local.size ?? 'medium'}
       aria-label={local.label}
       title={local.label}
+      // The ARIA grammar, not the platform spelling — the badge renders the
+      // human form from the same value (KB-M1, AC-KB15).
+      aria-keyshortcuts={
+        local.shortcut ? ariaKeyshortcuts(local.shortcut) : undefined
+      }
       {...rest}
     >
       {local.icon}
+      <Show when={local.shortcut}>
+        {shortcut => (
+          // Placed BELOW the box rather than inside its corner: a key legend is
+          // wider than a 2rem icon button, so the badge would cover the icon it
+          // is annotating. Nothing here clips overflow (no ripple to contain),
+          // so outside is available — see IconButton.module.css.
+          <ShortcutBadge shortcut={shortcut()} class={styles.shortcutBadge} />
+        )}
+      </Show>
     </button>
   );
 };

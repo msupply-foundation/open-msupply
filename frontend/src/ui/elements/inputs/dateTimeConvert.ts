@@ -79,7 +79,10 @@ export const localDayToUtc = (
 export const utcToLocalDay = (utc: string | null | undefined): string | null =>
   utcToLocalParts(utc)?.date ?? null;
 
-/** The day-range slice of a GraphQL `DatetimeFilterInput` — inclusive UTC bounds. */
+/**
+ * The day-range slice of a GraphQL `DatetimeFilterInput` — inclusive UTC
+ * bounds.
+ */
 export interface UtcDayBounds {
   afterOrEqualTo?: string | null;
   beforeOrEqualTo?: string | null;

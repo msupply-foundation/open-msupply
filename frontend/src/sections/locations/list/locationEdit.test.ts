@@ -70,9 +70,9 @@ describe('OMS-REG-INV-01.1 — create with code and name', () => {
 
 describe('OMS-REG-INV-01.23 — name defaults to code (wire default)', () => {
   // The server stores code as the name when none is supplied ON THE WIRE; the
-  // UI never exercises it because OMS-REG-INV-01.24 requires a name before any request is
-  // sent. The client-side guarantee is therefore: every insert this client
-  // builds carries a non-empty name. The wire default itself is a
+  // UI never exercises it because OMS-REG-INV-01.24 requires a name before any
+  // request is sent. The client-side guarantee is therefore: every insert this
+  // client builds carries a non-empty name. The wire default itself is a
   // real-backend criterion (BUILD_REPORT gap).
   it('the client always sends the entered name', () => {
     expect(buildInsertInput(form({ name: 'Fridge' }), 'id').name).toBe(

@@ -150,7 +150,8 @@ describe('dateToOffsetIso (offset-preserving serialization)', () => {
     // (Local components come from the Date's own fields, so this holds in any
     // device zone; only the offset varies.)
     expect(iso).toMatch(/^2026-07-22T09:30:15[+-]\d{2}:\d{2}$/);
-    // The date on the string's face is the local day a wire-local server log reads.
+    // The date on the string's face is the local day a wire-local server log
+    // reads.
     expect(iso.slice(0, 10)).toBe('2026-07-22');
     // Same instant, to the second (sub-second dropped, like OMS).
     expect(Math.floor(new Date(iso).getTime() / 1000)).toBe(

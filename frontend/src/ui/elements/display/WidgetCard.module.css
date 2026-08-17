@@ -21,9 +21,9 @@
   text-decoration: none;
   cursor: pointer;
   transition:
-    box-shadow 140ms ease,
-    border-color 140ms ease,
-    transform 140ms ease;
+    box-shadow var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
+    transform var(--motion-fast) ease;
 }
 
 .card:hover {
@@ -71,11 +71,10 @@
   overflow-wrap: anywhere;
 }
 
+/* Beyond zeroing the transition (--motion-fast does that): drop the hover LIFT
+   itself, so the card doesn't jump a few pixels under the cursor. The shadow
+   and border still change, so hover is never signalled by motion alone. */
 @media (prefers-reduced-motion: reduce) {
-  .card {
-    transition: none;
-  }
-
   .card:hover {
     transform: none;
   }

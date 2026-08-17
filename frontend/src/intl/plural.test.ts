@@ -14,6 +14,22 @@ describe('pluralCategory', () => {
     expect(pluralCategory('fr', 2)).toBe('other');
   });
 
+  it('selects Russian categories (one/few/many)', () => {
+    expect(pluralCategory('ru', 1)).toBe('one');
+    expect(pluralCategory('ru', 3)).toBe('few');
+    expect(pluralCategory('ru', 5)).toBe('many');
+  });
+
+  it('selects categories for the languages formatted through another tag', () => {
+    // Dari and Pashto format through fa-AF and Tetum through en-US
+    // (LOCALE_META numberLocale); plural selection must follow the language
+    // part of that tag, not the region.
+    expect(pluralCategory('prs', 1)).toBe('one');
+    expect(pluralCategory('ps', 5)).toBe('other');
+    expect(pluralCategory('tet', 1)).toBe('one');
+    expect(pluralCategory('tet', 2)).toBe('other');
+  });
+
   it('selects Arabic categories across the full range', () => {
     expect(pluralCategory('ar', 0)).toBe('zero');
     expect(pluralCategory('ar', 1)).toBe('one');

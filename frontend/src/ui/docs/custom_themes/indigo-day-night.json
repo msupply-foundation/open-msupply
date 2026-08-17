@@ -1,0 +1,47 @@
+{
+  "name": "Sample — Indigo (light + dark)",
+  "light": {
+    "brand": "#4338ca",
+    "accent": "#0e7490",
+    "danger": "#be123c",
+    "warning": "#b45309",
+    "success": "#15803d",
+    "surface": {
+      "page": "#ffffff",
+      "nav": "#eeeef8",
+      "sunken": "#f4f4fb"
+    },
+    "text": {
+      "body": "#17172e",
+      "muted": "#4e4e78"
+    },
+    "border": "#d8d8ea",
+    "status": {
+      "shipped": "#0e7490",
+      "delivered": "#7c3aed",
+      "received": "#2563eb"
+    }
+  },
+  "dark": {
+    "brand": "#8b8bf5",
+    "accent": "#38bdf8",
+    "danger": "#fb7185",
+    "warning": "#fbbf24",
+    "success": "#4ade80",
+    "surface": {
+      "page": "#191933",
+      "nav": "#111124",
+      "raised": "#232347"
+    },
+    "text": {
+      "body": "#e9e9f7",
+      "muted": "#a8a8cd"
+    },
+    "border": "#33335c",
+    "status": {
+      "shipped": "#22d3ee",
+      "delivered": "#a78bfa",
+      "received": "#60a5fa"
+    }
+  }
+}

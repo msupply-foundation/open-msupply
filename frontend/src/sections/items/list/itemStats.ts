@@ -9,12 +9,13 @@ import { t } from '../../../intl';
 
 const EMPTY_CELL = '—';
 
-// Months of stock for the DETAIL STATS BAND: a fixed two decimals, so the figure
-// reads the same width every time in a band of headline numbers. The wire value
-// is null when AMC is 0 (the figure is undefined, not zero/∞) and the band
-// renders that absence as 0.00, matching the reference app (ui-surface S2 §
-// statistics band). The LIST CELL renders the same absence as a dash and follows
-// the truncating numeric-cell rule instead — see monthsOfStockCell below.
+// Months of stock for the DETAIL STATS BAND: a fixed two decimals, so the
+// figure reads the same width every time in a band of headline numbers. The
+// wire value is null when AMC is 0 (the figure is undefined, not zero/∞) and
+// the band renders that absence as 0.00, matching the reference app (ui-surface
+// S2 § statistics band). The LIST CELL renders the same absence as a dash and
+// follows the truncating numeric-cell rule instead — see monthsOfStockCell
+// below.
 export const formatMonthsOfStock = (
   monthsOfStockOnHand: number | null | undefined
 ): string =>
@@ -32,7 +33,8 @@ export const formatUnits = (value: number, decimals = 0): string =>
   });
 
 // The doses equivalent of a unit figure for a vaccine item = units × the item's
-// doses-per-unit (display-only; there is no stored doses fact — OMS-REG-CAT-04.35).
+// doses-per-unit (display-only; there is no stored doses fact —
+// OMS-REG-CAT-04.35).
 export const dosesEquivalent = (units: number, dosesPerUnit: number): number =>
   units * dosesPerUnit;
 

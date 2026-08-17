@@ -22,6 +22,8 @@ export interface VvmStatusSelectProps {
   placeholder?: string;
   /** Control size — 'small' for dense contexts (a batch-grid cell). */
   size?: 'default' | 'small';
+  /** Max-width cap — forwarded to the Combobox, opt-in (default `full`). */
+  width?: 'compact' | 'short' | 'long' | 'full';
 }
 
 /*
@@ -46,6 +48,7 @@ export const VvmStatusSelect = (props: VvmStatusSelectProps): JSX.Element => (
     error={props.error}
     placeholder={props.placeholder}
     size={props.size}
+    width={props.width}
     onChange={s => props.onChange(s)}
   />
 );

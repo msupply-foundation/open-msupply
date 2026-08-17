@@ -15,3 +15,22 @@ query masterLists($storeId: String!, $filter: MasterListFilterInput) {
     }
   }
 }
+
+# The store's own NON-program master lists — the bulk-add picker's read
+# (MasterListPickerModal; internal-orders S7, reused by requisitions S2).
+# isProgram:false excludes program lists: a program order's item set is fixed,
+# so only ordinary lists are offered for a bulk add.
+query nonProgramMasterLists($storeId: String!) {
+  masterLists(
+    storeId: $storeId
+    filter: { existsForStoreId: { equalTo: $storeId }, isProgram: false }
+  ) {
+    ... on MasterListConnector {
+      __typename
+      nodes {
+        id
+        name
+      }
+    }
+  }
+}

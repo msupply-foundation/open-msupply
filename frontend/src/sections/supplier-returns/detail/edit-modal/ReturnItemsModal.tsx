@@ -5,16 +5,26 @@ import { t } from '../../../../intl';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
+import {
+  CancelButton,
+  DialogSaveButton,
+  SaveAndNextButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
+import {
+  createFocusTarget,
+  createFocusTargets,
+} from '../../../../ui/utils/createFocusTarget';
+import { EmptyState } from '../../../../ui/elements/feedback/EmptyState';
 import { TextField } from '../../../../ui/elements/inputs/TextField';
-import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
-import { Text } from '../../../../ui/elements/typography/Text';
+import { LabelledValue } from '../../../../ui/elements/typography/LabelledValue';
+import { ContentContainer } from '../../../../ui/layout/ContentContainer/ContentContainer';
+import { HStack } from '../../../../ui/layout/Stack/HStack';
 import { DataTable } from '../../../../ui/elements/table/DataTable';
 import { createTableConfig } from '../../../../api/createTableConfig';
 import { ItemSearch } from '../../../../domain/item';
 import { ProgressList } from '../../../../ui/sync/ProgressList';
 import { GenerateSupplierReturnLines } from '../supplierReturnDetail.generated';
-import styles from './ReturnItemsModal.module.css';
-import { saveReturnLines, type SaveReturnLinesResult } from '../returnUpdate';
+import { saveReturnLines } from '../returnUpdate';
 import type { ReturnFieldEdit } from '../returnEdit';
 import {
   existingLinesBeingRemoved,
@@ -42,14 +52,6 @@ type Step = 'quantity' | 'reason';
 
 export type ReturnItem = { id: string; code: string; name: string };
 
-// What a successful save hands back: the whole return with its refreshed line
-// set (updateSupplierReturnLines returns the full invoice — the view replaces
-// its node wholesale, no refetch).
-export type ReturnLinesSaved = Extract<
-  SaveReturnLinesResult,
-  { kind: 'saved' }
->['node'];
-
 export interface ReturnItemsModalProps {
   open: boolean;
   onClose: () => void;
@@ -58,8 +60,13 @@ export interface ReturnItemsModalProps {
   mode: ReturnItemsMode;
   /** UPDATE mode: the item to open on (from the clicked row). */
   initialItemId?: string;
-  /** ADD mode: item ids already on the return, excluded from the search. */
-  excludeItemIds: () => string[];
+  /**
+   * UPDATE mode: the clicked row's LINE id — the batch to focus once the item's
+   * rows load. An item can hold several batches, so the item id alone doesn't
+   * say which row the user meant. Unused for "Add item", and after a
+   * "Save & next" advance (which focuses the new item's first row).
+   */
+  initialLineId?: string;
   /**
    * UPDATE mode: the item AFTER this one in the current on-screen order —
    * drives "Save & next". undefined = last item (Save only).
@@ -67,8 +74,13 @@ export interface ReturnItemsModalProps {
   nextItem: (currentItemId: string) => ReturnItem | undefined;
   /** Resolve an item's descriptor from the current rows (update mode). */
   itemById: (id: string) => ReturnItem | undefined;
-  /** A save landed — the view replaces its node with the returned one. */
-  onSaved: (node: ReturnLinesSaved) => void;
+  /**
+   * A save landed — the view clears the selection and refetches the line
+   * table's current page. The mutation's own line set is deliberately NOT
+   * spliced in: the table is server-paginated and sorted, so only the server
+   * knows which lines belong on the held page.
+   */
+  onSaved: () => void;
   /** Existing line ids on the return (seeds the drafts' `existing` flag). */
   existingLineIds: () => ReadonlySet<string>;
   /** "Return to" — the supplier the goods go back to (read-only). */
@@ -81,8 +93,8 @@ export interface ReturnItemsModalProps {
   edit: ReturnFieldEdit;
 }
 
-// Mount-while-open wrapper (the reference modal shape): the content mounts fresh
-// per open; within one open it advances items itself.
+// Mount-while-open wrapper (the reference modal shape): the content mounts
+// fresh per open; within one open it advances items itself.
 export const ReturnItemsModal = (props: ReturnItemsModalProps): JSX.Element => (
   <Show
     when={props.open && (props.mode === 'add' ? 'add' : props.initialItemId)}
@@ -95,7 +107,7 @@ export const ReturnItemsModal = (props: ReturnItemsModalProps): JSX.Element => (
         returnId={props.returnId}
         mode={props.mode}
         initialItemId={props.mode === 'update' ? openKey : undefined}
-        excludeItemIds={props.excludeItemIds}
+        initialLineId={props.initialLineId}
         nextItem={props.nextItem}
         itemById={props.itemById}
         onSaved={props.onSaved}
@@ -126,15 +138,35 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
 
   const noItemYet = () => props.mode === 'add' && currentItem() === undefined;
 
+  // Quantity to return is the one control this grid exists for, so it is PINNED
+  // to the inline-end by default: at any width where the grid scrolls it stays
+  // on screen, rather than being carried off by a resize (issue #1002). Base
+  // band only — the compact band renders as cards, where pinning is meaningless.
   const tableConfig = createTableConfig({
     tableId: 'supplier-return-line-edit',
+    defaultConfig: {
+      base: { columnPinning: { right: ['numberOfPacksToReturn'] } },
+    },
   });
+
+  // The item lookup — live only in add mode, where it is the editor's starting
+  // control (ui/utils/createFocusTarget).
+  const itemSearch = createFocusTarget();
+  // One target per DRAFT ROW, per step: focus follows the user to the control
+  // they came to change (the stocktake / inbound line-editor rule).
+  const quantityFields = createFocusTargets();
+  const reasonFields = createFocusTargets();
 
   // Seed the draft for one item: the item's available stock lines plus any the
   // return already holds (via generateSupplierReturnLines' itemId + returnId —
-  // contract § draft-line generation). No blank fallback — supplier-return lines
-  // are existing stock lines only.
-  const seedItem = async (item: ReturnItem) => {
+  // contract § draft-line generation). No blank fallback — supplier-return
+  // lines are existing stock lines only.
+  //
+  // `focusLineId` is the row the user clicked in the detail table, when the
+  // editor opened from one: focus lands on THAT batch's quantity field rather
+  // than the item's first, since a return with several batches of one item is
+  // otherwise ambiguous. Falls back to the first row.
+  const seedItem = async (item: ReturnItem, focusLineId?: string) => {
     setCurrentItem(item);
     setStep('quantity');
     setMessage(undefined);
@@ -145,7 +177,8 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
       input: { stockLineIds: [], itemId: item.id, returnId: props.returnId },
     });
     // The response union's only member is the connector, so any failure here is
-    // the global unexpected-error modal's — stay in the loading phase behind it.
+    // the global unexpected-error modal's — stay in the loading phase behind
+    // it.
     if (result.kind !== 'success') return;
     const seeded = seedDrafts(
       result.data.generateSupplierReturnLines.nodes,
@@ -153,14 +186,21 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
     );
     setDraft(reconcile(seeded, { key: 'id' }));
     setLoadingLines(false);
+    // Armed, not applied: the request lands when the grid attaches, so there is
+    // no load gate to coordinate here (ui/utils/createFocusTarget).
+    quantityFields.focus(focusLineId ?? seeded[0]?.id ?? '');
   };
 
+  // Seed on mount: a row open starts on its item — focusing the clicked batch;
+  // an add open starts in the empty search state, focusing the item selector.
   onMount(() => {
     if (props.mode === 'update' && props.initialItemId) {
       const item = props.itemById(props.initialItemId);
       if (!item) return props.onClose();
-      void seedItem(item);
+      void seedItem(item, props.initialLineId);
+      return;
     }
+    itemSearch.focus();
   });
 
   const backToSearch = () => {
@@ -169,6 +209,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
     setMessage(undefined);
     setZeroConfirmed(false);
     setDraft(reconcile([], { key: 'id' }));
+    itemSearch.focus();
   };
 
   // Edit ONE field of ONE line (fine-grained store write). Any edit clears the
@@ -216,12 +257,24 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
     if (!gateStep1()) return;
     // Nothing with quantity (the confirmed zero-delete path) → save directly;
     // otherwise on to reasons.
-    if (reasonStepLines(draft.slice()).length === 0) {
+    const carried = reasonStepLines(draft.slice());
+    if (carried.length === 0) {
       void onSave();
       return;
     }
     setStep('reason');
     setMessage(undefined);
+    // The reason step's first picker is what this step is for — the Next-step
+    // button the click came from has become Save.
+    reasonFields.focus(carried[0]?.id ?? '');
+  };
+
+  // Back to the quantity step: focus returns to the first quantity field, the
+  // control that step is for.
+  const backToQuantity = () => {
+    setStep('quantity');
+    setMessage(undefined);
+    quantityFields.focus(draft[0]?.id ?? '');
   };
 
   const save = async (): Promise<boolean> => {
@@ -239,7 +292,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
       setMessage({ severity: 'error', text: result.message });
       return false;
     }
-    props.onSaved(result.node);
+    props.onSaved();
     return true;
   };
 
@@ -248,8 +301,8 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
   };
 
   // Save & next: save, then advance without closing — update mode steps to the
-  // next item; add mode returns to the search (the saved item drops out via the
-  // live excludeItemIds).
+  // next item; add mode returns to the empty search (the saved item is still
+  // offered there — re-picking it reloads its batch set to edit).
   const onSaveNext = async () => {
     if (!(await save())) return;
     if (props.mode === 'add') {
@@ -276,7 +329,43 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
       dismissable={!saving()}
       size="large"
       testId="add-item-modal"
-      title={t('heading.return-items')}
+      // The item lookup IS the dialog's title (the reference line editor's
+      // treatment): live in add mode — ALL available items, not narrowed to the
+      // supplier (SRN-001 .1) — and locked to the row's item in update mode.
+      // The dialog keeps its accessible name through `ariaLabel`.
+      //
+      // NO excludeItemIds: the search offers the whole addable catalogue,
+      // including items already on the return (issue #985 / #428 — the
+      // customer-returns twin does the same). Picking one goes through
+      // seedItem like any other, and GenerateSupplierReturnLines carries the
+      // returnId, so that item's EXISTING lines come back seeded with their
+      // saved quantities — a second visit edits rather than duplicating.
+      title={
+        <ItemSearch
+          label={t('label.item')}
+          hideLabel
+          // Fills the title row, as in every other line editor's item search:
+          // it IS the dialog's heading, so a short cap leaves it stranded
+          // against a wide dialog (issue #1002).
+          width="full"
+          storeId={props.storeId}
+          focusTarget={itemSearch}
+          value={currentItem()?.id}
+          selectedItem={currentItem()}
+          disabled={props.mode !== 'add'}
+          onSelect={item =>
+            item
+              ? void seedItem({
+                  id: item.id,
+                  code: item.code,
+                  name: item.name,
+                })
+              : backToSearch()
+          }
+          placeholder={t('placeholder.enter-an-item-code-or-name')}
+        />
+      }
+      ariaLabel={t('heading.return-items')}
       actionsLead={
         <Show when={message()}>
           {m => <Alert severity={m().severity}>{m().text}</Alert>}
@@ -289,22 +378,19 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
           <Show
             when={step() === 'reason'}
             fallback={
-              <Button
-                variant="secondary"
+              <CancelButton
                 data-testid="dialog-button-cancel"
                 onClick={props.onClose}
-              >
-                {t('button.cancel')}
-              </Button>
+              />
             }
           >
+            {/* Back is a non-standard verb, so a plain (icon-less) Button. It
+                steps within the dialog, so it claims NO role: Escape must still
+                cancel the whole dialog. */}
             <Button
               variant="secondary"
               data-testid="dialog-button-cancel"
-              onClick={() => {
-                setStep('quantity');
-                setMessage(undefined);
-              }}
+              onClick={backToQuantity}
             >
               {t('button.back')}
             </Button>
@@ -314,6 +400,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
               <Match when={step() === 'quantity'}>
                 <Button
                   loading={saving()}
+                  confirms="plain"
                   data-testid="dialog-button-ok"
                   onClick={onNextStep}
                 >
@@ -321,13 +408,11 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
                 </Button>
               </Match>
               <Match when={step() === 'reason'}>
-                <Button
+                <DialogSaveButton
                   loading={saving()}
                   data-testid="dialog-button-ok"
                   onClick={() => void onSave()}
-                >
-                  {t('button.save')}
-                </Button>
+                />
               </Match>
             </Switch>
             {/* Save & next is actionable only on the reason step with a next
@@ -335,88 +420,96 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
                 in-context, so it's HIDDEN, not disabled — the blocked-
                 affordances ladder (D39). */}
             <Show when={step() === 'reason' && hasNext()}>
-              <Button
+              {/* SaveAndNextButton claims the CONTINUING confirm: while present
+                  and enabled, Enter activates it in preference to plain Save
+                  (KB-E2, AC-KB23). */}
+              <SaveAndNextButton
                 loading={saving()}
                 data-testid="dialog-button-next-and-ok"
                 onClick={() => void onSaveNext()}
-              >
-                {t('button.save-and-next')}
-              </Button>
+              />
             </Show>
           </Show>
         </>
       }
     >
-      {/* Item row under the "Return items" title: the labelled catalogue lookup
-          — live in add mode (ALL available items, not narrowed to the supplier —
-          SRN-001 .1), locked to the row's item in update mode. */}
-      <ItemSearch
-        label={t('label.item')}
-        storeId={props.storeId}
-        excludeItemIds={props.excludeItemIds()}
-        value={currentItem()?.id}
-        selectedItem={currentItem()}
-        disabled={props.mode !== 'add'}
-        onSelect={item =>
-          item
-            ? void seedItem({ id: item.id, code: item.code, name: item.name })
-            : backToSearch()
-        }
-        placeholder={t('placeholder.enter-an-item-code-or-name')}
-      />
+      {/* Before an item is picked (the lookup lives in the dialog title): the
+          shared centred prompt in place of the grid — the reference line
+          editor's treatment. */}
       <Show
         when={!noItemYet()}
         fallback={
-          <p style={{ color: 'var(--text-secondary)' }}>
-            {t('placeholder.enter-an-item-code-or-name')}
-          </p>
+          <EmptyState
+            graphic={false}
+            message={t('messages.select-item-to-return')}
+          />
         }
       >
-        {/* The wizard's step indicator — the shared determinate progress list:
-            reaching the reason step completes "Select quantity" and starts
-            "Select reason" (ui-surface S4 § layout). */}
-        <ProgressList
-          variant="secondary"
-          steps={[
-            {
-              label: t('label.select-quantity'),
-              started: true,
-              finished: step() === 'reason',
-            },
-            {
-              label: t('label.select-reason'),
-              started: step() === 'reason',
-              finished: false,
-            },
-          ]}
-        />
-        {/* Context row: who the goods go back to (read-only) and the return's
-            supplier reference — edited through the shared debounced buffer, the
-            same save path as the detail toolbar. */}
-        <div class={styles.contextRow}>
-          <FieldRow label={t('label.return-to')}>
-            <Text variant="body">{props.returnToName}</Text>
-          </FieldRow>
-          <FieldRow label={t('label.supplier-reference')}>
-            <TextField
-              label={t('label.supplier-reference')}
-              hideLabel
-              size="small"
-              value={props.edit.state.theirReference}
-              onInput={e =>
-                props.edit.setField('theirReference', e.currentTarget.value)
-              }
-              onBlur={() => props.edit.flush()}
-            />
-          </FieldRow>
-        </div>
+        {/* The wizard's step indicator — the shared determinate progress list,
+            which the two-step flow maps onto directly: reaching the reason step
+            completes "Select quantity" and starts "Select reason" (ui-surface S4
+            § layout). Capped to a reading measure (the content-measure role):
+            the list divides its width between steps, so left full-bleed in this
+            workbench-width dialog the two markers fly to opposite edges with a
+            metre of connector between them. */}
+        <ContentContainer size="form">
+          <ProgressList
+            variant="secondary"
+            steps={[
+              {
+                label: t('label.select-quantity'),
+                started: true,
+                finished: step() === 'reason',
+              },
+              {
+                label: t('label.select-reason'),
+                started: step() === 'reason',
+                finished: false,
+              },
+            ]}
+          />
+        </ContentContainer>
+        {/* Under the stepper: who the goods go back to and the return's supplier
+            reference — a header FIELD CLUSTER, each field labelled above its
+            control, with the read-only fact as a `field`-variant LabelledValue
+            so it sits flush beside the editable one.
+
+            A generic HStack, NOT the two-up FormRow the page-header cluster
+            (`HeaderToolbar`) uses: that shares the row equally between its
+            fields, which is right for a page header spanning the viewport but
+            stretches a short reference field across a workbench-width dialog.
+            Here the fields size to themselves (the TextField keeps its own
+            `short` cap) and the pair hugs the inline-start, wrapping when the
+            dialog goes full-screen (ui-standards components § layout — dialog
+            context row). The reference edits through the shared debounced
+            buffer, the same save path as the detail toolbar. */}
+        <HStack gap="lg" align="start" wrap>
+          <LabelledValue
+            label={t('label.return-to')}
+            variant="field"
+            size="small"
+          >
+            {props.returnToName}
+          </LabelledValue>
+          <TextField
+            label={t('label.supplier-reference')}
+            size="small"
+            value={props.edit.state.theirReference}
+            onInput={e =>
+              props.edit.setField('theirReference', e.currentTarget.value)
+            }
+            onBlur={() => props.edit.flush()}
+          />
+        </HStack>
         {/* No Add-batch action — supplier-return lines are existing stock lines,
             not invented batches (ui-surface S4). */}
         <Show
           when={step() === 'reason'}
           fallback={
             <DataTable
-              columns={quantityColumns(update)}
+              columns={quantityColumns(update, quantityFields, {
+                showItem: false,
+              })}
               rows={draft.filter(() => true)}
               rowKey={line => line.id}
               loading={loadingLines()}
@@ -429,7 +522,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
           }
         >
           <DataTable
-            columns={reasonColumns(update)}
+            columns={reasonColumns(update, reasonFields, { showItem: false })}
             rows={reasonRows()}
             rowKey={line => line.id}
             showFullScreen={false}

@@ -62,7 +62,8 @@ describe('Configuration requires central server AND Server Admin (SET-05.24)', (
 
 // OMS-REG-SET-05.23 — the barcode-scanner half of Devices is Server-Admin-only,
 // strictly stricter than the label printer beside it (which the visibility test
-// above shows to everyone via the Devices section — SET-05.20's visibility half).
+// above shows to everyone via the Devices section — SET-05.20's visibility
+// half).
 describe('barcode-scanner rows are Server-Admin-only (SET-05.23)', () => {
   it('hides the scanner rows from a non-Server-Admin while Devices stays visible', () => {
     expect(visibleSections(nonAdmin)).toContain('devices');

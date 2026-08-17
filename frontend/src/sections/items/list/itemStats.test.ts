@@ -9,9 +9,9 @@ import {
 } from './itemStats';
 
 describe('itemStats — item statistics display (spec/items S1/S2)', () => {
-  // The BAND: a fixed two decimals, and a zero-AMC item (null on the wire) reads
-  // 0.00 — the reference app's behaviour (ui-surface S2 § statistics band). The
-  // list cell dashes the same absence; see the next test.
+  // The BAND: a fixed two decimals, and a zero-AMC item (null on the wire)
+  // reads 0.00 — the reference app's behaviour (ui-surface S2 § statistics
+  // band). The list cell dashes the same absence; see the next test.
   it('the MOS stat band shows a fixed 2dp, 0.00 at zero AMC', () => {
     expect(formatMonthsOfStock(null)).toBe('0.00');
     expect(formatMonthsOfStock(undefined)).toBe('0.00');

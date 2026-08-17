@@ -15,7 +15,9 @@ export type ProgramListPick = ProgramListItem | 'all' | null;
 const ALL_PROGRAMS_ID = 'AllProgramsSelector';
 
 export interface ProgramListSelectProps {
-  /** Selected program id (undefined = none; the All entry is never restored). */
+  /**
+   * Selected program id (undefined = none; the All entry is never restored).
+   */
   value?: string;
   onChange: (pick: ProgramListPick) => void;
   /** The store's visible programs (already immunisation-filtered if needed). */

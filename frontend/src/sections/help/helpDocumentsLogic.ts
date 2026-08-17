@@ -3,9 +3,9 @@
 // sort are unit-tested (OMS-REG-HLP-01.29/.30/.33) without the screens.
 
 // The publish pre-check (OMS-REG-HLP-01.29/.30): a title is required and its
-// surrounding whitespace trimmed. A whitespace-only title is refused client-side
-// so no title-only record is created; the server enforces the same rule as a
-// top-level "EmptyTitle" rejection (spec/help contract).
+// surrounding whitespace trimmed. A whitespace-only title is refused
+// client-side so no title-only record is created; the server enforces the same
+// rule as a top-level "EmptyTitle" rejection (spec/help contract).
 export type TitleCheck = { ok: true; title: string } | { ok: false };
 
 export const titleForUpload = (raw: string): TitleCheck => {

@@ -284,3 +284,56 @@ describe('distributeIssue partial-pack gap (AC-AL12)', () => {
     ).toBe(0);
   });
 });
+
+describe('distributeIssue partial-pack float dust (an exactly-covered request reports nothing)', () => {
+  // The fractional take's ÷/× round-trip leaves IEEE dust in `remaining`
+  // (e.g. 61/7 × 7 = 61.000000000000007). Un-rounded, positive dust became a
+  // phantom shortfall — or a ~1e-15-pack take from the NEXT batch, which
+  // read as a drawn batch and went into the save. Negative dust leaked out
+  // as a phantom over-allocation.
+
+  it('reports no shortfall when one batch covers the request exactly (61 units of pack size 7)', () => {
+    const result = distributeIssue([line('a', 7, 1000)], 61, {
+      partialPacks: true,
+    });
+    expect(result.shortfallUnits).toBe(0);
+    expect(result.overAllocatedUnits).toBe(0);
+  });
+
+  it('never micro-allocates dust from the next FEFO batch', () => {
+    const result = distributeIssue([line('a', 7, 1000), line('b', 7, 1000)], 61, {
+      partialPacks: true,
+    });
+    expect(result.packsById.get('b')).toBe(0);
+  });
+
+  it('reports no over-allocation on a negative-dust fill (29 units of pack size 7)', () => {
+    const result = distributeIssue([line('a', 7, 1000)], 29, {
+      partialPacks: true,
+    });
+    expect(result.overAllocatedUnits).toBe(0);
+    expect(result.shortfallUnits).toBe(0);
+  });
+
+  it('exhausting a fractional availability leaves no dust remainder', () => {
+    // 0.9999999999999999 packs of 3 covers a request of 3 minus dust only.
+    const result = distributeIssue(
+      [line('a', 3, 0.9999999999999999), line('b', 3, 1000)],
+      3,
+      { partialPacks: true }
+    );
+    expect(result.shortfallUnits).toBe(0);
+    // The dust-sized top-up from `b` must be gone entirely, not just tiny.
+    expect(result.packsById.get('b')).toBe(0);
+  });
+
+  it('mixed pack sizes cover exactly with no reported residue (the review repro)', () => {
+    const result = distributeIssue(
+      [line('a', 1, 3), line('b', 1, 3), line('c', 30, 1000)],
+      251,
+      { partialPacks: true }
+    );
+    expect(result.shortfallUnits).toBe(0);
+    expect(result.overAllocatedUnits).toBe(0);
+  });
+});

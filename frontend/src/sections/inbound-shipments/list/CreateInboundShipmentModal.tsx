@@ -215,6 +215,11 @@ const Body: Component<CreateInboundShipmentModalProps> = props => {
         title={t('suppliers')}
         initialFocus={supplierSearch}
         testId="create-inbound-modal"
+        widthRem={36}
+        // Room for the lookup's open listbox inside the dialog (#1029): header
+        // + field + the listbox's 18rem cap + padding, measured live. Sized as
+        // the outbound CustomerSearchModal, this picker's twin.
+        minBodyHeightRem={27}
       >
         <Show when={errorMessage()}>
           <Alert severity="error">{errorMessage()}</Alert>

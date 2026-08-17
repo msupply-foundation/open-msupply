@@ -67,3 +67,22 @@ export type MasterListsResult = {
 export const MasterLists = {
   query: "query masterLists($storeId: String!, $filter: MasterListFilterInput) {\n  masterLists(storeId: $storeId, filter: $filter) {\n    ... on MasterListConnector {\n      __typename\n      nodes {\n        id\n        name\n      }\n    }\n  }\n}",
 } as TypedDocument<MasterListsResult, MasterListsVariables>;
+
+export type NonProgramMasterListsVariables = {
+  storeId: string;
+};
+
+export type NonProgramMasterListsResult = {
+  masterLists: ({
+  __typename: "MasterListConnector";
+} & {
+  nodes: Array<{
+  id: string;
+  name: string;
+}>;
+});
+};
+
+export const NonProgramMasterLists = {
+  query: "query nonProgramMasterLists($storeId: String!) {\n  masterLists(\n    storeId: $storeId\n    filter: {existsForStoreId: {equalTo: $storeId}, isProgram: false}\n  ) {\n    ... on MasterListConnector {\n      __typename\n      nodes {\n        id\n        name\n      }\n    }\n  }\n}",
+} as TypedDocument<NonProgramMasterListsResult, NonProgramMasterListsVariables>;

@@ -1,24 +1,30 @@
-import type { BarReason, IssueWarning } from '../../../../domain/allocation';
+import { round9, type BarReason, type IssueWarning } from '@/domain/allocation';
 
-// The prescription line editor's inline warning banners, as message
+// The prescription line editor's inline report banners, as message
 // descriptors the editor resolves via t()/formatNumber — the prescriptions
 // face of the shared reporting vocabulary (spec/stock-allocation § reporting;
 // OMS-REG-DIS-03.58/.59). Dispensing distributes partial packs, so
 // over-allocation never arises (.31) and the split-pack warning does
-// (AC-AL12); the shortfall keeps its own dedicated banner. The skip
-// categories reuse the same ported `label.*` tokens as outbound's mapping
-// (contract § warning vocabulary) — repeated per vertical because
-// domain/allocation is i18n-free and each consumer owns its message choice.
+// (AC-AL12); the shortfall keeps its own dedicated banner.
+//
+// A skipped category gets its OWN whole-sentence message, one banner each,
+// naming the consequence and not just the condition — the vocabulary's
+// category names are what reports are built FROM, never the words shown
+// (contract § warning vocabulary). They are the current app's own
+// `messages.stock-*` sentences, the on-hold/expired pair plus the VVM one it
+// never had; the phrasing splits on how hard the bar is (rules § barred
+// batches): on-hold stock cannot be issued at all, while expired and
+// unusable-VVM stock is merely never AUTO-allocated and stays manually
+// issuable unless its guard preference is on.
 
-/** The ported label key each barred category is reported under. */
-export type SkipReasonLabel =
-  'label.on-hold' | 'label.expired' | 'label.unusable-vvm-status';
+/** The message each barred category is reported under, one sentence each. */
+export type SkipMessageKey =
+  | 'messages.stock-on-hold'
+  | 'messages.stock-expired'
+  | 'messages.stock-unusable-vvm';
 
 export type PrescriptionWarningMessage =
-  | {
-      key: 'messages.allocated-lines-skipped-line-reasons';
-      reasons: SkipReasonLabel[];
-    }
+  | { key: SkipMessageKey }
   | {
       key:
         | 'messages.partial-pack-warning-units'
@@ -31,30 +37,25 @@ export type PrescriptionWarningMessage =
       issueQuantity: number;
     };
 
-const skipReasonLabel = (reason: BarReason): SkipReasonLabel => {
+const skipMessageKey = (reason: BarReason): SkipMessageKey => {
   switch (reason) {
     // The on-hold arm completes the shared vocabulary, but prescriptions
     // never reports it — held stock is hidden from the grid and its
     // pass-over filtered before mapping (lineEditLogic, rules § allocation).
     case 'on-hold':
-      return 'label.on-hold';
+      return 'messages.stock-on-hold';
     case 'expired':
-      return 'label.expired';
+      return 'messages.stock-expired';
     case 'unusable-vvm':
-      return 'label.unusable-vvm-status';
+      return 'messages.stock-unusable-vvm';
   }
 };
 
-// Kill float dust before a figure surfaces to the user (0.7 packs of 10 must
-// read as exactly 3 units short of whole packs — as in distributeIssue).
-// Exported for the editor's own user-facing figures (the issue-field snap).
-export const round9 = (value: number): number => Math.round(value * 1e9) / 1e9;
-
 /**
  * Map a distribution's derived warnings to banner messages: every skipped
- * category reported (AC-AL2 — .59), and the split-pack warning naming the
- * nearest whole-pack quantity above, in doses under the doses lens
- * (AC-AL12 — .58).
+ * category reported as its own sentence (AC-AL2 — .59), and the split-pack
+ * warning naming the nearest whole-pack quantity above, in doses under the
+ * doses lens (AC-AL12 — .58).
  */
 export const issueWarningMessages = (
   derived: readonly IssueWarning[],
@@ -63,12 +64,7 @@ export const issueWarningMessages = (
   derived.flatMap((warning): PrescriptionWarningMessage[] => {
     switch (warning.kind) {
       case 'skipped-barred':
-        return [
-          {
-            key: 'messages.allocated-lines-skipped-line-reasons',
-            reasons: warning.reasons.map(skipReasonLabel),
-          },
-        ];
+        return warning.reasons.map(reason => ({ key: skipMessageKey(reason) }));
       case 'partial-packs':
         return [
           {

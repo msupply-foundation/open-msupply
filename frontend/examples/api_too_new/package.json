@@ -1,0 +1,15 @@
+{
+  "name": "api_too_new",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "omSupplyPlugin": {
+    "target": "frontend",
+    "types": [
+      "dashboard"
+    ]
+  },
+  "scripts": {
+    "build-plugin": "vite build"
+  }
+}

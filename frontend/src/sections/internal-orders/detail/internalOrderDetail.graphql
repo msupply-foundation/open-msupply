@@ -8,7 +8,7 @@
 # "server-paginated line table (non-negotiable)" moves server-side once the PR
 # lands and the schema is re-pinned. Documented as a backend gap in
 # spec/internal-orders/contract.md § "Backend gaps" — a server gap, not a
-# frontend divergence (so not in DIVERGENCES.md, per that section).
+# frontend divergence.
 
 fragment InternalOrderLine on RequisitionLineNode {
   id
@@ -89,12 +89,14 @@ fragment InternalOrderInfo on RequisitionNode {
   createdDatetime
   sentDatetime
   finalisedDatetime
-  # Side panel (S5): the creating user (entered-by), the fulfilling inbound
-  # shipments (AC-RD1), and the source customer requisition this order was
-  # created from (AC-RD2, display gated on a preference). Documents (AC-F1) come
-  # from the same node so the Documents tab lists them and Copy carries them.
+  # Side panel (S5): the creating user (entered-by, with their email for the
+  # info tooltip), the fulfilling inbound shipments (AC-RD1), and the source
+  # customer requisition this order was created from (AC-RD2, display gated on
+  # a preference). Documents (AC-F1) come from the same node so the Documents
+  # tab lists them and Copy carries them.
   user {
     username
+    email
   }
   shipments {
     nodes {
@@ -243,29 +245,6 @@ mutation useSuggestedQuantities($storeId: String!, $requisitionId: String!) {
       error {
         __typename
         description
-      }
-    }
-  }
-}
-
-# The order's activity trail (Log tab, spec S3 § Log tab) — keyed by recordId,
-# sorted client-side (oldest first, AC-AL1).
-query internalOrderLog($storeId: String!, $recordId: String!) {
-  activityLogs(
-    storeId: $storeId
-    filter: { recordId: { equalTo: $recordId } }
-    page: { first: 1000 }
-  ) {
-    ... on ActivityLogConnector {
-      __typename
-      totalCount
-      nodes {
-        id
-        type
-        datetime
-        user {
-          username
-        }
       }
     }
   }

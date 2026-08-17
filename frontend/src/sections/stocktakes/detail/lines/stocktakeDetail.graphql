@@ -21,10 +21,12 @@ fragment StocktakeInfo on StocktakeNode {
   verifiedBy
   stocktakeDate
   finalisedDatetime
-  # Read-only "Entered by" / "Created" in the Additional-info side panel.
+  # Read-only "Entered by" / "Created" in the Additional-info side panel —
+  # the email rides the entered-by info tooltip.
   createdDatetime
   user {
     username
+    email
   }
   # Files attached to this stocktake — the detail view's Documents tab (S3 § tabs).
   # The list is read here on the info fragment; upload/delete go through the REST

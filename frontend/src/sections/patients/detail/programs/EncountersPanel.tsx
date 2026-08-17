@@ -5,7 +5,11 @@ import {
   DataTable,
   type Column,
 } from '../../../../ui/elements/table/DataTable';
-import { getDateCell } from '../../../../ui/elements/table/tableHelpers';
+import {
+  getCellDefinition,
+  getTextCell,
+} from '../../../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../../../ui/utils/rem';
 import { createTableConfig } from '../../../../api/createTableConfig';
 import type { EncounterRowFragment } from './programTabs.generated';
 
@@ -35,6 +39,9 @@ export const EncountersPanel: Component<EncountersPanelProps> = props => {
     tableId: 'patient-encounter-list',
   });
 
+  // Cell-type presets carry the rendering AND the width
+  // (ui/docs/CELL_TYPES.md): the start date from the shared CELL_DEF map, the
+  // text columns from the text helper plus a call-site `size` (no map key).
   const columns = (): Column<Row, never>[] => [
     {
       c: {
@@ -42,6 +49,8 @@ export const EncountersPanel: Component<EncountersPanelProps> = props => {
         id: 'type',
       },
       header: () => t('label.encounter-type'),
+      ...getTextCell(),
+      size: remToPx(14),
     },
     {
       c: {
@@ -50,15 +59,19 @@ export const EncountersPanel: Component<EncountersPanelProps> = props => {
         id: 'program',
       },
       header: () => t('label.program'),
+      ...getTextCell(),
+      size: remToPx(14),
     },
     {
       c: { key: 'startDatetime' },
       header: () => t('label.date'),
-      ...getDateCell(),
+      ...getCellDefinition('startDatetime'),
     },
     {
       c: { accessor: r => statusLabel(r.status), id: 'status' },
       header: () => t('label.status'),
+      ...getTextCell(),
+      size: remToPx(6),
     },
   ];
 
@@ -72,6 +85,7 @@ export const EncountersPanel: Component<EncountersPanelProps> = props => {
       emptyMessage={t('messages.no-encounters')}
       config={tableConfig.config()}
       setConfig={tableConfig.setConfig}
+      configIsDefault={tableConfig.isConfigDefault()}
       onSaveGlobalDefault={
         tableConfig.canSaveGlobalDefault()
           ? tableConfig.saveGlobalTableConfig

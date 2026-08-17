@@ -29,6 +29,14 @@ import { createSignal } from 'solid-js';
 // reloading forever would loop, so instead this leaves the error to
 // propagate and shows a message telling the user a new version is available
 // and to refresh, with a manual action.
+//
+// The proactive counterpart is appUpdate.ts: a bundle swapped by front-end
+// sync RETAINS the old assets, so nothing here ever fires — that case is
+// detected by polling the served version instead. The two surfaces are
+// deliberately different: this one interrupts (blocking, non-dismissable)
+// because the app is already broken and no user choice can fix it; the update
+// prompt is a quiet footer cell because everything still works and only a
+// reload the user didn't choose could destroy their in-progress work.
 const RELOAD_FLAG = 'staleBundleReloaded';
 
 const [staleBundleDetected, setStaleBundleDetected] = createSignal(false);

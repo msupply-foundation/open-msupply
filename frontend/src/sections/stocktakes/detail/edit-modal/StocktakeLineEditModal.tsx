@@ -8,6 +8,8 @@ import {
   createFocusTarget,
   createFocusTargets,
 } from '@/ui/utils/createFocusTarget';
+import { createAction } from '@/ui/utils/keyActions';
+import { PLUS } from '@/ui/utils/shortcuts';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { EmptyState } from '@/ui/elements/feedback/EmptyState';
 import { Button } from '@/ui/elements/buttons/Button';
@@ -17,6 +19,8 @@ import {
   DialogSaveButton,
   SaveAndNextButton,
 } from '@/ui/elements/buttons/StandardButtons';
+import { HStack } from '@/ui/layout/Stack/HStack';
+import { LabelledValue } from '@/ui/elements/typography/LabelledValue';
 import { TextField } from '@/ui/elements/inputs/TextField';
 import { DateField } from '@/ui/elements/inputs/DateField';
 import { localTodayIso } from '@/ui/elements/inputs/dateTimeConvert';
@@ -65,18 +69,20 @@ import styles from './StocktakeLineEditModal.module.css';
 
 // The stocktake line-edit modal (kdd/edit-line-card-table +
 // kdd/stocktake-line-editing). It edits ALL of one ITEM's lines (batches) at
-// once — each batch is one row / one card. The grouped DataTable gives two faces
-// from ONE column set: tabs (Batch / Pricing / Other) in table view, sections in
-// card view. Edits live in a local draft STORE; Save partitions the draft into
-// one batchStocktake mutation and — on success — asks the detail view to refetch
-// the current lines page (onSaved). No splice-in-place: the page re-pulls.
+// once — each batch is one row / one card. The grouped DataTable gives two
+// faces from ONE column set: tabs (Batch / Pricing / Other) in table view,
+// sections in card view. Edits live in a local draft STORE; Save partitions the
+// draft into one batchStocktake mutation and — on success — asks the detail
+// view to refetch the current lines page (onSaved). No splice-in-place: the
+// page re-pulls.
 //
 // COMBINED add/edit (no mode flag): the item selector lives in the title the
-// whole time. Picking an item loads THAT item's data from the API — its existing
-// stocktake lines (stocktakeLines filtered by itemId) PLUS its other stock lines
-// (stockLinesByItem) — so the modal self-queries rather than being fed lines as
-// props. An item already on the stocktake loads its counted lines; a brand-new
-// item starts a fresh count. The search shows EVERY item (no exclusion).
+// whole time. Picking an item loads THAT item's data from the API — its
+// existing stocktake lines (stocktakeLines filtered by itemId) PLUS its other
+// stock lines (stockLinesByItem) — so the modal self-queries rather than being
+// fed lines as props. An item already on the stocktake loads its counted lines;
+// a brand-new item starts a fresh count. The search shows EVERY item (no
+// exclusion).
 //
 // The parent tells the modal only which item to OPEN on (initialItemId, from a
 // row click) or none (Add item → start in the search state), plus the current
@@ -91,11 +97,13 @@ export type StocktakeLineEditItem = {
   id: string;
   code: string;
   name: string;
-  // The vaccine flag + doses-per-unit the doses display needs (spec/stocktakes ›
-  // store-preference gates). Carried on the descriptor so a fresh blank batch
+  // The vaccine flag + doses-per-unit the doses display needs (spec/stocktakes
+  // › store-preference gates). Carried on the descriptor so a fresh blank batch
   // (addBatch) and a new-item pick both know them without a re-fetch.
   isVaccine: boolean;
   doses: number;
+  /** Read-only, shown beside the header item picker (inbound's Unit field). */
+  unitName: string | null;
 };
 
 // One of the item's stock lines (from stockLinesByItem).
@@ -162,12 +170,39 @@ const fetchExistingLines = async (
   return result.kind === 'success' ? result.data.stocktakeLines.nodes : [];
 };
 
+// How many lines one presence probe may return: a page of search results is
+// ~30 items at a handful of batches each, so this is never expected to bind.
+const PRESENCE_PROBE_PAGE = 1000;
+
+// The add-item search's already-on-stocktake probe (the "In stocktake"
+// option badge): one membership query per fetched page of options — the same
+// stocktakeLines query the editor loads items with, filtered to that page's
+// item ids; the distinct item ids of the returned lines are the hits.
+// undefined on a failed fetch → that page just goes unmarked (graphqlFetch
+// already surfaced the error).
+const probePresentItems = async (
+  storeId: string,
+  stocktakeId: string,
+  itemIds: string[]
+): Promise<string[] | undefined> => {
+  const result = await graphqlFetch(StocktakeLines, {
+    storeId,
+    stocktakeId,
+    filter: { itemId: { equalAny: itemIds } },
+    page: { first: PRESENCE_PROBE_PAGE },
+  });
+  if (result.kind !== 'success') return undefined;
+  return [
+    ...new Set(result.data.stocktakeLines.nodes.map(line => line.item.id)),
+  ];
+};
+
 // Fetch the item's other batches (stock lines NOT already on the stocktake) and
 // build the draft rows: the existing lines (counted-in → countThisLine true)
-// PLUS those stock lines (linked to their stockLineId — ticking one inserts it).
-// countThisLine for the stock lines is `countByDefault`: opt-in (false) when the
-// item already has lines on the stocktake, all-counted (true) for a brand-new
-// item (adding it means counting all its batches) — matching OMS.
+// PLUS those stock lines (linked to their stockLineId — ticking one inserts
+// it). countThisLine for the stock lines is `countByDefault`: opt-in (false)
+// when the item already has lines on the stocktake, all-counted (true) for a
+// brand-new item (adding it means counting all its batches) — matching OMS.
 const buildDraft = async (
   storeId: string,
   item: StocktakeLineEditItem,
@@ -296,27 +331,30 @@ interface StocktakeLineEditModalProps {
   nextItem: ResolveNextItem;
   /**
    * The store's locations WITH capacity, fetched by the detail view and passed
-   * down (the picker owns no cache — volumeUsed goes stale, so the view re-reads
-   * it after every save). The line editor's location field is volume-aware.
+   * down (the picker owns no cache — volumeUsed goes stale, so the view
+   * re-reads it after every save). The line editor's location field is
+   * volume-aware.
    */
   locations: LocationWithVolume[];
   /** True while the view's location fetch is in flight. */
   locationsLoading?: boolean;
   /**
-   * Fired after a successful save so the detail view refetches the current lines
-   * page (no splice-in-place).
+   * Fired after a successful save so the detail view refetches the current
+   * lines page (no splice-in-place).
    */
   onSaved: () => void;
 }
 
 // The parent-facing wrapper: mount the editor ONLY while open. `<Show keyed>`
-// tears the content down on close and rebuilds it on the next open, so each OPEN
-// starts fresh. Within one open the content owns its current item (advancing via
-// "OK & next" is imperative — see loadItemById/selectItem — not a prop change).
+// tears the content down on close and rebuilds it on the next open, so each
+// OPEN starts fresh. Within one open the content owns its current item
+// (advancing via "OK & next" is imperative — see loadItemById/selectItem — not
+// a prop change).
 //
 // The keyed `when` is the OPEN identity: the initial item id when opened from a
 // row, or the literal 'add' when opened from "Add item" (no initial item). A
-// stale close leaves `open` false, so the key is falsy and the content unmounts.
+// stale close leaves `open` false, so the key is falsy and the content
+// unmounts.
 export const StocktakeLineEditModal = (
   props: StocktakeLineEditModalProps
 ): JSX.Element => (
@@ -326,7 +364,8 @@ export const StocktakeLineEditModal = (
         onClose={props.onClose}
         storeId={props.storeId}
         stocktakeId={props.stocktakeId}
-        // 'add' sentinel → no initial item (start in add mode); otherwise the id.
+        // 'add' sentinel → no initial item (start in add mode); otherwise the
+        // id.
         initialItemId={openKey === 'add' ? undefined : openKey}
         initialLineId={props.initialLineId}
         nextItem={props.nextItem}
@@ -367,9 +406,9 @@ const StocktakeLineEditContent = (
   // yet (the search state).
   const [currentItem, setCurrentItem] = createSignal<StocktakeLineEditItem>();
   // Mode: 'update' (opened from a row — "OK & next" steps to the next item) or
-  // 'add' ("Add item", or fallen into when an update walk runs out — "OK & next"
-  // clears the selector to add another). Only ever flips update → add, never
-  // back. Not user-visible (no Add/Edit label).
+  // 'add' ("Add item", or fallen into when an update walk runs out — "OK &
+  // next" clears the selector to add another). Only ever flips update → add,
+  // never back. Not user-visible (no Add/Edit label).
   const [mode, setMode] = createSignal<'add' | 'update'>(
     props.initialItemId ? 'update' : 'add'
   );
@@ -389,6 +428,12 @@ const StocktakeLineEditContent = (
   // (ui/utils/createFocusTarget).
   const itemSearch = createFocusTarget();
 
+  // The header slot the DataTable portals its toolbar controls into
+  // (DataTable.controlsMount) — a ref SIGNAL, not a plain variable: the header
+  // renders before the table, so the table must re-read this once the element
+  // attaches.
+  const [tableControls, setTableControls] = createSignal<HTMLDivElement>();
+
   // Store-preference display gates (spec/stocktakes › store-preference gates),
   // read reactively. Each gated column is built into the column set only when
   // its preference is on. The VVM/doses cells additionally render only for a
@@ -407,16 +452,28 @@ const StocktakeLineEditContent = (
   // of the table, no Add batch / OK / OK & next).
   const noItemYet = () => currentItem() === undefined;
 
-  // Card-only: default the view to card at every band (compact already forces
-  // card; this extends it to desktop). No showCardToggle on the DataTable, so
-  // there's no way to a table view — the batch grid is always cards.
+  // Working-size latch (#771): the dialog opens small in add mode (it reads as
+  // "pick an item", not an empty workbench) and grows ONCE, when the first item
+  // is picked. That growth is the only size change in the modal's life — the
+  // latch (a reducing memo) never resets, so clearing the item (×) or
+  // "OK & next" returning to the search leaves the box at the working size and
+  // the add loop doesn't pulse. Update mode opens straight at the working size.
+  const workingSize = createMemo<boolean>(
+    prev => prev || mode() === 'update' || !noItemYet(),
+    false
+  );
+
+  // Cards by default at every band (compact already forces card; this extends
+  // it to desktop). Above the compact breakpoint the DataTable's showCardToggle
+  // offers the flip to a table for anyone who prefers it, and setConfig
+  // persists that choice per user (#886) — so this seed is only the default.
   const tableConfig = createTableConfig({
     tableId: 'stocktake-line-edit',
     defaultConfig: { base: { viewMode: 'card' } },
   });
 
-  // Seed the draft for one item. Replaces the store (reconcile by id) so no rows
-  // from the previous item linger, and resets per-item UI. countByDefault:
+  // Seed the draft for one item. Replaces the store (reconcile by id) so no
+  // rows from the previous item linger, and resets per-item UI. countByDefault:
   // opt-in (unchecked) when the item already has stocktake lines, all-counted
   // for a brand-new item. Records the item in the covered set for the walk.
   // `focusLineId` is the batch to focus once loaded (a row-click open focuses
@@ -454,9 +511,9 @@ const StocktakeLineEditContent = (
   // its id from a row open; the descriptor (code/name) comes from the search
   // selection OR, for a row open, from the item's own existing lines.
   //
-  // Picking from the selector is an ADD-flow action: update mode is entered ONLY
-  // by clicking a row, so a manual pick switches to add mode (its "OK & next"
-  // then adds another rather than stepping the original row-walk).
+  // Picking from the selector is an ADD-flow action: update mode is entered
+  // ONLY by clicking a row, so a manual pick switches to add mode (its "OK &
+  // next" then adds another rather than stepping the original row-walk).
   const selectItem = (item: StocktakeLineEditItem) => {
     setMode('add');
     void seedItem(item);
@@ -486,6 +543,7 @@ const StocktakeLineEditContent = (
         name: first.itemName,
         isVaccine: first.item.isVaccine,
         doses: first.item.doses,
+        unitName: first.item.unitName,
       },
       // Focus the clicked batch (falls back to the first row if it's not among
       // this item's lines, e.g. the id went stale).
@@ -494,8 +552,8 @@ const StocktakeLineEditContent = (
     );
   };
 
-  // Back to the item-search state — add mode with no item picked. Reached by the
-  // × clear, by "OK & next" in add mode, or when an update walk runs out of
+  // Back to the item-search state — add mode with no item picked. Reached by
+  // the × clear, by "OK & next" in add mode, or when an update walk runs out of
   // items. Always add mode from here on.
   const backToSearch = () => {
     setMode('add');
@@ -558,6 +616,29 @@ const StocktakeLineEditContent = (
   };
 
   // Add a new batch (a fresh draft line) — prepended, count blank.
+  /*
+   * `+` adds a batch (spec/keyboard KB-L1/KB-L2) — the app's one BARE-CHARACTER
+   * binding, and the only member of the `always` tier.
+   *
+   * KB-L2: such a binding "fires wherever it is pressed within its surface,
+   * INCLUDING while a text field holds focus… A surface MAY claim a bare
+   * character only where that character is not itself valid input to its fields;
+   * `+` is safe among quantity, price, and date fields for exactly that reason."
+   * That safety is a property of THIS surface's fields, not a general one, which
+   * is why the binding is declared here and nowhere else (AC-KB45).
+   *
+   * Unlisted: the palette already offers the action under its own name via the
+   * header control, and the label names the key inline, so a second entry would
+   * be noise. Disabled until an item is picked, matching the button's own
+   * `<Show>` — the key must not add a batch to nothing.
+   */
+  createAction({
+    unlisted: true,
+    shortcut: PLUS,
+    run: () => addBatch(),
+    disabled: noItemYet,
+  });
+
   const addBatch = () => {
     const item = currentItem();
     if (!item) return;
@@ -639,9 +720,9 @@ const StocktakeLineEditContent = (
     );
   };
 
-  // Partition the draft into the batch-mutation input arrays (unchanged from the
-  // original — the routing rules for insert/update/delete + countThisLine are
-  // identical). See the wrapped-nullable-field note.
+  // Partition the draft into the batch-mutation input arrays (unchanged from
+  // the original — the routing rules for insert/update/delete + countThisLine
+  // are identical). See the wrapped-nullable-field note.
   const buildBatch = (): BatchStocktakeLinesInput => {
     const insert: NonNullable<BatchStocktakeLinesInput['insert']> = [];
     const update: NonNullable<BatchStocktakeLinesInput['update']> = [];
@@ -675,10 +756,10 @@ const StocktakeLineEditContent = (
           volumePerPack: line.volumePerPack,
           reasonOptionId: line.reasonOption?.id ?? null,
           // VVM / donor (preference-gated) + manufacturer (ungated). Plain
-          // scalars on INSERT (contract: InsertStocktakeLineInput). Gated fields
-          // are sent regardless of the preference — the server accepts the data
-          // either way; the preference only decides whether the field was
-          // editable.
+          // scalars on INSERT (contract: InsertStocktakeLineInput). Gated
+          // fields are sent regardless of the preference — the server accepts
+          // the data either way; the preference only decides whether the field
+          // was editable.
           vvmStatusId: line.vvmStatus?.id ?? null,
           donorId: line.donorId ?? null,
           manufacturerId: line.manufacturer?.id ?? null,
@@ -819,9 +900,6 @@ const StocktakeLineEditContent = (
             label={t('label.batch')}
             hideLabel
             size="small"
-            // Narrow: a batch code is short, and it's the card's inline header
-            // field (the FieldRow control cell is otherwise full-width).
-            width="compact"
             disabled={!line.countThisLine}
             value={line.batch ?? ''}
             onInput={e =>
@@ -1107,8 +1185,8 @@ const StocktakeLineEditContent = (
             decimalLimit={10}
             disabled={!line.countThisLine}
             value={line.volumePerPack ?? undefined}
-            // NumberField commits a real number (or undefined when cleared); the
-            // draft stores null for empty, so map undefined → null.
+            // NumberField commits a real number (or undefined when cleared);
+            // the draft stores null for empty, so map undefined → null.
             onChange={value => update(line.id, 'volumePerPack', value ?? null)}
           />
         );
@@ -1247,11 +1325,12 @@ const StocktakeLineEditContent = (
                   return t('error.provide-valid-reason');
                 return undefined;
               };
-              // Offer only reasons valid for the line's adjustment direction; a zero
-              // variance (or uncounted) line has no direction, so the picker is
-              // disabled — a zero adjustment never takes a reason (rules.md §reason
-              // rules). setCounted clears a now-mismatched reason when the count
-              // changes direction, so the disabled default 'positive' is never read.
+              // Offer only reasons valid for the line's adjustment direction;
+              // a zero variance (or uncounted) line has no direction, so the
+              // picker is disabled — a zero adjustment never takes a reason
+              // (rules.md §reason rules). setCounted clears a now-mismatched
+              // reason when the count changes direction, so the disabled
+              // default 'positive' is never read.
               const direction = () => adjustmentDirection(line);
               return (
                 <ReasonSelect
@@ -1363,7 +1442,27 @@ const StocktakeLineEditContent = (
       open
       onClose={props.onClose}
       dismissable={!saving()}
-      size="large"
+      size={workingSize() ? 'full' : 'auto'}
+      // `full`, not `large`: this line table is 20 columns wide — and the one
+      // #771 named ("wider if the stocktake column set forces it"), so there
+      // is no card width that fits it. #771's "~900px if the tables fit" does
+      // NOT fit here — narrowing only pushes columns out of view, and the
+      // empty space it was filed against is VERTICAL, which the workbench's
+      // 60-80vh height band already answers. Recorded as a deliberate
+      // deviation from the 900px modal standard in the DESIGN_STANDARDS
+      // ledger.
+      //
+      // widthRem sizes the PRE-PICK state only (it is inert at `full`): a
+      // command-palette-shaped card at the standard create-modal width (the
+      // CreateStocktake/CreateInternalOrder family), with a body tall enough to
+      // OWN the open suggestions list — the search takes initial focus and the
+      // combobox opens on focus, so the list is this state's resting face, and
+      // without the reserved height it would dangle past the card onto the
+      // scrim. The popup itself matches its trigger's width. The reserved
+      // height is likewise dropped once the latch flips — the body flexes to
+      // fill the tall box instead.
+      widthRem={44}
+      minBodyHeightRem={28}
       testId="add-item-modal"
       // Title: JUST the item selector (no "Add"/"Edit" label — the modal is one
       // combined flow). A component title can't be the a11y name, so pass
@@ -1379,37 +1478,84 @@ const StocktakeLineEditContent = (
       // `selectedItem` gives the combobox the current item's label directly, so
       // it displays even in update mode where the row-opened item isn't in the
       // search's own paginated result list.
+      //
+      // Bounded, not full-width (inbound's treatment): once picked, an item's
+      // "code - name" label doesn't need the whole header row, and the Unit
+      // fact reads better grouped beside the picker than stranded at the far
+      // edge. Keyed off the size latch (not "an item is picked"), so the
+      // header doesn't resize under the user mid-walk.
       title={
-        <span class={styles.addTitle}>
-          <ItemSearch
-            label={t('heading.add-item')}
-            hideLabel
-            class={styles.addSelect}
-            storeId={props.storeId}
-            disabled={mode() === 'update'}
-            focusTarget={itemSearch}
-            value={currentItem()?.id}
-            selectedItem={currentItem()}
-            // Pick an item → load it; clear (×) → back to the search state.
-            onSelect={item => (item ? selectItem(item) : backToSearch())}
-            placeholder={t('placeholder.enter-an-item-code-or-name')}
-          />
-        </span>
+        <HStack gap="md" align="center">
+          <div
+            class={styles.headerPicker}
+            classList={{
+              [styles.headerPickerBounded ?? '']: workingSize(),
+            }}
+          >
+            <ItemSearch
+              label={t('heading.add-item')}
+              hideLabel
+              storeId={props.storeId}
+              disabled={mode() === 'update'}
+              focusTarget={itemSearch}
+              value={currentItem()?.id}
+              selectedItem={currentItem()}
+              // Mark items already on this stocktake in the results
+              // (OMS-REG-INV-03.78) — picking one still loads its existing count.
+              presentInDocument={{
+                probe: ids =>
+                  probePresentItems(props.storeId, props.stocktakeId, ids),
+                label: t('label.in-stocktake'),
+              }}
+              // Pick an item → load it; clear (×) → back to the search state.
+              onSelect={item => (item ? selectItem(item) : backToSearch())}
+              placeholder={t('placeholder.enter-an-item-code-or-name')}
+            />
+          </div>
+          <Show when={currentItem()?.unitName}>
+            {unitName => (
+              <LabelledValue
+                class={styles.headerUnit}
+                label={t('label.unit')}
+                variant="field"
+                layout="inline"
+                size="small"
+              >
+                {unitName()}
+              </LabelledValue>
+            )}
+          </Show>
+        </HStack>
       }
       ariaLabel={t('heading.add-item')}
       // Add batch lives at the inline-end of the header row. Hidden until an
       // item is picked.
       headerActions={
-        <Show when={!noItemYet()}>
-          <Button
-            variant="secondary"
-            icon={<PlusCircleIcon />}
-            data-testid="add-batch-button"
-            onClick={addBatch}
-          >
-            {t('label.add-batch')}
-          </Button>
-        </Show>
+        <>
+          {/* The table's own controls (Columns · Settings), lifted onto this
+              row by DataTable's controlsMount — they sat in a toolbar of their
+              own a few pixels above the cards, spending a whole row of a
+              modal whose vertical space is the scarce axis. Inline-start of
+              Add batch: view/column plumbing before the action that changes
+              the data. Empty (and invisible) until an item is picked, since
+              the table only exists then. */}
+          <div ref={setTableControls} class={styles.headerTableControls} />
+          <Show when={!noItemYet()}>
+            <Button
+              variant="secondary"
+              icon={<PlusCircleIcon />}
+              data-testid="add-batch-button"
+              onClick={addBatch}
+            >
+              {/* The key is named INLINE in the label rather than shown as a badge
+                  (spec/keyboard ui-surface S2: "A control MAY instead name its key
+                  in its own label, where the key is not a modifier combination…
+                  Such a control gets no badge"). Hence no `shortcut` prop here —
+                  a badge would be the second copy AC-KB15 forbids. */}
+              {t('label.add-batch')} (+)
+            </Button>
+          </Show>
+        </>
       }
       actionsLead={
         <Show when={footerError()}>
@@ -1460,9 +1606,11 @@ const StocktakeLineEditContent = (
           rowKey={line => line.id}
           loading={loadingLines()}
           cardGroups={CARD_GROUPS}
+          showCardToggle
           showFullScreen={false}
           config={tableConfig.config()}
           setConfig={tableConfig.setConfig}
+          controlsMount={tableControls()}
           emptyMessage={t('label.add-new-line')}
         />
       </Show>

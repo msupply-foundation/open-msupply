@@ -28,7 +28,8 @@ export const CustomFieldFilterControl = (props: {
   onChange: (value: CustomFieldFilterValue | null) => void;
   testId?: string;
 }) => {
-  // Typed reads of the current value for a given kind (null/other kind → empty).
+  // Typed reads of the current value for a given kind (null/other kind →
+  // empty).
   const asText = () =>
     props.value?.kind === 'text' ? props.value.contains : '';
   const asBoolean = (): 'true' | 'false' | '' =>
@@ -111,8 +112,9 @@ export const CustomFieldFilterControl = (props: {
               onChange={newIds => {
                 // Selection is a DIFF, so ticking/unticking one option doesn't
                 // re-lock the rest: adding a node selects its whole subtree;
-                // removing a node clears its subtree AND its ancestors (a parent
-                // is only selected while every descendant is), keeping siblings.
+                // removing a node clears its subtree AND its ancestors (a
+                // parent is only selected while every descendant is), keeping
+                // siblings.
                 const prev = new Set(asOptionIds());
                 const next = new Set<string>(newIds);
                 for (const id of newIds.filter(i => !prev.has(i)))

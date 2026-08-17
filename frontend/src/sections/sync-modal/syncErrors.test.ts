@@ -6,7 +6,7 @@ import type { SyncErrorVariant } from './syncStatus';
 // contract's error-summary table (spec/sync-modal/contract.md § error
 // summaries). Typing it Record<SyncErrorVariant, string> also fails compilation
 // if the generated variant union gains or loses a member — so this doubles as
-// the exhaustiveness guard for AC-E1.
+// the exhaustiveness guard for SYNC-03.28.
 const EXPECTED: Record<SyncErrorVariant, string> = {
   // cannot connect
   CONNECTION_ERROR: 'error.connection-error',
@@ -75,7 +75,7 @@ const HINTED = new Set([
 
 const variants = Object.keys(EXPECTED) as SyncErrorVariant[];
 
-describe('syncErrorSummary — variant → kind mapping (AC-E1)', () => {
+describe('syncErrorSummary — variant → kind mapping (SYNC-03.28)', () => {
   it('maps every variant to its kind’s captured summary', () => {
     for (const variant of variants) {
       expect(syncErrorSummary(variant).summary).toBe(EXPECTED[variant]);

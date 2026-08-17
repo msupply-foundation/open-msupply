@@ -1,6 +1,7 @@
 import { createEffect, createSignal, on, onMount, splitProps } from 'solid-js';
 import { locale } from '../../../intl/intl';
 import { TextField, type TextFieldProps } from './TextField';
+import { useInTableCell } from '../table/inTableCell';
 import {
   displayString,
   editString,
@@ -142,6 +143,13 @@ export const NumberField = (props: NumberFieldProps) => {
     noFormatting: local.noFormatting,
   });
 
+  /*
+   * Whether this field sits in a table cell (KB-S2 — see inTableCell.ts). Read
+   * ONCE at setup, not reactively: a field does not migrate in or out of a cell,
+   * and the value is the same for every field the table renders.
+   */
+  const inTableCell = useInTableCell();
+
   const [text, setText] = createSignal(
     displayString(local.value ?? local.defaultValue, constraints(), locale())
   );
@@ -258,6 +266,20 @@ export const NumberField = (props: NumberFieldProps) => {
     e: KeyboardEvent & { currentTarget: HTMLInputElement }
   ) => {
     if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      /*
+       * KB-S2: "A numeric field INSIDE A TABLE CELL instead lets arrow keys move
+       * the text cursor, and MUST NOT step the value or move the row focus."
+       *
+       * So in a cell we neither step nor preventDefault: the caret moves on the
+       * UA's own default action. `stopPropagation` stays, which is KB-N2 from the
+       * field's side — "arrow keys inside a table's input belong to the field" —
+       * and is what will keep a row-navigation rung from seeing the key when one
+       * exists (it does not today; see kdd/keyboard-layer).
+       */
+      if (inTableCell) {
+        e.stopPropagation();
+        return;
+      }
       e.preventDefault();
       e.stopPropagation();
       const amount =
@@ -303,9 +325,15 @@ export const NumberField = (props: NumberFieldProps) => {
     <TextField
       {...rest}
       class={local.class ? `${styles.numeric} ${local.class}` : styles.numeric}
-      // Numbers are short: default to the compact width cap (old OMS's
-      // numeric input defaulted narrow too, at 75px). Overridable per field.
-      width={local.width ?? 'compact'}
+      // No numeric-specific default: a number field fills its container like
+      // every other input. Numbers ARE short, but the container a number sits
+      // in is nearly always already narrow — a table cell sized by its column,
+      // a FormRow share, a side-panel value track — and there the old
+      // `compact` default only ever under-filled it. Where the container is
+      // genuinely unbounded (a full-width settings page), the field says
+      // `width="compact"` itself. Measured: 20 call sites overrode this to
+      // `full`, 1 asked for `compact`.
+      width={local.width}
       type="text"
       inputmode={inputMode()}
       autocomplete="off"

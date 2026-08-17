@@ -9,6 +9,8 @@ import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_N } from '../../../ui/utils/shortcuts';
 import {
   DataTable,
   type CardGroup,
@@ -20,6 +22,11 @@ import { createTableConfig } from '../../../api/createTableConfig';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import { PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
 import { stripEmpty } from '../../../typeHelpers';
 import { stockPreferences } from '../../../store/storeContext';
 import {
@@ -47,10 +54,7 @@ import { ExportStockAction } from './actions/ExportStockAction';
 // (TanStack gates header sort on the accessorFn; a pure display column never
 // sorts — this is why the old id-only columns were dead, kdd/table-state).
 //
-// The grouped-by-item view is deferred this iteration (spec/stock DIVERGENCES
-// D63) — the list is the flat stock-line list only.
-
-const DEFAULT_PAGE_SIZE = 20;
+// The grouped-by-item view is deferred this iteration — the list is the flat stock-line list only.
 
 type Row = StockLineRowFragment;
 
@@ -73,7 +77,11 @@ type StockListState = {
 };
 
 const DEFAULT_STATE: StockListState = {
-  filter: {},
+  // The search (batch or item code/name) is the list's default filter
+  // (ui-standards § tables → filtering): seeded present-as-null so its chip is
+  // on the bar from the start; stripEmpty keeps it out of the query until
+  // typed.
+  filter: { search: null },
   sort: [{ key: 'itemName', desc: false }],
   offset: 0,
   first: DEFAULT_PAGE_SIZE,
@@ -88,9 +96,21 @@ const lineValue = (l: Row) => l.totalNumberOfPacks * l.costPricePerPack;
 const StockList: Component = () => {
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
-  const { query, setQuery } = useUrlQueryState<StockListState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<StockListState>({
+    ...DEFAULT_STATE,
+    first: initialPageSize(),
+  });
   const [createOpen, setCreateOpen] = createSignal(false);
   const prefs = () => stockPreferences();
+
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
+  // the SCREEN, once, for the two controls that trigger it (the header button and
+  // the ghost button in the table's empty slot); each carries `shortcut={ALT_N}`
+  // for its badge, neither owns the action.
+  createAddAction({
+    name: 'button.new-stock',
+    run: () => setCreateOpen(true),
+  });
 
   const variables = (): StockLinesVariables => ({
     storeId: params.storeId,
@@ -125,8 +145,8 @@ const StockList: Component = () => {
   };
 
   // Clicking a sortable header: the DataTable (TanStack) computes the next
-  // direction and hands back key + desc; we record it as the GraphQL sort array,
-  // resetting to the first page.
+  // direction and hands back key + desc; we record it as the GraphQL sort
+  // array, resetting to the first page.
   const onSort = (key: SortKey, desc: boolean) =>
     setQuery({ ...query(), sort: [{ key, desc }], offset: 0 });
 
@@ -137,8 +157,8 @@ const StockList: Component = () => {
     navigate(`/${params.storeId}/inventory/stock/${id}`);
 
   // A units figure with the dose equivalent appended as a suffix for vaccine
-  // rows when manageVaccinesInDoses is on (spec/stock AC-P2) — mirrors the items
-  // list's dose display (no bespoke styling).
+  // rows when manageVaccinesInDoses is on (spec/stock AC-P2) — mirrors the
+  // items list's dose display (no bespoke styling).
   const unitsText = (
     units: number,
     isVaccine: boolean,
@@ -148,23 +168,23 @@ const StockList: Component = () => {
       ? `${formatNumber(units)} (${formatNumber(units * doses)} ${t('label.doses-short')})`
       : formatNumber(units);
 
-  // Every column is shown by default; the user hides / reorders / pins them from
-  // the Columns control (spec/stock S1). No default columnVisibility overrides —
-  // the card view renders only VISIBLE columns, so a lean default table would
-  // strip the card of its fields.
+  // Every column is shown by default; the user hides / reorders / pins them
+  // from the Columns control (spec/stock S1). No default columnVisibility
+  // overrides — the card view renders only VISIBLE columns, so a lean default
+  // table would strip the card of its fields.
   const tableConfig = createTableConfig({ tableId: 'stock-list' });
 
   // Column order follows the current open-mSupply Stock ListView (Code · Name ·
   // Master lists · Batch · Expiry · Manufacture date · VVM · Location code ·
-  // Location name · Unit · Pack size · Pack qty · SOH · Available stock · Cost ·
-  // Sell · Total · Manufacturer · Supplier). Each column also declares its card
-  // slot per spec/stock S1 › card view.
+  // Location name · Unit · Pack size · Pack qty · SOH · Available stock · Cost
+  // · Sell · Total · Manufacturer · Supplier). Each column also declares its
+  // card slot per spec/stock S1 › card view.
   //
-  // The card HEADER is Name-then-Code (the split for this screen), but the TABLE
-  // keeps OMS's Code-first order — the one place the two views want a different
-  // order (issue #551). So Code is TWO faces: a real table column (Code first,
-  // sortable, hidden on the card) and a card-only primary placed AFTER Name.
-  // Every other column is a single def serving both views.
+  // The card HEADER is Name-then-Code (the split for this screen), but the
+  // TABLE keeps OMS's Code-first order — the one place the two views want a
+  // different order (issue #551). So Code is TWO faces: a real table column
+  // (Code first, sortable, hidden on the card) and a card-only primary placed
+  // AFTER Name. Every other column is a single def serving both views.
   const columns = (): Column<Row, SortKey, GroupKey>[] => [
     {
       // Code — table face (OMS position 1): sortable, hidden on the card.
@@ -355,11 +375,12 @@ const StockList: Component = () => {
     },
   ];
 
-  const crumbs = () => [{ label: t('inventory') }, { label: t('stock') }];
+  const crumbs = () => [{ label: t('stock') }];
 
   const emptyCreate = (): JSX.Element => (
     <Button
       variant="ghost"
+      shortcut={ALT_N}
       data-testid="nothing-here-create-button"
       onClick={() => setCreateOpen(true)}
     >
@@ -376,6 +397,7 @@ const StockList: Component = () => {
           <HeaderButtons>
             <Button
               icon={<PlusCircleIcon />}
+              shortcut={ALT_N}
               data-testid="new-stock-button"
               onClick={() => setCreateOpen(true)}
             >
@@ -423,7 +445,10 @@ const StockList: Component = () => {
           pageSize: query().first,
           total: totalCount(),
           onOffsetChange: offset => setQuery({ ...query(), offset }),
-          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+          onPageSizeChange: first => {
+            rememberPageSize(first);
+            setQuery({ ...query(), first, offset: 0 });
+          },
         }}
       />
       <NewStockModal

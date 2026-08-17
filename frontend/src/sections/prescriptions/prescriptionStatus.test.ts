@@ -5,6 +5,7 @@ import {
   canDeletePrescription,
   hasDispensedLines,
   isReadOnly,
+  isRenderableLine,
   nextStatuses,
   prescriptionDateOf,
   statusSteps,
@@ -46,12 +47,32 @@ describe('canDeletePrescription (AC-D1/D2 — deletable while editable only)', (
   });
 });
 
-describe('canCancelPrescription (AC-X1 — VERIFIED only)', () => {
+describe('canCancelPrescription (.29/.33 — VERIFIED only, never a reversal)', () => {
   it('offers cancel on VERIFIED alone', () => {
-    expect(canCancelPrescription('VERIFIED')).toBe(true);
-    expect(canCancelPrescription('NEW')).toBe(false);
-    expect(canCancelPrescription('PICKED')).toBe(false);
-    expect(canCancelPrescription('CANCELLED')).toBe(false);
+    expect(canCancelPrescription('VERIFIED', false)).toBe(true);
+    expect(canCancelPrescription('NEW', false)).toBe(false);
+    expect(canCancelPrescription('PICKED', false)).toBe(false);
+    expect(canCancelPrescription('CANCELLED', false)).toBe(false);
+  });
+
+  // The cancellation mirror is itself VERIFIED (the item ledger's stock-return
+  // row opens it), so the status gate alone would offer a cancel the server
+  // always refuses.
+  it('withholds cancel on a cancellation reversal', () => {
+    expect(canCancelPrescription('VERIFIED', true)).toBe(false);
+  });
+});
+
+describe('isRenderableLine (AC-Q1 / .33 — carriers out, returns in)', () => {
+  it('renders dispensed lines and hides the prescribed-quantity carrier', () => {
+    expect(isRenderableLine({ type: 'STOCK_OUT' })).toBe(true);
+    expect(isRenderableLine({ type: 'UNALLOCATED_STOCK' })).toBe(false);
+  });
+
+  // The reversal's lines are the SAME lines retyped: an empty table here is
+  // the ledger-reached mirror showing nothing (the reported defect).
+  it('renders a cancellation reversal returned lines', () => {
+    expect(isRenderableLine({ type: 'STOCK_IN' })).toBe(true);
   });
 });
 

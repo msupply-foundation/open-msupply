@@ -6,11 +6,12 @@ import {
 } from './parse';
 import { customFieldDisplayString } from './display';
 
-// The configured custom-field COLUMNS for a list (spec/ui-standards/custom-fields
-// › lists): one non-sortable display column per shown field, its cell the
-// value's display string (option → resolved name, number/date → localised,
-// boolean → check mark). Generic over the row type — the caller supplies how to
-// read the row's raw `customFields` value. Empty when nothing is configured.
+// The configured custom-field COLUMNS for a list
+// (spec/ui-standards/custom-fields › lists): one non-sortable display column
+// per shown field, its cell the value's display string (option → resolved name,
+// number/date → localised, boolean → check mark). Generic over the row type —
+// the caller supplies how to read the row's raw `customFields` value. Empty
+// when nothing is configured.
 //
 // `cardGroup` routes every generated column into one card body group — a
 // deployment can configure a dozen fields, and on a phone card they belong

@@ -1,4 +1,4 @@
-import { createSignal, type JSX } from 'solid-js';
+import { createMemo, createSignal, type JSX } from 'solid-js';
 import { Combobox } from './Combobox';
 import {
   createPaginatedSearch,
@@ -47,6 +47,8 @@ export interface AsyncComboboxProps<T> {
   hideLabel?: boolean;
   /** InfoTooltip beside the label — passed through to the Combobox. */
   labelInfo?: JSX.Element;
+  /** A trailing in-field action — passed through to the Combobox. */
+  endAction?: JSX.Element;
   disabled?: boolean;
   error?: string;
   /** Marks the field required — passed through to the Combobox's label. */
@@ -59,6 +61,15 @@ export interface AsyncComboboxProps<T> {
   /** Control size, forwarded to the Combobox — `small` for a header field
    * cluster's compact row (see ui/layout/Header/HeaderToolbar). */
   size?: 'default' | 'small';
+  /** Width cap — the Combobox's own vocabulary, opt-in (default `full`). */
+  width?: 'compact' | 'short' | 'long' | 'full';
+  /**
+   * Popup width — the Combobox's own prop, forwarded. `false` lets the popup
+   * size to its content (floored at the trigger's width, capped so it stays on
+   * screen) instead of matching the trigger, for a picker whose option text can
+   * outrun a narrow field. See Combobox's `matchTriggerWidth`.
+   */
+  matchTriggerWidth?: boolean;
   class?: string;
   /** `data-testid` for the text input (locale-stable test hook). */
   inputTestId?: string;
@@ -70,7 +81,7 @@ export interface AsyncComboboxProps<T> {
   /**
    * Status text shown when a settled search matched nothing — a domain
    * message (e.g. the patient picker's "No matching patients"). Passed through
-   * to the Combobox; defaults there to "No matching items".
+   * to the Combobox; defaults there to a translated "No results".
    */
   noResultsMessage?: string;
   /**
@@ -138,14 +149,18 @@ export const AsyncCombobox = <T,>(
   // doesn't match what was typed (#318). The interim list is only as good as
   // the held page (~one page of the old query), which is fine: when the real
   // page-0 response lands, `pending` drops and it replaces this wholesale.
-  const base = (): T[] => {
+  // A MEMO, not a plain getter: the array identity must change only when its
+  // contents do. Read on every render pass, a getter hands back a fresh array
+  // each time, and `items` below inherits that churn — which is load-bearing,
+  // see its note.
+  const base = createMemo((): T[] => {
     if (!search.pending()) return search.items();
     const needle = query().toLocaleLowerCase();
     if (!needle) return search.items();
     return search
       .items()
       .filter(i => props.itemToString(i).toLocaleLowerCase().includes(needle));
-  };
+  });
 
   // The caller's selected node leads the list (deduped) so a controlled value
   // resolves even before its page is fetched. We seed it when it either matches
@@ -173,7 +188,16 @@ export const AsyncCombobox = <T,>(
   // placeholder fields (e.g. "0 Units") permanently shadow the real,
   // freshly-fetched data for as long as the item stays the controlled selection
   // (#549).
-  const items = (): T[] => {
+  //
+  // A MEMO for the same reason as `base`, and here it is load-bearing rather
+  // than merely tidy: Kobalte owns the input's text and resyncs it from its
+  // selection whenever its selectedKeys signal RE-EMITS (its
+  // `on(selectedKeys, resetInputValue)`). A fresh array identity per read made
+  // Combobox's `on([value, items])` selection-sync effect re-run on every
+  // render pass, which re-emitted that signal mid-typing — so each keystroke
+  // was overwritten by the selected item's label and the field could never be
+  // retyped over (you could not change a prescription's patient).
+  const items = createMemo((): T[] => {
     const seed = props.selected;
     if (!seed) return base();
     const key = props.itemToValue(seed);
@@ -186,7 +210,7 @@ export const AsyncCombobox = <T,>(
     const isControlledValue = props.value !== undefined && props.value === key;
     if (!seedMatches && !isControlledValue) return base();
     return [seed, ...rest];
-  };
+  });
 
   const value = () =>
     props.value ??
@@ -199,13 +223,20 @@ export const AsyncCombobox = <T,>(
   // the list-blink the filter exists to avoid. While pending with nothing to
   // show, loading (not "no matches") is the honest state: the in-flight page-0
   // fetch — or the one the debounce is about to fire — can still produce rows.
-  const loading = () => search.pending() && items().length === 0;
+  //
+  // Judged on `base()`, the FETCHED rows, not on `items()`: the seed is the
+  // caller's own selection, not an answer to anything. Counting it hid this
+  // state exactly where it matters — a picker reopened on a selection, its
+  // abandoned rows dropped, showing the selected item as if it were the only
+  // one in the catalogue while the real page was still on its way (#985).
+  const loading = () => search.pending() && base().length === 0;
 
   return (
     <Combobox<T>
       label={props.label}
       hideLabel={props.hideLabel}
       labelInfo={props.labelInfo}
+      endAction={props.endAction}
       class={props.class}
       disabled={props.disabled}
       error={props.error}
@@ -213,6 +244,8 @@ export const AsyncCombobox = <T,>(
       helperText={props.helperText}
       clearable={props.clearable}
       size={props.size}
+      width={props.width}
+      matchTriggerWidth={props.matchTriggerWidth}
       placeholder={props.placeholder}
       inputTestId={props.inputTestId}
       focusTarget={props.focusTarget}
@@ -227,30 +260,40 @@ export const AsyncCombobox = <T,>(
       itemToValue={props.itemToValue}
       itemDisabled={props.itemDisabled}
       renderItem={props.renderItem}
-      // Kobalte fires onInputChange whenever the combobox's controlled
-      // selection changes — not only when the user types. Its resetInputValue
-      // effect resyncs the input text to match a NEW selected/value prop
-      // (e.g. the stocktake line-edit modal opening on a row sets ItemSearch's
-      // value/selectedItem to that row's item), and that resync itself goes
-      // through onInputChange. Left unguarded, this fires a genuine
-      // itemsWithStock search for the row's own label on every row-click open
-      // — nobody typed anything. Guard: a next value that exactly matches the
-      // CURRENTLY selected item's label is that resync, not a keystroke —
-      // skip it. A real edit (even retyping the same text one keystroke at a
-      // time) still goes through query(), which the resync bypasses entirely
-      // (Kobalte sets the whole string in one call), so this can't mask a
-      // genuine search for text that happens to equal the selected label.
+      // What arrives here is the QUERY, already judged by the widget that owns
+      // the input and the selection: Kobalte resyncs the input text from its
+      // selection (on a pick, and whenever a new value/selected prop lands —
+      // e.g. the stocktake line-edit modal opening on a row), and Combobox
+      // hands those label echoes over as '' rather than as a search for the
+      // row's own label. That judgement can't be made from here: it needs the
+      // selection AS THE WIDGET HOLDS IT, which on a fresh pick is a round trip
+      // ahead of our `selected` prop — a race that decided, per open, whether
+      // this picker searched for a label the catalogue can't match (#985).
+      //
+      // Idempotent, because a resync re-reports text we already hold: without
+      // this, every reopen of a committed picker would refetch page 0.
       onInputChange={next => {
-        const selected = props.selected;
-        const isSelectedLabelEcho =
-          selected !== undefined &&
-          next === props.itemToString(selected) &&
-          next !== query();
-        if (isSelectedLabelEcho) return;
+        if (next === query()) return;
         setQuery(next);
         search.setSearch(next);
       }}
-      onOpenChange={open => open && search.ensure()}
+      onOpenChange={open => {
+        if (open) return search.ensure();
+        // Closing without picking ABANDONS the search — the typed text AND the
+        // rows fetched for it (see search.reset), so the next open starts from
+        // the full list instead of presenting one spent query as the whole
+        // catalogue. No request is issued to close a popup: reset re-arms the
+        // deferred first fetch and the next open's `ensure()` makes it.
+        //
+        // Forgetting the query is also what keeps the committed selection in
+        // `items` (see its seed rule): Kobalte looks the selection up in that
+        // list to restore the input's text as the field closes, and with a
+        // stale query still narrowing the list the lookup misses and the field
+        // blanks — reading as "the patient was deleted" on a field that cannot
+        // be emptied.
+        setQuery('');
+        search.reset();
+      }}
       onReachEnd={() => search.loadMore()}
       onChange={item => props.onSelect(item)}
     />

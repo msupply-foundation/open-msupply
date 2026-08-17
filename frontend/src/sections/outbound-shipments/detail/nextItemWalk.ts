@@ -1,6 +1,6 @@
 // The "Save & next" next-item walk (rules.md § Save & next and the next-item
-// walk; OMS-REG-DIST-03.32/.33), extracted from the view so the paging logic is testable
-// and race-free:
+// walk; OMS-REG-DIST-03.32/.33), extracted from the view so the paging logic
+// is testable and race-free:
 //
 // - Pages are always read from the walk's OWN direct fetches (never the
 //   reactive lines resource, whose `.latest` may still hold a previous page
@@ -31,7 +31,9 @@ export type WalkItem = WalkRow['item'];
 export type WalkPage = { rows: WalkRow[]; totalCount: number };
 
 export interface NextItemWalkDeps {
-  /** Direct, race-free page fetch; undefined = fetch failed (already surfaced). */
+  /**
+   * Direct, race-free page fetch; undefined = fetch failed (already surfaced).
+   */
   fetchPage: (offset: number, first: number) => Promise<WalkPage | undefined>;
   /** The table's current offset / page size (URL state). */
   currentOffset: () => number;
@@ -47,7 +49,9 @@ export interface NextItemWalk {
     currentId: string,
     covered: Set<string>
   ) => Promise<WalkItem | undefined>;
-  /** Drop the remembered page (a save changed the rows; refetch on next call). */
+  /**
+   * Drop the remembered page (a save changed the rows; refetch on next call).
+   */
   reset: () => void;
 }
 

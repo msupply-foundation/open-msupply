@@ -1,11 +1,18 @@
 import { t } from '../../../../intl';
 import { TextField } from '../../../../ui/elements/inputs/TextField';
 import { NumberField } from '../../../../ui/elements/inputs/NumberField';
+import { DateField } from '../../../../ui/elements/inputs/DateField';
 import { type Column } from '../../../../ui/elements/table/DataTable';
 import {
-  getDateCell,
+  getCellDefinition,
   getNumberCell,
+  getTextCell,
 } from '../../../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../../../ui/utils/rem';
+import type {
+  FocusTarget,
+  KeyedFocusTargets,
+} from '../../../../ui/utils/createFocusTarget';
 import { ReasonSelect } from '../../../../domain/reasonOptions';
 import { clampQuantity, type DraftReturnLine } from './returnLineLogic';
 
@@ -24,22 +31,66 @@ export type UpdateLine = <F extends keyof DraftReturnLine>(
   value: DraftReturnLine[F]
 ) => void;
 
+// One focus destination PER ROW, keyed by the row's own id — the same key the
+// draft store is keyed on (ui/utils/createFocusTarget). The host arms a request;
+// the grid binds it to the row's editable control, so "focus the row the user
+// clicked" never reaches for a test id or a selector.
+//
+// Each grid's target is the control a user came to that step to change: the
+// quantity field on step 1, the reason picker on step 2. Same rule the stocktake
+// and inbound line editors follow.
+
+// The keyed registry, adapted to the single-control shape a compound control
+// (Combobox, and so ReasonSelect) takes: the row's key selects WHICH ref.
+const targetFor = (targets: KeyedFocusTargets, key: string): FocusTarget => ({
+  ref: targets.ref(key),
+  focus: () => targets.focus(key),
+  cancel: targets.cancel,
+});
+
+// Whose rows are these? The from-shipment host's drafts span SEVERAL items, so
+// its grids must name each row's item; the per-item host's rows are all the one
+// item the dialog title already names, so they don't — repeating it per row
+// says nothing and costs the width the quantity field needs (issue #1002). The
+// same rule every other per-item line editor follows (stocktake, inbound), and
+// the supplier-returns twin.
+export type ItemIdentity = { showItem: boolean };
+
+const itemColumns = ({
+  showItem,
+}: ItemIdentity): Column<DraftReturnLine, never>[] =>
+  showItem
+    ? [
+        {
+          c: { key: 'itemCode' },
+          header: () => t('label.code'),
+          ...getCellDefinition('itemCode'),
+        },
+        {
+          c: { key: 'itemName' },
+          header: () => t('label.name'),
+          ...getCellDefinition('itemName', {
+            headerPosition: 'primary',
+            wrapLines: 2,
+          }),
+        },
+      ]
+    : [];
+
+// Each column takes its cell-type width preset (docs/CELL_TYPES.md) — spread
+// BEFORE any editable `cell` override, so the preset supplies the width and
+// alignment while the override supplies the control (the documented order).
 // ---- Step 1: the quantity grid (ui-surface S4 § step 1) ----
 export const quantityColumns = (
-  update: UpdateLine
+  update: UpdateLine,
+  quantityFields: KeyedFocusTargets,
+  identity: ItemIdentity
 ): Column<DraftReturnLine, never>[] => [
-  {
-    c: { key: 'itemCode' },
-    header: () => t('label.code'),
-  },
-  {
-    c: { key: 'itemName' },
-    header: () => t('label.name'),
-    meta: { headerPosition: 'primary', wrapLines: 2 },
-  },
+  ...itemColumns(identity),
   {
     c: { key: 'batch' },
     header: () => t('label.batch'),
+    ...getCellDefinition('batch'),
     cell: info => {
       const line = info.row.original;
       return (
@@ -56,18 +107,19 @@ export const quantityColumns = (
   {
     c: { key: 'expiryDate' },
     header: () => t('label.expiry'),
+    ...getCellDefinition('expiryDate'),
+    // DateField, never a native date input (ui-standards § inputs → dates &
+    // times): typed or picked, app-formatted, over the same plain ISO
+    // YYYY-MM-DD the draft holds.
     cell: info => {
       const line = info.row.original;
       return (
-        <TextField
+        <DateField
           label={t('label.expiry')}
           hideLabel
           size="small"
-          type="date"
-          value={line.expiryDate ?? ''}
-          onInput={e =>
-            update(line.id, 'expiryDate', e.currentTarget.value || null)
-          }
+          value={line.expiryDate}
+          onChange={value => update(line.id, 'expiryDate', value || null)}
         />
       );
     },
@@ -75,15 +127,17 @@ export const quantityColumns = (
   {
     // Packs issued: context from the originating shipment line — present on
     // from-shipment drafts only (contract § draft-line generation); blank on
-    // per-item drafts. Read-only.
+    // per-item drafts. Read-only. No CELL_DEF key — the explicit helper plus a
+    // call-site width, since "Pack quantity issued" is the binding constraint.
     c: { key: 'numberOfPacksIssued' },
     header: () => t('label.pack-quantity-issued'),
     ...getNumberCell(),
+    size: remToPx(8),
   },
   {
     c: { key: 'packSize' },
     header: () => t('label.pack-size'),
-    ...getNumberCell(),
+    ...getCellDefinition('packSize'),
     // NumberField (not a raw controlled input): it clamps to min/max and
     // repairs the DOM when a keystroke is rejected — the §13 pitfall
     // (kdd/solid-reactivity-pitfalls) a plain value= binding would hit.
@@ -104,14 +158,17 @@ export const quantityColumns = (
   },
   {
     // Quantity returned: min 0; capped at packs issued where known — a
-    // UI-only cap (rules § creation; AC-E5).
+    // UI-only cap (rules § creation; OMS-REG-DIST-07.31).
     c: { key: 'numberOfPacksReturned' },
     header: () => t('label.quantity-returned'),
     ...getNumberCell(),
+    // No CELL_DEF key; "Quantity returned" is the binding constraint.
+    size: remToPx(8),
     cell: info => {
       const line = info.row.original;
       return (
         <NumberField
+          ref={quantityFields.ref(line.id)}
           label={t('label.quantity-returned')}
           hideLabel
           size="small"
@@ -133,7 +190,7 @@ export const quantityColumns = (
   {
     c: { key: 'volumePerPack' },
     header: () => t('label.volume-per-pack'),
-    ...getNumberCell(),
+    ...getCellDefinition('volumePerPack'),
     cell: info => {
       const line = info.row.original;
       return (
@@ -153,28 +210,33 @@ export const quantityColumns = (
 
 // ---- Step 2: the reason grid — only lines with quantity (ui-surface S4 §
 // step 2). Reason optional; options are the active RETURN reasons (rules §
-// line rules, AC-E4). ----
+// line rules, OMS-REG-DIST-07.30). ----
 export const reasonColumns = (
-  update: UpdateLine
+  update: UpdateLine,
+  reasonFields: KeyedFocusTargets,
+  identity: ItemIdentity
 ): Column<DraftReturnLine, never>[] => [
-  { c: { key: 'itemCode' }, header: () => t('label.code') },
+  ...itemColumns(identity),
   {
-    c: { key: 'itemName' },
-    header: () => t('label.name'),
-    meta: { headerPosition: 'primary', wrapLines: 2 },
+    c: { key: 'batch' },
+    header: () => t('label.batch'),
+    ...getCellDefinition('batch'),
   },
-  { c: { key: 'batch' }, header: () => t('label.batch') },
   {
     // Expiry, read-only here (edited in the quantity step) — matches the
     // current app's reason-step table (ReturnReasonsTable: batch · expiry ·
-    // reason · comment; no quantity column).
+    // reason · comment; no quantity column). The expiry preset carries the
+    // near-expiry emphasis as well as the width.
     c: { key: 'expiryDate' },
     header: () => t('label.expiry'),
-    ...getDateCell(),
+    ...getCellDefinition('expiryDate'),
   },
   {
     c: { id: 'returnReasonInput' },
     header: () => t('label.reason'),
+    // No CELL_DEF key — a width wide enough for the reason picker.
+    ...getTextCell(),
+    size: remToPx(12),
     cell: info => {
       const line = info.row.original;
       return (
@@ -182,6 +244,7 @@ export const reasonColumns = (
           kind="return"
           label={t('label.reason')}
           hideLabel
+          focusTarget={targetFor(reasonFields, line.id)}
           value={line.reasonId ?? undefined}
           onChange={reason => update(line.id, 'reasonId', reason?.id ?? null)}
         />
@@ -191,6 +254,7 @@ export const reasonColumns = (
   {
     c: { key: 'note' },
     header: () => t('label.comment'),
+    ...getCellDefinition('note'),
     cell: info => {
       const line = info.row.original;
       return (

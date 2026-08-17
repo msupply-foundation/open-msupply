@@ -18,7 +18,7 @@
   border-radius: 50%;
   background: var(--ripple-color, var(--primary-main));
   transform: translate(-50%, -50%) scale(0);
-  animation: ripple 480ms ease-out;
+  animation: ripple var(--motion-ripple) ease-out;
 }
 
 @keyframes ripple {
@@ -33,8 +33,8 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .ripple {
-    animation: none;
-  }
-}
+/* No reduced-motion block: --motion-ripple is zeroed in tokens.css, and
+   createRipple's own reduced-motion gate means no ripple element is spawned in
+   the first place. Zeroing (rather than `animation: none`) matters if one ever
+   does render — the animationend that dismisses it still fires, so nothing
+   leaks. */

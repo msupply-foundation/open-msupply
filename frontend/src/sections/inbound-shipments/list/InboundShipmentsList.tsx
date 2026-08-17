@@ -8,24 +8,31 @@ import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_N } from '../../../ui/utils/shortcuts';
 import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
 import {
   DataTable,
   type Column,
   type SortState,
 } from '../../../ui/elements/table/DataTable';
-import {
-  getCommentCell,
-  getCurrencyCell,
-  getDateCell,
-  getNumberCell,
-} from '../../../ui/elements/table/tableHelpers';
+import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../../ui/utils/rem';
+import { HStack } from '../../../ui/layout/Stack/HStack';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { StatusChip } from '../../../ui/elements/feedback/StatusChip';
-import { ColourTagPicker } from '../../../ui/elements/selectors/ColourTag';
+import {
+  ColourTagDot,
+  ColourTagPicker,
+} from '../../../ui/elements/selectors/ColourTag';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
-import { HomeIcon, PlusCircleIcon, TruckIcon } from '../../../ui/icons';
+import { PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
 import { inboundShipmentPreferences } from '../../../store/storeContext';
 import {
   InboundShipments,
@@ -45,6 +52,7 @@ import {
 } from './actions';
 import { DuplicateInboundShipmentAction } from '../detail/actions/DuplicateInboundShipmentAction';
 import {
+  isEditable,
   statusColour,
   statusLabel,
   supplierIsStore,
@@ -55,6 +63,7 @@ import {
   scopeOf,
 } from '../inboundShipmentScope';
 import { linkedOrderOf } from '../linkedOrder';
+import { SupplierKindIcon } from '../SupplierKindIcon';
 import {
   customFieldDefinitions,
   customFieldColumns,
@@ -71,14 +80,15 @@ import { RecordLink } from '../../../ui/elements/typography/RecordLink';
 // variables so an empty filter chip doesn't reflash the list
 // (kdd/solid-reactivity-pitfalls).
 
-const DEFAULT_PAGE_SIZE = 20;
-
 type Row = InboundRowFragment;
 type SortKey = NonNullable<InboundShipmentsVariables['sort']>[number]['key'];
 
 type ListState = {
   filter: InboundListFilter;
-  /** Typed per-custom-field filter values → the dynamicFilter AST at query time. */
+  /**
+   * Typed per-custom-field filter values → the dynamicFilter AST at query
+   * time.
+   */
   cf?: CustomFieldFilterState;
   sort?: InboundShipmentsVariables['sort'];
   offset: number;
@@ -96,7 +106,10 @@ const DEFAULT_STATE: ListState = {
 const InboundShipmentsList: Component = () => {
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
-  const { query, setQuery } = useUrlQueryState<ListState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<ListState>({
+    ...DEFAULT_STATE,
+    first: initialPageSize(),
+  });
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   // The create modal: plain manual create, or the from-a-purchase-order flow
   // (offered only when the store's procurement preference is on).
@@ -104,6 +117,20 @@ const InboundShipmentsList: Component = () => {
     'manual' | 'fromPurchaseOrder'
   >();
   const prefs = () => inboundShipmentPreferences();
+
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
+  // the SCREEN, once, for the three controls that can trigger it (the plain New
+  // button, the procurement split button, and the ghost button in the table's
+  // empty slot — only two ever render at a time); each carries
+  // `shortcut={ALT_N}` for its badge, none owns the action.
+  //
+  // `run` is the manual create, which is the plain button's action and the
+  // split button's default option. The from-a-purchase-order route keeps its
+  // own control.
+  createAddAction({
+    name: 'button.new-shipment',
+    run: () => setCreateMode('manual'),
+  });
 
   const tableConfig = createTableConfig({
     tableId: 'inbound-shipments',
@@ -233,32 +260,32 @@ const InboundShipmentsList: Component = () => {
       // colour for an external supplier.
       c: { accessor: row => row.otherPartyName, id: 'otherPartyName' },
       sortKey: 'otherPartyName',
-      header: () => t('label.name'),
-      meta: { headerPosition: 'primary' },
+      header: () => t('label.supplier'),
+      ...getCellDefinition('otherPartyName', {
+        headerPosition: 'primary',
+        wrapLines: 2,
+      }),
       cell: info => {
         const row = info.row.original;
         return (
-          <span
-            style={{
-              display: 'inline-flex',
-              'align-items': 'center',
-              gap: 'var(--space-2)',
-            }}
-          >
-            {/* Stop the swatch's clicks opening the row (it edits in place). */}
-            <span onClick={e => e.stopPropagation()}>
+          <HStack gap="sm">
+            {/* The swatch is editable only while the shipment is (the same
+                standing gate as every other edit — rules § editability); a
+                read-only row shows the dot alone, per the registry's colour-tag
+                row. ColourTagPicker stops its own clicks reaching the row. */}
+            <Show
+              when={isEditable(row.status)}
+              fallback={<ColourTagDot colour={row.colour ?? null} />}
+            >
               <ColourTagPicker
                 colour={row.colour ?? null}
+                variant="row"
                 onSelect={colour => void setColour(row, colour)}
               />
-            </span>
-            {supplierIsStore(row) ? (
-              <HomeIcon style={{ color: 'var(--primary-main)' }} />
-            ) : (
-              <TruckIcon style={{ color: 'var(--secondary-main)' }} />
-            )}
+            </Show>
+            <SupplierKindIcon isStore={supplierIsStore(row)} />
             <span>{row.otherPartyName}</span>
-          </span>
+          </HStack>
         );
       },
     },
@@ -275,13 +302,17 @@ const InboundShipmentsList: Component = () => {
           />
         );
       },
+      // Status has no cell-type preset (CELL_TYPES § Status is page-rendered),
+      // so the width lives here.
       meta: { headerPosition: 'badge' },
+      size: remToPx(7.5),
+      maxSize: remToPx(9.375),
     },
     {
       c: { key: 'invoiceNumber' },
       sortKey: 'invoiceNumber',
       header: () => '#',
-      ...getNumberCell(),
+      ...getCellDefinition('invoiceNumber'),
     },
     {
       // Linked order (spec S1 column 4) — when linked, a link to the order
@@ -293,6 +324,9 @@ const InboundShipmentsList: Component = () => {
         id: 'linkedOrder',
       },
       header: () => t('label.linked-order'),
+      // No CELL_DEF key — "PO-011"/"IO-095" is code-like, but the header
+      // "Linked order" is the binding constraint, so size it here.
+      size: remToPx(9),
       cell: info => {
         const linked = linkedOrderOf(params.storeId, info.row.original);
         return (
@@ -315,37 +349,35 @@ const InboundShipmentsList: Component = () => {
       c: { key: 'createdDatetime' },
       sortKey: 'createdDatetime',
       header: () => t('label.created'),
-      ...getDateCell(),
+      ...getCellDefinition('createdDatetime'),
     },
     {
       c: { key: 'deliveredDatetime' },
       sortKey: 'deliveredDatetime',
       header: () => t('label.delivered'),
-      ...getDateCell(),
+      ...getCellDefinition('deliveredDatetime'),
     },
     {
       c: { key: 'comment' },
       header: () => t('label.comment'),
-      ...getCommentCell(),
+      ...getCellDefinition('comment'),
     },
     {
       c: { key: 'theirReference' },
       sortKey: 'theirReference',
       header: () => t('label.reference'),
+      ...getCellDefinition('theirReference'),
     },
     {
       c: { accessor: row => row.pricing.totalAfterTax, id: 'total' },
       header: () => t('label.total'),
-      ...getCurrencyCell(),
+      ...getCellDefinition('total'),
     },
     // Configured custom-field columns — not sortable; value chosen by kind.
     ...customFieldColumns<Row, SortKey>(cfDefs(), row => row.customFields),
   ];
 
-  const crumbs = () => [
-    { label: t('replenishment') },
-    { label: t('inbound-shipment') },
-  ];
+  const crumbs = () => [{ label: t('inbound-shipment') }];
 
   return (
     <Page
@@ -362,6 +394,7 @@ const InboundShipmentsList: Component = () => {
               fallback={
                 <Button
                   icon={<PlusCircleIcon />}
+                  shortcut={ALT_N}
                   data-testid="new-shipment-button"
                   onClick={() => setCreateMode('manual')}
                 >
@@ -373,6 +406,7 @@ const InboundShipmentsList: Component = () => {
                 icon={<PlusCircleIcon />}
                 testId="new-shipment-button"
                 menuLabel={t('button.new-shipment')}
+                shortcut={ALT_N}
                 options={[
                   { value: 'manual', label: t('button.new-shipment') },
                   {
@@ -419,6 +453,7 @@ const InboundShipmentsList: Component = () => {
         empty={
           <Button
             variant="ghost"
+            shortcut={ALT_N}
             data-testid="nothing-here-create-button"
             onClick={() => setCreateMode('manual')}
           >
@@ -433,41 +468,36 @@ const InboundShipmentsList: Component = () => {
         // while rows are selected).
         selectionActions={
           <>
-            {/* Delete — enabled only while every selected row is New (spec S1) */}
-            <span
+            {/* Delete — enabled only while every selected row is New (spec S1).
+                Disabled-with-reason: the reason rides the button's own hover
+                text, never a wrapper element. */}
+            <DeleteInboundShipmentsAction
+              storeId={params.storeId}
+              selectedIds={selectedIds}
+              onDeleted={onDeleted}
+              disabled={!allSelectedNew()}
               title={
                 allSelectedNew() ? undefined : t('messages.delete-only-new')
               }
-            >
-              <DeleteInboundShipmentsAction
-                storeId={params.storeId}
-                selectedIds={selectedIds}
-                onDeleted={onDeleted}
-                disabled={!allSelectedNew()}
-              />
-            </span>
+            />
             {/* Make a copy — enabled only for a single selection (spec AC-L4);
                 shown disabled-with-reason otherwise (M5). Number/supplier come
                 from the (only) selected row; when multi-selected the action is
                 disabled so the confirm never opens. */}
-            <span
+            <DuplicateInboundShipmentAction
+              invoiceId={singleSelectedId() ?? selectedIds()[0] ?? ''}
+              number={() =>
+                rows().find(r => r.id === selectedIds()[0])?.invoiceNumber ?? 0
+              }
+              supplierName={() =>
+                rows().find(r => r.id === selectedIds()[0])?.otherPartyName ??
+                ''
+              }
+              disabled={!singleSelectedId()}
               title={
                 singleSelectedId() ? undefined : t('messages.copy-single-only')
               }
-            >
-              <DuplicateInboundShipmentAction
-                invoiceId={singleSelectedId() ?? selectedIds()[0] ?? ''}
-                number={() =>
-                  rows().find(r => r.id === selectedIds()[0])?.invoiceNumber ??
-                  0
-                }
-                supplierName={() =>
-                  rows().find(r => r.id === selectedIds()[0])?.otherPartyName ??
-                  ''
-                }
-                disabled={!singleSelectedId()}
-              />
-            </span>
+            />
           </>
         }
         config={tableConfig.config()}
@@ -483,7 +513,11 @@ const InboundShipmentsList: Component = () => {
           pageSize: query().first,
           total: totalCount(),
           onOffsetChange: offset => setQuery({ ...query(), offset }),
-          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+          // The chosen size is remembered for the next visit (D106).
+          onPageSizeChange: first => {
+            rememberPageSize(first);
+            setQuery({ ...query(), first, offset: 0 });
+          },
         }}
       />
       <CreateInboundShipmentModal

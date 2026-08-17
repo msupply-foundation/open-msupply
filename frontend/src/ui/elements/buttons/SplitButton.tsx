@@ -3,6 +3,10 @@ import * as DropdownMenu from '@kobalte/core/dropdown-menu';
 import { ChevronDownIcon } from '../../icons';
 import { createRipple } from '../../utils/createRipple';
 import { Ripple } from './Ripple';
+import { ShortcutBadge } from '../keyboard/ShortcutBadge';
+import { ariaKeyshortcuts, type Shortcut } from '../../utils/shortcuts';
+// The collapse tiers, shared with <Button> so the two can't drift.
+import { collapseTier, type Collapsible } from './collapsible';
 import styles from './SplitButton.module.css';
 
 export interface SplitButtonOption {
@@ -76,14 +80,40 @@ interface SplitButtonProps {
    * cross-cutting).
    */
   disabled?: boolean;
-  /** Native tooltip shown while `disabled` — the reason the action is unavailable. */
+  /**
+   * Native tooltip shown while `disabled` — the reason the action is
+   * unavailable.
+   */
   disabledTitle?: string;
+  /**
+   * Collapse the MAIN half to just its icon to save space (the `<Button>`
+   * `collapsible` contract, same two tiers — `true` for phone widths ≤767px,
+   * `'narrow'` for the whole narrow-viewport range ≤1023px). Only meaningful
+   * with an `icon`. The caret half never collapses: it is already icon-only,
+   * and its menu keeps every option's full label, so the collapsed control
+   * still names what it does. The main label stays in the DOM (visually
+   * hidden) as the accessible name, and doubles as the button's tooltip —
+   * unlike `<Button>`, no `title` to pass, since the label is the control's
+   * own selected option.
+   */
+  collapsible?: Collapsible;
   /**
    * Test-hook prefix (e2e/TESTIDS.md): stamps `<testId>-main` on the main
    * button, `<testId>-dropdown` on the caret, and `<testId>-option-<value>`
    * on each menu item (e.g. `status-change-button`, `export-csv`).
    */
   testId?: string;
+  /**
+   * The key binding this control answers (spec/keyboard KB-H1, S2) — the same
+   * one prop `Button` takes, driving both `aria-keyshortcuts` and the hint badge
+   * so the two cannot drift (AC-KB15).
+   *
+   * It lands on the MAIN half, which is what the binding runs: the prescription
+   * detail's `Alt+L` prints labels (the main action) and `Alt+V` confirms the
+   * selected status, neither of which opens the caret menu. As with `Button`,
+   * this control does not dispatch the key — the screen registers the action.
+   */
+  shortcut?: Shortcut;
 }
 
 /*
@@ -124,6 +154,14 @@ export const SplitButton = (props: SplitButtonProps) => {
   // twice per evaluation. Resolve once, as <Button> does
   // (kdd/solid-reactivity-pitfalls §3).
   const icon = children(() => props.icon);
+  // The main half's tooltip: the unavailability reason while disabled, else
+  // the label it is currently wearing — but only when collapsing is on, since
+  // a visible label needs no tooltip repeating it.
+  const mainTitle = () => {
+    if (props.disabled) return props.disabledTitle;
+    if (collapseTier(props.collapsible) === undefined) return undefined;
+    return props.mainLabel ?? selectedOption()?.label;
+  };
 
   return (
     <div class={styles.split} data-variant={variant()}>
@@ -135,10 +173,19 @@ export const SplitButton = (props: SplitButtonProps) => {
         class={styles.main}
         data-variant={variant()}
         data-testid={props.testId ? `${props.testId}-main` : undefined}
+        // '' = the phone tier, 'narrow' = the whole narrow-viewport range; the
+        // CSS matches the bare attribute for the first and the value for the
+        // second, so 'narrow' collapses at both widths (see ./collapsible).
+        data-collapsible={collapseTier(props.collapsible)}
         disabled={inert()}
         aria-busy={props.loading || undefined}
         aria-live="polite"
-        title={props.disabled ? props.disabledTitle : undefined}
+        // The ARIA grammar, not the platform spelling — the badge below renders
+        // the human form from the same value (KB-M1, AC-KB15).
+        aria-keyshortcuts={
+          props.shortcut ? ariaKeyshortcuts(props.shortcut) : undefined
+        }
+        title={mainTitle()}
         onClick={() => {
           if (!inert()) props.onAction?.(selectedValue());
         }}
@@ -162,6 +209,12 @@ export const SplitButton = (props: SplitButtonProps) => {
         <span class={styles.label}>
           {props.mainLabel ?? selectedOption()?.label}
         </span>
+        {/* The badge positions itself against this half, which is already
+            `position: relative` (and `overflow: hidden`) for its ripple — the
+            same positioning contract Button provides. */}
+        <Show when={props.shortcut}>
+          {shortcut => <ShortcutBadge shortcut={shortcut()} />}
+        </Show>
         <Ripple ripples={mainRipple.ripples()} onDone={mainRipple.dismiss} />
       </button>
 

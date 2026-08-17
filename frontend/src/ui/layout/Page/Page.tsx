@@ -1,6 +1,16 @@
-import { children, createEffect, onCleanup, Show, type JSX } from 'solid-js';
-import { useFullScreen } from '../AppShell/shellContext';
+import {
+  children,
+  createEffect,
+  onCleanup,
+  onMount,
+  Show,
+  type JSX,
+} from 'solid-js';
+import { useFullScreen, useShellOverlay } from '../AppShell/shellContext';
+import { createFocusTarget } from '../../utils/createFocusTarget';
 import { useIsNavOverlay } from '../../utils/createMediaQuery';
+import { bindingRegistered } from '../../utils/keyActions';
+import { ALT_M } from '../../utils/shortcuts';
 import { SidePanel } from '../SidePanel/SidePanel';
 import styles from './Page.module.css';
 
@@ -96,14 +106,46 @@ export const Page = (props: PageProps) => {
   const overlayActive = () =>
     isNavOverlay() && props.sidePanelOpen === true && !!panelContent();
 
+  /*
+   * Tell the shell to make everything outside the panel inert while it covers
+   * the viewport (spec/keyboard KB-X2/AC-KB17). The `inert` on `.main` below is
+   * all a Page can reach on its own — MenuBar and the app footer render OUTSIDE
+   * the Page — so without this, Tab from an open panel walked straight into the
+   * nav, the theme toggle, the language selector and sync.
+   */
+  const shellOverlay = useShellOverlay();
+  createEffect(() => shellOverlay?.setPanelOverlay(overlayActive()));
+  // Leaving the page while the panel is open must not strand the shell inert.
+  onCleanup(() => shellOverlay?.setPanelOverlay(false));
+
+  // Focus moves INTO the panel when it takes over, so the keyboard is inside the
+  // trap rather than parked behind it, and the Escape rung below can see the key.
+  const panelFocus = createFocusTarget();
   createEffect(() => {
-    if (!overlayActive()) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') props.onSidePanelClose?.();
-    };
-    document.addEventListener('keydown', onKey);
-    onCleanup(() => document.removeEventListener('keydown', onKey));
+    if (overlayActive()) panelFocus.focus();
   });
+
+  /*
+   * KB-R2's defect, asserted where it is visible: "a screen offering it and not
+   * answering the key is a defect in that screen, not a narrower binding". A
+   * screen acquires Alt+M / Alt+Shift+M by owning its panel boolean through
+   * `createSidePanelOpen`, which registers them — so a panel-bearing screen with
+   * no Alt+M registered is one that rolled its own signal instead, and quietly
+   * stopped answering a binding the user learned on the screen next door.
+   *
+   * Dev-only, and deferred a microtask so a panel behind a <Show> or a pending
+   * load has rendered before it is judged.
+   */
+  if (import.meta.env.DEV) {
+    onMount(() =>
+      queueMicrotask(() => {
+        if (!panelContent() || bindingRegistered(ALT_M)) return;
+        console.warn(
+          'Page: this screen renders a more-info panel but nothing answers Alt+M. Own the panel boolean with createSidePanelOpen(), which registers show/hide for you (spec/keyboard KB-R2).'
+        );
+      })
+    );
+  }
 
   return (
     // Top level is a ROW: the main column (header / body / footer) beside the
@@ -141,8 +183,35 @@ export const Page = (props: PageProps) => {
           <div
             class={styles.panelSlot}
             data-closed={props.sidePanelOpen === false ? '' : undefined}
+            /*
+             * KB-X2's Escape rung. `on:keydown` (a REAL listener on this
+             * element), not `onKeyDown`: Solid delegates keydown at `document`,
+             * so a delegated handler runs after the event already passed there
+             * and could not stop our window-level tail or Kobalte.
+             *
+             * That is what the old `document`-level listener got wrong, twice: a
+             * dialog's stopPropagation could not stop it (so Escape inside any
+             * dialog ALSO closed the panel), and it ran before Kobalte's own
+             * listener (so Escape closing a Select inside the panel closed the
+             * panel too).
+             *
+             * preventDefault AND stopPropagation, because stopPropagation alone
+             * does not CONSUME Escape — the window tail bails on
+             * `defaultPrevented`, and a rung that only stopped propagation would
+             * let navigate-up fire from a nested surface.
+             *
+             * Overlay mode only: a docked panel is not modal and must not swallow
+             * Escape from the screen beside it.
+             */
+            on:keydown={event => {
+              if (event.key !== 'Escape' || !overlayActive()) return;
+              event.preventDefault();
+              event.stopPropagation();
+              props.onSidePanelClose?.();
+            }}
           >
             <SidePanel
+              ref={panelFocus.ref}
               label={props.sidePanelTitle}
               onClose={props.onSidePanelClose}
             >

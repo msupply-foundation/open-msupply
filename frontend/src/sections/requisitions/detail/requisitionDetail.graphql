@@ -1,0 +1,287 @@
+# Requisition DETAIL screen (spec/requisitions S2).
+#
+# The header read is `requisition(storeId, id)` → RecordNotFound |
+# RequisitionNode. Another store's requisition answers RecordNotFound too —
+# indistinguishable from a missing one on the wire (contract › the detail
+# screen).
+#
+# ⚠️ Interim divergence: the lines come from the NESTED `lines` connection
+# (client-side sort/filter), NOT a server-paginated root `requisitionLines`
+# query — that query does not exist in the pinned schema or the live server
+# (backend gap, open-msupply PR #12526; the same interim the internal-order
+# detail carries). The spec's "server-paginated line table (non-negotiable)"
+# moves server-side once the PR lands and the schema is re-pinned. Carried as a
+# known gap in spec/requisitions/README.md › status.
+
+fragment RequisitionDetailLine on RequisitionLineNode {
+  id
+  itemId
+  itemName
+  comment
+  item {
+    code
+    unitName
+    defaultPackSize
+    doses
+    isVaccine
+  }
+  # Our stock on hand — THIS store's current stock of the item (the response
+  # side computes it live; contract › the detail screen).
+  itemStats {
+    stockOnHand
+  }
+  # The customer's available stock as requested (label.customer-soh).
+  availableStockOnHand
+  # The extended requisition columns — the customer's reported consumption
+  # figures (store-context gates). Available and MOS are client arithmetic
+  # over these.
+  initialStockOnHandUnits
+  incomingUnits
+  outgoingUnits
+  lossInUnits
+  additionInUnits
+  expiringUnits
+  daysOutOfStock
+  averageMonthlyConsumption
+  # The stored variance reason: optionId is what the editor writes back (and
+  # must RESEND with every save — an omitted optionId clears the stored reason,
+  # contract › line editing); reason.reason is the table's display text.
+  optionId
+  reason {
+    reason
+  }
+  # The customer's population forecast, copied by the transfer (context only —
+  # never written from this side; rules › forecast context). Gated client-side
+  # on displayPopulationBasedForecasting + a non-null, non-zero total;
+  # vaccineCourses is the calculation display's per-course JSON (AC-LE13).
+  forecastTotalUnits
+  forecastTotalDoses
+  vaccineCourses
+  # The customer's volume snapshot on a storage-restricted transferred line
+  # (rules › volume guidance; null on a manual line). availableVolume arrives
+  # net of the requisition's OTHER lines' claims — the editor subtracts this
+  # line's own live share (contract › line editing).
+  availableVolumeAtLocationType {
+    locationType {
+      name
+    }
+    availableVolume
+    itemVolumePerUnit
+  }
+  suggestedQuantity
+  requestedQuantity
+  approvedQuantity
+  approvalComment
+  # The fulfilment ledger's three numbers (rules › supplying): the intent, the
+  # server-computed units already on shipments, and the clamped remainder.
+  supplyQuantity
+  alreadyIssued
+  remainingQuantityToSupply
+  pricePerUnit
+}
+
+fragment RequisitionInfo on RequisitionNode {
+  id
+  requisitionNumber
+  status
+  colour
+  theirReference
+  comment
+  otherPartyId
+  otherPartyName
+  otherParty(storeId: $storeId) {
+    store {
+      isDisabled
+    }
+  }
+  # The alternative receiving party — the toolbar shows it (read-only) only
+  # when one is named (rules › raising a shipment).
+  destinationCustomer(storeId: $storeId) {
+    id
+    name
+  }
+  programName
+  # The program id threads the Indicators tab's definitions read; the period
+  # id scopes its cell values (contract › indicator values).
+  program {
+    id
+  }
+  orderType
+  period {
+    id
+    name
+  }
+  # The requisition's OWN approval state; the transfer link (a transferred
+  # requisition cannot be deleted and its demand side is read-only — later
+  # slices consume this too).
+  approvalStatus
+  linkedRequisition {
+    id
+  }
+  isEmergency
+  createdDatetime
+  finalisedDatetime
+  # Side panel (S5): the recorded user (entered-by, with their email for the
+  # info tooltip) and the fulfilling outbound shipments (rules › related
+  # documents). Documents come from the same node so the Documents tab lists
+  # them; each node's recordId is the download-path discriminator — a
+  # transferred document serves under the LINKED internal order's path
+  # (contract › documents).
+  user {
+    username
+    email
+  }
+  # The raise/finalise gates (contract › raising a shipment): the lines with a
+  # positive remainder — the raise pre-check and the finalise warning count.
+  linesRemainingToSupply {
+    totalCount
+  }
+  shipments {
+    totalCount
+    nodes {
+      id
+      invoiceNumber
+      createdDatetime
+      user {
+        username
+      }
+    }
+  }
+  documents {
+    nodes {
+      id
+      fileName
+      createdDatetime
+      totalBytes
+      recordId
+    }
+  }
+  lines {
+    totalCount
+    nodes {
+      ...RequisitionDetailLine
+    }
+  }
+}
+
+query requisitionDetail($storeId: String!, $id: String!) {
+  requisition(storeId: $storeId, id: $id) {
+    __typename
+    ... on RequisitionNode {
+      ...RequisitionInfo
+    }
+    ... on RecordNotFound {
+      __typename
+    }
+  }
+}
+
+# Header-level saves (customer reference / comment / colour) go through
+# updateResponseRequisition; the response carries the refreshed node so callers
+# splice it back with no refetch. Every header edit is an order-level save
+# validated against the WHOLE record (rules › header edits): a program
+# requisition's unreasoned variance rejects any save naming the offending
+# lines (their Reason cells flag), and the emergency cap names its maximum.
+# Raising a shipment (rules › raising a shipment): the outstanding remainder
+# becomes a NEW outbound shipment of placeholder lines, permanently linked.
+# The UI pre-checks permission and nothing-remaining without a call; the typed
+# rejections below are the server's. Approval is NOT re-validated here — the
+# withheld action while approval blocks editing is client-side only.
+mutation createShipmentFromRequisition(
+  $storeId: String!
+  $input: CreateRequisitionShipmentInput!
+) {
+  createRequisitionShipment(storeId: $storeId, input: $input) {
+    __typename
+    ... on InvoiceNode {
+      id
+    }
+    ... on CreateRequisitionShipmentError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+mutation updateRequisition(
+  $storeId: String!
+  $input: UpdateResponseRequisitionInput!
+) {
+  updateResponseRequisition(storeId: $storeId, input: $input) {
+    __typename
+    ... on RequisitionNode {
+      ...RequisitionInfo
+    }
+    ... on UpdateResponseRequisitionError {
+      error {
+        __typename
+        description
+        ... on OrderingTooManyItems {
+          maxItemsInEmergencyOrder
+        }
+        ... on RequisitionReasonsNotProvided {
+          errors {
+            requisitionLine {
+              id
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# The master-list bulk add (AC-ML1; spec S2 § page actions → the shared
+# domain/masterList picker): one line per stock item on the chosen list not
+# already on the requisition, all quantities zero — idempotent, skip-by-item.
+# Success returns the requisition's ENTIRE line set (the client refetches
+# regardless, so only the outcome is needed here). The only typed rejection is
+# MasterListNotFoundForThisStore (AC-ML2 — also fires for another store's or a
+# program list); cannot-edit arrives as a plain GraphQL error on this mutation
+# (contract wire trap), surfacing through the global failure modal.
+mutation addRequisitionFromMasterList(
+  $storeId: String!
+  $input: ResponseAddFromMasterListInput!
+) {
+  responseAddFromMasterList(storeId: $storeId, input: $input) {
+    __typename
+    ... on RequisitionLineConnector {
+      __typename
+      totalCount
+    }
+    ... on ResponseAddFromMasterListError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# Auto-populating supply quantities (rules § auto-populating; OMS-REG-DIST-05
+# .9/.30/.31): one call fills every line's supply quantity — the requested
+# quantity, or the APPROVED quantity when the requisition carries an approval
+# status (the server picks; the client only mirrors the choice in its labels).
+# Success returns the full line set (the client refetches regardless). Typed
+# rejections: CannotEditRequisition (Finalised / disabled store / approval
+# block, undistinguished on the wire) and RecordNotFound.
+mutation supplyRequestedQuantity(
+  $storeId: String!
+  $input: SupplyRequestedQuantityInput!
+) {
+  supplyRequestedQuantity(storeId: $storeId, input: $input) {
+    __typename
+    ... on RequisitionLineConnector {
+      __typename
+      totalCount
+    }
+    ... on SupplyRequestedQuantityError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}

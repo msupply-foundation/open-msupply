@@ -4,7 +4,11 @@ import {
   DataTable,
   type Column,
 } from '../../../../ui/elements/table/DataTable';
-import { getDateCell } from '../../../../ui/elements/table/tableHelpers';
+import {
+  getCellDefinition,
+  getTextCell,
+} from '../../../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../../../ui/utils/rem';
 import { createTableConfig } from '../../../../api/createTableConfig';
 import type { ProgramEnrolmentRowFragment } from './programTabs.generated';
 
@@ -29,6 +33,10 @@ export const ProgramEnrolmentsPanel: Component<
 > = props => {
   const tableConfig = createTableConfig({ tableId: props.tableId });
 
+  // Cell-type presets carry the rendering AND the width
+  // (ui/docs/CELL_TYPES.md): the enrolment date from the shared CELL_DEF map,
+  // the three text columns from the text helper plus a call-site `size` (no map
+  // key), each sized to its header label.
   const columns = (): Column<Row, never>[] => [
     {
       c: {
@@ -36,6 +44,8 @@ export const ProgramEnrolmentsPanel: Component<
         id: 'program',
       },
       header: () => t('label.enrolment-program'),
+      ...getTextCell(),
+      size: remToPx(14),
     },
     {
       c: {
@@ -43,15 +53,19 @@ export const ProgramEnrolmentsPanel: Component<
         id: 'programEnrolmentId',
       },
       header: () => t('label.enrolment-patient-id'),
+      ...getTextCell(),
+      size: remToPx(11),
     },
     {
       c: { accessor: r => r.status ?? '', id: 'status' },
       header: () => t('label.program-status'),
+      ...getTextCell(),
+      size: remToPx(8),
     },
     {
       c: { key: 'enrolmentDatetime' },
       header: () => t('label.enrolment-datetime'),
-      ...getDateCell(),
+      ...getCellDefinition('enrolmentDatetime'),
     },
   ];
 
@@ -64,6 +78,7 @@ export const ProgramEnrolmentsPanel: Component<
       emptyMessage={props.emptyMessage}
       config={tableConfig.config()}
       setConfig={tableConfig.setConfig}
+      configIsDefault={tableConfig.isConfigDefault()}
       onSaveGlobalDefault={
         tableConfig.canSaveGlobalDefault()
           ? tableConfig.saveGlobalTableConfig

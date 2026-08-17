@@ -17,6 +17,10 @@ export { CustomFieldFilterControl } from './CustomFieldFilterControl';
 // List integration
 export { customFieldColumns } from './customFieldColumns';
 export {
+  customFieldCsvColumns,
+  type CustomFieldCsvColumns,
+} from './customFieldCsvColumns';
+export {
   customFieldFilters,
   type CustomFieldFilterState,
 } from './customFieldFilters';
@@ -34,6 +38,7 @@ export {
   customFieldValue,
   shownCustomFields,
   partitionCustomFields,
+  splitIntoColumns,
   orderOptionsHierarchically,
   optionAndDescendantIds,
   ancestorIds,

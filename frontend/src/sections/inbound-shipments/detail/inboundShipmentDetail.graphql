@@ -48,8 +48,10 @@ fragment InboundInfo on InvoiceNode {
   linkedShipment {
     id
   }
+  # Edited-by in the side panel — the email rides the info tooltip.
   user {
     username
+    email
   }
   currency {
     id
@@ -80,6 +82,7 @@ fragment InboundInfo on InvoiceNode {
       id
       fileName
       createdDatetime
+      totalBytes
     }
   }
   shippingMethod {

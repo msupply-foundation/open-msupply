@@ -16,9 +16,10 @@ export interface CopyStocktakeActionProps {
 // always-available gate, and the in-place copied/failed feedback
 // (spec/ui-standards/controls.md § copy to clipboard).
 //
-// A fetch/transport failure is routed to the global error modal by graphqlFetch;
-// a NodeError (bad id — not expected from a screen showing the record) likewise
-// promotes to the global modal via mapSuccessToError, and nothing is copied.
+// A fetch/transport failure is routed to the global error modal by
+// graphqlFetch; a NodeError (bad id — not expected from a screen showing the
+// record) likewise promotes to the global modal via mapSuccessToError, and
+// nothing is copied.
 export const CopyStocktakeAction: Component<
   CopyStocktakeActionProps
 > = props => {

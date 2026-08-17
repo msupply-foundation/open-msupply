@@ -29,19 +29,25 @@ import styles from './DateTimeFields.module.css';
 
 export interface DateTimeFieldProps {
   label: string;
-  /** Max-width cap: `short` (default) or `full` (see FieldShell). */
-  width?: 'short' | 'full';
-  /** The stored instant as a UTC ISO 8601 string, or null/undefined when empty. */
+  /** Max-width cap — opt-in; defaults to `full` (see FieldShell). */
+  width?: 'compact' | 'short' | 'long' | 'full';
+  /**
+   * The stored instant as a UTC ISO 8601 string, or null/undefined when empty.
+   */
   value?: string | null;
   /** Fired with the new UTC ISO instant, or null when cleared. */
   onChange?: (value: string | null) => void;
-  /** Earliest selectable instant, UTC ISO (date-level bound on the calendar). */
+  /**
+   * Earliest selectable instant, UTC ISO (date-level bound on the calendar).
+   */
   min?: string;
   /** Latest selectable instant, UTC ISO (date-level bound on the calendar). */
   max?: string;
   /** Date display + typed-entry format (see DateField). */
   format?: string;
-  /** 12-hour (am/pm) or 24-hour time segments. Defaults to the device locale. */
+  /**
+   * 12-hour (am/pm) or 24-hour time segments. Defaults to the device locale.
+   */
   hourCycle?: 12 | 24;
   helperText?: string;
   error?: string;

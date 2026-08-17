@@ -1,0 +1,57 @@
+{
+  "name": "Sample — Sunrise (hand-picked hero gradients)",
+  "light": {
+    "brand": {
+      "base": "#b91c5c",
+      "gradient": ["#fb923c", "#9d174d"]
+    },
+    "accent": {
+      "base": "#0369a1",
+      "gradient": ["#67e8f9", "#075985"]
+    },
+    "danger": "#dc2626",
+    "warning": "#c2410c",
+    "success": "#15803d",
+    "surface": {
+      "page": "#ffffff",
+      "nav": "#fdf2f4",
+      "sunken": "#fdf7f8"
+    },
+    "text": {
+      "body": "#2b1119",
+      "muted": "#6b4551"
+    },
+    "status": {
+      "shipped": "#0e7490",
+      "delivered": "#7e22ce",
+      "received": "#0369a1"
+    }
+  },
+  "dark": {
+    "brand": {
+      "base": "#f472a0",
+      "gradient": ["#fb923c", "#9d174d"]
+    },
+    "accent": {
+      "base": "#38bdf8",
+      "gradient": ["#67e8f9", "#075985"]
+    },
+    "danger": "#fb7185",
+    "warning": "#fbbf24",
+    "success": "#4ade80",
+    "surface": {
+      "page": "#241119",
+      "nav": "#190b11",
+      "raised": "#331924"
+    },
+    "text": {
+      "body": "#fbeaf0",
+      "muted": "#cba7b6"
+    },
+    "status": {
+      "shipped": "#22d3ee",
+      "delivered": "#c084fc",
+      "received": "#60a5fa"
+    }
+  }
+}

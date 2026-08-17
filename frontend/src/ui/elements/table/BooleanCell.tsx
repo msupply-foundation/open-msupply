@@ -18,8 +18,7 @@ import styles from './BooleanCell.module.css';
  *  - 'yesNo' — localised "Yes"/"No" text for BOTH states (e.g. a stocktake's
  *            "Locked" column), where the false state is worth stating too.
  *
- * Accessibility (spec/ui-standards/accessibility.md § assistive-tech parity;
- * DIVERGENCES D8): the dot/check marker is never an aria-hidden glyph alone —
+ * Accessibility (spec/ui-standards/accessibility.md § assistive-tech parity): the dot/check marker is never an aria-hidden glyph alone —
  * the SET state carries an accessible NAME (role="img" + aria-label), so a
  * screen reader announces e.g. "On hold" instead of nothing. The unset state
  * is a genuinely empty cell (blank-when-off). 'yesNo' needs no aria — its text

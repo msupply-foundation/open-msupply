@@ -5,8 +5,8 @@ import { getOwner, onCleanup } from 'solid-js';
  * `fn` to run `ms` after the LAST call — rapid calls (e.g. one per keystroke)
  * collapse into a single trailing invocation with the most recent arguments.
  * `flush` runs any pending call immediately (for save-on-blur /
- * save-before-navigate); `cancel` drops it. The timer is cleared on cleanup so
- * a pending save never fires against a disposed owner.
+ * save-before-navigate); `cancel` drops it. Once the owner is cleaned up
+ * nothing runs on its behalf again — neither a timer nor a later `flush`.
  *
  * Hand-rolled rather than a dependency (own-the-simple-buy-hard): a trailing
  * debounce is ~15 lines and we need exactly this shape — the buffered field
@@ -40,6 +40,19 @@ export const createDebounced = <A extends unknown[]>(
   // The latest buffered arguments, kept so flush() can replay the most recent
   // call.
   let pending: A | undefined;
+  /*
+   * Set once the owner is gone, so nothing runs on its behalf afterwards —
+   * including a flush().
+   *
+   * Cancelling on cleanup only empties the buffer, and a caller whose flush
+   * REFILLS it first (the filter bar's chip: draft in, then flush) would run
+   * anyway. That caller's flush comes from the box losing focus, which the
+   * browser can report AFTER the chip has been taken off screen — putting back
+   * the filter the user just removed. Chrome moves the caret to the button
+   * being pressed, so the report arrives early and harmlessly there; Safari and
+   * Firefox (and iOS, which the app ships into) leave it where it is.
+   */
+  let gone = false;
 
   const clear = () => {
     if (handle !== undefined) {
@@ -50,6 +63,7 @@ export const createDebounced = <A extends unknown[]>(
 
   const run = () => {
     clear();
+    if (gone) return;
     if (pending !== undefined) {
       const args = pending;
       pending = undefined;
@@ -72,6 +86,10 @@ export const createDebounced = <A extends unknown[]>(
   // Only auto-cancel on cleanup when there's an owner to register against; an
   // ownerless caller owns disposal via cancel() (see the ownership note above).
   // Guarding avoids Solid's dev warning.
-  if (getOwner()) onCleanup(() => debounced.cancel());
+  if (getOwner())
+    onCleanup(() => {
+      gone = true;
+      debounced.cancel();
+    });
   return debounced;
 };

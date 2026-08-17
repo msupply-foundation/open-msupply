@@ -13,13 +13,14 @@ const HelpDocumentsManagement = lazy(() => import('./HelpDocumentsManagement'));
 
 export const helpRoutes = () => <Route path="/" component={HelpPage} />;
 
-// Central-server + server-admin gate (spec/help S2, OMS-REG-HLP-01.28), mirroring
-// patients' DispensaryOnly: the nav entry is hidden elsewhere (ShellLayout), and
-// this layout route blocks direct-URL entry so the screen is unreachable either
-// way. It renders under StoreGuardLayout, which withholds its children until the
-// store context has loaded, so the permission is settled here — a non-central or
-// non-admin session redirects to the store dashboard rather than briefly exposing
-// the screen (whose mutations the server rejects regardless).
+// Central-server + server-admin gate (spec/help S2, OMS-REG-HLP-01.28),
+// mirroring patients' DispensaryOnly: the nav entry is hidden elsewhere
+// (ShellLayout), and this layout route blocks direct-URL entry so the screen is
+// unreachable either way. It renders under StoreGuardLayout, which withholds
+// its children until the store context has loaded, so the permission is settled
+// here — a non-central or non-admin session redirects to the store dashboard
+// rather than briefly exposing the screen (whose mutations the server rejects
+// regardless).
 const CentralAdminOnly = (props: RouteSectionProps) => {
   const params = useParams<{ storeId: string }>();
   return (

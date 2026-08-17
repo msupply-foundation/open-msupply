@@ -18,11 +18,11 @@ const Block = (props: { n: number }) => (
 /*
  * Storybook of the CardGrid layout element: a bare intrinsic `auto-fit` grid
  * (ui-standards § Layout) that fits as many equal columns of at least
- * `minColumnWidth` as the width allows and wraps the rest — no breakpoint maths
- * (principle #7). Shown here with plain coloured blocks standing in for cards so
- * the grid's reflow is what's on display; resize the panel to watch columns
- * add/drop and the blocks wrap. (Its first real consumer, the dashboard, is
- * demoed under Statistics laying out DashboardCards.)
+ * `minColumnWidth` as the width allows and wraps the rest — no breakpoint
+ * maths (principle #7). Shown here with plain coloured blocks standing in for
+ * cards so the grid's reflow is what's on display; resize the panel to watch
+ * columns add/drop and the blocks wrap. (Its first real consumer, the
+ * dashboard, is demoed under Statistics laying out DashboardCards.)
  */
 export const cardGridMetadata: PageMetadata = {
   id: 'card-grid',

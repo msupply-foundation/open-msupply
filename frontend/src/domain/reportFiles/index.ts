@@ -6,6 +6,7 @@
 export { fetchReportFile } from './files';
 export {
   csvToExcel,
+  mapPrintFailure,
   mapPrintResponse,
   type CsvToExcelVariables,
   type GenerateResult,

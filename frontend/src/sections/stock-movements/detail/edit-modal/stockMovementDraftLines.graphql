@@ -1,0 +1,30 @@
+fragment DraftStockMovementLine on DraftStockRelocationLineNode {
+  id
+  stockLineId
+  itemId
+  itemCode
+  itemName
+  restrictedLocationTypeId
+  batch
+  expiryDate
+  packSize
+  availableNumberOfPacks
+  totalNumberOfPacks
+  onHold
+  numberOfPacks
+  sourceLocation {
+    id
+    code
+    onHold
+  }
+  destinationLocation {
+    id
+    code
+  }
+}
+
+query StockMovementDraftLines($storeId: String!, $input: StockRelocationDraftLinesInput!) {
+  stockRelocationDraftLines(storeId: $storeId, input: $input) {
+    ...DraftStockMovementLine
+  }
+}

@@ -11,9 +11,10 @@ import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
+import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
 import { Select } from '../../../../ui/elements/selectors/Select';
 import { Spinner } from '../../../../ui/elements/feedback/Spinner';
-import { EditIcon, XCircleIcon } from '../../../../ui/icons';
+import { EditIcon } from '../../../../ui/icons';
 import {
   InboundCampaigns,
   InboundPrograms,
@@ -83,7 +84,7 @@ const Body = (props: LineActionProps & { onClose: () => void }) => {
         programId: { value: programId() || null },
       })),
     });
-    if (!outcome) return props.onClose();
+    if (!outcome) return setPhase('confirm'); // handled globally
     if (outcome.errors.size > 0) {
       props.onError(outcome.errors);
       setErrorMessage([...outcome.errors.values()][0]);
@@ -102,6 +103,9 @@ const Body = (props: LineActionProps & { onClose: () => void }) => {
       icon={<EditIcon />}
       testId="change-campaign-modal"
       title={t('label.campaign-program')}
+      // Room for the two selects' open listboxes inside the dialog (#1029) —
+      // the program select is the bottom-most field.
+      minBodyHeightRem={20}
       actionsLead={
         <Show when={phase() === 'error'}>
           <Alert severity="error">{errorMessage()}</Alert>
@@ -111,25 +115,26 @@ const Body = (props: LineActionProps & { onClose: () => void }) => {
         <Switch
           fallback={
             <>
-              <Button
-                variant="secondary"
-                icon={<XCircleIcon />}
+              <CancelButton
+                data-testid="dialog-button-cancel"
                 onClick={props.onClose}
-              >
-                {t('button.cancel')}
-              </Button>
+              />
               <Button
+                variant="primary"
+                confirms="plain"
                 data-testid="dialog-button-ok"
                 loading={phase() === 'working'}
                 onClick={() => void run()}
               >
-                {t('button.ok')}
+                {t('button.apply')}
               </Button>
             </>
           }
         >
           <Match when={phase() === 'error'}>
-            <Button onClick={props.onClose}>{t('button.close')}</Button>
+            <Button confirms="plain" onClick={props.onClose}>
+              {t('button.close')}
+            </Button>
           </Match>
         </Switch>
       }

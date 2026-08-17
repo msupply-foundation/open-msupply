@@ -1,4 +1,5 @@
 import { stripEmpty } from '../../../typeHelpers';
+import { DEFAULT_PAGE_SIZE } from '../../../list/pageSize';
 import type { CustomFieldFilterState } from '../../../domain/customFields';
 import type { NamesVariables, NamesResult } from '../names.generated';
 
@@ -21,7 +22,6 @@ export type NameRow = NamesResult['names']['nodes'][number];
 export type SortKey = NonNullable<NamesVariables['sort']>[number]['key'];
 
 // Pagination (rules › pagination): default 20, options 10/20/50/100.
-export const DEFAULT_PAGE_SIZE = 20;
 export const PAGE_SIZE_OPTIONS = [10, 20, 50, 100] as const;
 
 // Role → the per-store relationship flag that selects that list. The server
@@ -52,9 +52,9 @@ export type NamesListState = {
 };
 
 // Default: sorted name ascending (rules › sorting), first page of 20. The
-// name/code search chip is seeded present-as-null so it shows on a pristine
-// list (AC-N13) — the same always-shown pattern as the patient list; stripEmpty
-// drops the empty search from the query until the user types.
+// name/code search is the list's default filter (D25's always-present search,
+// AC-N13): seeded present-as-null so its chip shows on a pristine list;
+// stripEmpty drops it from the query until the user types.
 export const DEFAULT_STATE: NamesListState = {
   filter: { codeOrName: null },
   sort: [{ key: 'name', desc: false }],

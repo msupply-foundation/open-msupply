@@ -19,7 +19,13 @@ export const StaleBundleModal: Component = () => (
     icon={<SyncIcon />}
     description={t('error.new-version-available-detail')}
     actions={
-      <Button variant="secondary" onClick={reloadForStaleBundle}>
+      // The dialog's one way out, so it is its confirm: Enter refreshes
+      // (spec/keyboard KB-E2), and Alt+S shows on the badge.
+      <Button
+        variant="secondary"
+        confirms="plain"
+        onClick={reloadForStaleBundle}
+      >
         {t('button.refresh')}
       </Button>
     }

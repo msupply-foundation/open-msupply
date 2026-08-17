@@ -30,8 +30,22 @@
 }
 
 .crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
   font-weight: var(--weight-medium);
   white-space: nowrap;
+}
+
+/*
+ * A crumb's own marker (a record-kind glyph). Smaller than the section icon
+ * above — it sits in the text line beside the label, not ahead of the trail —
+ * and toned by the page, so no colour here.
+ */
+.crumbIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+  font-size: 1.125rem;
 }
 
 /*

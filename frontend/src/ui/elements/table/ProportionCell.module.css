@@ -1,0 +1,75 @@
+/* ProportionCell — a value shown as a proportion of a capacity inside a table
+   cell (registry role "proportion cell (fullness bar)"). Pure CSS over two
+   divs; the fill's direction follows the writing mode (logical properties), so
+   an RTL locale fills from the right with no extra rule. */
+
+.cell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* The capacity — the full width of the cell's remaining room, so every row's
+   bar starts and ends on the same edges and the column stays comparable down a
+   list. overflow clips the fill to the track's own rounded ends. */
+.track {
+  flex: 1 1 auto;
+  /* A sliver of a bar is unreadable; below this the column is all figure. */
+  min-inline-size: 1.5rem;
+  block-size: 0.375rem;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--gray-light) 55%, transparent);
+  overflow: hidden;
+}
+
+/* The proportion. Width comes from the component (inline style) — it's data,
+   not styling. The resting fill is the action blue (--secondary-main, Carl
+   2026-07-31), not the brand orange: orange is the app's accent for things the
+   user acts on, and it also sits too close to the amber near-capacity tone to
+   read as a different state. */
+.fill {
+  block-size: 100%;
+  border-radius: inherit;
+  background: var(--secondary-main);
+}
+
+.fill[data-tone='near'] {
+  background: var(--warning-main);
+}
+
+/* Over capacity: the track is full AND striped, so the state survives without
+   colour (WCAG 1.4.1) on top of the >100% figure and the visually-hidden
+   "Over capacity" text beside it. Static — no animation to reduce. */
+.fill[data-tone='over'] {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--error-main) 0 0.25rem,
+    color-mix(in srgb, var(--error-main) 45%, transparent) 0.25rem 0.5rem
+  );
+}
+
+/* The figure — the proportion as text, always present: the bar is decorative
+   (aria-hidden), so this is what assistive tech and a colour-blind reader get
+   (spec/ui-standards/accessibility § assistive-tech parity). Tabular digits and
+   a fixed measure keep the figures aligned and the bars equal-width down the
+   column. */
+.value {
+  flex: 0 0 auto;
+  min-inline-size: 2.75rem;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+/* An over-capacity figure reads in the error tone, like a near-expiry date. */
+.value[data-tone='over'] {
+  color: var(--error-main);
+}
+
+.srOnly {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

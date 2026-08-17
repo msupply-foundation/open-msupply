@@ -16,7 +16,9 @@
  * instead (see SectionTOC), and any link is derived from the id, never stored.
  */
 
-/** One key section within a page — a curated group anchored on its first card. */
+/**
+ * One key section within a page — a curated group anchored on its first card.
+ */
 export interface PageItem {
   /**
    * The in-page anchor id AND the search-index key. Page-id-prefixed kebab-case
@@ -29,7 +31,8 @@ export interface PageItem {
   /**
    * EXTRA search keywords the `title` doesn't already contain — synonyms,
    * abbreviations, related concepts. Title words are indexed automatically
-   * (buildSearchIndex tokenises them), so this holds only what the title misses.
+   * (buildSearchIndex tokenises them), so this holds only what the title
+   * misses.
    */
   searchTerms?: string[];
 }
@@ -59,7 +62,9 @@ export interface PageMetadata {
  */
 export interface SearchEntry {
   pageId: string;
-  /** undefined ⇒ the entry IS the page (scroll to top); else the item anchor. */
+  /**
+   * undefined ⇒ the entry IS the page (scroll to top); else the item anchor.
+   */
   itemId?: string;
   /** Item title, or the page title for a page entry. */
   title: string;

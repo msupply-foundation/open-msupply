@@ -11,15 +11,18 @@ import {
   dateToIsoDate,
 } from '../../ui/elements/inputs/dateTimeConvert';
 
-/** The preference values that shape barring and ordering (consumer-resolved). */
+/**
+ * The preference values that shape barring and ordering (consumer-resolved).
+ */
 export interface AllocationPreferences {
   expiredStockPreventIssue: boolean;
   /** Days before expiry at which the expired-issue guard bars a batch. */
   expiredStockIssueThreshold: number;
   manageVvmStatusForStock: boolean;
   /** Ordering variant (rules.md § ordering): usable VVM status before expiry.
-   *  Optional — a consumer that doesn't read the pref (prescriptions) omits
-   *  it, which behaves as off (plain FEFO). */
+   *  Optional only for callers with no VVM concept — both issue verticals
+   *  (outbound, prescriptions) resolve and pass it; omitted behaves as off
+   *  (plain FEFO). */
   sortByVvmStatusThenExpiry?: boolean;
 }
 
@@ -47,7 +50,10 @@ export interface BarrableBatch {
    * no exception (on hold always bars).
    */
   numberOfPacks?: number;
-  /** Available packs — the on-hold exception also needs stock to adjust against. */
+  /**
+   * Available packs — the on-hold exception also needs stock to adjust
+   * against.
+   */
   availablePacks?: number;
   /**
    * Whether the batch's item is a vaccine — the manual unusable-VVM bar
@@ -67,6 +73,20 @@ const expiredWithin = (
   today: Date
 ): boolean =>
   expiryDate.slice(0, 10) <= dateToIsoDate(addDays(today, thresholdDays));
+
+/**
+ * Is this batch PAST its expiry date — literally, with no preference threshold
+ * widening the window? Distinct from the `expired` bar reason, which the
+ * _prevent issue of expired stock_ preference widens to "expiring within N
+ * days": a batch inside that window is barred but not yet expired, and telling
+ * a user it has expired when it has not is worse than saying nothing. Same
+ * whole-day comparison as the bar reasons, so a batch reads the same way all
+ * day. A batch with no expiry date never expires.
+ */
+export const isExpired = (
+  expiryDate: string | null | undefined,
+  today: Date = new Date()
+): boolean => !!expiryDate && expiredWithin(expiryDate, 0, today);
 
 /**
  * Every category BARRING a batch from issue entirely — manual entry included

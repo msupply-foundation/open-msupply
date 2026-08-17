@@ -8,7 +8,10 @@
   border: 0.15em solid color-mix(in srgb, currentcolor 25%, transparent);
   border-block-start-color: currentcolor;
   border-radius: 50%;
-  animation: spinner-spin 700ms linear infinite;
+  /* --motion-spin, not a decorative tier: it slows to a crawl under reduced
+     motion instead of stopping, because a frozen ring reads as a hung app
+     (tokens.css). */
+  animation: spinner-spin var(--motion-spin) linear infinite;
 }
 
 @keyframes spinner-spin {
@@ -23,10 +26,4 @@
   place-content: center;
   block-size: 100%;
   min-block-size: 10rem;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .spinner {
-    animation-duration: 2s;
-  }
 }

@@ -345,6 +345,37 @@ describe('locales', () => {
     const r = processInput(`١٢${decimal}٥`, o({ decimalLimit: 1 }), 'ar');
     expect(r.accepted && r.commit?.value).toBe(12.5);
   });
+
+  it('prs: extended-Arabic digits gate and parse', () => {
+    // Dari and Pashto format through fa-AF, a different digit block from
+    // Arabic's — the gate has to admit both.
+    expect(processInput('۱۲۳', o(), 'prs')).toEqual({
+      accepted: true,
+      text: '۱۲۳',
+      commit: { value: 123 },
+    });
+    const { decimal } = getNumberSymbols('ps');
+    const r = processInput(`۱۲${decimal}۵`, o({ decimalLimit: 1 }), 'ps');
+    expect(r.accepted && r.commit?.value).toBe(12.5);
+  });
+
+  it('es: dot groups rather than aliasing to the decimal comma', () => {
+    const c = o({ decimalLimit: 1 });
+    expect(processInput('1234,5', c, 'es')).toEqual({
+      accepted: true,
+      text: '1234,5',
+      commit: { value: 1234.5 },
+    });
+    // Spanish groups with "." — pasted display text must parse as 12345.5, not
+    // be read as a decimal point. (Spanish only groups from five digits up.)
+    const grouped = displayString(12345.5, c, 'es');
+    expect(grouped).toBe('12.345,5');
+    expect(processInput(grouped, c, 'es')).toEqual({
+      accepted: true,
+      text: '12345,5',
+      commit: { value: 12345.5 },
+    });
+  });
 });
 
 describe('sync guards', () => {

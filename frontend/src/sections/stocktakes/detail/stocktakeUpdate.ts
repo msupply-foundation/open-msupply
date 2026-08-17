@@ -1,5 +1,5 @@
-import { graphqlFetch } from '@/api/graphql';
-import { t, type LocaleKey } from '@/intl';
+import { graphqlFetch, type GraphqlErrorItem } from '@/api/graphql';
+import { t, translateServerError, type LocaleKey } from '@/intl';
 import {
   UpdateStocktake,
   type StocktakeInfoFragment,
@@ -85,24 +85,61 @@ const ERROR_MESSAGE_KEYS: Record<string, LocaleKey> = {
   StockLinesReducedBelowZero: 'error.finalise-reduced-below-zero',
   StocktakeIsLocked: 'error.is-locked',
   CannotEditStocktake: 'error.not-editable',
+  // A truly-empty stocktake (zero lines). Verified live: this identifier can
+  // arrive either as a typed UpdateStocktakeError member OR — on builds where
+  // NoLines is not in the UpdateStocktakeErrorInterface union — as a top-level
+  // rejection under extensions.details; both paths map through here so it reads
+  // as an expected finalise error, never the global unexpected-error modal.
+  NoLines: 'error.finalise-no-lines',
 };
 
-const errorMessage = (typename: string, fallback: string): string => {
-  const key = ERROR_MESSAGE_KEYS[typename];
+// Map a rejection identifier (typed __typename OR a top-level
+// extensions.details variant name) to our own translated copy; `fallback` is
+// the server's own text when we have no key for it.
+const errorMessage = (identifier: string, fallback: string): string => {
+  const key = ERROR_MESSAGE_KEYS[identifier];
   return key ? t(key) : fallback;
+};
+
+// A top-level (untyped) rejection carries the Rust variant name in
+// `extensions.details` — the wire trap for finalise codes the union doesn't
+// declare (spec/stocktakes/contract.md). Map it through the same keys so e.g.
+// NoLines reads friendly, falling back to a sentence-cased form of the
+// identifier, then the bare GraphQL message.
+const untypedRejectionMessage = (errors: GraphqlErrorItem[]): string => {
+  const detail = errors[0]?.extensions?.details;
+  if (typeof detail === 'string' && detail.length > 0)
+    return errorMessage(detail, translateServerError(detail));
+  return errors[0]?.message ?? translateServerError('UnknownError');
 };
 
 // Finalise the stocktake (status → FINALISED). Unlike the field saves, its
 // domain errors are surfaced to the user, so it returns the discriminated
-// result rather than routing to the global modal.
+// result rather than routing to the global modal. It opts into
+// returnGraphqlErrors so a top-level (untyped) rejection — a finalise
+// precondition the union doesn't declare, e.g. NoLines on some builds — is
+// mapped to an expected `error` here instead of tripping the global
+// unexpected-error modal.
 export const finaliseStocktake = async (
   storeId: string,
   id: string
 ): Promise<StocktakeFinaliseResult> => {
-  const result = await graphqlFetch(UpdateStocktake, {
-    storeId,
-    input: { id, status: 'FINALISED' },
-  });
+  const result = await graphqlFetch(
+    UpdateStocktake,
+    { storeId, input: { id, status: 'FINALISED' } },
+    { returnGraphqlErrors: true }
+  );
+
+  // A top-level rejection (extensions.details) — surface it in the finalise
+  // modal, not the global one. No line ids to carry, so no "show error lines".
+  if (result.kind === 'graphqlError') {
+    return {
+      kind: 'error',
+      typename: 'GraphqlError',
+      message: untypedRejectionMessage(result.errors),
+      lineIds: [],
+    };
+  }
   if (result.kind !== 'success') return { kind: 'failed' };
 
   const response = result.data.updateStocktake;
@@ -110,7 +147,7 @@ export const finaliseStocktake = async (
     return { kind: 'saved', node: response };
   }
 
-  // An UpdateStocktakeError. SnapshotCountCurrentCountMismatch carries the
+  // A typed UpdateStocktakeError. SnapshotCountCurrentCountMismatch carries the
   // mismatched lines; the other variants are stocktake-wide messages with no
   // line detail ('lines' absent at runtime).
   const { error } = response;

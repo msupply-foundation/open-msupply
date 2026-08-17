@@ -51,8 +51,8 @@ const conditionsFor = (key: string, v: CustomFieldFilterValue): unknown[] => {
   }
 };
 
-// All custom-field filter values → the `dynamicFilter` JSON (an `{ And: [...] }`
-// of CustomField nodes), or undefined when nothing is set (a no-op). Every
+// All custom-field filter values → the `dynamicFilter` JSON (an `{ And: [...]
+// }` of CustomField nodes), or undefined when nothing is set (a no-op). Every
 // condition ANDs with the others and with the rest of the query's filter.
 export const buildCustomFieldDynamicFilter = (
   state: CustomFieldFilterState | undefined

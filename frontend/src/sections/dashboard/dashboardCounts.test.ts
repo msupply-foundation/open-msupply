@@ -47,9 +47,9 @@ describe('dashboard wire surface', () => {
     }
   });
 
-  // contract.md § stock levels — the threshold arguments are declared so the app
-  // can always send them explicitly (OMS-REG-DB-01.54); stockCounts declares
-  // daysTillExpired for the same reason (OMS-REG-DB-01.46).
+  // contract.md § stock levels — the threshold arguments are declared so the
+  // app can always send them explicitly (OMS-REG-DB-01.54); stockCounts
+  // declares daysTillExpired for the same reason (OMS-REG-DB-01.46).
   it('OMS-REG-DB-01.54/.46: declares the explicit threshold arguments', () => {
     expect(ItemCounts.query).toContain('$lowStockThreshold: Float');
     expect(ItemCounts.query).toContain('$highStockThreshold: Float');

@@ -29,22 +29,23 @@ const NUMBER_PAD = '0000';
 
 /**
  * The composition rule, pure so it can be asserted directly (DIS-02 `.54`).
- * Short store names contribute all they have — "Ab" gives "AB0001", not a padded
- * prefix; the reference generator takes the first N characters without padding.
+ * Short store names contribute all they have — "Ab" gives "AB0001", not a
+ * padded prefix; the reference generator takes the first N characters without
+ * padding.
  */
 export const composePatientCode = (storeName: string, number: number): string =>
   storeName.slice(0, PREFIX_LENGTH).toLocaleUpperCase() +
   String(number).padStart(NUMBER_PAD.length, '0');
 
 /**
- * Whether another patient already holds `code`. `excludePatientId` is the patient
- * being edited, whose own code is not a collision.
+ * Whether another patient already holds `code`. `excludePatientId` is the
+ * patient being edited, whose own code is not a collision.
  *
- * Uses the local patient search, whose `code` input is an EXACT server-side match
- * (spec/patients contract › generating a code) — there is no dedicated endpoint.
- * A failed fetch answers `false`: the check is a guard against an accidental
- * collision, and a transport failure (already surfaced globally) must not
- * manufacture a validation error that blocks an otherwise valid save.
+ * Uses the local patient search, whose `code` input is an EXACT server-side
+ * match (spec/patients contract › generating a code) — there is no dedicated
+ * endpoint. A failed fetch answers `false`: the check is a guard against an
+ * accidental collision, and a transport failure (already surfaced globally)
+ * must not manufacture a validation error that blocks an otherwise valid save.
  */
 export const isPatientCodeTaken = async (
   storeId: string,
@@ -59,8 +60,8 @@ export const isPatientCodeTaken = async (
 };
 
 /**
- * Allocate the next counter value for the store. Undefined when the call fails —
- * including the DOCUMENT_MUTATE Forbidden case (handled globally, since the
+ * Allocate the next counter value for the store. Undefined when the call fails
+ * — including the DOCUMENT_MUTATE Forbidden case (handled globally, since the
  * affordance is permission-gated and a user who sees it should hold the
  * permission).
  */
@@ -82,9 +83,9 @@ const MAX_ATTEMPTS = 10;
 
 /**
  * Generate an unused code for the store (DIS-02 `.54`/`.55`). Each attempt
- * consumes a counter value; the loop stops at the first unused code, and gives up
- * after MAX_ATTEMPTS by returning the last one composed — a taken code the user
- * can see and edit beats an empty field with no explanation, and the
+ * consumes a counter value; the loop stops at the first unused code, and gives
+ * up after MAX_ATTEMPTS by returning the last one composed — a taken code the
+ * user can see and edit beats an empty field with no explanation, and the
  * duplicate-code validation will still block the save.
  *
  * Undefined only when the counter itself is unreachable (nothing to show).

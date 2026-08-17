@@ -1,0 +1,132 @@
+/*
+ * The bottom bar's sync cell (spec/chrome § sync status). Two controls in one
+ * visual group: the status line itself, which starts a sync, and a small
+ * details button that opens the sync modal.
+ *
+ * NO TONE COLOUR here, deliberately. The bar is brand orange on a central
+ * server and menu-grey elsewhere, and neither --error-main nor --warning-main
+ * clears AA against the orange — a red status line was unreadable on exactly
+ * the sites that most need to read it. The escalation is carried by the GLYPH
+ * instead (SyncStatus.tsx `toneIcon`), while text and icon keep the bar's own
+ * contrast-checked content colour at every tone. That also means the state is
+ * never signalled by colour at all, so colour independence holds by
+ * construction rather than resting on the label.
+ */
+
+.group {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.cell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-1) var(--space-2);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit; /* a <button> resets colour; take the bar's */
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.cell:hover {
+  background: color-mix(in srgb, currentcolor 15%, transparent);
+}
+
+.cell:focus-visible {
+  outline: 2px solid currentcolor;
+  outline-offset: -0.125rem;
+}
+
+/* In flight the line is aria-disabled, never disabled — a disabled control
+   would drop keyboard focus and leave the tab order mid-run (the component
+   guards the click instead). */
+.cell[aria-disabled='true'] {
+  cursor: default;
+}
+
+.cell[aria-disabled='true']:hover {
+  background: transparent;
+}
+
+.icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  font-size: 1rem; /* the icon set sizes from font-size (1em) */
+  line-height: 0;
+  color: inherit;
+}
+
+.label {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* The action the status line performs, for the accessible name — the visible
+   text alone says what the STATE is, never that clicking starts a sync. */
+.srOnly {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* The details button carries no text, so it keeps a square footprint. */
+.details {
+  padding: var(--space-1);
+}
+
+/*
+ * Broadcast animation while a run is in flight (issue #9229): the two arc
+ * pairs fade outward from the hub, the inner pair leading. Targets the
+ * `data-sync-arc` groups SyncIcon tags for exactly this. --motion-pulse is the
+ * shared 2s looping-indicator token (see tokens.css).
+ */
+@keyframes sync-arc-inner {
+  0%,
+  25% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes sync-arc-outer {
+  0%,
+  50% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+.icon[data-syncing] [data-sync-arc='inner'] {
+  animation: sync-arc-inner var(--motion-pulse) ease-in-out infinite;
+}
+
+.icon[data-syncing] [data-sync-arc='outer'] {
+  animation: sync-arc-outer var(--motion-pulse) ease-in-out infinite;
+}
+
+/* A looping animation can't be zeroed (0s would pin it to one keyframe), so
+   --motion-pulse is excluded from the reduce block in tokens.css and stopped
+   here instead. Safe to stop outright: the in-flight state is also carried by
+   the cell's own text ("Syncing…"), which is what a reader relies on. */
+@media (prefers-reduced-motion: reduce) {
+  .icon[data-syncing] [data-sync-arc] {
+    animation: none;
+  }
+}

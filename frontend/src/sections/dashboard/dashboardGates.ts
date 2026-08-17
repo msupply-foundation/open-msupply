@@ -20,15 +20,24 @@ type StorePreferences = StoreContextResult['storePreferences'];
 export type DashboardGates = {
   /** External-inbound panel — procurement capability on (OMS-REG-DB-01.36). */
   externalInboundPanel: boolean;
-  /** Emergency (new) customer-requisition stat — program module on (OMS-REG-DB-01.39). */
+  /**
+   * Emergency (new) customer-requisition stat — program module on
+   * (OMS-REG-DB-01.39).
+   */
   emergencyStat: boolean;
-  /** Out-of-stock (recently used) stat — consumption look-back set (OMS-REG-DB-01.48). */
+  /**
+   * Out-of-stock (recently used) stat — consumption look-back set
+   * (OMS-REG-DB-01.48).
+   */
   outOfStockRecentlyUsedStat: boolean;
   /** At-risk stat — low-stock-alert threshold > 0 (OMS-REG-DB-01.51). */
   atRiskStat: boolean;
   /** Overstocked stat — over-stock-alert threshold > 0 (OMS-REG-DB-01.52). */
   overstockedStat: boolean;
-  /** Expiring-between-thresholds stat — at least one expiry threshold > 0 (OMS-REG-DB-01.45). */
+  /**
+   * Expiring-between-thresholds stat — at least one expiry threshold > 0
+   * (OMS-REG-DB-01.45).
+   */
   expiringBetweenThresholdsStat: boolean;
 };
 
@@ -37,13 +46,21 @@ export type DashboardSlots = {
   consumptionLookbackMonths: number;
   /** {low-stock-alert-months} — the at-risk tooltip's threshold (months). */
   lowStockAlertMonths: number;
-  /** {overstock-alert-months} — the gated overstocked stat's threshold (months). */
+  /**
+   * {overstock-alert-months} — the gated overstocked stat's threshold
+   * (months).
+   */
   overstockAlertMonths: number;
   /** {understock-months} — low-stock threshold, also the itemCounts low arg. */
   understockMonths: number;
-  /** {overstock-months} — high-stock threshold, also the itemCounts high arg. */
+  /**
+   * {overstock-months} — high-stock threshold, also the itemCounts high arg.
+   */
   overstockMonths: number;
-  /** {first-expiry-days} / {second-expiry-days} — the expiry window (whole days). */
+  /**
+   * {first-expiry-days} / {second-expiry-days} — the expiry window (whole
+   * days).
+   */
   firstExpiryDays: number;
   secondExpiryDays: number;
 };
@@ -85,7 +102,8 @@ export const computeDashboardSlots = (
 // explicitly, filled from the store understock / overstock preferences
 // (contract.md § stock levels — the server's own 3/6 defaults are a fallback
 // the app never relies on). Undefined until the store context resolves, which
-// pauses the fetch rather than sending threshold-less variables (OMS-REG-DB-01.54).
+// pauses the fetch rather than sending threshold-less variables
+// (OMS-REG-DB-01.54).
 export const itemCountsThresholds = (
   storeId: string,
   slots: DashboardSlots | undefined

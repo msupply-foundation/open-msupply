@@ -2,11 +2,18 @@ import { describe, expect, it } from 'vitest';
 import { t, tPlural, setLocale, setDictionaries } from './intl';
 import commonEn from './locales/en/common.json';
 import commonAr from './locales/ar/common.json';
+import commonFr from './locales/fr/common.json';
+import commonFrDj from './locales/fr-DJ/common.json';
 
 // Seed the dictionaries signal directly (the loading pipeline is tested
 // separately) so we exercise the translator + plural selection
 // deterministically.
-setDictionaries({ en: commonEn, ar: commonAr });
+setDictionaries({
+  en: commonEn,
+  ar: commonAr,
+  fr: commonFr,
+  'fr-DJ': commonFrDj,
+});
 
 describe('t', () => {
   it('translates a key in the active locale', () => {
@@ -39,6 +46,24 @@ describe('t', () => {
     expect(t('does.not.exist' as never)).toBe('does.not.exist');
   });
 
+  it('resolves a regional variant through its base locale, then English', () => {
+    // fr-DJ is a thin overlay on fr: it restates `app.login`, leaves
+    // `app.loading` to French, and `button.add-line` is in neither — which then
+    // resolves to English rather than the raw key (spec/i18n → translating
+    // text, AC-TR20).
+    setLocale('fr-DJ');
+    expect(t('app.login')).toBe(commonFrDj['app.login']);
+    expect(t('app.login')).not.toBe(commonFr['app.login']);
+    expect((commonFrDj as Record<string, string>)['app.loading']).toBe(
+      undefined
+    );
+    expect(t('app.loading')).toBe(commonFr['app.loading']);
+    expect((commonFr as Record<string, string>)['button.add-line']).toBe(
+      undefined
+    );
+    expect(t('button.add-line')).toBe(commonEn['button.add-line']);
+  });
+
   it('interpolates an already-translated string into {{ tokens }}', () => {
     setLocale('en');
     // messages.confirm-status-as = "Confirm status as {{status}}?" — the
@@ -61,5 +86,18 @@ describe('tPlural', () => {
     // zero / one / two are fixed strings; few interpolates the count.
     expect(tPlural('error.failed-attempts', 0)).toBe('لا محاولات فاشلة');
     expect(tPlural('error.failed-attempts', 3)).toContain('محاولات فاشلة');
+  });
+
+  it('renders both forms of the combobox truncation notice', () => {
+    // The Combobox's capped-list row. Its singular form only appears at
+    // EXACTLY one withheld match, so it is easy to ship malformed and never
+    // see; a wrong key name would render as the key itself.
+    setLocale('en');
+    expect(tPlural('control.search.more-matches', 1)).toBe(
+      '1 more match — keep typing to narrow the list'
+    );
+    expect(tPlural('control.search.more-matches', 4900)).toBe(
+      '4900 more matches — keep typing to narrow the list'
+    );
   });
 });

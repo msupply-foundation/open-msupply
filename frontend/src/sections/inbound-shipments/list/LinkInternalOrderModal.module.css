@@ -1,0 +1,11 @@
+/*
+ * Reach-for order step 4 — scoped to this screen, tokens only.
+ *
+ * The step's instruction line is italic (spec S2 → link internal order modal).
+ * `Text` carries size/weight only, deliberately no italic variant, so the slant
+ * lives here — the same answer two other verticals reached (settings, the
+ * internal-order indicators tab).
+ */
+.instruction {
+  font-style: italic;
+}

@@ -6,6 +6,12 @@
  * taller sibling rather than stretching or centring it.
  */
 .row {
+  /* The floor a <FormRowItem> falls back to when it names no minWidth of its
+     own — the row's min, resolved here so each slot inherits one value. A
+     weighted slot sizes ITSELF (see FormRowItem.tsx); nothing else in this file
+     reads this, and an unwrapped item keeps the equal-share rule below. */
+  --form-row-item-min: var(--form-row-min, 10rem);
+
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3) var(--space-4);

@@ -1,4 +1,9 @@
-import { DEFAULT_LOCALE, isSupported, type SupportedLocale } from './locales';
+import {
+  DEFAULT_LOCALE,
+  isSupported,
+  SUPPORTED_LOCALES,
+  type SupportedLocale,
+} from './locales';
 
 // Where a user's chosen locale is persisted, keyed by username (cf.
 // appData.ts).
@@ -43,12 +48,19 @@ export const rememberLastLocale = (locale: SupportedLocale): void => {
   }
 };
 
-// Normalise a BCP-47 tag to a supported locale (e.g. `fr-FR` → `fr`).
+// Normalise a BCP-47 tag to a supported locale (e.g. `fr-FR` → `fr`). Tags are
+// case-insensitive, and browsers/query strings don't always send the canonical
+// casing, so match a regional variant (`fr-dj` → `fr-DJ`) case-insensitively
+// before falling back to the bare language.
+const matchExact = (tag: string): SupportedLocale | undefined =>
+  SUPPORTED_LOCALES.find(l => l.toLowerCase() === tag.toLowerCase());
+
 const normalise = (tag?: string | null): SupportedLocale | undefined => {
   if (!tag) return undefined;
-  if (isSupported(tag)) return tag;
+  const exact = matchExact(tag);
+  if (exact) return exact;
   const base = tag.split('-')[0];
-  return base && isSupported(base) ? base : undefined;
+  return base ? matchExact(base) : undefined;
 };
 
 /**

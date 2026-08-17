@@ -138,3 +138,40 @@
 .timelineStep[data-current] .dot {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary-main) 25%, transparent);
 }
+
+/* NARROW BAR — the strip collapses to the CURRENT stage alone (the reference's
+   "status chip"). Nothing is lost: the next stage is already named on the
+   status button beside it ("Confirm Allocated"), and the whole sequence with
+   the date each stage was reached is in the history popover this strip already
+   opens on hover, focus or tap. Keyed to the FOOTER's own width (the named
+   container ContentFooter declares), not the viewport — a seven-stage track is
+   ~900px of content, so what matters is the room left in the bar after the
+   hold toggle, the pager and the status button, which is nothing like the
+   window's width.
+
+   Guarded by :has() so a flow with no current stage (an unmapped status) keeps
+   its full strip rather than collapsing to nothing. */
+@container content-footer (max-width: 48rem) {
+  .steps:has(.step[data-current]) .step:not([data-current]) {
+    display: none;
+  }
+
+  /* The surviving stage sheds the leading chevron it inherited from a sibling
+     that is no longer drawn (adjacency is DOM order, not paint order)... */
+  .steps:has(.step[data-current]) .step[data-current]::before {
+    content: none;
+  }
+
+  /* ...and gains a downward one, so the stage reads as the disclosure it is. */
+  .steps:has(.step[data-current]) .step[data-current]::after {
+    content: '';
+    flex-shrink: 0;
+    inline-size: 0.4rem;
+    block-size: 0.4rem;
+    /* Rotating a square corner leaves it sitting visually high against text. */
+    margin-block-start: -0.15rem;
+    border-inline-end: 1.5px solid var(--gray-light);
+    border-block-start: 1.5px solid var(--gray-light);
+    transform: rotate(135deg);
+  }
+}

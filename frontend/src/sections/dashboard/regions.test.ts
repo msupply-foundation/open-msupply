@@ -15,8 +15,8 @@ import {
 // Behaviours cited from spec/dashboard/cases/OMS-REG-DB-02 (plugin-region
 // semantics) and OMS-REG-DB-01.58 (the built-in default set).
 
-// A placeholder component — the merge carries it through untouched; its identity
-// is never inspected here.
+// A placeholder component — the merge carries it through untouched; its
+// identity is never inspected here.
 const noop = (() => null) as Component;
 const contribution = (
   id: string,
@@ -60,8 +60,8 @@ describe('mergeRegion — with no contributions', () => {
     expect(region.diagnostics).toEqual([]);
   });
 
-  // A gate-hidden built-in is not rendered, but its id still exists as an anchor
-  // target (ui-surface § published ids).
+  // A gate-hidden built-in is not rendered, but its id still exists as an
+  // anchor target (ui-surface § published ids).
   it('omits a gate-hidden built-in from the rendered entries', () => {
     const region = mergeRegion(
       [{ id: 'a' }, { id: 'b', hidden: true }, { id: 'c' }],
@@ -88,8 +88,9 @@ describe('mergeRegion — placement (OMS-REG-DB-02.2–.5)', () => {
     expect(ids(region)).toEqual(['a', 'after-a', 'b', 'before-c', 'c', 'tail']);
   });
 
-  // OMS-REG-DB-02.4 — the order is identical across reloads and independent of plugin load
-  // order: the same contributions in any input order merge to the same result.
+  // OMS-REG-DB-02.4 — the order is identical across reloads and independent of
+  // plugin load order: the same contributions in any input order merge to the
+  // same result.
   it('OMS-REG-DB-02.4: is independent of the contributions input order', () => {
     const bi = builtIns('a', 'b');
     const contribs = [
@@ -139,8 +140,8 @@ describe('mergeRegion — placement (OMS-REG-DB-02.2–.5)', () => {
     expect(region.diagnostics[0]!.message).toContain('ghost');
   });
 
-  // OMS-REG-DB-02.5 — anchoring to a gate-hidden built-in likewise falls to the end with a
-  // diagnostic (its id exists but has no rendered position).
+  // OMS-REG-DB-02.5 — anchoring to a gate-hidden built-in likewise falls to
+  // the end with a diagnostic (its id exists but has no rendered position).
   it('OMS-REG-DB-02.5: anchoring to a hidden built-in falls to the end with a diagnostic', () => {
     const region = mergeRegion(
       [{ id: 'a' }, { id: 'b', hidden: true }],
@@ -153,8 +154,8 @@ describe('mergeRegion — placement (OMS-REG-DB-02.2–.5)', () => {
 });
 
 describe('mergeRegion — suppression (OMS-REG-DB-02.6–.8)', () => {
-  // OMS-REG-DB-02.6 — a built-in suppressed by its published id does not render;
-  // other built-ins and contributions are unaffected.
+  // OMS-REG-DB-02.6 — a built-in suppressed by its published id does not
+  // render; other built-ins and contributions are unaffected.
   it('OMS-REG-DB-02.6: a suppressed built-in is removed, siblings unaffected', () => {
     const region = mergeRegion(
       builtIns('a', 'b', 'c'),
@@ -176,8 +177,8 @@ describe('mergeRegion — suppression (OMS-REG-DB-02.6–.8)', () => {
     expect(ids(region)).toContain('p');
   });
 
-  // OMS-REG-DB-02.5 — anchoring to a suppressed built-in falls to the end with a
-  // diagnostic (a suppressed id has no rendered position, like a hidden one).
+  // OMS-REG-DB-02.5 — anchoring to a suppressed built-in falls to the end with
+  // a diagnostic (a suppressed id has no rendered position, like a hidden one).
   it('OMS-REG-DB-02.5: anchoring to a suppressed built-in falls to the end', () => {
     const region = mergeRegion(
       builtIns('a', 'b'),

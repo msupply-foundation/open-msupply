@@ -30,7 +30,8 @@ describe('outboundStatus', () => {
     expect(statusIndex('CANCELLED')).toBe(-1);
   });
 
-  // OMS-REG-DIST-04.8 — SHIPPED is read-only: every edit affordance keys off this gate.
+  // OMS-REG-DIST-04.8 — SHIPPED is read-only: every edit affordance keys off
+  // this gate.
   it('OMS-REG-DIST-04.8: editable while NEW/ALLOCATED/PICKED, read-only from SHIPPED', () => {
     expect(isEditable('NEW')).toBe(true);
     expect(isEditable('ALLOCATED')).toBe(true);
@@ -41,7 +42,8 @@ describe('outboundStatus', () => {
     expect(isEditable('VERIFIED')).toBe(false);
   });
 
-  // OMS-REG-DIST-01.7/OMS-REG-DIST-01.8 — deletable exactly while editable; never once shipped.
+  // OMS-REG-DIST-01.7/OMS-REG-DIST-01.8 — deletable exactly while editable;
+  // never once shipped.
   it('OMS-REG-DIST-01.7/OMS-REG-DIST-01.8: deletable mirrors editable', () => {
     expect(isDeletable('PICKED')).toBe(true);
     expect(isDeletable('SHIPPED')).toBe(false);
@@ -53,8 +55,9 @@ describe('outboundStatus', () => {
     expect([...CLIENT_SETTABLE]).toEqual(['ALLOCATED', 'PICKED', 'SHIPPED']);
   });
 
-  // OMS-REG-DIST-04.21 — the customer-return entry point opens only from SHIPPED /
-  // DELIVERED / VERIFIED; every earlier status, and RECEIVED, gets the notice.
+  // OMS-REG-DIST-04.21 — the customer-return entry point opens only from
+  // SHIPPED / DELIVERED / VERIFIED; every earlier status, and RECEIVED, gets
+  // the notice.
   it('OMS-REG-DIST-04.21: canReturnLines only from SHIPPED/DELIVERED/VERIFIED', () => {
     expect(canReturnLines('SHIPPED')).toBe(true);
     expect(canReturnLines('DELIVERED')).toBe(true);

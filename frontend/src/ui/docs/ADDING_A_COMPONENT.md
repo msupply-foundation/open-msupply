@@ -12,6 +12,7 @@ A component isn't done until every doc/surface that indexes it is updated. Miss 
 - [ ] **Showcase** — add a real demo (the component itself, no showcase-only chrome) to the relevant showcase page, and register it in the page metadata / TOC.
 - [ ] **Sibling docs/comments** — update anything that referenced the gap (e.g. `Stack`'s doc comment once `HStack` existed).
 - [ ] **KDD** — if there's a real rejected alternative, write/extend a `kdd/` entry.
+- [ ] **Motion** — any transition/animation reads a `--motion-*` token, never a literal duration ([STYLING.md § Motion check](./STYLING.md#motion-check-step-6)); that is what makes `prefers-reduced-motion` hold without the component writing a media query.
 - [ ] `pnpm check` green.
 
 ## Open follow-ups (#550 audit)
@@ -29,7 +30,10 @@ A component isn't done until every doc/surface that indexes it is updated. Miss 
 - **`BulkDeleteButton(mutation, label)`** — was `SelectionActionModal`, deliberately inlined (`kdd/action-modal`); a narrow wrapper could reclaim ~4–5 atomic-batch deletes.
 - **`ExportPrintButton` (4×) / `HoldToggle` (4×)** — trivial wrappers, borderline vs explicit-composition.
 - **Library `ErrorBoundary` / `GenericErrorFallback` / `DataError`** — reference-parity, low urgency; the app has an app-level `UnexpectedErrorModal` only.
+- **Action-bearing header banner slot** — a standing-context row beneath the `HeaderToolbar` field cluster that carries **controls** (details popover, an apply action, inline error), which the alert chip slot may not hold (a compact alert is never actionable). Registered as a ⛔ role in the registry (App bar — action-bearing standing-context banner); sole consumer meanwhile composes its own `Toolbar` row (the internal-orders ancillary banner). Build when a second vertical needs one (operator ruling, 2026-07-31).
 
 ### Reference-parity primitives — adopt when a real consumer appears, don't pre-build
 
-`WizardStepper`, `ToggleButtonGroup`, `HierarchicalOptionAutocomplete`, content `Skeletons`, `InputModal`, `ListSearch`, linear `InlineProgress`.
+`ToggleButtonGroup`, `HierarchicalOptionAutocomplete`, content `Skeletons`, `InputModal`, `ListSearch`, linear `InlineProgress`.
+
+**Closed:** `WizardStepper` — a real consumer appeared (the patient create wizard's step rail) and the existing determinate progress list (`ui/sync/ProgressList`) already fills the role, which is what the reference app does too (its `WizardStepper` is a thin wrapper over the same `HorizontalStepper` its sync stepper uses). Two open nits, both in `ProgressList` rather than a new component: the active step's marker ring stays the pale tone where the reference paints it the strong one, and the role lives under `ui/sync/` though it now has non-sync consumers.

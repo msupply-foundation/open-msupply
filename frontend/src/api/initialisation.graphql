@@ -45,6 +45,28 @@ mutation manualSync {
   manualSync
 }
 
+# Standalone central initialisation (spec/startup/contract.md
+# § Initialisation): creates the store + admin user and completes
+# initialisation immediately — no sync settings, no sync run. Hardware-id and
+# database failures arrive as top-level GraphQL errors, not union members.
+mutation initialiseAsCentralServer(
+  $input: InitialiseAsCentralServerInputNode!
+) {
+  initialiseAsCentralServer(input: $input) {
+    ... on StandaloneCentralInitialisedNode {
+      __typename
+      success
+    }
+    ... on InitialiseAsCentralServerError {
+      __typename
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
 # Status-only poll — used by the initialisation page, which runs BEFORE a
 # session exists. numberOfRecordsInPushQueue requires auth, so it must not ride
 # on this document (it would fail the whole pre-login poll).

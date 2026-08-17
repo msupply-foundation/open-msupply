@@ -11,9 +11,9 @@ export interface FieldRowProps {
   children: JSX.Element;
   /**
    * Label column width. `fixed` (default) reserves a 6rem minimum so labels
-   * line up across stacked sibling rows in a form. `auto` reserves nothing — the
-   * label takes its natural width and the control sits right after it — for a
-   * lone row with no siblings to align to (e.g. a card header field).
+   * line up across stacked sibling rows in a form. `auto` reserves nothing —
+   * the label takes its natural width and the control sits right after it —
+   * for a lone row with no siblings to align to (e.g. a card header field).
    */
   labelWidth?: 'fixed' | 'auto';
   /**

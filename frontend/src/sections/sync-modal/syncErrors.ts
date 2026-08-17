@@ -3,9 +3,10 @@
 // guidance hint), with the full detail available for support. The exhaustive
 // Record<SyncErrorVariant, …> makes a new schema variant a compile error here
 // rather than a silent generic message (kdd/type-safety); one distinct summary
-// per kind (AC-E1), with `unknown` the runtime fallback for variants newer than
-// the pinned schema. The strings ship in the substrate catalogs under the
-// current app's error.* keys (the spec's captured strings live there).
+// per kind (SYNC-03.28), with `unknown` the runtime fallback for variants
+// newer than the pinned schema. The strings ship in the substrate catalogs
+// under the current app's error.* keys (the spec's captured strings live
+// there).
 
 import type { LocaleKey } from '../../intl';
 import type { SyncErrorVariant } from './syncStatus';

@@ -2,6 +2,8 @@
 
 **Target stack:** SolidJS + Vite; shared component library `src/ui/` resolved through [`spec/ui-standards/components.md`](../../../spec/ui-standards/components.md).
 
+> **Superseded in part by the [UI migration](./ui-migration-report.md) (2026-07-30):** the S2 detail screen described below is **gone** ([D80](../../../spec/DIVERGENCES.md)) — a row now opens the items catalogue scoped to that master list — and the list gained a name search and an Items count column. Read that report for the current shape; this one records the original build.
+
 Scoped build of the master-lists vertical (`spec/master-lists`) — a read-only Catalogue list + detail, **no mutations**. Types generated against `:8890` (`develop`) via the scoped codegen runner. After merging `main`, **all three gates pass** — `pnpm check` (0 TS errors) · `pnpm test` (green, incl. 4 new master-lists AC tests) · `pnpm build`. (The pre-existing `internal-orders` `tsc` breakage that previously blocked the `tsc -b` gates is now suppressed on `main` via `@ts-expect-error`; master-lists itself contributes zero errors.)
 
 ## Built

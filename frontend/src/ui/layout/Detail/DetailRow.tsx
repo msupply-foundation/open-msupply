@@ -70,7 +70,6 @@ export const DetailRow = (props: DetailRowProps): JSX.Element => {
               hideLabel
               disabled
               readOnly
-              width="full"
               value={displayValue(props.value)}
             />
           }

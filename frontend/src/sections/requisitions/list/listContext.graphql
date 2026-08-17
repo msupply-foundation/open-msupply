@@ -1,0 +1,45 @@
+# The store-context reads that gate the requisitions list's conditional
+# surfaces (spec/requisitions › store-context gates). Fetched once per store,
+# read non-suspending; a gated surface stays hidden until its read resolves
+# (safe default OFF — a gated column never flashes in before its gate is
+# known).
+#
+# - responseRequisitionRequiresAuthorisation → the Approval status column
+#   (OMS-REG-DIST-05.23).
+# - omProgramModule → the Emergency filter (OMS-REG-DIST-05.24 — the
+#   reference app's gate, confirmed against the running OMS client).
+# - canCreateInternalOrderFromARequisition → the Create-order action
+#   (OMS-FUN-DIS-03.16; the mutation itself is not preference-gated).
+# - names(isCustomer) → the customer ids feeding customerProgramsGate below.
+query requisitionListContext($storeId: String!) {
+  storePreferences(storeId: $storeId) {
+    responseRequisitionRequiresAuthorisation
+    omProgramModule
+  }
+  preferences(storeId: $storeId) {
+    canCreateInternalOrderFromARequisition
+  }
+  names(
+    storeId: $storeId
+    page: { first: 1000 }
+    filter: { isCustomer: true }
+  ) {
+    ... on NameConnector {
+      __typename
+      nodes {
+        id
+      }
+    }
+  }
+}
+
+# The program-columns gate (OMS-REG-DIST-05.22, D16): whether any of the
+# store's visible customers has a customer program configured. There is no
+# single store-level read — the customer ids come from the names read above,
+# the same two-step the create path uses (contract › store-context gates).
+query customerProgramsGate($storeId: String!, $customerNameIds: [String!]!) {
+  hasCustomerProgramRequisitionSettings(
+    storeId: $storeId
+    customerNameIds: $customerNameIds
+  )
+}

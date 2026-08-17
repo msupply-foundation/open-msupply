@@ -298,10 +298,10 @@ export const gapsProperties = (language: string): NamePropertyInput[] => [
 ];
 
 // "Already configured" — whether any existing property key belongs to the
-// set, flipping Initialise → Re-initialise (OMS-REG-SET-05.15/.16). GAPS deliberately
-// excludes the forecasting subset and the supply-level key, so seeding
-// forecasting (or editing supply levels) alone doesn't mark GAPS configured —
-// transcribed from the reference client's check.
+// set, flipping Initialise → Re-initialise (OMS-REG-SET-05.15/.16). GAPS
+// deliberately excludes the forecasting subset and the supply-level key, so
+// seeding forecasting (or editing supply levels) alone doesn't mark GAPS
+// configured — transcribed from the reference client's check.
 export const gapsConfigured = (existingKeys: string[]): boolean =>
   existingKeys.some(key =>
     gapsKeys
@@ -323,8 +323,8 @@ export const parseAllowedValues = (
     .filter(v => v !== '');
 
 // Values currently recorded against at least one store — not removable
-// (OMS-REG-SET-05.27). Each store's properties arrive as a JSON string keyed by property
-// key; a malformed blob contributes nothing.
+// (OMS-REG-SET-05.27). Each store's properties arrive as a JSON string keyed
+// by property key; a malformed blob contributes nothing.
 export const supplyLevelsInUse = (propertiesJson: string[]): string[] => {
   const inUse: string[] = [];
   for (const json of propertiesJson) {
@@ -345,7 +345,8 @@ export const supplyLevelsInUse = (propertiesJson: string[]): string[] => {
 };
 
 // Add rejects a value already present (duplicates prevented before saving,
-// OMS-REG-SET-05.27) and ignores blank input; returns the unchanged list on rejection.
+// OMS-REG-SET-05.27) and ignores blank input; returns the unchanged list on
+// rejection.
 export const addSupplyLevel = (values: string[], input: string): string[] => {
   const trimmed = input.trim();
   if (trimmed === '' || values.includes(trimmed)) return values;

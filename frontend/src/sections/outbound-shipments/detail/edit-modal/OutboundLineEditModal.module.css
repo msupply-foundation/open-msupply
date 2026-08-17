@@ -1,14 +1,32 @@
-/* The editor's header: Item picker · Available line · Issue quantity +
-   Allocate-in lens · placeholder notice, on ONE wrapping row (spec S4, D76) —
-   each piece drops to its own row as space runs out, bottoming out at the
-   fully stacked layout on narrow screens. Bottom-aligned so the Available
-   text and the labelled fields share a baseline. */
+/* The header cluster sits on the registry's inset grouping panel, so the four
+   pieces read as one thing the modal acts on. The panel's own block padding is
+   more than a single control row needs (it is sized for stacked blocks), and it
+   carries no bottom margin: the dialog's scroll region already gaps this from
+   the batch grid, and the two together left a dead band above the cards (#872). */
+.headerPanel {
+  padding: var(--space-3) var(--space-4);
+}
+
+/* Inside it: Item picker · Issue quantity + Allocate-in lens · Available ·
+   placeholder notice, on ONE wrapping row (spec S4, D76) — each piece drops to
+   its own row as space runs out, bottoming out at the fully stacked layout on
+   narrow screens. Bottom-aligned so every label→control pair shares a baseline. */
 .headerRow {
   display: flex;
   flex-wrap: wrap;
   align-items: end;
   gap: var(--space-3) var(--space-4);
-  margin-block-end: var(--space-3);
+}
+
+/* The header row's slot for the table's controls (DataTable.controlsMount).
+   Its auto margin docks the cluster at the row's inline end, so it keeps that
+   edge whether the placeholder notice is present or not; flex-shrink: 0 keeps
+   the icon buttons at size when the row tightens, and the row wraps instead. */
+.headerTableControls {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  margin-inline-start: auto;
 }
 
 /* The item picker: a bounded width (it holds "code - name" labels), NOT a
@@ -20,11 +38,26 @@
   min-inline-size: min(22rem, 100%);
 }
 
-/* Plain text beside the fields: nudge off the row's bottom edge so it reads
-   centred against the ~2.5rem input boxes. */
-.available {
+/* Available — the figure the entered quantity is judged against, so it follows
+   the two inputs and is set off from them by a hairline (Ling's mockup). It is a
+   read-only labelled value, NOT an input: the label matches Issue's and Units'
+   exactly, and the absence of a box is what says read-only. Never shrinks — the
+   count plus its pluralised unit name is the whole point of the field. */
+.availableStat {
+  flex: 0 0 auto;
   white-space: nowrap;
-  padding-block-end: 0.55rem;
+  padding-inline-start: var(--space-4);
+  border-inline-start: 1px solid var(--color-border-value);
+}
+
+/* Occupy an input's height so the label above it sits on the label line the
+   inputs beside it use. A number, so tabular figures (ui-standards › tables ›
+   data-type alignment) — it changes as the allocation does and shouldn't jitter. */
+.availableValue {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--input-height);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Issue + Allocate-in wrap as a unit — a lens without its quantity (or vice
@@ -37,8 +70,20 @@
 
 /* The "placeholder added" info notice fills what's left of the row, wrapping
    to its own full row when the header is tight. */
-.placeholderNotice {
-  flex: 1 1 20rem;
+/* The working area — the ONE scroll box between the header panel and the
+   footer, holding the batch grid and the advisory messages under it. They
+   scroll together, so a message costs nothing while the user is working in the
+   cards and is met at the end of them; a pinned band would have spent that
+   height on every screen, which on a tablet is most of a card. The table lays
+   out at content height inside it (DataTable's fitContent), so this is the
+   only scroller — no box inside a box. */
+.workArea {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-block-size: 0;
+  overflow-y: auto;
 }
 
 /* The batch grid's flex region. The DataTable is flex: 1; min-block-size: 0 (it
@@ -52,8 +97,8 @@
    still grows to fill the full height in the normal (tall) case. */
 .batchGrid {
   display: flex;
+  flex: 0 0 auto;
   flex-direction: column;
-  flex: 1;
   min-block-size: 16rem;
 }
 
@@ -74,31 +119,9 @@
   color: var(--primary-main);
 }
 
-/* The variant-info popover: the item's variants as a compact read-only table,
-   this batch's row marked. Wider than the popover default — three text
-   columns. */
+/* The variant-info popover: the item's variants as a compact read-only table
+   (the shared static sub-table shell, which owns the row look), this batch's row
+   marked. Wider than the popover default — three text columns. */
 .variantPanel {
   max-width: 40rem;
-}
-
-.variantTable {
-  border-collapse: collapse;
-  inline-size: 100%;
-}
-
-.variantTable th {
-  text-align: start;
-  font-weight: 600;
-  padding: var(--space-1) var(--space-3);
-}
-
-.variantTable td {
-  padding: var(--space-1) var(--space-3);
-  border-block-start: 1px solid var(--color-border-value);
-}
-
-/* The marker column hugs its check. */
-.variantMarker {
-  inline-size: 1.5rem;
-  color: var(--primary-main);
 }

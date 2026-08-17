@@ -2,16 +2,16 @@ import { t } from '../../../intl';
 import type { SupplierReturnInfoFragment } from './supplierReturnDetail.generated';
 
 // Pure status/editability logic for supplier returns
-// (spec/supplier-returns/rules.md § status lifecycle + § editability). Kept free
-// of components so the behaviour-citing tests exercise it directly
+// (spec/supplier-returns/rules.md § status lifecycle + § editability). Kept
+// free of components so the behaviour-citing tests exercise it directly
 // (OMS-REG-REPL-06 .17/.18/.34/.36, OMS-FUN-SRN-001 .6).
 
 export type ReturnStatus = SupplierReturnInfoFragment['status'];
 
-// The lifecycle indicator's fixed sequence (rules § status lifecycle): a supplier
-// return at THIS store only ever reaches NEW → PICKED → SHIPPED (forward-only);
-// RECEIVED and VERIFIED belong to the transfer counterpart and appear for display
-// only — never advance targets here.
+// The lifecycle indicator's fixed sequence (rules § status lifecycle): a
+// supplier return at THIS store only ever reaches NEW → PICKED → SHIPPED
+// (forward-only); RECEIVED and VERIFIED belong to the transfer counterpart and
+// appear for display only — never advance targets here.
 export const STATUS_FLOW = [
   'NEW',
   'PICKED',
@@ -51,19 +51,21 @@ export const statusLabel = (status: ReturnStatus): string =>
 export type AdvanceTarget = 'PICKED' | 'SHIPPED';
 
 // The forward statuses offered from the current one (rules § status lifecycle):
-// both forward confirmations from NEW — a NEW return MAY go straight to SHIPPED,
-// skipping PICKED; only SHIPPED remains from PICKED; nothing once SHIPPED
-// (terminal for this store). Never backwards, so reversal is not expressible.
+// both forward confirmations from NEW — a NEW return MAY go straight to
+// SHIPPED, skipping PICKED; only SHIPPED remains from PICKED; nothing once
+// SHIPPED (terminal for this store). Never backwards, so reversal is not
+// expressible.
 export const nextStatuses = (status: ReturnStatus): AdvanceTarget[] => {
   if (status === 'NEW') return ['PICKED', 'SHIPPED'];
   if (status === 'PICKED') return ['SHIPPED'];
   return [];
 };
 
-// Standing editability (rules § editability): header fields, lines, hold toggle,
-// status advance, and delete are available while the return is NEW or PICKED;
-// SHIPPED is terminal for this store (everything disabled). The disabled-
-// supplier-store gate is server-enforced only (not derivable from the node).
+// Standing editability (rules § editability): header fields, lines, hold
+// toggle, status advance, and delete are available while the return is NEW or
+// PICKED; SHIPPED is terminal for this store (everything disabled). The
+// disabled-supplier-store gate is server-enforced only (not derivable from
+// the node).
 export const isReturnDisabled = (node: { status: ReturnStatus }): boolean =>
   node.status !== 'NEW' && node.status !== 'PICKED';
 
@@ -76,23 +78,23 @@ export const hasOriginalShipment = (node: {
 
 // The status button's own gate (rules § advancing status — preconditions): hold
 // blocks ONLY status changes; the no-lines block is handled at the call site
-// (both also server-enforced). Hold is releasable in the same save that advances
-// (rules § advancing status — preconditions).
+// (both also server-enforced). Hold is releasable in the same save that
+// advances (rules § advancing status — preconditions).
 export const advanceBlockedByHold = (node: { onHold: boolean }): boolean =>
   node.onHold;
 
-// The flow narrowed to the statuses the invoice-status-options preference offers
-// (rules § preference gates — a display gate on EVERY status surface, the
-// lifecycle indicator included). Empty = no restriction.
+// The flow narrowed to the statuses the invoice-status-options preference
+// offers (rules § preference gates — a display gate on EVERY status surface,
+// the lifecycle indicator included). Empty = no restriction.
 export const offeredFlow = (allowed: readonly string[]): ReturnStatus[] =>
   (STATUS_FLOW as readonly ReturnStatus[]).filter(
     s => allowed.length === 0 || allowed.includes(s)
   );
 
-// Steps for the lifecycle indicator: each OFFERED stage with the datetime it was
-// reached (undefined = not reached yet). RECEIVED/VERIFIED datetimes are the
-// transfer counterpart's and are null on this return unless a counterpart set
-// them — shown for display.
+// Steps for the lifecycle indicator: each OFFERED stage with the datetime it
+// was reached (undefined = not reached yet). RECEIVED/VERIFIED datetimes are
+// the transfer counterpart's and are null on this return unless a counterpart
+// set them — shown for display.
 export const statusSteps = (
   node: SupplierReturnInfoFragment,
   allowed: readonly string[] = []

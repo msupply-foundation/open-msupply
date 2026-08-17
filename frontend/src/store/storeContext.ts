@@ -58,10 +58,10 @@ const currentStoreId = () => loaded()?.storeId;
 
 // The stocktake display-gate preferences (spec/stocktakes › store-preference
 // gates), read from the guard-3 PreferencesNode. Each defaults to `false` while
-// the context is still unresolved — the safe default is OFF, so a gated column /
-// field never flashes in before the preference is known (mirrors the D7 rule for
-// the simplified layout: unresolved ⇒ render the plainer surface). Reactive, so
-// a post-sync refetch re-gates the affected surfaces in place.
+// the context is still unresolved — the safe default is OFF, so a gated column
+// / field never flashes in before the preference is known (mirrors the D7 rule
+// for the simplified layout: unresolved ⇒ render the plainer surface).
+// Reactive, so a post-sync refetch re-gates the affected surfaces in place.
 const stocktakePreferences = () => {
   const prefs = storeContext()?.preferences;
   return {
@@ -179,7 +179,7 @@ const patientPreferences = () => {
 // Same safe defaults while unresolved as the other *Preferences accessors —
 // OFF for gated columns/fields, but `invoiceStatusOptions` empty means
 // UNRESTRICTED (every status offered until the real value resolves — the
-// permissive default, DIVERGENCES D7's precedent via AC-PR2). Reactive — a
+// permissive default, per AC-PR2). Reactive — a
 // post-sync refetch re-gates in place.
 const prescriptionPreferences = () => {
   const prefs = storeContext()?.preferences;
@@ -199,6 +199,15 @@ const prescriptionPreferences = () => {
   };
 };
 
+// The bottom bar's store colour (spec/chrome § bottom bar): the store's
+// custom-colour preference, raw as stored — the shell derives contrast text
+// and ignores an unparseable value (AppShell's footerColourStyle). Empty
+// while unresolved, so the bar shows its default until the preference is
+// known. Reactive — the store editor's preferences save refetches this
+// context, so a saved colour applies without a reload.
+const storeCustomColour = (): string =>
+  storeContext()?.preferences?.storeCustomColour ?? '';
+
 // The entered store's dispensary gate (spec/patients § configuration gates ›
 // AC-G1). Dispensary mode gates the WHOLE patient surface — the Dispensary nav
 // group (ShellLayout) and its routes (the patients section's route guard). The
@@ -215,11 +224,38 @@ const isDispensary = (): boolean => {
   return store?.storeMode === 'DISPENSARY';
 };
 
-// The NAME of the store the user has currently entered — the prefix source for a
-// generated patient code (spec/patients § generating a code). Read off the
-// me/login response's store list, the same place `isDispensary` reads storeMode,
-// so it costs no query. Empty string while the store is unresolved; the one
-// caller treats that as "cannot generate yet".
+// Whether the entered store has the vaccine (cold-chain) module enabled
+// (StorePreferenceNode.vaccineModule). Gates the cold-chain DESTINATIONS — the
+// menu's Cold chain section and the palette's cold-chain entries (spec/keyboard
+// AC-KB4) — which is the legitimate kind of module gate: it gates the place
+// there is to go to, not a generic action (KB-R2). Same safe-default-OFF rule as
+// the other gates, so a gated destination never flashes in before the preference
+// is known. Reactive — a post-sync refetch re-gates in place.
+const hasVaccineModule = (): boolean =>
+  storeContext()?.storePreferences?.vaccineModule ?? false;
+
+// Whether the entered store has the program module enabled
+// (StorePreferenceNode.omProgramModule). Gates the R&R Forms and Encounters
+// DESTINATIONS (spec/navigation › registry) the same way hasVaccineModule
+// gates cold chain — the destination kind of module gate KB-R2 sanctions.
+// patientPreferences reads the same field for the patient detail's program
+// surfaces; this accessor is the nav's. Safe default OFF while unresolved.
+const hasProgramModule = (): boolean =>
+  storeContext()?.storePreferences?.omProgramModule ?? false;
+
+// Whether the entered store has the procurement function enabled
+// (PreferencesNode.useProcurementFunctionality). Gates the Purchase Orders
+// DESTINATION (spec/navigation › registry); inboundShipmentPreferences reads
+// the same field for the from-PO creation option. Safe default OFF while
+// unresolved.
+const hasProcurement = (): boolean =>
+  storeContext()?.preferences?.useProcurementFunctionality ?? false;
+
+// The NAME of the store the user has currently entered — the prefix source for
+// a generated patient code (spec/patients § generating a code). Read off the
+// me/login response's store list, the same place `isDispensary` reads
+// storeMode, so it costs no query. Empty string while the store is unresolved;
+// the one caller treats that as "cannot generate yet".
 const currentStoreName = (): string => {
   const storeId = currentStoreId();
   return authUser()?.stores.nodes.find(s => s.id === storeId)?.name ?? '';
@@ -259,6 +295,10 @@ export {
   patientPreferences,
   prescriptionPreferences,
   isDispensary,
+  storeCustomColour,
+  hasVaccineModule,
+  hasProgramModule,
+  hasProcurement,
   hasPermission,
 };
 export type { UserPermission };

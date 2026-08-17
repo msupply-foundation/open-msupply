@@ -3,8 +3,9 @@ import { stockToCsv } from './stockToCsv';
 import type { StockLineRowFragment } from './stock.generated';
 
 // AC-L6 — the stock list exports a CSV of the list. Covers the CSV builder's
-// column set + the computed units / value columns + the blank-supplier fallback.
-// (The export action's all-pages fetch is exercised in the e2e/ suites.)
+// column set + the computed units / value columns + the blank-supplier
+// fallback. (The export action's all-pages fetch is exercised in the e2e/
+// suites.)
 
 const line = {
   id: 'sl1',
@@ -50,7 +51,8 @@ describe('stockToCsv (AC-L6)', () => {
     expect(rows[0].split(',')).toHaveLength(19);
   });
   it('derives units (packs × pack size) and total value (packs × cost)', () => {
-    // SOH units = 12 × 100 = 1200; available = 10 × 100 = 1000; total = 12 × 2 = 24.
+    // SOH units = 12 × 100 = 1200; available = 10 × 100 = 1000; total = 12 × 2
+    // = 24.
     expect(csv).toContain('1200');
     expect(csv).toContain('1000');
     expect(csv).toContain('24');

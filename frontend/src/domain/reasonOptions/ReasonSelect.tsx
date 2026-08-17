@@ -76,6 +76,8 @@ export interface ReasonSelectProps {
   /** `data-testid` for the error message — forwarded to the Combobox. */
   errorTestId?: string;
   placeholder?: string;
+  /** Max-width cap — forwarded to the Combobox, opt-in (default `full`). */
+  width?: 'compact' | 'short' | 'long' | 'full';
   /**
    * A `createFocusTarget()` handle bound to the picker's input — for an owner
    * that focuses it after an action (e.g. a dialog opening on it).
@@ -104,6 +106,7 @@ export const ReasonSelect = (props: ReasonSelectProps): JSX.Element => (
     required={props.required}
     errorTestId={props.errorTestId}
     placeholder={props.placeholder}
+    width={props.width}
     focusTarget={props.focusTarget}
     onChange={r => props.onChange(r)}
   />

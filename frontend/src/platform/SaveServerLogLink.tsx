@@ -1,6 +1,7 @@
 import { createSignal, Show } from 'solid-js';
 import { isAndroid } from './index';
 import { saveServerLog } from './readServerLog';
+import { SaveIcon } from '../ui/icons';
 import { t } from '../intl';
 
 // The "Save log" affordance for the initialisation screen (issue #519.5). On
@@ -18,6 +19,8 @@ import { t } from '../intl';
 // the link — this screen has no global toast host before auth.
 export const SaveServerLogLink = (props: {
   class: string;
+  /** Sizing class for the leading glyph, from the host's own stylesheet. */
+  iconClass?: string;
   noticeClass?: string;
 }) => {
   const [busy, setBusy] = createSignal(false);
@@ -54,6 +57,7 @@ export const SaveServerLogLink = (props: {
         onClick={() => void save()}
         data-testid="save-server-log"
       >
+        <SaveIcon class={props.iconClass} aria-hidden="true" />
         {t('button.save-log')}
       </button>
       <Show when={notice()}>

@@ -21,3 +21,12 @@
 .quantityRow > .quantityField {
   flex: 0 1 var(--input-max-compact);
 }
+
+/* The abbreviation entry holds a few characters, so it keeps its compact width
+   and hands the rest of the directions row to the item-default-directions
+   select (which grows to fill it) — the same opt-out of FormRow's equal shares
+   as the quantity row, two-class selector for the same reason. Below the row's
+   min item width the pair wraps to stacked, FormRow's own behaviour. */
+.directionsEntryRow > .abbreviationField {
+  flex: 0 1 var(--input-max-compact);
+}

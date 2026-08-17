@@ -3,11 +3,11 @@ import {
   barReasons,
   deriveIssueWarnings,
   distributeIssue,
-  fefoCompare,
+  fillOrderCompare,
   type AllocationPreferences,
   type BarReason,
   type IssueWarning,
-} from '../../../../domain/allocation';
+} from '@/domain/allocation';
 import type {
   PrescriptionEditLinesResult,
   SavePrescriptionItemLinesVariables,
@@ -47,9 +47,10 @@ const showLine = (line: ServerDraftLine): boolean =>
   (line.numberOfPacks > 0 && line.availablePacks > 0);
 
 /**
- * Seed the editor's rows: on-hold stock dropped (above), FEFO-ordered
- * (display order IS fill order, stock-allocation § ordering) with each row's
- * bar verdicts resolved once. `availablePacks` already includes this
+ * Seed the editor's rows: on-hold stock dropped (above), fill-ordered —
+ * FEFO, or VVM-priority-then-expiry under its preference (display order IS
+ * fill order, stock-allocation § ordering; rules § allocation) — with each
+ * row's bar verdicts resolved once. `availablePacks` already includes this
  * prescription's own draft allocation (the server hands back re-issuable
  * capacity).
  */
@@ -60,16 +61,12 @@ export const seedDraftLines = (
 ): DraftLine[] =>
   lines
     .filter(showLine)
-    .sort(fefoCompare)
+    .sort((a, b) => fillOrderCompare(a, b, prefs))
     .map(line => ({
       ...line,
       barred: barReasons(line, prefs, today),
       autoBarred: autoAllocateBarReasons(line, prefs, today),
     }));
-
-/** Units currently issued across the draft rows. */
-export const draftIssuedUnits = (lines: readonly DraftLine[]): number =>
-  lines.reduce((sum, line) => sum + line.numberOfPacks * line.packSize, 0);
 
 /**
  * Units available across usable rows. Held stock never counts — the editable
@@ -132,19 +129,6 @@ export const allocateUnits = (
       return reasons.length > 0 ? [{ ...warning, reasons }] : [];
     }),
   };
-};
-
-/**
- * A manual per-row entry is bounded 0…available (stock-allocation §
- * whole-pack arithmetic — the client is the only guard while NEW, and worse
- * here: auto-pick bakes a negative straight into on-hand; AC-I5).
- */
-export const clampPacks = (
-  value: number | undefined,
-  availablePacks: number
-): number => {
-  if (value == null || !Number.isFinite(value) || value < 0) return 0;
-  return Math.min(value, availablePacks);
 };
 
 /**

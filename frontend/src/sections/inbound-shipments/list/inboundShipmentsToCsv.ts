@@ -10,7 +10,7 @@ export const inboundShipmentsToCsv = (rows: InboundRowFragment[]): string => {
   const fields = [
     t('label.invoice-number'),
     t('label.status'),
-    t('label.name'),
+    t('label.supplier'),
     t('label.reference'),
     t('label.created'),
     t('label.delivered'),

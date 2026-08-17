@@ -1,0 +1,7 @@
+# The backend bridge (spec/plugins/contract.md § backend bridge): the opaque
+# transport between a plugin's two halves. Both sides of the JSON scalar are
+# plugin-owned — codegen types them `unknown`, and the SDK's pluginBridge<I, O>
+# is what puts the plugin's own Input/Output types back on.
+query pluginBridgeCall($storeId: String!, $pluginCode: String!, $input: JSON!) {
+  pluginGraphqlQuery(storeId: $storeId, pluginCode: $pluginCode, input: $input)
+}

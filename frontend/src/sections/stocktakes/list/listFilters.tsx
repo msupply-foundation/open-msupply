@@ -86,11 +86,11 @@ const FILTERS: Filter<StocktakeFilter>[] = constructFilters<StocktakeFilter>({
   // ─ dismissed (not user-facing)
   // ───────────────────────────────────────────────
   // Aligned to the real client (Stocktake/ListView): its list surfaces ONLY
-  // Status + Created, so Description / Comment / Locked / Number / Stocktake-date
-  // are dismissed here even though the schema declares them (they stay
-  // contract-declared and could be re-surfaced — see spec/stocktakes README's
-  // "List filter set aligned to the real client"). The fields remain filterable
-  // on the wire; we simply don't offer a control.
+  // Status + Created, so Description / Comment / Locked / Number /
+  // Stocktake-date are dismissed here even though the schema declares them
+  // (they stay contract-declared and could be re-surfaced — see spec/stocktakes
+  // README's "List filter set aligned to the real client"). The fields remain
+  // filterable on the wire; we simply don't offer a control.
   description: null,
   comment: null,
   isLocked: null,

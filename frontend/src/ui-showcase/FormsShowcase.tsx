@@ -117,7 +117,6 @@ const ValidationDemo = () => {
           <TextField
             label="Batch number"
             required
-            width="full"
             value={batch()}
             error={validation.errorFor('v-batch')}
             onInput={e => setBatch(e.currentTarget.value)}
@@ -125,7 +124,6 @@ const ValidationDemo = () => {
           <DateField
             label="Expiry date"
             required
-            width="full"
             format="dd/MM/yyyy"
             value={expiry()}
             error={validation.errorFor('v-expiry')}
@@ -246,13 +244,11 @@ export const FormsShowcase = () => {
                   <FormSection title="Batch & Dates">
                     <TextField
                       label="Batch number"
-                      width="full"
                       value={batch()}
                       onInput={e => setBatch(e.currentTarget.value)}
                     />
                     <TextField
                       label="Barcode"
-                      width="full"
                       placeholder="Scan or enter barcode"
                       value={barcode()}
                       onInput={e => setBarcode(e.currentTarget.value)}
@@ -260,14 +256,12 @@ export const FormsShowcase = () => {
                     <FormRow>
                       <DateField
                         label="Expiry date"
-                        width="full"
                         format="dd/MM/yyyy"
                         value={expiry()}
                         onChange={setExpiry}
                       />
                       <DateField
                         label="Manufacture date"
-                        width="full"
                         format="dd/MM/yyyy"
                         value={manufactured()}
                         onChange={setManufactured}

@@ -66,7 +66,39 @@ for (const { theme, tokens } of themeBlocks) {
   }
 }
 
+// --- Custom-theme coverage ---------------------------------------------
+/*
+ * Third check (kdd/custom-themes): the custom-theme role map must account for
+ * every colour token in the contract — each one is either reachable from a
+ * role/recipe or listed as deliberately not themable. Without this, adding a
+ * colour token silently makes it unthemable.
+ *
+ * Read with a regex rather than imported: this is a plain .mjs script and node
+ * cannot strip the TypeScript. themeRecipes.ts keeps its token keys as plain
+ * single-quoted literals for exactly this reason (a note there says so).
+ */
+const RECIPES_FILE = 'src/ui/branding/themeRecipes.ts';
+const recipes = stripComments(readFileSync(RECIPES_FILE, 'utf8'));
+const referenced = new Set(
+  [...recipes.matchAll(/'(--[\w-]+)'/g)].map(m => m[1])
+);
+
+const unreachable = [...contract].filter(t => !referenced.has(t));
+if (unreachable.length) {
+  failed = true;
+  console.error(
+    `${RECIPES_FILE} does not account for ${unreachable.length} contract token(s) — give each a role/recipe or list it in NOT_THEMABLE:\n  ${unreachable.join('\n  ')}`
+  );
+}
+const unknown = [...referenced].filter(t => !contract.has(t));
+if (unknown.length) {
+  failed = true;
+  console.error(
+    `${RECIPES_FILE} names ${unknown.length} token(s) that are not in the theme contract (renamed, or a typo?):\n  ${unknown.join('\n  ')}`
+  );
+}
+
 if (failed) process.exit(1);
 console.log(
-  `theme contract OK — ${contract.size} tokens × ${themeBlocks.length} theme(s) (${themeBlocks.map(b => b.theme).join(', ')})`
+  `theme contract OK — ${contract.size} tokens × ${themeBlocks.length} theme(s) (${themeBlocks.map(b => b.theme).join(', ')}); all themable via ${RECIPES_FILE}`
 );
