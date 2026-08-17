@@ -4,6 +4,8 @@ import { localisedDate } from '../../../intl/formatDateTime';
 import { TextArea } from '../../../ui/elements/inputs/TextArea';
 import { DateField } from '../../../ui/elements/inputs/DateField';
 import {
+  addDays,
+  dateToIsoDate,
   dateToOffsetIso,
   isoDateToDate,
   localTodayIso,
@@ -90,12 +92,40 @@ export const InboundShipmentDetailToolbar: Component<
   // the client only mirrors standing editability (spec S3 / validation.md).
   const isReceived = () =>
     props.node.status === 'RECEIVED' || props.node.status === 'VERIFIED';
+  // The picker window (rules § backdating the received date): earlier-only —
+  // capped at the current received date — and no further back than the store's
+  // max-days window: [today − (maxDays − 1), received date]. A maxDays of zero
+  // (or unset) means NO lower bound — unlimited backdating. The +1 buffer on
+  // the lower bound matches the outbound picked-date window
+  // (outbound-shipments/detail/backdating.ts): the server's UTC boundary check
+  // would reject the exact now − maxDays day for stores ahead of UTC.
+  const receivedMin = () =>
+    props.backdatingMaxDays > 0
+      ? dateToIsoDate(addDays(new Date(), -(props.backdatingMaxDays - 1)))
+      : undefined;
+  const receivedMax = () =>
+    utcToLocalDay(props.node.receivedDatetime) ?? undefined;
+  // The current received date already sits beyond the window — every earlier
+  // pick would too, so no valid target date exists and the field disables
+  // with the reason (ui-surface S3 "within the backdating window").
+  const windowEmpty = () => {
+    const min = receivedMin();
+    const max = receivedMax();
+    return min !== undefined && max !== undefined && max < min;
+  };
   const receivedDateEditable = () =>
-    isReceived() && props.backdatingEnabled && !props.disabled;
+    isReceived() &&
+    props.backdatingEnabled &&
+    !props.disabled &&
+    !windowEmpty();
   const receivedDateReason = () => {
     if (props.disabled) return t('error.inbound-shipment-not-editable');
     if (!isReceived()) return t('messages.can-only-backdate-received');
     if (!props.backdatingEnabled) return t('messages.backdating-not-enabled');
+    if (windowEmpty())
+      return t('messages.received-date-exceeds-backdating-limit', {
+        days: props.backdatingMaxDays,
+      });
     return undefined;
   };
 
@@ -139,9 +169,12 @@ export const InboundShipmentDetailToolbar: Component<
           </Show>
         }
         error={receivedError()}
-        // Backdating only ever moves the date earlier — cap at the current
-        // received date. (Server also bounds by the max-days window.)
-        max={utcToLocalDay(props.node.receivedDatetime) ?? undefined}
+        // Backdating only ever moves the date earlier — capped at the current
+        // received date — and no further back than the store's max-days window
+        // (receivedMin). DateField treats a TYPED out-of-range day as invalid
+        // too, so no save-path recheck is needed.
+        min={receivedMin()}
+        max={receivedMax()}
         onChange={value => {
           const picked = isoDateToDate(value);
           if (!value || !picked) return;
