@@ -47,23 +47,26 @@
   margin-inline: auto;
 }
 
-/* A read-only figure sitting in a row of inputs (Difference) — the same
-   treatment inbound's Difference and Line total get. A VALUE, not a disabled
-   input: the absence of a box is what says read-only, whereas `disabled` means
-   "an input you cannot use right now". Sized to the input row so the fields
-   either side still line up, and tabular so the digits align down the column.
-   data-signal weights it only when there IS a discrepancy — a zero, or no
-   count yet, is a non-event and stays regular. */
-.statValue {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  min-block-size: var(--input-height-sm);
-  color: var(--text-body);
-  font-size: var(--input-font-sm);
-  font-variant-numeric: tabular-nums;
+/* The difference, hinted under the counted-packs box (inbound's units hint
+   does the same under Packs received). Secondary and end-aligned so it reads
+   as an annotation on the figure above rather than a value of its own, and
+   min-block-size reserves its line even when empty — without that, the hint
+   appearing on the first keystroke would grow the row and shift every card
+   below it mid-count. */
+.diffHint {
+  display: block;
+  min-block-size: 1rem;
+  margin-block-start: var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  line-height: 1;
+  text-align: end;
+  white-space: nowrap;
 }
 
-.statValue[data-signal] {
+/* Weighted only where there IS a discrepancy — the batch worth a second look.
+   A zero difference, or no count yet, is a non-event and stays quiet. */
+.diffHint[data-signal] {
+  color: var(--text-body);
   font-weight: var(--weight-medium);
 }
