@@ -57,3 +57,13 @@
   gap: var(--space-4);
   flex-wrap: wrap;
 }
+
+/* Installed plugins: the host-identity note under the block's heading — what
+ * this app accepts, as an aside rather than a row. Deliberately NOT a FieldRow:
+ * as a label:value pair it read as the first entry of the plugin list beneath
+ * it, i.e. a loaded plugin whose code was missing. Same italic/secondary
+ * treatment as .inUseTag, the block's other parenthetical. */
+.pluginHostNote {
+  font-style: italic;
+  color: var(--text-secondary);
+}
