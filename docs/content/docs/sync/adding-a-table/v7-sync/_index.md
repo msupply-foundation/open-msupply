@@ -42,7 +42,7 @@ add an arm to.
 
 | # | File | What you add |
 |---|------|--------------|
-| 1 | `repository/src/migrations/v3_00_00/add_widget_table.rs` *(new)* | `CREATE TABLE widget`; PG: `ALTER TYPE changelog_table_name ADD VALUE 'widget'` |
+| 1 | `repository/src/migrations/v3_00_00/add_widget_table.rs` *(new)* | `CREATE TABLE widget` (no changelog enum change needed — see step 1) |
 | 2 | `repository/src/migrations/v3_00_00/mod.rs` | register the migration fragment |
 | 3 | `repository/src/db_diesel/widget_row.rs` *(new)* | `table!`, `WidgetRow`, `WidgetRowRepository`, `Upsert`/`Delete` impls |
 | 4 | `repository/src/db_diesel/mod.rs` | `pub mod widget_row;` + `pub use widget_row::*;` |
@@ -95,16 +95,6 @@ impl MigrationFragment for Migrate {
             "#
         )?;
 
-        // Postgres stores changelog_table_name as an ENUM, so the new value
-        // must be registered before any changelog row can reference it.
-        // SQLite stores it as TEXT, so this is Postgres-only.
-        if cfg!(feature = "postgres") {
-            sql!(
-                connection,
-                r#"ALTER TYPE changelog_table_name ADD VALUE IF NOT EXISTS 'widget';"#
-            )?;
-        }
-
         Ok(())
     }
 }
@@ -115,9 +105,16 @@ Notes:
 - `{DATETIME}`, `{DOUBLE}`, etc. are placeholders the `sql!` macro substitutes per backend
   (`TIMESTAMP`/`DATETIME`, `DOUBLE PRECISION`/`REAL`). Use them so the SQL runs on both
   Postgres and SQLite.
-- The `ALTER TYPE ... ADD VALUE` is **required** for any table that writes to the changelog
-  (i.e. anything that syncs). Forgetting it passes SQLite tests but breaks on Postgres at
-  runtime.
+- **No changelog enum change is needed.** `changelog.table_name` used to be a Postgres
+  `changelog_table_name` enum, so a new table had to register its value with
+  `ALTER TYPE … ADD VALUE`. As of `v3_00_00` that column is plain TEXT on both backends and
+  the type is dropped (by the `alter_changelog_table_for_sync_v7` fragment), so an
+  `ALTER TYPE` on it now **fails** on Postgres with `type "changelog_table_name" does not
+  exist`. Migrations before v3 still contain the old call; don't copy it.
+- Other Postgres enums are still enums — notably `key_type`. If your table needs a
+  processor cursor, that value *does* need registering:
+  `ALTER TYPE key_type ADD VALUE IF NOT EXISTS 'MY_PROCESSOR_CURSOR';` (guarded by
+  `cfg!(feature = "postgres")`). See `add_changelog_dedup_cursor_key_type` for the shape.
 - Triggers are **not** used for the changelog any more (they were removed in `v2_02_00`).
   Changelog rows are written programmatically by the repository (Step 3).
 
@@ -622,7 +619,8 @@ Key points:
 cd server
 cargo nextest run integration_order        # FK order / completeness guard
 cargo nextest run sync_v7                   # V7 sync tests
-cargo build --features postgres             # catches the missing ALTER TYPE / enum arms
+cargo build --features postgres             # catches missing enum arms
+cargo nextest run --features postgres migration_3_00_00   # migrations actually run on PG
 ```
 
 The compiler is your friend here: a missing `Row` / `serialize` / `deserialize` /
@@ -631,8 +629,10 @@ the rest. If those four pass, the table is fully wired for V7.
 
 ## Common mistakes
 
-- **Forgetting the Postgres `ALTER TYPE changelog_table_name ADD VALUE`** — green on SQLite,
-  runtime failure on Postgres.
+- **Copying the old `ALTER TYPE changelog_table_name ADD VALUE` from a pre-v3 migration** —
+  green on SQLite, and the Postgres *build* is fine too; it fails when migrations actually
+  run, because v3 dropped that type. Caught by `cargo nextest run --features postgres
+  migration_3_00_00`, which is why that test is in the verify list.
 - **Wrong `sync_style` transport/distribution** — the table compiles and "syncs" but rows go
   to the wrong sites (or nowhere). Copy from the closest existing table.
 - **Placing the table wrong in `INTEGRATION_ORDER`** — caught by the test, but only against

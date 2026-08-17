@@ -104,6 +104,7 @@ export const Toolbar = () => {
                     sx={{ width: 250 }}
                     value={theirReference ?? ''}
                     onChange={e => update({ theirReference: e.target.value })}
+                    inputProps={{ 'data-testid': 'supplier-reference-field' }}
                   />
                 </Box>
               </Tooltip>
@@ -156,6 +157,7 @@ export const Toolbar = () => {
               <Autocomplete
                 disabled={isDisabled || isProgram}
                 clearIcon={null}
+                inputTestId="min-months-of-stock-select"
                 isOptionEqualToValue={(a, b) => a.value === b.value}
                 value={
                   minMonthsOfStock === 0
@@ -200,6 +202,7 @@ export const Toolbar = () => {
               <Autocomplete
                 disabled={isDisabled || isProgram}
                 clearIcon={null}
+                inputTestId="max-months-of-stock-select"
                 isOptionEqualToValue={(a, b) => a.value === b.value}
                 value={{
                   label: t('label.number-months', { count: maxMonthsOfStock }),
@@ -241,6 +244,7 @@ export const Toolbar = () => {
                 setItemFilter(newValue);
               }}
               debounceTime={0}
+              inputTestId="filter-input-itemCodeOrName"
             />
           </Grid>
         </Grid>
