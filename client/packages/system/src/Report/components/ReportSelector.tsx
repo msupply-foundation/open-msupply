@@ -109,6 +109,7 @@ export const ReportSelector = ({
         <CustomButton onPrint={modalOpen.toggleOn} />
       ) : (
         <LoadingButton
+          data-testid="export-or-print-button"
           disabled={initialLoading || !dataId}
           isLoading={isPrinting}
           startIcon={<PrinterIcon />}
