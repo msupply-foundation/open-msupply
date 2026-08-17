@@ -1,15 +1,27 @@
 /*
- * Store selector panel. Mirrors the current app's login store-selector:
- * instructions, a search field, a bordered scrollable list of selectable rows
- * with an active/hover tint derived from the primary token, and a Continue
- * button in the footer. All colours from tokens, rem sizing, logical properties
- * for RTL.
+ * Store selector panel (issue #193): a title, a search field (long lists
+ * only), the stores as LIST rows — each group one bordered box with hairlines
+ * between its rows, under its own heading; a row names its store and nothing
+ * else — and the always-open toggle on one quiet line beneath. All colours
+ * from tokens, rem sizing, logical properties for RTL.
+ *
+ * Rows were separate cards, which put a border and a gap around every store: a
+ * list of eight drew nine borders and seven gaps beside a scroll rail, and the
+ * repetition read as the loudest thing on the panel. One box per group draws
+ * two and closes the gaps.
+ *
+ * The weight that survived that change was in the details, and measuring the
+ * panel is what found it: a 3rem min-height adding 12px to every row, a 20px
+ * chevron level with the store name, an uppercase letter-spaced heading
+ * shouting over the names under it, and 24px between the groups. Each is cut
+ * at its own rule below. Rows are ~36px rather than 48px, so the eight-store
+ * demo list now fits without scrolling at all.
  */
 .panel {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  inline-size: 26rem;
+  inline-size: 30rem;
   max-inline-size: 100%;
 }
 
@@ -21,39 +33,133 @@
   color: var(--text-body);
 }
 
-.instructions {
-  margin: 0;
-  font-size: var(--text-sm);
-  line-height: 1.6;
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  overflow-y: auto;
+  /* The modal's allowance. A dialog is a box over the screen, so its list has
+     to stop somewhere short of the viewport. */
+  max-block-size: min(28rem, 55vh);
+  /* `stable` reserves the gutter so rows don't shift sideways as filtering
+     takes the list above and below the scrolling threshold. The rail itself is
+     styled below. */
+  scrollbar-gutter: stable;
+}
+
+/* --- The scroll rail --------------------------------------------------
+   A floating pill rather than the platform's full-height rail, which lands
+   flush against the group's border and reads as a second frame beside it.
+   The thumb is inset from the gutter by a transparent border that
+   `background-clip: content-box` keeps unpainted, so it appears to float in
+   the margin; the track paints nothing at all.
+
+   Quiet by default rather than invisible: an overlay bar that only appears on
+   hover leaves a touch user with no signal that the list scrolls, and hides
+   how far down it they are. Hover deepens it instead.
+
+   These are the WebKit/Blink pseudo-elements deliberately, NOT
+   `scrollbar-width`/`scrollbar-color`: Chromium ignores the pseudos entirely
+   once either standard property is set, and neither can round or inset a
+   thumb. The enforced floor is Chromium (scripts/check-min-browser.mjs), and
+   MenuBar.module.css already takes this route; off-Blink the list falls back
+   to the native bar, which is a look, not a defect. */
+.list::-webkit-scrollbar {
+  inline-size: 0.875rem;
+}
+
+.list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.list::-webkit-scrollbar-thumb {
+  background-color: color-mix(
+    in srgb,
+    var(--color-border-value) 70%,
+    transparent
+  );
+  background-clip: content-box;
+  border: 0.3125rem solid transparent;
+  border-radius: 999px;
+  transition: background-color var(--motion-fast);
+}
+
+.list:hover::-webkit-scrollbar-thumb {
+  background-color: var(--text-secondary);
+}
+
+/* The full-page host's allowance (the routed sign-in screen): the login frame
+   hands the panel a whole viewport column, where the modal's cap left the list
+   scrolling with most of a screen going spare beneath it. */
+.panel[data-fill] .list {
+  max-block-size: min(44rem, 72vh);
+}
+
+/* Heading + its box. The heading sits outside the border, so the two are
+   paired by this wrapper rather than by the box itself. */
+.groupBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* One box per group; `overflow: hidden` is what clips the first and last
+   rows' hover/selected tint to the rounded corners, so no row paints past the
+   border it shares. The container query below reads THIS element's width —
+   the panel's own width is not the row's on a narrow tablet column. */
+.group {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid
+    color-mix(in srgb, var(--color-border-value) 70%, transparent);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  overflow: hidden;
+  container-type: inline-size;
+}
+
+/* The group heading ("Recent stores" / "All stores") — a quiet label, not a
+   competing title: the panel's own heading is the loud one. It replaces the
+   bare rule the pinned group used to be divided by, which with a single pin
+   read as an accidental gap and carried nothing to a screen reader (the
+   group's aria-label does that now).
+
+   Sentence case at normal tracking: uppercase + letter-spacing + 600 made a
+   12px label shout louder than the store names under it, and the heading only
+   has to separate two runs of rows, not compete with them. */
+.groupLabel {
+  font-size: var(--text-xs);
+  font-weight: 500;
+  line-height: 1.4;
   color: var(--text-secondary);
 }
 
-/* Bordered list container — paper surface, rounded, scrolls when tall. */
-.listPanel {
-  border: 1px solid var(--color-border-value);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  max-block-size: 17rem;
-  display: flex;
-  flex-direction: column;
-}
+/* A row is a grid, not a flex line, so the chip can change WHICH cell it sits
+   in without changing the markup — see the container query below. Wide, it is
+   one line:
 
-.list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  overflow-y: auto;
-}
+       name          tags  chevron
 
+   The row takes its NATURAL height — 2.25rem is a floor for an odd case (a
+   chip taller than the name), not a target. ui-standards § accessibility is
+   explicit that dense list rows keep their natural height rather than
+   inflating to 48px, because "the full-height bump stacks up in a list": an
+   earlier 3rem floor added 12px to every row for nothing, which is most of
+   what made the list read as chunky. 36px still clears the WCAG 2.5.8
+   minimum of 24x24 several times over, with the whole row as the hit area —
+   and the narrow layout below is roomier again, so the finger-sized case
+   stays finger-sized. */
 .row {
   position: relative;
   isolation: isolate;
   inline-size: 100%;
-  display: flex;
+  min-block-size: 2.25rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas: 'name tags chevron';
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-  padding: 0.875rem 1.125rem;
+  column-gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
   border: none;
   background: transparent;
   color: var(--text-body);
@@ -63,19 +169,42 @@
   cursor: pointer;
 }
 
-/*
- * Hover/selection tint. Not `background: color-mix(...)` — engines before
- * Chromium 111 (older Android WebViews in the tablet fleet) drop the whole
- * declaration and the selected row loses its only visual marker. An overlay
- * carrying the bare token at low element opacity renders identically and
- * works everywhere the app does.
- */
+/* The hairline between rows — one border per boundary, drawn by the row that
+   follows, so the group's own border is never doubled at the ends. */
+.row + .row {
+  border-block-start: 1px solid
+    color-mix(in srgb, var(--color-border-value) 60%, transparent);
+}
+
+/* Narrow columns (tablet portrait's login panel is ~20rem of content once the
+   hero takes its half): the name gets the row's full width instead of
+   truncating early against the chips, and the chip drops to a second line.
+
+       name  name  chevron
+       tags  tags  chevron */
+@container (max-width: 24rem) {
+  .row {
+    grid-template-areas:
+      'name name chevron'
+      'tags tags chevron';
+    row-gap: var(--space-1);
+    padding-block: var(--space-3);
+  }
+
+  .tags {
+    justify-self: start;
+  }
+}
+
+/* Hover/selection tint: an overlay carrying the bare token at low element
+   opacity over the card's own surface. */
 .row::before {
   content: '';
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: var(--secondary-main);
+  border-radius: inherit;
+  background: var(--primary-main);
   opacity: 0;
   transition: opacity var(--motion-fast);
   pointer-events: none;
@@ -95,11 +224,13 @@
 
 .row:focus-visible {
   outline: none;
-  box-shadow: inset 0 0 0 0.125rem var(--secondary-main);
+  box-shadow: inset 0 0 0 0.125rem var(--primary-main);
 }
 
+/* The row's whole label: the store's name. The code is a search key only, not
+   displayed (spec S3). */
 .storeName {
-  flex: 1;
+  grid-area: name;
   min-inline-size: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -107,21 +238,95 @@
 }
 
 .tags {
+  grid-area: tags;
   display: inline-flex;
+  align-items: center;
   gap: var(--space-2);
-  flex-shrink: 0;
+  min-inline-size: 0;
+}
+
+/* The forward indicator: the row is an entry point, not a checkbox — clicking
+   it enters the store rather than staging a selection, and there is no
+   Continue button to say so. Quiet enough not to compete with the chips. */
+/* Sized BELOW the row's text, not level with it: at --text-lg the indicator
+   matched the store name for weight and read as a second piece of content
+   rather than a hint about where the row goes. */
+.chevron {
+  grid-area: chevron;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  opacity: 0.5;
+}
+
+:dir(rtl) .chevron {
+  transform: scaleX(-1);
 }
 
 .empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
   padding: var(--space-5);
   text-align: center;
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
 }
 
-.footer {
-  display: flex;
+/* --- The always-open opt-in ------------------------------------------
+   One quiet line under the list, shaped as prose rather than as a form
+   control: no field chrome, no border, secondary tone, and the panel's
+   smallest type. It is a once-ever preference, so it must not read as a step
+   in the task above it.
+
+   Pressed state is carried by the icon (dashed ring → filled check) AND the
+   tone stepping up to body text — never by colour alone. The whole line is
+   the hit area, which clears the 24x24 minimum comfortably. */
+.alwaysOpen {
+  align-self: start;
+  display: inline-flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: var(--space-3);
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-2);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--text-xs);
+  text-align: start;
+  cursor: pointer;
+}
+
+.alwaysOpen[aria-pressed='true'] {
+  color: var(--text-body);
+  font-weight: 600;
+}
+
+.alwaysOpen:hover {
+  background: color-mix(in srgb, currentcolor 8%, transparent);
+}
+
+.alwaysOpen:focus-visible {
+  outline: 2px solid var(--primary-main);
+  outline-offset: -0.125rem;
+}
+
+.alwaysOpenIcon {
+  flex-shrink: 0;
+  font-size: var(--text-md);
+}
+
+.alwaysOpen[aria-pressed='true'] .alwaysOpenIcon {
+  color: var(--primary-main);
+}
+
+.emptyMessage {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  /* A long query must wrap rather than widen the panel. */
+  overflow-wrap: anywhere;
 }

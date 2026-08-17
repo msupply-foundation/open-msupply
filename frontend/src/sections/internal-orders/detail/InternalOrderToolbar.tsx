@@ -174,8 +174,19 @@ export const InternalOrderToolbar: Component<
   };
 
   // Cluster weights: the whole cluster is weighted (never just one field —
-  // FormRowItem's rule), floors summing to the unweighted row's 6 × 10rem so
-  // the wrap point doesn't move earlier.
+  // FormRowItem's rule), floors summing to no more than the unweighted row's
+  // (fields × 10rem) so the wrap point doesn't move earlier.
+  //
+  // A floor is also the width the field's LABEL gets, and a label that doesn't
+  // fit wraps to a second line — which pushes that one control half a row
+  // below its neighbours', since the row top-aligns its items (it must: an
+  // error has to extend its own field downward and leave the rest of the row
+  // where it was). "Reorder threshold MOS" needs ~9rem, so the MOS selects
+  // sat at their old 8.5rem floor with a two-line label and a dropped control
+  // on any narrow viewport. They keep the row's own 10rem floor instead —
+  // still the full unweighted budget, and their 12rem cap still hands the
+  // surplus to the lookups. Check a header label against its slot's floor
+  // whenever you pin one narrow.
   return (
     <>
       <FormRowItem weight={1.5}>
@@ -187,7 +198,6 @@ export const InternalOrderToolbar: Component<
           role="supplier"
           label={t('label.supplier-name')}
           size="small"
-          width="full"
           storeBacked
           selected={supplierSeed()}
           disabled={fieldsLocked()}
@@ -202,7 +212,6 @@ export const InternalOrderToolbar: Component<
         <TextField
           label={t('label.supplier-reference')}
           size="small"
-          width="full"
           data-testid="supplier-reference-field"
           value={props.edit.state.theirReference}
           disabled={!props.editable}
@@ -223,7 +232,6 @@ export const InternalOrderToolbar: Component<
             role="customer"
             label={t('label.destination-customer')}
             size="small"
-            width="full"
             inputTestId="customer-search-input"
             storeBacked
             excludeId={props.node.otherPartyId}
@@ -235,11 +243,10 @@ export const InternalOrderToolbar: Component<
           />
         </FormRowItem>
       </Show>
-      <FormRowItem weight={0.7} minWidth="8.5rem" maxWidth="12rem">
+      <FormRowItem weight={0.7} maxWidth="12rem">
         <Select
           label={t('label.min-months-of-stock')}
           size="small"
-          width="full"
           testId="min-months-of-stock-select"
           options={thresholdOptions()}
           value={thresholdValue()}
@@ -247,11 +254,10 @@ export const InternalOrderToolbar: Component<
           onValueChange={onThresholdChange}
         />
       </FormRowItem>
-      <FormRowItem weight={0.7} minWidth="8.5rem" maxWidth="12rem">
+      <FormRowItem weight={0.7} maxWidth="12rem">
         <Select
           label={t('label.max-months-of-stock')}
           size="small"
-          width="full"
           testId="max-months-of-stock-select"
           options={targetOptions()}
           value={targetValue()}

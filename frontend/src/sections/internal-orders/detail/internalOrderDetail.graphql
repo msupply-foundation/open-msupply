@@ -8,7 +8,7 @@
 # "server-paginated line table (non-negotiable)" moves server-side once the PR
 # lands and the schema is re-pinned. Documented as a backend gap in
 # spec/internal-orders/contract.md § "Backend gaps" — a server gap, not a
-# frontend divergence (so not in DIVERGENCES.md, per that section).
+# frontend divergence.
 
 fragment InternalOrderLine on RequisitionLineNode {
   id

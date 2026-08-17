@@ -81,6 +81,11 @@ const Body: Component<{ onClose: () => void }> = props => {
       dismissable={!creating()}
       testId="supplier-search-modal"
       title={t('label.supplier-name')}
+      widthRem={36}
+      // Room for the lookup's open listbox inside the dialog (#1029): header +
+      // field + the listbox's 18rem cap + padding, measured live. Sized as the
+      // outbound CustomerSearchModal, this picker's twin.
+      minBodyHeightRem={27}
       // The standard, icon-less dialog dismiss (D55).
       actions={
         // Cancel is the only footer action — choosing a supplier from the list is

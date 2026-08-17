@@ -67,8 +67,6 @@ export interface ReturnItemsModalProps {
    * "Save & next" advance (which focuses the new item's first row).
    */
   initialLineId?: string;
-  /** ADD mode: item ids already on the return, excluded from the search. */
-  excludeItemIds: () => string[];
   /**
    * UPDATE mode: the item AFTER this one in the current on-screen order —
    * drives "Save & next". undefined = last item (Save only).
@@ -110,7 +108,6 @@ export const ReturnItemsModal = (props: ReturnItemsModalProps): JSX.Element => (
         mode={props.mode}
         initialItemId={props.mode === 'update' ? openKey : undefined}
         initialLineId={props.initialLineId}
-        excludeItemIds={props.excludeItemIds}
         nextItem={props.nextItem}
         itemById={props.itemById}
         onSaved={props.onSaved}
@@ -141,8 +138,15 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
 
   const noItemYet = () => props.mode === 'add' && currentItem() === undefined;
 
+  // Quantity to return is the one control this grid exists for, so it is PINNED
+  // to the inline-end by default: at any width where the grid scrolls it stays
+  // on screen, rather than being carried off by a resize (issue #1002). Base
+  // band only — the compact band renders as cards, where pinning is meaningless.
   const tableConfig = createTableConfig({
     tableId: 'supplier-return-line-edit',
+    defaultConfig: {
+      base: { columnPinning: { right: ['numberOfPacksToReturn'] } },
+    },
   });
 
   // The item lookup — live only in add mode, where it is the editor's starting
@@ -297,8 +301,8 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
   };
 
   // Save & next: save, then advance without closing — update mode steps to the
-  // next item; add mode returns to the search (the saved item drops out via the
-  // live excludeItemIds).
+  // next item; add mode returns to the empty search (the saved item is still
+  // offered there — re-picking it reloads its batch set to edit).
   const onSaveNext = async () => {
     if (!(await save())) return;
     if (props.mode === 'add') {
@@ -329,13 +333,23 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
       // treatment): live in add mode — ALL available items, not narrowed to the
       // supplier (SRN-001 .1) — and locked to the row's item in update mode.
       // The dialog keeps its accessible name through `ariaLabel`.
+      //
+      // NO excludeItemIds: the search offers the whole addable catalogue,
+      // including items already on the return (issue #985 / #428 — the
+      // customer-returns twin does the same). Picking one goes through
+      // seedItem like any other, and GenerateSupplierReturnLines carries the
+      // returnId, so that item's EXISTING lines come back seeded with their
+      // saved quantities — a second visit edits rather than duplicating.
       title={
         <ItemSearch
           label={t('label.item')}
           hideLabel
+          // Fills the title row, as in every other line editor's item search:
+          // it IS the dialog's heading, so a short cap leaves it stranded
+          // against a wide dialog (issue #1002).
+          width="full"
           storeId={props.storeId}
           focusTarget={itemSearch}
-          excludeItemIds={props.excludeItemIds()}
           value={currentItem()?.id}
           selectedItem={currentItem()}
           disabled={props.mode !== 'add'}
@@ -493,7 +507,9 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
           when={step() === 'reason'}
           fallback={
             <DataTable
-              columns={quantityColumns(update, quantityFields)}
+              columns={quantityColumns(update, quantityFields, {
+                showItem: false,
+              })}
               rows={draft.filter(() => true)}
               rowKey={line => line.id}
               loading={loadingLines()}
@@ -506,7 +522,7 @@ const ReturnItemsContent = (props: ContentProps): JSX.Element => {
           }
         >
           <DataTable
-            columns={reasonColumns(update, reasonFields)}
+            columns={reasonColumns(update, reasonFields, { showItem: false })}
             rows={reasonRows()}
             rowKey={line => line.id}
             showFullScreen={false}

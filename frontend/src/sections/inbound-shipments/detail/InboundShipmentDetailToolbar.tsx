@@ -1,13 +1,17 @@
 import { createSignal, Show, type Component } from 'solid-js';
 import { t } from '../../../intl';
+import { localisedDate } from '../../../intl/formatDateTime';
 import { TextArea } from '../../../ui/elements/inputs/TextArea';
 import { DateField } from '../../../ui/elements/inputs/DateField';
 import {
+  addDays,
+  dateToIsoDate,
   dateToOffsetIso,
   isoDateToDate,
   localTodayIso,
   utcToLocalDay,
 } from '../../../ui/elements/inputs/dateTimeConvert';
+import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
 import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
 import { RecordLink } from '../../../ui/elements/typography/RecordLink';
@@ -53,6 +57,22 @@ export const InboundShipmentDetailToolbar: Component<
   // stays a row of fields.
   const [receivedError, setReceivedError] = createSignal<string>();
 
+  // The chosen backdate awaiting confirmation (the picked day + the instant
+  // to save) — the re-stamp it causes can't be undone (rules § backdating
+  // the received date), so it's confirmed first; undefined when no
+  // confirmation is open.
+  const [pendingReceived, setPendingReceived] = createSignal<{
+    day: string;
+    received: string;
+  }>();
+  // The user's un-saved picked day, so a cancelled pick reverts the input —
+  // the node hasn't changed, so the controlled `value` alone wouldn't
+  // (mirrors PickedDateField.tsx's fix for the same class of bug).
+  const [draftReceivedDay, setDraftReceivedDay] = createSignal<string>();
+  // A confirmed backdate is saving — onClose (which always follows
+  // onConfirm) must not revert the draft while it is.
+  let confirmInFlight = false;
+
   // Supplier is editable only on a manual shipment that isn't Verified — never
   // on a transfer or a PO-linked shipment (spec S3 header fields).
   const supplierLocked = () => props.disabled || kind() !== 'manual';
@@ -72,12 +92,40 @@ export const InboundShipmentDetailToolbar: Component<
   // the client only mirrors standing editability (spec S3 / validation.md).
   const isReceived = () =>
     props.node.status === 'RECEIVED' || props.node.status === 'VERIFIED';
+  // The picker window (rules § backdating the received date): earlier-only —
+  // capped at the current received date — and no further back than the store's
+  // max-days window: [today − (maxDays − 1), received date]. A maxDays of zero
+  // (or unset) means NO lower bound — unlimited backdating. The +1 buffer on
+  // the lower bound matches the outbound picked-date window
+  // (outbound-shipments/detail/backdating.ts): the server's UTC boundary check
+  // would reject the exact now − maxDays day for stores ahead of UTC.
+  const receivedMin = () =>
+    props.backdatingMaxDays > 0
+      ? dateToIsoDate(addDays(new Date(), -(props.backdatingMaxDays - 1)))
+      : undefined;
+  const receivedMax = () =>
+    utcToLocalDay(props.node.receivedDatetime) ?? undefined;
+  // The current received date already sits beyond the window — every earlier
+  // pick would too, so no valid target date exists and the field disables
+  // with the reason (ui-surface S3 "within the backdating window").
+  const windowEmpty = () => {
+    const min = receivedMin();
+    const max = receivedMax();
+    return min !== undefined && max !== undefined && max < min;
+  };
   const receivedDateEditable = () =>
-    isReceived() && props.backdatingEnabled && !props.disabled;
+    isReceived() &&
+    props.backdatingEnabled &&
+    !props.disabled &&
+    !windowEmpty();
   const receivedDateReason = () => {
     if (props.disabled) return t('error.inbound-shipment-not-editable');
     if (!isReceived()) return t('messages.can-only-backdate-received');
     if (!props.backdatingEnabled) return t('messages.backdating-not-enabled');
+    if (windowEmpty())
+      return t('messages.received-date-exceeds-backdating-limit', {
+        days: props.backdatingMaxDays,
+      });
     return undefined;
   };
 
@@ -97,7 +145,6 @@ export const InboundShipmentDetailToolbar: Component<
         label={t('label.reference')}
         size="small"
         rows={1}
-        width="full"
         data-testid="supplier-reference-field"
         value={props.edit.state.theirReference}
         disabled={props.disabled}
@@ -110,8 +157,7 @@ export const InboundShipmentDetailToolbar: Component<
       <DateField
         label={t('label.received')}
         size="small"
-        width="full"
-        value={utcToLocalDay(props.node.receivedDatetime)}
+        value={draftReceivedDay() ?? utcToLocalDay(props.node.receivedDatetime)}
         disabled={!receivedDateEditable()}
         // The blocking reason is a TOOLTIP on the label, per spec S3 ("disabled
         // state carries an explanatory tooltip for each blocking reason") — not
@@ -123,12 +169,15 @@ export const InboundShipmentDetailToolbar: Component<
           </Show>
         }
         error={receivedError()}
-        // Backdating only ever moves the date earlier — cap at the current
-        // received date. (Server also bounds by the max-days window.)
-        max={utcToLocalDay(props.node.receivedDatetime) ?? undefined}
+        // Backdating only ever moves the date earlier — capped at the current
+        // received date — and no further back than the store's max-days window
+        // (receivedMin). DateField treats a TYPED out-of-range day as invalid
+        // too, so no save-path recheck is needed.
+        min={receivedMin()}
+        max={receivedMax()}
         onChange={value => {
           const picked = isoDateToDate(value);
-          if (!picked) return;
+          if (!value || !picked) return;
           setReceivedError(undefined);
           // Offset-preserving so the server's backdating log records the
           // picked local day (input is DateTime<FixedOffset>; #456). Today
@@ -138,11 +187,38 @@ export const InboundShipmentDetailToolbar: Component<
             value === localTodayIso()
               ? dateToOffsetIso(new Date())
               : dateToOffsetIso(picked);
-          void props
-            .onSaveField({ receivedDatetime: received })
-            .then(r => setReceivedError(r.ok ? undefined : r.message));
+          // The re-stamp this causes can't be undone (rules § backdating the
+          // received date), so it's confirmed before saving — not applied
+          // straight away like the rest of this cluster's fields.
+          setDraftReceivedDay(value);
+          setPendingReceived({ day: value, received });
         }}
       />
+      <Show when={pendingReceived()}>
+        {info => (
+          <ConfirmDialog
+            open
+            onClose={() => {
+              setPendingReceived(undefined);
+              if (!confirmInFlight) setDraftReceivedDay(undefined);
+            }}
+            title={t('heading.are-you-sure')}
+            message={t('messages.confirm-backdate-received-date', {
+              date: localisedDate(info().received),
+            })}
+            onConfirm={() => {
+              confirmInFlight = true;
+              void props
+                .onSaveField({ receivedDatetime: info().received })
+                .then(r => {
+                  confirmInFlight = false;
+                  setDraftReceivedDay(undefined);
+                  setReceivedError(r.ok ? undefined : r.message);
+                });
+            }}
+          />
+        )}
+      </Show>
 
       {/* PO-linked: PO number (links to the order) + read-only reference (spec
           S3 header fields). Never-editable facts, so they're read-only

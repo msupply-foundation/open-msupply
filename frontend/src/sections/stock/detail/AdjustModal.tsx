@@ -10,6 +10,7 @@ import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { DateField } from '../../../ui/elements/inputs/DateField';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { StatComparisonTile } from '../../../ui/elements/display/StatComparisonTile';
+import { RecordLink } from '../../../ui/elements/typography/RecordLink';
 import { ReasonSelect, reasonsOfKind } from '../../../domain/reasonOptions';
 import { XCircleIcon, CheckIcon } from '../../../ui/icons';
 import { stockPreferences } from '../../../store/storeContext';
@@ -70,15 +71,17 @@ const AdjustContent = (props: {
   const [direction, setDirection] = createSignal<Direction>('ADDITION');
   const [amount, setAmount] = createSignal<number | undefined>();
   const [reasonId, setReasonId] = createSignal<string | undefined>();
-  const [date, setDate] = createSignal<string | null>(null);
+  // Local (wall-clock) today, not UTC — so a store whose date differs from UTC
+  // never treats its own today as backdated (spec/stock S4).
+  const today = localTodayIso();
+  // The date field starts at today (spec/stock S4) — today means "not
+  // backdated", so the default still submits with no backdatedDatetime.
+  const [date, setDate] = createSignal<string | null>(today);
   const [saving, setSaving] = createSignal(false);
   const [error, setError] = createSignal<string | undefined>();
 
   const prefs = () => stockPreferences();
   const backdating = () => prefs().backdating;
-  // Local (wall-clock) today, not UTC — so a store whose date differs from UTC
-  // never treats its own today as backdated (spec/stock S4).
-  const today = localTodayIso();
   const minDate = () => {
     const maxDays = backdating().maxDays;
     return maxDays <= 0 ? undefined : localIsoDaysAgo(maxDays);
@@ -203,6 +206,10 @@ const AdjustContent = (props: {
       widthRem={34}
       testId="adjust-modal"
       title={t('heading.stock-adjustment')}
+      // Room for the reason picker's open listbox inside the dialog (#1029) —
+      // it is the bottom row whenever backdating is off, so its list (commonly
+      // 5–10 reasons) would otherwise hang below the dialog.
+      minBodyHeightRem={30}
       actionsLead={
         <Show when={error() || belowZero()}>
           <Alert severity="error">
@@ -242,7 +249,8 @@ const AdjustContent = (props: {
           gap: 'var(--space-4)',
         }}
       >
-        {/* Context card: item code · pack size · name. */}
+        {/* Context card: item code · pack size · name (the name links to its
+            catalogue record — spec/stock S4). */}
         <div
           style={{
             display: 'flex',
@@ -250,7 +258,13 @@ const AdjustContent = (props: {
             gap: 'var(--space-1)',
           }}
         >
-          <strong>{props.line.itemName}</strong>
+          <strong>
+            <RecordLink
+              href={`/${props.storeId}/catalogue/items/${props.line.itemId}`}
+            >
+              {props.line.itemName}
+            </RecordLink>
+          </strong>
           <span
             style={{
               color: 'var(--text-secondary)',
