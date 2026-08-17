@@ -8,13 +8,13 @@ import {
 import { isCentralServer } from '../../api/serverInfo';
 import { storeContext } from '../../store/storeContext';
 import { SYNC_INDICATOR_REFRESH_MS } from '../../config';
-import { localisedDistanceToNow, t, tPlural } from '../../intl';
+import { localisedTimeAgo, t, tPlural } from '../../intl';
 import {
   toSyncOverview,
   syncFooterStatus,
-  syncFooterSignal,
+  syncFooterDimmed,
 } from './syncStatus';
-import type { SyncFooterSignal, SyncFooterTone } from './syncStatus';
+import type { SyncFooterTone } from './syncStatus';
 import { syncNow, triggerActive } from './syncTrigger';
 
 // Host-contract factory (spec/sync-modal/contract.md § Substrate): the bottom
@@ -33,7 +33,7 @@ export const createSyncIndicator = (): {
     label: string;
     detail: string | undefined;
     tone: SyncFooterTone;
-    signal: SyncFooterSignal;
+    dimmed: boolean;
   };
   syncing: () => boolean;
   syncNow: () => void;
@@ -84,7 +84,7 @@ export const createSyncIndicator = (): {
 
   // The one line the cell shows. Resolved here rather than in the shell so the
   // chrome stays presentational — and so it re-translates on a language switch,
-  // since t() and localisedDistanceToNow are both read at render.
+  // since t() and localisedTimeAgo are both read at render.
   const label = (): string => {
     const state = model();
     switch (state.kind) {
@@ -117,7 +117,7 @@ export const createSyncIndicator = (): {
     const finished = overview()?.lastSuccessful?.finished;
     return finished
       ? t('sync-status.footer-last-synced', {
-          distance: localisedDistanceToNow(finished),
+          distance: localisedTimeAgo(finished, now()),
         })
       : undefined;
   };
@@ -129,7 +129,7 @@ export const createSyncIndicator = (): {
     const state = model();
     switch (state.kind) {
       case 'synced':
-        return localisedDistanceToNow(state.finished);
+        return localisedTimeAgo(state.finished, now());
       case 'unreachable':
         return lastSynced() ?? t('sync-status.footer-never-synced');
       case 'error':
@@ -148,7 +148,7 @@ export const createSyncIndicator = (): {
       label: label(),
       detail: detail(),
       tone: model().tone,
-      signal: syncFooterSignal(model().kind),
+      dimmed: syncFooterDimmed(model().kind),
     }),
     syncing: () => model().kind === 'syncing',
     syncNow,

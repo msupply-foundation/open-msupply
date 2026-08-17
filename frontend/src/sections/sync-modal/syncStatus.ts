@@ -384,40 +384,19 @@ export const syncFooterStatus = (
 };
 
 /*
- * The mark's COLOUR (issue #1087) — a state cue that lands before the words are
- * read, so a user crossing the screen registers the site's health without
- * stopping on it.
+ * Whether the cell reads as DIMMED (issue #1087) — sync is not running and
+ * cannot, because the central server is out of reach.
  *
- * A SEPARATE axis from `tone`, because the two disagree in both directions and
- * collapsing them would misreport one of them:
+ * Its own level, deliberately not folded into `tone`. By the precedence ladder
+ * an unreachable server is a warning, and it must stay one: it MUST NOT read as
+ * synced, and a sustained outage still escalates through the staleness rungs.
+ * But it is not the same KIND of news as a site that has gone stale — one says
+ * "sync is not happening", the other "sync is behind, and you should act". So
+ * the tone keeps the precedence and the dim keeps them apart on screen.
  *
- *   - a queue is amber but escalates nothing — a backlog is worth noticing, and
- *     is not a fault;
- *   - an unreachable server warns but reads MUTED — the outage is honest news
- *     rather than an alarm, and nothing is lost while it lasts.
- *
- * `tone` still owns the escalation (the mark's shape and the cell's ground);
- * this only picks a hue for the mark, and never carries meaning alone.
+ * Dim rather than a hue because the bar's colour is store data: a hue can land
+ * on top of the store's own and vanish, whereas "switched off" survives any
+ * ground.
  */
-export type SyncFooterSignal = 'success' | 'warning' | 'error' | 'muted';
-
-export const syncFooterSignal = (
-  kind: SyncFooterStatus['kind']
-): SyncFooterSignal => {
-  switch (kind) {
-    case 'error':
-      return 'error';
-    case 'warning':
-    case 'records-queued':
-      return 'warning';
-    case 'synced':
-      return 'success';
-    // In flight the mark is the animating glyph, not a dot; the rest have
-    // nothing to report yet, or nothing to report at all.
-    case 'waiting':
-    case 'syncing':
-    case 'unreachable':
-    case 'never-synced':
-      return 'muted';
-  }
-};
+export const syncFooterDimmed = (kind: SyncFooterStatus['kind']): boolean =>
+  kind === 'unreachable';

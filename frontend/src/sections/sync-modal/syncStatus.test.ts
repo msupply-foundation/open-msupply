@@ -7,7 +7,7 @@ import {
   IDLE_TRIGGER,
   statusLineKind,
   syncDurationParts,
-  syncFooterSignal,
+  syncFooterDimmed,
   syncFooterStatus,
   toSyncOverview,
   type SyncFooterStatus,
@@ -627,41 +627,45 @@ describe("syncFooterStatus — the bottom bar's sync cell (spec/chrome § sync s
   });
 });
 
-describe("syncFooterSignal — the mark's hue (OMS-REG-FTR-03.21)", () => {
-  it('reads a healthy site as success and a failed one as error', () => {
-    expect(syncFooterSignal('synced')).toBe('success');
-    expect(syncFooterSignal('error')).toBe('error');
-  });
-
-  it('is a SEPARATE axis from the escalation tone, and disagrees both ways', () => {
-    // A queue escalates nothing (tone neutral) yet is worth noticing…
-    expect(syncFooterStatus(undefined, 0, 0, new Date()).tone).toBe('neutral');
-    expect(syncFooterSignal('records-queued')).toBe('warning');
-    // …and an unreachable server warns, but reads muted: the outage is news,
-    // not an alarm, and nothing is lost while it lasts.
-    expect(syncFooterSignal('unreachable')).toBe('muted');
-  });
-
-  it('stays muted wherever there is nothing to report', () => {
-    expect(syncFooterSignal('waiting')).toBe('muted');
-    expect(syncFooterSignal('never-synced')).toBe('muted');
-    // In flight the mark is the animating glyph, not a dot.
-    expect(syncFooterSignal('syncing')).toBe('muted');
-  });
-
-  it('answers every state the footer can be in', () => {
-    // Guards the mapping against a new state slipping past it: each kind in the
-    // union must resolve, so adding one without a hue fails here (and in tsc).
-    const kinds: SyncFooterStatus['kind'][] = [
+describe('syncFooterDimmed — the offline level (OMS-REG-FTR-03.21)', () => {
+  it('dims only while the central server is out of reach', () => {
+    expect(syncFooterDimmed('unreachable')).toBe(true);
+    for (const kind of [
       'waiting',
       'syncing',
       'error',
-      'unreachable',
       'warning',
       'records-queued',
       'synced',
       'never-synced',
-    ];
-    for (const kind of kinds) expect(syncFooterSignal(kind)).toBeTruthy();
+    ] as SyncFooterStatus['kind'][])
+      expect(syncFooterDimmed(kind)).toBe(false);
+  });
+
+  it('is a level BELOW the tone, not a replacement for it', () => {
+    // The outage keeps its warning tone — it must not read as synced, and a
+    // sustained one still escalates through the staleness rungs (FTR-03.3) —
+    // while dimming keeps it visually apart from a site that has gone stale.
+    const unreachable = toSyncOverview(
+      v7({ error: { variantV7: 'CONNECTION_ERROR', fullError: 'x' } }),
+      MODAL
+    );
+    const state = syncFooterStatus(unreachable, 0, 0, new Date());
+    expect(state.tone).toBe('warning');
+    expect(syncFooterDimmed(state.kind)).toBe(true);
+    // A stale site shares the tone but is NOT dimmed — different mark.
+    expect(syncFooterDimmed('warning')).toBe(false);
+  });
+
+  it('shows no queue count while offline (OMS-REG-FTR-03.24)', () => {
+    // The precedence ladder is what enforces this: the outage outranks the
+    // queue, so a waiting backlog cannot appear beside "No connection".
+    const unreachable = toSyncOverview(
+      v7({ error: { variantV7: 'CONNECTION_ERROR', fullError: 'x' } }),
+      MODAL
+    );
+    const state = syncFooterStatus(unreachable, 14, 0, new Date());
+    expect(state.kind).toBe('unreachable');
+    expect(state).not.toHaveProperty('count');
   });
 });
