@@ -1,6 +1,6 @@
 import { batch, createSignal, onCleanup, onMount, Show } from 'solid-js';
 import type { Component } from 'solid-js';
-import { graphqlFetch } from '../api/graphql';
+import { graphqlFetch, type GraphqlResult } from '../api/graphql';
 import {
   InitialisationStatus,
   InitialiseAsCentralServer,
@@ -124,6 +124,31 @@ export const InitialisationPage: Component<{
     }
   };
 
+  // The server flips its GraphQL schema to the authenticated one the instant
+  // sync finishes (contract § initialisation wire trap) — essentially
+  // synchronously with the sync record itself being marked succeeded, with no
+  // guaranteed ordering between the two from a poller's point of view. A tick
+  // that lands after the flip gets 'unauthenticated' instead of the terminal
+  // status, and — since no one has logged in yet on this screen — every tick
+  // after that does too: the re-login modal never fires pre-login (user()
+  // gates it), so a plain "ignore and retry" leaves the page spinning
+  // forever even though initialisation already succeeded. InitialisationStatus
+  // stays public across the flip, so an unauthenticated tick re-checks THAT
+  // directly instead of treating it as transient.
+  const handlePollResult = (
+    result: GraphqlResult<{ latestSyncStatus: SyncStatusFragment | null }>
+  ) => {
+    if (result.kind === 'success') {
+      handleStatus(result.data.latestSyncStatus);
+      return;
+    }
+    if (result.kind === 'unauthenticated') {
+      void confirmInitialised();
+    }
+    // Any other transient poll failure is ignored (background: no global
+    // unexpected-error modal); the next tick retries.
+  };
+
   // Spec: try the sync status subscription first; fall back to polling. A
   // subscription only pushes on CHANGE — establishing it proves the channel is
   // live but delivers nothing on its own, so a resumed/reconnected watch would
@@ -133,10 +158,7 @@ export const InitialisationPage: Component<{
   const watchProgress = () => {
     disposeWatch?.();
     void graphqlFetch(LatestSyncStatus, {}, { background: true }).then(
-      result => {
-        if (result.kind === 'success')
-          handleStatus(result.data.latestSyncStatus);
-      }
+      handlePollResult
     );
     let poller: number | undefined;
     const disposeSubscription = subscribe(SyncInfoUpdated, undefined, {
@@ -144,12 +166,7 @@ export const InitialisationPage: Component<{
       onFailure: () => {
         poller = window.setInterval(() => {
           void graphqlFetch(LatestSyncStatus, {}, { background: true }).then(
-            result => {
-              // Transient poll failures are ignored (background: no global
-              // unexpected-error modal); the next tick retries.
-              if (result.kind === 'success')
-                handleStatus(result.data.latestSyncStatus);
-            }
+            handlePollResult
           );
         }, SYNC_POLL_INTERVAL_MS);
       },
