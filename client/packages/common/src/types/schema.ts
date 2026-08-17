@@ -882,6 +882,12 @@ export type AuthToken = {
    * (e.g. Sage) that pass it as `Authorization: Bearer`.
    */
   token: Scalars['String']['output'];
+  /**
+   * The authenticated user, in the same shape as the `me` query. Lets clients fetch user
+   * details (stores, permissions, language, auth timing durations, ...) in the same round
+   * trip as the login itself.
+   */
+  user: UserNode;
 };
 
 export type AuthTokenError = {
@@ -3645,6 +3651,13 @@ export type IndicatorColumnNode = {
   isActive: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   value?: Maybe<IndicatorValueNode>;
+  /**
+   * The cell's effective type — this column's configured type, falling back
+   * to its line's where the column declares none (`var` in mSupply). This is
+   * the type an edit is validated against, so it is the one to render an
+   * input from. Null where neither declares a type: an edit is then not
+   * type-checked at all.
+   */
   valueType?: Maybe<IndicatorValueTypeNode>;
 };
 
@@ -3673,6 +3686,11 @@ export type IndicatorLineRowNode = {
   isActive: Scalars['Boolean']['output'];
   lineNumber: Scalars['Int']['output'];
   name: Scalars['String']['output'];
+  /**
+   * The line's own configured type, null where it declares none (`var` in
+   * mSupply). A CELL's type is its column's `valueType`, which already
+   * resolves the fallback to this one.
+   */
   valueType?: Maybe<IndicatorValueTypeNode>;
 };
 
@@ -5039,6 +5057,8 @@ export type InvoiceLineFilterInput = {
   invoiceStatus?: InputMaybe<EqualFilterInvoiceStatusInput>;
   invoiceType?: InputMaybe<EqualFilterInvoiceTypeInput>;
   isProgramInvoice?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Matches on item code OR item name */
+  itemCodeOrName?: InputMaybe<StringFilterInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
   locationId?: InputMaybe<EqualFilterStringInput>;
   numberOfPacks?: InputMaybe<EqualFilterBigFloatingNumberInput>;
@@ -7800,6 +7820,8 @@ export type PricingNode = {
   taxPercentage?: Maybe<Scalars['Float']['output']>;
   totalAfterTax: Scalars['Float']['output'];
   totalBeforeTax: Scalars['Float']['output'];
+  /** Sum of number_of_packs * volume_per_pack over stock lines */
+  totalVolume: Scalars['Float']['output'];
 };
 
 export enum PrintFormat {
@@ -8489,6 +8511,8 @@ export type Queries = {
   schedulesWithPeriodsByProgram: PeriodSchedulesResponse;
   /** Query omSupply "sensor" entries */
   sensors: SensorsResponse;
+  /** The running server's version, from the repo-root package.json (e.g. "3.00.00-RC") */
+  serverVersion: Scalars['String']['output'];
   shippingMethods: ShippingMethodsResponse;
   stockCounts: StockCounts;
   /** Query for "stock_line" entries */
@@ -10959,6 +10983,7 @@ export enum SyncErrorVariantV7 {
   SiteIdNotSet = 'SITE_ID_NOT_SET',
   SiteIsNotV7 = 'SITE_IS_NOT_V7',
   SiteLockError = 'SITE_LOCK_ERROR',
+  SyncFileNotFound = 'SYNC_FILE_NOT_FOUND',
   SyncRecordSerializeError = 'SYNC_RECORD_SERIALIZE_ERROR',
   SyncVersionMismatch = 'SYNC_VERSION_MISMATCH',
   TokenAlreadyAllocated = 'TOKEN_ALREADY_ALLOCATED',
@@ -12786,12 +12811,24 @@ export type UserNode = {
   /** The user's email address */
   email?: Maybe<Scalars['String']['output']>;
   firstName?: Maybe<Scalars['String']['output']>;
+  /**
+   * How long (in seconds) the user may be inactive before the client should force a re-login.
+   * Sourced from server configuration (`server.inactivity_timeout_seconds`); advisory — the
+   * server does not enforce it.
+   */
+  inactivityTimeoutSeconds: Scalars['Int']['output'];
   jobTitle?: Maybe<Scalars['String']['output']>;
   language: LanguageTypeNode;
   lastName?: Maybe<Scalars['String']['output']>;
   permissions: UserStorePermissionConnector;
   phoneNumber?: Maybe<Scalars['String']['output']>;
   stores: UserStoreConnector;
+  /**
+   * If the user is active but no API call has happened for this long (in seconds), the client
+   * should call the refresh endpoint (`refreshToken`) to keep the session alive. Sourced from
+   * server configuration (`server.token_refresh_interval_seconds`).
+   */
+  tokenRefreshIntervalSeconds: Scalars['Int']['output'];
   /** Internal user id */
   userId: Scalars['String']['output'];
   username: Scalars['String']['output'];
