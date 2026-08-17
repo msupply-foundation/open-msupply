@@ -2,7 +2,7 @@ import { generateUUID } from '@/uuid';
 import { createMemo, createSignal, onMount, Show, type JSX } from 'solid-js';
 import { createStore, produce, reconcile, unwrap } from 'solid-js/store';
 import { graphqlFetch } from '@/api/graphql';
-import { t, tPlural } from '@/intl';
+import { formatNumber, t, tPlural } from '@/intl';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import {
   createFocusTarget,
@@ -45,6 +45,9 @@ import { NameSearch } from '@/domain/name';
 import { CampaignOrProgramSelect } from '@/domain/campaign';
 import { stocktakePreferences } from '@/store/storeContext';
 import { dosesCounted } from '../lines/doses';
+// The detail table's own count arithmetic, shared so S3 and this editor cannot
+// disagree on the sign or on what counts as "uncounted".
+import { lineDifference } from '../lines/stocktakeLine';
 import { PlusCircleIcon, TrashIcon, CopyIcon } from '@/ui/icons';
 import {
   StockLinesByItem,
@@ -995,6 +998,56 @@ const StocktakeLineEditContent = (
         );
       },
     },
+    // Difference = counted − snapshot, immediately after the two figures it is
+    // drawn from — the comparison the counter is actually making. Shares the
+    // detail table's `lineDifference` (../lines/stocktakeLine), so the editor
+    // and S3 can never disagree on the sign or on what "uncounted" means.
+    //
+    // A read-only VALUE, not a disabled input: the absence of a box is what
+    // says read-only, and a difference is arithmetic that is never typed
+    // (kdd/form-layout; inbound's Difference and Line total do the same).
+    //
+    // Omitted alongside Snapshot under blind stocktake — the same gate, since
+    // a difference would hand back the theoretical stock the preference exists
+    // to hide (rules.md § store-preference gates names Snapshot and Difference
+    // together, for the detail table AND this editor).
+    ...(hideSnapshotStock()
+      ? []
+      : [
+          {
+            c: { id: 'difference' },
+            header: () => t('label.difference'),
+            cardGroup: 'batch',
+            ...getNumberCell({ cardWidth: 5 }),
+            cell: info => {
+              const line = info.row.original;
+              // A getter, not a hoisted const: read inside JSX it stays
+              // tracked, so the figure follows the draft store as the counter
+              // types (kdd/solid-reactivity-pitfalls).
+              const diff = () => lineDifference(line);
+              return (
+                <span
+                  class={styles.statValue}
+                  // Weight only when there IS a discrepancy — that is the
+                  // batch worth looking at. Zero, and "not counted yet", are
+                  // non-events.
+                  data-signal={diff() ? '' : undefined}
+                >
+                  {/* Uncounted ⇒ nothing to compare against. An em dash, as
+                      every other read-only "no value" in the vertical uses. */}
+                  {diff() === null
+                    ? '—'
+                    : // Explicit + on a positive adjustment (a negative
+                      // carries its own sign), so the direction reads without
+                      // colour doing the work.
+                      `${diff()! > 0 ? '+' : ''}${formatNumber(diff()!, {
+                        maximumFractionDigits: 2,
+                      })}`}
+                </span>
+              );
+            },
+          } satisfies Column<DraftLine, never, GroupKey>,
+        ]),
     {
       c: { key: 'packSize' },
       header: () => t('label.pack-size'),

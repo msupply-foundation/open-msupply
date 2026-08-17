@@ -46,3 +46,24 @@
 .countBox {
   margin-inline: auto;
 }
+
+/* A read-only figure sitting in a row of inputs (Difference) — the same
+   treatment inbound's Difference and Line total get. A VALUE, not a disabled
+   input: the absence of a box is what says read-only, whereas `disabled` means
+   "an input you cannot use right now". Sized to the input row so the fields
+   either side still line up, and tabular so the digits align down the column.
+   data-signal weights it only when there IS a discrepancy — a zero, or no
+   count yet, is a non-event and stays regular. */
+.statValue {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-block-size: var(--input-height-sm);
+  color: var(--text-body);
+  font-size: var(--input-font-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.statValue[data-signal] {
+  font-weight: var(--weight-medium);
+}
