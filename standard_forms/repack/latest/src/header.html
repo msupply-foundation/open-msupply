@@ -10,7 +10,7 @@
     </th>
     {% endif %}
     <th style="text-align:start;width:20%;">
-      <span style="font-weight:bold;">{{ data.store.storeName }}</span><br>
+      <span style="font-weight:bold;" excel-cell="F1" excel-type="bold">{{ data.store.storeName }}</span><br>
       <span style="font-size:6pt;">{{ data.store.name.address1 }}</span><br>
       <span style="font-size:6pt;">{{ data.store.name.address2 }}</span><br>
       <span style="font-size:6pt;">
@@ -22,23 +22,25 @@
       <br>
       <br>
     </th>
-    <th style="text-align:end;width:70%;font-size:28pt;">
+    <th style="text-align:end;width:70%;font-size:28pt;" excel-cell="A1" excel-type="title">
       {{ t(k="label.repack", f="Repack") }}<br>
     </th>
   </tr>
 </table>
 
+<!-- excel-cell places each identity line in the exported sheet, so the export
+     names the repack it holds just as the printed slip does. -->
 <div class="header_image_section" style="display: flex; flex-direction: column;">
-  <div style="display: flex; justify-content: flex-end;">
+  <div style="display: flex; justify-content: flex-end;" excel-cell="A3">
     {{ t(k="label.number", f="Number") }}: {{ data.repack.invoice.invoiceNumber }}
   </div>
-  <div style="display: flex; justify-content: flex-end;">
+  <div style="display: flex; justify-content: flex-end;" excel-cell="A4">
     {{t(k="report.confirmed-date", f="Confirmed date")}}: {{data.repack.datetime | date(format="%d/%m/%Y")}}
   </div>
-  <div style="display: flex; justify-content: flex-end;">
+  <div style="display: flex; justify-content: flex-end;" excel-cell="F3">
     {{t(k="report.item-code", f="Item code")}}: {{ data.repack.from.stockLine.item.code }}
   </div>
-  <div style="display: flex; justify-content: flex-end; padding-bottom: 10px;">
+  <div style="display: flex; justify-content: flex-end; padding-bottom: 10px;" excel-cell="F4">
     {{t(k="report.item-name", f="Item name")}}: {{
     data.repack.from.stockLine.item.name }}
   </div>
