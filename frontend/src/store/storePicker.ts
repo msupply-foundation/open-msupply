@@ -46,17 +46,19 @@ export const createStorePicker = () => {
       const currentUser = user();
       return currentUser ? getPreviousStoreId(currentUser.userId) : undefined;
     },
-    // The checkbox's starting state — true while a saved store exists, even a
-    // stale one (a forced re-pick keeps the opt-in).
-    alwaysOpenSaved: () => {
+    // The saved always-open store's id, or undefined. Its PRESENCE is the
+    // toggle's starting state — on while any id is saved, including a STALE
+    // one (a forced re-pick keeps the opt-in). Its VALUE names the store on
+    // the toggle's own line (.38), which is why this is the id and not a
+    // boolean; a stale id matches no row in the panel, so the line falls back
+    // to the pending wording rather than naming a store the user cannot see.
+    alwaysOpenStoreId: () => {
       const currentUser = user();
-      return currentUser
-        ? getAlwaysOpenStoreId(currentUser.userId) !== undefined
-        : false;
+      return currentUser ? getAlwaysOpenStoreId(currentUser.userId) : undefined;
     },
-    // Every checkbox toggle, before any pick. An UNTICK withdraws the opt-in
-    // on the spot (SL-9) — it must not wait for a confirm that may never
-    // come (the panel dismissed). A tick saves nothing here: only the
+    // Every toggle, before any pick. Turning it OFF withdraws the opt-in on
+    // the spot (SL-9) — it must not wait for a confirm that may never come
+    // (the panel dismissed). Turning it ON saves nothing here: only the
     // confirm knows which store to save.
     alwaysOpenChanged: (alwaysOpen: boolean) => {
       const currentUser = user();
