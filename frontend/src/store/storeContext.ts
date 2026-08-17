@@ -105,10 +105,14 @@ const stockPreferences = () => {
 // `donorTracking`/`vvm`/`vaccinesInDoses` overlap the stocktake gates; the
 // inbound-only ones (procurement, authorisation, foreign currency, backdating,
 // pack-to-one, manual internal-order linking) ride the same guard-3 query.
+// `invoiceStatusOptions` empty means UNRESTRICTED (every status offered until
+// the real value resolves — the permissive default, as in outbound/
+// prescriptions above; spec/inbound-shipments § preference gates).
 const inboundShipmentPreferences = () => {
   const prefs = storeContext()?.preferences;
   const store = storeContext()?.storePreferences;
   return {
+    invoiceStatusOptions: prefs?.invoiceStatusOptions ?? [],
     manageVaccinesInDoses: prefs?.manageVaccinesInDoses ?? false,
     manageVvmStatusForStock: prefs?.manageVvmStatusForStock ?? false,
     allowTrackingOfStockByDonor: prefs?.allowTrackingOfStockByDonor ?? false,
