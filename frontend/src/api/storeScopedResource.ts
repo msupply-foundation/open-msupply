@@ -1,4 +1,5 @@
 import { createResource, createRoot } from 'solid-js';
+import { sameFetchedValue } from '../typeHelpers';
 
 // A store-scoped, lazy, de-duplicated global cache — the reusable shape for
 // app-wide lookups that depend on the current store (master lists, locations,
@@ -67,9 +68,14 @@ export function createStoreScopedResource<T>(
 
   const build = (): StoreScopedResource<T> =>
     createRoot(() => {
-      const [resource, { refetch }] = createResource(
+      const [resource, { refetch }] = createResource<T[], string>(
         storeId,
-        async id => (await fetcher(id)) ?? []
+        async (id, { value }) => {
+          const next = (await fetcher(id)) ?? [];
+          return value !== undefined && sameFetchedValue(next, value)
+            ? value
+            : next;
+        }
       );
       return {
         // Idiomatic resource read — suspends an ancestor <Suspense> on the
