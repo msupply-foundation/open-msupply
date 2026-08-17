@@ -24,12 +24,12 @@ const SEARCH_THRESHOLD = 7;
 
 /*
  * Store selector — the store-picker panel, per issue #193 (mark-prins's
- * review): card rows (with Default / Last-used / Current chips), the pinned
- * previous/default group under its own heading, a search field only when the
- * list is long (7+ stores), and the "Always open" checkbox at the top.
- * Presentational and dismiss-agnostic — it takes the (already-ordered) stores
- * and reports the chosen id via onConfirm; the host decides what confirming
- * does.
+ * review): hairline-divided list rows (with Default / Last-used / Current
+ * chips) in one box per group, the pinned previous/default rows leading
+ * unlabelled, a search field only when the list is long (7+ stores), and the
+ * always-open toggle on one quiet line beneath. Presentational and
+ * dismiss-agnostic — it takes the (already-ordered) stores and reports the
+ * chosen id via onConfirm; the host decides what confirming does.
  *
  * Clicking a row CONFIRMS it — no separate Continue (D113, issue #193); arrow
  * keys move the highlighted row and Enter anywhere in the panel confirms it
@@ -48,11 +48,11 @@ const SEARCH_THRESHOLD = 7;
  * was a checkbox above the search, which got three things wrong: it took the
  * panel's best slot for a once-ever preference, its label ("Remember my
  * choice") could not say what was remembered, and its two directions have
- * different timing with nothing to show for it. Its label states the
- * relationship to the pick still to come — "always open the store I pick" —
- * rather than naming a store: every row confirms on click, so a label naming
- * the HIGHLIGHTED row would misdescribe any pointer pick made elsewhere in
- * the list.
+ * different timing with nothing to show for it. Its label NAMES the saved
+ * store while one is in force ("Always open Gryffindor District Store") and
+ * states the pending relationship otherwise ("Always open the store I pick")
+ * — .38. It never names the HIGHLIGHTED row: every row confirms on click, so
+ * that would misdescribe any pointer pick made elsewhere in the list.
  *
  * The toggle's two directions reach the host at different moments (spec
  * startup SL-9): on, it rides the confirm as onConfirm's `alwaysOpen` flag —
@@ -61,7 +61,7 @@ const SEARCH_THRESHOLD = 7;
  * clears the saved store immediately, pick or no pick (.32). A toggle before
  * the pick, never a prompt after it, so choosing a store stays one
  * interaction. It arrives showing the device's saved opt-in: the host seeds
- * it via `defaultAlwaysOpen` (.31), false on a fresh device.
+ * it via `alwaysOpenStoreId` (.31), absent on a fresh device.
  *
  * Colour independence: the Default / Last-used / Current markers are
  * StatusChips (dot + label), never colour alone; the active row is a token
@@ -79,7 +79,7 @@ export const StoreSelector = (props: {
    * you already are (spec S3, OMS-REG-LGN-02.35). */
   currentStoreId?: string;
   /** How many stores lead the list as the pinned previous/default group —
-   * rendered under a "Recent stores" heading (0/undefined: one unlabelled
+   * rendered as the unlabelled lead group (0/undefined: one unlabelled
    * group). The caller pinned them; only it knows how many rows are "the
    * pins". */
   pinnedCount?: number;
@@ -93,11 +93,14 @@ export const StoreSelector = (props: {
    * heading (the store-switch modal's Dialog title, spec startup S3). The
    * list keeps its own aria-label either way. */
   hideTitle?: boolean;
-  /** The always-open toggle's starting state — the device's saved opt-in
-   * (spec SL-9, OMS-REG-LGN-02.31): true while an always-open store is saved
-   * for the user. Read once at mount; both hosts mount the panel fresh per
-   * show. */
-  defaultAlwaysOpen?: boolean;
+  /** The store saved as the user's always-open one on this device, or
+   * undefined (spec SL-9, OMS-REG-LGN-02.31). Its PRESENCE is the toggle's
+   * starting state — on while any id is saved, including a stale one, since a
+   * forced re-pick keeps the opt-in. Its VALUE names the store on the
+   * toggle's line (.38); a stale id matches no row here, so the line falls
+   * back to the pending wording rather than naming a store the user cannot
+   * see. Read once at mount; both hosts mount the panel fresh per show. */
+  alwaysOpenStoreId?: string;
   /** Fired on every toggle, before any pick. The host persists the
    * UNTICK from here — withdrawing the opt-in needs no store, so it must not
    * wait for a confirm that may never come (spec SL-9, OMS-REG-LGN-02.32). */
@@ -107,8 +110,30 @@ export const StoreSelector = (props: {
   const [query, setQuery] = createSignal('');
   const [selected, setSelected] = createSignal<string | undefined>();
   const [alwaysOpen, setAlwaysOpen] = createSignal(
-    props.defaultAlwaysOpen ?? false
+    props.alwaysOpenStoreId !== undefined
   );
+  // The store currently IN FORCE as the always-open one, tracked separately
+  // from the toggle because SL-9's two directions have different timing.
+  // Turning the toggle OFF clears the saved store at once, so this clears with
+  // it; turning it back ON saves nothing until the confirm, so this stays
+  // empty and the line reverts to naming no store — which is the truth.
+  const [savedStoreId, setSavedStoreId] = createSignal(props.alwaysOpenStoreId);
+
+  const toggleAlwaysOpen = () => {
+    const on = !alwaysOpen();
+    setAlwaysOpen(on);
+    if (!on) setSavedStoreId(undefined);
+    props.onAlwaysOpenChange?.(on);
+  };
+
+  // The name to put on the toggle's line, or undefined for the pending
+  // wording. Only while the opt-in is on AND a saved store resolves to a row
+  // the user can actually see.
+  const savedStoreName = () => {
+    if (!alwaysOpen()) return undefined;
+    const id = savedStoreId();
+    return id ? props.stores.find(s => s.id === id)?.name : undefined;
+  };
 
   const showSearch = () => props.stores.length >= SEARCH_THRESHOLD;
 
@@ -220,19 +245,24 @@ export const StoreSelector = (props: {
     return visible()[0]?.id;
   });
 
-  // The list in one or two labelled groups. The pinned previous/default rows
-  // lead under "Recent stores" and the remainder sits under "All stores" — a
-  // heading each, rather than the bare rule the group division used to be: with
-  // a single pin a rule reads as an accidental gap, and it says nothing to a
-  // screen reader. A FILTERED list is one flat result set with no heading (the
-  // pins have no meaning among matches), as is a list with nothing pinned.
+  // The list in one or two groups, each its own box. The pinned
+  // previous/default rows lead UNLABELLED — nothing sits above them to be told
+  // apart from — and the remainder sits under "All stores", the one heading
+  // that earns its line by marking where the shortcut ends and the full list
+  // starts. A FILTERED list is one flat result set with no heading (the pins
+  // have no meaning among matches), as is a list with nothing pinned.
   const groups = createMemo<{ label?: string; stores: StoreOption[] }[]>(() => {
     const rows = visible();
     const pinned = props.pinnedCount ?? 0;
     if (query().trim() || pinned <= 0 || pinned >= rows.length)
       return [{ stores: rows }];
+    // The pinned group carries NO heading: it leads the panel, so there is
+    // nothing above it to be told apart from, and its own box plus the
+    // labelled group beneath already separate the two. "All stores" is the
+    // one label that earns its line — it marks where the shortcut ends and
+    // the full list starts.
     return [
-      { label: t('label.recent-stores'), stores: rows.slice(0, pinned) },
+      { stores: rows.slice(0, pinned) },
       { label: t('label.all-stores'), stores: rows.slice(pinned) },
     ];
   });
@@ -371,11 +401,7 @@ export const StoreSelector = (props: {
         class={styles.alwaysOpen}
         aria-pressed={alwaysOpen()}
         data-testid="store-always-open-toggle"
-        onClick={() => {
-          const on = !alwaysOpen();
-          setAlwaysOpen(on);
-          props.onAlwaysOpenChange?.(on);
-        }}
+        onClick={toggleAlwaysOpen}
       >
         <Show
           when={alwaysOpen()}
@@ -383,7 +409,18 @@ export const StoreSelector = (props: {
         >
           <CheckCircleIcon class={styles.alwaysOpenIcon} />
         </Show>
-        {t('label.always-open-picked-store')}
+        {/* Names the saved store while one is actually in force, and states
+            the pending relationship otherwise (.38). The two wordings track
+            SL-9's asymmetry exactly: a saved store is a fact that can be
+            named, whereas an opt-in just armed has no store yet — the pick
+            that will fill it hasn't happened, and naming the highlighted row
+            would be a guess that any click elsewhere in the list falsifies. */}
+        <Show
+          when={savedStoreName()}
+          fallback={t('label.always-open-picked-store')}
+        >
+          {name => t('label.always-open-named-store', { store: name() })}
+        </Show>
       </button>
     </div>
   );
