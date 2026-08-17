@@ -20,6 +20,10 @@ interface ConfirmationModalProps {
   cancelButtonLabel?: string | undefined;
   otherButtons?: Array<React.ReactNode>;
   placeCancelButtonFirst?: boolean;
+  /** Overrides the default `confirmation-modal` test id. */
+  testId?: string;
+  /** Overrides the default `confirmation-modal-ok` test id. */
+  confirmTestId?: string;
 }
 
 const iconLookup = {
@@ -42,6 +46,8 @@ export const ConfirmationModal = ({
   cancelButtonLabel,
   otherButtons,
   placeCancelButtonFirst = false,
+  testId = 'confirmation-modal',
+  confirmTestId = 'confirmation-modal-ok',
 }: ConfirmationModalProps) => {
   const [loading, setLoading] = useState(false);
   const Icon = iconLookup[iconType];
@@ -64,7 +70,7 @@ export const ConfirmationModal = ({
       height={height}
       open={open}
       onClose={onCancel}
-      data-testid="confirmation-modal"
+      data-testid={testId}
     >
       <Grid container gap={1} flex={1} padding={4} flexDirection="column">
         <Grid container gap={1} flexDirection="row">
@@ -107,7 +113,7 @@ export const ConfirmationModal = ({
               color="secondary"
               startIcon={<CheckIcon />}
               isLoading={loading}
-              data-testid="confirmation-modal-ok"
+              data-testid={confirmTestId}
               onClick={async () => {
                 const result = onConfirm && onConfirm();
                 if (result instanceof Promise) {

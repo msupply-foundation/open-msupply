@@ -34,6 +34,7 @@ export const ModalTabs: FC<DetailTabsProps> = ({ sx, tabs }) => {
               value={value}
               label={t(value as LocaleKey)}
               tabIndex={index === 0 ? -1 : undefined}
+              data-testid={`tab-${value.toLowerCase().replace(/\s+/g, '-')}`}
             ></Tab>
           ))}
         </ShortTabList>

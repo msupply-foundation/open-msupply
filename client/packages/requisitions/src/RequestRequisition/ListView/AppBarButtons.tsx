@@ -80,6 +80,7 @@ export const AppBarButtons: FC<{
           Icon={<PlusCircleIcon />}
           label={t('label.new-internal-order')}
           onClick={handleAddRequisitionClick}
+          data-testid="new-internal-order-button"
         />
         {!simplifiedTabletView && (
           <ExportSelector
@@ -91,6 +92,8 @@ export const AppBarButtons: FC<{
       </Grid>
       <ConfirmationModal
         open={confirmationState}
+        testId="stocktake-warning-modal"
+        confirmTestId="continue-without-stocktake-button"
         title={t('heading.are-you-sure')}
         message={t('warning.insufficient-recent-stocktake-items', {
           minItems: prefs.warnWhenMissingRecentStocktake?.minItems,
@@ -110,6 +113,7 @@ export const AppBarButtons: FC<{
           <DialogButton
             key="go-to-stocktakes"
             variant="back"
+            testId="go-to-stocktakes-button"
             customLabel={t('button.go-to-stocktakes')}
             onClick={() =>
               navigate(

@@ -79,6 +79,7 @@ export const AddButton = ({
         isDisabled={disableAddItem}
         openFrom="bottom"
         Icon={<PlusCircleIcon />}
+        testId="add-item-button"
       />
 
       {masterListModalController.isOn && (

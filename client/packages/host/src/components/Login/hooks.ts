@@ -99,8 +99,10 @@ export const useLoginForm = (
   useEffect(() => {
     if (!initStatus) return;
 
+    // `replace` so the uninitialised login page never becomes a back-button target — pushing
+    // let a redirect loop bury the real history under thousands of entries.
     if (initStatus.status != InitialisationStatusType.Initialised)
-      navigate(`/${AppRoute.Initialise}`);
+      navigate(`/${AppRoute.Initialise}`, { replace: true });
   }, [initStatus]);
 
   return {

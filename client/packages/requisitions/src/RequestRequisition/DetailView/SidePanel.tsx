@@ -69,11 +69,13 @@ export const SidePanel: FC = () => {
             title={t('label.delete')}
             onClick={onDelete}
             disabled={!canDelete}
+            testId="delete-internal-order-button"
           />
           <DetailPanelAction
             icon={<CopyIcon />}
             title={t('link.copy-to-clipboard')}
             onClick={copyToClipboard}
+            testId="copy-to-clipboard-button"
           />
         </>
       }

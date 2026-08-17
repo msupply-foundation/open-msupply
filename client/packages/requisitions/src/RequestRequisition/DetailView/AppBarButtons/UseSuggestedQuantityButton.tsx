@@ -26,6 +26,7 @@ export const UseSuggestedQuantityButtonComponent = () => {
       label={t('button.requested-to-suggested')}
       onClick={() => getConfirmation()}
       disabled={isDisabled}
+      data-testid="use-suggested-quantities-button"
     />
   );
 };

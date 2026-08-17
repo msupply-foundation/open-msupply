@@ -26,7 +26,7 @@ start /b /wait build\windows\omsupply-prepare.bat
 
 @ECHO ##### update cargo binary version #####
 @FOR /F "delims=*" %%i in ('more omSupply\version.txt') do SET versionTag=%%i
-@FOR /F "delims=*" %%i in ('node getVersion.js') do set version=%%i
+@FOR /F "delims=*" %%i in ('node build\windows\getVersion.js') do set version=%%i
 
 @cd server 
 

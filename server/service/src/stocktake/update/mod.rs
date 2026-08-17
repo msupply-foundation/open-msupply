@@ -932,4 +932,124 @@ mod test {
             Some(mock_immunisation_program_a().id)
         );
     }
+
+    /// Regression test for the concurrent-finalisation race: two users in the same store
+    /// finalising the same stocktake at the same time must result in exactly one success and one
+    /// `CannotEditFinalised` error, with the inventory adjustment applied only once.
+    ///
+    /// Postgres-only: under Postgres' default READ COMMITTED isolation both transactions could
+    /// otherwise read `status = New` and both commit. SQLite serialises writers via
+    /// `BEGIN IMMEDIATE`, so the interleaving can't occur there and the test wouldn't exercise the
+    /// race.
+    #[cfg(feature = "postgres")]
+    #[actix_rt::test]
+    async fn finalise_stocktake_concurrent_only_one_succeeds() {
+        use std::sync::{Arc, Barrier};
+
+        let stock_line = StockLineRow {
+            id: "stock_line_concurrent_finalise".to_string(),
+            item_id: mock_item_a().id,
+            store_id: mock_store_a().id,
+            pack_size: 1.0,
+            available_number_of_packs: 5.0,
+            total_number_of_packs: 5.0,
+            ..Default::default()
+        };
+
+        let stocktake = StocktakeRow {
+            id: "stocktake_concurrent_finalise".to_string(),
+            store_id: mock_store_a().id,
+            stocktake_number: 200,
+            created_datetime: NaiveDate::from_ymd_opt(2024, 1, 1)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap(),
+            status: StocktakeStatus::New,
+            ..Default::default()
+        };
+
+        // Counted (10) > snapshot (5) => inventory addition, bringing the stock line to 10 packs.
+        let stocktake_line = StocktakeLineRow {
+            id: "stocktake_line_concurrent_finalise".to_string(),
+            stocktake_id: stocktake.id.clone(),
+            stock_line_id: Some(stock_line.id.clone()),
+            item_id: mock_item_a().id,
+            snapshot_number_of_packs: 5.0,
+            counted_number_of_packs: Some(10.0),
+            ..Default::default()
+        };
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "finalise_stocktake_concurrent_only_one_succeeds",
+            MockDataInserts::all(),
+            MockData {
+                stock_lines: vec![stock_line.clone()],
+                stocktakes: vec![stocktake.clone()],
+                stocktake_lines: vec![stocktake_line],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = Arc::new(ServiceProvider::new(connection_manager));
+        let barrier = Arc::new(Barrier::new(2));
+
+        let handles: Vec<_> = (0..2)
+            .map(|_| {
+                let service_provider = service_provider.clone();
+                let barrier = barrier.clone();
+                let stocktake_id = stocktake.id.clone();
+                std::thread::spawn(move || {
+                    // Each thread gets its own DB connection (and therefore its own transaction).
+                    let context = service_provider
+                        .context(mock_store_a().id, "".to_string())
+                        .unwrap();
+                    // Release both threads as close together as possible to exercise the race.
+                    barrier.wait();
+                    service_provider.stocktake_service.update_stocktake(
+                        &context,
+                        UpdateStocktake {
+                            id: stocktake_id,
+                            status: Some(UpdateStocktakeStatus::Finalised),
+                            ..Default::default()
+                        },
+                    )
+                })
+            })
+            .collect();
+
+        let results: Vec<_> = handles
+            .into_iter()
+            .map(|handle| handle.join().unwrap())
+            .collect();
+
+        let successes = results.iter().filter(|result| result.is_ok()).count();
+        let already_finalised_errors = results
+            .iter()
+            .filter(|result| matches!(result, Err(UpdateStocktakeError::CannotEditFinalised)))
+            .count();
+
+        assert_eq!(
+            successes, 1,
+            "exactly one concurrent finalisation should succeed, got: {results:?}"
+        );
+        assert_eq!(
+            already_finalised_errors, 1,
+            "the losing finalisation should be rejected as already finalised, got: {results:?}"
+        );
+
+        // Stocktake finalised exactly once.
+        let finalised = StocktakeRepository::new(&connection)
+            .find_one_by_id(&stocktake.id)
+            .unwrap()
+            .unwrap();
+        assert_eq!(finalised.status, StocktakeStatus::Finalised);
+
+        // Inventory adjustment applied exactly once: 5 -> 10 packs (not 15).
+        let adjusted_stock_line = StockLineRowRepository::new(&connection)
+            .find_one_by_id(&stock_line.id)
+            .unwrap()
+            .unwrap();
+        assert_eq!(adjusted_stock_line.total_number_of_packs, 10.0);
+    }
 }

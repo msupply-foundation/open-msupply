@@ -264,6 +264,7 @@ export const StatusChangeButton = () => {
         label={selectedOption.label}
         Icon={<ArrowRightIcon />}
         onClick={onClick}
+        data-testid="save-and-confirm-status-button"
       />
     </div>
   );

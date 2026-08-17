@@ -42,6 +42,8 @@ interface DialogButtonProps {
   type?: 'button' | 'submit' | 'reset';
   customLabel?: string;
   shouldShrink?: boolean;
+  /** Overrides the derived `dialog-button-<variant>` test id. */
+  testId?: string;
 }
 
 const getButtonProps = (
@@ -136,6 +138,7 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
   type,
   customLabel,
   shouldShrink,
+  testId,
 }) => {
   const t = useTranslation();
   const { variant: buttonVariant, icon, labelKey } = getButtonProps(variant);
@@ -204,7 +207,7 @@ export const DialogButton: React.FC<DialogButtonProps> = ({
       label={customLabel ?? t(labelKey)}
       tabIndex={variant === 'cancel' ? 1 : 0}
       type={type}
-      data-testid={`dialog-button-${variant}`}
+      data-testid={testId ?? `dialog-button-${variant}`}
       sx={
         disabled
           ? {

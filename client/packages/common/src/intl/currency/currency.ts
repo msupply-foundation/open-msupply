@@ -113,7 +113,8 @@ export type Currencies =
   | 'XAF'
   | 'XOF'
   | 'STN'
-  | 'AFN';
+  | 'AFN'
+  | 'HTG';
 
 export const currencyOptions = (locale: string, code?: Currencies) => {
   switch (code) {
@@ -251,6 +252,19 @@ export const currencyOptions = (locale: string, code?: Currencies) => {
         ...getSeparatorAndDecimal(locale),
         ...getPatterns(locale),
         symbol: '؋',
+        precision: 2,
+        format,
+      };
+    }
+    case 'HTG': {
+      return {
+        // separator: "," decimal = "."
+        ...getSeparatorAndDecimal(locale),
+        // The Gourde is always written with the code trailing the amount
+        // (1,234.56 HTG), regardless of the UI language.
+        pattern: '# !',
+        negativePattern: '-# !',
+        symbol: 'HTG',
         precision: 2,
         format,
       };
