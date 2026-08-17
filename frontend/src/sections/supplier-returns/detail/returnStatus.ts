@@ -83,21 +83,15 @@ export const hasOriginalShipment = (node: {
 export const advanceBlockedByHold = (node: { onHold: boolean }): boolean =>
   node.onHold;
 
-// The flow narrowed to the statuses the invoice-status-options preference
-// offers (rules § preference gates — a display gate on EVERY status surface,
-// the lifecycle indicator included). Empty = no restriction.
-export const offeredFlow = (allowed: readonly string[]): ReturnStatus[] =>
-  (STATUS_FLOW as readonly ReturnStatus[]).filter(
-    s => allowed.length === 0 || allowed.includes(s)
-  );
-
-// Steps for the lifecycle indicator: each OFFERED stage with the datetime it
+// Steps for the lifecycle indicator: each OFFERED stage — the caller narrows
+// STATUS_FLOW by the invoice-status-options preference (@/domain/invoice
+// filterByStatusPreference; rules § preference gates) — with the datetime it
 // was reached (undefined = not reached yet). RECEIVED/VERIFIED datetimes are
 // the transfer counterpart's and are null on this return unless a counterpart
 // set them — shown for display.
 export const statusSteps = (
-  node: SupplierReturnInfoFragment,
-  allowed: readonly string[] = []
+  offered: readonly ReturnStatus[],
+  node: SupplierReturnInfoFragment
 ): { label: string; date?: string }[] => {
   const dates: Record<string, string | null | undefined> = {
     NEW: node.createdDatetime,
@@ -106,33 +100,8 @@ export const statusSteps = (
     RECEIVED: node.receivedDatetime,
     VERIFIED: node.verifiedDatetime,
   };
-  return offeredFlow(allowed).map(status => ({
+  return offered.map(status => ({
     label: statusLabel(status),
     date: dates[status] ?? undefined,
   }));
 };
-
-// The indicator's current stage within the OFFERED flow. When the preference
-// hides the actual status, the current stage falls back to the nearest offered
-// status at-or-before it. −1 when nothing at-or-before is offered.
-export const currentStep = (
-  status: ReturnStatus,
-  allowed: readonly string[] = []
-): number => {
-  const actual = statusIndex(status);
-  const offered = offeredFlow(allowed);
-  let current = -1;
-  offered.forEach((s, i) => {
-    if (statusIndex(s) <= actual) current = i;
-  });
-  return current;
-};
-
-// Filter the offered targets by the store's invoice-status-options preference
-// (rules § preference & permission gates — a display gate only). Empty = no
-// restriction.
-export const filterByStatusPreference = (
-  targets: AdvanceTarget[],
-  allowed: readonly string[]
-): AdvanceTarget[] =>
-  allowed.length === 0 ? targets : targets.filter(s => allowed.includes(s));
