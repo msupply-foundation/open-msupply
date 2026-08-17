@@ -200,7 +200,9 @@ export const AlertTriangleIcon = (props: IconProps) => (
   </Stroke>
 );
 
-/* Offline / connection lost (the error dialog's "can't reach the server") */
+/* Offline / connection lost — the app's one "can't reach the server" mark,
+   shared by the error dialog and the bottom bar's sync cell, so an outage looks
+   the same wherever it surfaces. */
 export const WifiOffIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
     <path d="M16.72 11.06C17.5387 11.4531 18.3037 11.9539 19 12.55" />
