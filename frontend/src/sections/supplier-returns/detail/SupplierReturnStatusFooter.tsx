@@ -8,7 +8,8 @@ import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { StatusChangeAction } from './actions/StatusChangeAction';
-import { currentStep, statusSteps } from './returnStatus';
+import { currentStep, filterByStatusPreference } from '@/domain/invoice';
+import { STATUS_FLOW, statusSteps } from './returnStatus';
 import type { SupplierReturnInfoFragment } from './supplierReturnDetail.generated';
 
 // The return-level footer (spec/supplier-returns/ui-surface.md S3 § layout —
@@ -45,6 +46,11 @@ export const SupplierReturnStatusFooter: Component<
   const [holdConfirm, setHoldConfirm] = createSignal(false);
 
   const holding = () => props.node.onHold;
+  // The flow narrowed by the invoice-status-options preference (rules §
+  // preference gates); an excluded current status highlights the nearest
+  // included earlier stage.
+  const offered = () =>
+    filterByStatusPreference(STATUS_FLOW, props.statusOptions);
 
   return (
     <ContentFooter>
@@ -61,8 +67,8 @@ export const SupplierReturnStatusFooter: Component<
       </Show>
 
       <StatusIndicator
-        steps={statusSteps(props.node, props.statusOptions)}
-        current={currentStep(props.node.status, props.statusOptions)}
+        steps={statusSteps(offered(), props.node)}
+        current={currentStep(STATUS_FLOW, offered(), props.node.status)}
       />
 
       {/* One inline-end cluster: Close sits right beside the Confirm-status

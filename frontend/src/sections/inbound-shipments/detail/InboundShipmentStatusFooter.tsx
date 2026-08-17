@@ -13,13 +13,14 @@ import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { ArrowRightIcon } from '../../../ui/icons';
 import type { InboundInfoFragment } from './inboundShipmentDetail.generated';
+import { inboundShipmentPreferences } from '../../../store/storeContext';
+import { currentStep, filterByStatusPreference } from '@/domain/invoice';
 import { updateInboundShipment } from './inboundShipmentUpdate';
 import {
   kindOf,
   reachableStatuses,
   statusDatetime,
   statusFlow,
-  statusIndex,
   STATUS_LABELS,
 } from './inboundShipmentStatus';
 
@@ -63,13 +64,21 @@ export const InboundShipmentStatusFooter: Component<
   const [errorMessage, setErrorMessage] = createSignal<string>();
 
   const kind = () => kindOf(props.node);
+  // Every status surface is limited by the invoice-status-options preference
+  // (spec § preference gates — OMS-REG-REPL-03.25); empty = unrestricted.
+  const allowed = () => inboundShipmentPreferences().invoiceStatusOptions;
   const flow = () => statusFlow(kind(), props.node.status);
+  const offered = () => filterByStatusPreference(flow(), allowed());
   const steps = () =>
-    flow().map(status => ({
+    offered().map(status => ({
       label: STATUS_LABELS[status],
       date: statusDatetime(props.node, status),
     }));
-  const reachable = () => reachableStatuses(kind(), props.node.status);
+  const reachable = () =>
+    filterByStatusPreference(
+      reachableStatuses(kind(), props.node.status),
+      allowed()
+    );
 
   const advance = async (status: string) => {
     if (busy()) return;
@@ -109,9 +118,11 @@ export const InboundShipmentStatusFooter: Component<
         {t('label.hold')}
       </CheckboxButton>
 
+      {/* An excluded current status highlights the nearest included earlier
+          stage (OMS-REG-REPL-03.26). */}
       <StatusIndicator
         steps={steps()}
-        current={statusIndex(flow(), props.node.status)}
+        current={currentStep(flow(), offered(), props.node.status)}
       />
 
       {/* The line pager, sharing this bar (`inBar` — it sizes to its cluster

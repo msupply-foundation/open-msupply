@@ -9,7 +9,8 @@ import {
   type PaginationProps,
 } from '../../../ui/elements/table/Pagination';
 import { StatusChangeAction, type StatusPreflight } from './actions';
-import { STATUS_LABELS, statusIndex, isEditable } from '../outboundStatus';
+import { currentStep } from '@/domain/invoice';
+import { STATUS_FLOW, STATUS_LABELS, isEditable } from '../outboundStatus';
 import { allowedStatuses } from '../outboundStatusOptions';
 import type { OutboundNode } from './outboundUpdate';
 
@@ -61,7 +62,6 @@ export const OutboundStatusFooter: Component<
 
   const editable = () => isEditable(props.node.status);
   const holding = () => props.node.onHold;
-  const currentIndex = () => statusIndex(props.node.status);
 
   // The lifecycle indicator over the preference-allowed sequence. A status
   // already reached stays visible even if the preference excludes it later in
@@ -81,21 +81,10 @@ export const OutboundStatusFooter: Component<
       date: stamps[status],
     }));
   };
-  // OMS-REG-DIST-04.22: a current status the preference EXCLUDES displays as
-  // the nearest included EARLIER status — the LAST allowed entry at or before
-  // the current one (allowedStatuses() is already in ascending flow order). A
-  // plain loop rather than Array#findLastIndex: eslint-plugin-solid doesn't
-  // recognise it as a safe callback host (unlike findIndex/map/etc.), so it
-  // misreports the predicate's currentIndex() read as untracked.
-  const indicatorIndex = () => {
-    const allowed = allowedStatuses();
-    let result = -1;
-    for (let i = 0; i < allowed.length; i++) {
-      if (statusIndex(allowed[i]) <= currentIndex()) result = i;
-      else break;
-    }
-    return result;
-  };
+  // OMS-REG-DIST-04.22: an excluded current status displays as the nearest
+  // included earlier one (the shared invoice-status gate's currentStep).
+  const indicatorIndex = () =>
+    currentStep(STATUS_FLOW, allowedStatuses(), props.node.status);
 
   return (
     <ContentFooter>
