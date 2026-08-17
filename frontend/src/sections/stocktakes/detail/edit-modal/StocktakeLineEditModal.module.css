@@ -33,3 +33,16 @@
   align-items: center;
   flex-shrink: 0;
 }
+
+/* The count-this-line checkbox, centred in its cell. The column declares
+   meta.align 'center', but that lands as `text-align: center` on the <td>,
+   which only moves INLINE content — BareCheckbox's root is `display: flex`
+   (a block-level box at `inline-size: fit-content`), so it ignored the
+   alignment and sat at the inline-start under a much wider header, leaving
+   the surplus as one gap on its right. Its own CSS names this remedy: "a
+   host's margin-inline: auto ... truly centres it", which is what the
+   DataTable's own .selectBox does for the selection column. Inert in CARD
+   view, where the slot already hugs the control. */
+.countBox {
+  margin-inline: auto;
+}
