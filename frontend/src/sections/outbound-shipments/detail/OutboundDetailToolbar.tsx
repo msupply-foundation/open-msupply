@@ -1,6 +1,7 @@
 import { type Component } from 'solid-js';
 import { t } from '../../../intl';
 import { TextField } from '../../../ui/elements/inputs/TextField';
+import { FormRowItem } from '../../../ui/layout/Form/FormRowItem';
 import { NameSearch } from '../../../domain/name';
 import { CustomFieldsToolbar } from '../../../domain/customFields';
 import type { OutboundNode } from './outboundUpdate';
@@ -41,44 +42,63 @@ export const OutboundDetailToolbar: Component<
   // requisition-sourced shipment (OMS-REG-DIST-02.19).
   const customerLocked = () => props.disabled || props.node.requisition != null;
 
+  // Cluster weights (PAGES.md § header field cluster): the two native fields
+  // hold very differently sized data, and this cluster is SPARSE — usually
+  // just the two — so equal shares gave a "PO-1234" reference the same column
+  // as "Waikato District Health Board Central Store", and on a wide screen
+  // half the row each. The name lookup takes the larger share and the larger
+  // ceiling; the reference is capped at what a document reference can use, so
+  // the surplus flows to the name rather than inflating it. Ceilings, not just
+  // weights, because with two items a weight alone still splits the whole row.
+  // Floors sum to 20rem — the unweighted row's 2 × 10rem — so the wrap point
+  // doesn't move earlier. The prominent custom fields alongside carry their
+  // own weights already (CustomFieldsToolbar `layout="field"`), so the whole
+  // cluster is weighted, never just part of it.
   return (
     <>
-      <NameSearch
-        label={t('label.customer-name')}
-        size="small"
-        storeId={props.storeId}
-        role="customer"
-        // Seed the record's current customer so the selection's label resolves
-        // before (or regardless of) its page.
-        selected={{
-          id: props.node.otherParty.id,
-          name: props.node.otherParty.name,
-          code: props.node.otherParty.code,
-          isOnHold: props.node.otherParty.isOnHold,
-          isStore: props.node.otherParty.store != null,
-          isSupplier: false,
-          isDonor: false,
-        }}
-        disabled={customerLocked()}
-        error={props.customerError}
-        // A shipment always has a customer — changed, never cleared (spec S3).
-        clearable={false}
-        onSelect={customer => {
-          if (customer) props.onChangeCustomer(customer.id);
-        }}
-      />
+      <FormRowItem weight={1.5} minWidth="12rem" maxWidth="22rem">
+        <NameSearch
+          label={t('label.customer-name')}
+          size="small"
+          storeId={props.storeId}
+          role="customer"
+          // Seed the record's current customer so the selection's label
+          // resolves before (or regardless of) its page.
+          selected={{
+            id: props.node.otherParty.id,
+            name: props.node.otherParty.name,
+            code: props.node.otherParty.code,
+            isOnHold: props.node.otherParty.isOnHold,
+            isStore: props.node.otherParty.store != null,
+            isSupplier: false,
+            isDonor: false,
+          }}
+          disabled={customerLocked()}
+          error={props.customerError}
+          // A shipment always has a customer — changed, never cleared (S3).
+          clearable={false}
+          onSelect={customer => {
+            if (customer) props.onChangeCustomer(customer.id);
+          }}
+        />
+      </FormRowItem>
 
-      <TextField
-        label={t('label.customer-ref')}
-        size="small"
-        data-testid="customer-reference-field"
-        value={props.edit.state.theirReference}
-        disabled={props.disabled}
-        onInput={e =>
-          props.edit.setField('theirReference', e.currentTarget.value)
-        }
-        onBlur={() => props.edit.flush()}
-      />
+      <FormRowItem weight={1} minWidth="8rem" maxWidth="16rem">
+        <TextField
+          label={t('label.customer-ref')}
+          size="small"
+          data-testid="customer-reference-field"
+          // A reference longer than its capped column reveals itself on hover
+          // (the requisition header's treatment of the same field).
+          title={props.edit.state.theirReference}
+          value={props.edit.state.theirReference}
+          disabled={props.disabled}
+          onInput={e =>
+            props.edit.setField('theirReference', e.currentTarget.value)
+          }
+          onBlur={() => props.edit.flush()}
+        />
+      </FormRowItem>
 
       {/* PROMINENT custom fields join the same row — `layout="field"` so they
           wear their labels above the control like the cluster's other fields.
