@@ -361,10 +361,23 @@ impl Selectors {
         self.html.select(&cell_selector).next().is_some()
     }
 
+    /// The column labels, taken from the LAST row of the header.
+    ///
+    /// Data cells are matched to columns by their index within their own row,
+    /// so the header row that defines the columns must line up with a data row
+    /// cell for cell. In a grouped header — a banner row spanning several
+    /// columns above the labels that name them, as the repack slip has — that
+    /// is the bottom row; the rows above it span groups and would otherwise
+    /// shift every column. A single-row header is its own last row, so this
+    /// leaves every other form untouched.
     fn data_headers(&self) -> Vec<(Option<&str>, &str)> {
-        let headers_selector = Selector::parse("thead tr td,thead tr th").unwrap();
-        self.html
-            .select(&headers_selector)
+        let row_selector = Selector::parse("thead tr").unwrap();
+        let cell_selector = Selector::parse("td,th").unwrap();
+        let Some(label_row) = self.html.select(&row_selector).last() else {
+            return Vec::new();
+        };
+        label_row
+            .select(&cell_selector)
             .map(|element| {
                 let custom_column = element.attr("excel-column");
                 let header_text = inner_text(element);
@@ -588,6 +601,66 @@ mod report_to_excel_test {
         // Data also mapped to the right columns
         assert_eq!(get_value("C6"), "Ibuprofen 200mg tabs");
         assert_eq!(get_value("A6"), "");
+    }
+
+    /// A grouped header — a banner row spanning the two sides of a repack above
+    /// the row that names their columns (standard_forms/repack). The labels are
+    /// the bottom row, and the data must land under them, not shifted by the
+    /// three cells of the banner above.
+    #[test]
+    fn test_generate_excel_grouped_header() {
+        let report: GeneratedReport = GeneratedReport {
+            document: r#"
+          <table>
+            <thead>
+              <tr>
+                <th colspan="2">Original</th>
+                <th>&rarr;</th>
+                <th colspan="2">New</th>
+              </tr>
+              <tr>
+                <th>Location</th>
+                <th>Pack size</th>
+                <th></th>
+                <th>Location</th>
+                <th>Pack size</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>A1</td>
+                <td>100</td>
+                <td></td>
+                <td>B2</td>
+                <td>10</td>
+              </tr>
+            </tbody>
+          </table>
+        "#
+            .to_string(),
+            header: None,
+            footer: None,
+        };
+
+        let mut book = umya_spreadsheet::new_file();
+        book.set_sheet_name(0, "test").unwrap();
+        let sheet = book.get_sheet_by_name_mut("test").unwrap();
+
+        apply_report(sheet, report);
+
+        let get_value = |coord: &str| get_value(sheet, coord);
+
+        // The labels are the header row; the banner above them is not written.
+        assert_eq!(get_value("A1"), "Location");
+        assert_eq!(get_value("B1"), "Pack size");
+        assert_eq!(get_value("D1"), "Location");
+        assert_eq!(get_value("E1"), "Pack size");
+        // Each side's data sits under its own labels — the "New" side is not
+        // shifted by the banner's cells.
+        assert_eq!(get_value("A2"), "A1");
+        assert_eq!(get_value("B2"), "100");
+        assert_eq!(get_value("D2"), "B2");
+        assert_eq!(get_value("E2"), "10");
     }
 
     #[test]
