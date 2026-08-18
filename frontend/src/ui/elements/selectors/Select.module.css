@@ -136,8 +136,11 @@
    the two puts a destructive control on the pixel a benign one occupied a
    moment earlier, and relies on hover, which a tablet doesn't have (as
    Combobox). Muted at rest so it reads as secondary to the value. */
+/* Kept in step with .clear's own width below — this is the room the value
+   ellipsises before, so if the button were narrower than the spacer the text
+   would stop short of it, and wider it would sit under the ✕. */
 .clearSlot {
-  inline-size: 1.75rem;
+  inline-size: 1.5rem;
   flex-shrink: 0;
 }
 
@@ -149,7 +152,11 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  inline-size: 1.75rem;
+  /* A 1rem ✕ in a 1.5rem slot — 4px clear each side, matching the chevron's own
+     inset; see the matching rule in Combobox.module.css for why 1.5rem (24px) is
+     the floor rather than a preference (WCAG 2.2 SC 2.5.8, AA). Keep in step
+     with .clearSlot above, which reserves this width inside the trigger. */
+  inline-size: 1.5rem;
   height: 100%;
   padding: 0;
   border: none;
@@ -298,18 +305,27 @@
 
      The font is set on BOTH rules rather than once on a shared `.trigger`
      selector: the size rule has to repeat it, and a later bare `.trigger` would
-     descend in specificity (stylelint no-descending-specificity). The trigger
-     is a button, not a text input, so the zoom threshold never applied to it —
-     it bumps so a Select in a row of fields reads at the same size as the text
-     field beside it. */
+     descend in specificity (stylelint no-descending-specificity).
+
+     Both sizes land on --text-sm here, NOT --input-font-touch (Ling, tablet
+     review 2026-08-18). The touch bump to 1rem stays right for a text input —
+     you type into it — but a picker trigger only DISPLAYS a value, and at 1rem
+     it read wrong three ways on a real tablet: larger than its own 14px field
+     label, larger than the 14px listbox it opens (.item takes a tap-target
+     min-height, never a font bump), and it squeezed the value badly — a
+     bordered picker already spends 1.75rem on the ✕ plus 1.25rem on the
+     chevron, so long codes truncated. The touch NORMALISATION is kept, just at
+     14px: small and standard still read the same size on the same surface,
+     which is what --input-font-touch was here to guarantee (ui-standards
+     #field-touch-sizing). Heights are untouched — the tap target is unchanged. */
   .trigger {
     min-height: var(--input-height-touch);
-    font-size: var(--input-font-touch);
+    font-size: var(--text-sm);
   }
 
   .field[data-size='small'] .trigger {
     min-height: var(--input-height-sm-touch);
-    font-size: var(--input-font-touch);
+    font-size: var(--text-sm);
   }
 
   .item {
