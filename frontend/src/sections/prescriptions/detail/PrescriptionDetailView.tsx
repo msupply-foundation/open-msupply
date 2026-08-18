@@ -24,7 +24,8 @@ import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import {
-  getCommentCell,
+  CommentHeader,
+  getCellDefinition,
   getCurrencyCell,
   getExpiryDateCell,
   getNumberCell,
@@ -401,8 +402,8 @@ const PrescriptionDetailView: Component = () => {
     const cols: Column<Line, never>[] = [
       {
         c: { accessor: line => line.note ?? '', id: 'directions' },
-        header: () => t('label.comment'),
-        ...getCommentCell(),
+        header: () => <CommentHeader />,
+        ...getCellDefinition('comment'),
       },
       { c: { key: 'itemCode' }, header: () => t('label.code') },
       {

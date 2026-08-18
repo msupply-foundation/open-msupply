@@ -4,7 +4,8 @@ import { localisedDate, localisedTime } from '../../../intl/formatDateTime';
 import { formatNumber } from '../../../intl/formatNumber';
 import { Comment } from '../feedback/Comment';
 import { StatusBadge } from '../feedback/StatusBadge';
-import { CheckIcon } from '../../icons';
+import { CheckIcon, MessageSquareIcon } from '../../icons';
+import { t } from '../../../intl';
 import type { Column } from './columnTypes';
 import { getChipListCell } from './ChipListCell';
 import { getProportionCell } from './ProportionCell';
@@ -255,8 +256,37 @@ export const AbsentValue = (props: { label: string }) => (
   <span class={styles.absentValue}>{props.label}</span>
 );
 
+/*
+ * The comment column's HEADER — the comment icon, not the word (Carl,
+ * 2026-08-19). The column is one icon wide; spelling "Comment" over it was the
+ * only thing making it a text-width column, and the glyph names it the same way
+ * the cells beneath do. Paired with the `comment` width preset, which is sized
+ * for the icon rather than the word.
+ *
+ * The WORD still names the column everywhere an icon can't stand in — the
+ * Columns popover and a card's field label (meta.textLabel, set by
+ * getCommentCell below) — and it is the header cell's accessible name here:
+ * role="img" + aria-label on the wrapper, the svg itself staying aria-hidden
+ * (an unlabelled iconic header would leave the column nameless to a screen
+ * reader). `title` gives the same word on hover, for the sighted reader who
+ * doesn't recognise the glyph.
+ */
+export const CommentHeader = () => (
+  <span
+    class={styles.commentHeader}
+    role="img"
+    aria-label={t('label.comment')}
+    title={t('label.comment')}
+  >
+    <MessageSquareIcon />
+  </span>
+);
+
 export const getCommentCell = <T,>(meta?: Meta): CellFragment<T> => ({
-  meta: { align: 'center', ...meta },
+  // textLabel: the grid header is iconic (CommentHeader), so the column names
+  // itself in words for the Columns popover and its card field label. Set by
+  // the preset, not per call site — every comment column wants it.
+  meta: { align: 'center', textLabel: () => t('label.comment'), ...meta },
   cell: info => <Comment comment={info.getValue<string | null>()} />,
 });
 

@@ -27,7 +27,10 @@ import {
   type Column,
   type SortState,
 } from '@/ui/elements/table/DataTable';
-import { getCellDefinition } from '@/ui/elements/table/tableHelpers';
+import {
+  CommentHeader,
+  getCellDefinition,
+} from '@/ui/elements/table/tableHelpers';
 import { HStack } from '@/ui/layout/Stack/HStack';
 import { StatusMarker } from '@/ui/elements/feedback/StatusMarker';
 import {
@@ -541,7 +544,7 @@ const RequisitionDetailView: Component = () => {
     {
       // Pinned first: an affordance revealing the line's full comment.
       c: { key: 'comment' },
-      header: () => t('label.comment'),
+      header: () => <CommentHeader />,
       ...getCellDefinition('comment'),
     },
     {

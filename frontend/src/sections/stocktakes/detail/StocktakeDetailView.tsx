@@ -29,8 +29,8 @@ import {
   type SortState,
 } from '@/ui/elements/table/DataTable';
 import {
+  CommentHeader,
   getCellDefinition,
-  getCommentCell,
   getDateCell,
   getExpiryDateCell,
 } from '@/ui/elements/table/tableHelpers';
@@ -911,9 +911,9 @@ const StocktakeDetailView: Component = () => {
     // note; the shared comment cell (indicator + popover).
     {
       c: { key: 'comment' },
-      header: () => t('label.comment'),
+      header: () => <CommentHeader />,
       cardGroup: 'more',
-      ...getCommentCell(),
+      ...getCellDefinition('comment'),
     },
   ]);
 

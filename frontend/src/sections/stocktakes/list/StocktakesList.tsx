@@ -18,8 +18,8 @@ import {
   type SortState,
 } from '@/ui/elements/table/DataTable';
 import {
+  CommentHeader,
   getCellDefinition,
-  getCommentCell,
   getDateCell,
 } from '@/ui/elements/table/tableHelpers';
 import { createTableConfig } from '@/api/createTableConfig';
@@ -292,8 +292,8 @@ const StocktakesList: Component = () => {
     {
       c: { key: 'comment' },
       // Not sortable — matches OMS's list column set.
-      header: () => t('label.comment'),
-      ...getCommentCell(),
+      header: () => <CommentHeader />,
+      ...getCellDefinition('comment'),
     },
   ];
 
