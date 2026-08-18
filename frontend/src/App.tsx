@@ -43,6 +43,7 @@ import { helpRoutes, helpDocumentsRoutes } from './sections/help';
 import { ShellLayout } from './nav/ShellLayout';
 import { EntryPage } from './nav/EntryPage';
 import { LoginPage } from './auth/LoginPage';
+import { prefersOldUi } from './preferredFrontend';
 import { ReLoginModal } from './auth/ReLoginModal';
 import { Alert } from './ui/elements/feedback/Alert';
 import { Button } from './ui/elements/buttons/Button';
@@ -93,6 +94,19 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
 };
 
 export const App: Component = () => {
+  // Issue #1075: checked before ANY startup work, including the auth check —
+  // the two UIs share one session cookie, so a device that switched to old UI
+  // is very often still authenticated here too. Gating only the unauthenticated
+  // login fallback would never fire in that case: this app would happily render
+  // its own authenticated shell (store selection, dashboard, ...) instead of
+  // bouncing to the sibling old UI. A Solid component's setup body runs once,
+  // so bailing out here before creating any signal is safe — there's no
+  // re-render to skip a hook on.
+  if (prefersOldUi()) {
+    location.replace('/old-ui/');
+    return null;
+  }
+
   const [phase, setPhase] = createSignal<Phase>('loading');
 
   // Spec (Startup Flow): initialisation status → me check → login or routing.

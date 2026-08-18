@@ -4,6 +4,7 @@ import { login } from './authContext';
 import { submitStateAfter, type SubmitState } from './submitState';
 import { hasLoginFieldError, loginFieldErrors } from './loginFieldErrors';
 import { getLastLoginUsername } from '../appData';
+import { recordPrefersOldUi } from '../preferredFrontend';
 import { serverVersion } from '../api/serverInfo';
 import { createFocusTarget } from '../ui/utils/createFocusTarget';
 import { useIsCompact } from '../ui/utils/createMediaQuery';
@@ -194,11 +195,16 @@ export const LoginPage: Component = () => {
                     mount, never nested under it (e.g. the /spec demo track
                     still points at the root /old-ui/). Shaped like the language
                     trigger opposite it, but still a link — see
-                    `.secondaryAction`. */}
+                    `.secondaryAction`. The onClick records the choice (issue
+                    #1075) without preventDefault — the browser's own
+                    navigation still fires; App.tsx reads it back on the next
+                    unauthenticated load and bounces here instead of showing
+                    this app's login page. */}
                 <a
                   class={styles.secondaryAction}
                   href="/old-ui/"
                   data-testid="login-switch-to-old-ui"
+                  onClick={recordPrefersOldUi}
                 >
                   <ClockIcon class={styles.secondaryActionIcon} />
                   {t('login.use-old-interface')}
