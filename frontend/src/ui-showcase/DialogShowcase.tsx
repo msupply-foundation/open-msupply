@@ -660,6 +660,9 @@ export const DialogShowcase = () => {
               defaultStoreId="AFCA0C9F0743AB43B779FB9EA2E64EAF"
               lastUsedStoreId="5B28901C52396E4BB098B9862CCF5DF9"
               currentStoreId="5B28901C52396E4BB098B9862CCF5DF9"
+              // A saved always-open store, so the toggle arrives ON and its
+              // line NAMES that store rather than using the pending wording.
+              alwaysOpenStoreId="demo-4"
               pinnedCount={2}
               onConfirm={(id, alwaysOpen) => {
                 const store = STORES.find(s => s.id === id);

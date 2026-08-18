@@ -60,6 +60,10 @@ export const UseSuggestedQuantitiesAction: Component<{
       <Button
         variant="secondary"
         icon={<ZapIcon />}
+        // Icon-only on a narrow viewport, so the header's action cluster fits
+        // beside the breadcrumb instead of taking a row of its own.
+        collapsible="narrow"
+        title={t('button.requested-to-suggested')}
         disabled={props.disabled}
         data-testid="use-suggested-quantities-button"
         onClick={() => setOpen(true)}
