@@ -63,6 +63,7 @@ export const Toolbar: FC = () => {
                   size="small"
                   sx={{ width: 250 }}
                   disabled={isDisabled}
+                  inputProps={{ 'data-testid': 'customer-reference-field' }}
                   value={theirReference ?? ''}
                   onChange={event => {
                     update({ theirReference: event.target.value });
@@ -109,5 +110,9 @@ const InfoAlert = ({
     return t('info.automatic-return');
   };
 
-  return <Alert severity="info">{loadMessage(customerReturn)}</Alert>;
+  return (
+    <Alert data-testid="return-kind-banner" severity="info">
+      {loadMessage(customerReturn)}
+    </Alert>
+  );
 };

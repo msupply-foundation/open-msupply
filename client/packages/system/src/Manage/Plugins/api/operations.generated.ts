@@ -10,6 +10,7 @@ export type InstalledPluginNodeFragment = {
   version: string;
   kind: Types.InstalledPluginKindType;
   types: Array<string>;
+  hostRuntime?: string | null;
 };
 
 export type InstalledPluginsQueryVariables = Types.Exact<{
@@ -32,6 +33,7 @@ export type InstalledPluginsQuery = {
           version: string;
           kind: Types.InstalledPluginKindType;
           types: Array<string>;
+          hostRuntime?: string | null;
         }>;
       };
     };
@@ -119,6 +121,7 @@ export const InstalledPluginNodeFragmentDoc = gql`
     version
     kind
     types
+    hostRuntime
   }
 `;
 export const InstalledPluginsDocument = gql`
