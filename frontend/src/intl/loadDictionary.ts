@@ -1,6 +1,7 @@
 import * as i18n from '@solid-primitives/i18n';
 import type { BaseRecordDict } from '@solid-primitives/i18n';
-import { locale as activeLocale, setDictionaries } from './intl';
+import { sameFetchedValue } from '../typeHelpers';
+import { locale as activeLocale, dictionaries, setDictionaries } from './intl';
 import type { FlatDict, SupportedLocale } from './locales';
 import { clearCache, readCache, writeCache } from './dictionaryCache';
 import { fetchCustomTranslations } from './customTranslations';
@@ -18,6 +19,15 @@ const loadCommon = async (locale: SupportedLocale): Promise<BaseRecordDict> => {
 };
 
 const merge = (locale: SupportedLocale, dict: FlatDict): void => {
+  // Skip the publish when nothing changed (kdd/state-management decision 5):
+  // the dict is REBUILT on every load (cache re-parse, or bundled+custom
+  // merge), so its identity never survives even when no string changed — and
+  // the post-sync refresh reloads the active catalogue every couple of
+  // seconds. t() reads through a plain accessor by design (ownerless calls —
+  // see intl.ts), so no memo boundary exists to stop the churn; this explicit
+  // structural compare is that boundary. Publishing an equal record would
+  // re-run every t() consumer — including every table cell renderer.
+  if (sameFetchedValue(dictionaries()[locale], dict)) return;
   setDictionaries(previous => ({ ...previous, [locale]: dict }));
 };
 
