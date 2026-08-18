@@ -12,6 +12,7 @@ import {
   type SortState,
 } from '../ui/elements/table/DataTable';
 import {
+  CommentHeader,
   formatCurrencyCell,
   getCellDefinition,
   getNumberCell,
@@ -329,7 +330,7 @@ const CellTypesTable = () => {
     },
     {
       c: { key: 'comment' },
-      header: () => 'Comment',
+      header: () => <CommentHeader />,
       ...getCellDefinition<StockLine>('comment'),
     },
   ];
@@ -597,7 +598,7 @@ const WorkingTable = () => {
     },
     {
       c: { key: 'comment' },
-      header: () => 'Comment',
+      header: () => <CommentHeader />,
       ...getCellDefinition<StockLine>('comment'),
     },
   ];
@@ -839,7 +840,7 @@ const CardGroupsDemo = () => {
     },
     {
       c: { key: 'comment' },
-      header: () => 'Comment',
+      header: () => <CommentHeader />,
       cardGroup: 'details',
       ...getCellDefinition<StockLine>('comment'),
     },
@@ -888,7 +889,7 @@ const CardDisclosureDemo = () => {
     },
     {
       c: { key: 'comment' },
-      header: () => 'Comment',
+      header: () => <CommentHeader />,
       cardGroup: 'more',
       ...getCellDefinition<StockLine>('comment'),
     },
@@ -1015,7 +1016,7 @@ const AssembledCardDemo = () => {
     },
     {
       c: { key: 'comment' },
-      header: () => 'Comment',
+      header: () => <CommentHeader />,
       cardGroup: 'more',
       ...getCellDefinition<StockLine>('comment'),
     },

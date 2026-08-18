@@ -36,7 +36,10 @@ import {
   type Column,
   type SortState,
 } from '../../../ui/elements/table/DataTable';
-import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
+import {
+  CommentHeader,
+  getCellDefinition,
+} from '../../../ui/elements/table/tableHelpers';
 import {
   FilterBar,
   FilterCheckbox,
@@ -602,7 +605,7 @@ const InternalOrderDetailView: Component = () => {
   const hostColumns = (): Column<Line, SortKey>[] => [
     {
       c: { key: COL.comment },
-      header: () => t('label.comment'),
+      header: () => <CommentHeader />,
       ...getCellDefinition('comment'),
     },
     {

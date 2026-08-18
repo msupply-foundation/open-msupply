@@ -36,6 +36,7 @@ import {
   type SortState,
 } from '../../../ui/elements/table/DataTable';
 import {
+  CommentHeader,
   getCellDefinition,
   getNumberCell,
   getTextCell,
@@ -656,7 +657,7 @@ const InboundShipmentDetailView: Component = () => {
       // column, and the getCellDefinition preset key).
       {
         c: { accessor: line => line.note, id: 'comment' },
-        header: () => t('label.comment'),
+        header: () => <CommentHeader />,
         ...getCellDefinition('comment'),
       },
       {
@@ -746,6 +747,12 @@ const InboundShipmentDetailView: Component = () => {
         sortKey: 'packSize',
         header: () => t('label.received-pack-size'),
         ...getCellDefinition('packSize'),
+        // The `packSize` preset is sized for the header "Pack size"; this table
+        // heads the column "Received pack size", whose longest word alone
+        // outgrows the preset's text box — at 5rem it broke "Received" mid-word
+        // and clipped the third line away. Local override, not a preset change:
+        // every other table still heads it "Pack size".
+        size: remToPx(7),
       },
       // Doses per unit (H5) — vaccines-in-doses pref; the item's configured
       // doses, blank for a non-vaccine item.
@@ -876,7 +883,11 @@ const InboundShipmentDetailView: Component = () => {
             {
               c: { accessor: line => line.donor?.name ?? '', id: 'donor' },
               header: () => t('label.donor'),
-              ...getCellDefinition('name'),
+              // The `donor` preset, NOT `name`: `name` is the text SINK
+              // (18.75rem, uncapped) — the width the item-name column earns
+              // by being the row's identity. A second sink beside it just
+              // eats the table.
+              ...getCellDefinition('donor'),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
@@ -904,7 +915,9 @@ const InboundShipmentDetailView: Component = () => {
                 id: 'campaignProgram',
               },
               header: () => t('label.campaign'),
-              ...getCellDefinition('name'),
+              // The `campaign` preset (a campaign OR program name), as the
+              // stocktake line table uses — not the `name` text sink.
+              ...getCellDefinition('campaign'),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
