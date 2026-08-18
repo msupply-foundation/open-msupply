@@ -1683,6 +1683,7 @@
   "label.rnr-stock-out-duration": "Stock out duration",
   "label.rows-per-page": "Rows per page:",
   "label.rtmd": "mSupply",
+  "label.runtime": "Runtime",
   "label.save-log": "Save log to file",
   "label.save-table-config-as-global-default": "Save table changes as global default",
   "label.schedule": "Schedule",
