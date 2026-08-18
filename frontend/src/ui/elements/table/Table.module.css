@@ -69,8 +69,9 @@
   color: var(--text-secondary);
 }
 
+/* Not muted, matching the DataTable's own [data-mono] rule — a code is the
+   row's identity, not de-emphasised metadata, and the face alone marks it. */
 .table td[data-mono] {
-  color: var(--text-secondary);
   font-family: var(--font-mono);
 }
 
