@@ -37,6 +37,16 @@ pub enum DeleteCampaignResponse {
     Response(DeleteCampaignSuccess),
 }
 
+#[derive(SimpleObject)]
+pub struct DeleteCampaignsNode {
+    pub ids: Vec<String>,
+}
+
+#[derive(Union)]
+pub enum DeleteCampaignsResponse {
+    Response(DeleteCampaignsNode),
+}
+
 pub fn delete_campaign(
     ctx: &Context<'_>,
     input: DeleteCampaignInput,
@@ -58,6 +68,42 @@ pub fn delete_campaign(
         .delete_campaign(&service_context, DeleteCampaign { id: input.id });
 
     map_response(result)
+}
+
+pub fn delete_campaigns(ctx: &Context<'_>, ids: Vec<String>) -> Result<DeleteCampaignsResponse> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::MutateCampaigns,
+            store_id: None,
+            require_central_standalone: false,
+        },
+    )?;
+
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.basic_context()?;
+
+    match service_provider
+        .campaign_service
+        .delete_campaigns(&service_context, ids)
+    {
+        Ok(ids) => Ok(DeleteCampaignsResponse::Response(DeleteCampaignsNode {
+            ids,
+        })),
+        Err(error) => Err(map_bulk_error(error)),
+    }
+}
+
+fn map_bulk_error(error: ServiceError) -> async_graphql::Error {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{error:#?}");
+
+    let graphql_error = match error {
+        ServiceError::CampaignDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::DatabaseError(_) => InternalError(formatted_error),
+    };
+
+    graphql_error.extend()
 }
 
 fn map_response(result: Result<String, ServiceError>) -> Result<DeleteCampaignResponse> {
