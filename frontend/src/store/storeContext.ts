@@ -1,4 +1,5 @@
 import { createSignal } from 'solid-js';
+import { sameFetchedValue } from '../typeHelpers';
 import { graphqlFetch } from '../api/graphql';
 import {
   StoreContext,
@@ -24,7 +25,15 @@ import { authUser } from '../auth/authContext';
 // (result set, id not yet) between two writes and fire a redundant second
 // fetch. One signal = one write = no half-state.
 type LoadedStoreContext = { storeId: string; result: StoreContextResult };
-const [loaded, setLoaded] = createSignal<LoadedStoreContext>();
+// `equals: sameFetchedValue` — refetchStoreContext runs on every completed sync
+// run as well as on store entry, and the preferences/permissions it returns
+// rarely differ. Publishing an equal payload as a new object invalidated
+// stocktakePreferences() and friends (each builds a fresh object per call), and
+// through them every column memo reading a preference gate.
+const [loaded, setLoaded] = createSignal<LoadedStoreContext | undefined>(
+  undefined,
+  { equals: sameFetchedValue }
+);
 
 const refetch = async (storeId: string | undefined) => {
   if (!storeId) {
