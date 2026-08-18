@@ -16,7 +16,10 @@ import {
   type Column,
   type SortState,
 } from '../../../ui/elements/table/DataTable';
-import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
+import {
+  CommentHeader,
+  getCellDefinition,
+} from '../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../ui/utils/rem';
 import { HStack } from '../../../ui/layout/Stack/HStack';
 import { createTableConfig } from '../../../api/createTableConfig';
@@ -359,7 +362,7 @@ const InboundShipmentsList: Component = () => {
     },
     {
       c: { key: 'comment' },
-      header: () => t('label.comment'),
+      header: () => <CommentHeader />,
       ...getCellDefinition('comment'),
     },
     {

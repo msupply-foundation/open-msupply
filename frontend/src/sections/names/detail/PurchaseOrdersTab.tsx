@@ -7,6 +7,7 @@ import { t } from '../../../intl';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import {
+  CommentHeader,
   getCellDefinition,
   getNumberCell,
   getTextCell,
@@ -94,7 +95,7 @@ export const PurchaseOrdersTab: Component<{ supplierName: string }> = props => {
     },
     {
       c: { key: 'comment' },
-      header: () => t('label.comment'),
+      header: () => <CommentHeader />,
       // The comment cell: icon + popover, blank when empty — the house
       // treatment for a comment column.
       ...getCellDefinition('comment'),
