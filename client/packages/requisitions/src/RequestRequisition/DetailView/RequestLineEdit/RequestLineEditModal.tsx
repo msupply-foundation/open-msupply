@@ -100,7 +100,11 @@ export const RequestLineEditModal = ({
     onClose();
   };
 
-  const { Modal } = useDialog({ onClose: onCancel, isOpen });
+  const { Modal } = useDialog({
+    onClose: onCancel,
+    isOpen,
+    testId: 'internal-order-line-edit-modal',
+  });
 
   const onChangeItem = (item: ItemWithStatsFragment) => {
     if (mode === ModalMode.Create) {

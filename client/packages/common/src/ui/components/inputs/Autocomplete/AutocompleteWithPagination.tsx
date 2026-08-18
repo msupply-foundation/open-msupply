@@ -75,6 +75,7 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
   getOptionLabel,
   popperMinWidth,
   inputProps,
+  inputTestId,
   paginationDebounce,
   onPageChange,
   onClear,
@@ -163,6 +164,7 @@ export function AutocompleteWithPagination<T extends RecordWithId>({
         },
         htmlInput: {
           ...props?.inputProps,
+          ...(inputTestId ? { 'data-testid': inputTestId } : {}),
         },
       }}
     />

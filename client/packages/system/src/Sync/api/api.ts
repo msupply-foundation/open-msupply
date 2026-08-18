@@ -155,6 +155,7 @@ function mapSyncErrorV7(
     [SyncErrorVariantV7.DatabaseError]: 'error.internal-error',
     [SyncErrorVariantV7.SyncRecordSerializeError]: 'error.internal-error',
     [SyncErrorVariantV7.RecordNotFound]: 'error.internal-error',
+    [SyncErrorVariantV7.SyncFileNotFound]: 'error.sync-file-not-found',
     [SyncErrorVariantV7.TokenAlreadyAllocated]: 'error.token-already-allocated',
     [SyncErrorVariantV7.TokenNotFound]: 'error.internal-error',
     [SyncErrorVariantV7.FailedToGetHardwareId]: 'error.internal-error',

@@ -1,7 +1,7 @@
 {
   "name": "open-msupply",
   "//": "Main version for the app, should be in semantic version format (any release candidate or test build should be separated by '-' i.e. 1.1.1-rc1 or 1.1.1-test",
-  "version": "3.00.00-RC",
+  "version": "3.01.01",
   "private": true,
   "packageManager": "yarn@4.13.0",
   "workspaces": [
@@ -14,6 +14,8 @@
     "start": "cd ./server && cargo run & cd ./client && yarn start-local",
     "build": "cd ./client && yarn build && cd ../server && cargo build --release",
     "test": "cd ./server && ulimit -n 1000 && cargo test && cd ../client && yarn test",
+    "//fetch-frontend": "Fetches the pinned open-msupply-frontend dist (frontend-version.json) into server/frontend, where a server run from server/ serves it at /. Defaults to the public B2 mirror so no GitHub token is needed — the FE repo is private, and the pin's sha256 is enforced either way. Override FRONTEND_DIST_BASE_URL, or FRONTEND_DIST_URL for a local zip.",
+    "fetch-frontend": "FRONTEND_DIST_BASE_URL=${FRONTEND_DIST_BASE_URL:-https://f002.backblazeb2.com/file/msupply-releases} node build/fetch-frontend.js server/frontend",
     "dockerise": "bash docker/dockerise.sh",
     "plugin": "node scripts/plugin-management/plugin.js",
     "load-test": "cd scripts/load-testing && mkdir -p output && k6 run main.js"
