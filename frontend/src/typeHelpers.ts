@@ -32,17 +32,6 @@ export const shallowEqual = <T extends readonly unknown[]>(
     a.length === b.length &&
     a.every((v, i) => v === b[i]));
 
-// Are two FETCHED payloads structurally identical? The equal-data dedup every
-// publication of fetched global state carries (kdd/state-management decision 5;
-// kdd/solid-reactivity-pitfalls §16): as a signal's `equals` or in a resource
-// fetcher, it keeps an unchanged background refresh from notifying consumers.
-// JSON-round-trip data ONLY — parsed responses, whose key order the selection
-// set fixes; no undefined/Date/class values. Within that contract a false
-// negative just re-renders, and a false positive cannot arise from differing
-// data (any difference changes the text).
-export const sameFetchedValue = <T>(a: T, b: T): boolean =>
-  a === b || JSON.stringify(a) === JSON.stringify(b);
-
 // Drop keys whose value is null/undefined or an empty operator object ({}),
 // keeping the same type. A generated GraphQL filter carries these two "not
 // applied" markers: FilterBar holds an added-but-empty chip as a `null` key,

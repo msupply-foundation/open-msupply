@@ -1,5 +1,4 @@
 import { createSignal } from 'solid-js';
-import { sameFetchedValue } from '../typeHelpers';
 import { graphqlFetch, msSinceLastGqlCall } from '../api/graphql';
 import {
   AuthToken,
@@ -20,11 +19,7 @@ import { ACTIVITY_CHECK_INTERVAL_MS } from '../config';
 // (spec, Guard 1).
 export type AuthUser = UserInfoFragment;
 
-// Fetched state: the post-sync refresh re-reads `me` every run, so an
-// unchanged response must publish nothing (kdd/state-management decision 5).
-const [user, setUser] = createSignal<AuthUser | undefined>(undefined, {
-  equals: sameFetchedValue,
-});
+const [user, setUser] = createSignal<AuthUser | undefined>(undefined);
 export const authUser = user;
 
 // A human display name for the current user: first + last name when set,
