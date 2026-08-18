@@ -1503,7 +1503,8 @@ export const TableCardShowcase = () => (
             <code>comment</code> (an icon + popover). A field that{' '}
             <em>isn't</em> a common key — <code>quantity</code> — uses the
             explicit <code>getNumberCell()</code> and sets its own{' '}
-            <code>size</code>. Drag a header edge to resize.
+            <code>size</code>. Drag a header edge to resize, or double-click it
+            to fit the column to its widest content.
           </Lead>
           <CellTypesTable />
         </DashboardCard>
@@ -1581,15 +1582,15 @@ export const TableCardShowcase = () => (
           </Lead>
           <PaginationDemo />
           <Lead>
-            The bar earns its space rather than standing as fixed chrome (spec/ui-standards § tables → pagination):
-            it renders only when there is somewhere to page to. No rows, or a
-            single page of them, and there is nothing here at all — the host
-            drops the footer band with it (DataTable does this from{' '}
-            <code>paginationState</code>), so no empty strip is left behind and
-            the height goes to the rows. A detail view goes further and hosts
-            the bar's contents in its status footer, where{' '}
-            <code>inBar</code> keeps the cluster at its content width so a
-            crowded bar wraps it whole.
+            The bar earns its space rather than standing as fixed chrome
+            (spec/ui-standards § tables → pagination): it renders only when
+            there is somewhere to page to. No rows, or a single page of them,
+            and there is nothing here at all — the host drops the footer band
+            with it (DataTable does this from <code>paginationState</code>), so
+            no empty strip is left behind and the height goes to the rows. A
+            detail view goes further and hosts the bar's contents in its status
+            footer, where <code>inBar</code> keeps the cluster at its content
+            width so a crowded bar wraps it whole.
           </Lead>
           <ConditionalPaginationDemo />
         </DashboardCard>
