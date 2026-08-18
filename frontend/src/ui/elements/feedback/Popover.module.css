@@ -32,9 +32,12 @@
      picker on a short window) must not clip: cap its height to the viewport
      minus the EDGE gap kept on each side (see EDGE in Popover.tsx) and scroll
      internally. Content shorter than this is unaffected. place() also clamps
-     `top` so the (now-bounded) panel stays fully on-screen. */
+     `top` so the (now-bounded) panel stays fully on-screen.
+     The SCROLLING lives on `.body` below, not here: the panel is the portal
+     mount for popups opened inside it (a Select's listbox — see
+     PortalMountContext in Popover.tsx), and a scroll container here would clip
+     them. */
   max-block-size: calc(100dvh - 16px);
-  overflow-y: auto;
   padding: var(--space-3) var(--space-4);
   border: 1px solid var(--color-border-value);
   border-radius: var(--radius-md);
@@ -50,9 +53,26 @@
   line-height: 1.5;
 }
 
-/* No reduced-motion media query: --motion-fast is zeroed in tokens.css, so the
+/* The panel's content, and the only part that scrolls (see `.panel`). A
+   portaled popup mounted into the panel is this element's SIBLING, so it
+   escapes the scroll container and can overhang the panel. `min-block-size: 0`
+   because a column flex item won't shrink below its content otherwise, and the
+   panel's cap would be overrun instead of scrolled. */
+.body {
+  min-block-size: 0;
+  overflow-y: auto;
+}
+
+/* Column flex, so the height-capped panel hands its spare block size to .body
+   and that alone scrolls. Declared on the OPEN state only: `display` on
+   `.panel` itself would out-specify the UA's
+   `[popover]:not(:popover-open) { display: none }` and every closed panel on
+   the page would render as an empty box over the content beneath it.
+   No reduced-motion media query: --motion-fast is zeroed in tokens.css, so the
    panel simply appears at its end state. */
 .panel:popover-open {
+  display: flex;
+  flex-direction: column;
   animation: panel-in var(--motion-fast) ease;
 }
 
