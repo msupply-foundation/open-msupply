@@ -46899,7 +46899,7 @@
     "universal_code": null,
     "vaccine_doses": 3,
     "ven_category": "NotAssigned",
-    "volume_per_pack": 0.0
+    "volume_per_pack": 2.0
    },
    "sync_version": "V7",
    "app_version": null,
@@ -80308,7 +80308,7 @@
    "action": "Upsert",
    "data": {
     "edit_prescribed_quantity_on_prescription": false,
-    "extra_fields_in_requisition": false,
+    "extra_fields_in_requisition": true,
     "id": "e2e_feature_store",
     "issue_in_foreign_currency": true,
     "keep_requisition_lines_with_zero_requested_quantity_on_finalised": true,
@@ -83854,32 +83854,6 @@
    "app_version": null,
    "source_site_id": 6,
    "store_id": null,
-   "transfer_store_id": null,
-   "patient_id": null,
-   "reference_id": null,
-   "is_integrated": false
-  },
-  {
-   "cursor": 2358,
-   "record_id": "e2e_nsj_gry_feat",
-   "received_datetime": "2026-07-09T00:00:00",
-   "integration_started_datetime": null,
-   "integration_datetime": null,
-   "integration_error": null,
-   "integration_result": null,
-   "table_name": "name_store_join",
-   "action": "Upsert",
-   "data": {
-    "id": "e2e_nsj_gry_feat",
-    "name_id": "e2e_feature_store_name",
-    "name_is_customer": true,
-    "name_is_supplier": true,
-    "store_id": "80004C94067A4CE5A34FC343EB1B4306"
-   },
-   "sync_version": "V7",
-   "app_version": null,
-   "source_site_id": 6,
-   "store_id": "80004C94067A4CE5A34FC343EB1B4306",
    "transfer_store_id": null,
    "patient_id": null,
    "reference_id": null,
