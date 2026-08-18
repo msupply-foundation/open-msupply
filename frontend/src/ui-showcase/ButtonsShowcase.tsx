@@ -35,6 +35,12 @@ const EXPORT_OPTIONS = [
   { value: 'excel', label: 'Export Excel' },
 ];
 
+// The header-cluster shape the narrow collapse is for (a detail page's Add).
+const ADD_OPTIONS = [
+  { value: 'item', label: 'Add item' },
+  { value: 'master-list', label: 'Add from master list' },
+];
+
 const STATUS_OPTIONS = [
   { value: 'allocated', label: 'Confirm Allocated' },
   { value: 'picked', label: 'Confirm Picked' },
@@ -474,6 +480,31 @@ export const ButtonsShowcase = () => {
               )}
             </Show>
           </Note>
+          <Lead>
+            It takes <code>&lt;Button&gt;</code>'s <code>collapsible</code> too,
+            with the same two tiers — the MAIN half sheds its label, while the
+            caret keeps a menu that still spells every option out. No{' '}
+            <code>title</code> to pass: the hidden label is the tooltip.{' '}
+            <strong>Resize below 1024px</strong> to see this pair collapse while
+            the one above keeps its labels.
+          </Lead>
+          <Row>
+            <SplitButton
+              collapsible="narrow"
+              icon={<PlusCircleIcon />}
+              options={ADD_OPTIONS}
+              menuLabel="Add options"
+              onAction={() => undefined}
+            />
+            <SplitButton
+              collapsible="narrow"
+              variant="secondary"
+              icon={<DownloadIcon />}
+              options={EXPORT_OPTIONS}
+              menuLabel="Export options"
+              onAction={value => setLastExport(value)}
+            />
+          </Row>
         </DashboardCard>
 
         <DashboardCard title="Split button — select-then-confirm (menuSelectsOnly)">

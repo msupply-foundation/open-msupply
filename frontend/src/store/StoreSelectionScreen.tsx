@@ -11,17 +11,17 @@ import styles from '../ui/styles/shared.module.css';
 // bottom bar's StoreSwitchModal). The frame is the login screen's own
 // (gradient hero + panel, LoginInitLayout — issue #193's mocks place store
 // selection in that frame); its content is the shared StoreSelector panel,
-// which owns the whole interaction — card rows, the search gate, and the
-// "Always open" checkbox (SL-9).
+// which owns the whole interaction — the grouped list rows, the search gate,
+// and the always-open toggle beneath them (SL-9).
 //
-// onSelect's `alwaysOpen` is that checkbox's state at the pick: true saves
+// onSelect's `alwaysOpen` is that toggle's state at the pick: true saves
 // the store as the user's always-open store on this device before entering.
 export const StoreSelectionScreen: Component<{
   stores: StoreSummary[];
   defaultStoreId?: string;
   lastUsedStoreId?: string;
   pinnedCount?: number;
-  defaultAlwaysOpen?: boolean;
+  alwaysOpenStoreId?: string;
   onAlwaysOpenChange?: (alwaysOpen: boolean) => void;
   onSelect: (storeId: string, alwaysOpen: boolean) => void;
 }> = props => (
@@ -37,7 +37,7 @@ export const StoreSelectionScreen: Component<{
         defaultStoreId={props.defaultStoreId}
         lastUsedStoreId={props.lastUsedStoreId}
         pinnedCount={props.pinnedCount}
-        defaultAlwaysOpen={props.defaultAlwaysOpen}
+        alwaysOpenStoreId={props.alwaysOpenStoreId}
         onAlwaysOpenChange={props.onAlwaysOpenChange}
         onConfirm={props.onSelect}
       />
