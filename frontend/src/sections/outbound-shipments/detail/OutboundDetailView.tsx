@@ -39,7 +39,10 @@ import {
   type PaginationProps,
 } from '../../../ui/elements/table/Pagination';
 import { remToPx } from '../../../ui/utils/rem';
-import { useIsNavOverlay } from '../../../ui/utils/createMediaQuery';
+import {
+  useIsNavOverlay,
+  useIsShortViewport,
+} from '../../../ui/utils/createMediaQuery';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
 import { createAddAction } from '../../../ui/utils/keyActions';
@@ -365,8 +368,15 @@ const OutboundDetailView: Component = () => {
   // function, not a stored element: the two footer faces each need their own
   // instance, and one element can't be in two places.
   const narrowViewport = useIsNavOverlay();
+  // …and the same trade on a SHORT one. The rule was written for tablet
+  // portrait, but a landscape tablet is the case that needs it most: wide
+  // enough that the width query never fires, short enough that a third stacked
+  // bar under the table costs a row of the thing the user came to work on.
+  // Measured at 1434×742, chrome took 52% of the screen.
+  const shortViewport = useIsShortViewport();
+  const foldTotalsIntoBar = () => narrowViewport() || shortViewport();
   const inlineTotals = () => (
-    <Show when={narrowViewport()}>
+    <Show when={foldTotalsIntoBar()}>
       <OutboundTotalsStrip
         inline
         totals={totalCount() > 0 ? shipmentTotals : undefined}
@@ -718,10 +728,15 @@ const OutboundDetailView: Component = () => {
           headerPosition: 'primary',
           wrapLines: 2,
         }),
-        // Name + the row-status badges (LineStatusBadges above).
+        // Name + the row-status badges (LineStatusBadges above). The name is
+        // wrapped so it can carry the gap on its TRAILING edge: this cell
+        // clamps to two lines, and a long name pushes the chips onto line 2,
+        // where a leading margin on the cluster would render as an indent
+        // instead of lining the chip up under the name (see
+        // [data-row-badges-label] in DataTable.module.css).
         cell: info => (
           <>
-            {info.row.original.itemName}
+            <span data-row-badges-label>{info.row.original.itemName}</span>
             <LineStatusBadges line={info.row.original} />
           </>
         ),
@@ -1107,10 +1122,11 @@ const OutboundDetailView: Component = () => {
                 <>
                   {/* The totals band, above BOTH footer faces — a document
                       fact, so a live row selection doesn't take it away.
-                      WIDE viewports only: on a narrow one the same figures
-                      ride the bar itself (below), because a row of height is
-                      the scarcer resource there. */}
-                  <Show when={!narrowViewport()}>
+                      Only where there is ROOM for it: on a narrow viewport, or
+                      a short one (landscape), the same figures ride the bar
+                      itself (below) rather than stacking a third band under
+                      the table, because height is the scarcer resource. */}
+                  <Show when={!foldTotalsIntoBar()}>
                     <OutboundTotalsStrip
                       totals={totalCount() > 0 ? shipmentTotals : undefined}
                     />
