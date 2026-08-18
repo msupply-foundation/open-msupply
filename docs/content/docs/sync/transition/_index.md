@@ -79,6 +79,8 @@ This is the implemented flow. A ROMS that has been upgraded to a V7-capable vers
 
 **Re-initialising a V7 site.** When a site that was previously on V5/V6 re-initialises against COMS, COMS itself checks with COGS whether the site is marked V7; if it isn't, COMS moves it back to V5/V6 so the two stay consistent.
 
+**Initialising a site COMS doesn't yet show as V7** (e.g. a site freshly created in legacy mSupply). Authentication (`get_token`) gates on the site being V7 on COMS. When it isn't, COMS asks COGS to transition it (the same `v7_url_and_upgrade` request as step 4); on success it answers `WaitingForCentralV7Upgrade` **and triggers its own sync with COGS**, so the flipped `site` row typically arrives and integrates within seconds. The initialising remote retries and gets through on the next attempt — without the trigger it would wait out COMS's whole sync interval ([open-msupply-frontend#504](https://github.com/msupply-foundation/open-msupply-frontend/issues/504)).
+
 **Hardware id.** During the transition the hardware id sometimes has to be reset on OG — but only once, before the V7 transition (for example when the site was previously running a legacy app such as legacy mSupply mobile). After transition, V7 site authentication is handled by COMS.
 
 ![migration_to_v7](./images/migrating_to_v7.drawio.svg)
