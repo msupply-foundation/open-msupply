@@ -28,6 +28,7 @@ import { createTableConfig } from '@/api/createTableConfig';
 import { FilterBar } from '@/ui/elements/selectors/FilterBar';
 import { CloseIcon, PlusCircleIcon } from '@/ui/icons';
 import { useUrlQueryState } from '@/list/urlQueryState';
+import { initialPageSize, rememberPageSize } from '@/list/pageSize';
 import { getVolumeUsedPercentage } from '@/domain/location';
 import { LocationsList as LocationsListQuery } from './locations.generated';
 import type { LocationsListVariables } from './locations.generated';
@@ -63,8 +64,10 @@ const LocationsList: Component = () => {
   // StoreGuardLayout, which requires a resolved store before routing. The
   // query is store-scoped server-side by it (OMS-REG-INV-01.36).
   const params = useParams<{ storeId: string }>();
-  const { query, setQuery } =
-    useUrlQueryState<LocationsListState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<LocationsListState>({
+    ...DEFAULT_STATE,
+    first: initialPageSize(),
+  });
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   // The S2 modal's opening state — null closed, else create or the clicked
   // row. Mounted fresh per open (<Show> below), so the form seeds once.
@@ -316,7 +319,10 @@ const LocationsList: Component = () => {
           pageSize: query().first,
           total: totalCount(),
           onOffsetChange: offset => setQuery({ ...query(), offset }),
-          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+          onPageSizeChange: first => {
+            rememberPageSize(first);
+            setQuery({ ...query(), first, offset: 0 });
+          },
         }}
       />
       <Show when={editor()}>

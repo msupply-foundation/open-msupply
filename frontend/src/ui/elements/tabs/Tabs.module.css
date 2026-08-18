@@ -32,11 +32,22 @@
   font-weight: var(--weight-medium);
   white-space: nowrap;
   cursor: pointer;
-  transition: color 120ms ease;
+  transition: color var(--motion-fast) ease;
 }
 
 .trigger:hover {
   color: var(--text-body);
+}
+
+/* Kobalte marks a disabled trigger with data-disabled (and disables the
+   button); mirror every other disabled control — dimmed, no pointer. */
+.trigger[data-disabled] {
+  color: var(--text-disabled);
+  cursor: default;
+}
+
+.trigger[data-disabled]:hover {
+  color: var(--text-disabled);
 }
 
 .trigger[data-selected] {
@@ -61,8 +72,8 @@
   height: 0.125rem;
   background: var(--primary-main);
   transition:
-    transform 200ms ease,
-    width 200ms ease;
+    transform var(--motion-slow) ease,
+    width var(--motion-slow) ease;
   pointer-events: none;
 }
 
@@ -87,13 +98,6 @@
   outline: 2px solid var(--primary-main);
   outline-offset: -2px;
   border-radius: var(--radius-sm);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .trigger,
-  .indicator {
-    transition: none;
-  }
 }
 
 /* NB: no pointer:coarse min-height bump on tabs — it inflated the trigger to

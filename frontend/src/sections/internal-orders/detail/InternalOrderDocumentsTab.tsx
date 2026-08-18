@@ -81,7 +81,9 @@ export const InternalOrderDocumentsTab: Component<{
   return (
     <>
       <Show when={errorMessage()}>
-        <Alert severity="error">{errorMessage()}</Alert>
+        <Alert severity="error" testId="document-upload-error">
+          {errorMessage()}
+        </Alert>
       </Show>
       <DocumentUploadPanel
         documents={(props.node.documents?.nodes ?? []).map(document => ({

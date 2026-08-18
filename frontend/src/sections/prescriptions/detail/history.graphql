@@ -1,6 +1,13 @@
 # The patient's recently-prescribed history (spec/prescriptions/contract.md §
 # history): every other prescription of the patient past NEW, newest first,
 # capped at 20; the per-item merge is client-side.
+#
+# The top-level `type` argument does BOTH jobs, so it is the only type pin here.
+# It selects the PERMISSION — the server authorises this read against
+# PrescriptionQuery alone because it is named; omitted, it falls back to a
+# deprecated combined resource demanding all six invoice query permissions at
+# once. It also OVERWRITES `filter.type` server-side, so a `filter.type` sent
+# alongside is dead weight (spec/navigation/contract.md § wire traps).
 query prescriptionHistory(
   $storeId: String!
   $patientId: String!
@@ -8,8 +15,8 @@ query prescriptionHistory(
 ) {
   invoices(
     storeId: $storeId
+    type: [PRESCRIPTION]
     filter: {
-      type: { equalTo: PRESCRIPTION }
       otherPartyId: { equalTo: $patientId }
       status: { equalAny: $statuses }
     }

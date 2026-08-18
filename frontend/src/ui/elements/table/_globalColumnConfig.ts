@@ -121,6 +121,8 @@ export const CELL_DEF = {
   initials: { kind: 'shortText' },
   user: { kind: 'shortText' }, // acting user's username (log / ledger tables)
   reason: { kind: 'shortText' }, // a line's variance reason (requisitions)
+  donor: { kind: 'shortText' },
+  campaign: { kind: 'shortText' }, // a campaign OR program name
   approvalComment: { kind: 'shortText' },
   firstName: { kind: 'shortText' },
   lastName: { kind: 'shortText' },
@@ -149,6 +151,10 @@ export const CELL_DEF = {
   packSize: { kind: 'number', size: 5 }, // "Pack size"
   numberOfPacks: { kind: 'number', size: 4.5 }, // "Pack quantity"
   countedNumberOfPacks: { kind: 'number', size: 8 },
+  // Same 8 as its counted twin, and for the same reason: the figure is narrow
+  // but "Packs snapshot" is not, and a stocktake reads the two side by side, so
+  // a mismatched pair would read as a mistake.
+  snapshotNumberOfPacks: { kind: 'number', size: 8 },
   receivedNumberOfPacks: { kind: 'number', size: 8 },
   availablePacks: { kind: 'number', size: 7 },
   volumePerPack: { kind: 'number', size: 7 },

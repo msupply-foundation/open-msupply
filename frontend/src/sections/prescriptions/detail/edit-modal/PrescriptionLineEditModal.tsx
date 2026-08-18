@@ -73,7 +73,8 @@ import {
 
 // The prescription line editor (spec/prescriptions/ui-surface.md S4 — the
 // D53 modal replacing the real app's full-page route): item lookup (locked in
-// edit mode, existing items excluded in add mode), the allocation editor body
+// edit mode, EVERY item offered in add mode — an already-dispensed item loads
+// its existing allocation, never a duplicate), the allocation editor body
 // with the prescription deltas — partial packs (AC-A1), no placeholder,
 // nothing allocated on open (AC-A2) — the preference-gated prescribed
 // quantity (AC-Q1–Q3), and the directions block (AC-R1–R3). Save is the item
@@ -91,8 +92,6 @@ export interface PrescriptionLineEditModalProps {
    * (which carries the full item info) resolves.
    */
   initialItem?: { id: string; code: string; name: string };
-  /** Items already dispensed — excluded from the add-mode picker (FL3). */
-  existingItemIds: string[];
   /**
    * The prescription's assigned program, if any — scopes the add-mode item
    * picker to the program's master list (rules.md: choosing a program scopes
@@ -722,38 +721,39 @@ const Body = (props: PrescriptionLineEditModalProps) => {
           dialog's own title holds the h2 (rank mirrors structure, never
           size). */}
       <FormSection title={t('label.item')} headingLevel="h3" heading="group">
-        <FieldRow label={t('label.item')}>
-          <ItemSearch
-            label={t('label.item')}
-            hideLabel
-            storeId={props.storeId}
-            focusTarget={itemSearch}
-            value={itemId()}
-            // Prefer the full item once the grid fetch lands; until then fall
-            // back to the row's own label so a re-opened line shows its item
-            // name immediately (not a blank locked box).
-            selectedItem={(() => {
-              const item = itemInfo();
-              if (item)
-                return { id: item.id, code: item.code, name: item.name };
-              return props.initialItem;
-            })()}
-            excludeItemIds={props.existingItemIds}
-            masterListId={props.programId}
-            disabled={isEdit}
-            onSelect={item => {
-              if (!item) return;
-              setItemId(item.id);
-              // A quantity typed for the previous item must not distribute
-              // over this one's grid while its fetch is still in flight.
-              cancelAllocate();
-              // The prescribed quantity is the first entry point once the
-              // item is chosen (.61); the handle lands when the field mounts.
-              if (prefs().editPrescribedQuantity)
-                prescribedQuantityFocus.focus();
-            }}
-          />
-        </FieldRow>
+        <ItemSearch
+          label={t('label.item')}
+          hideLabel
+          storeId={props.storeId}
+          focusTarget={itemSearch}
+          value={itemId()}
+          // Prefer the full item once the grid fetch lands; until then fall
+          // back to the row's own label so a re-opened line shows its item
+          // name immediately (not a blank locked box).
+          selectedItem={(() => {
+            const item = itemInfo();
+            if (item) return { id: item.id, code: item.code, name: item.name };
+            return props.initialItem;
+          })()}
+          // NO excludeItemIds: the search offers the whole addable catalogue,
+          // including items already dispensed on this prescription (issue
+          // #985 / #428). Picking one goes through the same gridData fetch as
+          // any other item, and `draftStockOutLines` returns that item's
+          // EXISTING allocation for this invoice — so a second visit edits
+          // (and lands on its batches) rather than duplicating.
+          masterListId={props.programId}
+          disabled={isEdit}
+          onSelect={item => {
+            if (!item) return;
+            setItemId(item.id);
+            // A quantity typed for the previous item must not distribute
+            // over this one's grid while its fetch is still in flight.
+            cancelAllocate();
+            // The prescribed quantity is the first entry point once the
+            // item is chosen (.61); the handle lands when the field mounts.
+            if (prefs().editPrescribedQuantity) prescribedQuantityFocus.focus();
+          }}
+        />
       </FormSection>
 
       <Show when={itemId()}>
@@ -949,7 +949,6 @@ const Body = (props: PrescriptionLineEditModalProps) => {
                 <Select
                   label={t('placeholder.item-directions')}
                   hideLabel
-                  width="full"
                   value=""
                   options={(itemInfo()?.itemDirections ?? [])
                     .slice()
@@ -985,7 +984,6 @@ const Body = (props: PrescriptionLineEditModalProps) => {
               <TextArea
                 label={t('label.directions')}
                 hideLabel
-                width="full"
                 rows={2}
                 value={note()}
                 onInput={e => {

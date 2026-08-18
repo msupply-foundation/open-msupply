@@ -1,5 +1,6 @@
 import { createSignal, Show, type Component } from 'solid-js';
-import { t, type LocaleKey } from '../../../intl';
+import { t } from '../../../intl';
+import { genderLabel } from '@/domain/patient';
 import { localisedDate } from '../../../intl/formatDateTime';
 import { formatNumber } from '../../../intl';
 import {
@@ -108,7 +109,6 @@ export const PrescriptionSidePanel: Component<
           <TextField
             label={t('label.reference')}
             hideLabel
-            width="full"
             data-testid="customer-reference-field"
             value={props.edit.state.theirReference}
             disabled={props.disabled}
@@ -154,7 +154,6 @@ export const PrescriptionSidePanel: Component<
           <TextArea
             label={t('heading.comment')}
             hideLabel
-            width="full"
             data-testid="comment-field"
             rows={3}
             value={props.edit.state.comment}
@@ -233,7 +232,7 @@ export const PrescriptionSidePanel: Component<
               patients rule (prescriptions ui-surface § side panel). */}
           <Text variant="body">
             {props.node.patient?.gender
-              ? genderDisplay(props.node.patient.gender)
+              ? genderLabel(props.node.patient.gender)
               : '—'}
           </Text>
         </FieldRow>
@@ -333,20 +332,4 @@ export const PrescriptionSidePanel: Component<
       />
     </>
   );
-};
-
-// Gender values render through the patients vertical's fixed label keys
-// (spec/patients S5); an unmapped value falls back to the raw string.
-const genderDisplay = (gender: string): string => {
-  const keyByValue: Record<string, LocaleKey> = {
-    FEMALE: 'gender.female',
-    MALE: 'gender.male',
-    TRANSGENDER: 'gender.transgender',
-    TRANSGENDER_MALE: 'gender.transgender-male',
-    TRANSGENDER_FEMALE: 'gender.transgender-female',
-    NON_BINARY: 'gender.non-binary',
-    UNKNOWN: 'gender.unknown',
-  };
-  const key = keyByValue[gender];
-  return key ? t(key) : gender;
 };
