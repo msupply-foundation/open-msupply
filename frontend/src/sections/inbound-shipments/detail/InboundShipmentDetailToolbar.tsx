@@ -138,6 +138,13 @@ export const InboundShipmentDetailToolbar: Component<
         role="supplier"
         selected={selectedSupplier()}
         disabled={supplierLocked()}
+        // Replace-only: a shipment always names a supplier, so the field is
+        // never nullable and offers no clear affordance (D5, clearability
+        // follows optionality — spec/DIVERGENCES.md; the internal-orders
+        // supplier picker is specced the same way). The ✕ it inherited from the
+        // combobox default was also inert here — `onSelect` discards a null, so
+        // clearing emptied the control on screen and saved nothing.
+        clearable={false}
         onSelect={name => name && props.onSaveField({ otherPartyId: name.id })}
       />
 
