@@ -29,10 +29,10 @@ import {
   type SortState,
 } from '@/ui/elements/table/DataTable';
 import {
+  getCellDefinition,
   getCommentCell,
   getDateCell,
   getExpiryDateCell,
-  getNumberCell,
 } from '@/ui/elements/table/tableHelpers';
 import {
   Pagination,
@@ -231,6 +231,17 @@ const StocktakeDetailView: Component = () => {
           manufacturer: false,
           campaign: false,
         },
+        // Code pinned to the inline-start edge, so the identifier stays put
+        // while the counting columns scroll horizontally — this table is wide
+        // enough to scroll on every device the app targets, and a row whose
+        // code has scrolled away is a row you can't be sure you're counting.
+        // Only a DEFAULT: the user's own pinning wins over it, and the Columns
+        // popover's reset returns here rather than to no pins at all.
+        //
+        // 'item.code' is the column's id (the accessor path, which the testid
+        // contract also uses) — NOT 'code'. A key that matches no column pins
+        // nothing and reports no error.
+        columnPinning: { left: ['item.code'] },
       },
     },
   });
@@ -681,19 +692,35 @@ const StocktakeDetailView: Component = () => {
       sortKey: 'itemCode',
       header: () => t('label.code'),
       cardGroup: 'more',
+      // Sized as the shared `itemCode` column (the `code` cell kind: 5rem off a
+      // ~9-char measure, capped at 7, monospace so digits align down the
+      // column). It was carrying no definition at all, so it auto-sized to
+      // whatever the widest code on the page happened to be and moved as the
+      // user paged. Any change to what a code column is worth belongs in
+      // _globalColumnConfig.ts, which is the one place those widths are tuned —
+      // not here.
+      ...getCellDefinition('itemCode'),
     },
     {
       c: { key: 'itemName' },
       sortKey: 'itemName',
       header: () => t('label.name'),
+      // The shared `itemName` definition: the `text` kind's 18.75rem, and
+      // deliberately NO growth cap, which is what makes this the column that
+      // absorbs the table's slack — the right behaviour for the longest value in
+      // the row ("ABACAVIR / LAMIVUDINE 120/60 mg comp disp. BTE/30").
       // Item names are long — allow up to two wrapped lines before clamping.
-      meta: { headerPosition: 'primary', wrapLines: 2 },
+      ...getCellDefinition('itemName', {
+        headerPosition: 'primary',
+        wrapLines: 2,
+      }),
     },
     {
       c: { key: 'batch' },
       sortKey: 'batch',
       header: () => t('label.batch'),
       cardGroup: 'more',
+      ...getCellDefinition('batch'),
     },
     {
       c: { key: 'expiryDate' },
@@ -717,6 +744,9 @@ const StocktakeDetailView: Component = () => {
       sortKey: 'locationCode',
       header: () => t('label.location'),
       cardGroup: 'more',
+      // `location`, not `locationCode`: this renders the code but its header is
+      // "Location", and that key's 6.5rem is the one measured against it.
+      ...getCellDefinition('location'),
     },
     {
       // Unit name (item.unitName) — read-only. Unsortable (no server key;
@@ -725,6 +755,7 @@ const StocktakeDetailView: Component = () => {
       c: { accessor: line => line.item.unitName ?? '', id: 'itemUnit' },
       header: () => t('label.unit-name'),
       cardGroup: 'more',
+      ...getCellDefinition('unitName'),
     },
     {
       c: { key: 'packSize' },
@@ -732,7 +763,7 @@ const StocktakeDetailView: Component = () => {
       // server has a packSize key — matched here.
       header: () => t('label.pack-size'),
       cardGroup: 'more',
-      ...getNumberCell(),
+      ...getCellDefinition('packSize'),
     },
     // Doses per unit (gated by manageVaccinesInDoses) — packSize × item.doses,
     // vaccine rows only.
@@ -745,7 +776,7 @@ const StocktakeDetailView: Component = () => {
             },
             header: () => t('label.doses-per-unit'),
             cardGroup: 'more',
-            ...getNumberCell(),
+            ...getCellDefinition('dosesPerUnit'),
           } satisfies Column<Line, SortKey, GroupKey>,
         ]
       : []),
@@ -759,7 +790,7 @@ const StocktakeDetailView: Component = () => {
             sortKey: 'snapshotNumberOfPacks',
             header: () => t('label.snapshot-num-of-packs'),
             cardGroup: 'more',
-            ...getNumberCell(),
+            ...getCellDefinition('snapshotNumberOfPacks'),
             // Snapshot cell also carries the line's error beneath the count (a
             // snapshot/current-count mismatch is a "recount this line" message
             // about the snapshot); the count itself formats like every other
@@ -788,8 +819,10 @@ const StocktakeDetailView: Component = () => {
       c: { key: 'countedNumberOfPacks' },
       sortKey: 'countedNumberOfPacks',
       header: () => t('label.counted-num-of-packs'),
-      ...getNumberCell(),
-      meta: { align: 'right', headerPosition: 'badge' },
+      ...getCellDefinition('countedNumberOfPacks', {
+        align: 'right',
+        headerPosition: 'badge',
+      }),
     },
     // Doses counted (gated by manageVaccinesInDoses) — client-side, vaccine
     // rows only (blank otherwise); nothing stored per line (see ./lines/doses).
@@ -802,7 +835,7 @@ const StocktakeDetailView: Component = () => {
             },
             header: () => t('label.doses-counted'),
             cardGroup: 'more',
-            ...getNumberCell(),
+            ...getCellDefinition('doses'),
           } satisfies Column<Line, SortKey, GroupKey>,
         ]
       : []),
@@ -819,7 +852,7 @@ const StocktakeDetailView: Component = () => {
             },
             header: () => t('label.difference'),
             cardGroup: 'more',
-            ...getNumberCell(),
+            ...getCellDefinition('difference'),
           } satisfies Column<Line, SortKey, GroupKey>,
         ]),
     // Tail columns in OMS's columns.tsx order: Reason · [Donor] · Manufacturer
@@ -851,6 +884,7 @@ const StocktakeDetailView: Component = () => {
             c: { accessor: line => line.donorName ?? '', id: 'donor' },
             header: () => t('label.donor'),
             cardGroup: 'more',
+            ...getCellDefinition('donor'),
           } satisfies Column<Line, SortKey, GroupKey>,
         ]
       : []),
@@ -871,6 +905,7 @@ const StocktakeDetailView: Component = () => {
       c: { accessor: line => line.campaign?.name ?? '', id: 'campaign' },
       header: () => t('label.campaign-only'),
       cardGroup: 'more',
+      ...getCellDefinition('campaign'),
     },
     // Comment (spec column #18) — the line's own comment text. Distinct from
     // note; the shared comment cell (indicator + popover).

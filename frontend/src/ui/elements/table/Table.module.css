@@ -22,9 +22,18 @@
   border-block-end: 1px solid var(--color-divider);
   background: var(--bg-toolbar);
   color: var(--text-secondary);
+  /* 13px, matching DataTable's header — rationale lives on the token. Modals
+     keep the body size (the dialog rule below). */
+  font-size: var(--table-header-font-size);
   font-weight: var(--weight-medium);
   text-align: start;
   white-space: nowrap;
+}
+
+/* Inside a modal, headers stay at the body size — same carve-out as DataTable,
+   scoped on the native <dialog> every modal renders into. */
+:global(dialog) .table th {
+  font-size: var(--text-sm);
 }
 
 .table td {
