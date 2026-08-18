@@ -177,7 +177,12 @@ const Body = (props: DeleteCampaignsActionProps & { onClose: () => void }) => {
             </>
           }
         >
-          <CancelButton onClick={close} />
+          {/* Nothing to submit or cancel — the refused delete already resolved,
+              so a single Close (the internal-orders / inbound-shipments error
+              phase); dismissing is what triggers the owner's prune. */}
+          <Button variant="secondary" confirms="plain" onClick={close}>
+            {t('button.close')}
+          </Button>
         </Show>
       }
     />

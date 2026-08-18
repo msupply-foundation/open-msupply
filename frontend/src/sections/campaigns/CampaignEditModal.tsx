@@ -7,7 +7,6 @@ import { translateServerError } from '@/intl/intlUtils';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { Stack } from '@/ui/layout/Stack/Stack';
-import { DetailContainer } from '@/ui/layout/Detail/DetailContainer';
 import { FieldRow } from '@/ui/elements/inputs/FieldRow';
 import { TextField } from '@/ui/elements/inputs/TextField';
 import { DateField } from '@/ui/elements/inputs/DateField';
@@ -140,55 +139,55 @@ export const CampaignEditModal: Component<CampaignEditModalProps> = props => {
         </>
       }
     >
-      <DetailContainer>
-        <Stack>
-          <FieldRow label={t('label.name')} required>
-            <TextField
-              label={t('label.name')}
-              hideLabel
-              required
-              width="full"
-              data-testid="campaign-name-input"
-              disabled={saving()}
-              value={draft().name}
-              onInput={e =>
-                setDraft({ ...draft(), name: e.currentTarget.value })
-              }
-              // The name is stored as entered, so it is trimmed as the field is
-              // LEFT — a name saved from this app never carries surrounding
-              // whitespace (rules § creating and editing). The save trims too;
-              // this is what makes the trim visible to the user.
-              onBlur={() => setDraft({ ...draft(), name: draft().name.trim() })}
-            />
-          </FieldRow>
-          {/* Both dates optional and independently clearable, and NEITHER is
+      {/* The field rows as ONE vertical stack (ui-surface S2 § Layout). The
+          dialog's own `width="prose"` measure owns the width cap — a
+          DetailContainer inside would double-pad and re-cap content the frame
+          already measures (the sites editor records the same resolution). */}
+      <Stack>
+        <FieldRow label={t('label.name')} required>
+          <TextField
+            label={t('label.name')}
+            hideLabel
+            required
+            width="full"
+            data-testid="campaign-name-input"
+            disabled={saving()}
+            value={draft().name}
+            onInput={e => setDraft({ ...draft(), name: e.currentTarget.value })}
+            // The name is stored as entered, so it is trimmed as the field is
+            // LEFT — a name saved from this app never carries surrounding
+            // whitespace (rules § creating and editing). The save trims too;
+            // this is what makes the trim visible to the user.
+            onBlur={() => setDraft({ ...draft(), name: draft().name.trim() })}
+          />
+        </FieldRow>
+        {/* Both dates optional and independently clearable, and NEITHER is
               bounded by the other: entering a start later than the end is
               possible and is rejected on save, because the ordering rule is the
               server's (rules § the campaign period). */}
-          <FieldRow label={t('label.start-date')}>
-            <DateField
-              label={t('label.start-date')}
-              hideLabel
-              width="full"
-              testId="campaign-start-date-input"
-              disabled={saving()}
-              value={draft().startDate ?? null}
-              onChange={value => setDraft({ ...draft(), startDate: value })}
-            />
-          </FieldRow>
-          <FieldRow label={t('label.end-date')}>
-            <DateField
-              label={t('label.end-date')}
-              hideLabel
-              width="full"
-              testId="campaign-end-date-input"
-              disabled={saving()}
-              value={draft().endDate ?? null}
-              onChange={value => setDraft({ ...draft(), endDate: value })}
-            />
-          </FieldRow>
-        </Stack>
-      </DetailContainer>
+        <FieldRow label={t('label.start-date')}>
+          <DateField
+            label={t('label.start-date')}
+            hideLabel
+            width="full"
+            testId="campaign-start-date-input"
+            disabled={saving()}
+            value={draft().startDate ?? null}
+            onChange={value => setDraft({ ...draft(), startDate: value })}
+          />
+        </FieldRow>
+        <FieldRow label={t('label.end-date')}>
+          <DateField
+            label={t('label.end-date')}
+            hideLabel
+            width="full"
+            testId="campaign-end-date-input"
+            disabled={saving()}
+            value={draft().endDate ?? null}
+            onChange={value => setDraft({ ...draft(), endDate: value })}
+          />
+        </FieldRow>
+      </Stack>
     </Dialog>
   );
 };
