@@ -637,13 +637,22 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     if (line.numberOfPacks > 0) return 'success';
     return undefined;
   };
-  // The card tone (tinted title + the badges after it — D111/D112): expired
-  // outranks held, matching the tint precedence; both badges still show.
-  const lineCardTone = (line: DraftLine): 'warning' | 'error' | undefined => {
-    if (lineExpired(line)) return 'error';
-    if (lineHeld(line)) return 'warning';
-    return undefined;
-  };
+  // The card tone paints the card's IDENTITY title, which on THIS grid is the
+  // BATCH CODE (the detail view's cards title themselves with the item name
+  // instead). Expiry no longer tones it (Ling, 2026-08-19): the card already
+  // states the fact twice in words — the "Expired" badge sits immediately
+  // beside the code, and the Expiry date field beneath it is red — so the red
+  // on the code itself added no information and read as though the CODE were
+  // wrong rather than the stock it names. A batch code is an identifier, and an
+  // identifier reading in an error colour is a category error.
+  //
+  // Held keeps its amber: nothing beside a held batch's code says "on hold" in
+  // the card header the way the Expired badge does.
+  //
+  // NB this narrows D112, which specifies a red identity title on expired
+  // cards — the divergence record needs the matching edit (spec/PROCESS.md).
+  const lineCardTone = (line: DraftLine): 'warning' | undefined =>
+    lineHeld(line) ? 'warning' : undefined;
   const lineAutoBarReasons = (line: DraftLine) =>
     autoAllocateBarReasons(line, allocationPrefs());
   // The tick column's predicate ("will be used in auto-allocation"): auto-
