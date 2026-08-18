@@ -76,7 +76,8 @@ export default tseslint.config(
 
   // Application source — browser environment + Solid JSX. compat flags Web
   // APIs unsupported by the minimum browser (browserslist in package.json —
-  // Chromium 138, the newest WebView installable on Android 9). The example
+  // Chromium 132, the WebView on the oldest Android 8.1 tablets deployed).
+  // The example
   // plugins (examples/) are the same: ordinary Solid components running in the
   // host's runtime, so they answer to the same rules.
   {

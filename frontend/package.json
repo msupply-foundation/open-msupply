@@ -76,6 +76,6 @@
     ]
   },
   "browserslist": [
-    "chrome >= 138"
+    "chrome >= 132"
   ]
 }
