@@ -94,8 +94,8 @@ export const Popover = (props: PopoverProps) => {
   // <Show> flip lands before `place()`'s queued microtask reads the panel's
   // box (see the beforetoggle listener below).
   const [everOpened, setEverOpened] = createSignal(false);
-  // The panel element as a signal, for PortalMountContext below — a plain ref
-  // can't be read reactively by the popups that mount into it (#1107).
+  // The panel as a signal, for the PortalMountContext below — the plain ref
+  // can't be read reactively by the popups that mount into it.
   const [panelEl, setPanelEl] = createSignal<HTMLElement>();
 
   const place = () => {
@@ -277,24 +277,14 @@ export const Popover = (props: PopoverProps) => {
             everOpened above) — a Popover the user never opens costs nothing
             beyond its trigger button. */}
         <Show when={everOpened()}>
-          {/* A portal-mounting popup opened INSIDE this panel (the Select in
-              the table's Settings panel, #1107) must mount INTO the panel, not
-              <body>: the panel is in the TOP LAYER, which paints above every
-              normal-flow element whatever its z-index, so a <body>-portaled
-              listbox is drawn behind the panel AND takes no clicks — the hit
-              test lands on the panel over it. Mounting it here puts it in the
-              same top-layer box, and keeps a click on an option "inside" the
-              popover so light dismiss doesn't fire. Same reasoning as Dialog's
-              provider — see utils/portalMount.ts.
-
-              Context reaches a component through the OWNER tree, and children
-              are CONSTRUCTED here, under this Provider, so the popups resolve
-              it (Dialog documents the trap of resolving a slot outside it). */}
+          {/* A Select/Combobox opened in here mounts INTO the panel, not
+              <body>: the panel is in the top layer, so a <body>-portaled
+              listbox paints behind it and takes no clicks (#1107). See
+              utils/portalMount.ts. Children are constructed under the Provider,
+              which is what makes the context reach them. */}
           <PortalMountContext.Provider value={panelEl}>
-            {/* The scrolling half of the panel. The panel itself must not
-                scroll: it is the portal mount above, and a scroll container
-                would clip the popup mounted into it (as Dialog clips on its
-                inner body, not the dialog box). */}
+            {/* The panel is the mount, so .body scrolls instead — a scroll
+                container on the panel would clip what's mounted into it. */}
             <div class={styles.body}>
               {(() => {
                 // Read props.children ONCE into a local: it's a getter compiled
