@@ -123,6 +123,14 @@ impl SyncTrigger {
             sender: mpsc::channel(1).0,
         }
     }
+
+    /// A trigger whose receiver the test holds, so it can assert whether a
+    /// code path fired a sync (e.g. `ensure_site_is_v7`'s central kick).
+    #[cfg(test)]
+    pub(crate) fn new_test() -> (SyncTrigger, mpsc::Receiver<()>) {
+        let (sender, receiver) = mpsc::channel(1);
+        (SyncTrigger { sender }, receiver)
+    }
 }
 
 fn get_sync_settings(service_provider: &ServiceProvider) -> SyncSettings {
