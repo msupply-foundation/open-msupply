@@ -1,4 +1,4 @@
-import { createSignal } from 'solid-js';
+import { createEffect, createRoot, createSignal } from 'solid-js';
 import { syncStatus, triggerSync } from '../../api/syncStore';
 import {
   advanceTriggerState,
@@ -17,16 +17,33 @@ import {
  * showed the run, exactly the disagreement OMS-REG-FTR-03.19 forbids.
  *
  * Module-scope state, like the substrate store's own signals: the armed run is
- * a session fact, not any component's. `active` is DERIVED at read rather than
- * advanced by an effect — advanceTriggerState is pure over (armed, status), so
- * a stored advance would only duplicate what the two signals already say.
+ * a session fact, not any component's.
+ *
+ * The advance is STORED, not derived at read. advanceTriggerState is pure over
+ * (armed, status), but it is not idempotent over a REPLAYED status: its
+ * `!prev.active` guard is what makes release one-way, and that guard only bites
+ * on a state that was written back. Derived at read, the stored arm would keep
+ * its pre-run signature for the whole session, so any later frame carrying that
+ * same signature — and syncRunSignature exists precisely so "a stale pre-run
+ * redelivery" hashes identically — would read as armed again, wedging the cell
+ * on "Syncing…" with syncNow() a no-op until the next status frame.
+ *
+ * The effect needs an owner and there is no component to own it (both surfaces
+ * share this one machine), so it gets a root of its own — never disposed, which
+ * is correct: it lives exactly as long as the store signals it reads.
  */
 const [trigger, setTrigger] = createSignal<TriggerState>(IDLE_TRIGGER);
 
+createRoot(() => {
+  createEffect(() => {
+    const status = syncStatus();
+    setTrigger(prev => advanceTriggerState(prev, status));
+  });
+});
+
 /** A manual run is in flight, held from the click until the run's signature
  * moves on — even when it fails before any in-progress frame arrives. */
-export const triggerActive = (): boolean =>
-  advanceTriggerState(trigger(), syncStatus()).active;
+export const triggerActive = (): boolean => trigger().active;
 
 /** Start a manual sync. A no-op while a run is already in flight (the status
  * line is aria-disabled, not disabled, so activation still reaches here; the

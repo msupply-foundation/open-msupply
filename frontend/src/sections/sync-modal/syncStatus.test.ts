@@ -445,6 +445,24 @@ describe('Sync-now busy state machine (SYNC-03.25)', () => {
       IDLE_TRIGGER
     );
   });
+
+  it('once released, a replay of the armed signature does NOT re-arm it', () => {
+    // Release is one-way, and only the STORED state carries that: the guard
+    // that makes it so reads prev.active, so it can only bite on a state that
+    // was written back. Fed its own output — which is what storing the advance
+    // does — a redelivered pre-run frame is inert. Derived fresh from the arm
+    // each time, that same frame would read as armed again and wedge the cell
+    // on "Syncing…" with sync-now a no-op.
+    const released = advanceTriggerState(
+      armed,
+      v7({ lastSuccessfulSync: { started: 'a', finished: 'c' } })
+    );
+    expect(released).toEqual(IDLE_TRIGGER);
+    expect(advanceTriggerState(released, idleStatus)).toEqual(IDLE_TRIGGER);
+    expect(advanceTriggerState(released, v7({ isSyncing: true }))).toEqual(
+      IDLE_TRIGGER
+    );
+  });
 });
 
 describe('a failed run preserves the last-successful record (SYNC-03.29)', () => {

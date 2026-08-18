@@ -39,9 +39,12 @@ export interface SyncStatusProps {
   /**
    * Sync is not running and cannot, because the server is out of reach (issue
    * #1087). Its own level, below the tones — an outage is not a fault to answer
-   * but a fact to report, and nothing is lost while it lasts. The cell dims AND
-   * takes the disconnected mark, which outranks any tone glyph: naming the
-   * cause is more use than an alarm the user can do nothing about.
+   * but a fact to report, and nothing is lost while it lasts. The cell recedes
+   * AND takes the disconnected mark, which outranks any tone glyph: naming the
+   * cause is more use than an alarm the user can do nothing about. Receding is
+   * a loss of WEIGHT, never of contrast — this bar has none to spend (see the
+   * measurements in SyncStatus.module.css), and an outage is the state with the
+   * most to say.
    */
   dimmed?: boolean;
   /** A run is in flight — the sync glyph spins while true. */
@@ -106,9 +109,8 @@ export const SyncStatus = (props: SyncStatusProps) => (
       aria-disabled={props.syncing ? 'true' : undefined}
       data-testid="footer-sync-now"
     >
-      {/* The animated state rides a wrapper rather than the <svg> itself:
-          the icon set's components take styling props, not state ones (and
-          MenuBar's dimmed icon is wrapped for the same reason). */}
+      {/* The animated state rides a wrapper rather than the <svg> itself: the
+          icon set's components take styling props, not state ones. */}
       <span
         class={styles.icon}
         data-syncing={props.syncing ? '' : undefined}

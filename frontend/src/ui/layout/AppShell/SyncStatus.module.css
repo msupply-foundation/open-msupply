@@ -114,14 +114,22 @@
 }
 
 /*
- * Dimmed: sync is not running and cannot (issue #1087). Applied to the whole
- * group so the glyph, the state, its timing and the details control all recede
- * together — a cell where only the glyph dimmed would read as a broken icon
- * rather than a quiet state. Mixed toward the bar's ground rather than given a
- * fixed grey, so it dims correctly against a bar of any colour.
+ * Dimmed: sync is not running and cannot (issue #1087). Carried by WEIGHT, for
+ * the reason measured on .detail above — the bar's own content starts at 3.48:1
+ * and 2.80:1, so there is no contrast to spend, and every alpha deep enough to
+ * READ as dimmed lands in the range that measurement already rejected (a 70%
+ * tail fell to 2.42:1 and 1.97:1). Fading the whole group would have spent it
+ * on the one state carrying the most to say: "No connection" plus the age that
+ * qualifies it.
+ *
+ * So the state recedes by giving up the label's emphasis rather than its
+ * contrast, and it is not carrying itself alone — the cell also takes the
+ * struck-through connection mark and says the words. Three carriers, none of
+ * them a hue and none of them contrast, which is what "survives an unknown
+ * ground" has to mean on a bar whose colour is store data.
  */
-.group[data-dimmed] {
-  color: color-mix(in srgb, currentcolor 65%, transparent);
+.group[data-dimmed] .label {
+  font-weight: var(--weight-regular);
 }
 
 /*
