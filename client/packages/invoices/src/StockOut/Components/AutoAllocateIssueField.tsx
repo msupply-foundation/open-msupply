@@ -57,11 +57,12 @@ export const AutoAllocateField = ({
         autoFocus={autoFocus}
         value={issueQuantity}
         onChange={handleIssueQuantityChange}
-        slotProps={
-          inputColor
-            ? { htmlInput: { sx: { backgroundColor: inputColor } } }
-            : undefined
-        }
+        slotProps={{
+          htmlInput: {
+            ...(inputColor ? { sx: { backgroundColor: inputColor } } : {}),
+            'data-testid': 'issue-field',
+          },
+        }}
       />
     </>
   );

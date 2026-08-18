@@ -5,10 +5,10 @@ use std::{
 };
 
 use base64::{prelude::BASE64_STANDARD, Engine};
-use log::info;
+use log::{error, info};
 use repository::{
     migrations::Version, BackendPluginRowRepository, FrontendPluginFile, FrontendPluginRow,
-    FrontendPluginRowRepository, PluginType, RepositoryError,
+    FrontendPluginRowRepository, HostRuntime, PluginType, RepositoryError, LEGACY_HOST_RUNTIME,
 };
 use serde::Deserialize;
 use sha2::{Digest, Sha256};
@@ -78,6 +78,9 @@ pub struct FrontendPluginMetadata {
     pub code: String,
     pub version: Version,
     pub entry_point: String,
+    /// Which front end can load this bundle, compared for equality against the
+    /// runtime the asking client declares (`get_frontend_plugins_metadata`).
+    pub host_runtime: String,
     /// Hex-encoded SHA-256 of the concatenated file contents — used as a
     /// cache-busting URL token so the browser only refetches when the bundle
     /// actually changes.
@@ -92,8 +95,19 @@ pub struct FrontendPlugin {
     files_content: HashMap<String /* file name */, Vec<u8>>,
 }
 
+/// Every server-compatible frontend plugin currently installed, keyed by ROW
+/// ID rather than by code.
+///
+/// One code can be present several times over: while the new front end is
+/// rolling out, a site holds two bundles of the same plugin — a React one for
+/// the old UI and an ESM one for the new — and has to hand each host the one
+/// it can load. Keying by code would mean choosing between them at bind time,
+/// before anyone has asked, which is exactly the choice that cannot be made
+/// then. Narrowing to one bundle per code is discovery's job instead, once the
+/// asking client has declared what it can load
+/// (`get_frontend_plugins_metadata`).
 #[derive(Clone)]
-pub struct FrontendPluginCache(Arc<RwLock<HashMap<String /* plugin code */, FrontendPlugin>>>);
+pub struct FrontendPluginCache(Arc<RwLock<HashMap<String /* plugin row id */, FrontendPlugin>>>);
 
 impl FrontendPluginCache {
     pub(crate) fn new() -> Self {
@@ -101,16 +115,35 @@ impl FrontendPluginCache {
     }
 }
 
+/// The plugin host runtime a client declares itself to be when it asks for the
+/// installed set (`react`, `solid`, ...).
+///
+/// The server cannot infer it. Several front ends are served concurrently and
+/// permanently by one binary — the SolidJS one at `/`, the React one at the
+/// never-synced `/old-ui/` escape hatch — so "which host is asking?" is a
+/// property of the request, not of the server. Adding a third is a client-side
+/// change plus bundles that name it; nothing here needs to learn its name.
+///
+/// A caller that declares nothing is the React UI as it shipped before any of
+/// this existed — the only client that was ever allowed not to declare.
+pub fn asking_host_or_legacy(declared: Option<String>) -> String {
+    declared.unwrap_or_else(|| LEGACY_HOST_RUNTIME.to_string())
+}
+
 #[derive(Deserialize, Debug)]
 pub struct FrontendPluginFileRequest {
-    plugin_code: String,
+    /// The plugin ROW id, not its code — two bundles of one code are live at
+    /// once and their entry files share a name, so the code alone no longer
+    /// addresses a bundle. Clients never build this themselves: they use the
+    /// `path` discovery handed them.
+    plugin_id: String,
     filename: String,
 }
 
 #[derive(Debug, Error)]
 pub enum FrontendPluginFileRequestError {
-    #[error("Plugin code can't be found")]
-    CannotFindPluginCode,
+    #[error("Plugin id can't be found")]
+    CannotFindPluginId,
     #[error("Plugin file can't be found")]
     CannotFindFile,
 }
@@ -123,12 +156,94 @@ pub struct InstalledPlugin {
     pub version: String,
     pub kind: InstalledPluginKind,
     pub types: Vec<String>,
+    /// Which front end this bundle is for — `None` for backend plugins, which
+    /// have no host.
+    ///
+    /// Present so the two rows that are now normal — one code, one version, a
+    /// React bundle and a SolidJS one — are distinguishable to whoever is
+    /// deciding which to uninstall. Without it the list shows one line twice,
+    /// and delete is a guess against an id it does not display.
+    pub host_runtime: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum InstalledPluginKind {
     Backend,
     Frontend,
+}
+
+/// Decode a stored row into a servable plugin, or `None` if this server cannot
+/// serve it — either because the compatibility gate rejects it or because the
+/// row does not decode.
+///
+/// The one *gate* here is the server axis — the plugin's `version` against the
+/// binary's own, by (major, minor). It is deliberately the ONLY compatibility
+/// question settled at load time: it depends on nothing but the server, so it
+/// can be answered once, whereas which host the bundle suits cannot be known
+/// until a host asks (`get_frontend_plugins_metadata`).
+///
+/// A row whose file contents are not valid base64 is dropped with an error
+/// rather than panicking. Its bundle is unservable either way, but the caller
+/// rebuilds the WHOLE cache from the table, so a panic here would take every
+/// other installed plugin down with it — and would do so again on every
+/// subsequent change to the table, since the bad row is still there.
+fn prepare_frontend_plugin(
+    FrontendPluginRow {
+        id,
+        code,
+        entry_point,
+        files,
+        version,
+        host_runtime: HostRuntime(host_runtime),
+        ..
+    }: FrontendPluginRow,
+) -> Option<FrontendPlugin> {
+    let version = Version::from_str(&version);
+    if !version.is_compatible_by_major_and_minor(&Version::from_package_json()) {
+        return None;
+    }
+
+    let mut files_content = HashMap::new();
+    for FrontendPluginFile {
+        file_name,
+        file_content_base64,
+    } in files.0.into_iter()
+    {
+        let content = match BASE64_STANDARD.decode(file_content_base64) {
+            Ok(content) => content,
+            Err(error) => {
+                error!(
+                    "Frontend plugin {id} ({code}@{version}) not loaded: file {file_name} is not valid base64: {error}"
+                );
+                return None;
+            }
+        };
+
+        files_content.insert(file_name, content);
+    }
+
+    // Hash all files (sorted by name for stability) so the URL token only
+    // changes when the bundle's bytes change.
+    let mut hasher = Sha256::new();
+    let mut file_names: Vec<&String> = files_content.keys().collect();
+    file_names.sort();
+    for name in file_names {
+        hasher.update(name.as_bytes());
+        hasher.update(&files_content[name]);
+    }
+    let hash = hex::encode(hasher.finalize());
+
+    Some(FrontendPlugin {
+        metadata: FrontendPluginMetadata {
+            id,
+            code,
+            version,
+            entry_point,
+            host_runtime,
+            hash,
+        },
+        files_content,
+    })
 }
 
 // TODO should really pass through StaticFileService
@@ -149,6 +264,7 @@ pub trait PluginServiceTrait: Sync + Send {
                 types: row.types.0.iter().filter_map(|t| {
                     serde_json::to_value(t).ok().and_then(|v| v.as_str().map(ToString::to_string))
                 }).collect(),
+                host_runtime: None,
             });
         }
 
@@ -160,6 +276,7 @@ pub trait PluginServiceTrait: Sync + Send {
                 version: row.version,
                 kind: InstalledPluginKind::Frontend,
                 types: row.types.0,
+                host_runtime: Some(row.host_runtime.0),
             });
         }
 
@@ -180,10 +297,58 @@ pub trait PluginServiceTrait: Sync + Send {
             PluginInstance::bind(row);
         }
 
-        let repo = FrontendPluginRowRepository::new(&ctx.connection);
-        for row in repo.all()? {
-            self.bind_frontend_plugin(ctx, row);
+        self.reload_frontend_plugins(ctx)
+    }
+
+    /// Rebuild the whole frontend serving cache from the DB and swap it in.
+    ///
+    /// A rebuild rather than an incremental bind, because the cache now holds
+    /// every compatible version of every code and so has no way to reconcile
+    /// itself against a delete: nothing in a single changed row says which of
+    /// the entries already cached should go. Rebuilding also settles the
+    /// question the old incremental path left open (#12169) — an uninstall now
+    /// stops the bundle being served at the next processor run, rather than at
+    /// the next server restart. The cost is re-decoding and re-hashing every
+    /// installed bundle whenever any one of them changes, which is a rare
+    /// event over a small number of small files.
+    fn reload_frontend_plugins(&self, ctx: &ServiceContext) -> Result<(), RepositoryError> {
+        let started = Instant::now();
+        let rows = FrontendPluginRowRepository::new(&ctx.connection).all()?;
+        let row_count = rows.len();
+
+        let mut rebuilt = HashMap::new();
+        for row in rows {
+            let Some(plugin) = prepare_frontend_plugin(row) else {
+                continue;
+            };
+            rebuilt.insert(plugin.metadata.id.clone(), plugin);
         }
+
+        let served: Vec<String> = {
+            let mut served: Vec<String> = rebuilt
+                .values()
+                .map(|p| {
+                    format!(
+                        "{}@{} ({})",
+                        p.metadata.code, p.metadata.version, p.metadata.host_runtime,
+                    )
+                })
+                .collect();
+            served.sort();
+            served
+        };
+
+        // Swap under the write lock, so a request either sees the whole old
+        // set or the whole new one.
+        *ctx.frontend_plugins_cache.0.write().unwrap() = rebuilt;
+
+        info!(
+            "Loaded {} of {} installed frontend plugins in {:?}: [{}]",
+            served.len(),
+            row_count,
+            started.elapsed(),
+            served.join(", "),
+        );
 
         Ok(())
     }
@@ -192,16 +357,14 @@ pub trait PluginServiceTrait: Sync + Send {
         &self,
         ctx: &ServiceContext,
         FrontendPluginFileRequest {
-            plugin_code,
+            plugin_id,
             filename,
         }: &FrontendPluginFileRequest,
     ) -> Result<Vec<u8>, FrontendPluginFileRequestError> {
         use FrontendPluginFileRequestError as Error;
         let plugins = ctx.frontend_plugins_cache.0.read().unwrap();
 
-        let plugin = plugins
-            .get(plugin_code)
-            .ok_or(Error::CannotFindPluginCode)?;
+        let plugin = plugins.get(plugin_id).ok_or(Error::CannotFindPluginId)?;
 
         let file_content = plugin
             .files_content
@@ -211,98 +374,46 @@ pub trait PluginServiceTrait: Sync + Send {
         Ok(file_content.clone())
     }
 
-    fn bind_frontend_plugin(
+    /// The installed set as seen by ONE asking host.
+    ///
+    /// Two narrowings, in this order, and the order is the point:
+    ///
+    /// 1. Drop the bundles built for a different front end.
+    /// 2. Of what is left, keep the highest version per code.
+    ///
+    /// Doing (2) first — which is what binding used to do — is what made a
+    /// second bundle of the same code unservable: the loser was gone before
+    /// anyone asked, so no filter here could hand it back. Ties on version are
+    /// broken by id purely so the answer is stable.
+    ///
+    /// (1) is equality on a name and nothing more. Whether a bundle is new
+    /// enough for this server is a version question, already answered at load
+    /// time; whether it is for this *host* is not a version question at all,
+    /// since both hosts run under one server version for the whole rollout.
+    /// The server never interprets the name, so a third front end needs no
+    /// release here to be served correctly.
+    fn get_frontend_plugins_metadata(
         &self,
         ctx: &ServiceContext,
-        FrontendPluginRow {
-            id,
-            code,
-            entry_point,
-            files,
-            version,
-            ..
-        }: FrontendPluginRow,
-    ) {
-        let started = Instant::now();
-        let file_count = files.0.len();
-        let total_bytes: usize = files.0.iter().map(|f| f.file_content_base64.len()).sum();
-
-        let version = Version::from_str(&version);
-        let app_version = Version::from_package_json();
-
-        // Skip if not compatible
-        if !version.is_compatible_by_major_and_minor(&app_version) {
-            return;
-        }
-
-        // Get the existing cached version of the plugin
-        {
-            let plugins = ctx.frontend_plugins_cache.0.read().unwrap();
-            if let Some(existing_plugin) = (*plugins).get(&code) {
-                if existing_plugin.metadata.version > version {
-                    // Existing cached plugin is higher version, skip (still install if same version)
-                    return;
-                }
-            }
-        } // Drop read lock
-
-        let mut files_content = HashMap::new();
-        // Prepare
-        for FrontendPluginFile {
-            file_name,
-            file_content_base64,
-        } in files.0.into_iter()
-        {
-            files_content.insert(
-                file_name,
-                BASE64_STANDARD.decode(file_content_base64).unwrap(),
-            );
-        }
-
-        // Hash all files (sorted by name for stability) so the URL token only
-        // changes when the bundle's bytes change.
-        let mut hasher = Sha256::new();
-        let mut file_names: Vec<&String> = files_content.keys().collect();
-        file_names.sort();
-        for name in file_names {
-            hasher.update(name.as_bytes());
-            hasher.update(&files_content[name]);
-        }
-        let hash = hex::encode(hasher.finalize());
-
-        let mut plugins = ctx.frontend_plugins_cache.0.write().unwrap();
-        // Remove all plugins with this code
-        (*plugins).remove(&code);
-
-        // Add plugin with this code
-        let code_for_log = code.clone();
-        (*plugins).insert(
-            code.clone(),
-            FrontendPlugin {
-                metadata: FrontendPluginMetadata {
-                    id,
-                    code,
-                    version,
-                    entry_point,
-                    hash,
-                },
-                files_content,
-            },
-        );
-
-        info!(
-            "Loaded frontend plugin '{}' ({} files, {} base64 bytes) in {:?}",
-            code_for_log,
-            file_count,
-            total_bytes,
-            started.elapsed(),
-        );
-    }
-
-    fn get_frontend_plugins_metadata(&self, ctx: &ServiceContext) -> Vec<FrontendPluginMetadata> {
+        host_runtime: &str,
+    ) -> Vec<FrontendPluginMetadata> {
         let plugins = ctx.frontend_plugins_cache.0.read().unwrap();
 
-        plugins.values().map(|p| p.metadata.clone()).collect()
+        let mut highest_per_code: HashMap<String, FrontendPluginMetadata> = HashMap::new();
+        for metadata in plugins.values().map(|p| &p.metadata) {
+            if metadata.host_runtime != host_runtime {
+                continue;
+            }
+
+            match highest_per_code.get(&metadata.code) {
+                Some(best) if (&best.version, &best.id) >= (&metadata.version, &metadata.id) => {}
+                _ => {
+                    highest_per_code.insert(metadata.code.clone(), metadata.clone());
+                }
+            }
+        }
+
+        highest_per_code.into_values().collect()
     }
 
     fn install_uploaded_plugin(
@@ -404,11 +515,15 @@ mod test {
     use repository::{
         mock::{MockData, MockDataInserts},
         BackendPluginRow, BackendPluginRowRepository, ChangelogCondition, ChangelogRepository,
-        ChangelogTableName, CursorAndLimit, FilterBuilder, FrontendPluginRow,
-        FrontendPluginRowRepository, FrontendPluginTypes, PluginType, PluginTypes, RowActionType,
+        ChangelogTableName, CursorAndLimit, FilterBuilder, FrontendPluginFile, FrontendPluginFiles,
+        FrontendPluginRow, FrontendPluginRowRepository, FrontendPluginTypes, HostRuntime,
+        PluginType, PluginTypes, RowActionType, LEGACY_HOST_RUNTIME,
     };
 
-    use super::{InstalledPluginKind, UninstallPluginError};
+    use super::{
+        FrontendPluginFileRequest, FrontendPluginFileRequestError, InstalledPluginKind,
+        UninstallPluginError,
+    };
 
     #[actix_rt::test]
     async fn installed_plugins() {
@@ -444,6 +559,7 @@ mod test {
             code: "my_frontend_plugin".to_string(),
             version: "2.0.0".to_string(),
             types: FrontendPluginTypes(vec!["report".to_string(), "dashboard".to_string()]),
+            host_runtime: HostRuntime("solid".to_string()),
             ..Default::default()
         };
         FrontendPluginRowRepository::new(&connection)
@@ -470,6 +586,9 @@ mod test {
             backend.types,
             vec!["average_monthly_consumption", "get_consumption"]
         );
+        // A backend plugin has no host, and says so rather than borrowing the
+        // frontend default.
+        assert_eq!(backend.host_runtime, None);
 
         let frontend = &plugins[1];
         assert_eq!(frontend.id, "frontend-1");
@@ -477,6 +596,42 @@ mod test {
         assert_eq!(frontend.version, "2.0.0");
         assert_eq!(frontend.kind, InstalledPluginKind::Frontend);
         assert_eq!(frontend.types, vec!["report", "dashboard"]);
+        assert_eq!(frontend.host_runtime.as_deref(), Some("solid"));
+    }
+
+    /// The listing exists to be acted on — its rows are what an admin picks
+    /// from when uninstalling. Two bundles of one plugin can share a code AND a
+    /// version, so the host fields are the only thing that tells the pair
+    /// apart.
+    #[actix_rt::test]
+    async fn installed_plugins_distinguishes_bundles_of_one_code() {
+        let ServiceTestContext {
+            service_provider,
+            service_context,
+            connection,
+            ..
+        } = setup_all_with_data_and_service_provider(
+            "installed_plugins_distinguishes_bundles_of_one_code",
+            MockDataInserts::none(),
+            MockData::default(),
+        )
+        .await;
+
+        let repo = FrontendPluginRowRepository::new(&connection);
+        repo.upsert_one(civ_bundle("react", "3.0.0", "react"))
+            .unwrap();
+        repo.upsert_one(civ_bundle("solid", "3.0.0", "solid"))
+            .unwrap();
+
+        let mut plugins = service_provider
+            .plugin_service
+            .installed_plugins(&service_context)
+            .unwrap();
+        plugins.sort_by(|a, b| a.id.cmp(&b.id));
+
+        // Same code, same version — every other listed field is identical.
+        let runtimes: Vec<Option<&str>> = plugins.iter().map(|p| p.host_runtime.as_deref()).collect();
+        assert_eq!(runtimes, vec![Some("react"), Some("solid")]);
     }
 
     #[actix_rt::test]
@@ -681,4 +836,300 @@ mod test {
         assert!(matches!(err, UninstallPluginError::PluginNotFound));
     }
 
+    /// One bundle of `civ_plugins`, as installed. `host_runtime` is the axis
+    /// under test — which front end the bundle is for.
+    fn civ_bundle(id: &str, version: &str, host_runtime: &str) -> FrontendPluginRow {
+        FrontendPluginRow {
+            id: id.to_string(),
+            code: "civ_plugins".to_string(),
+            version: version.to_string(),
+            // Both bundles' entry file is named after the code — which is why
+            // the file route cannot be keyed on the code.
+            entry_point: "civ_plugins.js".to_string(),
+            types: FrontendPluginTypes(vec!["prescriptionPaymentForm".to_string()]),
+            files: FrontendPluginFiles(vec![FrontendPluginFile {
+                file_name: "civ_plugins.js".to_string(),
+                // Encoded "nothing here"
+                file_content_base64: "bm90aGluZyBoZXJl".to_string(),
+            }]),
+            host_runtime: HostRuntime(host_runtime.to_string()),
+        }
+    }
+
+    fn discovered_ids(
+        service_provider: &crate::service_provider::ServiceProvider,
+        ctx: &crate::service_provider::ServiceContext,
+        host_runtime: &str,
+    ) -> Vec<String> {
+        let mut ids: Vec<String> = service_provider
+            .plugin_service
+            .get_frontend_plugins_metadata(ctx, host_runtime)
+            .into_iter()
+            .map(|m| m.id)
+            .collect();
+        ids.sort();
+        ids
+    }
+
+    /// The whole point of the issue: one server, one `frontend_plugin` set,
+    /// two hosts live at once, and each is handed the bundle it can load.
+    #[actix_rt::test]
+    async fn frontend_plugins_are_served_per_asking_host() {
+        let ServiceTestContext {
+            service_provider,
+            service_context,
+            connection,
+            ..
+        } = setup_all_with_data_and_service_provider(
+            "frontend_plugins_are_served_per_asking_host",
+            MockDataInserts::none(),
+            MockData::default(),
+        )
+        .await;
+
+        let repo = FrontendPluginRowRepository::new(&connection);
+        // The React bundle in the field.
+        repo.upsert_one(civ_bundle("react", "1.0.1", "react"))
+            .unwrap();
+        // The SolidJS bundle, numbered on the server's current major so a 2.x
+        // server would refuse it outright.
+        repo.upsert_one(civ_bundle("solid", "3.0.0", "solid"))
+            .unwrap();
+        // A runtime this server has never heard of, at the SAME version as the
+        // SolidJS bundle — the version alone must not be enough to match.
+        repo.upsert_one(civ_bundle("vanilla", "3.0.0", "vanilla"))
+            .unwrap();
+        // Built for a server this binary is older than — never servable at all.
+        repo.upsert_one(civ_bundle("too_new_for_server", "99.0.0", "solid"))
+            .unwrap();
+
+        service_provider
+            .plugin_service
+            .reload_frontend_plugins(&service_context)
+            .unwrap();
+
+        // The React UI is answered with the React bundle only — never the ESM
+        // ones it cannot evaluate, even though they are the higher version.
+        assert_eq!(
+            discovered_ids(&service_provider, &service_context, LEGACY_HOST_RUNTIME),
+            vec!["react".to_string()]
+        );
+
+        // The SolidJS front end declares itself and is answered with its own
+        // bundle: not the React one, and — the point of the runtime field —
+        // not the `vanilla` bundle, which is for a different host at the very
+        // same version and would otherwise be indistinguishable.
+        assert_eq!(
+            discovered_ids(&service_provider, &service_context, "solid"),
+            vec!["solid".to_string()]
+        );
+
+        // And the reverse: a host the server knows nothing about is served its
+        // own bundles, with no server change required to teach it the name.
+        assert_eq!(
+            discovered_ids(&service_provider, &service_context, "vanilla"),
+            vec!["vanilla".to_string()]
+        );
+
+        // A host with nothing installed for it gets nothing, rather than
+        // another host's bundles.
+        assert_eq!(
+            discovered_ids(&service_provider, &service_context, "no_bundles_for_me"),
+            Vec::<String>::new()
+        );
+
+        // Every live bundle is addressable, despite sharing an entry filename.
+        for id in ["react", "solid", "vanilla"] {
+            assert_eq!(
+                service_provider
+                    .plugin_service
+                    .get_frontend_plugin_file(
+                        &service_context,
+                        &FrontendPluginFileRequest {
+                            plugin_id: id.to_string(),
+                            filename: "civ_plugins.js".to_string(),
+                        }
+                    )
+                    .unwrap(),
+                b"nothing here".to_vec()
+            );
+        }
+
+        // The server-axis gate is still applied at load time, so a bundle for
+        // a newer server is not merely hidden — it was never cached.
+        assert!(matches!(
+            service_provider.plugin_service.get_frontend_plugin_file(
+                &service_context,
+                &FrontendPluginFileRequest {
+                    plugin_id: "too_new_for_server".to_string(),
+                    filename: "civ_plugins.js".to_string(),
+                }
+            ),
+            Err(FrontendPluginFileRequestError::CannotFindPluginId)
+        ));
+    }
+
+    /// Among the bundles a host CAN load, the highest version still wins —
+    /// keeping every version in the cache widened what discovery may choose
+    /// from, it did not stop it choosing.
+    #[actix_rt::test]
+    async fn highest_version_wins_within_one_host() {
+        let ServiceTestContext {
+            service_provider,
+            service_context,
+            connection,
+            ..
+        } = setup_all_with_data_and_service_provider(
+            "highest_version_wins_within_one_host",
+            MockDataInserts::none(),
+            MockData::default(),
+        )
+        .await;
+
+        let repo = FrontendPluginRowRepository::new(&connection);
+        repo.upsert_one(civ_bundle("solid_older", "3.0.0", "solid"))
+            .unwrap();
+        repo.upsert_one(civ_bundle("solid_newer", "3.0.2", "solid"))
+            .unwrap();
+        repo.upsert_one(civ_bundle("react_older", "1.0.0", "react"))
+            .unwrap();
+        repo.upsert_one(civ_bundle("react_newer", "1.0.1", "react"))
+            .unwrap();
+
+        service_provider
+            .plugin_service
+            .reload_frontend_plugins(&service_context)
+            .unwrap();
+
+        assert_eq!(
+            discovered_ids(&service_provider, &service_context, LEGACY_HOST_RUNTIME),
+            vec!["react_newer".to_string()]
+        );
+        assert_eq!(
+            discovered_ids(&service_provider, &service_context, "solid"),
+            vec!["solid_newer".to_string()]
+        );
+    }
+
+    /// Uninstalling a bundle stops it being served without a restart — the
+    /// cache is rebuilt from the DB rather than added to.
+    #[actix_rt::test]
+    async fn uninstall_stops_serving_without_a_restart() {
+        let ServiceTestContext {
+            service_provider,
+            service_context,
+            connection,
+            ..
+        } = setup_all_with_data_and_service_provider(
+            "uninstall_stops_serving_without_a_restart",
+            MockDataInserts::none(),
+            MockData::default(),
+        )
+        .await;
+
+        let repo = FrontendPluginRowRepository::new(&connection);
+        repo.upsert_one(civ_bundle("react", "1.0.1", "react"))
+            .unwrap();
+        repo.upsert_one(civ_bundle("solid", "3.0.0", "solid"))
+            .unwrap();
+
+        service_provider
+            .plugin_service
+            .reload_frontend_plugins(&service_context)
+            .unwrap();
+
+        service_provider
+            .plugin_service
+            .uninstall_plugin(&service_context, "solid")
+            .unwrap();
+        service_provider
+            .plugin_service
+            .reload_frontend_plugins(&service_context)
+            .unwrap();
+
+        assert_eq!(
+            discovered_ids(&service_provider, &service_context, "solid"),
+            Vec::<String>::new()
+        );
+        // The sibling bundle for the other host is untouched.
+        assert_eq!(
+            discovered_ids(&service_provider, &service_context, LEGACY_HOST_RUNTIME),
+            vec!["react".to_string()]
+        );
+        assert!(matches!(
+            service_provider.plugin_service.get_frontend_plugin_file(
+                &service_context,
+                &FrontendPluginFileRequest {
+                    plugin_id: "solid".to_string(),
+                    filename: "civ_plugins.js".to_string(),
+                }
+            ),
+            Err(FrontendPluginFileRequestError::CannotFindPluginId)
+        ));
+    }
+
+    /// A row whose file content will not decode costs its own plugin and
+    /// nothing else. Because the cache is rebuilt whole from the table, the
+    /// alternative is that one unreadable row ends frontend plugin serving
+    /// altogether — and does so again on every later change to the table.
+    #[actix_rt::test]
+    async fn a_corrupt_bundle_does_not_take_the_cache_down() {
+        let ServiceTestContext {
+            service_provider,
+            service_context,
+            connection,
+            ..
+        } = setup_all_with_data_and_service_provider(
+            "a_corrupt_bundle_does_not_take_the_cache_down",
+            MockDataInserts::none(),
+            MockData::default(),
+        )
+        .await;
+
+        let mut corrupt = civ_bundle("corrupt", "3.0.1", "solid");
+        corrupt.files = FrontendPluginFiles(vec![FrontendPluginFile {
+            file_name: "civ_plugins.js".to_string(),
+            file_content_base64: "not base64 at all!".to_string(),
+        }]);
+
+        let repo = FrontendPluginRowRepository::new(&connection);
+        repo.upsert_one(corrupt).unwrap();
+        // Lower version than the corrupt row, so it can only be discovered if
+        // the corrupt one was dropped rather than merely outranked.
+        repo.upsert_one(civ_bundle("solid", "3.0.0", "solid"))
+            .unwrap();
+
+        service_provider
+            .plugin_service
+            .reload_frontend_plugins(&service_context)
+            .unwrap();
+
+        assert_eq!(
+            discovered_ids(&service_provider, &service_context, "solid"),
+            vec!["solid".to_string()]
+        );
+        assert_eq!(
+            service_provider
+                .plugin_service
+                .get_frontend_plugin_file(
+                    &service_context,
+                    &FrontendPluginFileRequest {
+                        plugin_id: "solid".to_string(),
+                        filename: "civ_plugins.js".to_string(),
+                    }
+                )
+                .unwrap(),
+            b"nothing here".to_vec()
+        );
+        assert!(matches!(
+            service_provider.plugin_service.get_frontend_plugin_file(
+                &service_context,
+                &FrontendPluginFileRequest {
+                    plugin_id: "corrupt".to_string(),
+                    filename: "civ_plugins.js".to_string(),
+                }
+            ),
+            Err(FrontendPluginFileRequestError::CannotFindPluginId)
+        ));
+    }
 }

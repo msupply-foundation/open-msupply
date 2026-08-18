@@ -1,3 +1,7 @@
+# hostRuntime is null for backend plugins, which have no host. It is selected
+# because one plugin ships a bundle per front end and the two can share a code
+# and a version — without it the list shows one row twice, and delete acts on an
+# id it never displays.
 fragment InstalledPluginNode on InstalledPluginNode {
   __typename
   id
@@ -5,6 +9,7 @@ fragment InstalledPluginNode on InstalledPluginNode {
   version
   kind
   types
+  hostRuntime
 }
 
 query installedPlugins {

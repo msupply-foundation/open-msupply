@@ -322,8 +322,6 @@ impl SynchroniserV5V6 {
             }
         }
 
-        run_post_sync_triggers(ctx, &self.service_provider, is_initialised);
-
         // After a successful v5+v6 sync on a remote, ask the legacy server
         // for the v7 URL. On success, persist KV + carry cursors over and
         // kick off a v7 get_token in the background. On failure, surface the
@@ -331,6 +329,19 @@ impl SynchroniserV5V6 {
         if !CentralServerConfig::is_central_server() {
             self.try_upgrade_to_v7(ctx).await?;
         }
+
+        // Deliberately *after* try_upgrade_to_v7, and as late in the cycle as possible. On
+        // first initialisation this fires site_is_initialised_trigger, whose consumers (the
+        // graphql schema swap and FileSyncTrigger::start — see server/src/lib.rs) read the
+        // initialisation state that SyncLogger::done writes once we return. Firing before the
+        // v7 upgrade handed them a site that still looked uninitialised across a whole HTTP
+        // round trip — which parked the FileSyncDriver forever (issue #12232) — and, if the
+        // upgrade failed, spent the one-shot callback on a sync that never completed. Nothing
+        // between here and SyncLogger::done awaits, so `done` is guaranteed to land first.
+        // FileSyncDriver no longer relies on that (see FILE_SYNC_NOT_INITIALISED_DELAY), but
+        // the trigger's other consumers do. V7 orders these the same way, see
+        // sync_v7::sync::sync_inner.
+        run_post_sync_triggers(ctx, &self.service_provider, is_initialised);
 
         ctx.processors_trigger
             .trigger_processor(ProcessorType::SupportUploadFiles);

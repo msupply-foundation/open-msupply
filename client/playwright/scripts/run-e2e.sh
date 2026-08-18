@@ -35,11 +35,29 @@ DB_NAME=e2e_playwright # -> server/e2e_playwright.sqlite (gitignored)
 # server can't try to re-authenticate this throwaway site against a real
 # central on startup (which would panic or overwrite the restored settings).
 # All four must be set together or settings validation rejects the block.
+#
+# The server-role override is pinned for the same reason: it must NOT be
+# inherited from local.yaml. Left unpinned, the stack's sync topology depends
+# on whether the developer happens to set `server.override_is_central_server`
+# — and the two settings behave very differently:
+#
+#   pinned true (here)  the site is its own central, so a sync run is a local
+#                       no-op that SUCCEEDS instantly. Status, phase list,
+#                       last-successful notice and Sync-now are all exercised.
+#   unpinned in CI      settings are "not configured", so the synchroniser
+#                       logs "Sync is disabled, skipping" and NO run is ever
+#                       recorded — every trigger silently does nothing, and
+#                       isCentralServer flips to false (which changes the
+#                       phase-visibility row the modal displays).
+#
+# The sync-modal suite asserts triggering, so it needs runs to happen; every
+# other suite is indifferent. Pin it so local and CI agree.
 SYNC_OFF=(
   APP__SYNC__URL=
   APP__SYNC__USERNAME=
   APP__SYNC__PASSWORD_SHA256=
   APP__SYNC__INTERVAL_SECONDS=0
+  APP__SERVER__OVERRIDE_IS_CENTRAL_SERVER=true
 )
 
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
