@@ -58,6 +58,7 @@ export const useDetailPanel = (): DetailPanel => {
   const { isOpen, open, close, setEnabled } = useDetailPanelStore();
   const OpenButton = isOpen ? null : (
     <ButtonWithIcon
+      data-testid="open-detail-panel-button"
       Icon={<SidebarIcon />}
       label={t('button.more')}
       onClick={open}

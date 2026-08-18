@@ -77,3 +77,26 @@ describe('currency formatting - eur for en', () => {
     expect(f1).toBe('€111.00');
   });
 });
+
+describe('currency formatting - htg for en', () => {
+  it('trails the amount with the currency code', () => {
+    const { result } = renderHookWithProvider(() => useCurrency('HTG'));
+
+    const f1 = result.current.c(1_234.56).format();
+    expect(f1).toBe('1,234.56 HTG');
+  });
+
+  it('formats negative amounts with the code trailing', () => {
+    const { result } = renderHookWithProvider(() => useCurrency('HTG'));
+
+    const f1 = result.current.c(-1_234.56).format();
+    expect(f1).toBe('-1,234.56 HTG');
+  });
+
+  it('formats to two decimal places', () => {
+    const { result } = renderHookWithProvider(() => useCurrency('HTG'));
+
+    const f1 = result.current.c(111).format();
+    expect(f1).toBe('111.00 HTG');
+  });
+});

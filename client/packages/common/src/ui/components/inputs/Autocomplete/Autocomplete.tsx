@@ -65,6 +65,8 @@ export interface AutocompleteProps<T> extends Omit<
   textSx?: SxProps<Theme>;
   clickableOption?: ClickableOptionConfig;
   placeholder?: string;
+  /** `data-testid` for the text input (locale-stable test hook). */
+  inputTestId?: string;
 }
 
 export function Autocomplete<T>({
@@ -96,6 +98,7 @@ export function Autocomplete<T>({
   textSx,
   clickableOption,
   placeholder,
+  inputTestId,
   ...restOfAutocompleteProps
 }: PropsWithChildren<AutocompleteProps<T>>): JSX.Element {
   const t = useTranslation();
@@ -139,6 +142,7 @@ export function Autocomplete<T>({
         inputLabel: { shrink: true },
         htmlInput: {
           ...props.inputProps,
+          ...(inputTestId ? { 'data-testid': inputTestId } : {}),
         },
       }}
       sx={{ minWidth: width }}
@@ -242,9 +246,9 @@ export function Autocomplete<T>({
         ...restOfAutocompleteProps.slotProps,
         popper: popperMinWidth
           ? {
-            placement: 'bottom-start',
-            style: { minWidth: popperMinWidth, width: 'auto' },
-          }
+              placement: 'bottom-start',
+              style: { minWidth: popperMinWidth, width: 'auto' },
+            }
           : undefined,
       }}
       sx={{

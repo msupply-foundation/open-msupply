@@ -27,7 +27,8 @@ export const AppBarButtons = ({
   sortBy,
 }: AppBarButtonsComponentProps) => {
   const t = useTranslation();
-  const { isPending: isLoading, mutateAsync } = usePatient.document.listAll(sortBy);
+  const { isPending: isLoading, mutateAsync } =
+    usePatient.document.listAll(sortBy);
   const [createModalOpen, setCreateModalOpen] = useState(false);
 
   const handleClick = useCallbackWithPermission(
@@ -44,6 +45,7 @@ export const AppBarButtons = ({
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <ButtonWithIcon
+          data-testid="new-patient-button"
           Icon={<PlusCircleIcon />}
           label={t('button.new-patient')}
           onClick={handleClick}

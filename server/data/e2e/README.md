@@ -12,14 +12,18 @@ MSUPPLY_NO_TEST_DB_TEMPLATE=1 cargo run --bin remote_server_cli -- initialise-fr
 
 `-r` refreshes all dates relative to now and leaves sync disabled. Login:
 `Admin` / `pass` (case-insensitive), store `GRY` (Gryffindor District Store,
-exported as site 900).
+exported as site 900). Three purpose-built auth-profile users (all `pass`,
+for the login/startup suites): `single` (FEAT only — auto-entry), `nostore`
+(authenticates but has no store on this site — the no-site-access error),
+`limited` (GRY, query-only permissions — permission-denied flows).
 
 ## What's in it (and what isn't)
 
 Central-owned **nouns** the remote API cannot create: items, units, reason
 options, master lists (+ GRY's joins, so ~23 items are visible), currencies,
-users, stores, periods, programs. Plus injected login wiring for Admin on GRY
-(`user_store_join` / `user_permission` — a v7 pull doesn't deliver those).
+users, stores, periods, programs. Plus injected login wiring
+(`user_store_join` / `user_permission` — a v7 pull doesn't deliver those) for
+Admin on GRY + FEAT and the three auth-profile users above.
 
 Deliberately **no stock, no documents** — store-local state is created through
 the GraphQL API by `e2e/specs/data.setup.ts` (in open-msupply-frontend) at suite start

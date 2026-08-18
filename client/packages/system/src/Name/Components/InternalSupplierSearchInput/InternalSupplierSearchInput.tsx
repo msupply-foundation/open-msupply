@@ -49,6 +49,7 @@ export const InternalSupplierSearchInput: FC<
       openOnFocus={openOnFocus}
       width={width}
       noOptionsText={t('label.no-options')}
+      inputTestId="name-search-input"
     />
   );
 };

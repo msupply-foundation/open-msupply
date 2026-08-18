@@ -47,6 +47,7 @@ const StoreRow = React.memo(function StoreRow({
       onClick={() => onSelect(store.id)}
       role="option"
       aria-selected={isActive}
+      data-testid={`store-select-option-${store.code}`}
       sx={{
         display: 'flex',
         alignItems: 'center',
@@ -289,6 +290,7 @@ export const LoginStoreSelectorPanel = ({
           placeholder={t('placeholder.search-by-name')}
           debounceTime={0}
           autoFocus
+          inputTestId="store-selector-search"
         />
       </Box>
 
