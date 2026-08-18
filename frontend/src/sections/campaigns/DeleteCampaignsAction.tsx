@@ -12,15 +12,21 @@ import { DeleteCampaigns } from './campaigns.generated';
 // The register's one bulk action — spec/campaigns S1 § selection actions + S3.
 //
 // Deletion is ATOMIC: one mutation carries the whole selection and the server
-// deletes it in one transaction, so there are exactly two outcomes:
+// deletes it in one transaction, so there are exactly two domain outcomes:
 //
 //   deleted  → every row leaves the register and the selection clears;
 //              closure + the refreshed list is the confirmation (D21).
 //   rejected → NOTHING was deleted. The only domain rejection is a selected
 //              campaign no longer in the register (deleted elsewhere since the
 //              list was read), so the generic could-not-delete notice shows
-//              while the owner re-reads the register and drops the vanished
-//              rows from the kept selection.
+//              while the owner re-reads the register behind it; DISMISSING the
+//              notice is when the vanished rows leave the kept selection —
+//              pruning earlier could empty the selection and unmount the
+//              selection bar this dialog lives in, taking the notice with it.
+//
+// A transport/auth failure is neither: it is already surfaced globally, and
+// whether the delete committed is unknown, so the dialog only releases its
+// busy state (the same split as the editor's `failed` outcome).
 //
 // Nothing is pre-checked: there is no in-use guard on the server (a campaign
 // tagged on stock deletes just the same), so the client has nothing to mirror
@@ -34,8 +40,12 @@ export interface DeleteCampaignsActionProps {
   guardEdit: () => boolean;
   /** The whole selection was deleted. */
   onDeleted: () => void;
-  /** The delete was refused — nothing deleted; re-read and prune the selection. */
+  /** The delete was rejected — nothing deleted; the owner re-reads the
+   * register behind the still-open could-not-delete notice. */
   onRejected: () => void;
+  /** The could-not-delete notice was dismissed: the owner prunes the kept
+   * selection against the register as it now is. */
+  onRejectionDismissed: () => void;
 }
 
 type Phase = 'confirm' | 'deleting' | 'error';
@@ -75,6 +85,15 @@ const Body = (props: DeleteCampaignsActionProps & { onClose: () => void }) => {
   // notice can't shift if the selection changes behind the dialog.
   const count = props.selectedIds().length;
 
+  // Every way out of the dialog routes here. Dismissing the could-not-delete
+  // notice is what triggers the owner's prune — see the header comment for why
+  // it cannot run while the notice is still up.
+  const close = () => {
+    const rejected = phase() === 'error';
+    props.onClose();
+    if (rejected) props.onRejectionDismissed();
+  };
+
   const run = async () => {
     if (phase() !== 'confirm') return; // re-entry guard
     setPhase('deleting');
@@ -87,13 +106,22 @@ const Body = (props: DeleteCampaignsActionProps & { onClose: () => void }) => {
       { ids: props.selectedIds() },
       { returnGraphqlErrors: true }
     );
-    // The response union has no error member (every rejection is a top-level
-    // error), so success of the fetch IS success of the delete.
-    if (result.kind !== 'success') {
-      // Atomic: nothing was deleted. The owner re-reads and prunes; the notice
-      // stays in this dialog.
+    if (result.kind === 'graphqlError') {
+      // The domain rejection (a selected campaign no longer in the register) —
+      // and the delete is atomic, so NOTHING was deleted. The owner re-reads
+      // the register behind this dialog's could-not-delete phase; the kept
+      // selection is pruned when the notice is dismissed (ui-surface S1).
       props.onRejected();
       setPhase('error');
+      return;
+    }
+    if (result.kind !== 'success') {
+      // Transport/auth failure — already surfaced globally (the
+      // unexpected-error, re-login or permission modal), and whether the
+      // delete committed is unknown, so the could-not-delete notice would
+      // claim more than is known. Release the busy state back to the
+      // confirmation; the user retries or cancels.
+      setPhase('confirm');
       return;
     }
     // Success: close first (closure is the confirmation), then hand back — the
@@ -108,7 +136,7 @@ const Body = (props: DeleteCampaignsActionProps & { onClose: () => void }) => {
       open
       // Blocking while the delete is in flight.
       dismissable={phase() !== 'deleting'}
-      onClose={props.onClose}
+      onClose={close}
       icon={<TrashIcon />}
       testId="confirmation-modal"
       title={t('heading.are-you-sure')}
@@ -133,7 +161,7 @@ const Body = (props: DeleteCampaignsActionProps & { onClose: () => void }) => {
           fallback={
             <>
               <Show when={phase() === 'confirm'}>
-                <CancelButton onClick={props.onClose} />
+                <CancelButton onClick={close} />
               </Show>
               {/* OK, not Save — the confirming action genuinely isn't a save —
                   carrying the destructive emphasis (D55). */}
@@ -149,7 +177,7 @@ const Body = (props: DeleteCampaignsActionProps & { onClose: () => void }) => {
             </>
           }
         >
-          <CancelButton onClick={props.onClose} />
+          <CancelButton onClick={close} />
         </Show>
       }
     />
