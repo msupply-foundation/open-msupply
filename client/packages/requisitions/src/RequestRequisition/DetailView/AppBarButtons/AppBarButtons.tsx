@@ -41,6 +41,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
         <UseSuggestedQuantityButton />
 
         <ReportSelector
+          testId="export-or-print-button"
           context={ReportContext.InternalOrder}
           // Filters out reports that have a subContext (i.e. `R&R`)
           queryParams={{ filterBy: { subContext: { equalAnyOrNull: [] } } }}
