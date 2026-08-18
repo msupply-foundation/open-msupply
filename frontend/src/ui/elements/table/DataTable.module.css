@@ -294,14 +294,21 @@
    body cell in table view (.td) and the wrapped value span in card view
    (.card); the header label stays in the sans UI font. Sized as a proportion
    of the surrounding cell — 92.857% ≈ 13px against the 14px (--text-sm) body
-   — and muted, because Courier renders visually larger at the same px, so
+   — because a mono face renders visually larger at the same px, so
    codes/batches over-weighted the row (issue #614). Using a percentage rather
-   than a token keeps mono a fixed fraction of whatever text it sits in. */
+   than a token keeps mono a fixed fraction of whatever text it sits in.
+
+   NOT muted (Ling, 2026-08-19). The grey was the other half of the #614
+   correction, but it made a code differ from its neighbours in three ways at
+   once — face, size and colour — which is what read as "multiple fonts" rather
+   than as one code convention. It also mis-stated the content: an item code and
+   a batch are the row's IDENTITY, not de-emphasised metadata, and greying them
+   ranked them below the values they identify. With --font-mono now leading with
+   ui-monospace (see tokens.css) the face alone carries the distinction. */
 .td[data-mono],
 .card [data-mono] {
   font-family: var(--font-mono);
   font-size: 92.857%;
-  color: var(--text-secondary);
 }
 
 /* Footer cells (a column's `footer` — e.g. a summed total). A single band
@@ -1320,13 +1327,6 @@ tr[data-accent='error'] > :first-child::before {
 
 .cardRow[data-tone='error'] .cardPrimary {
   color: var(--error-main);
-}
-
-/* A toned identity's mono VALUE follows the tone — the `.card [data-mono]`
-   muting (issue #614) would otherwise pin it grey and the tone would only
-   ever reach the caption. */
-.cardRow[data-tone] .cardPrimary [data-mono] {
-  color: inherit;
 }
 
 .cardBadge {
