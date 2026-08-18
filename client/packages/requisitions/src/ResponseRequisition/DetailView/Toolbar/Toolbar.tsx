@@ -85,6 +85,9 @@ export const Toolbar = () => {
                         sx={{ width: 250 }}
                         value={theirReference}
                         onChange={e => update({ theirReference: e.target.value })}
+                        inputProps={{
+                          'data-testid': 'customer-reference-field',
+                        }}
                       />
                     </Box>
                   </Tooltip>
@@ -131,6 +134,7 @@ export const Toolbar = () => {
             setItemFilter(newValue);
           }}
           debounceTime={0}
+          inputTestId="filter-input-itemCodeOrName"
         />
       </Grid>
     </AppBarContentPortal>

@@ -170,6 +170,7 @@ export const DocumentUpload = ({
         maxSize={MAX_DOCUMENT_SIZE_BYTES}
         onRejected={onRejected}
         multiple
+        testId="document-upload-input"
       />
     </>
   );

@@ -85,7 +85,9 @@ export const SyncProgress: FC<SyncProgressProps> = ({
   return (
     <Box display="flex" flexDirection={'column'} alignItems="center">
       {!isExtraSmallScreen && (
-        <HorizontalStepper steps={steps} colour={colour} />
+        <Box width="100%" data-testid="sync-phases">
+          <HorizontalStepper steps={steps} colour={colour} />
+        </Box>
       )}
       {isSyncStatusV7(syncStatus) &&
         syncStatus.linkedDescriptions.length > 0 && (
@@ -112,9 +114,7 @@ const getStepElapsed = (
   if (!progress?.started) return undefined;
   const startMs = new Date(progress.started).getTime();
   if (!Number.isFinite(startMs)) return undefined;
-  const endMs = progress.finished
-    ? new Date(progress.finished).getTime()
-    : now;
+  const endMs = progress.finished ? new Date(progress.finished).getTime() : now;
 
   // Compute directly from the elapsed milliseconds so that durations over a day
   // fold into the hours field rather than being dropped (a long initial sync on
@@ -227,6 +227,12 @@ type RawStep = {
   icon: React.ReactNode;
 };
 
+// Locale-stable per-phase test hook, derived from the phase's locale key
+// ('sync-status.pull-central' -> 'sync-phase-pull-central') so the id can't
+// drift from the phase it marks.
+const phaseTestId = (labelKey: LocaleKey): string =>
+  `sync-phase-${labelKey.replace(/^sync-status\./, '')}`;
+
 const toStepDefinition = (
   t: TypedTFunction<LocaleKey>,
   colour: StepperColour,
@@ -257,6 +263,7 @@ const toStepDefinition = (
     error: isActiveAndError,
     icon: isActiveAndError ? <AlertIcon sx={{ color: 'error.main' }} /> : icon,
     label: t(labelKey),
+    testId: phaseTestId(labelKey),
     optional: (
       <ProgressIndicator
         progress={progress}

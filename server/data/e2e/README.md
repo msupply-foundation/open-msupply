@@ -29,6 +29,35 @@ Deliberately **no stock, no documents** — store-local state is created through
 the GraphQL API by `e2e/specs/data.setup.ts` (in open-msupply-frontend) at suite start
 ("seed nouns, create verbs"). Don't add stock here; extend the arrange step.
 
+### Fixtures a suite cannot arrange for itself
+
+Some behaviours are only observable against a _gate_ — a permission the user
+lacks, or a preference in its other state. Neither can be arranged through the
+remote API mid-run: `MutatePreferences` is not granted here, and the suites run
+`fullyParallel`, so flipping a global preference would change the UI under
+every other suite. They therefore live here.
+
+| Fixture                                    | What it is for                                               |
+| ------------------------------------------ | ------------------------------------------------------------ |
+| `StockViewer` / `pass` on GRY              | the reduced-permission user — see below                      |
+| 3 active VVM statuses (`Stage1`–`Stage3`)  | so the VVM status picker has something to offer              |
+| `allow_tracking_of_stock_by_donor`, on     | the donor field's on-state (global)                          |
+| `backdating`, adjustments on, `maxDays` 30 | backdated adjustments, and the window's upper bound (global) |
+
+**`StockViewer`** holds `StoreAccess`, `StockLineQuery`, `StockLineMutate` and
+`LogQuery`. What it _lacks_ is the point: no `InventoryAdjustmentMutate`, no
+`CreateRepack`, no `ViewAndEditVvmStatus`. Grant it more and the gated
+behaviours it exists for stop being observable.
+
+**`backdating` deliberately leaves `shipmentsEnabled` false**, so only
+inventory adjustments gain backdating and no shipment-dated suite changes
+behaviour.
+
+Both preferences are `PreferenceType::Global` and so apply to every store — a
+second store cannot carry a different value. One consequence: with backdating
+enabled, "rejected because backdating is disabled" is no longer observable
+here.
+
 ## Format
 
 A v7 `initialise-from-export` file: `sync_buffer_rows` in v7 wire shape
