@@ -3,9 +3,10 @@ import { sameFetchedValue } from './typeHelpers';
 
 /*
  * The explicit dedup for a publisher that rebuilds its value on every load
- * (kdd/state-management decision 5; loadDictionary is the one such site). The
- * publish-skipping behaviour it powers is asserted in loadDictionary.test.ts;
- * these pin the comparator itself.
+ * (kdd/state-management decision 5): loadDictionary's compare-before-publish,
+ * and the `equals` of storeScopedResource's noSuspense memo. The behaviour it
+ * powers is asserted in loadDictionary.test.ts and
+ * storeScopedResource.test.ts; these pin the comparator itself.
  */
 describe('sameFetchedValue', () => {
   it('treats structurally equal payloads as equal, and different ones as not', () => {

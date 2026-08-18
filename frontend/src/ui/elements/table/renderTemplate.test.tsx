@@ -14,10 +14,11 @@ import { renderTemplate } from './renderTemplate';
  * template through TanStack's `flexRender` runs it inside Solid's
  * `createComponent`, which untracks it, so a table painted in one language
  * stayed in that language — headers, numbers, dates and money all frozen —
- * until the page was reloaded. (That failure isn't asserted here: vitest
- * resolves a second Solid instance for `@tanstack/solid-table`, so its
- * `untrack` doesn't touch this instance's listener and flexRender appears to
- * track in-process. The real behaviour was confirmed in the browser.)
+ * until the page was reloaded. (That failure isn't asserted here — the real
+ * behaviour was confirmed in the browser. It used to be UNASSERTABLE because
+ * vitest resolved a second Solid instance for `@tanstack/solid-table`;
+ * vitest.config's `conditions: ['browser']` has since unified the instances,
+ * so asserting it is now possible if this guard ever needs strengthening.)
  */
 describe('renderTemplate', () => {
   it('re-resolves a template when a signal it reads changes', () => {
