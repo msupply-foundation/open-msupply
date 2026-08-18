@@ -2,17 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { sameFetchedValue } from './typeHelpers';
 
 /*
- * The guard on the loop that made a line editor's fields impossible to type in:
- * a background refresh (api/syncStore § onRunCompleted re-reads me,
- * storeContext and the translation catalogue on every completed sync run)
- * republished an EQUAL payload as a fresh object. Solid compares by reference,
- * so every consumer woke, every memo downstream recomputed, and a table's
- * column set — being such a memo — yielded new columns, which rebuilt every
- * cell and took focus with them.
- *
- * The invariant the fix rests on: re-setting equal data leaves the signal
- * holding the ORIGINAL object, so nothing downstream can observe a change; a
- * real change still lands.
+ * The comparator behind the equal-data dedup on fetched state
+ * (kdd/state-management decision 5; kdd/solid-reactivity-pitfalls §16). The
+ * invariant it serves: re-setting equal data leaves a signal holding the
+ * ORIGINAL object, so nothing downstream can observe a change; a real change
+ * still lands.
  */
 describe('sameFetchedValue', () => {
   it('treats structurally equal payloads as equal, and different ones as not', () => {

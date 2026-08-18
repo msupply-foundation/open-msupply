@@ -20,12 +20,8 @@ import { ACTIVITY_CHECK_INTERVAL_MS } from '../config';
 // (spec, Guard 1).
 export type AuthUser = UserInfoFragment;
 
-// `equals: sameFetchedValue` — the post-sync refresh re-reads `me` on every
-// completed sync run (api/syncStore § onRunCompleted), and that response is
-// almost always identical to the one already held. Without the comparator each
-// re-read published a fresh object, waking every consumer of authUser and
-// rebuilding whatever their memos feed — including a table's column set, which
-// remounts every input in it.
+// Fetched state: the post-sync refresh re-reads `me` every run, so an
+// unchanged response must publish nothing (kdd/state-management decision 5).
 const [user, setUser] = createSignal<AuthUser | undefined>(undefined, {
   equals: sameFetchedValue,
 });

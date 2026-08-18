@@ -16,14 +16,11 @@ import { pluginDictionaries } from './pluginTranslations';
 // filled in by loadDictionary; until then a locale's dictionary is absent and
 // t() falls back to the key.
 const [locale, setLocale] = createSignal<SupportedLocale>(DEFAULT_LOCALE);
-// `equals: sameFetchedValue` — invalidateCustomTranslations reloads the active
-// catalogue on every completed sync run (api/syncStore § onRunCompleted), and
-// loadDictionary republishes with a spread, so the object identity always
-// changed even when no string did. t() is called inside cell renderers, so every
-// consumer re-ran: table cells re-rendered and their inputs were replaced,
-// losing focus and any half-typed value. The compare serialises the whole
-// multi-locale record — both sides — once per load, and saves a full UI
-// re-render per sync.
+// Fetched state: the post-sync refresh reloads the active catalogue every run
+// and loadDictionary republishes with a spread, so an unchanged reload must
+// publish nothing — t() is read inside every cell renderer
+// (kdd/state-management decision 5). The compare serialises the whole
+// multi-locale record, both sides, once per load.
 const [dictionaries, setDictionaries] = createSignal<
   Partial<Record<SupportedLocale, FlatDict>>
 >({}, { equals: sameFetchedValue });

@@ -32,27 +32,14 @@ export const shallowEqual = <T extends readonly unknown[]>(
     a.length === b.length &&
     a.every((v, i) => v === b[i]));
 
-/*
- * Are two FETCHED payloads structurally identical? The `equals` for a signal a
- * BACKGROUND refresh rewrites — the post-sync re-reads of me / storeContext
- * (api/syncStore § onRunCompleted) — where the new response is almost always
- * identical to the one already held.
- *
- * Solid compares signal values by reference, so writing a fresh object from an
- * unchanged response notifies every reader. That is not merely wasted work: a
- * memo derived from it recomputes and yields a fresh value, and a table's column
- * set is such a memo — so TanStack rebuilds its cells and the card view's <For>
- * tears down and rebuilds every field, taking focus and any half-typed entry
- * with it. On a server that syncs every couple of seconds that fires
- * continuously, which is what made a line editor's fields impossible to type in.
- *
- * JSON, not a field-by-field compare: these are plain GraphQL responses — no
- * cycles, no class instances, no functions — and their key order is fixed by the
- * query's own selection set, so the serialisation is stable for equal data. The
- * asymmetry is safe in both directions: a false NEGATIVE (calling equal data
- * unequal) only costs the re-render we already had, and a false POSITIVE cannot
- * arise from data that differs, because any difference changes the text.
- */
+// Are two FETCHED payloads structurally identical? The equal-data dedup every
+// publication of fetched global state carries (kdd/state-management decision 5;
+// kdd/solid-reactivity-pitfalls §16): as a signal's `equals` or in a resource
+// fetcher, it keeps an unchanged background refresh from notifying consumers.
+// JSON-round-trip data ONLY — parsed responses, whose key order the selection
+// set fixes; no undefined/Date/class values. Within that contract a false
+// negative just re-renders, and a false positive cannot arise from differing
+// data (any difference changes the text).
 export const sameFetchedValue = <T>(a: T, b: T): boolean =>
   a === b || JSON.stringify(a) === JSON.stringify(b);
 

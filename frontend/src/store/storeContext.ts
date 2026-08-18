@@ -25,11 +25,9 @@ import { authUser } from '../auth/authContext';
 // (result set, id not yet) between two writes and fire a redundant second
 // fetch. One signal = one write = no half-state.
 type LoadedStoreContext = { storeId: string; result: StoreContextResult };
-// `equals: sameFetchedValue` — refetchStoreContext runs on every completed sync
-// run as well as on store entry, and the preferences/permissions it returns
-// rarely differ. Publishing an equal payload as a new object invalidated
-// stocktakePreferences() and friends (each builds a fresh object per call), and
-// through them every column memo reading a preference gate.
+// Fetched state: refetchStoreContext runs on every completed sync run, so an
+// unchanged response must publish nothing (kdd/state-management decision 5) —
+// every column memo reading a preference gate hangs off this signal.
 const [loaded, setLoaded] = createSignal<LoadedStoreContext | undefined>(
   undefined,
   { equals: sameFetchedValue }

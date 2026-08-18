@@ -72,6 +72,8 @@ export function createStoreScopedResource<T>(
         storeId,
         async (id, { value }) => {
           const next = (await fetcher(id)) ?? [];
+          // Fetched state: keep the held array when a refetch (the post-sync
+          // refresh) returns equal data (kdd/state-management decision 5).
           return value !== undefined && sameFetchedValue(next, value)
             ? value
             : next;
