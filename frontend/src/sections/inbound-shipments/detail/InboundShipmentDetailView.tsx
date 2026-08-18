@@ -29,7 +29,7 @@ import {
 } from '../../../ui/elements/buttons/SplitButton';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
-import { CloseIcon, SidebarIcon, TruckIcon } from '../../../ui/icons';
+import { CloseIcon, PlusCircleIcon, SidebarIcon } from '../../../ui/icons';
 import {
   DataTable,
   type Column,
@@ -40,10 +40,19 @@ import {
   getNumberCell,
   getTextCell,
 } from '../../../ui/elements/table/tableHelpers';
+import {
+  Pagination,
+  type PaginationProps,
+} from '../../../ui/elements/table/Pagination';
 import { remToPx } from '../../../ui/utils/rem';
 import styles from './InboundShipmentDetailView.module.css';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { useUrlQueryState } from '../../../list/urlQueryState';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import {
   CustomFieldsEditTab,
@@ -79,8 +88,14 @@ import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePane
 import { createAddAction } from '../../../ui/utils/keyActions';
 import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import { InboundShipmentStatusFooter } from './InboundShipmentStatusFooter';
-import { canChangeStatus, isEditable, kindOf } from './inboundShipmentStatus';
-import { InboundShipmentLogPanel } from './log/InboundShipmentLogPanel';
+import {
+  canChangeStatus,
+  isEditable,
+  kindOf,
+  supplierIsStore,
+} from './inboundShipmentStatus';
+import { SupplierKindIcon } from '../SupplierKindIcon';
+import { ActivityLogPanel } from '../../../domain/activityLog';
 import { InboundDocumentsPanel } from './tabs/InboundDocumentsPanel';
 import { InboundCurrencyPanel } from './tabs/InboundCurrencyPanel';
 import { InboundFinancialPanel } from './tabs/InboundFinancialPanel';
@@ -112,8 +127,6 @@ type Line = InboundLineFragment;
 type SortKey = NonNullable<
   InboundShipmentLinesVariables['sort']
 >[number]['key'];
-
-const DEFAULT_PAGE_SIZE = 20;
 
 type DetailUrlState = {
   sort: NonNullable<InboundShipmentLinesVariables['sort']>;
@@ -150,8 +163,10 @@ const DEFAULT_URL_STATE: DetailUrlState = {
 const InboundShipmentDetailView: Component = () => {
   const params = useParams<{ storeId: string; invoiceId: string }>();
   const navigate = useNavigate();
-  const { query, setQuery } =
-    useUrlQueryState<DetailUrlState>(DEFAULT_URL_STATE);
+  const { query, setQuery } = useUrlQueryState<DetailUrlState>({
+    ...DEFAULT_URL_STATE,
+    first: initialPageSize(),
+  });
   // The shipment's permission scope, carried by the route (inboundShipmentHref)
   // because the id alone can't reveal it. It selects `type` on the read below,
   // gates the mutate permission, and picks the plain-vs-`...External` mutation
@@ -175,6 +190,27 @@ const InboundShipmentDetailView: Component = () => {
     new Map()
   );
   const [activeTab, setActiveTab] = createSignal('details');
+
+  // The line table's pager. It lives in the screen's bottom bar — the status
+  // footer, or the selection footer while rows are ticked — rather than in a
+  // band of its own under the table (spec/ui-standards § tables → pagination):
+  // that bar is present at every line count, so hosting the pager there costs
+  // no extra row, and `conditional` means it renders nothing at all until the
+  // lines outrun one page, leaving the bar as it was and the height to the
+  // rows.
+  const linePagination = (): PaginationProps => ({
+    offset: query().offset,
+    pageSize: query().first,
+    total: totalCount(),
+    onOffsetChange: offset => setQuery({ ...query(), offset }),
+    onPageSizeChange: first => {
+      // The remembered page size (D106) — it rode the DataTable's own
+      // pagination prop, which this accessor replaced when the pager moved
+      // into the status footer, so it has to travel with the handler.
+      rememberPageSize(first);
+      setQuery({ ...query(), first, offset: 0 });
+    },
+  });
   // The line-edit modal open state: { itemId, lineId } to edit an item's
   // batches (lineId = the clicked batch, focused on open), {} to add a new
   // item, undefined = closed. Fixed for the whole "OK & next" walk — the modal
@@ -534,13 +570,20 @@ const InboundShipmentDetailView: Component = () => {
     { value: 'log', label: t('label.log') },
   ];
 
+  // The trail's leading glyph is the Replenishment section's, supplied by the
+  // shell for every page. The KIND icon (truck / house) is the RECORD's, so it
+  // rides the number crumb — before the number, as the current app shows it
+  // (spec S3 § breadcrumb).
   const crumbs = (node: InboundInfoFragment) => [
     {
       label: t('inbound-shipment'),
       onClick: () =>
         navigate(`/${params.storeId}/replenishment/inbound-shipment`),
     },
-    { label: String(node.invoiceNumber) },
+    {
+      label: String(node.invoiceNumber),
+      icon: <SupplierKindIcon isStore={supplierIsStore(node)} />,
+    },
   ];
 
   // Add-item split button options — master list & internal order gated (spec
@@ -900,10 +943,24 @@ const InboundShipmentDetailView: Component = () => {
               }
               header={
                 <Header>
-                  <Breadcrumb icon={<TruckIcon />} crumbs={crumbs(node())} />
+                  {/* No `icon` — the leading glyph is the Replenishment
+                      section's, from the shell. The kind icon rides the number
+                      crumb (see `crumbs`). */}
+                  <Breadcrumb crumbs={crumbs(node())} />
+                  {/* Every control here collapses to its icon on a narrow
+                      viewport (`collapsible="narrow"`, label kept as the
+                      accessible name and repeated as a tooltip — the outbound
+                      header's tier). Labelled, this cluster needs more width
+                      than a tablet's header has left beside the breadcrumb, so
+                      it wrapped onto a row of its own — and on a short screen
+                      that row costs table rows, which are worth more. The
+                      split button gains an icon for the same reason: collapsed
+                      it is nothing but its icon. */}
                   <HeaderButtons>
                     <Show when={!isDisabled()}>
                       <SplitButton
+                        icon={<PlusCircleIcon />}
+                        collapsible="narrow"
                         options={addOptions()}
                         value="item"
                         testId="add-item-button"
@@ -925,6 +982,8 @@ const InboundShipmentDetailView: Component = () => {
                       <Button
                         variant="secondary"
                         icon={<SidebarIcon />}
+                        collapsible="narrow"
+                        title={t('button.more')}
                         data-testid="open-detail-panel-button"
                         // createSidePanelOpen registers Alt+M; this is the
                         // control that advertises it (ui-surface S2).
@@ -990,6 +1049,7 @@ const InboundShipmentDetailView: Component = () => {
                       isExternal={isExternal()}
                       onSetHold={setHold}
                       onAdvanced={onAdvanced}
+                      pagination={linePagination()}
                     />
                   }
                 >
@@ -1067,6 +1127,9 @@ const InboundShipmentDetailView: Component = () => {
                       }
                       onDone={() => setSelectedIds([])}
                     />
+                    {/* The pager rides the selection face as well: ticking a
+                        row must not strip the way to the rest of the lines. */}
+                    <Pagination {...linePagination()} inBar />
                     <ContentFooterActions>
                       <Button
                         variant="secondary"
@@ -1127,14 +1190,6 @@ const InboundShipmentDetailView: Component = () => {
                       ? tableConfig.saveGlobalTableConfig
                       : undefined
                   }
-                  pagination={{
-                    offset: query().offset,
-                    pageSize: query().first,
-                    total: totalCount(),
-                    onOffsetChange: offset => setQuery({ ...query(), offset }),
-                    onPageSizeChange: first =>
-                      setQuery({ ...query(), first, offset: 0 }),
-                  }}
                 />
               </TabPanel>
               <Show when={isExternal()}>
@@ -1174,9 +1229,9 @@ const InboundShipmentDetailView: Component = () => {
                 />
               </TabPanel>
               <TabPanel value="log">
-                <InboundShipmentLogPanel
+                <ActivityLogPanel
                   storeId={params.storeId}
-                  invoiceId={node().id}
+                  recordId={node().id}
                 />
               </TabPanel>
 

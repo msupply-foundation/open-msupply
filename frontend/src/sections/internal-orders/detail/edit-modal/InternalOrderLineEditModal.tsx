@@ -533,7 +533,6 @@ const LineEditContent = (
         fallback={
           <ItemSearch
             label={t('label.item')}
-            width="full"
             storeId={props.storeId}
             focusTarget={itemSearch}
             placeholder={t('placeholder.enter-an-item-code-or-name')}
@@ -557,7 +556,6 @@ const LineEditContent = (
       >
         <TextField
           label={t('label.item')}
-          width="full"
           disabled
           value={`${current()?.itemCode ?? ''} - ${current()?.itemName ?? ''}`}
         />
@@ -682,7 +680,6 @@ const LineEditContent = (
                     <NumberField
                       label={t('label.requested')}
                       hideLabel
-                      width="full"
                       min={0}
                       decimalLimit={2}
                       data-testid="requested-quantity-input"
@@ -693,7 +690,6 @@ const LineEditContent = (
                     <Select
                       label={t('label.units')}
                       hideLabel
-                      width="full"
                       testId="entry-mode-select"
                       value={entryMode()}
                       options={entryOptions()}

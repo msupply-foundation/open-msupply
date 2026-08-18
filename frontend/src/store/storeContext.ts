@@ -1,4 +1,5 @@
 import { createSignal } from 'solid-js';
+import { sameFetchedValue } from '../typeHelpers';
 import { graphqlFetch } from '../api/graphql';
 import {
   StoreContext,
@@ -24,7 +25,15 @@ import { authUser } from '../auth/authContext';
 // (result set, id not yet) between two writes and fire a redundant second
 // fetch. One signal = one write = no half-state.
 type LoadedStoreContext = { storeId: string; result: StoreContextResult };
-const [loaded, setLoaded] = createSignal<LoadedStoreContext>();
+// `equals: sameFetchedValue` — refetchStoreContext runs on every completed sync
+// run as well as on store entry, and the preferences/permissions it returns
+// rarely differ. Publishing an equal payload as a new object invalidated
+// stocktakePreferences() and friends (each builds a fresh object per call), and
+// through them every column memo reading a preference gate.
+const [loaded, setLoaded] = createSignal<LoadedStoreContext | undefined>(
+  undefined,
+  { equals: sameFetchedValue }
+);
 
 const refetch = async (storeId: string | undefined) => {
   if (!storeId) {
@@ -105,10 +114,14 @@ const stockPreferences = () => {
 // `donorTracking`/`vvm`/`vaccinesInDoses` overlap the stocktake gates; the
 // inbound-only ones (procurement, authorisation, foreign currency, backdating,
 // pack-to-one, manual internal-order linking) ride the same guard-3 query.
+// `invoiceStatusOptions` empty means UNRESTRICTED (every status offered until
+// the real value resolves — the permissive default, as in outbound/
+// prescriptions above; spec/inbound-shipments § preference gates).
 const inboundShipmentPreferences = () => {
   const prefs = storeContext()?.preferences;
   const store = storeContext()?.storePreferences;
   return {
+    invoiceStatusOptions: prefs?.invoiceStatusOptions ?? [],
     manageVaccinesInDoses: prefs?.manageVaccinesInDoses ?? false,
     manageVvmStatusForStock: prefs?.manageVvmStatusForStock ?? false,
     allowTrackingOfStockByDonor: prefs?.allowTrackingOfStockByDonor ?? false,
@@ -179,7 +192,7 @@ const patientPreferences = () => {
 // Same safe defaults while unresolved as the other *Preferences accessors —
 // OFF for gated columns/fields, but `invoiceStatusOptions` empty means
 // UNRESTRICTED (every status offered until the real value resolves — the
-// permissive default, DIVERGENCES D7's precedent via AC-PR2). Reactive — a
+// permissive default, per AC-PR2). Reactive — a
 // post-sync refetch re-gates in place.
 const prescriptionPreferences = () => {
   const prefs = storeContext()?.preferences;
@@ -198,6 +211,15 @@ const prescriptionPreferences = () => {
     editPrescribedQuantity: store?.editPrescribedQuantityOnPrescription ?? true,
   };
 };
+
+// The bottom bar's store colour (spec/chrome § bottom bar): the store's
+// custom-colour preference, raw as stored — the shell derives contrast text
+// and ignores an unparseable value (AppShell's footerColourStyle). Empty
+// while unresolved, so the bar shows its default until the preference is
+// known. Reactive — the store editor's preferences save refetches this
+// context, so a saved colour applies without a reload.
+const storeCustomColour = (): string =>
+  storeContext()?.preferences?.storeCustomColour ?? '';
 
 // The entered store's dispensary gate (spec/patients § configuration gates ›
 // AC-G1). Dispensary mode gates the WHOLE patient surface — the Dispensary nav
@@ -286,6 +308,7 @@ export {
   patientPreferences,
   prescriptionPreferences,
   isDispensary,
+  storeCustomColour,
   hasVaccineModule,
   hasProgramModule,
   hasProcurement,

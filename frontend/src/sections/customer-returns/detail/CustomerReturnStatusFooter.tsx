@@ -8,7 +8,8 @@ import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { StatusChangeAction } from './actions/StatusChangeAction';
-import { currentStep, returnKind, statusSteps } from './returnStatus';
+import { currentStep, filterByStatusPreference } from '@/domain/invoice';
+import { returnKind, statusFlow, statusSteps } from './returnStatus';
 import type { CustomerReturnInfoFragment } from './customerReturnDetail.generated';
 
 // The return-level footer (spec/customer-returns/ui-surface.md S3 § layout —
@@ -45,6 +46,11 @@ export const CustomerReturnStatusFooter: Component<
 
   const kind = () => returnKind(props.node);
   const holding = () => props.node.onHold;
+  // The kind's flow narrowed by the invoice-status-options preference (rules
+  // § preference gates); an excluded current status highlights the nearest
+  // included earlier stage.
+  const flow = () => statusFlow(kind());
+  const offered = () => filterByStatusPreference(flow(), props.statusOptions);
 
   return (
     <ContentFooter>
@@ -61,8 +67,8 @@ export const CustomerReturnStatusFooter: Component<
       </Show>
 
       <StatusIndicator
-        steps={statusSteps(kind(), props.node, props.statusOptions)}
-        current={currentStep(kind(), props.node.status, props.statusOptions)}
+        steps={statusSteps(offered(), props.node)}
+        current={currentStep(flow(), offered(), props.node.status)}
       />
 
       {/* One inline-end cluster (the current app's footer): Close sits right

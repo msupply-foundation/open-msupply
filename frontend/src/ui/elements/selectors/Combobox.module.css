@@ -10,18 +10,30 @@
   flex-direction: column;
   gap: var(--input-field-gap);
   min-width: 0;
-  max-width: var(--input-max-long);
 }
 
-/* Width caps, TextField's data-width vocabulary (the `width` prop). The base
-   cap above is `long` — option text is often long — so only the other three
-   need a rule. */
+/* Width caps — TextField's data-width vocabulary AND its meanings, rule for
+   rule (see TextField.module.css, the reference block). The base carried a
+   `long` cap until 2026-08-13 and the component passed no default, which made
+   the picker the one control whose bare width (37.5rem) disagreed with the
+   text fields it stacks among (25rem) — see kdd/form-layout § input widths.
+   Long option text is a POPUP problem, and the popup can already outgrow the
+   trigger (`matchTriggerWidth={false}`, .contentGrow below).
+
+   `compact` caps only the CONTROL BOX (rule after the base .control rules
+   below, to satisfy no-descending-specificity) — the field keeps the `short`
+   cap so the label and helper/error text stay readable, exactly as
+   TextField's does. */
 .field[data-width='compact'] {
-  max-width: var(--input-max-compact);
+  max-width: var(--input-max-short);
 }
 
 .field[data-width='short'] {
   max-width: var(--input-max-short);
+}
+
+.field[data-width='long'] {
+  max-width: var(--input-max-long);
 }
 
 .field[data-width='full'] {
@@ -76,6 +88,13 @@
   box-shadow: var(--focus-ring-error);
 }
 
+/* `compact` narrows only the control box — the field above stays at the
+   `short` cap so a longer label still has room. Placed after the base .control
+   rules to satisfy no-descending-specificity, as TextField.module.css does. */
+.field[data-width='compact'] .control {
+  max-width: var(--input-max-compact);
+}
+
 /* Disabled: the same muted fill the disabled TextField uses (its
    `.input:disabled`), so a read-only lookup — the locked item in edit mode, or
    the customer field once the shipment is read-only / requisition-sourced —
@@ -84,6 +103,11 @@
   background: var(--bg-disabled);
 }
 
+/* The leading magnifier says "you can type here to search" — the one thing the
+   chevron alone doesn't tell you, since a Select looks the same without it. It
+   renders only while the field is EMPTY (see Combobox.tsx): that is exactly
+   when the cue is useful and when there is no value competing for the width,
+   and a committed selection needs every pixel it can get. */
 .searchIcon {
   display: inline-flex;
   margin-inline-start: var(--input-padding-x);
@@ -97,6 +121,7 @@
   min-width: 0;
   height: 100%;
   padding-inline: var(--space-2);
+  padding-inline-start: var(--input-padding-x);
   border: none;
   background: transparent;
   color: var(--text-body);
@@ -119,37 +144,51 @@
   color: var(--text-disabled);
 }
 
+/* Clear and chevron share ONE slot (ux-testing/header-field-width.html § "Clear
+   and chevron share a slot"): they are never both needed — with no value there
+   is nothing to clear, and with a value the chevron is the less urgent of the
+   two. Two icon boxes flanking the value cost width the value could use; in a
+   dense row a labelled picker earns one. Identical box so the swap below costs
+   no layout shift, and no inline padding of its own — the icon is centred in
+   the slot, which is what that padding was doing. */
 .clear,
 .toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  inline-size: 1.75rem;
   height: 100%;
-  padding-inline: var(--space-2);
+  padding: 0;
   border: none;
   background: transparent;
   color: var(--gray-dark);
   cursor: pointer;
 }
 
+/* The clear affordance keeps its OWN slot beside the chevron rather than
+   replacing it on hover. Swapping the two put a destructive control on the
+   pixel a benign one occupied a moment earlier — aim for the chevron, land on
+   ✕, lose the selection, with no undo — and it relies on hover, which a tablet
+   doesn't have. Muted at rest so it reads as secondary to the value; the
+   chevron stays put, so the control never stops looking like a combobox. */
 .clear {
   font-size: 1rem;
   color: var(--gray-main);
 }
 
-.clear:hover {
-  color: var(--text-body);
-}
-
-/* Disabled field: the clear button stays visible but dimmed and inert (the
-   field is read-only, so its value can't be cleared). */
+/* Disabled field: the clear button stays inert and dimmed (the field is
+   read-only, so its value can't be cleared). */
 .clear:disabled {
   opacity: var(--disabled-opacity);
   cursor: default;
 }
 
-.toggle {
-  padding-inline-end: var(--space-3);
+/* Brought up to full strength once the field is engaged. Last, so it
+   out-specifies the resting rules above without descending-specificity
+   juggling. */
+.clear:hover,
+.control:focus-within .clear {
+  color: var(--text-body);
 }
 
 .toggleIcon {
@@ -190,6 +229,9 @@
   inline-size: 100%;
   min-inline-size: 0;
   max-inline-size: var(--kb-popper-anchor-width, none);
+  /* The 18rem cap is load-bearing beyond this file: dialogs size their
+     minBodyHeightRem reservations to it (#1029 — "header + field + the
+     listbox's 18rem cap + padding"), so changing it means re-measuring those. */
   max-height: min(18rem, var(--kb-popper-content-available-height));
   padding: var(--space-2);
   background: var(--surface-raised);
@@ -247,6 +289,17 @@
 }
 
 .item {
+  /* A row must never shrink below its own text. `.listbox` is a scrolling
+     COLUMN flex box, so its rows are shrink candidates the moment the options
+     outgrow `.content`'s max-height. On a fine pointer nothing happens: the
+     automatic minimum size (`min-height: auto` resolves to the content height)
+     holds them open. The coarse-pointer touch floor below replaces that `auto`
+     with a definite 44px and takes the protection with it — so on a TABLET a
+     wrapped option was squashed into 44px and spilled over its neighbour, which
+     is the overlapping program list in #1039 (desktop, same data, was fine).
+     `flex: none` takes the row out of shrinking outright; the touch floor still
+     applies to short rows. */
+  flex: none;
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -255,6 +308,16 @@
   cursor: pointer;
   user-select: none;
   outline: none;
+  /* Free to wrap means free to be NARROWER than its longest word. An option's
+     text is an anonymous flex item, whose automatic minimum size is its
+     min-content width — the longest unbreakable token — so a long code or an
+     unspaced name overran the panel; and since `.listbox` sets `overflow-y:
+     auto` the other axis computes to `auto` too, which turned the overrun into a
+     horizontal scrollbar over the results (#1041). `anywhere` (not
+     `break-word`) is the one that also shrinks that min-content contribution,
+     so it fixes the minimum rather than just the painting. Measured on a 127px
+     panel: scrollWidth 340px -> 127px. */
+  overflow-wrap: anywhere;
 }
 
 .item[data-highlighted] {
@@ -298,9 +361,13 @@
   color: var(--error-main);
 }
 
+/* The glyph takes the error text's own colour (inherited from .error) — it is
+   part of the error line, not a caution of its own. It used to be
+   --color-warning, which rendered an amber triangle above red text and read as
+   a second, milder severity sitting on the same message. */
 .errorIcon {
   font-size: 0.875em;
-  color: var(--color-warning);
+  color: inherit;
   flex-shrink: 0;
 }
 
@@ -326,8 +393,15 @@
     min-height: var(--input-height-sm-touch);
   }
 
-  /* Touch font bump — see --input-font-touch (stops iOS zoom-on-focus). */
-  .input {
+  /* Touch font bump — see --input-font-touch. BOTH sizes: a small field beside
+     a default one must not read at a different size on the same touch surface.
+     The small selector has to be REPEATED here — a media query adds no
+     specificity, so a bare `.input` (0,1,0) loses to `.field[data-size='small']
+     .input` (0,3,0) above and the bump silently never lands on small. The
+     borderless chip is excluded for the same reason it drops the touch height
+     below: it sits at the filter bar's own chip scale, not the field scale. */
+  .field:not([data-borderless]) .input,
+  .field:not([data-borderless])[data-size='small'] .input {
     font-size: var(--input-font-touch);
   }
 

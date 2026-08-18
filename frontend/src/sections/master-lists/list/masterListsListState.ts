@@ -1,3 +1,4 @@
+import { DEFAULT_PAGE_SIZE } from '@/list/pageSize';
 import type { MasterListsVariables } from '../masterLists.generated';
 
 // URL-backed state for the master-lists list (spec/master-lists S1). The filter
@@ -12,8 +13,6 @@ export type MasterListsListState = {
   offset: number;
   first: number;
 };
-
-export const DEFAULT_PAGE_SIZE = 20;
 
 // Default sort: name ascending (ui-surface S1 › Columns). The wire honours only
 // the LAST sort entry (contract wire trap), so send a single one.

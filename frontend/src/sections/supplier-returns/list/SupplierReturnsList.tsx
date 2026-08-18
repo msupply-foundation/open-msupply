@@ -32,6 +32,11 @@ import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import { CloseIcon, PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
 import { stripEmpty } from '../../../typeHelpers';
 import {
   SupplierReturns,
@@ -60,8 +65,6 @@ import { statusLabel, isReturnDisabled } from '../detail/returnStatus';
 // bulk Delete on selection. "New return" opens the supplier selection (S2) —
 // gated by the disable-manual-returns preference (a UI-only affordance gate)
 // and the supplier-return mutate permission.
-
-const DEFAULT_PAGE_SIZE = 20;
 
 type ReturnRow = Extract<
   SupplierReturnsResult['invoices'],
@@ -112,7 +115,10 @@ const statusMeta = (status: ReturnRow['status']) => ({
 const SupplierReturnsList: Component = () => {
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
-  const { query, setQuery } = useUrlQueryState<ReturnsListState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<ReturnsListState>({
+    ...DEFAULT_STATE,
+    first: initialPageSize(),
+  });
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   const [createOpen, setCreateOpen] = createSignal(false);
   // The disable-manual-returns notice: shown instead of the supplier selection
@@ -139,14 +145,15 @@ const SupplierReturnsList: Component = () => {
     setSelectedIds([]);
   };
 
-  // GraphQL variables from URL state. The type pin lives HERE (not in the URL
-  // filter) so the list can never escape the vertical
+  // GraphQL variables from URL state. The type pin lives in the QUERY's
+  // top-level `type` argument, which both selects the permission and overwrites
+  // `filter.type` server-side — so the list can never escape the vertical, and
+  // a filter pin here would be silently discarded
   // (spec/supplier-returns/contract.md § list & lookups).
   const variables = createMemo<SupplierReturnsVariables>(() => ({
     storeId: params.storeId,
     filter: {
       ...stripEmpty(query().filter),
-      type: { equalTo: 'SUPPLIER_RETURN' },
       // Custom-field filters become the dynamicFilter AST (undefined = no-op).
       dynamicFilter: buildCustomFieldDynamicFilter(query().cf),
     },
@@ -468,7 +475,10 @@ const SupplierReturnsList: Component = () => {
           pageSize: query().first,
           total: totalCount(),
           onOffsetChange: offset => setQuery({ ...query(), offset }),
-          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+          onPageSizeChange: first => {
+            rememberPageSize(first);
+            setQuery({ ...query(), first, offset: 0 });
+          },
         }}
       />
       <NewReturnModal

@@ -6,7 +6,8 @@ import {
 } from './forecast';
 
 // The population-forecast calculation display's arithmetic
-// (spec/internal-orders S4 § Population-based forecasting, AC-PF7). The
+// (spec/internal-orders S4 § Population-based forecasting,
+// OMS-REG-REPL-11.7). The
 // forecast itself is captured server-side (behavioural acceptance lives in the
 // e2e/ suites); these cover the client-side parse of the stored vaccineCourses
 // JSON and the per-course figure substitution the editor walks step by step.
@@ -49,7 +50,7 @@ const booster: VaccineCourse = {
 
 const asJson = JSON.stringify([generalPopulation, booster]);
 
-describe('AC-PF7 — parsing the stored vaccineCourses JSON', () => {
+describe('OMS-REG-REPL-11.7 — parsing the stored vaccineCourses JSON', () => {
   it('parses the serialised array into its per-course groups', () => {
     const courses = parseVaccineCourses(asJson);
     expect(courses).toHaveLength(2);
@@ -69,7 +70,7 @@ describe('AC-PF7 — parsing the stored vaccineCourses JSON', () => {
   });
 });
 
-describe('AC-PF7 — the three calculation steps substitute the stored figures', () => {
+describe('OMS-REG-REPL-11.7 — the three calculation steps substitute the stored figures', () => {
   it('step 1: annual target doses = population × doses × (coverage/100) × loss', () => {
     const [annual] = forecastSteps(generalPopulation);
     // 10,000 × 2 × (60/100) × 2 = 24,000 doses per year.

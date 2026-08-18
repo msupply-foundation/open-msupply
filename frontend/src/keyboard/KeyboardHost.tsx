@@ -25,7 +25,9 @@ import { useFullScreen } from '../ui/layout/AppShell/shellContext';
  */
 
 export interface KeyboardHostProps {
-  /** Open the sync window (AC-KB6). */
+  /** Start a manual sync (AC-KB6) — what the Alt+Shift+S binding now does. */
+  onSyncNow: () => void;
+  /** Open the sync window (AC-KB6) — the palette's `Sync details` row. */
   onSyncOpen: () => void;
   /** Ask to confirm, then log out (AC-KB5). */
   onLogoutRequest: () => void;
@@ -52,8 +54,8 @@ export const KeyboardHost = (props: KeyboardHostProps) => {
   const go = (path: string) => navigate(`/${params.storeId}/${path}`);
 
   /*
-   * KB-X5: "navigates up one level — from a detail screen to its list, and so on
-   * toward the root."
+   * KB-X5: "navigates up one level — from a detail screen to its list, and so
+   * on toward the root."
    *
    * One segment off the path, which IS the hierarchy the routes already encode:
    * a detail's id drops to its list, a list drops to its section's entry page,
@@ -72,9 +74,12 @@ export const KeyboardHost = (props: KeyboardHostProps) => {
   };
 
   createGlobalActions({
-    navigate: go,
-    openSync: props.onSyncOpen,
-    requestLogout: props.onLogoutRequest,
+    // Called through props rather than captured: an action's `run` outlives
+    // this component body, so reading the handler at registration time would
+    // freeze whichever function the shell passed on first render.
+    syncNow: () => props.onSyncNow(),
+    openSync: () => props.onSyncOpen(),
+    requestLogout: () => props.onLogoutRequest(),
     // KB-X4: exit full screen if engaged, and report it so the tail stops there
     // rather than also navigating.
     exitFullScreen: () => {

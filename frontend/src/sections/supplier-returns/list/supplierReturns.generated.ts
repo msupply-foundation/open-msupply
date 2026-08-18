@@ -206,7 +206,7 @@ export type SupplierReturnsResult = {
 };
 
 export const SupplierReturns = {
-  query: "query supplierReturns($storeId: String!, $filter: InvoiceFilterInput, $sort: [InvoiceSortInput!], $page: PaginationInput) {\n  invoices(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {\n    ... on InvoiceConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        otherPartyName\n        status\n        invoiceNumber\n        createdDatetime\n        comment\n        theirReference\n        colour\n        onHold\n        customFields\n      }\n    }\n  }\n}",
+  query: "query supplierReturns($storeId: String!, $filter: InvoiceFilterInput, $sort: [InvoiceSortInput!], $page: PaginationInput) {\n  invoices(\n    storeId: $storeId\n    filter: $filter\n    sort: $sort\n    page: $page\n    type: [SUPPLIER_RETURN]\n  ) {\n    ... on InvoiceConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        otherPartyName\n        status\n        invoiceNumber\n        createdDatetime\n        comment\n        theirReference\n        colour\n        onHold\n        customFields\n      }\n    }\n  }\n}",
 } as TypedDocument<SupplierReturnsResult, SupplierReturnsVariables>;
 
 export type InsertSupplierReturnVariables = {

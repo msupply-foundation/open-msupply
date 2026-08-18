@@ -359,6 +359,10 @@ const InternalOrderDetailView: Component = () => {
     prefs()?.selectDestinationStoreForAnInternalOrder ?? false;
   const requiresAuth = () =>
     storePrefs()?.requestRequisitionRequiresAuthorisation ?? false;
+  // The empty-send guard's keep-zero-lines arm (AC-S4, D20).
+  const keepZeroLines = () =>
+    storePrefs()?.keepRequisitionLinesWithZeroRequestedQuantityOnFinalised ??
+    false;
   // The extended consumption columns / Area-AMC header: a program order on a
   // customer-statistics store.
   const showExtended = () =>
@@ -1061,6 +1065,13 @@ const InternalOrderDetailView: Component = () => {
               header={
                 <Header>
                   <Breadcrumb crumbs={crumbs(node())} />
+                  {/* Every control here collapses to its icon on a narrow
+                    viewport (`collapsible="narrow"`, label kept as the
+                    accessible name and repeated as a tooltip — the outbound
+                    header's tier). Labelled, this cluster needs ~44rem, more
+                    than a tablet's header has left beside the breadcrumb, so
+                    it wrapped onto a row of its own — and on a short screen
+                    that row costs table rows, which are worth more. */}
                   <HeaderButtons>
                     {/* Add — a split of Add item (line editor) and Add from
                       master list (S7 picker). Shown always but DISABLED on
@@ -1069,6 +1080,7 @@ const InternalOrderDetailView: Component = () => {
                       "disable with an explanation", not hide). */}
                     <SplitButton
                       icon={<PlusCircleIcon />}
+                      collapsible="narrow"
                       testId="add-item-button"
                       disabled={!canAddLines()}
                       disabledTitle={t('error.cannot-add-items-to-requisition')}
@@ -1104,6 +1116,8 @@ const InternalOrderDetailView: Component = () => {
                       <Button
                         variant="secondary"
                         icon={<SidebarIcon />}
+                        collapsible="narrow"
+                        title={t('button.more')}
                         data-testid="open-detail-panel-button"
                         // createSidePanelOpen registers Alt+M; this is the
                         // control that advertises it (ui-surface S2).
@@ -1190,6 +1204,7 @@ const InternalOrderDetailView: Component = () => {
                       node={node()}
                       editable={editable()}
                       requiresAuthorisation={requiresAuth()}
+                      keepZeroLines={keepZeroLines()}
                       onSent={onSent}
                       onReasonsNotProvided={ids =>
                         setReasonFlaggedIds(new Set(ids))
