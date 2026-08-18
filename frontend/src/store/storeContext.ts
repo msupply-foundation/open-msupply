@@ -1,5 +1,4 @@
 import { createSignal } from 'solid-js';
-import { sameFetchedValue } from '../typeHelpers';
 import { graphqlFetch } from '../api/graphql';
 import {
   StoreContext,
@@ -25,13 +24,7 @@ import { authUser } from '../auth/authContext';
 // (result set, id not yet) between two writes and fire a redundant second
 // fetch. One signal = one write = no half-state.
 type LoadedStoreContext = { storeId: string; result: StoreContextResult };
-// Fetched state: refetchStoreContext runs on every completed sync run, so an
-// unchanged response must publish nothing (kdd/state-management decision 5) —
-// every column memo reading a preference gate hangs off this signal.
-const [loaded, setLoaded] = createSignal<LoadedStoreContext | undefined>(
-  undefined,
-  { equals: sameFetchedValue }
-);
+const [loaded, setLoaded] = createSignal<LoadedStoreContext>();
 
 const refetch = async (storeId: string | undefined) => {
   if (!storeId) {

@@ -1,5 +1,4 @@
 import { createSignal } from 'solid-js';
-import { sameFetchedValue } from '../typeHelpers';
 import * as i18n from '@solid-primitives/i18n';
 import {
   DEFAULT_LOCALE,
@@ -16,14 +15,9 @@ import { pluginDictionaries } from './pluginTranslations';
 // filled in by loadDictionary; until then a locale's dictionary is absent and
 // t() falls back to the key.
 const [locale, setLocale] = createSignal<SupportedLocale>(DEFAULT_LOCALE);
-// Fetched state: the post-sync refresh reloads the active catalogue every run
-// and loadDictionary republishes with a spread, so an unchanged reload must
-// publish nothing — t() is read inside every cell renderer
-// (kdd/state-management decision 5). The compare serialises the whole
-// multi-locale record, both sides, once per load.
 const [dictionaries, setDictionaries] = createSignal<
   Partial<Record<SupportedLocale, FlatDict>>
->({}, { equals: sameFetchedValue });
+>({});
 
 // The active flattened dictionary — a plain accessor (not a memo): the
 // primitive calls it on every lookup, reading the signals fresh, so it stays
