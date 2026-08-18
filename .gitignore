@@ -22,6 +22,8 @@ node_modules/
 
 standard_reports/test-config.json
 client/dist
+# New FE dist staged for docker builds (fetched by build/fetch-frontend.js)
+frontend-dist/
 
 # IDEs
 .idea/
