@@ -780,18 +780,46 @@ export function DataTable<T, K extends string, G extends string = never>(
     );
   };
 
-  // What one body / footer cell's content WANTS, px. A Range over the cell's
-  // contents, because a single-line cell is `nowrap` + `overflow: hidden`: the
-  // text lays out at its full width and only PAINTS clipped, so the range's
-  // rect is the untruncated width even while an ellipsis is on screen — and
-  // unlike scrollWidth it needs no engine-specific padding correction. Content
-  // with no intrinsic width (a proportion bar, a line-clamped wrapper) reports
-  // the width it currently fills, so auto-fit won't shrink those below their
-  // column: the honest answer for content that has no natural width.
-  const cellContentWidth = (cell: HTMLElement): number => {
-    const range = document.createRange();
-    range.selectNodeContents(cell);
-    return range.getBoundingClientRect().width + inlinePadding(cell);
+  // What a column's body / footer cells WANT, px — one entry per cell.
+  //
+  // Each cell is measured by a Range over its contents: a single-line cell is
+  // `nowrap` + `overflow: hidden`, so its text lays out at full width and only
+  // PAINTS clipped — the range's rect is the untruncated width even while an
+  // ellipsis is on screen, and unlike scrollWidth it needs no engine-specific
+  // padding correction.
+  //
+  // But a cell whose content is a BLOCK — an `HStack` of colour dot + kind icon
+  // + name (the inbound Supplier column), a line-clamp wrapper — has a box that
+  // STRETCHES to fill the cell, so measuring it where it stands reports the
+  // width the column already has. Adding the cell's padding to that made every
+  // double-click grow the column by its own padding, a ratchet (measured on
+  // that column: 300 → 314 → 323 → …). So every element child is forced to
+  // `width: max-content` first, which collapses such a box to the width its
+  // content truly needs — the same unclamp-then-measure trick the header uses
+  // below. Inline content ignores `width` and is measured as it lays out, which
+  // is already intrinsic for a nowrap cell.
+  //
+  // Consequence worth knowing: a WRAPPING column (meta.wrapLines) is fitted to
+  // its text on ONE line — bounded by the cap — not to N wrapped lines.
+  //
+  // The whole column is unconstrained before anything is read, then restored in
+  // one pass: two layout flushes for the column instead of two per cell, and
+  // nothing yields in between, so no frame paints the unconstrained cells.
+  const cellContentWidths = (cells: HTMLElement[]): number[] => {
+    const forced = cells.flatMap(cell =>
+      ([...cell.children] as HTMLElement[]).map(child => {
+        const width = child.style.width;
+        child.style.width = 'max-content';
+        return { child, width };
+      })
+    );
+    const widths = cells.map(cell => {
+      const range = document.createRange();
+      range.selectNodeContents(cell);
+      return range.getBoundingClientRect().width + inlinePadding(cell);
+    });
+    for (const { child, width } of forced) child.style.width = width;
+    return widths;
   };
 
   // What the HEADER wants — measured differently, because its label is a
@@ -847,7 +875,7 @@ export function DataTable<T, K extends string, G extends string = never>(
     const width = autoFitWidth(
       [
         ...(header ? [headerContentWidth(header)] : []),
-        ...cells.map(cellContentWidth),
+        ...cellContentWidths(cells),
       ],
       {
         current: column.getSize(),
