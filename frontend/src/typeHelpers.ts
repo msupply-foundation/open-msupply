@@ -32,6 +32,17 @@ export const shallowEqual = <T extends readonly unknown[]>(
     a.length === b.length &&
     a.every((v, i) => v === b[i]));
 
+// Are two fetched payloads structurally identical? The explicit dedup for the
+// rare publisher that REBUILDS its value on every load, where neither
+// graphqlFetch's structural sharing nor a memo boundary can preserve identity
+// (kdd/state-management decision 5) — loadDictionary is the one such site
+// today. JSON-round-trip data only: parsed responses / string maps, no
+// undefined/Date/function values. A false negative just costs a re-render; a
+// false positive cannot arise from differing data (any difference changes the
+// text).
+export const sameFetchedValue = <T>(a: T, b: T): boolean =>
+  a === b || JSON.stringify(a) === JSON.stringify(b);
+
 // Drop keys whose value is null/undefined or an empty operator object ({}),
 // keeping the same type. A generated GraphQL filter carries these two "not
 // applied" markers: FilterBar holds an added-but-empty chip as a `null` key,
