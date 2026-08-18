@@ -206,7 +206,6 @@ const InboundPanelContent = () => {
           <TextArea
             label="Comment"
             hideLabel
-            width="full"
             value={comment()}
             onInput={e => setComment(e.currentTarget.value)}
           />
@@ -433,7 +432,6 @@ const OutboundPanelContent = () => {
           <TextArea
             label="Comment"
             hideLabel
-            width="full"
             value={comment()}
             onInput={e => setComment(e.currentTarget.value)}
           />
@@ -592,7 +590,6 @@ const OutboundPanelContent = () => {
             label="Reference"
             hideLabel
             size="small"
-            width="full"
             value={reference()}
             onInput={e => setReference(e.currentTarget.value)}
           />

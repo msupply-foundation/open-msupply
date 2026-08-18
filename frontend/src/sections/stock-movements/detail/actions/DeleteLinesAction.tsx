@@ -18,7 +18,7 @@ export interface DeleteLinesActionProps {
 
 // Bulk line delete from the selection footer (spec/stock-movements/
 // ui-surface.md S2 § status footer — the bulk-action bar; rules § editing and
-// deleting lines; OMS-REG-SMV-09.31). One batch, deletes only, default
+// deleting lines; OMS-REG-SMV-10.31). One batch, deletes only, default
 // all-or-nothing: any rejection (a finalised document — .26) arrives as a
 // single untyped top-level error (contract § editing and deleting lines), so
 // the error phase shows OUR translated refusal. Success closes — closure is

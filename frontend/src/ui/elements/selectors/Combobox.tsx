@@ -18,7 +18,11 @@ import { t, tPlural } from '../../../intl';
 import { usePortalMount } from '../../utils/portalMount';
 import type { FocusTarget } from '../../utils/createFocusTarget';
 import { keepPopupOpenOnInsideContent } from './dismissInsideGuard';
-import { visibleOptions, type VisibleOptions } from './comboboxLogic';
+import {
+  typedQuery,
+  visibleOptions,
+  type VisibleOptions,
+} from './comboboxLogic';
 import styles from './Combobox.module.css';
 
 // Server-mode infinite scroll: fetch the next page once the listbox is scrolled
@@ -142,8 +146,10 @@ interface ComboboxProps<T> {
   /**
    * The status text shown when a settled search matched nothing (server mode's
    * "no matches" state). Defaults to `control.search.no-results-label` ("No
-   * results"); a caller overrides it — already translated — with a
-   * domain-specific message, e.g. the patient picker's "No matching patients".
+   * results") — or, for a client-mode list whose `items` is empty, to
+   * `label.no-options` ("No options"), since nothing typed there could match. A
+   * caller overrides both — already translated — with a domain-specific
+   * message, e.g. the patient picker's "No matching patients".
    */
   noResultsMessage?: string;
   /**
@@ -239,10 +245,15 @@ interface ComboboxProps<T> {
    */
   matchTriggerWidth?: boolean;
   /**
-   * Max-width cap, TextField's vocabulary: `compact` (10rem), `short` (25rem),
-   * `long` (37.5rem — the default, since option text is often long) or `full`
-   * to fill the container. Set it to sit level with the text fields it's
-   * stacked among, whose own default is `short`.
+   * Max-width CAP — opt-in, TextField's vocabulary and TextField's default:
+   * `full` (fill the container). A picker stacked among text fields now sits
+   * level with them with nothing passed — it used to default to `long`
+   * (37.5rem) "because option text is often long", which made it the one
+   * control whose bare width disagreed with every neighbour's. Long option
+   * text is handled where it actually is a problem: the POPUP, which can
+   * outgrow the trigger via `matchTriggerWidth={false}`. Name a cap
+   * (`compact` 10rem / `short` 25rem / `long` 37.5rem) only when the data is
+   * short or the container unbounded.
    */
   width?: 'compact' | 'short' | 'long' | 'full';
   /**
@@ -277,7 +288,17 @@ interface ComboboxProps<T> {
  * already handled by Kobalte itself (Escape clears it, blur reverts it).
  */
 export const Combobox = <T,>(props: ComboboxProps<T>) => {
-  const [selected, setSelected] = createSignal<T | null>(null);
+  // `equals: false` — a set ALWAYS emits, including one landing on the
+  // selection already held. Kobalte restores the input's text off this signal
+  // re-emitting (its `on(selectedKeys, resetInputValue)`, reached through the
+  // controlled `value` below), so a plain signal — which drops a set to the
+  // same object reference — would leave a re-picked field showing whatever was
+  // typed to find the option instead of the option's own label. The two
+  // writers below are unaffected: `handleChange` is a pick, which SHOULD
+  // re-assert, and the controlled-value effect guards by key before it writes.
+  const [selected, setSelected] = createSignal<T | null>(null, {
+    equals: false,
+  });
   const [inputValue, setInputValue] = createSignal('');
   let inputEl: HTMLInputElement | undefined;
   let contentEl: HTMLElement | undefined;
@@ -288,6 +309,29 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   // Server mode: the caller drives filtering via onInputChange (it refetches
   // `items`), so we disable Kobalte's client-side filter and let it show every
   // item we pass. See the prop docs.
+  // Longer than a listbox-full: below this the whole list is visible at once,
+  // so scanning it is faster than typing at it. Deliberately a rule off the
+  // data rather than a prop — a picker shouldn't have to remember to say how
+  // many things it holds.
+  const SEARCHABLE_MIN_ITEMS = 10;
+
+  // The largest option count this picker has ever offered, LATCHED — never the
+  // current one. Two reasons. A server-backed list narrows as the user types,
+  // and the icon must not blink off the moment a query matches a single row.
+  // And AsyncCombobox defers its first fetch until the first open, so the count
+  // starts at zero and only becomes knowable later.
+  //
+  // Consequence, accepted deliberately: a server-backed picker shows no
+  // magnifier until it has been opened once. Better to withhold the cue than to
+  // assert "this list is worth typing at" about a list we have never seen —
+  // which is what a blanket exemption for server mode did, putting a search
+  // icon on a Manufacturer field holding exactly one name.
+  const [mostOptions, setMostOptions] = createSignal(0);
+  createEffect(() =>
+    setMostOptions(seen => Math.max(seen, props.items.length))
+  );
+  const worthSearching = () => mostOptions() >= SEARCHABLE_MIN_ITEMS;
+
   const serverMode = () => props.onInputChange !== undefined;
 
   const keyOf = (item: T) => (props.itemToValue ?? props.itemToString)(item);
@@ -362,15 +406,20 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
           .toLocaleLowerCase()
           .includes(input.toLocaleLowerCase());
 
-  // The input text ONLY filters while it's something the user typed: when it
-  // just mirrors the committed selection's label, reopening the popup shows
-  // the FULL list (matching the platform autocompletes users expect — and the
-  // shared e2e suites, whose pickers reopen to browse all options).
-  const filterText = () => {
-    const current = selected();
-    const input = inputValue();
-    return current && input === props.itemToString(current) ? '' : input;
-  };
+  // What this combobox is searching for: the input text ONLY counts while it's
+  // something the user typed, never when it just mirrors the committed
+  // selection's label (see typedQuery). So reopening the popup on a selection
+  // shows the FULL list — matching the platform autocompletes users expect, and
+  // the shared e2e suites, whose pickers reopen to browse all options.
+  //
+  // BOTH modes obey it, off this one derivation: client mode filters `items` by
+  // it, server mode sends it to the caller (see handleInputChange). It has to
+  // live here rather than in the server-mode caller, because judging a label
+  // echo needs the selection the WIDGET currently holds — which it has the
+  // instant a pick commits, while the caller's controlled `value` only comes
+  // back a round trip later.
+  const queryText = () =>
+    typedQuery(inputValue(), selected(), props.itemToString);
 
   /*
    * Client mode: the matching options, capped at maxVisibleOptions, plus the
@@ -384,7 +433,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
    */
   const shown = createMemo<VisibleOptions<T>>(() => {
     if (serverMode()) return { items: props.items, total: props.items.length };
-    const text = filterText();
+    const text = queryText();
     return visibleOptions(
       props.items,
       item => matches(item, text),
@@ -406,42 +455,88 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
     serverMode() ? props.items.length === 0 : shown().total === 0
   );
 
-  // The empty-list copy splits in two (see emptyQueryMessage): nothing typed
-  // is a prompt, a settled search with no rows is an answer. Callers that pass
-  // one message get one — emptyQueryMessage falls back to noResultsMessage.
-  const emptyMessage = () =>
-    (filterText().trim() === ''
-      ? (props.emptyQueryMessage ?? props.noResultsMessage)
-      : props.noResultsMessage) ?? t('control.search.no-results-label');
+  // A client-mode list holding NO options at all — a third empty state, and
+  // the only one where searching is beside the point: the caller passed an
+  // empty `items`, so neither "No results" nor "Start typing" is true, and
+  // both invite the user to keep typing at a list that was never populated
+  // (#906 — an option custom field configured with zero options). Server mode
+  // is excluded: there an empty `items` means the fetch hasn't landed or hasn't
+  // matched, which the two messages below already describe correctly.
+  const noOptionsAtAll = () => !serverMode() && props.items.length === 0;
+
+  // The empty-list copy splits in three (see emptyQueryMessage): nothing typed
+  // is a prompt, a settled search with no rows is an answer, and no options at
+  // all is neither. A caller's own message always wins — only the DEFAULT
+  // varies — so a picker that supplies its own copy is unaffected.
+  const emptyMessage = () => {
+    const fromCaller =
+      queryText().trim() === ''
+        ? (props.emptyQueryMessage ?? props.noResultsMessage)
+        : props.noResultsMessage;
+    return (
+      fromCaller ??
+      (noOptionsAtAll()
+        ? t('label.no-options')
+        : t('control.search.no-results-label'))
+    );
+  };
 
   // Resolved once per change and read twice below (test + render).
   const footer = children(() => props.listboxFooter);
 
   const handleInputChange = (value: string) => {
     setInputValue(value);
-    props.onInputChange?.(value);
+    // What a server-mode caller is handed is the QUERY, not the raw input text
+    // — the same rule the client filter runs on. Kobalte routes its own input
+    // resyncs through here too, echoing the committed selection's label back
+    // whenever that selection (re)emits, and those are not searches. Read after
+    // the set above so queryText() judges this very value.
+    props.onInputChange?.(queryText());
   };
 
   const handleChange = (item: T | null) => {
+    const current = selected();
+    // Always re-asserted, even onto the option already held: `selected`
+    // re-emits on every set (see its `equals: false`), and that emission is
+    // what puts the option's own label back in the input after a pick made
+    // through a typed query.
     setSelected(() => item);
-    props.onChange?.(item);
+    // Choosing the option already selected is not a CHANGE, so the caller never
+    // hears about it — "re-committing an unchanged value issues no new request"
+    // (spec/ui-standards/inputs.md § server-bound input). It is not merely a
+    // wasted call: a picker's onChange handler rebuilds the editor it opened
+    // from the chosen record, so announcing a no-op pick silently discarded
+    // whatever the user had already typed into that editor.
+    const unchanged =
+      item === null
+        ? current === null
+        : current !== null && keyOf(item) === keyOf(current);
+    if (!unchanged) props.onChange?.(item);
   };
 
   // The pinned selection. Kobalte resolves a selected value against its options
   // collection — that's where it reads the label from, and a key missing from
-  // it blanks the input — so whenever `items` doesn't hold the resolved
-  // selection we put it in the collection ourselves: a selection from outside
-  // the loaded page, or (server mode) one that simply isn't a match for what
-  // the user is typing.
+  // it blanks the input — so whenever the collection we pass (`options` below)
+  // wouldn't hold the resolved selection we put it in ourselves: a selection
+  // from outside the loaded page, (server mode) one that simply isn't a match
+  // for what the user is typing, or (client mode) one the CURRENT filter text
+  // excludes. That last case is the moment of a pick itself: choosing "Going
+  // bad" while the input still reads the old selection's "Good" re-emits the
+  // selection while the collection is still filtered by "Good" — Kobalte's
+  // resetInputValue then can't resolve the new key and blanks the field
+  // (#1020). So the pin is judged against the FILTERED list (`shown`), never
+  // the caller's full `items`; once the input resyncs to the new label the
+  // filter relaxes and the pin dissolves back into the list.
   //
   // A pin is in the collection for RESOLUTION, not for display: in server mode
   // it is filtered back out of the listbox (see defaultFilter), so searching
   // for a different party is never masked by the current one sitting above the
-  // real matches (#549).
+  // real matches (#549); in client mode the same defaultFilter hides it while
+  // it doesn't match the typed text.
   const pinned = createMemo<T | undefined>(() => {
     const sel = selected();
     if (!sel) return undefined;
-    const base = props.loading ? [] : props.items;
+    const base = props.loading ? [] : shown().items;
     return base.some(item => keyOf(item) === keyOf(sel)) ? undefined : sel;
   });
   const pinnedKey = () => {
@@ -497,7 +592,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
   return (
     <KCombobox.Root<T>
       class={props.class ? `${styles.field} ${props.class}` : styles.field}
-      data-width={props.width}
+      data-width={props.width ?? 'full'}
       data-size={props.size ?? 'default'}
       data-borderless={props.borderless ? '' : undefined}
       options={options()}
@@ -514,7 +609,7 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
       defaultFilter={
         serverMode()
           ? item => keyOf(item as T) !== pinnedKey()
-          : item => matches(item as T, filterText())
+          : item => matches(item as T, queryText())
       }
       value={selected()}
       onChange={handleChange}
@@ -524,10 +619,19 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
       // (bounded by .contentGrow below). See matchTriggerWidth.
       sameWidth={props.matchTriggerWidth ?? true}
       allowsEmptyCollection
+      // Choosing an option always SELECTS it. Kobalte's listbox otherwise
+      // TOGGLES, so choosing the option already selected deselected it — and a
+      // reopened picker offers the current selection at the top of the list,
+      // making the row most likely to be clicked the one that emptied the
+      // field. It also walked a `clearable={false}` field straight past the one
+      // rule it has (an outbound shipment's customer can be changed, never
+      // emptied). Clearing keeps its own affordances: the clear button, and the
+      // caller's own value.
+      disallowEmptySelection
       // Open the listbox as soon as the input is focused/clicked (not only once
       // the user types) — the options appear on interaction, matching the
       // platform autocompletes users expect. Reopening a committed selection
-      // still shows the full list (see filterText).
+      // still shows the full list (see queryText).
       triggerMode="focus"
       disabled={props.disabled}
       placeholder={props.placeholder}
@@ -558,9 +662,20 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
         class={styles.control}
         data-error={props.error ? '' : undefined}
       >
-        <span class={styles.searchIcon} aria-hidden="true">
-          <SearchIcon />
-        </span>
+        {/* The magnifier's job is to say the list is worth TYPING at — the one
+            thing the chevron alone doesn't convey, since a plain Select looks
+            identical without it. So it renders only where that's true: while
+            the field is EMPTY (once a selection is committed the cue is spent
+            and the value needs the width — a labelled picker was spending ~45%
+            of its box on chrome), and only for a list long enough that
+            filtering beats scanning. On a handful of options the icon is
+            signage for something nobody needs to do. Server-driven lists come
+            in a page at a time, so they always qualify. */}
+        <Show when={selected() === null && worthSearching()}>
+          <span class={styles.searchIcon} aria-hidden="true">
+            <SearchIcon />
+          </span>
+        </Show>
         <KCombobox.Input
           // Both the local ref (the clear button restores focus here) and the
           // caller's focus handle bind to the same input.

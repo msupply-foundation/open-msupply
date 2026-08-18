@@ -100,6 +100,7 @@ export const DocumentUploadPanel = (
             accept={local.accept}
             maxSize={local.maxSize}
             multiple
+            inputTestId="document-upload-input"
           />
         </section>
       </Show>
@@ -130,7 +131,7 @@ export const DocumentUploadPanel = (
           <ul class={styles.rows}>
             <For each={local.documents}>
               {document => (
-                <li class={styles.row}>
+                <li class={styles.row} data-testid="document-row">
                   <FileTypeIcon fileName={document.fileName} />
                   <Show
                     when={document.url}
@@ -174,6 +175,7 @@ export const DocumentUploadPanel = (
                         label={t('button.remove-file')}
                         variant="danger"
                         size="small"
+                        data-testid="document-remove-button"
                         onClick={() => local.onDelete?.(document)}
                       />
                     </Show>

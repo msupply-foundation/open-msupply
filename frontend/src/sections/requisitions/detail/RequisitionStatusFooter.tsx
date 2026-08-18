@@ -284,7 +284,10 @@ export const RequisitionStatusFooter: Component<
                 // (controls › dialogs, D55).
                 <>
                   <Show when={raisePhase() === 'confirm'}>
-                    <CancelButton onClick={() => setRaiseOpen(false)} />
+                    <CancelButton
+                      data-testid="dialog-button-cancel"
+                      onClick={() => setRaiseOpen(false)}
+                    />
                   </Show>
                   <OkButton
                     data-testid="confirmation-modal-ok"
@@ -357,7 +360,10 @@ export const RequisitionStatusFooter: Component<
                 // confirm / saving: the standard icon-less pair (D55).
                 <>
                   <Show when={finalisePhase() === 'confirm'}>
-                    <CancelButton onClick={() => setFinaliseOpen(false)} />
+                    <CancelButton
+                      data-testid="dialog-button-cancel"
+                      onClick={() => setFinaliseOpen(false)}
+                    />
                   </Show>
                   <OkButton
                     data-testid="confirmation-modal-ok"

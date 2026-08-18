@@ -70,7 +70,6 @@ export const SupplierReturnToolbar: Component<
       <TextField
         label={t('label.supplier-reference')}
         size="small"
-        width="full"
         data-testid="supplier-reference-field"
         value={props.edit.state.theirReference}
         disabled={props.disabled}

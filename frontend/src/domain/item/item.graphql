@@ -1,8 +1,9 @@
 # Stock items for the item-search selector (add-item flow), paginated for
 # infinite scroll: one page at a time (first/offset), server-side filtered by
 # codeOrName. type=STOCK + isActive/isVisibleOrOnHand mirror OMS's stock-item
-# search; `id: { notEqualAll }` drops items already in the caller's context
-# (e.g. already on the stocktake) so they aren't offered twice.
+# search. `id: { notEqualAll }` drops caller-supplied ids — NOT items the
+# document already holds (a line editor offers those; D60), only structural
+# exclusions such as an item that cannot be its own bundled/ancillary variant.
 #
 # The per-item stock figure is summed CLIENT-side from availableBatches (Σ
 # availableNumberOfPacks * packSize — AVAILABLE stock, net of reservations, so it
