@@ -151,6 +151,10 @@
 
   background: var(--bg-toolbar);
   color: var(--text-body);
+  /* 13px — one notch under the body's 14px; rationale and the measurement
+     behind the size live on the token. Full-page tables only: a table inside a
+     modal keeps the body size (see the dialog rule below). */
+  font-size: var(--table-header-font-size);
   font-weight: var(--weight-medium);
   /* Tighter than the body's --table-line-height (1.43) — a deliberate
      header deviation (Carl 2026-07-24): only ever visible when a header
@@ -163,6 +167,19 @@
      stays visible, vertically centered beside it. Body cells keep nowrap unless
      a column opts into wrapLines (.td[data-wrap]). */
   vertical-align: middle;
+}
+
+/* A table inside a modal keeps its headers at the body size (14px — what every
+   header was before the shrink). The 13px above is for full-page tables, where
+   the header row is one band among many and the smaller type separates it from
+   the data; a modal's table is already a small, dense surface inside its own
+   frame, where three or four rows need no help telling themselves apart from
+   their headings and the shrink would only cost legibility. Scoped on the
+   native <dialog> every modal renders into (Dialog/ConfirmDialog/ErrorDialog),
+   so a vertical gets this for free rather than passing a prop down to each
+   table it opens in a modal. */
+:global(dialog) .th {
+  font-size: var(--text-sm);
 }
 
 /* Sortable header (ui-standards § tables .sortable): the WHOLE cell is the
@@ -1407,6 +1424,16 @@ tr[data-accent='error'] > :first-child::before {
      CardView overrides them inline per group from the columns' meta.cardWidth. */
   --card-field-cols: repeat(auto-fit, minmax(10rem, 1fr));
   --card-field-max: none;
+  /* The per-field trio the wrapping fallback below reads — CardView's cardFlex
+     overrides them per field, mirroring <FormRowItem>'s weight / minWidth /
+     maxWidth. Declared here with inert defaults so they're known custom
+     properties, as the two above. */
+  /* The narrow layout's track count — overridden inline per group from
+     CardGroup.narrowLayout; the 6 here is only the known-property default. */
+  --card-narrow-columns: 6;
+  --card-field-weight: 1;
+  --card-field-floor: 10rem;
+  --card-field-max-w: none;
 
   grid-template-columns: var(--card-field-cols);
 
@@ -1417,18 +1444,102 @@ tr[data-accent='error'] > :first-child::before {
   max-inline-size: var(--card-field-max);
 }
 
-/* Below the sum of the template's own minima an explicit grid would overflow
-   the card rather than wrap, so CardView measures and flips this on: back to
-   the equal auto-fit tracks, which do wrap. */
+/* Below the sum of the template's own minima an explicit grid would overflow the
+   card rather than wrap, so CardView measures and flips this on: the fields
+   reflow as a WRAPPING FLEX ROW, each keeping the size its column declared
+   (CardView's cardFlex sets the two custom properties per field).
+
+   Flex, not `repeat(auto-fit, minmax(10rem, 1fr))` as this fallback used to be.
+   Equal auto-fit tracks wrap, but they discard the declaration that makes the
+   wide layout right, and hand every field an identical box whatever it holds —
+   which on a tablet in PORTRAIT (always far below an editor group's minima) was
+   wrong twice over in the same row: a read-only Pack size sat in a track it had
+   no use for while Location's "code — name" value truncated next to it. A
+   wrapping flex row is the one layout that keeps per-field sizes AND reflows, so
+   the declaration now holds at every width and only the row count changes.
+
+   Trade-off, accepted: columns no longer line up across rows the way equal
+   tracks did — a wrapped row starts where the previous one ended. That is the
+   cost of sizing to the data, and it only applies here; at full width the group
+   is a single row where alignment is not a question. */
 .cardFields[data-field-widths][data-narrow] {
-  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  display: flex;
+  flex-wrap: wrap;
 }
 
 /* Every field may shrink inside its track: a grid item's automatic minimum is
    its content's min-width, which for an input is its intrinsic size, and that
-   would push the row past the card. */
+   would push the row past the card. Covers the flex items below too — a flex
+   item's automatic minimum is min-content for the same reason, and without this
+   the wrapped row could never shrink to wrap. */
 .cardFields[data-field-widths] > * {
   min-inline-size: 0;
+}
+
+/* Sizing per field, in <FormRowItem>'s terms — see CardView's cardFlex for why
+   this borrows that component's technique rather than inventing a second one.
+
+   `flex-basis: 0` with the floor in `min-inline-size` is what makes a weight a
+   true `fr`: the whole line distributes in proportion instead of only the slack
+   left after every field has claimed a basis. `min()` caps the floor at the line
+   width so a lone field narrower than its own floor shrinks rather than
+   overflowing. The max stops a weighted field swallowing a wrapped line whole —
+   without it the last row overshot the right edge of the rows above it.
+
+   min-inline-size deliberately OVERRIDES the `0` set for grid mode above: there
+   the track's own minmax() carries the floor and a floored item would fight it,
+   here the item is the only thing that knows its floor. */
+.cardFields[data-field-widths][data-narrow] > * {
+  flex: var(--card-field-weight, 1) 1 0;
+  min-inline-size: min(var(--card-field-floor, 10rem), 100%);
+  max-inline-size: var(--card-field-max-w, none);
+}
+
+/* narrowLayout: 'columns' — the other bargain (see CardGroup.narrowLayout). Back
+   to EQUAL tracks, so every row fills its width and every row shares the same
+   column edges; a field that needs more than one column says so with
+   meta.cardSpan. Fields stop being sized to their data, which is the price, and
+   it's worth paying where the group's fields are close enough in length that
+   even columns waste little.
+
+   The span is also what makes a row come out even: eight fields on three columns
+   would leave the last row a third empty, but eight fields with one spanning two
+   fill three rows exactly. */
+.cardFields[data-field-widths][data-narrow][data-narrow-columns] {
+  display: grid;
+  /* SIX tracks, not an auto-fit count. The count has to be fixed for the spans
+     to mean anything — a field declaring 3 of 6 is asking for half the row, and
+     an auto-fit grid that resolved to 5 tracks at some width would silently make
+     that three-fifths and break every row's packing. Six is chosen so the spans
+     can express the ratios these cards need (2 against 3); see
+     CardGroup.narrowLayout for why three tracks could not. */
+  grid-template-columns: repeat(var(--card-narrow-columns, 6), 1fr);
+}
+
+/* A track grid over a narrow container leaves each track too fine for an input —
+   twelve of them at 30rem is ~1.5rem each. Below that, ONE field per row: the
+   spans have to be neutralised with it, because a group declaring `span 12`
+   against a 3-track grid would force implicit columns and overflow the card
+   rather than reflow. `1 / -1` says "this row, whatever its width", so it holds
+   for any group's count without knowing the number. */
+@container (max-inline-size: 30rem) {
+  .cardFields[data-field-widths][data-narrow][data-narrow-columns] {
+    grid-template-columns: 1fr;
+  }
+
+  .cardFields[data-field-widths][data-narrow][data-narrow-columns] > * {
+    grid-column: 1 / -1;
+  }
+}
+
+/* The flex sizing above is inert under grid, but min/max-inline-size are not:
+   the floor would stop a field shrinking into its track, and a weighted field's
+   `max` would cap it BELOW the tracks it spans (a 17rem max against two 13rem
+   columns), leaving the hole this layout exists to avoid. Both are cleared. */
+.cardFields[data-field-widths][data-narrow][data-narrow-columns] > * {
+  grid-column: span var(--card-field-span, 1);
+  min-inline-size: 0;
+  max-inline-size: none;
 }
 
 /* --- Card body groups ------------------------------------------------------- */

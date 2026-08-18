@@ -301,6 +301,23 @@
   --nav-child-height: 1.875rem; /* 30px */
   --table-data-row: 2.5rem; /* 40px */
   --table-header-row: 3.75rem; /* 60px */
+  /* Column-header text: 13px, one notch under the 14px cell font (--text-sm),
+     so the column names read as labels FOR the data rather than as more of it.
+     Its own token rather than --text-xs (12px, helper/caption) — 12px tested
+     too small to read comfortably across a wide table, and it left no room
+     below the header on the scale. Same shape as --input-font-sm, which notches
+     a small field down by exactly this step.
+
+     The size also earns its keep in translation: French column headers measure
+     ~24% wider than their English originals, and the 13px step gives back ~7%
+     of that, which pulls headers back inside the 2-line clamp (.thText) and
+     lowers the min-content floor a long compound word forces on its column.
+
+     Deviation from the org standards site, which sets th at 14px (= the cell
+     font) and separates the band by weight + fill alone — recorded in
+     src/ui/docs/DESIGN_STANDARDS.md. A table inside a modal opts BACK to 14px
+     (see the dialog rules in DataTable.module.css / Table.module.css). */
+  --table-header-font-size: 0.8125rem; /* 13px */
   /* Cell line-height (ui-standards § tables): 1.43 ≈ 20px leading at the 14px
      cell font, shared by header and body cells. */
   --table-line-height: 1.43;
