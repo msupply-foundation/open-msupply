@@ -23,6 +23,7 @@ export const AddFromMasterListModalComponent = ({
         responseAddFromMasterList(masterList);
       }}
       filterBy={filter}
+      testId="master-list-picker-modal"
     />
   );
 };

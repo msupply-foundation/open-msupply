@@ -39,7 +39,11 @@ export const CreateRequisitionModal = ({
   const t = useTranslation();
   const { data: programSettings, isLoading } =
     useRequest.utils.programSettings();
-  const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: false });
+  const { Modal } = useDialog({
+    isOpen,
+    onClose,
+    disableBackdrop: false,
+  });
   const noSuppliers = programSettings?.every(
     setting => setting.suppliers.length === 0
   );
@@ -73,6 +77,7 @@ export const CreateRequisitionModal = ({
 
   return (
     <Modal
+      testId="create-internal-order-modal"
       height={700}
       width={700}
       slideAnimation={false}

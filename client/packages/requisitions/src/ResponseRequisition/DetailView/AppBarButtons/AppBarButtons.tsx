@@ -93,6 +93,7 @@ export const AppBarButtonsComponent = ({
 
         <SupplyRequestedQuantityButton />
         <ReportSelector
+          testId="export-or-print-button"
           context={ReportContext.Requisition}
           dataId={data?.id ?? ''}
           queryParams={{ filterBy: { subContext: { equalAnyOrNull: [] } } }}
