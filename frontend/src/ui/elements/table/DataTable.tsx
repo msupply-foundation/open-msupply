@@ -30,6 +30,7 @@ import {
 import { sortKeyToId, sortIdToKey } from './tableHelpers';
 import { renderTemplate } from './renderTemplate';
 import { hiddenEdges } from './scrollEdges';
+import { autoFitWidth } from './autoFitWidth';
 import {
   toColumnDef,
   type CardGroup,
@@ -752,6 +753,143 @@ export function DataTable<T, K extends string, G extends string = never>(
     }
   };
 
+  // --- Auto-fit a column to its widest content (issue #651) ---
+  // The Excel gesture: double-clicking a header's resize divider snaps that
+  // column to the width its content actually needs (HeaderCell's onDblClick).
+  // What it writes is exactly what a DRAG writes — the column's `size`, i.e.
+  // its min-width floor — so the fitted width persists, layers, and clears with
+  // "Reset table to default" like any other user width.
+  //
+  // Measured, not computed: only the DOM knows what the cells rendered (a
+  // formatted number, a localised date, a status chip, this locale's glyph
+  // widths at this density). Scope is one column of the CURRENT page — the only
+  // "widest content" available without fetching every row.
+  //
+  // Same flex-sink caveat as a drag (docs/TABLE_PLAN.md Phase 3): under the
+  // min-width-floor + auto-layout model, the column that absorbs the table's
+  // slack re-absorbs anything auto-fit gives back, so fitting the WIDEST column
+  // narrower can leave it where it was. Fitting a clipped column WIDER — the
+  // gesture people actually reach for — works.
+
+  // A cell's own inline padding, added back to its content width: a column
+  // sized to bare text would clip against its own padding.
+  const inlinePadding = (cell: HTMLElement): number => {
+    const style = getComputedStyle(cell);
+    return (
+      parseFloat(style.paddingInlineStart) + parseFloat(style.paddingInlineEnd)
+    );
+  };
+
+  // What a column's body / footer cells WANT, px — one entry per cell.
+  //
+  // Each cell is measured by a Range over its contents: a single-line cell is
+  // `nowrap` + `overflow: hidden`, so its text lays out at full width and only
+  // PAINTS clipped — the range's rect is the untruncated width even while an
+  // ellipsis is on screen, and unlike scrollWidth it needs no engine-specific
+  // padding correction.
+  //
+  // But a cell whose content is a BLOCK — an `HStack` of colour dot + kind icon
+  // + name (the inbound Supplier column), a line-clamp wrapper — has a box that
+  // STRETCHES to fill the cell, so measuring it where it stands reports the
+  // width the column already has. Adding the cell's padding to that made every
+  // double-click grow the column by its own padding, a ratchet (measured on
+  // that column: 300 → 314 → 323 → …). So every element child is forced to
+  // `width: max-content` first, which collapses such a box to the width its
+  // content truly needs — the same unclamp-then-measure trick the header uses
+  // below. Inline content ignores `width` and is measured as it lays out, which
+  // is already intrinsic for a nowrap cell.
+  //
+  // Consequence worth knowing: a WRAPPING column (meta.wrapLines) is fitted to
+  // its text on ONE line — bounded by the cap — not to N wrapped lines.
+  //
+  // The whole column is unconstrained before anything is read, then restored in
+  // one pass: two layout flushes for the column instead of two per cell, and
+  // nothing yields in between, so no frame paints the unconstrained cells.
+  const cellContentWidths = (cells: HTMLElement[]): number[] => {
+    const forced = cells.flatMap(cell =>
+      ([...cell.children] as HTMLElement[]).map(child => {
+        const width = child.style.width;
+        child.style.width = 'max-content';
+        return { child, width };
+      })
+    );
+    const widths = cells.map(cell => {
+      const range = document.createRange();
+      range.selectNodeContents(cell);
+      return range.getBoundingClientRect().width + inlinePadding(cell);
+    });
+    for (const { child, width } of forced) child.style.width = width;
+    return widths;
+  };
+
+  // What the HEADER wants — measured differently, because its label is a
+  // two-line clamp (.thText) inside a flex row (.thLabel): laid out it is
+  // always exactly as wide as the column allows, so a Range would just hand the
+  // column's own width back. Unclamp it for ONE synchronous measurement (a
+  // max-content row, label on a single line), then restore. Nothing yields
+  // between the two writes, so no frame ever paints the unclamped header. The
+  // reserved sort-indicator slot sits inside .thLabel, so its width comes
+  // along.
+  const headerContentWidth = (th: HTMLElement): number => {
+    const label = th.querySelector<HTMLElement>(`.${styles.thLabel}`);
+    if (!label) return 0; // the leading select cell carries no label
+    const text = label.querySelector<HTMLElement>(`.${styles.thText}`);
+    label.style.width = 'max-content';
+    if (text) {
+      text.style.display = 'block';
+      text.style.whiteSpace = 'nowrap';
+    }
+    const wanted = label.getBoundingClientRect().width;
+    label.style.width = '';
+    if (text) {
+      text.style.display = '';
+      text.style.whiteSpace = '';
+    }
+    return wanted + inlinePadding(th);
+  };
+
+  const autoFitColumn = (column: TanColumn<T>) => {
+    if (!scrollBox || !column.getCanResize()) return;
+    // Cells are addressed by their PUBLISHED ids (e2e/TESTIDS.md —
+    // `header-`/`cell-`/`footer-<columnId>`), escaped because a column id can
+    // carry dots (`item.code`).
+    const id = CSS.escape(column.id);
+    const header = scrollBox.querySelector<HTMLElement>(
+      `thead [data-column-id="${id}"]`
+    );
+    const cells = [
+      ...scrollBox.querySelectorAll<HTMLElement>(
+        `tbody [data-testid="cell-${id}"], tfoot [data-testid="footer-${id}"]`
+      ),
+    ];
+    // The cap is READ off a rendered cell rather than recomputed: a cell's
+    // resolved max-width already IS the column's cap in px — its own `maxSize`
+    // when it declares one, else the table's --table-cell-max-grow default, and
+    // `none` for a wrapping column (which needs no cap: its content wraps
+    // instead of running on). Measuring it keeps that token defined once, in
+    // CSS.
+    const capSource = cells[0] ?? header;
+    const cap = capSource
+      ? parseFloat(getComputedStyle(capSource).maxWidth)
+      : NaN;
+    const width = autoFitWidth(
+      [
+        ...(header ? [headerContentWidth(header)] : []),
+        ...cellContentWidths(cells),
+      ],
+      {
+        current: column.getSize(),
+        cap: Number.isFinite(cap) ? cap : undefined,
+      }
+    );
+    // Commit through TanStack's own setter, so it lands in
+    // onColumnSizingChange like every other sizing change (kdd/table-state —
+    // the brains stay TanStack's). No drag is in flight on a double-click, so
+    // that handler persists it as rem immediately instead of parking it in the
+    // transient signal.
+    table.setColumnSizing(current => ({ ...current, [column.id]: width }));
+  };
+
   // The edge offset is MEASURED (pinnedOffsets, above), because the only widths
   // TanStack can offer — getStart('left') / getAfter('right') — sum the
   // CONFIGURED sizes, and under our auto table layout a column's `size` is only
@@ -1235,6 +1373,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                                 header={header}
                                 pinnedStyle={pinnedStyle}
                                 frozenEdge={frozenEdge}
+                                onAutoFit={autoFitColumn}
                               />
                             </Show>
                           )}
