@@ -310,7 +310,9 @@ export const CreateInternalOrderModal: Component<
         />
       </FieldRow>
       <Show when={error()}>
-        <Alert severity="error">{error()}</Alert>
+        <Alert severity="error" testId="create-internal-order-error">
+          {error()}
+        </Alert>
       </Show>
     </Stack>
   );

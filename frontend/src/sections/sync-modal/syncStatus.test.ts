@@ -7,7 +7,7 @@ import {
   IDLE_TRIGGER,
   statusLineKind,
   syncDurationParts,
-  syncIndicatorBadge,
+  syncFooterStatus,
   toSyncOverview,
   type SyncSurfaceContext,
 } from './syncStatus';
@@ -200,6 +200,29 @@ describe('toSyncOverview — phase list with progress (SYNC-03.19, .20)', () => 
     );
     expect(wait?.done).toBeUndefined();
     expect(wait?.total).toBeUndefined();
+  });
+
+  it('carries the phase timestamps through for the elapsed display', () => {
+    const steps = toSyncOverview(
+      v7({
+        push: {
+          started: '2026-01-01T00:00:00Z',
+          finished: '2026-01-01T00:00:12Z',
+          total: null,
+          done: null,
+        },
+        pull: phase({ done: 5, total: 10 }),
+      }),
+      MODAL
+    )?.steps;
+    expect(steps?.find(s => s.label === 'sync-status.push')).toMatchObject({
+      startedAt: '2026-01-01T00:00:00Z',
+      finishedAt: '2026-01-01T00:00:12Z',
+    });
+    // An unfinished phase carries its start stamp and no finish stamp.
+    const pull = steps?.find(s => s.label === 'sync-status.pull');
+    expect(pull?.startedAt).toBe('2026-01-01T00:00:00Z');
+    expect(pull?.finishedAt).toBeUndefined();
   });
 
   it('a known total with no done yet reads 0 / N', () => {
@@ -464,7 +487,7 @@ describe('a later successful run clears the error (SYNC-03.30)', () => {
   });
 });
 
-describe('syncIndicatorBadge — chrome indicator badge (spec/chrome § sync indicator)', () => {
+describe('syncFooterStatus — the bottom bar\'s sync cell (spec/chrome § sync status)', () => {
   const now = new Date('2026-01-10T00:00:00Z');
   const errored = (
     variant: 'CONNECTION_ERROR' | 'INVALID_SITE_NAME_OR_PASSWORD'
@@ -473,67 +496,131 @@ describe('syncIndicatorBadge — chrome indicator badge (spec/chrome § sync ind
       v7({ error: { variantV7: variant, fullError: 'x' } }),
       MODAL
     );
+  const finishedDaysAgo = (days: number) =>
+    new Date(now.getTime() - days * 86_400_000).toISOString();
   const staleBy = (days: number) =>
     toSyncOverview(
       v7({
-        lastSuccessfulSync: {
-          started: 'a',
-          finished: new Date(now.getTime() - days * 86_400_000).toISOString(),
-        },
+        lastSuccessfulSync: { started: 'a', finished: finishedDaysAgo(days) },
       }),
       MODAL
     );
 
-  it('is absent without a status', () => {
-    expect(syncIndicatorBadge(undefined, 5, 0, now)).toBeUndefined();
-  });
-
-  it('flags a non-connection error immediately', () => {
-    expect(
-      syncIndicatorBadge(errored('INVALID_SITE_NAME_OR_PASSWORD'), 0, 0, now)
-    ).toEqual({ kind: 'alert' });
-  });
-
-  it('tolerates a connection error (no alert marker)', () => {
-    expect(
-      syncIndicatorBadge(errored('CONNECTION_ERROR'), 0, 0, now)
-    ).toBeUndefined();
-  });
-
-  it('shows the count only once it reaches the display threshold', () => {
-    expect(syncIndicatorBadge(staleBy(0), 3, 5, now)).toBeUndefined();
-    expect(syncIndicatorBadge(staleBy(0), 5, 5, now)).toEqual({
-      kind: 'count',
-      count: 5,
+  it('waits while no status has arrived', () => {
+    expect(syncFooterStatus(undefined, 5, 0, now)).toEqual({
+      kind: 'waiting',
       tone: 'neutral',
     });
-    // Nothing to push → no badge, whatever the threshold.
-    expect(syncIndicatorBadge(staleBy(0), 0, 0, now)).toBeUndefined();
   });
 
-  it('escalates the tone by days since the last successful sync', () => {
-    expect(syncIndicatorBadge(staleBy(0), 5, 0, now)).toEqual({
-      kind: 'count',
-      count: 5,
+  it('reports a run in flight above everything else', () => {
+    const syncing = toSyncOverview(
+      v7({
+        isSyncing: true,
+        error: { variantV7: 'INVALID_SITE_NAME_OR_PASSWORD', fullError: 'x' },
+      }),
+      MODAL
+    );
+    expect(syncFooterStatus(syncing, 12, 0, now)).toEqual({
+      kind: 'syncing',
       tone: 'neutral',
     });
-    expect(syncIndicatorBadge(staleBy(1), 5, 0, now)).toEqual({
-      kind: 'count',
-      count: 5,
+  });
+
+  it('flags a non-connection error immediately, ahead of a queue', () => {
+    expect(
+      syncFooterStatus(errored('INVALID_SITE_NAME_OR_PASSWORD'), 12, 0, now)
+    ).toEqual({ kind: 'error', tone: 'error' });
+  });
+
+  it('reports an unreachable server at warning level, not as a failure', () => {
+    expect(syncFooterStatus(errored('CONNECTION_ERROR'), 0, 0, now)).toEqual({
+      kind: 'unreachable',
       tone: 'warning',
     });
-    expect(syncIndicatorBadge(staleBy(3), 5, 0, now)).toEqual({
-      kind: 'count',
-      count: 5,
+  });
+
+  it('lets staleness overtake an unreachable server once it bites', () => {
+    // A sustained outage is no longer merely "can't connect" — the site is out
+    // of date, and the staleness rungs say so instead.
+    const staleAndUnreachable = toSyncOverview(
+      v7({
+        error: { variantV7: 'CONNECTION_ERROR', fullError: 'x' },
+        lastSuccessfulSync: { started: 'a', finished: finishedDaysAgo(3) },
+      }),
+      MODAL
+    );
+    expect(syncFooterStatus(staleAndUnreachable, 0, 0, now)).toEqual({
+      kind: 'error',
       tone: 'error',
     });
   });
 
-  it('treats a site with no successful sync as fresh (never red on a new site)', () => {
-    expect(syncIndicatorBadge(toSyncOverview(v7(), MODAL), 5, 0, now)).toEqual({
-      kind: 'count',
-      count: 5,
+  it('never shows the quiet Synced line while the server is unreachable', () => {
+    // The defect this guards: the cell read "Synced 5 minutes ago" while the
+    // sync modal beside it reported "Unable to connect to server".
+    const freshButUnreachable = toSyncOverview(
+      v7({
+        error: { variantV7: 'CONNECTION_ERROR', fullError: 'x' },
+        lastSuccessfulSync: { started: 'a', finished: finishedDaysAgo(0) },
+      }),
+      MODAL
+    );
+    expect(syncFooterStatus(freshButUnreachable, 0, 0, now).kind).toBe(
+      'unreachable'
+    );
+    // …and it outranks a queue, exactly as the other alarm states do.
+    expect(syncFooterStatus(freshButUnreachable, 14, 0, now).kind).toBe(
+      'unreachable'
+    );
+  });
+
+  it('escalates by days since the last successful sync', () => {
+    expect(syncFooterStatus(staleBy(1), 0, 0, now)).toEqual({
+      kind: 'warning',
+      tone: 'warning',
+    });
+    expect(syncFooterStatus(staleBy(3), 0, 0, now)).toEqual({
+      kind: 'error',
+      tone: 'error',
+    });
+  });
+
+  it('staleness outranks a queue, so an ageing site says so either way', () => {
+    expect(syncFooterStatus(staleBy(1), 14, 0, now)).toEqual({
+      kind: 'warning',
+      tone: 'warning',
+    });
+  });
+
+  it('shows the queue only once it reaches the display threshold', () => {
+    expect(syncFooterStatus(staleBy(0), 3, 5, now)).toEqual({
+      kind: 'synced',
       tone: 'neutral',
+      finished: finishedDaysAgo(0),
+    });
+    expect(syncFooterStatus(staleBy(0), 5, 5, now)).toEqual({
+      kind: 'records-queued',
+      tone: 'neutral',
+      count: 5,
+    });
+    // Nothing to push → the quiet "Synced …" line, whatever the threshold.
+    expect(syncFooterStatus(staleBy(0), 0, 0, now)).toEqual({
+      kind: 'synced',
+      tone: 'neutral',
+      finished: finishedDaysAgo(0),
+    });
+  });
+
+  it('treats a site with no successful sync as fresh (never red on a new site)', () => {
+    expect(syncFooterStatus(toSyncOverview(v7(), MODAL), 0, 0, now)).toEqual({
+      kind: 'never-synced',
+      tone: 'neutral',
+    });
+    expect(syncFooterStatus(toSyncOverview(v7(), MODAL), 5, 0, now)).toEqual({
+      kind: 'records-queued',
+      tone: 'neutral',
+      count: 5,
     });
   });
 });

@@ -29,6 +29,11 @@ import {
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import { CloseIcon, PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
 import { stripEmpty } from '../../../typeHelpers';
 import {
   OutboundShipments,
@@ -59,8 +64,6 @@ import {
 // list (StocktakesList): URL-backed state, serialised resource source, library
 // components only, no CSS.
 
-const DEFAULT_PAGE_SIZE = 20;
-
 type ShipmentRow = OutboundShipmentsResult['invoices']['nodes'][number];
 
 type SortKey = NonNullable<OutboundShipmentsVariables['sort']>[number]['key'];
@@ -88,8 +91,10 @@ const DEFAULT_STATE: OutboundListState = {
 const OutboundShipmentsList: Component = () => {
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
-  const { query, setQuery } =
-    useUrlQueryState<OutboundListState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<OutboundListState>({
+    ...DEFAULT_STATE,
+    first: initialPageSize(),
+  });
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   const [createOpen, setCreateOpen] = createSignal(false);
 
@@ -129,13 +134,14 @@ const OutboundShipmentsList: Component = () => {
     setSelectedIds([]);
   };
 
-  // GraphQL variables from URL state; the type filter is PINNED here — it is
-  // not part of the user-facing filter state (contract.md § the list).
+  // GraphQL variables from URL state. The type pin is NOT here: the query's
+  // top-level `type` argument both selects the permission and overwrites
+  // `filter.type` server-side, so a filter pin would be silently discarded
+  // (contract.md § the list).
   const variables = createMemo<OutboundShipmentsVariables>(() => ({
     storeId: params.storeId,
     filter: {
       ...stripEmpty(query().filter),
-      type: { equalTo: 'OUTBOUND_SHIPMENT' },
       // Custom-field filters become the dynamicFilter AST (undefined = no-op).
       dynamicFilter: buildCustomFieldDynamicFilter(query().cf),
     },
@@ -413,7 +419,11 @@ const OutboundShipmentsList: Component = () => {
           pageSize: query().first,
           total: totalCount(),
           onOffsetChange: offset => setQuery({ ...query(), offset }),
-          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+          // The chosen size is remembered for the next visit (D106).
+          onPageSizeChange: first => {
+            rememberPageSize(first);
+            setQuery({ ...query(), first, offset: 0 });
+          },
         }}
       />
       <CustomerSearchModal

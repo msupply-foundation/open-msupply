@@ -75,6 +75,20 @@ const expiredWithin = (
   expiryDate.slice(0, 10) <= dateToIsoDate(addDays(today, thresholdDays));
 
 /**
+ * Is this batch PAST its expiry date — literally, with no preference threshold
+ * widening the window? Distinct from the `expired` bar reason, which the
+ * _prevent issue of expired stock_ preference widens to "expiring within N
+ * days": a batch inside that window is barred but not yet expired, and telling
+ * a user it has expired when it has not is worse than saying nothing. Same
+ * whole-day comparison as the bar reasons, so a batch reads the same way all
+ * day. A batch with no expiry date never expires.
+ */
+export const isExpired = (
+  expiryDate: string | null | undefined,
+  today: Date = new Date()
+): boolean => !!expiryDate && expiredWithin(expiryDate, 0, today);
+
+/**
  * Every category BARRING a batch from issue entirely — manual entry included
  * (rules.md § barred batches › barred from all issue; AC-AL8/AC-AL9): on
  * hold (batch or location), expired within the guard threshold (only under

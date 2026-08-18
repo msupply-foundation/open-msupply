@@ -1,4 +1,5 @@
 import { createSignal } from 'solid-js';
+import { sameFetchedValue } from '../typeHelpers';
 import * as i18n from '@solid-primitives/i18n';
 import {
   DEFAULT_LOCALE,
@@ -15,9 +16,16 @@ import { pluginDictionaries } from './pluginTranslations';
 // filled in by loadDictionary; until then a locale's dictionary is absent and
 // t() falls back to the key.
 const [locale, setLocale] = createSignal<SupportedLocale>(DEFAULT_LOCALE);
+// `equals: sameFetchedValue` — invalidateCustomTranslations reloads the active
+// catalogue on every completed sync run (api/syncStore § onRunCompleted), and
+// loadDictionary republishes with a spread, so the object identity always
+// changed even when no string did. t() is called inside cell renderers, so every
+// consumer re-ran: table cells re-rendered and their inputs were replaced,
+// losing focus and any half-typed value. Comparing the flattened catalogues costs
+// one serialisation per load and saves a full UI re-render per sync.
 const [dictionaries, setDictionaries] = createSignal<
   Partial<Record<SupportedLocale, FlatDict>>
->({});
+>({}, { equals: sameFetchedValue });
 
 // The active flattened dictionary — a plain accessor (not a memo): the
 // primitive calls it on every lookup, reading the signals fresh, so it stays

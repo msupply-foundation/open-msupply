@@ -43,6 +43,7 @@ import { DateField } from '../../../ui/elements/inputs/DateField';
 import { Checkbox } from '../../../ui/elements/inputs/Checkbox';
 import { IdentityHeader } from '../../../ui/layout/IdentityHeader/IdentityHeader';
 import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
+import { RecordLink } from '../../../ui/elements/typography/RecordLink';
 import { StockIcon, BarIcon, SaveIcon, XCircleIcon } from '../../../ui/icons';
 import { LocationVolumeSelect } from '../../../domain/location';
 import { NameSearch } from '../../../domain/name';
@@ -73,9 +74,6 @@ import { VvmStatusEntryModal } from './VvmStatusEntryModal';
 // quantity-changing flows (adjust S4, repack S5). Quantities + pack size are
 // read-only everywhere here (spec/stock rules). Tabs: Details · VVM history
 // (vaccine + preference) · Log (shared activity-log surface) · Ledger.
-//
-// The "Item linked to its catalogue record" identity link is rendered as plain
-// text: the item-catalogue detail route is owned elsewhere and not wired here.
 
 // The fetched detail node — the StockLineDetail fragment plus its VVM history
 // (the byId query selects vvmStatusLogs). A superset of
@@ -481,7 +479,13 @@ const StockLineDetailView: Component = () => {
                 <ContentContainer size="form">
                   <Stack>
                     <IdentityHeader
-                      title={l().itemName}
+                      title={
+                        <RecordLink
+                          href={`/${params.storeId}/catalogue/items/${l().itemId}`}
+                        >
+                          {l().itemName}
+                        </RecordLink>
+                      }
                       subtitle={
                         <>
                           {t('label.code')}: {l().item.code} · {t('label.unit')}
@@ -548,7 +552,6 @@ const StockLineDetailView: Component = () => {
                         <FormSection title={t('heading.batches-and-dates')}>
                           <TextField
                             label={t('label.batch')}
-                            width="full"
                             value={edit.batch}
                             onInput={e =>
                               setEdit('batch', e.currentTarget.value)
@@ -556,7 +559,6 @@ const StockLineDetailView: Component = () => {
                           />
                           <TextField
                             label={t('label.barcode')}
-                            width="full"
                             value={edit.barcode}
                             onInput={e =>
                               setEdit('barcode', e.currentTarget.value)
@@ -565,13 +567,11 @@ const StockLineDetailView: Component = () => {
                           <FormRow>
                             <DateField
                               label={t('label.expiry-date')}
-                              width="full"
                               value={edit.expiryDate}
                               onChange={v => setEdit('expiryDate', v)}
                             />
                             <DateField
                               label={t('label.manufacture-date')}
-                              width="full"
                               max={localTodayIso()}
                               value={edit.manufactureDate}
                               onChange={v => setEdit('manufactureDate', v)}
@@ -593,7 +593,6 @@ const StockLineDetailView: Component = () => {
                           <FormRow>
                             <CurrencyField
                               label={t('label.cost-price')}
-                              width="full"
                               value={edit.costPricePerPack}
                               onChange={v =>
                                 setEdit('costPricePerPack', v ?? 0)
@@ -601,7 +600,6 @@ const StockLineDetailView: Component = () => {
                             />
                             <CurrencyField
                               label={t('label.sell-price')}
-                              width="full"
                               value={edit.sellPricePerPack}
                               onChange={v =>
                                 setEdit('sellPricePerPack', v ?? 0)
@@ -660,7 +658,6 @@ const StockLineDetailView: Component = () => {
                           <FormRow>
                             <NumberField
                               label={t('label.volume-per-pack')}
-                              width="full"
                               decimalLimit={10}
                               value={edit.volumePerPack}
                               onChange={v => setEdit('volumePerPack', v ?? 0)}

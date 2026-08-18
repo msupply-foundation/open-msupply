@@ -226,15 +226,23 @@ export const CreateOrderAction: Component<CreateOrderActionProps> = props => {
         }
         actions={<CancelButton onClick={close} />}
       >
-        <DataTable
-          columns={columns()}
-          rows={rows()}
-          rowKey={r => r.id}
-          loading={data.loading}
-          showFullScreen={false}
-          emptyMessage={t('error.no-requisitions-to-create-order-from')}
-          onRowClick={row => void pick(row)}
-        />
+        {/* Render the table only while the modal is open. The Dialog stays
+            mounted (open driven reactively — see the note above), but a
+            native <dialog> keeps its closed children in the DOM, so an
+            always-rendered table would leak its transient test hooks (a
+            second `header-status`, `table-row`, …) onto the list behind it,
+            colliding with the list's own (TESTIDS § uniqueness). */}
+        <Show when={step() === 'pick'}>
+          <DataTable
+            columns={columns()}
+            rows={rows()}
+            rowKey={r => r.id}
+            loading={data.loading}
+            showFullScreen={false}
+            emptyMessage={t('error.no-requisitions-to-create-order-from')}
+            onRowClick={row => void pick(row)}
+          />
+        </Show>
       </Dialog>
     </>
   );

@@ -23,8 +23,8 @@
   text-align: center;
   cursor: pointer;
   transition:
-    border-color 120ms ease,
-    background-color 120ms ease;
+    border-color var(--motion-fast) ease,
+    background-color var(--motion-fast) ease;
 }
 
 .zone:hover,
@@ -78,8 +78,8 @@
   font-weight: 600;
   cursor: pointer;
   transition:
-    border-color 120ms ease,
-    background-color 120ms ease;
+    border-color var(--motion-fast) ease,
+    background-color var(--motion-fast) ease;
 }
 
 .browse:hover {
@@ -99,12 +99,5 @@
 @media (pointer: coarse) {
   .browse {
     min-height: var(--touch-target);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .zone,
-  .browse {
-    transition: none;
   }
 }

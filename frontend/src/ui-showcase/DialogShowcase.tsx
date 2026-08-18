@@ -5,6 +5,10 @@ import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
 import { Alert } from '../ui/elements/feedback/Alert';
 import { Dialog } from '../ui/elements/feedback/Dialog';
 import { ConfirmDialog } from '../ui/elements/feedback/ConfirmDialog';
+import {
+  ErrorDialog,
+  type ErrorDialogCondition,
+} from '../ui/elements/feedback/ErrorDialog';
 import { Button } from '../ui/elements/buttons/Button';
 import { FormColumns } from '../ui/layout/Form/FormColumns';
 import { FormColumn } from '../ui/layout/Form/FormColumn';
@@ -49,6 +53,13 @@ const STORES: StoreOption[] = [
   { id: 'demo-3', code: 'dili-central', name: 'Dili Central Warehouse' },
   { id: 'demo-4', code: 'baucau-hp', name: 'Baucau Health Post' },
   { id: 'demo-5', code: 'maliana-rh', name: 'Maliana Referral Hospital' },
+  // Accented names, and enough rows to cross the 7-store search threshold —
+  // together they exercise the accent-insensitive match (typing `depot` finds
+  // `Dépôt Régional`, OMS-REG-LGN-02.33), which is exactly what a list of
+  // unaccented demo names could never show.
+  { id: 'demo-6', code: 'depot-reg', name: 'Dépôt Régional' },
+  { id: 'demo-7', code: 'cs-menara', name: 'Centre de Santé el Menara' },
+  { id: 'demo-8', code: 'zenith-1', name: 'Myanmar Zenith Store 1' },
 ];
 
 export const dialogMetadata: PageMetadata = {
@@ -95,6 +106,20 @@ export const dialogMetadata: PageMetadata = {
       title: 'Store selector',
       searchTerms: ['store', 'blocking', 'choose'],
     },
+    {
+      id: 'dialog-errors',
+      title: 'Error dialogs',
+      searchTerms: [
+        'error',
+        'offline',
+        'timeout',
+        'server error',
+        'show details',
+        'retry',
+        'unexpected',
+        'oops',
+      ],
+    },
   ],
 };
 
@@ -114,6 +139,22 @@ export const DialogShowcase = () => {
     ]);
   const [storeOpen, setStoreOpen] = createSignal(false);
   const [chosen, setChosen] = createSignal('');
+  // Which error-dialog demo is open (undefined = closed); 'edit' is the
+  // during-an-edit modifier on the unreachable condition.
+  const [errorDemo, setErrorDemo] = createSignal<
+    ErrorDialogCondition | 'edit'
+  >();
+  const [errorOutcome, setErrorOutcome] = createSignal('');
+  const closeErrorDemo = (outcome: string) => {
+    setErrorOutcome(outcome);
+    setErrorDemo(undefined);
+  };
+  // The demo's condition: 'edit' shows the modifier on the unreachable
+  // condition (the standard's own pairing); 'unknown' while closed is inert.
+  const errorCondition = (): ErrorDialogCondition => {
+    const demo = errorDemo();
+    return demo === 'edit' ? 'unreachable' : (demo ?? 'unknown');
+  };
   // Which sizing option the all-sizes matrix card has open (undefined = closed).
   const [sizeDemo, setSizeDemo] = createSignal<
     'default' | 'rem' | 'prose' | 'form' | 'wide' | 'large' | 'full'
@@ -284,14 +325,14 @@ export const DialogShowcase = () => {
             <FormColumns>
               <FormColumn>
                 <FormSection title="Patient details">
-                  <TextField label="First name" width="full" />
-                  <TextField label="Last name" width="full" />
+                  <TextField label="First name" />
+                  <TextField label="Last name" />
                 </FormSection>
               </FormColumn>
               <FormColumn>
                 <FormSection title="Contact">
-                  <TextField label="Address" width="full" />
-                  <TextField label="Phone" width="full" />
+                  <TextField label="Address" />
+                  <TextField label="Phone" />
                 </FormSection>
               </FormColumn>
             </FormColumns>
@@ -455,14 +496,14 @@ export const DialogShowcase = () => {
                 <FormColumns>
                   <FormColumn>
                     <FormSection title="Patient details">
-                      <TextField label="First name" width="full" />
-                      <TextField label="Last name" width="full" />
+                      <TextField label="First name" />
+                      <TextField label="Last name" />
                     </FormSection>
                   </FormColumn>
                   <FormColumn>
                     <FormSection title="Contact">
-                      <TextField label="Address" width="full" />
-                      <TextField label="Phone" width="full" />
+                      <TextField label="Address" />
+                      <TextField label="Phone" />
                     </FormSection>
                   </FormColumn>
                 </FormColumns>
@@ -486,21 +527,101 @@ export const DialogShowcase = () => {
         </DashboardCard>
 
         <DashboardCard
+          id="dialog-errors"
+          title="Error dialogs — one per failure condition"
+        >
+          <Lead>
+            <code>ErrorDialog</code> is the blocking error modal (ui-standards ›
+            error dialogs; spec D109) — it retired{' '}
+            <em>Oops! Something's gone wrong</em>. The <code>condition</code>{' '}
+            picks fixed calm copy so a health worker understands what happened
+            from the title and buttons alone: the primary is{' '}
+            <strong>the fix</strong> (Retry / Try again), <strong>Close</strong>{' '}
+            keeps the user on their screen, and the raw technical string appears
+            only inside <strong>Show details</strong> — collapsed for a server
+            error, open for the unmapped fallback, omitted entirely for the
+            self-explanatory conditions. The support block carries a quotable
+            timestamp-based reference. <strong>Go to dashboard</strong> is a
+            quiet tertiary affordance, never a peer button — and the
+            during-an-edit modifier drops it and adds the reassurance line, so
+            leaving never costs the user their entry. In the app the global
+            unexpected-error modal maps the transport failure to the condition
+            automatically; nothing composes this dialog by hand.
+          </Lead>
+          <Row>
+            <Button
+              variant="secondary"
+              onClick={() => setErrorDemo('unreachable')}
+            >
+              Can't reach the server
+            </Button>
+            <Button variant="secondary" onClick={() => setErrorDemo('timeout')}>
+              Connection timed out
+            </Button>
+            <Button variant="secondary" onClick={() => setErrorDemo('server')}>
+              Server error
+            </Button>
+            <Button variant="secondary" onClick={() => setErrorDemo('unknown')}>
+              Unmapped fallback
+            </Button>
+            <Button variant="secondary" onClick={() => setErrorDemo('edit')}>
+              During an edit
+            </Button>
+            <span class={styles.outcome} role="status">
+              {errorOutcome()}
+            </span>
+          </Row>
+          <ErrorDialog
+            open={errorDemo() !== undefined}
+            condition={errorCondition()}
+            duringEdit={errorDemo() === 'edit'}
+            details={{
+              reference: 'e2d0-2026-07-30T09:18Z',
+              cause:
+                errorDemo() === 'server'
+                  ? 'HTTP 503'
+                  : 'unhandled — TypeError: undefined is not an object',
+              store: 'CHC Ermera (5B28…5DF9)',
+              request:
+                errorDemo() === 'edit'
+                  ? 'mutation upsertStocktakeLines'
+                  : 'query stockLines',
+            }}
+            onClose={() => closeErrorDemo('Closed — still on this screen.')}
+            onRetry={() => closeErrorDemo('Retry — the app would reload.')}
+            onDashboard={() =>
+              closeErrorDemo('Dashboard — the app would go to the root.')
+            }
+          />
+        </DashboardCard>
+
+        <DashboardCard
           id="dialog-store-selector"
           title="Store selector — in a blocking Dialog"
         >
           <Lead>
-            The <code>StoreSelector</code> library component styled after the
-            current app's login store-selector — <code>TextField</code> search,
-            a bordered selectable list with <code>Default</code> /{' '}
-            <code>Last used</code> StatusChips, and a <code>Continue</code>{' '}
-            button (select-then-confirm; double-click a row to confirm
-            directly). Here it fills a{' '}
+            The <code>StoreSelector</code> library component — hairline-divided
+            list rows naming each store, with <code>Current</code> /{' '}
+            <code>Default</code> / <code>Last used</code> StatusChips, the
+            pinned rows under a <em>Recent stores</em> heading and the rest
+            under <em>All stores</em>, a <code>TextField</code> search only for
+            long lists (7+ stores), and a quiet always-open opt-in on one line
+            BELOW the list (a pressed-state button, not a checkbox — it is a
+            once-ever preference, so it does not hold the slot above the search
+            that the panel's actual task needs). Search matches name or code
+            ignoring case and accents — type <code>depot</code> to find{' '}
+            <em>Dépôt Régional</em>, or <code>cs-men</code> to match a code the
+            row does not display; a query that matches nothing names itself in
+            the empty state and offers to clear. Clicking a row enters it
+            directly (no Continue button, no follow-up prompt — issue #193);
+            arrow keys move the highlight and Enter confirms it; the toggle
+            state rides along as <code>onConfirm</code>'s{' '}
+            <code>alwaysOpen</code> flag. Here it fills a{' '}
             <code>
               dismissable={'{'}false{'}'}
             </code>{' '}
-            Dialog — blocking (no scrim/Escape dismiss, an answer is required),
-            exactly as the app's store login uses it.
+            Dialog — blocking (no scrim/Escape dismiss, an answer is required);
+            in the app it fills the routed store-selection screen's login frame.
           </Lead>
           <Row>
             <Button onClick={() => setStoreOpen(true)}>
@@ -516,13 +637,26 @@ export const DialogShowcase = () => {
             dismissable={false}
             title="Select a store"
           >
+            {/* hideTitle: the Dialog's heading carries the title here, exactly
+                as the app's store-switch modal does — without it the panel's
+                own <h2> repeats it. */}
             <StoreSelector
               stores={STORES}
+              hideTitle
               defaultStoreId="AFCA0C9F0743AB43B779FB9EA2E64EAF"
               lastUsedStoreId="5B28901C52396E4BB098B9862CCF5DF9"
-              onConfirm={id => {
+              currentStoreId="5B28901C52396E4BB098B9862CCF5DF9"
+              // A saved always-open store, so the toggle arrives ON and its
+              // line NAMES that store rather than using the pending wording.
+              alwaysOpenStoreId="demo-4"
+              pinnedCount={2}
+              onConfirm={(id, alwaysOpen) => {
                 const store = STORES.find(s => s.id === id);
-                setChosen(store ? `Entered ${store.name}` : '');
+                setChosen(
+                  store
+                    ? `Entered ${store.name}${alwaysOpen ? ' (always open)' : ''}`
+                    : ''
+                );
                 setStoreOpen(false);
               }}
             />

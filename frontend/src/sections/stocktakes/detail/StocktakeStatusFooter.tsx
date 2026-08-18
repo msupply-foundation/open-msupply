@@ -4,6 +4,10 @@ import { CheckboxButton } from '@/ui/elements/buttons/CheckboxButton';
 import { ConfirmDialog } from '@/ui/elements/feedback/ConfirmDialog';
 import { StatusIndicator } from '@/ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
+import {
+  Pagination,
+  type PaginationProps,
+} from '@/ui/elements/table/Pagination';
 import { FinaliseAction } from './actions';
 import { STATUS_LABELS, statusIndex } from './stocktakeStatus';
 import type { StocktakeInfoFragment } from './lines/stocktakeDetail.generated';
@@ -29,6 +33,14 @@ export interface StocktakeStatusFooterProps {
   disabled: boolean;
   /** Toggle the on-hold lock (writes isLocked). */
   onSetHold: (hold: boolean) => void;
+  /**
+   * The line table's pager, hosted HERE rather than in a band of its own
+   * (spec/ui-standards § tables → pagination): this bar is present at every
+   * line count, so a stocktake that pages gets its controls without a second
+   * row of chrome. The pager renders itself away when there is nowhere to page
+   * to, leaving this bar exactly as it was.
+   */
+  pagination: PaginationProps;
   /**
    * The stocktake was finalised — merge the returned info over the node (in
    * place, no refetch).
@@ -81,6 +93,12 @@ export const StocktakeStatusFooter: Component<
       </Show>
 
       <StatusIndicator steps={steps()} current={currentIndex()} />
+
+      {/* The line pager, sharing this bar (`inBar` — it sizes to its cluster
+          so a crowded bar wraps it whole rather than crushing it). Spread of
+          the LIVE prop object, as DataTable does, so offset/total changes
+          reach it. */}
+      <Pagination {...props.pagination} inBar />
 
       {/* Finalise — the status-change split button + its modals, self-contained (kdd/action-modal). */}
       <FinaliseAction

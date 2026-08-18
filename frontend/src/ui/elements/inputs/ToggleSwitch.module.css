@@ -51,8 +51,8 @@
   border-radius: var(--radius-pill);
   background: var(--gray-light);
   transition:
-    background-color 140ms ease,
-    box-shadow 140ms ease;
+    background-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease;
 }
 
 /* The thumb: a circle riding inside the track, sliding to the inline-end when
@@ -66,7 +66,7 @@
   border-radius: 50%;
   background: var(--primary-contrast);
   box-shadow: var(--shadow-1);
-  transition: transform 140ms ease;
+  transition: transform var(--motion-fast) ease;
 }
 
 .input:checked + .track {
@@ -104,12 +104,5 @@
 @media (pointer: coarse) {
   .root {
     min-block-size: var(--touch-target);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .track,
-  .thumb {
-    transition: none;
   }
 }

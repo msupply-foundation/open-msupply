@@ -91,8 +91,8 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
       })),
     });
     // Transport / NodeError → outcome undefined (the global modal already
-    // showed it); just close.
-    if (!outcome) return props.onClose();
+    // showed it); stay on the confirm phase with the pick intact.
+    if (!outcome) return setPhase('confirm');
     props.onCommit(outcome.commit);
     // Clean apply: close — the rows already read zero.
     if (outcome.errors.size === 0) return props.onClose();
