@@ -8,7 +8,6 @@ import { Button } from '@/ui/elements/buttons/Button';
 import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
 import { TrashIcon } from '@/ui/icons';
 import { DeleteCampaigns } from './campaigns.generated';
-import { campaignsDeleted } from './campaignDelete';
 
 // The register's one bulk action — spec/campaigns S1 § selection actions + S3.
 //
@@ -30,10 +29,9 @@ import { campaignsDeleted } from './campaignDelete';
 export interface DeleteCampaignsActionProps {
   /** The currently-selected campaign ids. */
   selectedIds: () => string[];
-  /** Whether the user holds the central-data edit permission. */
-  mayEdit: () => boolean;
-  /** Refuse the action up front (the global permission-denied modal). */
-  onRefused: () => void;
+  /** The register's shared permission gate: true to proceed; otherwise the
+   * denial has been reported (the global permission-denied modal). */
+  guardEdit: () => boolean;
   /** The whole selection was deleted. */
   onDeleted: () => void;
   /** The delete was refused — nothing deleted; re-read and prune the selection. */
@@ -50,11 +48,7 @@ export const DeleteCampaignsAction: Component<
   // standing state the client already holds (ui-standards validation.md §
   // permission gating).
   const start = () => {
-    if (!props.mayEdit()) {
-      props.onRefused();
-      return;
-    }
-    setOpen(true);
+    if (props.guardEdit()) setOpen(true);
   };
   return (
     <>
@@ -93,7 +87,9 @@ const Body = (props: DeleteCampaignsActionProps & { onClose: () => void }) => {
       { ids: props.selectedIds() },
       { returnGraphqlErrors: true }
     );
-    if (!campaignsDeleted(result)) {
+    // The response union has no error member (every rejection is a top-level
+    // error), so success of the fetch IS success of the delete.
+    if (result.kind !== 'success') {
       // Atomic: nothing was deleted. The owner re-reads and prunes; the notice
       // stays in this dialog.
       props.onRejected();

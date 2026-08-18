@@ -1,19 +1,8 @@
-import type { GraphqlResult } from '@/api/graphql';
-import type { DeleteCampaignsResult } from './campaigns.generated';
-
 // Deleting a selection of campaigns (spec/campaigns rules.md § deleting a
 // campaign, contract.md § deleting a campaign). Pure logic, no reactivity, so
-// the two outcomes are pinned by tests without a backend.
-
-/**
- * Did the selection delete? The delete is ATOMIC — one mutation, one server
- * transaction — so there are exactly two outcomes: the whole selection deleted,
- * or nothing was. The response union has no error member (every rejection is a
- * top-level error), so success of the fetch IS success of the delete.
- */
-export const campaignsDeleted = (
-  result: GraphqlResult<DeleteCampaignsResult>
-): boolean => result.kind === 'success';
+// the pruning a refusal triggers is pinned by tests without a backend. The
+// delete's own two outcomes are the fetch result's kind, checked inline in
+// DeleteCampaignsAction.
 
 /**
  * The selection that survives a refused delete. A refusal deleted nothing, and
