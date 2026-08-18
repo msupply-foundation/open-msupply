@@ -439,12 +439,13 @@ const SupplierReturnDetailView: Component = () => {
     {
       c: { accessor: line => line.item.unitName ?? '', id: 'unitName' },
       header: () => t('label.unit'),
-      // The `unit` preset, not `unitName`: same cell type, but a width that
-      // allows for the "Unit" header (the `unitName` preset's 2rem is narrower
-      // than the header word — see LIB-4 in the migration report). Matches the
-      // items / stock lists and the inbound Financial tab, which head this
-      // column the same way.
-      ...getCellDefinition('unit'),
+      // The `unitName` preset, as every other line table's Unit column uses
+      // (inbound, internal orders, outbound, stocktakes, requisitions). It
+      // moved here from `unit` (8rem) once `unitName` was widened to fit the
+      // "Unit" header — the reason LIB-4 in the migration report gave for
+      // reaching past it. `unit` remains 8rem for the items / stock lists;
+      // consolidating those two presets is an open follow-up.
+      ...getCellDefinition('unitName'),
     },
     {
       c: { key: 'packSize' },

@@ -181,14 +181,15 @@ declare module '@tanstack/solid-table' {
      */
     cardSpan?: number;
     /**
-     * The row label in the Columns settings popover, for a column whose grid
-     * header deliberately renders EMPTY or iconic but stays user-hideable
-     * (e.g. the line editor's auto-allocation tick — blank header in the
-     * grid, named in the popover). A function, like `header`, so the text
-     * re-resolves on a locale change. Columns with a text header don't set
-     * this — the popover calls `header`.
+     * The column's name IN WORDS, for a column whose grid header deliberately
+     * renders EMPTY or ICONIC (the line editor's auto-allocation tick — blank
+     * header in the grid; the comment column — a glyph). Used everywhere the
+     * icon can't stand in for the column: the Columns settings popover's row
+     * label, and a card field's caption. A function, like `header`, so the text
+     * re-resolves on a locale change. Columns with a text header don't set this
+     * — both surfaces call `header`.
      */
-    columnSettingsLabel?: () => string;
+    textLabel?: () => string;
   }
 }
 
