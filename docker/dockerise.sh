@@ -282,7 +282,7 @@ for i in "${!ALL_TAGS[@]}"; do
 
       COMPILE_OK=true
       if [ "$ARCH" = "arm64" ]; then
-        if ! docker run --rm --user "$(id -u)":"$(id -g)" \
+        if ! docker run --rm --platform linux/arm64 --user "$(id -u)":"$(id -g)" \
           -v "$PWD":/usr/src/omsupply \
           -w /usr/src/omsupply/server \
           "$RUST_IMAGE" \
@@ -351,9 +351,10 @@ for i in "${!ALL_TAGS[@]}"; do
     fi
   fi
 
-  PLATFORM_FLAG=""
   if [ "$ARCH" = "amd64" ]; then
     PLATFORM_FLAG="--platform linux/amd64"
+  else
+    PLATFORM_FLAG="--platform linux/arm64"
   fi
 
   DOCKER_TARGET=$(docker_target_for "$DB" "$VARIANT")
