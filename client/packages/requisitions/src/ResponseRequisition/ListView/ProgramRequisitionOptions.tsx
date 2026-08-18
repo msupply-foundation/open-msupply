@@ -143,7 +143,12 @@ const LabelAndOptions = <T,>({
   optionKey,
   renderOption,
   getOptionDisabled,
-}: Pick<AutocompleteProps<T>, 'optionKey' | 'autoFocus'> & Common<T>) => {
+  inputTestId,
+}: Pick<
+  AutocompleteProps<T>,
+  'optionKey' | 'autoFocus' | 'inputTestId'
+> &
+  Common<T>) => {
   const noOptionsDisplay = options.length == 0 &&
     !disabled &&
     !!labelNoOptions && <Typography>{labelNoOptions}</Typography>;
@@ -160,6 +165,7 @@ const LabelAndOptions = <T,>({
             renderOption={renderOption}
             getOptionDisabled={getOptionDisabled}
             autoFocus={autoFocus}
+            inputTestId={inputTestId}
             options={options}
             optionKey={optionKey}
             value={value}
@@ -209,7 +215,11 @@ export const ProgramRequisitionOptions = ({
 
   return (
     <Grid container paddingTop={2} direction="column">
-      <LabelAndOptions {...customers} optionKey="name" />
+      <LabelAndOptions
+        {...customers}
+        optionKey="name"
+        inputTestId="create-program-customer"
+      />
       {customer?.store && (
         <Box sx={{ pb: 2, display: 'flex', justifyContent: 'center' }}>
           <Alert severity="warning" style={{ marginBottom: 2 }}>
@@ -222,8 +232,13 @@ export const ProgramRequisitionOptions = ({
         renderOption={ProgramOptionRenderer}
         optionKey="masterListName"
         autoFocus={true}
+        inputTestId="create-program-program"
       />
-      <LabelAndOptions {...orderTypes} optionKey="name" />
+      <LabelAndOptions
+        {...orderTypes}
+        optionKey="name"
+        inputTestId="create-program-order-type"
+      />
       <Grid>
         <Typography
           sx={{
@@ -236,10 +251,15 @@ export const ProgramRequisitionOptions = ({
         >
           {t('message.program-period')}
         </Typography>
-        <LabelAndOptions {...periods} optionKey="name" />
+        <LabelAndOptions
+          {...periods}
+          optionKey="name"
+          inputTestId="create-program-period"
+        />
       </Grid>
       <Grid display="flex" justifyContent="center">
         <ButtonWithIcon
+          data-testid="create-program-requisition-button"
           Icon={<PlusCircleIcon />}
           disabled={!createOptions}
           label={t('label.create')}
