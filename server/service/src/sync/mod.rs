@@ -212,3 +212,12 @@ pub fn test_util_set_is_central_server(is_central: bool) {
 pub fn test_util_set_central_server_url(url: String) {
     *CENTRAL_SERVER_CONFIG.write().unwrap() = CentralServerConfig::CentralServerUrl(url);
 }
+
+// TEST ONLY — reset the cached initialisation latch. `is_initialised` only ever caches
+// `true`, so a test that needs to observe the not-yet-initialised path has to clear it.
+// nextest (used in CI) gives every test its own process, so this only guards against
+// another test in the same process latching first — it is not protection against
+// concurrent mutation.
+pub fn test_util_set_is_initialised(is_initialised: bool) {
+    *IS_INITIALISED.write().unwrap() = is_initialised;
+}

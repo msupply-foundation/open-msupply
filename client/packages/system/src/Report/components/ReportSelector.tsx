@@ -114,7 +114,9 @@ export const ReportSelector = ({
           startIcon={<PrinterIcon />}
           onClick={modalOpen.toggleOn}
           label={t('button.export-or-print')}
-          data-testid={testId}
+          // `export-or-print-button` is the documented shared id for this
+          // trigger, so it stays the default; ExportSelector overrides it.
+          data-testid={testId ?? 'export-or-print-button'}
         />
       )}
       {modalOpen.isOn && (
