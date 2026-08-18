@@ -2674,6 +2674,7 @@
   "messages.vaccination-saved-and-stock-recorded": "Vaccination saved and stock transaction recorded 🥳",
   "messages.vaccination-was-given": "Vaccination was given on {{date}}.",
   "messages.vaccine-course-saved": "Vaccine course updated",
+  "messages.waiting-for-central-server": "Waiting for the central server to prepare this site…",
   "messages.yes": "Yes",
   "messages.zero-line-quantities_few": "The quantity of {{count}} lines has been set to 0",
   "messages.zero-line-quantities_many": "The quantity of {{count}} lines has been set to 0",
