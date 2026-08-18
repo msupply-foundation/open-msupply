@@ -15,6 +15,8 @@ interface ListSearchProps<T> extends AutocompleteListProps<T> {
   optionKey?: keyof T;
   renderOption?: AutocompleteOptionRenderer<T>;
   getOptionDisabled?: (option: T) => boolean;
+  /** Stamped on the modal Paper for e2e locators. */
+  testId?: string;
 }
 
 export const ListSearch = <T,>({
@@ -29,6 +31,8 @@ export const ListSearch = <T,>({
   onChange,
   getOptionDisabled,
   loading = false,
+  testId,
+  getOptionTestId,
 }: ListSearchProps<T>): JSX.Element => {
   const { height } = useWindowDimensions();
 
@@ -36,7 +40,12 @@ export const ListSearch = <T,>({
   const listViewHeight = modalHeight - 100;
 
   return (
-    <BasicModal open={open} onClose={onClose} height={modalHeight}>
+    <BasicModal
+      open={open}
+      onClose={onClose}
+      height={modalHeight}
+      {...(testId ? { 'data-testid': testId } : {})}
+    >
       <ModalTitle title={title} />
       <AutocompleteList
         filterOptions={filterOptions}
@@ -48,6 +57,7 @@ export const ListSearch = <T,>({
         optionKey={optionKey}
         height={listViewHeight}
         getOptionDisabled={getOptionDisabled}
+        getOptionTestId={getOptionTestId}
       />
     </BasicModal>
   );

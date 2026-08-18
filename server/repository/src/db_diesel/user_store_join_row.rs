@@ -94,10 +94,13 @@ impl<'a> UserStoreJoinRowRepository<'a> {
             .load(self.connection.lock().connection())?)
     }
 
-    pub fn delete_by_user_id(&self, id: &str) -> Result<(), RepositoryError> {
-        diesel::delete(user_store_join::table.filter(user_store_join::user_id.eq(id)))
-            .execute(self.connection.lock().connection())?;
-        Ok(())
+    pub fn find_many_by_user_id(
+        &self,
+        user_id: &str,
+    ) -> Result<Vec<UserStoreJoinRow>, RepositoryError> {
+        Ok(user_store_join::table
+            .filter(user_store_join::user_id.eq(user_id))
+            .load(self.connection.lock().connection())?)
     }
 }
 

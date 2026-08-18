@@ -11,6 +11,8 @@ interface MultilineTextInputProps {
   value: string;
   onChange?: (value?: string) => void;
   disabled?: boolean;
+  /** Stamped on the underlying textarea for e2e locators. */
+  testId?: string;
 }
 
 export const MultilineTextInput = ({
@@ -18,6 +20,7 @@ export const MultilineTextInput = ({
   value,
   onChange,
   disabled = false,
+  testId,
 }: MultilineTextInputProps) => {
   return (
     <Box flex={1}>
@@ -31,6 +34,7 @@ export const MultilineTextInput = ({
         disabled={disabled}
         minRows={3}
         maxRows={3}
+        inputProps={testId ? { 'data-testid': testId } : undefined}
       />
     </Box>
   );

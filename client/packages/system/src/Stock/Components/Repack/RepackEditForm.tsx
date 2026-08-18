@@ -145,6 +145,7 @@ export const RepackEditForm = ({
             <InputWithLabelRow
               label={t('label.new-location')}
               labelWidth="100%"
+              testId="repack-new-location"
               Input={
                 <LocationSearchInput
                   autoFocus={false}

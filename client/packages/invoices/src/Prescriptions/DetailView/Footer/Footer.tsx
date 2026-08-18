@@ -83,6 +83,7 @@ export const FooterComponent = ({
       label: t('button.delete-lines'),
       icon: <DeleteIcon />,
       onClick: confirmAndDelete,
+      testId: 'delete-lines-button',
     },
     {
       label: t('button.print-prescription-label'),
@@ -134,6 +135,7 @@ export const FooterComponent = ({
 
               <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
                 <ButtonWithIcon
+                  data-testid="close-button"
                   shrinkThreshold="lg"
                   Icon={<XCircleIcon />}
                   label={t('button.close')}
