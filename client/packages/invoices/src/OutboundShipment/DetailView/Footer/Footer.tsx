@@ -140,6 +140,7 @@ export const FooterComponent: FC<FooterComponentProps> = ({
       icon: <ArrowLeftIcon />,
       onClick: () => onReturnLines(selectedRows),
       shouldShrink: false,
+      testId: 'return-lines-button',
     },
   ];
 

@@ -69,6 +69,7 @@ export const StockItemSearchInputWithStats = ({
 
   return (
     <AutocompleteWithPagination
+      inputTestId="item-search-input"
       pages={data?.pages ?? []}
       pageNumber={pageNumber}
       rowsPerPage={ROWS_PER_PAGE}

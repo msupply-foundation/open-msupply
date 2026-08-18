@@ -29,6 +29,47 @@ Deliberately **no stock, no documents** — store-local state is created through
 the GraphQL API by `e2e/specs/data.setup.ts` (in open-msupply-frontend) at suite start
 ("seed nouns, create verbs"). Don't add stock here; extend the arrange step.
 
+### Fixtures a suite cannot arrange for itself
+
+Some behaviours are only observable against a _gate_ — a permission the user
+lacks, or a preference in its other state. Neither can be arranged through the
+remote API mid-run: `MutatePreferences` is not granted here, and the suites run
+`fullyParallel`, so flipping a global preference would change the UI under
+every other suite. They therefore live here.
+
+| Fixture                                            | What it is for                                                       |
+| -------------------------------------------------- | -------------------------------------------------------------------- |
+| `StockViewer` / `pass` on GRY                      | the reduced-permission user — see below                              |
+| 3 active VVM statuses (`Stage1`–`Stage3`)          | so the VVM status picker has something to offer                      |
+| `allow_tracking_of_stock_by_donor`, on             | the donor field's on-state (global)                                  |
+| `backdating`, shipments + adjustments on, `maxDays` 30 | backdated shipments and adjustments, and the window's bound (global) |
+| `E2E Facility Customer`, joined to GRY             | a NON-STORE customer — the outbound received-count / difference columns only appear for one |
+| `E2E On-Hold Customer`, joined to GRY              | an on-hold customer, listed but not selectable in the customer picker |
+| `manage_vvm_status_for_stock` on GRY               | the outbound line table's VVM-status column                          |
+| `manage_vaccines_in_doses` on GRY                  | the outbound line table's doses-per-unit column                      |
+
+**`StockViewer`** holds `StoreAccess`, `StockLineQuery`, `StockLineMutate` and
+`LogQuery`. What it _lacks_ is the point: no `InventoryAdjustmentMutate`, no
+`CreateRepack`, no `ViewAndEditVvmStatus`. Grant it more and the gated
+behaviours it exists for stop being observable.
+
+**`backdating` now has `shipmentsEnabled` true as well as
+`inventoryAdjustmentsEnabled`.** It started adjustments-only, deliberately, so
+that no shipment-dated suite changed behaviour; the outbound suite's
+picked-date (backdating) anchor then needed the shipment half, and because the
+preference is `PreferenceType::Global` there is exactly one value to have — a
+second store cannot carry a different one, so the two needs share one row.
+
+Both preferences are `PreferenceType::Global` and so apply to every store. One
+consequence, now for shipments as well as adjustments: with backdating enabled,
+"rejected because backdating is disabled" is no longer observable here.
+
+**The two extra customers are non-store `FACILITY` names** joined to GRY, which
+is what makes them usable as outbound customers. `E2E Facility Customer` exists
+because the received-count and Difference columns are only editable on a
+non-store customer's shipment; `E2E On-Hold Customer` carries `on_hold: true`,
+so the picker must offer it disabled rather than omit it.
+
 ## Format
 
 A v7 `initialise-from-export` file: `sync_buffer_rows` in v7 wire shape
