@@ -21,6 +21,7 @@ import { PlusCircleIcon } from '@/ui/icons';
 import { useUrlQueryState } from '@/list/urlQueryState';
 import { hasPermission } from '@/store/storeContext';
 import { campaignsResource } from '@/domain/campaign';
+import { survivingSelection } from './campaignDelete';
 import { Campaigns } from './campaigns.generated';
 import {
   DEFAULT_REGISTER_STATE,
@@ -160,16 +161,23 @@ const CampaignsList: Component = () => {
     registerChanged();
   };
 
-  // Every selected campaign was deleted: the rows leave the register and the
-  // selection clears. That IS the confirmation — no announcement follows (D21).
+  // The whole selection was deleted (the delete is atomic): the rows leave the
+  // register and the selection clears. That IS the confirmation — no
+  // announcement follows (D21).
   const onDeleted = () => {
     setSelectedIds([]);
     registerChanged();
   };
 
-  // A partial delete: the ones that went stay gone, so the register is re-read,
-  // but the selection is deliberately NOT cleared (ui-surface S1).
-  const onPartiallyDeleted = () => registerChanged();
+  // A refused delete deleted NOTHING — its only rejection is a selected
+  // campaign no longer in the register, i.e. the register moved underneath the
+  // selection. Re-read it, and drop the vanished ids from the kept selection so
+  // the selection bar never counts rows that are gone (ui-surface S1).
+  const onRejected = async () => {
+    void campaignsResource.refetch();
+    const fresh = await refetch();
+    setSelectedIds(survivingSelection(selectedIds(), fresh?.nodes ?? rows()));
+  };
 
   // Columns and crumbs are accessors, not plain arrays: their text comes from
   // t(), which must be read in a reactive scope to re-translate on a language
@@ -257,7 +265,7 @@ const CampaignsList: Component = () => {
             mayEdit={mayEdit}
             onRefused={refusePermission}
             onDeleted={onDeleted}
-            onPartiallyDeleted={onPartiallyDeleted}
+            onRejected={() => void onRejected()}
           />
         }
         config={tableConfig.config()}

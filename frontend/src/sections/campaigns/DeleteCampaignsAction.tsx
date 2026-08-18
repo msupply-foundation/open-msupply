@@ -7,25 +7,25 @@ import { Alert } from '@/ui/elements/feedback/Alert';
 import { Button } from '@/ui/elements/buttons/Button';
 import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
 import { TrashIcon } from '@/ui/icons';
-import { DeleteCampaign } from './campaigns.generated';
-import { campaignDeleted, runCampaignDeletes } from './campaignDelete';
+import { DeleteCampaigns } from './campaigns.generated';
+import { campaignsDeleted } from './campaignDelete';
 
 // The register's one bulk action — spec/campaigns S1 § selection actions + S3.
 //
-// Deletion is PER CAMPAIGN: there is no bulk operation, so this is n
-// independent deletes with no surrounding transaction. Partial success is
-// therefore the normal shape, and the two outcomes differ in what the caller
-// does with the selection:
+// Deletion is ATOMIC: one mutation carries the whole selection and the server
+// deletes it in one transaction, so there are exactly two outcomes:
 //
-//   all deleted  → the rows leave the register and the selection clears;
-//                  closure + the refreshed list is the confirmation (D21).
-//   any rejected → the generic could-not-delete notice, naming no campaign,
-//                  while the deletes that DID succeed stay deleted. The
-//                  selection is NOT cleared, so the user can see what is left.
+//   deleted  → every row leaves the register and the selection clears;
+//              closure + the refreshed list is the confirmation (D21).
+//   rejected → NOTHING was deleted. The only domain rejection is a selected
+//              campaign no longer in the register (deleted elsewhere since the
+//              list was read), so the generic could-not-delete notice shows
+//              while the owner re-reads the register and drops the vanished
+//              rows from the kept selection.
 //
 // Nothing is pre-checked: there is no in-use guard on the server (a campaign
 // tagged on stock deletes just the same), so the client has nothing to mirror
-// and every selected id is submitted (ui-standards validation.md § actions).
+// and the whole selection is submitted (ui-standards validation.md § actions).
 
 export interface DeleteCampaignsActionProps {
   /** The currently-selected campaign ids. */
@@ -34,10 +34,10 @@ export interface DeleteCampaignsActionProps {
   mayEdit: () => boolean;
   /** Refuse the action up front (the global permission-denied modal). */
   onRefused: () => void;
-  /** Every selected campaign was deleted. */
+  /** The whole selection was deleted. */
   onDeleted: () => void;
-  /** Some were deleted and some refused — re-read, keep the selection. */
-  onPartiallyDeleted: () => void;
+  /** The delete was refused — nothing deleted; re-read and prune the selection. */
+  onRejected: () => void;
 }
 
 type Phase = 'confirm' | 'deleting' | 'error';
@@ -84,14 +84,19 @@ const Body = (props: DeleteCampaignsActionProps & { onClose: () => void }) => {
   const run = async () => {
     if (phase() !== 'confirm') return; // re-entry guard
     setPhase('deleting');
-    const report = await runCampaignDeletes(props.selectedIds(), async id => {
-      const result = await graphqlFetch(DeleteCampaign, { input: { id } });
-      return campaignDeleted(result);
-    });
-    if (report.failed.length > 0) {
-      // Some are gone: the register is re-read so those rows leave, while the
-      // notice stays in this dialog and the selection is kept.
-      if (report.deleted.length > 0) props.onPartiallyDeleted();
+    // returnGraphqlErrors, because the response union has no error member: the
+    // not-found rejection is a top-level `Bad user input`, and without the
+    // opt-in it would trip the global unexpected-error modal instead of this
+    // dialog's own could-not-delete phase.
+    const result = await graphqlFetch(
+      DeleteCampaigns,
+      { ids: props.selectedIds() },
+      { returnGraphqlErrors: true }
+    );
+    if (!campaignsDeleted(result)) {
+      // Atomic: nothing was deleted. The owner re-reads and prunes; the notice
+      // stays in this dialog.
+      props.onRejected();
       setPhase('error');
       return;
     }
@@ -105,7 +110,7 @@ const Body = (props: DeleteCampaignsActionProps & { onClose: () => void }) => {
   return (
     <Dialog
       open
-      // Blocking while the deletes are in flight.
+      // Blocking while the delete is in flight.
       dismissable={phase() !== 'deleting'}
       onClose={props.onClose}
       icon={<TrashIcon />}
@@ -119,8 +124,8 @@ const Body = (props: DeleteCampaignsActionProps & { onClose: () => void }) => {
           // changes what is tagged (rules § deleting a campaign).
           fallback={tPlural('messages.confirm-delete-campaigns', count)}
         >
-          {/* The generic could-not-delete notice — it names no campaign,
-              which is the shape the absent bulk operation forces. */}
+          {/* The generic could-not-delete notice — it names no campaign; the
+              refused selection deleted nothing (rules § deleting a campaign). */}
           <Alert severity="error" testId="campaigns-cant-delete">
             {t('messages.cant-delete-generic')}
           </Alert>
