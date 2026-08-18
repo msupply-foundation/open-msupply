@@ -73,6 +73,22 @@ export function TableRow<T>(props: {
   selectionDisabled?: boolean;
   onRowClick?: (row: T) => void;
   /**
+   * Keyboard row navigation (spec/keyboard KB-N1). When set, this row can take
+   * the keyboard highlight: the arrows move real DOM focus onto it and `Enter`
+   * opens it. Absent on tables that aren't keyboard-navigable (a line editor's
+   * grid, where Tab walks the inputs instead).
+   *
+   * ACCESSORS, not values. An object literal that read the signals as it was
+   * built made Solid memoize the whole prop expression, and the row's own
+   * `onFocus` then triggered the first read from a bare native listener with no
+   * owner in scope — "computations created outside a createRoot". Lazy fields
+   * read inside the element's own bindings instead, where the owner exists.
+   */
+  rowFocus?: {
+    focused: () => boolean;
+    onFocus: () => void;
+  };
+  /**
    * Semantic row state (ui-standards § tables row states) — 'verified' /
    * 'warning' / 'disabled', derived by the page from the record's own facts
    * (see DataTable's prop doc). Stamps data-row-state, styled in CSS.
@@ -158,6 +174,20 @@ export function TableRow<T>(props: {
       // selection signal across both views); styled on the cells
       // (data-selected) in CSS.
       data-selected={props.row.getIsSelected() ? '' : undefined}
+      /*
+       * Programmatically focusable, never a tab stop (KB-N1/KB-T2): the <table>
+       * holds the single tabindex=0 and the arrows move DOM focus between rows
+       * from there, so the tab order cannot move underneath the user when the
+       * row set changes. KB-T1 forbids a positive tab index anywhere.
+       */
+      tabindex={props.rowFocus ? -1 : undefined}
+      // The row-focus indication (AC-KB37): "a background distinct from row
+      // striping"; styled in CSS, and a focus state rather than a meaning, so
+      // colour independence is satisfied by it also being the focused element.
+      data-row-focused={props.rowFocus?.focused() ? '' : undefined}
+      // Keep the highlight in step when focus arrives by pointer rather than by
+      // arrow key.
+      onFocus={() => props.rowFocus?.onFocus()}
       onClick={() => props.onRowClick?.(props.row.original)}
     >
       <Show when={props.enableSelection}>
