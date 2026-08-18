@@ -74,27 +74,24 @@ mutation upsertCampaign($input: UpsertCampaignInput!) {
   }
 }
 
-# Soft-delete one campaign (contract.md § deleting a campaign). There is NO bulk
-# operation, so deleting a selection is n independent calls with no surrounding
-# transaction — partial success is the contract, not an exception.
+# Soft-delete a selection of campaigns ATOMICALLY (contract.md § deleting a
+# campaign): the server deletes the whole selection in one transaction, so a
+# selection deletes in full or not at all. There is deliberately no in-use
+# rejection to select — no guard exists, because tagged records keep their tag
+# and its display whatever happens to the register.
 #
-# `DeleteCampaignErrorInterface` is implemented by RecordNotFound and
-# DatabaseError only: there is deliberately no in-use error to declare, because
-# no in-use guard exists. RecordNotFound covers both a second delete of the same
-# campaign and an id that never existed.
-mutation deleteCampaign($input: DeleteCampaignInput!) {
+# `DeleteCampaignsResponse` is a single-member union (DeleteCampaignsNode), so
+# every rejection is a TOP-LEVEL error. Its only domain rejection — an id
+# anywhere in the selection that is already deleted or never existed — arrives
+# as `Bad user input` with extensions.details "CampaignDoesNotExist", which is
+# why the caller opts into returnGraphqlErrors.
+mutation deleteCampaigns($ids: [String!]!) {
   centralServer {
     campaign {
-      deleteCampaign(input: $input) {
-        __typename
-        ... on DeleteCampaignSuccess {
-          id
-        }
-        ... on DeleteCampaignError {
-          error {
-            __typename
-            description
-          }
+      deleteCampaigns(ids: $ids) {
+        ... on DeleteCampaignsNode {
+          __typename
+          ids
         }
       }
     }

@@ -1,52 +1,31 @@
 import type { GraphqlResult } from '@/api/graphql';
-import type { DeleteCampaignResult } from './campaigns.generated';
+import type { DeleteCampaignsResult } from './campaigns.generated';
 
 // Deleting a selection of campaigns (spec/campaigns rules.md § deleting a
-// campaign, contract.md § deleting a campaign). Pure logic, no reactivity: the
-// runner takes the per-campaign delete as a callback so the partial-success
-// shape can be tested without a backend.
-
-/** Did one delete succeed? */
-export const campaignDeleted = (
-  result: GraphqlResult<DeleteCampaignResult>
-): boolean =>
-  result.kind === 'success' &&
-  result.data.centralServer.campaign.deleteCampaign.__typename ===
-    'DeleteCampaignSuccess';
+// campaign, contract.md § deleting a campaign). Pure logic, no reactivity, so
+// the two outcomes are pinned by tests without a backend.
 
 /**
- * What a selection delete did. Partial success is the CONTRACT, not an
- * exception: there is no bulk operation, so a selection is n independent
- * deletes with no surrounding transaction — each one that succeeds stays
- * deleted even if a later one is rejected.
+ * Did the selection delete? The delete is ATOMIC — one mutation, one server
+ * transaction — so there are exactly two outcomes: the whole selection deleted,
+ * or nothing was. The response union has no error member (every rejection is a
+ * top-level error), so success of the fetch IS success of the delete.
  */
-export type CampaignDeleteReport = {
-  /** Ids the server confirmed deleted. */
-  deleted: string[];
-  /** Ids it refused (or that failed) — each stays in the register. */
-  failed: string[];
-};
+export const campaignsDeleted = (
+  result: GraphqlResult<DeleteCampaignsResult>
+): boolean => result.kind === 'success';
 
 /**
- * Delete each selected campaign independently, in order, and report both sides.
- *
- * Sequential rather than concurrent: n unbatched writes against the central
- * server are the mechanism the missing bulk operation forces, and issuing them
- * one at a time keeps the register's own refetch (which follows) reading a
- * settled state rather than racing a fan-out.
- *
- * There is no in-use guard to anticipate — a campaign tagged on stock or on
- * documents deletes just the same — so nothing is pre-checked here; every id is
- * submitted and the server decides (ui-standards validation.md § actions).
+ * The selection that survives a refused delete. A refusal deleted nothing, and
+ * its only domain rejection is a selected campaign no longer in the register —
+ * the register moved underneath the selection. The caller re-reads the register
+ * and drops the vanished ids from the kept selection, so the selection count
+ * never includes rows that are no longer on screen.
  */
-export const runCampaignDeletes = async (
-  ids: readonly string[],
-  deleteOne: (id: string) => Promise<boolean>
-): Promise<CampaignDeleteReport> => {
-  const report: CampaignDeleteReport = { deleted: [], failed: [] };
-  for (const id of ids) {
-    if (await deleteOne(id)) report.deleted.push(id);
-    else report.failed.push(id);
-  }
-  return report;
+export const survivingSelection = (
+  selected: readonly string[],
+  register: readonly { id: string }[]
+): string[] => {
+  const present = new Set(register.map(row => row.id));
+  return selected.filter(id => present.has(id));
 };

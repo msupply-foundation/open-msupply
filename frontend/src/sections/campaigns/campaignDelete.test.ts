@@ -1,105 +1,86 @@
 import { describe, expect, it } from 'vitest';
 import type { GraphqlResult } from '@/api/graphql';
-import type { DeleteCampaignResult } from './campaigns.generated';
-import { campaignDeleted, runCampaignDeletes } from './campaignDelete';
+import type { DeleteCampaignsResult } from './campaigns.generated';
+import { campaignsDeleted, survivingSelection } from './campaignDelete';
 
 // Anchors: spec/campaigns/cases/OMS-REG-MNG-04.
-//   .24 — confirming removes the campaigns from the register
+//   .24 — confirming deletes the whole selection and clears it
 //   .25 — a campaign tagged on a stock line deletes without being blocked
-//   .29 — a selection in which one campaign cannot be deleted reports the
-//         generic notice, and the deletes that succeeded stay deleted
+//   .29 — a refused selection deletes nothing; vanished rows leave the kept
+//         selection
 //   .30 — deleting an already-deleted campaign is rejected as not found
-// Deletion has no bulk operation, so the client's own sequencing IS the
-// behaviour: these pin what happens across n independent deletes. The
-// server-side facts (.25's absent in-use guard, .30's RecordNotFound) are
-// verified against the real backend — see BUILD_REPORT.
+// The delete is ATOMIC — one mutation, one server transaction — so the client
+// has no sequencing of its own: these pin the two outcomes and the pruning.
+// The server-side facts (.25's absent in-use guard, .30's not-found, the
+// rollback itself) are verified against the real backend — see BUILD_REPORT.
 
-const success: GraphqlResult<DeleteCampaignResult> = {
+const deleted: GraphqlResult<DeleteCampaignsResult> = {
   kind: 'success',
   data: {
     centralServer: {
       campaign: {
-        deleteCampaign: { __typename: 'DeleteCampaignSuccess', id: 'camp-1' },
+        deleteCampaigns: { __typename: 'DeleteCampaignsNode', ids: ['a', 'b'] },
       },
     },
   },
 };
 
-const notFound: GraphqlResult<DeleteCampaignResult> = {
-  kind: 'success',
-  data: {
-    centralServer: {
-      campaign: {
-        deleteCampaign: {
-          __typename: 'DeleteCampaignError',
-          error: {
-            __typename: 'RecordNotFound',
-            description: 'Record not found',
-          },
-        },
-      },
-    },
-  },
-};
-
-describe('OMS-REG-MNG-04.30 — a delete of something already gone is refused', () => {
-  it('reads DeleteCampaignSuccess as deleted', () => {
-    expect(campaignDeleted(success)).toBe(true);
+describe('OMS-REG-MNG-04.24 — the whole selection deletes together', () => {
+  it('reads a DeleteCampaignsNode as deleted', () => {
+    // .25 rides along: nothing is pre-checked client-side — a campaign tagged
+    // on stock or on documents is submitted just the same, so there is no
+    // in-use branch for this mapping to have.
+    expect(campaignsDeleted(deleted)).toBe(true);
   });
+});
 
-  it('reads RecordNotFound as not deleted', () => {
-    // The existence check runs against the non-deleted set, so a second delete
-    // of the same campaign and an id that never existed are indistinguishable —
-    // both are RecordNotFound, and both count as a failure here.
-    expect(campaignDeleted(notFound)).toBe(false);
+describe('OMS-REG-MNG-04.29/.30 — a refused delete deleted nothing', () => {
+  it('reads the top-level not-found rejection as not deleted', () => {
+    // The response union has no error member: an already-deleted or unknown id
+    // anywhere in the selection arrives as a top-level Bad user input
+    // (details CampaignDoesNotExist), and the atomic transaction rolled the
+    // rest of the selection back with it.
+    expect(
+      campaignsDeleted({
+        kind: 'graphqlError',
+        message: 'Bad user input',
+        errors: [
+          {
+            message: 'Bad user input',
+            extensions: { details: 'CampaignDoesNotExist' },
+          },
+        ],
+      })
+    ).toBe(false);
   });
 
   it('reads a transport failure as not deleted', () => {
-    expect(campaignDeleted({ kind: 'unexpectedError' })).toBe(false);
+    expect(campaignsDeleted({ kind: 'unexpectedError' })).toBe(false);
   });
 });
 
-describe('OMS-REG-MNG-04.24 — confirming deletes the whole selection', () => {
-  it('submits every selected id, in order, and reports them all deleted', async () => {
-    const submitted: string[] = [];
-    const report = await runCampaignDeletes(['a', 'b', 'c'], async id => {
-      submitted.push(id);
-      return true;
-    });
-    expect(submitted).toEqual(['a', 'b', 'c']);
-    expect(report).toEqual({ deleted: ['a', 'b', 'c'], failed: [] });
+describe('OMS-REG-MNG-04.29 — the kept selection drops vanished rows', () => {
+  it('keeps ids still in the register, in selection order', () => {
+    expect(
+      survivingSelection(
+        ['a', 'gone', 'c'],
+        [{ id: 'c' }, { id: 'a' }, { id: 'x' }]
+      )
+    ).toEqual(['a', 'c']);
   });
 
-  it('submits every id even though one is in use — there is no in-use guard (.25)', async () => {
-    // Nothing is pre-checked client-side: a campaign tagged on stock or on
-    // documents deletes just the same, so the client has no guard to mirror.
-    const report = await runCampaignDeletes(['tagged'], async () => true);
-    expect(report).toEqual({ deleted: ['tagged'], failed: [] });
+  it('keeps the whole selection while the register still holds it', () => {
+    expect(survivingSelection(['a', 'b'], [{ id: 'a' }, { id: 'b' }])).toEqual([
+      'a',
+      'b',
+    ]);
   });
 
-  it('does nothing for an empty selection', async () => {
-    expect(await runCampaignDeletes([], async () => true)).toEqual({
-      deleted: [],
-      failed: [],
-    });
-  });
-});
-
-describe('OMS-REG-MNG-04.29 — a partial delete keeps what it managed', () => {
-  it('reports both sides and keeps going after a rejection', async () => {
-    // No surrounding transaction exists, so a rejection mid-selection neither
-    // rolls back what went before nor stops what follows.
-    const report = await runCampaignDeletes(
-      ['a', 'gone', 'c'],
-      async id => id !== 'gone'
-    );
-    expect(report).toEqual({ deleted: ['a', 'c'], failed: ['gone'] });
+  it('empties when the register lost the whole selection', () => {
+    expect(survivingSelection(['a'], [])).toEqual([]);
   });
 
-  it('reports every id as failed when none could be deleted', async () => {
-    expect(await runCampaignDeletes(['x', 'y'], async () => false)).toEqual({
-      deleted: [],
-      failed: ['x', 'y'],
-    });
+  it('does nothing for an empty selection', () => {
+    expect(survivingSelection([], [{ id: 'a' }])).toEqual([]);
   });
 });

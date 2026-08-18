@@ -67,31 +67,22 @@ export const UpsertCampaign = {
   query: "mutation upsertCampaign($input: UpsertCampaignInput!) {\n  centralServer {\n    campaign {\n      upsertCampaign(input: $input) {\n        __typename\n        ... on CampaignNode {\n          id\n          name\n          startDate\n          endDate\n        }\n        ... on UpsertCampaignError {\n          error {\n            __typename\n            description\n          }\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<UpsertCampaignResult, UpsertCampaignVariables>;
 
-export type DeleteCampaignVariables = {
-  input: {
-    id: string;
-  };
+export type DeleteCampaignsVariables = {
+  ids: Array<string>;
 };
 
-export type DeleteCampaignResult = {
+export type DeleteCampaignsResult = {
   centralServer: {
   campaign: {
-  deleteCampaign: ({
-  __typename: "DeleteCampaignSuccess";
+  deleteCampaigns: ({
+  __typename: "DeleteCampaignsNode";
 } & {
-  id: string;
-}) | ({
-  __typename: "DeleteCampaignError";
-} & {
-  error: {
-  __typename: string;
-  description: string;
-};
+  ids: Array<string>;
 });
 };
 };
 };
 
-export const DeleteCampaign = {
-  query: "mutation deleteCampaign($input: DeleteCampaignInput!) {\n  centralServer {\n    campaign {\n      deleteCampaign(input: $input) {\n        __typename\n        ... on DeleteCampaignSuccess {\n          id\n        }\n        ... on DeleteCampaignError {\n          error {\n            __typename\n            description\n          }\n        }\n      }\n    }\n  }\n}",
-} as TypedDocument<DeleteCampaignResult, DeleteCampaignVariables>;
+export const DeleteCampaigns = {
+  query: "mutation deleteCampaigns($ids: [String!]!) {\n  centralServer {\n    campaign {\n      deleteCampaigns(ids: $ids) {\n        ... on DeleteCampaignsNode {\n          __typename\n          ids\n        }\n      }\n    }\n  }\n}",
+} as TypedDocument<DeleteCampaignsResult, DeleteCampaignsVariables>;
