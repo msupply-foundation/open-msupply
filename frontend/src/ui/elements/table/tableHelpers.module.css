@@ -1,5 +1,26 @@
 /* An almost-expired / expired date cell (getExpiryDateCell): the date text in
-   the error tone, matching the old app's ExpiryDateCell (error.main). */
+   the error tone, matching the old app's ExpiryDateCell (error.main). An
+   ACTUALLY expired date (its day has arrived) additionally steps up to
+   medium weight — the "expiring soon" → "expired" tier (spec D112). Medium,
+   not bold: 700 read too heavy against the table's regular text (design
+   review, 2026-08-14). */
 .expiring {
   color: var(--error-main);
+}
+
+.expired {
+  font-weight: var(--weight-medium);
+}
+
+/* An ABSENT value that has a name (AbsentValue): the word standing in for a
+   value the record hasn't got yet — an outbound placeholder line's Batch. It
+   must not impersonate the values around it, and in a `code` column it would:
+   the same monospace face at the same size reads as a batch code called
+   "Unallocated". So the family reverts to the UI face and the word leans —
+   typography saying "this is a state, not a value", where a chip would put a
+   status object in a value column and out-shout every real value in it. */
+.absentValue {
+  font-family: var(--font-sans);
+  font-style: italic;
+  color: var(--text-secondary);
 }

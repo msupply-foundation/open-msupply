@@ -194,6 +194,10 @@ export const ItemVariantEditModal: Component<
       widthRem={50}
       dismissable={!saving()}
       onClose={props.onClose}
+      // Room for the manufacturer lookup's open listbox inside the dialog
+      // (#1029): it sits at the bottom of the left column (~15rem down), so
+      // its listbox (up to 18rem) would otherwise hang below the dialog.
+      minBodyHeightRem={32}
       footer={
         <Show when={rejection()}>
           {message => (
@@ -231,7 +235,6 @@ export const ItemVariantEditModal: Component<
               data-testid="item-variant-name-input"
               label={t('label.name')}
               required
-              width="full"
               disabled={saving()}
               value={form().name}
               onInput={e => setForm({ ...form(), name: e.currentTarget.value })}
@@ -263,7 +266,6 @@ export const ItemVariantEditModal: Component<
             <Show when={props.isVaccine}>
               <TextField
                 label={t('label.vvm-type')}
-                width="full"
                 disabled={saving()}
                 value={form().vvmType}
                 onInput={e =>

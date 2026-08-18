@@ -61,8 +61,15 @@ export interface AsyncComboboxProps<T> {
   /** Control size, forwarded to the Combobox — `small` for a header field
    * cluster's compact row (see ui/layout/Header/HeaderToolbar). */
   size?: 'default' | 'small';
-  /** Width cap — the Combobox's own vocabulary (default `long`). */
+  /** Width cap — the Combobox's own vocabulary, opt-in (default `full`). */
   width?: 'compact' | 'short' | 'long' | 'full';
+  /**
+   * Popup width — the Combobox's own prop, forwarded. `false` lets the popup
+   * size to its content (floored at the trigger's width, capped so it stays on
+   * screen) instead of matching the trigger, for a picker whose option text can
+   * outrun a narrow field. See Combobox's `matchTriggerWidth`.
+   */
+  matchTriggerWidth?: boolean;
   class?: string;
   /** `data-testid` for the text input (locale-stable test hook). */
   inputTestId?: string;
@@ -216,7 +223,13 @@ export const AsyncCombobox = <T,>(
   // the list-blink the filter exists to avoid. While pending with nothing to
   // show, loading (not "no matches") is the honest state: the in-flight page-0
   // fetch — or the one the debounce is about to fire — can still produce rows.
-  const loading = () => search.pending() && items().length === 0;
+  //
+  // Judged on `base()`, the FETCHED rows, not on `items()`: the seed is the
+  // caller's own selection, not an answer to anything. Counting it hid this
+  // state exactly where it matters — a picker reopened on a selection, its
+  // abandoned rows dropped, showing the selected item as if it were the only
+  // one in the catalogue while the real page was still on its way (#985).
+  const loading = () => search.pending() && base().length === 0;
 
   return (
     <Combobox<T>
@@ -232,6 +245,7 @@ export const AsyncCombobox = <T,>(
       clearable={props.clearable}
       size={props.size}
       width={props.width}
+      matchTriggerWidth={props.matchTriggerWidth}
       placeholder={props.placeholder}
       inputTestId={props.inputTestId}
       focusTarget={props.focusTarget}
@@ -246,40 +260,39 @@ export const AsyncCombobox = <T,>(
       itemToValue={props.itemToValue}
       itemDisabled={props.itemDisabled}
       renderItem={props.renderItem}
-      // Kobalte fires onInputChange whenever the combobox's controlled
-      // selection changes — not only when the user types. Its resetInputValue
-      // effect resyncs the input text to match a NEW selected/value prop
-      // (e.g. the stocktake line-edit modal opening on a row sets ItemSearch's
-      // value/selectedItem to that row's item), and that resync itself goes
-      // through onInputChange. Left unguarded, this fires a genuine
-      // itemsWithStock search for the row's own label on every row-click open
-      // — nobody typed anything. Guard: a next value that exactly matches the
-      // CURRENTLY selected item's label is that resync, not a keystroke —
-      // skip it. A real edit (even retyping the same text one keystroke at a
-      // time) still goes through query(), which the resync bypasses entirely
-      // (Kobalte sets the whole string in one call), so this can't mask a
-      // genuine search for text that happens to equal the selected label.
+      // What arrives here is the QUERY, already judged by the widget that owns
+      // the input and the selection: Kobalte resyncs the input text from its
+      // selection (on a pick, and whenever a new value/selected prop lands —
+      // e.g. the stocktake line-edit modal opening on a row), and Combobox
+      // hands those label echoes over as '' rather than as a search for the
+      // row's own label. That judgement can't be made from here: it needs the
+      // selection AS THE WIDGET HOLDS IT, which on a fresh pick is a round trip
+      // ahead of our `selected` prop — a race that decided, per open, whether
+      // this picker searched for a label the catalogue can't match (#985).
+      //
+      // Idempotent, because a resync re-reports text we already hold: without
+      // this, every reopen of a committed picker would refetch page 0.
       onInputChange={next => {
-        const selected = props.selected;
-        const isSelectedLabelEcho =
-          selected !== undefined &&
-          next === props.itemToString(selected) &&
-          next !== query();
-        if (isSelectedLabelEcho) return;
+        if (next === query()) return;
         setQuery(next);
         search.setSearch(next);
       }}
       onOpenChange={open => {
         if (open) return search.ensure();
-        // Closing without picking ABANDONS the search, so forget the typed
-        // text. It is what drops the committed selection out of `items` (see
-        // its seed rule), and Kobalte looks the selection up in that list to
-        // restore the input's text as the field closes — with a stale query
-        // still narrowing the list, the lookup misses and the field blanks,
-        // reading as "the patient was deleted" on a field that cannot be
-        // emptied. Only the local query is reset, not the fetch: the held rows
-        // stay as they are, so no request is issued to close a popup.
+        // Closing without picking ABANDONS the search — the typed text AND the
+        // rows fetched for it (see search.reset), so the next open starts from
+        // the full list instead of presenting one spent query as the whole
+        // catalogue. No request is issued to close a popup: reset re-arms the
+        // deferred first fetch and the next open's `ensure()` makes it.
+        //
+        // Forgetting the query is also what keeps the committed selection in
+        // `items` (see its seed rule): Kobalte looks the selection up in that
+        // list to restore the input's text as the field closes, and with a
+        // stale query still narrowing the list the lookup misses and the field
+        // blanks — reading as "the patient was deleted" on a field that cannot
+        // be emptied.
         setQuery('');
+        search.reset();
       }}
       onReachEnd={() => search.loadMore()}
       onChange={item => props.onSelect(item)}

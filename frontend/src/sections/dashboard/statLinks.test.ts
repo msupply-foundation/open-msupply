@@ -106,7 +106,7 @@ describe('replenishment links', () => {
   // Draft); the panel title stays the unfiltered list.
   it('OMS-REG-DB-01.55/.40: internal-order draft filters status to Draft; title is bare', () => {
     expect(filterOf(internalOrderDraftHref('s1'))).toEqual({
-      status: { equalTo: 'DRAFT' },
+      status: { equalAny: ['DRAFT'] },
     });
     expect(internalOrderListHref('s1')).toBe(
       '/s1/replenishment/internal-order'
@@ -135,7 +135,7 @@ describe('distribution links', () => {
   // list's own pinned RESPONSE, never carried by the link.
   it('OMS-REG-DB-01.59: customer-requisition new filters status to New', () => {
     expect(filterOf(customerRequisitionNewHref('s1'))).toEqual({
-      status: { equalTo: 'NEW' },
+      status: { equalAny: ['NEW'] },
     });
   });
 
@@ -143,7 +143,7 @@ describe('distribution links', () => {
   // its filter is the new stat's plus isEmergency (the counts' subset relation).
   it('OMS-REG-DB-01.59: customer-requisition emergency filters New + emergency', () => {
     expect(filterOf(customerRequisitionEmergencyHref('s1'))).toEqual({
-      status: { equalTo: 'NEW' },
+      status: { equalAny: ['NEW'] },
       isEmergency: true,
     });
     expect(filterOf(customerRequisitionEmergencyHref('s1'))).toMatchObject(

@@ -290,6 +290,7 @@ export type RoleName =
   | 'accent'
   | 'danger'
   | 'warning'
+  | 'unfinished'
   | 'success'
   | 'surface'
   | 'text'
@@ -364,6 +365,14 @@ export const ROLES: Record<RoleName, RoleSpec> = {
     members: { base: ['--color-warning'], alert: ['--warning-main'] },
     tokens: ['--color-warning', '--warning-main'],
   },
+  unfinished: {
+    shorthand: 'base',
+    // The awaiting-a-step marking (outbound placeholder rows). Its own role,
+    // not a member of `warning`: a site rebranding its caution amber must not
+    // silently repaint "still to do" as "something is wrong".
+    members: { base: ['--marking-unfinished'] },
+    tokens: ['--marking-unfinished'],
+  },
   success: {
     shorthand: 'base',
     members: {
@@ -376,11 +385,22 @@ export const ROLES: Record<RoleName, RoleSpec> = {
     members: {
       page: ['--bg-white'],
       chrome: ['--bg-toolbar', '--bg-row', '--bg-group-light'],
-      nav: ['--bg-drawer', '--bg-menu'],
+      nav: ['--bg-drawer', '--bg-menu', '--surface-chrome'],
       navSelected: ['--drawer-selected-bg'],
       header: ['--header-bg'],
       raised: ['--surface-raised'],
-      sunken: ['--table-card-surface'],
+      sunken: ['--table-card-surface', '--surface-sunken'],
+      /*
+       * L0 of the app shell's surface ladder (tokens.css § "Warm stone") — the
+       * page background the rail, footer and content sit on. Settable, never
+       * derived: the ladder's warmth is a hue choice, and mixing it out of the
+       * cool `page`/`muted` anchors would produce a grey canvas, the one thing
+       * the ladder exists to avoid. Same for the ladder's other rungs, which
+       * ride the members whose surfaces they already are — `nav` (the rail and
+       * footer chrome), `sunken` (the well inside a surface) and border `base`
+       * (the chrome↔canvas rule).
+       */
+      canvas: ['--surface-canvas'],
       input: ['--bg-input'],
       disabled: ['--bg-disabled'],
       login: ['--bg-login'],
@@ -406,7 +426,7 @@ export const ROLES: Record<RoleName, RoleSpec> = {
       // author setting `border` means "make my hairlines this colour", and
       // the stock header/body distinction is not worth preserving against
       // that intent.
-      base: ['--color-border-value', '--header-border'],
+      base: ['--color-border-value', '--header-border', '--surface-edge'],
       divider: ['--color-divider'],
       input: ['--input-border'],
       strong: ['--outline-main'],

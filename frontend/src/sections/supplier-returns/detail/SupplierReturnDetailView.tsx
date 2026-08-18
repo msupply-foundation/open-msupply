@@ -43,6 +43,11 @@ import {
 } from '../../../ui/elements/table/DataTable';
 import { useUrlQueryState } from '../../../list/urlQueryState';
 import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
+import {
   getCellDefinition,
   getNumberCell,
 } from '../../../ui/elements/table/tableHelpers';
@@ -65,7 +70,7 @@ import { SupplierReturnPreferences } from '../preferences.generated';
 import { SupplierReturnToolbar } from './SupplierReturnToolbar';
 import { SupplierReturnSidePanel } from './SupplierReturnSidePanel';
 import { SupplierReturnStatusFooter } from './SupplierReturnStatusFooter';
-import { LogTab } from './LogTab';
+import { ActivityLogPanel } from '../../../domain/activityLog';
 import {
   ReturnItemsModal,
   type ReturnItem,
@@ -88,8 +93,6 @@ type Line = SupplierReturnLineFragment;
 // The line table's sort keys, taken from the generated variables so a schema
 // change is a compile error rather than a silently-ignored sort.
 type SortKey = NonNullable<SupplierReturnLinesVariables['sort']>[number]['key'];
-
-const DEFAULT_PAGE_SIZE = 20;
 
 // The URL-backed view state (kdd/url-structure): sort + pagination in the one
 // `?query=` JSON param, so a sorted/paged table is shareable and survives a
@@ -124,8 +127,10 @@ const SupplierReturnDetailView: Component = () => {
   const navigate = useNavigate();
   // Sort + pagination are URL-backed in one `?query=` param (spec rules §
   // server-paginated line table).
-  const { query, setQuery } =
-    useUrlQueryState<DetailUrlState>(DEFAULT_URL_STATE);
+  const { query, setQuery } = useUrlQueryState<DetailUrlState>({
+    ...DEFAULT_URL_STATE,
+    first: initialPageSize(),
+  });
   const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen();
   const [supplierError, setSupplierError] = createSignal<string | undefined>();
   // Line selection (transient UI, like every other detail screen's): drives the
@@ -352,9 +357,6 @@ const SupplierReturnDetailView: Component = () => {
     return undefined;
   };
 
-  const existingItemIds = (): string[] => [
-    ...new Set(rows().map(line => line.item.id)),
-  ];
   const existingLineIds = (): ReadonlySet<string> =>
     new Set(rows().map(line => line.id));
 
@@ -706,6 +708,7 @@ const SupplierReturnDetailView: Component = () => {
                         setSelectedIds([]);
                       },
                       onPageSizeChange: first => {
+                        rememberPageSize(first);
                         setQuery({ ...query(), first, offset: 0 });
                         setSelectedIds([]);
                       },
@@ -722,7 +725,10 @@ const SupplierReturnDetailView: Component = () => {
                   />
                 </TabPanel>
                 <TabPanel value="log">
-                  <LogTab storeId={params.storeId} recordId={node().id} />
+                  <ActivityLogPanel
+                    storeId={params.storeId}
+                    recordId={node().id}
+                  />
                 </TabPanel>
                 <ReturnItemsModal
                   open={editState() != null}
@@ -732,7 +738,6 @@ const SupplierReturnDetailView: Component = () => {
                   mode={editState()?.mode ?? 'update'}
                   initialItemId={editItemId()}
                   initialLineId={editLineId()}
-                  excludeItemIds={existingItemIds}
                   nextItem={nextItem}
                   itemById={itemById}
                   onSaved={onLinesChanged}

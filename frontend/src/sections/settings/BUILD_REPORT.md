@@ -63,11 +63,13 @@ save → reopen → restore) was driven live against `localhost:8000`.
   `error.timeout` reason reachable instead of dead copy. Verified live (the
   automated browser can't answer the prompt — the block recovers and shows the
   timed-out reason).
-- **The row-alignment decision below recurs here** and is left alone the same
-  way: the store editor's definition labels vary widely in length ("Facility
-  Type" vs "Supply Interval (Months between deliveries)"), so `FieldRow`'s
-  per-row grid leaves the controls ragged where the reference app fixes a 250px
-  label column. Still a spec/registry decision, still not improvised.
+- **The row-alignment decision below recurred here and has since been made**
+  ([D114](../../../spec/DIVERGENCES.md), issue #1032): the store editor's
+  definition labels vary widely in length ("Facility Type" vs "Supply Interval
+  (Months between deliveries)"), and `FieldRow`'s per-row grid left the controls
+  ragged. The editor is now the shared sectioned edit form at the prose measure
+  — label above each control in one column, coordinates as read-only labelled
+  values — so no label column has to fit names that are data.
 
 ## Styling pass (vs. the reference app at runtime)
 

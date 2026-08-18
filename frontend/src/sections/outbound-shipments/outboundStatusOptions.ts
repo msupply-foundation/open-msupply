@@ -6,7 +6,7 @@ import { STATUS_FLOW, type OutboundStatus } from './outboundStatus';
 // options). An empty preference list means "no restriction". The raw gate
 // values come from the global outboundShipmentPreferences accessor (the
 // guard-3 store context); this is the outbound-only mapping of that set onto
-// STATUS_FLOW, reused by the supplier-/customer-returns filters.
+// STATUS_FLOW.
 export const allowedStatuses = (): readonly OutboundStatus[] => {
   const options = outboundShipmentPreferences().invoiceStatusOptions;
   const allowed = STATUS_FLOW.filter(status =>

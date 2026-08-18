@@ -40,9 +40,10 @@ export const ExportPrescriptionsAction: Component<
   const buildCsv = async (): Promise<string | null> => {
     const variables: PrescriptionsVariables = {
       storeId: props.storeId,
+      // No type pin: the query's top-level `type` argument overwrites
+      // `filter.type` server-side, so one here would be discarded.
       filter: {
         ...stripEmpty(props.filter()),
-        type: { equalTo: 'PRESCRIPTION' },
         dynamicFilter: buildCustomFieldDynamicFilter(props.customFieldFilter()),
       },
       // One sort key only (contract wire trap): the list's default order —

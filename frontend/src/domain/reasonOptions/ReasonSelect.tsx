@@ -78,6 +78,16 @@ export interface ReasonSelectProps {
   /** `data-testid` for the text input — forwarded to the Combobox. */
   inputTestId?: string;
   placeholder?: string;
+  /** Max-width cap — forwarded to the Combobox, opt-in (default `full`). */
+  width?: 'compact' | 'short' | 'long' | 'full';
+  /**
+   * Control size, forwarded to the Combobox — `small` matches the compact
+   * variant the dense card grids use. Without it the picker renders at the
+   * default height beside `size="small"` neighbours, standing a step taller
+   * than the fields either side of it (the same reason LocationVolumeSelect
+   * carries one).
+   */
+  size?: 'default' | 'small';
   /**
    * A `createFocusTarget()` handle bound to the picker's input — for an owner
    * that focuses it after an action (e.g. a dialog opening on it).
@@ -107,6 +117,8 @@ export const ReasonSelect = (props: ReasonSelectProps): JSX.Element => (
     errorTestId={props.errorTestId}
     inputTestId={props.inputTestId}
     placeholder={props.placeholder}
+    width={props.width}
+    size={props.size}
     focusTarget={props.focusTarget}
     onChange={r => props.onChange(r)}
   />

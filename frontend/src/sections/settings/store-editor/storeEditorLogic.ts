@@ -4,6 +4,10 @@
 // composes these.
 
 import type { NamePropertiesResult } from '../configuration/nameProperties.generated';
+import type {
+  StorePreferencesResult,
+  UpsertStorePreferencesVariables,
+} from './storeEditor.generated';
 
 /** One property definition as the nameProperties catalogue serves it. */
 export type PropertyDefinition =
@@ -203,4 +207,234 @@ export const geolocationErrorKey = (
     default:
       return 'error.unknown-geolocation-error';
   }
+};
+
+// ---------------------------------------------------------------------------
+// The Preferences tab (rules § The store editor › Preferences, ui-surface § S5)
+
+/** One preference as `preferenceDescriptions` serves it — the served order IS
+ *  the display order (contract § The store editor). */
+export type StorePreference =
+  StorePreferencesResult['preferenceDescriptions'][number];
+
+export type UpsertPreferencesInput = UpsertStorePreferencesVariables['input'];
+
+/*
+ * Staged preference edits, keyed by preference key — staged values ONLY (the
+ * write is per-preference, unlike the properties document, so an untouched
+ * preference never rides along). Values are `unknown` for the same reason the
+ * served `value` is: the wire declares its own type loss, so every read is
+ * defensive rather than cast.
+ */
+export type PreferenceDraft = Record<string, unknown>;
+
+/** The value a control shows: the staged edit, else what the server holds. */
+export const preferenceValue = (
+  preference: StorePreference,
+  draft: PreferenceDraft
+): unknown =>
+  preference.key in draft ? draft[preference.key] : preference.value;
+
+// Defensive readers from the untyped value — a wrong-typed value reads as the
+// kind's zero, which is also what the server fabricates for "unset".
+export const asBool = (value: unknown): boolean => value === true;
+export const asNumber = (value: unknown): number =>
+  typeof value === 'number' && Number.isFinite(value) ? value : 0;
+export const asColour = (value: unknown): string =>
+  typeof value === 'string' ? value : '';
+
+/** The three parts of the recent-stocktake warning composite. */
+export interface WarnStocktakeParts {
+  enabled: boolean;
+  maxAge: number;
+  minItems: number;
+}
+export const asWarnParts = (value: unknown): WarnStocktakeParts => {
+  const parts =
+    typeof value === 'object' && value !== null
+      ? (value as Record<string, unknown>)
+      : {};
+  return {
+    enabled: asBool(parts.enabled),
+    maxAge: asNumber(parts.maxAge),
+    minItems: asNumber(parts.minItems),
+  };
+};
+
+/** One offered invoice status — the generated input's own member type. */
+export type InvoiceStatusOption = NonNullable<
+  UpsertPreferencesInput['invoiceStatusOptions']
+>[number]['value'][number];
+
+/*
+ * The offered statuses, in the canonical (default-set) order. Two labelled
+ * groups over ONE stored set; the bookends are offered but immutable
+ * (ui-surface § S5 row 22). CANCELLED exists on the wire but is never offered
+ * — as the reference app.
+ */
+export const OUTBOUND_STATUS_OPTIONS = [
+  'NEW',
+  'ALLOCATED',
+  'PICKED',
+  'SHIPPED',
+] as const satisfies readonly InvoiceStatusOption[];
+export const INBOUND_STATUS_OPTIONS = [
+  'NEW',
+  'DELIVERED',
+  'RECEIVED',
+  'VERIFIED',
+] as const satisfies readonly InvoiceStatusOption[];
+export const IMMUTABLE_INVOICE_STATUSES: readonly InvoiceStatusOption[] = [
+  'NEW',
+  'SHIPPED',
+  'VERIFIED',
+];
+const ALL_INVOICE_STATUS_OPTIONS = [
+  'NEW',
+  'ALLOCATED',
+  'PICKED',
+  'SHIPPED',
+  'RECEIVED',
+  'DELIVERED',
+  'VERIFIED',
+] as const satisfies readonly InvoiceStatusOption[];
+
+export const asStatusList = (value: unknown): InvoiceStatusOption[] =>
+  Array.isArray(value)
+    ? ALL_INVOICE_STATUS_OPTIONS.filter(status => value.includes(status))
+    : [];
+
+/*
+ * Apply one checkbox toggle to the stored set, keeping canonical order.
+ * Returns null when the edit must be refused: unchecking the LAST selected of
+ * Delivered/Received (OMS-REG-SET-05.38) — the app's guard, the server accepts
+ * any set (contract wire trap). Only that specific uncheck refuses, so a set
+ * already violating the rule (written by another client) doesn't block
+ * unrelated edits.
+ */
+export const toggleInvoiceStatus = (
+  current: readonly InvoiceStatusOption[],
+  status: InvoiceStatusOption,
+  checked: boolean
+): InvoiceStatusOption[] | null => {
+  const next = ALL_INVOICE_STATUS_OPTIONS.filter(option =>
+    option === status ? checked : current.includes(option)
+  );
+  if (
+    !checked &&
+    (status === 'DELIVERED' || status === 'RECEIVED') &&
+    !next.includes('DELIVERED') &&
+    !next.includes('RECEIVED')
+  ) {
+    return null;
+  }
+  return next;
+};
+
+/** Case-insensitive substring match on the displayed label (SET-05.35) — a
+ *  blank term matches everything (`includes('')` is always true). */
+export const matchesPreferenceFilter = (label: string, term: string): boolean =>
+  label.toLowerCase().includes(term.trim().toLowerCase());
+
+/*
+ * Preferences are editable only on the central server by a session holding the
+ * central-data permission (rules § The store editor › Preferences) — the same
+ * two facts the server enforces (central-server root gate + EDIT_CENTRAL_DATA),
+ * mirrored as a UI gate.
+ */
+export const canEditPreferences = (session: {
+  canEditCentralData: boolean;
+  isCentralServer: boolean;
+}): boolean => session.canEditCentralData && session.isCentralServer;
+
+/** The generated input's store-scoped keys (its `{ storeId, value }`-array
+ *  members) whose entry value has the given type. */
+type PreferenceKeyOf<V> = {
+  [K in keyof UpsertPreferencesInput]-?: NonNullable<
+    UpsertPreferencesInput[K]
+  > extends Array<{ storeId: string; value: V }>
+    ? K
+    : never;
+}[keyof UpsertPreferencesInput];
+
+/*
+ * The uniform preferences, one key list per coercion — each key written once,
+ * with `satisfies` refusing any key whose generated wire type isn't a
+ * boolean/number entry array. Twenty identical branches is the "genuinely
+ * large, uniform surface" kdd/explicit-composition's re-open clause accepts a
+ * flat key list for; the three composites keep explicit branches below.
+ */
+const BOOL_PREFERENCE_KEYS = [
+  'showIndicativePriceInRequisitions',
+  'blindStocktake',
+  'orderInPacks',
+  'useProcurementFunctionality',
+  'sortByVvmStatusThenExpiry',
+  'useSimplifiedMobileUi',
+  'disableManualReturns',
+  'requisitionAutoFinalise',
+  'inboundShipmentAutoVerify',
+  'manageVvmStatusForStock',
+  'manageVaccinesInDoses',
+  'canCreateInternalOrderFromARequisition',
+  'selectDestinationStoreForAnInternalOrder',
+  'externalInboundShipmentLinesMustBeAuthorised',
+  'doNotPrintPlaceholderLineLabels',
+] as const satisfies readonly PreferenceKeyOf<boolean>[];
+const NUMBER_PREFERENCE_KEYS = [
+  'numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts',
+  'numberOfMonthsThresholdToShowLowStockAlertsForProducts',
+  'numberOfMonthsThresholdToShowOverStockAlertsForProducts',
+  'firstThresholdForExpiringItems',
+  'secondThresholdForExpiringItems',
+] as const satisfies readonly PreferenceKeyOf<number>[];
+
+/**
+ * Compile-time exhaustiveness net: `pnpm codegen` flows a new server store
+ * preference into the generated input, and the panel then renders it a live
+ * control — so a key missing from buildPreferencesInput would mean the save
+ * reports success while silently dropping that edit. This alias fails to
+ * compile (the default doesn't satisfy `never`) until the new key joins a
+ * list above or gets a composite branch below.
+ */
+export type EveryStorePreferenceHandled<
+  Unhandled extends never = Exclude<
+    PreferenceKeyOf<unknown>,
+    | (typeof BOOL_PREFERENCE_KEYS)[number]
+    | (typeof NUMBER_PREFERENCE_KEYS)[number]
+    | 'storeCustomColour'
+    | 'warnWhenMissingRecentStocktake'
+    | 'invoiceStatusOptions'
+  >,
+> = Unhandled;
+
+/*
+ * The staged edits as the mutation input — one `{ storeId, value }` array per
+ * staged preference, every entry naming the EDITED store (the server honours
+ * the ids inside the payload, not the auth-checked one — contract wire trap).
+ * Undefined when nothing is staged, so the save can skip the call.
+ */
+export const buildPreferencesInput = (
+  draft: PreferenceDraft,
+  storeId: string
+): UpsertPreferencesInput | undefined => {
+  const input: UpsertPreferencesInput = {};
+  for (const key of BOOL_PREFERENCE_KEYS)
+    if (key in draft) input[key] = [{ storeId, value: asBool(draft[key]) }];
+  for (const key of NUMBER_PREFERENCE_KEYS)
+    if (key in draft) input[key] = [{ storeId, value: asNumber(draft[key]) }];
+  if ('storeCustomColour' in draft)
+    input.storeCustomColour = [
+      { storeId, value: asColour(draft.storeCustomColour) },
+    ];
+  if ('warnWhenMissingRecentStocktake' in draft)
+    input.warnWhenMissingRecentStocktake = [
+      { storeId, value: asWarnParts(draft.warnWhenMissingRecentStocktake) },
+    ];
+  if ('invoiceStatusOptions' in draft)
+    input.invoiceStatusOptions = [
+      { storeId, value: asStatusList(draft.invoiceStatusOptions) },
+    ];
+
+  return Object.keys(input).length > 0 ? input : undefined;
 };

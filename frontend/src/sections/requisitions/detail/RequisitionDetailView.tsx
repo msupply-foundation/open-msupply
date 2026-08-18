@@ -41,7 +41,6 @@ import {
   MinusCircleIcon,
   PlusCircleIcon,
   SidebarIcon,
-  TruckIcon,
 } from '@/ui/icons';
 import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
@@ -401,7 +400,7 @@ const RequisitionDetailView: Component = () => {
   };
 
   // The requisition's existing line for an item (add mode loads it rather
-  // than duplicating — D74, AC-LE3).
+  // than duplicating — D60, AC-LE3).
   const findLineForItem = (itemId: string): Line | undefined =>
     info()?.lines.nodes.find(line => line.itemId === itemId);
 
@@ -935,7 +934,16 @@ const RequisitionDetailView: Component = () => {
               }
               header={
                 <Header>
-                  <Breadcrumb icon={<TruckIcon />} crumbs={crumbs(node())} />
+                  {/* The Distribution truck (ui-surface S3) rides the shell's
+                      section glyph — see RequisitionsList. */}
+                  <Breadcrumb crumbs={crumbs(node())} />
+                  {/* Every control here collapses to its icon on a narrow
+                    viewport (`collapsible="narrow"`, label kept as the
+                    accessible name and repeated as a tooltip — the outbound
+                    header's tier). Labelled, this cluster needs more width
+                    than a tablet's header has left beside the breadcrumb, so
+                    it wrapped onto a row of its own — and on a short screen
+                    that row costs table rows, which are worth more. */}
                   <HeaderButtons>
                     {/* Add — a split of Add item (the line editor, S4) and Add
                       from master list (the shared S7 picker). The whole
@@ -943,6 +951,7 @@ const RequisitionDetailView: Component = () => {
                       transfer-linked requisition (spec S2 § page actions). */}
                     <SplitButton
                       icon={<PlusCircleIcon />}
+                      collapsible="narrow"
                       testId="add-item-button"
                       disabled={!canAdd()}
                       disabledTitle={t('error.cannot-add-items-to-requisition')}
@@ -978,6 +987,8 @@ const RequisitionDetailView: Component = () => {
                       <Button
                         variant="secondary"
                         icon={<SidebarIcon />}
+                        collapsible="narrow"
+                        title={t('button.more')}
                         data-testid="open-detail-panel-button"
                         // createSidePanelOpen registers Alt+M; this is the
                         // control that advertises it.

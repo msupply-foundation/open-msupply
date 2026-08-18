@@ -209,7 +209,6 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
           <TextArea
             label={t('label.comment')}
             hideLabel
-            width="full"
             data-testid="comment-field"
             value={props.edit.state.comment}
             disabled={props.disabled}
@@ -477,7 +476,6 @@ export const OutboundSidePanel: Component<OutboundSidePanelProps> = props => {
             hideLabel
             // Free text — full width, small height (SIDE_PANEL.md rule 2).
             size="small"
-            width="full"
             data-testid="transport-reference-field"
             value={props.edit.state.transportReference}
             disabled={props.disabled}

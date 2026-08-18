@@ -14,25 +14,121 @@
  * The dot is decorative — it is `aria-hidden` and the option's text names the
  * state, so nothing rests on colour alone.
  */
-/* The dialog's title row: the selector takes the free width (its value is a
-   "code - name" label, which truncates the moment the box shrink-wraps), and the
-   unit beside it is sized to itself and never gives way. */
+/* The dialog's title row selector. In the PRE-PICK state it fills: the search is
+   the whole card there (a command-palette box that owns its open suggestion
+   list, which matches the trigger's width), so anything narrower leaves the card
+   lopsided. */
 .headerPicker {
   flex: 1 1 auto;
   min-inline-size: 0;
 }
 
-/* Unit is wedged between the selector and the header's own action slot, with
-   only the title row's gap on one side and the header's on the other — 16px and
-   12px, which read as crowding rather than as a separate fact. Set it off with
-   the hairline + inset the outbound editor's Available uses, so the two line
-   editors present their read-only header fact the same way, and hold it clear of
-   the Add batch button. */
+/* Once the dialog has grown to the working size, the same fill stretched a
+   "code - name" label (~30 chars) across a ~90rem header — a box wide enough for
+   a paragraph holding one line of text (#issue: "the Add item drop down box is
+   too wide"). Bound it there: 32rem holds the long end of that label and matches
+   the outbound line editor's item picker (.itemField), so the two editors'
+   headers read as one pattern; it may shrink to 22rem before the row wraps. The
+   item, its unit and Add batch then group left-to-right the way the reference
+   design has them, instead of the unit and button being shoved to the far edge.
+   Keyed off the size latch, not off "an item is picked", so the header doesn't
+   resize under the user when a walk returns to the search. */
+.headerPickerBounded {
+  flex: 0 1 32rem;
+  min-inline-size: min(22rem, 100%);
+}
+
+/* Unit sits between the selector and (once the row is tight) the header's own
+   action slot, with only the title row's gap on one side and the header's on the
+   other — 16px and 12px, which read as crowding rather than as a separate fact.
+   Set it off with the hairline + inset the outbound editor's Available uses, so
+   the two line editors present their read-only header fact the same way, and
+   hold it clear of the Add batch button. */
 .headerUnit {
   flex: 0 0 auto;
   padding-inline-start: var(--space-4);
   margin-inline-end: var(--space-2);
   border-inline-start: 1px solid var(--color-border-value);
+}
+
+/* The dialog-header landing pad for the table's toolbar controls (DataTable's
+   controlsMount portals its cluster in here). Pure placement — the cluster
+   brings its own layout and button styling; this only holds it in the header's
+   flex row and lets it collapse to nothing before an item is picked, when the
+   table (and so the portal's content) doesn't exist. */
+.headerTableControls {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* The units-received hint under Packs received ("2,000 Tablets"). Secondary
+   type, aligned under the figure it derives from (the packs input is
+   right-aligned, so is this). Its line box is reserved whether or not there is
+   anything to say — an empty span still lays out at this height — so the row
+   never changes height as the user types, which is what the reference design
+   uses absolute positioning to achieve. */
+.unitsHint {
+  display: block;
+  min-block-size: 1rem;
+  margin-block-start: var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+  line-height: 1;
+  text-align: end;
+  white-space: nowrap;
+}
+
+/* CARD view only. Units received keeps a real column in TABLE view (its own
+   `hideOnCard` column), so rendering the hint there too both duplicates the
+   figure and — because it is a second line inside one cell — pushes that
+   cell's input ~10px above every other input in the row. DataTable stamps the
+   view on its scroll box. */
+[data-view='table'] .unitsHint {
+  display: none;
+}
+
+/* Field labels one step lighter than the app default (semibold, Carl
+   2026-07-30). This card grid runs up to nine captions across a row above
+   13px values; at 600 the labels out-weigh the data they name. Set as a custom
+   property on a `display: contents` wrapper so it INHERITS into the DataTable's
+   cards without this module reaching into another component's class names, and
+   without adding a box to the dialog's flex column. Scoped to this modal — the
+   shared token is unchanged. */
+.cards {
+  display: contents;
+  --field-label-font-weight: var(--weight-medium);
+}
+
+/* A computed, never-typed figure (Difference, Line total) — a read-only VALUE
+   sitting among editable fields. The absence of a box is what says read-only
+   (kdd/form-layout); a greyed box would say "an input you can't use right
+   now", which is what a LOCKED cost price is, and conflating the two loses the
+   distinction the receiver needs.
+   The first attempt at this looked broken because it wasn't anchored: bare
+   text at the top of where an input would be, with a caption above it. Here it
+   takes the small input's exact height and centres in it, so it sits on the
+   same line as every value beside it and the row's rhythm is unchanged. Right
+   aligned with tabular figures, matching the number fields it's read against. */
+.statValue {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-block-size: var(--input-height-sm);
+  color: var(--text-body);
+  font-size: var(--input-font-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+/* A discrepancy — received differs from what the supplier says was shipped.
+   WEIGHT ONLY, one step: it is a non-colour channel, so it survives greyscale
+   and colour blindness with nothing riding on hue, and it stays quiet enough
+   not to pull the eye off the field the receiver is actually typing in. The
+   figure keeps tabular figures, so the heavier digits don't shift the column.
+   Colour was tried and rejected — a severity hue on a single number in a dense
+   row read as an error state rather than as a value worth noticing. */
+.statValue[data-signal] {
+  font-weight: var(--weight-medium);
 }
 
 .statusDot {
