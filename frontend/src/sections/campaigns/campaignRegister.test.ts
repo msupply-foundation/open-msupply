@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  DEFAULT_PAGE_SIZE,
   DEFAULT_REGISTER_STATE,
   campaignVariables,
   type CampaignSortKey,
@@ -51,11 +50,11 @@ describe('OMS-REG-MNG-04.2 — default order is by name, ascending', () => {
     // `CampaignSortFieldInput` carries one value, so the GENERATED union is the
     // literal 'name': a column naming any other key is a compile error, which
     // is what makes the two date columns unsortable by construction rather than
-    // by convention. Enumerating the union here pins that — the array's element
-    // type is the whole union, so a second key appearing upstream would make
-    // this assertion fail rather than pass silently.
-    const everyKey: CampaignSortKey[] = ['name'];
-    expect(everyKey).toEqual(['name']);
+    // by convention. The pin is TYPE-LEVEL: if a second member ever appears
+    // upstream, the conditional type below becomes `never` and this line stops
+    // compiling.
+    const onlyName: [CampaignSortKey] extends ['name'] ? true : never = true;
+    expect(onlyName).toBe(true);
   });
 });
 
@@ -72,7 +71,6 @@ describe('OMS-REG-MNG-04.3 — the register offers no search and no filter', () 
 
 describe('OMS-REG-MNG-04.6 — the register is paged', () => {
   it('sends the page as first + offset, default page size 20', () => {
-    expect(DEFAULT_PAGE_SIZE).toBe(20);
     expect(campaignVariables('store-a', DEFAULT_REGISTER_STATE).page).toEqual({
       first: 20,
       offset: 0,

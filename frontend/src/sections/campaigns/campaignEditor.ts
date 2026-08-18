@@ -55,9 +55,7 @@ export const canSaveCampaign = (draft: CampaignDraft): boolean =>
  *    — which is exactly what clearing a date in the editor must do (`.15`).
  *    Both dates travel every time.
  */
-export const campaignInput = (
-  draft: CampaignDraft
-): UpsertCampaignVariables['input'] => ({
+export const campaignInput = (draft: CampaignDraft): CampaignDraft => ({
   id: draft.id,
   name: draft.name.trim(),
   startDate: draft.startDate || undefined,
@@ -82,7 +80,7 @@ export const campaignInput = (
  *                       busy state.
  */
 export type CampaignSaveOutcome =
-  | { kind: 'saved'; campaign: Campaign }
+  | { kind: 'saved' }
   | { kind: 'duplicate-name' }
   | { kind: 'rejected'; serverError: string }
   | { kind: 'failed' };
@@ -115,8 +113,7 @@ export const campaignSaveOutcome = (
   }
   if (result.kind !== 'success') return { kind: 'failed' };
   const response = result.data.centralServer.campaign.upsertCampaign;
-  if (response.__typename === 'CampaignNode')
-    return { kind: 'saved', campaign: response };
+  if (response.__typename === 'CampaignNode') return { kind: 'saved' };
   if (response.error.__typename === 'UniqueValueViolation')
     return { kind: 'duplicate-name' };
   return { kind: 'rejected', serverError: response.error.description };

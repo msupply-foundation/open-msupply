@@ -186,11 +186,9 @@ describe('OMS-REG-MNG-04.16 — re-saving a campaign unchanged succeeds', () => 
   });
 
   it('reads a CampaignNode response as saved', () => {
-    const outcome = campaignSaveOutcome(successResult('Measles 2026'));
-    expect(outcome.kind).toBe('saved');
-    expect(outcome.kind === 'saved' && outcome.campaign.name).toBe(
-      'Measles 2026'
-    );
+    expect(campaignSaveOutcome(successResult('Measles 2026'))).toEqual({
+      kind: 'saved',
+    });
   });
 });
 

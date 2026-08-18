@@ -19,6 +19,7 @@ import { getDateCell } from '@/ui/elements/table/tableHelpers';
 import { createTableConfig } from '@/api/createTableConfig';
 import { PlusCircleIcon } from '@/ui/icons';
 import { useUrlQueryState } from '@/list/urlQueryState';
+import { initialPageSize, rememberPageSize } from '@/list/pageSize';
 import { hasPermission } from '@/store/storeContext';
 import { campaignsResource } from '@/domain/campaign';
 import { survivingSelection } from './campaignDelete';
@@ -56,9 +57,12 @@ const CampaignsList: Component = () => {
   // StoreGuardLayout. It AUTHORISES the read — the register is
   // installation-wide and the argument scopes nothing (contract.md wire trap).
   const params = useParams<{ storeId: string }>();
-  const { query, setQuery } = useUrlQueryState<CampaignRegisterState>(
-    DEFAULT_REGISTER_STATE
-  );
+  const { query, setQuery } = useUrlQueryState<CampaignRegisterState>({
+    ...DEFAULT_REGISTER_STATE,
+    // A fresh visit starts at the user's remembered rows-per-page (D106); a
+    // URL that carries a page size still wins.
+    first: initialPageSize(),
+  });
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   // The editor is one dialog for both create and edit (S2): `undefined` = shut,
   // `null` = open blank (create), a campaign = open on that campaign (edit).
@@ -74,17 +78,21 @@ const CampaignsList: Component = () => {
   // the click, before the editor or the confirmation opens, instead of walking
   // the user through a form the server would refuse at the write. The server
   // enforces the same resource regardless.
-  const mayEdit = () => hasPermission('EDIT_CENTRAL_DATA');
-  // PascalCase, matching the HasPermission(...) names a real Forbidden carries.
-  const refusePermission = () => reportPermissionDenied(['EditCentralData']);
+  // One gate for all three entry points (create, edit, delete): true to
+  // proceed, otherwise the denial is reported and the caller stops.
+  const guardEdit = (): boolean => {
+    if (hasPermission('EDIT_CENTRAL_DATA')) return true;
+    // PascalCase, matching the HasPermission(...) names a real Forbidden
+    // carries.
+    reportPermissionDenied(['EditCentralData']);
+    return false;
+  };
 
   const openCreate = () => {
-    if (!mayEdit()) return refusePermission();
-    setEditing(null);
+    if (guardEdit()) setEditing(null);
   };
   const openEdit = (campaign: Campaign) => {
-    if (!mayEdit()) return refusePermission();
-    setEditing(campaign);
+    if (guardEdit()) setEditing(campaign);
   };
 
   // Alt+N — this screen's add action (spec/keyboard KB-R2). Declared by the
@@ -147,18 +155,20 @@ const CampaignsList: Component = () => {
   const onSort = (key: CampaignSortKey, desc: boolean) =>
     setQuery({ ...query(), sort: [{ key, desc }], offset: 0 });
 
-  // A campaign changed: re-read the register, and refresh the app-wide
+  // A campaign changed: re-read the register, and invalidate the app-wide
   // campaigns cache the campaign-or-program pickers read, so a deleted campaign
   // stops being offered and a renamed one is offered under its new name
-  // (`.27`).
+  // (`.27`). `invalidate`, not `refetch`: a never-opened picker's cache stays
+  // unfetched and simply loads fresh when first read. Returns the register
+  // re-read for the caller that needs the fresh rows.
   const registerChanged = () => {
-    void refetch();
-    void campaignsResource.refetch();
+    campaignsResource.invalidate();
+    return refetch();
   };
 
   const onSaved = () => {
     setEditing(undefined);
-    registerChanged();
+    void registerChanged();
   };
 
   // The whole selection was deleted (the delete is atomic): the rows leave the
@@ -166,7 +176,7 @@ const CampaignsList: Component = () => {
   // announcement follows (D21).
   const onDeleted = () => {
     setSelectedIds([]);
-    registerChanged();
+    void registerChanged();
   };
 
   // A refused delete deleted NOTHING — its only rejection is a selected
@@ -174,8 +184,7 @@ const CampaignsList: Component = () => {
   // selection. Re-read it, and drop the vanished ids from the kept selection so
   // the selection bar never counts rows that are gone (ui-surface S1).
   const onRejected = async () => {
-    void campaignsResource.refetch();
-    const fresh = await refetch();
+    const fresh = await registerChanged();
     setSelectedIds(survivingSelection(selectedIds(), fresh?.nodes ?? rows()));
   };
 
@@ -262,8 +271,7 @@ const CampaignsList: Component = () => {
         selectionActions={
           <DeleteCampaignsAction
             selectedIds={selectedIds}
-            mayEdit={mayEdit}
-            onRefused={refusePermission}
+            guardEdit={guardEdit}
             onDeleted={onDeleted}
             onRejected={() => void onRejected()}
           />
@@ -280,7 +288,11 @@ const CampaignsList: Component = () => {
           pageSize: query().first,
           total: totalCount(),
           onOffsetChange: offset => setQuery({ ...query(), offset }),
-          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+          // The chosen size is remembered for the next visit (D106).
+          onPageSizeChange: first => {
+            rememberPageSize(first);
+            setQuery({ ...query(), first, offset: 0 });
+          },
         }}
       />
       {/* Mounted only while open, so the dialog's ids exist exactly while it
