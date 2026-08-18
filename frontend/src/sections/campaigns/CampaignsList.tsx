@@ -22,7 +22,7 @@ import { useUrlQueryState } from '@/list/urlQueryState';
 import { initialPageSize, rememberPageSize } from '@/list/pageSize';
 import { hasPermission } from '@/store/storeContext';
 import { campaignsResource } from '@/domain/campaign';
-import { survivingSelection } from './campaignDelete';
+import { survivingSelection, wholeRegisterVariables } from './campaignDelete';
 import { Campaigns } from './campaigns.generated';
 import {
   DEFAULT_REGISTER_STATE,
@@ -159,16 +159,15 @@ const CampaignsList: Component = () => {
   // campaigns cache the campaign-or-program pickers read, so a deleted campaign
   // stops being offered and a renamed one is offered under its new name
   // (`.27`). `invalidate`, not `refetch`: a never-opened picker's cache stays
-  // unfetched and simply loads fresh when first read. Returns the register
-  // re-read for the caller that needs the fresh rows.
+  // unfetched and simply loads fresh when first read.
   const registerChanged = () => {
     campaignsResource.invalidate();
-    return refetch();
+    void refetch();
   };
 
   const onSaved = () => {
     setEditing(undefined);
-    void registerChanged();
+    registerChanged();
   };
 
   // The whole selection was deleted (the delete is atomic): the rows leave the
@@ -176,16 +175,32 @@ const CampaignsList: Component = () => {
   // announcement follows (D21).
   const onDeleted = () => {
     setSelectedIds([]);
-    void registerChanged();
+    registerChanged();
   };
 
   // A refused delete deleted NOTHING — its only rejection is a selected
   // campaign no longer in the register, i.e. the register moved underneath the
-  // selection. Re-read it, and drop the vanished ids from the kept selection so
-  // the selection bar never counts rows that are gone (ui-surface S1).
-  const onRejected = async () => {
-    const fresh = await registerChanged();
-    setSelectedIds(survivingSelection(selectedIds(), fresh?.nodes ?? rows()));
+  // selection. Re-read it behind the still-open could-not-delete notice, so the
+  // user is shown the register as it now is (ui-surface S1). The selection is
+  // NOT pruned yet: pruning could empty it, and an empty selection unmounts the
+  // selection bar — and with it the notice being read.
+  const onRejected = () => registerChanged();
+
+  // The notice was dismissed: NOW drop the vanished ids from the kept
+  // selection, checked against the WHOLE register — a selection can span
+  // pages, so the visible page cannot say which rows survive — so the
+  // selection bar never counts rows that are gone (ui-surface S1). On a failed
+  // read the selection is left alone: the global modal owns that failure, and
+  // guessing would drop live rows.
+  const onRejectionDismissed = async () => {
+    const result = await graphqlFetch(
+      Campaigns,
+      wholeRegisterVariables(params.storeId)
+    );
+    if (result.kind !== 'success') return;
+    setSelectedIds(
+      survivingSelection(selectedIds(), result.data.campaigns.nodes)
+    );
   };
 
   // Columns and crumbs are accessors, not plain arrays: their text comes from
@@ -273,7 +288,8 @@ const CampaignsList: Component = () => {
             selectedIds={selectedIds}
             guardEdit={guardEdit}
             onDeleted={onDeleted}
-            onRejected={() => void onRejected()}
+            onRejected={onRejected}
+            onRejectionDismissed={() => void onRejectionDismissed()}
           />
         }
         config={tableConfig.config()}
