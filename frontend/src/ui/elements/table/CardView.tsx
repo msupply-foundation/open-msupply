@@ -3,6 +3,7 @@ import type { JSX } from 'solid-js';
 import {
   type Cell as TanCell,
   type HeaderContext,
+  type Row as TanRow,
   type Table,
 } from '@tanstack/solid-table';
 import { renderTemplate } from './renderTemplate';
@@ -364,6 +365,15 @@ export function CardView<T, G extends string>(props: {
    * recolour field labels and controls). Stamps data-tone on the card row.
    */
   rowTone?: (row: T) => 'info' | 'warning' | 'error' | undefined;
+  /**
+   * Keyboard row navigation, per row (see TableRow's prop of the same name —
+   * same accessors, same reason they must stay lazy). Card view is the SAME
+   * rows in the same table, so the arrows work identically here; only the
+   * highlight's painting differs (a ring on the card, not on cells).
+   */
+  rowFocus?: (
+    row: TanRow<T>
+  ) => { focused: () => boolean; onFocus: () => void } | undefined;
 }): JSX.Element {
   // The DataTable renders the empty state itself (before this view), so cards
   // always have ≥1 row here — no empty branch.
@@ -401,6 +411,9 @@ export function CardView<T, G extends string>(props: {
         // A declared group's cells, in body order.
         const groupCells = (key: G) =>
           bodyCells().filter(c => cellGroup(c) === key);
+        // This row's keyboard-focus handle, re-resolved on each read like every
+        // other per-row fact here (see the bindings below).
+        const rowFocus = () => props.rowFocus?.(row);
         return (
           <tr
             class={`${styles.cardRow} ${props.onRowClick ? styles.rowClickable : ''}`}
@@ -410,6 +423,15 @@ export function CardView<T, G extends string>(props: {
             // The row's key, exactly as table view stamps it (TableRow), so a
             // caller can address one row in the DOM in either rendering.
             data-row-key={row.id}
+            // Keyboard row navigation (KB-N1): -1, never 0 — the <table> is the
+            // tab stop and the arrows move real DOM focus between rows, exactly
+            // as in table view (see createRowFocus.ts). Resolved per read, not
+            // hoisted into the row's scope: `rowFocus` answers undefined once a
+            // record turns read-only (its onRowClick goes with it), and a row
+            // built while it was set must drop the affordance when it does.
+            tabindex={rowFocus() ? -1 : undefined}
+            data-row-focused={rowFocus()?.focused() ? '' : undefined}
+            onFocus={() => rowFocus()?.onFocus()}
             onClick={() => props.onRowClick?.(row.original)}
           >
             <td class={styles.cardCell}>
