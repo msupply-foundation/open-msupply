@@ -38,10 +38,10 @@ export type CampaignRegisterState = {
  * falls back to `id` ascending, so there is no server-side default that matches
  * the rule (contract.md wire trap).
  *
- * `first` is the register's base page size (ui-surface S1 § Layout); the
- * screen seeds the user's remembered rows-per-page over it per visit (D106,
- * `@/list/pageSize` — NOT re-exported here, to keep one source for the
- * app-wide default).
+ * `first` is the register's OWN base page size, 20 (ui-surface S1 § Layout) —
+ * spec-owned and deliberately NOT the app-wide `DEFAULT_PAGE_SIZE` (50), so it
+ * is stated here, not imported. The screen seeds the user's remembered
+ * rows-per-page over it per visit (D106, `@/list/pageSize`).
  */
 export const DEFAULT_REGISTER_STATE: CampaignRegisterState = {
   sort: [{ key: 'name', desc: false }],

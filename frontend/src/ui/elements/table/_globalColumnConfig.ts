@@ -216,6 +216,8 @@ export const CELL_DEF = {
   date: { kind: 'date' },
   startDatetime: { kind: 'date' },
   enrolmentDatetime: { kind: 'date' },
+  startDate: { kind: 'date' },
+  endDate: { kind: 'date' },
   // Time of day — the sibling of a Date column over the same instant.
   time: { kind: 'time' },
   // Expiry (date + near-expiry error tone).

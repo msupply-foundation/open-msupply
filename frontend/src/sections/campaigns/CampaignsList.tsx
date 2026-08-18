@@ -15,7 +15,7 @@ import {
   type Column,
   type SortState,
 } from '@/ui/elements/table/DataTable';
-import { getDateCell } from '@/ui/elements/table/tableHelpers';
+import { getCellDefinition } from '@/ui/elements/table/tableHelpers';
 import { createTableConfig } from '@/api/createTableConfig';
 import { PlusCircleIcon } from '@/ui/icons';
 import { useUrlQueryState } from '@/list/urlQueryState';
@@ -221,12 +221,12 @@ const CampaignsList: Component = () => {
       header: () => t('label.start-date'),
       // No sortKey: there is no server sort key for either date, so the header
       // offers no sort control and its column menu no sort entry.
-      ...getDateCell(),
+      ...getCellDefinition('startDate'),
     },
     {
       c: { key: 'endDate' },
       header: () => t('label.end-date'),
-      ...getDateCell(),
+      ...getCellDefinition('endDate'),
     },
   ];
 
