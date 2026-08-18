@@ -32,11 +32,12 @@ export const shallowEqual = <T extends readonly unknown[]>(
     a.length === b.length &&
     a.every((v, i) => v === b[i]));
 
-// Are two fetched payloads structurally identical? The explicit dedup for the
-// rare publisher that REBUILDS its value on every load, where neither
-// graphqlFetch's structural sharing nor a memo boundary can preserve identity
-// (kdd/state-management decision 5) — loadDictionary is the one such site
-// today. JSON-round-trip data only: parsed responses / string maps, no
+// Are two fetched payloads structurally identical? The explicit dedup for a
+// publisher that REBUILDS its value on every load, where graphqlFetch's
+// structural sharing alone can't preserve identity (kdd/state-management
+// decision 5): loadDictionary compares before publishing, and
+// storeScopedResource's noSuspense memo carries this as its `equals`.
+// JSON-round-trip data only: parsed responses / string maps, no
 // undefined/Date/function values. A false negative just costs a re-render; a
 // false positive cannot arise from differing data (any difference changes the
 // text).

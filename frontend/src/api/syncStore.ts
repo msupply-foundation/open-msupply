@@ -51,9 +51,12 @@ let wasSyncing = false;
 // so an UNCHANGED response must publish nothing — no notification, no remount,
 // no focus loss (spec: an unchanged refresh is imperceptible, SYNC-03.32).
 // graphqlFetch's structural sharing makes that hold for reads published
-// straight off the response; anything ADDED to this hook must keep it holding
-// — publish the fetched object directly, or derive through an owned memo
-// (kdd/state-management decision 5; kdd/solid-reactivity-pitfalls §16).
+// straight off the response, and storeScopedResource's noSuspense memo makes
+// it hold for the shared caches (absorbing both resource.state churn and a
+// fetcher that derives); anything ADDED to this hook must keep it holding —
+// publish the fetched object directly, read a store-scoped cache via
+// noSuspense(), or derive through an owned memo (kdd/state-management
+// decision 5; kdd/solid-reactivity-pitfalls §16).
 // Locations are NOT a shared cache anymore — each view fetches them locally (a
 // fresh view mount re-reads, and the stocktake detail view refetches after
 // every line save), so there is no global locations cache to refresh here.
