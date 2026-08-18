@@ -7,6 +7,7 @@ import {
   type JSX,
 } from 'solid-js';
 import type { FocusTarget } from '../../utils/createFocusTarget';
+import { PortalMountContext } from '../../utils/portalMount';
 import styles from './Popover.module.css';
 
 export type PopoverPlacement =
@@ -83,6 +84,9 @@ const EDGE = 8;
 export const Popover = (props: PopoverProps) => {
   let trigger!: HTMLButtonElement;
   let panel!: HTMLDivElement;
+  // The panel element as a signal, for PortalMountContext below (the provider's
+  // consumers read it reactively; the bare `panel` ref never notifies).
+  const [panelEl, setPanelEl] = createSignal<HTMLDivElement>();
   const panelId = createUniqueId();
   // Panel content mounts lazily, on first open, not with the rest of the page
   // — a Popover that's never opened (most of them, most page-loads) never
@@ -251,7 +255,10 @@ export const Popover = (props: PopoverProps) => {
         {props.trigger}
       </button>
       <div
-        ref={panel}
+        ref={el => {
+          panel = el;
+          setPanelEl(el);
+        }}
         id={panelId}
         popover="auto"
         class={props.class ? `${styles.panel} ${props.class}` : styles.panel}
@@ -269,21 +276,27 @@ export const Popover = (props: PopoverProps) => {
         {/* Lazy mount: content is never constructed until the first open (see
             everOpened above) — a Popover the user never opens costs nothing
             beyond its trigger button. */}
-        <Show when={everOpened()}>
-          {(() => {
-            // Read props.children ONCE into a local: it's a getter compiled
-            // from the caller's JSX, so a second read (e.g. testing its type,
-            // then rendering it) re-evaluates that JSX and constructs the
-            // child a second time (solidjs/solid docs — the `children`
-            // helper exists for exactly this; not used here because it
-            // auto-invokes only NILADIC function children, and ours takes
-            // `close`).
-            const resolved = props.children;
-            return typeof resolved === 'function'
-              ? resolved(() => panel.hidePopover())
-              : resolved;
-          })()}
-        </Show>
+        {/* The panel is in the TOP LAYER (popover="auto"), so a popup portaled
+            to <body> (a Select/Combobox listbox) paints BEHIND it and its
+            clicks land on the panel — same trap as a modal <dialog>. Mount
+            such popups into the panel instead, exactly as Dialog does. */}
+        <PortalMountContext.Provider value={panelEl}>
+          <Show when={everOpened()}>
+            {(() => {
+              // Read props.children ONCE into a local: it's a getter compiled
+              // from the caller's JSX, so a second read (e.g. testing its type,
+              // then rendering it) re-evaluates that JSX and constructs the
+              // child a second time (solidjs/solid docs — the `children`
+              // helper exists for exactly this; not used here because it
+              // auto-invokes only NILADIC function children, and ours takes
+              // `close`).
+              const resolved = props.children;
+              return typeof resolved === 'function'
+                ? resolved(() => panel.hidePopover())
+                : resolved;
+            })()}
+          </Show>
+        </PortalMountContext.Provider>
       </div>
     </>
   );
