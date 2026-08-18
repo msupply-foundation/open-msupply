@@ -38,7 +38,13 @@ export interface PopoverProps {
   /** Preferred side/alignment; flips to the other side rather than overflow.
       start/end are logical (mirror in RTL). Default 'bottom'. */
   placement?: PopoverPlacement;
-  /** Close when a button inside the panel is clicked  */
+  /**
+   * Close when a button inside the panel is clicked.
+   *
+   * Don't combine with a Select/Combobox in the panel: their trigger IS a
+   * button, so opening the drop-down would dismiss the popover. (Picking an
+   * option is safe — an option is an `<li>`.)
+   */
   closeOnClickInside?: boolean;
   /**
    * Open on hover (and focus) — for content bubbles whose trigger IS the
