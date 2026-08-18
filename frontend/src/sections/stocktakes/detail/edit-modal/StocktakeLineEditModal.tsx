@@ -276,12 +276,34 @@ const CARD_GROUPS: CardGroup<DraftLine, GroupKey>[] = [
   {
     key: 'batch',
     panel: true,
+    // TWELVE tracks, not the inbound editor's six — worked out from THIS group's
+    // fields (see CardGroup.narrowLayout). Six cannot express the split these six
+    // fields want at all: a date needs 2 of 6 (13rem), and a row of four with a
+    // date in it then overflows. Twelve is finer than the ten that first fit,
+    // because the counting fields do NOT all want the same box — Packs counted is
+    // the one field on the card the user actually types into, and Pack size is
+    // read-only on existing stock and holds "1". So the counting row is 3/3/2/4
+    // rather than an even 2/2/2/4 — the two packs figures MATCHED, because they
+    // are read against each other and a mismatched pair reads as a mistake, with
+    // the pack size beside them at two — and the row under it is 8+4, which also
+    // buys Location its widest yet (~27rem).
+    narrowLayout: { columns: 12 },
   },
   {
     key: 'pricing',
     labelKey: 'label.pricing-additional-info',
     panel: true,
     disclosure: 'closed',
+    // Twelve, as the batch panel above — one card should not read as two
+    // different grids. Its own fields happen to want the same count: the three
+    // money/volume figures at 4 each, then the four long lookups and text fields
+    // in pairs at 6. Donor pairs like the rest; Comment takes the full row, which
+    // is what absorbs the PARITY Donor changes — an extra 6-span field flips
+    // whether the 6s pair off evenly, and Comment is the one field here that
+    // reads fine at either width. So the rows tile exactly with the donor
+    // preference ON (the pairs run Donor+Campaign, Manufacturer+Note, then
+    // Comment); with it off, the Note row is left half empty.
+    narrowLayout: { columns: 12 },
   },
 ];
 
@@ -939,7 +961,7 @@ const StocktakeLineEditContent = (
             c: { key: 'snapshotNumberOfPacks' },
             header: () => t('label.snapshot-num-of-packs'),
             cardGroup: 'batch',
-            ...getNumberCell({ cardWidth: 7.5 }),
+            ...getNumberCell({ cardWidth: 7.5, cardSpan: 3 }),
             cell: info => {
               const line = info.row.original;
               return (
@@ -966,7 +988,7 @@ const StocktakeLineEditContent = (
       c: { key: 'countedNumberOfPacks' },
       header: () => t('label.counted-num-of-packs'),
       cardGroup: 'batch',
-      ...getNumberCell({ cardWidth: 7.5 }),
+      ...getNumberCell({ cardWidth: 7.5, cardSpan: 3 }),
       cell: info => {
         const line = info.row.original;
         return (
@@ -999,7 +1021,11 @@ const StocktakeLineEditContent = (
       c: { key: 'packSize' },
       header: () => t('label.pack-size'),
       cardGroup: 'batch',
-      ...getNumberCell({ cardWidth: 8.75 }),
+      // 7.5 = the house figure for a numeric quantity (CARD_TABLE_MODEL.md §
+      // Field widths). It was 8.75, which a pack size has no use for — and the
+      // 1.25rem it gives back is what keeps the four counting fields on one
+      // wrapped row once the dates widen below.
+      ...getNumberCell({ cardWidth: 7.5, cardSpan: 2 }),
       cell: info => {
         const line = info.row.original;
         return (
@@ -1037,7 +1063,7 @@ const StocktakeLineEditContent = (
             c: { id: 'dosesCounted' },
             header: () => t('label.doses-counted'),
             cardGroup: 'batch',
-            ...getNumberCell({ cardWidth: 7.5 }),
+            ...getNumberCell({ cardWidth: 7.5, cardSpan: 2 }),
             cell: info => {
               const doses = dosesCounted(info.row.original);
               return (
@@ -1062,7 +1088,11 @@ const StocktakeLineEditContent = (
       c: { key: 'expiryDate' },
       header: () => t('label.expiry-date'),
       cardGroup: 'batch',
-      meta: { cardWidth: 10 },
+      // 11, not the 10 the width table lists for a date: 10rem was measured
+      // against a rendered VALUE ("11 Sep 2026", 74px in English), but an empty
+      // DateField shows the `DD MMM YYYY` placeholder, and all-caps is wider
+      // than the digits it stands for — at 10rem it clipped to "DD MMM YYY".
+      meta: { cardWidth: 11, cardSpan: 4 },
       cell: info => {
         const line = info.row.original;
         return (
@@ -1084,7 +1114,20 @@ const StocktakeLineEditContent = (
       c: { key: 'location' },
       header: () => t('label.location'),
       cardGroup: 'batch',
-      meta: { cardWidth: { min: 8, max: 17, weight: 1.2 } },
+      // max 24.5 lands this field exactly on a COLUMN EDGE, so the wrapped row
+      // still reads as a grid instead of a ragged second line. The counting row
+      // above is 7.5 + 7.5 + 7.5 + 11 with 1rem (--space-4) gaps, i.e. edges at
+      // 0 / 8.5 / 17 / 25.5, ending at 36.5. Capped at 24.5 the location stops
+      // level with Pack size's right edge — it occupies columns 1–3 — so the
+      // manufacture date after it starts at 25.5 (under Expiry) and ends at 36.5
+      // (level with the row above). The cap, not a span, is what buys that: it's
+      // the only reason a lone weighted field on a wrapped row stops anywhere
+      // predictable.
+      //
+      // NB it is arithmetic against THIS field set. A vaccine item's extra
+      // fields (doses counted, VVM status) change the counting row's
+      // composition, and the wrapped row's edges move with it.
+      meta: { cardWidth: { min: 8, max: 24.5, weight: 1.2 }, cardSpan: 8 },
       cell: info => {
         const line = info.row.original;
         return (
@@ -1124,7 +1167,7 @@ const StocktakeLineEditContent = (
             c: { id: 'vvmStatus' },
             header: () => t('label.vvm-status'),
             cardGroup: 'batch',
-            meta: { cardWidth: 10 },
+            meta: { cardWidth: 10, cardSpan: 4 },
             cell: info => {
               const line = info.row.original;
               return (
@@ -1158,7 +1201,9 @@ const StocktakeLineEditContent = (
       c: { key: 'manufactureDate' },
       header: () => t('label.manufacture-date'),
       cardGroup: 'batch',
-      meta: { cardWidth: 10 },
+      // 11 for the placeholder, as the expiry date above — and this is the field
+      // where it showed, since it is usually the empty one.
+      meta: { cardWidth: 11, cardSpan: 4 },
       cell: info => {
         const line = info.row.original;
         return (
@@ -1178,7 +1223,7 @@ const StocktakeLineEditContent = (
       c: { key: 'sellPricePerPack' },
       header: () => t('label.pack-sell-price'),
       cardGroup: 'pricing',
-      ...getNumberCell({ cardWidth: 10 }),
+      ...getNumberCell({ cardWidth: 10, cardSpan: 4 }),
       cell: info => {
         const line = info.row.original;
         return (
@@ -1199,7 +1244,7 @@ const StocktakeLineEditContent = (
       c: { key: 'costPricePerPack' },
       header: () => t('label.pack-cost-price'),
       cardGroup: 'pricing',
-      ...getNumberCell({ cardWidth: 10 }),
+      ...getNumberCell({ cardWidth: 10, cardSpan: 4 }),
       cell: info => {
         const line = info.row.original;
         return (
@@ -1220,7 +1265,7 @@ const StocktakeLineEditContent = (
       c: { key: 'volumePerPack' },
       header: () => t('label.volume-per-pack'),
       cardGroup: 'pricing',
-      ...getNumberCell({ cardWidth: 10 }),
+      ...getNumberCell({ cardWidth: 10, cardSpan: 4 }),
       cell: info => {
         const line = info.row.original;
         return (
@@ -1250,7 +1295,7 @@ const StocktakeLineEditContent = (
             c: { id: 'donor' },
             header: () => t('label.donor'),
             cardGroup: 'pricing',
-            meta: { cardWidth: { min: 9, max: 18, weight: 1 } },
+            meta: { cardWidth: { min: 9, max: 18, weight: 1 }, cardSpan: 6 },
             cell: info => {
               const line = info.row.original;
               return (
@@ -1295,7 +1340,7 @@ const StocktakeLineEditContent = (
       c: { id: 'campaignOrProgram' },
       header: () => t('label.campaign'),
       cardGroup: 'pricing',
-      meta: { cardWidth: { min: 9.5, max: 20, weight: 1.2 } },
+      meta: { cardWidth: { min: 9.5, max: 20, weight: 1.2 }, cardSpan: 6 },
       cell: info => {
         const line = info.row.original;
         return (
@@ -1326,7 +1371,7 @@ const StocktakeLineEditContent = (
       c: { id: 'manufacturer' },
       header: () => t('label.manufacturer'),
       cardGroup: 'pricing',
-      meta: { cardWidth: { min: 10, max: 20, weight: 1.4 } },
+      meta: { cardWidth: { min: 10, max: 20, weight: 1.4 }, cardSpan: 6 },
       cell: info => {
         const line = info.row.original;
         return (
@@ -1373,6 +1418,12 @@ const StocktakeLineEditContent = (
             cardGroup: 'batch',
             meta: {
               cardWidth: { min: 9, max: 20, weight: 1.2 },
+              // A whole row of the ten when it appears. Reason comes and goes
+              // per BATCH (hideOnCardWhen below), not per table, so it's the one
+              // field here that can change a card's packing while the modal is
+              // open — a full row is the only span that leaves the rows above it
+              // untouched when it does.
+              cardSpan: 12,
               // The card shows Reason only on a batch that can actually take
               // one: counted, and counted to something other than its
               // snapshot. A level batch takes no reason at all (rules.md
@@ -1433,7 +1484,7 @@ const StocktakeLineEditContent = (
       c: { key: 'note' },
       header: () => t('label.note'),
       cardGroup: 'pricing',
-      meta: { cardWidth: { min: 8, max: 24, weight: 1.4 } },
+      meta: { cardWidth: { min: 8, max: 24, weight: 1.4 }, cardSpan: 6 },
       cell: info => {
         const line = info.row.original;
         return (
@@ -1454,7 +1505,7 @@ const StocktakeLineEditContent = (
       c: { key: 'comment' },
       header: () => t('label.stocktake-comment'),
       cardGroup: 'pricing',
-      meta: { cardWidth: { min: 8, max: 24, weight: 1.4 } },
+      meta: { cardWidth: { min: 8, max: 24, weight: 1.4 }, cardSpan: 12 },
       cell: info => {
         const line = info.row.original;
         return (
