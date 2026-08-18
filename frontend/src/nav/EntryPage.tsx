@@ -1,4 +1,4 @@
-import { Show } from 'solid-js';
+import { lazy, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { t } from '../intl';
@@ -8,6 +8,12 @@ import { Breadcrumb } from '../ui/layout/Header/Breadcrumb';
 import { EmptyState } from '../ui/elements/feedback/EmptyState';
 import { Button } from '../ui/elements/buttons/Button';
 import { navTrail, type NavItem } from './navConfig';
+
+// The not-found page's whimsy (issue #867) — the current app's lost-on-the-moon
+// illustration. Lazy so its ~3 KB gzip rides in its own chunk, fetched only
+// when a 404 actually renders; a fresh screen load, so suspending here loses
+// no live state (kdd/solid-reactivity-pitfalls).
+const UnhappyMan = lazy(() => import('../ui/icons/UnhappyMan'));
 
 // The stand-in page for a nav destination with no section built yet, and for
 // the router's catch-all (no `dest` → the not-found variant).
@@ -43,7 +49,8 @@ export const EntryPage: Component<{ dest?: NavItem }> = props => {
       }
     >
       <EmptyState
-        title={props.dest ? t('common.coming-soon') : t('heading.not-found')}
+        title={props.dest ? t('common.coming-soon') : t('heading.404')}
+        illustration={props.dest ? undefined : <UnhappyMan />}
         message={
           props.dest
             ? t('message.destination-not-built')

@@ -19,6 +19,12 @@ export interface EmptyStateProps {
    */
   graphic?: boolean;
   /**
+   * Replace the default NothingHereIcon with a bespoke illustration (the 404
+   * page's UnhappyMan). The element owns its own sizing; the heading and
+   * message render beneath it as usual.
+   */
+  illustration?: JSX.Element;
+  /**
    * Optional call to action, rendered INLINE after the message (e.g. a "Create
    * a new one" ghost button) — same line, matching the current app.
    */
@@ -41,7 +47,7 @@ export interface EmptyStateProps {
 export const EmptyState = (props: EmptyStateProps) => (
   <div class={styles.empty} data-testid={props['data-testid']}>
     <Show when={props.graphic !== false}>
-      <NothingHereIcon class={styles.graphic} />
+      {props.illustration ?? <NothingHereIcon class={styles.graphic} />}
       <p class={styles.title}>{props.title ?? t('error.no-results')}</p>
     </Show>
     <div class={styles.body}>

@@ -42,7 +42,7 @@ import type { StockMovementLineFragment } from '../stockMovementDetail.generated
 // item → batch → destination → quantity, progressively disclosed. Add mode
 // starts on the item search (auto-focused); update mode opens read-only on
 // the line's item + batch with its saved destination and quantity
-// (OMS-REG-SMV-09.16). Save & next (add mode only — .32) saves and resets for
+// (OMS-REG-SMV-10.16). Save & next (add mode only — .32) saves and resets for
 // another entry.
 //
 // The batch CANDIDATES resource first fetches on an interaction (picking an
@@ -113,7 +113,7 @@ export const StockMovementLineEditModal: Component<
       : [];
 
   // The options: candidates minus batches already on the movement, keeping
-  // the edited line's own batch offerable (OMS-REG-SMV-09.8).
+  // the edited line's own batch offerable (OMS-REG-SMV-10.8).
   const options = createMemo(() =>
     excludeAddedBatches(
       candidates(),
@@ -152,7 +152,7 @@ export const StockMovementLineEditModal: Component<
     number | null | undefined
   >();
   // Seeded with the batch's FULL available packs (ui-surface S3;
-  // OMS-REG-SMV-09.11); update mode with the line's saved quantity.
+  // OMS-REG-SMV-10.11); update mode with the line's saved quantity.
   const packs = (): number | undefined => {
     const entered = enteredPacks();
     if (entered !== undefined) return entered ?? undefined;
@@ -176,7 +176,7 @@ export const StockMovementLineEditModal: Component<
   // Destination options honour the item's restricted storage type when set
   // (rules § lines) — a hard narrowing, while the source location and held
   // locations stay VISIBLE but disabled in place, labelled with the reason
-  // (ui-surface S3; OMS-REG-SMV-09.10).
+  // (ui-surface S3; OMS-REG-SMV-10.10).
   const destinationOptions = createMemo(() => {
     const restrictedType = selectedBatch()?.restrictedLocationTypeId;
     const all = props.locations();
@@ -243,7 +243,7 @@ export const StockMovementLineEditModal: Component<
     if (await save()) props.onClose();
   };
 
-  // Save & next (add mode only — OMS-REG-SMV-09.32): saves, then resets to a
+  // Save & next (add mode only — OMS-REG-SMV-10.32): saves, then resets to a
   // fresh add with the item search focused for the next entry.
   const onSaveAndNext = async () => {
     if (!(await save())) return;
@@ -295,7 +295,6 @@ export const StockMovementLineEditModal: Component<
           hideLabel
           storeId={props.storeId}
           hasStockOnHand
-          width="full"
           disabled={isUpdate()}
           value={itemId()}
           selectedItem={selectedItemSeed()}
@@ -305,7 +304,7 @@ export const StockMovementLineEditModal: Component<
       </FieldRow>
 
       {/* Batch — appears once an item is chosen; location-held candidates
-          disabled in place, labelled (OMS-REG-SMV-09.9); read-only in update
+          disabled in place, labelled (OMS-REG-SMV-10.9); read-only in update
           mode. */}
       <Show when={itemId()}>
         <FieldRow label={t('label.batch')}>
@@ -394,7 +393,7 @@ export const StockMovementLineEditModal: Component<
                 // tighter cap here would round the seeded full-available value
                 // and make the upper bound unreachable — 1.003 available could
                 // only ever be typed as 1.00, so a whole line couldn't move
-                // (OMS-REG-SMV-09.11). Match OMS's 10-dp room.
+                // (OMS-REG-SMV-10.11). Match OMS's 10-dp room.
                 decimalLimit={10}
                 value={packs()}
                 helperText={t('messages.move-all-or-partial', {

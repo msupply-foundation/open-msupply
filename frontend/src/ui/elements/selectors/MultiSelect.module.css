@@ -9,7 +9,24 @@
   flex-direction: column;
   gap: var(--input-field-gap);
   min-width: 0;
+}
+
+/* Width caps — TextField's data-width vocabulary AND its meanings, rule for
+   rule (see TextField.module.css, the reference block). Until 2026-08-13 this
+   field was hardwired to the `long` cap with no `width` prop at all, so a
+   caller couldn't correct it. `compact` caps only the control box (rule after
+   the base .control rules below, for no-descending-specificity). */
+.field[data-width='compact'],
+.field[data-width='short'] {
+  max-width: var(--input-max-short);
+}
+
+.field[data-width='long'] {
   max-width: var(--input-max-long);
+}
+
+.field[data-width='full'] {
+  max-width: 100%;
 }
 
 /* Label + its labelInfo affordance on one line (only rendered when there IS a
@@ -35,13 +52,19 @@
   border-radius: var(--input-radius);
   background: var(--bg-white);
   transition:
-    border-color 120ms ease,
-    box-shadow 120ms ease;
+    border-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease;
 }
 
 .control:focus-within {
   border-color: var(--secondary-main);
   box-shadow: var(--focus-ring);
+}
+
+/* `compact` narrows only the control box; the field above keeps its `short`
+   cap so a longer label still reads. As TextField.module.css. */
+.field[data-width='compact'] .control {
+  max-width: var(--input-max-compact);
 }
 
 .tags {
@@ -123,7 +146,7 @@
 .toggleIcon {
   display: inline-flex;
   font-size: 1.25rem;
-  transition: transform 150ms ease;
+  transition: transform var(--motion-base) ease;
 }
 
 /* Kobalte marks the icon with data-expanded while the menu is open. */
@@ -157,6 +180,12 @@
 }
 
 .item {
+  /* Never shrink below the row's own text — see Combobox.module.css `.item` for
+     the full account: a scrolling column flex box shrinks its rows, and the
+     coarse-pointer touch floor below replaces the `min-height: auto` that
+     otherwise holds them open, so on a tablet a wrapped option collapsed into
+     44px and overlapped its neighbour (#1039). The touch floor still applies. */
+  flex: none;
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -165,6 +194,10 @@
   cursor: pointer;
   user-select: none;
   outline: none;
+  /* A wrapping row must be allowed to be narrower than its longest word, or the
+     overrun becomes a horizontal scrollbar over the options (#1041) — see
+     Combobox.module.css for why `anywhere` and not `break-word`. */
+  overflow-wrap: anywhere;
 }
 
 .item[data-highlighted] {
@@ -219,9 +252,15 @@
     min-height: var(--input-height-sm-touch);
   }
 
-  /* Touch font bump — see --input-font-touch (stops iOS zoom-on-focus). */
-  .input {
-    font-size: var(--input-font-touch);
+  /* Touch size normalisation — BOTH sizes read the same on the same surface
+     (ui-standards #field-touch-sizing). At --text-sm, not --input-font-touch:
+     see the Select trigger's note for the tablet review behind that. The small
+     selector has to be REPEATED here — a media query adds no specificity, so a
+     bare `.input` (0,1,0) loses to `.field[data-size='small'] .input` (0,3,0)
+     above and the rule silently never lands on small. */
+  .input,
+  .field[data-size='small'] .input {
+    font-size: var(--text-sm);
   }
 
   .item {

@@ -45,3 +45,12 @@
   text-align: start;
   padding: 0.5rem 0.75rem;
 }
+
+/* Store-selection screen (startup S3): seats the selector panel inside the
+   login frame's light panel — centred, breathing room top and bottom, its own
+   scroll when the list outgrows the viewport (the frame's .panel already
+   scrolls). */
+.storeSelectArea {
+  justify-content: center;
+  padding: var(--space-6);
+}

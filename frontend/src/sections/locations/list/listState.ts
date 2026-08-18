@@ -1,4 +1,5 @@
 import { stripEmpty } from '@/typeHelpers';
+import { DEFAULT_PAGE_SIZE } from '@/list/pageSize';
 import type { LocationsListVariables } from './locations.generated';
 import type { LocationFilter } from './listFilters';
 
@@ -7,8 +8,6 @@ import type { LocationFilter } from './listFilters';
 // (OMS-REG-INV-01.36..OMS-REG-INV-01.19) is testable in node vitest. Filter
 // and sort are exactly the generated GraphQL shapes (kdd/type-safety: no
 // remapping).
-
-export const DEFAULT_PAGE_SIZE = 20;
 
 export type LocationsListState = {
   filter: LocationFilter;

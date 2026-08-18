@@ -50,10 +50,10 @@
   line-height: 1.5;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .panel:popover-open {
-    animation: panel-in 120ms ease;
-  }
+/* No reduced-motion media query: --motion-fast is zeroed in tokens.css, so the
+   panel simply appears at its end state. */
+.panel:popover-open {
+  animation: panel-in var(--motion-fast) ease;
 }
 
 @keyframes panel-in {

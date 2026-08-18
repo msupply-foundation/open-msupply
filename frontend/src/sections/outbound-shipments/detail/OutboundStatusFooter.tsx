@@ -1,12 +1,16 @@
-import { createSignal, Show, type Component } from 'solid-js';
+import { createSignal, Show, type Component, type JSX } from 'solid-js';
 import { t } from '../../../intl';
 import { CheckboxButton } from '../../../ui/elements/buttons/CheckboxButton';
-import { CloseButton } from '../../../ui/elements/buttons/StandardButtons';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
+import {
+  Pagination,
+  type PaginationProps,
+} from '../../../ui/elements/table/Pagination';
 import { StatusChangeAction, type StatusPreflight } from './actions';
-import { STATUS_LABELS, statusIndex, isEditable } from '../outboundStatus';
+import { currentStep } from '@/domain/invoice';
+import { STATUS_FLOW, STATUS_LABELS, isEditable } from '../outboundStatus';
 import { allowedStatuses } from '../outboundStatusOptions';
 import type { OutboundNode } from './outboundUpdate';
 
@@ -31,11 +35,24 @@ export interface OutboundStatusFooterProps {
   preflight: () => Promise<StatusPreflight | undefined>;
   /** Toggle hold (writes onHold via the field-save path). */
   onSetHold: (hold: boolean) => void;
+  /**
+   * The line table's pager, hosted HERE rather than in a band of its own
+   * (spec/ui-standards § tables → pagination): this bar is present at every
+   * line count, so a shipment that pages gets its controls without a second
+   * row of chrome. The pager renders itself away when there is nowhere to page
+   * to, leaving this bar exactly as it was.
+   */
+  pagination: PaginationProps;
+  /**
+   * The shipment totals, when the screen is too short of height to give them a
+   * band of their own (narrow viewports — see OutboundTotalsStrip's `inline`).
+   * Rendered as this bar's first item; nothing at all on a wide screen, where
+   * the band above the bar is still where they live.
+   */
+  totals?: JSX.Element;
   /** A status change saved — replace the entity in place (the view also
    * refetches the lines page: leaving NEW trims zero rows server-side). */
   onSaved: (node: OutboundNode) => void;
-  /** Close — navigate back to the list. */
-  onClose: () => void;
 }
 
 export const OutboundStatusFooter: Component<
@@ -45,7 +62,6 @@ export const OutboundStatusFooter: Component<
 
   const editable = () => isEditable(props.node.status);
   const holding = () => props.node.onHold;
-  const currentIndex = () => statusIndex(props.node.status);
 
   // The lifecycle indicator over the preference-allowed sequence. A status
   // already reached stays visible even if the preference excludes it later in
@@ -65,24 +81,17 @@ export const OutboundStatusFooter: Component<
       date: stamps[status],
     }));
   };
-  // OMS-REG-DIST-04.22: a current status the preference EXCLUDES displays as
-  // the nearest included EARLIER status — the LAST allowed entry at or before
-  // the current one (allowedStatuses() is already in ascending flow order). A
-  // plain loop rather than Array#findLastIndex: eslint-plugin-solid doesn't
-  // recognise it as a safe callback host (unlike findIndex/map/etc.), so it
-  // misreports the predicate's currentIndex() read as untracked.
-  const indicatorIndex = () => {
-    const allowed = allowedStatuses();
-    let result = -1;
-    for (let i = 0; i < allowed.length; i++) {
-      if (statusIndex(allowed[i]) <= currentIndex()) result = i;
-      else break;
-    }
-    return result;
-  };
+  // OMS-REG-DIST-04.22: an excluded current status displays as the nearest
+  // included earlier one (the shared invoice-status gate's currentStep).
+  const indicatorIndex = () =>
+    currentStep(STATUS_FLOW, allowedStatuses(), props.node.status);
 
   return (
     <ContentFooter>
+      {/* The totals, on the bar itself rather than above it (narrow
+          viewports only — the prop is undefined on a wide screen). */}
+      {props.totals}
+
       {/* Hold: blocks status changes only, not edits (rules.md § on hold).
           Editable while the shipment is editable; hidden from SHIPPED. */}
       <Show when={editable()}>
@@ -97,19 +106,22 @@ export const OutboundStatusFooter: Component<
 
       <StatusIndicator steps={steps()} current={indicatorIndex()} />
 
-      {/* Close (back to the list) + the status-change split button. The split
-          button hides entirely when read-only (spec S3 § status footer). */}
+      {/* The status-change split button, which hides entirely when read-only
+          (spec S3 § status footer). No Close beside it (D103): leaving the
+          shipment is the breadcrumb's job, as on every other screen. */}
       <StatusChangeAction
         storeId={props.storeId}
         node={props.node}
         preflight={props.preflight}
         onSaved={props.onSaved}
-        closeButton={
-          // The standard action-footer close (registry § buttons & status):
-          // secondary, close glyph, and LABELLED — a footer action is read as a
-          // verb. It sheds its label to the icon on phones by default, so the
-          // dense case is a width outcome, not a per-vertical choice.
-          <CloseButton data-testid="close-button" onClick={props.onClose} />
+        leading={
+          <>
+            {/* The line pager, docked in the action cluster (`inBar` — it
+                sizes to its cluster, so a crowded bar wraps the cluster whole
+                rather than crushing the pager). Spread of the LIVE prop
+                object, as DataTable does, so offset/total changes reach it. */}
+            <Pagination {...props.pagination} inBar />
+          </>
         }
       />
 

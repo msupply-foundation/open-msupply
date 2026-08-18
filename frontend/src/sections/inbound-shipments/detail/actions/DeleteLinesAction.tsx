@@ -58,7 +58,7 @@ const Body = (props: LineActionProps & { onClose: () => void }) => {
     const outcome = await runInboundBatch(props.storeId, props.isExternal, {
       deleteInboundShipmentLines: props.selectedIds().map(id => ({ id })),
     });
-    if (!outcome) return props.onClose();
+    if (!outcome) return setPhase('confirm'); // handled globally
     if (outcome.errors.size > 0) {
       props.onError(outcome.errors);
       setErrorMessage([...outcome.errors.values()][0]);
