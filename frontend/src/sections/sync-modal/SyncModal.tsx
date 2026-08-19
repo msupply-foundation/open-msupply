@@ -129,6 +129,10 @@ export const SyncModal: Component<{
       startedAt: s.startedAt,
       finishedAt: s.finishedAt,
       icon: syncStepIcon[s.kind],
+      // Locale-stable per-phase test hook, derived from the phase's locale key
+      // ('sync-status.pull-central' -> 'sync-phase-pull-central') so the id
+      // can't drift from the phase it marks (e2e/TESTIDS.md § Sync modal).
+      testId: `sync-phase-${s.label.replace(/^sync-status\./, '')}`,
     })) ?? [];
 
   // The run's backfill descriptions (V7 only; empty for an ordinary run). Shown
@@ -161,6 +165,7 @@ export const SyncModal: Component<{
             icon={<SyncIcon />}
             loading={busy()}
             onClick={syncNow}
+            data-testid="sync-now-button"
           >
             {t('button.sync-now')}
           </Button>
@@ -184,15 +189,19 @@ export const SyncModal: Component<{
               <Spinner sizeRem={1.5} />
             </Match>
             <Match when={statusKind() === 'syncing'}>
-              <p class={styles.statusLine}>{t('sync-info.syncing')}</p>
+              <p class={styles.statusLine} data-testid="sync-status-line">
+                {t('sync-info.syncing')}
+              </p>
             </Match>
             <Match when={statusKind() === 'records-to-push'}>
-              <p class={styles.statusLine}>
+              <p class={styles.statusLine} data-testid="sync-status-line">
                 {tPlural('label.records-to-push', pushQueueCount() ?? 0)}
               </p>
             </Match>
             <Match when={statusKind() === 'nothing-to-push'}>
-              <p class={styles.statusLine}>{t('label.no-records-to-push')}</p>
+              <p class={styles.statusLine} data-testid="sync-status-line">
+                {t('label.no-records-to-push')}
+              </p>
             </Match>
           </Switch>
           <Show when={overview()}>
@@ -201,6 +210,7 @@ export const SyncModal: Component<{
                 steps={progressSteps()}
                 variant="primary"
                 error={ov().error != null}
+                testId="sync-phases"
               />
             )}
           </Show>
@@ -244,7 +254,11 @@ export const SyncModal: Component<{
           when={overview()?.succeeded ? overview()?.lastSuccessful : undefined}
         >
           {last => (
-            <Alert severity="neutral" icon={CheckCircleIcon}>
+            <Alert
+              severity="neutral"
+              icon={CheckCircleIcon}
+              testId="sync-last-successful"
+            >
               <span class={styles.successText}>
                 {t('messages.last-successful-sync-time-and-duration', {
                   time: lastSuccessTime(last().finished),
