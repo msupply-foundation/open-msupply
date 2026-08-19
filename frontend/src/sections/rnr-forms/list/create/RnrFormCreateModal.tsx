@@ -1,11 +1,10 @@
 import { createResource, createSignal, Show } from 'solid-js';
-import type { Component } from 'solid-js';
+import type { Component, Resource } from 'solid-js';
 import { graphqlFetch } from '@/api/graphql';
 import { t } from '@/intl';
 import { generateUUID } from '@/uuid';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
-import { Text } from '@/ui/elements/typography/Text';
 import {
   CancelButton,
   DialogSaveButton,
@@ -14,6 +13,7 @@ import { FieldRow } from '@/ui/elements/inputs/FieldRow';
 import { Stack } from '@/ui/layout/Stack/Stack';
 import { Combobox } from '@/ui/elements/selectors/Combobox';
 import { NameSearch, type NameOption } from '@/domain/name';
+import { fetchNameById } from '@/domain/name/nameResource';
 import {
   InsertRnrForm,
   RnrPrograms,
@@ -53,10 +53,7 @@ export const RnrFormCreateModal: Component<{
   // Every read below first fetches inside this open modal — live user state —
   // so all are `.state`-gated, never suspending (kdd/solid-reactivity-pitfalls
   // › the createResource checklist).
-  const gated = <T,>(resource: {
-    state: string;
-    latest: T | undefined;
-  }): T | undefined =>
+  const gated = <T,>(resource: Resource<T>): T | undefined =>
     resource.state === 'ready' || resource.state === 'refreshing'
       ? resource.latest
       : undefined;
@@ -135,24 +132,18 @@ export const RnrFormCreateModal: Component<{
   const periods = () => periodSelection(schedule(), previousForm());
   const periodId = () => pickedPeriodId() ?? periods().defaultPeriodId;
 
+  // The supplier prefill resolves the REAL option by id (never a hand-built
+  // NameOption — the row fragment holds only id + name, and fabricating the
+  // flag fields is a type hole; kdd/type-safety).
+  const [prefillSupplier] = createResource(
+    () => defaultSupplier(mostRecentForm())?.id,
+    async id => fetchNameById(props.storeId, id)
+  );
+
   const supplier = (): NameOption | null => {
     const picked = pickedSupplier();
     if (picked !== undefined) return picked;
-    const prefill = defaultSupplier(mostRecentForm());
-    // The prefill seed carries only id + name (the row fragment); the flag
-    // fields drive option-ROW display, which a pre-set selection never renders
-    // — the input shows the name alone (NameSearch's selected contract).
-    return prefill
-      ? {
-          id: prefill.id,
-          name: prefill.name,
-          code: '',
-          isSupplier: true,
-          isDonor: false,
-          isOnHold: false,
-          isStore: false,
-        }
-      : null;
+    return gated(prefillSupplier) ?? null;
   };
 
   const changeProgram = (id: string | undefined) => {
@@ -242,10 +233,13 @@ export const RnrFormCreateModal: Component<{
             {serverError()}
           </Alert>
         </Show>
+        {/* All four lookups are required (Save gates on them), so none offers
+            a clear affordance (controls › clearability follows optionality). */}
         <FieldRow label={t('label.program')}>
           <Combobox<ProgramOption>
             label={t('label.program')}
             hideLabel
+            clearable={false}
             items={programs()}
             value={programId()}
             itemToString={p => p.name}
@@ -259,6 +253,7 @@ export const RnrFormCreateModal: Component<{
           <Combobox<ScheduleOption>
             label={t('label.schedule')}
             hideLabel
+            clearable={false}
             items={schedules()}
             value={scheduleId()}
             disabled={!programId()}
@@ -270,26 +265,32 @@ export const RnrFormCreateModal: Component<{
           />
         </FieldRow>
         <FieldRow label={t('label.period')}>
-          <Stack gap="sm">
-            {/* The standing closed-periods hint (ui-surface S2). */}
-            <Text variant="bodySmall">
-              {t('messages.only-closed-periods-visible')}
-            </Text>
-            <Combobox<ReturnType<typeof periodSelection>['options'][number]>
-              label={t('label.period')}
-              hideLabel
-              items={periods().options}
-              value={periodId()}
-              disabled={!programId() || !scheduleId()}
-              itemToString={o => o.option.period.name}
-              itemToValue={o => o.option.period.id}
-              itemDisabled={o => o.disabled}
-              onChange={o => setPickedPeriodId(o?.option.period.id)}
-              error={periodErrorText()}
-              errorTestId="create-rnr-form-period-error"
-              inputTestId="create-rnr-form-period"
-            />
-          </Stack>
+          <Combobox<ReturnType<typeof periodSelection>['options'][number]>
+            label={t('label.period')}
+            hideLabel
+            clearable={false}
+            items={periods().options}
+            value={periodId()}
+            disabled={!programId() || !scheduleId()}
+            itemToString={o => o.option.period.name}
+            itemToValue={o => o.option.period.id}
+            itemDisabled={o => o.disabled}
+            // Unselectable periods stay listed, dimmed AND textually marked
+            // (controls › blocked affordances — never dimming alone).
+            renderItem={o => (
+              <>
+                {o.option.period.name}
+                {o.disabled ? ` (${t('label.rnr-period-used')})` : null}
+              </>
+            )}
+            onChange={o => setPickedPeriodId(o?.option.period.id)}
+            // The standing closed-periods hint (ui-surface S2); the error line
+            // takes its place while one applies (Combobox precedence).
+            helperText={t('messages.only-closed-periods-visible')}
+            error={periodErrorText()}
+            errorTestId="create-rnr-form-period-error"
+            inputTestId="create-rnr-form-period"
+          />
         </FieldRow>
         <FieldRow label={t('label.supplier')}>
           <NameSearch
@@ -297,6 +298,7 @@ export const RnrFormCreateModal: Component<{
             role="supplier"
             label={t('label.supplier')}
             hideLabel
+            clearable={false}
             selected={supplier() ?? undefined}
             onSelect={name => setPickedSupplier(name)}
             inputTestId="create-rnr-form-supplier"

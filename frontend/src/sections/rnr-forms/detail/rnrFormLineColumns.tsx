@@ -7,19 +7,19 @@ import { DateField } from '@/ui/elements/inputs/DateField';
 import { type Column } from '@/ui/elements/table/DataTable';
 import {
   getCellDefinition,
-  getDateCell,
   getNumberCell,
 } from '@/ui/elements/table/tableHelpers';
 import { remToPx } from '@/ui/utils/rem';
+import { HStack } from '@/ui/layout/Stack/HStack';
 import { StatusMarker } from '@/ui/elements/feedback/StatusMarker';
 import { InfoTooltip } from '@/ui/elements/feedback/InfoTooltip';
 import type { LocaleKey } from '@/intl';
-import { lineHasError, type DraftRnrLine } from './rnrFormEdit';
+import { type DraftRnrLine } from './rnrFormEdit';
 
 // The R&R form line table's columns (spec/rnr-forms/ui-surface.md S3 § line
-// table): one row per program item, white editable cells over a draft store,
-// grey derived cells recomputed live by the host. The host owns the store and
-// the recompute; the columns only call back — one field of one row
+// table): one row per program item, editable cells over a draft store, derived
+// cells recomputed live by the host. The host owns the store and the
+// recompute; the columns only call back — one field of one row
 // (kdd/solid-reactivity-pitfalls § editable collections).
 
 /** Edit ONE field of ONE draft line (a fine-grained store write). */
@@ -28,6 +28,46 @@ export type UpdateRnrLine = <F extends keyof DraftRnrLine>(
   field: F,
   value: DraftRnrLine[F]
 ) => void;
+
+// Client-side sort (the bounded in-memory working set — the line set arrives
+// whole): the host holds the SortState and orders rows via sortValue.
+export type RnrLineSortKey =
+  | 'code'
+  | 'name'
+  | 'initialBalance'
+  | 'quantityReceived'
+  | 'quantityConsumed'
+  | 'adjustedQuantityConsumed'
+  | 'losses'
+  | 'adjustments'
+  | 'stockOutDuration'
+  | 'finalBalance'
+  | 'averageMonthlyConsumption'
+  | 'minimumQuantity'
+  | 'maximumQuantity'
+  | 'expiryDate'
+  | 'requested'
+  | 'approved';
+
+export const sortValue = (
+  line: DraftRnrLine,
+  key: RnrLineSortKey
+): string | number => {
+  switch (key) {
+    case 'code':
+      return line.item.code.toLowerCase();
+    case 'name':
+      return line.item.name.toLowerCase();
+    case 'expiryDate':
+      return line.expiryDate ?? '';
+    case 'requested':
+      return line.enteredRequestedQuantity ?? line.calculatedRequestedQuantity;
+    case 'approved':
+      return line.approvedQuantity ?? 0;
+    default:
+      return line[key];
+  }
+};
 
 export type RnrLineColumnOptions = {
   /** FINALISED, or saving the finalise — every editable cell disables. */
@@ -38,54 +78,62 @@ export type RnrLineColumnOptions = {
 };
 
 // A column header with its info tooltip (ui-surface S3 — the description.rnr-*
-// glosses ride the headers).
-const headerWithInfo = (labelKey: LocaleKey, infoKey: LocaleKey) => () => (
-  <span style={{ display: 'inline-flex', 'align-items': 'center' }}>
-    {t(labelKey)}
-    <InfoTooltip text={t(infoKey)} label={t(labelKey)} />
-  </span>
-);
+// glosses ride the headers). justify follows the column's alignment (these
+// headers sit on right-aligned numeric columns bar the centred lowStock).
+const headerWithInfo =
+  (
+    labelKey: LocaleKey,
+    infoKey: LocaleKey,
+    justify: 'end' | 'center' = 'end'
+  ) =>
+  () => (
+    <HStack gap="sm" justify={justify}>
+      {t(labelKey)}
+      <InfoTooltip text={t(infoKey)} label={t(labelKey)} />
+    </HStack>
+  );
 
-// A derived numeric value, flagged with a marker when the line is in error
-// (OMS-REG-REPL-07.46 — never colour alone).
+// A derived numeric value, flagged with a marker when it is in error
+// (OMS-REG-REPL-07.46 — never colour alone). The marker leads and the number
+// keeps the cell's inline-end edge, matching the numeric preset's alignment.
 const derivedNumber = (
   value: number,
   marker?: { severity: 'error' | 'warning'; label: string }
 ): JSX.Element => (
-  <span
-    style={{
-      display: 'inline-flex',
-      'align-items': 'center',
-      gap: '0.25rem',
-    }}
-  >
-    {formatNumber(value)}
+  <HStack gap="sm" justify="end">
     <Show when={marker}>
       {m => <StatusMarker severity={m().severity} label={m().label} />}
     </Show>
-  </span>
+    {formatNumber(value)}
+  </HStack>
 );
 
 export const rnrFormLineColumns = ({
   disabled,
   periodLength,
   update,
-}: RnrLineColumnOptions): Column<DraftRnrLine, never>[] => [
+}: RnrLineColumnOptions): Column<DraftRnrLine, RnrLineSortKey, 'more'>[] => [
   {
     c: { accessor: line => line.item.code, id: 'code' },
+    sortKey: 'code',
     header: () => t('label.code'),
-    ...getCellDefinition('itemCode', { headerPosition: 'primary' }),
+    ...getCellDefinition('itemCode'),
   },
   {
+    // The card-primary column: the item name titles the sub-600px card.
     c: { accessor: line => line.item.name, id: 'name' },
+    sortKey: 'name',
     header: () => t('label.name'),
-    meta: { wrapLines: 2 },
-    size: remToPx(14),
+    ...getCellDefinition('itemName', {
+      headerPosition: 'primary',
+      wrapLines: 2,
+    }),
   },
   {
     c: { accessor: line => line.item.unitName ?? '', id: 'unit' },
     header: () => t('label.unit'),
-    size: remToPx(5),
+    cardGroup: 'more',
+    ...getCellDefinition('unitName'),
   },
   {
     // Blank when unassigned (ui-surface S3).
@@ -95,16 +143,19 @@ export const rnrFormLineColumns = ({
       id: 'ven',
     },
     header: () => t('label.ven'),
+    cardGroup: 'more',
     size: remToPx(4),
   },
   {
     c: { key: 'initialBalance' },
+    sortKey: 'initialBalance',
     header: headerWithInfo(
       'label.rnr-initial-balance',
       'description.rnr-initial-balance'
     ),
     ...getNumberCell(),
     size: remToPx(8),
+    cardGroup: 'more',
     cell: info => {
       const line = info.row.original;
       return (
@@ -114,6 +165,13 @@ export const rnrFormLineColumns = ({
           size="small"
           disabled={disabled()}
           value={line.initialBalance}
+          // A negative generated balance is an error state on THIS cell
+          // (ui-surface S3/S4 — the line is withheld from save until fixed).
+          error={
+            line.initialBalance < 0
+              ? t('error.rnr-negative-balance')
+              : undefined
+          }
           onChange={v => update(line.id, 'initialBalance', v ?? 0)}
         />
       );
@@ -121,9 +179,11 @@ export const rnrFormLineColumns = ({
   },
   {
     c: { key: 'quantityReceived' },
+    sortKey: 'quantityReceived',
     header: headerWithInfo('label.rnr-received', 'description.rnr-received'),
     ...getNumberCell(),
     size: remToPx(8),
+    cardGroup: 'more',
     cell: info => {
       const line = info.row.original;
       return (
@@ -140,9 +200,11 @@ export const rnrFormLineColumns = ({
   },
   {
     c: { key: 'quantityConsumed' },
+    sortKey: 'quantityConsumed',
     header: headerWithInfo('label.rnr-consumed', 'description.rnr-consumed'),
     ...getNumberCell(),
     size: remToPx(8),
+    cardGroup: 'more',
     cell: info => {
       const line = info.row.original;
       return (
@@ -160,19 +222,22 @@ export const rnrFormLineColumns = ({
   {
     // Derived: the stock-out-adjusted consumption (rules § line generation).
     c: { key: 'adjustedQuantityConsumed' },
+    sortKey: 'adjustedQuantityConsumed',
     header: headerWithInfo(
       'label.adjusted',
       'description.rnr-consumed-adjusted'
     ),
     ...getNumberCell(),
     size: remToPx(7),
+    cardGroup: 'more',
     cell: info => derivedNumber(info.row.original.adjustedQuantityConsumed),
   },
   {
     c: { key: 'losses' },
+    sortKey: 'losses',
     header: headerWithInfo('label.losses', 'description.rnr-losses'),
-    ...getNumberCell(),
-    size: remToPx(7),
+    ...getCellDefinition('losses'),
+    cardGroup: 'more',
     cell: info => {
       const line = info.row.original;
       return (
@@ -189,12 +254,14 @@ export const rnrFormLineColumns = ({
   },
   {
     c: { key: 'adjustments' },
+    sortKey: 'adjustments',
     header: headerWithInfo(
       'label.rnr-adjustments',
       'description.rnr-adjustments'
     ),
     ...getNumberCell(),
     size: remToPx(8),
+    cardGroup: 'more',
     cell: info => {
       const line = info.row.original;
       return (
@@ -212,9 +279,11 @@ export const rnrFormLineColumns = ({
   },
   {
     c: { key: 'stockOutDuration' },
+    sortKey: 'stockOutDuration',
     header: () => t('label.rnr-stock-out-duration'),
     ...getNumberCell(),
     size: remToPx(7),
+    cardGroup: 'more',
     cell: info => {
       const line = info.row.original;
       return (
@@ -235,6 +304,7 @@ export const rnrFormLineColumns = ({
     // Derived; the error marker when the balance identity lands negative
     // (OMS-REG-REPL-07.46).
     c: { key: 'finalBalance' },
+    sortKey: 'finalBalance',
     header: headerWithInfo(
       'label.rnr-final-balance',
       'description.rnr-final-balance'
@@ -245,44 +315,50 @@ export const rnrFormLineColumns = ({
       const line = info.row.original;
       return derivedNumber(
         line.finalBalance,
-        lineHasError(line)
-          ? { severity: 'error', label: t('error.rnr-has-errors') }
+        line.finalBalance < 0
+          ? { severity: 'error', label: t('error.rnr-negative-balance') }
           : undefined
       );
     },
   },
   {
     c: { key: 'averageMonthlyConsumption' },
+    sortKey: 'averageMonthlyConsumption',
     header: headerWithInfo('label.amc', 'description.rnr-amc'),
-    ...getNumberCell(),
-    size: remToPx(6),
+    ...getCellDefinition('amc'),
+    cardGroup: 'more',
     cell: info => derivedNumber(info.row.original.averageMonthlyConsumption),
   },
   {
     c: { key: 'minimumQuantity' },
+    sortKey: 'minimumQuantity',
     header: headerWithInfo(
       'label.rnr-minimum-quantity',
       'description.rnr-minimum-quantity'
     ),
     ...getNumberCell(),
     size: remToPx(7),
+    cardGroup: 'more',
     cell: info => derivedNumber(info.row.original.minimumQuantity),
   },
   {
     c: { key: 'maximumQuantity' },
+    sortKey: 'maximumQuantity',
     header: headerWithInfo(
       'label.rnr-maximum-quantity',
       'description.rnr-maximum-quantity'
     ),
     ...getNumberCell(),
     size: remToPx(7),
+    cardGroup: 'more',
     cell: info => derivedNumber(info.row.original.maximumQuantity),
   },
   {
     c: { key: 'expiryDate' },
+    sortKey: 'expiryDate',
     header: headerWithInfo('label.expiry', 'description.expiry'),
-    ...getDateCell(),
-    size: remToPx(10),
+    ...getCellDefinition('expiryDate'),
+    cardGroup: 'more',
     cell: info => {
       const line = info.row.original;
       return (
@@ -305,12 +381,12 @@ export const rnrFormLineColumns = ({
         line.enteredRequestedQuantity ?? line.calculatedRequestedQuantity,
       id: 'requested',
     },
+    sortKey: 'requested',
     header: headerWithInfo(
       'label.requested',
       'description.rnr-requested-quantity'
     ),
-    ...getNumberCell(),
-    size: remToPx(8),
+    ...getCellDefinition('requested'),
     cell: info => {
       const line = info.row.original;
       return (
@@ -329,9 +405,14 @@ export const rnrFormLineColumns = ({
   },
   {
     // Severe below a quarter of maximum, mild below half (rules § line
-    // generation); the marker carries its meaning, never colour alone.
+    // generation); the marker's label is its MEANING — the two severities
+    // must announce differently (StatusMarker contract; never colour alone).
     c: { key: 'lowStock' },
-    header: headerWithInfo('label.low-stock', 'description.rnr-low-stock'),
+    header: headerWithInfo(
+      'label.low-stock',
+      'description.rnr-low-stock',
+      'center'
+    ),
     size: remToPx(5),
     meta: { align: 'center' },
     cell: info => (
@@ -340,7 +421,11 @@ export const rnrFormLineColumns = ({
           severity={
             info.row.original.lowStock === 'BELOW_QUARTER' ? 'error' : 'warning'
           }
-          label={t('label.low-stock')}
+          label={
+            info.row.original.lowStock === 'BELOW_QUARTER'
+              ? t('messages.rnr-low-stock-severe')
+              : t('messages.rnr-low-stock-mild')
+          }
         />
       </Show>
     ),
@@ -348,7 +433,8 @@ export const rnrFormLineColumns = ({
   {
     c: { key: 'comment' },
     header: () => t('label.comment'),
-    size: remToPx(10),
+    ...getCellDefinition('comment'),
+    cardGroup: 'more',
     cell: info => {
       const line = info.row.original;
       return (
@@ -367,11 +453,12 @@ export const rnrFormLineColumns = ({
     // From the generated order's approval flow — blank until finalised
     // (contract § finalise effects).
     c: { accessor: line => line.approvedQuantity ?? undefined, id: 'approved' },
+    sortKey: 'approved',
     header: headerWithInfo(
       'label.approved-quantity',
       'description.rnr-approved-quantity'
     ),
-    ...getNumberCell(),
-    size: remToPx(7),
+    ...getCellDefinition('approvedQuantity'),
+    cardGroup: 'more',
   },
 ];

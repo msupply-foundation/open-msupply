@@ -1,4 +1,7 @@
-import type { RnrFormLineFragment } from './rnrFormDetail.generated';
+import type {
+  RnrFormLineFragment,
+  UpdateRnrFormVariables,
+} from './rnrFormDetail.generated';
 
 // The draft-line engine (spec/rnr-forms/rules.md § editing a draft / § line
 // generation): the client recomputes every derived figure on each edit and the
@@ -165,10 +168,15 @@ export const lineHasError = (line: {
 export const linesToSave = (lines: DraftRnrLine[]): DraftRnrLine[] =>
   lines.filter(line => line.dirty && !lineHasError(line));
 
+/** The update input's line shape — the generated type, never remapped
+ * (kdd/type-safety). Annotating the mapper keeps excess-property checking
+ * live: a renamed/dropped input field fails here instead of shipping stale. */
+export type RnrLineInput = UpdateRnrFormVariables['input']['lines'][number];
+
 /** A draft line as the update input's line shape (contract § editing a draft:
  * the input sends the full line state; the server persists the derived
  * figures verbatim). */
-export const toUpdateLineInput = (line: DraftRnrLine) => ({
+export const toUpdateLineInput = (line: DraftRnrLine): RnrLineInput => ({
   id: line.id,
   quantityReceived: line.quantityReceived,
   quantityConsumed: line.quantityConsumed,

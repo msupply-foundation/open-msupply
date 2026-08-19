@@ -24,6 +24,8 @@ export const RnrFormSidePanel: Component<{
   edit: ReturnType<typeof createDebouncedEdit<RnrHeaderEditFields>>;
   /** The whole loaded form, for copy-to-clipboard (a read, never gated). */
   fullDocument: () => RnrFormNode | undefined;
+  /** The form was deleted — the owning view navigates back to the list. */
+  onDeleted: () => void;
 }> = props => {
   return (
     <>
@@ -76,6 +78,7 @@ export const RnrFormSidePanel: Component<{
             storeId={props.storeId}
             node={props.node}
             disabled={props.disabled}
+            onDeleted={props.onDeleted}
           />
           {/* A read — offered whatever the status (controls › copy to
               clipboard); the node carries the whole form incl. the

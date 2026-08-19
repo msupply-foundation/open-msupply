@@ -27,7 +27,7 @@ export type SaveResult =
   | { kind: 'failed' };
 
 type HeaderPatch = Pick<
-  NonNullable<UpdateRnrFormVariables['input']>,
+  UpdateRnrFormVariables['input'],
   'theirReference' | 'comment'
 >;
 
