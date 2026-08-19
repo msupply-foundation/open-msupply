@@ -274,7 +274,23 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
   minBodyRem?: number;
 
   // --- Row selection, owned by the page. ---
+  /**
+   * Show the leading checkbox column (the multi-select affordance,
+   * ui-standards § tables → selection). Pair with selectedIds +
+   * onSelectionChange.
+   */
   enableSelection?: boolean;
+  /**
+   * The selected rows, by rowKey. Selected rows carry the brand tint in both
+   * views.
+   *
+   * Valid WITHOUT `enableSelection` too: a master-detail table where the row
+   * click reveals that row's detail beside/below it passes the clicked row's
+   * key here, so the row the detail belongs to stays marked. No checkbox
+   * column is drawn — the tint is the whole affordance, and nothing is
+   * toggleable, so the page keeps sole control of what's current (the repack
+   * modal's history table, issue #794).
+   */
   selectedIds?: string[];
   onSelectionChange?: (ids: string[]) => void;
   /**
