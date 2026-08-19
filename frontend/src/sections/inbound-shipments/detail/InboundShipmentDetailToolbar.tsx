@@ -73,8 +73,10 @@ export const InboundShipmentDetailToolbar: Component<
   // onConfirm) must not revert the draft while it is.
   let confirmInFlight = false;
 
-  // Supplier is editable only on a manual shipment that isn't Verified — never
-  // on a transfer or a PO-linked shipment (spec S3 header fields).
+  // Supplier is editable only on a shipment with no source link that isn't
+  // Verified — never on a transfer or a PO-linked shipment (spec S3 header
+  // fields). Deliberately wider than "manual": a shipment linked only to an
+  // internal order has no source link, and its supplier stays editable.
   const supplierLocked = () => props.disabled || sourceLink() !== 'none';
 
   const selectedSupplier = (): NameOption => ({
