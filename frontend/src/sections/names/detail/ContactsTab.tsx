@@ -2,6 +2,7 @@ import { createResource } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
@@ -38,11 +39,8 @@ export const ContactsTab: Component<{ nameId: string }> = props => {
   );
 
   // Non-suspending read (opened on interaction — see the reactivity note in
-  // domain/customFields CustomFieldsView / kdd/solid-reactivity-pitfalls).
-  const rows = (): ContactRow[] =>
-    data.state === 'ready' || data.state === 'refreshing'
-      ? (data.latest ?? [])
-      : [];
+  // domain/customFields CustomFieldsView).
+  const rows = (): ContactRow[] => gated(data) ?? [];
 
   // Contacts aren't sortable here — no SortKey, so `never`. Each column takes
   // its cell type's width preset (docs/CELL_TYPES.md); `position` and

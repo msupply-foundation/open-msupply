@@ -1,4 +1,5 @@
 import { generateUUID } from '@/uuid';
+import { gated } from '@/api/gated';
 import {
   createMemo,
   createResource,
@@ -285,10 +286,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
     const { id } = JSON.parse(serialised) as { id: string };
     return fetchLineStats(props.storeId, id);
   });
-  const statsNode = () =>
-    stats.state === 'ready' || stats.state === 'refreshing'
-      ? stats.latest
-      : undefined;
+  const statsNode = () => gated(stats);
 
   // The customer's volume snapshot (AC-LE12): the live item volume at the
   // supply as typed, and whether the capacity is spent — driving the Customer
@@ -828,10 +826,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
                   <Captions />
                   <DemandPanel />
                   <Show when={excess()}>
-                    <Alert
-                      severity="warning"
-                      testId="excess-request-warning"
-                    >
+                    <Alert severity="warning" testId="excess-request-warning">
                       {t('messages.requested-exceeds-suggested')}
                     </Alert>
                   </Show>
@@ -889,10 +884,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
             <div class={styles.column}>
               <DemandPanel />
               <Show when={excess()}>
-                <Alert
-                  severity="warning"
-                  testId="excess-request-warning"
-                >
+                <Alert severity="warning" testId="excess-request-warning">
                   {t('messages.requested-exceeds-suggested')}
                 </Alert>
               </Show>

@@ -2,6 +2,7 @@ import { createMemo, createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch, reportPermissionDenied } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { hasPermission } from '../../../store/storeContext';
 import { t } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
@@ -195,14 +196,11 @@ const CustomerReturnsList: Component = () => {
   );
   // NON-suspending read (kdd/solid-reactivity-pitfalls § no remounts on
   // interaction): the status chip reads the options lazily as it renders, so a
-  // still-pending preference must never suspend this screen's boundary —
-  // `.latest` alone would, on its first pending read, tearing down the open
-  // chip. Unresolved = no restriction (and manual returns ENABLED — the common
-  // case; flashing the notice would be the wrong direction).
-  const loadedPrefs = () =>
-    prefs.state === 'ready' || prefs.state === 'refreshing'
-      ? prefs.latest
-      : undefined;
+  // still-pending preference must never suspend this screen's boundary and
+  // tear down the open chip. Unresolved = no restriction (and manual returns
+  // ENABLED — the common case; flashing the notice would be the wrong
+  // direction).
+  const loadedPrefs = () => gated(prefs);
   const manualReturnsDisabled = () =>
     loadedPrefs()?.disableManualReturns ?? false;
 

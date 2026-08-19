@@ -10,6 +10,7 @@ import {
 } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
@@ -347,10 +348,7 @@ const InternalOrderDetailView: Component = () => {
     mutateIndicators(prev =>
       prev ? applySavedIndicatorValue(prev, valueId, value) : prev
     );
-  const indicatorNodes = () =>
-    indicators.state === 'ready' || indicators.state === 'refreshing'
-      ? (indicators.latest ?? [])
-      : [];
+  const indicatorNodes = () => gated(indicators) ?? [];
   const showDoses = () => prefs()?.manageVaccinesInDoses ?? false;
   const showPricing = () => prefs()?.showIndicativePriceInRequisitions ?? false;
   const showForecast = () =>
@@ -957,16 +955,12 @@ const InternalOrderDetailView: Component = () => {
     return loaded;
   });
 
-  // NON-suspending, `.state`-gated: the line editor is often open ABOVE this
+  // NON-suspending: the line editor is often open ABOVE this
   // table, and a suspending read would remount the subtree and detach the open
   // <dialog> from the top layer (kdd/solid-reactivity-pitfalls § no remounts on
-  // interaction). `.latest` alone is not safe — it suspends on the first
-  // pending read.
+  // interaction).
   const lineColumnBatch = (): LineColumnBatch => ({
-    data:
-      lineColumnData.state === 'ready' || lineColumnData.state === 'refreshing'
-        ? (lineColumnData.latest ?? EMPTY_BATCH_DATA)
-        : EMPTY_BATCH_DATA,
+    data: gated(lineColumnData) ?? EMPTY_BATCH_DATA,
     loading: lineColumnData.loading,
   });
 

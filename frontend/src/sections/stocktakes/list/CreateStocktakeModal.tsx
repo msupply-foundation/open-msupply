@@ -9,6 +9,7 @@ import {
 } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '@/api/graphql';
+import { gated } from '@/api/gated';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { InsetPanel } from '@/ui/layout/InsetPanel/InsetPanel';
@@ -97,10 +98,7 @@ export const CreateStocktakeModal = (props: {
   // suspending (this modal renders under AppShell's <Suspense>; a pending read
   // there would remount + reset the form — see the estimate resource below).
   const [locationsData] = createResource(() => params.storeId, fetchLocations);
-  const locations = (): Location[] =>
-    locationsData.state === 'ready' || locationsData.state === 'refreshing'
-      ? (locationsData.latest ?? [])
-      : [];
+  const locations = (): Location[] => gated(locationsData) ?? [];
 
   const [form, setForm] = createSignal<FormState>(EMPTY_FORM);
   const [creating, setCreating] = createSignal(false);
@@ -190,13 +188,9 @@ export const CreateStocktakeModal = (props: {
 
   // Read WITHOUT suspending: this modal renders under AppShell's <Suspense>
   // (lazy section chunks), and a pending resource read there trips the fallback
-  // → remounts the section → resets the form. Gate on resource.state, never
-  // `.latest` (which suspends the first read) — see kdd/state-management (no
+  // → remounts the section → resets the form — see kdd/state-management (no
   // remounts).
-  const estimatedLines = (): number =>
-    estimate.state === 'ready' || estimate.state === 'refreshing'
-      ? (estimate.latest ?? 0)
-      : 0;
+  const estimatedLines = (): number => gated(estimate) ?? 0;
 
   // A short human comment describing the filtered selection (empty for
   // full/blank).

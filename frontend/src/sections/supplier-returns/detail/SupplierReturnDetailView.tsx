@@ -8,6 +8,7 @@ import {
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { t, tPlural } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
@@ -200,17 +201,13 @@ const SupplierReturnDetailView: Component = () => {
   // interaction): a line save, a bulk delete, and every "Save & next" page
   // advance refetch this while the return-items modal is OPEN. A suspending
   // read would tear down the page's Suspense boundary and detach the <dialog>
-  // (backdrop gone, focus lost). The `.state` gate keeps the current page on
-  // screen while the fresh one lands.
-  const linesReady = () =>
-    linesData.state === 'ready' || linesData.state === 'refreshing';
-  const rows = (): Line[] =>
-    linesReady() ? (linesData.latest?.nodes ?? []) : [];
+  // (backdrop gone, focus lost). The gate keeps the current page on screen
+  // while the fresh one lands.
+  const rows = (): Line[] => gated(linesData)?.nodes ?? [];
   // The return's WHOLE line count, not the held page's — the pager reads it, and
   // so does the no-lines status precondition: a page can be empty while later
   // pages hold lines.
-  const totalCount = () =>
-    linesReady() ? (linesData.latest?.totalCount ?? 0) : 0;
+  const totalCount = () => gated(linesData)?.totalCount ?? 0;
   const hasLines = () => totalCount() > 0;
   // Selection is per page, so the selected rows are always resolvable from the
   // held page.
@@ -257,10 +254,7 @@ const SupplierReturnDetailView: Component = () => {
   // render, so a still-pending preference must never suspend this screen's
   // boundary — `.latest` alone would, on its first pending read, tearing down
   // the open screen. Unresolved = no restriction.
-  const statusOptions = () =>
-    prefs.state === 'ready' || prefs.state === 'refreshing'
-      ? (prefs.latest?.invoiceStatusOptions ?? [])
-      : [];
+  const statusOptions = () => gated(prefs)?.invoiceStatusOptions ?? [];
 
   // --- Return-level saves (updateSupplierReturn, spliced back, no refetch) ---
 
