@@ -15,7 +15,7 @@ import { ArrowRightIcon } from '../../../ui/icons';
 import type { InboundInfoFragment } from './inboundShipmentDetail.generated';
 import { updateInboundShipment } from './inboundShipmentUpdate';
 import {
-  kindOf,
+  sourceLinkOf,
   reachableStatuses,
   statusDatetime,
   statusFlow,
@@ -62,14 +62,14 @@ export const InboundShipmentStatusFooter: Component<
   const [busy, setBusy] = createSignal(false);
   const [errorMessage, setErrorMessage] = createSignal<string>();
 
-  const kind = () => kindOf(props.node);
-  const flow = () => statusFlow(kind(), props.node.status);
+  const sourceLink = () => sourceLinkOf(props.node);
+  const flow = () => statusFlow(sourceLink(), props.node.status);
   const steps = () =>
     flow().map(status => ({
       label: STATUS_LABELS[status],
       date: statusDatetime(props.node, status),
     }));
-  const reachable = () => reachableStatuses(kind(), props.node.status);
+  const reachable = () => reachableStatuses(sourceLink(), props.node.status);
 
   const advance = async (status: string) => {
     if (busy()) return;
