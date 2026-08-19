@@ -6,6 +6,7 @@ import { StatusIndicator } from '@/ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
 import type { RnrFormNode } from './rnrFormUpdate';
+import { isFinalised } from '../list/rnrFormStatus';
 import { FinaliseRnrFormAction } from './actions/FinaliseRnrFormAction';
 
 // The detail footer (spec/rnr-forms/ui-surface.md S3 § footer): the
@@ -24,7 +25,7 @@ export const RnrFormStatusFooter: Component<{
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
 
-  const finalised = () => props.node.status === 'FINALISED';
+  const finalised = () => isFinalised(props.node.status);
 
   // Draft carries its reached-at datetime for the history popover; the schema
   // exposes no finalised stamp, so that step legitimately stays undated.

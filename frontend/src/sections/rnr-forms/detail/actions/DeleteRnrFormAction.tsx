@@ -1,4 +1,4 @@
-import { createSignal, Match, Show, Switch } from 'solid-js';
+import { createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { graphqlFetch } from '@/api/graphql';
 import { t } from '@/intl';
@@ -68,19 +68,19 @@ export const DeleteRnrFormAction: Component<{
           testId="confirmation-modal"
           title={t('heading.are-you-sure')}
           description={
-            <Switch
+            <Show
+              when={phase() === 'error'}
               fallback={t('messages.confirm-delete-rnr-form', {
                 programName: props.node.programName,
                 period: props.node.period.name,
               })}
             >
-              <Match when={phase() === 'error'}>
-                <Alert severity="error">{t('error.something-wrong')}</Alert>
-              </Match>
-            </Switch>
+              <Alert severity="error">{t('error.something-wrong')}</Alert>
+            </Show>
           }
           actions={
-            <Switch
+            <Show
+              when={phase() === 'error'}
               fallback={
                 <>
                   <Show when={phase() === 'confirm'}>
@@ -101,12 +101,10 @@ export const DeleteRnrFormAction: Component<{
                 </>
               }
             >
-              <Match when={phase() === 'error'}>
-                <Button variant="secondary" confirms="plain" onClick={close}>
-                  {t('button.close')}
-                </Button>
-              </Match>
-            </Switch>
+              <Button variant="secondary" confirms="plain" onClick={close}>
+                {t('button.close')}
+              </Button>
+            </Show>
           }
         />
       </Show>

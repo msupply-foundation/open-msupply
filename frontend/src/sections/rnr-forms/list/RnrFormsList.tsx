@@ -1,7 +1,6 @@
-import { createSignal, Show } from 'solid-js';
+import { createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
-import { createResource } from 'solid-js';
 import { graphqlFetch } from '@/api/graphql';
 import { t } from '@/intl';
 import { Page } from '@/ui/layout/Page/Page';
@@ -34,7 +33,7 @@ import type {
   RnrFormsVariables,
   RnrFormRowFragment,
 } from './rnrForms.generated';
-import { statusLabel, STATUS_COLOURS } from './rnrFormStatus';
+import { isFinalised, statusLabel, STATUS_COLOURS } from './rnrFormStatus';
 import { filterFields, type RnrFormFilter } from './listFilters';
 import { DeleteRnrFormsAction } from './actions/DeleteRnrFormsAction';
 import { RnrFormCreateModal } from './create/RnrFormCreateModal';
@@ -113,8 +112,7 @@ const RnrFormsList: Component = () => {
 
   // The bulk delete is drafts-only (rules § deleting); the action opens
   // blocked-and-explaining when this is false (OMS-REG-REPL-07.48).
-  const canDelete = () =>
-    !selectedRows().some(row => row.status === 'FINALISED');
+  const canDelete = () => !selectedRows().some(row => isFinalised(row.status));
 
   const onDeleted = () => {
     setSelectedIds([]);
@@ -230,7 +228,7 @@ const RnrFormsList: Component = () => {
         onSort={onSort}
         onRowClick={openRow}
         // OMS-REG-REPL-07.48: finalised rows read as inactive (still open).
-        rowState={row => (row.status === 'FINALISED' ? 'disabled' : undefined)}
+        rowState={row => (isFinalised(row.status) ? 'disabled' : undefined)}
         emptyMessage={t('error.no-rnr-forms')}
         empty={
           <Button

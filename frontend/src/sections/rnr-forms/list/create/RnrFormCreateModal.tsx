@@ -1,4 +1,4 @@
-import { createResource, createSignal, Show } from 'solid-js';
+import { createMemo, createResource, createSignal, Show } from 'solid-js';
 import type { Component, Resource } from 'solid-js';
 import { graphqlFetch } from '@/api/graphql';
 import { t } from '@/intl';
@@ -15,20 +15,24 @@ import { Combobox } from '@/ui/elements/selectors/Combobox';
 import { NameSearch, type NameOption } from '@/domain/name';
 import { fetchNameById } from '@/domain/name/nameResource';
 import {
-  InsertRnrForm,
-  RnrPrograms,
-  RnrSchedules,
-} from './createRnrForm.generated';
+  fetchPrograms,
+  fetchSchedulesWithPeriods,
+  type ProgramListItem,
+  type ScheduleWithPeriods,
+} from '@/domain/program/programResource';
+import { InsertRnrForm } from './createRnrForm.generated';
 import { RnrForms } from '../rnrForms.generated';
-import type { RnrFormRowFragment } from '../rnrForms.generated';
+import type {
+  RnrFormRowFragment,
+  RnrFormsVariables,
+} from '../rnrForms.generated';
 import {
   defaultProgramId,
   defaultScheduleId,
-  defaultSupplier,
+  defaultSupplierId,
   periodSelection,
   programOptions,
-  type ProgramOption,
-  type ScheduleOption,
+  type PeriodSelection,
 } from './rnrFormCreate';
 
 // The create modal (spec/rnr-forms/ui-surface.md S2; rules § creation):
@@ -60,13 +64,9 @@ export const RnrFormCreateModal: Component<{
 
   const [programsData] = createResource(
     () => props.storeId,
-    async storeId => {
-      const result = await graphqlFetch(RnrPrograms, { storeId });
-      if (result.kind !== 'success') return undefined;
-      return programOptions(result.data.programs.nodes);
-    }
+    async storeId => programOptions(await fetchPrograms(storeId))
   );
-  const programs = (): ProgramOption[] => gated(programsData) ?? [];
+  const programs = (): ProgramListItem[] => gated(programsData) ?? [];
 
   // The most recent form overall — the program/supplier prefill source
   // (OMS-REG-REPL-07.36/.38).
@@ -79,27 +79,33 @@ export const RnrFormCreateModal: Component<{
         page: { first: 1 },
       });
       if (result.kind !== 'success') return undefined;
-      return { form: result.data.rAndRForms.nodes[0] };
+      return result.data.rAndRForms.nodes[0];
     }
   );
   const mostRecentForm = (): RnrFormRowFragment | undefined =>
-    gated(recentData)?.form;
+    gated(recentData);
 
   const programId = () =>
     pickedProgramId() ?? defaultProgramId(programs(), mostRecentForm());
 
+  // Value-keyed source (a serialised string, like the sibling list/detail
+  // resources): the tracked deps include other resources' states, and a fresh
+  // object identity per source run would refetch even when the ids are
+  // unchanged.
   const [schedulesData] = createResource(
     () =>
       programId()
-        ? { storeId: props.storeId, programId: programId()! }
+        ? JSON.stringify({ storeId: props.storeId, programId: programId()! })
         : undefined,
-    async variables => {
-      const result = await graphqlFetch(RnrSchedules, variables);
-      if (result.kind !== 'success') return undefined;
-      return result.data.schedulesWithPeriodsByProgram.nodes;
+    async serialised => {
+      const { storeId, programId } = JSON.parse(serialised) as {
+        storeId: string;
+        programId: string;
+      };
+      return fetchSchedulesWithPeriods(storeId, programId);
     }
   );
-  const schedules = (): ScheduleOption[] => gated(schedulesData) ?? [];
+  const schedules = (): ScheduleWithPeriods[] => gated(schedulesData) ?? [];
 
   const scheduleId = () =>
     pickedScheduleId() ?? defaultScheduleId(schedules(), mostRecentForm());
@@ -110,33 +116,36 @@ export const RnrFormCreateModal: Component<{
   const [previousData] = createResource(
     () =>
       programId() && scheduleId()
-        ? {
+        ? JSON.stringify({
             storeId: props.storeId,
             filter: {
               programId: { equalTo: programId()! },
               periodScheduleId: { equalTo: scheduleId()! },
             },
-            sort: { key: 'createdDatetime', desc: true } as const,
+            sort: { key: 'createdDatetime', desc: true },
             page: { first: 1 },
-          }
+          } satisfies RnrFormsVariables)
         : undefined,
-    async variables => {
-      const result = await graphqlFetch(RnrForms, variables);
+    async serialised => {
+      const result = await graphqlFetch(
+        RnrForms,
+        JSON.parse(serialised) as RnrFormsVariables
+      );
       if (result.kind !== 'success') return undefined;
-      return { form: result.data.rAndRForms.nodes[0] };
+      return result.data.rAndRForms.nodes[0];
     }
   );
-  const previousForm = () => gated(previousData)?.form;
+  const previousForm = () => gated(previousData);
   const previousSettled = () => previousData.state === 'ready';
 
-  const periods = () => periodSelection(schedule(), previousForm());
+  const periods = createMemo(() => periodSelection(schedule(), previousForm()));
   const periodId = () => pickedPeriodId() ?? periods().defaultPeriodId;
 
   // The supplier prefill resolves the REAL option by id (never a hand-built
   // NameOption — the row fragment holds only id + name, and fabricating the
   // flag fields is a type hole; kdd/type-safety).
   const [prefillSupplier] = createResource(
-    () => defaultSupplier(mostRecentForm())?.id,
+    () => defaultSupplierId(mostRecentForm()),
     async id => fetchNameById(props.storeId, id)
   );
 
@@ -236,7 +245,7 @@ export const RnrFormCreateModal: Component<{
         {/* All four lookups are required (Save gates on them), so none offers
             a clear affordance (controls › clearability follows optionality). */}
         <FieldRow label={t('label.program')}>
-          <Combobox<ProgramOption>
+          <Combobox<ProgramListItem>
             label={t('label.program')}
             hideLabel
             clearable={false}
@@ -250,7 +259,7 @@ export const RnrFormCreateModal: Component<{
           />
         </FieldRow>
         <FieldRow label={t('label.schedule')}>
-          <Combobox<ScheduleOption>
+          <Combobox<ScheduleWithPeriods>
             label={t('label.schedule')}
             hideLabel
             clearable={false}
@@ -265,7 +274,7 @@ export const RnrFormCreateModal: Component<{
           />
         </FieldRow>
         <FieldRow label={t('label.period')}>
-          <Combobox<ReturnType<typeof periodSelection>['options'][number]>
+          <Combobox<PeriodSelection['options'][number]>
             label={t('label.period')}
             hideLabel
             clearable={false}
