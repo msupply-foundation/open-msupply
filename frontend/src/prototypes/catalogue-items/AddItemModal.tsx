@@ -12,6 +12,9 @@ import { FormColumn } from '../../ui/layout/Form/FormColumn';
 import { FormSection } from '../../ui/layout/Form/FormSection';
 import { FormRow } from '../../ui/layout/Form/FormRow';
 import { CatalogueIcon } from '../../ui/icons';
+// The real items vertical's own location-type label, so the temperature range
+// reads identically here and on the item-variant modal (one definition, not two).
+import { locationTypeLabel } from '../../sections/items/detail/itemVariantEdit';
 import styles from './catalogueItems.module.css';
 
 /*
@@ -69,20 +72,42 @@ const VEN_OPTIONS = [
   { value: '', label: 'Not set' },
 ];
 
-const CATEGORY_OPTIONS = [
+/*
+ * Item categories. The schema models these as a FLAT list
+ * (`categories: [ItemCategoryNode!]!`, which is just id + name — no parent), so
+ * this is a multi-select, not the legacy desktop's Category 1 / 2 / 3 tiers.
+ * Whether open mSupply should carry that hierarchy is an open question on the
+ * prototype's card, not something to invent here.
+ */
+const CATEGORIES = [
   'Cardiovascular',
   'Diuretics',
   'Anti-infectives',
   'Vaccines',
   'Consumables',
-].map(c => ({ value: c, label: c }));
-
-const STORAGE_OPTIONS = [
-  { value: 'cold', label: '+2 °C to +8 °C' },
-  { value: 'frozen', label: '−20 °C' },
-  { value: 'ultra', label: '−70 °C' },
-  { value: 'ambient', label: 'Ambient' },
 ];
+
+/*
+ * Location types for "Restricted to" (`restrictedLocationTypeId`). Labelled with
+ * the real vertical's own helper so the temperature range reads exactly as it
+ * does on the item-variant modal, rather than a second format invented here.
+ *
+ * This REPLACES an invented "Storage temperature" select: the schema has no such
+ * field, and a location type already carries min/max temperature. It also applies
+ * to any stock item (legacy puts it on the General tab), not just vaccines, so it
+ * sits outside the vaccine block.
+ */
+const LOCATION_TYPES = [
+  { id: 'cold', name: 'Cold room', minTemperature: 2, maxTemperature: 8 },
+  { id: 'freezer', name: 'Freezer', minTemperature: -25, maxTemperature: -15 },
+  { id: 'ultra', name: 'Ultra-cold freezer', minTemperature: -80, maxTemperature: -60 },
+  { id: 'ambient', name: 'Ambient store', minTemperature: 15, maxTemperature: 25 },
+];
+
+const LOCATION_TYPE_OPTIONS = LOCATION_TYPES.map(lt => ({
+  value: lt.id,
+  label: locationTypeLabel(lt),
+}));
 
 export const AddItemModal = (props: AddItemModalProps) => {
   const [name, setName] = createSignal('');
@@ -94,8 +119,9 @@ export const AddItemModal = (props: AddItemModalProps) => {
   const [isVaccine, setIsVaccine] = createSignal(false);
   const [doses, setDoses] = createSignal<number | undefined>(undefined);
   const [volume, setVolume] = createSignal<number | undefined>(undefined);
-  const [storage, setStorage] = createSignal('cold');
-  const [category, setCategory] = createSignal('Diuretics');
+  const [categories, setCategories] = createSignal<string[]>(['Diuretics']);
+  const [weight, setWeight] = createSignal<number | undefined>(undefined);
+  const [restrictedTo, setRestrictedTo] = createSignal('');
   const [ven, setVen] = createSignal('E');
   const [atc, setAtc] = createSignal('');
   const [universalCode, setUniversalCode] = createSignal('');
@@ -208,16 +234,43 @@ export const AddItemModal = (props: AddItemModalProps) => {
                   min={1}
                 />
               </FormRow>
-              <TextField
-                label="Strength"
-                value={strength()}
-                onInput={e => setStrength(e.currentTarget.value)}
-                placeholder="e.g. 250mg"
+              <FormRow>
+                <TextField
+                  label="Strength"
+                  value={strength()}
+                  onInput={e => setStrength(e.currentTarget.value)}
+                  placeholder="e.g. 250mg"
+                />
+                <NumberField
+                  label="Default weight (kg)"
+                  value={weight()}
+                  onChange={setWeight}
+                  min={0}
+                  decimalLimit={3}
+                  helperText="Of the default pack"
+                />
+              </FormRow>
+              {/* Applies to any stock item, not just vaccines — so it sits
+                  outside the vaccine block, as it does on legacy's General tab.
+                  Stock can then only be received into a matching location. */}
+              <Select
+                label="Restricted to"
+                options={LOCATION_TYPE_OPTIONS}
+                value={restrictedTo()}
+                onValueChange={setRestrictedTo}
+                placeholder="Not restricted"
+                helperText="Limits which location types this item may be stored in"
               />
+              {/* Legacy mSupply defaults Doses to 1 the moment this is ticked,
+                  so the required field is never left empty for the user to
+                  discover on save. Matched here. */}
               <Checkbox
                 label="This is a vaccine"
                 checked={isVaccine()}
-                onChange={setIsVaccine}
+                onChange={checked => {
+                  setIsVaccine(checked);
+                  if (checked && doses() === undefined) setDoses(1);
+                }}
               />
               <Show when={isVaccine()}>
                 <div class={styles.conditional}>
@@ -237,12 +290,6 @@ export const AddItemModal = (props: AddItemModalProps) => {
                       decimalLimit={2}
                     />
                   </FormRow>
-                  <Select
-                    label="Storage temperature"
-                    options={STORAGE_OPTIONS}
-                    value={storage()}
-                    onValueChange={setStorage}
-                  />
                 </div>
               </Show>
             </FormSection>
@@ -252,11 +299,13 @@ export const AddItemModal = (props: AddItemModalProps) => {
         <FormColumn>
           <FormSection title="Classification" headingLevel="h3" heading="group">
             <FormRow>
-              <Select
-                label="Category"
-                options={CATEGORY_OPTIONS}
-                value={category()}
-                onValueChange={setCategory}
+              <MultiSelect
+                label="Categories"
+                items={CATEGORIES}
+                itemToString={c => c}
+                selectedItems={categories()}
+                onChange={setCategories}
+                placeholder="Add a category…"
               />
               <Select
                 label="VEN category"
