@@ -3707,7 +3707,7 @@
   "sync-status.footer-never-synced": "Jamais synchronisé",
   "sync-status.footer-records-queued_one": "{{count}} enregistrement en file d'attente",
   "sync-status.footer-records-queued_other": "{{count}} enregistrements mis en file d'attente",
-  "sync-status.footer-synced": "Synchronisé {{distance}}",
+  "sync-status.footer-synced": "Synchronisé",
   "sync-status.footer-syncing": "Synchronisation…",
   "sync-status.footer-warning": "Avertissement de synchronisation",
   "sync-status.integrate": "Intégrer",
