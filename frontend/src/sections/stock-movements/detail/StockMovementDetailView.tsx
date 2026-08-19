@@ -304,7 +304,7 @@ const StockMovementDetailView: Component = () => {
           dismissable={false}
           onClose={() => undefined}
           title={t('error.stock-movement-not-found')}
-          description={t('messages.click-to-return')}
+          description={t('messages.click-to-return-to-stock-movements')}
           actions={
             <OkButton
               data-testid="dialog-button-ok"
