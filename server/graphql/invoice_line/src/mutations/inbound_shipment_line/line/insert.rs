@@ -202,7 +202,6 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::DonorNotVisible
         | ServiceError::SelectedDonorPartyIsNotADonor
         | ServiceError::ManufacturerDoesNotExist
-        | ServiceError::ManufacturerNotVisible
         | ServiceError::ManufacturerIsNotAManufacturer
         | ServiceError::ProgramDoesNotExist
         | ServiceError::PurchaseOrderLineIdRequired
