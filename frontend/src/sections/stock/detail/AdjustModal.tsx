@@ -1,5 +1,6 @@
 import { createResource, createSignal, Show, type JSX } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
 import { formatNumber } from '../../../intl/formatNumber';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
@@ -122,13 +123,10 @@ const AdjustContent = (props: {
   // open — and `.latest` alone still suspends on that first pending read, which
   // collapses the detail view's <Suspense> boundary and detaches the open
   // <dialog>: it loses the top layer, so the backdrop vanishes and the modal
-  // re-renders in normal flow further down the page (#469 / #601). Gating on
-  // `.state` never suspends (kdd/solid-reactivity-pitfalls › No remounts on
-  // interaction); `historical.loading` is still free to drive a spinner.
-  const historicalLine = () =>
-    historical.state === 'ready' || historical.state === 'refreshing'
-      ? historical.latest
-      : undefined;
+  // re-renders in normal flow further down the page (#469 / #601).
+  // `historical.loading` is still free to drive a spinner
+  // (kdd/solid-reactivity-pitfalls › No remounts on interaction).
+  const historicalLine = () => gated(historical);
 
   // Current quantities: the historical values when backdated (once loaded),
   // otherwise the line's live quantities.

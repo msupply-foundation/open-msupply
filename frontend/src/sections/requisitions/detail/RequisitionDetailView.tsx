@@ -8,6 +8,7 @@ import {
 } from 'solid-js';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
 import { graphqlFetch } from '@/api/graphql';
+import { gated } from '@/api/gated';
 import { t } from '@/intl';
 import { Page } from '@/ui/layout/Page/Page';
 import { Header } from '@/ui/layout/Header/Header';
@@ -278,10 +279,7 @@ const RequisitionDetailView: Component = () => {
     mutateIndicators(prev =>
       prev ? applySavedIndicatorValue(prev, valueId, value) : prev
     );
-  const indicatorNodes = () =>
-    indicators.state === 'ready' || indicators.state === 'refreshing'
-      ? (indicators.latest ?? [])
-      : [];
+  const indicatorNodes = () => gated(indicators) ?? [];
   // Indicators tab gate (spec S2 § tabs, AC-V5): a non-emergency program
   // requisition of a store-backed customer whose program defines ≥1
   // indicator.

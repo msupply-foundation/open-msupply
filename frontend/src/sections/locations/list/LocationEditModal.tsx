@@ -2,6 +2,7 @@ import { generateUUID } from '@/uuid';
 import { createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { graphqlFetch } from '@/api/graphql';
+import { gated } from '@/api/gated';
 import { t } from '@/intl';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { createFocusTarget } from '@/ui/utils/createFocusTarget';
@@ -107,10 +108,7 @@ export const LocationEditModal: Component<LocationEditModalProps> = props => {
       return result.data.locationTypes.nodes;
     }
   );
-  const locationTypes = (): LocationType[] =>
-    typesData.state === 'ready' || typesData.state === 'refreshing'
-      ? (typesData.latest ?? [])
-      : [];
+  const locationTypes = (): LocationType[] => gated(typesData) ?? [];
 
   const isEdit = () => current().mode === 'edit';
   const editedLocation = (): LocationRow | undefined => {

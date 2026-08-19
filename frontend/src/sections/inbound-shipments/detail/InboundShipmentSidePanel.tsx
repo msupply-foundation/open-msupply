@@ -10,6 +10,7 @@ import { t, localisedDate } from '../../../intl';
 import { formatNumber } from '../../../intl/formatNumber';
 import { homeCurrency } from '../../../intl/currency';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import {
   SidePanelSection,
   SidePanelActions,
@@ -133,16 +134,13 @@ export const InboundShipmentSidePanel: Component<
         : [];
     }
   );
-  // Non-suspending read — the binding read-safety gate (kdd/solid-reactivity-
-  // pitfalls → No remounts on interaction). This refetches WHILE the screen
+  // Non-suspending read (kdd/solid-reactivity-pitfalls → No remounts on
+  // interaction). This refetches WHILE the screen
   // stays open (a committed charges batch, and the tax cascade below fired from
   // a focused field), and first-fetches on the interaction that opens the panel
   // — a direct `serviceLines()` read would suspend the detail view's boundary
   // each time, unmounting the panel's own focused tax input.
-  const serviceLineRows = () =>
-    serviceLines.state === 'ready' || serviceLines.state === 'refreshing'
-      ? (serviceLines.latest ?? [])
-      : [];
+  const serviceLineRows = () => gated(serviceLines) ?? [];
   const refreshService = () => {
     setServiceVersion(v => v + 1);
     props.onRefetch();

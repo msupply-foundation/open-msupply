@@ -8,6 +8,7 @@ import {
 import type { Component } from 'solid-js';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
@@ -272,13 +273,10 @@ const InboundShipmentDetailView: Component = () => {
   // (its stock/service charge totals change), and the line editor stays open
   // across an "OK & next" walk: a direct `data()` read would suspend the page
   // <Suspense> on that refetch, detaching the open native <dialog> (backdrop
-  // gone, focus lost). The `.state` gate keeps the previous node on screen
+  // gone, focus lost). gated keeps the previous node on screen
   // while it refreshes. Initial load (no live state) is handled by the <Show>
   // fallback below, not by suspending.
-  const info = (): InboundInfoFragment | undefined =>
-    data.state === 'ready' || data.state === 'refreshing'
-      ? data.latest
-      : undefined;
+  const info = (): InboundInfoFragment | undefined => gated(data);
 
   // One server-paginated page of the shipment's stock lines (invoiceId + type
   // forced; user filter/sort/page from the URL). Keyed on serialised variables
@@ -311,16 +309,10 @@ const InboundShipmentDetailView: Component = () => {
     }
   );
   // Lines page read NON-SUSPENDING too (same rule): a line save / bulk action /
-  // "OK & next" page-advance refetches this while the editor is open — the
-  // `.state` gate keeps the current page visible instead of suspending.
-  const rows = (): Line[] =>
-    linesData.state === 'ready' || linesData.state === 'refreshing'
-      ? (linesData.latest?.nodes ?? [])
-      : [];
-  const totalCount = () =>
-    linesData.state === 'ready' || linesData.state === 'refreshing'
-      ? (linesData.latest?.totalCount ?? 0)
-      : 0;
+  // "OK & next" page-advance refetches this while the editor is open — gated
+  // keeps the current page visible instead of suspending.
+  const rows = (): Line[] => gated(linesData)?.nodes ?? [];
+  const totalCount = () => gated(linesData)?.totalCount ?? 0;
 
   // Total volume of the selected lines (volumePerPack × packs received) — feeds
   // the change-location picker's "Available" filter so it keeps only locations
@@ -360,16 +352,12 @@ const InboundShipmentDetailView: Component = () => {
     () => (locationsNeeded() ? params.storeId : undefined),
     fetchLocationsWithVolume
   );
-  // Non-suspending read — the binding read-safety gate (kdd/solid-reactivity-
-  // pitfalls → No remounts on interaction). This resource now FIRST fetches
-  // during an interaction, under the already-open screen's Suspense boundary,
-  // so `.latest` alone would suspend on that first pending read and detach the
-  // very <dialog> that triggered it. The picker renders empty while it's in
-  // flight.
-  const locations = (): LocationWithVolume[] =>
-    locationsData.state === 'ready' || locationsData.state === 'refreshing'
-      ? (locationsData.latest ?? [])
-      : [];
+  // Non-suspending read (kdd/solid-reactivity-pitfalls → No remounts on
+  // interaction). This resource now FIRST fetches during an interaction, under
+  // the already-open screen's Suspense boundary — a suspend there would detach
+  // the very <dialog> that triggered it. The picker renders empty while it's
+  // in flight.
+  const locations = (): LocationWithVolume[] => gated(locationsData) ?? [];
 
   const current = () => info();
   // The two standing conditions that refuse EVERY write, a status advance

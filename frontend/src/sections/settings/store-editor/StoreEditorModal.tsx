@@ -7,6 +7,7 @@ import {
   Show,
 } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import {
   hasPermission,
   refetchStoreContext,
@@ -107,10 +108,7 @@ export const StoreEditorModal = (props: {
         : undefined;
     }
   );
-  const facility = () =>
-    facilityData.state === 'ready' || facilityData.state === 'refreshing'
-      ? facilityData.latest
-      : undefined;
+  const facility = () => gated(facilityData);
 
   // The property-definition catalogue — the same query Configuration reads.
   const [definitionsData] = createResource(
@@ -124,15 +122,12 @@ export const StoreEditorModal = (props: {
       return result.kind === 'success' ? result.data.nameProperties.nodes : [];
     }
   );
-  const definitions = () =>
-    definitionsData.state === 'ready' || definitionsData.state === 'refreshing'
-      ? (definitionsData.latest ?? [])
-      : [];
+  const definitions = () => gated(definitionsData) ?? [];
 
   // The store's 23 preference descriptions — served in display order, with a
   // fabricated default standing in for any unset preference (contract § The
   // store editor). Same interaction-opened read as the two above, so the same
-  // non-suspending `.state` gate.
+  // non-suspending gate.
   const [preferencesData] = createResource(
     () => (props.open && props.storeId ? props.storeId : undefined),
     async storeId => {
@@ -146,10 +141,7 @@ export const StoreEditorModal = (props: {
         : [];
     }
   );
-  const preferences = () =>
-    preferencesData.state === 'ready' || preferencesData.state === 'refreshing'
-      ? (preferencesData.latest ?? [])
-      : [];
+  const preferences = () => gated(preferencesData) ?? [];
 
   // Seed the draft from the record each time one lands — the whole stored
   // document, including keys no definition covers, so the save can round-trip

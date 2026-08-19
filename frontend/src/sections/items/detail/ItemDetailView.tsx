@@ -8,6 +8,7 @@ import {
 } from 'solid-js';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { isCentralServer } from '../../../api/serverInfo';
 import { t } from '../../../intl';
@@ -105,15 +106,11 @@ const ItemDetailView: Component = () => {
       return result.data.items.nodes[0];
     }
   );
-  // Read WITHOUT suspending, gated on `.state` — the same read every tab panel
-  // below uses. This is the screen's first load, so a suspending read would be
-  // tolerable here, but keeping it non-suspending means NOTHING on this screen
-  // can trip the boundary below: `data.loading` drives the spinner instead
-  // (kdd/solid-reactivity-pitfalls § no remounts on interaction).
-  const item = (): ItemDetailRow | undefined =>
-    data.state === 'ready' || data.state === 'refreshing'
-      ? data.latest
-      : undefined;
+  // Read WITHOUT suspending — the same read every tab panel below uses. This
+  // is the screen's first load, so a suspending read would be tolerable here,
+  // but keeping it non-suspending means NOTHING on this screen can trip the
+  // boundary below: `data.loading` drives the spinner instead.
+  const item = (): ItemDetailRow | undefined => gated(data);
 
   const backToList = () => {
     // Replace history so Back can't return to the missing record

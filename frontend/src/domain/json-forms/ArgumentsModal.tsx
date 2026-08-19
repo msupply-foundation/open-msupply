@@ -9,6 +9,7 @@ import {
   Switch,
 } from 'solid-js';
 import { createStore, reconcile, unwrap } from 'solid-js/store';
+import { gated } from '../../api/gated';
 import { t } from '../../intl';
 import { Dialog } from '../../ui/elements/feedback/Dialog';
 import { Button } from '../../ui/elements/buttons/Button';
@@ -209,18 +210,12 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
   // only references a location. Non-suspending read so a pending fetch never
   // trips an ancestor <Suspense>.
   const [locationsData] = createResource(currentStoreId, fetchLocations);
-  const locations = (): Location[] =>
-    locationsData.state === 'ready' || locationsData.state === 'refreshing'
-      ? (locationsData.latest ?? [])
-      : [];
+  const locations = (): Location[] => gated(locationsData) ?? [];
 
   // Programs for a `programSearch`-kind argument (AC-R12), fetched locally in
   // the same style; an immunisation-only field filters this one fetch.
   const [programsData] = createResource(currentStoreId, fetchPrograms);
-  const programs = (): ProgramListItem[] =>
-    programsData.state === 'ready' || programsData.state === 'refreshing'
-      ? (programsData.latest ?? [])
-      : [];
+  const programs = (): ProgramListItem[] => gated(programsData) ?? [];
 
   // The program picker's three-key write (AC-R12, contract "Arguments"): the
   // scoped key gets the program id, and the hard-coded companions `elmisCode`

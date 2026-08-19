@@ -1,6 +1,7 @@
 import { createMemo, createResource, type Component } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import {
@@ -281,13 +282,8 @@ export const ItemLedgerPanel: Component<{
 
   // Read WITHOUT suspending: this panel mounts when its TAB is opened, so its
   // FIRST read is pending under the already-open detail screen's <Suspense> —
-  // a suspending read there tears down and remounts the whole screen. `.latest`
-  // alone is not enough (it suspends on the first pending read), so gate on
-  // `.state` (kdd/solid-reactivity-pitfalls § no remounts on interaction).
-  const ready = () =>
-    data.state === 'ready' || data.state === 'refreshing'
-      ? data.latest
-      : undefined;
+  // a suspending read there tears down and remounts the whole screen.
+  const ready = () => gated(data);
   const rows = (): LedgerRow[] => ready()?.nodes ?? [];
   const totalCount = (): number => ready()?.totalCount ?? 0;
 

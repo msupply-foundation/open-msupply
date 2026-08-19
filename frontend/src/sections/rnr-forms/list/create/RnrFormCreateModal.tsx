@@ -1,6 +1,7 @@
 import { createMemo, createResource, createSignal, Show } from 'solid-js';
-import type { Component, Resource } from 'solid-js';
+import type { Component } from 'solid-js';
 import { graphqlFetch } from '@/api/graphql';
+import { gated } from '@/api/gated';
 import { t } from '@/intl';
 import { generateUUID } from '@/uuid';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
@@ -55,13 +56,8 @@ export const RnrFormCreateModal: Component<{
   const [serverError, setServerError] = createSignal<string>();
 
   // Every read below first fetches inside this open modal — live user state —
-  // so all are `.state`-gated, never suspending (kdd/solid-reactivity-pitfalls
-  // › the createResource checklist).
-  const gated = <T,>(resource: Resource<T>): T | undefined =>
-    resource.state === 'ready' || resource.state === 'refreshing'
-      ? resource.latest
-      : undefined;
-
+  // so all are `gated`, never suspending (kdd/solid-reactivity-pitfalls › the
+  // createResource checklist).
   const [programsData] = createResource(
     () => props.storeId,
     async storeId => programOptions(await fetchPrograms(storeId))

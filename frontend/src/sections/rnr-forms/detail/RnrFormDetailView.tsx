@@ -12,6 +12,7 @@ import {
 import { createStore, produce } from 'solid-js/store';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '@/api/graphql';
+import { gated } from '@/api/gated';
 import { t } from '@/intl';
 import { Page } from '@/ui/layout/Page/Page';
 import { Header } from '@/ui/layout/Header/Header';
@@ -165,10 +166,7 @@ const RnrFormDetailView: Component = () => {
   const periodLength = () => node()?.periodLength ?? 30;
 
   const recomputeCtx = (): RecomputeContext => {
-    const prefs =
-      prefsData.state === 'ready' || prefsData.state === 'refreshing'
-        ? prefsData.latest
-        : undefined;
+    const prefs = gated(prefsData);
     return {
       periodLength: periodLength(),
       monthsUnderstock: prefs?.monthsUnderstock ?? 0,
