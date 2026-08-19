@@ -36,6 +36,7 @@ import { patientsRoutes } from './sections/patients';
 import { cliniciansRoutes } from './sections/clinicians';
 import { prescriptionsRoutes } from './sections/prescriptions';
 import { masterListsRoutes } from './sections/master-lists';
+import { campaignsRoutes } from './sections/campaigns';
 import { reportsRoutes } from './sections/reports';
 import { settingsRoutes } from './sections/settings';
 import { sitesRoutes } from './sections/sites';
@@ -92,6 +93,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'manage/sites': sitesRoutes,
   'manage/global-preferences': globalPreferencesRoutes,
   help: helpRoutes,
+  'manage/campaigns': campaignsRoutes,
   'manage/help-documents': helpDocumentsRoutes,
 };
 
