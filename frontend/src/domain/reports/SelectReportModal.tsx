@@ -1,4 +1,5 @@
 import { createResource, createSignal, Show, type Component } from 'solid-js';
+import { gated } from '../../api/gated';
 import { t, type LocaleKey } from '../../intl';
 import { Dialog } from '../../ui/elements/feedback/Dialog';
 import { createFocusTarget } from '../../ui/utils/createFocusTarget';
@@ -68,14 +69,14 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
   const picker = createFocusTarget();
 
   // The context's reports, fetched once when the dialog opens (the component is
-  // mounted only while open). Read non-suspending via `.latest` so the dialog
-  // shows its own spinner rather than tripping an outer Suspense boundary
+  // mounted only while open). `gated` read so the dialog shows its own spinner
+  // rather than tripping an outer Suspense boundary
   // (kdd/solid-reactivity-pitfalls).
   const [reports] = createResource(
     () => props.context,
     context => listReportsByContext(context, props.extraFilter)
   );
-  const options = () => reports.latest ?? [];
+  const options = () => gated(reports) ?? [];
 
   const [selected, setSelected] = createSignal<Report | null>(null);
   // 'idle' → the pick/format row; 'generating' → blocking spinner + disabled

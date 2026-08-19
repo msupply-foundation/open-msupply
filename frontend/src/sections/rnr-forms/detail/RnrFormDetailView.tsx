@@ -262,9 +262,19 @@ const RnrFormDetailView: Component = () => {
   const showFirstError = () => {
     const first = draft.lines.find(lineHasError);
     if (!first) return;
-    document
-      .querySelector(`[data-row-key="${first.id}"]`)
-      ?.scrollIntoView(smoothScrollOptions());
+    const scroll = () =>
+      document
+        .querySelector(`[data-row-key="${first.id}"]`)
+        ?.scrollIntoView(smoothScrollOptions());
+    if (visibleLines().some(line => line.id === first.id)) {
+      scroll();
+      return;
+    }
+    // The item search is hiding the error line — clear it, then scroll once
+    // the row is back in the DOM (the URL-backed filter lands on the router's
+    // schedule, not synchronously).
+    setLineFilter(DEFAULT_URL_STATE.filter);
+    requestAnimationFrame(scroll);
   };
 
   const runFinalise = async (): Promise<boolean> => {

@@ -134,7 +134,16 @@ export const RnrFormCreateModal: Component<{
   const previousForm = () => gated(previousData);
   const previousSettled = () => previousData.state === 'ready';
 
-  const periods = createMemo(() => periodSelection(schedule(), previousForm()));
+  // The gating flags need the SETTLED sequence anchor: while a program or
+  // schedule switch has the previous-form query in flight, `gated` still
+  // serves the old anchor, which would mis-flag the fresh period list — so
+  // the options wait empty until it lands (Save is blocked on the same
+  // condition, and the picker shows its loading state).
+  const periods = createMemo(() =>
+    previousSettled()
+      ? periodSelection(schedule(), previousForm())
+      : periodSelection(undefined, undefined)
+  );
   const periodId = () => pickedPeriodId() ?? periods().defaultPeriodId;
 
   // The supplier prefill resolves the REAL option by id (never a hand-built
@@ -280,6 +289,7 @@ export const RnrFormCreateModal: Component<{
             itemToString={o => o.option.period.name}
             itemToValue={o => o.option.period.id}
             itemDisabled={o => o.disabled}
+            loading={previousData.loading || schedulesData.loading}
             // Unselectable periods stay listed, dimmed AND textually marked
             // (controls › blocked affordances — never dimming alone).
             renderItem={o => (

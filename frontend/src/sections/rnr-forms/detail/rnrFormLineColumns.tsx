@@ -237,7 +237,8 @@ export const rnrFormLineColumns = ({
     c: { key: 'losses' },
     sortKey: 'losses',
     header: headerWithInfo('label.losses', 'description.rnr-losses'),
-    ...getCellDefinition('losses'),
+    ...getNumberCell(),
+    size: remToPx(7),
     cardGroup: 'more',
     cell: info => {
       const line = info.row.original;

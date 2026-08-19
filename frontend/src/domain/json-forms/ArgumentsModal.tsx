@@ -133,7 +133,7 @@ const PeriodArgumentField = (props: {
       return fetchPeriods(vars.storeId, vars.programId ?? undefined);
     }
   );
-  const periods = (): PeriodItem[] => periodsData.latest ?? [];
+  const periods = (): PeriodItem[] => gated(periodsData) ?? [];
 
   const selectedId = (): string | undefined => {
     const value = props.value;
