@@ -126,7 +126,7 @@ export const CustomTranslationsModal = (props: {
       : {};
   });
   createEffect(() => {
-    const served = legacyData.state === 'ready' ? legacyData.latest : undefined;
+    const served = gated(legacyData);
     if (served && !legacyLoaded()) {
       setLegacy(served);
       setLegacyLoaded(true);

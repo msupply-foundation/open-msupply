@@ -90,6 +90,11 @@ export const periodSelection = (
     const usedIndex = schedule.periods.findIndex(
       p => p.period.id === previousForm.period.id
     );
+    // The anchor's period missing from this schedule's list is "no anchor",
+    // not "exhausted" — nothing pre-selects, no error. (Unreachable while the
+    // caller filters the previous form by this same schedule.)
+    if (usedIndex === -1)
+      return { options, defaultPeriodId: undefined, error: undefined };
     const next = usedIndex > 0 ? schedule.periods[usedIndex - 1] : undefined;
     if (!next) {
       // OMS-REG-REPL-07.42: the schedule has no period left.

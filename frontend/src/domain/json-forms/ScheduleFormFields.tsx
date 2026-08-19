@@ -1,4 +1,5 @@
 import { createMemo, createResource, type JSX } from 'solid-js';
+import { gated } from '../../api/gated';
 import { t } from '../../intl';
 import { Combobox } from '../../ui/elements/selectors/Combobox';
 import { DateField } from '../../ui/elements/inputs/DateField';
@@ -50,7 +51,7 @@ export const ScheduleFormFields = (
   props: ScheduleFormFieldsProps
 ): JSX.Element => {
   // The chosen program's schedules (with their closed periods) — refetched
-  // when the program changes; no program, no fetch. `.latest` read so a
+  // when the program changes; no program, no fetch. `gated` read so a
   // pending fetch never trips an ancestor <Suspense>
   // (kdd/solid-reactivity-pitfalls).
   const [schedulesData] = createResource(
@@ -67,7 +68,7 @@ export const ScheduleFormFields = (
     }
   );
   const schedules = (): ScheduleWithPeriods[] =>
-    props.programId ? (schedulesData.latest ?? []) : [];
+    props.programId ? (gated(schedulesData) ?? []) : [];
 
   // The period options are the CHOSEN schedule's own list — no extra query
   // (AC-R17).

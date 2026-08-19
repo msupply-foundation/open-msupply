@@ -172,6 +172,23 @@ describe('periodSelection (OMS-REG-REPL-07.39–.42)', () => {
     expect(result.error).toBe('no-available-periods');
     expect(result.defaultPeriodId).toBeUndefined();
   });
+
+  it('treats a previous period absent from the schedule as no anchor, not exhaustion', () => {
+    const anchorElsewhere = {
+      ...form('nov'),
+      period: {
+        id: 'sep',
+        name: 'Sep 2024',
+        startDate: '2024-09-01',
+        endDate: '2024-09-30',
+      },
+    };
+    const result = periodSelection(monthly, anchorElsewhere);
+    expect(result.error).toBeUndefined();
+    expect(result.defaultPeriodId).toBeUndefined();
+    // The date gate still applies against the anchor's end.
+    expect(result.options.map(o => o.disabled)).toEqual([false, false, false]);
+  });
 });
 
 describe('defaultSupplierId (OMS-REG-REPL-07.10 .38)', () => {
