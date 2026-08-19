@@ -83849,7 +83849,12 @@
    "integration_result": null,
    "table_name": "preference",
    "action": "Upsert",
-   "data": "{\"id\": \"backdating_global\", \"key\": \"backdating\", \"store_id\": null, \"value\": \"{\\\"shipmentsEnabled\\\": true, \\\"inventoryAdjustmentsEnabled\\\": true, \\\"maxDays\\\": 30}\"}",
+   "data": {
+    "id": "backdating_global",
+    "key": "backdating",
+    "store_id": null,
+    "value": "{\"shipmentsEnabled\": true, \"inventoryAdjustmentsEnabled\": true, \"maxDays\": 30}"
+   },
    "sync_version": "V7",
    "app_version": null,
    "source_site_id": 6,
