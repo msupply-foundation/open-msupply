@@ -86,7 +86,17 @@ pub fn validate(
             return Err(CantBackDate("Cannot set date in the future".to_string()));
         }
 
-        // Lines are deleted atomically in generate if backdating with existing lines
+        // Existing lines were allocated at the old date, so they'd need re-allocation.
+        // Rather than deleting them as a side effect, leave that decision to the caller
+        // - same as prescriptions (see open-msupply#12615)
+        let line_count = InvoiceLineRepository::new(connection).count(Some(
+            InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(patch.id.to_string())),
+        ))?;
+        if line_count > 0 {
+            return Err(CantBackDate(
+                "Can't backdate as invoice has allocated lines".to_string(),
+            ));
+        }
 
         if backdating.max_days > 0 {
             let earliest_allowed = Utc::now() - Duration::days(backdating.max_days as i64);

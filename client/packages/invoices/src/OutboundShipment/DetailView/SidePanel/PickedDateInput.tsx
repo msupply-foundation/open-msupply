@@ -53,6 +53,7 @@ export const PickedDateInput = () => {
   const disabled = !!disabledReason;
 
   const { sdk, storeId } = useOutbound.utils.api();
+  const { mutateAsync: deleteLines } = useOutbound.line.delete();
 
   const [dateValue, setDateValue] = useState<Date | null>(currentDate);
 
@@ -102,6 +103,16 @@ export const PickedDateInput = () => {
       ? newDate.toISOString()
       : Formatter.toIsoString(DateUtils.endOfDayOrNull(newDate));
 
+    // The backend rejects backdating while lines exist (they were allocated at the
+    // old date), so any lines are deleted here first - once every confirmation has
+    // been accepted. Mirrors the prescription toolbar's date change.
+    const applyBackdate = async () => {
+      if (lineCount > 0) {
+        await deleteLines(lines?.nodes ?? []);
+      }
+      await update({ backdatedDatetime });
+    };
+
     const doUpdate = async () => {
       const hasStocktakeAfter = await checkStocktakeAfterDate(newDate);
       if (hasStocktakeAfter) {
@@ -109,18 +120,16 @@ export const PickedDateInput = () => {
           message: t('messages.stocktake-after-backdate-warning', {
             date: formattedDate,
           }),
-          onConfirm: async () => {
-            await update({ backdatedDatetime });
-          },
+          onConfirm: applyBackdate,
           onCancel: () => setDateValue(previousValue),
         });
         return;
       }
 
-      await update({ backdatedDatetime });
+      await applyBackdate();
     };
 
-    // If lines exist, warn they'll be deleted (backend handles deletion atomically)
+    // If lines exist, warn they'll be deleted
     if (lineCount > 0) {
       getDeleteLinesConfirmation({
         message: t('messages.confirm-backdate-picked-date', {

@@ -211,7 +211,6 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::PreferenceError(_) => InternalError(formatted_error),
         ServiceError::InvoiceLineHasNoStockLine(_) => InternalError(formatted_error),
-        ServiceError::LineDeleteError { .. } => InternalError(formatted_error),
         ServiceError::UpdatedInvoiceDoesNotExist => InternalError(formatted_error),
     };
 
