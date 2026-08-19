@@ -3,10 +3,11 @@ import { isUncounted, lineDifference, type CountLine } from './stocktakeLine';
 
 // Anchors: spec/stocktakes/cases/OMS-REG-INV-03.
 //   .49 — displayed difference = counted − snapshot (blank while uncounted)
-//   .68 — an uncounted line reads in the info tone; any count (incl. 0) default
+//   .68 — an uncounted line takes the unfinished-work marking (tint + leading
+//         bar) and reads "Not counted"; any count (incl. 0) is an ordinary row
 // Pure count arithmetic — the cheapest layer to pin the exact rule; the detail
-// table's rendering of it (the actual info-tone class, the blank cell) is
-// exercised in the e2e suite.
+// table's rendering of it (the tint/accent attributes, the absent-value word)
+// is exercised in the e2e suite.
 
 const line = (over: Partial<CountLine> = {}): CountLine => ({
   snapshotNumberOfPacks: 10,
@@ -14,7 +15,7 @@ const line = (over: Partial<CountLine> = {}): CountLine => ({
   ...over,
 });
 
-describe('OMS-REG-INV-03.68 — uncounted predicate (row tone)', () => {
+describe('OMS-REG-INV-03.68 — uncounted predicate (row marking)', () => {
   it('treats a null counted value as uncounted', () => {
     expect(isUncounted(line({ countedNumberOfPacks: null }))).toBe(true);
   });

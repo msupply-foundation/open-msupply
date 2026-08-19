@@ -29,6 +29,7 @@ import {
   type SortState,
 } from '@/ui/elements/table/DataTable';
 import {
+  AbsentValue,
   CommentHeader,
   getCellDefinition,
   getDateCell,
@@ -819,10 +820,40 @@ const StocktakeDetailView: Component = () => {
       c: { key: 'countedNumberOfPacks' },
       sortKey: 'countedNumberOfPacks',
       header: () => t('label.counted-num-of-packs'),
+      // NOT user-hideable (hideFromColumnSettings), unlike the other data
+      // columns here: this cell carries the WORD behind the uncounted marking
+      // ("Not counted", below), and the tint and bar beside it are colour.
+      // Hide the column from the Columns popover and an uncounted row would be
+      // marked by colour alone — the one thing the marking is never allowed to
+      // be (styling principle 9 / WCAG 1.4.1). Same reasoning as the outbound
+      // line table's Batch column, which holds "Unallocated". The column stays
+      // sortable and stays in its place in the order; it just can't be
+      // switched off.
       ...getCellDefinition('countedNumberOfPacks', {
         align: 'right',
         headerPosition: 'badge',
+        hideFromColumnSettings: true,
       }),
+      // An uncounted line has no counted value, and a blank cell says nothing —
+      // it reads as "zero" or "still loading" as readily as "not counted yet",
+      // and it is the only cell that could carry the word the row's marking
+      // leans on. The absent-value treatment types it as prose (UI face,
+      // italic, muted) so it cannot be mistaken for a counted quantity.
+      //
+      // A word, not a chip: the row already carries the unfinished tint AND the
+      // leading bar, so nothing more is needed to FIND it. This cell's one job
+      // is to say WHICH value is missing.
+      //
+      // The accessor above keeps the raw number as the cell's VALUE, so
+      // sorting, the hover-reveal and any export are unchanged.
+      cell: info =>
+        isUncounted(info.row.original) ? (
+          <AbsentValue label={t('label.not-counted')} />
+        ) : (
+          formatNumber(info.getValue<number | null | undefined>(), {
+            maximumFractionDigits: 2,
+          })
+        ),
     },
     // Doses counted (gated by manageVaccinesInDoses) — client-side, vaccine
     // rows only (blank otherwise); nothing stored per line (see ./lines/doses).
@@ -1121,13 +1152,38 @@ const StocktakeDetailView: Component = () => {
                   sort={currentSort()}
                   onSort={onSort}
                   onRowClick={isDisabled(node()) ? undefined : openRow}
-                  // Uncounted lines (no counted value) read in the info tone —
-                  // whole-row action-blue text, marking them as awaiting a
-                  // count (spec ui-surface → Line table, OMS-REG-INV-03.68).
-                  // They're the lines trimmed on finalise. Flat table, so a
+                  // Uncounted lines (no counted value) carry the unfinished-
+                  // work marking — the teal row tint AND a bar of the same
+                  // colour down the row's leading edge (spec ui-surface → Line
+                  // table, OMS-REG-INV-03.68). One channel, one question —
+                  // "what is still to count?" — answered by running the eye
+                  // down one edge rather than reading every Counted cell. These
+                  // are the lines trimmed on finalise. Flat table, so a
                   // leaf-row predicate is enough (no grouped parents to
                   // propagate to).
-                  rowTone={line => (isUncounted(line) ? 'info' : undefined)}
+                  //
+                  // This replaces the earlier whole-row action-blue TEXT tone:
+                  // blue text is the colour row SELECTION already spends, it
+                  // recoloured every value in the row (so a counted-looking
+                  // number and a missing one differed only in hue), and it left
+                  // the at-a-glance channel — the row background — unused. The
+                  // shared marking is the outbound line table's, same tokens
+                  // and same CSS (kdd/ui-styling; --marking-unfinished).
+                  rowTint={line =>
+                    isUncounted(line) ? 'unfinished' : undefined
+                  }
+                  // Same predicate on both channels: the tint colours the row,
+                  // the bar makes the uncounted lines legible down one edge as
+                  // the user scrolls a long count.
+                  rowAccent={line =>
+                    isUncounted(line) ? 'unfinished' : undefined
+                  }
+                  // Cards have neither a row background nor a leading edge to
+                  // mark, so they keep the TEXT tone on the card's identity
+                  // title (the teal is a 3:1 graphic colour — below the 4.5:1
+                  // text floor — so it can't cross over to text). The word is
+                  // there too: the Counted field is the card's badge.
+                  cardTone={line => (isUncounted(line) ? 'info' : undefined)}
                   emptyMessage={t('error.no-stocktake-items')}
                   empty={
                     isDisabled(node()) ? undefined : (
