@@ -51,8 +51,15 @@ export type StoreScopedResource<T> = {
   /** True while a fetch for the current store is in flight. */
   loading: () => boolean;
   /** Force a refetch now (e.g. after a mutation that changed the list).
-   * Awaitable. */
+   * Awaitable. NB: arms the lazy cache — refetching a never-read cache builds
+   * it and fetches. From a screen that only WRITES the list (and may never
+   * read it), use `invalidate` instead. */
   refetch: () => Promise<void>;
+  /** Mark the cache stale after a mutation changed the list: refetches an
+   * ARMED cache, and leaves a never-read one unbuilt — it simply loads fresh
+   * on its first real read, so invalidating never costs an unwanted fetch.
+   * Fire-and-forget. */
+  invalidate: () => void;
 };
 
 export function createStoreScopedResource<T>(
@@ -90,6 +97,9 @@ export function createStoreScopedResource<T>(
         refetch: async () => {
           await refetch();
         },
+        invalidate: () => {
+          void refetch();
+        },
       };
     });
 
@@ -98,5 +108,8 @@ export function createStoreScopedResource<T>(
     noSuspense: () => (instance ??= build()).noSuspense(),
     loading: () => (instance ??= build()).loading(),
     refetch: () => (instance ??= build()).refetch(),
+    // Deliberately NOT `??=`: invalidating an unbuilt cache must stay a no-op,
+    // or every write-only screen would arm (and fetch) a list nobody reads.
+    invalidate: () => instance?.invalidate(),
   };
 }
