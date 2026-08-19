@@ -279,8 +279,19 @@
     'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   /* Monospace — codes, batches, location IDs & dense identifiers
      (ui-standards › typography). A system stack, no webfont bundled: fixed-
-     width glyphs align in columns and disambiguate 0/O and 1/l/I. */
-  --font-mono: 'Monaco', 'Courier New', monospace;
+     width glyphs align in columns and disambiguate 0/O and 1/l/I.
+
+     `ui-monospace` FIRST (Ling, 2026-08-19): it resolves to the platform's
+     UI-grade mono — SF Mono on Apple, and the named fallbacks cover the rest —
+     each drawn to sit beside a UI sans. The old stack led with Monaco, a 1984
+     terminal face with no design relationship to Inter, which read on screen as
+     a visitor from another application; review feedback on the outbound detail
+     table was "I seem to have multiple fonts in this screen". Worse, Monaco
+     ships only on macOS, so every Windows/Linux client — the tablets included —
+     fell through to Courier New: thin, cramped, and more foreign still. */
+  --font-mono:
+    ui-monospace, 'SFMono-Regular', 'Menlo', 'Consolas', 'Liberation Mono',
+    monospace;
   --text-xs: 0.75rem; /* 12px — body2 */
   --text-sm: 0.875rem; /* 14px — body1 / th / input */
   --text-md: 1rem; /* 16px — h6 */
