@@ -53,12 +53,6 @@ export type NavItem = {
    */
   permission?: UserPermission;
   /**
-   * Offered at phone width (spec/navigation › mobile-friendly, D95). Absent =
-   * withheld from the phone menu until the destination's screens are made
-   * phone-ready; flipping this one flag is the whole change.
-   */
-  mobileFriendly?: true;
-  /**
    * OVERRIDE for the command palette's name, complete with its "Go to:" prefix
    * (spec/keyboard ui-surface S1 § Action names).
    *
@@ -96,7 +90,6 @@ export const navConfig: NavItem[] = [
         labelKey: 'inbound-shipment',
         path: 'replenishment/inbound-shipment',
         permission: 'INBOUND_SHIPMENT_QUERY',
-        mobileFriendly: true,
       },
       {
         labelKey: 'supplier-returns',
@@ -199,7 +192,6 @@ export const navConfig: NavItem[] = [
         labelKey: 'equipment',
         path: 'cold-chain/equipment',
         permission: 'ASSET_QUERY',
-        mobileFriendly: true,
         cmdkKey: 'cmdk.goto-cold-chain-equipment',
       },
       {
@@ -301,8 +293,8 @@ export const navConfig: NavItem[] = [
     path: 'reports',
     permission: 'REPORT',
   },
-  { labelKey: 'settings', path: 'settings', mobileFriendly: true },
-  { labelKey: 'help', path: 'help', mobileFriendly: true },
+  { labelKey: 'settings', path: 'settings' },
+  { labelKey: 'help', path: 'help' },
 ];
 
 // Flattened list of every destination (sections + inner entries) — used to

@@ -178,10 +178,14 @@ const HelpPage: Component = () => {
             </FormSection>
           </Show>
 
-          {/* Block 4 — contact form. */}
+          {/* Block 4 — contact form. The reason and the address carry short
+              values and this section spans the page's 58rem measure, so both
+              take an explicit cap rather than the default fill; the message is
+              free text and keeps it. */}
           <FormSection title={t('heading.contact-us')}>
             <Select
               label={t('label.reason-for-contacting')}
+              width="short"
               value={reason()}
               options={[
                 { value: 'FEEDBACK', label: t('label.feedback') },
@@ -191,6 +195,7 @@ const HelpPage: Component = () => {
             />
             <TextField
               label={t('label.your-email-address')}
+              width="short"
               value={email()}
               onInput={e => setEmail(e.currentTarget.value)}
               error={emailError()}

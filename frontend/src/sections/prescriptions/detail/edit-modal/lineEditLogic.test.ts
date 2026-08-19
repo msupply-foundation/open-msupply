@@ -117,7 +117,7 @@ describe('seedDraftLines (stock-allocation AC-AL1/AL2 client face — FEFO order
   });
 });
 
-describe('draftAvailableUnits (AC-AL16 — the available figure, .72)', () => {
+describe('draftAvailableUnits (AC-AL17 — the available figure, .73)', () => {
   it('counts only rows auto-distribution can draw from — an item with only expired stock reads 0 (issue #945)', () => {
     const seeded = seedDraftLines(
       [

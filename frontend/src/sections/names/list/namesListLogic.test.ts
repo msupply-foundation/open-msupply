@@ -179,10 +179,10 @@ describe('AC-N11 Server-side pagination with full total', () => {
 });
 
 describe('AC-N12 Page size', () => {
-  it('offers 10/20/50/100, defaulting to 20', () => {
+  it('offers 10/20/50/100, defaulting to 50', () => {
     expect(PAGE_SIZE_OPTIONS).toEqual([10, 20, 50, 100]);
-    expect(DEFAULT_PAGE_SIZE).toBe(20);
-    expect(DEFAULT_STATE.first).toBe(20);
+    expect(DEFAULT_PAGE_SIZE).toBe(50);
+    expect(DEFAULT_STATE.first).toBe(50);
   });
 });
 

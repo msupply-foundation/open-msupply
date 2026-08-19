@@ -1,4 +1,4 @@
-import { createSignal } from 'solid-js';
+import { createMemo, createRoot, createSignal } from 'solid-js';
 import { graphqlFetch } from '../api/graphql';
 import {
   StoreContext,
@@ -41,20 +41,35 @@ const refetch = async (storeId: string | undefined) => {
   setLoaded({ storeId, result: result.data });
 };
 
-// The loaded store context (Guard 3 state): store preferences + permissions.
-// Reactive; undefined until the guard's fetch lands and between store switches.
-const storeContext = (): StoreContextResult | undefined => loaded()?.result;
-
-// The id of the store the user has currently ENTERED (Guard 3 loaded).
-// Reactive and module-level, so store-scoped global caches
-// (createStoreScopedResource) can depend on it without a component. Set only
-// when the store guard has resolved and authorised the store from the URL and
-// its context fetch succeeded — so it is URL-driven in effect
-// (kdd/url-structure), and never reports a store whose lookups aren't yet
-// valid to fetch. Keyed on the REQUEST (not the response's
-// storePreferences.id, which is "" for a store without a preference row).
-// Undefined between store switches (guard shows its loading state).
-const currentStoreId = () => loaded()?.storeId;
+// The public reads are MEMOS, not plain accessors, and that is load-bearing
+// (kdd/state-management decision 5): refetch builds a fresh
+// { storeId, result } wrapper on every run — including the post-sync run every
+// couple of seconds — so the `loaded` signal notifies even when the fetched
+// payload came back reference-identical (graphqlFetch's structural sharing).
+// Each memo re-runs then, but its OUTPUT — the inner result reference / the id
+// string — is unchanged, so Solid's memo equality stops the propagation right
+// here: the preference gates below and every column memo behind them never
+// wake. A plain accessor would pass the wrapper churn straight through.
+// createRoot gives the module-scope memos an owner (cf.
+// createStoreScopedResource).
+const { storeContext, currentStoreId } = createRoot(() => ({
+  // The loaded store context (Guard 3 state): store preferences + permissions.
+  // Reactive; undefined until the guard's fetch lands and between store
+  // switches.
+  storeContext: createMemo(
+    (): StoreContextResult | undefined => loaded()?.result
+  ),
+  // The id of the store the user has currently ENTERED (Guard 3 loaded).
+  // Reactive and module-level, so store-scoped global caches
+  // (createStoreScopedResource) can depend on it without a component. Set only
+  // when the store guard has resolved and authorised the store from the URL
+  // and its context fetch succeeded — so it is URL-driven in effect
+  // (kdd/url-structure), and never reports a store whose lookups aren't yet
+  // valid to fetch. Keyed on the REQUEST (not the response's
+  // storePreferences.id, which is "" for a store without a preference row).
+  // Undefined between store switches (guard shows its loading state).
+  currentStoreId: createMemo(() => loaded()?.storeId),
+}));
 
 // The stocktake display-gate preferences (spec/stocktakes › store-preference
 // gates), read from the guard-3 PreferencesNode. Each defaults to `false` while
@@ -179,7 +194,7 @@ const patientPreferences = () => {
 // Same safe defaults while unresolved as the other *Preferences accessors —
 // OFF for gated columns/fields, but `invoiceStatusOptions` empty means
 // UNRESTRICTED (every status offered until the real value resolves — the
-// permissive default, DIVERGENCES D7's precedent via AC-PR2). Reactive — a
+// permissive default, per AC-PR2). Reactive — a
 // post-sync refetch re-gates in place.
 const prescriptionPreferences = () => {
   const prefs = storeContext()?.preferences;
@@ -198,6 +213,15 @@ const prescriptionPreferences = () => {
     editPrescribedQuantity: store?.editPrescribedQuantityOnPrescription ?? true,
   };
 };
+
+// The bottom bar's store colour (spec/chrome § bottom bar): the store's
+// custom-colour preference, raw as stored — the shell derives contrast text
+// and ignores an unparseable value (AppShell's footerColourStyle). Empty
+// while unresolved, so the bar shows its default until the preference is
+// known. Reactive — the store editor's preferences save refetches this
+// context, so a saved colour applies without a reload.
+const storeCustomColour = (): string =>
+  storeContext()?.preferences?.storeCustomColour ?? '';
 
 // The entered store's dispensary gate (spec/patients § configuration gates ›
 // AC-G1). Dispensary mode gates the WHOLE patient surface — the Dispensary nav
@@ -286,6 +310,7 @@ export {
   patientPreferences,
   prescriptionPreferences,
   isDispensary,
+  storeCustomColour,
   hasVaccineModule,
   hasProgramModule,
   hasProcurement,

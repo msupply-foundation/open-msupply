@@ -188,7 +188,7 @@ const Body: Component<InsuranceModalProps> = props => {
           nameOfInsured: draft.nameOfInsured,
         });
     setSaving(false);
-    if (!outcome) return props.onClose(); // handled globally
+    if (!outcome) return; // handled globally
     if (outcome.kind === 'error') {
       setSaveError(outcome.message);
       return;
@@ -210,6 +210,10 @@ const Body: Component<InsuranceModalProps> = props => {
       onClose={props.onClose}
       title={editing() ? t('title.edit-insurance') : t('title.new-insurance')}
       testId="insurance-modal"
+      // Room for the provider-name picker's open listbox inside the dialog
+      // (#1029) — it sits ~8rem down in the right column and its list (the
+      // site's providers) can reach the 18rem cap.
+      minBodyHeightRem={28}
       actionsLead={
         <Show when={saveError()}>
           <Alert severity="error">{saveError()}</Alert>
@@ -241,13 +245,11 @@ const Body: Component<InsuranceModalProps> = props => {
         <FormColumn>
           <TextField
             label={t('label.name-of-the-insured')}
-            width="full"
             value={draft.nameOfInsured}
             onInput={e => setDraft('nameOfInsured', e.currentTarget.value)}
           />
           <TextField
             label={t('label.policy-number-family')}
-            width="full"
             required={!editing() && draft.policyNumberPerson.trim() === ''}
             disabled={editing()}
             error={validation.errorFor('policyNumberFamily')}
@@ -256,7 +258,6 @@ const Body: Component<InsuranceModalProps> = props => {
           />
           <TextField
             label={t('label.policy-number-person')}
-            width="full"
             required={!editing() && draft.policyNumberFamily.trim() === ''}
             disabled={editing()}
             error={validation.errorFor('policyNumberPerson')}
@@ -281,7 +282,6 @@ const Body: Component<InsuranceModalProps> = props => {
         <FormColumn>
           <DateField
             label={t('label.insurance-expiry-date')}
-            width="full"
             min={today}
             value={draft.expiryDate}
             error={validation.errorFor('expiryDate')}
@@ -299,7 +299,6 @@ const Body: Component<InsuranceModalProps> = props => {
           />
           <NumberField
             label={t('label.coverage-rate')}
-            width="full"
             required
             min={0}
             max={100}

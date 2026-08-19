@@ -95,7 +95,7 @@ const stepStatus = (state: StepState, errored: boolean): string => {
  * styling — the errored step's alert glyph and colour are only its visual
  * echo (the marker circle is aria-hidden).
  *
- * One count, on the in-flight step (D100): the done/total count — and the
+ * One count, on the in-flight step (D101): the done/total count — and the
  * step's elapsed time, ticking against a live clock — render beneath the
  * in-flight step only; a completed step's final count and duration are a
  * hover/focus popover on its marker (which becomes a button — both also ride

@@ -212,6 +212,31 @@
   --warning-main: #ed6c02;
   --success-main: #2e7d32;
 
+  /* UNFINISHED WORK — the marking for a record still awaiting a step the user
+     must take (an outbound placeholder line: a requested quantity with no
+     batch behind it yet). Deliberately its own hue rather than a reuse:
+     - not the warning amber, because a placeholder is unfinished, not wrong,
+       and #ed6c02 sits almost on the brand orange (#e95c30) besides;
+     - not the action blue, because row SELECTION is that blue at 8% — a
+       marked row and a selected row would be the same colour;
+     - not red/amber/orange at all, the family that collapses under the common
+       colour-blindness types, which is the family this very table already
+       spends on expired and on-hold.
+     A calm teal separates from every one of those in normal and dichromatic
+     vision, and stays readable as a whole-table field on a shipment raised
+     from a requisition, where EVERY line starts unallocated. Deeper and less
+     saturated than --status-shipped's teal, so the two don't read as the same
+     thing on different screens. */
+  /* Lightened one step from the first value (#0f8b8d) after a design review:
+     softer rows without losing the bar. That step is bounded — the bar is a
+     meaningful graphic, so WCAG 2.2 SC 1.4.11 wants 3:1 against the page, and
+     this sits at 3.51:1. One more step (#17a2a4) reaches 3.12:1 and is the
+     last that passes; the pale teals past it (including --status-shipped's
+     #1fb6b6, 2.49:1) do not. Lighten the ROWS by the color-mix percentage in
+     DataTable.module.css instead — a background carries no such floor while
+     the text on it stays dark. */
+  --marking-unfinished: #14989a;
+
   /* @theme-contract:end */
 
   /* Disabled dimming — one opacity for whole-control widgets that fade as a
@@ -254,8 +279,19 @@
     'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   /* Monospace — codes, batches, location IDs & dense identifiers
      (ui-standards › typography). A system stack, no webfont bundled: fixed-
-     width glyphs align in columns and disambiguate 0/O and 1/l/I. */
-  --font-mono: 'Monaco', 'Courier New', monospace;
+     width glyphs align in columns and disambiguate 0/O and 1/l/I.
+
+     `ui-monospace` FIRST (Ling, 2026-08-19): it resolves to the platform's
+     UI-grade mono — SF Mono on Apple, and the named fallbacks cover the rest —
+     each drawn to sit beside a UI sans. The old stack led with Monaco, a 1984
+     terminal face with no design relationship to Inter, which read on screen as
+     a visitor from another application; review feedback on the outbound detail
+     table was "I seem to have multiple fonts in this screen". Worse, Monaco
+     ships only on macOS, so every Windows/Linux client — the tablets included —
+     fell through to Courier New: thin, cramped, and more foreign still. */
+  --font-mono:
+    ui-monospace, 'SFMono-Regular', 'Menlo', 'Consolas', 'Liberation Mono',
+    monospace;
   --text-xs: 0.75rem; /* 12px — body2 */
   --text-sm: 0.875rem; /* 14px — body1 / th / input */
   --text-md: 1rem; /* 16px — h6 */
@@ -276,6 +312,23 @@
   --nav-child-height: 1.875rem; /* 30px */
   --table-data-row: 2.5rem; /* 40px */
   --table-header-row: 3.75rem; /* 60px */
+  /* Column-header text: 13px, one notch under the 14px cell font (--text-sm),
+     so the column names read as labels FOR the data rather than as more of it.
+     Its own token rather than --text-xs (12px, helper/caption) — 12px tested
+     too small to read comfortably across a wide table, and it left no room
+     below the header on the scale. Same shape as --input-font-sm, which notches
+     a small field down by exactly this step.
+
+     The size also earns its keep in translation: French column headers measure
+     ~24% wider than their English originals, and the 13px step gives back ~7%
+     of that, which pulls headers back inside the 2-line clamp (.thText) and
+     lowers the min-content floor a long compound word forces on its column.
+
+     Deviation from the org standards site, which sets th at 14px (= the cell
+     font) and separates the band by weight + fill alone — recorded in
+     src/ui/docs/DESIGN_STANDARDS.md. A table inside a modal opts BACK to 14px
+     (see the dialog rules in DataTable.module.css / Table.module.css). */
+  --table-header-font-size: 0.8125rem; /* 13px */
   /* Cell line-height (ui-standards § tables): 1.43 ≈ 20px leading at the 14px
      cell font, shared by header and body cells. */
   --table-line-height: 1.43;
@@ -283,12 +336,32 @@
   /* The single knob for the minimum size of every touch-restricted element —
      labelled buttons, icon-only buttons, header controls, menu rows, etc., all
      of which reference this token behind a `pointer: coarse` query. Tune here.
-     An ABSOLUTE px (like --input-font-touch), a deliberate exception to the
-     rem-only rule: a tap target must stay a stable physical size and NOT be
-     eroded by the root-size shrink, which fires below 600px — i.e. on exactly
-     the phones where the coarse pointer applies. px still scales under browser
-     zoom, so reflow/AA zoom is unaffected. 44px satisfies WCAG 2.5.5 (AAA). */
-  --touch-target: 44px; /* tunable */
+     44px satisfies WCAG 2.5.5 (AAA).
+
+     `max(rem, px)` — the shape the touch SIZE tokens take, and the one place
+     the rem-only rule is bent. The px half is a FLOOR: a tap target must stay a
+     stable physical size and not be eroded by the root-size shrink, which fires
+     below 600px — i.e. on exactly the phones where the coarse pointer applies.
+     The rem half lets the token grow where the root font-size genuinely grows
+     (a desktop engine whose default font size the user raised — WCAG 1.4.4).
+     A floor belongs on a SIZE, never on a font-size: shrinking the type is the
+     user's choice to make, shrinking the tap target under their finger is not.
+     --input-font-touch below is pure rem for exactly that reason.
+
+     MEASURED on an Android tablet (SM-X200, system font_scale 1.3, Capacitor
+     WebView, 2026-08-14) — Android's font scaling does NOT move rem in a LENGTH
+     context, so this half is inert there, and reasoning from the root's
+     computed font-size will mislead you:
+       getComputedStyle(html).fontSize -> 20.8px   (scaled: a font-size context)
+       width: 2.75rem                  -> 44px     (NOT scaled)
+       width: 2.75em                   -> 44px     (NOT scaled, even at 20.8px)
+       width: 2.75lh                   -> 57.18px  (scaled — font-metric unit)
+     So on Android the text scales and a rem/px/em-sized box does not. Only lh
+     (and the other font-metric units) track it. --input-font-touch below is a
+     font-size context, so it scales there and the type stays in step with the
+     rest of the UI even though these boxes don't. Browser zoom, unlike font
+     scaling, scales everything, so reflow/AA zoom is unaffected either way. */
+  --touch-target: max(2.75rem, 44px); /* 44px floor — tunable */
 
   /* --- Buttons (ui-standards #btn-sizes) ------------------------------ */
   --button-height: 2.25rem; /* 36px — medium (default) */
@@ -299,21 +372,40 @@
      multi-select, combobox) reads these four tokens and NOTHING else for its
      height, so they stay identical side by side and tune from one place. Two
      rest sizes in rem (scale with the root density knob) + two touch sizes
-     enforced under pointer:coarse in ABSOLUTE px, so the root-shrink on phones
-     can't erode the tap target (px still scales under browser zoom). Both touch
-     sizes clear WCAG 2.5.5 AAA (44px); standard sits a notch above at 48, and
-     the standard↔small 4px step is preserved in both modes. */
+     enforced under pointer:coarse as `max(rem, px)` — see --touch-target above
+     for the shape and for the measurement that bounds it: the px is a floor the
+     root-shrink can't erode, the rem grows the box on an engine that scales the
+     root font-size as a length (desktop), and is inert under Android's font
+     scaling, which scales the TEXT but not a rem/em length. Both touch sizes
+     clear WCAG 2.5.5 AAA (44px); standard sits a notch above at 48, and the
+     standard↔small 4px step is preserved in both modes. */
   --input-height: 2.5rem; /* 40px — standard, rest */
   --input-height-sm: 2.25rem; /* 36px — small, rest */
-  --input-height-touch: 48px; /* standard, touch-enforced */
-  --input-height-sm-touch: 44px; /* small, touch-enforced */
-  /* Font size on touch — an ABSOLUTE 16px, an input exception to the rem-only
-     rule (px, not rem). iOS Safari zooms the page on focus when a field's font
-     is under 16px, and that threshold is absolute, so this must hold even below
-     600px where index.css shrinks the root. Applied to BOTH sizes on coarse
-     pointers (ui-standards #field-touch-sizing) — small included, since the iOS
-     zoom threshold ignores our size variants. */
-  --input-font-touch: 16px;
+  --input-height-touch: max(3rem, 48px); /* standard, touch-enforced */
+  --input-height-sm-touch: max(2.75rem, 44px); /* small, touch-enforced */
+  /* Font size on touch — PURE rem, deliberately NOT the `max(rem, px)` shape
+     the heights above take. That split is the rule: type scales with the root,
+     a tap target keeps a physical floor. A px floor on a font-size only ever
+     pins type against a root the user chose, and it breaks in both directions —
+     at Chrome's "Small" default (root 12px) a floored 16px left field text at
+     1.5x the 10.5px body text around it, which is exactly the inconsistency
+     this token was blamed for; on Android at font_scale 1.3 a floored 16px sat
+     BELOW the 18.2px body text. One rem tracks the root either way (12px /
+     16px / 20.8px), staying a step above body text at every setting.
+
+     The floor it used to carry was iOS Safari's zoom-on-focus threshold, which
+     is an absolute 16px. That argument is gone: browserslist is
+     `chrome >= 132` (Chromium only, enforced by scripts/check-min-browser.mjs),
+     so iOS Safari is not a supported target. If it ever becomes one, the floor
+     comes back HERE and nowhere else.
+
+     Applied to BOTH size variants on coarse pointers (ui-standards
+     #field-touch-sizing): a small field beside a default one must not read at a
+     different size on the same touch surface. NB every input module has to
+     repeat its own `[data-size='small']` selector inside its `pointer: coarse`
+     block to make that land — a media query adds no specificity, so a bare
+     class rule inside one loses to the small rule outside it. */
+  --input-font-touch: 1rem;
   /* Small-field text (ui-standards "Text Fields — Size Variations"): 13px, a
      notch under the 14px default (--text-sm) so a small input + its label read
      denser. Its own token rather than --text-xs (12px, helper/caption) — the
@@ -541,6 +633,7 @@
 
   /* Feedback severities — same lift as the rest of the dark palette */
   --info-main: var(--secondary-main);
+  --marking-unfinished: #2fb3b5;
   --warning-main: #ff8f33;
   --success-main: #4caf50;
 }

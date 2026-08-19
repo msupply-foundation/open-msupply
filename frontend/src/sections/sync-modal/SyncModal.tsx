@@ -1,7 +1,6 @@
 import {
   createEffect,
   createMemo,
-  createSignal,
   For,
   Match,
   onCleanup,
@@ -14,6 +13,7 @@ import { Dialog } from '../../ui/elements/feedback/Dialog';
 import { Alert } from '../../ui/elements/feedback/Alert';
 import { ErrorDetails } from '../../ui/elements/feedback/ErrorDetails';
 import { Button } from '../../ui/elements/buttons/Button';
+import { CancelButton } from '../../ui/elements/buttons/StandardButtons';
 import { Spinner } from '../../ui/elements/feedback/Spinner';
 import { ProgressList, type ProgressStep } from '../../ui/sync/ProgressList';
 import { CheckCircleIcon, SyncIcon, SettingsIcon } from '../../ui/icons';
@@ -23,22 +23,18 @@ import {
   pushQueueCount,
   liveConnected,
   pollSyncStatus,
-  triggerSync,
 } from '../../api/syncStore';
 import { isCentralServer } from '../../api/serverInfo';
 import { hasPermission } from '../../store/storeContext';
 import { SYNC_POLL_INTERVAL_MS } from '../../config';
 import {
-  advanceTriggerState,
-  armTrigger,
   durationUnits,
-  IDLE_TRIGGER,
   statusLineKind,
   syncDurationParts,
   toSyncOverview,
   type SyncBackfill,
-  type TriggerState,
 } from './syncStatus';
+import { syncNow, triggerActive } from './syncTrigger';
 import { syncErrorSummary } from './syncErrors';
 import { syncStepIcon } from './syncStepIcons';
 import styles from './SyncModal.module.css';
@@ -96,26 +92,15 @@ export const SyncModal: Component<{
   // SYNC-03.25: Sync-now busy state — held from the click, through the pre-run
   // gap, until the run ends. Keyed on the run-status signature (not the
   // isSyncing transition), so a run that errors before any in-progress frame is
-  // observed still releases the button for a retry.
-  const [trigger, setTrigger] = createSignal<TriggerState>(IDLE_TRIGGER);
-  createEffect(() => {
-    const status = syncStatus();
-    setTrigger(prev => advanceTriggerState(prev, status));
-  });
+  // observed still releases the button for a retry. The machine is the SHARED
+  // one (syncTrigger.ts): the bottom bar's status line runs the same, so a run
+  // armed on either surface reads as in-flight on both.
   const busy = createMemo(
     () =>
-      trigger().active ||
+      triggerActive() ||
       (overview()?.isSyncing ?? false) ||
       overview() === undefined
   );
-
-  const onSyncNow = async () => {
-    setTrigger(armTrigger(syncStatus()));
-    // Fire-and-forget; a request that itself fails releases the busy state (the
-    // failure surfaces through the global unexpected-error handling).
-    const ok = await triggerSync();
-    if (!ok) setTrigger(IDLE_TRIGGER);
-  };
 
   // Server-admin only: closes the modal and navigates to sync settings. The
   // sync-settings screen is owned elsewhere (spec/sync-modal/README § scope),
@@ -168,18 +153,15 @@ export const SyncModal: Component<{
       // No confirm semantics: Sync Now is a trigger, not a Save — Enter from
       // the (buttonless) body must not start a sync run.
       enterConfirms={false}
-      // Action row, centred — in the Dialog's actions slot so it sticks to the
-      // modal's bottom edge like every other modal's buttons.
+      // Action row — in the Dialog's actions slot, so it sticks to the modal's
+      // bottom edge and takes the house footer (dismiss first, emphasised
+      // action last, under the hairline) like every other modal's buttons.
       actions={
         <>
-          <Button
-            variant="primary"
-            icon={<SyncIcon />}
-            loading={busy()}
-            onClick={() => void onSyncNow()}
-          >
-            {t('button.sync-now')}
-          </Button>
+          <CancelButton
+            data-testid="dialog-button-cancel"
+            onClick={props.onClose}
+          />
           <Show when={hasPermission('SERVER_ADMIN')}>
             <Button
               variant="secondary"
@@ -189,6 +171,14 @@ export const SyncModal: Component<{
               {t('settings')}
             </Button>
           </Show>
+          <Button
+            variant="primary"
+            icon={<SyncIcon />}
+            loading={busy()}
+            onClick={syncNow}
+          >
+            {t('button.sync-now')}
+          </Button>
         </>
       }
     >

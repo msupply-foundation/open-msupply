@@ -17,7 +17,7 @@ import {
   useAccordionItemExpanded,
 } from '../accordion/Accordion';
 import { t } from '../../../intl';
-import type { CardGroup } from './columnTypes';
+import { visibleOnCard, type CardGroup } from './columnTypes';
 import styles from './DataTable.module.css';
 
 // A cell's card HEADER slot, or undefined when it belongs to the body.
@@ -77,6 +77,63 @@ const cardTrack = <T,>(cell: TanCell<T, unknown>): string => {
     : `minmax(${width.min}rem, ${width.weight}fr)`;
 };
 
+// The same declaration expressed for the NARROW fallback, where the row wraps.
+// An explicit grid template cannot wrap, so below the group's minima the fields
+// reflow as a wrapping flex row instead — and this hands each one its declared
+// size to wrap WITH, rather than throwing the declaration away and splitting the
+// row evenly. That even split is what made a card in portrait wrong in both
+// directions at once: a read-only Pack size held a full track it had no use for
+// while Location's "code — name" value truncated beside it.
+//
+// THE SAME MODEL AS <FormRowItem> (ui/layout/Form, kdd/form-layout), whose
+// weight / minWidth / maxWidth are this meta's weight / min / max — a wrapping
+// weighted row was solved there first, for the prescriptions header, and the two
+// should not drift. Its technique, adopted here:
+//
+//   - `flex: <weight> 1 0` — basis ZERO, the floor carried in `min-inline-size`.
+//     That is what makes a weight a true `fr`: the row's whole width distributes
+//     in proportion, rather than only the leftovers after every item has taken a
+//     basis. Flexbox's min-violation pass then clamps each floor exactly as
+//     `minmax()` does in the declared template, so both modes agree.
+//   - The floor capped at `100%`, so a lone field on a line narrower than its
+//     own floor shrinks instead of overflowing the card.
+//   - Weight 0 pins a FIXED scalar (a quantity, a date) to its floor and hands
+//     every spare pixel to its siblings: it has a known longest value, so extra
+//     width is waste. A row of nothing but pinned fields therefore does not fill
+//     — the slack is trailing space, which is the same bargain the group's own
+//     ceiling strikes at full width.
+//   - `max` applied PER FIELD, which the grid could not do: there, capping a
+//     field inside its own track left the track's leftover as a hole mid-row, so
+//     `max` had to become a whole-group ceiling. A wrapping flex row has no fixed
+//     tracks, so a capped field simply stops and the slack passes on. Without it
+//     a lone weighted field on a wrapped row stretches that whole line — the
+//     failure FormRowItem's own `maxWidth` note describes.
+const cardFlex = <T,>(
+  cell: TanCell<T, unknown>
+): JSX.CSSProperties | undefined => {
+  const width = cell.column.columnDef.meta?.cardWidth;
+  // The span is read only by the 'columns' narrow layout, which ignores the
+  // sizing below — but it rides along here so one style object carries
+  // everything a field tells its group about its own width.
+  const declaredSpan = cell.column.columnDef.meta?.cardSpan;
+  const span = declaredSpan
+    ? { '--card-field-span': `${declaredSpan}` }
+    : undefined;
+  if (width === undefined) return span;
+  return typeof width === 'number'
+    ? {
+        '--card-field-weight': '0',
+        '--card-field-floor': `${width}rem`,
+        ...span,
+      }
+    : {
+        '--card-field-weight': `${width.weight}`,
+        '--card-field-floor': `${width.min}rem`,
+        '--card-field-max-w': `${width.max}rem`,
+        ...span,
+      };
+};
+
 // The width, in rem, below which this group's declared template cannot fit —
 // every track's minimum plus the 1rem column gaps between them. An explicit
 // grid does not wrap, so below this the row would overflow its card; the flow
@@ -124,7 +181,9 @@ function cellField<T>(
       // An unlabelled body cell is a direct child of the auto-fit field grid,
       // so a plain wrapper keeps the same layout — and it has no LabelledValue
       // to carry the id.
-      <div data-testid={cellTestId(cell)}>{value()}</div>
+      <div data-testid={cellTestId(cell)} style={cardFlex(cell)}>
+        {value()}
+      </div>
     );
   // The label is read as a JSX prop (compiled to a getter), NOT hoisted into a
   // local — hoisting would resolve it once, outside any tracking scope, and
@@ -147,6 +206,7 @@ function cellField<T>(
       // detail-panel gap. At 4px the label crowded the box beneath it.
       variant="field"
       data-testid={cellTestId(cell)}
+      style={cardFlex(cell)}
     >
       {value()}
     </LabelledValue>
@@ -194,7 +254,11 @@ const cardTracksMaxRem = <T,>(
   return total + Math.max(0, cells.length - 1);
 };
 
-function FieldFlow<T>(props: { cells: TanCell<T, unknown>[] }): JSX.Element {
+function FieldFlow<T>(props: {
+  cells: TanCell<T, unknown>[];
+  /** The owning group's `narrowLayout` (undefined → the weighted flex row). */
+  narrowLayout?: { columns: number };
+}): JSX.Element {
   const sized = () =>
     props.cells.some(c => c.column.columnDef.meta?.cardWidth !== undefined);
   const [narrow, setNarrow] = createSignal(false);
@@ -224,11 +288,20 @@ function FieldFlow<T>(props: { cells: TanCell<T, unknown>[] }): JSX.Element {
       class={styles.cardFields}
       data-field-widths={sized() ? '' : undefined}
       data-narrow={sized() && narrow() ? '' : undefined}
+      data-narrow-columns={
+        sized() && narrow() && props.narrowLayout ? '' : undefined
+      }
       style={
         sized()
           ? {
               '--card-field-cols': props.cells.map(cardTrack).join(' '),
               '--card-field-max': maxRem() ? `${maxRem()}rem` : 'none',
+              // The narrow layout's track count, when the group declares one —
+              // a group's own number, worked out from its fields (see
+              // CardGroup.narrowLayout), not a house constant.
+              ...(props.narrowLayout
+                ? { '--card-narrow-columns': `${props.narrowLayout.columns}` }
+                : {}),
             }
           : undefined
       }
@@ -255,9 +328,20 @@ function GroupFields<T, G extends string>(props: {
   cells: TanCell<T, unknown>[];
 }): JSX.Element {
   return (
-    <Show when={props.group.panel} fallback={<FieldFlow cells={props.cells} />}>
+    <Show
+      when={props.group.panel}
+      fallback={
+        <FieldFlow
+          cells={props.cells}
+          narrowLayout={props.group.narrowLayout}
+        />
+      }
+    >
       <div class={styles.cardPanel}>
-        <FieldFlow cells={props.cells} />
+        <FieldFlow
+          cells={props.cells}
+          narrowLayout={props.group.narrowLayout}
+        />
       </div>
     </Show>
   );
@@ -358,6 +442,12 @@ export function CardView<T, G extends string>(props: {
   enableSelection: boolean;
   selectionDisabled?: boolean;
   onRowClick?: (row: T) => void;
+  /**
+   * Semantic text tone (see DataTable's rowTone) — in card view the tone
+   * paints the card's IDENTITY title only (a whole-card repaint would
+   * recolour field labels and controls). Stamps data-tone on the card row.
+   */
+  rowTone?: (row: T) => 'info' | 'warning' | 'error' | undefined;
 }): JSX.Element {
   // The DataTable renders the empty state itself (before this view), so cards
   // always have ≥1 row here — no empty branch.
@@ -367,11 +457,18 @@ export function CardView<T, G extends string>(props: {
     <For each={rows()}>
       {row => {
         // Card view drops table-only columns (meta.hideOnCard) at the source,
-        // so they appear in neither the header nor the body.
+        // so they appear in neither the header nor the body — and, per ROW,
+        // any column whose meta.hideOnCardWhen answers true for it (a field
+        // meaningless for this record: a stocktake batch counted level has no
+        // adjustment reason). Filtering HERE, at the one source every later
+        // split reads, is what makes the withdrawal complete: the field leaves
+        // its group, its caption goes with it, and the group's width template
+        // and narrow-fallback threshold are computed without it, so the
+        // neighbours close up instead of leaving a hole.
         const cells = () =>
           row
             .getVisibleCells()
-            .filter(c => !c.column.columnDef.meta?.hideOnCard);
+            .filter(c => visibleOnCard(c.column.columnDef.meta, row.original));
         const inHeader = (slot: 'primary' | 'badge') =>
           cells().filter(c => headerSlot(c) === slot);
         // Body cells = everything not in the header row.
@@ -391,6 +488,7 @@ export function CardView<T, G extends string>(props: {
           <tr
             class={`${styles.cardRow} ${props.onRowClick ? styles.rowClickable : ''}`}
             data-selected={row.getIsSelected() ? '' : undefined}
+            data-tone={props.rowTone?.(row.original)}
             data-testid="table-row"
             // The row's key, exactly as table view stamps it (TableRow), so a
             // caller can address one row in the DOM in either rendering.

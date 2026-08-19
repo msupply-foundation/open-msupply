@@ -137,13 +137,14 @@ const PrescriptionsList: Component = () => {
     setSelectedIds([]);
   };
 
-  // The list always pins the invoice type (contract § the list); the user's
-  // filters merge over that.
+  // The invoice type is pinned by the query's top-level `type` argument, which
+  // both selects the permission and overwrites `filter.type` server-side — so
+  // a filter pin here would be silently discarded (contract § the list). Only
+  // the user's own filters travel in `filter`.
   const variables = createMemo<PrescriptionsVariables>(() => ({
     storeId: params.storeId,
     filter: {
       ...stripEmpty(query().filter),
-      type: { equalTo: 'PRESCRIPTION' },
       // Custom-field filters become the dynamicFilter AST (undefined = no-op).
       dynamicFilter: buildCustomFieldDynamicFilter(query().cf),
     },

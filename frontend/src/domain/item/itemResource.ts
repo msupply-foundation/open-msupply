@@ -93,6 +93,20 @@ export const fetchItemById = async (
   };
 };
 
+/**
+ * Fold one already-on-document probe answer into the search's presence map
+ * (the option-row marker's backing state). Every probed id gets an explicit
+ * true/false — not just the hits — so re-probing an item whose lines were
+ * since deleted clears its stale mark instead of leaving it stuck true.
+ */
+export const presencePatch = (
+  probedIds: string[],
+  presentIds: string[]
+): Record<string, boolean> => {
+  const hits = new Set(presentIds);
+  return Object.fromEntries(probedIds.map(id => [id, hits.has(id)]));
+};
+
 export const itemPageFetcher =
   (
     storeId: string,

@@ -38,11 +38,13 @@ export const SUPPORT_DATABASE_URL = '/support/database';
 export const PRINT_LABEL_TEST_URL = '/print/label-test';
 
 // Installed frontend-plugin bundles (spec/plugins/contract.md § discovery &
-// loading): the server serves each at `<this>/{path}`, where `path` is the
-// `code/entry` the discovery query reports. Immutable-cached, so the content
-// hash rides as a `?v=` token (src/plugins/bundleUrl.ts). Proxied to the
-// backend in dev AND in preview (see vite.config.ts) — the plugin production
-// path is exercised against a real server.
+// loading): the server serves each at `<this>/{path}`, where `path` is what
+// the discovery query reports, used verbatim. It is keyed on the plugin ROW
+// id rather than its code, because a server can hold a bundle of one code per
+// host and their entry files commonly share a name. Immutable-cached, so the
+// content hash rides as a `?v=` token (src/plugins/bundleUrl.ts). Proxied to
+// the backend in dev AND in preview (see vite.config.ts) — the plugin
+// production path is exercised against a real server.
 export const FRONTEND_PLUGINS_URL = '/frontend_plugins';
 
 // The served bundle's release manifest (spec/startup/contract.md § App
@@ -61,7 +63,7 @@ export const SYNC_POLL_INTERVAL_MS = 2000;
 // while the live channel is down. The modal owns the fast poll while open.
 export const SYNC_INDICATOR_REFRESH_MS = 60_000;
 // The initialisation screen's silent wait for the central server to prepare a
-// fresh site (spec/startup/rules.md § Initialisation, D98, issue #504): after
+// fresh site (spec/startup/rules.md § Initialisation, D99, issue #504): after
 // the user's own submit returns the one transient error, the submit is
 // repeated on this cadence, this many more times (~1 min in all), before the
 // error is shown.

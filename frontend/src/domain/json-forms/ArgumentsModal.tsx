@@ -450,7 +450,6 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                 {textField => (
                   <TextField
                     label={textField.label}
-                    width="full"
                     value={textValue(textField.key)}
                     disabled={textField.readOnly}
                     required={textField.required}
@@ -470,7 +469,6 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                    */
                   <NumberField
                     label={numberField.label}
-                    width="full"
                     decimalLimit={2}
                     value={numberValue(numberField.key)}
                     disabled={numberField.readOnly}
@@ -497,7 +495,6 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                 {dateField => (
                   <DateField
                     label={dateField.label}
-                    width="full"
                     value={dateArgumentDay(values[dateField.key])}
                     min={
                       dateFieldBounds(dateField, values, localTodayIso()).min
@@ -533,7 +530,6 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                 {dateTimeField => (
                   <DateTimeField
                     label={dateTimeField.label}
-                    width="full"
                     value={textValue(dateTimeField.key) || null}
                     disabled={dateTimeField.readOnly}
                     required={dateTimeField.required}
@@ -567,6 +563,13 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                     // OK (AC-R7) and this text says why. No shipped schema
                     // marks an enum required today.
                     helperText={requiredError(enumField)}
+                    // A picked choice must be emptiable again unless required
+                    // (AC-R19); the cleared key is omitted on submit (AC-R8).
+                    // A read-only field (AC-R6: shown disabled, seeded value
+                    // still submitted) gets no clear affordance — it could
+                    // never be used.
+                    clearable={!enumField.required && !enumField.readOnly}
+                    onClear={() => setValues(enumField.key, undefined)}
                     onValueChange={value => setValues(enumField.key, value)}
                   />
                 )}
@@ -595,7 +598,6 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                  */}
                 <DateRangeField
                   label={field.label}
-                  width="full"
                   value={rangeValue(field.key)}
                   onChange={range => {
                     const start = range.start ?? '';
@@ -778,7 +780,6 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                     with its label so the form still lists the filter. */}
                 <TextField
                   label={field.label}
-                  width="full"
                   disabled
                   value=""
                   helperText={t('message.filter-not-supported')}

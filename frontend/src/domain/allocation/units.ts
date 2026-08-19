@@ -99,7 +99,7 @@ export const clampManualPacks = (
 };
 
 /** The structural fields the unit sums read. The available total is not
- * summed here — it is policy (only auto-allocatable stock counts, AC-AL16):
+ * summed here — it is policy (only auto-allocatable stock counts, AC-AL17):
  * policy.ts's autoAllocatableUnits. */
 export interface UnitCountableBatch {
   packSize: number;

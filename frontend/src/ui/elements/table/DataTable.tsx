@@ -67,7 +67,8 @@ import { ContentFooterActions } from '../../layout/ContentFooter/ContentFooterAc
 import { ColumnSettings } from './ColumnSettings';
 import { TableSettings } from './TableSettings';
 import { Pagination, type PaginationProps } from './Pagination';
-import { isRtl, t } from '../../../intl';
+import { paginationState } from './paginationState';
+import { isRtl, t, tPlural } from '../../../intl';
 import styles from './DataTable.module.css';
 
 // The column model
@@ -170,11 +171,53 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
   rowState?: (row: T) => 'verified' | 'warning' | 'disabled' | undefined;
   /**
    * Semantic text tone for matching rows: 'info' for lines awaiting an action
-   * (placeholder / uncounted lines), 'error' for a line the server refused (a
-   * failed bulk operation). Stamps data-tone on the row, mapped to palette
-   * tokens in CSS. Semantic names only, never colours.
+   * (placeholder / uncounted lines), 'warning' for a line needing attention
+   * before it can proceed (a held batch on an outbound line), 'error' for a
+   * line in an error state (expired stock; a server-refused bulk line).
+   * Stamps data-tone on the row, mapped to palette tokens in CSS: table view
+   * paints the whole row's text, card view the card's identity title plus,
+   * for warning/error, a tinted border + faint shadow. Semantic names only,
+   * never colours — and never colour alone: the tone restates a fact some
+   * cell already states in words.
    */
-  rowTone?: (row: T) => 'info' | 'error' | undefined;
+  rowTone?: (row: T) => 'info' | 'warning' | 'error' | undefined;
+  /**
+   * Card-only tone override: when set, CARD view takes its tone (the tinted
+   * identity title) from this instead of rowTone, and rowTone is free to
+   * stay unset — for a page whose table view must NOT colour row text
+   * (outbound's status-tinted tables, D111) but whose cards keep the tone
+   * treatment. Same vocabulary and CSS as rowTone's card half.
+   */
+  cardTone?: (row: T) => 'info' | 'warning' | 'error' | undefined;
+  /**
+   * Semantic record-STATUS background tint, always on (unlike the rowState
+   * tints, which show only while selected): 'success' for a satisfied row
+   * (an outbound line with stock allocated), 'error' for an error-state row
+   * (expired stock), 'warning' for a row needing attention (a held batch).
+   * One tint per row — the page encodes its own precedence. Table view only
+   * (cards carry status via cardTone + badges); stamps data-tint on the row,
+   * mapped to palette tokens in CSS; selection deepens the tint. Never
+   * colour alone: the tint restates a fact a cell states in words
+   * (spec D111).
+   */
+  rowTint?: (
+    row: T
+  ) => 'unfinished' | 'success' | 'warning' | 'error' | undefined;
+  /**
+   * Semantic LEFT-EDGE accent: a solid bar down the row's leading edge,
+   * marking the rows that still need work in a list the user is working
+   * through (an outbound line with nothing issued yet). Same tone vocabulary
+   * as rowTint and normally paired with it — the tint colours the whole row,
+   * the bar makes a half-finished list legible from across the room while the
+   * eye runs down one edge. Table view only (cards carry status via cardTone +
+   * badges); stamps data-accent on the row, drawn in CSS on the leading cell
+   * as an overlay, so an accented row is exactly as wide as an unaccented one
+   * and nothing shifts sideways when a row flips state. Never colour alone:
+   * a cell or badge in the row states the same fact in words.
+   */
+  rowAccent?: (
+    row: T
+  ) => 'unfinished' | 'success' | 'warning' | 'error' | undefined;
   /**
    * The data is being fetched. Drives the loading treatment so a slow fetch
    * never flashes the empty state (issues #160/#196): with NO rows yet
@@ -231,7 +274,23 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
   minBodyRem?: number;
 
   // --- Row selection, owned by the page. ---
+  /**
+   * Show the leading checkbox column (the multi-select affordance,
+   * ui-standards § tables → selection). Pair with selectedIds +
+   * onSelectionChange.
+   */
   enableSelection?: boolean;
+  /**
+   * The selected rows, by rowKey. Selected rows carry the brand tint in both
+   * views.
+   *
+   * Valid WITHOUT `enableSelection` too: a master-detail table where the row
+   * click reveals that row's detail beside/below it passes the clicked row's
+   * key here, so the row the detail belongs to stays marked. No checkbox
+   * column is drawn — the tint is the whole affordance, and nothing is
+   * toggleable, so the page keeps sole control of what's current (the repack
+   * modal's history table, issue #794).
+   */
   selectedIds?: string[];
   onSelectionChange?: (ids: string[]) => void;
   /**
@@ -283,6 +342,20 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    * no-op reset at default is harmless).
    */
   configIsDefault?: boolean;
+
+  /**
+   * Lay out at CONTENT height instead of owning a scroll box: the table grows
+   * to fit its rows and whatever scroller the host provides scrolls it — so
+   * content the host puts BELOW the table (a modal's advisory messages) scrolls
+   * with the rows instead of being pinned under a table that scrolls
+   * internally.
+   *
+   * Card view only, and deliberately: a row-view table scrolls HORIZONTALLY in
+   * that same box (20 columns is normal here), and CSS cannot give one axis
+   * `auto` while the other is `visible` — asking for it silently makes both
+   * scroll. So in row view the table keeps its box, whatever this says.
+   */
+  fitContent?: boolean;
 
   // --- Pagination (optional), STATE owned by the page. --- When set, the
   // table's footer bar shows the Pagination control (its default face — the
@@ -374,6 +447,13 @@ export function DataTable<T, K extends string, G extends string = never>(
   const selectedCount = () => props.selectedIds?.length ?? 0;
   const selectionBarActive = () =>
     props.selectionActions !== undefined && selectedCount() > 0;
+
+  // Is there a pager to show? Always, when `pagination` is passed — except in a
+  // `conditional` pager's zero-row state, where the bar is dropped whole (see
+  // the footer below, and Pagination's `paginationState`).
+  const paginationVisible = () =>
+    props.pagination !== undefined &&
+    paginationState(props.pagination) !== 'hidden';
 
   // --- Column config ⇄ the page's resolved config
   // (order/sizing/pinning/visibility) --- Each field mirrors props.config into
@@ -867,7 +947,8 @@ export function DataTable<T, K extends string, G extends string = never>(
   // table then loses the hairline that row carried along its bottom edge, which
   // is what separated the header from whatever sits above it. The seam moves to
   // the table area instead (see .root[data-no-toolbar] in the CSS).
-  const hasToolbar = () => !!filters() || !props.controlsMount;
+  const hasToolbar = () =>
+    !!filters() || !!props.pagination || !props.controlsMount;
 
   const controls = (): JSX.Element => (
     <div class={styles.toolbarControls}>
@@ -1001,6 +1082,12 @@ export function DataTable<T, K extends string, G extends string = never>(
             anyColumnSized={anyColumnSized()}
             anyColumnPinned={anyColumnPinned()}
             onSaveGlobalDefault={props.onSaveGlobalDefault}
+            // Rows per page lives here now, not in the footer (which is the
+            // pager alone). Passed straight through from the page's pagination
+            // state — the table owns no page state of its own.
+            pageSize={props.pagination?.pageSize}
+            pageSizes={props.pagination?.pageSizes}
+            onPageSizeChange={props.pagination?.onPageSizeChange}
           />
         </Popover>
       </Show>
@@ -1035,6 +1122,12 @@ export function DataTable<T, K extends string, G extends string = never>(
           : undefined
       }
       data-no-toolbar={hasToolbar() ? undefined : ''}
+      // Content height, for a host that scrolls the table together with what
+      // sits below it (see `fitContent`). Card view only — a row view's
+      // horizontal scrolling needs the box.
+      data-fit-content={
+        props.fitContent && viewMode() === 'card' ? '' : undefined
+      }
     >
       {/* The table toolbar (ui-standards § tables): one bar above the scroll
           area — the page-composed filter bar inline-start, the control cluster
@@ -1050,6 +1143,18 @@ export function DataTable<T, K extends string, G extends string = never>(
               placement: filter state stays page-owned. */}
           <Show when={filters()}>
             <div class={styles.toolbarFilters}>{filters()}</div>
+          </Show>
+          {/* The row count — the one fact the visible rows cannot supply once a
+              set runs past a page, and free here: this row exists whatever the
+              data does, and it sits beside the filters that change the number.
+              Read from `pagination.total`, so any paginated table shows it
+              without the host passing anything extra. */}
+          <Show when={props.pagination}>
+            {pagination => (
+              <span class={styles.toolbarCount} data-testid="table-row-count">
+                {tPlural('pagination.rows-total', pagination().total)}
+              </span>
+            )}
           </Show>
           <Show when={!props.controlsMount}>{controls()}</Show>
         </div>
@@ -1169,6 +1274,9 @@ export function DataTable<T, K extends string, G extends string = never>(
                         enableSelection={props.enableSelection ?? false}
                         selectionDisabled={props.selectionDisabled ?? false}
                         onRowClick={props.onRowClick}
+                        rowTone={row =>
+                          (props.cardTone ?? props.rowTone)?.(row)
+                        }
                       />
                     </Match>
                     <Match when={viewMode() === 'table'}>
@@ -1181,6 +1289,8 @@ export function DataTable<T, K extends string, G extends string = never>(
                             onRowClick={props.onRowClick}
                             rowState={props.rowState}
                             rowTone={props.rowTone}
+                            rowTint={props.rowTint}
+                            rowAccent={props.rowAccent}
                             pinnedStyle={pinnedStyle}
                             leadingPinnedStyle={leadingPinnedStyle}
                             frozenEdge={frozenEdge}
@@ -1279,8 +1389,14 @@ export function DataTable<T, K extends string, G extends string = never>(
                              (`selectionActions`) + Clear.
           State stays page-owned (kdd/table-state) — only the controls render
           here. Pages not yet migrated (no selectionActions) keep their own
-          Page-level selection footer and this bar just shows the pager. */}
-      <Show when={props.pagination || selectionBarActive()}>
+          Page-level selection footer and this bar just shows the pager.
+          A `conditional` pager (spec/ui-standards § tables → pagination) can
+          also ask for NO footer at all — its zero-row state — and the bar goes
+          with it: the band's border and padding are drawn here, so leaving it
+          behind would show an empty strip where the pager used to be. A live
+          selection still brings the bar back (it is the selection's own
+          face). */}
+      <Show when={paginationVisible() || selectionBarActive()}>
         <ContentFooter
           class={styles.tableFooter}
           testId={selectionBarActive() ? 'actions-footer' : 'table-footer'}
@@ -1288,7 +1404,7 @@ export function DataTable<T, K extends string, G extends string = never>(
           <Show
             when={selectionBarActive()}
             fallback={
-              <Show when={props.pagination}>
+              <Show when={paginationVisible()}>
                 {/* Spread the LIVE prop object (not a <Show>-accessor
                     snapshot): the page recreates props.pagination whenever
                     offset/total change, and a JSX spread of props.pagination

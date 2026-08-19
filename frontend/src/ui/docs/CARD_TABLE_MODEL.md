@@ -30,7 +30,7 @@ A value that must look different in each view is simply **two columns** — one 
 └─────────────────────────────────────────────┘
 ```
 
-- **Header** — the card's top row. `primary` cells sit inline-start (the identity/title; multiple primaries sit inline, in column order); `badge` cells sit inline-end (a chip/status). Header cells are **unlabelled by default**. A selection checkbox leads the row when `enableSelection`.
+- **Header** — the card's top row. `primary` cells sit inline-start (the identity/title; multiple primaries sit inline, in column order); `badge` cells follow — **status flags (`data-flag`) directly after the title**, anything else (an actions cluster) pushed to the inline-end corner. Header cells are **unlabelled by default**. A selection checkbox leads the row when `enableSelection`.
 - **Body** — divided from the header by a hairline. Renders the **default (ungrouped) group first** (unpanelled, always shown), then each declared group in `cardGroups` list order. Body cells are **labelled by default** (label above value).
 - **Groups** — a body group is a captioned block of its columns' fields. It can be boxed (`panel`) and/or wrapped in a disclosure/accordion (`disclosure`).
 
@@ -38,19 +38,20 @@ A value that must look different in each view is simply **two columns** — one 
 
 Set on each column literal in your `columns()` array. Anything not about the card is the ordinary table column (see [CELL_TYPES.md](./CELL_TYPES.md)).
 
-| Field                           | Type                   | Default       | Effect                                                                                                                                                                         |
-| ------------------------------- | ---------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `c`                             | identity union         | —             | The column's identity (`{ key }` / `{ id }` / `{ accessor, id }`). Two columns must have **distinct** resolved ids. See [columnTypes.ts](../elements/table/columnTypes.ts).    |
-| `header`                        | `() => JSX.Element`    | —             | Table header text **and** the card field label. Function-only (so the text re-resolves on a locale change); the card + Columns popover + card Sort menu all call it.           |
-| `sortKey`                       | `K`                    | —             | Makes the column sortable. In card view it feeds the Sort control — read from **every** column regardless of view, so a table-only column can still supply a card sort option. |
-| `cardGroup`                     | `G`                    | default group | Which body group this column joins in card view (typed; a typo is a compile error). Omit → the default ungrouped group. Ignored for header cells.                              |
-| `meta.headerPosition`           | `'primary' \| 'badge'` | — (body)      | Puts the column in the card **header** — `primary` (title, inline-start) or `badge` (chip, inline-end). Omit → the column is a body cell.                                      |
-| `meta.showLabel`                | `boolean`              | slot-based    | Override the card label. Default: header cells **unlabelled**, body cells **labelled**. Set `true` to caption a header cell, `false` to drop a body label.                     |
-| `meta.hideOnCard`               | `boolean`              | `false`       | Omit the column from **card** view entirely (a table-only column).                                                                                                             |
-| `meta.hideOnTable`              | `boolean`              | `false`       | Omit the column from **table** view entirely (a card-only column).                                                                                                             |
-| `meta.hideFromColumnSettings`   | `boolean`              | `false`       | Keep the column out of the **Columns popover** (stays on screen, just not user show/hide/move/pin). For structural columns — the card identity, a row-actions column.          |
-| `meta.cardWidth`                | `number` (rem)         | — (equal)     | This field's resting width in **card** view, per ui-standards § _Field Widths by Context_ (numeric quantity `7.5`, currency / date `10`, location `8.75`). See below.          |
-| `meta.align` / `meta.wrapLines` | —                      | —             | Table display only (text alignment, multi-line clamp). See [CELL_TYPES.md](./CELL_TYPES.md).                                                                                   |
+| Field                           | Type                   | Default       | Effect                                                                                                                                                                                         |
+| ------------------------------- | ---------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `c`                             | identity union         | —             | The column's identity (`{ key }` / `{ id }` / `{ accessor, id }`). Two columns must have **distinct** resolved ids. See [columnTypes.ts](../elements/table/columnTypes.ts).                    |
+| `header`                        | `() => JSX.Element`    | —             | Table header text **and** the card field label. Function-only (so the text re-resolves on a locale change); the card + Columns popover + card Sort menu all call it.                           |
+| `sortKey`                       | `K`                    | —             | Makes the column sortable. In card view it feeds the Sort control — read from **every** column regardless of view, so a table-only column can still supply a card sort option.                 |
+| `cardGroup`                     | `G`                    | default group | Which body group this column joins in card view (typed; a typo is a compile error). Omit → the default ungrouped group. Ignored for header cells.                                              |
+| `meta.headerPosition`           | `'primary' \| 'badge'` | — (body)      | Puts the column in the card **header** — `primary` (title, inline-start) or `badge` (chip, inline-end). Omit → the column is a body cell.                                                      |
+| `meta.showLabel`                | `boolean`              | slot-based    | Override the card label. Default: header cells **unlabelled**, body cells **labelled**. Set `true` to caption a header cell, `false` to drop a body label.                                     |
+| `meta.hideOnCard`               | `boolean`              | `false`       | Omit the column from **card** view entirely (a table-only column).                                                                                                                             |
+| `meta.hideOnCardWhen`           | `(row) => boolean`     | —             | Omit this field from the cards of the **rows** it answers true for — the per-row counterpart of `hideOnCard`. Card view only; see [Withdrawing a field per row](#withdrawing-a-field-per-row). |
+| `meta.hideOnTable`              | `boolean`              | `false`       | Omit the column from **table** view entirely (a card-only column).                                                                                                                             |
+| `meta.hideFromColumnSettings`   | `boolean`              | `false`       | Keep the column out of the **Columns popover** (stays on screen, just not user show/hide/move/pin). For structural columns — the card identity, a row-actions column.                          |
+| `meta.cardWidth`                | `number` (rem)         | — (equal)     | This field's resting width in **card** view, per ui-standards § _Field Widths by Context_ (numeric quantity `7.5`, currency / date `10`, location `8.75`). See below.                          |
+| `meta.align` / `meta.wrapLines` | —                      | —             | Table display only (text alignment, multi-line clamp). See [CELL_TYPES.md](./CELL_TYPES.md).                                                                                                   |
 
 `getCellDefinition(key, meta?)` merges its second argument into the column's `meta`, so card flags ride along with a preset: `...getCellDefinition('numberOfPacks', { headerPosition: 'badge', showLabel: true })`.
 
@@ -68,6 +69,8 @@ A group's fields default to **equal auto-fit tracks** — fine for a list card's
 { c: { id: 'location' },     meta: { cardWidth: { min: 9,  max: 17, weight: 1.2 } } }
 { c: { id: 'manufacturer' }, meta: { cardWidth: { min: 11, max: 20, weight: 1.4 } } }
 ```
+
+**This is [`FormRowItem`](../layout/Form/FormRowItem.tsx)'s model, spelled as column meta.** `weight` / `min` / `max` here are its `weight` / `minWidth` / `maxWidth`, and a card group too narrow for its declared template falls back to the same wrapping weighted flex row that component implements (`flex: <weight> 1 0`, the floor in `min-inline-size`, capped at `100%`) — see `CardView`'s `cardFlex`. Keep the two in step: a fix to one is a fix to the other, and the prescriptions header ([`PrescriptionToolbar`](../../sections/prescriptions/detail/PrescriptionToolbar.tsx)) is the worked reference for choosing weights and floors. Its `weight: 0` for a date is the same call as a fixed `rem` track here.
 
 **`fr` is a share of the leftover.** Once every fixed track and every column gap is paid for, what remains is split between the weighted tracks in their declared ratio. So weight expresses **expected data length**, not importance: `"Serum Institute of India Pvt. Ltd."` outweighs `"A1-03"`. Doubling every weight changes nothing — only the ratio counts.
 
@@ -90,15 +93,18 @@ Distinct from the top-level `size` / `maxSize`, which are TanStack's drag-resiza
 
 Passed to `<DataTable>`.
 
-| Prop                   | Type                                             | Effect                                                                                                                                                                                       |
-| ---------------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `cardGroups`           | `CardGroup<T, G>[]`                              | Declares each **body group's** presentation (below). Card-view only; table view ignores it.                                                                                                  |
-| `showCardToggle`       | `boolean`                                        | Show the card⇄table toggle in the toolbar (above the 600px compact band). Needs `setConfig`. Omit for a table with no card view, or a card-only screen.                                      |
-| `config` / `setConfig` | table config                                     | `config.viewMode` picks the view above the compact band (`'table'` default). Seed base-band `viewMode: 'card'` to default to cards. **Below 600px the table is always card**, toggle hidden. |
-| `enableSelection`      | `boolean`                                        | Adds the leading selection checkbox to both views.                                                                                                                                           |
-| `onRowClick`           | `(row) => void`                                  | Click-through on a row/card. Disclosure and inline-editing controls stop propagation so they don't trigger it.                                                                               |
-| `rowState`             | `(row) => 'verified' \| 'warning' \| 'disabled'` | The row's **background** tint, mapped from the row's own facts — see [Row states & backgrounds](#row-states--backgrounds). **Table view only.**                                              |
-| `rowTone`              | `(row) => 'info' \| 'error'`                     | The row's **text** colour (info / error) — same section. **Table view only.**                                                                                                                |
+| Prop                   | Type                                                         | Effect                                                                                                                                                                                       |
+| ---------------------- | ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cardGroups`           | `CardGroup<T, G>[]`                                          | Declares each **body group's** presentation (below). Card-view only; table view ignores it.                                                                                                  |
+| `showCardToggle`       | `boolean`                                                    | Show the card⇄table toggle in the toolbar (above the 600px compact band). Needs `setConfig`. Omit for a table with no card view, or a card-only screen.                                      |
+| `config` / `setConfig` | table config                                                 | `config.viewMode` picks the view above the compact band (`'table'` default). Seed base-band `viewMode: 'card'` to default to cards. **Below 600px the table is always card**, toggle hidden. |
+| `enableSelection`      | `boolean`                                                    | Adds the leading selection checkbox to both views.                                                                                                                                           |
+| `onRowClick`           | `(row) => void`                                              | Click-through on a row/card. Disclosure and inline-editing controls stop propagation so they don't trigger it.                                                                               |
+| `rowState`             | `(row) => 'verified' \| 'warning' \| 'disabled'`             | The row's **background** tint, mapped from the row's own facts — see [Row states & backgrounds](#row-states--backgrounds). **Table view only.**                                              |
+| `rowTone`              | `(row) => 'info' \| 'warning' \| 'error'`                    | The row's **text** colour (info / warning / error) — same section. Table view paints the whole row's text; card view the card's **identity title** only.                                     |
+| `cardTone`             | `(row) => 'info' \| 'warning' \| 'error'`                    | CARD-ONLY tone override: cards take their tone from this when set, leaving table text unpainted (`rowTone` unset) — for status-tinted tables (spec D111).                                    |
+| `rowTint`              | `(row) => 'unfinished' \| 'success' \| 'warning' \| 'error'` | The row's record-STATUS **background**, always on (unlike `rowState`'s selection-gated tints) — see [rowTint](#rowtint--the-status-background). **Table view only.**                         |
+| `rowAccent`            | `(row) => 'unfinished' \| 'success' \| 'warning' \| 'error'` | A bar down the row's **leading edge** — see [rowAccent](#rowaccent--the-leading-edge-bar). Normally the same predicate as `rowTint`. **Table view only.**                                    |
 
 ### `CardGroup<T, G>`
 
@@ -148,9 +154,25 @@ Three things that trip people up:
 
 Hover deepens whichever tint is showing by a couple of points; `disabled` stays flat.
 
+### `rowTint` — the status background
+
+`rowTint={(row) => 'unfinished' | 'success' | 'warning' | 'error' | undefined}` is the record-STATUS background channel, **always on** — unlike `rowState`'s selection-gated tints: `success` (green) for a satisfied row (an outbound line with stock allocated), `error` (red) for an error-state row (expired stock), `warning` (amber) for a row needing attention (a held batch). One tint per row; the page encodes its own precedence (outbound: allocated > expired > held — spec D111). Table view only — cards carry status via `cardTone` + badges. It shows through the `disabled` grey (the status is why the row is disabled; the muted text stays), and selection deepens the tint instead of switching to the selection blue. On **clickable** rows (`onRowClick` set — the detail tables) hover deepens the tint further; non-clickable grids (the line editors) have no hover response. Never colour alone: the tint restates a fact a cell states in words. A prop function reading a store field (the outbound editor's `numberOfPacks`) re-evaluates on in-place edits — the tint flips live, with none of the TanStack accessor-caching trouble.
+
+### `rowAccent` — the leading-edge bar
+
+`rowAccent={(row) => 'unfinished' | 'success' | 'warning' | 'error' | undefined}` draws a solid 3px bar down the row's **inline-start edge**, in the same tone vocabulary as `rowTint`. **`'unfinished'`** is the tone for a row still awaiting a step the user must take — its own hue (`--marking-unfinished`), not the caution amber, because such a row is unfinished rather than wrong; see the token in `tokens.css` for why none of the severities would do. It answers a different question from the tint: the tint says what a row _is_, the bar makes a set of rows countable — with the accented rows aligned on one edge, "how much is left?" is answered by running the eye down that edge instead of reading every row (the outbound detail table's unissued lines). Pass it the **same predicate as `rowTint`**, so the whole row and its edge say one thing; a page using the bar alone is fine too, but the two are not independent channels to spend on different facts.
+
+Table view only (cards carry status via `cardTone` + badges). It's drawn as an overlay on the row's leading cell — the selection cell where the table has one, else the first data cell — so an accented row is exactly as wide as an unaccented one and nothing shifts sideways when a row flips state mid-edit. Logical inset, so it follows the reading direction in RTL. Never colour alone: as with the tint, a cell or badge in the row states the same fact in words.
+
 ### `rowTone` — the text colour
 
-`rowTone={(row) => 'info' | 'error' | undefined}` is the orthogonal **text-colour** channel (not a background): `info` paints the row's text in the action-blue tone (a record awaiting an action — a placeholder / uncounted line), `error` in the error tone (a line the server refused). It composes on top of any `rowState` background.
+`rowTone={(row) => 'info' | 'warning' | 'error' | undefined}` is the orthogonal **text-colour** channel (not a background): `info` paints the row's text in the action-blue tone (a record awaiting an action — a placeholder / uncounted line), `warning` in the warning tone (a record needing attention before it can proceed — an outbound line issued from a held batch, spec D111), `error` in the error tone (a line the server refused). It composes on top of any `rowState` background. In table view the tone paints the whole row's text (surviving the disabled muting); in card view it paints the card's **identity title** only — a whole-card repaint would recolour field labels and controls. Never colour alone: a tone restates a fact some cell already states in words.
+
+A page whose table rows must stay plain-text (a status-tinted table — spec D111) sets **`cardTone`** instead of `rowTone`: cards take the tone treatment from it, table text stays unpainted. When both are set, cards prefer `cardTone`.
+
+### Flag cells in the badge slot
+
+A `getFlagCell` check is anonymous by design in table view — its column header names it. In a card's **badge** slot there is no header, so the cell renders **two representations, one shown per view** (CSS-gated in DataTable.module.css): the bare check (`[data-flag]`) in table view, and a **`StatusBadge` chip** (`[data-flag-chip]`) on the card — label + optional icon in the flag's semantic `tone` (`getFlagCell(label, meta, tone, icon)`), including `'success'` for affirmative flags like the auto-allocation tick. A bespoke flag cell opts in by rendering the same pair. Status-flag chips sit directly **after the card title** (the identity stops absorbing the space when the badges are flags); action-bearing badge slots keep the corner. Body-slot card flags need none of this — they get a check with a `LabelledValue` caption like any body field.
 
 ### What a dev writes
 
@@ -247,13 +269,42 @@ A line-edit modal or similar whose natural presentation is cards: seed `viewMode
 Omit `showCardToggle` only where the column set genuinely has no usable table face — that makes the screen card-**only**, and the user has no way back.
 
 ```ts
-type GroupKey = 'batch' | 'pricing' | 'other';
+type GroupKey = 'batch' | 'pricing';
 const CARD_GROUPS: CardGroup<Draft, GroupKey>[] = [
-  { key: 'batch',   labelKey: 'label.batch',   icon: () => <StockIcon/>, panel: true },
-  { key: 'pricing', labelKey: 'label.pricing', icon: () => <InfoIcon/>,  panel: true, disclosure: 'closed' },
-  { key: 'other',   labelKey: 'heading.other', icon: () => <MessageSquareIcon/>, panel: true, disclosure: 'closed' },
+  // The primary panel is UNLABELLED — the card's own header field already names
+  // the row ("Batch"), so a caption above it would be the same word twice.
+  { key: 'batch', panel: true },
+  {
+    key: 'pricing',
+    labelKey: 'label.pricing-additional-info',
+    panel: true,
+    disclosure: 'closed',
+  },
 ];
 ```
+
+### Withdrawing a field per row
+
+`hideOnCard` is all-or-nothing per column. `meta.hideOnCardWhen: (row) => boolean` is the per-**row** version, for a field that is meaningless for some records rather than for the whole table — the stocktake line editor's Reason, which applies only to a batch counted to something other than its snapshot.
+
+```ts
+{
+  c: { id: 'inventoryAdjustmentReasonInput' },
+  header: () => t('label.reason'),
+  cardGroup: 'batch',
+  meta: {
+    cardWidth: { min: 9, max: 20, weight: 1.2 },
+    hideOnCardWhen: line => !line.countThisLine || adjustmentDirection(line) === null,
+  },
+  cell: /* … disabled when there is no direction — that governs TABLE view */
+}
+```
+
+**Returning `null` from the cell is not the same thing.** The card wraps every body cell in its caption, so a nulled cell leaves a label standing over blank space — the field looks broken rather than absent. `hideOnCardWhen` is applied where `hideOnCard` is, at the single cell list every later split reads, so the field leaves its group, takes its caption with it, and is excluded from the group's width template and narrow-fallback threshold. The neighbours close up instead of leaving a hole.
+
+**Card view only, deliberately.** A table column is a property of the grid, not the row: blanking one row's cell keeps the columns aligned, removing it would not. Give the cell renderer whatever blank/disabled treatment the table face needs.
+
+Reach for it only for genuinely per-row conditions. A whole-column condition — a store preference, or an item attribute on a one-item editor — should build the column conditionally instead, so it never enters the column list at all.
 
 ## Rules of thumb
 

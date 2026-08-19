@@ -134,13 +134,14 @@ const OutboundShipmentsList: Component = () => {
     setSelectedIds([]);
   };
 
-  // GraphQL variables from URL state; the type filter is PINNED here — it is
-  // not part of the user-facing filter state (contract.md § the list).
+  // GraphQL variables from URL state. The type pin is NOT here: the query's
+  // top-level `type` argument both selects the permission and overwrites
+  // `filter.type` server-side, so a filter pin would be silently discarded
+  // (contract.md § the list).
   const variables = createMemo<OutboundShipmentsVariables>(() => ({
     storeId: params.storeId,
     filter: {
       ...stripEmpty(query().filter),
-      type: { equalTo: 'OUTBOUND_SHIPMENT' },
       // Custom-field filters become the dynamicFilter AST (undefined = no-op).
       dynamicFilter: buildCustomFieldDynamicFilter(query().cf),
     },
@@ -410,6 +411,16 @@ const OutboundShipmentsList: Component = () => {
         onSelectionChange={setSelectedIds}
         config={tableConfig.config()}
         setConfig={tableConfig.setConfig}
+        // Central-server admins (EDIT_CENTRAL_DATA) can promote their current
+        // layout to the shared install-wide default; everyone else gets no
+        // action (the gate is the app's, so the generic DataTable stays
+        // agnostic). Gate + action both come off the config controller, and the
+        // gate is reactive: undefined until central + permitted both hold.
+        onSaveGlobalDefault={
+          tableConfig.canSaveGlobalDefault()
+            ? tableConfig.saveGlobalTableConfig
+            : undefined
+        }
         // Pagination renders as an overlay INSIDE the table
         // (bottom-inline-end), matching the stocktakes list (kdd/table-state).
         // State stays page-owned / URL-backed.
@@ -418,6 +429,7 @@ const OutboundShipmentsList: Component = () => {
           pageSize: query().first,
           total: totalCount(),
           onOffsetChange: offset => setQuery({ ...query(), offset }),
+          // The chosen size is remembered for the next visit (D106).
           onPageSizeChange: first => {
             rememberPageSize(first);
             setQuery({ ...query(), first, offset: 0 });

@@ -64,6 +64,7 @@ import {
   isReadOnly,
   isRenderableLine,
 } from '../prescriptionStatus';
+import { itemLedgerHref } from '@/sections/items/detail/itemLedgerNav';
 import {
   PrescriptionDetail,
   LabelPrinterSettings,
@@ -84,12 +85,14 @@ import {
 import { PrescriptionStatusFooter } from './PrescriptionStatusFooter';
 import { HistoryModal } from './HistoryModal';
 import { PrescriptionLineEditModal } from './edit-modal/PrescriptionLineEditModal';
+import { EditPatientModal } from '../../patients';
 
 // The prescription detail (spec/prescriptions/ui-surface.md S3): toolbar
 // (patient / clinician / date / program), Details + Log tabs over the flat
 // line table (one row per dispensed line; carriers never render — AC-Q1/V1),
 // the side panel, and the status footer. Dispensing happens in the S4 modal
-// (D53). Read-only from VERIFIED: dead affordances are hidden (D39).
+// (D53). Read-only from VERIFIED: dead affordances are hidden (D39) and a row
+// selection leads to the item's catalogue ledger instead of S4 (.72).
 
 type Line = PrescriptionFieldsFragment['lines']['nodes'][number];
 
@@ -104,6 +107,10 @@ const PrescriptionDetailView: Component = () => {
     itemId?: string;
     item?: { id: string; code: string; name: string };
   }>();
+  // The patient picker's edit-patient modal (#1038) — the id it's currently
+  // open for; undefined = closed. Mounted fresh per open (below), like
+  // editState's line editor.
+  const [editPatientId, setEditPatientId] = createSignal<string>();
   const [historyOpen, setHistoryOpen] = createSignal(false);
   const [reportOpen, setReportOpen] = createSignal(false);
   const [deleteLinesConfirm, setDeleteLinesConfirm] = createSignal(false);
@@ -351,8 +358,11 @@ const PrescriptionDetailView: Component = () => {
         ? t('message.print-failed')
         : undefined;
 
+  // Row selection: the line editor while editable (.55); the item's catalogue
+  // ledger once read-only (.72).
   const openRow = (line: Line) => {
-    if (!disabled())
+    if (disabled()) navigate(itemLedgerHref(params.storeId, line.itemId));
+    else
       setEditState({
         itemId: line.itemId,
         item: { id: line.itemId, code: line.itemCode, name: line.itemName },
@@ -578,7 +588,8 @@ const PrescriptionDetailView: Component = () => {
                     node={node()}
                     disabled={disabled()}
                     onSave={input => void saveField(input)}
-                    onClearLinesAndSave={input => void clearLinesAndSave(input)}
+                    onClearLinesAndSave={clearLinesAndSave}
+                    onEditPatient={setEditPatientId}
                   />
                 </HeaderToolbar>
                 <TabList tabs={tabs()} />
@@ -699,6 +710,16 @@ const PrescriptionDetailView: Component = () => {
                 onSelectionChange={setSelectedIds}
                 config={tableConfig.config()}
                 setConfig={tableConfig.setConfig}
+                // Central-server admins can promote this table's layout to the
+                // shared install-wide default, the same as the list (issue
+                // #1118 — detail tables offered no way to save table
+                // defaults). Gate + action both off the config controller;
+                // undefined for everyone else, so the action isn't offered.
+                onSaveGlobalDefault={
+                  tableConfig.canSaveGlobalDefault()
+                    ? tableConfig.saveGlobalTableConfig
+                    : undefined
+                }
               />
             </TabPanel>
             <TabPanel value="custom-fields">
@@ -725,6 +746,22 @@ const PrescriptionDetailView: Component = () => {
                 initialItem={state.item}
                 programId={node().programId ?? undefined}
                 onClose={() => setEditState(undefined)}
+                onSaved={() => void refetch()}
+              />
+            )}
+          </Show>
+
+          {/* The patient picker's edit-patient modal (spec/patients S4,
+              #1038) — in place over this screen, never a navigate-away;
+              mounted fresh per open like the line editor above. A save
+              refetches so the toolbar/side panel show the patient's current
+              name. */}
+          <Show when={editPatientId()} keyed>
+            {patientId => (
+              <EditPatientModal
+                storeId={params.storeId}
+                patientId={patientId}
+                onClose={() => setEditPatientId(undefined)}
                 onSaved={() => void refetch()}
               />
             )}

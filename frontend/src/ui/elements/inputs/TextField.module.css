@@ -12,10 +12,14 @@
   min-width: 0;
 }
 
-/* Spec max-widths. `compact` caps only the INPUT BOX (rule after the base
-   input rules below) — the field container keeps the `short` cap so the label
-   and helper/error text wrap at a readable width instead of being squeezed to
-   match the narrow box. */
+/* Spec max-widths — OPT-IN caps over the `full` default (see TextField.tsx).
+   THIS BLOCK IS THE REFERENCE the other input modules match: same four values,
+   same meanings, so a text field, a picker, a select and a date field stacked
+   in one form are the same width with nothing passed.
+
+   `compact` caps only the INPUT BOX (rule after the base input rules below) —
+   the field container keeps the `short` cap so the label and helper/error text
+   wrap at a readable width instead of being squeezed to match the narrow box. */
 .field[data-width='compact'] {
   max-width: var(--input-max-short);
 }
@@ -275,9 +279,22 @@
     min-height: var(--input-height-sm-touch);
   }
 
-  /* Touch font bump — see --input-font-touch (stops iOS zoom-on-focus). BOTH
-     sizes: the iOS zoom threshold is absolute and ignores our size variant. */
-  .input {
+  /* Touch font bump — see --input-font-touch. BOTH sizes: a small field beside
+     a default one must not read at a different size on the same touch surface.
+     The small selector has to be REPEATED here — a media query adds no
+     specificity, so the bare `.input` (0,1,0) loses to `.input[data-size=
+     'small']` (0,2,0) above and the bump silently never lands on small. */
+  .input,
+  .input[data-size='small'] {
+    font-size: var(--input-font-touch);
+  }
+
+  /* The adornment tracks its value, at both sizes (same specificity trap).
+     Labels are deliberately NOT bumped, here or in any other input module: the
+     touch size is about the editable value, and a label at input size flattens
+     the label → value hierarchy. */
+  .adornment,
+  .field[data-size='small'] .adornment {
     font-size: var(--input-font-touch);
   }
 

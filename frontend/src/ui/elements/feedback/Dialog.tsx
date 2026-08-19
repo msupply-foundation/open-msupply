@@ -93,6 +93,12 @@ export interface DialogProps {
    * Footer buttons. Rendered (with `footer`) in a region pinned below the
    * dialog's scroll area: over-tall content scrolls between the header and the
    * buttons, which hold still on the dialog's bottom edge.
+   *
+   * The row is the house footer (ui-standards › dialogs § chrome), with no
+   * per-dialog choice to make: the buttons group at the **inline-end** under a
+   * full-bleed hairline, dismiss first and the emphasised confirm last. A
+   * dialog offering an action a user can back out of pairs it with a
+   * `CancelButton`.
    */
   actions?: JSX.Element;
   /**
@@ -309,7 +315,11 @@ const DialogContent = (local: DialogContentProps): JSX.Element => {
         {c.children}
       </div>
       {/* Footer + actions share one bottom region pinned under the scroll
-          area, so they stay on the dialog's bottom edge together. */}
+          area, so they stay on the dialog's bottom edge together. The
+          house hairline is drawn above the ACTIONS row, not above this whole
+          region: a `footer` banner is the content's own last word (the
+          stocktake estimate), so it belongs on the content side of the line
+          (ui-standards › dialogs § chrome). */}
       <Show when={footer() || actions()}>
         <div class={styles.bottom}>
           <Show when={footer()}>

@@ -937,6 +937,13 @@ const RequisitionDetailView: Component = () => {
                   {/* The Distribution truck (ui-surface S3) rides the shell's
                       section glyph — see RequisitionsList. */}
                   <Breadcrumb crumbs={crumbs(node())} />
+                  {/* Every control here collapses to its icon on a narrow
+                    viewport (`collapsible="narrow"`, label kept as the
+                    accessible name and repeated as a tooltip — the outbound
+                    header's tier). Labelled, this cluster needs more width
+                    than a tablet's header has left beside the breadcrumb, so
+                    it wrapped onto a row of its own — and on a short screen
+                    that row costs table rows, which are worth more. */}
                   <HeaderButtons>
                     {/* Add — a split of Add item (the line editor, S4) and Add
                       from master list (the shared S7 picker). The whole
@@ -944,6 +951,7 @@ const RequisitionDetailView: Component = () => {
                       transfer-linked requisition (spec S2 § page actions). */}
                     <SplitButton
                       icon={<PlusCircleIcon />}
+                      collapsible="narrow"
                       testId="add-item-button"
                       disabled={!canAdd()}
                       disabledTitle={t('error.cannot-add-items-to-requisition')}
@@ -979,6 +987,8 @@ const RequisitionDetailView: Component = () => {
                       <Button
                         variant="secondary"
                         icon={<SidebarIcon />}
+                        collapsible="narrow"
+                        title={t('button.more')}
                         data-testid="open-detail-panel-button"
                         // createSidePanelOpen registers Alt+M; this is the
                         // control that advertises it.
@@ -1133,6 +1143,16 @@ const RequisitionDetailView: Component = () => {
                   }
                   config={tableConfig.config()}
                   setConfig={tableConfig.setConfig}
+                  // Central-server admins can promote this table's layout to
+                  // the shared install-wide default, the same as the list
+                  // (issue #1118 — detail tables offered no way to save table
+                  // defaults). Gate + action both off the config controller;
+                  // undefined for everyone else, so the action isn't offered.
+                  onSaveGlobalDefault={
+                    tableConfig.canSaveGlobalDefault()
+                      ? tableConfig.saveGlobalTableConfig
+                      : undefined
+                  }
                   // Leading-checkbox row selection for the bulk line delete
                   // (spec S2 § line table): checkbox-only — the row click
                   // stays bound to the editor. Always offered, on every

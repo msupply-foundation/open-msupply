@@ -25,6 +25,25 @@ export const createMediaQuery = (query: string): (() => boolean) => {
 export const useIsNavOverlay = () => createMediaQuery(mediaQuery.navOverlay);
 
 /**
+ * True on viewports wide enough that the docked rail DEFAULTS to expanded.
+ * Below it the rail is still docked — down to navOverlay — but defaults to the
+ * mini rail, which buys a landscape tablet back ~180px without giving up
+ * persistent navigation. Only a default: the user's toggle wins and persists.
+ */
+export const useIsRailWide = () => createMediaQuery(mediaQuery.railWide);
+
+/**
+ * True when vertical room is the scarce resource — a landscape tablet or a
+ * windowed laptop (see breakpoints.shortViewport). Use it to drop a band of
+ * chrome that a tall screen can afford: the outbound detail view folds its
+ * totals strip into the status footer here rather than stacking a third bar
+ * under the table. The width queries above cannot answer this — a landscape
+ * screen is WIDE and short, so `useIsNavOverlay` never fires on one.
+ */
+export const useIsShortViewport = () =>
+  createMediaQuery(mediaQuery.shortViewport);
+
+/**
  * True on phone-ish widths (below the compact breakpoint) — where the DataTable
  * switches to its card layout and index.css drops the root font-size. Keeps the
  * 600px cutoff living once in breakpoints.ts (a CSS media query can't read a

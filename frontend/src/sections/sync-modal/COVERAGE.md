@@ -13,10 +13,10 @@ real-backend exercise is the `e2e/` Playwright suite, not vitest).
 
 | Behaviour                  | What it asserts                                                                                 | Verified by                                                                                                                                                                                                                                                                                                        |
 | -------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **.5**                     | Sync icon opens the modal                                                                       | Chrome wiring — the shell mounts the modal and the sync indicator opens it (`src/nav/ShellLayout.tsx`); checked against the running app (C4)                                                                                                                                                                       |
+| **.5**                     | Sync icon opens the modal                                                                       | Chrome wiring — the shell mounts the modal and the bottom bar's sync cell opens it (`src/nav/ShellLayout.tsx`); checked against the running app (C4)                                                                                                                                                                       |
 | **.11**                    | Modal closes with the `x` button                                                                | The modal's `closeButton` (`SyncModal.tsx`, the registry modal role); checked against the running app (C4)                                                                                                                                                                                                         |
 | **.18**                    | Status-line precedence                                                                          | `syncStatus.test.ts` › _status-line precedence_ (`statusLineKind`)                                                                                                                                                                                                                                                 |
-| **.19** / **.20**          | Phase list with progress (count where countable); idle keeps completed phases                   | `syncStatus.test.ts` › _phase list with progress_ (`toSyncOverview` — the per-phase done/total data and start/finish stamps); the D100 placement (count + elapsed beneath the in-flight phase only; a completed phase's count and duration on marker hover/focus) is the shared `ui/sync/ProgressList`'s rendering |
+| **.19** / **.20**          | Phase list with progress (count where countable); idle keeps completed phases                   | `syncStatus.test.ts` › _phase list with progress_ (`toSyncOverview` — the per-phase done/total data and start/finish stamps); the D101 placement (count + elapsed beneath the in-flight phase only; a completed phase's count and duration on marker hover/focus) is the shared `ui/sync/ProgressList`'s rendering |
 | **.21** / **.7**           | Last-successful notice: idle-only, time + exact h/m/s                                           | `syncStatus.test.ts` › _duration decomposition and units_ (`syncDurationParts` + `durationUnits`); time-of-day-vs-date is `SyncModal.tsx` (running app)                                                                                                                                                            |
 | **.22**                    | Status stays current while open                                                                 | Substrate live channel + poll discipline (`src/api/syncStore.ts`); modal's fetch-on-open-when-uncached + open-time fallback interval (`SyncModal.tsx`); pure-display proxy in `syncStatus.test.ts` › _display tracks the latest status_                                                                            |
 | **.23** / **.9** / **.10** | Phase set matches generation × surface × role (`.9`/`.10` are its legacy-generation modal rows) | `syncStatus.test.ts` › _phase set matches the context_ (the full matrix)                                                                                                                                                                                                                                           |
@@ -42,11 +42,11 @@ trigger rejection (was AC-T3) is server-enforced (`manualSync` rejects
 pre-init — contract § Viewing and triggering); the modal is chrome-mounted
 only in an entered store, unreachable pre-init.
 
-## Chrome sync indicator (spec/chrome § sync indicator)
+## Chrome sync status (spec/chrome § sync status)
 
-The badge/dim derivation (`createSyncIndicator`) is a host-contract export. Its
-pure model — alert-vs-count, the display-threshold gate, the 99+ cap, and the
-staleness tones — is unit-tested in `syncStatus.test.ts` › _chrome indicator
-badge_ (`syncIndicatorBadge`). The reactive wiring (the minutely tick, the slow
-fallback poll while the live channel is down, the 99+/exact-count formatting) is
-verified against the running app.
+The status-line derivation (`createSyncIndicator`) is a host-contract export.
+Its pure model — the precedence ladder, the display-threshold gate, and the
+staleness tones — is unit-tested in `syncStatus.test.ts` › _the bottom bar's
+sync cell_ (`syncFooterStatus`). The reactive wiring (the minutely tick that
+both re-ages the "Synced …" line and drives the slow fallback poll while the
+live channel is down) is verified against the running app.

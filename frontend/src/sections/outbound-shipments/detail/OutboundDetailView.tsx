@@ -28,18 +28,35 @@ import {
   type SortState,
 } from '../../../ui/elements/table/DataTable';
 import {
-  formatCurrencyCell,
+  AbsentValue,
   getCellDefinition,
+  getFlagCell,
   getNumberCell,
+  isNearOrPastExpiry,
 } from '../../../ui/elements/table/tableHelpers';
+import {
+  Pagination,
+  type PaginationProps,
+} from '../../../ui/elements/table/Pagination';
 import { remToPx } from '../../../ui/utils/rem';
-import { formatNumber } from '../../../intl/formatNumber';
+import {
+  useIsNavOverlay,
+  useIsShortViewport,
+} from '../../../ui/utils/createMediaQuery';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
 import { createAddAction } from '../../../ui/utils/keyActions';
 import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
-import { InfoIcon, MinusCircleIcon, PlusCircleIcon } from '../../../ui/icons';
+import { RowStatusBadges, uncapped } from './RowStatusBadges';
+import {
+  AlertCircleIcon,
+  InfoIcon,
+  MinusCircleIcon,
+  PauseIcon,
+  PlusCircleIcon,
+} from '../../../ui/icons';
+import { isExpired } from '../../../domain/allocation';
 import { fetchLocations } from '../../../domain/location';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import { useUrlQueryState } from '../../../list/urlQueryState';
@@ -67,6 +84,7 @@ import { isEditable, canReturnLines } from '../outboundStatus';
 import { outboundShipmentPreferences } from '@/store/storeContext';
 import { OutboundDetailToolbar } from './OutboundDetailToolbar';
 import { OutboundStatusFooter } from './OutboundStatusFooter';
+import { OutboundTotalsStrip } from './OutboundTotalsStrip';
 import { OutboundSidePanel } from './OutboundSidePanel';
 import { ActivityLogPanel } from '../../../domain/activityLog';
 import {
@@ -114,15 +132,79 @@ import {
 
 type Line = OutboundLineFragment;
 
-// Drop a preset's growth cap, keeping its cell + width floor: `maxSize` is a
-// HARD cap, so a column sitting at it can't be dragged wider at all. The shared
-// config expresses this as a per-key `maxSize: null`; at a call site the key has
-// to be removed outright — an explicit `maxSize: undefined` would override
-// TanStack's own default rather than fall back to it.
-const uncapped = <T,>({
-  maxSize: _cap,
-  ...rest
-}: ReturnType<typeof getCellDefinition<T>>) => rest;
+// A held line — its batch, or the batch's location, on hold — cannot be
+// issued (OMS-REG-DIST-03.18); the detail table says so where the user looks
+// first: the amber "On hold" badge beside the item name and the amber card
+// treatment (OMS-REG-DIST-03.37). A held line is also, necessarily, a line
+// with nothing issued, so it takes the needs-action marking below as well.
+const lineOnHold = (line: Line): boolean =>
+  !!line.stockLine?.onHold || !!line.location?.onHold;
+
+// Calendar-expired line (D112) — the medium-weight red Expiry-date cell, the
+// red "Expired" badge, and the red card treatment (tinted title + the Expired
+// chip after it).
+const lineExpired = (line: Line): boolean =>
+  !!line.expiryDate && isExpired(line.expiryDate);
+
+// Inside the shared near-expiry window but not yet expired — the "Near
+// expiry" badge tier (the expiry cell is red at this tier, regular weight).
+const lineNearExpiry = (line: Line): boolean =>
+  !!line.expiryDate &&
+  !lineExpired(line) &&
+  isNearOrPastExpiry(line.expiryDate);
+
+// A line the user still has to act on before this shipment can go anywhere:
+// a PLACEHOLDER (the requested quantity has no batch behind it yet) or a
+// stock line with nothing issued on it. Everything else is done work.
+const lineNeedsAction = (line: Line): boolean =>
+  line.type === 'UNALLOCATED_STOCK' || line.numberOfPacks === 0;
+
+// The row-status badges beside the item name (the shared RowStatusBadges
+// cluster — ui-standards § table interaction; OMS-REG-DIST-03.37/.38,
+// D111/D112). A placeholder carries none — its Batch cell's "Unallocated"
+// word is the flag, and it is the word the needs-action marking below leans
+// on; a stock line with nothing issued has no such cell, so it takes the
+// "Not issued" badge instead.
+const LineStatusBadges = (props: { line: Line }) => (
+  <Show when={props.line.type !== 'UNALLOCATED_STOCK'}>
+    <RowStatusBadges
+      expired={lineExpired(props.line)}
+      nearExpiry={lineNearExpiry(props.line)}
+      held={lineOnHold(props.line)}
+      notIssued={lineNeedsAction(props.line)}
+    />
+  </Show>
+);
+
+// The ACTIONED / UNACTIONED marking (ui-surface S3 line table): the lines
+// still needing work carry the unfinished-work tint AND a bar of the same
+// colour down the row's leading edge; a done line carries nothing at all. One channel,
+// one question — "what is left?" — answered by running the eye down one
+// edge rather than reading every row.
+//
+// This replaces the earlier status-per-tint scheme (allocated green /
+// expired red / held amber, D111): colouring every done row green left the
+// unfinished ones no louder than the rest, and it spent the row background —
+// the screen's one at-a-glance channel — on a fact each row already states.
+// The expiry and hold facts keep their own words: the row-status badges
+// beside the item name and the reddened Expiry-date cell, plus the card
+// tones below.
+const lineRowTint = (
+  line: Line
+): 'unfinished' | 'success' | 'warning' | 'error' | undefined =>
+  lineNeedsAction(line) ? 'unfinished' : undefined;
+
+// The card tone (tinted title + the chips after it — D111/D112). Expired
+// outranks held, which outranks needs-action — the amber a card takes for a
+// held batch and for an unissued line is the same amber, and a held line is
+// unissued by definition, so the order only decides which chip tone leads;
+// both chips still show. A placeholder has nothing but its needs-action
+// state, so it now reads amber where D111 left it plain.
+const lineCardTone = (line: Line): 'warning' | 'error' | undefined => {
+  if (line.type !== 'UNALLOCATED_STOCK' && lineExpired(line)) return 'error';
+  if (line.type !== 'UNALLOCATED_STOCK' && lineOnHold(line)) return 'warning';
+  return lineNeedsAction(line) ? 'warning' : undefined;
+};
 
 // The server sort-field union (from codegen) — a column can only ever name a
 // real server sort key (kdd/type-safety). Columns whose data the server can't
@@ -255,6 +337,70 @@ const OutboundDetailView: Component = () => {
   // page (keeps rows in place, no remount); undefined before the first load.
   const rows = (): Line[] => linesData.latest?.nodes ?? [];
   const totalCount = (): number => linesData.latest?.totalCount ?? 0;
+
+  // The line table's pager. It lives in the screen's bottom bar — the status
+  // footer, or the selection footer while rows are ticked — rather than in a
+  // band of its own under the table (spec/ui-standards § tables → pagination):
+  // that bar is present at every line count, so hosting the pager there costs
+  // no extra row, and `conditional` means it renders nothing at all until the
+  // lines outrun one page, leaving the bar as it was and the height to the
+  // rows. Paging still clears the selection (OMS-REG-DIST-03.34): the
+  // bulk-action gates classify by rows in view.
+  // The shipment's totals (spec § line table, D45): whole-shipment SERVER
+  // aggregates off the entity's pricing stats — never a sum over the loaded
+  // rows, which would silently become a page total under server pagination
+  // (OMS-REG-DIST-03.28). Price = stockTotalBeforeTax (contract § detail line
+  // table): the sum of the Total column, pack sell price × packs before tax —
+  // the after-tax figure belongs to the side panel's stock-charges Total.
+  // Shown in the status footer rather than a pinned row beneath the table:
+  // being whole-shipment figures, a band under one page of rows would read as
+  // that page's column sums, and would cost a row to do it.
+  const shipmentTotals = () => ({
+    price: node()?.pricing?.stockTotalBeforeTax ?? 0,
+    volume: node()?.pricing?.totalVolume ?? 0,
+  });
+
+  // Where the totals live is a "which element renders" decision, so it is the
+  // one responsive mechanism that touches JS (src/ui/CLAUDE.md #7): a band of
+  // its own above the bar on a wide screen, and ON the bar below the
+  // navOverlay line — tablet portrait and down, where the shipment's lines are
+  // worth more than a row of chrome and the bar has the room. Rendered by a
+  // function, not a stored element: the two footer faces each need their own
+  // instance, and one element can't be in two places.
+  const narrowViewport = useIsNavOverlay();
+  // …and the same trade on a SHORT one. The rule was written for tablet
+  // portrait, but a landscape tablet is the case that needs it most: wide
+  // enough that the width query never fires, short enough that a third stacked
+  // bar under the table costs a row of the thing the user came to work on.
+  // Measured at 1434×742, chrome took 52% of the screen.
+  const shortViewport = useIsShortViewport();
+  const foldTotalsIntoBar = () => narrowViewport() || shortViewport();
+  const inlineTotals = () => (
+    <Show when={foldTotalsIntoBar()}>
+      <OutboundTotalsStrip
+        inline
+        totals={totalCount() > 0 ? shipmentTotals : undefined}
+      />
+    </Show>
+  );
+
+  const linePagination = (): PaginationProps => ({
+    offset: query().offset,
+    pageSize: query().first,
+    total: totalCount(),
+    onOffsetChange: offset => {
+      setQuery({ ...query(), offset });
+      setSelectedIds([]);
+    },
+    onPageSizeChange: first => {
+      // The remembered page size (D106) — it rode the DataTable's own
+      // pagination prop, which this accessor replaced when the pager moved
+      // into the status footer, so it has to travel with the handler.
+      rememberPageSize(first);
+      setQuery({ ...query(), first, offset: 0 });
+      setSelectedIds([]);
+    },
+  });
   // Deleting the last page's rows can leave the offset past the end (an
   // empty "41–40 of 40" page) — clamp back to the last real page when a
   // resolved page proves the offset overshot. Idempotent: the clamped offset
@@ -565,24 +711,11 @@ const OutboundDetailView: Component = () => {
   // placeholder rows show the requested quantity. Sortable columns name a real
   // server sort key; the rest omit sortKey (no client-side fallback).
   const columns = (): Column<Line, SortKey>[] => {
-    // Footer totals (spec § line table, D45): whole-shipment SERVER aggregates
-    // off the entity's pricing stats — never a sum over the loaded rows, which
-    // would silently become a page total under server pagination
-    // (OMS-REG-DIST-03.28).
-    const pricing = node()?.pricing;
-    // Price footer = stockTotalBeforeTax (contract § detail line table): it
-    // sums the Total column (pack sell price × packs, before tax) — the
-    // after-tax figure belongs to the side panel's stock-charges Total.
-    const totals = {
-      price: pricing?.stockTotalBeforeTax ?? 0,
-      volume: pricing?.totalVolume ?? 0,
-    };
     return [
       {
         c: { key: 'itemCode' },
         sortKey: 'itemCode',
         header: () => t('label.code'),
-        footer: () => t('label.total'),
         // The `code` kind carries the monospace treatment the spec's line-table
         // column 1 asks for ("text (mono)"), plus the shared code width.
         ...getCellDefinition('itemCode'),
@@ -595,12 +728,24 @@ const OutboundDetailView: Component = () => {
           headerPosition: 'primary',
           wrapLines: 2,
         }),
+        // Name + the row-status badges (LineStatusBadges above). The name is
+        // wrapped so it can carry the gap on its TRAILING edge: this cell
+        // clamps to two lines, and a long name pushes the chips onto line 2,
+        // where a leading margin on the cluster would render as an indent
+        // instead of lining the chip up under the name (see
+        // [data-row-badges-label] in DataTable.module.css).
+        cell: info => (
+          <>
+            <span data-row-badges-label>{info.row.original.itemName}</span>
+            <LineStatusBadges line={info.row.original} />
+          </>
+        ),
       },
       {
         c: {
           accessor: line =>
             line.type === 'UNALLOCATED_STOCK'
-              ? t('label.placeholder')
+              ? t('label.unallocated')
               : (line.batch ?? '—'),
           id: 'batch',
         },
@@ -608,11 +753,95 @@ const OutboundDetailView: Component = () => {
         header: () => t('label.batch'),
         // Mono, per the spec's line-table column 3 — but WITHOUT the `code`
         // kind's 7rem growth cap: this column doesn't only hold a code, it
-        // renders the word "Placeholder" for an unallocated line, which fills
+        // renders the word "Unallocated" for a placeholder line, which fills
         // the cap exactly and pins the column there so it can't be dragged
         // wider at all. Same reasoning (and fix) as the `locationCode` key's
         // "own size, NO cap" note in _globalColumnConfig (#601).
-        ...uncapped(getCellDefinition<Line>('batch')),
+        //
+        // NOT user-hideable (hideFromColumnSettings), unlike every other data
+        // column here: this cell carries the WORD behind the placeholder
+        // marking, and the tint and bar beside it are colour. Hide the column
+        // from the Columns popover and a placeholder row would be marked by
+        // colour alone — the one thing the marking is never allowed to be
+        // (styling principle 9 / WCAG 1.4.1). The column stays draggable and
+        // sortable; it just can't be switched off.
+        ...uncapped(
+          getCellDefinition<Line>('batch', { hideFromColumnSettings: true })
+        ),
+        // A placeholder has no batch, and the word standing in for one must
+        // not be readable AS one: in this mono column "Unallocated" set in
+        // Monaco alongside e2e-030062-a is just another code at a glance. The
+        // absent-value treatment types it as prose instead — the UI face,
+        // italic, muted.
+        //
+        // A word, not a chip: this row already carries the amber tint AND the
+        // leading bar, so nothing more is needed to FIND it. The cell's one
+        // remaining job is to say WHICH value is missing, and a chip on a
+        // tinted row adds a fourth marker for a fact three already carry (and
+        // shows the tint through its own transparent fill).
+        //
+        // The accessor above keeps the plain word as the cell's VALUE, so
+        // sorting, the hover-reveal and any export are unchanged.
+        cell: info =>
+          info.row.original.type === 'UNALLOCATED_STOCK' ? (
+            <AbsentValue label={t('label.unallocated')} />
+          ) : (
+            (info.row.original.batch ?? '—')
+          ),
+      },
+      {
+        // On-hold flag, CARD-ONLY (OMS-REG-DIST-03.37, D111): the table's
+        // amber "On hold" badge beside the item name carries the state, so
+        // the grid has no On-hold column; the card's after-the-title chip
+        // is this.
+        c: { accessor: lineOnHold, id: 'onHold' },
+        header: () => t('label.on-hold'),
+        ...getFlagCell(
+          t('label.on-hold'),
+          {
+            headerPosition: 'badge',
+            hideOnTable: true,
+            hideFromColumnSettings: true,
+          },
+          'warning',
+          () => <PauseIcon />
+        ),
+      },
+      {
+        // Expired flag, CARD-ONLY (D112): the table's Expiry-date cell
+        // reddens under its header; a card buries that in the body, so the
+        // chip puts the word after the card title, with the row's error tone.
+        c: { accessor: lineExpired, id: 'expired' },
+        header: () => t('label.expired'),
+        ...getFlagCell(
+          t('label.expired'),
+          {
+            headerPosition: 'badge',
+            hideOnTable: true,
+            hideFromColumnSettings: true,
+          },
+          'error',
+          () => <AlertCircleIcon />
+        ),
+      },
+      {
+        // Needs-action flag, CARD-ONLY: in the table the amber tint, the
+        // leading bar and the "Not issued" badge beside the item name carry
+        // it; a card has none of those, and its Batch field ("Unallocated")
+        // sits in the body where nothing distinguishes it — so the corner
+        // badge is where the fact lands. Shown for placeholders too, unlike
+        // the table badge.
+        c: { accessor: lineNeedsAction, id: 'notIssued' },
+        header: () => t('label.not-issued'),
+        ...getFlagCell(
+          t('label.not-issued'),
+          {
+            headerPosition: 'badge',
+            hideOnTable: true,
+            hideFromColumnSettings: true,
+          },
+          'warning'
+        ),
       },
       {
         c: { key: 'expiryDate' },
@@ -724,7 +953,6 @@ const OutboundDetailView: Component = () => {
           id: 'total',
         },
         header: () => t('label.total'),
-        footer: () => formatCurrencyCell(totals.price),
         ...getCellDefinition('total'),
       },
       {
@@ -739,7 +967,6 @@ const OutboundDetailView: Component = () => {
         // Same display rounding as the column's cells (ui-standards § tables'
         // 2-dp number cell) — a 5-dp footer under 2-dp cells reads as a
         // mismatch.
-        footer: () => formatNumber(totals.volume, { maximumFractionDigits: 2 }),
         ...getNumberCell(),
         // No CELL_DEF key; the "Volume (m³)" header is the binding constraint.
         size: remToPx(6),
@@ -809,11 +1036,21 @@ const OutboundDetailView: Component = () => {
               header={
                 <Header>
                   <Breadcrumb crumbs={crumbs(current())} />
+                  {/* Every button here collapses to its icon on a narrow
+                      viewport (`collapsible="narrow"`, with the label kept as
+                      the accessible name and repeated as a tooltip): four
+                      labelled buttons need ~38rem, which is more than a
+                      tablet's header has left beside the breadcrumb, so the
+                      cluster wrapped onto a row of its own. Icon-only they fit
+                      on the breadcrumb's line, and the screen keeps that row's
+                      height for table rows. */}
                   <HeaderButtons>
                     <Show when={editable()}>
                       <Button
                         icon={<PlusCircleIcon />}
                         shortcut={ALT_N}
+                        collapsible="narrow"
+                        title={t('button.add-item')}
                         data-testid="add-item-button"
                         onClick={openAdd}
                       >
@@ -836,6 +1073,8 @@ const OutboundDetailView: Component = () => {
                       <Button
                         variant="secondary"
                         icon={<InfoIcon />}
+                        collapsible="narrow"
+                        title={t('button.more')}
                         data-testid="open-detail-panel-button"
                         // createSidePanelOpen registers Alt+M; this is the
                         // control that advertises it (ui-surface S2).
@@ -880,81 +1119,97 @@ const OutboundDetailView: Component = () => {
                 </Header>
               }
               contentFooter={
-                <Show
-                  when={selectedIds().length > 0}
-                  fallback={
-                    <OutboundStatusFooter
-                      storeId={params.storeId}
-                      node={current()}
-                      preflight={preflight}
-                      onSetHold={setHold}
-                      // A status change can trim zero-quantity lines
-                      // server-side — refetch the lines page alongside the
-                      // in-place entity splice.
-                      onSaved={saved => {
-                        mutate(() => saved);
-                        void refetchAfterSave();
-                      }}
-                      onClose={() =>
-                        navigate(
-                          `/${params.storeId}/distribution/outbound-shipment`
-                        )
-                      }
+                <>
+                  {/* The totals band, above BOTH footer faces — a document
+                      fact, so a live row selection doesn't take it away.
+                      Only where there is ROOM for it: on a narrow viewport, or
+                      a short one (landscape), the same figures ride the bar
+                      itself (below) rather than stacking a third band under
+                      the table, because height is the scarcer resource. */}
+                  <Show when={!foldTotalsIntoBar()}>
+                    <OutboundTotalsStrip
+                      totals={totalCount() > 0 ? shipmentTotals : undefined}
                     />
-                  }
-                >
-                  <ContentFooter testId="actions-footer">
-                    <strong data-testid="selected-rows-count">
-                      {tPlural('label.items-selected', selectedIds().length)}
-                    </strong>
-                    {/* Delete: hidden (not disabled) when read-only — editable
+                  </Show>
+                  <Show
+                    when={selectedIds().length > 0}
+                    fallback={
+                      <OutboundStatusFooter
+                        storeId={params.storeId}
+                        node={current()}
+                        pagination={linePagination()}
+                        preflight={preflight}
+                        onSetHold={setHold}
+                        totals={inlineTotals()}
+                        // A status change can trim zero-quantity lines
+                        // server-side — refetch the lines page alongside the
+                        // in-place entity splice.
+                        onSaved={saved => {
+                          mutate(() => saved);
+                          void refetchAfterSave();
+                        }}
+                      />
+                    }
+                  >
+                    <ContentFooter testId="actions-footer">
+                      {/* Same on the selection face: the totals stay on screen
+                          while rows are ticked, on the bar itself when narrow. */}
+                      {inlineTotals()}
+                      <strong data-testid="selected-rows-count">
+                        {tPlural('label.items-selected', selectedIds().length)}
+                      </strong>
+                      {/* Delete: hidden (not disabled) when read-only — editable
                         only (NEW/ALLOCATED/PICKED). S3 bulk-action matrix. */}
-                    <Show when={editable()}>
-                      <DeleteLinesAction
-                        storeId={params.storeId}
-                        selectedLines={selectedLines}
-                        disabled={false}
-                        onCommitted={onLineOpsCommitted}
-                      />
-                    </Show>
-                    {/* Allocate placeholder lines: only while editable AND a
+                      <Show when={editable()}>
+                        <DeleteLinesAction
+                          storeId={params.storeId}
+                          selectedLines={selectedLines}
+                          disabled={false}
+                          onCommitted={onLineOpsCommitted}
+                        />
+                      </Show>
+                      {/* Allocate placeholder lines: only while editable AND a
                         placeholder line is in the selection. */}
-                    <Show when={editable() && hasSelectedPlaceholder()}>
-                      <AllocateLinesAction
-                        storeId={params.storeId}
-                        selectedLines={selectedLines}
-                        disabled={false}
-                        onCommitted={onLineOpsCommitted}
-                      />
-                    </Show>
-                    {/* Return selected lines (OMS-REG-DIST-04.21): shown at EVERY status (not
+                      <Show when={editable() && hasSelectedPlaceholder()}>
+                        <AllocateLinesAction
+                          storeId={params.storeId}
+                          selectedLines={selectedLines}
+                          disabled={false}
+                          onCommitted={onLineOpsCommitted}
+                        />
+                      </Show>
+                      {/* Return selected lines (OMS-REG-DIST-04.21): shown at EVERY status (not
                         hidden, not disabled). At SHIPPED / DELIVERED / VERIFIED
                         it opens the customer-return create flow (owned by the
                         returns vertical, over this shipment); any other status
                         (RECEIVED included) gets the explanatory notice. See the
                         S3 bulk-action matrix. */}
-                    <Button
-                      variant="secondary"
-                      data-testid="return-lines-button"
-                      onClick={() =>
-                        canReturnLines(current().status)
-                          ? setReturnModalOpen(true)
-                          : setReturnNoticeOpen(true)
-                      }
-                    >
-                      {t('button.return-lines')}
-                    </Button>
-                    <ContentFooterActions>
                       <Button
                         variant="secondary"
-                        icon={<MinusCircleIcon />}
-                        onClick={() => setSelectedIds([])}
+                        data-testid="return-lines-button"
+                        onClick={() =>
+                          canReturnLines(current().status)
+                            ? setReturnModalOpen(true)
+                            : setReturnNoticeOpen(true)
+                        }
                       >
-                        {t('label.clear-selection')}
+                        {t('button.return-lines')}
                       </Button>
-                    </ContentFooterActions>
-                  </ContentFooter>
-                </Show>
+                      {/* The pager rides the selection face as well: ticking a
+                        row must not strip the way to the rest of the lines. */}
+                      <Pagination {...linePagination()} inBar />
+                      <ContentFooterActions>
+                        <Button
+                          variant="secondary"
+                          icon={<MinusCircleIcon />}
+                          onClick={() => setSelectedIds([])}
+                        >
+                          {t('label.clear-selection')}
+                        </Button>
+                      </ContentFooterActions>
+                    </ContentFooter>
+                  </Show>
+                </>
               }
             >
               <TabPanel value="details">
@@ -981,11 +1236,12 @@ const OutboundDetailView: Component = () => {
                   sort={currentSort()}
                   onSort={onSort}
                   onRowClick={editable() ? openRow : undefined}
-                  // Placeholder lines read in the info tone — whole-row blue
-                  // text, matching the current app (ui-surface S3 line table).
-                  rowTone={line =>
-                    line.type === 'UNALLOCATED_STOCK' ? 'info' : undefined
-                  }
+                  rowTint={lineRowTint}
+                  // Same predicate on both channels: the tint colours the
+                  // row, the bar makes the unfinished lines legible down one
+                  // edge as the user scrolls.
+                  rowAccent={lineRowTint}
+                  cardTone={lineCardTone}
                   emptyMessage={t('error.no-outbound-items')}
                   empty={
                     editable() ? (
@@ -1004,23 +1260,16 @@ const OutboundDetailView: Component = () => {
                   onSelectionChange={setSelectedIds}
                   config={tableConfig.config()}
                   setConfig={tableConfig.setConfig}
-                  // Page navigation clears the selection (OMS-REG-DIST-03.34):
-                  // the bulk-action gates classify by rows in view, so a
-                  // selection must never carry ids the user can no longer see.
-                  pagination={{
-                    offset: query().offset,
-                    pageSize: query().first,
-                    total: totalCount(),
-                    onOffsetChange: offset => {
-                      setQuery({ ...query(), offset });
-                      setSelectedIds([]);
-                    },
-                    onPageSizeChange: first => {
-                      rememberPageSize(first);
-                      setQuery({ ...query(), first, offset: 0 });
-                      setSelectedIds([]);
-                    },
-                  }}
+                  // Central-server admins can promote this table's layout to
+                  // the shared install-wide default, the same as the list
+                  // (issue #1118 — detail tables offered no way to save table
+                  // defaults). Gate + action both off the config controller;
+                  // undefined for everyone else, so the action isn't offered.
+                  onSaveGlobalDefault={
+                    tableConfig.canSaveGlobalDefault()
+                      ? tableConfig.saveGlobalTableConfig
+                      : undefined
+                  }
                 />
               </TabPanel>
               <TabPanel value="custom-fields">

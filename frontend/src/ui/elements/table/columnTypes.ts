@@ -1,6 +1,7 @@
 import type { JSX } from 'solid-js';
 import type {
   ColumnDef,
+  ColumnMeta,
   HeaderContext,
   IdentifiedColumnDef,
   RowData,
@@ -85,6 +86,35 @@ declare module '@tanstack/solid-table' {
      */
     hideOnCard?: boolean;
     /**
+     * Omit this field from the cards of the ROWS this predicate answers true
+     * for — the per-row counterpart of `hideOnCard`, which is all-or-nothing
+     * per column.
+     *
+     * For a field that is meaningless for SOME records rather than for the
+     * whole table: the stocktake line editor's Reason, which applies only to a
+     * batch whose count differs from its snapshot. Returning null from such a
+     * cell is NOT the same thing — the card still renders the field's caption
+     * around the empty cell, so the row shows a label over blank space. This
+     * withdraws the whole field, caption included, and its neighbours close up.
+     *
+     * CARD VIEW ONLY, deliberately. A table column is a property of the column,
+     * not the row: blanking one row's cell keeps the grid aligned, whereas
+     * removing it would not. So a table row simply renders the cell as usual —
+     * use the cell's own renderer to blank it there if that is wanted.
+     *
+     * Whole-column conditions stay where they belong: build the column
+     * conditionally (a store preference, a non-vaccine item) rather than
+     * declaring it and hiding it on every row.
+     *
+     * Declared METHOD-style, not as a property holding an arrow type: the
+     * helpers in tableHelpers build their metas against the row-erased
+     * `ColumnMeta<never, unknown>`, and a property-style parameter is
+     * contravariant under strictFunctionTypes, so `(row: never) => boolean`
+     * would not assign to `(row: T) => boolean`. A method parameter is
+     * bivariant, which is what lets one erased meta serve every row type.
+     */
+    hideOnCardWhen?(row: TData): boolean;
+    /**
      * An explanation of what this column's figure means, as ALREADY-TRANSLATED
      * text — the header's tooltip content (spec/internal-orders § S3 lists the
      * `description.*` key per column; a plugin column carries its own key,
@@ -138,6 +168,20 @@ declare module '@tanstack/solid-table' {
      */
     cardWidth?: number | { min: number; max: number; weight: number };
     /**
+     * Tracks this field occupies of its group's `narrowLayout.columns` —
+     * ignored in any other layout. Those tracks are deliberately too fine for a
+     * field to sit in one, so in such a group EVERY field declares a span; that
+     * is what lets the spans express a real ratio between fields rather than the
+     * 1-against-2 an even one-field-per-column grid is limited to.
+     *
+     * Pick the span from the data, then check the rows come out even — a span
+     * that leaves a row part-empty is the layout's one failure mode. The inbound
+     * batch panel is the worked example: 2 for every formatted scalar, 3 for the
+     * two long lookups, which tiles exactly at 8 fields, at the 5 a non-store
+     * supplier shows, and again with the 3 vaccine/auth fields added.
+     */
+    cardSpan?: number;
+    /**
      * The row label in the Columns settings popover, for a column whose grid
      * header deliberately renders EMPTY or iconic but stays user-hideable
      * (e.g. the line editor's auto-allocation tick — blank header in the
@@ -150,6 +194,17 @@ declare module '@tanstack/solid-table' {
 }
 
 export type SortState<K extends string> = { key: K; desc: boolean };
+
+// Card view's per-cell visibility — the ONE filter CardView applies at its
+// cell source, which every later split (header slots, body groups, each
+// group's width template and narrow-fallback threshold) reads: the column-wide
+// `hideOnCard`, then the per-row `hideOnCardWhen` (both documented on the meta
+// above). Pure so it's testable in the node environment; CardView owns the
+// tracking scope it runs in.
+export const visibleOnCard = <T>(
+  meta: ColumnMeta<T, unknown> | undefined,
+  row: T
+): boolean => !meta?.hideOnCard && !meta?.hideOnCardWhen?.(row);
 
 // How a column identifies itself — a discriminated union of the three real
 // scenarios, replacing TanStack's raw accessorKey/accessorFn/id fields (which
@@ -304,4 +359,37 @@ export type CardGroup<T, G extends string> = {
    * (e.g. "Diff +3 · Reason: Damaged"). Only meaningful with `disclosure`.
    */
   disclosurePreview?: (row: T) => JSX.Element;
+  /**
+   * How this group lays out once the card is too narrow for its declared
+   * `cardWidth` template. Omit for the default: a wrapping weighted flex row
+   * that keeps each field's declared size (see CardView's `cardFlex`). Fields
+   * are then sized to their data, but a wrapped line's edges don't line up with
+   * the line above — flex lines are independent.
+   *
+   * `{ columns: N }` instead lays the fields on N equal tracks, each field taking
+   * the number it declares in `meta.cardSpan`. Every row then fills its width and
+   * every row shares the same column edges, at the price of a field's width being
+   * a multiple of a track rather than exactly what its data asks for.
+   *
+   * **N is a consequence of the group's own fields, not a house number.** Work it
+   * out, don't guess: the finest track has to be coarse enough that the widest
+   * field which MUST fit (usually a date, ~11rem for `DD MMM YYYY` plus its
+   * trigger) can be reached by a whole number of tracks, and N has to divide into
+   * each row's intended field grouping. Two worked examples, both on a ~41rem
+   * panel:
+   *
+   *   - The inbound batch panel takes **6**: eight fields as three rows of
+   *     three, spans 2/2/2 per row and 3+3 for the two long lookups.
+   *   - The stocktake batch panel takes **10**: six fields as a row of FOUR then
+   *     a row of two, which 6 cannot express (a date needs 2 of 6 = 13rem, and
+   *     three of those plus a fourth field overflows). At 10, spans 2/2/2/4 fill
+   *     row one and 6+4 fill row two, which is what lets Location have 24rem
+   *     instead of the 13rem an even three-per-row would allow it.
+   *
+   * If no N tiles the group, that's a real answer: leave `narrowLayout` unset and
+   * take the weighted flex default, which sizes exactly but doesn't align.
+   *
+   * Choose this when the tidiness is worth more than exact sizing.
+   */
+  narrowLayout?: { columns: number };
 };
