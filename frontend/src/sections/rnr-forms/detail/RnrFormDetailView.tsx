@@ -26,6 +26,7 @@ import {
 } from '@/ui/elements/table/DataTable';
 import { createTableConfig } from '@/api/createTableConfig';
 import { useUrlQueryState } from '@/list/urlQueryState';
+import { sortRows } from '@/list/sortRows';
 import { ALT_M } from '@/ui/utils/shortcuts';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Spinner } from '@/ui/elements/feedback/Spinner';
@@ -306,15 +307,9 @@ const RnrFormDetailView: Component = () => {
 
   // Sorted first in its own memo, so each (undebounced) search keystroke
   // costs only the O(n) prefix scan below, never a re-sort.
-  const sortedLines = createMemo(() => {
-    const s = sort();
-    const dir = s.desc ? -1 : 1;
-    return [...draft.lines].sort((a, b) => {
-      const av = sortValue(a, s.key);
-      const bv = sortValue(b, s.key);
-      return av < bv ? -dir : av > bv ? dir : 0;
-    });
-  });
+  const sortedLines = createMemo(() =>
+    sortRows(draft.lines, sort(), sortValue)
+  );
 
   // OMS-REG-REPL-07.50: prefix match on item name or code, case-insensitive.
   const visibleLines = createMemo(() => {

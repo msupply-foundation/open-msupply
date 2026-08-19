@@ -37,6 +37,7 @@ import {
   type SortState,
 } from '../../../ui/elements/table/DataTable';
 import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
+import { sortRows } from '@/list/sortRows';
 import {
   FilterBar,
   FilterCheckbox,
@@ -559,13 +560,7 @@ const InternalOrderDetailView: Component = () => {
           (l.availableStockOnHand === 0 && l.averageMonthlyConsumption === 0)
       );
     }
-    const s = sort();
-    const dir = s.desc ? -1 : 1;
-    return [...lines].sort((a, b) => {
-      const av = sortValue(a, s.key);
-      const bv = sortValue(b, s.key);
-      return av < bv ? -dir : av > bv ? dir : 0;
-    });
+    return sortRows(lines, sort(), sortValue);
   };
 
   // Dose annotation for a unit quantity on a vaccine item under the doses
