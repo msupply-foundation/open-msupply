@@ -19,8 +19,11 @@ import {
 import { getCellDefinition } from '@/ui/elements/table/tableHelpers';
 import { createTableConfig } from '@/api/createTableConfig';
 import { StatusChip } from '@/ui/elements/feedback/StatusChip';
+import { FilterBar } from '@/ui/elements/selectors/FilterBar';
 import { PlusCircleIcon } from '@/ui/icons';
+import { remToPx } from '@/ui/utils/rem';
 import { useUrlQueryState } from '@/list/urlQueryState';
+import { stripEmpty } from '@/typeHelpers';
 import {
   DEFAULT_PAGE_SIZE,
   initialPageSize,
@@ -31,18 +34,19 @@ import type {
   RnrFormsVariables,
   RnrFormRowFragment,
 } from './rnrForms.generated';
-import { statusLabel } from './rnrFormStatus';
+import { statusLabel, STATUS_COLOURS } from './rnrFormStatus';
+import { filterFields, type RnrFormFilter } from './listFilters';
 import { DeleteRnrFormsAction } from './actions/DeleteRnrFormsAction';
 import { RnrFormCreateModal } from './create/RnrFormCreateModal';
 
 // The R&R forms list (spec/rnr-forms/ui-surface.md S1): the store's forms,
-// newest created first, with the New form create modal and the draft-only
-// bulk delete. No filter bar — the server offers no status/supplier filter
-// (contract § list rules) and the reference surface renders none.
+// newest created first, with the Created filter chip, the New form create
+// modal and the draft-only bulk delete.
 
 type SortKey = NonNullable<RnrFormsVariables['sort']>['key'];
 
 type RnrFormsListState = {
+  filter: RnrFormFilter;
   sort: NonNullable<RnrFormsVariables['sort']>;
   offset: number;
   first: number;
@@ -50,14 +54,10 @@ type RnrFormsListState = {
 
 // Default sort: created, newest first (ui-surface S1 § columns).
 const DEFAULT_STATE: RnrFormsListState = {
+  filter: {},
   sort: { key: 'createdDatetime', desc: true },
   offset: 0,
   first: DEFAULT_PAGE_SIZE,
-};
-
-const STATUS_COLOURS: Record<RnrFormRowFragment['status'], string> = {
-  DRAFT: 'var(--status-new)',
-  FINALISED: 'var(--status-finalised)',
 };
 
 const RnrFormsList: Component = () => {
@@ -70,8 +70,11 @@ const RnrFormsList: Component = () => {
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   const [createOpen, setCreateOpen] = createSignal(false);
 
+  // stripEmpty drops added-but-empty filter chips (held as null keys) so an
+  // empty chip does not change the effective filter or reflash the list.
   const variables = (): RnrFormsVariables => ({
     storeId: params.storeId,
+    filter: stripEmpty(query().filter),
     sort: query().sort,
     page: { first: query().first, offset: query().offset },
   });
@@ -104,6 +107,15 @@ const RnrFormsList: Component = () => {
     setQuery({ ...query(), sort: { key, desc }, offset: 0 });
   };
 
+  const onFilterChange = (filter: RnrFormFilter) => {
+    setQuery({ ...query(), filter, offset: 0 });
+  };
+
+  // The bulk delete is drafts-only (rules § deleting); the action opens
+  // blocked-and-explaining when this is false (OMS-REG-REPL-07.48).
+  const canDelete = () =>
+    !selectedRows().some(row => row.status === 'FINALISED');
+
   const onDeleted = () => {
     setSelectedIds([]);
     void refetch();
@@ -129,7 +141,8 @@ const RnrFormsList: Component = () => {
       c: { accessor: row => row.period.name, id: 'period' },
       sortKey: 'period',
       header: () => t('label.period'),
-      meta: { headerPosition: 'primary' },
+      // The 'name' preset: the card-primary text column's width sink.
+      ...getCellDefinition('name', { headerPosition: 'primary' }),
     },
     {
       c: { key: 'createdDatetime' },
@@ -138,14 +151,17 @@ const RnrFormsList: Component = () => {
       ...getCellDefinition('createdDatetime'),
     },
     {
+      // 'campaign' is the documented preset for "a campaign OR program name".
       c: { key: 'programName' },
       sortKey: 'program',
       header: () => t('label.program-name'),
+      ...getCellDefinition('campaign'),
     },
     {
       c: { key: 'supplierName' },
       sortKey: 'supplierName',
       header: () => t('label.supplier'),
+      ...getCellDefinition('supplierName'),
     },
     {
       c: { key: 'status' },
@@ -157,6 +173,10 @@ const RnrFormsList: Component = () => {
         />
       ),
       meta: { headerPosition: 'badge' },
+      // Status chips are page-rendered; the page supplies the chip column's
+      // width pair (ui docs › CELL_TYPES § inventory).
+      size: remToPx(7.5),
+      maxSize: remToPx(9.375),
     },
   ];
 
@@ -196,6 +216,15 @@ const RnrFormsList: Component = () => {
         columns={columns()}
         rows={rows()}
         rowKey={r => r.id}
+        // Filters live in the table's own toolbar (ui-standards § tables →
+        // filtering); state stays URL-backed here.
+        filters={
+          <FilterBar
+            filters={filterFields()}
+            filter={query().filter}
+            onChange={onFilterChange}
+          />
+        }
         loading={data.loading}
         sort={currentSort()}
         onSort={onSort}
@@ -219,7 +248,8 @@ const RnrFormsList: Component = () => {
         selectionActions={
           <DeleteRnrFormsAction
             storeId={params.storeId}
-            selectedRows={selectedRows}
+            selectedIds={selectedIds}
+            canDelete={canDelete}
             onDeleted={onDeleted}
           />
         }

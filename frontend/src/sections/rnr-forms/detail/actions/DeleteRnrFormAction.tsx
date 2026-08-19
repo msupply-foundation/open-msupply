@@ -1,6 +1,5 @@
 import { createSignal, Match, Show, Switch } from 'solid-js';
 import type { Component } from 'solid-js';
-import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '@/api/graphql';
 import { t } from '@/intl';
 import { Button } from '@/ui/elements/buttons/Button';
@@ -13,8 +12,9 @@ import type { RnrFormNode } from '../rnrFormUpdate';
 
 // The side panel's whole-record delete (spec/rnr-forms/rules.md § deleting;
 // ui-surface S3 § side panel; OMS-REG-REPL-07.47): drafts only — disabled once
-// finalised — with the program+period confirmation; success navigates back to
-// the list (the navigation is the confirmation, no toast).
+// finalised — with the program+period confirmation. The action reports via
+// onDeleted and the VIEW navigates (the navigation is the confirmation, no
+// toast) — the sibling record-delete shape.
 
 type Phase = 'confirm' | 'deleting' | 'error';
 
@@ -22,9 +22,9 @@ export const DeleteRnrFormAction: Component<{
   storeId: string;
   node: RnrFormNode;
   disabled: boolean;
+  /** Deletion succeeded — the owning view navigates back to the list. */
+  onDeleted: () => void;
 }> = props => {
-  const params = useParams<{ storeId: string }>();
-  const navigate = useNavigate();
   const [open, setOpen] = createSignal(false);
   const [phase, setPhase] = createSignal<Phase>('confirm');
 
@@ -45,9 +45,7 @@ export const DeleteRnrFormAction: Component<{
       setPhase('error');
       return;
     }
-    navigate(`/${params.storeId}/replenishment/r-and-r-forms`, {
-      replace: true,
-    });
+    props.onDeleted();
   };
 
   return (
@@ -85,7 +83,12 @@ export const DeleteRnrFormAction: Component<{
             <Switch
               fallback={
                 <>
-                  <CancelButton onClick={close} />
+                  <Show when={phase() === 'confirm'}>
+                    <CancelButton
+                      data-testid="dialog-button-cancel"
+                      onClick={close}
+                    />
+                  </Show>
                   <Button
                     variant="danger"
                     confirms="plain"

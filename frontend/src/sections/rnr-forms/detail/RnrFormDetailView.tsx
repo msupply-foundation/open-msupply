@@ -19,8 +19,14 @@ import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '@/ui/layout/Header/HeaderButtons';
 import { Button } from '@/ui/elements/buttons/Button';
 import { OkButton } from '@/ui/elements/buttons/StandardButtons';
-import { DataTable } from '@/ui/elements/table/DataTable';
+import {
+  DataTable,
+  type CardGroup,
+  type SortState,
+} from '@/ui/elements/table/DataTable';
 import { createTableConfig } from '@/api/createTableConfig';
+import { useUrlQueryState } from '@/list/urlQueryState';
+import { ALT_M } from '@/ui/utils/shortcuts';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Spinner } from '@/ui/elements/feedback/Spinner';
 import { Tabs, TabList, TabPanel } from '@/ui/elements/tabs/Tabs';
@@ -47,7 +53,12 @@ import {
   type DraftRnrLine,
   type RecomputeContext,
 } from './rnrFormEdit';
-import { rnrFormLineColumns, type UpdateRnrLine } from './rnrFormLineColumns';
+import {
+  rnrFormLineColumns,
+  sortValue,
+  type RnrLineSortKey,
+  type UpdateRnrLine,
+} from './rnrFormLineColumns';
 import {
   finaliseRnrForm,
   saveRnrForm,
@@ -68,8 +79,8 @@ import { ExportPrintRnrFormAction } from './actions/ExportPrintRnrFormAction';
 const AUTOSAVE_MS = 10_000;
 
 // The item search — a CLIENT-side narrowing (the line set is bounded by the
-// program's master list and arrives whole), so it is not debounced
-// (inputs › server-bound input governs server-bound input only).
+// program's master list and arrives whole), so no debounce (debounceMs={0};
+// the input's default 300ms is for server-bound filters).
 type LineFilter = { itemCodeOrName?: { like: string } | null };
 
 const LINE_FILTERS: Filter<LineFilter>[] = constructFilters<LineFilter>({
@@ -79,7 +90,8 @@ const LINE_FILTERS: Filter<LineFilter>[] = constructFilters<LineFilter>({
       <FilterTextInput
         label={t('label.code-or-name')}
         testId={props.testId}
-        placeholder={t('placeholder.search-by-name-or-code')}
+        placeholder={t('placeholder.search')}
+        debounceMs={0}
         value={props.filter().itemCodeOrName?.like ?? ''}
         onInput={value =>
           props.setPartialFilter({
@@ -90,6 +102,21 @@ const LINE_FILTERS: Filter<LineFilter>[] = constructFilters<LineFilter>({
     ),
   },
 });
+
+// Card view (below 600px): the item name titles the card and the secondary
+// columns drop into one collapsed "More details" disclosure
+// (ui docs › CARD_TABLE_MODEL).
+const CARD_GROUPS: CardGroup<DraftRnrLine, 'more'>[] = [
+  { key: 'more', disclosure: 'closed' },
+];
+
+// The URL-backed view state (ui-standards § tables → filtering: applied
+// filters persist in the URL). The item search is the screen's default
+// filter — seeded present-as-null so its chip is on the bar from the start.
+type DetailUrlState = { filter: LineFilter };
+const DEFAULT_URL_STATE: DetailUrlState = {
+  filter: { itemCodeOrName: null },
+};
 
 const RnrFormDetailView: Component = () => {
   const params = useParams<{ storeId: string; rnrFormId: string }>();
@@ -264,23 +291,45 @@ const RnrFormDetailView: Component = () => {
   const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen();
 
   // --- the line table -------------------------------------------------------
-  const [lineFilter, setLineFilter] = createSignal<LineFilter>({});
+  // Filter state is URL-backed (shareable, survives reload); sort is a
+  // client-side ordering over the bounded in-memory line set, like the
+  // sibling fixed-line-set detail tables.
+  const { query, setQuery } =
+    useUrlQueryState<DetailUrlState>(DEFAULT_URL_STATE);
+  const lineFilter = () => query().filter;
+  const setLineFilter = (filter: LineFilter) =>
+    setQuery({ ...query(), filter });
+  const [sort, setSort] = createSignal<SortState<RnrLineSortKey>>({
+    key: 'name',
+    desc: false,
+  });
 
-  // OMS-REG-REPL-07.50: prefix match on item name or code, case-insensitive.
+  // OMS-REG-REPL-07.50: prefix match on item name or code, case-insensitive;
+  // then the client-side sort.
   const visibleLines = createMemo(() => {
     const term = lineFilter().itemCodeOrName?.like?.toLocaleLowerCase();
-    if (!term) return draft.lines;
-    return draft.lines.filter(
-      line =>
-        line.item.name.toLocaleLowerCase().startsWith(term) ||
-        line.item.code.toLocaleLowerCase().startsWith(term)
-    );
+    let lines = draft.lines;
+    if (term) {
+      lines = lines.filter(
+        line =>
+          line.item.name.toLocaleLowerCase().startsWith(term) ||
+          line.item.code.toLocaleLowerCase().startsWith(term)
+      );
+    }
+    const s = sort();
+    const dir = s.desc ? -1 : 1;
+    return [...lines].sort((a, b) => {
+      const av = sortValue(a, s.key);
+      const bv = sortValue(b, s.key);
+      return av < bv ? -dir : av > bv ? dir : 0;
+    });
   });
 
   const tableConfig = createTableConfig({
     tableId: 'rnr-form-lines',
     defaultConfig: {
       base: { columnPinning: { left: ['code', 'name'] } },
+      compact: { viewMode: 'card' },
     },
   });
 
@@ -347,6 +396,11 @@ const RnrFormDetailView: Component = () => {
                   disabled={disabled()}
                   edit={edit}
                   fullDocument={node}
+                  onDeleted={() =>
+                    navigate(`/${params.storeId}/replenishment/r-and-r-forms`, {
+                      replace: true,
+                    })
+                  }
                 />
               }
               header={
@@ -355,9 +409,14 @@ const RnrFormDetailView: Component = () => {
                   <HeaderButtons>
                     <ExportPrintRnrFormAction rnrFormId={n().id} />
                     <Show when={!sidePanelOpen()}>
+                      {/* createSidePanelOpen registers Alt+M; this is the
+                          control that advertises it. */}
                       <Button
                         variant="secondary"
                         icon={<SidebarIcon />}
+                        shortcut={ALT_M}
+                        collapsible="narrow"
+                        title={t('button.more')}
                         data-testid="open-detail-panel-button"
                         onClick={() => setSidePanelOpen(true)}
                       >
@@ -383,6 +442,12 @@ const RnrFormDetailView: Component = () => {
                   rows={visibleLines()}
                   rowKey={line => line.id}
                   loading={data.loading}
+                  sort={sort()}
+                  onSort={(key, desc) => setSort({ key, desc })}
+                  cardGroups={CARD_GROUPS}
+                  // The line-level error tint (ui-surface S3/S4) — restates
+                  // what the cell markers state in words, never colour alone.
+                  rowTint={line => (lineHasError(line) ? 'error' : undefined)}
                   filters={
                     <FilterBar
                       filters={LINE_FILTERS}
@@ -390,7 +455,11 @@ const RnrFormDetailView: Component = () => {
                       onChange={setLineFilter}
                     />
                   }
-                  emptyMessage={t('error.no-items')}
+                  emptyMessage={
+                    (lineFilter().itemCodeOrName?.like ?? '').trim()
+                      ? t('error.no-items-filter-on')
+                      : t('error.no-items')
+                  }
                   config={tableConfig.config()}
                   setConfig={tableConfig.setConfig}
                 />
