@@ -31,6 +31,15 @@ import {
   StockEvolutionChart,
 } from '../../../../ui/elements/charts';
 import { ItemSearch } from '../../../../domain/item';
+import {
+  PluginSlotOutlet,
+  type PluginSlotContribution,
+} from '../../../../ui/elements/plugins/PluginSlotOutlet';
+import type {
+  InternalOrderLineInfoPanelProps,
+  InternalOrderView,
+} from '../../../../plugin-sdk/types';
+import { toLineViewFromEditor } from '../pluginViews';
 import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
 import { ReasonSelect } from '../../../../domain/reasonOptions';
 import { RequisitionLineChart } from './lineChart.generated';
@@ -48,7 +57,7 @@ import {
   type EditorLine,
   type EntryMode,
 } from './internalOrderLineEdit';
-import { ForecastCalculationDisplay } from './ForecastCalculationDisplay';
+import { ForecastCalculationDisplay } from '../../../../domain/forecast';
 import styles from './InternalOrderLineEditModal.module.css';
 
 // The internal-order line editor (spec/internal-orders S4): add an item (add
@@ -82,7 +91,9 @@ export interface InternalOrderLineEditModalProps {
   showPricing: boolean;
   showForecast: boolean;
   showExcess: boolean;
-  /** Customer-statistics program order → the movements panel + reason (AC-R1). */
+  /**
+   * Customer-statistics program order → the movements panel + reason (AC-R1).
+   */
   showExtended: boolean;
   orderInPacks: boolean;
   /** An existing line → edit mode; omitted → add mode. */
@@ -104,6 +115,19 @@ export interface InternalOrderLineEditModalProps {
   findLineForItem: (itemId: string) => InternalOrderLineFragment | undefined;
   /** A save committed — the parent refetches the line table (AC-LN21). */
   onCommitted: () => void;
+  /**
+   * The order this line belongs to, as the SDK's published view — half of the
+   * info-panel slot's props (ui-surface § S8 › editor region).
+   */
+  order: InternalOrderView;
+  /**
+   * The info-panel contributions to render, already `when`-filtered and ordered
+   * by the caller (the detail view composes them exactly as it composes the
+   * line table's column contributions). An ACCESSOR, so the modal stays
+   * presentational: it never reads the plugin registry, and a test can inject
+   * fixtures.
+   */
+  infoPanelContributions: () => readonly PluginSlotContribution<InternalOrderLineInfoPanelProps>[];
 }
 
 // Mount the content only while open, keyed on the OPEN identity (the line id,
@@ -132,7 +156,6 @@ const LineEditContent = (
   const [requestedUnits, setRequestedUnits] = createSignal(0);
   const [comment, setComment] = createSignal('');
   const [reasonId, setReasonId] = createSignal<string | null>(null);
-  const [dirty, setDirty] = createSignal(false);
   const [saving, setSaving] = createSignal(false);
   const [advancing, setAdvancing] = createSignal(false);
   const [loading, setLoading] = createSignal(false);
@@ -202,7 +225,6 @@ const LineEditContent = (
     setRequestedUnits(editorLine.requestedQuantity);
     setComment(editorLine.comment);
     setReasonId(editorLine.reasonId);
-    setDirty(false);
     setErrorMessage(undefined);
   };
 
@@ -240,7 +262,6 @@ const LineEditContent = (
     setRequestedUnits(0);
     setComment('');
     setReasonId(null);
-    setDirty(false);
     setErrorMessage(undefined);
   };
 
@@ -256,6 +277,16 @@ const LineEditContent = (
   const disabled = () => !props.editable;
 
   const current = () => line();
+
+  // Working-size latch (#771): open small in add mode (just the search), grow
+  // ONCE when the first item is picked, and never shrink back — clearing the
+  // item or "Save & next" returning to the search keeps the working size, so
+  // the add loop doesn't pulse. Update mode opens straight at the working size.
+  const workingSize = createMemo<boolean>(
+    prev => prev || updateMode() || current() !== undefined,
+    false
+  );
+
   const packSize = () => current()?.defaultPackSize ?? 1;
   const doses = () => current()?.doses ?? 0;
   const suggested = () => current()?.suggestedQuantity ?? 0;
@@ -275,7 +306,6 @@ const LineEditContent = (
         ? 0
         : modeToUnits(value, entryMode(), packSize(), doses())
     );
-    setDirty(true);
   };
 
   // A variance from the suggestion demands a reason on a customer-statistics
@@ -284,15 +314,20 @@ const LineEditContent = (
   const variance = () => requestedUnits() !== suggested();
   const excess = () => props.showExcess && requestedUnits() - suggested() >= 1;
 
-  // A statistic (units) rendered in the active mode with its measure word.
-  const stat = (units: number, roundUp = false): string =>
-    `${formatNumber(statInMode(units, entryMode(), packSize(), doses(), roundUp))} ${modeWord(entryMode(), current()?.unitName ?? null)}`;
+  // A statistic (units) rendered in the active mode with its measure word,
+  // inflected for the figure it suffixes ("1 pack" / "61 packs").
+  const stat = (units: number, roundUp = false): string => {
+    const figure = statInMode(units, entryMode(), packSize(), doses(), roundUp);
+    return `${formatNumber(figure)} ${modeWord(entryMode(), current()?.unitName ?? null, figure)}`;
+  };
 
   // A unit quantity re-expressed in the OTHER measure (AC-LN20): units when
   // doses is the active mode, the dose equivalent otherwise — rounded whole.
   const otherMeasure = (units: number): string => {
-    if (entryMode() === 'doses')
-      return `${formatNumber(Math.round(units))} ${current()?.unitName ?? t('label.unit')}`;
+    if (entryMode() === 'doses') {
+      const unitCount = Math.round(units);
+      return `${formatNumber(unitCount)} ${modeWord('units', current()?.unitName ?? null, unitCount)}`;
+    }
     const doseCount = Math.round(units * doses());
     return `${formatNumber(doseCount)} ${tPlural('label.doses-plural', doseCount)}`;
   };
@@ -365,12 +400,38 @@ const LineEditContent = (
     })();
   };
 
+  // The plugin info-panel slot's props (ui-surface § S8 › editor region): the
+  // line being edited and its order, as the SDK's published DTOs. ONE memo, so
+  // the pair's identity changes only when the line or the order does — and
+  // never a remount: advancing with Save & next writes the `line` signal, so
+  // the mounted contributions read a new DTO in place (AC-PLUG-N2).
+  const infoPanelSlotProps = createMemo<
+    InternalOrderLineInfoPanelProps | undefined
+  >(() => {
+    const editorLine = current();
+    return editorLine
+      ? { line: toLineViewFromEditor(editorLine), order: props.order }
+      : undefined;
+  });
+
+  // Option labels inflect with the entered quantity (reference-app parity:
+  // singular at exactly 1, plural otherwise — spec S4's "tablets · packs").
   const entryOptions = createMemo(() => {
-    const unit = current()?.unitName ?? t('label.unit');
-    const options = [{ value: 'units', label: unit }];
+    const unitName = current()?.unitName ?? null;
+    const count = requestedDisplay() === 1 ? 1 : 2;
+    const options = [
+      { value: 'units', label: modeWord('units', unitName, count) },
+    ];
     if (packSize() > 0)
-      options.push({ value: 'packs', label: t('label.pack') });
-    if (dosesApply()) options.push({ value: 'doses', label: t('label.dose') });
+      options.push({
+        value: 'packs',
+        label: modeWord('packs', unitName, count),
+      });
+    if (dosesApply())
+      options.push({
+        value: 'doses',
+        label: modeWord('doses', unitName, count),
+      });
     return options;
   });
 
@@ -404,14 +465,41 @@ const LineEditContent = (
       open
       onClose={props.onClose}
       dismissable={!saving()}
-      size="large"
+      size={workingSize() ? 'full' : 'auto'}
+      // `full`, not `large` — but for a different reason than the shipment
+      // editors' column count. This one's CONTEXT CHARTS want the room: the
+      // charts region caps itself at 64rem so the pair sits side by side
+      // (.charts in the CSS module, matching the original app's layout), which
+      // a 56rem card can never give it — the body is ~53rem, so the two ~29rem
+      // charts stack and the whole editor reads cramped. `full` puts the cap
+      // back in reach; the region's own max-inline-size + auto margins keep it
+      // a centred block rather than letting it sprawl.
+      //
+      // The PLUGIN SLOT below the form settles it independently: what a
+      // deployment contributes there is not ours to measure (CIV's panel is a
+      // six-column table), so no card width is safe for every site.
+      //
+      // widthRem sizes the PRE-PICK state only (it is inert at `full`): a
+      // command-palette-shaped card at the standard create-modal width (the
+      // CreateStocktake/CreateInternalOrder family), with a body tall enough to
+      // OWN the open suggestions list — the search takes initial focus and the
+      // combobox opens on focus, so the list is this state's resting face, and
+      // without the reserved height it would dangle past the card onto the
+      // scrim. The popup itself matches its trigger's width. The reserved
+      // height is likewise dropped once the latch flips.
+      widthRem={44}
+      minBodyHeightRem={28}
       testId="internal-order-line-edit-modal"
       // Untitled per spec S4 — the title stays as the accessible name only.
       title={updateMode() ? t('heading.edit-line') : t('button.add-item')}
       titleHidden
       actionsLead={
         <Show when={errorMessage()}>
-          {message => <Alert severity="error">{message()}</Alert>}
+          {message => (
+            <Alert severity="error" testId="line-edit-error">
+              {message()}
+            </Alert>
+          )}
         </Show>
       }
       actions={
@@ -422,7 +510,7 @@ const LineEditContent = (
           />
           <DialogSaveButton
             data-testid="dialog-button-ok"
-            disabled={!current() || !dirty() || saving() || !props.editable}
+            disabled={!current() || saving() || !props.editable}
             loading={saving()}
             onClick={onOk}
           />
@@ -445,7 +533,6 @@ const LineEditContent = (
         fallback={
           <ItemSearch
             label={t('label.item')}
-            class={styles.itemField}
             storeId={props.storeId}
             focusTarget={itemSearch}
             placeholder={t('placeholder.enter-an-item-code-or-name')}
@@ -469,7 +556,6 @@ const LineEditContent = (
       >
         <TextField
           label={t('label.item')}
-          width="full"
           disabled
           value={`${current()?.itemCode ?? ''} - ${current()?.itemName ?? ''}`}
         />
@@ -512,9 +598,7 @@ const LineEditContent = (
                       : t('label.amc/amd')
                   }
                   value={stat(editorLine().averageMonthlyConsumption, true)}
-                  caption={statCaption(
-                    editorLine().averageMonthlyConsumption
-                  )}
+                  caption={statCaption(editorLine().averageMonthlyConsumption)}
                 />
                 <StatRow
                   label={t('label.months-of-stock')}
@@ -596,7 +680,6 @@ const LineEditContent = (
                     <NumberField
                       label={t('label.requested')}
                       hideLabel
-                      width="full"
                       min={0}
                       decimalLimit={2}
                       data-testid="requested-quantity-input"
@@ -607,7 +690,7 @@ const LineEditContent = (
                     <Select
                       label={t('label.units')}
                       hideLabel
-                      width="full"
+                      testId="entry-mode-select"
                       value={entryMode()}
                       options={entryOptions()}
                       disabled={disabled() || saving()}
@@ -621,7 +704,7 @@ const LineEditContent = (
 
                 {/* Excess-request warning (AC-LN13). */}
                 <Show when={excess()}>
-                  <Alert severity="warning">
+                  <Alert severity="warning" testId="excess-request-warning">
                     {t('warning.requested-exceeds-suggested')}
                   </Alert>
                 </Show>
@@ -652,12 +735,10 @@ const LineEditContent = (
                       kind="requisition"
                       label={t('label.reason')}
                       hideLabel
+                      inputTestId="variance-reason-input"
                       disabled={disabled() || saving() || !variance()}
                       value={variance() ? (reasonId() ?? undefined) : undefined}
-                      onChange={reason => {
-                        setReasonId(reason?.id ?? null);
-                        setDirty(true);
-                      }}
+                      onChange={reason => setReasonId(reason?.id ?? null)}
                     />
                   </FieldRow>
                 </Show>
@@ -667,16 +748,32 @@ const LineEditContent = (
                     label={t('label.comment')}
                     hideLabel
                     rows={3}
+                    data-testid="line-comment-field"
                     disabled={disabled() || saving()}
                     value={comment()}
-                    onInput={e => {
-                      setComment(e.currentTarget.value);
-                      setDirty(true);
-                    }}
+                    onInput={e => setComment(e.currentTarget.value)}
                   />
                 </FieldRow>
               </InsetPanel>
             </div>
+
+            {/* The plugin info-panel region (internal-orders ui-surface § S8 ›
+              editor region): read-only decoration between the record panels
+              above and the charts below. No wrapper, no heading, no border — an
+              invisible seam, so with nothing contributing the editor is
+              byte-identical to one built without it (spec/plugins § S1,
+              AC-PLUG-N1). The non-keyed Show hands the outlet the props pair as
+              an ACCESSOR: a new line flows into the live contributions rather
+              than replacing them (AC-PLUG-N2). */}
+            <Show when={infoPanelSlotProps()}>
+              {slotProps => (
+                <PluginSlotOutlet
+                  contributions={props.infoPanelContributions()}
+                  slotProps={slotProps}
+                  errorFallback={t('error.plugin-unavailable')}
+                />
+              )}
+            </Show>
 
             {/* Below — where the store shows population-based forecasting and
               this line carries a forecast, the calculation display stands in

@@ -10,6 +10,23 @@ import type { InternalOrderInfoFragment } from './internalOrderDetail.generated'
 export const isOrderEditable = (node: InternalOrderInfoFragment): boolean =>
   node.status === 'DRAFT' && !node.otherParty.store?.isDisabled;
 
+// The empty-send refusal (AC-S4; rules › Lifecycle; D20): an order with no
+// lines is never sendable; an all-zero order is sendable only where the store
+// keeps zero-requested lines on send
+// (keepRequisitionLinesWithZeroRequestedQuantityOnFinalised) — its lines
+// survive the send. The all-zero test scans the loaded lines — currently the
+// full set, since the lines ride the nested connection (see
+// internalOrderDetail.graphql's server-pagination note); it becomes a server
+// count when that gap closes.
+export const isEmptySend = (
+  lines: { requestedQuantity: number }[],
+  keepZeroLines: boolean
+): boolean => {
+  if (lines.length === 0) return true;
+  if (keepZeroLines) return false;
+  return !lines.some(line => line.requestedQuantity > 0);
+};
+
 // The lifecycle trail shown in the footer StatusIndicator: DRAFT → SENT →
 // FINALISED (README › status; NEW is response-side only and never appears on a
 // request requisition). Each stage stamped with its date.

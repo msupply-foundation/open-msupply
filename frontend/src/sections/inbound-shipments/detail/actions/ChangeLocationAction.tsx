@@ -4,7 +4,8 @@ import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
-import { MapPinIcon, XCircleIcon } from '../../../../ui/icons';
+import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
+import { MapPinIcon } from '../../../../ui/icons';
 import {
   LocationVolumeSelect,
   type LocationWithVolume,
@@ -75,7 +76,7 @@ const Body = (
         location: { value: locationId() ?? null },
       })),
     });
-    if (!outcome) return props.onClose();
+    if (!outcome) return setPhase('confirm'); // handled globally
     if (outcome.errors.size > 0) {
       props.onError(outcome.errors);
       setErrorMessage([...outcome.errors.values()][0]);
@@ -108,25 +109,26 @@ const Body = (
         <Switch
           fallback={
             <>
-              <Button
-                variant="secondary"
-                icon={<XCircleIcon />}
+              <CancelButton
+                data-testid="dialog-button-cancel"
                 onClick={props.onClose}
-              >
-                {t('button.cancel')}
-              </Button>
+              />
               <Button
+                variant="primary"
+                confirms="plain"
                 data-testid="dialog-button-ok"
                 loading={phase() === 'working'}
                 onClick={() => void run()}
               >
-                {t('button.ok')}
+                {t('button.apply')}
               </Button>
             </>
           }
         >
           <Match when={phase() === 'error'}>
-            <Button onClick={props.onClose}>{t('button.close')}</Button>
+            <Button confirms="plain" onClick={props.onClose}>
+              {t('button.close')}
+            </Button>
           </Match>
         </Switch>
       }

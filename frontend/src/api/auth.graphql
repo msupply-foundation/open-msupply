@@ -71,6 +71,12 @@ fragment UserInfo on UserNode {
     nodes {
       id
       code
+      # The store's FACILITY record id (spec/settings § The store editor): the
+      # store editor reads and writes the name row, not the store row, and
+      # `names(filter: { id: { equalTo } })` is the only way to fetch one — so
+      # the id must be known before the editor opens. Rides the me/login
+      # response, like storeMode, rather than costing a query.
+      nameId
       name
       # The store's mode (spec/patients § configuration gates › AC-G1):
       # dispensary mode gates the whole patient surface. UserStoreNode carries
@@ -78,6 +84,10 @@ fragment UserInfo on UserNode {
       # me/login response — no extra query.
       storeMode
       homeCurrencyCode
+      # Spec (Store Login, SL-8): a disabled store cannot be logged into, and
+      # the front end owns that rule end to end — the server neither filters
+      # `stores` nor rejects a login into one.
+      isDisabled
     }
   }
 }

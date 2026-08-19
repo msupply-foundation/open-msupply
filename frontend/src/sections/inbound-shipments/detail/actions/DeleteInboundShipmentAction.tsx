@@ -3,7 +3,8 @@ import { t } from '../../../../intl';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
-import { TrashIcon, XCircleIcon } from '../../../../ui/icons';
+import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
+import { TrashIcon } from '../../../../ui/icons';
 import { deleteInboundShipment } from '../inboundShipmentUpdate';
 
 export interface DeleteInboundShipmentActionProps {
@@ -95,22 +96,19 @@ const Body = (
           fallback={
             <>
               <Show when={phase() === 'confirm'}>
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
+                <CancelButton
+                  data-testid="dialog-button-cancel"
                   onClick={props.onClose}
-                >
-                  {t('button.cancel')}
-                </Button>
+                />
               </Show>
               <Button
-                variant="secondary"
-                icon={<TrashIcon />}
+                variant="danger"
+                confirms="plain"
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'deleting'}
                 onClick={() => void run()}
               >
-                {t('button.ok')}
+                {t('button.delete')}
               </Button>
             </>
           }
@@ -118,7 +116,7 @@ const Body = (
           <Match when={phase() === 'error'}>
             <Button
               variant="secondary"
-              icon={<XCircleIcon />}
+              confirms="plain"
               onClick={props.onClose}
             >
               {t('button.close')}

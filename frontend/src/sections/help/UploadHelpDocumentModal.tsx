@@ -16,9 +16,9 @@ import { titleForUpload } from './helpDocumentsLogic';
 
 // S3 — the upload dialog (spec/help S3), a modal over the S2 management screen.
 // The two-step publish: a title, then one file (OMS-REG-HLP-01.29). The record
-// is created via GraphQL (title only); the file travels over the HTTP sync-files
-// route ('help_document'). Supplying a file starts the publish immediately —
-// there is no separate confirm.
+// is created via GraphQL (title only); the file travels over the HTTP
+// sync-files route ('help_document'). Supplying a file starts the publish
+// immediately — there is no separate confirm.
 
 const TABLE_NAME = 'help_document';
 
@@ -27,8 +27,8 @@ export const UploadHelpDocumentModal: Component<{
   onClose: () => void;
   /**
    * Re-read the list. Called after the record is created — even when the file
-   * step then fails, a title-only record now exists (OMS-REG-HLP-01.32) and must
-   * appear in the list.
+   * step then fails, a title-only record now exists (OMS-REG-HLP-01.32) and
+   * must appear in the list.
    */
   onChanged: () => void;
 }> = props => {
@@ -36,8 +36,8 @@ export const UploadHelpDocumentModal: Component<{
   const [uploading, setUploading] = createSignal(false);
   const [errorMessage, setErrorMessage] = createSignal<string>();
 
-  // Closing resets the title (spec/help S3). Cancel/dismiss are disabled while a
-  // publish is in flight, so this is a no-op then.
+  // Closing resets the title (spec/help S3). Cancel/dismiss are disabled while
+  // a publish is in flight, so this is a no-op then.
   const close = () => {
     if (uploading()) return;
     setTitle('');
@@ -67,8 +67,9 @@ export const UploadHelpDocumentModal: Component<{
     );
     if (insert.kind !== 'success') {
       setUploading(false);
-      // A graphqlError carries the server's description to show in-dialog; other
-      // failures (unauthenticated / transport) are already surfaced globally.
+      // A graphqlError carries the server's description to show in-dialog;
+      // other failures (unauthenticated / transport) are already surfaced
+      // globally.
       if (insert.kind === 'graphqlError')
         setErrorMessage(
           t('error.an-error-occurred', { message: insert.message })
@@ -117,7 +118,14 @@ export const UploadHelpDocumentModal: Component<{
       icon={<UploadIcon />}
       testId="upload-help-document-modal"
       actions={
-        <Button variant="secondary" disabled={uploading()} onClick={close}>
+        // Cancel is the only footer action — the upload runs from the drop zone
+        // in the body, so nothing claims `plain` and Enter confirms nothing.
+        <Button
+          variant="secondary"
+          confirms="cancel"
+          disabled={uploading()}
+          onClick={close}
+        >
           {t('button.cancel')}
         </Button>
       }
@@ -129,7 +137,6 @@ export const UploadHelpDocumentModal: Component<{
           onInput={e => setTitle(e.currentTarget.value)}
           required
           disabled={uploading()}
-          width="full"
         />
         {/* Supplying a file starts the publish; the dropzone is replaced by a
             busy indicator while it runs (spec/help S3). */}

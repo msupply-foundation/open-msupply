@@ -42,13 +42,18 @@
   box-shadow: var(--shadow-4);
   color: var(--text-body);
   font-size: var(--text-sm);
+  /* Establish the panel's OWN text weight (body): a popover is a floating
+     surface and must not inherit the weight of whatever triggered it — e.g. an
+     InfoTooltip icon sitting inside a bold heading would otherwise render its
+     gloss bold. Content that wants bold sets it explicitly. */
+  font-weight: var(--weight-regular);
   line-height: 1.5;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .panel:popover-open {
-    animation: panel-in 120ms ease;
-  }
+/* No reduced-motion media query: --motion-fast is zeroed in tokens.css, so the
+   panel simply appears at its end state. */
+.panel:popover-open {
+  animation: panel-in var(--motion-fast) ease;
 }
 
 @keyframes panel-in {

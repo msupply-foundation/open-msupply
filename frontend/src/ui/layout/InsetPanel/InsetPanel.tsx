@@ -1,4 +1,4 @@
-import { Show, type JSX } from 'solid-js';
+import { children, Show, type JSX } from 'solid-js';
 import styles from './InsetPanel.module.css';
 
 export interface InsetPanelProps {
@@ -18,11 +18,16 @@ export interface InsetPanelProps {
  * filter / include-all block). Hand-rolled, pure CSS + tokens: no
  * interaction/a11y contract to buy, just a tinted rounded container.
  */
-export const InsetPanel = (props: InsetPanelProps): JSX.Element => (
-  <div class={props.class ? `${styles.panel} ${props.class}` : styles.panel}>
-    <Show when={props.hint}>
-      <p class={styles.hint}>{props.hint}</p>
-    </Show>
-    {props.children}
-  </div>
-);
+export const InsetPanel = (props: InsetPanelProps): JSX.Element => {
+  // Resolved once — a JSX prop read twice builds two element trees
+  // (kdd/solid-reactivity-pitfalls §3).
+  const hint = children(() => props.hint);
+  return (
+    <div class={props.class ? `${styles.panel} ${props.class}` : styles.panel}>
+      <Show when={hint()}>
+        <p class={styles.hint}>{hint()}</p>
+      </Show>
+      {props.children}
+    </div>
+  );
+};

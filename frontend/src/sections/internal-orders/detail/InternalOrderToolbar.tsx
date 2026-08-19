@@ -1,19 +1,27 @@
-import { createSignal, Show, type Component } from 'solid-js';
+import { createSignal, type Component } from 'solid-js';
+import { Show } from 'solid-js';
 import { t, tPlural } from '../../../intl';
-import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { TextField } from '../../../ui/elements/inputs/TextField';
-import { ToggleSwitch } from '../../../ui/elements/inputs/ToggleSwitch';
-import { Select, type SelectOption } from '../../../ui/elements/selectors/Select';
-import { Alert } from '../../../ui/elements/feedback/Alert';
+import {
+  Select,
+  type SelectOption,
+} from '../../../ui/elements/selectors/Select';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
-import { FormColumns } from '../../../ui/layout/Form/FormColumns';
-import { FormColumn } from '../../../ui/layout/Form/FormColumn';
-import { FormRow } from '../../../ui/layout/Form/FormRow';
-import { Stack } from '../../../ui/layout/Stack/Stack';
+import { FormRowItem } from '../../../ui/layout/Form/FormRowItem';
 import { NameSearch, type NameOption } from '../../../domain/name';
 import { type DebouncedEdit } from '../../../domain/debouncedEdit';
 import type { InternalOrderInfoFragment } from './internalOrderDetail.generated';
-import styles from './InternalOrderToolbar.module.css';
+
+// The detail header's field cluster (spec/internal-orders S3 § toolbar),
+// rendered as the children of the page's <HeaderToolbar>: each field carries
+// its own label above a small control, and the cluster's FormRow shares the
+// row per each field's FormRowItem weight — the name lookups take the larger
+// shares and the MOS selects cap at what a "N months" value needs
+// (ui/docs/PAGES.md § header field cluster). The item filter and the
+// hide-stock-over-minimum narrowing live in the line table's own toolbar
+// (ui-standards § tables → filtering), not here. The read-only info notices
+// are the VIEW's (they render beneath the cluster, pending the header-notice
+// treatment decision).
 
 // The buffered as-you-type header fields — reference + comment share one
 // buffer; this toolbar reads theirReference, the side panel reads comment.
@@ -38,15 +46,6 @@ export interface InternalOrderToolbarProps {
   /** MOS threshold / target changes (each already confirmed here). */
   onChangeThreshold: (months: number) => void;
   onChangeTarget: (months: number) => void;
-  /**
-   * Hide-stock-over-minimum switch — a client-side line filter (see the
-   * detail view's interim note on the missing server-paginated line query).
-   */
-  hideOverMin: boolean;
-  onHideOverMinChange: (value: boolean) => void;
-  /** Item filter — a client-side line filter, same interim as hideOverMin. */
-  itemFilter: string;
-  onItemFilterChange: (value: string) => void;
 }
 
 // The MOS selects offer 1…6 months (label.number-months); the threshold also
@@ -120,14 +119,16 @@ export const InternalOrderToolbar: Component<
     ...MONTH_VALUES.map(n => ({
       value: String(n),
       label: tPlural('label.number-months', n),
-      disabled: props.node.maxMonthsOfStock > 0 && n > props.node.maxMonthsOfStock,
+      disabled:
+        props.node.maxMonthsOfStock > 0 && n > props.node.maxMonthsOfStock,
     })),
   ];
   const targetOptions = (): SelectOption[] =>
     MONTH_VALUES.map(n => ({
       value: String(n),
       label: tPlural('label.number-months', n),
-      disabled: props.node.minMonthsOfStock > 0 && n < props.node.minMonthsOfStock,
+      disabled:
+        props.node.minMonthsOfStock > 0 && n < props.node.minMonthsOfStock,
     }));
 
   const onThresholdChange = (value: string) => {
@@ -172,136 +173,100 @@ export const InternalOrderToolbar: Component<
     setPendingMos(undefined);
   };
 
+  // Cluster weights: the whole cluster is weighted (never just one field —
+  // FormRowItem's rule), floors summing to no more than the unweighted row's
+  // (fields × 10rem) so the wrap point doesn't move earlier.
+  //
+  // A floor is also the width the field's LABEL gets, and a label that doesn't
+  // fit wraps to a second line — which pushes that one control half a row
+  // below its neighbours', since the row top-aligns its items (it must: an
+  // error has to extend its own field downward and leave the rest of the row
+  // where it was). "Reorder threshold MOS" needs ~9rem, so the MOS selects
+  // sat at their old 8.5rem floor with a two-line label and a dropped control
+  // on any narrow viewport. They keep the row's own 10rem floor instead —
+  // still the full unweighted budget, and their 12rem cap still hands the
+  // surplus to the lookups. Check a header label against its slot's floor
+  // whenever you pin one narrow.
   return (
-    <div class={styles.layout}>
-      {/* Two equal columns (FormColumns/FormColumn own the even share + the
-          intrinsic wrap to a single stack on narrow). Each column stacks its
-          FieldRows tightly (Stack), so labels line up down each column and the
-          controls align across both. */}
-      <FormColumns>
-        {/* Left column — supplier, reference, (gated) destination customer. */}
-        <FormColumn>
-          <Stack gap="sm">
-            <FieldRow label={t('label.supplier-name')}>
-              {/* Internal (store-backed) suppliers only, matching the create
-                  picker — a supplier change is re-validated by the same checks
-                  that govern creation (rules › header fields). */}
-              <NameSearch
-                storeId={props.storeId}
-                role="supplier"
-                label={t('label.supplier-name')}
-                hideLabel
-                storeBacked
-                selected={supplierSeed()}
-                disabled={fieldsLocked()}
-                error={props.supplierError}
-                clearable={false}
-                onSelect={supplier => {
-                  if (supplier) props.onChangeSupplier(supplier.id);
-                }}
-              />
-            </FieldRow>
-            <FieldRow label={t('label.supplier-reference')}>
-              <TextField
-                label={t('label.supplier-reference')}
-                hideLabel
-                width="full"
-                data-testid="supplier-reference-field"
-                value={props.edit.state.theirReference}
-                disabled={!props.editable}
-                onInput={e =>
-                  props.edit.setField('theirReference', e.currentTarget.value)
-                }
-                onBlur={() => props.edit.flush()}
-              />
-            </FieldRow>
-            <Show when={props.showDestination}>
-              <FieldRow label={t('label.destination-customer')}>
-                {/* Store-backed customers only, the chosen supplier excluded
-                    (spec S3 § toolbar). The picker's filtering is load-bearing:
-                    a lone destination update is NOT re-validated server-side
-                    (D42), so this is the only guard on the stored value. */}
-                <NameSearch
-                  storeId={props.storeId}
-                  role="customer"
-                  label={t('label.destination-customer')}
-                  hideLabel
-                  storeBacked
-                  excludeId={props.node.otherPartyId}
-                  selected={destinationSeed()}
-                  disabled={!props.editable}
-                  onSelect={customer =>
-                    props.onChangeDestination(customer?.id ?? null)
-                  }
-                />
-              </FieldRow>
-            </Show>
-          </Stack>
-        </FormColumn>
-
-        {/* Right column — MOS thresholds, then the hide-over-min switch + item
-            filter on their own row. */}
-        <FormColumn>
-          <Stack gap="sm">
-            <FieldRow label={t('label.min-months-of-stock')}>
-              <Select
-                label={t('label.min-months-of-stock')}
-                hideLabel
-                width="full"
-                options={thresholdOptions()}
-                value={thresholdValue()}
-                disabled={fieldsLocked()}
-                onValueChange={onThresholdChange}
-              />
-            </FieldRow>
-            <FieldRow label={t('label.max-months-of-stock')}>
-              <Select
-                label={t('label.max-months-of-stock')}
-                hideLabel
-                width="full"
-                options={targetOptions()}
-                value={targetValue()}
-                disabled={fieldsLocked()}
-                onValueChange={onTargetChange}
-              />
-            </FieldRow>
-            <FormRow>
-              <ToggleSwitch
-                label={t('label.hide-stock-over-minimum')}
-                checked={props.hideOverMin}
-                onChange={props.onHideOverMinChange}
-                testId="hide-over-minimum-switch"
-              />
-              <TextField
-                label={t('placeholder.filter-items')}
-                hideLabel
-                width="full"
-                placeholder={t('placeholder.filter-items')}
-                data-testid="filter-items-field"
-                value={props.itemFilter}
-                onInput={e => props.onItemFilterChange(e.currentTarget.value)}
-              />
-            </FormRow>
-          </Stack>
-        </FormColumn>
-      </FormColumns>
-
-      {/* Full-width notices beneath both columns (helper text never sits inside
-          a column). */}
-      <Stack gap="sm">
-        <Show when={props.node.otherParty.store?.isDisabled}>
-          <Alert severity="info">
-            {t('info.cannot-edit-disabled-store')}
-          </Alert>
-        </Show>
-        <Show when={props.isProgram}>
-          <Alert severity="info">
-            {t('info.cannot-edit-program-requisition')}
-          </Alert>
-        </Show>
-      </Stack>
-
-      {/* MOS-change confirmation (recalculates suggestions — AC-H2). */}
+    <>
+      <FormRowItem weight={1.5}>
+        {/* Internal (store-backed) suppliers only, matching the create
+            picker — a supplier change is re-validated by the same checks
+            that govern creation (rules › header fields). */}
+        <NameSearch
+          storeId={props.storeId}
+          role="supplier"
+          label={t('label.supplier-name')}
+          size="small"
+          storeBacked
+          selected={supplierSeed()}
+          disabled={fieldsLocked()}
+          error={props.supplierError}
+          clearable={false}
+          onSelect={supplier => {
+            if (supplier) props.onChangeSupplier(supplier.id);
+          }}
+        />
+      </FormRowItem>
+      <FormRowItem weight={1}>
+        <TextField
+          label={t('label.supplier-reference')}
+          size="small"
+          data-testid="supplier-reference-field"
+          value={props.edit.state.theirReference}
+          disabled={!props.editable}
+          onInput={e =>
+            props.edit.setField('theirReference', e.currentTarget.value)
+          }
+          onBlur={() => props.edit.flush()}
+        />
+      </FormRowItem>
+      <Show when={props.showDestination}>
+        <FormRowItem weight={1.5}>
+          {/* Store-backed customers only, the chosen supplier excluded
+              (spec S3 § toolbar). The picker's filtering is load-bearing:
+              a lone destination update is NOT re-validated server-side
+              (D42), so this is the only guard on the stored value. */}
+          <NameSearch
+            storeId={props.storeId}
+            role="customer"
+            label={t('label.destination-customer')}
+            size="small"
+            inputTestId="customer-search-input"
+            storeBacked
+            excludeId={props.node.otherPartyId}
+            selected={destinationSeed()}
+            disabled={!props.editable}
+            onSelect={customer =>
+              props.onChangeDestination(customer?.id ?? null)
+            }
+          />
+        </FormRowItem>
+      </Show>
+      <FormRowItem weight={0.7} maxWidth="12rem">
+        <Select
+          label={t('label.min-months-of-stock')}
+          size="small"
+          testId="min-months-of-stock-select"
+          options={thresholdOptions()}
+          value={thresholdValue()}
+          disabled={fieldsLocked()}
+          onValueChange={onThresholdChange}
+        />
+      </FormRowItem>
+      <FormRowItem weight={0.7} maxWidth="12rem">
+        <Select
+          label={t('label.max-months-of-stock')}
+          size="small"
+          testId="max-months-of-stock-select"
+          options={targetOptions()}
+          value={targetValue()}
+          disabled={fieldsLocked()}
+          onValueChange={onTargetChange}
+        />
+      </FormRowItem>
+      {/* MOS-change confirmation (recalculates suggestions — AC-H2). A closed
+          <dialog> renders nothing, so it costs the cluster's row no slot. */}
       <ConfirmDialog
         open={pendingMos() != null}
         onClose={onDialogClose}
@@ -309,6 +274,6 @@ export const InternalOrderToolbar: Component<
         message={pendingMos()?.message ?? ''}
         onConfirm={confirmMos}
       />
-    </div>
+    </>
   );
 };

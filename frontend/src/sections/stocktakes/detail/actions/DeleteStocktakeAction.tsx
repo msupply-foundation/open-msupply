@@ -94,8 +94,8 @@ export const DeleteStocktakeAction: Component<
       <Show when={open()}>
         <Dialog
           open
-          // Blocking while the mutation is in flight — no click-outside / Escape
-          // exit until it resolves.
+          // Blocking while the mutation is in flight — no click-outside /
+          // Escape exit until it resolves.
           dismissable={phase() !== 'deleting'}
           onClose={close}
           icon={<TrashIcon />}
@@ -128,6 +128,7 @@ export const DeleteStocktakeAction: Component<
                   </Show>
                   <Button
                     variant="danger"
+                    confirms="plain"
                     data-testid="confirmation-modal-ok"
                     loading={phase() === 'deleting'}
                     onClick={() => void run()}
@@ -140,6 +141,7 @@ export const DeleteStocktakeAction: Component<
               <Match when={phase() === 'error'}>
                 <Button
                   variant="secondary"
+                  confirms="plain"
                   data-testid="dialog-button-ok"
                   onClick={close}
                 >

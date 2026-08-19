@@ -12,6 +12,16 @@ import { t } from '../../../intl';
 import { PortalMountContext } from '../../utils/portalMount';
 import { useIsNavOverlay } from '../../utils/createMediaQuery';
 import type { FocusTarget } from '../../utils/createFocusTarget';
+import { createAction } from '../../utils/keyActions';
+import { ALT_S, ESCAPE } from '../../utils/shortcuts';
+import { InTableCellContext } from '../table/inTableCell';
+import { SurfaceActiveContext } from '../../utils/surfaceActive';
+import {
+  DialogConfirmContext,
+  type ConfirmClaim,
+  type ConfirmRole,
+  type DialogConfirmSlots,
+} from './dialogConfirm';
 import styles from './Dialog.module.css';
 
 export interface DialogProps {
@@ -79,7 +89,11 @@ export interface DialogProps {
    * content.
    */
   footer?: JSX.Element;
-  /** Footer buttons (rendered inline-end). */
+  /**
+   * Footer buttons. Rendered (with `footer`) in a region pinned below the
+   * dialog's scroll area: over-tall content scrolls between the header and the
+   * buttons, which hold still on the dialog's bottom edge.
+   */
   actions?: JSX.Element;
   /**
    * Content pinned to the inline-START of the actions row — same row as the
@@ -89,12 +103,59 @@ export interface DialogProps {
    */
   actionsLead?: JSX.Element;
   /**
-   * Width, in rem — for wider forms (e.g. the stocktake create modal). The
-   * dialog sits at this fixed width (clamped down to the viewport on narrow
-   * screens), so its box stays a steady size regardless of content — a form
-   * switching modes doesn't change width. Overrides the default (30rem) via a
-   * custom property; the page passes a number, not CSS, so it owns no
-   * stylesheet (principle #10).
+   * Draws a full-bleed hairline above the pinned bottom region (footer +
+   * actions) — the footer-divider treatment ui-standards › error dialogs
+   * specifies (`ErrorDialog` passes it). Off by default: the house dialog
+   * carries no divider.
+   */
+  actionsDivider?: boolean;
+  /**
+   * Horizontal placement of the footer buttons. The house default is
+   * `center` (the current app's modal DialogActions); `end` pins them to the
+   * inline-end — ui-standards › error dialogs' footer. With `actionsLead`
+   * present the row is space-between either way, so this only shows when
+   * there is no lead.
+   */
+  actionsAlign?: 'center' | 'end';
+  /**
+   * Width as one of the shared content MEASURES — the same vocabulary
+   * `ContentContainer` uses, so a dialog and an in-page form of the same kind
+   * sit at the same width and neither restates the number:
+   *  - `prose` — single-column reading text or a short form (`--measure-prose`)
+   *  - `form` — a comfortable two-column form (`--measure-form`)
+   *  - `wide` — a dense form or a result table (`--measure-wide`)
+   *
+   * PREFER this over `widthRem`, which stays for a genuinely bespoke width. A
+   * measure keeps the box steady across a multi-step flow: the width belongs to
+   * the dialog frame, so capping the CONTENT with a `ContentContainer` inside
+   * would leave the frame (and its title + actions rows) at its old width with
+   * the body floating in the middle. Ignored in `size="large"`, whose working
+   * width is a rem number (see `widthRem`) rather than a content measure — a
+   * workbench is sized by the table it holds, not by reading comfort. If both
+   * are passed the rem number wins — it sets the custom property inline, which
+   * beats the preset's rule.
+   *
+   * A measure also opts the dialog into the shared **full-screen** treatment
+   * below the narrow-viewport line (tablet portrait and phones, breakpoints.ts
+   * › navOverlay), since a measure describes a page-sized surface. `widthRem`
+   * does not: it stays a centred card at every width.
+   */
+  width?: 'prose' | 'form' | 'wide';
+  /**
+   * Width, in rem — a bespoke width no measure fits. The dialog sits at this
+   * fixed width (clamped down to the viewport on narrow screens), so its box
+   * stays a steady size regardless of content — a form switching modes doesn't
+   * change width. Overrides the default (30rem) via a custom property; the page
+   * passes a number, not CSS, so it owns no stylesheet (principle #10).
+   *
+   * Also sets the WORKING WIDTH in `size="large"`, overriding its 56rem default
+   * (#771: "~900px if the tables fit, wider if the column set forces it"). A
+   * line editor whose table is column-heavy asks for more; one whose table fits
+   * passes nothing. Because the width is `min(widthRem, 100vw - 4rem)`, a
+   * generous number self-clamps: it reads as near-full-bleed on a laptop and
+   * still as a framed card on a large monitor. A modal that changes size with
+   * its state passes the matching number alongside `size` — see the line
+   * editors' `workingSize` latch.
    */
   widthRem?: number;
   /**
@@ -105,13 +166,34 @@ export interface DialogProps {
   minBodyHeightRem?: number;
   /**
    * Overall size. `'auto'` (default): the dialog sizes to its content (bounded
-   * by widthRem + the viewport cap). `'large'`: a workbench modal that fills
-   * nearly the whole viewport — full width and ~80% height — for content-heavy
-   * modals like the line-edit table. In large mode widthRem is ignored (the
-   * dialog goes full-bleed) and the body flexes so a scrolling child (a
-   * DataTable) fills the tall space.
+   * by widthRem + the viewport cap). The two WORKBENCH sizes are for
+   * content-heavy modals like the line-edit table. Both start at a ~60vh FLOOR
+   * — #771's win: a two-batch item is a short modal, not an empty full-screen
+   * box — and both flex the body so a scrolling child (a DataTable) fills the
+   * tall space once content passes the ceiling, and both go full-screen below
+   * the narrow-viewport line like a `width` measure. They differ in how far
+   * they may GROW:
+   *  - `'large'` — a centred CARD: 56rem wide by default (`widthRem` for a
+   *    wider table), ceiling ~80vh so the scrim still frames it top and bottom.
+   *  - `'full'` — a SHEET: fills the viewport in both axes bar a 2rem gutter.
+   *    For content no card width fits: a table too wide (the shipment and
+   *    stocktake line editors run to ~20 columns, where narrowing hides columns
+   *    without removing any empty space), a region that caps itself wider than
+   *    a card's body (the internal-order editor's 64rem charts row, the
+   *    requisition editor's three-column figure grid), or a row count that
+   *    wants every row it can show before scrolling. Also the right choice for
+   *    a modal hosting a PLUGIN SLOT: what a deployment contributes there is
+   *    not ours to measure, so no card width is safe. `widthRem` is ignored.
    */
-  size?: 'auto' | 'large';
+  size?: 'auto' | 'large' | 'full';
+  /**
+   * Drops the dialog's panel surface — no background, no shadow, no padding —
+   * so the content floats directly over the scrim. For an overlay whose own
+   * children already carry surfaces (the command palette: a text field and an
+   * option list, nothing behind them). Everything else <Dialog> gives stays:
+   * top layer, inert page, Escape, focus restore, scrim-click dismiss.
+   */
+  chromeless?: boolean;
   /**
    * Where focus lands when the dialog opens, overriding the default (the
    * dialog panel — see the note on `.body` below). Pass a
@@ -125,10 +207,30 @@ export interface DialogProps {
    * and no autocomplete pops its listbox open unprompted.
    */
   initialFocus?: FocusTarget;
+  /**
+   * `false` opts this dialog out of Enter-to-confirm (spec/keyboard KB-E2: "A
+   * dialog MAY opt out of Enter-to-confirm entirely"). Default: Enter confirms
+   * from any of its text fields, activating the continuing action (Save & next)
+   * when present and enabled, otherwise the plain one.
+   */
+  enterConfirms?: boolean;
   /** `data-testid` for the <dialog> element (locale-stable test hook,
    * e2e/TESTIDS.md). */
   testId?: string;
 }
+
+/*
+ * Input types that ACTIVATE THEMSELVES on Enter, as the keydown's default
+ * action. Confirming the dialog for these too would run two actions from one
+ * keypress — the double-fire KB-E4 forbids ("a button already activates on
+ * Enter; nothing may re-fire it on top of that").
+ */
+const SELF_ACTIVATING_INPUT_TYPES = new Set([
+  'submit',
+  'button',
+  'reset',
+  'image',
+]);
 
 interface DialogContentProps {
   /**
@@ -211,26 +313,43 @@ const DialogContent = (local: DialogContentProps): JSX.Element => {
           <div class={styles.headerActions}>{headerActions()}</div>
         </Show>
       </header>
-      <Show when={description()}>
-        <p class={styles.description} id={local.descriptionId}>
-          {description()}
-        </p>
-      </Show>
-      {c.children}
-      <Show when={footer()}>
-        <div class={styles.footer}>{footer()}</div>
-      </Show>
-      <Show when={actions()}>
+      {/* Only THIS region scrolls (see .scroll in the CSS). The header above
+          and the bottom region below sit outside the scroll container, so the
+          buttons hold perfectly still — no shift when a scrollbar appears, no
+          drift with overscroll — while over-tall content scrolls between
+          them. */}
+      <div class={styles.scroll}>
+        <Show when={description()}>
+          <p class={styles.description} id={local.descriptionId}>
+            {description()}
+          </p>
+        </Show>
+        {c.children}
+      </div>
+      {/* Footer + actions share one bottom region pinned under the scroll
+          area, so they stay on the dialog's bottom edge together. */}
+      <Show when={footer() || actions()}>
         <div
-          class={styles.actions}
-          data-has-lead={actionsLead() ? '' : undefined}
+          class={styles.bottom}
+          data-divider={c.actionsDivider ? '' : undefined}
         >
-          {/* Lead content sits at the inline-start; the buttons group at the
-              inline-end. */}
-          <Show when={actionsLead()}>
-            <div class={styles.actionsLead}>{actionsLead()}</div>
+          <Show when={footer()}>
+            <div>{footer()}</div>
           </Show>
-          <div class={styles.actionsButtons}>{actions()}</div>
+          <Show when={actions()}>
+            <div
+              class={styles.actions}
+              data-has-lead={actionsLead() ? '' : undefined}
+              data-align={c.actionsAlign === 'end' ? 'end' : undefined}
+            >
+              {/* Lead content sits at the inline-start; the buttons group at the
+                  inline-end. */}
+              <Show when={actionsLead()}>
+                <div class={styles.actionsLead}>{actionsLead()}</div>
+              </Show>
+              <div class={styles.actionsButtons}>{actions()}</div>
+            </div>
+          </Show>
         </div>
       </Show>
     </div>
@@ -281,16 +400,147 @@ export const Dialog = (props: DialogProps) => {
   // open rather than once per read site — a JSX-element prop is a getter, so N
   // raw reads = N constructions, each firing its own initial fetch (#549).
   const [dialogEl, setDialogEl] = createSignal<HTMLElement>();
-  // Large ("workbench") modals go full-screen on tablet portrait and phones —
-  // the same "narrow viewport" line as the nav overlay, so we reuse navOverlay
-  // (1024) rather than mint a fourth breakpoint. data-fullscreen drives the
-  // CSS; the cutoff lives once in breakpoints.ts (createMediaQuery).
-  const fullscreen = useIsNavOverlay();
+  // Both workbench sizes share every rule except width, so almost everything
+  // that asks "is this large?" means this.
+  const workbench = () => props.size === 'large' || props.size === 'full';
+  // Modals whose width is a page-sized SURFACE go full-screen on tablet
+  // portrait and phones — the same "narrow viewport" line as the nav overlay, so
+  // we reuse navOverlay (1024) rather than mint a fourth breakpoint.
+  // data-fullscreen drives the CSS; the cutoff lives once in breakpoints.ts
+  // (createMediaQuery).
+  //
+  // That is either workbench size (`large`/`full`) and any `width` MEASURE: the
+  // widest measure is wider than the line itself, so below it a measure dialog
+  // would otherwise be an edge-to-edge card holding a 1rem margin — the
+  // in-between this rule exists to remove. A default or `widthRem` dialog stays
+  // a centred card: a confirmation has no business filling a tablet screen, and
+  // a caller who wants the sheet asks for the measure it is sized to.
+  const narrowViewport = useIsNavOverlay();
+  const fullscreen = () =>
+    narrowViewport() && (workbench() || props.width !== undefined);
   // The <dialog>'s OWN aria-labelledby/aria-label depend on whether the title
   // is a string, but the title is resolved inside the Provider (DialogContent),
   // not here — so DialogContent reports it back via this signal rather than us
   // reading (and mis-constructing) the title in this scope.
   const [titleIsString, setTitleIsString] = createSignal(false);
+
+  /*
+   * Which footer button confirms this dialog (spec/keyboard KB-E2). The Dialog
+   * cannot inspect `actions` — it is opaque JSX, and this shell stays layout-only
+   * (kdd/explicit-composition) — so each StandardButton claims its ROLE here and
+   * the Dialog reads the role, never a behaviour. See feedback/dialogConfirm.ts.
+   *
+   * Plain object + Map, not a signal: nothing RENDERS from a claim. Both readers
+   * run at keypress time (the Enter handler) or on demand (the Alt+S action), so
+   * a signal would only add churn and a remount risk.
+   *
+   * The provider wraps the whole dialog body rather than just the footer. Slot
+   * construction happens inside DialogContent, so scoping to the footer alone
+   * would mean moving that `children()` call — and no `headerActions` in the app
+   * contains a standard confirm button, so the wider scope claims nothing extra.
+   * A confirm button deliberately placed in `headerActions` WOULD claim the
+   * footer's role; that is the constraint this note records.
+   */
+  const claims = new Map<ConfirmRole, ConfirmClaim>();
+  const confirmSlots: DialogConfirmSlots = {
+    claim: (role, claim) => {
+      // Two buttons claiming one role means the footer has two confirms and only
+      // one of them answers Enter — an authoring mistake, not a state the spec
+      // has. Dev-only: in production the last claim simply wins.
+      if (import.meta.env.DEV && claims.has(role))
+        console.warn(
+          `Dialog: two footer buttons claim the "${role}" confirm role. Enter will activate only one of them (spec/keyboard KB-E2).`
+        );
+      claims.set(role, claim);
+    },
+    // Identity-checked: a <Show> swap can mount the replacement before the old
+    // one's cleanup runs, and an unchecked delete would clear the new claim.
+    release: (role, claim) => {
+      if (claims.get(role) === claim) claims.delete(role);
+    },
+    get: role => claims.get(role),
+  };
+
+  /*
+   * A bespoke confirm that forgets `confirms` answers no Enter (KB-E2), fails
+   * silently, and is invisible until somebody tries the keyboard. Dev-only, this
+   * finds it — the enforcement the design otherwise leaves to review across ~57
+   * call sites.
+   *
+   * The test is UNCLAIMED FOOTER BUTTONS, not "no confirm claimed". Several
+   * dialogs legitimately show no confirm in some state — the line editor's
+   * item-search state offers only Cancel, and its Save appears once an item
+   * loads — so "the footer holds a button that declared no role" is the signal,
+   * and a dialog whose every button declares one is silent whatever the roles
+   * are. `enterConfirms={false}` opts out entirely.
+   *
+   * Deferred a microtask: the footer buttons claim in their own onMount, which is
+   * queued after this effect.
+   */
+  if (import.meta.env.DEV) {
+    let warned = false;
+    createEffect(() => {
+      if (!props.open || props.enterConfirms === false || warned) return;
+      // Presence check via `in`, never a read — reading the getter here would
+      // construct the actions outside the Provider (see the note on `title`).
+      if (!('actions' in props)) return;
+      queueMicrotask(() => {
+        if (warned || !props.open) return;
+        // Direct children only: a composite control (a SplitButton's pair) is
+        // nested in its own wrapper and is not a footer action, so it is not
+        // counted and cannot raise a false alarm.
+        const buttons = dialog.querySelectorAll(
+          `.${styles.actionsButtons ?? ''} > button`
+        ).length;
+        if (buttons <= claims.size) return;
+        warned = true;
+        console.warn(
+          `Dialog: ${buttons - claims.size} of ${buttons} footer button(s) declare no confirm role, so Enter cannot reach them. Use a StandardButton, or pass \`confirms="plain"\` on a bespoke confirm — or \`enterConfirms={false}\` if this dialog deliberately has no submit key (spec/keyboard KB-E2).`
+        );
+      });
+    });
+  }
+
+  /*
+   * KB-E2's choice: "where a continuing action (Save & next) is present and
+   * enabled, Enter activates THAT; otherwise it activates the plain confirming
+   * action. A disabled action MUST NOT be activated, and Enter then does
+   * nothing" (AC-KB23, AC-KB24).
+   */
+  const enterTarget = (): ConfirmClaim | undefined => {
+    const continuing = claims.get('continuing');
+    if (continuing && !continuing.disabled()) return continuing;
+    const plain = claims.get('plain');
+    return plain && !plain.disabled() ? plain : undefined;
+  };
+
+  /*
+   * Which controls Enter confirms FROM. A WHITELIST, not a blacklist: a blacklist
+   * breaks silently the first time a new widget is added, while a whitelist
+   * merely fails to help — the right direction for a convenience feature.
+   *
+   * The panel itself, plus text-ish <input>s. Deliberately excluded:
+   *   <textarea>  Enter inserts a newline (KB-E2 says "from anywhere in its
+   *               FORM", and a textarea's Enter is its own).
+   *   buttons/links  they self-activate as the keydown's default action, so
+   *               confirming here too would double-fire (KB-E4, AC-KB26).
+   *   listboxes/comboboxes with an open popup  they preventDefault, caught by
+   *               the defaultPrevented guard (KB-E1, AC-KB21).
+   */
+  const enterConfirmsFrom = (target: EventTarget | null): boolean => {
+    if (!(target instanceof Element)) return false;
+    if (target.classList.contains(styles.body ?? '')) return true;
+    if (target.tagName !== 'INPUT') return false;
+    // NOT isTextEntry: that predicate answers a different question (does a
+    // keystroke here mean TEXT), and its answers diverge from this one in both
+    // directions. A radio or checkbox is not text entry — Alt+N must still fire
+    // on it — but Enter there DOES natively submit a form, so it confirms
+    // (Space is what toggles). Conversely a textarea IS text entry but keeps
+    // Enter for its newline, and it is excluded above by the tag check.
+    return !SELF_ACTIVATING_INPUT_TYPES.has(
+      (target.getAttribute('type') ?? 'text').toLowerCase()
+    );
+  };
 
   createEffect(() => {
     if (props.open && !dialog.open) {
@@ -309,25 +559,75 @@ export const Dialog = (props: DialogProps) => {
   // releases the top layer + restores focus deterministically.
   onCleanup(() => dialog.open && dialog.close());
 
+  /*
+   * The DIALOG TIER (KB-1) and the palette's dialog-contributed entries
+   * (ui-surface S1: "Dialog-contributed, present only while a dialog is open —
+   * Save and Cancel, each showing its keys").
+   *
+   * `disabled` is what gates them on `props.open`: dialog content stays
+   * MOUNTED while closed (several call sites keep the <Dialog> rendered and
+   * flip `open`), so a plain unconditional registration would leave Save in
+   * the palette for a dialog nobody can see. Gating via `disabled` rather than
+   * conditional creation keeps the action's lifetime tied to this component
+   * and out of an effect, where re-runs would churn the registration
+   * (kdd/keyboard-layer).
+   *
+   * Alt+S is `surface` tier, so it fires from inside a text field — the whole
+   * point of the dialog tier (AC-KB2). Escape needs no action to work: the
+   * UA's close request handles it, and the binding is declared on CancelButton
+   * purely so the badge and this entry can render it.
+   *
+   * Alt+S targets the PLAIN confirm, never `enterTarget()`. KB-E2's "a
+   * continuing action wins" is about ENTER, whose target is implicit — the
+   * user pressed a general "go on" key and the footer decides what that means.
+   * Alt+S is the Save button's OWN binding: it is the key that button
+   * advertises on its badge (AC-KB15), so running Save & next from it would
+   * fire an action the user did not aim at, and one whose badge sits on a
+   * different button.
+   */
+  const saveTarget = (): ConfirmClaim | undefined => {
+    const plain = claims.get('plain');
+    return plain && !plain.disabled() ? plain : undefined;
+  };
+  createAction({
+    name: 'button.save',
+    shortcut: ALT_S,
+    run: () => saveTarget()?.activate(),
+    disabled: () => !props.open || saveTarget() === undefined,
+  });
+  createAction({
+    name: 'button.cancel',
+    shortcut: ESCAPE,
+    run: () => claims.get('cancel')?.activate(),
+    disabled: () =>
+      !props.open ||
+      claims.get('cancel') === undefined ||
+      claims.get('cancel')?.disabled() === true,
+  });
+
   return (
     <dialog
       ref={el => {
         dialog = el;
         setDialogEl(el);
       }}
-      class={
-        props.size === 'large'
-          ? `${styles.dialog} ${styles.large}`
-          : styles.dialog
-      }
+      classList={{
+        [styles.dialog ?? '']: true,
+        // `full` IS `large` plus a width override, so it takes both classes —
+        // the flex column, the height band and the body rules live once.
+        [styles.large ?? '']: workbench(),
+        [styles.bleed ?? '']: props.size === 'full',
+        [styles.chromeless ?? '']: props.chromeless === true,
+      }}
       data-testid={props.testId}
-      data-fullscreen={fullscreen() && props.size === 'large' ? '' : undefined}
+      data-fullscreen={fullscreen() ? '' : undefined}
+      // The measure preset has nothing to say at either workbench size.
+      data-width={workbench() ? undefined : props.width}
       style={{
-        // widthRem is ignored in large mode (it goes full-bleed via the .large
-        // class).
-        ...(props.widthRem && props.size !== 'large'
-          ? { '--dialog-width': `${props.widthRem}rem` }
-          : {}),
+        // Sets the working width in `large` too, overriding the .large class's
+        // 56rem default (#771). In `full` it is inert: .bleed sets `width`
+        // outright rather than through this custom property.
+        ...(props.widthRem ? { '--dialog-width': `${props.widthRem}rem` } : {}),
         ...(props.minBodyHeightRem
           ? { '--dialog-min-body-height': `${props.minBodyHeightRem}rem` }
           : {}),
@@ -354,7 +654,32 @@ export const Dialog = (props: DialogProps) => {
       // open) loses its top layer and later re-renders in-flow. Stop
       // propagation only — the UA's own default action (the `cancel` event
       // above) is not propagation-dependent and still closes the dialog.
-      onKeyDown={event => event.key === 'Escape' && event.stopPropagation()}
+      onKeyDown={event => {
+        if (event.key === 'Escape') {
+          event.stopPropagation();
+          return;
+        }
+        if (event.key !== 'Enter') return;
+        if (props.enterConfirms === false) return;
+        // A rung inside the dialog already claimed it: an open picker selecting
+        // its highlighted option (KB-E1/AC-KB21), or a field claiming Enter for
+        // its own completion — the prescription abbreviation field expanding
+        // into directions (KB-E6/AC-KB27). Solid's delegated walk reaches the
+        // field before this handler, so its preventDefault lands first.
+        if (event.defaultPrevented) return;
+        // A held key must not submit twice (AC-KB26).
+        if (event.repeat || event.isComposing) return;
+        if (!enterConfirmsFrom(event.target)) return;
+        // From here Enter is ours, so consume it either way — with every confirm
+        // disabled, "Enter then does nothing" (AC-KB24) and it must not fall
+        // through to an implicit form submission either.
+        event.preventDefault();
+        // A nested dialog (a ConfirmDialog inside a line editor) is a DOM
+        // DESCENDANT of the outer one, so without this the outer dialog would
+        // confirm as well.
+        event.stopPropagation();
+        enterTarget()?.activate();
+      }}
       // Native close paths (Escape now; browser `closedby` UI later) land
       // here — report them so the parent's `open` stays the source of truth.
       onClose={() => props.open && props.onClose()}
@@ -393,12 +718,29 @@ export const Dialog = (props: DialogProps) => {
       }}
     >
       <PortalMountContext.Provider value={dialogEl}>
-        <DialogContent
-          content={props}
-          titleId={titleId}
-          descriptionId={descriptionId}
-          setTitleIsString={setTitleIsString}
-        />
+        {/* Resets KB-S2's "in a table cell" fact. A line editor is opened FROM a
+            row, so it renders inside that row's subtree and Solid contexts follow
+            the owner tree — without this every NumberField in the modal would
+            believe it was in a cell and stop stepping on the arrows. */}
+        <InTableCellContext.Provider value={false}>
+          {/* Dialog content stays MOUNTED while closed, so an action declared
+              inside it would keep answering its keys for a surface nobody can
+              see — and an `always`-tier bare character would fire app-wide.
+              createAction folds this flag into every such action's `disabled`
+              (see utils/surfaceActive.ts); Dialog's own two registrations are
+              created outside this Provider and carry their own `props.open`
+              gate. */}
+          <SurfaceActiveContext.Provider value={() => props.open}>
+            <DialogConfirmContext.Provider value={confirmSlots}>
+              <DialogContent
+                content={props}
+                titleId={titleId}
+                descriptionId={descriptionId}
+                setTitleIsString={setTitleIsString}
+              />
+            </DialogConfirmContext.Provider>
+          </SurfaceActiveContext.Provider>
+        </InTableCellContext.Provider>
       </PortalMountContext.Provider>
     </dialog>
   );

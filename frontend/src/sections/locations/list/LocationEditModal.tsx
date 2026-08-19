@@ -221,6 +221,9 @@ export const LocationEditModal: Component<LocationEditModalProps> = props => {
       // resolves).
       dismissable={saving() === null}
       onClose={props.onClose}
+      // Room for the location-type picker's open listbox inside the dialog
+      // (#1029) — it sits ~12.5rem down with only two short rows below it.
+      minBodyHeightRem={26}
       // The save-rejection banner pins above the actions, inside the modal
       // (ui-surface S3 § save errors).
       footer={

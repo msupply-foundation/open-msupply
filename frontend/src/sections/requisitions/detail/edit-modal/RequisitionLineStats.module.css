@@ -1,0 +1,204 @@
+/* The line editor's stats tabs (spec S4 § stats tabs). The tab strip is
+   centred; each panel's content sits centred as a width-capped block in the
+   wide modal. */
+.tabs {
+  margin-block-start: var(--space-4);
+  border-block-start: 1px solid var(--gray-light);
+}
+
+.panelBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
+  max-width: 50rem;
+  margin-inline: auto;
+  padding: var(--space-4);
+  font-size: var(--text-xs);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.sectionHeading {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--weight-bold);
+}
+
+/* A section with nothing to draw: the italic info note in place of its bar. */
+.emptyNote {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-style: italic;
+  text-align: center;
+}
+
+/* The proportional stacked bar; its width reads against the sibling section. */
+.barTrack {
+  display: flex;
+  height: 1.25rem;
+}
+
+.segment {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+/* The neutral ramp (our stock, darkest-first) and the primary ramp
+   (requested, darkest-first) — spec S4 § stats tabs. */
+.stockDarkFill {
+  background: var(--gray-dark);
+}
+
+.stockMainFill {
+  background: var(--gray-main);
+}
+
+.stockLightFill {
+  background: var(--gray-light);
+}
+
+.requestedFill {
+  background: var(--primary-main);
+}
+
+.otherRequestedFill {
+  background: var(--primary-light);
+}
+
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.legendRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.swatch {
+  flex: 0 0 auto;
+  width: 0.625rem;
+  height: 0.625rem;
+}
+
+.legendLabel {
+  min-width: 10rem;
+}
+
+.legendValue {
+  font-weight: var(--weight-bold);
+}
+
+/* The Customer tab's month axis (0 → max months of stock), the response
+   variant of the target-quantity breakdown: no threshold/target markers, and
+   the unable-to-calculate notes render ABOVE it. */
+.calcNote {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--error-main);
+}
+
+.monthAxis {
+  display: flex;
+  align-items: stretch;
+}
+
+.monthEdge {
+  position: relative;
+  flex: 0 0 1px;
+  border-inline-start: 1px solid var(--gray-dark);
+}
+
+.monthEdgeLabel {
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline-end: 100%;
+  padding-inline-end: 0.2rem;
+  color: var(--gray-dark);
+  line-height: 1.2;
+}
+
+.monthCell {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  min-width: 0;
+  /* Fixed height so a sliver-width cell whose label wraps is clipped, never
+     growing the row; the tooltip carries the full text. */
+  height: 2.4rem;
+  overflow: hidden;
+  padding-inline-end: 0.4rem;
+  text-align: end;
+  border-inline-end: 1px solid var(--gray-dark);
+  border-block-end: 1px solid var(--gray-dark);
+}
+
+.monthValue {
+  margin-block-start: auto;
+  color: var(--gray-dark);
+  line-height: 1.2;
+  overflow-wrap: break-word;
+}
+
+/* The value bars (stock on hand, suggested order) proportioned to target. */
+.valueBars {
+  display: flex;
+  align-items: flex-start;
+  margin-block-start: var(--space-2);
+}
+
+.divider {
+  flex: 0 0 auto;
+  width: 1px;
+  height: 2.8rem;
+  background: var(--gray-dark);
+}
+
+.valueBar {
+  min-width: 0;
+}
+
+.valueFill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.25rem;
+}
+
+.valueNum {
+  font-weight: var(--weight-bold);
+  color: var(--primary-contrast);
+}
+
+.valueLabel {
+  padding-block-start: var(--space-2);
+  padding-inline-end: 0.6rem;
+  text-align: end;
+  color: var(--text-body);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The volume block (AC-LE12): plain guidance lines; the no-capacity message
+   reads bold in the error tone. */
+.volumeLine {
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+.volumeFull {
+  font-weight: var(--weight-bold);
+  color: var(--error-main);
+}

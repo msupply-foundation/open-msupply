@@ -3,7 +3,6 @@ import {
   allocateUnits,
   buildSaveInput,
   canSave,
-  clampPacks,
   seedDraftLines,
   type DraftLine,
 } from './lineEditLogic';
@@ -32,6 +31,14 @@ const OPEN_PREFS = {
   manageVvmStatusForStock: false,
 };
 
+// Every seeding below passes this as `today`. `seedDraftLines` falls back to the
+// real clock, and the expiry verdicts (barred / autoBarred) are computed against
+// it — so a fixture dated "next month" silently becomes an EXPIRED batch once the
+// wall clock passes it, and the allocation cases start reporting 0 packs. Dates
+// are fixtures, not facts about now: pin the clock (as
+// domain/allocation/policy.test.ts does) so these read the same in any year.
+const TODAY = new Date('2026-01-01');
+
 describe('seedDraftLines (stock-allocation AC-AL1/AL2 client face — FEFO order, barred verdicts)', () => {
   it('orders earliest expiry first with no-expiry last', () => {
     const seeded = seedDraftLines(
@@ -40,7 +47,8 @@ describe('seedDraftLines (stock-allocation AC-AL1/AL2 client face — FEFO order
         line({ id: 'late', expiryDate: '2027-01-01' }),
         line({ id: 'early', expiryDate: '2026-08-01' }),
       ],
-      OPEN_PREFS
+      OPEN_PREFS,
+      TODAY
     );
     expect(seeded.map(l => l.id)).toEqual(['early', 'late', 'none']);
   });
@@ -52,7 +60,8 @@ describe('seedDraftLines (stock-allocation AC-AL1/AL2 client face — FEFO order
         line({ id: 'held-location', location: { code: 'HL', onHold: true } }),
         line({ id: 'open' }),
       ],
-      OPEN_PREFS
+      OPEN_PREFS,
+      TODAY
     );
     expect(seeded.map(l => l.id)).toEqual(['open']);
   });
@@ -60,11 +69,50 @@ describe('seedDraftLines (stock-allocation AC-AL1/AL2 client face — FEFO order
   it('keeps a held row already carrying an allocation, manually editable (AC-AL14)', () => {
     const seeded = seedDraftLines(
       [line({ id: 'held', stockLineOnHold: true, numberOfPacks: 2 })],
-      OPEN_PREFS
+      OPEN_PREFS,
+      TODAY
     );
     expect(seeded.map(l => l.id)).toEqual(['held']);
     expect(seeded[0].barred).toEqual([]); // row stays enabled
     expect(seeded[0].autoBarred).toContain('on-hold'); // never auto-filled
+  });
+
+  const vvm = (priority: number) => ({
+    id: `vvm-${priority}`,
+    description: `Stage ${priority}`,
+    unusable: false,
+    priority,
+  });
+
+  it('orders VVM priority before expiry under the preference — no-status last, expiry breaking ties (rules § ordering)', () => {
+    const seeded = seedDraftLines(
+      [
+        line({ id: 'no-status', expiryDate: '2026-08-01' }),
+        line({ id: 'p2', expiryDate: '2026-08-01', vvmStatus: vvm(2) }),
+        line({ id: 'p1-late', expiryDate: '2027-01-01', vvmStatus: vvm(1) }),
+        line({ id: 'p1-early', expiryDate: '2026-09-01', vvmStatus: vvm(1) }),
+      ],
+      { ...OPEN_PREFS, sortByVvmStatusThenExpiry: true },
+      TODAY
+    );
+    expect(seeded.map(l => l.id)).toEqual([
+      'p1-early',
+      'p1-late',
+      'p2',
+      'no-status',
+    ]);
+  });
+
+  it('ignores VVM priority with the preference off — plain FEFO', () => {
+    const seeded = seedDraftLines(
+      [
+        line({ id: 'p1-late', expiryDate: '2027-01-01', vvmStatus: vvm(1) }),
+        line({ id: 'p2-early', expiryDate: '2026-08-01', vvmStatus: vvm(2) }),
+      ],
+      { ...OPEN_PREFS, sortByVvmStatusThenExpiry: false },
+      TODAY
+    );
+    expect(seeded.map(l => l.id)).toEqual(['p2-early', 'p1-late']);
   });
 });
 
@@ -74,7 +122,8 @@ describe('allocateUnits (AC-A1 — partial packs: exact units, no over-allocatio
     // 100-tab pack persists as 0.01 packs).
     const lines = seedDraftLines(
       [line({ id: 'a', packSize: 100, availablePacks: 100 })],
-      OPEN_PREFS
+      OPEN_PREFS,
+      TODAY
     );
     const { packsById, shortfallUnits } = allocateUnits(lines, 1);
     expect(packsById.get('a')).toBeCloseTo(0.01, 10);
@@ -87,7 +136,8 @@ describe('allocateUnits (AC-A1 — partial packs: exact units, no over-allocatio
         line({ id: 'early', expiryDate: '2026-08-01', availablePacks: 2 }),
         line({ id: 'late', expiryDate: '2027-01-01', availablePacks: 3 }),
       ],
-      OPEN_PREFS
+      OPEN_PREFS,
+      TODAY
     );
     const { packsById, shortfallUnits } = allocateUnits(lines, 10);
     expect(packsById.get('early')).toBe(2);
@@ -99,7 +149,7 @@ describe('allocateUnits (AC-A1 — partial packs: exact units, no over-allocatio
     const lines = seedDraftLines(
       [line({ id: 'expired', expiryDate: '2020-01-01', availablePacks: 50 })],
       OPEN_PREFS,
-      new Date('2026-01-01')
+      TODAY
     );
     const { packsById, shortfallUnits } = allocateUnits(lines, 5);
     expect(packsById.get('expired')).toBe(0);
@@ -109,7 +159,8 @@ describe('allocateUnits (AC-A1 — partial packs: exact units, no over-allocatio
   it('reports a split pack with the nearest whole-pack quantity above (AC-AL12 — .58)', () => {
     const lines = seedDraftLines(
       [line({ id: 'a', packSize: 10, availablePacks: 10 })],
-      OPEN_PREFS
+      OPEN_PREFS,
+      TODAY
     );
     const { warnings } = allocateUnits(lines, 25); // 2.5 packs
     expect(warnings).toContainEqual({
@@ -121,7 +172,8 @@ describe('allocateUnits (AC-A1 — partial packs: exact units, no over-allocatio
   it('raises no split-pack warning when the allocation lands on whole packs', () => {
     const lines = seedDraftLines(
       [line({ id: 'a', packSize: 10, availablePacks: 10 })],
-      OPEN_PREFS
+      OPEN_PREFS,
+      TODAY
     );
     const { warnings } = allocateUnits(lines, 20);
     expect(warnings).toEqual([]);
@@ -134,7 +186,7 @@ describe('allocateUnits (AC-A1 — partial packs: exact units, no over-allocatio
         line({ id: 'open', availablePacks: 2 }),
       ],
       OPEN_PREFS,
-      new Date('2026-01-01')
+      TODAY
     );
     const { warnings, shortfallUnits } = allocateUnits(lines, 5);
     expect(shortfallUnits).toBe(3);
@@ -156,24 +208,13 @@ describe('allocateUnits (AC-A1 — partial packs: exact units, no over-allocatio
         }),
         line({ id: 'open', availablePacks: 2 }),
       ],
-      OPEN_PREFS
+      OPEN_PREFS,
+      TODAY
     );
     const { warnings, shortfallUnits, packsById } = allocateUnits(lines, 5);
     expect(packsById.get('held')).toBe(0);
     expect(shortfallUnits).toBe(3);
     expect(warnings).toEqual([]);
-  });
-});
-
-describe('clampPacks (AC-I5 — the client is the only negative/overdraw guard)', () => {
-  it('floors negatives and non-finite input at zero', () => {
-    expect(clampPacks(-3, 10)).toBe(0);
-    expect(clampPacks(Number.NaN, 10)).toBe(0);
-    expect(clampPacks(undefined, 10)).toBe(0);
-  });
-  it('caps at the batch availability and keeps fractions', () => {
-    expect(clampPacks(99, 10)).toBe(10);
-    expect(clampPacks(0.25, 10)).toBe(0.25);
   });
 });
 

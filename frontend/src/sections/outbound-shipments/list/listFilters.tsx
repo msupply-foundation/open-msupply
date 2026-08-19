@@ -38,7 +38,7 @@ const FILTERS: Filter<OutboundFilter>[] = constructFilters<OutboundFilter>({
       <FilterTextInput
         label={t('label.name')}
         testId={props.testId}
-        placeholder={t('placeholder.search-by-name')}
+        placeholder={t('placeholder.search')}
         value={props.filter().otherPartyName?.like ?? ''}
         onInput={value =>
           props.setPartialFilter({
@@ -56,8 +56,9 @@ const FILTERS: Filter<OutboundFilter>[] = constructFilters<OutboundFilter>({
         testId={props.testId}
         placeholder={t('label.any')}
         values={props.filter().status?.equalAny ?? []}
-        // Options limited by the _invoice status options_ preference (OMS-REG-DIST-04.22);
-        // computed in render so the preference fetch resolves reactively.
+        // Options limited by the _invoice status options_ preference
+        // (OMS-REG-DIST-04.22); computed in render so the preference fetch
+        // resolves reactively.
         options={allowedStatuses().map(value => ({
           value: value as StatusValue,
           label: STATUS_LABELS[value],
@@ -76,7 +77,7 @@ const FILTERS: Filter<OutboundFilter>[] = constructFilters<OutboundFilter>({
       <FilterTextInput
         label={t('label.invoice-number')}
         testId={props.testId}
-        placeholder={t('placeholder.search-by-invoice-number')}
+        placeholder={t('placeholder.search')}
         value={props.filter().invoiceNumber?.equalTo?.toString() ?? ''}
         onInput={value => {
           const n = Number.parseInt(value, 10);
@@ -93,7 +94,7 @@ const FILTERS: Filter<OutboundFilter>[] = constructFilters<OutboundFilter>({
       <FilterTextInput
         label={t('label.reference')}
         testId={props.testId}
-        placeholder={t('messages.search')}
+        placeholder={t('placeholder.search')}
         value={props.filter().theirReference?.like ?? ''}
         onInput={value =>
           props.setPartialFilter({

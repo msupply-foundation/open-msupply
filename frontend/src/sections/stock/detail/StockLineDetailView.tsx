@@ -32,6 +32,7 @@ import {
   type TabDef,
 } from '../../../ui/elements/tabs/Tabs';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { createAddAction } from '../../../ui/utils/keyActions';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
@@ -42,8 +43,9 @@ import { DateField } from '../../../ui/elements/inputs/DateField';
 import { Checkbox } from '../../../ui/elements/inputs/Checkbox';
 import { IdentityHeader } from '../../../ui/layout/IdentityHeader/IdentityHeader';
 import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
+import { RecordLink } from '../../../ui/elements/typography/RecordLink';
 import { StockIcon, BarIcon, SaveIcon, XCircleIcon } from '../../../ui/icons';
-import { LocationSelect } from '../../../domain/location';
+import { LocationVolumeSelect } from '../../../domain/location';
 import { NameSearch } from '../../../domain/name';
 import { CampaignOrProgramSelect } from '../../../domain/campaign';
 import { ActivityLogPanel } from '../../../domain/activityLog';
@@ -72,13 +74,11 @@ import { VvmStatusEntryModal } from './VvmStatusEntryModal';
 // quantity-changing flows (adjust S4, repack S5). Quantities + pack size are
 // read-only everywhere here (spec/stock rules). Tabs: Details · VVM history
 // (vaccine + preference) · Log (shared activity-log surface) · Ledger.
-//
-// The "Item linked to its catalogue record" identity link is rendered as plain
-// text: the item-catalogue detail route is owned elsewhere and not wired here.
 
 // The fetched detail node — the StockLineDetail fragment plus its VVM history
-// (the byId query selects vvmStatusLogs). A superset of StockLineDetailFragment,
-// so it passes straight to the adjust/repack/VVM modals that take the fragment.
+// (the byId query selects vvmStatusLogs). A superset of
+// StockLineDetailFragment, so it passes straight to the adjust/repack/VVM
+// modals that take the fragment.
 type Line = StockLineByIdResult['stockLines']['nodes'][number];
 
 // The locally-buffered editable attributes. Read-only quantities are read from
@@ -179,8 +179,9 @@ const StockLineDetailView: Component = () => {
 
   // Seed the editable draft from a line: sets the draft and records the seeded
   // id. Called on load / line-id change (the effect below) and after a save
-  // (re-seed to clear the dirty state) — a refetch on the same id never re-seeds,
-  // so an in-progress edit isn't clobbered by an adjust/repack refresh.
+  // (re-seed to clear the dirty state) — a refetch on the same id never
+  // re-seeds, so an in-progress edit isn't clobbered by an adjust/repack
+  // refresh.
   const seedFor = (node: StockLineDetailFragment) => {
     setEdit(seedEdit(node));
     setSeededId(node.id);
@@ -200,7 +201,7 @@ const StockLineDetailView: Component = () => {
   // this view's boundary and tear the rendered form down again — and the same
   // read runs after an adjust/repack refetch, with a modal potentially open
   // (kdd/solid-reactivity-pitfalls › No remounts on interaction). `loading`
-  // below still gives LocationSelect its spinner.
+  // below still gives LocationVolumeSelect its spinner.
   const locations = () =>
     locationsForItem(
       allLocations.state === 'ready' || allLocations.state === 'refreshing'
@@ -219,10 +220,10 @@ const StockLineDetailView: Component = () => {
     return l ? l.totalNumberOfPacks * l.packSize : 0;
   };
 
-  // Dose context for vaccine items when manageVaccinesInDoses is on (spec AC-P2)
-  // — the read-only quantity fields (pack qty, available packs, SOH, available
-  // stock) append the dose equivalent (units × the item's doses-per-unit) as a
-  // muted note beside the value.
+  // Dose context for vaccine items when manageVaccinesInDoses is on (spec
+  // AC-P2) — the read-only quantity fields (pack qty, available packs, SOH,
+  // available stock) append the dose equivalent (units × the item's
+  // doses-per-unit) as a muted note beside the value.
   const showDoses = () =>
     prefs().manageVaccinesInDoses && !!line()?.item.isVaccine;
   // The value node for a read-only quantity field: the number, plus the dose
@@ -345,6 +346,36 @@ const StockLineDetailView: Component = () => {
     !!line()?.item.isVaccine &&
     (prefs().manageVvmStatusForStock || prefs().sortByVvmStatusThenExpiry);
 
+  /*
+   * Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7): the VVM tab's
+   * New status entry, which is the only add this screen offers. The control lives
+   * in VvmHistoryPanel and carries `shortcut={ALT_N}` for its badge; the SCREEN
+   * declares the action, as everywhere else.
+   *
+   * Disabled — and so unlisted in the palette — unless the VVM tab is both offered
+   * and showing, with the permission the control itself requires. KB-R2's
+   * "unclaimed only where the thing is absent": on the Details, Log and Ledger tabs
+   * this screen has no add action.
+   *
+   * Gated on `.state` rather than through `showVvmTab()`, which reads
+   * `data.latest` and suspends on the first pending read — the palette evaluates
+   * every action's `disabled()` in its own render (kdd/keyboard-layer).
+   */
+  createAddAction({
+    name: 'button.new-status-entry',
+    run: () => setVvmEntry({}),
+    disabled: () => {
+      if (data.state !== 'ready' && data.state !== 'refreshing') return true;
+      const node = data.latest;
+      return (
+        activeTab() !== 'vvm' ||
+        !node?.item.isVaccine ||
+        !prefs().manageVvmStatusForStock ||
+        !hasPermission('VIEW_AND_EDIT_VVM_STATUS')
+      );
+    },
+  });
+
   const tabs = (): TabDef[] => [
     { value: 'details', label: t('label.details') },
     ...(showVvmTab() ? [{ value: 'vvm', label: t('label.vvm-status') }] : []),
@@ -353,13 +384,12 @@ const StockLineDetailView: Component = () => {
   ];
 
   const crumbs = (l: Line) => [
-    { label: t('inventory') },
     { label: t('stock'), onClick: onCancelOrClose },
     { label: l.itemName },
   ];
 
-  // The invalid-location warning (spec/stock AC-D4): the item is restricted to a
-  // location type and the current location is of another type.
+  // The invalid-location warning (spec/stock AC-D4): the item is restricted to
+  // a location type and the current location is of another type.
   const invalidLocation = (l: Line) =>
     !!l.item.restrictedLocationTypeId &&
     !!l.location &&
@@ -449,7 +479,13 @@ const StockLineDetailView: Component = () => {
                 <ContentContainer size="form">
                   <Stack>
                     <IdentityHeader
-                      title={l().itemName}
+                      title={
+                        <RecordLink
+                          href={`/${params.storeId}/catalogue/items/${l().itemId}`}
+                        >
+                          {l().itemName}
+                        </RecordLink>
+                      }
                       subtitle={
                         <>
                           {t('label.code')}: {l().item.code} · {t('label.unit')}
@@ -516,7 +552,6 @@ const StockLineDetailView: Component = () => {
                         <FormSection title={t('heading.batches-and-dates')}>
                           <TextField
                             label={t('label.batch')}
-                            width="full"
                             value={edit.batch}
                             onInput={e =>
                               setEdit('batch', e.currentTarget.value)
@@ -524,7 +559,6 @@ const StockLineDetailView: Component = () => {
                           />
                           <TextField
                             label={t('label.barcode')}
-                            width="full"
                             value={edit.barcode}
                             onInput={e =>
                               setEdit('barcode', e.currentTarget.value)
@@ -533,13 +567,11 @@ const StockLineDetailView: Component = () => {
                           <FormRow>
                             <DateField
                               label={t('label.expiry-date')}
-                              width="full"
                               value={edit.expiryDate}
                               onChange={v => setEdit('expiryDate', v)}
                             />
                             <DateField
                               label={t('label.manufacture-date')}
-                              width="full"
                               max={localTodayIso()}
                               value={edit.manufactureDate}
                               onChange={v => setEdit('manufactureDate', v)}
@@ -561,7 +593,6 @@ const StockLineDetailView: Component = () => {
                           <FormRow>
                             <CurrencyField
                               label={t('label.cost-price')}
-                              width="full"
                               value={edit.costPricePerPack}
                               onChange={v =>
                                 setEdit('costPricePerPack', v ?? 0)
@@ -569,7 +600,6 @@ const StockLineDetailView: Component = () => {
                             />
                             <CurrencyField
                               label={t('label.sell-price')}
-                              width="full"
                               value={edit.sellPricePerPack}
                               onChange={v =>
                                 setEdit('sellPricePerPack', v ?? 0)
@@ -581,12 +611,24 @@ const StockLineDetailView: Component = () => {
 
                       <FormColumn>
                         <FormSection title={t('heading.storage-and-pack')}>
-                          <LocationSelect
+                          <LocationVolumeSelect
                             label={t('label.location')}
                             locations={locations()}
                             loading={allLocations.loading}
                             value={edit.location?.id}
                             placeholder={t('label.none')}
+                            // This field PLACES stock, so "Available" is
+                            // measured against what's being placed — the DRAFT
+                            // volume per pack (what the user is editing), not
+                            // the saved figure (spec/stock/rules.md › location
+                            // fields).
+                            requiredVolume={
+                              (edit.volumePerPack ?? 0) * l().totalNumberOfPacks
+                            }
+                            // The SAVED location, not the draft one: once the
+                            // user picks elsewhere, where the stock actually
+                            // still sits must stay offered under "Available".
+                            originalLocationId={l().location?.id}
                             onChange={loc =>
                               setEdit(
                                 'location',
@@ -616,7 +658,6 @@ const StockLineDetailView: Component = () => {
                           <FormRow>
                             <NumberField
                               label={t('label.volume-per-pack')}
-                              width="full"
                               decimalLimit={10}
                               value={edit.volumePerPack}
                               onChange={v => setEdit('volumePerPack', v ?? 0)}

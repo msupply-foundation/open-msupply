@@ -1,7 +1,6 @@
 import {
   createEffect,
   createMemo,
-  createSignal,
   For,
   Match,
   onCleanup,
@@ -23,22 +22,18 @@ import {
   pushQueueCount,
   liveConnected,
   pollSyncStatus,
-  triggerSync,
 } from '../../api/syncStore';
 import { isCentralServer } from '../../api/serverInfo';
 import { hasPermission } from '../../store/storeContext';
 import { SYNC_POLL_INTERVAL_MS } from '../../config';
 import {
-  advanceTriggerState,
-  armTrigger,
   durationUnits,
-  IDLE_TRIGGER,
   statusLineKind,
   syncDurationParts,
   toSyncOverview,
   type SyncBackfill,
-  type TriggerState,
 } from './syncStatus';
+import { syncNow, triggerActive } from './syncTrigger';
 import { syncErrorSummary } from './syncErrors';
 import { syncStepIcon } from './syncStepIcons';
 import styles from './SyncModal.module.css';
@@ -56,9 +51,9 @@ const isSameLocalDay = (a: Date, b: Date): boolean =>
  * (contract.md § Substrate); its own lazy chunk.
  *
  * Reads the shared substrate store for status/count/liveness and adds only its
- * two residual obligations (SYNC-03.22): one immediate poll on open when NO status
- * is cached (the subscription sends no initial frame), and the fast fallback
- * poll while open AND the live channel is down. The live channel, its
+ * two residual obligations (SYNC-03.22): one immediate poll on open when NO
+ * status is cached (the subscription sends no initial frame), and the fast
+ * fallback poll while open AND the live channel is down. The live channel, its
  * transport-ack liveness, reconnection, poll supersession, the fire-and-forget
  * trigger, and the post-run app refresh all live in the substrate.
  */
@@ -77,44 +72,34 @@ export const SyncModal: Component<{
   );
   const statusKind = () => statusLineKind(overview(), pushQueueCount());
 
-  // SYNC-03.22: fetch once on open when nothing is cached (no initial subscription
-  // frame — contract.md § Records to push). Fires exactly once per open while
-  // uncached; a landed status flips the guard.
+  // SYNC-03.22: fetch once on open when nothing is cached (no initial
+  // subscription frame — contract.md § Records to push). Fires exactly once per
+  // open while uncached; a landed status flips the guard.
   createEffect(() => {
     if (props.open && syncStatus() == null) void pollSyncStatus();
   });
 
-  // SYNC-03.22: the fast fallback interval, only while open and the live channel is
-  // down (the substrate store drops a stale poll once live data resumes).
+  // SYNC-03.22: the fast fallback interval, only while open and the live
+  // channel is down (the substrate store drops a stale poll once live data
+  // resumes).
   createEffect(() => {
     if (!props.open || liveConnected()) return;
     const id = setInterval(() => void pollSyncStatus(), SYNC_POLL_INTERVAL_MS);
     onCleanup(() => clearInterval(id));
   });
 
-  // SYNC-03.25: Sync-now busy state — held from the click, through the pre-run gap,
-  // until the run ends. Keyed on the run-status signature (not the isSyncing
-  // transition), so a run that errors before any in-progress frame is observed
-  // still releases the button for a retry.
-  const [trigger, setTrigger] = createSignal<TriggerState>(IDLE_TRIGGER);
-  createEffect(() => {
-    const status = syncStatus();
-    setTrigger(prev => advanceTriggerState(prev, status));
-  });
+  // SYNC-03.25: Sync-now busy state — held from the click, through the pre-run
+  // gap, until the run ends. Keyed on the run-status signature (not the
+  // isSyncing transition), so a run that errors before any in-progress frame is
+  // observed still releases the button for a retry. The machine is the SHARED
+  // one (syncTrigger.ts): the bottom bar's status line runs the same, so a run
+  // armed on either surface reads as in-flight on both.
   const busy = createMemo(
     () =>
-      trigger().active ||
+      triggerActive() ||
       (overview()?.isSyncing ?? false) ||
       overview() === undefined
   );
-
-  const onSyncNow = async () => {
-    setTrigger(armTrigger(syncStatus()));
-    // Fire-and-forget; a request that itself fails releases the busy state (the
-    // failure surfaces through the global unexpected-error handling).
-    const ok = await triggerSync();
-    if (!ok) setTrigger(IDLE_TRIGGER);
-  };
 
   // Server-admin only: closes the modal and navigates to sync settings. The
   // sync-settings screen is owned elsewhere (spec/sync-modal/README § scope),
@@ -141,6 +126,8 @@ export const SyncModal: Component<{
       finished: s.finished,
       done: s.done,
       total: s.total,
+      startedAt: s.startedAt,
+      finishedAt: s.finishedAt,
       icon: syncStepIcon[s.kind],
       // Locale-stable per-phase test hook, derived from the phase's locale key
       // ('sync-status.pull-central' -> 'sync-phase-pull-central') so the id
@@ -149,8 +136,8 @@ export const SyncModal: Component<{
     })) ?? [];
 
   // The run's backfill descriptions (V7 only; empty for an ordinary run). Shown
-  // under a "Special syncs" disclosure below the phase list, the same expandable
-  // pattern as the error panel's "More information".
+  // under a "Special syncs" disclosure below the phase list, the same
+  // expandable pattern as the error panel's "More information".
   const backfills = (): SyncBackfill[] => overview()?.backfills ?? [];
   const backfillLabel = (b: SyncBackfill): string =>
     b.kind === 'all-store-data'
@@ -166,6 +153,33 @@ export const SyncModal: Component<{
       closeButton
       widthRem={36}
       testId="sync-modal"
+      // No confirm semantics: Sync Now is a trigger, not a Save — Enter from
+      // the (buttonless) body must not start a sync run.
+      enterConfirms={false}
+      // Action row, centred — in the Dialog's actions slot so it sticks to the
+      // modal's bottom edge like every other modal's buttons.
+      actions={
+        <>
+          <Button
+            variant="primary"
+            icon={<SyncIcon />}
+            loading={busy()}
+            onClick={syncNow}
+            data-testid="sync-now-button"
+          >
+            {t('button.sync-now')}
+          </Button>
+          <Show when={hasPermission('SERVER_ADMIN')}>
+            <Button
+              variant="secondary"
+              icon={<SettingsIcon />}
+              onClick={onSettings}
+            >
+              {t('settings')}
+            </Button>
+          </Show>
+        </>
+      }
     >
       <div class={styles.content}>
         {/* Status band: the precedence status line above the phase list. */}
@@ -257,28 +271,6 @@ export const SyncModal: Component<{
             </Alert>
           )}
         </Show>
-
-        {/* Action row, centred. */}
-        <div class={styles.actions}>
-          <Button
-            variant="primary"
-            icon={<SyncIcon />}
-            loading={busy()}
-            onClick={() => void onSyncNow()}
-            data-testid="sync-now-button"
-          >
-            {t('button.sync-now')}
-          </Button>
-          <Show when={hasPermission('SERVER_ADMIN')}>
-            <Button
-              variant="secondary"
-              icon={<SettingsIcon />}
-              onClick={onSettings}
-            >
-              {t('settings')}
-            </Button>
-          </Show>
-        </div>
       </div>
     </Dialog>
   );

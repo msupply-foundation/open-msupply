@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
   currentStep,
   filterByStatusPreference,
+} from '@/domain/invoice/statusGate';
+import {
   isReturnDisabled,
   nextStatuses,
-  offeredFlow,
   returnKind,
   statusFlow,
   statusIndex,
@@ -34,6 +35,7 @@ const node = (
   verifiedDatetime: null,
   otherPartyId: 'c1',
   otherPartyName: 'Customer',
+  transportReference: null,
   user: null,
   linkedShipment: null,
   originalShipment: null,
@@ -70,22 +72,22 @@ describe('status flow per kind (rules § status lifecycle)', () => {
 });
 
 describe('nextStatuses — forward-only targets', () => {
-  // AC-S3 — a NEW manual return may go straight to VERIFIED, skipping
-  // RECEIVED (both forward steps offered).
+  // OMS-REG-DIST-07.37 — a NEW manual return may go straight to VERIFIED,
+  // skipping RECEIVED (both forward steps offered).
   it('offers both confirmations from NEW on a manual return', () => {
     expect(nextStatuses('manual', 'NEW')).toEqual(['RECEIVED', 'VERIFIED']);
   });
 
-  // AC-S7 — forward only: from RECEIVED only VERIFIED remains; VERIFIED is
-  // terminal and offers nothing.
+  // OMS-REG-DIST-07.39 — forward only: from RECEIVED only VERIFIED remains;
+  // VERIFIED is terminal and offers nothing.
   it('offers only VERIFIED from RECEIVED, nothing from VERIFIED', () => {
     expect(nextStatuses('manual', 'RECEIVED')).toEqual(['VERIFIED']);
     expect(nextStatuses('manual', 'VERIFIED')).toEqual([]);
     expect(nextStatuses('transfer', 'VERIFIED')).toEqual([]);
   });
 
-  // AC-T1 — a transfer return becomes advanceable once SHIPPED; before that
-  // its lifecycle is in the sending store's hands.
+  // OMS-REG-DIST-07.44 — a transfer return becomes advanceable once SHIPPED;
+  // before that its lifecycle is in the sending store's hands.
   it('offers nothing on a transfer return before SHIPPED', () => {
     expect(nextStatuses('transfer', 'NEW')).toEqual([]);
     expect(nextStatuses('transfer', 'PICKED')).toEqual([]);
@@ -97,7 +99,7 @@ describe('nextStatuses — forward-only targets', () => {
 });
 
 describe('isReturnDisabled (rules § editability)', () => {
-  // AC-E7 — a VERIFIED return is immutable, whatever its kind.
+  // OMS-REG-DIST-07.26 — a VERIFIED return is immutable, whatever its kind.
   it('disables a VERIFIED return', () => {
     expect(isReturnDisabled(node({ status: 'VERIFIED' }))).toBe(true);
     expect(
@@ -112,7 +114,7 @@ describe('isReturnDisabled (rules § editability)', () => {
     expect(isReturnDisabled(node({ status: 'RECEIVED' }))).toBe(false);
   });
 
-  // AC-T1 — a transfer return is read-only until RECEIVED.
+  // OMS-REG-DIST-07.43 — a transfer return is read-only until RECEIVED.
   it('keeps a transfer return read-only until RECEIVED', () => {
     const transfer = (status: CustomerReturnInfoFragment['status']) =>
       node({ status, linkedShipment: { id: 'x' } });
@@ -125,7 +127,7 @@ describe('isReturnDisabled (rules § editability)', () => {
 describe('statusSteps / statusIndex — the lifecycle indicator', () => {
   it('maps each reached stage to its datetime', () => {
     const steps = statusSteps(
-      'manual',
+      statusFlow('manual'),
       node({
         status: 'RECEIVED',
         receivedDatetime: '2026-01-02T00:00:00Z',
@@ -140,27 +142,30 @@ describe('statusSteps / statusIndex — the lifecycle indicator', () => {
   });
 });
 
-describe('offeredFlow / currentStep — pref-filtered lifecycle indicator', () => {
+describe('offered flow / currentStep — pref-filtered lifecycle indicator', () => {
   // rules § preference gates: the invoice-status-options preference limits
   // EVERY status surface, the lifecycle indicator included; the current stage
   // falls back to the nearest offered status at-or-before the actual one.
+  // Composed through the shared @/domain/invoice helpers exactly as the
+  // footer does.
+  const offered = (allowed: readonly string[]) =>
+    filterByStatusPreference(statusFlow('manual'), allowed);
+  const step = (status: string, allowed: readonly string[]) =>
+    currentStep(statusFlow('manual'), offered(allowed), status);
+
   it('filters the indicator steps and keeps a sensible current stage', () => {
-    expect(offeredFlow('manual', [])).toEqual(['NEW', 'RECEIVED', 'VERIFIED']);
-    expect(offeredFlow('manual', ['NEW', 'VERIFIED'])).toEqual([
-      'NEW',
-      'VERIFIED',
-    ]);
+    expect(offered([])).toEqual(['NEW', 'RECEIVED', 'VERIFIED']);
+    expect(offered(['NEW', 'VERIFIED'])).toEqual(['NEW', 'VERIFIED']);
     const steps = statusSteps(
-      'manual',
-      node({ status: 'RECEIVED', receivedDatetime: '2026-01-02T00:00:00Z' }),
-      ['NEW', 'VERIFIED']
+      offered(['NEW', 'VERIFIED']),
+      node({ status: 'RECEIVED', receivedDatetime: '2026-01-02T00:00:00Z' })
     );
     expect(steps.map(s => s.label)).toHaveLength(2);
     // Actual status RECEIVED is hidden by the pref → current falls back to
     // NEW (the nearest offered stage at-or-before).
-    expect(currentStep('manual', 'RECEIVED', ['NEW', 'VERIFIED'])).toBe(0);
-    expect(currentStep('manual', 'RECEIVED', [])).toBe(1);
-    expect(currentStep('manual', 'VERIFIED', ['NEW', 'VERIFIED'])).toBe(1);
+    expect(step('RECEIVED', ['NEW', 'VERIFIED'])).toBe(0);
+    expect(step('RECEIVED', [])).toBe(1);
+    expect(step('VERIFIED', ['NEW', 'VERIFIED'])).toBe(1);
   });
 });
 

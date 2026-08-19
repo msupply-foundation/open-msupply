@@ -44,12 +44,12 @@ import styles from '../Settings.module.css';
  * Devices (spec/settings/ui-surface.md § Devices).
  *  - Label printer: visible and usable by ANY signed-in user — deliberately
  *    no Server Admin requirement, unlike every other write in this vertical
- *    (OMS-REG-SET-05.20). Test and Save both require all four network/label fields,
- *    even in USB mode (OMS-REG-SET-05.21); the USB preference is device-local and never
- *    saved to the server (OMS-REG-SET-05.22).
- *  - Barcode scanner: Server Admin only (OMS-REG-SET-05.23) — a diagnostic surface over
- *    local-device state; it never decides which screen accepts a scan (owned
- *    by spec/android).
+ *    (OMS-REG-SET-05.20). Test and Save both require all four network/label
+ *    fields, even in USB mode (OMS-REG-SET-05.21); the USB preference is
+ *    device-local and never saved to the server (OMS-REG-SET-05.22).
+ *  - Barcode scanner: Server Admin only (OMS-REG-SET-05.23) — a diagnostic
+ *    surface over local-device state; it never decides which screen accepts a
+ *    scan (owned by spec/android).
  */
 export const DevicesSection = () => {
   const params = useParams<{ storeId: string }>();
@@ -180,10 +180,17 @@ export const DevicesSection = () => {
           onChange={toggleUsb}
           testId="print-via-usb"
         />
+        {/* Explicit caps: this section's FieldRows sit in the settings page's
+            58rem ContentContainer, so the control column is ~51rem wide — far
+            more than a hostname or a port number has to say. These are the
+            "short data in an unbounded container" case the width caps exist
+            for (kdd/form-layout § input widths); everywhere else the default
+            fill is right. */}
         <FieldRow label={t('settings.printer-address')}>
           <TextField
             label={t('settings.printer-address')}
             hideLabel
+            width="short"
             value={form().address}
             onInput={e => edit({ address: e.currentTarget.value })}
             disabled={busy() != null}
@@ -194,6 +201,7 @@ export const DevicesSection = () => {
           <NumberField
             label={t('settings.printer-port')}
             hideLabel
+            width="compact"
             min={1}
             max={65535}
             noFormatting
@@ -207,6 +215,7 @@ export const DevicesSection = () => {
           <NumberField
             label={t('settings.printer-label-height')}
             hideLabel
+            width="compact"
             min={1}
             value={form().labelHeight}
             onChange={labelHeight => edit({ labelHeight })}
@@ -218,6 +227,7 @@ export const DevicesSection = () => {
           <NumberField
             label={t('settings.printer-label-width')}
             hideLabel
+            width="compact"
             min={1}
             value={form().labelWidth}
             onChange={labelWidth => edit({ labelWidth })}
