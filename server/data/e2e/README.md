@@ -77,6 +77,22 @@ A v7 `initialise-from-export` file: `sync_buffer_rows` in v7 wire shape
 The `central_site_id` field routes integration through the v7 path — see
 `InitialisationData` in `server/cli/src/cli.rs`.
 
+**`data` must be a JSON object, never a JSON string of one.** Import
+deserializes the field straight into the target row struct, so a quoted string
+fails with `invalid type: string "..." expected struct <Row>` — and it fails
+QUIETLY: the row is skipped, and a skipped preference simply reads as its
+default, so the fixture looks present in this file while having no effect. Eight
+hand-added rows were wrong this way and inert for weeks. After editing by hand,
+check that nothing was dropped:
+
+```bash
+sqlite3 <db>.sqlite \
+  "select table_name, record_id, integration_error
+     from sync_buffer where integration_result = 'ERROR';"
+```
+
+An empty result is the pass condition.
+
 ## Regenerating
 
 Only needed when reference data must change (new reason types, more items) or

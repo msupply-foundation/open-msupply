@@ -83709,7 +83709,19 @@
    "integration_result": null,
    "table_name": "user_account",
    "action": "Upsert",
-   "data": "{\"email\": null, \"first_name\": null, \"hashed_password\": \"$2b$12$FnpR5IFWuSCsxapzYMkEWOzSVwwjFMvpzZDD1TwCvaH4mMaky0a16\", \"id\": \"e2e_user_stock_viewer\", \"is_active\": true, \"job_title\": null, \"language\": \"English\", \"last_name\": null, \"last_successful_sync\": null, \"phone_number\": null, \"username\": \"StockViewer\"}",
+   "data": {
+    "email": null,
+    "first_name": null,
+    "hashed_password": "$2b$12$FnpR5IFWuSCsxapzYMkEWOzSVwwjFMvpzZDD1TwCvaH4mMaky0a16",
+    "id": "e2e_user_stock_viewer",
+    "is_active": true,
+    "job_title": null,
+    "language": "English",
+    "last_name": null,
+    "last_successful_sync": null,
+    "phone_number": null,
+    "username": "StockViewer"
+   },
    "sync_version": "V7",
    "app_version": null,
    "source_site_id": 6,
@@ -83729,7 +83741,12 @@
    "integration_result": null,
    "table_name": "user_store_join",
    "action": "Upsert",
-   "data": "{\"id\": \"e2e_usj_stockviewer_gry\", \"is_default\": true, \"store_id\": \"80004C94067A4CE5A34FC343EB1B4306\", \"user_id\": \"e2e_user_stock_viewer\"}",
+   "data": {
+    "id": "e2e_usj_stockviewer_gry",
+    "is_default": true,
+    "store_id": "80004C94067A4CE5A34FC343EB1B4306",
+    "user_id": "e2e_user_stock_viewer"
+   },
    "sync_version": "V7",
    "app_version": null,
    "source_site_id": 6,
@@ -83749,7 +83766,13 @@
    "integration_result": null,
    "table_name": "user_permission",
    "action": "Upsert",
-   "data": "{\"context_id\": null, \"id\": \"e2e_perm_stockviewer_StoreAccess\", \"permission\": \"StoreAccess\", \"store_id\": \"80004C94067A4CE5A34FC343EB1B4306\", \"user_id\": \"e2e_user_stock_viewer\"}",
+   "data": {
+    "context_id": null,
+    "id": "e2e_perm_stockviewer_StoreAccess",
+    "permission": "StoreAccess",
+    "store_id": "80004C94067A4CE5A34FC343EB1B4306",
+    "user_id": "e2e_user_stock_viewer"
+   },
    "sync_version": "V7",
    "app_version": null,
    "source_site_id": 6,
@@ -83769,7 +83792,13 @@
    "integration_result": null,
    "table_name": "user_permission",
    "action": "Upsert",
-   "data": "{\"context_id\": null, \"id\": \"e2e_perm_stockviewer_StockLineQuery\", \"permission\": \"StockLineQuery\", \"store_id\": \"80004C94067A4CE5A34FC343EB1B4306\", \"user_id\": \"e2e_user_stock_viewer\"}",
+   "data": {
+    "context_id": null,
+    "id": "e2e_perm_stockviewer_StockLineQuery",
+    "permission": "StockLineQuery",
+    "store_id": "80004C94067A4CE5A34FC343EB1B4306",
+    "user_id": "e2e_user_stock_viewer"
+   },
    "sync_version": "V7",
    "app_version": null,
    "source_site_id": 6,
@@ -83789,7 +83818,13 @@
    "integration_result": null,
    "table_name": "user_permission",
    "action": "Upsert",
-   "data": "{\"context_id\": null, \"id\": \"e2e_perm_stockviewer_StockLineMutate\", \"permission\": \"StockLineMutate\", \"store_id\": \"80004C94067A4CE5A34FC343EB1B4306\", \"user_id\": \"e2e_user_stock_viewer\"}",
+   "data": {
+    "context_id": null,
+    "id": "e2e_perm_stockviewer_StockLineMutate",
+    "permission": "StockLineMutate",
+    "store_id": "80004C94067A4CE5A34FC343EB1B4306",
+    "user_id": "e2e_user_stock_viewer"
+   },
    "sync_version": "V7",
    "app_version": null,
    "source_site_id": 6,
@@ -83809,7 +83844,13 @@
    "integration_result": null,
    "table_name": "user_permission",
    "action": "Upsert",
-   "data": "{\"context_id\": null, \"id\": \"e2e_perm_stockviewer_LogQuery\", \"permission\": \"LogQuery\", \"store_id\": \"80004C94067A4CE5A34FC343EB1B4306\", \"user_id\": \"e2e_user_stock_viewer\"}",
+   "data": {
+    "context_id": null,
+    "id": "e2e_perm_stockviewer_LogQuery",
+    "permission": "LogQuery",
+    "store_id": "80004C94067A4CE5A34FC343EB1B4306",
+    "user_id": "e2e_user_stock_viewer"
+   },
    "sync_version": "V7",
    "app_version": null,
    "source_site_id": 6,
@@ -83829,7 +83870,12 @@
    "integration_result": null,
    "table_name": "preference",
    "action": "Upsert",
-   "data": "{\"id\": \"allow_tracking_of_stock_by_donor_global\", \"key\": \"allow_tracking_of_stock_by_donor\", \"store_id\": null, \"value\": \"true\"}",
+   "data": {
+    "id": "allow_tracking_of_stock_by_donor_global",
+    "key": "allow_tracking_of_stock_by_donor",
+    "store_id": null,
+    "value": "true"
+   },
    "sync_version": "V7",
    "app_version": null,
    "source_site_id": 6,
