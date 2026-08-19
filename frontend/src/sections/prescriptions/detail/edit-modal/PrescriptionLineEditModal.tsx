@@ -813,7 +813,11 @@ const Body = (props: PrescriptionLineEditModalProps) => {
             prescription has no placeholder) states the bound and stops:
             "There is a total of X units available for auto allocation." The
             current app follows it with "Unable to allocate all Y units.",
-            which only restates the request the field already shows. */}
+            which only restates the request the field already shows.
+            requestedQuantity is still passed for the sentence English has
+            dropped: the other eight catalogs still interpolate it until the
+            translation pass reaches them, and an unmatched token renders as
+            itself, not as nothing. */}
           <Show when={shortfall() > 0}>
             <Alert severity="warning" testId="prescription-shortfall-warning">
               {t(
@@ -823,6 +827,9 @@ const Body = (props: PrescriptionLineEditModalProps) => {
                 {
                   allocatedQuantity: formatNumber(
                     unitsToLens(allocatedUnits(), allocateLens())
+                  ),
+                  requestedQuantity: formatNumber(
+                    unitsToLens(allocatedUnits() + shortfall(), allocateLens())
                   ),
                 }
               )}
