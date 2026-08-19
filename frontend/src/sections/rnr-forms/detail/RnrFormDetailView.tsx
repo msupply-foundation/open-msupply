@@ -161,13 +161,15 @@ const RnrFormDetailView: Component = () => {
       return result.data.storePreferences;
     }
   );
+  const periodLength = () => node()?.periodLength ?? 30;
+
   const recomputeCtx = (): RecomputeContext => {
     const prefs =
       prefsData.state === 'ready' || prefsData.state === 'refreshing'
         ? prefsData.latest
         : undefined;
     return {
-      periodLength: node()?.periodLength ?? 30,
+      periodLength: periodLength(),
       monthsUnderstock: prefs?.monthsUnderstock ?? 0,
       monthsOverstock: prefs?.monthsOverstock ?? 2,
     };
@@ -193,18 +195,16 @@ const RnrFormDetailView: Component = () => {
   // One edit's full consequence, in place: the field, the recomputed derived
   // figures, and the dirty/rev tracking (rules § editing a draft).
   const update: UpdateRnrLine = (id, field, value) => {
-    batch(() => {
-      setDraft(
-        'lines',
-        line => line.id === id,
-        produce(line => {
-          line[field] = value;
-          Object.assign(line, recomputeLine(line, recomputeCtx()));
-          line.dirty = true;
-          line.rev += 1;
-        })
-      );
-    });
+    setDraft(
+      'lines',
+      line => line.id === id,
+      produce(line => {
+        line[field] = value;
+        Object.assign(line, recomputeLine(line, recomputeCtx()));
+        line.dirty = true;
+        line.rev += 1;
+      })
+    );
   };
 
   // --- auto-save (rules § editing; OMS-REG-REPL-07.45): a dirty sweep on an
@@ -304,25 +304,27 @@ const RnrFormDetailView: Component = () => {
     desc: false,
   });
 
-  // OMS-REG-REPL-07.50: prefix match on item name or code, case-insensitive;
-  // then the client-side sort.
-  const visibleLines = createMemo(() => {
-    const term = lineFilter().itemCodeOrName?.like?.toLocaleLowerCase();
-    let lines = draft.lines;
-    if (term) {
-      lines = lines.filter(
-        line =>
-          line.item.name.toLocaleLowerCase().startsWith(term) ||
-          line.item.code.toLocaleLowerCase().startsWith(term)
-      );
-    }
+  // Sorted first in its own memo, so each (undebounced) search keystroke
+  // costs only the O(n) prefix scan below, never a re-sort.
+  const sortedLines = createMemo(() => {
     const s = sort();
     const dir = s.desc ? -1 : 1;
-    return [...lines].sort((a, b) => {
+    return [...draft.lines].sort((a, b) => {
       const av = sortValue(a, s.key);
       const bv = sortValue(b, s.key);
       return av < bv ? -dir : av > bv ? dir : 0;
     });
+  });
+
+  // OMS-REG-REPL-07.50: prefix match on item name or code, case-insensitive.
+  const visibleLines = createMemo(() => {
+    const term = lineFilter().itemCodeOrName?.like?.toLocaleLowerCase();
+    if (!term) return sortedLines();
+    return sortedLines().filter(
+      line =>
+        line.item.name.toLocaleLowerCase().startsWith(term) ||
+        line.item.code.toLocaleLowerCase().startsWith(term)
+    );
   });
 
   const tableConfig = createTableConfig({
@@ -338,7 +340,7 @@ const RnrFormDetailView: Component = () => {
   const columns = createMemo(() =>
     rnrFormLineColumns({
       disabled,
-      periodLength: () => recomputeCtx().periodLength,
+      periodLength,
       update,
     })
   );

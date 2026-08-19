@@ -14,7 +14,7 @@ import { HStack } from '@/ui/layout/Stack/HStack';
 import { StatusMarker } from '@/ui/elements/feedback/StatusMarker';
 import { InfoTooltip } from '@/ui/elements/feedback/InfoTooltip';
 import type { LocaleKey } from '@/intl';
-import { type DraftRnrLine } from './rnrFormEdit';
+import { type DraftRnrLine, type EditableRnrField } from './rnrFormEdit';
 
 // The R&R form line table's columns (spec/rnr-forms/ui-surface.md S3 § line
 // table): one row per program item, editable cells over a draft store, derived
@@ -22,8 +22,9 @@ import { type DraftRnrLine } from './rnrFormEdit';
 // recompute; the columns only call back — one field of one row
 // (kdd/solid-reactivity-pitfalls § editable collections).
 
-/** Edit ONE field of ONE draft line (a fine-grained store write). */
-export type UpdateRnrLine = <F extends keyof DraftRnrLine>(
+/** Edit ONE field of ONE draft line (a fine-grained store write) —
+ * restricted to the columns the user can type into. */
+export type UpdateRnrLine = <F extends EditableRnrField>(
   id: string,
   field: F,
   value: DraftRnrLine[F]

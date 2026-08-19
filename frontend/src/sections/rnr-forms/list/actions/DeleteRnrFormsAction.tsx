@@ -102,7 +102,8 @@ const Body = (props: DeleteRnrFormsActionProps & { onClose: () => void }) => {
         </Switch>
       }
       actions={
-        <Switch
+        <Show
+          when={phase() === 'blocked' || phase() === 'error'}
           fallback={
             <>
               <Show when={phase() === 'confirm'}>
@@ -123,16 +124,10 @@ const Body = (props: DeleteRnrFormsActionProps & { onClose: () => void }) => {
             </>
           }
         >
-          <Match when={phase() === 'blocked' || phase() === 'error'}>
-            <Button
-              variant="secondary"
-              confirms="plain"
-              onClick={props.onClose}
-            >
-              {t('button.close')}
-            </Button>
-          </Match>
-        </Switch>
+          <Button variant="secondary" confirms="plain" onClick={props.onClose}>
+            {t('button.close')}
+          </Button>
+        </Show>
       }
     />
   );

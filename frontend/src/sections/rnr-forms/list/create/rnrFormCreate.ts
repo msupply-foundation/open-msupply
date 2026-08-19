@@ -1,30 +1,28 @@
 import type {
-  RnrSchedulesResult,
-  RnrProgramsResult,
-} from './createRnrForm.generated';
+  ProgramListItem,
+  ScheduleWithPeriods,
+} from '@/domain/program/programResource';
 import type { RnrFormRowFragment } from '../rnrForms.generated';
+import { isFinalised } from '../rnrFormStatus';
 
 // The create modal's selection logic (spec/rnr-forms/rules.md § creation;
 // ui-surface S2): program/schedule auto-selection and prefill-from-history,
 // the closed-period sequence gating, and the two period error states. Pure —
-// the modal component owns the signals and calls these.
+// the modal component owns the signals and calls these. The option shapes are
+// the shared program domain module's reads (src/domain/program).
 
-export type ProgramOption = RnrProgramsResult['programs']['nodes'][number];
-
-export type ScheduleOption =
-  RnrSchedulesResult['schedulesWithPeriodsByProgram']['nodes'][number];
-
-export type PeriodOption = ScheduleOption['periods'][number];
+export type PeriodOption = ScheduleWithPeriods['periods'][number];
 
 /** The program picker's options: requisition programs only — immunisation
  * programs are excluded (ui-surface S2). */
-export const programOptions = (programs: ProgramOption[]): ProgramOption[] =>
-  programs.filter(program => !program.isImmunisation);
+export const programOptions = (
+  programs: ProgramListItem[]
+): ProgramListItem[] => programs.filter(program => !program.isImmunisation);
 
 /** OMS-REG-REPL-07.5/.6/.36: exactly one program auto-selects; otherwise the
  * most recent form's program pre-fills; with no history, none. */
 export const defaultProgramId = (
-  programs: ProgramOption[],
+  programs: ProgramListItem[],
   mostRecentForm: RnrFormRowFragment | undefined
 ): string | undefined => {
   if (programs.length === 1) return programs[0]?.id;
@@ -36,7 +34,7 @@ export const defaultProgramId = (
 /** OMS-REG-REPL-07.7/.8/.37: exactly one schedule auto-selects; otherwise the
  * schedule holding the most recent form's period pre-fills; else none. */
 export const defaultScheduleId = (
-  schedules: ScheduleOption[],
+  schedules: ScheduleWithPeriods[],
   mostRecentForm: RnrFormRowFragment | undefined
 ): string | undefined => {
   if (schedules.length === 1) return schedules[0]?.id;
@@ -59,7 +57,7 @@ export type PeriodSelection = {
 };
 
 export const periodSelection = (
-  schedule: ScheduleOption | undefined,
+  schedule: ScheduleWithPeriods | undefined,
   previousForm: RnrFormRowFragment | undefined
 ): PeriodSelection => {
   if (!schedule)
@@ -76,7 +74,7 @@ export const periodSelection = (
   }));
 
   // rules § creation 6: a draft previous form blocks the next create.
-  if (previousForm && previousForm.status !== 'FINALISED') {
+  if (previousForm && !isFinalised(previousForm.status)) {
     return {
       options,
       defaultPeriodId: undefined,
@@ -108,10 +106,7 @@ export const periodSelection = (
 };
 
 /** OMS-REG-REPL-07.10/.38: the supplier prefill — the most recent form's,
- * none with no history. */
-export const defaultSupplier = (
+ * none with no history. An id only: the modal resolves the real NameOption. */
+export const defaultSupplierId = (
   mostRecentForm: RnrFormRowFragment | undefined
-): { id: string; name: string } | undefined =>
-  mostRecentForm
-    ? { id: mostRecentForm.supplierId, name: mostRecentForm.supplierName }
-    : undefined;
+): string | undefined => mostRecentForm?.supplierId;

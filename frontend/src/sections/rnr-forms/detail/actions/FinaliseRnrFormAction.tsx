@@ -5,6 +5,7 @@ import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { CheckIcon } from '@/ui/icons';
+import { isFinalised } from '../../list/rnrFormStatus';
 import type { RnrFormNode } from '../rnrFormUpdate';
 
 // The Finalise action (spec/rnr-forms/rules.md § finalise; ui-surface S3 §
@@ -32,7 +33,7 @@ export const FinaliseRnrFormAction: Component<{
   const [open, setOpen] = createSignal(false);
   const [phase, setPhase] = createSignal<Phase>('confirm');
 
-  const finalised = () => props.node.status === 'FINALISED';
+  const finalised = () => isFinalised(props.node.status);
 
   const openDialog = () => {
     setPhase(props.hasErrorLines() ? 'errors' : 'confirm');
