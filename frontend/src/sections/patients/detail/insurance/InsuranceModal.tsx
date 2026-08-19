@@ -9,7 +9,7 @@ import { TextField } from '../../../../ui/elements/inputs/TextField';
 import { NumberField } from '../../../../ui/elements/inputs/NumberField';
 import { DateField } from '../../../../ui/elements/inputs/DateField';
 import { localTodayIso } from '../../../../ui/elements/inputs/dateTimeConvert';
-import { ToggleSwitch } from '../../../../ui/elements/inputs/ToggleSwitch';
+import { Checkbox } from '../../../../ui/elements/inputs/Checkbox';
 import { Combobox } from '../../../../ui/elements/selectors/Combobox';
 import { FormColumns } from '../../../../ui/layout/Form/FormColumns';
 import { FormColumn } from '../../../../ui/layout/Form/FormColumn';
@@ -61,7 +61,8 @@ type Draft = {
   isActive: boolean;
   expiryDate: string | null;
   insuranceProviderId: string | null;
-  discountPercentage: number;
+  /** `undefined` = no rate entered — the required field is genuinely empty. */
+  discountPercentage: number | undefined;
 };
 
 const Body: Component<InsuranceModalProps> = props => {
@@ -88,7 +89,7 @@ const Body: Component<InsuranceModalProps> = props => {
           isActive: true,
           expiryDate: null,
           insuranceProviderId: null,
-          discountPercentage: 0,
+          discountPercentage: undefined,
         }
   );
 
@@ -101,19 +102,22 @@ const Body: Component<InsuranceModalProps> = props => {
   ];
 
   // At least one policy number is required (each part required only while the
-  // other is empty) — enforced on create; locked (and thus unvalidated) on edit.
+  // other is empty) — enforced on create; locked (and thus unvalidated) on
+  // edit.
   const hasAnyPolicyNumber = () =>
     draft.policyNumberFamily.trim() !== '' ||
     draft.policyNumberPerson.trim() !== '';
   const expiryInPast = () =>
     draft.expiryDate !== null && draft.expiryDate < today;
-  // An active policy must carry a non-zero coverage rate (spec AC-I4).
+  // An active policy must carry a non-zero coverage rate (spec AC-I4). Only an
+  // entered 0 trips this — an empty field is the required rule's business.
   const activeNeedsCoverage = () =>
-    draft.isActive && draft.discountPercentage <= 0;
+    draft.isActive && draft.discountPercentage === 0;
 
   // Validation (AC-I3/I4). Required errors + the active-needs-coverage rule
-  // (which trips on the default 0 rate) stay quiet until Save; the past-expiry
-  // rule surfaces immediately. The Body remounts per open, so state is fresh.
+  // (which trips on a policy being edited that already carries 0) stay quiet
+  // until Save; the past-expiry rule surfaces immediately. The Body remounts
+  // per open, so state is fresh.
   const validation = createFormValidation(() => [
     {
       id: 'policyNumberFamily',
@@ -144,6 +148,11 @@ const Body: Component<InsuranceModalProps> = props => {
     {
       id: 'discountPercentage',
       label: t('label.coverage-rate'),
+      failed: draft.discountPercentage === undefined,
+    },
+    {
+      id: 'discountPercentage',
+      label: t('label.coverage-rate'),
       failed: activeNeedsCoverage(),
       message: t('messages.active-policy-needs-coverage'),
       showOnSubmit: true,
@@ -161,7 +170,7 @@ const Body: Component<InsuranceModalProps> = props => {
           id: props.policy.id,
           insuranceProviderId: draft.insuranceProviderId,
           policyType: draft.policyType,
-          discountPercentage: draft.discountPercentage,
+          discountPercentage: draft.discountPercentage!,
           expiryDate: draft.expiryDate,
           isActive: draft.isActive,
           nameOfInsured: draft.nameOfInsured,
@@ -173,13 +182,13 @@ const Body: Component<InsuranceModalProps> = props => {
           policyNumberFamily: draft.policyNumberFamily,
           policyNumberPerson: draft.policyNumberPerson,
           policyType: draft.policyType,
-          discountPercentage: draft.discountPercentage,
+          discountPercentage: draft.discountPercentage!,
           expiryDate: draft.expiryDate!,
           isActive: draft.isActive,
           nameOfInsured: draft.nameOfInsured,
         });
     setSaving(false);
-    if (!outcome) return props.onClose(); // handled globally
+    if (!outcome) return; // handled globally
     if (outcome.kind === 'error') {
       setSaveError(outcome.message);
       return;
@@ -191,10 +200,20 @@ const Body: Component<InsuranceModalProps> = props => {
   return (
     <Dialog
       open
+      // The two-column form measure (as the site editor / create-patient
+      // modals): wide enough for the FormColumns row to sit side by side, and
+      // it opts the dialog into the full-screen treatment below the
+      // narrow-viewport line — where the columns wrap to a single stack on
+      // their own (FormColumn's min width, no breakpoint).
+      width="form"
       dismissable={!saving()}
       onClose={props.onClose}
       title={editing() ? t('title.edit-insurance') : t('title.new-insurance')}
       testId="insurance-modal"
+      // Room for the provider-name picker's open listbox inside the dialog
+      // (#1029) — it sits ~8rem down in the right column and its list (the
+      // site's providers) can reach the 18rem cap.
+      minBodyHeightRem={28}
       actionsLead={
         <Show when={saveError()}>
           <Alert severity="error">{saveError()}</Alert>
@@ -205,12 +224,14 @@ const Body: Component<InsuranceModalProps> = props => {
           <Button
             variant="secondary"
             icon={<XCircleIcon />}
+            confirms="cancel"
             onClick={props.onClose}
           >
             {t('button.cancel')}
           </Button>
           <Button
             icon={<SaveIcon />}
+            confirms="plain"
             data-testid="dialog-button-ok"
             loading={saving()}
             onClick={() => void save()}
@@ -224,13 +245,11 @@ const Body: Component<InsuranceModalProps> = props => {
         <FormColumn>
           <TextField
             label={t('label.name-of-the-insured')}
-            width="full"
             value={draft.nameOfInsured}
             onInput={e => setDraft('nameOfInsured', e.currentTarget.value)}
           />
           <TextField
             label={t('label.policy-number-family')}
-            width="full"
             required={!editing() && draft.policyNumberPerson.trim() === ''}
             disabled={editing()}
             error={validation.errorFor('policyNumberFamily')}
@@ -239,7 +258,6 @@ const Body: Component<InsuranceModalProps> = props => {
           />
           <TextField
             label={t('label.policy-number-person')}
-            width="full"
             required={!editing() && draft.policyNumberFamily.trim() === ''}
             disabled={editing()}
             error={validation.errorFor('policyNumberPerson')}
@@ -255,7 +273,7 @@ const Body: Component<InsuranceModalProps> = props => {
             value={draft.policyType}
             onChange={o => o && setDraft('policyType', o.value)}
           />
-          <ToggleSwitch
+          <Checkbox
             label={t('label.insurance-active')}
             checked={draft.isActive}
             onChange={checked => setDraft('isActive', checked)}
@@ -264,7 +282,6 @@ const Body: Component<InsuranceModalProps> = props => {
         <FormColumn>
           <DateField
             label={t('label.insurance-expiry-date')}
-            width="full"
             min={today}
             value={draft.expiryDate}
             error={validation.errorFor('expiryDate')}
@@ -282,7 +299,6 @@ const Body: Component<InsuranceModalProps> = props => {
           />
           <NumberField
             label={t('label.coverage-rate')}
-            width="full"
             required
             min={0}
             max={100}
@@ -290,7 +306,7 @@ const Body: Component<InsuranceModalProps> = props => {
             endAdornment="%"
             value={draft.discountPercentage}
             error={validation.errorFor('discountPercentage')}
-            onChange={value => setDraft('discountPercentage', value ?? 0)}
+            onChange={value => setDraft('discountPercentage', value)}
           />
         </FormColumn>
       </FormColumns>

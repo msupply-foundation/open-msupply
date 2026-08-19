@@ -12,6 +12,7 @@ import {
 } from '../../../ui/elements/table/DataTable';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { useUrlQueryState } from '../../../list/urlQueryState';
+import { initialPageSize, rememberPageSize } from '../../../list/pageSize';
 import { Clinicians, type CliniciansVariables } from '../clinicians.generated';
 import {
   buildVariables,
@@ -32,8 +33,10 @@ import {
 
 const CliniciansList: Component = () => {
   const params = useParams<{ storeId: string }>();
-  const { query, setQuery } =
-    useUrlQueryState<CliniciansListState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<CliniciansListState>({
+    ...DEFAULT_STATE,
+    first: initialPageSize(),
+  });
   const tableConfig = createTableConfig({ tableId: 'clinician-list' });
 
   const variables = createMemo<CliniciansVariables>(() =>
@@ -105,11 +108,9 @@ const CliniciansList: Component = () => {
       fillBody
       header={
         <Header>
-          {/* Dispensary / Clinicians (ui-surface › layout). No page actions —
-              read-only vertical (OMS-FUN-DIS-004.23). */}
-          <Breadcrumb
-            crumbs={[{ label: t('dispensary') }, { label: t('clinicians') }]}
-          />
+          {/* Clinicians (ui-surface › layout). No page actions — read-only
+              vertical (OMS-FUN-DIS-004.23). */}
+          <Breadcrumb crumbs={[{ label: t('clinicians') }]} />
         </Header>
       }
     >
@@ -131,7 +132,10 @@ const CliniciansList: Component = () => {
           pageSize: query().first,
           total: totalCount(),
           onOffsetChange: offset => setQuery({ ...query(), offset }),
-          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+          onPageSizeChange: first => {
+            rememberPageSize(first);
+            setQuery({ ...query(), first, offset: 0 });
+          },
         }}
       />
     </Page>

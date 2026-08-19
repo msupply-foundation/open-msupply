@@ -13,6 +13,13 @@ import { SelectReportModal } from '../../../../domain/reports';
 export interface ExportPrintActionProps {
   /** The return the reports render against. */
   returnId: string;
+  /**
+   * This is the header cluster's leading AVAILABLE action — Add item is hidden,
+   * so the return is read-only. It then carries the region's single primary
+   * emphasis; alongside Add item it steps back to secondary
+   * (ui-standards/controls.md — one primary action per region).
+   */
+  leadingAction?: boolean;
 }
 
 export const ExportPrintAction: Component<ExportPrintActionProps> = props => {
@@ -20,9 +27,9 @@ export const ExportPrintAction: Component<ExportPrintActionProps> = props => {
   return (
     <>
       <Button
-        variant="secondary"
+        variant={props.leadingAction ? 'primary' : 'secondary'}
         icon={<PrinterIcon />}
-        data-testid="export-print-button"
+        data-testid="export-or-print-button"
         onClick={() => setOpen(true)}
       >
         {t('button.export-or-print')}

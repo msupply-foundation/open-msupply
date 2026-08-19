@@ -3,7 +3,8 @@ import { t, tPlural } from '../../../../intl';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
-import { MinusCircleIcon, XCircleIcon } from '../../../../ui/icons';
+import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
+import { MinusCircleIcon } from '../../../../ui/icons';
 import { runInboundBatch } from '../inboundShipmentUpdate';
 import type { LineActionProps } from './DeleteLinesAction';
 
@@ -44,7 +45,7 @@ const Body = (props: LineActionProps & { onClose: () => void }) => {
         .selectedIds()
         .map(id => ({ id, numberOfPacks: 0 })),
     });
-    if (!outcome) return props.onClose();
+    if (!outcome) return setPhase('confirm'); // handled globally
     if (outcome.errors.size > 0) {
       props.onError(outcome.errors);
       setErrorMessage([...outcome.errors.values()][0]);
@@ -75,27 +76,27 @@ const Body = (props: LineActionProps & { onClose: () => void }) => {
           fallback={
             <>
               <Show when={phase() === 'confirm'}>
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
+                <CancelButton
+                  data-testid="dialog-button-cancel"
                   onClick={props.onClose}
-                >
-                  {t('button.cancel')}
-                </Button>
+                />
               </Show>
               <Button
-                variant="secondary"
+                variant="primary"
+                confirms="plain"
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'working'}
                 onClick={() => void run()}
               >
-                {t('button.ok')}
+                {t('button.zero-line-quantity')}
               </Button>
             </>
           }
         >
           <Match when={phase() === 'error'}>
-            <Button onClick={props.onClose}>{t('button.close')}</Button>
+            <Button confirms="plain" onClick={props.onClose}>
+              {t('button.close')}
+            </Button>
           </Match>
         </Switch>
       }

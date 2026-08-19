@@ -67,9 +67,9 @@
   color: var(--primary-contrast);
   pointer-events: none;
   transition:
-    background-color 120ms ease,
-    border-color 120ms ease,
-    box-shadow 120ms ease;
+    background-color var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease;
 }
 
 /* Both glyphs are stacked in the grid's single cell; opacity picks one. */
@@ -131,10 +131,4 @@
    composed field looks identical with no double-fade (see Checkbox.module.css). */
 .input:disabled + .box {
   opacity: var(--disabled-opacity);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .box {
-    transition: none;
-  }
 }

@@ -1,12 +1,16 @@
-import { For, Show, createSignal } from 'solid-js';
+import { For, Show, createMemo, createSignal } from 'solid-js';
 import { createStore, reconcile } from 'solid-js/store';
 import { t } from '../../intl';
 import { EmptyState } from '../../ui/elements/feedback/EmptyState';
 import { Spinner } from '../../ui/elements/feedback/Spinner';
-import { Button } from '../../ui/elements/buttons/Button';
+import { SaveButton } from '../../ui/elements/buttons/StandardButtons';
 import { ConfirmDialog } from '../../ui/elements/feedback/ConfirmDialog';
 import { ContentContainer } from '../../ui/layout/ContentContainer/ContentContainer';
+import { FormColumns } from '../../ui/layout/Form/FormColumns';
+import { FormColumn } from '../../ui/layout/Form/FormColumn';
 import { FormSection } from '../../ui/layout/Form/FormSection';
+import { Stack } from '../../ui/layout/Stack/Stack';
+import { HStack } from '../../ui/layout/Stack/HStack';
 import { createConfirmOnLeave } from '../confirmOnLeave';
 import { customFieldDefinitions } from './customFieldsResource';
 import { CustomFieldInput } from './CustomFieldInput';
@@ -15,15 +19,19 @@ import {
   parseCustomFields,
   partitionCustomFields,
   shownCustomFields,
+  splitIntoColumns,
+  type CustomFieldDef,
 } from './parse';
 
 // The editable custom-fields tab (spec/ui-standards/custom-fields › editing):
 // the scope's tab fields as the standard sectioned edit form — each field on
 // its own line with its LABEL ABOVE the control (matching the patient/stock
-// detail forms) — over a local draft, with an EXPLICIT Save and a
-// discard-on-leave guard. The mutation itself is the vertical's — `onSave`
-// receives the tab's keys patch-merged server-side — so this component owns only
-// the draft + save lifecycle, never a GraphQL call (kdd/state-management).
+// detail forms), the fields split down TWO COLUMNS exactly as the read-only
+// tab lays them out (CustomFieldsView) — over a local draft, with an EXPLICIT
+// Save and a discard-on-leave guard. The mutation itself is the vertical's —
+// `onSave` receives the tab's keys patch-merged server-side — so this component
+// owns only the draft + save lifecycle, never a GraphQL call
+// (kdd/state-management).
 //
 // `promoteToToolbar`: when the detail has a toolbar hosting PROMINENT fields
 // (the invoice verticals), the tab shows only the non-prominent fields; without
@@ -49,6 +57,22 @@ export const CustomFieldsEditTab = (props: {
       ? partitionCustomFields(defs, true).tab
       : shownCustomFields(defs);
   };
+  // The tab is empty for two different reasons, and they must not read alike:
+  // the scope configures no shown fields at all, or every one of them is
+  // PROMINENT and so lives in the toolbar above (spec › placement). Saying "No
+  // custom fields defined" in the second case contradicts the fields the user
+  // can see in the header — so name them, and the empty state points at where
+  // they went instead of asserting they exist somewhere.
+  const promotedToHeader = (): CustomFieldDef[] => {
+    if (!props.promoteToToolbar || tabDefs().length > 0) return [];
+    return partitionCustomFields(reader.noSuspense(), true).prominent;
+  };
+
+  // The two columns, split the same way the read-only tab splits them
+  // (splitIntoColumns — configured order read down column one, then two).
+  const columns = createMemo(() => splitIntoColumns(tabDefs()));
+  const firstColumn = () => columns()[0];
+  const secondColumn = () => columns()[1];
 
   const [draft, setDraft] = createStore<Record<string, unknown>>(
     parseCustomFields(props.values)
@@ -101,42 +125,58 @@ export const CustomFieldsEditTab = (props: {
         fallback={
           <EmptyState
             data-testid="nothing-here"
-            message={t('messages.no-custom-fields')}
+            message={
+              promotedToHeader().length > 0
+                ? t('messages.custom-fields-in-header', {
+                    fields: promotedToHeader()
+                      .map(def => def.name)
+                      .join(', '),
+                  })
+                : t('messages.no-custom-fields')
+            }
           />
         }
       >
         {/* `padded` supplies the body's edge padding: every host is a fillBody
             detail page (full-bleed for its line table), so the form tab has no
-            body padding to inherit. Capped to a single comfortable field-column
-            width (not the 58rem two-column measure) and centred, so text fields,
-            number/date fields and option pickers all line up at one width
-            instead of the text fields filling the whole measure. */}
-        <ContentContainer
-          padded
-          style={{ 'max-inline-size': 'var(--input-max-short)' }}
-        >
+            body padding to inherit. `form` is the two-column measure the
+            read-only tab and the sibling detail forms use, so every custom-
+            fields tab reads alike whichever surface renders it. */}
+        <ContentContainer size="form" padded>
           <FormSection title={t('label.custom-fields')}>
-            <For each={tabDefs()}>
-              {def => (
-                <CustomFieldInput
-                  field={parseCustomField(def)}
-                  value={draft[def.key]}
+            <FormColumns>
+              <FormColumn>
+                <FieldColumn
+                  fields={firstColumn()}
+                  draft={draft}
                   disabled={props.disabled}
-                  onChange={v => setField(def.key, v)}
+                  setField={setField}
                 />
-              )}
-            </For>
+              </FormColumn>
+              {/* Only when it has fields: an empty column would still claim its
+                  half of the row and squeeze the filled one. */}
+              <Show when={secondColumn().length > 0}>
+                <FormColumn>
+                  <FieldColumn
+                    fields={secondColumn()}
+                    draft={draft}
+                    disabled={props.disabled}
+                    setField={setField}
+                  />
+                </FormColumn>
+              </Show>
+            </FormColumns>
             <Show when={!props.disabled}>
-              <div>
-                <Button
-                  variant="primary"
+              {/* An HStack so the button shrinks to its own width instead of
+                  stretching across the section's stack. */}
+              <HStack>
+                <SaveButton
+                  collapsible={false}
                   disabled={!dirty()}
                   loading={saving()}
                   onClick={() => void save()}
-                >
-                  {t('button.save')}
-                </Button>
-              </div>
+                />
+              </HStack>
             </Show>
           </FormSection>
         </ContentContainer>
@@ -152,3 +192,26 @@ export const CustomFieldsEditTab = (props: {
     </Show>
   );
 };
+
+// One column's worth of fields, matching the read-only tab's FieldColumn.
+// FormColumn's own gap is the between-SECTIONS rhythm (--space-6), too airy for
+// individual fields, so the fields carry their own tighter stack.
+const FieldColumn = (props: {
+  fields: CustomFieldDef[];
+  draft: Record<string, unknown>;
+  disabled?: boolean;
+  setField: (key: string, value: unknown) => void;
+}) => (
+  <Stack gap="md">
+    <For each={props.fields}>
+      {def => (
+        <CustomFieldInput
+          field={parseCustomField(def)}
+          value={props.draft[def.key]}
+          disabled={props.disabled}
+          onChange={v => props.setField(def.key, v)}
+        />
+      )}
+    </For>
+  </Stack>
+);

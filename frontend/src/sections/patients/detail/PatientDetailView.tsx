@@ -1,14 +1,10 @@
 import {
-  createEffect,
-  createMemo,
   createResource,
   createSignal,
-  on,
   Show,
   Suspense,
   type Component,
 } from 'solid-js';
-import { createStore } from 'solid-js/store';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { t, localisedDate, getDisplayAge } from '../../../intl';
@@ -26,6 +22,8 @@ import {
   type TabDef,
 } from '../../../ui/elements/tabs/Tabs';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_N } from '../../../ui/utils/shortcuts';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
@@ -36,21 +34,14 @@ import { ActivityLogPanel } from '../../../domain/activityLog';
 import { createConfirmOnLeave } from '../../../domain/confirmOnLeave';
 import { genderLabel } from '../../../domain/patient';
 import { Patient, type PatientVariables } from './patient.generated';
-import { runUpdatePatient, runUpdatePatientCustomFields } from '../patientApi';
-import { CustomFieldsEditTab } from '../../../domain/customFields';
+import { runUpdatePatientCustomFields } from '../patientApi';
 import {
-  draftEquals,
-  emptyDraft,
-  isDraftValid,
-  patientFieldErrors,
-  seedDraft,
-  toUpdateInput,
-  type PatientDraft,
-} from './patientEdit';
-import { createCodeTakenCheck } from '../patientCode';
+  CustomFieldsEditTab,
+  EMPTY_FIELD_VALUE,
+} from '../../../domain/customFields';
+import { createPatientEditor } from './patientEditor';
 import { PatientDetailsForm } from './PatientDetailsForm';
 import { FormErrorSummary } from '../../../ui/layout/Form/FormErrorSummary';
-import { createFormValidation } from '../../../ui/layout/Form/formValidation';
 import { InsurancePanel } from './insurance/InsurancePanel';
 import { InsuranceModal } from './insurance/InsuranceModal';
 import {
@@ -64,7 +55,7 @@ import {
   fetchPatientProgramEnrolments,
   fetchPatientEncounters,
 } from './programs/programsApi';
-import { hasPermission, patientPreferences } from '../../../store/storeContext';
+import { patientPreferences } from '../../../store/storeContext';
 
 // S3 — the patient detail screen (spec/patients). Summary header + tabs
 // (Details / Programs / Encounters / Vaccinations / Insurance / Log). The
@@ -110,67 +101,55 @@ const PatientDetailView: Component = () => {
   );
   const node = () => data.latest ?? undefined;
 
-  // Local edit buffer, seeded from the fetched patient and re-seeded on id
-  // change / after a save (never on a same-id refetch, to keep focus).
-  const [edit, setEdit] = createStore<PatientDraft>(emptyDraft());
-  const [seededId, setSeededId] = createSignal<string>();
-  // Details-tab validation (AC-C3): required errors stay quiet until the user
-  // attempts Save, then surface per field and as the summary. Disarmed on every
-  // (re)seed — a fresh patient, or the post-save reseed, starts clean.
-  // Duplicate-code check (spec/patients § generating a code). Run on the save
-  // attempt below, store-scoped; skipped while the code is still the one the
-  // patient was loaded with, so a pre-existing collision doesn't block an
-  // unrelated edit.
-  const codeCheck = createCodeTakenCheck({
+  // Local edit buffer, duplicate-code check, validation, and full-replace save
+  // (spec/patients S3 Details) — shared with the picker's edit modal, so
+  // neither surface can drift on these rules (patientEditor.ts).
+  const editor = createPatientEditor({
     storeId: () => params.storeId,
-    code: () => edit.code,
-    savedCode: () => node()?.code ?? '',
-    patientId: () => node()?.id,
+    node,
   });
-  const validation = createFormValidation(() =>
-    patientFieldErrors(edit, codeCheck.taken())
-  );
-  createEffect(
-    on(node, n => {
-      if (n && n.id !== seededId()) {
-        setEdit(seedDraft(n));
-        setSeededId(n.id);
-        validation.reset();
-      }
-    })
-  );
-
-  const setField = <K extends keyof PatientDraft>(
-    key: K,
-    value: PatientDraft[K]
-  ) => setEdit(key, value);
-
-  const canMutate = () => hasPermission('PATIENT_MUTATE');
-
-  const isDirty = createMemo(() => {
-    const n = node();
-    if (!n || seededId() === undefined) return false;
-    return !draftEquals(edit, seedDraft(n));
-  });
-
-  const [saving, setSaving] = createSignal(false);
-  const [saveError, setSaveError] = createSignal('');
-  const [confirmSaveOpen, setConfirmSaveOpen] = createSignal(false);
 
   // Insurance (spec § insurance policies). The tab + add action gate on the
   // site having at least one configured (active) insurance provider; policies
   // load only once that surface is shown. Modal state: undefined = closed,
-  // { policy? } = open (a policy present ⇒ edit, absent ⇒ add). `.latest` reads
-  // keep these off the Suspense boundary the patient resource owns.
+  // { policy? } = open (a policy present ⇒ edit, absent ⇒ add).
+  //
+  // Every secondary resource below is read through a `state` GATE, never
+  // `.latest` alone: `.latest` SUSPENDS on a first pending read, and these are
+  // read inside tab panels, which Kobalte unmounts while inactive — so the
+  // first read happens on the tab click. Suspending then would tear down this
+  // whole screen (and detach an open dialog) mid-interaction
+  // (kdd/solid-reactivity-pitfalls › no remounts on interaction). Only the
+  // patient resource above reads suspending: that is the screen's first load,
+  // which has no live user state to lose.
   const [providers] = createResource(
     () => params.storeId,
     fetchInsuranceProviders
   );
-  const hasInsurance = () => (providers.latest ?? []).length > 0;
+  const providerList = () =>
+    providers.state === 'ready' || providers.state === 'refreshing'
+      ? (providers.latest ?? [])
+      : [];
+  const hasInsurance = () => providerList().length > 0;
 
   const [insuranceState, setInsuranceState] = createSignal<{
     policy?: InsurancePolicyFragment;
   }>();
+
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
+  // the SCREEN, once, for the two controls that trigger it (the app-bar button and
+  // the ghost button in the Insurance panel's empty slot); each carries
+  // `shortcut={ALT_N}` for its badge.
+  //
+  // Disabled — and so unlisted in the palette — except on the Insurance tab with
+  // the mutate permission, which is exactly when either control renders. KB-R2's
+  // "unclaimed only where the thing is absent": on the Details tab this screen has
+  // no add action, so nothing here answers the key.
+  createAddAction({
+    name: 'button.add-insurance',
+    run: () => setInsuranceState({}),
+    disabled: () => activeTab() !== 'insurance' || !editor.canMutate(),
+  });
 
   const [policiesData, { refetch: refetchPolicies }] = createResource(
     () =>
@@ -179,7 +158,10 @@ const PatientDetailView: Component = () => {
         : undefined,
     fetchInsurancePolicies
   );
-  const policies = () => policiesData.latest ?? [];
+  const policies = () =>
+    policiesData.state === 'ready' || policiesData.state === 'refreshing'
+      ? (policiesData.latest ?? [])
+      : [];
 
   // Program-module tabs (spec § program-module tabs): Programs / Encounters /
   // Vaccinations, read-only lists gated on the program module. Enrolments load
@@ -198,7 +180,10 @@ const PatientDetailView: Component = () => {
         : undefined,
     fetchPatientProgramEnrolments
   );
-  const enrolments = () => enrolmentsData.latest ?? [];
+  const enrolments = () =>
+    enrolmentsData.state === 'ready' || enrolmentsData.state === 'refreshing'
+      ? (enrolmentsData.latest ?? [])
+      : [];
   const immunisationEnrolments = () =>
     enrolments().filter(e => e.isImmunisationProgram);
 
@@ -213,66 +198,23 @@ const PatientDetailView: Component = () => {
         : undefined,
     fetchPatientEncounters
   );
-  const encounters = () => encountersData.latest ?? [];
+  const encounters = () =>
+    encountersData.state === 'ready' || encountersData.state === 'refreshing'
+      ? (encountersData.latest ?? [])
+      : [];
 
   const openEncounter = (encounter: { id: string }) =>
     navigate(`/${params.storeId}/dispensary/encounter/${encounter.id}`);
 
-  // Full-replace edit (AC-E2): toUpdateInput sends every field. On success,
-  // re-seed from the refreshed record (name is recomputed server-side) by
-  // clearing seededId so the seed effect re-runs, and refetch.
-  const doSave = async () => {
-    const n = node();
-    if (!n || !isDraftValid(edit) || saving()) return;
-    setSaving(true);
-    const outcome = await runUpdatePatient(
-      params.storeId,
-      toUpdateInput(n.id, edit)
-    );
-    setSaving(false);
-    setConfirmSaveOpen(false);
-    if (!outcome) return; // handled globally
-    if (outcome.kind === 'error') {
-      setSaveError(outcome.message);
-      return;
-    }
-    setSaveError('');
-    setSeededId(undefined);
-    void refetch();
-  };
-
-  // Save click: arm validation first, so an invalid form reveals its errors
-  // (per field + summary) instead of silently doing nothing; only a valid form
-  // opens the confirmation prompt (AC-E1).
-  //
-  // The duplicate-code check is the one rule that needs the server, so it runs
-  // here rather than in patientFieldErrors — borrowing the `saving` window so the
-  // Save button shows it working and a second click can't start a second check.
-  // A clash leaves the prompt closed and the error on the field (DIS-02 `.57`).
-  const attemptSave = async () => {
-    validation.arm();
-    if (!validation.valid() || saving()) return;
-    setSaving(true);
-    const taken = await codeCheck.check();
-    setSaving(false);
-    if (taken) return;
-    setConfirmSaveOpen(true);
-  };
-
   const leave = () => navigate(`/${params.storeId}/dispensary/patients`);
-
-  // Re-seed the edit buffer from the fetched patient, making the form pristine.
-  const resetDraft = () => {
-    const n = node();
-    if (!n) return;
-    setEdit(seedDraft(n));
-    validation.reset();
-  };
 
   // Discard prompt on any leave from a dirty form (spec § patient edit form):
   // route change, tab switch, browser back, reload / tab close. onDiscard
   // resets the draft so a tab switch — which stays mounted — is truly cleared.
-  const leaveGuard = createConfirmOnLeave({ isDirty, onDiscard: resetDraft });
+  const leaveGuard = createConfirmOnLeave({
+    isDirty: editor.isDirty,
+    onDiscard: editor.resetDraft,
+  });
 
   const displayName = () => node()?.name || t('label.new-patient');
 
@@ -318,7 +260,7 @@ const PatientDetailView: Component = () => {
   ];
 
   const dobDisplay = (n: NonNullable<ReturnType<typeof node>>) => {
-    if (!n.dateOfBirth) return '—';
+    if (!n.dateOfBirth) return EMPTY_FIELD_VALUE;
     const date = localisedDate(n.dateOfBirth);
     const age = getDisplayAge(n.dateOfBirth);
     return age ? `${date} (${t('label.age')}: ${age})` : date;
@@ -339,10 +281,13 @@ const PatientDetailView: Component = () => {
                       configured + patient-mutate; opens the modal in add mode.
                       (The other-vertical program create actions share this slot
                       once built.) */}
-                  <Show when={activeTab() === 'insurance' && canMutate()}>
+                  <Show
+                    when={activeTab() === 'insurance' && editor.canMutate()}
+                  >
                     <HeaderButtons>
                       <Button
                         icon={<PlusCircleIcon />}
+                        shortcut={ALT_N}
                         data-testid="add-insurance-header-button"
                         onClick={() => setInsuranceState({})}
                       >
@@ -365,7 +310,11 @@ const PatientDetailView: Component = () => {
                       variant="field"
                       size="small"
                     >
-                      {n().code}
+                      {/* A dash, never blank space: beside a label, blank reads
+                          as a rendering fault (ui-standards/detail-views §
+                          never-editable fields). A patient retrieved without a
+                          code is the case that gets here. */}
+                      {n().code || '—'}
                     </LabelledValue>
                     <LabelledValue
                       label={t('label.gender')}
@@ -374,7 +323,7 @@ const PatientDetailView: Component = () => {
                     >
                       {(() => {
                         const g = n().gender;
-                        return g ? genderLabel(g) : '—';
+                        return g ? genderLabel(g) : EMPTY_FIELD_VALUE;
                       })()}
                     </LabelledValue>
                     <LabelledValue
@@ -398,15 +347,17 @@ const PatientDetailView: Component = () => {
                         data-testid="cancel-button"
                         onClick={leave}
                       >
-                        {isDirty() ? t('button.cancel') : t('button.close')}
+                        {editor.isDirty()
+                          ? t('button.cancel')
+                          : t('button.close')}
                       </Button>
-                      <Show when={canMutate()}>
+                      <Show when={editor.canMutate()}>
                         <Button
                           icon={<SaveIcon />}
                           data-testid="save-button"
-                          loading={saving()}
-                          disabled={!isDirty() || saving()}
-                          onClick={() => void attemptSave()}
+                          loading={editor.saving()}
+                          disabled={!editor.isDirty() || editor.saving()}
+                          onClick={() => void editor.attemptSave()}
                         >
                           {t('button.save')}
                         </Button>
@@ -419,27 +370,26 @@ const PatientDetailView: Component = () => {
               <TabPanel value="details">
                 {/* fillBody strips the body's edge padding (so the Log table
                     fills the region); the Details form is a padded, centred,
-                    width-capped measure of its own (ui-standards/detail-views
-                    → detail form). */}
-                <div style={{ padding: 'var(--space-5)' }}>
-                  <ContentContainer size="form">
-                    <Show when={saveError()}>
-                      <Alert severity="error">{saveError()}</Alert>
-                    </Show>
-                    <PatientDetailsForm
-                      storeId={params.storeId}
-                      patientId={params.patientId}
-                      draft={edit}
-                      setField={setField}
-                      disabled={!canMutate()}
-                      errorFor={validation.errorFor}
-                    />
-                    <FormErrorSummary
-                      errors={validation.visible()}
-                      testId="patient-detail-error-summary"
-                    />
-                  </ContentContainer>
-                </div>
+                    width-capped measure of its own — which is exactly what
+                    ContentContainer's `padded` supplies (ui-standards/
+                    detail-views → detail form). */}
+                <ContentContainer size="form" padded>
+                  <Show when={editor.saveError()}>
+                    <Alert severity="error">{editor.saveError()}</Alert>
+                  </Show>
+                  <PatientDetailsForm
+                    storeId={params.storeId}
+                    patientId={params.patientId}
+                    draft={editor.edit}
+                    setField={editor.setField}
+                    disabled={!editor.canMutate()}
+                    errorFor={editor.validation.errorFor}
+                  />
+                  <FormErrorSummary
+                    errors={editor.validation.visible()}
+                    testId="patient-detail-error-summary"
+                  />
+                </ContentContainer>
               </TabPanel>
               <Show when={hasProgramModule()}>
                 {/* Read-only program-module lists. Programs + Vaccinations
@@ -479,7 +429,7 @@ const PatientDetailView: Component = () => {
                   <InsurancePanel
                     policies={policies()}
                     loading={policiesData.loading}
-                    disabled={!canMutate()}
+                    disabled={!editor.canMutate()}
                     onAdd={() => setInsuranceState({})}
                     onRowClick={policy => setInsuranceState({ policy })}
                   />
@@ -493,7 +443,7 @@ const PatientDetailView: Component = () => {
                     tab shows every configured field. */}
                 <CustomFieldsEditTab
                   scope="patient"
-                  disabled={!canMutate()}
+                  disabled={!editor.canMutate()}
                   values={n().customFields}
                   onSave={saveCustomFields}
                 />
@@ -508,18 +458,18 @@ const PatientDetailView: Component = () => {
                 storeId={params.storeId}
                 patientId={n().id}
                 patientName={n().name}
-                providers={providers.latest ?? []}
+                providers={providerList()}
                 policy={insuranceState()?.policy}
                 onSaved={() => void refetchPolicies()}
               />
 
               <ConfirmDialog
-                open={confirmSaveOpen()}
+                open={editor.confirmSaveOpen()}
                 title={t('heading.are-you-sure')}
                 message={t('messages.confirm-save-generic')}
                 confirmAction="save"
-                onConfirm={() => void doSave()}
-                onClose={() => setConfirmSaveOpen(false)}
+                onConfirm={() => void editor.doSave(() => void refetch())}
+                onClose={() => editor.setConfirmSaveOpen(false)}
               />
               <ConfirmDialog
                 open={leaveGuard.open()}

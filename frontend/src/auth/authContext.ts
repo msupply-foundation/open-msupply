@@ -1,4 +1,5 @@
 import { createSignal } from 'solid-js';
+import { sameFetchedValue } from '../typeHelpers';
 import { graphqlFetch, msSinceLastGqlCall } from '../api/graphql';
 import {
   AuthToken,
@@ -8,6 +9,7 @@ import {
   type UserInfoFragment,
 } from '../api/auth.generated';
 import { refetchStoreContext } from '../store/storeContext';
+import { recordLastLoginUsername } from '../appData';
 import { ACTIVITY_CHECK_INTERVAL_MS } from '../config';
 
 // All authentication context lives here: the user, the unauthenticated and
@@ -18,7 +20,15 @@ import { ACTIVITY_CHECK_INTERVAL_MS } from '../config';
 // (spec, Guard 1).
 export type AuthUser = UserInfoFragment;
 
-const [user, setUser] = createSignal<AuthUser | undefined>(undefined);
+// `equals: sameFetchedValue` — the post-sync refresh re-reads `me` on every
+// completed sync run (api/syncStore § onRunCompleted), and that response is
+// almost always identical to the one already held. Without the comparator each
+// re-read published a fresh object, waking every consumer of authUser and
+// rebuilding whatever their memos feed — including a table's column set, which
+// remounts every input in it.
+const [user, setUser] = createSignal<AuthUser | undefined>(undefined, {
+  equals: sameFetchedValue,
+});
 export const authUser = user;
 
 // A human display name for the current user: first + last name when set,
@@ -48,10 +58,10 @@ export const currentUserId = (): string | undefined => user()?.userId;
 // letting a reload bypass the re-login just demanded. We mirror the requirement
 // into sessionStorage (per-tab, cleared when the tab closes) so it survives a
 // reload; checkAuth re-arms the signal from it after startup re-establishes the
-// user. Cross-tab sharing is deliberately NOT done here (deferred — issue #646).
-// Access is guarded: sessionStorage is absent in the node test environment and
-// can throw (private-mode / disabled storage), and its loss only weakens the
-// reload guard — never break auth over it.
+// user. Cross-tab sharing is deliberately NOT done here (deferred — issue
+// #646). Access is guarded: sessionStorage is absent in the node test
+// environment and can throw (private-mode / disabled storage), and its loss
+// only weakens the reload guard — never break auth over it.
 const RELOGIN_STORAGE_KEY = 'oms.reLoginRequired';
 const persistReLoginRequired = (required: boolean): void => {
   try {
@@ -68,6 +78,18 @@ const reLoginRequiredWasPersisted = (): boolean => {
     return false;
   }
 };
+
+// Spec (Store Login, SL-8): the stores a user can actually log into. A store
+// the site has disabled is not one of them, so it is never listed, never
+// resolves from a URL segment, and never counts towards single-store
+// auto-entry. The front end owns this end to end — the server neither filters
+// `stores` nor refuses a login into a disabled one (contract § login errors).
+// Takes the user rather than reading the signal so callers stay reactive on
+// their own read of it.
+export const loginableStores = (
+  u: AuthUser | undefined
+): AuthUser['stores']['nodes'] =>
+  u?.stores.nodes.filter(store => !store.isDisabled) ?? [];
 
 // The store code for a store id, from the logged-in user's store list — the
 // list StoreGuardLayout itself resolves stores from, so any routed storeId is
@@ -130,14 +152,23 @@ export const checkAuth = async (): Promise<boolean> => {
 export type LoginResult =
   | { kind: 'success' }
   | { kind: 'error'; message: string }
-  // Globally handled failure (unexpected-error modal): the consumer stays in
-  // its loading phase.
+  // Globally handled failure (unexpected-error modal owns the description): the
+  // consumer shows no error of its own, but releases its submitting state so
+  // the form is usable again with what was typed (spec, Unexpected API errors).
   | { kind: 'pending' };
 
 export const login = async (
-  username: string,
+  typedUsername: string,
   password: string
 ): Promise<LoginResult> => {
+  // Spec (rules § authentication): leading and trailing whitespace around the
+  // username is not part of the credential — a name typed with a stray space,
+  // pasted, or autofilled with padding is the same user, and the server would
+  // otherwise reject it. Trimmed here, at the one place both login forms (the
+  // login page and the re-login modal) go through, so what is sent and what is
+  // remembered are the same trimmed name. The password is NEVER trimmed:
+  // whitespace in it is a real character of the secret.
+  const username = typedUsername.trim();
   const result = await graphqlFetch(AuthToken, { username, password });
   if (result.kind !== 'success') {
     return { kind: 'pending' };
@@ -146,9 +177,11 @@ export const login = async (
   if (auth.__typename === 'AuthTokenError') {
     return { kind: 'error', message: auth.error.description };
   }
-  // Spec (Store Login): a user with no stores cannot log in. The backend
-  // enforces this (NoSiteAccess); this is a defensive check only.
-  if (auth.user.stores.nodes.length === 0) {
+  // Spec (Store Login): a user with no store to log into cannot log in. The
+  // backend enforces the zero-store case (NoSiteAccess), so that half is
+  // defensive — but it counts store rows without regard to isDisabled, so the
+  // all-disabled case (SL-8) reaches us and is ours alone to refuse.
+  if (loginableStores(auth.user).length === 0) {
     return { kind: 'error', message: 'You have no stores to log into' };
   }
   setUser(auth.user);
@@ -156,17 +189,24 @@ export const login = async (
   setInactivityExpired(false);
   // A successful re-login discharges the persisted requirement (D69).
   persistReLoginRequired(false);
+  // Spec (Authentication): the device remembers the last username to get in, so
+  // the login page can prefill it. Only on success — a rejected name is not
+  // worth offering back — and never the password.
+  recordLastLoginUsername(username);
   return { kind: 'success' };
 };
 
 // Spec (Authentication Logic, Explicit logout): the backend clears the session
 // cookie; clearing the user presents the login page. Unlike unexpected logout,
 // no re-login modal. The local session ends regardless of the server response.
+// The remembered username is deliberately NOT cleared — logout ends the
+// session, not the device's memory of who was here (spec § Authentication).
 export const logout = async (): Promise<void> => {
   await graphqlFetch(Logout, {});
   clearUnauthenticated();
   setInactivityExpired(false);
-  // An explicit logout ends the session — nothing is owed on the next load (D69).
+  // An explicit logout ends the session — nothing is owed on the next load
+  // (D69).
   persistReLoginRequired(false);
   refetchStoreContext(undefined);
   setUser(undefined);

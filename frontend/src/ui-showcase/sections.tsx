@@ -12,6 +12,7 @@ import { ButtonsShowcase, buttonsMetadata } from './ButtonsShowcase';
 import { InputsShowcase, inputsMetadata } from './InputsShowcase';
 import { SelectorsShowcase, selectorsMetadata } from './SelectorsShowcase';
 import { FeedbackShowcase, feedbackMetadata } from './FeedbackShowcase';
+import { KeyboardShowcase, keyboardMetadata } from './KeyboardShowcase';
 import { ProgressShowcase, progressMetadata } from './ProgressShowcase';
 import { DialogShowcase, dialogMetadata } from './DialogShowcase';
 import { DisplayShowcase, displayMetadata } from './DisplayShowcase';
@@ -148,6 +149,13 @@ export const sections: SectionDef[] = [
     label: 'Feedback',
     component: FeedbackShowcase,
     metadata: feedbackMetadata,
+    category: 'components',
+  },
+  {
+    id: 'keyboard',
+    label: 'Keyboard',
+    component: KeyboardShowcase,
+    metadata: keyboardMetadata,
     category: 'components',
   },
   {

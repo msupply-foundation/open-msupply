@@ -1,7 +1,7 @@
 // Sync-modal status derivations — pure functions over the raw
 // SyncStatusFragment. The substrate exposes the raw fragment; deriving what a
 // surface DISPLAYS (the phase-visibility matrix, the status-line precedence,
-// the duration decomposition, the indicator badge) is this vertical's job
+// the duration decomposition, the footer status line) is this vertical's job
 // (spec/sync-modal/contract.md § Substrate). No framework/UI here, so every
 // rule below is unit-testable (spec/sync-modal/cases/ — OMS-REG-SYNC-03).
 
@@ -37,6 +37,10 @@ export type SyncStep = {
   finished: boolean;
   done?: number;
   total?: number;
+  // The wire's phase timestamps, passed through for the per-step elapsed time
+  // (ProgressList ticks the in-flight step's against a live clock).
+  startedAt?: string;
+  finishedAt?: string;
 };
 
 export type SyncError = { variant: SyncErrorVariant; fullError: string };
@@ -67,7 +71,7 @@ export type SyncOverview = {
   // last-successful notice shows.
   succeeded: boolean;
   // Staleness thresholds in DAYS since the last successful sync — consumed by
-  // the chrome indicator's badge colouring (spec/chrome § sync indicator).
+  // the chrome sync cell's status line (spec/chrome § sync status).
   warningThresholdDays: number;
   errorThresholdDays: number;
   // The most recent successful run, tracked independently of the latest run
@@ -88,9 +92,9 @@ type ProgressPart =
   | null
   | undefined;
 
-// SYNC-03.19: a count only where there is something to count — a phase with total
-// zero or unreported (e.g. a push with no records) shows none; a known total
-// with no done yet reads as 0 / N.
+// SYNC-03.19: a count only where there is something to count — a phase with
+// total zero or unreported (e.g. a push with no records) shows none; a known
+// total with no done yet reads as 0 / N.
 const step = (
   label: LocaleKey,
   kind: SyncStepKind,
@@ -102,6 +106,8 @@ const step = (
   finished: part?.finished != null,
   done: part?.total ? (part.done ?? 0) : undefined,
   total: part?.total || undefined,
+  startedAt: part?.started,
+  finishedAt: part?.finished ?? undefined,
 });
 
 // spec/sync-modal/rules.md § Phase visibility — the displayed phases, in
@@ -225,8 +231,8 @@ export const syncDurationParts = (
 export type DurationUnit = { key: LocaleKey; count: number };
 
 // The ordered unit list the notice composes: hours and minutes only when
-// non-zero, seconds ALWAYS present (SYNC-03.21). Each unit is a plural key + count;
-// the notice resolves them with tPlural at render.
+// non-zero, seconds ALWAYS present (SYNC-03.21). Each unit is a plural key +
+// count; the notice resolves them with tPlural at render.
 export const durationUnits = (parts: {
   hours: number;
   minutes: number;
@@ -240,8 +246,8 @@ export const durationUnits = (parts: {
   return units;
 };
 
-// SYNC-03.25: the Sync-now busy state holds from the click, through the gap before
-// the run's first status frame — a STALE pre-run tick carries the SAME
+// SYNC-03.25: the Sync-now busy state holds from the click, through the gap
+// before the run's first status frame — a STALE pre-run tick carries the SAME
 // signature and must not release it — until the run ends. A run has ended once
 // a NOT-syncing status arrives whose signature differs from the one captured at
 // the click: a new run always carries a fresh `summary.started`, so this
@@ -290,38 +296,45 @@ export const advanceTriggerState = (
   return syncRunSignature(status) !== prev.sig ? IDLE_TRIGGER : prev;
 };
 
-// spec/chrome § sync indicator — the badge model (framework-free; the factory
-// in syncIndicator.ts formats it into the chrome NavBadge). A non-connection
-// latest-run error flags immediately; otherwise the records-to-push count once
-// it reaches the display threshold, coloured by days since the last success.
-export type SyncBadgeModel =
-  | { kind: 'alert' }
-  | { kind: 'count'; count: number; tone: 'neutral' | 'warning' | 'error' }
-  | undefined;
+// spec/chrome § sync status — the footer cell's model (framework-free; the
+// factory in syncIndicator.ts resolves it into a label). ONE line of text, by
+// precedence, so the bar never has to arbitrate between two competing states.
+export type SyncFooterTone = 'neutral' | 'warning' | 'error';
 
-// Connection errors are deliberately tolerated (transient outages between
-// scheduled runs are normal); they surface only through staleness colouring,
-// never the alert glyph.
+// A union rather than one wide record, so the fields a state carries are the
+// fields it HAS — the label resolver narrows instead of coalescing away a
+// missing timestamp (kdd/type-safety).
+export type SyncFooterStatus =
+  // No status has arrived yet this session.
+  | { kind: 'waiting'; tone: 'neutral' }
+  // A run is in flight.
+  | { kind: 'syncing'; tone: 'neutral' }
+  // The latest run failed, or the site is critically stale.
+  | { kind: 'error'; tone: 'error' }
+  // The latest run could not reach the central server, and the site is not yet
+  // stale enough for the rungs below to speak for it.
+  | { kind: 'unreachable'; tone: 'warning' }
+  // No failure, but the last success is old enough to warn.
+  | { kind: 'warning'; tone: 'warning' }
+  // Idle and clean, with records waiting to push.
+  | { kind: 'records-queued'; tone: 'neutral'; count: number }
+  // Idle and clean; `finished` is the last successful run's finish stamp.
+  | { kind: 'synced'; tone: 'neutral'; finished: string }
+  // Idle and clean, and no run has ever succeeded.
+  | { kind: 'never-synced'; tone: 'neutral' };
+
+// Connection errors are deliberately NOT treated as outright failures —
+// transient outages between scheduled runs are normal, and a site on a flaky
+// link would otherwise sit permanently red. They get their own warning-level
+// line, and a sustained outage still escalates through the staleness rungs.
 const CONNECTION_VARIANT: SyncErrorVariant = 'CONNECTION_ERROR';
 
 const MS_PER_DAY = 86_400_000;
 
-export const syncIndicatorBadge = (
-  overview: SyncOverview | undefined,
-  pushQueueCount: number | undefined,
-  displayThreshold: number,
-  now: Date
-): SyncBadgeModel => {
-  if (!overview) return undefined;
-  if (overview.error && overview.error.variant !== CONNECTION_VARIANT)
-    return { kind: 'alert' };
-
-  const count = pushQueueCount ?? 0;
-  if (count <= 0 || count < displayThreshold) return undefined;
-
-  // No successful sync on record counts as zero days stale — a brand-new site
-  // must not open on an error-red badge.
-  const daysStale = overview.lastSuccessful
+// Whole days since the last successful run. No successful sync on record counts
+// as zero days stale — a brand-new site must not open showing an error.
+const daysSinceSuccess = (overview: SyncOverview, now: Date): number =>
+  overview.lastSuccessful
     ? Math.max(
         0,
         Math.floor(
@@ -332,11 +345,40 @@ export const syncIndicatorBadge = (
       )
     : 0;
 
-  const tone =
-    daysStale >= overview.errorThresholdDays
-      ? 'error'
-      : daysStale >= overview.warningThresholdDays
-        ? 'warning'
-        : 'neutral';
-  return { kind: 'count', count, tone };
+/*
+ * The footer sync cell's state (spec/chrome § sync status). Precedence, highest
+ * first: a run in flight, a failed run, staleness, an unreachable server, the
+ * queue, then the quiet "Synced …" line. Staleness escalates the WHOLE cell —
+ * it is the site's one standing sync signal, so an ageing site must say so even
+ * with an empty queue.
+ */
+export const syncFooterStatus = (
+  overview: SyncOverview | undefined,
+  pushQueueCount: number | undefined,
+  displayThreshold: number,
+  now: Date
+): SyncFooterStatus => {
+  if (!overview) return { kind: 'waiting', tone: 'neutral' };
+  if (overview.isSyncing) return { kind: 'syncing', tone: 'neutral' };
+  const unreachable = overview.error?.variant === CONNECTION_VARIANT;
+  if (overview.error && !unreachable) return { kind: 'error', tone: 'error' };
+
+  const daysStale = daysSinceSuccess(overview, now);
+  if (daysStale >= overview.errorThresholdDays)
+    return { kind: 'error', tone: 'error' };
+  if (daysStale >= overview.warningThresholdDays)
+    return { kind: 'warning', tone: 'warning' };
+  // A fresh outage: below both staleness rungs, so nothing above would have
+  // spoken for it and the cell would otherwise read "Synced …" while the modal
+  // beside it reports the failure.
+  if (unreachable) return { kind: 'unreachable', tone: 'warning' };
+
+  const count = pushQueueCount ?? 0;
+  if (count > 0 && count >= displayThreshold)
+    return { kind: 'records-queued', tone: 'neutral', count };
+
+  const finished = overview.lastSuccessful?.finished;
+  return finished
+    ? { kind: 'synced', tone: 'neutral', finished }
+    : { kind: 'never-synced', tone: 'neutral' };
 };

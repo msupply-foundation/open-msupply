@@ -6,13 +6,29 @@
 # PaginationInput) so URL state maps straight onto them (kdd/type-safety).
 # linkedShipment distinguishes a transfer return from a manual one — it drives
 # which rows are read-only (spec/customer-returns/rules.md § manual vs transfer).
+#
+# The top-level `type` argument does BOTH jobs, so it is the only type pin here.
+# It selects the PERMISSION — the server authorises this read against
+# CustomerReturnQuery alone because it is named; omitted, it falls back to a
+# deprecated combined resource demanding all six invoice query permissions at
+# once. It also OVERWRITES `filter.type` server-side, so a `filter.type` sent
+# alongside is dead weight (spec/navigation/contract.md § wire traps). A literal,
+# not a variable: this query serves one screen pinned to one type, so no caller
+# can forget it — and forgetting it would now widen the rows, not just the
+# permission.
 query customerReturns(
   $storeId: String!
   $filter: InvoiceFilterInput
   $sort: [InvoiceSortInput!]
   $page: PaginationInput
 ) {
-  invoices(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {
+  invoices(
+    storeId: $storeId
+    filter: $filter
+    sort: $sort
+    page: $page
+    type: [CUSTOMER_RETURN]
+  ) {
     ... on InvoiceConnector {
       __typename
       totalCount
@@ -81,7 +97,7 @@ mutation updateCustomerReturnColour(
   }
 }
 
-# Bulk delete (spec/customer-returns/acceptance.md AC-D1/D2). There is no batch
+# Bulk delete (spec/customer-returns/cases OMS-REG-DIST-07.40/.41). There is no batch
 # mutation for customer returns — the list's bulk action runs one delete per
 # selected id. Every rejection (not editable, wrong store, …) is NON-typed: the
 # three declared error members are dead schema

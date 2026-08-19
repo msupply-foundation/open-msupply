@@ -13,11 +13,17 @@ export interface EmptyStateProps {
    */
   title?: string;
   /**
-   * Show the sprout illustration + heading. Default true. Pass false for a plain
-   * centred message (e.g. a loading fallback that reuses the same centred layout
-   * without the illustration + heading).
+   * Show the sprout illustration + heading. Default true. Pass false for a
+   * plain centred message (e.g. a loading fallback that reuses the same
+   * centred layout without the illustration + heading).
    */
   graphic?: boolean;
+  /**
+   * Replace the default NothingHereIcon with a bespoke illustration (the 404
+   * page's UnhappyMan). The element owns its own sizing; the heading and
+   * message render beneath it as usual.
+   */
+  illustration?: JSX.Element;
   /**
    * Optional call to action, rendered INLINE after the message (e.g. a "Create
    * a new one" ghost button) — same line, matching the current app.
@@ -29,11 +35,11 @@ export interface EmptyStateProps {
 
 /*
  * Empty state — the current app's NothingHere: a centred illustration, a
- * bold "Nothing here" heading, a quiet body line, and an optional call to action
- * (e.g. a "Create a new one" button) sitting INLINE after the message on the
- * same line. Used for an empty or filtered-to-nothing table (via DataTable's
- * `empty`), an unbuilt page, or an empty tab. Fills whatever container it's
- * given, so it sits centred in the available space.
+ * bold "Nothing here" heading, a quiet body line, and an optional call to
+ * action (e.g. a "Create a new one" button) sitting INLINE after the message
+ * on the same line. Used for an empty or filtered-to-nothing table (via
+ * DataTable's `empty`), an unbuilt page, or an empty tab. Fills whatever
+ * container it's given, so it sits centred in the available space.
  *
  * `graphic={false}` drops the illustration + heading for a plain centred
  * message — the loading fallback reuses this layout that way.
@@ -41,7 +47,7 @@ export interface EmptyStateProps {
 export const EmptyState = (props: EmptyStateProps) => (
   <div class={styles.empty} data-testid={props['data-testid']}>
     <Show when={props.graphic !== false}>
-      <NothingHereIcon class={styles.graphic} />
+      {props.illustration ?? <NothingHereIcon class={styles.graphic} />}
       <p class={styles.title}>{props.title ?? t('error.no-results')}</p>
     </Show>
     <div class={styles.body}>

@@ -10,6 +10,7 @@ import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
+import { ALT_M } from '../../../ui/utils/shortcuts';
 import { CardGrid } from '../../../ui/layout/CardGrid/CardGrid';
 import { DashboardCard } from '../../../ui/elements/dashboard/DashboardCard';
 import { WidgetCard } from '../../../ui/elements/display/WidgetCard';
@@ -59,7 +60,9 @@ type CategoryDef = {
   titleKey: LocaleKey;
   subContexts: readonly string[];
   gate: CategoryGate;
-  /** The category-heading icon (spec S1: headings carry the icon, cards none). */
+  /**
+   * The category-heading icon (spec S1: headings carry the icon, cards none).
+   */
   icon: () => JSX.Element;
 };
 
@@ -246,6 +249,9 @@ const ReportsPage: Component = () => {
               <Button
                 variant="secondary"
                 icon={<SidebarIcon />}
+                // createSidePanelOpen registers Alt+M; this is the control that
+                // advertises it (ui-surface S2).
+                shortcut={ALT_M}
                 onClick={() => setPanelOpen(true)}
               >
                 {t('button.more')}

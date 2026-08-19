@@ -19,7 +19,7 @@ import { isRtl, locale, type LocaleKey } from '../intl';
 /*
  * Storybook shell: the showcase dogfoods the REAL app chrome — it renders the
  * library's own <AppShell> (docked MenuBar + the orange app footer with its
- * store / user / language cells) wrapping a <Page> whose header is the real
+ * store / user / sync cells) wrapping a <Page> whose header is the real
  * <Header>, so a showcase view is composed EXACTLY like an app page and only
  * the body content differs. AppShell takes the section registry as its nav
  * model (its `upper` override); the footer's store/user cells are inert demo
@@ -154,6 +154,15 @@ export function ShowcaseApp() {
     return Icon ? <Dynamic component={Icon} /> : undefined;
   });
 
+  // A fake sync run, so the footer cell's animated glyph can be seen here.
+  const [demoSyncing, setDemoSyncing] = createSignal(false);
+  let demoSyncTimer: number | undefined;
+  const runDemoSync = () => {
+    setDemoSyncing(true);
+    demoSyncTimer = window.setTimeout(() => setDemoSyncing(false), 3_000);
+  };
+  onCleanup(() => clearTimeout(demoSyncTimer));
+
   return (
     <AppShell
       // The showcase's own menu (section registry) replaces the app's navModel;
@@ -162,10 +171,22 @@ export function ShowcaseApp() {
       selected={selectedLeaf()}
       onNavigate={select}
       // The footer's store/user cells are inert demo placeholders — there is no
-      // store or session in the standalone showcase; the language cell is live.
+      // store or session in the standalone showcase. The sync cell is the one
+      // exception: it has real state to show off (the glyph's in-flight
+      // animation), so "Sync now" runs a fake three-second run.
       storeName="Demo store"
       onStoreClick={() => {}}
+      syncStatus={{
+        label: demoSyncing() ? 'Synchronising…' : 'Synced 3 minutes ago',
+        tone: 'neutral',
+      }}
+      syncing={demoSyncing()}
+      onSyncNow={runDemoSync}
+      onSyncDetails={() => {}}
       username="Developer"
+      displayName="Dev Eloper"
+      email="dev.eloper@msupply.foundation"
+      jobTitle="Product manager"
       onLogout={() => {}}
     >
       {/* A `fill` section (Table) is a real full-height page that composes its

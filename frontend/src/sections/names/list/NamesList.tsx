@@ -17,6 +17,7 @@ import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
 import { HomeIcon } from '../../../ui/icons';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { useUrlQueryState } from '../../../list/urlQueryState';
+import { initialPageSize, rememberPageSize } from '../../../list/pageSize';
 import { Names } from '../names.generated';
 import type { NamesVariables } from '../names.generated';
 import {
@@ -43,12 +44,12 @@ import {
 
 // The shared Customer/Supplier list screen (spec/names S1/S2). The standard
 // list screen (spec/ui-standards/list-views) minus every write affordance: no
-// selection, no page actions, no bulk footer — read-only (AC-N16). The two lists
-// are one component differing only by `role` (relationship filter + custom-field
-// scope) and how a row opens (customer → modal in place; supplier → navigate),
-// which the caller supplies via onRowClick. Data access uses the fixed shape
-// (never-throwing graphqlFetch + resource signals, .latest non-suspending reads
-// — kdd/state-management, kdd/solid-reactivity-pitfalls).
+// selection, no page actions, no bulk footer — read-only (AC-N16). The two
+// lists are one component differing only by `role` (relationship filter +
+// custom-field scope) and how a row opens (customer → modal in place; supplier
+// → navigate), which the caller supplies via onRowClick. Data access uses the
+// fixed shape (never-throwing graphqlFetch + resource signals, .latest
+// non-suspending reads — kdd/state-management, kdd/solid-reactivity-pitfalls).
 
 export interface NamesListProps {
   role: Role;
@@ -64,32 +65,36 @@ export interface NamesListProps {
 
 export const NamesList: Component<NamesListProps> = props => {
   // storeId is guaranteed present: the section renders only inside
-  // StoreGuardLayout, which requires a resolved, authorised store before routing
-  // (AC-N17 — the list cannot be shown without an active store).
+  // StoreGuardLayout, which requires a resolved, authorised store before
+  // routing (AC-N17 — the list cannot be shown without an active store).
   const params = useParams<{ storeId: string }>();
-  const { query, setQuery } = useUrlQueryState<NamesListState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<NamesListState>({
+    ...DEFAULT_STATE,
+    first: initialPageSize(),
+  });
 
   const tableConfig = createTableConfig({ tableId: props.tableId });
 
   // Custom-field definitions for the role — the shared scope-keyed cache
   // (domain/customFields), loaded once per scope and read NON-SUSPENDING so a
-  // pending fetch never tears down the open list (kdd/solid-reactivity-pitfalls).
-  // Empty when the deployment configures none (AC-N18/N19: none configured ⇒ no
-  // columns and no custom-field filters).
+  // pending fetch never tears down the open list
+  // (kdd/solid-reactivity-pitfalls). Empty when the deployment configures none
+  // (AC-N18/N19: none configured ⇒ no columns and no custom-field filters).
   const cfReader = customFieldDefinitions(props.scope);
   const cfDefs = () => cfReader.noSuspense();
 
-  // The custom-field filter definitions, memoised so the Filter object identities
-  // are STABLE across filter edits: FilterBar's <For> keys chips by reference, so
-  // rebuilding this array on every filter change (customFieldFilters returns fresh
-  // objects) would remount the chips and drop input focus. The memo only re-runs
-  // when the underlying defs change (they load once per store/scope), never on an
-  // interaction (kdd/solid-reactivity-pitfalls: no remounts on interaction).
+  // The custom-field filter definitions, memoised so the Filter object
+  // identities are STABLE across filter edits: FilterBar's <For> keys chips by
+  // reference, so rebuilding this array on every filter change
+  // (customFieldFilters returns fresh objects) would remount the chips and drop
+  // input focus. The memo only re-runs when the underlying defs change (they
+  // load once per store/scope), never on an interaction
+  // (kdd/solid-reactivity-pitfalls: no remounts on interaction).
   const cfFilters = createMemo(() => customFieldFilters(cfDefs()));
 
   // GraphQL variables from URL state + the store in the path. The custom-field
-  // filter values (cf) become the dynamicFilter AST; role + type restriction are
-  // applied inside buildVariables. Serialised (below) as the resource key.
+  // filter values (cf) become the dynamicFilter AST; role + type restriction
+  // are applied inside buildVariables. Serialised (below) as the resource key.
   const variables = createMemo<NamesVariables>(() =>
     buildVariables({
       storeId: params.storeId,
@@ -226,7 +231,10 @@ export const NamesList: Component<NamesListProps> = props => {
           total: totalCount(),
           pageSizes: [...PAGE_SIZE_OPTIONS],
           onOffsetChange: offset => setQuery({ ...query(), offset }),
-          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+          onPageSizeChange: first => {
+            rememberPageSize(first);
+            setQuery({ ...query(), first, offset: 0 });
+          },
         }}
       />
     </Page>

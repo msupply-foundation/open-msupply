@@ -15,7 +15,10 @@ export interface DashboardCardProps {
    * icon-chip convention (decorative — the title carries the name).
    */
   icon?: JSX.Element;
-  /** Optional footer action (e.g. a create shortcut), pinned to the bottom-inline-end. */
+  /**
+   * Optional footer action (e.g. a create shortcut), pinned to the
+   * bottom-inline-end.
+   */
   footer?: JSX.Element;
   /** e2e testid — the widget's published id (e2e/TESTIDS.md § Dashboard). */
   testId?: string;

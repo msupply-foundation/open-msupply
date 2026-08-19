@@ -1,5 +1,4 @@
 import { For, Show, type Component } from 'solid-js';
-import { A } from '@solidjs/router';
 import { t, localisedDate } from '../../../intl';
 import { formatNumber } from '../../../intl/formatNumber';
 import { homeCurrency } from '../../../intl/currency';
@@ -8,9 +7,16 @@ import {
   SidePanelActions,
 } from '../../../ui/layout/SidePanel/SidePanel';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
+import { UserLabel } from '../../../ui/elements/typography/UserLabel';
+import { Text } from '../../../ui/elements/typography/Text';
+import { RecordLink } from '../../../ui/elements/typography/RecordLink';
 import { TextArea } from '../../../ui/elements/inputs/TextArea';
+import { Popover } from '../../../ui/elements/feedback/Popover';
 import { CopyToClipboardButton } from '../../../ui/elements/buttons/CopyToClipboardButton';
-import { ColourTagPicker } from '../../../ui/elements/selectors/ColourTag';
+import {
+  ColourTagDot,
+  ColourTagPicker,
+} from '../../../ui/elements/selectors/ColourTag';
 import { type DebouncedEdit } from '../../../domain/debouncedEdit';
 import {
   inboundShipmentHref,
@@ -20,7 +26,6 @@ import { approvalStatusLabel } from '../list/internalOrderStatus';
 import type { InternalOrderInfoFragment } from './internalOrderDetail.generated';
 import { type HeaderEditFields } from './InternalOrderToolbar';
 import { DeleteInternalOrderAction } from './actions/DeleteInternalOrderAction';
-import styles from './InternalOrderSidePanel.module.css';
 
 // The internal-order detail side panel (spec/internal-orders S5). Sections, in
 // order: Order info (approval, gated) · Program info (program orders) ·
@@ -115,22 +120,37 @@ export const InternalOrderSidePanel: Component<
         collapsible
       >
         <FieldRow label={t('label.entered-by')}>
-          <span>{props.node.user?.username ?? '—'}</span>
+          {/* The recorded user's name, a dash when none, an info tooltip with
+              their email when known (spec S5). */}
+          <UserLabel
+            username={props.node.user?.username}
+            email={props.node.user?.email}
+            label={t('label.entered-by')}
+            testId="entered-by-field"
+          />
         </FieldRow>
         <FieldRow label={t('label.created')}>
           <span>{localisedDate(props.node.createdDatetime)}</span>
         </FieldRow>
         <FieldRow label={t('label.color')}>
-          <ColourTagPicker
-            colour={props.node.colour ?? null}
-            onSelect={colour => props.onSaveField({ colour })}
-          />
+          {/* The picker only while editable (spec S5 — colour + comment are
+              the two editable fields, disabled when read-only); a read-only
+              order shows the dot, as the list column does (AC-T1). */}
+          <Show
+            when={props.editable}
+            fallback={<ColourTagDot colour={props.node.colour ?? null} />}
+          >
+            <ColourTagPicker
+              colour={props.node.colour ?? null}
+              variant="field"
+              onSelect={colour => props.onSaveField({ colour })}
+            />
+          </Show>
         </FieldRow>
         <FieldRow label={t('heading.comment')}>
           <TextArea
             label={t('heading.comment')}
             hideLabel
-            width="full"
             data-testid="comment-field"
             value={props.edit.state.comment}
             disabled={!props.editable}
@@ -152,39 +172,63 @@ export const InternalOrderSidePanel: Component<
         >
           <For each={props.node.shipments.nodes}>
             {shipment => (
-              <FieldRow label={t('label.shipment')}>
-                <A
+              <Text variant="body">
+                {/* The label is a hover popover carrying the created-on / by-
+                    whom annotation (AC-RD1) — a real popover, not a native
+                    `title`, so it also opens on keyboard focus. The label (not
+                    the entry) triggers it because the number is itself a link
+                    — nesting one interactive in another is invalid. */}
+                <Popover
+                  trigger={t('label.shipment')}
+                  openOnHover
+                  placement="top"
+                >
+                  <p>
+                    {shipmentTooltip(
+                      shipment.createdDatetime,
+                      shipment.user?.username
+                    )}
+                  </p>
+                </Popover>{' '}
+                {/* A shipment reference is neutral — no `kind` tone. */}
+                <RecordLink
                   href={inboundShipmentHref(
                     props.storeId,
                     shipment.id,
                     scopeOf(shipment.purchaseOrderId)
                   )}
-                  class={styles.link}
-                  title={shipmentTooltip(
-                    shipment.createdDatetime,
-                    shipment.user?.username
-                  )}
+                  testId="fulfilling-shipment-link"
                 >
                   {`#${shipment.invoiceNumber}`}
-                </A>
-              </FieldRow>
+                </RecordLink>
+              </Text>
             )}
           </For>
         </Show>
         <Show when={props.showSourceLink && props.node.createdFromRequisition}>
           {source => (
-            <FieldRow label={t('label.created-from-requisition')}>
-              <A
+            <Text variant="body">
+              <Popover
+                trigger={t('label.created-from-requisition')}
+                openOnHover
+                placement="top"
+              >
+                <p>
+                  {shipmentTooltip(
+                    source().createdDatetime,
+                    source().user?.username
+                  )}
+                </p>
+              </Popover>{' '}
+              {/* A requisition reference wears the io kind tone. */}
+              <RecordLink
                 href={`/${props.storeId}/distribution/customer-requisition/${source().id}`}
-                class={styles.link}
-                title={shipmentTooltip(
-                  source().createdDatetime,
-                  source().user?.username
-                )}
+                kind="io"
+                testId="created-from-requisition-link"
               >
                 {`#${source().requisitionNumber}`}
-              </A>
-            </FieldRow>
+              </RecordLink>
+            </Text>
           )}
         </Show>
       </SidePanelSection>
@@ -197,7 +241,9 @@ export const InternalOrderSidePanel: Component<
           collapsible
         >
           <FieldRow label={t('heading.grand-total')}>
-            <strong>{money(grandTotal())}</strong>
+            <strong data-testid="grand-total-field">
+              {money(grandTotal())}
+            </strong>
           </FieldRow>
         </SidePanelSection>
       </Show>

@@ -6,17 +6,17 @@ import { t } from '../../../intl';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { createFocusTarget } from '../../../ui/utils/createFocusTarget';
 import { Alert } from '../../../ui/elements/feedback/Alert';
-import { Button } from '../../../ui/elements/buttons/Button';
-import { XCircleIcon } from '../../../ui/icons';
+import { CancelButton } from '../../../ui/elements/buttons/StandardButtons';
 import { NameSearch } from '../../../domain/name';
 import { InsertCustomerReturn } from './customerReturns.generated';
 
 // S2 — customer selection (spec/customer-returns/ui-surface.md): a modal over
 // the list holding a single customer lookup. Choosing a customer IMMEDIATELY
 // creates an empty NEW return and navigates to its detail — no second confirm
-// step (AC-C1). The two typed rejections (customer not visible / not a
-// customer) surface inline and the modal stays open with the lookup preserved
-// (AC-C2); anything non-typed went through the generic error path already.
+// step (OMS-REG-DIST-07.16). The two typed rejections (customer not visible /
+// not a customer) surface inline and the modal stays open with the lookup
+// preserved (OMS-REG-DIST-07.17); anything non-typed went through the generic
+// error path already.
 
 export interface NewReturnModalProps {
   open: boolean;
@@ -82,15 +82,20 @@ const Body: Component<{ onClose: () => void }> = props => {
       dismissable={!creating()}
       testId="customer-search-modal"
       title={t('label.customer-name')}
+      widthRem={36}
+      // Room for the lookup's open listbox inside the dialog (#1029): header +
+      // field + the listbox's 18rem cap + padding, measured live. Sized as the
+      // outbound CustomerSearchModal, this picker's twin.
+      minBodyHeightRem={27}
+      // The standard, icon-less dialog dismiss (D55).
       actions={
-        <Button
-          variant="secondary"
-          icon={<XCircleIcon />}
+        // Cancel is the only footer action — choosing a customer from the list
+        // is this dialog's confirm, and Enter there belongs to the picker
+        // (KB-E1). So nothing claims `plain` and Enter confirms nothing.
+        <CancelButton
           data-testid="dialog-button-cancel"
           onClick={props.onClose}
-        >
-          {t('button.cancel')}
-        </Button>
+        />
       }
     >
       <NameSearch

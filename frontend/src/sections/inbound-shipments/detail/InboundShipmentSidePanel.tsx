@@ -13,11 +13,13 @@ import { graphqlFetch } from '../../../api/graphql';
 import {
   SidePanelSection,
   SidePanelActions,
+  SidePanelSubheading,
 } from '../../../ui/layout/SidePanel/SidePanel';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
+import { UserLabel } from '../../../ui/elements/typography/UserLabel';
 import { TextArea } from '../../../ui/elements/inputs/TextArea';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
-import { Button } from '../../../ui/elements/buttons/Button';
+import { IconButton } from '../../../ui/elements/buttons/IconButton';
 import { CopyToClipboardButton } from '../../../ui/elements/buttons/CopyToClipboardButton';
 import { ColourTagPicker } from '../../../ui/elements/selectors/ColourTag';
 import { EditIcon } from '../../../ui/icons';
@@ -212,26 +214,33 @@ export const InboundShipmentSidePanel: Component<
           <FieldRow label={t('label.donor')}>
             <span
               style={{
-                display: 'inline-flex',
+                display: 'flex',
                 gap: 'var(--space-2)',
                 'align-items': 'center',
+                'justify-content': 'space-between',
+                'inline-size': '100%',
               }}
             >
               <span>{props.node.defaultDonor?.name ?? t('label.none')}</span>
-              <Button
-                variant="secondary"
+              <IconButton
+                bordered
+                size="small"
                 icon={<EditIcon />}
+                label={t('label.edit')}
                 disabled={props.disabled}
                 data-testid="edit-donor-button"
                 onClick={() => setDonorOpen(true)}
-              >
-                {t('label.edit')}
-              </Button>
+              />
             </span>
           </FieldRow>
         </Show>
         <FieldRow label={t('label.edited-by')}>
-          <span>{props.node.user?.username ?? '—'}</span>
+          <UserLabel
+            username={props.node.user?.username}
+            email={props.node.user?.email}
+            label={t('label.edited-by')}
+            testId="edited-by-field"
+          />
         </FieldRow>
         <FieldRow label={t('label.created')}>
           <span>{localisedDate(props.node.createdDatetime)}</span>
@@ -246,7 +255,6 @@ export const InboundShipmentSidePanel: Component<
           <TextArea
             label={t('label.comment')}
             hideLabel
-            width="full"
             data-testid="comment-field"
             value={props.edit.state.comment}
             disabled={props.disabled}
@@ -302,39 +310,28 @@ export const InboundShipmentSidePanel: Component<
       >
         {/* Stock charges: sub-total · tax (inline rate editor + amount, gated
             off when not editable or the stock sub-total is zero) · total. */}
-        <FieldRow label={t('heading.stock-charges')}>
-          <span />
-        </FieldRow>
+        <SidePanelSubheading>{t('heading.stock-charges')}</SidePanelSubheading>
         <FieldRow label={t('label.sub-total')}>
           <span>{money(pricing().stockTotalBeforeTax)}</span>
         </FieldRow>
         <FieldRow label={t('label.tax')}>
-          <span
-            style={{
-              display: 'inline-flex',
-              gap: 'var(--space-2)',
-              'align-items': 'center',
-            }}
-          >
-            <NumberField
-              label={t('label.tax')}
-              hideLabel
-              value={props.node.taxPercentage ?? 0}
-              min={0}
-              max={100}
-              decimalLimit={2}
-              endAdornment="%"
-              disabled={props.disabled || pricing().stockTotalBeforeTax === 0}
-              onChange={value =>
-                props.onSaveField({ tax: { percentage: value ?? 0 } })
-              }
-            />
-            <span>
-              {money(
-                pricing().stockTotalAfterTax - pricing().stockTotalBeforeTax
-              )}
-            </span>
-          </span>
+          <NumberField
+            label={t('label.tax')}
+            hideLabel
+            size="small"
+            value={props.node.taxPercentage ?? 0}
+            min={0}
+            max={100}
+            decimalLimit={2}
+            endAdornment="%"
+            disabled={props.disabled || pricing().stockTotalBeforeTax === 0}
+            helperText={money(
+              pricing().stockTotalAfterTax - pricing().stockTotalBeforeTax
+            )}
+            onChange={value =>
+              props.onSaveField({ tax: { percentage: value ?? 0 } })
+            }
+          />
         </FieldRow>
         <FieldRow label={t('label.total')}>
           <span>{money(pricing().stockTotalAfterTax)}</span>
@@ -343,17 +340,21 @@ export const InboundShipmentSidePanel: Component<
         {/* Service charges: an edit action opens the service-line modal; an
             itemised list, then sub-total · tax (inline editor + amount) ·
             total (spec S3 charges → service charges). */}
-        <FieldRow label={t('heading.service-charges')}>
-          <Button
-            variant="secondary"
-            icon={<EditIcon />}
-            disabled={props.disabled}
-            data-testid="edit-service-charges-button"
-            onClick={() => setServiceOpen(true)}
-          >
-            {t('label.edit')}
-          </Button>
-        </FieldRow>
+        <SidePanelSubheading
+          action={
+            <IconButton
+              bordered
+              size="small"
+              icon={<EditIcon />}
+              label={t('messages.edit-service-charges')}
+              disabled={props.disabled}
+              data-testid="edit-service-charges-button"
+              onClick={() => setServiceOpen(true)}
+            />
+          }
+        >
+          {t('heading.service-charges')}
+        </SidePanelSubheading>
         <For each={serviceLineRows()}>
           {line => (
             <FieldRow label={line.itemName}>
@@ -365,30 +366,21 @@ export const InboundShipmentSidePanel: Component<
           <span>{money(pricing().serviceTotalBeforeTax)}</span>
         </FieldRow>
         <FieldRow label={t('label.tax')}>
-          <span
-            style={{
-              display: 'inline-flex',
-              gap: 'var(--space-2)',
-              'align-items': 'center',
-            }}
-          >
-            <NumberField
-              label={t('label.tax')}
-              hideLabel
-              value={serviceRate()}
-              min={0}
-              max={100}
-              decimalLimit={2}
-              endAdornment="%"
-              disabled={props.disabled || pricing().serviceTotalBeforeTax === 0}
-              onChange={value => setServiceTax(value ?? 0)}
-            />
-            <span>
-              {money(
-                pricing().serviceTotalAfterTax - pricing().serviceTotalBeforeTax
-              )}
-            </span>
-          </span>
+          <NumberField
+            label={t('label.tax')}
+            hideLabel
+            size="small"
+            value={serviceRate()}
+            min={0}
+            max={100}
+            decimalLimit={2}
+            endAdornment="%"
+            disabled={props.disabled || pricing().serviceTotalBeforeTax === 0}
+            helperText={money(
+              pricing().serviceTotalAfterTax - pricing().serviceTotalBeforeTax
+            )}
+            onChange={value => setServiceTax(value ?? 0)}
+          />
         </FieldRow>
         <FieldRow label={t('label.total')}>
           <span>{money(pricing().serviceTotalAfterTax)}</span>
@@ -399,9 +391,11 @@ export const InboundShipmentSidePanel: Component<
         <FieldRow label={t('label.currency')}>
           <span
             style={{
-              display: 'inline-flex',
+              display: 'flex',
               gap: 'var(--space-2)',
               'align-items': 'center',
+              'justify-content': 'space-between',
+              'inline-size': '100%',
             }}
           >
             <span>
@@ -415,15 +409,15 @@ export const InboundShipmentSidePanel: Component<
                 @ {props.node.currencyRate}
               </Show>
             </span>
-            <Button
-              variant="secondary"
+            <IconButton
+              bordered
+              size="small"
               icon={<EditIcon />}
+              label={t('label.currency')}
               disabled={!canChangeCurrency()}
               data-testid="change-currency-button"
               onClick={() => setCurrencyOpen(true)}
-            >
-              {t('label.edit')}
-            </Button>
+            />
           </span>
         </FieldRow>
         <Show when={props.node.currency && !props.node.currency.isHomeCurrency}>

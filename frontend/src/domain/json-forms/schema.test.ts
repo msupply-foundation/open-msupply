@@ -410,6 +410,15 @@ describe('cleanArguments', () => {
   it('drops an unparseable number leftover like an empty', () => {
     expect(cleanArguments(fields, { monthsOverstock: '.' })).toEqual({});
   });
+
+  it('omits a cleared enum choice entirely (AC-R19 via AC-R8)', () => {
+    // Clearing an enum pick writes its key undefined in the form store; the
+    // submitted arguments must omit the key, not send an empty value.
+    const enumFields = parseArgumentSchema(itemListSchema);
+    expect(
+      cleanArguments(enumFields, { venCategory: undefined, sort: 'name' })
+    ).toEqual({ sort: 'name' });
+  });
 });
 
 // The Pending Encounters shape (real backend fixture, abridged): a required

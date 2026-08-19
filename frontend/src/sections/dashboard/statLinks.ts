@@ -1,15 +1,17 @@
 // Stat-link builders (spec/dashboard/rules.md § navigation correspondence,
-// OMS-REG-DB-01.55): every stat links into the list holding exactly the records it counts,
-// so the filter each link applies restates the count's definition. The
-// dashboard owns WHAT each stat filters by; the target list owns the URL
-// encoding — here that is the shared `?query=` JSON param (kdd/url-structure),
-// with the filter object conforming to the target list's generated GraphQL
-// filter input (kdd/type-safety: type-only imports of the target lists' own
-// filter types, so a drift in their contract stops compiling here).
+// OMS-REG-DB-01.55): every stat links into the list holding exactly the
+// records it counts, so the filter each link applies restates the count's
+// definition. The dashboard owns WHAT each stat filters by; the target list
+// owns the URL encoding — here that is the shared `?query=` JSON param
+// (kdd/url-structure), with the filter object conforming to the target list's
+// generated GraphQL filter input (kdd/type-safety: type-only imports of the
+// target lists' own filter types, so a drift in their contract stops compiling
+// here).
 //
-// Lists that don't exist yet (customer requisitions) get their registered
-// placeholder, unfiltered — they begin filtering once the list ships
-// (contract.md § navigation correspondence, OMS-REG-DB-01.57).
+// A list that doesn't exist yet gets its registered placeholder, unfiltered,
+// and begins filtering once the list ships (contract.md § navigation
+// correspondence, OMS-REG-DB-01.57) — no built-in stat is in that state now
+// that the requisitions list has shipped.
 //
 // Pure: `today` is injected so the window maths is unit-testable.
 
@@ -22,6 +24,7 @@ import {
 import type { InboundListFilter } from '@/sections/inbound-shipments/list/listFilters';
 import type { InternalOrderFilter } from '@/sections/internal-orders/list/listFilters';
 import type { OutboundFilter } from '@/sections/outbound-shipments/list/listFilters';
+import type { RequisitionFilter } from '@/sections/requisitions/list/listFilters';
 import type { StockFilter } from '@/sections/stock/list/listFilters';
 import type { ItemsListFilter } from '@/sections/items/list/itemFilter';
 
@@ -34,7 +37,8 @@ export const DAYS_TILL_EXPIRED = 30;
 // FilterDateRange): 'dateTime' widens each day to inclusive UTC instants via
 // the shared conversion (#456); 'date' passes the plain ISO day through
 // (`Date` scalar). Open-ended when a bound is null. So every dated stat link
-// declares its field's scalar and gets the right conversion — none hand-rolls it.
+// declares its field's scalar and gets the right conversion — none hand-rolls
+// it.
 const dayRange = (
   type: 'date' | 'dateTime',
   from: Date | null,
@@ -116,10 +120,11 @@ export const internalOrderListHref = (storeId: string): string =>
   listHref(storeId, 'replenishment/internal-order');
 
 // Draft = request requisitions still in Draft (rules.md § internal orders;
-// OMS-REG-DB-01.40) — the internal-order list's single-select status filter.
+// OMS-REG-DB-01.40) — the internal-order list's multi-select status filter,
+// one value ticked.
 export const internalOrderDraftHref = (storeId: string): string =>
   listHref(storeId, 'replenishment/internal-order', {
-    status: { equalTo: 'DRAFT' },
+    status: { equalAny: ['DRAFT'] },
   } satisfies InternalOrderFilter);
 
 // ── Distribution ─────────────────────────────────────────────────────────────
@@ -127,15 +132,36 @@ export const internalOrderDraftHref = (storeId: string): string =>
 export const outboundListHref = (storeId: string): string =>
   listHref(storeId, 'distribution/outbound-shipment');
 
-// Not shipped = New/Allocated/Picked (rules.md § outbound shipments; OMS-REG-DB-01.37).
+// Not shipped = New/Allocated/Picked (rules.md § outbound shipments;
+// OMS-REG-DB-01.37).
 export const outboundNotShippedHref = (storeId: string): string =>
   listHref(storeId, 'distribution/outbound-shipment', {
     status: { equalAny: ['NEW', 'ALLOCATED', 'PICKED'] },
   } satisfies OutboundFilter);
 
-// Customer-requisition list: registered placeholder (vertical not built yet).
+// Customer requisitions — the requisitions list (response requisitions). Its
+// own filter contract, unremapped; `type` is pinned to RESPONSE by the list
+// itself, so no link carries it. The panel title opens the list unfiltered.
 export const customerRequisitionListHref = (storeId: string): string =>
   listHref(storeId, 'distribution/customer-requisition');
+
+// New = response requisitions in New (rules.md § customer requisitions;
+// OMS-REG-DB-01.38, .59) — the list's multi-select status filter, one value
+// ticked.
+export const customerRequisitionNewHref = (storeId: string): string =>
+  listHref(storeId, 'distribution/customer-requisition', {
+    status: { equalAny: ['NEW'] },
+  } satisfies RequisitionFilter);
+
+// Emergency (new) = the New set narrowed to emergency — a subset of the stat
+// above (OMS-REG-DB-01.39, .59). Both the stat and the list's `isEmergency`
+// control are gated by the same program-module preference, so this link never
+// carries a filter the target list would hide.
+export const customerRequisitionEmergencyHref = (storeId: string): string =>
+  listHref(storeId, 'distribution/customer-requisition', {
+    status: { equalAny: ['NEW'] },
+    isEmergency: true,
+  } satisfies RequisitionFilter);
 
 // ── Inventory ────────────────────────────────────────────────────────────────
 
@@ -160,7 +186,8 @@ export const expiringSoonHref = (storeId: string, today: Date): string =>
     ),
   } satisfies StockFilter);
 
-// Next three months: the fixed 30–89-day slice (OMS-REG-DB-01.44 — the 90th day excluded).
+// Next three months: the fixed 30–89-day slice (OMS-REG-DB-01.44 — the 90th
+// day excluded).
 export const expiringNextThreeMonthsHref = (
   storeId: string,
   today: Date
@@ -169,7 +196,8 @@ export const expiringNextThreeMonthsHref = (
     expiryDate: dayRange('date', addDays(today, 30), addDays(today, 89)),
   } satisfies StockFilter);
 
-// Between thresholds: today + first … today + second (whole days — OMS-REG-DB-01.45).
+// Between thresholds: today + first … today + second (whole days —
+// OMS-REG-DB-01.45).
 export const expiringBetweenThresholdsHref = (
   storeId: string,
   today: Date,
@@ -185,18 +213,19 @@ export const expiringBetweenThresholdsHref = (
   } satisfies StockFilter);
 
 // Item catalogue (spec/items). The stock-level stats link into this list
-// filtered to the records each counts (OMS-REG-DB-01.55). The dashboard conforms to the
-// list's OWN filter contract — the UI-side `ItemsListFilter` its
-// `useUrlQueryState` reads (`lens` / `atRisk` / min-max months-of-stock), which
-// the list expands to the wire `ItemFilterInput` itself. That vocabulary is the
-// list's, not contract.md's guessed `stockStatus` / `productsAtRiskOfBeingOutOfStock`
-// (candidate spec refinement — see the build report). Total items and the panel
-// title use the unfiltered catalogue.
+// filtered to the records each counts (OMS-REG-DB-01.55). The dashboard
+// conforms to the list's OWN filter contract — the UI-side `ItemsListFilter`
+// its `useUrlQueryState` reads (`lens` / `atRisk` / min-max months-of-stock),
+// which the list expands to the wire `ItemFilterInput` itself. That vocabulary
+// is the list's, not contract.md's guessed `stockStatus` /
+// `productsAtRiskOfBeingOutOfStock` (candidate spec refinement — see the build
+// report). Total items and the panel title use the unfiltered catalogue.
 
 export const itemCatalogueHref = (storeId: string): string =>
   listHref(storeId, 'catalogue/items');
 
-// Out of stock (recently used): zero on hand + recent consumption (OMS-REG-DB-01.48 count).
+// Out of stock (recently used): zero on hand + recent consumption
+// (OMS-REG-DB-01.48 count).
 export const itemsOutOfStockRecentlyUsedHref = (storeId: string): string =>
   listHref(storeId, 'catalogue/items', {
     lens: 'out-of-stock-recent',
@@ -214,30 +243,33 @@ export const itemsAtRiskHref = (storeId: string): string =>
     atRisk: 'at-risk',
   } satisfies ItemsListFilter);
 
-// Low stock: months of stock below the understock threshold (OMS-REG-DB-01.49 count).
+// Low stock: months of stock below the understock threshold (OMS-REG-DB-01.49
+// count).
 export const itemsLowStockHref = (
   storeId: string,
   understockMonths: number
 ): string =>
   listHref(storeId, 'catalogue/items', {
-    maxMonthsOfStock: understockMonths,
+    monthsOfStock: { to: understockMonths },
   } satisfies ItemsListFilter);
 
-// High stock: months of stock above the overstock threshold (OMS-REG-DB-01.50 count).
+// High stock: months of stock above the overstock threshold (OMS-REG-DB-01.50
+// count).
 export const itemsHighStockHref = (
   storeId: string,
   overstockMonths: number
 ): string =>
   listHref(storeId, 'catalogue/items', {
-    minMonthsOfStock: overstockMonths,
+    monthsOfStock: { from: overstockMonths },
   } satisfies ItemsListFilter);
 
-// Overstocked: months of stock above the over-stock-alert threshold (OMS-REG-DB-01.52
-// count) — a different threshold from high stock (rules § stock levels).
+// Overstocked: months of stock above the over-stock-alert threshold
+// (OMS-REG-DB-01.52 count) — a different threshold from high stock (rules §
+// stock levels).
 export const itemsOverstockedHref = (
   storeId: string,
   overstockAlertMonths: number
 ): string =>
   listHref(storeId, 'catalogue/items', {
-    minMonthsOfStock: overstockAlertMonths,
+    monthsOfStock: { from: overstockAlertMonths },
   } satisfies ItemsListFilter);

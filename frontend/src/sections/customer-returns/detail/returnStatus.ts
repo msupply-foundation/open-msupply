@@ -3,8 +3,9 @@ import type { CustomerReturnInfoFragment } from './customerReturnDetail.generate
 
 // Pure status/kind logic for customer returns
 // (spec/customer-returns/rules.md § manual vs transfer + § status lifecycle +
-// § editability). Kept free of components so the AC-citing tests exercise it
-// directly (acceptance.md AC-E7, AC-S4/S5, AC-T1, AC-D3).
+// § editability). Kept free of components so the behaviour-citing tests
+// exercise it directly (cases/OMS-REG-DIST-07 .26, .38, .7/.32/.33, .43/.44,
+// .42).
 
 // The InvoiceNodeStatus values a customer return passes through. DELIVERED is a
 // legacy intermediate customer returns always skip (contract § status
@@ -87,7 +88,7 @@ export const nextStatuses = (
 // Standing editability (rules § editability): header fields, lines, hold,
 // delete. A VERIFIED return is immutable; a transfer return is read-only until
 // RECEIVED (the UI's conservative gate — the receive action itself is offered
-// from SHIPPED via nextStatuses above). AC-E7 / AC-T1.
+// from SHIPPED via nextStatuses above). OMS-REG-DIST-07.26 / .43 / .44.
 export const isReturnDisabled = (node: {
   status: ReturnStatus;
   linkedShipment?: { id: string } | null;
@@ -99,26 +100,19 @@ export const isReturnDisabled = (node: {
 
 // The status button's own gate (rules § advancing status — preconditions):
 // hold blocks ONLY status changes; no-lines blocks the advance (both also
-// server-enforced — AC-S4 / AC-S5). The button stays clickable on no-lines so
-// the click explains itself (messages.no-lines dialog) rather than dead-ending.
+// server-enforced — OMS-REG-DIST-07.38 / .7). The button stays clickable on
+// no-lines so the click explains itself (messages.no-lines dialog) rather than
+// dead-ending.
 export const advanceBlockedByHold = (node: { onHold: boolean }): boolean =>
   node.onHold;
 
-// The kind's flow narrowed to the statuses the invoice-status-options
-// preference offers (rules § preference gates — a display gate on EVERY
-// status surface, the lifecycle indicator included). Empty = no restriction.
-export const offeredFlow = (
-  kind: ReturnKind,
-  allowed: readonly string[]
-): ReturnStatus[] =>
-  statusFlow(kind).filter(s => allowed.length === 0 || allowed.includes(s));
-
-// Steps for the lifecycle indicator: each OFFERED stage of the kind's flow
+// Steps for the lifecycle indicator: each OFFERED stage of the kind's flow —
+// the caller narrows the flow by the invoice-status-options preference
+// (@/domain/invoice filterByStatusPreference; rules § preference gates) —
 // with the datetime it was reached (undefined = not reached yet).
 export const statusSteps = (
-  kind: ReturnKind,
-  node: CustomerReturnInfoFragment,
-  allowed: readonly string[] = []
+  offered: readonly ReturnStatus[],
+  node: CustomerReturnInfoFragment
 ): { label: string; date?: string }[] => {
   const dates: Record<string, string | null | undefined> = {
     NEW: node.createdDatetime,
@@ -127,36 +121,8 @@ export const statusSteps = (
     RECEIVED: node.receivedDatetime,
     VERIFIED: node.verifiedDatetime,
   };
-  return offeredFlow(kind, allowed).map(status => ({
+  return offered.map(status => ({
     label: statusLabel(status),
     date: dates[status] ?? undefined,
   }));
 };
-
-// The indicator's current stage within the OFFERED flow. When the preference
-// hides the actual status, the current stage falls back to the nearest
-// offered status at-or-before it (the current app's getPreviousStatus
-// fallback). −1 when nothing at-or-before is offered.
-export const currentStep = (
-  kind: ReturnKind,
-  status: ReturnStatus,
-  allowed: readonly string[] = []
-): number => {
-  const actual = statusIndex(kind, status);
-  const offered = offeredFlow(kind, allowed);
-  let current = -1;
-  offered.forEach((s, i) => {
-    if (statusIndex(kind, s) <= actual) current = i;
-  });
-  return current;
-};
-
-// Filter the offered targets by the store's invoice-status-options preference
-// (rules § preference & permission gates — a display gate only). An empty
-// preference = no restriction. RECEIVED/VERIFIED are members of the same
-// InvoiceNodeStatus enum the preference lists, so this is a plain includes.
-export const filterByStatusPreference = (
-  targets: AdvanceTarget[],
-  allowed: readonly string[]
-): AdvanceTarget[] =>
-  allowed.length === 0 ? targets : targets.filter(s => allowed.includes(s));

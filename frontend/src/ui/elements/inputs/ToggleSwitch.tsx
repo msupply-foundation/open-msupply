@@ -1,4 +1,4 @@
-import { createUniqueId, Show, type JSX } from 'solid-js';
+import { children, createUniqueId, Show, type JSX } from 'solid-js';
 import styles from './ToggleSwitch.module.css';
 
 export interface ToggleSwitchProps {
@@ -23,6 +23,13 @@ export interface ToggleSwitchProps {
    * `class`); without one the DOM is unchanged. As TextField.
    */
   labelInfo?: JSX.Element;
+  /**
+   * Visually hide the label (kept as the input's accessible name) — for use
+   * inside a row that shows it (the FieldRow contract: the wrapped control
+   * must not render its own visible label). As TextField's `hideLabel`.
+   * `labelInfo` is ignored with it (no visible label to sit beside).
+   */
+  hideLabel?: boolean;
   id?: string;
   class?: string;
   /** Test id on the native input (cross-FE test-id contract). */
@@ -49,10 +56,13 @@ export const ToggleSwitch = (props: ToggleSwitchProps) => {
   // JSX node across both would try to mount it in two places. As TextField.
   // `class` stays on whichever element is the root, so a caller's layout class
   // always lands on the outermost box.
+  // Resolved once — a JSX prop read twice builds two element trees
+  // (kdd/solid-reactivity-pitfalls §3).
+  const labelInfo = children(() => props.labelInfo);
   const Label = () => (
     <label
       class={
-        props.class && !props.labelInfo
+        props.class && !labelInfo()
           ? `${styles.root} ${props.class}`
           : styles.root
       }
@@ -66,25 +76,28 @@ export const ToggleSwitch = (props: ToggleSwitchProps) => {
         class={styles.input}
         checked={props.checked}
         disabled={props.disabled}
+        aria-label={props.hideLabel ? props.label : undefined}
         data-testid={props.testId}
         onChange={event => props.onChange?.(event.currentTarget.checked)}
       />
       <span class={styles.track} aria-hidden="true">
         <span class={styles.thumb} />
       </span>
-      <span class={styles.label}>{props.label}</span>
+      <Show when={!props.hideLabel}>
+        <span class={styles.label}>{props.label}</span>
+      </Show>
     </label>
   );
 
   return (
-    <Show when={props.labelInfo} fallback={<Label />}>
+    <Show when={!props.hideLabel && labelInfo()} fallback={<Label />}>
       <span
         class={
           props.class ? `${styles.labelRow} ${props.class}` : styles.labelRow
         }
       >
         <Label />
-        {props.labelInfo}
+        {labelInfo()}
       </span>
     </Show>
   );

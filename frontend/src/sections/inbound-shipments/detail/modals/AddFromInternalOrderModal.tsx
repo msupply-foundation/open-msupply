@@ -4,12 +4,12 @@ import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
-import { XCircleIcon } from '../../../../ui/icons';
+import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
 import {
   DataTable,
   type Column,
 } from '../../../../ui/elements/table/DataTable';
-import { getNumberCell } from '../../../../ui/elements/table/tableHelpers';
+import { getCellDefinition } from '../../../../ui/elements/table/tableHelpers';
 import {
   InternalOrderLines,
   type InternalOrderLineRowFragment,
@@ -61,12 +61,17 @@ const Body: Component<AddFromInternalOrderModalProps> = props => {
     {
       c: { accessor: row => row.item.code, id: 'code' },
       header: () => t('label.code'),
+      ...getCellDefinition('itemCode'),
     },
-    { c: { key: 'itemName' }, header: () => t('label.name') },
+    {
+      c: { key: 'itemName' },
+      header: () => t('label.name'),
+      ...getCellDefinition('itemName'),
+    },
     {
       c: { key: 'requestedQuantity' },
       header: () => t('label.requested-quantity'),
-      ...getNumberCell(),
+      ...getCellDefinition('requestedQuantity'),
     },
   ];
 
@@ -83,7 +88,7 @@ const Body: Component<AddFromInternalOrderModalProps> = props => {
       })),
     });
     setSaving(false);
-    if (!outcome) return props.onClose();
+    if (!outcome) return; // handled globally
     if (outcome.errors.size > 0) {
       setErrorMessage([...outcome.errors.values()][0]);
       return;
@@ -107,15 +112,12 @@ const Body: Component<AddFromInternalOrderModalProps> = props => {
       }
       actions={
         <>
-          <Button
-            variant="secondary"
-            icon={<XCircleIcon />}
+          <CancelButton
             data-testid="dialog-button-cancel"
             onClick={props.onClose}
-          >
-            {t('button.cancel')}
-          </Button>
+          />
           <Button
+            confirms="plain"
             data-testid="dialog-button-ok"
             loading={saving()}
             disabled={selectedIds().length === 0}

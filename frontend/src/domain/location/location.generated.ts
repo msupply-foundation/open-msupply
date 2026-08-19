@@ -37,6 +37,9 @@ export type LocationsWithVolumeResult = {
   onHold: boolean;
   volume: number;
   volumeUsed: number;
+  locationType: {
+  id: string;
+} | null;
   stock: {
   __typename: "StockLineConnector";
   totalCount: number;
@@ -46,5 +49,5 @@ export type LocationsWithVolumeResult = {
 };
 
 export const LocationsWithVolume = {
-  query: "query locationsWithVolume($storeId: String!) {\n  locations(storeId: $storeId) {\n    ... on LocationConnector {\n      __typename\n      nodes {\n        id\n        code\n        name\n        onHold\n        volume\n        volumeUsed\n        stock {\n          ... on StockLineConnector {\n            __typename\n            totalCount\n          }\n        }\n      }\n    }\n  }\n}",
+  query: "query locationsWithVolume($storeId: String!) {\n  locations(storeId: $storeId) {\n    ... on LocationConnector {\n      __typename\n      nodes {\n        id\n        code\n        name\n        onHold\n        volume\n        volumeUsed\n        locationType {\n          id\n        }\n        stock {\n          ... on StockLineConnector {\n            __typename\n            totalCount\n          }\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<LocationsWithVolumeResult, LocationsWithVolumeVariables>;

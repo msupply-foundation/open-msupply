@@ -1,6 +1,8 @@
 import { createSignal, createUniqueId, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { authUser, login, reLoginRequired } from './authContext';
+import { submitStateAfter, type SubmitState } from './submitState';
+import { hasLoginFieldError, loginFieldErrors } from './loginFieldErrors';
 import { Dialog } from '../ui/elements/feedback/Dialog';
 import { TextField } from '../ui/elements/inputs/TextField';
 import { PasswordField } from '../ui/elements/inputs/PasswordField';
@@ -8,11 +10,6 @@ import { Button } from '../ui/elements/buttons/Button';
 import { Alert } from '../ui/elements/feedback/Alert';
 import { t } from '../intl';
 import styles from '../ui/styles/shared.module.css';
-
-type SubmitState =
-  | { kind: 'idle' }
-  | { kind: 'submitting' }
-  | { kind: 'error'; message: string };
 
 // Spec (Authentication Logic): re-login modal on top of everything else,
 // username prefilled but editable — the re-login may be as a different user.
@@ -49,21 +46,18 @@ const ReLoginForm: Component<{ currentUsername: string }> = props => {
 
   const submit = async (event: SubmitEvent) => {
     event.preventDefault();
-    // Spec: the button is always clickable; validation errors show on click.
-    const errors = {
-      username:
-        values().username.trim() === '' ? t('error.username-required') : '',
-      password:
-        values().password.trim() === '' ? t('error.password-required') : '',
-    };
+    // Spec: the button is always clickable; validation errors show on click —
+    // the same rule as the login page (S1, D98), so the same helper.
+    const errors = loginFieldErrors(values().username, values().password);
     setFieldErrors(errors);
-    if (errors.username !== '' || errors.password !== '') return;
+    if (hasLoginFieldError(errors)) return;
     setSubmitState({ kind: 'submitting' });
     const result = await login(values().username, values().password);
-    if (result.kind === 'error')
-      setSubmitState({ kind: 'error', message: result.message });
-    // 'success' closes the modal reactively; 'pending' is globally handled —
-    // stay in the loading phase.
+    // Success closes the modal reactively (this component unmounts); a rejected
+    // login shows inline; a globally-handled failure just releases the
+    // submitting state — otherwise the only control out of a non-dismissable
+    // modal stays disabled on "Logging in…" for good.
+    setSubmitState(submitStateAfter(result));
   };
 
   return (
@@ -74,9 +68,15 @@ const ReLoginForm: Component<{ currentUsername: string }> = props => {
       testId="re-login-modal"
       title={t('heading.login-again')}
       actions={
+        // Enter already submits this form natively (KB-E3), which is why the
+        // form/submit shape is here at all. The claim adds what the form
+        // cannot: the Alt+S badge, the palette's Save entry, and one activation
+        // path — Dialog consumes Enter and clicks this button rather than
+        // letting the implicit submission also fire (KB-E4).
         <Button
           type="submit"
           form={formId}
+          confirms="plain"
           data-testid="re-login-button"
           disabled={submitting()}
         >
@@ -87,7 +87,6 @@ const ReLoginForm: Component<{ currentUsername: string }> = props => {
       <form id={formId} class={styles.stack} onSubmit={e => void submit(e)}>
         <TextField
           label={t('heading.username')}
-          width="full"
           name="username"
           data-testid="re-login-username-input"
           autocomplete="username"
@@ -100,7 +99,6 @@ const ReLoginForm: Component<{ currentUsername: string }> = props => {
         />
         <PasswordField
           label={t('heading.password')}
-          width="full"
           name="password"
           data-testid="re-login-password-input"
           autocomplete="current-password"

@@ -1,5 +1,5 @@
 import { createSignal, Show, type Component } from 'solid-js';
-import { A, useNavigate, useParams } from '@solidjs/router';
+import { useNavigate, useParams } from '@solidjs/router';
 import { t, tPlural } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
 import {
@@ -7,9 +7,14 @@ import {
   SidePanelActions,
 } from '../../../ui/layout/SidePanel/SidePanel';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
+import { UserLabel } from '../../../ui/elements/typography/UserLabel';
 import { TextField } from '../../../ui/elements/inputs/TextField';
+import { TextArea } from '../../../ui/elements/inputs/TextArea';
 import { Text } from '../../../ui/elements/typography/Text';
+import { RecordLink } from '../../../ui/elements/typography/RecordLink';
+import { HStack } from '../../../ui/layout/Stack/HStack';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { OkButton } from '../../../ui/elements/buttons/StandardButtons';
 import { CopyToClipboardButton } from '../../../ui/elements/buttons/CopyToClipboardButton';
 import {
   ColourTagDot,
@@ -17,11 +22,10 @@ import {
 } from '../../../ui/elements/selectors/ColourTag';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
-import { Popover } from '../../../ui/elements/feedback/Popover';
-import { CheckIcon, InfoIcon, TrashIcon } from '../../../ui/icons';
+import { InfoIcon, TrashIcon } from '../../../ui/icons';
 import { graphqlFetch } from '../../../api/graphql';
 import {
-  SupplierReturnDetail,
+  SupplierReturnForCopy,
   type SupplierReturnInfoFragment,
 } from './supplierReturnDetail.generated';
 import {
@@ -41,7 +45,9 @@ import type { ReturnFieldEdit } from './returnEdit';
 export interface SupplierReturnSidePanelProps {
   node: SupplierReturnInfoFragment;
   disabled: boolean;
-  /** The shared return edit buffer — reads/writes comment + transportReference. */
+  /**
+   * The shared return edit buffer — reads/writes comment + transportReference.
+   */
   edit: ReturnFieldEdit;
   /** Colour save (header-level, in place). */
   onSetColour: (colour: string) => void;
@@ -75,16 +81,19 @@ export const SupplierReturnSidePanel: Component<
   };
 
   // The WHOLE return — header, every line, and the linked records — for the
-  // copy action (controls § copy to clipboard). This panel is handed the info
-  // node alone, so copy re-reads the detail query, whose nested `lines`
-  // connector carries the complete line set.
+  // copy action (controls § copy to clipboard). Its OWN operation, not the
+  // screen's: supplierReturnDetail is header-only and the line table holds one
+  // server-paginated page, and the standard requires copy to make an
+  // unpaginated read rather than serialise the page on screen. The nested
+  // `lines` connector takes no page argument, so it carries the complete set.
   const loadFullReturn = async () => {
-    const result = await graphqlFetch(SupplierReturnDetail, {
+    const result = await graphqlFetch(SupplierReturnForCopy, {
       storeId: params.storeId,
       id: props.node.id,
     });
     if (result.kind !== 'success') return undefined;
     if (result.data.invoice.__typename !== 'InvoiceNode') return undefined;
+    // The node itself — the record, not the query wrapper ({"invoice": …}).
     return result.data.invoice;
   };
 
@@ -96,29 +105,12 @@ export const SupplierReturnSidePanel: Component<
         collapsible
       >
         <FieldRow label={t('label.edited-by')}>
-          <span
-            style={{
-              display: 'inline-flex',
-              'align-items': 'center',
-              gap: 'var(--space-2)',
-            }}
-          >
-            <Text variant="body" as="span">
-              {props.node.user?.username ?? '—'}
-            </Text>
-            <Show when={props.node.user?.email}>
-              {email => (
-                <Popover
-                  trigger={<InfoIcon />}
-                  triggerLabel={email()}
-                  openOnHover
-                  placement="top"
-                >
-                  <p>{email()}</p>
-                </Popover>
-              )}
-            </Show>
-          </span>
+          <UserLabel
+            username={props.node.user?.username}
+            email={props.node.user?.email}
+            label={t('label.edited-by')}
+            testId="edited-by-field"
+          />
         </FieldRow>
         <FieldRow label={t('label.color')}>
           <Show
@@ -133,10 +125,10 @@ export const SupplierReturnSidePanel: Component<
           </Show>
         </FieldRow>
         <FieldRow label={t('heading.comment')}>
-          <TextField
+          {/* Multi-line in place (ui-surface S3 § side panel). */}
+          <TextArea
             label={t('heading.comment')}
             hideLabel
-            width="full"
             data-testid="comment-field"
             value={props.edit.state.comment}
             disabled={props.disabled}
@@ -161,14 +153,9 @@ export const SupplierReturnSidePanel: Component<
           }
         >
           {shipment => (
-            <span
-              style={{
-                display: 'flex',
-                'align-items': 'center',
-                'justify-content': 'space-between',
-                gap: 'var(--space-3)',
-              }}
-            >
+            // The dated, attributed description inline-start, the #N link
+            // pinned inline-end.
+            <HStack gap="md" justify="between">
               <Text variant="body">
                 {t('messages.inbound-shipment-created-on', {
                   date: localisedDate(shipment().createdDatetime),
@@ -180,7 +167,11 @@ export const SupplierReturnSidePanel: Component<
                   })}
                 </Show>
               </Text>
-              <A
+              {/* The shared related-record link (no `kind` — a shipment is a
+                  neutral reference), as the customer-returns twin renders the
+                  mirror-image link. */}
+              <RecordLink
+                testId="originating-shipment-link"
                 href={inboundShipmentHref(
                   params.storeId,
                   shipment().id,
@@ -188,8 +179,8 @@ export const SupplierReturnSidePanel: Component<
                 )}
               >
                 #{shipment().invoiceNumber}
-              </A>
-            </span>
+              </RecordLink>
+            </HStack>
           )}
         </Show>
       </SidePanelSection>
@@ -205,7 +196,7 @@ export const SupplierReturnSidePanel: Component<
           <TextField
             label={t('label.reference')}
             hideLabel
-            width="full"
+            size="small"
             data-testid="transport-reference-field"
             value={props.edit.state.transportReference}
             disabled={props.disabled}
@@ -234,14 +225,19 @@ export const SupplierReturnSidePanel: Component<
         </SidePanelActions>
       </SidePanelSection>
 
-      <ConfirmDialog
-        open={deleteConfirm()}
-        onClose={() => setDeleteConfirm(false)}
-        title={t('heading.are-you-sure')}
-        message={tPlural('messages.confirm-delete-returns', 1)}
-        confirmVariant="danger"
-        onConfirm={() => void runDelete()}
-      />
+      {/* Mounted only while open (kdd/action-modal) — see the status footer's
+          hold confirm: a closed dialog keeps its `confirmation-modal` + footer
+          ids matchable. */}
+      <Show when={deleteConfirm()}>
+        <ConfirmDialog
+          open
+          onClose={() => setDeleteConfirm(false)}
+          title={t('heading.are-you-sure')}
+          message={tPlural('messages.confirm-delete-returns', 1)}
+          confirmVariant="danger"
+          onConfirm={() => void runDelete()}
+        />
+      </Show>
 
       {/* An unexpected delete rejection (not a permission block, which routes to
           the global modal) — surfaced here rather than swallowed. */}
@@ -253,13 +249,10 @@ export const SupplierReturnSidePanel: Component<
           title={t('error.something-wrong')}
           description={deleteError()}
           actions={
-            <Button
-              variant="secondary"
-              icon={<CheckIcon />}
+            <OkButton
+              data-testid="dialog-button-ok"
               onClick={() => setDeleteError(undefined)}
-            >
-              {t('button.ok')}
-            </Button>
+            />
           }
         />
       </Show>

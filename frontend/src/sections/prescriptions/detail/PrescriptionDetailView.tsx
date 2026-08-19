@@ -19,6 +19,7 @@ import { Button } from '../../../ui/elements/buttons/Button';
 import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
+import { ErrorDetails } from '../../../ui/elements/feedback/ErrorDetails';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
@@ -36,7 +37,11 @@ import {
   type TabDef,
 } from '../../../ui/elements/tabs/Tabs';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
+import { createAction, createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_L, ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import {
+  AlertCircleIcon,
+  CheckIcon,
   CloseIcon,
   InfoIcon,
   PlusCircleIcon,
@@ -44,6 +49,7 @@ import {
   SidebarIcon,
   TrashIcon,
 } from '../../../ui/icons';
+import { createFlash } from '../../../ui/utils/createFlash';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import { ActivityLogPanel } from '../../../domain/activityLog';
 import { CustomFieldsEditTab } from '../../../domain/customFields';
@@ -53,7 +59,12 @@ import {
   prescriptionPreferences,
 } from '../../../store/storeContext';
 import { storeNameOf } from '../../../auth/authContext';
-import { asPrescriptionStatus, isReadOnly } from '../prescriptionStatus';
+import {
+  asPrescriptionStatus,
+  isReadOnly,
+  isRenderableLine,
+} from '../prescriptionStatus';
+import { itemLedgerHref } from '@/sections/items/detail/itemLedgerNav';
 import {
   PrescriptionDetail,
   LabelPrinterSettings,
@@ -74,12 +85,14 @@ import {
 import { PrescriptionStatusFooter } from './PrescriptionStatusFooter';
 import { HistoryModal } from './HistoryModal';
 import { PrescriptionLineEditModal } from './edit-modal/PrescriptionLineEditModal';
+import { EditPatientModal } from '../../patients';
 
 // The prescription detail (spec/prescriptions/ui-surface.md S3): toolbar
 // (patient / clinician / date / program), Details + Log tabs over the flat
 // line table (one row per dispensed line; carriers never render — AC-Q1/V1),
 // the side panel, and the status footer. Dispensing happens in the S4 modal
-// (D53). Read-only from VERIFIED: dead affordances are hidden (D39).
+// (D53). Read-only from VERIFIED: dead affordances are hidden (D39) and a row
+// selection leads to the item's catalogue ledger instead of S4 (.72).
 
 type Line = PrescriptionFieldsFragment['lines']['nodes'][number];
 
@@ -94,11 +107,27 @@ const PrescriptionDetailView: Component = () => {
     itemId?: string;
     item?: { id: string; code: string; name: string };
   }>();
+  // The patient picker's edit-patient modal (#1038) — the id it's currently
+  // open for; undefined = closed. Mounted fresh per open (below), like
+  // editState's line editor.
+  const [editPatientId, setEditPatientId] = createSignal<string>();
   const [historyOpen, setHistoryOpen] = createSignal(false);
   const [reportOpen, setReportOpen] = createSignal(false);
   const [deleteLinesConfirm, setDeleteLinesConfirm] = createSignal(false);
   const [printerMissing, setPrinterMissing] = createSignal(false);
   const [printingLabels, setPrintingLabels] = createSignal(false);
+  // The print outcome reported ON the control that started it (D73 — a label
+  // leaves the app, so nothing on screen would otherwise distinguish printed
+  // from not). Both print controls can be on screen at once, so the flash
+  // carries which one to label: the app bar's must not report an outcome the
+  // bulk bar's button earned. It reverts on its own timer; the failure detail
+  // is held separately so its dialog stays open until the user closes it.
+  type PrintSource = 'header' | 'bulk';
+  const printFlash = createFlash<{
+    source: PrintSource;
+    outcome: 'done' | 'failed';
+  }>();
+  const [printError, setPrintError] = createSignal<string>();
 
   // The prescription — header, side panel, AND lines in one read (a
   // prescription's line set is small; no server paging needed). A NodeError
@@ -167,11 +196,12 @@ const PrescriptionDetailView: Component = () => {
   const status = () => asPrescriptionStatus(info()?.status ?? 'CANCELLED');
   const disabled = () => isReadOnly(status());
 
-  // The dispensed rows — carriers (prescribed-quantity holders) never render
-  // as lines (AC-Q1); ordered by item then batch for a stable read.
+  // The rendered rows — carriers never render (AC-Q1), a cancellation
+  // reversal's returned lines do (isRenderableLine); ordered by item then
+  // batch for a stable read.
   const rows = createMemo((): Line[] =>
     (info()?.lines.nodes ?? [])
-      .filter(line => line.type === 'STOCK_OUT')
+      .filter(isRenderableLine)
       .slice()
       .sort(
         (a, b) =>
@@ -179,7 +209,6 @@ const PrescriptionDetailView: Component = () => {
           (a.batch ?? '').localeCompare(b.batch ?? '')
       )
   );
-  const existingItemIds = () => [...new Set(rows().map(line => line.itemId))];
 
   const tableConfig = createTableConfig({
     tableId: 'prescription-detail',
@@ -251,8 +280,10 @@ const PrescriptionDetailView: Component = () => {
 
   // Print labels (AC-E2): gated on a configured label printer; one label per
   // dispensed item — the whole prescription from the app bar, the selection
-  // from the bulk bar.
-  const runPrintLabels = async (lineIds?: string[]) => {
+  // from the bulk bar. The endpoint's answer is reported either way (.64): the
+  // printer is off-screen hardware, so a rejected print reaches the user only
+  // through this control.
+  const runPrintLabels = async (source: PrintSource, lineIds?: string[]) => {
     const node = info();
     if (!node || printingLabels()) return;
     setPrintingLabels(true);
@@ -268,14 +299,70 @@ const PrescriptionDetailView: Component = () => {
       const lines = lineIds
         ? rows().filter(line => lineIds.includes(line.id))
         : rows();
-      await printLabels(buildLabels(node, storeNameOf(params.storeId), lines));
+      const outcome = await printLabels(
+        buildLabels(node, storeNameOf(params.storeId), lines)
+      );
+      if (outcome.ok) {
+        printFlash.show({ source, outcome: 'done' });
+        return;
+      }
+      printFlash.show({ source, outcome: 'failed' });
+      setPrintError(outcome.detail);
     } finally {
       setPrintingLabels(false);
     }
   };
 
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). One
+  // declaration for the header button and the ghost button in the table's empty
+  // slot; each carries `shortcut={ALT_N}` for its badge. `info()` is the
+  // `.state`-gated read above, so this predicate never suspends the palette
+  // (kdd/keyboard-layer § an action's `disabled` MUST NOT read a suspending
+  // source).
+  createAddAction({
+    name: 'button.add-item',
+    run: () => setEditState({}),
+    disabled: () => !info() || disabled(),
+  });
+
+  // Alt+L — print prescription labels (KB-R1's binding table, ui-surface S2). A
+  // SPECIFIC action, gated on this screen because this is the only place it
+  // exists (KB-R2's contrast). Available at every status (AC-E2); inert while a
+  // print is already in flight, mirroring the footer control's `loading`. Runs
+  // the HEADER control's print, which is the control that advertises the badge.
+  createAction({
+    name: 'button.print-prescription-label',
+    shortcut: ALT_L,
+    run: () => void runPrintLabels('header'),
+    disabled: () => !info() || printingLabels(),
+  });
+
+  // What a given print control is reporting — nothing unless it was the one
+  // pressed. Resting (undefined) leaves each control its own label and icon.
+  const printOutcomeOf = (source: PrintSource) => {
+    const flash = printFlash.value();
+    return flash?.source === source ? flash.outcome : undefined;
+  };
+  const printIcon = (outcome?: 'done' | 'failed') =>
+    outcome === 'done' ? (
+      <CheckIcon />
+    ) : outcome === 'failed' ? (
+      <AlertCircleIcon />
+    ) : (
+      <PrinterIcon />
+    );
+  const printText = (outcome?: 'done' | 'failed') =>
+    outcome === 'done'
+      ? t('message.print-success')
+      : outcome === 'failed'
+        ? t('message.print-failed')
+        : undefined;
+
+  // Row selection: the line editor while editable (.55); the item's catalogue
+  // ledger once read-only (.72).
   const openRow = (line: Line) => {
-    if (!disabled())
+    if (disabled()) navigate(itemLedgerHref(params.storeId, line.itemId));
+    else
       setEditState({
         itemId: line.itemId,
         item: { id: line.itemId, code: line.itemCode, name: line.itemName },
@@ -410,7 +497,6 @@ const PrescriptionDetailView: Component = () => {
   };
 
   const crumbs = (node?: PrescriptionFieldsFragment) => [
-    { label: t('dispensary') },
     {
       label: t('prescriptions'),
       to: `/${params.storeId}/dispensary/prescription`,
@@ -432,6 +518,7 @@ const PrescriptionDetailView: Component = () => {
                   <Show when={!disabled()}>
                     <Button
                       icon={<PlusCircleIcon />}
+                      shortcut={ALT_N}
                       data-testid="add-item-button"
                       onClick={() => setEditState({})}
                     >
@@ -439,9 +526,10 @@ const PrescriptionDetailView: Component = () => {
                     </Button>
                   </Show>
                   {/* Print: labels primary, the report selector as the
-                      option — both at every status (AC-E1/E2). */}
+                      option — both at every status (AC-E1/E2). Labels report
+                      their outcome here (.64): busy, then printed / failed. */}
                   <SplitButton
-                    icon={<PrinterIcon />}
+                    icon={printIcon(printOutcomeOf('header'))}
                     testId="print-button"
                     options={[
                       {
@@ -454,11 +542,21 @@ const PrescriptionDetailView: Component = () => {
                       },
                     ]}
                     defaultValue="labels"
-                    onAction={value =>
-                      value === 'labels'
-                        ? void runPrintLabels()
-                        : setReportOpen(true)
-                    }
+                    loading={printingLabels()}
+                    mainLabel={printText(printOutcomeOf('header'))}
+                    // Alt+L is registered above and runs the labels action; it
+                    // lands on this control's MAIN half, whose default option is
+                    // labels (ui-surface S2).
+                    shortcut={ALT_L}
+                    onAction={value => {
+                      if (value === 'labels')
+                        return void runPrintLabels('header');
+                      // Picking an option also re-targets the main button, so a
+                      // lingering "Printed" would now label Export or print —
+                      // drop it (createFlash § clear).
+                      printFlash.clear();
+                      setReportOpen(true);
+                    }}
                   />
                   <Button
                     variant="secondary"
@@ -473,6 +571,9 @@ const PrescriptionDetailView: Component = () => {
                       variant="secondary"
                       icon={<SidebarIcon />}
                       data-testid="open-detail-panel-button"
+                      // createSidePanelOpen registers Alt+M; this is the
+                      // control that advertises it (ui-surface S2).
+                      shortcut={ALT_M}
                       onClick={() => setSidePanelOpen(true)}
                     >
                       {t('button.more')}
@@ -487,7 +588,8 @@ const PrescriptionDetailView: Component = () => {
                     node={node()}
                     disabled={disabled()}
                     onSave={input => void saveField(input)}
-                    onClearLinesAndSave={input => void clearLinesAndSave(input)}
+                    onClearLinesAndSave={clearLinesAndSave}
+                    onEditPatient={setEditPatientId}
                   />
                 </HeaderToolbar>
                 <TabList tabs={tabs()} />
@@ -562,11 +664,13 @@ const PrescriptionDetailView: Component = () => {
                   </Show>
                   <Button
                     variant="secondary"
-                    icon={<PrinterIcon />}
+                    icon={printIcon(printOutcomeOf('bulk'))}
                     loading={printingLabels()}
-                    onClick={() => void runPrintLabels(selectedIds())}
+                    data-testid="print-labels-button"
+                    onClick={() => void runPrintLabels('bulk', selectedIds())}
                   >
-                    {t('button.print-prescription-label')}
+                    {printText(printOutcomeOf('bulk')) ??
+                      t('button.print-prescription-label')}
                   </Button>
                   <ContentFooterActions>
                     <Button
@@ -593,6 +697,7 @@ const PrescriptionDetailView: Component = () => {
                   <Show when={!disabled()}>
                     <Button
                       variant="ghost"
+                      shortcut={ALT_N}
                       data-testid="nothing-here-create-button"
                       onClick={() => setEditState({})}
                     >
@@ -629,8 +734,24 @@ const PrescriptionDetailView: Component = () => {
                 invoiceId={node().id}
                 initialItemId={state.itemId}
                 initialItem={state.item}
-                existingItemIds={existingItemIds()}
+                programId={node().programId ?? undefined}
                 onClose={() => setEditState(undefined)}
+                onSaved={() => void refetch()}
+              />
+            )}
+          </Show>
+
+          {/* The patient picker's edit-patient modal (spec/patients S4,
+              #1038) — in place over this screen, never a navigate-away;
+              mounted fresh per open like the line editor above. A save
+              refetches so the toolbar/side panel show the patient's current
+              name. */}
+          <Show when={editPatientId()} keyed>
+            {patientId => (
+              <EditPatientModal
+                storeId={params.storeId}
+                patientId={patientId}
+                onClose={() => setEditPatientId(undefined)}
                 onSaved={() => void refetch()}
               />
             )}
@@ -673,6 +794,7 @@ const PrescriptionDetailView: Component = () => {
             title={t('heading.unable-to-print')}
             actions={
               <Button
+                confirms="plain"
                 data-testid="dialog-button-ok"
                 onClick={() => setPrinterMissing(false)}
               >
@@ -684,6 +806,36 @@ const PrescriptionDetailView: Component = () => {
               {t('error.label-printer-not-configured')}
             </Alert>
           </Dialog>
+
+          {/* The print was attempted and the server refused it (.64). Distinct
+              from the notice above: that one is a configuration warning caught
+              before any request, this carries the endpoint's own message — its
+              plain-text body, the only detail there is. */}
+          <Show when={printError()}>
+            {detail => (
+              <Dialog
+                open
+                onClose={() => setPrintError(undefined)}
+                icon={<AlertCircleIcon />}
+                testId="print-error-modal"
+                title={t('heading.unable-to-print')}
+                actions={
+                  <Button
+                    variant="secondary"
+                    data-testid="print-error-modal-close"
+                    onClick={() => setPrintError(undefined)}
+                  >
+                    {t('button.close')}
+                  </Button>
+                }
+              >
+                <Alert severity="error">
+                  {t('error.printing-label')}
+                  <ErrorDetails detail={detail()} />
+                </Alert>
+              </Dialog>
+            )}
+          </Show>
         </Tabs>
       )}
     </Show>

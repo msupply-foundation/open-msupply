@@ -83,6 +83,29 @@ query supplierReturnDetail($storeId: String!, $id: String!) {
     __typename
     ... on InvoiceNode {
       ...SupplierReturnInfo
+    }
+    ... on NodeError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# The WHOLE record for Copy to clipboard (ui-standards/controls.md § copy to
+# clipboard): the header, every line, and the linked references the detail reads.
+# A SEPARATE operation from supplierReturnDetail, which is header-only so the
+# screen's own read stays lean — and from supplierReturnLines, which is one
+# server-paginated PAGE. The standard is explicit that copy "MUST make its own
+# unpaginated read, not serialise the page on screen", and the nested `lines`
+# connector is that read: it takes no page argument, so it carries the complete
+# line set.
+query supplierReturnForCopy($storeId: String!, $id: String!) {
+  invoice(storeId: $storeId, id: $id) {
+    __typename
+    ... on InvoiceNode {
+      ...SupplierReturnInfo
       lines {
         totalCount
         nodes {
@@ -90,10 +113,28 @@ query supplierReturnDetail($storeId: String!, $id: String!) {
         }
       }
     }
-    ... on NodeError {
-      error {
-        __typename
-        description
+  }
+}
+
+# ONE server-paginated / server-sorted page of the return's lines — the detail
+# table (spec/supplier-returns/rules.md § server-paginated line table). A
+# supplier return's lines are STOCK_OUT lines; the caller pins invoiceId + type
+# and supplies sort + page from the URL state. totalCount is the return's whole
+# line count: it backs the pager, the no-lines status precondition, and the
+# "Save & next" cross-page walk. Wire trap: only the LAST sort key is honoured —
+# send exactly one.
+query supplierReturnLines(
+  $storeId: String!
+  $filter: InvoiceLineFilterInput
+  $sort: [InvoiceLineSortInput!]
+  $page: PaginationInput
+) {
+  invoiceLines(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {
+    ... on InvoiceLineConnector {
+      __typename
+      totalCount
+      nodes {
+        ...SupplierReturnLine
       }
     }
   }
@@ -138,12 +179,6 @@ mutation updateSupplierReturnLines(
     ... on InvoiceNode {
       __typename
       ...SupplierReturnInfo
-      lines {
-        totalCount
-        nodes {
-          ...SupplierReturnLine
-        }
-      }
     }
   }
 }
@@ -215,28 +250,5 @@ query generateSupplierReturnLines(
   }
 }
 
-# The Log tab (spec/supplier-returns/cases OMS-REG-REPL-06.46): the return's
-# activity history — creation, status changes — keyed by recordId. Sorted
-# client-side by datetime (no server sort dependency).
-query supplierReturnLog($storeId: String!, $recordId: String!) {
-  activityLogs(
-    storeId: $storeId
-    filter: { recordId: { equalTo: $recordId } }
-    page: { first: 1000 }
-  ) {
-    ... on ActivityLogConnector {
-      __typename
-      totalCount
-      nodes {
-        id
-        type
-        datetime
-        to
-        from
-        user {
-          username
-        }
-      }
-    }
-  }
-}
+# The Log tab (spec/supplier-returns/cases OMS-REG-REPL-06.46) reads the shared
+# activity-log query (src/domain/activityLog), not one of its own.

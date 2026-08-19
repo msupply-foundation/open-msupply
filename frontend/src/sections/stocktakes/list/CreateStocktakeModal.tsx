@@ -91,11 +91,11 @@ export const CreateStocktakeModal = (props: {
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
 
-  // Locations for the picker, fetched locally (the domain widget owns no cache —
-  // spec/ui-standards/components.md). Volume-blind here: the picker only scopes
-  // which stock to count, so capacity is irrelevant. Read WITHOUT suspending
-  // (this modal renders under AppShell's <Suspense>; a pending read there would
-  // remount + reset the form — see the estimate resource below).
+  // Locations for the picker, fetched locally (the domain widget owns no cache
+  // — spec/ui-standards/components.md). Volume-blind here: the picker only
+  // scopes which stock to count, so capacity is irrelevant. Read WITHOUT
+  // suspending (this modal renders under AppShell's <Suspense>; a pending read
+  // there would remount + reset the form — see the estimate resource below).
   const [locationsData] = createResource(() => params.storeId, fetchLocations);
   const locations = (): Location[] =>
     locationsData.state === 'ready' || locationsData.state === 'refreshing'
@@ -233,10 +233,10 @@ export const CreateStocktakeModal = (props: {
       expiryDate,
       includeAllItems,
     } = form();
-    // Seed a default description on every create mode (OMS-REG-INV-03.9): the server
-    // fabricates no default, so the client composes one — the user's display
-    // name and today's date, both in the active locale. Editable in place
-    // afterward; nothing re-derives it.
+    // Seed a default description on every create mode (OMS-REG-INV-03.9): the
+    // server fabricates no default, so the client composes one — the user's
+    // display name and today's date, both in the active locale. Editable in
+    // place afterward; nothing re-derives it.
     const base = {
       id: generateUUID(),
       comment: generatedComment(),
@@ -253,8 +253,9 @@ export const CreateStocktakeModal = (props: {
           ...base,
           masterListId: masterListId || undefined,
           locationId: locationId || undefined,
-          // VVM status filter — gated by manageVvmStatusForStock (the field only
-          // appears when the pref is on, so vvmStatusId is otherwise always '').
+          // VVM status filter — gated by manageVvmStatusForStock (the field
+          // only appears when the pref is on, so vvmStatusId is otherwise
+          // always '').
           vvmStatusId: vvmStatusId || undefined,
           expiresBefore: expiryDate ? dayBefore(expiryDate) : undefined,
           includeAllMasterListItems: includeAllItems,
@@ -356,6 +357,7 @@ export const CreateStocktakeModal = (props: {
           </Show>
           <Button
             variant="primary"
+            confirms="plain"
             data-testid="dialog-button-ok"
             loading={creating()}
             onClick={() => void create()}

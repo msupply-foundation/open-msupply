@@ -2,13 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { locationsToCsv } from './locationsToCsv';
 import type { LocationRow } from './locationEdit';
 
-// OMS-REG-INV-01.11 — CSV export (spec/locations/acceptance.md § list & lifecycle): a CSV
-// with each location's code, name, location type, volume, volume-used, and
-// on-hold, formatted for OMS consumer compatibility (#377): type name only,
-// lowercase true/false, timestamp-and-store-code filename. In node the catalog
-// isn't loaded, so t() falls back to its keys — header assertions pin keys
-// standing in for the translated labels; the data-value assertions are exact
-// because OMS-REG-INV-01.11–.13 pin them as machine formats, not translations.
+// OMS-REG-INV-01.11 — CSV export (spec/locations/acceptance.md § list &
+// lifecycle): a CSV with each location's code, name, location type, volume,
+// volume-used, and on-hold, formatted for OMS consumer compatibility (#377):
+// type name only, lowercase true/false, timestamp-and-store-code filename. In
+// node the catalog isn't loaded, so t() falls back to its keys — header
+// assertions pin keys standing in for the translated labels; the data-value
+// assertions are exact because OMS-REG-INV-01.11–.13 pin them as machine
+// formats, not translations.
 
 const row = (overrides: Partial<LocationRow> = {}): LocationRow => ({
   id: 'loc-1',
