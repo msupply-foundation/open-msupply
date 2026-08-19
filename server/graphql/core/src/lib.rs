@@ -125,11 +125,19 @@ pub fn auth_data_from_request(http_req: &HttpRequest, cookie_suffix: &str) -> Re
 
 fn session_cookie_value(http_req: &HttpRequest, cookie_suffix: &str) -> Option<String> {
     let cookie_name = format!("session_{cookie_suffix}");
-    let header = http_req.headers().get(COOKIE)?.to_str().ok()?;
-    // RFC 6265: a Cookie header is a `; `-separated list of name=value pairs.
-    header
-        .split("; ")
-        .filter_map(|raw_cookie| Cookie::parse(raw_cookie).ok())
+    // RFC 6265: a Cookie header is a `; `-separated list of name=value pairs — but a request
+    // may carry *several* Cookie header fields: HTTP/2+ clients split ("crumble") the cookie
+    // list into one field per cookie for better compression (RFC 9113 §8.2.3), ordered
+    // oldest-created first, so the freshly issued session cookie tends to arrive last. Scan
+    // every field (skipping any individually malformed cookie) rather than only the first,
+    // otherwise any stale cookie on the origin hides the session cookie (issue
+    // msupply-foundation/open-msupply-frontend#1088).
+    http_req
+        .headers()
+        .get_all(COOKIE)
+        .filter_map(|header_value| header_value.to_str().ok())
+        .flat_map(|header| header.split(';'))
+        .filter_map(|raw_cookie| Cookie::parse(raw_cookie.trim()).ok())
         .find(|cookie| cookie.name() == cookie_name)
         .map(|cookie| cookie.value().to_owned())
 }
@@ -151,4 +159,55 @@ macro_rules! map_filter {
             is_null: None,
         }
     }};
+}
+
+#[cfg(test)]
+mod session_cookie_tests {
+    use super::*;
+    use actix_web::test::TestRequest;
+
+    #[test]
+    fn finds_session_cookie_in_single_combined_header() {
+        // HTTP/1.1 style: one Cookie header with a `; `-separated list.
+        let req = TestRequest::default()
+            .insert_header((COOKIE, "refresh_token=stale; session_8000=the-token"))
+            .to_http_request();
+        assert_eq!(
+            session_cookie_value(&req, "8000"),
+            Some("the-token".to_string())
+        );
+    }
+
+    #[test]
+    fn finds_session_cookie_split_across_multiple_headers() {
+        // HTTP/2 style: the client "crumbles" the cookie list into one header field per
+        // cookie, oldest first — the fresh session cookie arrives last (issue
+        // msupply-foundation/open-msupply-frontend#1088).
+        let req = TestRequest::default()
+            .append_header((COOKIE, "auth=legacy-json-blob"))
+            .append_header((COOKIE, "refresh_token=stale"))
+            .append_header((COOKIE, "session_8000=the-token"))
+            .to_http_request();
+        assert_eq!(
+            session_cookie_value(&req, "8000"),
+            Some("the-token".to_string())
+        );
+    }
+
+    #[test]
+    fn missing_session_cookie_returns_none() {
+        let req = TestRequest::default()
+            .append_header((COOKIE, "refresh_token=stale"))
+            .to_http_request();
+        assert_eq!(session_cookie_value(&req, "8000"), None);
+    }
+
+    #[test]
+    fn wrong_suffix_is_not_matched() {
+        // Two instances on one domain must not read each other's sessions.
+        let req = TestRequest::default()
+            .append_header((COOKIE, "session_8000=the-token"))
+            .to_http_request();
+        assert_eq!(session_cookie_value(&req, "8002"), None);
+    }
 }
