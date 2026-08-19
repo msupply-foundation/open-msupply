@@ -1,0 +1,48 @@
+# The create modal's reads + the insert (spec/rnr-forms/ui-surface.md S2;
+# rules § creation).
+
+# The program picker's options. The client excludes immunisation programs
+# (ui-surface S2 — the create flow is for requisition programs only).
+query RnrPrograms($storeId: String!) {
+  programs(storeId: $storeId, sort: { key: name }) {
+    ... on ProgramConnector {
+      nodes {
+        id
+        name
+        isImmunisation
+      }
+    }
+  }
+}
+
+# The schedule + period cascade for the chosen program: closed periods only,
+# newest first, with inUse marking periods already consumed by a form
+# (contract § creation rules).
+query RnrSchedules($storeId: String!, $programId: String!) {
+  schedulesWithPeriodsByProgram(storeId: $storeId, programId: $programId) {
+    ... on PeriodSchedulesConnector {
+      nodes {
+        id
+        name
+        periods {
+          id
+          inUse
+          period {
+            id
+            name
+            startDate
+            endDate
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation InsertRnrForm($storeId: String!, $input: InsertRnRFormInput!) {
+  insertRnrForm(storeId: $storeId, input: $input) {
+    ... on RnRFormNode {
+      id
+    }
+  }
+}

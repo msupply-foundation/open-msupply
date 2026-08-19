@@ -1,0 +1,308 @@
+import { createResource, createSignal, Show } from 'solid-js';
+import type { Component } from 'solid-js';
+import { graphqlFetch } from '@/api/graphql';
+import { t } from '@/intl';
+import { generateUUID } from '@/uuid';
+import { Dialog } from '@/ui/elements/feedback/Dialog';
+import { Alert } from '@/ui/elements/feedback/Alert';
+import { Text } from '@/ui/elements/typography/Text';
+import {
+  CancelButton,
+  DialogSaveButton,
+} from '@/ui/elements/buttons/StandardButtons';
+import { FieldRow } from '@/ui/elements/inputs/FieldRow';
+import { Stack } from '@/ui/layout/Stack/Stack';
+import { Combobox } from '@/ui/elements/selectors/Combobox';
+import { NameSearch, type NameOption } from '@/domain/name';
+import {
+  InsertRnrForm,
+  RnrPrograms,
+  RnrSchedules,
+} from './createRnrForm.generated';
+import { RnrForms } from '../rnrForms.generated';
+import type { RnrFormRowFragment } from '../rnrForms.generated';
+import {
+  defaultProgramId,
+  defaultScheduleId,
+  defaultSupplier,
+  periodSelection,
+  programOptions,
+  type ProgramOption,
+  type ScheduleOption,
+} from './rnrFormCreate';
+
+// The create modal (spec/rnr-forms/ui-surface.md S2; rules § creation):
+// program → schedule → period cascade + supplier, with auto-selection,
+// prefill-from-history, the closed-periods hint, and the two period error
+// states. The dialog footer is the standard Cancel/Save (never OK); a server
+// rejection keeps the dialog open with an inline banner.
+
+export const RnrFormCreateModal: Component<{
+  storeId: string;
+  onClose: () => void;
+  onCreated: (id: string) => void;
+}> = props => {
+  // The user's explicit picks; undefined = follow the defaults below.
+  const [pickedProgramId, setPickedProgramId] = createSignal<string>();
+  const [pickedScheduleId, setPickedScheduleId] = createSignal<string>();
+  const [pickedPeriodId, setPickedPeriodId] = createSignal<string>();
+  const [pickedSupplier, setPickedSupplier] = createSignal<NameOption | null>();
+  const [saving, setSaving] = createSignal(false);
+  const [serverError, setServerError] = createSignal<string>();
+
+  // Every read below first fetches inside this open modal — live user state —
+  // so all are `.state`-gated, never suspending (kdd/solid-reactivity-pitfalls
+  // › the createResource checklist).
+  const gated = <T,>(resource: {
+    state: string;
+    latest: T | undefined;
+  }): T | undefined =>
+    resource.state === 'ready' || resource.state === 'refreshing'
+      ? resource.latest
+      : undefined;
+
+  const [programsData] = createResource(
+    () => props.storeId,
+    async storeId => {
+      const result = await graphqlFetch(RnrPrograms, { storeId });
+      if (result.kind !== 'success') return undefined;
+      return programOptions(result.data.programs.nodes);
+    }
+  );
+  const programs = (): ProgramOption[] => gated(programsData) ?? [];
+
+  // The most recent form overall — the program/supplier prefill source
+  // (OMS-REG-REPL-07.36/.38).
+  const [recentData] = createResource(
+    () => props.storeId,
+    async storeId => {
+      const result = await graphqlFetch(RnrForms, {
+        storeId,
+        sort: { key: 'createdDatetime', desc: true },
+        page: { first: 1 },
+      });
+      if (result.kind !== 'success') return undefined;
+      return { form: result.data.rAndRForms.nodes[0] };
+    }
+  );
+  const mostRecentForm = (): RnrFormRowFragment | undefined =>
+    gated(recentData)?.form;
+
+  const programId = () =>
+    pickedProgramId() ?? defaultProgramId(programs(), mostRecentForm());
+
+  const [schedulesData] = createResource(
+    () =>
+      programId()
+        ? { storeId: props.storeId, programId: programId()! }
+        : undefined,
+    async variables => {
+      const result = await graphqlFetch(RnrSchedules, variables);
+      if (result.kind !== 'success') return undefined;
+      return result.data.schedulesWithPeriodsByProgram.nodes;
+    }
+  );
+  const schedules = (): ScheduleOption[] => gated(schedulesData) ?? [];
+
+  const scheduleId = () =>
+    pickedScheduleId() ?? defaultScheduleId(schedules(), mostRecentForm());
+  const schedule = () => schedules().find(s => s.id === scheduleId());
+
+  // The previous form within the chosen program+schedule — the sequence
+  // anchor (rules § creation 5/6). Distinct from the overall prefill read.
+  const [previousData] = createResource(
+    () =>
+      programId() && scheduleId()
+        ? {
+            storeId: props.storeId,
+            filter: {
+              programId: { equalTo: programId()! },
+              periodScheduleId: { equalTo: scheduleId()! },
+            },
+            sort: { key: 'createdDatetime', desc: true } as const,
+            page: { first: 1 },
+          }
+        : undefined,
+    async variables => {
+      const result = await graphqlFetch(RnrForms, variables);
+      if (result.kind !== 'success') return undefined;
+      return { form: result.data.rAndRForms.nodes[0] };
+    }
+  );
+  const previousForm = () => gated(previousData)?.form;
+  const previousSettled = () => previousData.state === 'ready';
+
+  const periods = () => periodSelection(schedule(), previousForm());
+  const periodId = () => pickedPeriodId() ?? periods().defaultPeriodId;
+
+  const supplier = (): NameOption | null => {
+    const picked = pickedSupplier();
+    if (picked !== undefined) return picked;
+    const prefill = defaultSupplier(mostRecentForm());
+    // The prefill seed carries only id + name (the row fragment); the flag
+    // fields drive option-ROW display, which a pre-set selection never renders
+    // — the input shows the name alone (NameSearch's selected contract).
+    return prefill
+      ? {
+          id: prefill.id,
+          name: prefill.name,
+          code: '',
+          isSupplier: true,
+          isDonor: false,
+          isOnHold: false,
+          isStore: false,
+        }
+      : null;
+  };
+
+  const changeProgram = (id: string | undefined) => {
+    setPickedProgramId(id);
+    // Changing the program clears schedule and period (ui-surface S2).
+    setPickedScheduleId(undefined);
+    setPickedPeriodId(undefined);
+  };
+  const changeSchedule = (id: string | undefined) => {
+    setPickedScheduleId(id);
+    setPickedPeriodId(undefined);
+  };
+
+  // Save is disabled while any field is empty or the previous form is a draft
+  // (OMS-REG-REPL-07.41; the sequence rejections are pre-empted here and
+  // re-checked server-side).
+  const incomplete = () =>
+    !programId() || !scheduleId() || !periodId() || !supplier();
+  const blocked = () =>
+    periods().error === 'previous-not-finalised' || !previousSettled();
+
+  const save = async () => {
+    if (saving() || incomplete() || blocked()) return;
+    setSaving(true);
+    setServerError(undefined);
+    const id = generateUUID();
+    const result = await graphqlFetch(
+      InsertRnrForm,
+      {
+        storeId: props.storeId,
+        input: {
+          id,
+          programId: programId()!,
+          periodId: periodId()!,
+          supplierId: supplier()!.id,
+        },
+      },
+      // A rejection that slips past the modal's gating (a race on the period)
+      // surfaces inline in the dialog, not the global modal (ui-surface S2).
+      { returnGraphqlErrors: true }
+    );
+    setSaving(false);
+    if (result.kind === 'success') {
+      props.onCreated(id);
+      return;
+    }
+    if (result.kind === 'graphqlError') setServerError(result.message);
+    // unauthenticated/forbidden/unexpected: the global surface owns it; the
+    // dialog just released its busy state.
+  };
+
+  const periodErrorText = () => {
+    switch (periods().error) {
+      case 'previous-not-finalised':
+        return t('messages.finalise-previous-form');
+      case 'no-available-periods':
+        return t('messages.no-available-periods');
+      default:
+        return undefined;
+    }
+  };
+
+  return (
+    <Dialog
+      open
+      onClose={props.onClose}
+      closeButton
+      dismissable={!saving()}
+      title={t('label.new-rnr-form')}
+      testId="create-rnr-form-modal"
+      width="form"
+      actions={
+        <>
+          <CancelButton onClick={props.onClose} />
+          <DialogSaveButton
+            data-testid="create-rnr-form-save-button"
+            disabled={incomplete() || blocked()}
+            loading={saving()}
+            onClick={() => void save()}
+          />
+        </>
+      }
+    >
+      <Stack gap="md">
+        <Show when={serverError()}>
+          <Alert severity="error" testId="create-rnr-form-error">
+            {serverError()}
+          </Alert>
+        </Show>
+        <FieldRow label={t('label.program')}>
+          <Combobox<ProgramOption>
+            label={t('label.program')}
+            hideLabel
+            items={programs()}
+            value={programId()}
+            itemToString={p => p.name}
+            itemToValue={p => p.id}
+            loading={programsData.loading}
+            onChange={p => changeProgram(p?.id)}
+            inputTestId="create-rnr-form-program"
+          />
+        </FieldRow>
+        <FieldRow label={t('label.schedule')}>
+          <Combobox<ScheduleOption>
+            label={t('label.schedule')}
+            hideLabel
+            items={schedules()}
+            value={scheduleId()}
+            disabled={!programId()}
+            itemToString={s => s.name}
+            itemToValue={s => s.id}
+            loading={schedulesData.loading}
+            onChange={s => changeSchedule(s?.id)}
+            inputTestId="create-rnr-form-schedule"
+          />
+        </FieldRow>
+        <FieldRow label={t('label.period')}>
+          <Stack gap="sm">
+            {/* The standing closed-periods hint (ui-surface S2). */}
+            <Text variant="bodySmall">
+              {t('messages.only-closed-periods-visible')}
+            </Text>
+            <Combobox<ReturnType<typeof periodSelection>['options'][number]>
+              label={t('label.period')}
+              hideLabel
+              items={periods().options}
+              value={periodId()}
+              disabled={!programId() || !scheduleId()}
+              itemToString={o => o.option.period.name}
+              itemToValue={o => o.option.period.id}
+              itemDisabled={o => o.disabled}
+              onChange={o => setPickedPeriodId(o?.option.period.id)}
+              error={periodErrorText()}
+              errorTestId="create-rnr-form-period-error"
+              inputTestId="create-rnr-form-period"
+            />
+          </Stack>
+        </FieldRow>
+        <FieldRow label={t('label.supplier')}>
+          <NameSearch
+            storeId={props.storeId}
+            role="supplier"
+            label={t('label.supplier')}
+            hideLabel
+            selected={supplier() ?? undefined}
+            onSelect={name => setPickedSupplier(name)}
+            inputTestId="create-rnr-form-supplier"
+          />
+        </FieldRow>
+      </Stack>
+    </Dialog>
+  );
+};
