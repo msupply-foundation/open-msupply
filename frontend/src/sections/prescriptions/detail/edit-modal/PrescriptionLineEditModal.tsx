@@ -810,9 +810,10 @@ const Body = (props: PrescriptionLineEditModalProps) => {
           {/* The warning banners sit between the quantity fields and the batch
             list (ui-surface S4 § layout). The shortfall banner (stock-
             allocation § reporting — nothing narrows silently; the
-            prescription has no placeholder) carries the current app's own
-            copy: "There is a total of X units available. Unable to allocate
-            all Y units."… */}
+            prescription has no placeholder) carries the current app's copy
+            with one clause added, naming which total the figure is: "There is
+            a total of X units available for auto allocation. Unable to
+            allocate all Y units."… */}
           <Show when={shortfall() > 0}>
             <Alert severity="warning" testId="prescription-shortfall-warning">
               {t(
