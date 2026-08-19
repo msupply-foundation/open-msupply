@@ -91,7 +91,7 @@ import { InboundShipmentStatusFooter } from './InboundShipmentStatusFooter';
 import {
   canChangeStatus,
   isEditable,
-  kindOf,
+  sourceLinkOf,
   supplierIsStore,
 } from './inboundShipmentStatus';
 import { SupplierKindIcon } from '../SupplierKindIcon';
@@ -610,12 +610,12 @@ const InboundShipmentDetailView: Component = () => {
     });
     // Add-from-internal-order — store allows the manual link, the shipment is
     // still editable, and it carries a MANUALLY linked internal order (spec
-    // AC-PG4 / AC-IO1). The distinguishing signal is linkedShipment, NOT kind:
-    // any requisition-linked shipment is inboundType FROM_REQUISITION, which
-    // kindOf() calls 'transfer', so the old `kindOf(node) !== 'transfer'` gate
-    // could never coexist with `node.requisition` — the option was dead code
-    // (H4). An INCOMING transfer has linkedShipment (arrives pre-populated, no
-    // order-line pull); a manual link has a requisition but no linkedShipment.
+    // AC-PG4 / AC-IO1). The distinguishing signal is linkedShipment: an
+    // INCOMING transfer has one (it arrives pre-populated, so there is no
+    // order-line pull to offer), a manual link has a requisition without one.
+    // That is the same signal sourceLinkOf() keys on, so a !== 'transfer' test
+    // would read equivalently here — linkedShipment is named directly because
+    // this gate is about the pre-populated lines, not about the status flow.
     // Offered only when the store enables manual IO linking (a preference
     // gate → offer-shaping, omitted otherwise). When offered,
     // disable-with-reason for the per-shipment state (M5): needs a manually
@@ -1006,7 +1006,7 @@ const InboundShipmentDetailView: Component = () => {
                   <HeaderToolbar
                     alert={
                       <Alert severity="info" compact>
-                        {kindOf(node()) === 'manual'
+                        {sourceLinkOf(node()) === 'none'
                           ? t('messages.inbound-manual-info')
                           : t('messages.inbound-automatic-info')}
                       </Alert>

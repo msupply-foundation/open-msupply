@@ -2,9 +2,11 @@ import { describe, expect, it } from 'vitest';
 import {
   canChangeStatus,
   isEditable,
-  kindOf,
+  reachableStatuses,
+  sourceLinkOf,
   statusDatetime,
   statusFlow,
+  type SourceLink,
 } from './inboundShipmentStatus';
 
 // The inbound-shipment status track's per-step dates
@@ -21,6 +23,117 @@ const datetimes = (over: Partial<Datetimes> = {}): Datetimes => ({
   receivedDatetime: null,
   verifiedDatetime: null,
   ...over,
+});
+
+// Every (origin, linked-shipment) pair the wire can present, and the source
+// link each one reads as. Exhaustive on purpose: this classification is the
+// single input to the status track, the split button, the kind banner, the
+// supplier lock and the transport panel, so one wrong row moves all five at
+// once. Enumerating the whole cross-product also makes an added origin fail
+// here rather than silently fall through to a default.
+const ORIGINS = [
+  'FROM_REQUISITION',
+  'FROM_PURCHASE_ORDER',
+  'MANUAL_INTERNAL',
+  'MANUAL_EXTERNAL',
+] as const;
+
+const CLASSIFICATION: Record<
+  (typeof ORIGINS)[number],
+  { unlinked: SourceLink; linked: SourceLink }
+> = {
+  // A requisition link alone is NOT a source link — the internal order says
+  // what was asked for, nothing is sending against it. The server agrees: it
+  // refuses Shipped on "no purchase order and no linked shipment" (issue
+  // #1132, the case this whole classification got wrong).
+  FROM_REQUISITION: { unlinked: 'none', linked: 'transfer' },
+  // A purchase order wins over a linked shipment. Unreachable through
+  // oMS's own writes — the transfer processor stamps purchase_order_id: None
+  // — but sync from legacy mSupply translates both links independently, so the
+  // pair is decidable rather than impossible, and the precedence is pinned
+  // here to match the current app's.
+  FROM_PURCHASE_ORDER: { unlinked: 'purchaseOrder', linked: 'purchaseOrder' },
+  // Either manual origin: unlinked until the transfer processor links it.
+  MANUAL_INTERNAL: { unlinked: 'none', linked: 'transfer' },
+  MANUAL_EXTERNAL: { unlinked: 'none', linked: 'transfer' },
+};
+
+describe('sourceLinkOf (REPL-03.10 / .11 / .12 — which shipments reach Picked and Shipped)', () => {
+  for (const origin of ORIGINS) {
+    const expected = CLASSIFICATION[origin];
+
+    it(`reads ${origin} with no linked shipment as '${expected.unlinked}'`, () => {
+      expect(sourceLinkOf({ inboundType: origin })).toBe(expected.unlinked);
+      // null and undefined are the same absence on the wire.
+      expect(sourceLinkOf({ inboundType: origin, linkedShipment: null })).toBe(
+        expected.unlinked
+      );
+    });
+
+    it(`reads ${origin} with a linked shipment as '${expected.linked}'`, () => {
+      expect(
+        sourceLinkOf({
+          inboundType: origin,
+          linkedShipment: { id: 'outbound-1' },
+        })
+      ).toBe(expected.linked);
+    });
+  }
+});
+
+// .10/.11: Picked and Shipped appear only where they are reachable — and .12:
+// the split button never OFFERS a Shipped the server would refuse. Asserted per
+// source link, so the two are pinned together for every shipment class.
+describe('status flow per source link (REPL-03.10 / .11 / .12)', () => {
+  it('gives an unlinked shipment no Picked and no Shipped', () => {
+    expect(statusFlow('none', 'NEW')).toEqual([
+      'NEW',
+      'DELIVERED',
+      'RECEIVED',
+      'VERIFIED',
+    ]);
+    expect(reachableStatuses('none', 'NEW')).toEqual([
+      'DELIVERED',
+      'RECEIVED',
+      'VERIFIED',
+    ]);
+  });
+
+  it('gives a PO-linked shipment Shipped but never Picked', () => {
+    expect(statusFlow('purchaseOrder', 'NEW')).toEqual([
+      'NEW',
+      'SHIPPED',
+      'DELIVERED',
+      'RECEIVED',
+      'VERIFIED',
+    ]);
+    expect(reachableStatuses('purchaseOrder', 'NEW')).toContain('SHIPPED');
+  });
+
+  // Picked is on a transfer's track (the sender stamped it) but is never
+  // offered as an advance — only the transfer processor sets it.
+  it('shows Picked on a transfer track without offering it', () => {
+    expect(statusFlow('transfer', 'NEW')).toEqual([
+      'NEW',
+      'PICKED',
+      'SHIPPED',
+      'DELIVERED',
+      'RECEIVED',
+      'VERIFIED',
+    ]);
+    expect(reachableStatuses('transfer', 'NEW')).not.toContain('PICKED');
+  });
+
+  // The manual+internal-order regression in full: the shipment the issue was
+  // filed about must offer Delivered, not Shipped.
+  it('offers Delivered, not Shipped, on an internal-order-linked shipment', () => {
+    const link = sourceLinkOf({
+      inboundType: 'FROM_REQUISITION',
+      linkedShipment: null,
+    });
+    expect(reachableStatuses(link, 'NEW')[0]).toBe('DELIVERED');
+    expect(reachableStatuses(link, 'NEW')).not.toContain('SHIPPED');
+  });
 });
 
 describe('isEditable', () => {
@@ -96,7 +209,7 @@ describe('statusDatetime (REPL-03.23 — a date per reached step)', () => {
       receivedDatetime: '2026-06-17T22:22:00Z',
       verifiedDatetime: '2026-06-17T22:23:00Z',
     });
-    const flow = statusFlow(kindOf(transfer), 'VERIFIED');
+    const flow = statusFlow(sourceLinkOf(transfer), 'VERIFIED');
     expect(flow).toContain('PICKED');
     for (const status of flow)
       expect(statusDatetime(info, status)).toBeTruthy();
@@ -107,7 +220,7 @@ describe('statusDatetime (REPL-03.23 — a date per reached step)', () => {
   it('has no picked time, and no Picked step, on a manual shipment', () => {
     expect(statusDatetime(datetimes(), 'PICKED')).toBeNull();
     expect(
-      statusFlow(kindOf({ inboundType: 'MANUAL_EXTERNAL' }), 'NEW')
+      statusFlow(sourceLinkOf({ inboundType: 'MANUAL_EXTERNAL' }), 'NEW')
     ).not.toContain('PICKED');
   });
 });

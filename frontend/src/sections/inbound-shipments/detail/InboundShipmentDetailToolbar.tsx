@@ -19,7 +19,7 @@ import { poLabel } from '../linkedOrder';
 import { NameSearch, type NameOption } from '../../../domain/name';
 import type { InboundInfoFragment } from './inboundShipmentDetail.generated';
 import type { InboundFieldEdit } from './inboundShipmentEdit';
-import { kindOf, supplierIsStore } from './inboundShipmentStatus';
+import { sourceLinkOf, supplierIsStore } from './inboundShipmentStatus';
 import type { UpdateInboundShipmentVariables } from './inboundShipmentDetail.generated';
 
 export interface InboundShipmentDetailToolbarProps {
@@ -47,7 +47,7 @@ export interface InboundShipmentDetailToolbarProps {
 export const InboundShipmentDetailToolbar: Component<
   InboundShipmentDetailToolbarProps
 > = props => {
-  const kind = () => kindOf(props.node);
+  const sourceLink = () => sourceLinkOf(props.node);
 
   // The received date is enabled while Received + backdating-on, yet the server
   // can still refuse the save (moving the date forward, or beyond the store's
@@ -75,7 +75,7 @@ export const InboundShipmentDetailToolbar: Component<
 
   // Supplier is editable only on a manual shipment that isn't Verified — never
   // on a transfer or a PO-linked shipment (spec S3 header fields).
-  const supplierLocked = () => props.disabled || kind() !== 'manual';
+  const supplierLocked = () => props.disabled || sourceLink() !== 'none';
 
   const selectedSupplier = (): NameOption => ({
     id: props.node.otherPartyId,
