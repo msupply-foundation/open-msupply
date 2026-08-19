@@ -28,6 +28,7 @@ import {
   type SortState,
 } from '@/ui/elements/table/DataTable';
 import { getCellDefinition } from '@/ui/elements/table/tableHelpers';
+import { sortRows } from '@/list/sortRows';
 import { HStack } from '@/ui/layout/Stack/HStack';
 import { StatusMarker } from '@/ui/elements/feedback/StatusMarker';
 import {
@@ -489,13 +490,7 @@ const RequisitionDetailView: Component = () => {
           l.item.code.toLowerCase().includes(f) ||
           l.itemName.toLowerCase().includes(f)
       );
-    const s = sort();
-    const dir = s.desc ? -1 : 1;
-    return [...lines].sort((a, b) => {
-      const av = sortValue(a, s.key);
-      const bv = sortValue(b, s.key);
-      return av < bv ? -dir : av > bv ? dir : 0;
-    });
+    return sortRows(lines, sort(), sortValue);
   };
 
   // Dose annotation for a unit quantity on a vaccine item under the doses
