@@ -1189,6 +1189,10 @@ export function DataTable<T, K extends string, G extends string = never>(
           trigger={<SettingsIcon />}
           triggerLabel={t('table.settings')}
           triggerProps={{ title: t('table.settings') }}
+          // The panel's CONTENTS carry ids; so must what opens them, or a test
+          // has to find this button by its translated title — which also
+          // collides with the nav's own Settings entry (e2e/TESTIDS.md).
+          triggerTestId="table-settings"
           triggerClass={styles.controlButton}
           class={styles.controlPopover}
         >
