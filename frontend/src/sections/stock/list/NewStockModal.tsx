@@ -272,9 +272,11 @@ const NewStockContent = (props: {
       // two-column form needs, growing downward as the sections reveal once an
       // item is chosen. The body reserves enough height to OWN the item
       // search's open suggestions list (the create/search-modal convention —
-      // CustomerSearchModal et al), which otherwise dangles past the card.
+      // CustomerSearchModal et al), which otherwise dangles past the card:
+      // header + field + the listbox's 18rem cap + padding (#1029 — the old 24
+      // left the bottom ~2rem of a full listbox hanging past the dialog).
       widthRem={56}
-      minBodyHeightRem={24}
+      minBodyHeightRem={27}
       testId="new-stock-modal"
       initialFocus={itemSearch}
       title={t('heading.stock-line-details')}
@@ -353,7 +355,6 @@ const NewStockContent = (props: {
                     <NumberField
                       label={t('label.pack-qty')}
                       required
-                      width="full"
                       decimalLimit={2}
                       value={draft.numberOfPacks}
                       onChange={v => setDraft('numberOfPacks', v)}
@@ -361,7 +362,6 @@ const NewStockContent = (props: {
                     <NumberField
                       label={t('label.pack-size')}
                       required
-                      width="full"
                       min={1}
                       decimalLimit={2}
                       value={draft.packSize}
@@ -378,26 +378,22 @@ const NewStockContent = (props: {
                 <FormSection title={t('heading.batches-and-dates')}>
                   <TextField
                     label={t('label.batch')}
-                    width="full"
                     value={draft.batch}
                     onInput={e => setDraft('batch', e.currentTarget.value)}
                   />
                   <TextField
                     label={t('label.barcode')}
-                    width="full"
                     value={draft.barcode}
                     onInput={e => setDraft('barcode', e.currentTarget.value)}
                   />
                   <FormRow>
                     <DateField
                       label={t('label.expiry-date')}
-                      width="full"
                       value={draft.expiryDate}
                       onChange={v => setDraft('expiryDate', v)}
                     />
                     <DateField
                       label={t('label.manufacture-date')}
-                      width="full"
                       max={today}
                       value={draft.manufactureDate}
                       onChange={v => setDraft('manufactureDate', v)}
@@ -435,13 +431,11 @@ const NewStockContent = (props: {
                   <FormRow>
                     <CurrencyField
                       label={t('label.cost-price')}
-                      width="full"
                       value={draft.costPricePerPack}
                       onChange={v => setDraft('costPricePerPack', v)}
                     />
                     <CurrencyField
                       label={t('label.sell-price')}
-                      width="full"
                       value={draft.sellPricePerPack}
                       onChange={v => setDraft('sellPricePerPack', v)}
                     />
@@ -495,7 +489,6 @@ const NewStockContent = (props: {
                     />
                     <NumberField
                       label={t('label.volume-per-pack')}
-                      width="full"
                       decimalLimit={10}
                       value={draft.volumePerPack}
                       onChange={v => setDraft('volumePerPack', v)}

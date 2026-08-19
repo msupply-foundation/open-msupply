@@ -36,12 +36,7 @@ import {
   getNumberCell,
 } from '../../../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../../../api/createTableConfig';
-import {
-  CopyIcon,
-  InfoIcon,
-  PlusCircleIcon,
-  TrashIcon,
-} from '../../../../ui/icons';
+import { CopyIcon, PlusCircleIcon, TrashIcon } from '../../../../ui/icons';
 import { ItemSearch, type ItemOption } from '../../../../domain/item';
 import {
   createFocusTarget,
@@ -270,13 +265,36 @@ const CARD_GROUPS: CardGroup<DraftBatch, GroupKey>[] = [
   {
     key: 'batch',
     panel: true,
+    // Portrait on a tablet: even columns, every row full, and Location spanning
+    // two so the eight fields come out as three even rows — the quantity trio,
+    // then the two pack sizes with the expiry, then Location + Manufacturer. The
+    // weighted flex default sized each field to its data but left a wrapped
+    // row's edges out of step with the row above it, which read as untidy on a
+    // card this wide.
+    narrowLayout: { columns: 6 },
   },
   {
     key: 'pricing',
     labelKey: 'label.pricing-additional-info',
-    icon: () => <InfoIcon />,
     panel: true,
     disclosure: 'closed',
+    // TWELVE, where the batch panel above takes six — the two panels are boxed
+    // separately, so they read as their own grids and need not share a track
+    // count. Twelve is what lets Donor, Campaign and Manufacture date share ONE
+    // row at three different widths: at six the only split available was 2/2/2,
+    // which would have taken Campaign down to a third of the row.
+    //
+    // The row is 3 + 5 + 4, and every part of that is a floor pushing back:
+    // Manufacture date cannot go below 4 (its DD MMM YYYY placeholder needs
+    // ~11rem and a 3 is 9.6), and Donor cannot go below 3 (a lookup spends ~56px
+    // on its ✕ and chevron before any text). So Campaign takes what is left, 5 —
+    // less than the 4-of-6 it had when it sat on a row with only Donor. That is
+    // the cost of the three-up grouping, not a sizing oversight.
+    //
+    // Tiles exactly with the track-by-donor preference ON; with it OFF that row
+    // is left a quarter empty (see CardGroup.narrowLayout — no fixed set of spans
+    // suits both counts).
+    narrowLayout: { columns: 12 },
   },
 ];
 
@@ -787,9 +805,6 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             label={t('label.batch')}
             hideLabel
             size="small"
-            // Narrow: a batch code is short, and it's the card's inline header
-            // field (the FieldRow control cell is otherwise full-width).
-            width="compact"
             value={b.batch}
             onInput={e => updateBatch(b.id, 'batch', e.currentTarget.value)}
           />
@@ -800,7 +815,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { key: 'numberOfPacks' },
       header: () => t('label.packs-received'),
       cardGroup: 'batch',
-      ...getNumberCell({ cardWidth: 7.5 }),
+      ...getNumberCell({ cardWidth: 7.5, cardSpan: 2 }),
       cell: info => {
         const b = info.row.original;
         return (
@@ -810,7 +825,6 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
               label={t('label.packs-received')}
               hideLabel
               size="small"
-              width="full"
               value={b.numberOfPacks}
               min={0}
               // Packs are received in fractions (a part-full pack) —
@@ -840,7 +854,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             c: { id: 'shippedNumberOfPacks' },
             header: () => t('label.shipped-number-of-packs'),
             cardGroup: 'batch',
-            ...getNumberCell({ cardWidth: 7.5 }),
+            ...getNumberCell({ cardWidth: 7.5, cardSpan: 2 }),
             cell: info => {
               const b = info.row.original;
               return (
@@ -848,7 +862,6 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                   label={t('label.shipped-number-of-packs')}
                   hideLabel
                   size="small"
-                  width="full"
                   value={b.shippedNumberOfPacks}
                   min={0}
                   decimalLimit={2}
@@ -872,7 +885,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             // which is what a locked Cost price is; a difference is arithmetic
             // and is never typed, so greying it conflates the two. Sized to the
             // input row so the columns still line up.
-            ...getNumberCell({ cardWidth: 5 }),
+            ...getNumberCell({ cardWidth: 5, cardSpan: 2 }),
             cell: info => {
               const b = info.row.original;
               // A getter, not a hoisted const: read inside JSX it stays
@@ -917,7 +930,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { key: 'packSize' },
       header: () => t('label.received-pack-size'),
       cardGroup: 'batch',
-      ...getNumberCell({ cardWidth: 8.75 }),
+      ...getNumberCell({ cardWidth: 8.75, cardSpan: 2 }),
       cell: info => {
         const b = info.row.original;
         return (
@@ -925,7 +938,6 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             label={t('label.received-pack-size')}
             hideLabel
             size="small"
-            width="full"
             value={b.packSize}
             // Don't clamp below 1 — a pack size < 1 is a server rule
             // (PackSizeBelowOne, untyped); submit it and surface the rejection
@@ -947,7 +959,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             c: { id: 'shippedPackSize' },
             header: () => t('label.shipped-pack-size'),
             cardGroup: 'batch',
-            ...getNumberCell({ cardWidth: 8.75 }),
+            ...getNumberCell({ cardWidth: 8.75, cardSpan: 2 }),
             cell: info => {
               const b = info.row.original;
               return (
@@ -955,7 +967,6 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                   label={t('label.shipped-pack-size')}
                   hideLabel
                   size="small"
-                  width="full"
                   value={b.shippedPackSize}
                   min={0}
                   decimalLimit={2}
@@ -988,7 +999,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { key: 'expiryDate' },
       header: () => t('label.expiry'),
       cardGroup: 'batch',
-      meta: { cardWidth: 10 },
+      meta: { cardWidth: 10, cardSpan: 2 },
       cell: info => {
         const b = info.row.original;
         return (
@@ -1009,7 +1020,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { id: 'location' },
       header: () => t('label.location'),
       cardGroup: 'batch',
-      meta: { cardWidth: { min: 8, max: 17, weight: 1.2 } },
+      // Two columns in the group's portrait layout: the longest value on the
+      // card ("fr — Central Regional Medical Logistics & …") against the short
+      // scalars around it, and the odd field that makes eight fill three rows.
+      meta: { cardWidth: { min: 8, max: 17, weight: 1.2 }, cardSpan: 3 },
       cell: info => {
         const b = info.row.original;
         return (
@@ -1032,7 +1046,9 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { id: 'manufacturer' },
       header: () => t('label.manufacturer'),
       cardGroup: 'batch',
-      meta: { cardWidth: { min: 10, max: 20, weight: 1.4 } },
+      // 3 of 6 — half the row, level with Location beside it. Manufacturer names
+      // run long ("Serum Institute of India Pvt. Ltd."), and at 2 they truncated.
+      meta: { cardWidth: { min: 10, max: 20, weight: 1.4 }, cardSpan: 3 },
       cell: info => {
         const b = info.row.original;
         return (
@@ -1078,7 +1094,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             c: { id: 'authStatus' },
             header: () => t('label.auth-status'),
             cardGroup: 'batch',
-            meta: { cardWidth: 10 },
+            meta: { cardWidth: 10, cardSpan: 2 },
             cell: info => {
               const b = info.row.original;
               // The styled Kobalte Select (not a Combobox — no point searching
@@ -1129,13 +1145,12 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             c: { id: 'dosesPerUnit' },
             header: () => t('label.doses-per-unit'),
             cardGroup: 'batch',
-            ...getNumberCell({ cardWidth: 7.5 }),
+            ...getNumberCell({ cardWidth: 7.5, cardSpan: 2 }),
             cell: () => (
               <NumberField
                 label={t('label.doses-per-unit')}
                 hideLabel
                 size="small"
-                width="full"
                 value={item()?.doses ?? 0}
                 disabled
               />
@@ -1151,7 +1166,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             c: { id: 'vvmStatus' },
             header: () => t('label.vvm-status'),
             cardGroup: 'batch',
-            meta: { cardWidth: 10 },
+            meta: { cardWidth: 10, cardSpan: 2 },
             cell: info => {
               const b = info.row.original;
               return (
@@ -1173,7 +1188,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { key: 'costPricePerPack' },
       header: () => t('label.pack-cost-price'),
       cardGroup: 'pricing',
-      ...getNumberCell({ cardWidth: 10 }),
+      ...getNumberCell({ cardWidth: 10, cardSpan: 4 }),
       cell: info => {
         const b = info.row.original;
         return (
@@ -1181,7 +1196,6 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             label={t('label.pack-cost-price')}
             hideLabel
             size="small"
-            width="full"
             value={b.costPricePerPack}
             disabled={props.costLocked}
             onChange={v => changeCost(b.id, v ?? 0)}
@@ -1193,7 +1207,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { key: 'sellPricePerPack' },
       header: () => t('label.pack-sell-price'),
       cardGroup: 'pricing',
-      ...getNumberCell({ cardWidth: 10 }),
+      ...getNumberCell({ cardWidth: 10, cardSpan: 4 }),
       cell: info => {
         const b = info.row.original;
         return (
@@ -1201,7 +1215,6 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             label={t('label.pack-sell-price')}
             hideLabel
             size="small"
-            width="full"
             value={b.sellPricePerPack}
             onChange={v => changeSell(b.id, v ?? 0)}
           />
@@ -1215,7 +1228,13 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       cardGroup: 'pricing',
       // A read-only value, like Difference — packs × cost price is derived,
       // never typed.
-      ...getNumberCell({ cardWidth: 5 }),
+      // 8, not the 5 a small count takes: this is a CURRENCY total, and at 5rem
+      // (80px) "$19,536,000.00" wrapped onto a second line in the wide template,
+      // where the track is fixed and cannot grow. The 3rem comes out of Note's
+      // floor below rather than being added, so the group's minima — and with
+      // them the width at which it drops to the narrow grid — do not move; Note
+      // is weighted and grows past its floor anyway, so it loses nothing.
+      ...getNumberCell({ cardWidth: 8, cardSpan: 4 }),
       cell: info => {
         const b = info.row.original;
         return (
@@ -1232,7 +1251,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             c: { id: 'donor' },
             header: () => t('label.donor'),
             cardGroup: 'pricing',
-            meta: { cardWidth: { min: 9, max: 18, weight: 1 } },
+            meta: { cardWidth: { min: 9, max: 18, weight: 1 }, cardSpan: 3 },
             cell: info => {
               const b = info.row.original;
               return (
@@ -1272,7 +1291,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { id: 'campaignOrProgram' },
       header: () => t('label.campaign'),
       cardGroup: 'pricing',
-      meta: { cardWidth: { min: 9.5, max: 20, weight: 1.2 } },
+      meta: { cardWidth: { min: 9.5, max: 20, weight: 1.2 }, cardSpan: 5 },
       cell: info => {
         const b = info.row.original;
         return (
@@ -1296,7 +1315,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { key: 'manufactureDate' },
       header: () => t('label.manufacture-date'),
       cardGroup: 'pricing',
-      meta: { cardWidth: 10 },
+      meta: { cardWidth: 10, cardSpan: 4 },
       cell: info => {
         const b = info.row.original;
         return (
@@ -1316,7 +1335,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { id: 'volumePerPack' },
       header: () => t('label.volume-per-pack'),
       cardGroup: 'pricing',
-      ...getNumberCell({ cardWidth: 10 }),
+      ...getNumberCell({ cardWidth: 10, cardSpan: 4 }),
       cell: info => {
         const b = info.row.original;
         return (
@@ -1325,7 +1344,6 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             hideLabel
             decimalLimit={10}
             size="small"
-            width="full"
             value={b.volumePerPack}
             min={0}
             onChange={v => updateBatch(b.id, 'volumePerPack', v ?? 0)}
@@ -1337,7 +1355,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { key: 'note' },
       header: () => t('label.note'),
       cardGroup: 'pricing',
-      meta: { cardWidth: { min: 8, max: 24, weight: 1.4 } },
+      meta: { cardWidth: { min: 5, max: 24, weight: 1.4 }, cardSpan: 8 },
       cell: info => {
         const b = info.row.original;
         return (
@@ -1345,7 +1363,6 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             label={t('label.note')}
             hideLabel
             size="small"
-            width="full"
             value={b.note}
             onInput={e => updateBatch(b.id, 'note', e.currentTarget.value)}
           />
@@ -1451,12 +1468,16 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
               <ItemSearch
                 label={t('label.item')}
                 hideLabel
-                width="full"
                 storeId={props.storeId}
                 focusTarget={topSelector}
                 value={item()?.id}
                 selectedItem={item() ?? undefined}
                 disabled={mode() === 'update'}
+                // No clear affordance: a shipment line always HAS an item, so
+                // the field is never nullable — it is changed by picking
+                // another, never emptied (D5, clearability follows optionality
+                // — spec/DIVERGENCES.md; as prescriptions' patient picker).
+                clearable={false}
                 onSelect={chooseItem}
               />
             )}

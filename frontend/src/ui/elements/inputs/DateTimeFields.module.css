@@ -12,13 +12,23 @@
   flex-direction: column;
   gap: var(--input-field-gap);
   min-width: 0;
-  max-width: var(--input-max-short);
   position: relative;
 }
 
-/* Width caps, TextField's data-width vocabulary (FieldShell `width`). The
-   compact cap narrows only the control box; it lives after the base .control
-   rules below (to satisfy no-descending-specificity). */
+/* Width caps — TextField's data-width vocabulary AND its meanings, rule for
+   rule (see TextField.module.css, the reference block). The base carried a
+   `short` cap until 2026-08-13, and `long` had no rule at all, so a date field
+   silently ignored it. `compact` caps only the control box; that rule lives
+   after the base .control rules below (no-descending-specificity). */
+.field[data-width='compact'],
+.field[data-width='short'] {
+  max-width: var(--input-max-short);
+}
+
+.field[data-width='long'] {
+  max-width: var(--input-max-long);
+}
+
 .field[data-width='full'] {
   max-width: 100%;
 }
@@ -294,9 +304,11 @@
 }
 
 /* Touch: match the shared input touch heights (standard 48 / small 44, both
-   WCAG 2.5.5 AAA) and bump the typed text to 16px for BOTH sizes — the date
-   input is a real <input>, so iOS Safari zooms on focus under 16px. This block
-   is the reason the date fields now reach the touch target at all. */
+   WCAG 2.5.5 AAA) and bump the inner text to 16px for BOTH sizes, so a date
+   field reads at the same size as the text field beside it. The small selectors
+   have to be REPEATED inside the block — a media query adds no specificity, so
+   a bare `.dateInput` (0,1,0) loses to `.control[data-size='small'] .dateInput`
+   (0,3,0) above and the bump silently never lands on small. */
 @media (pointer: coarse) {
   .control {
     min-block-size: var(--input-height-touch);
@@ -308,7 +320,10 @@
 
   .dateTrigger,
   .dateInput,
-  .timeSegs {
+  .timeSegs,
+  .control[data-size='small'] .dateTrigger,
+  .control[data-size='small'] .dateInput,
+  .control[data-size='small'] .timeSegs {
     font-size: var(--input-font-touch);
   }
 }

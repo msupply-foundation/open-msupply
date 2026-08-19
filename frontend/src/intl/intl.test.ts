@@ -48,9 +48,14 @@ describe('t', () => {
 
   it('resolves a regional variant through its base locale, then English', () => {
     // fr-DJ is a thin overlay on fr: it restates `app.login`, leaves
-    // `app.loading` to French, and `button.add-line` is in neither — which then
-    // resolves to English rather than the raw key (spec/i18n → translating
-    // text, AC-TR20).
+    // `app.loading` to French, and a key in neither resolves to English rather
+    // than the raw key (spec/i18n → translating text, AC-TR20). That last hop
+    // is seeded rather than read off a real key: the French catalog now covers
+    // every English one, so no shipped key has the gap it needs.
+    setDictionaries(previous => ({
+      ...previous,
+      en: { ...commonEn, 'probe.english-only': 'English only' },
+    }));
     setLocale('fr-DJ');
     expect(t('app.login')).toBe(commonFrDj['app.login']);
     expect(t('app.login')).not.toBe(commonFr['app.login']);
@@ -58,10 +63,7 @@ describe('t', () => {
       undefined
     );
     expect(t('app.loading')).toBe(commonFr['app.loading']);
-    expect((commonFr as Record<string, string>)['button.add-line']).toBe(
-      undefined
-    );
-    expect(t('button.add-line')).toBe(commonEn['button.add-line']);
+    expect(t('probe.english-only' as never)).toBe('English only');
   });
 
   it('interpolates an already-translated string into {{ tokens }}', () => {

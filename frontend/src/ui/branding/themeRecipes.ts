@@ -290,6 +290,7 @@ export type RoleName =
   | 'accent'
   | 'danger'
   | 'warning'
+  | 'unfinished'
   | 'success'
   | 'surface'
   | 'text'
@@ -363,6 +364,14 @@ export const ROLES: Record<RoleName, RoleSpec> = {
     // panel. `alert` falls back to `base`.
     members: { base: ['--color-warning'], alert: ['--warning-main'] },
     tokens: ['--color-warning', '--warning-main'],
+  },
+  unfinished: {
+    shorthand: 'base',
+    // The awaiting-a-step marking (outbound placeholder rows). Its own role,
+    // not a member of `warning`: a site rebranding its caution amber must not
+    // silently repaint "still to do" as "something is wrong".
+    members: { base: ['--marking-unfinished'] },
+    tokens: ['--marking-unfinished'],
   },
   success: {
     shorthand: 'base',

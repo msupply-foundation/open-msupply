@@ -513,6 +513,7 @@ const InboundShipmentsList: Component = () => {
           pageSize: query().first,
           total: totalCount(),
           onOffsetChange: offset => setQuery({ ...query(), offset }),
+          // The chosen size is remembered for the next visit (D106).
           onPageSizeChange: first => {
             rememberPageSize(first);
             setQuery({ ...query(), first, offset: 0 });

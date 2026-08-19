@@ -9,9 +9,10 @@ import {
 import type { InboundInfoFragment } from '../inboundShipmentDetail.generated';
 
 // The detail "Documents" tab (spec S3 tabs → Documents): the shared documents
-// table (filename, created date) + upload/download/delete over the sync-file
-// REST store (domain/syncFiles). Documents attach to the "invoice" table keyed
-// by the shipment id. Upload/delete are blocked once the shipment is Verified.
+// table (filename, created date, file size) + upload/download/delete over the
+// sync-file REST store (domain/syncFiles). Documents attach to the "invoice"
+// table keyed by the shipment id. Upload/delete are blocked once the shipment
+// is Verified.
 const TABLE_NAME = 'invoice';
 
 export const InboundDocumentsPanel: Component<{
@@ -47,6 +48,7 @@ export const InboundDocumentsPanel: Component<{
           id: d.id,
           fileName: d.fileName,
           createdDatetime: d.createdDatetime,
+          totalBytes: d.totalBytes,
           url: syncFileUrl(TABLE_NAME, props.node.id, d.id),
           canDelete: !props.disabled,
         }))}

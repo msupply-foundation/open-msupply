@@ -1,0 +1,61 @@
+/* The shipment's totals as their own band, sitting directly on top of the
+   status footer.
+
+   It inherits the look of the thing it replaced — the table's own footer band
+   (DataTable's .tf): the toolbar tint, a divider hairline above it, and
+   body-tone medium figures. That band was where a total lived in this app, so
+   keeping its surface keeps the reading recognisable; what changes is the
+   height, and that it is no longer pinned inside the table pretending to sum
+   the page above it.
+
+   Deliberately SHORT — 0.125rem of block padding, so the row costs a line of
+   type and no more: reference the eye visits occasionally, not chrome worth a
+   bar's height on a tablet. It reads at the inline end, above the status bar's
+   own end cluster, so the screen's figures line up in one column bottom-right.
+
+   The tint does the work the hairline used to do alone, but both are kept: a
+   band between two white surfaces reads as a band, and the rule keeps its top
+   edge crisp against the last table row. */
+.strip {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--space-2);
+  justify-content: flex-end;
+  padding-block: 0.125rem;
+  padding-inline: var(--space-5);
+  border-block-start: 1px solid var(--color-divider);
+  background: var(--bg-toolbar);
+  font-size: var(--text-sm);
+}
+
+/* The inline form (narrow viewports) — the same label + figures, contributed
+   straight into the status/selection bar's own flex flow rather than a band
+   above it. Everything the band was is dropped: no tint, no rule, no padding
+   of its own, since the bar already provides all three. What is left is a pair
+   of items the size of one, which the bar absorbs in space it already had —
+   and the screen gets that row of height back for table rows, which is the
+   whole point on a tablet. */
+.inline {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+/* "Total" — quiet, so it names the figures without competing with them. It IS
+   displayed: two bare numbers at a screen's foot are only conventionally a
+   total, and the word is the whole of what a screen reader would otherwise be
+   missing here. */
+.label {
+  color: var(--text-secondary);
+}
+
+/* The figures — body tone and medium weight, the same emphasis the table's
+   footer band gave them, with tabular numerals so the digits hold their
+   columns as lines change. */
+.figures {
+  color: var(--text-body);
+  font-weight: var(--weight-medium);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

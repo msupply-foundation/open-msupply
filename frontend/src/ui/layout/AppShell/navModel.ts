@@ -13,7 +13,6 @@ import {
   SettingsIcon,
   HelpIcon,
   ReplenishmentIcon,
-  SyncIcon,
 } from '../../icons';
 import type { LocaleKey } from '../../../intl';
 import {
@@ -40,22 +39,7 @@ export interface NavLeaf {
   gate?: NavCapability;
   /** Permission-gated read — visible, refused on activation (navConfig). */
   permission?: NavConfigItem['permission'];
-  /** Offered at phone width (see navConfig NavItem.mobileFriendly). */
-  mobileFriendly?: true;
 }
-
-// A small status marker on a nav entry (the sync indicator). A count rides a
-// Badge pill (meaning in the label text; tone only escalates it); an alert is
-// the current app's bare error-coloured alert glyph (spec/chrome § sync
-// indicator).
-export type NavBadge =
-  | {
-      kind: 'count';
-      label: string;
-      tone: 'neutral' | 'warning' | 'error';
-      title?: string;
-    }
-  | { kind: 'alert'; title: string };
 
 export interface NavItem {
   id: string;
@@ -66,14 +50,12 @@ export interface NavItem {
   gate?: NavCapability;
   /** Permission-gated read — visible, refused on activation (navConfig). */
   permission?: NavConfigItem['permission'];
-  /** Offered at phone width (see navConfig NavItem.mobileFriendly). */
-  mobileFriendly?: true;
   /** Present → expandable parent section. Absent → a leaf link. */
   children?: NavLeaf[];
 }
 
 // Section icons, keyed by the top-level navConfig path. Cosmetic; one icon set
-// only (spec DIVERGENCES D4).
+// only.
 const SECTION_ICONS: Record<string, Component<IconProps>> = {
   dashboard: DashboardIcon,
   replenishment: ReplenishmentIcon,
@@ -115,44 +97,24 @@ const toNavItem = (item: NavConfigItem): NavItem => ({
   icon: SECTION_ICONS[item.path] ?? FileIcon,
   gate: item.gate,
   permission: item.permission,
-  mobileFriendly: item.mobileFriendly,
   children: item.children?.map(child => ({
     id: child.path,
     labelKey: child.labelKey,
     to: child.path,
     gate: child.gate,
     permission: child.permission,
-    mobileFriendly: child.mobileFriendly,
   })),
 });
 
 const items = navConfig.map(toNavItem);
 
-// The Sync entry is chrome, not a destination (spec/chrome § sync indicator):
-// it opens the sync modal in place, so it lives here — NOT in navConfig, which
-// would generate a route for it. Pinned between Settings and Help per the
-// chrome frame layout.
-export const SYNC_NAV_ID = 'sync';
-const syncNavItem: NavItem = {
-  id: SYNC_NAV_ID,
-  labelKey: 'sync',
-  to: 'sync',
-  icon: SyncIcon,
-  // Offered at phone width (spec/navigation › registry: the Sync entry is
-  // mobile-friendly — it opens the modal, no screen of its own).
-  mobileFriendly: true,
-};
-
+// Sync is NOT a menu entry (issue #9229): it never navigated anywhere, and its
+// status now lives in the bottom bar's sync cell (spec/chrome § sync status),
+// where one click starts a run and a second control opens the modal.
 export const upperNav: NavItem[] = items.filter(
   item => !LOWER_IDS.has(item.id)
 );
-const lower = items.filter(item => LOWER_IDS.has(item.id));
-lower.splice(
-  lower.findIndex(item => item.id === 'help'),
-  0,
-  syncNavItem
-);
-export const lowerNav: NavItem[] = lower;
+export const lowerNav: NavItem[] = items.filter(item => LOWER_IDS.has(item.id));
 
 // Every selectable destination as a flat NavLeaf list (top-level leaves + all
 // children) — used to derive the menu highlight from the current route.
@@ -166,7 +128,6 @@ export const navLeaves: NavLeaf[] = items.flatMap(item =>
           to: item.to,
           gate: item.gate,
           permission: item.permission,
-          mobileFriendly: item.mobileFriendly,
         },
       ]
 );

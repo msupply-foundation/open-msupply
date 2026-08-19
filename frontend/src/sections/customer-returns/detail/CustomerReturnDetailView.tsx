@@ -68,7 +68,7 @@ import { CustomerReturnPreferences } from '../preferences.generated';
 import { CustomerReturnToolbar } from './CustomerReturnToolbar';
 import { CustomerReturnSidePanel } from './CustomerReturnSidePanel';
 import { CustomerReturnStatusFooter } from './CustomerReturnStatusFooter';
-import { LogTab } from './LogTab';
+import { ActivityLogPanel } from '../../../domain/activityLog';
 import {
   ReturnItemsModal,
   type ReturnItem,
@@ -819,7 +819,10 @@ const CustomerReturnDetailView: Component = () => {
                   />
                 </TabPanel>
                 <TabPanel value="log">
-                  <LogTab storeId={params.storeId} recordId={node().id} />
+                  <ActivityLogPanel
+                    storeId={params.storeId}
+                    recordId={node().id}
+                  />
                 </TabPanel>
                 <ReturnItemsModal
                   open={editState() != null}

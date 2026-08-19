@@ -9,6 +9,7 @@ import {
   patientSearchPageFetcher,
   type PatientOption,
 } from './patientResource';
+import styles from './PatientSearch.module.css';
 
 export interface PatientSearchProps {
   label: string;
@@ -66,23 +67,22 @@ export interface PatientSearchProps {
 
 // One option row (spec/patients S4): the code (emphasised), the date of birth,
 // then the derived name. Code, date of birth, and name are separately-marked
-// nodes (e2e/TESTIDS.md item-option-code / -dob / -name).
+// nodes (e2e/TESTIDS.md item-option-code / -dob / -name). Layout in
+// PatientSearch.module.css — the identifiers hold their line, the name wraps in
+// what's left.
 const renderRow = (patient: PatientOption): JSX.Element => (
-  <span
-    style={{ display: 'inline-flex', 'align-items': 'center', gap: '0.5rem' }}
-  >
-    <span
-      data-testid="item-option-code"
-      style={{ 'font-weight': 'var(--weight-bold)' }}
-    >
+  <span class={styles.row}>
+    <span class={styles.code} data-testid="item-option-code">
       {patient.code}
     </span>
     {patient.dateOfBirth ? (
-      <span data-testid="item-option-dob">
+      <span class={styles.dob} data-testid="item-option-dob">
         {localisedDate(patient.dateOfBirth)}
       </span>
     ) : null}
-    <span data-testid="item-option-name">{patient.name}</span>
+    <span class={styles.name} data-testid="item-option-name">
+      {patient.name}
+    </span>
   </span>
 );
 
@@ -103,9 +103,10 @@ const renderRow = (patient: PatientOption): JSX.Element => (
  * Consumed by other surfaces (prescriptions, next-of-kin). Its allow-edit
  * affordance (spec/patients S4) is `onEditPatient`: an edit button at the end
  * of the field — the current app's placement — so it costs the label row
- * nothing and stays live while the picker itself is disabled. (S4's fuller
- * two-tab edit modal is not built; the consumer decides where the affordance
- * leads.)
+ * nothing and stays live while the picker itself is disabled. The consumer
+ * decides where the affordance leads — prescriptions opens the S4 two-tab edit
+ * modal (`EditPatientModal`, `src/sections/patients`) in place, never a
+ * navigate-away (#1038).
  */
 export const PatientSearch = (props: PatientSearchProps): JSX.Element => (
   <AsyncCombobox<PatientOption>
@@ -147,6 +148,11 @@ export const PatientSearch = (props: PatientSearchProps): JSX.Element => (
     itemToString={patient => patient.name}
     itemToValue={patient => patient.id}
     renderItem={renderRow}
+    // Let the popup grow past a narrow field — the field is often a dialog
+    // column or a header cluster's compact slot, and at that width a patient's
+    // code + date of birth + name has nowhere to go (#1041). Same treatment as
+    // the location pickers.
+    matchTriggerWidth={false}
     selected={props.selected}
     onSelect={props.onSelect}
     // Create-patient entry (opt-in) at the foot of the result list, offered

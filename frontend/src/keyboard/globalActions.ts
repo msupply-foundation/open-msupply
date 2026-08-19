@@ -11,6 +11,8 @@ import { ALT_SHIFT_L, ALT_SHIFT_S, ESCAPE } from '../ui/utils/shortcuts';
  */
 
 export interface GlobalActionHandlers {
+  /** Start a manual sync, without opening anything (AC-KB6). */
+  syncNow: () => void;
   /** Open the sync window (AC-KB6 — the screen underneath must not move). */
   openSync: () => void;
   /** Log out, asking to confirm first (AC-KB5). */
@@ -36,9 +38,24 @@ export const createGlobalActions = (handlers: GlobalActionHandlers): void => {
    * What is left here is what the menu cannot reach: an action on the app
    * rather than a place in it.
    */
+  /*
+   * The shortcut SYNCS; it no longer opens the modal (issue #9229). A binding
+   * whose whole job was to raise a dialog the user then had to click through
+   * was a keystroke that saved nothing — and the bottom bar now shows the run's
+   * progress, so there is nothing the modal had to be open to tell them.
+   *
+   * Two rows, because they are two different acts: `sync` runs one, and
+   * `sync-details` opens the window for someone who wants the phase-by-phase
+   * detail. Only the first carries a binding — the detail view is a browse, not
+   * a reflex.
+   */
   createAction({
     name: 'sync',
     shortcut: ALT_SHIFT_S,
+    run: handlers.syncNow,
+  });
+  createAction({
+    name: 'button.sync-details',
     run: handlers.openSync,
   });
   createAction({

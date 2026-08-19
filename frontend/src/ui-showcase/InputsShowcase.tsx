@@ -796,13 +796,54 @@ export const InputsShowcase = () => {
             rim + dot, the gap between them transparent —{' '}
             <code>accent-color</code> painted it white in both themes) and lay
             the label — with an optional muted description — beside it. Options
-            can be individually <code>disabled</code>, and{' '}
-            <code>indentRem</code> lines a sub-group up under a sibling control.
-            This is the create-stocktake type + include-all choice.
+            can be individually <code>disabled</code>;{' '}
+            <code>orientation="horizontal"</code> lays them in a row that{' '}
+            <em>wraps</em>, so a long pair still fits a narrow control column;
+            and <code>indentRem</code> lines a sub-group up under a sibling
+            control's text, past a leading icon. The <em>Which items</em> group
+            below is <code>indentRem</code>'s only remaining use — the
+            create-stocktake modal it was built for now labels that choice{' '}
+            <em>Include</em> and gives it a row of its own (#837).
+          </Lead>
+          <Lead>
+            <code>appearance="card"</code> is the same group drawn as selectable
+            boxes: the whole box is the target, the label goes bold with its{' '}
+            <code>description</code> running <em>inline</em> after it, and the
+            chosen one takes a brand rim and a wash of the same colour — so the
+            active choice reads from across a dialog, not from one 18px dot. Use
+            it for a short set of <strong>modes that reshape the screen</strong>{' '}
+            (the three below decide what the create-stocktake modal shows under
+            them); a plain yes/no like <em>Which items</em> stays a bare list.
+            The selected state comes from <code>:has(input:checked)</code> — no
+            JS mirrors it, so the box and the dot cannot disagree.
           </Lead>
           <FormPreview>
             <RadioGroup
-              label="Stocktake type"
+              label='Stocktake type (appearance="card")'
+              appearance="card"
+              value={stocktakeType()}
+              onChange={setStocktakeType}
+              options={[
+                {
+                  value: 'full',
+                  label: 'Full stocktake',
+                  description: 'Count every item in your store.',
+                },
+                {
+                  value: 'filtered',
+                  label: 'Filtered stocktake',
+                  description:
+                    'Narrow down which items are included using the filters below.',
+                },
+                {
+                  value: 'blank',
+                  label: 'Blank stocktake',
+                  description: 'Start empty and add items manually.',
+                },
+              ]}
+            />
+            <RadioGroup
+              label="Stocktake type (default appearance)"
               value={stocktakeType()}
               onChange={setStocktakeType}
               options={[

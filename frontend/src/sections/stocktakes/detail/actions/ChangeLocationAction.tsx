@@ -92,7 +92,7 @@ const Body = (props: ChangeLocationActionProps & { onClose: () => void }) => {
         .selectedIds()
         .map(id => ({ id, location: { value: locationId() } })),
     });
-    if (!outcome) return props.onClose();
+    if (!outcome) return setPhase('confirm'); // handled globally
     props.onCommit(outcome.commit);
     // Clean apply: close — the rows already show their new location.
     if (outcome.errors.size === 0) return props.onClose();

@@ -25,6 +25,10 @@ export const ExportPrintAction: Component<ExportPrintActionProps> = props => {
       <Button
         variant="secondary"
         icon={<PrinterIcon />}
+        // Icon-only on a narrow viewport, so the header's action cluster fits
+        // beside the breadcrumb instead of taking a row of its own.
+        collapsible="narrow"
+        title={t('button.export-or-print')}
         data-testid="export-print-button"
         onClick={() => setOpen(true)}
       >
