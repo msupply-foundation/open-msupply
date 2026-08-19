@@ -3,7 +3,6 @@ import {
   allocateUnits,
   buildSaveInput,
   canSave,
-  draftAvailableUnits,
   seedDraftLines,
   type DraftLine,
 } from './lineEditLogic';
@@ -114,49 +113,6 @@ describe('seedDraftLines (stock-allocation AC-AL1/AL2 client face — FEFO order
       TODAY
     );
     expect(seeded.map(l => l.id)).toEqual(['p2-early', 'p1-late']);
-  });
-});
-
-describe('draftAvailableUnits (AC-AL17 — the available figure, .73)', () => {
-  it('counts only rows auto-distribution can draw from — an item with only expired stock reads 0 (issue #945)', () => {
-    const seeded = seedDraftLines(
-      [
-        line({
-          id: 'expired',
-          expiryDate: '2025-12-01',
-          packSize: 100,
-          availablePacks: 24,
-        }),
-        line({
-          id: 'usable',
-          expiryDate: '2026-06-01',
-          packSize: 10,
-          availablePacks: 2,
-        }),
-      ],
-      OPEN_PREFS,
-      TODAY
-    );
-    expect(draftAvailableUnits(seeded)).toBe(20);
-    expect(draftAvailableUnits(seeded.filter(l => l.id === 'expired'))).toBe(0);
-  });
-
-  it('excludes the held-with-allocation exception row — editable (AC-AL14), but no headroom for distribution', () => {
-    const seeded = seedDraftLines(
-      [
-        line({
-          id: 'held',
-          stockLineOnHold: true,
-          numberOfPacks: 2,
-          availablePacks: 5,
-          packSize: 10,
-        }),
-      ],
-      OPEN_PREFS,
-      TODAY
-    );
-    expect(seeded).toHaveLength(1);
-    expect(draftAvailableUnits(seeded)).toBe(0);
   });
 });
 

@@ -156,29 +156,6 @@ export const autoAllocateBarReasons = (
   return reasons;
 };
 
-/**
- * The editor's available figure (AC-AL17, D108): units summed over exactly
- * the batches auto-distribution may fill — a never-auto-allocated batch
- * (autoAllocateBarReasons above) contributes nothing, so the figure is the
- * Issue entry's real headroom, never a total distribution then refuses to
- * issue (an item with only expired stock reads 0, issue #945).
- */
-export const autoAllocatableUnits = (
-  batches: readonly (BarrableBatch & {
-    packSize: number;
-    availablePacks: number;
-  })[],
-  prefs: AllocationPreferences,
-  today: Date = new Date()
-): number =>
-  batches.reduce(
-    (sum, batch) =>
-      autoAllocateBarReasons(batch, prefs, today).length > 0
-        ? sum
-        : sum + batch.availablePacks * batch.packSize,
-    0
-  );
-
 /** Convenience predicate over barReasons (grid row disabling, AC-AL8). */
 export const isBarred = (
   batch: BarrableBatch,

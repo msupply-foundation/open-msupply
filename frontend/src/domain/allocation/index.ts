@@ -9,7 +9,6 @@ export {
   type Distribution,
 } from './distributeIssue';
 export {
-  autoAllocatableUnits,
   autoAllocateBarReasons,
   barReasons,
   isBarred,
@@ -28,6 +27,7 @@ export {
   packsToDoses,
   dosesToPacks,
   round9,
+  availableUnits,
   issuedUnits,
   distinctPackSizes,
   type AllocateUnit,
