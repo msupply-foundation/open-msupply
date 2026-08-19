@@ -15,7 +15,7 @@ use crate::{
         common::{
             calculate_foreign_currency_total, calculate_total_after_tax,
             generate_batches_total_number_of_packs_update, get_invoice_status_datetime,
-            get_lines_for_invoice, InvoiceLineHasNoStockLine,
+            InvoiceLineHasNoStockLine,
         },
         invoice_date_utils::handle_new_backdated_datetime,
         stock_effect::{stock_effects, StockEffect},
@@ -33,10 +33,6 @@ pub(crate) struct GenerateResult {
     pub(crate) batches_to_update: Option<Vec<StockLineRow>>,
     pub(crate) update_invoice: InvoiceRow,
     pub(crate) lines_to_trim: Option<Vec<InvoiceLineRow>>,
-    /// All of the invoice's lines, when it's being backdated (they need re-allocation
-    /// at the new date). Deleted via the stock out line service rather than trimmed,
-    /// so the stock they had reserved is released.
-    pub(crate) backdated_lines_to_delete: Option<Vec<InvoiceLineRow>>,
     pub(crate) location_movements: Option<Vec<LocationMovementRow>>,
     pub(crate) update_lines: Option<Vec<InvoiceLineRow>>,
 }
@@ -67,8 +63,6 @@ pub(crate) fn generate(
         backdated_datetime_change(input_backdated_datetime, &existing_invoice);
     let new_status = UpdateOutboundShipmentStatus::full_status_option(&input_status);
     let should_update_batches_total_number_of_packs = match &new_status {
-        // Backdating removes every line below, so there's nothing left to issue stock for
-        Some(_) if new_backdated_datetime.is_some() => false,
         Some(to) => {
             stock_effects(&InvoiceType::OutboundShipment, &existing_invoice.status, to)
                 == StockEffect::ReduceStock
@@ -142,7 +136,7 @@ pub(crate) fn generate(
         None
     };
 
-    let mut update_lines = if update_invoice.tax_percentage.is_some() || input_currency_rate.is_some() {
+    let update_lines = if update_invoice.tax_percentage.is_some() || input_currency_rate.is_some() {
         Some(generate_update_for_lines(
             connection,
             &update_invoice.id,
@@ -154,30 +148,11 @@ pub(crate) fn generate(
         None
     };
 
-    let mut lines_to_trim = lines_to_trim(connection, &existing_invoice, &input_status)?;
-
-    // When backdating, delete all existing lines (they need re-allocation at the new
-    // date) and clear update_lines so deleted lines don't get re-inserted. The lines are
-    // returned separately from lines_to_trim because they're deleted via the stock out
-    // line service, which releases the stock they had reserved (lines_to_trim only ever
-    // holds lines that reserve nothing - unallocated and zero quantity lines). That set
-    // is a subset of every line, so it's cleared to avoid deleting a line twice.
-    let backdated_lines_to_delete = if new_backdated_datetime.is_some() {
-        update_lines = None;
-        lines_to_trim = None;
-        let all_lines = get_lines_for_invoice(connection, &existing_invoice.id)?;
-        match all_lines.is_empty() {
-            true => None,
-            false => Some(all_lines.into_iter().map(|l| l.invoice_line_row).collect()),
-        }
-    } else {
-        None
-    };
+    let lines_to_trim = lines_to_trim(connection, &existing_invoice, &input_status)?;
 
     Ok(GenerateResult {
         batches_to_update,
         lines_to_trim,
-        backdated_lines_to_delete,
         update_invoice,
         location_movements,
         update_lines,
