@@ -395,7 +395,7 @@
 
      The floor it used to carry was iOS Safari's zoom-on-focus threshold, which
      is an absolute 16px. That argument is gone: browserslist is
-     `chrome >= 138` (Chromium only, enforced by scripts/check-min-browser.mjs),
+     `chrome >= 132` (Chromium only, enforced by scripts/check-min-browser.mjs),
      so iOS Safari is not a supported target. If it ever becomes one, the floor
      comes back HERE and nowhere else.
 
