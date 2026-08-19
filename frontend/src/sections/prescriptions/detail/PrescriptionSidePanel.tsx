@@ -19,6 +19,7 @@ import { Combobox } from '../../../ui/elements/selectors/Combobox';
 import { CopyToClipboardButton } from '../../../ui/elements/buttons/CopyToClipboardButton';
 import { MinusCircleIcon, TrashIcon } from '../../../ui/icons';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { CurrencyField } from '../../../ui/elements/inputs/CurrencyField';
 import {
   canCancelPrescription,
@@ -249,11 +250,7 @@ export const PrescriptionSidePanel: Component<
           <Combobox<Diagnosis>
             label={t('heading.diagnosis')}
             hideLabel
-            items={
-              (diagnoses.state === 'ready' || diagnoses.state === 'refreshing'
-                ? diagnoses.latest
-                : undefined) ?? []
-            }
+            items={gated(diagnoses) ?? []}
             loading={diagnoses.loading}
             itemToString={d => d.description}
             itemToValue={d => d.id}

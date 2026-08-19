@@ -10,6 +10,7 @@ import {
 } from 'solid-js';
 import { t } from '@/intl';
 import { graphqlFetch } from '@/api/graphql';
+import { gated } from '@/api/gated';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { createFocusTarget } from '@/ui/utils/createFocusTarget';
 import { Alert } from '@/ui/elements/feedback/Alert';
@@ -128,9 +129,7 @@ export const CreateRequisitionModal: Component<
       return result.data.programRequisitionSettingsByCustomer.programSettings;
     }
   );
-  const settingsSettled = () =>
-    settings.state === 'ready' || settings.state === 'refreshing';
-  const settingsList = () => (settingsSettled() ? (settings.latest ?? []) : []);
+  const settingsList = () => gated(settings) ?? [];
 
   // Programs the chosen customer orders under, rendered
   // "masterListName (tagName)" — the program identity is carried by the order

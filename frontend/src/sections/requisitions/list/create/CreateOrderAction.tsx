@@ -1,11 +1,7 @@
-import {
-  createResource,
-  createSignal,
-  Show,
-  type Component,
-} from 'solid-js';
+import { createResource, createSignal, Show, type Component } from 'solid-js';
 import { t } from '@/intl';
 import { graphqlFetch } from '@/api/graphql';
+import { gated } from '@/api/gated';
 import { generateUUID } from '@/uuid';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
@@ -39,8 +35,7 @@ import { statusLabel } from '../requisitionStatus';
 // reference's toast is deliberately not copied), with its copy
 // (`error.failed-to-create-internal-order`).
 
-type PickerRow =
-  CreateOrderRequisitionsResult['requisitions']['nodes'][number];
+type PickerRow = CreateOrderRequisitionsResult['requisitions']['nodes'][number];
 
 export interface CreateOrderActionProps {
   storeId: string;
@@ -79,13 +74,8 @@ export const CreateOrderAction: Component<CreateOrderActionProps> = props => {
       return result.data.requisitions.nodes;
     }
   );
-  // Full .state gate — `.latest` alone suspends on the first pending read,
-  // and this resource first fetches mid-interaction inside the open step-2
-  // dialog (kdd/solid-reactivity-pitfalls › no remounts on interaction).
-  const rows = (): PickerRow[] =>
-    data.state === 'ready' || data.state === 'refreshing'
-      ? (data.latest ?? [])
-      : [];
+  // This resource first fetches mid-interaction inside the open step-2 dialog.
+  const rows = (): PickerRow[] => gated(data) ?? [];
 
   const onSupplier = (picked: NameOption | null) => {
     if (!picked) return;

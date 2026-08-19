@@ -1,5 +1,6 @@
 import { createResource, createSignal, Show } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { Alert } from '../../../ui/elements/feedback/Alert';
@@ -43,10 +44,7 @@ export const ServerLogModal = (props: {
         : { error: true as const };
     }
   );
-  const names = () =>
-    namesData.state === 'ready' || namesData.state === 'refreshing'
-      ? namesData.latest
-      : undefined;
+  const names = () => gated(namesData);
   const fileNames = () => names()?.fileNames ?? [];
 
   // No file preselected — content loads when the user picks one
@@ -66,10 +64,7 @@ export const ServerLogModal = (props: {
         : { error: true as const };
     }
   );
-  const contents = () =>
-    contentsData.state === 'ready' || contentsData.state === 'refreshing'
-      ? contentsData.latest
-      : undefined;
+  const contents = () => gated(contentsData);
   const text = () => contents()?.text ?? '';
   const loadFailed = () =>
     names()?.error === true || contents()?.error === true;

@@ -8,6 +8,7 @@ import {
 } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '@/api/graphql';
+import { gated } from '@/api/gated';
 import { t } from '@/intl';
 import { Page } from '@/ui/layout/Page/Page';
 import { Header } from '@/ui/layout/Header/Header';
@@ -150,17 +151,14 @@ const StockMovementDetailView: Component = () => {
 
   // The destination picker's volume-bearing locations (volumeUsed is
   // server-computed and staleable, so the view owns the fetch and re-reads on
-  // every modal open — locationResource's contract). State-gated read: the
+  // every modal open — locationResource's contract). Non-suspending read: the
   // refetch fires on an interaction (opening the editor) while the screen is
   // live (kdd/solid-reactivity-pitfalls).
   const [locationsData, { refetch: refetchLocations }] = createResource(
     () => params.storeId,
     storeId => fetchLocationsWithVolume(storeId)
   );
-  const locations = () =>
-    locationsData.state === 'ready' || locationsData.state === 'refreshing'
-      ? (locationsData.latest ?? [])
-      : [];
+  const locations = () => gated(locationsData) ?? [];
 
   // --- selection + line editor ----------------------------------------------
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);

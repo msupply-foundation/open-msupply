@@ -2,6 +2,7 @@ import { createResource } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
@@ -47,11 +48,8 @@ export const PurchaseOrdersTab: Component<{ supplierName: string }> = props => {
   );
 
   // Non-suspending read (opened on interaction — see the reactivity note in
-  // domain/customFields CustomFieldsView / kdd/solid-reactivity-pitfalls).
-  const rows = (): PoRow[] =>
-    data.state === 'ready' || data.state === 'refreshing'
-      ? (data.latest ?? [])
-      : [];
+  // domain/customFields CustomFieldsView).
+  const rows = (): PoRow[] => gated(data) ?? [];
 
   // Cell types + widths per docs/CELL_TYPES.md: the date and comment columns
   // take their key's preset; the PO number, target months, lines count and
