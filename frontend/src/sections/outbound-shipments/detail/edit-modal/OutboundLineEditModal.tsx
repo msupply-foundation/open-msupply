@@ -67,9 +67,9 @@ import {
 import { toSaveLineInputs } from './saveLineInputs';
 import { mirroredIssueValue, roundedLensValue } from './issueMirror';
 import {
+  availableUnits as sumAvailableUnits,
   issuedUnits as sumIssuedUnits,
   distinctPackSizes as packSizesIn,
-  autoAllocatableUnits,
   autoAllocateBarReasons,
   barReasons,
   clampManualPacks,
@@ -665,13 +665,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     return lens.kind !== 'packs' || line.packSize === lens.size;
   };
 
-  // Available = units auto-distribution can draw from (AC-AL17, D108): held,
-  // expired, and unusable-VVM batches contribute nothing — the figure is the
-  // Issue entry's headroom, so an item whose only stock is expired reads 0
-  // (issue #945). The excluded rows still render in the grid, disabled.
-  const availableUnits = createMemo(() =>
-    autoAllocatableUnits(draft, allocationPrefs())
-  );
+  // Available = allocatable units, EXCLUDING on-hold batches (old-app parity;
+  // the shared helper skips on-hold stock/location — kdd/allocation). On-hold
+  // rows still render in the grid, disabled.
+  const availableUnits = createMemo(() => sumAvailableUnits(draft));
 
   // A fresh array whenever the draft's SHAPE changes (rows added on load /
   // cleared on item switch). The DataTable/TanStack memoises its row model on
