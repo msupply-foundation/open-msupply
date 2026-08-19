@@ -104,10 +104,20 @@
 
 /* The batch cell: batch name + (when the row carries an item variant) the
    variant-info trigger beside it (spec S4 § batch grid). */
+/* The batch value, its variant-info marker and its row-status chips on one
+   non-wrapping row. The gap is --space-2 so the chips sit off the value by the
+   same distance as the detail table's ([data-row-badges-label]) — that cluster
+   carries no leading margin of its own, so the separation has to come from
+   here. --space-1 stays between the value and its variant marker, which reads
+   as part of the value rather than a chip beside it. */
 .batchCell {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
+}
+
+.batchCell [data-row-badges] {
+  margin-inline-start: var(--space-1);
 }
 
 .variantInfoTrigger {
