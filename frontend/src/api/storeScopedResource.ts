@@ -1,4 +1,5 @@
 import { createResource, createRoot } from 'solid-js';
+import { gated } from './gated';
 
 // A store-scoped, lazy, de-duplicated global cache — the reusable shape for
 // app-wide lookups that depend on the current store (master lists, locations,
@@ -84,15 +85,12 @@ export function createStoreScopedResource<T>(
         // always fetches to `T[]`); while pending, reading `resource()`
         // suspends before this runs.
         suspends: () => resource() ?? [],
-        // No-suspend read: gate on `resource.state` (NOT `.latest`, which still
+        // No-suspend read: the shared `gated` gate (NOT `.latest`, which still
         // suspends on the first pending read — the exact remount bug, see the
         // type doc / kdd/state-management). 'refreshing' keeps the prior value
         // during a refetch; any other state falls back to []. Never trips the
         // boundary, first read or later.
-        noSuspense: () =>
-          resource.state === 'ready' || resource.state === 'refreshing'
-            ? resource.latest
-            : [],
+        noSuspense: () => gated(resource) ?? [],
         loading: () => resource.loading,
         refetch: async () => {
           await refetch();

@@ -8,6 +8,7 @@ import {
 } from 'solid-js';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
 import { graphqlFetch } from '@/api/graphql';
+import { gated } from '@/api/gated';
 import { t } from '@/intl';
 import { Page } from '@/ui/layout/Page/Page';
 import { Header } from '@/ui/layout/Header/Header';
@@ -28,6 +29,7 @@ import {
   type SortState,
 } from '@/ui/elements/table/DataTable';
 import { getCellDefinition } from '@/ui/elements/table/tableHelpers';
+import { sortRows } from '@/list/sortRows';
 import { HStack } from '@/ui/layout/Stack/HStack';
 import { StatusMarker } from '@/ui/elements/feedback/StatusMarker';
 import {
@@ -277,10 +279,7 @@ const RequisitionDetailView: Component = () => {
     mutateIndicators(prev =>
       prev ? applySavedIndicatorValue(prev, valueId, value) : prev
     );
-  const indicatorNodes = () =>
-    indicators.state === 'ready' || indicators.state === 'refreshing'
-      ? (indicators.latest ?? [])
-      : [];
+  const indicatorNodes = () => gated(indicators) ?? [];
   // Indicators tab gate (spec S2 § tabs, AC-V5): a non-emergency program
   // requisition of a store-backed customer whose program defines ≥1
   // indicator.
@@ -489,13 +488,7 @@ const RequisitionDetailView: Component = () => {
           l.item.code.toLowerCase().includes(f) ||
           l.itemName.toLowerCase().includes(f)
       );
-    const s = sort();
-    const dir = s.desc ? -1 : 1;
-    return [...lines].sort((a, b) => {
-      const av = sortValue(a, s.key);
-      const bv = sortValue(b, s.key);
-      return av < bv ? -dir : av > bv ? dir : 0;
-    });
+    return sortRows(lines, sort(), sortValue);
   };
 
   // Dose annotation for a unit quantity on a vaccine item under the doses

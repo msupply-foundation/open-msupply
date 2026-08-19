@@ -7,6 +7,7 @@ import {
 } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { t, tPlural } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
@@ -152,15 +153,11 @@ const PrescriptionDetailView: Component = () => {
         : undefined;
     }
   );
-  // Non-suspending read (kdd/solid-reactivity-pitfalls § no remounts): the
-  // .state gate means neither the first load (pending → undefined → the
+  // Non-suspending read: neither the first load (pending → undefined → the
   // Show's spinner) nor a post-save refetch (refreshing → the previous node,
   // subtree kept — the open line-edit dialog included) ever trips a Suspense
-  // boundary. `.latest` alone would suspend on the first pending read.
-  const info = (): PrescriptionFieldsFragment | undefined =>
-    data.state === 'ready' || data.state === 'refreshing'
-      ? data.latest
-      : undefined;
+  // boundary.
+  const info = (): PrescriptionFieldsFragment | undefined => gated(data);
 
   // Insurance providers — the payment-window and insurance-status gates
   // (AC-Y1; provider presence, not a preference — captured as-is).
@@ -173,10 +170,7 @@ const PrescriptionDetailView: Component = () => {
         : undefined;
     }
   );
-  const hasInsuranceProviders = () =>
-    (providersData.state === 'ready' || providersData.state === 'refreshing'
-      ? providersData.latest
-      : undefined) ?? false;
+  const hasInsuranceProviders = () => gated(providersData) ?? false;
 
   // The patient's policy count (the insured/not-insured row) — keyed on the
   // patient so a patient change refetches.
@@ -605,12 +599,7 @@ const PrescriptionDetailView: Component = () => {
                 disabled={disabled()}
                 edit={edit}
                 hasInsuranceProviders={hasInsuranceProviders()}
-                patientPolicyCount={
-                  policiesData.state === 'ready' ||
-                  policiesData.state === 'refreshing'
-                    ? policiesData.latest
-                    : undefined
-                }
+                patientPolicyCount={gated(policiesData)}
                 canCancelPermission={hasPermission('CANCEL_FINALISED_INVOICES')}
                 onSave={input => void saveField(input)}
                 onCancel={() =>

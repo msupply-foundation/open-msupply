@@ -1,6 +1,7 @@
 import { createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { graphqlFetch } from '@/api/graphql';
+import { gated } from '@/api/gated';
 import { t } from '@/intl';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
@@ -119,10 +120,9 @@ export const SiteEditModal: Component<SiteEditModalProps> = props => {
   const codeField = createFocusTarget();
 
   // The site's assigned stores. Fetched on OPEN (this modal is mounted only
-  // while open), which is exactly why the read is `.state`-gated and never
-  // `resource()` or `.latest` alone: it settles while the dialog is already
-  // open, and a suspending read would remount this section — detaching the open
-  // <dialog>, losing its modal backdrop and any typed input
+  // while open), which is exactly why the read is gated: it settles while the
+  // dialog is already open, and a suspending read would remount this section —
+  // detaching the open <dialog>, losing its modal backdrop and any typed input
   // (kdd/solid-reactivity-pitfalls § no remounts on interaction).
   const [assignedData] = createResource(
     () => site()?.id,
@@ -132,10 +132,7 @@ export const SiteEditModal: Component<SiteEditModalProps> = props => {
       return result.data.stores.nodes;
     }
   );
-  const assigned = (): SiteStore[] =>
-    assignedData.state === 'ready' || assignedData.state === 'refreshing'
-      ? (assignedData.latest ?? [])
-      : [];
+  const assigned = (): SiteStore[] => gated(assignedData) ?? [];
 
   // The store draft is held as its two DELTAS over the fetched set rather than
   // as a copied list, so it needs no seeding effect and cannot go stale when

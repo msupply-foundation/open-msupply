@@ -8,6 +8,7 @@ import {
   untrack,
 } from 'solid-js';
 import { graphqlFetch } from '../../api/graphql';
+import { gated } from '../../api/gated';
 import { invalidateCustomTranslations, locale, t } from '../../intl';
 import { currentLanguageName } from '../../intl/intlUtils';
 import { loadedPlugins } from '../../plugins/registry';
@@ -125,7 +126,7 @@ export const CustomTranslationsModal = (props: {
       : {};
   });
   createEffect(() => {
-    const served = legacyData.state === 'ready' ? legacyData.latest : undefined;
+    const served = gated(legacyData);
     if (served && !legacyLoaded()) {
       setLegacy(served);
       setLegacyLoaded(true);
@@ -155,10 +156,7 @@ export const CustomTranslationsModal = (props: {
       enNs: await loadBundle('en', ns),
     })
   );
-  const loadedBundles = () =>
-    bundles.state === 'ready' || bundles.state === 'refreshing'
-      ? bundles.latest
-      : undefined;
+  const loadedBundles = () => gated(bundles);
 
   /* The default text a key seeds/compares against (rules § The
      custom-translations editor): the bundled string for the bundled

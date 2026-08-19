@@ -1,5 +1,6 @@
 import { createEffect, createResource, createSignal, Show } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { PasswordField } from '../../../ui/elements/inputs/PasswordField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
@@ -44,10 +45,7 @@ export const SyncSection = () => {
     const result = await graphqlFetch(SyncSettings, {});
     return result.kind === 'success' ? result.data.syncSettings : null;
   });
-  const stored = () =>
-    storedData.state === 'ready' || storedData.state === 'refreshing'
-      ? storedData.latest
-      : null;
+  const stored = () => gated(storedData) ?? null;
 
   const [form, setForm] = createSignal<SyncFormState>(initialSyncForm(null));
   const [saving, setSaving] = createSignal(false);

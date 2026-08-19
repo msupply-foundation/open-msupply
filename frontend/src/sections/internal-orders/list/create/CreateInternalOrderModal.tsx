@@ -10,6 +10,7 @@ import {
 } from 'solid-js';
 import { t } from '../../../../intl';
 import { graphqlFetch } from '../../../../api/graphql';
+import { gated } from '../../../../api/gated';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
 import { Spinner } from '../../../../ui/elements/feedback/Spinner';
@@ -94,7 +95,7 @@ export const CreateInternalOrderModal: Component<
   );
   const settled = () =>
     settings.state === 'ready' || settings.state === 'refreshing';
-  const settingsList = () => (settled() ? (settings.latest ?? []) : []);
+  const settingsList = () => gated(settings) ?? [];
   const programCapable = () => settingsList().length > 0;
 
   const [tab, setTab] = createSignal('program');

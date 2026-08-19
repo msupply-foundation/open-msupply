@@ -1,6 +1,7 @@
 import { createResource, createSignal, Show, type Component } from 'solid-js';
 import { t } from '../../../../intl';
 import { graphqlFetch } from '../../../../api/graphql';
+import { gated } from '../../../../api/gated';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
@@ -63,10 +64,7 @@ export const AddFromMasterListAction: Component<
         : [];
     }
   );
-  const listOptions = () =>
-    lists.state === 'ready' || lists.state === 'refreshing'
-      ? (lists.latest ?? [])
-      : [];
+  const listOptions = () => gated(lists) ?? [];
 
   const add = async (masterListId: string) => {
     setError(undefined);

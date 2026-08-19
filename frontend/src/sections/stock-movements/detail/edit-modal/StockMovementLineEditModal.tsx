@@ -9,6 +9,7 @@ import { t } from '@/intl';
 import { formatNumber } from '@/intl/formatNumber';
 import { generateUUID } from '@/uuid';
 import { graphqlFetch } from '@/api/graphql';
+import { gated } from '@/api/gated';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import {
@@ -108,9 +109,7 @@ export const StockMovementLineEditModal: Component<
     }
   );
   const candidates = (): DraftStockMovementLineFragment[] =>
-    candidatesData.state === 'ready' || candidatesData.state === 'refreshing'
-      ? (candidatesData.latest ?? [])
-      : [];
+    gated(candidatesData) ?? [];
 
   // The options: candidates minus batches already on the movement, keeping
   // the edited line's own batch offerable (OMS-REG-SMV-10.8).

@@ -31,6 +31,7 @@ import { outboundShipmentsRoutes } from './sections/outbound-shipments';
 import { inboundShipmentsRoutes } from './sections/inbound-shipments';
 import { internalOrdersRoutes } from './sections/internal-orders';
 import { requisitionsRoutes } from './sections/requisitions';
+import { rnrFormsRoutes } from './sections/rnr-forms';
 import { itemsRoutes } from './sections/items';
 import { patientsRoutes } from './sections/patients';
 import { cliniciansRoutes } from './sections/clinicians';
@@ -82,6 +83,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'distribution/outbound-shipment': outboundShipmentsRoutes,
   'distribution/customer-requisition': requisitionsRoutes,
   'replenishment/internal-order': internalOrdersRoutes,
+  'replenishment/r-and-r-forms': rnrFormsRoutes,
   'replenishment/inbound-shipment': inboundShipmentsRoutes,
   'catalogue/items': itemsRoutes,
   'catalogue/master-lists': masterListsRoutes,

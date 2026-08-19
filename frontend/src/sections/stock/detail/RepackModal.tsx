@@ -6,6 +6,7 @@ import {
   type JSX,
 } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
 import { formatNumber } from '../../../intl/formatNumber';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
@@ -118,24 +119,20 @@ const RepackContent = (props: {
   // `.latest` alone still suspends on a first pending read, which collapses the
   // detail view's <Suspense> and detaches the just-opened <dialog> — it loses
   // the top layer, so the backdrop vanishes and the modal lands in normal flow
-  // (kdd/solid-reactivity-pitfalls › No remounts on interaction). Gate on
-  // `.state`; `.loading` still drives the spinners.
+  // (kdd/solid-reactivity-pitfalls › No remounts on interaction). `.loading`
+  // still drives the spinners.
   const locations = () =>
     locationsForItem(
-      allLocations.state === 'ready' || allLocations.state === 'refreshing'
-        ? (allLocations.latest ?? [])
-        : [],
+      gated(allLocations) ?? [],
       props.line.item.restrictedLocationTypeId
     );
 
   // Newest-first by the repack's verified time (spec/stock rules › repack
   // history).
   const repacks = (): RepackNode[] =>
-    repacksData.state === 'ready' || repacksData.state === 'refreshing'
-      ? [...(repacksData.latest?.nodes ?? [])].sort((a, b) =>
-          a.datetime < b.datetime ? 1 : -1
-        )
-      : [];
+    [...(gated(repacksData)?.nodes ?? [])].sort((a, b) =>
+      a.datetime < b.datetime ? 1 : -1
+    );
 
   const available = () => props.line.availableNumberOfPacks;
 

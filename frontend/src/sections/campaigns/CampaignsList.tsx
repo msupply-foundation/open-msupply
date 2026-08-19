@@ -2,6 +2,7 @@ import { createMemo, createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useParams } from '@solidjs/router';
 import { graphqlFetch, reportPermissionDenied } from '@/api/graphql';
+import { gated } from '@/api/gated';
 import { t } from '@/intl';
 import { Page } from '@/ui/layout/Page/Page';
 import { Header } from '@/ui/layout/Header/Header';
@@ -126,20 +127,15 @@ const CampaignsList: Component = () => {
     }
   );
 
-  // The NON-SUSPENDING read, gated on `.state` — the binding read-safety rule
-  // (kdd/solid-reactivity-pitfalls › no remounts on interaction, the mandatory
-  // createResource checklist). Not `data()`: this list renders under the
-  // router's fallback-less <Suspense>, so a suspending read would blank the page
+  // The NON-SUSPENDING read (kdd/solid-reactivity-pitfalls › no remounts on
+  // interaction). Not `data()`: this list renders under the router's
+  // fallback-less <Suspense>, so a suspending read would blank the page
   // on a slow first load instead of showing the table's own loading treatment.
-  // Not `.latest` alone either: it suspends on the first pending read, and this
-  // resource refetches while a native <dialog> of ours can still be OPEN — the
-  // delete confirmation stays open in its could-not-delete phase and re-reads
-  // the register behind itself, and a suspend there would detach the dialog and
-  // lose its backdrop.
-  const register = () =>
-    data.state === 'ready' || data.state === 'refreshing'
-      ? data.latest
-      : undefined;
+  // And this resource refetches while a native <dialog> of ours can still be
+  // OPEN — the delete confirmation stays open in its could-not-delete phase
+  // and re-reads the register behind itself, and a suspend there would detach
+  // the dialog and lose its backdrop.
+  const register = () => gated(data);
   const rows = (): Campaign[] => register()?.nodes ?? [];
   // The register's WHOLE total, not the page's (`.6`) — nothing narrows the
   // read, so the connector's totalCount is the register's size.

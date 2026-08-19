@@ -1,6 +1,7 @@
 import { createMemo, createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { graphqlFetch } from '@/api/graphql';
+import { gated } from '@/api/gated';
 import { t } from '@/intl';
 import { Page } from '@/ui/layout/Page/Page';
 import { Header } from '@/ui/layout/Header/Header';
@@ -94,7 +95,7 @@ const SitesList: Component = () => {
 
   // The deployment reads: the standalone gate, the multi-device feature flag
   // and the two site ids the editor needs. One fetch per visit, keyed on
-  // nothing. Read NON-suspending (`.state`-gated, not `.latest` alone): this
+  // nothing. Read NON-suspending: this
   // resolves while the screen is already open, and a suspending read would
   // remount the section — and any dialog inside it — the moment it settled.
   const [deploymentData] = createResource(async () => {
@@ -102,10 +103,7 @@ const SitesList: Component = () => {
     if (result.kind !== 'success') return undefined;
     return result.data;
   });
-  const deployment = () =>
-    deploymentData.state === 'ready' || deploymentData.state === 'refreshing'
-      ? deploymentData.latest
-      : undefined;
+  const deployment = () => gated(deploymentData);
 
   // OMS-FUN-SYC-002.12/.15 — every editable affordance on this screen and in
   // the editor is gated on the standalone read. False until known, which is the
