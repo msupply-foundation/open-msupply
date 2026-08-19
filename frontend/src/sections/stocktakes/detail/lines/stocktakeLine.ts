@@ -1,9 +1,9 @@
 // Pure per-line count arithmetic for the stocktake detail table
 // (spec/stocktakes S3). Kept as free functions — not inline accessors — so the
 // two observable outcomes they drive can be pinned at the unit layer and the
-// "uncounted" predicate isn't restated in three places (the difference column,
-// the row tone, and the finalise-trim rule all mean the same thing: a line with
-// no counted value).
+// "uncounted" predicate isn't restated in four places (the difference column,
+// the Counted cell's "Not counted", the row marking, and the finalise-trim rule
+// all mean the same thing: a line with no counted value).
 
 // The minimal shape the count arithmetic needs — a subset of the detail
 // StocktakeLine fragment, so the generated type doesn't leak in here.
@@ -13,9 +13,10 @@ export interface CountLine {
 }
 
 // A line is uncounted until a counted value is entered. Zero counts as counted
-// (a deliberate zero is a real count, and renders in the default tone) — only a
-// null/absent counted value is uncounted (OMS-REG-INV-03.68). These are the
-// lines trimmed on finalise (OMS-REG-SMV-01.9).
+// (a deliberate zero is a real count, and renders as an ordinary row) — only a
+// null/absent counted value is uncounted (OMS-REG-INV-03.68), which is what
+// takes the unfinished-work marking in the detail table. These are the lines
+// trimmed on finalise (OMS-REG-SMV-01.9).
 export const isUncounted = (line: CountLine): boolean =>
   line.countedNumberOfPacks == null;
 
