@@ -994,6 +994,12 @@ const StocktakeDetailView: Component = () => {
                         icon={<PlusCircleIcon />}
                         shortcut={ALT_N}
                         onClick={openAdd}
+                        // The toolbar button is what `add-item-button` names
+                        // (e2e/TESTIDS.md § Stocktake). It carried no id at
+                        // all, so the only addressable Add-item affordance was
+                        // the empty state's ghost below — which disappears the
+                        // moment a line exists.
+                        data-testid="add-item-button"
                       >
                         {t('button.add-item')}
                       </Button>
@@ -1190,7 +1196,12 @@ const StocktakeDetailView: Component = () => {
                       <Button
                         variant="ghost"
                         shortcut={ALT_N}
-                        data-testid="add-item-button"
+                        // The shared empty-state id, as the locations list and
+                        // the inbound line table already use — NOT
+                        // `add-item-button`, which now names the toolbar button
+                        // above; two elements answering one id is what made
+                        // this ambiguous.
+                        data-testid="nothing-here-create-button"
                         onClick={openAdd}
                       >
                         {t('button.add-item')}
