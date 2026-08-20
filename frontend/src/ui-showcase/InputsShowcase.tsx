@@ -233,6 +233,13 @@ export const InputsShowcase = () => {
                 error="Quantity must be positive"
               />
             </Field>
+            <Field caption="Warning — advisory, not an error">
+              <TextField
+                label="Password"
+                value="secret"
+                warning="Warning: Caps lock is on"
+              />
+            </Field>
             <Field caption="Disabled">
               <TextField
                 label="Notes"
