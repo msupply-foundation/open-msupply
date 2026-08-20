@@ -1478,6 +1478,31 @@ mod test {
             }
         }
 
+        fn transferred_invoice() -> InvoiceRow {
+            InvoiceRow {
+                id: "delivered_transferred_invoice".to_string(),
+                linked_invoice_id: Some(mock_outbound_shipment_e().id),
+                ..empty_invoice()
+            }
+        }
+
+        /// A line that came over from the sending store's outbound shipment. Even with nothing
+        /// shipped and nothing received it exempts the invoice from the empty check, mirroring
+        /// `validateEmptyInvoice` on the client — the store still needs to close out the transfer.
+        fn transferred_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "transferred_line".to_string(),
+                invoice_id: transferred_invoice().id,
+                item_id: mock_item_a().id,
+                r#type: InvoiceLineType::StockIn,
+                pack_size: 1.0,
+                number_of_packs: 0.0,
+                shipped_number_of_packs: None,
+                linked_invoice_id: Some(mock_outbound_shipment_e().id),
+                ..Default::default()
+            }
+        }
+
         fn service_line() -> InvoiceLineRow {
             InvoiceLineRow {
                 id: "freight_charge_line".to_string(),
@@ -1499,8 +1524,14 @@ mod test {
                     placeholder_invoice(),
                     nothing_received_invoice(),
                     service_line_invoice(),
+                    transferred_invoice(),
                 ],
-                invoice_lines: vec![placeholder_line(), nothing_received_line(), service_line()],
+                invoice_lines: vec![
+                    placeholder_line(),
+                    nothing_received_line(),
+                    service_line(),
+                    transferred_line(),
+                ],
                 ..Default::default()
             },
         )
@@ -1568,6 +1599,16 @@ mod test {
             .update_inbound_shipment(
                 &context,
                 receive(service_line_invoice().id),
+                InboundShipmentType::InboundShipment,
+            )
+            .is_ok());
+
+        // A transfer can be received even when every line is zero, receiving nothing is how the
+        // store closes out a transfer where nothing arrived
+        assert!(service
+            .update_inbound_shipment(
+                &context,
+                receive(transferred_invoice().id),
                 InboundShipmentType::InboundShipment,
             )
             .is_ok());
