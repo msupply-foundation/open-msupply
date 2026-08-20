@@ -265,12 +265,17 @@ const CARD_GROUPS: CardGroup<DraftBatch, GroupKey>[] = [
   {
     key: 'batch',
     panel: true,
-    // Portrait on a tablet: even columns, every row full, and Location spanning
-    // two so the eight fields come out as three even rows — the quantity trio,
-    // then the two pack sizes with the expiry, then Location + Manufacturer. The
-    // weighted flex default sized each field to its data but left a wrapped
-    // row's edges out of step with the row above it, which read as untidy on a
-    // card this wide.
+    // Portrait on a tablet: even columns, every row full. SEVEN fields now that
+    // Manufacturer has moved to the disclosure (see its note) — the quantity
+    // trio, then the two pack sizes with the expiry, then Location across a
+    // whole row. The weighted flex default sized each field to its data but
+    // left a wrapped row's edges out of step with the row above it, which read
+    // as untidy on a card this wide.
+    //
+    // The spans tile at every combination of the conditional fields, which is
+    // what the re-tiling after Manufacturer left was for: Auth status takes a
+    // whole row (it appears on PO-linked shipments, where the two shipped
+    // figures do not), and the two vaccine facts share one at 3 + 3.
     narrowLayout: { columns: 6 },
   },
   {
@@ -1020,10 +1025,11 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { id: 'location' },
       header: () => t('label.location'),
       cardGroup: 'batch',
-      // Two columns in the group's portrait layout: the longest value on the
-      // card ("fr — Central Regional Medical Logistics & …") against the short
-      // scalars around it, and the odd field that makes eight fill three rows.
-      meta: { cardWidth: { min: 8, max: 17, weight: 1.2 }, cardSpan: 3 },
+      // A FULL row of the six, now that Manufacturer no longer shares it: the
+      // longest value on the card ("fr — Central Regional Medical Logistics &
+      // …") against the short scalars above it. At 3 it would leave half a row
+      // empty, which is the one failure mode the span layout has.
+      meta: { cardWidth: { min: 8, max: 17, weight: 1.2 }, cardSpan: 6 },
       cell: info => {
         const b = info.row.original;
         return (
@@ -1035,46 +1041,6 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             value={b.locationId ?? undefined}
             requiredVolume={b.volumePerPack * b.numberOfPacks}
             onChange={loc => updateBatch(b.id, 'locationId', loc?.id ?? null)}
-          />
-        );
-      },
-    },
-    // Manufacturer (spec S4) — a name lookup, manufacturer role. Primary panel
-    // too (reference design): it arrives pre-filled and is confirm-only, but it
-    // is part of what the receiver checks off the delivery against.
-    {
-      c: { id: 'manufacturer' },
-      header: () => t('label.manufacturer'),
-      cardGroup: 'batch',
-      // 3 of 6 — half the row, level with Location beside it. Manufacturer names
-      // run long ("Serum Institute of India Pvt. Ltd."), and at 2 they truncated.
-      meta: { cardWidth: { min: 10, max: 20, weight: 1.4 }, cardSpan: 3 },
-      cell: info => {
-        const b = info.row.original;
-        return (
-          <NameSearch
-            label={t('label.manufacturer')}
-            hideLabel
-            size="small"
-            storeId={props.storeId}
-            role="manufacturer"
-            selected={
-              b.manufacturerId
-                ? ({
-                    id: b.manufacturerId,
-                    name: b.manufacturerName ?? '',
-                    code: '',
-                    isSupplier: false,
-                    isDonor: false,
-                    isOnHold: false,
-                    isStore: false,
-                  } satisfies NameOption)
-                : undefined
-            }
-            onSelect={m => {
-              updateBatch(b.id, 'manufacturerId', m?.id ?? null);
-              updateBatch(b.id, 'manufacturerName', m?.name ?? null);
-            }}
           />
         );
       },
@@ -1094,7 +1060,11 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             c: { id: 'authStatus' },
             header: () => t('label.auth-status'),
             cardGroup: 'batch',
-            meta: { cardWidth: 10, cardSpan: 2 },
+            // A full row of the six: it is the only field in this panel that
+            // appears on a PO-linked shipment and not a manual one, so a whole
+            // row is what keeps every other row's packing untouched as it comes
+            // and goes.
+            meta: { cardWidth: 10, cardSpan: 6 },
             cell: info => {
               const b = info.row.original;
               // The styled Kobalte Select (not a Combobox — no point searching
@@ -1145,7 +1115,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             c: { id: 'dosesPerUnit' },
             header: () => t('label.doses-per-unit'),
             cardGroup: 'batch',
-            ...getNumberCell({ cardWidth: 7.5, cardSpan: 2 }),
+            ...getNumberCell({ cardWidth: 7.5, cardSpan: 3 }),
             cell: () => (
               <NumberField
                 label={t('label.doses-per-unit')}
@@ -1166,7 +1136,9 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             c: { id: 'vvmStatus' },
             header: () => t('label.vvm-status'),
             cardGroup: 'batch',
-            meta: { cardWidth: 10, cardSpan: 2 },
+            // 3 + 3 with Doses per unit: the two vaccine facts share a row, so
+            // the pair tiles whether or not the item is a vaccine.
+            meta: { cardWidth: 10, cardSpan: 3 },
             cell: info => {
               const b = info.row.original;
               return (
@@ -1326,6 +1298,64 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             value={b.manufactureDate}
             max={localTodayIso()}
             onChange={v => updateBatch(b.id, 'manufactureDate', v)}
+          />
+        );
+      },
+    },
+    // Manufacturer (spec S4) — a name lookup, manufacturer role. In the
+    // "Pricing & additional info" disclosure, not the primary receiving panel.
+    // It sits on the group's own stated line — "everything that arrives
+    // pre-filled or is confirm-only" (see CARD_GROUPS) — which is exactly what
+    // its own note used to say while claiming the primary panel anyway: it
+    // arrives pre-filled and is confirm-only.
+    //
+    // The move is a WIDTH decision as much as a grouping one. The primary
+    // panel's floors are what decide whether it holds its declared-width
+    // template, and at eight fields they came to ~72.5rem — more than a
+    // full-screen modal has on a narrower laptop, so the panel dropped to the
+    // equal-track fallback and its fields either filled tracks several times
+    // their size or (capped) left the leftover as a gap. Taking Manufacturer
+    // out drops the panel to seven fields and ~61.5rem, which a ~1000px panel
+    // can pay, so the fields it leaves behind are sized by their data again.
+    // The reference design (ux-testing/inbound_shipments_modal.html) keeps its
+    // own primary zone to about this count for the same reason.
+    {
+      c: { id: 'manufacturer' },
+      header: () => t('label.manufacturer'),
+      cardGroup: 'pricing',
+      // A full row of the twelve. Manufacturer names run long ("Serum
+      // Institute of India Pvt. Ltd."), and it is the only field in this group
+      // that would otherwise have to share a row with a date or a currency —
+      // both of which have a known longest value and would give up nothing.
+      // A whole row also keeps the group's rows tiling exactly: 4+4+4, 3+5+4,
+      // 12, then 4+8.
+      meta: { cardWidth: { min: 10, max: 20, weight: 1.4 }, cardSpan: 12 },
+      cell: info => {
+        const b = info.row.original;
+        return (
+          <NameSearch
+            label={t('label.manufacturer')}
+            hideLabel
+            size="small"
+            storeId={props.storeId}
+            role="manufacturer"
+            selected={
+              b.manufacturerId
+                ? ({
+                    id: b.manufacturerId,
+                    name: b.manufacturerName ?? '',
+                    code: '',
+                    isSupplier: false,
+                    isDonor: false,
+                    isOnHold: false,
+                    isStore: false,
+                  } satisfies NameOption)
+                : undefined
+            }
+            onSelect={m => {
+              updateBatch(b.id, 'manufacturerId', m?.id ?? null);
+              updateBatch(b.id, 'manufacturerName', m?.name ?? null);
+            }}
           />
         );
       },
