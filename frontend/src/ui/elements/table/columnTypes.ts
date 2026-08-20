@@ -68,10 +68,10 @@ declare module '@tanstack/solid-table' {
      * label, BODY cells WITH one. Set explicitly to override either case — e.g.
      * `showLabel: true` on a primary header field to caption it ("Batch"), or
      * `showLabel: false` on a body field to drop its label. The label text is
-     * the column's `header`, CALLED (our headers are function-only so their
-     * text re-resolves on a locale change — CardView.columnHeaderText does the
-     * calling). A column with no header at all yields no label, and the cell
-     * fills its slot unlabelled.
+     * `meta.textLabel` where the column sets one, else the column's `header`,
+     * CALLED either way (both are function-only so their text re-resolves on a
+     * locale change — CardView.columnHeaderText does the calling). A column
+     * with no header yields no label, and the cell fills its slot unlabelled.
      */
     showLabel?: boolean;
     /**

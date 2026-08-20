@@ -482,10 +482,19 @@ export function DataTable<T, K extends string, G extends string = never>(
   // (renderTemplate), CardView.columnHeaderText and ColumnSettings.label; none
   // of our headers read the context argument, so an empty one is safe. The
   // sortKey stays the last resort for a column with no header at all.
-  const columnLabel = (c: Column<T, K, G>): JSX.Element =>
-    typeof c.header === 'function'
+  const columnLabel = (c: Column<T, K, G>): JSX.Element => {
+    // A column whose grid header renders iconic or empty names itself with
+    // meta.textLabel (the comment column's glyph, the line editor's
+    // auto-allocation tick). A sort option has to read as a word, so it wins
+    // over the header here exactly as it does in the Columns popover and a
+    // card's field caption. Latent while no such column is sortable; wired up
+    // so the next one that is doesn't put a glyph in the Sort menu.
+    const textLabel = c.meta?.textLabel;
+    if (textLabel) return textLabel();
+    return typeof c.header === 'function'
       ? c.header({} as HeaderContext<T, unknown>)
       : (c.header ?? c.sortKey ?? '');
+  };
   const activeSortColumn = (): Column<T, K, G> | undefined =>
     props.sort
       ? sortableColumns().find(c => c.sortKey === props.sort!.key)
