@@ -159,7 +159,7 @@ export const AddItemModal = (props: AddItemModalProps) => {
       title="New item"
       icon={<CatalogueIcon />}
       width="form"
-      description={`Will be added to the central catalogue and sync to all ${props.facilityCount} facilities`}
+      description={`Once approved, will be added to the central catalogue and sync to all ${props.facilityCount} facilities`}
       actionsAlign="end"
       actions={
         <>
@@ -185,7 +185,7 @@ export const AddItemModal = (props: AddItemModalProps) => {
               value={name()}
               onInput={e => setName(e.currentTarget.value)}
               placeholder="e.g. Amoxicillin 250mg capsules"
-              helperText="Generic name, strength, then form — what dispensers search on."
+              helperText="Name, strength, then form — what dispensers search on."
             />
             <TextField
               label="Item code"
