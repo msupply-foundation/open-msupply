@@ -113,19 +113,20 @@ mod test {
             Err(ServiceError::ItemVariantDoesNotExist)
         );
 
-        // DonorNotVisible
+        // Invisible name which is also not a donor: the type check runs before the
+        // visibility check (it only needs name_row), so DonorIsNotADonor wins
         assert_eq!(
             service.update_stock_line(
                 &context,
                 UpdateStockLine {
                     id: mock_stock_line_a().id,
                     donor_id: Some(NullableUpdate {
-                        value: Some(mock_name_b().id), // Not visible in store_a
+                        value: Some(mock_name_b().id), // Not visible in store_a, not a donor
                     }),
                     ..Default::default()
                 }
             ),
-            Err(ServiceError::DonorNotVisible)
+            Err(ServiceError::DonorIsNotADonor)
         );
 
         // DonorIsNotADonor
