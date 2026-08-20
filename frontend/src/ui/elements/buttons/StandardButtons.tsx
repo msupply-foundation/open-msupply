@@ -1,6 +1,6 @@
 import { splitProps } from 'solid-js';
 import { t } from '../../../intl';
-import { SaveIcon, XCircleIcon } from '../../icons';
+import { SaveIcon } from '../../icons';
 import { Button, type ButtonProps } from './Button';
 import { ALT_S, ESCAPE } from '../../utils/shortcuts';
 
@@ -57,28 +57,20 @@ export const CancelButton = (props: StandardButtonProps) => (
 );
 
 /*
- * Leave a record screen without saving — the action-footer counterpart to
- * CancelButton, sitting beside the status control on a detail footer (Carl,
- * 2026-07-30). Secondary + the close glyph, and LABELLED: a footer action is
- * read as a verb, so an icon-only glyph was the rejected alternative (two
- * verticals had hand-rolled one; three had the labelled form, which won).
- * Collapsible by default like SaveButton — on phones it sheds the label to the
- * icon, keeping the accessible name, which is where an icon-only close is
- * actually the right density.
+ * There is deliberately NO CloseButton here. It existed from 2026-07-30 as the
+ * action-footer counterpart to CancelButton — secondary, close glyph, labelled
+ * — and was adopted by five verticals' detail footers over the migrations that
+ * followed. D103 (spec owner, 2026-08-13) then removed the control itself: a
+ * detail screen is a PLACE, not a dialog, so it is left by navigating up, in
+ * the app bar, where every other screen puts it. A second exit at the opposite
+ * corner reads as "dismiss this page" and is a dangerous neighbour to the
+ * button that advances a document's status.
+ *
+ * So a detail footer carries no dismiss at all, and this file offers no
+ * component for one. Don't re-add it because a footer "needs" a way out — the
+ * way out is the Breadcrumb's parent crumb (ui/layout/Header/Breadcrumb, sized
+ * as a real target for exactly this reason) and Escape (KB-X5).
  */
-export const CloseButton = (props: StandardButtonProps) => {
-  const [local, rest] = splitProps(props, ['collapsible']);
-  return (
-    <Button
-      variant="secondary"
-      icon={<XCircleIcon />}
-      collapsible={local.collapsible ?? true}
-      {...rest}
-    >
-      {t('button.close')}
-    </Button>
-  );
-};
 
 /*
  * Primary save with the save icon. Collapsible by default (sheds its label to
