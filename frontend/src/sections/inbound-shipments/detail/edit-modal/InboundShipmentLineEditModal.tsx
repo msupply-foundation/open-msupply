@@ -1401,7 +1401,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { key: 'note' },
       header: () => t('label.note'),
       cardGroup: 'pricing',
-      meta: { cardWidth: { min: 5, weight: 1.4 } },
+      meta: { cardWidth: { min: 12.5, weight: 3 } },
       cell: info => {
         const b = info.row.original;
         return (
