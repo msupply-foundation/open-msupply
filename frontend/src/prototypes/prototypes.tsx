@@ -82,9 +82,9 @@ export const prototypes: PrototypeDef[] = [
     title: 'Catalogue items admin',
     status: 'in-review',
     summary:
-      'Creating one catalogue item, and importing several hundred from a spreadsheet.',
+      'Proposing one catalogue item, or several hundred from a spreadsheet, and approving the change before it reaches any store.',
     proposes:
-      'One page per concept, with permissions changing the affordances rather than the location: a store user and a catalogue administrator both go to Catalogue › Items, and a scope strip states whose data it is and how far a change reaches.',
+      'One page per concept, with permissions changing the affordances rather than the location: a store user and a catalogue administrator both go to Catalogue › Items, and a scope strip states whose data it is and how far a change reaches. Central data is never written directly: a change is proposed, then approved. A rejection carries a reason, nobody approves their own request, and an import batch is one decision rather than one per row.',
     relationToSpec:
       'Diverges from spec/items, deliberately. That vertical is specified read-only: S1 "Page actions: none", § Scope "item records are maintained in central data entry outside this app", and OMS-FUN-ITEM-001 ("Create Items in OMS Central") was explicitly not folded in. Nothing here is built in src/sections/items. Adopting it needs MORE than a spec change: the schema exposes no item create/update mutation at all (no insertItem / updateItem / upsertItem, including under centralServer, where variants, bundling, ancillary items and barcodes all have one but the item record does not), so it needs a backend + schema change as well.',
     openQuestions: [
@@ -93,6 +93,10 @@ export const prototypes: PrototypeDef[] = [
       'Non-stock items: legacy pairs the flag with a mandatory Default customer. Open mSupply has NON_STOCK as an item type but no default-customer field. Is that flow still supported?',
       'Cross-reference items (a brand name that redirects to a normal item) have no equivalent in the schema. Retired, or not yet built?',
       'Warnings, barcodes and per-store visibility are all in the schema but not on this form. They are linked records (a warning carries its own priority flag per item), so they belong on the item detail view rather than a create dialog. Confirm that split.',
+      'Does a catalogue administrator\u2019s own change need approval too, or only a store user\u2019s request? This prototype routes BOTH through the queue, which is the stricter reading and the one the dialog copy implies.',
+      'Nobody can approve their own request here. In a deployment with a single catalogue approver that blocks every change they raise, so it needs either a second approver or an explicit self-approval preference. Which?',
+      'Is there a withdraw path? A requester currently cannot cancel their own pending request, only wait for a decision.',
+      'Approval has no schema backing either: there is no request or approval entity, so this needs the same backend work as the item mutation itself.',
     ],
     component: CatalogueItemsPrototype,
   },

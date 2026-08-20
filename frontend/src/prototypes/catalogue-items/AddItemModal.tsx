@@ -45,8 +45,14 @@ export interface AddItemModalProps {
   masterLists: string[];
   /** Facilities each of those lists reaches, for the picker's helper text. */
   reachOf: (lists: string[]) => number;
-  /** Total facilities the catalogue serves — the scope note's denominator. */
+  /** Total facilities the catalogue serves, for the scope note's denominator. */
   facilityCount: number;
+  /**
+   * Submit the form as a REQUEST. There is no create path: a catalogue change
+   * is proposed and then approved, so this dialog never writes central data
+   * itself (see requests.ts).
+   */
+  onSubmit: (name: string, fields: { label: string; value: string }[]) => void;
 }
 
 const TYPE_OPTIONS = [
@@ -145,6 +151,62 @@ export const AddItemModal = (props: AddItemModalProps) => {
   // does not apply, a greyed one teaches nothing.
   const isStocked = () => type() !== 'service';
 
+  /*
+   * The proposed record, as the approver will read it. Built here rather than
+   * handing over raw form state, so the review dialog shows labelled values in
+   * the same words the form used and empty fields are simply absent.
+   */
+  const proposedFields = () => {
+    const rows: { label: string; value: string }[] = [
+      { label: 'Item name', value: name().trim() },
+      { label: 'Item code', value: code().trim() },
+      {
+        label: 'Type',
+        value: TYPE_OPTIONS.find(o => o.value === type())?.label ?? type(),
+      },
+    ];
+    if (isStocked()) {
+      rows.push({ label: 'Unit', value: unit() });
+      if (packSize() !== undefined)
+        rows.push({ label: 'Default pack size', value: String(packSize()) });
+      if (strength().trim())
+        rows.push({ label: 'Strength', value: strength().trim() });
+      if (weight() !== undefined)
+        rows.push({ label: 'Default weight (kg)', value: String(weight()) });
+      if (restrictedTo())
+        rows.push({
+          label: 'Restricted to',
+          value:
+            LOCATION_TYPE_OPTIONS.find(o => o.value === restrictedTo())
+              ?.label ?? restrictedTo(),
+        });
+      if (isVaccine()) {
+        rows.push({ label: 'Is a vaccine', value: 'Yes' });
+        if (doses() !== undefined)
+          rows.push({ label: 'Doses per unit', value: String(doses()) });
+        if (volume() !== undefined)
+          rows.push({ label: 'Volume per dose (mL)', value: String(volume()) });
+      }
+    }
+    if (categories().length)
+      rows.push({ label: 'Categories', value: categories().join(', ') });
+    rows.push({
+      label: 'VEN category',
+      value: VEN_OPTIONS.find(o => o.value === ven())?.label ?? 'Not set',
+    });
+    if (atc().trim()) rows.push({ label: 'ATC code', value: atc().trim() });
+    if (universalCode().trim())
+      rows.push({ label: 'Universal code', value: universalCode().trim() });
+    rows.push({
+      label: 'Master lists',
+      value: lists().length ? lists().join(', ') : 'None',
+    });
+    rows.push({ label: 'Active', value: active() ? 'Yes' : 'No' });
+    return rows;
+  };
+
+  const submit = () => props.onSubmit(name().trim(), proposedFields());
+
   const canCreate = () =>
     name().trim().length > 0 &&
     code().trim().length > 0 &&
@@ -169,10 +231,14 @@ export const AddItemModal = (props: AddItemModalProps) => {
           {/* Manual catalogue entry is almost never one item, so the
               repeat-entry path is a first-class action rather than a
               close-and-reopen. */}
-          <Button variant="secondary" disabled={!canCreate()}>
-            Create and add another
+          <Button variant="secondary" disabled={!canCreate()} onClick={submit}>
+            Submit and add another
           </Button>
-          <Button disabled={!canCreate()}>Create item</Button>
+          {/* Never "Create": this dialog proposes a change, it does not write
+              one. The label has to match what the button actually does. */}
+          <Button disabled={!canCreate()} onClick={submit}>
+            Submit for approval
+          </Button>
         </>
       }
     >

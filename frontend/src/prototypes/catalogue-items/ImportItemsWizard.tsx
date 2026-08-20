@@ -284,9 +284,17 @@ const MODE_OPTIONS = [
 ];
 
 export interface ImportItemsWizardProps {
-  /** Leaves the wizard — back to the items list. */
+  /** Leaves the wizard, back to the items list. */
   onExit: () => void;
   facilityCount: number;
+  /**
+   * Submit the batch as ONE approval request covering every row. Not one per
+   * row: approving 395 rows individually is data entry, not review.
+   */
+  onSubmitted: (
+    fields: { label: string; value: string }[],
+    count: number
+  ) => void;
 }
 
 export const ImportItemsWizard = (props: ImportItemsWizardProps) => {
@@ -351,6 +359,42 @@ export const ImportItemsWizard = (props: ImportItemsWizardProps) => {
       return `${IMPORTABLE} of ${TOTAL_ROWS} rows are ready to import · ${ERROR_ROWS} have errors`;
     return '';
   };
+
+  /*
+   * Hand the batch to the approval queue, described the way an approver needs to
+   * read it: what the file was, how it was matched, and what it would do. The
+   * counts are the blast radius of a single Approve click.
+   */
+  const submitBatch = () =>
+    props.onSubmitted(
+      [
+        { label: 'File', value: 'essential-medicines-2026-q3.csv' },
+        { label: 'Rows in file', value: String(TOTAL_ROWS) },
+        { label: 'Ready to import', value: String(IMPORTABLE) },
+        { label: 'New items', value: String(counts().new) },
+        { label: 'Updates to existing items', value: String(counts().update) },
+        { label: 'Excluded (errors)', value: String(ERROR_ROWS) },
+        {
+          label: 'Excluded (already up to date)',
+          value: String(counts().skipped),
+        },
+        {
+          label: 'Existing rows',
+          value:
+            MODE_OPTIONS.find(o => o.value === mode())?.label ?? mode(),
+        },
+        {
+          label: 'Matched on',
+          value:
+            matchKey() === 'code'
+              ? 'Item code'
+              : matchKey() === 'universal'
+                ? 'mSupply universal code'
+                : 'Item code, then universal code',
+        },
+      ],
+      IMPORTABLE
+    );
 
   const STEPS = [
     'Choose file',
@@ -700,9 +744,9 @@ export const ImportItemsWizard = (props: ImportItemsWizardProps) => {
             <div style={{ 'margin-block-end': 'var(--space-4)' }}>
               <Alert severity="warning">
                 <b>{ERROR_ROWS} rows cannot be imported yet.</b> Fix them below,
-                or continue and import the other {IMPORTABLE}. The failed rows
-                stay downloadable, so you can correct them in your file and
-                re-import.
+                or continue and submit the other {IMPORTABLE} for approval. The
+                excluded rows stay downloadable, so you can correct them in your
+                file and submit them separately.
               </Alert>
             </div>
 
@@ -753,10 +797,11 @@ export const ImportItemsWizard = (props: ImportItemsWizardProps) => {
                   <CheckIcon />
                 </span>
                 <h3 class={styles.resultTitle}>
-                  {IMPORTABLE} items imported
+                  {IMPORTABLE} items submitted for approval
                 </h3>
                 <p class={styles.resultDetail}>
-                  They are in the catalogue now and will reach all{' '}
+                  Nothing has been written yet. A catalogue approver reviews the
+                  batch as one decision, and only then does it reach all{' '}
                   {props.facilityCount} facilities at their next sync.
                 </p>
 
@@ -766,7 +811,7 @@ export const ImportItemsWizard = (props: ImportItemsWizardProps) => {
                       label={OUTCOME_CHIP.new.label}
                       colour={OUTCOME_CHIP.new.colour}
                     />
-                    <span>Items created</span>
+                    <span>Items to create</span>
                     <span class={styles.resultLineValue}>{counts().new}</span>
                   </div>
                   <div class={styles.resultLine}>
@@ -774,7 +819,7 @@ export const ImportItemsWizard = (props: ImportItemsWizardProps) => {
                       label="Updated"
                       colour={OUTCOME_CHIP.update.colour}
                     />
-                    <span>Items changed</span>
+                    <span>Items to update</span>
                     <span class={styles.resultLineValue}>
                       {counts().update}
                     </span>
@@ -784,7 +829,7 @@ export const ImportItemsWizard = (props: ImportItemsWizardProps) => {
                       label={OUTCOME_CHIP.skipped.label}
                       colour={OUTCOME_CHIP.skipped.colour}
                     />
-                    <span>Already up to date</span>
+                    <span>Skipped, already up to date</span>
                     <span class={styles.resultLineValue}>
                       {counts().skipped}
                     </span>
@@ -794,19 +839,19 @@ export const ImportItemsWizard = (props: ImportItemsWizardProps) => {
                       label="Failed"
                       colour={OUTCOME_CHIP.error.colour}
                     />
-                    <span>Not imported</span>
+                    <span>Excluded, not submitted</span>
                     <span class={styles.resultLineValue}>{ERROR_ROWS}</span>
                   </div>
                 </div>
 
                 <div class={styles.resultActions}>
-                  <Button onClick={props.onExit}>
-                    View the {IMPORTABLE} imported items
-                  </Button>
+                  <Button onClick={submitBatch}>View the request</Button>
                   <Button variant="secondary" icon={<DownloadIcon />}>
-                    Download {ERROR_ROWS} failed rows
+                    Download {ERROR_ROWS} excluded rows
                   </Button>
-                  <Button variant="secondary">Open import log</Button>
+                  <Button variant="secondary" onClick={props.onExit}>
+                    Back to items
+                  </Button>
                 </div>
               </div>
             </section>
@@ -842,7 +887,9 @@ export const ImportItemsWizard = (props: ImportItemsWizardProps) => {
               } else setStep(s => s + 1);
             }}
           >
-            {step() === 3 ? `Import ${IMPORTABLE} items` : 'Continue'}
+            {step() === 3
+              ? `Submit ${IMPORTABLE} items for approval`
+              : 'Continue'}
           </Button>
         </div>
       </Show>
