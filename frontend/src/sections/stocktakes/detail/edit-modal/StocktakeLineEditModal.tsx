@@ -45,6 +45,7 @@ import { NameSearch } from '@/domain/name';
 import { CampaignOrProgramSelect } from '@/domain/campaign';
 import { stocktakePreferences } from '@/store/storeContext';
 import { dosesCounted } from '../lines/doses';
+import { defaultedPackSize, packSizeEditable } from '../lines/stocktakeLine';
 import { PlusCircleIcon, TrashIcon, CopyIcon } from '@/ui/icons';
 import {
   StockLinesByItem,
@@ -98,6 +99,12 @@ export type StocktakeLineEditItem = {
   doses: number;
   /** Read-only, shown beside the header item picker (inbound's Unit field). */
   unitName: string | null;
+  /**
+   * Seeds an editable batch's pack size (OMS-REG-INV-03.79/.80): a fresh blank
+   * batch starts at it, and a zero-stock item's generated line with no pack
+   * size is prefilled with it on load (defaultedPackSize).
+   */
+  defaultPackSize: number;
 };
 
 // One of the item's stock lines (from stockLinesByItem).
@@ -135,13 +142,6 @@ const adjustmentDirection = (
   if (delta < 0) return 'negative';
   return null;
 };
-
-// Pack size is only editable on a genuinely NEW batch — one being introduced
-// with no existing stock behind it (`isNew` and no linked stock line). An
-// existing stocktake line, or a row opting an existing stock line into the
-// count, carries that stock's real pack size and must not be re-typed here.
-const packSizeEditable = (line: DraftLine): boolean =>
-  !!line.isNew && line.stockLineId == null;
 
 // How many lines/stock lines to pull for one item (a single item never has many
 // batches — one page covers it).
@@ -219,6 +219,14 @@ const buildDraft = async (
   const fromExisting: DraftLine[] = existing.map(line => ({
     ...line,
     countThisLine: true,
+    // A line with no stock behind it and no pack size yet — a zero-stock
+    // item's generated line — is prefilled with the item's default pack size
+    // (OMS-REG-INV-03.80), so an ordinary count-and-save persists a usable
+    // pack size instead of the empty one finalise chokes on (issue #1173).
+    // Stock-backed lines keep their stock's pack size untouched.
+    packSize: packSizeEditable(line)
+      ? defaultedPackSize(item, line.packSize)
+      : line.packSize,
   }));
   const fromStock: DraftLine[] = stockLines.map(sl => ({
     id: generateUUID(),
@@ -235,6 +243,7 @@ const buildDraft = async (
       unitName: null,
       isVaccine: item.isVaccine,
       doses: item.doses,
+      defaultPackSize: item.defaultPackSize,
     },
     batch: sl.batch,
     expiryDate: sl.expiryDate,
@@ -555,6 +564,7 @@ const StocktakeLineEditContent = (
         isVaccine: first.item.isVaccine,
         doses: first.item.doses,
         unitName: first.item.unitName,
+        defaultPackSize: first.item.defaultPackSize,
       },
       // Focus the clicked batch (falls back to the first row if it's not among
       // this item's lines, e.g. the id went stale).
@@ -668,13 +678,16 @@ const StocktakeLineEditContent = (
             unitName: null,
             isVaccine: item.isVaccine,
             doses: item.doses,
+            defaultPackSize: item.defaultPackSize,
           },
           batch: null,
           expiryDate: null,
           manufactureDate: null,
           snapshotNumberOfPacks: 0,
           countedNumberOfPacks: null,
-          packSize: null,
+          // Starts at the item's default pack size, not empty
+          // (OMS-REG-INV-03.79) — see defaultedPackSize.
+          packSize: defaultedPackSize(item),
           sellPricePerPack: null,
           costPricePerPack: null,
           comment: null,
@@ -722,6 +735,13 @@ const StocktakeLineEditContent = (
       isNew: true,
       snapshotNumberOfPacks: 0,
       countedNumberOfPacks: null,
+      // The duplicate carries a stock link only when the source was itself
+      // opting a stock line in (stockLineId — buildBatch then inserts against
+      // that stock). A copy of an existing line inserts by item, with no stock
+      // behind it, so the source's stockLine node must not ride along — it
+      // would misreport the link and read-only the copy's pack size
+      // (packSizeEditable keys off it).
+      stockLine: line.stockLineId ? unwrap(line).stockLine : null,
     };
     setDraft(
       produce(lines => {
@@ -1034,8 +1054,8 @@ const StocktakeLineEditContent = (
             hideLabel
             size="small"
             decimalLimit={2}
-            // Pack size is fixed for existing stock — editable only on a
-            // genuinely new batch (packSizeEditable).
+            // Pack size is fixed for stock-backed batches — editable only
+            // where no stock stands behind the row (packSizeEditable).
             disabled={!line.countThisLine || !packSizeEditable(line)}
             value={line.packSize ?? undefined}
             onChange={value => update(line.id, 'packSize', value ?? null)}
