@@ -41,6 +41,13 @@ export interface PopoverProps {
   /** Close when a button inside the panel is clicked  */
   closeOnClickInside?: boolean;
   /**
+   * Called each time the panel opens — for panels that re-seed their own
+   * state from the outside value per open (the colour picker's hex entry).
+   * Fires before the first open mounts the children, so seeding a signal the
+   * children read is never a tear.
+   */
+  onOpen?: () => void;
+  /**
    * Open on hover (and focus) — for content bubbles whose trigger IS the
    * content (a status row, a comment icon), where hover reads more naturally
    * than a click. Click/tap opens it too (the only way on touch, which has no
@@ -177,6 +184,7 @@ export const Popover = (props: PopoverProps) => {
       const open = (event as ToggleEvent).newState === 'open';
       trigger.setAttribute('aria-expanded', String(open));
       if (open) {
+        props.onOpen?.();
         setEverOpened(true);
         queueMicrotask(place);
         window.addEventListener('scroll', replace, {
