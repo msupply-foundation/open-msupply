@@ -961,7 +961,10 @@ const StocktakeLineEditContent = (
             c: { key: 'snapshotNumberOfPacks' },
             header: () => t('label.snapshot-num-of-packs'),
             cardGroup: 'batch',
-            ...getNumberCell({ cardWidth: 7.5, cardSpan: 3 }),
+            ...getNumberCell({
+              cardWidth: { min: 7.5, max: 9, weight: 1 },
+              cardSpan: 3,
+            }),
             cell: info => {
               const line = info.row.original;
               return (
@@ -988,7 +991,10 @@ const StocktakeLineEditContent = (
       c: { key: 'countedNumberOfPacks' },
       header: () => t('label.counted-num-of-packs'),
       cardGroup: 'batch',
-      ...getNumberCell({ cardWidth: 7.5, cardSpan: 3 }),
+      ...getNumberCell({
+        cardWidth: { min: 7.5, max: 9, weight: 1 },
+        cardSpan: 3,
+      }),
       cell: info => {
         const line = info.row.original;
         return (
@@ -1025,7 +1031,10 @@ const StocktakeLineEditContent = (
       // Field widths). It was 8.75, which a pack size has no use for — and the
       // 1.25rem it gives back is what keeps the four counting fields on one
       // wrapped row once the dates widen below.
-      ...getNumberCell({ cardWidth: 7.5, cardSpan: 2 }),
+      ...getNumberCell({
+        cardWidth: { min: 7.5, max: 9, weight: 1 },
+        cardSpan: 2,
+      }),
       cell: info => {
         const line = info.row.original;
         return (
@@ -1063,7 +1072,10 @@ const StocktakeLineEditContent = (
             c: { id: 'dosesCounted' },
             header: () => t('label.doses-counted'),
             cardGroup: 'batch',
-            ...getNumberCell({ cardWidth: 7.5, cardSpan: 2 }),
+            ...getNumberCell({
+              cardWidth: { min: 7.5, max: 9, weight: 1 },
+              cardSpan: 2,
+            }),
             cell: info => {
               const doses = dosesCounted(info.row.original);
               return (
@@ -1092,7 +1104,7 @@ const StocktakeLineEditContent = (
       // against a rendered VALUE ("11 Sep 2026", 74px in English), but an empty
       // DateField shows the `DD MMM YYYY` placeholder, and all-caps is wider
       // than the digits it stands for — at 10rem it clipped to "DD MMM YYY".
-      meta: { cardWidth: 11, cardSpan: 4 },
+      meta: { cardWidth: { min: 11, max: 12.5, weight: 1 }, cardSpan: 4 },
       cell: info => {
         const line = info.row.original;
         return (
@@ -1167,7 +1179,7 @@ const StocktakeLineEditContent = (
             c: { id: 'vvmStatus' },
             header: () => t('label.vvm-status'),
             cardGroup: 'batch',
-            meta: { cardWidth: 10, cardSpan: 4 },
+            meta: { cardWidth: { min: 10, max: 12, weight: 1 }, cardSpan: 4 },
             cell: info => {
               const line = info.row.original;
               return (
@@ -1203,7 +1215,7 @@ const StocktakeLineEditContent = (
       cardGroup: 'batch',
       // 11 for the placeholder, as the expiry date above — and this is the field
       // where it showed, since it is usually the empty one.
-      meta: { cardWidth: 11, cardSpan: 4 },
+      meta: { cardWidth: { min: 11, max: 12.5, weight: 1 }, cardSpan: 4 },
       cell: info => {
         const line = info.row.original;
         return (
@@ -1223,7 +1235,10 @@ const StocktakeLineEditContent = (
       c: { key: 'sellPricePerPack' },
       header: () => t('label.pack-sell-price'),
       cardGroup: 'pricing',
-      ...getNumberCell({ cardWidth: 10, cardSpan: 4 }),
+      ...getNumberCell({
+        cardWidth: { min: 10, max: 12, weight: 1 },
+        cardSpan: 4,
+      }),
       cell: info => {
         const line = info.row.original;
         return (
@@ -1244,7 +1259,10 @@ const StocktakeLineEditContent = (
       c: { key: 'costPricePerPack' },
       header: () => t('label.pack-cost-price'),
       cardGroup: 'pricing',
-      ...getNumberCell({ cardWidth: 10, cardSpan: 4 }),
+      ...getNumberCell({
+        cardWidth: { min: 10, max: 12, weight: 1 },
+        cardSpan: 4,
+      }),
       cell: info => {
         const line = info.row.original;
         return (
@@ -1265,7 +1283,10 @@ const StocktakeLineEditContent = (
       c: { key: 'volumePerPack' },
       header: () => t('label.volume-per-pack'),
       cardGroup: 'pricing',
-      ...getNumberCell({ cardWidth: 10, cardSpan: 4 }),
+      ...getNumberCell({
+        cardWidth: { min: 10, max: 12, weight: 1 },
+        cardSpan: 4,
+      }),
       cell: info => {
         const line = info.row.original;
         return (

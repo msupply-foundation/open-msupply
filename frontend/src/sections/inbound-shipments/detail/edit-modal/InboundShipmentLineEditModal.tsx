@@ -265,41 +265,37 @@ const CARD_GROUPS: CardGroup<DraftBatch, GroupKey>[] = [
   {
     key: 'batch',
     panel: true,
-    // Portrait on a tablet: even columns, every row full. SEVEN fields now that
-    // Manufacturer has moved to the disclosure (see its note) — the quantity
-    // trio, then the two pack sizes with the expiry, then Location across a
-    // whole row. The weighted flex default sized each field to its data but
-    // left a wrapped row's edges out of step with the row above it, which read
-    // as untidy on a card this wide.
+    // No narrowLayout — nothing here forces a row count. The fields lay out as
+    // the wrapping weighted row: as many to a line as fit at the widths they
+    // declare, each free to grow between its own min and max, and whatever is
+    // still left over passes to the fields with the most room to give (Location
+    // at 1.2, against 1 for the scalars).
     //
-    // The spans tile at every combination of the conditional fields, which is
-    // what the re-tiling after Manufacturer left was for: Auth status takes a
-    // whole row (it appears on PO-linked shipments, where the two shipped
-    // figures do not), and the two vaccine facts share one at 3 + 3.
-    narrowLayout: { columns: 6 },
+    // It used to carry `{ columns: 6 }`, an equal-track grid the fields took
+    // spans of. That gave even rows, and a span claims a FRACTION of the row
+    // while a declared width does not scale, so the two only agree at one panel
+    // width: at 6 tracks a third of a laptop's modal is ~27rem handed to a
+    // field that asked for 7.5. Filling that track makes a two-digit count read
+    // as a text box; capping it inside the track leaves the difference as a gap
+    // between the fields. Both were shipped and both were wrong, because the
+    // slack in such a row is `panel − Σ(declared widths)` however the tracks
+    // are counted, and the only good place for it is the END of a line — which
+    // is what a wrapping row does by construction.
+    //
+    // What that costs is the alignment the grid was chosen for: when a line
+    // wraps, its right edge won't line up with the line above. Accepted
+    // knowingly, and mitigated by the ranges above — a line fills by growing
+    // its fields within their permitted widths before any slack is left at all.
   },
   {
     key: 'pricing',
     labelKey: 'label.pricing-additional-info',
     panel: true,
     disclosure: 'closed',
-    // TWELVE, where the batch panel above takes six — the two panels are boxed
-    // separately, so they read as their own grids and need not share a track
-    // count. Twelve is what lets Donor, Campaign and Manufacture date share ONE
-    // row at three different widths: at six the only split available was 2/2/2,
-    // which would have taken Campaign down to a third of the row.
-    //
-    // The row is 3 + 5 + 4, and every part of that is a floor pushing back:
-    // Manufacture date cannot go below 4 (its DD MMM YYYY placeholder needs
-    // ~11rem and a 3 is 9.6), and Donor cannot go below 3 (a lookup spends ~56px
-    // on its ✕ and chevron before any text). So Campaign takes what is left, 5 —
-    // less than the 4-of-6 it had when it sat on a row with only Donor. That is
-    // the cost of the three-up grouping, not a sizing oversight.
-    //
-    // Tiles exactly with the track-by-donor preference ON; with it OFF that row
-    // is left a quarter empty (see CardGroup.narrowLayout — no fixed set of spans
-    // suits both counts).
-    narrowLayout: { columns: 12 },
+    // Likewise none. This group's spans had a second problem the batch panel's
+    // did not: they tiled exactly with the track-by-donor preference ON and
+    // left a row a quarter empty with it OFF, because one fixed set of spans
+    // cannot suit two field counts. A wrapping row has nothing to re-tile.
   },
 ];
 
@@ -820,7 +816,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { key: 'numberOfPacks' },
       header: () => t('label.packs-received'),
       cardGroup: 'batch',
-      ...getNumberCell({ cardWidth: 7.5, cardSpan: 2 }),
+      ...getNumberCell({ cardWidth: { min: 7.5, max: 9, weight: 1 } }),
       cell: info => {
         const b = info.row.original;
         return (
@@ -859,7 +855,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             c: { id: 'shippedNumberOfPacks' },
             header: () => t('label.shipped-number-of-packs'),
             cardGroup: 'batch',
-            ...getNumberCell({ cardWidth: 7.5, cardSpan: 2 }),
+            ...getNumberCell({ cardWidth: { min: 7.5, max: 9, weight: 1 } }),
             cell: info => {
               const b = info.row.original;
               return (
@@ -890,7 +886,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             // which is what a locked Cost price is; a difference is arithmetic
             // and is never typed, so greying it conflates the two. Sized to the
             // input row so the columns still line up.
-            ...getNumberCell({ cardWidth: 5, cardSpan: 2 }),
+            ...getNumberCell({ cardWidth: { min: 5, max: 6, weight: 1 } }),
             cell: info => {
               const b = info.row.original;
               // A getter, not a hoisted const: read inside JSX it stays
@@ -935,7 +931,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { key: 'packSize' },
       header: () => t('label.received-pack-size'),
       cardGroup: 'batch',
-      ...getNumberCell({ cardWidth: 8.75, cardSpan: 2 }),
+      ...getNumberCell({ cardWidth: { min: 8.75, max: 10.5, weight: 1 } }),
       cell: info => {
         const b = info.row.original;
         return (
@@ -964,7 +960,9 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             c: { id: 'shippedPackSize' },
             header: () => t('label.shipped-pack-size'),
             cardGroup: 'batch',
-            ...getNumberCell({ cardWidth: 8.75, cardSpan: 2 }),
+            ...getNumberCell({
+              cardWidth: { min: 8.75, max: 10.5, weight: 1 },
+            }),
             cell: info => {
               const b = info.row.original;
               return (
@@ -1004,7 +1002,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { key: 'expiryDate' },
       header: () => t('label.expiry'),
       cardGroup: 'batch',
-      meta: { cardWidth: 10, cardSpan: 2 },
+      meta: { cardWidth: { min: 10, max: 11.5, weight: 1 } },
       cell: info => {
         const b = info.row.original;
         return (
@@ -1029,7 +1027,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       // longest value on the card ("fr — Central Regional Medical Logistics &
       // …") against the short scalars above it. At 3 it would leave half a row
       // empty, which is the one failure mode the span layout has.
-      meta: { cardWidth: { min: 8, max: 17, weight: 1.2 }, cardSpan: 6 },
+      meta: { cardWidth: { min: 8, max: 17, weight: 1.2 } },
       cell: info => {
         const b = info.row.original;
         return (
@@ -1064,7 +1062,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             // appears on a PO-linked shipment and not a manual one, so a whole
             // row is what keeps every other row's packing untouched as it comes
             // and goes.
-            meta: { cardWidth: 10, cardSpan: 6 },
+            meta: { cardWidth: { min: 10, max: 12, weight: 1 } },
             cell: info => {
               const b = info.row.original;
               // The styled Kobalte Select (not a Combobox — no point searching
@@ -1115,7 +1113,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             c: { id: 'dosesPerUnit' },
             header: () => t('label.doses-per-unit'),
             cardGroup: 'batch',
-            ...getNumberCell({ cardWidth: 7.5, cardSpan: 3 }),
+            ...getNumberCell({ cardWidth: { min: 7.5, max: 9, weight: 1 } }),
             cell: () => (
               <NumberField
                 label={t('label.doses-per-unit')}
@@ -1138,7 +1136,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             cardGroup: 'batch',
             // 3 + 3 with Doses per unit: the two vaccine facts share a row, so
             // the pair tiles whether or not the item is a vaccine.
-            meta: { cardWidth: 10, cardSpan: 3 },
+            meta: { cardWidth: { min: 10, max: 12, weight: 1 } },
             cell: info => {
               const b = info.row.original;
               return (
@@ -1160,7 +1158,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { key: 'costPricePerPack' },
       header: () => t('label.pack-cost-price'),
       cardGroup: 'pricing',
-      ...getNumberCell({ cardWidth: 10, cardSpan: 4 }),
+      ...getNumberCell({ cardWidth: { min: 10, max: 12, weight: 1 } }),
       cell: info => {
         const b = info.row.original;
         return (
@@ -1179,7 +1177,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { key: 'sellPricePerPack' },
       header: () => t('label.pack-sell-price'),
       cardGroup: 'pricing',
-      ...getNumberCell({ cardWidth: 10, cardSpan: 4 }),
+      ...getNumberCell({ cardWidth: { min: 10, max: 12, weight: 1 } }),
       cell: info => {
         const b = info.row.original;
         return (
@@ -1206,7 +1204,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       // floor below rather than being added, so the group's minima — and with
       // them the width at which it drops to the narrow grid — do not move; Note
       // is weighted and grows past its floor anyway, so it loses nothing.
-      ...getNumberCell({ cardWidth: 8, cardSpan: 4 }),
+      ...getNumberCell({ cardWidth: { min: 8, max: 10, weight: 1 } }),
       cell: info => {
         const b = info.row.original;
         return (
@@ -1223,7 +1221,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             c: { id: 'donor' },
             header: () => t('label.donor'),
             cardGroup: 'pricing',
-            meta: { cardWidth: { min: 9, max: 18, weight: 1 }, cardSpan: 3 },
+            meta: { cardWidth: { min: 9, max: 18, weight: 1 } },
             cell: info => {
               const b = info.row.original;
               return (
@@ -1263,7 +1261,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { id: 'campaignOrProgram' },
       header: () => t('label.campaign'),
       cardGroup: 'pricing',
-      meta: { cardWidth: { min: 9.5, max: 20, weight: 1.2 }, cardSpan: 5 },
+      meta: { cardWidth: { min: 9.5, max: 20, weight: 1.2 } },
       cell: info => {
         const b = info.row.original;
         return (
@@ -1287,7 +1285,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { key: 'manufactureDate' },
       header: () => t('label.manufacture-date'),
       cardGroup: 'pricing',
-      meta: { cardWidth: 10, cardSpan: 4 },
+      meta: { cardWidth: { min: 10, max: 11.5, weight: 1 } },
       cell: info => {
         const b = info.row.original;
         return (
@@ -1329,7 +1327,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       // both of which have a known longest value and would give up nothing.
       // A whole row also keeps the group's rows tiling exactly: 4+4+4, 3+5+4,
       // 12, then 4+8.
-      meta: { cardWidth: { min: 10, max: 20, weight: 1.4 }, cardSpan: 12 },
+      meta: { cardWidth: { min: 10, max: 20, weight: 1.4 } },
       cell: info => {
         const b = info.row.original;
         return (
@@ -1365,7 +1363,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { id: 'volumePerPack' },
       header: () => t('label.volume-per-pack'),
       cardGroup: 'pricing',
-      ...getNumberCell({ cardWidth: 10, cardSpan: 4 }),
+      ...getNumberCell({ cardWidth: { min: 10, max: 12, weight: 1 } }),
       cell: info => {
         const b = info.row.original;
         return (
@@ -1385,7 +1383,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { key: 'note' },
       header: () => t('label.note'),
       cardGroup: 'pricing',
-      meta: { cardWidth: { min: 5, max: 24, weight: 1.4 }, cardSpan: 8 },
+      meta: { cardWidth: { min: 5, max: 24, weight: 1.4 } },
       cell: info => {
         const b = info.row.original;
         return (
