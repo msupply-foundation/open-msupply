@@ -262,9 +262,11 @@ const buildDraft = async (
   return [...fromExisting, ...fromStock];
 };
 
-// The card body groups. This modal is card-only (no table view — see the
-// createTableConfig default below), and matches the inbound-shipment line
-// editor: TWO groups, not three, and no group icons. `batch` is the
+// The card body groups. The modal now defaults to the TABLE view on a wide
+// screen (see the createTableConfig call below), but card view is still reached
+// two ways — the toolbar toggle, and unconditionally below the compact
+// breakpoint — so these groups remain live. They match the inbound-shipment
+// line editor: TWO groups, not three, and no group icons. `batch` is the
 // always-shown primary counting panel and is UNLABELLED — the card's own header
 // field already reads "Batch", so a "Batch" caption directly above it was the
 // same word twice. Everything that isn't part of the count itself collapses
@@ -474,14 +476,13 @@ const StocktakeLineEditContent = (
     false
   );
 
-  // Cards by default at every band (compact already forces card; this extends
-  // it to desktop). Above the compact breakpoint the DataTable's showCardToggle
-  // offers the flip to a table for anyone who prefers it, and setConfig
-  // persists that choice per user (#886) — so this seed is only the default.
-  const tableConfig = createTableConfig({
-    tableId: 'stocktake-line-edit',
-    defaultConfig: { base: { viewMode: 'card' } },
-  });
+  // Table by default above the compact breakpoint — no `viewMode` seed, which
+  // is how the DataTable's own default ('table') stands. Below compact the table
+  // is ALWAYS card regardless (the toggle is suppressed there), so the card
+  // layout and its CARD_GROUPS still carry the tablet/phone case. The
+  // showCardToggle offers the flip to cards on a wide screen, and setConfig
+  // persists that choice per user (#886) — so this is only the default.
+  const tableConfig = createTableConfig({ tableId: 'stocktake-line-edit' });
 
   // Seed the draft for one item. Replaces the store (reconcile by id) so no
   // rows from the previous item linger, and resets per-item UI. countByDefault:
