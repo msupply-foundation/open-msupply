@@ -19,8 +19,8 @@ import {
   type SortState,
 } from '@/ui/elements/table/DataTable';
 import {
+  CommentHeader,
   getCellDefinition,
-  getCommentCell,
   getDateCell,
   getNumberCell,
 } from '@/ui/elements/table/tableHelpers';
@@ -218,8 +218,8 @@ const StockMovementsList: Component = () => {
     },
     {
       c: { key: 'comment' },
-      header: () => t('label.comment'),
-      ...getCommentCell(),
+      header: () => <CommentHeader />,
+      ...getCellDefinition('comment'),
     },
     {
       c: { key: 'createdDatetime' },

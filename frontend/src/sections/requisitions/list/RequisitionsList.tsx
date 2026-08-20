@@ -13,7 +13,10 @@ import {
   type Column,
   type SortState,
 } from '@/ui/elements/table/DataTable';
-import { getCellDefinition } from '@/ui/elements/table/tableHelpers';
+import {
+  CommentHeader,
+  getCellDefinition,
+} from '@/ui/elements/table/tableHelpers';
 import { remToPx } from '@/ui/utils/rem';
 import { createTableConfig } from '@/api/createTableConfig';
 import { StatusChip } from '@/ui/elements/feedback/StatusChip';
@@ -327,7 +330,7 @@ const RequisitionsList: Component = () => {
     },
     {
       c: { key: 'comment' },
-      header: () => t('label.comment'),
+      header: () => <CommentHeader />,
       ...getCellDefinition('comment'),
     },
     // Program / Order type / Period — only when the store has customer

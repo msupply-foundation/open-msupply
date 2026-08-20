@@ -1,9 +1,4 @@
-import {
-  createResource,
-  createSignal,
-  Show,
-  type Component,
-} from 'solid-js';
+import { createResource, createSignal, Show, type Component } from 'solid-js';
 import { t } from '@/intl';
 import { graphqlFetch } from '@/api/graphql';
 import { generateUUID } from '@/uuid';
@@ -13,6 +8,7 @@ import { Button } from '@/ui/elements/buttons/Button';
 import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
 import { DataTable, type Column } from '@/ui/elements/table/DataTable';
 import {
+  CommentHeader,
   getCellDefinition,
   getNumberCell,
 } from '@/ui/elements/table/tableHelpers';
@@ -39,8 +35,7 @@ import { statusLabel } from '../requisitionStatus';
 // reference's toast is deliberately not copied), with its copy
 // (`error.failed-to-create-internal-order`).
 
-type PickerRow =
-  CreateOrderRequisitionsResult['requisitions']['nodes'][number];
+type PickerRow = CreateOrderRequisitionsResult['requisitions']['nodes'][number];
 
 export interface CreateOrderActionProps {
   storeId: string;
@@ -161,7 +156,7 @@ export const CreateOrderAction: Component<CreateOrderActionProps> = props => {
     },
     {
       c: { key: 'comment' },
-      header: () => t('label.comment'),
+      header: () => <CommentHeader />,
       ...getCellDefinition('comment'),
     },
   ];
