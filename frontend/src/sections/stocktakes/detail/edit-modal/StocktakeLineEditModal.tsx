@@ -477,11 +477,14 @@ const StocktakeLineEditContent = (
   );
 
   // Table by default above the compact breakpoint — no `viewMode` seed, which
-  // is how the DataTable's own default ('table') stands. Below compact the table
-  // is ALWAYS card regardless (the toggle is suppressed there), so the card
-  // layout and its CARD_GROUPS still carry the tablet/phone case. The
-  // showCardToggle offers the flip to cards on a wide screen, and setConfig
-  // persists that choice per user (#886) — so this is only the default.
+  // is how the DataTable's own default ('table') stands. This deliberately
+  // diverges from the inbound/outbound line editors (card-by-default): counting
+  // is a dense numeric sweep down many batches, and the row grid keeps every
+  // count cell in one column. Below compact the table is ALWAYS card regardless
+  // (the toggle is suppressed there), so the card layout and its CARD_GROUPS
+  // still carry the tablet/phone case. The showCardToggle offers the flip to
+  // cards on a wide screen, and setConfig persists that choice per user (#886)
+  // — so this is only the default.
   const tableConfig = createTableConfig({ tableId: 'stocktake-line-edit' });
 
   // Seed the draft for one item. Replaces the store (reconcile by id) so no

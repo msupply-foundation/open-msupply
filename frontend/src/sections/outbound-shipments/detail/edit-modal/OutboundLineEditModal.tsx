@@ -388,7 +388,8 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
 
   const tableConfig = createTableConfig({
     tableId: 'outbound-line-edit',
-    // Cards by DEFAULT (as the inbound + stocktake line editors) — the
+    // Cards by DEFAULT (as the inbound line editor; the stocktake one is
+    // table-by-default — counting favours the dense row grid) — the
     // DataTable's showCardToggle offers the flip to a table above the compact
     // breakpoint and setConfig persists it per user (#886). Manufacturer starts
     // hidden (the old app's defaultHidden) — declared per band, since bands
