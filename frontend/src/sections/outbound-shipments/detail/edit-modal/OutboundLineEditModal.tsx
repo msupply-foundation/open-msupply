@@ -1009,7 +1009,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       // a body field: a bare marker with no label of its own.
       meta: {
         headerPosition: 'badge',
-        columnSettingsLabel: () => t('description.used-in-auto-allocation'),
+        textLabel: () => t('description.used-in-auto-allocation'),
       },
       cell: info => (
         <Show when={willAutoAllocate(info.row.original)}>
@@ -1164,8 +1164,13 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             },
             header: () => t('label.donor'),
             cardGroup: 'pricing',
-            // No CELL_DEF key — a donor name is free text like a manufacturer.
-            ...getCellDefinition('manufacturer'),
+            // The `donor` preset (shortText, 8rem floor, uncapped so it still
+            // grows into slack). NOT `manufacturer`: that is the `text` SINK
+            // (18.75rem), and a sink with no content is the worst thing to put
+            // in a table — this column is usually EMPTY, so it absorbed the
+            // modal's slack and pushed the editable Packs-issued columns off
+            // the inline-start edge.
+            ...getCellDefinition('donor'),
           } satisfies Column<DraftLine, never, GroupKey>,
         ]
       : []),

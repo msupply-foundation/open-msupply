@@ -24,3 +24,14 @@
   font-style: italic;
   color: var(--text-secondary);
 }
+
+/* The comment column's iconic header (CommentHeader). Icons size off font-size
+   (1em), and the header row runs a notch smaller than the body (13px), so an
+   inherited size would draw the header glyph SMALLER than the identical glyph
+   in every cell under it. 1rem pins both to the same 16px. inline-flex so the
+   glyph sits on the header's text baseline box without adding line-box height
+   (the same reason Comment's own wrapper is inline-flex). */
+.commentHeader {
+  display: inline-flex;
+  font-size: 1rem;
+}

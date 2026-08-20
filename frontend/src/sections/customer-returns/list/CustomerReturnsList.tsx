@@ -20,7 +20,10 @@ import {
   type Column,
   type SortState,
 } from '../../../ui/elements/table/DataTable';
-import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
+import {
+  CommentHeader,
+  getCellDefinition,
+} from '../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../ui/utils/rem';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { StatusChip } from '../../../ui/elements/feedback/StatusChip';
@@ -355,7 +358,7 @@ const CustomerReturnsList: Component = () => {
     },
     {
       c: { key: 'comment' },
-      header: () => t('label.comment'),
+      header: () => <CommentHeader />,
       // Shared comment cell — indicator + popover (ui-surface S1 col 5); the
       // column is not sortable (only Name / Status / Number / Created are).
       ...getCellDefinition('comment'),
