@@ -163,6 +163,17 @@ export const CELL_DEF = {
   locationCode: { kind: 'code', size: 8.5, maxSize: null }, // measured: 127px
   // Number — size widened where the header label is the binding constraint.
   packSize: { kind: 'number', size: 5 }, // "Pack size"
+  // Headed "Received pack size" — three words where `packSize` has two, and the
+  // extra word is what costs the room: at packSize's 5rem the label lays out
+  // "Received" / "pack size" and the second line overruns its text box, so the
+  // 2-line clamp ellipsises the tail away ("Received pack…"). Nothing breaks
+  // mid-word — `.thText`'s `break-word` holds min-content at the longest word,
+  // so auto-layout floors the column at "Received" and the loss is the trailing
+  // word, not a chopped one. 7rem leaves both lines whole with the 1rem
+  // sort-arrow slot the inbound line table's sortable copy reserves. Its own
+  // key rather than a call-site override, so the two inbound tables that share
+  // this header cannot drift apart again (#1165).
+  receivedPackSize: { kind: 'number', size: 7 },
   // Headed "Pack quantity" / "Packs received" / "Number of packs" depending on
   // the table — every one of them a two-word label whose longest word ("packs",
   // "quantity", "received", "Number") measures ~50-54px, over the 48px of text
