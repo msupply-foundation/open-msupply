@@ -63,6 +63,25 @@ const PrototypeCard = (props: { prototype: PrototypeDef }) => {
           )}
         </Show>
 
+        {/* The decisions being asked for. On the card rather than in someone's
+            notes, so they travel with the proposal. */}
+        <Show when={p().openQuestions?.length}>
+          <div>
+            <Text variant="bodySmall" as="div">
+              <b>Open questions</b>
+            </Text>
+            <ul>
+              <For each={p().openQuestions}>
+                {question => (
+                  <li>
+                    <Text variant="bodySmall">{question}</Text>
+                  </li>
+                )}
+              </For>
+            </ul>
+          </div>
+        </Show>
+
         <div>
           <Button icon={<ArrowRightIcon />} onClick={open}>
             Open {p().title}
