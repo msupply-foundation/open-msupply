@@ -746,13 +746,9 @@ const InboundShipmentDetailView: Component = () => {
         c: { key: 'packSize' },
         sortKey: 'packSize',
         header: () => t('label.received-pack-size'),
-        ...getCellDefinition('packSize'),
-        // The `packSize` preset is sized for the header "Pack size"; this table
-        // heads the column "Received pack size", whose longest word alone
-        // outgrows the preset's text box — at 5rem it broke "Received" mid-word
-        // and clipped the third line away. Local override, not a preset change:
-        // every other table still heads it "Pack size".
-        size: remToPx(7),
+        // Not `packSize` — that preset is sized for the header "Pack size".
+        // See `receivedPackSize` in _globalColumnConfig for the measurement.
+        ...getCellDefinition('receivedPackSize'),
       },
       // Doses per unit (H5) — vaccines-in-doses pref; the item's configured
       // doses, blank for a non-vaccine item.
