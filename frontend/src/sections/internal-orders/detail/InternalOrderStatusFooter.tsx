@@ -1,11 +1,9 @@
 import { createSignal, Show, Switch, Match, type Component } from 'solid-js';
-import { useNavigate, useParams } from '@solidjs/router';
 import { t, tPlural } from '../../../intl';
 import { authUser, userDisplayName } from '../../../auth/authContext';
 import { Button } from '../../../ui/elements/buttons/Button';
 import {
   CancelButton,
-  CloseButton,
   OkButton,
 } from '../../../ui/elements/buttons/StandardButtons';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
@@ -93,8 +91,6 @@ export interface InternalOrderStatusFooterProps {
 export const InternalOrderStatusFooter: Component<
   InternalOrderStatusFooterProps
 > = props => {
-  const params = useParams<{ storeId: string }>();
-  const navigate = useNavigate();
   const [open, setOpen] = createSignal(false);
   const [phase, setPhase] = createSignal<Phase>('confirm');
   const [errorMessage, setErrorMessage] = createSignal<string>();
@@ -163,12 +159,8 @@ export const InternalOrderStatusFooter: Component<
         current={currentStatusStep(props.node.status)}
       />
       <ContentFooterActions>
-        <CloseButton
-          data-testid="close-button"
-          onClick={() =>
-            navigate(`/${params.storeId}/replenishment/internal-order`)
-          }
-        />
+        {/* No Close here (D103): leaving the order is the breadcrumb's job, in
+            the app bar, where every other screen puts it. */}
         {/* Hidden on a read-only order (AC-S3). */}
         <Show when={props.editable}>
           <Button
