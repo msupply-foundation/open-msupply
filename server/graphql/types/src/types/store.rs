@@ -52,7 +52,8 @@ impl StoreNode {
     pub async fn is_disabled(&self) -> bool {
         self.row().is_disabled
     }
-    /// Returns the associated store logo.
+    /// Returns the associated store logo, falling back to the global logo
+    /// preference when the store has none.
     /// The logo is returned as a data URL schema, e.g. "data:image/png;base64,..."
     /// Lazy-loaded — the logo is not pulled with the default store row.
     pub async fn logo(&self, ctx: &Context<'_>) -> Result<Option<String>> {
@@ -86,7 +87,7 @@ mod test {
     use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test_with_data};
     use repository::{
         mock::{MockData, MockDataInserts},
-        NameRow, Store, StoreRow,
+        NameRow, PreferenceRow, Store, StoreRow, StoreRowRepository,
     };
     use serde_json::json;
 
@@ -142,6 +143,8 @@ mod test {
             "testQuery": {
                 "__typename": "StoreNode",
                 "storeName": name().name,
+                // No store logo and no global logo preference
+                "logo": null,
                 "name": {
                     "id": name().id
                 }
@@ -154,6 +157,7 @@ mod test {
             testQuery {
                 __typename
                 storeName
+                logo
                 name(storeId: $storeId) {
                     id
                 }
@@ -166,5 +170,98 @@ mod test {
         });
 
         assert_graphql_query!(&settings, &query, &Some(variables), expected, None);
+    }
+
+    #[actix_rt::test]
+    async fn graphql_test_store_logo_global_fallback() {
+        #[derive(Clone)]
+        struct TestQuery;
+
+        const OWN_LOGO: &str = "data:image/png;base64,own";
+        const GLOBAL_LOGO: &str = "data:image/png;base64,global";
+
+        fn name() -> NameRow {
+            NameRow {
+                id: "name_id".to_string(),
+                name: "name".to_string(),
+                ..Default::default()
+            }
+        }
+
+        fn store_with_logo() -> StoreRow {
+            StoreRow {
+                id: "store_with_logo".to_string(),
+                name_id: name().id,
+                ..Default::default()
+            }
+        }
+
+        fn store_without_logo() -> StoreRow {
+            StoreRow {
+                id: "store_without_logo".to_string(),
+                name_id: name().id,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, _, settings) = setup_graphql_test_with_data(
+            TestQuery,
+            EmptyMutation,
+            "graphql_test_store_logo_global_fallback",
+            MockDataInserts::none(),
+            MockData {
+                stores: vec![store_with_logo(), store_without_logo()],
+                names: vec![name()],
+                preferences: vec![PreferenceRow {
+                    id: "global_logo_global".to_string(),
+                    key: "global_logo".to_string(),
+                    value: serde_json::to_string(GLOBAL_LOGO).unwrap(),
+                    store_id: None,
+                }],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        StoreRowRepository::new(&connection)
+            .update_logo(&store_with_logo().id, Some(OWN_LOGO))
+            .unwrap();
+
+        #[Object]
+        impl TestQuery {
+            pub async fn with_logo(&self) -> StoreNode {
+                StoreNode {
+                    store: Store {
+                        store_row: store_with_logo(),
+                        name_row: name(),
+                    },
+                }
+            }
+
+            pub async fn without_logo(&self) -> StoreNode {
+                StoreNode {
+                    store: Store {
+                        store_row: store_without_logo(),
+                        name_row: name(),
+                    },
+                }
+            }
+        }
+
+        let expected = json!({
+            // A store's own logo wins over the global one
+            "withLogo": { "logo": OWN_LOGO },
+            // A store without a logo falls back to the global logo preference
+            "withoutLogo": { "logo": GLOBAL_LOGO }
+        });
+
+        let query = r#"
+        query {
+            withLogo { logo }
+            withoutLogo { logo }
+        }
+        "#;
+
+        assert_graphql_query!(&settings, &query, &None, expected, None);
     }
 }
