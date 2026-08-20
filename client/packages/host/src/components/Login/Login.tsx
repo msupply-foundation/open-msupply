@@ -3,6 +3,7 @@ import {
   ArrowRightIcon,
   useTranslation,
   useInterval,
+  BaseButton,
   LoadingButton,
   useHostContext,
   useLogout,
@@ -17,6 +18,7 @@ import { LoginLayout } from './LoginLayout';
 import { LoginStoreSelectorPanel } from './LoginStoreSelectorPanel';
 import { SiteInfo } from '../SiteInfo';
 import { useHost } from '../../api';
+import { startOidcLogin, useOidcConfig } from './useOidcConfig';
 
 // Build-time base path (webpack DefinePlugin literal; see config.ts). Compared
 // directly — not via Environment.PUBLIC_PATH — so the minifier can constant-fold
@@ -36,6 +38,17 @@ export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
     theme: LocalStorage.getItem('/theme/customhash') ?? '',
   };
   const { data: displaySettings } = useHost.settings.displaySettings(hashInput);
+  const { data: oidcConfig } = useOidcConfig();
+  // The server lands the browser back here after single sign-on: `sso=success` when a session was
+  // created, or `oidcError` with a slug describing what went wrong (never the underlying reason —
+  // that's in the server log). Read once on mount, before any navigation clears the query string.
+  const [ssoReturn] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return {
+      succeeded: params.get('sso') === 'success',
+      error: params.get('oidcError'),
+    };
+  });
   const passwordRef = React.useRef<HTMLInputElement>(null);
   const {
     isValid,
@@ -45,6 +58,7 @@ export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
     setUsername,
     isLoggingIn,
     onLogin,
+    onSsoReturn,
     error,
     siteName,
     showStoreSelector,
@@ -71,7 +85,23 @@ export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
   }, [error]);
 
   const loginError: { error: string; hint?: string } = useMemo(() => {
-    if (!error) return { error: '' };
+    if (!error) {
+      if (!ssoReturn.error) return { error: '' };
+      const ssoErrorKeys = {
+        expired: 'error.sso-expired',
+        'unknown-user': 'error.sso-unknown-user',
+        'account-inactive': 'error.sso-account-inactive',
+        'no-permission-group': 'error.sso-no-permission-group',
+        'no-site-access': 'error.no-site-access',
+      } as const;
+      return {
+        error: t('error.unable-to-login'),
+        hint: t(
+          ssoErrorKeys[ssoReturn.error as keyof typeof ssoErrorKeys] ??
+            'error.sso-failed'
+        ),
+      };
+    }
 
     if (error.message === 'ConnectionError') {
       return {
@@ -126,7 +156,7 @@ export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
     return {
       error: t('error.authentication-error'),
     };
-  }, [error, timeoutRemaining, customDate, t]);
+  }, [error, ssoReturn.error, timeoutRemaining, customDate, t]);
 
   useEffect(() => {
     if (!displaySettings) return;
@@ -150,6 +180,13 @@ export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
   // during a startTransition navigation will re-trigger logout and wipe the
   // auth cookie mid-login.
   useEffect(() => {
+    // Arriving from single sign-on: the server has already created the session, so logging out
+    // here would revoke the cookie we came back with. Adopt it instead.
+    if (ssoReturn.succeeded) {
+      LocalStorage.removeItem('/error/auth');
+      onSsoReturn();
+      return;
+    }
     if (fullSize) {
       logout();
       LocalStorage.removeItem('/error/auth');
@@ -220,6 +257,18 @@ export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
           data-testid="login-button"
         />
       }
+      SsoButton={
+        oidcConfig?.enabled && (
+          <BaseButton
+            variant="text"
+            onClick={() => startOidcLogin(oidcConfig.loginUrl)}
+            disabled={isLoggingIn}
+            data-testid="login-sso-button"
+          >
+            {oidcConfig.buttonLabel || t('button.login')}
+          </BaseButton>
+        )
+      }
       TryNewUiLink={
         // Dual-frontend packaging serves this (old) client at a subpath while
         // the new frontend lives at '/'. Only then does linking to '/' make
@@ -239,11 +288,10 @@ export const Login = ({ fullSize = true }: { fullSize?: boolean }) => {
         )
       }
       ErrorMessage={
-        error &&
         loginError.error !== '' && (
           <div data-testid="login-error" style={{ width: '100%' }}>
             <BoxedErrorWithDetails
-              details={error.detail || ''}
+              details={error?.detail || ''}
               error={loginError.error}
               hint={loginError.hint}
               width="100%"

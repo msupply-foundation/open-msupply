@@ -21,6 +21,8 @@ export type LoginLayoutProps = {
   StoreSelector?: React.ReactNode;
   showStoreSelector?: boolean;
   TryNewUiLink?: React.ReactNode;
+  /** Single sign-on button, when the server offers it. */
+  SsoButton?: React.ReactNode;
 };
 
 export const LoginLayout = ({
@@ -34,6 +36,7 @@ export const LoginLayout = ({
   StoreSelector,
   showStoreSelector = false,
   TryNewUiLink,
+  SsoButton,
 }: LoginLayoutProps) => {
   const t = useTranslation();
 
@@ -47,6 +50,7 @@ export const LoginLayout = ({
       onLogin={onLogin}
       fullSize={fullSize}
       TryNewUiLink={TryNewUiLink}
+      SsoButton={SsoButton}
     />
   );
 
@@ -126,13 +130,19 @@ export const LoginLayout = ({
             alignItems: 'center',
             overflowY: 'auto',
             transition: 'transform 0.35s ease-in-out',
-            transform: showStoreSelector ? 'translateX(-100%)' : 'translateX(0)',
+            transform: showStoreSelector
+              ? 'translateX(-100%)'
+              : 'translateX(0)',
           }}
         >
           <Box display="flex" flexGrow={1} sx={{ alignItems: 'center' }}>
             {loginForm}
           </Box>
-          <AppVersion style={{ opacity: 0.4 }} SiteInfo={SiteInfo} testId="login-version" />
+          <AppVersion
+            style={{ opacity: 0.4 }}
+            SiteInfo={SiteInfo}
+            testId="login-version"
+          />
           <LanguageButton />
         </Box>
         <Box
@@ -163,6 +173,7 @@ const LoginForm = ({
   onLogin,
   fullSize,
   TryNewUiLink,
+  SsoButton,
 }: LoginLayoutProps) => {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
     if (e.key === 'Enter') {
@@ -184,6 +195,11 @@ const LoginForm = ({
         <Box display="flex" justifyContent="flex-end">
           {LoginButton}
         </Box>
+        {SsoButton && (
+          <Box display="flex" justifyContent="center">
+            {SsoButton}
+          </Box>
+        )}
         {TryNewUiLink && (
           <Box display="flex" justifyContent="center">
             {TryNewUiLink}

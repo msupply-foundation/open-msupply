@@ -147,6 +147,22 @@ impl<'a> UserAccountRowRepository<'a> {
         }
     }
 
+    /// Case-insensitive lookup with no credential or activity filtering.
+    ///
+    /// [`Self::find_one_by_user_name`] is the *password login* lookup — it also requires an active
+    /// account with a stored hash. A login an external identity provider has already authenticated
+    /// (see `service::oidc`) needs neither: an SSO-only account may hold no mSupply password at
+    /// all, and the caller wants to tell "no such user" apart from "account deactivated" itself.
+    pub fn find_one_by_user_name_unfiltered(
+        &self,
+        username: &str,
+    ) -> Result<Option<UserAccountRow>, RepositoryError> {
+        Ok(user_account::table
+            .filter(lower(user_account::username).eq(lower(username)))
+            .first(self.connection.lock().connection())
+            .optional()?)
+    }
+
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<UserAccountRow>, RepositoryError> {
         let result = user_account::table
             .filter(user_account::id.eq_any(ids))

@@ -24,6 +24,9 @@ pub struct Settings {
     pub features: Option<HashMap<String, bool>>,
     pub changelog_partition: Option<ChangelogPartitionSettings>,
     pub changelog_dedup: Option<ChangelogDedupSettings>,
+    /// OpenID Connect (Keycloak) single sign-on. Absent disables it, and the password login is
+    /// untouched either way. See [`crate::oidc`].
+    pub oidc: Option<OidcSettings>,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -100,6 +103,158 @@ fn default_frontend_dir() -> String {
     "frontend".to_string()
 }
 
+/// Which mSupply `user_account` an SSO session runs as — see [`OidcSettings::account_source`].
+#[derive(Deserialize, Serialize, Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum OidcAccountSource {
+    /// The account named by [`OidcSettings::username_claim`]: one mSupply user per person, and
+    /// the person must already exist in mSupply. Permissions are then granted from the roles the
+    /// provider returns (see [`crate::oidc::role_grant`]).
+    #[default]
+    UsernameClaim,
+    /// The account named by the user's group ([`OidcSettings::group_claim`]): one mSupply user per
+    /// group, shared by everyone in it. The provider's users need not exist in mSupply at all —
+    /// only the group accounts do — and no permissions are granted or revoked, because the
+    /// session already *is* that account and carries the permissions mSupply gave it.
+    ///
+    /// The trade is attribution: every action by everyone in a group is recorded against the one
+    /// account, so the database cannot tell them apart. Who actually signed in appears only in
+    /// the server log.
+    Group,
+}
+
+/// Where an SSO session's permissions come from — see [`OidcSettings::permission_source`].
+#[derive(Deserialize, Serialize, Clone, Copy, Debug, Default, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum OidcPermissionSource {
+    /// The provider's roles are matched to mSupply accounts acting as permission groups, and their
+    /// permissions are granted to the user for the stores they can already reach. A user whose
+    /// roles match no group is **refused**. See [`crate::oidc::role_grant`].
+    #[default]
+    Roles,
+    /// The signed-in account's own mSupply permissions are the whole story: the provider proves who
+    /// the user is and nothing else. Roles are not read, no grants are written, and any left by a
+    /// previous sign-in under [`Self::Roles`] are removed so that what mSupply granted is all that
+    /// applies.
+    Account,
+}
+
+/// Configuration for OpenID Connect single sign-on against Keycloak (or any spec-compliant
+/// provider). Endpoints are read from the provider's discovery document, so only the issuer is
+/// needed here.
+///
+/// The session always runs as an existing local `user_account` that is active on this site — user
+/// accounts and store joins stay owned by mSupply sync, and nothing here creates them. Which
+/// account, and where its permissions come from, is [`Self::account_source`].
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct OidcSettings {
+    /// Issuer URL, e.g. `https://keycloak.example.org/realms/msupply`. The discovery document is
+    /// fetched from `{issuer}/.well-known/openid-configuration` and the `iss` claim of the ID
+    /// token must match it exactly.
+    pub issuer: String,
+    /// Client id registered in the Keycloak realm.
+    pub client_id: String,
+    /// Only for confidential clients. Public clients authenticate the code exchange with PKCE
+    /// alone, which is what Keycloak's default "public" client type expects.
+    #[serde(default)]
+    pub client_secret: Option<String>,
+    /// Absolute URL the provider redirects back to. Must be registered verbatim as a valid
+    /// redirect URI on the Keycloak client and must resolve to this server's
+    /// `/auth/oidc/callback`, e.g. `https://oms.example.org/auth/oidc/callback`.
+    pub redirect_url: String,
+    #[serde(default = "default_oidc_scopes")]
+    pub scopes: Vec<String>,
+    /// Which `user_account` the session runs as: the one named by the person's
+    /// [`Self::username_claim`] (the default), or the one named by their
+    /// [`Self::group_claim`]. See [`OidcAccountSource`] — the two differ in more than the lookup
+    /// key.
+    #[serde(default)]
+    pub account_source: OidcAccountSource,
+    /// ID-token claim holding the name to match against `user_account.username`
+    /// (case-insensitive). `preferred_username` is Keycloak's default.
+    ///
+    /// With `account_source: group` this is no longer the account lookup — it is only used to
+    /// name the person in the server log, and may be absent.
+    #[serde(default = "default_oidc_username_claim")]
+    pub username_claim: String,
+    /// Dotted path to the claim holding the user's groups, used only when
+    /// [`Self::account_source`] is `group`.
+    ///
+    /// Keycloak does **not** put group membership in a token by default — add a *Group
+    /// Membership* mapper to the client (or a client scope it uses); `groups` is that mapper's
+    /// default claim name. Values may be plain names (`dispensary`) or full paths
+    /// (`/pharmacy/dispensary`, the mapper's default); either way the **last** path segment is
+    /// what is matched, after [`Self::role_template_prefix`].
+    #[serde(default = "default_oidc_group_claim")]
+    pub group_claim: String,
+    /// Where the session's permissions come from. Only meaningful with
+    /// `account_source: username_claim` — under `group` the session already *is* the group's
+    /// account, so its own permissions always apply. See [`OidcPermissionSource`].
+    #[serde(default)]
+    pub permission_source: OidcPermissionSource,
+    /// Dotted path to the claim holding the user's roles. Keycloak puts realm roles in
+    /// `realm_access.roles`; client roles live under
+    /// `resource_access.{client_id}.roles`. The claim may be an array of strings or a single
+    /// space-separated string.
+    #[serde(default = "default_oidc_roles_claim")]
+    pub roles_claim: String,
+    /// Prefix applied to a provider-side name before it is looked up as an mSupply user account
+    /// — to the **role** under `account_source: username_claim`, and to the **group** under
+    /// `account_source: group`. With `role_`, `dispensary` resolves to the account
+    /// `role_dispensary`.
+    ///
+    /// Strongly recommended: without it any Keycloak role or group that happens to share a name
+    /// with a real mSupply user resolves to that user, so whoever administers the realm can reach
+    /// a privileged account's permissions — or, under `account_source: group`, the account
+    /// itself — by naming a role or group after it.
+    #[serde(default)]
+    pub role_template_prefix: Option<String>,
+    /// End the provider's session when the user logs out of mSupply (OIDC RP-Initiated Logout).
+    ///
+    /// Off by default, and deliberately so: a realm-wide sign-out is a bigger action than leaving
+    /// mSupply, and for most deployments logging out here should not sign the user out of every
+    /// other application on the realm.
+    ///
+    /// With it on, the provider shows its own logout confirmation before returning — mSupply sends
+    /// no `id_token_hint`, which is what would let the provider skip that step, because a
+    /// front-channel hint travels in a URL the browser requests and would put the identity token
+    /// in browser history and the provider's logs. The confirmation is also honest about the blast
+    /// radius: it is every application on the realm, not just this one.
+    ///
+    /// Only sessions the provider authenticated are affected; a password login logs out exactly as
+    /// before. Requires the return URL to be registered on the Keycloak client under **Valid post
+    /// logout redirect URIs**.
+    #[serde(default)]
+    pub logout_from_provider: bool,
+    /// Label for the sign-in button on the login page.
+    #[serde(default = "default_oidc_button_label")]
+    pub button_label: String,
+}
+
+fn default_oidc_scopes() -> Vec<String> {
+    vec![
+        "openid".to_string(),
+        "profile".to_string(),
+        "email".to_string(),
+    ]
+}
+
+fn default_oidc_username_claim() -> String {
+    "preferred_username".to_string()
+}
+
+fn default_oidc_roles_claim() -> String {
+    "realm_access.roles".to_string()
+}
+
+fn default_oidc_group_claim() -> String {
+    "groups".to_string()
+}
+
+fn default_oidc_button_label() -> String {
+    "Sign in with Keycloak".to_string()
+}
+
 /// Builds a `Settings` value suitable for tests, given the `DatabaseSettings`
 /// produced by the test setup. `features` enables feature flags that gate
 /// functionality under test (e.g. `stock_movement`).
@@ -133,6 +288,7 @@ pub fn test_settings(
         features,
         changelog_partition: None,
         changelog_dedup: None,
+        oidc: None,
     }
 }
 

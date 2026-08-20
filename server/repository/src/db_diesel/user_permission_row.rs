@@ -163,6 +163,44 @@ impl UserPermissionRow {
             &format!("{user_id}:{store}:{permission_db_form}"),
         )
     }
+
+    /// Stable id for a permission this site granted locally from an external identity
+    /// provider role (see `service::oidc::role_grant`).
+    ///
+    /// Deliberately a different namespace to [`Self::deterministic_id`] so a role grant can
+    /// never collide with a row owned by sync, and so [`Self::is_role_grant`] can tell the two
+    /// apart: the id is a pure function of the row's own fields, which means any row can be
+    /// tested for "did we mint this?" without keeping a side table of grant ids.
+    pub fn role_grant_id(
+        user_id: &str,
+        store_id: Option<&str>,
+        permission: &PermissionType,
+        context_id: Option<&str>,
+    ) -> String {
+        // Project-local namespace; do not change without invalidating existing grants
+        // (they would stop being recognised by `is_role_grant` and leak).
+        const NAMESPACE: Uuid = Uuid::from_u128(0x1c4a7f30_9d62_4f8b_8f3a_6b2d5e9c71a4);
+        let store = store_id.unwrap_or("");
+        let context = context_id.unwrap_or("");
+        deterministic_uuid(
+            &NAMESPACE,
+            &format!("{user_id}:{store}:{}:{context}", permission.as_ref()),
+        )
+    }
+
+    /// True when this row's id is the [`Self::role_grant_id`] derived from its own fields, i.e.
+    /// the row was minted by the identity-provider role mapping on this site rather than
+    /// delivered by sync. Used to scope grant cleanup so a re-login never deletes a synced
+    /// permission.
+    pub fn is_role_grant(&self) -> bool {
+        self.id
+            == Self::role_grant_id(
+                &self.user_id,
+                self.store_id.as_deref(),
+                &self.permission,
+                self.context_id.as_deref(),
+            )
+    }
 }
 
 pub struct UserPermissionRowRepository<'a> {
@@ -193,6 +231,26 @@ impl<'a> UserPermissionRowRepository<'a> {
             SourceSiteId::CurrentSiteId,
         )?;
         ChangelogRepository::new(self.connection).insert(&changelog)
+    }
+
+    /// Upsert without queuing the row for sync.
+    ///
+    /// `user_permission` is `Remote`-authored, so [`Self::upsert_one`] writes a changelog row and
+    /// the permission is pushed to central and on to the site's other devices. Permissions minted
+    /// locally from an identity-provider role (see [`UserPermissionRow::role_grant_id`]) are
+    /// derived state that belongs to this site only — central must stay the sole author of the
+    /// permissions it distributes — so they bypass the changelog.
+    pub fn upsert_one_without_changelog(
+        &self,
+        row: &UserPermissionRow,
+    ) -> Result<(), RepositoryError> {
+        self._upsert_one(row)
+    }
+
+    /// Delete without queuing a delete for sync. Counterpart to
+    /// [`Self::upsert_one_without_changelog`] — only for rows this site minted locally.
+    pub fn delete_without_changelog(&self, id: &str) -> Result<(), RepositoryError> {
+        self._delete(id)
     }
 
     pub fn find_one_by_id(&self, id: &str) -> Result<Option<UserPermissionRow>, RepositoryError> {
@@ -345,5 +403,51 @@ mod test {
             found.permission,
             PermissionType::Unknown("FUTURE_PERMISSION".to_string())
         );
+    }
+
+    #[test]
+    fn role_grant_id_is_recognisable_and_distinct_from_sync_ids() {
+        let permission = PermissionType::StocktakeMutate;
+        let grant = UserPermissionRow {
+            id: UserPermissionRow::role_grant_id("user_a", Some("store_a"), &permission, None),
+            user_id: "user_a".to_string(),
+            store_id: Some("store_a".to_string()),
+            permission: permission.clone(),
+            context_id: None,
+        };
+        assert!(grant.is_role_grant());
+
+        // A row with the same (user, store, permission) minted by sync must not be mistaken for
+        // a grant, otherwise re-login would delete synced permissions.
+        let synced = UserPermissionRow {
+            id: UserPermissionRow::deterministic_id("user_a", Some("store_a"), &permission),
+            ..grant.clone()
+        };
+        assert_ne!(synced.id, grant.id);
+        assert!(!synced.is_role_grant());
+
+        // Legacy OG primary keys aren't grants either.
+        assert!(!UserPermissionRow {
+            id: "some_og_uuid".to_string(),
+            ..grant.clone()
+        }
+        .is_role_grant());
+
+        // Every field participates in the id, so a grant is only recognised against its own row.
+        assert!(!UserPermissionRow {
+            store_id: Some("store_b".to_string()),
+            ..grant.clone()
+        }
+        .is_role_grant());
+        assert!(!UserPermissionRow {
+            context_id: Some("context_a".to_string()),
+            ..grant.clone()
+        }
+        .is_role_grant());
+        assert!(!UserPermissionRow {
+            permission: PermissionType::StocktakeQuery,
+            ..grant
+        }
+        .is_role_grant());
     }
 }

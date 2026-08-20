@@ -73,6 +73,7 @@ pub(crate) async fn setup_all_with_data_and_service_provider(
         features: None,
         changelog_partition: None,
         changelog_dedup: None,
+        oidc: None,
     };
     let (file_sync_trigger, _) = FileSyncDriver::init(&settings);
     let (sync_trigger, _) = SynchroniserDriver::init(file_sync_trigger);

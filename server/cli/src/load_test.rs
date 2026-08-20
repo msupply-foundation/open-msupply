@@ -513,6 +513,7 @@ impl LoadTest {
             features: None,
             changelog_partition: None,
             changelog_dedup: None,
+            oidc: None,
         };
         let base_config_path = self.output_dir.join("base.yaml");
         std::fs::write(base_config_path, serde_yml::to_string(&base_config)?)?;
@@ -627,6 +628,7 @@ impl LoadTest {
                 features: None,
                 changelog_partition: None,
                 changelog_dedup: None,
+                oidc: None,
             };
 
             let full_site = TestSite {

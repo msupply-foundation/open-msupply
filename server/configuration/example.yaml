@@ -79,6 +79,65 @@
 #   from: "no-reply@msupply.foundation"
 #   #  Can make this smaller for testing emails
 #   interval: 60 # in seconds
+# oidc: # OpenID Connect single sign-on (Keycloak). Omit the whole block to disable it.
+#   # Realm issuer. Endpoints are read from {issuer}/.well-known/openid-configuration, and the
+#   # ID token's `iss` claim must match this exactly.
+#   issuer: "https://keycloak.example.org/realms/msupply"
+#   client_id: "open-msupply"
+#   # Only for confidential clients. Public clients are authenticated by PKCE alone.
+#   # client_secret: "..."
+#   # Must be registered verbatim as a valid redirect URI on the Keycloak client, and must point
+#   # at this server's /auth/oidc/callback.
+#   redirect_url: "https://oms.example.org/auth/oidc/callback"
+#   # scopes: [openid, profile, email] # must include openid
+#   #
+#   # Which mSupply user_account the session runs as:
+#   #   username_claim (default) - the person's own account; they must exist in mSupply, and their
+#   #                              roles are matched to permission groups (see roles_claim below).
+#   #   group                    - the account named by their GROUP, shared by everyone in it. The
+#   #                              provider's users need not exist in mSupply, and no permissions
+#   #                              are copied: the session IS that account. The trade is
+#   #                              attribution - every action by everyone in the group is recorded
+#   #                              against the one account.
+#   # account_source: username_claim
+#   #
+#   # account_source: username_claim only --------------------------------------
+#   # username_claim: preferred_username # matched (case-insensitively) against user_account.username
+#   #
+#   # Where that account's permissions come from:
+#   #   roles (default) - Keycloak roles are matched to permission-group accounts and grant their
+#   #                     permissions; a user whose roles match NO group is refused.
+#   #   account         - the account's own mSupply permissions are the whole story. Keycloak only
+#   #                     proves who you are; roles are not read, and grants left by an earlier
+#   #                     'roles' sign-in are removed. Nothing extra to configure in Keycloak.
+#   # permission_source: roles
+#   #
+#   # permission_source: roles only --------------------------------------------
+#   # Dotted path to the roles claim. Keycloak realm roles live in realm_access.roles; client roles
+#   # in resource_access.<client_id>.roles. NOTE Keycloak's built-in realm-roles mapper populates
+#   # the ACCESS token, not the ID token this server verifies - turn on "Add to ID token".
+#   # roles_claim: realm_access.roles
+#   #
+#   # account_source: group only -----------------------------------------------
+#   # Dotted path to the groups claim. Keycloak does NOT include groups by default - add a
+#   # "Group Membership" mapper to the client; 'groups' is its default claim name. Values may be
+#   # plain names or full paths (/pharmacy/dispensary); the last segment is what is matched.
+#   # group_claim: groups
+#   #
+#   # Prefix applied to the role (username_claim mode) or group (group mode) before looking it up
+#   # as an mSupply user account, e.g. 'dispensary' -> account 'role_dispensary'. Strongly
+#   # recommended: without it any realm role or group sharing a name with a real mSupply user
+#   # reaches that user's permissions - or, in group mode, the account itself.
+#   role_template_prefix: "role_"
+#   #
+#   # End the identity provider's session when the user logs out of mSupply
+#   # (OIDC RP-Initiated Logout). Off by default: for most deployments, leaving mSupply should not
+#   # sign the user out of every other application on the realm. The provider shows its own logout
+#   # confirmation (no id_token_hint is sent - see the docs), and only sessions the provider
+#   # authenticated are affected. The return URL must be registered on the Keycloak client under
+#   # "Valid post logout redirect URIs".
+#   # logout_from_provider: false
+#   # button_label: "Sign in with Keycloak"
 # features:
 #   stock_movement: true
 #   enable_multi_device_site: true # central server only; enables the multi-device toggle on the Sites screen

@@ -41,6 +41,8 @@ serde = { workspace = true }
 tokio = { workspace = true }
 clap = { workspace = true }
 mime_guess = "2.0.5"
+# Origin comparison when validating the OIDC return-to URL.
+url = "2.5.8"
 futures = { workspace = true }
 simple-log = { workspace = true }
 rcgen = { workspace = true }

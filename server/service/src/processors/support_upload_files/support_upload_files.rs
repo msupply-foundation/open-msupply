@@ -476,6 +476,7 @@ mod tests {
             features: None,
             changelog_partition: Default::default(),
             changelog_dedup: None,
+            oidc: None,
         };
         service_provider.settings = Box::new(SettingsService::new(Some(test_settings)));
 

@@ -45,7 +45,8 @@ export const useLoginForm = (
   const { data: initStatus } = useInitialisationStatus();
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, isLoggingIn, mostRecentCredentials } = useLogin();
+  const { login, completeSsoLogin, isLoggingIn, mostRecentCredentials } =
+    useLogin();
   const mostRecentUsername = mostRecentCredentials[0]?.username ?? undefined;
   const queryClient = useQueryClient();
   const authApi = useAuthApi();
@@ -54,15 +55,11 @@ export const useLoginForm = (
   const [showStoreSelector, setShowStoreSelector] = useState(false);
   const [loginRedirectFrom, setLoginRedirectFrom] = useState('/');
 
-  const onLogin = async () => {
-    setError();
-    const { error, token } = await login(username.trim(), password);
-    setError(error);
-    setPassword('');
-    if (!token) return;
-
-    if (!navigateOnSuccess) return;
-
+  /**
+   * Where to go once a session exists, and whether to ask which store first. Shared by the
+   * password login and the single sign-on return — from here on the two are identical.
+   */
+  const goToApp = (sessionUsername: string) => {
     const locationState = location.state as State | undefined;
     const redirectTo = locationState?.from?.pathname || `/`;
     setLoginRedirectFrom(redirectTo);
@@ -73,13 +70,48 @@ export const useLoginForm = (
     const enabledStoreCount =
       userDetails?.stores?.nodes?.filter(s => !s.isDisabled).length ?? 0;
     const skipPrefs = LocalStorage.getItem('/login/skip-store-selector') ?? {};
-    const optedOut = !!skipPrefs[username.trim().toLowerCase()];
+    const optedOut = !!skipPrefs[sessionUsername.toLowerCase()];
 
     if (enabledStoreCount > 1 && !optedOut) {
       setShowStoreSelector(true);
     } else {
       navigate(redirectTo, { replace: true });
     }
+  };
+
+  const onLogin = async () => {
+    setError();
+    const { error, token } = await login(username.trim(), password);
+    setError(error);
+    setPassword('');
+    if (!token) return;
+
+    if (!navigateOnSuccess) return;
+
+    goToApp(username.trim());
+  };
+
+  /**
+   * Adopt the session the server created during single sign-on and carry on into the app. Called
+   * when the server lands the browser back here with `sso=success`; the session cookie is already
+   * set, so this only loads the client-side state.
+   */
+  const onSsoReturn = async () => {
+    setError();
+    const {
+      success,
+      username: sessionUsername,
+      error,
+    } = await completeSsoLogin();
+    if (!success) {
+      // The cookie should be there — a failure here means the session went away between the
+      // callback and this request, so fall back to the form.
+      setError(error ?? { message: 'Unauthenticated' });
+      return;
+    }
+    setUsername(sessionUsername);
+    if (!navigateOnSuccess) return;
+    goToApp(sessionUsername);
   };
 
   const dismissStoreSelector = useCallback(() => {
@@ -108,6 +140,7 @@ export const useLoginForm = (
   return {
     isValid,
     onLogin,
+    onSsoReturn,
     isLoggingIn,
     ...state,
     error,

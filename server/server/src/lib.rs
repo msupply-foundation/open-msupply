@@ -10,6 +10,7 @@ use crate::{
     cors::cors_policy,
     custom_translations::config_custom_translations,
     middleware::central_server_only,
+    oidc::{config_oidc, OidcState},
     print::config_print,
     serve_frontend::config_serve_frontend,
     static_files::config_static_files,
@@ -45,11 +46,11 @@ use service::{
     plugin::validation::ValidatedPluginBucket,
     processors::Processors,
     service_provider::ServiceProvider,
+    session_store::SessionStore,
     settings::{is_develop, ServerSettings, Settings},
     standalone_central::InitialiseAsCentralServerInput,
     standard_reports::StandardReports,
     subscription::{SubscriptionTrigger, SubscriptionWorker},
-    session_store::SessionStore,
     sync::{
         file_sync_driver::FileSyncDriver,
         sync_status::status::InitialisationStatus,
@@ -85,6 +86,7 @@ mod serve_frontend_plugins;
 mod upload;
 
 mod central;
+mod oidc;
 pub mod print;
 
 use serve_frontend_plugins::config_server_frontend_plugins;
@@ -171,7 +173,9 @@ pub async fn start_server(
         .map(|s| s.relax_hardware_id_token_checks)
         .unwrap_or(false);
     if relax_hardware_id_token_checks {
-        log::warn!("relax_hardware_id_token_checks is set — v7 hardware-id/token guards are RELAXED");
+        log::warn!(
+            "relax_hardware_id_token_checks is set — v7 hardware-id/token guards are RELAXED"
+        );
     }
     let service_provider = Data::new(ServiceProvider::new_with_triggers(
         connection_manager.clone(),
@@ -196,6 +200,49 @@ pub async fn start_server(
     let session_store = Arc::new(RwLock::new(SessionStore::new()));
     let auth = auth_data(&settings.server, session_store, &certificates);
     info!("Initialising server context..done");
+
+    // Single sign-on, if configured. Misconfiguration is fatal rather than silently disabling SSO:
+    // an operator who configured it would otherwise be left with a login page that has quietly
+    // dropped the button. The identity provider itself isn't contacted until the first sign-in, so
+    // a Keycloak that is down doesn't stop the server.
+    let oidc = Data::new(OidcState(match settings.oidc.clone() {
+        Some(oidc_settings) => {
+            // Name the mode and the claim the account is resolved from: an `oidc` key that is
+            // misspelled (or a binary that predates the setting) is silently ignored by the config
+            // deserialiser, so "which mode am I actually in" is otherwise unanswerable from the
+            // outside — and the two modes fail in different places.
+            let account_from = match oidc_settings.account_source {
+                service::settings::OidcAccountSource::UsernameClaim => {
+                    format!("the '{}' claim", oidc_settings.username_claim)
+                }
+                service::settings::OidcAccountSource::Group => {
+                    format!("the '{}' claim (group)", oidc_settings.group_claim)
+                }
+            };
+            let permissions_from = match oidc_settings.maps_roles_to_permissions() {
+                true => format!(
+                    "roles in the '{}' claim, mapped to permission groups",
+                    oidc_settings.roles_claim
+                ),
+                false => "the account's own mSupply permissions".to_string(),
+            };
+            info!(
+                "Single sign-on enabled, issuer: {}. Account resolved from {account_from}; \
+                 permissions from {permissions_from}.",
+                oidc_settings.issuer
+            );
+            if oidc_settings.role_template_prefix.is_none() {
+                log::warn!(
+                    "oidc.role_template_prefix is not set: any identity provider role that shares \
+                     a name with an mSupply user account will grant that account's permissions"
+                );
+            }
+            Some(
+                service::oidc::OidcService::new(oidc_settings).expect("Invalid oidc configuration"),
+            )
+        }
+        None => None,
+    }));
 
     let service_context = service_provider.basic_context().unwrap();
 
@@ -322,6 +369,7 @@ pub async fn start_server(
     let closure_settings = settings.clone();
     let closure_service_provider = service_provider.clone();
     let closure_schema = graphql_schema.clone();
+    let closure_oidc = oidc.clone();
     let mut http_server = HttpServer::new(move || {
         App::new()
             .app_data(Data::new(closure_settings.clone()))
@@ -335,6 +383,7 @@ pub async fn start_server(
             // needed for cold chain service
             .app_data(closure_service_provider.clone())
             .app_data(auth.clone())
+            .app_data(closure_oidc.clone())
             .app_data(validated_plugins.clone())
             .app_data(get_default_directory(&closure_settings))
             .configure(attach_graphql_schema(closure_schema.clone()))
@@ -347,6 +396,7 @@ pub async fn start_server(
             .configure(config_print)
             .configure(config_custom_translations)
             .configure(config_upload)
+            .configure(config_oidc)
             // Needs to be last to capture all unmatches routes
             .configure(config_serve_frontend)
     })
@@ -467,10 +517,7 @@ pub async fn start_server(
     // CHECK SYNC STATUS
     info!("Checking sync status..");
     // A flags-only `sync:` block (no credentials) counts as "no sync settings" here.
-    let yaml_sync_settings = settings
-        .sync
-        .clone()
-        .filter(|s| s.has_core_sync_settings());
+    let yaml_sync_settings = settings.sync.clone().filter(|s| s.has_core_sync_settings());
     let database_sync_settings = service_provider
         .settings
         .sync_settings(&service_context)

@@ -66,6 +66,7 @@ pub mod master_list;
 pub mod name;
 pub mod name_property;
 pub mod number;
+pub mod oidc;
 pub mod permission;
 pub mod plugin;
 pub mod plugin_data;

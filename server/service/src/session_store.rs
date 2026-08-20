@@ -22,6 +22,17 @@ pub struct ValidatedSession {
 struct SessionEntry {
     user_id: String,
     expires_at: DateTime<Utc>,
+    /// True when an external identity provider authenticated this session (see
+    /// [`crate::oidc`]) rather than a password. The only thing that reads it is logout: ending the
+    /// provider's session too is meaningful for these and meaningless — or actively wrong — for a
+    /// password session, whose owner may have no provider account at all.
+    ///
+    /// Deliberately a flag and not the provider's ID token. Using the token as an
+    /// `id_token_hint` would let the provider skip its logout confirmation, but a front-channel
+    /// hint travels in a URL the **browser** requests, so the token would land in browser history
+    /// and the provider's access logs. Keeping no token at all is worth one confirmation click
+    /// (see `oidc::OidcService::provider_logout_url`).
+    from_provider: bool,
 }
 
 /// In-memory store of active sessions.
@@ -47,6 +58,16 @@ impl SessionStore {
     /// Issue a new session token for the user. The returned token is the only handle —
     /// it is not stored anywhere else server-side.
     pub fn create(&mut self, user_id: &str) -> SessionToken {
+        self.create_entry(user_id, false)
+    }
+
+    /// As [`Self::create`], for a session an external identity provider authenticated. Recorded so
+    /// logout can offer to end the provider's session too — see [`SessionEntry::from_provider`].
+    pub fn create_from_provider(&mut self, user_id: &str) -> SessionToken {
+        self.create_entry(user_id, true)
+    }
+
+    fn create_entry(&mut self, user_id: &str, from_provider: bool) -> SessionToken {
         let token = generate_token();
         let expires_at = Utc::now() + SESSION_LIFETIME;
         self.sessions.insert(
@@ -54,9 +75,20 @@ impl SessionStore {
             SessionEntry {
                 user_id: user_id.to_string(),
                 expires_at,
+                from_provider,
             },
         );
         token
+    }
+
+    /// Whether this session was authenticated by an external identity provider.
+    ///
+    /// Read-only and expiry-agnostic: the caller has just validated the session, and an expired
+    /// one has nothing to log out of anyway.
+    pub fn is_from_provider(&self, token: &str) -> bool {
+        self.sessions
+            .get(token)
+            .is_some_and(|entry| entry.from_provider)
     }
 
     /// Look up a session token; if present and not expired, slide its expiry forward and return
@@ -142,6 +174,35 @@ mod tests {
             !store.sessions.contains_key(&token),
             "expired session should be removed"
         );
+    }
+
+    #[test]
+    fn only_provider_sessions_are_marked_as_such() {
+        let mut store = SessionStore::new();
+        let password = store.create("u");
+        let provider = store.create_from_provider("u");
+
+        assert!(!store.is_from_provider(&password));
+        assert!(store.is_from_provider(&provider));
+        // An unknown token is not a provider session — logout must not act on a guess.
+        assert!(!store.is_from_provider("not-a-token"));
+
+        // The mark is not what makes a session valid, and doesn't change its lifetime.
+        assert_eq!(
+            store.validate_and_slide(&provider).map(|s| s.user_id),
+            Some("u".to_string())
+        );
+    }
+
+    #[test]
+    fn a_revoked_provider_session_is_no_longer_one() {
+        let mut store = SessionStore::new();
+        let token = store.create_from_provider("u");
+        store.revoke(&token);
+
+        // Logout revokes before redirecting, so this is the state the redirect is built from —
+        // it must not resurrect a session's identity.
+        assert!(!store.is_from_provider(&token));
     }
 
     #[test]

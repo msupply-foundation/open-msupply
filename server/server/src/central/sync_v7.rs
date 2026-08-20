@@ -72,7 +72,9 @@ async fn pull(
     service_provider: Data<ServiceProvider>,
 ) -> actix_web::Result<impl Responder> {
     let response: api::pull::Response = match extract_common(&http_req) {
-        Ok(common) => handlers::pull(service_provider.into_inner(), common, body.into_inner()).await,
+        Ok(common) => {
+            handlers::pull(service_provider.into_inner(), common, body.into_inner()).await
+        }
         Err(e) => Err(e),
     };
     Ok(web::Json(response))
@@ -101,8 +103,12 @@ async fn patient_data_for_site(
 ) -> actix_web::Result<impl Responder> {
     let response: api::patient_data_for_site::Response = match extract_common(&http_req) {
         Ok(common) => {
-            handlers::patient_data_for_site(service_provider.into_inner(), common, body.into_inner())
-                .await
+            handlers::patient_data_for_site(
+                service_provider.into_inner(),
+                common,
+                body.into_inner(),
+            )
+            .await
         }
         Err(e) => Err(e),
     };
@@ -198,7 +204,10 @@ mod test_sync_v7_server_api {
         db_name: &str,
         token: Option<&str>,
         hardware_id: Option<&str>,
-    ) -> (Data<ServiceProvider>, repository::database_settings::DatabaseSettings) {
+    ) -> (
+        Data<ServiceProvider>,
+        repository::database_settings::DatabaseSettings,
+    ) {
         let (_, connection, connection_manager, database_settings) =
             setup_all(db_name, MockDataInserts::none()).await;
         test_util_set_is_central_server(true);

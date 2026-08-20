@@ -96,6 +96,7 @@ pub mod android {
             features: None,
             changelog_partition: None,
             changelog_dedup: None,
+            oidc: None,
         };
 
         logging_init(settings.logging.clone(), None);

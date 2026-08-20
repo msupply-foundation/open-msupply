@@ -178,7 +178,11 @@ mod test {
     /// Build a `Settings` whose frontend dirs point at temp dirs. Each dir gets
     /// an `index.html` with distinguishable content and a nested `assets/x.js`.
     fn write_dist(dir: &Path, marker: &str) {
-        fs::write(dir.join("index.html"), format!("<html>{marker} index</html>")).unwrap();
+        fs::write(
+            dir.join("index.html"),
+            format!("<html>{marker} index</html>"),
+        )
+        .unwrap();
         fs::create_dir_all(dir.join("assets")).unwrap();
         fs::write(dir.join("assets/x.js"), format!("// {marker} js")).unwrap();
     }
@@ -252,7 +256,9 @@ mod test {
         // /old-ui SPA route -> old index
         let resp = test::call_service(
             &app,
-            test::TestRequest::get().uri("/old-ui/some/route").to_request(),
+            test::TestRequest::get()
+                .uri("/old-ui/some/route")
+                .to_request(),
         )
         .await;
         assert!(body_string(resp).await.contains("OLD index"));
@@ -260,7 +266,9 @@ mod test {
         // /old-ui asset -> old js with long cache header
         let resp = test::call_service(
             &app,
-            test::TestRequest::get().uri("/old-ui/assets/x.js").to_request(),
+            test::TestRequest::get()
+                .uri("/old-ui/assets/x.js")
+                .to_request(),
         )
         .await;
         let cache = resp
@@ -303,12 +311,18 @@ mod test {
         // /old-ui/anything is graceful (plain-text hint, not a swallow of the new app)
         let resp = test::call_service(
             &app,
-            test::TestRequest::get().uri("/old-ui/anything").to_request(),
+            test::TestRequest::get()
+                .uri("/old-ui/anything")
+                .to_request(),
         )
         .await;
         assert!(resp.status().is_success());
         let body = body_string(resp).await;
-        assert!(body.contains("Cannot find index.html in old UI"), "got {}", body);
+        assert!(
+            body.contains("Cannot find index.html in old UI"),
+            "got {}",
+            body
+        );
         assert!(!body.contains("NEW index"));
     }
 

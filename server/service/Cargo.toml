@@ -22,6 +22,13 @@ actix-web = { workspace = true }
 actix-files = { workspace = true }
 actix-multipart = { workspace = true }
 jsonschema = "0.45.0"
+# ID-token verification for OIDC single sign-on. `rust_crypto` (rather than the `aws_lc_rs`
+# provider) keeps the crypto pure Rust — it leans on `rsa`/`sha2`, already in the tree — so the
+# Android and other cross-compiled targets don't need a C toolchain. `use_pem` is off because keys
+# only ever arrive as JWKs from the provider's `jwks_uri`.
+jsonwebtoken = { version = "11.0.0", default-features = false, features = [
+    "rust_crypto",
+] }
 log = { workspace = true }
 reqwest = { workspace = true }
 url = "2.5.8"

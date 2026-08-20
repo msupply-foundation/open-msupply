@@ -245,6 +245,25 @@ impl<'a> UserAccountService<'a> {
         )
     }
 
+    /// As [`Self::find_user_active_on_this_site`], but without requiring a local password hash.
+    ///
+    /// For logins an external identity provider has already authenticated (see [`crate::oidc`]):
+    /// mSupply may hold no password for an SSO-only account, and a stored hash is irrelevant when
+    /// it is never checked. The site-access requirement is unchanged — the user must still be
+    /// joined to a store on this site.
+    pub fn find_user_on_this_site(&self, user_id: &str) -> Result<Option<User>, RepositoryError> {
+        let key_value_store = KeyValueStoreRepository::new(self.connection);
+        let site_id = key_value_store
+            .get_i32(KeyType::SettingsSyncSiteId)?
+            .unwrap(); //TODO relocate to service
+
+        UserRepository::new(self.connection).query_one(
+            UserFilter::new()
+                .id(EqualFilter::equal_to(user_id.to_string()))
+                .site_id(EqualFilter::equal_to(site_id)),
+        )
+    }
+
     /// Finds a user account and verifies that the password is ok
     pub fn verify_password(
         &self,
@@ -282,17 +301,79 @@ impl<'a> UserAccountService<'a> {
 mod user_account_test {
     use repository::{
         mock::{
-            mock_user_account_a, mock_user_account_b, mock_user_empty_hashed_password,
-            MockDataInserts,
+            mock_store_a, mock_user_account_a, mock_user_account_b,
+            mock_user_empty_hashed_password, MockData, MockDataInserts,
         },
-        test_db::{self, setup_all},
-        PermissionType,
+        test_db::{self, setup_all, setup_all_with_data},
+        KeyType, KeyValueStoreRepository, PermissionType, UserStoreJoinRow,
     };
     use util::assert_matches;
 
     use crate::service_provider::ServiceProvider;
 
     use super::*;
+
+    /// The distinction that `me` depends on (graphql_general::queries::me).
+    ///
+    /// An account with no mSupply password is a real thing once an external identity provider is
+    /// in play — nothing local ever verifies a hash for it. Such an account is invisible to
+    /// `find_user_active_on_this_site`, whose `hashed_password != ''` filter is really asking
+    /// "could this user log in with a password". A read that only needs to know *who the session
+    /// belongs to* must not ask that: doing so seated a valid SSO session whose first `me` then
+    /// failed with "Can't find user account data".
+    #[actix_rt::test]
+    async fn find_user_on_this_site_does_not_require_a_password() {
+        let (_, connection, _, _) = setup_all_with_data(
+            "find_user_on_this_site_does_not_require_a_password",
+            MockDataInserts::none()
+                .names()
+                .stores()
+                .user_accounts()
+                .user_store_joins(),
+            MockData {
+                user_accounts: vec![UserAccountRow {
+                    id: "sso_only".to_string(),
+                    username: "sso_only".to_string(),
+                    // An SSO-only account: mSupply holds no password for it.
+                    hashed_password: String::new(),
+                    ..UserAccountRow::default()
+                }],
+                user_store_joins: vec![UserStoreJoinRow {
+                    id: "sso_only_store_a".to_string(),
+                    user_id: "sso_only".to_string(),
+                    store_id: mock_store_a().id,
+                    is_default: true,
+                }],
+                ..MockData::default()
+            },
+        )
+        .await;
+        KeyValueStoreRepository::new(&connection)
+            .set_i32(KeyType::SettingsSyncSiteId, Some(mock_store_a().site_id))
+            .unwrap();
+        let service = UserAccountService::new(&connection);
+
+        assert_eq!(
+            service.find_user_active_on_this_site("sso_only").unwrap(),
+            None,
+            "the password-login lookup should not see a password-less account"
+        );
+
+        let found = service
+            .find_user_on_this_site("sso_only")
+            .unwrap()
+            .expect("an authenticated session's own user must be readable");
+        assert_eq!(found.user_row.id, "sso_only");
+        assert_eq!(
+            found
+                .stores
+                .iter()
+                .map(|store| store.store_row.id.clone())
+                .collect::<Vec<_>>(),
+            vec![mock_store_a().id],
+            "and it must carry the store list, which is what the session needs it for"
+        );
+    }
 
     #[actix_rt::test]
     async fn test_user_auth() {
@@ -554,7 +635,10 @@ mod user_account_test {
         service
             .upsert_user(
                 reconcile_user(),
-                store_a_permissions(vec![permission("reconcile_p1", PermissionType::StoreAccess)]),
+                store_a_permissions(vec![permission(
+                    "reconcile_p1",
+                    PermissionType::StoreAccess,
+                )]),
             )
             .unwrap();
 
@@ -566,8 +650,7 @@ mod user_account_test {
 
         let remaining = UserPermissionRepository::new(&connection)
             .query_by_filter(
-                UserPermissionFilter::new()
-                    .user_id(EqualFilter::equal_to(reconcile_user().id)),
+                UserPermissionFilter::new().user_id(EqualFilter::equal_to(reconcile_user().id)),
             )
             .unwrap();
         assert_eq!(remaining.len(), 1);

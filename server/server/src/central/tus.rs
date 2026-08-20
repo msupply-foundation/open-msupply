@@ -263,7 +263,8 @@ async fn patch_chunk(
 
     let mut written: u64 = 0;
     while let Some(chunk) = body.next().await {
-        let chunk: Bytes = chunk.map_err(|e| TusError::BadRequest(format!("payload error: {e}")))?;
+        let chunk: Bytes =
+            chunk.map_err(|e| TusError::BadRequest(format!("payload error: {e}")))?;
         handle.write_all(&chunk).await.map_err(internal)?;
         written += chunk.len() as u64;
     }
@@ -319,16 +320,10 @@ fn require_tus_resumable(headers: &HeaderMap) -> Result<(), TusError> {
     }
 }
 
-fn require_header_value(
-    headers: &HeaderMap,
-    name: &str,
-    expected: &str,
-) -> Result<(), TusError> {
+fn require_header_value(headers: &HeaderMap, name: &str, expected: &str) -> Result<(), TusError> {
     match headers.get(name).and_then(|v| v.to_str().ok()) {
         Some(v) if v.eq_ignore_ascii_case(expected) => Ok(()),
-        _ => Err(TusError::BadRequest(format!(
-            "expected {name}: {expected}"
-        ))),
+        _ => Err(TusError::BadRequest(format!("expected {name}: {expected}"))),
     }
 }
 
@@ -388,13 +383,10 @@ fn require_metadata(meta: &HashMap<String, String>, key: &str) -> Result<String,
         .ok_or_else(|| TusError::BadRequest(format!("missing Upload-Metadata key: {key}")))
 }
 
-fn decode_sync_v5_settings(
-    meta: &HashMap<String, String>,
-) -> Result<SyncApiSettings, TusError> {
+fn decode_sync_v5_settings(meta: &HashMap<String, String>) -> Result<SyncApiSettings, TusError> {
     let json = require_metadata(meta, "sync_v5_settings")?;
-    serde_json::from_str::<SyncApiSettings>(&json).map_err(|e| {
-        TusError::BadRequest(format!("sync_v5_settings JSON parse failed: {e}"))
-    })
+    serde_json::from_str::<SyncApiSettings>(&json)
+        .map_err(|e| TusError::BadRequest(format!("sync_v5_settings JSON parse failed: {e}")))
 }
 
 /// When the file_reference row hasn't yet synced from the remote we still want the upload to
@@ -439,10 +431,8 @@ fn current_offset(
     row: &SyncFileReferenceRow,
     file_id: &str,
 ) -> Result<u64, TusError> {
-    let file_service =
-        StaticFileService::new(&settings.server.base_dir).map_err(internal)?;
-    let category =
-        StaticFileCategory::SyncFile(row.table_name.clone(), row.record_id.clone());
+    let file_service = StaticFileService::new(&settings.server.base_dir).map_err(internal)?;
+    let category = StaticFileCategory::SyncFile(row.table_name.clone(), row.record_id.clone());
     let file = file_service
         .reserve_file(&row.file_name, &category, Some(file_id.to_string()))
         .map_err(internal)?;
@@ -601,12 +591,10 @@ mod tests {
     #[test]
     fn require_header_value_is_case_insensitive() {
         let headers = header(&[("content-type", "Application/Offset+Octet-Stream")]);
-        assert!(require_header_value(
-            &headers,
-            "content-type",
-            "application/offset+octet-stream"
-        )
-        .is_ok());
+        assert!(
+            require_header_value(&headers, "content-type", "application/offset+octet-stream")
+                .is_ok()
+        );
     }
 
     #[test]
@@ -634,11 +622,7 @@ mod tests {
 
         async fn app_parts(
             db_name: &str,
-        ) -> (
-            Data<ServiceProvider>,
-            Data<Settings>,
-            tempfile::TempDir,
-        ) {
+        ) -> (Data<ServiceProvider>, Data<Settings>, tempfile::TempDir) {
             let (_, connection, connection_manager, database_settings) =
                 setup_all(db_name, MockDataInserts::none()).await;
             test_util_set_is_central_server(true);
@@ -709,9 +693,11 @@ mod tests {
             )
             .await;
 
-            let response =
-                test::call_service(&app, with_v7_auth(create_request(), "test_token").to_request())
-                    .await;
+            let response = test::call_service(
+                &app,
+                with_v7_auth(create_request(), "test_token").to_request(),
+            )
+            .await;
             assert_eq!(response.status(), StatusCode::CREATED);
         }
 
@@ -726,9 +712,11 @@ mod tests {
             )
             .await;
 
-            let response =
-                test::call_service(&app, with_v7_auth(create_request(), "wrong_token").to_request())
-                    .await;
+            let response = test::call_service(
+                &app,
+                with_v7_auth(create_request(), "wrong_token").to_request(),
+            )
+            .await;
             assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
         }
 
