@@ -205,7 +205,57 @@ export const AddItemModal = (props: AddItemModalProps) => {
     return rows;
   };
 
-  const submit = () => props.onSubmit(name().trim(), proposedFields());
+  /*
+   * Fields cleared for the next record, keeping Type / Unit / Categories / VEN:
+   * a run of manual entries is nearly always the same KIND of item, so those
+   * are the settings worth carrying and the identity is what must not carry.
+   */
+  const clearForNext = () => {
+    setName('');
+    setCode('');
+    setStrength('');
+    setPackSize(1);
+    setWeight(undefined);
+    setRestrictedTo('');
+    setIsVaccine(false);
+    setDoses(undefined);
+    setVolume(undefined);
+    setAtc('');
+    setUniversalCode('');
+    setLists([]);
+    setActive(true);
+  };
+
+  /*
+   * Submitted-this-session count. Without it "Submit and add another" just
+   * empties the form and the user has no evidence anything was recorded.
+   */
+  const [submitted, setSubmitted] = createSignal(0);
+
+  /*
+   * Closing resets everything. The dialog is controlled by `open` and never
+   * unmounts, so without this a reopened form still holds the last entry
+   * (reseed in place, the house pattern from LocationEditModal /
+   * ItemVariantEditModal, rather than a remount).
+   */
+  const close = () => {
+    clearForNext();
+    setSubmitted(0);
+    props.onClose();
+  };
+
+  /** Submit, then leave: the parent lands the user on the approval queue. */
+  const submitAndClose = () => {
+    props.onSubmit(name().trim(), proposedFields());
+    close();
+  };
+
+  /** Submit, then stay with an empty form for the next record. */
+  const submitAndAnother = () => {
+    props.onSubmit(name().trim(), proposedFields());
+    setSubmitted(count => count + 1);
+    clearForNext();
+  };
 
   const canCreate = () =>
     name().trim().length > 0 &&
@@ -217,7 +267,7 @@ export const AddItemModal = (props: AddItemModalProps) => {
   return (
     <Dialog
       open={props.open}
-      onClose={props.onClose}
+      onClose={close}
       title="New item"
       icon={<CatalogueIcon />}
       width="form"
@@ -225,23 +275,38 @@ export const AddItemModal = (props: AddItemModalProps) => {
       actionsAlign="end"
       actions={
         <>
-          <Button variant="secondary" onClick={props.onClose}>
+          <Button variant="secondary" onClick={close}>
             Cancel
           </Button>
           {/* Manual catalogue entry is almost never one item, so the
               repeat-entry path is a first-class action rather than a
               close-and-reopen. */}
-          <Button variant="secondary" disabled={!canCreate()} onClick={submit}>
+          <Button
+            variant="secondary"
+            disabled={!canCreate()}
+            onClick={submitAndAnother}
+          >
             Submit and add another
           </Button>
           {/* Never "Create": this dialog proposes a change, it does not write
               one. The label has to match what the button actually does. */}
-          <Button disabled={!canCreate()} onClick={submit}>
+          <Button disabled={!canCreate()} onClick={submitAndClose}>
             Submit for approval
           </Button>
         </>
       }
     >
+      <Show when={submitted() > 0}>
+        <div style={{ 'margin-block-end': 'var(--space-4)' }}>
+          <Alert severity="success">
+            {submitted() === 1
+              ? '1 request submitted for approval.'
+              : `${submitted()} requests submitted for approval.`}{' '}
+            Add another below, or close to review them.
+          </Alert>
+        </div>
+      </Show>
+
       <FormColumns>
         <FormColumn>
           <FormSection title="Identity" headingLevel="h3" heading="group">
