@@ -53,11 +53,17 @@ copy "target\release\test_connection.exe"  "..\omSupply\Server\test-connection-p
 @cd..
 
 @ECHO ##### Building new frontend (served at / from frontend_dir) #####
-@REM The NEW FE is built from this repo's frontend\ (corepack pnpm; the pnpm
-@REM version is pinned by frontend\package.json) and staged into
-@REM Server\frontend — same commit as the server binaries above, no pin, no
-@REM token. See server/README.md, 'Serving front-end'.
-node build\stage-frontend.js "omSupply\Server\frontend"
+@REM The NEW FE is built in-tree (corepack pnpm; the pnpm version is pinned by
+@REM frontend\package.json — the repo root workspace is yarn, so corepack must
+@REM run from frontend\) and copied into Server\frontend — same commit as the
+@REM server binaries above. See server/README.md, 'Serving front-end'.
+cd frontend
+call corepack pnpm install --frozen-lockfile
+@if %errorlevel% neq 0 ( exit /b %errorlevel% )
+call corepack pnpm build
+@if %errorlevel% neq 0 ( exit /b %errorlevel% )
+@cd..
+xcopy "frontend\dist" "omSupply\Server\frontend" /e /h /c /i
 @if %errorlevel% neq 0 ( exit /b %errorlevel% )
 
 @ECHO ##### Copying old UI (served at /old-ui/) #####

@@ -42,11 +42,12 @@ mkdir $DESTINATION/bin
 cp "server/target/${TARGET}/release/remote_server" $DESTINATION/bin 
 cp "server/target/${TARGET}/release/remote_server_cli" $DESTINATION/bin 
 
-# New FE at / : built from this repo's frontend/ and staged into frontend/
-# (served from frontend_dir, relative to the launch script's working
-# directory) — same commit as the server binaries above, no pin, no token.
-# See server/README.md ('Serving front-end').
-node build/stage-frontend.js "$DESTINATION/frontend"
+# New FE at / : built in-tree (`corepack pnpm` — version pinned by
+# frontend/package.json) and copied into frontend/ (served from frontend_dir,
+# relative to the launch script's working directory) — same commit as the
+# server binaries above. See server/README.md ('Serving front-end').
+(cd frontend && corepack pnpm install --frozen-lockfile && corepack pnpm build)
+cp -R frontend/dist "$DESTINATION/frontend"
 
 # Old UI at /old-ui/ : the client build above (PUBLIC_PATH=/old-ui/) goes here.
 cp -R client/packages/host/dist "$DESTINATION/frontend/old-ui"

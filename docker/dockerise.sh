@@ -263,11 +263,12 @@ fi
 if [ ! -f "frontend-dist/index.html" ]; then
   echo "=== Building new frontend into frontend-dist/ ==="
   # Built in-tree from frontend/ — same commit as everything else in the image,
-  # so there is no pin to bump and no token needed for the private FE repo.
-  if ! node build/stage-frontend.js frontend-dist; then
-    echo "ERROR: Could not stage the new frontend into frontend-dist/. Aborting."
+  # so there is no pin to bump and no token needed for a separate FE repo.
+  if ! ( cd frontend && corepack pnpm install --frozen-lockfile && corepack pnpm build ); then
+    echo "ERROR: Could not build the new frontend into frontend-dist/. Aborting."
     exit 1
   fi
+  rm -rf frontend-dist && cp -R frontend/dist frontend-dist
 else
   echo "=== Using existing frontend-dist/ (delete it to rebuild) ==="
 fi

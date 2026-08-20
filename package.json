@@ -14,8 +14,6 @@
     "start": "cd ./server && cargo run & cd ./client && yarn start-local",
     "build": "cd ./client && yarn build && cd ../server && cargo build --release",
     "test": "cd ./server && ulimit -n 1000 && cargo test && cd ../client && yarn test",
-    "//stage-frontend": "Builds the in-tree frontend (frontend/, corepack pnpm) and stages its dist into server/frontend, where a server run from server/ serves it at /.",
-    "stage-frontend": "node build/stage-frontend.js server/frontend",
     "dockerise": "bash docker/dockerise.sh",
     "plugin": "node scripts/plugin-management/plugin.js",
     "load-test": "cd scripts/load-testing && mkdir -p output && k6 run main.js"
