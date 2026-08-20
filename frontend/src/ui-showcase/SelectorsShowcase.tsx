@@ -820,6 +820,22 @@ export const SelectorsShowcase = () => {
               panel's edge.{' '}
             </span>
           </div>
+          <div class={styles.tagRow}>
+            <ColourTagPicker
+              colour={tagColour()}
+              onSelect={setTagColour}
+              variant="field"
+              allowCustom
+              onReset={() => setTagColour(null)}
+            />
+            <span class={styles.tagRowLabel}>
+              Custom-entry mode (<code>allowCustom</code> + <code>onReset</code>
+              , the store editor's colour preference): the popover adds a hex
+              entry — six digits, <code>#</code> optional, committed via the
+              preview swatch or Enter — and a Reset that commits no colour.{' '}
+              {tagColour() ? `Current: ${tagColour()}` : 'No colour set'}
+            </span>
+          </div>
         </DashboardCard>
       </Stack>
     </ContentContainer>
