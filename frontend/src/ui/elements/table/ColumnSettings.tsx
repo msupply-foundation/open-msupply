@@ -90,9 +90,10 @@ export function ColumnSettings<T>(props: {
   const label = (id: string): JSX.Element => {
     const def = props.table.getColumn(id)?.columnDef;
     // A column whose grid header renders empty/iconic names itself here via
-    // meta.columnSettingsLabel (e.g. the line editor's auto-allocation tick).
-    const settingsLabel = def?.meta?.columnSettingsLabel;
-    if (settingsLabel) return settingsLabel();
+    // meta.textLabel (the line editor's auto-allocation tick, the comment
+    // column's glyph).
+    const textLabel = def?.meta?.textLabel;
+    if (textLabel) return textLabel();
     const header = def?.header;
     if (typeof header !== 'function') return id;
     return header({} as HeaderContext<T, unknown>);

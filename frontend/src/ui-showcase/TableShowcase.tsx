@@ -8,7 +8,10 @@ import {
   type Column,
   type SortState,
 } from '../ui/elements/table/DataTable';
-import { getCellDefinition } from '../ui/elements/table/tableHelpers';
+import {
+  CommentHeader,
+  getCellDefinition,
+} from '../ui/elements/table/tableHelpers';
 import {
   resolveTableConfig,
   type Band,
@@ -482,7 +485,7 @@ const TableShowcaseDemo = () => {
     },
     {
       c: { key: 'comment' },
-      header: () => t('label.comment'),
+      header: () => <CommentHeader />,
       cardGroup: 'more',
       ...getCellDefinition<Row>('comment'),
     },

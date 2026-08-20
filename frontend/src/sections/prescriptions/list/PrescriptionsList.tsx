@@ -18,7 +18,8 @@ import {
   type SortState,
 } from '../../../ui/elements/table/DataTable';
 import {
-  getCommentCell,
+  CommentHeader,
+  getCellDefinition,
   getDateCell,
   getNumberCell,
 } from '../../../ui/elements/table/tableHelpers';
@@ -264,8 +265,8 @@ const PrescriptionsList: Component = () => {
     },
     {
       c: { key: 'comment' },
-      header: () => t('label.comment'),
-      ...getCommentCell(),
+      header: () => <CommentHeader />,
+      ...getCellDefinition('comment'),
     },
     // A column per configured prescription custom field (AC-CF4) — not
     // sortable; value chosen by kind.
