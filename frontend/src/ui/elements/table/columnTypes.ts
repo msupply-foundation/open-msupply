@@ -150,10 +150,14 @@ declare module '@tanstack/solid-table' {
      *    data length: a manufacturer ("Serum Institute of India Pvt. Ltd.")
      *    outweighs a location code ("A1-03").
      *
-     * `max` is not optional, and is what stops the last field on a wrapped line
+     * `max` is what stops the last field on a wrapped line
      * from stretching across the whole of it — the failure the weighted model
      * replaced. Past its ceiling a field simply stops growing and the row ends
-     * in space, which is the honest result of sizing by data.
+     * in space, which is the honest result of sizing by data. **Omit it only
+     * for FREE TEXT** (a note, a comment): every ceiling here is a claim about
+     * how long the value will be, and free text is the one kind about which no
+     * such claim can be made. An uncapped field also removes its GROUP's
+     * ceiling, since a row that can grow without limit has no meaningful one.
      *
      * Opt-in per GROUP: a group where NO column declares one keeps the equal
      * tracks; in a group where at least one does, an undeclared column falls
@@ -166,7 +170,7 @@ declare module '@tanstack/solid-table' {
      * column widths (px, drag-resizable) — card fields aren't table columns and
      * aren't resizable, so they carry their own figure.
      */
-    cardWidth?: number | { min: number; max: number; weight: number };
+    cardWidth?: number | { min: number; max?: number; weight: number };
     /**
      * Tracks this field occupies of its group's `narrowLayout.columns` —
      * ignored in any other layout. Those tracks are deliberately too fine for a
