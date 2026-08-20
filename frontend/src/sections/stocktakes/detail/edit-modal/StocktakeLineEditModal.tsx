@@ -1509,8 +1509,21 @@ const StocktakeLineEditContent = (
     {
       c: { key: 'note' },
       header: () => t('label.note'),
-      cardGroup: 'pricing',
-      meta: { cardWidth: { min: 12.5, weight: 3 }, cardSpan: 6 },
+      // TABLE ONLY. On the card it sat beside Comment as a second identical
+      // free-text box with nothing to tell the two apart, and the pair is not a
+      // duplicate: Comment belongs to this COUNT (it starts empty on a new
+      // line), where `note` is seeded from the STOCK LINE — see the draft
+      // seeding above, `comment: null, note: sl.note`, alongside batch, expiry
+      // and the prices — so it describes the batch rather than counting it.
+      // Editing a property of the stock line from a stocktake line editor is
+      // what made the pair confusing.
+      //
+      // `hideOnCard`, not a deleted column: the value is still there to read
+      // and edit in table view (this editor offers the card ⇄ table toggle),
+      // and a note already on the stock line is untouched either way. Note that
+      // below the compact breakpoint the table is always card, so on a phone
+      // the field is not reachable at all.
+      meta: { hideOnCard: true },
       cell: info => {
         const line = info.row.original;
         return (
