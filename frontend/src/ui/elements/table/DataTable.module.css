@@ -1499,6 +1499,11 @@ tr[data-accent='error'] > :first-child::before {
   --card-field-weight: 1;
   --card-field-floor: 10rem;
   --card-field-max-w: none;
+  /* A FIXED field's declared width, read as a ceiling by the equal-track
+     layout on desktop and tablet landscape only (CardView's cardFlex sets it
+     for the number form). Inert here, and inherited as `none` by any field that
+     declares no fixed width. */
+  --card-field-cap: none;
 
   grid-template-columns: var(--card-field-cols);
 
@@ -1581,22 +1586,6 @@ tr[data-accent='error'] > :first-child::before {
   grid-template-columns: repeat(var(--card-narrow-columns, 6), 1fr);
 }
 
-/* A track grid over a narrow container leaves each track too fine for an input —
-   twelve of them at 30rem is ~1.5rem each. Below that, ONE field per row: the
-   spans have to be neutralised with it, because a group declaring `span 12`
-   against a 3-track grid would force implicit columns and overflow the card
-   rather than reflow. `1 / -1` says "this row, whatever its width", so it holds
-   for any group's count without knowing the number. */
-@container (max-inline-size: 30rem) {
-  .cardFields[data-field-widths][data-narrow][data-narrow-columns] {
-    grid-template-columns: 1fr;
-  }
-
-  .cardFields[data-field-widths][data-narrow][data-narrow-columns] > * {
-    grid-column: 1 / -1;
-  }
-}
-
 /* The flex sizing above is inert under grid, but min/max-inline-size are not:
    the floor would stop a field shrinking into its track, and a weighted field's
    `max` would cap it BELOW the tracks it spans (a 17rem max against two 13rem
@@ -1605,6 +1594,69 @@ tr[data-accent='error'] > :first-child::before {
   grid-column: span var(--card-field-span, 1);
   min-inline-size: 0;
   max-inline-size: none;
+}
+
+/* DESKTOP AND TABLET LANDSCAPE: a fixed field stops at its declared width
+   instead of filling the track it claimed.
+
+   The equal tracks above are right on the surface this layout was worked out
+   on — a tablet in PORTRAIT, where a third of the panel is about what a field
+   wants, so filling the track and sizing by data come to the same thing. They
+   come apart as the panel grows: on a laptop's full-screen modal a third is
+   ~27rem, and a two-digit count filling it reads as a text box. Capped, the
+   field keeps its declared width and the leftover stays inside its track as
+   trailing space — so the row's column EDGES still line up, which is the whole
+   reason a card uses this layout rather than the wrapping row.
+
+   TWO conditions, either of which caps:
+
+     - `pointer: fine` — a mouse-driven window, at any width. This is already
+       how the codebase separates touch surfaces from desktop ones, and it
+       covers a laptop whose window is narrow.
+     - `min-width: 1024px` — the wide end of TOUCH. A tablet in landscape has
+       the same problem a laptop does (a third of ~1280px is twice what a
+       quantity wants) and reports `coarse`, so the pointer condition alone left
+       it filling its tracks. 1024 is not a new number: it is
+       `breakpoints.navOverlay`, the line this codebase already draws between
+       tablet and desktop (Page.module.css keys its own rule off it), and the
+       width at which a 10" tablet turns landscape.
+
+   What is left uncapped is exactly what should be: tablet portrait and phones,
+   where the tracks and the fields want the same width.
+
+   A WEIGHTED field is not capped — it must keep filling the tracks it spans,
+   or its leftover becomes a hole in the middle of the row rather than trailing
+   space at the end of one. That asymmetry is the point: `--card-field-cap` is
+   set only for the fixed form (CardView's cardFlex). */
+@media (pointer: fine), (min-width: 1024px) {
+  .cardFields[data-field-widths][data-narrow][data-narrow-columns] > * {
+    max-inline-size: var(--card-field-cap, none);
+  }
+}
+
+/* A track grid over a narrow container leaves each track too fine for an input —
+   twelve of them at 30rem is ~1.5rem each. Below that, ONE field per row: the
+   spans have to be neutralised with it, because a group declaring `span 12`
+   against a 3-track grid would force implicit columns and overflow the card
+   rather than reflow. `1 / -1` says "this row, whatever its width", so it holds
+   for any group's count without knowing the number.
+
+   AFTER the two rules above, not before them. A container query carries no
+   specificity of its own, so at an identical selector this block only wins by
+   source order — sitting above them, its `1 / -1` lost to the span rule and
+   the spans it exists to neutralise stayed live, which is the implicit-column
+   overflow described above rather than the stacking described here. It also
+   clears the declared ceiling, for the same reason it clears the span: one
+   field to a row means that row IS the field's width. */
+@container (max-inline-size: 30rem) {
+  .cardFields[data-field-widths][data-narrow][data-narrow-columns] {
+    grid-template-columns: 1fr;
+  }
+
+  .cardFields[data-field-widths][data-narrow][data-narrow-columns] > * {
+    grid-column: 1 / -1;
+    max-inline-size: none;
+  }
 }
 
 /* --- Card body groups ------------------------------------------------------- */

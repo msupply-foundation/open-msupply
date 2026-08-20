@@ -130,6 +130,14 @@ const cardFlex = <T,>(
     ? {
         '--card-field-weight': '0',
         '--card-field-floor': `${width}rem`,
+        // The same figure under a second name, which the equal-track layout
+        // reads as a CEILING on desktop and tablet landscape (see the DataTable
+        // CSS). A fixed width is a known longest value, so where a track is
+        // several times the field — a third of a full-screen modal — filling it
+        // makes a two-digit count look like a text box. Only the fixed form
+        // declares one: a weighted field must keep filling the tracks it spans
+        // or its leftover becomes a hole mid-row.
+        '--card-field-cap': `${width}rem`,
         ...span,
       }
     : {
