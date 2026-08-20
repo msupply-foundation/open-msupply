@@ -9,6 +9,8 @@ mod post_acknowledged_records;
 mod post_initialise;
 mod post_queued_records;
 mod v7_url_and_upgrade;
+#[cfg(test)]
+pub(crate) mod test_helpers;
 
 pub(crate) use self::common_records::*;
 pub use self::core::*;
