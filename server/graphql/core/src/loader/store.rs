@@ -1,7 +1,10 @@
 use actix_web::web::Data;
 use async_graphql::dataloader::*;
 use async_graphql::*;
-use repository::{EqualFilter, RepositoryError, Store, StoreFilter, StoreLogoRow, StoreRowRepository};
+use repository::{
+    EqualFilter, RepositoryError, Store, StoreFilter, StoreLogoRow, StoreRowRepository,
+};
+use service::preference::{GlobalLogo, Preference};
 use service::service_provider::ServiceProvider;
 use std::collections::HashMap;
 
@@ -40,6 +43,7 @@ impl Loader<String> for StoreByIdLoader {
 /// Lazy-loads `store.logo` for the GraphQL `StoreNode.logo` resolver. Logos
 /// are large base64 TEXT blobs, so they're kept out of the default `StoreRow`
 /// shape and fetched only when explicitly requested.
+/// Stores without a logo of their own fall back to the global logo preference.
 pub struct StoreLogoLoader {
     pub service_provider: Data<ServiceProvider>,
 }
@@ -53,6 +57,24 @@ impl Loader<String> for StoreLogoLoader {
         let results =
             StoreRowRepository::new(&service_context.connection).find_logos_by_ids(keys)?;
 
-        Ok(results.into_iter().map(|row| (row.id.clone(), row)).collect())
+        // Only pay for the preference read when some requested store needs it
+        let global_logo = if results.iter().any(|row| row.logo.is_none()) {
+            let logo = GlobalLogo
+                .load(&service_context.connection, None)
+                .map_err(|e| e.into_repository_error())?;
+            (!logo.is_empty()).then_some(logo)
+        } else {
+            None
+        };
+
+        Ok(results
+            .into_iter()
+            .map(|mut row| {
+                if row.logo.is_none() {
+                    row.logo = global_logo.clone();
+                }
+                (row.id.clone(), row)
+            })
+            .collect())
     }
 }

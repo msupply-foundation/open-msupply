@@ -49,6 +49,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
             // Hidden from the preferences edit UI until prescription payment
             // functionality is implemented (#6179)
             receive_payments_from_prescriptions: _,
+            global_logo,
 
             // Store preferences
             blind_stocktake,
@@ -105,6 +106,7 @@ pub trait PreferenceServiceTrait: Sync + Send {
         append_if_type(is_gaps, &mut prefs, &input)?;
         append_if_type(display_population_based_forecasting, &mut prefs, &input)?;
         append_if_type(backdating, &mut prefs, &input)?;
+        append_if_type(global_logo, &mut prefs, &input)?;
         // TODO: receive_payments_from_prescriptions intentionally omitted, hidden from
         // the edit UI until prescription payment functionality exists
 
