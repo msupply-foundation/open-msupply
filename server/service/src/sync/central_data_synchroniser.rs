@@ -1,9 +1,10 @@
-use std::cmp;
+use std::{cmp, time::Duration};
 
 use super::{
     api::{
-        CommonSyncRecord, ParsingSyncRecordError, SyncApiError, SyncApiV5,
+        retry_delay_description, CommonSyncRecord, ParsingSyncRecordError, SyncApiError, SyncApiV5,
         CENTRAL_BUSY_POLL_PERIOD_SECONDS, CENTRAL_BUSY_TIMEOUT_SECONDS,
+        TRANSIENT_RETRY_DELAYS_SECONDS,
     },
     sync_status::logger::{SyncLogger, SyncLoggerError, SyncStepProgress},
 };
@@ -54,7 +55,10 @@ impl CentralDataSynchroniser {
 
             // Retry while central is busy with another sync session for this site
             // (legacy central gates sync per-site); wait for idle then re-request the
-            // same cursor.
+            // same cursor. Transient transport failures are retried with backoff for the
+            // same reason it's safe to: the cursor hasn't advanced, so re-requesting is
+            // a plain repeat of an idempotent read.
+            let mut transient_attempts = 0;
             let CentralSyncBatchV5 { max_cursor, data } = loop {
                 match self
                     .sync_api_v5
@@ -69,6 +73,22 @@ impl CentralDataSynchroniser {
                                 CENTRAL_BUSY_TIMEOUT_SECONDS,
                             )
                             .await?;
+                    }
+                    Err(error)
+                        if error.is_transient()
+                            && transient_attempts < TRANSIENT_RETRY_DELAYS_SECONDS.len() =>
+                    {
+                        let delay = TRANSIENT_RETRY_DELAYS_SECONDS[transient_attempts];
+                        transient_attempts += 1;
+                        log::warn!(
+                            "Pulling central records at cursor {} failed with a transient transport error (attempt {}/{}, retrying {}): {:#?}",
+                            start_cursor,
+                            transient_attempts,
+                            TRANSIENT_RETRY_DELAYS_SECONDS.len(),
+                            retry_delay_description(delay),
+                            error
+                        );
+                        tokio::time::sleep(Duration::from_secs(delay)).await;
                     }
                     Err(error) => return Err(error.into()),
                 }
@@ -107,5 +127,74 @@ impl CentralDataSynchroniser {
             }
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::sync::{
+        api::{
+            test_helpers::{ScriptedResponse, ScriptedServer},
+            SyncApiV5,
+        },
+        sync_status::logger::SyncLogger,
+    };
+    use repository::{mock::MockDataInserts, test_db, SyncBufferRowRepository};
+
+    /// The reported failure, at the level that has to survive it: central drops the
+    /// connection part-way through a batch body, the pull retries the same cursor, and the
+    /// batch from the retry lands in the sync buffer. Before this, the drop aborted the
+    /// whole sync run and the user had to press Retry.
+    #[actix_rt::test]
+    async fn test_pull_retries_dropped_response_body() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "test_pull_retries_dropped_response_body",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        let server = ScriptedServer::start(vec![
+            // Attempt 1: headers, then the body is cut short.
+            ScriptedResponse::TruncatedBody {
+                content_length: 5000,
+                body: r#"{"maxCursor": 2, "data": [{"ID": 2, "tableN"#,
+            },
+            // Attempt 2 (the retry): the same cursor, served in full.
+            ScriptedResponse::Complete(
+                r#"{
+                    "maxCursor": 2,
+                    "data": [
+                        {
+                            "ID": 2,
+                            "tableName": "test_table_1",
+                            "recordId": "record_from_retry",
+                            "action": "delete"
+                        }
+                    ]
+                }"#
+                .to_string(),
+            ),
+            // Nothing left to pull - ends the loop.
+            ScriptedResponse::Complete(r#"{ "maxCursor": 2, "data": [] }"#.to_string()),
+        ]);
+
+        let synchroniser = CentralDataSynchroniser {
+            sync_api_v5: SyncApiV5::new_test(server.url(), "", "", "site_id"),
+        };
+
+        let mut logger = SyncLogger::start(&connection).unwrap();
+        let result = synchroniser.pull(&connection, 100, &mut logger).await;
+
+        assert!(result.is_ok(), "Expected Ok, got {:#?}", result);
+
+        // The record only exists in the response served to the retry.
+        let buffered = SyncBufferRowRepository::new(&connection)
+            .find_one_by_record_id("record_from_retry")
+            .unwrap();
+        assert!(
+            buffered.is_some(),
+            "Batch from the retried request was not saved"
+        );
     }
 }

@@ -248,8 +248,34 @@ impl SyncApiV5 {
 pub(crate) const CENTRAL_BUSY_POLL_PERIOD_SECONDS: u64 = 15;
 pub(crate) const CENTRAL_BUSY_TIMEOUT_SECONDS: u64 = 30 * 60;
 
+// A transient transport failure on an idempotent read is retried in place, waiting this
+// long before each attempt. Attempts reset after any successful batch, so a long pull
+// isn't capped globally - only a persistently broken connection gives up.
+//
+// The first retry is immediate: a dropped connection is usually a momentary blip (proxy
+// dropping a long-lived connection, NAT timeout, network handover) that's over by the time
+// the next packet goes out, and `with_retries` retries transport failures with no wait at
+// all. The later waits cover what an instant retry can't - an outage lasting seconds, or a
+// central busy enough to be dropping connections, where retrying instantly would just burn
+// the attempt budget in a few hundred milliseconds.
+pub(crate) const TRANSIENT_RETRY_DELAYS_SECONDS: [u64; 3] = [0, 5, 30];
+
+/// "immediately" / "in 5s" - so the retry log reads properly when the delay is zero.
+pub(crate) fn retry_delay_description(delay_seconds: u64) -> String {
+    if delay_seconds == 0 {
+        "immediately".to_string()
+    } else {
+        format!("in {}s", delay_seconds)
+    }
+}
+
 #[derive(Error, Debug)]
 pub enum ParsingResponseError {
+    /// The connection dropped part-way through the response body (reset, incomplete
+    /// message). Nothing was parsed - the body never arrived in full - so this is a
+    /// transport failure and the request can be retried.
+    #[error("Connection dropped while reading response body")]
+    ConnectionDropped(#[source] reqwest::Error),
     #[error("Cannot retrieve response body")]
     CannotGetTextResponse(#[from] reqwest::Error),
     #[error("Could not parse response body, response: '{response_text}'")]
@@ -259,13 +285,44 @@ pub enum ParsingResponseError {
     },
 }
 
+impl ParsingResponseError {
+    /// Classify a failed body read at the point it fails, so callers match on a variant
+    /// instead of re-deriving this from the error chain.
+    ///
+    /// Signature-based only: a genuine idle timeout stays `CannotGetTextResponse`, since
+    /// sync v5 deliberately doesn't retry those (see `with_retries_opts` -
+    /// server-side work continues after the client gives up, and retrying overlaps it).
+    pub(crate) fn from_body_read_error(error: reqwest::Error) -> Self {
+        if !error.is_status() && !error.is_builder() && util::chain_contains_transient_drop(&error)
+        {
+            Self::ConnectionDropped(error)
+        } else {
+            Self::CannotGetTextResponse(error)
+        }
+    }
+}
+
 pub(crate) async fn to_json<T: DeserializeOwned>(
     response: Response,
 ) -> Result<T, ParsingResponseError> {
     let url = util::redact_url_for_log(response.url());
     let started = std::time::Instant::now();
     // TODO not owned (to avoid double parsing)
-    let response_text = response.text().await?;
+    let response_text = match response.text().await {
+        Ok(text) => text,
+        // Headers already logged a successful response, so without this the log just
+        // stops - no "API body read" line, no explanation. Say what broke, here.
+        Err(error) => {
+            let error = ParsingResponseError::from_body_read_error(error);
+            log::warn!(
+                "API body read failed: url '{}', after {:.1}s: {}",
+                url,
+                started.elapsed().as_secs_f64(),
+                util::format_error(&error),
+            );
+            return Err(error);
+        }
+    };
     let elapsed = started.elapsed();
     let bytes = response_text.len();
     let kb_per_sec = (bytes as f64 / 1024.0) / elapsed.as_secs_f64().max(0.001);
@@ -341,6 +398,31 @@ mod tests {
     use util::assert_matches;
 
     use super::*;
+
+    /// A dropped response body while polling must not abort the wait: the poll loop
+    /// tolerates it via `is_transient()` and keeps going, so a truncated first reply
+    /// followed by a valid `Idle` reply still resolves to `Ok`.
+    #[actix_rt::test]
+    async fn test_wait_until_central_idle_retries_dropped_body() {
+        use crate::sync::api::test_helpers::{ScriptedResponse, ScriptedServer};
+
+        let server = ScriptedServer::start(vec![
+            ScriptedResponse::TruncatedBody {
+                content_length: 500,
+                body: r#"{"cod"#,
+            },
+            ScriptedResponse::Complete(
+                r#"{ "code": "idle", "message": "", "data": null }"#.to_string(),
+            ),
+        ]);
+
+        let api = SyncApiV5::new_test(server.url(), "", "", "site_id");
+
+        // 0s poll period keeps the test fast; the loop still makes two requests.
+        let result = api.wait_until_central_idle(0, 30).await;
+
+        assert!(result.is_ok(), "Expected Ok, got {:#?}", result);
+    }
 
     #[actix_rt::test]
     async fn test_headers() {

@@ -186,3 +186,69 @@ impl SyncApiV6 {
         })
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::sync::api::{
+        test_helpers::{ScriptedResponse, ScriptedServer},
+        ParsingResponseError, SyncApiV5,
+    };
+    use util::assert_matches;
+
+    fn api_v6(url: &str) -> SyncApiV6 {
+        let settings = SyncApiV5::new_test(url, "", "", "site_id").settings;
+        SyncApiV6::new(url, &settings, 1).unwrap()
+    }
+
+    /// Same failure as sync v5's `test_dropped_response_body_is_transient`: v6 reads its
+    /// body after the transport retry loop has returned, so it needs the same
+    /// classification to be retryable.
+    #[actix_rt::test]
+    async fn test_dropped_response_body_is_transient() {
+        let server = ScriptedServer::start(vec![ScriptedResponse::TruncatedBody {
+            content_length: 1000,
+            body: r#"{"data": {"endC"#,
+        }]);
+
+        let result = api_v6(server.url())
+            .pull(0, 100, true)
+            .await
+            .expect_err("Should result in error");
+
+        assert_matches!(
+            result,
+            SyncApiErrorV6 {
+                source: SyncApiErrorVariantV6::ParsingResponseError(
+                    ParsingResponseError::ConnectionDropped(_)
+                ),
+                ..
+            }
+        );
+        assert!(result.is_transient());
+    }
+
+    /// A body that arrives in full but doesn't parse is not a transport fault.
+    #[actix_rt::test]
+    async fn test_unparseable_body_is_not_transient() {
+        let server = ScriptedServer::start(vec![ScriptedResponse::Complete(
+            "not json at all".to_string(),
+        )]);
+
+        let result = api_v6(server.url())
+            .pull(0, 100, true)
+            .await
+            .expect_err("Should result in error");
+
+        assert_matches!(
+            result,
+            SyncApiErrorV6 {
+                source: SyncApiErrorVariantV6::ParsingResponseError(
+                    ParsingResponseError::ParseError { .. }
+                ),
+                ..
+            }
+        );
+        assert!(!result.is_transient());
+    }
+}

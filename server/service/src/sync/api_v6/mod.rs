@@ -121,10 +121,26 @@ pub enum SyncApiErrorVariantV6 {
     ConnectionError(#[from] reqwest::Error),
     #[error("Could not parse response")]
     ParsedError(#[from] SyncParsedErrorV6),
-    #[error("Could not parse response")]
+    // See sync v5's equivalent: let the inner variant speak.
+    #[error(transparent)]
     ParsingResponseError(#[from] ParsingResponseError),
     #[error("Unknown api error")]
     Other(#[from] anyhow::Error),
+}
+
+impl SyncApiErrorV6 {
+    /// Transient transport-level failure, safe to retry on an idempotent read.
+    /// Mirrors `SyncApiError::is_transient` for sync v5.
+    pub(crate) fn is_transient(&self) -> bool {
+        match &self.source {
+            SyncApiErrorVariantV6::ConnectionError(_) | SyncApiErrorVariantV6::Other(_) => true,
+            SyncApiErrorVariantV6::ParsingResponseError(error) => {
+                matches!(error, ParsingResponseError::ConnectionDropped(_))
+            }
+            // An error central deliberately returned - authoritative, not a transport fault.
+            SyncApiErrorVariantV6::ParsedError(_) => false,
+        }
+    }
 }
 
 #[derive(Deserialize, Debug, Serialize)]
@@ -259,10 +275,21 @@ async fn response_or_err<T: DeserializeOwned>(
     let url = util::redact_url_for_log(response.url());
     let started = std::time::Instant::now();
     // Not checking for status, expecting 200 only, even if there is error
-    let response_text = response
-        .text()
-        .await
-        .map_err(ParsingResponseError::CannotGetTextResponse)?;
+    let response_text = match response.text().await {
+        Ok(text) => text,
+        // Same as sync v5's `to_json`: classify the drop where it happens, and say so in
+        // the log rather than leaving a gap after the successful-headers line.
+        Err(error) => {
+            let error = ParsingResponseError::from_body_read_error(error);
+            log::warn!(
+                "API body read failed: url '{}', after {:.1}s: {}",
+                url,
+                started.elapsed().as_secs_f64(),
+                format_error(&error),
+            );
+            return Err(error.into());
+        }
+    };
     let elapsed = started.elapsed();
     let bytes = response_text.len();
     let kb_per_sec = (bytes as f64 / 1024.0) / elapsed.as_secs_f64().max(0.001);

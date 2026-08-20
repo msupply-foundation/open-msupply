@@ -9,7 +9,10 @@ use crate::{
 };
 
 use super::{
-    api::{CommonSyncRecord, ParsingSyncRecordError, SyncApiSettings},
+    api::{
+        retry_delay_description, CommonSyncRecord, ParsingSyncRecordError, SyncApiSettings,
+        TRANSIENT_RETRY_DELAYS_SECONDS,
+    },
     api_v6::{SyncApiErrorV6, SyncApiV6, SyncApiV6CreatingError},
     get_sync_push_changelogs_filter,
     sync_status::logger::{SyncLogger, SyncLoggerError},
@@ -23,6 +26,44 @@ use repository::{
     ChangelogRepository, KeyType, RepositoryError, StorageConnection, SyncBufferRowRepository,
 };
 use thiserror::Error;
+
+/// Run an idempotent v6 read, retrying transient transport failures (dropped connection,
+/// dropped response body) with backoff before giving up.
+///
+/// Only for reads that can be repeated as-is: each attempt re-requests the same cursor,
+/// which hasn't advanced. Pushes are deliberately not retried this way - central may have
+/// integrated the batch and only lost the acknowledgement.
+async fn with_transient_retries<T, F, Fut>(
+    description: &str,
+    mut request: F,
+) -> Result<T, SyncApiErrorV6>
+where
+    F: FnMut() -> Fut,
+    Fut: std::future::Future<Output = Result<T, SyncApiErrorV6>>,
+{
+    let mut attempts = 0;
+    loop {
+        match request().await {
+            Ok(result) => return Ok(result),
+            Err(error)
+                if error.is_transient() && attempts < TRANSIENT_RETRY_DELAYS_SECONDS.len() =>
+            {
+                let delay = TRANSIENT_RETRY_DELAYS_SECONDS[attempts];
+                attempts += 1;
+                log::warn!(
+                    "{} failed with a transient transport error (attempt {}/{}, retrying {}): {:#?}",
+                    description,
+                    attempts,
+                    TRANSIENT_RETRY_DELAYS_SECONDS.len(),
+                    retry_delay_description(delay),
+                    error
+                );
+                tokio::time::sleep(Duration::from_secs(delay)).await;
+            }
+            Err(error) => return Err(error),
+        }
+    }
+}
 
 #[derive(Error, Debug)]
 pub(crate) enum CentralPullErrorV6 {
@@ -97,15 +138,17 @@ impl SynchroniserV6 {
         loop {
             let start_cursor = cursor_controller.get(connection)?;
 
+            let api = &self.sync_api_v6;
             let SyncBatchV6 {
                 end_cursor,
                 total_records,
                 is_last_batch,
                 records,
-            } = self
-                .sync_api_v6
-                .pull(start_cursor, batch_size, is_initialised)
-                .await?;
+            } = with_transient_retries(
+                &format!("Pulling v6 central records at cursor {}", start_cursor),
+                || api.pull(start_cursor, batch_size, is_initialised),
+            )
+            .await?;
 
             logger.progress(SyncStepProgress::PullCentralV6, total_records)?;
 
@@ -209,15 +252,17 @@ impl SynchroniserV6 {
 
         // TODO protection from infinite loop
         loop {
+            let api = &self.sync_api_v6;
             let SyncBatchV6 {
                 end_cursor,
                 total_records,
                 is_last_batch,
                 records,
-            } = self
-                .sync_api_v6
-                .patient_pull(patient_cursor, batch_size, fetch_patient_id.clone())
-                .await?;
+            } = with_transient_retries(
+                &format!("Pulling v6 patient records at cursor {}", patient_cursor),
+                || api.patient_pull(patient_cursor, batch_size, fetch_patient_id.clone()),
+            )
+            .await?;
 
             logger.progress(SyncStepProgress::PullCentralV6, total_records)?;
 

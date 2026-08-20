@@ -31,7 +31,10 @@ pub enum SyncApiErrorVariantV5 {
     },
     #[error("Connection problem")]
     ConnectionError(#[from] reqwest::Error),
-    #[error("Could not parse response")]
+    // Transparent: the inner variant already says what happened (body dropped mid-read
+    // vs. unreadable vs. genuinely unparseable). A wrapper message here only ever claimed
+    // a parse was attempted, which for a dropped connection it never was.
+    #[error(transparent)]
     ResponseParsingError(#[from] ParsingResponseError),
     #[error("Could not parse url")]
     FailToParseUrl(#[from] ParseError),
@@ -96,7 +99,10 @@ impl SyncApiErrorVariantV5 {
 
         use ParsingResponseError::*;
         match error {
-            CannotGetTextResponse(source) => {
+            // The body we couldn't read was central's *error* body, so the error status is
+            // the more useful thing to report; whether to retry follows from that status,
+            // not from how the error body was lost.
+            ConnectionDropped(source) | CannotGetTextResponse(source) => {
                 SyncApiErrorVariantV5::ErrorParsingError { status, source }
             }
             ParseError {
@@ -134,10 +140,21 @@ impl SyncApiError {
         matches!(self.source, SyncApiErrorVariantV5::Other(_))
     }
 
-    /// Transient transport-level failure (dropped connection, unknown/unparseable error).
-    /// Safe to retry within a bounded polling loop rather than aborting it outright.
+    /// The connection dropped part-way through reading the response body - central
+    /// answered, then the socket died mid-stream. Distinct from `is_connection`, which
+    /// only covers failures to *establish* the connection.
+    pub(crate) fn is_dropped_response_body(&self) -> bool {
+        matches!(
+            &self.source,
+            SyncApiErrorVariantV5::ResponseParsingError(ParsingResponseError::ConnectionDropped(_))
+        )
+    }
+
+    /// Transient transport-level failure (dropped connection, dropped response body,
+    /// unknown/unparseable error). Safe to retry within a bounded polling loop rather
+    /// than aborting it outright.
     pub(crate) fn is_transient(&self) -> bool {
-        self.is_connection() || self.is_unknown()
+        self.is_connection() || self.is_unknown() || self.is_dropped_response_body()
     }
 
     /// Central is busy with another session for this site (sync / integration / initialisation in
@@ -410,6 +427,69 @@ mod test {
             .expect_err("Should result in error");
         assert!(!result.is_central_busy());
         assert!(result.is_connection());
+    }
+
+    /// The reported failure: central answers 200, then the connection dies part-way
+    /// through the response body. Nothing is parsed - the body never arrives in full - so
+    /// it must classify as a dropped body and be transient, not as a parse failure.
+    #[actix_rt::test]
+    async fn test_dropped_response_body_is_transient() {
+        use crate::sync::api::test_helpers::{ScriptedResponse, ScriptedServer};
+
+        let server = ScriptedServer::start(vec![ScriptedResponse::TruncatedBody {
+            content_length: 1000,
+            body: r#"{"maxCurs"#,
+        }]);
+
+        let result = create_api(server.url(), "", "")
+            .get_central_records(100, 2)
+            .await
+            .expect_err("Should result in error");
+
+        assert_matches!(
+            result,
+            SyncApiError {
+                source: SyncApiErrorVariantV5::ResponseParsingError(
+                    ParsingResponseError::ConnectionDropped(_)
+                ),
+                ..
+            }
+        );
+        assert!(result.is_dropped_response_body());
+        assert!(result.is_transient());
+        // Not a failure to *establish* the connection - that distinction still holds.
+        assert!(!result.is_connection());
+        // And it no longer claims something was parsed.
+        assert!(
+            util::format_error(&result).contains("Connection dropped while reading response body")
+        );
+    }
+
+    /// A body that arrives in full but isn't valid JSON is a protocol error, not a
+    /// transport one - retrying would fetch the same bytes.
+    #[actix_rt::test]
+    async fn test_unparseable_body_is_not_transient() {
+        use crate::sync::api::test_helpers::{ScriptedResponse, ScriptedServer};
+
+        let server = ScriptedServer::start(vec![ScriptedResponse::Complete(
+            "not json at all".to_string(),
+        )]);
+
+        let result = create_api(server.url(), "", "")
+            .get_central_records(100, 2)
+            .await
+            .expect_err("Should result in error");
+
+        assert_matches!(
+            result,
+            SyncApiError {
+                source: SyncApiErrorVariantV5::ResponseParsingError(
+                    ParsingResponseError::ParseError { .. }
+                ),
+                ..
+            }
+        );
+        assert!(!result.is_transient());
     }
 
     #[actix_rt::test]

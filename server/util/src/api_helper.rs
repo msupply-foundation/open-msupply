@@ -180,14 +180,21 @@ fn is_connection_dropped(error: &reqwest::Error) -> bool {
 }
 
 /// Walk the error's source chain looking for a transient transport-drop signature.
-fn chain_contains_transient_drop(error: &(dyn std::error::Error + 'static)) -> bool {
+///
+/// Public so callers that read a response body *after* the retry loop above has returned
+/// (the body is read by the caller, not here) can classify the same failure the same way -
+/// see `ParsingResponseError::from_body_read_error` in the sync api.
+pub fn chain_contains_transient_drop(error: &(dyn std::error::Error + 'static)) -> bool {
     // hyper renders `IncompleteMessage` as "connection closed before message completed".
-    const SIGNATURES: [&str; 5] = [
+    const SIGNATURES: [&str; 6] = [
         "connection closed before message completed",
         "incompletemessage",
         "connection reset",
         "broken pipe",
         "unexpected end of file",
+        // hyper's `IncompleteBody`: the body ended before Content-Length was reached, i.e.
+        // the response was cut short. Same failure as a reset, just a clean FIN.
+        "end of file before message length reached",
     ];
 
     let mut current: Option<&(dyn std::error::Error + 'static)> = Some(error);
@@ -253,6 +260,34 @@ mod test {
     #[test]
     fn detects_connection_reset() {
         let error = chain(&["error sending request", "Connection reset by peer (os error 54)"]);
+        assert!(chain_contains_transient_drop(&error));
+    }
+
+    /// The chain reported from the field when a central server reset the connection
+    /// part-way through streaming a `/sync/v5/central_records` batch body. The drop
+    /// happens while *reading the body*, so it surfaces as a decode/body error rather
+    /// than the request-phase error `detects_connection_reset` covers.
+    #[test]
+    fn detects_body_read_reset() {
+        let error = chain(&[
+            "error decoding response body",
+            "request or response body error",
+            "error reading a body from connection",
+            "Connection reset by peer (os error 104)",
+        ]);
+        assert!(chain_contains_transient_drop(&error));
+    }
+
+    /// A body cut short with a clean FIN rather than a reset: hyper reports
+    /// `IncompleteBody` and the chain otherwise matches `detects_body_read_reset`.
+    #[test]
+    fn detects_truncated_body() {
+        let error = chain(&[
+            "error decoding response body",
+            "request or response body error",
+            "error reading a body from connection",
+            "end of file before message length reached",
+        ]);
         assert!(chain_contains_transient_drop(&error));
     }
 

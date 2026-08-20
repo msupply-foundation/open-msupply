@@ -252,6 +252,9 @@ impl RemoteDataSynchroniser {
         loop {
             // Retry while central is busy with another sync session for this site
             // (legacy central gates sync per-site); wait for idle then re-request.
+            // Transient transport failures are retried with backoff - records stay queued
+            // centrally until acknowledged, so re-requesting returns the same batch.
+            let mut transient_attempts = 0;
             let sync_batch = loop {
                 match self.sync_api_v5.get_queued_records(batch_size).await {
                     Ok(batch) => break batch,
@@ -262,6 +265,21 @@ impl RemoteDataSynchroniser {
                                 CENTRAL_BUSY_TIMEOUT_SECONDS,
                             )
                             .await?;
+                    }
+                    Err(error)
+                        if error.is_transient()
+                            && transient_attempts < TRANSIENT_RETRY_DELAYS_SECONDS.len() =>
+                    {
+                        let delay = TRANSIENT_RETRY_DELAYS_SECONDS[transient_attempts];
+                        transient_attempts += 1;
+                        log::warn!(
+                            "Pulling queued records failed with a transient transport error (attempt {}/{}, retrying {}): {:#?}",
+                            transient_attempts,
+                            TRANSIENT_RETRY_DELAYS_SECONDS.len(),
+                            retry_delay_description(delay),
+                            error
+                        );
+                        tokio::time::sleep(Duration::from_secs(delay)).await;
                     }
                     Err(error) => return Err(error.into()),
                 }
