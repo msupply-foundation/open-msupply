@@ -14,10 +14,11 @@ import { useDialog, useNotification, useToggle } from '@common/hooks';
 
 /// Max length of the stored data-URL string. Must match
 /// MAX_GLOBAL_LOGO_DATA_URL_LENGTH in the server's global_logo.rs.
-export const MAX_DATA_URL_LENGTH = 250 * 1024;
+export const MAX_DATA_URL_LENGTH = 342 * 1024;
 
-/// Raw file cap, allowing for base64's 4/3 inflation plus the data-URL prefix.
-export const MAX_FILE_BYTES = Math.floor((MAX_DATA_URL_LENGTH * 3) / 4) - 64;
+/// Raw file cap. A 250KB file's data URL (base64's 4/3 inflation plus the
+/// prefix, ~341.4KB) still fits within MAX_DATA_URL_LENGTH.
+export const MAX_FILE_BYTES = 250 * 1024;
 
 export const IMAGE_ACCEPT: Accept = {
   'image/png': ['.png'],
@@ -65,8 +66,12 @@ export const EditImagePreference = ({
           sx={{ maxHeight: 40, maxWidth: 120, objectFit: 'contain' }}
         />
       ) : (
-        <Typography variant="body2" color="text.secondary">
-          {t('messages.no-image-uploaded')}
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{ whiteSpace: 'nowrap' }}
+        >
+          {t('messages.none-uploaded')}
         </Typography>
       )}
       <ButtonWithIcon
@@ -205,7 +210,7 @@ const ImagePreferenceModal = ({
           </>
         ) : (
           <Typography variant="body2" color="text.secondary">
-            {t('messages.no-image-uploaded')}
+            {t('messages.none-uploaded')}
           </Typography>
         )}
       </Box>
