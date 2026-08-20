@@ -151,8 +151,12 @@ pub fn validate(
 /// * All pending lines must be resolved (accepted or rejected), otherwise stock would be created
 ///   for lines that haven't been reviewed yet.
 /// * The invoice must not be empty. An invoice with no lines at all, or one whose only lines are
-///   placeholders (nothing received and nothing shipped), receives no stock, so confirming it
-///   would produce a finalised but empty shipment.
+///   manually added placeholders (nothing received and nothing shipped), receives no stock, so
+///   confirming it would produce a finalised but empty shipment. Lines that came from another
+///   store's transfer (`linked_invoice_id` is set) are exempt: receiving zero of everything is a
+///   valid receipt, the store still needs to close out the transfer.
+///
+/// This deliberately mirrors `validateEmptyInvoice` on the client.
 fn check_lines_can_be_received(
     invoice_id: &str,
     connection: &StorageConnection,
@@ -166,7 +170,10 @@ fn check_lines_can_be_received(
         }
     }
 
-    if invoice_lines.iter().all(is_placeholder_line) {
+    if invoice_lines
+        .iter()
+        .all(|line| line.linked_invoice_id.is_none() && is_placeholder_line(line))
+    {
         return Err(UpdateInboundShipmentError::CannotReceiveWithNoLines);
     }
 
@@ -177,7 +184,7 @@ fn check_lines_can_be_received(
 /// said they sent 5 packs but I received 0", which is why shipped packs are checked too. These
 /// are the same lines that `empty_lines_to_trim` deletes when the invoice leaves New status.
 ///
-/// Mirrors `validateEmptyInvoice` on the client. Note service lines (freight charges and the
+/// Mirrors `isInboundPlaceholderRow` on the client. Note service lines (freight charges and the
 /// like) are not placeholders, so an invoice of only service lines can still be received.
 fn is_placeholder_line(line: &InvoiceLineRow) -> bool {
     line.r#type == InvoiceLineType::StockIn
