@@ -1023,11 +1023,14 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { id: 'location' },
       header: () => t('label.location'),
       cardGroup: 'batch',
-      // A FULL row of the six, now that Manufacturer no longer shares it: the
-      // longest value on the card ("fr — Central Regional Medical Logistics &
-      // …") against the short scalars above it. At 3 it would leave half a row
-      // empty, which is the one failure mode the span layout has.
-      meta: { cardWidth: { min: 8, max: 17, weight: 1.2 } },
+      // 12.5–30rem, the configured-lookup pair (ui-standards § Field Widths by
+      // Content Type). A location renders as `code — name` ("fr — Central
+      // Regional Medical Logistics & …"), so its length is UNPREDICTABLE, which
+      // is what puts a field in that group — it is not the short pick from a
+      // fixed list that VVM and Auth status are. The 8rem floor it carried left
+      // ~4.5rem of text once the picker's own clear and chevron were paid for,
+      // about nine characters, and a browser narrowed a little took it there.
+      meta: { cardWidth: { min: 12.5, max: 30, weight: 1.2 } },
       cell: info => {
         const b = info.row.original;
         return (
@@ -1221,7 +1224,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             c: { id: 'donor' },
             header: () => t('label.donor'),
             cardGroup: 'pricing',
-            meta: { cardWidth: { min: 9, max: 18, weight: 1 } },
+            meta: { cardWidth: { min: 12.5, max: 30, weight: 1 } },
             cell: info => {
               const b = info.row.original;
               return (
@@ -1261,7 +1264,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { id: 'campaignOrProgram' },
       header: () => t('label.campaign'),
       cardGroup: 'pricing',
-      meta: { cardWidth: { min: 9.5, max: 20, weight: 1.2 } },
+      meta: { cardWidth: { min: 12.5, max: 30, weight: 1.2 } },
       cell: info => {
         const b = info.row.original;
         return (
@@ -1327,7 +1330,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       // both of which have a known longest value and would give up nothing.
       // A whole row also keeps the group's rows tiling exactly: 4+4+4, 3+5+4,
       // 12, then 4+8.
-      meta: { cardWidth: { min: 10, max: 20, weight: 1.4 } },
+      meta: { cardWidth: { min: 12.5, max: 30, weight: 1.4 } },
       cell: info => {
         const b = info.row.original;
         return (
@@ -1383,7 +1386,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { key: 'note' },
       header: () => t('label.note'),
       cardGroup: 'pricing',
-      meta: { cardWidth: { min: 5, max: 24, weight: 1.4 } },
+      meta: { cardWidth: { min: 5, weight: 1.4 } },
       cell: info => {
         const b = info.row.original;
         return (

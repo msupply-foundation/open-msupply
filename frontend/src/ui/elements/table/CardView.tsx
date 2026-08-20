@@ -135,7 +135,11 @@ const cardFlex = <T,>(
     : {
         '--card-field-weight': `${width.weight}`,
         '--card-field-floor': `${width.min}rem`,
-        '--card-field-max-w': `${width.max}rem`,
+        // Free text declares no ceiling and gets none — left unset, so the
+        // field inherits the `none` the group declares.
+        ...(width.max === undefined
+          ? undefined
+          : { '--card-field-max-w': `${width.max}rem` }),
         ...span,
       };
 };
@@ -255,7 +259,9 @@ const cardTracksMaxRem = <T,>(
   for (const cell of cells) {
     const width = cell.column.columnDef.meta?.cardWidth;
     if (width === undefined) return undefined;
-    total += typeof width === 'number' ? width : width.max;
+    if (typeof width === 'number') total += width;
+    else if (width.max === undefined) return undefined;
+    else total += width.max;
   }
   return total + Math.max(0, cells.length - 1);
 };
