@@ -142,4 +142,4 @@ export const cardTracksMaxRem = (
 // takes the measure, which is what stops a note running the full width of a
 // very wide modal.
 export const cardFieldMaxRem = (widths: (CardWidth | undefined)[]): number =>
-  Math.min(cardTracksMaxRem(widths) ?? MEASURE_WIDE_REM, MEASURE_WIDE_REM);
+  Math.min(cardTracksMaxRem(widths) ?? Infinity, MEASURE_WIDE_REM);
