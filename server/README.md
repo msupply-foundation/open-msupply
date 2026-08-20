@@ -8,9 +8,10 @@
 The server serves the web frontend at runtime from `server.frontend_dir`
 (default `frontend`, resolved relative to the working directory). Packaging
 ships the built bundle there; on Android the app shell copies its bundled web
-assets there on startup. In debug builds this falls back to
-`client/packages/host/dist` when the configured directory doesn't exist, so
-`cargo run` serves the frontend without any configuration.
+assets there on startup. In debug builds, when the configured directory
+doesn't exist, the server serves the in-repo builds directly — `frontend/dist`
+at `/` and `client/packages/host/dist` at `/old-ui/` — so `cargo run` serves
+both UIs without any configuration or copying.
 
 A second ("old UI") frontend is served under the `/old-ui/` URL prefix from
 the `old-ui` subdirectory of `frontend_dir`, when present — by convention, not
@@ -31,24 +32,25 @@ own destination.
 From the repo root:
 
 ```sh
-yarn stage-frontend          # builds frontend/ -> server/frontend
-cd client && yarn build:old-ui   # old UI -> server/frontend/old-ui
+cd frontend && corepack pnpm install && pnpm build   # new FE -> frontend/dist
+cd client && yarn build:old-ui                       # old UI -> client/packages/host/dist
 ```
 
-`stage-frontend` builds the in-tree frontend (`frontend/`, via `corepack pnpm`
-— the pnpm version is pinned by `frontend/package.json`). Note it **replaces**
-`server/frontend` wholesale, and that directory is gitignored — so it is
-shared across every branch in your checkout, not per branch.
+A debug server (`cargo run` from `server/`) serves both directly from those
+build outputs — nothing to copy. Note: a leftover `server/frontend` directory
+from the pre-monorepo staged-copy workflow takes priority over the direct
+fallback — delete it.
 
 ### In-tree frontend build (new FE at `/`)
 
-The new frontend lives in this repo under `frontend/`. Packaging builds it
-from the working tree with `build/stage-frontend.js` (plain Node, no npm
-deps; `corepack pnpm install && pnpm build`), which replaces the target
-`frontend/` directory served at `/` with the built dist — the shipped FE is
-always the FE of the commit being built. The old UI is built at `/old-ui/`
-and copied to `frontend/old-ui`, which the server serves at `/old-ui/` by
-convention, so a packaged bundle serves both UIs out of the box.
+The new frontend lives in this repo under `frontend/`. Each packaging
+pipeline builds it from the working tree (`corepack pnpm install && pnpm
+build` in `frontend/` — the pnpm version is pinned by its `packageManager`)
+and copies `frontend/dist` into its own staging area as the `frontend/`
+directory served at `/` — the shipped FE is always the FE of the commit being
+built. The old UI is built with `PUBLIC_PATH=/old-ui/` and nested at
+`frontend/old-ui`, which the server serves at `/old-ui/` by convention, so a
+packaged bundle serves both UIs out of the box.
 
 (Pre-monorepo, the new FE was a pinned, checksum-verified release asset of
 the separate private open-msupply-frontend repo, fetched by

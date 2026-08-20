@@ -15,11 +15,14 @@ set -e
 BUNDLE="frontend-bundle"
 REPO_ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 
-# stage-frontend builds frontend/ in-tree and wipes/recreates its target dir,
-# so stage the NEW FE FIRST...
-node "$REPO_ROOT/build/stage-frontend.js" "$BUNDLE"
+# Build the NEW FE in-tree (`corepack pnpm` — the pnpm version is pinned by
+# frontend/package.json; the repo root workspace is yarn)...
+(cd "$REPO_ROOT/frontend" && corepack pnpm install --frozen-lockfile && corepack pnpm build)
+
+# ...copy its dist in fresh...
+rm -rf "$BUNDLE"
+cp -R "$REPO_ROOT/frontend/dist" "$BUNDLE"
 
 # ...then nest the OLD UI (built with PUBLIC_PATH=/old-ui/, see the root
 # android:build:release script) under old-ui/.
-rm -rf "$BUNDLE/old-ui"
 cp -R ../host/dist "$BUNDLE/old-ui"
