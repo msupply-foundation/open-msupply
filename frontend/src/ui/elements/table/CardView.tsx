@@ -255,11 +255,13 @@ function cellField<T>(
 // The MEASURE a card's field block is held to, whatever the card is given.
 // Mirrors --measure-wide in tokens.css ("~1280px — wide dashboards / dense
 // forms"); duplicated as a number because the clamp below is arithmetic, not a
-// cascade. Chosen above every group's floor sum, so it never forces a line to
-// wrap that would otherwise have fit — it only stops a block sprawling when the
-// surface is wider than the fields have any use for.
+// cascade.
 //
-// A form should be constrained rather than stretched across a wide viewport
+// It CAN wrap a group that a wider surface would have carried on fewer lines —
+// a group whose floors sum past the measure has no single-line width left to
+// it (the inbound pricing group's floors plus gaps come to ~106rem). That wrap
+// is the constraint doing its job, not a defect:
+// a form should be constrained rather than stretched across a wide viewport
 // (ui-standards § Form & detail layout), and a block held near its content's
 // width also wraps into FULLER lines: less slack to distribute means less
 // variation between one line's right edge and the next, which is the jaggedness
