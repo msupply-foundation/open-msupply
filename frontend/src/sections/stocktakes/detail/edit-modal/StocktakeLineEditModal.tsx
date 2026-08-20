@@ -1139,7 +1139,7 @@ const StocktakeLineEditContent = (
       // NB it is arithmetic against THIS field set. A vaccine item's extra
       // fields (doses counted, VVM status) change the counting row's
       // composition, and the wrapped row's edges move with it.
-      meta: { cardWidth: { min: 8, max: 24.5, weight: 1.2 }, cardSpan: 8 },
+      meta: { cardWidth: { min: 12.5, max: 36, weight: 2 }, cardSpan: 8 },
       cell: info => {
         const line = info.row.original;
         return (
@@ -1316,7 +1316,7 @@ const StocktakeLineEditContent = (
             c: { id: 'donor' },
             header: () => t('label.donor'),
             cardGroup: 'pricing',
-            meta: { cardWidth: { min: 9, max: 18, weight: 1 }, cardSpan: 6 },
+            meta: { cardWidth: { min: 12.5, max: 36, weight: 2 }, cardSpan: 6 },
             cell: info => {
               const line = info.row.original;
               return (
@@ -1361,7 +1361,7 @@ const StocktakeLineEditContent = (
       c: { id: 'campaignOrProgram' },
       header: () => t('label.campaign'),
       cardGroup: 'pricing',
-      meta: { cardWidth: { min: 9.5, max: 20, weight: 1.2 }, cardSpan: 6 },
+      meta: { cardWidth: { min: 12.5, max: 36, weight: 2 }, cardSpan: 6 },
       cell: info => {
         const line = info.row.original;
         return (
@@ -1392,7 +1392,7 @@ const StocktakeLineEditContent = (
       c: { id: 'manufacturer' },
       header: () => t('label.manufacturer'),
       cardGroup: 'pricing',
-      meta: { cardWidth: { min: 10, max: 20, weight: 1.4 }, cardSpan: 6 },
+      meta: { cardWidth: { min: 12.5, max: 36, weight: 2 }, cardSpan: 6 },
       cell: info => {
         const line = info.row.original;
         return (
@@ -1438,7 +1438,7 @@ const StocktakeLineEditContent = (
             header: () => t('label.reason'),
             cardGroup: 'batch',
             meta: {
-              cardWidth: { min: 9, max: 20, weight: 1.2 },
+              cardWidth: { min: 12.5, max: 36, weight: 2 },
               // A whole row of the ten when it appears. Reason comes and goes
               // per BATCH (hideOnCardWhen below), not per table, so it's the one
               // field here that can change a card's packing while the modal is
@@ -1484,6 +1484,11 @@ const StocktakeLineEditContent = (
                   kind={direction() ?? 'positive'}
                   label={t('label.reason')}
                   hideLabel
+                  // The compact height its neighbours use. Without it the
+                  // picker takes the default 40px against their 36px and
+                  // stands a step taller than every field around it — the
+                  // failure its own `size` prop doc names.
+                  size="small"
                   disabled={!line.countThisLine || direction() === null}
                   value={line.reasonOption?.id}
                   error={error()}
@@ -1505,7 +1510,7 @@ const StocktakeLineEditContent = (
       c: { key: 'note' },
       header: () => t('label.note'),
       cardGroup: 'pricing',
-      meta: { cardWidth: { min: 8, max: 24, weight: 1.4 }, cardSpan: 6 },
+      meta: { cardWidth: { min: 12.5, weight: 3 }, cardSpan: 6 },
       cell: info => {
         const line = info.row.original;
         return (
@@ -1526,7 +1531,7 @@ const StocktakeLineEditContent = (
       c: { key: 'comment' },
       header: () => t('label.stocktake-comment'),
       cardGroup: 'pricing',
-      meta: { cardWidth: { min: 8, max: 24, weight: 1.4 }, cardSpan: 12 },
+      meta: { cardWidth: { min: 12.5, weight: 3 }, cardSpan: 12 },
       cell: info => {
         const line = info.row.original;
         return (
