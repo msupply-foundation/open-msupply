@@ -38,9 +38,15 @@ const cellGroup = <T,>(cell: TanCell<T, unknown>): string | undefined =>
 // empty one is safe. A non-function header (or none) yields no label — the cell
 // then fills its slot unlabelled. Called from a JSX position (never stored in a
 // local), so the label re-resolves on a locale change like the value does.
+// A column whose grid header is ICONIC (the comment glyph) or empty captions
+// its card field with meta.textLabel instead — the same word the Columns
+// popover lists it under. A card field is a label BESIDE or ABOVE its value, so
+// repeating the cell's own glyph as its caption would say nothing.
 const columnHeaderText = <T,>(
   cell: TanCell<T, unknown>
 ): JSX.Element | undefined => {
+  const textLabel = cell.column.columnDef.meta?.textLabel;
+  if (textLabel) return textLabel();
   const header = cell.column.columnDef.header;
   return typeof header === 'function'
     ? header({} as HeaderContext<T, unknown>)
