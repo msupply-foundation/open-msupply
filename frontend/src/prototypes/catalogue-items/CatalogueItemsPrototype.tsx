@@ -134,7 +134,7 @@ const DATA: ItemRow[] = [
   row('i7', 'DX0044', 'Dexamethasone 4mg/mL injection', 'Ampoule', ['Hospital formulary'], 1250, 210),
   row('i8', 'GL0009', 'Gloves, examination, latex, medium', 'Each', ['Consumables'], 8600, 1400),
   // On no master list — exists, but invisible to every store.
-  row('i9', 'LB0021', 'Laboratory testing — full blood count', 'Each', [], 0, 0),
+  row('i9', 'LB0021', 'Laboratory testing: full blood count', 'Each', [], 0, 0),
   row('i10', 'ME0303', 'Metformin 500mg tablets', 'Tablet', ['National EML 2026', 'NCD kit'], 21000, 2600),
   row('i11', 'OR0007', 'Oral rehydration salts sachet', 'Each', ['National EML 2026', 'Paediatric kit'], 5400, 900),
   row('i12', 'PA0555', 'Paracetamol 500mg tablets', 'Tablet', ['National EML 2026', 'Health Centre kit'], 46000, 6200),
@@ -251,8 +251,8 @@ const CatalogueItemsDemo = () => {
                 when={isCentral()}
                 fallback={
                   <Alert severity="neutral" icon={LockIcon} compact>
-                    Read only. Items are maintained centrally — ask a catalogue
-                    administrator, or request one from this page.
+                    Read only. Items are maintained centrally. Ask a
+                    catalogue administrator, or request one from this page.
                   </Alert>
                 }
               >

@@ -41,7 +41,7 @@ const ERROR_ROWS = 14;
 
 /** The item fields the importer can write. Empty value = don't import. */
 const FIELD_OPTIONS = [
-  { value: '', label: "— Don't import —" },
+  { value: '', label: "Don't import" },
   ...[
     'Item code',
     'Item name',
@@ -170,7 +170,7 @@ const REVIEW_ROWS: ReviewRow[] = [
     unit: 'Vial',
     packSize: '10',
     ven: 'V',
-    note: 'Marked as a vaccine but no doses per unit — will import as 1',
+    note: 'Marked as a vaccine but no doses per unit, so it will import as 1',
   },
   {
     line: 7,
@@ -222,7 +222,7 @@ const REVIEW_ROWS: ReviewRow[] = [
     unit: 'Tablet',
     packSize: '100',
     ven: 'E',
-    note: 'Master list "NCD Kit" not found — will import without it',
+    note: 'Master list "NCD Kit" not found, so it will import without it',
   },
   {
     line: 12,
@@ -548,7 +548,7 @@ export const ImportItemsWizard = (props: ImportItemsWizardProps) => {
               </h3>
               <p class={styles.sheetHint}>
                 This is the setting that causes the most accidental damage, so
-                it is a decision made before upload — never a silent default.
+                it is a decision made before upload, never a silent default.
               </p>
               <RadioGroup
                 options={MODE_OPTIONS}
@@ -597,7 +597,7 @@ export const ImportItemsWizard = (props: ImportItemsWizardProps) => {
               </h3>
               <p class={styles.sheetHint}>
                 Ten of your eleven columns matched automatically. Unmapped
-                columns are ignored — that is not an error.
+                columns are ignored, which is not an error.
               </p>
 
               <Show when={unmappedRequired() > 0}>
@@ -700,8 +700,8 @@ export const ImportItemsWizard = (props: ImportItemsWizardProps) => {
             <div style={{ 'margin-block-end': 'var(--space-4)' }}>
               <Alert severity="warning">
                 <b>{ERROR_ROWS} rows cannot be imported yet.</b> Fix them below,
-                or continue and import the other {IMPORTABLE} — the failed rows
-                stay downloadable so you can correct them in your file and
+                or continue and import the other {IMPORTABLE}. The failed rows
+                stay downloadable, so you can correct them in your file and
                 re-import.
               </Alert>
             </div>

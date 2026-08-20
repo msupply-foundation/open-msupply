@@ -50,9 +50,9 @@ export interface AddItemModalProps {
 }
 
 const TYPE_OPTIONS = [
-  { value: 'stock', label: 'Stock — held and counted' },
-  { value: 'service', label: 'Service — charged, no stock' },
-  { value: 'nonstock', label: 'Non-stock — ordered on demand' },
+  { value: 'stock', label: 'Stock (held and counted)' },
+  { value: 'service', label: 'Service (charged, no stock)' },
+  { value: 'nonstock', label: 'Non-stock (ordered on demand)' },
 ];
 
 const UNIT_OPTIONS = [
@@ -66,9 +66,9 @@ const UNIT_OPTIONS = [
 ].map(u => ({ value: u, label: u }));
 
 const VEN_OPTIONS = [
-  { value: 'V', label: 'V — Vital' },
-  { value: 'E', label: 'E — Essential' },
-  { value: 'N', label: 'N — Non-essential' },
+  { value: 'V', label: 'V (Vital)' },
+  { value: 'E', label: 'E (Essential)' },
+  { value: 'N', label: 'N (Non-essential)' },
   { value: '', label: 'Not set' },
 ];
 
@@ -185,7 +185,7 @@ export const AddItemModal = (props: AddItemModalProps) => {
               value={name()}
               onInput={e => setName(e.currentTarget.value)}
               placeholder="e.g. Amoxicillin 250mg capsules"
-              helperText="Name, strength, then form — what dispensers search on."
+              helperText="Name, strength, then form. This is what dispensers search on."
             />
             <TextField
               label="Item code"
@@ -349,14 +349,14 @@ export const AddItemModal = (props: AddItemModalProps) => {
               placeholder="Add a master list…"
               helperText={
                 lists().length === 0
-                  ? 'No lists yet — this item will not be visible to any store.'
+                  ? 'No lists yet. This item will not be visible to any store.'
                   : `Reaches ${props.reachOf(lists())} of ${props.facilityCount} facilities`
               }
             />
             {/* Checkbox carries no helper slot, so the consequence of
                 unchecking rides the label itself. */}
             <Checkbox
-              label="Active — inactive items stay in history and reports but cannot be ordered or dispensed"
+              label="Active (inactive items stay in history and reports but cannot be ordered or dispensed)"
               checked={active()}
               onChange={setActive}
             />
