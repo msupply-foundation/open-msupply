@@ -1,3 +1,4 @@
+use base64::{prelude::BASE64_STANDARD, Engine};
 use repository::StorageConnection;
 
 use crate::preference::{
@@ -5,11 +6,12 @@ use crate::preference::{
     UpsertPreferenceError,
 };
 
-/// Max length of the stored data-URL string (~250KB). Data URLs are ASCII, so
-/// chars == bytes. Must match MAX_DATA_URL_LENGTH in the client's
-/// EditImagePreference.tsx. Kept small: the value rides inside an ordinary
-/// JSON sync batch (no chunking/resume), so it must stay cheap on poor links.
-pub const MAX_GLOBAL_LOGO_DATA_URL_LENGTH: usize = 250 * 1024;
+/// Max length of the stored data-URL string (~342KB, fits a 250KB file after
+/// base64's 4/3 inflation). Data URLs are ASCII, so chars == bytes. Must match
+/// MAX_DATA_URL_LENGTH in the client's EditImagePreference.tsx. Kept small:
+/// the value rides inside an ordinary JSON sync batch (no chunking/resume),
+/// so it must stay cheap on poor links.
+pub const MAX_GLOBAL_LOGO_DATA_URL_LENGTH: usize = 342 * 1024;
 
 pub const ALLOWED_LOGO_DATA_URL_PREFIXES: &[&str] = &[
     "data:image/png;base64,",
@@ -61,16 +63,19 @@ fn validate_logo_data_url(value: &str) -> Result<(), String> {
     if value.is_empty() {
         return Ok(());
     }
-    if !ALLOWED_LOGO_DATA_URL_PREFIXES
+    let Some(prefix) = ALLOWED_LOGO_DATA_URL_PREFIXES
         .iter()
-        .any(|prefix| value.starts_with(prefix))
-    {
+        .find(|prefix| value.starts_with(*prefix))
+    else {
         return Err("must be a png/jpeg/gif/svg base64 data URL".to_string());
-    }
+    };
     if value.len() > MAX_GLOBAL_LOGO_DATA_URL_LENGTH {
         return Err(format!(
             "exceeds maximum size of {MAX_GLOBAL_LOGO_DATA_URL_LENGTH} bytes"
         ));
+    }
+    if BASE64_STANDARD.decode(&value[prefix.len()..]).is_err() {
+        return Err("base64 payload does not decode".to_string());
     }
     Ok(())
 }
@@ -111,6 +116,17 @@ mod tests {
         let result = GlobalLogo.upsert(
             &ctx.connection,
             "data:text/html;base64,PHNjcmlwdD4=".to_string(),
+            None,
+        );
+        assert!(matches!(
+            result,
+            Err(UpsertPreferenceError::InvalidValue(_, _))
+        ));
+
+        // Corrupt base64 payload rejected
+        let result = GlobalLogo.upsert(
+            &ctx.connection,
+            "data:image/png;base64,not$valid".to_string(),
             None,
         );
         assert!(matches!(

@@ -3128,8 +3128,8 @@
   "warning.manual-store-requisition": "Entering a requisition for this store may result in duplicates if the store also submits an internal order.",
   "warning.nothing-to-supply": "Nothing left to supply!",
   "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested",
-  "preference.globalLogo": "Global logo (used on printed documents when a store has no logo)",
+  "preference.globalLogo": "Global logo",
   "label.edit-image": "Edit image",
-  "messages.no-image-uploaded": "No image uploaded",
+  "messages.none-uploaded": "None uploaded",
   "messages.image-upload-helper": "PNG, JPEG, GIF or SVG, up to {{maxSize}}"
 }
