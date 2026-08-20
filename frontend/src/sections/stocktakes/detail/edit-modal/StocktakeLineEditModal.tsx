@@ -1506,40 +1506,19 @@ const StocktakeLineEditContent = (
             },
           } satisfies Column<DraftLine, never, GroupKey>,
         ]),
-    {
-      c: { key: 'note' },
-      header: () => t('label.note'),
-      // TABLE ONLY. On the card it sat beside Comment as a second identical
-      // free-text box with nothing to tell the two apart, and the pair is not a
-      // duplicate: Comment belongs to this COUNT (it starts empty on a new
-      // line), where `note` is seeded from the STOCK LINE — see the draft
-      // seeding above, `comment: null, note: sl.note`, alongside batch, expiry
-      // and the prices — so it describes the batch rather than counting it.
-      // Editing a property of the stock line from a stocktake line editor is
-      // what made the pair confusing.
-      //
-      // `hideOnCard`, not a deleted column: the value is still there to read
-      // and edit in table view (this editor offers the card ⇄ table toggle),
-      // and a note already on the stock line is untouched either way. Note that
-      // below the compact breakpoint the table is always card, so on a phone
-      // the field is not reachable at all.
-      meta: { hideOnCard: true },
-      cell: info => {
-        const line = info.row.original;
-        return (
-          <TextField
-            label={t('label.note')}
-            hideLabel
-            size="small"
-            disabled={!line.countThisLine}
-            value={line.note ?? ''}
-            onInput={e =>
-              update(line.id, 'note', e.currentTarget.value || null)
-            }
-          />
-        );
-      },
-    },
+    // NO Note field, in either view. The line carries both `note` and
+    // `comment`, and on the card they rendered as two identical free-text boxes
+    // with nothing to tell them apart. They are not duplicates, which is the
+    // point: Comment belongs to this COUNT — it starts empty on a new line —
+    // where `note` is seeded from the STOCK LINE (see the draft seeding above:
+    // `comment: null, note: sl.note`, alongside batch, expiry and the prices),
+    // so it describes the batch rather than counting it. A stocktake line
+    // editor is the wrong surface for editing a property of the stock line, in
+    // a table column as much as in a card field.
+    //
+    // The draft still carries `note` and the save still sends it back
+    // unchanged, so a note already on the stock line survives a count
+    // untouched — it is no longer EDITED here, not dropped.
     {
       c: { key: 'comment' },
       header: () => t('label.stocktake-comment'),
