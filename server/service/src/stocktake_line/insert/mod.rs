@@ -486,6 +486,16 @@ mod stocktake_line_test {
             }
         }
 
+        fn invisible_non_manufacturer() -> NameRow {
+            NameRow {
+                id: String::from("invisible_non_manufacturer"),
+                name: String::from("Invisible non-manufacturer"),
+                code: String::from("invisible_non_manufacturer"),
+                is_manufacturer: false,
+                ..Default::default()
+            }
+        }
+
         fn mock_stock_line_for_manufacturer_test() -> StockLineRow {
             StockLineRow {
                 id: String::from("mock_stock_line_for_manufacturer_test"),
@@ -502,7 +512,7 @@ mod stocktake_line_test {
             "insert_stocktake_line_with_invisible_manufacturer",
             MockDataInserts::all(),
             MockData {
-                names: vec![invisible_manufacturer()],
+                names: vec![invisible_manufacturer(), invisible_non_manufacturer()],
                 stock_lines: vec![mock_stock_line_for_manufacturer_test()],
                 ..Default::default()
             },
@@ -515,9 +525,27 @@ mod stocktake_line_test {
             .unwrap();
         let service = service_provider.stocktake_line_service;
 
-        // success: manufacturer exists but has no name_store_join for this store
+        // error: skipping the visibility check must not skip the type check - an invisible
+        // name that is not a manufacturer is still rejected
         let stocktake_a = mock_stocktake_a();
         let stock_line = mock_stock_line_for_manufacturer_test();
+        let result = service.insert_stocktake_line(
+            &context,
+            InsertStocktakeLine {
+                id: uuid(),
+                stocktake_id: stocktake_a.id.clone(),
+                stock_line_id: Some(stock_line.id.clone()),
+                manufacturer_id: Some(invisible_non_manufacturer().id),
+                counted_number_of_packs: Some(17.0),
+                ..Default::default()
+            },
+        );
+        assert_eq!(
+            result.unwrap_err(),
+            InsertStocktakeLineError::ManufacturerIsNotAManufacturer
+        );
+
+        // success: manufacturer exists but has no name_store_join for this store
         let result = service
             .insert_stocktake_line(
                 &context,
