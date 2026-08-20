@@ -64,10 +64,13 @@
 
 /* The units-received hint under Packs received ("2,000 Tablets"). Secondary
    type, aligned under the figure it derives from (the packs input is
-   right-aligned, so is this). Its line box is reserved whether or not there is
-   anything to say — an empty span still lays out at this height — so the row
-   never changes height as the user types, which is what the reference design
-   uses absolute positioning to achieve. */
+   right-aligned, so is this).
+   The height here applies only when the hint EXISTS — the cell renders it
+   conditionally (see the Show in the packs cell). Reserving it unconditionally
+   kept the card's height stable while typing, but a flex line is as tall as its
+   tallest cell, so an empty hint added 20px to every line holding this field
+   and the gap between the first two rows of fields read as ~32px against a
+   12px row gap. */
 .unitsHint {
   display: block;
   min-block-size: 1rem;

@@ -837,10 +837,19 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             {/* Units received, as a HINT under the packs figure rather than a
                 field of its own (reference design). It is packs × pack size —
                 derived, never typed — so a whole labelled input for it cost the
-                row ~140px that the fields either side of it needed. Rendered
-                unconditionally (empty when there's nothing to say) so the row
-                height is constant and typing never makes the card jump. */}
-            <span class={styles.unitsHint}>{unitsHint(b)}</span>
+                row ~140px that the fields either side of it needed.
+                Rendered only when there IS a figure. It used to render always,
+                empty, so the card's height never changed as the user typed —
+                but a flex line is as tall as its tallest cell, so an empty hint
+                reserved 20px (1rem + its margin) on every line holding this
+                field. Against a 12px row gap that made the space between the
+                first and second row of fields read as ~32px: nearly three times
+                the gap, and the reason the card looked loosely spaced. The cost
+                is a one-time shift of the rows below when the first pack count
+                is entered. */}
+            <Show when={unitsHint(b)}>
+              {hint => <span class={styles.unitsHint}>{hint()}</span>}
+            </Show>
           </>
         );
       },
