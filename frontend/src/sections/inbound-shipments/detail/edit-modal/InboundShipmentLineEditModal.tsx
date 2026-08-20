@@ -1076,10 +1076,9 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             c: { id: 'authStatus' },
             header: () => t('label.auth-status'),
             cardGroup: 'batch',
-            // A full row of the six: it is the only field in this panel that
-            // appears on a PO-linked shipment and not a manual one, so a whole
-            // row is what keeps every other row's packing untouched as it comes
-            // and goes.
+            // A pick from a fixed list, so its longest value is known — a
+            // tight scalar range at weight 1, not the lookup range (see
+            // Location for the distinction).
             meta: { cardWidth: { min: 10, max: 12, weight: 1 } },
             cell: info => {
               const b = info.row.original;
@@ -1152,8 +1151,9 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             c: { id: 'vvmStatus' },
             header: () => t('label.vvm-status'),
             cardGroup: 'batch',
-            // 3 + 3 with Doses per unit: the two vaccine facts share a row, so
-            // the pair tiles whether or not the item is a vaccine.
+            // A pick from a fixed list, like Auth status: the longest value is
+            // known, so a tight scalar range at weight 1 rather than the
+            // lookup range.
             meta: { cardWidth: { min: 10, max: 12, weight: 1 } },
             cell: info => {
               const b = info.row.original;
@@ -1339,12 +1339,9 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { id: 'manufacturer' },
       header: () => t('label.manufacturer'),
       cardGroup: 'pricing',
-      // A full row of the twelve. Manufacturer names run long ("Serum
-      // Institute of India Pvt. Ltd."), and it is the only field in this group
-      // that would otherwise have to share a row with a date or a currency —
-      // both of which have a known longest value and would give up nothing.
-      // A whole row also keeps the group's rows tiling exactly: 4+4+4, 3+5+4,
-      // 12, then 4+8.
+      // A name lookup of unpredictable length ("Serum Institute of India
+      // Pvt. Ltd.") — the lookup range, as Donor and Campaign carry above; see
+      // Location for the range's reasoning.
       meta: { cardWidth: { min: 12.5, max: 36, weight: 2 } },
       cell: info => {
         const b = info.row.original;
