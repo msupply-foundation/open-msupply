@@ -3,7 +3,8 @@
 // modules own the shared surface + lookups only — each vertical supplies its
 // own writes as plain props (kdd/explicit-composition). Also home to the
 // invoice-status-options display gate (statusGate) the invoice verticals
-// share.
+// share, and to deleteRejection — why a cascading invoice delete was refused,
+// which reads the same on every vertical whose delete walks the lines.
 export {
   ServiceChargesModal,
   type ServiceChargeSeed,
@@ -16,6 +17,7 @@ export {
   type CurrencySaveResult,
 } from './CurrencyModal';
 export { filterByStatusPreference, currentStep } from './statusGate';
+export { deleteRejection, type DeleteRejection } from './deleteRejection';
 export {
   splitServiceChargeBatch,
   chargeTotalAfterTax,
