@@ -261,20 +261,15 @@ fi
 # --- Stage the new frontend dist (the Dockerfile COPYs frontend-dist/) ---
 
 if [ ! -f "frontend-dist/index.html" ]; then
-  echo "=== Fetching new frontend dist into frontend-dist/ ==="
-  # The FE repo is private, so fetch-frontend.js needs a token; fall back to the
-  # gh CLI's stored token when neither a token nor a source override is set.
-  if [ -z "$FRONTEND_FETCH_TOKEN" ] && [ -z "$GITHUB_TOKEN" ] && \
-     [ -z "$FRONTEND_DIST_URL" ] && [ -z "$FRONTEND_DIST_BASE_URL" ] && \
-     command -v gh &> /dev/null; then
-    export GITHUB_TOKEN="$(gh auth token 2>/dev/null)"
-  fi
-  if ! node build/fetch-frontend.js frontend-dist; then
+  echo "=== Building new frontend into frontend-dist/ ==="
+  # Built in-tree from frontend/ — same commit as everything else in the image,
+  # so there is no pin to bump and no token needed for the private FE repo.
+  if ! node build/stage-frontend.js frontend-dist; then
     echo "ERROR: Could not stage the new frontend into frontend-dist/. Aborting."
     exit 1
   fi
 else
-  echo "=== Using existing frontend-dist/ (delete it to re-fetch the pinned dist) ==="
+  echo "=== Using existing frontend-dist/ (delete it to rebuild) ==="
 fi
 
 # --- Compile, build, and push per (db, arch) combination ---

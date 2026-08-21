@@ -24,8 +24,8 @@ remote-server-android-<version>-<profile>.zip
 └── VERSION.txt   (version, profile, commit, abis)
 ```
 
-Consumers (e.g. the [open-msupply-frontend](https://github.com/msupply-foundation/open-msupply-frontend)
-Android app) pin a version and fetch + checksum-verify the zip at build time,
+Consumers (e.g. the new frontend's Android app, `frontend/android`) pin a
+version and fetch + checksum-verify the zip at build time,
 unpacking `jniLibs/` into their gradle project. No Rust/NDK toolchain needed
 on the consumer side.
 

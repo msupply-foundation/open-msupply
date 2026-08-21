@@ -52,15 +52,12 @@ copy "target\release\test_connection.exe"  "..\omSupply\Server\test-connection-p
 
 @cd..
 
-@ECHO ##### Fetching new frontend (served at / from frontend_dir) #####
-@REM The NEW FE lives in the private open-msupply-frontend repo and ships as a
-@REM pinned, checksum-verified dist zip. Jenkins must have FRONTEND_FETCH_TOKEN set
-@REM on the build box (a token with read access to that repo's release assets).
-@REM Until frontend-version.json is pinned to a real release, drive this with the
-@REM FRONTEND_DIST_URL override instead (see server/README.md, 'Serving front-end').
-@REM No unzip.exe needed: on Windows fetch-frontend.js falls back to `tar -xf`
-@REM (bsdtar, present on Windows 10+) - do NOT "fix" this by installing unzip.
-node build\fetch-frontend.js "omSupply\Server\frontend"
+@ECHO ##### Building new frontend (served at / from frontend_dir) #####
+@REM The NEW FE is built from this repo's frontend\ (corepack pnpm; the pnpm
+@REM version is pinned by frontend\package.json) and staged into
+@REM Server\frontend — same commit as the server binaries above, no pin, no
+@REM token. See server/README.md, 'Serving front-end'.
+node build\stage-frontend.js "omSupply\Server\frontend"
 @if %errorlevel% neq 0 ( exit /b %errorlevel% )
 
 @ECHO ##### Copying old UI (served at /old-ui/) #####
