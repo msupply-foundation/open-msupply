@@ -207,11 +207,12 @@ export const App: Component = () => {
                 waited for — it is a render-time input to each contribution's
                 visibility gate. */}
             <PluginGate>
-              {/* `routerBase` matches Vite's `base` config so the same
-                build can be mounted at a non-root path (the deployed /rc/
-                track). It is shared with storeRelativePath, which has to take
-                the same prefix back OFF the location — the router never does
-                that itself (issue #1141). */}
+              {/* `routerBase` matches Vite's `base` config so the same build
+                can be mounted at a non-root path — the deployed /rc/ track,
+                and every branch deploy, which build-and-deploy.sh mounts at
+                its own BASE_PATH ('/pr-123/'). It is shared with
+                storeRelativePath, which has to take the same prefix back OFF
+                the location — the router never does that itself (#1141). */}
               <Router base={routerBase}>
                 {/* Store guard wraps the routed app shell; the shell mounts once and
                   pages swap inside it. One route per nav destination renders its
