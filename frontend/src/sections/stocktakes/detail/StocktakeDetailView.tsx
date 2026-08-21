@@ -389,10 +389,36 @@ const StocktakeDetailView: Component = () => {
   );
   const locations = (): LocationWithVolume[] => locationsData.latest ?? [];
 
+  // Clamp a stale page offset back onto the last page that still has rows.
+  // The offset is URL-backed VIEW state, so nothing about a refetch moves it —
+  // but a save can shrink the line count underneath it. Finalise trims every
+  // uncounted line server-side (the OMS update service's
+  // unallocated_lines_to_trim), so a 93-line full stocktake with two counted
+  // lines becomes a two-line one; a bulk delete removes rows outright. Paged
+  // past the new end, the refetched page comes back EMPTY and the table claims
+  // the stocktake has no lines at all — with the pager collapsed to a single
+  // page, so there is nothing left to click back to and only reopening the
+  // record (which re-seeds offset 0) brought the counted lines back
+  // (issue #1117). Costs one extra fetch, and only when actually out of range:
+  // setQuery changes the lines query key, so the resource lands the clamped
+  // page reactively.
+  const clampOffset = (total: number) => {
+    const { offset, first } = query();
+    if (offset === 0 || offset < total) return;
+    setQuery({
+      ...query(),
+      offset: total === 0 ? 0 : Math.floor((total - 1) / first) * first,
+    });
+  };
+
   // Refetch the current lines page after a save. Only the lines page: a line
   // save changes the count/line rows, never the location capacities (see
-  // locationsData above).
-  const refetchAfterSave = () => refetchLines();
+  // locationsData above). The fresh total is clamped against the current
+  // offset, because a save can delete the very rows the offset points at.
+  const refetchAfterSave = async () => {
+    const page = await refetchLines();
+    clampOffset(page?.totalCount ?? 0);
+  };
   // Any in-flight lines fetch shows the loading treatment. Every refetch —
   // filter/sort/page navigation AND a post-save refetch — surfaces it so the
   // user always sees that something is happening (a slow network otherwise
