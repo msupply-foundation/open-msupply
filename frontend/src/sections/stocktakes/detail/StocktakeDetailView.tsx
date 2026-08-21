@@ -390,10 +390,9 @@ const StocktakeDetailView: Component = () => {
   );
   const locations = (): LocationWithVolume[] => locationsData.latest ?? [];
 
-  // Finalise TRIMS every uncounted line server-side, so the total can collapse
-  // far below the page the user is paged to (issue #1117); a bulk delete of the
-  // last page's rows does the same. The shared guard clamps the offset back
-  // onto a page that still exists — see src/list/clampPageOffset.ts.
+  // Finalise trims every uncounted line server-side, so the total can collapse
+  // far below the page the user is on; a bulk delete does the same
+  // (src/list/clampPageOffset.ts, issue #1117).
   clampPageOffset({
     total: () => settledTotal(linesData, page => page.totalCount),
     offset: () => query().offset,
