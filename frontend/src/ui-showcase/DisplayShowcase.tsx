@@ -222,7 +222,10 @@ export const DisplayShowcase = () => {
             documents. Fills its container, shows a centred Spinner until the
             load event, and sandboxes to <code>allow-same-origin</code> by
             default (the document may load same-origin images but runs no
-            scripts). This one is driven by <code>srcdoc</code>.
+            scripts). A document that must run its own scripts takes{' '}
+            <code>allow-scripts</code> <em>instead</em> — the reports view's
+            does — so the two never combine into a frame that can reach the app.
+            This one is driven by <code>srcdoc</code>.
           </Lead>
           <div class={styles.frameHolder}>
             <DocumentFrame title="Stock on hand report" srcdoc={REPORT_HTML} />
