@@ -2434,7 +2434,6 @@
   "messages.log-saved-successfully": "Journal sauvegardé avec succès",
   "messages.logout-confirm": "Cela vous déconnectera.",
   "messages.manual-returns-preferences-disabled": "Les retours manuels sont désactivés pour votre dépôt. Veuillez contacter votre administrateur système si vous devez modifier ce paramètre.",
-  "messages.manufacturer-not-visible-dropped": "Le fabricant \"{{name}}\" n'est pas visible pour ce dépôt, il n'a donc pas été ajouté à la ligne de stock",
   "messages.mark-as-visited": "Cette consultation est encore en attente. Si elle est terminée, marquez-la comme réalisée.",
   "messages.max-or-min-temperature": "Température Max/Min",
   "messages.message-not-sent": "Erreur ! Message non envoyé",

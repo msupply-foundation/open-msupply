@@ -178,6 +178,7 @@ export const ResponseLineEditModal = ({
 
   return (
     <Modal
+      testId="requisition-line-edit-modal"
       title=""
       contentProps={{
         sx: {
