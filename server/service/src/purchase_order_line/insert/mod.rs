@@ -26,7 +26,6 @@ pub enum InsertPurchaseOrderLineError {
     CannotEditPurchaseOrder,
     OtherPartyDoesNotExist,
     OtherPartyNotAManufacturer,
-    OtherPartyNotVisible,
     PackSizeCodeCombinationExists(PackSizeCodeCombination),
     DatabaseError(RepositoryError),
     CannotFindItemByCode(String),

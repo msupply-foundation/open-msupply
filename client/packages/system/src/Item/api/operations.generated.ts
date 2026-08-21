@@ -241,7 +241,6 @@ export type ItemVariantFragment = {
   } | null;
   manufacturer?: {
     __typename: 'NameNode';
-    isVisible: boolean;
     code: string;
     id: string;
     isCustomer: boolean;
@@ -440,7 +439,6 @@ export type ItemFragment = {
     } | null;
     manufacturer?: {
       __typename: 'NameNode';
-      isVisible: boolean;
       code: string;
       id: string;
       isCustomer: boolean;
@@ -822,7 +820,6 @@ export type ItemByIdQuery = {
         } | null;
         manufacturer?: {
           __typename: 'NameNode';
-          isVisible: boolean;
           code: string;
           id: string;
           isCustomer: boolean;
@@ -983,7 +980,6 @@ export type ItemVariantsQuery = {
         } | null;
         manufacturer?: {
           __typename: 'NameNode';
-          isVisible: boolean;
           code: string;
           id: string;
           isCustomer: boolean;
@@ -1167,7 +1163,6 @@ export type UpsertItemVariantMutation = {
             } | null;
             manufacturer?: {
               __typename: 'NameNode';
-              isVisible: boolean;
               code: string;
               id: string;
               isCustomer: boolean;
@@ -1688,7 +1683,6 @@ export const ItemVariantFragmentDoc = gql`
     manufacturerId
     manufacturer(storeId: $storeId) {
       ...NameRow
-      isVisible
     }
     locationTypeId
     locationType {

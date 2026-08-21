@@ -1,7 +1,6 @@
 use async_trait::async_trait;
 use repository::{
-    BackendPluginRowRepository, ChangelogRow, ChangelogTableName, FrontendPluginRowRepository,
-    KeyType, RowActionType,
+    BackendPluginRowRepository, ChangelogRow, ChangelogTableName, KeyType, RowActionType,
 };
 
 use crate::{
@@ -27,12 +26,18 @@ impl Processor for LoadPlugin {
         service_provider: &ServiceProvider,
         changelog: &ChangelogRow,
     ) -> Result<Option<String>, ProcessorError> {
-        // Plugin deletes are intentionally not applied to the in-memory cache:
-        // only the DB row is removed (by uninstall_plugin / a sync delete), while
-        // the cached instance keeps serving until the next server restart, when
-        // reload_all_plugins rebuilds the cache from the DB. This avoids
-        // reconciling the live cache against remaining DB versions on delete.
-        // See issue #12169.
+        // BACKEND plugin deletes are still intentionally not applied to the
+        // in-memory cache: only the DB row is removed (by uninstall_plugin / a
+        // sync delete), while the bound instance keeps running until the next
+        // server restart. See issue #12169.
+        //
+        // FRONTEND plugins no longer work that way. Their cache holds every
+        // compatible version of every code, so an incremental bind cannot tell
+        // which cached entry a change retires; instead any change to the table,
+        // upsert or delete, rebuilds the cache from the DB. An uninstalled
+        // bundle therefore stops being served here rather than at the next
+        // restart — which is also what makes swapping between the old-UI and
+        // new-UI bundles of one plugin testable on a running server.
         match (&changelog.table_name, &changelog.row_action) {
             (ChangelogTableName::BackendPlugin, RowActionType::Upsert) => {
                 let plugin = BackendPluginRowRepository::new(&ctx.connection)
@@ -44,17 +49,10 @@ impl Processor for LoadPlugin {
 
                 PluginInstance::bind(plugin);
             }
-            (ChangelogTableName::FrontendPlugin, RowActionType::Upsert) => {
-                let plugin = FrontendPluginRowRepository::new(&ctx.connection)
-                    .find_one_by_id(&changelog.record_id)?
-                    .ok_or(ProcessorError::RecordNotFound(
-                        "Frontend plugin".to_string(),
-                        changelog.record_id.clone(),
-                    ))?;
-
+            (ChangelogTableName::FrontendPlugin, _) => {
                 service_provider
                     .plugin_service
-                    .bind_frontend_plugin(ctx, plugin);
+                    .reload_frontend_plugins(ctx)?;
             }
             _ => {}
         }
