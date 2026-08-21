@@ -214,9 +214,8 @@ const SupplierReturnDetailView: Component = () => {
     linesReady() ? (linesData.latest?.totalCount ?? 0) : 0;
   const hasLines = () => totalCount() > 0;
 
-  // A bulk delete of the last page's rows can leave the offset past the new
-  // end (issue #1117 in the stocktake detail) — the shared guard clamps it
-  // back to a page that still exists. See src/list/clampPageOffset.ts.
+  // A bulk delete of the last page's rows leaves the offset past the new end
+  // (src/list/clampPageOffset.ts, issue #1117).
   clampPageOffset({
     total: () => settledTotal(linesData, page => page.totalCount),
     offset: () => query().offset,

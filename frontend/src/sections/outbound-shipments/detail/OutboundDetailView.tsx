@@ -401,10 +401,8 @@ const OutboundDetailView: Component = () => {
       setSelectedIds([]);
     },
   });
-  // Deleting the last page's rows can leave the offset past the end (an
-  // empty "41–40 of 40" page) — the shared guard clamps it back to the last
-  // real page. This view had the rule inline first; see
-  // src/list/clampPageOffset.ts for where it went and what else needed it.
+  // Deleting the last page's rows leaves the offset past the end — an empty
+  // "41-40 of 40" page (src/list/clampPageOffset.ts, where this rule started).
   clampPageOffset({
     total: () => settledTotal(linesData, page => page.totalCount),
     offset: () => query().offset,
