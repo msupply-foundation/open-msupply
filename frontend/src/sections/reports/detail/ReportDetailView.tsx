@@ -382,7 +382,21 @@ const ReportDetailView: Component = () => {
           <Spinner center />
         </Match>
         <Match when={result()?.kind === 'fileId'}>
-          <DocumentFrame title={displayName()} src={fileSrc()} />
+          {/* A report document runs its own scripts (AC-U10) — a template may
+              chart, paginate, or lay itself out in script, and a blocked one
+              takes the console with it (issue #1112). So the frame takes
+              `allow-scripts` INSTEAD of the default `allow-same-origin`, never
+              both: the document lands on an opaque origin where its scripts
+              execute but reach no cookie, no storage, and no part of the app.
+              Dropping same-origin costs nothing, because a generated report is
+              self-contained — its images arrive as data URLs, which is what
+              lets the server render the same HTML to PDF with no session at
+              all. */}
+          <DocumentFrame
+            title={displayName()}
+            src={fileSrc()}
+            sandbox="allow-scripts"
+          />
         </Match>
         <Match
           when={result()?.kind === 'dataError' || result()?.kind === 'error'}
