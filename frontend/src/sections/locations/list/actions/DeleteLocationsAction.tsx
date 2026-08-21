@@ -146,7 +146,13 @@ const Body = (props: DeleteLocationsActionProps & { onClose: () => void }) => {
       onClose={props.onClose}
       icon={<TrashIcon />}
       testId="confirmation-modal"
-      title={t('heading.are-you-sure')}
+      // The title tracks the phase: the report is never a question, and only
+      // ever opens because something was refused (kdd/action-modal).
+      title={
+        phase().kind === 'report'
+          ? t('heading.cannot-do-that')
+          : t('heading.are-you-sure')
+      }
       description={
         <Switch
           // Confirm / deleting: how many will be deleted (OMS-REG-INV-01.34).

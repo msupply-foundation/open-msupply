@@ -88,7 +88,13 @@ const Body = (props: DeleteRnrFormsActionProps & { onClose: () => void }) => {
       onClose={props.onClose}
       icon={<TrashIcon />}
       testId="confirmation-modal"
-      title={t('heading.are-you-sure')}
+      // The title tracks the phase — neither a blocked selection nor a
+      // rejection is a question (kdd/action-modal).
+      title={
+        phase() === 'blocked' || phase() === 'error'
+          ? t('heading.cannot-do-that')
+          : t('heading.are-you-sure')
+      }
       description={
         <Switch fallback={tPlural('messages.confirm-delete-rnr-forms', count)}>
           <Match when={phase() === 'blocked'}>
