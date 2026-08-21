@@ -212,6 +212,11 @@ const InboundShipmentsList: Component = () => {
   const singleSelectedId = () =>
     selectedIds().length === 1 ? selectedIds()[0] : undefined;
 
+  // Anything past New has introduced stock, so deleting it reverses the receipt
+  // (rules → deletion). Not a gate — the confirmation just says so.
+  const selectionRemovesStock = () =>
+    rows().some(r => selectedIds().includes(r.id) && r.status !== 'NEW');
+
   const currentSort = (): SortState<SortKey> | undefined => {
     const s = query().sort?.[0];
     return s ? { key: s.key, desc: s.desc ?? false } : undefined;
@@ -474,6 +479,7 @@ const InboundShipmentsList: Component = () => {
             <DeleteInboundShipmentsAction
               storeId={params.storeId}
               selectedIds={selectedIds}
+              removesStock={selectionRemovesStock}
               onDeleted={onDeleted}
             />
             {/* Make a copy — enabled only for a single selection (spec AC-L4);
