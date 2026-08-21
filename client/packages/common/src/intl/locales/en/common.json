@@ -2468,7 +2468,6 @@
   "messages.log-saved-successfully": "Log saved successfully",
   "messages.logout-confirm": "This will log you out.",
   "messages.manual-returns-preferences-disabled": "Manual returns are disabled for your store. Please contact your system administrator if you need to change this.",
-  "messages.manufacturer-not-visible-dropped": "Manufacturer \"{{name}}\" is not visible in this store, so it was not added to the stock line",
   "messages.mark-as-visited": "This encounter is still marked as pending. If you are finished, mark it as visited.",
   "messages.max-or-min-temperature": "Max/min temperature",
   "messages.message-not-sent": "Error! Your message was not sent",

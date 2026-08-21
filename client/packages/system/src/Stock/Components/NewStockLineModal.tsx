@@ -36,7 +36,7 @@ export const NewStockLineModal = ({
 }: NewStockLineModalProps) => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const { success, error, warning } = useNotification();
+  const { success, error } = useNotification();
   const pluginEvents = usePluginEvents({
     isDirty: false,
   });
@@ -113,22 +113,10 @@ export const NewStockLineModal = ({
   const onVariantSelected = useCallback(
     (variant: ItemVariantFragment) => {
       // A variant's manufacturer is configured centrally and may not be visible
-      // to this store. Drop it when not visible (else the save is rejected with
-      // ManufacturerNotVisible) and warn, so a valid variant is still usable.
-      const manufacturer =
-        variant.manufacturer && !variant.manufacturer.isVisible
-          ? null
-          : (variant.manufacturer ?? null);
-      if (variant.manufacturer && !manufacturer) {
-        warning(
-          t('messages.manufacturer-not-visible-dropped', {
-            name: variant.manufacturer.name,
-          })
-        )();
-      }
+      // to this store - that's still valid data, so it is kept as-is
       updatePatch({
         itemVariant: variant,
-        manufacturer,
+        manufacturer: variant.manufacturer ?? null,
         volumePerPack:
           getVolumePerPackFromVariant({
             packSize: draft.packSize,
@@ -137,7 +125,7 @@ export const NewStockLineModal = ({
       });
       setVariantPanelOpen(false);
     },
-    [updatePatch, draft.packSize, warning, t]
+    [updatePatch, draft.packSize]
   );
 
   return (

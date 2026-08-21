@@ -47,7 +47,6 @@ pub enum UpdateStocktakeLineError {
     AdjustmentReasonNotProvided,
     AdjustmentReasonNotValid,
     ManufacturerDoesNotExist,
-    ManufacturerNotVisible,
     ManufacturerIsNotAManufacturer,
     CampaignDoesNotExist,
     ProgramDoesNotExist,
@@ -89,9 +88,9 @@ mod stocktake_line_test {
             mock_stocktake_line_finalised, mock_store_a, MockData, MockDataInserts,
         },
         test_db::setup_all_with_data,
-        EqualFilter, InvoiceLineRow, InvoiceRow, InvoiceStatus, InvoiceType, ReasonOptionRow,
-        ReasonOptionRowRepository, ReasonOptionType, StockLineFilter, StockLineRepository,
-        StocktakeLineRow, StocktakeLineRowRepository,
+        EqualFilter, InvoiceLineRow, InvoiceRow, InvoiceStatus, InvoiceType, NameRow,
+        ReasonOptionRow, ReasonOptionRowRepository, ReasonOptionType, StockLineFilter,
+        StockLineRepository, StocktakeLineRow, StocktakeLineRowRepository,
     };
 
     use crate::{
@@ -118,6 +117,16 @@ mod stocktake_line_test {
                 is_active: true,
                 r#type: ReasonOptionType::NegativeInventoryAdjustment,
                 reason: "Lost".to_string(),
+                ..Default::default()
+            }
+        }
+
+        fn invisible_manufacturer() -> NameRow {
+            NameRow {
+                id: "invisible_manufacturer".to_string(),
+                name: "Invisible manufacturer".to_string(),
+                code: "invisible_manufacturer".to_string(),
+                is_manufacturer: true,
                 ..Default::default()
             }
         }
@@ -176,6 +185,7 @@ mod stocktake_line_test {
             MockData {
                 invoices: vec![outbound_shipment()],
                 invoice_lines: vec![outbound_shipment_line()],
+                names: vec![invisible_manufacturer()],
                 reason_options: vec![positive_reason(), negative_reason()],
                 stocktake_lines: vec![mock_stocktake_line(), mock_reduced_stock()],
                 ..Default::default()
@@ -318,6 +328,40 @@ mod stocktake_line_test {
             )
             .unwrap_err();
         assert_eq!(error, UpdateStocktakeLineError::ManufacturerDoesNotExist);
+
+        // success: manufacturer exists but has no name_store_join for this store - saving a
+        // line with an invisible manufacturer is allowed (see #12672)
+        let stocktake_line_a = mock_stocktake_line_a();
+        let result = service
+            .update_stocktake_line(
+                &context,
+                UpdateStocktakeLine {
+                    id: stocktake_line_a.id,
+                    manufacturer_id: Some(NullableUpdate {
+                        value: Some(invisible_manufacturer().id),
+                    }),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+        assert_eq!(
+            result.line.manufacturer_id,
+            Some(invisible_manufacturer().id)
+        );
+
+        // clear the manufacturer again (also restores the line for the tests below)
+        let stocktake_line_a = mock_stocktake_line_a();
+        let result = service
+            .update_stocktake_line(
+                &context,
+                UpdateStocktakeLine {
+                    id: stocktake_line_a.id,
+                    manufacturer_id: Some(NullableUpdate { value: None }),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+        assert_eq!(result.line.manufacturer_id, None);
 
         // error: IncorrectLocationType
         let stocktake_line = StocktakeLineRow {
