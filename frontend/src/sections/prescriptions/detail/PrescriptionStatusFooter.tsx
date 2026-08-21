@@ -43,8 +43,6 @@ export interface PrescriptionStatusFooterProps {
   hasInsuranceProviders: boolean;
   /** The status change saved — merge the returned node in place. */
   onSaved: (node: PrescriptionFieldsFragment) => void;
-  /** Navigate back to the list (the footer's Close). */
-  onClose: () => void;
 }
 
 export const PrescriptionStatusFooter: Component<
@@ -177,14 +175,8 @@ export const PrescriptionStatusFooter: Component<
       />
 
       <ContentFooterActions>
-        <Button
-          variant="secondary"
-          icon={<XCircleIcon />}
-          data-testid="close-button"
-          onClick={props.onClose}
-        >
-          {t('button.close')}
-        </Button>
+        {/* No Close here (D103): leaving the prescription is the breadcrumb's
+            job, in the app bar, where every other screen puts it. */}
         {/* Hidden once read-only — a permanently dead control (D39). */}
         <Show when={!isReadOnly(status())}>
           <SplitButton

@@ -1,4 +1,4 @@
-import { createMemo, createSignal, Show } from 'solid-js';
+import { createMemo, createSignal, Match, Show, Switch } from 'solid-js';
 import { t } from '../../intl';
 import { Page } from '../../ui/layout/Page/Page';
 import { Header } from '../../ui/layout/Header/Header';
@@ -10,8 +10,17 @@ import { Button } from '../../ui/elements/buttons/Button';
 import { SplitButton } from '../../ui/elements/buttons/SplitButton';
 import { DataTable, type SortState } from '../../ui/elements/table/DataTable';
 import { CentralIcon, LockIcon, PlusCircleIcon } from '../../ui/icons';
+import { createStore } from 'solid-js/store';
 import { AddItemModal } from './AddItemModal';
 import { ImportItemsWizard } from './ImportItemsWizard';
+import { ItemRequestsPanel } from './ItemRequestsPanel';
+import {
+  CURRENT_USER,
+  REQUESTS,
+  pendingCount,
+  type ItemRequest,
+  type RequestStatus,
+} from './requests';
 // Imports from the REAL items vertical — the same move src/ui-showcase's
 // TableShowcase makes for inbound shipments. This page is a faithful mock of
 // the actual catalogue list (spec/items S1), so it reuses the generated row type
@@ -134,7 +143,7 @@ const DATA: ItemRow[] = [
   row('i7', 'DX0044', 'Dexamethasone 4mg/mL injection', 'Ampoule', ['Hospital formulary'], 1250, 210),
   row('i8', 'GL0009', 'Gloves, examination, latex, medium', 'Each', ['Consumables'], 8600, 1400),
   // On no master list — exists, but invisible to every store.
-  row('i9', 'LB0021', 'Laboratory testing — full blood count', 'Each', [], 0, 0),
+  row('i9', 'LB0021', 'Laboratory testing: full blood count', 'Each', [], 0, 0),
   row('i10', 'ME0303', 'Metformin 500mg tablets', 'Tablet', ['National EML 2026', 'NCD kit'], 21000, 2600),
   row('i11', 'OR0007', 'Oral rehydration salts sachet', 'Each', ['National EML 2026', 'Paediatric kit'], 5400, 900),
   row('i12', 'PA0555', 'Paracetamol 500mg tablets', 'Tablet', ['National EML 2026', 'Health Centre kit'], 46000, 6200),
@@ -148,7 +157,15 @@ type Role = 'central' | 'store';
 
 const CatalogueItemsDemo = () => {
   const [role, setRole] = createSignal<Role>('central');
-  const [importing, setImporting] = createSignal(false);
+  /*
+   * Which view of Catalogue > Items is showing. Requests is a view of this page
+   * rather than a separate destination: a request is a pending state of an item,
+   * so it belongs beside the items.
+   */
+  const [screen, setScreen] = createSignal<'list' | 'import' | 'requests'>(
+    'list'
+  );
+  const [requests, setRequests] = createStore<ItemRequest[]>(REQUESTS);
   const [addOpen, setAddOpen] = createSignal(false);
   const [sort, setSort] = createSignal<SortState<SortKey>>({
     key: 'name',
@@ -170,6 +187,55 @@ const CatalogueItemsDemo = () => {
       ? 0
       : Math.max(...lists.map(l => LIST_REACH[l] ?? 0));
 
+  /*
+   * Record a decision. In the real thing an approval is what writes the change
+   * to central data; here it only moves the request's status, which is enough
+   * to show the queue draining and the audit trail it leaves behind.
+   */
+  const decide = (id: string, status: RequestStatus, reason?: string) => {
+    const index = requests.findIndex(r => r.id === id);
+    if (index < 0) return;
+    setRequests(index, {
+      ...requests[index],
+      status,
+      reason,
+      decidedBy: CURRENT_USER,
+      decidedAt: '2026-08-20T09:00:00.000Z',
+    });
+  };
+
+  /** A submitted New item form becomes a pending request, not a catalogue row. */
+  const submitNewItem = (name: string, fields: ItemRequest['fields']) => {
+    setRequests(requests.length, {
+      id: `req-${requests.length + 1}`,
+      kind: 'new-item',
+      summary: name || 'Untitled item',
+      requestedBy: CURRENT_USER,
+      requestedAt: '2026-08-20T09:00:00.000Z',
+      status: 'pending',
+      fields,
+    });
+    setScreen('requests');
+  };
+
+  /*
+   * An import batch is ONE request covering every row, not one per row:
+   * approving 395 rows individually is data entry, not review.
+   */
+  const submitImportBatch = (fields: ItemRequest['fields'], count: number) => {
+    setRequests(requests.length, {
+      id: `req-${requests.length + 1}`,
+      kind: 'import-batch',
+      summary: 'essential-medicines-2026-q3.csv',
+      requestedBy: CURRENT_USER,
+      requestedAt: '2026-08-20T09:00:00.000Z',
+      status: 'pending',
+      itemCount: count,
+      fields,
+    });
+    setScreen('requests');
+  };
+
   // The doses preference is on for this demo, so vaccine rows show the doses
   // equivalent — the real column definitions handle it.
   const columns = () => fixedColumns(() => true);
@@ -182,23 +248,50 @@ const CatalogueItemsDemo = () => {
           <Header>
             <Breadcrumb
               crumbs={
-                importing()
-                  ? [
-                      { label: t('items'), onClick: () => setImporting(false) },
-                      { label: 'Import items' },
+                screen() === 'list'
+                  ? [{ label: t('items') }]
+                  : [
+                      { label: t('items'), onClick: () => setScreen('list') },
+                      {
+                        label:
+                          screen() === 'import'
+                            ? 'Import items'
+                            : 'Approval requests',
+                      },
                     ]
-                  : [{ label: t('items') }]
               }
             />
 
-            <Show when={!importing()}>
+            <Show when={screen() === 'list'}>
               <HeaderButtons>
+                {/*
+                 * The approval queue, badged with the work waiting. Central
+                 * only: a store user has no one else's requests to decide.
+                 */}
+                <Show when={isCentral()}>
+                  <Button
+                    variant="secondary"
+                    onClick={() => setScreen('requests')}
+                  >
+                    {pendingCount(requests) > 0
+                      ? `Requests (${pendingCount(requests)})`
+                      : 'Requests'}
+                  </Button>
+                </Show>
                 <Show
                   when={isCentral()}
                   fallback={
-                    /* The read-only path is not a dead end: it offers the
-                       route forward instead of nothing at all. */
-                    <Button variant="secondary">Request a new item</Button>
+                    /*
+                     * The read-only path is not a dead end, and no longer a
+                     * stub: it opens the SAME New item form, which submits for
+                     * approval rather than writing. One form, two entry points.
+                     */
+                    <Button
+                      variant="secondary"
+                      onClick={() => setAddOpen(true)}
+                    >
+                      Request a new item
+                    </Button>
                   }
                 >
                   {/*
@@ -225,7 +318,7 @@ const CatalogueItemsDemo = () => {
                       { value: 'export', label: 'Export this list…' },
                     ]}
                     onAction={value => {
-                      if (value === 'import') setImporting(true);
+                      if (value === 'import') setScreen('import');
                       else if (value === 'new') setAddOpen(true);
                     }}
                   />
@@ -251,14 +344,14 @@ const CatalogueItemsDemo = () => {
                 when={isCentral()}
                 fallback={
                   <Alert severity="neutral" icon={LockIcon} compact>
-                    Read only. Items are maintained centrally — ask a catalogue
-                    administrator, or request one from this page.
+                    Read only. Items are maintained centrally. Request one from
+                    this page and a catalogue approver reviews it.
                   </Alert>
                 }
               >
                 <Alert severity="info" icon={CentralIcon} compact>
-                  Central data. Changes sync to all {FACILITY_COUNT} facilities
-                  at their next sync.
+                  Central data. Once approved, changes sync to all{' '}
+                  {FACILITY_COUNT} facilities at their next sync.
                 </Alert>
               </Show>
               {/* Role switch — prototype scaffolding, not a product control.
@@ -275,8 +368,7 @@ const CatalogueItemsDemo = () => {
           </Header>
         }
       >
-        <Show
-          when={importing()}
+        <Switch
           fallback={
             <DataTable
               columns={columns()}
@@ -293,16 +385,23 @@ const CatalogueItemsDemo = () => {
             />
           }
         >
-          <ImportItemsWizard
-            onExit={() => setImporting(false)}
-            facilityCount={FACILITY_COUNT}
-          />
-        </Show>
+          <Match when={screen() === 'import'}>
+            <ImportItemsWizard
+              onExit={() => setScreen('list')}
+              facilityCount={FACILITY_COUNT}
+              onSubmitted={submitImportBatch}
+            />
+          </Match>
+          <Match when={screen() === 'requests'}>
+            <ItemRequestsPanel requests={requests} onDecide={decide} />
+          </Match>
+        </Switch>
       </Page>
 
       <AddItemModal
         open={addOpen()}
         onClose={() => setAddOpen(false)}
+        onSubmit={submitNewItem}
         takenCodes={DATA.map(i => ({ code: i.code, name: i.name }))}
         masterLists={MASTER_LISTS}
         reachOf={reachOf}

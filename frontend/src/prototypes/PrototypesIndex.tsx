@@ -102,7 +102,7 @@ export const PrototypesIndex = () => (
         <Text variant="body">
           Proposals built against the real component library, so an internal
           reviewer can use the thing rather than read about it. Each one is a
-          working screen — but nothing here is wired to a backend, and nothing
+          working screen, but nothing here is wired to a backend, and nothing
           here is necessarily agreed.
         </Text>
       </Stack>
