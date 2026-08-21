@@ -19,6 +19,7 @@ import {
   ColourTagDot,
   ColourTagPicker,
 } from '../../../ui/elements/selectors/ColourTag';
+import { Alert } from '../../../ui/elements/feedback/Alert';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { InfoIcon, TrashIcon } from '../../../ui/icons';
@@ -55,13 +56,19 @@ export const CustomerReturnSidePanel: Component<
   const [deleteConfirm, setDeleteConfirm] = createSignal(false);
   const [deleteError, setDeleteError] = createSignal<string>();
 
-  // Delete is offered only while NEW (OMS-REG-DIST-07.42 — the UI's
-  // conservative gate; the server's own rule is "until VERIFIED", asserted
-  // separately by .40 / .41),
-  // and never on a read-only return — a transfer return at NEW is still in the
-  // sender's hands (isReturnDisabled), so it must share the standing gate every
-  // other affordance respects rather than keying off status alone.
-  const canDelete = () => !props.disabled && props.node.status === 'NEW';
+  // Delete is offered at every status the return is editable at — the server's
+  // own rule ("until VERIFIED") rather than a client copy of it, matching the
+  // list's bulk delete so one return gives one answer wherever it is deleted
+  // (validation.md § actions; issue #1134).
+  //
+  // The read-only gate stays: a transfer return at NEW is still in the sender's
+  // hands (isReturnDisabled), which IS a standing property of the record, not
+  // an admissibility question for the server.
+  const canDelete = () => !props.disabled;
+
+  // Past NEW the return has introduced stock, so deleting it reverses the
+  // receipt (rules § deletion rules) — the confirmation says so.
+  const removesStock = () => props.node.status !== 'NEW';
 
   const runDelete = async () => {
     const result = await deleteReturn(params.storeId, props.node.id);
@@ -69,10 +76,10 @@ export const CustomerReturnSidePanel: Component<
       navigate(`/${params.storeId}/distribution/customer-return`);
       return;
     }
-    // A rejection here is unexpected (the action is gated to NEW). 'forbidden'
-    // has already raised the global permission-denied modal (D38); the other
-    // cases (e.g. a concurrent advance to VERIFIED) get a local notice instead
-    // of failing silently.
+    // 'forbidden' has already raised the global permission-denied modal (D38);
+    // every other refusal — a return finalised under this screen, or one of its
+    // lines holding stock that has since been issued — gets the server's own
+    // reason in a local notice.
     if (result.kind === 'error') setDeleteError(result.message);
     else if (result.kind === 'failed')
       setDeleteError(t('messages.cant-delete-generic'));
@@ -196,7 +203,7 @@ export const CustomerReturnSidePanel: Component<
         </SidePanelSection>
       </Show>
 
-      {/* Record-level actions (ui-surface S3): Delete (gated to an editable NEW
+      {/* Record-level actions (ui-surface S3): Delete (offered on any editable
           return, danger tone — Delete buttons are danger app-wide, Carl
           2026-07-24) and Copy to clipboard (secondary) — the shared
           SidePanelActions layout, matching the stocktake detail. */}
@@ -226,7 +233,18 @@ export const CustomerReturnSidePanel: Component<
           open
           onClose={() => setDeleteConfirm(false)}
           title={t('heading.are-you-sure')}
-          message={tPlural('messages.confirm-delete-returns', 1)}
+          message={
+            <>
+              {tPlural('messages.confirm-delete-returns', 1)}
+              {/* Receipt reversal — informational, so the confirm still
+                  submits (validation.md § actions). */}
+              <Show when={removesStock()}>
+                <Alert severity="warning" testId="delete-removes-stock">
+                  {t('messages.delete-removes-received-stock')}
+                </Alert>
+              </Show>
+            </>
+          }
           confirmVariant="danger"
           onConfirm={() => void runDelete()}
         />
@@ -239,7 +257,8 @@ export const CustomerReturnSidePanel: Component<
           open
           onClose={() => setDeleteError(undefined)}
           icon={<InfoIcon />}
-          title={t('error.something-wrong')}
+          // A refusal is not a fault (kdd/action-modal).
+          title={t('heading.cannot-do-that')}
           description={deleteError()}
           // The standard, icon-less acknowledgement (D55).
           actions={
