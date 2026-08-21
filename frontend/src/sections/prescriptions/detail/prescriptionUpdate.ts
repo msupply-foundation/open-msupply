@@ -1,5 +1,8 @@
 import { graphqlFetch } from '../../../api/graphql';
-import { localDayToUtc } from '../../../ui/elements/inputs/dateTimeConvert';
+import {
+  localDayToUtc,
+  localTodayIso,
+} from '../../../ui/elements/inputs/dateTimeConvert';
 import {
   UpdatePrescription,
   DeletePrescriptionLines,
@@ -63,11 +66,21 @@ export const deleteLines = async (
 };
 
 /**
- * A prescription date for the wire: the picked LOCAL calendar day widened to
- * its end-of-day instant (matching the reference client), so "today" reads as
- * not-backdated — the server clears a future instant rather than storing it
- * (contract wire trap: futures are silently dropped, AC-B5 — the picker caps
- * at today so nothing sent here is meaningfully future).
+ * A prescription date for the wire: a PAST day is widened to its LOCAL
+ * end-of-day instant (matching the reference client), but **today keeps the
+ * actual current moment** — the same rule the outbound picked date already
+ * follows (outbound-shipments/detail/backdating.ts `backdatedDatetimeFor`).
+ *
+ * Today must not be widened (#1211). End-of-day today is always in the future,
+ * and a future instant is silently DROPPED by the server — it clears
+ * `backdatedDatetime` instead of storing it (contract wire trap, AC-B5). The
+ * date then displays as `backdatedDatetime ?? createdDatetime`, so a
+ * prescription created on an earlier day snapped straight back to its creation
+ * date and could never be dated today. Sending the current moment stores it
+ * (server-verified), and for a prescription created today it is
+ * indistinguishable from not backdating at all.
  */
 export const prescriptionDateInstant = (isoDay: string): string =>
-  localDayToUtc(isoDay, { endOfDay: true });
+  isoDay === localTodayIso()
+    ? new Date().toISOString()
+    : localDayToUtc(isoDay, { endOfDay: true });
