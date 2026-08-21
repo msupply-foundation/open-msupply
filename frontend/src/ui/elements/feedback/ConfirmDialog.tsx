@@ -77,7 +77,7 @@ export const ConfirmDialog = (props: ConfirmDialogProps) => {
         onClose={props.onClose}
         icon={<HelpIcon />}
         testId="confirmation-modal"
-        title={props.title ?? 'Are you sure?'}
+        title={props.title ?? t('heading.are-you-sure')}
         description={props.message}
         actions={
           <>
