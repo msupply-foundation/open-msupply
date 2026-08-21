@@ -1,8 +1,14 @@
 import { createSignal, Match, Show, Switch, type Component } from 'solid-js';
 import { t, tPlural } from '../../../../intl';
-import { graphqlFetch } from '../../../../api/graphql';
+import {
+  graphqlFetch,
+  isForbidden,
+  missingPermissions,
+  reportPermissionDenied,
+} from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
+import { ErrorDetails } from '../../../../ui/elements/feedback/ErrorDetails';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
 import { TrashIcon } from '../../../../ui/icons';
@@ -12,23 +18,18 @@ export interface DeleteInboundShipmentsActionProps {
   storeId: string;
   selectedIds: () => string[];
   onDeleted: () => void;
-  /** Shown disabled when true — an actionable block (change the selection). */
-  disabled?: boolean;
-  /**
-   * The reason it's disabled, as the trigger's hover text (ui-standards
-   * controls.md § blocked affordances → "actionable block": stay rendered and
-   * disabled, reason perceivable in place). Goes on the Button itself, not a
-   * wrapper element.
-   */
-  title?: string;
 }
 
 // The inbound-shipments-list bulk delete (spec AC-L3): footer button + a
 // confirm → deleting → error dialog. Mirrors DeleteStocktakesAction. The server
-// is the source of truth (the list only OFFERS delete when every selected row
-// is New — a UI narrowing). The batch is atomic (AC-BA1): if any row can't be
-// deleted the whole batch fails and nothing is removed, so on error we show the
-// server's reason (a per-line lock can surface here too, per rules → deletion).
+// is the source of truth and the action is SUBMITTED rather than pre-screened —
+// no client-side copy of the server's delete window, and the button is never
+// disabled because the selection "might" contain an undeletable row
+// (spec/ui-standards/validation.md § actions; issue #1134). The batch is atomic
+// (AC-BA1): if any row can't be deleted the whole batch fails and nothing is
+// removed, so on error we show the server's reason (a per-line lock can surface
+// here too, per rules → deletion) — which is strictly more informative than the
+// old blanket "Only New shipments can be deleted" hover text.
 //
 // No success phase: a clean delete CLOSES the dialog — closure is the
 // confirmation and the shorter list behind it is the visible result
@@ -46,8 +47,6 @@ export const DeleteInboundShipmentsAction: Component<
         variant="danger"
         icon={<TrashIcon />}
         data-testid="delete-lines-button"
-        disabled={props.disabled}
-        title={props.title}
         onClick={() => setOpen(true)}
       >
         {t('button.delete')}
@@ -64,15 +63,43 @@ const Body = (
 ) => {
   const [phase, setPhase] = createSignal<Phase>('confirm');
   const [errorMessage, setErrorMessage] = createSignal<string>();
+  // The raw server text behind a disclosure, when the refusal arrived untyped.
+  const [errorDetail, setErrorDetail] = createSignal<string>();
   const count = props.selectedIds().length;
 
   const run = async () => {
     if (phase() !== 'confirm') return;
     setPhase('deleting');
-    const result = await graphqlFetch(DeleteInboundShipments, {
-      storeId: props.storeId,
-      ids: props.selectedIds().map(id => ({ id })),
-    });
+    const result = await graphqlFetch(
+      DeleteInboundShipments,
+      {
+        storeId: props.storeId,
+        ids: props.selectedIds().map(id => ({ id })),
+      },
+      // A per-line delete lock (transferred / reserved / stocktake-referenced —
+      // rules → deletion) comes back as a TOP-LEVEL GraphQL error rather than a
+      // typed DeleteInboundShipmentError. Take those here so the refusal lands
+      // in the surface that fired the action (D21) instead of tripping the
+      // global unexpected-error (reload) modal, which is what the user saw once
+      // the New-only narrowing stopped hiding this path (issue #1134).
+      { returnGraphqlErrors: true }
+    );
+    if (result.kind === 'graphqlError') {
+      // Opting in also intercepts Forbidden, which owes the user the global
+      // permission-denied modal (D38) — hand it back and close.
+      if (isForbidden(result.errors)) {
+        reportPermissionDenied(missingPermissions(result.errors));
+        props.onClose();
+        return;
+      }
+      // The server's text here is a Rust debug dump, not user copy: show the
+      // translated refusal and tuck the raw detail behind a disclosure
+      // (ui-standards/components.md § error detail disclosure).
+      setErrorMessage(t('messages.cant-delete-generic'));
+      setErrorDetail(result.message);
+      setPhase('error');
+      return;
+    }
     if (result.kind !== 'success') {
       setPhase('confirm');
       return;
@@ -112,7 +139,12 @@ const Body = (
       description={
         <Switch fallback={tPlural('messages.confirm-delete-shipments', count)}>
           <Match when={phase() === 'error'}>
-            <Alert severity="error">{errorMessage()}</Alert>
+            <Alert severity="error">
+              {errorMessage()}
+              <Show when={errorDetail()}>
+                {detail => <ErrorDetails detail={detail()} />}
+              </Show>
+            </Alert>
           </Match>
         </Switch>
       }

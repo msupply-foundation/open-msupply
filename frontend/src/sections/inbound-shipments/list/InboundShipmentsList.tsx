@@ -209,11 +209,6 @@ const InboundShipmentsList: Component = () => {
   const rows = (): Row[] => data.latest?.nodes ?? [];
   const totalCount = () => data.latest?.totalCount ?? 0;
 
-  // Bulk delete is offered only while EVERY selected row is New (spec S1 — a
-  // deliberate UI narrowing of the server's wider delete window).
-  const selectedRows = () => rows().filter(r => selectedIds().includes(r.id));
-  const allSelectedNew = () =>
-    selectedRows().length > 0 && selectedRows().every(r => r.status === 'NEW');
   const singleSelectedId = () =>
     selectedIds().length === 1 ? selectedIds()[0] : undefined;
 
@@ -471,17 +466,15 @@ const InboundShipmentsList: Component = () => {
         // while rows are selected).
         selectionActions={
           <>
-            {/* Delete — enabled only while every selected row is New (spec S1).
-                Disabled-with-reason: the reason rides the button's own hover
-                text, never a wrapper element. */}
+            {/* Delete — always offered on a selection. Deletability is the
+                admissibility of an action, not a standing property of the rows,
+                so it is submitted and the server's own reason is surfaced in
+                the dialog rather than pre-screened here
+                (spec/ui-standards/validation.md § actions; issue #1134). */}
             <DeleteInboundShipmentsAction
               storeId={params.storeId}
               selectedIds={selectedIds}
               onDeleted={onDeleted}
-              disabled={!allSelectedNew()}
-              title={
-                allSelectedNew() ? undefined : t('messages.delete-only-new')
-              }
             />
             {/* Make a copy — enabled only for a single selection (spec AC-L4);
                 shown disabled-with-reason otherwise (M5). Number/supplier come
