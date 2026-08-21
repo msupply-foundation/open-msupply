@@ -45,14 +45,20 @@ export interface AddItemModalProps {
   masterLists: string[];
   /** Facilities each of those lists reaches, for the picker's helper text. */
   reachOf: (lists: string[]) => number;
-  /** Total facilities the catalogue serves — the scope note's denominator. */
+  /** Total facilities the catalogue serves, for the scope note's denominator. */
   facilityCount: number;
+  /**
+   * Submit the form as a REQUEST. There is no create path: a catalogue change
+   * is proposed and then approved, so this dialog never writes central data
+   * itself (see requests.ts).
+   */
+  onSubmit: (name: string, fields: { label: string; value: string }[]) => void;
 }
 
 const TYPE_OPTIONS = [
-  { value: 'stock', label: 'Stock — held and counted' },
-  { value: 'service', label: 'Service — charged, no stock' },
-  { value: 'nonstock', label: 'Non-stock — ordered on demand' },
+  { value: 'stock', label: 'Stock (held and counted)' },
+  { value: 'service', label: 'Service (charged, no stock)' },
+  { value: 'nonstock', label: 'Non-stock (ordered on demand)' },
 ];
 
 const UNIT_OPTIONS = [
@@ -66,9 +72,9 @@ const UNIT_OPTIONS = [
 ].map(u => ({ value: u, label: u }));
 
 const VEN_OPTIONS = [
-  { value: 'V', label: 'V — Vital' },
-  { value: 'E', label: 'E — Essential' },
-  { value: 'N', label: 'N — Non-essential' },
+  { value: 'V', label: 'V (Vital)' },
+  { value: 'E', label: 'E (Essential)' },
+  { value: 'N', label: 'N (Non-essential)' },
   { value: '', label: 'Not set' },
 ];
 
@@ -145,6 +151,112 @@ export const AddItemModal = (props: AddItemModalProps) => {
   // does not apply, a greyed one teaches nothing.
   const isStocked = () => type() !== 'service';
 
+  /*
+   * The proposed record, as the approver will read it. Built here rather than
+   * handing over raw form state, so the review dialog shows labelled values in
+   * the same words the form used and empty fields are simply absent.
+   */
+  const proposedFields = () => {
+    const rows: { label: string; value: string }[] = [
+      { label: 'Item name', value: name().trim() },
+      { label: 'Item code', value: code().trim() },
+      {
+        label: 'Type',
+        value: TYPE_OPTIONS.find(o => o.value === type())?.label ?? type(),
+      },
+    ];
+    if (isStocked()) {
+      rows.push({ label: 'Unit', value: unit() });
+      if (packSize() !== undefined)
+        rows.push({ label: 'Default pack size', value: String(packSize()) });
+      if (strength().trim())
+        rows.push({ label: 'Strength', value: strength().trim() });
+      if (weight() !== undefined)
+        rows.push({ label: 'Default weight (kg)', value: String(weight()) });
+      if (restrictedTo())
+        rows.push({
+          label: 'Restricted to',
+          value:
+            LOCATION_TYPE_OPTIONS.find(o => o.value === restrictedTo())
+              ?.label ?? restrictedTo(),
+        });
+      if (isVaccine()) {
+        rows.push({ label: 'Is a vaccine', value: 'Yes' });
+        if (doses() !== undefined)
+          rows.push({ label: 'Doses per unit', value: String(doses()) });
+        if (volume() !== undefined)
+          rows.push({ label: 'Volume per dose (mL)', value: String(volume()) });
+      }
+    }
+    if (categories().length)
+      rows.push({ label: 'Categories', value: categories().join(', ') });
+    rows.push({
+      label: 'VEN category',
+      value: VEN_OPTIONS.find(o => o.value === ven())?.label ?? 'Not set',
+    });
+    if (atc().trim()) rows.push({ label: 'ATC code', value: atc().trim() });
+    if (universalCode().trim())
+      rows.push({ label: 'Universal code', value: universalCode().trim() });
+    rows.push({
+      label: 'Master lists',
+      value: lists().length ? lists().join(', ') : 'None',
+    });
+    rows.push({ label: 'Active', value: active() ? 'Yes' : 'No' });
+    return rows;
+  };
+
+  /*
+   * Fields cleared for the next record, keeping Type / Unit / Categories / VEN:
+   * a run of manual entries is nearly always the same KIND of item, so those
+   * are the settings worth carrying and the identity is what must not carry.
+   */
+  const clearForNext = () => {
+    setName('');
+    setCode('');
+    setStrength('');
+    setPackSize(1);
+    setWeight(undefined);
+    setRestrictedTo('');
+    setIsVaccine(false);
+    setDoses(undefined);
+    setVolume(undefined);
+    setAtc('');
+    setUniversalCode('');
+    setLists([]);
+    setActive(true);
+  };
+
+  /*
+   * Submitted-this-session count. Without it "Submit and add another" just
+   * empties the form and the user has no evidence anything was recorded.
+   */
+  const [submitted, setSubmitted] = createSignal(0);
+
+  /*
+   * Closing resets everything. The dialog is controlled by `open` and never
+   * unmounts, so without this a reopened form still holds the last entry
+   * (reseed in place, the house pattern from LocationEditModal /
+   * ItemVariantEditModal, rather than a remount).
+   */
+  const close = () => {
+    clearForNext();
+    setSubmitted(0);
+    props.onClose();
+  };
+
+  /** Submit, then leave: the parent lands the user on the approval queue. */
+  const submitAndClose = () => {
+    props.onSubmit(name().trim(), proposedFields());
+    close();
+  };
+
+  /** Submit, then stay with an empty form for the next record. */
+  const submitAndAnother = () => {
+    props.onSubmit(name().trim(), proposedFields());
+    setSubmitted(count => count + 1);
+    clearForNext();
+  };
+
   const canCreate = () =>
     name().trim().length > 0 &&
     code().trim().length > 0 &&
@@ -155,27 +267,46 @@ export const AddItemModal = (props: AddItemModalProps) => {
   return (
     <Dialog
       open={props.open}
-      onClose={props.onClose}
+      onClose={close}
       title="New item"
       icon={<CatalogueIcon />}
       width="form"
-      description={`Will be added to the central catalogue and sync to all ${props.facilityCount} facilities`}
+      description={`Once approved, will be added to the central catalogue and sync to all ${props.facilityCount} facilities`}
       actionsAlign="end"
       actions={
         <>
-          <Button variant="secondary" onClick={props.onClose}>
+          <Button variant="secondary" onClick={close}>
             Cancel
           </Button>
           {/* Manual catalogue entry is almost never one item, so the
               repeat-entry path is a first-class action rather than a
               close-and-reopen. */}
-          <Button variant="secondary" disabled={!canCreate()}>
-            Create and add another
+          <Button
+            variant="secondary"
+            disabled={!canCreate()}
+            onClick={submitAndAnother}
+          >
+            Submit and add another
           </Button>
-          <Button disabled={!canCreate()}>Create item</Button>
+          {/* Never "Create": this dialog proposes a change, it does not write
+              one. The label has to match what the button actually does. */}
+          <Button disabled={!canCreate()} onClick={submitAndClose}>
+            Submit for approval
+          </Button>
         </>
       }
     >
+      <Show when={submitted() > 0}>
+        <div style={{ 'margin-block-end': 'var(--space-4)' }}>
+          <Alert severity="success">
+            {submitted() === 1
+              ? '1 request submitted for approval.'
+              : `${submitted()} requests submitted for approval.`}{' '}
+            Add another below, or close to review them.
+          </Alert>
+        </div>
+      </Show>
+
       <FormColumns>
         <FormColumn>
           <FormSection title="Identity" headingLevel="h3" heading="group">
@@ -185,7 +316,7 @@ export const AddItemModal = (props: AddItemModalProps) => {
               value={name()}
               onInput={e => setName(e.currentTarget.value)}
               placeholder="e.g. Amoxicillin 250mg capsules"
-              helperText="Generic name, strength, then form — what dispensers search on."
+              helperText="Name, strength, then form. This is what dispensers search on."
             />
             <TextField
               label="Item code"
@@ -349,14 +480,14 @@ export const AddItemModal = (props: AddItemModalProps) => {
               placeholder="Add a master list…"
               helperText={
                 lists().length === 0
-                  ? 'No lists yet — this item will not be visible to any store.'
+                  ? 'No lists yet. This item will not be visible to any store.'
                   : `Reaches ${props.reachOf(lists())} of ${props.facilityCount} facilities`
               }
             />
             {/* Checkbox carries no helper slot, so the consequence of
                 unchecking rides the label itself. */}
             <Checkbox
-              label="Active — inactive items stay in history and reports but cannot be ordered or dispensed"
+              label="Active (inactive items stay in history and reports but cannot be ordered or dispensed)"
               checked={active()}
               onChange={setActive}
             />

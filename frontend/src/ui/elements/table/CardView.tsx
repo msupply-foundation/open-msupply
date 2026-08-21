@@ -135,7 +135,11 @@ const cardFlex = <T,>(
     : {
         '--card-field-weight': `${width.weight}`,
         '--card-field-floor': `${width.min}rem`,
-        '--card-field-max-w': `${width.max}rem`,
+        // Free text declares no ceiling and gets none — left unset, so the
+        // field inherits the `none` the group declares.
+        ...(width.max === undefined
+          ? undefined
+          : { '--card-field-max-w': `${width.max}rem` }),
         ...span,
       };
 };
@@ -248,6 +252,20 @@ function cellField<T>(
 //
 // `undefined` when any column declares no width: its track is an open-ended
 // sink, so the group has no meaningful ceiling.
+// The MEASURE a card's field block is held to, whatever the card is given.
+// Mirrors --measure-wide in tokens.css ("~1280px — wide dashboards / dense
+// forms"); duplicated as a number because the clamp below is arithmetic, not a
+// cascade. Chosen above every group's floor sum, so it never forces a line to
+// wrap that would otherwise have fit — it only stops a block sprawling when the
+// surface is wider than the fields have any use for.
+//
+// A form should be constrained rather than stretched across a wide viewport
+// (ui-standards § Form & detail layout), and a block held near its content's
+// width also wraps into FULLER lines: less slack to distribute means less
+// variation between one line's right edge and the next, which is the jaggedness
+// a wrapping row otherwise trades for its widths.
+const MEASURE_WIDE_REM = 80;
+
 const cardTracksMaxRem = <T,>(
   cells: TanCell<T, unknown>[]
 ): number | undefined => {
@@ -255,7 +273,9 @@ const cardTracksMaxRem = <T,>(
   for (const cell of cells) {
     const width = cell.column.columnDef.meta?.cardWidth;
     if (width === undefined) return undefined;
-    total += typeof width === 'number' ? width : width.max;
+    if (typeof width === 'number') total += width;
+    else if (width.max === undefined) return undefined;
+    else total += width.max;
   }
   return total + Math.max(0, cells.length - 1);
 };
@@ -301,7 +321,14 @@ function FieldFlow<T>(props: {
         sized()
           ? {
               '--card-field-cols': props.cells.map(cardTrack).join(' '),
-              '--card-field-max': maxRem() ? `${maxRem()}rem` : 'none',
+              // The group's own ceiling, held to the measure. `undefined` here
+              // means the group has an uncapped field (free text) and so no
+              // ceiling of its own — it still takes the measure, which is what
+              // stops a note running the full width of a very wide modal.
+              '--card-field-max': `${Math.min(
+                maxRem() ?? MEASURE_WIDE_REM,
+                MEASURE_WIDE_REM
+              )}rem`,
               // The narrow layout's track count, when the group declares one —
               // a group's own number, worked out from its fields (see
               // CardGroup.narrowLayout), not a house constant.

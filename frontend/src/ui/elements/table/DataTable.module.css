@@ -1560,25 +1560,56 @@ tr[data-accent='error'] > :first-child::before {
   max-inline-size: var(--card-field-max-w, none);
 }
 
-/* narrowLayout: 'columns' — the other bargain (see CardGroup.narrowLayout). Back
-   to EQUAL tracks, so every row fills its width and every row shares the same
-   column edges; a field that needs more than one column says so with
-   meta.cardSpan. Fields stop being sized to their data, which is the price, and
-   it's worth paying where the group's fields are close enough in length that
-   even columns waste little.
+/* narrowLayout: 'columns' — the other bargain (see CardGroup.narrowLayout).
+   NARROW VIEWPORTS ONLY (≤1023px, 2026-08-20).
 
-   The span is also what makes a row come out even: eight fields on three columns
-   would leave the last row a third empty, but eight fields with one spanning two
-   fill three rows exactly. */
-.cardFields[data-field-widths][data-narrow][data-narrow-columns] {
-  display: grid;
-  /* SIX tracks, not an auto-fit count. The count has to be fixed for the spans
-     to mean anything — a field declaring 3 of 6 is asking for half the row, and
-     an auto-fit grid that resolved to 5 tracks at some width would silently make
-     that three-fifths and break every row's packing. Six is chosen so the spans
-     can express the ratios these cards need (2 against 3); see
-     CardGroup.narrowLayout for why three tracks could not. */
-  grid-template-columns: repeat(var(--card-narrow-columns, 6), 1fr);
+   Equal tracks, so every row fills its width and every row shares the same
+   column edges; a field that needs more than one column says so with
+   meta.cardSpan. Fields stop being sized to their data, which is the price —
+   and on a tablet in portrait it is a price worth paying, because a third of
+   that panel is about what a field wants anyway, so the two come to nearly the
+   same thing and the rows come out even.
+
+   They come apart as the viewport grows. A span claims a FRACTION of the row
+   and a declared width does not scale, so the two agree at one panel width and
+   diverge either side of it: on a laptop's full-screen modal a third is ~27rem
+   handed to a field that asked for 7.5. Capping the field inside its track was
+   tried (and shipped for a day): it honours the width, but the leftover then
+   sits between the fields as a gap, which is worse than either the filled track
+   or the wrap. There is no third answer inside this layout — the slack in a row
+   is `panel − Σ(declared widths)` whatever the track count, and it can only go
+   between the fields, into them, or at the end of the line.
+
+   So above 1023px this layout simply doesn't run: the element keeps the
+   WRAPPING WEIGHTED ROW declared above, which puts as many fields on a line as
+   fit at the widths they asked for and lets the weighted ones absorb what is
+   left — no gaps, and the slack ends up at the end of a line instead. What is
+   given up there is that a wrapped line's edges don't align with the line
+   above. Even rows below the tablet line, sized fields above it.
+
+   1023 is not a new number: it is `breakpoints.navOverlay − 1`, the line this
+   codebase already draws between tablet and desktop. */
+@media (max-width: 1023px) {
+  .cardFields[data-field-widths][data-narrow][data-narrow-columns] {
+    display: grid;
+    /* SIX tracks, not an auto-fit count. The count has to be fixed for the spans
+       to mean anything — a field declaring 3 of 6 is asking for half the row, and
+       an auto-fit grid that resolved to 5 tracks at some width would silently make
+       that three-fifths and break every row's packing. Six is chosen so the spans
+       can express the ratios these cards need (2 against 3); see
+       CardGroup.narrowLayout for why three tracks could not. */
+    grid-template-columns: repeat(var(--card-narrow-columns, 6), 1fr);
+  }
+
+  /* The flex sizing above is inert under grid, but min/max-inline-size are not:
+     the floor would stop a field shrinking into its track, and a weighted field's
+     `max` would cap it BELOW the tracks it spans (a 17rem max against two 13rem
+     columns), leaving the hole this layout exists to avoid. Both are cleared. */
+  .cardFields[data-field-widths][data-narrow][data-narrow-columns] > * {
+    grid-column: span var(--card-field-span, 1);
+    min-inline-size: 0;
+    max-inline-size: none;
+  }
 }
 
 /* A track grid over a narrow container leaves each track too fine for an input —
@@ -1586,27 +1617,28 @@ tr[data-accent='error'] > :first-child::before {
    spans have to be neutralised with it, because a group declaring `span 12`
    against a 3-track grid would force implicit columns and overflow the card
    rather than reflow. `1 / -1` says "this row, whatever its width", so it holds
-   for any group's count without knowing the number. */
-@container (max-inline-size: 30rem) {
-  .cardFields[data-field-widths][data-narrow][data-narrow-columns] {
-    grid-template-columns: 1fr;
-  }
+   for any group's count without knowing the number.
 
-  .cardFields[data-field-widths][data-narrow][data-narrow-columns] > * {
-    grid-column: 1 / -1;
+   NESTED in the same viewport media query as the grid it corrects, and AFTER
+   the two rules above, not before them. A container query carries no
+   specificity of its own, so at an identical selector this block only wins by
+   source order — sitting above them, its `1 / -1` lost to the span rule and
+   the spans it exists to neutralise stayed live, which is the implicit-column
+   overflow described above rather than the stacking described here. It also
+   clears the declared ceiling, for the same reason it clears the span: one
+   field to a row means that row IS the field's width. */
+@media (max-width: 1023px) {
+  @container (max-inline-size: 30rem) {
+    .cardFields[data-field-widths][data-narrow][data-narrow-columns] {
+      grid-template-columns: 1fr;
+    }
+
+    .cardFields[data-field-widths][data-narrow][data-narrow-columns] > * {
+      grid-column: 1 / -1;
+      max-inline-size: none;
+    }
   }
 }
-
-/* The flex sizing above is inert under grid, but min/max-inline-size are not:
-   the floor would stop a field shrinking into its track, and a weighted field's
-   `max` would cap it BELOW the tracks it spans (a 17rem max against two 13rem
-   columns), leaving the hole this layout exists to avoid. Both are cleared. */
-.cardFields[data-field-widths][data-narrow][data-narrow-columns] > * {
-  grid-column: span var(--card-field-span, 1);
-  min-inline-size: 0;
-  max-inline-size: none;
-}
-
 /* --- Card body groups ------------------------------------------------------- */
 
 /* A body group's block (non-disclosure): its optional caption then its field

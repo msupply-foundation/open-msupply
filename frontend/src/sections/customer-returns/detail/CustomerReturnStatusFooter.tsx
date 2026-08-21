@@ -1,8 +1,6 @@
 import { createSignal, Show, type Component } from 'solid-js';
-import { useNavigate, useParams } from '@solidjs/router';
 import { t } from '../../../intl';
 import { CheckboxButton } from '../../../ui/elements/buttons/CheckboxButton';
-import { CloseButton } from '../../../ui/elements/buttons/StandardButtons';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
@@ -40,8 +38,6 @@ export interface CustomerReturnStatusFooterProps {
 export const CustomerReturnStatusFooter: Component<
   CustomerReturnStatusFooterProps
 > = props => {
-  const params = useParams<{ storeId: string }>();
-  const navigate = useNavigate();
   const [holdConfirm, setHoldConfirm] = createSignal(false);
 
   const kind = () => returnKind(props.node);
@@ -71,15 +67,10 @@ export const CustomerReturnStatusFooter: Component<
         current={currentStep(flow(), offered(), props.node.status)}
       />
 
-      {/* One inline-end cluster (the current app's footer): Close sits right
-          beside the Confirm-status split button. */}
+      {/* One inline-end cluster: the Confirm-status split button alone. No
+          Close beside it (D103) — leaving the return is the breadcrumb's job,
+          in the app bar, where every other screen puts it. */}
       <ContentFooterActions>
-        <CloseButton
-          data-testid="close-button"
-          onClick={() =>
-            navigate(`/${params.storeId}/distribution/customer-return`)
-          }
-        />
         <StatusChangeAction
           storeId={props.storeId}
           node={props.node}
