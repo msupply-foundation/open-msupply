@@ -457,17 +457,18 @@ export const InboundShipmentSidePanel: Component<
           heading + padding as the info sections above. */}
       <SidePanelSection value="actions" title={t('heading.actions')}>
         <SidePanelActions>
-          {/* Delete only while New (client narrowing). */}
-          <Show when={props.node.status === 'NEW'}>
-            <DeleteInboundShipmentAction
-              storeId={props.storeId}
-              invoiceId={props.node.id}
-              isExternal={isExternal()}
-              number={() => props.node.invoiceNumber}
-              disabled={false}
-              onDeleted={props.onDeleted}
-            />
-          </Show>
+          {/* Delete — offered at every status, matching the list's bulk
+              delete: it is submitted and the server's own reason surfaced,
+              never pre-screened here (issue #1134). Past New the confirmation
+              warns that the stock the shipment introduced goes with it. */}
+          <DeleteInboundShipmentAction
+            storeId={props.storeId}
+            invoiceId={props.node.id}
+            isExternal={isExternal()}
+            number={() => props.node.invoiceNumber}
+            removesStock={() => props.node.status !== 'NEW'}
+            onDeleted={props.onDeleted}
+          />
           <DuplicateInboundShipmentAction
             invoiceId={props.node.id}
             number={() => props.node.invoiceNumber}

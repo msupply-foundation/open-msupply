@@ -1,4 +1,11 @@
-import { graphqlFetch, type GraphqlErrorItem } from '../../../api/graphql';
+import {
+  graphqlFetch,
+  isForbidden,
+  missingPermissions,
+  reportPermissionDenied,
+  type GraphqlErrorItem,
+} from '../../../api/graphql';
+import { t } from '../../../intl';
 import { translateServerError } from '../../../intl/intlUtils';
 import {
   UpdateInboundShipment,
@@ -57,6 +64,52 @@ const untypedRejectionMessage = (errors: GraphqlErrorItem[]): string => {
   if (typeof detail === 'string' && detail.length > 0)
     return translateServerError(detail);
   return errors[0]?.message ?? translateServerError('UnknownError');
+};
+
+// A per-LINE delete lock reaches us as `LineDeleteError { line_id, error: <the
+// line's own variant> }`, and the server maps THAT to an internal error whose
+// message is the bare string "Internal error" — the reason survives only in
+// `extensions.details`, as a multi-line Rust pretty-debug dump rather than the
+// bare identifier the other untyped rejections carry (server graphql/invoice →
+// inbound_shipment/delete.rs, the `LineDeleteError => InternalError` arm). So
+// the reason has to be recovered by finding the inner variant name in the dump.
+// Ordered widest-cause-first; each has a `server-error.*` translation.
+const LINE_LOCK_VARIANTS = [
+  'BatchIsReserved',
+  'LineUsedInStocktake',
+  'LineLinkedToTransferredInvoice',
+  'CannotDeleteLinesOfAuthorisedReceivedInvoice',
+] as const;
+
+export interface DeleteRejection {
+  /** The reason, translated when the server named one we recognise. */
+  message: string;
+  /** The raw server text, when it came as a debug dump instead of a reason. */
+  detail?: string;
+}
+
+// Why a shipment delete was refused. Shared by the detail action and the list's
+// bulk delete, which surface the same set of rejections (a shipment-level gate,
+// or any one line's own lock — rules → deletion).
+export const deleteRejection = (
+  errors: GraphqlErrorItem[]
+): DeleteRejection => {
+  const detail = errors[0]?.extensions?.details;
+  if (typeof detail === 'string' && detail.length > 0) {
+    const lineLock = LINE_LOCK_VARIANTS.find(variant =>
+      detail.includes(variant)
+    );
+    if (lineLock) return { message: translateServerError(lineLock) };
+    // A single-line detail is the bare variant name and translates; anything
+    // multi-line is a debug dump, which is not user copy — show the generic
+    // refusal and tuck the raw text behind a disclosure instead.
+    if (!detail.includes('\n'))
+      return { message: translateServerError(detail) };
+    return { message: t('messages.cant-delete-generic'), detail };
+  }
+  return {
+    message: errors[0]?.message ?? translateServerError('UnknownError'),
+  };
 };
 
 // A header/status update. Returns a discriminated result so a caller can
@@ -211,13 +264,19 @@ const summariseBatch = (batch: BatchResultFragment): BatchOutcome => {
 };
 
 // Delete a whole shipment (side panel). Picks the twin; returns the server's
-// rejection message on a typed error OR an untyped top-level rejection, or
-// undefined on success/transport-fail (the latter already surfaced globally).
+// rejection on a typed error OR an untyped top-level rejection (message, plus
+// the raw text when the server only gave a debug dump), or nothing on
+// success/transport-fail (the latter already surfaced globally).
 export const deleteInboundShipment = async (
   storeId: string,
   isExternal: boolean,
   id: string
-): Promise<{ ok: boolean; message?: string }> => {
+): Promise<{
+  ok: boolean;
+  message?: string;
+  detail?: string;
+  forbidden?: true;
+}> => {
   const result = isExternal
     ? await graphqlFetch(
         DeleteInboundShipmentExternal,
@@ -229,8 +288,16 @@ export const deleteInboundShipment = async (
         { storeId, input: { id } },
         { returnGraphqlErrors: true }
       );
-  if (result.kind === 'graphqlError')
-    return { ok: false, message: untypedRejectionMessage(result.errors) };
+  if (result.kind === 'graphqlError') {
+    // Opting into graphql errors also intercepts Forbidden, which owes the user
+    // the global permission-denied modal (D38) rather than an inline rejection
+    // — a delete they may not perform is not a property of this shipment.
+    if (isForbidden(result.errors)) {
+      reportPermissionDenied(missingPermissions(result.errors));
+      return { ok: false, forbidden: true };
+    }
+    return { ok: false, ...deleteRejection(result.errors) };
+  }
   if (result.kind !== 'success') return { ok: false };
   const response =
     'deleteInboundShipmentExternal' in result.data
