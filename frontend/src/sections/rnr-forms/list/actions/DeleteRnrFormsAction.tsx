@@ -1,11 +1,17 @@
 import { createSignal, Match, Show, Switch } from 'solid-js';
 import type { Component } from 'solid-js';
-import { graphqlFetch } from '@/api/graphql';
+import {
+  graphqlFetch,
+  isForbidden,
+  missingPermissions,
+  reportPermissionDenied,
+} from '@/api/graphql';
 import { t, tPlural } from '@/intl';
 import { Button } from '@/ui/elements/buttons/Button';
 import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
+import { ErrorDetails } from '@/ui/elements/feedback/ErrorDetails';
 import { TrashIcon } from '@/ui/icons';
 import { DeleteRnrForm } from '../rnrForms.generated';
 
@@ -60,40 +66,83 @@ const Body = (props: DeleteRnrFormsActionProps & { onClose: () => void }) => {
   const [phase, setPhase] = createSignal<Phase>(
     props.canDelete() ? 'confirm' : 'blocked'
   );
+  // The server's own text, behind a disclosure — a refusal arrives untyped.
+  const [errorDetail, setErrorDetail] = createSignal<string>();
   const count = props.selectedIds().length;
+  // Whether any form went before a refusal stopped the loop — the report must
+  // not claim nothing happened, and the list must re-read either way. A signal,
+  // because the report's own title reads it.
+  const [didDelete, setDidDelete] = createSignal(false);
+
+  // Every close path: dismiss FIRST, then hand back — onDeleted clears the
+  // selection, which unmounts the selection-gated footer this dialog lives in.
+  const finish = () => {
+    props.onClose();
+    if (didDelete()) props.onDeleted();
+  };
 
   const run = async () => {
     if (phase() !== 'confirm') return;
     setPhase('deleting');
     for (const id of props.selectedIds()) {
-      const result = await graphqlFetch(DeleteRnrForm, {
-        storeId: props.storeId,
-        id,
-      });
-      if (result.kind !== 'success') {
-        // The global modal owns the description; this dialog just stops
-        // claiming progress (a partial delete is visible in the list).
+      const result = await graphqlFetch(
+        DeleteRnrForm,
+        {
+          storeId: props.storeId,
+          id,
+        },
+        // DeleteRnRFormResponse is a single-member union (DeleteResponse), so a
+        // refusal — a form finalised since this list loaded — can only reach us
+        // as a top-level GraphQL error. Take it here so it becomes THIS
+        // dialog's error phase (D21); left to the default it also tripped the
+        // global unexpected-error (reload) modal, stacking two surfaces on one
+        // refusal (the fix already applied to the detail twin).
+        { returnGraphqlErrors: true }
+      );
+      if (result.kind === 'graphqlError') {
+        // Opting in also intercepts Forbidden, which owes the user the global
+        // permission-denied modal (D38) — every remaining form would fail the
+        // same way, so commit what went and close rather than stacking a
+        // second surface under it.
+        if (isForbidden(result.errors)) {
+          reportPermissionDenied(missingPermissions(result.errors));
+          finish();
+          return;
+        }
+        setErrorDetail(result.message);
         setPhase('error');
         return;
       }
+      if (result.kind !== 'success') {
+        // A genuine transport failure: the global modal owns the description;
+        // this dialog just stops claiming progress.
+        setPhase('error');
+        return;
+      }
+      setDidDelete(true);
     }
-    props.onClose();
-    props.onDeleted();
+    finish();
   };
 
   return (
     <Dialog
       open
       dismissable={phase() !== 'deleting'}
-      onClose={props.onClose}
+      onClose={finish}
       icon={<TrashIcon />}
       testId="confirmation-modal"
       // The title tracks the phase — neither a blocked selection nor a
-      // rejection is a question (kdd/action-modal).
+      // rejection is a question (kdd/action-modal). These are N independent
+      // deletes, so a refusal partway leaves the earlier forms deleted; the
+      // report says so rather than claiming nothing was.
       title={
-        phase() === 'blocked' || phase() === 'error'
+        phase() === 'blocked'
           ? t('heading.cannot-do-that')
-          : t('heading.are-you-sure')
+          : phase() !== 'error'
+            ? t('heading.are-you-sure')
+            : didDelete()
+              ? t('heading.some-not-deleted')
+              : t('heading.cannot-do-that')
       }
       description={
         <Switch fallback={tPlural('messages.confirm-delete-rnr-forms', count)}>
@@ -103,7 +152,15 @@ const Body = (props: DeleteRnrFormsActionProps & { onClose: () => void }) => {
             </Alert>
           </Match>
           <Match when={phase() === 'error'}>
-            <Alert severity="error">{t('error.something-wrong')}</Alert>
+            <Show when={didDelete()}>
+              <p>{t('messages.deleted-rnr-forms-before-this')}</p>
+            </Show>
+            <Alert severity="error">
+              {t('error.something-wrong')}
+              <Show when={errorDetail()}>
+                {detail => <ErrorDetails detail={detail()} />}
+              </Show>
+            </Alert>
           </Match>
         </Switch>
       }
@@ -130,7 +187,9 @@ const Body = (props: DeleteRnrFormsActionProps & { onClose: () => void }) => {
             </>
           }
         >
-          <Button variant="secondary" confirms="plain" onClick={props.onClose}>
+          {/* Dismissal ends the interaction — finish hands back to the list so
+              anything already deleted leaves it. */}
+          <Button variant="secondary" confirms="plain" onClick={finish}>
             {t('button.close')}
           </Button>
         </Show>

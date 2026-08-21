@@ -1,8 +1,14 @@
 import { createSignal, Show, type Component } from 'solid-js';
 import { t, tPlural } from '@/intl';
-import { graphqlFetch } from '@/api/graphql';
+import {
+  graphqlFetch,
+  isForbidden,
+  missingPermissions,
+  reportPermissionDenied,
+} from '@/api/graphql';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
+import { ErrorDetails } from '@/ui/elements/feedback/ErrorDetails';
 import { Button } from '@/ui/elements/buttons/Button';
 import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
 import { TrashIcon } from '@/ui/icons';
@@ -18,10 +24,17 @@ export interface DeleteStockMovementsActionProps {
 // The list's bulk delete — button + confirm → deleting → error dialog
 // (the DeleteStocktakesAction shape). The backend owns what can be deleted;
 // the batch is ALL-OR-NOTHING with no per-id results (contract § deletion):
-// one finalised movement in the selection refuses the whole delete as a
-// single untyped top-level error, so on failure we show OUR translated
-// refusal (rules § deletion / OMS-REG-SMV-10.28/.30), selection kept.
-// Success closes the dialog — closure is the confirmation (D21).
+// any rejection refuses the whole delete as a single untyped top-level error
+// (rules § deletion / OMS-REG-SMV-10.28/.30), selection kept.
+//
+// Because it is untyped there is nothing to branch on, so the error phase does
+// NOT name a cause: it states the refusal generically and puts the server's own
+// text behind a disclosure — naming the finalised case for every rejection that
+// lands here reported a reason that was not the user's. Permission denials are
+// separated out first: those owe the user the global permission-denied modal
+// (D38), which opting into GraphQL errors would otherwise swallow. Success
+// closes the dialog — closure is the confirmation (D21). Mirrors the
+// stock-movement detail view's own line delete.
 type Phase = 'confirm' | 'deleting' | 'error';
 
 export const DeleteStockMovementsAction: Component<
@@ -49,6 +62,8 @@ const Body = (
   props: DeleteStockMovementsActionProps & { onClose: () => void }
 ) => {
   const [phase, setPhase] = createSignal<Phase>('confirm');
+  // The server's own text, behind a disclosure — the refusal arrives untyped.
+  const [errorDetail, setErrorDetail] = createSignal<string>();
   const count = props.selectedIds().length;
 
   const run = async () => {
@@ -63,6 +78,14 @@ const Body = (
       { returnGraphqlErrors: true }
     );
     if (result.kind === 'graphqlError') {
+      // A permission denial is not a delete refusal — hand it to the global
+      // permission-denied modal (D38) and close, as the default path would.
+      if (isForbidden(result.errors)) {
+        reportPermissionDenied(missingPermissions(result.errors));
+        props.onClose();
+        return;
+      }
+      setErrorDetail(result.message);
       setPhase('error');
       return;
     }
@@ -94,7 +117,10 @@ const Body = (
           fallback={tPlural('messages.confirm-delete-stock-movements', count)}
         >
           <Alert severity="error">
-            {t('messages.cant-delete-finalised-stock-movements')}
+            {t('messages.cant-delete-generic')}
+            <Show when={errorDetail()}>
+              {detail => <ErrorDetails detail={detail()} />}
+            </Show>
           </Alert>
         </Show>
       }

@@ -2653,6 +2653,7 @@
   "messages.deleted-returns_other": "Deleted {{count}} returns",
   "messages.deleted-rnr-form_one": "Deleted {{count}} R&R Form",
   "messages.deleted-rnr-form_other": "Deleted {{count}} R&R Forms",
+  "messages.deleted-rnr-forms-before-this": "The forms before this one were deleted",
   "messages.deleted-shipments_few": "Deleted {{count}} shipments",
   "messages.deleted-shipments_many": "Deleted {{count}} shipments",
   "messages.deleted-shipments_one": "Deleted {{count}} shipment",
