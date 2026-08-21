@@ -1,5 +1,4 @@
 import {
-  createEffect,
   createMemo,
   createResource,
   createSignal,
@@ -65,6 +64,7 @@ import {
   initialPageSize,
   rememberPageSize,
 } from '../../../list/pageSize';
+import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
 import { stripEmpty } from '../../../typeHelpers';
 import { CustomFieldsEditTab } from '../../../domain/customFields';
 import {
@@ -402,15 +402,14 @@ const OutboundDetailView: Component = () => {
     },
   });
   // Deleting the last page's rows can leave the offset past the end (an
-  // empty "41–40 of 40" page) — clamp back to the last real page when a
-  // resolved page proves the offset overshot. Idempotent: the clamped offset
-  // satisfies the guard, so the effect settles in one step.
-  createEffect(() => {
-    const total = linesData.latest?.totalCount;
-    const { offset, first } = query();
-    if (total == null || offset === 0 || offset < total) return;
-    const lastPage = Math.floor(Math.max(0, total - 1) / first) * first;
-    setQuery({ ...query(), offset: lastPage });
+  // empty "41–40 of 40" page) — the shared guard clamps it back to the last
+  // real page. This view had the rule inline first; see
+  // src/list/clampPageOffset.ts for where it went and what else needed it.
+  clampPageOffset({
+    total: () => settledTotal(linesData, page => page.totalCount),
+    offset: () => query().offset,
+    pageSize: () => query().first,
+    setOffset: offset => setQuery({ ...query(), offset }),
   });
 
   // Service lines — a small dedicated read (spec S5; the side panel's service
