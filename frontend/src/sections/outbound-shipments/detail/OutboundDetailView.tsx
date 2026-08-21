@@ -51,6 +51,7 @@ import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { RowStatusBadges, uncapped } from './RowStatusBadges';
 import {
   AlertCircleIcon,
+  AlertTriangleIcon,
   InfoIcon,
   MinusCircleIcon,
   PauseIcon,
@@ -187,24 +188,25 @@ const LineStatusBadges = (props: { line: Line }) => (
 // unfinished ones no louder than the rest, and it spent the row background —
 // the screen's one at-a-glance channel — on a fact each row already states.
 // The expiry and hold facts keep their own words: the row-status badges
-// beside the item name and the reddened Expiry-date cell, plus the card
-// tones below.
-const lineRowTint = (
-  line: Line
-): 'unfinished' | 'success' | 'warning' | 'error' | undefined =>
+// beside the item name and the reddened Expiry-date cell. This is the ONE
+// row colour outbound spends, here and in the line editor (2026-08-21) — the
+// editor's own status tints are gone for the same reason.
+const lineRowTint = (line: Line): 'unfinished' | undefined =>
   lineNeedsAction(line) ? 'unfinished' : undefined;
 
-// The card tone (tinted title + the chips after it — D111/D112). Expired
-// outranks held, which outranks needs-action — the amber a card takes for a
-// held batch and for an unissued line is the same amber, and a held line is
-// unissued by definition, so the order only decides which chip tone leads;
-// both chips still show. A placeholder has nothing but its needs-action
-// state, so it now reads amber where D111 left it plain.
-const lineCardTone = (line: Line): 'warning' | 'error' | undefined => {
-  if (line.type !== 'UNALLOCATED_STOCK' && lineExpired(line)) return 'error';
-  if (line.type !== 'UNALLOCATED_STOCK' && lineOnHold(line)) return 'warning';
-  return lineNeedsAction(line) ? 'warning' : undefined;
-};
+// The card tone — the tinted identity title, the card's stand-in for the row
+// marking it has no background to carry (D111). ONE fact tones a card now:
+// the needs-action state this screen's whole marking is about.
+//
+// Expiry and hold no longer tone it (2026-08-21): a card states each of them
+// TWICE in words already — the chip sits immediately after the title, and the
+// body's Expiry-date field is red — so the colour on the title added nothing
+// and, on a red title, read as though the item NAME were wrong rather than the
+// stock it names. Every state keeps its chip; only this one keeps a colour.
+// Narrows D112 (which specifies a red identity title on an expired card) — the
+// divergence record carries the matching edit.
+const lineCardTone = (line: Line): 'warning' | undefined =>
+  lineNeedsAction(line) ? 'warning' : undefined;
 
 // The server sort-field union (from codegen) — a column can only ever name a
 // real server sort key (kdd/type-safety). Columns whose data the server can't
@@ -825,7 +827,29 @@ const OutboundDetailView: Component = () => {
         ),
       },
       {
-        // Needs-action flag, CARD-ONLY: in the table the amber tint, the
+        // Near-expiry flag, CARD-ONLY (D112's lower tier): the table's red
+        // "Near expiry" badge beside the item name carries the tier, and the
+        // card hides that cluster — without this chip the tier would reach a
+        // card as the reddened Expiry-date field ALONE, i.e. colour with no
+        // word (styling principle 9 / WCAG 1.4.1), and would be
+        // indistinguishable at a glance from the expired tier the chip above
+        // names. Tiered with `expired`, never both: the predicate excludes an
+        // already-expired line.
+        c: { accessor: lineNearExpiry, id: 'nearExpiry' },
+        header: () => t('label.near-expiry'),
+        ...getFlagCell(
+          t('label.near-expiry'),
+          {
+            headerPosition: 'badge',
+            hideOnTable: true,
+            hideFromColumnSettings: true,
+          },
+          'error',
+          () => <AlertTriangleIcon />
+        ),
+      },
+      {
+        // Needs-action flag, CARD-ONLY: in the table the teal tint, the
         // leading bar and the "Not issued" badge beside the item name carry
         // it; a card has none of those, and its Batch field ("Unallocated")
         // sits in the body where nothing distinguishes it — so the corner
