@@ -62,9 +62,13 @@ create_tag_for_branch() {
     fi
 }
 
-# Get all RC and develop branches
-RC_BRANCHES=$(git branch -r | grep -E 'v[0-9.]+-(R|r)(C|c)' | sed 's/.*origin\///')
-DEV_BRANCHES=$(git branch -r | grep -E 'v[0-9.]+-(dev|develop)$' | sed 's/.*origin\///')
+# Get all RC and develop branches. Match from 'origin/' so only branches whose
+# name STARTS with the version qualify: suffixed RC branches (v3.01.00-RC-fix-x)
+# still count, but prefixed ones like merge-v3.01.00-RC-to-develop don't — that
+# one carries develop's package version, so it minted v3.01.01-RC-* tags and
+# announced develop content on the RC release channel.
+RC_BRANCHES=$(git branch -r | grep -E 'origin/v[0-9.]+-(R|r)(C|c)' | sed 's/.*origin\///')
+DEV_BRANCHES=$(git branch -r | grep -E 'origin/v[0-9.]+-(dev|develop)$' | sed 's/.*origin\///')
 
 # Process all RC, develop branches, and the literal 'develop'
 for BRANCH in $RC_BRANCHES $DEV_BRANCHES 'develop'; do

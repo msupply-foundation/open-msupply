@@ -330,13 +330,14 @@ mod query {
         );
         assert_eq!(result.unwrap_err(), UpsertItemVariantError::DuplicateName);
 
-        // Test manufacturer not visible
+        // Test manufacturer type check: name_c is not visible in this store, but visibility
+        // no longer blocks manufacturers - the is-a-manufacturer check must still apply
         let result = service.upsert_item_variant(
             &context,
             UpsertItemVariantWithPackaging {
                 id: uuid(),
                 item_id: mock_item_a().id,
-                name: "OtherPartyNotVisible".to_string(),
+                name: "OtherPartyNotAManufacturer".to_string(),
                 manufacturer_id: Some(NullableUpdate {
                     value: Some(mock_name_c().id),
                 }),
@@ -345,7 +346,7 @@ mod query {
         );
         assert_eq!(
             result.unwrap_err(),
-            UpsertItemVariantError::OtherPartyNotVisible
+            UpsertItemVariantError::OtherPartyNotAManufacturer
         );
     }
 }

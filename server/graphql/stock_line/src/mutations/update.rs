@@ -164,7 +164,6 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::DonorNotVisible
         | ServiceError::DonorIsNotADonor
         | ServiceError::ManufacturerDoesNotExist
-        | ServiceError::ManufacturerNotVisible
         | ServiceError::ManufacturerIsNotAManufacturer
         | ServiceError::VVMStatusDoesNotExist
         | ServiceError::StockDoesNotBelongToStore

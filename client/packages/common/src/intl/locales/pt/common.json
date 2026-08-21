@@ -2409,7 +2409,6 @@
   "messages.log-saved-successfully": "Registo salvo com sucesso",
   "messages.logout-confirm": "Isto te desconectará.",
   "messages.manual-returns-preferences-disabled": "As devoluções manuais estão desativadas na sua loja. Se precisar de alterar esta configuração, contacte o administrador do sistema.",
-  "messages.manufacturer-not-visible-dropped": "O fabricante \"{{name}}\" não está visível nesta unidade de saúde, pelo que não foi adicionado à linha de estoque",
   "messages.mark-as-visited": "Esta consulta ainda está marcada como pendente. Caso tenha finalizado, marque como 'visitado'.",
   "messages.max-or-min-temperature": "Temperatura máx/mín",
   "messages.message-not-sent": "Erro! Sua mensagem não foi enviada",
