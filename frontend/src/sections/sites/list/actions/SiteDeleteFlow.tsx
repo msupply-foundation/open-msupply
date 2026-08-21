@@ -121,12 +121,16 @@ export const SiteDeleteFlow: Component<SiteDeleteFlowProps> = props => {
       onClose={props.onCancel}
       icon={<TrashIcon />}
       testId="confirmation-modal"
-      // The title tracks the phase: the report is never a question, and only
-      // ever opens because a site was refused (kdd/action-modal).
+      // The title tracks the phase: the report is never a question
+      // (kdd/action-modal). It only opens because a site was refused, but the
+      // deletes are independent — when some sites DID go, "Can't do that!"
+      // would sit over a report saying they are gone.
       title={
-        phase().kind === 'report'
-          ? t('heading.cannot-do-that')
-          : t('heading.are-you-sure')
+        phase().kind !== 'report'
+          ? t('heading.are-you-sure')
+          : (report()?.deletedCount ?? 0) > 0
+            ? t('heading.some-not-deleted')
+            : t('heading.cannot-do-that')
       }
       description={
         <Switch
