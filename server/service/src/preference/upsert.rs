@@ -37,6 +37,7 @@ pub struct UpsertPreferences {
     pub global_table_configs: Option<serde_json::Value>,
     pub backdating: Option<BackdatingData>,
     pub receive_payments_from_prescriptions: Option<bool>,
+    pub global_logo: Option<String>,
 
     // Store preferences
     pub blind_stocktake: Option<Vec<StorePrefUpdate<bool>>>,
@@ -91,6 +92,7 @@ pub fn upsert_preferences(
         global_table_configs: global_table_configs_input,
         backdating: backdating_input,
         receive_payments_from_prescriptions: receive_payments_from_prescriptions_input,
+        global_logo: global_logo_input,
 
         // Store preferences
         blind_stocktake: blind_stocktake_input,
@@ -108,7 +110,8 @@ pub fn upsert_preferences(
             can_create_internal_order_from_a_requisition_input,
         select_destination_store_for_an_internal_order:
             select_destination_store_for_an_internal_order_input,
-        external_inbound_shipment_lines_must_be_authorised: external_inbound_shipment_lines_must_be_authorised_input,
+        external_inbound_shipment_lines_must_be_authorised:
+            external_inbound_shipment_lines_must_be_authorised_input,
         number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products:
             number_of_months_to_check_for_consumption_when_calculating_out_of_stock_products_input,
         number_of_months_threshold_to_show_low_stock_alerts_for_products:
@@ -144,6 +147,7 @@ pub fn upsert_preferences(
         global_table_configs,
         backdating,
         receive_payments_from_prescriptions,
+        global_logo,
 
         // Store preferences
         blind_stocktake,
@@ -251,6 +255,10 @@ pub fn upsert_preferences(
 
             if let Some(input) = receive_payments_from_prescriptions_input {
                 receive_payments_from_prescriptions.upsert(connection, input, None)?;
+            }
+
+            if let Some(input) = global_logo_input {
+                global_logo.upsert(connection, input, None)?;
             }
 
             // Store preferences, input could be array of store IDs and values - iterate and insert...
@@ -415,8 +423,7 @@ mod tests {
         test_util_set_is_central_server(true);
 
         // Seed an existing v1 (legacy) map.
-        let v1 =
-            BTreeMap::from([("button.close".to_string(), "Legacy Close".to_string())]);
+        let v1 = BTreeMap::from([("button.close".to_string(), "Legacy Close".to_string())]);
         CustomTranslations
             .upsert(&ctx.connection, v1.clone(), None)
             .unwrap();
@@ -435,13 +442,15 @@ mod tests {
         )
         .unwrap();
 
-        assert_eq!(CustomTranslationsV2.load(&ctx.connection, None).unwrap(), v2);
+        assert_eq!(
+            CustomTranslationsV2.load(&ctx.connection, None).unwrap(),
+            v2
+        );
         // v1 is untouched
         assert_eq!(CustomTranslations.load(&ctx.connection, None).unwrap(), v1);
 
         // The legacy v1 map is edited directly via the custom_translations input.
-        let new_v1 =
-            BTreeMap::from([("button.save".to_string(), "Legacy Save".to_string())]);
+        let new_v1 = BTreeMap::from([("button.save".to_string(), "Legacy Save".to_string())]);
         upsert_preferences(
             &ctx,
             UpsertPreferences {
