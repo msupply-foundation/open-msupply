@@ -1,6 +1,6 @@
 use crate::{
     invoice::common::generate_invoice_user_id_update,
-    invoice_line::stock_in_line::{generate_batch, StockLineInput},
+    invoice_line::stock_in_line::{generate_batch, should_update_stock, StockLineInput},
 };
 use repository::{
     InvoiceLineRow, InvoiceLineType, InvoiceRow, ItemRow, RepositoryError, RequisitionLineRow,
@@ -11,7 +11,7 @@ use util::uuid::uuid;
 pub struct GenerateResult {
     pub invoice: Option<InvoiceRow>,
     pub invoice_line: InvoiceLineRow,
-    pub stock_line: StockLineRow,
+    pub stock_line: Option<StockLineRow>,
 }
 
 pub fn generate(
@@ -23,20 +23,25 @@ pub fn generate(
 ) -> Result<GenerateResult, RepositoryError> {
     let mut invoice_line = generate_line(requisition_row, item_row, existing_invoice_row.clone());
 
-    let stock_line = generate_batch(
-        connection,
-        invoice_line.clone(),
-        StockLineInput {
-            stock_line_id: None,
-            store_id: existing_invoice_row.store_id.clone(),
-            supplier_id: existing_invoice_row.name_id.clone(),
-            on_hold: false,
-            barcode_id: None,
-            overwrite_stock_levels: true,
-        },
-    )?;
-    // If a new stock line has been created, update the stock_line_id on the invoice line
-    invoice_line.stock_line_id = Some(stock_line.id.clone());
+    let stock_line = if should_update_stock(&existing_invoice_row) {
+        let batch = generate_batch(
+            connection,
+            invoice_line.clone(),
+            StockLineInput {
+                stock_line_id: None,
+                store_id: existing_invoice_row.store_id.clone(),
+                supplier_id: existing_invoice_row.name_id.clone(),
+                on_hold: false,
+                barcode_id: None,
+                overwrite_stock_levels: true,
+            },
+        )?;
+        // If a new stock line has been created, update the stock_line_id on the invoice line
+        invoice_line.stock_line_id = Some(batch.id.clone());
+        Some(batch)
+    } else {
+        None
+    };
 
     Ok(GenerateResult {
         invoice: generate_invoice_user_id_update(user_id, existing_invoice_row),
