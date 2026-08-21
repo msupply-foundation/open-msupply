@@ -35,6 +35,7 @@ import {
   initialPageSize,
   rememberPageSize,
 } from '../../../list/pageSize';
+import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
 import { stripEmpty } from '../../../typeHelpers';
 import {
   InternalOrders,
@@ -163,6 +164,17 @@ const InternalOrdersList: Component = () => {
 
   const rows = (): Row[] => data.latest?.nodes ?? [];
   const totalCount = () => data.latest?.totalCount ?? 0;
+
+  // Deleting the last page's rows (the bulk delete action) can leave the offset
+  // past the new end, which shows an empty table under a "nothing here"
+  // placeholder — the shared guard clamps it back to a page that still exists.
+  // See src/list/clampPageOffset.ts (issue #1117).
+  clampPageOffset({
+    total: () => settledTotal(data, page => page.totalCount),
+    offset: () => query().offset,
+    pageSize: () => query().first,
+    setOffset: offset => setQuery({ ...query(), offset }),
+  });
 
   // The store-context gates for the conditional columns (AC-L8/L9), fetched
   // once per store, read non-suspending. Safe default OFF while unresolved — a
