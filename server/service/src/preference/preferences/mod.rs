@@ -80,6 +80,8 @@ pub mod do_not_print_placeholder_line_labels;
 pub use do_not_print_placeholder_line_labels::*;
 pub mod blind_stocktake;
 pub use blind_stocktake::*;
+pub mod global_logo;
+pub use global_logo::*;
 
 pub struct PreferenceProvider {
     // Global preferences
@@ -102,6 +104,7 @@ pub struct PreferenceProvider {
     pub global_table_configs: GlobalTableConfigs,
     pub backdating: Backdating,
     pub receive_payments_from_prescriptions: ReceivePaymentsFromPrescriptions,
+    pub global_logo: GlobalLogo,
 
     // Store preferences
     pub blind_stocktake: BlindStocktake,
@@ -155,6 +158,7 @@ pub fn get_preference_provider() -> PreferenceProvider {
         global_table_configs: GlobalTableConfigs,
         backdating: Backdating,
         receive_payments_from_prescriptions: ReceivePaymentsFromPrescriptions,
+        global_logo: GlobalLogo,
 
         // Store preferences
         blind_stocktake: BlindStocktake,

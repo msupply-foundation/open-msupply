@@ -194,6 +194,8 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::LineAlreadyExists
         | ServiceError::NotAStockIn
         | ServiceError::NumberOfPacksBelowZero
+        | ServiceError::SellPricePerPackBelowZero
+        | ServiceError::CostPricePerPackBelowZero
         | ServiceError::PackSizeBelowOne
         | ServiceError::LocationDoesNotExist
         | ServiceError::ItemVariantDoesNotExist
