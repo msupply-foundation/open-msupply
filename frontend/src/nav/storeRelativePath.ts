@@ -5,14 +5,20 @@
  * Issue #1141: solid-router's `base` is prepended to route PATTERNS, never
  * stripped from the location — its browser integration feeds it
  * `window.location.pathname` verbatim (@solidjs/router
- * dist/routers/Router.js). So on a nested mount (the deployed /rc/ track)
- * `useLocation().pathname` reads '/rc/{store}/inventory/stocktakes', and
- * hand-stripping only '/{store}' left the base in the string. Nothing matched:
- * the menu highlighted nothing, the breadcrumb lost its section glyph, the tab
- * title fell back, the keyboard's navigate-up walked to a garbage path — and
+ * dist/routers/Router.js). So on a nested mount `useLocation().pathname` reads
+ * '/rc/{store}/inventory/stocktakes', and hand-stripping only '/{store}' left
+ * the base in the string. Nothing matched: the menu highlighted nothing and
+ * its section stayed shut (chrome OMS-REG-FTR-02.4/.19/.21), the breadcrumb
+ * lost its section glyph (chrome § app bar), the tab title fell back (.27),
+ * the keyboard's navigate-up walked to a garbage path (keyboard KB-X5) — and
  * routeAccess found no destination, so every capability and permission route
- * gate silently passed. None of it reproduced at the root mount, where the
- * base is ''.
+ * gate silently passed (navigation OMS-REG-NAV-01.16/.20).
+ *
+ * A nested mount is not one exotic track: deploy/build-and-deploy.sh mounts
+ * every branch deploy at its own BASE_PATH ('/pr-123/'), alongside the
+ * deployed /rc/ track. Local dev and CI both run at the root, where the base
+ * is '' and the old derivation was correct — which is why this was invisible
+ * to everyone writing the code and plain to anyone reviewing a deploy.
  */
 
 /**
@@ -33,14 +39,27 @@ export const routerBase = import.meta.env.BASE_URL.replace(/\/$/, '');
  *
  * Takes the location's pathname rather than reading it, so it stays a pure
  * function of (URL, store) and can be tested without a router.
+ *
+ * The mount comes off first and unconditionally, the store segment behind a
+ * guard. Deliberate: a path that is somehow NOT under '/{store}' still comes
+ * back mount-free, because a leaked mount is exactly what leaves routeAccess
+ * with no destination to judge — and that fails OPEN. In this app the guard
+ * cannot miss (ShellLayout and KeyboardHost both sit under the '/:storeId'
+ * route, and solid-router hands params through undecoded, so the segment is
+ * always the literal one in the pathname), which is also why a miss doesn't
+ * warn: it would only ever fire on a routing transition where location and
+ * params disagree for a frame.
  */
 export const storeRelativePath = (
   pathname: string,
   storeId: string
 ): string => {
-  const prefix = `${routerBase}/${storeId}`;
-  const rest = pathname.startsWith(prefix)
-    ? pathname.slice(prefix.length)
+  const belowMount = pathname.startsWith(routerBase)
+    ? pathname.slice(routerBase.length)
     : pathname;
+  const prefix = `/${storeId}`;
+  const rest = belowMount.startsWith(prefix)
+    ? belowMount.slice(prefix.length)
+    : belowMount;
   return rest.replace(/^\/+|\/+$/g, '');
 };
