@@ -29,7 +29,6 @@ pub enum UpsertItemVariantError {
     DuplicateName,
     LocationTypeDoesNotExist,
     OtherPartyDoesNotExist,
-    OtherPartyNotVisible,
     OtherPartyNotAManufacturer,
     PackagingVariantError(UpsertPackagingVariantError),
     DatabaseError(RepositoryError),

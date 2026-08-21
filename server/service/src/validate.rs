@@ -96,22 +96,10 @@ pub fn check_other_party(
     let other_party = get_other_party(connection, store_id, other_party_id)?
         .ok_or(OtherPartyErrors::OtherPartyDoesNotExist)?;
 
-    if !other_party.is_visible() {
-        return Err(OtherPartyErrors::OtherPartyNotVisible);
-    }
-
+    // is_manufacturer/is_donor are flags on name_row itself, so they are well-defined even for
+    // names with no name_store_join - check them before visibility, so that callers which allow
+    // invisible names (by ignoring OtherPartyNotVisible) still get the type check
     match other_party_type {
-        CheckOtherPartyType::Customer => {
-            if !other_party.is_customer() {
-                return Err(OtherPartyErrors::TypeMismatched);
-            }
-        }
-
-        CheckOtherPartyType::Supplier => {
-            if !other_party.is_supplier() {
-                return Err(OtherPartyErrors::TypeMismatched);
-            }
-        }
         CheckOtherPartyType::Manufacturer => {
             if !other_party.is_manufacturer() {
                 return Err(OtherPartyErrors::TypeMismatched);
@@ -122,8 +110,29 @@ pub fn check_other_party(
                 return Err(OtherPartyErrors::TypeMismatched);
             }
         }
+        _ => {}
+    };
+
+    if !other_party.is_visible() {
+        return Err(OtherPartyErrors::OtherPartyNotVisible);
+    }
+
+    // is_customer/is_supplier come from name_store_join, so they can only be checked for
+    // visible names
+    match other_party_type {
+        CheckOtherPartyType::Customer => {
+            if !other_party.is_customer() {
+                return Err(OtherPartyErrors::TypeMismatched);
+            }
+        }
+        CheckOtherPartyType::Supplier => {
+            if !other_party.is_supplier() {
+                return Err(OtherPartyErrors::TypeMismatched);
+            }
+        }
         // Already handled above
-        CheckOtherPartyType::Patient => {}
+        CheckOtherPartyType::Manufacturer | CheckOtherPartyType::Donor
+        | CheckOtherPartyType::Patient => {}
     };
 
     Ok(other_party)

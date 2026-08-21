@@ -83,11 +83,7 @@ export const ItemVariantForm = ({
                   value={variant.manufacturer ?? null}
                   onChange={manufacturer =>
                     updateVariant?.({
-                      // ManufacturerSearchInput only lists names visible in the
-                      // current store, so a selection is visible by definition.
-                      manufacturer: manufacturer
-                        ? { ...manufacturer, isVisible: true }
-                        : null,
+                      manufacturer,
                       manufacturerId: manufacturer?.id ?? null,
                     })
                   }
