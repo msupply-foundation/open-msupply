@@ -6,8 +6,9 @@ use super::{
 };
 use log::{debug, warn};
 use repository::*;
+use std::borrow::Cow;
 use std::collections::HashMap;
-use util::datetime_now;
+use util::{datetime_now, json_without_nulls};
 
 pub(crate) struct TranslationAndIntegration<'a> {
     connection: &'a StorageConnection,
@@ -41,6 +42,8 @@ impl<'a> TranslationAndIntegration<'a> {
         sync_record: &SyncBufferRow,
         translators: &SyncTranslators,
     ) -> Result<Vec<PullTranslateResult>, anyhow::Error> {
+        let sync_record = strip_nulls_from_sync_record(sync_record);
+        let sync_record = sync_record.as_ref();
         let mut translation_results = Vec::new();
 
         for translator in translators.iter() {
@@ -175,6 +178,27 @@ impl<'a> TranslationAndIntegration<'a> {
     }
 }
 
+/// Postgres text columns cannot store the NUL character (0x00), and legacy mSupply sometimes
+/// sends NUL padded strings, which fail to integrate with
+/// `invalid byte sequence for encoding "UTF8": 0x00`. Since a record that errors is not
+/// retried, the affected rows are then silently missing, so strip NULs out of the record
+/// before it is translated.
+///
+/// The sync buffer keeps the payload exactly as it was received, so what central sent is
+/// still available for debugging.
+///
+/// Records containing a NUL are very rare, so the common case is a read only scan of the
+/// record, no clone and no allocation.
+fn strip_nulls_from_sync_record(sync_record: &SyncBufferRow) -> Cow<'_, SyncBufferRow> {
+    match json_without_nulls(&sync_record.data) {
+        Cow::Borrowed(_) => Cow::Borrowed(sync_record),
+        Cow::Owned(data) => Cow::Owned(SyncBufferRow {
+            data: SyncRecordData(data),
+            ..sync_record.clone()
+        }),
+    }
+}
+
 impl IntegrationOperation {
     fn integrate(
         &self,
@@ -268,7 +292,33 @@ impl TranslationAndIntegrationResults {
 mod test {
     use super::*;
     use repository::mock::MockDataInserts;
+    use serde_json::json;
     use util::{assert_matches, uuid::uuid};
+
+    #[test]
+    fn test_strip_nulls_from_sync_record() {
+        let row = |data: serde_json::Value| SyncBufferRow {
+            data: SyncRecordData(data),
+            ..Default::default()
+        };
+
+        // Records without NULs are passed through, without a clone or an allocation
+        let without_nuls = row(json!({ "itemName": "Amoxicillin" }));
+        assert_matches!(
+            strip_nulls_from_sync_record(&without_nuls),
+            Cow::Borrowed(_)
+        );
+
+        // NUL padded strings, as sent by legacy mSupply, are stripped
+        let with_nuls = row(json!({
+            "itemName": "Amoxicillin\u{0000}\u{0000}",
+            "daily_usage": 1.0,
+        }));
+        assert_eq!(
+            strip_nulls_from_sync_record(&with_nuls).data.0,
+            json!({ "itemName": "Amoxicillin", "daily_usage": 1.0 })
+        );
+    }
 
     #[actix_rt::test]
     async fn test_fall_through_inner_transaction() {
