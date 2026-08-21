@@ -5,8 +5,8 @@ import {
   reportPermissionDenied,
   type GraphqlErrorItem,
 } from '../../../api/graphql';
-import { t } from '../../../intl';
 import { translateServerError } from '../../../intl/intlUtils';
+import { deleteRejection } from '@/domain/invoice';
 import {
   UpdateInboundShipment,
   UpdateInboundShipmentExternal,
@@ -64,52 +64,6 @@ const untypedRejectionMessage = (errors: GraphqlErrorItem[]): string => {
   if (typeof detail === 'string' && detail.length > 0)
     return translateServerError(detail);
   return errors[0]?.message ?? translateServerError('UnknownError');
-};
-
-// A per-LINE delete lock reaches us as `LineDeleteError { line_id, error: <the
-// line's own variant> }`, and the server maps THAT to an internal error whose
-// message is the bare string "Internal error" — the reason survives only in
-// `extensions.details`, as a multi-line Rust pretty-debug dump rather than the
-// bare identifier the other untyped rejections carry (server graphql/invoice →
-// inbound_shipment/delete.rs, the `LineDeleteError => InternalError` arm). So
-// the reason has to be recovered by finding the inner variant name in the dump.
-// Ordered widest-cause-first; each has a `server-error.*` translation.
-const LINE_LOCK_VARIANTS = [
-  'BatchIsReserved',
-  'LineUsedInStocktake',
-  'LineLinkedToTransferredInvoice',
-  'CannotDeleteLinesOfAuthorisedReceivedInvoice',
-] as const;
-
-export interface DeleteRejection {
-  /** The reason, translated when the server named one we recognise. */
-  message: string;
-  /** The raw server text, when it came as a debug dump instead of a reason. */
-  detail?: string;
-}
-
-// Why a shipment delete was refused. Shared by the detail action and the list's
-// bulk delete, which surface the same set of rejections (a shipment-level gate,
-// or any one line's own lock — rules → deletion).
-export const deleteRejection = (
-  errors: GraphqlErrorItem[]
-): DeleteRejection => {
-  const detail = errors[0]?.extensions?.details;
-  if (typeof detail === 'string' && detail.length > 0) {
-    const lineLock = LINE_LOCK_VARIANTS.find(variant =>
-      detail.includes(variant)
-    );
-    if (lineLock) return { message: translateServerError(lineLock) };
-    // A single-line detail is the bare variant name and translates; anything
-    // multi-line is a debug dump, which is not user copy — show the generic
-    // refusal and tuck the raw text behind a disclosure instead.
-    if (!detail.includes('\n'))
-      return { message: translateServerError(detail) };
-    return { message: t('messages.cant-delete-generic'), detail };
-  }
-  return {
-    message: errors[0]?.message ?? translateServerError('UnknownError'),
-  };
 };
 
 // A header/status update. Returns a discriminated result so a caller can

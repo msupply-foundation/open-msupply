@@ -13,7 +13,7 @@ import { Button } from '../../../../ui/elements/buttons/Button';
 import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
 import { TrashIcon } from '../../../../ui/icons';
 import { DeleteInboundShipments } from '../inboundShipments.generated';
-import { deleteRejection } from '../../detail/inboundShipmentUpdate';
+import { deleteRejection } from '@/domain/invoice';
 
 export interface DeleteInboundShipmentsActionProps {
   storeId: string;
