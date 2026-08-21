@@ -6,7 +6,7 @@ use util::constants::DEFAULT_SERVICE_ITEM_CODE;
 
 use crate::{
     invoice::{
-        check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store,
+        check_invoice_exists, check_invoice_lines_are_editable, check_invoice_type, check_store,
         inbound_shipment::InboundShipmentType,
     },
     invoice_line::validate::{check_item_exists, check_line_exists},
@@ -53,7 +53,7 @@ pub fn validate(
             return Err(OutError::WrongInboundShipmentType);
         }
     }
-    if !check_invoice_is_editable(&invoice) {
+    if !check_invoice_lines_are_editable(&invoice) {
         return Err(OutError::CannotEditInvoice);
     }
     if check_other_party_store_is_disabled(connection, store_id, &invoice.name_id)? {

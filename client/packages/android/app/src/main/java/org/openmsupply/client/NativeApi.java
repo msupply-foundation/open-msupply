@@ -51,8 +51,6 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     private static final String DB_FILE_NAME = "omsupply-database";
 
     public static final String OM_SUPPLY = "omSupply";
-    private static final Integer DEFAULT_PORT = DiscoveryConstants.PORT;
-    private static final String DEFAULT_URL = "https://localhost:" + DEFAULT_PORT + "/";
 
     DiscoveryConstants discoveryConstants;
     JSArray discoveredServers;
@@ -66,6 +64,10 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     boolean isDiscovering;
     boolean isResolvingServer;
     boolean shouldRestartDiscovery;
+    // Cold-start bootstrap state (see handleOnStart). Written from the poll
+    // thread, read on the main thread, hence volatile.
+    volatile boolean frontendLoaded;
+    volatile boolean frontendLoadInFlight;
 
     CertWebViewClient client;
 
@@ -132,14 +134,17 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         // Potentially avoiding issues if it takes too long to generate.
         client.loadJsInject();
 
-        // handleOnStart fires on cold start AND on warm resume. On cold start we
-        // begin on the inline LoadingPage (set in MainActivity.onCreate), not on
-        // DEFAULT_URL — so the old `getUrl().matches(DEFAULT_URL)` check no longer
-        // distinguishes the two. Use the readiness/server state instead: if we've
-        // already completed a successful startup and have a connected server,
-        // this is a resume and we should not re-run the poll.
-        if (AppState.getInstance().isWebViewReady() && connectedServer != null)
+        // handleOnStart fires on cold start AND on every warm resume (app
+        // switcher, system file picker, screen off/on). The readiness poll
+        // below is cold-start bootstrap only: re-running it on resume
+        // force-navigates to /android, kicking the user out of whatever page
+        // they were on (open-msupply-frontend#905). Once the frontend has
+        // loaded there is nothing to re-check — the server's lifetime is tied
+        // to the activity. A FAILED startup (error page showing) is still
+        // retried on the next start, since the error page has no retry button.
+        if (frontendLoaded || frontendLoadInFlight)
             return;
+        frontendLoadInFlight = true;
         Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -211,6 +216,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
                 if (isServerRunning) {
                     final String targetUrl = localUrl + "/android";
                     Log.i(OM_SUPPLY, "Loading WebView url=" + targetUrl);
+                    frontendLoaded = true;
                     webView.post(() -> webView.loadUrl(targetUrl));
                 } else {
                     Log.e(OM_SUPPLY, "Server not running, displaying error page");
@@ -218,6 +224,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
                     webView.post(() -> webView.addJavascriptInterface(errorPage, "ErrorPageInject"));
                     webView.post(() -> webView.loadUrl(ErrorPage.URL));
                 }
+                frontendLoadInFlight = false;
             }
         });
         thread.start();

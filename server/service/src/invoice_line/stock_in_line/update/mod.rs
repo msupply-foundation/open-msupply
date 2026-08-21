@@ -123,6 +123,8 @@ pub enum UpdateStockInLineError {
     ItemNotFound,
     PackSizeBelowOne,
     NumberOfPacksBelowZero,
+    SellPricePerPackBelowZero,
+    CostPricePerPackBelowZero,
     BatchIsReserved,
     UpdatedLineDoesNotExist,
     NotThisInvoiceLine(String),
@@ -311,6 +313,47 @@ mod test {
             ),
             Err(ServiceError::NumberOfPacksBelowZero)
         );
+
+        // SellPricePerPackBelowZero
+        assert_eq!(
+            update_stock_in_line(
+                &context,
+                UpdateStockInLine {
+                    id: mock_customer_return_a_invoice_line_a().id,
+                    sell_price_per_pack: Some(-1.0),
+                    ..Default::default()
+                },
+                None
+            ),
+            Err(ServiceError::SellPricePerPackBelowZero)
+        );
+
+        // CostPricePerPackBelowZero
+        assert_eq!(
+            update_stock_in_line(
+                &context,
+                UpdateStockInLine {
+                    id: mock_customer_return_a_invoice_line_a().id,
+                    cost_price_per_pack: Some(-1.0),
+                    ..Default::default()
+                },
+                None
+            ),
+            Err(ServiceError::CostPricePerPackBelowZero)
+        );
+
+        // Zero is allowed, donated and free of charge stock has no price
+        assert!(update_stock_in_line(
+            &context,
+            UpdateStockInLine {
+                id: mock_customer_return_a_invoice_line_a().id,
+                sell_price_per_pack: Some(0.0),
+                cost_price_per_pack: Some(0.0),
+                ..Default::default()
+            },
+            None
+        )
+        .is_ok());
 
         // ItemNotFound
         assert_eq!(
