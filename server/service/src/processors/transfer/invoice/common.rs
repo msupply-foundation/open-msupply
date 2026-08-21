@@ -9,7 +9,7 @@ use util::uuid::uuid;
 use crate::invoice::common::calculate_total_after_tax;
 use crate::invoice::inbound_shipment::{
     update_inbound_shipment, InboundShipmentType, UpdateInboundShipment,
-    UpdateInboundShipmentStatus,
+    UpdateInboundShipmentError, UpdateInboundShipmentStatus,
 };
 use crate::preference::{InboundShipmentAutoVerify, ItemMarginOverridesSupplierMargin, Preference};
 use crate::service_provider::ServiceContext;
@@ -220,7 +220,7 @@ pub(crate) fn auto_verify_if_store_preference(
         })?;
 
     if should_auto_verify {
-        update_inbound_shipment(
+        let result = update_inbound_shipment(
             ctx,
             UpdateInboundShipment {
                 id: inbound_shipment.id.to_string(),
@@ -229,11 +229,27 @@ pub(crate) fn auto_verify_if_store_preference(
             },
             Some(&inbound_shipment.store_id),
             InboundShipmentType::InboundShipment,
-        )
-        .map_err(|e| {
-            log::error!("{e:?}");
-            RepositoryError::as_db_error("Error attempting to verify inbound shipment", e)
-        })?;
+        );
+
+        match result {
+            Ok(_) => (),
+            // An empty shipment can't be verified, and there is nothing for the processor to
+            // retry, so leave it where it is for someone to deal with by hand rather than
+            // failing the transfer and blocking every record behind it.
+            Err(UpdateInboundShipmentError::CannotReceiveWithNoLines) => {
+                log::warn!(
+                    "Not auto verifying inbound shipment {}, it has no lines to receive",
+                    inbound_shipment.id
+                );
+            }
+            Err(e) => {
+                log::error!("{e:?}");
+                return Err(RepositoryError::as_db_error(
+                    "Error attempting to verify inbound shipment",
+                    e,
+                ));
+            }
+        }
     }
     Ok(())
 }

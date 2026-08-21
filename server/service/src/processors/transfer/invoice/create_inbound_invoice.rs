@@ -304,9 +304,13 @@ mod test {
     use crate::{preference::PrefKey, service_provider::ServiceProvider};
     use chrono::NaiveDate;
     use repository::{
-        mock::{mock_name_b, mock_outbound_shipment_a, mock_store_b, MockData, MockDataInserts},
+        mock::{
+            mock_item_a, mock_name_b, mock_outbound_shipment_a, mock_store_b, MockData,
+            MockDataInserts,
+        },
         test_db::setup_all_with_data,
-        InvoiceFilter, InvoiceRepository, PreferenceRow, SyncLogV5V6Row,
+        InvoiceFilter, InvoiceLineRow, InvoiceLineType, InvoiceRepository, PreferenceRow,
+        SyncLogV5V6Row,
     };
 
     #[actix_rt::test]
@@ -481,10 +485,36 @@ mod test {
             InvoiceType::SupplierReturn,
         );
 
+        // Shipments need lines, an empty shipment can't be received or verified
+        fn outbound_line(invoice_id: &str) -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: format!("{invoice_id}_line"),
+                invoice_id: invoice_id.to_string(),
+                item_id: mock_item_a().id,
+                item_name: mock_item_a().name,
+                item_code: mock_item_a().code,
+                r#type: InvoiceLineType::StockOut,
+                pack_size: 1.0,
+                number_of_packs: 10.0,
+                ..Default::default()
+            }
+        }
+        let lines_with_supplier_return = vec![
+            outbound_line(&new_invoice_row.id),
+            outbound_line(&picked_invoice_row.id),
+            outbound_line(&shipped_invoice_row.id),
+            outbound_line(&supplier_return_row.id),
+        ];
+        let lines_without_supplier_return = vec![
+            outbound_line(&new_invoice_row.id),
+            outbound_line(&picked_invoice_row.id),
+            outbound_line(&shipped_invoice_row.id),
+        ];
+
         // First test without preference
         let (_, _, connection_manager, _) = setup_all_with_data(
             "test_create_inbound_invoice_auto_finalise_off",
-            MockDataInserts::none().stores(),
+            MockDataInserts::none().names().stores().units().items(),
             MockData {
                 invoices: vec![
                     new_invoice_row.clone(),
@@ -492,6 +522,7 @@ mod test {
                     shipped_invoice_row.clone(),
                     supplier_return_row.clone(),
                 ],
+                invoice_lines: lines_with_supplier_return,
                 ..Default::default()
             },
         )
@@ -553,13 +584,14 @@ mod test {
 
         let (_, _, connection_manager, _) = setup_all_with_data(
             "test_create_inbound_invoice_auto_finalise_on",
-            MockDataInserts::none().stores(),
+            MockDataInserts::none().names().stores().units().items(),
             MockData {
                 invoices: vec![
                     new_invoice_row.clone(),
                     picked_invoice_row.clone(),
                     shipped_invoice_row.clone(),
                 ],
+                invoice_lines: lines_without_supplier_return,
                 preferences: vec![preference],
                 ..Default::default()
             },
