@@ -73,7 +73,13 @@ export const DeleteShipmentAction: Component<
           onClose={close}
           icon={<TrashIcon />}
           testId="confirmation-modal"
-          title={t('heading.are-you-sure')}
+          // The title tracks the phase — a rejection is not a question
+          // (kdd/action-modal).
+          title={
+            phase() === 'error'
+              ? t('heading.cannot-do-that')
+              : t('heading.are-you-sure')
+          }
           description={
             <Show
               when={phase() !== 'error'}
@@ -85,7 +91,13 @@ export const DeleteShipmentAction: Component<
           actions={
             <Show
               when={phase() !== 'error'}
-              fallback={<CancelButton onClick={close} />}
+              fallback={
+                // Nothing was deleted, so there is nothing to cancel — the
+                // error phase is acknowledged, not aborted.
+                <Button variant="secondary" confirms="plain" onClick={close}>
+                  {t('button.close')}
+                </Button>
+              }
             >
               <Show when={phase() === 'confirm'}>
                 <CancelButton
