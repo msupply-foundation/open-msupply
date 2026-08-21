@@ -1286,6 +1286,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                         rowTone={row =>
                           (props.cardTone ?? props.rowTone)?.(row)
                         }
+                        rowState={props.rowState}
                       />
                     </Match>
                     <Match when={viewMode() === 'table'}>
