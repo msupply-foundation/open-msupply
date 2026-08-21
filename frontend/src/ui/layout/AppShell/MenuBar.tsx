@@ -278,6 +278,35 @@ const NavGroup = (props: {
   </ul>
 );
 
+/*
+ * The brand mark at the head of the menu, in whichever mode is rendering.
+ *
+ * Shared rather than written out per mode: the two branches below already
+ * disagreed once — the docked rail wired the mark up as a route home and the
+ * overlay rendered a bare glyph, so on a phone or tablet the logo was simply
+ * dead (issue #1142). One component means a host that supplies `onHome` gets
+ * the same affordance at every width.
+ *
+ * `onActivate` rather than `onHome` straight through, because going home from
+ * the overlay also has to CLOSE it — the panel covers the page it would
+ * navigate to, exactly as picking a destination does.
+ */
+const BrandMark = (props: { onActivate?: () => void }) => (
+  <div class={styles.logoArea}>
+    <Show when={props.onActivate} fallback={<AppLogo class={styles.logo} />}>
+      <button
+        type="button"
+        class={styles.logoButton}
+        data-testid="nav-home"
+        onClick={() => props.onActivate?.()}
+        aria-label={t('label.home')}
+      >
+        <AppLogo class={styles.logo} />
+      </button>
+    </Show>
+  </div>
+);
+
 const NavLists = (props: {
   upper: NavItem[];
   lower?: NavItem[];
@@ -331,6 +360,14 @@ export const MenuBar = (props: MenuBarProps) => {
   const select = (leaf: NavLeaf) => {
     props.onSelect(leaf);
     if (props.isOverlay) props.nav.closeOverlay();
+  };
+
+  // The brand mark goes home, and in the overlay that also dismisses the panel
+  // — it sits over the very page being navigated to, so leaving it up would
+  // hide the arrival (same reason `select` closes it).
+  const goHome = () => {
+    props.onHome?.();
+    props.nav.closeOverlay();
   };
 
   // --- Accordion (expanded rail) ------------------------------------------
@@ -444,22 +481,7 @@ export const MenuBar = (props: MenuBarProps) => {
               rail exactly when the rail is hardest to read.
               Losing the mark on the rail costs no route home: the Dashboard
               entry directly below it goes to the same place. */}
-          <div class={styles.logoArea}>
-            <Show
-              when={props.onHome}
-              fallback={<AppLogo class={styles.logo} />}
-            >
-              <button
-                type="button"
-                class={styles.logoButton}
-                data-testid="nav-home"
-                onClick={props.onHome}
-                aria-label={t('label.home')}
-              >
-                <AppLogo class={styles.logo} />
-              </button>
-            </Show>
-          </div>
+          <BrandMark onActivate={props.onHome} />
           <NavLists
             upper={props.upper}
             lower={props.lower}
@@ -550,9 +572,7 @@ export const MenuBar = (props: MenuBarProps) => {
         aria-label={t('label.menu')}
         aria-hidden={!props.nav.overlayOpen()}
       >
-        <div class={styles.logoArea}>
-          <AppLogo class={styles.logo} />
-        </div>
+        <BrandMark onActivate={props.onHome && goHome} />
         <NavLists
           upper={props.upper}
           lower={props.lower}
