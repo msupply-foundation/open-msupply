@@ -97,8 +97,9 @@ export const DeleteReturnsAction: Component<
 
 const Body = (props: DeleteReturnsActionProps & { onClose: () => void }) => {
   const [phase, setPhase] = createSignal<Phase>('confirm');
-  // Whether any row deleted — the deferred hand-back needs it (see finish).
-  let didDelete = false;
+  // Whether any row deleted — the deferred hand-back needs it (see finish), and
+  // the report's own title reads it, so it is a signal.
+  const [didDelete, setDidDelete] = createSignal(false);
   // Snapshotted on open so the message can't shift behind the dialog.
   const count = props.selectedRows().length;
 
@@ -106,7 +107,7 @@ const Body = (props: DeleteReturnsActionProps & { onClose: () => void }) => {
   // onDeleted clears the selection, which unmounts this dialog's footer host.
   const finish = () => {
     props.onClose();
-    if (didDelete) props.onDeleted();
+    if (didDelete()) props.onDeleted();
   };
 
   const run = async () => {
@@ -116,7 +117,7 @@ const Body = (props: DeleteReturnsActionProps & { onClose: () => void }) => {
     // Sequential, one per id — keeps the outcome per row unambiguous.
     for (const row of props.selectedRows()) {
       const result = await deleteReturn(props.storeId, row.id);
-      if (result.kind === 'deleted') didDelete = true;
+      if (result.kind === 'deleted') setDidDelete(true);
       else if (result.kind === 'forbidden') {
         // A standing permission block — the global permission-denied modal is
         // already showing (D38) and every remaining row would fail the same
@@ -142,15 +143,22 @@ const Body = (props: DeleteReturnsActionProps & { onClose: () => void }) => {
       icon={<TrashIcon />}
       testId="confirmation-modal"
       // The title tracks the phase — a rejection is not a question
-      // (kdd/action-modal).
+      // (kdd/action-modal). There is no batch mutation for returns, so these
+      // are N independent deletes: when some rows DID go, "Can't do that!"
+      // would sit over an outcome that partly succeeded.
       title={
-        phase() === 'error'
-          ? t('heading.cannot-do-that')
-          : t('heading.are-you-sure')
+        phase() !== 'error'
+          ? t('heading.are-you-sure')
+          : didDelete()
+            ? t('heading.some-not-deleted')
+            : t('heading.cannot-do-that')
       }
       description={
         <Switch fallback={tPlural('messages.confirm-delete-returns', count)}>
           <Match when={phase() === 'error'}>
+            <Show when={didDelete()}>
+              <p>{t('messages.deleted-returns-before-this')}</p>
+            </Show>
             <Alert severity="error">{t('messages.cant-delete-generic')}</Alert>
           </Match>
         </Switch>
