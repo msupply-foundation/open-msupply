@@ -1,11 +1,17 @@
 import { createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
-import { graphqlFetch } from '@/api/graphql';
+import {
+  graphqlFetch,
+  isForbidden,
+  missingPermissions,
+  reportPermissionDenied,
+} from '@/api/graphql';
 import { t } from '@/intl';
 import { Button } from '@/ui/elements/buttons/Button';
 import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
+import { ErrorDetails } from '@/ui/elements/feedback/ErrorDetails';
 import { TrashIcon } from '@/ui/icons';
 import { DeleteRnrForm } from '../../list/rnrForms.generated';
 import type { RnrFormNode } from '../rnrFormUpdate';
@@ -27,6 +33,8 @@ export const DeleteRnrFormAction: Component<{
 }> = props => {
   const [open, setOpen] = createSignal(false);
   const [phase, setPhase] = createSignal<Phase>('confirm');
+  // The server's own text, behind a disclosure — the refusal arrives untyped.
+  const [errorDetail, setErrorDetail] = createSignal<string>();
 
   const close = () => {
     if (phase() === 'deleting') return;
@@ -37,12 +45,38 @@ export const DeleteRnrFormAction: Component<{
   const run = async () => {
     if (phase() !== 'confirm') return;
     setPhase('deleting');
-    const result = await graphqlFetch(DeleteRnrForm, {
-      storeId: props.storeId,
-      id: props.node.id,
-    });
-    if (result.kind !== 'success') {
+    const result = await graphqlFetch(
+      DeleteRnrForm,
+      {
+        storeId: props.storeId,
+        id: props.node.id,
+      },
+      // DeleteRnRFormResponse is a single-member union (DeleteResponse), so a
+      // refusal — a form finalised since this screen loaded — can only reach us
+      // as a top-level GraphQL error. Take it here so it becomes THIS dialog's
+      // error phase (D21). Left to the default it tripped the global
+      // unexpected-error (reload) modal as well, stacking two surfaces on one
+      // refusal — the only record delete that did.
+      { returnGraphqlErrors: true }
+    );
+    if (result.kind === 'graphqlError') {
+      // Opting in also intercepts Forbidden, which owes the user the global
+      // permission-denied modal (D38) — hand it back and close.
+      if (isForbidden(result.errors)) {
+        reportPermissionDenied(missingPermissions(result.errors));
+        setPhase('confirm');
+        setOpen(false);
+        return;
+      }
+      setErrorDetail(result.message);
       setPhase('error');
+      return;
+    }
+    if (result.kind !== 'success') {
+      // A genuine transport failure: the global modal owns the description, so
+      // drop back to confirm rather than claiming progress — the same shape as
+      // every sibling record delete.
+      setPhase('confirm');
       return;
     }
     props.onDeleted();
@@ -66,7 +100,13 @@ export const DeleteRnrFormAction: Component<{
           onClose={close}
           icon={<TrashIcon />}
           testId="confirmation-modal"
-          title={t('heading.are-you-sure')}
+          // The title tracks the phase — a rejection is not a question
+          // (kdd/action-modal).
+          title={
+            phase() === 'error'
+              ? t('heading.cannot-do-that')
+              : t('heading.are-you-sure')
+          }
           description={
             <Show
               when={phase() === 'error'}
@@ -75,7 +115,12 @@ export const DeleteRnrFormAction: Component<{
                 period: props.node.period.name,
               })}
             >
-              <Alert severity="error">{t('error.something-wrong')}</Alert>
+              <Alert severity="error">
+                {t('error.something-wrong')}
+                <Show when={errorDetail()}>
+                  {detail => <ErrorDetails detail={detail()} />}
+                </Show>
+              </Alert>
             </Show>
           }
           actions={
