@@ -18,6 +18,12 @@ import {
 } from '../accordion/Accordion';
 import { t } from '../../../intl';
 import { visibleOnCard, type CardGroup } from './columnTypes';
+import {
+  cardFieldMaxRem,
+  cardFlex,
+  cardTrack,
+  cardTracksMinRem,
+} from './cardWidths';
 import styles from './DataTable.module.css';
 
 // A cell's card HEADER slot, or undefined when it belongs to the body.
@@ -69,88 +75,13 @@ const showsLabel = <T,>(
 const cellTestId = <T,>(cell: TanCell<T, unknown>): string =>
   `cell-${cell.column.id}`;
 
-// One column's grid TRACK. A number is a fixed `rem` track — a formatted scalar
-// whose longest value is known. `{ min, weight }` is `minmax(<min>rem,
-// <weight>fr)`: an `fr` is one share of the space left over once every fixed
-// track and gap is paid for, so the weighted fields split the remainder in
-// their declared ratio (ux-testing/header-field-width.html § weighted columns).
-// An undeclared column falls back to a 1fr share off a readable floor.
-const cardTrack = <T,>(cell: TanCell<T, unknown>): string => {
-  const width = cell.column.columnDef.meta?.cardWidth;
-  if (width === undefined) return 'minmax(10rem, 1fr)';
-  return typeof width === 'number'
-    ? `${width}rem`
-    : `minmax(${width.min}rem, ${width.weight}fr)`;
-};
-
-// The same declaration expressed for the NARROW fallback, where the row wraps.
-// An explicit grid template cannot wrap, so below the group's minima the fields
-// reflow as a wrapping flex row instead — and this hands each one its declared
-// size to wrap WITH, rather than throwing the declaration away and splitting the
-// row evenly. That even split is what made a card in portrait wrong in both
-// directions at once: a read-only Pack size held a full track it had no use for
-// while Location's "code — name" value truncated beside it.
-//
-// THE SAME MODEL AS <FormRowItem> (ui/layout/Form, kdd/form-layout), whose
-// weight / minWidth / maxWidth are this meta's weight / min / max — a wrapping
-// weighted row was solved there first, for the prescriptions header, and the two
-// should not drift. Its technique, adopted here:
-//
-//   - `flex: <weight> 1 0` — basis ZERO, the floor carried in `min-inline-size`.
-//     That is what makes a weight a true `fr`: the row's whole width distributes
-//     in proportion, rather than only the leftovers after every item has taken a
-//     basis. Flexbox's min-violation pass then clamps each floor exactly as
-//     `minmax()` does in the declared template, so both modes agree.
-//   - The floor capped at `100%`, so a lone field on a line narrower than its
-//     own floor shrinks instead of overflowing the card.
-//   - Weight 0 pins a FIXED scalar (a quantity, a date) to its floor and hands
-//     every spare pixel to its siblings: it has a known longest value, so extra
-//     width is waste. A row of nothing but pinned fields therefore does not fill
-//     — the slack is trailing space, which is the same bargain the group's own
-//     ceiling strikes at full width.
-//   - `max` applied PER FIELD, which the grid could not do: there, capping a
-//     field inside its own track left the track's leftover as a hole mid-row, so
-//     `max` had to become a whole-group ceiling. A wrapping flex row has no fixed
-//     tracks, so a capped field simply stops and the slack passes on. Without it
-//     a lone weighted field on a wrapped row stretches that whole line — the
-//     failure FormRowItem's own `maxWidth` note describes.
-const cardFlex = <T,>(
-  cell: TanCell<T, unknown>
-): JSX.CSSProperties | undefined => {
-  const width = cell.column.columnDef.meta?.cardWidth;
-  // The span is read only by the 'columns' narrow layout, which ignores the
-  // sizing below — but it rides along here so one style object carries
-  // everything a field tells its group about its own width.
-  const declaredSpan = cell.column.columnDef.meta?.cardSpan;
-  const span = declaredSpan
-    ? { '--card-field-span': `${declaredSpan}` }
-    : undefined;
-  if (width === undefined) return span;
-  return typeof width === 'number'
-    ? {
-        '--card-field-weight': '0',
-        '--card-field-floor': `${width}rem`,
-        ...span,
-      }
-    : {
-        '--card-field-weight': `${width.weight}`,
-        '--card-field-floor': `${width.min}rem`,
-        '--card-field-max-w': `${width.max}rem`,
-        ...span,
-      };
-};
-
-// The width, in rem, below which this group's declared template cannot fit —
-// every track's minimum plus the 1rem column gaps between them. An explicit
-// grid does not wrap, so below this the row would overflow its card; the flow
-// falls back to the equal auto-fit tracks instead (see FieldFlow).
-const cardTracksMinRem = <T,>(cells: TanCell<T, unknown>[]): number =>
-  cells.reduce((total, cell) => {
-    const width = cell.column.columnDef.meta?.cardWidth;
-    const min =
-      width === undefined ? 10 : typeof width === 'number' ? width : width.min;
-    return total + min;
-  }, 0) + Math.max(0, cells.length - 1);
+// The width facts a column tells its group. The arithmetic they feed —
+// tracks, the wrapping-fallback flex trio, floors, ceilings, the measure —
+// lives in cardWidths.ts, pure and cell-free so it is unit-testable.
+const cardWidthOf = <T,>(cell: TanCell<T, unknown>) =>
+  cell.column.columnDef.meta?.cardWidth;
+const cardSpanOf = <T,>(cell: TanCell<T, unknown>) =>
+  cell.column.columnDef.meta?.cardSpan;
 
 // A card cell, optionally captioned by the column's string header. Unlabelled,
 // the cell fills its slot directly. Labelled, the wrapper follows the slot: a
@@ -187,7 +118,10 @@ function cellField<T>(
       // An unlabelled body cell is a direct child of the auto-fit field grid,
       // so a plain wrapper keeps the same layout — and it has no LabelledValue
       // to carry the id.
-      <div data-testid={cellTestId(cell)} style={cardFlex(cell)}>
+      <div
+        data-testid={cellTestId(cell)}
+        style={cardFlex(cardWidthOf(cell), cardSpanOf(cell))}
+      >
         {value()}
       </div>
     );
@@ -212,7 +146,7 @@ function cellField<T>(
       // detail-panel gap. At 4px the label crowded the box beneath it.
       variant="field"
       data-testid={cellTestId(cell)}
-      style={cardFlex(cell)}
+      style={cardFlex(cardWidthOf(cell), cardSpanOf(cell))}
     >
       {value()}
     </LabelledValue>
@@ -231,44 +165,18 @@ function cellField<T>(
 //
 // An explicit template does not wrap, so it only holds while the container can
 // pay every track's minimum. `narrow` measures that: below the sum of the
-// minima the flow reverts to the equal auto-fit tracks, which do wrap. The
+// minima the flow reverts to the wrapping weighted flex row, which does. The
 // threshold comes from the group's own declarations (so it follows conditional
 // columns automatically) rather than a breakpoint literal — a container query
 // can't read it, since its condition can't reference a custom property.
-// The width past which this group stops growing — every fixed track at its
-// size, every weighted track at its declared max, plus the gaps. Beyond it the
-// extra space is not distributed at all; the row simply ends and the remainder
-// is trailing space.
-//
-// A GROUP-level ceiling, not a per-field one. Capping each field inside its own
-// `fr` track left the track's remainder as a hole in the MIDDLE of the row —
-// Location stopping at its max while its track kept growing put a visible gap
-// between it and Manufacturer. Capping the grid keeps every track proportional
-// and moves the slack to the end, where it reads as margin.
-//
-// `undefined` when any column declares no width: its track is an open-ended
-// sink, so the group has no meaningful ceiling.
-const cardTracksMaxRem = <T,>(
-  cells: TanCell<T, unknown>[]
-): number | undefined => {
-  let total = 0;
-  for (const cell of cells) {
-    const width = cell.column.columnDef.meta?.cardWidth;
-    if (width === undefined) return undefined;
-    total += typeof width === 'number' ? width : width.max;
-  }
-  return total + Math.max(0, cells.length - 1);
-};
-
 function FieldFlow<T>(props: {
   cells: TanCell<T, unknown>[];
   /** The owning group's `narrowLayout` (undefined → the weighted flex row). */
   narrowLayout?: { columns: number };
 }): JSX.Element {
-  const sized = () =>
-    props.cells.some(c => c.column.columnDef.meta?.cardWidth !== undefined);
+  const sized = () => props.cells.some(c => cardWidthOf(c) !== undefined);
   const [narrow, setNarrow] = createSignal(false);
-  const maxRem = () => cardTracksMaxRem(props.cells);
+  const widths = () => props.cells.map(cardWidthOf);
 
   // Measured on the SHELL, which is size-contained (container-type in the CSS),
   // for two reasons. It holds still: the grid's own width is what we're about
@@ -281,7 +189,7 @@ function FieldFlow<T>(props: {
       parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
     const check = () =>
       setNarrow(
-        shell.clientWidth < cardTracksMinRem(props.cells) * rootFontSize()
+        shell.clientWidth < cardTracksMinRem(widths()) * rootFontSize()
       );
     check();
     const observer = new ResizeObserver(check);
@@ -300,8 +208,9 @@ function FieldFlow<T>(props: {
       style={
         sized()
           ? {
-              '--card-field-cols': props.cells.map(cardTrack).join(' '),
-              '--card-field-max': maxRem() ? `${maxRem()}rem` : 'none',
+              '--card-field-cols': widths().map(cardTrack).join(' '),
+              // The group's ceiling held to the measure — see cardFieldMaxRem.
+              '--card-field-max': `${cardFieldMaxRem(widths())}rem`,
               // The narrow layout's track count, when the group declares one —
               // a group's own number, worked out from its fields (see
               // CardGroup.narrowLayout), not a house constant.
