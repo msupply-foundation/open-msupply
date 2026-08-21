@@ -4,10 +4,7 @@ import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
-import {
-  CancelButton,
-  OkButton,
-} from '../../../../ui/elements/buttons/StandardButtons';
+import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
 import { InfoIcon, TrashIcon } from '../../../../ui/icons';
 import { isDeletable } from '../../outboundStatus';
 import { DeleteOutboundShipments } from '../outboundShipments.generated';
@@ -67,11 +64,20 @@ export const DeleteShipmentsAction: Component<
           open
           onClose={() => setBlockedOpen(false)}
           icon={<InfoIcon />}
-          title={t('heading.are-you-sure')}
+          // A refusal is not a question (kdd/action-modal).
+          title={t('heading.cannot-do-that')}
           description={
             <Alert severity="error">{t('messages.cant-delete-generic')}</Alert>
           }
-          actions={<OkButton onClick={() => setBlockedOpen(false)} />}
+          actions={
+            <Button
+              variant="secondary"
+              confirms="plain"
+              onClick={() => setBlockedOpen(false)}
+            >
+              {t('button.close')}
+            </Button>
+          }
         />
       </Show>
     </>
@@ -151,8 +157,16 @@ const Body = (props: DeleteShipmentsActionProps & { onClose: () => void }) => {
             </>
           }
         >
+          {/* Nothing was deleted, so there is nothing to cancel — the error
+              phase is acknowledged, not aborted. */}
           <Match when={phase() === 'error'}>
-            <CancelButton onClick={props.onClose} />
+            <Button
+              variant="secondary"
+              confirms="plain"
+              onClick={props.onClose}
+            >
+              {t('button.close')}
+            </Button>
           </Match>
         </Switch>
       }

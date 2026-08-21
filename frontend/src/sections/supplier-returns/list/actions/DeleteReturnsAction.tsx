@@ -3,10 +3,7 @@ import { t, tPlural } from '../../../../intl';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
-import {
-  CancelButton,
-  OkButton,
-} from '../../../../ui/elements/buttons/StandardButtons';
+import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
 import { InfoIcon, TrashIcon } from '../../../../ui/icons';
 import { deleteReturn } from '../../detail/returnUpdate';
 
@@ -75,15 +72,22 @@ export const DeleteReturnsAction: Component<
           open
           onClose={() => setBlockedOpen(false)}
           icon={<InfoIcon />}
-          title={t('heading.are-you-sure')}
+          // A refusal is not a question (kdd/action-modal).
+          title={t('heading.cannot-do-that')}
           description={
             <Alert severity="error">{t('messages.cant-delete-generic')}</Alert>
           }
+          // The standard, icon-less acknowledgement (D55) — nothing was
+          // deleted, so this is acknowledged, not confirmed.
           actions={
-            <OkButton
+            <Button
+              variant="secondary"
+              confirms="plain"
               data-testid="dialog-button-ok"
               onClick={() => setBlockedOpen(false)}
-            />
+            >
+              {t('button.close')}
+            </Button>
           }
         />
       </Show>
@@ -137,7 +141,13 @@ const Body = (props: DeleteReturnsActionProps & { onClose: () => void }) => {
       onClose={finish}
       icon={<TrashIcon />}
       testId="confirmation-modal"
-      title={t('heading.are-you-sure')}
+      // The title tracks the phase — a rejection is not a question
+      // (kdd/action-modal).
+      title={
+        phase() === 'error'
+          ? t('heading.cannot-do-that')
+          : t('heading.are-you-sure')
+      }
       description={
         <Switch fallback={tPlural('messages.confirm-delete-returns', count)}>
           <Match when={phase() === 'error'}>
@@ -168,7 +178,14 @@ const Body = (props: DeleteReturnsActionProps & { onClose: () => void }) => {
           }
         >
           <Match when={phase() === 'error'}>
-            <OkButton data-testid="dialog-button-ok" onClick={finish} />
+            <Button
+              variant="secondary"
+              confirms="plain"
+              data-testid="dialog-button-ok"
+              onClick={finish}
+            >
+              {t('button.close')}
+            </Button>
           </Match>
         </Switch>
       }

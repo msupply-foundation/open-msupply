@@ -121,7 +121,13 @@ export const SiteDeleteFlow: Component<SiteDeleteFlowProps> = props => {
       onClose={props.onCancel}
       icon={<TrashIcon />}
       testId="confirmation-modal"
-      title={t('heading.are-you-sure')}
+      // The title tracks the phase: the report is never a question, and only
+      // ever opens because a site was refused (kdd/action-modal).
+      title={
+        phase().kind === 'report'
+          ? t('heading.cannot-do-that')
+          : t('heading.are-you-sure')
+      }
       description={
         <Switch
           // Confirm / deleting: the count-aware confirmation. The editor's own

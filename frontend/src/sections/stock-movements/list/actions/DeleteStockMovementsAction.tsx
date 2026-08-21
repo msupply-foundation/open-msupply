@@ -81,7 +81,13 @@ const Body = (
       onClose={props.onClose}
       icon={<TrashIcon />}
       testId="confirmation-modal"
-      title={t('heading.are-you-sure')}
+      // The title tracks the phase — a rejection is not a question
+      // (kdd/action-modal).
+      title={
+        phase() === 'error'
+          ? t('heading.cannot-do-that')
+          : t('heading.are-you-sure')
+      }
       description={
         <Show
           when={phase() === 'error'}
@@ -112,7 +118,11 @@ const Body = (
             </>
           }
         >
-          <CancelButton onClick={props.onClose} />
+          {/* Nothing was deleted, so there is nothing to cancel — the error
+              phase is acknowledged, not aborted. */}
+          <Button variant="secondary" confirms="plain" onClick={props.onClose}>
+            {t('button.close')}
+          </Button>
         </Show>
       }
     />
