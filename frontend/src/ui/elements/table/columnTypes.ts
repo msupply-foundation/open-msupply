@@ -323,6 +323,42 @@ export const toColumnDef = <T, K extends string, G extends string>(
   return { ...rest, enableSorting, id: c.id } as ColumnDef<T>;
 };
 
+// The column visibility TanStack is actually run on: the persisted map with
+// every STRUCTURAL column (meta.hideFromColumnSettings) forced visible.
+//
+// `hideFromColumnSettings` means "stays on screen, just not user-configurable",
+// but on its own it only removes the Columns-popover ROW — TanStack's
+// getIsVisible still reads columnVisibility (its enableHiding gates the
+// HANDLER, not the state). So a `false` already stored for that id — in the
+// user layer or the store-wide global blob (tableConfig.ts), written while the
+// column was still user-hideable, or defaulted off by an earlier version of the
+// page — went on hiding it with nothing left able to reach it: ColumnSettings
+// filters the id out of its list, and its Show all / Hide all is scoped to that
+// same list. Only the Settings popover's "Show all columns" (which iterates
+// getAllLeafColumns) or a full table reset could recover it, and nothing on
+// screen said a field had gone missing.
+//
+// Making a column structural is precisely when that bites, since the flag is
+// normally added BECAUSE the field must always show — outbound's line editor
+// pins its On-hold column so the card's only worded hold indicator cannot be
+// switched off (Aneesh, PR #1207).
+//
+// Returns the SAME object when there is nothing to force (the common case):
+// TanStack treats a new state identity as a change.
+export const resolveColumnVisibility = <T>(
+  persisted: Record<string, boolean>,
+  columnDefs: ColumnDef<T>[]
+): Record<string, boolean> => {
+  const pinned = columnDefs.filter(
+    d => d.meta?.hideFromColumnSettings && d.id && persisted[d.id] === false
+  );
+  if (pinned.length === 0) return persisted;
+  return {
+    ...persisted,
+    ...Object.fromEntries(pinned.map(d => [d.id as string, true])),
+  };
+};
+
 // A card BODY group — how one `cardGroup` key presents in card view. The table
 // declares a const list (`DataTable.cardGroups`); each column's `cardGroup`
 // references a key (typed G). A group renders as a captioned block of its

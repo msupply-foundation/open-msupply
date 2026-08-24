@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { ColumnMeta } from '@tanstack/solid-table';
-import { visibleOnCard } from './columnTypes';
+import type { ColumnDef, ColumnMeta } from '@tanstack/solid-table';
+import { resolveColumnVisibility, visibleOnCard } from './columnTypes';
 
 /*
  * The card view's cell filter (CardView applies it at the one cell source every
@@ -59,5 +59,44 @@ describe('visibleOnCard', () => {
     expect(visibleOnCard<Line>(erased, { counted: null, snapshot: 0 })).toBe(
       false
     );
+  });
+});
+
+/*
+ * The structural-column visibility guard. `hideFromColumnSettings` promises the
+ * column "stays on screen" (it only takes the Columns-popover row away), but
+ * TanStack reads columnVisibility regardless — so a `false` persisted for that
+ * id while the column was still user-hideable would keep hiding it with no
+ * control left able to reach it. resolveColumnVisibility is what makes the flag
+ * mean what it says.
+ */
+describe('resolveColumnVisibility', () => {
+  const defs = [
+    { id: 'batch', meta: { hideFromColumnSettings: true } },
+    { id: 'onHold', meta: { hideFromColumnSettings: true } },
+    { id: 'comment' },
+  ] as ColumnDef<Line>[];
+
+  it('returns the same map when nothing needs forcing', () => {
+    const persisted = { comment: false };
+    expect(resolveColumnVisibility(persisted, defs)).toBe(persisted);
+    expect(resolveColumnVisibility({}, defs)).toEqual({});
+  });
+
+  it('forces a structural column back on, leaving the rest alone', () => {
+    expect(
+      resolveColumnVisibility({ onHold: false, comment: false }, defs)
+    ).toEqual({ onHold: true, comment: false });
+  });
+
+  it('forces every structural column that was switched off', () => {
+    expect(
+      resolveColumnVisibility({ batch: false, onHold: false }, defs)
+    ).toEqual({ batch: true, onHold: true });
+  });
+
+  it('leaves an ordinary hidden column hidden', () => {
+    const persisted = { comment: false, onHold: true };
+    expect(resolveColumnVisibility(persisted, defs)).toBe(persisted);
   });
 });
