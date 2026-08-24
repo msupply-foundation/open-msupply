@@ -114,9 +114,13 @@ const Body = (props: DeleteRnrFormsActionProps & { onClose: () => void }) => {
         return;
       }
       if (result.kind !== 'success') {
-        // A genuine transport failure: the global modal owns the description;
-        // this dialog just stops claiming progress.
-        setPhase('error');
+        // A genuine transport failure, which raised the global modal on its
+        // own — `returnGraphqlErrors` covers GraphQL errors, not this. While
+        // nothing has gone that modal is the whole story, so drop back to
+        // confirm rather than stacking a second notice under it (the detail
+        // twin's shape). Once forms HAVE gone the report must say so, and
+        // finish() has to re-query a list that is now stale.
+        setPhase(didDelete() ? 'error' : 'confirm');
         return;
       }
       setDidDelete(true);
