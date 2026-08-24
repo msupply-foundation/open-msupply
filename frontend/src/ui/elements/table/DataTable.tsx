@@ -32,6 +32,7 @@ import { renderTemplate } from './renderTemplate';
 import { hiddenEdges } from './scrollEdges';
 import { autoFitWidth } from './autoFitWidth';
 import {
+  resolveColumnVisibility,
   toColumnDef,
   type CardGroup,
   type Column,
@@ -275,7 +276,23 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
   minBodyRem?: number;
 
   // --- Row selection, owned by the page. ---
+  /**
+   * Show the leading checkbox column (the multi-select affordance,
+   * ui-standards § tables → selection). Pair with selectedIds +
+   * onSelectionChange.
+   */
   enableSelection?: boolean;
+  /**
+   * The selected rows, by rowKey. Selected rows carry the brand tint in both
+   * views.
+   *
+   * Valid WITHOUT `enableSelection` too: a master-detail table where the row
+   * click reveals that row's detail beside/below it passes the clicked row's
+   * key here, so the row the detail belongs to stays marked. No checkbox
+   * column is drawn — the tint is the whole affordance, and nothing is
+   * toggleable, so the page keeps sole control of what's current (the repack
+   * modal's history table, issue #794).
+   */
   selectedIds?: string[];
   onSelectionChange?: (ids: string[]) => void;
   /**
@@ -483,10 +500,19 @@ export function DataTable<T, K extends string, G extends string = never>(
   // (renderTemplate), CardView.columnHeaderText and ColumnSettings.label; none
   // of our headers read the context argument, so an empty one is safe. The
   // sortKey stays the last resort for a column with no header at all.
-  const columnLabel = (c: Column<T, K, G>): JSX.Element =>
-    typeof c.header === 'function'
+  const columnLabel = (c: Column<T, K, G>): JSX.Element => {
+    // A column whose grid header renders iconic or empty names itself with
+    // meta.textLabel (the comment column's glyph, the line editor's
+    // auto-allocation tick). A sort option has to read as a word, so it wins
+    // over the header here exactly as it does in the Columns popover and a
+    // card's field caption. Latent while no such column is sortable; wired up
+    // so the next one that is doesn't put a glyph in the Sort menu.
+    const textLabel = c.meta?.textLabel;
+    if (textLabel) return textLabel();
+    return typeof c.header === 'function'
       ? c.header({} as HeaderContext<T, unknown>)
       : (c.header ?? c.sortKey ?? '');
+  };
   const activeSortColumn = (): Column<T, K, G> | undefined =>
     props.sort
       ? sortableColumns().find(c => c.sortKey === props.sort!.key)
@@ -571,6 +597,16 @@ export function DataTable<T, K extends string, G extends string = never>(
   // breaks that: the mapped array is only rebuilt when the caller's columns
   // actually change.
   const columnDefs = createMemo(() => props.columns.map(toColumnDef));
+
+  // The visibility TanStack is run on — the persisted map with every STRUCTURAL
+  // column forced visible (resolveColumnVisibility explains why the flag alone
+  // isn't enough). Resolved here rather than per page so it's one rule for
+  // every caller, and the change handler below resolves TanStack's updater
+  // against THIS map, so the next visibility write heals a stale entry.
+  const resolvedColumnVisibility = createMemo<VisibilityState>(() =>
+    resolveColumnVisibility(columnVisibility(), columnDefs())
+  );
+
   const table = createSolidTable<T>({
     get data() {
       return props.rows;
@@ -595,7 +631,7 @@ export function DataTable<T, K extends string, G extends string = never>(
         return columnPinning();
       },
       get columnVisibility() {
-        return columnVisibility();
+        return resolvedColumnVisibility();
       },
     },
     manualSorting: true,
@@ -626,7 +662,7 @@ export function DataTable<T, K extends string, G extends string = never>(
     onColumnVisibilityChange: u =>
       props.setConfig?.(
         'columnVisibility',
-        functionalUpdate(u, columnVisibility())
+        functionalUpdate(u, resolvedColumnVisibility())
       ),
     getRowId: row => props.rowKey(row),
     getCoreRowModel: getCoreRowModel(),
@@ -1050,8 +1086,11 @@ export function DataTable<T, K extends string, G extends string = never>(
     const def = columnDefs().map(d => d.id);
     return order.length !== def.length || order.some((id, i) => id !== def[i]);
   };
+  // Reads the RESOLVED map, not the raw config: a stale `false` on a structural
+  // column is inert (see resolvedColumnVisibility), so it must not light up a
+  // "Show all columns" reset that has nothing left to reveal.
   const anyColumnHidden = () =>
-    Object.values(props.config?.columnVisibility ?? {}).some(v => v === false);
+    Object.values(resolvedColumnVisibility()).some(v => v === false);
   const anyColumnSized = () =>
     Object.keys(props.config?.columnSizing ?? {}).length > 0;
   const anyColumnPinned = () => {
@@ -1404,6 +1443,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                         rowTone={row =>
                           (props.cardTone ?? props.rowTone)?.(row)
                         }
+                        rowState={props.rowState}
                       />
                     </Match>
                     <Match when={viewMode() === 'table'}>

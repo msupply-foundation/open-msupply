@@ -93,6 +93,12 @@ export interface DialogProps {
    * Footer buttons. Rendered (with `footer`) in a region pinned below the
    * dialog's scroll area: over-tall content scrolls between the header and the
    * buttons, which hold still on the dialog's bottom edge.
+   *
+   * The row is the house footer (ui-standards › dialogs § chrome), with no
+   * per-dialog choice to make: the buttons group at the **inline-end** under a
+   * full-bleed hairline, dismiss first and the emphasised confirm last. A
+   * dialog offering an action a user can back out of pairs it with a
+   * `CancelButton`.
    */
   actions?: JSX.Element;
   /**
@@ -102,21 +108,6 @@ export interface DialogProps {
    * body's vertical space. Only shown when `actions` is present.
    */
   actionsLead?: JSX.Element;
-  /**
-   * Draws a full-bleed hairline above the pinned bottom region (footer +
-   * actions) — the footer-divider treatment ui-standards › error dialogs
-   * specifies (`ErrorDialog` passes it). Off by default: the house dialog
-   * carries no divider.
-   */
-  actionsDivider?: boolean;
-  /**
-   * Horizontal placement of the footer buttons. The house default is
-   * `center` (the current app's modal DialogActions); `end` pins them to the
-   * inline-end — ui-standards › error dialogs' footer. With `actionsLead`
-   * present the row is space-between either way, so this only shows when
-   * there is no lead.
-   */
-  actionsAlign?: 'center' | 'end';
   /**
    * Width as one of the shared content MEASURES — the same vocabulary
    * `ContentContainer` uses, so a dialog and an in-page form of the same kind
@@ -327,12 +318,13 @@ const DialogContent = (local: DialogContentProps): JSX.Element => {
         {c.children}
       </div>
       {/* Footer + actions share one bottom region pinned under the scroll
-          area, so they stay on the dialog's bottom edge together. */}
+          area, so they stay on the dialog's bottom edge together. The
+          house hairline is drawn above the ACTIONS row, not above this whole
+          region: a `footer` banner is the content's own last word (the
+          stocktake estimate), so it belongs on the content side of the line
+          (ui-standards › dialogs § chrome). */}
       <Show when={footer() || actions()}>
-        <div
-          class={styles.bottom}
-          data-divider={c.actionsDivider ? '' : undefined}
-        >
+        <div class={styles.bottom}>
           <Show when={footer()}>
             <div>{footer()}</div>
           </Show>
@@ -340,7 +332,6 @@ const DialogContent = (local: DialogContentProps): JSX.Element => {
             <div
               class={styles.actions}
               data-has-lead={actionsLead() ? '' : undefined}
-              data-align={c.actionsAlign === 'end' ? 'end' : undefined}
             >
               {/* Lead content sits at the inline-start; the buttons group at the
                   inline-end. */}

@@ -38,8 +38,21 @@ export interface PopoverProps {
   /** Preferred side/alignment; flips to the other side rather than overflow.
       start/end are logical (mirror in RTL). Default 'bottom'. */
   placement?: PopoverPlacement;
-  /** Close when a button inside the panel is clicked  */
+  /**
+   * Close when a button inside the panel is clicked.
+   *
+   * Don't combine with a Select/Combobox in the panel: their trigger IS a
+   * button, so opening the drop-down would dismiss the popover. (Picking an
+   * option is safe — an option is an `<li>`.)
+   */
   closeOnClickInside?: boolean;
+  /**
+   * Called each time the panel opens — for panels that re-seed their own
+   * state from the outside value per open (the colour picker's hex entry).
+   * Fires before the first open mounts the children, so seeding a signal the
+   * children read is never a tear.
+   */
+  onOpen?: () => void;
   /**
    * Open on hover (and focus) — for content bubbles whose trigger IS the
    * content (a status row, a comment icon), where hover reads more naturally
@@ -84,9 +97,6 @@ const EDGE = 8;
 export const Popover = (props: PopoverProps) => {
   let trigger!: HTMLButtonElement;
   let panel!: HTMLDivElement;
-  // The panel element as a signal, for PortalMountContext below (the provider's
-  // consumers read it reactively; the bare `panel` ref never notifies).
-  const [panelEl, setPanelEl] = createSignal<HTMLDivElement>();
   const panelId = createUniqueId();
   // Panel content mounts lazily, on first open, not with the rest of the page
   // — a Popover that's never opened (most of them, most page-loads) never
@@ -97,6 +107,9 @@ export const Popover = (props: PopoverProps) => {
   // <Show> flip lands before `place()`'s queued microtask reads the panel's
   // box (see the beforetoggle listener below).
   const [everOpened, setEverOpened] = createSignal(false);
+  // The panel as a signal, for the PortalMountContext below — the plain ref
+  // can't be read reactively by the popups that mount into it.
+  const [panelEl, setPanelEl] = createSignal<HTMLElement>();
 
   const place = () => {
     // No box yet = the engine hasn't finished displaying the popover (the
@@ -177,6 +190,7 @@ export const Popover = (props: PopoverProps) => {
       const open = (event as ToggleEvent).newState === 'open';
       trigger.setAttribute('aria-expanded', String(open));
       if (open) {
+        props.onOpen?.();
         setEverOpened(true);
         queueMicrotask(place);
         window.addEventListener('scroll', replace, {
@@ -255,7 +269,7 @@ export const Popover = (props: PopoverProps) => {
         {props.trigger}
       </button>
       <div
-        ref={el => {
+        ref={(el: HTMLDivElement) => {
           panel = el;
           setPanelEl(el);
         }}
@@ -276,27 +290,32 @@ export const Popover = (props: PopoverProps) => {
         {/* Lazy mount: content is never constructed until the first open (see
             everOpened above) — a Popover the user never opens costs nothing
             beyond its trigger button. */}
-        {/* The panel is in the TOP LAYER (popover="auto"), so a popup portaled
-            to <body> (a Select/Combobox listbox) paints BEHIND it and its
-            clicks land on the panel — same trap as a modal <dialog>. Mount
-            such popups into the panel instead, exactly as Dialog does. */}
-        <PortalMountContext.Provider value={panelEl}>
-          <Show when={everOpened()}>
-            {(() => {
-              // Read props.children ONCE into a local: it's a getter compiled
-              // from the caller's JSX, so a second read (e.g. testing its type,
-              // then rendering it) re-evaluates that JSX and constructs the
-              // child a second time (solidjs/solid docs — the `children`
-              // helper exists for exactly this; not used here because it
-              // auto-invokes only NILADIC function children, and ours takes
-              // `close`).
-              const resolved = props.children;
-              return typeof resolved === 'function'
-                ? resolved(() => panel.hidePopover())
-                : resolved;
-            })()}
-          </Show>
-        </PortalMountContext.Provider>
+        <Show when={everOpened()}>
+          {/* A Select/Combobox opened in here mounts INTO the panel, not
+              <body>: the panel is in the top layer, so a <body>-portaled
+              listbox paints behind it and takes no clicks (#1107). See
+              utils/portalMount.ts. Children are constructed under the Provider,
+              which is what makes the context reach them. */}
+          <PortalMountContext.Provider value={panelEl}>
+            {/* The panel is the mount, so .body scrolls instead — a scroll
+                container on the panel would clip what's mounted into it. */}
+            <div class={styles.body}>
+              {(() => {
+                // Read props.children ONCE into a local: it's a getter compiled
+                // from the caller's JSX, so a second read (e.g. testing its
+                // type, then rendering it) re-evaluates that JSX and constructs
+                // the child a second time (solidjs/solid docs — the `children`
+                // helper exists for exactly this; not used here because it
+                // auto-invokes only NILADIC function children, and ours takes
+                // `close`).
+                const resolved = props.children;
+                return typeof resolved === 'function'
+                  ? resolved(() => panel.hidePopover())
+                  : resolved;
+              })()}
+            </div>
+          </PortalMountContext.Provider>
+        </Show>
       </div>
     </>
   );
