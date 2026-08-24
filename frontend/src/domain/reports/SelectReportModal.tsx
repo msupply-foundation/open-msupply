@@ -127,7 +127,12 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
     if (result.kind === 'error') {
       return fail('error.failed-to-generate-report', result.message);
     }
-    if (result.kind === 'failed') {
+    // `failed` is already on the global modal; `aborted` was cancelled on
+    // purpose. Neither is the dialog's to describe, so both just release the
+    // busy state. (This dialog passes no signal today — it cannot be dismissed
+    // mid-generation — so `aborted` is unreachable; handled so that adding
+    // cancellation here stays a safe change.)
+    if (result.kind === 'failed' || result.kind === 'aborted') {
       setPhase('idle');
       return;
     }

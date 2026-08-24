@@ -363,3 +363,55 @@ describe('graphqlFetch structural sharing', () => {
     expect(mapped).toEqual({ kind: 'unexpectedError' });
   });
 });
+
+describe('graphqlFetch cancellation', () => {
+  // A cancelled request is the caller's own decision, so it must not reach the
+  // global unexpected-error modal — that modal offers Reload and Go to
+  // dashboard, which are the wrong answers for work nobody is waiting for.
+  it('resolves to aborted, leaving the global error modal untouched', async () => {
+    const controller = new AbortController();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation((_url: string, init: RequestInit) => {
+        // Reject the way a real fetch does once its signal is aborted.
+        return new Promise((_resolve, reject) => {
+          init.signal?.addEventListener('abort', () =>
+            reject(new DOMException('The user aborted a request.', 'AbortError'))
+          );
+        });
+      })
+    );
+
+    const pending = graphqlFetch(document, {}, { signal: controller.signal });
+    controller.abort();
+
+    expect(await pending).toEqual({ kind: 'aborted' });
+    expect(unexpectedError()).toBeUndefined();
+  });
+
+  it('passes the signal through to fetch', async () => {
+    const controller = new AbortController();
+    const fetchMock = mockFetch({ data: { thing: { id: '1' } } });
+
+    await graphqlFetch(document, {}, { signal: controller.signal });
+
+    expect(fetchMock.mock.calls[0][1].signal).toBe(controller.signal);
+  });
+
+  // Only an ABORTED signal excuses a rejection. A genuine transport failure
+  // that happens to occur while a signal is attached is still a fault, and
+  // must still reach the modal.
+  it('still reports a real transport failure when the signal is unused', async () => {
+    const controller = new AbortController();
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
+
+    const result = await graphqlFetch(
+      document,
+      {},
+      { signal: controller.signal }
+    );
+
+    expect(result).toEqual({ kind: 'unexpectedError' });
+    expect(unexpectedError()?.cause).toBe('offline');
+  });
+});
