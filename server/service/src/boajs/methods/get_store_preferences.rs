@@ -1,7 +1,8 @@
 use boa_engine::*;
 
 use crate::{
-    boajs::context::BoaJsContext, boajs::utils::*, store_preference::get_store_preferences,
+    boajs::context::use_boajs_connection, boajs::utils::*,
+    store_preference::get_store_preferences,
 };
 
 pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
@@ -12,14 +13,10 @@ pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
             let store_id = get_string_argument(args, 0)?;
 
             // When using BoaJsContext, it's best to use 'scope' see BoaJsContext for a link to testing repo
-            let preferences = {
-                let service_provider = BoaJsContext::service_provider();
-                let connection = service_provider
-                    .connection()
-                    .map_err(std_error_to_js_error)?;
-
-                get_store_preferences(&connection, &store_id).map_err(std_error_to_js_error)
-            }?;
+            let preferences = use_boajs_connection(|connection| {
+                get_store_preferences(connection, &store_id).map_err(std_error_to_js_error)
+            })
+            .map_err(std_error_to_js_error)??;
 
             let value: serde_json::Value =
                 serde_json::to_value(&preferences).map_err(std_error_to_js_error)?;
