@@ -93,9 +93,9 @@ public class ExtendedWebViewClient extends BridgeWebViewClient {
         // injection (return null below), leaving the served UI with no bridge
         // at all - so keep it in step with the registrations in MainActivity
         // and with the npm plugins in assets/capacitor.plugins.json.
-        // Share, and our own SaveFile / Print / ReadLog, are used only by the
-        // new front end.
-        List<String> pluginNames =  Arrays.asList("NativeApi","Keyboard", "WebView","BarcodeScanner","HoneywellScanner","Preferences", "KeepAwake", "App", "Printer", "Camera", "Geolocation", "Filesystem", "FileOpener", "Device", "ScreenOrientation", "Share", "SaveFile", "Print", "ReadLog");
+        // Share, and our own FileTransfer / Print / ReadLog, are used only by
+        // the new front end.
+        List<String> pluginNames =  Arrays.asList("NativeApi","Keyboard", "WebView","BarcodeScanner","HoneywellScanner","Preferences", "KeepAwake", "App", "Printer", "Camera", "Geolocation", "Filesystem", "FileOpener", "Device", "ScreenOrientation", "Share", "FileTransfer", "Print", "ReadLog");
         List<PluginHandle> pluginList = new ArrayList<>();
         for (String pluginName : pluginNames) {
             PluginHandle plugin = bridge.getPlugin(pluginName);

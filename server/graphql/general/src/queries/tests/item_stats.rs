@@ -66,5 +66,46 @@ mod tests {
         );
 
         assert_graphql_query!(&settings, query, &Some(variables.clone()), &expected, None);
+
+        // When only stock-on-hand fields are selected, stats short-circuits to the cheap
+        // ItemsStockOnHandLoader (no consumption/AMC computation). Same figures expected.
+        let soh_only_query = r#"
+        query($filter: ItemFilterInput) {
+          items(filter: $filter, storeId: \"store_a\") {
+            ... on ItemConnector {
+              nodes {
+                id
+                stats(storeId: \"store_a\") {
+                    __typename
+                    availableStockOnHand
+                    stockOnHand
+                }
+              }
+            }
+          }
+       }
+        "#;
+
+        let expected = json!({
+            "items": {
+                "nodes": [{
+                    "id": &test_item_stats::item().id,
+                    "stats": {
+                        "__typename": "ItemStatsNode",
+                        "availableStockOnHand": test_item_stats::item_1_soh(),
+                    }
+                },
+                {
+                    "id": &test_item_stats::item2().id,
+                    "stats": {
+                        "__typename": "ItemStatsNode",
+                        "availableStockOnHand": test_item_stats::item_2_soh(),
+                    },
+                }]
+            }
+        }
+        );
+
+        assert_graphql_query!(&settings, soh_only_query, &Some(variables), &expected, None);
     }
 }
