@@ -49,9 +49,10 @@ describe('recordedPrescribedQuantity (DIS-03.73)', () => {
     ).toBe(30);
   });
 
-  // The carrier line never renders as a batch row (AC-Q1), so the view must
-  // read across every line of the item, carriers included.
-  it('reads it from a carrier line with nothing dispensed', () => {
+  // A prescribed-quantity placeholder line never appears as a BATCH row (it
+  // has no batch), so the view must read across every line of the item,
+  // placeholders included.
+  it('reads it from a placeholder line with nothing dispensed', () => {
     expect(
       recordedPrescribedQuantity([
         line({ type: 'STOCK_OUT', numberOfPacks: 0, prescribedQuantity: 12 }),

@@ -5,7 +5,7 @@ import {
   canDeletePrescription,
   hasDispensedLines,
   isReadOnly,
-  isCarrierLine,
+  isPlaceholderLine,
   isRenderableLine,
   nextStatuses,
   prescriptionDateOf,
@@ -64,25 +64,25 @@ describe('canCancelPrescription (.29/.33 — VERIFIED only, never a reversal)', 
   });
 });
 
-describe('isRenderableLine (.25 / .33 — carriers in, returns in)', () => {
+describe('isRenderableLine (.25 / .33 — placeholders in, returns in)', () => {
   it('renders dispensed lines', () => {
     expect(isRenderableLine({ type: 'STOCK_OUT' })).toBe(true);
   });
 
-  // The carrier row is the ONLY on-screen trace of a prescribed quantity
+  // The placeholder row is the ONLY on-screen trace of a prescribed quantity
   // recorded for an item with no stock (.25). Filtering it out left the table
   // empty, so a save that had worked looked like one that had failed — and
   // there was nothing to click to revisit or delete it. The current app shows
   // the row too (probed side by side).
-  it('renders the prescribed-quantity carrier', () => {
+  it('renders the prescribed-quantity placeholder', () => {
     expect(isRenderableLine({ type: 'UNALLOCATED_STOCK' })).toBe(true);
-    expect(isCarrierLine({ type: 'UNALLOCATED_STOCK' })).toBe(true);
-    expect(isCarrierLine({ type: 'STOCK_OUT' })).toBe(false);
+    expect(isPlaceholderLine({ type: 'UNALLOCATED_STOCK' })).toBe(true);
+    expect(isPlaceholderLine({ type: 'STOCK_OUT' })).toBe(false);
   });
 
-  // Rendering the carrier must NOT make it count as dispensed: the status
+  // Rendering the placeholder must NOT make it count as dispensed: the status
   // guard (.22) and the zero-quantity warning (AC-S5) both ignore it.
-  it('does not make a carrier-only prescription look dispensed', () => {
+  it('does not make a placeholder-only prescription look dispensed', () => {
     expect(hasDispensedLines([{ type: 'UNALLOCATED_STOCK' }])).toBe(false);
     expect(
       zeroQuantityLineCount([{ type: 'UNALLOCATED_STOCK', numberOfPacks: 0 }])
@@ -136,8 +136,8 @@ describe('prescriptionDateOf (AC-L1 — backdated when set, else created)', () =
   });
 });
 
-describe('hasDispensedLines (AC-S6 — carrier-only counts as no lines)', () => {
-  it('blocks on empty and on carrier-only line sets', () => {
+describe('hasDispensedLines (AC-S6 — placeholder-only counts as no lines)', () => {
+  it('blocks on empty and on placeholder-only line sets', () => {
     expect(hasDispensedLines([])).toBe(false);
     expect(hasDispensedLines([{ type: 'UNALLOCATED_STOCK' }])).toBe(false);
   });
@@ -149,7 +149,7 @@ describe('hasDispensedLines (AC-S6 — carrier-only counts as no lines)', () => 
 });
 
 describe('zeroQuantityLineCount (AC-S5 — the confirmation counts removable rows)', () => {
-  it('counts zero-pack dispensed rows only — carriers never count', () => {
+  it('counts zero-pack dispensed rows only — placeholders never count', () => {
     expect(
       zeroQuantityLineCount([
         { type: 'STOCK_OUT', numberOfPacks: 0 },

@@ -110,7 +110,8 @@ export const PrescriptionStatusFooter: Component<
   };
 
   const openConfirm = (next: ForwardStatus) => {
-    // The one sanctioned pre-flight (AC-S6): nothing dispensed — carrier-only
+    // The one sanctioned pre-flight (AC-S6): nothing dispensed —
+    // placeholder-only
     // counts as nothing — blocks with a notice and no server call.
     if (!hasDispensedLines(props.node.lines.nodes)) return setNoLinesOpen(true);
     // The payment window replaces the plain confirmation when the store has

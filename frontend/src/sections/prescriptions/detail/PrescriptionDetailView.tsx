@@ -63,7 +63,7 @@ import { storeNameOf } from '../../../auth/authContext';
 import {
   asPrescriptionStatus,
   isReadOnly,
-  isCarrierLine,
+  isPlaceholderLine,
   isRenderableLine,
 } from '../prescriptionStatus';
 import {
@@ -91,7 +91,8 @@ import { EditPatientModal } from '../../patients';
 
 // The prescription detail (spec/prescriptions/ui-surface.md S3): toolbar
 // (patient / clinician / date / program), Details + Log tabs over the flat
-// line table (one row per dispensed line; carriers never render — AC-Q1/V1),
+// line table (a row per dispensed line, plus a prescribed-quantity
+// placeholder row where an item has nothing dispensed — AC-Q1/V1),
 // the side panel, and the status footer. Dispensing happens in the S4 modal
 // (D53). Read-only from VERIFIED: dead affordances are hidden (D39) and a row
 // selection opens S4's read-only face rather than its editor (.73).
@@ -201,8 +202,8 @@ const PrescriptionDetailView: Component = () => {
   const disabled = () => isReadOnly(status());
 
   // The rendered rows — dispensed lines, a cancellation reversal's returned
-  // lines, and the prescribed-quantity carrier (isRenderableLine); ordered by
-  // item then batch for a stable read.
+  // lines, and the prescribed-quantity placeholder (isRenderableLine);
+  // ordered by item then batch for a stable read.
   const rows = createMemo((): Line[] =>
     (info()?.lines.nodes ?? [])
       .filter(isRenderableLine)
@@ -376,7 +377,7 @@ const PrescriptionDetailView: Component = () => {
   };
 
   // The read-only face reads off the lines already loaded, so it needs only
-  // the item — EVERY line of it, carriers included (the prescribed quantity
+  // the item — EVERY line of it, placeholders included (the prescribed quantity
   // and the directions may sit on one; see ./lineView).
   const viewLines = createMemo((): Line[] => {
     const itemId = viewItemId();
@@ -486,13 +487,13 @@ const PrescriptionDetailView: Component = () => {
         header: () => t('label.pack-quantity'),
         ...getNumberCell(),
       },
-      // The money columns stay EMPTY on a carrier row: it holds no stock and
-      // no packs, so a price would be a fabricated $0.00 (the current app
-      // blanks them the same way).
+      // The money columns stay EMPTY on a placeholder row: it holds no
+      // stock and no packs, so a price would be a fabricated $0.00 (the
+      // current app blanks them the same way).
       {
         c: {
           accessor: line =>
-            isCarrierLine(line)
+            isPlaceholderLine(line)
               ? null
               : line.sellPricePerPack / (line.packSize || 1),
           id: 'unitPrice',
@@ -502,7 +503,7 @@ const PrescriptionDetailView: Component = () => {
       },
       {
         c: {
-          accessor: line => (isCarrierLine(line) ? null : line.totalAfterTax),
+          accessor: line => (isPlaceholderLine(line) ? null : line.totalAfterTax),
           id: 'totalAfterTax',
         },
         header: () => t('label.line-total'),
@@ -511,7 +512,7 @@ const PrescriptionDetailView: Component = () => {
       {
         c: {
           accessor: line =>
-            isCarrierLine(line)
+            isPlaceholderLine(line)
               ? null
               : line.costPricePerPack * line.numberOfPacks,
           id: 'costPrice',
@@ -714,10 +715,10 @@ const PrescriptionDetailView: Component = () => {
                 columns={columns()}
                 rows={rows()}
                 rowKey={line => line.id}
-                // The carrier is a line awaiting an action — nothing is
+                // The placeholder is a line awaiting an action — nothing is
                 // dispensed for the item yet (its own cells say so: no batch,
                 // zero packs, a prescribed quantity).
-                rowTone={line => (isCarrierLine(line) ? 'info' : undefined)}
+                rowTone={line => (isPlaceholderLine(line) ? 'info' : undefined)}
                 loading={data.loading && !info()}
                 onRowClick={openRow}
                 emptyMessage={t('error.no-items')}
