@@ -28,6 +28,11 @@ export type LineEditCommit = {
 // The three input arrays, minus storeId (the caller passes that separately).
 // Same shape the line editor's buildBatch produces and the selection actions
 // assemble.
+//
+// `continueOnError` rides along as the per-call transaction choice (see the
+// mutation in stocktakeDetail.graphql): the line editor leaves it unset so its
+// insert+update+delete stays one atomic save, a bulk selection action sets it
+// so each independent line stands or falls alone.
 export type BatchStocktakeLinesInput = Omit<
   BatchStocktakeLinesVariables,
   'storeId'
