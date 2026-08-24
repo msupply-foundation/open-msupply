@@ -117,6 +117,8 @@ pub enum InsertStockInLineError {
     ItemNotFound,
     PackSizeBelowOne,
     NumberOfPacksBelowZero,
+    SellPricePerPackBelowZero,
+    CostPricePerPackBelowZero,
     NewlyCreatedLineDoesNotExist,
     ManufacturerDoesNotExist,
     ManufacturerIsNotAManufacturer,
@@ -248,6 +250,38 @@ mod test {
                 None
             ),
             Err(ServiceError::NumberOfPacksBelowZero)
+        );
+
+        // SellPricePerPackBelowZero
+        assert_eq!(
+            insert_stock_in_line(
+                &context,
+                InsertStockInLine {
+                    id: "new invoice line id".to_string(),
+                    pack_size: 1.0,
+                    number_of_packs: 1.0,
+                    sell_price_per_pack: -1.0,
+                    ..Default::default()
+                },
+                None
+            ),
+            Err(ServiceError::SellPricePerPackBelowZero)
+        );
+
+        // CostPricePerPackBelowZero
+        assert_eq!(
+            insert_stock_in_line(
+                &context,
+                InsertStockInLine {
+                    id: "new invoice line id".to_string(),
+                    pack_size: 1.0,
+                    number_of_packs: 1.0,
+                    cost_price_per_pack: -1.0,
+                    ..Default::default()
+                },
+                None
+            ),
+            Err(ServiceError::CostPricePerPackBelowZero)
         );
 
         // ItemNotFound
@@ -940,5 +974,90 @@ mod test {
             line.reason_option_id,
             Some(mock_shipment_variance_reason_option().id)
         );
+    }
+    #[actix_rt::test]
+    async fn insert_stock_in_line_shipped_inbound_shipment() {
+        /// A transfer from another store, its lines are the sending store's record
+        fn transferred_shipment() -> InvoiceRow {
+            InvoiceRow {
+                id: "shipped_transferred_shipment".to_string(),
+                status: InvoiceStatus::Shipped,
+                store_id: mock_store_a().id,
+                name_id: mock_name_store_b().id,
+                r#type: InvoiceType::InboundShipment,
+                linked_invoice_id: Some(mock_outbound_shipment_e().id),
+                ..Default::default()
+            }
+        }
+
+        /// Raised against a purchase order, the user records what the supplier despatched
+        fn external_shipment() -> InvoiceRow {
+            InvoiceRow {
+                id: "shipped_external_shipment".to_string(),
+                status: InvoiceStatus::Shipped,
+                store_id: mock_store_a().id,
+                name_id: mock_name_store_b().id,
+                r#type: InvoiceType::InboundShipment,
+                purchase_order_id: Some(mock_purchase_order_a().id),
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "insert_stock_in_line_shipped_inbound_shipment",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![transferred_shipment(), external_shipment()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, mock_user_account_a().id)
+            .unwrap();
+
+        // Lines of a transferred shipment are locked while it is in transit
+        assert_eq!(
+            insert_stock_in_line(
+                &context,
+                InsertStockInLine {
+                    id: "line_on_transferred_shipment".to_string(),
+                    invoice_id: transferred_shipment().id,
+                    item_id: mock_item_a().id,
+                    pack_size: 1.0,
+                    number_of_packs: 5.0,
+                    r#type: StockInType::InboundShipment,
+                    ..Default::default()
+                },
+                None
+            ),
+            Err(ServiceError::CannotEditFinalised)
+        );
+
+        // An external shipment stays editable while in transit
+        insert_stock_in_line(
+            &context,
+            InsertStockInLine {
+                id: "line_on_external_shipment".to_string(),
+                invoice_id: external_shipment().id,
+                item_id: mock_item_a().id,
+                pack_size: 1.0,
+                number_of_packs: 5.0,
+                r#type: StockInType::InboundShipment,
+                purchase_order_line_id: Some(mock_purchase_order_a_line_1().id),
+                ..Default::default()
+            },
+            None,
+        )
+        .unwrap();
+
+        // ...but the goods are still in transit, so no stock is created for it yet
+        let line = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id("line_on_external_shipment")
+            .unwrap()
+            .unwrap();
+        assert_eq!(line.stock_line_id, None);
     }
 }

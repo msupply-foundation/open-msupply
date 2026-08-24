@@ -2673,6 +2673,7 @@
   "messages.vaccination-saved-and-stock-recorded": "Vaccination saved and stock transaction recorded 🥳",
   "messages.vaccination-was-given": "Vaccination was given on {{date}}.",
   "messages.vaccine-course-saved": "Vaccine course updated",
+  "messages.waiting-for-central-server": "Waiting for the central server to prepare this site…",
   "messages.yes": "Yes",
   "messages.zero-line-quantities_few": "The quantity of {{count}} lines has been set to 0",
   "messages.zero-line-quantities_many": "The quantity of {{count}} lines has been set to 0",
@@ -3125,5 +3126,9 @@
   "warning.insufficient-recent-stocktake-items": "You have not completed stocktake(s) containing at least {{ minItems }} items within the last {{maxAge}} days. Your stock levels may not be accurate. Are you sure that you want to continue?",
   "warning.manual-store-requisition": "Entering a requisition for this store may result in duplicates if the store also submits an internal order.",
   "warning.nothing-to-supply": "Nothing left to supply!",
-  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested"
+  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested",
+  "preference.globalLogo": "Global logo",
+  "label.edit-image": "Edit image",
+  "messages.none-uploaded": "None uploaded",
+  "messages.image-upload-helper": "PNG, JPEG, GIF or SVG, up to {{maxSize}}"
 }
