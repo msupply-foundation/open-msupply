@@ -1,49 +1,55 @@
-import { createSignal, Match, Show, Switch, type Component } from 'solid-js';
+import {
+  createSignal,
+  For,
+  Match,
+  Show,
+  Switch,
+  type Component,
+} from 'solid-js';
 import { t, tPlural } from '../../../../intl';
 import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
-import { InfoIcon, TrashIcon } from '../../../../ui/icons';
-import { isDeletable } from '../../outboundStatus';
+import { Stack } from '../../../../ui/layout/Stack/Stack';
+import { TrashIcon } from '../../../../ui/icons';
 import { DeleteOutboundShipments } from '../outboundShipments.generated';
 
 export interface DeleteShipmentsActionProps {
   storeId: string;
-  /** The selected rows' id + status (the pre-check needs the status). */
-  selectedRows: () => { id: string; status: string }[];
+  selectedIds: () => string[];
   /** Deletion succeeded — clear the selection and re-query. */
   onDeleted: () => void;
 }
 
-// The list's bulk delete (spec S1 bulk actions, OMS-REG-DIST-01.21): the whole
-// batch is refused when ANY selected shipment is not deletable — a UI pre-check
-// with a blocking notice instead of the confirmation, no server call (rules.md
-// § the list; controls › action feedback); per-row enforcement remains
-// server-side. Same confirm → deleting → error dialog shape as the stocktakes
-// delete action (kdd/action-modal). No success phase: a clean delete CLOSES the
-// dialog — closure is the confirmation and the shorter list behind it is the
-// visible result (spec/ui-standards/controls.md § dialogs, D22; § action
-// feedback, D21).
+// The list's bulk delete (spec S1 bulk actions, OMS-REG-DIST-01.23). Offered
+// for any selection: deletability is the admissibility of an action, not a
+// standing property of the rows, so the batch is SUBMITTED and the server's own
+// reason surfaced here rather than pre-screened (validation.md § actions;
+// issue #1134).
+//
+// Submitting a mixed selection is safe because the batch is ATOMIC. The server
+// runs every row inside one transaction with `continue_on_error` defaulting to
+// false, and the first failure returns `Err(WithDBError::err(results))`, which
+// rolls the transaction back — then unwraps that error back into a normal
+// response, so the client receives each row's own typed rejection with the
+// database untouched (server service/src/invoice/outbound_shipment/batch.rs).
+// Nothing is ever partially deleted.
+//
+// Each failed row carries a translated `error.description`, so the refusal
+// names its cause instead of a blanket notice — one notice per DISTINCT reason,
+// since N rows refused for the same cause is one thing to say, not N.
+//
+// No success phase: a clean delete CLOSES the dialog — closure is the
+// confirmation and the shorter list behind it is the visible result
+// (spec/ui-standards/controls.md § dialogs, D22; § action feedback, D21).
 type Phase = 'confirm' | 'deleting' | 'error';
 
 export const DeleteShipmentsAction: Component<
   DeleteShipmentsActionProps
 > = props => {
   const [open, setOpen] = createSignal(false);
-  const [blockedOpen, setBlockedOpen] = createSignal(false);
-
-  const onClick = () => {
-    // Pre-check: every selected shipment must be deletable (NEW / ALLOCATED /
-    // PICKED) or the whole batch is refused with an explanatory notice in
-    // place of the confirmation (OMS-REG-DIST-01.21).
-    if (props.selectedRows().some(row => !isDeletable(row.status))) {
-      setBlockedOpen(true);
-      return;
-    }
-    setOpen(true);
-  };
 
   return (
     <>
@@ -51,34 +57,12 @@ export const DeleteShipmentsAction: Component<
         variant="danger"
         icon={<TrashIcon />}
         data-testid="delete-lines-button"
-        onClick={onClick}
+        onClick={() => setOpen(true)}
       >
         {t('label.delete')}
       </Button>
       <Show when={open()}>
         <Body {...props} onClose={() => setOpen(false)} />
-      </Show>
-      {/* Non-deletable selection: an info-only notice, no server call. */}
-      <Show when={blockedOpen()}>
-        <Dialog
-          open
-          onClose={() => setBlockedOpen(false)}
-          icon={<InfoIcon />}
-          // A refusal is not a question (kdd/action-modal).
-          title={t('heading.cannot-do-that')}
-          description={
-            <Alert severity="error">{t('messages.cant-delete-generic')}</Alert>
-          }
-          actions={
-            <Button
-              variant="secondary"
-              confirms="plain"
-              onClick={() => setBlockedOpen(false)}
-            >
-              {t('button.close')}
-            </Button>
-          }
-        />
       </Show>
     </>
   );
@@ -86,15 +70,17 @@ export const DeleteShipmentsAction: Component<
 
 const Body = (props: DeleteShipmentsActionProps & { onClose: () => void }) => {
   const [phase, setPhase] = createSignal<Phase>('confirm');
+  // Each refused row's reason, deduplicated for the report.
+  const [reasons, setReasons] = createSignal<string[]>([]);
   // Snapshotted on open so the message can't shift behind the dialog.
-  const count = props.selectedRows().length;
+  const count = props.selectedIds().length;
 
   const run = async () => {
     if (phase() !== 'confirm') return; // re-entry guard
     setPhase('deleting');
     const result = await graphqlFetch(DeleteOutboundShipments, {
       storeId: props.storeId,
-      ids: props.selectedRows().map(row => row.id),
+      ids: props.selectedIds(),
     });
     if (result.kind !== 'success') {
       // transport/unexpected → the global modal already surfaced it.
@@ -103,10 +89,19 @@ const Body = (props: DeleteShipmentsActionProps & { onClose: () => void }) => {
     }
     const items =
       result.data.batchOutboundShipment.deleteOutboundShipments ?? [];
-    const failed = items.some(
-      item => item.response.__typename === 'DeleteOutboundShipmentError'
-    );
-    if (failed) {
+    const refused = [
+      ...new Set(
+        items.flatMap(item =>
+          item.response.__typename === 'DeleteOutboundShipmentError'
+            ? [item.response.error.description]
+            : []
+        )
+      ),
+    ];
+    if (refused.length > 0) {
+      // The batch rolled back, so nothing went — the report is the reasons
+      // alone, with no count of what survived.
+      setReasons(refused);
       setPhase('error');
       return;
     }
@@ -134,7 +129,17 @@ const Body = (props: DeleteShipmentsActionProps & { onClose: () => void }) => {
       description={
         <Switch fallback={tPlural('messages.confirm-delete-shipments', count)}>
           <Match when={phase() === 'error'}>
-            <Alert severity="error">{t('messages.cant-delete-generic')}</Alert>
+            {/* The description slot is a single <p> with no rhythm of its own,
+                so the gap between notices comes from Stack. */}
+            <Stack gap="sm">
+              <For each={reasons()}>
+                {reason => (
+                  <Alert severity="error" testId="shipment-delete-refused">
+                    {reason}
+                  </Alert>
+                )}
+              </For>
+            </Stack>
           </Match>
         </Switch>
       }
