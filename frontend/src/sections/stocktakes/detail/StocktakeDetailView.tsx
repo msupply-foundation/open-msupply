@@ -611,6 +611,7 @@ const StocktakeDetailView: Component = () => {
           isVaccine: line.item.isVaccine,
           doses: line.item.doses,
           unitName: line.item.unitName,
+          defaultPackSize: line.item.defaultPackSize,
         };
       }
       return undefined;
