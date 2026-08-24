@@ -29,7 +29,7 @@ impl SyncApiV6 {
 
         // Resume from an earlier partial download; see the v7 equivalent for why this
         // needs nothing on the central side.
-        let resume_from = static_file_service.resume_offset(sync_file);
+        let resume_from = static_file_service.partial_download_offset(sync_file);
 
         let mut request = https_client().post(url.clone()).json(&request);
         if resume_from > 0 {
@@ -37,20 +37,20 @@ impl SyncApiV6 {
         }
         let result = request.send().await;
 
-        // See the v7 equivalent: a 416 means the partial can't be continued, so discard
-        // it rather than retrying the same unsatisfiable range forever.
-        if matches!(&result, Ok(response) if response.status() == reqwest::StatusCode::RANGE_NOT_SATISFIABLE)
-        {
-            static_file_service.discard_partial_download(sync_file);
-            return Err(SyncApiErrorV6 {
-                url,
-                route: route.to_string(),
-                source: SyncApiErrorVariantV6::Other(anyhow::anyhow!(
-                    "Central cannot resume sync file {} from byte {}; discarded the partial download",
-                    sync_file.id,
-                    resume_from
-                )),
-            });
+        // See `resolve_unsatisfiable_range`: a 416 means either that we already hold the
+        // whole file, or that the partial can't be continued. Never that we should ask
+        // for the same range again.
+        if let Ok(response) = &result {
+            if response.status() == reqwest::StatusCode::RANGE_NOT_SATISFIABLE {
+                return static_file_service
+                    .resolve_unsatisfiable_range(sync_file, response)
+                    .map(|(file, _bytes)| file)
+                    .map_err(|source| SyncApiErrorV6 {
+                        url,
+                        route: route.to_string(),
+                        source: SyncApiErrorVariantV6::Other(source),
+                    });
+            }
         }
 
         let downloaded_file = match download_response_or_err(result).await {
@@ -109,6 +109,7 @@ async fn download_response_or_err(
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::static_files::StaticFileCategory;
     use crate::sync::api::SyncApiSettings;
     use httpmock::{Method::POST, MockServer};
     use repository::sync_file_reference_row::SyncFileReferenceRow;
@@ -125,42 +126,104 @@ mod test {
         }
     }
 
-    /// 416 means central won't serve from the offset we asked for, so the partial we
-    /// hoped to continue is unusable. Retrying the same range would fail identically
-    /// until the row gave up, so the partial has to go.
-    #[actix_rt::test]
-    async fn a_range_central_cannot_satisfy_discards_the_partial() {
+    fn sync_file(id: &str) -> SyncFileReferenceRow {
+        SyncFileReferenceRow {
+            id: id.to_string(),
+            table_name: "frontend_bundle".to_string(),
+            record_id: "bundle5".to_string(),
+            file_name: "frontend-dist.zip".to_string(),
+            total_bytes: 100,
+            ..Default::default()
+        }
+    }
+
+    /// Plant a part-downloaded file and answer the resume request with a 416 carrying the
+    /// given complete length, the way actix's `NamedFile` does.
+    async fn download_against_416(
+        id: &str,
+        partial: &str,
+        content_range: Option<&str>,
+    ) -> (StaticFileService, SyncFileReferenceRow, anyhow::Result<()>) {
         let mock_server = MockServer::start();
         mock_server.mock(|when, then| {
             when.method(POST).path("/central/sync/download_file");
-            then.status(416);
+            match content_range {
+                Some(value) => then.status(416).header("Content-Range", value),
+                None => then.status(416),
+            };
         });
 
         let temp_dir = tempfile::tempdir().unwrap();
         let mut file_service = StaticFileService::new(".").unwrap();
-        file_service.dir = temp_dir.path().to_path_buf();
+        // Outlives the TempDir guard being dropped, since the assertions only read
+        // lengths through the service.
+        file_service.dir = temp_dir.keep();
 
-        let sync_file = SyncFileReferenceRow {
-            id: "wedged".to_string(),
-            table_name: "frontend_bundle".to_string(),
-            record_id: "bundle5".to_string(),
-            file_name: "frontend-dist.zip".to_string(),
-            // Larger than the partial, so resume_offset hands the offset over as-is and
-            // it really is the 416 handling under test.
-            total_bytes: 100,
-            ..Default::default()
-        };
-
+        let sync_file = sync_file(id);
         let partial_path = file_service.partial_path(&sync_file).unwrap();
         std::fs::create_dir_all(partial_path.parent().unwrap()).unwrap();
-        std::fs::write(&partial_path, "partial bytes").unwrap();
-        assert_eq!(file_service.partial_download_offset(&sync_file), 13);
+        std::fs::write(&partial_path, partial).unwrap();
+        assert_eq!(
+            file_service.partial_download_offset(&sync_file),
+            partial.len() as u64
+        );
 
         let api = SyncApiV6::new(&mock_server.base_url(), &test_settings(), 6).unwrap();
-        assert!(api.download_file(&file_service, &sync_file).await.is_err());
+        let result = api
+            .download_file(&file_service, &sync_file)
+            .await
+            .map(|_| ())
+            .map_err(anyhow::Error::from);
 
-        // Gone, so the next attempt starts from zero instead of asking for the same
-        // unsatisfiable range forever.
+        (file_service, sync_file, result)
+    }
+
+    /// The partial holds every byte central has: the download did finish, and only the
+    /// rename was missed because the process died in that window. Re-fetching a bundle we
+    /// already hold in full is exactly the waste this path exists to avoid, so the file is
+    /// completed where it stands.
+    #[actix_rt::test]
+    async fn a_complete_partial_is_finished_rather_than_re_downloaded() {
+        let (file_service, sync_file, result) =
+            download_against_416("already_complete", "partial bytes", Some("bytes */13")).await;
+
+        assert!(result.is_ok(), "expected success, got {:?}", result.err());
+
+        // Findable under its final name, with the bytes we already had…
+        let category =
+            StaticFileCategory::SyncFile(sync_file.table_name.clone(), sync_file.record_id.clone());
+        let found = file_service
+            .find_file(&sync_file.id, category)
+            .unwrap()
+            .expect("file should be findable");
+        assert_eq!(
+            std::fs::read_to_string(&found.path).unwrap(),
+            "partial bytes"
+        );
+
+        // …and no partial left to resume.
+        assert_eq!(file_service.partial_download_offset(&sync_file), 0);
+    }
+
+    /// Central holds fewer bytes than we do, so what we have can't be a prefix of the
+    /// file. Nothing to salvage: discard and start over.
+    #[actix_rt::test]
+    async fn a_partial_longer_than_the_file_is_discarded() {
+        let (file_service, sync_file, result) =
+            download_against_416("too_long", "partial bytes", Some("bytes */5")).await;
+
+        assert!(result.is_err());
+        assert_eq!(file_service.partial_download_offset(&sync_file), 0);
+    }
+
+    /// Without a usable `Content-Range` there is no evidence the bytes are complete, so
+    /// the safe reading is that they aren't.
+    #[actix_rt::test]
+    async fn a_416_without_a_length_discards_the_partial() {
+        let (file_service, sync_file, result) =
+            download_against_416("no_header", "partial bytes", None).await;
+
+        assert!(result.is_err());
         assert_eq!(file_service.partial_download_offset(&sync_file), 0);
     }
 }

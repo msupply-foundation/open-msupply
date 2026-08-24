@@ -43,7 +43,7 @@ impl SyncApiV7 {
         // nothing on the central side. A central that ignored the header would answer
         // 200 with the whole file, which download_file_in_chunks handles by starting
         // over rather than corrupting the partial.
-        let resume_from = static_file_service.resume_offset(sync_file);
+        let resume_from = static_file_service.partial_download_offset(sync_file);
         let range = (resume_from > 0).then(|| format!("bytes={resume_from}-"));
 
         let result = with_retries(RetrySeconds::default(), |client| {
@@ -72,15 +72,14 @@ impl SyncApiV7 {
             }
         };
 
-        // Central can't serve from our offset, so the partial it would continue is not
-        // a prefix of the file — and every retry would fail identically. Discard it so
-        // the next attempt starts from zero instead of wedging here.
+        // Central won't serve from the offset we asked for. Either we already hold the
+        // whole file and only the rename was missed, or the partial is unusable — see
+        // `resolve_unsatisfiable_range`. Both beat asking for the same range forever.
         if response.status() == reqwest::StatusCode::RANGE_NOT_SATISFIABLE {
-            static_file_service.discard_partial_download(sync_file);
-            return Err(SyncError::Other(format!(
-                "Central cannot resume sync file {} from byte {}; discarded the partial download",
-                sync_file.id, resume_from
-            )));
+            return static_file_service
+                .resolve_unsatisfiable_range(sync_file, &response)
+                .map(|(file, _bytes)| file)
+                .map_err(|e| SyncError::Other(format!("{e:#}")));
         }
 
         if !response.status().is_success() {
