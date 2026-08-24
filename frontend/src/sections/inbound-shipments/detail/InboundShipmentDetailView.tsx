@@ -314,6 +314,11 @@ const InboundShipmentDetailView: Component = () => {
   // keeps the current page visible instead of suspending.
   const rows = (): Line[] => gated(linesData)?.nodes ?? [];
   const totalCount = () => gated(linesData)?.totalCount ?? 0;
+  // Whether the shipment holds any STOCK-BEARING line — this query already
+  // filters to STOCK_IN / UNALLOCATED_STOCK, so service lines (which never
+  // create stock) are correctly excluded. Feeds the side panel's delete
+  // confirmation: an empty shipment has no stock to warn about.
+  const hasLines = () => totalCount() > 0;
 
   // Total volume of the selected lines (volumePerPack × packs received) — feeds
   // the change-location picker's "Available" filter so it keeps only locations
@@ -932,6 +937,7 @@ const InboundShipmentDetailView: Component = () => {
                   node={node()}
                   open={sidePanelOpen()}
                   disabled={isDisabled()}
+                  hasLines={hasLines()}
                   scope={scope()}
                   edit={edit}
                   donorTracking={prefs().allowTrackingOfStockByDonor}

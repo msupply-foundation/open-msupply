@@ -4,7 +4,8 @@ import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
-import { TrashIcon, XCircleIcon } from '../../../../ui/icons';
+import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
+import { TrashIcon } from '../../../../ui/icons';
 import {
   asPrescriptionStatus,
   canDeletePrescription,
@@ -98,7 +99,13 @@ const Body = (
       onClose={props.onClose}
       icon={<TrashIcon />}
       testId="confirmation-modal"
-      title={t('heading.are-you-sure')}
+      // The title tracks the phase — neither a refused selection nor a
+      // rejection is a question (kdd/action-modal).
+      title={
+        phase() === 'refused' || phase() === 'error'
+          ? t('heading.cannot-do-that')
+          : t('heading.are-you-sure')
+      }
       description={
         <Show
           when={phase() === 'refused' || phase() === 'error'}
@@ -113,18 +120,14 @@ const Body = (
           fallback={
             <>
               <Show when={phase() === 'confirm'}>
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
-                  confirms="cancel"
-                  onClick={props.onClose}
-                >
-                  {t('button.cancel')}
-                </Button>
+                <CancelButton onClick={props.onClose} />
               </Show>
+              {/* A dialog footer is read as verbs in a fixed position, not a
+                  toolbar: the standard icon-less buttons, with the destructive
+                  confirm carrying the danger tone
+                  (ui-standards/controls.md § footer button identity). */}
               <Button
-                variant="secondary"
-                icon={<TrashIcon />}
+                variant="danger"
                 confirms="plain"
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'deleting'}
@@ -135,12 +138,7 @@ const Body = (
             </>
           }
         >
-          <Button
-            variant="secondary"
-            icon={<XCircleIcon />}
-            confirms="plain"
-            onClick={props.onClose}
-          >
+          <Button variant="secondary" confirms="plain" onClick={props.onClose}>
             {t('button.close')}
           </Button>
         </Show>

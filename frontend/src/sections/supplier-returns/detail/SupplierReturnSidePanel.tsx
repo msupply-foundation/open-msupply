@@ -20,6 +20,7 @@ import {
   ColourTagDot,
   ColourTagPicker,
 } from '../../../ui/elements/selectors/ColourTag';
+import { Alert } from '../../../ui/elements/feedback/Alert';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { InfoIcon, TrashIcon } from '../../../ui/icons';
@@ -33,6 +34,7 @@ import {
   scopeOf,
 } from '@/sections/inbound-shipments/inboundShipmentScope';
 import { deleteReturn } from './returnUpdate';
+import { deleteRestoresStock } from './returnStatus';
 import type { ReturnFieldEdit } from './returnEdit';
 
 // The detail side panel (spec/supplier-returns/ui-surface.md S3 § side panel):
@@ -45,6 +47,11 @@ import type { ReturnFieldEdit } from './returnEdit';
 export interface SupplierReturnSidePanelProps {
   node: SupplierReturnInfoFragment;
   disabled: boolean;
+  /**
+   * Whether the return holds any lines — only lines issued stock, so this and
+   * the status together decide the delete confirmation's stock warning.
+   */
+  hasLines: boolean;
   /**
    * The shared return edit buffer — reads/writes comment + transportReference.
    */
@@ -65,6 +72,15 @@ export const SupplierReturnSidePanel: Component<
   // offers it regardless of which; rules § deletion). A SHIPPED return is
   // read-only (isReturnDisabled), so it shares the standing gate.
   const canDelete = () => !props.disabled;
+
+  // A PICKED return has already issued its stock, so deleting it returns those
+  // packs to the store (rules § deleting an issued return restores its stock) —
+  // the confirmation says so. Both halves have to hold for there to be stock the
+  // delete would actually return: the status must admit it (deleteRestoresStock
+  // — PICKED alone: NEW issued nothing, and SHIPPED onwards is refused
+  // outright), and the return must have lines, since only lines issued anything.
+  const restoresStock = () =>
+    deleteRestoresStock(props.node.status) && props.hasLines;
 
   const runDelete = async () => {
     const result = await deleteReturn(params.storeId, props.node.id);
@@ -233,7 +249,18 @@ export const SupplierReturnSidePanel: Component<
           open
           onClose={() => setDeleteConfirm(false)}
           title={t('heading.are-you-sure')}
-          message={tPlural('messages.confirm-delete-returns', 1)}
+          message={
+            <>
+              {tPlural('messages.confirm-delete-returns', 1)}
+              {/* The stock comes back — informational, so the confirm still
+                  submits (validation.md § actions). */}
+              <Show when={restoresStock()}>
+                <Alert severity="warning" testId="delete-restores-stock">
+                  {t('messages.delete-restores-issued-stock')}
+                </Alert>
+              </Show>
+            </>
+          }
           confirmVariant="danger"
           onConfirm={() => void runDelete()}
         />
@@ -246,7 +273,8 @@ export const SupplierReturnSidePanel: Component<
           open
           onClose={() => setDeleteError(undefined)}
           icon={<InfoIcon />}
-          title={t('error.something-wrong')}
+          // A refusal is not a fault (kdd/action-modal).
+          title={t('heading.cannot-do-that')}
           description={deleteError()}
           actions={
             <OkButton

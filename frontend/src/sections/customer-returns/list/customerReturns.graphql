@@ -45,6 +45,13 @@ query customerReturns(
         linkedShipment {
           id
         }
+        # Line count only — the bulk delete's confirmation warns that a
+        # received return's stock goes with it, and an EMPTY return has no
+        # stock to warn about (rules § deletion rules). Batched server-side by
+        # the invoice-line loader, so it costs one query for the page.
+        lines {
+          totalCount
+        }
         # Custom-field VALUES (JSON object), scope-filtered — backs the
         # configured custom-field columns.
         customFields
