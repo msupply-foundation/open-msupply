@@ -7,6 +7,7 @@ import { startKeyboardDispatcher } from './keyboardDispatcher';
 import { createAction } from '../ui/utils/keyActions';
 import { MOD_K } from '../ui/utils/shortcuts';
 import { useFullScreen } from '../ui/layout/AppShell/shellContext';
+import { storeRelativePath } from '../nav/storeRelativePath';
 
 /*
  * Where the keyboard layer is switched on (spec/keyboard). Mounted inside
@@ -41,15 +42,10 @@ export const KeyboardHost = (props: KeyboardHostProps) => {
 
   const [paletteOpen, setPaletteOpen] = createSignal(false);
 
-  // Store-relative path, as ShellLayout derives it: '/{store}/inventory/
-  // stocktakes/{id}' → 'inventory/stocktakes/{id}'.
-  const relativePath = (): string => {
-    const prefix = `/${params.storeId}`;
-    const rest = location.pathname.startsWith(prefix)
-      ? location.pathname.slice(prefix.length)
-      : location.pathname;
-    return rest.replace(/^\/+|\/+$/g, '');
-  };
+  // Store-relative path, from the same derivation ShellLayout uses:
+  // '/{store}/inventory/stocktakes/{id}' → 'inventory/stocktakes/{id}'.
+  const relativePath = (): string =>
+    storeRelativePath(location.pathname, params.storeId);
 
   const go = (path: string) => navigate(`/${params.storeId}/${path}`);
 
