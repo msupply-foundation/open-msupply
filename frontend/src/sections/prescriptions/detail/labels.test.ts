@@ -31,8 +31,8 @@ const prescription = {
         note: 'every FOUR to SIX hours',
         item: { unitName: 'tablet' },
       },
-      // A carrier line — a prescribed quantity with nothing dispensed. Never a
-      // label (AC-Q1/V1).
+      // A placeholder line — a prescribed quantity with nothing dispensed.
+      // Never a label (AC-Q1/V1).
       {
         id: 'line-3',
         type: 'UNALLOCATED_STOCK',
@@ -68,7 +68,7 @@ afterEach(() => {
 describe('buildLabels (.47 — one label per dispensed item)', () => {
   it('merges an item across batches, summing units and keeping its directions', () => {
     const labels = buildLabels(prescription, 'Central Store');
-    expect(labels).toHaveLength(1); // the carrier line contributes nothing
+    expect(labels).toHaveLength(1); // the placeholder line contributes nothing
     expect(labels[0].itemDetails).toBe('21 tablet Aspirin'); // 0.01×100 + 2×10
     expect(labels[0].itemDirections).toBe('every FOUR to SIX hours');
     expect(labels[0].patientDetails).toBe('Ann Smith - P0042');
