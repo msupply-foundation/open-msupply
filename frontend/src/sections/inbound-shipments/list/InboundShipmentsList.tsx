@@ -55,7 +55,7 @@ import {
 } from './actions';
 import { DuplicateInboundShipmentAction } from '../detail/actions/DuplicateInboundShipmentAction';
 import {
-  hasIntroducedStock,
+  deleteRemovesStock,
   isEditable,
   statusColour,
   statusLabel,
@@ -215,14 +215,19 @@ const InboundShipmentsList: Component = () => {
 
   // Whether deleting the selection reverses a receipt, which the confirmation
   // warns about (rules → deletion). Not a gate — it only picks the copy. Both
-  // halves have to hold for there to be stock at all: the shipment must have
-  // reached Received (hasIntroducedStock — Shipped and Delivered hold none),
-  // and it must actually have lines, since stock only ever comes from those.
+  // halves have to hold for there to be stock the delete would actually take:
+  // the status must admit it (deleteRemovesStock — Received alone: Shipped and
+  // Delivered hold none, Verified is refused outright), and the row must have
+  // lines, since stock only ever comes from those.
+  //
+  // Reads the CURRENT page's rows, since status and line count come from them:
+  // a selection carried across a page change is still submitted in full, but a
+  // stock-bearing row left behind on another page cannot raise the notice.
   const selectionRemovesStock = () =>
     rows().some(
       r =>
         selectedIds().includes(r.id) &&
-        hasIntroducedStock(r.status) &&
+        deleteRemovesStock(r.status) &&
         r.lines.totalCount > 0
     );
 

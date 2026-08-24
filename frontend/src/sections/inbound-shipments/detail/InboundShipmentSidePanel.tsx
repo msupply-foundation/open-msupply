@@ -36,7 +36,7 @@ import {
   updateInboundShipment,
 } from './inboundShipmentUpdate';
 import {
-  hasIntroducedStock,
+  deleteRemovesStock,
   kindOf,
   supplierIsStore,
 } from './inboundShipmentStatus';
@@ -470,15 +470,16 @@ export const InboundShipmentSidePanel: Component<
           {/* Delete — offered at every status, matching the list's bulk
               delete: it is submitted and the server's own reason surfaced,
               never pre-screened here (issue #1134). The confirmation warns
-              that the shipment's stock goes with it ONLY where there is stock
-              to take: received, and holding at least one line. */}
+              that the shipment's stock goes with it ONLY where the delete
+              would actually take stock: Received (Verified is refused
+              outright), and holding at least one line. */}
           <DeleteInboundShipmentAction
             storeId={props.storeId}
             invoiceId={props.node.id}
             isExternal={isExternal()}
             number={() => props.node.invoiceNumber}
             removesStock={() =>
-              hasIntroducedStock(props.node.status) && props.hasLines
+              deleteRemovesStock(props.node.status) && props.hasLines
             }
             onDeleted={props.onDeleted}
           />

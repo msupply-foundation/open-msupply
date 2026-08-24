@@ -62,7 +62,7 @@ import { NewReturnModal } from './NewReturnModal';
 import { ExportSupplierReturnsAction } from './actions/ExportSupplierReturnsAction';
 import { deleteReturn } from '../detail/returnUpdate';
 import {
-  hasIssuedStock,
+  deleteRestoresStock,
   statusLabel,
   isReturnDisabled,
 } from '../detail/returnStatus';
@@ -270,8 +270,10 @@ const SupplierReturnsList: Component = () => {
   // Whether deleting the selection brings issued stock back, which the bulk
   // delete's confirmation says (rules § deleting an issued return restores its
   // stock). Not a gate — it only picks the copy. Both halves have to hold for
-  // there to be stock at all: the return must have issued (hasIssuedStock), and
-  // it must actually have lines, since only lines issued anything.
+  // there to be stock the delete would actually return: the status must admit it
+  // (deleteRestoresStock — PICKED alone: NEW issued nothing, and SHIPPED onwards
+  // is refused outright), and the row must have lines, since only lines issued
+  // anything.
   //
   // Reads the CURRENT page's rows, since status and line count come from them:
   // a selection carried across a page change is still deleted in full (the
@@ -281,7 +283,7 @@ const SupplierReturnsList: Component = () => {
     rows().some(
       row =>
         selectedIds().includes(row.id) &&
-        hasIssuedStock(row.status) &&
+        deleteRestoresStock(row.status) &&
         row.lines.totalCount > 0
     );
 
