@@ -1,4 +1,5 @@
 use crate::backend_plugin::types::get_consumption;
+use crate::boajs::context::with_shared_connection;
 use crate::common::days_in_a_month;
 use crate::preference::{AdjustForNumberOfDaysOutOfStock, Preference};
 use crate::{
@@ -10,7 +11,6 @@ use crate::{
     store_preference::get_store_preferences,
     PluginOrRepositoryError,
 };
-use crate::boajs::context::with_shared_connection;
 use chrono::{Duration, NaiveDate};
 use repository::{
     ConsumptionFilter, ConsumptionRepository, DateFilter, DaysOutOfStockFilter,
@@ -68,6 +68,8 @@ pub fn get_item_stats(
 ) -> Result<Vec<ItemStats>, PluginOrRepositoryError> {
     // Lend `connection` to the plugin's sql()/use_repository() bindings so a plugin run reuses
     // it instead of checking out a second pool connection while this one is pinned (#12689).
+    // No-op when already in a transaction (the requisition create/update callers) — see
+    // `with_shared_connection` for why plugin statements are kept out of a caller's transaction.
     with_shared_connection(connection, || {
         get_item_stats_inner(
             connection,
