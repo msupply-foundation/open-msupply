@@ -10,7 +10,9 @@ files.forEach((fileName) => {
 });
 
 function replaceVersion(fileContent) {
-  return fileContent.replace(/replace with version/g, process.env.versionTag);
+  return fileContent
+    .replace(/replace with version/g, process.env.versionTag)
+    .replace(/replace canonical version/g, process.env.version);
 }
 
 function adjustOutputFolder(fileContent) {

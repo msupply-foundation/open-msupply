@@ -122,6 +122,7 @@ const AppBarButtonsComponent = ({
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <ButtonWithIcon
+          data-testid="new-requisition-button"
           Icon={<PlusCircleIcon />}
           label={t('button.new-requisition')}
           onClick={requisitionModalController.toggleOn}

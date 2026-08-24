@@ -2,7 +2,7 @@
   "name": "@openmsupply-client/electron",
   "productName": "Open mSupply",
   "//": "Version is updated from the root package.json when electron is built, see the 'make' script below",
-  "version": "2.16.00-develop",
+  "version": "3.00.00-RC",
   "description": "Client for Open mSupply running on local network",
   "main": "./.webpack/main",
   "scripts": {

@@ -468,7 +468,7 @@ export const CustomTranslationsV2Modal = ({
               disabled={loading}
             />
             <ButtonWithIcon
-              label={t('button.download')}
+              label={t('button.export')}
               onClick={downloadTranslations}
               Icon={<DownloadIcon />}
               disabled={loading}

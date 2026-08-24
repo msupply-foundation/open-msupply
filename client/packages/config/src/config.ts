@@ -1,4 +1,5 @@
 declare const API_HOST: string;
+declare const PUBLIC_PATH: string;
 
 // For production, API is on the same domain/ip and port as web app, available through sub-route
 // i.e. web app is on https://my.openmsupply.com/, then graphql will be available https://my.openmsupply.com/graphql
@@ -23,8 +24,15 @@ const apiHost = isProductionBuild ? productionApiHost : developmentApiHost;
 
 const pluginUrl = `${apiHost}/plugins`;
 
+// Build-time base path the app is served from (webpack output.publicPath, wired
+// via DefinePlugin). Default '/'; the dual-FE packaging builds the old UI with
+// '/old-ui/'. Always ends with '/'. Used for the router basename and for
+// same-origin asset paths that don't go through webpack (e.g. i18n locales).
+const publicPath = (typeof PUBLIC_PATH !== 'undefined' && PUBLIC_PATH) || '/';
+
 export const Environment = {
   API_HOST: apiHost,
+  PUBLIC_PATH: publicPath,
   FILE_URL: `${apiHost}/files?id=`,
   GRAPHQL_URL: `${apiHost}/graphql`,
   PLUGIN_URL: pluginUrl,

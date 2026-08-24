@@ -17,6 +17,9 @@ export type Stat = {
   alertFlag?: boolean;
   labelSx?: SxProps<Theme>;
   infoTooltip?: string;
+  /** Cross-front-end e2e hook (e2e/TESTIDS.md § Dashboard); the stat's
+   * published id, e.g. `dashboard-stat-distribution.shipments.not-shipped`. */
+  testId?: string;
 };
 export interface StatsPanelProps {
   error?: ApiException;
@@ -28,6 +31,9 @@ export interface StatsPanelProps {
   width?: number;
   link?: string;
   alertFlag?: boolean;
+  /** Cross-front-end e2e hook (e2e/TESTIDS.md § Dashboard); the panel's
+   * published id, e.g. `dashboard-panel-distribution.shipments`. */
+  testId?: string;
 }
 
 export const Statistic = ({
@@ -38,10 +44,11 @@ export const Statistic = ({
   extraMessage,
   labelSx,
   infoTooltip,
+  testId,
 }: Stat) => {
   const t = useTranslation();
   return (
-    <Grid container flexDirection={'column'}>
+    <Grid container flexDirection={'column'} data-testid={testId}>
       <Grid container alignItems="center" sx={{ marginTop: 1 }}>
         <Grid
           sx={{ minWidth: '43px', display: 'flex', justifyContent: 'flex-end' }}
@@ -172,8 +179,10 @@ export const StatsPanel = ({
   width,
   link,
   panelContext,
+  testId,
 }: StatsPanelProps) => (
   <Paper
+    data-testid={testId}
     sx={{
       borderRadius: '16px',
       marginTop: '14px',

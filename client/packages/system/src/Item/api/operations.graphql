@@ -254,6 +254,7 @@ fragment Item on ItemNode {
   itemStoreProperties(storeId: $storeId) {
     defaultSellPricePerPack
     ignoreForOrders
+    margin
   }
   customFields
 }
@@ -381,6 +382,16 @@ query itemById($storeId: String!, $itemId: String!) {
         }
       }
       totalCount
+    }
+  }
+}
+
+query itemPrice($storeId: String!, $itemId: String!) {
+  itemPrice(storeId: $storeId, input: { itemId: $itemId }) {
+    ... on ItemPriceNode {
+      __typename
+      itemId
+      defaultPricePerUnit
     }
   }
 }

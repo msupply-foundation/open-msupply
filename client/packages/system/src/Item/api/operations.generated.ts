@@ -542,6 +542,7 @@ export type ItemFragment = {
     __typename: 'ItemStorePropertiesNode';
     defaultSellPricePerPack: number;
     ignoreForOrders: boolean;
+    margin: number;
   } | null;
 };
 
@@ -923,8 +924,23 @@ export type ItemByIdQuery = {
         __typename: 'ItemStorePropertiesNode';
         defaultSellPricePerPack: number;
         ignoreForOrders: boolean;
+        margin: number;
       } | null;
     }>;
+  };
+};
+
+export type ItemPriceQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  itemId: Types.Scalars['String']['input'];
+}>;
+
+export type ItemPriceQuery = {
+  __typename: 'Queries';
+  itemPrice: {
+    __typename: 'ItemPriceNode';
+    itemId: string;
+    defaultPricePerUnit?: number | null;
   };
 };
 
@@ -1775,6 +1791,7 @@ export const ItemFragmentDoc = gql`
     itemStoreProperties(storeId: $storeId) {
       defaultSellPricePerPack
       ignoreForOrders
+      margin
     }
     customFields
   }
@@ -1960,6 +1977,17 @@ export const ItemByIdDocument = gql`
   }
   ${ItemFragmentDoc}
   ${StockLineFragmentDoc}
+`;
+export const ItemPriceDocument = gql`
+  query itemPrice($storeId: String!, $itemId: String!) {
+    itemPrice(storeId: $storeId, input: { itemId: $itemId }) {
+      ... on ItemPriceNode {
+        __typename
+        itemId
+        defaultPricePerUnit
+      }
+    }
+  }
 `;
 export const ItemVariantsConfiguredDocument = gql`
   query itemVariantsConfigured($storeId: String!) {
@@ -2277,6 +2305,24 @@ export function getSdk(
             signal,
           }),
         'itemById',
+        'query',
+        variables
+      );
+    },
+    itemPrice(
+      variables: ItemPriceQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<ItemPriceQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<ItemPriceQuery>({
+            document: ItemPriceDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'itemPrice',
         'query',
         variables
       );

@@ -194,6 +194,8 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::LineAlreadyExists
         | ServiceError::NotAStockIn
         | ServiceError::NumberOfPacksBelowZero
+        | ServiceError::SellPricePerPackBelowZero
+        | ServiceError::CostPricePerPackBelowZero
         | ServiceError::PackSizeBelowOne
         | ServiceError::LocationDoesNotExist
         | ServiceError::ItemVariantDoesNotExist
@@ -213,6 +215,7 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         }
         ServiceError::IncorrectLocationType => BadUserInput(formatted_error),
         ServiceError::WrongInboundShipmentType => BadUserInput(formatted_error),
+        ServiceError::CannotSetManufactureDateInFuture => BadUserInput(formatted_error),
     };
 
     Err(graphql_error.extend())

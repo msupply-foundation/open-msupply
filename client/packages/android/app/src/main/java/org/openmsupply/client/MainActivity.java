@@ -26,6 +26,14 @@ public class MainActivity extends BridgeActivity {
     protected void onCreate(Bundle savedInstanceState) {
         registerPlugin(NativeApi.class);
         registerPlugin(HoneywellScannerPlugin.class);
+        // Used by the new front end (open-msupply-frontend, src/platform/).
+        // Registering here is only half the job: the UI is served by the
+        // embedded server, so each plugin's name must ALSO be listed in
+        // ExtendedWebViewClient.generatePluginScript() or the JS proxy has no
+        // header to dispatch through.
+        registerPlugin(FileTransferPlugin.class);
+        registerPlugin(PrintPlugin.class);
+        registerPlugin(ReadLogPlugin.class);
         super.onCreate(savedInstanceState);
 
         // Replace Capacitor's auto-loaded https://localhost:<PORT>/ with an inline
@@ -96,6 +104,10 @@ public class MainActivity extends BridgeActivity {
                         }
                     }
                 });
+
+        // The server serves the web UI from <filesDir>/frontend; ship the
+        // APK-bundled assets there before it starts
+        FrontendAssets.sync(this);
 
         String path = getFilesDir().getAbsolutePath();
         String cache = getCacheDir().getAbsolutePath();

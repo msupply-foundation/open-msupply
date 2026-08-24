@@ -7,6 +7,7 @@ import {
   PaperPopoverSection,
   Typography,
   useAuthContext,
+  useSelectStore,
   useLocalStorage,
   useTranslation,
   useNavigate,
@@ -21,8 +22,9 @@ import { PropsWithChildrenOnly, UserStoreNodeFragment } from '@common/types';
 export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
   const t = useTranslation();
   const navigate = useNavigate();
-  const { store, setStore, token, mostRecentUsername } = useAuthContext();
-  const { data, isLoading } = useUserDetails(token);
+  const { store, user } = useAuthContext();
+  const setStore = useSelectStore();
+  const { data, isLoading } = useUserDetails();
   const [popoverAnchor, setPopoverAnchor] = useState<HTMLElement | null>(null);
   const [skipPrefs, setSkipPrefs] = useLocalStorage(
     '/login/skip-store-selector',
@@ -30,7 +32,7 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
   );
 
   // For store selector on login
-  const skipKey = (mostRecentUsername ?? '').toLowerCase();
+  const skipKey = (user?.name ?? '').toLowerCase();
   const rememberChoice = !!(skipPrefs ?? {})[skipKey];
   const setRememberChoice = (checked: boolean) => {
     if (skipKey) setSkipPrefs({ ...(skipPrefs ?? {}), [skipKey]: checked });
@@ -78,6 +80,7 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
         navigate(rootNavigationPath);
       }}
       key={s.id}
+      testId={`store-select-option-${s.code}`}
       sx={buttonStyle}
     />
   ));
@@ -117,7 +120,7 @@ export const StoreSelector: FC<PropsWithChildrenOnly> = ({ children }) => {
                 ) : (
                   <FlatButton
                     label={t('control.search.no-results-label')}
-                    onClick={() => { }}
+                    onClick={() => {}}
                     disabled={true}
                     key="no-results"
                     sx={buttonStyle}

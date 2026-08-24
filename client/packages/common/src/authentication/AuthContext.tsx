@@ -1,41 +1,16 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import React, { useMemo, useState, useEffect, FC } from 'react';
-import { AppRoute } from '@openmsupply-client/config';
-import { useLocalStorage } from '../localStorage';
-import Cookies from 'js-cookie';
-import { addMinutes } from 'date-fns/addMinutes';
-import {
-  useLogin,
-  useGetUserPermissions,
-  useRefreshToken,
-  useRefreshUserCookie,
-} from './api/hooks';
-import { AuthenticationResponse } from './api';
+import { LocalStorage, useLocalStorage } from '../localStorage';
 import { UserStoreNodeFragment } from './api/operations.generated';
-import { PropsWithChildrenOnly, UserPermission } from '@common/types';
-import { RouteBuilder } from '../utils/navigation';
-import { matchPath } from 'react-router-dom';
-import { createRegisteredContext } from 'react-singleton-context';
-import { useUserActivity } from './hooks/useUserActivity';
-
-const AUTH_TOKEN_LIFETIME_MINUTES = 60;
-const TOKEN_CHECK_INTERVAL = 60 * 1000;
+import { UserPermission } from '@common/types';
 
 export enum AuthError {
   NoStoreAssigned = 'NoStoreAssigned',
   PermissionDenied = 'Forbidden',
+  ServerError = 'ServerError',
   Unauthenticated = 'Unauthenticated',
   Timeout = 'Timeout',
 }
 
-export interface AuthCookie {
-  expires?: Date;
-  store?: UserStoreNodeFragment;
-  token: string;
-  user?: User;
-}
-
-type User = {
+export type User = {
   id: string;
   name: string;
   permissions: UserPermission[];
@@ -46,185 +21,53 @@ type User = {
   jobTitle?: string | null;
 };
 
-interface AuthControl {
-  error?: AuthError | null;
-  isLoggingIn: boolean;
-  login: (
-    username: string,
-    password: string
-  ) => Promise<AuthenticationResponse>;
-  logout: () => void;
-  mostRecentUsername?: string;
-  setError?: (error: AuthError) => void;
-  setStore: (store: UserStoreNodeFragment) => Promise<void>;
+/**
+ * Client-side view of an authenticated session.
+ *
+ * The actual session token is held server-side in `SessionStore` and rides along in the HttpOnly
+ * `session_{port}` cookie — JavaScript never sees it. This struct carries only the user-facing
+ * metadata that the UI needs and a boolean signal that we *think* we're logged in.
+ */
+export interface AuthState {
   store?: UserStoreNodeFragment;
-  storeId: string;
-  token: string;
   user?: User;
-  userHasPermission: (permission: UserPermission) => boolean;
-  refreshUserCookie: () => Promise<void>;
+  /**
+   * True when login succeeded and we haven't seen an unauthenticated/timeout error since. This
+   * is a UI hint, not a security guarantee — every request is validated against `SessionStore`
+   * on the server.
+   */
+  isAuthenticated: boolean;
 }
 
-export const getAuthCookie = (): AuthCookie => {
-  const authString = Cookies.get('auth');
-  const emptyCookie = { token: '' };
-  if (!!authString) {
-    try {
-      const parsed = JSON.parse(authString) as AuthCookie;
-      return parsed;
-    } catch {
-      return emptyCookie;
-    }
-  }
-  return emptyCookie;
-};
+const EMPTY_STATE: AuthState = { isAuthenticated: false };
 
-export const setAuthCookie = (cookie: AuthCookie) => {
-  const expires = addMinutes(new Date(), AUTH_TOKEN_LIFETIME_MINUTES); // Decide when to refresh
-  const authCookie = { ...cookie, expires };
+export const getAuthState = (): AuthState =>
+  LocalStorage.getItem('/auth/state') ?? EMPTY_STATE;
 
-  Cookies.set('auth', JSON.stringify(authCookie), { expires });
-};
+export const setAuthState = (state: AuthState) =>
+  LocalStorage.setItem('/auth/state', state);
 
-const authControl = {
-  isLoggingIn: false,
-  login: (_username: string, _password: string) =>
-    new Promise<AuthenticationResponse>(() => ({ token: 'token' })),
-  logout: () => { },
-  setStore: (_store: UserStoreNodeFragment) => new Promise<void>(() => ({})),
-  storeId: 'store-id',
-  token: '',
-  userHasPermission: (_permission: UserPermission) => false,
-  refreshUserCookie: () => Promise.resolve(),
-};
+export const clearAuthState = () => LocalStorage.removeItem('/auth/state');
 
-const AuthContext = createRegisteredContext<AuthControl>(
-  'auth-context',
-  authControl
-);
-const { Provider } = AuthContext;
-
-export const AuthProvider: FC<PropsWithChildrenOnly> = ({ children }) => {
-  const authCookie = getAuthCookie();
-  const [cookie, setCookie] = useState<AuthCookie | undefined>(authCookie);
-  const [error, setError] = useLocalStorage('/error/auth');
-  const storeId = cookie?.store?.id ?? '';
-  const {
-    login,
-    isLoggingIn,
-    upsertMostRecentCredential,
-    mostRecentCredentials,
-  } = useLogin(setCookie);
-  const getUserPermissions = useGetUserPermissions();
-  const { isActive } = useUserActivity();
-  const { refreshToken } = useRefreshToken(
-    () => {
-      Cookies.remove('auth');
-      setCookie(undefined);
-      setError(AuthError.Timeout);
-    },
-  );
-
-  const mostRecentUsername = mostRecentCredentials[0]?.username ?? undefined;
-
-  const setStore = async (store: UserStoreNodeFragment) => {
-    if (!cookie?.token) return;
-
-    upsertMostRecentCredential(mostRecentUsername ?? '', store);
-
-    const permissions = await getUserPermissions(cookie?.token, store);
-    const user = {
-      id: cookie.user?.id ?? '',
-      name: cookie.user?.name ?? '',
-      permissions,
-      email: cookie.user?.email,
-      jobTitle: cookie.user?.jobTitle,
-    };
-    const newCookie = { ...cookie, store, user };
-    setAuthCookie(newCookie);
-    setCookie(newCookie);
+/**
+ * Read-side accessor for the persisted auth state. Components re-render when `/auth/state`
+ * changes (via [[useLocalStorage]]'s listener) — there is no React Context behind this.
+ *
+ * Mutations are not exposed here. Use the dedicated hooks:
+ *   - [[useLogin]] — sign in
+ *   - [[useLogout]] — sign out (server + local)
+ *   - [[useSelectStore]] — change active store
+ *   - [[useRefreshUserCookie]] — refresh user metadata after sync
+ */
+export const useAuthContext = () => {
+  const [authState] = useLocalStorage('/auth/state', EMPTY_STATE);
+  const state = authState ?? EMPTY_STATE;
+  return {
+    isAuthenticated: state.isAuthenticated,
+    store: state.store,
+    storeId: state.store?.id ?? '',
+    user: state.user,
+    userHasPermission: (p: UserPermission) =>
+      state.user?.permissions.some(x => x === p) ?? false,
   };
-
-  const { refreshUserCookie } = useRefreshUserCookie(
-    setCookie,
-    cookie,
-    mostRecentCredentials
-  );
-
-  const logout = () => {
-    Cookies.remove('auth');
-    setError(undefined);
-    setCookie(undefined);
-  };
-
-  const userHasPermission = (permission: UserPermission) =>
-    cookie?.user?.permissions.some(p => p === permission) || false;
-
-  const val = useMemo(
-    () => ({
-      error,
-      isLoggingIn,
-      login,
-      logout,
-      storeId,
-      token: cookie?.token || '',
-      user: cookie?.user,
-      store: cookie?.store,
-      mostRecentUsername,
-      setStore,
-      setError,
-      userHasPermission,
-      refreshUserCookie,
-    }),
-    [
-      login,
-      cookie,
-      error,
-      mostRecentUsername,
-      isLoggingIn,
-      setStore,
-      setError,
-      userHasPermission,
-      refreshUserCookie,
-    ]
-  );
-
-  useEffect(() => {
-    // check every minute for a valid token
-    // if the cookie has expired, raise an auth error
-    const timer = window.setInterval(() => {
-      const authCookie = getAuthCookie();
-      const { token } = authCookie;
-      const isInitScreen = matchPath(
-        RouteBuilder.create(AppRoute.Initialise).addWildCard().build(),
-        location.pathname
-      );
-
-      const isDiscoveryScreen = matchPath(
-        RouteBuilder.create(AppRoute.Discovery).addWildCard().build(),
-        location.pathname
-      );
-
-      const isNotAuthPath = isDiscoveryScreen || isInitScreen;
-      if (isNotAuthPath) return;
-
-      if (!token) {
-        setError(AuthError.Timeout);
-        window.clearInterval(timer);
-        return;
-      }
-
-      if (isActive()) {
-        refreshToken();
-      }
-    }, TOKEN_CHECK_INTERVAL);
-    return () => window.clearInterval(timer);
-  }, [cookie?.token, isActive, refreshToken, setError]);
-
-  return <Provider value={val}>{children}</Provider>;
-};
-
-export const useAuthContext = (): AuthControl => {
-  const authControl = React.useContext(AuthContext);
-  return authControl;
 };

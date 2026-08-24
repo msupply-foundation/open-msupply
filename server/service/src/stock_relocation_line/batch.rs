@@ -145,16 +145,9 @@ mod test {
     #[actix_rt::test]
     async fn batch_stock_relocation_line_success() {
         let (service_provider, ctx) = setup("batch_stock_relocation_line_success").await;
-        StockLineRowRepository::new(&ctx.connection)
-
-            .upsert_one(&stock_line("a_sl"))
-
-            .unwrap();
-        StockLineRowRepository::new(&ctx.connection)
-
-            .upsert_one(&stock_line("b_sl"))
-
-            .unwrap();
+        let sl_repo = StockLineRowRepository::new(&ctx.connection);
+        sl_repo.upsert_one(&stock_line("a_sl")).unwrap();
+        sl_repo.upsert_one(&stock_line("b_sl")).unwrap();
         let service = &service_provider.stock_relocation_service;
         let line_repo = StockRelocationLineRowRepository::new(&ctx.connection);
         let movement_id = new_movement(&service_provider, &ctx).await;

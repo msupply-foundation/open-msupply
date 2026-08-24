@@ -10,7 +10,6 @@ import {
   useToggle,
   IconButton,
   useFormatCurrency,
-  PricingNode,
   PricingUtils,
   MenuDotsIcon,
   InfoTooltipIcon,
@@ -21,18 +20,23 @@ import {
   TaxEdit,
   Divider,
 } from '@openmsupply-client/common';
-import { useOutbound } from '../../api';
+import { OutboundFragment, useOutbound } from '../../api';
 import { OutboundServiceLineEdit } from '../OutboundServiceLineEdit';
 import { CurrencyModal, CurrencyRowFragment } from '@openmsupply-client/system';
 
+// Take the fragment's pricing, not the schema's PricingNode: the fragment only
+// selects the fields these panels render, so requiring the full node would break
+// every time an unrelated field is added server side (#12643).
+type OutboundPricing = OutboundFragment['pricing'];
+
 type PricingGroupProps = {
-  pricing: PricingNode;
+  pricing: OutboundPricing;
   taxPercentage?: number | null;
   isDisabled?: boolean;
 };
 
 type CurrencyPricingProps = {
-  pricing: PricingNode;
+  pricing: OutboundPricing;
   currency?: CurrencyRowFragment | null;
   otherPartyIsInternal: boolean;
   currencyRate: number;
@@ -76,6 +80,7 @@ const ServiceCharges = ({ pricing, isDisabled }: PricingGroupProps) => {
         </PanelLabel>
         <PanelField>
           <IconButton
+            testId="edit-service-charges-button"
             disabled={isDisabled}
             icon={<MenuDotsIcon style={{ fontSize: 16 }} />}
             label={t('messages.edit-service-charges')}

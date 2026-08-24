@@ -55,6 +55,7 @@ pub enum UpdateStocktakeLineError {
     StockLineReducedBelowZero(StockLine),
     IncorrectLocationType,
     VvmStatusDoesNotExist,
+    CannotSetManufactureDateInFuture,
 }
 
 pub fn update_stocktake_line(
@@ -266,6 +267,25 @@ mod stocktake_line_test {
             )
             .unwrap_err();
         assert_eq!(error, UpdateStocktakeLineError::LocationDoesNotExist);
+
+        // error: CannotSetManufactureDateInFuture
+        let stocktake_line_a = mock_stocktake_line_a();
+        let error = service
+            .update_stocktake_line(
+                &context,
+                UpdateStocktakeLine {
+                    id: stocktake_line_a.id,
+                    manufacture_date: Some(NullableUpdate {
+                        value: NaiveDate::from_ymd_opt(9999, 1, 1),
+                    }),
+                    ..Default::default()
+                },
+            )
+            .unwrap_err();
+        assert_eq!(
+            error,
+            UpdateStocktakeLineError::CannotSetManufactureDateInFuture
+        );
 
         // error: VvmStatusDoesNotExist
         let stocktake_line_a = mock_stocktake_line_a();

@@ -59,8 +59,6 @@ export const CreatePatientModal = ({
     }
   }, [open, setCreateNewPatient]);
 
-  if (isLoading) return <BasicSpinner />;
-
   return (
     <Modal
       title=""
@@ -108,20 +106,29 @@ export const CreatePatientModal = ({
       slideAnimation={false}
     >
       <DetailContainer>
-        <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
-          <WizardStepper
-            activeStep={getActiveStep()}
-            steps={patientSteps}
-            nowrap
-          />
-          <TabContext value={currentTab}>
-            {tabs.map(({ Component, value }) => (
-              <DetailTab value={value} key={value}>
-                {Component}
-              </DetailTab>
-            ))}
-          </TabContext>
-        </Box>
+        {isLoading ? (
+          <BasicSpinner />
+        ) : (
+          <Box
+            display="flex"
+            flexDirection="column"
+            alignItems="center"
+            gap={2}
+          >
+            <WizardStepper
+              activeStep={getActiveStep()}
+              steps={patientSteps}
+              nowrap
+            />
+            <TabContext value={currentTab}>
+              {tabs.map(({ Component, value }) => (
+                <DetailTab value={value} key={value}>
+                  {Component}
+                </DetailTab>
+              ))}
+            </TabContext>
+          </Box>
+        )}
       </DetailContainer>
     </Modal>
   );

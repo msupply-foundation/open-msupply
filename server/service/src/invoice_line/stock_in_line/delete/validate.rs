@@ -1,6 +1,8 @@
 use crate::invoice::inbound_shipment::InboundShipmentType;
 use crate::{
-    invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
+    invoice::{
+        check_invoice_exists, check_invoice_lines_are_editable, check_invoice_type, check_store,
+    },
     invoice_line::{
         stock_in_line::{check_batch, check_lines_locked_by_authorisation},
         validate::{
@@ -36,7 +38,7 @@ pub fn validate(
             return Err(WrongInboundShipmentType);
         }
     }
-    if !check_invoice_is_editable(&invoice) {
+    if !check_invoice_lines_are_editable(&invoice) {
         return Err(CannotEditFinalised);
     }
     if check_other_party_store_is_disabled(connection, store_id, &invoice.name_id)? {

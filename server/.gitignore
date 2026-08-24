@@ -62,3 +62,6 @@ sensor_*.txt
 
 # Load test artifacts
 load_test/
+
+# frontend build artifacts
+frontend/

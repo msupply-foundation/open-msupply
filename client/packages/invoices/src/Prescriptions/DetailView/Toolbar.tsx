@@ -179,6 +179,7 @@ export const Toolbar = () => {
               onChange={handleDateChange}
               maxDate={new Date()}
               actions={['cancel', 'accept']}
+              textFieldTestId="date-field"
             />
           }
         />

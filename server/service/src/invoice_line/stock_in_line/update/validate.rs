@@ -4,17 +4,19 @@ use crate::{
     campaign::check_campaign_exists_including_deleted,
     check_item_variant_exists, check_location_exists, check_location_type_is_valid,
     check_vvm_status_exists,
-    invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
+    invoice::{
+        check_invoice_exists, check_invoice_lines_are_editable, check_invoice_type, check_store,
+    },
     invoice_line::{
         stock_in_line::{check_batch, check_pack_size},
         validate::{
             check_item_exists, check_line_belongs_to_invoice, check_line_exists,
-            check_number_of_packs,
+            check_number_of_packs, check_price_is_not_negative,
         },
     },
     validate::{
-        check_other_party, check_other_party_store_is_disabled, CheckOtherPartyType,
-        OtherPartyErrors,
+        check_date_is_not_in_future, check_other_party, check_other_party_store_is_disabled,
+        CheckOtherPartyType, OtherPartyErrors,
     },
     NullableUpdate,
 };
@@ -44,6 +46,21 @@ pub fn validate(
     if !check_number_of_packs(input.number_of_packs) {
         return Err(NumberOfPacksBelowZero);
     }
+    if !check_price_is_not_negative(input.sell_price_per_pack) {
+        return Err(SellPricePerPackBelowZero);
+    }
+    if !check_price_is_not_negative(input.cost_price_per_pack) {
+        return Err(CostPricePerPackBelowZero);
+    }
+
+    if let Some(NullableUpdate {
+        value: Some(manufacture_date),
+    }) = &input.manufacture_date
+    {
+        if !check_date_is_not_in_future(manufacture_date) {
+            return Err(CannotSetManufactureDateInFuture);
+        }
+    }
 
     let item = check_item_option(&input.item_id, connection)?;
 
@@ -58,7 +75,7 @@ pub fn validate(
             return Err(WrongInboundShipmentType);
         }
     }
-    if !check_invoice_is_editable(&invoice) {
+    if !check_invoice_lines_are_editable(&invoice) {
         return Err(CannotEditFinalised);
     }
     if check_other_party_store_is_disabled(connection, store_id, &invoice.name_id)? {
@@ -177,7 +194,7 @@ pub fn validate(
         .is_some_and(|s| s.value != line_row.status)
     {
         use repository::InvoiceStatus::*;
-        // Verified is already excluded by check_invoice_is_editable (invoice is no longer editable once verified).
+        // Verified is already excluded by check_invoice_lines_are_editable (invoice is no longer editable once verified).
         // Can't change line status once invoice is received as stock lines may have already been allocated so rejecting a line at that point could cause issues with stock management.
         if invoice.status == Received {
             return Err(CannotChangeLineStatusOfReceivedInvoice);

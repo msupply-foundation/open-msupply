@@ -8,6 +8,7 @@ import {
   RadioIcon,
   Typography,
   useAuthContext,
+  useRefreshUserCookie,
   useFormatDateTime,
   useNativeClient,
   useQueryClient,
@@ -51,7 +52,7 @@ const useHostSync = (enabled: boolean) => {
   const [isInitialMount, setIsInitialMount] = useState(true);
   const { mutateAsync: manualSync } = useSync.sync.manualSync();
   const { allowSleep, keepAwake } = useNativeClient();
-  const { refreshUserCookie } = useAuthContext();
+  const { refreshUserCookie } = useRefreshUserCookie();
 
   // true by default to wait for first syncStatus api result
   const [isLoading, setIsLoading] = useState(true);
@@ -129,7 +130,7 @@ export const SyncModal = ({ onCancel, open, width = 900 }: SyncModalProps) => {
     isLoading,
     onManualSync,
   } = useHostSync(open);
-  const { refreshUserCookie } = useAuthContext();
+  const { refreshUserCookie } = useRefreshUserCookie();
   const error =
     syncStatus?.error &&
     mapSyncError(t, syncStatus?.error, 'error.unknown-sync-error');
@@ -197,6 +198,7 @@ export const SyncModal = ({ onCancel, open, width = 900 }: SyncModalProps) => {
       // a stale narrow value when the window grows back. See issue #12172.
       width={!isExtraSmallScreen ? width : 340}
       open={open}
+      data-testid="sync-modal"
       onKeyDown={e => {
         if (e.key === 'Escape') onCancel();
       }}

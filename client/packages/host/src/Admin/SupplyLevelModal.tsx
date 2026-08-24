@@ -114,6 +114,7 @@ export const SupplyLevelModal = ({
           <BasicTextInput
             sx={{ width: '250px' }}
             value={inputValue}
+            slotProps={{ htmlInput: { 'data-testid': 'supply-level-input' } }}
             onChange={e => setInputValue(e.target.value)}
             onKeyDown={e => {
               if (e.key === 'Enter') {
@@ -130,56 +131,58 @@ export const SupplyLevelModal = ({
             disabled={!inputValue.trim()}
           />
         </Box>
-        {supplyLevels.length > 0 ? (
-          supplyLevels.map(supplyLevel => {
-            const isInUse = supplyLevelsInUse.includes(supplyLevel);
+        <Box data-testid="supply-level-list">
+          {supplyLevels.length > 0 ? (
+            supplyLevels.map(supplyLevel => {
+              const isInUse = supplyLevelsInUse.includes(supplyLevel);
 
-            return (
-              <Box
-                key={supplyLevel}
-                sx={{
-                  mb: 1,
-                  pb: 0.5,
-                  display: 'flex',
-                  alignItems: 'center',
-                  '&:not(:last-child)': {
-                    borderBottom: '1px dashed',
-                  },
-                }}
-              >
-                <Typography sx={{ flex: 1 }}>
-                  {supplyLevel}
-                  {isInUse && (
-                    <Typography
-                      component="span"
-                      sx={{
-                        ml: 1,
-                        fontSize: '0.80rem',
-                        color: 'text.secondary',
-                        fontStyle: 'italic',
-                      }}
-                    >
-                      ({t('label.in-use')})
-                    </Typography>
-                  )}
-                </Typography>
-                <IconButton
-                  icon={<DeleteIcon />}
-                  label={t('label.delete-supply-level')}
-                  onClick={() => handleDeleteSupplyLevel(supplyLevel)}
-                  disabled={isInUse}
+              return (
+                <Box
+                  key={supplyLevel}
                   sx={{
-                    '&.Mui-disabled': {
-                      opacity: 0.5,
+                    mb: 1,
+                    pb: 0.5,
+                    display: 'flex',
+                    alignItems: 'center',
+                    '&:not(:last-child)': {
+                      borderBottom: '1px dashed',
                     },
                   }}
-                />
-              </Box>
-            );
-          })
-        ) : (
-          <Typography>{t('label.no-supply-levels-configured')}</Typography>
-        )}
+                >
+                  <Typography sx={{ flex: 1 }}>
+                    {supplyLevel}
+                    {isInUse && (
+                      <Typography
+                        component="span"
+                        sx={{
+                          ml: 1,
+                          fontSize: '0.80rem',
+                          color: 'text.secondary',
+                          fontStyle: 'italic',
+                        }}
+                      >
+                        ({t('label.in-use')})
+                      </Typography>
+                    )}
+                  </Typography>
+                  <IconButton
+                    icon={<DeleteIcon />}
+                    label={t('label.delete-supply-level')}
+                    onClick={() => handleDeleteSupplyLevel(supplyLevel)}
+                    disabled={isInUse}
+                    sx={{
+                      '&.Mui-disabled': {
+                        opacity: 0.5,
+                      },
+                    }}
+                  />
+                </Box>
+              );
+            })
+          ) : (
+            <Typography>{t('label.no-supply-levels-configured')}</Typography>
+          )}
+        </Box>
       </>
     </Modal>
   );

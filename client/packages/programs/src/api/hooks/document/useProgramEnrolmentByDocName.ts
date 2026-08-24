@@ -8,7 +8,9 @@ export const useProgramEnrolmentByDocName = (
 
   return useQuery({
     queryKey: api.keys.byDocName(documentName ?? ''),
-    queryFn: () => api.byDocName(documentName ?? ''),
+    // Coalesce to null: api.byDocName returns undefined when no enrolment
+    // matches, which TanStack Query forbids and would crash the page.
+    queryFn: async () => (await api.byDocName(documentName ?? '')) ?? null,
     enabled: !!documentName
   });
 };

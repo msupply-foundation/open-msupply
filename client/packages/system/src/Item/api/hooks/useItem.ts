@@ -1,12 +1,10 @@
-import { ItemNodeType, useParams, useQuery } from '@openmsupply-client/common';
+import { ItemNodeType, useQuery } from '@openmsupply-client/common';
 import { useItemGraphQL } from '../useItemGraphQL';
 import { useItemApi } from './useItemApi';
 import { useItemsByFilter } from './useItems';
 
 export function useItem(id?: string) {
-  const { id: paramId = '' } = useParams();
-
-  const itemId = id || paramId;
+  const itemId = id ?? '';
 
   const { data, isLoading, error } = useGetById(itemId);
   const { data: stockLinesFromItem, isLoading: stockLinesIsLoading } =
@@ -46,8 +44,11 @@ export const useGetById = (itemId: string) => {
     });
 
     if (result.items.__typename === 'ItemConnector') {
-      return result.items.nodes[0];
+      // Coalesce to null: TanStack Query forbids a queryFn resolving to
+      // undefined (empty nodes / non-connector result would crash the page).
+      return result.items.nodes[0] ?? null;
     }
+    return null;
   };
 
   const query = useQuery({

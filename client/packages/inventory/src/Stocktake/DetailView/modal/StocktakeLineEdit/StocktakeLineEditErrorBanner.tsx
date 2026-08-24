@@ -26,7 +26,11 @@ export const StocktakeLineEditErrorBanner = ({ draftLines }: StocktakeLineErrorB
       sx={{ display: 'flex', flexDirection: 'column', gap: 1, marginTop: 1 }}
     >
       {visibleErrors.map(({ line, error }) => (
-        <Alert key={line.id} severity="error">
+        <Alert
+          data-testid="stocktake-line-error"
+          key={line.id}
+          severity="error"
+        >
           {line.batch ? `${line.batch}: ` : ''}
           {t(stocktakeLineErrorMessageKey(error.__typename))}
         </Alert>

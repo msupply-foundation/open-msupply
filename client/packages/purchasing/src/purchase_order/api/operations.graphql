@@ -109,6 +109,10 @@ fragment PurchaseOrderLine on PurchaseOrderLineNode {
     stats(storeId: $storeId) {
       stockOnHand
     }
+    itemStoreProperties(storeId: $storeId) {
+      margin
+      defaultSellPricePerPack
+    }
   }
   requestedPackSize
   requestedDeliveryDate

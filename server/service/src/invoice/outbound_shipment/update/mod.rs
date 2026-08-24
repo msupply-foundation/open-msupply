@@ -450,8 +450,88 @@ mod test {
             ),
             Err(ServiceError::NotThisStoreInvoice)
         );
+    }
 
-        // TODO CanOnlyChangeToAllocatedWhenNoUnallocatedLines
+    // Wiki rule (Test: Distribution): "Confirm allocation with placeholders →
+    // Reject (require batch assignment)". Advancing a New outbound shipment to
+    // Allocated/Picked/Shipped must fail while any unallocated line still has a
+    // non-zero quantity — zero-qty unallocated lines are trimmed silently
+    // (covered by update_outbound_shipment_success_trim_unallocated_line).
+    #[actix_rt::test]
+    async fn update_outbound_shipment_cannot_change_to_allocated_with_unallocated_lines() {
+        fn invoice() -> InvoiceRow {
+            InvoiceRow {
+                id: "invoice_with_placeholder".to_string(),
+                name_id: mock_name_a().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::OutboundShipment,
+                status: InvoiceStatus::New,
+                ..Default::default()
+            }
+        }
+
+        fn unallocated_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "placeholder_line".to_string(),
+                invoice_id: invoice().id,
+                item_id: mock_item_a().id,
+                r#type: InvoiceLineType::UnallocatedStock,
+                pack_size: 1.0,
+                number_of_packs: 5.0,
+                ..Default::default()
+            }
+        }
+
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "update_outbound_shipment_cannot_change_to_allocated_with_unallocated_lines",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![invoice()],
+                invoice_lines: vec![unallocated_line()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.invoice_service;
+
+        for status in [
+            UpdateOutboundShipmentStatus::Allocated,
+            UpdateOutboundShipmentStatus::Picked,
+            UpdateOutboundShipmentStatus::Shipped,
+        ] {
+            let result = service.update_outbound_shipment(
+                &context,
+                UpdateOutboundShipment {
+                    id: invoice().id,
+                    status: Some(status.clone()),
+                    ..Default::default()
+                },
+            );
+
+            match result {
+                Err(ServiceError::CanOnlyChangeToAllocatedWhenNoUnallocatedLines(lines)) => {
+                    let ids: Vec<String> = lines
+                        .iter()
+                        .map(|l| l.invoice_line_row.id.clone())
+                        .collect();
+                    assert_eq!(
+                        ids,
+                        vec![unallocated_line().id],
+                        "expected the offending placeholder line to be returned for {:?}",
+                        status
+                    );
+                }
+                other => panic!(
+                    "expected CanOnlyChangeToAllocatedWhenNoUnallocatedLines for {:?}, got {:?}",
+                    status, other
+                ),
+            }
+        }
     }
 
     #[actix_rt::test]
@@ -1674,5 +1754,115 @@ mod test {
             after_shipped.allocated_datetime,
             Some(two_days_ago.naive_utc())
         );
+    }
+
+    // Mirrors the e2e "un-holding allows status to advance again" flow at the
+    // service layer: advancing a held shipment is blocked, but once on_hold is
+    // cleared the same patch succeeds.
+    #[actix_rt::test]
+    async fn update_outbound_shipment_unhold_then_advance() {
+        fn invoice() -> InvoiceRow {
+            InvoiceRow {
+                id: "unhold_then_advance".to_string(),
+                name_id: mock_name_a().id,
+                store_id: mock_store_a().id,
+                r#type: InvoiceType::OutboundShipment,
+                status: InvoiceStatus::Allocated,
+                on_hold: true,
+                allocated_datetime: Some(
+                    NaiveDate::from_ymd_opt(1970, 1, 7)
+                        .unwrap()
+                        .and_hms_milli_opt(15, 30, 0, 0)
+                        .unwrap(),
+                ),
+                ..Default::default()
+            }
+        }
+
+        fn stock_line() -> StockLineRow {
+            StockLineRow {
+                id: "unhold_stock_line".to_string(),
+                store_id: mock_store_a().id,
+                available_number_of_packs: 8.0,
+                total_number_of_packs: 10.0,
+                pack_size: 1.0,
+                item_id: mock_item_a().id,
+                ..Default::default()
+            }
+        }
+
+        fn invoice_line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "unhold_invoice_line".to_string(),
+                invoice_id: invoice().id,
+                stock_line_id: Some(stock_line().id),
+                number_of_packs: 2.0,
+                item_id: mock_item_a().id,
+                r#type: InvoiceLineType::StockOut,
+                ..Default::default()
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "update_outbound_shipment_unhold_then_advance",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![invoice()],
+                stock_lines: vec![stock_line()],
+                invoice_lines: vec![invoice_line()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.invoice_service;
+
+        // Sanity: advancing while still on hold is rejected.
+        assert_eq!(
+            service.update_outbound_shipment(
+                &context,
+                UpdateOutboundShipment {
+                    id: invoice().id,
+                    status: Some(UpdateOutboundShipmentStatus::Picked),
+                    ..Default::default()
+                }
+            ),
+            Err(ServiceError::CannotChangeStatusOfInvoiceOnHold)
+        );
+
+        // Clear the hold in a standalone update.
+        service
+            .update_outbound_shipment(
+                &context,
+                UpdateOutboundShipment {
+                    id: invoice().id,
+                    on_hold: Some(false),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        // Status advance now succeeds.
+        service
+            .update_outbound_shipment(
+                &context,
+                UpdateOutboundShipment {
+                    id: invoice().id,
+                    status: Some(UpdateOutboundShipmentStatus::Picked),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let after = InvoiceRowRepository::new(&connection)
+            .find_one_by_id(&invoice().id)
+            .unwrap()
+            .unwrap();
+        assert_eq!(after.status, InvoiceStatus::Picked);
+        assert!(!after.on_hold);
     }
 }

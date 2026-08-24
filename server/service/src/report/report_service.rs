@@ -1128,13 +1128,11 @@ mod report_generation_test {
 
 #[cfg(test)]
 mod report_filter_test {
-
+    use crate::{report::report_service::report_filter_method, service_provider::ServiceProvider};
     use repository::{
         migrations::Version, mock::MockDataInserts, test_db::setup_all, ReportFilter,
         ReportRepository, StringFilter,
     };
-
-    use crate::{report::report_service::report_filter_method, service_provider::ServiceProvider};
 
     // adding tests to generate reports
 

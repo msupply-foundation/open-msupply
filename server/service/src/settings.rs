@@ -60,10 +60,44 @@ pub struct ServerSettings {
     /// Number of actix-web worker threads. Defaults to the number of logical CPUs.
     /// Increase if 408 timeouts are observed under load.
     pub workers: Option<usize>,
+
+    /// How long (in seconds) a user may be inactive before the front end forces a re-login.
+    /// Advisory: exposed to clients via `UserNode.inactivityTimeoutSeconds`; the server does not
+    /// enforce it (server-side session expiry is governed by `SESSION_LIFETIME`).
+    #[serde(default = "default_inactivity_timeout_seconds")]
+    pub inactivity_timeout_seconds: u32,
+    /// If the user is active but no API call has happened for this long (in seconds), the front
+    /// end calls the refresh endpoint to keep the session alive. Advisory: exposed to clients via
+    /// `UserNode.tokenRefreshIntervalSeconds`.
+    #[serde(default = "default_token_refresh_interval_seconds")]
+    pub token_refresh_interval_seconds: u32,
+
+    /// Directory the web frontend is served from, resolved relative to the
+    /// working directory. Packaging ships the built frontend bundle here;
+    /// on Android the app shell copies its bundled web assets here on startup.
+    /// An `old-ui` subdirectory, when present, is served under `/old-ui/`
+    /// (by convention — not configurable).
+    #[serde(default = "default_frontend_dir")]
+    pub frontend_dir: String,
+}
+
+pub const DEFAULT_INACTIVITY_TIMEOUT_SECONDS: u32 = 900;
+pub const DEFAULT_TOKEN_REFRESH_INTERVAL_SECONDS: u32 = 60;
+
+fn default_inactivity_timeout_seconds() -> u32 {
+    DEFAULT_INACTIVITY_TIMEOUT_SECONDS
+}
+
+fn default_token_refresh_interval_seconds() -> u32 {
+    DEFAULT_TOKEN_REFRESH_INTERVAL_SECONDS
 }
 
 fn default_base_dir() -> String {
     "app_data".to_string()
+}
+
+fn default_frontend_dir() -> String {
+    "frontend".to_string()
 }
 
 /// Builds a `Settings` value suitable for tests, given the `DatabaseSettings`
@@ -87,6 +121,9 @@ pub fn test_settings(
             standalone_admin_username: None,
             standalone_admin_password: None,
             workers: None,
+            inactivity_timeout_seconds: DEFAULT_INACTIVITY_TIMEOUT_SECONDS,
+            token_refresh_interval_seconds: DEFAULT_TOKEN_REFRESH_INTERVAL_SECONDS,
+            frontend_dir: default_frontend_dir(),
         },
         database,
         sync: None,

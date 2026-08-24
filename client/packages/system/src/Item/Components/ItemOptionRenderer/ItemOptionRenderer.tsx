@@ -16,6 +16,7 @@ export const getItemOptionRenderer =
         key={item.code}
       >
         <span
+          data-testid="item-option-code"
           style={{
             whiteSpace: 'nowrap',
             width: 150,
@@ -25,7 +26,9 @@ export const getItemOptionRenderer =
         >
           {item.code}
         </span>
-        <span style={{ whiteSpace: 'normal', width: 500 }}>{item.name}</span>
+        <span data-testid="item-option-name" style={{ whiteSpace: 'normal', width: 500 }}>
+          {item.name}
+        </span>
         <span
           style={{
             width: 200,

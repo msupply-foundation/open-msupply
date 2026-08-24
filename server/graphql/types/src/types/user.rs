@@ -167,6 +167,20 @@ impl UserNode {
     pub async fn job_title(&self) -> &Option<String> {
         &self.user.user_row.job_title
     }
+
+    /// How long (in seconds) the user may be inactive before the client should force a re-login.
+    /// Sourced from server configuration (`server.inactivity_timeout_seconds`); advisory — the
+    /// server does not enforce it.
+    pub async fn inactivity_timeout_seconds(&self, ctx: &Context<'_>) -> u32 {
+        ctx.get_settings().server.inactivity_timeout_seconds
+    }
+
+    /// If the user is active but no API call has happened for this long (in seconds), the client
+    /// should call the refresh endpoint (`refreshToken`) to keep the session alive. Sourced from
+    /// server configuration (`server.token_refresh_interval_seconds`).
+    pub async fn token_refresh_interval_seconds(&self, ctx: &Context<'_>) -> u32 {
+        ctx.get_settings().server.token_refresh_interval_seconds
+    }
 }
 
 impl UserNode {

@@ -51,6 +51,7 @@ export const Toolbar: FC = () => {
                     onChange={name => {
                       update({ otherPartyId: name?.id });
                     }}
+                    width={250}
                   />
                 }
               />

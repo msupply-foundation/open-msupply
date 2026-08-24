@@ -863,8 +863,31 @@ export type AssignStoresToSiteNode = {
 
 export type AuthToken = {
   __typename: 'AuthToken';
-  /** Bearer token */
+  /** When the session expires, as a unix timestamp [s]. */
+  expiryDate: Scalars['Int']['output'];
+  /**
+   * **Deprecated** — there is no longer a separate refresh token. Returned as a duplicate of
+   * `token` purely so existing integrations that read this field don't break.
+   */
+  refresh: Scalars['String']['output'];
+  /**
+   * **Deprecated** — there is no longer a separate refresh-token expiry. Returned as a
+   * duplicate of `expiry_date` purely so existing integrations that read this field don't
+   * break.
+   */
+  refreshExpiryDate: Scalars['Int']['output'];
+  /**
+   * Bearer token. Web clients ignore this — the browser sends the HttpOnly `session_{port}`
+   * cookie automatically. Kept in the response for backwards-compatible API integrations
+   * (e.g. Sage) that pass it as `Authorization: Bearer`.
+   */
   token: Scalars['String']['output'];
+  /**
+   * The authenticated user, in the same shape as the `me` query. Lets clients fetch user
+   * details (stores, permissions, language, auth timing durations, ...) in the same round
+   * trip as the login itself.
+   */
+  user: UserNode;
 };
 
 export type AuthTokenError = {
@@ -3628,6 +3651,13 @@ export type IndicatorColumnNode = {
   isActive: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   value?: Maybe<IndicatorValueNode>;
+  /**
+   * The cell's effective type — this column's configured type, falling back
+   * to its line's where the column declares none (`var` in mSupply). This is
+   * the type an edit is validated against, so it is the one to render an
+   * input from. Null where neither declares a type: an edit is then not
+   * type-checked at all.
+   */
   valueType?: Maybe<IndicatorValueTypeNode>;
 };
 
@@ -3656,6 +3686,11 @@ export type IndicatorLineRowNode = {
   isActive: Scalars['Boolean']['output'];
   lineNumber: Scalars['Int']['output'];
   name: Scalars['String']['output'];
+  /**
+   * The line's own configured type, null where it declares none (`var` in
+   * mSupply). A CELL's type is its column's `valueType`, which already
+   * resolves the fallback to this one.
+   */
   valueType?: Maybe<IndicatorValueTypeNode>;
 };
 
@@ -4775,6 +4810,15 @@ export enum InstalledPluginKindType {
 export type InstalledPluginNode = {
   __typename: 'InstalledPluginNode';
   code: Scalars['String']['output'];
+  /**
+   * Which front end a frontend bundle is for (`react`, `solid`, ...). Null
+   * on backend plugins, which have no host.
+   *
+   * One plugin ships a bundle per front end and the two can share a code and
+   * a version, so without this the list shows one line twice and there is
+   * nothing to tell an admin which of the pair they are about to uninstall.
+   */
+  hostRuntime?: Maybe<Scalars['String']['output']>;
   id: Scalars['String']['output'];
   kind: InstalledPluginKindType;
   types: Array<Scalars['String']['output']>;
@@ -5022,6 +5066,8 @@ export type InvoiceLineFilterInput = {
   invoiceStatus?: InputMaybe<EqualFilterInvoiceStatusInput>;
   invoiceType?: InputMaybe<EqualFilterInvoiceTypeInput>;
   isProgramInvoice?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Matches on item code OR item name */
+  itemCodeOrName?: InputMaybe<StringFilterInput>;
   itemId?: InputMaybe<EqualFilterStringInput>;
   locationId?: InputMaybe<EqualFilterStringInput>;
   numberOfPacks?: InputMaybe<EqualFilterBigFloatingNumberInput>;
@@ -7659,11 +7705,13 @@ export enum PreferenceKey {
   DaysInMonth = 'daysInMonth',
   DisableManualReturns = 'disableManualReturns',
   DisplayPopulationBasedForecasting = 'displayPopulationBasedForecasting',
+  DoNotPrintPlaceholderLineLabels = 'doNotPrintPlaceholderLineLabels',
   ExpiredStockIssueThreshold = 'expiredStockIssueThreshold',
   ExpiredStockPreventIssue = 'expiredStockPreventIssue',
   ExternalInboundShipmentLinesMustBeAuthorised = 'externalInboundShipmentLinesMustBeAuthorised',
   FirstThresholdForExpiringItems = 'firstThresholdForExpiringItems',
   GenderOptions = 'genderOptions',
+  GlobalLogo = 'globalLogo',
   GlobalTableConfigs = 'globalTableConfigs',
   InboundShipmentAutoVerify = 'inboundShipmentAutoVerify',
   InvoiceStatusOptions = 'invoiceStatusOptions',
@@ -7676,6 +7724,7 @@ export enum PreferenceKey {
   NumberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts = 'numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts',
   OrderInPacks = 'orderInPacks',
   PreventTransfersMonthsBeforeInitialisation = 'preventTransfersMonthsBeforeInitialisation',
+  ReceivePaymentsFromPrescriptions = 'receivePaymentsFromPrescriptions',
   RequisitionAutoFinalise = 'requisitionAutoFinalise',
   SecondThresholdForExpiringItems = 'secondThresholdForExpiringItems',
   SelectDestinationStoreForAnInternalOrder = 'selectDestinationStoreForAnInternalOrder',
@@ -7713,6 +7762,7 @@ export enum PreferenceValueNodeType {
   CustomTranslations = 'CUSTOM_TRANSLATIONS',
   CustomTranslationsV2 = 'CUSTOM_TRANSLATIONS_V2',
   Float = 'FLOAT',
+  Image = 'IMAGE',
   Integer = 'INTEGER',
   MultiChoice = 'MULTI_CHOICE',
   String = 'STRING',
@@ -7732,11 +7782,17 @@ export type PreferencesNode = {
   daysInMonth: Scalars['Float']['output'];
   disableManualReturns: Scalars['Boolean']['output'];
   displayPopulationBasedForecasting: Scalars['Boolean']['output'];
+  doNotPrintPlaceholderLineLabels: Scalars['Boolean']['output'];
   expiredStockIssueThreshold: Scalars['Int']['output'];
   expiredStockPreventIssue: Scalars['Boolean']['output'];
   externalInboundShipmentLinesMustBeAuthorised: Scalars['Boolean']['output'];
   firstThresholdForExpiringItems: Scalars['Int']['output'];
   genderOptions: Array<GenderTypeNode>;
+  /**
+   * Base64 data-URL logo used as fallback when a store has no logo.
+   * Large - don't add to eagerly-fetched preference queries.
+   */
+  globalLogo: Scalars['String']['output'];
   globalTableConfigs: Scalars['JSON']['output'];
   inboundShipmentAutoVerify: Scalars['Boolean']['output'];
   invoiceStatusOptions: Array<InvoiceNodeStatus>;
@@ -7749,6 +7805,7 @@ export type PreferencesNode = {
   numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts: Scalars['Int']['output'];
   orderInPacks: Scalars['Boolean']['output'];
   preventTransfersMonthsBeforeInitialisation: Scalars['Int']['output'];
+  receivePaymentsFromPrescriptions: Scalars['Boolean']['output'];
   requisitionAutoFinalise: Scalars['Boolean']['output'];
   secondThresholdForExpiringItems: Scalars['Int']['output'];
   selectDestinationStoreForAnInternalOrder: Scalars['Boolean']['output'];
@@ -7779,6 +7836,8 @@ export type PricingNode = {
   taxPercentage?: Maybe<Scalars['Float']['output']>;
   totalAfterTax: Scalars['Float']['output'];
   totalBeforeTax: Scalars['Float']['output'];
+  /** Sum of number_of_packs * volume_per_pack over stock lines */
+  totalVolume: Scalars['Float']['output'];
 };
 
 export enum PrintFormat {
@@ -8303,8 +8362,8 @@ export type Queries = {
   /** Query omSupply "assets" entries */
   assets: AssetsResponse;
   /**
-   * Retrieves a new auth bearer and refresh token
-   * The refresh token is returned as a cookie
+   * Authenticate with username + password. Issues an opaque session token, returned both in
+   * the response body and as an HttpOnly session cookie. There is no separate refresh token.
    */
   authToken: AuthTokenResponse;
   barcodeByGtin: BarcodeResponse;
@@ -8447,8 +8506,9 @@ export type Queries = {
   rAndRForms: RnRFormsResponse;
   reasonOptions: ReasonOptionResponse;
   /**
-   * Retrieves a new auth bearer and refresh token
-   * The refresh token is returned as a cookie
+   * Slides the existing session's expiry forward (no token rotation). Kept for backwards
+   * compatibility — web clients no longer need to call this, since the session slides on every
+   * authenticated request.
    */
   refreshToken: RefreshTokenResponse;
   repack: RepackResponse;
@@ -8467,6 +8527,8 @@ export type Queries = {
   schedulesWithPeriodsByProgram: PeriodSchedulesResponse;
   /** Query omSupply "sensor" entries */
   sensors: SensorsResponse;
+  /** The running server's version, from the repo-root package.json (e.g. "3.00.00-RC") */
+  serverVersion: Scalars['String']['output'];
   shippingMethods: ShippingMethodsResponse;
   stockCounts: StockCounts;
   /** Query for "stock_line" entries */
@@ -8731,6 +8793,10 @@ export type QueriesFormSchemasArgs = {
   filter?: InputMaybe<FormSchemaFilterInput>;
   page?: InputMaybe<PaginationInput>;
   sort?: InputMaybe<Array<FormSchemaSortInput>>;
+};
+
+export type QueriesFrontendPluginMetadataArgs = {
+  hostRuntime?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type QueriesGenerateCustomerReturnLinesArgs = {
@@ -9453,7 +9519,18 @@ export type RefreshAncillaryItemsSuccess = {
 
 export type RefreshToken = {
   __typename: 'RefreshToken';
-  /** New Bearer token */
+  expiryDate: Scalars['Int']['output'];
+  /**
+   * **Deprecated** — there is no longer a separate refresh token. Returned as a duplicate of
+   * `token` purely so existing integrations that read this field don't break.
+   */
+  refresh: Scalars['String']['output'];
+  /**
+   * **Deprecated** — there is no longer a separate refresh-token expiry. Returned as a
+   * duplicate of `expiry_date` purely so existing integrations that read this field don't
+   * break.
+   */
+  refreshExpiryDate: Scalars['Int']['output'];
   token: Scalars['String']['output'];
 };
 
@@ -10704,7 +10781,8 @@ export type StoreNode = {
   /** Whether the store has been disabled, either by a user or as a result of a store merge. */
   isDisabled: Scalars['Boolean']['output'];
   /**
-   * Returns the associated store logo.
+   * Returns the associated store logo, falling back to the global logo
+   * preference when the store has none.
    * The logo is returned as a data URL schema, e.g. "data:image/png;base64,..."
    * Lazy-loaded — the logo is not pulled with the default store row.
    */
@@ -10926,6 +11004,7 @@ export enum SyncErrorVariantV7 {
   SiteIdNotSet = 'SITE_ID_NOT_SET',
   SiteIsNotV7 = 'SITE_IS_NOT_V7',
   SiteLockError = 'SITE_LOCK_ERROR',
+  SyncFileNotFound = 'SYNC_FILE_NOT_FOUND',
   SyncRecordSerializeError = 'SYNC_RECORD_SERIALIZE_ERROR',
   SyncVersionMismatch = 'SYNC_VERSION_MISMATCH',
   TokenAlreadyAllocated = 'TOKEN_ALREADY_ALLOCATED',
@@ -12617,6 +12696,7 @@ export type UpsertPreferencesInput = {
   daysInMonth?: InputMaybe<Scalars['Float']['input']>;
   disableManualReturns?: InputMaybe<Array<BoolStorePrefInput>>;
   displayPopulationBasedForecasting?: InputMaybe<Scalars['Boolean']['input']>;
+  doNotPrintPlaceholderLineLabels?: InputMaybe<Array<BoolStorePrefInput>>;
   expiredStockIssueThreshold?: InputMaybe<Scalars['Int']['input']>;
   expiredStockPreventIssue?: InputMaybe<Scalars['Boolean']['input']>;
   externalInboundShipmentLinesMustBeAuthorised?: InputMaybe<
@@ -12624,6 +12704,7 @@ export type UpsertPreferencesInput = {
   >;
   firstThresholdForExpiringItems?: InputMaybe<Array<IntegerStorePrefInput>>;
   genderOptions?: InputMaybe<Array<GenderTypeNode>>;
+  globalLogo?: InputMaybe<Scalars['String']['input']>;
   globalTableConfigs?: InputMaybe<Scalars['JSON']['input']>;
   inboundShipmentAutoVerify?: InputMaybe<Array<BoolStorePrefInput>>;
   invoiceStatusOptions?: InputMaybe<Array<InvoiceStatusOptionsInput>>;
@@ -12644,6 +12725,7 @@ export type UpsertPreferencesInput = {
   preventTransfersMonthsBeforeInitialisation?: InputMaybe<
     Scalars['Int']['input']
   >;
+  receivePaymentsFromPrescriptions?: InputMaybe<Scalars['Boolean']['input']>;
   requisitionAutoFinalise?: InputMaybe<Array<BoolStorePrefInput>>;
   secondThresholdForExpiringItems?: InputMaybe<Array<IntegerStorePrefInput>>;
   selectDestinationStoreForAnInternalOrder?: InputMaybe<
@@ -12751,12 +12833,24 @@ export type UserNode = {
   /** The user's email address */
   email?: Maybe<Scalars['String']['output']>;
   firstName?: Maybe<Scalars['String']['output']>;
+  /**
+   * How long (in seconds) the user may be inactive before the client should force a re-login.
+   * Sourced from server configuration (`server.inactivity_timeout_seconds`); advisory — the
+   * server does not enforce it.
+   */
+  inactivityTimeoutSeconds: Scalars['Int']['output'];
   jobTitle?: Maybe<Scalars['String']['output']>;
   language: LanguageTypeNode;
   lastName?: Maybe<Scalars['String']['output']>;
   permissions: UserStorePermissionConnector;
   phoneNumber?: Maybe<Scalars['String']['output']>;
   stores: UserStoreConnector;
+  /**
+   * If the user is active but no API call has happened for this long (in seconds), the client
+   * should call the refresh endpoint (`refreshToken`) to keep the session alive. Sourced from
+   * server configuration (`server.token_refresh_interval_seconds`).
+   */
+  tokenRefreshIntervalSeconds: Scalars['Int']['output'];
   /** Internal user id */
   userId: Scalars['String']['output'];
   username: Scalars['String']['output'];

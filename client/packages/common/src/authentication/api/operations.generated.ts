@@ -162,30 +162,11 @@ export type IsCentralStandaloneQuery = {
   isCentralStandalone: boolean;
 };
 
-export type RefreshTokenQueryVariables = Types.Exact<{ [key: string]: never }>;
+export type LogoutQueryVariables = Types.Exact<{ [key: string]: never }>;
 
-export type RefreshTokenQuery = {
+export type LogoutQuery = {
   __typename: 'Queries';
-  refreshToken:
-    | { __typename: 'RefreshToken'; token: string }
-    | {
-        __typename: 'RefreshTokenError';
-        error:
-          | {
-              __typename: 'DatabaseError';
-              description: string;
-              fullError: string;
-            }
-          | {
-              __typename: 'InternalError';
-              description: string;
-              fullError: string;
-            }
-          | { __typename: 'InvalidToken'; description: string }
-          | { __typename: 'NoRefreshTokenProvided'; description: string }
-          | { __typename: 'NotARefreshToken'; description: string }
-          | { __typename: 'TokenExpired'; description: string };
-      };
+  logout: { __typename: 'Logout'; userId: string };
 };
 
 export type PermissionsQueryVariables = Types.Exact<{
@@ -387,44 +368,12 @@ export const IsCentralStandaloneDocument = gql`
     isCentralStandalone
   }
 `;
-export const RefreshTokenDocument = gql`
-  query refreshToken {
-    refreshToken {
-      ... on RefreshToken {
+export const LogoutDocument = gql`
+  query logout {
+    logout {
+      ... on Logout {
         __typename
-        token
-      }
-      ... on RefreshTokenError {
-        __typename
-        error {
-          description
-          ... on DatabaseError {
-            __typename
-            description
-            fullError
-          }
-          ... on TokenExpired {
-            __typename
-            description
-          }
-          ... on NotARefreshToken {
-            __typename
-            description
-          }
-          ... on NoRefreshTokenProvided {
-            __typename
-            description
-          }
-          ... on InvalidToken {
-            __typename
-            description
-          }
-          ... on InternalError {
-            __typename
-            description
-            fullError
-          }
-        }
+        userId
       }
     }
   }
@@ -604,20 +553,20 @@ export function getSdk(
         variables
       );
     },
-    refreshToken(
-      variables?: RefreshTokenQueryVariables,
+    logout(
+      variables?: LogoutQueryVariables,
       requestHeaders?: GraphQLClientRequestHeaders,
       signal?: RequestInit['signal']
-    ): Promise<RefreshTokenQuery> {
+    ): Promise<LogoutQuery> {
       return withWrapper(
         wrappedRequestHeaders =>
-          client.request<RefreshTokenQuery>({
-            document: RefreshTokenDocument,
+          client.request<LogoutQuery>({
+            document: LogoutDocument,
             variables,
             requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
             signal,
           }),
-        'refreshToken',
+        'logout',
         'query',
         variables
       );
