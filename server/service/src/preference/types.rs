@@ -31,6 +31,8 @@ pub enum PrefKey {
     DisplayPopulationBasedForecasting,
     GlobalTableConfigs,
     Backdating,
+    ReceivePaymentsFromPrescriptions,
+    GlobalLogo,
 
     // Store preferences
     BlindStocktake,
@@ -56,6 +58,7 @@ pub enum PrefKey {
     WarnWhenMissingRecentStocktake,
     InvoiceStatusOptions,
     ShowIndicativePriceInRequisitions,
+    DoNotPrintPlaceholderLineLabels,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -79,6 +82,7 @@ pub enum PreferenceValueType {
     BackdatingData,
     String,
     Colour,
+    Image,
     // MultilineString,
     // Add scalar or custom value types here - mapped to frontend renderers
 }
@@ -105,6 +109,8 @@ pub enum UpsertPreferenceError {
     NotACentralServer,
     #[error("Store ID is required for store preference")]
     StoreIdNotProvided,
+    #[error("Invalid value for preference {0}: {1}")]
+    InvalidValue(String, String),
 }
 
 pub trait Preference: Sync + Send {

@@ -10,12 +10,12 @@ import { PropsWithChildrenOnly } from '@common/types';
 export const RequireAuthentication: FC<PropsWithChildrenOnly> = ({
   children,
 }) => {
-  const { token } = useAuthContext();
+  const { isAuthenticated } = useAuthContext();
   const location = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!token) {
+    if (!isAuthenticated) {
       navigate(`/${AppRoute.Login}`, {
         replace: true,
         state: { from: location },

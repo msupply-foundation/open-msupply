@@ -114,6 +114,38 @@ impl<'a> StocktakeRowRepository<'a> {
         result.map_err(RepositoryError::from)
     }
 
+    /// Like `find_one_by_id`, but takes a row-level lock (`SELECT ... FOR UPDATE`) on the
+    /// stocktake row for the duration of the current transaction.
+    ///
+    /// This is used to serialise concurrent stocktake finalisations: two transactions both
+    /// reading `status = New` and both finalising would otherwise be accepted under Postgres'
+    /// default READ COMMITTED isolation. With the lock, the second transaction blocks until the
+    /// first commits, then re-reads the (now finalised) row and is rejected.
+    // feature postgres
+    #[cfg(feature = "postgres")]
+    pub fn find_one_by_id_for_update(
+        &self,
+        id: &str,
+    ) -> Result<Option<StocktakeRow>, RepositoryError> {
+        let result = stocktake::table
+            .filter(stocktake::id.eq(id))
+            .for_update()
+            .first(self.connection.lock().connection())
+            .optional();
+        result.map_err(RepositoryError::from)
+    }
+
+    // feature sqlite
+    // SQLite allows only a single write transaction at a time (transactions are opened with
+    // `BEGIN IMMEDIATE`), so writers are already serialised and no row-level lock is needed.
+    #[cfg(not(feature = "postgres"))]
+    pub fn find_one_by_id_for_update(
+        &self,
+        id: &str,
+    ) -> Result<Option<StocktakeRow>, RepositoryError> {
+        self.find_one_by_id(id)
+    }
+
     pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<StocktakeRow>, RepositoryError> {
         let result = stocktake::table
             .filter(stocktake::id.eq_any(ids))

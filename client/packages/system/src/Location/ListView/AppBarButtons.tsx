@@ -29,6 +29,7 @@ export const AppBarButtons = ({ onCreate, sortBy }: AppBarButtonsProps) => {
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <ButtonWithIcon
+          data-testid="new-location-button"
           Icon={<PlusCircleIcon />}
           label={t('label.new-location')}
           onClick={onCreate}

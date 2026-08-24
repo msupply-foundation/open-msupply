@@ -39,8 +39,7 @@ export const getSyncQueries = (sdk: Sdk) => ({
       const result = await sdk.syncStatus();
       return result?.syncStatus;
     },
-    syncInfo: (token?: string) =>
-      sdk.syncInfo({}, { Authorization: `Bearer ${token}` }),
+    syncInfo: () => sdk.syncInfo({}),
   },
   // manualSync is a trigger that returns a string result (don't need to capture it)
   manualSync: async (fetchPatientId?: string) =>
@@ -156,6 +155,7 @@ function mapSyncErrorV7(
     [SyncErrorVariantV7.DatabaseError]: 'error.internal-error',
     [SyncErrorVariantV7.SyncRecordSerializeError]: 'error.internal-error',
     [SyncErrorVariantV7.RecordNotFound]: 'error.internal-error',
+    [SyncErrorVariantV7.SyncFileNotFound]: 'error.sync-file-not-found',
     [SyncErrorVariantV7.TokenAlreadyAllocated]: 'error.token-already-allocated',
     [SyncErrorVariantV7.TokenNotFound]: 'error.internal-error',
     [SyncErrorVariantV7.FailedToGetHardwareId]: 'error.internal-error',

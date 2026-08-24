@@ -75,12 +75,9 @@ async fn assigns_prescription_number_to_prescriptions() {
         ..Default::default()
     };
 
-    InvoiceRowRepository::new(&ctx.connection)
-        .upsert_one(&prescription)
-        .unwrap();
-    InvoiceRowRepository::new(&ctx.connection)
-        .upsert_one(&inbound_shipment)
-        .unwrap();
+    let invoice_repo = InvoiceRowRepository::new(&ctx.connection);
+    invoice_repo.upsert_one(&prescription).unwrap();
+    invoice_repo.upsert_one(&inbound_shipment).unwrap();
 
     // manually trigger because inserting the invoice doesn't trigger the processor
     ctx.processors_trigger

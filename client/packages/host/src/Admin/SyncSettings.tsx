@@ -61,8 +61,7 @@ const SyncSettingsForm = ({
   const onChangeBatchSize = (value: number | undefined): void => {
     setSyncSettings({
       ...settings,
-      batchSize:
-        value === undefined || value <= 0 ? null : Math.round(value),
+      batchSize: value === undefined || value <= 0 ? null : Math.round(value),
     });
   };
 
@@ -82,6 +81,7 @@ const SyncSettingsForm = ({
             value={url}
             onChange={e => setSettings('url', e.target.value)}
             disabled={isDisabled}
+            slotProps={{ htmlInput: { 'data-testid': 'sync-settings-url' } }}
           />
         }
       />
@@ -92,6 +92,9 @@ const SyncSettingsForm = ({
             value={username}
             onChange={e => setSettings('username', e.target.value)}
             disabled={isDisabled}
+            slotProps={{
+              htmlInput: { 'data-testid': 'sync-settings-username' },
+            }}
           />
         }
       />
@@ -101,7 +104,11 @@ const SyncSettingsForm = ({
           <PasswordTextInput
             value={password}
             onChange={e => setSettings('password', e.target.value)}
-            slotProps={{ input: { autoComplete: 'sync-password' } }}
+            slotProps={{
+              input: { autoComplete: 'sync-password' },
+              htmlInput: { 'data-testid': 'sync-settings-password' },
+            }}
+            visibilityToggleTestId="sync-settings-password-visibility"
             disabled={isDisabled}
             sx={{ width: 'calc(100% - 24px)' }}
           />
@@ -114,6 +121,9 @@ const SyncSettingsForm = ({
             value={intervalSeconds}
             onChange={onChangeSyncInterval}
             disabled={isDisabled}
+            slotProps={{
+              htmlInput: { 'data-testid': 'sync-settings-interval' },
+            }}
           />
         }
       />
@@ -138,6 +148,7 @@ const SyncSettingsForm = ({
           disabled={!isValid}
           onClick={onSave}
           label={t('button.save')}
+          data-testid="sync-settings-save"
         />
       </Grid>
     </form>

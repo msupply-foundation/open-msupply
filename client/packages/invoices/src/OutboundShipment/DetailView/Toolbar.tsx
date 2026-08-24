@@ -68,6 +68,7 @@ export const Toolbar = () => {
                   { replace: true }
                 );
               }}
+              width={250}
             />
           }
         />
@@ -81,6 +82,7 @@ export const Toolbar = () => {
               size="small"
               sx={{ width: 250 }}
               value={theirReferenceBuffer ?? ''}
+              inputProps={{ 'data-testid': 'customer-reference-field' }}
               onChange={event => {
                 setTheirReferenceBuffer(event.target.value);
                 update({ theirReference: event.target.value });

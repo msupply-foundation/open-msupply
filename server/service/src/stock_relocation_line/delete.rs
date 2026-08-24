@@ -132,9 +132,7 @@ mod test {
     async fn delete_line_success() {
         let (service_provider, ctx) = setup("delete_line_success").await;
         StockLineRowRepository::new(&ctx.connection)
-
             .upsert_one(&stock_line("del_sl"))
-
             .unwrap();
         let movement_id = new_movement(&service_provider, &ctx).await;
         let line_id = add_line(&ctx, &movement_id, "del_sl").await;
@@ -152,16 +150,9 @@ mod test {
         use crate::stock_relocation::update::UpdateStockRelocation;
 
         let (service_provider, ctx) = setup("delete_line_errors").await;
-        StockLineRowRepository::new(&ctx.connection)
-
-            .upsert_one(&stock_line("del_sl"))
-
-            .unwrap();
-        StockLineRowRepository::new(&ctx.connection)
-
-            .upsert_one(&stock_line("fin_sl"))
-
-            .unwrap();
+        let sl_repo = StockLineRowRepository::new(&ctx.connection);
+        sl_repo.upsert_one(&stock_line("del_sl")).unwrap();
+        sl_repo.upsert_one(&stock_line("fin_sl")).unwrap();
         let service = &service_provider.stock_relocation_service;
         let movement_id = new_movement(&service_provider, &ctx).await;
         let line_id = add_line(&ctx, &movement_id, "del_sl").await;

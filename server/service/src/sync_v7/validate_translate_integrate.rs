@@ -520,6 +520,39 @@ pub(crate) fn validate_translate_integrate_in_memory(
         .map_err(|e| e.to_inner_error())
 }
 
+/// Offline/CLI entry point: integrate whatever is pending in the sync buffer for
+/// `source_site_id`, mirroring the remote `integrate` step during initialisation but without an
+/// API session or logger. Used by the CLI's `initialise-from-export` for v7 exports, where the
+/// buffer rows come from a file rather than a pull.
+///
+/// Requires `SettingsSyncSiteId` to be set (the CLI sets it from the export
+/// before calling this).
+pub fn integrate_pending_sync_buffer_v7(
+    connection: &StorageConnection,
+    source_site_id: i32,
+) -> Result<(), RepositoryError> {
+    let active_stores = ActiveStoresOnSite::get(connection)
+        .map_err(|e| RepositoryError::as_db_error("Failed to load active stores", e))?;
+
+    // Mirrors the v7 synchroniser's integrate step (see `sync.rs`).
+    let is_multi_device = KeyValueStoreRepository::new(connection)
+        .get_bool(KeyType::SettingsSyncSiteIsMultiDevice)?
+        .unwrap_or(false);
+
+    validate_translate_integrate(
+        connection,
+        None,
+        source_site_id,
+        None,
+        SyncContext::Remote {
+            is_initialising: true,
+            active_stores,
+            is_multi_device,
+        },
+        true,
+    )
+}
+
 /// Cursors of rows superseded by a higher-cursor row for the same
 /// (table_name, record_id). The buffer cursor is DB arrival order — monotone
 /// with the source's changelog order — so the highest cursor is the record's

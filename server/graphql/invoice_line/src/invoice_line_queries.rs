@@ -2,6 +2,7 @@ use async_graphql::*;
 use graphql_core::{
     generic_filters::{
         DatetimeFilterInput, EqualFilterBigFloatingNumberInput, EqualFilterStringInput,
+        StringFilterInput,
     },
     generic_inputs::{report_sort_to_typed_sort, PrintReportSortInput},
     map_filter,
@@ -15,7 +16,7 @@ use graphql_types::types::{
 };
 use repository::{
     DatetimeFilter, EqualFilter, InvoiceLineFilter, InvoiceLineSort, InvoiceLineSortField,
-    InvoiceLineType, InvoiceStatus, InvoiceType, PaginationOption,
+    InvoiceLineType, InvoiceStatus, InvoiceType, PaginationOption, StringFilter,
 };
 use service::{
     auth::{Resource, ResourceAccessRequest},
@@ -37,6 +38,8 @@ pub struct InvoiceLineFilterInput {
     pub invoice_id: Option<EqualFilterStringInput>,
     pub location_id: Option<EqualFilterStringInput>,
     pub item_id: Option<EqualFilterStringInput>,
+    /// Matches on item code OR item name
+    pub item_code_or_name: Option<StringFilterInput>,
     pub r#type: Option<EqualFilterInvoiceLineTypeInput>,
     pub requisition_id: Option<EqualFilterStringInput>,
     pub number_of_packs: Option<EqualFilterBigFloatingNumberInput>,
@@ -59,6 +62,7 @@ impl From<InvoiceLineFilterInput> for InvoiceLineFilter {
             invoice_id: f.invoice_id.map(EqualFilter::from),
             location_id: f.location_id.map(EqualFilter::from),
             item_id: f.item_id.map(EqualFilter::from),
+            item_code_or_name: f.item_code_or_name.map(StringFilter::from),
             r#type: f.r#type.map(|t| map_filter!(t, InvoiceLineType::from)),
             requisition_id: f.requisition_id.map(EqualFilter::from),
             number_of_packs: f.number_of_packs.map(|t| map_filter!(t, f64::from)),

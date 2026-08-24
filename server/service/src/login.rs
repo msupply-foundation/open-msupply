@@ -21,9 +21,7 @@ use crate::{
     },
     auth_data::AuthData,
     service_provider::{ServiceContext, ServiceProvider},
-    settings::is_develop,
     sync::CentralServerConfig,
-    token::{JWTIssuingError, TokenPair, TokenService},
     user_account::{StorePermissions, UserAccountService, VerifyPasswordError},
 };
 
@@ -62,12 +60,19 @@ pub enum LoginFailure {
 #[derive(Debug)]
 pub enum LoginError {
     LoginFailure(LoginFailure),
-    FailedToGenerateToken(JWTIssuingError),
     FetchUserError(FetchUserError),
     UpdateUserError(UpdateUserError),
     InternalError(String),
     DatabaseError(RepositoryError),
     MSupplyCentralNotReached,
+}
+
+/// Result of a successful login. The caller is responsible for creating a session token via
+/// `AuthData::session_store` and setting the cookie; this keeps the service free of
+/// transport/cookie concerns.
+#[derive(Debug, Clone)]
+pub struct LoginSuccess {
+    pub user_id: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -96,7 +101,7 @@ impl LoginService {
         auth_data: &AuthData,
         input: LoginInput,
         min_err_response_time_sec: u64,
-    ) -> Result<TokenPair, LoginError> {
+    ) -> Result<LoginSuccess, LoginError> {
         let now = SystemTime::now();
         match LoginService::do_login(service_provider, auth_data, input).await {
             Ok(result) => Ok(result),
@@ -153,9 +158,9 @@ impl LoginService {
 
     async fn do_login(
         service_provider: &ServiceProvider,
-        auth_data: &AuthData,
+        _auth_data: &AuthData,
         input: LoginInput,
-    ) -> Result<TokenPair, LoginError> {
+    ) -> Result<LoginSuccess, LoginError> {
         // Pick login flow based on which sync version this site is running.
         // V5V6 sites authenticate via legacy mSupply's /api/v4/login (which
         // also delivers the user row, store joins, and permissions). V7 sites
@@ -193,24 +198,9 @@ impl LoginService {
             None,
         )?;
 
-        let mut token_service = TokenService::new(
-            &auth_data.token_bucket,
-            auth_data.auth_token_secret.as_bytes(),
-            !is_develop(),
-        );
-        let max_age_token = crate::auth_data::TOKEN_LIFETIME_SEC;
-        let max_age_refresh = crate::auth_data::REFRESH_TOKEN_LIFETIME_SEC;
-
-        let pair = match token_service.jwt_token(
-            &user_account.id,
-            &input.password,
-            max_age_token,
-            max_age_refresh,
-        ) {
-            Ok(pair) => pair,
-            Err(err) => return Err(LoginError::FailedToGenerateToken(err)),
-        };
-        Ok(pair)
+        Ok(LoginSuccess {
+            user_id: user_account.id,
+        })
     }
 
     /// V5V6 login: fetch user data + permissions from legacy mSupply's
@@ -347,7 +337,7 @@ impl LoginService {
     /// to the calling site's stores, so on COMS this would wipe joins for stores
     /// that belong to other ROMS sites and that COMS legitimately holds for the
     /// user.
-    /// 
+    ///
     /// # Safety
     /// Safe on ROMS — the wipe scope matches the OG response scope, since a ROMS
     /// only holds joins for its own site.
@@ -552,7 +542,7 @@ mod test {
         login::{LoginError, LoginFailure, LoginInput},
         login_mock_data::LOGIN_V4_RESPONSE_1,
         service_provider::ServiceProvider,
-        token_bucket::TokenBucket,
+        session_store::SessionStore,
         user_account::{CreateUserAccount, UserAccountService},
     };
 
@@ -590,8 +580,8 @@ mod test {
         SyncVersion::set(&context.connection, SyncVersion::V5V6).unwrap();
 
         let auth_data = AuthData {
-            auth_token_secret: "secret".to_string(),
-            token_bucket: Arc::new(RwLock::new(TokenBucket::new())),
+            session_store: Arc::new(RwLock::new(SessionStore::new())),
+            cookie_suffix: "test".to_string(),
             no_ssl: true,
             debug_no_access_control: false,
         };
@@ -836,8 +826,8 @@ mod test {
         SyncVersion::set(&context.connection, SyncVersion::V7).unwrap();
 
         let auth_data = AuthData {
-            auth_token_secret: "secret".to_string(),
-            token_bucket: Arc::new(RwLock::new(TokenBucket::new())),
+            session_store: Arc::new(RwLock::new(SessionStore::new())),
+            cookie_suffix: "test".to_string(),
             no_ssl: true,
             debug_no_access_control: false,
         };
@@ -1095,8 +1085,8 @@ mod test {
         let context = service_provider.basic_context().unwrap();
 
         let auth_data = AuthData {
-            auth_token_secret: "secret".to_string(),
-            token_bucket: Arc::new(RwLock::new(TokenBucket::new())),
+            session_store: Arc::new(RwLock::new(SessionStore::new())),
+            cookie_suffix: "test".to_string(),
             no_ssl: true,
             debug_no_access_control: false,
         };

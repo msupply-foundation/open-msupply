@@ -101,6 +101,7 @@ export const ColorMenu: FC<ColorMenuProps> = ({
     <CircleIcon
       role="button"
       aria-label={name}
+      data-testid={`colour-swatch-${name}`}
       key={hex}
       onClick={e => {
         e.stopPropagation();

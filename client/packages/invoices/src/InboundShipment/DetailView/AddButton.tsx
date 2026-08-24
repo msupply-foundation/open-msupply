@@ -96,6 +96,7 @@ export const AddButton = ({
   return (
     <>
       <SplitButton
+        testId="add-item-button"
         color="primary"
         options={options}
         selectedOption={selectedOption}

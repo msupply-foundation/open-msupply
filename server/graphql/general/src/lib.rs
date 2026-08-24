@@ -70,13 +70,17 @@ pub struct GeneralQueries;
 
 #[Object]
 impl GeneralQueries {
-    #[allow(non_snake_case)]
-    pub async fn apiVersion(&self) -> String {
+    pub async fn api_version(&self) -> String {
         env!("CARGO_PKG_VERSION").to_string()
     }
 
-    /// Retrieves a new auth bearer and refresh token
-    /// The refresh token is returned as a cookie
+    /// The running server's version, from the repo-root package.json (e.g. "3.00.00-RC")
+    pub async fn server_version(&self) -> String {
+        repository::migrations::raw_app_version()
+    }
+
+    /// Authenticate with username + password. Issues an opaque session token, returned both in
+    /// the response body and as an HttpOnly session cookie. There is no separate refresh token.
     pub async fn auth_token(
         &self,
         ctx: &Context<'_>,
@@ -99,8 +103,9 @@ impl GeneralQueries {
         logout(ctx)
     }
 
-    /// Retrieves a new auth bearer and refresh token
-    /// The refresh token is returned as a cookie
+    /// Slides the existing session's expiry forward (no token rotation). Kept for backwards
+    /// compatibility — web clients no longer need to call this, since the session slides on every
+    /// authenticated request.
     pub async fn refresh_token(&self, ctx: &Context<'_>) -> RefreshTokenResponse {
         refresh_token(ctx)
     }
@@ -399,8 +404,15 @@ impl GeneralQueries {
     pub async fn frontend_plugin_metadata(
         &self,
         ctx: &Context<'_>,
+        #[graphql(
+            desc = "Which front end this client is (`react`, `solid`, ...), so it \
+                    is served only the bundles it can load. Omit only from a \
+                    pre-existing old-UI build: absent means the React \
+                    module-federation UI."
+        )]
+        host_runtime: Option<String>,
     ) -> Result<Vec<FrontendPluginMetadataNode>> {
-        frontend_plugin_metadata(ctx)
+        frontend_plugin_metadata(ctx, host_runtime)
     }
 
     pub async fn currencies(
@@ -682,6 +694,11 @@ impl InitialisationQueries {
     /// Available without authorisation/authentication
     pub async fn is_central_server(&self) -> bool {
         CentralServerConfig::is_central_server()
+    }
+
+    /// The running server's version, from the repo-root package.json (e.g. "3.00.00-RC")
+    pub async fn server_version(&self) -> String {
+        repository::migrations::raw_app_version()
     }
 }
 /// Auth is not checked during initialisation stage

@@ -1,13 +1,9 @@
 mod bandwidth_harness;
 mod central;
 mod central_server_configurations;
-// TODO: re-enable once file-sync pause-during-sync is re-wired for v7. The v7 merge
-// decoupled FileSyncDriver from the SynchroniserDriver, so these modules no longer
-// compile (sync()/trigger()/init() lost their pause args). See server/server/src/lib.rs
-// (FileSyncDriver::init is commented out there).
-// mod driver_harness;
+mod driver_harness;
 mod errors;
-// mod file_sync_pause;
+mod file_sync_pause;
 mod omsupply_central;
 mod remote;
 mod site_info;

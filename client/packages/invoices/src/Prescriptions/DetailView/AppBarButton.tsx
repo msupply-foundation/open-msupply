@@ -75,6 +75,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
     <AppBarButtonsPortal>
       <Grid container gap={1}>
         <AddButton
+          data-testid="add-item-button"
           disabled={isDisabled}
           label={t('button.add-item')}
           onClick={onAddItem}
@@ -95,6 +96,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
             };
             return (
               <SplitButton
+                testId="print-button"
                 color="primary"
                 openFrom={'bottom'}
                 Icon={<PrinterIcon />}
@@ -112,6 +114,7 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           }}
         />
         <ButtonWithIcon
+          data-testid="history-button"
           label={t('button.history')}
           Icon={<InfoOutlineIcon />}
           onClick={() => onViewHistory()}

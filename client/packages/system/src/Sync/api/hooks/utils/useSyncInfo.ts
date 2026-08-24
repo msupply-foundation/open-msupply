@@ -17,10 +17,10 @@ export const useSyncInfo = (
   enabled: boolean = true
 ) => {
   const api = useSyncApi();
+  const { isAuthenticated } = useAuthContext();
   const queryClient = useQueryClient();
-  const { token } = useAuthContext();
 
-  const isEnabled = !!token && enabled;
+  const isEnabled = isAuthenticated && enabled;
 
   const { isSubscribed, data: subData } = useSubscription({
     document: SyncInfoUpdatedDocument,
@@ -31,7 +31,7 @@ export const useSyncInfo = (
   // Fallback to polling if subscription fails or is unavailable
   const { data: queryData, ...rest } = useQuery({
     queryKey: api.keys.syncInfo(),
-    queryFn: () => api.get.syncInfo(token),
+    queryFn: () => api.get.syncInfo(),
     refetchInterval: isSubscribed ? false : refetchInterval,
     enabled: isEnabled,
   });
