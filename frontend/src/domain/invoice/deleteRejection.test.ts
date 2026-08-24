@@ -38,15 +38,14 @@ describe('OMS-REG-REPL-01.32 — deleting a Verified shipment is refused, and th
     });
   });
 
-  it('KNOWN GAP: the finalised refusal has no translation and says "edit"', () => {
-    // CannotEditFinalised is what all five invoice verticals return for a
-    // delete of a finalised record (server invoice/*/delete/validate.rs), so
-    // this is the delete refusal users hit most — and there is no
-    // `server-error.CannotEditFinalised`, so it renders as the sentence-cased
-    // identifier, naming the wrong verb. Pinned so the copy fix breaks this
-    // deliberately rather than passing unnoticed.
+  it('names the finalised status as a sentence, not as an identifier', () => {
+    // CannotEditFinalised is the refusal for deleting a finalised record in all
+    // five invoice verticals (server invoice/*/delete/validate.rs), which makes
+    // it the delete refusal users meet most. It reaches edit paths too — the
+    // inbound header update and stocktake delete raise the same variant — so
+    // the copy names both verbs and no particular record type.
     expect(deleteRejection(error('CannotEditFinalised'))).toEqual({
-      message: 'Cannot Edit Finalised',
+      message: "This is finalised, so it can't be edited or deleted",
     });
   });
 
