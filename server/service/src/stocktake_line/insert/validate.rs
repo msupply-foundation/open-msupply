@@ -177,9 +177,9 @@ pub fn validate(
                 OtherPartyErrors::OtherPartyDoesNotExist => {
                     return Err(InsertStocktakeLineError::ManufacturerDoesNotExist)
                 }
-                OtherPartyErrors::OtherPartyNotVisible => {
-                    return Err(InsertStocktakeLineError::ManufacturerNotVisible)
-                }
+                // Invisible manufacturers are allowed - they can be configured centrally (e.g. on
+                // an item variant) or inherited from stock without being visible in this store
+                OtherPartyErrors::OtherPartyNotVisible => {}
                 OtherPartyErrors::TypeMismatched => {
                     return Err(InsertStocktakeLineError::ManufacturerIsNotAManufacturer)
                 }

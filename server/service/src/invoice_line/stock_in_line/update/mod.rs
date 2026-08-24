@@ -129,7 +129,6 @@ pub enum UpdateStockInLineError {
     UpdatedLineDoesNotExist,
     NotThisInvoiceLine(String),
     ManufacturerDoesNotExist,
-    ManufacturerNotVisible,
     ManufacturerIsNotAManufacturer,
     VVMStatusDoesNotExist,
     ProgramDoesNotExist,

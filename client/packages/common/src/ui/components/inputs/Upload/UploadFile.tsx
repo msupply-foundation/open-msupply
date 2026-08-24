@@ -14,6 +14,8 @@ interface UploadFileProps {
   multiple?: boolean;
   /** Called with files rejected by `accept`/`maxSize` (drag & drop only). */
   onRejected?: (rejections: FileRejection[]) => void;
+  /** Stamped on the hidden file input for e2e locators. */
+  testId?: string;
 }
 
 export const UploadFile = ({
@@ -24,6 +26,7 @@ export const UploadFile = ({
   maxSize,
   multiple = false,
   onRejected,
+  testId,
 }: UploadFileProps) => {
   const isNative = Capacitor.isNativePlatform();
   // Convert Accept type to a string for the native file input
@@ -38,6 +41,7 @@ export const UploadFile = ({
       files={files}
       accept={acceptString}
       multiple={multiple}
+      testId={testId}
     />
   ) : (
     <UploadDragAndDrop
@@ -47,6 +51,7 @@ export const UploadFile = ({
       maxSize={maxSize}
       multiple={multiple}
       onRejected={onRejected}
+      testId={testId}
     />
   );
 };

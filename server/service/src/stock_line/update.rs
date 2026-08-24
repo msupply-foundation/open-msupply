@@ -48,7 +48,6 @@ pub enum UpdateStockLineError {
     DonorNotVisible,
     DonorIsNotADonor,
     ManufacturerDoesNotExist,
-    ManufacturerNotVisible,
     ManufacturerIsNotAManufacturer,
     UpdatedStockNotFound,
     StockMovementNotFound,
@@ -164,18 +163,24 @@ fn validate(
         value: Some(manufacturer_id),
     }) = &input.manufacturer_id
     {
-        check_other_party(
+        match check_other_party(
             connection,
             store_id,
             manufacturer_id,
             CheckOtherPartyType::Manufacturer,
-        )
-        .map_err(|e| match e {
-            OtherPartyErrors::OtherPartyDoesNotExist => ManufacturerDoesNotExist,
-            OtherPartyErrors::OtherPartyNotVisible => ManufacturerNotVisible,
-            OtherPartyErrors::TypeMismatched => ManufacturerIsNotAManufacturer,
-            OtherPartyErrors::DatabaseError(repository_error) => DatabaseError(repository_error),
-        })?;
+        ) {
+            Ok(_) => {}
+            Err(e) => match e {
+                OtherPartyErrors::OtherPartyDoesNotExist => return Err(ManufacturerDoesNotExist),
+                // Invisible manufacturers are allowed - they can be configured centrally (e.g. on
+                // an item variant) or inherited from stock without being visible in this store
+                OtherPartyErrors::OtherPartyNotVisible => {}
+                OtherPartyErrors::TypeMismatched => return Err(ManufacturerIsNotAManufacturer),
+                OtherPartyErrors::DatabaseError(repository_error) => {
+                    return Err(DatabaseError(repository_error))
+                }
+            },
+        };
     };
 
     Ok(stock_line)
