@@ -56,7 +56,13 @@ export type GraphqlFailure =
   | { kind: 'unexpectedError' }
   // GraphQL errors from the response, returned only when the caller opts in via
   // returnGraphqlErrors to handle them itself.
-  | { kind: 'graphqlError'; message: string; errors: GraphqlErrorItem[] };
+  | { kind: 'graphqlError'; message: string; errors: GraphqlErrorItem[] }
+  // The caller aborted the request through its own `signal` — it asked for this,
+  // so it is NOT a fault: no global modal, no error description, nothing for the
+  // user to read. Distinct from unexpectedError precisely so a caller that
+  // cancels superseded work can tell "I dropped this" apart from "this broke",
+  // and drop the result silently instead of reporting it.
+  | { kind: 'aborted' };
 
 export type GraphqlResult<TResult> =
   { kind: 'success'; data: TResult } | GraphqlFailure;
@@ -85,6 +91,16 @@ type FetchOptions<TResult> = {
   // the unexpected-error modal is suppressed.
   background?: boolean;
   endpoint?: string;
+  // Cancel the request. Aborting resolves to { kind: 'aborted' } — never the
+  // global unexpected-error modal — so a caller can drop work it no longer
+  // wants (a superseded refetch, a screen the user navigated away from) without
+  // the abandoned request reporting itself as a failure.
+  //
+  // Aborting releases the CLIENT's hold on the request; it does not stop the
+  // server, which finishes the work it started. Worth knowing where that work
+  // is expensive: a cancelled report generation still occupies its server
+  // worker to completion (msupply-foundation/open-msupply#12710).
+  signal?: AbortSignal;
 };
 
 export const isUnauthenticated = (errors: GraphqlErrorItem[]): boolean =>
@@ -281,8 +297,14 @@ export async function graphqlFetch<TResult, TVariables>(
       headers: { 'Content-Type': 'application/json' },
       credentials: 'same-origin',
       body: JSON.stringify({ query: document.query, variables }),
+      signal: options.signal,
     });
   } catch (e) {
+    // An abort is the caller's own doing, so it takes the aborted result rather
+    // than the global modal. Checked on the signal, not on the error's name:
+    // `AbortError` is the spec'd rejection but a polyfilled or vendored fetch
+    // can reject differently, and the signal is the fact we actually asked for.
+    if (options.signal?.aborted) return { kind: 'aborted' };
     // The fetch itself rejected — no response reached us at all.
     return unexpected(
       'unreachable',
