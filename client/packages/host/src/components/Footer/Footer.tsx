@@ -29,6 +29,7 @@ interface PaddedCellProps {
   icon: ReactNode;
   tooltip?: string;
   onClick?: () => void;
+  testId?: string;
 }
 
 const PaddedCell: FC<PaddedCellProps> = ({
@@ -37,10 +38,12 @@ const PaddedCell: FC<PaddedCellProps> = ({
   icon,
   tooltip,
   onClick,
+  testId,
 }) => {
   const isExtraSmallScreen = useIsExtraSmallScreen();
   return (
     <Box
+      data-testid={testId}
       onClick={onClick}
       sx={{
         display: 'flex',
@@ -98,6 +101,7 @@ export const Footer = ({ backgroundColor }: { backgroundColor?: string }) => {
 
   return (
     <Box
+      data-testid="app-footer"
       gap={isExtraSmallScreen ? 0 : 2}
       display="flex"
       alignItems="center"
@@ -110,6 +114,7 @@ export const Footer = ({ backgroundColor }: { backgroundColor?: string }) => {
           icon={<HomeIcon sx={iconStyles} />}
           text={store?.name}
           tooltip={t('store-details', { ...store })}
+          testId="store-selector-trigger"
         />
       </StoreSelector>
       <PaddedCell
@@ -117,6 +122,7 @@ export const Footer = ({ backgroundColor }: { backgroundColor?: string }) => {
         text={t('label.edit')}
         tooltip={t('label.edit-store-properties')}
         onClick={onOpen}
+        testId="footer-store-edit"
       />
       {user ? (
         <>
@@ -126,6 +132,7 @@ export const Footer = ({ backgroundColor }: { backgroundColor?: string }) => {
               icon={<UserIcon sx={iconStyles} />}
               text={user.name}
               tooltip={getLocalisedFullName(user.firstName, user.lastName)}
+              testId="user-menu-trigger"
             />
           </UserDetails>
         </>
@@ -136,6 +143,7 @@ export const Footer = ({ backgroundColor }: { backgroundColor?: string }) => {
           icon={<TranslateIcon sx={iconStyles} />}
           text={currentLanguageName}
           tooltip={t('select-language', { ...store })}
+          testId="language-selector"
         />
       </LanguageSelector>
       {isExtraSmallScreen && <Divider />}

@@ -131,6 +131,7 @@ export const CreateStocktakeModal = ({
   return (
     <>
       <Modal
+        testId="create-stocktake-modal"
         slideAnimation={false}
         title={t('label.new-stocktake')}
         width={675}
@@ -194,6 +195,7 @@ export const CreateStocktakeModal = ({
                   }
                 >
                   <FormControlLabel
+                    data-testid="stocktake-type-full"
                     value={StocktakeType.FULL}
                     control={<Radio sx={{ paddingY: '7px' }} />}
                     label={t('stocktake.create-full')}
@@ -201,6 +203,7 @@ export const CreateStocktakeModal = ({
                   />
 
                   <FormControlLabel
+                    data-testid="stocktake-type-filtered"
                     value={StocktakeType.FILTERED}
                     control={<Radio sx={{ paddingY: '7px' }} />}
                     label={t('stocktake.create-filtered')}
@@ -208,6 +211,7 @@ export const CreateStocktakeModal = ({
                   />
 
                   <FormControlLabel
+                    data-testid="stocktake-type-blank"
                     value={StocktakeType.BLANK}
                     control={<Radio sx={{ paddingY: '7px' }} />}
                     label={t('stocktake.create-blank')}
@@ -251,11 +255,19 @@ export const CreateStocktakeModal = ({
 
               {/* Estimated lines */}
               {createBlankStocktake ? (
-                <Alert severity="success" sx={{ marginRight: 0 }}>
+                <Alert
+                  data-testid="blank-stocktake-notice"
+                  severity="success"
+                  sx={{ marginRight: 0 }}
+                >
                   {t('message.create-blank-stocktake')}
                 </Alert>
               ) : (
-                <Alert severity="info" sx={{ marginRight: 0 }}>
+                <Alert
+                  data-testid="stocktake-line-estimate"
+                  severity="info"
+                  sx={{ marginRight: 0 }}
+                >
                   {t('message.lines-estimated', {
                     count: estimateLineCount(),
                   })}

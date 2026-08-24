@@ -233,6 +233,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::CannotMoveReceivedDateForward
         | ServiceError::ExceedsMaximumBackdatingDays
         | ServiceError::CannotSetShippedStatusOnManualInboundShipment
+        | ServiceError::CannotReceiveWithNoLines
         | ServiceError::CurrencyRateMustBePositive
         | ServiceError::UnknownPropertyKey(_) => BadUserInput(formatted_error),
         ServiceError::PreferenceError(_) => InternalError(formatted_error),
@@ -497,6 +498,18 @@ mod test {
 
         //OtherPartyDoesNotExist
         let test_service = TestService(Box::new(|_| Err(ServiceError::OtherPartyDoesNotExist)));
+        let expected_message = "Bad user input";
+        assert_standard_graphql_error!(
+            &settings,
+            &mutation,
+            &Some(empty_variables()),
+            &expected_message,
+            None,
+            Some(service_provider(test_service, &connection_manager))
+        );
+
+        //CannotReceiveWithNoLines
+        let test_service = TestService(Box::new(|_| Err(ServiceError::CannotReceiveWithNoLines)));
         let expected_message = "Bad user input";
         assert_standard_graphql_error!(
             &settings,

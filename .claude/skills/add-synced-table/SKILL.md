@@ -28,7 +28,7 @@ Scenario B is a superset of A (same repository layer + V7 bits) plus the legacy 
 
 Each guide has a TL;DR checklist table at the top, then a step-per-section walkthrough with the exact file paths and code. The layers, in order:
 
-1. **Repository + migration** — `CREATE TABLE` (incl. the Postgres `ALTER TYPE changelog_table_name ADD VALUE`), the `*_row.rs` row struct + repository + `Upsert`/`Delete` impls, `db_diesel/mod.rs` wiring.
+1. **Repository + migration** — `CREATE TABLE`, the `*_row.rs` row struct + repository + `Upsert`/`Delete` impls, `db_diesel/mod.rs` wiring. Note: **no** `ALTER TYPE changelog_table_name ADD VALUE` — v3 made `changelog.table_name` plain TEXT and dropped that type, so the old call now fails on Postgres. Other PG enums (e.g. `key_type`, for a processor cursor) still need registering.
 2. **Changelog** — add the `ChangelogTableName` variant, the `generate_changelog` impl (store-scoped `RowOrId` vs central id-string flavour), the `sync_style.rs` classification (`authoring` / `distribution` / `transport: V5|V6|V5_V6`), and the `Row` enum + `fetch_rows_for_table` arm in `batch_query.rs` (the V7 **push** path).
 3. **Legacy v5/v6 translation** *(scenario B only)* — a `SyncTranslation` in `service/src/sync/translations/`, registered in `all_translators()`, with a test-data fixture. Note: `table_name()` must match central exactly; `pull_dependencies()` references the dependency translation's own `table_name()` (e.g. `vec![StoreTranslation.table_name()]`), not a string literal.
 4. **V7 sync** — `INTEGRATION_ORDER` (FK order), `serde.rs` `serialize`/`deserialize` arms, and the `translate_delete` arm (if the table supports hard deletes).

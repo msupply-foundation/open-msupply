@@ -88,6 +88,7 @@ export const NameListView = ({ type }: NameListProps): ReactElement => {
       {type === 'customer' && (
         <Modal
           title=""
+          testId="customer-detail-modal"
           okButton={<DialogButton variant="ok" onClick={hideDialog} />}
           slideAnimation={false}
           Transition={Transition}

@@ -79,6 +79,7 @@ interface DropdownMenuProps {
   disabled?: boolean;
   sx?: SxProps;
   selectSx?: SxProps;
+  testId?: string;
 }
 
 // Styled doesn't like `sx` prop being passed to it.
@@ -89,6 +90,7 @@ export const DropdownMenu: FC<PropsWithChildren<DropdownMenuProps>> = ({
   disabled = false,
   sx,
   selectSx,
+  testId,
 }) => {
   const [open, setOpen] = useState(false);
   const onClick = disabled ? undefined : () => setOpen(curr => !curr);
@@ -102,6 +104,7 @@ export const DropdownMenu: FC<PropsWithChildren<DropdownMenuProps>> = ({
         {label}
       </InputLabel>
       <StyledSelect
+        data-testid={testId}
         disabled={disabled}
         value=""
         size="small"

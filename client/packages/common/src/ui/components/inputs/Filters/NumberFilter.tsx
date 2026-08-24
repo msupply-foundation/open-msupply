@@ -64,6 +64,7 @@ export const NumberFilter: FC<{ filterDefinition: NumberFilterDefinition }> = ({
 
   return (
     <NumericTextInput
+      inputProps={{ 'data-testid': `filter-input-${urlParameter}` }}
       label={name}
       width={wide ? FILTER_WIDTH : FILTER_WIDTH / 2}
       sx={FilterLabelSx}

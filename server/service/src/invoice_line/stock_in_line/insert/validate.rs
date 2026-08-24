@@ -3,14 +3,19 @@ use crate::invoice::inbound_shipment::InboundShipmentType;
 use crate::{
     check_item_variant_exists, check_location_exists, check_location_type_is_valid,
     check_vvm_status_exists,
-    invoice::{check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store},
+    invoice::{
+        check_invoice_exists, check_invoice_lines_are_editable, check_invoice_type, check_store,
+    },
     invoice_line::{
         stock_in_line::{check_lines_locked_by_authorisation, check_pack_size},
-        validate::{check_item_exists, check_line_exists, check_number_of_packs},
+        validate::{
+            check_item_exists, check_line_exists, check_number_of_packs,
+            check_price_is_not_negative,
+        },
     },
     validate::{
-        check_other_party, check_other_party_store_is_disabled, CheckOtherPartyType,
-        OtherPartyErrors,
+        check_date_is_not_in_future, check_other_party, check_other_party_store_is_disabled,
+        CheckOtherPartyType, OtherPartyErrors,
     },
     NullableUpdate,
 };
@@ -33,6 +38,18 @@ pub fn validate(
     }
     if !check_number_of_packs(Some(input.number_of_packs)) {
         return Err(NumberOfPacksBelowZero);
+    }
+    if !check_price_is_not_negative(Some(input.sell_price_per_pack)) {
+        return Err(SellPricePerPackBelowZero);
+    }
+    if !check_price_is_not_negative(Some(input.cost_price_per_pack)) {
+        return Err(CostPricePerPackBelowZero);
+    }
+
+    if let Some(manufacture_date) = &input.manufacture_date {
+        if !check_date_is_not_in_future(manufacture_date) {
+            return Err(CannotSetManufactureDateInFuture);
+        }
     }
 
     let item = check_item_exists(connection, &input.item_id)?.ok_or(ItemNotFound)?;
@@ -78,7 +95,7 @@ pub fn validate(
             return Err(WrongInboundShipmentType);
         }
     }
-    if !check_invoice_is_editable(&invoice) {
+    if !check_invoice_lines_are_editable(&invoice) {
         return Err(CannotEditFinalised);
     }
     if check_other_party_store_is_disabled(connection, store_id, &invoice.name_id)? {

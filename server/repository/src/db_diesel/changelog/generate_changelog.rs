@@ -244,7 +244,7 @@ impl StockRelocationLineRow {
                 .find_one_by_id(row_id)?
                 .ok_or(RepositoryError::NotFound)?,
         };
-        let relocation_changelog = StockRelocationRow::generate_changelog(
+        let stock_relocation_changelog = StockRelocationRow::generate_changelog(
             RowOrId::Id(&row.stock_relocation_id),
             con,
             action,
@@ -253,7 +253,7 @@ impl StockRelocationLineRow {
         Ok(ChangeLogInsertRow {
             table_name: ChangelogTableName::StockRelocationLine,
             record_id: row.id.clone(),
-            ..relocation_changelog
+            ..stock_relocation_changelog
         })
     }
 }

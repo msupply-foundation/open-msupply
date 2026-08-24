@@ -69,8 +69,8 @@ const DetailViewInner = () => {
     isExternal,
     isDisabled,
     invalidateQuery,
-    update: { update },
     isAddOrDeleteLinesDisabled,
+    update: { update },
   } = useInboundShipment();
 
   // ScanInputModal needs the same line list that the table renders.

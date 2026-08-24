@@ -204,7 +204,10 @@ fn chain_contains_transient_drop(error: &(dyn std::error::Error + 'static)) -> b
     let mut current: Option<&(dyn std::error::Error + 'static)> = Some(error);
     while let Some(err) = current {
         let message = err.to_string().to_lowercase();
-        if SIGNATURES.iter().any(|signature| message.contains(signature)) {
+        if SIGNATURES
+            .iter()
+            .any(|signature| message.contains(signature))
+        {
             return true;
         }
         current = err.source();
@@ -263,14 +266,21 @@ mod test {
 
     #[test]
     fn detects_connection_reset() {
-        let error = chain(&["error sending request", "Connection reset by peer (os error 54)"]);
+        let error = chain(&[
+            "error sending request",
+            "Connection reset by peer (os error 54)",
+        ]);
         assert!(chain_contains_transient_drop(&error));
     }
 
     #[test]
     fn ignores_non_transient_errors() {
         // A connect refusal is handled by `is_connect`, not here; a status/body error must not match.
-        let connect = chain(&["error sending request", "tcp connect error", "Connection refused (os error 111)"]);
+        let connect = chain(&[
+            "error sending request",
+            "tcp connect error",
+            "Connection refused (os error 111)",
+        ]);
         assert!(!chain_contains_transient_drop(&connect));
 
         let bad_request = chain(&["builder error", "invalid header value"]);

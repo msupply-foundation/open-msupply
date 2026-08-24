@@ -104,45 +104,42 @@ pub struct RequestUserData {
     // Used for self execution of graphql queries for plugins
     pub override_user_id: Option<String>,
     pub auth_token: Option<String>,
-    pub refresh_token: Option<String>,
 }
 
-pub fn auth_data_from_request(http_req: &HttpRequest) -> RequestUserData {
+/// Extracts the session token from the request. Reads `Authorization: Bearer …` first (used by
+/// API integrations like Sage), then falls back to the HttpOnly `session_{suffix}` cookie used by
+/// the web client. Returns `None` if neither is present.
+pub fn auth_data_from_request(http_req: &HttpRequest, cookie_suffix: &str) -> RequestUserData {
     let headers = http_req.headers();
-    // retrieve auth token
-    let auth_token = headers.get("Authorization").and_then(|header_value| {
-        header_value.to_str().ok().and_then(|header| {
-            if header.starts_with("Bearer ") {
-                return Some(header["Bearer ".len()..header.len()].to_string());
-            }
-            None
-        })
-    });
-
-    // retrieve refresh token
-    let refresh_token = headers.get(COOKIE).and_then(|header_value| {
-        header_value
-            .to_str()
-            .ok()
-            .and_then(|header| {
-                let cookies = header.split(' ').collect::<Vec<&str>>();
-                cookies
-                    .into_iter()
-                    .map(|raw_cookie| Cookie::parse(raw_cookie).ok())
-                    .find(|cookie_option| match &cookie_option {
-                        Some(cookie) => cookie.name() == "refresh_token",
-                        None => false,
-                    })
-                    .flatten()
-            })
-            .map(|cookie| cookie.value().to_owned())
-    });
+    let auth_token = headers
+        .get("Authorization")
+        .and_then(|header_value| header_value.to_str().ok())
+        .and_then(|header| header.strip_prefix("Bearer ").map(|t| t.to_string()))
+        .or_else(|| session_cookie_value(http_req, cookie_suffix));
 
     RequestUserData {
         auth_token,
-        refresh_token,
         override_user_id: None,
     }
+}
+
+fn session_cookie_value(http_req: &HttpRequest, cookie_suffix: &str) -> Option<String> {
+    let cookie_name = format!("session_{cookie_suffix}");
+    // RFC 6265: a Cookie header is a `; `-separated list of name=value pairs — but a request
+    // may carry *several* Cookie header fields: HTTP/2+ clients split ("crumble") the cookie
+    // list into one field per cookie for better compression (RFC 9113 §8.2.3), ordered
+    // oldest-created first, so the freshly issued session cookie tends to arrive last. Scan
+    // every field (skipping any individually malformed cookie) rather than only the first,
+    // otherwise any stale cookie on the origin hides the session cookie (issue
+    // msupply-foundation/open-msupply-frontend#1088).
+    http_req
+        .headers()
+        .get_all(COOKIE)
+        .filter_map(|header_value| header_value.to_str().ok())
+        .flat_map(|header| header.split(';'))
+        .filter_map(|raw_cookie| Cookie::parse(raw_cookie.trim()).ok())
+        .find(|cookie| cookie.name() == cookie_name)
+        .map(|cookie| cookie.value().to_owned())
 }
 
 #[macro_export]
@@ -162,4 +159,55 @@ macro_rules! map_filter {
             is_null: None,
         }
     }};
+}
+
+#[cfg(test)]
+mod session_cookie_tests {
+    use super::*;
+    use actix_web::test::TestRequest;
+
+    #[test]
+    fn finds_session_cookie_in_single_combined_header() {
+        // HTTP/1.1 style: one Cookie header with a `; `-separated list.
+        let req = TestRequest::default()
+            .insert_header((COOKIE, "refresh_token=stale; session_8000=the-token"))
+            .to_http_request();
+        assert_eq!(
+            session_cookie_value(&req, "8000"),
+            Some("the-token".to_string())
+        );
+    }
+
+    #[test]
+    fn finds_session_cookie_split_across_multiple_headers() {
+        // HTTP/2 style: the client "crumbles" the cookie list into one header field per
+        // cookie, oldest first — the fresh session cookie arrives last (issue
+        // msupply-foundation/open-msupply-frontend#1088).
+        let req = TestRequest::default()
+            .append_header((COOKIE, "auth=legacy-json-blob"))
+            .append_header((COOKIE, "refresh_token=stale"))
+            .append_header((COOKIE, "session_8000=the-token"))
+            .to_http_request();
+        assert_eq!(
+            session_cookie_value(&req, "8000"),
+            Some("the-token".to_string())
+        );
+    }
+
+    #[test]
+    fn missing_session_cookie_returns_none() {
+        let req = TestRequest::default()
+            .append_header((COOKIE, "refresh_token=stale"))
+            .to_http_request();
+        assert_eq!(session_cookie_value(&req, "8000"), None);
+    }
+
+    #[test]
+    fn wrong_suffix_is_not_matched() {
+        // Two instances on one domain must not read each other's sessions.
+        let req = TestRequest::default()
+            .append_header((COOKIE, "session_8000=the-token"))
+            .to_http_request();
+        assert_eq!(session_cookie_value(&req, "8002"), None);
+    }
 }

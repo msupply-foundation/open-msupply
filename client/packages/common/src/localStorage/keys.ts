@@ -1,7 +1,7 @@
 import { SupportedLocales } from '@common/intl';
 import { ThemeOptions } from '@mui/material';
 import { UserStoreNodeFragment } from '../authentication/api/operations.generated';
-import { AuthError } from '../authentication/AuthContext';
+import { AuthError, AuthState } from '../authentication/AuthContext';
 
 export type GroupByItem = {
   outboundShipment?: boolean;
@@ -25,7 +25,9 @@ export type LocalStorageRecord = {
   '/theme/logo': string;
   '/theme/logohash': string;
   '/mru/credentials': AuthenticationCredentials | AuthenticationCredentials[];
+  '/auth/state': AuthState;
   '/error/auth': AuthError | undefined;
+  '/error/server': string;
   '/pagination/rowsperpage': number;
   '/columns/hidden': Record<string, string[]> | undefined;
   '/printlabel/isusb': boolean;

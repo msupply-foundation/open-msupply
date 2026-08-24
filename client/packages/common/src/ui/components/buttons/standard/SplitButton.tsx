@@ -41,6 +41,7 @@ export interface SplitButtonProps<T> {
   isLoadingType?: boolean;
   isLoading?: boolean;
   dataShortcut?: string;
+  testId?: string;
 }
 
 export const SplitButton = <T,>({
@@ -59,6 +60,7 @@ export const SplitButton = <T,>({
   isLoadingType = false,
   isLoading = false,
   dataShortcut,
+  testId,
 }: SplitButtonProps<T>) => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const buttonLabel = staticLabel ?? selectedOption.label;
@@ -104,10 +106,15 @@ export const SplitButton = <T,>({
             <LoadingButton
               isLoading={isLoading}
               startIcon={icon}
+              {...(testId ? { 'data-testid': `${testId}-main` } : {})}
               {...sharedButtonProps}
             />
           ) : (
-            <ButtonWithIcon Icon={icon} {...sharedButtonProps} />
+            <ButtonWithIcon
+              Icon={icon}
+              {...(testId ? { 'data-testid': `${testId}-main` } : {})}
+              {...sharedButtonProps}
+            />
           )}
 
           <ShrinkableBaseButton
@@ -121,6 +128,7 @@ export const SplitButton = <T,>({
             aria-expanded={open ? 'true' : undefined}
             aria-label={ariaLabel}
             aria-haspopup="menu"
+            {...(testId ? { 'data-testid': `${testId}-dropdown` } : {})}
             onClick={e => {
               setAnchorEl(e.currentTarget);
             }}
@@ -152,6 +160,9 @@ export const SplitButton = <T,>({
         {options.map(option => (
           <MenuItem
             key={option.label}
+            {...(testId
+              ? { 'data-testid': `${testId}-option-${String(option.value)}` }
+              : {})}
             disabled={option?.isDisabled}
             selected={option.value === selectedOption.value}
             onClick={() => {

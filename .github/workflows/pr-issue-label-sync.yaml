@@ -8,7 +8,7 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Sync labels
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             core.debug(`where the PR? ${context.repo.repo} ${context.repo.owner} ${context.issue.number}`);
@@ -40,6 +40,7 @@ jobs:
                     }
                     closingIssuesReferences(first: 1) {
                       nodes {
+                        id
                         labels(first: 100) {
                           nodes {
                             id
@@ -70,9 +71,12 @@ jobs:
             let issue = pullRequest.closingIssuesReferences.nodes[0]
 
             if (!issue) {
-              const regex = new RegExp(/#(\d+)/);
+              // Search for GitHub closing keywords followed by issue reference
+              // https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/using-keywords-in-issues-and-pull-requests
+              const keywords = ['close', 'closes', 'closed', 'fix', 'fixes', 'fixed', 'resolve', 'resolves', 'resolved'];
+              const keywordPattern = keywords.join('|');
+              const regex = new RegExp(`(?:${keywordPattern})\\s+#(\\d+)`, 'i');
               const bodyMatch = pullRequest.body && pullRequest.body.match(regex)
-              // Merge note: kept optional-chaining (bodyMatch?.[1]) from prior merge for null-safety.
               const issueNumber = bodyMatch?.[1] ? Number(bodyMatch[1]) : null
 
               if (!issueNumber) {
@@ -87,6 +91,7 @@ jobs:
                 query ($repo: String!, $owner: String!, $number: Int!) {
                   repository(name: $repo, owner: $owner) {
                     issue(number: $number) {
+                      id
                       labels(first: 100) {
                         nodes {
                           id

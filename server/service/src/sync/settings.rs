@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 
 // See README.md for description of when this API version needs to be updated
-pub(crate) static SYNC_V5_VERSION: u32 = 16; // bumped for 2.21.0 OG v9.01.X: client handles the non-blocking (202) initialise + /sync/v5/site polling
+pub(crate) static SYNC_V5_VERSION: u32 = 16; // bumped for 2.21.02 OG v9.02.04: client handles the non-blocking (202) initialise + /sync/v5/site polling (#12068)
 pub(crate) static SYNC_V6_VERSION: u32 = 5; // bumped for 2.9.02 (adding new types to system log)
 
 #[derive(Deserialize, Serialize, Clone, Debug, PartialEq, Default)]
@@ -133,7 +133,7 @@ mod tests {
         let err = serde_yaml::from_str::<SyncSettings>("url: http://x\nusername: y\n")
             .unwrap_err()
             .to_string();
-        assert!(err.contains("all together"), "unexpected error: {err}");
+        assert!(err.contains("all together"), "unexpected error: {}", err);
 
         // A flags-only block is allowed.
         let flags_only =
