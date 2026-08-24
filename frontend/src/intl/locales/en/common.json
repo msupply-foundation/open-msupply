@@ -2285,7 +2285,6 @@
   "message.add-a-translation": "No translations configured yet. Use the search box above to find and add a translation.",
   "message.all-lines-have-been-fulfilled": "All of the lines of this requisition with a supply quantity specified already have a matching shipment line.",
   "message.all-lines-have-no-supply-quantity": "There is no supply quantity specified for all of the unfulfilled lines of this requisition. Please specify a supply quantity for at least one line.",
-  "message.already-saving": "Already saving...",
   "message.arguments": "You can customize what is shown on the report by specifying some of the optional details below. Click OK to view the report.",
   "message.asset-created": "Asset created",
   "message.blind-stocktake-enabled": "Blind stock take is enabled: theoretical stock will be hidden while counting.",

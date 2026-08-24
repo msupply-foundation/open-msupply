@@ -16,12 +16,26 @@ import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.ActivityCallback;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.KeyStore;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 
 /**
  * File bytes in and out of the app, natively — the file half of the legacy
@@ -70,6 +84,13 @@ public class FileTransferPlugin extends Plugin {
         String fileName = call.getString("fileName");
         if (url == null || fileName == null) {
             call.reject("url and fileName are required");
+            return;
+        }
+        // The JS side sanitizes names; this is defense in depth, since the
+        // bridge is callable by any JS in the WebView and fileName lands in a
+        // cacheDir path.
+        if (fileName.contains("/") || fileName.contains("\\") || fileName.contains("..")) {
+            call.reject("fileName must be a plain file name");
             return;
         }
 
@@ -142,16 +163,24 @@ public class FileTransferPlugin extends Plugin {
         Uri uri = pickedUri(call, result);
         if (uri == null) return;
 
-        try (
-            InputStream in = getActivity().getContentResolver()
-                    .openInputStream(Uri.parse(call.getString("srcUri")));
-            OutputStream out = getActivity().getContentResolver().openOutputStream(uri)
-        ) {
-            copy(in, out);
-            resolveSaved(call);
-        } catch (Exception e) {
-            call.reject("Failed to write file: " + e.getMessage(), e);
-        }
+        // Off the main thread — the activity callback lands there, and a
+        // large copy into a slow DocumentsProvider (Drive, SD card) would
+        // jank or ANR.
+        getBridge().execute(() -> {
+            try (
+                InputStream in = getActivity().getContentResolver()
+                        .openInputStream(Uri.parse(call.getString("srcUri")));
+                OutputStream out = getActivity().getContentResolver().openOutputStream(uri)
+            ) {
+                copy(in, out);
+                resolveSaved(call);
+            } catch (Exception e) {
+                // The pick created the document; don't leave a partial file
+                // behind a failed copy.
+                deleteDocumentQuietly(uri);
+                call.reject("Failed to write file: " + e.getMessage(), e);
+            }
+        });
     }
 
     @ActivityCallback
@@ -225,14 +254,122 @@ public class FileTransferPlugin extends Plugin {
         return mimeType == null ? "application/octet-stream" : mimeType;
     }
 
-    private static HttpURLConnection openWithCookie(String url, int readTimeoutMs)
+    private HttpURLConnection openWithCookie(String url, int readTimeoutMs)
             throws Exception {
         HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+        if (connection instanceof HttpsURLConnection) {
+            ensureLocalServerTrust();
+            ((HttpsURLConnection) connection).setSSLSocketFactory(localTrustSocketFactory);
+            ((HttpsURLConnection) connection).setHostnameVerifier(localTrustHostnameVerifier);
+        }
         connection.setConnectTimeout(30_000);
         connection.setReadTimeout(readTimeoutMs);
         String cookie = CookieManager.getInstance().getCookie(url);
         if (cookie != null) connection.setRequestProperty("Cookie", cookie);
         return connection;
+    }
+
+    /*
+     * Self-signed local-server trust. The embedded server serves https with a
+     * self-signed certificate the WEBVIEW is taught to trust (the shell's SSL
+     * error handling validates against the known cert file); URLConnection
+     * needs the equivalent or every download/saveFromUrl on a
+     * tablet-as-server device dies with SSLHandshakeException. Validation
+     * mirrors the current app's CertWebViewClient.validateLocalCertificate:
+     * normal system-CA trust first, otherwise accept exactly a peer
+     * certificate that verifies against the known local server cert at
+     * filesDir/certs/cert.pem (the file the server writes on startup). With
+     * no cert file (a server-less APK, or client mode) behaviour is stock
+     * system-CA trust. Remote self-signed servers (the legacy shell's TOFU
+     * store) are NOT handled here — that travels with the client-mode port.
+     */
+    private SSLSocketFactory localTrustSocketFactory;
+    private HostnameVerifier localTrustHostnameVerifier;
+
+    private X509Certificate loadLocalServerCert() {
+        File certFile = new File(getContext().getFilesDir(), "certs/cert.pem");
+        if (!certFile.isFile()) return null;
+        try (InputStream in = new BufferedInputStream(new FileInputStream(certFile))) {
+            return (X509Certificate) CertificateFactory.getInstance("X.509")
+                    .generateCertificate(in);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static boolean verifiesAgainstLocal(X509Certificate peer, X509Certificate local) {
+        if (peer == null || local == null) return false;
+        try {
+            peer.verify(local.getPublicKey());
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private synchronized void ensureLocalServerTrust() throws Exception {
+        if (localTrustSocketFactory != null) return;
+
+        // Read once per plugin instance — the server writes the cert at
+        // startup, before any UI that could call this plugin is served.
+        final X509Certificate local = loadLocalServerCert();
+
+        TrustManagerFactory factory =
+                TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        factory.init((KeyStore) null);
+        X509TrustManager found = null;
+        for (TrustManager manager : factory.getTrustManagers()) {
+            if (manager instanceof X509TrustManager) {
+                found = (X509TrustManager) manager;
+                break;
+            }
+        }
+        final X509TrustManager system = found;
+
+        X509TrustManager trustManager = new X509TrustManager() {
+            @Override
+            public void checkClientTrusted(X509Certificate[] chain, String authType)
+                    throws CertificateException {
+                system.checkClientTrusted(chain, authType);
+            }
+
+            @Override
+            public void checkServerTrusted(X509Certificate[] chain, String authType)
+                    throws CertificateException {
+                try {
+                    system.checkServerTrusted(chain, authType);
+                } catch (CertificateException e) {
+                    if (!verifiesAgainstLocal(chain[0], local)) throw e;
+                }
+            }
+
+            @Override
+            public X509Certificate[] getAcceptedIssuers() {
+                return system.getAcceptedIssuers();
+            }
+        };
+
+        SSLContext context = SSLContext.getInstance("TLS");
+        context.init(null, new TrustManager[] { trustManager }, null);
+        SSLSocketFactory socketFactory = context.getSocketFactory();
+
+        // The local cert's hostname never matches how the app addresses the
+        // server (localhost / a LAN IP), so pair the trust decision with the
+        // same known-cert check at hostname verification.
+        HostnameVerifier verifier = (hostname, session) -> {
+            if (HttpsURLConnection.getDefaultHostnameVerifier().verify(hostname, session)) {
+                return true;
+            }
+            try {
+                return verifiesAgainstLocal(
+                        (X509Certificate) session.getPeerCertificates()[0], local);
+            } catch (Exception e) {
+                return false;
+            }
+        };
+
+        localTrustSocketFactory = socketFactory;
+        localTrustHostnameVerifier = verifier;
     }
 
     private static void copy(InputStream in, OutputStream out) throws Exception {
