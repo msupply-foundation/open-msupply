@@ -256,11 +256,27 @@
   color: var(--error-main);
 }
 
-/* The glyph takes the error text's own colour (inherited from .error) — it is
-   part of the error line, not a caution of its own. It used to be
+/* Advisory warning — the error line's anatomy in the warning colour. Only the
+   message line changes: no border/glow shift and no aria-invalid on the input,
+   because the value isn't wrong — the conditions around it are (caps lock
+   while typing a password). The text colour is Alert's warning-text
+   derivation (Alert.module.css): the severity mixed into body text, which
+   holds AA in both themes where raw --warning-main cannot. */
+.warning {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: 1.3;
+  color: color-mix(in srgb, var(--warning-main) 40%, var(--text-body));
+}
+
+/* The glyph takes its message line's own colour (inherited from .error /
+   .warning) — it is part of the line, not a caution of its own. It used to be
    --color-warning, which rendered an amber triangle above red text and read as
    a second, milder severity sitting on the same message. */
-.errorIcon {
+.messageIcon {
   font-size: 0.875em;
   color: inherit;
   flex-shrink: 0;

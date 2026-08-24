@@ -1284,6 +1284,17 @@ const InternalOrderDetailView: Component = () => {
                   }
                   config={tableConfig.config()}
                   setConfig={tableConfig.setConfig}
+                  // Central-server admins can promote this table's layout to
+                  // the shared install-wide default, the same as the list
+                  // (issue #1118 — the detail table offered no way to save
+                  // table defaults). Gate + action both off the config
+                  // controller; undefined for everyone else, so the action
+                  // isn't offered.
+                  onSaveGlobalDefault={
+                    tableConfig.canSaveGlobalDefault()
+                      ? tableConfig.saveGlobalTableConfig
+                      : undefined
+                  }
                   // Row selection for the bulk line delete (AC-LN15). The
                   // column always shows; on a read-only order the delete is
                   // refused with an explanation (AC-LN16), and on a program

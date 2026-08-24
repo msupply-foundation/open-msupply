@@ -52,6 +52,7 @@ import {
   initialPageSize,
   rememberPageSize,
 } from '../../../list/pageSize';
+import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import {
   CustomFieldsEditTab,
@@ -228,6 +229,15 @@ const CustomerReturnDetailView: Component = () => {
   // can be empty while later pages hold lines.
   const totalCount = () => gated(linesData)?.totalCount ?? 0;
   const hasLines = () => totalCount() > 0;
+
+  // A bulk delete of the last page's rows leaves the offset past the new end
+  // (src/list/clampPageOffset.ts, issue #1117).
+  clampPageOffset({
+    total: () => settledTotal(linesData, page => page.totalCount),
+    offset: () => query().offset,
+    pageSize: () => query().first,
+    setOffset: offset => setQuery({ ...query(), offset }),
+  });
   // Selection is per page (the deferred multi-page selection pattern —
   // spec/customer-returns README § known gaps), so the selected rows are always
   // resolvable from the held page.

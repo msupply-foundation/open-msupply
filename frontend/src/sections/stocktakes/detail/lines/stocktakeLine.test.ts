@@ -1,10 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { isUncounted, lineDifference, type CountLine } from './stocktakeLine';
+import {
+  defaultedPackSize,
+  isUncounted,
+  lineDifference,
+  packSizeEditable,
+  type CountLine,
+} from './stocktakeLine';
 
 // Anchors: spec/stocktakes/cases/OMS-REG-INV-03.
 //   .49 — displayed difference = counted − snapshot (blank while uncounted)
 //   .68 — an uncounted line takes the unfinished-work marking (tint + leading
 //         bar) and reads "Not counted"; any count (incl. 0) is an ordinary row
+//   .15 — pack size editable only on a batch with no stock line behind it
+//   .79/.80 — an editable batch's pack size defaults to the item's default
 // Pure count arithmetic — the cheapest layer to pin the exact rule; the detail
 // table's rendering of it (the tint/accent attributes, the absent-value word)
 // is exercised in the e2e suite.
@@ -56,5 +64,36 @@ describe('OMS-REG-INV-03.49 — difference = counted − snapshot', () => {
     expect(
       lineDifference({ snapshotNumberOfPacks: null, countedNumberOfPacks: 5 })
     ).toBe(5);
+  });
+});
+
+describe('OMS-REG-INV-03.15 — pack size editable only with no stock behind the batch', () => {
+  it('is editable on a batch with no stock line — a fresh batch or a zero-stock generated line', () => {
+    expect(packSizeEditable({ stockLine: null })).toBe(true);
+    expect(packSizeEditable({})).toBe(true);
+  });
+
+  it('is read-only on a batch backed by a stock line', () => {
+    expect(packSizeEditable({ stockLine: { id: 'stock-1' } })).toBe(false);
+  });
+});
+
+describe('OMS-REG-INV-03.79/.80 — editable pack size defaults to the item default', () => {
+  it('keeps a pack size the line already has', () => {
+    expect(defaultedPackSize({ defaultPackSize: 12 }, 5)).toBe(5);
+  });
+
+  it('fills an empty pack size with the item default (.79 new batch, .80 zero-stock line)', () => {
+    expect(defaultedPackSize({ defaultPackSize: 12 }, null)).toBe(12);
+    expect(defaultedPackSize({ defaultPackSize: 12 })).toBe(12);
+  });
+
+  it('floors an unconfigured item default to 1 — never seeds the 0/empty finalise rejects', () => {
+    expect(defaultedPackSize({ defaultPackSize: 0 }, null)).toBe(1);
+    expect(defaultedPackSize({ defaultPackSize: -3 }, null)).toBe(1);
+  });
+
+  it('keeps a deliberate fractional or small pack size untouched', () => {
+    expect(defaultedPackSize({ defaultPackSize: 12 }, 0.5)).toBe(0.5);
   });
 });
