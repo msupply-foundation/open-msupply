@@ -2,7 +2,7 @@ use boa_engine::*;
 use repository::{raw_query, JsonRawRow};
 use util::format_error;
 
-use crate::boajs::{context::BoaJsContext, utils::*};
+use crate::boajs::{context::use_boajs_connection, utils::*};
 
 // SQL method accepts first argument as SQL string
 // TODO add the json row wrapper, so that consumer doesn't need to add "json_object" or "row_to_json"
@@ -15,15 +15,12 @@ pub(crate) fn bind_method(context: &mut Context) -> Result<(), JsError> {
             let sql = get_string_argument(args, 0)?;
 
             // When using BoaJsContext, it's best to use 'scope' see PluginContext for a link to testing repo
-            let results = {
-                let service_provider = BoaJsContext::service_provider();
-                let connection = service_provider
-                    .connection()
-                    .map_err(std_error_to_js_error)?;
-                raw_query(&connection, sql.clone())
+            let results = use_boajs_connection(|connection| -> Result<Vec<JsonRawRow>, JsError> {
+                raw_query(connection, sql.clone())
                     .inspect_err(|e| log::error!("{} {sql}", format_error(e)))
                     .map_err(std_error_to_js_error)
-            }?;
+            })
+            .map_err(std_error_to_js_error)??;
 
             let as_json: Vec<serde_json::Value> = results
                 .into_iter()
