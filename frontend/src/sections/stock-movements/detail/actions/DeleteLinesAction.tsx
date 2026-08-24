@@ -6,6 +6,7 @@ import {
   missingPermissions,
   reportPermissionDenied,
 } from '@/api/graphql';
+import { rejectionFrom } from '@/api/rejection';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { ErrorDetails } from '@/ui/elements/feedback/ErrorDetails';
@@ -28,11 +29,16 @@ export interface DeleteLinesActionProps {
 // all-or-nothing: any rejection (a finalised document — .26) arrives as a
 // single untyped top-level error (contract § editing and deleting lines).
 //
-// Because it is untyped there is nothing to branch on, so the error phase does
-// NOT name a cause: it states the refusal generically and puts the server's own
-// text behind a disclosure. It previously hard-coded "cannot be deleted from a
-// finalised stock movement", which reported the wrong reason for every other
-// rejection that lands here. Permission denials are separated out first — those
+// Untyped is not unreadable: the server writes the service-error variant into
+// extensions.details, and the batch propagates each line's own delete error
+// unchanged — StockRelocationFinalised, LineDoesNotExist,
+// NotThisStoreRelocation, all unit variants (server graphql/stock_relocation →
+// mutations/line/delete.rs `map_delete_line_error`, reached through
+// line/batch.rs) — so rejectionFrom translates the actual cause. It previously
+// hard-coded "cannot be deleted from a finalised stock movement", which
+// reported the wrong reason for every other rejection that lands here.
+// Anything unrecognised falls back to the generic refusal with the server's
+// text behind a disclosure. Permission denials are separated out first — those
 // owe the user the global permission-denied modal (D38), which opting into
 // GraphQL errors would otherwise swallow. Success closes — closure is the
 // confirmation (D21).
@@ -59,7 +65,9 @@ export const DeleteLinesAction: Component<DeleteLinesActionProps> = props => {
 
 const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
   const [phase, setPhase] = createSignal<Phase>('confirm');
-  // The server's own text, behind a disclosure — the refusal arrives untyped.
+  // The refusal: the server's own reason where it named one, and the raw text
+  // behind a disclosure where it did not.
+  const [errorMessage, setErrorMessage] = createSignal<string>();
   const [errorDetail, setErrorDetail] = createSignal<string>();
   const count = props.selectedLineIds().length;
 
@@ -82,7 +90,12 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
         props.onClose();
         return;
       }
-      setErrorDetail(result.message);
+      const rejection = rejectionFrom(
+        result.errors,
+        t('messages.cant-delete-generic')
+      );
+      setErrorMessage(rejection.message);
+      setErrorDetail(rejection.detail);
       setPhase('error');
       return;
     }
@@ -117,7 +130,7 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
           )}
         >
           <Alert severity="error">
-            {t('messages.cant-delete-generic')}
+            {errorMessage()}
             <Show when={errorDetail()}>
               {detail => <ErrorDetails detail={detail()} />}
             </Show>

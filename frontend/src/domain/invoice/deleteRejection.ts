@@ -1,10 +1,15 @@
 import type { GraphqlErrorItem } from '@/api/graphql';
+import { rejectionFrom, type Rejection } from '@/api/rejection';
 import { t } from '@/intl';
-import { translateServerError } from '@/intl/intlUtils';
 
 // Why deleting an invoice was refused, for the verticals whose delete cascades
 // through the invoice's lines — inbound shipments and customer returns (both
 // stock-in), and supplier returns (stock-out).
+//
+// The shared untyped-refusal reader (api/rejection) handles the ordinary shape:
+// a bare variant name in `extensions.details` translates, anything multi-line is
+// a debug dump and stays behind a disclosure. This adds the one case it cannot
+// know about.
 //
 // A per-LINE lock reaches the client as `LineDeleteError { line_id, error: <the
 // line's own variant> }`, and every one of those mutations maps THAT to an
@@ -34,30 +39,9 @@ const LINE_LOCK_VARIANTS = [
   'CannotDeleteLinesOfAuthorisedReceivedInvoice',
 ] as const;
 
-export interface DeleteRejection {
-  /** The reason, translated when the server named one we recognise. */
-  message: string;
-  /** The raw server text, when it came as a debug dump instead of a reason. */
-  detail?: string;
-}
+export type DeleteRejection = Rejection;
 
-export const deleteRejection = (
-  errors: GraphqlErrorItem[]
-): DeleteRejection => {
-  const detail = errors[0]?.extensions?.details;
-  if (typeof detail === 'string' && detail.length > 0) {
-    const lineLock = LINE_LOCK_VARIANTS.find(variant =>
-      detail.includes(variant)
-    );
-    if (lineLock) return { message: translateServerError(lineLock) };
-    // A single-line detail is the bare variant name and translates; anything
-    // multi-line is a debug dump, which is not user copy — show the generic
-    // refusal and tuck the raw text behind a disclosure instead.
-    if (!detail.includes('\n'))
-      return { message: translateServerError(detail) };
-    return { message: t('messages.cant-delete-generic'), detail };
-  }
-  return {
-    message: errors[0]?.message ?? translateServerError('UnknownError'),
-  };
-};
+export const deleteRejection = (errors: GraphqlErrorItem[]): DeleteRejection =>
+  rejectionFrom(errors, t('messages.cant-delete-generic'), detail =>
+    LINE_LOCK_VARIANTS.find(variant => detail.includes(variant))
+  );
