@@ -84,3 +84,26 @@ export const prescriptionDateInstant = (isoDay: string): string =>
   isoDay === localTodayIso()
     ? new Date().toISOString()
     : localDayToUtc(isoDay, { endOfDay: true });
+
+/**
+ * The prescription date for CREATION — `undefined` for today, meaning **send
+ * no `prescriptionDate` at all** (the same shape the stock adjust modal uses:
+ * stock/stockCalc.ts `backdatedDatetime`).
+ *
+ * Today means "not backdated", and at creation that is expressible: with the
+ * field absent, `backdatedDatetime` stays null (source-verified — prescription
+ * insert/generate.rs only calls `handle_new_backdated_datetime` when a date is
+ * given). Sending the current moment instead would backdate every new
+ * prescription to its own creation instant, and ANY non-null
+ * `backdatedDatetime` switches the item editor to historical stock, dropping
+ * batches that had no availability then (get_draft_outbound_lines.rs) — so
+ * stock received after the prescription was created could never be dispensed
+ * on it. Only an EARLIER day is a real backdate, and it rides as its
+ * end-of-day instant like everywhere else.
+ *
+ * Editing is different: there the field must always be sent, because omitting
+ * it leaves the stored date untouched (prescription update/generate.rs) — see
+ * {@link prescriptionDateInstant}.
+ */
+export const newPrescriptionDate = (isoDay: string): string | undefined =>
+  isoDay === localTodayIso() ? undefined : prescriptionDateInstant(isoDay);
