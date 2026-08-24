@@ -195,6 +195,11 @@ export const reasonColumns = (
           kind="return"
           label={t('label.reason')}
           hideLabel
+          // The compact height every other control in this grid uses. Without
+          // it the picker takes the default 40px against their 36px and stands
+          // a step taller than the cells either side of it — the failure
+          // ReasonSelect's own `size` prop doc names.
+          size="small"
           focusTarget={targetFor(reasonFields, line.id)}
           value={line.reasonId ?? undefined}
           onChange={reason => update(line.id, 'reasonId', reason?.id ?? null)}
