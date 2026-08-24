@@ -86,6 +86,15 @@ const InputWithLabel = ({
     autoFocus,
   };
 
+  // Mirror the rewrite's stem: indicator-input-<column-label>, lowercased with
+  // spaces collapsed to dashes (e.g. value / extra / comment).
+  const inputTestId = `indicator-input-${indicatorColumnNameToLocal(
+    data.name,
+    t
+  )
+    .toLowerCase()
+    .replace(/\s+/g, '-')}`;
+
   const inputComponent =
     data.valueType === IndicatorValueTypeNode.Number ? (
       <NumericTextInput
@@ -95,6 +104,7 @@ const InputWithLabel = ({
           const newValue = isNaN(Number(v)) ? 0 : v;
           update({ value: String(newValue) }).then(errorHandler);
         }}
+        slotProps={{ htmlInput: { 'data-testid': inputTestId } }}
         {...sharedProps}
       />
     ) : (
@@ -104,6 +114,7 @@ const InputWithLabel = ({
         onChange={e => {
           update({ value: e.target.value }).then(errorHandler);
         }}
+        slotProps={{ htmlInput: { 'data-testid': inputTestId } }}
         {...sharedProps}
       />
     );

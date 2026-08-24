@@ -21,6 +21,12 @@ export interface StepDefinition {
   icon?: React.ReactNode;
   label: string;
   optional?: React.ReactNode;
+  /**
+   * Locale-stable test hook for this step, on the label. The Step element's
+   * own data-testid carries the active/completed state and is not unique, so
+   * identifying a particular step needs its own id.
+   */
+  testId?: string;
 }
 
 export type StepperColour = 'primary' | 'secondary';
@@ -256,6 +262,7 @@ export const HorizontalStepper = ({
                   justifyContent="center"
                 >
                   <Typography
+                    data-testid={step.testId}
                     sx={getLabelStyle(colour, completed, error, nowrap)}
                     variant="body2"
                     fontSize="12px"
