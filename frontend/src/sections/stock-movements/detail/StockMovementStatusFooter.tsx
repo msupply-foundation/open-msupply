@@ -1,6 +1,4 @@
 import { Show, type Component } from 'solid-js';
-import { useNavigate, useParams } from '@solidjs/router';
-import { CloseButton } from '@/ui/elements/buttons/StandardButtons';
 import { StatusIndicator } from '@/ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
@@ -10,10 +8,11 @@ import type { StockMovementInfoFragment } from './stockMovementDetail.generated'
 
 // The document-level footer (spec/stock-movements/ui-surface.md S2 § status
 // footer): lifecycle indicator (New → Confirmed → Finalised, each stage dated
-// once reached) · spacer · Close · the status-advance split button, hidden
-// entirely once finalised. No hold concept on this document (rules
-// § editability). Shown only when nothing is selected — the selection action
-// bar replaces it (the view owns that swap).
+// once reached) · spacer · the status-advance split button, hidden entirely
+// once finalised. No hold concept on this document (rules § editability).
+// Shown only when nothing is selected — the selection action bar replaces it
+// (the view owns that swap). No Close (D103): leaving the document is the
+// breadcrumb's job, in the app bar, where every other screen puts it.
 
 export interface StockMovementStatusFooterProps {
   storeId: string;
@@ -25,9 +24,6 @@ export interface StockMovementStatusFooterProps {
 export const StockMovementStatusFooter: Component<
   StockMovementStatusFooterProps
 > = props => {
-  const params = useParams<{ storeId: string }>();
-  const navigate = useNavigate();
-
   return (
     <ContentFooter>
       <StatusIndicator
@@ -35,12 +31,6 @@ export const StockMovementStatusFooter: Component<
         current={currentStep(props.node.status)}
       />
       <ContentFooterActions>
-        <CloseButton
-          data-testid="close-button"
-          onClick={() =>
-            navigate(`/${params.storeId}/inventory/stock-movement`)
-          }
-        />
         <Show when={!isFinalised(props.node.status)}>
           <StatusChangeAction
             storeId={props.storeId}
