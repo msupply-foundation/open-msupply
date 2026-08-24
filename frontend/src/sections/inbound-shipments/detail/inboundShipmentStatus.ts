@@ -109,15 +109,11 @@ const EDITABLE: InboundStatus[] = ['NEW', 'DELIVERED', 'RECEIVED'];
 export const isEditable = (status: string): boolean =>
   EDITABLE.includes(status as InboundStatus);
 
-// Whether the shipment has actually put stock on the shelf, which is what makes
-// a delete a receipt REVERSAL rather than a plain removal — the delete
-// confirmation warns about it (rules → deletion).
+// Whether the shipment has actually put stock on the shelf.
 //
 // Stock first exists at RECEIVED, never before: the SDL doc-comment claiming
 // DELIVERED introduces it is wrong, and a line's `stockLine` is null through
-// New/Shipped/Delivered (contract → what receiving does). So Shipped and
-// Delivered get the plain confirmation — telling someone their Shipped
-// shipment "has already been received" was both false and alarming.
+// New/Shipped/Delivered (contract → what receiving does).
 //
 // Caveat carried deliberately: a line INSERTED while the shipment sits at
 // Shipped is stocked immediately (mechanism 2), so such a shipment holds stock
@@ -126,8 +122,23 @@ export const isEditable = (status: string): boolean =>
 // every Shipped/Delivered shipment — was wrong far more often than right.
 const HAS_INTRODUCED_STOCK: InboundStatus[] = ['RECEIVED', 'VERIFIED'];
 
-export const hasIntroducedStock = (status: string): boolean =>
+const hasIntroducedStock = (status: string): boolean =>
   HAS_INTRODUCED_STOCK.includes(status as InboundStatus);
+
+// Whether DELETING the shipment would take that stock back out, which is what
+// the delete confirmation warns about (rules → deletion).
+//
+// Holding stock is not enough. A Verified shipment is finalised, so its delete
+// is refused outright (server invoice/inbound_shipment/delete/validate.rs →
+// check_invoice_is_editable admits New/Shipped/Delivered/Received) — warning
+// that its stock "will be removed as well" promises an outcome that cannot
+// happen, and the user meets the finalised refusal instead. Nor is this a gate:
+// delete stays offered and submitted at every status (issue #1134); the status
+// only picks the copy. Shipped and Delivered hold no stock yet, so they get the
+// plain confirmation too — telling someone their Shipped shipment "has already
+// been received" was both false and alarming.
+export const deleteRemovesStock = (status: string): boolean =>
+  hasIntroducedStock(status) && status !== 'VERIFIED';
 
 // Whether the status footer offers an advance — a SEPARATE, deliberately looser
 // gate than `isEditable`. An advance travels through updateInboundShipment, so
