@@ -85,6 +85,17 @@ export const nextStatuses = (
   return ['RECEIVED', 'VERIFIED'];
 };
 
+// Whether the return has actually put stock on the shelf, which is what makes a
+// delete a receipt REVERSAL rather than a plain removal — the delete
+// confirmation warns about it (rules § deletion rules).
+//
+// Stock is introduced on the FIRST transition into RECEIVED or VERIFIED and at
+// no earlier step (rules § what receiving does), so a transfer return sitting
+// at PICKED or SHIPPED holds none: telling someone their shipped return "has
+// already been received" would be both false and alarming.
+export const hasIntroducedStock = (status: string): boolean =>
+  status === 'RECEIVED' || status === 'VERIFIED';
+
 // Standing editability (rules § editability): header fields, lines, hold,
 // delete. A VERIFIED return is immutable; a transfer return is read-only until
 // RECEIVED (the UI's conservative gate — the receive action itself is offered

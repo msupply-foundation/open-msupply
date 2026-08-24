@@ -592,6 +592,7 @@ const CustomerReturnDetailView: Component = () => {
                   <CustomerReturnSidePanel
                     node={node()}
                     disabled={disabled()}
+                    hasLines={hasLines()}
                     edit={edit}
                     onSetColour={setColour}
                   />

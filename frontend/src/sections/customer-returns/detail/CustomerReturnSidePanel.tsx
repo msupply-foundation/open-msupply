@@ -29,7 +29,7 @@ import {
   type CustomerReturnInfoFragment,
 } from './customerReturnDetail.generated';
 import { deleteReturn } from './returnUpdate';
-import { returnKind } from './returnStatus';
+import { hasIntroducedStock, returnKind } from './returnStatus';
 import type { ReturnFieldEdit } from './returnEdit';
 
 // The detail side panel (spec/customer-returns/ui-surface.md S3 § side panel):
@@ -42,6 +42,11 @@ import type { ReturnFieldEdit } from './returnEdit';
 export interface CustomerReturnSidePanelProps {
   node: CustomerReturnInfoFragment;
   disabled: boolean;
+  /**
+   * Whether the return holds any lines — only lines carry stock, so this and
+   * the status together decide the delete confirmation's stock warning.
+   */
+  hasLines: boolean;
   /** The shared return edit buffer — this panel reads/writes comment. */
   edit: ReturnFieldEdit;
   /** Colour save (header-level, in place). */
@@ -66,9 +71,13 @@ export const CustomerReturnSidePanel: Component<
   // an admissibility question for the server.
   const canDelete = () => !props.disabled;
 
-  // Past NEW the return has introduced stock, so deleting it reverses the
-  // receipt (rules § deletion rules) — the confirmation says so.
-  const removesStock = () => props.node.status !== 'NEW';
+  // Whether deleting reverses a receipt, which the confirmation warns about
+  // (rules § deletion rules). Both halves have to hold for there to be stock at
+  // all: the return must have reached RECEIVED (hasIntroducedStock — a transfer
+  // return at PICKED or SHIPPED holds none), and it must actually have lines,
+  // since stock only ever comes from those.
+  const removesStock = () =>
+    hasIntroducedStock(props.node.status) && props.hasLines;
 
   const runDelete = async () => {
     const result = await deleteReturn(params.storeId, props.node.id);

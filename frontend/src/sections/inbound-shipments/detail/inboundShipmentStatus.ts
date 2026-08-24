@@ -109,6 +109,26 @@ const EDITABLE: InboundStatus[] = ['NEW', 'DELIVERED', 'RECEIVED'];
 export const isEditable = (status: string): boolean =>
   EDITABLE.includes(status as InboundStatus);
 
+// Whether the shipment has actually put stock on the shelf, which is what makes
+// a delete a receipt REVERSAL rather than a plain removal — the delete
+// confirmation warns about it (rules → deletion).
+//
+// Stock first exists at RECEIVED, never before: the SDL doc-comment claiming
+// DELIVERED introduces it is wrong, and a line's `stockLine` is null through
+// New/Shipped/Delivered (contract → what receiving does). So Shipped and
+// Delivered get the plain confirmation — telling someone their Shipped
+// shipment "has already been received" was both false and alarming.
+//
+// Caveat carried deliberately: a line INSERTED while the shipment sits at
+// Shipped is stocked immediately (mechanism 2), so such a shipment holds stock
+// this predicate does not admit. That path needs a PO-linked or transfer
+// shipment plus a line added after shipping, and the alternative — warning
+// every Shipped/Delivered shipment — was wrong far more often than right.
+const HAS_INTRODUCED_STOCK: InboundStatus[] = ['RECEIVED', 'VERIFIED'];
+
+export const hasIntroducedStock = (status: string): boolean =>
+  HAS_INTRODUCED_STOCK.includes(status as InboundStatus);
+
 // Whether the status footer offers an advance — a SEPARATE, deliberately looser
 // gate than `isEditable`. An advance travels through updateInboundShipment, so
 // reusing the edit gate would strand a Shipped shipment with no route to

@@ -1,4 +1,11 @@
-import { createSignal, For, Match, Show, Switch, type Component } from 'solid-js';
+import {
+  createSignal,
+  For,
+  Match,
+  Show,
+  Switch,
+  type Component,
+} from 'solid-js';
 import { t, tPlural } from '../../../../intl';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
@@ -7,12 +14,16 @@ import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
 import { ErrorDetails } from '../../../../ui/elements/feedback/ErrorDetails';
 import { TrashIcon } from '../../../../ui/icons';
 import { deleteReturn } from '../../detail/returnUpdate';
+import { hasIssuedStock } from '../../detail/returnStatus';
 import type { DeleteRejection } from '@/domain/invoice';
 
 export interface DeleteReturnsActionProps {
   storeId: string;
-  /** The selected rows' id + status (the status drives the stock warning). */
-  selectedRows: () => { id: string; status: string }[];
+  /**
+   * The selected rows' id + status + whether they hold any lines (status and
+   * lines together drive the stock warning).
+   */
+  selectedRows: () => { id: string; status: string; hasLines: boolean }[];
   /** Deletion succeeded — clear the selection and re-query. */
   onDeleted: () => void;
 }
@@ -74,7 +85,12 @@ const Body = (props: DeleteReturnsActionProps & { onClose: () => void }) => {
   const [failures, setFailures] = createSignal<DeleteRejection[]>([]);
   // Snapshotted on open so neither can shift behind the dialog.
   const count = props.selectedRows().length;
-  const restoresStock = props.selectedRows().some(row => row.status !== 'NEW');
+  // Both halves have to hold for there to be stock at all: the return must have
+  // issued (hasIssuedStock), and it must actually have lines, since only lines
+  // issued anything.
+  const restoresStock = props
+    .selectedRows()
+    .some(row => hasIssuedStock(row.status) && row.hasLines);
 
   const reasons = () => {
     const seen = new Set<string>();

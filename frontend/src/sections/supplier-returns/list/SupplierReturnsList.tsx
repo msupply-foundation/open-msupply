@@ -262,11 +262,17 @@ const SupplierReturnsList: Component = () => {
     void refetch();
   };
 
-  // Id + status for the bulk delete's client-side pre-check.
+  // Id + status + whether the return holds any lines — the bulk delete's
+  // confirmation warns that an issued return's stock comes back, and only lines
+  // carry stock.
   const selectedRows = () =>
     rows()
       .filter(row => selectedIds().includes(row.id))
-      .map(row => ({ id: row.id, status: row.status }));
+      .map(row => ({
+        id: row.id,
+        status: row.status,
+        hasLines: row.lines.totalCount > 0,
+      }));
 
   const openRow = (row: ReturnRow) =>
     navigate(`/${params.storeId}/replenishment/supplier-return/${row.id}`);

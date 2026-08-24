@@ -1,4 +1,11 @@
-import { createSignal, For, Match, Show, Switch, type Component } from 'solid-js';
+import {
+  createSignal,
+  For,
+  Match,
+  Show,
+  Switch,
+  type Component,
+} from 'solid-js';
 import { t, tPlural } from '../../../../intl';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
@@ -7,12 +14,16 @@ import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
 import { ErrorDetails } from '../../../../ui/elements/feedback/ErrorDetails';
 import { TrashIcon } from '../../../../ui/icons';
 import { deleteReturn } from '../../detail/returnUpdate';
+import { hasIntroducedStock } from '../../detail/returnStatus';
 import type { DeleteRejection } from '@/domain/invoice';
 
 export interface DeleteReturnsActionProps {
   storeId: string;
-  /** The selected rows' id + status (the status drives the stock warning). */
-  selectedRows: () => { id: string; status: string }[];
+  /**
+   * The selected rows' id + status + whether they hold any lines (status and
+   * lines together drive the stock warning).
+   */
+  selectedRows: () => { id: string; status: string; hasLines: boolean }[];
   /** Deletion succeeded — clear the selection and re-query. */
   onDeleted: () => void;
 }
@@ -28,10 +39,11 @@ export interface DeleteReturnsActionProps {
 // one deleteCustomerReturn per id and each row succeeds or fails on its own — a
 // refusal never stops the rest, and the report says how many went.
 //
-// Past NEW the delete REVERSES the receipt: the server cascades to the lines
-// and the stock they created, refusing per-line once any of that stock has been
-// issued, reserved, counted in a stocktake or arrived by transfer (rules §
-// deletion rules). So it is warned about, not blocked.
+// Once RECEIVED the delete REVERSES the receipt: the server cascades to the
+// lines and the stock they created, refusing per-line once any of that stock
+// has been issued, reserved, counted in a stocktake or arrived by transfer
+// (rules § deletion rules). So it is warned about, not blocked — and only where
+// there is stock to take, which needs both the status and a line to exist.
 //
 // A clean sweep closes silently (closure is the confirmation — ui-standards
 // controls.md § dialogs). The hand-back to the list (clear selection +
@@ -74,7 +86,13 @@ const Body = (props: DeleteReturnsActionProps & { onClose: () => void }) => {
   const [failures, setFailures] = createSignal<DeleteRejection[]>([]);
   // Snapshotted on open so neither can shift behind the dialog.
   const count = props.selectedRows().length;
-  const removesStock = props.selectedRows().some(row => row.status !== 'NEW');
+  // Both halves have to hold for there to be stock at all: the return must have
+  // reached RECEIVED (hasIntroducedStock — a transfer return at PICKED or
+  // SHIPPED holds none), and it must actually have lines, since stock only ever
+  // comes from those.
+  const removesStock = props
+    .selectedRows()
+    .some(row => hasIntroducedStock(row.status) && row.hasLines);
 
   const reasons = () => {
     const seen = new Set<string>();

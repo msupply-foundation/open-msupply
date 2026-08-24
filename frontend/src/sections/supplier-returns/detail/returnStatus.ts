@@ -20,6 +20,15 @@ export const STATUS_FLOW = [
   'VERIFIED',
 ] as const;
 
+// Whether the return has actually taken stock off the shelf, which is what
+// makes a delete a RESTORE rather than a plain removal — the delete
+// confirmation warns about it (rules § deletion rules).
+//
+// Issuing happens on reaching PICKED (rules § what issuing does), so only NEW
+// holds none. Named rather than inlined as `!== 'NEW'` so it reads the same way
+// as its stock-in twins, which do NOT share this shape.
+export const hasIssuedStock = (status: string): boolean => status !== 'NEW';
+
 export const statusIndex = (status: ReturnStatus): number =>
   (STATUS_FLOW as readonly string[]).indexOf(status);
 
