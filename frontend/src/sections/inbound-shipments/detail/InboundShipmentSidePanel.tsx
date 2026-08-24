@@ -35,7 +35,11 @@ import {
   runInboundBatch,
   updateInboundShipment,
 } from './inboundShipmentUpdate';
-import { kindOf, supplierIsStore } from './inboundShipmentStatus';
+import {
+  hasIntroducedStock,
+  kindOf,
+  supplierIsStore,
+} from './inboundShipmentStatus';
 import { isExternalScope, type InboundScope } from '../inboundShipmentScope';
 import { DeleteInboundShipmentAction } from './actions/DeleteInboundShipmentAction';
 import { DuplicateInboundShipmentAction } from './actions/DuplicateInboundShipmentAction';
@@ -61,6 +65,12 @@ export interface InboundShipmentSidePanelProps {
   open: boolean;
   /** True once Verified (global edit lock). */
   disabled: boolean;
+  /**
+   * Whether the shipment holds any stock-bearing lines — only those carry
+   * stock, so this and the status together decide the delete confirmation's
+   * stock warning.
+   */
+  hasLines: boolean;
   /**
    * The shipment's permission scope, from the route (see
    * inboundShipmentScope). Selects `type` on the whole-shipment copy read and
@@ -459,14 +469,17 @@ export const InboundShipmentSidePanel: Component<
         <SidePanelActions>
           {/* Delete — offered at every status, matching the list's bulk
               delete: it is submitted and the server's own reason surfaced,
-              never pre-screened here (issue #1134). Past New the confirmation
-              warns that the stock the shipment introduced goes with it. */}
+              never pre-screened here (issue #1134). The confirmation warns
+              that the shipment's stock goes with it ONLY where there is stock
+              to take: received, and holding at least one line. */}
           <DeleteInboundShipmentAction
             storeId={props.storeId}
             invoiceId={props.node.id}
             isExternal={isExternal()}
             number={() => props.node.invoiceNumber}
-            removesStock={() => props.node.status !== 'NEW'}
+            removesStock={() =>
+              hasIntroducedStock(props.node.status) && props.hasLines
+            }
             onDeleted={props.onDeleted}
           />
           <DuplicateInboundShipmentAction

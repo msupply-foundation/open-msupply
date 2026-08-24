@@ -55,6 +55,7 @@ import {
 } from './actions';
 import { DuplicateInboundShipmentAction } from '../detail/actions/DuplicateInboundShipmentAction';
 import {
+  hasIntroducedStock,
   isEditable,
   statusColour,
   statusLabel,
@@ -212,10 +213,18 @@ const InboundShipmentsList: Component = () => {
   const singleSelectedId = () =>
     selectedIds().length === 1 ? selectedIds()[0] : undefined;
 
-  // Anything past New has introduced stock, so deleting it reverses the receipt
-  // (rules → deletion). Not a gate — the confirmation just says so.
+  // Whether deleting the selection reverses a receipt, which the confirmation
+  // warns about (rules → deletion). Not a gate — it only picks the copy. Both
+  // halves have to hold for there to be stock at all: the shipment must have
+  // reached Received (hasIntroducedStock — Shipped and Delivered hold none),
+  // and it must actually have lines, since stock only ever comes from those.
   const selectionRemovesStock = () =>
-    rows().some(r => selectedIds().includes(r.id) && r.status !== 'NEW');
+    rows().some(
+      r =>
+        selectedIds().includes(r.id) &&
+        hasIntroducedStock(r.status) &&
+        r.lines.totalCount > 0
+    );
 
   const currentSort = (): SortState<SortKey> | undefined => {
     const s = query().sort?.[0];

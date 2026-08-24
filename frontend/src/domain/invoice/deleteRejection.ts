@@ -18,6 +18,15 @@ import { translateServerError } from '@/intl/intlUtils';
 // Ordered widest-cause-first; each has a `server-error.*` translation. Only
 // the stock-in locks appear: deleting a stock-OUT line restores its packs, so
 // it has no equivalent lock to hit.
+//
+// Those translations are written about the RECORD, not the line, even though
+// the server's variant names say "Line…". This path is the only reader of them
+// (a line delete shows the server's typed `error.description` instead), and it
+// is only ever reached by deleting a whole shipment or return — so "a line
+// arrived through a stock transfer" named something the user was not acting on
+// and could not act on. `linked_invoice_id` is set on a line only by the
+// transfer processors, so a line-lock of that kind means the RECORD arrived as
+// a transfer (server service/src/processors/transfer/invoice/).
 const LINE_LOCK_VARIANTS = [
   'BatchIsReserved',
   'LineUsedInStocktake',

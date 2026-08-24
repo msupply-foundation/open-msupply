@@ -34,6 +34,7 @@ import {
   scopeOf,
 } from '@/sections/inbound-shipments/inboundShipmentScope';
 import { deleteReturn } from './returnUpdate';
+import { hasIssuedStock } from './returnStatus';
 import type { ReturnFieldEdit } from './returnEdit';
 
 // The detail side panel (spec/supplier-returns/ui-surface.md S3 § side panel):
@@ -46,6 +47,11 @@ import type { ReturnFieldEdit } from './returnEdit';
 export interface SupplierReturnSidePanelProps {
   node: SupplierReturnInfoFragment;
   disabled: boolean;
+  /**
+   * Whether the return holds any lines — only lines issued stock, so this and
+   * the status together decide the delete confirmation's stock warning.
+   */
+  hasLines: boolean;
   /**
    * The shared return edit buffer — reads/writes comment + transportReference.
    */
@@ -69,8 +75,11 @@ export const SupplierReturnSidePanel: Component<
 
   // A PICKED return has already issued its stock, so deleting it returns those
   // packs to the store (rules § deleting an issued return restores its stock) —
-  // the confirmation says so.
-  const restoresStock = () => props.node.status !== 'NEW';
+  // the confirmation says so. Both halves have to hold for there to be stock at
+  // all: the return must have issued (hasIssuedStock), and it must actually
+  // have lines, since only lines issued anything.
+  const restoresStock = () =>
+    hasIssuedStock(props.node.status) && props.hasLines;
 
   const runDelete = async () => {
     const result = await deleteReturn(params.storeId, props.node.id);

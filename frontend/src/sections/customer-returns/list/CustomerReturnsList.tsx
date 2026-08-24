@@ -268,12 +268,17 @@ const CustomerReturnsList: Component = () => {
     void refetch();
   };
 
-  // Id + status for the bulk delete's client-side pre-check (the outbound
-  // list's shape).
+  // Id + status + whether the return holds any lines — the bulk delete's
+  // confirmation warns that a received return's stock goes with it, and only
+  // lines carry stock (the outbound list's shape).
   const selectedRows = () =>
     rows()
       .filter(row => selectedIds().includes(row.id))
-      .map(row => ({ id: row.id, status: row.status }));
+      .map(row => ({
+        id: row.id,
+        status: row.status,
+        hasLines: row.lines.totalCount > 0,
+      }));
 
   const openRow = (row: ReturnRow) =>
     navigate(`/${params.storeId}/distribution/customer-return/${row.id}`);

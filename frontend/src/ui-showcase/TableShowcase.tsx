@@ -176,6 +176,9 @@ const DATA: Row[] = Array.from({ length: 120 }, (_, i): Row => {
     requisition: hasIo ? { id: `req-${i}`, requisitionNumber: 90 + i } : null,
     purchaseOrder: hasPo ? { id: `po-${i}`, number: 11 + i } : null,
     pricing: { totalAfterTax: Number((((i * 37) % 5000) + 12.5).toFixed(2)) },
+    // Every fourth row is an empty shipment — the real list reads this to
+    // decide whether a delete warns about the stock it takes with it.
+    lines: { totalCount: i % 4 === 0 ? 0 : (i % 7) + 1 },
   };
 });
 
