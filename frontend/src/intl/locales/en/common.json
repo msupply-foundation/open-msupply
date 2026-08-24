@@ -3438,6 +3438,7 @@
   "server-error.CannotDeleteLinesOfAuthorisedReceivedInvoice": "This shipment has been received and authorised, so it can't be deleted",
   "server-error.CanOnlyBackdateReceivedShipments": "Only a received shipment can be backdated",
   "server-error.CannotEditCostPrice": "Cost price can't be edited on this shipment",
+  "server-error.CannotEditFinalised": "This is finalised, so it can't be edited or deleted",
   "server-error.CannotMoveReceivedDateForward": "The received date can only be moved earlier, not later",
   "server-error.CannotSetManufactureDateInFuture": "The manufacture date can't be in the future",
   "server-error.CannotSetShippedStatusOnManualInboundShipment": "A manual shipment can't be set to Shipped",
