@@ -80,7 +80,6 @@ export const ReviewRequestModal = (props: ReviewRequestModalProps) => {
           ? `${KIND_LABEL[props.request.kind]}, requested by ${props.request.requestedBy}`
           : undefined
       }
-      actionsAlign="end"
       actions={
         <Show when={props.request}>
           {request => (

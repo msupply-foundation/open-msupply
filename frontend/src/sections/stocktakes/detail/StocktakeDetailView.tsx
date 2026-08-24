@@ -67,6 +67,7 @@ import {
   ExportPrintAction,
 } from './actions';
 import { saveStocktakeFields } from './stocktakeUpdate';
+import type { LineEditCommit } from './lines/stocktakeLineUpdate';
 import type { LineErrors } from './lines/stocktakeLineErrors';
 import type { StocktakeLineFilter } from './stocktakeLineFilter';
 import { createDebouncedEdit } from '@/domain/debouncedEdit';
@@ -81,6 +82,7 @@ import {
   initialPageSize,
   rememberPageSize,
 } from '@/list/pageSize';
+import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
 import { stripEmpty } from '@/typeHelpers';
 import { stocktakePreferences } from '@/store/storeContext';
 import { dosesCounted, dosesPerUnit } from './lines/doses';
@@ -390,6 +392,16 @@ const StocktakeDetailView: Component = () => {
   );
   const locations = (): LocationWithVolume[] => locationsData.latest ?? [];
 
+  // Finalise trims every uncounted line server-side, so the total can collapse
+  // far below the page the user is on; a bulk delete does the same
+  // (src/list/clampPageOffset.ts, issue #1117).
+  clampPageOffset({
+    total: () => settledTotal(linesData, page => page.totalCount),
+    offset: () => query().offset,
+    pageSize: () => query().first,
+    setOffset: offset => setQuery({ ...query(), offset }),
+  });
+
   // Refetch the current lines page after a save. Only the lines page: a line
   // save changes the count/line rows, never the location capacities (see
   // locationsData above).
@@ -554,8 +566,19 @@ const StocktakeDetailView: Component = () => {
   // must NOT also call the manual refetch, or the page would fetch twice. When
   // the filter wasn't on, the key is unchanged and the manual refetch is the
   // only refresh.
-  const onLinesChanged = () => {
-    setSelectedIds([]);
+  // `keepSelection` is for a PARTIAL commit (some lines saved, some rejected):
+  // the selection footer OWNS the action dialogs, so dropping the selection
+  // unmounts the very dialog that still has to report the outcome (issue
+  // #1150). Holding it also leaves the user on the same selection to act on
+  // what didn't save. The errors the action is about to stamp survive either
+  // way — clearLineErrors runs here, the stamp lands after it, same tick.
+  // (`_commit` is what the callers hand over; this view refetches the page
+  // rather than splicing it in, per the comment above.)
+  const onLinesChanged = (
+    _commit?: LineEditCommit,
+    opts?: { keepSelection?: boolean }
+  ) => {
+    if (!opts?.keepSelection) setSelectedIds([]);
     const wasFilteringErrors = query().showError && lineErrors().size > 0;
     clearLineErrors();
     if (wasFilteringErrors) {
@@ -611,6 +634,7 @@ const StocktakeDetailView: Component = () => {
           isVaccine: line.item.isVaccine,
           doses: line.item.doses,
           unitName: line.item.unitName,
+          defaultPackSize: line.item.defaultPackSize,
         };
       }
       return undefined;
@@ -994,6 +1018,12 @@ const StocktakeDetailView: Component = () => {
                         icon={<PlusCircleIcon />}
                         shortcut={ALT_N}
                         onClick={openAdd}
+                        // The toolbar button is what `add-item-button` names
+                        // (e2e/TESTIDS.md § Stocktake). It carried no id at
+                        // all, so the only addressable Add-item affordance was
+                        // the empty state's ghost below — which disappears the
+                        // moment a line exists.
+                        data-testid="add-item-button"
                       >
                         {t('button.add-item')}
                       </Button>
@@ -1190,7 +1220,12 @@ const StocktakeDetailView: Component = () => {
                       <Button
                         variant="ghost"
                         shortcut={ALT_N}
-                        data-testid="add-item-button"
+                        // The shared empty-state id, as the locations list and
+                        // the inbound line table already use — NOT
+                        // `add-item-button`, which now names the toolbar button
+                        // above; two elements answering one id is what made
+                        // this ambiguous.
+                        data-testid="nothing-here-create-button"
                         onClick={openAdd}
                       >
                         {t('button.add-item')}

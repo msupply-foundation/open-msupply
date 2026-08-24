@@ -1,4 +1,4 @@
-import { createSignal, splitProps } from 'solid-js';
+import { createSignal, splitProps, type JSX } from 'solid-js';
 import { EyeIcon, EyeOffIcon } from '../../icons';
 import { t } from '../../../intl';
 import { TextField, type TextFieldProps } from './TextField';
@@ -25,15 +25,26 @@ export interface PasswordFieldProps extends Omit<
 
 /*
  * Password input — a thin variant of TextField. Masking is the standard
- * `type="password"` input; the only special piece is the show/hide toggle,
+ * `type="password"` input; the special pieces are the show/hide toggle,
  * rendered in TextField's interactive `endAction` slot (the same end
- * icon-button affordance as Combobox's clear button). The toggle flips the
- * input's `type` between `password` and `text`; everything else — label, error
- * line, focus ring, aria wiring — comes from TextField unchanged.
+ * icon-button affordance as Combobox's clear button), and the caps-lock
+ * notice: keystrokes report the CapsLock modifier state, and while it's on
+ * the field shows TextField's advisory warning line (`OMS-REG-LGN-01.31` —
+ * displacing any warning the call site passed, until a keystroke with caps
+ * off). The toggle flips the input's `type` between `password` and `text`;
+ * everything else — label, error line, focus ring, aria wiring — comes from
+ * TextField unchanged.
  */
 export const PasswordField = (props: PasswordFieldProps) => {
-  const [local, rest] = splitProps(props, ['toggleTestId', 'disabled']);
+  const [local, rest] = splitProps(props, [
+    'toggleTestId',
+    'disabled',
+    'warning',
+    'onKeyDown',
+    'onKeyUp',
+  ]);
   const [visible, setVisible] = createSignal(false);
+  const [capsLock, setCapsLock] = createSignal(false);
 
   const toggleTestId = () => {
     if (local.toggleTestId) return local.toggleTestId;
@@ -41,11 +52,31 @@ export const PasswordField = (props: PasswordFieldProps) => {
     return fieldTestId ? `${fieldTestId}-visibility` : undefined;
   };
 
+  // Reads the modifier on BOTH key events, then forwards to the call site's
+  // own handler (accessed lazily so a swapped-in handler isn't stale). Both
+  // events because the CapsLock key itself is one-sided on some platforms —
+  // macOS fires only keydown when it engages and only keyup when it
+  // disengages — while ordinary typing keeps the state fresh via either.
+  const watchCapsLock =
+    (
+      forward: () =>
+        JSX.EventHandlerUnion<HTMLInputElement, KeyboardEvent> | undefined
+    ): JSX.EventHandler<HTMLInputElement, KeyboardEvent> =>
+    event => {
+      setCapsLock(event.getModifierState('CapsLock'));
+      const handler = forward();
+      if (typeof handler === 'function') handler(event);
+      else if (handler) handler[0](handler[1], event);
+    };
+
   return (
     <TextField
       {...rest}
       type={visible() ? 'text' : 'password'}
       disabled={local.disabled}
+      warning={capsLock() ? t('warning.caps-lock') : local.warning}
+      onKeyDown={watchCapsLock(() => local.onKeyDown)}
+      onKeyUp={watchCapsLock(() => local.onKeyUp)}
       endAction={
         <button
           type="button"

@@ -2,6 +2,7 @@ import { Show, type Component } from 'solid-js';
 import { Dialog } from '../ui/elements/feedback/Dialog';
 import { Button } from '../ui/elements/buttons/Button';
 import { StoreSelector } from '../ui/elements/selectors/StoreSelector';
+import { CancelButton } from '../ui/elements/buttons/StandardButtons';
 import { EditIcon } from '../ui/icons';
 import { createStorePicker } from './storePicker';
 import { currentStoreId } from './storeContext';
@@ -62,6 +63,15 @@ export const StoreSwitchModal: Component<{
       }
       closeButton
       testId="store-switch-modal"
+      // The panel confirms by activating a store row, so the footer holds only
+      // the way OUT — the house Cancel every modal offers (ui-standards ›
+      // dialogs § chrome). Dismissing changes nothing (.29).
+      actions={
+        <CancelButton
+          data-testid="dialog-button-cancel"
+          onClick={props.onClose}
+        />
+      }
     >
       <StoreSelector
         stores={picker.stores()}

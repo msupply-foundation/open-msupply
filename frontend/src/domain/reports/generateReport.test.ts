@@ -13,7 +13,9 @@ import { csvToExcel, mapPrintResponse } from '../reportFiles/csvToExcel';
 const mockFetch = (body: unknown, ok = true, status = 200) => {
   vi.stubGlobal(
     'fetch',
-    vi.fn().mockResolvedValue({ ok, status, json: async () => body })
+    vi
+      .fn()
+      .mockResolvedValue({ ok, status, text: async () => JSON.stringify(body) })
   );
 };
 

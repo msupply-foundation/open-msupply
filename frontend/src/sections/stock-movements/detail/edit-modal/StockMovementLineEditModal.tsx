@@ -41,10 +41,10 @@ import type { StockMovementLineFragment } from '../stockMovementDetail.generated
 
 // The line editor (spec/stock-movements/ui-surface.md S3): one move per line —
 // item → batch → destination → quantity, progressively disclosed. Add mode
-// starts on the item search (auto-focused); update mode opens read-only on
-// the line's item + batch with its saved destination and quantity
-// (OMS-REG-SMV-10.16). Save & next (add mode only — .32) saves and resets for
-// another entry.
+// starts on the item search (auto-focused, its list already open); update mode
+// opens read-only on the line's item + batch with its saved destination and
+// quantity (OMS-REG-SMV-10.16). Save & next (add mode only — .32) saves and
+// resets for another entry.
 //
 // The batch CANDIDATES resource first fetches on an interaction (picking an
 // item, inside this open dialog), so it is read through the `.state` gate —
@@ -256,6 +256,12 @@ export const StockMovementLineEditModal: Component<
       onClose={props.onClose}
       dismissable={!saving()}
       size="large"
+      // Add mode opens ON the item search (ui-surface S3: "auto-focused and
+      // opened while empty") — the Combobox opens on focus, so the catalogue
+      // is already showing and the first keystroke narrows it. Update mode
+      // takes the panel default: its item search is read-only, and the fields
+      // that matter are further down.
+      initialFocus={isUpdate() ? undefined : itemFocus}
       testId="stock-movement-line-modal"
       title={isUpdate() ? t('heading.edit-line') : t('heading.add-line')}
       actionsLead={

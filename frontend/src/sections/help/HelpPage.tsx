@@ -24,6 +24,8 @@ import { TextField } from '../../ui/elements/inputs/TextField';
 import { TextArea } from '../../ui/elements/inputs/TextArea';
 import { Button } from '../../ui/elements/buttons/Button';
 import { Alert } from '../../ui/elements/feedback/Alert';
+import { Spinner } from '../../ui/elements/feedback/Spinner';
+import { openDocument } from '../../platform/openDocument';
 import { MessageSquareIcon } from '../../ui/icons';
 import { HelpDocuments } from './helpDocuments.generated';
 import { InsertContactForm } from './contactForm.generated';
@@ -58,6 +60,28 @@ const HelpPage: Component = () => {
   const documents = () => showableDocuments(docsData.latest ?? []);
 
   // Contact form (OMS-REG-HLP-01.2-.9, .23-.27).
+  // Help-document open failure, shown inline above the list, and the busy
+  // document's id — its link shows a small spinner while the file is fetched
+  // and handed to the OS (same reporting shape as DocumentUploadPanel's).
+  // Cleared unconditionally so no failure can leave it stuck.
+  const [openError, setOpenError] = createSignal<string>();
+  const [openingId, setOpeningId] = createSignal<string>();
+  const openHelpDocument = async (
+    docId: string,
+    url: string,
+    fileName: string
+  ) => {
+    if (openingId()) return;
+    setOpenError(undefined);
+    setOpeningId(docId);
+    try {
+      const result = await openDocument(url, fileName);
+      if (!result.ok) setOpenError(result.message);
+    } finally {
+      setOpeningId(undefined);
+    }
+  };
+
   const [reason, setReason] = createSignal<ContactType>('FEEDBACK');
   const [email, setEmail] = createSignal('');
   const [message, setMessage] = createSignal('');
@@ -160,20 +184,54 @@ const HelpPage: Component = () => {
           {/* Block 3 — help documents; whole block absent when none showable (OMS-REG-HLP-01.18/.19). */}
           <Show when={documents().length > 0}>
             <FormSection title={t('heading.help-documents')}>
+              <Show when={openError()}>
+                <Alert severity="error">{openError()}</Alert>
+              </Show>
               <For each={documents()}>
-                {doc => (
-                  <a
-                    href={helpDocumentFileUrl(
-                      '',
-                      doc.id,
-                      doc.files!.nodes[0]!.id
-                    )}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {doc.title}
-                  </a>
-                )}
+                {doc => {
+                  const url = helpDocumentFileUrl(
+                    '',
+                    doc.id,
+                    doc.files!.nodes[0]!.id
+                  );
+                  return (
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      // Plain clicks route through the platform open capability
+                      // — in the Android WebView a bare anchor renders the file
+                      // inline with no way back, or does nothing for PDFs
+                      // (spec/android § Files out of the app; the same idiom as
+                      // DocumentUploadPanel). Modified clicks (new tab, copy
+                      // link) keep native anchor behaviour.
+                      aria-busy={openingId() === doc.id || undefined}
+                      onClick={event => {
+                        const modified =
+                          event.ctrlKey ||
+                          event.metaKey ||
+                          event.shiftKey ||
+                          event.altKey;
+                        if (event.button !== 0 || modified) return;
+                        event.preventDefault();
+                        void openHelpDocument(
+                          doc.id,
+                          url,
+                          doc.files!.nodes[0]!.fileName
+                        );
+                      }}
+                    >
+                      {doc.title}
+                      <Show when={openingId() === doc.id}>
+                        {' '}
+                        <Spinner
+                          sizeRem={0.875}
+                          label={t('label.opening-file')}
+                        />
+                      </Show>
+                    </a>
+                  );
+                }}
               </For>
             </FormSection>
           </Show>

@@ -13,6 +13,7 @@ import { Dialog } from '../../ui/elements/feedback/Dialog';
 import { Alert } from '../../ui/elements/feedback/Alert';
 import { ErrorDetails } from '../../ui/elements/feedback/ErrorDetails';
 import { Button } from '../../ui/elements/buttons/Button';
+import { CancelButton } from '../../ui/elements/buttons/StandardButtons';
 import { Spinner } from '../../ui/elements/feedback/Spinner';
 import { ProgressList, type ProgressStep } from '../../ui/sync/ProgressList';
 import { CheckCircleIcon, SyncIcon, SettingsIcon } from '../../ui/icons';
@@ -156,19 +157,15 @@ export const SyncModal: Component<{
       // No confirm semantics: Sync Now is a trigger, not a Save — Enter from
       // the (buttonless) body must not start a sync run.
       enterConfirms={false}
-      // Action row, centred — in the Dialog's actions slot so it sticks to the
-      // modal's bottom edge like every other modal's buttons.
+      // Action row — in the Dialog's actions slot, so it sticks to the modal's
+      // bottom edge and takes the house footer (dismiss first, emphasised
+      // action last, under the hairline) like every other modal's buttons.
       actions={
         <>
-          <Button
-            variant="primary"
-            icon={<SyncIcon />}
-            loading={busy()}
-            onClick={syncNow}
-            data-testid="sync-now-button"
-          >
-            {t('button.sync-now')}
-          </Button>
+          <CancelButton
+            data-testid="dialog-button-cancel"
+            onClick={props.onClose}
+          />
           <Show when={hasPermission('SERVER_ADMIN')}>
             <Button
               variant="secondary"
@@ -178,6 +175,15 @@ export const SyncModal: Component<{
               {t('settings')}
             </Button>
           </Show>
+          <Button
+            variant="primary"
+            icon={<SyncIcon />}
+            loading={busy()}
+            onClick={syncNow}
+            data-testid="sync-now-button"
+          >
+            {t('button.sync-now')}
+          </Button>
         </>
       }
     >

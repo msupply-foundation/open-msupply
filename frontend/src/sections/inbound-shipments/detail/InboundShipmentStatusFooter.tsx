@@ -17,7 +17,7 @@ import { inboundShipmentPreferences } from '../../../store/storeContext';
 import { currentStep, filterByStatusPreference } from '@/domain/invoice';
 import { updateInboundShipment } from './inboundShipmentUpdate';
 import {
-  kindOf,
+  sourceLinkOf,
   reachableStatuses,
   statusDatetime,
   statusFlow,
@@ -63,11 +63,11 @@ export const InboundShipmentStatusFooter: Component<
   const [busy, setBusy] = createSignal(false);
   const [errorMessage, setErrorMessage] = createSignal<string>();
 
-  const kind = () => kindOf(props.node);
+  const sourceLink = () => sourceLinkOf(props.node);
   // Every status surface is limited by the invoice-status-options preference
   // (spec § preference gates — OMS-REG-REPL-03.25); empty = unrestricted.
   const allowed = () => inboundShipmentPreferences().invoiceStatusOptions;
-  const flow = () => statusFlow(kind(), props.node.status);
+  const flow = () => statusFlow(sourceLink(), props.node.status);
   const offered = () => filterByStatusPreference(flow(), allowed());
   const steps = () =>
     offered().map(status => ({
@@ -76,7 +76,7 @@ export const InboundShipmentStatusFooter: Component<
     }));
   const reachable = () =>
     filterByStatusPreference(
-      reachableStatuses(kind(), props.node.status),
+      reachableStatuses(sourceLink(), props.node.status),
       allowed()
     );
 

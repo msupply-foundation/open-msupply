@@ -26,6 +26,7 @@ import { storeCustomColour } from '../store/storeContext';
 import { isCentralServer } from '../api/serverInfo';
 import { reportPermissionDenied } from '../api/graphql';
 import { deniedPermission, gateNav, routeAccess } from './navGates';
+import { storeRelativePath } from './storeRelativePath';
 import { KeyboardHost } from '../keyboard/KeyboardHost';
 import { createDocumentTitle, screenTitleKey } from '../documentTitle';
 import { startSyncWatch, stopSyncWatch } from '../api/syncStore';
@@ -62,13 +63,12 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
 
   // The path relative to the store root, e.g. '/{store}/inventory/stocktakes'
   // → 'inventory/stocktakes'. The empty (store root) path is the dashboard.
-  const relativePath = () => {
-    const prefix = `/${params.storeId}`;
-    const rest = location.pathname.startsWith(prefix)
-      ? location.pathname.slice(prefix.length)
-      : location.pathname;
-    return rest.replace(/^\/+|\/+$/g, '');
-  };
+  // Four things below read it — the menu highlight, the tab title, the
+  // breadcrumb's section glyph and the route gates — which is why the
+  // derivation is shared rather than spelled out here: getting it wrong on a
+  // nested mount disabled all four at once (issue #1141).
+  const relativePath = () =>
+    storeRelativePath(location.pathname, params.storeId);
 
   // Sentinel for "no menu item matches this route": only `id` is consumed (the
   // menu highlights by id, and '' matches nothing). labelKey is never rendered
