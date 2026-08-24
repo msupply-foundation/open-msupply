@@ -150,9 +150,23 @@ const Body = (props: DeleteReturnsActionProps & { onClose: () => void }) => {
         return;
       } else if (result.kind === 'error')
         failed.push({ message: result.message, detail: result.detail });
-      // A transport failure has no reason to give; the global modal owns the
-      // description, so it only counts against the batch.
-      else failed.push({ message: t('messages.cant-delete-generic') });
+      else {
+        // A transport failure is NOT a per-row verdict — the request itself
+        // failed — so unlike a refusal it STOPS the batch: the global modal
+        // already owns the description, and every remaining call would most
+        // likely fail the same way, raising one more modal each.
+        //
+        // Nothing at all has happened yet ⇒ that modal is the whole story, so
+        // drop back to confirm rather than stacking a second notice under it.
+        // Otherwise fall out of the loop: any refusals collected so far are
+        // reported below, and failing that the dialog closes and the list
+        // re-reads, which is what shows the rows that did go.
+        if (deletedCount() === 0 && failed.length === 0) {
+          setPhase('confirm');
+          return;
+        }
+        break;
+      }
     }
     if (failed.length > 0) {
       setFailures(failed);
