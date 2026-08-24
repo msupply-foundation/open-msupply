@@ -365,10 +365,13 @@ export function CardView<T, G extends string>(props: {
   rowTone?: (row: T) => 'info' | 'warning' | 'error' | undefined;
   /**
    * Semantic row state (see DataTable's rowState) — in card view only
-   * 'disabled' has a treatment: the card takes the muted fill + text a
-   * disabled ROW takes in table view, because a read-only record must read as
-   * one in either rendering (the outbound line editor's barred batches are
-   * cards at every width). 'verified' / 'warning' are selection-only tints in
+   * 'disabled' has a treatment: the card takes a muted fill + secondary text,
+   * because a read-only record must read as one in either rendering (the
+   * outbound line editor's barred batches are cards at every width). The fill
+   * is the card's OWN token (`--table-card-surface-disabled`), not the grey a
+   * disabled row takes: that one is a step off the white row surface and reads
+   * backwards against the recessed card list — see the rule in
+   * DataTable.module.css. 'verified' / 'warning' are selection-only tints in
    * table view and a card has no row background to tint, so they are stamped
    * for parity but styled only for 'disabled'. Stamps data-row-state on the
    * card row.
