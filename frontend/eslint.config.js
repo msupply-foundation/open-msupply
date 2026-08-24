@@ -24,6 +24,39 @@ const commentLengthOptions = {
  * intentionally-unused binding; camelCase identifiers; prefer-const; and a
  * space after comment markers (something Prettier doesn't enforce).
  */
+// compat can't flag this: Chrome supports crypto.randomUUID, but only in
+// secure contexts — it crashes on plain-HTTP LAN origins (#499).
+const cryptoRandomUuidRestriction = {
+  object: 'crypto',
+  property: 'randomUUID',
+  message:
+    'Secure-context only — crashes on plain-HTTP origins (#499). ' +
+    'Use generateUUID from src/uuid.ts.',
+};
+
+/*
+ * The browser-download idiom (an object URL / a download-attributed anchor
+ * click) is a silent no-op in the Android WebView — no DownloadListener, so
+ * the click just dies (#1169). Every file handed to the user goes through the
+ * platform layer instead: saveBlob / openBlob / saveDocument / openDocument in
+ * src/platform/openDocument.ts, whose own block below carves out the one
+ * place the idiom is legitimately implemented (the web halves of those
+ * helpers).
+ */
+const downloadIdiomMessage =
+  'Silently does nothing in the Android WebView (#1169). Use saveBlob / ' +
+  'saveDocument (or openBlob / openDocument) from ' +
+  'src/platform/openDocument.ts.';
+const createObjectUrlRestriction = {
+  object: 'URL',
+  property: 'createObjectURL',
+  message: downloadIdiomMessage,
+};
+const anchorDownloadRestriction = {
+  selector: 'AssignmentExpression[left.property.name="download"]',
+  message: downloadIdiomMessage,
+};
+
 const sharedRules = {
   '@typescript-eslint/no-unused-vars': [
     'error',
@@ -99,18 +132,24 @@ export default tseslint.config(
       ...sharedRules,
       // Browser app code ships no stray logs; info/warn/error are intentional.
       'no-console': ['error', { allow: ['info', 'warn', 'error'] }],
-      // compat can't flag this: Chrome supports crypto.randomUUID, but only
-      // in secure contexts — it crashes on plain-HTTP LAN origins (#499).
       'no-restricted-properties': [
         'error',
-        {
-          object: 'crypto',
-          property: 'randomUUID',
-          message:
-            'Secure-context only — crashes on plain-HTTP origins (#499). ' +
-            'Use generateUUID from src/uuid.ts.',
-        },
+        cryptoRandomUuidRestriction,
+        createObjectUrlRestriction,
       ],
+      'no-restricted-syntax': ['error', anchorDownloadRestriction],
+    },
+  },
+
+  // The platform layer OWNS the browser-download idiom banned above —
+  // openDocument.ts (and its tests) is where object URLs and anchor clicks
+  // legitimately implement the web halves of saveBlob/openBlob. Only the
+  // download restrictions lift here; the crypto one stands everywhere.
+  {
+    files: ['src/platform/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-properties': ['error', cryptoRandomUuidRestriction],
+      'no-restricted-syntax': 'off',
     },
   },
 
@@ -138,6 +177,10 @@ export default tseslint.config(
     rules: {
       ...sharedRules,
       'no-console': ['error', { allow: ['info', 'warn', 'error'] }],
+      // Same Android WebView, same dead click (#1169) — a plugin needing to
+      // hand the user a file is an SDK gap, not a hand-rolled download.
+      'no-restricted-properties': ['error', createObjectUrlRestriction],
+      'no-restricted-syntax': ['error', anchorDownloadRestriction],
       /*
        * The `@/` alias is already unresolvable here (tsconfig.plugins.json and
        * the plugin build preset both omit it), but a RELATIVE reach —
