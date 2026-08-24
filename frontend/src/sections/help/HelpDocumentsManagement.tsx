@@ -14,11 +14,14 @@ import { DataTable, type Column } from '../../ui/elements/table/DataTable';
 import { getDateCell } from '../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../api/createTableConfig';
 import {
+  AlertCircleIcon,
   CloseIcon,
   DownloadIcon,
   PlusCircleIcon,
   TrashIcon,
 } from '../../ui/icons';
+import { createFlash } from '../../ui/utils/createFlash';
+import { saveDocument } from '../../platform/openDocument';
 import { syncFileUrl } from '../../domain/syncFiles';
 import { HelpDocuments } from './helpDocuments.generated';
 import type { HelpDocumentsResult } from './helpDocuments.generated';
@@ -70,22 +73,32 @@ const HelpDocumentsManagement: Component = () => {
 
   const fileOf = (doc: HelpDocRow) => doc.files.nodes[0];
 
-  // Download each selected document's file, sequentially (spec/help S2). The
-  // downloads themselves are the outcome; selection persists.
-  const downloadSelected = () => {
+  // Download each selected document's file, sequentially (spec/help S2),
+  // through the platform save flow — a download-attributed anchor click is a
+  // silent no-op in the Android WebView (#1169). The saved files themselves
+  // are the outcome (no success toast per ui-surface § selection footer); a
+  // failure flashes on the button (ui-standards controls.md § action
+  // feedback). A dismissed Android save picker is the user declining, not a
+  // failure. Selection persists.
+  const [downloading, setDownloading] = createSignal(false);
+  const downloadFeedback = createFlash<'failed'>();
+  const downloadSelected = async () => {
+    if (downloading()) return;
+    setDownloading(true);
     const selected = new Set(selectedIds());
+    let failed = false;
     for (const doc of rows()) {
       if (!selected.has(doc.id)) continue;
       const file = fileOf(doc);
       if (!file) continue;
-      const link = document.createElement('a');
-      link.href = syncFileUrl(TABLE_NAME, doc.id, file.id);
-      link.download = file.fileName;
-      link.rel = 'noreferrer';
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+      const result = await saveDocument(
+        syncFileUrl(TABLE_NAME, doc.id, file.id),
+        file.fileName
+      );
+      if (!result.ok) failed = true;
     }
+    if (failed) downloadFeedback.show('failed');
+    setDownloading(false);
   };
 
   // Per-document independent deletion (OMS-REG-HLP-01.34): each runs on its
@@ -168,10 +181,19 @@ const HelpDocumentsManagement: Component = () => {
             </strong>
             <Button
               variant="secondary"
-              icon={<DownloadIcon />}
-              onClick={downloadSelected}
+              icon={
+                downloadFeedback.value() ? (
+                  <AlertCircleIcon />
+                ) : (
+                  <DownloadIcon />
+                )
+              }
+              loading={downloading()}
+              onClick={() => void downloadSelected()}
             >
-              {t('button.download')}
+              {downloadFeedback.value()
+                ? t('message.download-failed')
+                : t('button.download')}
             </Button>
             <Button
               variant="danger"
