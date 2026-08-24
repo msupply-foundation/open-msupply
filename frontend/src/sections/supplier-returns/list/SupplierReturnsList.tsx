@@ -57,10 +57,15 @@ import {
   buildCustomFieldDynamicFilter,
   type CustomFieldFilterState,
 } from '../../../domain/customFields';
+import { DeleteReturnsAction } from '../../../domain/invoice';
 import { NewReturnModal } from './NewReturnModal';
-import { DeleteReturnsAction } from './actions/DeleteReturnsAction';
 import { ExportSupplierReturnsAction } from './actions/ExportSupplierReturnsAction';
-import { statusLabel, isReturnDisabled } from '../detail/returnStatus';
+import { deleteReturn } from '../detail/returnUpdate';
+import {
+  hasIssuedStock,
+  statusLabel,
+  isReturnDisabled,
+} from '../detail/returnStatus';
 
 // The supplier-returns list (spec/supplier-returns/ui-surface.md S1): the
 // standard list screen over the invoices query pinned to SUPPLIER_RETURN.
@@ -262,17 +267,23 @@ const SupplierReturnsList: Component = () => {
     void refetch();
   };
 
-  // Id + status + whether the return holds any lines — the bulk delete's
-  // confirmation warns that an issued return's stock comes back, and only lines
-  // carry stock.
-  const selectedRows = () =>
-    rows()
-      .filter(row => selectedIds().includes(row.id))
-      .map(row => ({
-        id: row.id,
-        status: row.status,
-        hasLines: row.lines.totalCount > 0,
-      }));
+  // Whether deleting the selection brings issued stock back, which the bulk
+  // delete's confirmation says (rules § deleting an issued return restores its
+  // stock). Not a gate — it only picks the copy. Both halves have to hold for
+  // there to be stock at all: the return must have issued (hasIssuedStock), and
+  // it must actually have lines, since only lines issued anything.
+  //
+  // Reads the CURRENT page's rows, since status and line count come from them:
+  // a selection carried across a page change is still deleted in full (the
+  // delete works from the ids), but a stock-bearing row left behind on another
+  // page cannot raise the notice. The inbound list has the same shape.
+  const selectionRestoresStock = () =>
+    rows().some(
+      row =>
+        selectedIds().includes(row.id) &&
+        hasIssuedStock(row.status) &&
+        row.lines.totalCount > 0
+    );
 
   const openRow = (row: ReturnRow) =>
     navigate(`/${params.storeId}/replenishment/supplier-return/${row.id}`);
@@ -406,9 +417,22 @@ const SupplierReturnsList: Component = () => {
             <strong data-testid="selected-rows-count">
               {selectedIds().length} {t('label.selected')}
             </strong>
+            {/* The shared returns bulk delete (domain/invoice): one
+                deleteSupplierReturn per selected id, since there is no batch
+                mutation. Deleting a PICKED return RESTORES its stock — the
+                server deletes each stock-out line, which returns the packs to
+                the stock line (rules § deleting an issued return restores its
+                stock). The confirmation says so: stock moving is worth
+                stating, even when it moves back. */}
             <DeleteReturnsAction
               storeId={params.storeId}
-              selectedRows={selectedRows}
+              selectedIds={selectedIds}
+              deleteOne={deleteReturn}
+              stockNotice={{
+                applies: selectionRestoresStock,
+                message: t('messages.delete-restores-issued-stock'),
+                testId: 'delete-restores-stock',
+              }}
               onDeleted={onDeleted}
             />
             <ContentFooterActions>
