@@ -13,7 +13,10 @@ export interface DocumentFrameProps {
   srcdoc?: string;
   /**
    * Sandbox token string. Default 'allow-same-origin' — the document may load
-   * same-origin assets (e.g. images) but runs no scripts. Widen deliberately.
+   * same-origin assets (e.g. images) but runs no scripts. Choose deliberately:
+   * a document that must run its own scripts wants `allow-scripts` INSTEAD of
+   * (not alongside) `allow-same-origin`, so the two capabilities never combine
+   * into a frame that can reach back into the app.
    */
   sandbox?: string;
   class?: string;
@@ -28,6 +31,12 @@ export interface DocumentFrameProps {
  * executes no scripts (no allow-scripts), so a rendered report can't run code
  * in the app's context. The loading flag resets whenever the source changes so
  * a re-navigated frame shows the spinner again.
+ *
+ * `allow-scripts` and `allow-same-origin` are alternatives here, never a pair:
+ * a frame granted both can reach the parent document — including to strip its
+ * own sandbox attribute — which is no sandbox at all. Whichever a caller picks,
+ * the frame still cannot navigate the top window, submit forms, open popups, or
+ * open modals.
  */
 export const DocumentFrame = (props: DocumentFrameProps) => {
   const [loaded, setLoaded] = createSignal(false);

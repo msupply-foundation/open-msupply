@@ -27,3 +27,24 @@ export const lineDifference = (line: CountLine): number | null => {
   if (counted == null) return null;
   return counted - (line.snapshotNumberOfPacks ?? 0);
 };
+
+// Pack size is editable only where no stock stands behind the batch
+// (OMS-REG-INV-03.15): a batch backed by a stock line — whether an existing
+// stocktake line's or one being opted into the count — carries that stock's
+// real pack size read-only. A batch with NO stock line (a freshly added one,
+// or a line the stocktake generated for a zero-stock item) is where the pack
+// size gets established, so it accepts input (rules § line editor).
+export const packSizeEditable = (line: {
+  stockLine?: { id: string } | null;
+}): boolean => line.stockLine == null;
+
+// The pack size an editable batch starts with (OMS-REG-INV-03.79/.80): its own
+// recorded value where one exists, else the item's default pack size, floored
+// to 1 when the item has none configured. A counted line saved with no pack
+// size cannot become stock — finalise rejects the whole stocktake with an
+// untyped error (spec/stocktakes/contract.md § backend gaps; issue #1173) —
+// so the editor always seeds a usable value.
+export const defaultedPackSize = (
+  item: { defaultPackSize: number },
+  packSize?: number | null
+): number => packSize ?? (item.defaultPackSize > 0 ? item.defaultPackSize : 1);
