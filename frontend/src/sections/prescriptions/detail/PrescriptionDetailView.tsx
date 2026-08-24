@@ -643,9 +643,6 @@ const PrescriptionDetailView: Component = () => {
                     onSaved={saved =>
                       mutate(prev => (prev ? { ...prev, ...saved } : prev))
                     }
-                    onClose={() =>
-                      navigate(`/${params.storeId}/dispensary/prescription`)
-                    }
                   />
                 }
               >
