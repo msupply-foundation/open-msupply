@@ -41,6 +41,7 @@ export const BooleanFilter: FC<{
         checked={value}
         onChange={handleChange}
         size="medium"
+        testId={`filter-input-${urlParameter}`}
       />
     </Box>
   );

@@ -158,7 +158,6 @@ fn map_error(error: ServiceError) -> Result<UpsertItemVariantErrorInterface> {
         | ServiceError::CantChangeItem
         | ServiceError::LocationTypeDoesNotExist
         | ServiceError::OtherPartyDoesNotExist
-        | ServiceError::OtherPartyNotVisible
         | ServiceError::OtherPartyNotAManufacturer => BadUserInput(formatted_error),
 
         ServiceError::PackagingVariantError(upsert_packaging_variant_error) => {

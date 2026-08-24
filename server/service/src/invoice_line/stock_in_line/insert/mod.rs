@@ -121,7 +121,6 @@ pub enum InsertStockInLineError {
     CostPricePerPackBelowZero,
     NewlyCreatedLineDoesNotExist,
     ManufacturerDoesNotExist,
-    ManufacturerNotVisible,
     ManufacturerIsNotAManufacturer,
     VVMStatusDoesNotExist,
     ProgramDoesNotExist,
