@@ -31,6 +31,7 @@ import { sortKeyToId, sortIdToKey } from './tableHelpers';
 import { renderTemplate } from './renderTemplate';
 import { hiddenEdges } from './scrollEdges';
 import {
+  resolveColumnVisibility,
   toColumnDef,
   type CardGroup,
   type Column,
@@ -595,6 +596,16 @@ export function DataTable<T, K extends string, G extends string = never>(
   // breaks that: the mapped array is only rebuilt when the caller's columns
   // actually change.
   const columnDefs = createMemo(() => props.columns.map(toColumnDef));
+
+  // The visibility TanStack is run on — the persisted map with every STRUCTURAL
+  // column forced visible (resolveColumnVisibility explains why the flag alone
+  // isn't enough). Resolved here rather than per page so it's one rule for
+  // every caller, and the change handler below resolves TanStack's updater
+  // against THIS map, so the next visibility write heals a stale entry.
+  const resolvedColumnVisibility = createMemo<VisibilityState>(() =>
+    resolveColumnVisibility(columnVisibility(), columnDefs())
+  );
+
   const table = createSolidTable<T>({
     get data() {
       return props.rows;
@@ -619,7 +630,7 @@ export function DataTable<T, K extends string, G extends string = never>(
         return columnPinning();
       },
       get columnVisibility() {
-        return columnVisibility();
+        return resolvedColumnVisibility();
       },
     },
     manualSorting: true,
@@ -650,7 +661,7 @@ export function DataTable<T, K extends string, G extends string = never>(
     onColumnVisibilityChange: u =>
       props.setConfig?.(
         'columnVisibility',
-        functionalUpdate(u, columnVisibility())
+        functionalUpdate(u, resolvedColumnVisibility())
       ),
     getRowId: row => props.rowKey(row),
     getCoreRowModel: getCoreRowModel(),
@@ -937,8 +948,11 @@ export function DataTable<T, K extends string, G extends string = never>(
     const def = columnDefs().map(d => d.id);
     return order.length !== def.length || order.some((id, i) => id !== def[i]);
   };
+  // Reads the RESOLVED map, not the raw config: a stale `false` on a structural
+  // column is inert (see resolvedColumnVisibility), so it must not light up a
+  // "Show all columns" reset that has nothing left to reveal.
   const anyColumnHidden = () =>
-    Object.values(props.config?.columnVisibility ?? {}).some(v => v === false);
+    Object.values(resolvedColumnVisibility()).some(v => v === false);
   const anyColumnSized = () =>
     Object.keys(props.config?.columnSizing ?? {}).length > 0;
   const anyColumnPinned = () => {
@@ -1286,6 +1300,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                         rowTone={row =>
                           (props.cardTone ?? props.rowTone)?.(row)
                         }
+                        rowState={props.rowState}
                       />
                     </Match>
                     <Match when={viewMode() === 'table'}>

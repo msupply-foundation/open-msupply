@@ -363,6 +363,20 @@ export function CardView<T, G extends string>(props: {
    * recolour field labels and controls). Stamps data-tone on the card row.
    */
   rowTone?: (row: T) => 'info' | 'warning' | 'error' | undefined;
+  /**
+   * Semantic row state (see DataTable's rowState) — in card view only
+   * 'disabled' has a treatment: the card takes a muted fill + secondary text,
+   * because a read-only record must read as one in either rendering (the
+   * outbound line editor's barred batches are cards at every width). The fill
+   * is the card's OWN token (`--table-card-surface-disabled`), not the grey a
+   * disabled row takes: that one is a step off the white row surface and reads
+   * backwards against the recessed card list — see the rule in
+   * DataTable.module.css. 'verified' / 'warning' are selection-only tints in
+   * table view and a card has no row background to tint, so they are stamped
+   * for parity but styled only for 'disabled'. Stamps data-row-state on the
+   * card row.
+   */
+  rowState?: (row: T) => 'verified' | 'warning' | 'disabled' | undefined;
 }): JSX.Element {
   // The DataTable renders the empty state itself (before this view), so cards
   // always have ≥1 row here — no empty branch.
@@ -404,6 +418,9 @@ export function CardView<T, G extends string>(props: {
             class={`${styles.cardRow} ${props.onRowClick ? styles.rowClickable : ''}`}
             data-selected={row.getIsSelected() ? '' : undefined}
             data-tone={props.rowTone?.(row.original)}
+            // The same attribute TableRow stamps, so one selector addresses a
+            // read-only record's row in either rendering.
+            data-row-state={props.rowState?.(row.original)}
             data-testid="table-row"
             // The row's key, exactly as table view stamps it (TableRow), so a
             // caller can address one row in the DOM in either rendering.

@@ -699,14 +699,22 @@ tr[data-row-state='disabled'] > .selectCell {
   color: var(--text-secondary);
 }
 
-/* Record-STATUS tints (rowTint — spec D111): always-on backgrounds naming
-   the row's status (outbound lines: allocated green / expired red / held
-   amber), unlike the rowState tints above which show only while selected.
+/* Record-STATUS tints (rowTint): always-on backgrounds naming the row's
+   status, unlike the rowState tints above which show only while selected.
    Same opaque color-mix recipe over --surface-raised so pinned cells cover
-   cleanly. AFTER the disabled rule (equal specificity): a disabled held/
-   expired row keeps its tint background under the disabled muted text — the
-   status is why the row is disabled. Selection deepens each tint (rules
-   with the selection block below). */
+   cleanly. AFTER the disabled rule (equal specificity): a disabled toned row
+   keeps its tint background under the disabled muted text — the status is why
+   the row is disabled. Selection deepens each tint (rules with the selection
+   block below).
+
+   ONE tint per table is the standing guidance, and it earns its place by
+   answering the question that table is FOR: 'unfinished' marks the rows still
+   awaiting work (the outbound and stocktake line tables), 'error' the rows the
+   server refused (R&R forms). The severity three (success/warning/error) are
+   kept for that second kind of use, but a table that washes several statuses
+   at once spends its whole at-a-glance channel on facts its own badges already
+   state — which is why outbound's line editor gave its three tints up (D111,
+   2026-08-21). */
 tr[data-tint='success'] > .td,
 tr[data-tint='success'] > .selectCell {
   background: color-mix(in srgb, var(--success-main) 8%, var(--surface-raised));
@@ -1264,6 +1272,32 @@ tr[data-accent='error'] > :first-child::before {
     var(--secondary-main) 5%,
     var(--surface-raised)
   );
+}
+
+/* Disabled card (rowState 'disabled') — the card half of table view's grey
+   read-only row: a muted fill and secondary text, so a record that cannot be
+   edited reads as one in EITHER rendering (a line editor whose grid is cards at
+   every width would otherwise show its barred batches exactly like the editable
+   ones — only the disabled inputs inside them would say so). Placed after the
+   selected rule at equal specificity: a disabled card keeps the grey even while
+   selected, as its row does.
+
+   NOT the row's --bg-toolbar: that grey is a step off the WHITE row surface,
+   and on the recessed card list it lands 5/255 from a normal card in light and
+   3/255 from the LIST in dark, where the card box dissolves into its own list
+   (Aneesh, PR #1207). Cards get their own fill token, fitted to both of a
+   card's neighbours in each theme — see the --table-card-surface-disabled note
+   in tokens.css. This reaches every card list keying rowState off an
+   editability gate (the six list screens, both line editors), which is the
+   point: those same rows are grey in table view.
+
+   The fill is the whole treatment. The identity title keeps its own colour
+   (.cardPrimary, and any tone on it) rather than being muted here — the same
+   bargain table view strikes, where a held or expired row reads in its tone
+   THROUGH the disabled muting, because the status is why the row is disabled. */
+.cardRow[data-row-state='disabled'] > .cardCell > .card {
+  background: var(--table-card-surface-disabled);
+  color: var(--text-secondary);
 }
 
 /* Toned cards carry NO border/shadow treatment — the tinted identity title
