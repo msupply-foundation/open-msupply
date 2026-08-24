@@ -5,6 +5,7 @@ import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { ErrorDetails } from '../../../../ui/elements/feedback/ErrorDetails';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
+import { Stack } from '../../../../ui/layout/Stack/Stack';
 import { TrashIcon } from '../../../../ui/icons';
 import { deleteInboundShipment } from '../inboundShipmentUpdate';
 
@@ -107,7 +108,7 @@ const Body = (
       description={
         <Switch
           fallback={
-            <>
+            <Stack gap="sm">
               {t('messages.confirm-delete-shipment', {
                 number: props.number(),
               })}
@@ -118,7 +119,7 @@ const Body = (
                   {t('messages.delete-removes-received-stock')}
                 </Alert>
               </Show>
-            </>
+            </Stack>
           }
         >
           <Match when={phase() === 'error'}>

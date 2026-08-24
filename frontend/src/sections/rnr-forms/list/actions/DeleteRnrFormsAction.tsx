@@ -13,6 +13,7 @@ import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { ErrorDetails } from '@/ui/elements/feedback/ErrorDetails';
+import { Stack } from '@/ui/layout/Stack/Stack';
 import { TrashIcon } from '@/ui/icons';
 import { DeleteRnrForm } from '../rnrForms.generated';
 
@@ -173,18 +174,21 @@ const Body = (props: DeleteRnrFormsActionProps & { onClose: () => void }) => {
             </Alert>
           </Match>
           <Match when={phase() === 'error'}>
-            <Show when={didDelete()}>
-              <p>{t('messages.deleted-rnr-forms-before-this')}</p>
-            </Show>
-            <Alert severity="error">
-              {/* The transport-failure path reaches this phase with no reason
-                  to give (it only gets here once forms HAVE gone), so it keeps
-                  the fault wording; a refusal replaces it with the cause. */}
-              {errorMessage() ?? t('error.something-wrong')}
-              <Show when={errorDetail()}>
-                {detail => <ErrorDetails detail={detail()} />}
+            <Stack gap="sm">
+              <Show when={didDelete()}>
+                <p>{t('messages.deleted-rnr-forms-before-this')}</p>
               </Show>
-            </Alert>
+              <Alert severity="error">
+                {/* The transport-failure path reaches this phase with no reason
+                    to give (it only gets here once forms HAVE gone), so it
+                    keeps the fault wording; a refusal replaces it with the
+                    cause. */}
+                {errorMessage() ?? t('error.something-wrong')}
+                <Show when={errorDetail()}>
+                  {detail => <ErrorDetails detail={detail()} />}
+                </Show>
+              </Alert>
+            </Stack>
           </Match>
         </Switch>
       }

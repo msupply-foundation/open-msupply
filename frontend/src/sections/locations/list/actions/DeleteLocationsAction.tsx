@@ -6,6 +6,7 @@ import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { Button } from '@/ui/elements/buttons/Button';
 import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
+import { Stack } from '@/ui/layout/Stack/Stack';
 import { TrashIcon } from '@/ui/icons';
 import { DeleteLocation } from '../locations.generated';
 import {
@@ -164,7 +165,7 @@ const Body = (props: DeleteLocationsActionProps & { onClose: () => void }) => {
         >
           <Match when={report()}>
             {summary => (
-              <>
+              <Stack gap="sm">
                 <Show when={summary().deletedCount > 0}>
                   <p>
                     {tPlural(
@@ -195,7 +196,7 @@ const Body = (props: DeleteLocationsActionProps & { onClose: () => void }) => {
                     )}
                   </Alert>
                 </Show>
-              </>
+              </Stack>
             )}
           </Match>
         </Switch>
