@@ -12,7 +12,12 @@ import { TextField } from '../ui/elements/inputs/TextField';
 import { PasswordField } from '../ui/elements/inputs/PasswordField';
 import { Button } from '../ui/elements/buttons/Button';
 import { Alert } from '../ui/elements/feedback/Alert';
-import { ArrowRightIcon, ClockIcon } from '../ui/icons';
+import {
+  ArrowRightIcon,
+  ClockIcon,
+  TransferHorizontalIcon,
+} from '../ui/icons';
+import { discoveryReturnUrl, withLng } from '../desktop/discoveryReturn';
 import { AppLogo } from '../ui/branding/AppLogo';
 import { LanguageSelector } from '../ui/layout/AppShell/LanguageSelector';
 import { changeLanguage, locale, t } from '../intl';
@@ -66,6 +71,10 @@ export const LoginPage: Component = () => {
 
   // Only decides WHERE the version line renders — see versionLine() below.
   const compact = useIsCompact();
+
+  // Set when the desktop discovery page handed off to this server
+  // (src/desktop/discoveryReturn.ts) — offers the way back beneath the form.
+  const changeServerUrl = discoveryReturnUrl(window.location.search);
 
   const submitting = () => submitState().kind === 'submitting';
   const submitError = () => {
@@ -209,6 +218,30 @@ export const LoginPage: Component = () => {
                   <ClockIcon class={styles.secondaryActionIcon} />
                   {t('login.use-old-interface')}
                 </a>
+                {/* Arriving from the desktop discovery page (spec/desktop §
+                    server selection, AC-DT16): the hand-off names its return
+                    URL in the query string, and this becomes the way to leave
+                    this server for another. A plain anchor — the discovery
+                    page may be a different origin (the shell's own bundled
+                    page), so this is a document navigation, not the router's.
+                    Absent the parameter (every browser/served deployment),
+                    nothing renders. Read once: the URL is fixed while this
+                    page shows. */}
+                <Show when={changeServerUrl}>
+                  {/* The href re-reads locale(): the way back carries the
+                      language ACTIVE at click time, so a change made here
+                      arrives back at discovery too. */}
+                  <a
+                    class={styles.secondaryAction}
+                    href={withLng(changeServerUrl!, locale())}
+                    data-testid="login-change-server"
+                  >
+                    <TransferHorizontalIcon
+                      class={styles.secondaryActionIcon}
+                    />
+                    {t('messages.change-server')}
+                  </a>
+                </Show>
                 <div class={styles.languageAction}>
                   <LanguageSelector
                     language={locale()}
