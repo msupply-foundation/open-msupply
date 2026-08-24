@@ -204,7 +204,37 @@ impl StaticFileService {
         std::fs::metadata(path).map(|m| m.len()).unwrap_or(0)
     }
 
-    fn partial_path(&self, sync_file: &SyncFileReferenceRow) -> anyhow::Result<PathBuf> {
+    /// The offset to ask central to resume from, which is the partial file's length
+    /// except when that partial can no longer be continued.
+    ///
+    /// A partial that has already reached the reference's declared size cannot be
+    /// resumed: `Range: bytes=<total>-` is unsatisfiable, central answers 416, and every
+    /// retry fails identically until the row gives up. The process dying between the
+    /// stream completing and the rename leaves exactly this. Throwing the partial away
+    /// costs one re-download of a file we were seconds from having; leaving it wedges the
+    /// file forever.
+    pub fn resume_offset(&self, sync_file: &SyncFileReferenceRow) -> u64 {
+        let offset = self.partial_download_offset(sync_file);
+
+        // total_bytes is 0 for a reference that never declared a size, which says
+        // nothing about the partial — the 416 handling in the transports covers that.
+        if sync_file.total_bytes > 0 && offset >= sync_file.total_bytes as u64 {
+            log::warn!(
+                "Discarding un-resumable partial download of sync file {} ({} bytes of a {} byte file)",
+                sync_file.id,
+                offset,
+                sync_file.total_bytes
+            );
+            self.discard_partial_download(sync_file);
+            return 0;
+        }
+
+        offset
+    }
+
+    /// `pub(crate)` so the transports' tests can plant a partial file; the download path
+    /// itself only ever reaches it through the helpers above.
+    pub(crate) fn partial_path(&self, sync_file: &SyncFileReferenceRow) -> anyhow::Result<PathBuf> {
         let category =
             StaticFileCategory::SyncFile(sync_file.table_name.clone(), sync_file.record_id.clone());
         let file =
@@ -682,5 +712,49 @@ mod test {
         // partial would fail forever.
         service.discard_partial_download(&sync_file);
         assert_eq!(service.partial_download_offset(&sync_file), 0);
+    }
+
+    /// A partial that already holds the whole file cannot be resumed — central would
+    /// answer 416 to `bytes=<total>-` and every retry after it would fail identically.
+    /// The process dying between the stream finishing and the rename leaves exactly this,
+    /// so the offset the transports ask for has to self-heal.
+    #[actix_rt::test]
+    async fn a_partial_that_cannot_be_resumed_is_discarded() {
+        use repository::sync_file_reference_row::SyncFileReferenceRow;
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let mut service = StaticFileService::new(".").unwrap();
+        service.dir = temp_dir.path().to_path_buf();
+
+        let sync_file = SyncFileReferenceRow {
+            id: "unresumable".to_string(),
+            table_name: "frontend_bundle".to_string(),
+            record_id: "bundle4".to_string(),
+            file_name: "frontend-dist.zip".to_string(),
+            total_bytes: 7,
+            ..Default::default()
+        };
+
+        let partial_path = service.partial_path(&sync_file).unwrap();
+        fs::create_dir_all(partial_path.parent().unwrap()).unwrap();
+
+        // Short of the declared size: resume from where we got to.
+        fs::write(&partial_path, "hel").unwrap();
+        assert_eq!(service.resume_offset(&sync_file), 3);
+        assert_eq!(service.partial_download_offset(&sync_file), 3);
+
+        // The whole file, never renamed into place. Start over rather than wedge.
+        fs::write(&partial_path, "hello!!").unwrap();
+        assert_eq!(service.resume_offset(&sync_file), 0);
+        assert_eq!(service.partial_download_offset(&sync_file), 0);
+
+        // A reference with no declared size says nothing about its partial, so the
+        // partial is kept and the transports' 416 handling covers it.
+        let undeclared = SyncFileReferenceRow {
+            total_bytes: 0,
+            ..sync_file.clone()
+        };
+        fs::write(&partial_path, "hello!!").unwrap();
+        assert_eq!(service.resume_offset(&undeclared), 7);
     }
 }
