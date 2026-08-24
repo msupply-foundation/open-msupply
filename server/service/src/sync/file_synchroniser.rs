@@ -36,6 +36,19 @@ pub static MAX_UPLOAD_ATTEMPTS: i32 = 7 * 24; // 7 days * 24 hours Retry sending
 pub static RETRY_DELAY_MINUTES: i64 = 15; // Doubles each retry until MAX_RETRY_DELAY_MINUTES
 pub static MAX_RETRY_DELAY_MINUTES: i64 = 60; // 1 hour
 
+/// Minutes to wait before the next attempt: double the last wait, up to the cap.
+///
+/// Saturating rather than `i64::pow`, because `retries` runs to MAX_*_ATTEMPTS (168) and
+/// `2^60` already leaves i64 — which panics in a debug build and, worse, wraps negative
+/// in a release one, putting `retry_at` in the past and turning the backoff into a spin.
+/// A site offline for a few days reaches that many retries at the capped delay.
+fn backoff(retries: i32) -> i64 {
+    cmp::min(
+        RETRY_DELAY_MINUTES.saturating_mul(2i64.saturating_pow(retries.max(0) as u32)),
+        MAX_RETRY_DELAY_MINUTES,
+    )
+}
+
 #[derive(Debug, Error)]
 pub(crate) enum FileSyncError {
     #[error(transparent)]
@@ -64,6 +77,27 @@ pub enum DownloadFileError {
     SyncApiV6CreatingError(#[from] SyncApiV6CreatingError),
     #[error(transparent)]
     SyncApiV5CreatingError(#[from] SyncApiV5CreatingError),
+}
+
+impl DownloadFileError {
+    /// True when the attempt never got an answer: this site's link is down, or central
+    /// is. That says nothing about the file, so it must not consume the retry budget.
+    ///
+    /// Load-bearing for a site that is offline for longer than the budget covers. Once a
+    /// download row reaches `PermanentFailure` nothing revives it on its own: the
+    /// processor that decides what to want is changelog-driven, so it will not re-fire
+    /// for a bundle it has already seen, and central publishing a newer bundle is the
+    /// only other way back. A site on a bad link is exactly the site this feature exists
+    /// for, so it retries connection failures indefinitely.
+    fn is_connection_error(&self) -> bool {
+        match self {
+            DownloadFileError::SyncApiError(error) => {
+                matches!(error.source, SyncApiErrorVariantV6::ConnectionError(_))
+            }
+            DownloadFileError::SyncApiV7Error(SyncErrorV7::ConnectionError { .. }) => true,
+            _ => false,
+        }
+    }
 }
 
 pub struct FileSynchroniser {
@@ -190,27 +224,30 @@ impl FileSynchroniser {
                 .find_one_by_id(&sync_file_reference.id)?
                 .unwrap_or_else(|| sync_file_reference.clone());
 
-            let update = if current.retries >= MAX_UPLOAD_ATTEMPTS {
+            // Unreachable central doesn't count against the budget, and can't exhaust it.
+            let counts_against_budget = !error.is_connection_error();
+
+            let update = if counts_against_budget && current.retries >= MAX_UPLOAD_ATTEMPTS {
                 SyncFileReferenceRow {
                     status: SyncFileStatus::PermanentFailure,
                     ..current
                 }
             } else {
-                let retry_at = Utc::now().naive_utc()
-                    + Duration::minutes(cmp::min(
-                        RETRY_DELAY_MINUTES * i64::pow(2, current.retries as u32),
-                        MAX_RETRY_DELAY_MINUTES,
-                    ));
+                let retry_at = Utc::now().naive_utc() + Duration::minutes(backoff(current.retries));
                 SyncFileReferenceRow {
                     status: SyncFileStatus::Error,
-                    retries: current.retries + 1,
+                    retries: match counts_against_budget {
+                        true => current.retries + 1,
+                        false => current.retries,
+                    },
                     retry_at: Some(retry_at),
                     // Bytes already on disk are kept, so record how far we got — the
-                    // next attempt resumes from there.
+                    // next attempt resumes from there. Saturating because the column is
+                    // i32 while a file's length is not.
                     downloaded_bytes: self
                         .static_file_service
                         .partial_download_offset(sync_file_reference)
-                        as i32,
+                        .min(i32::MAX as u64) as i32,
                     ..current
                 }
             };
@@ -223,7 +260,9 @@ impl FileSynchroniser {
                 sync_file_reference.id,
                 format_error(error)
             );
-            return Ok(queued.len());
+            // The attempted file now has a future retry_at, so it isn't part of what
+            // the driver can pick up on its next pass.
+            return Ok(queued.len() - 1);
         }
 
         log::info!(
@@ -339,11 +378,7 @@ impl FileSynchroniser {
                     Utc::now().naive_utc() + Duration::minutes(1)
                 }
                 _ => {
-                    Utc::now().naive_utc()
-                        + Duration::minutes(cmp::min(
-                            RETRY_DELAY_MINUTES * i64::pow(2, sync_file_reference.retries as u32),
-                            MAX_RETRY_DELAY_MINUTES,
-                        ))
+                    Utc::now().naive_utc() + Duration::minutes(backoff(sync_file_reference.retries))
                 }
             };
 
@@ -365,5 +400,43 @@ impl FileSynchroniser {
         })?;
 
         Err(error.into())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn backoff_doubles_up_to_the_cap_without_overflowing() {
+        assert_eq!(backoff(0), RETRY_DELAY_MINUTES);
+        assert_eq!(backoff(1), RETRY_DELAY_MINUTES * 2);
+        // Capped from the third attempt on: 15 * 2^2 = 60.
+        assert_eq!(backoff(2), MAX_RETRY_DELAY_MINUTES);
+
+        // 2^60 already leaves i64, and the budget runs to 168 attempts — which a site
+        // offline for a few days reaches at the capped delay. `i64::pow` would panic in
+        // a debug build and wrap negative in a release one, putting retry_at in the past
+        // and turning the backoff into a spin.
+        assert_eq!(backoff(MAX_UPLOAD_ATTEMPTS), MAX_RETRY_DELAY_MINUTES);
+        assert_eq!(backoff(i32::MAX), MAX_RETRY_DELAY_MINUTES);
+    }
+
+    /// Being unable to reach central says nothing about the file, so it must not spend
+    /// the budget that ends in `PermanentFailure` — nothing revives a download that gave
+    /// up, and a site on a bad link is the site this exists for.
+    #[test]
+    fn only_connection_failures_spare_the_retry_budget() {
+        let unreachable = DownloadFileError::SyncApiV7Error(SyncErrorV7::ConnectionError {
+            url: "http://central".to_string(),
+            e: "connection refused".to_string(),
+        });
+        assert!(unreachable.is_connection_error());
+
+        // Central answered, and the answer was about the file. That counts.
+        let missing = DownloadFileError::SyncApiV7Error(SyncErrorV7::SyncFileNotFound(
+            "bundle-file".to_string(),
+        ));
+        assert!(!missing.is_connection_error());
     }
 }

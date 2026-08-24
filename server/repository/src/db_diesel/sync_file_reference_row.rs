@@ -265,6 +265,10 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
     /// must be set. Without it this would return every reference on the site, since
     /// references broadcast everywhere and default to `Download`. `InProgress` is
     /// included so a download interrupted by a restart is resumed rather than stranded.
+    ///
+    /// Ordered by *request* time rather than the reference's own creation time: the queue
+    /// serves this site's decisions in the order it made them, which is also what makes
+    /// `request_download`'s idempotency mean something.
     pub fn find_all_to_download(&self) -> Result<Vec<SyncFileReferenceRow>, RepositoryError> {
         let result = sync_file_reference
             .filter(deleted_datetime.is_null())
@@ -278,7 +282,7 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
                         .eq(SyncFileStatus::Error)
                         .and(retry_at.lt(diesel::dsl::now))),
             )
-            .order_by(created_datetime.asc())
+            .order_by(download_requested_datetime.asc())
             .load(self.connection.lock().connection())?;
         Ok(result)
     }
@@ -286,6 +290,11 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
     /// Record that this site wants the file's bytes, putting it in the download queue.
     /// Idempotent — an already-requested file keeps its original request time, so
     /// re-running the deciding processor doesn't reorder the queue.
+    ///
+    /// A row that had given up is revived. `PermanentFailure` is excluded from the queue,
+    /// so without this a file that exhausted its retries could never be wanted again, and
+    /// asking for it a second time would silently do nothing. `retries` resets with the
+    /// status, or the revived row would give up again on its first failure.
     ///
     /// No changelog: wanting a file is local intent, not something other sites act on.
     pub fn request_download(&self, file_id: &str) -> Result<(), RepositoryError> {
@@ -296,6 +305,20 @@ impl<'a> SyncFileReferenceRowRepository<'a> {
         )
         .set(download_requested_datetime.eq(Some(chrono::Utc::now().naive_utc())))
         .execute(self.connection.lock().connection())?;
+
+        diesel::update(
+            sync_file_reference
+                .filter(id.eq(file_id))
+                .filter(status.eq(SyncFileStatus::PermanentFailure)),
+        )
+        .set((
+            status.eq(SyncFileStatus::New),
+            retries.eq(0),
+            retry_at.eq(None::<NaiveDateTime>),
+            error.eq(None::<String>),
+        ))
+        .execute(self.connection.lock().connection())?;
+
         Ok(())
     }
 
@@ -511,6 +534,85 @@ mod test {
         })
         .unwrap();
         assert!(queued_ids(&connection).is_empty());
+    }
+
+    /// A file that gave up must be reachable again, because nothing else revives it: the
+    /// processor that decides what to want is changelog-driven and won't re-fire for a
+    /// bundle it has already seen, so `PermanentFailure` would otherwise be the end of
+    /// this site ever holding that file.
+    #[actix_rt::test]
+    async fn requesting_a_file_that_gave_up_revives_it() {
+        let (_, connection, _, _) = setup_all(
+            "requesting_a_file_that_gave_up_revives_it",
+            MockDataInserts::none(),
+        )
+        .await;
+        let repo = SyncFileReferenceRowRepository::new(&connection);
+
+        let row = reference(SyncFileDirection::Download);
+        repo.upsert_one(&row).unwrap();
+        repo.request_download(&row.id).unwrap();
+        let requested = repo.find_one_by_id(&row.id).unwrap().unwrap();
+
+        repo.upsert_without_changelog(&SyncFileReferenceRow {
+            status: SyncFileStatus::PermanentFailure,
+            retries: 500,
+            retry_at: Some(chrono::Utc::now().naive_utc() + chrono::Duration::hours(1)),
+            error: Some("gave up".to_string()),
+            ..requested.clone()
+        })
+        .unwrap();
+        assert!(queued_ids(&connection).is_empty());
+
+        repo.request_download(&row.id).unwrap();
+
+        let revived = repo.find_one_by_id(&row.id).unwrap().unwrap();
+        assert_eq!(revived.status, SyncFileStatus::New);
+        // Retries reset with the status, or the revived row gives up again on its first
+        // failure; the stale backoff and error message go with them.
+        assert_eq!(revived.retries, 0);
+        assert_eq!(revived.retry_at, None);
+        assert_eq!(revived.error, None);
+        assert_eq!(queued_ids(&connection), vec![row.id.clone()]);
+
+        // Reviving is not re-requesting: the original request time still stands.
+        assert_eq!(
+            revived.download_requested_datetime,
+            requested.download_requested_datetime
+        );
+    }
+
+    /// The queue runs in the order this site decided it wanted things, not the order the
+    /// references happen to have been created on central.
+    #[actix_rt::test]
+    async fn download_queue_runs_in_request_order() {
+        let (_, connection, _, _) = setup_all(
+            "download_queue_runs_in_request_order",
+            MockDataInserts::none(),
+        )
+        .await;
+        let repo = SyncFileReferenceRowRepository::new(&connection);
+
+        // Created newest-first, so ordering on created_datetime would invert the result.
+        let now = chrono::Utc::now().naive_utc();
+        let newer = SyncFileReferenceRow {
+            created_datetime: now,
+            ..reference(SyncFileDirection::Download)
+        };
+        let older = SyncFileReferenceRow {
+            created_datetime: now - chrono::Duration::days(1),
+            ..reference(SyncFileDirection::Download)
+        };
+        repo.upsert_one(&newer).unwrap();
+        repo.upsert_one(&older).unwrap();
+
+        repo.request_download(&newer.id).unwrap();
+        repo.request_download(&older.id).unwrap();
+
+        assert_eq!(
+            queued_ids(&connection),
+            vec![newer.id.clone(), older.id.clone()]
+        );
     }
 
     /// A status update arriving from central must not disturb this site's own decision
