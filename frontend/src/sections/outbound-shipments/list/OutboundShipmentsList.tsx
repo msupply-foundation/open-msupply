@@ -37,6 +37,7 @@ import {
   initialPageSize,
   rememberPageSize,
 } from '../../../list/pageSize';
+import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
 import { stripEmpty } from '../../../typeHelpers';
 import {
   OutboundShipments,
@@ -177,6 +178,15 @@ const OutboundShipmentsList: Component = () => {
     return latest.offset === query().offset ? latest.invoices.nodes : [];
   };
   const totalCount = () => data.latest?.invoices.totalCount ?? 0;
+
+  // A bulk delete of the last page's rows leaves the offset past the new end
+  // (src/list/clampPageOffset.ts, issue #1117).
+  clampPageOffset({
+    total: () => settledTotal(data, d => d.invoices.totalCount),
+    offset: () => query().offset,
+    pageSize: () => query().first,
+    setOffset: offset => setQuery({ ...query(), offset }),
+  });
 
   const currentSort = (): SortState<SortKey> | undefined => {
     const s = query().sort?.[0];

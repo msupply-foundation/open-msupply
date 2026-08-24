@@ -54,6 +54,7 @@ import {
   initialPageSize,
   rememberPageSize,
 } from '../../../list/pageSize';
+import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import {
   CustomFieldsEditTab,
@@ -322,6 +323,15 @@ const InboundShipmentDetailView: Component = () => {
     linesData.state === 'ready' || linesData.state === 'refreshing'
       ? (linesData.latest?.totalCount ?? 0)
       : 0;
+
+  // A bulk delete of the last page's rows leaves the offset past the new end
+  // (src/list/clampPageOffset.ts, issue #1117).
+  clampPageOffset({
+    total: () => settledTotal(linesData, page => page.totalCount),
+    offset: () => query().offset,
+    pageSize: () => query().first,
+    setOffset: offset => setQuery({ ...query(), offset }),
+  });
 
   // Total volume of the selected lines (volumePerPack × packs received) — feeds
   // the change-location picker's "Available" filter so it keeps only locations
