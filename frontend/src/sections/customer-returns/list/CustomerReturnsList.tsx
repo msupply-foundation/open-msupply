@@ -57,10 +57,15 @@ import {
   buildCustomFieldDynamicFilter,
   type CustomFieldFilterState,
 } from '../../../domain/customFields';
+import { DeleteReturnsAction } from '../../../domain/invoice';
 import { NewReturnModal } from './NewReturnModal';
-import { DeleteReturnsAction } from './actions/DeleteReturnsAction';
 import { ExportCustomerReturnsAction } from './actions/ExportCustomerReturnsAction';
-import { statusLabel, isReturnDisabled } from '../detail/returnStatus';
+import { deleteReturn } from '../detail/returnUpdate';
+import {
+  hasIntroducedStock,
+  statusLabel,
+  isReturnDisabled,
+} from '../detail/returnStatus';
 
 // The customer-returns list (spec/customer-returns/ui-surface.md S1): the
 // standard list screen over the invoices query pinned to CUSTOMER_RETURN.
@@ -268,17 +273,24 @@ const CustomerReturnsList: Component = () => {
     void refetch();
   };
 
-  // Id + status + whether the return holds any lines — the bulk delete's
-  // confirmation warns that a received return's stock goes with it, and only
-  // lines carry stock (the outbound list's shape).
-  const selectedRows = () =>
-    rows()
-      .filter(row => selectedIds().includes(row.id))
-      .map(row => ({
-        id: row.id,
-        status: row.status,
-        hasLines: row.lines.totalCount > 0,
-      }));
+  // Whether deleting the selection reverses a receipt, which the bulk delete's
+  // confirmation warns about (rules § deletion rules). Not a gate — it only
+  // picks the copy. Both halves have to hold for there to be stock at all: the
+  // return must have reached RECEIVED (hasIntroducedStock — a transfer return
+  // at PICKED or SHIPPED holds none), and it must actually have lines, since
+  // stock only ever comes from those.
+  //
+  // Reads the CURRENT page's rows, since status and line count come from them:
+  // a selection carried across a page change is still deleted in full (the
+  // delete works from the ids), but a stock-bearing row left behind on another
+  // page cannot raise the notice. The inbound list has the same shape.
+  const selectionRemovesStock = () =>
+    rows().some(
+      row =>
+        selectedIds().includes(row.id) &&
+        hasIntroducedStock(row.status) &&
+        row.lines.totalCount > 0
+    );
 
   const openRow = (row: ReturnRow) =>
     navigate(`/${params.storeId}/distribution/customer-return/${row.id}`);
@@ -414,9 +426,22 @@ const CustomerReturnsList: Component = () => {
             <strong data-testid="selected-rows-count">
               {selectedIds().length} {t('label.selected')}
             </strong>
+            {/* The shared returns bulk delete (domain/invoice): one
+                deleteCustomerReturn per selected id, since there is no batch
+                mutation. Once RECEIVED the delete REVERSES the receipt — the
+                server cascades to the lines and the stock they created,
+                refusing per-line once any of that stock has been issued,
+                reserved, counted in a stocktake or arrived by transfer (rules
+                § deletion rules). So it is warned about, not blocked. */}
             <DeleteReturnsAction
               storeId={params.storeId}
-              selectedRows={selectedRows}
+              selectedIds={selectedIds}
+              deleteOne={deleteReturn}
+              stockNotice={{
+                applies: selectionRemovesStock,
+                message: t('messages.delete-removes-received-stock'),
+                testId: 'delete-removes-stock',
+              }}
               onDeleted={onDeleted}
             />
             <ContentFooterActions>
