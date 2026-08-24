@@ -19,7 +19,9 @@
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
         <item name="android:background">@drawable/splash</item>
         <item name="splashScreenIconSize">100dp</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/splash</item>
+        <!-- the bare logo, not @drawable/splash: from Android 12 the platform
+             draws the background itself and masks this to a centred icon -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_logo</item>
         <item name="postSplashScreenTheme">@style/AppTheme</item>
         <item name="windowSplashScreenBackground">#f2f2f5</item>
     </style>

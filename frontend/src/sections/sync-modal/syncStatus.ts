@@ -382,3 +382,21 @@ export const syncFooterStatus = (
     ? { kind: 'synced', tone: 'neutral', finished }
     : { kind: 'never-synced', tone: 'neutral' };
 };
+
+/*
+ * Whether the cell reads as DIMMED (issue #1087) — sync is not running and
+ * cannot, because the central server is out of reach.
+ *
+ * Its own level, deliberately not folded into `tone`. By the precedence ladder
+ * an unreachable server is a warning, and it must stay one: it MUST NOT read as
+ * synced, and a sustained outage still escalates through the staleness rungs.
+ * But it is not the same KIND of news as a site that has gone stale — one says
+ * "sync is not happening", the other "sync is behind, and you should act". So
+ * the tone keeps the precedence and the dim keeps them apart on screen.
+ *
+ * Dim rather than a hue because the bar's colour is store data: a hue can land
+ * on top of the store's own and vanish, whereas "switched off" survives any
+ * ground.
+ */
+export const syncFooterDimmed = (kind: SyncFooterStatus['kind']): boolean =>
+  kind === 'unreachable';

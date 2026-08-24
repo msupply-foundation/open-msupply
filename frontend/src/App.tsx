@@ -19,6 +19,7 @@ import { authUser, checkAuth, startActivityTracking } from './auth/authContext';
 import { InitialisationPage } from './initialisation/InitialisationPage';
 import { resolveStorePath, StoreGuardLayout } from './store/StoreGuardLayout';
 import { navDestinations } from './nav/navConfig';
+import { routerBase } from './nav/storeRelativePath';
 import { DashboardPage, dashboardRoutes } from './sections/dashboard';
 import { stocktakesRoutes } from './sections/stocktakes';
 import { stockMovementsRoutes } from './sections/stock-movements';
@@ -212,16 +213,13 @@ export const App: Component = () => {
                 waited for — it is a render-time input to each contribution's
                 visibility gate. */}
             <PluginGate>
-              {/* base matches Vite's `base` config so the same build can be
-                mounted at a non-root path (e.g. the demo server's /spec
-                track). import.meta.env.BASE_URL always ends in "/" (Vite's
-                convention); solid-router's own root-route resolution
-                doesn't strip that before concatenating an absolute `to`
-                (e.g. navigate(`/${id}`) in StoreGuardLayout), producing a
-                double slash — "/spec//id" — that fails to match any route
-                and drops the base entirely. Trimmed here, once, at the
-                source. */}
-              <Router base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+              {/* `routerBase` matches Vite's `base` config so the same build
+                can be mounted at a non-root path — the deployed /rc/ track,
+                and every branch deploy, which build-and-deploy.sh mounts at
+                its own BASE_PATH ('/pr-123/'). It is shared with
+                storeRelativePath, which has to take the same prefix back OFF
+                the location — the router never does that itself (#1141). */}
+              <Router base={routerBase}>
                 {/* Store guard wraps the routed app shell; the shell mounts once and
                   pages swap inside it. One route per nav destination renders its
                   (empty) entry page until a real section is registered above. */}

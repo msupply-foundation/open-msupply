@@ -272,7 +272,6 @@ export const AddItemModal = (props: AddItemModalProps) => {
       icon={<CatalogueIcon />}
       width="form"
       description={`Once approved, will be added to the central catalogue and sync to all ${props.facilityCount} facilities`}
-      actionsAlign="end"
       actions={
         <>
           <Button variant="secondary" onClick={close}>

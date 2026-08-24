@@ -660,6 +660,10 @@ const RowStatesDemo = () => {
     'sl-2',
     'sl-3',
   ]);
+  // Only here to power the card⇄table toggle below (the view control needs a
+  // setConfig to persist the choice into) — this demo's point is the states,
+  // not table configuration.
+  const { config, setConfig } = createViewConfig('table');
   const columns = (): Column<StockLine, SortKey>[] => [
     {
       c: { key: 'code' },
@@ -710,6 +714,13 @@ const RowStatesDemo = () => {
       enableSelection
       selectedIds={selectedIds()}
       onSelectionChange={setSelectedIds}
+      // Flip to cards to see the one state a CARD carries: `disabled` mutes the
+      // card box (its own fill token, legible against both the card list and an
+      // editable card, in either theme). The selection-gated pair has no card
+      // treatment — a card has no row background to tint.
+      showCardToggle
+      config={config()}
+      setConfig={setConfig}
       // The page's ONLY job: map each row to a state. Read-only wins (→
       // disabled, grey always); else active → verified, onHold → warning;
       // anything else — discontinued here — stays plain, so it takes the
@@ -1559,7 +1570,14 @@ export const TableCardShowcase = () => (
             meaning at rest. <code>disabled</code> is the exception: a read-only
             / locked row (greyed, with a lock) is grey <em>always</em>, selected
             or not. Three rows are pre-selected; select or deselect any to watch
-            it. Full rules are in <code>CARD_TABLE_MODEL.md</code>.
+            it. <strong>Flip to cards</strong> and <code>disabled</code> is the
+            one state that follows: the card box takes a muted fill of its own (
+            <code>--table-card-surface-disabled</code>) — a step clear of both
+            an editable card and the recessed list behind it, in light and dark
+            — because a read-only record must read as one in either rendering.
+            The selection-gated pair is stamped on the card row but unstyled: a
+            card has no row background to tint. Full rules are in{' '}
+            <code>CARD_TABLE_MODEL.md</code>.
           </Lead>
           <RowStatesDemo />
         </DashboardCard>

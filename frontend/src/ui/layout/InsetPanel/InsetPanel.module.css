@@ -1,15 +1,35 @@
 /*
  * InsetPanel — a recessed grey group panel (the current app's dialog "options" block).
- * A subtle tinted fill + rounded corners; the hint reads as muted helper text above the
- * content. Colours are tokens; the only px is the border-radius.
+ * A subtle tinted fill inside a hairline, rounded corners; the hint reads as muted helper
+ * text above the content. The border is the same hairline the dialog chrome and the
+ * option cards use, so a panel reads as a bounded group rather than a fill that fades
+ * into the surface behind it. Colours are tokens; the only px are the border width and
+ * the radius.
  */
 .panel {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
   padding: var(--space-4);
+  /* Lighter than the hairline the dialog chrome and the option cards draw
+     (Aneesh, #837): this panel only GROUPS passive content, so its edge marks
+     where the group starts without competing with the selectable cards above
+     it. A mix toward transparent rather than a second token, so it lightens
+     against whatever surface it sits on, in either theme. */
+  border: 1px solid color-mix(in srgb, var(--color-divider) 55%, transparent);
   border-radius: var(--radius-md);
   background: var(--bg-group-light);
+
+  /* A FIXED label track for every FieldRow in the panel (the var hook in
+     FieldRow.module.css) — the same rule the side panel follows: a panel
+     stacks rows with mixed-length labels, and the default `max-content` track
+     is sized PER ROW, so one long label ("Items expiring before") shoves its
+     own control clear of the column the others share. Fixed, the controls line
+     up in one column and a long label wraps within the track instead.
+
+     Wide enough for the longest label in the app's panels on one line; the
+     hint line above them is free-flowing text and is unaffected. */
+  --field-row-label: 9.5rem;
 }
 
 .hint {

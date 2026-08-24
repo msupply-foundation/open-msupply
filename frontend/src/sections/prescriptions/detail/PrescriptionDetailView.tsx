@@ -64,9 +64,9 @@ import { storeNameOf } from '../../../auth/authContext';
 import {
   asPrescriptionStatus,
   isReadOnly,
+  isPlaceholderLine,
   isRenderableLine,
 } from '../prescriptionStatus';
-import { itemLedgerHref } from '@/sections/items/detail/itemLedgerNav';
 import {
   PrescriptionDetail,
   LabelPrinterSettings,
@@ -87,14 +87,16 @@ import {
 import { PrescriptionStatusFooter } from './PrescriptionStatusFooter';
 import { HistoryModal } from './HistoryModal';
 import { PrescriptionLineEditModal } from './edit-modal/PrescriptionLineEditModal';
+import { PrescriptionLineViewModal } from './PrescriptionLineViewModal';
 import { EditPatientModal } from '../../patients';
 
 // The prescription detail (spec/prescriptions/ui-surface.md S3): toolbar
 // (patient / clinician / date / program), Details + Log tabs over the flat
-// line table (one row per dispensed line; carriers never render — AC-Q1/V1),
+// line table (a row per dispensed line, plus a prescribed-quantity
+// placeholder row where an item has nothing dispensed — AC-Q1/V1),
 // the side panel, and the status footer. Dispensing happens in the S4 modal
 // (D53). Read-only from VERIFIED: dead affordances are hidden (D39) and a row
-// selection leads to the item's catalogue ledger instead of S4 (.72).
+// selection opens S4's read-only face rather than its editor (.73).
 
 type Line = PrescriptionFieldsFragment['lines']['nodes'][number];
 
@@ -109,6 +111,8 @@ const PrescriptionDetailView: Component = () => {
     itemId?: string;
     item?: { id: string; code: string; name: string };
   }>();
+  // S4's read-only face (.73) — the item it's open for; undefined = closed.
+  const [viewItemId, setViewItemId] = createSignal<string>();
   // The patient picker's edit-patient modal (#1038) — the id it's currently
   // open for; undefined = closed. Mounted fresh per open (below), like
   // editState's line editor.
@@ -191,9 +195,9 @@ const PrescriptionDetailView: Component = () => {
   const status = () => asPrescriptionStatus(info()?.status ?? 'CANCELLED');
   const disabled = () => isReadOnly(status());
 
-  // The rendered rows — carriers never render (AC-Q1), a cancellation
-  // reversal's returned lines do (isRenderableLine); ordered by item then
-  // batch for a stable read.
+  // The rendered rows — dispensed lines, a cancellation reversal's returned
+  // lines, and the prescribed-quantity placeholder (isRenderableLine);
+  // ordered by item then batch for a stable read.
   const rows = createMemo((): Line[] =>
     (info()?.lines.nodes ?? [])
       .filter(isRenderableLine)
@@ -353,16 +357,27 @@ const PrescriptionDetailView: Component = () => {
         ? t('message.print-failed')
         : undefined;
 
-  // Row selection: the line editor while editable (.55); the item's catalogue
-  // ledger once read-only (.72).
+  // Row selection opens S4 for the row's item — the editor while editable
+  // (.55), its read-only face once it isn't (.73). Never a navigation away:
+  // what the reader wants is the directions the item was dispensed with, and
+  // they live on the line.
   const openRow = (line: Line) => {
-    if (disabled()) navigate(itemLedgerHref(params.storeId, line.itemId));
+    if (disabled()) setViewItemId(line.itemId);
     else
       setEditState({
         itemId: line.itemId,
         item: { id: line.itemId, code: line.itemCode, name: line.itemName },
       });
   };
+
+  // The read-only face reads off the lines already loaded, so it needs only
+  // the item — EVERY line of it, placeholders included (the prescribed quantity
+  // and the directions may sit on one; see ./lineView).
+  const viewLines = createMemo((): Line[] => {
+    const itemId = viewItemId();
+    if (itemId == null) return [];
+    return (info()?.lines.nodes ?? []).filter(line => line.itemId === itemId);
+  });
 
   const tabs = (): TabDef[] => [
     { value: 'details', label: t('label.details') },
@@ -466,22 +481,35 @@ const PrescriptionDetailView: Component = () => {
         header: () => t('label.pack-quantity'),
         ...getNumberCell(),
       },
+      // The money columns stay EMPTY on a placeholder row: it holds no
+      // stock and no packs, so a price would be a fabricated $0.00 (the
+      // current app blanks them the same way).
       {
         c: {
-          accessor: line => line.sellPricePerPack / (line.packSize || 1),
+          accessor: line =>
+            isPlaceholderLine(line)
+              ? null
+              : line.sellPricePerPack / (line.packSize || 1),
           id: 'unitPrice',
         },
         header: () => t('label.unit-price'),
         ...getCurrencyCell(),
       },
       {
-        c: { key: 'totalAfterTax' },
+        c: {
+          accessor: line =>
+            isPlaceholderLine(line) ? null : line.totalAfterTax,
+          id: 'totalAfterTax',
+        },
         header: () => t('label.line-total'),
         ...getCurrencyCell(),
       },
       {
         c: {
-          accessor: line => line.costPricePerPack * line.numberOfPacks,
+          accessor: line =>
+            isPlaceholderLine(line)
+              ? null
+              : line.costPricePerPack * line.numberOfPacks,
           id: 'costPrice',
         },
         header: () => t('label.purchase-cost-price'),
@@ -677,6 +705,10 @@ const PrescriptionDetailView: Component = () => {
                 columns={columns()}
                 rows={rows()}
                 rowKey={line => line.id}
+                // The placeholder is a line awaiting an action — nothing is
+                // dispensed for the item yet (its own cells say so: no batch,
+                // zero packs, a prescribed quantity).
+                rowTone={line => (isPlaceholderLine(line) ? 'info' : undefined)}
                 loading={data.loading && !info()}
                 onRowClick={openRow}
                 emptyMessage={t('error.no-items')}
@@ -697,6 +729,16 @@ const PrescriptionDetailView: Component = () => {
                 onSelectionChange={setSelectedIds}
                 config={tableConfig.config()}
                 setConfig={tableConfig.setConfig}
+                // Central-server admins can promote this table's layout to the
+                // shared install-wide default, the same as the list (issue
+                // #1118 — detail tables offered no way to save table
+                // defaults). Gate + action both off the config controller;
+                // undefined for everyone else, so the action isn't offered.
+                onSaveGlobalDefault={
+                  tableConfig.canSaveGlobalDefault()
+                    ? tableConfig.saveGlobalTableConfig
+                    : undefined
+                }
               />
             </TabPanel>
             <TabPanel value="custom-fields">
@@ -726,6 +768,16 @@ const PrescriptionDetailView: Component = () => {
                 onSaved={() => void refetch()}
               />
             )}
+          </Show>
+
+          {/* S4's read-only face (.73) — the same surface the editor above
+              occupies while the prescription is editable, opened by a row
+              selection once it isn't. */}
+          <Show when={viewLines().length > 0}>
+            <PrescriptionLineViewModal
+              lines={viewLines()}
+              onClose={() => setViewItemId(undefined)}
+            />
           </Show>
 
           {/* The patient picker's edit-patient modal (spec/patients S4,

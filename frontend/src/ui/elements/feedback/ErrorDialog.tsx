@@ -150,8 +150,6 @@ export const ErrorDialog = (props: ErrorDialogProps) => {
        * role).
        */
       enterConfirms={false}
-      actionsDivider
-      actionsAlign="end"
       actionsLead={
         <Show when={props.onDashboard && !props.duringEdit}>
           <Button

@@ -1,6 +1,7 @@
 import { createSignal, Show, type Component } from 'solid-js';
 import { t } from '../../../intl';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { CancelButton } from '../../../ui/elements/buttons/StandardButtons';
 import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
 import { createAction } from '../../../ui/utils/keyActions';
 import { ALT_V } from '../../../ui/utils/shortcuts';
@@ -9,7 +10,6 @@ import { Alert } from '../../../ui/elements/feedback/Alert';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
-import { XCircleIcon } from '../../../ui/icons';
 import {
   asPrescriptionStatus,
   hasDispensedLines,
@@ -110,7 +110,8 @@ export const PrescriptionStatusFooter: Component<
   };
 
   const openConfirm = (next: ForwardStatus) => {
-    // The one sanctioned pre-flight (AC-S6): nothing dispensed — carrier-only
+    // The one sanctioned pre-flight (AC-S6): nothing dispensed —
+    // placeholder-only
     // counts as nothing — blocks with a notice and no server call.
     if (!hasDispensedLines(props.node.lines.nodes)) return setNoLinesOpen(true);
     // The payment window replaces the plain confirmation when the store has
@@ -257,14 +258,13 @@ export const PrescriptionStatusFooter: Component<
                 }
               >
                 <Show when={!working()}>
-                  <Button
-                    variant="secondary"
-                    icon={<XCircleIcon />}
-                    confirms="cancel"
+                  {/* The standard, icon-less footer Cancel (controls › dialogs
+                      § footer button identity, D55) — a dialog footer is read
+                      as verbs in a fixed position, not a toolbar. */}
+                  <CancelButton
+                    data-testid="dialog-button-cancel"
                     onClick={closeDialogs}
-                  >
-                    {t('button.cancel')}
-                  </Button>
+                  />
                 </Show>
                 <Button
                   confirms="plain"

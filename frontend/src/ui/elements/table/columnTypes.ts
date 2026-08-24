@@ -1,6 +1,7 @@
 import type { JSX } from 'solid-js';
 import type {
   ColumnDef,
+  ColumnMeta,
   HeaderContext,
   IdentifiedColumnDef,
   RowData,
@@ -67,10 +68,10 @@ declare module '@tanstack/solid-table' {
      * label, BODY cells WITH one. Set explicitly to override either case — e.g.
      * `showLabel: true` on a primary header field to caption it ("Batch"), or
      * `showLabel: false` on a body field to drop its label. The label text is
-     * the column's `header`, CALLED (our headers are function-only so their
-     * text re-resolves on a locale change — CardView.columnHeaderText does the
-     * calling). A column with no header at all yields no label, and the cell
-     * fills its slot unlabelled.
+     * `meta.textLabel` where the column sets one, else the column's `header`,
+     * CALLED either way (both are function-only so their text re-resolves on a
+     * locale change — CardView.columnHeaderText does the calling). A column
+     * with no header yields no label, and the cell fills its slot unlabelled.
      */
     showLabel?: boolean;
     /**
@@ -199,6 +200,17 @@ declare module '@tanstack/solid-table' {
 
 export type SortState<K extends string> = { key: K; desc: boolean };
 
+// Card view's per-cell visibility — the ONE filter CardView applies at its
+// cell source, which every later split (header slots, body groups, each
+// group's width template and narrow-fallback threshold) reads: the column-wide
+// `hideOnCard`, then the per-row `hideOnCardWhen` (both documented on the meta
+// above). Pure so it's testable in the node environment; CardView owns the
+// tracking scope it runs in.
+export const visibleOnCard = <T>(
+  meta: ColumnMeta<T, unknown> | undefined,
+  row: T
+): boolean => !meta?.hideOnCard && !meta?.hideOnCardWhen?.(row);
+
 // How a column identifies itself — a discriminated union of the three real
 // scenarios, replacing TanStack's raw accessorKey/accessorFn/id fields (which
 // we strip from the base below, so identity is spelled EXACTLY one way per
@@ -309,6 +321,42 @@ export const toColumnDef = <T, K extends string, G extends string>(
       id: c.id,
     } as ColumnDef<T>;
   return { ...rest, enableSorting, id: c.id } as ColumnDef<T>;
+};
+
+// The column visibility TanStack is actually run on: the persisted map with
+// every STRUCTURAL column (meta.hideFromColumnSettings) forced visible.
+//
+// `hideFromColumnSettings` means "stays on screen, just not user-configurable",
+// but on its own it only removes the Columns-popover ROW — TanStack's
+// getIsVisible still reads columnVisibility (its enableHiding gates the
+// HANDLER, not the state). So a `false` already stored for that id — in the
+// user layer or the store-wide global blob (tableConfig.ts), written while the
+// column was still user-hideable, or defaulted off by an earlier version of the
+// page — went on hiding it with nothing left able to reach it: ColumnSettings
+// filters the id out of its list, and its Show all / Hide all is scoped to that
+// same list. Only the Settings popover's "Show all columns" (which iterates
+// getAllLeafColumns) or a full table reset could recover it, and nothing on
+// screen said a field had gone missing.
+//
+// Making a column structural is precisely when that bites, since the flag is
+// normally added BECAUSE the field must always show — outbound's line editor
+// pins its On-hold column so the card's only worded hold indicator cannot be
+// switched off (Aneesh, PR #1207).
+//
+// Returns the SAME object when there is nothing to force (the common case):
+// TanStack treats a new state identity as a change.
+export const resolveColumnVisibility = <T>(
+  persisted: Record<string, boolean>,
+  columnDefs: ColumnDef<T>[]
+): Record<string, boolean> => {
+  const pinned = columnDefs.filter(
+    d => d.meta?.hideFromColumnSettings && d.id && persisted[d.id] === false
+  );
+  if (pinned.length === 0) return persisted;
+  return {
+    ...persisted,
+    ...Object.fromEntries(pinned.map(d => [d.id as string, true])),
+  };
 };
 
 // A card BODY group — how one `cardGroup` key presents in card view. The table
