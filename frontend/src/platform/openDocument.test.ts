@@ -7,6 +7,7 @@ import {
   printBlob,
   sanitizeFileName,
   saveBlob,
+  saveDocument,
 } from './openDocument';
 
 describe('openDocument (web path)', () => {
@@ -97,6 +98,75 @@ describe('saveBlob (web path)', () => {
     expect(result).toEqual({ ok: true, saved: true });
     expect(anchor.download).toBe('report.xlsx');
     expect(click).toHaveBeenCalledOnce();
+  });
+});
+
+describe('saveDocument (web path)', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('fetches the file with the session cookie and hands it to saveBlob', async () => {
+    const click = vi.fn();
+    const anchor = { href: '', download: '', click, remove: vi.fn() };
+    vi.stubGlobal('window', {});
+    vi.stubGlobal('document', {
+      createElement: vi.fn(() => anchor),
+      body: { appendChild: vi.fn() },
+    });
+    vi.stubGlobal('URL', {
+      createObjectURL: vi.fn(() => 'blob:fake'),
+      revokeObjectURL: vi.fn(),
+    });
+    const fetchSpy = vi.fn(async () => ({
+      ok: true,
+      blob: async () => new Blob(['manual'], { type: 'application/pdf' }),
+    }));
+    vi.stubGlobal('fetch', fetchSpy);
+
+    const result = await saveDocument(
+      '/sync_files/help_document/abc/f1',
+      'manual.pdf'
+    );
+
+    expect(result).toEqual({ ok: true, saved: true });
+    expect(fetchSpy).toHaveBeenCalledWith('/sync_files/help_document/abc/f1', {
+      credentials: 'same-origin',
+    });
+    expect(anchor.download).toBe('manual.pdf');
+    expect(click).toHaveBeenCalledOnce();
+  });
+
+  it('reports an HTTP failure without attempting a save', async () => {
+    const createElement = vi.fn();
+    vi.stubGlobal('window', {});
+    vi.stubGlobal('document', {
+      createElement,
+      body: { appendChild: vi.fn() },
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => ({ ok: false, status: 404 }))
+    );
+
+    const result = await saveDocument('/sync_files/x/y/z', 'gone.pdf');
+
+    expect(result).toEqual({ ok: false, message: 'HTTP 404' });
+    expect(createElement).not.toHaveBeenCalled();
+  });
+
+  it('reports a network failure as the error result, never throwing', async () => {
+    vi.stubGlobal('window', {});
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw new Error('offline');
+      })
+    );
+
+    const result = await saveDocument('/sync_files/x/y/z', 'a.pdf');
+
+    expect(result).toEqual({ ok: false, message: 'offline' });
   });
 });
 
