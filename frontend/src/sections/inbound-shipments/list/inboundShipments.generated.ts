@@ -32,6 +32,9 @@ export type InboundRowFragment = {
   pricing: {
   totalAfterTax: number;
 };
+  lines: {
+  totalCount: number;
+};
   customFields: unknown | null;
 };
 
@@ -229,7 +232,7 @@ export type InboundShipmentsResult = {
 };
 
 export const InboundShipments = {
-  query: "query inboundShipments($storeId: String!, $page: PaginationInput, $filter: InvoiceFilterInput, $sort: [InvoiceSortInput!], $type: [InvoiceTypeInput!]) {\n  invoices(\n    storeId: $storeId\n    page: $page\n    filter: $filter\n    sort: $sort\n    type: $type\n  ) {\n    ... on InvoiceConnector {\n      __typename\n      totalCount\n      nodes {\n        ...InboundRow\n      }\n    }\n  }\n}\n\nfragment InboundRow on InvoiceNode {\n  id\n  invoiceNumber\n  otherPartyName\n  otherPartyId\n  otherParty(storeId: $storeId) {\n    store {\n      id\n    }\n  }\n  status\n  onHold\n  inboundType\n  colour\n  comment\n  theirReference\n  createdDatetime\n  deliveredDatetime\n  purchaseOrderId\n  requisition {\n    id\n    requisitionNumber\n  }\n  purchaseOrder {\n    id\n    number\n  }\n  pricing {\n    totalAfterTax\n  }\n  customFields\n}",
+  query: "query inboundShipments($storeId: String!, $page: PaginationInput, $filter: InvoiceFilterInput, $sort: [InvoiceSortInput!], $type: [InvoiceTypeInput!]) {\n  invoices(\n    storeId: $storeId\n    page: $page\n    filter: $filter\n    sort: $sort\n    type: $type\n  ) {\n    ... on InvoiceConnector {\n      __typename\n      totalCount\n      nodes {\n        ...InboundRow\n      }\n    }\n  }\n}\n\nfragment InboundRow on InvoiceNode {\n  id\n  invoiceNumber\n  otherPartyName\n  otherPartyId\n  otherParty(storeId: $storeId) {\n    store {\n      id\n    }\n  }\n  status\n  onHold\n  inboundType\n  colour\n  comment\n  theirReference\n  createdDatetime\n  deliveredDatetime\n  purchaseOrderId\n  requisition {\n    id\n    requisitionNumber\n  }\n  purchaseOrder {\n    id\n    number\n  }\n  pricing {\n    totalAfterTax\n  }\n  lines {\n    totalCount\n  }\n  customFields\n}",
 } as TypedDocument<InboundShipmentsResult, InboundShipmentsVariables>;
 
 export type DeleteInboundShipmentsVariables = {

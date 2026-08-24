@@ -1,6 +1,11 @@
 import { createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
-import { graphqlFetch } from '@/api/graphql';
+import {
+  graphqlFetch,
+  isForbidden,
+  missingPermissions,
+  reportPermissionDenied,
+} from '@/api/graphql';
 import { t, tPlural } from '@/intl';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
@@ -107,6 +112,16 @@ const Body = (props: DeleteCampaignsActionProps & { onClose: () => void }) => {
       { returnGraphqlErrors: true }
     );
     if (result.kind === 'graphqlError') {
+      // Opting in also disables graphqlFetch's Forbidden special-case, so a
+      // permission denial would otherwise read as a delete rejection and prune
+      // the selection. It owes the user the global permission-denied modal
+      // (D38) instead — nothing about the register has changed, so close
+      // without the rejection phase or its prune.
+      if (isForbidden(result.errors)) {
+        reportPermissionDenied(missingPermissions(result.errors));
+        props.onClose();
+        return;
+      }
       // The domain rejection (a selected campaign no longer in the register) —
       // and the delete is atomic, so NOTHING was deleted. The owner re-reads
       // the register behind this dialog's could-not-delete phase; the kept
@@ -139,7 +154,13 @@ const Body = (props: DeleteCampaignsActionProps & { onClose: () => void }) => {
       onClose={close}
       icon={<TrashIcon />}
       testId="confirmation-modal"
-      title={t('heading.are-you-sure')}
+      // The title tracks the phase — a rejection is not a question
+      // (kdd/action-modal).
+      title={
+        phase() === 'error'
+          ? t('heading.cannot-do-that')
+          : t('heading.are-you-sure')
+      }
       description={
         <Show
           when={phase() === 'error'}

@@ -39,6 +39,13 @@ fragment InboundRow on InvoiceNode {
   pricing {
     totalAfterTax
   }
+  # Line count only — the bulk delete's confirmation warns that a received
+  # shipment's stock goes with it, and an EMPTY shipment has no stock to warn
+  # about (rules → deletion). Batched server-side by the invoice-line loader,
+  # so it costs one query for the page.
+  lines {
+    totalCount
+  }
   # Custom-field VALUES (JSON object), scope-filtered — backs the configured
   # custom-field columns on the list.
   customFields
