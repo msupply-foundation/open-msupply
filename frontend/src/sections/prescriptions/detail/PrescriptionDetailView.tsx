@@ -63,6 +63,7 @@ import { storeNameOf } from '../../../auth/authContext';
 import {
   asPrescriptionStatus,
   isReadOnly,
+  isCarrierLine,
   isRenderableLine,
 } from '../prescriptionStatus';
 import {
@@ -199,9 +200,9 @@ const PrescriptionDetailView: Component = () => {
   const status = () => asPrescriptionStatus(info()?.status ?? 'CANCELLED');
   const disabled = () => isReadOnly(status());
 
-  // The rendered rows — carriers never render (AC-Q1), a cancellation
-  // reversal's returned lines do (isRenderableLine); ordered by item then
-  // batch for a stable read.
+  // The rendered rows — dispensed lines, a cancellation reversal's returned
+  // lines, and the prescribed-quantity carrier (isRenderableLine); ordered by
+  // item then batch for a stable read.
   const rows = createMemo((): Line[] =>
     (info()?.lines.nodes ?? [])
       .filter(isRenderableLine)
@@ -485,22 +486,34 @@ const PrescriptionDetailView: Component = () => {
         header: () => t('label.pack-quantity'),
         ...getNumberCell(),
       },
+      // The money columns stay EMPTY on a carrier row: it holds no stock and
+      // no packs, so a price would be a fabricated $0.00 (the current app
+      // blanks them the same way).
       {
         c: {
-          accessor: line => line.sellPricePerPack / (line.packSize || 1),
+          accessor: line =>
+            isCarrierLine(line)
+              ? null
+              : line.sellPricePerPack / (line.packSize || 1),
           id: 'unitPrice',
         },
         header: () => t('label.unit-price'),
         ...getCurrencyCell(),
       },
       {
-        c: { key: 'totalAfterTax' },
+        c: {
+          accessor: line => (isCarrierLine(line) ? null : line.totalAfterTax),
+          id: 'totalAfterTax',
+        },
         header: () => t('label.line-total'),
         ...getCurrencyCell(),
       },
       {
         c: {
-          accessor: line => line.costPricePerPack * line.numberOfPacks,
+          accessor: line =>
+            isCarrierLine(line)
+              ? null
+              : line.costPricePerPack * line.numberOfPacks,
           id: 'costPrice',
         },
         header: () => t('label.purchase-cost-price'),
@@ -701,6 +714,10 @@ const PrescriptionDetailView: Component = () => {
                 columns={columns()}
                 rows={rows()}
                 rowKey={line => line.id}
+                // The carrier is a line awaiting an action — nothing is
+                // dispensed for the item yet (its own cells say so: no batch,
+                // zero packs, a prescribed quantity).
+                rowTone={line => (isCarrierLine(line) ? 'info' : undefined)}
                 loading={data.loading && !info()}
                 onRowClick={openRow}
                 emptyMessage={t('error.no-items')}

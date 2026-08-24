@@ -136,14 +136,32 @@ export const hasDispensedLines = (
 ): boolean => lines.some(line => line.type === 'STOCK_OUT');
 
 /**
- * The lines the detail table renders: what was dispensed, plus what a
- * cancellation reversal returned — the mirror holds the same lines retyped
- * STOCK_IN, and the item ledger's return movement opens that record
- * (OMS-REG-DIS-04.33). Prescribed-quantity carriers (UNALLOCATED_STOCK) never
- * render (AC-Q1).
+ * The prescribed-quantity carrier: the line the server mints to hold an item's
+ * prescribed quantity while nothing is dispensed for it (contract › prescribed
+ * quantity — `UNALLOCATED_STOCK`, `packSize` 0, `numberOfPacks` 0, no stock
+ * line). Absorbed into the dispensed line once stock is allocated.
+ */
+export const isCarrierLine = (line: { type: string }): boolean =>
+  line.type === 'UNALLOCATED_STOCK';
+
+/**
+ * The lines the detail table renders: what was dispensed, what a cancellation
+ * reversal returned — the mirror holds the same lines retyped STOCK_IN, and
+ * the item ledger's return movement opens that record (OMS-REG-DIS-04.33) —
+ * and the prescribed-quantity carrier.
+ *
+ * The carrier renders, as it does in the current app: a
+ * non-dispensable row carrying the item and its prescribed quantity, with no
+ * batch and no prices. It must not be filtered out — recording a prescribed
+ * quantity for an item with no stock then showed the user an EMPTY table, so a
+ * save that worked looked like one that had failed, with nothing on screen to
+ * revisit or delete. "Invisible as a dispensable line" (the reverse-spec's
+ * AC-Q1) means it is not a dispensed batch, not that it is unrendered: the
+ * status guard ignores it (hasDispensedLines) and its quantity/money cells
+ * stay empty.
  */
 export const isRenderableLine = (line: { type: string }): boolean =>
-  line.type === 'STOCK_OUT' || line.type === 'STOCK_IN';
+  line.type === 'STOCK_OUT' || line.type === 'STOCK_IN' || isCarrierLine(line);
 
 /**
  * Zero-quantity rows that a status confirmation warns about and the change
