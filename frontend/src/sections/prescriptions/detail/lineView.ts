@@ -26,9 +26,9 @@ export const issuedUnitsOf = (lines: readonly ViewableLine[]): number =>
 
 /**
  * The prescribed quantity as recorded. It is set-saved across the item's
- * lines, and may sit on a carrier line that never renders as a row
- * (rules § prescribed quantity) — so read it from ANY of the item's lines,
- * not just the ones the batch table shows.
+ * lines, and may sit on a prescribed-quantity placeholder line, which has no
+ * batch of its own (rules § prescribed quantity) — so read it from ANY of the
+ * item's lines, not just the ones the batch table shows.
  */
 export const recordedPrescribedQuantity = (
   lines: readonly ViewableLine[]
@@ -36,7 +36,7 @@ export const recordedPrescribedQuantity = (
   lines.find(line => line.prescribedQuantity != null)?.prescribedQuantity ??
   undefined;
 
-/** The directions as saved — same set-save/carrier reasoning as above. */
+/** The directions as saved — same set-save/placeholder reasoning as above. */
 export const recordedDirections = (
   lines: readonly ViewableLine[]
 ): string | undefined =>

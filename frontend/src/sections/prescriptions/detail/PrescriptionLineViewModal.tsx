@@ -25,7 +25,7 @@ type Line = PrescriptionFieldsFragment['lines']['nodes'][number];
 
 export interface PrescriptionLineViewModalProps {
   /**
-   * EVERY line the prescription holds for the opened item — carriers
+   * EVERY line the prescription holds for the opened item — placeholders
    * included: the prescribed quantity and the directions are set-saved across
    * the item and may sit on a line the batch table never shows (see
    * ./lineView).
@@ -58,7 +58,7 @@ export const PrescriptionLineViewModal: Component<
 
   // The batch rows: what this item was dispensed from. A cancellation
   // reversal's returned lines are its rows, exactly as in the line table
-  // (isRenderableLine) — a bare prescribed-quantity carrier has none, and
+  // (isRenderableLine) — a bare prescribed-quantity placeholder has none, and
   // then the section doesn't render at all.
   const batches = createMemo(() => props.lines.filter(isRenderableLine));
 
