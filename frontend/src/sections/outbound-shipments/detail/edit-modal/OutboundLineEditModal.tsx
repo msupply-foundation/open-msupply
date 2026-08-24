@@ -1441,6 +1441,11 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       // this chip from the CARDS, where the badge cluster is hidden and the
       // chip is the only worded hold indicator left now that the amber tint
       // is gone. Same reasoning as the detail table's Batch column.
+      //
+      // The flag is enough on its own: DataTable resolves a structural column
+      // to VISIBLE whatever the persisted config says, so an `onHold: false`
+      // carried over from when this column WAS hideable cannot strand the chip
+      // (resolveColumnVisibility in columnTypes.ts) — nothing to write here.
       ...getFlagCell(
         t('label.on-hold'),
         { headerPosition: 'badge', hideFromColumnSettings: true },

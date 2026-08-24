@@ -1275,19 +1275,28 @@ tr[data-accent='error'] > :first-child::before {
 }
 
 /* Disabled card (rowState 'disabled') — the card half of table view's grey
-   read-only row: the same muted fill and secondary text, so a record that
-   cannot be edited reads as one in EITHER rendering (a line editor whose grid
-   is cards at every width would otherwise show its barred batches exactly like
-   the editable ones — only the disabled inputs inside them would say so).
-   Placed after the selected rule at equal specificity: a disabled card keeps
-   the grey even while selected, as its row does.
+   read-only row: a muted fill and secondary text, so a record that cannot be
+   edited reads as one in EITHER rendering (a line editor whose grid is cards at
+   every width would otherwise show its barred batches exactly like the editable
+   ones — only the disabled inputs inside them would say so). Placed after the
+   selected rule at equal specificity: a disabled card keeps the grey even while
+   selected, as its row does.
+
+   NOT the row's --bg-toolbar: that grey is a step off the WHITE row surface,
+   and on the recessed card list it lands 5/255 from a normal card in light and
+   3/255 from the LIST in dark, where the card box dissolves into its own list
+   (Aneesh, PR #1207). Cards get their own fill token, fitted to both of a
+   card's neighbours in each theme — see the --table-card-surface-disabled note
+   in tokens.css. This reaches every card list keying rowState off an
+   editability gate (the six list screens, both line editors), which is the
+   point: those same rows are grey in table view.
 
    The fill is the whole treatment. The identity title keeps its own colour
    (.cardPrimary, and any tone on it) rather than being muted here — the same
    bargain table view strikes, where a held or expired row reads in its tone
    THROUGH the disabled muting, because the status is why the row is disabled. */
 .cardRow[data-row-state='disabled'] > .cardCell > .card {
-  background: var(--bg-toolbar);
+  background: var(--table-card-surface-disabled);
   color: var(--text-secondary);
 }
 
