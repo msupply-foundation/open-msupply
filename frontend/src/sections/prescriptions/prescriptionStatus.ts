@@ -170,6 +170,17 @@ export const isRenderableLine = (line: { type: string }): boolean =>
   isPlaceholderLine(line);
 
 /**
+ * The lines that record a batch this item was dispensed FROM — the rows of the
+ * read-only line modal's batch grid. Deliberately NOT isRenderableLine: "renders
+ * as a line-table row" and "was dispensed from a batch" are different questions,
+ * and the prescribed-quantity placeholder answers them differently. It has no
+ * stock line, so as a batch row it would be all but empty; the grid's section
+ * is hidden instead.
+ */
+export const isBatchLine = (line: { type: string }): boolean =>
+  isRenderableLine(line) && !isPlaceholderLine(line);
+
+/**
  * Zero-quantity rows that a status confirmation warns about and the change
  * removes (AC-S5).
  */

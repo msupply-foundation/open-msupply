@@ -503,7 +503,8 @@ const PrescriptionDetailView: Component = () => {
       },
       {
         c: {
-          accessor: line => (isPlaceholderLine(line) ? null : line.totalAfterTax),
+          accessor: line =>
+            isPlaceholderLine(line) ? null : line.totalAfterTax,
           id: 'totalAfterTax',
         },
         header: () => t('label.line-total'),
