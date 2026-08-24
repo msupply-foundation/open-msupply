@@ -185,12 +185,18 @@ pub async fn get_loaders(
         tokio::spawn,
     );
 
+    // Item stats can be plugin-backed and very expensive per batch, and a report resolves stats
+    // on thousands of item nodes whose keys trickle in over time. The default 1ms coalescing
+    // window shatters them into many batches — each a separate plugin run holding a pool
+    // connection (#12689). A wider window collects a report's worth of keys into few batches;
+    // +50ms latency is imperceptible on interactive queries.
     let item_stats_for_item_loader = DataLoader::new(
         ItemsStatsForItemLoader {
             service_provider: service_provider.clone(),
         },
         tokio::spawn,
-    );
+    )
+    .delay(std::time::Duration::from_millis(50));
 
     let requisition_line_supply_status_loader = DataLoader::new(
         RequisitionLineSupplyStatusLoader {
