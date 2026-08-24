@@ -1,4 +1,4 @@
-import { createSignal, Match, Show, Switch } from 'solid-js';
+import { createSignal, For, Match, Show, Switch } from 'solid-js';
 import type { Component } from 'solid-js';
 import {
   graphqlFetch,
@@ -6,7 +6,7 @@ import {
   missingPermissions,
   reportPermissionDenied,
 } from '@/api/graphql';
-import { rejectionFrom } from '@/api/rejection';
+import { rejectionFrom, type Rejection } from '@/api/rejection';
 import { t, tPlural } from '@/intl';
 import { Button } from '@/ui/elements/buttons/Button';
 import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
@@ -68,26 +68,34 @@ const Body = (props: DeleteRnrFormsActionProps & { onClose: () => void }) => {
   const [phase, setPhase] = createSignal<Phase>(
     props.canDelete() ? 'confirm' : 'blocked'
   );
-  // The refusal: the server's own reason where it named one, and the raw text
-  // behind a disclosure where it did not.
-  const [errorMessage, setErrorMessage] = createSignal<string>();
-  const [errorDetail, setErrorDetail] = createSignal<string>();
+  // Each refused form's reason. Deduplicated for the report: N forms refused
+  // for the same cause is one notice, not N identical ones.
+  const [failures, setFailures] = createSignal<Rejection[]>([]);
   const count = props.selectedIds().length;
-  // Whether any form went before a refusal stopped the loop — the report must
-  // not claim nothing happened, and the list must re-read either way. A signal,
-  // because the report's own title reads it.
-  const [didDelete, setDidDelete] = createSignal(false);
+  // How many forms went — the deferred hand-back needs it, and the report both
+  // counts them and titles itself from it.
+  const [deletedCount, setDeletedCount] = createSignal(0);
+
+  const reasons = () => {
+    const seen = new Set<string>();
+    return failures().filter(f => {
+      if (seen.has(f.message)) return false;
+      seen.add(f.message);
+      return true;
+    });
+  };
 
   // Every close path: dismiss FIRST, then hand back — onDeleted clears the
   // selection, which unmounts the selection-gated footer this dialog lives in.
   const finish = () => {
     props.onClose();
-    if (didDelete()) props.onDeleted();
+    if (deletedCount() > 0) props.onDeleted();
   };
 
   const run = async () => {
     if (phase() !== 'confirm') return;
     setPhase('deleting');
+    const failed: Rejection[] = [];
     for (const id of props.selectedIds()) {
       const result = await graphqlFetch(
         DeleteRnrForm,
@@ -122,27 +130,40 @@ const Body = (props: DeleteRnrFormsActionProps & { onClose: () => void }) => {
           finish();
           return;
         }
-        const rejection = rejectionFrom(
-          result.errors,
-          t('messages.cant-delete-this')
+        // A per-form refusal stops that form, not the batch: these are N
+        // independent deletes, so the ones that CAN go, go, and every distinct
+        // reason is reported at the end (the returns lists' shape).
+        failed.push(
+          rejectionFrom(result.errors, t('messages.cant-delete-this'))
         );
-        setErrorMessage(rejection.message);
-        setErrorDetail(rejection.detail);
-        setPhase('error');
-        return;
+        continue;
       }
       if (result.kind !== 'success') {
-        // A genuine transport failure, which raised the global modal on its
-        // own — `returnGraphqlErrors` covers GraphQL errors, not this. While
-        // nothing has gone that modal is the whole story, so drop back to
-        // confirm rather than stacking a second notice under it (the detail
-        // twin's shape). Once forms HAVE gone the report must say so, and
-        // finish() has to re-query a list that is now stale.
-        setPhase(didDelete() ? 'error' : 'confirm');
-        return;
+        // A transport failure is NOT a per-form verdict — the request itself
+        // failed, and `returnGraphqlErrors` does not cover it — so unlike a
+        // refusal it STOPS the batch: the global modal already owns the
+        // description, and every remaining call would most likely fail the same
+        // way, raising one more modal each. Same split as the returns lists.
+        //
+        // Nothing at all has happened yet ⇒ that modal is the whole story, so
+        // drop back to confirm rather than stacking a second notice under it.
+        // Otherwise fall out of the loop: any refusals collected so far are
+        // reported below, and failing that the dialog closes and finish()
+        // re-queries a list that is now stale.
+        if (deletedCount() === 0 && failed.length === 0) {
+          setPhase('confirm');
+          return;
+        }
+        break;
       }
-      setDidDelete(true);
+      setDeletedCount(n => n + 1);
     }
+    if (failed.length > 0) {
+      setFailures(failed);
+      setPhase('error');
+      return;
+    }
+    // Clean sweep: closure is the confirmation — no announcement.
     finish();
   };
 
@@ -162,7 +183,7 @@ const Body = (props: DeleteRnrFormsActionProps & { onClose: () => void }) => {
           ? t('heading.cannot-do-that')
           : phase() !== 'error'
             ? t('heading.are-you-sure')
-            : didDelete()
+            : deletedCount() > 0
               ? t('heading.some-not-deleted')
               : t('heading.cannot-do-that')
       }
@@ -175,19 +196,21 @@ const Body = (props: DeleteRnrFormsActionProps & { onClose: () => void }) => {
           </Match>
           <Match when={phase() === 'error'}>
             <Stack gap="sm">
-              <Show when={didDelete()}>
-                <p>{t('messages.deleted-rnr-forms-before-this')}</p>
+              <Show when={deletedCount() > 0}>
+                <p>{tPlural('messages.deleted-rnr-form', deletedCount())}</p>
               </Show>
-              <Alert severity="error">
-                {/* The transport-failure path reaches this phase with no reason
-                    to give (it only gets here once forms HAVE gone), so it
-                    keeps the fault wording; a refusal replaces it with the
-                    cause. */}
-                {errorMessage() ?? t('error.something-wrong')}
-                <Show when={errorDetail()}>
-                  {detail => <ErrorDetails detail={detail()} />}
-                </Show>
-              </Alert>
+              {/* One notice per distinct reason, so the user reads what the
+                  server actually said rather than a blanket refusal. */}
+              <For each={reasons()}>
+                {reason => (
+                  <Alert severity="error" testId="rnr-form-delete-refused">
+                    {reason.message}
+                    <Show when={reason.detail}>
+                      {detail => <ErrorDetails detail={detail()} />}
+                    </Show>
+                  </Alert>
+                )}
+              </For>
             </Stack>
           </Match>
         </Switch>
