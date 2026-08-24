@@ -63,6 +63,7 @@ import { storeNameOf } from '../../../auth/authContext';
 import {
   asPrescriptionStatus,
   isReadOnly,
+  isPlaceholderLine,
   isRenderableLine,
 } from '../prescriptionStatus';
 import {
@@ -90,7 +91,8 @@ import { EditPatientModal } from '../../patients';
 
 // The prescription detail (spec/prescriptions/ui-surface.md S3): toolbar
 // (patient / clinician / date / program), Details + Log tabs over the flat
-// line table (one row per dispensed line; carriers never render — AC-Q1/V1),
+// line table (a row per dispensed line, plus a prescribed-quantity
+// placeholder row where an item has nothing dispensed — AC-Q1/V1),
 // the side panel, and the status footer. Dispensing happens in the S4 modal
 // (D53). Read-only from VERIFIED: dead affordances are hidden (D39) and a row
 // selection opens S4's read-only face rather than its editor (.73).
@@ -199,9 +201,9 @@ const PrescriptionDetailView: Component = () => {
   const status = () => asPrescriptionStatus(info()?.status ?? 'CANCELLED');
   const disabled = () => isReadOnly(status());
 
-  // The rendered rows — carriers never render (AC-Q1), a cancellation
-  // reversal's returned lines do (isRenderableLine); ordered by item then
-  // batch for a stable read.
+  // The rendered rows — dispensed lines, a cancellation reversal's returned
+  // lines, and the prescribed-quantity placeholder (isRenderableLine);
+  // ordered by item then batch for a stable read.
   const rows = createMemo((): Line[] =>
     (info()?.lines.nodes ?? [])
       .filter(isRenderableLine)
@@ -375,7 +377,7 @@ const PrescriptionDetailView: Component = () => {
   };
 
   // The read-only face reads off the lines already loaded, so it needs only
-  // the item — EVERY line of it, carriers included (the prescribed quantity
+  // the item — EVERY line of it, placeholders included (the prescribed quantity
   // and the directions may sit on one; see ./lineView).
   const viewLines = createMemo((): Line[] => {
     const itemId = viewItemId();
@@ -485,22 +487,35 @@ const PrescriptionDetailView: Component = () => {
         header: () => t('label.pack-quantity'),
         ...getNumberCell(),
       },
+      // The money columns stay EMPTY on a placeholder row: it holds no
+      // stock and no packs, so a price would be a fabricated $0.00 (the
+      // current app blanks them the same way).
       {
         c: {
-          accessor: line => line.sellPricePerPack / (line.packSize || 1),
+          accessor: line =>
+            isPlaceholderLine(line)
+              ? null
+              : line.sellPricePerPack / (line.packSize || 1),
           id: 'unitPrice',
         },
         header: () => t('label.unit-price'),
         ...getCurrencyCell(),
       },
       {
-        c: { key: 'totalAfterTax' },
+        c: {
+          accessor: line =>
+            isPlaceholderLine(line) ? null : line.totalAfterTax,
+          id: 'totalAfterTax',
+        },
         header: () => t('label.line-total'),
         ...getCurrencyCell(),
       },
       {
         c: {
-          accessor: line => line.costPricePerPack * line.numberOfPacks,
+          accessor: line =>
+            isPlaceholderLine(line)
+              ? null
+              : line.costPricePerPack * line.numberOfPacks,
           id: 'costPrice',
         },
         header: () => t('label.purchase-cost-price'),
@@ -701,6 +716,10 @@ const PrescriptionDetailView: Component = () => {
                 columns={columns()}
                 rows={rows()}
                 rowKey={line => line.id}
+                // The placeholder is a line awaiting an action — nothing is
+                // dispensed for the item yet (its own cells say so: no batch,
+                // zero packs, a prescribed quantity).
+                rowTone={line => (isPlaceholderLine(line) ? 'info' : undefined)}
                 loading={data.loading && !info()}
                 onRowClick={openRow}
                 emptyMessage={t('error.no-items')}

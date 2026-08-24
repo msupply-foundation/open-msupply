@@ -13,7 +13,7 @@ import { FormSection } from '@/ui/layout/Form/FormSection';
 import { LabelledValue } from '@/ui/elements/typography/LabelledValue';
 import { Text } from '@/ui/elements/typography/Text';
 import { prescriptionPreferences } from '@/store/storeContext';
-import { isRenderableLine } from '../prescriptionStatus';
+import { isBatchLine } from '../prescriptionStatus';
 import type { PrescriptionFieldsFragment } from './prescriptionDetail.generated';
 import {
   issuedUnitsOf,
@@ -25,7 +25,7 @@ type Line = PrescriptionFieldsFragment['lines']['nodes'][number];
 
 export interface PrescriptionLineViewModalProps {
   /**
-   * EVERY line the prescription holds for the opened item — carriers
+   * EVERY line the prescription holds for the opened item — placeholders
    * included: the prescribed quantity and the directions are set-saved across
    * the item and may sit on a line the batch table never shows (see
    * ./lineView).
@@ -57,10 +57,11 @@ export const PrescriptionLineViewModal: Component<
   const item = () => first()?.item;
 
   // The batch rows: what this item was dispensed from. A cancellation
-  // reversal's returned lines are its rows, exactly as in the line table
-  // (isRenderableLine) — a bare prescribed-quantity carrier has none, and
-  // then the section doesn't render at all.
-  const batches = createMemo(() => props.lines.filter(isRenderableLine));
+  // reversal's returned lines are its rows, as in the line table — but the
+  // prescribed-quantity placeholder is NOT one (isBatchLine, not
+  // isRenderableLine): it has no stock line, so an item with only a
+  // placeholder has no batches and the section doesn't render at all.
+  const batches = createMemo(() => props.lines.filter(isBatchLine));
 
   const unitName = () => item()?.unitName ?? t('label.unit');
   const dosesPerUnit = () => Math.max(item()?.doses ?? 1, 1);
