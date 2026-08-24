@@ -3,7 +3,10 @@ import {
   localTodayIso,
   utcToLocalDay,
 } from '../../../ui/elements/inputs/dateTimeConvert';
-import { prescriptionDateInstant } from './prescriptionUpdate';
+import {
+  newPrescriptionDate,
+  prescriptionDateInstant,
+} from './prescriptionUpdate';
 
 // The write-side date conversion for the prescription date (#456). A PAST day
 // is widened to its inclusive end-of-day instant, exactly as the reference
@@ -72,5 +75,24 @@ describe('prescriptionDateInstant', () => {
     expect(utcToLocalDay(prescriptionDateInstant(localTodayIso()))).toBe(
       localTodayIso()
     );
+  });
+});
+
+// The CREATE side of the same rule (#1215 review). Editing must always send a
+// date — omitting it leaves the stored one untouched — but creation must send
+// NOTHING for today: any non-null `backdatedDatetime` pins the new prescription
+// to that instant, and the item editor then offers historical stock, dropping
+// batches that had no availability then. Stock received after the prescription
+// was created would be undispensable on it.
+describe('newPrescriptionDate', () => {
+  it('sends NOTHING for today — today means "not backdated"', () => {
+    expect(newPrescriptionDate(localTodayIso())).toBeUndefined();
+  });
+
+  it('sends the end-of-day instant for an EARLIER day, as the edit path does', () => {
+    expect(newPrescriptionDate('2026-07-15')).toBe(
+      prescriptionDateInstant('2026-07-15')
+    );
+    expect(newPrescriptionDate('2026-07-15')).toBe(localDayEnd('2026-07-15'));
   });
 });
