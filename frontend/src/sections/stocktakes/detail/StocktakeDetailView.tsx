@@ -81,6 +81,7 @@ import {
   initialPageSize,
   rememberPageSize,
 } from '@/list/pageSize';
+import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
 import { stripEmpty } from '@/typeHelpers';
 import { stocktakePreferences } from '@/store/storeContext';
 import { dosesCounted, dosesPerUnit } from './lines/doses';
@@ -389,6 +390,16 @@ const StocktakeDetailView: Component = () => {
     }
   );
   const locations = (): LocationWithVolume[] => locationsData.latest ?? [];
+
+  // Finalise trims every uncounted line server-side, so the total can collapse
+  // far below the page the user is on; a bulk delete does the same
+  // (src/list/clampPageOffset.ts, issue #1117).
+  clampPageOffset({
+    total: () => settledTotal(linesData, page => page.totalCount),
+    offset: () => query().offset,
+    pageSize: () => query().first,
+    setOffset: offset => setQuery({ ...query(), offset }),
+  });
 
   // Refetch the current lines page after a save. Only the lines page: a line
   // save changes the count/line rows, never the location capacities (see
