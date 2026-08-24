@@ -204,7 +204,93 @@ impl StaticFileService {
         std::fs::metadata(path).map(|m| m.len()).unwrap_or(0)
     }
 
-    fn partial_path(&self, sync_file: &SyncFileReferenceRow) -> anyhow::Result<PathBuf> {
+    /// Settle a partial download that central answered `416 Range Not Satisfiable` to.
+    ///
+    /// A resume request is unsatisfiable when its start is at or past the end of the
+    /// file, which means the partial we hoped to continue is not shorter than the file
+    /// itself. Two very different situations produce that, and central's answer
+    /// distinguishes them: `NamedFile` sends `Content-Range: bytes */<length>` with a
+    /// 416, and that length is the file's true size — better evidence than the
+    /// reference's own `total_bytes`, which may be stale, zero, or wrong.
+    ///
+    /// - Exactly as long as the bytes we hold: the download had in fact finished and only
+    ///   the rename didn't happen, because the process died in that window. There is
+    ///   nothing left to fetch, so the partial is promoted and the file is done. Trusting
+    ///   those bytes is no new leap: every resumed download already appends to a partial
+    ///   it never re-verified, and a bundle's sha256 is checked before it is activated.
+    /// - Anything else, or no usable header: the bytes we hold cannot be a prefix of the
+    ///   file, so they are discarded and the next attempt starts from zero.
+    ///
+    /// Either way the caller stops asking for the same unsatisfiable range, which is what
+    /// would otherwise repeat until the row gave up permanently.
+    pub fn resolve_unsatisfiable_range(
+        &self,
+        sync_file: &SyncFileReferenceRow,
+        response: &Response,
+    ) -> anyhow::Result<(StaticFile, u64)> {
+        let held = self.partial_download_offset(sync_file);
+        let complete_length = response
+            .headers()
+            .get(reqwest::header::CONTENT_RANGE)
+            .and_then(|value| value.to_str().ok())
+            .and_then(|value| value.rsplit('/').next()?.trim().parse::<u64>().ok());
+
+        if held > 0 && complete_length == Some(held) {
+            log::info!(
+                "Sync file {} was already fully downloaded ({held} bytes); completing it without re-fetching",
+                sync_file.id
+            );
+            return self.promote_partial_download(sync_file);
+        }
+
+        log::warn!(
+            "Central cannot resume sync file {} from byte {} (it holds {:?} bytes); discarding the partial download",
+            sync_file.id,
+            held,
+            complete_length
+        );
+        self.discard_partial_download(sync_file);
+
+        Err(anyhow::anyhow!(
+            "Central cannot resume sync file {} from byte {}; discarded the partial download",
+            sync_file.id,
+            held
+        ))
+    }
+
+    /// Rename a complete partial into place under its final name, making it findable, and
+    /// report its size. The tail of a successful download, and the recovery for one that
+    /// turned out to have finished before a crash.
+    fn promote_partial_download(
+        &self,
+        sync_file: &SyncFileReferenceRow,
+    ) -> anyhow::Result<(StaticFile, u64)> {
+        let category =
+            StaticFileCategory::SyncFile(sync_file.table_name.clone(), sync_file.record_id.clone());
+        let file =
+            self.reserve_file(&sync_file.file_name, &category, Some(sync_file.id.clone()))?;
+        let partial_path = self.partial_path(sync_file)?;
+
+        let total_bytes = std::fs::metadata(&partial_path)
+            .map(|m| m.len())
+            .unwrap_or(0);
+
+        // Same directory, so the rename is atomic.
+        std::fs::rename(&partial_path, PathBuf::from(&file.path))?;
+
+        Ok((
+            StaticFile {
+                id: sync_file.id.clone(),
+                name: sync_file.file_name.clone(),
+                path: file.path.to_string(),
+            },
+            total_bytes,
+        ))
+    }
+
+    /// `pub(crate)` so the transports' tests can plant a partial file; the download path
+    /// itself only ever reaches it through the helpers above.
+    pub(crate) fn partial_path(&self, sync_file: &SyncFileReferenceRow) -> anyhow::Result<PathBuf> {
         let category =
             StaticFileCategory::SyncFile(sync_file.table_name.clone(), sync_file.record_id.clone());
         let file =
@@ -243,12 +329,7 @@ impl StaticFileService {
         mut download_response: Response,
         resume_from: u64,
     ) -> anyhow::Result<(StaticFile, u64)> {
-        let category =
-            StaticFileCategory::SyncFile(sync_file.table_name.clone(), sync_file.record_id.clone());
-
-        let file =
-            self.reserve_file(&sync_file.file_name, &category, Some(sync_file.id.clone()))?;
-        let final_path = PathBuf::from(&file.path);
+        // Also creates the category directory, which the partial file needs.
         let partial_path = self.partial_path(sync_file)?;
 
         // Central honours `Range` (its handler serves the file through actix's
@@ -283,21 +364,7 @@ impl StaticFileService {
         // the whole point, and a stale partial is invisible to lookups.
         download.await?;
 
-        let total_bytes = std::fs::metadata(&partial_path)
-            .map(|m| m.len())
-            .unwrap_or(0);
-
-        // Same directory, so the rename is atomic.
-        std::fs::rename(&partial_path, &final_path)?;
-
-        Ok((
-            StaticFile {
-                id: sync_file.id.clone(),
-                name: sync_file.file_name.clone(),
-                path: file.path.to_string(),
-            },
-            total_bytes,
-        ))
+        self.promote_partial_download(sync_file)
     }
 
     /// Discard a part-downloaded file so the next attempt starts from zero. For when a
@@ -681,6 +748,49 @@ mod test {
         // Used when the assembled bytes fail their checksum: resuming from a corrupt
         // partial would fail forever.
         service.discard_partial_download(&sync_file);
+        assert_eq!(service.partial_download_offset(&sync_file), 0);
+    }
+
+    /// Promotion is the tail of a successful download and the recovery for one that had
+    /// already finished, so it has to leave the file exactly as a normal download would:
+    /// findable under its final name, with no partial behind it.
+    #[actix_rt::test]
+    async fn promoting_a_partial_leaves_a_normal_completed_file() {
+        use repository::sync_file_reference_row::SyncFileReferenceRow;
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let mut service = StaticFileService::new(".").unwrap();
+        service.dir = temp_dir.path().to_path_buf();
+
+        let sync_file = SyncFileReferenceRow {
+            id: "promotable".to_string(),
+            table_name: "frontend_bundle".to_string(),
+            record_id: "bundle4".to_string(),
+            file_name: "frontend-dist.zip".to_string(),
+            total_bytes: 7,
+            ..Default::default()
+        };
+        let category =
+            StaticFileCategory::SyncFile(sync_file.table_name.clone(), sync_file.record_id.clone());
+
+        let partial_path = service.partial_path(&sync_file).unwrap();
+        fs::create_dir_all(partial_path.parent().unwrap()).unwrap();
+        fs::write(&partial_path, "hello!!").unwrap();
+
+        // Invisible to lookups while it is still a partial.
+        assert!(service
+            .find_file(&sync_file.id, category.clone())
+            .unwrap()
+            .is_none());
+
+        let (file, bytes) = service.promote_partial_download(&sync_file).unwrap();
+
+        assert_eq!(bytes, 7);
+        assert_eq!(fs::read_to_string(&file.path).unwrap(), "hello!!");
+        assert!(service
+            .find_file(&sync_file.id, category)
+            .unwrap()
+            .is_some());
         assert_eq!(service.partial_download_offset(&sync_file), 0);
     }
 }

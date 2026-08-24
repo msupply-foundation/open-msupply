@@ -72,6 +72,16 @@ impl SyncApiV7 {
             }
         };
 
+        // Central won't serve from the offset we asked for. Either we already hold the
+        // whole file and only the rename was missed, or the partial is unusable — see
+        // `resolve_unsatisfiable_range`. Both beat asking for the same range forever.
+        if response.status() == reqwest::StatusCode::RANGE_NOT_SATISFIABLE {
+            return static_file_service
+                .resolve_unsatisfiable_range(sync_file, &response)
+                .map(|(file, _bytes)| file)
+                .map_err(|e| SyncError::Other(format!("{e:#}")));
+        }
+
         if !response.status().is_success() {
             let response_text = response
                 .text()
