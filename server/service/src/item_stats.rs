@@ -10,6 +10,7 @@ use crate::{
     store_preference::get_store_preferences,
     PluginOrRepositoryError,
 };
+use crate::boajs::context::with_shared_connection;
 use chrono::{Duration, NaiveDate};
 use repository::{
     ConsumptionFilter, ConsumptionRepository, DateFilter, DaysOutOfStockFilter,
@@ -50,7 +51,35 @@ pub trait ItemStatsServiceTrait: Sync + Send {
 pub struct ItemStatsService {}
 impl ItemStatsServiceTrait for ItemStatsService {}
 
+/// Whether item-stats computations will invoke a backend plugin (a full JS engine run plus the
+/// plugin's own SQL). Used by callers that fan out many computations (the graphql dataloader) to
+/// decide whether to throttle — see `ItemsStatsForItemLoader`.
+pub fn item_stats_uses_plugin() -> bool {
+    PluginInstance::get_one(PluginType::GetConsumption).is_some()
+        || PluginInstance::get_one(PluginType::AverageMonthlyConsumption).is_some()
+}
+
 pub fn get_item_stats(
+    connection: &StorageConnection,
+    store_id: &str,
+    amc_lookback_months: Option<f64>,
+    item_ids: Vec<String>,
+    period_end: Option<NaiveDate>,
+) -> Result<Vec<ItemStats>, PluginOrRepositoryError> {
+    // Lend `connection` to the plugin's sql()/use_repository() bindings so a plugin run reuses
+    // it instead of checking out a second pool connection while this one is pinned (#12689).
+    with_shared_connection(connection, || {
+        get_item_stats_inner(
+            connection,
+            store_id,
+            amc_lookback_months,
+            item_ids,
+            period_end,
+        )
+    })
+}
+
+fn get_item_stats_inner(
     connection: &StorageConnection,
     store_id: &str,
     amc_lookback_months: Option<f64>,
