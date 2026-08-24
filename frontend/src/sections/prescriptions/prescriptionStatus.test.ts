@@ -5,6 +5,7 @@ import {
   canDeletePrescription,
   hasDispensedLines,
   isReadOnly,
+  isBatchLine,
   isPlaceholderLine,
   isRenderableLine,
   nextStatuses,
@@ -93,6 +94,21 @@ describe('isRenderableLine (.25 / .33 — placeholders in, returns in)', () => {
   // the ledger-reached mirror showing nothing (the reported defect).
   it('renders a cancellation reversal returned lines', () => {
     expect(isRenderableLine({ type: 'STOCK_IN' })).toBe(true);
+  });
+});
+
+describe('isBatchLine (the read-only modal batch grid)', () => {
+  it('counts dispensed lines and a reversal returned lines as batches', () => {
+    expect(isBatchLine({ type: 'STOCK_OUT' })).toBe(true);
+    expect(isBatchLine({ type: 'STOCK_IN' })).toBe(true);
+  });
+
+  // The placeholder renders as a LINE-TABLE row but is not a batch: it has no
+  // stock line, so reusing isRenderableLine here gave an item with only a
+  // placeholder a Batches table holding one all-but-empty row.
+  it('excludes the prescribed-quantity placeholder', () => {
+    expect(isBatchLine({ type: 'UNALLOCATED_STOCK' })).toBe(false);
+    expect([{ type: 'UNALLOCATED_STOCK' }].filter(isBatchLine)).toHaveLength(0);
   });
 });
 
