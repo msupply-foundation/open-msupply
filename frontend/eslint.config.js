@@ -56,6 +56,12 @@ const anchorDownloadRestriction = {
   selector: 'AssignmentExpression[left.property.name="download"]',
   message: downloadIdiomMessage,
 };
+// The JSX form of the same idiom — <a download={…}> needs no object URL, so
+// the property ban alone would not catch it.
+const jsxDownloadRestriction = {
+  selector: 'JSXAttribute[name.name="download"]',
+  message: downloadIdiomMessage,
+};
 
 const sharedRules = {
   '@typescript-eslint/no-unused-vars': [
@@ -137,7 +143,7 @@ export default tseslint.config(
         cryptoRandomUuidRestriction,
         createObjectUrlRestriction,
       ],
-      'no-restricted-syntax': ['error', anchorDownloadRestriction],
+      'no-restricted-syntax': ['error', anchorDownloadRestriction, jsxDownloadRestriction],
     },
   },
 
@@ -180,7 +186,7 @@ export default tseslint.config(
       // Same Android WebView, same dead click (#1169) — a plugin needing to
       // hand the user a file is an SDK gap, not a hand-rolled download.
       'no-restricted-properties': ['error', createObjectUrlRestriction],
-      'no-restricted-syntax': ['error', anchorDownloadRestriction],
+      'no-restricted-syntax': ['error', anchorDownloadRestriction, jsxDownloadRestriction],
       /*
        * The `@/` alias is already unresolvable here (tsconfig.plugins.json and
        * the plugin build preset both omit it), but a RELATIVE reach —

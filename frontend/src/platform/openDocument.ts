@@ -15,7 +15,7 @@ import { t } from '../intl';
 //   OS viewer, falling back to the share sheet.
 // - saveBlob(blob, fileName): keep a file the app already holds. Web: a plain
 //   browser download. Android: the OS save-location picker (SAF, via our own
-//   SaveFile shell plugin) — the user picks Downloads/Drive/SD card.
+//   FileTransfer shell plugin) — the user picks Downloads/Drive/SD card.
 // - saveDocument(url, fileName): keep a server-stored file addressed by URL —
 //   openDocument's "keep this" counterpart. Web: fetched and downloaded.
 //   Android: the SAF picker, then the shell streams server → the picked URI.
@@ -38,8 +38,8 @@ import { t } from '../intl';
 //    re-serializes the message JSON on the Java heap, so a 40MB document
 //    became a 75MB StringBuilder allocation: OutOfMemoryError, app killed.
 //  So: URL-addressed files move NATIVELY — server → cache file for viewing
-//  (DownloadFile plugin), server → the picked SAF URI for saving
-//  (SaveFile.saveFromUrl) — and the bytes never enter JS; blobs the app
+//  (FileTransfer.download), server → the picked SAF URI for saving
+//  (FileTransfer.saveFromUrl) — and the bytes never enter JS; blobs the app
 //  already holds are staged to a cache file in bounded chunks. Plugin calls
 //  carry URLs and file URIs, never payloads.
 
@@ -212,11 +212,14 @@ const openBlobAndroid = async (
   blob: Blob,
   fileName: string
 ): Promise<OpenDocumentResult> => {
+  const staged = sanitizeFileName(fileName);
   try {
-    const staged = sanitizeFileName(fileName);
     const uri = await stageBlobInCache(blob, staged);
-    return openCachedAndroid(uri, fileName, mimeOf(blob.type || null));
+    return await openCachedAndroid(uri, fileName, mimeOf(blob.type || null));
   } catch (e) {
+    // A mid-stage failure leaves partial chunks — clean them up. (A file
+    // successfully handed to the viewer is deliberately NOT deleted.)
+    deleteCached(staged);
     return { ok: false, message: e instanceof Error ? e.message : String(e) };
   }
 };
@@ -286,8 +289,10 @@ export const saveBlob = async (
     const plugin = await getFileTransfer();
     const { generateUUID } = await import('../uuid');
     const staged = `save-${generateUUID()}`;
-    const srcUri = await stageBlobInCache(blob, staged);
+    // Staging inside the try so a mid-blob failure still cleans up its
+    // partial chunks.
     try {
+      const srcUri = await stageBlobInCache(blob, staged);
       const { saved } = await plugin.save({
         srcUri,
         fileName: sanitizeFileName(fileName),
@@ -384,7 +389,7 @@ const printViaHiddenFrame = (html: string): void => {
 };
 
 // Our own custom Capacitor plugin (android/.../PrintPlugin.java, registered in
-// MainActivity), the print counterpart to SaveFilePlugin: hands HTML to
+// MainActivity), the print counterpart to FileTransferPlugin: hands HTML to
 // Android's PrintManager. The server can't render PDFs on a tablet — it drives
 // headless Chrome, and there is no Chrome executable to launch — so printing on
 // Android MUST go through the OS rather than a generated PDF (spec/reports
