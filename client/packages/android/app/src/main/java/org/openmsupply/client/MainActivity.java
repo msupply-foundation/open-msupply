@@ -31,7 +31,7 @@ public class MainActivity extends BridgeActivity {
         // embedded server, so each plugin's name must ALSO be listed in
         // ExtendedWebViewClient.generatePluginScript() or the JS proxy has no
         // header to dispatch through.
-        registerPlugin(SaveFilePlugin.class);
+        registerPlugin(FileTransferPlugin.class);
         registerPlugin(PrintPlugin.class);
         registerPlugin(ReadLogPlugin.class);
         super.onCreate(savedInstanceState);
