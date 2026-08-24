@@ -147,7 +147,9 @@ pub fn validate(
             Ok(_) => {}
             Err(e) => match e {
                 OtherPartyErrors::OtherPartyDoesNotExist => return Err(ManufacturerDoesNotExist),
-                OtherPartyErrors::OtherPartyNotVisible => return Err(ManufacturerNotVisible),
+                // Invisible manufacturers are allowed - they can be configured centrally (e.g. on
+                // an item variant) or inherited from stock without being visible in this store
+                OtherPartyErrors::OtherPartyNotVisible => {}
                 OtherPartyErrors::TypeMismatched => return Err(ManufacturerIsNotAManufacturer),
                 OtherPartyErrors::DatabaseError(repository_error) => {
                     return Err(DatabaseError(repository_error))

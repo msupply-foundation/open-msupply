@@ -138,7 +138,6 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::CampaignDoesNotExist
         | ServiceError::ProgramDoesNotExist
         | ServiceError::ManufacturerDoesNotExist
-        | ServiceError::ManufacturerNotVisible
         | ServiceError::ManufacturerIsNotAManufacturer
         | ServiceError::VvmStatusDoesNotExist
         | ServiceError::ItemDoesNotExist => BadUserInput(formatted_error),
