@@ -13,6 +13,7 @@ import { Alert } from '../../ui/elements/feedback/Alert';
 import { Button } from '../../ui/elements/buttons/Button';
 import { CancelButton } from '../../ui/elements/buttons/StandardButtons';
 import { ErrorDetails } from '../../ui/elements/feedback/ErrorDetails';
+import { Stack } from '../../ui/layout/Stack/Stack';
 import { TrashIcon } from '../../ui/icons';
 
 /**
@@ -183,7 +184,7 @@ const Body = (props: DeleteReturnsActionProps & { onClose: () => void }) => {
       description={
         <Switch
           fallback={
-            <>
+            <Stack gap="sm">
               {tPlural('messages.confirm-delete-returns', count)}
               {/* Stock moving — informational, so the confirm still submits
                   (validation.md § actions). */}
@@ -194,25 +195,25 @@ const Body = (props: DeleteReturnsActionProps & { onClose: () => void }) => {
                   </Alert>
                 )}
               </Show>
-            </>
+            </Stack>
           }
         >
           <Match when={phase() === 'error'}>
-            <Show when={deletedCount() > 0}>
-              <p>{tPlural('messages.deleted-returns', deletedCount())}</p>
-            </Show>
-            {/* One notice per distinct reason, so the user reads what the
-                server actually said rather than a blanket refusal. */}
-            <For each={reasons()}>
-              {reason => (
-                <Alert severity="error" testId="return-delete-refused">
-                  {reason.message}
-                  <Show when={reason.detail}>
-                    {detail => <ErrorDetails detail={detail()} />}
-                  </Show>
-                </Alert>
-              )}
-            </For>
+            <Stack gap="sm">
+              <Show when={deletedCount() > 0}>
+                <p>{tPlural('messages.deleted-returns', deletedCount())}</p>
+              </Show>
+              <For each={reasons()}>
+                {reason => (
+                  <Alert severity="error" testId="return-delete-refused">
+                    {reason.message}
+                    <Show when={reason.detail}>
+                      {detail => <ErrorDetails detail={detail()} />}
+                    </Show>
+                  </Alert>
+                )}
+              </For>
+            </Stack>
           </Match>
         </Switch>
       }

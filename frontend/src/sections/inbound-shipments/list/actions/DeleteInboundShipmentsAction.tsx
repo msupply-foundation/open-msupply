@@ -11,6 +11,7 @@ import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { ErrorDetails } from '../../../../ui/elements/feedback/ErrorDetails';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
+import { Stack } from '../../../../ui/layout/Stack/Stack';
 import { TrashIcon } from '../../../../ui/icons';
 import { DeleteInboundShipments } from '../inboundShipments.generated';
 import { deleteRejection } from '@/domain/invoice';
@@ -156,7 +157,7 @@ const Body = (
       description={
         <Switch
           fallback={
-            <>
+            <Stack gap="sm">
               {tPlural('messages.confirm-delete-shipments', count)}
               {/* Receipt reversal — informational, so the confirm still
                   submits (validation.md § actions). */}
@@ -165,7 +166,7 @@ const Body = (
                   {t('messages.delete-removes-received-stock')}
                 </Alert>
               </Show>
-            </>
+            </Stack>
           }
         >
           <Match when={phase() === 'error'}>

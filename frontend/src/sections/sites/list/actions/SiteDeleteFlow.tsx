@@ -6,6 +6,7 @@ import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { Button } from '@/ui/elements/buttons/Button';
 import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
+import { Stack } from '@/ui/layout/Stack/Stack';
 import { TrashIcon } from '@/ui/icons';
 import { DeleteSite } from '../sites.generated';
 import {
@@ -141,7 +142,7 @@ export const SiteDeleteFlow: Component<SiteDeleteFlowProps> = props => {
         >
           <Match when={report()}>
             {summary => (
-              <>
+              <Stack gap="sm">
                 <Show when={summary().deletedCount > 0}>
                   <p>
                     {tPlural('messages.deleted-sites', summary().deletedCount)}
@@ -156,7 +157,7 @@ export const SiteDeleteFlow: Component<SiteDeleteFlowProps> = props => {
                     </Alert>
                   )}
                 </For>
-              </>
+              </Stack>
             )}
           </Match>
         </Switch>
