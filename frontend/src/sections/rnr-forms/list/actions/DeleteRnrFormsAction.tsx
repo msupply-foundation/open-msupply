@@ -6,6 +6,7 @@ import {
   missingPermissions,
   reportPermissionDenied,
 } from '@/api/graphql';
+import { rejectionFrom } from '@/api/rejection';
 import { t, tPlural } from '@/intl';
 import { Button } from '@/ui/elements/buttons/Button';
 import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
@@ -66,7 +67,9 @@ const Body = (props: DeleteRnrFormsActionProps & { onClose: () => void }) => {
   const [phase, setPhase] = createSignal<Phase>(
     props.canDelete() ? 'confirm' : 'blocked'
   );
-  // The server's own text, behind a disclosure — a refusal arrives untyped.
+  // The refusal: the server's own reason where it named one, and the raw text
+  // behind a disclosure where it did not.
+  const [errorMessage, setErrorMessage] = createSignal<string>();
   const [errorDetail, setErrorDetail] = createSignal<string>();
   const count = props.selectedIds().length;
   // Whether any form went before a refusal stopped the loop — the report must
@@ -97,6 +100,15 @@ const Body = (props: DeleteRnrFormsActionProps & { onClose: () => void }) => {
         // dialog's error phase (D21); left to the default it also tripped the
         // global unexpected-error (reload) modal, stacking two surfaces on one
         // refusal (the fix already applied to the detail twin).
+        //
+        // The reason is readable: the service maps its refusals through
+        // `format!("{error:#?}")` into extensions.details, and all three are
+        // unit variants — CannotEditRnRForm, RnRFormDoesNotExist,
+        // NotThisStoreRnRForm (server graphql/programs →
+        // mutations/rnr_form/delete.rs `map_error`) — so rejectionFrom names
+        // the actual cause. Worth more here than on the detail twin: the form
+        // that refused is one of a selection, and "this form is finalised" is
+        // the only thing that identifies which.
         { returnGraphqlErrors: true }
       );
       if (result.kind === 'graphqlError') {
@@ -109,7 +121,12 @@ const Body = (props: DeleteRnrFormsActionProps & { onClose: () => void }) => {
           finish();
           return;
         }
-        setErrorDetail(result.message);
+        const rejection = rejectionFrom(
+          result.errors,
+          t('messages.cant-delete-this')
+        );
+        setErrorMessage(rejection.message);
+        setErrorDetail(rejection.detail);
         setPhase('error');
         return;
       }
@@ -160,7 +177,10 @@ const Body = (props: DeleteRnrFormsActionProps & { onClose: () => void }) => {
               <p>{t('messages.deleted-rnr-forms-before-this')}</p>
             </Show>
             <Alert severity="error">
-              {t('error.something-wrong')}
+              {/* The transport-failure path reaches this phase with no reason
+                  to give (it only gets here once forms HAVE gone), so it keeps
+                  the fault wording; a refusal replaces it with the cause. */}
+              {errorMessage() ?? t('error.something-wrong')}
               <Show when={errorDetail()}>
                 {detail => <ErrorDetails detail={detail()} />}
               </Show>

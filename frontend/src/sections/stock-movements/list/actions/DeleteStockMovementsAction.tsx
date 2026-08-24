@@ -6,6 +6,7 @@ import {
   missingPermissions,
   reportPermissionDenied,
 } from '@/api/graphql';
+import { rejectionFrom } from '@/api/rejection';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { ErrorDetails } from '@/ui/elements/feedback/ErrorDetails';
@@ -27,14 +28,18 @@ export interface DeleteStockMovementsActionProps {
 // any rejection refuses the whole delete as a single untyped top-level error
 // (rules § deletion / OMS-REG-SMV-10.28/.30), selection kept.
 //
-// Because it is untyped there is nothing to branch on, so the error phase does
-// NOT name a cause: it states the refusal generically and puts the server's own
-// text behind a disclosure — naming the finalised case for every rejection that
-// lands here reported a reason that was not the user's. Permission denials are
-// separated out first: those owe the user the global permission-denied modal
-// (D38), which opting into GraphQL errors would otherwise swallow. Success
-// closes the dialog — closure is the confirmation (D21). Mirrors the
-// stock-movement detail view's own line delete.
+// Untyped is not unreadable: the server writes the service-error variant into
+// extensions.details, and every refusal this mutation raises is a unit variant
+// — RelocationAlreadyFinalised, RelocationDoesNotExist, NotThisStoreRelocation
+// (server graphql/stock_relocation → mutations/delete.rs `map_error`) — so
+// rejectionFrom translates the actual cause. It names the finalised case ONLY
+// when that is the case; hard-coding it reported a reason that was not the
+// user's, and a blanket refusal reported none at all. Anything unrecognised
+// falls back to the generic refusal with the server's text behind a
+// disclosure. Permission denials are separated out first: those owe the user
+// the global permission-denied modal (D38), which opting into GraphQL errors
+// would otherwise swallow. Success closes the dialog — closure is the
+// confirmation (D21). Mirrors the stock-movement detail view's own line delete.
 type Phase = 'confirm' | 'deleting' | 'error';
 
 export const DeleteStockMovementsAction: Component<
@@ -62,7 +67,9 @@ const Body = (
   props: DeleteStockMovementsActionProps & { onClose: () => void }
 ) => {
   const [phase, setPhase] = createSignal<Phase>('confirm');
-  // The server's own text, behind a disclosure — the refusal arrives untyped.
+  // The refusal: the server's own reason where it named one, and the raw text
+  // behind a disclosure where it did not.
+  const [errorMessage, setErrorMessage] = createSignal<string>();
   const [errorDetail, setErrorDetail] = createSignal<string>();
   const count = props.selectedIds().length;
 
@@ -85,7 +92,12 @@ const Body = (
         props.onClose();
         return;
       }
-      setErrorDetail(result.message);
+      const rejection = rejectionFrom(
+        result.errors,
+        t('messages.cant-delete-generic')
+      );
+      setErrorMessage(rejection.message);
+      setErrorDetail(rejection.detail);
       setPhase('error');
       return;
     }
@@ -117,7 +129,7 @@ const Body = (
           fallback={tPlural('messages.confirm-delete-stock-movements', count)}
         >
           <Alert severity="error">
-            {t('messages.cant-delete-generic')}
+            {errorMessage()}
             <Show when={errorDetail()}>
               {detail => <ErrorDetails detail={detail()} />}
             </Show>

@@ -6,6 +6,7 @@ import {
   missingPermissions,
   reportPermissionDenied,
 } from '@/api/graphql';
+import { rejectionFrom } from '@/api/rejection';
 import { t } from '@/intl';
 import { Button } from '@/ui/elements/buttons/Button';
 import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
@@ -33,7 +34,9 @@ export const DeleteRnrFormAction: Component<{
 }> = props => {
   const [open, setOpen] = createSignal(false);
   const [phase, setPhase] = createSignal<Phase>('confirm');
-  // The server's own text, behind a disclosure — the refusal arrives untyped.
+  // The refusal: the server's own reason where it named one, and the raw text
+  // behind a disclosure where it did not.
+  const [errorMessage, setErrorMessage] = createSignal<string>();
   const [errorDetail, setErrorDetail] = createSignal<string>();
 
   const close = () => {
@@ -57,6 +60,14 @@ export const DeleteRnrFormAction: Component<{
       // error phase (D21). Left to the default it tripped the global
       // unexpected-error (reload) modal as well, stacking two surfaces on one
       // refusal — the only record delete that did.
+      //
+      // The reason is readable: the service maps its refusals through
+      // `format!("{error:#?}")` into extensions.details, and all three are unit
+      // variants — CannotEditRnRForm, RnRFormDoesNotExist, NotThisStoreRnRForm
+      // (server graphql/programs → mutations/rnr_form/delete.rs `map_error`) —
+      // so rejectionFrom translates the actual cause instead of "Something went
+      // wrong" over a disclosure the user has to open to learn the form was
+      // finalised.
       { returnGraphqlErrors: true }
     );
     if (result.kind === 'graphqlError') {
@@ -68,7 +79,12 @@ export const DeleteRnrFormAction: Component<{
         setOpen(false);
         return;
       }
-      setErrorDetail(result.message);
+      const rejection = rejectionFrom(
+        result.errors,
+        t('messages.cant-delete-this')
+      );
+      setErrorMessage(rejection.message);
+      setErrorDetail(rejection.detail);
       setPhase('error');
       return;
     }
@@ -116,7 +132,7 @@ export const DeleteRnrFormAction: Component<{
               })}
             >
               <Alert severity="error">
-                {t('error.something-wrong')}
+                {errorMessage()}
                 <Show when={errorDetail()}>
                   {detail => <ErrorDetails detail={detail()} />}
                 </Show>
