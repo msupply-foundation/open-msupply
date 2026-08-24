@@ -182,11 +182,21 @@ query stocktakeLines(
 # delete (removed lines) in a single batchStocktake mutation. Insert/update success returns the
 # SAME StocktakeLine fragment as a detail row (spliced back with no refetch); delete returns the
 # id. Errors are per-line (each array element carries its own response union).
+#
+# continueOnError is a PER-CALL choice, so both semantics are available from the one mutation:
+#   - unset (the line editor): the server wraps the whole batch in one transaction and rolls it
+#     ALL back if any member fails — the editor's insert+update+delete is one intended-atomic
+#     save, so a half-applied edit is worse than none.
+#   - true (a bulk selection action over independent lines): every line that validates commits
+#     and the rest report their own error. Without it a single rejected line silently discards
+#     the whole selection's work — and worse, the response still lists the rolled-back lines as
+#     succeeded, so nothing downstream can tell what actually persisted (issue #1150).
 mutation batchStocktakeLines(
   $storeId: String!
   $insert: [InsertStocktakeLineInput!]
   $update: [UpdateStocktakeLineInput!]
   $delete: [DeleteStocktakeLineInput!]
+  $continueOnError: Boolean
 ) {
   batchStocktake(
     storeId: $storeId
@@ -194,6 +204,7 @@ mutation batchStocktakeLines(
       insertStocktakeLines: $insert
       updateStocktakeLines: $update
       deleteStocktakeLines: $delete
+      continueOnError: $continueOnError
     }
   ) {
     insertStocktakeLines {
