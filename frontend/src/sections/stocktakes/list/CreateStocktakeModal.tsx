@@ -131,6 +131,28 @@ export const CreateStocktakeModal = (props: {
 
   const isBlank = () => form().type === 'blank';
 
+  // Include-all choice: stock-on-hand items only, or every item (a zero line
+  // for the rest). In filtered mode "All items" means every item on the CHOSEN
+  // master list — the server rejects includeAllMasterListItems without a
+  // masterListId (#1199) — and out-of-stock items aren't in any location, have
+  // no VVM status and no expiry, so the option requires a master list and is
+  // incompatible with every other filter. Disabled (greyed) rather than
+  // hidden, matching OMS. Full mode has no filters, so it's never disabled
+  // there.
+  const allItemsDisabled = () => {
+    const { type, masterListId, locationId, vvmStatusId, expiryDate } = form();
+    return (
+      type === 'filtered' &&
+      (!masterListId || Boolean(locationId || vvmStatusId || expiryDate))
+    );
+  };
+
+  // The EFFECTIVE include-all value: the raw choice counts only while the
+  // option is selectable. Everything reads this — the radios, the estimate,
+  // and buildInput — so the request can never disagree with what the UI shows
+  // (#1199: the raw flag survived the visual fallback and was sent anyway).
+  const includeAll = () => form().includeAllItems && !allItemsDisabled();
+
   // Estimated line count, from ONE resource keyed on the whole form (blank
   // needs no count). The resource's INPUT switches on the current state: it
   // always counts the stock lines matching the filters, and ADDS the item count
@@ -139,13 +161,14 @@ export const CreateStocktakeModal = (props: {
   // type STOCK), matching the master list when set. Filters are built straight
   // from the form as the generated input types (kdd/type-safety).
   const stockFilter = (): StockLineCountVariables['filter'] => {
-    const { masterListId, locationId, expiryDate } = form();
+    const { masterListId, locationId, vvmStatusId, expiryDate } = form();
     return {
       // Count only stock lines that actually hold packs — an empty/zero line
       // isn't part of the stocktake estimate (matches OMS).
       hasPacksInStore: true,
       masterList: masterListId ? { id: { equalTo: masterListId } } : undefined,
       locationId: locationId ? { equalTo: locationId } : undefined,
+      vvmStatusId: vvmStatusId ? { equalTo: vvmStatusId } : undefined,
       expiryDate: expiryDate
         ? { beforeOrEqualTo: dayBefore(expiryDate) }
         : undefined,
@@ -163,12 +186,19 @@ export const CreateStocktakeModal = (props: {
   const countKey = createMemo(
     () => {
       if (isBlank()) return null;
-      const { type, masterListId, locationId, expiryDate, includeAllItems } =
-        form();
+      const {
+        type,
+        masterListId,
+        locationId,
+        vvmStatusId,
+        expiryDate,
+        includeAllItems,
+      } = form();
       return [
         type,
         masterListId,
         locationId,
+        vvmStatusId,
         expiryDate,
         includeAllItems,
       ] as const;
@@ -178,14 +208,14 @@ export const CreateStocktakeModal = (props: {
   );
 
   const [estimate] = createResource(countKey, async () => {
-    const { includeAllItems, masterListId } = form();
+    const { masterListId } = form();
     const stock = await graphqlFetch(StockLineCount, {
       storeId: params.storeId,
       filter: stockFilter(),
     });
     const stockCount =
       stock.kind === 'success' ? stock.data.stockLines.totalCount : 0;
-    if (!includeAllItems) return stockCount;
+    if (!includeAll()) return stockCount;
     const noStock = await graphqlFetch(NoStockItemCount, {
       storeId: params.storeId,
       filter: {
@@ -238,14 +268,7 @@ export const CreateStocktakeModal = (props: {
   // fields; the id is client-generated so the create can navigate to the new
   // stocktake.
   const buildInput = (): InsertStocktakeVariables['input'] => {
-    const {
-      type,
-      masterListId,
-      locationId,
-      vvmStatusId,
-      expiryDate,
-      includeAllItems,
-    } = form();
+    const { type, masterListId, locationId, vvmStatusId, expiryDate } = form();
     // Seed a default description on every create mode (OMS-REG-INV-03.9): the
     // server fabricates no default, so the client composes one — the user's
     // display name and today's date, both in the active locale. Editable in
@@ -260,7 +283,7 @@ export const CreateStocktakeModal = (props: {
     };
     switch (type) {
       case 'full':
-        return { ...base, isAllItemsStocktake: includeAllItems };
+        return { ...base, isAllItemsStocktake: includeAll() };
       case 'filtered':
         return {
           ...base,
@@ -271,7 +294,9 @@ export const CreateStocktakeModal = (props: {
           // always '').
           vvmStatusId: vvmStatusId || undefined,
           expiresBefore: expiryDate ? dayBefore(expiryDate) : undefined,
-          includeAllMasterListItems: includeAllItems,
+          // The EFFECTIVE value, never the raw flag: the server rejects
+          // includeAllMasterListItems without a masterListId (#1199).
+          includeAllMasterListItems: includeAll(),
         };
       case 'blank':
         return { ...base, createBlankStocktake: true };
@@ -299,13 +324,6 @@ export const CreateStocktakeModal = (props: {
   // leak in).
   const setType = (type: StocktakeType) => setForm({ ...EMPTY_FORM, type });
 
-  // Include-all choice: stock-on-hand items only, or every (master-list) item
-  // (a zero line for the rest). "All items" is DISABLED when a location or
-  // expiry is set — out-of-stock items aren't in any location and have no
-  // expiry, so including them is incompatible with those filters (matches OMS:
-  // it greys out "All items" rather than hiding the choice).
-  const allItemsDisabled = () =>
-    Boolean(form().locationId || form().expiryDate);
   const includeAllOptions = () => [
     {
       value: 'soh',
@@ -319,10 +337,9 @@ export const CreateStocktakeModal = (props: {
       testId: 'stocktake-all-items',
     },
   ];
-  // If "All items" was chosen and then becomes disabled (location/expiry set),
-  // fall back.
-  const includeAllValue = () =>
-    form().includeAllItems && !allItemsDisabled() ? 'all' : 'soh';
+  // If "All items" was chosen and then becomes disabled (master list cleared,
+  // or a location/VVM/expiry filter set), fall back.
+  const includeAllValue = () => (includeAll() ? 'all' : 'soh');
 
   return (
     <Dialog
