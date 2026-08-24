@@ -59,6 +59,10 @@ fragment StocktakeLine on StocktakeLineNode {
     # fact — computed as counted × packSize × item.doses).
     isVaccine
     doses
+    # Seeds an editable batch's pack size in the line editor (spec/stocktakes
+    # OMS-REG-INV-03.79/.80): a new batch starts at it, and a zero-stock item's
+    # generated line (packSize null, no stock line) is prefilled with it.
+    defaultPackSize
   }
   # The stock line this stocktake line counts (if any). The editor passes these ids as
   # excludeStockLineIds to stockLinesByItem, so a batch already on the stocktake isn't offered

@@ -233,6 +233,13 @@ export const InputsShowcase = () => {
                 error="Quantity must be positive"
               />
             </Field>
+            <Field caption="Warning — advisory, not an error">
+              <TextField
+                label="Password"
+                value="secret"
+                warning="Warning: Caps lock is on"
+              />
+            </Field>
             <Field caption="Disabled">
               <TextField
                 label="Notes"
@@ -309,7 +316,9 @@ export const InputsShowcase = () => {
             A TextField variant — the standard masked{' '}
             <code>type="password"</code> input plus a show/hide eye toggle
             seated in the field frame. Click the eye to reveal the value, again
-            to mask it; the toggle is keyboard-focusable.
+            to mask it; the toggle is keyboard-focusable. Type in any of these
+            fields with Caps Lock on to see the built-in advisory warning line —
+            cleared by the next keystroke with it off.
           </Lead>
           <div class={styles.grid}>
             <Field caption="Default">
