@@ -128,11 +128,32 @@ public class FileTransferPlugin extends Plugin {
 
     @PluginMethod
     public void save(PluginCall call) {
-        if (call.getString("srcUri") == null) {
+        String srcUri = call.getString("srcUri");
+        if (srcUri == null) {
             call.reject("srcUri (file URI of the staged bytes) is required");
             return;
         }
+        // Same defense-in-depth reasoning as download's fileName check: the
+        // bridge is callable by any JS in the WebView, and an unchecked
+        // srcUri would read ANY app-private file into the user's pick. Only
+        // staged cache files are legitimate sources.
+        if (!isCacheFileUri(srcUri)) {
+            call.reject("srcUri must be a file:// URI inside the cache directory");
+            return;
+        }
         launchPicker(call, "onSaveResult");
+    }
+
+    private boolean isCacheFileUri(String srcUri) {
+        try {
+            Uri uri = Uri.parse(srcUri);
+            if (!"file".equals(uri.getScheme()) || uri.getPath() == null) return false;
+            String canonical = new File(uri.getPath()).getCanonicalPath();
+            String cacheDir = getContext().getCacheDir().getCanonicalPath();
+            return canonical.startsWith(cacheDir + "/");
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     @PluginMethod
