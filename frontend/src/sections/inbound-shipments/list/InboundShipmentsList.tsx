@@ -65,6 +65,7 @@ import {
   heldInboundQueryScopes,
   inboundShipmentHref,
   scopeOf,
+  type InboundScope,
 } from '../inboundShipmentScope';
 import { linkedOrderOf } from '../linkedOrder';
 import { SupplierKindIcon } from '../SupplierKindIcon';
@@ -213,6 +214,31 @@ const InboundShipmentsList: Component = () => {
   const singleSelectedId = () =>
     selectedIds().length === 1 ? selectedIds()[0] : undefined;
 
+  // The bulk delete is twinned per scope, so it needs the SCOPE of every
+  // selected shipment, not just its id (issue #1213 — see
+  // deleteInboundShipments). A selection survives a page change, outliving the
+  // row that carried `purchaseOrderId`, so the scope is recorded as each id is
+  // selected — it was on the page at that moment — and carried until the id
+  // leaves the selection.
+  const [scopeById, setScopeById] = createSignal<Record<string, InboundScope>>(
+    {}
+  );
+  const onSelectionChange = (ids: string[]) => {
+    const known = scopeById();
+    const next: Record<string, InboundScope> = {};
+    for (const id of ids)
+      next[id] =
+        known[id] ?? scopeOf(rows().find(r => r.id === id)?.purchaseOrderId);
+    setScopeById(next);
+    setSelectedIds(ids);
+  };
+  const selection = () =>
+    selectedIds().map(id => ({
+      id,
+      scope: scopeById()[id] ?? 'INBOUND_SHIPMENT',
+    }));
+  const clearSelection = () => onSelectionChange([]);
+
   // Whether deleting the selection reverses a receipt, which the confirmation
   // warns about (rules → deletion). Not a gate — it only picks the copy. Both
   // halves have to hold for there to be stock the delete would actually take:
@@ -239,15 +265,11 @@ const InboundShipmentsList: Component = () => {
     setQuery({ ...query(), sort: [{ key, desc }], offset: 0 });
   const onFilterChange = (filter: InboundListFilter) => {
     setQuery({ ...query(), filter, offset: 0 });
-    setSelectedIds([]);
+    clearSelection();
   };
   const onCustomFieldChange = (cf: CustomFieldFilterState) => {
     setQuery({ ...query(), cf, offset: 0 });
-    setSelectedIds([]);
-  };
-  const onDeleted = () => {
-    setSelectedIds([]);
-    void refetch();
+    clearSelection();
   };
 
   // Both scopes share one detail route; the row's purchaseOrderId names which
@@ -479,7 +501,7 @@ const InboundShipmentsList: Component = () => {
         }
         enableSelection
         selectedIds={selectedIds()}
-        onSelectionChange={setSelectedIds}
+        onSelectionChange={onSelectionChange}
         // The bulk actions for the table's selection footer (the table adds
         // the count + Clear around them, and swaps its pager for the bar
         // while rows are selected).
@@ -492,9 +514,10 @@ const InboundShipmentsList: Component = () => {
                 (spec/ui-standards/validation.md § actions; issue #1134). */}
             <DeleteInboundShipmentsAction
               storeId={params.storeId}
-              selectedIds={selectedIds}
+              selection={selection}
               removesStock={selectionRemovesStock}
-              onDeleted={onDeleted}
+              refetchList={() => void refetch()}
+              clearSelection={clearSelection}
             />
             {/* Make a copy — enabled only for a single selection (spec AC-L4);
                 shown disabled-with-reason otherwise (M5). Number/supplier come

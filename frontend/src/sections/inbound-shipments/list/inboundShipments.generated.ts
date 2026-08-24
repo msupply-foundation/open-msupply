@@ -38,6 +38,24 @@ export type InboundRowFragment = {
   customFields: unknown | null;
 };
 
+export type BulkDeleteResultFragment = {
+  deleteInboundShipments: Array<{
+  id: string;
+  response: ({
+  __typename: "DeleteResponse";
+} & {
+  id: string;
+}) | ({
+  __typename: "DeleteInboundShipmentError";
+} & {
+  error: {
+  __typename: string;
+  description: string;
+};
+});
+}> | null;
+};
+
 export type InboundShipmentsVariables = {
   storeId: string;
   page?: {
@@ -243,25 +261,24 @@ export type DeleteInboundShipmentsVariables = {
 };
 
 export type DeleteInboundShipmentsResult = {
-  batchInboundShipment: {
-  deleteInboundShipments: Array<{
-  id: string;
-  response: ({
-  __typename: "DeleteResponse";
-} & {
-  id: string;
-}) | ({
-  __typename: "DeleteInboundShipmentError";
-} & {
-  error: {
-  __typename: string;
-  description: string;
-};
-});
-}> | null;
-};
+  batchInboundShipment: BulkDeleteResultFragment;
 };
 
 export const DeleteInboundShipments = {
-  query: "mutation deleteInboundShipments($storeId: String!, $ids: [DeleteInboundShipmentInput!]!) {\n  batchInboundShipment(storeId: $storeId, input: {deleteInboundShipments: $ids}) {\n    deleteInboundShipments {\n      id\n      response {\n        ... on DeleteResponse {\n          __typename\n          id\n        }\n        ... on DeleteInboundShipmentError {\n          __typename\n          error {\n            __typename\n            description\n          }\n        }\n      }\n    }\n  }\n}",
+  query: "mutation deleteInboundShipments($storeId: String!, $ids: [DeleteInboundShipmentInput!]!) {\n  batchInboundShipment(storeId: $storeId, input: {deleteInboundShipments: $ids}) {\n    ...BulkDeleteResult\n  }\n}\n\nfragment BulkDeleteResult on BatchInboundShipmentResponse {\n  deleteInboundShipments {\n    id\n    response {\n      ... on DeleteResponse {\n        __typename\n        id\n      }\n      ... on DeleteInboundShipmentError {\n        __typename\n        error {\n          __typename\n          description\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<DeleteInboundShipmentsResult, DeleteInboundShipmentsVariables>;
+
+export type DeleteInboundShipmentsExternalVariables = {
+  storeId: string;
+  ids: Array<{
+    id: string;
+  }>;
+};
+
+export type DeleteInboundShipmentsExternalResult = {
+  batchInboundShipmentExternal: BulkDeleteResultFragment;
+};
+
+export const DeleteInboundShipmentsExternal = {
+  query: "mutation deleteInboundShipmentsExternal($storeId: String!, $ids: [DeleteInboundShipmentInput!]!) {\n  batchInboundShipmentExternal(\n    storeId: $storeId\n    input: {deleteInboundShipments: $ids}\n  ) {\n    ...BulkDeleteResult\n  }\n}\n\nfragment BulkDeleteResult on BatchInboundShipmentResponse {\n  deleteInboundShipments {\n    id\n    response {\n      ... on DeleteResponse {\n        __typename\n        id\n      }\n      ... on DeleteInboundShipmentError {\n        __typename\n        error {\n          __typename\n          description\n        }\n      }\n    }\n  }\n}",
+} as TypedDocument<DeleteInboundShipmentsExternalResult, DeleteInboundShipmentsExternalVariables>;

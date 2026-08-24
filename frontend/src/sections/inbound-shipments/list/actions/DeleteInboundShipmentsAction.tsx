@@ -1,11 +1,5 @@
 import { createSignal, Match, Show, Switch, type Component } from 'solid-js';
 import { t, tPlural } from '../../../../intl';
-import {
-  graphqlFetch,
-  isForbidden,
-  missingPermissions,
-  reportPermissionDenied,
-} from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { ErrorDetails } from '../../../../ui/elements/feedback/ErrorDetails';
@@ -13,19 +7,27 @@ import { Button } from '../../../../ui/elements/buttons/Button';
 import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
 import { Stack } from '../../../../ui/layout/Stack/Stack';
 import { TrashIcon } from '../../../../ui/icons';
-import { DeleteInboundShipments } from '../inboundShipments.generated';
-import { deleteRejection } from '@/domain/invoice';
+import { deleteInboundShipments } from '../deleteInboundShipments';
+import type { InboundScope } from '../../inboundShipmentScope';
 
 export interface DeleteInboundShipmentsActionProps {
   storeId: string;
-  selectedIds: () => string[];
+  /**
+   * The selection, each id with the scope its shipment belongs to — the delete
+   * is twinned per scope (see deleteInboundShipments), so the id alone is not
+   * enough to submit it.
+   */
+  selection: () => { id: string; scope: InboundScope }[];
   /**
    * Whether the selection includes a shipment that has already introduced stock
    * (anything past New) — the confirmation says so, because that stock goes
    * with it.
    */
   removesStock: () => boolean;
-  onDeleted: () => void;
+  /** Re-query the list behind the dialog. */
+  refetchList: () => void;
+  /** Drop the selection — the rows it named are gone. */
+  clearSelection: () => void;
 }
 
 // The inbound-shipments-list bulk delete (spec AC-L3): footer button + a
@@ -33,11 +35,19 @@ export interface DeleteInboundShipmentsActionProps {
 // is the source of truth and the action is SUBMITTED rather than pre-screened —
 // no client-side copy of the server's delete window, and the button is never
 // disabled because the selection "might" contain an undeletable row
-// (spec/ui-standards/validation.md § actions; issue #1134). The batch is atomic
-// (AC-BA1): if any row can't be deleted the whole batch fails and nothing is
-// removed, so on error we show the server's reason (a per-line lock can surface
-// here too, per rules → deletion) — which is strictly more informative than the
-// old blanket "Only New shipments can be deleted" hover text.
+// (spec/ui-standards/validation.md § actions; issue #1134). Each scope's batch
+// is atomic (AC-BA1): if any row can't be deleted that whole batch fails and
+// nothing in it is removed, so on error we show the server's reason (a per-line
+// lock can surface here too, per rules → deletion) — which is strictly more
+// informative than the old blanket "Only New shipments can be deleted" hover
+// text.
+//
+// The selection is submitted as ONE BATCH PER SCOPE, because the batch mutation
+// is twinned like every other inbound write (issue #1213 — see
+// deleteInboundShipments). So a mixed selection can end up PARTLY deleted: the
+// plain batch commits and the PO-linked one is refused. That outcome is
+// reported rather than hidden — the title stops claiming nothing happened, the
+// body says how many went, and the list re-queries behind the dialog.
 //
 // Deleting a Delivered/Received shipment REVERSES the receipt: the server
 // cascades to the lines and the stock they created, and refuses per-line the
@@ -49,7 +59,7 @@ export interface DeleteInboundShipmentsActionProps {
 // No success phase: a clean delete CLOSES the dialog — closure is the
 // confirmation and the shorter list behind it is the visible result
 // (spec/ui-standards/controls.md § dialogs, D22; § action feedback, D21). The
-// list clears selection + re-queries via onDeleted.
+// list clears selection + re-queries.
 type Phase = 'confirm' | 'deleting' | 'error';
 
 export const DeleteInboundShipmentsAction: Component<
@@ -80,79 +90,72 @@ const Body = (
   const [errorMessage, setErrorMessage] = createSignal<string>();
   // The raw server text behind a disclosure, when the refusal arrived untyped.
   const [errorDetail, setErrorDetail] = createSignal<string>();
+  // How many shipments the run actually removed. Read by the title and body, so
+  // a signal.
+  const [deletedCount, setDeletedCount] = createSignal(0);
   // Snapshotted on open so neither can shift behind the open dialog.
-  const count = props.selectedIds().length;
+  const count = props.selection().length;
   const removesStock = props.removesStock();
+
+  // Ending the interaction: close FIRST, then hand back — clearing the
+  // selection unmounts the selection-gated footer this dialog lives in. The
+  // selection is dropped only when rows actually went; a refusal that removed
+  // nothing leaves the list untouched, so the user keeps their selection to
+  // adjust it.
+  const finish = () => {
+    props.onClose();
+    if (deletedCount() > 0) props.clearSelection();
+  };
 
   const run = async () => {
     if (phase() !== 'confirm') return;
     setPhase('deleting');
-    const result = await graphqlFetch(
-      DeleteInboundShipments,
-      {
-        storeId: props.storeId,
-        ids: props.selectedIds().map(id => ({ id })),
-      },
-      // A per-line delete lock (transferred / reserved / stocktake-referenced —
-      // rules → deletion) comes back as a TOP-LEVEL GraphQL error rather than a
-      // typed DeleteInboundShipmentError. Take those here so the refusal lands
-      // in the surface that fired the action (D21) instead of tripping the
-      // global unexpected-error (reload) modal, which is what the user saw once
-      // the New-only narrowing stopped hiding this path (issue #1134).
-      { returnGraphqlErrors: true }
+    const outcome = await deleteInboundShipments(
+      props.storeId,
+      props.selection()
     );
-    if (result.kind === 'graphqlError') {
-      // Opting in also intercepts Forbidden, which owes the user the global
-      // permission-denied modal (D38) — hand it back and close.
-      if (isForbidden(result.errors)) {
-        reportPermissionDenied(missingPermissions(result.errors));
-        props.onClose();
-        return;
-      }
-      // deleteRejection names the line lock when it can, and otherwise falls
-      // back to the generic refusal + the raw server text behind a disclosure
-      // (the server's own text there is a Rust debug dump, not user copy).
-      const rejection = deleteRejection(result.errors);
-      setErrorMessage(rejection.message);
-      setErrorDetail(rejection.detail);
-      setPhase('error');
+    setDeletedCount(outcome.deleted);
+    // Whatever else happened, rows that went have to leave the list.
+    if (outcome.deleted > 0) props.refetchList();
+
+    if (outcome.forbidden) {
+      // The global permission-denied modal (D38) is already showing; this
+      // dialog has nothing to add.
+      finish();
       return;
     }
-    if (result.kind !== 'success') {
+    if (outcome.failed) {
+      // Transport/unexpected — graphqlFetch already surfaced it globally. Back
+      // to the confirmation so the action can be retried.
       setPhase('confirm');
       return;
     }
-    const items = result.data.batchInboundShipment.deleteInboundShipments ?? [];
-    const firstError = items.find(
-      i => i.response.__typename === 'DeleteInboundShipmentError'
-    );
-    if (
-      firstError &&
-      firstError.response.__typename === 'DeleteInboundShipmentError'
-    ) {
-      setErrorMessage(firstError.response.error.description);
+    if (outcome.message) {
+      setErrorMessage(outcome.message);
+      setErrorDetail(outcome.detail);
       setPhase('error');
       return;
     }
-    // Close first, then hand back to the list: onDeleted clears the selection,
-    // which unmounts the selection-gated footer this dialog lives in.
-    props.onClose();
-    props.onDeleted();
+    finish();
   };
 
   return (
     <Dialog
       open
       dismissable={phase() !== 'deleting'}
-      onClose={props.onClose}
+      onClose={finish}
       icon={<TrashIcon />}
       testId="confirmation-modal"
       // The error phase is no longer a question, so the heading stops asking
-      // one (it would otherwise read "Are you sure?" over a rejection).
+      // one (it would otherwise read "Are you sure?" over a rejection) — and
+      // when the other scope's batch DID commit, "Can't do that!" would sit
+      // over an outcome that partly succeeded.
       title={
-        phase() === 'error'
-          ? t('heading.cannot-do-that')
-          : t('heading.are-you-sure')
+        phase() !== 'error'
+          ? t('heading.are-you-sure')
+          : deletedCount() > 0
+            ? t('heading.some-not-deleted')
+            : t('heading.cannot-do-that')
       }
       description={
         <Switch
@@ -170,12 +173,17 @@ const Body = (
           }
         >
           <Match when={phase() === 'error'}>
-            <Alert severity="error">
-              {errorMessage()}
-              <Show when={errorDetail()}>
-                {detail => <ErrorDetails detail={detail()} />}
+            <Stack gap="sm">
+              <Show when={deletedCount() > 0}>
+                <p>{tPlural('messages.deleted-shipments', deletedCount())}</p>
               </Show>
-            </Alert>
+              <Alert severity="error">
+                {errorMessage()}
+                <Show when={errorDetail()}>
+                  {detail => <ErrorDetails detail={detail()} />}
+                </Show>
+              </Alert>
+            </Stack>
           </Match>
         </Switch>
       }
@@ -204,11 +212,7 @@ const Body = (
           }
         >
           <Match when={phase() === 'error'}>
-            <Button
-              variant="secondary"
-              confirms="plain"
-              onClick={props.onClose}
-            >
+            <Button variant="secondary" confirms="plain" onClick={finish}>
               {t('button.close')}
             </Button>
           </Match>

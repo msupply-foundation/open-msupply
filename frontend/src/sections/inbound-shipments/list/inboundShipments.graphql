@@ -75,8 +75,17 @@ query inboundShipments(
   }
 }
 
-# Bulk delete from the list (spec AC-L3). One batch, all-or-nothing by default
-# (spec AC-BA1). Per-id typed error surfaces on DeleteInboundShipmentError.
+# Bulk delete from the list (spec AC-L3), TWINNED like every other inbound
+# mutation (contract → creation wire trap): the batch is scope-checked
+# server-side per id, so `batchInboundShipment` accepts ONLY plain-scope
+# (purchaseOrderId IS NULL) shipments and `batchInboundShipmentExternal` ONLY
+# PO-linked ones. A wrong-twin id is refused as an UNTYPED top-level
+# `WrongInboundShipmentType`, which aborts the whole batch — so the caller
+# partitions the selection by scope and sends one batch per scope
+# (deleteInboundShipments.ts), rather than one batch for the lot (issue #1213).
+#
+# Each batch is all-or-nothing by default (spec AC-BA1). Per-id typed errors
+# surface on DeleteInboundShipmentError.
 mutation deleteInboundShipments(
   $storeId: String!
   $ids: [DeleteInboundShipmentInput!]!
@@ -85,19 +94,35 @@ mutation deleteInboundShipments(
     storeId: $storeId
     input: { deleteInboundShipments: $ids }
   ) {
-    deleteInboundShipments {
-      id
-      response {
-        ... on DeleteResponse {
+    ...BulkDeleteResult
+  }
+}
+
+mutation deleteInboundShipmentsExternal(
+  $storeId: String!
+  $ids: [DeleteInboundShipmentInput!]!
+) {
+  batchInboundShipmentExternal(
+    storeId: $storeId
+    input: { deleteInboundShipments: $ids }
+  ) {
+    ...BulkDeleteResult
+  }
+}
+
+fragment BulkDeleteResult on BatchInboundShipmentResponse {
+  deleteInboundShipments {
+    id
+    response {
+      ... on DeleteResponse {
+        __typename
+        id
+      }
+      ... on DeleteInboundShipmentError {
+        __typename
+        error {
           __typename
-          id
-        }
-        ... on DeleteInboundShipmentError {
-          __typename
-          error {
-            __typename
-            description
-          }
+          description
         }
       }
     }
