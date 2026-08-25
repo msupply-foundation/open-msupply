@@ -12,8 +12,8 @@
  * MUST stay free of module-scope side effects: this module is evaluated by
  * the facade entry before any plugin code runs.
  *
- * This is the v1 surface. `pages`, `register`, navigation builders, and lazy
- * component wrappers are later.
+ * This is the v1 surface. `pages`, `register`, the typed deep-link builders,
+ * and lazy component wrappers are later.
  */
 
 // ── Compatibility gate ──────────────────────────────────────────────────────
@@ -114,6 +114,16 @@ export {
   localisedDateTime,
 } from './intl';
 export type { PluginIntl, SupportedLocale } from './intl';
+
+// ── Navigation ──────────────────────────────────────────────────────────────
+/*
+ * Reaching a host screen without knowing the entered store or the app's mount
+ * — and without meeting `@solidjs/router`, which is not in the closed import
+ * set (sdk-contract § imports). The typed deep-link builders the same section
+ * requires produce the store-relative paths these take.
+ */
+export { storeHref, navigateTo } from './navigation';
+export type { NavigateOptions } from './navigation';
 
 // ── Data access — the core schema ───────────────────────────────────────────
 export { graphqlQuery } from './graphql';
