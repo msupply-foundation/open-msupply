@@ -3,6 +3,7 @@ package org.openmsupply.client;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.content.Context;
+import android.provider.Settings;
 
 import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
@@ -40,10 +41,20 @@ import javax.net.ssl.X509TrustManager;
  * Android bridge ("NativeApi") so the two stay one recognisable contract.
  *
  * Host duties per src/desktop/README.md's table: browse mDNS announcements
- * (NsdManager, `_omsupply._tcp`), mark a server on this machine, run the
+ * (NsdManager, `_omsupply._tcp`), mark the server on this device, run the
  * bounded answer check before navigating, and navigate the WebView to the
  * chosen server's own origin — HONOURING the `path`, which carries the
  * login hand-off's discovery-return + lng parameters (AC-DT23/24).
+ *
+ * "This device's server" is matched by HARDWARE ID, as spec/android
+ * § server discovery requires (and the current app does): the announcement's
+ * hardware_id against this device's ANDROID_ID — the same value
+ * MainActivity hands the embedded server to announce. An address compare
+ * can't do this job: the device's own announcement may resolve to any of
+ * its interfaces. A local server's address is then REWRITTEN to the
+ * device's site-local (LAN) address — what the list displays must be an
+ * address other devices can reach (the Android flavour of AC-DT22), and
+ * NsdManager's resolution of the device's own service is not that.
  *
  * SPIKE-level trust, same as MainActivity's SSL bypass: the answer check
  * accepts any certificate. The real app ports the legacy CertWebViewClient
@@ -142,16 +153,35 @@ public class NativeApiPlugin extends Plugin {
     private JSObject toFrontEndHost(NsdServiceInfo info) {
         InetAddress address = info.getHost();
         if (!(address instanceof Inet4Address)) return null;
-        String ip = address.getHostAddress();
         Map<String, byte[]> txt = info.getAttributes();
+        String hardwareId = this.txtValue(txt, "hardware_id");
+        // This device's own server: matched by hardware id (spec/android
+        // § server discovery), never by address.
+        boolean isLocal = !hardwareId.isEmpty() && hardwareId.equals(this.deviceHardwareId());
+        // A local announcement's address is whatever interface NsdManager
+        // resolved it on; display and share the device's LAN address instead
+        // (the current app's getHostAddress does the same).
+        String ip = isLocal ? this.siteLocalAddress(address) : address.getHostAddress();
         JSObject host = new JSObject();
         host.put("protocol", "http".equals(this.txtValue(txt, "protocol")) ? "http" : "https");
         host.put("port", info.getPort());
         host.put("ip", ip);
         host.put("clientVersion", this.txtValue(txt, "client_version"));
-        host.put("hardwareId", this.txtValue(txt, "hardware_id"));
-        host.put("isLocal", this.isOwnAddress(address));
+        host.put("hardwareId", hardwareId);
+        host.put("isLocal", isLocal);
         return host;
+    }
+
+    private String deviceHardwareId() {
+        // ANDROID_ID is scoped PER SIGNING KEY since Android 8, so this only
+        // matches an announcement from a server another app started if both
+        // apps share a key. They do, by existing plan: this app ships with
+        // the legacy app's release key (kdd/android § signing) — verified
+        // live against the legacy tablet-as-server (debug keys, emulator).
+        return Settings.Secure.getString(
+            this.getContext().getContentResolver(),
+            Settings.Secure.ANDROID_ID
+        );
     }
 
     private String txtValue(Map<String, byte[]> txt, String key) {
@@ -159,18 +189,25 @@ public class NativeApiPlugin extends Plugin {
         return value == null ? "" : new String(value, StandardCharsets.UTF_8);
     }
 
-    private boolean isOwnAddress(InetAddress address) {
-        if (address.isLoopbackAddress()) return true;
+    /** The device's own reachable-by-others IPv4, falling back to the
+     * resolved address when no interface qualifies (no network). */
+    private String siteLocalAddress(InetAddress resolved) {
         try {
             Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
             while (interfaces.hasMoreElements()) {
                 Enumeration<InetAddress> addresses = interfaces.nextElement().getInetAddresses();
                 while (addresses.hasMoreElements()) {
-                    if (addresses.nextElement().equals(address)) return true;
+                    InetAddress address = addresses.nextElement();
+                    if (address instanceof Inet4Address
+                            && !address.isLoopbackAddress()
+                            && !address.isLinkLocalAddress()
+                            && address.isSiteLocalAddress()) {
+                        return address.getHostAddress();
+                    }
                 }
             }
         } catch (Exception ignored) {}
-        return false;
+        return resolved.getHostAddress();
     }
 
     @PluginMethod
