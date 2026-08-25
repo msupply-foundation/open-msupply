@@ -208,7 +208,14 @@ public class NativeApiPlugin extends Plugin {
             result.put("success", true);
             call.resolve(result);
             String target = base + "/" + path;
-            getActivity().runOnUiThread(() -> bridge.getWebView().loadUrl(target));
+            getActivity().runOnUiThread(() -> {
+                // Fresh start: without the history clear, hardware back from
+                // the server would re-enter discovery flagless and its
+                // autoconnect would bounce straight back (MainActivity
+                // clearHistoryWhenLoaded).
+                ((MainActivity) getActivity()).clearHistoryWhenLoaded(base);
+                bridge.getWebView().loadUrl(target);
+            });
         });
     }
 
@@ -252,7 +259,12 @@ public class NativeApiPlugin extends Plugin {
     @PluginMethod
     public void goBackToDiscovery(PluginCall call) {
         String target = bridge.getLocalUrl() + "/discovery/index.html?autoconnect=false";
-        getActivity().runOnUiThread(() -> bridge.getWebView().loadUrl(target));
+        getActivity().runOnUiThread(() -> {
+            // Fresh start, like connectToServer: back from discovery leaves
+            // the app rather than returning to the server just left.
+            ((MainActivity) getActivity()).clearHistoryWhenLoaded(bridge.getLocalUrl() + "/discovery/");
+            bridge.getWebView().loadUrl(target);
+        });
         call.resolve();
     }
 }

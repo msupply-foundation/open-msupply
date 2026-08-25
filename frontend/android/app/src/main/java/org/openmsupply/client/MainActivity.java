@@ -13,6 +13,22 @@ public class MainActivity extends BridgeActivity {
     private static final int SERVER_PORT = 8000;
     private final RemoteServer server = new RemoteServer();
 
+    // Host-initiated navigations (client-mode boot, connectToServer,
+    // goBackToDiscovery) are each a fresh start: once the target page has
+    // loaded, drop the WebView history beneath it. Otherwise hardware back
+    // resurrects a dead document (the serverless bundled app under the
+    // discovery page) or re-enters discovery WITHOUT ?autoconnect=false —
+    // which immediately reconnects to the just-remembered server, the bounce
+    // AC-DT16 forbids. With history pinned to the current page, back falls
+    // through to the App plugin's default (leave the app); the designed ways
+    // back — the login hand-off's discovery-return link and goBackToDiscovery
+    // — both carry autoconnect=false. Set on and read from the UI thread.
+    private String pendingHistoryClearPrefix;
+
+    public void clearHistoryWhenLoaded(String urlPrefix) {
+        pendingHistoryClearPrefix = urlPrefix;
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         // Custom CAPACITOR plugins register here, before super.onCreate —
@@ -36,6 +52,20 @@ public class MainActivity extends BridgeActivity {
                 android.util.Log.w("OpenMSupply", "Proceeding through SSL error for: " + error.getUrl());
                 handler.proceed();
             }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                // clearHistory only drops committed entries, so it must run
+                // after the target page loads — matched by prefix because the
+                // final URL can carry a query or a same-origin redirect.
+                if (pendingHistoryClearPrefix != null
+                        && url != null
+                        && url.startsWith(pendingHistoryClearPrefix)) {
+                    view.clearHistory();
+                    pendingHistoryClearPrefix = null;
+                }
+            }
         });
 
         // Client mode (no embedded server, not the dev-server loop): the
@@ -49,7 +79,14 @@ public class MainActivity extends BridgeActivity {
         // /discovery.html for hand-testing instead.
         if (!server.isAvailable() && bridge.getConfig().getServerUrl() == null) {
             String discovery = bridge.getLocalUrl() + "/discovery/index.html";
-            bridge.getWebView().post(() -> bridge.getWebView().loadUrl(discovery));
+            clearHistoryWhenLoaded(bridge.getLocalUrl() + "/discovery/");
+            bridge.getWebView().post(() -> {
+                // Abort the default boot (the bundled app, which has no server
+                // to talk to in client mode) before it commits: discovery is
+                // the sole history entry and the doomed bundle never flashes.
+                bridge.getWebView().stopLoading();
+                bridge.getWebView().loadUrl(discovery);
+            });
         }
 
         // Embedded server, only when its library is bundled (manually sourced
