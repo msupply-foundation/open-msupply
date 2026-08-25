@@ -12,6 +12,14 @@ export interface TextFieldProps extends Omit<
   /** Error message — presence switches the field to the error state. */
   error?: string;
   /**
+   * Advisory warning shown below the field when there's no error — the error
+   * line's icon + text anatomy in the warning colour, with none of the error
+   * semantics (no aria-invalid, border unchanged; an error displaces it). For
+   * a caution about the conditions around the value, not the value itself —
+   * PasswordField feeds its caps-lock notice through here.
+   */
+  warning?: string;
+  /**
    * `data-testid` for the error message (locale-stable test hook,
    * e2e/TESTIDS.md) — e.g. the line-edit modal's per-line errors.
    */
@@ -20,10 +28,13 @@ export interface TextFieldProps extends Omit<
   /** Spec: 2.5rem (40px) default, 2.25rem (36px) small. */
   size?: 'default' | 'small';
   /**
-   * Max-width caps (the container can always be narrower): compact 10rem
-   * (numbers/money — NumberField's default; caps only the input box, while
-   * the label and helper/error text wrap at the short cap), short 25rem
-   * (codes/short text), long 37.5rem (names), full = fill.
+   * Max-width CAP — opt-in. The default is `full` (fill the container), which
+   * is what a field in a form column, a dialog, a header cluster or a table
+   * cell wants; name a cap only when the DATA is short, or when the container
+   * is unbounded (a full-width settings page) and an unclamped field would
+   * sprawl. compact 10rem (numbers/money/codes; caps only the input box, while
+   * the label and helper/error text wrap at the short cap), short 25rem, long
+   * 37.5rem (names). Same vocabulary, same meaning, on every input.
    */
   width?: 'compact' | 'short' | 'long' | 'full';
   /**
@@ -74,6 +85,7 @@ export const TextField = (props: TextFieldProps) => {
     'label',
     'helperText',
     'error',
+    'warning',
     'errorTestId',
     'required',
     'size',
@@ -107,7 +119,7 @@ export const TextField = (props: TextFieldProps) => {
   return (
     <div
       class={local.class ? `${styles.field} ${local.class}` : styles.field}
-      data-width={local.width ?? 'short'}
+      data-width={local.width ?? 'full'}
       data-size={local.size ?? 'default'}
     >
       {/* hideLabel names the input via aria-label INSTEAD of rendering a
@@ -150,7 +162,9 @@ export const TextField = (props: TextFieldProps) => {
           aria-label={local.hideLabel ? local.label : undefined}
           aria-invalid={local.error ? 'true' : undefined}
           aria-describedby={
-            local.error || local.helperText ? messageId() : undefined
+            local.error || local.warning || local.helperText
+              ? messageId()
+              : undefined
           }
           {...rest}
         />
@@ -166,9 +180,22 @@ export const TextField = (props: TextFieldProps) => {
       <Show
         when={local.error}
         fallback={
-          <Show when={local.helperText}>
-            <p id={messageId()} class={styles.helper}>
-              {local.helperText}
+          <Show
+            when={local.warning}
+            fallback={
+              <Show when={local.helperText}>
+                <p id={messageId()} class={styles.helper}>
+                  {local.helperText}
+                </p>
+              </Show>
+            }
+          >
+            {/* role="status": the warning appears while the user is typing
+                (the caps-lock notice), so it's announced politely rather than
+                relying on them to glance down mid-entry. */}
+            <p id={messageId()} class={styles.warning} role="status">
+              <AlertTriangleIcon class={styles.messageIcon} />
+              {local.warning}
             </p>
           </Show>
         }
@@ -178,7 +205,7 @@ export const TextField = (props: TextFieldProps) => {
           class={styles.error}
           data-testid={local.errorTestId}
         >
-          <AlertTriangleIcon class={styles.errorIcon} />
+          <AlertTriangleIcon class={styles.messageIcon} />
           {local.error}
         </p>
       </Show>

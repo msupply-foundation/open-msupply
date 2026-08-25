@@ -19,7 +19,7 @@ export type ThemeCheck = {
 
 /*
  * The save gate. Shape-aware, unlike the reference app's bare JSON.parse
- * (spec/DIVERGENCES.md): the document must parse AND leave at least one
+ * the document must parse AND leave at least one
  * recognised setting, or saving it would store something that changes
  * nothing. Everything else — unknown keys, unreadable colours, contrast
  * failures — is a warning: we apply what we understood and say what we

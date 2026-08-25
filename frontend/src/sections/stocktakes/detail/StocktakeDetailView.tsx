@@ -29,11 +29,16 @@ import {
   type SortState,
 } from '@/ui/elements/table/DataTable';
 import {
-  getCommentCell,
+  AbsentValue,
+  CommentHeader,
+  getCellDefinition,
   getDateCell,
   getExpiryDateCell,
-  getNumberCell,
 } from '@/ui/elements/table/tableHelpers';
+import {
+  Pagination,
+  type PaginationProps,
+} from '@/ui/elements/table/Pagination';
 import { createTableConfig } from '@/api/createTableConfig';
 import {
   StocktakeDetail,
@@ -53,7 +58,7 @@ import { StocktakeDetailToolbar } from './StocktakeDetailToolbar';
 import { StocktakeLineFilters } from './StocktakeLineFilters';
 import { StocktakeSidePanel } from './StocktakeSidePanel';
 import { createSidePanelOpen } from '@/ui/layout/SidePanel/createSidePanelOpen';
-import { StocktakeLogPanel } from './log/StocktakeLogPanel';
+import { ActivityLogPanel } from '@/domain/activityLog';
 import { StocktakeDocumentsTab } from './StocktakeDocumentsTab';
 import {
   DeleteLinesAction,
@@ -62,6 +67,7 @@ import {
   ExportPrintAction,
 } from './actions';
 import { saveStocktakeFields } from './stocktakeUpdate';
+import type { LineEditCommit } from './lines/stocktakeLineUpdate';
 import type { LineErrors } from './lines/stocktakeLineErrors';
 import type { StocktakeLineFilter } from './stocktakeLineFilter';
 import { createDebouncedEdit } from '@/domain/debouncedEdit';
@@ -71,6 +77,12 @@ import {
 } from '@/domain/location';
 import type { StocktakeEditFields } from './stocktakeEdit';
 import { useUrlQueryState } from '@/list/urlQueryState';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '@/list/pageSize';
+import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
 import { stripEmpty } from '@/typeHelpers';
 import { stocktakePreferences } from '@/store/storeContext';
 import { dosesCounted, dosesPerUnit } from './lines/doses';
@@ -125,8 +137,6 @@ const CARD_GROUPS: CardGroup<Line, GroupKey>[] = [
 const isDisabled = (node: StocktakeInfoFragment) =>
   node.status !== 'NEW' || node.isLocked;
 
-const DEFAULT_PAGE_SIZE = 20;
-
 // The URL-backed view state (kdd/url-structure): filter + sort + pagination in
 // the single `?query=` JSON param, so a filtered/sorted/paged view is shareable
 // and survives reload + back-nav. All three conform to the generated
@@ -163,8 +173,10 @@ const StocktakeDetailView: Component = () => {
   const navigate = useNavigate();
   // Filter + sort + pagination are URL-backed (shareable, survive reload/back-
   // nav) in one `?query=` param. Thin accessors over that single query.
-  const { query, setQuery } =
-    useUrlQueryState<DetailUrlState>(DEFAULT_URL_STATE);
+  const { query, setQuery } = useUrlQueryState<DetailUrlState>({
+    ...DEFAULT_URL_STATE,
+    first: initialPageSize(),
+  });
   const filter = () => query().filter;
   const currentSort = (): SortState<SortKey> | undefined => {
     const s = query().sort[0];
@@ -222,6 +234,17 @@ const StocktakeDetailView: Component = () => {
           manufacturer: false,
           campaign: false,
         },
+        // Code pinned to the inline-start edge, so the identifier stays put
+        // while the counting columns scroll horizontally — this table is wide
+        // enough to scroll on every device the app targets, and a row whose
+        // code has scrolled away is a row you can't be sure you're counting.
+        // Only a DEFAULT: the user's own pinning wins over it, and the Columns
+        // popover's reset returns here rather than to no pins at all.
+        //
+        // 'item.code' is the column's id (the accessor path, which the testid
+        // contract also uses) — NOT 'code'. A key that matches no column pins
+        // nothing and reports no error.
+        columnPinning: { left: ['item.code'] },
       },
     },
   });
@@ -241,6 +264,27 @@ const StocktakeDetailView: Component = () => {
   // The Documents tab reads the node's `documents` list; the Log tab
   // self-queries its own activity log.
   const [activeTab, setActiveTab] = createSignal('details');
+
+  // The line table's pager. It lives in the screen's bottom bar — the status
+  // footer, or the selection footer while rows are ticked — rather than in a
+  // band of its own under the table (spec/ui-standards § tables → pagination):
+  // that bar is present at every line count, so hosting the pager there costs
+  // no extra row, and `conditional` means it renders nothing at all until the
+  // lines outrun one page, leaving the bar as it was and the height to the
+  // rows.
+  const linePagination = (): PaginationProps => ({
+    offset: query().offset,
+    pageSize: query().first,
+    total: totalCount(),
+    onOffsetChange: offset => setQuery({ ...query(), offset }),
+    onPageSizeChange: first => {
+      // The remembered page size (D106) — it rode the DataTable's own
+      // pagination prop, which this accessor replaced when the pager moved
+      // into the status footer, so it has to travel with the handler.
+      rememberPageSize(first);
+      setQuery({ ...query(), first, offset: 0 });
+    },
+  });
   const tabs = (): TabDef[] => [
     { value: 'details', label: t('label.details') },
     { value: 'documents', label: t('label.documents') },
@@ -347,6 +391,16 @@ const StocktakeDetailView: Component = () => {
     }
   );
   const locations = (): LocationWithVolume[] => locationsData.latest ?? [];
+
+  // Finalise trims every uncounted line server-side, so the total can collapse
+  // far below the page the user is on; a bulk delete does the same
+  // (src/list/clampPageOffset.ts, issue #1117).
+  clampPageOffset({
+    total: () => settledTotal(linesData, page => page.totalCount),
+    offset: () => query().offset,
+    pageSize: () => query().first,
+    setOffset: offset => setQuery({ ...query(), offset }),
+  });
 
   // Refetch the current lines page after a save. Only the lines page: a line
   // save changes the count/line rows, never the location capacities (see
@@ -512,8 +566,19 @@ const StocktakeDetailView: Component = () => {
   // must NOT also call the manual refetch, or the page would fetch twice. When
   // the filter wasn't on, the key is unchanged and the manual refetch is the
   // only refresh.
-  const onLinesChanged = () => {
-    setSelectedIds([]);
+  // `keepSelection` is for a PARTIAL commit (some lines saved, some rejected):
+  // the selection footer OWNS the action dialogs, so dropping the selection
+  // unmounts the very dialog that still has to report the outcome (issue
+  // #1150). Holding it also leaves the user on the same selection to act on
+  // what didn't save. The errors the action is about to stamp survive either
+  // way — clearLineErrors runs here, the stamp lands after it, same tick.
+  // (`_commit` is what the callers hand over; this view refetches the page
+  // rather than splicing it in, per the comment above.)
+  const onLinesChanged = (
+    _commit?: LineEditCommit,
+    opts?: { keepSelection?: boolean }
+  ) => {
+    if (!opts?.keepSelection) setSelectedIds([]);
     const wasFilteringErrors = query().showError && lineErrors().size > 0;
     clearLineErrors();
     if (wasFilteringErrors) {
@@ -568,6 +633,8 @@ const StocktakeDetailView: Component = () => {
           name: line.itemName,
           isVaccine: line.item.isVaccine,
           doses: line.item.doses,
+          unitName: line.item.unitName,
+          defaultPackSize: line.item.defaultPackSize,
         };
       }
       return undefined;
@@ -650,19 +717,35 @@ const StocktakeDetailView: Component = () => {
       sortKey: 'itemCode',
       header: () => t('label.code'),
       cardGroup: 'more',
+      // Sized as the shared `itemCode` column (the `code` cell kind: 5rem off a
+      // ~9-char measure, capped at 7, monospace so digits align down the
+      // column). It was carrying no definition at all, so it auto-sized to
+      // whatever the widest code on the page happened to be and moved as the
+      // user paged. Any change to what a code column is worth belongs in
+      // _globalColumnConfig.ts, which is the one place those widths are tuned —
+      // not here.
+      ...getCellDefinition('itemCode'),
     },
     {
       c: { key: 'itemName' },
       sortKey: 'itemName',
       header: () => t('label.name'),
+      // The shared `itemName` definition: the `text` kind's 18.75rem, and
+      // deliberately NO growth cap, which is what makes this the column that
+      // absorbs the table's slack — the right behaviour for the longest value in
+      // the row ("ABACAVIR / LAMIVUDINE 120/60 mg comp disp. BTE/30").
       // Item names are long — allow up to two wrapped lines before clamping.
-      meta: { headerPosition: 'primary', wrapLines: 2 },
+      ...getCellDefinition('itemName', {
+        headerPosition: 'primary',
+        wrapLines: 2,
+      }),
     },
     {
       c: { key: 'batch' },
       sortKey: 'batch',
       header: () => t('label.batch'),
       cardGroup: 'more',
+      ...getCellDefinition('batch'),
     },
     {
       c: { key: 'expiryDate' },
@@ -686,6 +769,9 @@ const StocktakeDetailView: Component = () => {
       sortKey: 'locationCode',
       header: () => t('label.location'),
       cardGroup: 'more',
+      // `location`, not `locationCode`: this renders the code but its header is
+      // "Location", and that key's 6.5rem is the one measured against it.
+      ...getCellDefinition('location'),
     },
     {
       // Unit name (item.unitName) — read-only. Unsortable (no server key;
@@ -694,6 +780,7 @@ const StocktakeDetailView: Component = () => {
       c: { accessor: line => line.item.unitName ?? '', id: 'itemUnit' },
       header: () => t('label.unit-name'),
       cardGroup: 'more',
+      ...getCellDefinition('unitName'),
     },
     {
       c: { key: 'packSize' },
@@ -701,7 +788,7 @@ const StocktakeDetailView: Component = () => {
       // server has a packSize key — matched here.
       header: () => t('label.pack-size'),
       cardGroup: 'more',
-      ...getNumberCell(),
+      ...getCellDefinition('packSize'),
     },
     // Doses per unit (gated by manageVaccinesInDoses) — packSize × item.doses,
     // vaccine rows only.
@@ -714,7 +801,7 @@ const StocktakeDetailView: Component = () => {
             },
             header: () => t('label.doses-per-unit'),
             cardGroup: 'more',
-            ...getNumberCell(),
+            ...getCellDefinition('dosesPerUnit'),
           } satisfies Column<Line, SortKey, GroupKey>,
         ]
       : []),
@@ -728,7 +815,7 @@ const StocktakeDetailView: Component = () => {
             sortKey: 'snapshotNumberOfPacks',
             header: () => t('label.snapshot-num-of-packs'),
             cardGroup: 'more',
-            ...getNumberCell(),
+            ...getCellDefinition('snapshotNumberOfPacks'),
             // Snapshot cell also carries the line's error beneath the count (a
             // snapshot/current-count mismatch is a "recount this line" message
             // about the snapshot); the count itself formats like every other
@@ -757,8 +844,40 @@ const StocktakeDetailView: Component = () => {
       c: { key: 'countedNumberOfPacks' },
       sortKey: 'countedNumberOfPacks',
       header: () => t('label.counted-num-of-packs'),
-      ...getNumberCell(),
-      meta: { align: 'right', headerPosition: 'badge' },
+      // NOT user-hideable (hideFromColumnSettings), unlike the other data
+      // columns here: this cell carries the WORD behind the uncounted marking
+      // ("Not counted", below), and the tint and bar beside it are colour.
+      // Hide the column from the Columns popover and an uncounted row would be
+      // marked by colour alone — the one thing the marking is never allowed to
+      // be (styling principle 9 / WCAG 1.4.1). Same reasoning as the outbound
+      // line table's Batch column, which holds "Unallocated". The column stays
+      // sortable and stays in its place in the order; it just can't be
+      // switched off.
+      ...getCellDefinition('countedNumberOfPacks', {
+        align: 'right',
+        headerPosition: 'badge',
+        hideFromColumnSettings: true,
+      }),
+      // An uncounted line has no counted value, and a blank cell says nothing —
+      // it reads as "zero" or "still loading" as readily as "not counted yet",
+      // and it is the only cell that could carry the word the row's marking
+      // leans on. The absent-value treatment types it as prose (UI face,
+      // italic, muted) so it cannot be mistaken for a counted quantity.
+      //
+      // A word, not a chip: the row already carries the unfinished tint AND the
+      // leading bar, so nothing more is needed to FIND it. This cell's one job
+      // is to say WHICH value is missing.
+      //
+      // The accessor above keeps the raw number as the cell's VALUE, so
+      // sorting, the hover-reveal and any export are unchanged.
+      cell: info =>
+        isUncounted(info.row.original) ? (
+          <AbsentValue label={t('label.not-counted')} />
+        ) : (
+          formatNumber(info.getValue<number | null | undefined>(), {
+            maximumFractionDigits: 2,
+          })
+        ),
     },
     // Doses counted (gated by manageVaccinesInDoses) — client-side, vaccine
     // rows only (blank otherwise); nothing stored per line (see ./lines/doses).
@@ -771,7 +890,7 @@ const StocktakeDetailView: Component = () => {
             },
             header: () => t('label.doses-counted'),
             cardGroup: 'more',
-            ...getNumberCell(),
+            ...getCellDefinition('doses'),
           } satisfies Column<Line, SortKey, GroupKey>,
         ]
       : []),
@@ -788,7 +907,7 @@ const StocktakeDetailView: Component = () => {
             },
             header: () => t('label.difference'),
             cardGroup: 'more',
-            ...getNumberCell(),
+            ...getCellDefinition('difference'),
           } satisfies Column<Line, SortKey, GroupKey>,
         ]),
     // Tail columns in OMS's columns.tsx order: Reason · [Donor] · Manufacturer
@@ -820,6 +939,7 @@ const StocktakeDetailView: Component = () => {
             c: { accessor: line => line.donorName ?? '', id: 'donor' },
             header: () => t('label.donor'),
             cardGroup: 'more',
+            ...getCellDefinition('donor'),
           } satisfies Column<Line, SortKey, GroupKey>,
         ]
       : []),
@@ -840,14 +960,15 @@ const StocktakeDetailView: Component = () => {
       c: { accessor: line => line.campaign?.name ?? '', id: 'campaign' },
       header: () => t('label.campaign-only'),
       cardGroup: 'more',
+      ...getCellDefinition('campaign'),
     },
     // Comment (spec column #18) — the line's own comment text. Distinct from
     // note; the shared comment cell (indicator + popover).
     {
       c: { key: 'comment' },
-      header: () => t('label.comment'),
+      header: () => <CommentHeader />,
       cardGroup: 'more',
-      ...getCommentCell(),
+      ...getCellDefinition('comment'),
     },
   ]);
 
@@ -897,6 +1018,12 @@ const StocktakeDetailView: Component = () => {
                         icon={<PlusCircleIcon />}
                         shortcut={ALT_N}
                         onClick={openAdd}
+                        // The toolbar button is what `add-item-button` names
+                        // (e2e/TESTIDS.md § Stocktake). It carried no id at
+                        // all, so the only addressable Add-item affordance was
+                        // the empty state's ghost below — which disappears the
+                        // moment a line exists.
+                        data-testid="add-item-button"
                       >
                         {t('button.add-item')}
                       </Button>
@@ -951,6 +1078,7 @@ const StocktakeDetailView: Component = () => {
                       storeId={params.storeId}
                       node={node()}
                       disabled={isDisabled(node())}
+                      pagination={linePagination()}
                       onSetHold={setHold}
                       onFinalised={onFinalised}
                       onError={lineIds =>
@@ -1003,6 +1131,9 @@ const StocktakeDetailView: Component = () => {
                       onError={stampErrors}
                       onShowErrors={showErrors}
                     />
+                    {/* The pager rides the selection face as well: ticking a
+                        row must not strip the way to the rest of the lines. */}
+                    <Pagination {...linePagination()} inBar />
                     <ContentFooterActions>
                       <Button
                         variant="secondary"
@@ -1051,20 +1182,50 @@ const StocktakeDetailView: Component = () => {
                   sort={currentSort()}
                   onSort={onSort}
                   onRowClick={isDisabled(node()) ? undefined : openRow}
-                  // Uncounted lines (no counted value) read in the info tone —
-                  // whole-row action-blue text, marking them as awaiting a
-                  // count (spec ui-surface → Line table, OMS-REG-INV-03.68).
-                  // They're the lines trimmed on finalise. Flat table, so a
+                  // Uncounted lines (no counted value) carry the unfinished-
+                  // work marking — the teal row tint AND a bar of the same
+                  // colour down the row's leading edge (spec ui-surface → Line
+                  // table, OMS-REG-INV-03.68). One channel, one question —
+                  // "what is still to count?" — answered by running the eye
+                  // down one edge rather than reading every Counted cell. These
+                  // are the lines trimmed on finalise. Flat table, so a
                   // leaf-row predicate is enough (no grouped parents to
                   // propagate to).
-                  rowTone={line => (isUncounted(line) ? 'info' : undefined)}
+                  //
+                  // This replaces the earlier whole-row action-blue TEXT tone:
+                  // blue text is the colour row SELECTION already spends, it
+                  // recoloured every value in the row (so a counted-looking
+                  // number and a missing one differed only in hue), and it left
+                  // the at-a-glance channel — the row background — unused. The
+                  // shared marking is the outbound line table's, same tokens
+                  // and same CSS (kdd/ui-styling; --marking-unfinished).
+                  rowTint={line =>
+                    isUncounted(line) ? 'unfinished' : undefined
+                  }
+                  // Same predicate on both channels: the tint colours the row,
+                  // the bar makes the uncounted lines legible down one edge as
+                  // the user scrolls a long count.
+                  rowAccent={line =>
+                    isUncounted(line) ? 'unfinished' : undefined
+                  }
+                  // Cards have neither a row background nor a leading edge to
+                  // mark, so they keep the TEXT tone on the card's identity
+                  // title (the teal is a 3:1 graphic colour — below the 4.5:1
+                  // text floor — so it can't cross over to text). The word is
+                  // there too: the Counted field is the card's badge.
+                  cardTone={line => (isUncounted(line) ? 'info' : undefined)}
                   emptyMessage={t('error.no-stocktake-items')}
                   empty={
                     isDisabled(node()) ? undefined : (
                       <Button
                         variant="ghost"
                         shortcut={ALT_N}
-                        data-testid="add-item-button"
+                        // The shared empty-state id, as the locations list and
+                        // the inbound line table already use — NOT
+                        // `add-item-button`, which now names the toolbar button
+                        // above; two elements answering one id is what made
+                        // this ambiguous.
+                        data-testid="nothing-here-create-button"
                         onClick={openAdd}
                       >
                         {t('button.add-item')}
@@ -1085,14 +1246,6 @@ const StocktakeDetailView: Component = () => {
                       ? tableConfig.saveGlobalTableConfig
                       : undefined
                   }
-                  pagination={{
-                    offset: query().offset,
-                    pageSize: query().first,
-                    total: totalCount(),
-                    onOffsetChange: offset => setQuery({ ...query(), offset }),
-                    onPageSizeChange: first =>
-                      setQuery({ ...query(), first, offset: 0 }),
-                  }}
                 />
               </TabPanel>
               {/* Documents tab: files attached to this stocktake (OMS parity).
@@ -1111,9 +1264,9 @@ const StocktakeDetailView: Component = () => {
               parity), mounted only while this tab is active (Kobalte unmounts
               inactive panels), so it fetches on first visit. */}
               <TabPanel value="log">
-                <StocktakeLogPanel
+                <ActivityLogPanel
                   storeId={params.storeId}
-                  stocktakeId={node().id}
+                  recordId={node().id}
                 />
               </TabPanel>
               {/* The line-edit modal is an overlay, not tab content: it stays a

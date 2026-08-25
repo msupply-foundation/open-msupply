@@ -1,6 +1,7 @@
 import { createResource, createSignal, Show, type Component } from 'solid-js';
 import { t } from '../../../../intl';
 import { graphqlFetch } from '../../../../api/graphql';
+import { gated } from '../../../../api/gated';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
@@ -10,7 +11,7 @@ import {
   CancelButton,
   DialogSaveButton,
 } from '../../../../ui/elements/buttons/StandardButtons';
-import { PlusCircleIcon } from '../../../../ui/icons';
+import { CatalogueIcon } from '../../../../ui/icons';
 import {
   AddToOutboundFromMasterList,
   CustomerMasterLists,
@@ -63,10 +64,7 @@ export const AddFromMasterListAction: Component<
         : [];
     }
   );
-  const listOptions = () =>
-    lists.state === 'ready' || lists.state === 'refreshing'
-      ? (lists.latest ?? [])
-      : [];
+  const listOptions = () => gated(lists) ?? [];
 
   const add = async (masterListId: string) => {
     setError(undefined);
@@ -90,7 +88,12 @@ export const AddFromMasterListAction: Component<
   return (
     <Show when={props.visible}>
       <Button
-        icon={<PlusCircleIcon />}
+        // A catalogue, not a bare plus: this button collapses to its icon
+        // beside "Add item" on a narrow viewport, and two identical plus
+        // circles there would be two unlabelled buttons that look the same.
+        icon={<CatalogueIcon />}
+        collapsible="narrow"
+        title={t('button.add-from-master-list')}
         data-testid="add-from-master-list-button"
         onClick={() => {
           setError(undefined);

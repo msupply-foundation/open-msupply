@@ -4,7 +4,7 @@ import type { StockMovementInfoFragment } from './stockMovementDetail.generated'
 // Pure status logic for stock movements (spec/stock-movements/rules.md
 // § status lifecycle + § editability + § status changes and the zero-line
 // gate). Kept free of components so the behaviour-citing tests exercise it
-// directly (cases/OMS-REG-SMV-09 .4, .6).
+// directly (cases/OMS-REG-SMV-10 .4, .6).
 
 export type MovementStatus = StockMovementInfoFragment['status'];
 
@@ -32,6 +32,13 @@ export const STATUS_LABELS: Record<string, string> = {
 export const statusLabel = (status: MovementStatus): string =>
   STATUS_LABELS[status] ?? status;
 
+// The label for the action that advances TO a status — the verb, not the
+// generic "Confirm ‹status›" (which reads as "Confirm Confirmed"):
+// CONFIRMED → Confirm, FINALISED → Finalise. Used by the footer's split
+// button and its confirmation dialog alike, so the two always agree.
+export const advanceLabel = (status: MovementStatus): string =>
+  status === 'FINALISED' ? t('button.finalise') : t('button.confirm');
+
 // The forward statuses offered from the current one (rules § status
 // lifecycle): every later stage, in order — NEW may skip straight to
 // FINALISED. Empty = terminal.
@@ -39,7 +46,7 @@ export const nextStatuses = (status: MovementStatus): MovementStatus[] =>
   STATUS_FLOW.slice(statusIndex(status) + 1) as MovementStatus[];
 
 // Standing editability (rules § editability): NEW and CONFIRMED are equally
-// editable — comment, lines, delete; only FINALISED disables. OMS-REG-SMV-09
+// editable — comment, lines, delete; only FINALISED disables. OMS-REG-SMV-10
 // .26–.28 own the finalised-protection outcomes end-to-end.
 export const isFinalised = (status: MovementStatus): boolean =>
   status === 'FINALISED';
@@ -48,7 +55,7 @@ export const isFinalised = (status: MovementStatus): boolean =>
 // ANY status change is blocked with a notice while the movement has no lines —
 // a client-side superset of the server's finalise-only rule. The button stays
 // clickable so the click explains itself (messages.no-lines dialog) rather
-// than dead-ending. OMS-REG-SMV-09.4.
+// than dead-ending. OMS-REG-SMV-10.4.
 export const blockedByZeroLines = (node: { lineCount: number }): boolean =>
   node.lineCount === 0;
 

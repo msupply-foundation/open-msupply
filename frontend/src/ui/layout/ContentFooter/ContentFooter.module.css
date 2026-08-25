@@ -8,6 +8,15 @@
  */
 
 .footer {
+  /* A size container (CLAUDE.md #7 — container queries for content): the bar's
+     own width is what its contents have to live within, and that is NOT the
+     viewport. A detail screen's footer shares its width between Hold, the
+     status track, the pager and the status button, so the pager must compact
+     against the space left in HERE, not against the window (Pagination's
+     `.inBar` query). Safe on this bar: it is a full-width strip whose inline
+     size comes from its parent, never from its contents. */
+  container-type: inline-size;
+  container-name: content-footer;
   display: flex;
   flex-wrap: wrap;
   flex-shrink: 0;

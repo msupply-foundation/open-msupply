@@ -3,17 +3,18 @@ import {
   CommandPaletteView,
   type PaletteEntry,
 } from '../ui/elements/keyboard/CommandPaletteView';
-import { registeredActions } from '../ui/utils/keyActions';
+import { actionName, registeredActions } from '../ui/utils/keyActions';
 import { locale, t } from '../intl';
 
 /*
- * The palette's app-side host: it turns the registry into rows and hands them to
- * the presentational view (spec/keyboard ui-surface S1).
+ * The palette's app-side host: it turns the registry into rows and hands them
+ * to the presentational view (spec/keyboard ui-surface S1).
  *
- * The snapshot is taken PER OPEN, not reactively (kdd/keyboard-layer): while the
- * palette is up it is modal and focus-trapped, so nothing behind it can mount or
- * unmount, and the set cannot change under the user. `props.open` is the memo's
- * only dependency, so opening re-reads the registry and closing drops it.
+ * The snapshot is taken PER OPEN, not reactively (kdd/keyboard-layer): while
+ * the palette is up it is modal and focus-trapped, so nothing behind it can
+ * mount or unmount, and the set cannot change under the user. `props.open` is
+ * the memo's only dependency, so opening re-reads the registry and closing
+ * drops it.
  */
 
 export interface CommandPaletteProps {
@@ -25,8 +26,8 @@ export const CommandPalette = (props: CommandPaletteProps) => {
   const entries = createMemo<readonly PaletteEntry[]>(() => {
     if (!props.open) return [];
 
-    // Collator, not `<` or a bare localeCompare: three locales, one of them RTL,
-    // and alphabetical has to mean alphabetical in the reader's language.
+    // Collator, not `<` or a bare localeCompare: three locales, one of them
+    // RTL, and alphabetical has to mean alphabetical in the reader's language.
     const collator = new Intl.Collator(locale());
 
     return (
@@ -36,15 +37,20 @@ export const CommandPalette = (props: CommandPaletteProps) => {
         .filter(action => action.name !== undefined)
         // A disabled action is inert AND unlisted (one field — see KeyAction).
         .filter(action => action.disabled?.() !== true)
-        .map((action, index) => ({
-          // Registration order is stable within a snapshot, and the index keeps
-          // two same-named actions distinct as list rows.
-          id: `${action.name ?? ''}-${index}`,
-          name: action.name === undefined ? '' : t(action.name),
-          keywords: action.keywords?.map(key => t(key)),
-          ...(action.shortcut ? { shortcut: action.shortcut } : {}),
-          run: action.run,
-        }))
+        .map((action, index) => {
+          // Resolved HERE, per open, so a language switch re-translates the
+          // whole list — whichever `name` form the action carries.
+          const name = actionName(action);
+          return {
+            // Registration order is stable within a snapshot, and the index
+            // keeps two same-named actions distinct as list rows.
+            id: `${name}-${index}`,
+            name,
+            keywords: action.keywords?.map(key => t(key)),
+            ...(action.shortcut ? { shortcut: action.shortcut } : {}),
+            run: action.run,
+          };
+        })
         // KB-P3: alphabetically BY NAME. Sorting on the name alone, before the
         // view appends the parenthesised keys, so "Go to: Dashboard (Option+D)"
         // does not sort under its modifier.

@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import {
   allowedValues,
+  asStatusList,
+  asWarnParts,
+  buildPreferencesInput,
+  canEditPreferences,
+  matchesPreferenceFilter,
+  preferenceValue,
+  toggleInvoiceStatus,
+  type StorePreference,
   canEditAnything,
   coordinate,
   formatCoordinate,
@@ -219,5 +227,183 @@ describe('storeEditorLogic — store editor (spec/settings S5)', () => {
     expect(geolocationErrorKey(2)).toBe('error.position-unavailable');
     expect(geolocationErrorKey(3)).toBe('error.timeout');
     expect(geolocationErrorKey(99)).toBe('error.unknown-geolocation-error');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The Preferences tab (rules § The store editor › Preferences,
+// OMS-REG-SET-05.33–.39)
+
+const preference = (
+  key: StorePreference['key'],
+  valueType: StorePreference['valueType'],
+  value: unknown
+): StorePreference => ({ key, valueType, value });
+
+describe('preferenceValue', () => {
+  it('shows the staged edit over the served value, including a staged falsy', () => {
+    const pref = preference('blindStocktake', 'BOOLEAN', true);
+    expect(preferenceValue(pref, {})).toBe(true);
+    expect(preferenceValue(pref, { blindStocktake: false })).toBe(false);
+  });
+});
+
+describe('matchesPreferenceFilter (SET-05.35)', () => {
+  it('matches case-insensitively on a substring of the label', () => {
+    expect(matchesPreferenceFilter('Enable blind stock take', 'STOCK')).toBe(
+      true
+    );
+    expect(matchesPreferenceFilter('Order in packs', 'stock')).toBe(false);
+  });
+
+  it('an empty or whitespace-only term matches everything', () => {
+    expect(matchesPreferenceFilter('Anything', '')).toBe(true);
+    expect(matchesPreferenceFilter('Anything', '   ')).toBe(true);
+  });
+});
+
+describe('toggleInvoiceStatus (SET-05.38)', () => {
+  const defaults = asStatusList([
+    'NEW',
+    'ALLOCATED',
+    'PICKED',
+    'SHIPPED',
+    'RECEIVED',
+    'DELIVERED',
+    'VERIFIED',
+  ]);
+
+  it('unchecks one of the Delivered/Received pair while the other remains', () => {
+    expect(toggleInvoiceStatus(defaults, 'DELIVERED', false)).toEqual([
+      'NEW',
+      'ALLOCATED',
+      'PICKED',
+      'SHIPPED',
+      'RECEIVED',
+      'VERIFIED',
+    ]);
+  });
+
+  it('refuses unchecking the LAST selected of Delivered/Received', () => {
+    const withoutReceived = asStatusList([
+      'NEW',
+      'ALLOCATED',
+      'PICKED',
+      'SHIPPED',
+      'DELIVERED',
+      'VERIFIED',
+    ]);
+    expect(toggleInvoiceStatus(withoutReceived, 'DELIVERED', false)).toBeNull();
+  });
+
+  it('a set already violating the rule does not block unrelated edits', () => {
+    // Another client can store any set (the server never validates) — only
+    // the specific uncheck-the-last-of-the-pair edit refuses.
+    const bad = asStatusList(['NEW', 'SHIPPED']);
+    expect(toggleInvoiceStatus(bad, 'PICKED', true)).toEqual([
+      'NEW',
+      'PICKED',
+      'SHIPPED',
+    ]);
+  });
+
+  it('keeps the canonical order whatever the toggle order', () => {
+    const some = asStatusList(['NEW', 'RECEIVED']);
+    expect(toggleInvoiceStatus(some, 'ALLOCATED', true)).toEqual([
+      'NEW',
+      'ALLOCATED',
+      'RECEIVED',
+    ]);
+  });
+});
+
+describe('asWarnParts / asStatusList — defensive reads of the untyped value', () => {
+  it('reads a malformed composite as the fabricated default', () => {
+    expect(asWarnParts('not-an-object')).toEqual({
+      enabled: false,
+      maxAge: 0,
+      minItems: 0,
+    });
+    expect(asWarnParts({ enabled: true, maxAge: 30, minItems: 5 })).toEqual({
+      enabled: true,
+      maxAge: 30,
+      minItems: 5,
+    });
+  });
+
+  it('reads a malformed status list as empty and drops unknown members', () => {
+    expect(asStatusList('nope')).toEqual([]);
+    expect(asStatusList(['DELIVERED', 'CANCELLED', 'bogus'])).toEqual([
+      'DELIVERED',
+    ]);
+  });
+});
+
+describe('canEditPreferences (SET-05.36)', () => {
+  it('requires the central server AND the central-data permission together', () => {
+    expect(
+      canEditPreferences({ canEditCentralData: true, isCentralServer: true })
+    ).toBe(true);
+    expect(
+      canEditPreferences({ canEditCentralData: true, isCentralServer: false })
+    ).toBe(false);
+    expect(
+      canEditPreferences({ canEditCentralData: false, isCentralServer: true })
+    ).toBe(false);
+  });
+});
+
+describe('buildPreferencesInput (SET-05.37)', () => {
+  it('sends only staged preferences, each naming the edited store', () => {
+    const input = buildPreferencesInput(
+      { blindStocktake: true, firstThresholdForExpiringItems: 30 },
+      'store-a'
+    );
+    expect(input).toEqual({
+      blindStocktake: [{ storeId: 'store-a', value: true }],
+      firstThresholdForExpiringItems: [{ storeId: 'store-a', value: 30 }],
+    });
+  });
+
+  it('returns undefined when nothing is staged, so the save skips the call', () => {
+    expect(buildPreferencesInput({}, 'store-a')).toBeUndefined();
+  });
+
+  it('carries the composite and the status set in their wire shapes', () => {
+    const input = buildPreferencesInput(
+      {
+        warnWhenMissingRecentStocktake: {
+          enabled: true,
+          maxAge: 30,
+          minItems: 5,
+        },
+        invoiceStatusOptions: ['NEW', 'DELIVERED'],
+        storeCustomColour: '#004fc4',
+      },
+      'store-a'
+    );
+    expect(input).toEqual({
+      warnWhenMissingRecentStocktake: [
+        {
+          storeId: 'store-a',
+          value: { enabled: true, maxAge: 30, minItems: 5 },
+        },
+      ],
+      invoiceStatusOptions: [
+        { storeId: 'store-a', value: ['NEW', 'DELIVERED'] },
+      ],
+      storeCustomColour: [{ storeId: 'store-a', value: '#004fc4' }],
+    });
+  });
+
+  it("coerces a wrong-typed staged value to the kind's zero, never dropping the write", () => {
+    const input = buildPreferencesInput(
+      { blindStocktake: 'yes', secondThresholdForExpiringItems: 'ten' },
+      'store-a'
+    );
+    expect(input).toEqual({
+      blindStocktake: [{ storeId: 'store-a', value: false }],
+      secondThresholdForExpiringItems: [{ storeId: 'store-a', value: 0 }],
+    });
   });
 });

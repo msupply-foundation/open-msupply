@@ -1,11 +1,9 @@
 import { createSignal, Show, Switch, Match, type Component } from 'solid-js';
-import { useNavigate, useParams } from '@solidjs/router';
 import { t, tPlural } from '../../../intl';
 import { authUser, userDisplayName } from '../../../auth/authContext';
 import { Button } from '../../../ui/elements/buttons/Button';
 import {
   CancelButton,
-  CloseButton,
   OkButton,
 } from '../../../ui/elements/buttons/StandardButtons';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
@@ -15,16 +13,24 @@ import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { CheckIcon } from '../../../ui/icons';
 import { sendInternalOrder } from './internalOrderUpdate';
-import { currentStatusStep, statusSteps } from './internalOrderDetailStatus';
+import {
+  currentStatusStep,
+  isEmptySend,
+  statusSteps,
+} from './internalOrderDetailStatus';
 import type { InternalOrderInfoFragment } from './internalOrderDetail.generated';
 
 // The detail footer (spec/internal-orders S3 § footer): the status trail
 // (Draft → Sent → Finalised, each stamped with its date) and the one status
 // action — Confirm Sent.
 //
-// Confirm Sent is hidden on a read-only order (AC-S3). When invoked on an order
-// with no non-zero-requested line it is refused client-side with an explanation
-// and no call (AC-S4); otherwise it confirms before sending. The server's
+// Confirm Sent is hidden on a read-only order (AC-S3). A send that would
+// produce an empty order is refused client-side with an explanation and no
+// call (AC-S4): no lines at all, or — where the store trims zero-requested
+// lines on send — no non-zero-requested line. Where the store keeps
+// zero-requested lines (keepRequisitionLinesWithZeroRequestedQuantityOn-
+// Finalised), an all-zero order is sendable — its lines survive the send
+// (rules › Lifecycle, D20). Otherwise it confirms before sending. The server's
 // domain refusals (the reasons backstop, the emergency cap, cannot-edit) come
 // back typed and surface inline in the dialog (contract › lifecycle). A missing
 // RequisitionSend permission routes to the global permission-denied modal
@@ -66,6 +72,12 @@ export interface InternalOrderStatusFooterProps {
    * send auto-comment stamping (AC-S7).
    */
   requiresAuthorisation: boolean;
+  /**
+   * The store keeps zero-requested lines on send
+   * (keepRequisitionLinesWithZeroRequestedQuantityOnFinalised) — an all-zero
+   * order is then sendable (AC-S4, D20).
+   */
+  keepZeroLines: boolean;
   /** A send succeeded — merge the returned node over the current one. */
   onSent: (node: InternalOrderInfoFragment) => void;
   /**
@@ -79,14 +91,12 @@ export interface InternalOrderStatusFooterProps {
 export const InternalOrderStatusFooter: Component<
   InternalOrderStatusFooterProps
 > = props => {
-  const params = useParams<{ storeId: string }>();
-  const navigate = useNavigate();
   const [open, setOpen] = createSignal(false);
   const [phase, setPhase] = createSignal<Phase>('confirm');
   const [errorMessage, setErrorMessage] = createSignal<string>();
 
-  const hasSendableLine = () =>
-    props.node.lines.nodes.some(line => line.requestedQuantity > 0);
+  const emptySend = () =>
+    isEmptySend(props.node.lines.nodes, props.keepZeroLines);
 
   // Outstanding-ancillary send warning (AC-A9): alert-styled, never blocks the
   // send. The plan is computed server-side and rides the node.
@@ -107,7 +117,7 @@ export const InternalOrderStatusFooter: Component<
 
   const onConfirmSend = () => {
     // Empty-order refusal is a client check — no call (AC-S4).
-    setPhase(hasSendableLine() ? 'confirm' : 'empty');
+    setPhase(emptySend() ? 'empty' : 'confirm');
     setErrorMessage(undefined);
     setOpen(true);
   };
@@ -149,12 +159,8 @@ export const InternalOrderStatusFooter: Component<
         current={currentStatusStep(props.node.status)}
       />
       <ContentFooterActions>
-        <CloseButton
-          data-testid="close-button"
-          onClick={() =>
-            navigate(`/${params.storeId}/replenishment/internal-order`)
-          }
-        />
+        {/* No Close here (D103): leaving the order is the breadcrumb's job, in
+            the app bar, where every other screen puts it. */}
         {/* Hidden on a read-only order (AC-S3). */}
         <Show when={props.editable}>
           <Button
@@ -190,12 +196,14 @@ export const InternalOrderStatusFooter: Component<
               }
             >
               <Match when={phase() === 'empty'}>
-                <Alert severity="warning">
+                <Alert severity="warning" testId="send-error">
                   {t('messages.cant-send-order')}
                 </Alert>
               </Match>
               <Match when={phase() === 'error'}>
-                <Alert severity="error">{errorMessage()}</Alert>
+                <Alert severity="error" testId="send-error">
+                  {errorMessage()}
+                </Alert>
               </Match>
             </Switch>
           }
