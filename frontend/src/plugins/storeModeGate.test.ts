@@ -54,7 +54,7 @@ const edges = vi.hoisted(() => {
 vi.mock('../auth/authContext', () => ({ authUser: () => edges.state.user }));
 vi.mock('../api/graphql', () => ({ graphqlFetch: edges.graphqlFetch }));
 
-import { refetchStoreContext } from '../store/storeContext';
+import { isDispensary, refetchStoreContext } from '../store/storeContext';
 import { clearPlugins, registerPlugin } from './registry';
 import { visibleContributions } from './PluginSlot';
 import { slotContext } from './slotContext';
@@ -183,6 +183,26 @@ describe('gating a contribution on store mode (CK-1.1)', () => {
     expect(ctx.storeId).toBe('clinic');
     expect(ctx.storeMode).toBe('dispensary');
     expect(ctx.permissions).toEqual(['REQUISITION_MUTATE']);
+  });
+
+  // isDispensary() gates the whole patient surface — the Dispensary nav group
+  // and its routes — and every suite that exercises those MOCKS it, so nothing
+  // else pins the real accessor. CK-1.1 re-expressed it over currentStoreMode();
+  // this is what would catch that refactor changing its answer.
+  it('leaves isDispensary() answering exactly as before', async () => {
+    edges.state.user = loggedIn;
+    expect(isDispensary()).toBe(false); // no store entered
+
+    await refetchStoreContext('clinic');
+    expect(isDispensary()).toBe(true);
+
+    await refetchStoreContext('depot');
+    expect(isDispensary()).toBe(false);
+
+    // Safe default OFF: a failed context fetch must not admit the surface.
+    edges.state.fetchFails = true;
+    await refetchStoreContext('clinic');
+    expect(isDispensary()).toBe(false);
   });
 
   it('leaves the mode unknown when the context fetch fails', async () => {
