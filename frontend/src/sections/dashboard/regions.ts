@@ -258,14 +258,13 @@ export const applicableSuppressions = (
 export const publishedIds = (): string[] => {
   const ids: string[] = [];
   for (const widget of Object.values(DASHBOARD_IDS)) {
-    for (const [key, value] of Object.entries(widget)) {
-      if (key === 'id') {
-        ids.push(value as string);
-      } else if (typeof value === 'object') {
-        for (const [innerKey, innerValue] of Object.entries(value)) {
-          if (typeof innerValue === 'string' && innerKey !== undefined)
-            ids.push(innerValue);
-        }
+    for (const value of Object.values(widget)) {
+      if (typeof value === 'string') {
+        ids.push(value);
+        continue;
+      }
+      for (const innerValue of Object.values(value)) {
+        if (typeof innerValue === 'string') ids.push(innerValue);
       }
     }
   }
