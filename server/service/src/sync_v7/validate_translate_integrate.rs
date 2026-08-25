@@ -127,6 +127,8 @@ fn translate_delete(
         ChangelogTableName::RnrFormLine => Box::new(RnRFormLineDelete(id)),
         ChangelogTableName::Site => Box::new(SiteRowDelete(id)),
         ChangelogTableName::StockLine => Box::new(StockLineRowDelete(id)),
+        ChangelogTableName::PrescriptionOrder => Box::new(PrescriptionOrderRowDelete(id)),
+        ChangelogTableName::PrescriptionOrderLine => Box::new(PrescriptionOrderLineRowDelete(id)),
         ChangelogTableName::StockRelocation => Box::new(StockRelocationRowDelete(id)),
         ChangelogTableName::StockRelocationLine => Box::new(StockRelocationLineRowDelete(id)),
         ChangelogTableName::Stocktake => Box::new(StocktakeRowDelete(id)),
@@ -592,7 +594,11 @@ mod test {
         connection
     }
 
-    fn buffer_row(record_id: &str, action: SyncAction, data: serde_json::Value) -> SyncBufferRowInsert {
+    fn buffer_row(
+        record_id: &str,
+        action: SyncAction,
+        data: serde_json::Value,
+    ) -> SyncBufferRowInsert {
         SyncBufferRowInsert {
             record_id: record_id.to_string(),
             table_name: "unit".to_string(),
@@ -683,8 +689,11 @@ mod test {
         // The #12610 shape: a stale Delete arrives in an earlier batch than the
         // record's re-create Upsert. The delete must be superseded, not applied
         // after the upsert.
-        let connection =
-            setup("integrate_marks_stale_delete_superseded", MockDataInserts::none()).await;
+        let connection = setup(
+            "integrate_marks_stale_delete_superseded",
+            MockDataInserts::none(),
+        )
+        .await;
 
         SyncBufferRepository::new(&connection)
             .insert_many(&[
@@ -829,7 +838,10 @@ mod test {
         SyncBufferRepository::new(&connection)
             .insert_many(&[
                 row(SyncAction::Delete, serde_json::json!({})),
-                row(SyncAction::Upsert, serde_json::to_value(&permission).unwrap()),
+                row(
+                    SyncAction::Upsert,
+                    serde_json::to_value(&permission).unwrap(),
+                ),
             ])
             .unwrap();
 

@@ -185,6 +185,7 @@ impl SyncTranslation for GoodsReceivedTranslation {
             charges_foreign_currency: 0.0,
             default_donor_id,
             legacy_goods_received_id: None,
+            prescription_order_id: None,
         };
 
         Ok(PullTranslateResult::upsert(invoice))

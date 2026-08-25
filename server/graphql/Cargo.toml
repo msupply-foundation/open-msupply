@@ -36,6 +36,7 @@ graphql_stocktake_line = { path = "stocktake_line" }
 graphql_types = { path = "types" }
 graphql_batch_mutations = { path = "batch_mutations" }
 graphql_stock_line = { path = "stock_line" }
+graphql_prescription_order = { path = "prescription_order" }
 graphql_stock_relocation = { path = "stock_relocation" }
 graphql_repack = { path = "repack" }
 graphql_printer = { path = "printer" }

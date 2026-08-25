@@ -4307,6 +4307,7 @@ dependencies = [
  "graphql_location",
  "graphql_plugin",
  "graphql_preference",
+ "graphql_prescription_order",
  "graphql_printer",
  "graphql_programs",
  "graphql_purchase_order",
@@ -4739,6 +4740,26 @@ dependencies = [
  "graphql_types",
  "log",
  "repository",
+ "serde_json",
+ "service",
+ "util",
+]
+
+[[package]]
+name = "graphql_prescription_order"
+version = "0.1.0"
+dependencies = [
+ "actix-rt",
+ "actix-web",
+ "assert-json-diff",
+ "async-graphql",
+ "async-graphql-actix-web",
+ "async-trait",
+ "chrono",
+ "graphql_core",
+ "graphql_types",
+ "repository",
+ "serde",
  "serde_json",
  "service",
  "util",

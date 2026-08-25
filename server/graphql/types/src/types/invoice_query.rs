@@ -244,8 +244,7 @@ impl InvoiceNode {
             return Ok(None);
         };
 
-        let Some(scope) = service::invoice::invoice_custom_field_scope(&self.row().r#type)
-        else {
+        let Some(scope) = service::invoice::invoice_custom_field_scope(&self.row().r#type) else {
             return Ok(None);
         };
 
@@ -549,6 +548,12 @@ impl InvoiceNode {
 
     pub async fn purchase_order_id(&self) -> &Option<String> {
         &self.row().purchase_order_id
+    }
+
+    /// The prescriber's prescription order this dispensing invoice was
+    /// generated from (soft link — the order may not exist on this site)
+    pub async fn prescription_order_id(&self) -> &Option<String> {
+        &self.row().prescription_order_id
     }
 
     pub async fn purchase_order(&self, ctx: &Context<'_>) -> Result<Option<PurchaseOrderNode>> {

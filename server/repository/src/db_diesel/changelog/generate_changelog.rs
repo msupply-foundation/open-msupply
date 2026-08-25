@@ -306,6 +306,57 @@ impl LocationRow {
     }
 }
 
+impl PrescriptionOrderRow {
+    pub(crate) fn generate_changelog(
+        row_or_id: RowOrId<PrescriptionOrderRow>,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: SourceSiteId,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        let row = match row_or_id {
+            RowOrId::Row(row) => row,
+            RowOrId::Id(row_id) => &PrescriptionOrderRowRepository::new(con)
+                .find_one_by_id(row_id)?
+                .ok_or(RepositoryError::NotFound)?,
+        };
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::PrescriptionOrder,
+            record_id: row.id.clone(),
+            row_action: action,
+            store_id: Some(row.store_id.clone()),
+            source_site_id: source_site_id.get_id(con)?,
+            ..Default::default()
+        })
+    }
+}
+
+impl PrescriptionOrderLineRow {
+    pub(crate) fn generate_changelog(
+        row_or_id: RowOrId<PrescriptionOrderLineRow>,
+        con: &StorageConnection,
+        action: RowActionType,
+        source_site_id: SourceSiteId,
+    ) -> Result<ChangeLogInsertRow, RepositoryError> {
+        let row = match row_or_id {
+            RowOrId::Row(row) => row,
+            RowOrId::Id(row_id) => &PrescriptionOrderLineRowRepository::new(con)
+                .find_one_by_id(row_id)?
+                .ok_or(RepositoryError::NotFound)?,
+        };
+        let prescription_order_changelog = PrescriptionOrderRow::generate_changelog(
+            RowOrId::Id(&row.prescription_order_id),
+            con,
+            action,
+            source_site_id,
+        )?;
+        Ok(ChangeLogInsertRow {
+            table_name: ChangelogTableName::PrescriptionOrderLine,
+            record_id: row.id.clone(),
+            ..prescription_order_changelog
+        })
+    }
+}
+
 impl PurchaseOrderRow {
     pub(crate) fn generate_changelog(
         row_or_id: RowOrId<PurchaseOrderRow>,
