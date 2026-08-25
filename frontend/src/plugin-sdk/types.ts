@@ -110,9 +110,11 @@ export type PluginLocaleKey = string;
 
 // ── The dashboard slots ─────────────────────────────────────────────────────
 // The proof surface for v1 (spec/dashboard/ui-surface.md § S3): three sibling
-// slots, one per nesting level. `internalOrderLine.column` and
-// `internalOrderLine.infoPanel` join the maps below as their host surfaces
-// land — a new slot is an additive change, a rename is an API-version bump.
+// PIECE slots, one per nesting level, plus the screen-level `dashboard.body`,
+// whose contribution IS the dashboard body rather than a piece within one.
+// `internalOrderLine.column` and `internalOrderLine.infoPanel` join the maps
+// below as their host surfaces land — a new slot is an additive change, a
+// rename is an API-version bump.
 
 /**
  * A published host id — `<widget>` / `<widget>.<panel>` /
@@ -148,6 +150,11 @@ export type NoPlacement = Record<never, never>;
  * data-access and context surfaces, so it fetches its own data rather than
  * receiving it. `Record<string, never>` (not `{}`) keeps the props type
  * assignable to Solid's bare `Component` at the host's outlet.
+ *
+ * ONE type for all four dashboard slots, the body included: which stores get a
+ * contributed body is `when(ctx)`'s answer, and the store mode and preferences
+ * it turns on reach the contribution as session context, so there is nothing
+ * for props to carry there either.
  */
 export type DashboardSlotProps = Record<string, never>;
 
@@ -411,6 +418,7 @@ export interface SlotPropsMap {
   'dashboard.widget': DashboardSlotProps;
   'dashboard.panel': DashboardSlotProps;
   'dashboard.stat': DashboardSlotProps;
+  'dashboard.body': DashboardSlotProps;
   'internalOrderLine.column': ColumnCellProps<InternalOrderLineView>;
   'internalOrderLine.infoPanel': InternalOrderLineInfoPanelProps;
   'prescription.paymentForm': PrescriptionPaymentFormProps;
@@ -419,9 +427,12 @@ export interface SlotPropsMap {
 export type SlotId = keyof SlotPropsMap;
 
 /**
- * The dashboard's slot ids — the three whose contributions are a PROPS-LESS
- * `Component`, and so are exactly what the shared props-less outlet renders. A
- * slot carrying props (the column slot) has its own host surface.
+ * The dashboard's PIECE slot ids — the three that contribute into a container
+ * of host siblings, and so are exactly what the shared props-less outlet
+ * renders at a region's tail. A slot carrying props (the column slot) has its
+ * own host surface, and so does `dashboard.body`: its occupant replaces the
+ * body rather than joining a region, so it is not one of these
+ * (spec/dashboard/ui-surface.md § body-region semantics).
  */
 export type DashboardSlotId =
   'dashboard.widget' | 'dashboard.panel' | 'dashboard.stat';
@@ -447,6 +458,9 @@ export interface SlotPlacement {
     panel: DashboardPanelId;
     anchor?: DashboardAnchor<DashboardStatId>;
   };
+  // The body has no siblings to place itself among and no published ids inside
+  // it: `when(ctx)` is the whole of its placement question.
+  'dashboard.body': NoPlacement;
   'internalOrderLine.column': ColumnDeclaration<InternalOrderLineView>;
   'internalOrderLine.infoPanel': NoPlacement;
   'prescription.paymentForm': NoPlacement;
@@ -462,6 +476,7 @@ export interface SlotRender {
   'dashboard.widget': { Component: Component<DashboardSlotProps> };
   'dashboard.panel': { Component: Component<DashboardSlotProps> };
   'dashboard.stat': { Component: Component<DashboardSlotProps> };
+  'dashboard.body': { Component: Component<DashboardSlotProps> };
   'internalOrderLine.column': ColumnRender<InternalOrderLineView>;
   'internalOrderLine.infoPanel': {
     Component: Component<InternalOrderLineInfoPanelProps>;
