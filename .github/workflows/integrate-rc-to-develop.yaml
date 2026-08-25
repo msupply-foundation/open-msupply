@@ -5,17 +5,32 @@ on:
   schedule:
     - cron: "0 8 * * *" # Every day at 08:00 AM UTC - equivalent to 08:00 PM NZST (or 09:00 PM NZDT)
 
+# Privileged work (pushing branches, opening the PR) uses the tmf-ci-bot
+# token minted below; GITHUB_TOKEN needs nothing beyond read.
+permissions:
+  contents: read
+
 jobs:
   integrate-rc-to-develop:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
     steps:
+      # Branches pushed / PRs opened with the workflow's own GITHUB_TOKEN
+      # would not trigger CI on the resulting PR, so use an app-minted token.
+      - name: Mint tmf-ci-bot token
+        uses: actions/create-github-app-token@v3
+        id: bot-token
+        with:
+          client-id: ${{ vars.TMF_CI_BOT_APP_ID }}
+          private-key: ${{ secrets.TMF_CI_BOT_PRIVATE_KEY }}
+          owner: msupply-foundation
+          repositories: open-msupply
+          permission-contents: write
+          permission-pull-requests: write
+
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-          token: ${{ secrets.NIGHTLY_BUILD_GITHUB_PAT }}
+          token: ${{ steps.bot-token.outputs.token }}
 
       - name: Configure Git
         run: |
@@ -24,5 +39,5 @@ jobs:
 
       - name: Integrate RC to Develop
         env:
-          GITHUB_TOKEN: ${{ secrets.NIGHTLY_BUILD_GITHUB_PAT }}
+          GITHUB_TOKEN: ${{ steps.bot-token.outputs.token }}
         run: bash .github/scripts/integrate-rc-to-develop.sh

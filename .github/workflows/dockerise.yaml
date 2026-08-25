@@ -97,8 +97,8 @@ jobs:
       # New FE served at / : fetch the pinned, checksum-verified dist host-side (no
       # network fetch inside docker build) and ship it into the image as files.
       # The FE repo is private and GITHUB_TOKEN only grants this repo, so a
-      # short-lived token is minted from the same GitHub App the e2e workflow uses
-      # to read open-msupply-frontend (vars.FE_APP_ID / secrets.FE_APP_PRIVATE_KEY —
+      # short-lived token is minted from the tmf-ci-bot GitHub App
+      # (vars.TMF_CI_BOT_APP_ID / secrets.TMF_CI_BOT_PRIVATE_KEY —
       # no PAT to expire or rotate). Until the FE repo cuts a release the pin is a placeholder
       # and this step fails loudly (matching the mac build's "wrong FE at / is worse
       # than a loud failure" stance); nightly tags will fail here until the pin is
@@ -108,10 +108,11 @@ jobs:
         uses: actions/create-github-app-token@v3
         id: fe-token
         with:
-          client-id: ${{ vars.FE_APP_ID }}
-          private-key: ${{ secrets.FE_APP_PRIVATE_KEY }}
+          client-id: ${{ vars.TMF_CI_BOT_APP_ID }}
+          private-key: ${{ secrets.TMF_CI_BOT_PRIVATE_KEY }}
           owner: msupply-foundation
           repositories: open-msupply-frontend
+          permission-contents: read
 
       - name: Fetch new frontend (pinned dist)
         env:
@@ -315,4 +316,4 @@ jobs:
     with:
       image_tag: ${{ needs.dockerise.outputs.image_tag }}-dev
     secrets:
-      ORG_WORKFLOW_TOKEN: ${{ secrets.ORG_WORKFLOW_TOKEN }}
+      TMF_CI_BOT_PRIVATE_KEY: ${{ secrets.TMF_CI_BOT_PRIVATE_KEY }}

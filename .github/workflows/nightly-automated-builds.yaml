@@ -4,20 +4,35 @@ on:
   schedule:
     - cron: "30 6 * * *" # Every day at 06:30 AM UTC - equivalent to 06:30 PM NZST (or 07:30 PM NZDT)
 
+# Privileged work (pushing tags) uses the tmf-ci-bot token minted below;
+# GITHUB_TOKEN only ever needs to read this repo for checkout.
+permissions:
+  contents: read
+
 jobs:
   create-tags:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     outputs:
       CREATED_TAGS: ${{ steps.create_tags.outputs.CREATED_TAGS }}
       AFFECTED_BRANCHES: ${{ steps.create_tags.outputs.AFFECTED_BRANCHES }}
       HAS_TAGS: ${{ steps.create_tags.outputs.HAS_TAGS }}
     steps:
+      # Tags pushed with the workflow's own GITHUB_TOKEN would not trigger
+      # the tag-driven build workflows, so push with an app-minted token.
+      - name: Mint tmf-ci-bot token
+        uses: actions/create-github-app-token@v3
+        id: bot-token
+        with:
+          client-id: ${{ vars.TMF_CI_BOT_APP_ID }}
+          private-key: ${{ secrets.TMF_CI_BOT_PRIVATE_KEY }}
+          owner: msupply-foundation
+          repositories: open-msupply
+          permission-contents: write
+
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0
-          token: ${{ secrets.NIGHTLY_BUILD_GITHUB_PAT }}
+          token: ${{ steps.bot-token.outputs.token }}
 
       - name: Configure Git
         run: |

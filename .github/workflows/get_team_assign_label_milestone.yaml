@@ -4,14 +4,30 @@ on:
   issues:
     types: [assigned, unassigned]
 
+# Labelling and milestone work uses the tmf-ci-bot token minted below;
+# GITHUB_TOKEN is only used by actions/checkout.
+permissions:
+  contents: read
+
 jobs:
   assign-team-labels:
     runs-on: ubuntu-latest
-    permissions:
-      issues: write
-      contents: read
 
     steps:
+      # The script reads org team membership, which GITHUB_TOKEN can't do —
+      # mint a token from the tmf-ci-bot GitHub App (org Members: read,
+      # plus issues write on this repo).
+      - name: Mint tmf-ci-bot token
+        uses: actions/create-github-app-token@v3
+        id: bot-token
+        with:
+          client-id: ${{ vars.TMF_CI_BOT_APP_ID }}
+          private-key: ${{ secrets.TMF_CI_BOT_PRIVATE_KEY }}
+          owner: msupply-foundation
+          repositories: open-msupply
+          permission-issues: write
+          permission-members: read
+
       - name: Checkout repository
         uses: actions/checkout@v5
 
@@ -27,6 +43,6 @@ jobs:
       - name: Run team label assignment script
         run: python .github/scripts/get_team_assign_label_milestone.py
         env:
-          GITHUB_TOKEN: ${{ secrets.ASSIGN_TEAM_LABEL_AND_MILESTONE }}
+          GITHUB_TOKEN: ${{ steps.bot-token.outputs.token }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}

@@ -10,12 +10,12 @@ name: Bump frontend pin
 # again, restore the rolling-PR step (git history of this file, or
 # open-msupply-frontend#401 / #12523).
 #
-# Auth: the FE repo is private — reading its releases reuses the same
-# GitHub App (FE_APP_ID / FE_APP_PRIVATE_KEY) the packaging workflows
-# use to fetch the dist. The commit is pushed with
-# NIGHTLY_BUILD_GITHUB_PAT; develop's protection requires PR reviews,
-# so that PAT's account must be allowed to bypass them (repo admin, or
-# on the branch-protection bypass list).
+# Auth: two tokens, both minted from the tmf-ci-bot GitHub App (the
+# same app the packaging workflows use) — one read-only on the private
+# FE repo to read its releases, one with write on this repo to push the
+# pin commit. Kept separate so reading a release never needs write on
+# the FE repo. develop's protection requires PR reviews, so tmf-ci-bot
+# must be on the branch-protection bypass list.
 
 on:
   schedule:
@@ -34,19 +34,30 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v5
-        with:
-          ref: develop
-          token: ${{ secrets.NIGHTLY_BUILD_GITHUB_PAT }}
-
-      - name: Mint token for the frontend repo
+      - name: Mint tmf-ci-bot token for the frontend repo
         uses: actions/create-github-app-token@v3
         id: fe-token
         with:
-          client-id: ${{ vars.FE_APP_ID }}
-          private-key: ${{ secrets.FE_APP_PRIVATE_KEY }}
+          client-id: ${{ vars.TMF_CI_BOT_APP_ID }}
+          private-key: ${{ secrets.TMF_CI_BOT_PRIVATE_KEY }}
           owner: msupply-foundation
           repositories: open-msupply-frontend
+          permission-contents: read
+
+      - name: Mint tmf-ci-bot token for this repo
+        uses: actions/create-github-app-token@v3
+        id: bot-token
+        with:
+          client-id: ${{ vars.TMF_CI_BOT_APP_ID }}
+          private-key: ${{ secrets.TMF_CI_BOT_PRIVATE_KEY }}
+          owner: msupply-foundation
+          repositories: open-msupply
+          permission-contents: write
+
+      - uses: actions/checkout@v5
+        with:
+          ref: develop
+          token: ${{ steps.bot-token.outputs.token }}
 
       - name: Compare latest FE release with the pin
         id: check

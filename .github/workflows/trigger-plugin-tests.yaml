@@ -8,7 +8,7 @@ on:
         required: true
         type: string
     secrets:
-      ORG_WORKFLOW_TOKEN:
+      TMF_CI_BOT_PRIVATE_KEY:
         required: true
   workflow_dispatch:
     inputs:
@@ -21,30 +21,43 @@ jobs:
   trigger-tests:
     runs-on: ubuntu-latest
     steps:
+      # Dispatching workflows in other repos is beyond GITHUB_TOKEN's scope,
+      # so mint a token from the tmf-ci-bot GitHub App (needs actions write
+      # on the target repos). Keep `repositories` in sync with REPOS below.
+      - name: Mint tmf-ci-bot token
+        uses: actions/create-github-app-token@v3
+        id: bot-token
+        with:
+          client-id: ${{ vars.TMF_CI_BOT_APP_ID }}
+          private-key: ${{ secrets.TMF_CI_BOT_PRIVATE_KEY }}
+          owner: msupply-foundation
+          repositories: sao-tome-plugins
+          permission-actions: write
+
       - name: Trigger tests in plugin repositories
+        env:
+          BOT_TOKEN: ${{ steps.bot-token.outputs.token }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
         run: |
           # List of repositories to trigger tests in
           REPOS=(
             "msupply-foundation/sao-tome-plugins"
             # Add more repositories as needed
           )
-          
+
           for repo in "${REPOS[@]}"; do
-            echo "Triggering test workflow in $repo with image tag: ${{ inputs.image_tag }}"
-            
-            curl -X POST \
+            echo "Triggering test workflow in $repo with image tag: $IMAGE_TAG"
+
+            # --fail-with-body so a repo the token can't reach (404) fails the
+            # step instead of passing silently — see the `repositories` note above.
+            curl --fail-with-body -sS -X POST \
               -H "Accept: application/vnd.github.v3+json" \
-              -H "Authorization: token ${{ secrets.ORG_WORKFLOW_TOKEN }}" \
+              -H "Authorization: Bearer $BOT_TOKEN" \
               -H "X-GitHub-Api-Version: 2022-11-28" \
-              https://api.github.com/repos/$repo/actions/workflows/test.yml/dispatches \
-              -d '{
-                "ref": "main",
-                "inputs": {
-                  "image_tag": "${{ inputs.image_tag }}",
-                  "branch": "Tests"
-                }
-              }'
-            
+              "https://api.github.com/repos/$repo/actions/workflows/test.yml/dispatches" \
+              -d "$(jq -n --arg image_tag "$IMAGE_TAG" \
+                    '{ref: "main", inputs: {image_tag: $image_tag, branch: "Tests"}}')"
+
             # Add a small delay between requests to avoid rate limiting
             sleep 2
           done
