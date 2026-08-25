@@ -1,6 +1,18 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest';
+import { setDictionaries, setLocale } from '../../../intl/intl';
+import commonEn from '../../../intl/locales/en/common.json';
 import {
   ageFromDob,
+  ageMonthsAndDays,
+  dobFromAge,
   draftEquals,
   emptyDraft,
   isDraftValid,
@@ -29,11 +41,38 @@ const fullDraft = (): PatientDraft => ({
 describe('ageFromDob (AC-M3 — age derived from date of birth)', () => {
   afterEach(() => vi.useRealTimers());
 
-  it('is whole years floor(days / 365) from the date of birth', () => {
+  it('is completed calendar years from the date of birth', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-07-22T12:00:00Z'));
     // 30 calendar years back → 30 whole years.
     expect(ageFromDob('1996-07-22')).toBe(30);
+  });
+
+  // A day short of the birthday is still the younger age — the property a
+  // days/365 division gets wrong once leap days accumulate.
+  it('counts the year only once the birthday has passed', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 6, 22, 12));
+    expect(ageFromDob('1996-07-23')).toBe(29);
+    expect(ageFromDob('1996-07-22')).toBe(30);
+  });
+
+  // The regression this file's round-trip test caught in CI but not locally: on
+  // 31 December, three leap-inclusive years past a 1 January date of birth,
+  // floor(days / 365) read 3 where the calendar says 2.
+  it('does not overcount a January date of birth late in December', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 11, 31, 23));
+    expect(ageFromDob('2024-01-01')).toBe(2);
+  });
+
+  // The second one the round-trip caught, in Asia/Kathmandu only: the zone
+  // moved +05:30 → +05:45 in 1986, so instant arithmetic lands 15 minutes short
+  // of a 1986 birthday and reads a year low. Comparing calendar fields can't.
+  it('is unaffected by a zone changing offset since the birth year', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 0, 1));
+    expect(ageFromDob('1986-01-01')).toBe(40);
   });
 
   it('is undefined with no date of birth', () => {
@@ -44,6 +83,42 @@ describe('ageFromDob (AC-M3 — age derived from date of birth)', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-07-22T12:00:00Z'));
     expect(ageFromDob('2030-01-01')).toBeUndefined();
+  });
+});
+
+describe('dobFromAge (an age entered in place of a date of birth)', () => {
+  afterEach(() => vi.useRealTimers());
+
+  it('back-fills the start of the birth year', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-22T12:00:00Z'));
+    expect(dobFromAge(43)).toBe('1983-01-01');
+  });
+
+  it('treats a newborn as the start of the current year', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-22T12:00:00Z'));
+    expect(dobFromAge(0)).toBe('2026-01-01');
+  });
+
+  // The form drives both directions off the single dateOfBirth field, so a
+  // typed age must survive the trip back out as the SAME number — otherwise the
+  // field fights the typist. Checked across the whole offered range at both
+  // ends of the year.
+  //
+  // The instants are LOCAL (`new Date(y, m, d)`), not UTC strings: both helpers
+  // read the local calendar, so a UTC string lands on a different local date in
+  // every timezone — which is how the December end of this range passed in NZ
+  // (UTC+13, already next year) and failed in CI (UTC).
+  it.each([
+    ['1 January', new Date(2026, 0, 1)],
+    ['31 December', new Date(2026, 11, 31, 23)],
+  ])('round-trips every age 0–150 on %s', (_label, now) => {
+    vi.useFakeTimers();
+    vi.setSystemTime(now);
+    for (let age = 0; age <= 150; age++) {
+      expect(ageFromDob(dobFromAge(age))).toBe(age);
+    }
   });
 });
 
@@ -78,8 +153,45 @@ describe('patientFieldErrors (AC-C3 — required-field rules feed validation)', 
     expect(ids({ ...fullDraft(), firstName: '   ' })).toEqual(['firstName']);
   });
 
-  it('carries no per-field message — each defaults to the generic required text', () => {
-    expect(patientFieldErrors(emptyDraft()).every(e => !e.message)).toBe(true);
+  it('the required rules carry no per-field message — each defaults to the generic required text', () => {
+    const required = patientFieldErrors(emptyDraft()).filter(e => e.failed);
+    expect(required.every(e => !e.message)).toBe(true);
+  });
+});
+
+// spec/patients § generating a code — DIS-02 `.57`.
+describe('patientFieldErrors (DIS-02 .57 — duplicate code blocks the save)', () => {
+  const codeErrors = (draft: PatientDraft, codeTaken: boolean) =>
+    patientFieldErrors(draft, codeTaken).filter(
+      e => e.id === 'code' && e.failed
+    );
+
+  it('flags nothing extra when the code is not taken', () => {
+    expect(codeErrors(fullDraft(), false)).toEqual([]);
+  });
+
+  // No dictionary is loaded under test, so t() answers with the key — asserting
+  // the key is what pins the message to the right locale entry.
+  it('flags the code with the duplicated-code message when it is taken', () => {
+    const errors = codeErrors({ ...fullDraft(), code: 'GEN0007' }, true);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]?.message).toBe('error.duplicated-code');
+  });
+
+  // The message means the rule is NOT deferred (formValidation defers only
+  // message-less rules), so the clash shows the moment the check answers
+  // instead of needing the form armed a second time.
+  it('is not held back until the form is armed', () => {
+    const errors = codeErrors(fullDraft(), true);
+    expect(errors[0]?.showOnSubmit).toBeUndefined();
+    expect(errors[0]?.message).toBeDefined();
+  });
+
+  // Both code rules share the id so the field renders one message; the required
+  // rule is listed first, so an empty code reads as required, not duplicated.
+  it('reports an empty code as required, not duplicated', () => {
+    const errors = codeErrors(emptyDraft(), true);
+    expect(errors[0]?.message).toBeUndefined();
   });
 });
 
@@ -149,5 +261,43 @@ describe('draftEquals (dirty tracking)', () => {
     expect(draftEquals(fullDraft(), { ...fullDraft(), phone: 'changed' })).toBe(
       false
     );
+  });
+});
+
+// spec/patients rules § age — DIS-02 `.58`. Last in the file, and the only
+// block with a catalog loaded: the message assertions above read t() answering
+// with its key, which is what an unseeded catalog does.
+describe('ageMonthsAndDays (DIS-02 .58 — under a year reads months and days)', () => {
+  beforeAll(() => {
+    setDictionaries({ en: commonEn });
+    setLocale('en');
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 6, 22, 12)); // 2026-07-22, local
+  });
+
+  afterAll(() => {
+    vi.useRealTimers();
+    setDictionaries({});
+  });
+
+  it('is months and days below a year, where whole years read a bare 0', () => {
+    expect(ageFromDob('2026-05-04')).toBe(0); // what the years box would show
+    expect(ageMonthsAndDays('2026-05-04')).toBe('2 months, 18 days');
+  });
+
+  it('is days alone under a month, and counts a birth today as 0 days', () => {
+    expect(ageMonthsAndDays('2026-07-12')).toBe('10 days');
+    expect(ageMonthsAndDays('2026-07-22')).toBe('0 days');
+  });
+
+  it('is undefined from the first birthday on — the years box takes over', () => {
+    expect(ageMonthsAndDays('2025-07-22')).toBeUndefined(); // exactly 1
+    expect(ageMonthsAndDays('2025-07-23')).toBe('11 months, 29 days');
+    expect(ageMonthsAndDays('1996-07-22')).toBeUndefined();
+  });
+
+  it('is undefined with no date of birth, and for a future one', () => {
+    expect(ageMonthsAndDays(null)).toBeUndefined();
+    expect(ageMonthsAndDays('2027-01-01')).toBeUndefined();
   });
 });

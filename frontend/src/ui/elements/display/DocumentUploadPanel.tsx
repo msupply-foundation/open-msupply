@@ -3,6 +3,7 @@ import { t, localisedDate, formatFileSize } from '../../../intl';
 import { openDocument } from '../../../platform/openDocument';
 import { FileIcon, TrashIcon } from '../../icons';
 import { Alert } from '../feedback/Alert';
+import { Spinner } from '../feedback/Spinner';
 import { IconButton } from '../buttons/IconButton';
 import { Text } from '../typography/Text';
 import { UploadZone } from '../inputs/UploadZone';
@@ -80,11 +81,22 @@ export const DocumentUploadPanel = (
 
   const showUpload = () => local.canUpload !== false && !!local.onUpload;
   const [openError, setOpenError] = createSignal<string>();
+  // The row whose file is being fetched/handed to the OS — its name shows a
+  // small spinner (a large document takes seconds to download on Android),
+  // and further opens are ignored until it lands. Cleared unconditionally so
+  // no failure can leave it stuck.
+  const [openingId, setOpeningId] = createSignal<string>();
 
-  const onOpen = async (url: string, fileName: string) => {
+  const onOpen = async (doc: DocumentFile, url: string) => {
+    if (openingId()) return;
     setOpenError(undefined);
-    const result = await openDocument(url, fileName);
-    if (!result.ok) setOpenError(result.message);
+    setOpeningId(doc.id);
+    try {
+      const result = await openDocument(url, doc.fileName);
+      if (!result.ok) setOpenError(result.message);
+    } finally {
+      setOpeningId(undefined);
+    }
   };
 
   return (
@@ -100,6 +112,7 @@ export const DocumentUploadPanel = (
             accept={local.accept}
             maxSize={local.maxSize}
             multiple
+            inputTestId="document-upload-input"
           />
         </section>
       </Show>
@@ -130,7 +143,7 @@ export const DocumentUploadPanel = (
           <ul class={styles.rows}>
             <For each={local.documents}>
               {document => (
-                <li class={styles.row}>
+                <li class={styles.row} data-testid="document-row">
                   <FileTypeIcon fileName={document.fileName} />
                   <Show
                     when={document.url}
@@ -144,6 +157,7 @@ export const DocumentUploadPanel = (
                         href={url()}
                         target="_blank"
                         rel="noreferrer"
+                        aria-busy={openingId() === document.id || undefined}
                         onClick={event => {
                           const modified =
                             event.ctrlKey ||
@@ -152,10 +166,17 @@ export const DocumentUploadPanel = (
                             event.altKey;
                           if (event.button !== 0 || modified) return;
                           event.preventDefault();
-                          void onOpen(url(), document.fileName);
+                          void onOpen(document, url());
                         }}
                       >
                         {document.fileName}
+                        <Show when={openingId() === document.id}>
+                          {' '}
+                          <Spinner
+                            sizeRem={0.875}
+                            label={t('label.opening-file')}
+                          />
+                        </Show>
                       </a>
                     )}
                   </Show>
@@ -174,6 +195,7 @@ export const DocumentUploadPanel = (
                         label={t('button.remove-file')}
                         variant="danger"
                         size="small"
+                        data-testid="document-remove-button"
                         onClick={() => local.onDelete?.(document)}
                       />
                     </Show>

@@ -37,10 +37,11 @@ export type LinkOutcome =
 
 /**
  * Local-search page fetcher for the reusable picker (spec/patients S4). The
- * typed text is placed in `identifier` — the broad match across code / secondary
- * code / name / program-enrolment id. The server hard-codes a 100-row page
- * sorted by code and ignores paging (contract › searching wire trap), so we
- * report `totalCount = rows returned` to stop the picker paging futilely.
+ * typed text is placed in `identifier` — the broad match across code /
+ * secondary code / name / program-enrolment id. The server hard-codes a
+ * 100-row page sorted by code and ignores paging (contract › searching wire
+ * trap), so we report `totalCount = rows returned` to stop the picker paging
+ * futilely.
  */
 export const patientSearchPageFetcher =
   (storeId: string) =>
@@ -129,10 +130,11 @@ export const searchCentralPatients = async (
 };
 
 /**
- * Fetch a central-only patient into the store (spec/patients AC-S4). Registered
- * as a mutation; creates/returns the name_store_join. Central-unreachable is the
- * typed ConnectionError (note the doubled-word type name) — decoded to
- * `unreachable`; the fetch then stops (no retry, per AC-S5).
+ * Fetch a central-only patient into the store (spec/patients AC-S4).
+ * Registered as a mutation; creates/returns the name_store_join.
+ * Central-unreachable is the typed ConnectionError (note the doubled-word type
+ * name) — decoded to `unreachable`; the fetch then stops (no retry, per
+ * AC-S5).
  */
 export const linkPatientToStore = async (
   storeId: string,

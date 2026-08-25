@@ -9,7 +9,7 @@ Tiers:
 - **ui** — a static surface/gating/state assertion, verified against the running implementation (contract C4) — a11y tree + presence; scriptable in `e2e/`.
 - **exempt** — out of scope, with the reason stated (C1 requires these be named, never silently dropped).
 
-Colocated unit tests: `stockCalc.test.ts`, `stockApi.test.ts`, `stockLocations.test.ts`, `detail/stockEdit.test.ts`, `list/newStockEntry.test.ts`, `list/stockToCsv.test.ts` (68 tests).
+Colocated unit tests: `stockCalc.test.ts`, `stockApi.test.ts`, `stockLocations.test.ts`, `detail/stockEdit.test.ts`, `list/newStockEntry.test.ts`, `list/stockToCsv.test.ts`, `detail/repackSelection.test.ts`, and the shared `domain/location/volume.test.ts`.
 
 ## OMS-REG-INV-02 — View Stock and Stock Line Details
 
@@ -70,6 +70,9 @@ Colocated unit tests: `stockCalc.test.ts`, `stockApi.test.ts`, `stockLocations.t
 | `.53` ledger read-only                          | ui             | no edit affordance on the panel                                                                                            |
 | `.54` dose context                              | **unit** + ui  | `stockCalc.test.ts` (`doseEquivalent` — the gate and the arithmetic); the suffix is the surface                            |
 | `.55` donor field gate                          | ui             | donor field `<Show>` on `allowTrackingOfStockByDonor`                                                                      |
+| `.56` detail Location is volume-aware           | **unit** + ui  | `domain/location/volume.test.ts` (the fullness filter + % used); `LocationVolumeSelect` on S2                              |
+| `.57` the filter guides, never gates            | **unit** + e2e | `domain/location/volume.test.ts` (selected option always survives the filter); the server accepts a full/on-hold location  |
+| `.58` Available keeps where the stock sits      | **unit**       | `domain/location/volume.test.ts` (`originalLocationId` exemption, and that it is NOT exempt from Empty)                    |
 
 ## OMS-REG-SMV-02 — Ledger Updates via Inventory Adjustment
 
@@ -119,6 +122,8 @@ Colocated unit tests: `stockCalc.test.ts`, `stockApi.test.ts`, `stockLocations.t
 | `.41` backdate control gate                    | ui             | date control `<Show>` on `backdating.inventoryAdjustmentsEnabled`                                                                                                                                                                      |
 | `.42` adjustment permission                    | ui + e2e       | Adjust suppressed without `INVENTORY_ADJUSTMENT_MUTATE`; server enforces                                                                                                                                                               |
 | `.43` modal busy → closes on success           | ui             | shared Dialog lifecycle                                                                                                                                                                                                                |
+| `.46` new-stock Location is volume-aware       | **unit** + ui  | `domain/location/volume.test.ts`; `LocationVolumeSelect` on S3, `requiredVolume` = volumePerPack × packs                                                                                                                                |
+| `.47` date control opens on today              | ui             | `AdjustModal` seeds the date input with today                                                                                                                                                                                          |
 | `.44` modal keeps error inline, no toast       | ui + **unit**  | shared Dialog lifecycle; `stockApi.test.ts` (identifier → message key)                                                                                                                                                                 |
 
 ## OMS-REG-SMV-08 — Stock Changes via Repack
@@ -147,6 +152,10 @@ Colocated unit tests: `stockCalc.test.ts`, `stockApi.test.ts`, `stockLocations.t
 | `.20` created-by repack hidden                     | e2e            | server skips created-by                                                               |
 | `.10` repack permission                            | ui + e2e       | New repack gated on `CREATE_REPACK`                                                   |
 | `.11` history viewable without it                  | ui + e2e       | history stays rendered                                                                |
+| `.23` New location is volume-aware                 | **unit** + ui  | `domain/location/volume.test.ts`; `requiredVolume` = the volume leaving the original  |
+| `.24` selected repack marked and read-only         | **unit** + ui  | `detail/repackSelection.test.ts` (`repackPanelState`)                                 |
+| `.25` print acts on the selection, else prompts    | **unit** + ui  | `detail/repackSelection.test.ts` (the print gate)                                     |
+| `.26` a saved repack stays selected                | **unit** + ui  | `detail/repackSelection.test.ts` (the post-save window)                               |
 
 ## OMS-REG-INV-06 — VVM Status Management on Stock Lines
 
@@ -170,19 +179,19 @@ Colocated unit tests: `stockCalc.test.ts`, `stockApi.test.ts`, `stockLocations.t
 
 | Tier                                                | Behaviours             |
 | --------------------------------------------------- | ---------------------- |
-| unit (colocated vitest, alone or with another tier) | 33                     |
-| e2e (server-enforced outcome)                       | 95                     |
-| ui (surface / gating / state)                       | 47                     |
+| unit (colocated vitest, alone or with another tier) | 41                     |
+| e2e (server-enforced outcome)                       | 96                     |
+| ui (surface / gating / state)                       | 54                     |
 | exempt                                              | 1 (`OMS-REG-INV-02.9`) |
 
-Counts overlap — a behaviour verified at two tiers is listed under both. Total distinct behaviours: **135**.
+Counts overlap — a behaviour verified at two tiers is listed under both. Total distinct behaviours: **144**.
 
 ## Notes / deferrals
 
 - **The e2e rows are the remaining test work**: authoring `e2e/specs/stock-regression.spec.ts` against the running app and the real backend, per the test-id contract. Sequenced in [`spec/stock/TESTING-PLAN.md`](../../../spec/stock/TESTING-PLAN.md).
-- **Grouped-by-item view** — deferred ([D63](../../../spec/DIVERGENCES.md)); no behaviour exists for it, and the retired `AC-L5` holds the reservation.
+- **Grouped-by-item view** — deferred to a future iteration; no behaviour exists for it, and the retired `AC-L5` holds the reservation ([acceptance mapping](../../../spec/stock/acceptance.md)).
 - **Campaign/program field** (S2/S3) is built on the shared `CampaignOrProgramSelect` (`src/domain/campaign`) — one mutually-exclusive choice over the two wire fields, both nullable-update wrappers sent together on S2 saves. (The live backend's `StockLineFilterInput` still lacks `campaignId` — a list-filter drift from the pinned schema, not a field concern.) No behaviour asserts the mutual exclusion; it is carried as a gap probe in [`exploratory/workflows/stock.md`](../../../exploratory/workflows/stock.md).
 - **Barcode scan affordance** (S2) is omitted — scanner discovery is owned by [`android/`](../../../spec/android) and unavailable on web; the barcode text field is present.
 - **Repack "created-by" source-batch note** (S5) is omitted — not directly queryable.
-- **Item-name → catalogue link** (S2) is plain text — the catalogue route is owned elsewhere.
+- **Item-name → catalogue link** (S2 identity header and the S4 adjust modal's context card) is a `RecordLink` to the item's catalogue record. No behaviour asserts it — it is an affordance, stated in [`ui-surface.md`](../../../spec/stock/ui-surface.md) like S2's own header link.
 - **Item-variant selection** in the new-stock flow has no behaviour; carried as a gap probe in the exploratory workflow.

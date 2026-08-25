@@ -6,6 +6,8 @@ import { Button } from '../ui/elements/buttons/Button';
 import { CheckboxButton } from '../ui/elements/buttons/CheckboxButton';
 import { IconButton } from '../ui/elements/buttons/IconButton';
 import { SplitButton } from '../ui/elements/buttons/SplitButton';
+import { DisclosureToggle } from '../ui/elements/buttons/DisclosureToggle';
+import { NumberField } from '../ui/elements/inputs/NumberField';
 import {
   OkButton,
   CancelButton,
@@ -30,6 +32,12 @@ import styles from './ButtonsShowcase.module.css';
 const EXPORT_OPTIONS = [
   { value: 'csv', label: 'Export CSV' },
   { value: 'excel', label: 'Export Excel' },
+];
+
+// The header-cluster shape the narrow collapse is for (a detail page's Add).
+const ADD_OPTIONS = [
+  { value: 'item', label: 'Add item' },
+  { value: 'master-list', label: 'Add from master list' },
 ];
 
 const STATUS_OPTIONS = [
@@ -74,9 +82,26 @@ export const buttonsMetadata: PageMetadata = {
       searchTerms: ['split', 'menu', 'dropdown', 'caret'],
     },
     {
+      id: 'buttons-split-feedback',
+      title: 'Split button — busy & outcome',
+      searchTerms: [
+        'loading',
+        'spinner',
+        'busy',
+        'success',
+        'failed',
+        'action feedback',
+      ],
+    },
+    {
       id: 'buttons-checkbox',
       title: 'Checkbox button',
       searchTerms: ['checkbox', 'toggle', 'pill'],
+    },
+    {
+      id: 'buttons-disclosure',
+      title: 'Disclosure toggle',
+      searchTerms: ['disclosure', 'advanced options', 'chevron', 'expand'],
     },
   ],
 };
@@ -88,7 +113,22 @@ export const ButtonsShowcase = () => {
     null
   );
   const [onHold, setOnHold] = createSignal(false);
+  const [showAdvanced, setShowAdvanced] = createSignal(false);
   const [lastStandard, setLastStandard] = createSignal<string | null>(null);
+
+  // Demo of the busy → outcome cycle: CSV "succeeds", Excel "fails", each
+  // after a beat so the spinner is visible.
+  const [demoBusy, setDemoBusy] = createSignal(false);
+  const [demoOutcome, setDemoOutcome] = createSignal<'done' | 'failed'>();
+  const runDemoExport = (format: string) => {
+    if (demoBusy()) return;
+    setDemoBusy(true);
+    setTimeout(() => {
+      setDemoBusy(false);
+      setDemoOutcome(format === 'excel' ? 'failed' : 'done');
+      setTimeout(() => setDemoOutcome(undefined), 2000);
+    }, 1200);
+  };
 
   return (
     <Stack gap="lg">
@@ -110,11 +150,15 @@ export const ButtonsShowcase = () => {
             takes — <code>onClick</code>, <code>disabled</code>,{' '}
             <code>loading</code>, <code>size</code> — passes through. Reach for
             these first; drop to the raw variants below only when you need a
-            different label or tone. <code>Save</code> carries the icon and{' '}
+            different label or tone. <code>Save</code> carries an icon and{' '}
             <strong>collapses to icon-only on phones</strong> — resize below
             768px to see it; <code>DialogSaveButton</code>/
             <code>SaveAndNextButton</code> are the icon-less dialog-footer forms
-            (ui-standards › controls § dialogs).
+            (ui-standards › controls § dialogs). There is deliberately no{' '}
+            <code>CloseButton</code>: a detail screen is left by navigating up
+            (the breadcrumb's parent crumb), not by a footer dismiss — D103
+            retired the action-footer close, and <code>Cancel</code> is the
+            dialog one.
           </Lead>
           <Row>
             <OkButton onClick={() => setLastStandard('OK')} />
@@ -149,10 +193,10 @@ export const ButtonsShowcase = () => {
             You pass <code>load</code> — a supplier of the{' '}
             <strong>whole record</strong> (a node the screen already holds, or
             its own unpaginated fetch where the row table is server-paged) — and
-            the button owns the rest: indented JSON, the clipboard write, and the
-            outcome reported <strong>in place</strong> (the label and icon swap
-            to <em>Copied</em> or <em>Copy failed</em> for a moment, announced
-            via <code>aria-live</code>) — never a toast. Copy is a{' '}
+            the button owns the rest: indented JSON, the clipboard write, and
+            the outcome reported <strong>in place</strong> (the label and icon
+            swap to <em>Copied</em> or <em>Copy failed</em> for a moment,
+            announced via <code>aria-live</code>) — never a toast. Copy is a{' '}
             <strong>read</strong>, so it takes no status or permission gate.
           </Lead>
           <Row>
@@ -320,6 +364,33 @@ export const ButtonsShowcase = () => {
             </Button>
             <Button icon={<SaveIcon />}>Save changes</Button>
           </Row>
+          <Lead>
+            <code>collapsible="narrow"</code> collapses over the whole
+            narrow-viewport range (≤1023px) instead — for a page header whose
+            action cluster would otherwise wrap onto a row of its own on a
+            tablet, where a row of height costs more than the labels are worth.
+            A tablet hovers, so pass <code>title</code> as well, and keep the
+            icons in one cluster distinguishable.{' '}
+            <strong>Resize below 1024px</strong> to see this pair collapse while
+            the row above keeps its labels.
+          </Lead>
+          <Row>
+            <Button
+              collapsible="narrow"
+              title="New shipment"
+              icon={<PlusCircleIcon />}
+            >
+              New shipment
+            </Button>
+            <Button
+              collapsible="narrow"
+              title="Export"
+              variant="secondary"
+              icon={<DownloadIcon />}
+            >
+              Export
+            </Button>
+          </Row>
         </DashboardCard>
 
         <DashboardCard
@@ -408,6 +479,31 @@ export const ButtonsShowcase = () => {
               )}
             </Show>
           </Note>
+          <Lead>
+            It takes <code>&lt;Button&gt;</code>'s <code>collapsible</code> too,
+            with the same two tiers — the MAIN half sheds its label, while the
+            caret keeps a menu that still spells every option out. No{' '}
+            <code>title</code> to pass: the hidden label is the tooltip.{' '}
+            <strong>Resize below 1024px</strong> to see this pair collapse while
+            the one above keeps its labels.
+          </Lead>
+          <Row>
+            <SplitButton
+              collapsible="narrow"
+              icon={<PlusCircleIcon />}
+              options={ADD_OPTIONS}
+              menuLabel="Add options"
+              onAction={() => undefined}
+            />
+            <SplitButton
+              collapsible="narrow"
+              variant="secondary"
+              icon={<DownloadIcon />}
+              options={EXPORT_OPTIONS}
+              menuLabel="Export options"
+              onAction={value => setLastExport(value)}
+            />
+          </Row>
         </DashboardCard>
 
         <DashboardCard title="Split button — select-then-confirm (menuSelectsOnly)">
@@ -456,6 +552,72 @@ export const ButtonsShowcase = () => {
         </DashboardCard>
 
         <DashboardCard
+          id="buttons-split-feedback"
+          title="Split button — busy & outcome (loading / mainLabel)"
+        >
+          <Lead>
+            An async split action reports IN PLACE, never as a toast (
+            <code>spec/ui-standards/controls.md</code> § action feedback).{' '}
+            <code>loading</code> swaps the main half's icon for a spinner and
+            makes <em>both</em> halves inert, so the action can't re-fire from
+            either; <code>mainLabel</code> then briefly overrides the main
+            half's label with the outcome — the menu entries keep their own
+            labels throughout. The main half is <code>aria-live="polite"</code>,
+            so the swap is announced. Try both: CSV succeeds, Excel fails.{' '}
+            <code>domain/reportFiles/ListExportAction</code> is the real
+            consumer — it pairs the failure flash with a dialog carrying the
+            message, so a failed export is diagnosable rather than a dead click.
+          </Lead>
+          <Row>
+            <SplitButton
+              icon={
+                demoOutcome() === 'done' ? (
+                  <SaveIcon />
+                ) : demoOutcome() === 'failed' ? (
+                  <TrashIcon />
+                ) : (
+                  <DownloadIcon />
+                )
+              }
+              options={EXPORT_OPTIONS}
+              menuLabel="Export options"
+              loading={demoBusy()}
+              mainLabel={
+                demoOutcome() === 'done'
+                  ? 'Exported'
+                  : demoOutcome() === 'failed'
+                    ? 'Export failed'
+                    : undefined
+              }
+              onAction={runDemoExport}
+            />
+            <SplitButton
+              variant="secondary"
+              icon={<DownloadIcon />}
+              options={EXPORT_OPTIONS}
+              menuLabel="Export options"
+              loading={demoBusy()}
+              mainLabel={
+                demoOutcome() === 'done'
+                  ? 'Exported'
+                  : demoOutcome() === 'failed'
+                    ? 'Export failed'
+                    : undefined
+              }
+              onAction={runDemoExport}
+            />
+          </Row>
+          <Note>
+            <Show
+              when={demoBusy()}
+              fallback="Click the main half (succeeds) or pick Excel from the caret (fails)."
+            >
+              Working… both halves are inert until it settles.
+            </Show>
+          </Note>
+        </DashboardCard>
+
+        <DashboardCard
           id="buttons-checkbox"
           title="Checkbox button — a pill that IS a checkbox"
         >
@@ -478,6 +640,38 @@ export const ButtonsShowcase = () => {
             </CheckboxButton>
           </Row>
           <Note>The shipment is {onHold() ? 'on hold' : 'not on hold'}.</Note>
+        </DashboardCard>
+
+        <DashboardCard
+          id="buttons-disclosure"
+          title="Disclosure toggle — a form's advanced options"
+        >
+          <Lead>
+            A ghost <code>&lt;Button&gt;</code> whose chevron rotates to the
+            state it will move to — the accordion convention, so a disclosure
+            inside a form reads like a collapsible section around one. It
+            carries <code>aria-expanded</code> and <code>aria-controls</code>{' '}
+            but owns neither the state nor the revealed region: the caller keeps
+            those, which is the line against <code>Accordion</code>. Live in the
+            initialisation form and Synchronisation settings, both hiding the
+            optional sync batch size.
+          </Lead>
+          <Row>
+            <DisclosureToggle
+              expanded={showAdvanced()}
+              controls="showcase-advanced"
+              onClick={() => setShowAdvanced(previous => !previous)}
+            >
+              {showAdvanced()
+                ? 'Hide advanced options'
+                : 'Show advanced options'}
+            </DisclosureToggle>
+          </Row>
+          <Show when={showAdvanced()}>
+            <div id="showcase-advanced">
+              <NumberField label="Sync batch size" min={1} />
+            </div>
+          </Show>
         </DashboardCard>
       </CardGrid>
     </Stack>

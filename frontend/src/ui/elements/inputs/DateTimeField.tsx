@@ -1,8 +1,15 @@
-import { createEffect, createSignal, createUniqueId, on } from 'solid-js';
+import {
+  createEffect,
+  createSignal,
+  createUniqueId,
+  on,
+  type JSX,
+} from 'solid-js';
 import { TimeField as KTimeField } from '@kobalte/core/time-field';
 import { locale } from '../../../intl';
 import { CalendarIcon } from '../../icons';
 import { Popover } from '../feedback/Popover';
+import type { FocusTarget } from '../../utils/createFocusTarget';
 import { FieldShell } from './FieldShell';
 import { DatePickerPanel } from './DatePickerPanel';
 import {
@@ -22,19 +29,25 @@ import styles from './DateTimeFields.module.css';
 
 export interface DateTimeFieldProps {
   label: string;
-  /** Max-width cap: `short` (default) or `full` (see FieldShell). */
-  width?: 'short' | 'full';
-  /** The stored instant as a UTC ISO 8601 string, or null/undefined when empty. */
+  /** Max-width cap — opt-in; defaults to `full` (see FieldShell). */
+  width?: 'compact' | 'short' | 'long' | 'full';
+  /**
+   * The stored instant as a UTC ISO 8601 string, or null/undefined when empty.
+   */
   value?: string | null;
   /** Fired with the new UTC ISO instant, or null when cleared. */
   onChange?: (value: string | null) => void;
-  /** Earliest selectable instant, UTC ISO (date-level bound on the calendar). */
+  /**
+   * Earliest selectable instant, UTC ISO (date-level bound on the calendar).
+   */
   min?: string;
   /** Latest selectable instant, UTC ISO (date-level bound on the calendar). */
   max?: string;
   /** Date display + typed-entry format (see DateField). */
   format?: string;
-  /** 12-hour (am/pm) or 24-hour time segments. Defaults to the device locale. */
+  /**
+   * 12-hour (am/pm) or 24-hour time segments. Defaults to the device locale.
+   */
   hourCycle?: 12 | 24;
   helperText?: string;
   error?: string;
@@ -43,7 +56,19 @@ export interface DateTimeFieldProps {
   size?: 'default' | 'small';
   /** Visually hide the label (kept for a11y) — for use inside a FieldRow. */
   hideLabel?: boolean;
+  /**
+   * An affordance rendered inline after the label text — the InfoTooltip help
+   * icon whose bubble explains the field (see FieldShell). Ignored under
+   * `hideLabel`.
+   */
+  labelInfo?: JSX.Element;
   id?: string;
+  /** `data-testid` stamped on the DATE input — the field's first focusable and
+   *  the part a test types into (e2e/TESTIDS.md). */
+  testId?: string;
+  /** Focus destination (kdd/focus-targets) — lands on the date input, where
+   *  entry starts. */
+  focusTarget?: FocusTarget;
 }
 
 /*
@@ -117,6 +142,7 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
       required={props.required}
       error={props.error}
       helperText={props.helperText}
+      labelInfo={props.labelInfo}
       controlId={dateId()}
     >
       {({ describedBy, invalid }) => (
@@ -128,8 +154,10 @@ export const DateTimeField = (props: DateTimeFieldProps) => {
         >
           <input
             id={dateId()}
+            ref={(el: HTMLInputElement) => props.focusTarget?.ref(el)}
             type="text"
             class={styles.dateInput}
+            data-testid={props.testId}
             value={dateText()}
             placeholder={formatPlaceholder(fmt())}
             disabled={props.disabled}

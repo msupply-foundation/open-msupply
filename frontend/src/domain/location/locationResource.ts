@@ -14,7 +14,9 @@ export type Location = LocationsResult['locations']['nodes'][number];
 export type LocationWithVolume =
   LocationsWithVolumeResult['locations']['nodes'][number];
 
-// Locations own NO global cache (unlike masterLists). Two reasons:
+// Locations own NO global cache (unlike masterLists) — the standing example of
+// the third shape in kdd/state-management → data needed only sometimes. Two
+// reasons:
 //   1. `volumeUsed` is server-computed and shifts whenever stock moves, so a
 //      cached capacity goes stale — the volume-aware picker must re-read.
 //   2. Keeping both pickers uniform, every consumer fetches locally in its

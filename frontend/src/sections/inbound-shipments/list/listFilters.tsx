@@ -9,6 +9,7 @@ import {
   type Filter,
 } from '../../../ui/elements/selectors/FilterBar';
 import { stripEmpty } from '../../../typeHelpers';
+import { inboundShipmentPreferences } from '../../../store/storeContext';
 import type { InboundScope } from '../inboundShipmentScope';
 import type { InboundShipmentsVariables } from './inboundShipments.generated';
 
@@ -80,6 +81,18 @@ const STATUS_OPTIONS: readonly { value: string; label: string }[] = [
   { value: 'VERIFIED', label: t('label.verified') },
 ];
 
+// The offered subset of STATUS_OPTIONS: limited by the invoice-status-options
+// preference (spec § preference gates — OMS-REG-REPL-01.28); empty/unresolved
+// = every status. Read inside the filter's render closure, so the options
+// narrow in place when the preference resolves.
+const offeredStatusOptions = () => {
+  const allowed: readonly string[] =
+    inboundShipmentPreferences().invoiceStatusOptions;
+  return allowed.length === 0
+    ? STATUS_OPTIONS
+    : STATUS_OPTIONS.filter(option => allowed.includes(option.value));
+};
+
 // Origin (Type) values offered in the single-select (spec S1 filters). '' is
 // the "Any" clear choice, matching the stocktakes status select.
 const KIND_OPTIONS: readonly { value: OriginKind | ''; label: string }[] = [
@@ -103,12 +116,12 @@ const FILTERS: Filter<InboundListFilter>[] =
   constructFilters<InboundListFilter>({
     // ─ user-facing, in display order ────────────────────────────────────────
     otherPartyName: {
-      label: () => t('label.name'),
+      label: () => t('label.supplier'),
       render: props => (
         <FilterTextInput
-          label={t('label.name')}
+          label={t('label.supplier')}
           testId={props.testId}
-          placeholder={t('label.name')}
+          placeholder={t('placeholder.search')}
           value={props.filter().otherPartyName?.like ?? ''}
           onInput={value =>
             props.setPartialFilter({
@@ -124,7 +137,7 @@ const FILTERS: Filter<InboundListFilter>[] =
         <FilterNumberInput
           label={t('label.invoice-number')}
           testId={props.testId}
-          placeholder={t('label.invoice-number')}
+          placeholder={t('placeholder.search')}
           value={props.filter().invoiceNumber?.equalTo ?? undefined}
           onChange={value =>
             props.setPartialFilter({
@@ -156,11 +169,12 @@ const FILTERS: Filter<InboundListFilter>[] =
           label={t('label.status')}
           testId={props.testId}
           placeholder={t('label.any')}
-          // Multi-select → status.equalAny (spec AC-L1: matches ANY of the chosen
-          // statuses). The generated element type is the InvoiceNodeStatus union,
-          // so the string values narrow at the boundary.
+          // Multi-select → status.equalAny (spec AC-L1: matches ANY of the
+          // chosen statuses). The generated element type is the
+          // InvoiceNodeStatus union, so the string values narrow at the
+          // boundary.
           values={props.filter().status?.equalAny ?? []}
-          options={STATUS_OPTIONS}
+          options={offeredStatusOptions()}
           onChange={values =>
             props.setPartialFilter({
               status: values.length
@@ -181,7 +195,7 @@ const FILTERS: Filter<InboundListFilter>[] =
         <FilterTextInput
           label={t('label.reference')}
           testId={props.testId}
-          placeholder={t('label.reference')}
+          placeholder={t('placeholder.search')}
           value={props.filter().theirReference?.like ?? ''}
           onInput={value =>
             props.setPartialFilter({
@@ -199,7 +213,7 @@ const FILTERS: Filter<InboundListFilter>[] =
         <FilterNumberInput
           label={t('label.linked-order')}
           testId={props.testId}
-          placeholder={t('label.linked-order')}
+          placeholder={t('placeholder.search')}
           value={props.filter().linkedOrderNumber?.equalTo ?? undefined}
           onChange={value =>
             props.setPartialFilter({
@@ -239,9 +253,10 @@ const FILTERS: Filter<InboundListFilter>[] =
       ),
     },
 
-    // ─ dismissed (not user-facing) ────────────────────────────────────────────
-    // Identity / relational / programmatic filters — the store scope and type are
-    // forced by the query, never a user filter.
+    // ─ dismissed (not user-facing)
+    // ──────────────────────────────────────────── Identity / relational /
+    // programmatic filters — the store scope and type are forced by the query,
+    // never a user filter.
     id: null,
     nameId: null,
     invoiceNumberOrStatus: null,

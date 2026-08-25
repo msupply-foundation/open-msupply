@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_PAGE_SIZE } from '../../list/pageSize';
 import {
   ACTIVE_ONLY_FILTER,
   buildVariables,
   cliniciansListPath,
-  DEFAULT_PAGE_SIZE,
   DEFAULT_STATE,
   genderLabelKey,
   PAGE_SIZE_OPTIONS,
@@ -86,11 +86,11 @@ describe('OMS-FUN-DIS-004.18 single-entry sort (wire trap: only the last honoure
 });
 
 describe('OMS-FUN-DIS-004.20 page size options and default', () => {
-  it('defaults to 20 with options 10/20/50/100', () => {
-    expect(DEFAULT_PAGE_SIZE).toBe(20);
+  it('defaults to 50 with options 10/20/50/100', () => {
+    expect(DEFAULT_PAGE_SIZE).toBe(50);
     expect([...PAGE_SIZE_OPTIONS]).toEqual([10, 20, 50, 100]);
     const vars = buildVariables({ storeId: 'storeA', state: state() });
-    expect(vars.page).toEqual({ first: 20, offset: 0 });
+    expect(vars.page).toEqual({ first: 50, offset: 0 });
   });
 });
 

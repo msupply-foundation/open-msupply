@@ -1,13 +1,15 @@
 import { createSignal, Show, type Component } from 'solid-js';
 import { t } from '../../../intl';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { CancelButton } from '../../../ui/elements/buttons/StandardButtons';
 import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
+import { createAction } from '../../../ui/utils/keyActions';
+import { ALT_V } from '../../../ui/utils/shortcuts';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
-import { XCircleIcon } from '../../../ui/icons';
 import {
   asPrescriptionStatus,
   hasDispensedLines,
@@ -41,8 +43,6 @@ export interface PrescriptionStatusFooterProps {
   hasInsuranceProviders: boolean;
   /** The status change saved — merge the returned node in place. */
   onSaved: (node: PrescriptionFieldsFragment) => void;
-  /** Navigate back to the list (the footer's Close). */
-  onClose: () => void;
 }
 
 export const PrescriptionStatusFooter: Component<
@@ -77,6 +77,32 @@ export const PrescriptionStatusFooter: Component<
 
   const zeroCount = () => zeroQuantityLineCount(props.node.lines.nodes);
 
+  /*
+   * Alt+V — update status (spec/keyboard KB-R1's binding table, ui-surface
+   * S2). Declared HERE, not in the detail view, because this component owns
+   * the control and the selection the binding acts on: the split button's
+   * currently selected forward transition. That is the same "one creation site
+   * per binding, inside the thing that owns it" shape as createSidePanelOpen's
+   * Alt+M (kdd/keyboard-layer decision 4).
+   *
+   * A SPECIFIC action (KB-R2's contrast), so gating on this screen is correct —
+   * the prescription detail is the only place it exists. Registration lives
+   * exactly as long as this footer, and the footer itself is <Show>-gated away
+   * behind the bulk-selection bar, so the key stops answering when the control
+   * does with no further code.
+   */
+  createAction({
+    name: 'button.update-status',
+    shortcut: ALT_V,
+    run: () => {
+      const next = selectedStatus();
+      if (next) openConfirm(next);
+    },
+    // Same inertness as the control: hidden once read-only (D39), and nothing
+    // to confirm when no forward transition is offered.
+    disabled: () => isReadOnly(status()) || !selectedStatus(),
+  });
+
   const closeDialogs = () => {
     setPendingStatus(undefined);
     setRejection(undefined);
@@ -84,7 +110,8 @@ export const PrescriptionStatusFooter: Component<
   };
 
   const openConfirm = (next: ForwardStatus) => {
-    // The one sanctioned pre-flight (AC-S6): nothing dispensed — carrier-only
+    // The one sanctioned pre-flight (AC-S6): nothing dispensed —
+    // placeholder-only
     // counts as nothing — blocks with a notice and no server call.
     if (!hasDispensedLines(props.node.lines.nodes)) return setNoLinesOpen(true);
     // The payment window replaces the plain confirmation when the store has
@@ -94,26 +121,48 @@ export const PrescriptionStatusFooter: Component<
     setPendingStatus(next);
   };
 
-  const run = async (next: ForwardStatus, extra?: Partial<UpdateInput>) => {
+  const run = async (
+    next: ForwardStatus,
+    extra?: Partial<UpdateInput>,
+    // The payment window's plugin after-save step (spec/plugins/rules.md § form
+    // participation): awaited AFTER the status change has succeeded and before
+    // the save is reported complete. It resolves to a message when a plugin's
+    // own write failed — the window stays open showing it, because the
+    // prescription IS saved but the plugin's record is not, and that must not
+    // vanish silently.
+    afterSave?: (context: { recordId: string }) => Promise<string | undefined>
+  ) => {
     setWorking(true);
+    // A retry must not show the previous attempt's verdict.
+    setRejection(undefined);
     const outcome = await savePrescription(props.storeId, {
       id: props.node.id,
       status: next,
       ...extra,
     });
-    setWorking(false);
     if (outcome.kind === 'saved') {
+      const failure = await afterSave?.({ recordId: props.node.id });
+      setWorking(false);
+      if (failure) {
+        // The payment window surfaces the failure itself; leave it open and
+        // still merge the saved node, since the status change did land.
+        props.onSaved(outcome.node);
+        return;
+      }
       closeDialogs();
       props.onSaved(outcome.node);
       return;
     }
+    setWorking(false);
     if (outcome.kind === 'rejected') {
-      // The server's verdict replaces the confirmation with a blocking
-      // notice (never a toast — D21). The payment window closes too: it held
-      // derived values only.
-      setPaymentStatus(undefined);
-      setPendingStatus(next);
+      // The server's verdict shows as a blocking notice in the surface that
+      // initiated the save — never a toast (D21). When that surface is the
+      // PAYMENT WINDOW it stays open and shows the notice there: it now carries
+      // a plugin contribution's own draft (amount tendered, payment method), so
+      // swapping it for the plain confirmation would throw away the user's input
+      // over a server error they can fix.
       setRejection(outcome.description);
+      if (!paymentStatus()) setPendingStatus(next);
       return;
     }
     closeDialogs(); // transport — the global modal has it
@@ -127,14 +176,8 @@ export const PrescriptionStatusFooter: Component<
       />
 
       <ContentFooterActions>
-        <Button
-          variant="secondary"
-          icon={<XCircleIcon />}
-          data-testid="close-button"
-          onClick={props.onClose}
-        >
-          {t('button.close')}
-        </Button>
+        {/* No Close here (D103): leaving the prescription is the breadcrumb's
+            job, in the app bar, where every other screen puts it. */}
         {/* Hidden once read-only — a permanently dead control (D39). */}
         <Show when={!isReadOnly(status())}>
           <SplitButton
@@ -148,6 +191,9 @@ export const PrescriptionStatusFooter: Component<
             }}
             menuSelectsOnly
             testId="status-change-button"
+            // Alt+V is registered above; this is the control that advertises it
+            // (ui-surface S2).
+            shortcut={ALT_V}
             onAction={value => {
               const next = nextStatuses(status()).find(s => s === value);
               if (next) openConfirm(next);
@@ -165,6 +211,7 @@ export const PrescriptionStatusFooter: Component<
         description={<Alert severity="info">{t('messages.no-lines')}</Alert>}
         actions={
           <Button
+            confirms="plain"
             data-testid="dialog-button-ok"
             onClick={() => setNoLinesOpen(false)}
           >
@@ -201,21 +248,26 @@ export const PrescriptionStatusFooter: Component<
               <Show
                 when={!rejection()}
                 fallback={
-                  <Button data-testid="dialog-button-ok" onClick={closeDialogs}>
+                  <Button
+                    confirms="plain"
+                    data-testid="dialog-button-ok"
+                    onClick={closeDialogs}
+                  >
                     {t('button.close')}
                   </Button>
                 }
               >
                 <Show when={!working()}>
-                  <Button
-                    variant="secondary"
-                    icon={<XCircleIcon />}
+                  {/* The standard, icon-less footer Cancel (controls › dialogs
+                      § footer button identity, D55) — a dialog footer is read
+                      as verbs in a fixed position, not a toolbar. */}
+                  <CancelButton
+                    data-testid="dialog-button-cancel"
                     onClick={closeDialogs}
-                  >
-                    {t('button.cancel')}
-                  </Button>
+                  />
                 </Show>
                 <Button
+                  confirms="plain"
                   data-testid="confirmation-modal-ok"
                   loading={working()}
                   onClick={() => void run(next())}
@@ -236,8 +288,9 @@ export const PrescriptionStatusFooter: Component<
             storeId={props.storeId}
             node={props.node}
             working={working()}
+            rejection={rejection()}
             onClose={closeDialogs}
-            onConfirm={extra => void run(next(), extra)}
+            onConfirm={(extra, afterSave) => void run(next(), extra, afterSave)}
           />
         )}
       </Show>

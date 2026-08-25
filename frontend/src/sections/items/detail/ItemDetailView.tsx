@@ -1,4 +1,5 @@
 import {
+  createMemo,
   createResource,
   createSignal,
   Show,
@@ -7,6 +8,8 @@ import {
 } from 'solid-js';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
+import { createTableConfig } from '../../../api/createTableConfig';
 import { isCentralServer } from '../../../api/serverInfo';
 import { t } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
@@ -31,9 +34,9 @@ import { FormSection } from '../../../ui/layout/Form/FormSection';
 import { FormRow } from '../../../ui/layout/Form/FormRow';
 import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
-import { EmptyState } from '../../../ui/elements/feedback/EmptyState';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
+import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
 import { ActivityLogPanel } from '../../../domain/activityLog';
 import { CustomFieldsView } from '../../../domain/customFields';
 import { ItemDetail, type ItemDetailResult } from './itemDetail.generated';
@@ -103,10 +106,15 @@ const ItemDetailView: Component = () => {
       return result.data.items.nodes[0];
     }
   );
-  const item = (): ItemDetailRow | undefined => data.latest;
+  // Read WITHOUT suspending — the same read every tab panel below uses. This
+  // is the screen's first load, so a suspending read would be tolerable here,
+  // but keeping it non-suspending means NOTHING on this screen can trip the
+  // boundary below: `data.loading` drives the spinner instead.
+  const item = (): ItemDetailRow | undefined => gated(data);
 
   const backToList = () => {
-    // Replace history so Back can't return to the missing record (OMS-REG-CAT-04.32).
+    // Replace history so Back can't return to the missing record
+    // (OMS-REG-CAT-04.32).
     navigate(`/${params.storeId}/catalogue/items`, { replace: true });
   };
 
@@ -114,19 +122,49 @@ const ItemDetailView: Component = () => {
 
   const stockHref = () =>
     `/${params.storeId}/inventory/stock?itemId=${params.itemId}`;
-  const selfHref = () => `/${params.storeId}/catalogue/items/${params.itemId}`;
 
-  const masterListColumns = (): Column<MasterListRow, never>[] => [
-    { c: { key: 'code' }, header: () => t('label.code'), enableSorting: false },
-    { c: { key: 'name' }, header: () => t('label.name'), enableSorting: false },
+  // Column config for the Master lists tab's table — also what puts the Columns
+  // + Settings controls in its toolbar (DataTable renders both only when
+  // `setConfig` is wired), so a table without it silently loses them.
+  const masterListsConfig = createTableConfig({
+    tableId: 'item-master-lists',
+  });
+
+  // Not sortable: these rows ride along with the item record (no query of their
+  // own), and the shared table sorts server-side only (ui-standards § tables →
+  // pagination & scale) — there is no client-side sort to offer.
+  //
+  // createMemo, NOT a plain function: TanStack memoizes on this array's
+  // REFERENCE, so a fresh one per read invalidates four layers of its internal
+  // memo chain (kdd/solid-reactivity-pitfalls §14).
+  const masterListColumns = createMemo((): Column<MasterListRow, never>[] => [
+    {
+      c: { key: 'code' },
+      header: () => t('label.code'),
+      enableSorting: false,
+      ...getCellDefinition('code'),
+    },
+    {
+      c: { key: 'name' },
+      header: () => t('label.name'),
+      enableSorting: false,
+      ...getCellDefinition('name'),
+    },
     {
       c: { key: 'description' },
       header: () => t('label.description'),
       enableSorting: false,
+      ...getCellDefinition('description'),
     },
-  ];
+  ]);
 
   return (
+    // A BACKSTOP, not the load treatment: every read on this screen — the
+    // record above and each tab panel's own resource — is `.state`-gated and so
+    // never suspends, and `data.loading` below drives the spinner. The boundary
+    // stays only so a future suspending read degrades to a spinner here instead
+    // of bubbling to the router's fallback-less boundary and blanking the page
+    // (#160/#196).
     <Suspense fallback={<Spinner center />}>
       <Show
         when={item()}
@@ -158,38 +196,47 @@ const ItemDetailView: Component = () => {
                       { label: i().name },
                     ]}
                   />
-                  {/* Ancillary items' page action (ui-surface S2) — central
-                      server only, and only while that tab is active. */}
-                  <Show when={activeTab() === 'ancillary' && isCentralServer()}>
-                    <HeaderButtons>
+                  {/* ONE page-action cluster (ui-surface S2) — the header has a
+                      single inline-end region, so the per-tab actions live
+                      inside it rather than each bringing its own. Both are
+                      central-server only; only one tab is ever active, so at
+                      most one button shows. */}
+                  <HeaderButtons>
+                    <Show
+                      when={activeTab() === 'ancillary' && isCentralServer()}
+                    >
                       <Button
                         icon={<PlusCircleIcon />}
                         onClick={() => setAncillaryEditor({ mode: 'create' })}
                       >
                         {t('label.add-ancillary-item')}
                       </Button>
-                    </HeaderButtons>
-                  </Show>
-                  {/* Variants' page action (ui-surface S2) — the tab itself is
-                      already central-only (itemDetailTabs.ts), so this only
-                      needs to check the active tab. */}
-                  <Show when={activeTab() === 'variants' && isCentralServer()}>
-                    <HeaderButtons>
+                    </Show>
+                    {/* The Variants tab is already central-only
+                        (itemDetailTabs.ts), so this only checks the active
+                        tab. */}
+                    <Show
+                      when={activeTab() === 'variants' && isCentralServer()}
+                    >
                       <Button
                         icon={<PlusCircleIcon />}
                         onClick={() => setVariantEditor({ mode: 'create' })}
                       >
                         {t('label.add-variant')}
                       </Button>
-                    </HeaderButtons>
-                  </Show>
+                    </Show>
+                  </HeaderButtons>
                   {/* Statistics band (spec/items S2) — in the header's toolbar
                       row, above the tab strip, mirroring the old app's
-                      AppBarContent slot. The Toolbar's own flex-wrap row lays
-                      the panels out inline (compact, content-sized), wrapping on
-                      narrow viewports. Only the stock-on-hand panel's title
-                      links to the stock register; AMC/MOS have no drill-down (a
-                      Statistic requires an href, so they self-link). */}
+                      AppBarContent slot. It has to sit here rather than in the
+                      content body: the tab strip claims the header's bottom
+                      edge, so a band in the body would render BELOW the strip,
+                      not above it as the spec's order requires. The Toolbar's
+                      own flex-wrap row lays the panels out inline (compact,
+                      content-sized), wrapping on narrow viewports. Only the
+                      stock-on-hand stats drill down (to the stock register);
+                      AMC and months-of-stock have no destination, so they take
+                      no href and render as plain text. */}
                   <Toolbar>
                     <StatsPanel
                       title={t('title.stock-on-hand')}
@@ -221,7 +268,6 @@ const ItemDetailView: Component = () => {
                           i().stats.averageMonthlyConsumption,
                           2
                         )}
-                        href={selfHref()}
                       />
                     </StatsPanel>
                     <StatsPanel
@@ -233,7 +279,6 @@ const ItemDetailView: Component = () => {
                         value={formatMonthsOfStock(
                           i().stats.monthsOfStockOnHand
                         )}
-                        href={selfHref()}
                       />
                     </StatsPanel>
                   </Toolbar>
@@ -242,7 +287,13 @@ const ItemDetailView: Component = () => {
               }
             >
               <TabPanel value="general">
-                <ContentContainer size="form">
+                {/* `padded`: this page is fillBody (so the Ledger / Master
+                    lists / Ancillary tables fill the region and own their
+                    scroll), which strips the Page body's edge padding — the
+                    exact mixed table+form detail view ContentContainer's
+                    padded mode exists for. Without it the form sits flush
+                    against the tab strip. */}
+                <ContentContainer size="form" padded>
                   {/* Two-column groups (spec S2 › General) of read-only
                       labelled values (no input chrome — spec D67). Column 1
                       then column 2 preserves the spec's group order when the
@@ -400,7 +451,8 @@ const ItemDetailView: Component = () => {
               </TabPanel>
 
               <TabPanel value="store">
-                <ContentContainer size="form">
+                {/* Padded for the same reason as the General tab above. */}
+                <ContentContainer size="form" padded>
                   <FormColumns>
                     <FormColumn>
                       <FormSection title={t('title.pricing')}>
@@ -435,17 +487,25 @@ const ItemDetailView: Component = () => {
               </TabPanel>
 
               <TabPanel value="master-lists">
-                <Show
-                  when={(i().masterLists?.length ?? 0) > 0}
-                  fallback={<EmptyState message={t('error.no-master-list')} />}
-                >
-                  <DataTable
-                    columns={masterListColumns()}
-                    rows={i().masterLists ?? []}
-                    rowKey={row => row.id}
-                    emptyMessage={t('error.no-master-list')}
-                  />
-                </Show>
+                {/* No <Show> wrapper: the DataTable owns its own empty
+                    treatment, and gating on the row count would hide the
+                    column headers with it (ui-standards § tables → empty &
+                    loading: the header row stays visible and the empty state
+                    fills the body below it). */}
+                <DataTable
+                  columns={masterListColumns()}
+                  rows={i().masterLists ?? []}
+                  rowKey={row => row.id}
+                  emptyMessage={t('error.no-master-list')}
+                  config={masterListsConfig.config()}
+                  setConfig={masterListsConfig.setConfig}
+                  configIsDefault={masterListsConfig.isConfigDefault()}
+                  onSaveGlobalDefault={
+                    masterListsConfig.canSaveGlobalDefault()
+                      ? masterListsConfig.saveGlobalTableConfig
+                      : undefined
+                  }
+                />
               </TabPanel>
 
               <TabPanel value="ledger">

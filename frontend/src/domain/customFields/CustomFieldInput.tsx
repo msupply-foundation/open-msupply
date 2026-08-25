@@ -50,7 +50,6 @@ export const CustomFieldInput = (props: {
           label={name()}
           hideLabel={props.hideLabel}
           size={props.size}
-          width="full"
           disabled
           value=""
           helperText={t('custom-fields.unsupported-type')}
@@ -71,7 +70,6 @@ export const CustomFieldInput = (props: {
           label={name()}
           hideLabel={props.hideLabel}
           size={props.size}
-          width="full"
           value={props.value == null ? '' : String(props.value)}
           disabled={props.disabled}
           data-testid={testId()}
@@ -84,7 +82,6 @@ export const CustomFieldInput = (props: {
             label={name()}
             hideLabel={props.hideLabel}
             size={props.size}
-            width="full"
             allowNegative
             decimalLimit={numberField().integer ? 0 : 6}
             value={asNumber(props.value)}
@@ -98,7 +95,6 @@ export const CustomFieldInput = (props: {
           label={name()}
           hideLabel={props.hideLabel}
           size={props.size}
-          width="full"
           value={typeof props.value === 'string' ? props.value : null}
           disabled={props.disabled}
           onChange={d => props.onChange(d)}
@@ -111,6 +107,7 @@ export const CustomFieldInput = (props: {
             value={props.value == null ? '' : String(props.value)}
             disabled={props.disabled}
             hideLabel={props.hideLabel}
+            size={props.size}
             testId={testId()}
             onChange={id => props.onChange(id || null)}
           />

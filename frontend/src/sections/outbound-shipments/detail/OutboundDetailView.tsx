@@ -1,5 +1,4 @@
 import {
-  createEffect,
   createMemo,
   createResource,
   createSignal,
@@ -15,13 +14,12 @@ import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
-import { Toolbar } from '../../../ui/layout/Header/Toolbar';
+import { HeaderToolbar } from '../../../ui/layout/Header/HeaderToolbar';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { OkButton } from '../../../ui/elements/buttons/StandardButtons';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
-import { TextField } from '../../../ui/elements/inputs/TextField';
-import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { Tabs, TabList, TabPanel } from '../../../ui/elements/tabs/Tabs';
 import {
   DataTable,
@@ -29,34 +27,47 @@ import {
   type SortState,
 } from '../../../ui/elements/table/DataTable';
 import {
-  FilterBar,
-  FilterTextInput,
-} from '../../../ui/elements/selectors/FilterBar';
-import {
-  formatCurrencyCell,
-  getCurrencyCell,
-  getExpiryDateCell,
+  AbsentValue,
+  getCellDefinition,
+  getFlagCell,
   getNumberCell,
+  isNearOrPastExpiry,
 } from '../../../ui/elements/table/tableHelpers';
-import { formatNumber } from '../../../intl/formatNumber';
-import { createTableConfig } from '../../../api/createTableConfig';
-import { createMediaQuery } from '../../../ui/utils/createMediaQuery';
-import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import {
-  CheckIcon,
+  Pagination,
+  type PaginationProps,
+} from '../../../ui/elements/table/Pagination';
+import { remToPx } from '../../../ui/utils/rem';
+import {
+  useIsNavOverlay,
+  useIsShortViewport,
+} from '../../../ui/utils/createMediaQuery';
+import { createTableConfig } from '../../../api/createTableConfig';
+import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
+import { createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
+import { Dialog } from '../../../ui/elements/feedback/Dialog';
+import { RowStatusBadges, uncapped } from './RowStatusBadges';
+import {
+  AlertCircleIcon,
+  AlertTriangleIcon,
   InfoIcon,
   MinusCircleIcon,
+  PauseIcon,
   PlusCircleIcon,
 } from '../../../ui/icons';
-import { NameSearch } from '../../../domain/name';
+import { isExpired } from '../../../domain/allocation';
 import { fetchLocations } from '../../../domain/location';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import { useUrlQueryState } from '../../../list/urlQueryState';
-import { stripEmpty } from '../../../typeHelpers';
 import {
-  CustomFieldsEditTab,
-  CustomFieldsToolbar,
-} from '../../../domain/customFields';
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
+import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
+import { stripEmpty } from '../../../typeHelpers';
+import { CustomFieldsEditTab } from '../../../domain/customFields';
 import {
   OutboundDetail,
   OutboundLines,
@@ -68,13 +79,15 @@ import { saveShipmentFields, type OutboundNode } from './outboundUpdate';
 import type { OutboundEditFields } from './outboundEdit';
 import type { OutboundLineFilter } from './outboundLineFilter';
 import { createNextItemWalk } from './nextItemWalk';
-import { outboundDetailFilters } from './outboundDetailFilters';
+import { OutboundLineFilters } from './OutboundLineFilters';
 import type { StatusPreflight } from './actions/StatusChangeAction';
 import { isEditable, canReturnLines } from '../outboundStatus';
 import { outboundShipmentPreferences } from '@/store/storeContext';
+import { OutboundDetailToolbar } from './OutboundDetailToolbar';
 import { OutboundStatusFooter } from './OutboundStatusFooter';
+import { OutboundTotalsStrip } from './OutboundTotalsStrip';
 import { OutboundSidePanel } from './OutboundSidePanel';
-import { LogTab } from './LogTab';
+import { ActivityLogPanel } from '../../../domain/activityLog';
 import {
   OutboundLineEditModal,
   type LineEditItem,
@@ -85,9 +98,9 @@ import {
   saveOutboundServiceCharges,
 } from './service-charges/outboundServiceCharges';
 // The from-shipment customer-return flow (spec/customer-returns S4, owned by
-// the returns vertical — AC-V3 hands over to it). Lazy so the returns graph it
-// pulls in stays out of this section's eager chunk, loading only when a return
-// is actually started.
+// the returns vertical — OMS-REG-DIST-04.21 hands over to it). Lazy so the
+// returns graph it pulls in stays out of this section's eager chunk, loading
+// only when a return is actually started.
 const ReturnFromShipmentModal = lazy(() =>
   import('../../customer-returns/detail/edit-modal/ReturnFromShipmentModal').then(
     module => ({ default: module.ReturnFromShipmentModal })
@@ -103,21 +116,97 @@ import {
 // The outbound-shipment detail view (spec/outbound-shipments S3): app-bar
 // header (customer + customer reference + line search/filters), Details/Log
 // tabs, the flat read-only SERVER-paginated line table (row click opens the
-// line editor S4 on that row's item AND batch — AC-V1/AC-V6), the side panel
-// (S3 § side panel), and the persistent status footer (hold / crumbs / status
-// split button — AC-V2), replaced by the bulk line-action bar on selection.
-// Line quantities are entered ONLY in the line editor.
+// line editor S4 on that row's item AND batch —
+// OMS-REG-DIST-03.27/OMS-REG-DIST-03.31), the side panel (S3 § side panel), and
+// the persistent status footer (hold / crumbs / status split button —
+// OMS-REG-DIST-04.20), replaced by the bulk line-action bar on selection. Line
+// quantities are entered ONLY in the line editor.
 //
-// TWO independent queries (rules.md § server-paginated line table, AC-V4):
-// `info` (outboundDetail — header/footer/side-panel fields, NOT the lines)
-// and `lines` (outboundLines — one server-filtered/sorted page). An entity-
-// LEVEL save mutates `info` in place; a LINE-level change refetches the lines
-// page AND the entity (the footer totals are its server-side pricing
-// aggregates — D45; placeholders and trims move server-side too —
-// kdd/state-management: refresh by direct call). Service lines are their own
-// small read (the S5 editor + side-panel rows).
+// TWO independent queries (rules.md § server-paginated line table,
+// OMS-REG-DIST-03.28): `info` (outboundDetail — header/footer/side-panel
+// fields, NOT the lines) and `lines` (outboundLines — one
+// server-filtered/sorted page). An entity-LEVEL save mutates `info` in place;
+// a LINE-level change refetches the lines page AND the entity (the footer
+// totals are its server-side pricing aggregates — D45; placeholders and trims
+// move server-side too — kdd/state-management: refresh by direct call). Service
+// lines are their own small read (the S5 editor + side-panel rows).
 
 type Line = OutboundLineFragment;
+
+// A held line — its batch, or the batch's location, on hold — cannot be
+// issued (OMS-REG-DIST-03.18); the detail table says so where the user looks
+// first: the amber "On hold" badge beside the item name and the amber card
+// treatment (OMS-REG-DIST-03.37). A held line is also, necessarily, a line
+// with nothing issued, so it takes the needs-action marking below as well.
+const lineOnHold = (line: Line): boolean =>
+  !!line.stockLine?.onHold || !!line.location?.onHold;
+
+// Calendar-expired line (D112) — the medium-weight red Expiry-date cell, the
+// red "Expired" badge, and the red card treatment (tinted title + the Expired
+// chip after it).
+const lineExpired = (line: Line): boolean =>
+  !!line.expiryDate && isExpired(line.expiryDate);
+
+// Inside the shared near-expiry window but not yet expired — the "Near
+// expiry" badge tier (the expiry cell is red at this tier, regular weight).
+const lineNearExpiry = (line: Line): boolean =>
+  !!line.expiryDate &&
+  !lineExpired(line) &&
+  isNearOrPastExpiry(line.expiryDate);
+
+// A line the user still has to act on before this shipment can go anywhere:
+// a PLACEHOLDER (the requested quantity has no batch behind it yet) or a
+// stock line with nothing issued on it. Everything else is done work.
+const lineNeedsAction = (line: Line): boolean =>
+  line.type === 'UNALLOCATED_STOCK' || line.numberOfPacks === 0;
+
+// The row-status badges beside the item name (the shared RowStatusBadges
+// cluster — ui-standards § table interaction; OMS-REG-DIST-03.37/.38,
+// D111/D112). A placeholder carries none — its Batch cell's "Unallocated"
+// word is the flag, and it is the word the needs-action marking below leans
+// on; a stock line with nothing issued has no such cell, so it takes the
+// "Not issued" badge instead.
+const LineStatusBadges = (props: { line: Line }) => (
+  <Show when={props.line.type !== 'UNALLOCATED_STOCK'}>
+    <RowStatusBadges
+      expired={lineExpired(props.line)}
+      nearExpiry={lineNearExpiry(props.line)}
+      held={lineOnHold(props.line)}
+      notIssued={lineNeedsAction(props.line)}
+    />
+  </Show>
+);
+
+// The ACTIONED / UNACTIONED marking (ui-surface S3 line table): the lines
+// still needing work carry the unfinished-work tint AND a bar of the same
+// colour down the row's leading edge; a done line carries nothing at all. One channel,
+// one question — "what is left?" — answered by running the eye down one
+// edge rather than reading every row.
+//
+// This replaces the earlier status-per-tint scheme (allocated green /
+// expired red / held amber, D111): colouring every done row green left the
+// unfinished ones no louder than the rest, and it spent the row background —
+// the screen's one at-a-glance channel — on a fact each row already states.
+// The expiry and hold facts keep their own words: the row-status badges
+// beside the item name and the reddened Expiry-date cell. This is the ONE
+// row colour outbound spends, here and in the line editor (2026-08-21) — the
+// editor's own status tints are gone for the same reason.
+const lineRowTint = (line: Line): 'unfinished' | undefined =>
+  lineNeedsAction(line) ? 'unfinished' : undefined;
+
+// The card tone — the tinted identity title, the card's stand-in for the row
+// marking it has no background to carry (D111). ONE fact tones a card now:
+// the needs-action state this screen's whole marking is about.
+//
+// Expiry and hold no longer tone it (2026-08-21): a card states each of them
+// TWICE in words already — the chip sits immediately after the title, and the
+// body's Expiry-date field is red — so the colour on the title added nothing
+// and, on a red title, read as though the item NAME were wrong rather than the
+// stock it names. Every state keeps its chip; only this one keeps a colour.
+// Narrows D112 (which specifies a red identity title on an expired card) — the
+// divergence record carries the matching edit.
+const lineCardTone = (line: Line): 'warning' | undefined =>
+  lineNeedsAction(line) ? 'warning' : undefined;
 
 // The server sort-field union (from codegen) — a column can only ever name a
 // real server sort key (kdd/type-safety). Columns whose data the server can't
@@ -125,14 +214,12 @@ type Line = OutboundLineFragment;
 // spec contract § detail line table) simply omit `sortKey`.
 type SortKey = NonNullable<OutboundLinesVariables['sort']>[number]['key'];
 
-const DEFAULT_PAGE_SIZE = 20;
-
 // The URL-backed view state (kdd/url-structure): filter + sort + pagination in
 // the single `?query=` JSON param, so a filtered/sorted/paged view is
-// shareable and survives reload + back-nav (AC-V4). All three conform to the
-// generated outboundLines variables (no remapping — kdd/type-safety).
-// Selection and the side-panel open state stay local (transient UI). Mirrors
-// the stocktakes detail.
+// shareable and survives reload + back-nav (OMS-REG-DIST-03.28). All three
+// conform to the generated outboundLines variables (no remapping —
+// kdd/type-safety). Selection and the side-panel open state stay local
+// (transient UI). Mirrors the stocktakes detail.
 type DetailUrlState = {
   filter: OutboundLineFilter;
   sort: NonNullable<OutboundLinesVariables['sort']>;
@@ -141,8 +228,11 @@ type DetailUrlState = {
 };
 
 const DEFAULT_URL_STATE: DetailUrlState = {
-  // Default sort: item name ascending (spec S3 § line table).
-  filter: {},
+  // Default sort: item name ascending (spec S3 § line table). The item search
+  // is the screen's default filter (ui-surface § line-table filters; D91):
+  // seeded present-as-null so its chip is on the bar from the start; stripEmpty
+  // keeps it out of the query until typed.
+  filter: { itemCodeOrName: null },
   sort: [{ key: 'itemName', desc: false }],
   offset: 0,
   first: DEFAULT_PAGE_SIZE,
@@ -153,24 +243,34 @@ const OutboundDetailView: Component = () => {
   const navigate = useNavigate();
   // Filter + sort + pagination are URL-backed (shareable, survive reload/back-
   // nav) in one `?query=` param. Thin accessors over that single query.
-  const { query, setQuery } =
-    useUrlQueryState<DetailUrlState>(DEFAULT_URL_STATE);
+  const { query, setQuery } = useUrlQueryState<DetailUrlState>({
+    ...DEFAULT_URL_STATE,
+    first: initialPageSize(),
+  });
   const filter = () => query().filter;
   const currentSort = (): SortState<SortKey> | undefined => {
     const s = query().sort[0];
     return s ? { key: s.key, desc: s.desc ?? false } : undefined;
   };
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
-  // Side panel: auto-open on wide viewports, closed below (the responsive
-  // detail-panel behaviour the shared e2e suites drive); the More button and
-  // the panel's close re-take control until the breakpoint next flips.
-  const isWide = createMediaQuery('(min-width: 1536px)');
-  const [sidePanelOpen, setSidePanelOpen] = createSignal(false);
-  createEffect(() => setSidePanelOpen(isWide()));
+  // Side panel: starts CLOSED at every width (D90) — the lines table is this
+  // screen's work surface and the widest table in the app, so the panel is
+  // opt-in via the app bar's More button rather than taking a column of it
+  // before the user asks. The choice lasts the visit and isn't persisted, so
+  // every arrival starts closed.
+  //
+  // Still the shared helper, with the responsive default switched off, because
+  // it also registers Alt+M / Alt+Shift+M (spec/keyboard KB-R2 — "the screen has
+  // a more-info panel" IS "this helper was called"). A bare createSignal here
+  // left this the one panel answering neither binding.
+  const [sidePanelOpen, setSidePanelOpen] = createSidePanelOpen({
+    responsive: false,
+  });
 
   // The line editor's open state (undefined = closed). The editor self-manages
   // its current item as the user advances with "OK & next"; we only tell it
-  // WHICH item (and clicked batch, for scroll/focus — AC-V6) to open on:
+  // WHICH item (and clicked batch, for scroll/focus — OMS-REG-DIST-03.31) to
+  // open on:
   // - { item, lineId }: opened from a ROW click — update mode.
   // - {}: opened from "Add item" — add mode (item search focused).
   type EditState = { item?: LineEditItem; lineId?: string } | undefined;
@@ -180,7 +280,8 @@ const OutboundDetailView: Component = () => {
   // feedback: inline, keyed to its cause).
   const [customerError, setCustomerError] = createSignal<string>();
   // "Return selected lines": at SHIPPED+ opens the customer-return create flow
-  // (returnModalOpen, AC-V3); before that the explanatory notice instead.
+  // (returnModalOpen, OMS-REG-DIST-04.21); before that the explanatory notice
+  // instead.
   const [returnNoticeOpen, setReturnNoticeOpen] = createSignal(false);
   const [returnModalOpen, setReturnModalOpen] = createSignal(false);
 
@@ -190,7 +291,7 @@ const OutboundDetailView: Component = () => {
       // A not-found NodeError is NOT routed to the global error modal (which
       // would offer a useless reload of the same bad id, and shadow the local
       // notice); it falls through to `undefined` here and the view shows the
-      // AC-L5 "not found" blocking notice → back to list.
+      // OMS-REG-DIST-01.20 "not found" blocking notice → back to list.
       const result = await graphqlFetch(OutboundDetail, variables);
       if (result.kind !== 'success') return undefined;
       return result.data.invoice.__typename === 'InvoiceNode'
@@ -207,11 +308,12 @@ const OutboundDetailView: Component = () => {
   // (kdd/solid-reactivity-pitfalls § no remounts, rule 1).
   const node = (): OutboundNode | undefined => data.latest;
 
-  // The lines PAGE — a separate, server-filtered/sorted/paged query (AC-V4).
-  // Keyed on the SERIALISED variables (a stable string) so identical query
-  // content doesn't refetch (kdd/solid-reactivity-pitfalls). stripEmpty drops
-  // added-but-empty filter chips; the fixed invoiceId + non-service scoping is
-  // merged here (never URL state). Service lines are a separate read below.
+  // The lines PAGE — a separate, server-filtered/sorted/paged query
+  // (OMS-REG-DIST-03.28). Keyed on the SERIALISED variables (a stable string)
+  // so identical query content doesn't refetch (kdd/solid-reactivity-pitfalls).
+  // stripEmpty drops added-but-empty filter chips; the fixed invoiceId +
+  // non-service scoping is merged here (never URL state). Service lines are a
+  // separate read below.
   const linesVariables = createMemo<OutboundLinesVariables>(() => ({
     storeId: params.storeId,
     filter: {
@@ -237,16 +339,77 @@ const OutboundDetailView: Component = () => {
   // page (keeps rows in place, no remount); undefined before the first load.
   const rows = (): Line[] => linesData.latest?.nodes ?? [];
   const totalCount = (): number => linesData.latest?.totalCount ?? 0;
-  // Deleting the last page's rows can leave the offset past the end (an
-  // empty "41–40 of 40" page) — clamp back to the last real page when a
-  // resolved page proves the offset overshot. Idempotent: the clamped offset
-  // satisfies the guard, so the effect settles in one step.
-  createEffect(() => {
-    const total = linesData.latest?.totalCount;
-    const { offset, first } = query();
-    if (total == null || offset === 0 || offset < total) return;
-    const lastPage = Math.floor(Math.max(0, total - 1) / first) * first;
-    setQuery({ ...query(), offset: lastPage });
+
+  // The line table's pager. It lives in the screen's bottom bar — the status
+  // footer, or the selection footer while rows are ticked — rather than in a
+  // band of its own under the table (spec/ui-standards § tables → pagination):
+  // that bar is present at every line count, so hosting the pager there costs
+  // no extra row, and `conditional` means it renders nothing at all until the
+  // lines outrun one page, leaving the bar as it was and the height to the
+  // rows. Paging still clears the selection (OMS-REG-DIST-03.34): the
+  // bulk-action gates classify by rows in view.
+  // The shipment's totals (spec § line table, D45): whole-shipment SERVER
+  // aggregates off the entity's pricing stats — never a sum over the loaded
+  // rows, which would silently become a page total under server pagination
+  // (OMS-REG-DIST-03.28). Price = stockTotalBeforeTax (contract § detail line
+  // table): the sum of the Total column, pack sell price × packs before tax —
+  // the after-tax figure belongs to the side panel's stock-charges Total.
+  // Shown in the status footer rather than a pinned row beneath the table:
+  // being whole-shipment figures, a band under one page of rows would read as
+  // that page's column sums, and would cost a row to do it.
+  const shipmentTotals = () => ({
+    price: node()?.pricing?.stockTotalBeforeTax ?? 0,
+    volume: node()?.pricing?.totalVolume ?? 0,
+  });
+
+  // Where the totals live is a "which element renders" decision, so it is the
+  // one responsive mechanism that touches JS (src/ui/CLAUDE.md #7): a band of
+  // its own above the bar on a wide screen, and ON the bar below the
+  // navOverlay line — tablet portrait and down, where the shipment's lines are
+  // worth more than a row of chrome and the bar has the room. Rendered by a
+  // function, not a stored element: the two footer faces each need their own
+  // instance, and one element can't be in two places.
+  const narrowViewport = useIsNavOverlay();
+  // …and the same trade on a SHORT one. The rule was written for tablet
+  // portrait, but a landscape tablet is the case that needs it most: wide
+  // enough that the width query never fires, short enough that a third stacked
+  // bar under the table costs a row of the thing the user came to work on.
+  // Measured at 1434×742, chrome took 52% of the screen.
+  const shortViewport = useIsShortViewport();
+  const foldTotalsIntoBar = () => narrowViewport() || shortViewport();
+  const inlineTotals = () => (
+    <Show when={foldTotalsIntoBar()}>
+      <OutboundTotalsStrip
+        inline
+        totals={totalCount() > 0 ? shipmentTotals : undefined}
+      />
+    </Show>
+  );
+
+  const linePagination = (): PaginationProps => ({
+    offset: query().offset,
+    pageSize: query().first,
+    total: totalCount(),
+    onOffsetChange: offset => {
+      setQuery({ ...query(), offset });
+      setSelectedIds([]);
+    },
+    onPageSizeChange: first => {
+      // The remembered page size (D106) — it rode the DataTable's own
+      // pagination prop, which this accessor replaced when the pager moved
+      // into the status footer, so it has to travel with the handler.
+      rememberPageSize(first);
+      setQuery({ ...query(), first, offset: 0 });
+      setSelectedIds([]);
+    },
+  });
+  // Deleting the last page's rows leaves the offset past the end — an empty
+  // "41-40 of 40" page (src/list/clampPageOffset.ts, where this rule started).
+  clampPageOffset({
+    total: () => settledTotal(linesData, page => page.totalCount),
+    offset: () => query().offset,
+    pageSize: () => query().first,
+    setOffset: offset => setQuery({ ...query(), offset }),
   });
 
   // Service lines — a small dedicated read (spec S5; the side panel's service
@@ -297,11 +460,12 @@ const OutboundDetailView: Component = () => {
     return current ? isEditable(current.status) : false;
   };
 
-  // Status pre-flight (AC-S5/AC-S6) — whole-shipment answers the current page
-  // can't give (rules.md § server-paginated line table): three sequential
-  // count/name probes run when the user invokes the status change, not
-  // reactive derivations. A failed probe returns undefined (graphqlFetch has
-  // already routed the error to the global modal) and the action aborts.
+  // Status pre-flight (OMS-REG-DIST-04.15/OMS-REG-DIST-04.16) — whole-shipment
+  // answers the current page can't give (rules.md § server-paginated line
+  // table): three sequential count/name probes run when the user invokes the
+  // status change, not reactive derivations. A failed probe returns undefined
+  // (graphqlFetch has already routed the error to the global modal) and the
+  // action aborts.
   const preflight = async (): Promise<StatusPreflight | undefined> => {
     const invoiceId = { equalTo: params.invoiceId };
     const nonService = await graphqlFetch(OutboundLines, {
@@ -344,10 +508,8 @@ const OutboundDetailView: Component = () => {
         // Code starts pinned left (spec S3 § line table: "item code, pinned
         // left") — the row anchor stays visible while the wide table scrolls.
         columnPinning: { left: ['itemCode'] },
-        // Name starts at twice the default column width (rem — the config
-        // layer's unit): item names routinely run to several words, and the
-        // primary column earns the room before the 2-line wrap truncates.
-        columnSizing: { itemName: 18.75 },
+        // Name's width comes from its `text` cell-type preset (the widest kind,
+        // and the flex-fill sink) — no per-table override needed.
         columnVisibility: {
           // The denser columns start hidden (spec S1's hidden-by-default idea
           // applied to the detail table); the user reveals them via column
@@ -408,9 +570,10 @@ const OutboundDetailView: Component = () => {
     return false;
   };
 
-  // Customer change (AC-N1): reissues under a NEW identity — renavigate to the
-  // returned id. Blocked (UI) when the shipment came from a requisition
-  // (AC-N2 — the lookup is disabled then, this is the backstop).
+  // Customer change (OMS-REG-DIST-02.20): reissues under a NEW identity —
+  // renavigate to the returned id. Blocked (UI) when the shipment came from a
+  // requisition (OMS-REG-DIST-02.19 — the lookup is disabled then, this is the
+  // backstop).
   const changeCustomer = async (customerId: string) => {
     const current = node();
     if (!current || customerId === current.otherParty.id) return;
@@ -440,7 +603,7 @@ const OutboundDetailView: Component = () => {
 
   // Header click: TanStack computed the next direction; record it as the
   // GraphQL sort array, reset to the first page, and clear the selection
-  // (AC-V9 — the gates below classify by the rows in view).
+  // (OMS-REG-DIST-03.34 — the gates below classify by the rows in view).
   const onSort = (key: SortKey, desc: boolean) => {
     setQuery({ ...query(), sort: [{ key, desc }], offset: 0 });
     setSelectedIds([]);
@@ -451,10 +614,11 @@ const OutboundDetailView: Component = () => {
     setSelectedIds([]);
   };
 
-  // Row click → the line editor for that row's ITEM (AC-V1), carrying the
-  // clicked line so the editor scrolls to / focuses that batch (AC-V6);
-  // disabled rows (read-only shipment) get no handler at all. The editor
-  // advances through the list itself via "OK & next" (AC-V7).
+  // Row click → the line editor for that row's ITEM (OMS-REG-DIST-03.27),
+  // carrying the clicked line so the editor scrolls to / focuses that batch
+  // (OMS-REG-DIST-03.31); disabled rows (read-only shipment) get no handler at
+  // all. The editor advances through the list itself via "OK & next"
+  // (OMS-REG-DIST-03.32).
   const openRow = (line: Line) =>
     setEditState({
       item: {
@@ -469,14 +633,33 @@ const OutboundDetailView: Component = () => {
     });
   const openAdd = () => setEditState({});
 
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
+  // the SCREEN, once, for the two controls that trigger it (the header button and
+  // the ghost button in the table's empty slot); each carries `shortcut={ALT_N}`
+  // for its badge, neither owns the action.
+  //
+  // Gated on `.state`, NOT through `editable()` — that reads `data.latest`, which
+  // suspends on the first pending read, and the palette evaluates every action's
+  // `disabled()` inside its own render (kdd/keyboard-layer § an action's
+  // `disabled` MUST NOT read a suspending source).
+  createAddAction({
+    name: 'button.add-item',
+    run: openAdd,
+    disabled: () => {
+      if (data.state !== 'ready' && data.state !== 'refreshing') return true;
+      const current = data.latest;
+      return !current || !isEditable(current.status);
+    },
+  });
+
   // "OK & next" (update mode) asks the parent for the next item to edit. We
   // own this (not the modal) because the list is server-paginated: the next
   // item may be on a later PAGE, and finding it means advancing the detail
   // table forward — the same as the user paging (rules.md § Save & next).
   // The paging logic lives in ./nextItemWalk (unit-tested); this wires its
   // deps: direct page fetches (race-free — never the reactive resource),
-  // page advance = setQuery + selection clear (AC-V9), abort = the editor
-  // closed (a cancel mid-walk must not keep paging the table).
+  // page advance = setQuery + selection clear (OMS-REG-DIST-03.34), abort =
+  // the editor closed (a cancel mid-walk must not keep paging the table).
   const walk = createNextItemWalk({
     fetchPage: async (offset, first) => {
       const result = await graphqlFetch(OutboundLines, {
@@ -504,8 +687,8 @@ const OutboundDetailView: Component = () => {
 
   const selectedLines = () =>
     rows().filter(line => selectedIds().includes(line.id));
-  // Bulk-action visibility (spec S3 § bulk line actions matrix): state-disallowed
-  // actions are HIDDEN, not disabled.
+  // Bulk-action visibility (spec S3 § bulk line actions matrix):
+  // state-disallowed actions are HIDDEN, not disabled.
   const hasSelectedPlaceholder = () =>
     selectedLines().some(line => line.type === 'UNALLOCATED_STOCK');
 
@@ -513,13 +696,7 @@ const OutboundDetailView: Component = () => {
   const dosesOn = () => prefs().manageVaccinesInDoses;
   const vvmOn = () => prefs().manageVvmStatusForStock;
 
-  // Build the filter definitions ONCE (a component body runs once at mount).
-  // The location chip's render reads `locations` through the accessor, so the
-  // live list flows in without rebuilding the filter array.
-  const detailFilters = outboundDetailFilters(locations);
-
   const crumbs = (current: OutboundNode) => [
-    { label: t('distribution') },
     {
       label: t('outbound-shipments'),
       onClick: () =>
@@ -533,43 +710,165 @@ const OutboundDetailView: Component = () => {
   // placeholder rows show the requested quantity. Sortable columns name a real
   // server sort key; the rest omit sortKey (no client-side fallback).
   const columns = (): Column<Line, SortKey>[] => {
-    // Footer totals (spec § line table, D45): whole-shipment SERVER aggregates
-    // off the entity's pricing stats — never a sum over the loaded rows, which
-    // would silently become a page total under server pagination (AC-V4).
-    const pricing = node()?.pricing;
-    const totals = {
-      price: pricing?.stockTotalAfterTax ?? 0,
-      volume: pricing?.totalVolume ?? 0,
-    };
     return [
       {
         c: { key: 'itemCode' },
         sortKey: 'itemCode',
         header: () => t('label.code'),
-        footer: () => t('label.total'),
+        // The `code` kind carries the monospace treatment the spec's line-table
+        // column 1 asks for ("text (mono)"), plus the shared code width.
+        ...getCellDefinition('itemCode'),
       },
       {
         c: { key: 'itemName' },
         sortKey: 'itemName',
         header: () => t('label.name'),
-        meta: { headerPosition: 'primary', wrapLines: 2 },
+        ...getCellDefinition('itemName', {
+          headerPosition: 'primary',
+          wrapLines: 2,
+        }),
+        // Name + the row-status badges (LineStatusBadges above). The name is
+        // wrapped so it can carry the gap on its TRAILING edge: this cell
+        // clamps to two lines, and a long name pushes the chips onto line 2,
+        // where a leading margin on the cluster would render as an indent
+        // instead of lining the chip up under the name (see
+        // [data-row-badges-label] in DataTable.module.css).
+        cell: info => (
+          <>
+            <span data-row-badges-label>{info.row.original.itemName}</span>
+            <LineStatusBadges line={info.row.original} />
+          </>
+        ),
       },
       {
         c: {
           accessor: line =>
             line.type === 'UNALLOCATED_STOCK'
-              ? t('label.placeholder')
+              ? t('label.unallocated')
               : (line.batch ?? '—'),
           id: 'batch',
         },
         sortKey: 'batch',
         header: () => t('label.batch'),
+        // Mono, per the spec's line-table column 3 — but WITHOUT the `code`
+        // kind's 7rem growth cap: this column doesn't only hold a code, it
+        // renders the word "Unallocated" for a placeholder line, which fills
+        // the cap exactly and pins the column there so it can't be dragged
+        // wider at all. Same reasoning (and fix) as the `locationCode` key's
+        // "own size, NO cap" note in _globalColumnConfig (#601).
+        //
+        // NOT user-hideable (hideFromColumnSettings), unlike every other data
+        // column here: this cell carries the WORD behind the placeholder
+        // marking, and the tint and bar beside it are colour. Hide the column
+        // from the Columns popover and a placeholder row would be marked by
+        // colour alone — the one thing the marking is never allowed to be
+        // (styling principle 9 / WCAG 1.4.1). The column stays draggable and
+        // sortable; it just can't be switched off.
+        ...uncapped(
+          getCellDefinition<Line>('batch', { hideFromColumnSettings: true })
+        ),
+        // A placeholder has no batch, and the word standing in for one must
+        // not be readable AS one: in this mono column "Unallocated" set in
+        // Monaco alongside e2e-030062-a is just another code at a glance. The
+        // absent-value treatment types it as prose instead — the UI face,
+        // italic, muted.
+        //
+        // A word, not a chip: this row already carries the amber tint AND the
+        // leading bar, so nothing more is needed to FIND it. The cell's one
+        // remaining job is to say WHICH value is missing, and a chip on a
+        // tinted row adds a fourth marker for a fact three already carry (and
+        // shows the tint through its own transparent fill).
+        //
+        // The accessor above keeps the plain word as the cell's VALUE, so
+        // sorting, the hover-reveal and any export are unchanged.
+        cell: info =>
+          info.row.original.type === 'UNALLOCATED_STOCK' ? (
+            <AbsentValue label={t('label.unallocated')} />
+          ) : (
+            (info.row.original.batch ?? '—')
+          ),
+      },
+      {
+        // On-hold flag, CARD-ONLY (OMS-REG-DIST-03.37, D111): the table's
+        // amber "On hold" badge beside the item name carries the state, so
+        // the grid has no On-hold column; the card's after-the-title chip
+        // is this.
+        c: { accessor: lineOnHold, id: 'onHold' },
+        header: () => t('label.on-hold'),
+        ...getFlagCell(
+          t('label.on-hold'),
+          {
+            headerPosition: 'badge',
+            hideOnTable: true,
+            hideFromColumnSettings: true,
+          },
+          'warning',
+          () => <PauseIcon />
+        ),
+      },
+      {
+        // Expired flag, CARD-ONLY (D112): the table's Expiry-date cell
+        // reddens under its header; a card buries that in the body, so the
+        // chip puts the word after the card title, with the row's error tone.
+        c: { accessor: lineExpired, id: 'expired' },
+        header: () => t('label.expired'),
+        ...getFlagCell(
+          t('label.expired'),
+          {
+            headerPosition: 'badge',
+            hideOnTable: true,
+            hideFromColumnSettings: true,
+          },
+          'error',
+          () => <AlertCircleIcon />
+        ),
+      },
+      {
+        // Near-expiry flag, CARD-ONLY (D112's lower tier): the table's red
+        // "Near expiry" badge beside the item name carries the tier, and the
+        // card hides that cluster — without this chip the tier would reach a
+        // card as the reddened Expiry-date field ALONE, i.e. colour with no
+        // word (styling principle 9 / WCAG 1.4.1), and would be
+        // indistinguishable at a glance from the expired tier the chip above
+        // names. Tiered with `expired`, never both: the predicate excludes an
+        // already-expired line.
+        c: { accessor: lineNearExpiry, id: 'nearExpiry' },
+        header: () => t('label.near-expiry'),
+        ...getFlagCell(
+          t('label.near-expiry'),
+          {
+            headerPosition: 'badge',
+            hideOnTable: true,
+            hideFromColumnSettings: true,
+          },
+          'error',
+          () => <AlertTriangleIcon />
+        ),
+      },
+      {
+        // Needs-action flag, CARD-ONLY: in the table the teal tint, the
+        // leading bar and the "Not issued" badge beside the item name carry
+        // it; a card has none of those, and its Batch field ("Unallocated")
+        // sits in the body where nothing distinguishes it — so the corner
+        // badge is where the fact lands. Shown for placeholders too, unlike
+        // the table badge.
+        c: { accessor: lineNeedsAction, id: 'notIssued' },
+        header: () => t('label.not-issued'),
+        ...getFlagCell(
+          t('label.not-issued'),
+          {
+            headerPosition: 'badge',
+            hideOnTable: true,
+            hideFromColumnSettings: true,
+          },
+          'warning'
+        ),
       },
       {
         c: { key: 'expiryDate' },
         sortKey: 'expiryDate',
         header: () => t('label.expiry-date'),
-        ...getExpiryDateCell(),
+        ...getCellDefinition('expiryDate'),
       },
       ...(vvmOn()
         ? [
@@ -579,7 +878,8 @@ const OutboundDetailView: Component = () => {
                 id: 'vvmStatus',
               },
               header: () => t('label.vvm-status'),
-            } as Column<Line, SortKey>,
+              ...getCellDefinition('vvmStatus'),
+            } satisfies Column<Line, SortKey>,
           ]
         : []),
       {
@@ -588,16 +888,18 @@ const OutboundDetailView: Component = () => {
         // near enough in practice (codes prefix names in this dataset).
         sortKey: 'locationName',
         header: () => t('label.location'),
+        ...getCellDefinition('locationCode'),
       },
       {
         c: { accessor: line => line.item.unitName ?? '', id: 'unitName' },
         header: () => t('label.unit'),
+        ...getCellDefinition('unitName'),
       },
       {
         c: { key: 'packSize' },
         sortKey: 'packSize',
         header: () => t('label.pack-size'),
-        ...getNumberCell(),
+        ...getCellDefinition('packSize'),
       },
       ...(dosesOn()
         ? [
@@ -608,19 +910,19 @@ const OutboundDetailView: Component = () => {
                 id: 'dosesPerUnit',
               },
               header: () => t('label.doses-per-unit'),
-              ...getNumberCell(),
-            } as Column<Line, SortKey>,
+              ...getCellDefinition('dosesPerUnit'),
+            } satisfies Column<Line, SortKey>,
           ]
         : []),
       {
         c: { key: 'numberOfPacks' },
         header: () => t('label.pack-quantity'),
-        ...getNumberCell(),
+        ...getCellDefinition('numberOfPacks'),
       },
       {
         c: { key: 'receivedNumberOfPacks' },
         header: () => t('label.packs-received'),
-        ...getNumberCell(),
+        ...getCellDefinition('receivedNumberOfPacks'),
       },
       {
         c: {
@@ -631,7 +933,7 @@ const OutboundDetailView: Component = () => {
           id: 'difference',
         },
         header: () => t('label.difference'),
-        ...getNumberCell(),
+        ...getCellDefinition('difference'),
       },
       {
         c: {
@@ -639,7 +941,7 @@ const OutboundDetailView: Component = () => {
           id: 'unitQuantity',
         },
         header: () => t('label.unit-quantity'),
-        ...getNumberCell(),
+        ...getCellDefinition('unitQuantity'),
       },
       ...(dosesOn()
         ? [
@@ -652,20 +954,27 @@ const OutboundDetailView: Component = () => {
                 id: 'doses',
               },
               header: () => t('label.doses'),
-              ...getNumberCell(),
-            } as Column<Line, SortKey>,
+              ...getCellDefinition('doses'),
+            } satisfies Column<Line, SortKey>,
           ]
         : []),
       {
         c: { key: 'sellPricePerPack' },
         header: () => t('label.unit-sell-price'),
-        ...getCurrencyCell(),
+        ...getCellDefinition('sellPricePerPack'),
       },
       {
-        c: { key: 'totalAfterTax' },
+        // Pack sell price × packs, BEFORE tax (spec § line table col 16) —
+        // not the line's totalAfterTax.
+        c: {
+          accessor: line =>
+            line.type === 'UNALLOCATED_STOCK'
+              ? null
+              : line.sellPricePerPack * line.numberOfPacks,
+          id: 'total',
+        },
         header: () => t('label.total'),
-        footer: () => formatCurrencyCell(totals.price),
-        ...getCurrencyCell(),
+        ...getCellDefinition('total'),
       },
       {
         // Line volume — volume per pack × packs (the old app's volume column),
@@ -679,8 +988,9 @@ const OutboundDetailView: Component = () => {
         // Same display rounding as the column's cells (ui-standards § tables'
         // 2-dp number cell) — a 5-dp footer under 2-dp cells reads as a
         // mismatch.
-        footer: () => formatNumber(totals.volume, { maximumFractionDigits: 2 }),
         ...getNumberCell(),
+        // No CELL_DEF key; the "Volume (m³)" header is the binding constraint.
+        size: remToPx(6),
       },
     ];
   };
@@ -703,18 +1013,14 @@ const OutboundDetailView: Component = () => {
               title={t('heading.not-found')}
               description={t('error.shipment-not-found')}
               actions={
-                <Button
-                  variant="secondary"
-                  icon={<CheckIcon />}
+                <OkButton
                   data-testid="dialog-button-ok"
                   onClick={() =>
                     navigate(
                       `/${params.storeId}/distribution/outbound-shipment`
                     )
                   }
-                >
-                  {t('button.ok')}
-                </Button>
+                />
               }
             />
           </Show>
@@ -741,8 +1047,8 @@ const OutboundDetailView: Component = () => {
                   onSaveField={async patch => {
                     await saveField(patch);
                     // A backdate DELETES the shipment's lines server-side
-                    // (AC-B2) — the visible page must follow, like any other
-                    // line-level change.
+                    // (OMS-REG-DIST-04.24) — the visible page must follow,
+                    // like any other line-level change.
                     if ('backdatedDatetime' in patch) await refetchAfterSave();
                   }}
                   onEditServiceCharges={() => setServiceOpen(true)}
@@ -751,10 +1057,21 @@ const OutboundDetailView: Component = () => {
               header={
                 <Header>
                   <Breadcrumb crumbs={crumbs(current())} />
+                  {/* Every button here collapses to its icon on a narrow
+                      viewport (`collapsible="narrow"`, with the label kept as
+                      the accessible name and repeated as a tooltip): four
+                      labelled buttons need ~38rem, which is more than a
+                      tablet's header has left beside the breadcrumb, so the
+                      cluster wrapped onto a row of its own. Icon-only they fit
+                      on the breadcrumb's line, and the screen keeps that row's
+                      height for table rows. */}
                   <HeaderButtons>
                     <Show when={editable()}>
                       <Button
                         icon={<PlusCircleIcon />}
+                        shortcut={ALT_N}
+                        collapsible="narrow"
+                        title={t('button.add-item')}
                         data-testid="add-item-button"
                         onClick={openAdd}
                       >
@@ -777,88 +1094,36 @@ const OutboundDetailView: Component = () => {
                       <Button
                         variant="secondary"
                         icon={<InfoIcon />}
+                        collapsible="narrow"
+                        title={t('button.more')}
                         data-testid="open-detail-panel-button"
+                        // createSidePanelOpen registers Alt+M; this is the
+                        // control that advertises it (ui-surface S2).
+                        shortcut={ALT_M}
                         onClick={() => setSidePanelOpen(true)}
                       >
                         {t('button.more')}
                       </Button>
                     </Show>
                   </HeaderButtons>
-                  <Toolbar>
-                    {/* Inline label: control pairs on one row (FieldRow, the
-                        current app's toolbar layout — the controls hide their
-                        own labels, the rows carry them). Customer lookup:
-                        disabled when not editable or when the shipment came
-                        from a requisition (AC-N2). */}
-                    <FieldRow label={t('label.customer-name')}>
-                      <NameSearch
-                        label={t('label.customer-name')}
-                        hideLabel
-                        storeId={params.storeId}
-                        role="customer"
-                        // Seed the record's current customer so the selection's
-                        // label resolves before (or regardless of) its page.
-                        selected={{
-                          id: current().otherParty.id,
-                          name: current().otherParty.name,
-                          code: current().otherParty.code,
-                          isOnHold: current().otherParty.isOnHold,
-                          isStore: current().otherParty.store != null,
-                          isSupplier: false,
-                          isDonor: false,
-                        }}
-                        disabled={!editable() || current().requisition != null}
-                        error={customerError()}
-                        clearable={false}
-                        onSelect={customer => {
-                          if (customer) void changeCustomer(customer.id);
-                        }}
-                      />
-                    </FieldRow>
-                    <FieldRow label={t('label.customer-ref')}>
-                      <TextField
-                        label={t('label.customer-ref')}
-                        hideLabel
-                        size="small"
-                        data-testid="customer-reference-field"
-                        value={edit.state.theirReference}
-                        disabled={!editable()}
-                        onInput={e =>
-                          edit.setField('theirReference', e.currentTarget.value)
-                        }
-                        onBlur={() => edit.flush()}
-                      />
-                    </FieldRow>
-                    {/* PROMINENT custom fields — stay in the toolbar even when
-                        the shipment is read-only (past PICKED), just disabled. */}
-                    <CustomFieldsToolbar
-                      scope="outbound_shipment"
-                      recordId={current().id}
-                      values={current().customFields}
+                  {/* The header field cluster — never a hand-rolled <Toolbar>
+                      + FieldRow (ui/docs/PAGES.md § header field cluster). The
+                      line filters live in the DataTable's own toolbar below. */}
+                  <HeaderToolbar>
+                    <OutboundDetailToolbar
+                      storeId={params.storeId}
+                      node={current()}
                       disabled={!editable()}
-                      onSave={patch => void saveField({ customFields: patch })}
-                    />
-                    {/* Always-on item search — name OR code (server
-                        itemCodeOrName.like, AC-V5), like the stocktakes
-                        detail. Blank clears to null so stripEmpty drops it (a
-                        blank `like` would match everything). */}
-                    <FilterTextInput
-                      label={t('placeholder.filter-items')}
-                      placeholder={t('placeholder.filter-items')}
-                      value={filter().itemCodeOrName?.like ?? ''}
-                      onInput={value =>
-                        onFilterChange({
-                          ...filter(),
-                          itemCodeOrName: value ? { like: value } : null,
-                        })
+                      edit={edit}
+                      customerError={customerError()}
+                      onChangeCustomer={customerId =>
+                        void changeCustomer(customerId)
+                      }
+                      onSaveCustomFields={patch =>
+                        void saveField({ customFields: patch })
                       }
                     />
-                    <FilterBar
-                      filters={detailFilters}
-                      filter={filter()}
-                      onChange={onFilterChange}
-                    />
-                  </Toolbar>
+                  </HeaderToolbar>
                   <TabList
                     tabs={[
                       {
@@ -875,81 +1140,97 @@ const OutboundDetailView: Component = () => {
                 </Header>
               }
               contentFooter={
-                <Show
-                  when={selectedIds().length > 0}
-                  fallback={
-                    <OutboundStatusFooter
-                      storeId={params.storeId}
-                      node={current()}
-                      preflight={preflight}
-                      onSetHold={setHold}
-                      // A status change can trim zero-quantity lines
-                      // server-side — refetch the lines page alongside the
-                      // in-place entity splice.
-                      onSaved={saved => {
-                        mutate(() => saved);
-                        void refetchAfterSave();
-                      }}
-                      onClose={() =>
-                        navigate(
-                          `/${params.storeId}/distribution/outbound-shipment`
-                        )
-                      }
+                <>
+                  {/* The totals band, above BOTH footer faces — a document
+                      fact, so a live row selection doesn't take it away.
+                      Only where there is ROOM for it: on a narrow viewport, or
+                      a short one (landscape), the same figures ride the bar
+                      itself (below) rather than stacking a third band under
+                      the table, because height is the scarcer resource. */}
+                  <Show when={!foldTotalsIntoBar()}>
+                    <OutboundTotalsStrip
+                      totals={totalCount() > 0 ? shipmentTotals : undefined}
                     />
-                  }
-                >
-                  <ContentFooter testId="actions-footer">
-                    <strong data-testid="selected-rows-count">
-                      {tPlural('label.items-selected', selectedIds().length)}
-                    </strong>
-                    {/* Delete: hidden (not disabled) when read-only — editable
+                  </Show>
+                  <Show
+                    when={selectedIds().length > 0}
+                    fallback={
+                      <OutboundStatusFooter
+                        storeId={params.storeId}
+                        node={current()}
+                        pagination={linePagination()}
+                        preflight={preflight}
+                        onSetHold={setHold}
+                        totals={inlineTotals()}
+                        // A status change can trim zero-quantity lines
+                        // server-side — refetch the lines page alongside the
+                        // in-place entity splice.
+                        onSaved={saved => {
+                          mutate(() => saved);
+                          void refetchAfterSave();
+                        }}
+                      />
+                    }
+                  >
+                    <ContentFooter testId="actions-footer">
+                      {/* Same on the selection face: the totals stay on screen
+                          while rows are ticked, on the bar itself when narrow. */}
+                      {inlineTotals()}
+                      <strong data-testid="selected-rows-count">
+                        {tPlural('label.items-selected', selectedIds().length)}
+                      </strong>
+                      {/* Delete: hidden (not disabled) when read-only — editable
                         only (NEW/ALLOCATED/PICKED). S3 bulk-action matrix. */}
-                    <Show when={editable()}>
-                      <DeleteLinesAction
-                        storeId={params.storeId}
-                        selectedLines={selectedLines}
-                        disabled={false}
-                        onCommitted={onLineOpsCommitted}
-                      />
-                    </Show>
-                    {/* Allocate placeholder lines: only while editable AND a
+                      <Show when={editable()}>
+                        <DeleteLinesAction
+                          storeId={params.storeId}
+                          selectedLines={selectedLines}
+                          disabled={false}
+                          onCommitted={onLineOpsCommitted}
+                        />
+                      </Show>
+                      {/* Allocate placeholder lines: only while editable AND a
                         placeholder line is in the selection. */}
-                    <Show when={editable() && hasSelectedPlaceholder()}>
-                      <AllocateLinesAction
-                        storeId={params.storeId}
-                        selectedLines={selectedLines}
-                        disabled={false}
-                        onCommitted={onLineOpsCommitted}
-                      />
-                    </Show>
-                    {/* Return selected lines (AC-V3): shown at EVERY status (not
+                      <Show when={editable() && hasSelectedPlaceholder()}>
+                        <AllocateLinesAction
+                          storeId={params.storeId}
+                          selectedLines={selectedLines}
+                          disabled={false}
+                          onCommitted={onLineOpsCommitted}
+                        />
+                      </Show>
+                      {/* Return selected lines (OMS-REG-DIST-04.21): shown at EVERY status (not
                         hidden, not disabled). At SHIPPED / DELIVERED / VERIFIED
                         it opens the customer-return create flow (owned by the
                         returns vertical, over this shipment); any other status
                         (RECEIVED included) gets the explanatory notice. See the
                         S3 bulk-action matrix. */}
-                    <Button
-                      variant="secondary"
-                      data-testid="return-lines-button"
-                      onClick={() =>
-                        canReturnLines(current().status)
-                          ? setReturnModalOpen(true)
-                          : setReturnNoticeOpen(true)
-                      }
-                    >
-                      {t('button.return-lines')}
-                    </Button>
-                    <ContentFooterActions>
                       <Button
                         variant="secondary"
-                        icon={<MinusCircleIcon />}
-                        onClick={() => setSelectedIds([])}
+                        data-testid="return-lines-button"
+                        onClick={() =>
+                          canReturnLines(current().status)
+                            ? setReturnModalOpen(true)
+                            : setReturnNoticeOpen(true)
+                        }
                       >
-                        {t('label.clear-selection')}
+                        {t('button.return-lines')}
                       </Button>
-                    </ContentFooterActions>
-                  </ContentFooter>
-                </Show>
+                      {/* The pager rides the selection face as well: ticking a
+                        row must not strip the way to the rest of the lines. */}
+                      <Pagination {...linePagination()} inBar />
+                      <ContentFooterActions>
+                        <Button
+                          variant="secondary"
+                          icon={<MinusCircleIcon />}
+                          onClick={() => setSelectedIds([])}
+                        >
+                          {t('label.clear-selection')}
+                        </Button>
+                      </ContentFooterActions>
+                    </ContentFooter>
+                  </Show>
+                </>
               }
             >
               <TabPanel value="details">
@@ -957,6 +1238,17 @@ const OutboundDetailView: Component = () => {
                   columns={columns()}
                   rows={rows()}
                   rowKey={line => line.id}
+                  // Filters live WITH the table, in its own toolbar — never the
+                  // page header (ui-standards § tables › toolbar, binding). The
+                  // item search is the permanent default chip; Location is
+                  // addable (OutboundLineFilters).
+                  filters={
+                    <OutboundLineFilters
+                      filter={filter()}
+                      onFilterChange={onFilterChange}
+                      locations={locations()}
+                    />
+                  }
                   // Non-suspending loading read — a between-page/filter/sort
                   // refetch keeps rows + shows the refreshing bar; a post-save
                   // refetch is silent (tableLoading gates it out). Initial
@@ -965,16 +1257,18 @@ const OutboundDetailView: Component = () => {
                   sort={currentSort()}
                   onSort={onSort}
                   onRowClick={editable() ? openRow : undefined}
-                  // Placeholder lines read in the info tone — whole-row blue
-                  // text, matching the current app (ui-surface S3 line table).
-                  rowTone={line =>
-                    line.type === 'UNALLOCATED_STOCK' ? 'info' : undefined
-                  }
+                  rowTint={lineRowTint}
+                  // Same predicate on both channels: the tint colours the
+                  // row, the bar makes the unfinished lines legible down one
+                  // edge as the user scrolls.
+                  rowAccent={lineRowTint}
+                  cardTone={lineCardTone}
                   emptyMessage={t('error.no-outbound-items')}
                   empty={
                     editable() ? (
                       <Button
-                        icon={<PlusCircleIcon />}
+                        variant="ghost"
+                        shortcut={ALT_N}
                         data-testid="nothing-here-create-button"
                         onClick={openAdd}
                       >
@@ -987,22 +1281,16 @@ const OutboundDetailView: Component = () => {
                   onSelectionChange={setSelectedIds}
                   config={tableConfig.config()}
                   setConfig={tableConfig.setConfig}
-                  // Page navigation clears the selection (AC-V9): the bulk-
-                  // action gates classify by rows in view, so a selection must
-                  // never carry ids the user can no longer see.
-                  pagination={{
-                    offset: query().offset,
-                    pageSize: query().first,
-                    total: totalCount(),
-                    onOffsetChange: offset => {
-                      setQuery({ ...query(), offset });
-                      setSelectedIds([]);
-                    },
-                    onPageSizeChange: first => {
-                      setQuery({ ...query(), first, offset: 0 });
-                      setSelectedIds([]);
-                    },
-                  }}
+                  // Central-server admins can promote this table's layout to
+                  // the shared install-wide default, the same as the list
+                  // (issue #1118 — detail tables offered no way to save table
+                  // defaults). Gate + action both off the config controller;
+                  // undefined for everyone else, so the action isn't offered.
+                  onSaveGlobalDefault={
+                    tableConfig.canSaveGlobalDefault()
+                      ? tableConfig.saveGlobalTableConfig
+                      : undefined
+                  }
                 />
               </TabPanel>
               <TabPanel value="custom-fields">
@@ -1018,7 +1306,17 @@ const OutboundDetailView: Component = () => {
                 />
               </TabPanel>
               <TabPanel value="log">
-                <LogTab storeId={params.storeId} recordId={current().id} />
+                {/* The shared activity-log surface (domain/activityLog) — the
+                    same Date · Time · User · Event · Details table every other
+                    vertical's Log tab renders. Oldest-first, preserving this
+                    tab's existing order and matching the real OMS
+                    ActivityLogList (which sends no sort and takes the server's
+                    datetime-ascending default). */}
+                <ActivityLogPanel
+                  storeId={params.storeId}
+                  recordId={current().id}
+                  order="oldest-first"
+                />
               </TabPanel>
 
               <OutboundLineEditModal
@@ -1028,6 +1326,8 @@ const OutboundDetailView: Component = () => {
                 invoiceId={current().id}
                 isNew={current().status === 'NEW'}
                 customerIsStore={current().otherParty.store != null}
+                currencyCode={current().currency?.code}
+                currencyRate={current().currencyRate}
                 initialItem={editState()?.item}
                 initialLineId={editState()?.lineId}
                 nextItem={nextItem}
@@ -1054,7 +1354,7 @@ const OutboundDetailView: Component = () => {
                   return result;
                 }}
               />
-              {/* Returns need a shipped shipment (AC-V3) — an info-only
+              {/* Returns need a shipped shipment (OMS-REG-DIST-04.21) — an info-only
                   notice; the return flow is the returns vertical's. */}
               <Show when={returnNoticeOpen()}>
                 <Dialog
@@ -1064,17 +1364,11 @@ const OutboundDetailView: Component = () => {
                   title={t('button.return-lines')}
                   description={t('messages.cant-return-shipment')}
                   actions={
-                    <Button
-                      variant="secondary"
-                      icon={<CheckIcon />}
-                      onClick={() => setReturnNoticeOpen(false)}
-                    >
-                      {t('button.ok')}
-                    </Button>
+                    <OkButton onClick={() => setReturnNoticeOpen(false)} />
                   }
                 />
               </Show>
-              {/* From-shipment customer-return flow (AC-V3 → customer-returns
+              {/* From-shipment customer-return flow (OMS-REG-DIST-04.21 → customer-returns
                   S4): seeded from the selected STOCK lines (placeholder and
                   service lines can't be returned, so they're excluded); the
                   return is created born VERIFIED and linked to this shipment,

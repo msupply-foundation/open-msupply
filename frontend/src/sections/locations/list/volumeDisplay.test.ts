@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import {
   availableVolume,
   getVolumeUsedPercentage,
-} from '../../../domain/location/volume';
+} from '@/domain/location/volume';
 
 // AC-citing tests for the volume criteria (spec/locations/acceptance.md
 // § volume) over the SHARED helpers in src/domain/location/volume.ts — the one
@@ -39,8 +39,8 @@ describe('OMS-REG-INV-01.30 — volume fields feed location pickers elsewhere', 
   // volume / volumeUsed / stock.totalCount through the SAME helpers: the
   // percentage rule above (identical suppression cases), and availableVolume
   // for its Available fullness mode. The picker never writes these fields —
-  // OMS-REG-INV-01.30 holds across every surface (locationEdit.test.ts pins that no input
-  // carries volumeUsed).
+  // OMS-REG-INV-01.30 holds across every surface (locationEdit.test.ts pins
+  // that no input carries volumeUsed).
   it("the picker's % used follows the same undefined-safe rule as the list", () => {
     expect(getVolumeUsedPercentage(loc(4, 4, 1))).toBe(100);
     expect(getVolumeUsedPercentage(loc(10, 0, 4))).toBeUndefined();

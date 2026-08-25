@@ -1,9 +1,7 @@
 import {
-  createEffect,
   createMemo,
   createResource,
   createSignal,
-  on,
   Show,
   Suspense,
 } from 'solid-js';
@@ -11,36 +9,36 @@ import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '@/api/graphql';
 import { t } from '@/intl';
+import { formatNumber } from '@/intl/formatNumber';
 import { Page } from '@/ui/layout/Page/Page';
 import { Header } from '@/ui/layout/Header/Header';
 import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '@/ui/layout/Header/HeaderButtons';
-import { Toolbar } from '@/ui/layout/Header/Toolbar';
 import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
-import {
-  Tabs,
-  TabList,
-  TabPanel,
-  type TabDef,
-} from '@/ui/elements/tabs/Tabs';
+import { Tabs, TabList, TabPanel, type TabDef } from '@/ui/elements/tabs/Tabs';
 import { Button } from '@/ui/elements/buttons/Button';
+import { createAddAction } from '@/ui/utils/keyActions';
+import { ALT_M, ALT_N } from '@/ui/utils/shortcuts';
 import { Spinner } from '@/ui/elements/feedback/Spinner';
-import {
-  SidebarIcon,
-  MinusCircleIcon,
-  PlusCircleIcon,
-} from '@/ui/icons';
+import { SidebarIcon, MinusCircleIcon, PlusCircleIcon } from '@/ui/icons';
 import {
   DataTable,
+  type CardGroup,
   type Column,
   type SortState,
 } from '@/ui/elements/table/DataTable';
 import {
-  getCommentCell,
+  AbsentValue,
+  CommentHeader,
+  getCellDefinition,
   getDateCell,
-  getNumberCell,
+  getExpiryDateCell,
 } from '@/ui/elements/table/tableHelpers';
+import {
+  Pagination,
+  type PaginationProps,
+} from '@/ui/elements/table/Pagination';
 import { createTableConfig } from '@/api/createTableConfig';
 import {
   StocktakeDetail,
@@ -57,9 +55,11 @@ import {
 } from './edit-modal/StocktakeLineEditModal';
 import { StocktakeStatusFooter } from './StocktakeStatusFooter';
 import { StocktakeDetailToolbar } from './StocktakeDetailToolbar';
+import { StocktakeLineFilters } from './StocktakeLineFilters';
 import { StocktakeSidePanel } from './StocktakeSidePanel';
 import { createSidePanelOpen } from '@/ui/layout/SidePanel/createSidePanelOpen';
-import { StocktakeLogPanel } from './log/StocktakeLogPanel';
+import { ActivityLogPanel } from '@/domain/activityLog';
+import { StocktakeDocumentsTab } from './StocktakeDocumentsTab';
 import {
   DeleteLinesAction,
   ChangeLocationAction,
@@ -67,6 +67,7 @@ import {
   ExportPrintAction,
 } from './actions';
 import { saveStocktakeFields } from './stocktakeUpdate';
+import type { LineEditCommit } from './lines/stocktakeLineUpdate';
 import type { LineErrors } from './lines/stocktakeLineErrors';
 import type { StocktakeLineFilter } from './stocktakeLineFilter';
 import { createDebouncedEdit } from '@/domain/debouncedEdit';
@@ -76,10 +77,17 @@ import {
 } from '@/domain/location';
 import type { StocktakeEditFields } from './stocktakeEdit';
 import { useUrlQueryState } from '@/list/urlQueryState';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '@/list/pageSize';
+import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
 import { stripEmpty } from '@/typeHelpers';
 import { stocktakePreferences } from '@/store/storeContext';
 import { dosesCounted, dosesPerUnit } from './lines/doses';
 import { isUncounted, lineDifference } from './lines/stocktakeLine';
+import styles from './StocktakeDetailView.module.css';
 
 // The stocktake detail view. The page shell (breadcrumb back to the list + an
 // editable description + filters), the lines in a SERVER-paginated DataTable
@@ -116,12 +124,18 @@ type StocktakeInfoNode = Extract<
 // campaign, comment — see spec contract § backend gaps) simply omit `sortKey`.
 type SortKey = NonNullable<StocktakeLinesVariables['sort']>[number]['key'];
 
+// Card view (below 600px): the item name is the card title (headerPosition
+// 'primary') and the counted-packs its badge; every other column drops into
+// one collapsed "More details" disclosure (ui-standards → CARD_TABLE_MODEL).
+type GroupKey = 'more';
+const CARD_GROUPS: CardGroup<Line, GroupKey>[] = [
+  { key: 'more', disclosure: 'closed' },
+];
+
 // A finalised or on-hold (locked) stocktake can't have its content edited (OMS
 // isStocktakeDisabled).
 const isDisabled = (node: StocktakeInfoFragment) =>
   node.status !== 'NEW' || node.isLocked;
-
-const DEFAULT_PAGE_SIZE = 20;
 
 // The URL-backed view state (kdd/url-structure): filter + sort + pagination in
 // the single `?query=` JSON param, so a filtered/sorted/paged view is shareable
@@ -133,14 +147,25 @@ type DetailUrlState = {
   sort: NonNullable<StocktakeLinesVariables['sort']>;
   offset: number;
   first: number;
+  // The "show error lines" filter (issue #791 follow-up): a BOOLEAN flag, not
+  // the ids. The offending line ids live in transient error state (lineErrors),
+  // not the URL — so a shared/reloaded link never carries a stale id list, and
+  // the flag resolves against whatever errors are currently stamped (none after
+  // a reload ⇒ the filter is simply absent). When on, the lines query injects
+  // `id.equalAny: [<error ids>]`.
+  showError: boolean;
 };
 
 const DEFAULT_URL_STATE: DetailUrlState = {
-  filter: {},
+  // The item search is the screen's default filter (ui-standards § tables →
+  // filtering): seeded present-as-null so its chip is on the bar from the
+  // start; stripEmpty keeps it out of the query until typed.
+  filter: { itemCodeOrName: null },
   // Default sort: item name ascending (matches OMS's default line order).
   sort: [{ key: 'itemName', desc: false }],
   offset: 0,
   first: DEFAULT_PAGE_SIZE,
+  showError: false,
 };
 
 const StocktakeDetailView: Component = () => {
@@ -148,8 +173,10 @@ const StocktakeDetailView: Component = () => {
   const navigate = useNavigate();
   // Filter + sort + pagination are URL-backed (shareable, survive reload/back-
   // nav) in one `?query=` param. Thin accessors over that single query.
-  const { query, setQuery } =
-    useUrlQueryState<DetailUrlState>(DEFAULT_URL_STATE);
+  const { query, setQuery } = useUrlQueryState<DetailUrlState>({
+    ...DEFAULT_URL_STATE,
+    first: initialPageSize(),
+  });
   const filter = () => query().filter;
   const currentSort = (): SortState<SortKey> | undefined => {
     const s = query().sort[0];
@@ -177,6 +204,12 @@ const StocktakeDetailView: Component = () => {
   // id → the error's __typename (the shared LineErrors shape, kept raw). The
   // Snapshot column renders it inline; cleared when a fresh page lands.
   const [lineErrors, setLineErrors] = createSignal<LineErrors>(new Map());
+  // The stamped error line ids — what the "show error lines" filter (showError)
+  // resolves to at query time (id.equalAny). Empty when nothing is stamped, so
+  // the filter is treated as absent rather than sending an empty equalAny
+  // (which the server reads as "match nothing").
+  const errorLineIds = (): string[] => [...lineErrors().keys()];
+  const hasErrors = (): boolean => lineErrors().size > 0;
   // Column config (order/sizing/visibility) persists per user/store. The extra
   // editable columns start HIDDEN by default so the table isn't overwhelming —
   // the user reveals them via the column-visibility settings.
@@ -187,13 +220,13 @@ const StocktakeDetailView: Component = () => {
         // Hidden by default (the user reveals them via the column-visibility
         // control) — the spec's "hidden by default" set for the detail line
         // table (spec/stocktakes S3), which mirrors OMS's defaultHideOnMobile
-        // columns. Snapshot / Counted / Difference / Reason / Comment stay
-        // visible. Gated columns (dosesPerUnit / donor) only appear in the table
-        // at all when their store preference is on; this sets their initial
-        // visibility once present.
+        // columns, minus Location, which stays visible so stock placement is
+        // seen without reconfiguring. Snapshot / Counted / Difference / Reason
+        // / Comment stay visible. Gated columns (dosesPerUnit / donor) only
+        // appear in the table at all when their store preference is on; this
+        // sets their initial visibility once present.
         columnVisibility: {
           manufactureDate: false,
-          location: false,
           itemUnit: false,
           packSize: false,
           dosesPerUnit: false,
@@ -201,6 +234,17 @@ const StocktakeDetailView: Component = () => {
           manufacturer: false,
           campaign: false,
         },
+        // Code pinned to the inline-start edge, so the identifier stays put
+        // while the counting columns scroll horizontally — this table is wide
+        // enough to scroll on every device the app targets, and a row whose
+        // code has scrolled away is a row you can't be sure you're counting.
+        // Only a DEFAULT: the user's own pinning wins over it, and the Columns
+        // popover's reset returns here rather than to no pins at all.
+        //
+        // 'item.code' is the column's id (the accessor path, which the testid
+        // contract also uses) — NOT 'code'. A key that matches no column pins
+        // nothing and reports no error.
+        columnPinning: { left: ['item.code'] },
       },
     },
   });
@@ -214,20 +258,50 @@ const StocktakeDetailView: Component = () => {
   type EditState = { itemId?: string; lineId?: string } | undefined;
   const [editState, setEditState] = createSignal<EditState>();
 
-  // The content region's two tabs (OMS parity): Details (the line table) and
-  // Log (the stocktake's activity log). Local UI state — not URL-backed; a
-  // reload lands on Details. The Log tab self-queries its own activity log.
+  // The content region's three tabs (OMS parity): Details (the line table),
+  // Documents (files attached to the stocktake) and Log (the stocktake's
+  // activity log). Local UI state — not URL-backed; a reload lands on Details.
+  // The Documents tab reads the node's `documents` list; the Log tab
+  // self-queries its own activity log.
   const [activeTab, setActiveTab] = createSignal('details');
+
+  // The line table's pager. It lives in the screen's bottom bar — the status
+  // footer, or the selection footer while rows are ticked — rather than in a
+  // band of its own under the table (spec/ui-standards § tables → pagination):
+  // that bar is present at every line count, so hosting the pager there costs
+  // no extra row, and `conditional` means it renders nothing at all until the
+  // lines outrun one page, leaving the bar as it was and the height to the
+  // rows.
+  const linePagination = (): PaginationProps => ({
+    offset: query().offset,
+    pageSize: query().first,
+    total: totalCount(),
+    onOffsetChange: offset => setQuery({ ...query(), offset }),
+    onPageSizeChange: first => {
+      // The remembered page size (D106) — it rode the DataTable's own
+      // pagination prop, which this accessor replaced when the pager moved
+      // into the status footer, so it has to travel with the handler.
+      rememberPageSize(first);
+      setQuery({ ...query(), first, offset: 0 });
+    },
+  });
   const tabs = (): TabDef[] => [
     { value: 'details', label: t('label.details') },
+    { value: 'documents', label: t('label.documents') },
     { value: 'log', label: t('label.log') },
   ];
 
   // Fetch the stocktake INFO (header/footer/side-panel fields — NOT the lines).
   // A NodeError (e.g. bad id) is promoted to the global unexpected-error modal
   // via mapSuccessToError. Stocktake-LEVEL saves write back with `mutate` (no
-  // refetch), so `info` is an accessor over data().
-  const [data, { mutate }] = createResource(
+  // refetch), but the Documents tab's upload/delete calls `refetchInfo` to
+  // re-read the node's documents list — so `info` reads `.latest`
+  // NON-suspending (kdd/solid-reactivity-pitfalls): a bare `data()` read would
+  // re-suspend the <Suspense> below on every documents refetch and remount the
+  // whole open detail view. `.latest` still suspends until the FIRST load
+  // resolves, so the initial spinner is unchanged; a later refetch keeps the
+  // previous node on screen while the fresh one lands.
+  const [data, { mutate, refetch: refetchInfo }] = createResource(
     () => ({ storeId: params.storeId, stocktakeId: params.stocktakeId }),
     async variables => {
       const result = await graphqlFetch(StocktakeDetail, variables, {
@@ -242,20 +316,31 @@ const StocktakeDetailView: Component = () => {
         : undefined;
     }
   );
-  const info = (): StocktakeInfoFragment | undefined => data();
+  const info = (): StocktakeInfoFragment | undefined => data.latest;
 
   // The lines PAGE — a separate, server-filtered/sorted/paged query. Keyed on
   // the SERIALISED variables (a stable string) like the stocktakes LIST, so
   // identical query content doesn't refetch (kdd/solid-reactivity-pitfalls).
   // stripEmpty drops added-but-empty filter chips so an empty chip doesn't
   // reflash the list.
-  const linesVariables = createMemo<StocktakeLinesVariables>(() => ({
-    storeId: params.storeId,
-    stocktakeId: params.stocktakeId,
-    filter: stripEmpty(query().filter),
-    sort: query().sort,
-    page: { first: query().first, offset: query().offset },
-  }));
+  const linesVariables = createMemo<StocktakeLinesVariables>(() => {
+    const base = stripEmpty(query().filter);
+    // "Show error lines": layer id.equalAny over the current wire filter from
+    // the transient error set. Only when the flag is on AND ids are stamped —
+    // an empty equalAny would match nothing, and after a reload (flag on, no
+    // ids) we want the full list, so the id key is simply omitted then.
+    const filter =
+      query().showError && errorLineIds().length > 0
+        ? { ...base, id: { equalAny: errorLineIds() } }
+        : base;
+    return {
+      storeId: params.storeId,
+      stocktakeId: params.stocktakeId,
+      filter,
+      sort: query().sort,
+      page: { first: query().first, offset: query().offset },
+    };
+  });
   const [linesData, { refetch: refetchLines }] = createResource(
     () => JSON.stringify(linesVariables()),
     async serialised => {
@@ -288,14 +373,17 @@ const StocktakeDetailView: Component = () => {
       );
   };
 
-  // Locations WITH capacity for this store, fetched HERE (not from a global
-  // cache) and passed down to the line editor + change-location picker, so their
-  // % used / fullness filter reflect current stock. `volumeUsed` is
-  // server-computed and shifts whenever a count commits stock into/out of a
-  // location, so this is REFETCHED after every line save (see refetchAfterSave).
+  // Locations WITH capacity for this store, fetched ONCE HERE (not from a
+  // global cache) and passed down to the line editor + change-location picker,
+  // so their % used / fullness filter reflect current stock. `volumeUsed` is
+  // the sum of each stock line's volume in the location; a NEW stocktake's line
+  // saves never move stock (stock movements happen only on finalise — verified
+  // against the OMS `get_volume_used` service + the stocktake_line update
+  // service, which upserts only the stocktake_line row). So capacity is static
+  // for the stocktake's editable life and this is NOT refetched on line save.
   // The detail location FILTER also reads it (code/name only). Non-suspending
   // read via `.latest` so a refetch never trips the view's Suspense boundary.
-  const [locationsData, { refetch: refetchLocations }] = createResource(
+  const [locationsData] = createResource(
     () => params.storeId,
     async storeId => {
       const result = await fetchLocationsWithVolume(storeId);
@@ -304,47 +392,56 @@ const StocktakeDetailView: Component = () => {
   );
   const locations = (): LocationWithVolume[] => locationsData.latest ?? [];
 
-  // A save-triggered refetch is SILENT — no refreshing bar (the table stays put
-  // while the fresh page swaps in). A user-navigation refetch
-  // (filter/sort/page) shows the bar as usual. `silentRefetching` is raised
-  // around a save refetch and drives the DataTable's `loading` gate below.
-  const [silentRefetching, setSilentRefetching] = createSignal(false);
-  const refetchAfterSave = async () => {
-    setSilentRefetching(true);
-    try {
-      // Refetch the lines page AND the location capacities together: a save may
-      // have moved stock between locations (changing volumeUsed) or edited a
-      // line's volume, so the picker's % used / fullness must be re-read.
-      await Promise.all([refetchLines(), refetchLocations()]);
-    } finally {
-      setSilentRefetching(false);
-    }
-  };
-  // Show the loading treatment only for a genuine (user-navigation) fetch — not
-  // a post-save refetch.
-  const tableLoading = () => linesData.loading && !silentRefetching();
+  // Finalise trims every uncounted line server-side, so the total can collapse
+  // far below the page the user is on; a bulk delete does the same
+  // (src/list/clampPageOffset.ts, issue #1117).
+  clampPageOffset({
+    total: () => settledTotal(linesData, page => page.totalCount),
+    offset: () => query().offset,
+    pageSize: () => query().first,
+    setOffset: offset => setQuery({ ...query(), offset }),
+  });
 
-  // A fresh lines page clears stale per-line errors. lineErrors is
-  // independently stamped by save failures, so it stays its own signal — this
-  // effect only resets it when a new page lands.
-  createEffect(
-    on(
-      () => linesData.latest,
-      () => setLineErrors(new Map())
-    )
-  );
+  // Refetch the current lines page after a save. Only the lines page: a line
+  // save changes the count/line rows, never the location capacities (see
+  // locationsData above).
+  const refetchAfterSave = () => refetchLines();
+  // Any in-flight lines fetch shows the loading treatment. Every refetch —
+  // filter/sort/page navigation AND a post-save refetch — surfaces it so the
+  // user always sees that something is happening (a slow network otherwise
+  // looks frozen). The rows stay put across a refetch (keepPreviousData), so
+  // with rows already showing this is the small toolbar spinner, not a blanked
+  // table; only the very first load (no rows yet) uses the centred spinner.
+  const tableLoading = () => linesData.loading;
 
-  // A stocktake can be finalised only when it has at least one counted line
-  // (OMS no-lines guard). Best-effort over the CURRENT page — a fuller guard
-  // would need a server count; the finalise mutation is the source of truth.
-  const canFinalise = () =>
-    rows().some(line => line.countedNumberOfPacks != null);
+  // Stale per-line errors are cleared ONLY when a successful line change
+  // resolves them (onLinesChanged) — not on sort, filter, paging, or any fresh
+  // page. Those navigations don't resolve an error, so the highlights and the
+  // "show error lines" filter (which the errors filter reads its id set from)
+  // survive them; a save is the one event that makes the errors stale. This
+  // also avoids a feedback loop: showError refetches off the very error set in
+  // lineErrors, so clearing on any page load would collapse the filter the
+  // instant it applied.
+  const clearLineErrors = () => setLineErrors(new Map());
+
+  // No client-side "has counted lines" guard. The old best-effort check only
+  // saw the CURRENT page (rows()), so a stocktake with placeholder lines on the
+  // first page but counted lines further in was wrongly blocked from finalising
+  // (issue #791). Finalise now always reaches the server, which is the source
+  // of truth: it accepts an all-uncounted stocktake (a no-op) and rejects a
+  // truly-empty one with NoLines, surfaced in the finalise-rejection dialog.
 
   // Header click: TanStack computed the next direction; record it as the
-  // GraphQL sort array and reset to the first page.
+  // GraphQL sort array and reset to the first page. Sorting resolves no error,
+  // so it keeps both the stamped errors and the errors filter — it just
+  // reorders the (possibly error-filtered) lines.
   const onSort = (key: SortKey, desc: boolean) =>
     setQuery({ ...query(), sort: [{ key, desc }], offset: 0 });
 
+  // A wire-filter change (item search / location) also keeps the errors and
+  // the errors filter: the id.equalAny set layers with the new wire filter
+  // (linesVariables merges them), so the two narrow together. Nothing is
+  // resolved here either, so lineErrors stays.
   const onFilterChange = (next: StocktakeLineFilter) => {
     setQuery({ ...query(), filter: next, offset: 0 });
     setSelectedIds([]);
@@ -364,6 +461,32 @@ const StocktakeDetailView: Component = () => {
   // --
 
   const current = () => info();
+
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). One
+  // declaration for the two controls that trigger it (the toolbar button and the
+  // ghost button in the table's empty slot); each carries `shortcut={ALT_N}` for
+  // its badge, neither owns the action.
+  //
+  // Reads `current()` rather than the `node` the JSX binds: that one is a <Show>
+  // render-prop accessor scoped inside the tree, while the action is declared at
+  // component scope. Disabled while there is no stocktake yet, or once it is
+  // finalised and there is nothing to add to — evaluated at keypress time, so no
+  // re-registration when the status changes.
+  createAddAction({
+    name: 'button.add-item',
+    run: openAdd,
+    // Gated on `.state`, NOT on `current()` — which reads `data.latest`, and
+    // `.latest` suspends on the first pending read (kdd/solid-reactivity-pitfalls
+    // § no remounts). The command palette evaluates every action's `disabled()`
+    // inside its own render, so a suspending read here would suspend THE PALETTE
+    // whenever it was opened while this screen was still first-loading. An
+    // action's `disabled` must never read a suspending source.
+    disabled: () => {
+      if (data.state !== 'ready' && data.state !== 'refreshing') return true;
+      const stocktake = data.latest;
+      return !stocktake || isDisabled(stocktake);
+    },
+  });
 
   // A stocktake-level field save: patch → updateStocktake, replace `info` in
   // place on success. No user-facing error branch — any rejection here is
@@ -435,8 +558,33 @@ const StocktakeDetailView: Component = () => {
   // A line-level change committed (line-edit modal OR a selection action). We
   // refetch the current page rather than splice; the fresh page also clears
   // stale rows. Selection is cleared so the footer returns to the status view.
-  const onLinesChanged = () => {
-    setSelectedIds([]);
+  //
+  // A successful commit resolves whatever the errors were about → drop the
+  // stale highlights and leave the errors view. Turning the errors filter off
+  // changes the lines-query key (id.equalAny disappears), which by itself
+  // triggers a reactive refetch to the now-unfiltered page — so on that path we
+  // must NOT also call the manual refetch, or the page would fetch twice. When
+  // the filter wasn't on, the key is unchanged and the manual refetch is the
+  // only refresh.
+  // `keepSelection` is for a PARTIAL commit (some lines saved, some rejected):
+  // the selection footer OWNS the action dialogs, so dropping the selection
+  // unmounts the very dialog that still has to report the outcome (issue
+  // #1150). Holding it also leaves the user on the same selection to act on
+  // what didn't save. The errors the action is about to stamp survive either
+  // way — clearLineErrors runs here, the stamp lands after it, same tick.
+  // (`_commit` is what the callers hand over; this view refetches the page
+  // rather than splicing it in, per the comment above.)
+  const onLinesChanged = (
+    _commit?: LineEditCommit,
+    opts?: { keepSelection?: boolean }
+  ) => {
+    if (!opts?.keepSelection) setSelectedIds([]);
+    const wasFilteringErrors = query().showError && lineErrors().size > 0;
+    clearLineErrors();
+    if (wasFilteringErrors) {
+      setQuery({ ...query(), showError: false }); // reactive refetch does it
+      return;
+    }
     void refetchAfterSave();
   };
 
@@ -485,6 +633,8 @@ const StocktakeDetailView: Component = () => {
           name: line.itemName,
           isVaccine: line.item.isVaccine,
           doses: line.item.doses,
+          unitName: line.item.unitName,
+          defaultPackSize: line.item.defaultPackSize,
         };
       }
       return undefined;
@@ -517,16 +667,19 @@ const StocktakeDetailView: Component = () => {
     }
   };
 
-  // "Show error lines" — TODO: the old client-side errors-only filter is gone
-  // (the server can't filter by an arbitrary id list yet — see
-  // stocktakeDetailFilters.tsx). For now this just clears the selection so the
-  // footer returns to the status view; the error lines already flag inline via
-  // stampErrors.
-  const showErrors = () => setSelectedIds([]);
+  // "Show error lines" (from a failed finalise / bulk action's error dialog):
+  // turn on the errors filter so the table narrows to just the stamped lines
+  // (server id.equalAny — see linesVariables). Reset to the first page and
+  // clear the selection so the footer returns to the status view. A no-op when
+  // nothing is stamped (the dialog only offers it when there are error lines).
+  const showErrors = () => {
+    setSelectedIds([]);
+    if (!hasErrors()) return;
+    setQuery({ ...query(), showError: true, offset: 0 });
+  };
 
   // Crumbs are an accessor so t() re-translates on locale change.
   const crumbs = (node: StocktakeInfoFragment) => [
-    { label: t('inventory') },
     {
       label: t('stocktakes'),
       onClick: () => navigate(`/${params.storeId}/inventory/stocktakes`),
@@ -556,37 +709,57 @@ const StocktakeDetailView: Component = () => {
   // behind it (this caused a genuine slow-load bug; root-caused via targeted
   // logging that confirmed every actual dependency stayed unchanged across
   // dozens of re-fires per second).
-  const columns = createMemo((): Column<Line, SortKey>[] => [
+  const columns = createMemo((): Column<Line, SortKey, GroupKey>[] => [
     {
       // Column id is the e2e/TESTIDS.md contract's `item.code` (the accessor
       // path); the server sort key is `itemCode`.
       c: { accessor: line => line.item.code, id: 'item.code' },
       sortKey: 'itemCode',
       header: () => t('label.code'),
+      cardGroup: 'more',
+      // Sized as the shared `itemCode` column (the `code` cell kind: 5rem off a
+      // ~9-char measure, capped at 7, monospace so digits align down the
+      // column). It was carrying no definition at all, so it auto-sized to
+      // whatever the widest code on the page happened to be and moved as the
+      // user paged. Any change to what a code column is worth belongs in
+      // _globalColumnConfig.ts, which is the one place those widths are tuned —
+      // not here.
+      ...getCellDefinition('itemCode'),
     },
     {
       c: { key: 'itemName' },
       sortKey: 'itemName',
       header: () => t('label.name'),
+      // The shared `itemName` definition: the `text` kind's 18.75rem, and
+      // deliberately NO growth cap, which is what makes this the column that
+      // absorbs the table's slack — the right behaviour for the longest value in
+      // the row ("ABACAVIR / LAMIVUDINE 120/60 mg comp disp. BTE/30").
       // Item names are long — allow up to two wrapped lines before clamping.
-      meta: { headerPosition: 'primary', wrapLines: 2 },
+      ...getCellDefinition('itemName', {
+        headerPosition: 'primary',
+        wrapLines: 2,
+      }),
     },
     {
       c: { key: 'batch' },
       sortKey: 'batch',
       header: () => t('label.batch'),
+      cardGroup: 'more',
+      ...getCellDefinition('batch'),
     },
     {
       c: { key: 'expiryDate' },
       sortKey: 'expiryDate',
       header: () => t('label.expiry-date'),
-      ...getDateCell(),
+      cardGroup: 'more',
+      ...getExpiryDateCell(),
     },
     {
       c: { key: 'manufactureDate' },
       // Unsortable — StocktakeLineSortFieldInput has no manufactureDate key
       // (backend gap; spec/stocktakes contract § backend gaps).
       header: () => t('label.manufacture-date'),
+      cardGroup: 'more',
       ...getDateCell(),
     },
     {
@@ -595,19 +768,27 @@ const StocktakeDetailView: Component = () => {
       c: { accessor: line => line.location?.code ?? '', id: 'location' },
       sortKey: 'locationCode',
       header: () => t('label.location'),
+      cardGroup: 'more',
+      // `location`, not `locationCode`: this renders the code but its header is
+      // "Location", and that key's 6.5rem is the one measured against it.
+      ...getCellDefinition('location'),
     },
     {
       // Unit name (item.unitName) — read-only. Unsortable (no server key;
-      // backend gap). Matches OMS's columns.tsx itemUnit, placed after Location.
+      // backend gap). Matches OMS's columns.tsx itemUnit, placed after
+      // Location.
       c: { accessor: line => line.item.unitName ?? '', id: 'itemUnit' },
       header: () => t('label.unit-name'),
+      cardGroup: 'more',
+      ...getCellDefinition('unitName'),
     },
     {
       c: { key: 'packSize' },
       // Unsortable in OMS's columns.tsx (no enableSorting) even though the
       // server has a packSize key — matched here.
       header: () => t('label.pack-size'),
-      ...getNumberCell(),
+      cardGroup: 'more',
+      ...getCellDefinition('packSize'),
     },
     // Doses per unit (gated by manageVaccinesInDoses) — packSize × item.doses,
     // vaccine rows only.
@@ -619,12 +800,13 @@ const StocktakeDetailView: Component = () => {
               id: 'dosesPerUnit',
             },
             header: () => t('label.doses-per-unit'),
-            ...getNumberCell(),
-          } satisfies Column<Line, SortKey>,
+            cardGroup: 'more',
+            ...getCellDefinition('dosesPerUnit'),
+          } satisfies Column<Line, SortKey, GroupKey>,
         ]
       : []),
-    // Snapshot — omitted entirely while counting under blind stocktake (reappears
-    // once finalised; see hideSnapshotStock above).
+    // Snapshot — omitted entirely while counting under blind stocktake
+    // (reappears once finalised; see hideSnapshotStock above).
     ...(hideSnapshotStock()
       ? []
       : [
@@ -632,53 +814,73 @@ const StocktakeDetailView: Component = () => {
             c: { key: 'snapshotNumberOfPacks' },
             sortKey: 'snapshotNumberOfPacks',
             header: () => t('label.snapshot-num-of-packs'),
-            ...getNumberCell(),
-            // Snapshot cell also carries the line's error inline beneath the count (a
-            // snapshot/current-count mismatch is a "recount this line" message about
-            // the snapshot). Styled inline from the design tokens (a section owns no
-            // stylesheet).
+            cardGroup: 'more',
+            ...getCellDefinition('snapshotNumberOfPacks'),
+            // Snapshot cell also carries the line's error beneath the count (a
+            // snapshot/current-count mismatch is a "recount this line" message
+            // about the snapshot); the count itself formats like every other
+            // number column.
             cell: info => {
               const value = info.getValue<number | null | undefined>();
               return (
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    'flex-direction': 'column',
-                    'align-items': 'flex-end',
-                  }}
-                >
-                  <span>{value ?? ''}</span>
+                <>
+                  {formatNumber(value, { maximumFractionDigits: 2 })}
                   <Show
                     when={
                       lineErrors().get(info.row.original.id) ===
                       'SnapshotCountCurrentCountMismatchLine'
                     }
                   >
-                    <span
-                      style={{
-                        color: 'var(--error-main)',
-                        'font-size': 'var(--text-xs)',
-                        'white-space': 'normal',
-                        'text-align': 'end',
-                      }}
-                    >
+                    <span class={styles.lineError}>
                       {t('error.snapshot-total-mismatch')}
                     </span>
                   </Show>
-                </span>
+                </>
               );
             },
-          } satisfies Column<Line, SortKey>,
+          } satisfies Column<Line, SortKey, GroupKey>,
         ]),
     {
       c: { key: 'countedNumberOfPacks' },
       sortKey: 'countedNumberOfPacks',
       header: () => t('label.counted-num-of-packs'),
-      ...getNumberCell(),
-      meta: { align: 'right', headerPosition: 'badge' },
+      // NOT user-hideable (hideFromColumnSettings), unlike the other data
+      // columns here: this cell carries the WORD behind the uncounted marking
+      // ("Not counted", below), and the tint and bar beside it are colour.
+      // Hide the column from the Columns popover and an uncounted row would be
+      // marked by colour alone — the one thing the marking is never allowed to
+      // be (styling principle 9 / WCAG 1.4.1). Same reasoning as the outbound
+      // line table's Batch column, which holds "Unallocated". The column stays
+      // sortable and stays in its place in the order; it just can't be
+      // switched off.
+      ...getCellDefinition('countedNumberOfPacks', {
+        align: 'right',
+        headerPosition: 'badge',
+        hideFromColumnSettings: true,
+      }),
+      // An uncounted line has no counted value, and a blank cell says nothing —
+      // it reads as "zero" or "still loading" as readily as "not counted yet",
+      // and it is the only cell that could carry the word the row's marking
+      // leans on. The absent-value treatment types it as prose (UI face,
+      // italic, muted) so it cannot be mistaken for a counted quantity.
+      //
+      // A word, not a chip: the row already carries the unfinished tint AND the
+      // leading bar, so nothing more is needed to FIND it. This cell's one job
+      // is to say WHICH value is missing.
+      //
+      // The accessor above keeps the raw number as the cell's VALUE, so
+      // sorting, the hover-reveal and any export are unchanged.
+      cell: info =>
+        isUncounted(info.row.original) ? (
+          <AbsentValue label={t('label.not-counted')} />
+        ) : (
+          formatNumber(info.getValue<number | null | undefined>(), {
+            maximumFractionDigits: 2,
+          })
+        ),
     },
-    // Doses counted (gated by manageVaccinesInDoses) — client-side, vaccine rows
-    // only (blank otherwise); nothing stored per line (see ./lines/doses).
+    // Doses counted (gated by manageVaccinesInDoses) — client-side, vaccine
+    // rows only (blank otherwise); nothing stored per line (see ./lines/doses).
     ...(prefs().manageVaccinesInDoses
       ? [
           {
@@ -687,8 +889,9 @@ const StocktakeDetailView: Component = () => {
               id: 'dosesCounted',
             },
             header: () => t('label.doses-counted'),
-            ...getNumberCell(),
-          } satisfies Column<Line, SortKey>,
+            cardGroup: 'more',
+            ...getCellDefinition('doses'),
+          } satisfies Column<Line, SortKey, GroupKey>,
         ]
       : []),
     // Difference = counted − snapshot; blank until the line is counted. Derived
@@ -703,11 +906,12 @@ const StocktakeDetailView: Component = () => {
               id: 'difference',
             },
             header: () => t('label.difference'),
-            ...getNumberCell(),
-          } satisfies Column<Line, SortKey>,
+            cardGroup: 'more',
+            ...getCellDefinition('difference'),
+          } satisfies Column<Line, SortKey, GroupKey>,
         ]),
-    // Tail columns in OMS's columns.tsx order: Reason · [Donor] · Manufacturer ·
-    // Campaign · Comment. No price columns — Sell/Cost price live only in the
+    // Tail columns in OMS's columns.tsx order: Reason · [Donor] · Manufacturer
+    // · Campaign · Comment. No price columns — Sell/Cost price live only in the
     // line editor's Pricing tab, never as detail-table columns (spec S3).
     // Reason — omitted for the stocktake's whole life under blind stocktake,
     // since no reason is ever required (see hideReason above).
@@ -723,17 +927,20 @@ const StocktakeDetailView: Component = () => {
             },
             sortKey: 'reasonOption',
             header: () => t('label.reason'),
-          } satisfies Column<Line, SortKey>,
+            cardGroup: 'more',
+          } satisfies Column<Line, SortKey, GroupKey>,
         ]),
-    // Donor (gated by allowTrackingOfStockByDonor) — donorName is a plain scalar
-    // on the line. Unsortable: StocktakeLineSortFieldInput has no donor key, so
-    // no sortKey (server can't sort it — kdd/type-safety, D23).
+    // Donor (gated by allowTrackingOfStockByDonor) — donorName is a plain
+    // scalar on the line. Unsortable: StocktakeLineSortFieldInput has no donor
+    // key, so no sortKey (server can't sort it — kdd/type-safety, D23).
     ...(prefs().allowTrackingOfStockByDonor
       ? [
           {
             c: { accessor: line => line.donorName ?? '', id: 'donor' },
             header: () => t('label.donor'),
-          } satisfies Column<Line, SortKey>,
+            cardGroup: 'more',
+            ...getCellDefinition('donor'),
+          } satisfies Column<Line, SortKey, GroupKey>,
         ]
       : []),
     {
@@ -744,6 +951,7 @@ const StocktakeDetailView: Component = () => {
         id: 'manufacturer',
       },
       header: () => t('label.manufacturer'),
+      cardGroup: 'more',
     },
     {
       // Campaign name (ungated) — campaign.name on the line. Unsortable (no
@@ -751,23 +959,29 @@ const StocktakeDetailView: Component = () => {
       // after Manufacturer, before Comment.
       c: { accessor: line => line.campaign?.name ?? '', id: 'campaign' },
       header: () => t('label.campaign-only'),
+      cardGroup: 'more',
+      ...getCellDefinition('campaign'),
     },
     // Comment (spec column #18) — the line's own comment text. Distinct from
     // note; the shared comment cell (indicator + popover).
     {
       c: { key: 'comment' },
-      header: () => t('label.comment'),
-      ...getCommentCell(),
+      header: () => <CommentHeader />,
+      cardGroup: 'more',
+      ...getCellDefinition('comment'),
     },
   ]);
 
   return (
-    // Local Suspense boundary: the FIRST read of data() (info()) suspends until
-    // the info fetch lands. Catching it here keeps first-load from tripping the
-    // section fallback and remounting the view (kdd/solid-reactivity-pitfalls).
-    // Every later stocktake-level save is a mutate(), which never suspends, so
-    // this fallback shows only on the initial info fetch. The lines resource is
-    // read non-suspending (.latest), so a lines refetch never trips it.
+    // Local Suspense boundary: the FIRST read of info() (data.latest) suspends
+    // until the info fetch lands. Catching it here keeps first-load from
+    // tripping the section fallback and remounting the view
+    // (kdd/solid-reactivity-pitfalls). Later reads are non-suspending — a
+    // stocktake-level save is a mutate() (never suspends) and a Documents-tab
+    // refetch reads through `.latest` (previous node stays on screen) — so this
+    // fallback shows only on the initial info fetch. The lines resource is
+    // likewise read non-suspending (.latest), so a lines refetch never trips
+    // it.
     <Suspense fallback={<Spinner center />}>
       {/* NON-keyed Show: the subtree stays mounted while info() is truthy — a
           keyed Show would tear down + rebuild on every stocktake-level save
@@ -800,7 +1014,17 @@ const StocktakeDetailView: Component = () => {
                     {/* "Add item" — opens the line-edit modal in the item-search
                     state. Only while the stocktake is editable. */}
                     <Show when={!isDisabled(node())}>
-                      <Button icon={<PlusCircleIcon />} onClick={openAdd}>
+                      <Button
+                        icon={<PlusCircleIcon />}
+                        shortcut={ALT_N}
+                        onClick={openAdd}
+                        // The toolbar button is what `add-item-button` names
+                        // (e2e/TESTIDS.md § Stocktake). It carried no id at
+                        // all, so the only addressable Add-item affordance was
+                        // the empty state's ghost below — which disappears the
+                        // moment a line exists.
+                        data-testid="add-item-button"
+                      >
                         {t('button.add-item')}
                       </Button>
                     </Show>
@@ -822,22 +1046,20 @@ const StocktakeDetailView: Component = () => {
                         variant="secondary"
                         icon={<SidebarIcon />}
                         data-testid="open-detail-panel-button"
+                        // createSidePanelOpen registers Alt+M; this is the
+                        // control that advertises it (ui-surface S2).
+                        shortcut={ALT_M}
                         onClick={() => setSidePanelOpen(true)}
                       >
                         {t('button.more')}
                       </Button>
                     </Show>
                   </HeaderButtons>
-                  <Toolbar>
-                    <StocktakeDetailToolbar
-                      node={node()}
-                      disabled={isDisabled(node())}
-                      edit={edit}
-                      filter={filter()}
-                      onFilterChange={onFilterChange}
-                      locations={locations()}
-                    />
-                  </Toolbar>
+                  <StocktakeDetailToolbar
+                    node={node()}
+                    disabled={isDisabled(node())}
+                    edit={edit}
+                  />
                   {/* Last child of the Header → the tab strip claims its bottom
                   edge (Header.module.css / Tabs). Details + Log. */}
                   <TabList tabs={tabs()} />
@@ -856,7 +1078,7 @@ const StocktakeDetailView: Component = () => {
                       storeId={params.storeId}
                       node={node()}
                       disabled={isDisabled(node())}
-                      canFinalise={canFinalise()}
+                      pagination={linePagination()}
                       onSetHold={setHold}
                       onFinalised={onFinalised}
                       onError={lineIds =>
@@ -909,6 +1131,9 @@ const StocktakeDetailView: Component = () => {
                       onError={stampErrors}
                       onShowErrors={showErrors}
                     />
+                    {/* The pager rides the selection face as well: ticking a
+                        row must not strip the way to the rest of the lines. */}
+                    <Pagination {...linePagination()} inBar />
                     <ContentFooterActions>
                       <Button
                         variant="secondary"
@@ -926,28 +1151,81 @@ const StocktakeDetailView: Component = () => {
               <TabPanel value="details">
                 <DataTable
                   columns={columns()}
+                  cardGroups={CARD_GROUPS}
                   rows={rows()}
                   rowKey={line => line.id}
-                  // Non-suspending loading read — a between-page/filter/sort
-                  // refetch keeps rows + shows the refreshing bar; a post-save
-                  // refetch is silent (tableLoading gates it out). Initial load
-                  // → Suspense.
+                  // Filters live in the table's own toolbar (ui-standards §
+                  // tables → filtering), never the page header.
+                  filters={
+                    <StocktakeLineFilters
+                      filter={filter()}
+                      onFilterChange={onFilterChange}
+                      locations={locations()}
+                      showError={query().showError}
+                      errorCount={lineErrors().size}
+                      onShowErrorChange={on =>
+                        setQuery({
+                          ...query(),
+                          showError: on,
+                          offset: 0,
+                        })
+                      }
+                    />
+                  }
+                  // Non-suspending loading read — every refetch (filter/sort/
+                  // page navigation AND a post-save refetch) keeps the rows and
+                  // shows the DataTable's loading treatment, so a slow network
+                  // never looks frozen. With rows already showing that's the
+                  // small toolbar spinner; the first load (no rows yet) is the
+                  // centred spinner.
                   loading={tableLoading()}
                   sort={currentSort()}
                   onSort={onSort}
                   onRowClick={isDisabled(node()) ? undefined : openRow}
-                  // Uncounted lines (no counted value) read in the info tone —
-                  // whole-row action-blue text, marking them as awaiting a
-                  // count (spec ui-surface → Line table, OMS-REG-INV-03.68). They're the
-                  // lines trimmed on finalise. Flat table, so a leaf-row
-                  // predicate is enough (no grouped parents to propagate to).
-                  rowTone={line => (isUncounted(line) ? 'info' : undefined)}
+                  // Uncounted lines (no counted value) carry the unfinished-
+                  // work marking — the teal row tint AND a bar of the same
+                  // colour down the row's leading edge (spec ui-surface → Line
+                  // table, OMS-REG-INV-03.68). One channel, one question —
+                  // "what is still to count?" — answered by running the eye
+                  // down one edge rather than reading every Counted cell. These
+                  // are the lines trimmed on finalise. Flat table, so a
+                  // leaf-row predicate is enough (no grouped parents to
+                  // propagate to).
+                  //
+                  // This replaces the earlier whole-row action-blue TEXT tone:
+                  // blue text is the colour row SELECTION already spends, it
+                  // recoloured every value in the row (so a counted-looking
+                  // number and a missing one differed only in hue), and it left
+                  // the at-a-glance channel — the row background — unused. The
+                  // shared marking is the outbound line table's, same tokens
+                  // and same CSS (kdd/ui-styling; --marking-unfinished).
+                  rowTint={line =>
+                    isUncounted(line) ? 'unfinished' : undefined
+                  }
+                  // Same predicate on both channels: the tint colours the row,
+                  // the bar makes the uncounted lines legible down one edge as
+                  // the user scrolls a long count.
+                  rowAccent={line =>
+                    isUncounted(line) ? 'unfinished' : undefined
+                  }
+                  // Cards have neither a row background nor a leading edge to
+                  // mark, so they keep the TEXT tone on the card's identity
+                  // title (the teal is a 3:1 graphic colour — below the 4.5:1
+                  // text floor — so it can't cross over to text). The word is
+                  // there too: the Counted field is the card's badge.
+                  cardTone={line => (isUncounted(line) ? 'info' : undefined)}
                   emptyMessage={t('error.no-stocktake-items')}
                   empty={
                     isDisabled(node()) ? undefined : (
                       <Button
-                        icon={<PlusCircleIcon />}
-                        data-testid="add-item-button"
+                        variant="ghost"
+                        shortcut={ALT_N}
+                        // The shared empty-state id, as the locations list and
+                        // the inbound line table already use — NOT
+                        // `add-item-button`, which now names the toolbar button
+                        // above; two elements answering one id is what made
+                        // this ambiguous.
+                        data-testid="nothing-here-create-button"
                         onClick={openAdd}
                       >
                         {t('button.add-item')}
@@ -968,23 +1246,27 @@ const StocktakeDetailView: Component = () => {
                       ? tableConfig.saveGlobalTableConfig
                       : undefined
                   }
-                  pagination={{
-                    offset: query().offset,
-                    pageSize: query().first,
-                    total: totalCount(),
-                    onOffsetChange: offset => setQuery({ ...query(), offset }),
-                    onPageSizeChange: first =>
-                      setQuery({ ...query(), first, offset: 0 }),
-                  }}
+                />
+              </TabPanel>
+              {/* Documents tab: files attached to this stocktake (OMS parity).
+              Reads the node's `documents` list; upload/delete go through the
+              REST sync-file store and re-read the node (refetchInfo) so the
+              list reflects. Available on any status — documents sit outside the
+              stocktake lifecycle gate. */}
+              <TabPanel value="documents">
+                <StocktakeDocumentsTab
+                  storeId={params.storeId}
+                  node={node()}
+                  onChanged={() => void refetchInfo()}
                 />
               </TabPanel>
               {/* Log tab: the stocktake's activity log — its own query (OMS
               parity), mounted only while this tab is active (Kobalte unmounts
               inactive panels), so it fetches on first visit. */}
               <TabPanel value="log">
-                <StocktakeLogPanel
+                <ActivityLogPanel
                   storeId={params.storeId}
-                  stocktakeId={node().id}
+                  recordId={node().id}
                 />
               </TabPanel>
               {/* The line-edit modal is an overlay, not tab content: it stays a

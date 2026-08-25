@@ -1,14 +1,18 @@
 import { generateUUID } from '../../../uuid';
 import { createResource, createSignal, Show, type Component } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
-import { Button } from '../../../ui/elements/buttons/Button';
+import {
+  CancelButton,
+  DialogSaveButton,
+} from '../../../ui/elements/buttons/StandardButtons';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { Combobox } from '../../../ui/elements/selectors/Combobox';
-import { CheckIcon, XCircleIcon } from '../../../ui/icons';
 import { ItemSearch } from '../../../domain/item/ItemSearch';
+import { createFocusTarget } from '../../../ui/utils/createFocusTarget';
 import { ItemVariants } from './itemVariants.generated';
 import { UpsertBundledItem } from './itemVariantMutations.generated';
 import {
@@ -30,9 +34,14 @@ export interface BundledItemModalProps {
   storeId: string;
   /** The variant this bundle is created FROM (the principal). */
   principalVariantId: string;
-  /** The principal's own item — excluded from the item picker (no self-bundling). */
+  /**
+   * The principal's own item — excluded from the item picker (no
+   * self-bundling).
+   */
   principalItemId: string;
-  /** This principal's existing bundledItemVariants' ids (duplicate-pair guard). */
+  /**
+   * This principal's existing bundledItemVariants' ids (duplicate-pair guard).
+   */
   existingBundledVariantIds: string[];
   onClose: () => void;
   /** A save landed — the panel re-queries so the card reflects it. */
@@ -43,6 +52,9 @@ export const BundledItemModal: Component<BundledItemModalProps> = props => {
   const [form, setForm] = createSignal<DraftBundledItem>(EMPTY_FORM);
   const [saving, setSaving] = createSignal(false);
   const [failed, setFailed] = createSignal(false);
+  // Create-only, so the modal always opens with nothing picked and the flow
+  // starts by typing an item (ui-surface S4).
+  const itemSearch = createFocusTarget();
 
   // The chosen item's variants (step 2, shown once an item is picked) — the
   // same itemVariants query the panel itself uses, parametrised by whichever
@@ -60,10 +72,7 @@ export const BundledItemModal: Component<BundledItemModalProps> = props => {
       return result.data.items.nodes[0]?.variants ?? [];
     }
   );
-  const candidateVariants = (): ItemVariantRow[] =>
-    variantsData.state === 'ready' || variantsData.state === 'refreshing'
-      ? (variantsData.latest ?? [])
-      : [];
+  const candidateVariants = (): ItemVariantRow[] => gated(variantsData) ?? [];
 
   const selectedVariant = () =>
     candidateVariants().find(v => v.id === form().variantId);
@@ -102,9 +111,14 @@ export const BundledItemModal: Component<BundledItemModalProps> = props => {
     <Dialog
       open
       testId="bundled-item-modal"
+      initialFocus={itemSearch}
       title={t('title.bundle-with')}
       dismissable={!saving()}
       onClose={props.onClose}
+      // Room for the item search's open listbox inside the dialog (#1029) —
+      // it opens with the dialog (initialFocus) and is the bottom-most field:
+      // header + field + the listbox's 18rem cap + padding.
+      minBodyHeightRem={27}
       footer={
         <Show when={failed()}>
           <Alert severity="error" testId="bundled-item-save-error">
@@ -112,27 +126,23 @@ export const BundledItemModal: Component<BundledItemModalProps> = props => {
           </Alert>
         </Show>
       }
+      // The standard, ICON-LESS dialog-footer buttons (ui-standards › controls
+      // § dialogs, D55) — a footer is read as verbs in a fixed position, not a
+      // toolbar, so it earns no icon. Each supplies its own translated label.
       actions={
         <>
           <Show when={!saving()}>
-            <Button
-              variant="secondary"
-              icon={<XCircleIcon />}
+            <CancelButton
               data-testid="dialog-button-cancel"
               onClick={props.onClose}
-            >
-              {t('button.cancel')}
-            </Button>
+            />
           </Show>
-          <Button
-            icon={<CheckIcon />}
+          <DialogSaveButton
             data-testid="dialog-button-ok"
             loading={saving()}
             disabled={!isFormValid(form()) || saving()}
             onClick={() => void save()}
-          >
-            {t('button.save')}
-          </Button>
+          />
         </>
       }
     >
@@ -141,6 +151,7 @@ export const BundledItemModal: Component<BundledItemModalProps> = props => {
       <ItemSearch
         label={t('label.item_one')}
         storeId={props.storeId}
+        focusTarget={itemSearch}
         excludeItemIds={[props.principalItemId]}
         value={form().itemId || undefined}
         disabled={saving()}

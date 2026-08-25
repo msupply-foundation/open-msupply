@@ -1,7 +1,7 @@
 // Pure stock calculations (spec/stock), extracted so the screens stay thin and
-// the arithmetic is unit-testable in node without a DOM or backend. These mirror
-// the server's rules for the UI's previews / pre-validation; the server remains
-// the guard for every MUST.
+// the arithmetic is unit-testable in node without a DOM or backend. These
+// mirror the server's rules for the UI's previews / pre-validation; the server
+// remains the guard for every MUST.
 
 import { localDayToUtc } from '../../ui/elements/inputs/dateTimeConvert';
 
@@ -48,8 +48,9 @@ export const repackNewPacks = (
 export const isWholePacks = (newPacks: number | undefined): boolean =>
   newPacks !== undefined && Number.isInteger(newPacks);
 
-// The signed adjustment delta in packs (spec/stock S4): additions add, reductions
-// subtract; the amount itself is always positive (direction carries the sign).
+// The signed adjustment delta in packs (spec/stock S4): additions add,
+// reductions subtract; the amount itself is always positive (direction carries
+// the sign).
 export const signedAdjustment = (
   direction: 'ADDITION' | 'REDUCTION',
   amount: number
@@ -73,9 +74,9 @@ export const wouldGoBelowZero = (
   direction === 'REDUCTION' &&
   adjustedQuantity(currentAvailable, direction, amount) < 0;
 
-// The backdated instant for an adjustment (spec/stock S4): choosing today (or no
-// date) means "not backdated" (undefined); otherwise a reduction is stamped at
-// the day's end, an addition at its start.
+// The backdated instant for an adjustment (spec/stock S4): choosing today (or
+// no date) means "not backdated" (undefined); otherwise a reduction is stamped
+// at the day's end, an addition at its start.
 export const backdatedDatetime = (
   date: string | null,
   today: string,

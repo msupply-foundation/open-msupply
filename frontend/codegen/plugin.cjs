@@ -73,6 +73,14 @@ const SCALAR_MAP = {
   // arrays, strings, ...), so `unknown` is the only honest type — callers
   // narrow at the boundary.
   JSON: "unknown",
+  // Same reasoning for JSONObject (`Query.featureFlags`,
+  // `customTranslations`): an arbitrary key→value map, so `unknown` and a
+  // narrowing guard at the consumer. WITHOUT this entry it fell through to the
+  // "unknown scalar → string" default, which is not just imprecise but wrong —
+  // it type-checks `flags.someKey` away into a string index and would have let
+  // the sites vertical read a feature flag off a value that is really an
+  // object.
+  JSONObject: "unknown",
 };
 
 /** PascalCase a name (operation/fragment names are usually camelCase). */

@@ -15,10 +15,11 @@ export type ActiveVvmStatusesResult = {
   code: string;
   description: string;
   priority: number;
+  unusable: boolean;
 }>;
 });
 };
 
 export const ActiveVvmStatuses = {
-  query: "query activeVvmStatuses($storeId: String!) {\n  activeVvmStatuses(storeId: $storeId) {\n    ... on VvmstatusConnector {\n      __typename\n      nodes {\n        id\n        code\n        description\n        priority\n      }\n    }\n  }\n}",
+  query: "query activeVvmStatuses($storeId: String!) {\n  activeVvmStatuses(storeId: $storeId) {\n    ... on VvmstatusConnector {\n      __typename\n      nodes {\n        id\n        code\n        description\n        priority\n        unusable\n      }\n    }\n  }\n}",
 } as TypedDocument<ActiveVvmStatusesResult, ActiveVvmStatusesVariables>;

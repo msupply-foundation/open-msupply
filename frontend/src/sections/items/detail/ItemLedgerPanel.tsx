@@ -1,25 +1,41 @@
-import { createResource, type Component } from 'solid-js';
+import { createMemo, createResource, type Component } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
-import { localisedDate, localisedTime } from '../../../intl/formatDateTime';
-import { formatNumber } from '../../../intl/formatNumber';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import {
+  getCellDefinition,
+  getNumberCell,
+  getTextCell,
+} from '../../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../../ui/utils/rem';
+import {
   FilterBar,
-  FilterSelect,
+  FilterMultiSelect,
   FilterDateTimeRange,
   constructFilters,
   type Filter,
   type FilterDef,
-  type IsoDateTimeRange,
 } from '../../../ui/elements/selectors/FilterBar';
+import { createTableConfig } from '../../../api/createTableConfig';
 import { useUrlQueryState } from '../../../list/urlQueryState';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
 import {
   ItemLedger,
   type ItemLedgerResult,
   type ItemLedgerVariables,
 } from './itemLedger.generated';
+import {
+  buildWireFilter,
+  type InvoiceStatus,
+  type InvoiceType,
+  type LedgerFilter,
+} from './itemLedgerFilter';
 import { ledgerRowHref } from './itemLedgerNav';
 
 // The item detail's Ledger tab (spec/items S2 › Ledger tab, rules.md § the
@@ -31,20 +47,45 @@ import { ledgerRowHref } from './itemLedgerNav';
 // (kdd/state-management), independent of the itemDetail read.
 
 type LedgerRow = ItemLedgerResult['itemLedger']['nodes'][number];
-type InvoiceType = LedgerRow['invoiceType'];
-type InvoiceStatus = LedgerRow['invoiceStatus'];
 
-type LedgerFilter = {
-  invoiceType?: InvoiceType | null;
-  invoiceStatus?: InvoiceStatus | null;
-  from?: string | null;
-  to?: string | null;
+// The filter is its OWN key, never spread across the state's top level (as the
+// items list does too). Both of FilterBar's chip operations depend on it:
+//   • REMOVING a chip deletes its key, so the new filter must REPLACE the old
+//     object — merged into a flat state, the deleted key just survives from the
+//     previous value and the chip won't clear.
+//   • ADDING a chip writes `<key>: null` (its added-but-empty marker), and
+//     useUrlQueryState strips TOP-LEVEL nulls when it parses the URL — so a
+//     flat null is erased on the round trip and the chip never appears at all.
+// Nested, the whole filter object survives as one value and both work.
+type LedgerState = { filter: LedgerFilter; offset: number; first: number };
+
+// `datetime: null` SEEDS the date-time chip so it is on the bar from the first
+// render with no menu step — this app's way of expressing the reference app's
+// `isDefault: true` on that filter. A null bound never reaches the query, and
+// the chip is still removable like any other (a URL whose filter object omits
+// it wins over this default).
+const DEFAULT_STATE: LedgerState = {
+  filter: { datetime: null },
+  offset: 0,
+  first: DEFAULT_PAGE_SIZE,
 };
 
-type LedgerState = LedgerFilter & { offset: number; first: number };
-
-const DEFAULT_PAGE_SIZE = 20;
-const DEFAULT_STATE: LedgerState = { offset: 0, first: DEFAULT_PAGE_SIZE };
+// Widths (rem) for the two columns no preset key covers — an explicit helper
+// carries rendering only, never a width (docs/CELL_TYPES.md § Width model), so
+// these are set per column. Both are sized to their HEADER, which is wider than
+// the values: "Status" holds a translated document status, "Change" a signed
+// unit figure.
+const STATUS_WIDTH_REM = 7.5;
+const CHANGE_WIDTH_REM = 5;
+// "Inventory adjustment" / "Outbound shipment" are the long ones.
+const TYPE_WIDTH_REM = 11;
+// The shared `invoiceNumber` preset is 3.5rem — right for the other consumer,
+// whose header is just "#" — but this table spells out "Invoice number", which
+// wraps at that width. A ONE-OFF override, per _globalColumnConfig's own
+// guidance (change the shared value only when every consumer wants it).
+// Calibrated against the `locationCode` key, whose 13-character header measured
+// 8.5rem; this one is a character longer.
+const INVOICE_NUMBER_WIDTH_REM = 9;
 
 // The document-type / status labels (spec ui-surface.md § Ledger tab
 // columns) — explicit per-vertical lookups (kdd/explicit-composition), not a
@@ -115,9 +156,14 @@ const INVOICE_TYPES: InvoiceType[] = [
   'REPACK',
 ];
 
+// The statuses the Status chip OFFERS — NEW and ALLOCATED are deliberately
+// absent, matching the reference app's ledger filter. Both are pre-dispatch
+// states in which no stock has moved (see InvoiceNodeStatus in schema.graphql:
+// "No stock changes in this status"), so no ledger row can ever carry them and
+// offering them would be a filter that always matches nothing. STATUS_LABEL
+// above stays COMPLETE — it labels the Status column, which renders whatever
+// the row carries.
 const INVOICE_STATUSES: InvoiceStatus[] = [
-  'NEW',
-  'ALLOCATED',
   'PICKED',
   'SHIPPED',
   'DELIVERED',
@@ -126,25 +172,44 @@ const INVOICE_STATUSES: InvoiceStatus[] = [
   'CANCELLED',
 ];
 
-// Only invoiceType/invoiceStatus are addable FilterBar chips; from/to render
-// as an always-present control beside the bar (dismissed here — same shape
-// as the items list's always-present code-or-name search, listFilters.tsx).
+// Every filter is a chip on the ONE bar — there is no control standing beside
+// it (ui-standards § tables → toolbar/filtering). The date-time range leads,
+// grouped under a single "Date/time" label exactly as the reference app groups
+// its two dateTime elements under one filter, and is seeded present by
+// DEFAULT_STATE above.
 const buildLedgerFilters = (): Filter<LedgerFilter>[] =>
   constructFilters<LedgerFilter>({
+    datetime: {
+      label: () => t('label.datetime'),
+      render: props => (
+        <FilterDateTimeRange
+          // Both bounds live in this one chip, so the group label is the chip's
+          // and each field keeps its own accessible name.
+          value={props.filter().datetime ?? { start: null, end: null }}
+          onChange={range => props.setPartialFilter({ datetime: range })}
+          fromLabel={t('label.from-datetime')}
+          toLabel={t('label.to-datetime')}
+          testId={props.testId}
+        />
+      ),
+    } satisfies FilterDef<LedgerFilter>,
+    // Both enum chips are multi-select "any of" (D110). NARROW, never assert:
+    // the URL-restored values are bare strings (a stale URL could carry
+    // anything), so keep only known members rather than casting into the enum.
     invoiceType: {
       label: () => t('label.type'),
       render: props => (
-        <FilterSelect
+        <FilterMultiSelect
           label={t('label.type')}
           testId={props.testId}
-          value={props.filter().invoiceType ?? ''}
-          options={[
-            { value: '', label: t('label.any') },
-            ...INVOICE_TYPES.map(v => ({ value: v, label: TYPE_LABEL[v] })),
-          ]}
-          onChange={value =>
+          placeholder={t('label.any')}
+          values={(props.filter().invoiceType ?? []).filter(value =>
+            INVOICE_TYPES.some(v => v === value)
+          )}
+          options={INVOICE_TYPES.map(v => ({ value: v, label: TYPE_LABEL[v] }))}
+          onChange={values =>
             props.setPartialFilter({
-              invoiceType: (value || null) as InvoiceType | null,
+              invoiceType: values.length ? values : null,
             })
           }
         />
@@ -153,62 +218,54 @@ const buildLedgerFilters = (): Filter<LedgerFilter>[] =>
     invoiceStatus: {
       label: () => t('label.status'),
       render: props => (
-        <FilterSelect
+        <FilterMultiSelect
           label={t('label.status')}
           testId={props.testId}
-          value={props.filter().invoiceStatus ?? ''}
-          options={[
-            { value: '', label: t('label.any') },
-            ...INVOICE_STATUSES.map(v => ({
-              value: v,
-              label: STATUS_LABEL[v],
-            })),
-          ]}
-          onChange={value =>
+          placeholder={t('label.any')}
+          values={(props.filter().invoiceStatus ?? []).filter(value =>
+            INVOICE_STATUSES.some(v => v === value)
+          )}
+          options={INVOICE_STATUSES.map(v => ({
+            value: v,
+            label: STATUS_LABEL[v],
+          }))}
+          onChange={values =>
             props.setPartialFilter({
-              invoiceStatus: (value || null) as InvoiceStatus | null,
+              invoiceStatus: values.length ? values : null,
             })
           }
         />
       ),
     } satisfies FilterDef<LedgerFilter>,
-    from: null,
-    to: null,
   });
-
-const buildWireFilter = (
-  itemId: string,
-  f: LedgerFilter
-): NonNullable<ItemLedgerVariables['filter']> => {
-  const filter: NonNullable<ItemLedgerVariables['filter']> = {
-    itemId: { equalTo: itemId },
-  };
-  if (f.invoiceType) filter.invoiceType = { equalTo: f.invoiceType };
-  if (f.invoiceStatus) filter.invoiceStatus = { equalTo: f.invoiceStatus };
-  if (f.from || f.to) {
-    filter.datetime = {
-      ...(f.from ? { afterOrEqualTo: f.from } : {}),
-      ...(f.to ? { beforeOrEqualTo: f.to } : {}),
-    };
-  }
-  return filter;
-};
 
 export const ItemLedgerPanel: Component<{
   storeId: string;
   itemId: string;
 }> = props => {
   const navigate = useNavigate();
-  const { query, setQuery } = useUrlQueryState<LedgerState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<LedgerState>({
+    ...DEFAULT_STATE,
+    first: initialPageSize(),
+  });
   const filters = buildLedgerFilters();
 
+  // Column config (order/sizing/pinning/visibility/density), resolved default →
+  // global → user (kdd/table-state). It is also what puts the Columns and
+  // Settings controls in the table's toolbar at all — DataTable renders both
+  // only when `setConfig` is wired — so a table without it silently loses them.
+  // 17 columns make this the tab that needs them most.
+  const tableConfig = createTableConfig({ tableId: 'item-ledger' });
+
+  // REPLACE the filter object, never merge into it — a chip removal is
+  // expressed by the key's ABSENCE, which a merge would silently undo.
   const onFilterChange = (filter: LedgerFilter) =>
-    setQuery({ ...query(), ...filter, offset: 0 });
+    setQuery({ ...query(), filter, offset: 0 });
 
   const variables = (): ItemLedgerVariables => ({
     storeId: props.storeId,
     page: { first: query().first, offset: query().offset },
-    filter: buildWireFilter(props.itemId, query()),
+    filter: buildWireFilter(props.itemId, query().filter),
   });
 
   const [data] = createResource(
@@ -223,164 +280,174 @@ export const ItemLedgerPanel: Component<{
     }
   );
 
-  const rows = (): LedgerRow[] => data.latest?.nodes ?? [];
-  const totalCount = (): number => data.latest?.totalCount ?? 0;
+  // Read WITHOUT suspending: this panel mounts when its TAB is opened, so its
+  // FIRST read is pending under the already-open detail screen's <Suspense> —
+  // a suspending read there tears down and remounts the whole screen.
+  const ready = () => gated(data);
+  const rows = (): LedgerRow[] => ready()?.nodes ?? [];
+  const totalCount = (): number => ready()?.totalCount ?? 0;
 
-  const columns = (): Column<LedgerRow, never>[] => [
+  // Cell rendering, alignment AND width come from the shared presets
+  // (docs/CELL_TYPES.md) — the Date/Time pair, the numbers, the money columns
+  // and the text columns are all standard types, so nothing here formats a
+  // value by hand. Only Type and Status keep an explicit `cell`, each needing a
+  // label map no preset key can supply (there is no Status preset —
+  // docs/CELL_TYPES.md § Status), so each pairs its cell with a width.
+  //
+  // createMemo, NOT a plain function: this array is read by TanStack, which
+  // memoizes on its REFERENCE — a fresh array per read invalidates four layers
+  // of its internal memo chain, and 17 columns is exactly the scale that hurts
+  // (kdd/solid-reactivity-pitfalls §14). It still re-derives on a language
+  // switch, since every header reads t().
+  const columns = createMemo((): Column<LedgerRow, never>[] => [
     {
       c: { accessor: l => l.invoiceType, id: 'type' },
       header: () => t('label.type'),
-      cell: info =>
-        `${TYPE_LABEL[info.row.original.invoiceType]} ${info.row.original.invoiceNumber}`,
+      ...getTextCell(),
+      size: remToPx(TYPE_WIDTH_REM),
+      // The document type ALONE. The sibling stock ledger appends the invoice
+      // number to this cell, but that table has no Invoice number column; this
+      // one does (next column), so appending it printed the same value twice in
+      // every row. ui-surface S2 › Ledger tab names this column as the
+      // translated type label only, and so does the reference app.
+      cell: info => TYPE_LABEL[info.row.original.invoiceType],
     },
     {
       c: { key: 'invoiceNumber' },
       header: () => t('label.invoice-number'),
-      meta: { align: 'right' },
+      // Preset for the rendering (right-aligned, tabular, locale-formatted),
+      // own width so the spelled-out header sits on one line.
+      ...getCellDefinition('invoiceNumber'),
+      size: remToPx(INVOICE_NUMBER_WIDTH_REM),
     },
     {
       c: { accessor: l => l.datetime, id: 'date' },
       header: () => t('label.date'),
-      cell: info => localisedDate(info.row.original.datetime),
+      ...getCellDefinition('date'),
     },
     {
       c: { accessor: l => l.datetime, id: 'time' },
       header: () => t('label.time'),
-      cell: info => localisedTime(info.row.original.datetime),
+      ...getCellDefinition('time'),
     },
-    { c: { key: 'name' }, header: () => t('label.name') },
+    {
+      c: { key: 'name' },
+      header: () => t('label.name'),
+      ...getCellDefinition('name'),
+    },
     {
       c: { accessor: l => l.invoiceStatus, id: 'status' },
       header: () => t('label.status'),
+      ...getTextCell(),
+      size: remToPx(STATUS_WIDTH_REM),
       cell: info => STATUS_LABEL[info.row.original.invoiceStatus],
     },
     {
-      c: { accessor: l => l.expiryDate ?? '', id: 'expiry' },
+      c: { accessor: l => l.expiryDate, id: 'expiry' },
       header: () => t('label.expiry'),
-      cell: info =>
-        info.row.original.expiryDate
-          ? localisedDate(info.row.original.expiryDate)
-          : '',
+      // The expiry preset, so a near-expiry date carries the app-wide warning
+      // tone (≤3 months) instead of reading as a plain date.
+      ...getCellDefinition('expiryDate'),
     },
     {
       c: { accessor: l => l.batch ?? '', id: 'batch' },
       header: () => t('label.batch'),
+      ...getCellDefinition('batch'),
     },
     {
       c: { key: 'packSize' },
       header: () => t('label.pack-size'),
-      meta: { align: 'right' },
-      cell: info => formatNumber(info.row.original.packSize),
+      ...getCellDefinition('packSize'),
     },
     {
       c: { key: 'numberOfPacks' },
       header: () => t('label.num-packs'),
-      meta: { align: 'right' },
-      cell: info => formatNumber(info.row.original.numberOfPacks),
+      ...getCellDefinition('numberOfPacks'),
     },
     {
       c: { accessor: l => l.movementInUnits, id: 'change' },
       header: () => t('label.change'),
-      meta: { align: 'right' },
-      cell: info => formatNumber(info.row.original.movementInUnits),
+      // Signed units — a number with no common key, so the explicit helper
+      // plus its own width (the header "Change" is the binding constraint).
+      ...getNumberCell(),
+      size: remToPx(CHANGE_WIDTH_REM),
     },
     {
       c: { key: 'balance' },
       header: () => t('label.balance'),
-      meta: { align: 'right' },
-      cell: info => formatNumber(info.row.original.balance),
+      ...getCellDefinition('balance'),
     },
     {
       c: { key: 'costPricePerPack' },
       header: () => t('label.pack-cost-price'),
-      meta: { align: 'right' },
-      cell: info =>
-        formatNumber(info.row.original.costPricePerPack, {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        }),
+      ...getCellDefinition('costPricePerPack'),
     },
     {
       c: { key: 'sellPricePerPack' },
       header: () => t('label.pack-sell-price'),
-      meta: { align: 'right' },
-      cell: info =>
-        formatNumber(info.row.original.sellPricePerPack, {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        }),
+      ...getCellDefinition('sellPricePerPack'),
     },
     {
-      c: { accessor: l => l.totalBeforeTax ?? 0, id: 'totalBeforeTax' },
+      // Accessor left nullable so an absent total renders BLANK, not $0.00
+      // (the currency preset renders null as an empty cell).
+      c: { accessor: l => l.totalBeforeTax, id: 'totalBeforeTax' },
       header: () => t('label.total-before-tax'),
-      meta: { align: 'right' },
-      cell: info =>
-        info.row.original.totalBeforeTax == null
-          ? ''
-          : formatNumber(info.row.original.totalBeforeTax, {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            }),
+      ...getCellDefinition('totalBeforeTax'),
     },
     {
       c: { accessor: l => l.reason ?? '', id: 'reason' },
       header: () => t('label.reason'),
+      ...getTextCell(),
     },
     {
       c: { accessor: l => l.user?.username ?? '', id: 'user' },
       header: () => t('label.user'),
+      ...getCellDefinition('user'),
     },
-  ];
+  ]);
 
   return (
-    <>
-      <div
-        style={{
-          display: 'flex',
-          gap: '0.75rem',
-          'align-items': 'center',
-          'margin-block-end': '1rem',
-        }}
-      >
-        {t('label.datetime')}
-        <FilterDateTimeRange
-          value={
-            {
-              start: query().from ?? null,
-              end: query().to ?? null,
-            } satisfies IsoDateTimeRange
-          }
-          onChange={range =>
-            onFilterChange({ from: range.start, to: range.end })
-          }
-          fromLabel={t('label.from-datetime')}
-          toLabel={t('label.to-datetime')}
-          testId="filter-input-datetime"
-        />
+    <DataTable
+      columns={columns()}
+      rows={rows()}
+      rowKey={l => l.id}
+      // Filters render in the TABLE's toolbar, never a page-level band above it
+      // (ui-standards § tables → toolbar — binding for every table, list or
+      // detail). ONE bar carries all three chips, the date-time range included
+      // (seeded present, see DEFAULT_STATE) — nothing stands beside it.
+      filters={
         <FilterBar
           filters={filters}
-          filter={query()}
+          filter={query().filter}
           onChange={onFilterChange}
         />
-      </div>
-      <DataTable
-        columns={columns()}
-        rows={rows()}
-        rowKey={l => l.id}
-        loading={data.loading}
-        onRowClick={row => {
-          const href = ledgerRowHref(props.storeId, row);
-          if (href) navigate(href);
-        }}
-        emptyMessage={t('messages.no-item-ledger')}
-        pagination={{
-          offset: query().offset,
-          pageSize: query().first,
-          total: totalCount(),
-          onOffsetChange: offset => setQuery({ ...query(), offset }),
-          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
-        }}
-      />
-    </>
+      }
+      loading={data.loading}
+      onRowClick={row => {
+        const href = ledgerRowHref(props.storeId, row);
+        if (href) navigate(href);
+      }}
+      emptyMessage={t('messages.no-item-ledger')}
+      config={tableConfig.config()}
+      setConfig={tableConfig.setConfig}
+      configIsDefault={tableConfig.isConfigDefault()}
+      // Central-server admins (EDIT_CENTRAL_DATA) can promote their layout to
+      // the install-wide default; everyone else gets no action. Reactive gate.
+      onSaveGlobalDefault={
+        tableConfig.canSaveGlobalDefault()
+          ? tableConfig.saveGlobalTableConfig
+          : undefined
+      }
+      pagination={{
+        offset: query().offset,
+        pageSize: query().first,
+        total: totalCount(),
+        onOffsetChange: offset => setQuery({ ...query(), offset }),
+        onPageSizeChange: first => {
+          rememberPageSize(first);
+          setQuery({ ...query(), first, offset: 0 });
+        },
+      }}
+    />
   );
 };

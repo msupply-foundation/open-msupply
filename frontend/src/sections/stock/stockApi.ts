@@ -212,8 +212,8 @@ export const runInsertRepack = async (
   };
 };
 
-// Record a VVM status change (spec/stock S6). No typed error union — a rejection
-// is a plain GraphQL error.
+// Record a VVM status change (spec/stock S6). No typed error union — a
+// rejection is a plain GraphQL error.
 export const runInsertVvmStatusLog = async (
   storeId: string,
   input: InsertVvmStatusLogVariables['input']

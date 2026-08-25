@@ -1,28 +1,48 @@
-/* The inline item selector sits on the title row (no "Add"/"Edit" label — one
-   combined flow). It takes the full width so it reads as one heading-level
-   control; min-inline-size:0 lets it shrink rather than push Add batch off. */
-.addTitle {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  inline-size: 100%;
-  min-inline-size: 0;
-  font-weight: var(--weight-regular);
-}
-
-.addSelect {
+/* The dialog's title row selector (matches the inbound line editor's
+   treatment). In the PRE-PICK state it fills: the search is the whole card
+   there (a command-palette box owning its open suggestion list, sized to its
+   trigger), so anything narrower leaves the card lopsided. */
+.headerPicker {
   flex: 1 1 auto;
   min-inline-size: 0;
-  max-inline-size: 60rem;
 }
 
-/* Body prompt shown in add mode before an item is picked (in place of the
-   empty batch table). */
-.selectPrompt {
+/* Once the dialog has grown to the working size, the same fill stretched a
+   "code - name" label across a header many times wider than the label needs.
+   Bound it there, matching inbound's cap, so the item, its unit, and Add
+   batch group left-to-right instead of the unit/button being shoved to the
+   far edge. Keyed off the size latch, not "an item is picked", so the header
+   doesn't resize under the user mid-walk. */
+.headerPickerBounded {
+  flex: 0 1 32rem;
+  min-inline-size: min(22rem, 100%);
+}
+
+/* Unit sits between the selector and the header's action slot — set off with
+   the same hairline + inset inbound uses, so the two line editors present
+   their read-only header fact the same way. */
+.headerUnit {
+  flex: 0 0 auto;
+  padding-inline-start: var(--space-4);
+  margin-inline-end: var(--space-2);
+  border-inline-start: 1px solid var(--color-border-value);
+}
+
+.headerTableControls {
   display: flex;
   align-items: center;
-  justify-content: center;
-  min-block-size: 8rem;
-  color: var(--text-secondary);
-  font-size: var(--text-sm);
+  flex-shrink: 0;
+}
+
+/* The count-this-line checkbox, centred in its cell. The column declares
+   meta.align 'center', but that lands as `text-align: center` on the <td>,
+   which only moves INLINE content — BareCheckbox's root is `display: flex`
+   (a block-level box at `inline-size: fit-content`), so it ignored the
+   alignment and sat at the inline-start under a much wider header, leaving
+   the surplus as one gap on its right. Its own CSS names this remedy: "a
+   host's margin-inline: auto ... truly centres it", which is what the
+   DataTable's own .selectBox does for the selection column. Inert in CARD
+   view, where the slot already hugs the control. */
+.countBox {
+  margin-inline: auto;
 }

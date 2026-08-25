@@ -20,6 +20,7 @@ import {
   DateRangeField,
   type IsoDateRange,
 } from '../ui/elements/inputs/DateRangeField';
+import { InfoTooltip } from '../ui/elements/feedback/InfoTooltip';
 import { SaveButton } from '../ui/elements/buttons/StandardButtons';
 import { Select } from '../ui/elements/selectors/Select';
 import {
@@ -93,6 +94,11 @@ export const inputsMetadata: PageMetadata = {
       id: 'inputs-text',
       title: 'Text fields',
       searchTerms: ['string', 'textfield', 'states', 'size'],
+    },
+    {
+      id: 'inputs-label-info',
+      title: 'Label help tooltip',
+      searchTerms: ['labelInfo', 'tooltip', 'info', 'help', 'explanation'],
     },
     {
       id: 'inputs-multiline',
@@ -227,6 +233,13 @@ export const InputsShowcase = () => {
                 error="Quantity must be positive"
               />
             </Field>
+            <Field caption="Warning — advisory, not an error">
+              <TextField
+                label="Password"
+                value="secret"
+                warning="Warning: Caps lock is on"
+              />
+            </Field>
             <Field caption="Disabled">
               <TextField
                 label="Notes"
@@ -247,12 +260,65 @@ export const InputsShowcase = () => {
           </div>
         </DashboardCard>
 
+        <DashboardCard
+          id="inputs-label-info"
+          title="Help tooltip on the label — labelInfo"
+        >
+          <Lead>
+            Any field can hang an{' '}
+            <a href="#/showcase/feedback">
+              <code>&lt;InfoTooltip&gt;</code>
+            </a>{' '}
+            off its label through the <code>labelInfo</code> slot: a quiet ⓘ
+            that opens a short gloss on hover, focus, or tap. It's the place for
+            a <em>standing</em> explanation — why a field is disabled, what a
+            number means — that would cost a permanent two- or three-line{' '}
+            <code>helperText</code> paragraph under the control. Keep{' '}
+            <code>helperText</code> for text that must always be read.
+          </Lead>
+          <div class={styles.grid}>
+            <Field caption="Text field">
+              <TextField
+                label="Currency rate"
+                value="1.6"
+                labelInfo={
+                  <InfoTooltip text="The number of local (home) currency units per one PO currency unit — a rate of 1.6 means 1 USD = 1.6 NZD." />
+                }
+              />
+            </Field>
+            <Field caption="Date field — explaining a disabled state">
+              <DateField
+                label="Received"
+                value="2026-05-19"
+                disabled
+                labelInfo={
+                  <InfoTooltip text="The received date can only be changed once the shipment is received, and only within the store's backdating window." />
+                }
+              />
+            </Field>
+          </div>
+          <Note>
+            <strong>Every labelled input and selector takes it</strong> — the
+            text inputs and their wrappers, the multi-line field, all four
+            date/time fields, Checkbox, ToggleSwitch, RadioGroup, and the{' '}
+            <a href="#/showcase/selectors">selectors</a> — so the affordance
+            reads the same wherever it appears. The icon always renders{' '}
+            <em>outside</em> the label element, so it never becomes part of the
+            control's accessible name (and on the self-labelling controls, a
+            click on the icon doesn't toggle them). It's ignored under{' '}
+            <code>hideLabel</code>, where there's no visible label to hang it
+            off.
+          </Note>
+        </DashboardCard>
+
         <DashboardCard title="Password field">
           <Lead>
             A TextField variant — the standard masked{' '}
             <code>type="password"</code> input plus a show/hide eye toggle
             seated in the field frame. Click the eye to reveal the value, again
-            to mask it; the toggle is keyboard-focusable.
+            to mask it; the toggle is keyboard-focusable. Type in any of these
+            fields with Caps Lock on to see the built-in advisory warning line —
+            cleared by the next keystroke with it off.
           </Lead>
           <div class={styles.grid}>
             <Field caption="Default">
@@ -739,13 +805,54 @@ export const InputsShowcase = () => {
             rim + dot, the gap between them transparent —{' '}
             <code>accent-color</code> painted it white in both themes) and lay
             the label — with an optional muted description — beside it. Options
-            can be individually <code>disabled</code>, and{' '}
-            <code>indentRem</code> lines a sub-group up under a sibling control.
-            This is the create-stocktake type + include-all choice.
+            can be individually <code>disabled</code>;{' '}
+            <code>orientation="horizontal"</code> lays them in a row that{' '}
+            <em>wraps</em>, so a long pair still fits a narrow control column;
+            and <code>indentRem</code> lines a sub-group up under a sibling
+            control's text, past a leading icon. The <em>Which items</em> group
+            below is <code>indentRem</code>'s only remaining use — the
+            create-stocktake modal it was built for now labels that choice{' '}
+            <em>Include</em> and gives it a row of its own (#837).
+          </Lead>
+          <Lead>
+            <code>appearance="card"</code> is the same group drawn as selectable
+            boxes: the whole box is the target, the label goes bold with its{' '}
+            <code>description</code> running <em>inline</em> after it, and the
+            chosen one takes a brand rim and a wash of the same colour — so the
+            active choice reads from across a dialog, not from one 18px dot. Use
+            it for a short set of <strong>modes that reshape the screen</strong>{' '}
+            (the three below decide what the create-stocktake modal shows under
+            them); a plain yes/no like <em>Which items</em> stays a bare list.
+            The selected state comes from <code>:has(input:checked)</code> — no
+            JS mirrors it, so the box and the dot cannot disagree.
           </Lead>
           <FormPreview>
             <RadioGroup
-              label="Stocktake type"
+              label='Stocktake type (appearance="card")'
+              appearance="card"
+              value={stocktakeType()}
+              onChange={setStocktakeType}
+              options={[
+                {
+                  value: 'full',
+                  label: 'Full stocktake',
+                  description: 'Count every item in your store.',
+                },
+                {
+                  value: 'filtered',
+                  label: 'Filtered stocktake',
+                  description:
+                    'Narrow down which items are included using the filters below.',
+                },
+                {
+                  value: 'blank',
+                  label: 'Blank stocktake',
+                  description: 'Start empty and add items manually.',
+                },
+              ]}
+            />
+            <RadioGroup
+              label="Stocktake type (default appearance)"
               value={stocktakeType()}
               onChange={setStocktakeType}
               options={[
@@ -774,8 +881,8 @@ export const InputsShowcase = () => {
                 indentRem={0.2}
                 options={[
                   { value: 'soh', label: 'Items with stock on hand' },
-                  // Disabled to show the per-option disabled state (as the modal
-                  // greys "All items").
+                  // Disabled to show the per-option disabled state (as the
+                  // modal greys "All items").
                   {
                     value: 'all',
                     label: 'All items',

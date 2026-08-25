@@ -1,3 +1,4 @@
+import { generateUUID } from '../../../../uuid';
 import { createSignal, onMount, Show, type JSX } from 'solid-js';
 import { createStore, reconcile, unwrap } from 'solid-js/store';
 import { graphqlFetch } from '../../../../api/graphql';
@@ -5,9 +6,15 @@ import { t } from '../../../../intl';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
+import {
+  CancelButton,
+  DialogSaveButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
 import { TextField } from '../../../../ui/elements/inputs/TextField';
-import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
-import { Text } from '../../../../ui/elements/typography/Text';
+import { createFocusTargets } from '../../../../ui/utils/createFocusTarget';
+import { LabelledValue } from '../../../../ui/elements/typography/LabelledValue';
+import { ContentContainer } from '../../../../ui/layout/ContentContainer/ContentContainer';
+import { HStack } from '../../../../ui/layout/Stack/HStack';
 import { DataTable } from '../../../../ui/elements/table/DataTable';
 import { createTableConfig } from '../../../../api/createTableConfig';
 import { ProgressList } from '../../../../ui/sync/ProgressList';
@@ -25,8 +32,6 @@ import {
   reasonColumns,
   type UpdateLine,
 } from './returnLineColumns';
-// The shared wizard context-row layout (stacks below the compact breakpoint).
-import styles from './ReturnItemsModal.module.css';
 
 // S4, from-shipment mode — the return-items modal launched from an inbound
 // shipment's "Return selected lines" (spec/supplier-returns/ui-surface.md S4;
@@ -101,9 +106,21 @@ const Body = (props: BodyProps): JSX.Element => {
     { severity: 'error' | 'warning'; text: string } | undefined
   >();
 
+  // Quantity to return pinned to the inline-end, as in the per-item modal — the
+  // one control the grid exists for stays on screen at any width (issue #1002).
+  // It matters more here: these drafts span items, so the grid carries the item
+  // columns too and scrolls sooner.
   const tableConfig = createTableConfig({
     tableId: 'supplier-return-from-shipment-edit',
+    defaultConfig: {
+      base: { columnPinning: { right: ['numberOfPacksToReturn'] } },
+    },
   });
+
+  // One target per DRAFT ROW, per step: focus follows the user to the control
+  // they came to change (the stocktake / inbound line-editor rule).
+  const quantityFields = createFocusTargets();
+  const reasonFields = createFocusTargets();
 
   // Edit ONE field of ONE line (fine-grained store write). Any edit clears the
   // step message.
@@ -128,18 +145,19 @@ const Body = (props: BodyProps): JSX.Element => {
       },
     });
     // The response union's only member is the connector, so any failure here is
-    // the global unexpected-error modal's — stay in the loading phase behind it.
+    // the global unexpected-error modal's — stay in the loading phase behind
+    // it.
     if (result.kind !== 'success') return;
-    setDraft(
-      reconcile(
-        seedDrafts(
-          result.data.generateSupplierReturnLines.nodes,
-          new Set<string>()
-        ),
-        { key: 'id' }
-      )
+    const seeded = seedDrafts(
+      result.data.generateSupplierReturnLines.nodes,
+      new Set<string>()
     );
+    setDraft(reconcile(seeded, { key: 'id' }));
     setLoadingLines(false);
+    // The first quantity field is what this dialog opens for — every other
+    // control here is read-only. Armed, not applied: the request lands as the
+    // grid attaches (ui/utils/createFocusTarget).
+    quantityFields.focus(seeded[0]?.id ?? '');
   };
 
   onMount(() => void loadDrafts());
@@ -162,6 +180,17 @@ const Body = (props: BodyProps): JSX.Element => {
     if (!gateStep1()) return;
     setStep('reason');
     setMessage(undefined);
+    // The reason step's first picker is what this step is for — the Next-step
+    // button the click came from has become Save.
+    reasonFields.focus(reasonStepLines(draft.slice())[0]?.id ?? '');
+  };
+
+  // Back to the quantity step: focus returns to the first quantity field, the
+  // control that step is for.
+  const backToQuantity = () => {
+    setStep('quantity');
+    setMessage(undefined);
+    quantityFields.focus(draft[0]?.id ?? '');
   };
 
   const onSave = async () => {
@@ -169,7 +198,7 @@ const Body = (props: BodyProps): JSX.Element => {
     setSaving(true);
     setMessage(undefined);
     const result = await createReturnFromShipment(props.storeId, {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       supplierId: props.supplierId,
       inboundShipmentId: props.inboundShipmentId,
       theirReference: reference(),
@@ -201,7 +230,11 @@ const Body = (props: BodyProps): JSX.Element => {
       open
       onClose={props.onClose}
       dismissable={!saving()}
-      size="large"
+      // A SHEET, not the per-item modal's card: this draft set spans the whole
+      // shipment selection, so it carries the item columns as well and can run
+      // to many rows — a row count that wants every row it can show before
+      // scrolling. The per-item editor stays a card; one item's batches fit one.
+      size="full"
       testId="return-from-shipment-modal"
       title={t('heading.return-items')}
       actionsLead={
@@ -216,22 +249,19 @@ const Body = (props: BodyProps): JSX.Element => {
           <Show
             when={step() === 'reason'}
             fallback={
-              <Button
-                variant="secondary"
+              <CancelButton
                 data-testid="dialog-button-cancel"
                 onClick={props.onClose}
-              >
-                {t('button.cancel')}
-              </Button>
+              />
             }
           >
+            {/* Back is a non-standard verb, so a plain (icon-less) Button. It
+                steps within the dialog, so it claims NO role: Escape must still
+                cancel the whole dialog. */}
             <Button
               variant="secondary"
               data-testid="dialog-button-cancel"
-              onClick={() => {
-                setStep('quantity');
-                setMessage(undefined);
-              }}
+              onClick={backToQuantity}
             >
               {t('button.back')}
             </Button>
@@ -240,6 +270,7 @@ const Body = (props: BodyProps): JSX.Element => {
             when={step() === 'reason'}
             fallback={
               <Button
+                confirms="plain"
                 data-testid="dialog-button-ok"
                 disabled={draft.length === 0}
                 onClick={onNextStep}
@@ -248,57 +279,64 @@ const Body = (props: BodyProps): JSX.Element => {
               </Button>
             }
           >
-            <Button
+            <DialogSaveButton
               loading={saving()}
               data-testid="dialog-button-ok"
               onClick={() => void onSave()}
-            >
-              {t('button.save')}
-            </Button>
+            />
           </Show>
         </>
       }
     >
       {/* The wizard's step indicator — the shared determinate progress list;
           reaching the reason step completes "Select quantity" (ui-surface S4
-          § layout). */}
-      <ProgressList
-        variant="secondary"
-        steps={[
-          {
-            label: t('label.select-quantity'),
-            started: true,
-            finished: step() === 'reason',
-          },
-          {
-            label: t('label.select-reason'),
-            started: step() === 'reason',
-            finished: false,
-          },
-        ]}
-      />
-      {/* Context row: who the goods go back to (read-only) and the return's
-          supplier reference, pre-filled. One field per row below the compact
-          breakpoint — the ReturnItemsModal's shared contextRow. */}
-      <div class={styles.contextRow}>
-        <FieldRow label={t('label.return-to')}>
-          <Text variant="body">{props.supplierName}</Text>
-        </FieldRow>
-        <FieldRow label={t('label.supplier-reference')}>
-          <TextField
-            label={t('label.supplier-reference')}
-            hideLabel
-            size="small"
-            value={reference()}
-            onInput={e => setReference(e.currentTarget.value)}
-          />
-        </FieldRow>
-      </div>
+          § layout). Capped to a reading measure, as in the per-item modal: the
+          list divides its width between steps, so full-bleed in a
+          workbench-width dialog the markers fly to opposite edges. */}
+      <ContentContainer size="form">
+        <ProgressList
+          variant="secondary"
+          steps={[
+            {
+              label: t('label.select-quantity'),
+              started: true,
+              finished: step() === 'reason',
+            },
+            {
+              label: t('label.select-reason'),
+              started: step() === 'reason',
+              finished: false,
+            },
+          ]}
+        />
+      </ContentContainer>
+      {/* Context row: who the goods go back to and the return's supplier
+          reference, pre-filled "From inbound shipment #N" (rules § creation — a
+          UI default). The per-item modal's field cluster, same shape: label
+          above control, each field sized to itself, hugging the inline-start and
+          wrapping when the dialog goes full-screen. */}
+      <HStack gap="lg" align="start" wrap>
+        <LabelledValue
+          label={t('label.return-to')}
+          variant="field"
+          size="small"
+        >
+          {props.supplierName}
+        </LabelledValue>
+        <TextField
+          label={t('label.supplier-reference')}
+          size="small"
+          value={reference()}
+          onInput={e => setReference(e.currentTarget.value)}
+        />
+      </HStack>
       <Show
         when={step() === 'reason'}
         fallback={
           <DataTable
-            columns={quantityColumns(update)}
+            columns={quantityColumns(update, quantityFields, {
+              showItem: true,
+            })}
             rows={draft.filter(() => true)}
             rowKey={line => line.id}
             loading={loadingLines()}
@@ -311,7 +349,7 @@ const Body = (props: BodyProps): JSX.Element => {
         }
       >
         <DataTable
-          columns={reasonColumns(update)}
+          columns={reasonColumns(update, reasonFields, { showItem: true })}
           rows={reasonRows()}
           rowKey={line => line.id}
           showFullScreen={false}

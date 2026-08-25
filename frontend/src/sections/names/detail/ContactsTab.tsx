@@ -2,9 +2,15 @@ import { createResource } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
+import {
+  getCellDefinition,
+  getTextCell,
+} from '../../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../../ui/utils/rem';
 import { Contacts } from '../names.generated';
 import type { ContactsResult } from '../names.generated';
 
@@ -33,20 +39,46 @@ export const ContactsTab: Component<{ nameId: string }> = props => {
   );
 
   // Non-suspending read (opened on interaction — see the reactivity note in
-  // domain/customFields CustomFieldsView / kdd/solid-reactivity-pitfalls).
-  const rows = (): ContactRow[] =>
-    data.state === 'ready' || data.state === 'refreshing'
-      ? (data.latest ?? [])
-      : [];
+  // domain/customFields CustomFieldsView).
+  const rows = (): ContactRow[] => gated(data) ?? [];
 
-  // Contacts aren't sortable here — no SortKey, so `never`.
+  // Contacts aren't sortable here — no SortKey, so `never`. Each column takes
+  // its cell type's width preset (docs/CELL_TYPES.md); `position` and
+  // `category1` have no CELL_DEF key, so they keep the explicit text helper and
+  // set the width at the call site.
   const columns = (): Column<ContactRow, never>[] => [
-    { c: { key: 'firstName' }, header: () => t('label.first-name') },
-    { c: { key: 'lastName' }, header: () => t('label.last-name') },
-    { c: { key: 'position' }, header: () => t('label.position') },
-    { c: { key: 'email' }, header: () => t('label.email') },
-    { c: { key: 'phone' }, header: () => t('label.phone') },
-    { c: { key: 'category1' }, header: () => t('label.category-1') },
+    {
+      c: { key: 'firstName' },
+      header: () => t('label.first-name'),
+      ...getCellDefinition('firstName'),
+    },
+    {
+      c: { key: 'lastName' },
+      header: () => t('label.last-name'),
+      ...getCellDefinition('lastName'),
+    },
+    {
+      c: { key: 'position' },
+      header: () => t('label.position'),
+      ...getTextCell(),
+      size: remToPx(10),
+    },
+    {
+      c: { key: 'email' },
+      header: () => t('label.email'),
+      ...getCellDefinition('email'),
+    },
+    {
+      c: { key: 'phone' },
+      header: () => t('label.phone'),
+      ...getCellDefinition('phone'),
+    },
+    {
+      c: { key: 'category1' },
+      header: () => t('label.category-1'),
+      ...getTextCell(),
+      size: remToPx(10),
+    },
   ];
 
   return (
@@ -58,6 +90,12 @@ export const ContactsTab: Component<{ nameId: string }> = props => {
       emptyMessage={t('name.contacts.empty')}
       config={tableConfig.config()}
       setConfig={tableConfig.setConfig}
+      configIsDefault={tableConfig.isConfigDefault()}
+      onSaveGlobalDefault={
+        tableConfig.canSaveGlobalDefault()
+          ? tableConfig.saveGlobalTableConfig
+          : undefined
+      }
     />
   );
 };

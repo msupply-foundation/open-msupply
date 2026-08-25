@@ -6,7 +6,9 @@ import {
   SidePanelActions,
 } from '@/ui/layout/SidePanel/SidePanel';
 import { TextField } from '@/ui/elements/inputs/TextField';
+import { TextArea } from '@/ui/elements/inputs/TextArea';
 import { FieldRow } from '@/ui/elements/inputs/FieldRow';
+import { UserLabel } from '@/ui/elements/typography/UserLabel';
 import { Text } from '@/ui/elements/typography/Text';
 import { DeleteStocktakeAction, CopyStocktakeAction } from './actions';
 import type { StocktakeInfoFragment } from './lines/stocktakeDetail.generated';
@@ -45,11 +47,18 @@ export const StocktakeSidePanel: Component<StocktakeSidePanelProps> = props => (
       title={t('heading.additional-info')}
       collapsible
     >
-      {/* All rows share ONE FieldRow label column so labels line up and the read-only values sit on
-        the same inline-start as the editable inputs below them (no mixed <dl>/FieldRow widths).
-        Read-only rows render a plain value; editable ones a buffered field. */}
+      {/* All rows share ONE FieldRow label column so labels line up and the
+        read-only values sit on the same inline-start as the editable inputs
+        below them. Row spacing is the section's own gap (SidePanel contract),
+        not a wrapping Stack. Read-only rows render a plain value; editable
+        ones a buffered field. */}
       <FieldRow label={t('label.entered-by')}>
-        <Text variant="body">{props.node.user?.username ?? '—'}</Text>
+        <UserLabel
+          username={props.node.user?.username}
+          email={props.node.user?.email}
+          label={t('label.entered-by')}
+          testId="entered-by-field"
+        />
       </FieldRow>
       <FieldRow label={t('label.created')}>
         <Text variant="body">{localisedDate(props.node.createdDatetime)}</Text>
@@ -59,7 +68,7 @@ export const StocktakeSidePanel: Component<StocktakeSidePanelProps> = props => (
         <TextField
           label={t('label.counted-by')}
           hideLabel
-          width="full"
+          size="small"
           value={props.edit.state.countedBy}
           disabled={props.disabled}
           onInput={e => props.edit.setField('countedBy', e.currentTarget.value)}
@@ -70,7 +79,7 @@ export const StocktakeSidePanel: Component<StocktakeSidePanelProps> = props => (
         <TextField
           label={t('label.verified-by')}
           hideLabel
-          width="full"
+          size="small"
           value={props.edit.state.verifiedBy}
           disabled={props.disabled}
           onInput={e =>
@@ -80,10 +89,9 @@ export const StocktakeSidePanel: Component<StocktakeSidePanelProps> = props => (
         />
       </FieldRow>
       <FieldRow label={t('heading.comment')}>
-        <TextField
+        <TextArea
           label={t('heading.comment')}
           hideLabel
-          width="full"
           data-testid="comment-field"
           value={props.edit.state.comment}
           disabled={props.disabled}

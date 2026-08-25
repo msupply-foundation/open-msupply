@@ -1,5 +1,7 @@
-# A single customer return with its lines, for the detail view
-# (spec/customer-returns S3). The return-level fields feed the toolbar (customer /
+# A single customer return — HEADER ONLY, no lines — for the detail view
+# (spec/customer-returns S3). The lines are a SEPARATE, server-paginated/sorted
+# query below (spec rules § server-paginated line table), so the two refetch
+# independently. The return-level fields feed the toolbar (customer /
 # reference / kind banner), the status footer (status / hold / the step
 # datetimes), and the side panel (edited-by / colour / comment / related
 # documents). The SAME fragment is what updateCustomerReturn returns, so a
@@ -25,6 +27,7 @@ fragment CustomerReturnInfo on InvoiceNode {
   verifiedDatetime
   otherPartyId
   otherPartyName
+  transportReference
   user {
     username
     email
@@ -45,9 +48,8 @@ fragment CustomerReturnInfo on InvoiceNode {
   customFields
 }
 
-# ONE fragment, both directions: the detail row AND what updateCustomerReturnLines
-# returns, so a line save replaces the node's lines with no remapping and no
-# refetch. Line-display fields per spec/customer-returns/ui-surface.md S3.
+# One page's worth of a detail line row. Line-display fields per
+# spec/customer-returns/ui-surface.md S3.
 fragment CustomerReturnLine on InvoiceLineNode {
   id
   itemName
@@ -80,6 +82,29 @@ query customerReturnDetail($storeId: String!, $id: String!) {
     __typename
     ... on InvoiceNode {
       ...CustomerReturnInfo
+    }
+    ... on NodeError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# The WHOLE record for Copy to clipboard (ui-standards/controls.md § copy to
+# clipboard): the header, every line, and the linked references the detail reads.
+# A SEPARATE operation from customerReturnDetail, which is header-only so the
+# screen's own read stays lean — and from customerReturnLines, which is one
+# server-paginated PAGE. The standard is explicit that copy "MUST make its own
+# unpaginated read, not serialise the page on screen", and the nested `lines`
+# connector is that read: it takes no page argument, so it carries the complete
+# line set.
+query customerReturnForCopy($storeId: String!, $id: String!) {
+  invoice(storeId: $storeId, id: $id) {
+    __typename
+    ... on InvoiceNode {
+      ...CustomerReturnInfo
       lines {
         totalCount
         nodes {
@@ -87,10 +112,27 @@ query customerReturnDetail($storeId: String!, $id: String!) {
         }
       }
     }
-    ... on NodeError {
-      error {
-        __typename
-        description
+  }
+}
+
+# ONE server-paginated / server-sorted page of the return's lines — the detail
+# table (spec/customer-returns/rules.md § server-paginated line table). A
+# customer return's lines are STOCK_IN lines; the caller pins invoiceId + type
+# and supplies sort + page from the URL state. totalCount is the return's whole
+# line count: it backs the pager, the no-lines status precondition, and the
+# "Save & next" cross-page walk (spec contract § server-paginated line table).
+query customerReturnLines(
+  $storeId: String!
+  $filter: InvoiceLineFilterInput
+  $sort: [InvoiceLineSortInput!]
+  $page: PaginationInput
+) {
+  invoiceLines(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {
+    ... on InvoiceLineConnector {
+      __typename
+      totalCount
+      nodes {
+        ...CustomerReturnLine
       }
     }
   }
@@ -126,8 +168,12 @@ mutation updateCustomerReturn(
 # item's WHOLE batch set each save — quantity > 0 upserts, an existing line at
 # zero deletes, a new line at zero is dropped server-side. The response union has
 # NO error member (contract wire trap) — every rejection arrives as a top-level
-# GraphQL error (returnGraphqlErrors + extensions.details). Success returns the
-# whole invoice with its lines; the view replaces the node wholesale.
+# GraphQL error (returnGraphqlErrors + extensions.details).
+#
+# The response's LINE SET IS NOT SELECTED: the detail table is server-paginated,
+# so a save refetches its current page rather than splicing a full line set into
+# a held list (spec contract § server-paginated line table). Only the header
+# fragment comes back, for the id the caller confirms the save against.
 mutation updateCustomerReturnLines(
   $storeId: String!
   $input: UpdateCustomerReturnLinesInput!
@@ -136,12 +182,6 @@ mutation updateCustomerReturnLines(
     ... on InvoiceNode {
       __typename
       ...CustomerReturnInfo
-      lines {
-        totalCount
-        nodes {
-          ...CustomerReturnLine
-        }
-      }
     }
   }
 }
@@ -184,28 +224,5 @@ query generateCustomerReturnLines(
   }
 }
 
-# The Log tab (spec/customer-returns/acceptance.md AC-G1): the return's activity
-# history — creation, status changes, deletion — keyed by recordId. Sorted
-# client-side by datetime (no server sort dependency).
-query customerReturnLog($storeId: String!, $recordId: String!) {
-  activityLogs(
-    storeId: $storeId
-    filter: { recordId: { equalTo: $recordId } }
-    page: { first: 1000 }
-  ) {
-    ... on ActivityLogConnector {
-      __typename
-      totalCount
-      nodes {
-        id
-        type
-        datetime
-        to
-        from
-        user {
-          username
-        }
-      }
-    }
-  }
-}
+# The Log tab (spec/customer-returns/cases OMS-REG-DIST-07.45) reads the shared
+# activity-log query (src/domain/activityLog), not one of its own.

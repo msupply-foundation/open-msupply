@@ -6,6 +6,7 @@
 export { fetchReportFile } from './files';
 export {
   csvToExcel,
+  mapPrintFailure,
   mapPrintResponse,
   type CsvToExcelVariables,
   type GenerateResult,
@@ -16,3 +17,9 @@ export {
   listExportExcelFilename,
   sanitizeForFilename,
 } from './exportFilenames';
+// ListExportAction is deliberately NOT re-exported here. This barrel is
+// imported by every vertical's pure `*ToCsv` formatter (for `toCsv`), and the
+// component drags the whole SplitButton/Kobalte/Dialog graph behind it — which
+// broke those formatters' unit tests outright, and would entangle the chunk
+// graph app-wide (src/ui/CLAUDE.md principle 11). Import it by full path:
+//   import { ListExportAction } from '@/domain/reportFiles/ListExportAction';

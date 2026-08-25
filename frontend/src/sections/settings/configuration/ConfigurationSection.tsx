@@ -1,5 +1,6 @@
 import { createResource, createSignal, Show } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { hasPermission } from '../../../store/storeContext';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { Button } from '../../../ui/elements/buttons/Button';
@@ -43,10 +44,7 @@ export const ConfigurationSection = () => {
       ? result.data.nameProperties.nodes
       : undefined;
   });
-  const properties = () =>
-    propertiesData.state === 'ready' || propertiesData.state === 'refreshing'
-      ? (propertiesData.latest ?? [])
-      : [];
+  const properties = () => gated(propertiesData) ?? [];
   const loading = () => propertiesData.loading;
 
   const existingKeys = () => properties().map(node => node.property.key);

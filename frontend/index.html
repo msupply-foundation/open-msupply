@@ -12,6 +12,19 @@
         var theme = localStorage.getItem('oms-theme');
         if (theme) document.documentElement.dataset.theme = theme;
       } catch (e) {}
+      // Same for a site's custom theme: inject the CSS compiled on the last
+      // successful boot so a branded site never flashes the stock palette.
+      // This only ever injects a cached string — compiling happens in the app
+      // (src/ui/branding), never here (keys shared with applyBranding.ts).
+      try {
+        var custom = localStorage.getItem('oms-custom-theme-css');
+        if (custom) {
+          var style = document.createElement('style');
+          style.id = 'oms-custom-theme';
+          style.textContent = custom;
+          document.head.appendChild(style);
+        }
+      } catch (e) {}
     </script>
   </head>
   <body>
@@ -23,7 +36,7 @@
       // the bundle, so this can depend on nothing the app provides. The
       // minimum must match browserslist (scripts/check-min-browser.mjs).
       (function () {
-        var MIN_CHROMIUM = 138;
+        var MIN_CHROMIUM = 132;
         try {
           var ua = navigator.userAgent;
           // Only Chromium is versioned against the floor — a browser

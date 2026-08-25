@@ -42,13 +42,24 @@ let reconnectTimer: number | undefined;
 let reconnectDelay = RECONNECT_BASE_MS;
 let wasSyncing = false;
 
-// Spec (sync-modal › After a run completes; AC-R1): when a run observed while
-// the app is open completes, re-read the session user (store list), the
+// Spec (sync-modal › After a run completes; SYNC-03.31): when a run observed
+// while the app is open completes, re-read the session user (store list), the
 // entered store's preferences + permissions, the shared caches, and custom
 // translations — by direct call (kdd/explicit-composition), no re-login.
+//
+// ⚠ These writes land every couple of seconds under whatever screen is open,
+// so an UNCHANGED response must publish nothing — no notification, no remount,
+// no focus loss (spec: an unchanged refresh is imperceptible, SYNC-03.32).
+// graphqlFetch's structural sharing makes that hold for reads published
+// straight off the response, and storeScopedResource's noSuspense memo makes
+// it hold for the shared caches (absorbing both resource.state churn and a
+// fetcher that derives); anything ADDED to this hook must keep it holding —
+// publish the fetched object directly, read a store-scoped cache via
+// noSuspense(), or derive through an owned memo (kdd/state-management
+// decision 5; kdd/solid-reactivity-pitfalls §16).
 // Locations are NOT a shared cache anymore — each view fetches them locally (a
-// fresh view mount re-reads, and the stocktake detail view refetches after every
-// line save), so there is no global locations cache to refresh here.
+// fresh view mount re-reads, and the stocktake detail view refetches after
+// every line save), so there is no global locations cache to refresh here.
 const onRunCompleted = () => {
   void checkAuth();
   if (currentStoreId() != null) void refetchStoreContext(currentStoreId());

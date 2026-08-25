@@ -2,7 +2,7 @@
  * Native <dialog> — the top layer handles stacking (no z-index) and the UA
  * centres dialog:modal in the viewport (fixed + inset 0 + margin auto), so
  * the CSS here is only the look. Padding lives on .body, NOT the dialog:
- * scrim-click detection relies on "pointerdown targeting the <dialog> element
+ * scrim-click detection relies on "an event targeting the <dialog> element
  * itself means the ::backdrop was hit".
  */
 
@@ -33,13 +33,70 @@
   overflow: visible;
 }
 
+/* Width presets (Dialog width="prose|form|wide") — the shared content measures, so a
+   dialog's form sits at the same width as the same form in a page (ContentContainer's
+   `size` names the same three). A class+attribute selector, so it beats the default
+   above; an inline --dialog-width from widthRem still beats BOTH, which is the
+   documented precedence. */
+.dialog[data-width='prose'] {
+  --dialog-width: var(--measure-prose);
+}
+
+.dialog[data-width='form'] {
+  --dialog-width: var(--measure-form);
+}
+
+.dialog[data-width='wide'] {
+  --dialog-width: var(--measure-wide);
+}
+
+/* The DEFAULT working width for size="large" — #771's "~900px if the tables fit". A
+   caller whose table is column-heavy overrides it with widthRem, which lands inline on
+   the element and so beats this ("wider if the column set forces it"). Higher specificity
+   than .dialog's 30rem default; the data-width measures never collide, since Dialog omits
+   data-width entirely in large mode. */
+.dialog.large {
+  --dialog-width: 56rem;
+}
+
 /* Large / "workbench" size (Dialog size="large") — for content-heavy modals like the
-   line-edit table. Fills nearly the whole viewport: full width and ~80% height (a ~10%
-   margin top/bottom). Overrides the fixed width; the body flex column (already bounded)
-   plus this fixed height let a flex-1 child (a DataTable) fill the tall space and scroll. */
+   line-edit table. A centred card at its working width (not full-bleed — a visible
+   margin of page and scrim frames it on desktop; #771), clamped down on narrow screens.
+   The clamp is what makes a generous widthRem safe: a 76rem workbench is near-full-bleed
+   on a laptop and still a framed card on a large monitor, with no second breakpoint.
+   Height is elastic between ~60vh (so a table still has room to be a table) and ~80vh:
+   short content makes a short modal, and past the cap the body flex column (already
+   bounded) lets a flex-1 child (a DataTable) fill the tall space and scroll internally.
+   A card keeps the 80vh ceiling so the scrim still frames it top and bottom; `full`
+   below raises it, since a sheet has no frame to preserve. */
 .large {
+  width: min(var(--dialog-width), calc(100vw - 4rem));
+  min-block-size: 60vh;
+  max-block-size: 80vh;
+}
+
+/* size="full" — the workbench at FULL BLEED (Dialog puts .bleed alongside .large, so
+   only the two caps differ). Drops BOTH of .large's caps to the same 2rem gutter, in
+   both axes:
+
+   Width, because for a ~20-column line table there is no card width that fits, and
+   narrowing only hides columns.
+
+   Height, because .large's 80vh ceiling exists to keep the scrim framing a CARD top and
+   bottom — a sheet has no frame to preserve, and a batch grid that overflows wants every
+   row it can show before it starts scrolling (the pre-#771 modal sat at exactly this
+   height, so a long grid loses nothing to the change). The 60vh FLOOR stays: that is
+   #771's actual win, and it is what keeps a two-batch item a short modal instead of an
+   empty full-screen box.
+
+   Specificity beats .large; width is set outright (not through --dialog-width) so a
+   caller's pre-pick widthRem can't reach it. Guarded off data-fullscreen: three classes
+   outrank .dialog[data-fullscreen]'s two selectors, so without the :not() these caps
+   would beat the full-screen width/height below the narrow-viewport line — pinned
+   top-left by fullscreen's margin:0, the whole 4rem gutter landed on the right/bottom
+   edge (#918's tablet gap). */
+.dialog.large.bleed:not([data-fullscreen]) {
   width: calc(100vw - 4rem);
-  height: calc(100vh - 4rem);
   max-block-size: calc(100vh - 4rem);
 }
 
@@ -54,6 +111,14 @@
 
 .dialog::backdrop {
   background: var(--overlay-scrim);
+}
+
+/* Chromeless (Dialog `chromeless`) — no panel surface, so the content floats
+   over the scrim on its children's own surfaces. The dialog element stays the
+   same box (width, height cap, top layer, ::backdrop): only the look goes. */
+.chromeless {
+  background: none;
+  box-shadow: none;
 }
 
 /* The page behind is inert but the UA still lets it scroll under the scrim. */
@@ -72,29 +137,98 @@
   /* Reserve a minimum height (Dialog's minBodyHeightRem) so a dialog whose content changes
      size doesn't jump; inherits the default (0) or the caller's inline override from .dialog. */
   min-block-size: var(--dialog-min-body-height);
-  /* Bounded so content can't push the dialog past the viewport: a flex-1 child (e.g. a
-     DataTable) scrolls INTERNALLY via its own scroll region, and any other over-tall content
-     falls back to scrolling the body itself. Header / footer / actions keep their natural
-     size. `auto` doesn't clip the Select/Combobox popups — those mount on the <dialog> (a
-     sibling of .body), which stays overflow:visible. */
+  /* Bounded so content can't push the dialog past the viewport. The body itself does NOT
+     scroll — only the .scroll region between the header and the bottom region does (it
+     shrinks and takes over when content is over-tall), so the header and the footer/actions
+     hold perfectly still: no shift when a scrollbar appears, no drift with overscroll. */
   max-block-size: calc(100vh - 2rem);
-  overflow: auto;
-  padding: var(--space-6);
+  /* Tightened from the old --space-6 (issue #840 review, Aneesh 2026-08-13):
+     the standards site's modal chrome runs 1.25–1.5rem; we take --space-4, the
+     nearest step ON the scale rather than an off-scale literal. The workbench
+     sizes already dropped their own padding for the same empty-margin reason
+     (#872). The inline inset is a custom property so .bottom[data-divider]'s
+     full-bleed margins track it exactly, whichever .body variant applies. */
+  --dialog-pad-inline: var(--space-4);
+
+  padding: var(--space-4) var(--dialog-pad-inline);
 }
 
-/* In large mode the body fills the dialog's fixed height, so its flex-1 child (the DataTable)
-   gets the full tall space and scrolls internally; header/footer/actions stay their size.
+/* The scrolling middle — description + children. The only scroll container in the dialog;
+   the header and bottom region are siblings outside it, so they never move. Grows to absorb
+   reserved slack (minBodyHeightRem) and, in large mode, the tall space (so a flex-1 child
+   like the DataTable fills it); shrinks (min-block-size: 0) and scrolls when content
+   exceeds the body's cap. The padding + equal negative margin cancel visually (content and
+   gap spacing sit exactly where they would without them) but keep a focused field's ring
+   (--focus-ring's 0.1875rem spread) inside the scrollport instead of clipped at its edge.
+   `auto` doesn't clip Select/Combobox popups — those mount on the <dialog>, which stays
+   overflow:visible. */
+.scroll {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  flex: 1 1 auto;
+  min-block-size: 0;
+  overflow: auto;
+  padding: var(--space-2);
+  margin: calc(-1 * var(--space-2));
+}
+
+/* In large mode the body fills the dialog's fixed height, so the .scroll region (and a
+   flex-1 child inside it, e.g. the DataTable) gets the full tall space and scrolls
+   internally; header/footer/actions stay their size.
    Placed after .body to satisfy stylelint no-descending-specificity. */
 .large .body {
   flex: 1;
   min-block-size: 0;
   max-block-size: none;
+  /* Tighter block inset than an `auto` dialog's. A workbench modal's
+     content IS the screen — a line editor's batch cards, a picker's table — so
+     the block padding is the one part of its chrome that buys nothing, and at
+     the old --space-6 it spent 4rem of a ~90vh box on empty margin (#872).
+     Inline stays generous: the cards' own edges want room from the panel. */
+  --dialog-pad-inline: var(--space-5);
+
+  padding: var(--space-4) var(--dialog-pad-inline);
 }
 
+/* No surface means no inset either — the children sit against the dialog box, so
+   the only thing separating them is their own spacing.
+
+   Placed after .body to satisfy stylelint no-descending-specificity. */
+.chromeless .body {
+  --dialog-pad-inline: 0rem;
+
+  padding: 0;
+}
+
+/* And the scroll region opts out of scrolling: with no body padding there is
+   nothing between a child and the edge, so `auto` would clip whatever a child
+   paints OUTSIDE its own box — a focused field's ring and the surfaces' shadows
+   (the ring-room padding/margin trick is dropped along with it, so the children
+   sit flush against the dialog box). A chromeless overlay's content owns its own
+   scroll region instead (the palette's fixed-height list does). */
+.chromeless .scroll {
+  overflow: visible;
+  padding: 0;
+  margin: 0;
+}
+
+/* The heading row, and the first of the house dialog's two hairlines
+   (ui-standards › dialogs § chrome: a line under the heading, a line above the
+   actions). Full-bleed, by the same negative-inline-margin trick .actions uses:
+   --dialog-pad-inline is whichever .body variant's own inline padding applies,
+   so the line spans the dialog edge to edge under every one of them. */
 .header {
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  /* Sibling of the shrinkable .scroll region — the header keeps its size; over-tall
+     content squeezes the scroll region instead. */
+  flex-shrink: 0;
+  border-block-end: 1px solid var(--color-divider);
+  margin-inline: calc(-1 * var(--dialog-pad-inline));
+  padding-inline: var(--dialog-pad-inline);
+  padding-block-end: var(--space-3);
 }
 
 /* headerAlign="start": top-align the title + actions — for a title taller than
@@ -104,7 +238,8 @@
 }
 
 /* titleHidden: the heading stays the accessible name but paints nothing (and
-   contributes no flex gap to the body column). */
+   contributes no flex gap to the body column) — including its hairline: a rule
+   under nothing is a stray line across the top of the dialog. */
 .header.srOnly {
   position: absolute;
   inline-size: 1px;
@@ -112,6 +247,9 @@
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
+  border-block-end: none;
+  margin-inline: 0;
+  padding: 0;
 }
 
 .icon {
@@ -147,31 +285,55 @@
   color: var(--text-body);
 }
 
-/* The footer (bottom-pinned content, e.g. a status banner) sits at the bottom of the body:
-   `auto` sends the reserved slack ABOVE it. With no height reserved it collapses to nothing.
-   When a footer is present the actions follow it naturally; when absent, .actions carries the
-   same `auto` so it bottom-pins on its own. */
-.footer {
-  margin-block-start: auto;
+/* The bottom region — the footer slot (e.g. a status banner) + the actions row, grouped
+   under the scroll area so they pin to the dialog's bottom edge together and never scroll
+   away (the buttons stay reachable however tall the content is). No margin-block-start:auto
+   needed — .scroll's flex-grow absorbs any reserved slack (minBodyHeightRem), which is what
+   keeps this region on the bottom edge. flex-shrink: 0 so an over-tall body squeezes the
+   scroll region, never the buttons. */
+.bottom {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  flex-shrink: 0;
 }
 
+/* The actions row, and the second house hairline (ui-standards › dialogs §
+   chrome). Buttons group at the INLINE-END under the line — no per-dialog
+   choice; a footer read in a fixed corner is the point. Full-bleed by the same
+   margin/padding trick as .header, so both lines land on the same edges.
+
+   The line sits above the ACTIONS, not above the whole .bottom region: a
+   `footer` banner (the stocktake estimate) is the content's last word, so it
+   stays on the content side of it. */
 .actions {
   display: flex;
-  /* Footer buttons are centred (matching the current app's modal DialogActions). */
-  justify-content: center;
+  justify-content: flex-end;
   align-items: center;
   gap: var(--space-3);
-  /* Bottom-pin the actions when there's no footer above them (see .footer). With a footer,
-     :not() drops the auto so the actions sit directly under it rather than adding a second gap. */
-  margin-block-start: auto;
-  padding-block-start: var(--space-2);
   flex-wrap: wrap;
+  border-block-start: 1px solid var(--color-divider);
+  margin-inline: calc(-1 * var(--dialog-pad-inline));
+  padding-inline: var(--dialog-pad-inline);
+  padding-block-start: var(--space-3);
 }
 
 /* With a lead (a message beside the buttons), split the row: lead at the inline-start, buttons
-   at the inline-end. Without it, the centred buttons group applies (above). */
+   at the inline-end — the same place they sit without one. */
 .actions[data-has-lead] {
   justify-content: space-between;
+}
+
+/* Chromeless drops the panel, so it drops the panel's chrome with it: a
+   hairline needs a surface to divide, and here the children float free over the
+   scrim on their own surfaces.
+
+   Placed after .header/.actions to satisfy stylelint no-descending-specificity. */
+.chromeless .header,
+.chromeless .actions {
+  border: none;
+  margin-inline: 0;
+  padding-inline: 0;
 }
 
 /* The lead content (e.g. a validation message) — takes the free inline-start space, wrapping if
@@ -189,20 +351,15 @@
   justify-content: flex-end;
 }
 
-/* When a footer precedes the actions, the footer already absorbed the slack — don't add a
-   second auto-gap between them. */
-.footer + .actions {
-  margin-block-start: 0;
+/* Entry only (native <dialog> has no exit hook we rely on). No reduced-motion
+   media query here — --motion-base is zeroed in tokens.css, which lands the
+   dialog and its backdrop at their end state immediately. */
+.dialog[open] {
+  animation: content-in var(--motion-base) ease;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .dialog[open] {
-    animation: content-in 150ms ease;
-  }
-
-  .dialog[open]::backdrop {
-    animation: overlay-in 150ms ease;
-  }
+.dialog[open]::backdrop {
+  animation: overlay-in var(--motion-base) ease;
 }
 
 @keyframes overlay-in {
@@ -255,14 +412,16 @@
 }
 
 /* Full-screen on tablet portrait and phones — driven by data-fullscreen, which
-   Dialog.tsx sets on a size="large" dialog when useIsNavOverlay matches
-   (createMediaQuery reads the navOverlay breakpoint from breakpoints.ts, the
-   single source of truth — reused as the shared "narrow viewport" line). A
-   media query can't read a CSS var, so the cutoff stays in JS as the repo
-   prefers (CLAUDE.md #7); this is the CSS analogue of the "which layout"
-   createMediaQuery branches. Only large ("workbench") modals go full-screen —
-   smaller dialogs stay centred cards (their base width/height caps already fit
-   a tablet-portrait viewport).
+   Dialog.tsx sets on a size="large" dialog OR one sized by a width MEASURE
+   (width="prose|form|wide") when useIsNavOverlay matches (createMediaQuery reads
+   the navOverlay breakpoint from breakpoints.ts, the single source of truth —
+   reused as the shared "narrow viewport" line). A media query can't read a CSS
+   var, so the cutoff stays in JS as the repo prefers (CLAUDE.md #7); this is the
+   CSS analogue of the "which layout" createMediaQuery branches. A default or
+   widthRem dialog stays a centred card (its width cap already fits a
+   tablet-portrait viewport, and a confirmation shouldn't fill the screen) —
+   whereas the form and wide measures are wider than the line itself, so below it
+   they would be edge-to-edge cards clinging to a 1rem margin.
    Higher specificity than .large so these rules override its width/height.
    dvh/dvw track the visible viewport as the mobile browser chrome shows/hides;
    plain 100vh would tuck the actions behind the address bar. */

@@ -12,6 +12,7 @@ import {
   type SortState,
 } from '../ui/elements/table/DataTable';
 import {
+  CommentHeader,
   formatCurrencyCell,
   getCellDefinition,
   getNumberCell,
@@ -35,6 +36,7 @@ import { DateField } from '../ui/elements/inputs/DateField';
 import { Select } from '../ui/elements/selectors/Select';
 import {
   FilterBar,
+  FilterCombobox,
   FilterMultiSelect,
   FilterTextInput,
   type Filter,
@@ -328,13 +330,86 @@ const CellTypesTable = () => {
     },
     {
       c: { key: 'comment' },
-      header: () => 'Comment',
+      header: () => <CommentHeader />,
       ...getCellDefinition<StockLine>('comment'),
     },
   ];
   return (
     <DataTable columns={columns} rows={DATA.slice(0, 6)} rowKey={r => r.id} />
   );
+};
+
+// 3 — The proportion (fullness) cell: a value read against a CAPACITY rather
+// than on its own. Storage locations are its real consumer (the locations
+// list's Volume used column), so the demo rows are locations: a capacity in m³,
+// the volume of stock in them, and the proportion the cell draws. The
+// proportion is computed here the plain way — used ÷ capacity × 100 — including
+// for the row with NO capacity, whose division by zero reaches the cell as
+// Infinity and renders blank (there is nothing to be a proportion of).
+type StorageLocation = {
+  id: string;
+  code: string;
+  name: string;
+  volume: number;
+  volumeUsed: number;
+};
+
+const LOCATIONS: StorageLocation[] = [
+  {
+    id: 'l1',
+    code: 'CR-01',
+    name: 'Cold room 1',
+    volume: 1000,
+    volumeUsed: 250,
+  },
+  {
+    id: 'l2',
+    code: 'CR-02',
+    name: 'Cold room 2',
+    volume: 500,
+    volumeUsed: 430,
+  },
+  { id: 'l3', code: 'SH-A3', name: 'Shelf A3', volume: 20, volumeUsed: 26 },
+  { id: 'l4', code: 'SH-B1', name: 'Shelf B1', volume: 100, volumeUsed: 0 },
+  { id: 'l5', code: 'BULK', name: 'Bulk store', volume: 0, volumeUsed: 40 },
+];
+
+const ProportionTable = () => {
+  const columns: Column<StorageLocation, never>[] = [
+    {
+      c: { key: 'code' },
+      header: () => 'Code',
+      ...getCellDefinition<StorageLocation>('code'),
+    },
+    {
+      c: { key: 'name' },
+      header: () => 'Name',
+      ...getCellDefinition<StorageLocation>('name'),
+    },
+    {
+      c: { key: 'volume' },
+      header: () => 'Volume (m³)',
+      ...getNumberCell<StorageLocation>(),
+      size: remToPx(7),
+    },
+    {
+      c: { key: 'volumeUsed' },
+      header: () => 'Volume used (m³)',
+      ...getNumberCell<StorageLocation>(),
+      size: remToPx(9),
+    },
+    {
+      // The proportion cell: its VALUE is the proportion as a percentage, so
+      // the `volumeUsed` key resolves the bar + its width in one spread.
+      c: {
+        accessor: row => (row.volumeUsed / row.volume) * 100,
+        id: 'fullness',
+      },
+      header: () => 'Fullness',
+      ...getCellDefinition<StorageLocation>('volumeUsed'),
+    },
+  ];
+  return <DataTable columns={columns} rows={LOCATIONS} rowKey={r => r.id} />;
 };
 
 // The working table's filter, in the same shape a real list uses: a GraphQL-
@@ -344,6 +419,7 @@ const CellTypesTable = () => {
 type DemoFilter = {
   search?: string | null;
   status?: StockStatus[] | null;
+  item?: string | null;
 };
 
 // The status options offered in the multi-select, derived from the one STATUS
@@ -390,6 +466,23 @@ const FILTER_FIELDS: Filter<DemoFilter>[] = [
       />
     ),
   },
+  {
+    key: 'item',
+    label: () => 'Item',
+    render: props => (
+      <FilterCombobox
+        label="Item"
+        placeholder="Item"
+        items={ITEMS}
+        itemToString={i => `${i.code} — ${i.name}`}
+        itemToValue={i => i.code}
+        testId={props.testId}
+        focusTarget={props.focusTarget}
+        value={props.filter().item ?? undefined}
+        onChange={i => props.setPartialFilter({ item: i?.code ?? null })}
+      />
+    ),
+  },
 ];
 
 // 3 — A working table: the toolbar/footer features a real list ships, all on
@@ -426,9 +519,10 @@ const WorkingTable = () => {
   // empty chip) is ignored — mirrors the page stripping empty keys before it
   // queries.
   const filtered = createMemo(() => {
-    const { search, status } = filter();
+    const { search, status, item } = filter();
     const needle = search?.trim().toLowerCase();
     return DATA.filter(r => {
+      if (item && r.code !== item) return false;
       if (status && status.length && !status.includes(r.status)) return false;
       if (
         needle &&
@@ -504,7 +598,7 @@ const WorkingTable = () => {
     },
     {
       c: { key: 'comment' },
-      header: () => 'Comment',
+      header: () => <CommentHeader />,
       ...getCellDefinition<StockLine>('comment'),
     },
   ];
@@ -566,6 +660,10 @@ const RowStatesDemo = () => {
     'sl-2',
     'sl-3',
   ]);
+  // Only here to power the card⇄table toggle below (the view control needs a
+  // setConfig to persist the choice into) — this demo's point is the states,
+  // not table configuration.
+  const { config, setConfig } = createViewConfig('table');
   const columns = (): Column<StockLine, SortKey>[] => [
     {
       c: { key: 'code' },
@@ -616,6 +714,13 @@ const RowStatesDemo = () => {
       enableSelection
       selectedIds={selectedIds()}
       onSelectionChange={setSelectedIds}
+      // Flip to cards to see the one state a CARD carries: `disabled` mutes the
+      // card box (its own fill token, legible against both the card list and an
+      // editable card, in either theme). The selection-gated pair has no card
+      // treatment — a card has no row background to tint.
+      showCardToggle
+      config={config()}
+      setConfig={setConfig}
       // The page's ONLY job: map each row to a state. Read-only wins (→
       // disabled, grey always); else active → verified, onHold → warning;
       // anything else — discontinued here — stays plain, so it takes the
@@ -746,7 +851,7 @@ const CardGroupsDemo = () => {
     },
     {
       c: { key: 'comment' },
-      header: () => 'Comment',
+      header: () => <CommentHeader />,
       cardGroup: 'details',
       ...getCellDefinition<StockLine>('comment'),
     },
@@ -795,7 +900,7 @@ const CardDisclosureDemo = () => {
     },
     {
       c: { key: 'comment' },
-      header: () => 'Comment',
+      header: () => <CommentHeader />,
       cardGroup: 'more',
       ...getCellDefinition<StockLine>('comment'),
     },
@@ -864,7 +969,6 @@ const CardAdvancedDemo = () => {
             label="Note"
             hideLabel
             size="small"
-            width="full"
             value={notes[row.id]}
             onInput={e => setNotes(row.id, e.currentTarget.value)}
             onClick={e => e.stopPropagation()}
@@ -923,7 +1027,7 @@ const AssembledCardDemo = () => {
     },
     {
       c: { key: 'comment' },
-      header: () => 'Comment',
+      header: () => <CommentHeader />,
       cardGroup: 'more',
       ...getCellDefinition<StockLine>('comment'),
     },
@@ -1255,13 +1359,63 @@ const PaginationDemo = () => {
     <Pagination
       offset={offset()}
       pageSize={pageSize()}
-      total={38}
+      // Enough pages to show what the pager does with a long set: a window
+      // around the current page, an ellipsis for each break, and the number
+      // box behind it.
+      total={380}
       onOffsetChange={setOffset}
       onPageSizeChange={size => {
         setPageSize(size);
         setOffset(0);
       }}
     />
+  );
+};
+
+// The `conditional` footer's two states, each over a fixed row count so the
+// state is the thing on show: 8 rows (one page) renders nothing at all — its
+// label stands alone and the space goes to the table — while 38 rows brings the
+// bar. Paging within the second stays on the bar: the row count decides the
+// state, not where you are in it. The third demo is the same bar with `inBar`,
+// the face a detail view's status footer hosts.
+const ConditionalPaginationDemo = () => {
+  const [offset, setOffset] = createSignal(0);
+  return (
+    <Stack gap="md">
+      <div>
+        <Text variant="subtitle">8 rows (one page) — no footer</Text>
+        <Pagination
+          offset={0}
+          pageSize={20}
+          total={8}
+          onOffsetChange={() => {}}
+          onPageSizeChange={() => {}}
+        />
+      </div>
+      <div>
+        <Text variant="subtitle">38 rows — the bar</Text>
+        <Pagination
+          offset={offset()}
+          pageSize={20}
+          total={38}
+          onOffsetChange={setOffset}
+          onPageSizeChange={() => setOffset(0)}
+        />
+      </div>
+      <div>
+        <Text variant="subtitle">
+          38 rows, inBar — sized to its cluster, for a shared bar
+        </Text>
+        <Pagination
+          offset={offset()}
+          pageSize={20}
+          total={38}
+          inBar
+          onOffsetChange={setOffset}
+          onPageSizeChange={() => setOffset(0)}
+        />
+      </div>
+    </Stack>
   );
 };
 
@@ -1283,6 +1437,18 @@ export const tableCardMetadata: PageMetadata = {
       id: 'table-card-basics',
       title: 'Table basics',
       searchTerms: ['cell', 'column', 'width', 'row states', 'tint'],
+    },
+    {
+      id: 'table-card-proportion',
+      title: 'Proportion (fullness) cell',
+      searchTerms: [
+        'bar',
+        'capacity',
+        'volume used',
+        'percentage',
+        'over capacity',
+        'progress',
+      ],
     },
     {
       id: 'table-card-pagination',
@@ -1349,9 +1515,32 @@ export const TableCardShowcase = () => (
             <code>comment</code> (an icon + popover). A field that{' '}
             <em>isn't</em> a common key — <code>quantity</code> — uses the
             explicit <code>getNumberCell()</code> and sets its own{' '}
-            <code>size</code>. Drag a header edge to resize.
+            <code>size</code>. Drag a header edge to resize, or double-click it
+            to fit the column to its widest content.
           </Lead>
           <CellTypesTable />
+        </DashboardCard>
+
+        <DashboardCard
+          id="table-card-proportion"
+          title="Table basics · Proportion (fullness) cell"
+        >
+          <Lead>
+            One cell type reads its value against a <strong>capacity</strong>:
+            the proportion cell (<code>getCellDefinition('volumeUsed')</code>,{' '}
+            <code>getProportionCell()</code>) draws a fill sized to used ÷
+            capacity. Its column value <em>is</em> that proportion as a
+            percentage — whether a proportion is meaningful at all is a domain
+            rule, so the vertical computes it and the cell renders what it is
+            handed. Above 80% the fill turns amber; over 100% it fills the
+            track, stripes, and keeps the true figure — and the tone never
+            carries the meaning alone, since the percentage is beside it and the
+            near-/ over-capacity state is in visually-hidden text. Row 4 shows a
+            real <code>0</code> (an empty bar — a genuine reading), and{' '}
+            <em>Bulk store</em>, which has no recorded capacity, divides by zero
+            and renders <strong>blank</strong>: nothing to be a proportion of.
+          </Lead>
+          <ProportionTable />
         </DashboardCard>
 
         <DashboardCard title="Table basics · A working table">
@@ -1381,7 +1570,14 @@ export const TableCardShowcase = () => (
             meaning at rest. <code>disabled</code> is the exception: a read-only
             / locked row (greyed, with a lock) is grey <em>always</em>, selected
             or not. Three rows are pre-selected; select or deselect any to watch
-            it. Full rules are in <code>CARD_TABLE_MODEL.md</code>.
+            it. <strong>Flip to cards</strong> and <code>disabled</code> is the
+            one state that follows: the card box takes a muted fill of its own (
+            <code>--table-card-surface-disabled</code>) — a step clear of both
+            an editable card and the recessed list behind it, in light and dark
+            — because a read-only record must read as one in either rendering.
+            The selection-gated pair is stamped on the card row but unstyled: a
+            card has no row background to tint. Full rules are in{' '}
+            <code>CARD_TABLE_MODEL.md</code>.
           </Lead>
           <RowStatesDemo />
         </DashboardCard>
@@ -1400,9 +1596,22 @@ export const TableCardShowcase = () => (
             parent owns <code>offset</code>/<code>pageSize</code> (bound for URL
             params); the component is pure presentation over them and resets to
             the first page on a size change. Below 480px the selector and number
-            slots collapse to <code>‹ ›</code> + the range.
+            slots collapse to <code>‹ ›</code> + the page position and the
+            range.
           </Lead>
           <PaginationDemo />
+          <Lead>
+            The bar earns its space rather than standing as fixed chrome
+            (spec/ui-standards § tables → pagination): it renders only when
+            there is somewhere to page to. No rows, or a single page of them,
+            and there is nothing here at all — the host drops the footer band
+            with it (DataTable does this from <code>paginationState</code>), so
+            no empty strip is left behind and the height goes to the rows. A
+            detail view goes further and hosts the bar's contents in its status
+            footer, where <code>inBar</code> keeps the cluster at its content
+            width so a crowded bar wraps it whole.
+          </Lead>
+          <ConditionalPaginationDemo />
         </DashboardCard>
 
         <Text variant="heading">Cards</Text>

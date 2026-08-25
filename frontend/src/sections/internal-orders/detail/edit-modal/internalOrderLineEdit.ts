@@ -1,6 +1,5 @@
 import { graphqlFetch } from '../../../../api/graphql';
-import { t } from '../../../../intl';
-import { formatNumber, round } from '../../../../intl/formatNumber';
+import { getPlural, t, tPlural } from '../../../../intl';
 import {
   InternalOrderItemStats,
   AddInternalOrderLine,
@@ -16,73 +15,20 @@ import type { InternalOrderLineFragment } from '../internalOrderDetail.generated
 // only re-expresses the display.
 export type EntryMode = 'units' | 'packs' | 'doses';
 
-// One course-and-demographic group of a line's stored population forecast —
-// the shape the server serialises into RequisitionLineNode.vaccineCourses
-// (contract › Population-based forecasting), consumed by the editor's
-// calculation display (AC-PF7). The client parses this; it never writes it.
-export type VaccineCourse = {
-  /** Pre-formatted "<course> (<demographic>)"; empty parens for a demographic-less course. */
-  courseTitle: string;
-  numberOfDoses: number;
-  coverageRate: number;
-  targetPopulation: number;
-  wastageRate: number;
-  lossFactor: number;
-  annualTargetDoses: number;
-  bufferStockMonths: number;
-  supplyPeriodMonths: number;
-  dosesPerUnit: number;
-  forecastDoses: number;
-  forecastUnits: number;
-};
-
-// Parse a line's stored vaccineCourses JSON into its per-course breakdown. A
-// null, empty, or unparseable string yields no courses (the display then falls
-// back to the ordinary charts).
-export const parseVaccineCourses = (json: string | null): VaccineCourse[] => {
-  if (!json) return [];
-  try {
-    const parsed = JSON.parse(json);
-    return Array.isArray(parsed) ? (parsed as VaccineCourse[]) : [];
-  } catch {
-    return [];
-  }
-};
-
-// One arithmetic step of the calculation display: its figures substituted into
-// the formula, then the emphasised result (AC-PF7). The step's title and
-// formula wording are static locale keys held by the display component; this
-// pure function owns only the arithmetic so it can be tested against the AC's
-// exact figures. Rounding mirrors the reference: the loss factor to 3 dp, the
-// two dose totals to 2 dp, the units result the ceil of the stored total.
-export type ForecastStep = { substitution: string; result: string };
-
-export const forecastSteps = (
-  course: VaccineCourse
-): [ForecastStep, ForecastStep, ForecastStep] => [
-  {
-    // 1. Annual target doses = target population × doses × (coverage/100) × loss factor.
-    substitution: `${formatNumber(course.targetPopulation)} × ${formatNumber(course.numberOfDoses)} × (${formatNumber(course.coverageRate)} / 100) × ${round(course.lossFactor, 3)}`,
-    result: `= ${round(course.annualTargetDoses, 2)} ${t('label.doses-per-year')}`,
-  },
-  {
-    // 2. Forecast doses = annual/12 × (supply period + buffer stock months).
-    substitution: `(${round(course.annualTargetDoses, 2)} / 12) × (${formatNumber(course.supplyPeriodMonths)} + ${formatNumber(course.bufferStockMonths)})`,
-    result: `= ${round(course.forecastDoses, 2)} ${t('label.doses').toLowerCase()}`,
-  },
-  {
-    // 3. Forecast units = forecast doses ÷ doses per unit (result rounded up).
-    substitution: `${round(course.forecastDoses, 2)} / ${formatNumber(course.dosesPerUnit)}`,
-    result: `= ${formatNumber(Math.ceil(course.forecastUnits))} ${t('label.units').toLowerCase()}`,
-  },
-];
+// The population-forecast breakdown (VaccineCourse, parseVaccineCourses,
+// forecastSteps) is the shared module at src/domain/forecast — both
+// requisition verticals' editors consume it.
+import { parseVaccineCourses, type VaccineCourse } from '../../../../domain/forecast';
 
 // The editor's working line — the same shape whether it comes from an existing
 // line (edit mode: the stored figures) or an add-mode item preview (the item's
 // current figures + a client-previewed suggestion). Statistics are all in
 // UNITS; the entry mode re-expresses them at display time.
 export type EditorLine = {
-  /** Existing line id (edit) or the client-generated id that will create it (add). */
+  /**
+   * Existing line id (edit) or the client-generated id that will create it
+   * (add).
+   */
   lineId: string;
   itemId: string;
   itemCode: string;
@@ -98,7 +44,10 @@ export type EditorLine = {
   suggestedQuantity: number;
   forecastTotalUnits: number | null;
   forecastTotalDoses: number | null;
-  /** The forecast's per-course breakdown (AC-PF7); empty on a forecast-less line. */
+  /**
+   * The forecast's per-course breakdown (AC-PF7); empty on a forecast-less
+   * line.
+   */
   vaccineCourses: VaccineCourse[];
   pricePerUnit: number | null;
   // Extended movements (edit mode on a customer-statistics program order).
@@ -113,6 +62,12 @@ export type EditorLine = {
   requestedQuantity: number;
   comment: string;
   reasonId: string | null;
+  /**
+   * The stored variance reason's TEXT (the id above is what the editor writes).
+   * Carried so the line's published plugin view can be built from the editor's
+   * own draft — see `toLineViewFromEditor` (detail/pluginViews.ts).
+   */
+  reason: string | null;
   /** True in add mode — no line exists on the wire until the first save. */
   isNew: boolean;
 };
@@ -161,15 +116,20 @@ export const statInMode = (
 };
 
 // The active mode's measure word — the item's unit name (falling back to
-// "unit") / "pack" / "dose", pluralised for the dose word.
+// "unit") / "pack" / "dose", inflected for the count it suffixes (spec S4
+// — "e.g. 61 packs"). An item's own unit name inflects via getPlural
+// (reference-app parity — English only; other languages pass through
+// unchanged).
 export const modeWord = (
   mode: EntryMode,
   unitName: string | null,
   count = 2
 ): string => {
-  if (mode === 'packs') return t('label.packs');
-  if (mode === 'doses') return t('label.doses-plural', { count });
-  return unitName ?? t('label.unit');
+  if (mode === 'packs') return tPlural('label.packs-plural', count);
+  if (mode === 'doses') return tPlural('label.doses-plural', count);
+  return unitName
+    ? getPlural(unitName, count)
+    : tPlural('label.units-plural', count);
 };
 
 // The store's default entry mode (AC-LN18): packs where the store orders in
@@ -216,7 +176,10 @@ export const buildAddPreview = async (
   maxMonths: number,
   lineId: string
 ): Promise<EditorLine | undefined> => {
-  const result = await graphqlFetch(InternalOrderItemStats, { storeId, itemId });
+  const result = await graphqlFetch(InternalOrderItemStats, {
+    storeId,
+    itemId,
+  });
   if (result.kind !== 'success') return undefined;
   const node = result.data.items.nodes[0];
   if (!node) return undefined;
@@ -258,6 +221,7 @@ export const buildAddPreview = async (
     requestedQuantity: 0,
     comment: '',
     reasonId: null,
+    reason: null,
     isNew: true,
   };
 };
@@ -296,15 +260,14 @@ export const editorLineFromLine = (
   requestedQuantity: line.requestedQuantity,
   comment: line.comment ?? '',
   reasonId: line.optionId,
+  reason: line.reason?.reason ?? null,
   isNew: false,
 });
 
 // --- Save (AC-LN3/LN11) -----------------------------------------------------
 
 export type SaveLineResult =
-  | { kind: 'saved' }
-  | { kind: 'error'; message: string }
-  | { kind: 'failed' };
+  { kind: 'saved' } | { kind: 'error'; message: string } | { kind: 'failed' };
 
 // Map the update union's typed errors to copy (contract › editing lines). Only
 // the reasons refusal and cannot-edit are reachable from the editor; the rest
@@ -365,7 +328,10 @@ export const saveNewLine = async (
     // failure, matching the reference (no dedicated handling).
     return { kind: 'failed' };
   const update = batch.updateRequestRequisitionLines?.[0];
-  if (update && update.response.__typename === 'UpdateRequestRequisitionLineError')
+  if (
+    update &&
+    update.response.__typename === 'UpdateRequestRequisitionLineError'
+  )
     return {
       kind: 'error',
       message: mapUpdateError(
@@ -396,6 +362,9 @@ export const saveExistingLine = async (
   if (response.__typename === 'RequisitionLineNode') return { kind: 'saved' };
   return {
     kind: 'error',
-    message: mapUpdateError(response.error.__typename, response.error.description),
+    message: mapUpdateError(
+      response.error.__typename,
+      response.error.description
+    ),
   };
 };

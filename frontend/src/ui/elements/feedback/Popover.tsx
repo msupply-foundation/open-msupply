@@ -6,6 +6,8 @@ import {
   Show,
   type JSX,
 } from 'solid-js';
+import type { FocusTarget } from '../../utils/createFocusTarget';
+import { PortalMountContext } from '../../utils/portalMount';
 import styles from './Popover.module.css';
 
 export type PopoverPlacement =
@@ -27,11 +29,30 @@ export interface PopoverProps {
   triggerProps?: JSX.ButtonHTMLAttributes<HTMLButtonElement>;
   /** `data-testid` stamped on the trigger button (e2e/TESTIDS.md). */
   triggerTestId?: string;
+  /**
+   * Focus destination for the TRIGGER (kdd/focus-targets) — the trigger button
+   * is owned in here, so a caller that must send focus (or a synthetic open) to
+   * it can't reach it with a plain ref.
+   */
+  focusTarget?: FocusTarget;
   /** Preferred side/alignment; flips to the other side rather than overflow.
       start/end are logical (mirror in RTL). Default 'bottom'. */
   placement?: PopoverPlacement;
-  /** Close when a button inside the panel is clicked  */
+  /**
+   * Close when a button inside the panel is clicked.
+   *
+   * Don't combine with a Select/Combobox in the panel: their trigger IS a
+   * button, so opening the drop-down would dismiss the popover. (Picking an
+   * option is safe — an option is an `<li>`.)
+   */
   closeOnClickInside?: boolean;
+  /**
+   * Called each time the panel opens — for panels that re-seed their own
+   * state from the outside value per open (the colour picker's hex entry).
+   * Fires before the first open mounts the children, so seeding a signal the
+   * children read is never a tear.
+   */
+  onOpen?: () => void;
   /**
    * Open on hover (and focus) — for content bubbles whose trigger IS the
    * content (a status row, a comment icon), where hover reads more naturally
@@ -86,6 +107,9 @@ export const Popover = (props: PopoverProps) => {
   // <Show> flip lands before `place()`'s queued microtask reads the panel's
   // box (see the beforetoggle listener below).
   const [everOpened, setEverOpened] = createSignal(false);
+  // The panel as a signal, for the PortalMountContext below — the plain ref
+  // can't be read reactively by the popups that mount into it.
+  const [panelEl, setPanelEl] = createSignal<HTMLElement>();
 
   const place = () => {
     // No box yet = the engine hasn't finished displaying the popover (the
@@ -166,6 +190,7 @@ export const Popover = (props: PopoverProps) => {
       const open = (event as ToggleEvent).newState === 'open';
       trigger.setAttribute('aria-expanded', String(open));
       if (open) {
+        props.onOpen?.();
         setEverOpened(true);
         queueMicrotask(place);
         window.addEventListener('scroll', replace, {
@@ -219,11 +244,15 @@ export const Popover = (props: PopoverProps) => {
   return (
     <>
       <button
-        ref={trigger}
+        ref={(el: HTMLButtonElement) => {
+          trigger = el;
+          props.focusTarget?.ref(el);
+        }}
         type="button"
         // Click toggles via the platform for a plain popover; in hover mode the
         // toggle is dropped (see hoverHandlers) so click stays open-only, and
-        // aria-controls/-expanded are wired by hand instead of by popovertarget.
+        // aria-controls/-expanded are wired by hand instead of by
+        // popovertarget.
         popovertarget={props.openOnHover ? undefined : panelId}
         aria-controls={panelId}
         aria-expanded={props.openOnHover ? false : undefined}
@@ -240,7 +269,10 @@ export const Popover = (props: PopoverProps) => {
         {props.trigger}
       </button>
       <div
-        ref={panel}
+        ref={(el: HTMLDivElement) => {
+          panel = el;
+          setPanelEl(el);
+        }}
         id={panelId}
         popover="auto"
         class={props.class ? `${styles.panel} ${props.class}` : styles.panel}
@@ -259,19 +291,30 @@ export const Popover = (props: PopoverProps) => {
             everOpened above) — a Popover the user never opens costs nothing
             beyond its trigger button. */}
         <Show when={everOpened()}>
-          {(() => {
-            // Read props.children ONCE into a local: it's a getter compiled
-            // from the caller's JSX, so a second read (e.g. testing its type,
-            // then rendering it) re-evaluates that JSX and constructs the
-            // child a second time (solidjs/solid docs — the `children`
-            // helper exists for exactly this; not used here because it
-            // auto-invokes only NILADIC function children, and ours takes
-            // `close`).
-            const resolved = props.children;
-            return typeof resolved === 'function'
-              ? resolved(() => panel.hidePopover())
-              : resolved;
-          })()}
+          {/* A Select/Combobox opened in here mounts INTO the panel, not
+              <body>: the panel is in the top layer, so a <body>-portaled
+              listbox paints behind it and takes no clicks (#1107). See
+              utils/portalMount.ts. Children are constructed under the Provider,
+              which is what makes the context reach them. */}
+          <PortalMountContext.Provider value={panelEl}>
+            {/* The panel is the mount, so .body scrolls instead — a scroll
+                container on the panel would clip what's mounted into it. */}
+            <div class={styles.body}>
+              {(() => {
+                // Read props.children ONCE into a local: it's a getter compiled
+                // from the caller's JSX, so a second read (e.g. testing its
+                // type, then rendering it) re-evaluates that JSX and constructs
+                // the child a second time (solidjs/solid docs — the `children`
+                // helper exists for exactly this; not used here because it
+                // auto-invokes only NILADIC function children, and ours takes
+                // `close`).
+                const resolved = props.children;
+                return typeof resolved === 'function'
+                  ? resolved(() => panel.hidePopover())
+                  : resolved;
+              })()}
+            </div>
+          </PortalMountContext.Provider>
         </Show>
       </div>
     </>

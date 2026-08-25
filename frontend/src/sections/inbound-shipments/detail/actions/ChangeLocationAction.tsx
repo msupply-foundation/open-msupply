@@ -4,7 +4,8 @@ import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
-import { MapPinIcon, XCircleIcon } from '../../../../ui/icons';
+import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
+import { MapPinIcon } from '../../../../ui/icons';
 import {
   LocationVolumeSelect,
   type LocationWithVolume,
@@ -20,6 +21,14 @@ type Phase = 'confirm' | 'working' | 'error';
 export const ChangeLocationAction: Component<
   LineActionProps & {
     locations: LocationWithVolume[];
+    /**
+     * True while the detail view's on-demand locations fetch is in flight.
+     * That fetch starts when a line's CHECKBOX is ticked — which is also what
+     * makes this action's button appear — so ticking and clicking straight
+     * through can outrun it. Renders the picker as loading rather than as an
+     * empty list.
+     */
+    locationsLoading?: boolean;
     /**
      * Total volume of the selected lines — the picker's "Available" filter
      * keeps only locations with room for the whole move.
@@ -49,6 +58,7 @@ export const ChangeLocationAction: Component<
 const Body = (
   props: LineActionProps & {
     locations: LocationWithVolume[];
+    locationsLoading?: boolean;
     requiredVolume?: () => number;
     onClose: () => void;
   }
@@ -66,7 +76,7 @@ const Body = (
         location: { value: locationId() ?? null },
       })),
     });
-    if (!outcome) return props.onClose();
+    if (!outcome) return setPhase('confirm'); // handled globally
     if (outcome.errors.size > 0) {
       props.onError(outcome.errors);
       setErrorMessage([...outcome.errors.values()][0]);
@@ -99,25 +109,26 @@ const Body = (
         <Switch
           fallback={
             <>
-              <Button
-                variant="secondary"
-                icon={<XCircleIcon />}
+              <CancelButton
+                data-testid="dialog-button-cancel"
                 onClick={props.onClose}
-              >
-                {t('button.cancel')}
-              </Button>
+              />
               <Button
+                variant="primary"
+                confirms="plain"
                 data-testid="dialog-button-ok"
                 loading={phase() === 'working'}
                 onClick={() => void run()}
               >
-                {t('button.ok')}
+                {t('button.apply')}
               </Button>
             </>
           }
         >
           <Match when={phase() === 'error'}>
-            <Button onClick={props.onClose}>{t('button.close')}</Button>
+            <Button confirms="plain" onClick={props.onClose}>
+              {t('button.close')}
+            </Button>
           </Match>
         </Switch>
       }
@@ -126,6 +137,7 @@ const Body = (
         label={t('label.location')}
         focusTarget={locationPicker}
         locations={props.locations}
+        loading={props.locationsLoading}
         value={locationId()}
         requiredVolume={props.requiredVolume?.()}
         onChange={location => setLocationId(location?.id)}

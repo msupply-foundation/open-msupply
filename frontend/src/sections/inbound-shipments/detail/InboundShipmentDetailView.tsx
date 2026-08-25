@@ -6,14 +6,15 @@ import {
   Suspense,
 } from 'solid-js';
 import type { Component } from 'solid-js';
-import { useNavigate, useParams } from '@solidjs/router';
+import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
-import { Toolbar } from '../../../ui/layout/Header/Toolbar';
+import { HeaderToolbar } from '../../../ui/layout/Header/HeaderToolbar';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import {
@@ -27,20 +28,34 @@ import {
   SplitButton,
   type SplitButtonOption,
 } from '../../../ui/elements/buttons/SplitButton';
+import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
-import { CloseIcon, InfoIcon, SidebarIcon, TruckIcon } from '../../../ui/icons';
+import { CloseIcon, PlusCircleIcon, SidebarIcon } from '../../../ui/icons';
 import {
   DataTable,
   type Column,
   type SortState,
 } from '../../../ui/elements/table/DataTable';
 import {
-  getCurrencyCell,
-  getDateCell,
+  CommentHeader,
+  getCellDefinition,
   getNumberCell,
+  getTextCell,
 } from '../../../ui/elements/table/tableHelpers';
+import {
+  Pagination,
+  type PaginationProps,
+} from '../../../ui/elements/table/Pagination';
+import { remToPx } from '../../../ui/utils/rem';
+import styles from './InboundShipmentDetailView.module.css';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { useUrlQueryState } from '../../../list/urlQueryState';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
+import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import {
   CustomFieldsEditTab,
@@ -60,23 +75,30 @@ import {
 } from './inboundShipmentDetail.generated';
 import type { UpdateInboundShipmentVariables } from './inboundShipmentDetail.generated';
 import {
-  isExternalShipment,
   isPlaceholderLine,
   updateInboundShipment,
   type InboundLineErrors,
 } from './inboundShipmentUpdate';
 import {
   canMutateInboundScope,
-  heldInboundQueryScopes,
-  scopeOf,
+  isExternalScope,
+  scopeFromParam,
 } from '../inboundShipmentScope';
 import type { InboundEditFields } from './inboundShipmentEdit';
 import { InboundShipmentDetailToolbar } from './InboundShipmentDetailToolbar';
 import { InboundShipmentSidePanel } from './InboundShipmentSidePanel';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
+import { createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
 import { InboundShipmentStatusFooter } from './InboundShipmentStatusFooter';
-import { canChangeStatus, isEditable } from './inboundShipmentStatus';
-import { InboundShipmentLogPanel } from './log/InboundShipmentLogPanel';
+import {
+  canChangeStatus,
+  isEditable,
+  sourceLinkOf,
+  supplierIsStore,
+} from './inboundShipmentStatus';
+import { SupplierKindIcon } from '../SupplierKindIcon';
+import { ActivityLogPanel } from '../../../domain/activityLog';
 import { InboundDocumentsPanel } from './tabs/InboundDocumentsPanel';
 import { InboundCurrencyPanel } from './tabs/InboundCurrencyPanel';
 import { InboundFinancialPanel } from './tabs/InboundFinancialPanel';
@@ -92,6 +114,10 @@ import {
   ChangeCampaignProgramAction,
   ExportPrintAction,
 } from './actions';
+// "Return selected lines" → the supplier-return from-shipment create flow. The
+// entry point is owned here (inbound detail); the flow is the returns
+// vertical's (mirrors outbound-shipments → customer-returns).
+import { ReturnFromInboundAction } from '../../supplier-returns/detail/edit-modal/ReturnFromInboundAction';
 
 // The inbound-shipment detail view (spec S3). Mirrors the stocktake detail
 // reference: TWO resources — `info` (header/footer/side-panel, a single node,
@@ -105,13 +131,32 @@ type SortKey = NonNullable<
   InboundShipmentLinesVariables['sort']
 >[number]['key'];
 
-const DEFAULT_PAGE_SIZE = 20;
-
 type DetailUrlState = {
   sort: NonNullable<InboundShipmentLinesVariables['sort']>;
   offset: number;
   first: number;
 };
+// The columns spec S3's line table marks "hidden by default (narrow)" — keyed
+// by column ID (not accessor key). The compact band starts from this whole set;
+// the base band hides the four a desktop still keeps out of the way.
+const NARROW_HIDDEN: Record<string, boolean> = {
+  comment: false,
+  vvmStatus: false,
+  location: false,
+  unitName: false,
+  dosesPerUnit: false,
+  difference: false,
+  unitQuantity: false,
+  doses: false,
+  costPricePerPack: false,
+  sellPricePerPack: false,
+  total: false,
+  donor: false,
+  manufacturer: false,
+  manufactureDate: false,
+  campaignProgram: false,
+};
+
 const DEFAULT_URL_STATE: DetailUrlState = {
   sort: [{ key: 'itemName', desc: false }],
   offset: 0,
@@ -121,8 +166,19 @@ const DEFAULT_URL_STATE: DetailUrlState = {
 const InboundShipmentDetailView: Component = () => {
   const params = useParams<{ storeId: string; invoiceId: string }>();
   const navigate = useNavigate();
-  const { query, setQuery } =
-    useUrlQueryState<DetailUrlState>(DEFAULT_URL_STATE);
+  const { query, setQuery } = useUrlQueryState<DetailUrlState>({
+    ...DEFAULT_URL_STATE,
+    first: initialPageSize(),
+  });
+  // The shipment's permission scope, carried by the route (inboundShipmentHref)
+  // because the id alone can't reveal it. It selects `type` on the read below,
+  // gates the mutate permission, and picks the plain-vs-`...External` mutation
+  // twins — the whole screen's scope, known before the node arrives. The node
+  // that comes back can only agree with it: the server filters on exactly this
+  // (purchaseOrderId IS NULL / IS NOT NULL), so a mismatched URL yields no node
+  // at all rather than a screen crossed between the two scopes.
+  const [searchParams] = useSearchParams<{ type?: string }>();
+  const scope = () => scopeFromParam(searchParams.type);
 
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   // Details-panel open state: responsive default (open on very wide viewports —
@@ -137,6 +193,27 @@ const InboundShipmentDetailView: Component = () => {
     new Map()
   );
   const [activeTab, setActiveTab] = createSignal('details');
+
+  // The line table's pager. It lives in the screen's bottom bar — the status
+  // footer, or the selection footer while rows are ticked — rather than in a
+  // band of its own under the table (spec/ui-standards § tables → pagination):
+  // that bar is present at every line count, so hosting the pager there costs
+  // no extra row, and `conditional` means it renders nothing at all until the
+  // lines outrun one page, leaving the bar as it was and the height to the
+  // rows.
+  const linePagination = (): PaginationProps => ({
+    offset: query().offset,
+    pageSize: query().first,
+    total: totalCount(),
+    onOffsetChange: offset => setQuery({ ...query(), offset }),
+    onPageSizeChange: first => {
+      // The remembered page size (D106) — it rode the DataTable's own
+      // pagination prop, which this accessor replaced when the pager moved
+      // into the status footer, so it has to travel with the handler.
+      rememberPageSize(first);
+      setQuery({ ...query(), first, offset: 0 });
+    },
+  });
   // The line-edit modal open state: { itemId, lineId } to edit an item's
   // batches (lineId = the clicked batch, focused on open), {} to add a new
   // item, undefined = closed. Fixed for the whole "OK & next" walk — the modal
@@ -154,11 +231,19 @@ const InboundShipmentDetailView: Component = () => {
   const tableConfig = createTableConfig({
     tableId: 'inbound-shipment-detail',
     defaultConfig: {
+      // Code is pinned inline-start (spec S3 line table col 2) so the row stays
+      // identifiable as the wide column set scrolls.
+      compact: {
+        viewMode: 'card',
+        columnPinning: { left: ['itemCode'] },
+        columnVisibility: NARROW_HIDDEN,
+      },
       base: {
+        columnPinning: { left: ['itemCode'] },
         columnVisibility: {
           manufactureDate: false,
           manufacturer: false,
-          note: false,
+          comment: false,
           sellPricePerPack: false,
         },
       },
@@ -166,37 +251,23 @@ const InboundShipmentDetailView: Component = () => {
   });
 
   // Header/side-panel/footer node. `type` is the permission scope selector and
-  // must match the shipment's own scope, which the id alone doesn't reveal
-  // (contract → permissions), so we probe the query scopes the user holds:
-  // INBOUND_SHIPMENT (manual/transfer) then INBOUND_SHIPMENT_EXTERNAL
-  // (PO-linked). The wrong scope returns RecordNotFound (its purchaseOrderId
-  // filter excludes the row), so we advance to the next scope; the last scope
-  // promotes a genuine RecordNotFound to the global unexpected-error modal.
+  // must match the shipment's own scope — which the URL carries, put there by
+  // whatever surfaced this shipment (see inboundShipmentHref). ONE request: a
+  // RecordNotFound here is a real missing record, promoted to the global
+  // unexpected-error modal, and never the wrong-scope kind.
   const [data, { mutate, refetch: refetchInfo }] = createResource(
-    () => ({ storeId: params.storeId, id: params.invoiceId }),
-    async ({ storeId, id }) => {
-      const scopes = heldInboundQueryScopes();
-      for (let i = 0; i < scopes.length; i++) {
-        const isLast = i === scopes.length - 1;
-        const result = await graphqlFetch(
-          InboundShipment,
-          { storeId, id, type: scopes[i] },
-          isLast
-            ? {
-                mapSuccessToError: d =>
-                  d.invoice.__typename === 'NodeError'
-                    ? d.invoice.error.description
-                    : undefined,
-              }
-            : undefined
-        );
-        if (
-          result.kind === 'success' &&
-          result.data.invoice.__typename === 'InvoiceNode'
-        )
-          return result.data.invoice;
-      }
-      return undefined;
+    () => ({ storeId: params.storeId, id: params.invoiceId, type: scope() }),
+    async variables => {
+      const result = await graphqlFetch(InboundShipment, variables, {
+        mapSuccessToError: d =>
+          d.invoice.__typename === 'NodeError'
+            ? d.invoice.error.description
+            : undefined,
+      });
+      return result.kind === 'success' &&
+        result.data.invoice.__typename === 'InvoiceNode'
+        ? result.data.invoice
+        : undefined;
     }
   );
   // Header/side-panel/footer node — read NON-SUSPENDING (kdd/solid-reactivity-
@@ -204,13 +275,10 @@ const InboundShipmentDetailView: Component = () => {
   // (its stock/service charge totals change), and the line editor stays open
   // across an "OK & next" walk: a direct `data()` read would suspend the page
   // <Suspense> on that refetch, detaching the open native <dialog> (backdrop
-  // gone, focus lost). The `.state` gate keeps the previous node on screen
+  // gone, focus lost). gated keeps the previous node on screen
   // while it refreshes. Initial load (no live state) is handled by the <Show>
   // fallback below, not by suspending.
-  const info = (): InboundInfoFragment | undefined =>
-    data.state === 'ready' || data.state === 'refreshing'
-      ? data.latest
-      : undefined;
+  const info = (): InboundInfoFragment | undefined => gated(data);
 
   // One server-paginated page of the shipment's stock lines (invoiceId + type
   // forced; user filter/sort/page from the URL). Keyed on serialised variables
@@ -243,16 +311,19 @@ const InboundShipmentDetailView: Component = () => {
     }
   );
   // Lines page read NON-SUSPENDING too (same rule): a line save / bulk action /
-  // "OK & next" page-advance refetches this while the editor is open — the
-  // `.state` gate keeps the current page visible instead of suspending.
-  const rows = (): Line[] =>
-    linesData.state === 'ready' || linesData.state === 'refreshing'
-      ? (linesData.latest?.nodes ?? [])
-      : [];
-  const totalCount = () =>
-    linesData.state === 'ready' || linesData.state === 'refreshing'
-      ? (linesData.latest?.totalCount ?? 0)
-      : 0;
+  // "OK & next" page-advance refetches this while the editor is open — gated
+  // keeps the current page visible instead of suspending.
+  const rows = (): Line[] => gated(linesData)?.nodes ?? [];
+  const totalCount = () => gated(linesData)?.totalCount ?? 0;
+
+  // A bulk delete of the last page's rows leaves the offset past the new end
+  // (src/list/clampPageOffset.ts, issue #1117).
+  clampPageOffset({
+    total: () => settledTotal(linesData, page => page.totalCount),
+    offset: () => query().offset,
+    pageSize: () => query().first,
+    setOffset: offset => setQuery({ ...query(), offset }),
+  });
 
   // Total volume of the selected lines (volumePerPack × packs received) — feeds
   // the change-location picker's "Available" filter so it keeps only locations
@@ -266,13 +337,38 @@ const InboundShipmentDetailView: Component = () => {
 
   // Volume-aware: inbound places received stock at a location, so the picker
   // shows each location's % used and offers the All / Empty / Available filter
-  // (same picker as stocktakes). Fetched once per view; a plain (non-cached)
-  // read, so figures are fresh on each visit — see fetchLocationsWithVolume.
-  const [locationsData] = createResource(
-    params.storeId,
+  // (same picker as stocktakes). A plain (non-cached) read, so the figures are
+  // fresh whenever it runs — see fetchLocationsWithVolume.
+  //
+  // Fetched ON DEMAND, then held for the visit (kdd/state-management → data
+  // needed only sometimes). Unlike the stocktake detail — whose toolbar
+  // location FILTER reads this list, so it must be there on arrival — inbound's
+  // only consumers are the bulk change-location modal and the line editor, so
+  // nothing is fetched until one of the two gestures that reach them: ticking a
+  // line's checkbox (which is what raises the bulk action bar) or clicking a
+  // line (which opens the editor). The shipment's first paint pays for no
+  // locations+stock query it may never need.
+  //
+  // The latch never lowers, so that is ONE fetch per visit rather than one per
+  // interaction — a dropped gate would discard the list every time the
+  // selection cleared. Freshness comes from refetching where it actually
+  // changes: volumeUsed is server-computed and moves as stock lands, so
+  // onLinesChanged re-reads it, exactly as the stocktake detail does after
+  // every line save.
+  const locationsNeeded = createMemo(
+    prev => prev || editState() != null || selectedIds().length > 0,
+    false
+  );
+  const [locationsData, { refetch: refetchLocations }] = createResource(
+    () => (locationsNeeded() ? params.storeId : undefined),
     fetchLocationsWithVolume
   );
-  const locations = (): LocationWithVolume[] => locationsData.latest ?? [];
+  // Non-suspending read (kdd/solid-reactivity-pitfalls → No remounts on
+  // interaction). This resource now FIRST fetches during an interaction, under
+  // the already-open screen's Suspense boundary — a suspend there would detach
+  // the very <dialog> that triggered it. The picker renders empty while it's
+  // in flight.
+  const locations = (): LocationWithVolume[] => gated(locationsData) ?? [];
 
   const current = () => info();
   // The two standing conditions that refuse EVERY write, a status advance
@@ -284,7 +380,7 @@ const InboundShipmentDetailView: Component = () => {
     if (!node) return true;
     return (
       (node.otherParty.store?.isDisabled ?? false) ||
-      !canMutateInboundScope(scopeOf(node.purchaseOrderId))
+      !canMutateInboundScope(scope())
     );
   };
   // Edit surfaces add the status rule: read-only at Picked, Shipped, Verified.
@@ -294,7 +390,7 @@ const InboundShipmentDetailView: Component = () => {
   // stay reachable at Shipped, which the edit gate closes.
   const statusLocked = () =>
     writeBlocked() || !canChangeStatus(current()?.status ?? '');
-  const isExternal = () => (current() ? isExternalShipment(current()!) : false);
+  const isExternal = () => isExternalScope(scope());
 
   const refetchAll = () => {
     void refetchInfo();
@@ -352,6 +448,11 @@ const InboundShipmentDetailView: Component = () => {
     setSelectedIds([]);
     setLineErrors(new Map());
     refetchAll();
+    // A line save or bulk action can place stock at a location (or move it), so
+    // the pickers' % used / fullness filter must re-read — the stocktake
+    // detail's refetchAfterSave, in the shape this view already has. A no-op
+    // until something has armed the latch above.
+    void refetchLocations();
   };
   const stampErrors = (errors: InboundLineErrors) =>
     setLineErrors(new Map(errors));
@@ -366,6 +467,23 @@ const InboundShipmentDetailView: Component = () => {
   const openRow = (line: Line) =>
     setEditState({ itemId: line.itemId, lineId: line.id });
   const openAdd = () => setEditState({});
+
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
+  // the SCREEN, once, because two controls trigger it: the header SplitButton
+  // and the ghost button in the table's empty slot. Each carries
+  // `shortcut={ALT_N}` for its badge; neither owns the action — which is
+  // exactly the case a control-owned declaration could not express
+  // (kdd/keyboard-layer decision 3).
+  //
+  // `run` is the plain add, the split button's default option, NOT its
+  // menu-selected value: the binding means "add an item", and the master-list
+  // and internal-order routes have their own gates. `isDisabled()` reads the
+  // `.state`-gated `info()`, so this predicate never suspends the palette.
+  createAddAction({
+    name: 'button.add-item',
+    run: openAdd,
+    disabled: () => !current() || isDisabled(),
+  });
 
   // "OK & next" (update mode): resolve the next item for the editor to advance
   // to. Owned by the PARENT because the line table is server-paginated — the
@@ -451,13 +569,20 @@ const InboundShipmentDetailView: Component = () => {
     { value: 'log', label: t('label.log') },
   ];
 
+  // The trail's leading glyph is the Replenishment section's, supplied by the
+  // shell for every page. The KIND icon (truck / house) is the RECORD's, so it
+  // rides the number crumb — before the number, as the current app shows it
+  // (spec S3 § breadcrumb).
   const crumbs = (node: InboundInfoFragment) => [
     {
       label: t('inbound-shipment'),
       onClick: () =>
         navigate(`/${params.storeId}/replenishment/inbound-shipment`),
     },
-    { label: String(node.invoiceNumber) },
+    {
+      label: String(node.invoiceNumber),
+      icon: <SupplierKindIcon isStore={supplierIsStore(node)} />,
+    },
   ];
 
   // Add-item split button options — master list & internal order gated (spec
@@ -484,16 +609,16 @@ const InboundShipmentDetailView: Component = () => {
     });
     // Add-from-internal-order — store allows the manual link, the shipment is
     // still editable, and it carries a MANUALLY linked internal order (spec
-    // AC-PG4 / AC-IO1). The distinguishing signal is linkedShipment, NOT kind:
-    // any requisition-linked shipment is inboundType FROM_REQUISITION, which
-    // kindOf() calls 'transfer', so the old `kindOf(node) !== 'transfer'` gate
-    // could never coexist with `node.requisition` — the option was dead code
-    // (H4). An INCOMING transfer has linkedShipment (arrives pre-populated, no
-    // order-line pull); a manual link has a requisition but no linkedShipment.
+    // AC-PG4 / AC-IO1). The distinguishing signal is linkedShipment: an
+    // INCOMING transfer has one (it arrives pre-populated, so there is no
+    // order-line pull to offer), a manual link has a requisition without one.
+    // That is the same signal sourceLinkOf() keys on, so a !== 'transfer' test
+    // would read equivalently here — linkedShipment is named directly because
+    // this gate is about the pre-populated lines, not about the status flow.
     // Offered only when the store enables manual IO linking (a preference
-    // gate → offer-shaping, omitted otherwise). When offered, disable-with-reason for
-    // the per-shipment state (M5): needs a manually linked internal order and an
-    // editable shipment.
+    // gate → offer-shaping, omitted otherwise). When offered,
+    // disable-with-reason for the per-shipment state (M5): needs a manually
+    // linked internal order and an editable shipment.
     if (prefs().manuallyLinkInternalOrderToInboundShipment) {
       const ioReason = !node
         ? undefined
@@ -519,27 +644,32 @@ const InboundShipmentDetailView: Component = () => {
     else openAdd();
   };
 
-  const columns = (node: InboundInfoFragment): Column<Line, SortKey>[] => {
-    const isManual = !isExternalShipment(node);
+  const columns = (): Column<Line, SortKey>[] => {
+    const isManual = !isExternal();
     return [
+      // Comment first, hidden by default (spec S3 line table col 1) — the
+      // line's note, in the shared comment cell (icon + popover). Explicit
+      // `id: 'comment'`, NOT the `note` accessor key: the id is what the
+      // column-visibility defaults and `cell-<columnId>` testids speak, and
+      // this column is "Comment" everywhere else (the list's own comment
+      // column, and the getCellDefinition preset key).
+      {
+        c: { accessor: line => line.note, id: 'comment' },
+        header: () => <CommentHeader />,
+        ...getCellDefinition('comment'),
+      },
       {
         c: { accessor: line => line.itemCode, id: 'itemCode' },
         sortKey: 'itemCode',
         header: () => t('label.code'),
+        ...getCellDefinition('itemCode'),
         // A line that arrived via another store's transfer (linkedInvoiceId
         // set) can't be independently deleted; flag its code in the error tone
-        // so the provenance is visible (spec AC-E9 / M9). Inline token colour
-        // matches the linked-order cell's inline-style precedent in this table.
+        // so the provenance is visible (spec AC-E9 / M9).
         cell: info => {
           const line = info.row.original;
           return (
-            <span
-              style={
-                line.linkedInvoiceId
-                  ? { color: 'var(--error-main)' }
-                  : undefined
-              }
-            >
+            <span class={line.linkedInvoiceId ? styles.errorCode : undefined}>
               {line.itemCode}
             </span>
           );
@@ -549,10 +679,13 @@ const InboundShipmentDetailView: Component = () => {
         c: { key: 'itemName' },
         sortKey: 'itemName',
         header: () => t('label.name'),
-        meta: { headerPosition: 'primary', wrapLines: 2 },
+        ...getCellDefinition('itemName', {
+          headerPosition: 'primary',
+          wrapLines: 2,
+        }),
       },
       // PO line number — PO-linked shipments only.
-      ...(isExternalShipment(node)
+      ...(isExternal()
         ? [
             {
               c: {
@@ -560,16 +693,23 @@ const InboundShipmentDetailView: Component = () => {
                 id: 'poLine',
               },
               header: () => t('label.po-line-number'),
+              // No CELL_DEF key; "PO line number" is the binding constraint.
               ...getNumberCell(),
+              size: remToPx(8),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
-      { c: { key: 'batch' }, sortKey: 'batch', header: () => t('label.batch') },
+      {
+        c: { key: 'batch' },
+        sortKey: 'batch',
+        header: () => t('label.batch'),
+        ...getCellDefinition('batch'),
+      },
       {
         c: { key: 'expiryDate' },
         sortKey: 'expiryDate',
         header: () => t('label.expiry'),
-        ...getDateCell(),
+        ...getCellDefinition('expiryDate'),
       },
       // VVM status — gated by the store preference; shown for vaccine items
       // only, blank otherwise (VVM applies to vaccines, spec AC-PG1 / M1).
@@ -584,6 +724,7 @@ const InboundShipmentDetailView: Component = () => {
                 id: 'vvmStatus',
               },
               header: () => t('label.vvm-status'),
+              ...getCellDefinition('vvmStatus'),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
@@ -591,17 +732,21 @@ const InboundShipmentDetailView: Component = () => {
         c: { accessor: line => line.location?.code ?? '', id: 'location' },
         sortKey: 'locationName',
         header: () => t('label.location'),
+        ...getCellDefinition('location'),
       },
       // Unit name (spec S1 line-table col 9 / L3).
       {
         c: { accessor: line => line.item?.unitName ?? '', id: 'unitName' },
         header: () => t('label.unit'),
+        ...getCellDefinition('unitName'),
       },
       {
         c: { key: 'packSize' },
         sortKey: 'packSize',
-        header: () => t('label.pack-size'),
-        ...getNumberCell(),
+        header: () => t('label.received-pack-size'),
+        // Not `packSize` — that preset is sized for the header "Pack size".
+        // See `receivedPackSize` in _globalColumnConfig for the measurement.
+        ...getCellDefinition('receivedPackSize'),
       },
       // Doses per unit (H5) — vaccines-in-doses pref; the item's configured
       // doses, blank for a non-vaccine item.
@@ -616,15 +761,14 @@ const InboundShipmentDetailView: Component = () => {
                 id: 'dosesPerUnit',
               },
               header: () => t('label.doses-per-unit'),
-              ...getNumberCell(),
+              ...getCellDefinition('dosesPerUnit'),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
       {
         c: { key: 'numberOfPacks' },
-        header: () => t('label.pack-quantity'),
-        ...getNumberCell(),
-        meta: { align: 'right', headerPosition: 'badge' },
+        header: () => t('label.packs-received'),
+        ...getCellDefinition('numberOfPacks', { headerPosition: 'badge' }),
       },
       // Difference (H6) — supplier-shipped packs minus received packs; blank
       // when nothing was recorded as shipped.
@@ -637,7 +781,7 @@ const InboundShipmentDetailView: Component = () => {
           id: 'difference',
         },
         header: () => t('label.difference'),
-        ...getNumberCell(),
+        ...getCellDefinition('difference'),
       },
       // Unit quantity (H6) — pack size × pack quantity; manual shipments only.
       ...(isManual
@@ -648,7 +792,7 @@ const InboundShipmentDetailView: Component = () => {
                 id: 'unitQuantity',
               },
               header: () => t('label.unit-quantity'),
-              ...getNumberCell(),
+              ...getCellDefinition('unitQuantity'),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
@@ -667,7 +811,7 @@ const InboundShipmentDetailView: Component = () => {
                 id: 'doses',
               },
               header: () => t('label.doses'),
-              ...getNumberCell(),
+              ...getCellDefinition('doses'),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
@@ -693,6 +837,10 @@ const InboundShipmentDetailView: Component = () => {
                 id: 'authStatus',
               },
               header: () => t('label.auth-status'),
+              // Pending/Passed/Rejected as text; no CELL_DEF key, and "Auth
+              // status" is the binding constraint.
+              ...getTextCell(),
+              size: remToPx(7),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
@@ -702,12 +850,12 @@ const InboundShipmentDetailView: Component = () => {
             {
               c: { key: 'costPricePerPack' },
               header: () => t('label.pack-cost-price'),
-              ...getCurrencyCell(),
+              ...getCellDefinition('costPricePerPack'),
             } satisfies Column<Line, SortKey>,
             {
               c: { key: 'sellPricePerPack' },
               header: () => t('label.pack-sell-price'),
-              ...getCurrencyCell(),
+              ...getCellDefinition('sellPricePerPack'),
             } satisfies Column<Line, SortKey>,
             {
               c: {
@@ -719,7 +867,7 @@ const InboundShipmentDetailView: Component = () => {
                 id: 'total',
               },
               header: () => t('label.total'),
-              ...getCurrencyCell(),
+              ...getCellDefinition('total'),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
@@ -729,6 +877,11 @@ const InboundShipmentDetailView: Component = () => {
             {
               c: { accessor: line => line.donor?.name ?? '', id: 'donor' },
               header: () => t('label.donor'),
+              // The `donor` preset, NOT `name`: `name` is the text SINK
+              // (18.75rem, uncapped) — the width the item-name column earns
+              // by being the row's identity. A second sink beside it just
+              // eats the table.
+              ...getCellDefinition('donor'),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
@@ -738,11 +891,12 @@ const InboundShipmentDetailView: Component = () => {
           id: 'manufacturer',
         },
         header: () => t('label.manufacturer'),
+        ...getCellDefinition('manufacturer'),
       },
       {
         c: { key: 'manufactureDate' },
         header: () => t('label.manufacture-date'),
-        ...getDateCell(),
+        ...getCellDefinition('manufactureDate'),
       },
       // Campaign/program (spec S1 line-table col 23 / L3) — manual shipments
       // only; a line carries a campaign OR a program (mutually exclusive).
@@ -755,10 +909,12 @@ const InboundShipmentDetailView: Component = () => {
                 id: 'campaignProgram',
               },
               header: () => t('label.campaign'),
+              // The `campaign` preset (a campaign OR program name), as the
+              // stocktake line table uses — not the `name` text sink.
+              ...getCellDefinition('campaign'),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
-      { c: { key: 'note' }, header: () => t('label.note') },
     ];
   };
 
@@ -780,8 +936,9 @@ const InboundShipmentDetailView: Component = () => {
                 <InboundShipmentSidePanel
                   storeId={params.storeId}
                   node={node()}
+                  open={sidePanelOpen()}
                   disabled={isDisabled()}
-                  isExternal={isExternal()}
+                  scope={scope()}
                   edit={edit}
                   donorTracking={prefs().allowTrackingOfStockByDonor}
                   foreignCurrencyAllowed={prefs().issueInForeignCurrency}
@@ -793,14 +950,29 @@ const InboundShipmentDetailView: Component = () => {
               }
               header={
                 <Header>
-                  <Breadcrumb icon={<TruckIcon />} crumbs={crumbs(node())} />
+                  {/* No `icon` — the leading glyph is the Replenishment
+                      section's, from the shell. The kind icon rides the number
+                      crumb (see `crumbs`). */}
+                  <Breadcrumb crumbs={crumbs(node())} />
+                  {/* Every control here collapses to its icon on a narrow
+                      viewport (`collapsible="narrow"`, label kept as the
+                      accessible name and repeated as a tooltip — the outbound
+                      header's tier). Labelled, this cluster needs more width
+                      than a tablet's header has left beside the breadcrumb, so
+                      it wrapped onto a row of its own — and on a short screen
+                      that row costs table rows, which are worth more. The
+                      split button gains an icon for the same reason: collapsed
+                      it is nothing but its icon. */}
                   <HeaderButtons>
                     <Show when={!isDisabled()}>
                       <SplitButton
+                        icon={<PlusCircleIcon />}
+                        collapsible="narrow"
                         options={addOptions()}
                         value="item"
                         testId="add-item-button"
                         menuLabel={t('button.add-item')}
+                        shortcut={ALT_N}
                         onAction={onAddAction}
                       />
                     </Show>
@@ -817,14 +989,36 @@ const InboundShipmentDetailView: Component = () => {
                       <Button
                         variant="secondary"
                         icon={<SidebarIcon />}
+                        collapsible="narrow"
+                        title={t('button.more')}
                         data-testid="open-detail-panel-button"
+                        // createSidePanelOpen registers Alt+M; this is the
+                        // control that advertises it (ui-surface S2).
+                        shortcut={ALT_M}
                         onClick={() => setSidePanelOpen(true)}
                       >
                         {t('button.more')}
                       </Button>
                     </Show>
                   </HeaderButtons>
-                  <Toolbar>
+                  {/* The header field cluster — never a hand-rolled <Toolbar>
+                      (ui/docs/PAGES.md § header field cluster). The kind banner
+                      (spec S3: manual shipments don't auto-advance; a
+                      transfer/automatic one is driven by the sending side) is
+                      the cluster's `alert`: a COMPACT Alert, which is what the
+                      slot takes — it hugs its content at the end of the field
+                      row on the bottom baseline and drops to its own line when
+                      the row can't hold it. A full-width Alert here would take
+                      an equal share of the row like a field. */}
+                  <HeaderToolbar
+                    alert={
+                      <Alert severity="info" compact>
+                        {sourceLinkOf(node()) === 'none'
+                          ? t('messages.inbound-manual-info')
+                          : t('messages.inbound-automatic-info')}
+                      </Alert>
+                    }
+                  >
                     <InboundShipmentDetailToolbar
                       storeId={params.storeId}
                       node={node()}
@@ -836,15 +1030,18 @@ const InboundShipmentDetailView: Component = () => {
                     />
                     {/* PROMINENT custom fields for the scope — stay in the
                         toolbar even when the shipment is read-only, just
-                        disabled (spec/ui-standards/custom-fields). */}
+                        disabled (spec/ui-standards/custom-fields). They wear
+                        their own labels like the fields above (the cluster's
+                        `field` layout). */}
                     <CustomFieldsToolbar
                       scope="inbound_shipment"
                       recordId={node().id}
                       values={node().customFields}
                       disabled={isDisabled()}
+                      layout="field"
                       onSave={patch => void saveField({ customFields: patch })}
                     />
-                  </Toolbar>
+                  </HeaderToolbar>
                   <TabList tabs={tabs()} />
                 </Header>
               }
@@ -856,13 +1053,15 @@ const InboundShipmentDetailView: Component = () => {
                       storeId={params.storeId}
                       node={node()}
                       disabled={statusLocked()}
+                      isExternal={isExternal()}
                       onSetHold={setHold}
                       onAdvanced={onAdvanced}
+                      pagination={linePagination()}
                     />
                   }
                 >
-                  <ContentFooter>
-                    <strong>
+                  <ContentFooter testId="actions-footer">
+                    <strong data-testid="selected-rows-count">
                       {selectedIds().length} {t('label.selected')}
                     </strong>
                     <DeleteLinesAction
@@ -887,6 +1086,7 @@ const InboundShipmentDetailView: Component = () => {
                       selectedIds={selectedIds}
                       disabled={isDisabled()}
                       locations={locations()}
+                      locationsLoading={locationsData.loading}
                       requiredVolume={selectedVolume}
                       onChanged={onLinesChanged}
                       onError={stampErrors}
@@ -915,6 +1115,28 @@ const InboundShipmentDetailView: Component = () => {
                         onError={stampErrors}
                       />
                     </Show>
+                    {/* Return selected lines → supplier-return create flow
+                        (spec/supplier-returns § from an originating inbound
+                        shipment). Shown at every status; a non-returnable
+                        status explains rather than acts. */}
+                    <ReturnFromInboundAction
+                      storeId={params.storeId}
+                      shipmentId={node().id}
+                      shipmentInvoiceNumber={node().invoiceNumber}
+                      supplierId={node().otherPartyId}
+                      supplierName={node().otherPartyName}
+                      status={node().status}
+                      stockLineIds={() =>
+                        rows()
+                          .filter(line => selectedIds().includes(line.id))
+                          .map(line => line.stockLine?.id)
+                          .filter((id): id is string => !!id)
+                      }
+                      onDone={() => setSelectedIds([])}
+                    />
+                    {/* The pager rides the selection face as well: ticking a
+                        row must not strip the way to the rest of the lines. */}
+                    <Pagination {...linePagination()} inBar />
                     <ContentFooterActions>
                       <Button
                         variant="secondary"
@@ -930,7 +1152,7 @@ const InboundShipmentDetailView: Component = () => {
             >
               <TabPanel value="details">
                 <DataTable
-                  columns={columns(node())}
+                  columns={columns()}
                   rows={rows()}
                   rowKey={line => line.id}
                   loading={linesData.loading}
@@ -949,10 +1171,16 @@ const InboundShipmentDetailView: Component = () => {
                   }
                   emptyMessage={t('error.no-inbound-items')}
                   empty={
+                    // The empty state's create affordance takes the shared
+                    // nothing-here id — NOT `add-item-button`, which is the
+                    // Add-item split button's prefix (it generates
+                    // add-item-button-main / -dropdown, so re-stamping it here
+                    // collided with them).
                     isDisabled() ? undefined : (
                       <Button
-                        icon={<InfoIcon />}
-                        data-testid="add-item-button"
+                        variant="ghost"
+                        shortcut={ALT_N}
+                        data-testid="nothing-here-create-button"
                         onClick={openAdd}
                       >
                         {t('button.add-item')}
@@ -969,14 +1197,6 @@ const InboundShipmentDetailView: Component = () => {
                       ? tableConfig.saveGlobalTableConfig
                       : undefined
                   }
-                  pagination={{
-                    offset: query().offset,
-                    pageSize: query().first,
-                    total: totalCount(),
-                    onOffsetChange: offset => setQuery({ ...query(), offset }),
-                    onPageSizeChange: first =>
-                      setQuery({ ...query(), first, offset: 0 }),
-                  }}
                 />
               </TabPanel>
               <Show when={isExternal()}>
@@ -1016,9 +1236,9 @@ const InboundShipmentDetailView: Component = () => {
                 />
               </TabPanel>
               <TabPanel value="log">
-                <InboundShipmentLogPanel
+                <ActivityLogPanel
                   storeId={params.storeId}
-                  invoiceId={node().id}
+                  recordId={node().id}
                 />
               </TabPanel>
 

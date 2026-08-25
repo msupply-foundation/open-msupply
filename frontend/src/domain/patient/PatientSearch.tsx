@@ -1,13 +1,15 @@
 import { Show, type JSX } from 'solid-js';
 import { AsyncCombobox } from '../../ui/elements/selectors/AsyncCombobox';
 import { Button } from '../../ui/elements/buttons/Button';
-import { PlusCircleIcon } from '../../ui/icons';
+import { IconButton } from '../../ui/elements/buttons/IconButton';
+import { EditIcon, PlusCircleIcon } from '../../ui/icons';
 import { t, localisedDate } from '../../intl';
 import type { FocusTarget } from '../../ui/utils/createFocusTarget';
 import {
   patientSearchPageFetcher,
   type PatientOption,
 } from './patientResource';
+import styles from './PatientSearch.module.css';
 
 export interface PatientSearchProps {
   label: string;
@@ -25,10 +27,14 @@ export interface PatientSearchProps {
   hideLabel?: boolean;
   /** Control size — `small` for a header field cluster's compact row. */
   size?: 'default' | 'small';
+  /** Width cap — `full` to fill the slot a layout hands it (header clusters). */
+  width?: 'compact' | 'short' | 'long' | 'full';
   disabled?: boolean;
   /** Inline error text shown under the field. */
   error?: string;
-  /** Override the input's `data-testid` (defaults to `patient-search-input`). */
+  /**
+   * Override the input's `data-testid` (defaults to `patient-search-input`).
+   */
   inputTestId?: string;
   /** Whether the selection can be cleared (default true). */
   clearable?: boolean;
@@ -45,27 +51,38 @@ export interface PatientSearchProps {
    * flow from this callback and selects the result via `onSelect`.
    */
   onCreatePatient?: () => void;
+  /**
+   * When set, the picker offers its **edit-patient** affordance for the
+   * currently-selected patient (spec/patients S4 allow-edit): an edit button
+   * at the end of the field, as the current app has. The consuming vertical
+   * decides what it opens (routing is the app's concern, not the domain
+   * module's) and is handed the selected patient's id.
+   *
+   * Offered only while a patient IS selected, and NOT gated by `disabled`: it
+   * edits the patient, not the record hosting this picker (prescriptions
+   * ui-surface S3 — it stays available on a read-only prescription).
+   */
+  onEditPatient?: (patientId: string) => void;
 }
 
 // One option row (spec/patients S4): the code (emphasised), the date of birth,
 // then the derived name. Code, date of birth, and name are separately-marked
-// nodes (e2e/TESTIDS.md item-option-code / -dob / -name).
+// nodes (e2e/TESTIDS.md item-option-code / -dob / -name). Layout in
+// PatientSearch.module.css — the identifiers hold their line, the name wraps in
+// what's left.
 const renderRow = (patient: PatientOption): JSX.Element => (
-  <span
-    style={{ display: 'inline-flex', 'align-items': 'center', gap: '0.5rem' }}
-  >
-    <span
-      data-testid="item-option-code"
-      style={{ 'font-weight': 'var(--weight-bold)' }}
-    >
+  <span class={styles.row}>
+    <span class={styles.code} data-testid="item-option-code">
       {patient.code}
     </span>
     {patient.dateOfBirth ? (
-      <span data-testid="item-option-dob">
+      <span class={styles.dob} data-testid="item-option-dob">
         {localisedDate(patient.dateOfBirth)}
       </span>
     ) : null}
-    <span data-testid="item-option-name">{patient.name}</span>
+    <span class={styles.name} data-testid="item-option-name">
+      {patient.name}
+    </span>
   </span>
 );
 
@@ -76,22 +93,44 @@ const renderRow = (patient: PatientOption): JSX.Element => (
  * shows the derived name. A thin binding over AsyncCombobox: it supplies the
  * search fetcher + the option row; the combobox owns the input/listbox/paging.
  *
- * The empty query is gated (spec/patients S4): an unqueried picker does NOT list
- * every site patient — it shows the `messages.type-to-search` hint ("Start
- * typing to search") in place of results and issues no request until text is
- * typed. Once a search settles with no match the copy switches to
+ * The empty query is gated (spec/patients S4): an unqueried picker does NOT
+ * list every site patient — it shows the `messages.type-to-search` hint
+ * ("Start typing to search") in place of results and issues no request until
+ * text is typed. Once a search settles with no match the copy switches to
  * `messages.no-matching-patients` — the fact the user is actually after
  * (OMS-REG-DIS-01 `.52`, D68).
  *
- * Consumed by other surfaces (prescriptions, next-of-kin). The allow-edit
- * inline affordance (spec/patients S4) is added by its consuming vertical when
- * built — see the implementation flags.
+ * Consumed by other surfaces (prescriptions, next-of-kin). Its allow-edit
+ * affordance (spec/patients S4) is `onEditPatient`: an edit button at the end
+ * of the field — the current app's placement — so it costs the label row
+ * nothing and stays live while the picker itself is disabled. The consumer
+ * decides where the affordance leads — prescriptions opens the S4 two-tab edit
+ * modal (`EditPatientModal`, `src/sections/patients`) in place, never a
+ * navigate-away (#1038).
  */
 export const PatientSearch = (props: PatientSearchProps): JSX.Element => (
   <AsyncCombobox<PatientOption>
     label={props.label}
     hideLabel={props.hideLabel}
+    // The edit-patient button, at the end of the field: offered only once a
+    // patient is selected (there is nothing to edit otherwise), and
+    // deliberately NOT gated by `disabled` — it edits the patient, not the
+    // record hosting the picker (prescriptions ui-surface S3).
+    endAction={
+      <Show when={props.onEditPatient && props.selected}>
+        {selected => (
+          <IconButton
+            icon={<EditIcon />}
+            label={t('label.edit')}
+            size="small"
+            data-testid="edit-patient-button"
+            onClick={() => props.onEditPatient?.(selected().id)}
+          />
+        )}
+      </Show>
+    }
     size={props.size}
+    width={props.width}
     class={props.class}
     disabled={props.disabled}
     error={props.error}
@@ -109,6 +148,11 @@ export const PatientSearch = (props: PatientSearchProps): JSX.Element => (
     itemToString={patient => patient.name}
     itemToValue={patient => patient.id}
     renderItem={renderRow}
+    // Let the popup grow past a narrow field — the field is often a dialog
+    // column or a header cluster's compact slot, and at that width a patient's
+    // code + date of birth + name has nowhere to go (#1041). Same treatment as
+    // the location pickers.
+    matchTriggerWidth={false}
     selected={props.selected}
     onSelect={props.onSelect}
     // Create-patient entry (opt-in) at the foot of the result list, offered

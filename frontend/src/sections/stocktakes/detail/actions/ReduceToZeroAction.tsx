@@ -4,13 +4,9 @@ import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { createFocusTarget } from '@/ui/utils/createFocusTarget';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { Button } from '@/ui/elements/buttons/Button';
+import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
 import { FieldRow } from '@/ui/elements/inputs/FieldRow';
-import {
-  CheckIcon,
-  MinusCircleIcon,
-  SearchIcon,
-  XCircleIcon,
-} from '@/ui/icons';
+import { MinusCircleIcon } from '@/ui/icons';
 import { ReasonSelect } from '@/domain/reasonOptions';
 import {
   runBatchStocktakeLines,
@@ -27,8 +23,16 @@ export interface ReduceToZeroActionProps {
    * ever required under this preference, so the picker is omitted here too.
    */
   hideReason: boolean;
-  /** Apply what committed in place (no refetch). */
-  onCommit: (commit: LineEditCommit) => void;
+  /**
+   * Apply what committed in place (no refetch). `keepSelection` holds the
+   * selection open on a partial outcome: this dialog lives INSIDE the
+   * selection footer, so clearing the selection unmounts it mid-report
+   * (issue #1150).
+   */
+  onCommit: (
+    commit: LineEditCommit,
+    opts?: { keepSelection?: boolean }
+  ) => void;
   /**
    * Partial failure — stamp the per-line errors (lineId → typename) so the
    * rows show them.
@@ -42,24 +46,33 @@ export interface ReduceToZeroActionProps {
 }
 
 // The Reduce-to-0 selection action: its footer button + a confirm → working →
-// success | error modal (a negative-adjustment ReasonSelect setting
+// success | summary modal (a negative-adjustment ReasonSelect setting
 // countedNumberOfPacks = 0 on every selected line; the server enforces whether
 // a reason is required).
+//
+// Selected lines are INDEPENDENT of each other, so the batch runs with
+// continueOnError: every line the server accepts is reduced and the rest report
+// their own error — the outcome then says how many of each (issue #1150). A
+// line is commonly rejected for a legitimate reason: reducing it to 0 would
+// drive its stock line's available quantity negative, because some of its packs
+// are already allocated to outbound shipments that haven't been picked. Those
+// lines CANNOT be reduced to 0 (until the allocation is picked or cancelled),
+// so the summary names that as the cause rather than inviting a retry.
 //
 // The modal is written inline (not via a shared ActionModal) so the whole flow
 // — mutation, the phase transitions, what each phase renders — is readable in
 // one place (kdd/explicit-composition). What committed splices in via onCommit;
-// on a partial failure the offending lines are stamped (onError) so they also
-// show inline on the detail rows, and the error phase offers "Show error lines"
-// (onShowErrors filters to them). The phase lives in <Body>, mounted only while
-// open, so it's fresh on every open and a late-resolving run() from a prior
-// open lands on a disposed scope.
+// the offending lines are stamped (onError) so they also show inline on the
+// detail rows, and the summary offers "Show error lines" (onShowErrors filters
+// to them). The phase lives in <Body>, mounted only while open, so it's fresh
+// on every open and a late-resolving run() from a prior open lands on a
+// disposed scope.
 export const ReduceToZeroAction: Component<ReduceToZeroActionProps> = props => {
   const [open, setOpen] = createSignal(false);
   return (
     <>
       <Button
-        variant="secondary"
+        variant="danger"
         icon={<MinusCircleIcon />}
         disabled={props.disabled}
         data-testid="reduce-lines-to-zero-button"
@@ -74,12 +87,26 @@ export const ReduceToZeroAction: Component<ReduceToZeroActionProps> = props => {
   );
 };
 
-type Phase = 'confirm' | 'working' | 'success' | 'error';
+// No success phase: an apply where EVERY line reduced closes the dialog —
+// closure is the confirmation and the zeroed rows behind it are the visible
+// result (spec/ui-standards/controls.md § dialogs, D22; § action feedback, D21).
+// A mixed outcome has something only a message can carry (how many reduced, how
+// many couldn't and why), so that one stays open on the summary phase.
+type Phase = 'confirm' | 'working' | 'summary';
 
 const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
   const [reasonId, setReasonId] = createSignal<string | null>(null);
   const [phase, setPhase] = createSignal<Phase>('confirm');
-  const [errorCount, setErrorCount] = createSignal(0);
+  const [reducedCount, setReducedCount] = createSignal(0);
+  const [errors, setErrors] = createSignal<LineErrors>(new Map());
+
+  const errorCount = () => errors().size;
+  // Every rejection is the reserved-stock rule → name that cause outright. A
+  // mixed bag (a reason became invalid, the stocktake was locked meanwhile)
+  // falls back to the bare count, since one sentence can't explain all of them.
+  const allReservedStock = () =>
+    errorCount() > 0 &&
+    [...errors().values()].every(e => e === 'StockLineReducedBelowZero');
 
   const run = async () => {
     if (phase() !== 'confirm') return; // re-entry guard
@@ -90,15 +117,25 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
         countedNumberOfPacks: 0,
         reasonOptionId: reasonId(),
       })),
+      // Independent lines: each stands or falls alone. Without this the server
+      // rolls the whole selection back over one rejected line — while still
+      // reporting the rest as saved (issue #1150).
+      continueOnError: true,
     });
     // Transport / NodeError → outcome undefined (the global modal already
-    // showed it); just close.
-    if (!outcome) return props.onClose();
-    props.onCommit(outcome.commit);
-    if (outcome.errors.size === 0) return setPhase('success');
+    // showed it); stay on the confirm phase with the pick intact.
+    if (!outcome) return setPhase('confirm');
+    const failed = outcome.errors.size;
+    // keepSelection on a mixed outcome: this dialog is a child of the selection
+    // footer, so letting the commit clear the selection would unmount it before
+    // the summary below could be read (issue #1150).
+    props.onCommit(outcome.commit, { keepSelection: failed > 0 });
+    // Every line reduced: close — the rows already read zero.
+    if (failed === 0) return props.onClose();
     props.onError(outcome.errors); // stamp so the rows show the errors too
-    setErrorCount(outcome.errors.size);
-    setPhase('error');
+    setReducedCount(outcome.commit.updated.length);
+    setErrors(outcome.errors);
+    setPhase('summary');
   };
 
   // The reason picker is the confirm phase's only control, so the dialog opens
@@ -135,12 +172,19 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
             </>
           }
         >
-          <Match when={phase() === 'success'}>
-            {tPlural('messages.reduced-to-zero', props.selectedIds().length)}
-          </Match>
-          <Match when={phase() === 'error'}>
-            <Alert severity="error">
-              {tPlural('messages.line-errors', errorCount())}
+          <Match when={phase() === 'summary'}>
+            {/* Two facts, two lines: what WAS reduced (the action did work, so
+                this is not a plain error) and what wasn't, with the cause when
+                every rejection shares one. severity="warning" because the
+                result is partial, not failed. */}
+            <Alert severity="warning" testId="reduce-to-zero-summary">
+              <Show when={reducedCount() > 0}>
+                <p>{tPlural('messages.lines-reduced', reducedCount())}</p>
+              </Show>
+              <p>{tPlural('messages.lines-not-reduced', errorCount())}</p>
+              <Show when={allReservedStock()}>
+                <p>{t('error.reduced-below-zero')}</p>
+              </Show>
             </Alert>
           </Match>
         </Switch>
@@ -152,19 +196,15 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
             // Apply.
             <>
               <Show when={phase() === 'confirm'}>
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
+                <CancelButton
                   data-testid="dialog-button-cancel"
                   onClick={props.onClose}
-                >
-                  {t('button.cancel')}
-                </Button>
+                />
               </Show>
               <Button
-                variant="primary"
-                icon={<CheckIcon />}
+                variant="danger"
                 loading={phase() === 'working'}
+                confirms="plain"
                 data-testid="dialog-button-ok"
                 onClick={() => void run()}
               >
@@ -173,28 +213,13 @@ const Body = (props: ReduceToZeroActionProps & { onClose: () => void }) => {
             </>
           }
         >
-          <Match when={phase() === 'success'}>
-            <Button
-              variant="secondary"
-              icon={<CheckIcon />}
-              data-testid="dialog-button-ok"
-              onClick={props.onClose}
-            >
-              {t('button.ok')}
-            </Button>
-          </Match>
-          <Match when={phase() === 'error'}>
-            <Button
-              variant="secondary"
-              icon={<XCircleIcon />}
+          <Match when={phase() === 'summary'}>
+            <CancelButton
               data-testid="dialog-button-cancel"
               onClick={props.onClose}
-            >
-              {t('button.cancel')}
-            </Button>
+            />
             <Button
               variant="primary"
-              icon={<SearchIcon />}
               onClick={() => {
                 props.onShowErrors();
                 props.onClose();

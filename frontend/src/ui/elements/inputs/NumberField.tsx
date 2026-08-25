@@ -1,6 +1,7 @@
 import { createEffect, createSignal, on, onMount, splitProps } from 'solid-js';
 import { locale } from '../../../intl/intl';
 import { TextField, type TextFieldProps } from './TextField';
+import { useInTableCell } from '../table/inTableCell';
 import {
   displayString,
   editString,
@@ -43,6 +44,15 @@ export interface NumberFieldProps extends Omit<
    * blur/Enter after canonicalising. Parents MUST handle `undefined`.
    */
   onChange?: (value: number | undefined) => void;
+  /**
+   * Fired after a commit whose typed number the constraints changed —
+   * rounded to `decimalLimit` (pasted over-precision) or clamped to
+   * `min`/`max` — with what was entered and what was applied. Consumers that
+   * must REPORT an adjusted entry rather than silently bound it (e.g. the
+   * allocation editors' AC-AL13 banner) hook this; arrow-stepping and
+   * programmatic value changes never fire it.
+   */
+  onClamped?: (entered: number, applied: number) => void;
   /** Lower bound. Default 0 — or -MAX_SAFE_API_INTEGER with `allowNegative`. */
   min?: number;
   /** Upper bound. Default MAX_SAFE_API_INTEGER. */
@@ -111,6 +121,7 @@ export const NumberField = (props: NumberFieldProps) => {
   const [local, rest] = splitProps(props, [
     'value',
     'onChange',
+    'onClamped',
     'min',
     'max',
     'allowNegative',
@@ -132,6 +143,13 @@ export const NumberField = (props: NumberFieldProps) => {
     noFormatting: local.noFormatting,
   });
 
+  /*
+   * Whether this field sits in a table cell (KB-S2 — see inTableCell.ts). Read
+   * ONCE at setup, not reactively: a field does not migrate in or out of a cell,
+   * and the value is the same for every field the table renders.
+   */
+  const inTableCell = useInTableCell();
+
   const [text, setText] = createSignal(
     displayString(local.value ?? local.defaultValue, constraints(), locale())
   );
@@ -143,6 +161,17 @@ export const NumberField = (props: NumberFieldProps) => {
   const commit = (value: number | undefined) => {
     lastCommitted = { value };
     if (value !== local.value) local.onChange?.(value);
+  };
+
+  // After the commit (so onChange's state lands first), report an entry the
+  // constraints adjusted. Repeat keystrokes past a bound re-fire — the entered
+  // figure changes ("900" → "9000") even while the committed value holds.
+  const reportClamped = (result: {
+    value: number | undefined;
+    adjustedFrom?: number;
+  }) => {
+    if (result.adjustedFrom != null && result.value != null)
+      local.onClamped?.(result.adjustedFrom, result.value);
   };
 
   onMount(() => {
@@ -219,7 +248,10 @@ export const NumberField = (props: NumberFieldProps) => {
       );
       el.setSelectionRange(pos, pos);
     }
-    if (result.commit) commit(result.commit.value);
+    if (result.commit) {
+      commit(result.commit.value);
+      reportClamped(result.commit);
+    }
   };
 
   const finalize = () => {
@@ -227,12 +259,27 @@ export const NumberField = (props: NumberFieldProps) => {
     const result = finalizeText(text(), constraints(), locale());
     setText(result.text);
     commit(result.value);
+    reportClamped(result);
   };
 
   const handleKeyDown = (
     e: KeyboardEvent & { currentTarget: HTMLInputElement }
   ) => {
     if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+      /*
+       * KB-S2: "A numeric field INSIDE A TABLE CELL instead lets arrow keys move
+       * the text cursor, and MUST NOT step the value or move the row focus."
+       *
+       * So in a cell we neither step nor preventDefault: the caret moves on the
+       * UA's own default action. `stopPropagation` stays, which is KB-N2 from the
+       * field's side — "arrow keys inside a table's input belong to the field" —
+       * and is what will keep a row-navigation rung from seeing the key when one
+       * exists (it does not today; see kdd/keyboard-layer).
+       */
+      if (inTableCell) {
+        e.stopPropagation();
+        return;
+      }
       e.preventDefault();
       e.stopPropagation();
       const amount =
@@ -278,9 +325,15 @@ export const NumberField = (props: NumberFieldProps) => {
     <TextField
       {...rest}
       class={local.class ? `${styles.numeric} ${local.class}` : styles.numeric}
-      // Numbers are short: default to the compact width cap (old OMS's
-      // numeric input defaulted narrow too, at 75px). Overridable per field.
-      width={local.width ?? 'compact'}
+      // No numeric-specific default: a number field fills its container like
+      // every other input. Numbers ARE short, but the container a number sits
+      // in is nearly always already narrow — a table cell sized by its column,
+      // a FormRow share, a side-panel value track — and there the old
+      // `compact` default only ever under-filled it. Where the container is
+      // genuinely unbounded (a full-width settings page), the field says
+      // `width="compact"` itself. Measured: 20 call sites overrode this to
+      // `full`, 1 asked for `compact`.
+      width={local.width}
       type="text"
       inputmode={inputMode()}
       autocomplete="off"

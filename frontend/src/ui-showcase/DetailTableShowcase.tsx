@@ -569,7 +569,6 @@ export const DetailTableShowcase = () => {
                 <TextArea
                   label="Comment"
                   hideLabel
-                  width="full"
                   value={comment()}
                   onInput={e => setComment(e.currentTarget.value)}
                 />
@@ -644,10 +643,13 @@ export const DetailTableShowcase = () => {
               </Show>
             </HeaderButtons>
             {/* The header field cluster via HeaderToolbar (Carl 2026-07-27):
-                fields flow into its FormRow (equal shares at a 10rem min,
-                growing to fill and wrapping as a unit); the compact Alert goes
+                fields flow into its FormRow (equal shares at a 10rem min by
+                default — a field whose data needs a different share wraps in a
+                FormRowItem — growing to fill and wrapping as a unit); the
+                compact Alert goes
                 to the `alert` prop, rendered as a content-hugging chip pinned to
-                the bottom baseline. Fields take width="full" to fill the share. */}
+                the bottom baseline. Fields fill the share they're handed —
+                that's the default, so nothing is passed for it. */}
             <HeaderToolbar
               alert={
                 <Alert severity="info" compact>
@@ -658,7 +660,6 @@ export const DetailTableShowcase = () => {
               <Select
                 label={t('label.supplier-name')}
                 size="small"
-                width="full"
                 options={SUPPLIERS}
                 value={supplier()}
                 onValueChange={setSupplier}
@@ -666,14 +667,12 @@ export const DetailTableShowcase = () => {
               <TextField
                 label={t('label.reference')}
                 size="small"
-                width="full"
                 value={reference()}
                 onInput={e => setReference(e.currentTarget.value)}
               />
               <DateField
                 label={t('label.received')}
                 size="small"
-                width="full"
                 format="dd MMM yyyy"
                 value="2026-05-19"
                 disabled

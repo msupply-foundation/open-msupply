@@ -3,6 +3,7 @@ import { generateUUID } from '../../../uuid';
 import { createResource, createSignal, Show, type JSX } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
@@ -20,8 +21,9 @@ import { FormColumn } from '../../../ui/layout/Form/FormColumn';
 import { FormSection } from '../../../ui/layout/Form/FormSection';
 import { FormRow } from '../../../ui/layout/Form/FormRow';
 import { XCircleIcon, CheckIcon } from '../../../ui/icons';
+import { createFocusTarget } from '../../../ui/utils/createFocusTarget';
 import { ItemSearch, type ItemOption } from '../../../domain/item';
-import { LocationSelect } from '../../../domain/location';
+import { LocationVolumeSelect } from '../../../domain/location';
 import { NameSearch } from '../../../domain/name';
 import { VvmStatusSelect } from '../../../domain/vvmStatus';
 import { ReasonSelect, reasonsOfKind } from '../../../domain/reasonOptions';
@@ -120,12 +122,16 @@ const NewStockContent = (props: {
   const [draft, setDraft] = createStore<Draft>({ ...EMPTY_DRAFT });
   const [saving, setSaving] = createSignal(false);
   const [error, setError] = createSignal<string | undefined>();
+  // Item-first: the modal always opens with nothing picked, so the flow starts
+  // by typing (spec S3).
+  const itemSearch = createFocusTarget();
 
   const prefs = () => stockPreferences();
   const today = localTodayIso();
 
-  // The chosen item's defaults + variants (spec S3: seed pack size + sell price;
-  // offer variants). Keyed on the item id; undefined until an item is picked.
+  // The chosen item's defaults + variants (spec S3: seed pack size + sell
+  // price; offer variants). Keyed on the item id; undefined until an item is
+  // picked.
   const [itemDetail] = createResource(
     () => item()?.id,
     async itemId => {
@@ -170,17 +176,11 @@ const NewStockContent = (props: {
   // also lingers after the item is cleared, so every read stays gated on there
   // still being a chosen item — else a cleared search would keep the old item's
   // variants / location narrowing.
-  const detail = () =>
-    item() &&
-    (itemDetail.state === 'ready' || itemDetail.state === 'refreshing')
-      ? itemDetail.latest
-      : undefined;
+  const detail = () => (item() ? gated(itemDetail) : undefined);
 
   const locations = () =>
     locationsForItem(
-      allLocations.state === 'ready' || allLocations.state === 'refreshing'
-        ? (allLocations.latest ?? [])
-        : [],
+      gated(allLocations) ?? [],
       detail()?.restrictedLocationTypeId
     );
 
@@ -265,8 +265,17 @@ const NewStockContent = (props: {
       open
       onClose={props.onClose}
       dismissable={!saving()}
-      size="large"
+      // A form dialog, not a workbench (#771): fixed at the width the
+      // two-column form needs, growing downward as the sections reveal once an
+      // item is chosen. The body reserves enough height to OWN the item
+      // search's open suggestions list (the create/search-modal convention —
+      // CustomerSearchModal et al), which otherwise dangles past the card:
+      // header + field + the listbox's 18rem cap + padding (#1029 — the old 24
+      // left the bottom ~2rem of a full listbox hanging past the dialog).
+      widthRem={56}
+      minBodyHeightRem={27}
       testId="new-stock-modal"
+      initialFocus={itemSearch}
       title={t('heading.stock-line-details')}
       actionsLead={
         <Show when={error()}>
@@ -278,6 +287,7 @@ const NewStockContent = (props: {
           <Button
             variant="secondary"
             icon={<XCircleIcon />}
+            confirms="cancel"
             disabled={saving()}
             data-testid="dialog-button-cancel"
             onClick={props.onClose}
@@ -287,6 +297,7 @@ const NewStockContent = (props: {
           <Button
             icon={<CheckIcon />}
             loading={saving()}
+            confirms="plain"
             disabled={!canConfirm()}
             data-testid="dialog-button-ok"
             onClick={() => void onOk()}
@@ -304,6 +315,7 @@ const NewStockContent = (props: {
               label={t('label.item')}
               required
               storeId={props.storeId}
+              focusTarget={itemSearch}
               value={item()?.id}
               selectedItem={item()}
               onSelect={picked => {
@@ -342,7 +354,6 @@ const NewStockContent = (props: {
                       label={t('label.pack-qty')}
                       data-testid="field-pack-quantity"
                       required
-                      width="full"
                       decimalLimit={2}
                       value={draft.numberOfPacks}
                       onChange={v => setDraft('numberOfPacks', v)}
@@ -351,7 +362,6 @@ const NewStockContent = (props: {
                       label={t('label.pack-size')}
                       data-testid="field-pack-size"
                       required
-                      width="full"
                       min={1}
                       decimalLimit={2}
                       value={draft.packSize}
@@ -369,14 +379,12 @@ const NewStockContent = (props: {
                   <TextField
                     label={t('label.batch')}
                     data-testid="field-batch"
-                    width="full"
                     value={draft.batch}
                     onInput={e => setDraft('batch', e.currentTarget.value)}
                   />
                   <TextField
                     label={t('label.barcode')}
                     data-testid="field-barcode"
-                    width="full"
                     value={draft.barcode}
                     onInput={e => setDraft('barcode', e.currentTarget.value)}
                   />
@@ -384,14 +392,12 @@ const NewStockContent = (props: {
                     <DateField
                       label={t('label.expiry-date')}
                       testId="field-expiry-date"
-                      width="full"
                       value={draft.expiryDate}
                       onChange={v => setDraft('expiryDate', v)}
                     />
                     <DateField
                       label={t('label.manufacture-date')}
                       testId="field-manufacture-date"
-                      width="full"
                       max={today}
                       value={draft.manufactureDate}
                       onChange={v => setDraft('manufactureDate', v)}
@@ -432,14 +438,12 @@ const NewStockContent = (props: {
                     <CurrencyField
                       label={t('label.cost-price')}
                       data-testid="field-cost-price"
-                      width="full"
                       value={draft.costPricePerPack}
                       onChange={v => setDraft('costPricePerPack', v)}
                     />
                     <CurrencyField
                       label={t('label.sell-price')}
                       data-testid="field-sell-price"
-                      width="full"
                       value={draft.sellPricePerPack}
                       onChange={v => setDraft('sellPricePerPack', v)}
                     />
@@ -468,13 +472,19 @@ const NewStockContent = (props: {
 
               <FormColumn>
                 <FormSection title={t('heading.storage-and-pack')}>
-                  <LocationSelect
+                  <LocationVolumeSelect
                     label={t('label.location')}
                     inputTestId="field-location"
                     locations={locations()}
                     loading={allLocations.loading}
                     value={draft.location?.id}
                     placeholder={t('label.none')}
+                    // The volume this new line will occupy, so "Available"
+                    // means "has room for it" (spec/stock/rules.md › location
+                    // fields).
+                    requiredVolume={
+                      (draft.volumePerPack ?? 0) * (draft.numberOfPacks ?? 0)
+                    }
                     onChange={l =>
                       setDraft(
                         'location',
@@ -492,7 +502,6 @@ const NewStockContent = (props: {
                     <NumberField
                       label={t('label.volume-per-pack')}
                       data-testid="field-volume-per-pack"
-                      width="full"
                       decimalLimit={10}
                       value={draft.volumePerPack}
                       onChange={v => setDraft('volumePerPack', v)}

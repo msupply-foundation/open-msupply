@@ -25,20 +25,21 @@ import {
 // Return-LEVEL mutations, split by how their errors are handled (the
 // customer-returns / stocktakeUpdate convention):
 //
-// - saveReturnFields — header saves (reference / transport reference / comment /
-//   colour / hold / custom fields). UpdateSupplierReturnResponse is a
-//   single-member union (InvoiceNode) — there is NO typed error to display; an
-//   editable return produces none the user must act on, so anything unexpected is
-//   promoted to the global modal (default graphqlFetch routing). Changing the
-//   supplier is a SEPARATE, typed mutation (changeSupplier, below).
+// - saveReturnFields — header saves (reference / transport reference /
+//   comment / colour / hold / custom fields). UpdateSupplierReturnResponse is
+//   a single-member union (InvoiceNode) — there is NO typed error to display;
+//   an editable return produces none the user must act on, so anything
+//   unexpected is promoted to the global modal (default graphqlFetch routing).
+//   Changing the supplier is a SEPARATE, typed mutation (changeSupplier,
+//   below).
 //
 // - changeSupplier — updateSupplierReturnOtherParty. The service
 //   delete-and-recreates the return under a NEW id (contract § changing the
 //   supplier), so success returns the new node to navigate to. Its four typed
 //   rejections come back for inline display on the supplier lookup.
 //
-// - advanceReturnStatus — the action with user-facing rejections. Every one is a
-//   NON-typed GraphQL error (contract § advancing status): we opt in via
+// - advanceReturnStatus — the action with user-facing rejections. Every one is
+//   a NON-typed GraphQL error (contract § advancing status): we opt in via
 //   returnGraphqlErrors and map extensions.details to translated copy.
 //
 // - saveReturnLines — the one line-save call. Its response union has NO error
@@ -46,7 +47,8 @@ import {
 //   surfaced as a message in the modal.
 //
 // - deleteReturn — all rejections non-typed (the three declared typed members
-//   are dead schema — contract § deletion). Forbidden routes to the global modal.
+//   are dead schema — contract § deletion). Forbidden routes to the global
+//   modal.
 
 // --- Header save (no typed error) ------------------------------------------
 
@@ -74,7 +76,8 @@ const OTHER_PARTY_ERROR_KEYS: Record<string, LocaleKey> = {
 };
 
 export type ChangeSupplierResult =
-  // The new return's id — the UI navigates to it (the old id no longer resolves).
+  // The new return's id — the UI navigates to it (the old id no
+  // longer resolves).
   | { kind: 'saved'; node: SupplierReturnInfoFragment }
   | { kind: 'error'; typename: string; message: string }
   | { kind: 'failed' };
@@ -107,7 +110,7 @@ export const changeSupplier = async (
 // payload still resolves).
 const ADVANCE_ERROR_KEYS: Record<string, LocaleKey> = {
   CannotIssueSupplierReturnWithNoLines: 'messages.no-lines',
-  CannotChangeStatusOfInvoiceOnHold: 'messages.on-hold-description',
+  CannotChangeStatusOfInvoiceOnHold: 'messages.status-blocked-on-hold',
   ReturnIsNotEditable: 'error.not-editable',
   CannotReverseInvoiceStatus: 'error.not-editable',
 };
@@ -142,6 +145,14 @@ export const advanceReturnStatus = async (
     { returnGraphqlErrors: true }
   );
   if (result.kind === 'graphqlError') {
+    // A server-rejected write (e.g. missing mutate permission) surfaces through
+    // the global permission-denied modal, not inline in the confirm dialog
+    // (rules § permission gates — D38); returnGraphqlErrors suppressed the
+    // default routing, so route it here.
+    if (isForbidden(result.errors)) {
+      reportPermissionDenied(missingPermissions(result.errors));
+      return { kind: 'failed' };
+    }
     const key = matchDetails(result.errors);
     return { kind: 'error', message: key ? t(key) : result.message };
   }
@@ -170,8 +181,17 @@ export const saveReturnLines = async (
     { storeId, input },
     { returnGraphqlErrors: true }
   );
-  if (result.kind === 'graphqlError')
+  if (result.kind === 'graphqlError') {
+    // returnGraphqlErrors is on (to surface the non-typed line faults), which
+    // suppresses the default Forbidden→modal routing — so route it here, like
+    // delete/create below (rules § permission gates: a server-rejected write
+    // surfaces through the global modal, never inline — D38).
+    if (isForbidden(result.errors)) {
+      reportPermissionDenied(missingPermissions(result.errors));
+      return { kind: 'failed' };
+    }
     return { kind: 'error', message: result.message };
+  }
   if (result.kind !== 'success') return { kind: 'failed' };
   return { kind: 'saved', node: result.data.updateSupplierReturnLines };
 };
@@ -214,15 +234,16 @@ export const deleteReturn = async (
 // --- Create from an originating inbound shipment ----------------------------
 
 // The from-shipment creation path (rules § creation — from an originating
-// inbound shipment; REPL-06 .1/.28): insertSupplierReturn with inboundShipmentId
-// set. The server records the originating shipment (InvoiceNode.originalShipment)
-// and auto-advances the return to SHIPPED in the same transaction, so the
-// response node is already terminal with its stock issued (contract § creation —
-// auto-ship). The entry point lives in inbound-shipments; this is the wiring for
-// it. The two typed insert errors are the supplier pair, which can't fire here
-// (the supplier comes from the shipment); every other rejection is non-typed and
-// surfaces in the modal — except Forbidden, which routes to the global modal
-// (D38), exactly as deleteReturn above.
+// inbound shipment; REPL-06 .1/.28): insertSupplierReturn with
+// inboundShipmentId set. The server records the originating shipment
+// (InvoiceNode.originalShipment) and auto-advances the return to SHIPPED in the
+// same transaction, so the response node is already terminal with its stock
+// issued (contract § creation — auto-ship). The entry point lives in
+// inbound-shipments; this is the wiring for it. The two typed insert errors are
+// the supplier pair, which can't fire here (the supplier comes from the
+// shipment); every other rejection is non-typed and surfaces in the modal —
+// except Forbidden, which routes to the global modal (D38), exactly as
+// deleteReturn above.
 export type CreateReturnResult =
   | { kind: 'created'; id: string }
   | { kind: 'forbidden' }

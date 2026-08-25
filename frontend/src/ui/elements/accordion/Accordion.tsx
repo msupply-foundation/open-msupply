@@ -1,19 +1,42 @@
-import { createContext, useContext, type Accessor, type JSX } from 'solid-js';
+import {
+  children,
+  createContext,
+  Show,
+  useContext,
+  type Accessor,
+  type JSX,
+} from 'solid-js';
 import * as KAccordion from '@kobalte/core/accordion';
 import { useCollapsibleContext } from '@kobalte/core/collapsible';
 import { ChevronDownIcon } from '../../icons';
 import styles from './Accordion.module.css';
 
 export interface AccordionProps {
-  /** Controlled: semantic key(s) of the currently-open item(s) (see AccordionItem.value). */
+  /**
+   * Controlled: semantic key(s) of the currently-open item(s) (see
+   * AccordionItem.value).
+   */
   value?: string[];
   /** Uncontrolled: semantic key(s) open on first render. */
   defaultValue?: string[];
   onValueChange?: (value: string[]) => void;
-  /** Allow more than one item open at once (a shared group of independent items). */
+  /**
+   * Allow more than one item open at once (a shared group of independent
+   * items).
+   */
   multiple?: boolean;
-  /** In single-open mode, allow closing the open item by clicking its trigger again. */
+  /**
+   * In single-open mode, allow closing the open item by clicking its trigger
+   * again.
+   */
   collapsible?: boolean;
+  /**
+   * `card` renders each item as a filled rounded panel (the current app's
+   * AccordionPanelSection look) instead of the flat, divider-separated
+   * default — for a disclosure that must read as its own region inside a
+   * form or dialog body.
+   */
+  variant?: 'card';
   class?: string;
   children: JSX.Element;
 }
@@ -46,7 +69,8 @@ export const Accordion = (props: AccordionProps) => (
     onChange={props.onValueChange}
     multiple={props.multiple}
     collapsible={props.collapsible}
-    class={props.class}
+    class={props.class ? `${styles.root} ${props.class}` : styles.root}
+    data-variant={props.variant}
   >
     {props.children}
   </KAccordion.Root>
@@ -82,18 +106,34 @@ export const AccordionItem = (props: AccordionItemProps) => (
 );
 
 export interface AccordionTriggerProps {
-  /** Heading level wrapping the trigger, for document-outline correctness. Default 'h3'. */
+  /**
+   * Heading level wrapping the trigger, for document-outline correctness.
+   * Default 'h3'.
+   */
   as?: 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+  /**
+   * Muted metadata pinned to the trigger's end, beside the chevron — a
+   * figure that must stay visible whether the section is open or closed
+   * (e.g. an available-stock total). Part of the trigger's accessible name;
+   * for collapsed-only content inside `children`, see
+   * `useAccordionItemExpanded`.
+   */
+  end?: JSX.Element;
   class?: string;
   children: JSX.Element;
 }
 
 export const AccordionTrigger = (props: AccordionTriggerProps) => {
   const value = useContext(ItemValueContext);
-  // accordion-trigger-<value> per e2e/TESTIDS.md: value lowercased, spaces → '-'
+  // accordion-trigger-<value> per e2e/TESTIDS.md: value lowercased, spaces →
+  // '-'
   const testId = value
     ? `accordion-trigger-${value.toLowerCase().replace(/\s+/g, '-')}`
     : undefined;
+  // Resolved once — a JSX prop read twice builds two element trees, and this
+  // one is typically reactive (a live stock total), so the discarded copy
+  // would rebuild on every change (kdd/solid-reactivity-pitfalls §3).
+  const end = children(() => props.end);
   return (
     <KAccordion.Header as={props.as ?? 'h3'} class={styles.header}>
       <KAccordion.Trigger
@@ -102,7 +142,10 @@ export const AccordionTrigger = (props: AccordionTriggerProps) => {
         }
         data-testid={testId}
       >
-        <span>{props.children}</span>
+        <span class={styles.label}>{props.children}</span>
+        <Show when={end()}>
+          <span class={styles.endMeta}>{end()}</span>
+        </Show>
         <ChevronDownIcon class={styles.chevron} aria-hidden="true" />
       </KAccordion.Trigger>
     </KAccordion.Header>

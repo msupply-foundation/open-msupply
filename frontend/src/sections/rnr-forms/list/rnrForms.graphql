@@ -1,0 +1,46 @@
+# The R&R forms list read (spec/rnr-forms/ui-surface.md S1) and the shared
+# row fragment. The row carries programId/supplierId beyond the display
+# columns because the create modal's prefill-from-history reads the most
+# recent form through this same query (rules § creation; useCreateRnRForm
+# precedent in the reference app).
+fragment RnrFormRow on RnRFormNode {
+  id
+  createdDatetime
+  status
+  programId
+  programName
+  supplierId
+  supplierName
+  period {
+    id
+    name
+    startDate
+    endDate
+  }
+}
+
+query RnrForms(
+  $storeId: String!
+  $filter: RnRFormFilterInput
+  $sort: RnRFormSortInput
+  $page: PaginationInput
+) {
+  rAndRForms(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {
+    ... on RnRFormConnector {
+      totalCount
+      nodes {
+        ...RnrFormRow
+      }
+    }
+  }
+}
+
+# Draft-only whole-form delete (rules § deleting). The server exposes only a
+# single-id delete; the list's bulk action fires one call per selected id.
+mutation DeleteRnrForm($storeId: String!, $id: String!) {
+  deleteRnrForm(storeId: $storeId, input: { id: $id }) {
+    ... on DeleteResponse {
+      id
+    }
+  }
+}

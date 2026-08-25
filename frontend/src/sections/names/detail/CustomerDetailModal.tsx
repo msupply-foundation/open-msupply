@@ -2,11 +2,12 @@ import { createResource, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
-import { Button } from '../../../ui/elements/buttons/Button';
+import { OkButton } from '../../../ui/elements/buttons/StandardButtons';
+import { EmptyState } from '../../../ui/elements/feedback/EmptyState';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
-import { CheckIcon } from '../../../ui/icons';
 import { NameById, NameProperties } from '../names.generated';
 import {
   detailFromResult,
@@ -16,10 +17,10 @@ import {
 } from './nameDetail';
 import { NameDetailForm } from './NameDetailForm';
 
-// S3 — Customer detail modal (read-only), opened in place over the Customer list
-// (AC-N14, AC-N20). Every field is disabled/read-only; the only footer action is
-// Close (AC-N22). Shows the customer's attributes plus its customer-only supply
-// level, a v1 name property (AC-N25).
+// S3 — Customer detail modal (read-only), opened in place over the Customer
+// list (AC-N14, AC-N20). Every field is a read-only labelled value and the only
+// footer action is OK (AC-N22). Shows the customer's attributes plus its
+// customer-only supply level, a v1 name property (AC-N25).
 
 interface Props {
   nameId: string | undefined;
@@ -32,8 +33,8 @@ type Loaded = { detail: NameDetail | undefined; propDefs: NamePropertyDef[] };
 export const CustomerDetailModal: Component<Props> = props => {
   const params = useParams<{ storeId: string }>();
 
-  // Fetch only while open with a selected id — the single-name read (by id) plus
-  // the v1 name-property definitions (for the supply-level label/value).
+  // Fetch only while open with a selected id — the single-name read (by id)
+  // plus the v1 name-property definitions (for the supply-level label/value).
   const [data] = createResource(
     () => (props.open && props.nameId ? props.nameId : undefined),
     async (nameId): Promise<Loaded> => {
@@ -52,13 +53,23 @@ export const CustomerDetailModal: Component<Props> = props => {
     }
   );
 
-  const detail = () => data.latest?.detail;
-  const title = () => detail()?.name ?? t('name.detail.loading');
+  // Read NON-SUSPENDING. This resource first fetches on an INTERACTION
+  // (opening the modal over the already-open list); a suspending read would
+  // tear down this open native <dialog> (losing its modal backdrop) and the
+  // list behind it. `data.loading` stays the spinner boolean.
+  const loaded = () => gated(data);
+  const detail = () => loaded()?.detail;
+  // The accessible name states which of the three states the viewer is in, so a
+  // record that doesn't resolve never reads as "still loading" (detail-views ›
+  // states).
+  const title = () =>
+    detail()?.name ??
+    (data.loading ? t('name.detail.loading') : t('error.customer-not-found'));
 
   return (
     // Title is the record name (accessible name), hidden because the detail
     // form shows a centred record-name header itself (matches the current app,
-    // which renders the same Details body inside the modal). Close is the only
+    // which renders the same Details body inside the modal). OK is the only
     // action (read-only — AC-N22).
     <Dialog
       open={props.open}
@@ -68,29 +79,36 @@ export const CustomerDetailModal: Component<Props> = props => {
       widthRem={52}
       testId="customer-detail-modal"
       actions={
-        // OK dismisses the read-only viewer (matches the current app's modal OK:
-        // primary + check icon). Our Button is the brand white-pill primary that
-        // fills on hover (design-system choice), not OMS's solid-fill button.
-        <Button
-          variant="primary"
-          icon={<CheckIcon />}
-          onClick={props.onClose}
-          // The shared dialog-OK id (the current app's DialogButton emits the
-          // same), so the cross-FE suite locates OK by one id.
-          data-testid="dialog-button-ok"
-        >
-          {t('common.ok')}
-        </Button>
+        // The standard dialog dismiss for a read-only viewer: icon-less OK
+        // (D55 — a footer is read as words in a fixed position, so it earns no
+        // icon; OK stays the label where nothing is being saved, detail-views ›
+        // modal detail). The shared dialog-OK id (the current app's
+        // DialogButton emits the same), so the cross-FE suite locates OK by one
+        // id.
+        <OkButton onClick={props.onClose} data-testid="dialog-button-ok" />
       }
     >
-      <Show when={detail()} fallback={<Spinner center />}>
+      <Show
+        when={detail()}
+        fallback={
+          // Spinner while the read is in flight; once it has settled with no
+          // record, say so rather than spinning forever (detail-views ›
+          // states).
+          <Show when={!data.loading} fallback={<Spinner center />}>
+            <EmptyState
+              title={t('error.customer-not-found')}
+              message={t('messages.customer-not-found')}
+            />
+          </Show>
+        }
+      >
         {name => (
           <NameDetailForm
             name={name()}
             role="customer"
             supplyLevel={supplyLevelValue(
               name().properties,
-              data.latest?.propDefs
+              loaded()?.propDefs
             )}
           />
         )}

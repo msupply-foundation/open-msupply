@@ -9,6 +9,7 @@ import {
   Switch,
 } from 'solid-js';
 import { createStore, reconcile, unwrap } from 'solid-js/store';
+import { gated } from '../../api/gated';
 import { t } from '../../intl';
 import { Dialog } from '../../ui/elements/feedback/Dialog';
 import { Button } from '../../ui/elements/buttons/Button';
@@ -132,7 +133,7 @@ const PeriodArgumentField = (props: {
       return fetchPeriods(vars.storeId, vars.programId ?? undefined);
     }
   );
-  const periods = (): PeriodItem[] => periodsData.latest ?? [];
+  const periods = (): PeriodItem[] => gated(periodsData) ?? [];
 
   const selectedId = (): string | undefined => {
     const value = props.value;
@@ -204,23 +205,17 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
       : []
   );
 
-  // Locations for a `location`-kind argument, fetched locally (no global cache —
-  // the location domain owns none anymore). Volume-blind: a report filter only
-  // references a location. Non-suspending read so a pending fetch never trips an
-  // ancestor <Suspense>.
+  // Locations for a `location`-kind argument, fetched locally (no global cache
+  // — the location domain owns none anymore). Volume-blind: a report filter
+  // only references a location. Non-suspending read so a pending fetch never
+  // trips an ancestor <Suspense>.
   const [locationsData] = createResource(currentStoreId, fetchLocations);
-  const locations = (): Location[] =>
-    locationsData.state === 'ready' || locationsData.state === 'refreshing'
-      ? (locationsData.latest ?? [])
-      : [];
+  const locations = (): Location[] => gated(locationsData) ?? [];
 
   // Programs for a `programSearch`-kind argument (AC-R12), fetched locally in
   // the same style; an immunisation-only field filters this one fetch.
   const [programsData] = createResource(currentStoreId, fetchPrograms);
-  const programs = (): ProgramListItem[] =>
-    programsData.state === 'ready' || programsData.state === 'refreshing'
-      ? (programsData.latest ?? [])
-      : [];
+  const programs = (): ProgramListItem[] => gated(programsData) ?? [];
 
   // The program picker's three-key write (AC-R12, contract "Arguments"): the
   // scoped key gets the program id, and the hard-coded companions `elmisCode`
@@ -423,10 +418,16 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
       widthRem={30}
       actions={
         <>
-          <Button variant="secondary" onClick={() => props.onClose()}>
+          <Button
+            variant="secondary"
+            confirms="cancel"
+            onClick={() => props.onClose()}
+          >
             {t('button.cancel')}
           </Button>
-          <Button onClick={submit}>{t('button.ok')}</Button>
+          <Button confirms="plain" onClick={submit}>
+            {t('button.ok')}
+          </Button>
         </>
       }
     >
@@ -444,7 +445,6 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                 {textField => (
                   <TextField
                     label={textField.label}
-                    width="full"
                     value={textValue(textField.key)}
                     disabled={textField.readOnly}
                     required={textField.required}
@@ -458,12 +458,12 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
               <Match when={field.kind === 'number' ? field : undefined} keyed>
                 {numberField => (
                   /* Constrained numeric entry (AC-R4): NumberField gates
-                     keystrokes and raises the decimal keypad. The schema
-                     declares no precision; two decimal places covers the
-                     fractional-months cases without float noise. */
+                   * keystrokes and raises the decimal keypad. The schema
+                   * declares no precision; two decimal places covers the
+                   * fractional-months cases without float noise.
+                   */
                   <NumberField
                     label={numberField.label}
-                    width="full"
                     decimalLimit={2}
                     value={numberValue(numberField.key)}
                     disabled={numberField.readOnly}
@@ -490,7 +490,6 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                 {dateField => (
                   <DateField
                     label={dateField.label}
-                    width="full"
                     value={dateArgumentDay(values[dateField.key])}
                     min={
                       dateFieldBounds(dateField, values, localTodayIso()).min
@@ -526,7 +525,6 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                 {dateTimeField => (
                   <DateTimeField
                     label={dateTimeField.label}
-                    width="full"
                     value={textValue(dateTimeField.key) || null}
                     disabled={dateTimeField.readOnly}
                     required={dateTimeField.required}
@@ -560,6 +558,13 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                     // OK (AC-R7) and this text says why. No shipped schema
                     // marks an enum required today.
                     helperText={requiredError(enumField)}
+                    // A picked choice must be emptiable again unless required
+                    // (AC-R19); the cleared key is omitted on submit (AC-R8).
+                    // A read-only field (AC-R6: shown disabled, seeded value
+                    // still submitted) gets no clear affordance — it could
+                    // never be used.
+                    clearable={!enumField.required && !enumField.readOnly}
+                    onClear={() => setValues(enumField.key, undefined)}
                     onValueChange={value => setValues(enumField.key, value)}
                   />
                 )}
@@ -588,7 +593,6 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                  */}
                 <DateRangeField
                   label={field.label}
-                  width="full"
                   value={rangeValue(field.key)}
                   onChange={range => {
                     const start = range.start ?? '';
@@ -638,8 +642,9 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
               >
                 {nameField => (
                   /* AC-R13: the party picker writes the scoped key = the
-                     name's id, nothing else; the picked object lives in
-                     pickedNames for label display only. */
+                   * name's id, nothing else; the picked object lives in
+                   * pickedNames for label display only.
+                   */
                   <NameSearch
                     label={nameField.label}
                     storeId={currentStoreId() ?? ''}
@@ -659,8 +664,9 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
               >
                 {itemField => (
                   /* AC-R14: the item picker's two-key write — the scoped key
-                     = the item's id plus the hard-coded sibling `itemName`
-                     shipped templates print (contract "Arguments"). */
+                   * = the item's id plus the hard-coded sibling `itemName`
+                   * shipped templates print (contract "Arguments").
+                   */
                   <ItemSearch
                     label={itemField.label}
                     storeId={currentStoreId() ?? ''}
@@ -701,8 +707,9 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
               >
                 {periodField => (
                   /* AC-R16: the write forks on the scoped key — id at
-                     `periodId`, span (+ `before` companion) anywhere else
-                     (periodSearchWrites). */
+                   * `periodId`, span (+ `before` companion) anywhere else
+                   * (periodSearchWrites).
+                   */
                   <PeriodArgumentField
                     field={periodField}
                     storeId={currentStoreId()}
@@ -721,8 +728,9 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
               >
                 {sfField => (
                   /* AC-R17: the cascade ignores its scoped key and writes the
-                     five flat keys via scheduleCascadeWrites; the schema's
-                     required list gates the keys it renders (see submit). */
+                   * five flat keys via scheduleCascadeWrites; the schema's
+                   * required list gates the keys it renders (see submit).
+                   */
                   <ScheduleFormFields
                     storeId={currentStoreId() ?? ''}
                     programs={programs()}
@@ -767,7 +775,6 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
                     with its label so the form still lists the filter. */}
                 <TextField
                   label={field.label}
-                  width="full"
                   disabled
                   value=""
                   helperText={t('message.filter-not-supported')}

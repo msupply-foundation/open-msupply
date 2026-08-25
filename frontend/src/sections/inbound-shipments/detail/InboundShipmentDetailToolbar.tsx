@@ -1,20 +1,25 @@
-import { Show, createSignal, type Component } from 'solid-js';
-import { A } from '@solidjs/router';
+import { createSignal, Show, type Component } from 'solid-js';
 import { t } from '../../../intl';
-import { Alert } from '../../../ui/elements/feedback/Alert';
+import { localisedDate } from '../../../intl/formatDateTime';
 import { TextArea } from '../../../ui/elements/inputs/TextArea';
 import { DateField } from '../../../ui/elements/inputs/DateField';
 import {
+  addDays,
+  dateToIsoDate,
   dateToOffsetIso,
   isoDateToDate,
   localTodayIso,
   utcToLocalDay,
 } from '../../../ui/elements/inputs/dateTimeConvert';
-import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
+import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
+import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
+import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
+import { RecordLink } from '../../../ui/elements/typography/RecordLink';
+import { poLabel } from '../linkedOrder';
 import { NameSearch, type NameOption } from '../../../domain/name';
 import type { InboundInfoFragment } from './inboundShipmentDetail.generated';
 import type { InboundFieldEdit } from './inboundShipmentEdit';
-import { kindOf, supplierIsStore } from './inboundShipmentStatus';
+import { sourceLinkOf, supplierIsStore } from './inboundShipmentStatus';
 import type { UpdateInboundShipmentVariables } from './inboundShipmentDetail.generated';
 
 export interface InboundShipmentDetailToolbarProps {
@@ -31,20 +36,48 @@ export interface InboundShipmentDetailToolbarProps {
   ) => Promise<{ ok: boolean; message?: string }>;
 }
 
+/*
+ * The detail header's field cluster (spec S3 § header fields), rendered as the
+ * children of the page's <HeaderToolbar>: each field carries its own label
+ * above a small control, and HeaderToolbar's FormRow gives them equal shares
+ * that wrap as a unit (ui/docs/PAGES.md § header field cluster). The kind
+ * banner is NOT here — it's the cluster's trailing compact Alert, passed to
+ * <HeaderToolbar alert={…}> by the view.
+ */
 export const InboundShipmentDetailToolbar: Component<
   InboundShipmentDetailToolbarProps
 > = props => {
-  const kind = () => kindOf(props.node);
+  const sourceLink = () => sourceLinkOf(props.node);
 
   // The received date is enabled while Received + backdating-on, yet the server
   // can still refuse the save (moving the date forward, or beyond the store's
   // max-days window). Those come back as untyped rejections; surface the
-  // verdict inline beneath the field (spec S7 / AC-B), request preserved.
+  // verdict on the field itself (spec S7 / AC-B), request preserved. It's the
+  // DateField's own `error` rather than a sibling Alert so the cluster's row
+  // stays a row of fields.
   const [receivedError, setReceivedError] = createSignal<string>();
 
-  // Supplier is editable only on a manual shipment that isn't Verified — never
-  // on a transfer or a PO-linked shipment (spec S3 header fields).
-  const supplierLocked = () => props.disabled || kind() !== 'manual';
+  // The chosen backdate awaiting confirmation (the picked day + the instant
+  // to save) — the re-stamp it causes can't be undone (rules § backdating
+  // the received date), so it's confirmed first; undefined when no
+  // confirmation is open.
+  const [pendingReceived, setPendingReceived] = createSignal<{
+    day: string;
+    received: string;
+  }>();
+  // The user's un-saved picked day, so a cancelled pick reverts the input —
+  // the node hasn't changed, so the controlled `value` alone wouldn't
+  // (mirrors PickedDateField.tsx's fix for the same class of bug).
+  const [draftReceivedDay, setDraftReceivedDay] = createSignal<string>();
+  // A confirmed backdate is saving — onClose (which always follows
+  // onConfirm) must not revert the draft while it is.
+  let confirmInFlight = false;
+
+  // Supplier is editable only on a shipment with no source link that isn't
+  // Verified — never on a transfer or a PO-linked shipment (spec S3 header
+  // fields). Deliberately wider than "manual": a shipment linked only to an
+  // internal order has no source link, and its supplier stays editable.
+  const supplierLocked = () => props.disabled || sourceLink() !== 'none';
 
   const selectedSupplier = (): NameOption => ({
     id: props.node.otherPartyId,
@@ -61,108 +94,175 @@ export const InboundShipmentDetailToolbar: Component<
   // the client only mirrors standing editability (spec S3 / validation.md).
   const isReceived = () =>
     props.node.status === 'RECEIVED' || props.node.status === 'VERIFIED';
+  // The picker window (rules § backdating the received date): earlier-only —
+  // capped at the current received date — and no further back than the store's
+  // max-days window: [today − (maxDays − 1), received date]. A maxDays of zero
+  // (or unset) means NO lower bound — unlimited backdating. The +1 buffer on
+  // the lower bound matches the outbound picked-date window
+  // (outbound-shipments/detail/backdating.ts): the server's UTC boundary check
+  // would reject the exact now − maxDays day for stores ahead of UTC.
+  const receivedMin = () =>
+    props.backdatingMaxDays > 0
+      ? dateToIsoDate(addDays(new Date(), -(props.backdatingMaxDays - 1)))
+      : undefined;
+  const receivedMax = () =>
+    utcToLocalDay(props.node.receivedDatetime) ?? undefined;
+  // The current received date already sits beyond the window — every earlier
+  // pick would too, so no valid target date exists and the field disables
+  // with the reason (ui-surface S3 "within the backdating window").
+  const windowEmpty = () => {
+    const min = receivedMin();
+    const max = receivedMax();
+    return min !== undefined && max !== undefined && max < min;
+  };
   const receivedDateEditable = () =>
-    isReceived() && props.backdatingEnabled && !props.disabled;
+    isReceived() &&
+    props.backdatingEnabled &&
+    !props.disabled &&
+    !windowEmpty();
   const receivedDateReason = () => {
     if (props.disabled) return t('error.inbound-shipment-not-editable');
     if (!isReceived()) return t('messages.can-only-backdate-received');
     if (!props.backdatingEnabled) return t('messages.backdating-not-enabled');
+    if (windowEmpty())
+      return t('messages.received-date-exceeds-backdating-limit', {
+        days: props.backdatingMaxDays,
+      });
     return undefined;
   };
 
   return (
     <>
-      {/* Kind banner: manual shipments don't auto-advance; a transfer/automatic
-          one is driven by the sending side. */}
-      <Alert severity="info">
-        {kind() === 'manual'
-          ? t('messages.inbound-manual-info')
-          : t('messages.inbound-automatic-info')}
-      </Alert>
+      <NameSearch
+        label={t('label.supplier-name')}
+        size="small"
+        storeId={props.storeId}
+        role="supplier"
+        selected={selectedSupplier()}
+        disabled={supplierLocked()}
+        // Replace-only: a shipment always names a supplier, so the field is
+        // never nullable and offers no clear affordance (D5, clearability
+        // follows optionality — spec/DIVERGENCES.md; the internal-orders
+        // supplier picker is specced the same way). The ✕ it inherited from the
+        // combobox default was also inert here — `onSelect` discards a null, so
+        // clearing emptied the control on screen and saved nothing.
+        clearable={false}
+        onSelect={name => name && props.onSaveField({ otherPartyId: name.id })}
+      />
 
-      <FieldRow label={t('label.supplier-name')}>
-        <NameSearch
-          label={t('label.supplier-name')}
-          hideLabel
-          storeId={props.storeId}
-          role="supplier"
-          selected={selectedSupplier()}
-          disabled={supplierLocked()}
-          onSelect={name =>
-            name && props.onSaveField({ otherPartyId: name.id })
-          }
-        />
-      </FieldRow>
+      <TextArea
+        label={t('label.reference')}
+        size="small"
+        rows={1}
+        data-testid="supplier-reference-field"
+        value={props.edit.state.theirReference}
+        disabled={props.disabled}
+        onInput={e =>
+          props.edit.setField('theirReference', e.currentTarget.value)
+        }
+        onBlur={() => props.edit.flush()}
+      />
 
-      <FieldRow label={t('label.reference')}>
-        <TextArea
-          label={t('label.reference')}
-          hideLabel
-          rows={1}
-          width="full"
-          data-testid="supplier-reference-field"
-          value={props.edit.state.theirReference}
-          disabled={props.disabled}
-          onInput={e =>
-            props.edit.setField('theirReference', e.currentTarget.value)
-          }
-          onBlur={() => props.edit.flush()}
-        />
-      </FieldRow>
-
-      <FieldRow label={t('label.received')}>
-        <DateField
-          label={t('label.received')}
-          hideLabel
-          value={utcToLocalDay(props.node.receivedDatetime)}
-          disabled={!receivedDateEditable()}
-          helperText={receivedDateReason()}
-          // Backdating only ever moves the date earlier — cap at the current
-          // received date. (Server also bounds by the max-days window.)
-          max={utcToLocalDay(props.node.receivedDatetime) ?? undefined}
-          onChange={value => {
-            const picked = isoDateToDate(value);
-            if (!picked) return;
-            setReceivedError(undefined);
-            // Offset-preserving so the server's backdating log records the
-            // picked local day (input is DateTime<FixedOffset>; #456). Today
-            // → the current moment; a backdated day → its local start (matches
-            // the current app).
-            const received =
-              value === localTodayIso()
-                ? dateToOffsetIso(new Date())
-                : dateToOffsetIso(picked);
-            void props
-              .onSaveField({ receivedDatetime: received })
-              .then(r => setReceivedError(r.ok ? undefined : r.message));
-          }}
-        />
-      </FieldRow>
-      <Show when={receivedError()}>
-        <Alert severity="error">{receivedError()}</Alert>
+      <DateField
+        label={t('label.received')}
+        size="small"
+        value={draftReceivedDay() ?? utcToLocalDay(props.node.receivedDatetime)}
+        disabled={!receivedDateEditable()}
+        // The blocking reason is a TOOLTIP on the label, per spec S3 ("disabled
+        // state carries an explanatory tooltip for each blocking reason") — not
+        // permanent helper text, which wraps to three lines in this dense row
+        // and drags the whole strip taller than the fields it explains.
+        labelInfo={
+          <Show when={receivedDateReason()}>
+            {reason => <InfoTooltip text={reason()} />}
+          </Show>
+        }
+        error={receivedError()}
+        // Backdating only ever moves the date earlier — capped at the current
+        // received date — and no further back than the store's max-days window
+        // (receivedMin). DateField treats a TYPED out-of-range day as invalid
+        // too, so no save-path recheck is needed.
+        min={receivedMin()}
+        max={receivedMax()}
+        onChange={value => {
+          const picked = isoDateToDate(value);
+          if (!value || !picked) return;
+          setReceivedError(undefined);
+          // Offset-preserving so the server's backdating log records the
+          // picked local day (input is DateTime<FixedOffset>; #456). Today
+          // → the current moment; a backdated day → its local start (matches
+          // the current app).
+          const received =
+            value === localTodayIso()
+              ? dateToOffsetIso(new Date())
+              : dateToOffsetIso(picked);
+          // The re-stamp this causes can't be undone (rules § backdating the
+          // received date), so it's confirmed before saving — not applied
+          // straight away like the rest of this cluster's fields.
+          setDraftReceivedDay(value);
+          setPendingReceived({ day: value, received });
+        }}
+      />
+      <Show when={pendingReceived()}>
+        {info => (
+          <ConfirmDialog
+            open
+            onClose={() => {
+              setPendingReceived(undefined);
+              if (!confirmInFlight) setDraftReceivedDay(undefined);
+            }}
+            title={t('heading.are-you-sure')}
+            message={t('messages.confirm-backdate-received-date', {
+              date: localisedDate(info().received),
+            })}
+            onConfirm={() => {
+              confirmInFlight = true;
+              void props
+                .onSaveField({ receivedDatetime: info().received })
+                .then(r => {
+                  confirmInFlight = false;
+                  setDraftReceivedDay(undefined);
+                  setReceivedError(r.ok ? undefined : r.message);
+                });
+            }}
+          />
+        )}
       </Show>
 
       {/* PO-linked: PO number (links to the order) + read-only reference (spec
-          S3 header fields). The link targets the purchase-order detail route
-          exactly as the side panel's Related-documents link does — a DEAD link
-          for now: this app mounts only the inbound-shipment vertical (App.tsx),
-          so /replenishment/purchase-order has no component yet. It resolves the
+          S3 header fields). Never-editable facts, so they're read-only
+          LabelledValues sitting flush among the inputs (variant="field") —
+          read-only reads from the absence of a box, not a greyed-out one. The
+          link is the shared kind-toned RecordLink, identical to the side
+          panel's Related-documents entry (same route, same PO-xxx label, so a
+          reader learns the kind by tone app-wide) — a DEAD link for now: this
+          app mounts only the inbound-shipment vertical (App.tsx), so
+          /replenishment/purchase-order has no component yet. It resolves the
           day someone implements the purchase-order vertical; kept in step with
           the side panel so both light up together. */}
       <Show when={props.node.purchaseOrder}>
         {po => (
           <>
-            <FieldRow label={t('label.purchase-order')}>
-              <A
+            <LabelledValue
+              label={t('label.purchase-order')}
+              variant="field"
+              size="small"
+            >
+              <RecordLink
                 href={`/${props.storeId}/replenishment/purchase-order/${po().id}`}
+                kind="po"
               >
-                #{po().number}
-              </A>
-            </FieldRow>
+                {poLabel(po().number)}
+              </RecordLink>
+            </LabelledValue>
             <Show when={po().reference}>
-              <FieldRow label={t('label.reference')}>
-                <span>{po().reference}</span>
-              </FieldRow>
+              <LabelledValue
+                label={t('label.reference')}
+                variant="field"
+                size="small"
+              >
+                {po().reference}
+              </LabelledValue>
             </Show>
           </>
         )}

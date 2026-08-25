@@ -9,11 +9,15 @@ import {
   type Component,
 } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { createFocusTarget } from '../../../ui/utils/createFocusTarget';
 import { Alert } from '../../../ui/elements/feedback/Alert';
-import { Button } from '../../../ui/elements/buttons/Button';
+import {
+  CancelButton,
+  DialogSaveButton,
+} from '../../../ui/elements/buttons/StandardButtons';
 import { TextField } from '../../../ui/elements/inputs/TextField';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { Combobox } from '../../../ui/elements/selectors/Combobox';
@@ -25,7 +29,7 @@ import {
   fetchNameById,
   type NameOption,
 } from '../../../domain/name/nameResource';
-import { CheckIcon, PlusCircleIcon, XCircleIcon } from '../../../ui/icons';
+import { PlusCircleIcon } from '../../../ui/icons';
 import {
   ItemVariantLocationTypes,
   type ItemVariantLocationTypesResult,
@@ -94,10 +98,7 @@ export const ItemVariantEditModal: Component<
       return result.data.locationTypes.nodes;
     }
   );
-  const locationTypes = (): LocationType[] =>
-    typesData.state === 'ready' || typesData.state === 'refreshing'
-      ? (typesData.latest ?? [])
-      : [];
+  const locationTypes = (): LocationType[] => gated(typesData) ?? [];
 
   // NameSearch's controlled value is the whole NameOption, not a bare id
   // (an async picker has no client-side list to resolve an id against) — so
@@ -122,11 +123,7 @@ export const ItemVariantEditModal: Component<
   // screen's Suspense — kdd/solid-reactivity-pitfalls § no remounts).
   createEffect(
     on(
-      () =>
-        manufacturerData.state === 'ready' ||
-        manufacturerData.state === 'refreshing'
-          ? manufacturerData.latest
-          : undefined,
+      () => gated(manufacturerData),
       resolved => {
         if (resolved) setManufacturer(resolved);
       }
@@ -191,6 +188,10 @@ export const ItemVariantEditModal: Component<
       widthRem={50}
       dismissable={!saving()}
       onClose={props.onClose}
+      // Room for the manufacturer lookup's open listbox inside the dialog
+      // (#1029): it sits at the bottom of the left column (~15rem down), so
+      // its listbox (up to 18rem) would otherwise hang below the dialog.
+      minBodyHeightRem={32}
       footer={
         <Show when={rejection()}>
           {message => (
@@ -200,27 +201,23 @@ export const ItemVariantEditModal: Component<
           )}
         </Show>
       }
+      // The standard, ICON-LESS dialog-footer buttons (ui-standards › controls
+      // § dialogs, D55) — a footer is read as verbs in a fixed position, not a
+      // toolbar, so it earns no icon. Each supplies its own translated label.
       actions={
         <>
           <Show when={!saving()}>
-            <Button
-              variant="secondary"
-              icon={<XCircleIcon />}
+            <CancelButton
               data-testid="dialog-button-cancel"
               onClick={props.onClose}
-            >
-              {t('button.cancel')}
-            </Button>
+            />
           </Show>
-          <Button
-            icon={<CheckIcon />}
+          <DialogSaveButton
             data-testid="dialog-button-ok"
             loading={saving()}
             disabled={!isFormValid(form()) || saving()}
             onClick={() => void save()}
-          >
-            {t('button.save')}
-          </Button>
+          />
         </>
       }
     >
@@ -232,7 +229,6 @@ export const ItemVariantEditModal: Component<
               data-testid="item-variant-name-input"
               label={t('label.name')}
               required
-              width="full"
               disabled={saving()}
               value={form().name}
               onInput={e => setForm({ ...form(), name: e.currentTarget.value })}
@@ -264,7 +260,6 @@ export const ItemVariantEditModal: Component<
             <Show when={props.isVaccine}>
               <TextField
                 label={t('label.vvm-type')}
-                width="full"
                 disabled={saving()}
                 value={form().vvmType}
                 onInput={e =>

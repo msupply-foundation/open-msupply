@@ -1,15 +1,30 @@
 # Outbound shipments list view (spec/outbound-shipments S1). Filter / sort /
 # pagination are the GraphQL input types so URL state maps straight onto them
-# (kdd/type-safety). The type filter is pinned to OUTBOUND_SHIPMENT by the view;
-# the server forces the store scope and excludes cancellation reversals
-# (contract.md § the list).
+# (kdd/type-safety). The server forces the store scope and excludes cancellation
+# reversals (contract.md § the list).
+#
+# The top-level `type` argument does BOTH jobs, so it is the only type pin here.
+# It selects the PERMISSION — the server authorises this read against
+# OutboundShipmentQuery alone because it is named; omitted, it falls back to a
+# deprecated combined resource demanding all six invoice query permissions at
+# once. It also OVERWRITES `filter.type` server-side, so a `filter.type` sent
+# alongside is dead weight (spec/navigation/contract.md § wire traps). A literal,
+# not a variable: this query serves one screen pinned to one type, so no caller
+# can forget it — and forgetting it would now widen the rows, not just the
+# permission.
 query outboundShipments(
   $storeId: String!
   $filter: InvoiceFilterInput
   $sort: [InvoiceSortInput!]
   $page: PaginationInput
 ) {
-  invoices(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {
+  invoices(
+    storeId: $storeId
+    filter: $filter
+    sort: $sort
+    page: $page
+    type: [OUTBOUND_SHIPMENT]
+  ) {
     ... on InvoiceConnector {
       __typename
       totalCount
@@ -34,7 +49,7 @@ query outboundShipments(
 }
 
 # Create a shipment for a customer (S2). The id is client-generated so the
-# create can navigate to the new shipment. Typed rejections (AC-C2) are
+# create can navigate to the new shipment. Typed rejections (OMS-REG-DIST-02.15) are
 # selected so the modal can translate them; anything else is non-typed and goes
 # to the global error modal.
 mutation insertOutboundShipment(
@@ -55,7 +70,7 @@ mutation insertOutboundShipment(
   }
 }
 
-# Bulk delete from the list (AC-D3). Per-row server enforcement: each id's
+# Bulk delete from the list (OMS-REG-DIST-01.21). Per-row server enforcement: each id's
 # response is DeleteResponse or a typed error; the UI pre-checks deletability
 # (SHIPPED+ disables the action) so an error here is a race.
 mutation deleteOutboundShipments($storeId: String!, $ids: [String!]) {
@@ -81,7 +96,7 @@ mutation deleteOutboundShipments($storeId: String!, $ids: [String!]) {
   }
 }
 
-# Duplicate a shipment (AC-X1/X2): any shipment (incl. SHIPPED) copies into a
+# Duplicate a shipment (OMS-REG-DIST-02.28/.29): any shipment (incl. SHIPPED) copies into a
 # fresh NEW one whose stock lines became placeholders; inactive-catalogue items
 # are skipped and counted.
 mutation duplicateOutboundShipment($storeId: String!, $id: String!) {
