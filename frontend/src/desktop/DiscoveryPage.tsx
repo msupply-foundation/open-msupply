@@ -27,6 +27,7 @@ import {
   autoconnectTarget,
   DISCOVERY_POLL_MS,
   DISCOVERY_TIMEOUT_MS,
+  discoveryReturnAddress,
   frontEndHostDisplay,
   mergeServers,
   parseDiscoveryFlags,
@@ -35,6 +36,7 @@ import {
   recordPreviousServer,
   serverKey,
   STANDALONE_LOCAL_SERVER,
+  standaloneSeededFailure,
 } from './discovery';
 import layout from '../ui/styles/LoginInitLayout.module.css';
 import styles from './Discovery.module.css';
@@ -66,15 +68,16 @@ export const DiscoveryPage: Component = () => {
   });
 
   const host = getDesktopHost();
-  // Where the landing screen can send the user back to (AC-DT16): this page,
-  // told not to bounce straight back to the server just left. Passed on every
-  // hand-off via the connect path (./discoveryReturn.ts).
-  const returnUrl = `${window.location.origin}${window.location.pathname}?autoconnect=false`;
   // Read once: both are fixed for this page-load — the shell sets the flags
   // at navigation, and the remembered server only changes by leaving this
   // page (a successful connection navigates away).
   const flags = parseDiscoveryFlags(window.location.search);
   const previous = readPreviousServer();
+  // Where the landing screen can send the user back to (AC-DT16): this page,
+  // told not to bounce straight back and told the install's mode, so a
+  // standalone return is never offered the chooser (AC-DT20). Passed on every
+  // hand-off via the connect path (./discoveryReturn.ts).
+  const returnUrl = discoveryReturnAddress(window.location, flags);
 
   const [servers, setServers] = createSignal<FrontEndHost[]>([]);
   // The bounded wait elapsed with nothing found (AC-DT9).
@@ -89,10 +92,15 @@ export const DiscoveryPage: Component = () => {
   const [failedServer, setFailedServer] = createSignal<string | undefined>(
     flags.timedout && previous ? frontEndHostDisplay(previous) : undefined
   );
-  // Standalone only: the install's own server did not answer. A standalone
+  // Standalone only: not connected to the install's own server. A standalone
   // install is never offered a choice (AC-DT20), so this is a stated error,
-  // not a fallback to the list (spec § standalone auto-connection).
-  const [standaloneFailed, setStandaloneFailed] = createSignal(false);
+  // not a fallback to the list (spec § standalone auto-connection). Seeded
+  // like failedServer: when the launch flags mean no attempt will be made,
+  // the state is stated with its retry rather than left as a "connecting"
+  // spinner nothing is driving.
+  const [standaloneFailed, setStandaloneFailed] = createSignal(
+    standaloneSeededFailure(flags)
+  );
   const [manualUrl, setManualUrl] = createSignal(
     previous ? frontEndHostDisplay(previous) : 'https://'
   );
@@ -257,7 +265,10 @@ export const DiscoveryPage: Component = () => {
                 </Match>
                 <Match when={true}>
                   <div class={styles.searching} role="status">
-                    <Spinner sizeRem={1.25} label={t('discovery.connecting-standalone')} />
+                    <Spinner
+                      sizeRem={1.25}
+                      label={t('discovery.connecting-standalone')}
+                    />
                     <span aria-hidden="true">
                       {t('discovery.connecting-standalone')}
                     </span>
@@ -318,7 +329,10 @@ export const DiscoveryPage: Component = () => {
                     </div>
                   </Match>
                   <Match when={true}>
-                    <ul class={styles.serverList} data-testid="discovery-server-list">
+                    <ul
+                      class={styles.serverList}
+                      data-testid="discovery-server-list"
+                    >
                       <For each={servers()}>
                         {server => (
                           <li>
