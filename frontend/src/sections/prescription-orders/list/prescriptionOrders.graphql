@@ -1,0 +1,44 @@
+# The prescription-orders list (spec/prescription-orders/contract.md § the
+# list): store-scoped server-side (the storeId argument is the scope — any
+# store filter sent alongside is overwritten). Exactly ONE sort key is sent,
+# matching the app-wide single-sort convention.
+query prescriptionOrders(
+  $storeId: String!
+  $filter: PrescriptionOrderFilterInput
+  $sort: [PrescriptionOrderSortInput!]
+  $page: PaginationInput
+) {
+  prescriptionOrders(
+    storeId: $storeId
+    filter: $filter
+    sort: $sort
+    page: $page
+  ) {
+    ... on PrescriptionOrderConnector {
+      totalCount
+      nodes {
+        id
+        prescriptionOrderNumber
+        status
+        createdDatetime
+        prescriptionDatetime
+        comment
+        patient {
+          id
+          name
+        }
+      }
+    }
+  }
+}
+
+# List delete (spec/prescription-orders/contract.md § deletion). Per-order —
+# the selection is pre-checked client-side to New rows (AC-D2); rejections are
+# generic (contract § wire traps) and route to the global error surface.
+mutation deletePrescriptionOrder($storeId: String!, $id: String!) {
+  deletePrescriptionOrder(storeId: $storeId, id: $id) {
+    ... on DeleteResponse {
+      id
+    }
+  }
+}

@@ -180,7 +180,15 @@ export const navConfig: NavItem[] = [
         permission: 'PATIENT_QUERY',
       },
       {
+        // The prescriber's side (spec/prescription-orders) — takes the
+        // "Prescriptions" name; the dispensing vertical below is relabelled
+        // "Dispensing" (its path and spec folder keep their old names).
         labelKey: 'prescriptions',
+        path: 'dispensary/prescription-order',
+        permission: 'PRESCRIPTION_QUERY',
+      },
+      {
+        labelKey: 'dispensing',
         path: 'dispensary/prescription',
         permission: 'PRESCRIPTION_QUERY',
       },

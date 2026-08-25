@@ -63,7 +63,7 @@ import {
   manualEntryMessages,
   type PrescriptionWarningMessage,
 } from './allocationWarnings';
-import { expandAbbreviations } from './directions';
+import { expandAbbreviations } from '@/domain/directions';
 import {
   Abbreviations,
   PrescriptionEditLines,
