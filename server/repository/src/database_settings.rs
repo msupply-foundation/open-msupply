@@ -9,7 +9,6 @@ use std::time::Duration;
 
 // Timeout for waiting for the SQLite lock (https://www.sqlite.org/c3ref/busy_timeout.html).
 // A locked DB results in the "SQLite database is locked" error.
-#[cfg(not(feature = "postgres"))]
 pub(crate) const SQLITE_LOCKWAIT_MS: u32 = 30 * 1000;
 
 #[cfg(not(feature = "postgres"))]
