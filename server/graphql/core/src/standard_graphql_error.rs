@@ -59,9 +59,9 @@ impl StandardGraphqlError {
         StandardGraphqlError::from(error).extend()
     }
 
-    /// Maps a `spawn_blocking` join failure (e.g. the plugin task panicked) to an internal error.
+    /// Maps a `spawn_blocking` join failure (e.g. the blocking task panicked) to an internal error.
     pub fn from_join_error(error: tokio::task::JoinError) -> async_graphql::Error {
-        StandardGraphqlError::InternalError(format!("Plugin task error: {error}")).extend()
+        StandardGraphqlError::InternalError(format!("Blocking task error: {error}")).extend()
     }
 
     pub fn from_str_slice(str_slice: &str) -> async_graphql::Error {
