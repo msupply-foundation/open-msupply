@@ -1,12 +1,8 @@
+import { createMemo, ErrorBoundary, onMount, Show, type JSX } from 'solid-js';
 import {
-  createEffect,
-  createMemo,
-  ErrorBoundary,
-  onMount,
-  Show,
-  type JSX,
-} from 'solid-js';
-import { recordPluginDiagnostic } from '@/plugins/diagnostics';
+  createRegionDiagnostics,
+  recordPluginDiagnostic,
+} from '@/plugins/diagnostics';
 import { bodyRegion, type BodyOccupant } from './bodyRegion';
 import { DashboardBuiltInBody } from './DashboardBuiltInBody';
 
@@ -76,20 +72,13 @@ export const DashboardBody = (): JSX.Element => {
     }
   );
 
-  // Deduped per mount, so a re-evaluation cannot spam the same passed-over
-  // claimant; recorded from an effect, since recording is a write.
-  const reported = new Set<string>();
-  createEffect(() => {
-    for (const diagnostic of region().diagnostics) {
-      if (reported.has(diagnostic.contributionId)) continue;
-      reported.add(diagnostic.contributionId);
-      recordPluginDiagnostic({
-        level: 'warning',
-        pluginCode: diagnostic.contributionId.split('.')[0],
-        message: `dashboard.body: ${diagnostic.contributionId} — ${diagnostic.message}`,
-      });
-    }
-  });
+  // Recorded from an effect, since recording is a write, and deduped so a
+  // re-evaluation cannot spam the same passed-over claimant — both the shared
+  // helper's (src/plugins/diagnostics).
+  createRegionDiagnostics(
+    () => region().diagnostics,
+    () => 'dashboard.body'
+  );
 
   return (
     <Show when={occupant()} keyed fallback={<DashboardBuiltInBody />}>
