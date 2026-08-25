@@ -60,22 +60,22 @@ public class NativeApiPlugin extends Plugin {
     private final List<JSObject> discovered = Collections.synchronizedList(new ArrayList<>());
     // NsdManager resolves ONE service at a time; found services queue here.
     private final Deque<NsdServiceInfo> resolveQueue = new ArrayDeque<>();
-    private boolean resolving = false;
+    private volatile boolean resolving = false;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     @PluginMethod
     public void startServerDiscovery(PluginCall call) {
         if (nsdManager == null) {
-            nsdManager = (NsdManager) getContext().getSystemService(Context.NSD_SERVICE);
+            this.nsdManager = (NsdManager) super.getContext().getSystemService(Context.NSD_SERVICE);
         }
-        stopDiscovery();
-        discovered.clear();
+        this.stopDiscovery();
+        this.discovered.clear();
         synchronized (resolveQueue) {
-            resolveQueue.clear();
-            resolving = false;
+            this.resolveQueue.clear();
+            this.resolving = false;
         }
 
-        discoveryListener = new NsdManager.DiscoveryListener() {
+        this.discoveryListener = new NsdManager.DiscoveryListener() {
             @Override public void onDiscoveryStarted(String serviceType) {}
             @Override public void onDiscoveryStopped(String serviceType) {}
             @Override public void onStartDiscoveryFailed(String serviceType, int errorCode) {}
@@ -92,47 +92,47 @@ public class NativeApiPlugin extends Plugin {
                 resolveNext();
             }
         };
-        nsdManager.discoverServices(SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, discoveryListener);
+        this.nsdManager.discoverServices(SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, discoveryListener);
         call.resolve();
     }
 
     private void stopDiscovery() {
-        if (nsdManager != null && discoveryListener != null) {
+        if (this.nsdManager != null && this.discoveryListener != null) {
             try {
-                nsdManager.stopServiceDiscovery(discoveryListener);
+                this.nsdManager.stopServiceDiscovery(discoveryListener);
             } catch (IllegalArgumentException ignored) {
                 // was not discovering
             }
-            discoveryListener = null;
+            this.discoveryListener = null;
         }
     }
 
     private void resolveNext() {
         NsdServiceInfo next;
-        synchronized (resolveQueue) {
-            if (resolving) return;
-            next = resolveQueue.poll();
+        synchronized (this.resolveQueue) {
+            if (this.resolving) return;
+            next = this.resolveQueue.poll();
             if (next == null) return;
-            resolving = true;
+            this.resolving = true;
         }
-        nsdManager.resolveService(next, new NsdManager.ResolveListener() {
+        this.nsdManager.resolveService(next, new NsdManager.ResolveListener() {
             @Override
             public void onResolveFailed(NsdServiceInfo serviceInfo, int errorCode) {
-                finished();
+                this.finished();
             }
 
             @Override
             public void onServiceResolved(NsdServiceInfo serviceInfo) {
-                JSObject host = toFrontEndHost(serviceInfo);
-                if (host != null) discovered.add(host);
-                finished();
+                JSObject host = NativeApiPlugin.this.toFrontEndHost(serviceInfo);
+                if (host != null) NativeApiPlugin.this.discovered.add(host);
+                this.finished();
             }
 
             private void finished() {
-                synchronized (resolveQueue) {
-                    resolving = false;
+                synchronized (NativeApiPlugin.this.resolveQueue) {
+                    NativeApiPlugin.this.resolving = false;
                 }
-                resolveNext();
+                NativeApiPlugin.this.resolveNext();
             }
         });
     }
@@ -145,12 +145,12 @@ public class NativeApiPlugin extends Plugin {
         String ip = address.getHostAddress();
         Map<String, byte[]> txt = info.getAttributes();
         JSObject host = new JSObject();
-        host.put("protocol", "http".equals(txtValue(txt, "protocol")) ? "http" : "https");
+        host.put("protocol", "http".equals(this.txtValue(txt, "protocol")) ? "http" : "https");
         host.put("port", info.getPort());
         host.put("ip", ip);
-        host.put("clientVersion", txtValue(txt, "client_version"));
-        host.put("hardwareId", txtValue(txt, "hardware_id"));
-        host.put("isLocal", isOwnAddress(address));
+        host.put("clientVersion", this.txtValue(txt, "client_version"));
+        host.put("hardwareId", this.txtValue(txt, "hardware_id"));
+        host.put("isLocal", this.isOwnAddress(address));
         return host;
     }
 
@@ -176,8 +176,8 @@ public class NativeApiPlugin extends Plugin {
     @PluginMethod
     public void discoveredServers(PluginCall call) {
         JSArray servers = new JSArray();
-        synchronized (discovered) {
-            for (JSObject host : discovered) servers.put(host);
+        synchronized (this.discovered) {
+            for (JSObject host : this.discovered) servers.put(host);
         }
         JSObject result = new JSObject();
         result.put("servers", servers);
@@ -192,10 +192,10 @@ public class NativeApiPlugin extends Plugin {
         String path = call.getString("path", "");
         String base = protocol + "://" + ip + ":" + port;
 
-        executor.execute(() -> {
+        this.executor.execute(() -> {
             // The bounded answer check (spec § launch / § server selection):
             // a server that does not answer leaves the user on the page.
-            if (!answers(base + "/graphql")) {
+            if (!this.answers(base + "/graphql")) {
                 JSObject result = new JSObject();
                 result.put("success", false);
                 result.put("error", "server did not answer");
@@ -223,7 +223,7 @@ public class NativeApiPlugin extends Plugin {
         try {
             HttpURLConnection connection = (HttpURLConnection) new URL(target).openConnection();
             if (connection instanceof HttpsURLConnection) {
-                trustAnyCertificate((HttpsURLConnection) connection);
+                this.trustAnyCertificate((HttpsURLConnection) connection);
             }
             connection.setConnectTimeout(ANSWER_CHECK_TIMEOUT_MS);
             connection.setReadTimeout(ANSWER_CHECK_TIMEOUT_MS);
