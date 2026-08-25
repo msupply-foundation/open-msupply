@@ -5,6 +5,11 @@ on:
   schedule:
     - cron: "0 8 * * *" # Every day at 08:00 AM UTC - equivalent to 08:00 PM NZST (or 09:00 PM NZDT)
 
+# Privileged work (pushing branches, opening the PR) uses the tmf-ci-bot
+# token minted below; GITHUB_TOKEN needs nothing beyond read.
+permissions:
+  contents: read
+
 jobs:
   integrate-rc-to-develop:
     runs-on: ubuntu-latest
@@ -19,6 +24,8 @@ jobs:
           private-key: ${{ secrets.TMF_CI_BOT_PRIVATE_KEY }}
           owner: msupply-foundation
           repositories: open-msupply
+          permission-contents: write
+          permission-pull-requests: write
 
       - uses: actions/checkout@v5
         with:

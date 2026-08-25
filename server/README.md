@@ -39,10 +39,10 @@ packaged bundle serves both UIs out of the box.
 - **Private-repo token:** the fetch needs `FRONTEND_FETCH_TOKEN` (or `GITHUB_TOKEN`) with
   read access to the FE repo's release assets — it is sent as an `Authorization: token …`
   header to github.com and dropped when GitHub redirects to its signed asset CDN. GitHub
-  Actions workflows (Docker image, transition APK, mac builds) mint a short-lived token
-  per run from the same GitHub App the e2e workflow uses to read the FE repo
-  (`vars.FE_APP_ID` / `secrets.FE_APP_PRIVATE_KEY`) — nothing to configure beyond the
-  app. The Jenkins/Windows box cannot mint app tokens: set
+  Actions workflows (Docker image, transition APK, mac builds) mint a short-lived,
+  read-only token per run from the tmf-ci-bot GitHub App
+  (`vars.TMF_CI_BOT_APP_ID` / `secrets.TMF_CI_BOT_PRIVATE_KEY`) — nothing to configure
+  beyond the app. The Jenkins/Windows box cannot mint app tokens: set
   `FRONTEND_DIST_BASE_URL=https://f002.backblazeb2.com/file/msupply-releases` once —
   the FE release workflow mirrors every dist there (public bucket, layout
   `<tag>/frontend-dist-<tag>.zip`), the script derives the URL from the pin's tag, and
