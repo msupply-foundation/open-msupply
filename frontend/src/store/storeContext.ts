@@ -227,6 +227,18 @@ const prescriptionPreferences = () => {
 const storeCustomColour = (): string =>
   storeContext()?.preferences?.storeCustomColour ?? '';
 
+// The MODE of the store the user has currently entered, as the wire's own
+// `storeMode` value ('STORE' / 'DISPENSARY') — kept in the generated vocabulary
+// rather than remapped to a parallel one (kdd/type-safety). Read off the
+// me/login response's store list (UserStoreNode.storeMode), the same place
+// `currentStoreName` reads, so it costs no query. Undefined while the store is
+// unresolved — every caller must treat that as "mode not yet known", never as a
+// mode. Reactive — reads authUser + currentStoreId.
+const currentStoreMode = () => {
+  const storeId = currentStoreId();
+  return authUser()?.stores.nodes.find(s => s.id === storeId)?.storeMode;
+};
+
 // The entered store's dispensary gate (spec/patients § configuration gates ›
 // AC-G1). Dispensary mode gates the WHOLE patient surface — the Dispensary nav
 // group (ShellLayout) and its routes (the patients section's route guard). The
@@ -237,11 +249,7 @@ const storeCustomColour = (): string =>
 // loaded, so callers read a settled value. Safe default OFF (not dispensary)
 // while the store is unresolved, so the patient surface never shows for a
 // non-dispensary store. Reactive — reads authUser + currentStoreId.
-const isDispensary = (): boolean => {
-  const storeId = currentStoreId();
-  const store = authUser()?.stores.nodes.find(s => s.id === storeId);
-  return store?.storeMode === 'DISPENSARY';
-};
+const isDispensary = (): boolean => currentStoreMode() === 'DISPENSARY';
 
 // Whether the entered store has the vaccine (cold-chain) module enabled
 // (StorePreferenceNode.vaccineModule). Gates the cold-chain DESTINATIONS — the
@@ -307,6 +315,7 @@ export {
   refetch as refetchStoreContext,
   currentStoreId,
   currentStoreName,
+  currentStoreMode,
   stocktakePreferences,
   stockPreferences,
   inboundShipmentPreferences,
