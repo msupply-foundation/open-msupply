@@ -16,6 +16,11 @@
 // explicit JSX) is the page's. `Component` is the only Solid type referenced
 // (it is what a contribution carries), so the merge logic stays unit-testable
 // as plain data.
+//
+// These are the three PIECE regions. The dashboard's fourth region is
+// screen-level — one contribution in place of the whole body — and its
+// semantics live in `bodyRegion.ts`; what stays here is the rule that ties the
+// two together: suppression may not empty the body (`applicableSuppressions`).
 
 import type { Component } from 'solid-js';
 import { anchorMerge } from '../../plugins/anchorMerge';
@@ -190,6 +195,61 @@ export const mergeRegion = (
     ),
     diagnostics: merged.diagnostics,
   };
+};
+
+/**
+ * What the widget region's suppressions come to once the never-blank rule is
+ * applied: the set actually obeyed, plus the ids ignored so they can be named
+ * in diagnostics.
+ */
+export interface AppliedSuppression {
+  applied: ReadonlySet<string>;
+  /** Suppressed widget ids obeying which would have emptied the body. */
+  ignored: readonly string[];
+}
+
+/**
+ * The suppressions the built-in dashboard body actually applies
+ * (OMS-REG-DB-02.18, ui-surface § region semantics — "suppression may not empty
+ * the body").
+ *
+ * Suppression is site-wide and store-blind (registry § `suppressedPieces`),
+ * so a plugin clearing the built-ins to make room for a screen only some stores
+ * should see would blank the dashboard of every OTHER store on the server. That
+ * screen belongs in the body region, which replaces the body only where it
+ * renders. So the degenerate case is refused rather than obeyed: if the union
+ * of every plugin's suppressions would leave the widget region with nothing at
+ * all to render, the widget-level suppressions are dropped and named — the
+ * built-ins render, and the dashboard is never blank.
+ *
+ * Only WIDGET suppressions are recoverable, because only they can empty the
+ * body; nested-piece suppressions are obeyed either way (a suppressed panel
+ * stays suppressed inside a widget this rule brought back). Called from the
+ * built-in body only — while a body contribution occupies the region there are
+ * no built-ins to empty (ui-surface § body-region semantics § precedence).
+ */
+export const applicableSuppressions = (
+  widgetBuiltIns: readonly RegionBuiltIn[],
+  /** How many widget contributions are visible in this store. */
+  widgetContributions: number,
+  suppressed: ReadonlySet<string>
+): AppliedSuppression => {
+  const wouldRender =
+    widgetContributions > 0 ||
+    widgetBuiltIns.some(
+      widget => widget.hidden !== true && !suppressed.has(widget.id)
+    );
+  // A built-in its own gate hides is not recoverable: ignoring its suppression
+  // would not put anything on the screen.
+  const recoverable = widgetBuiltIns
+    .filter(widget => widget.hidden !== true && suppressed.has(widget.id))
+    .map(widget => widget.id);
+  if (wouldRender || recoverable.length === 0) {
+    return { applied: suppressed, ignored: [] };
+  }
+  const applied = new Set(suppressed);
+  for (const id of recoverable) applied.delete(id);
+  return { applied, ignored: recoverable };
 };
 
 /**

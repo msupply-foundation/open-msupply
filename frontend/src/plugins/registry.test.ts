@@ -142,4 +142,32 @@ describe('suppressedPieces', () => {
     clearPlugins();
     expect(suppressedPieces().size).toBe(0);
   });
+
+  // OMS-REG-DB-02.17 — suppression is the installed plugin's standing
+  // statement about the built-in set, not part of what it contributes: it takes
+  // no context, so no `when` gate can narrow it to some stores. A suppressed
+  // built-in is therefore absent from EVERY store on the site, which is exactly
+  // why a screen only some stores should see is the body region's job and not
+  // suppression's (sdk-contract § the dashboard region slot).
+  it('OMS-REG-DB-02.17: is never narrowed by a contribution`s visibility', () => {
+    registerPlugin(
+      plugin('alpha', {
+        suppress: ['replenishment.inbound'],
+        // Every contribution this plugin makes is hidden in every store.
+        contributions: [{ ...stat('a'), when: () => false }],
+      })
+    );
+    // `suppressedPieces` takes no context to gate on, and answers the same
+    // regardless: there is no store in which the suppression does not apply.
+    expect([...suppressedPieces()]).toEqual(['replenishment.inbound']);
+    expect(suppressedPieces.length).toBe(0); // no context parameter to pass
+  });
+
+  it('suppresses without contributing anything at all', () => {
+    // The two are siblings on `definePlugin`, so a plugin may state only what
+    // the dashboard should stop showing.
+    registerPlugin(plugin('alpha', { suppress: ['distribution'] }));
+    expect([...suppressedPieces()]).toEqual(['distribution']);
+    expect(contributionsFor('dashboard.widget')()).toEqual([]);
+  });
 });

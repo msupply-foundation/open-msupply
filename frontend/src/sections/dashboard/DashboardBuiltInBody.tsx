@@ -1,4 +1,12 @@
-import { createResource, createSignal, lazy, Show, Suspense } from 'solid-js';
+import {
+  createEffect,
+  createMemo,
+  createResource,
+  createSignal,
+  lazy,
+  Show,
+  Suspense,
+} from 'solid-js';
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import {
@@ -30,7 +38,10 @@ import { dashboardGates, dashboardSlots } from './dashboardPreferences';
 import { itemCountsThresholds } from './dashboardGates';
 import { countPanelState, type CountValue } from './panelState';
 import { suppressedPieces } from '@/plugins/registry';
-import { DASHBOARD_IDS } from './regions';
+import { recordPluginDiagnostic } from '@/plugins/diagnostics';
+import { visibleContributions } from '@/plugins/PluginSlot';
+import { applicableSuppressions, DASHBOARD_IDS } from './regions';
+import { widgetBuiltIns } from './regionBuiltIns';
 import { PluginRegion } from './PluginRegion';
 import {
   customerRequisitionListHref,
@@ -280,7 +291,35 @@ export const DashboardBuiltInBody: Component = () => {
   // loading after the page mounts removes its pieces in place; and because
   // built-ins nest, suppressing a widget or a panel takes its whole subtree
   // with it.
-  const shows = (id: string) => !suppressedPieces().has(id);
+  //
+  // Except where obeying it would leave the body blank (OMS-REG-DB-02.18):
+  // suppression is site-wide, so a plugin clearing the widgets to make room for
+  // a screen meant for some stores would empty the dashboard of all the others.
+  // `applicableSuppressions` refuses that set and names it; the body region is
+  // how a store-conditional screen is built. ONE memo, so nothing here can tear
+  // down a live contribution's subtree.
+  const suppression = createMemo(() =>
+    applicableSuppressions(
+      widgetBuiltIns(),
+      visibleContributions('dashboard.widget').length,
+      suppressedPieces()
+    )
+  );
+  const shows = (id: string) => !suppression().applied.has(id);
+
+  // Recorded out of the memo (a memo's body stays a pure computation) and
+  // deduped, so a re-evaluation cannot spam the same refusal.
+  const reported = new Set<string>();
+  createEffect(() => {
+    for (const id of suppression().ignored) {
+      if (reported.has(id)) continue;
+      reported.add(id);
+      recordPluginDiagnostic({
+        level: 'warning',
+        message: `dashboard: suppression of built-in widget "${id}" ignored — obeying every suppression would leave the dashboard body empty, and no plugin contributes a body. A screen only some stores should see belongs in the dashboard.body slot.`,
+      });
+    }
+  });
 
   return (
     <>
