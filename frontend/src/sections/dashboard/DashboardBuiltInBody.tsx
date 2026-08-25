@@ -316,7 +316,10 @@ export const DashboardBuiltInBody: Component = () => {
       reported.add(id);
       recordPluginDiagnostic({
         level: 'warning',
-        message: `dashboard: suppression of built-in widget "${id}" ignored — obeying every suppression would leave the dashboard body empty, and no plugin contributes a body. A screen only some stores should see belongs in the dashboard.body slot.`,
+        // Not "no plugin contributes a body": this component is also the
+        // fallback a THROWING body contribution lands on, where one did. What
+        // is true in both paths is that no contributed body is rendering.
+        message: `dashboard: suppression of built-in widget "${id}" ignored — obeying every suppression would leave the dashboard body empty, and no contributed body is rendering in its place. A screen only some stores should see belongs in the dashboard.body slot.`,
       });
     }
   });
