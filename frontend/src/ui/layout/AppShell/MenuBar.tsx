@@ -16,6 +16,13 @@ export interface MenuBarState {
   toggleRail: () => void;
   overlayOpen: () => boolean;
   openOverlay: () => void;
+  /**
+   * Dismiss the off-canvas panel. MUST be idempotent and side-effect-free when
+   * the panel is already closed: the menu calls it on every navigation and on
+   * the brand mark, in BOTH modes, rather than guarding each call on a mode it
+   * would otherwise have to thread through. A host that made this restore
+   * focus to the hamburger trigger would steal focus from the docked rail.
+   */
   closeOverlay: () => void;
 }
 
@@ -278,6 +285,36 @@ const NavGroup = (props: {
   </ul>
 );
 
+/*
+ * The brand mark at the head of the menu, in whichever mode is rendering.
+ *
+ * Shared rather than written out per mode: the two branches below already
+ * disagreed once — the docked rail wired the mark up as a route home and the
+ * overlay rendered a bare glyph, so on a phone or tablet the logo was simply
+ * dead (issue #1142). One component means a host that supplies `onHome` gets
+ * the same affordance at every width.
+ *
+ * `onActivate` rather than `onHome` straight through, because the mark's
+ * action is more than the host's callback: it also dismisses the overlay,
+ * which covers the page it would navigate to, exactly as picking a
+ * destination does.
+ */
+const BrandMark = (props: { onActivate?: () => void }) => (
+  <div class={styles.logoArea}>
+    <Show when={props.onActivate} fallback={<AppLogo class={styles.logo} />}>
+      <button
+        type="button"
+        class={styles.logoButton}
+        data-testid="nav-home"
+        onClick={() => props.onActivate?.()}
+        aria-label={t('label.home')}
+      >
+        <AppLogo class={styles.logo} />
+      </button>
+    </Show>
+  </div>
+);
+
 const NavLists = (props: {
   upper: NavItem[];
   lower?: NavItem[];
@@ -328,10 +365,25 @@ const NavLists = (props: {
  *     desktop: the overlay always shows full labels, so it needs no flyout.
  */
 export const MenuBar = (props: MenuBarProps) => {
+  // Navigating dismisses the overlay: it sits over the very page being
+  // navigated to, so leaving it up would hide the arrival. Unguarded, because
+  // closing an already-closed panel is required to be a no-op (see
+  // MenuBarState) — and in docked mode it always is one anyway.
   const select = (leaf: NavLeaf) => {
     props.onSelect(leaf);
-    if (props.isOverlay) props.nav.closeOverlay();
+    props.nav.closeOverlay();
   };
+
+  // The brand mark goes home, and dismisses the overlay for the same reason.
+  const goHome = () => {
+    props.onHome?.();
+    props.nav.closeOverlay();
+  };
+
+  // Undefined when no host wired a route home — which is what makes the mark
+  // render as an inert glyph rather than a button. An accessor, not a const:
+  // reading props.onHome at setup would freeze that switch.
+  const homeAction = () => props.onHome && goHome;
 
   // --- Accordion (expanded rail) ------------------------------------------
   // ONE section open at a time, owned here rather than per-section, because
@@ -444,22 +496,7 @@ export const MenuBar = (props: MenuBarProps) => {
               rail exactly when the rail is hardest to read.
               Losing the mark on the rail costs no route home: the Dashboard
               entry directly below it goes to the same place. */}
-          <div class={styles.logoArea}>
-            <Show
-              when={props.onHome}
-              fallback={<AppLogo class={styles.logo} />}
-            >
-              <button
-                type="button"
-                class={styles.logoButton}
-                data-testid="nav-home"
-                onClick={props.onHome}
-                aria-label={t('label.home')}
-              >
-                <AppLogo class={styles.logo} />
-              </button>
-            </Show>
-          </div>
+          <BrandMark onActivate={homeAction()} />
           <NavLists
             upper={props.upper}
             lower={props.lower}
@@ -550,9 +587,7 @@ export const MenuBar = (props: MenuBarProps) => {
         aria-label={t('label.menu')}
         aria-hidden={!props.nav.overlayOpen()}
       >
-        <div class={styles.logoArea}>
-          <AppLogo class={styles.logo} />
-        </div>
+        <BrandMark onActivate={homeAction()} />
         <NavLists
           upper={props.upper}
           lower={props.lower}
