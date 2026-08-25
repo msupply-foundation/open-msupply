@@ -1,10 +1,10 @@
-import { createMemo, createRoot, createSignal } from 'solid-js';
+import { createMemo, createRoot, createSignal, type Accessor } from 'solid-js';
 import { graphqlFetch } from '../api/graphql';
 import {
   StoreContext,
   type StoreContextResult,
 } from './storeContext.generated';
-import { authUser } from '../auth/authContext';
+import { authUser, type AuthUser } from '../auth/authContext';
 
 // Spec (Store Login, Guard 3): store preferences + permissions as global state.
 // Callers invoke refetchStoreContext directly — on store entry, and from
@@ -227,6 +227,10 @@ const prescriptionPreferences = () => {
 const storeCustomColour = (): string =>
   storeContext()?.preferences?.storeCustomColour ?? '';
 
+// The wire's own store-mode vocabulary, read off the generated fragment rather
+// than restated (kdd/type-safety), so a mode added to the schema lands here.
+type StoreMode = AuthUser['stores']['nodes'][number]['storeMode'];
+
 // The MODE of the store the user has currently entered, as the wire's own
 // `storeMode` value ('STORE' / 'DISPENSARY') — kept in the generated vocabulary
 // rather than remapped to a parallel one (kdd/type-safety). Read off the
@@ -234,9 +238,34 @@ const storeCustomColour = (): string =>
 // `currentStoreName` reads, so it costs no query. Undefined while the store is
 // unresolved — every caller must treat that as "mode not yet known", never as a
 // mode. Reactive — reads authUser + currentStoreId.
-const currentStoreMode = () => {
-  const storeId = currentStoreId();
-  return authUser()?.stores.nodes.find(s => s.id === storeId)?.storeMode;
+//
+// A MEMO, for the same reason as the two above, and here it is the plugin slot
+// boundary that makes it load-bearing: `slotContext` (src/plugins/slotContext)
+// is read inside PluginSlot's one memo, whose array identity is what keeps
+// mounted contributions alive. A plain accessor would put the whole `me`
+// payload in that memo's dependency set, so any genuine change to it — a store
+// renamed or added centrally, isDisabled flipped, the user's own name or
+// timeout changed — would rebuild the array and remount every contribution,
+// losing typed input and re-running their fetches. The memo's output is a
+// string, so an unchanged mode stops the propagation dead.
+//
+// Created on FIRST READ rather than in the createRoot above, and that is
+// deliberate: this is the only module-level derivation here that reads
+// authContext, which imports this module back (refetchStoreContext — and again
+// via api/graphql's deliberate cycle). createMemo computes eagerly, so building
+// it at module init would call authUser() while authContext's own `const`
+// bindings are still in their temporal dead zone whenever authContext is the
+// side the bundler evaluates first. Deferring creation to the first read puts
+// that call after both modules have finished evaluating, whatever the order.
+let storeModeMemo: Accessor<StoreMode | undefined> | undefined;
+const currentStoreMode = (): StoreMode | undefined => {
+  storeModeMemo ??= createRoot(() =>
+    createMemo(() => {
+      const storeId = currentStoreId();
+      return authUser()?.stores.nodes.find(s => s.id === storeId)?.storeMode;
+    })
+  );
+  return storeModeMemo();
 };
 
 // The entered store's dispensary gate (spec/patients § configuration gates ›

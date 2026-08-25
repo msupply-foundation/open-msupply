@@ -21,14 +21,14 @@ import type { SlotContext } from '../plugin-sdk/types';
  */
 /* eslint-disable solid/reactivity */
 const edges = vi.hoisted(() => {
+  // Filled in by the auth mock's factory below, once solid-js is loadable.
+  const auth: { setUser: (user: unknown) => void } = { setUser: () => {} };
   const state: {
-    user: unknown;
     // Only the store-context fields the slot boundary reads; the guard-3
     // response is otherwise irrelevant to a mode gate.
     payload: unknown;
     fetchFails: boolean;
   } = {
-    user: undefined,
     payload: {
       storePreferences: {
         useConsumptionAndStockFromCustomersForInternalOrders: false,
@@ -43,6 +43,7 @@ const edges = vi.hoisted(() => {
   };
   return {
     state,
+    auth,
     graphqlFetch: vi.fn(async () =>
       state.fetchFails
         ? { kind: 'error', error: { kind: 'network' } }
@@ -51,7 +52,20 @@ const edges = vi.hoisted(() => {
   };
 });
 
-vi.mock('../auth/authContext', () => ({ authUser: () => edges.state.user }));
+// A REAL signal behind authUser, with the app's own comparator — not a getter
+// over a plain field. currentStoreMode memoises over this signal, and the last
+// test in this suite pins that it is the MEMO, not the raw `me` payload, that a
+// slot region ends up depending on; a plain-field stand-in could not observe
+// that at all.
+vi.mock('../auth/authContext', async () => {
+  const { createSignal } = await import('solid-js');
+  const { sameFetchedValue } = await import('../typeHelpers');
+  const [user, setUser] = createSignal<unknown>(undefined, {
+    equals: sameFetchedValue,
+  });
+  edges.auth.setUser = value => setUser(() => value);
+  return { authUser: user };
+});
 vi.mock('../api/graphql', () => ({ graphqlFetch: edges.graphqlFetch }));
 
 import { isDispensary, refetchStoreContext } from '../store/storeContext';
@@ -127,7 +141,7 @@ const gatedIds = () =>
 
 beforeEach(async () => {
   clearPlugins();
-  edges.state.user = undefined;
+  edges.auth.setUser(undefined);
   edges.state.fetchFails = false;
   await refetchStoreContext(undefined);
 });
@@ -135,7 +149,7 @@ beforeEach(async () => {
 describe('gating a contribution on store mode (CK-1.1)', () => {
   it('withholds it until a store is entered', () => {
     registerNavigator();
-    edges.state.user = loggedIn;
+    edges.auth.setUser(loggedIn);
 
     // Logged in, no store entered: the mode is not known, so a positive gate
     // is off and the contribution never renders.
@@ -145,7 +159,7 @@ describe('gating a contribution on store mode (CK-1.1)', () => {
 
   it('renders it in a dispensary-mode store', async () => {
     registerNavigator();
-    edges.state.user = loggedIn;
+    edges.auth.setUser(loggedIn);
     await refetchStoreContext('clinic');
 
     expect(slotContext().storeMode).toBe('dispensary');
@@ -154,7 +168,7 @@ describe('gating a contribution on store mode (CK-1.1)', () => {
 
   it('withholds it in a store-mode store', async () => {
     registerNavigator();
-    edges.state.user = loggedIn;
+    edges.auth.setUser(loggedIn);
     await refetchStoreContext('depot');
 
     expect(slotContext().storeMode).toBe('store');
@@ -163,7 +177,7 @@ describe('gating a contribution on store mode (CK-1.1)', () => {
 
   it('re-gates on a store switch, both ways', async () => {
     registerNavigator();
-    edges.state.user = loggedIn;
+    edges.auth.setUser(loggedIn);
 
     await refetchStoreContext('clinic');
     expect(gatedIds()).toEqual(['home-navigator']);
@@ -176,7 +190,7 @@ describe('gating a contribution on store mode (CK-1.1)', () => {
   });
 
   it('reports the mode alongside the rest of the session surface', async () => {
-    edges.state.user = loggedIn;
+    edges.auth.setUser(loggedIn);
     await refetchStoreContext('clinic');
 
     const ctx = slotContext();
@@ -190,7 +204,7 @@ describe('gating a contribution on store mode (CK-1.1)', () => {
   // else pins the real accessor. CK-1.1 re-expressed it over currentStoreMode();
   // this is what would catch that refactor changing its answer.
   it('leaves isDispensary() answering exactly as before', async () => {
-    edges.state.user = loggedIn;
+    edges.auth.setUser(loggedIn);
     expect(isDispensary()).toBe(false); // no store entered
 
     await refetchStoreContext('clinic');
@@ -207,7 +221,7 @@ describe('gating a contribution on store mode (CK-1.1)', () => {
 
   it('leaves the mode unknown when the context fetch fails', async () => {
     registerNavigator();
-    edges.state.user = loggedIn;
+    edges.auth.setUser(loggedIn);
     edges.state.fetchFails = true;
     await refetchStoreContext('clinic');
 
@@ -216,5 +230,56 @@ describe('gating a contribution on store mode (CK-1.1)', () => {
     expect(slotContext().storeId).toBeUndefined();
     expect(slotContext().storeMode).toBeUndefined();
     expect(gatedIds()).toEqual([]);
+  });
+
+  /*
+   * The identity guarantee PluginSlot's one memo exists for
+   * (kdd/solid-reactivity-pitfalls). A slot region's memo maps to fresh
+   * `{ id, Component }` objects for a reference-keyed `<For>`, so a recompute
+   * remounts every live contribution — typed input lost, per-contribution
+   * fetches re-run. Reading the store's mode must therefore cost the region a
+   * dependency on the MODE, not on the whole `me` payload: `me` is republished
+   * whenever a store is renamed or added centrally, a store is disabled, or the
+   * user's own name or timeout changes, none of which a mode gate cares about.
+   */
+  it('does not rebuild a slot region when `me` changes but the mode does not', async () => {
+    registerNavigator();
+    edges.auth.setUser(loggedIn);
+    await refetchStoreContext('clinic');
+
+    createRoot(dispose => {
+      const rendered = createMemo(() =>
+        visibleContributions('dashboard.widget').map(contribution => ({
+          id: contribution.id,
+          Component: contribution.Component,
+        }))
+      );
+      const first = rendered();
+      expect(first.map(c => c.id)).toEqual(['home-navigator']);
+
+      // A genuinely different `me` — the entered store renamed centrally, the
+      // other one disabled — carrying the same mode for the entered store.
+      edges.auth.setUser({
+        ...loggedIn,
+        stores: {
+          nodes: [
+            { ...store('clinic', 'DISPENSARY'), name: 'Rarotonga Clinic' },
+            { ...store('depot', 'STORE'), isDisabled: true },
+          ],
+        },
+      } satisfies UserInfoFragment);
+      expect(rendered()).toBe(first); // same array ⇒ nothing remounts
+
+      // The mode itself flipping still re-gates: the memo filters propagation,
+      // it does not freeze it.
+      edges.auth.setUser({
+        ...loggedIn,
+        stores: { nodes: [store('clinic', 'STORE'), store('depot', 'STORE')] },
+      } satisfies UserInfoFragment);
+      expect(rendered()).not.toBe(first);
+      expect(rendered()).toEqual([]);
+
+      dispose();
+    });
   });
 });
