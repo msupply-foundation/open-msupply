@@ -30,6 +30,8 @@
 // - The page owns the remembered previous server (src/desktop/discovery.ts §
 //   previous server) and the decision to auto-connect (AC-DT1, AC-DT13–15).
 
+import { androidDesktopHost } from '../platform/discoveryHost';
+
 /** Matches server/server/src/discovery.rs (FrontEndHost) — the announcement's
  * identity attributes plus the host-side `isLocal` marking. */
 export type FrontEndHost = {
@@ -46,6 +48,7 @@ export type FrontEndHost = {
 };
 
 export type ConnectionResult = { success: boolean; error?: string };
+
 
 export type DesktopHostApi = {
   /** Start (or restart) browsing announcements. Fire-and-forget; results are
@@ -75,6 +78,10 @@ declare global {
 // A function, not a module-scope const (same reasoning as src/platform/index):
 // costs nothing and stays correct if a shell ever injects the bridge later
 // than module evaluation. The typeof guard keeps it safe under vitest's node
-// environment.
+// environment. Electron shells inject the global; the Android shell answers
+// through its Capacitor plugin instead (src/platform/discoveryHost.ts) —
+// same contract, two transports.
 export const getDesktopHost = (): DesktopHostApi | undefined =>
-  typeof window === 'undefined' ? undefined : window.electronNativeAPI;
+  typeof window === 'undefined'
+    ? undefined
+    : (window.electronNativeAPI ?? androidDesktopHost());

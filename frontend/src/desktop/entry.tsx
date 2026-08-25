@@ -22,7 +22,12 @@ const boot = async () => {
   render(() => <DiscoveryPage />, document.getElementById('root')!);
 };
 
-if (import.meta.env.DEV && window.electronNativeAPI === undefined) {
+// A REAL host wins over the mock in dev too: the electron shell's injected
+// global, or the Android shell's plugin (the dev-android loop serves this
+// page from vite with the native bridge live behind it).
+const { getDesktopHost } = await import('./hostBridge');
+
+if (import.meta.env.DEV && getDesktopHost() === undefined) {
   void import('./devHostMock').then(({ installDevHostMock }) => {
     installDevHostMock();
     void boot();
