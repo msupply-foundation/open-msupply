@@ -122,6 +122,29 @@ Two rules a real panel must follow, both visible here:
   A `when` that depended on the record would add and remove the contribution as
   the user steps, which is a remount by another name.
 
+## Navigation
+
+Two primitives, both over a path **below the store root**, spelled as the
+navigation registry spells it — `'inventory/stock'`, `'catalogue/items'`, `''`
+for the store's landing screen — plus any query string of its own:
+
+- `storeHref(path)` — the href. Put it on an `<a>` (or on an SDK component that
+  takes one) and you get a real link: middle-click, open in a new tab, the link
+  role and keyboard activation, and the host's router turns the click into a
+  client-side navigation.
+- `navigateTo(path, { replace })` — the same destination from code, for when
+  there is no anchor to click (after creating a record, say). Prefer the link
+  wherever the user is choosing to go somewhere.
+
+**Never build a host URL by hand.** Two things you would have to encode are the
+host's and both move: the entered store, and where the app is _mounted_ — the
+deployed `/rc/` track and every branch deploy sit under their own prefix, and a
+link missing it is one the router declines to intercept, so it 404s instead of
+navigating. `storeHref` reads the entered store reactively, so an href read in
+your JSX re-resolves when the user switches store.
+
+The reference plugin's greeting stat has one of each.
+
 ## Data
 
 Three ways in, all never-throwing (match on `result.kind`):
