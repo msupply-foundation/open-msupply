@@ -36,13 +36,73 @@ describe('resolveOptionValue', () => {
   });
 
   it('joins an array of option ids', () => {
-    expect(resolveOptionValue(definition, ['opt_1', 'opt_2'])).toBe('Red, Blue');
+    expect(resolveOptionValue(definition, ['opt_1', 'opt_2'])).toBe(
+      'Red, Blue'
+    );
   });
 
   it('drops unresolvable ids from an array so a missing id leaves no stray comma', () => {
-    expect(resolveOptionValue(definition, ['opt_1', 'opt_missing', 'opt_2'])).toBe(
-      'Red, Blue'
-    );
+    expect(
+      resolveOptionValue(definition, ['opt_1', 'opt_missing', 'opt_2'])
+    ).toBe('Red, Blue');
+  });
+});
+
+describe('deleted options', () => {
+  // The server returns deleted options on purpose: a stored value is only ever
+  // an option id, so dropping them would make every record still holding one
+  // render a raw id. They stay resolvable, but nothing offers them as a choice.
+  const deleted = (id: string, name: string) => ({
+    id,
+    name,
+    deletedDatetime: '2026-01-01T00:00:00',
+  });
+
+  const definition = def({
+    valueType: CustomFieldNodeValueType.Option,
+    options: [option('live', 'Pregnant'), deleted('gone', 'Widowed')],
+  });
+
+  it('still resolves a deleted option to its name', () => {
+    expect(resolveOptionValue(definition, 'gone')).toBe('Widowed');
+  });
+
+  it('never offers a deleted option for selection', () => {
+    expect(getSelectableOptions(definition).map(o => o.id)).toEqual(['live']);
+    expect(getHierarchicalOptions(definition).map(o => o.id)).toEqual(['live']);
+  });
+
+  it('still matches a deleted descendant when filtering by its parent', () => {
+    const hierarchy = def({
+      valueType: CustomFieldNodeValueType.Option,
+      options: [
+        option('parent', 'Parent'),
+        { ...deleted('child', 'Child'), parentOptionId: 'parent' },
+      ],
+    });
+    expect(getOptionAndDescendantIds(hierarchy, 'parent')).toEqual([
+      'parent',
+      'child',
+    ]);
+  });
+
+  it('promotes the children of a deleted parent to roots rather than losing them', () => {
+    const hierarchy = def({
+      valueType: CustomFieldNodeValueType.Option,
+      options: [
+        deleted('parent', 'Parent'),
+        { ...option('child', 'Child'), parentOptionId: 'parent' },
+      ],
+    });
+    expect(getHierarchicalOptions(hierarchy)).toEqual([
+      {
+        id: 'child',
+        name: 'Child',
+        parentOptionId: 'parent',
+        depth: 0,
+        isLeaf: true,
+      },
+    ]);
   });
 });
 
@@ -83,7 +143,10 @@ describe('getSelectableOptions', () => {
         withParent('c2', 'Child 2', 'p'),
       ],
     });
-    expect(getSelectableOptions(definition).map(o => o.id)).toEqual(['c1', 'c2']);
+    expect(getSelectableOptions(definition).map(o => o.id)).toEqual([
+      'c1',
+      'c2',
+    ]);
   });
 });
 
@@ -194,7 +257,9 @@ describe('formatCustomFieldValue', () => {
   const localisedDate = (d: Date) => d.toISOString().slice(0, 10);
 
   it('stringifies text/number/real values', () => {
-    expect(formatCustomFieldValue(def({}), 'hello', localisedDate)).toBe('hello');
+    expect(formatCustomFieldValue(def({}), 'hello', localisedDate)).toBe(
+      'hello'
+    );
     expect(
       formatCustomFieldValue(
         def({ valueType: CustomFieldNodeValueType.Real }),

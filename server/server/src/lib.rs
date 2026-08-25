@@ -41,6 +41,7 @@ use service::{
     },
     auth_data::AuthData,
     boajs::context::BoaJsContext,
+    custom_field::builtin::seed_builtin_custom_fields,
     ledger_fix::ledger_fix_driver::LedgerFixDriver,
     plugin::validation::ValidatedPluginBucket,
     processors::Processors,
@@ -436,6 +437,20 @@ pub async fn start_server(
                     format_error(&e)
                 ),
             }
+        }
+    }
+
+    // Builtin custom fields (`service/src/custom_field/builtin.rs`) are central
+    // data, so only a central server seeds them. This is the **standalone**
+    // central's only chance: it never runs the sync loop
+    // (`SynchroniserDriver::run` parks it forever), so the seed call in the sync
+    // cycle — which covers a synced central, the one that only learns it is
+    // central after its first sync — never fires here. Runs after the YAML
+    // bootstrap above so a just-initialised standalone central is seeded on the
+    // same boot. Idempotent and change-aware, so repeating it costs nothing.
+    if CentralServerConfig::is_standalone_central() {
+        if let Err(e) = seed_builtin_custom_fields(&connection) {
+            log::error!("Failed to seed builtin custom fields: {}", format_error(&e));
         }
     }
 

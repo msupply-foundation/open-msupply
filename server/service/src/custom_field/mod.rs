@@ -1,3 +1,5 @@
+pub mod builtin;
+
 use std::collections::HashSet;
 
 use repository::{

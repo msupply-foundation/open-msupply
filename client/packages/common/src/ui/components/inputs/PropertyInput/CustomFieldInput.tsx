@@ -52,9 +52,7 @@ export const CustomFieldInput = ({
       <Checkbox
         checked={Boolean(value)}
         disabled={disabled || !editable}
-        onChange={
-          editable ? e => onChange?.(e.target.checked) : undefined
-        }
+        onChange={editable ? e => onChange?.(e.target.checked) : undefined}
       />
     );
   }
@@ -65,8 +63,11 @@ export const CustomFieldInput = ({
     // back as a plain depth-0 list (every option selectable).
     const hierarchical = getHierarchicalOptions(definition);
     const existing = definition.options.find(o => o.id === value) ?? null;
-    // Always keep the current value selectable, even if it's a non-leaf / a
-    // not-yet-synced id, so an existing value still shows.
+    // Always keep the current value selectable, even if it's a non-leaf, a
+    // not-yet-synced id, or an option since deleted, so an existing value still
+    // shows. A deleted option reaches the list only this way — via the value
+    // already on the record — so it is never offered to a record that doesn't
+    // already hold it.
     const options =
       existing && !hierarchical.some(o => o.id === existing.id)
         ? [{ ...existing, depth: 0, isLeaf: true }, ...hierarchical]
