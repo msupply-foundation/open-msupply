@@ -52,13 +52,13 @@ const refetch = async (storeId: string | undefined) => {
 // wake. A plain accessor would pass the wrapper churn straight through.
 // createRoot gives the module-scope memos an owner (cf.
 // createStoreScopedResource).
-const { storeContext, currentStoreId } = createRoot(() => ({
+const { storeContext, currentStoreId } = createRoot(() => {
   // The loaded store context (Guard 3 state): store preferences + permissions.
   // Reactive; undefined until the guard's fetch lands and between store
   // switches.
-  storeContext: createMemo(
+  const storeContext = createMemo(
     (): StoreContextResult | undefined => loaded()?.result
-  ),
+  );
   // The id of the store the user has currently ENTERED (Guard 3 loaded).
   // Reactive and module-level, so store-scoped global caches
   // (createStoreScopedResource) can depend on it without a component. Set only
@@ -68,8 +68,9 @@ const { storeContext, currentStoreId } = createRoot(() => ({
   // valid to fetch. Keyed on the REQUEST (not the response's
   // storePreferences.id, which is "" for a store without a preference row).
   // Undefined between store switches (guard shows its loading state).
-  currentStoreId: createMemo(() => loaded()?.storeId),
-}));
+  const currentStoreId = createMemo(() => loaded()?.storeId);
+  return { storeContext, currentStoreId };
+});
 
 // The stocktake display-gate preferences (spec/stocktakes › store-preference
 // gates), read from the guard-3 PreferencesNode. Each defaults to `false` while
@@ -259,12 +260,13 @@ type StoreMode = AuthUser['stores']['nodes'][number]['storeMode'];
 // that call after both modules have finished evaluating, whatever the order.
 let storeModeMemo: Accessor<StoreMode | undefined> | undefined;
 const currentStoreMode = (): StoreMode | undefined => {
-  storeModeMemo ??= createRoot(() =>
-    createMemo(() => {
+  storeModeMemo ??= createRoot(() => {
+    const memo = createMemo(() => {
       const storeId = currentStoreId();
       return authUser()?.stores.nodes.find(s => s.id === storeId)?.storeMode;
-    })
-  );
+    });
+    return memo;
+  });
   return storeModeMemo();
 };
 
@@ -284,9 +286,9 @@ const isDispensary = (): boolean => currentStoreMode() === 'DISPENSARY';
 // (StorePreferenceNode.vaccineModule). Gates the cold-chain DESTINATIONS — the
 // menu's Cold chain section and the palette's cold-chain entries (spec/keyboard
 // AC-KB4) — which is the legitimate kind of module gate: it gates the place
-// there is to go to, not a generic action (KB-R2). Same safe-default-OFF rule as
-// the other gates, so a gated destination never flashes in before the preference
-// is known. Reactive — a post-sync refetch re-gates in place.
+// there is to go to, not a generic action (KB-R2). Same safe-default-OFF rule
+// as the other gates, so a gated destination never flashes in before the
+// preference is known. Reactive — a post-sync refetch re-gates in place.
 const hasVaccineModule = (): boolean =>
   storeContext()?.storePreferences?.vaccineModule ?? false;
 
