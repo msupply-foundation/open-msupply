@@ -26,6 +26,7 @@ import { storeCustomColour } from '../store/storeContext';
 import { isCentralServer } from '../api/serverInfo';
 import { reportPermissionDenied } from '../api/graphql';
 import { deniedPermission, gateNav, routeAccess } from './navGates';
+import { bindHostNavigate } from './hostNavigate';
 import { storeRelativePath } from './storeRelativePath';
 import { KeyboardHost } from '../keyboard/KeyboardHost';
 import { createDocumentTitle, screenTitleKey } from '../documentTitle';
@@ -60,6 +61,18 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   const params = useParams<{ storeId: string }>();
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Programmatic navigation for host-adjacent code with no router context —
+  // today the plugin SDK's `navigateTo` (src/nav/hostNavigate.ts). Bound here
+  // because this shell is where navigation lives and it mounts once for the
+  // whole in-store app, which every plugin contribution renders inside.
+  // `resolve: false` because the href handed over is already resolved, mount
+  // base included: resolving it again would prepend the base twice. It is the
+  // same path a click on an `<a href>` takes (the router's own anchor handler
+  // navigates with `resolve: false` too).
+  bindHostNavigate((href, options) =>
+    navigate(href, { ...options, resolve: false })
+  );
 
   // The path relative to the store root, e.g. '/{store}/inventory/stocktakes'
   // → 'inventory/stocktakes'. The empty (store root) path is the dashboard.
