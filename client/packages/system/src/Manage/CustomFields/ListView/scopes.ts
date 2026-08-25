@@ -15,7 +15,11 @@ export const CUSTOM_FIELD_SCOPES: {
   labelKey: LocaleKey;
   supportsProminent: boolean;
 }[] = [
-  { scope: 'item', labelKey: 'label.custom-field-scope-item', supportsProminent: false },
+  {
+    scope: 'item',
+    labelKey: 'label.custom-field-scope-item',
+    supportsProminent: false,
+  },
   {
     scope: 'customer',
     labelKey: 'label.custom-field-scope-customer',
@@ -44,6 +48,16 @@ export const CUSTOM_FIELD_SCOPES: {
   {
     scope: 'prescription',
     labelKey: 'label.custom-field-scope-prescription',
+    supportsProminent: true,
+  },
+  {
+    // The prescriber-side order (`prescription_order`), distinct from the
+    // dispensing `prescription` scope above. Its fields are shipped by
+    // open-mSupply itself rather than configured per deployment (see
+    // `service/src/custom_field/builtin.rs`), so this tab is never empty — it is
+    // where a deployment hides or promotes what it was given.
+    scope: 'prescription_order',
+    labelKey: 'label.custom-field-scope-prescription-order',
     supportsProminent: true,
   },
   {

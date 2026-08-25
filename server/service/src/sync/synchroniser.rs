@@ -191,6 +191,18 @@ impl SynchroniserV5V6 {
             )?;
         }
 
+        // Builtin custom fields are OMS-authored rather than mapped from OG, so
+        // unlike the mapping properties above they are meaningful on a central
+        // with no legacy central behind it — gated on being central, not on
+        // being a *synced* central. (A standalone central never gets here at
+        // all: its sync driver parks, so it seeds from the server's startup
+        // path instead.) Change-aware, so steady-state syncs add no changelog
+        // churn, and a builtin added in a later version is picked up on the
+        // next sync.
+        if CentralServerConfig::is_central_server() {
+            crate::custom_field::builtin::seed_builtin_custom_fields(&ctx.connection)?;
+        }
+
         let central_sync_server_id = site_info.msupply_central_site_id;
         // Set central server site id in key value store, so it can be used by other code which hasn't called the get_site_info api
         KeyValueStoreRepository::new(&ctx.connection).set_i32(

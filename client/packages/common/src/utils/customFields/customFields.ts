@@ -11,12 +11,36 @@ export interface CustomFieldOptionLike {
   name: string;
   /** Parent option id for hierarchical OPTIONs (e.g. name category 1); null/absent for flat. */
   parentOptionId?: string | null;
+  /**
+   * Set when the option has been deleted. The server returns deleted options
+   * deliberately — a stored value is only ever an option id, so dropping them
+   * would make every record still holding one render a raw id instead of a
+   * name. So they stay **resolvable but not offerable**: see `withoutDeleted`.
+   */
+  deletedDatetime?: string | null;
 }
 
 export interface CustomFieldDefinitionLike {
   valueType: CustomFieldNodeValueType;
   options: CustomFieldOptionLike[];
 }
+
+/**
+ * Drop deleted options — everything a user could *choose* is built from this,
+ * while `resolveOptionValue` deliberately reads the unfiltered list so an
+ * already-stored deleted value still renders its name. Deleting an option
+ * therefore stops it being picked without stranding the records that hold it.
+ *
+ * A deleted parent leaves its children in place: they become orphans, and the
+ * hierarchy walkers below already treat an option whose parent is absent as a
+ * root.
+ */
+const withoutDeleted = (
+  definition: CustomFieldDefinitionLike
+): CustomFieldDefinitionLike => ({
+  ...definition,
+  options: definition.options.filter(o => !o.deletedDatetime),
+});
 
 /**
  * The options a value may actually be set to: the **leaves** of the option
@@ -29,12 +53,11 @@ export interface CustomFieldDefinitionLike {
 export const getSelectableOptions = (
   definition: CustomFieldDefinitionLike
 ): CustomFieldOptionLike[] => {
+  const live = withoutDeleted(definition);
   const parentIds = new Set(
-    definition.options
-      .map(o => o.parentOptionId)
-      .filter((id): id is string => !!id)
+    live.options.map(o => o.parentOptionId).filter((id): id is string => !!id)
   );
-  return definition.options.filter(o => !parentIds.has(o.id));
+  return live.options.filter(o => !parentIds.has(o.id));
 };
 
 export interface HierarchicalOption extends CustomFieldOptionLike {
@@ -52,7 +75,10 @@ const getChildrenByParent = (
   definition: CustomFieldDefinitionLike
 ): Map<string | undefined, CustomFieldOptionLike[]> => {
   const ids = new Set(definition.options.map(o => o.id));
-  const childrenByParent = new Map<string | undefined, CustomFieldOptionLike[]>();
+  const childrenByParent = new Map<
+    string | undefined,
+    CustomFieldOptionLike[]
+  >();
   for (const option of definition.options) {
     const parent =
       option.parentOptionId && ids.has(option.parentOptionId)
@@ -72,11 +98,16 @@ const getChildrenByParent = (
  * dimensions (no parents) come back as a depth-0 list of leaves. Orphans
  * (parent not present) are treated as roots; a `seen` guard makes it safe
  * against cyclic parent references.
+ *
+ * Deleted options are excluded — this feeds selection surfaces (the edit
+ * picker, the list's option filter). The edit control re-adds the record's own
+ * current value when it isn't in this list, which is what keeps a deleted value
+ * visible on the record that holds it without offering it to anyone else.
  */
 export const getHierarchicalOptions = (
   definition: CustomFieldDefinitionLike
 ): HierarchicalOption[] => {
-  const childrenByParent = getChildrenByParent(definition);
+  const childrenByParent = getChildrenByParent(withoutDeleted(definition));
 
   const result: HierarchicalOption[] = [];
   const seen = new Set<string>();
@@ -97,6 +128,10 @@ export const getHierarchicalOptions = (
  * store. Includes intermediate levels, not just leaves, so values stored at
  * any level under the selection still match. An id with no descendants (or
  * not in the definition at all) comes back as just itself.
+ *
+ * Deliberately walks the **unfiltered** options: a deleted option can't be
+ * picked any more, but records still hold it, so filtering by its parent must
+ * keep finding them.
  */
 export const getOptionAndDescendantIds = (
   definition: CustomFieldDefinitionLike,
@@ -123,9 +158,13 @@ export const getOptionAndDescendantIds = (
  * deleted in mSupply before the OG→OMS migration: the `transaction_category`
  * record is gone, so no `custom_field_option` ever syncs and the invoice's
  * stored id references nothing. Mirrors OG, which falls back to "None" for an
- * orphaned `category_ID`. (OMS-authored options are only ever soft-deleted, so
- * their row — and label — survives and keeps resolving here.) Array entries
- * that don't resolve are dropped so a missing id doesn't leave a stray comma.
+ * orphaned `category_ID`. Array entries that don't resolve are dropped so a
+ * missing id doesn't leave a stray comma.
+ *
+ * Note this reads `definition.options` **unfiltered**, so a soft-deleted option
+ * still resolves to its name — that is precisely why the server returns deleted
+ * options. Only an id with no row at all (the legacy case above) comes back
+ * empty.
  */
 export const resolveOptionValue = (
   definition: CustomFieldDefinitionLike,

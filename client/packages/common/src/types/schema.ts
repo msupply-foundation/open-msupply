@@ -156,6 +156,10 @@ export enum ActivityLogNodeType {
   PatientUpdated = 'PATIENT_UPDATED',
   PrescriptionCreated = 'PRESCRIPTION_CREATED',
   PrescriptionDeleted = 'PRESCRIPTION_DELETED',
+  PrescriptionOrderCreated = 'PRESCRIPTION_ORDER_CREATED',
+  PrescriptionOrderDeleted = 'PRESCRIPTION_ORDER_DELETED',
+  PrescriptionOrderDispensed = 'PRESCRIPTION_ORDER_DISPENSED',
+  PrescriptionOrderReadyToDispense = 'PRESCRIPTION_ORDER_READY_TO_DISPENSE',
   PrescriptionStatusCancelled = 'PRESCRIPTION_STATUS_CANCELLED',
   PrescriptionStatusPicked = 'PRESCRIPTION_STATUS_PICKED',
   PrescriptionStatusVerified = 'PRESCRIPTION_STATUS_VERIFIED',
@@ -1966,6 +1970,12 @@ export enum CustomFieldNodeDisplayMode {
 }
 
 export enum CustomFieldNodeKind {
+  /**
+   * Authored by open-mSupply in code and shipped as a deployment default.
+   * Provenance only — nothing on the surface branches on it; the deployment
+   * configures its display mode like any other definition.
+   */
+  Builtin = 'BUILTIN',
   /** Synced from legacy mSupply. */
   Legacy = 'LEGACY',
   /** Configured natively in open-mSupply. */
@@ -1984,6 +1994,14 @@ export enum CustomFieldNodeValueType {
 export type CustomFieldOptionNode = {
   __typename: 'CustomFieldOptionNode';
   customFieldId: Scalars['String']['output'];
+  /**
+   * Set when the option has been deleted. A deleted option is still returned
+   * so a record that already holds it renders its **name** rather than a raw
+   * id — clients resolve values against the whole list and must filter on
+   * this field when building a picker, so a deleted option can be read but
+   * not newly selected.
+   */
+  deletedDatetime?: Maybe<Scalars['NaiveDateTime']['output']>;
   id: Scalars['String']['output'];
   key: Scalars['String']['output'];
   name: Scalars['String']['output'];
@@ -2423,6 +2441,10 @@ export type DeletePrescriptionLineResponseWithId = {
   id: Scalars['String']['output'];
   response: DeletePrescriptionLineResponse;
 };
+
+export type DeletePrescriptionOrderLineResponse = DeleteResponse;
+
+export type DeletePrescriptionOrderResponse = DeleteResponse;
 
 export type DeletePrescriptionResponse =
   | DeletePrescriptionError
@@ -3269,6 +3291,13 @@ export type EqualFilterNumberInput = {
   equalTo?: InputMaybe<Scalars['Int']['input']>;
   notEqualAll?: InputMaybe<Array<Scalars['Int']['input']>>;
   notEqualTo?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type EqualFilterPrescriptionOrderStatusInput = {
+  equalAny?: InputMaybe<Array<PrescriptionOrderNodeStatus>>;
+  equalTo?: InputMaybe<PrescriptionOrderNodeStatus>;
+  notEqualAll?: InputMaybe<Array<PrescriptionOrderNodeStatus>>;
+  notEqualTo?: InputMaybe<PrescriptionOrderNodeStatus>;
 };
 
 export type EqualFilterPurchaseOrderLineStatusInput = {
@@ -4360,6 +4389,17 @@ export type InsertPrescriptionLineResponseWithId = {
   response: InsertPrescriptionLineResponse;
 };
 
+export type InsertPrescriptionOrderInput = {
+  clinicianId?: InputMaybe<Scalars['String']['input']>;
+  diagnosisId?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['String']['input'];
+  patientId: Scalars['String']['input'];
+  prescriptionDatetime?: InputMaybe<Scalars['DateTime']['input']>;
+  programId?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type InsertPrescriptionOrderResponse = PrescriptionOrderNode;
+
 export type InsertPrescriptionResponse = InvoiceNode;
 
 export type InsertPrescriptionResponseWithId = {
@@ -5029,6 +5069,7 @@ export type InvoiceFilterInput = {
   otherPartyId?: InputMaybe<EqualFilterStringInput>;
   otherPartyName?: InputMaybe<StringFilterInput>;
   pickedDatetime?: InputMaybe<DatetimeFilterInput>;
+  prescriptionOrderId?: InputMaybe<EqualFilterStringInput>;
   programId?: InputMaybe<EqualFilterStringInput>;
   purchaseOrderId?: InputMaybe<EqualFilterStringInput>;
   purchaseOrderNumber?: InputMaybe<EqualFilterBigNumberInput>;
@@ -5228,6 +5269,11 @@ export type InvoiceNode = {
   otherPartyName: Scalars['String']['output'];
   patient?: Maybe<PatientNode>;
   pickedDatetime?: Maybe<Scalars['DateTime']['output']>;
+  /**
+   * The prescriber's prescription order this dispensing invoice was
+   * generated from (soft link — the order may not exist on this site)
+   */
+  prescriptionOrderId?: Maybe<Scalars['String']['output']>;
   pricing: PricingNode;
   program?: Maybe<ProgramNode>;
   programId?: Maybe<Scalars['String']['output']>;
@@ -6124,6 +6170,8 @@ export type Mutations = {
   deletePluginData: DeletePluginDataResponse;
   deletePrescription: DeletePrescriptionResponse;
   deletePrescriptionLine: DeletePrescriptionLineResponse;
+  deletePrescriptionOrder: DeletePrescriptionOrderResponse;
+  deletePrescriptionOrderLine: DeletePrescriptionOrderLineResponse;
   deletePurchaseOrder: DeletePurchaseOrderResponse;
   deletePurchaseOrderLines: Array<DeletePurchaseOrderLineResponseWithId>;
   deleteRequestRequisition: DeleteRequestRequisitionResponse;
@@ -6168,6 +6216,7 @@ export type Mutations = {
   insertPluginData: InsertPluginDataResponse;
   insertPrescription: InsertPrescriptionResponse;
   insertPrescriptionLine: InsertPrescriptionLineResponse;
+  insertPrescriptionOrder: InsertPrescriptionOrderResponse;
   insertPrinter: InsertPrinterResponse;
   /**
    * Enrols a patient into a program by adding a program document to the patient's documents.
@@ -6240,6 +6289,7 @@ export type Mutations = {
   updatePluginData: UpdatePluginDataResponse;
   updatePrescription: UpdatePrescriptionResponse;
   updatePrescriptionLine: UpdatePrescriptionLineResponse;
+  updatePrescriptionOrder: UpdatePrescriptionOrderResponse;
   updatePrinter: UpdatePrinterResponse;
   /** Updates an existing program document belonging to a patient. */
   updateProgramEnrolment: UpdateProgramEnrolmentResponse;
@@ -6267,6 +6317,7 @@ export type Mutations = {
   updateTemperatureBreach: UpdateTemperatureBreachResponse;
   updateVaccination: UpdateVaccinationResponse;
   updateVvmStatusLog: UpdateVvmStatusResponse;
+  upsertPrescriptionOrderLine: UpsertPrescriptionOrderLineResponse;
   /** Set requested for each line in request requisition to calculated */
   useSuggestedQuantity: UseSuggestedQuantityResponse;
 };
@@ -6428,6 +6479,16 @@ export type MutationsDeletePrescriptionArgs = {
 
 export type MutationsDeletePrescriptionLineArgs = {
   input: DeletePrescriptionLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsDeletePrescriptionOrderArgs = {
+  id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsDeletePrescriptionOrderLineArgs = {
+  id: Scalars['String']['input'];
   storeId: Scalars['String']['input'];
 };
 
@@ -6639,6 +6700,11 @@ export type MutationsInsertPrescriptionArgs = {
 
 export type MutationsInsertPrescriptionLineArgs = {
   input: InsertPrescriptionLineInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsInsertPrescriptionOrderArgs = {
+  input: InsertPrescriptionOrderInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -6923,6 +6989,11 @@ export type MutationsUpdatePrescriptionLineArgs = {
   storeId: Scalars['String']['input'];
 };
 
+export type MutationsUpdatePrescriptionOrderArgs = {
+  input: UpdatePrescriptionOrderInput;
+  storeId: Scalars['String']['input'];
+};
+
 export type MutationsUpdatePrinterArgs = {
   input: UpdatePrinterInput;
 };
@@ -7028,6 +7099,11 @@ export type MutationsUpdateVaccinationArgs = {
 
 export type MutationsUpdateVvmStatusLogArgs = {
   input: UpdateVvmStatusLogInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsUpsertPrescriptionOrderLineArgs = {
+  input: UpsertPrescriptionOrderLineInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -7826,6 +7902,91 @@ export type PrescriptionLineInput = {
   stockLineId: Scalars['String']['input'];
 };
 
+export type PrescriptionOrderConnector = {
+  __typename: 'PrescriptionOrderConnector';
+  nodes: Array<PrescriptionOrderNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type PrescriptionOrderFilterInput = {
+  createdDatetime?: InputMaybe<DatetimeFilterInput>;
+  id?: InputMaybe<EqualFilterStringInput>;
+  patientId?: InputMaybe<EqualFilterStringInput>;
+  patientName?: InputMaybe<StringFilterInput>;
+  prescriptionDatetime?: InputMaybe<DatetimeFilterInput>;
+  prescriptionOrderNumber?: InputMaybe<EqualFilterBigNumberInput>;
+  status?: InputMaybe<EqualFilterPrescriptionOrderStatusInput>;
+};
+
+export type PrescriptionOrderLineConnector = {
+  __typename: 'PrescriptionOrderLineConnector';
+  nodes: Array<PrescriptionOrderLineNode>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type PrescriptionOrderLineNode = {
+  __typename: 'PrescriptionOrderLineNode';
+  id: Scalars['String']['output'];
+  item?: Maybe<ItemNode>;
+  itemId: Scalars['String']['output'];
+  /** Directions */
+  note?: Maybe<Scalars['String']['output']>;
+  prescriptionOrderId: Scalars['String']['output'];
+  /** Prescribed quantity in units */
+  quantity: Scalars['Float']['output'];
+};
+
+export type PrescriptionOrderNode = {
+  __typename: 'PrescriptionOrderNode';
+  clinician?: Maybe<ClinicianNode>;
+  clinicianId?: Maybe<Scalars['String']['output']>;
+  comment?: Maybe<Scalars['String']['output']>;
+  createdDatetime: Scalars['DateTime']['output'];
+  /**
+   * Properties-v2 values, filtered to the keys visible for the
+   * "prescription_order" scope
+   */
+  customFields?: Maybe<Scalars['JSON']['output']>;
+  diagnosis?: Maybe<DiagnosisNode>;
+  diagnosisId?: Maybe<Scalars['String']['output']>;
+  dispensedDatetime?: Maybe<Scalars['DateTime']['output']>;
+  id: Scalars['String']['output'];
+  lines: PrescriptionOrderLineConnector;
+  patient?: Maybe<PatientNode>;
+  patientId: Scalars['String']['output'];
+  prescriptionDatetime: Scalars['DateTime']['output'];
+  prescriptionOrderNumber: Scalars['Int']['output'];
+  program?: Maybe<ProgramNode>;
+  programId?: Maybe<Scalars['String']['output']>;
+  readyDatetime?: Maybe<Scalars['DateTime']['output']>;
+  status: PrescriptionOrderNodeStatus;
+  storeId: Scalars['String']['output'];
+  user?: Maybe<UserNode>;
+};
+
+export enum PrescriptionOrderNodeStatus {
+  Dispensed = 'DISPENSED',
+  New = 'NEW',
+  ReadyToDispense = 'READY_TO_DISPENSE',
+}
+
+export type PrescriptionOrderResponse = PrescriptionOrderNode | RecordNotFound;
+
+export enum PrescriptionOrderSortFieldInput {
+  CreatedDatetime = 'createdDatetime',
+  PrescriptionDatetime = 'prescriptionDatetime',
+  PrescriptionOrderNumber = 'prescriptionOrderNumber',
+  Status = 'status',
+}
+
+export type PrescriptionOrderSortInput = {
+  desc?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Sort query result by `key` */
+  key: PrescriptionOrderSortFieldInput;
+};
+
+export type PrescriptionOrdersResponse = PrescriptionOrderConnector;
+
 export type PricingNode = {
   __typename: 'PricingNode';
   foreignCurrencyTotalAfterTax?: Maybe<Scalars['Float']['output']>;
@@ -8492,6 +8653,8 @@ export type Queries = {
   preferenceDescriptions: Array<PreferenceDescriptionNode>;
   /** Returns the relevant set of preferences based on context (e.g. current store) */
   preferences: PreferencesNode;
+  prescriptionOrder: PrescriptionOrderResponse;
+  prescriptionOrders: PrescriptionOrdersResponse;
   printers: PrinterConnector;
   programEnrolments: ProgramEnrolmentResponse;
   programEvents: ProgramEventResponse;
@@ -9046,6 +9209,18 @@ export type QueriesPreferenceDescriptionsArgs = {
 };
 
 export type QueriesPreferencesArgs = {
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesPrescriptionOrderArgs = {
+  id: Scalars['String']['input'];
+  storeId: Scalars['String']['input'];
+};
+
+export type QueriesPrescriptionOrdersArgs = {
+  filter?: InputMaybe<PrescriptionOrderFilterInput>;
+  page?: InputMaybe<PaginationInput>;
+  sort?: InputMaybe<Array<PrescriptionOrderSortInput>>;
   storeId: Scalars['String']['input'];
 };
 
@@ -12018,6 +12193,29 @@ export type UpdatePrescriptionLineResponseWithId = {
   response: UpdatePrescriptionLineResponse;
 };
 
+export type UpdatePrescriptionOrderInput = {
+  clinicianId?: InputMaybe<NullableStringUpdate>;
+  comment?: InputMaybe<NullableStringUpdate>;
+  /**
+   * Patch of customFields key -> value; a JSON null deletes that key. Keys
+   * must be visible for the "prescription_order" scope.
+   */
+  customFields?: InputMaybe<Scalars['JSON']['input']>;
+  diagnosisId?: InputMaybe<NullableStringUpdate>;
+  id: Scalars['String']['input'];
+  patientId?: InputMaybe<Scalars['String']['input']>;
+  prescriptionDatetime?: InputMaybe<Scalars['DateTime']['input']>;
+  programId?: InputMaybe<NullableStringUpdate>;
+  status?: InputMaybe<UpdatePrescriptionOrderStatusInput>;
+};
+
+export type UpdatePrescriptionOrderResponse = PrescriptionOrderNode;
+
+export enum UpdatePrescriptionOrderStatusInput {
+  /** Locks the order and generates the dispensing invoice */
+  ReadyToDispense = 'READY_TO_DISPENSE',
+}
+
 export type UpdatePrescriptionResponse =
   | InvoiceNode
   | NodeError
@@ -12743,6 +12941,18 @@ export type UpsertPreferencesInput = {
   >;
   warningForExcessRequest?: InputMaybe<Scalars['Boolean']['input']>;
 };
+
+export type UpsertPrescriptionOrderLineInput = {
+  id: Scalars['String']['input'];
+  itemId: Scalars['String']['input'];
+  /** Directions */
+  note?: InputMaybe<Scalars['String']['input']>;
+  prescriptionOrderId: Scalars['String']['input'];
+  /** Prescribed quantity in units */
+  quantity: Scalars['Float']['input'];
+};
+
+export type UpsertPrescriptionOrderLineResponse = PrescriptionOrderLineNode;
 
 export type UpsertSiteError = {
   __typename: 'UpsertSiteError';
