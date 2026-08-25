@@ -1,3 +1,4 @@
+use actix_web::web::Data;
 use async_graphql::*;
 use chrono::Utc;
 use graphql_core::generic_inputs::PrintReportSortInput;
@@ -7,6 +8,7 @@ use repository::{query_json, StoreRowRepository};
 use service::auth::{Resource, ResourceAccessRequest};
 use service::report::definition::{GraphQlQuery, PrintReportSort, ReportDefinition, SQLQuery};
 use service::report::report_service::{ReportError, ResolvedReportQuery};
+use service::service_provider::ServiceProvider;
 
 use crate::PrintFormat;
 
@@ -78,7 +80,7 @@ pub async fn generate_report(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.clone(), user.user_id)?;
     let service = &service_provider.report_service;
-    let localisations = &service_provider
+    let localisations = service_provider
         .localisations_service
         .get_localisations(&service_context.connection)?;
 
@@ -117,17 +119,35 @@ pub async fn generate_report(
     // filename (best effort — a missing store just omits the prefix).
     let store_code = store_code(&service_context, &store_id)?;
 
+    // Nothing below needs the database, and generation can take tens of seconds, so hand the
+    // pooled connection back before starting it.
+    drop(service_context);
+
+    // Generation is CPU bound (BoaJs `convert_data`, Tera render, Excel/PDF conversion) and the
+    // service method is sync. Under HTTP/2 a client has a single connection pinned to one actix
+    // worker, so occupying that worker's runtime thread freezes every other request the client
+    // makes for the whole generation - run it on the blocking pool instead (#12710).
+    let service_provider = ctx.data_unchecked::<Data<ServiceProvider>>().clone();
+    let base_dir = ctx.get_settings().server.base_dir.clone();
+    let format = format.map(PrintFormat::to_domain);
+
     // generate the report with the fetched data
-    let file_id = match service.generate_html_report(
-        &ctx.get_settings().server.base_dir,
-        &resolved_report,
-        report_data,
-        arguments,
-        format.map(PrintFormat::to_domain),
-        localisations,
-        current_language,
-        store_code.as_deref(),
-    ) {
+    let generated = tokio::task::spawn_blocking(move || {
+        service_provider.report_service.generate_html_report(
+            &base_dir,
+            &resolved_report,
+            report_data,
+            arguments,
+            format,
+            &localisations,
+            current_language,
+            store_code.as_deref(),
+        )
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?;
+
+    let file_id = match generated {
         Ok(file_id) => file_id,
         Err(err) => {
             return Ok(PrintReportResponse::Error(PrintReportError {
@@ -162,7 +182,7 @@ pub async fn generate_report_definition(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.clone(), user.user_id)?;
     let service = &service_provider.report_service;
-    let localisations = &service_provider
+    let localisations = service_provider
         .localisations_service
         .get_localisations(&service_context.connection)?;
 
@@ -207,17 +227,35 @@ pub async fn generate_report_definition(
 
     let store_code = store_code(&service_context, &store_id)?;
 
+    // Nothing below needs the database, and generation can take tens of seconds, so hand the
+    // pooled connection back before starting it.
+    drop(service_context);
+
+    // Generation is CPU bound (BoaJs `convert_data`, Tera render, Excel/PDF conversion) and the
+    // service method is sync. Under HTTP/2 a client has a single connection pinned to one actix
+    // worker, so occupying that worker's runtime thread freezes every other request the client
+    // makes for the whole generation - run it on the blocking pool instead (#12710).
+    let service_provider = ctx.data_unchecked::<Data<ServiceProvider>>().clone();
+    let base_dir = ctx.get_settings().server.base_dir.clone();
+    let format = format.map(PrintFormat::to_domain);
+
     // generate the report with the fetched data
-    let file_id = match service.generate_html_report(
-        &ctx.get_settings().server.base_dir,
-        &resolved_report,
-        report_data,
-        arguments,
-        format.map(PrintFormat::to_domain),
-        localisations,
-        current_language,
-        store_code.as_deref(),
-    ) {
+    let generated = tokio::task::spawn_blocking(move || {
+        service_provider.report_service.generate_html_report(
+            &base_dir,
+            &resolved_report,
+            report_data,
+            arguments,
+            format,
+            &localisations,
+            current_language,
+            store_code.as_deref(),
+        )
+    })
+    .await
+    .map_err(StandardGraphqlError::from_join_error)?;
+
+    let file_id = match generated {
         Ok(file_id) => file_id,
         Err(err) => {
             return Ok(PrintReportResponse::Error(PrintReportError {
