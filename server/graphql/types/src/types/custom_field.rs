@@ -1,5 +1,6 @@
 use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
+use chrono::NaiveDateTime;
 use graphql_core::loader::CustomFieldOptionsByCustomFieldIdLoader;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
@@ -44,6 +45,10 @@ pub enum CustomFieldNodeKind {
     Standard,
     /// Synced from legacy mSupply.
     Legacy,
+    /// Authored by open-mSupply in code and shipped as a deployment default.
+    /// Provenance only — nothing on the surface branches on it; the deployment
+    /// configures its display mode like any other definition.
+    Builtin,
 }
 
 impl From<repository::CustomFieldKind> for CustomFieldNodeKind {
@@ -51,6 +56,7 @@ impl From<repository::CustomFieldKind> for CustomFieldNodeKind {
         use repository::CustomFieldKind as RepoKind;
         match value {
             RepoKind::Legacy => Self::Legacy,
+            RepoKind::Builtin => Self::Builtin,
             // Standard, plus any unrecognised kind from a newer central. Rows
             // whose kind is the `Other` catch-all are filtered out at the
             // repository read path (CustomFieldRepository::is_displayable), so
@@ -184,6 +190,14 @@ impl CustomFieldOptionNode {
     }
     pub async fn parent_option_id(&self) -> &Option<String> {
         &self.option.parent_option_id
+    }
+    /// Set when the option has been deleted. A deleted option is still returned
+    /// so a record that already holds it renders its **name** rather than a raw
+    /// id — clients resolve values against the whole list and must filter on
+    /// this field when building a picker, so a deleted option can be read but
+    /// not newly selected.
+    pub async fn deleted_datetime(&self) -> &Option<NaiveDateTime> {
+        &self.option.deleted_datetime
     }
 }
 

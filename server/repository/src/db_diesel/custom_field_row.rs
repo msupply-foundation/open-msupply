@@ -37,14 +37,18 @@ diesel_string_enum! {
     #[strum(serialize_all = "SCREAMING_SNAKE_CASE")]
     // Stored as plain TEXT (not a native DB enum) for v7 forwards-compatibility:
     // a custom_field kind added on a newer central but unknown here is captured into
-    // `Other(String)` rather than rejected at insert. `Plugin`/`Builtin` can be
-    // added as variants later with no DB migration (TEXT storage).
+    // `Other(String)` rather than rejected at insert. `Plugin` can be added as a
+    // variant later with no DB migration (TEXT storage).
     pub enum CustomFieldKind {
         // A custom_field configured natively in open-mSupply.
         #[default]
         Standard,
         // Synced from legacy mSupply.
         Legacy,
+        // Authored by open-mSupply itself, in code, and shipped as a deployment
+        // default (`service/src/custom_field/builtin.rs`). Code owns the key,
+        // value type, name and options; the deployment owns only `display_mode`.
+        Builtin,
         #[strum(default, transparent)]
         Other(String),
     }
@@ -234,8 +238,26 @@ mod tests {
             CustomFieldKind::Legacy
         );
 
-        // A kind unknown to this build (e.g. PLUGIN/BUILTIN added on a newer
-        // central) round-trips through its raw inner string, not lost as "OTHER".
+        assert_eq!(
+            serde_json::to_value(CustomFieldKind::Builtin).unwrap(),
+            serde_json::json!("Builtin")
+        );
+        assert_eq!(
+            serde_json::from_value::<CustomFieldKind>(serde_json::json!("Builtin")).unwrap(),
+            CustomFieldKind::Builtin
+        );
+        // A build that predates the variant captures the same wire value as
+        // `Other("BUILTIN")` — normalized to the DB casing, so the row it stores
+        // parses into the real `Builtin` variant (via the diesel `db_case`
+        // mapping) once an upgrade adds it. That is the whole forwards-compat
+        // contract for a new kind: hidden until upgrade, never corrupted.
+        assert_eq!(
+            serde_json::from_value::<CustomFieldKind>(serde_json::json!("BUILTIN")).unwrap(),
+            CustomFieldKind::Other("BUILTIN".to_string())
+        );
+
+        // A kind unknown to this build (e.g. PLUGIN added on a newer central)
+        // round-trips through its raw inner string, not lost as "OTHER".
         assert_eq!(
             serde_json::to_value(CustomFieldKind::Other("FUTURE_KIND".to_string())).unwrap(),
             serde_json::json!("FUTURE_KIND")
