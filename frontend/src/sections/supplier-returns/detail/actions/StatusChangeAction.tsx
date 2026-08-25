@@ -9,12 +9,8 @@ import { SplitButton } from '../../../../ui/elements/buttons/SplitButton';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { ArrowRightIcon, InfoIcon } from '../../../../ui/icons';
-import {
-  filterByStatusPreference,
-  nextStatuses,
-  statusLabel,
-  type AdvanceTarget,
-} from '../returnStatus';
+import { filterByStatusPreference } from '@/domain/invoice';
+import { nextStatuses, statusLabel, type AdvanceTarget } from '../returnStatus';
 import { advanceReturnStatus } from '../returnUpdate';
 import type { SupplierReturnInfoFragment } from '../supplierReturnDetail.generated';
 

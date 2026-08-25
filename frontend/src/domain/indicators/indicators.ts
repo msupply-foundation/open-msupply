@@ -29,6 +29,8 @@ export type IndicatorCell = {
 // One customer-breakdown row for a line (AC-I10): a supplied customer store,
 // its figures per column, and the period-end date (or null).
 export type IndicatorCustomerRow = {
+  /** Unique per ROW, not per customer: a merged line repeats its customers
+   *  once per source indicator, so the source line qualifies the id. */
   id: string;
   name: string;
   datetime: string | null;
@@ -55,11 +57,22 @@ const cellLabel = (columnName: string): string =>
       ? t('label.comment')
       : columnName;
 
-// The declared type drives the input; a null type renders as number (the
-// server fabricates NUMBER for a null type — contract wire trap).
-const declaredType = (
-  type: 'NUMBER' | 'STRING' | null
-): 'NUMBER' | 'STRING' => (type === 'STRING' ? 'STRING' : 'NUMBER');
+// The cell's EFFECTIVE type drives the input (rules › indicator values): the
+// column's configured type, falling back to the LINE's when the column has
+// none. Only a Number cell is validated numerically by the server, so anything
+// else — String, or typed nowhere — takes the text input that mirrors what the
+// update accepts.
+//
+// The line leg is a fallback for servers whose `IndicatorColumnNode.valueType`
+// still reports the column's RAW type; a current server resolves the fallback
+// itself and sends the effective type (contract › indicator values). Older
+// servers never send null at all (they answer a null type with the enum
+// default, NUMBER — which is what left a `var` column on a text line wearing a
+// number input the update would have taken text into).
+const effectiveType = (
+  column: 'NUMBER' | 'STRING' | null,
+  line: 'NUMBER' | 'STRING' | null
+): 'NUMBER' | 'STRING' => ((column ?? line) === 'NUMBER' ? 'NUMBER' : 'STRING');
 
 // Merge the program's indicator lines into one entry per line code (AC-I4):
 // indicators ordered alphabetically by code (so the first's columns lead),
@@ -93,13 +106,13 @@ export const mergeIndicatorLines = (
           valueId: column.value.id,
           columnId: column.id,
           label: cellLabel(column.name),
-          type: declaredType(column.valueType),
+          type: effectiveType(column.valueType, lc.line.valueType),
           value: column.value.value,
         });
       }
       for (const info of lc.customerIndicatorInfo)
         customerRows.push({
-          id: info.id,
+          id: `${lc.line.id}:${info.id}`,
           name: info.customer.name,
           datetime: info.datetime,
           values: Object.fromEntries(
@@ -121,11 +134,39 @@ export const mergeIndicatorLines = (
   return entries.sort((a, b) => a.lineNumber - b.lineNumber);
 };
 
+// Write a saved cell back into the fetched nodes — the tab's source of truth.
+// Without it the next mount of that cell's input (stepping to another line and
+// back, leaving and re-entering the tab) re-reads the figure the screen loaded
+// with and shows the pre-edit value until a reload (#957). Only the branch
+// carrying the saved value is rebuilt; every other node, line, and column keeps
+// its identity.
+export const applySavedIndicatorValue = (
+  nodes: readonly IndicatorNode[],
+  valueId: string,
+  value: string
+): IndicatorNode[] =>
+  nodes.map(node => ({
+    ...node,
+    lineAndColumns: node.lineAndColumns.map(lc =>
+      lc.columns.some(column => column.value?.id === valueId)
+        ? {
+            ...lc,
+            columns: lc.columns.map(column =>
+              column.value?.id === valueId
+                ? { ...column, value: { ...column.value, value } }
+                : column
+            ),
+          }
+        : lc
+    ),
+  }));
+
 // The per-cell save (AC-I5): updateIndicatorValue, mapping the typed errors —
 // RecordNotFound → messages.record-not-found, anything else →
-// error.value-type-not-correct (the client's mapping, contract › edit).
+// error.value-type-not-correct (the client's mapping, contract › edit). A save
+// answers with the stored value, which the caller writes back into the nodes.
 export type CellSaveResult =
-  | { kind: 'saved' }
+  | { kind: 'saved'; value: string }
   | { kind: 'error'; message: string }
   | { kind: 'failed' };
 
@@ -140,7 +181,8 @@ export const saveIndicatorValue = async (
   });
   if (result.kind !== 'success') return { kind: 'failed' };
   const response = result.data.updateIndicatorValue;
-  if (response.__typename === 'IndicatorValueNode') return { kind: 'saved' };
+  if (response.__typename === 'IndicatorValueNode')
+    return { kind: 'saved', value: response.value };
   return {
     kind: 'error',
     message:

@@ -7,7 +7,6 @@ import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
-import { Toolbar } from '../../../ui/layout/Header/Toolbar';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '../../../ui/elements/buttons/Button';
@@ -19,7 +18,8 @@ import {
   type SortState,
 } from '../../../ui/elements/table/DataTable';
 import {
-  getCommentCell,
+  CommentHeader,
+  getCellDefinition,
   getDateCell,
   getNumberCell,
 } from '../../../ui/elements/table/tableHelpers';
@@ -33,6 +33,12 @@ import { HStack } from '../../../ui/layout/Stack/HStack';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import { CloseIcon, PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
+import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
 import { stripEmpty } from '../../../typeHelpers';
 import { Prescriptions } from './prescriptions.generated';
 import type {
@@ -67,8 +73,6 @@ import {
 // swatch on the Name column edits in place while the row is editable; default
 // sort is the prescription date (backdated-or-created), newest first (AC-L1).
 
-const DEFAULT_PAGE_SIZE = 20;
-
 type PrescriptionRow = PrescriptionsResult['invoices']['nodes'][number];
 type SortKey = NonNullable<PrescriptionsVariables['sort']>[number]['key'];
 
@@ -97,8 +101,10 @@ const DEFAULT_STATE: PrescriptionsListState = {
 const PrescriptionsList: Component = () => {
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
-  const { query, setQuery } =
-    useUrlQueryState<PrescriptionsListState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<PrescriptionsListState>({
+    ...DEFAULT_STATE,
+    first: initialPageSize(),
+  });
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   const [createOpen, setCreateOpen] = createSignal(false);
 
@@ -133,13 +139,14 @@ const PrescriptionsList: Component = () => {
     setSelectedIds([]);
   };
 
-  // The list always pins the invoice type (contract § the list); the user's
-  // filters merge over that.
+  // The invoice type is pinned by the query's top-level `type` argument, which
+  // both selects the permission and overwrites `filter.type` server-side — so
+  // a filter pin here would be silently discarded (contract § the list). Only
+  // the user's own filters travel in `filter`.
   const variables = createMemo<PrescriptionsVariables>(() => ({
     storeId: params.storeId,
     filter: {
       ...stripEmpty(query().filter),
-      type: { equalTo: 'PRESCRIPTION' },
       // Custom-field filters become the dynamicFilter AST (undefined = no-op).
       dynamicFilter: buildCustomFieldDynamicFilter(query().cf),
     },
@@ -163,6 +170,15 @@ const PrescriptionsList: Component = () => {
   );
   const rows = () => data.latest?.nodes ?? [];
   const totalCount = () => data.latest?.totalCount ?? 0;
+
+  // A bulk delete of the last page's rows leaves the offset past the new end
+  // (src/list/clampPageOffset.ts, issue #1117).
+  clampPageOffset({
+    total: () => settledTotal(data, page => page.totalCount),
+    offset: () => query().offset,
+    pageSize: () => query().first,
+    setOffset: offset => setQuery({ ...query(), offset }),
+  });
 
   const currentSort = (): SortState<SortKey> | undefined => {
     const s = query().sort?.[0];
@@ -259,8 +275,8 @@ const PrescriptionsList: Component = () => {
     },
     {
       c: { key: 'comment' },
-      header: () => t('label.comment'),
-      ...getCommentCell(),
+      header: () => <CommentHeader />,
+      ...getCellDefinition('comment'),
     },
     // A column per configured prescription custom field (AC-CF4) — not
     // sortable; value chosen by kind.
@@ -294,18 +310,6 @@ const PrescriptionsList: Component = () => {
               customFields={cfDefs}
             />
           </HeaderButtons>
-          <Toolbar>
-            <FilterBar
-              filters={filterFields()}
-              filter={query().filter}
-              onChange={onFilterChange}
-              extra={{
-                filters: cfFilters(),
-                filter: query().cf ?? {},
-                onChange: onCustomFieldChange,
-              }}
-            />
-          </Toolbar>
         </Header>
       }
       contentFooter={
@@ -341,6 +345,18 @@ const PrescriptionsList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
+        filters={
+          <FilterBar
+            filters={filterFields()}
+            filter={query().filter}
+            onChange={onFilterChange}
+            extra={{
+              filters: cfFilters(),
+              filter: query().cf ?? {},
+              onChange: onCustomFieldChange,
+            }}
+          />
+        }
         // Read-only rows take the disabled state — de-emphasised but legible
         // and clickable (AC-L3); matches the outbound list post table-styling.
         rowState={row => (isReadOnly(rowStatus(row)) ? 'disabled' : undefined)}
@@ -370,7 +386,10 @@ const PrescriptionsList: Component = () => {
           pageSize: query().first,
           total: totalCount(),
           onOffsetChange: offset => setQuery({ ...query(), offset }),
-          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+          onPageSizeChange: first => {
+            rememberPageSize(first);
+            setQuery({ ...query(), first, offset: 0 });
+          },
         }}
       />
       <CreatePrescriptionModal

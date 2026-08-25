@@ -47,22 +47,29 @@
      surface (--bg-drawer = OMS background.menu) with muted grey text/icons
      (--gray-main = OMS gray.main); on a central server it flips to brand
      orange with white content (below). The store name is text, so bar colour
-     is never the sole active-store cue. */
-  background: var(--bg-drawer);
-  color: var(--gray-main);
+     is never the sole active-store cue.
+
+     The bar's colours route through two custom properties so the store's
+     custom colour (spec/chrome § bottom bar — a DATA colour AppShell sets
+     inline when the preference parses as hex, as ColourTag's --tag-colour)
+     overrides every variant in this one declared place. */
+  --footer-bg: var(--bg-drawer);
+  --footer-fg: var(--gray-main);
+
+  background: var(--footer-bg);
+  color: var(--footer-fg);
   font-size: var(--text-xs);
   line-height: 1.2; /* the 1.71 body line-height makes this dense bar too tall */
-  /* One knob the sub-rules (divider, hover, focus) read, flipped by
-     [data-central] — so tint follows the bar without repeating the condition. */
-  --footer-accent: var(--gray-main);
+  /* One knob the sub-rules (divider, hover, focus) read — following the bar's
+     text colour, whichever rule (variant or inline custom colour) set it. */
+  --footer-accent: var(--footer-fg);
 }
 
 /* Central server: the bar is brand orange (Open mSupply's central-server cue).
    Set from the isCentralServer global (queried at startup) via AppShell. */
 .footer[data-central] {
-  background: var(--primary-main);
-  color: var(--primary-contrast);
-  --footer-accent: var(--primary-contrast);
+  --footer-bg: var(--primary-main);
+  --footer-fg: var(--primary-contrast);
 }
 
 /* Spacer between the store selector and the user/language/central cluster

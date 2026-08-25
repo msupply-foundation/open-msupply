@@ -27,7 +27,7 @@ describe('custom theme must be applicable (SET-01.13)', () => {
 
   /*
    * Shape-aware, unlike the reference app's parse-only gate
-   * (spec/DIVERGENCES.md): valid JSON that would change nothing is refused
+   * valid JSON that would change nothing is refused
    * rather than stored as a no-op. This is what resolves the wrong-shape
    * ⚠️ VERIFY the spec used to carry.
    */

@@ -18,7 +18,10 @@ import {
   type Column,
   type SortState,
 } from '../../../ui/elements/table/DataTable';
-import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
+import {
+  CommentHeader,
+  getCellDefinition,
+} from '../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../ui/utils/rem';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { StatusChip } from '../../../ui/elements/feedback/StatusChip';
@@ -29,6 +32,12 @@ import {
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import { CloseIcon, PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
+import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
 import { stripEmpty } from '../../../typeHelpers';
 import {
   OutboundShipments,
@@ -59,8 +68,6 @@ import {
 // list (StocktakesList): URL-backed state, serialised resource source, library
 // components only, no CSS.
 
-const DEFAULT_PAGE_SIZE = 20;
-
 type ShipmentRow = OutboundShipmentsResult['invoices']['nodes'][number];
 
 type SortKey = NonNullable<OutboundShipmentsVariables['sort']>[number]['key'];
@@ -88,8 +95,10 @@ const DEFAULT_STATE: OutboundListState = {
 const OutboundShipmentsList: Component = () => {
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
-  const { query, setQuery } =
-    useUrlQueryState<OutboundListState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<OutboundListState>({
+    ...DEFAULT_STATE,
+    first: initialPageSize(),
+  });
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   const [createOpen, setCreateOpen] = createSignal(false);
 
@@ -129,13 +138,14 @@ const OutboundShipmentsList: Component = () => {
     setSelectedIds([]);
   };
 
-  // GraphQL variables from URL state; the type filter is PINNED here — it is
-  // not part of the user-facing filter state (contract.md § the list).
+  // GraphQL variables from URL state. The type pin is NOT here: the query's
+  // top-level `type` argument both selects the permission and overwrites
+  // `filter.type` server-side, so a filter pin would be silently discarded
+  // (contract.md § the list).
   const variables = createMemo<OutboundShipmentsVariables>(() => ({
     storeId: params.storeId,
     filter: {
       ...stripEmpty(query().filter),
-      type: { equalTo: 'OUTBOUND_SHIPMENT' },
       // Custom-field filters become the dynamicFilter AST (undefined = no-op).
       dynamicFilter: buildCustomFieldDynamicFilter(query().cf),
     },
@@ -168,6 +178,15 @@ const OutboundShipmentsList: Component = () => {
     return latest.offset === query().offset ? latest.invoices.nodes : [];
   };
   const totalCount = () => data.latest?.invoices.totalCount ?? 0;
+
+  // A bulk delete of the last page's rows leaves the offset past the new end
+  // (src/list/clampPageOffset.ts, issue #1117).
+  clampPageOffset({
+    total: () => settledTotal(data, d => d.invoices.totalCount),
+    offset: () => query().offset,
+    pageSize: () => query().first,
+    setOffset: offset => setQuery({ ...query(), offset }),
+  });
 
   const currentSort = (): SortState<SortKey> | undefined => {
     const s = query().sort?.[0];
@@ -281,7 +300,7 @@ const OutboundShipmentsList: Component = () => {
       // Comment is the shared comment cell (bubble + hover popover, as the
       // inbound list renders it) — not sortable (ui-surface S1).
       c: { key: 'comment' },
-      header: () => t('label.comment'),
+      header: () => <CommentHeader />,
       ...getCellDefinition('comment'),
     },
     {
@@ -405,6 +424,16 @@ const OutboundShipmentsList: Component = () => {
         onSelectionChange={setSelectedIds}
         config={tableConfig.config()}
         setConfig={tableConfig.setConfig}
+        // Central-server admins (EDIT_CENTRAL_DATA) can promote their current
+        // layout to the shared install-wide default; everyone else gets no
+        // action (the gate is the app's, so the generic DataTable stays
+        // agnostic). Gate + action both come off the config controller, and the
+        // gate is reactive: undefined until central + permitted both hold.
+        onSaveGlobalDefault={
+          tableConfig.canSaveGlobalDefault()
+            ? tableConfig.saveGlobalTableConfig
+            : undefined
+        }
         // Pagination renders as an overlay INSIDE the table
         // (bottom-inline-end), matching the stocktakes list (kdd/table-state).
         // State stays page-owned / URL-backed.
@@ -413,7 +442,11 @@ const OutboundShipmentsList: Component = () => {
           pageSize: query().first,
           total: totalCount(),
           onOffsetChange: offset => setQuery({ ...query(), offset }),
-          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+          // The chosen size is remembered for the next visit (D106).
+          onPageSizeChange: first => {
+            rememberPageSize(first);
+            setQuery({ ...query(), first, offset: 0 });
+          },
         }}
       />
       <CustomerSearchModal

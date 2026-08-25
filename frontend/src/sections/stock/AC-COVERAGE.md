@@ -59,6 +59,7 @@ Colocated unit tests: `stockCalc.test.ts`, `stockApi.test.ts`, `stockLocations.t
 | AC-R5 repack document                      | e2e            | `insertRepack` → VERIFIED invoice                                                                                         |
 | AC-R6 history lists from, hides created-by | e2e            | `repacksByStockLine` (server skips created-by)                                                                            |
 | AC-R7 full + same-size repack              | ui + e2e       | full-repack `ConfirmDialog` + navigate; same-size via `repackNewPacks`                                                    |
+| AC-R8 selected repack is identified        | **unit** + ui  | `repackSelection.test.ts` (`repackPanelState` — panel face, marked row, print gate); `RepackModal` renders it             |
 | AC-LV1 placement fields volume-aware       | **unit** + ui  | `stockLocations.test.ts` (capacity survives `locationsForItem`); `LocationVolumeSelect` on S2/S3/S5 with `requiredVolume` |
 | AC-LV2 fullness filter guides, never gates | **unit** + ui  | `volume.test.ts` (`passesFullness` — selected always passes); filter is client-side display only                          |
 | AC-LV3 "Available" keeps current location  | **unit**       | `volume.test.ts` (`passesFullness` origin exemption); `originalLocationId` wired on S2 + S5                               |

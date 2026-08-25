@@ -82,8 +82,10 @@ const CustomerSearchContent = (props: { onClose: () => void }): JSX.Element => {
       dismissable={!creating()}
       onClose={props.onClose}
       widthRem={36}
-      // Room for the lookup's open listbox inside the dialog.
-      minBodyHeightRem={24}
+      // Room for the lookup's open listbox inside the dialog (#1029): header +
+      // field + the listbox's 18rem cap + padding, measured live (24 left the
+      // bottom ~2rem of a full listbox hanging past the dialog).
+      minBodyHeightRem={27}
       actions={
         // Cancel is the only footer action — choosing a customer from the list
         // is this dialog's confirm, and Enter there belongs to the picker

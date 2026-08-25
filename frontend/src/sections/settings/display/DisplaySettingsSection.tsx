@@ -1,5 +1,6 @@
 import { createResource, createSignal, For, Show } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { hasPermission } from '../../../store/storeContext';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { TextArea } from '../../../ui/elements/inputs/TextArea';
@@ -166,18 +167,15 @@ const EditorToggleRow = (props: {
 
 export const DisplaySettingsSection = () => {
   // Current server values. Empty hashes → the server returns whatever is set.
-  // Read via the .state gate, never suspending — this section lives inside an
-  // already-open page (kdd/solid-reactivity-pitfalls § no remounts).
+  // Non-suspending read — this section lives inside an already-open page
+  // (kdd/solid-reactivity-pitfalls § no remounts).
   const [settingsData, { refetch }] = createResource(async () => {
     const result = await graphqlFetch(DisplaySettings, {
       input: { logo: '', theme: '' },
     });
     return result.kind === 'success' ? result.data.displaySettings : undefined;
   });
-  const settings = () =>
-    settingsData.state === 'ready' || settingsData.state === 'refreshing'
-      ? settingsData.latest
-      : undefined;
+  const settings = () => gated(settingsData);
 
   /** The new hash on success, so the caller can cache what it just saved. */
   const update = async (

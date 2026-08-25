@@ -204,7 +204,7 @@ export type PrescriptionsResult = {
 };
 
 export const Prescriptions = {
-  query: "query prescriptions($storeId: String!, $filter: InvoiceFilterInput, $sort: [InvoiceSortInput!], $page: PaginationInput) {\n  invoices(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {\n    ... on InvoiceConnector {\n      totalCount\n      nodes {\n        id\n        invoiceNumber\n        status\n        otherPartyName\n        colour\n        comment\n        theirReference\n        createdDatetime\n        backdatedDatetime\n        customFields\n      }\n    }\n  }\n}",
+  query: "query prescriptions($storeId: String!, $filter: InvoiceFilterInput, $sort: [InvoiceSortInput!], $page: PaginationInput) {\n  invoices(\n    storeId: $storeId\n    filter: $filter\n    sort: $sort\n    page: $page\n    type: [PRESCRIPTION]\n  ) {\n    ... on InvoiceConnector {\n      totalCount\n      nodes {\n        id\n        invoiceNumber\n        status\n        otherPartyName\n        colour\n        comment\n        theirReference\n        createdDatetime\n        backdatedDatetime\n        customFields\n      }\n    }\n  }\n}",
 } as TypedDocument<PrescriptionsResult, PrescriptionsVariables>;
 
 export type DeletePrescriptionsVariables = {

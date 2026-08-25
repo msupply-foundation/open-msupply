@@ -142,7 +142,9 @@ export const InboundFinancialPanel: Component<{
       {
         c: { key: 'packSize' },
         header: () => t('label.received-pack-size'),
-        ...getCellDefinition('packSize'),
+        // Same header as the line table, so the same preset — see
+        // `receivedPackSize` in _globalColumnConfig.
+        ...getCellDefinition('receivedPackSize'),
       },
       {
         c: { accessor: line => line.item.unitName ?? '', id: 'unit' },

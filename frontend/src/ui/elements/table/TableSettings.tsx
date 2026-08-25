@@ -2,6 +2,7 @@ import { Show, createSignal } from 'solid-js';
 import type { JSX } from 'solid-js';
 import type { Table } from '@tanstack/solid-table';
 import { t } from '../../../intl';
+import { Select } from '../selectors/Select';
 import {
   EyeIcon,
   MenuLinesIcon,
@@ -17,6 +18,9 @@ import styles from './TableSettings.module.css';
 // The density cycle for the "Toggle density" action (issue #572), matching the
 // current app's order: compact → spacious → comfortable → compact.
 const DENSITY_CYCLE: Density[] = ['compact', 'spacious', 'comfortable'];
+
+// The sizes offered when a host doesn't name its own.
+const PAGE_SIZES = [10, 20, 50, 100];
 
 // The Settings panel — the content inside the toolbar's ⚙ popover: TABLE-WIDE
 // settings, as opposed to the per-column rows of the Columns popover
@@ -68,6 +72,16 @@ export function TableSettings<T>(props: {
    * action isn't offered. Resolves true on success, false on failure.
    */
   onSaveGlobalDefault?: () => Promise<boolean>;
+  /**
+   * Rows per page. Table-WIDE state, so it belongs in this panel rather than
+   * the footer, which now carries the pager alone: a size selector spent a
+   * permanent slot in a bar people look at to change page, and it is a setting
+   * you touch rarely. Present only when the host paginates; omit and no
+   * rows-per-page row is drawn.
+   */
+  pageSize?: number;
+  pageSizes?: number[];
+  onPageSizeChange?: (size: number) => void;
 }): JSX.Element {
   // Cycle the density (issue #572 — one "Toggle density" action, not a radio).
   const toggleDensity = () => {
@@ -102,6 +116,29 @@ export function TableSettings<T>(props: {
       {/* Panel heading (issue #572 — matches the current app's settings menu). */}
       <div class={styles.title}>{t('table.settings')}</div>
       <div class={styles.separator} />
+
+      {/* Rows per page — the one setting here that isn't a reset, so it leads
+          and takes a separator of its own. Moved out of the footer, which is
+          the pager alone now (spec/ui-standards § tables → pagination). */}
+      <Show when={props.onPageSizeChange && props.pageSize}>
+        <div class={styles.pageSizeRow}>
+          <Select
+            size="small"
+            label={t('pagination.rows')}
+            testId="rows-per-page-select"
+            value={String(props.pageSize)}
+            options={(props.pageSizes ?? PAGE_SIZES).map(size => ({
+              value: String(size),
+              label: String(size),
+            }))}
+            onValueChange={value => {
+              const next = Number(value);
+              if (next !== props.pageSize) props.onPageSizeChange?.(next);
+            }}
+          />
+        </div>
+        <div class={styles.separator} />
+      </Show>
 
       {/* Granular resets — each clears one facet's user override (order /
           visibility / sizes / pinning). */}

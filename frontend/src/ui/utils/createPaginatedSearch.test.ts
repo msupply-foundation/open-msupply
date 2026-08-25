@@ -171,6 +171,77 @@ describe('createPaginatedSearch pending semantics', () => {
     });
   });
 
+  // reset() is the abandon half of the contract (#985): a selector whose popup
+  // closes must not go on holding one spent query's rows as though they were
+  // the list. It drops the text, the rows, and anything still owed for them,
+  // and re-arms the deferred first fetch — without issuing a request itself.
+  it('reset() drops the search text and its rows, and re-arms the first fetch', async () => {
+    const { calls, fetchPage } = createFetcher();
+    await createRoot(async dispose => {
+      const search = createPaginatedSearch<string>({ fetchPage });
+      await respond(calls[0], page('alpha', 'beta'));
+
+      search.setSearch('amo');
+      vi.advanceTimersByTime(300);
+      await respond(calls[1], page('amoxicillin'));
+      expect(search.items()).toEqual(['amoxicillin']);
+
+      // Abandoned: no request made, nothing held that answers 'amo'.
+      search.reset();
+      expect(calls).toHaveLength(2);
+      expect(search.items()).toEqual([]);
+      expect(search.pending()).toBe(true);
+
+      // The next open fetches page 0 for the empty search again.
+      search.ensure();
+      expect(calls).toHaveLength(3);
+      expect(calls[2].search).toBe('');
+      expect(calls[2].offset).toBe(0);
+      await respond(calls[2], page('alpha', 'beta'));
+      expect(search.items()).toEqual(['alpha', 'beta']);
+      expect(search.pending()).toBe(false);
+      dispose();
+    });
+  });
+
+  it('reset() cancels the debounced fetch and discards one in flight', async () => {
+    const { calls, fetchPage } = createFetcher();
+    await createRoot(async dispose => {
+      const search = createPaginatedSearch<string>({ fetchPage });
+      await respond(calls[0], page('alpha'));
+
+      // One fetch in flight, another still waiting out the debounce.
+      search.setSearch('am');
+      vi.advanceTimersByTime(300);
+      expect(calls).toHaveLength(2);
+      search.setSearch('amo');
+
+      search.reset();
+      // The debounced 'amo' never fires...
+      vi.advanceTimersByTime(300);
+      expect(calls).toHaveLength(2);
+      // ...and the in-flight 'am' response is dropped rather than applied.
+      await respond(calls[1], page('amikacin'));
+      expect(search.items()).toEqual([]);
+      dispose();
+    });
+  });
+
+  it('reset() is a no-op on an empty search, so reopening an untouched selector refetches nothing', async () => {
+    const { calls, fetchPage } = createFetcher();
+    await createRoot(async dispose => {
+      const search = createPaginatedSearch<string>({ fetchPage });
+      await respond(calls[0], page('alpha', 'beta'));
+
+      search.reset();
+      search.ensure();
+      expect(calls).toHaveLength(1);
+      expect(search.items()).toEqual(['alpha', 'beta']);
+      expect(search.pending()).toBe(false);
+      dispose();
+    });
+  });
+
   it('deferred (eager: false): pending until ensure() fires and its page applies', async () => {
     const { calls, fetchPage } = createFetcher();
     await createRoot(async dispose => {
