@@ -201,8 +201,8 @@ describe('gating a contribution on store mode (CK-1.1)', () => {
 
   // isDispensary() gates the whole patient surface — the Dispensary nav group
   // and its routes — and every suite that exercises those MOCKS it, so nothing
-  // else pins the real accessor. CK-1.1 re-expressed it over currentStoreMode();
-  // this is what would catch that refactor changing its answer.
+  // else pins the real accessor. CK-1.1 re-expressed it over
+  // currentStoreMode(); this is what catches that refactor changing its answer.
   it('leaves isDispensary() answering exactly as before', async () => {
     edges.auth.setUser(loggedIn);
     expect(isDispensary()).toBe(false); // no store entered

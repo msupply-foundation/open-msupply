@@ -176,6 +176,68 @@ const InfoPanel = (props: InternalOrderLineInfoPanelProps) => {
   );
 };
 
+/*
+ * The dashboard BODY slot (plugins sdk-contract § the dashboard region slot),
+ * behind `?pluginBody`. The only SCREEN-LEVEL seam in v1: the occupant IS the
+ * dashboard body, so the built-in card grid is not beside it — it is never
+ * mounted, and none of its six count queries is issued. Two contributions, one
+ * per thing this slot has to prove that the piece slots do not:
+ *
+ *  1. `body` — the SWAP. The frame stays the host's (app frame, page header,
+ *     breadcrumb, menu); everything below it is this component. The mount stamp
+ *     is the same trick the info panel uses: the host must not remount the
+ *     occupant when the registry or the store context churns around it.
+ *  2. `bodyBoom` — the FALLBACK, behind `?pluginBodyBoom`: a body that throws
+ *     falls back to the BUILT-IN body, never to the neutral piece-region text,
+ *     which in a whole-body region would leave the screen with nothing in it.
+ */
+const Body = () => {
+  // Shares the info panel's counter, so the two can never mint the same stamp.
+  const stamp = `mount-${++mountCount}`;
+  const [clicks, setClicks] = createSignal(0);
+  onCleanup(() =>
+    console.info(`[plugins] ${CODE}: dashboard body ${stamp} was disposed`)
+  );
+  return (
+    <div
+      data-testid="hello-world-dashboard-body"
+      data-body-mount={stamp}
+      data-body-clicks={clicks()}
+    >
+      <h2>{intl.t('body.title')}</h2>
+      <p>{intl.t('body.blurb')}</p>
+      <Table label={intl.t('body.table-label')}>
+        <thead>
+          <tr>
+            <th>{intl.t('panel.fact')}</th>
+            <th>{intl.t('panel.value')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>{intl.t('body.slot')}</td>
+            <td>dashboard.body</td>
+          </tr>
+          <tr>
+            <td>{intl.t('body.built-ins')}</td>
+            <td>{intl.t('body.not-mounted')}</td>
+          </tr>
+        </tbody>
+      </Table>
+      <p>
+        <button
+          type="button"
+          data-testid="hello-world-dashboard-body-counter"
+          onClick={() => setClicks(count => count + 1)}
+        >
+          {intl.t('clicks', { count: formatNumber(clicks()) })}
+        </button>{' '}
+        <span data-testid="hello-world-dashboard-body-mount">{stamp}</span>
+      </p>
+    </div>
+  );
+};
+
 export default definePlugin({
   manifest: {
     code: CODE,
@@ -207,6 +269,13 @@ export default definePlugin({
       'panel.editable': 'editable',
       'panel.read-only': 'read-only',
       'panel.help': 'Everything here came from the slot props',
+      'body.title': 'This whole dashboard body came from a plugin',
+      'body.blurb':
+        'The page frame above is still the host’s. Everything below it is one contribution.',
+      'body.table-label': 'Plugin dashboard body',
+      'body.slot': 'Slot',
+      'body.built-ins': 'Built-in widgets',
+      'body.not-mounted': 'not mounted — no count query was issued',
     },
     fr: {
       greeting: 'Bonjour depuis un plugin',
@@ -228,6 +297,13 @@ export default definePlugin({
       'panel.editable': 'modifiable',
       'panel.read-only': 'lecture seule',
       'panel.help': 'Tout ceci provient des props du slot',
+      'body.title': 'Tout ce corps de tableau de bord vient d’un plugin',
+      'body.blurb':
+        'Le cadre de la page ci-dessus reste celui de l’hôte. Tout ce qui suit est une seule contribution.',
+      'body.table-label': 'Corps du tableau de bord (plugin)',
+      'body.slot': 'Slot',
+      'body.built-ins': 'Widgets intégrés',
+      'body.not-mounted': 'non montés — aucune requête de comptage émise',
     },
   },
   contributions: [
@@ -242,6 +318,22 @@ export default definePlugin({
       id: 'boom',
       panel: 'replenishment.internal-order',
       when: () => flag('pluginBoom'),
+      Component: Boom,
+    },
+    // The ids tie-break alphabetically (registry § contributionsFor), so with
+    // both flags on `body` takes the region and `bodyBoom` is named in
+    // diagnostics as passed over — turn `?pluginBodyBoom` on by itself to watch
+    // the built-in body come back in a failed occupant's place.
+    {
+      slot: 'dashboard.body',
+      id: 'body',
+      when: () => flag('pluginBody'),
+      Component: Body,
+    },
+    {
+      slot: 'dashboard.body',
+      id: 'bodyBoom',
+      when: () => flag('pluginBodyBoom'),
       Component: Boom,
     },
     {
