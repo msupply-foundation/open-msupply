@@ -1,9 +1,4 @@
-import {
-  createResource,
-  createSignal,
-  Show,
-  type Component,
-} from 'solid-js';
+import { createResource, createSignal, Show, type Component } from 'solid-js';
 import { generateUUID } from '../../../../uuid';
 import { t } from '../../../../intl';
 import { formatNumber } from '../../../../intl';
@@ -12,12 +7,13 @@ import { gated } from '../../../../api/gated';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
-import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
 import { TextField } from '../../../../ui/elements/inputs/TextField';
 import { TextArea } from '../../../../ui/elements/inputs/TextArea';
 import { NumberField } from '../../../../ui/elements/inputs/NumberField';
 import { Select } from '../../../../ui/elements/selectors/Select';
-import { Text } from '../../../../ui/elements/typography/Text';
+import { FormRow } from '../../../../ui/layout/Form/FormRow';
+import styles from './OrderLineEditModal.module.css';
+import { LabelledValue } from '../../../../ui/elements/typography/LabelledValue';
 import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
 import {
   ItemSearch,
@@ -148,9 +144,7 @@ export const OrderLineEditModal: Component<OrderLineEditModalProps> = props => {
       open
       onClose={props.onClose}
       initialFocus={props.line ? undefined : itemSearch}
-      title={
-        props.line ? (props.line.item?.name ?? '') : t('button.add-item')
-      }
+      title={props.line ? (props.line.item?.name ?? '') : t('button.add-item')}
       testId="order-line-edit-modal"
       actionsLead={
         <Show when={error()}>
@@ -181,59 +175,64 @@ export const OrderLineEditModal: Component<OrderLineEditModalProps> = props => {
         </>
       }
     >
-      <FieldRow label={t('label.item')}>
-        <Show
-          when={!props.line}
-          fallback={
-            <Text variant="body">
-              {props.line?.item
-                ? `${props.line.item.code} — ${props.line.item.name}`
-                : ''}
-            </Text>
-          }
-        >
-          <ItemSearch
-            label={t('label.item')}
-            hideLabel
-            storeId={props.storeId}
-            value={item()?.id}
-            focusTarget={itemSearch}
-            clearable={false}
-            onSelect={setItem}
-          />
-        </Show>
-      </FieldRow>
+      {/* Each field stands alone in the dialog's stacked body, so it wears
+          the control's own label — the label-above form layout
+          (kdd/form-layout), not an inline FieldRow. */}
+      <Show
+        when={!props.line}
+        fallback={
+          <LabelledValue variant="field" label={t('label.item')}>
+            {props.line?.item
+              ? `${props.line.item.code} — ${props.line.item.name}`
+              : ''}
+          </LabelledValue>
+        }
+      >
+        <ItemSearch
+          label={t('label.item')}
+          storeId={props.storeId}
+          value={item()?.id}
+          focusTarget={itemSearch}
+          clearable={false}
+          onSelect={setItem}
+        />
+      </Show>
       {/* Advisory stock on hand (AC-N4): informs, never blocks — an
-          out-of-stock item still saves. */}
+          out-of-stock item still saves. A read-only fact among editable
+          fields, so it reads as a LabelledValue rather than a disabled input
+          (kdd/form-layout). */}
       <Show when={chosenItem()}>
         {chosen => (
-          <FieldRow label={t('label.available-soh')}>
-            <Text variant="body" data-testid="available-stock-note">
+          <LabelledValue variant="field" label={t('label.available-soh')}>
+            <span data-testid="available-stock-note">
               {t('label.available-quantity', {
                 number: formatNumber(chosen().availableUnits),
                 unitName: chosen().unitName ?? t('label.units'),
               })}
-            </Text>
-          </FieldRow>
+            </span>
+          </LabelledValue>
         )}
       </Show>
-      <FieldRow label={t('label.quantity')}>
-        <NumberField
-          label={t('label.quantity')}
-          hideLabel
-          data-testid="quantity-field"
-          value={quantity()}
-          min={0}
-          disabled={props.readOnly}
-          onChange={value => setQuantity(value ?? undefined)}
-        />
-      </FieldRow>
+      <NumberField
+        label={t('label.quantity')}
+        data-testid="quantity-field"
+        value={quantity()}
+        min={0}
+        disabled={props.readOnly}
+        onChange={value => setQuantity(value ?? undefined)}
+      />
+      {/* Directions, laid out as the prescription line editor lays them
+          (PrescriptionLineEditModal): the abbreviation entry and the item's
+          default-directions select share one row — the entry stays compact (an
+          abbreviation is a few characters) and the select takes the rest, the
+          pair wrapping intrinsically — with the expanded text below. The
+          select renders even for an item with no canned directions: its own
+          empty state says so, where hiding it moved the field below it. */}
       <Show when={!props.readOnly}>
-        <FieldRow label={t('label.abbreviation')}>
+        <FormRow class={styles.directionsEntryRow}>
           <TextField
             label={t('label.abbreviation')}
-            hideLabel
-            width="compact"
+            class={styles.abbreviationField}
             data-testid="abbreviation-field"
             value={abbrevEntry()}
             onInput={e => setAbbrevEntry(e.currentTarget.value)}
@@ -242,44 +241,40 @@ export const OrderLineEditModal: Component<OrderLineEditModalProps> = props => {
               if (e.key === 'Enter') applyAbbreviation();
             }}
           />
-        </FieldRow>
-        <Show when={itemDirections().length > 0}>
-          <FieldRow label={t('placeholder.item-directions')}>
-            <Select
-              label={t('placeholder.item-directions')}
-              hideLabel
-              value=""
-              options={itemDirections()
-                .slice()
-                .sort((a, b) => a.priority - b.priority)
-                .map(direction => ({
-                  value: direction.id,
-                  label: direction.directions,
-                }))}
-              placeholder={t('placeholder.item-directions')}
-              onValueChange={id => {
-                const picked = itemDirections().find(
-                  direction => direction.id === id
-                );
-                if (!picked) return;
-                setNote(expandAbbreviations(picked.directions, abbreviations()));
-              }}
-            />
-          </FieldRow>
-        </Show>
+          <Select
+            label={t('placeholder.item-directions')}
+            value=""
+            options={itemDirections()
+              .slice()
+              .sort((a, b) => a.priority - b.priority)
+              .map(direction => ({
+                value: direction.id,
+                label: direction.directions,
+              }))}
+            placeholder={
+              itemDirections().length === 0
+                ? t('message.no-directions')
+                : t('label.select')
+            }
+            onValueChange={id => {
+              const picked = itemDirections().find(
+                direction => direction.id === id
+              );
+              if (!picked) return;
+              setNote(expandAbbreviations(picked.directions, abbreviations()));
+            }}
+          />
+        </FormRow>
       </Show>
-      <FieldRow label={t('label.directions')}>
-        <TextArea
-          label={t('label.directions')}
-          hideLabel
-          data-testid="directions-field"
-          rows={2}
-          value={note()}
-          disabled={props.readOnly}
-          onInput={e => setNote(e.currentTarget.value)}
-          onBlur={() => setNote(expandAbbreviations(note(), abbreviations()))}
-        />
-      </FieldRow>
+      <TextArea
+        label={t('label.directions')}
+        data-testid="directions-field"
+        rows={2}
+        value={note()}
+        disabled={props.readOnly}
+        onInput={e => setNote(e.currentTarget.value)}
+        onBlur={() => setNote(expandAbbreviations(note(), abbreviations()))}
+      />
     </Dialog>
   );
 };
