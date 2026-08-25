@@ -1,10 +1,8 @@
-use crate::database_settings::DatabaseSettings;
+use crate::database_settings::{DatabaseSettings, SQLITE_LOCKWAIT_MS};
 use crate::RepositoryError;
-use crate::StorageConnectionManager;
-#[cfg(feature = "postgres")]
 use crate::StorageConnection;
-#[cfg(feature = "postgres")]
-use diesel::sql_types::*;
+use crate::StorageConnectionManager;
+use diesel::sql_types::Text;
 
 /// A report's SQL query, carrying both dialects. Which one runs is decided by
 /// [`ReportQueryExecutor`], so callers never need to know the backend.
@@ -19,31 +17,19 @@ pub struct ReportSqlQuery {
 ///
 /// Report queries are synchronous, so callers are expected to run [`ReportQueryExecutor::run`]
 /// inside `spawn_blocking` rather than on an async worker thread (#12710).
+///
+/// Both backends' fields are always present and only one is used, so that both arms stay
+/// compiled (and type checked) under either feature. See [`ReportQueryExecutor::run`].
 #[derive(Clone)]
 pub struct ReportQueryExecutor {
-    #[cfg(not(feature = "postgres"))]
     settings: DatabaseSettings,
-    #[cfg(feature = "postgres")]
     connection_manager: StorageConnectionManager,
 }
 
 impl ReportQueryExecutor {
-    #[cfg(not(feature = "postgres"))]
-    pub fn new(
-        settings: &DatabaseSettings,
-        _connection_manager: &StorageConnectionManager,
-    ) -> Self {
+    pub fn new(settings: &DatabaseSettings, connection_manager: &StorageConnectionManager) -> Self {
         Self {
             settings: settings.clone(),
-        }
-    }
-
-    #[cfg(feature = "postgres")]
-    pub fn new(
-        _settings: &DatabaseSettings,
-        connection_manager: &StorageConnectionManager,
-    ) -> Self {
-        Self {
             connection_manager: connection_manager.clone(),
         }
     }
@@ -55,50 +41,53 @@ impl ReportQueryExecutor {
     /// parsed once rather than per query. Running them concurrently instead would put each on its
     /// own blocking-pool thread, which oversubscribes low-core devices and is bounded by nothing
     /// (these connections are outside the diesel pool).
-    #[cfg(not(feature = "postgres"))]
+    ///
+    /// The backend is picked with `if cfg!` rather than `#[cfg]` so both arms are compiled under
+    /// either feature - one build proves the other still type checks, and rust-analyzer doesn't
+    /// grey out half the file depending on which feature the editor is configured with. The unused
+    /// arm is dead code the optimiser drops.
     pub fn run(
         &self,
         queries: Vec<ReportSqlQuery>,
         parameters: &serde_json::Map<String, serde_json::Value>,
     ) -> Result<Vec<(String, Vec<serde_json::Value>)>, RepositoryError> {
-        let connection = report_connection(&self.settings)?;
-        queries
-            .into_iter()
-            .map(|query| {
-                let rows = query_json_with_connection(&connection, &query.sqlite, parameters)?;
-                Ok((query.name, rows))
-            })
-            .collect()
-    }
-
-    #[cfg(feature = "postgres")]
-    pub fn run(
-        &self,
-        queries: Vec<ReportSqlQuery>,
-        parameters: &serde_json::Map<String, serde_json::Value>,
-    ) -> Result<Vec<(String, Vec<serde_json::Value>)>, RepositoryError> {
-        // Checked out here rather than by the caller so that waiting for a pooled connection also
-        // happens off the async worker, and nothing non-`Send` has to cross into the closure.
-        let connection = self.connection_manager.connection()?;
-        queries
-            .into_iter()
-            .map(|query| {
-                let rows = query_json(&connection, &query.postgres, parameters)?;
-                Ok((query.name, rows))
-            })
-            .collect()
+        if cfg!(feature = "postgres") {
+            // Checked out here rather than by the caller so that waiting for a pooled connection
+            // also happens off the async worker, and nothing non-`Send` has to cross into the
+            // `spawn_blocking` closure.
+            let connection = self.connection_manager.connection()?;
+            queries
+                .into_iter()
+                .map(|query| {
+                    let rows = query_json_postgres(&connection, &query.postgres, parameters)?;
+                    Ok((query.name, rows))
+                })
+                .collect()
+        } else {
+            let connection = report_connection(&self.settings)?;
+            queries
+                .into_iter()
+                .map(|query| {
+                    let rows = query_json_sqlite(&connection, &query.sqlite, parameters)?;
+                    Ok((query.name, rows))
+                })
+                .collect()
+        }
     }
 }
 
-#[cfg(feature = "postgres")]
 #[derive(QueryableByName, Debug, PartialEq)]
-pub struct JsonDataRow {
+struct JsonDataRow {
     #[diesel(sql_type = Text)]
     data: String,
 }
 
-#[cfg(feature = "postgres")]
-pub(crate) fn query_json(
+/// Run a report query through diesel, wrapping it so each row comes back as JSON.
+///
+/// Postgres only - the SQL it builds (`PREPARE`, `row_to_json`) is Postgres syntax. It still
+/// compiles on a SQLite build because everything it touches is backend generic; it just never
+/// runs there.
+fn query_json_postgres(
     connection: &StorageConnection,
     sql: &str,
     parameters: &serde_json::Map<String, serde_json::Value>,
@@ -184,9 +173,6 @@ pub(crate) fn query_json(
     Ok(rows)
 }
 
-#[cfg(not(feature = "postgres"))]
-use crate::database_settings::SQLITE_LOCKWAIT_MS;
-#[cfg(not(feature = "postgres"))]
 impl From<rusqlite::Error> for RepositoryError {
     fn from(value: rusqlite::Error) -> Self {
         RepositoryError::DBError {
@@ -202,8 +188,10 @@ impl From<rusqlite::Error> for RepositoryError {
 /// (`SqliteConnectionOptions::on_acquire`). `busy_timeout` in particular defaults to 0, which
 /// means a report query that collides with a sync write fails immediately with "database is
 /// locked" instead of waiting, so set it explicitly to match the pooled connections.
-#[cfg(not(feature = "postgres"))]
-pub(crate) fn report_connection(
+///
+/// SQLite only - on a Postgres build `connection_string()` returns a Postgres URL and this is
+/// never called.
+fn report_connection(
     settings: &DatabaseSettings,
 ) -> Result<rusqlite::Connection, RepositoryError> {
     let conn = rusqlite::Connection::open(settings.connection_string())?;
@@ -211,13 +199,12 @@ pub(crate) fn report_connection(
     Ok(conn)
 }
 
-/// Run a report query on an existing connection.
+/// Run a report query on an existing SQLite connection.
 ///
-/// Prefer this over [`query_json`] when running several queries for one report: SQLite's page
-/// cache is per-connection, so reusing one connection lets later queries hit pages the earlier
-/// ones already loaded, and pays the schema parse once rather than per query.
-#[cfg(not(feature = "postgres"))]
-pub(crate) fn query_json_with_connection(
+/// The connection is passed in rather than opened per query: SQLite's page cache is
+/// per-connection, so reusing one connection lets later queries hit pages the earlier ones
+/// already loaded, and pays the schema parse once rather than per query.
+fn query_json_sqlite(
     conn: &rusqlite::Connection,
     sql: &str,
     parameters: &serde_json::Map<String, serde_json::Value>,
@@ -382,5 +369,31 @@ mod tests {
             &serde_json::to_string(&result).unwrap().to_string(),
             "[{\"code\":\"name_store_code\",\"id\":\"name_store_id\"},{\"code\":\"name_store_code_a\",\"id\":\"name_store_a_id\"}]"
         );
+
+        // a batch comes back in input order, with each name paired to its own rows
+        let results = executor
+            .run(
+                vec![
+                    ReportSqlQuery {
+                        name: "first".to_string(),
+                        sqlite: "SELECT id FROM store WHERE id=$store".to_string(),
+                        postgres: "SELECT id FROM store WHERE id=$store".to_string(),
+                    },
+                    ReportSqlQuery {
+                        name: "second".to_string(),
+                        sqlite: "SELECT code FROM store WHERE id=$store".to_string(),
+                        postgres: "SELECT code FROM store WHERE id=$store".to_string(),
+                    },
+                ],
+                json!({ "store": "store_a" }).as_object().unwrap(),
+            )
+            .unwrap();
+        assert_eq!(results[0].0, "first");
+        assert_eq!(results[1].0, "second");
+        assert_eq!(results[0].1.len(), 1);
+        assert_eq!(results[1].1.len(), 1);
+        // the two queries select different columns, so rows paired with the wrong name surface here
+        assert!(results[0].1[0].as_object().unwrap().contains_key("id"));
+        assert!(results[1].1[0].as_object().unwrap().contains_key("code"));
     }
 }
