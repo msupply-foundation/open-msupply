@@ -97,7 +97,8 @@ export const parseManualServer = (
   return {
     protocol,
     ip: url.hostname,
-    port: url.port === '' ? (protocol === 'https' ? 443 : 80) : Number(url.port),
+    port:
+      url.port === '' ? (protocol === 'https' ? 443 : 80) : Number(url.port),
     clientVersion: 'unspecified',
     hardwareId,
     isLocal: false,
@@ -146,6 +147,30 @@ export const autoconnectTarget = (
   if (flags.standalone) return STANDALONE_LOCAL_SERVER;
   return previous;
 };
+
+// Where a landing screen's "change server" link sends the user: back to THIS
+// page, told not to bounce straight back to the server just left (AC-DT16) —
+// and told the install's mode. standalone=true is a launch fact, not session
+// state: without it the way back would land a standalone install in client
+// mode and offer the chooser AC-DT20 forbids. timedout is deliberately NOT
+// carried — it described the launch that brought the user here, not the
+// return.
+export const discoveryReturnAddress = (
+  { origin, pathname }: { origin: string; pathname: string },
+  flags: DiscoveryFlags
+): string =>
+  `${origin}${pathname}?autoconnect=false` +
+  (flags.standalone ? '&standalone=true' : '');
+
+// Standalone with no attempt to make this page-load (the user chose to come
+// back, or the shell's own launch check already elapsed): the failure state
+// is seeded so the page states it with a retry, symmetric with client mode's
+// ?timedout seeding of the could-not-connect notice. Unseeded, the standalone
+// arm would sit on a "connecting" spinner nothing is driving (spec §
+// standalone auto-connection: say so, don't present a choice — and AC-DT9's
+// bounded-wait principle: never an unbounded spinner).
+export const standaloneSeededFailure = (flags: DiscoveryFlags): boolean =>
+  flags.standalone && (!flags.autoconnect || flags.timedout);
 
 // --- Previous server ------------------------------------------------------
 // The remembered server is the last one SUCCESSFULLY connected to (spec §

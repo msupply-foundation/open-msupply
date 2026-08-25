@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { FrontEndHost } from './hostBridge';
 import {
   autoconnectTarget,
+  discoveryReturnAddress,
   frontEndHostDisplay,
   isCompleteAnnouncement,
   mergeServers,
@@ -11,6 +12,7 @@ import {
   recordPreviousServer,
   serverKey,
   STANDALONE_LOCAL_SERVER,
+  standaloneSeededFailure,
 } from './discovery';
 
 const host = (overrides: Partial<FrontEndHost> = {}): FrontEndHost => ({
@@ -52,7 +54,12 @@ describe('mergeServers', () => {
   it('never lists the same server twice (AC-DT8)', () => {
     const merged = mergeServers(
       [host()],
-      [host(), host(), host({ hardwareId: 'HW-B' }), host({ hardwareId: 'HW-B' })]
+      [
+        host(),
+        host(),
+        host({ hardwareId: 'HW-B' }),
+        host({ hardwareId: 'HW-B' }),
+      ]
     );
     expect(merged.map(serverKey)).toEqual(['HW-A:8000', 'HW-B:8000']);
   });
@@ -173,6 +180,59 @@ describe('autoconnectTarget', () => {
     expect(autoconnectTarget({ ...flags, standalone: true }, undefined)).toBe(
       STANDALONE_LOCAL_SERVER
     );
+  });
+});
+
+describe('discoveryReturnAddress (AC-DT16, AC-DT20)', () => {
+  const location = {
+    origin: 'http://localhost:3007',
+    pathname: '/discovery.html',
+  };
+  const flags = { autoconnect: true, timedout: false, standalone: false };
+
+  it('returns without auto-connection (AC-DT16)', () => {
+    expect(discoveryReturnAddress(location, flags)).toBe(
+      'http://localhost:3007/discovery.html?autoconnect=false'
+    );
+  });
+
+  it('carries the standalone mode, so the way back never offers the chooser (AC-DT20)', () => {
+    expect(
+      discoveryReturnAddress(location, { ...flags, standalone: true })
+    ).toBe(
+      'http://localhost:3007/discovery.html?autoconnect=false&standalone=true'
+    );
+  });
+
+  it('does not carry timedout — it described the arrival, not the return', () => {
+    expect(
+      discoveryReturnAddress(location, { ...flags, timedout: true })
+    ).not.toContain('timedout');
+  });
+});
+
+describe('standaloneSeededFailure', () => {
+  const flags = { autoconnect: true, timedout: false, standalone: true };
+
+  it('a plain standalone launch attempts its own server — nothing seeded', () => {
+    expect(standaloneSeededFailure(flags)).toBe(false);
+  });
+
+  it('states the failure when no attempt will be made, instead of an undriven spinner', () => {
+    expect(standaloneSeededFailure({ ...flags, autoconnect: false })).toBe(
+      true
+    );
+    expect(standaloneSeededFailure({ ...flags, timedout: true })).toBe(true);
+  });
+
+  it('client mode is never the standalone stated error', () => {
+    expect(
+      standaloneSeededFailure({
+        autoconnect: false,
+        timedout: true,
+        standalone: false,
+      })
+    ).toBe(false);
   });
 });
 

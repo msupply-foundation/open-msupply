@@ -348,7 +348,7 @@
   "discovery.no-host": "This screen is part of the desktop app — a browser tab can't search the network for servers. Open it from the Open mSupply desktop application.",
   "discovery.search-again": "Search again",
   "discovery.select-server": "Available servers",
-  "discovery.standalone-unreachable": "This machine's own server is not answering. Restart Open mSupply, and contact support if this keeps happening.",
+  "discovery.standalone-unreachable": "Not connected to this machine's own server. Retry to reconnect; restart Open mSupply and contact support if this keeps happening.",
   "discovery.sub-heading": "to open mSupply!",
   "discovery.this-machine": "This machine",
   "discovery.use-server-mode": "Note: You are currently using the client mode. To change to the local server mode click the button below.",

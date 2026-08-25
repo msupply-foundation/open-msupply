@@ -6,10 +6,16 @@
 //
 // The shape is wire-compatible with the CURRENT desktop shell's preload
 // (open-msupply client/packages/electron/src/preload.ts exposes exactly this
-// global), so that shell can host this page unmodified. Only the subset the
-// discovery page uses is typed here — the shell's other capabilities (barcode
-// scanning, file saving, log reading) belong to the host capability bridge
-// (#977), not to this screen.
+// global). Two shell changes remain before that shell hosts this page
+// unmodified (its main process, electron.ts): its connectToServer drops
+// `path` when navigating (only the Android host honours it), which carries
+// the login hand-off — without it the landing screen gets no discovery-return
+// or lng parameter (AC-DT23/24); and it appends only ?autoconnect=false,
+// never ?timedout=true (Android sends it), so the could-not-connect notice
+// (AC-DT2) is never seeded. Everything else in the contract it already does.
+// Only the subset the discovery page uses is typed here — the shell's other
+// capabilities (barcode scanning, file saving, log reading) belong to the
+// host capability bridge (#977), not to this screen.
 //
 // What the host owns vs what the page owns:
 // - The host browses mDNS announcements (`_omsupply._tcp`), filters incomplete
@@ -49,8 +55,9 @@ export type DesktopHostApi = {
    * page's job (discovery.ts § mergeServers). */
   discoveredServers: () => Promise<{ servers: FrontEndHost[] }>;
   /** Check the server answers, and if so navigate this window to it. Resolves
-   * BEFORE any navigation, so a success still gives the page a beat to record
-   * the choice; a failure leaves the window here. */
+   * before the page is torn down (the current shell initiates the navigation
+   * first, but the commit needs a full page fetch), so a success still gives
+   * the page a beat to record the choice; a failure leaves the window here. */
   connectToServer: (server: FrontEndHost) => Promise<ConnectionResult>;
   /** The server this shell last navigated to, if any — display-only. */
   connectedServer: () => Promise<FrontEndHost | null>;
