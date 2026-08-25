@@ -18,10 +18,9 @@ describe('screenTitleKey', () => {
   });
 
   it('names the store root Home', () => {
-    // The store root resolves through the `dashboard` ROUTE, and the registry
-    // labels that destination Home (CK-1.7) — the tab title follows the label,
-    // not the path.
-    expect(screenTitleKey('')).toBe('home');
+    // The store root is Home's own registry entry (path ''), so the title
+    // resolves straight through navTrail with no fallback path to guess.
+    expect(screenTitleKey('')).toBe('label.home');
   });
 
   it('keeps a record screen on the list it was reached from', () => {

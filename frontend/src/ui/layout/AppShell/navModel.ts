@@ -57,9 +57,8 @@ export interface NavItem {
 // Section icons, keyed by the top-level navConfig path. Cosmetic; one icon set
 // only.
 const SECTION_ICONS: Record<string, Component<IconProps>> = {
-  // Keyed by route, which stays `dashboard`; the glyph is the house that goes
-  // with the Home label (CK-1.7).
-  dashboard: HomeIcon,
+  // Home's key is '' — the store root's own store-relative path (navConfig).
+  '': HomeIcon,
   replenishment: ReplenishmentIcon,
   inventory: StockIcon,
   distribution: TruckIcon,
@@ -93,7 +92,10 @@ export const sectionIconForPath = (
 const LOWER_IDS = new Set(['catalogue', 'manage', 'settings', 'help']);
 
 const toNavItem = (item: NavConfigItem): NavItem => ({
-  id: item.path,
+  // `id` names the entry (menu highlight, `nav-<id>` testid); `to` routes it.
+  // They are the same string for every destination except Home, whose route is
+  // the store root — an empty `to`, which would leave it a nameless `nav-`.
+  id: item.path || 'home',
   labelKey: item.labelKey,
   to: item.path,
   icon: SECTION_ICONS[item.path] ?? FileIcon,
