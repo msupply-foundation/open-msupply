@@ -1,8 +1,94 @@
+use crate::database_settings::DatabaseSettings;
 use crate::RepositoryError;
+use crate::StorageConnectionManager;
 #[cfg(feature = "postgres")]
 use crate::StorageConnection;
 #[cfg(feature = "postgres")]
 use diesel::sql_types::*;
+
+/// A report's SQL query, carrying both dialects. Which one runs is decided by
+/// [`ReportQueryExecutor`], so callers never need to know the backend.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ReportSqlQuery {
+    pub name: String,
+    pub sqlite: String,
+    pub postgres: String,
+}
+
+/// Runs a report's SQL queries. Owned and `Clone`, so it can be moved onto a blocking thread.
+///
+/// Report queries are synchronous, so callers are expected to run [`ReportQueryExecutor::run`]
+/// inside `spawn_blocking` rather than on an async worker thread (#12710).
+#[derive(Clone)]
+pub struct ReportQueryExecutor {
+    #[cfg(not(feature = "postgres"))]
+    settings: DatabaseSettings,
+    #[cfg(feature = "postgres")]
+    connection_manager: StorageConnectionManager,
+}
+
+impl ReportQueryExecutor {
+    #[cfg(not(feature = "postgres"))]
+    pub fn new(
+        settings: &DatabaseSettings,
+        _connection_manager: &StorageConnectionManager,
+    ) -> Self {
+        Self {
+            settings: settings.clone(),
+        }
+    }
+
+    #[cfg(feature = "postgres")]
+    pub fn new(
+        _settings: &DatabaseSettings,
+        connection_manager: &StorageConnectionManager,
+    ) -> Self {
+        Self {
+            connection_manager: connection_manager.clone(),
+        }
+    }
+
+    /// Run every query in order, returning `(name, rows)` per query.
+    ///
+    /// The queries run sequentially on a single connection. On SQLite that matters: the page cache
+    /// is per-connection, so later queries reuse pages the earlier ones loaded, and the schema is
+    /// parsed once rather than per query. Running them concurrently instead would put each on its
+    /// own blocking-pool thread, which oversubscribes low-core devices and is bounded by nothing
+    /// (these connections are outside the diesel pool).
+    #[cfg(not(feature = "postgres"))]
+    pub fn run(
+        &self,
+        queries: Vec<ReportSqlQuery>,
+        parameters: &serde_json::Map<String, serde_json::Value>,
+    ) -> Result<Vec<(String, Vec<serde_json::Value>)>, RepositoryError> {
+        let connection = report_connection(&self.settings)?;
+        queries
+            .into_iter()
+            .map(|query| {
+                let rows = query_json_with_connection(&connection, &query.sqlite, parameters)?;
+                Ok((query.name, rows))
+            })
+            .collect()
+    }
+
+    #[cfg(feature = "postgres")]
+    pub fn run(
+        &self,
+        queries: Vec<ReportSqlQuery>,
+        parameters: &serde_json::Map<String, serde_json::Value>,
+    ) -> Result<Vec<(String, Vec<serde_json::Value>)>, RepositoryError> {
+        // Checked out here rather than by the caller so that waiting for a pooled connection also
+        // happens off the async worker, and nothing non-`Send` has to cross into the closure.
+        let connection = self.connection_manager.connection()?;
+        queries
+            .into_iter()
+            .map(|query| {
+                let rows = query_json(&connection, &query.postgres, parameters)?;
+                Ok((query.name, rows))
+            })
+            .collect()
+    }
+}
 
 #[cfg(feature = "postgres")]
 #[derive(QueryableByName, Debug, PartialEq)]
@@ -12,7 +98,7 @@ pub struct JsonDataRow {
 }
 
 #[cfg(feature = "postgres")]
-pub fn query_json(
+pub(crate) fn query_json(
     connection: &StorageConnection,
     sql: &str,
     parameters: &serde_json::Map<String, serde_json::Value>,
@@ -99,7 +185,7 @@ pub fn query_json(
 }
 
 #[cfg(not(feature = "postgres"))]
-use crate::database_settings::DatabaseSettings;
+use crate::database_settings::SQLITE_LOCKWAIT_MS;
 #[cfg(not(feature = "postgres"))]
 impl From<rusqlite::Error> for RepositoryError {
     fn from(value: rusqlite::Error) -> Self {
@@ -110,16 +196,34 @@ impl From<rusqlite::Error> for RepositoryError {
     }
 }
 
+/// Open a connection for running report queries.
+///
+/// These queries bypass the diesel pool, so they don't get the customiser's pragmas
+/// (`SqliteConnectionOptions::on_acquire`). `busy_timeout` in particular defaults to 0, which
+/// means a report query that collides with a sync write fails immediately with "database is
+/// locked" instead of waiting, so set it explicitly to match the pooled connections.
 #[cfg(not(feature = "postgres"))]
-pub fn query_json(
+pub(crate) fn report_connection(
     settings: &DatabaseSettings,
+) -> Result<rusqlite::Connection, RepositoryError> {
+    let conn = rusqlite::Connection::open(settings.connection_string())?;
+    conn.busy_timeout(std::time::Duration::from_millis(SQLITE_LOCKWAIT_MS.into()))?;
+    Ok(conn)
+}
+
+/// Run a report query on an existing connection.
+///
+/// Prefer this over [`query_json`] when running several queries for one report: SQLite's page
+/// cache is per-connection, so reusing one connection lets later queries hit pages the earlier
+/// ones already loaded, and pays the schema parse once rather than per query.
+#[cfg(not(feature = "postgres"))]
+pub(crate) fn query_json_with_connection(
+    conn: &rusqlite::Connection,
     sql: &str,
     parameters: &serde_json::Map<String, serde_json::Value>,
 ) -> Result<Vec<serde_json::Value>, RepositoryError> {
-    use rusqlite::{types::Null, Connection as RusqliteConnection};
+    use rusqlite::types::Null;
     use serde_json::Number;
-
-    let conn = RusqliteConnection::open(settings.connection_string())?;
 
     let mut statement = conn.prepare(sql)?;
 
@@ -200,42 +304,40 @@ pub fn query_json(
 mod tests {
     use serde_json::json;
 
-    use crate::{mock::MockDataInserts, query_json, test_db};
+    use crate::{mock::MockDataInserts, test_db};
 
-    use crate::{database_settings::DatabaseSettings, RepositoryError, StorageConnection};
+    use super::{ReportQueryExecutor, ReportSqlQuery};
 
-    #[cfg(feature = "postgres")]
-    pub fn query(
-        connection: &StorageConnection,
-        _settings: &DatabaseSettings,
+    /// Run one query through the executor. The SQL here is valid in both dialects, so the same
+    /// string is given for each and the executor picks whichever matches the build.
+    fn query(
+        executor: &ReportQueryExecutor,
         sql: &str,
         parameters: &serde_json::Map<String, serde_json::Value>,
-    ) -> Result<Vec<serde_json::Value>, RepositoryError> {
-        query_json(connection, sql, parameters)
-    }
-
-    #[cfg(not(feature = "postgres"))]
-    pub fn query(
-        _connection: &StorageConnection,
-        settings: &DatabaseSettings,
-        sql: &str,
-        parameters: &serde_json::Map<String, serde_json::Value>,
-    ) -> Result<Vec<serde_json::Value>, RepositoryError> {
-        query_json(settings, sql, parameters)
+    ) -> Result<Vec<serde_json::Value>, crate::RepositoryError> {
+        let mut results = executor.run(
+            vec![ReportSqlQuery {
+                name: "query".to_string(),
+                sqlite: sql.to_string(),
+                postgres: sql.to_string(),
+            }],
+            parameters,
+        )?;
+        Ok(results.remove(0).1)
     }
 
     #[actix_rt::test]
     async fn test_report_query() {
-        let (_, connection, _, settings) = test_db::setup_all(
+        let (_, _, connection_manager, settings) = test_db::setup_all(
             "test_report_query",
             MockDataInserts::none().names().stores(),
         )
         .await;
+        let executor = ReportQueryExecutor::new(&settings, &connection_manager);
 
         // query with no params
         let result = query(
-            &connection,
-            &settings,
+            &executor,
             "SELECT id, code, logo FROM store LIMIT 1;", // test with trailing ";"
             &serde_json::Map::new(),
         )
@@ -247,8 +349,7 @@ mod tests {
 
         // simple params
         let result = query(
-            &connection,
-            &settings,
+            &executor,
             "SELECT id, code FROM store WHERE id=$store LIMIT $limit", // test without trailing ";"
             json!({
                 "store": "store_a",
@@ -266,8 +367,7 @@ mod tests {
 
         // multiple used params
         let result = query(
-            &connection,
-            &settings,
+            &executor,
             "SELECT id, code FROM store WHERE id LIKE $b || '%' AND code LIKE $b || '%' LIMIT $a",
             json!({
                 "a": 5,

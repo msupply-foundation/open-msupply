@@ -4,9 +4,9 @@ use chrono::Utc;
 use graphql_core::generic_inputs::PrintReportSortInput;
 use graphql_core::standard_graphql_error::{validate_auth, StandardGraphqlError};
 use graphql_core::{ContextExt, RequestUserData};
-use repository::{query_json, StoreRowRepository};
+use repository::{ReportQueryExecutor, ReportSqlQuery, StoreRowRepository};
 use service::auth::{Resource, ResourceAccessRequest};
-use service::report::definition::{GraphQlQuery, PrintReportSort, ReportDefinition, SQLQuery};
+use service::report::definition::{GraphQlQuery, PrintReportSort, ReportDefinition};
 use service::report::report_service::{ReportError, ResolvedReportQuery};
 use service::service_provider::ServiceProvider;
 
@@ -371,41 +371,37 @@ async fn fetch_data(
         serde_json::Map::new()
     };
 
-    for sql in queries.iter().filter_map(|query| match query {
-        ResolvedReportQuery::SQLQuery(sql) => Some(sql),
-        ResolvedReportQuery::GraphQlQuery(_) => None,
-    }) {
+    let sql_queries: Vec<ReportSqlQuery> = queries
+        .iter()
+        .filter_map(|query| match query {
+            ResolvedReportQuery::SQLQuery(sql) => Some(ReportSqlQuery {
+                name: sql.name.clone(),
+                sqlite: sql.query_sqlite.clone(),
+                postgres: sql.query_postgres.clone(),
+            }),
+            ResolvedReportQuery::GraphQlQuery(_) => None,
+        })
+        .collect();
+
+    if !sql_queries.is_empty() {
+        // Hoisted out of the per-query loop: these variables were already identical for every SQL
+        // query, and computing them once also gives every query the same `now` rather than one
+        // `Utc::now()` per query.
         let variables = query_variables(store_id, &data_id, &arguments, &sort, &None);
-        let result = fetch_sql_data(ctx, sql, variables)?;
-        data.insert(sql.name.clone(), result);
+
+        // The report's SQL queries are synchronous, so run them on the blocking pool rather than
+        // the actix worker's runtime thread (#12710) - see the note on `generate_html_report`.
+        // The executor runs them sequentially on one connection; see `ReportQueryExecutor::run`.
+        let executor =
+            ReportQueryExecutor::new(&ctx.get_settings().database, ctx.get_connection_manager());
+        let results = tokio::task::spawn_blocking(move || executor.run(sql_queries, &variables))
+            .await??;
+        for (name, rows) in results {
+            data.insert(name, serde_json::Value::Array(rows));
+        }
     }
 
     Ok(FetchResult::Data(serde_json::Value::Object(data)))
-}
-
-#[cfg(not(feature = "postgres"))]
-fn fetch_sql_data(
-    ctx: &Context<'_>,
-    query: &SQLQuery,
-    variables: serde_json::Map<String, serde_json::Value>,
-) -> anyhow::Result<serde_json::Value> {
-    let data = query_json(
-        &ctx.get_settings().database,
-        &query.query_sqlite,
-        &variables,
-    )?;
-    Ok(serde_json::Value::Array(data))
-}
-
-#[cfg(feature = "postgres")]
-fn fetch_sql_data(
-    ctx: &Context<'_>,
-    query: &SQLQuery,
-    variables: serde_json::Map<String, serde_json::Value>,
-) -> anyhow::Result<serde_json::Value> {
-    let connection = ctx.get_connection_manager().connection()?;
-    let data = query_json(&connection, &query.query_postgres, &variables)?;
-    Ok(serde_json::Value::Array(data))
 }
 
 async fn fetch_graphql_data(
