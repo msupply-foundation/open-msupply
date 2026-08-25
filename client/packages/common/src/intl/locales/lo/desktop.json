@@ -1,0 +1,18 @@
+{
+  "about-oms": "ກ່ຽວກັບ Open mSupply",
+  "clear-data": "ລຶບຂໍ້ມູນ",
+  "clear-data-confirm-message": "ນີ້ຈະລຶບຂໍ້ມູນທ້ອງຖິ່ນທັງໝົດ ແລະ ປິດແອັບພລິເຄຊັນ. ທ່ານແນ່ໃຈບໍ?",
+  "confirmation": "ການຢືນຢັນ",
+  "copy": "ສຳເນົາ",
+  "cut": "ຕັດ",
+  "developer-tools": "ເຄື່ອງມືນັກພັດທະນາ",
+  "documentation": "ເອກະສານ",
+  "file": "ໄຟລ໌",
+  "help": "ຊ່ວຍເຫຼືອ",
+  "no": "ບໍ່",
+  "paste": "ວາງ",
+  "quit": "ອອກ",
+  "reload": "ໂຫຼດຄືນ",
+  "select-all": "ເລືອກທັງໝົດ",
+  "yes": "ແມ່ນ"
+}
