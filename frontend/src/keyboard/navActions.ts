@@ -63,7 +63,8 @@ const paletteName = (destination: NavItem): (() => string) => {
  * the shortcut and one without.
  */
 const DESTINATION_SHORTCUTS: Record<string, Shortcut> = {
-  dashboard: ALT_D,
+  // Keyed by the destination's PATH; Home's is the store root, so ''.
+  '': ALT_D,
   help: ALT_H,
 };
 

@@ -9,7 +9,7 @@ import {
   Switch,
 } from 'solid-js';
 import type { Component, JSX } from 'solid-js';
-import { Navigate, Route, Router } from '@solidjs/router';
+import { Navigate, Route, Router, useParams } from '@solidjs/router';
 import { graphqlFetch } from './api/graphql';
 import { detectLocale, initialiseLocale, isRtl, locale, t } from './intl';
 import { InitialisationStatus } from './api/initialisation.generated';
@@ -19,7 +19,8 @@ import { authUser, checkAuth, startActivityTracking } from './auth/authContext';
 import { InitialisationPage } from './initialisation/InitialisationPage';
 import { resolveStorePath, StoreGuardLayout } from './store/StoreGuardLayout';
 import { navDestinations } from './nav/navConfig';
-import { DashboardPage, dashboardRoutes } from './sections/dashboard';
+import { routerBase } from './nav/storeRelativePath';
+import { DashboardPage } from './sections/dashboard';
 import { stocktakesRoutes } from './sections/stocktakes';
 import { stockMovementsRoutes } from './sections/stock-movements';
 import { customersRoutes, suppliersRoutes } from './sections/names';
@@ -31,17 +32,23 @@ import { outboundShipmentsRoutes } from './sections/outbound-shipments';
 import { inboundShipmentsRoutes } from './sections/inbound-shipments';
 import { internalOrdersRoutes } from './sections/internal-orders';
 import { requisitionsRoutes } from './sections/requisitions';
+import { rnrFormsRoutes } from './sections/rnr-forms';
 import { itemsRoutes } from './sections/items';
 import { patientsRoutes } from './sections/patients';
 import { cliniciansRoutes } from './sections/clinicians';
 import { prescriptionsRoutes } from './sections/prescriptions';
 import { masterListsRoutes } from './sections/master-lists';
+import { campaignsRoutes } from './sections/campaigns';
 import { reportsRoutes } from './sections/reports';
 import { settingsRoutes } from './sections/settings';
+import { sitesRoutes } from './sections/sites';
 import { helpRoutes, helpDocumentsRoutes } from './sections/help';
+import { globalPreferencesRoutes } from './sections/global-preferences';
+import { customFieldsRoutes } from './sections/custom-fields';
 import { ShellLayout } from './nav/ShellLayout';
 import { EntryPage } from './nav/EntryPage';
 import { LoginPage } from './auth/LoginPage';
+import { prefersOldUi } from './preferredFrontend';
 import { ReLoginModal } from './auth/ReLoginModal';
 import { Alert } from './ui/elements/feedback/Alert';
 import { Button } from './ui/elements/buttons/Button';
@@ -66,7 +73,8 @@ type Phase = 'loading' | 'failed' | 'initialisation' | 'operational';
 // section's nested route tree (list + detail etc.), whose view components are
 // lazy. Every other destination falls back to EntryPage.
 const sectionRoutes: Record<string, () => JSX.Element> = {
-  dashboard: dashboardRoutes,
+  // Home is the store root, so its registry path is '' and its route is the
+  // `/` below — it takes no entry here (see the Home route in the tree).
   'inventory/stocktakes': stocktakesRoutes,
   'inventory/stock-movement': stockMovementsRoutes,
   'distribution/customers': customersRoutes,
@@ -78,6 +86,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'distribution/outbound-shipment': outboundShipmentsRoutes,
   'distribution/customer-requisition': requisitionsRoutes,
   'replenishment/internal-order': internalOrdersRoutes,
+  'replenishment/r-and-r-forms': rnrFormsRoutes,
   'replenishment/inbound-shipment': inboundShipmentsRoutes,
   'catalogue/items': itemsRoutes,
   'catalogue/master-lists': masterListsRoutes,
@@ -86,11 +95,39 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'dispensary/prescription': prescriptionsRoutes,
   reports: reportsRoutes,
   settings: settingsRoutes,
+  'manage/sites': sitesRoutes,
+  'manage/global-preferences': globalPreferencesRoutes,
   help: helpRoutes,
+  'manage/campaigns': campaignsRoutes,
   'manage/help-documents': helpDocumentsRoutes,
+  'manage/custom-fields': customFieldsRoutes,
+};
+
+/**
+ * The legacy `/{storeId}/dashboard` address, answered with the screen it names.
+ * Home moved to the store root (spec/navigation § the registry), so this keeps
+ * every bookmark, shared link and printed URL made before the move working —
+ * arriving at the canonical URL rather than at the not-found page.
+ */
+const DashboardRedirect: Component = () => {
+  const params = useParams();
+  return <Navigate href={`/${params['storeId']}`} />;
 };
 
 export const App: Component = () => {
+  // Issue #1075: checked before ANY startup work, including the auth check —
+  // the two UIs share one session cookie, so a device that switched to old UI
+  // is very often still authenticated here too. Gating only the unauthenticated
+  // login fallback would never fire in that case: this app would happily render
+  // its own authenticated shell (store selection, dashboard, ...) instead of
+  // bouncing to the sibling old UI. A Solid component's setup body runs once,
+  // so bailing out here before creating any signal is safe — there's no
+  // re-render to skip a hook on.
+  if (prefersOldUi()) {
+    location.replace('/old-ui/');
+    return null;
+  }
+
   const [phase, setPhase] = createSignal<Phase>('loading');
 
   // Spec (Startup Flow): initialisation status → me check → login or routing.
@@ -190,25 +227,28 @@ export const App: Component = () => {
                 waited for — it is a render-time input to each contribution's
                 visibility gate. */}
             <PluginGate>
-              {/* base matches Vite's `base` config so the same build can be
-                mounted at a non-root path (e.g. the demo server's /spec
-                track). import.meta.env.BASE_URL always ends in "/" (Vite's
-                convention); solid-router's own root-route resolution
-                doesn't strip that before concatenating an absolute `to`
-                (e.g. navigate(`/${id}`) in StoreGuardLayout), producing a
-                double slash — "/spec//id" — that fails to match any route
-                and drops the base entirely. Trimmed here, once, at the
-                source. */}
-              <Router base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+              {/* `routerBase` matches Vite's `base` config so the same build
+                can be mounted at a non-root path — the deployed /rc/ track,
+                and every branch deploy, which build-and-deploy.sh mounts at
+                its own BASE_PATH ('/pr-123/'). It is shared with
+                storeRelativePath, which has to take the same prefix back OFF
+                the location — the router never does that itself (#1141). */}
+              <Router base={routerBase}>
                 {/* Store guard wraps the routed app shell; the shell mounts once and
                   pages swap inside it. One route per nav destination renders its
                   (empty) entry page until a real section is registered above. */}
                 <Route path="/:storeId" component={StoreGuardLayout}>
                   <Route path="/" component={ShellLayout}>
-                    {/* The store root is the landing screen — the dashboard
-                      (spec/dashboard S1), same page as the nav's `dashboard`
-                      destination. */}
+                    {/* Home: the store root IS the landing screen
+                      (spec/dashboard S1, spec/navigation § the registry). One
+                      screen, one URL — the nav entry, the brand mark and a
+                      bare store link all resolve here. */}
                     <Route path="/" component={DashboardPage} />
+                    {/* Bookmarks and links made before Home moved off its own
+                      segment. Without this the old address falls through to
+                      the not-found catch-all below, which is a worse answer
+                      than the screen the user asked for. */}
+                    <Route path="/dashboard" component={DashboardRedirect} />
                     <For each={Object.entries(sectionRoutes)}>
                       {([path, routes]) => (
                         <Route path={`/${path}`}>{routes()}</Route>
@@ -216,7 +256,9 @@ export const App: Component = () => {
                     </For>
                     <For
                       each={navDestinations.filter(
-                        dest => !sectionRoutes[dest.path]
+                        // Home's route is the `/` above, not a generated one:
+                        // its path is '' and would generate a second `/`.
+                        dest => dest.path !== '' && !sectionRoutes[dest.path]
                       )}
                     >
                       {dest => (

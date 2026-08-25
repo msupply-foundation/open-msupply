@@ -284,9 +284,9 @@ const DashboardPage: Component = () => {
       header={
         <Header>
           {/* The crumb is the destination's registry LABEL, which is Home —
-              this vertical is still the dashboard, and its route is still
-              `/dashboard` (spec/navigation § the registry). */}
-          <Breadcrumb crumbs={[{ label: t('home') }]} />
+              the same key the menu entry and the brand mark use. The vertical
+              is still the dashboard; only what the user reads changed. */}
+          <Breadcrumb crumbs={[{ label: t('label.home') }]} />
         </Header>
       }
     >
