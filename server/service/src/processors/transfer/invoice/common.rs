@@ -3,7 +3,7 @@ use repository::{
     InvoiceType, ItemRow, ItemStoreJoinRow, ItemStoreJoinRowRepository,
     ItemStoreJoinRowRepositoryTrait, NameFilter, NameRepository, Pagination,
 };
-use repository::{InvoiceLineRow, RepositoryError, StorageConnection};
+use repository::{InvoiceLineRow, RepositoryError, StockLineRow, StorageConnection};
 use util::uuid::uuid;
 
 use crate::invoice::common::calculate_total_after_tax;
@@ -12,6 +12,7 @@ use crate::invoice::inbound_shipment::{
     UpdateInboundShipmentStatus,
 };
 use crate::preference::{InboundShipmentAutoVerify, ItemMarginOverridesSupplierMargin, Preference};
+use crate::pricing::calculate_sell_price::issue_at_cost_price;
 use crate::service_provider::ServiceContext;
 
 pub(crate) fn generate_inbound_lines(
@@ -31,9 +32,15 @@ pub(crate) fn generate_inbound_lines(
     )?;
     let item_properties_repo = ItemStoreJoinRowRepository::new(connection);
 
+    // When the source outbound shipment was issued at cost, its sell price is the
+    // supplying store's cost price, so it can't also carry a sell price to base the
+    // inbound line's sell price on - we take that from the source stock line instead.
+    // See `issue_at_cost_price` and #12517.
+    let issued_at_cost_price = issue_at_cost_price(connection, invoice_row)?;
+
     let inbound_lines = outbound_lines
         .into_iter()
-        .map(|l| (l.invoice_line_row, l.item_row))
+        .map(|l| (l.invoice_line_row, l.item_row, l.stock_line_option))
         .map(
             |(
                 InvoiceLineRow {
@@ -80,6 +87,7 @@ pub(crate) fn generate_inbound_lines(
                     default_pack_size,
                     ..
                 },
+                source_stock_line,
             )| {
                 let item_properties = item_properties_repo
                     .find_one_by_item_and_store_id(&item_id, inbound_store_id)
@@ -105,12 +113,22 @@ pub(crate) fn generate_inbound_lines(
                     pack_size,
                 );
 
-                // Default price per pack takes priority over cost + margin
-                let adjusted_sell_price_per_pack = if default_price_for_inbound_pack > 0.0 {
-                    default_price_for_inbound_pack
-                } else {
-                    get_cost_plus_margin(connection, trans_cost_price, item_properties, supplier_id)
-                        .unwrap_or(trans_cost_price)
+                let supplying_store_sell_price =
+                    get_supplying_store_sell_price(issued_at_cost_price, source_stock_line);
+
+                let adjusted_sell_price_per_pack = match supplying_store_sell_price {
+                    // Issued at cost: the receiving store keeps the supplying store's
+                    // sell price, the default price list and margins don't apply
+                    Some(sell_price_per_pack) => sell_price_per_pack,
+                    // Default price per pack takes priority over cost + margin
+                    None if default_price_for_inbound_pack > 0.0 => default_price_for_inbound_pack,
+                    None => get_cost_plus_margin(
+                        connection,
+                        trans_cost_price,
+                        item_properties,
+                        supplier_id,
+                    )
+                    .unwrap_or(trans_cost_price),
                 };
 
                 InvoiceLineRow {
@@ -238,6 +256,24 @@ pub(crate) fn auto_verify_if_store_preference(
     Ok(())
 }
 
+/// The sell price the transferred inbound line should take when the source
+/// outbound shipment was issued at the supplying store's cost price.
+///
+/// `Some` only when the source line came from a stock line - service lines, and
+/// lines whose stock line has since gone, fall back to the usual default price /
+/// cost + margin calculation. The outbound line's pack size is the stock line's
+/// pack size, so the price needs no pack conversion.
+fn get_supplying_store_sell_price(
+    issued_at_cost_price: bool,
+    source_stock_line: Option<StockLineRow>,
+) -> Option<f64> {
+    if !issued_at_cost_price {
+        return None;
+    }
+
+    source_stock_line.map(|stock_line| stock_line.sell_price_per_pack)
+}
+
 pub(super) fn get_default_price_for_pack(
     default_sell_price_per_pack: f64,
     default_pack_size: f64,
@@ -296,18 +332,23 @@ fn get_supplier_margin(connection: &StorageConnection, supplier_id: &String) -> 
 
 #[cfg(test)]
 mod test {
-    use super::{get_cost_plus_margin, get_default_price_for_pack};
+    use super::{generate_inbound_lines, get_cost_plus_margin, get_default_price_for_pack};
 
     use repository::{
         mock::{
-            mock_item_a_join_store_a, mock_store_a, mock_store_b, mock_store_c, MockDataInserts,
+            mock_item_a_join_store_a, mock_name_store_a, mock_store_a, mock_store_b, mock_store_c,
+            MockData, MockDataInserts,
         },
-        test_db::setup_all,
-        PreferenceRow, PreferenceRowRepository,
+        test_db::{setup_all, setup_all_with_data},
+        Invoice, InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType, ItemRow,
+        ItemStoreJoinRow, PreferenceRow, PreferenceRowRepository, StockLineRow, StorageConnection,
     };
 
     use crate::{
-        preference::{ItemMarginOverridesSupplierMargin, Preference},
+        preference::{
+            ItemMarginOverridesSupplierMargin, Preference,
+            TransferStockToInternalCustomersAtCostPrice,
+        },
         service_provider::ServiceProvider,
     };
 
@@ -442,5 +483,159 @@ mod test {
             get_default_price_for_pack(default_price, default_pack_size, inbound_pack_size),
             0.0
         );
+    }
+
+    const ITEM_ID: &str = "transfer_at_cost_item";
+    const SUPPLYING_STORE_COST_PRICE: f64 = 2.0;
+    const SUPPLYING_STORE_SELL_PRICE: f64 = 3.0;
+    const DEFAULT_SELL_PRICE_PER_PACK: f64 = 50.0;
+
+    fn set_transfer_at_cost_price(connection: &StorageConnection, value: bool) {
+        PreferenceRowRepository::new(connection)
+            .upsert_one(&PreferenceRow {
+                id: "transfer stock to internal customers at cost price".to_string(),
+                store_id: None,
+                key: TransferStockToInternalCustomersAtCostPrice
+                    .key()
+                    .to_string(),
+                value: value.to_string(),
+            })
+            .unwrap();
+    }
+
+    /// An outbound shipment from store_b to store_a, an internal customer
+    fn transfer_at_cost_invoice() -> InvoiceRow {
+        InvoiceRow {
+            id: "transfer_at_cost_outbound".to_string(),
+            name_id: mock_name_store_a().id,
+            name_store_id: Some(mock_store_a().id),
+            store_id: mock_store_b().id,
+            invoice_number: 100,
+            r#type: InvoiceType::OutboundShipment,
+            status: InvoiceStatus::Picked,
+            ..Default::default()
+        }
+    }
+
+    /// The outbound shipment above, issued at cost - so its line's sell price is
+    /// the supplying store's cost price
+    fn transfer_at_cost_mock_data() -> MockData {
+        let item = ItemRow {
+            id: ITEM_ID.to_string(),
+            name: "Transfer at cost item".to_string(),
+            code: ITEM_ID.to_string(),
+            default_pack_size: 1.0,
+            ..Default::default()
+        };
+
+        // A default sell price is configured in the receiving store, so it's
+        // unambiguous which price the inbound line ends up with
+        let item_properties = ItemStoreJoinRow {
+            id: "transfer_at_cost_item_store_a".to_string(),
+            item_id: item.id.clone(),
+            store_id: mock_store_a().id,
+            default_sell_price_per_pack: DEFAULT_SELL_PRICE_PER_PACK,
+            margin: 15.0,
+            ..Default::default()
+        };
+
+        let stock_line = StockLineRow {
+            id: "transfer_at_cost_stock_line".to_string(),
+            item_id: item.id.clone(),
+            store_id: mock_store_b().id,
+            pack_size: 1.0,
+            cost_price_per_pack: SUPPLYING_STORE_COST_PRICE,
+            sell_price_per_pack: SUPPLYING_STORE_SELL_PRICE,
+            available_number_of_packs: 10.0,
+            total_number_of_packs: 10.0,
+            ..Default::default()
+        };
+
+        let invoice = transfer_at_cost_invoice();
+
+        let invoice_line = InvoiceLineRow {
+            id: "transfer_at_cost_outbound_line".to_string(),
+            invoice_id: invoice.id.clone(),
+            item_id: item.id.clone(),
+            item_name: item.name.clone(),
+            item_code: item.code.clone(),
+            stock_line_id: Some(stock_line.id.clone()),
+            r#type: InvoiceLineType::StockOut,
+            pack_size: 1.0,
+            number_of_packs: 5.0,
+            cost_price_per_pack: SUPPLYING_STORE_COST_PRICE,
+            // Issued at cost, so the sell price is the supplying store's cost price
+            sell_price_per_pack: SUPPLYING_STORE_COST_PRICE,
+            ..Default::default()
+        };
+
+        MockData {
+            items: vec![item],
+            item_store_joins: vec![item_properties],
+            stock_lines: vec![stock_line],
+            invoices: vec![invoice],
+            invoice_lines: vec![invoice_line],
+            ..Default::default()
+        }
+    }
+
+    #[actix_rt::test]
+    async fn generate_inbound_lines_pricing_when_issued_at_cost_price() {
+        let (_, connection, _, _) = setup_all_with_data(
+            "generate_inbound_lines_pricing_when_issued_at_cost_price",
+            MockDataInserts::all(),
+            transfer_at_cost_mock_data(),
+        )
+        .await;
+
+        let source_invoice = Invoice {
+            invoice_row: transfer_at_cost_invoice(),
+            name_row: mock_name_store_a(),
+            store_row: mock_store_b(),
+            clinician_row: None,
+        };
+        let inbound_store_id = mock_store_a().id;
+
+        // Preference off: the receiving store's default sell price applies, as before
+        let lines = generate_inbound_lines(
+            &connection,
+            "inbound_id",
+            &inbound_store_id,
+            &source_invoice,
+        )
+        .unwrap();
+
+        assert_eq!(lines.len(), 1);
+        assert_eq!(lines[0].cost_price_per_pack, SUPPLYING_STORE_COST_PRICE);
+        assert_eq!(lines[0].sell_price_per_pack, DEFAULT_SELL_PRICE_PER_PACK);
+
+        set_transfer_at_cost_price(&connection, true);
+
+        // Preference on: the cost price is still the supplying store's cost price,
+        // and the sell price is now the supplying store's sell price - the receiving
+        // store's default price and margin don't apply
+        let lines = generate_inbound_lines(
+            &connection,
+            "inbound_id",
+            &inbound_store_id,
+            &source_invoice,
+        )
+        .unwrap();
+
+        assert_eq!(lines.len(), 1);
+        assert_eq!(lines[0].cost_price_per_pack, SUPPLYING_STORE_COST_PRICE);
+        assert_eq!(lines[0].sell_price_per_pack, SUPPLYING_STORE_SELL_PRICE);
+
+        set_transfer_at_cost_price(&connection, false);
+
+        let lines = generate_inbound_lines(
+            &connection,
+            "inbound_id",
+            &inbound_store_id,
+            &source_invoice,
+        )
+        .unwrap();
+
+        assert_eq!(lines[0].sell_price_per_pack, DEFAULT_SELL_PRICE_PER_PACK);
     }
 }
