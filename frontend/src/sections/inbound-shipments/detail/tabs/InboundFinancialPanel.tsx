@@ -6,7 +6,11 @@ import {
   DataTable,
   type Column,
 } from '../../../../ui/elements/table/DataTable';
-import { getNumberCell } from '../../../../ui/elements/table/tableHelpers';
+import {
+  getCellDefinition,
+  getNumberCell,
+} from '../../../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../../../ui/utils/rem';
 import { createTableConfig } from '../../../../api/createTableConfig';
 import type {
   InboundInfoFragment,
@@ -96,8 +100,12 @@ export const InboundFinancialPanel: Component<{
     c: { accessor: value, id },
     header: () => header,
     // Spread FIRST: the money cell must override getNumberCell's own
-    // 2-dp number cell, keeping the currency formatting.
+    // 2-dp number cell, keeping the currency formatting. The currency PRESET
+    // isn't usable here — it pins one currency code, and this table mixes PO
+    // and local columns — so the width is set at the call site instead, wide
+    // enough for the "Label (CODE)" headers these columns carry.
     ...getNumberCell(),
+    size: remToPx(9),
     cell: info => money(info.getValue<number>()),
     ...(footerTotal !== undefined ? { footer: () => money(footerTotal) } : {}),
   });
@@ -113,6 +121,7 @@ export const InboundFinancialPanel: Component<{
       {
         c: { accessor: line => line.itemName, id: 'itemName' },
         header: () => t('label.name'),
+        ...getCellDefinition('itemName'),
         footer: () => t('label.total'),
       },
       {
@@ -121,21 +130,26 @@ export const InboundFinancialPanel: Component<{
           id: 'poLine',
         },
         header: () => t('label.po-line-number'),
+        // No CELL_DEF key; "PO line number" is the binding constraint.
         ...getNumberCell(),
+        size: remToPx(8),
       },
       {
         c: { key: 'numberOfPacks' },
-        header: () => t('label.pack-quantity'),
-        ...getNumberCell(),
+        header: () => t('label.packs-received'),
+        ...getCellDefinition('numberOfPacks'),
       },
       {
         c: { key: 'packSize' },
-        header: () => t('label.pack-size'),
-        ...getNumberCell(),
+        header: () => t('label.received-pack-size'),
+        // Same header as the line table, so the same preset — see
+        // `receivedPackSize` in _globalColumnConfig.
+        ...getCellDefinition('receivedPackSize'),
       },
       {
         c: { accessor: line => line.item.unitName ?? '', id: 'unit' },
         header: () => t('label.unit'),
+        ...getCellDefinition('unit'),
       },
       ...(foreign()
         ? [

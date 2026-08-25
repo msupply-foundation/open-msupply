@@ -10,16 +10,20 @@ import {
 } from 'solid-js';
 import { t } from '../../../../intl';
 import { graphqlFetch } from '../../../../api/graphql';
+import { gated } from '../../../../api/gated';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
 import { Spinner } from '../../../../ui/elements/feedback/Spinner';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
+import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
 import { Tabs, TabList, TabPanel } from '../../../../ui/elements/tabs/Tabs';
 import { Combobox } from '../../../../ui/elements/selectors/Combobox';
 import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
 import { Stack } from '../../../../ui/layout/Stack/Stack';
-import { PlusCircleIcon, AlertTriangleIcon } from '../../../../ui/icons';
+import { HStack } from '../../../../ui/layout/Stack/HStack';
+import { StatusMarker } from '../../../../ui/elements/feedback/StatusMarker';
+import { AlertTriangleIcon } from '../../../../ui/icons';
 import { NameSearch, type NameOption } from '../../../../domain/name';
 import { InternalOrderProgramSettings } from './createInternalOrder.generated';
 import { createGeneralOrder, createProgramOrder } from './createInternalOrder';
@@ -92,7 +96,7 @@ export const CreateInternalOrderModal: Component<
   );
   const settled = () =>
     settings.state === 'ready' || settings.state === 'refreshing';
-  const settingsList = () => (settled() ? (settings.latest ?? []) : []);
+  const settingsList = () => gated(settings) ?? [];
   const programCapable = () => settingsList().length > 0;
 
   const [tab, setTab] = createSignal('program');
@@ -120,7 +124,9 @@ export const CreateInternalOrderModal: Component<
   });
 
   // Program suppliers: deduped across every program setting, name-sorted;
-  // on-hold suppliers listed but not selectable (AC-P2 supplier picker).
+  // on-hold suppliers listed but not selectable (AC-P2 supplier picker) — and
+  // textually marked, so the block never reads from the dimming alone
+  // (ui-standards controls.md § blocked affordances).
   const suppliers = createMemo<CascadeOption[]>(() => {
     const seen = new Map<string, CascadeOption>();
     for (const setting of settingsList())
@@ -128,7 +134,9 @@ export const CreateInternalOrderModal: Component<
         if (!seen.has(supplier.id))
           seen.set(supplier.id, {
             id: supplier.id,
-            label: supplier.name,
+            label: supplier.isOnHold
+              ? `${supplier.name} (${t('label.on-hold')})`
+              : supplier.name,
             disabled: supplier.isOnHold,
           });
     return [...seen.values()].sort((a, b) => a.label.localeCompare(b.label));
@@ -274,21 +282,16 @@ export const CreateInternalOrderModal: Component<
             setError();
           }}
           renderItem={option => (
-            <span
-              style={{
-                display: 'inline-flex',
-                'align-items': 'center',
-                gap: 'var(--space-2)',
-              }}
-            >
+            <HStack gap="sm">
               {option.label}
               <Show when={isEmergency(option.id)}>
-                <AlertTriangleIcon
-                  style={{ color: 'var(--error-main)' }}
-                  aria-label={t('label.emergency')}
+                <StatusMarker
+                  severity="error"
+                  icon={AlertTriangleIcon}
+                  label={t('label.emergency')}
                 />
               </Show>
-            </span>
+            </HStack>
           )}
           testId="create-program-order-type"
         />
@@ -309,7 +312,9 @@ export const CreateInternalOrderModal: Component<
         />
       </FieldRow>
       <Show when={error()}>
-        <Alert severity="error">{error()}</Alert>
+        <Alert severity="error" testId="create-internal-order-error">
+          {error()}
+        </Alert>
       </Show>
     </Stack>
   );
@@ -324,20 +329,28 @@ export const CreateInternalOrderModal: Component<
       testId="create-internal-order-modal"
       widthRem={44}
       minBodyHeightRem={30}
-      // Create sits in the actions row only on the Program path; the General
-      // path creates on supplier-select and has no footer button (AC-C2/AC-P3).
+      // Cancel is the house way out on both paths (ui-standards › dialogs §
+      // chrome); Create sits beside it only on the Program path — the General
+      // path creates on supplier-select and has no confirm (AC-C2/AC-P3).
       actions={
-        <Show when={activeTab() === 'program'}>
-          <Button
-            icon={<PlusCircleIcon />}
-            data-testid="create-program-order-button"
-            disabled={!createReady()}
-            loading={submitting()}
-            onClick={() => void submitProgram()}
-          >
-            {t('label.create')}
-          </Button>
-        </Show>
+        <>
+          <CancelButton
+            data-testid="dialog-button-cancel"
+            disabled={submitting()}
+            onClick={props.onClose}
+          />
+          <Show when={activeTab() === 'program'}>
+            <Button
+              confirms="plain"
+              data-testid="create-program-order-button"
+              disabled={!createReady()}
+              loading={submitting()}
+              onClick={() => void submitProgram()}
+            >
+              {t('label.create')}
+            </Button>
+          </Show>
+        </>
       }
     >
       <Show when={settled()} fallback={<Spinner center label={t('loading')} />}>

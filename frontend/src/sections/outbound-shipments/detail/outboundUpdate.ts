@@ -79,9 +79,9 @@ export type StatusChangeResult =
   | { kind: 'saved'; node: OutboundNode }
   // A structured rejection with a translated message; `unallocatedItems`
   // carries the offending placeholder items when the rejection is the
-  // unallocated-lines guard (AC-P3); `heldShipment` marks the on-hold
-  // rejection (AC-H1) so the notice can offer the one-save release-and-
-  // advance retry (AC-H2).
+  // unallocated-lines guard (OMS-REG-DIST-03.9); `heldShipment` marks the
+  // on-hold rejection (OMS-REG-DIST-02.10) so the notice can offer the
+  // one-save release-and-advance retry (OMS-REG-DIST-02.27).
   | {
       kind: 'error';
       message: string;
@@ -95,7 +95,7 @@ export const changeShipmentStatus = async (
   id: string,
   status: NonNullable<UpdateInput['status']>,
   // Release the hold in the SAME save (rules.md § on hold: a single change
-  // that both releases and advances is allowed — AC-H2).
+  // that both releases and advances is allowed — OMS-REG-DIST-02.27).
   releaseHold = false
 ): Promise<StatusChangeResult> => {
   const result = await graphqlFetch(UpdateOutboundShipment, {

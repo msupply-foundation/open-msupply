@@ -7,7 +7,10 @@ interface ReadyState {
 }
 interface LoadingState {
   status: 'loading';
-  /** Message shown while the count query loads (e.g. "Loading…"), already translated. */
+  /**
+   * Message shown while the count query loads (e.g. "Loading…"), already
+   * translated.
+   */
   loadingMessage: string;
 }
 interface ErrorState {
@@ -33,8 +36,13 @@ export interface StatsPanelProps {
   titleHref?: string;
   /** Optional leading icon for the title (which family this panel counts). */
   icon?: JSX.Element;
-  /** The count query's state — each message travels with its status (see `StatsPanelState`). */
+  /**
+   * The count query's state — each message travels with its status (see
+   * `StatsPanelState`).
+   */
   state: StatsPanelState;
+  /** e2e testid — the panel's published id (e2e/TESTIDS.md § Dashboard). */
+  testId?: string;
   /** The Statistic children, shown when ready. */
   children?: JSX.Element;
 }
@@ -52,6 +60,7 @@ export const StatsPanel = (props: StatsPanelProps) => (
   <section
     class={styles.panel}
     aria-busy={props.state.status === 'loading' || undefined}
+    data-testid={props.testId}
   >
     <SectionTitle
       title={props.title}

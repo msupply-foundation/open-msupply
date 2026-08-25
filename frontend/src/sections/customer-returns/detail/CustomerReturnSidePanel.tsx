@@ -8,9 +8,12 @@ import {
   SidePanelActions,
 } from '../../../ui/layout/SidePanel/SidePanel';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
-import { TextField } from '../../../ui/elements/inputs/TextField';
+import { UserLabel } from '../../../ui/elements/typography/UserLabel';
+import { TextArea } from '../../../ui/elements/inputs/TextArea';
 import { Text } from '../../../ui/elements/typography/Text';
+import { HStack } from '../../../ui/layout/Stack/HStack';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { OkButton } from '../../../ui/elements/buttons/StandardButtons';
 import { CopyToClipboardButton } from '../../../ui/elements/buttons/CopyToClipboardButton';
 import {
   ColourTagDot,
@@ -18,22 +21,22 @@ import {
 } from '../../../ui/elements/selectors/ColourTag';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
-import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
-import { CheckIcon, InfoIcon, TrashIcon } from '../../../ui/icons';
+import { InfoIcon, TrashIcon } from '../../../ui/icons';
 import { graphqlFetch } from '../../../api/graphql';
 import {
-  CustomerReturnDetail,
+  CustomerReturnForCopy,
   type CustomerReturnInfoFragment,
 } from './customerReturnDetail.generated';
 import { deleteReturn } from './returnUpdate';
+import { returnKind } from './returnStatus';
 import type { ReturnFieldEdit } from './returnEdit';
 
 // The detail side panel (spec/customer-returns/ui-surface.md S3 § side panel):
 // Additional info (edited-by / colour / comment) and Related documents (the
 // originating outbound shipment, when there is one) are collapsible info
 // sections (open by default); the record actions — Delete (offered only while
-// NEW — rules § deletion, AC-D3) and Copy to clipboard — are pinned at the
-// panel's end, below them.
+// NEW — rules § deletion, OMS-REG-DIST-07.42) and Copy to clipboard — are
+// pinned at the panel's end, below them.
 
 export interface CustomerReturnSidePanelProps {
   node: CustomerReturnInfoFragment;
@@ -52,8 +55,9 @@ export const CustomerReturnSidePanel: Component<
   const [deleteConfirm, setDeleteConfirm] = createSignal(false);
   const [deleteError, setDeleteError] = createSignal<string>();
 
-  // Delete is offered only while NEW (AC-D3 — the UI's conservative gate; the
-  // server's own rule is "until VERIFIED", asserted separately by AC-D1/D2),
+  // Delete is offered only while NEW (OMS-REG-DIST-07.42 — the UI's
+  // conservative gate; the server's own rule is "until VERIFIED", asserted
+  // separately by .40 / .41),
   // and never on a read-only return — a transfer return at NEW is still in the
   // sender's hands (isReturnDisabled), so it must share the standing gate every
   // other affordance respects rather than keying off status alone.
@@ -75,13 +79,15 @@ export const CustomerReturnSidePanel: Component<
   };
 
   // The WHOLE return — header, every line, and the linked records — for the
-  // copy action (controls § copy to clipboard). This panel is handed the info
-  // node alone, so copy re-reads the detail query, whose nested `lines`
-  // connector takes no page argument and so carries the complete line set. A
+  // copy action (controls § copy to clipboard). Its OWN operation, not the
+  // screen's: customerReturnDetail is header-only and the line table holds one
+  // server-paginated page, and the standard requires copy to make an
+  // unpaginated read rather than serialise the page on screen. The nested
+  // `lines` connector takes no page argument, so it carries the complete set. A
   // fetch failure routes to the global error modal; a NodeError (not expected
   // from a screen showing the record) copies nothing.
   const loadFullReturn = async () => {
-    const result = await graphqlFetch(CustomerReturnDetail, {
+    const result = await graphqlFetch(CustomerReturnForCopy, {
       storeId: params.storeId,
       id: props.node.id,
     });
@@ -99,22 +105,12 @@ export const CustomerReturnSidePanel: Component<
         collapsible
       >
         <FieldRow label={t('label.edited-by')}>
-          <span
-            style={{
-              display: 'inline-flex',
-              'align-items': 'center',
-              gap: 'var(--space-2)',
-            }}
-          >
-            <Text variant="body" as="span">
-              {props.node.user?.username ?? '—'}
-            </Text>
-            {/* Info popover on hover — the user's email (the picked-date
-                reason bubble's pattern); no icon when there is no email. */}
-            <Show when={props.node.user?.email}>
-              {email => <InfoTooltip text={email()} label={email()} />}
-            </Show>
-          </span>
+          <UserLabel
+            username={props.node.user?.username}
+            email={props.node.user?.email}
+            label={t('label.edited-by')}
+            testId="edited-by-field"
+          />
         </FieldRow>
         <FieldRow label={t('label.color')}>
           <Show
@@ -129,10 +125,11 @@ export const CustomerReturnSidePanel: Component<
           </Show>
         </FieldRow>
         <FieldRow label={t('heading.comment')}>
-          <TextField
+          {/* Multi-line, in-place (ui-surface S3 § side panel) — the multi-line
+              input role, not a single-line field. */}
+          <TextArea
             label={t('heading.comment')}
             hideLabel
-            width="full"
             data-testid="comment-field"
             value={props.edit.state.comment}
             disabled={props.disabled}
@@ -159,14 +156,7 @@ export const CustomerReturnSidePanel: Component<
           {shipment => (
             // The current app's arrangement: the dated, attributed description
             // inline-start, the #N link pinned inline-end.
-            <span
-              style={{
-                display: 'flex',
-                'align-items': 'center',
-                'justify-content': 'space-between',
-                gap: 'var(--space-3)',
-              }}
-            >
+            <HStack gap="md" justify="between">
               <Text variant="body">
                 {t('messages.outbound-shipment-created-on', {
                   date: localisedDate(shipment().createdDatetime),
@@ -179,14 +169,32 @@ export const CustomerReturnSidePanel: Component<
                 </Show>
               </Text>
               <RecordLink
+                testId="originating-shipment-link"
                 href={`/${params.storeId}/distribution/outbound-shipment/${shipment().id}`}
               >
                 #{shipment().invoiceNumber}
               </RecordLink>
-            </span>
+            </HStack>
           )}
         </Show>
       </SidePanelSection>
+
+      {/* Transport details — transfer returns only (ui-surface S3 § side panel),
+          read-only: the transport reference is written by the transfer-creation
+          process and no return surface edits it. Same section as the shipment
+          verticals'; a return carries no shipping method or expected-delivery
+          date, so the reference is the whole section. */}
+      <Show when={returnKind(props.node) === 'transfer'}>
+        <SidePanelSection
+          value="transport-details"
+          title={t('heading.transport-details')}
+          collapsible
+        >
+          <FieldRow label={t('label.transport-reference')}>
+            <span>{props.node.transportReference ?? '—'}</span>
+          </FieldRow>
+        </SidePanelSection>
+      </Show>
 
       {/* Record-level actions (ui-surface S3): Delete (gated to an editable NEW
           return, danger tone — Delete buttons are danger app-wide, Carl
@@ -210,14 +218,19 @@ export const CustomerReturnSidePanel: Component<
         </SidePanelActions>
       </SidePanelSection>
 
-      <ConfirmDialog
-        open={deleteConfirm()}
-        onClose={() => setDeleteConfirm(false)}
-        title={t('heading.are-you-sure')}
-        message={tPlural('messages.confirm-delete-returns', 1)}
-        confirmVariant="danger"
-        onConfirm={() => void runDelete()}
-      />
+      {/* Mounted only while open (kdd/action-modal) — see the status footer's
+          hold confirm: a closed dialog keeps its `confirmation-modal` + footer
+          ids matchable. */}
+      <Show when={deleteConfirm()}>
+        <ConfirmDialog
+          open
+          onClose={() => setDeleteConfirm(false)}
+          title={t('heading.are-you-sure')}
+          message={tPlural('messages.confirm-delete-returns', 1)}
+          confirmVariant="danger"
+          onConfirm={() => void runDelete()}
+        />
+      </Show>
 
       {/* An unexpected delete rejection (not a permission block, which routes to
           the global modal) — surfaced here rather than swallowed. */}
@@ -228,14 +241,12 @@ export const CustomerReturnSidePanel: Component<
           icon={<InfoIcon />}
           title={t('error.something-wrong')}
           description={deleteError()}
+          // The standard, icon-less acknowledgement (D55).
           actions={
-            <Button
-              variant="secondary"
-              icon={<CheckIcon />}
+            <OkButton
+              data-testid="dialog-button-ok"
               onClick={() => setDeleteError(undefined)}
-            >
-              {t('button.ok')}
-            </Button>
+            />
           }
         />
       </Show>

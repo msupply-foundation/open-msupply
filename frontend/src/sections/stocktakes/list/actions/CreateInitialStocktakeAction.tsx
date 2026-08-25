@@ -7,7 +7,8 @@ import { userDisplayName } from '@/auth/authContext';
 import { graphqlFetch } from '@/api/graphql';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Button } from '@/ui/elements/buttons/Button';
-import { CheckIcon, PlusCircleIcon, XCircleIcon } from '@/ui/icons';
+import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
+import { PlusCircleIcon } from '@/ui/icons';
 import { InsertStocktake } from '../createStocktake.generated';
 
 // The initial (opening-balance) stocktake create action — offered only from
@@ -20,12 +21,13 @@ import { InsertStocktake } from '../createStocktake.generated';
 // isInitialStocktake: true (the ONLY place we set it).
 //
 // Controlled open/onClose like CreateStocktakeModal (the list owns the toggle).
-// On success it navigates to the new stocktake's detail, so there's no in-dialog
-// success phase — the page changes. A failed create is surfaced by the global
-// unexpected-error modal (graphqlFetch); we drop back to confirm so the dialog
-// isn't stuck loading. The once-per-store rejection (InitialStocktakeAlreadyExists)
-// can't happen from here — the button is only shown when the store has none —
-// so it needs no bespoke handling (it would fall through to the global modal).
+// On success it navigates to the new stocktake's detail, so there's no
+// in-dialog success phase — the page changes. A failed create is surfaced by
+// the global unexpected-error modal (graphqlFetch); we drop back to confirm so
+// the dialog isn't stuck loading. The once-per-store rejection
+// (InitialStocktakeAlreadyExists) can't happen from here — the button is only
+// shown when the store has none — so it needs no bespoke handling (it would
+// fall through to the global modal).
 export const CreateInitialStocktakeAction = (props: {
   open: boolean;
   onClose: () => void;
@@ -74,21 +76,14 @@ export const CreateInitialStocktakeAction = (props: {
       description={t('messages.confirm-create-initial-stocktake')}
       actions={
         <>
+          <CancelButton disabled={creating()} onClick={props.onClose} />
           <Button
-            variant="secondary"
-            icon={<XCircleIcon />}
-            disabled={creating()}
-            onClick={props.onClose}
-          >
-            {t('button.cancel')}
-          </Button>
-          <Button
-            variant="secondary"
-            icon={<CheckIcon />}
+            variant="primary"
             loading={creating()}
+            confirms="plain"
             onClick={() => void create()}
           >
-            {t('button.ok')}
+            {t('button.create')}
           </Button>
         </>
       }

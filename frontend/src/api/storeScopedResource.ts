@@ -1,4 +1,6 @@
-import { createResource, createRoot } from 'solid-js';
+import { createMemo, createResource, createRoot } from 'solid-js';
+import { sameFetchedValue } from '../typeHelpers';
+import { gated } from './gated';
 
 // A store-scoped, lazy, de-duplicated global cache — the reusable shape for
 // app-wide lookups that depend on the current store (master lists, locations,
@@ -46,20 +48,35 @@ export type StoreScopedResource<T> = {
    * (kdd/state-management). NB: this is NOT `resource.latest` — `.latest` still
    * suspends on the first pending read; this gates on `resource.state` so it
    * never trips the boundary. Reading it arms the fetch.
+   *
+   * Also the resource-path equal-data boundary (kdd/state-management decision
+   * 5): a refetch that returns equal data notifies no consumer, and they keep
+   * the ORIGINAL array reference — even when the fetcher rebuilds its value
+   * every load (a sort, a parse) and despite `resource.state` churning on
+   * every load.
    */
   noSuspense: () => T[];
   /** True while a fetch for the current store is in flight. */
   loading: () => boolean;
   /** Force a refetch now (e.g. after a mutation that changed the list).
-   * Awaitable. */
+   * Awaitable. NB: arms the lazy cache — refetching a never-read cache builds
+   * it and fetches. From a screen that only WRITES the list (and may never
+   * read it), use `invalidate` instead. */
   refetch: () => Promise<void>;
+  /** Mark the cache stale after a mutation changed the list: refetches an
+   * ARMED cache, and leaves a never-read one unbuilt — it simply loads fresh
+   * on its first real read, so invalidating never costs an unwanted fetch.
+   * Fire-and-forget. */
+  invalidate: () => void;
 };
 
 export function createStoreScopedResource<T>(
   // The current store id (module-level reactive accessor, e.g. currentStoreId).
   storeId: () => string | undefined,
   // Fetches the list for a store; returns undefined on failure (handled
-  // globally).
+  // globally). May freely DERIVE from the response (sort, parse, wrap) — the
+  // noSuspense memo below restores the identity such a derivation loses, so a
+  // background refetch returning equal data still publishes nothing.
   fetcher: (storeId: string) => Promise<T[] | undefined>
 ): StoreScopedResource<T> {
   // Lazy singleton: one instance built on first use, shared by every consumer.
@@ -77,18 +94,37 @@ export function createStoreScopedResource<T>(
         // always fetches to `T[]`); while pending, reading `resource()`
         // suspends before this runs.
         suspends: () => resource() ?? [],
-        // No-suspend read: gate on `resource.state` (NOT `.latest`, which still
+        // No-suspend read: the shared `gated` gate (NOT `.latest`, which still
         // suspends on the first pending read — the exact remount bug, see the
         // type doc / kdd/state-management). 'refreshing' keeps the prior value
         // during a refetch; any other state falls back to []. Never trips the
         // boundary, first read or later.
-        noSuspense: () =>
-          resource.state === 'ready' || resource.state === 'refreshing'
-            ? resource.latest
-            : [],
+        //
+        // An OWNED MEMO, not a plain accessor, and that is load-bearing
+        // (kdd/state-management decision 5; pitfalls §16): Solid flips
+        // `resource.state` on EVERY load (ready → refreshing → ready), value
+        // change or not, so a plain accessor would wake every consumer twice
+        // per refetch — under the post-sync refresh, every couple of seconds.
+        // The memo re-runs on that churn but its unchanged output stops the
+        // propagation here. `equals: sameFetchedValue` extends the boundary to
+        // fetchers that REBUILD their value every load (vvmStatus's sort,
+        // tableConfig's parse — and the fresh `[]` a failed fetch yields):
+        // structurally equal data keeps the ORIGINAL array, so consumers can
+        // never observe an unchanged refresh. The stringify only runs when the
+        // reference actually changed (`===` is its fast path).
+        //
+        // The read itself goes through `gated` — the one canonical spelling of
+        // the read-safety gate (api/gated.ts), so this stays in step with the
+        // 20-odd call sites that use it rather than restating the state check.
+        noSuspense: createMemo(() => gated(resource) ?? [], undefined, {
+          equals: sameFetchedValue,
+        }),
         loading: () => resource.loading,
         refetch: async () => {
           await refetch();
+        },
+        invalidate: () => {
+          void refetch();
         },
       };
     });
@@ -98,5 +134,8 @@ export function createStoreScopedResource<T>(
     noSuspense: () => (instance ??= build()).noSuspense(),
     loading: () => (instance ??= build()).loading(),
     refetch: () => (instance ??= build()).refetch(),
+    // Deliberately NOT `??=`: invalidating an unbuilt cache must stay a no-op,
+    // or every write-only screen would arm (and fetch) a list nobody reads.
+    invalidate: () => instance?.invalidate(),
   };
 }

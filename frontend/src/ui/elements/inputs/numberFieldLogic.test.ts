@@ -66,7 +66,7 @@ describe('sign handling', () => {
     expect(r).toEqual({
       accepted: true,
       text: '1.7',
-      commit: { value: 1.7 },
+      commit: { value: 1.7, adjustedFrom: -1.7 },
     });
   });
 
@@ -127,7 +127,7 @@ describe('decimal padding (decimalMin)', () => {
     expect(processInput('1.11', tight, 'en')).toEqual({
       accepted: true,
       text: '1.1',
-      commit: { value: 1.1 },
+      commit: { value: 1.1, adjustedFrom: 1.11 },
     });
     // …and the blur display still pads to decimalMin.
     expect(finalizeText('1.1', tight, 'en').text).toBe('1.100');
@@ -188,7 +188,7 @@ describe('gate and repair', () => {
     expect(processInput('$1,234.567', o({ decimalLimit: 2 }), 'en')).toEqual({
       accepted: true,
       text: '1234.57',
-      commit: { value: 1234.57 },
+      commit: { value: 1234.57, adjustedFrom: 1234.567 },
     });
   });
 
@@ -197,7 +197,7 @@ describe('gate and repair', () => {
     expect(processInput('1.5', o(), 'en')).toEqual({
       accepted: true,
       text: '2',
-      commit: { value: 2 },
+      commit: { value: 2, adjustedFrom: 1.5 },
     });
   });
 
@@ -249,11 +249,11 @@ describe('leading zeros', () => {
 describe('clamping (commit-only while typing; text on blur)', () => {
   const c = o({ min: 10, max: 100 });
 
-  it('clamps the committed value but never the text mid-typing', () => {
+  it('clamps the committed value but never the text mid-typing, carrying what was entered (adjustedFrom → the component onClamped)', () => {
     expect(processInput('5', c, 'en')).toEqual({
       accepted: true,
       text: '5',
-      commit: { value: 10 },
+      commit: { value: 10, adjustedFrom: 5 },
     });
     expect(processInput('50', c, 'en')).toEqual({
       accepted: true,
@@ -263,13 +263,30 @@ describe('clamping (commit-only while typing; text on blur)', () => {
     expect(processInput('500', c, 'en')).toEqual({
       accepted: true,
       text: '500',
-      commit: { value: 100 },
+      commit: { value: 100, adjustedFrom: 500 },
     });
   });
 
-  it('clamps the text on blur', () => {
-    expect(finalizeText('5', c, 'en')).toEqual({ value: 10, text: '10' });
-    expect(finalizeText('500', c, 'en')).toEqual({ value: 100, text: '100' });
+  it('clamps the text on blur, still carrying what was entered', () => {
+    expect(finalizeText('5', c, 'en')).toEqual({
+      value: 10,
+      text: '10',
+      adjustedFrom: 5,
+    });
+    expect(finalizeText('500', c, 'en')).toEqual({
+      value: 100,
+      text: '100',
+      adjustedFrom: 500,
+    });
+  });
+
+  it('never marks an entry that committed as typed (no false onClamped)', () => {
+    expect(processInput('100', c, 'en')).toEqual({
+      accepted: true,
+      text: '100',
+      commit: { value: 100 },
+    });
+    expect(finalizeText('100', c, 'en')).toEqual({ value: 100, text: '100' });
   });
 });
 
@@ -327,6 +344,37 @@ describe('locales', () => {
     const { decimal } = getNumberSymbols('ar');
     const r = processInput(`١٢${decimal}٥`, o({ decimalLimit: 1 }), 'ar');
     expect(r.accepted && r.commit?.value).toBe(12.5);
+  });
+
+  it('prs: extended-Arabic digits gate and parse', () => {
+    // Dari and Pashto format through fa-AF, a different digit block from
+    // Arabic's — the gate has to admit both.
+    expect(processInput('۱۲۳', o(), 'prs')).toEqual({
+      accepted: true,
+      text: '۱۲۳',
+      commit: { value: 123 },
+    });
+    const { decimal } = getNumberSymbols('ps');
+    const r = processInput(`۱۲${decimal}۵`, o({ decimalLimit: 1 }), 'ps');
+    expect(r.accepted && r.commit?.value).toBe(12.5);
+  });
+
+  it('es: dot groups rather than aliasing to the decimal comma', () => {
+    const c = o({ decimalLimit: 1 });
+    expect(processInput('1234,5', c, 'es')).toEqual({
+      accepted: true,
+      text: '1234,5',
+      commit: { value: 1234.5 },
+    });
+    // Spanish groups with "." — pasted display text must parse as 12345.5, not
+    // be read as a decimal point. (Spanish only groups from five digits up.)
+    const grouped = displayString(12345.5, c, 'es');
+    expect(grouped).toBe('12.345,5');
+    expect(processInput(grouped, c, 'es')).toEqual({
+      accepted: true,
+      text: '12345,5',
+      commit: { value: 12345.5 },
+    });
   });
 });
 

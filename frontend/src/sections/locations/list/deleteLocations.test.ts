@@ -4,13 +4,13 @@ import {
   summariseOutcomes,
   type DeleteOutcome,
 } from './deleteLocations';
-import type { GraphqlResult } from '../../../api/graphql';
+import type { GraphqlResult } from '@/api/graphql';
 import type { DeleteLocationResult } from './locations.generated';
 
 // AC-citing tests for the delete flow's logic (spec/locations/acceptance.md
-// § deletion). The dialog half — the confirmation gate (OMS-REG-INV-01.34) and the in-use
-// report rendering — lives in DeleteLocationsAction; the mutation is only
-// fired from the confirm phase's OK, and these tests pin how each call's
+// § deletion). The dialog half — the confirmation gate (OMS-REG-INV-01.34) and
+// the in-use report rendering — lives in DeleteLocationsAction; the mutation is
+// only fired from the confirm phase's OK, and these tests pin how each call's
 // result becomes an outcome and how outcomes fold into the report.
 
 const success = (

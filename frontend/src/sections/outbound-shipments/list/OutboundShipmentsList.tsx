@@ -7,21 +7,22 @@ import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
-import { Toolbar } from '../../../ui/layout/Header/Toolbar';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
+import { HStack } from '../../../ui/layout/Stack/HStack';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_N } from '../../../ui/utils/shortcuts';
 import {
   DataTable,
   type Column,
   type SortState,
 } from '../../../ui/elements/table/DataTable';
 import {
-  getCommentCell,
-  getCurrencyCell,
-  getDateCell,
-  getNumberCell,
+  CommentHeader,
+  getCellDefinition,
 } from '../../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../../ui/utils/rem';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { StatusChip } from '../../../ui/elements/feedback/StatusChip';
 import {
@@ -31,6 +32,12 @@ import {
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import { CloseIcon, PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
+import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
 import { stripEmpty } from '../../../typeHelpers';
 import {
   OutboundShipments,
@@ -61,15 +68,16 @@ import {
 // list (StocktakesList): URL-backed state, serialised resource source, library
 // components only, no CSS.
 
-const DEFAULT_PAGE_SIZE = 20;
-
 type ShipmentRow = OutboundShipmentsResult['invoices']['nodes'][number];
 
 type SortKey = NonNullable<OutboundShipmentsVariables['sort']>[number]['key'];
 
 type OutboundListState = {
   filter: OutboundFilter;
-  /** Typed per-custom-field filter values → the dynamicFilter AST at query time. */
+  /**
+   * Typed per-custom-field filter values → the dynamicFilter AST at query
+   * time.
+   */
   cf?: CustomFieldFilterState;
   sort?: OutboundShipmentsVariables['sort'];
   offset: number;
@@ -87,10 +95,21 @@ const DEFAULT_STATE: OutboundListState = {
 const OutboundShipmentsList: Component = () => {
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
-  const { query, setQuery } =
-    useUrlQueryState<OutboundListState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<OutboundListState>({
+    ...DEFAULT_STATE,
+    first: initialPageSize(),
+  });
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   const [createOpen, setCreateOpen] = createSignal(false);
+
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
+  // the SCREEN, once, for the two controls that trigger it (the header button and
+  // the ghost button in the table's empty slot); each carries `shortcut={ALT_N}`
+  // for its badge, neither owns the action.
+  createAddAction({
+    name: 'button.new-shipment',
+    run: () => setCreateOpen(true),
+  });
 
   // Column config per breakpoint (kdd/table-state). Narrow viewports default
   // to card view and hide the columns the spec marks hidden-by-default
@@ -108,8 +127,9 @@ const OutboundShipmentsList: Component = () => {
     },
   });
 
-  // Custom-field definitions for the outbound_shipment scope — shared scope-keyed
-  // cache, read non-suspending. Empty ⇒ no custom-field columns/filters.
+  // Custom-field definitions for the outbound_shipment scope — shared
+  // scope-keyed cache, read non-suspending. Empty ⇒ no custom-field
+  // columns/filters.
   const cfReader = customFieldDefinitions('outbound_shipment');
   const cfDefs = () => cfReader.noSuspense();
   const cfFilters = createMemo(() => customFieldFilters(cfDefs()));
@@ -118,13 +138,14 @@ const OutboundShipmentsList: Component = () => {
     setSelectedIds([]);
   };
 
-  // GraphQL variables from URL state; the type filter is PINNED here — it is
-  // not part of the user-facing filter state (contract.md § the list).
+  // GraphQL variables from URL state. The type pin is NOT here: the query's
+  // top-level `type` argument both selects the permission and overwrites
+  // `filter.type` server-side, so a filter pin would be silently discarded
+  // (contract.md § the list).
   const variables = createMemo<OutboundShipmentsVariables>(() => ({
     storeId: params.storeId,
     filter: {
       ...stripEmpty(query().filter),
-      type: { equalTo: 'OUTBOUND_SHIPMENT' },
       // Custom-field filters become the dynamicFilter AST (undefined = no-op).
       dynamicFilter: buildCustomFieldDynamicFilter(query().cf),
     },
@@ -158,13 +179,22 @@ const OutboundShipmentsList: Component = () => {
   };
   const totalCount = () => data.latest?.invoices.totalCount ?? 0;
 
+  // A bulk delete of the last page's rows leaves the offset past the new end
+  // (src/list/clampPageOffset.ts, issue #1117).
+  clampPageOffset({
+    total: () => settledTotal(data, d => d.invoices.totalCount),
+    offset: () => query().offset,
+    pageSize: () => query().first,
+    setOffset: offset => setQuery({ ...query(), offset }),
+  });
+
   const currentSort = (): SortState<SortKey> | undefined => {
     const s = query().sort?.[0];
     return s ? { key: s.key, desc: s.desc ?? false } : undefined;
   };
 
-  // Single-key server sort (AC-L2 — the resolver honours only the last key, so
-  // exactly one is ever sent).
+  // Single-key server sort (OMS-REG-DIST-01.16 — the resolver honours only the
+  // last key, so exactly one is ever sent).
   const onSort = (key: SortKey, desc: boolean) => {
     setQuery({ ...query(), sort: [{ key, desc }], offset: 0 });
   };
@@ -205,17 +235,14 @@ const OutboundShipmentsList: Component = () => {
       c: { key: 'otherPartyName' },
       sortKey: 'otherPartyName',
       header: () => t('label.name'),
-      meta: { headerPosition: 'primary', wrapLines: 2 },
+      ...getCellDefinition('otherPartyName', {
+        headerPosition: 'primary',
+        wrapLines: 2,
+      }),
       cell: info => {
         const row = info.row.original;
         return (
-          <span
-            style={{
-              display: 'inline-flex',
-              'align-items': 'center',
-              gap: 'var(--space-2)',
-            }}
-          >
+          <HStack gap="sm">
             <Show
               when={isEditable(row.status)}
               fallback={<ColourTagDot colour={row.colour ?? null} />}
@@ -227,7 +254,7 @@ const OutboundShipmentsList: Component = () => {
               />
             </Show>
             <span>{row.otherPartyName}</span>
-          </span>
+          </HStack>
         );
       },
     },
@@ -244,31 +271,37 @@ const OutboundShipmentsList: Component = () => {
           />
         );
       },
+      // Status has no cell-type preset (CELL_TYPES § Status is page-rendered),
+      // so the width lives here — the same pair the inbound list uses, so the
+      // two invoice lists' Status columns line up.
       meta: { headerPosition: 'badge' },
+      size: remToPx(7.5),
+      maxSize: remToPx(9.375),
     },
     {
       c: { key: 'invoiceNumber' },
       sortKey: 'invoiceNumber',
       header: () => t('label.number'),
-      ...getNumberCell(),
+      ...getCellDefinition('invoiceNumber'),
     },
     {
       c: { key: 'createdDatetime' },
       sortKey: 'createdDatetime',
       header: () => t('label.created'),
-      ...getDateCell(),
+      ...getCellDefinition('createdDatetime'),
     },
     {
       // Reference is not sortable (ui-surface S1 columns table).
       c: { key: 'theirReference' },
       header: () => t('label.reference'),
+      ...getCellDefinition('theirReference'),
     },
     {
       // Comment is the shared comment cell (bubble + hover popover, as the
       // inbound list renders it) — not sortable (ui-surface S1).
       c: { key: 'comment' },
-      header: () => t('label.comment'),
-      ...getCommentCell(),
+      header: () => <CommentHeader />,
+      ...getCellDefinition('comment'),
     },
     {
       // Shipment total after tax (nested under pricing) — an accessor column.
@@ -277,7 +310,7 @@ const OutboundShipmentsList: Component = () => {
         id: 'totalAfterTax',
       },
       header: () => t('label.total'),
-      ...getCurrencyCell(),
+      ...getCellDefinition('totalAfterTax'),
     },
     // Configured custom-field columns — not sortable; value chosen by kind.
     ...customFieldColumns<ShipmentRow, SortKey>(
@@ -286,10 +319,7 @@ const OutboundShipmentsList: Component = () => {
     ),
   ];
 
-  const crumbs = () => [
-    { label: t('distribution') },
-    { label: t('outbound-shipments') },
-  ];
+  const crumbs = () => [{ label: t('outbound-shipments') }];
 
   return (
     <Page
@@ -300,6 +330,7 @@ const OutboundShipmentsList: Component = () => {
           <HeaderButtons>
             <Button
               icon={<PlusCircleIcon />}
+              shortcut={ALT_N}
               data-testid="new-shipment-button"
               onClick={() => setCreateOpen(true)}
             >
@@ -310,18 +341,6 @@ const OutboundShipmentsList: Component = () => {
               filter={() => variables().filter}
             />
           </HeaderButtons>
-          <Toolbar>
-            <FilterBar
-              filters={filterFields()}
-              filter={query().filter}
-              onChange={onFilterChange}
-              extra={{
-                filters: cfFilters(),
-                filter: query().cf ?? {},
-                onChange: onCustomFieldChange,
-              }}
-            />
-          </Toolbar>
         </Header>
       }
       contentFooter={
@@ -366,21 +385,38 @@ const OutboundShipmentsList: Component = () => {
         columns={columns()}
         rows={rows()}
         rowKey={row => row.id}
+        // Filters live WITH the table, in its own toolbar — never the page
+        // header (ui-standards § tables › toolbar, binding). State stays
+        // page-owned and URL-backed; only the placement is the table's.
+        filters={
+          <FilterBar
+            filters={filterFields()}
+            filter={query().filter}
+            onChange={onFilterChange}
+            extra={{
+              filters: cfFilters(),
+              filter: query().cf ?? {},
+              onChange: onCustomFieldChange,
+            }}
+          />
+        }
         loading={data.loading}
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
-        // Read-only rows (SHIPPED+) take the disabled state (AC-L3); they
-        // stay clickable — row click still opens the detail.
+        // Read-only rows (SHIPPED+) take the disabled state
+        // (OMS-REG-DIST-01.17); they stay clickable — row click still opens the
+        // detail.
         rowState={row => (!isEditable(row.status) ? 'disabled' : undefined)}
         emptyMessage={t('error.no-outbound-shipments')}
         empty={
           <Button
-            icon={<PlusCircleIcon />}
+            variant="ghost"
+            shortcut={ALT_N}
             data-testid="nothing-here-create-button"
             onClick={() => setCreateOpen(true)}
           >
-            {t('button.new-shipment')}
+            {t('button.create-a-new-one')}
           </Button>
         }
         enableSelection
@@ -388,15 +424,29 @@ const OutboundShipmentsList: Component = () => {
         onSelectionChange={setSelectedIds}
         config={tableConfig.config()}
         setConfig={tableConfig.setConfig}
-        // Pagination renders as an overlay INSIDE the table (bottom-inline-end),
-        // matching the stocktakes list (kdd/table-state). State stays
-        // page-owned / URL-backed.
+        // Central-server admins (EDIT_CENTRAL_DATA) can promote their current
+        // layout to the shared install-wide default; everyone else gets no
+        // action (the gate is the app's, so the generic DataTable stays
+        // agnostic). Gate + action both come off the config controller, and the
+        // gate is reactive: undefined until central + permitted both hold.
+        onSaveGlobalDefault={
+          tableConfig.canSaveGlobalDefault()
+            ? tableConfig.saveGlobalTableConfig
+            : undefined
+        }
+        // Pagination renders as an overlay INSIDE the table
+        // (bottom-inline-end), matching the stocktakes list (kdd/table-state).
+        // State stays page-owned / URL-backed.
         pagination={{
           offset: query().offset,
           pageSize: query().first,
           total: totalCount(),
           onOffsetChange: offset => setQuery({ ...query(), offset }),
-          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+          // The chosen size is remembered for the next visit (D106).
+          onPageSizeChange: first => {
+            rememberPageSize(first);
+            setQuery({ ...query(), first, offset: 0 });
+          },
         }}
       />
       <CustomerSearchModal

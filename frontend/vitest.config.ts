@@ -11,11 +11,33 @@ export default defineConfig({
     APP_VERSION: JSON.stringify('0.0.0-test'),
   },
   // "@/x" → src/x — mirrors vite.config.ts / tsconfig.app.json "paths".
+  // "@openmsupply/plugin-sdk" mirrors vite.config.ts / tsconfig.plugins.json,
+  // so an in-repo plugin's own unit tests resolve the SDK the same way its
+  // build does.
   resolve: {
-    alias: { '@': new URL('./src', import.meta.url).pathname },
+    alias: {
+      '@': new URL('./src', import.meta.url).pathname,
+      '@openmsupply/plugin-sdk': new URL(
+        './src/plugin-sdk/index.ts',
+        import.meta.url
+      ).pathname,
+    },
+    // Resolve solid-js (and solid-consuming deps) to the CLIENT build — the
+    // one that ships — not the node-default server build, whose createResource
+    // refuses to run outside a hydration context. Without this, no test can
+    // construct a resource (storeScopedResource.test.ts), and solid-js and
+    // @tanstack/solid-table resolve as two disconnected instances (the
+    // limitation renderTemplate.test.tsx documents).
+    conditions: ['browser'],
   },
   test: {
-    include: ['src/**/*.test.ts'],
+    // The in-repo country plugins are covered too — co-locating them buys
+    // nothing if CI doesn't run their tests.
+    include: [
+      'src/**/*.test.ts',
+      'vite/**/*.test.ts',
+      'plugins/*/src/**/*.test.ts',
+    ],
     environment: 'node',
   },
 });

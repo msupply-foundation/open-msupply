@@ -1,10 +1,13 @@
-# The store's campaigns — an app-wide lookup backed by a store-scoped cache
-# (campaignsResource): fetched once per store, shared by every consumer (the
-# stocktake line-editor's campaign-or-program field pairs these with the
-# item-narrowed programs, spec/stocktakes S4). Campaigns are store-scoped and few,
-# so one cache serves all pickers. Sorted by name (the only sort key the server
-# offers) so every picker lists them in a stable order. id + name label the
-# option; startDate/endDate are unused by the picker but come cheap on the node.
+# The campaign register — an app-wide lookup backed by a cache
+# (campaignsResource), shared by every consumer (the stocktake line-editor's
+# campaign-or-program field pairs these with the item-narrowed programs,
+# spec/stocktakes S4). Campaigns are INSTALLATION-WIDE, not store-scoped:
+# `storeId` authorises the read and scopes nothing (spec/campaigns contract.md
+# wire trap), so every store reads the same, typically small, register — one
+# cache serves all pickers. Read unpaginated (no page = the whole register, the
+# sanctioned generous read) and sorted by name — the only sort key the server
+# offers, and one it does NOT default to — so every picker lists a stable
+# order. id + name are all a picker needs to label and submit the option.
 query campaigns($storeId: String!) {
   campaigns(storeId: $storeId, sort: [{ key: name }]) {
     ... on CampaignConnector {

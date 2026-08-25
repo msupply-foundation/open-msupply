@@ -12,14 +12,17 @@ export interface DeleteLinesActionProps {
   /** The selected LINE rows (leaves — the view resolves group selections). */
   selectedLines: () => OutboundLineFragment[];
   disabled: boolean;
-  /** Something committed — the view refetches (stock released, AC-I7). */
+  /**
+   * Something committed — the view refetches (stock released,
+   * OMS-REG-SMV-03.13).
+   */
   onCommitted: () => void;
 }
 
 // Bulk line delete (spec S3 § bulk line actions): stock, placeholder, and
 // service lines each go through their own batch array in one call; the
 // confirmation counts the lines. Deleting releases exactly what each line held
-// (AC-I7 — server-side; the view refetches to reflect it).
+// (OMS-REG-SMV-03.13 — server-side; the view refetches to reflect it).
 export const DeleteLinesAction: Component<DeleteLinesActionProps> = props => {
   const [confirmOpen, setConfirmOpen] = createSignal(false);
 
@@ -39,7 +42,7 @@ export const DeleteLinesAction: Component<DeleteLinesActionProps> = props => {
   return (
     <>
       <Button
-        variant="secondary"
+        variant="danger"
         icon={<TrashIcon />}
         data-testid="delete-lines-button"
         disabled={props.disabled}
@@ -53,7 +56,7 @@ export const DeleteLinesAction: Component<DeleteLinesActionProps> = props => {
           onClose={() => setConfirmOpen(false)}
           title={t('heading.are-you-sure')}
           message={tPlural(
-            'messages.confirm-delete-invoice-lines',
+            'messages.confirm-delete-shipment-lines',
             props.selectedLines().length
           )}
           confirmVariant="danger"

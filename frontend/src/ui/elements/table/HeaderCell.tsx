@@ -1,10 +1,7 @@
 import { Show } from 'solid-js';
 import type { JSX } from 'solid-js';
-import {
-  flexRender,
-  type Column as TanColumn,
-  type Header,
-} from '@tanstack/solid-table';
+import { type Column as TanColumn, type Header } from '@tanstack/solid-table';
+import { renderTemplate } from './renderTemplate';
 import styles from './DataTable.module.css';
 
 // A header cell: a sortable label + a resize handle on the trailing edge.
@@ -22,6 +19,12 @@ export function HeaderCell<T>(props: {
    * DataTable.module.css); columns inside a block carry none.
    */
   frozenEdge: (column: TanColumn<T>) => 'left' | 'right' | undefined;
+  /**
+   * Snap this column to the width of its widest content — the Excel auto-fit
+   * gesture on the resize divider (issue #651). The measuring and the commit
+   * are DataTable's (autoFitColumn); this cell only carries the gesture.
+   */
+  onAutoFit: (column: TanColumn<T>) => void;
 }): JSX.Element {
   const column = () => props.header.column;
   const canSort = () => column().getCanSort();
@@ -92,7 +95,10 @@ export function HeaderCell<T>(props: {
         {/* Header text wraps up to 2 lines (.thText clamp); the sort indicator is a
             separate non-shrinking sibling so it stays visible when the text wraps. */}
         <span class={styles.thText}>
-          {flexRender(column().columnDef.header, props.header.getContext())}
+          {/* renderTemplate, not TanStack's flexRender — flexRender untracks the
+              header thunk, so `header: () => t('label.name')` never re-resolves
+              on a locale change (see renderTemplate.ts). */}
+          {renderTemplate(column().columnDef.header, props.header.getContext())}
         </span>
         {indicator()}
       </span>
@@ -101,7 +107,31 @@ export function HeaderCell<T>(props: {
       <Show when={canResize()}>
         <span
           class={`${styles.resizeHandle} ${isResizing() ? styles.resizeHandleActive : ''}`}
-          onMouseDown={props.header.getResizeHandler()}
+          // Two gestures on one press: a drag resizes, a DOUBLE-PRESS auto-fits
+          // the column to its widest content — Excel's gesture (issue #651).
+          //
+          // Read off the second mousedown's `detail` (the browser's own
+          // click-count: 2 when this press completes a double-click), NOT from
+          // an onDblClick handler — neither click nor dblclick ever fires on
+          // this handle. The first mousedown puts the table into resizing
+          // state, which rebuilds TanStack's header objects, so <For>
+          // re-creates this very element between the two presses (measured
+          // 2026-08-18 — which is also why the onClick below never runs in
+          // practice, and stays only as a guard for presses that don't
+          // re-render). `detail` survives it: the browser counts presses by
+          // position + time, not by element identity.
+          //
+          // The fit REPLACES the second press's drag (no drag is started), and
+          // the first press's drag committed nothing — it never moved.
+          // Mouse/trackpad only: a touch double-tap carries no click count, so
+          // touch keeps drag-to-resize alone.
+          onMouseDown={event => {
+            if (event.detail >= 2) {
+              props.onAutoFit(column());
+              return;
+            }
+            props.header.getResizeHandler()(event);
+          }}
           onTouchStart={props.header.getResizeHandler()}
           onClick={event => event.stopPropagation()}
           aria-hidden="true"

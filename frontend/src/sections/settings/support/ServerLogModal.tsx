@@ -1,5 +1,7 @@
 import { createResource, createSignal, Show } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
+import { saveBlob } from '../../../platform/openDocument';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { Alert } from '../../../ui/elements/feedback/Alert';
@@ -14,7 +16,8 @@ import { LogContents, LogFileNames } from './serverLog.generated';
  * S3 — Server log viewer (spec/settings/ui-surface.md § S3): pick any one of
  * the server's log files — the current log and its rotated/compressed
  * history — and view its raw text; copy it to the clipboard or save it to a
- * file. Viewing never changes anything (OMS-REG-SET-03.1/.2/.3; rules § Support).
+ * file. Viewing never changes anything (OMS-REG-SET-03.1/.2/.3; rules §
+ * Support).
  *
  * Both resources are read via the .state gate, never suspending — this modal
  * lives inside an already-open page, and a suspending read would detach the
@@ -27,7 +30,7 @@ export const ServerLogModal = (props: {
 }) => {
   const [selectedFile, setSelectedFile] = createSignal<string>();
   const [notice, setNotice] = createSignal<{
-    severity: 'success' | 'info';
+    severity: 'success' | 'info' | 'error';
     message: string;
   }>();
   const [savingFile, setSavingFile] = createSignal(false);
@@ -42,14 +45,11 @@ export const ServerLogModal = (props: {
         : { error: true as const };
     }
   );
-  const names = () =>
-    namesData.state === 'ready' || namesData.state === 'refreshing'
-      ? namesData.latest
-      : undefined;
+  const names = () => gated(namesData);
   const fileNames = () => names()?.fileNames ?? [];
 
-  // No file preselected — content loads when the user picks one (OMS-REG-SET-03.1/.2/.3;
-  // matches the reference viewer's initial state).
+  // No file preselected — content loads when the user picks one
+  // (OMS-REG-SET-03.1/.2/.3; matches the reference viewer's initial state).
   const file = () => selectedFile();
 
   const [contentsData] = createResource(
@@ -65,10 +65,7 @@ export const ServerLogModal = (props: {
         : { error: true as const };
     }
   );
-  const contents = () =>
-    contentsData.state === 'ready' || contentsData.state === 'refreshing'
-      ? contentsData.latest
-      : undefined;
+  const contents = () => gated(contentsData);
   const text = () => contents()?.text ?? '';
   const loadFailed = () =>
     names()?.error === true || contents()?.error === true;
@@ -84,28 +81,59 @@ export const ServerLogModal = (props: {
       setNotice({ severity: 'info', message: t('message.nothing-to-copy') });
       return;
     }
-    await navigator.clipboard.writeText(text());
-    setNotice({ severity: 'success', message: t('message.copy-success') });
+    try {
+      await navigator.clipboard.writeText(text());
+      setNotice({ severity: 'success', message: t('message.copy-success') });
+    } catch (e) {
+      // A denied/unfocused clipboard write rejects — report it rather than
+      // leaving a silent dead button.
+      setNotice({
+        severity: 'error',
+        message: e instanceof Error ? e.message : String(e),
+      });
+    }
   };
 
-  const saveToFile = () => {
-    if (savingFile()) {
-      setNotice({ severity: 'info', message: t('message.already-saving') });
-      return;
-    }
+  // Save through the platform layer (browser download on web, the Android SAF
+  // save picker) — a hand-rolled anchor click is a silent no-op in the Android
+  // WebView (#1169). The Save button is busy (spinner, inert) while in flight
+  // — the standard action feedback (ui-standards controls.md).
+  const saveToFile = async () => {
+    // Belt only — the button is inert while busy.
+    if (savingFile()) return;
     if (!text()) {
       setNotice({ severity: 'info', message: t('message.nothing-to-save') });
       return;
     }
     setSavingFile(true);
-    const blob = new Blob([text()], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = file() ?? 'server.log';
-    anchor.click();
-    URL.revokeObjectURL(url);
-    setSavingFile(false);
+    setNotice(undefined);
+    try {
+      const blob = new Blob([text()], { type: 'text/plain' });
+      // The viewer's content is always the decompressed text (the server
+      // decompresses rotated .gz logs), so save under a .txt name — a raw
+      // "server.log.0.gz" name would label plain text as a gzip archive. The
+      // reference viewer appends .txt the same way.
+      const name = file() ?? 'server.log';
+      const result = await saveBlob(
+        blob,
+        /\.txt$/i.test(name) ? name : `${name}.txt`
+      );
+      if (result.ok) {
+        // saved === false = the user dismissed the OS save picker (declined,
+        // not a failure) — no notice. Matches SaveServerLogLink.
+        if (result.saved)
+          setNotice({
+            severity: 'success',
+            message: t('messages.log-saved-successfully'),
+          });
+      } else {
+        setNotice({ severity: 'error', message: result.message });
+      }
+    } finally {
+      // Unconditional un-busy: a save that failed any way at all must never
+      // leave the button stuck spinning.
+      setSavingFile(false);
+    }
   };
 
   return (
@@ -120,7 +148,8 @@ export const ServerLogModal = (props: {
           <Button
             variant="secondary"
             icon={<SaveIcon />}
-            onClick={saveToFile}
+            loading={savingFile()}
+            onClick={() => void saveToFile()}
             data-testid="server-log-save"
           >
             {t('button.save')}
@@ -133,7 +162,13 @@ export const ServerLogModal = (props: {
           >
             {t('button.copy-to-clipboard')}
           </Button>
-          <Button onClick={close} data-testid="dialog-button-ok">
+          {/* Save-to-file and copy-to-clipboard are side actions on the log, not
+              this dialog's confirm, so they claim no role; OK is the way out. */}
+          <Button
+            confirms="plain"
+            onClick={close}
+            data-testid="dialog-button-ok"
+          >
             {t('button.ok')}
           </Button>
         </>

@@ -5,6 +5,9 @@ import {
   canDeletePrescription,
   hasDispensedLines,
   isReadOnly,
+  isBatchLine,
+  isPlaceholderLine,
+  isRenderableLine,
   nextStatuses,
   prescriptionDateOf,
   statusSteps,
@@ -46,12 +49,66 @@ describe('canDeletePrescription (AC-D1/D2 — deletable while editable only)', (
   });
 });
 
-describe('canCancelPrescription (AC-X1 — VERIFIED only)', () => {
+describe('canCancelPrescription (.29/.33 — VERIFIED only, never a reversal)', () => {
   it('offers cancel on VERIFIED alone', () => {
-    expect(canCancelPrescription('VERIFIED')).toBe(true);
-    expect(canCancelPrescription('NEW')).toBe(false);
-    expect(canCancelPrescription('PICKED')).toBe(false);
-    expect(canCancelPrescription('CANCELLED')).toBe(false);
+    expect(canCancelPrescription('VERIFIED', false)).toBe(true);
+    expect(canCancelPrescription('NEW', false)).toBe(false);
+    expect(canCancelPrescription('PICKED', false)).toBe(false);
+    expect(canCancelPrescription('CANCELLED', false)).toBe(false);
+  });
+
+  // The cancellation mirror is itself VERIFIED (the item ledger's stock-return
+  // row opens it), so the status gate alone would offer a cancel the server
+  // always refuses.
+  it('withholds cancel on a cancellation reversal', () => {
+    expect(canCancelPrescription('VERIFIED', true)).toBe(false);
+  });
+});
+
+describe('isRenderableLine (.25 / .33 — placeholders in, returns in)', () => {
+  it('renders dispensed lines', () => {
+    expect(isRenderableLine({ type: 'STOCK_OUT' })).toBe(true);
+  });
+
+  // The placeholder row is the ONLY on-screen trace of a prescribed quantity
+  // recorded for an item with no stock (.25). Filtering it out left the table
+  // empty, so a save that had worked looked like one that had failed — and
+  // there was nothing to click to revisit or delete it. The current app shows
+  // the row too (probed side by side).
+  it('renders the prescribed-quantity placeholder', () => {
+    expect(isRenderableLine({ type: 'UNALLOCATED_STOCK' })).toBe(true);
+    expect(isPlaceholderLine({ type: 'UNALLOCATED_STOCK' })).toBe(true);
+    expect(isPlaceholderLine({ type: 'STOCK_OUT' })).toBe(false);
+  });
+
+  // Rendering the placeholder must NOT make it count as dispensed: the status
+  // guard (.22) and the zero-quantity warning (AC-S5) both ignore it.
+  it('does not make a placeholder-only prescription look dispensed', () => {
+    expect(hasDispensedLines([{ type: 'UNALLOCATED_STOCK' }])).toBe(false);
+    expect(
+      zeroQuantityLineCount([{ type: 'UNALLOCATED_STOCK', numberOfPacks: 0 }])
+    ).toBe(0);
+  });
+
+  // The reversal's lines are the SAME lines retyped: an empty table here is
+  // the ledger-reached mirror showing nothing (the reported defect).
+  it('renders a cancellation reversal returned lines', () => {
+    expect(isRenderableLine({ type: 'STOCK_IN' })).toBe(true);
+  });
+});
+
+describe('isBatchLine (the read-only modal batch grid)', () => {
+  it('counts dispensed lines and a reversal returned lines as batches', () => {
+    expect(isBatchLine({ type: 'STOCK_OUT' })).toBe(true);
+    expect(isBatchLine({ type: 'STOCK_IN' })).toBe(true);
+  });
+
+  // The placeholder renders as a LINE-TABLE row but is not a batch: it has no
+  // stock line, so reusing isRenderableLine here gave an item with only a
+  // placeholder a Batches table holding one all-but-empty row.
+  it('excludes the prescribed-quantity placeholder', () => {
+    expect(isBatchLine({ type: 'UNALLOCATED_STOCK' })).toBe(false);
+    expect([{ type: 'UNALLOCATED_STOCK' }].filter(isBatchLine)).toHaveLength(0);
   });
 });
 
@@ -95,8 +152,8 @@ describe('prescriptionDateOf (AC-L1 — backdated when set, else created)', () =
   });
 });
 
-describe('hasDispensedLines (AC-S6 — carrier-only counts as no lines)', () => {
-  it('blocks on empty and on carrier-only line sets', () => {
+describe('hasDispensedLines (AC-S6 — placeholder-only counts as no lines)', () => {
+  it('blocks on empty and on placeholder-only line sets', () => {
     expect(hasDispensedLines([])).toBe(false);
     expect(hasDispensedLines([{ type: 'UNALLOCATED_STOCK' }])).toBe(false);
   });
@@ -108,7 +165,7 @@ describe('hasDispensedLines (AC-S6 — carrier-only counts as no lines)', () => 
 });
 
 describe('zeroQuantityLineCount (AC-S5 — the confirmation counts removable rows)', () => {
-  it('counts zero-pack dispensed rows only — carriers never count', () => {
+  it('counts zero-pack dispensed rows only — placeholders never count', () => {
     expect(
       zeroQuantityLineCount([
         { type: 'STOCK_OUT', numberOfPacks: 0 },

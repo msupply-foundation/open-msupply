@@ -3,7 +3,6 @@ import {
   createEffect,
   createMemo,
   createSignal,
-  For,
   Show,
   Switch,
   Match,
@@ -18,8 +17,10 @@ import { IconButton } from '../../../ui/elements/buttons/IconButton';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
-import { getDateCell } from '../../../ui/elements/table/tableHelpers';
+import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
 import { getBooleanCell } from '../../../ui/elements/table/BooleanCell';
+import { remToPx } from '../../../ui/utils/rem';
+import { ProgressList } from '../../../ui/sync/ProgressList';
 import { FormSection } from '../../../ui/layout/Form/FormSection';
 import { FormErrorSummary } from '../../../ui/layout/Form/FormErrorSummary';
 import { createFormValidation } from '../../../ui/layout/Form/formValidation';
@@ -53,15 +54,17 @@ import {
   toInsertInput,
   type PatientDraft,
 } from '../detail/patientEdit';
+import { createCodeTakenCheck } from '../patientCode';
 import { PatientDetailsForm } from '../detail/PatientDetailsForm';
 import { FetchFromCentralModal } from './FetchFromCentralModal';
 
-// S2 — the create wizard (spec/patients FL2). A blocking modal with a three-step
-// flow: ① details + search → ② the mandatory local + central duplicate check →
-// ③ the full plain-path details form. A fresh patient identifier is minted when
-// the modal opens (AC-C5), so a duplicate-id rejection is unreachable. The step
-// rail is a section-local presentational stepper — the "wizard stepper" role is
-// not in the component registry (see the implementation flags).
+// S2 — the create wizard (spec/patients FL2). A blocking modal with a
+// three-step flow: ① details + search → ② the mandatory local + central
+// duplicate check → ③ the full plain-path details form. A fresh patient
+// identifier is minted when the modal opens (AC-C5), so a duplicate-id
+// rejection is unreachable. The step rail is a section-local presentational
+// stepper — the "wizard stepper" role is not in the component registry (see the
+// implementation flags).
 
 type Step = 1 | 2 | 3;
 
@@ -127,9 +130,21 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
   const [fetchCandidate, setFetchCandidate] = createSignal<CentralPatient>();
   const [fetchOpen, setFetchOpen] = createSignal(false);
 
+  // Duplicate-code check (spec/patients § generating a code), run on the save
+  // attempt below. No saved code to compare against while creating, so every
+  // non-empty code is checked.
+  const codeCheck = createCodeTakenCheck({
+    storeId: () => props.storeId,
+    code: () => draft.code,
+    savedCode: () => '',
+    patientId: () => undefined,
+  });
+
   // Details-step validation (AC-C3): required errors stay quiet until the first
   // Save attempt, then surface per field and as the summary below the form.
-  const validation = createFormValidation(() => patientFieldErrors(draft));
+  const validation = createFormValidation(() =>
+    patientFieldErrors(draft, codeCheck.taken())
+  );
 
   // Mint a fresh identifier + reset the flow each time the modal opens (AC-C5).
   createEffect(() => {
@@ -226,6 +241,13 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
     }
   };
 
+  // What a match row DOES: a local match opens that patient, a central-only one
+  // opens the fetch modal. Bound to the whole row as well as its trailing icon
+  // — the step's own instruction (messages.patients-create) tells the user to
+  // "click an existing patient below", so the row itself has to be the target.
+  const openMatch = (row: MatchRow) =>
+    row.kind === 'central' ? openFetch(row) : openExisting(row.id);
+
   // Advance to the details step, seeding the plain form from the entered search
   // details (spec/patients step ③).
   const advanceToDetails = () => {
@@ -247,6 +269,12 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
     if (!validation.valid()) return;
     setSaving(true);
     setSaveError('');
+    // The one rule that needs the server (DIS-02 `.57`) — a clash abandons the
+    // save with the error left on the Code field.
+    if (await codeCheck.check()) {
+      setSaving(false);
+      return;
+    }
     const outcome = await runInsertPatient(
       props.storeId,
       toInsertInput(patientId(), draft)
@@ -269,15 +297,35 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
     navigate(`/${props.storeId}/dispensary/patients/${outcome.id}`);
   };
 
+  // Cell-type presets carry the rendering AND the width
+  // (ui/docs/CELL_TYPES.md). Deceased reads as a word here, not the list's
+  // flag: this table is scanned to judge whether a candidate IS the patient,
+  // and it holds a handful of rows.
   const resultColumns = (): Column<MatchRow, never>[] => [
-    { c: { key: 'code' }, header: () => t('label.patient-id') },
-    { c: { key: 'code2' }, header: () => t('label.patient-nuic') },
-    { c: { key: 'firstName' }, header: () => t('label.first-name') },
-    { c: { key: 'lastName' }, header: () => t('label.last-name') },
+    {
+      c: { key: 'code' },
+      header: () => t('label.patient-id'),
+      ...getCellDefinition('code'),
+    },
+    {
+      c: { key: 'code2' },
+      header: () => t('label.patient-nuic'),
+      ...getCellDefinition('code2'),
+    },
+    {
+      c: { key: 'firstName' },
+      header: () => t('label.first-name'),
+      ...getCellDefinition('firstName'),
+    },
+    {
+      c: { key: 'lastName' },
+      header: () => t('label.last-name'),
+      ...getCellDefinition('lastName'),
+    },
     {
       c: { key: 'dateOfBirth' },
       header: () => t('label.date-of-birth'),
-      ...getDateCell(),
+      ...getCellDefinition('dateOfBirth'),
     },
     {
       c: {
@@ -286,40 +334,50 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
         id: 'gender',
       },
       header: () => t('label.gender'),
+      ...getCellDefinition('gender'),
     },
     {
       c: { key: 'isDeceased' },
       header: () => t('label.deceased'),
       ...getBooleanCell({ display: 'yesNo' }),
+      // Yes/No text under the header word, which is the wider of the two.
+      size: remToPx(5.5),
     },
     {
       c: { id: 'action' },
       header: () => '',
+      // One icon button, never grows.
+      size: remToPx(3),
+      maxSize: remToPx(3),
+      // The trailing icon does what the row does — it is here to distinguish a
+      // central-only candidate (download → retrieve) from a local match (home →
+      // open). Its click must not ALSO bubble to the row handler.
       cell: info => {
         const row = info.row.original;
-        return row.kind === 'central' ? (
-          <IconButton
-            icon={<DownloadIcon />}
-            label={t('button.ok')}
-            onClick={() => openFetch(row)}
-          />
-        ) : (
-          <IconButton
-            icon={<HomeIcon />}
-            label={t('label.details')}
-            onClick={() => openExisting(row.id)}
-          />
+        const open = (event: MouseEvent) => {
+          event.stopPropagation();
+          openMatch(row);
+        };
+        return (
+          <>
+            {row.kind === 'central' ? (
+              <IconButton
+                icon={<DownloadIcon />}
+                label={t('messages.click-to-fetch')}
+                onClick={open}
+              />
+            ) : (
+              <IconButton
+                icon={<HomeIcon />}
+                label={t('label.details')}
+                onClick={open}
+              />
+            )}
+          </>
         );
       },
     },
   ];
-
-  const stepTitle = () =>
-    step() === 1
-      ? t('label.create-patient')
-      : step() === 2
-        ? t('label.search-results')
-        : t('label.patient-details');
 
   const actions = () => (
     <Switch>
@@ -327,13 +385,17 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
         <Button
           variant="secondary"
           icon={<XCircleIcon />}
+          confirms="cancel"
           data-testid="dialog-button-cancel"
           onClick={props.onClose}
         >
           {t('button.cancel')}
         </Button>
+        {/* Each step's forward action is that step's confirm, so Enter advances
+            the wizard from anywhere in its form (spec/keyboard KB-E2). */}
         <Button
           icon={<SearchIcon />}
+          confirms="plain"
           data-testid="dialog-button-ok"
           loading={searching()}
           disabled={!canSearch()}
@@ -346,6 +408,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
         <Button
           variant="secondary"
           icon={<XCircleIcon />}
+          confirms="cancel"
           data-testid="dialog-button-cancel"
           onClick={props.onClose}
         >
@@ -353,6 +416,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
         </Button>
         <Button
           icon={<PlusCircleIcon />}
+          confirms="plain"
           data-testid="create-new-patient-button"
           onClick={advanceToDetails}
         >
@@ -363,6 +427,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
         <Button
           variant="secondary"
           icon={<XCircleIcon />}
+          confirms="cancel"
           data-testid="dialog-button-cancel"
           onClick={props.onClose}
         >
@@ -370,6 +435,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
         </Button>
         <Button
           icon={<SaveIcon />}
+          confirms="plain"
           data-testid="dialog-button-ok"
           loading={saving()}
           onClick={() => void save()}
@@ -389,42 +455,41 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
         icon={<PlusCircleIcon />}
         dismissable={!searching() && !saving()}
         onClose={props.onClose}
-        widthRem={step() === 2 ? 96 : step() === 3 ? 56 : 44}
+        // ONE width for every step — the shared form measure, so the dialog is
+        // a steady box the flow moves through rather than one that jumps wider
+        // on the results step and back again. The results table fits: its
+        // columns' width presets total ~51rem (Carl, 2026-07-31).
+        width="form"
         minBodyHeightRem={34}
         actions={actions()}
       >
-        {/* Section-local wizard stepper (registry-gap role — see flags). */}
-        <div
-          style={{
-            display: 'flex',
-            gap: '1.5rem',
-            'margin-block-end': '1rem',
-          }}
-          aria-label={stepTitle()}
-        >
-          <For
-            each={
-              [
-                [1, t('label.create-patient')],
-                [2, t('label.search-results')],
-                [3, t('label.patient-details')],
-              ] as const
-            }
-          >
-            {([n, label]) => (
-              <span
-                aria-current={step() === n ? 'step' : undefined}
-                style={{
-                  'font-weight':
-                    step() === n ? 'var(--weight-bold)' : undefined,
-                  opacity: step() === n ? undefined : '0.6',
-                }}
-              >
-                {n}. {label}
-              </span>
-            )}
-          </For>
-        </div>
+        {/* The wizard's step rail — the shared determinate progress list, the
+            same role the reference app's WizardStepper fills with its one
+            horizontal stepper. A step is finished once the flow has moved past
+            it, so the step you are on reads as in-progress and the ones behind
+            it as done. It needs no measure wrapper (the customer-return wizards
+            cap theirs): this dialog is already the form measure, so the rail can
+            divide the body's full width between its three steps. */}
+        <ProgressList
+          variant="secondary"
+          steps={[
+            {
+              label: t('label.create-patient'),
+              started: true,
+              finished: step() > 1,
+            },
+            {
+              label: t('label.search-results'),
+              started: step() >= 2,
+              finished: step() > 2,
+            },
+            {
+              label: t('label.patient-details'),
+              started: step() >= 3,
+              finished: false,
+            },
+          ]}
+        />
 
         <Switch>
           <Match when={step() === 1}>
@@ -432,21 +497,20 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
             <FormSection title={t('heading.patient-details')}>
               <TextField
                 label={t('label.first-name')}
-                width="full"
                 required
+                data-testid="input-firstName"
                 value={search.firstName}
                 onInput={e => setSearch('firstName', e.currentTarget.value)}
               />
               <TextField
                 label={t('label.last-name')}
-                width="full"
                 required
+                data-testid="input-lastName"
                 value={search.lastName}
                 onInput={e => setSearch('lastName', e.currentTarget.value)}
               />
               <DateField
                 label={t('label.date-of-birth')}
-                width="full"
                 max={localTodayIso()}
                 value={search.dateOfBirth}
                 onChange={value => setSearch('dateOfBirth', value)}
@@ -461,13 +525,11 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
               />
               <TextField
                 label={t('label.address')}
-                width="full"
                 value={search.address}
                 onInput={e => setSearch('address', e.currentTarget.value)}
               />
               <TextField
                 label={t('label.phone')}
-                width="full"
                 value={search.phone}
                 onInput={e => setSearch('phone', e.currentTarget.value)}
               />
@@ -495,7 +557,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
                 </Alert>
               </Show>
               <Show when={centralUnreachable()}>
-                <Alert severity="warning">
+                <Alert severity="warning" testId="central-search-error">
                   {t('messages.failed-to-reach-central')}{' '}
                   <Button
                     variant="secondary"
@@ -511,6 +573,8 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
                   columns={resultColumns()}
                   rows={matches()}
                   rowKey={row => `${row.kind}:${row.id}`}
+                  onRowClick={openMatch}
+                  showFullScreen={false}
                   emptyMessage={t('messages.no-matching-patients')}
                 />
               </Show>
@@ -523,6 +587,7 @@ export const CreatePatientModal: Component<CreatePatientModalProps> = props => {
             </Show>
             <PatientDetailsForm
               storeId={props.storeId}
+              patientId={patientId()}
               draft={draft}
               setField={setDraftField}
               errorFor={validation.errorFor}

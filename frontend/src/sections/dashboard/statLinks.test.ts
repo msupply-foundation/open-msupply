@@ -5,11 +5,15 @@ import {
   expiringBetweenThresholdsHref,
   expiringNextThreeMonthsHref,
   expiringSoonHref,
+  inboundListHref,
   inboundNotDeliveredHref,
   inboundThisWeekHref,
   inboundTodayHref,
+  internalOrderDraftHref,
   internalOrderListHref,
   customerRequisitionListHref,
+  customerRequisitionNewHref,
+  customerRequisitionEmergencyHref,
   itemCatalogueHref,
   itemsAtRiskHref,
   itemsHighStockHref,
@@ -67,9 +71,43 @@ describe('replenishment links', () => {
     });
   });
 
-  // OMS-REG-DB-01.57 — the internal-order list is not built: its links land
-  // on the registered placeholder, unfiltered.
-  it('OMS-REG-DB-01.57: internal-order link is the registered placeholder, unfiltered', () => {
+  // OMS-REG-DB-01.55, OMS-REG-DB-01.36 — the external panel's links carry the
+  // inbound list's origin filter: kind=fromPurchaseOrder is exactly the
+  // PO-linked set the external counts use (contract § navigation
+  // correspondence). Internal links stay kind-less — "internal" (manual ∪
+  // from-internal-order) has no single selectable kind value (recorded
+  // fallback), which the kind-free assertions above pin.
+  it('OMS-REG-DB-01.55: external inbound stats add kind=fromPurchaseOrder', () => {
+    expect(filterOf(inboundTodayHref('s1', wednesday, true))).toEqual({
+      createdDatetime: {
+        afterOrEqualTo: new Date(2026, 6, 22).toISOString(),
+        beforeOrEqualTo: new Date(2026, 6, 22, 23, 59, 59, 999).toISOString(),
+      },
+      kind: 'fromPurchaseOrder',
+    });
+    expect(filterOf(inboundThisWeekHref('s1', wednesday, true))).toMatchObject({
+      kind: 'fromPurchaseOrder',
+    });
+    expect(filterOf(inboundNotDeliveredHref('s1', true))).toEqual({
+      status: { equalAny: ['NEW', 'SHIPPED'] },
+      kind: 'fromPurchaseOrder',
+    });
+  });
+
+  it('OMS-REG-DB-01.55: external panel title link is scoped to the external kind; internal is bare', () => {
+    expect(inboundListHref('s1')).toBe('/s1/replenishment/inbound-shipment');
+    expect(filterOf(inboundListHref('s1', true))).toEqual({
+      kind: 'fromPurchaseOrder',
+    });
+  });
+
+  // OMS-REG-DB-01.55, OMS-REG-DB-01.40 — draft: the internal-order list's
+  // single-select status filter restates the count (request requisitions in
+  // Draft); the panel title stays the unfiltered list.
+  it('OMS-REG-DB-01.55/.40: internal-order draft filters status to Draft; title is bare', () => {
+    expect(filterOf(internalOrderDraftHref('s1'))).toEqual({
+      status: { equalAny: ['DRAFT'] },
+    });
     expect(internalOrderListHref('s1')).toBe(
       '/s1/replenishment/internal-order'
     );
@@ -85,9 +123,31 @@ describe('distribution links', () => {
     });
   });
 
-  it('OMS-REG-DB-01.57: customer-requisition link is the registered placeholder, unfiltered', () => {
+  // OMS-REG-DB-01.59 — the panel title is the only unfiltered requisition
+  // link: it opens the whole list (contract § navigation correspondence).
+  it('OMS-REG-DB-01.59: the customer-requisition panel title opens the list unfiltered', () => {
     expect(customerRequisitionListHref('s1')).toBe(
       '/s1/distribution/customer-requisition'
+    );
+  });
+
+  // OMS-REG-DB-01.59, .38 — new: response requisitions in New. `type` is the
+  // list's own pinned RESPONSE, never carried by the link.
+  it('OMS-REG-DB-01.59: customer-requisition new filters status to New', () => {
+    expect(filterOf(customerRequisitionNewHref('s1'))).toEqual({
+      status: { equalAny: ['NEW'] },
+    });
+  });
+
+  // OMS-REG-DB-01.59, .39 — emergency is the New set narrowed to emergency, so
+  // its filter is the new stat's plus isEmergency (the counts' subset relation).
+  it('OMS-REG-DB-01.59: customer-requisition emergency filters New + emergency', () => {
+    expect(filterOf(customerRequisitionEmergencyHref('s1'))).toEqual({
+      status: { equalAny: ['NEW'] },
+      isEmergency: true,
+    });
+    expect(filterOf(customerRequisitionEmergencyHref('s1'))).toMatchObject(
+      filterOf(customerRequisitionNewHref('s1'))
     );
   });
 });
@@ -100,14 +160,15 @@ describe('inventory links', () => {
     });
   });
 
-  // OMS-REG-DB-01.55, OMS-REG-DB-01.42 — expiring soon: the same 30-day window
-  // the count uses.
-  it('OMS-REG-DB-01.55: expiring soon spans today … today + 30 days', () => {
+  // OMS-REG-DB-01.55, OMS-REG-DB-01.42 — expiring soon: exactly the count's
+  // window, (today, today + 30d] — today's expiries are the expired
+  // stat's (D71).
+  it('OMS-REG-DB-01.55: expiring soon spans tomorrow … today + 30 days', () => {
     expect(DAYS_TILL_EXPIRED).toBe(30);
     expect(filterOf(expiringSoonHref('s1', wednesday))).toEqual({
       expiryDate: {
-        afterOrEqualTo: '2026-07-22',
-        beforeOrEqualTo: '2026-08-21',
+        afterOrEqualTo: '2026-07-23', // tomorrow — today itself is "expired"
+        beforeOrEqualTo: '2026-08-21', // +30d
       },
     });
   });
@@ -158,24 +219,25 @@ describe('inventory links', () => {
 
   // OMS-REG-DB-01.55, OMS-REG-DB-01.49 — low stock: months of stock ≤ the
   // understock threshold.
-  it('OMS-REG-DB-01.55/.49: low stock → maxMonthsOfStock = understock months', () => {
+  it('OMS-REG-DB-01.55/.49: low stock → months-of-stock "to" = understock months', () => {
     expect(filterOf(itemsLowStockHref('s1', 3))).toEqual({
-      maxMonthsOfStock: 3,
+      monthsOfStock: { to: 3 },
     });
   });
 
-  // OMS-REG-DB-01.55/.50 — high stock: months of stock ≥ the overstock threshold.
-  it('OMS-REG-DB-01.55/.50: high stock → minMonthsOfStock = overstock months', () => {
+  // OMS-REG-DB-01.55/.50 — high stock: months of stock ≥ the overstock
+  // threshold.
+  it('OMS-REG-DB-01.55/.50: high stock → months-of-stock "from" = overstock months', () => {
     expect(filterOf(itemsHighStockHref('s1', 6))).toEqual({
-      minMonthsOfStock: 6,
+      monthsOfStock: { from: 6 },
     });
   });
 
   // OMS-REG-DB-01.55/.52 — overstocked uses the over-stock-ALERT threshold, a
   // different knob from high stock (rules § stock levels).
-  it('OMS-REG-DB-01.55/.52: overstocked → minMonthsOfStock = over-stock-alert months', () => {
+  it('OMS-REG-DB-01.55/.52: overstocked → months-of-stock "from" = over-stock-alert months', () => {
     expect(filterOf(itemsOverstockedHref('s1', 9))).toEqual({
-      minMonthsOfStock: 9,
+      monthsOfStock: { from: 9 },
     });
   });
 

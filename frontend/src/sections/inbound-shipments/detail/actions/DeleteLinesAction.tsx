@@ -3,7 +3,8 @@ import { t, tPlural } from '../../../../intl';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
-import { CheckIcon, TrashIcon, XCircleIcon } from '../../../../ui/icons';
+import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
+import { TrashIcon } from '../../../../ui/icons';
 import { runInboundBatch } from '../inboundShipmentUpdate';
 import type { InboundLineErrors } from '../inboundShipmentUpdate';
 
@@ -12,7 +13,9 @@ export interface LineActionProps {
   isExternal: boolean;
   selectedIds: () => string[];
   disabled: boolean;
-  /** A commit happened — the view refetches the lines page + clears selection. */
+  /**
+   * A commit happened — the view refetches the lines page + clears selection.
+   */
   onChanged: () => void;
   /** Per-line failures — stamped inline in the table. */
   onError: (errors: InboundLineErrors) => void;
@@ -29,7 +32,7 @@ export const DeleteLinesAction: Component<LineActionProps> = props => {
   return (
     <>
       <Button
-        variant="secondary"
+        variant="danger"
         icon={<TrashIcon />}
         disabled={props.disabled}
         data-testid="delete-lines-button"
@@ -55,7 +58,7 @@ const Body = (props: LineActionProps & { onClose: () => void }) => {
     const outcome = await runInboundBatch(props.storeId, props.isExternal, {
       deleteInboundShipmentLines: props.selectedIds().map(id => ({ id })),
     });
-    if (!outcome) return props.onClose();
+    if (!outcome) return setPhase('confirm'); // handled globally
     if (outcome.errors.size > 0) {
       props.onError(outcome.errors);
       setErrorMessage([...outcome.errors.values()][0]);
@@ -75,7 +78,9 @@ const Body = (props: LineActionProps & { onClose: () => void }) => {
       testId="confirmation-modal"
       title={t('heading.are-you-sure')}
       description={
-        <Switch fallback={tPlural('messages.confirm-delete-lines', count)}>
+        <Switch
+          fallback={tPlural('messages.confirm-delete-shipment-lines', count)}
+        >
           <Match when={phase() === 'error'}>
             <Alert severity="error">{errorMessage()}</Alert>
           </Match>
@@ -86,28 +91,29 @@ const Body = (props: LineActionProps & { onClose: () => void }) => {
           fallback={
             <>
               <Show when={phase() === 'confirm'}>
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
+                <CancelButton
+                  data-testid="dialog-button-cancel"
                   onClick={props.onClose}
-                >
-                  {t('button.cancel')}
-                </Button>
+                />
               </Show>
               <Button
-                variant="secondary"
-                icon={<TrashIcon />}
+                variant="danger"
+                confirms="plain"
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'working'}
                 onClick={() => void run()}
               >
-                {t('button.ok')}
+                {t('button.delete-lines')}
               </Button>
             </>
           }
         >
           <Match when={phase() === 'error'}>
-            <Button icon={<CheckIcon />} onClick={props.onClose}>
+            <Button
+              variant="secondary"
+              confirms="plain"
+              onClick={props.onClose}
+            >
               {t('button.close')}
             </Button>
           </Match>

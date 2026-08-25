@@ -1,14 +1,16 @@
 import { createResource, createRoot } from 'solid-js';
 import { graphqlFetch } from '../../api/graphql';
+import { gated } from '../../api/gated';
 import { CustomFieldDefinitions } from './customFields.generated';
 import type { CustomFieldDef } from './parse';
 
-// Custom-field DEFINITIONS cache, keyed by scope (spec/ui-standards/custom-fields
-// › definitions). Definitions come from central config/sync and are stable for
-// the session, and the SAME scope is read by a list, a detail tab, and a
-// toolbar at once — so one lazy, de-duplicated fetch per scope is shared by
-// every consumer. Modelled on `createStoreScopedResource`, but keyed by the
-// scope string (not the store): definitions are not store-scoped.
+// Custom-field DEFINITIONS cache, keyed by scope
+// (spec/ui-standards/custom-fields › definitions). Definitions come from
+// central config/sync and are stable for the session, and the SAME scope is
+// read by a list, a detail tab, and a toolbar at once — so one lazy,
+// de-duplicated fetch per scope is shared by every consumer. Modelled on
+// `createStoreScopedResource`, but keyed by the scope string (not the store):
+// definitions are not store-scoped.
 //
 // The read is NON-SUSPENDING (kdd/solid-reactivity-pitfalls › no remounts on
 // interaction): a detail tab first-fetches when the user switches to it, so a
@@ -16,7 +18,9 @@ import type { CustomFieldDef } from './parse';
 // `resource.state`, never `.latest` alone.
 
 export interface CustomFieldDefinitionsReader {
-  /** The scope's definitions, read without ever suspending ([] until loaded). */
+  /**
+   * The scope's definitions, read without ever suspending ([] until loaded).
+   */
   noSuspense: () => CustomFieldDef[];
   /** True while the first fetch for this scope is in flight. */
   loading: () => boolean;
@@ -34,10 +38,7 @@ const build = (scope: string): CustomFieldDefinitionsReader =>
       }
     );
     return {
-      noSuspense: () =>
-        resource.state === 'ready' || resource.state === 'refreshing'
-          ? (resource.latest ?? [])
-          : [],
+      noSuspense: () => gated(resource) ?? [],
       loading: () => resource.loading,
     };
   });

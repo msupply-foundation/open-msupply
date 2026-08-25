@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import {
-  DEFAULT_PAGE_SIZE,
-  DEFAULT_STATE,
-  buildListVariables,
-} from './listState';
+import { DEFAULT_PAGE_SIZE } from '@/list/pageSize';
+import { DEFAULT_STATE, buildListVariables } from './listState';
 
 // AC-citing tests for the list's state → variables wiring (spec/locations/
 // acceptance.md § list & lifecycle). The rendered halves — the URL round-trip

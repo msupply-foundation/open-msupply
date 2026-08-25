@@ -8,25 +8,34 @@ import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { Button } from '../../../ui/elements/buttons/Button';
+import { createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_N } from '../../../ui/utils/shortcuts';
 import {
   DataTable,
   type Column,
   type SortState,
 } from '../../../ui/elements/table/DataTable';
 import {
-  getCommentCell,
-  getDateCell,
-  getNumberCell,
+  CommentHeader,
+  getCellDefinition,
 } from '../../../ui/elements/table/tableHelpers';
+import { remToPx } from '../../../ui/utils/rem';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { StatusChip } from '../../../ui/elements/feedback/StatusChip';
 import {
   ColourTagDot,
   ColourTagPicker,
 } from '../../../ui/elements/selectors/ColourTag';
+import { HStack } from '../../../ui/layout/Stack/HStack';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import { PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
+import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
 import { stripEmpty } from '../../../typeHelpers';
 import {
   InternalOrders,
@@ -59,8 +68,6 @@ import { recentStocktakeIsInsufficient } from './create/createInternalOrder';
 // SERIALISED variables so an empty filter chip doesn't reflash the list
 // (kdd/solid-reactivity-pitfalls). The page owns no CSS.
 
-const DEFAULT_PAGE_SIZE = 20;
-
 type Row = InternalOrderRowFragment;
 
 // Sortable columns are typed to the generated sort-field union, so a column can
@@ -91,7 +98,10 @@ const InternalOrdersList: Component = () => {
   // StoreGuardLayout, which requires a resolved store before routing.
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
-  const { query, setQuery } = useUrlQueryState<ListState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<ListState>({
+    ...DEFAULT_STATE,
+    first: initialPageSize(),
+  });
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   // Create-flow state: the modal, the recent-stocktake warning gate, and the
   // in-flight stocktake check that decides between them (spec S2 / AC-C5).
@@ -155,6 +165,15 @@ const InternalOrdersList: Component = () => {
   const rows = (): Row[] => data.latest?.nodes ?? [];
   const totalCount = () => data.latest?.totalCount ?? 0;
 
+  // A bulk delete of the last page's rows leaves the offset past the new end
+  // (src/list/clampPageOffset.ts, issue #1117).
+  clampPageOffset({
+    total: () => settledTotal(data, page => page.totalCount),
+    offset: () => query().offset,
+    pageSize: () => query().first,
+    setOffset: offset => setQuery({ ...query(), offset }),
+  });
+
   // The store-context gates for the conditional columns (AC-L8/L9), fetched
   // once per store, read non-suspending. Safe default OFF while unresolved — a
   // gated column never flashes in before its gate is known.
@@ -195,6 +214,21 @@ const InternalOrdersList: Component = () => {
     if (insufficient) setGateOpen(true);
     else setCreateOpen(true);
   };
+
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
+  // the SCREEN, once, for the two controls that trigger it (the header button
+  // and the ghost button in the table's empty slot); each carries
+  // `shortcut={ALT_N}` for its badge, neither owns the action.
+  //
+  // Same inertness as both controls: the store context has to resolve before
+  // the stocktake-warning gate can be decided, and a check already in flight
+  // must not be started twice (AC-KB26's "once activated, the control MUST stop
+  // accepting a second activation", which for a key means declining it).
+  createAddAction({
+    name: 'label.new-internal-order',
+    run: () => void startCreate(),
+    disabled: () => context.loading || checking(),
+  });
 
   const onCreated = (id: string) => {
     setCreateOpen(false);
@@ -255,28 +289,25 @@ const InternalOrdersList: Component = () => {
       c: { accessor: row => row.otherPartyName, id: 'otherPartyName' },
       sortKey: 'otherPartyName',
       header: () => t('label.name'),
-      meta: { headerPosition: 'primary' },
+      // The text "sink" column: width floor + no growth cap, so it absorbs
+      // the slack the narrow columns leave behind.
+      ...getCellDefinition('otherPartyName', { headerPosition: 'primary' }),
       cell: info => {
         const row = info.row.original;
         return (
-          <span
-            style={{
-              display: 'inline-flex',
-              'align-items': 'center',
-              gap: 'var(--space-2)',
-            }}
-          >
+          <HStack gap="sm">
             <Show
               when={isRowEditable(row)}
               fallback={<ColourTagDot colour={row.colour ?? null} />}
             >
               <ColourTagPicker
                 colour={row.colour ?? null}
+                variant="row"
                 onSelect={colour => void setColour(row, colour)}
               />
             </Show>
             <span>{row.otherPartyName}</span>
-          </span>
+          </HStack>
         );
       },
     },
@@ -284,6 +315,7 @@ const InternalOrdersList: Component = () => {
       c: { accessor: row => row.theirReference ?? '', id: 'theirReference' },
       sortKey: 'theirReference',
       header: () => t('label.reference'),
+      ...getCellDefinition('theirReference'),
     },
     {
       c: { key: 'status' },
@@ -300,26 +332,31 @@ const InternalOrdersList: Component = () => {
       },
       // Card view: the status chip is the top-right badge.
       meta: { headerPosition: 'badge' },
+      // Status has no cell-type preset (CELL_TYPES § Status is page-rendered),
+      // so the width lives here — the same pair the invoice lists use, so the
+      // lists' Status columns line up.
+      size: remToPx(7.5),
+      maxSize: remToPx(9.375),
     },
     {
       c: { key: 'requisitionNumber' },
       sortKey: 'requisitionNumber',
       // Language-neutral '#' for the number column.
       header: () => '#',
-      ...getNumberCell(),
+      ...getCellDefinition('requisitionNumber'),
     },
     {
       c: { key: 'createdDatetime' },
       sortKey: 'createdDatetime',
       header: () => t('label.created'),
-      ...getDateCell(),
+      ...getCellDefinition('createdDatetime'),
     },
     {
       // Number of rows — the order's line count (condensed-tablet only, hidden
       // on base by the table config). Not sortable.
       c: { accessor: row => row.lines.totalCount, id: 'countRows' },
       header: () => t('label.count-rows'),
-      ...getNumberCell(),
+      ...getCellDefinition('countRows'),
     },
     // Program / Order type / Period — only when the store has supplier programs
     // (AC-L8); empty for a non-program order.
@@ -344,8 +381,8 @@ const InternalOrdersList: Component = () => {
       : []),
     {
       c: { key: 'comment' },
-      header: () => t('label.comment'),
-      ...getCommentCell(),
+      header: () => <CommentHeader />,
+      ...getCellDefinition('comment'),
     },
     // Approval status — only when the store requires supplier authorisation
     // (AC-L9); read from the linked response requisition's copy, None fallback.
@@ -363,10 +400,7 @@ const InternalOrdersList: Component = () => {
       : []),
   ];
 
-  const crumbs = () => [
-    { label: t('replenishment') },
-    { label: t('internal-order') },
-  ];
+  const crumbs = () => [{ label: t('internal-order') }];
 
   return (
     <Page
@@ -377,6 +411,7 @@ const InternalOrdersList: Component = () => {
           <HeaderButtons>
             <Button
               icon={<PlusCircleIcon />}
+              shortcut={ALT_N}
               data-testid="new-internal-order-button"
               // Disabled until the store context (and so the stocktake-warning
               // gate) is known; busy while the on-click stocktake check runs.
@@ -435,16 +470,21 @@ const InternalOrdersList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
+        // Restricted rows (Sent/Finalised, or a disabled supplier store) read
+        // as read-only via the disabled background tint (AC-L7) — the same
+        // rowState the other list views key off their editability gate.
+        rowState={row => (isRowEditable(row) ? undefined : 'disabled')}
         emptyMessage={t('error.no-internal-orders')}
         // Empty state offers create (AC-N2).
         empty={
           <Button
-            icon={<PlusCircleIcon />}
+            variant="ghost"
+            shortcut={ALT_N}
             data-testid="nothing-here-create-button"
             disabled={context.loading || checking()}
             onClick={() => void startCreate()}
           >
-            {t('label.new-internal-order')}
+            {t('button.create-a-new-one')}
           </Button>
         }
         enableSelection
@@ -476,7 +516,10 @@ const InternalOrdersList: Component = () => {
           pageSize: query().first,
           total: totalCount(),
           onOffsetChange: offset => setQuery({ ...query(), offset }),
-          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+          onPageSizeChange: first => {
+            rememberPageSize(first);
+            setQuery({ ...query(), first, offset: 0 });
+          },
         }}
       />
     </Page>

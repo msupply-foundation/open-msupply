@@ -38,7 +38,7 @@ export const DeletePrescriptionsAction: Component<
   return (
     <>
       <Button
-        variant="secondary"
+        variant="danger"
         icon={<TrashIcon />}
         data-testid="delete-lines-button"
         onClick={() => setOpen(true)}
@@ -116,6 +116,7 @@ const Body = (
                 <Button
                   variant="secondary"
                   icon={<XCircleIcon />}
+                  confirms="cancel"
                   onClick={props.onClose}
                 >
                   {t('button.cancel')}
@@ -124,6 +125,7 @@ const Body = (
               <Button
                 variant="secondary"
                 icon={<TrashIcon />}
+                confirms="plain"
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'deleting'}
                 onClick={() => void run()}
@@ -136,6 +138,7 @@ const Body = (
           <Button
             variant="secondary"
             icon={<XCircleIcon />}
+            confirms="plain"
             onClick={props.onClose}
           >
             {t('button.close')}

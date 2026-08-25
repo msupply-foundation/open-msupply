@@ -1,11 +1,12 @@
+import { generateUUID } from '../../../uuid';
 import { createSignal, Show, type Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
-import { Button } from '../../../ui/elements/buttons/Button';
-import { XCircleIcon } from '../../../ui/icons';
+import { CancelButton } from '../../../ui/elements/buttons/StandardButtons';
+import { createFocusTarget } from '../../../ui/utils/createFocusTarget';
 import { NameSearch } from '../../../domain/name';
 import { InsertSupplierReturn } from './supplierReturns.generated';
 
@@ -41,7 +42,7 @@ const Body: Component<{ onClose: () => void }> = props => {
     const result = await graphqlFetch(InsertSupplierReturn, {
       storeId: params.storeId,
       input: {
-        id: crypto.randomUUID(),
+        id: generateUUID(),
         supplierId,
         supplierReturnLines: [],
       },
@@ -68,22 +69,31 @@ const Body: Component<{ onClose: () => void }> = props => {
     navigate(`/${params.storeId}/replenishment/supplier-return/${response.id}`);
   };
 
+  // The supplier lookup is this dialog's only control, so the dialog opens on
+  // it (ui-standards › accessibility › keyboard).
+  const supplierSearch = createFocusTarget();
+
   return (
     <Dialog
       open
+      initialFocus={supplierSearch}
       onClose={props.onClose}
       dismissable={!creating()}
       testId="supplier-search-modal"
       title={t('label.supplier-name')}
+      widthRem={36}
+      // Room for the lookup's open listbox inside the dialog (#1029): header +
+      // field + the listbox's 18rem cap + padding, measured live. Sized as the
+      // outbound CustomerSearchModal, this picker's twin.
+      minBodyHeightRem={27}
+      // The standard, icon-less dialog dismiss (D55).
       actions={
-        <Button
-          variant="secondary"
-          icon={<XCircleIcon />}
+        // Cancel is the only footer action — choosing a supplier from the list is
+        // this dialog's confirm, and Enter there belongs to the picker (KB-E1).
+        <CancelButton
           data-testid="dialog-button-cancel"
           onClick={props.onClose}
-        >
-          {t('button.cancel')}
-        </Button>
+        />
       }
     >
       <NameSearch
@@ -93,6 +103,7 @@ const Body: Component<{ onClose: () => void }> = props => {
         placeholder={t('placeholder.search-by-name')}
         disabled={creating()}
         inputTestId="supplier-search-input"
+        focusTarget={supplierSearch}
         clearable={false}
         onSelect={supplier => {
           if (supplier) void create(supplier.id);

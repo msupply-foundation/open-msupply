@@ -1,8 +1,12 @@
-import { createSignal, For, Show, type JSX } from 'solid-js';
+import { children, createSignal, For, Show, type JSX } from 'solid-js';
 import * as DropdownMenu from '@kobalte/core/dropdown-menu';
 import { ChevronDownIcon } from '../../icons';
 import { createRipple } from '../../utils/createRipple';
 import { Ripple } from './Ripple';
+import { ShortcutBadge } from '../keyboard/ShortcutBadge';
+import { ariaKeyshortcuts, type Shortcut } from '../../utils/shortcuts';
+// The collapse tiers, shared with <Button> so the two can't drift.
+import { collapseTier, type Collapsible } from './collapsible';
 import styles from './SplitButton.module.css';
 
 export interface SplitButtonOption {
@@ -55,20 +59,61 @@ interface SplitButtonProps {
   /** Accessible name for the caret trigger (it has no visible text). */
   menuLabel?: string;
   /**
+   * Busy state: swaps the main button's icon for a spinner and makes the WHOLE
+   * control inert (both halves disabled, `aria-busy` on the main button), so an
+   * in-flight action can't re-fire from either half. The `<Button>` `loading`
+   * contract, applied to the pair.
+   */
+  loading?: boolean;
+  /**
+   * Overrides the main button's visible label WITHOUT touching the menu (whose
+   * entries keep their own labels, so the selection stays readable). For the
+   * in-place outcome report — the main button briefly reads "Exported" /
+   * "Export failed", then reverts (ui-standards/controls.md § action feedback,
+   * never a toast). Paired with an `icon` swap by the caller.
+   */
+  mainLabel?: string;
+  /**
    * Disable the whole control — both the main action and the caret menu. Prefer
    * this (with `disabledTitle`) over hiding the button when the action is
    * temporarily unavailable ("disable with an explanation" — ui-surface
    * cross-cutting).
    */
   disabled?: boolean;
-  /** Native tooltip shown while `disabled` — the reason the action is unavailable. */
+  /**
+   * Native tooltip shown while `disabled` — the reason the action is
+   * unavailable.
+   */
   disabledTitle?: string;
+  /**
+   * Collapse the MAIN half to just its icon to save space (the `<Button>`
+   * `collapsible` contract, same two tiers — `true` for phone widths ≤767px,
+   * `'narrow'` for the whole narrow-viewport range ≤1023px). Only meaningful
+   * with an `icon`. The caret half never collapses: it is already icon-only,
+   * and its menu keeps every option's full label, so the collapsed control
+   * still names what it does. The main label stays in the DOM (visually
+   * hidden) as the accessible name, and doubles as the button's tooltip —
+   * unlike `<Button>`, no `title` to pass, since the label is the control's
+   * own selected option.
+   */
+  collapsible?: Collapsible;
   /**
    * Test-hook prefix (e2e/TESTIDS.md): stamps `<testId>-main` on the main
    * button, `<testId>-dropdown` on the caret, and `<testId>-option-<value>`
    * on each menu item (e.g. `status-change-button`, `export-csv`).
    */
   testId?: string;
+  /**
+   * The key binding this control answers (spec/keyboard KB-H1, S2) — the same
+   * one prop `Button` takes, driving both `aria-keyshortcuts` and the hint badge
+   * so the two cannot drift (AC-KB15).
+   *
+   * It lands on the MAIN half, which is what the binding runs: the prescription
+   * detail's `Alt+L` prints labels (the main action) and `Alt+V` confirms the
+   * selected status, neither of which opens the caret menu. As with `Button`,
+   * this control does not dispatch the key — the screen registers the action.
+   */
+  shortcut?: Shortcut;
 }
 
 /*
@@ -101,25 +146,75 @@ export const SplitButton = (props: SplitButtonProps) => {
   };
 
   const variant = () => props.variant ?? 'primary';
+  // Busy is inertness on top of any caller-set disabled — one accessor so both
+  // halves and the ripples agree.
+  const inert = () => props.disabled === true || props.loading === true;
+  // JSX-element props are lazy getters, and `icon` is read twice below (the
+  // <Show> test + the insertion) — raw reads would create the passed element
+  // twice per evaluation. Resolve once, as <Button> does
+  // (kdd/solid-reactivity-pitfalls §3).
+  const icon = children(() => props.icon);
+  // The main half's tooltip: the unavailability reason while disabled, else
+  // the label it is currently wearing — but only when collapsing is on, since
+  // a visible label needs no tooltip repeating it.
+  const mainTitle = () => {
+    if (props.disabled) return props.disabledTitle;
+    if (collapseTier(props.collapsible) === undefined) return undefined;
+    return props.mainLabel ?? selectedOption()?.label;
+  };
 
   return (
     <div class={styles.split} data-variant={variant()}>
+      {/* aria-live so a label swap is announced — the outcome flash, and the
+          selection change on a menu pick. Always present: a live region has to
+          exist BEFORE the text changes for the change to be announced. */}
       <button
         type="button"
         class={styles.main}
         data-variant={variant()}
         data-testid={props.testId ? `${props.testId}-main` : undefined}
-        disabled={props.disabled}
-        title={props.disabled ? props.disabledTitle : undefined}
+        // '' = the phone tier, 'narrow' = the whole narrow-viewport range; the
+        // CSS matches the bare attribute for the first and the value for the
+        // second, so 'narrow' collapses at both widths (see ./collapsible).
+        data-collapsible={collapseTier(props.collapsible)}
+        disabled={inert()}
+        aria-busy={props.loading || undefined}
+        aria-live="polite"
+        // The ARIA grammar, not the platform spelling — the badge below renders
+        // the human form from the same value (KB-M1, AC-KB15).
+        aria-keyshortcuts={
+          props.shortcut ? ariaKeyshortcuts(props.shortcut) : undefined
+        }
+        title={mainTitle()}
         onClick={() => {
-          if (!props.disabled) props.onAction?.(selectedValue());
+          if (!inert()) props.onAction?.(selectedValue());
         }}
-        onPointerDown={props.disabled ? undefined : mainRipple.onPointerDown}
+        onPointerDown={event => {
+          // Guarded INSIDE the handler: event props aren't reactive, so a
+          // handler chosen at JSX time would go stale when `loading` flips.
+          if (!inert()) mainRipple.onPointerDown(event);
+        }}
       >
-        <Show when={props.icon}>
-          <span class={styles.icon}>{props.icon}</span>
+        {/* Spinner replaces the icon while loading (the <Button> contract). */}
+        <Show
+          when={props.loading}
+          fallback={
+            <Show when={icon()}>
+              <span class={styles.icon}>{icon()}</span>
+            </Show>
+          }
+        >
+          <span class={styles.spinner} aria-hidden="true" />
         </Show>
-        <span class={styles.label}>{selectedOption()?.label}</span>
+        <span class={styles.label}>
+          {props.mainLabel ?? selectedOption()?.label}
+        </span>
+        {/* The badge positions itself against this half, which is already
+            `position: relative` (and `overflow: hidden`) for its ripple — the
+            same positioning contract Button provides. */}
+        <Show when={props.shortcut}>
+          {shortcut => <ShortcutBadge shortcut={shortcut()} />}
+        </Show>
         <Ripple ripples={mainRipple.ripples()} onDone={mainRipple.dismiss} />
       </button>
 
@@ -129,9 +224,11 @@ export const SplitButton = (props: SplitButtonProps) => {
           data-variant={variant()}
           data-testid={props.testId ? `${props.testId}-dropdown` : undefined}
           aria-label={props.menuLabel ?? 'More options'}
-          disabled={props.disabled}
+          disabled={inert()}
           title={props.disabled ? props.disabledTitle : undefined}
-          onPointerDown={props.disabled ? undefined : caretRipple.onPointerDown}
+          onPointerDown={event => {
+            if (!inert()) caretRipple.onPointerDown(event);
+          }}
         >
           <ChevronDownIcon class={styles.caretIcon} />
           <Ripple

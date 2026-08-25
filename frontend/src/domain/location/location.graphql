@@ -38,6 +38,11 @@ query locationsWithVolume($storeId: String!) {
         onHold
         volume
         volumeUsed
+        # The storage type, for pickers that must honour an item's restricted
+        # location type (the stock-movement destination — its rules § lines).
+        locationType {
+          id
+        }
         stock {
           ... on StockLineConnector {
             __typename

@@ -14,28 +14,65 @@ export type AllocateUnit =
   | { kind: 'doses'; dosesPerUnit: number };
 
 /**
+ * Kill float dust before a figure reaches state or the user (0.7 packs of 10
+ * must read as exactly 3 units short of whole packs). Applied by the lens
+ * conversions below and distributeIssue's reported gap; consumers use it on
+ * their own pack×size sums.
+ */
+export const round9 = (value: number): number => Math.round(value * 1e9) / 1e9;
+
+/**
  * Convert a lens-entered quantity to units (negative or non-finite —
  * NaN/Infinity from unparsed input — → undefined: AC-AL6). A dose entry
  * divides by the item's doses-per-unit (a zero/missing rate falls back to 1,
  * the old app's `dosesPerUnit || 1`); the policy always distributes in units
- * (AC-AL7 — "lens converts, policy stays in units").
+ * (AC-AL7 — "lens converts, policy stays in units"). Rounded (round9) — the
+ * ÷/× otherwise leaves IEEE dust in figures that surface to the user.
  */
 export const lensToUnits = (
   value: number | null | undefined,
   lens: AllocateUnit
 ): number | undefined => {
   if (value == null || !Number.isFinite(value) || value < 0) return undefined;
-  if (lens.kind === 'packs') return value * lens.size;
-  if (lens.kind === 'doses') return value / (lens.dosesPerUnit || 1);
+  if (lens.kind === 'packs') return round9(value * lens.size);
+  if (lens.kind === 'doses') return round9(value / (lens.dosesPerUnit || 1));
   return value;
 };
 
-/** Units re-expressed in a lens — the display face of lensToUnits. */
+/**
+ * Units re-expressed in a lens — the display face of lensToUnits (rounded, as
+ * above).
+ */
 export const unitsToLens = (units: number, lens: AllocateUnit): number => {
-  if (lens.kind === 'packs') return units / lens.size;
-  if (lens.kind === 'doses') return units * (lens.dosesPerUnit || 1);
+  if (lens.kind === 'packs') return round9(units / lens.size);
+  if (lens.kind === 'doses') return round9(units * (lens.dosesPerUnit || 1));
   return units;
 };
+
+/**
+ * Per-batch doses ⇄ packs conversion (old-app parity — QuantityUtils):
+ * doses = packs × pack size × doses-per-unit. Unlike the lens conversions
+ * above (one item-level lens for the whole grid), these take a SINGLE batch's
+ * own `packSize`/`dosesPerUnit` — a variant may override the item's, so the
+ * batch grid converts row by row. A zero/missing rate falls back to 1, as the
+ * lens conversions do (the old app's `dosesPerUnit || 1`).
+ *
+ * `packsToDoses` rounds to whole doses — doses are shown and entered as whole
+ * numbers. `dosesToPacks` returns the raw (possibly fractional) pack count for
+ * `clampManualPacks` to round UP and clamp, so a doses entry that isn't a
+ * whole number of packs is reported back as an adjustment (AC-AL13).
+ */
+export const packsToDoses = (
+  packs: number,
+  packSize: number,
+  dosesPerUnit: number
+): number => Math.round(packs * packSize * (dosesPerUnit || 1));
+
+export const dosesToPacks = (
+  doses: number,
+  packSize: number,
+  dosesPerUnit: number
+): number => doses / (packSize * (dosesPerUnit || 1));
 
 /**
  * Clamp a manual per-batch packs entry (rules.md § whole-pack arithmetic,
@@ -50,7 +87,11 @@ export const clampManualPacks = (
   options?: { partialPacks?: boolean }
 ): number => {
   if (value == null || !Number.isFinite(value) || value < 0) return 0;
-  if (options?.partialPacks) return Math.min(value, availablePacks);
+  // Floored at 0: a server-computed negative availability (over-reserved
+  // stock) must not round-trip a negative entry (rules.md § whole-pack
+  // arithmetic — a negative quantity is never produced client-side).
+  if (options?.partialPacks)
+    return Math.max(0, Math.min(value, availablePacks));
   const wholePacks = Math.ceil(value);
   return wholePacks > availablePacks
     ? Math.max(0, Math.floor(availablePacks))

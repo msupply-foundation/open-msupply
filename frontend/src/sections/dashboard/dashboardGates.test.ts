@@ -27,6 +27,7 @@ const prefs = (overrides: Partial<Preferences> = {}): Preferences => ({
   invoiceStatusOptions: [],
   useProcurementFunctionality: false,
   externalInboundShipmentLinesMustBeAuthorised: false,
+  storeCustomColour: '',
   backdating: {
     inventoryAdjustmentsEnabled: false,
     shipmentsEnabled: false,
@@ -37,6 +38,7 @@ const prefs = (overrides: Partial<Preferences> = {}): Preferences => ({
   numberOfMonthsThresholdToShowOverStockAlertsForProducts: 0,
   firstThresholdForExpiringItems: 0,
   secondThresholdForExpiringItems: 0,
+  warnWhenMissingRecentStocktake: { enabled: false, maxAge: 0, minItems: 0 },
   ...overrides,
 });
 
@@ -56,6 +58,7 @@ const store = (
   monthlyConsumptionLookBackPeriod: 0,
   monthsLeadTime: 0,
   editPrescribedQuantityOnPrescription: false,
+  useConsumptionAndStockFromCustomersForInternalOrders: false,
   ...overrides,
 });
 

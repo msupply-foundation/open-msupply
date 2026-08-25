@@ -4,8 +4,8 @@ import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
+import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
 import { MasterListSelect } from '../../../../domain/masterList';
-import { XCircleIcon } from '../../../../ui/icons';
 import { addFromMasterList } from '../inboundShipmentUpdate';
 
 export interface AddFromMasterListModalProps {
@@ -49,8 +49,8 @@ const Body: Component<AddFromMasterListModalProps> = props => {
     }
   };
 
-  // The master-list picker is this dialog's only control, so the dialog opens on it
-  // (ui-standards › accessibility › keyboard).
+  // The master-list picker is this dialog's only control, so the dialog opens
+  // on it (ui-standards › accessibility › keyboard).
   const picker = createFocusTarget();
 
   return (
@@ -68,20 +68,20 @@ const Body: Component<AddFromMasterListModalProps> = props => {
       }
       actions={
         <>
-          <Button
-            variant="secondary"
-            icon={<XCircleIcon />}
+          <CancelButton
+            data-testid="dialog-button-cancel"
             onClick={props.onClose}
-          >
-            {t('button.cancel')}
-          </Button>
+          />
+          {/* The action's own verb, not a save (D55) — it adds the list's items
+              as lines. */}
           <Button
+            confirms="plain"
             data-testid="dialog-button-ok"
             loading={saving()}
             disabled={!masterListId()}
             onClick={() => void add()}
           >
-            {t('button.ok')}
+            {t('button.add')}
           </Button>
         </>
       }

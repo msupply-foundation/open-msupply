@@ -24,6 +24,45 @@ const commentLengthOptions = {
  * intentionally-unused binding; camelCase identifiers; prefer-const; and a
  * space after comment markers (something Prettier doesn't enforce).
  */
+// compat can't flag this: Chrome supports crypto.randomUUID, but only in
+// secure contexts — it crashes on plain-HTTP LAN origins (#499).
+const cryptoRandomUuidRestriction = {
+  object: 'crypto',
+  property: 'randomUUID',
+  message:
+    'Secure-context only — crashes on plain-HTTP origins (#499). ' +
+    'Use generateUUID from src/uuid.ts.',
+};
+
+/*
+ * The browser-download idiom (an object URL / a download-attributed anchor
+ * click) is a silent no-op in the Android WebView — no DownloadListener, so
+ * the click just dies (#1169). Every file handed to the user goes through the
+ * platform layer instead: saveBlob / openBlob / saveDocument / openDocument in
+ * src/platform/openDocument.ts, whose own block below carves out the one
+ * place the idiom is legitimately implemented (the web halves of those
+ * helpers).
+ */
+const downloadIdiomMessage =
+  'Silently does nothing in the Android WebView (#1169). Use saveBlob / ' +
+  'saveDocument (or openBlob / openDocument) from ' +
+  'src/platform/openDocument.ts.';
+const createObjectUrlRestriction = {
+  object: 'URL',
+  property: 'createObjectURL',
+  message: downloadIdiomMessage,
+};
+const anchorDownloadRestriction = {
+  selector: 'AssignmentExpression[left.property.name="download"]',
+  message: downloadIdiomMessage,
+};
+// The JSX form of the same idiom — <a download={…}> needs no object URL, so
+// the property ban alone would not catch it.
+const jsxDownloadRestriction = {
+  selector: 'JSXAttribute[name.name="download"]',
+  message: downloadIdiomMessage,
+};
+
 const sharedRules = {
   '@typescript-eslint/no-unused-vars': [
     'error',
@@ -58,20 +97,33 @@ const sharedRules = {
 export default tseslint.config(
   {
     ignores: [
-      'dist/**',
+      // Anywhere, not just the root: plugins/<code>/dist holds built bundles.
+      '**/dist/**',
       'dist-ssr/**',
       'node_modules/**',
       '**/*.generated.ts',
       '**/*.css.d.ts',
       'codegen/**', // CommonJS (.cjs) with its own node:test suite
+      // The COUNTRY plugins' backend halves: BoaJS code built by the
+      // open-msupply client toolchain, plus its prebuilt shipped artifact —
+      // vendored, so not this repo's lint domain
+      // (plugins/civ/backend/README.md). The reference backend plugin
+      // (examples/*/backend) is ours and IS linted, below.
+      'plugins/*/backend/**',
     ],
   },
 
   // Application source — browser environment + Solid JSX. compat flags Web
   // APIs unsupported by the minimum browser (browserslist in package.json —
-  // Chromium 138, the newest WebView installable on Android 9).
+  // Chromium 132, the WebView on the oldest Android 8.1 tablets deployed).
+  // The example
+  // plugins (examples/) are the same: ordinary Solid components running in the
+  // host's runtime, so they answer to the same rules.
   {
-    files: ['src/**/*.{ts,tsx}'],
+    files: ['src/**/*.{ts,tsx}', 'examples/**/*.{ts,tsx}'],
+    // The reference BACKEND plugin is not browser code — it has its own block
+    // below rather than Solid, DOM globals and browser-compat rules.
+    ignores: ['examples/*/backend/**'],
     extends: [
       js.configs.recommended,
       tseslint.configs.recommended,
@@ -86,19 +138,103 @@ export default tseslint.config(
       ...sharedRules,
       // Browser app code ships no stray logs; info/warn/error are intentional.
       'no-console': ['error', { allow: ['info', 'warn', 'error'] }],
-      // compat can't flag this: Chrome supports crypto.randomUUID, but only
-      // in secure contexts — it crashes on plain-HTTP LAN origins (#499).
       'no-restricted-properties': [
         'error',
+        cryptoRandomUuidRestriction,
+        createObjectUrlRestriction,
+      ],
+      'no-restricted-syntax': ['error', anchorDownloadRestriction, jsxDownloadRestriction],
+    },
+  },
+
+  // The platform layer OWNS the browser-download idiom banned above —
+  // openDocument.ts (and its tests) is where object URLs and anchor clicks
+  // legitimately implement the web halves of saveBlob/openBlob. Only the
+  // download restrictions lift here; the crypto one stands everywhere.
+  {
+    files: ['src/platform/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-properties': ['error', cryptoRandomUuidRestriction],
+      'no-restricted-syntax': 'off',
+    },
+  },
+
+  /*
+   * The in-repo country plugins (plugins/<code>/src). Same rules as app source —
+   * they are Solid components in the host's runtime, so the reactivity and
+   * browser-compat rules apply identically — plus the import boundary
+   * (spec/plugins/sdk-contract.md § imports): a plugin may import ONLY the SDK
+   * and solid-js. tsconfig.plugins.json and the plugin build preset
+   * (vite/pluginBuild.ts) already make a reach into host source unresolvable;
+   * this makes the failure say why.
+   */
+  {
+    files: ['plugins/*/src/**/*.{ts,tsx}'],
+    extends: [
+      js.configs.recommended,
+      tseslint.configs.recommended,
+      solid,
+      compat.configs['flat/recommended'],
+    ],
+    languageOptions: {
+      globals: globals.browser,
+      parserOptions: { ecmaVersion: 2023, sourceType: 'module' },
+    },
+    rules: {
+      ...sharedRules,
+      'no-console': ['error', { allow: ['info', 'warn', 'error'] }],
+      // Same Android WebView, same dead click (#1169) — a plugin needing to
+      // hand the user a file is an SDK gap, not a hand-rolled download.
+      'no-restricted-properties': ['error', createObjectUrlRestriction],
+      'no-restricted-syntax': ['error', anchorDownloadRestriction, jsxDownloadRestriction],
+      /*
+       * The `@/` alias is already unresolvable here (tsconfig.plugins.json and
+       * the plugin build preset both omit it), but a RELATIVE reach —
+       * `../../../src/intl` — resolves fine at both type-check and build time.
+       * Only lint closes that, so these patterns are load-bearing rather than
+       * belt-and-braces: without them a plugin could silently bundle a frozen
+       * copy of host code, which is the exact failure the old client had.
+       */
+      'no-restricted-imports': [
+        'error',
         {
-          object: 'crypto',
-          property: 'randomUUID',
-          message:
-            'Secure-context only — crashes on plain-HTTP origins (#499). ' +
-            'Use generateUUID from src/uuid.ts.',
+          patterns: [
+            {
+              // `@/…`; any path reaching into src/; and any escape above the
+              // plugin's own tree (plugins/<dir>/src/x sits 3 levels down, so
+              // four-or-more `../` can only mean leaving the plugin).
+              group: ['@/*', '**/src/*', '../../../../*'],
+              message:
+                'A plugin may import only @openmsupply/plugin-sdk and solid-js ' +
+                '(spec/plugins/sdk-contract.md § imports). Missing something? ' +
+                'That is a gap to add to the SDK.',
+            },
+          ],
         },
       ],
     },
+  },
+
+  /*
+   * The reference BACKEND plugin (examples/<code>/backend) — the half that
+   * runs in the server's BoaJS engine. No Solid, no DOM, and deliberately NO
+   * `globals.browser`: the only globals it has are the host functions the
+   * engine binds, which the plugin declares ambiently (its `host.d.ts`), so an
+   * accidental `document` or `window` should be an undefined-variable error
+   * rather than something the config quietly permits. `no-console` is absent
+   * for the same reason — there is no console in the engine, so a stray
+   * `console.log` is already an error here, and `log()` is the way out.
+   *
+   * The country plugins' vendored backend halves are ignored above; this one
+   * is ours and builds in this repo, so it answers to the shared rules.
+   */
+  {
+    files: ['examples/*/backend/**/*.ts'],
+    extends: [js.configs.recommended, tseslint.configs.recommended],
+    languageOptions: {
+      parserOptions: { ecmaVersion: 2022, sourceType: 'module' },
+    },
+    rules: sharedRules,
   },
 
   // Build config + node scripts.
@@ -115,7 +251,13 @@ export default tseslint.config(
   // Comment line-length cap (all linted files). Warn + auto-fix; see options
   // above.
   {
-    files: ['src/**/*.{ts,tsx}', '*.config.{ts,js}', 'scripts/**/*.mjs'],
+    files: [
+      'src/**/*.{ts,tsx}',
+      'plugins/*/src/**/*.{ts,tsx}',
+      'examples/**/*.{ts,tsx}',
+      '*.config.{ts,js}',
+      'scripts/**/*.mjs',
+    ],
     plugins: { 'comment-length': commentLength },
     rules: {
       'comment-length/limit-single-line-comments': [

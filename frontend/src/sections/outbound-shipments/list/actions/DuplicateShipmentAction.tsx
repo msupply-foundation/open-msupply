@@ -5,7 +5,11 @@ import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
-import { CheckIcon, CopyIcon, XCircleIcon } from '../../../../ui/icons';
+import {
+  CancelButton,
+  OkButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
+import { CopyIcon } from '../../../../ui/icons';
 import { DuplicateOutboundShipment } from '../outboundShipments.generated';
 import { hasPermission } from '../../../../store/storeContext';
 
@@ -17,17 +21,17 @@ export interface DuplicateShipmentActionProps {
   customerName: () => string;
 }
 
-// "Make a copy" (rules.md § duplication, AC-X1/X2): any shipment — SHIPPED
-// included — copies into a fresh NEW one whose stock lines became placeholders.
-// Offered for a single selection (list footer) and as a record action (detail
-// side panel). Confirm → duplicate → navigate to the copy. A typed rejection
-// (AC-X2's inactive customer, or any other) keeps the dialog open with the
-// server's description inline — the confirmation is one of this vertical's
-// dialog-surfaced actions (ui-surface S6), so its failure belongs there too,
-// not the global unexpected-error modal (controls › action feedback, S6
-// inline notices). Skipped inactive-catalogue items are reported in the
-// dialog itself; acknowledging the report performs the navigation — the
-// follow-on happens after the close (controls › dialogs).
+// "Make a copy" (rules.md § duplication, OMS-REG-DIST-02.28/.29): any shipment
+// — SHIPPED included — copies into a fresh NEW one whose stock lines became
+// placeholders. Offered for a single selection (list footer) and as a record
+// action (detail side panel). Confirm → duplicate → navigate to the copy. A
+// typed rejection (OMS-REG-DIST-02.29's inactive customer, or any other) keeps
+// the dialog open with the server's description inline — the confirmation is
+// one of this vertical's dialog-surfaced actions (ui-surface S6), so its
+// failure belongs there too, not the global unexpected-error modal (controls ›
+// action feedback, S6 inline notices). Skipped inactive-catalogue items are
+// reported in the dialog itself; acknowledging the report performs the
+// navigation — the follow-on happens after the close (controls › dialogs).
 type Phase = 'confirm' | 'working' | 'error' | 'skipped';
 
 export const DuplicateShipmentAction: Component<
@@ -41,8 +45,8 @@ export const DuplicateShipmentAction: Component<
   const [skippedCount, setSkippedCount] = createSignal(0);
   const [copyId, setCopyId] = createSignal<string>();
 
-  // Duplication needs the mutate permission. Disabled (never hidden) without it,
-  // per rules.md's disable-with-reason model (the shared hasPermission is
+  // Duplication needs the mutate permission. Disabled (never hidden) without
+  // it, per rules.md's disable-with-reason model (the shared hasPermission is
   // reactive to the entered store).
   const canMutate = () => hasPermission('OUTBOUND_SHIPMENT_MUTATE');
 
@@ -66,9 +70,9 @@ export const DuplicateShipmentAction: Component<
     if (result.kind !== 'success') return close();
     const response = result.data.duplicateOutboundShipment;
     if (response.__typename !== 'DuplicateOutboundShipmentNode') {
-      // A typed rejection (e.g. AC-X2's inactive customer) — keep the dialog
-      // open with the server's description inline, rather than promoting it
-      // to the global unexpected-error/reload modal.
+      // A typed rejection (e.g. OMS-REG-DIST-02.29's inactive customer) — keep
+      // the dialog open with the server's description inline, rather than
+      // promoting it to the global unexpected-error/reload modal.
       setErrorMessage(response.error.description);
       setPhase('error');
       return;
@@ -136,51 +140,33 @@ export const DuplicateShipmentAction: Component<
             <Show
               when={phase() !== 'skipped'}
               fallback={
-                <Button
-                  variant="secondary"
-                  icon={<CheckIcon />}
+                <OkButton
                   data-testid="dialog-button-ok"
                   onClick={() => {
                     const id = copyId();
                     close();
                     if (id) goToCopy(id);
                   }}
-                >
-                  {t('button.ok')}
-                </Button>
+                />
               }
             >
               <Show
                 when={phase() !== 'error'}
-                fallback={
-                  <Button
-                    variant="secondary"
-                    icon={<XCircleIcon />}
-                    onClick={close}
-                  >
-                    {t('button.cancel')}
-                  </Button>
-                }
+                fallback={<CancelButton onClick={close} />}
               >
                 <Show when={phase() === 'confirm'}>
-                  <Button
-                    variant="secondary"
-                    icon={<XCircleIcon />}
+                  <CancelButton
                     data-testid="dialog-button-cancel"
                     onClick={close}
-                  >
-                    {t('button.cancel')}
-                  </Button>
+                  />
                 </Show>
-                <Button
-                  variant="secondary"
-                  icon={<CheckIcon />}
+                {/* A confirm, not a save — D55 keeps OkButton for exactly this
+                    case (icon-less either way). */}
+                <OkButton
                   data-testid="confirmation-modal-ok"
                   loading={phase() === 'working'}
                   onClick={() => void run()}
-                >
-                  {t('button.ok')}
-                </Button>
+                />
               </Show>
             </Show>
           }

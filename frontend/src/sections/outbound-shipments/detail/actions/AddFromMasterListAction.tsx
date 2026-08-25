@@ -1,12 +1,17 @@
 import { createResource, createSignal, Show, type Component } from 'solid-js';
 import { t } from '../../../../intl';
 import { graphqlFetch } from '../../../../api/graphql';
+import { gated } from '../../../../api/gated';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Combobox } from '../../../../ui/elements/selectors/Combobox';
-import { CheckIcon, PlusCircleIcon, XCircleIcon } from '../../../../ui/icons';
+import {
+  CancelButton,
+  DialogSaveButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
+import { CatalogueIcon } from '../../../../ui/icons';
 import {
   AddToOutboundFromMasterList,
   CustomerMasterLists,
@@ -22,13 +27,13 @@ export interface AddFromMasterListActionProps {
   onCommitted: () => void;
 }
 
-// "Add from master list" (rules.md § adding from a master list, AC-P5): every
-// stock item of a CUSTOMER-visible master list lands as a zero-quantity
-// placeholder (already-present items skipped server-side). The picker offers
-// only lists joined to the customer, so the not-for-this-customer rejection is
-// a race — surfaced as an inline notice in the dialog, which stays open
-// (controls › dialogs, D20). Success closes it: the refreshed line table is
-// the confirmation.
+// "Add from master list" (rules.md § adding from a master list,
+// OMS-REG-DIST-03.10): every stock item of a CUSTOMER-visible master list lands
+// as a zero-quantity placeholder (already-present items skipped server-side).
+// The picker offers only lists joined to the customer, so the
+// not-for-this-customer rejection is a race — surfaced as an inline notice in
+// the dialog, which stays open (controls › dialogs, D20). Success closes it:
+// the refreshed line table is the confirmation.
 export const AddFromMasterListAction: Component<
   AddFromMasterListActionProps
 > = props => {
@@ -59,10 +64,7 @@ export const AddFromMasterListAction: Component<
         : [];
     }
   );
-  const listOptions = () =>
-    lists.state === 'ready' || lists.state === 'refreshing'
-      ? (lists.latest ?? [])
-      : [];
+  const listOptions = () => gated(lists) ?? [];
 
   const add = async (masterListId: string) => {
     setError(undefined);
@@ -86,7 +88,12 @@ export const AddFromMasterListAction: Component<
   return (
     <Show when={props.visible}>
       <Button
-        icon={<PlusCircleIcon />}
+        // A catalogue, not a bare plus: this button collapses to its icon
+        // beside "Add item" on a narrow viewport, and two identical plus
+        // circles there would be two unlabelled buttons that look the same.
+        icon={<CatalogueIcon />}
+        collapsible="narrow"
+        title={t('button.add-from-master-list')}
         data-testid="add-from-master-list-button"
         onClick={() => {
           setError(undefined);
@@ -106,19 +113,15 @@ export const AddFromMasterListAction: Component<
         minBodyHeightRem={20}
         actions={
           <>
-            <Button
-              variant="secondary"
-              icon={<XCircleIcon />}
+            <CancelButton
               data-testid="dialog-button-cancel"
               disabled={adding()}
               onClick={() => setOpen(false)}
-            >
-              {t('button.cancel')}
-            </Button>
-            {/* OK commits the bulk add — disabled until a list is chosen, and
-                showing a spinner (loading) until the add resolves (D46). */}
-            <Button
-              icon={<CheckIcon />}
+            />
+            {/* Save commits the bulk add directly (spec S3 Layout, D46) —
+                disabled until a list is chosen, and showing a spinner until the
+                add resolves. No separate "add all items?" confirmation. */}
+            <DialogSaveButton
               data-testid="dialog-button-ok"
               disabled={!selected()}
               loading={adding()}
@@ -126,9 +129,7 @@ export const AddFromMasterListAction: Component<
                 const chosen = selected();
                 if (chosen) void add(chosen);
               }}
-            >
-              {t('button.ok')}
-            </Button>
+            />
           </>
         }
       >

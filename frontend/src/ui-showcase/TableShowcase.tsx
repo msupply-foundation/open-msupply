@@ -8,7 +8,10 @@ import {
   type Column,
   type SortState,
 } from '../ui/elements/table/DataTable';
-import { getCellDefinition } from '../ui/elements/table/tableHelpers';
+import {
+  CommentHeader,
+  getCellDefinition,
+} from '../ui/elements/table/tableHelpers';
 import {
   resolveTableConfig,
   type Band,
@@ -482,7 +485,7 @@ const TableShowcaseDemo = () => {
     },
     {
       c: { key: 'comment' },
-      header: () => t('label.comment'),
+      header: () => <CommentHeader />,
       cardGroup: 'more',
       ...getCellDefinition<Row>('comment'),
     },
@@ -514,7 +517,6 @@ const TableShowcaseDemo = () => {
             label="Note"
             hideLabel
             size="small"
-            width="full"
             value={notes[row.id]}
             onInput={e => setNotes(row.id, e.currentTarget.value)}
             // Don't let typing/clicking the input open the row.
@@ -530,12 +532,7 @@ const TableShowcaseDemo = () => {
       fillBody
       header={
         <Header>
-          <Breadcrumb
-            crumbs={[
-              { label: t('replenishment') },
-              { label: t('inbound-shipment') },
-            ]}
-          />
+          <Breadcrumb crumbs={[{ label: t('inbound-shipment') }]} />
           <HeaderButtons>
             <Button icon={<PlusCircleIcon />} disabled title="Demo only">
               {t('button.new-shipment')}
@@ -591,6 +588,13 @@ const TableShowcaseDemo = () => {
                 ? 'disabled'
                 : undefined
         }
+        // The needs-action marking (rowTint + rowAccent on ONE predicate —
+        // the outbound detail table's pattern): the rows still to be worked
+        // carry the amber tint and a bar down the leading edge, so what's
+        // left reads down one edge. NEW stands in for "not yet actioned"
+        // here; the two props always take the same predicate.
+        rowTint={row => (row.status === 'NEW' ? 'unfinished' : undefined)}
+        rowAccent={row => (row.status === 'NEW' ? 'unfinished' : undefined)}
         emptyMessage={t('error.no-inbound-shipments')}
         enableSelection
         selectedIds={selectedIds()}

@@ -12,21 +12,21 @@ import type { NamesFilter } from './namesListLogic';
 
 /*
  * The SEARCH filter — an EXHAUSTIVE, keyed map over every key of the generated
- * NameFilterInput (the reference vertical's completeness pattern): a key maps to
- * a definition to expose it, or `null` to dismiss it. Because the map is a
+ * NameFilterInput (the reference vertical's completeness pattern): a key maps
+ * to a definition to expose it, or `null` to dismiss it. Because the map is a
  * Record over all of NamesFilter, codegen adding a filter key breaks
  * compilation here until we decide expose-or-dismiss — nothing is exposed by
  * accident, and this map is BOTH the definition and the completeness proof.
  *
  * Only `codeOrName` is exposed: a single free-text box that the server matches
- * against BOTH name and code (contract › filtering & search; AC-N13;
- * DIVERGENCES D18). Everything else is dismissed — role/type/visibility are
+ * against BOTH name and code (contract › filtering & search; AC-N13). Everything else is dismissed — role/type/visibility are
  * applied by the page (not user chips), and the rest are programmatic.
  *
- * NB: ui-surface asks for an always-present dedicated search FIELD; that role is
- * ⛔ not built (components.md › inputs: "Free-text search / filter"), so it is
- * substituted by the built FilterBar text filter — the registry's sanctioned
- * fallback ("the filter-menu case is covered by FilterBar"). See BUILD_REPORT.
+ * NB: ui-surface asks for an always-present dedicated search FIELD; that role
+ * is ⛔ not built (components.md › inputs: "Free-text search / filter"), so it
+ * is substituted by the built FilterBar text filter — the registry's
+ * sanctioned fallback ("the filter-menu case is covered by FilterBar"). See
+ * BUILD_REPORT.
  */
 const SEARCH_FILTERS: Filter<NamesFilter>[] = constructFilters<NamesFilter>({
   // ─ user-facing
@@ -35,7 +35,7 @@ const SEARCH_FILTERS: Filter<NamesFilter>[] = constructFilters<NamesFilter>({
     render: props => (
       <FilterTextInput
         label={t('name.filter.search')}
-        placeholder={t('name.filter.search-placeholder')}
+        placeholder={t('placeholder.search')}
         // e2e hook: FilterBar supplies `filter-input-codeOrName` (TESTIDS.md).
         testId={props.testId}
         value={props.filter().codeOrName?.like ?? ''}

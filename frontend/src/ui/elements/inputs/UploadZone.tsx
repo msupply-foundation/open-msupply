@@ -11,12 +11,19 @@ import styles from './UploadZone.module.css';
 export interface UploadZoneProps extends PartitionOptions {
   /** Called with the files that pass `accept`/`maxSize`. */
   onFiles: (files: File[]) => void;
-  /** Called with files rejected by `accept`/`maxSize`, so they can be surfaced. */
+  /**
+   * Called with files rejected by `accept`/`maxSize`, so they can be surfaced.
+   */
   onRejected?: (rejections: FileRejection<File>[]) => void;
   /** Allow selecting/dropping more than one file at once (default true). */
   multiple?: boolean;
   disabled?: boolean;
   class?: string;
+  /**
+   * `data-testid` for the hidden `<input type="file">` (locale-stable test
+   * hook, e2e/TESTIDS.md) — the setInputFiles target in e2e.
+   */
+  inputTestId?: string;
 }
 
 /*
@@ -37,6 +44,7 @@ export const UploadZone = (props: UploadZoneProps): JSX.Element => {
     'accept',
     'maxSize',
     'class',
+    'inputTestId',
   ]);
 
   const [dragging, setDragging] = createSignal(false);
@@ -98,6 +106,7 @@ export const UploadZone = (props: UploadZoneProps): JSX.Element => {
         disabled={local.disabled}
         tabindex={-1}
         aria-hidden="true"
+        data-testid={local.inputTestId}
         onChange={event => {
           dispatch(event.currentTarget.files);
           // Reset so re-selecting the same file fires change again.

@@ -4,9 +4,10 @@ import type { StockLineRowFragment } from './stock.generated';
 
 // Anchors: spec/stock/cases/OMS-REG-INV-02.
 //   .8 — the export produces a CSV containing the stock data
-// Covers the CSV builder's column set + the computed units / value columns +
-// the blank-supplier fallback. (The export action's all-pages fetch is
-// exercised in the e2e/ suites.)
+// Covers the CSV builder's
+// column set + the computed units / value columns + the blank-supplier
+// fallback. (The export action's all-pages fetch is exercised in the e2e/
+// suites.)
 
 const line = {
   id: 'sl1',
@@ -52,7 +53,8 @@ describe('OMS-REG-INV-02.8 — stockToCsv', () => {
     expect(rows[0].split(',')).toHaveLength(19);
   });
   it('derives units (packs × pack size) and total value (packs × cost)', () => {
-    // SOH units = 12 × 100 = 1200; available = 10 × 100 = 1000; total = 12 × 2 = 24.
+    // SOH units = 12 × 100 = 1200; available = 10 × 100 = 1000; total = 12 × 2
+    // = 24.
     expect(csv).toContain('1200');
     expect(csv).toContain('1000');
     expect(csv).toContain('24');

@@ -2,6 +2,7 @@ import { createSignal, Show, type Component } from 'solid-js';
 import { t } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
 import { graphqlFetch } from '../../../api/graphql';
+import { HStack } from '../../../ui/layout/Stack/HStack';
 import { DateField } from '../../../ui/elements/inputs/DateField';
 import { dateToIsoDate } from '../../../ui/elements/inputs/dateTimeConvert';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
@@ -22,18 +23,18 @@ import {
 } from './backdating';
 
 // The picked-date backdating control (spec/outbound-shipments rules.md §
-// backdating; S3 side panel — AC-B1..B4). Enabled only while NEW with the
-// backdating preference on; otherwise DISABLED WITH THE REASON (pref off /
-// past NEW). Picking an earlier day confirms first — the line-removal warning
-// (AC-B2) and, when a stocktake was counted on or after that day, the
-// stocktake-conflict warning (AC-B4) — before setting backdatedDatetime; the
-// parent's field save then re-issues against historical availability and
-// stamps future statuses at the backdated time (server-side). The picker is
-// bounded to [today − (maxDays − 1), today] — maxDays 0/unset = unbounded
-// past (backdating.ts) — so a future or over-limit day can't be
-// chosen (the remaining AC-B1 rejections). The pure gate/date/warning logic
-// lives in ./backdating (unit-tested); this component wires it to the UI + the
-// stocktake-conflict query.
+// backdating; S3 side panel — OMS-REG-DIST-04.23..27). Enabled only while NEW
+// with the backdating preference on; otherwise DISABLED WITH THE REASON (pref
+// off / past NEW). Picking an earlier day confirms first — the line-removal
+// warning (OMS-REG-DIST-04.24) and, when a stocktake was counted on or after
+// that day, the stocktake-conflict warning (OMS-REG-DIST-04.27) — before
+// setting backdatedDatetime; the parent's field save then re-issues against
+// historical availability and stamps future statuses at the backdated time
+// (server-side). The picker is bounded to [today − (maxDays − 1), today] —
+// maxDays 0/unset = unbounded past (backdating.ts) — so a future or over-limit
+// day can't be chosen (the remaining OMS-REG-DIST-04.23 rejections). The pure
+// gate/date/warning logic lives in ./backdating (unit-tested); this component
+// wires it to the UI + the stocktake-conflict query.
 
 export interface PickedDateFieldProps {
   storeId: string;
@@ -91,10 +92,11 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
     }
     setDraft(day);
     const backdatedDatetime = backdatedDatetimeFor(new Date(), day);
-    // Stocktake-conflict check (AC-B4): any stocktake counted on or after the
-    // chosen day. A non-success is UNKNOWN, not "no conflict" — fail closed:
-    // revert the pick and let the global unexpected-error modal (already
-    // raised by graphqlFetch) explain, rather than backdating unconfirmed.
+    // Stocktake-conflict check (OMS-REG-DIST-04.27): any stocktake counted on
+    // or after the chosen day. A non-success is UNKNOWN, not "no conflict" —
+    // fail closed: revert the pick and let the global unexpected-error modal
+    // (already raised by graphqlFetch) explain, rather than backdating
+    // unconfirmed.
     const result = await graphqlFetch(OutboundStocktakeConflict, {
       storeId: props.storeId,
       onOrAfter: day,
@@ -131,11 +133,11 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
     setPending({ backdatedDatetime, warningKeys });
   };
 
-  // The confirmation body: the applicable warnings (AC-B2/B4), each resolved
-  // with the chosen date (spec S6 § confirmation dialog). Each warning sits on
-  // its own block (both ported sentences end in "Are you sure…?", so joined
-  // into one line they read as a run-on); <br/> not <p> — the Dialog already
-  // renders the description inside a <p>.
+  // The confirmation body: the applicable warnings (OMS-REG-DIST-04.24/.27),
+  // each resolved with the chosen date (spec S6 § confirmation dialog). Each
+  // warning sits on its own block (both ported sentences end in "Are you
+  // sure…?", so joined into one line they read as a run-on); <br/> not <p> —
+  // the Dialog already renders the description inside a <p>.
   const confirmMessage = () => {
     const info = pending();
     if (!info) return '';
@@ -153,43 +155,35 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
 
   return (
     <>
-      <span
-        style={{
-          display: 'inline-flex',
-          'align-items': 'center',
-          gap: 'var(--space-2)',
-        }}
-      >
-        {/* Fixed 8rem footprint (the same width the field had as a native
-            date input): left free, the field fills the panel row's whole
-            control column — clipping at the panel edge and leaving no room
-            for the disabled-reason bubble beside it. Grid so the field
-            stretches to the cell and shrinks (its input has min-width 0). */}
-        <span style={{ display: 'grid', width: '8rem' }}>
-          <DateField
-            label={t('label.picked-date')}
-            hideLabel
-            // The shared calendar-date input (ui-standards/inputs § dates &
-            // times — typed entry or the picker, never a native date input).
-            // `required`: a picked date always has an effective day — blanking
-            // the text reverts rather than clearing.
-            required
-            // Numeric day-first display/parse (27/07/2026) — matches the
-            // panel's localisedDate renderings (created date etc.).
-            format="dd/MM/yyyy"
-            testId="picked-date-field"
-            value={shown()}
-            min={enabled() ? bounds().min : undefined}
-            max={enabled() ? bounds().max : undefined}
-            disabled={!enabled()}
-            onChange={value => {
-              // AC-B1 re-check as defence in depth — DateField already reverts
-              // typed out-of-range entries against min/max.
-              if (!value || !withinBackdateBounds(bounds(), value)) return;
-              void onPick(value);
-            }}
-          />
-        </span>
+      <HStack gap="sm">
+        <DateField
+          label={t('label.picked-date')}
+          hideLabel
+          // A date is a short value, so the field is compact (SIDE_PANEL.md
+          // rule 2) — which is also what keeps it from filling the panel row's
+          // whole control column and crowding out the reason bubble beside it.
+          size="small"
+          width="compact"
+          // The shared calendar-date input (ui-standards/inputs § dates &
+          // times — typed entry or the picker, never a native date input).
+          // `required`: a picked date always has an effective day — blanking
+          // the text reverts rather than clearing.
+          required
+          // Numeric day-first display/parse (27/07/2026) — matches the
+          // panel's localisedDate renderings (created date etc.).
+          format="dd/MM/yyyy"
+          testId="picked-date-field"
+          value={shown()}
+          min={enabled() ? bounds().min : undefined}
+          max={enabled() ? bounds().max : undefined}
+          disabled={!enabled()}
+          onChange={value => {
+            // OMS-REG-DIST-04.23 re-check as defence in depth — DateField
+            // already reverts typed out-of-range entries against min/max.
+            if (!value || !withinBackdateBounds(bounds(), value)) return;
+            void onPick(value);
+          }}
+        />
         {/* When a backdating gate disables the field (pref off / past NEW), an
             info popover explains why on hover / focus / tap — disable-with-
             reason (spec S3), reusing the ported reason messages. */}
@@ -202,7 +196,7 @@ export const PickedDateField: Component<PickedDateFieldProps> = props => {
             />
           )}
         </Show>
-      </span>
+      </HStack>
       <ConfirmDialog
         open={pending() != null}
         title={t('heading.are-you-sure')}

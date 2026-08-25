@@ -12,15 +12,46 @@
   flex-direction: column;
   gap: var(--input-field-gap);
   min-width: 0;
-  max-width: var(--input-max-short);
   position: relative;
 }
 
-/* Width caps, TextField's data-width vocabulary (FieldShell `width`). The
-   compact cap narrows only the control box; it lives after the base .control
-   rules below (to satisfy no-descending-specificity). */
+/* Width caps — TextField's data-width vocabulary AND its meanings, rule for
+   rule (see TextField.module.css, the reference block). The base carried a
+   `short` cap until 2026-08-13, and `long` had no rule at all, so a date field
+   silently ignored it. `compact` caps only the control box; that rule lives
+   after the base .control rules below (no-descending-specificity). */
+.field[data-width='compact'],
+.field[data-width='short'] {
+  max-width: var(--input-max-short);
+}
+
+.field[data-width='long'] {
+  max-width: var(--input-max-long);
+}
+
 .field[data-width='full'] {
   max-width: 100%;
+}
+
+/* Holds the label beside its labelInfo affordance (the InfoTooltip help icon)
+   — as TextField.module.css. */
+.labelRow {
+  display: flex;
+  align-items: center;
+}
+
+/* The row's height is the LABEL's, never the affordance's. An InfoTooltip
+   trigger is taller than the label's line box, and a flex row sized by its
+   tallest child pushes this field's control below its neighbours' — so a field
+   with help text stops lining up in a header cluster or a card row, both of
+   which top-align their items. Giving the affordance zero block-size takes it
+   out of that calculation entirely (it still paints — nothing clips it — and
+   centres on the label's midline), so the field's geometry is identical with
+   and without labelInfo, whatever the label tokens are set to. */
+.labelRow > :not(.label) {
+  display: flex;
+  align-items: center;
+  block-size: 0;
 }
 
 .label {
@@ -61,8 +92,8 @@
   background: var(--bg-white);
   color: var(--text-body);
   transition:
-    border-color 120ms ease,
-    box-shadow 120ms ease;
+    border-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease;
 }
 
 .control[data-size='small'] {
@@ -273,9 +304,11 @@
 }
 
 /* Touch: match the shared input touch heights (standard 48 / small 44, both
-   WCAG 2.5.5 AAA) and bump the typed text to 16px for BOTH sizes — the date
-   input is a real <input>, so iOS Safari zooms on focus under 16px. This block
-   is the reason the date fields now reach the touch target at all. */
+   WCAG 2.5.5 AAA) and bump the inner text to 16px for BOTH sizes, so a date
+   field reads at the same size as the text field beside it. The small selectors
+   have to be REPEATED inside the block — a media query adds no specificity, so
+   a bare `.dateInput` (0,1,0) loses to `.control[data-size='small'] .dateInput`
+   (0,3,0) above and the bump silently never lands on small. */
 @media (pointer: coarse) {
   .control {
     min-block-size: var(--input-height-touch);
@@ -287,7 +320,10 @@
 
   .dateTrigger,
   .dateInput,
-  .timeSegs {
+  .timeSegs,
+  .control[data-size='small'] .dateTrigger,
+  .control[data-size='small'] .dateInput,
+  .control[data-size='small'] .timeSegs {
     font-size: var(--input-font-touch);
   }
 }
@@ -315,8 +351,89 @@
   flex-shrink: 0;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .control {
-    transition: none;
-  }
+/* The range picker's popover: the calendar with a footer under it (see
+   DateRangeField). The Popover owns the surface + its padding, so this stacks
+   the two and the footer's hairline sits inset by that padding. */
+.rangePanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Footer: the two picked sides STACKED, with the pair's Clear dates beside them
+   at the inline-end. Stacked because the calendar grid stretches to the panel,
+   so a footer wider than the calendar's intrinsic width spreads the day cells
+   apart — two short rows stay inside it where one long row didn't. Wraps (Clear
+   dates dropping under the stack) if a long localised date still outgrows the
+   calendar. */
+.rangeFooter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  padding-block-start: var(--space-2);
+  border-block-start: 1px solid var(--color-divider);
+  font-size: var(--text-xs);
+}
+
+/* One grid for BOTH sides — label / value / clear as three columns — so From
+   and To line up down the stack rather than each row measuring itself. */
+.rangeSides {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  align-items: center;
+  column-gap: var(--space-1);
+}
+
+/* Each side's three parts ARE the grid's cells (see RangeSide). */
+.rangeSide {
+  display: contents;
+}
+
+.rangeSideLabel {
+  color: var(--text-secondary);
+}
+
+.rangeSideValue {
+  color: var(--text-body);
+}
+
+/* An unset side reads as a placeholder, matching the trigger's own '…' */
+.rangeSideValue[data-empty] {
+  color: var(--text-disabled);
+}
+
+.rangeSideClear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--text-secondary);
+  font-size: 0.75em;
+  cursor: pointer;
+}
+
+.rangeSideClear:hover {
+  background: color-mix(in srgb, var(--secondary-main) 12%, transparent);
+  color: var(--secondary-main);
+}
+
+.rangeClear {
+  margin-inline-start: auto;
+  padding: var(--space-1);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--secondary-main);
+  font: inherit;
+  cursor: pointer;
+}
+
+.rangeClear:hover {
+  background: color-mix(in srgb, var(--secondary-main) 12%, transparent);
 }

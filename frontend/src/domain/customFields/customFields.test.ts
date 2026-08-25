@@ -11,6 +11,11 @@ import {
   type CustomFieldOption,
 } from './parse';
 import { buildCustomFieldDynamicFilter } from './filter';
+import {
+  customFieldDisplayString,
+  customFieldFormText,
+  EMPTY_FIELD_VALUE,
+} from './display';
 
 // The shared custom-field interpreter (spec/ui-standards/custom-fields). The
 // reference dataset configures no custom fields, so these assert the contract-
@@ -176,5 +181,46 @@ describe('buildCustomFieldDynamicFilter — typed AST per kind', () => {
     ).toBeUndefined();
     expect(buildCustomFieldDynamicFilter({})).toBeUndefined();
     expect(buildCustomFieldDynamicFilter(undefined)).toBeUndefined();
+  });
+});
+
+// A table CELL and a read-only FIELD have OPPOSITE empty conventions, and both
+// renderings live in display.ts — these pin the difference so a change to one
+// can't quietly adopt the other's convention.
+describe('cell text vs read-only field text', () => {
+  const parsed = (over: Partial<CustomFieldDef> = {}) =>
+    parseCustomField(def(over));
+
+  it('a cell renders empty as BLANK, a field as a dash', () => {
+    const text = parsed({ key: 'note' });
+    expect(customFieldDisplayString(text, {})).toBe('');
+    expect(customFieldFormText(text, {})).toBe(EMPTY_FIELD_VALUE);
+    // An empty string is as absent as a missing key.
+    expect(customFieldFormText(text, { note: '' })).toBe(EMPTY_FIELD_VALUE);
+  });
+
+  // Asserted as dictionary KEYS: with no catalogue loaded under test, t()
+  // resolves to the key, so this pins which key each state uses (the point of
+  // the test) without pinning the English copy.
+  it('a field renders a boolean as Yes/No, distinguishing false from unset', () => {
+    const flag = parsed({ key: 'flag', valueType: 'BOOLEAN' });
+    expect(customFieldFormText(flag, { flag: true })).toBe('messages.yes');
+    // false is a real value — NOT the empty mark (the ambiguity a disabled
+    // checkbox hides, since an unchecked box means both things).
+    expect(customFieldFormText(flag, { flag: false })).toBe('messages.no');
+    expect(customFieldFormText(flag, {})).toBe(EMPTY_FIELD_VALUE);
+  });
+
+  it('a field resolves an option to its name, and localises numbers', () => {
+    const opt = parsed({
+      key: 'cat',
+      valueType: 'OPTION',
+      options: [option({ id: 'o1', name: 'Vaccines' })],
+    });
+    expect(customFieldFormText(opt, { cat: 'o1' })).toBe('Vaccines');
+    const num = parsed({ key: 'qty', valueType: 'INTEGER' });
+    expect(customFieldFormText(num, { qty: 3000 })).toBe('3,000');
+    // Zero is a real value, not emptiness.
+    expect(customFieldFormText(num, { qty: 0 })).toBe('0');
   });
 });

@@ -4,16 +4,19 @@ import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
-import { Button } from '../../../ui/elements/buttons/Button';
+import {
+  CancelButton,
+  DialogSaveButton,
+  SaveAndNextButton,
+} from '../../../ui/elements/buttons/StandardButtons';
 import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { Text } from '../../../ui/elements/typography/Text';
-import {
-  ArrowRightIcon,
-  CheckIcon,
-  PlusCircleIcon,
-  XCircleIcon,
-} from '../../../ui/icons';
+import { HStack } from '../../../ui/layout/Stack/HStack';
+import { Stack } from '../../../ui/layout/Stack/Stack';
+import { PlusCircleIcon } from '../../../ui/icons';
 import { ItemSearch } from '../../../domain/item/ItemSearch';
+import { createFocusTarget } from '../../../ui/utils/createFocusTarget';
+import type { ItemAncillaryItemsResult } from './ancillaryItems.generated';
 import {
   UpsertAncillaryItem,
   type UpsertAncillaryItemResult,
@@ -33,12 +36,10 @@ import {
 // advances INSIDE the mounted modal by reseeding signals, never a remount
 // (kdd/solid-reactivity-pitfalls § no remounts; mirrors LocationEditModal.tsx).
 
-export type AncillaryRow = {
-  id: string;
-  itemQuantity: number;
-  ancillaryQuantity: number;
-  ancillaryItem: { id: string; code: string; name: string } | null;
-};
+// One ancillary-supply link, derived from the query that reads it — never a
+// hand-written mirror of the wire shape (kdd/type-safety).
+export type AncillaryRow =
+  ItemAncillaryItemsResult['items']['nodes'][number]['ancillaryItems'][number];
 
 /** What the modal was opened on: a fresh add, or a clicked table row. */
 export type AncillaryEditorState =
@@ -63,6 +64,10 @@ export const AncillaryItemEditModal: Component<
   AncillaryItemEditModalProps
 > = props => {
   const isEdit = () => props.editor.mode === 'edit';
+  // Adding starts by typing an item, so the lookup takes the caret on open and
+  // again on each Save & Next reset — a run of links goes in from the keyboard
+  // (ui-surface S5). Editing keeps the dialog default: its lookup is locked.
+  const itemSearch = createFocusTarget();
   const editedRow = (): AncillaryRow | undefined =>
     props.editor.mode === 'edit' ? props.editor.row : undefined;
 
@@ -135,12 +140,14 @@ export const AncillaryItemEditModal: Component<
     // Save & Next (add mode only, ui-surface S5): reset to a fresh blank
     // form for another link, without returning to the list.
     setForm(EMPTY_FORM);
+    itemSearch.focus();
   };
 
   return (
     <Dialog
       open
       testId="ancillary-item-edit-modal"
+      initialFocus={isEdit() ? undefined : itemSearch}
       title={t('title.ancillary-supply')}
       icon={isEdit() ? undefined : <PlusCircleIcon />}
       dismissable={saving() === null}
@@ -154,42 +161,34 @@ export const AncillaryItemEditModal: Component<
           )}
         </Show>
       }
+      // The standard, ICON-LESS dialog-footer buttons (ui-standards › controls
+      // § dialogs, D55) — a footer is read as verbs in a fixed position, not a
+      // toolbar, so it earns no icon. Each supplies its own translated label.
       actions={
         <>
           <Show when={saving() === null}>
-            <Button
-              variant="secondary"
-              icon={<XCircleIcon />}
+            <CancelButton
               data-testid="dialog-button-cancel"
               onClick={props.onClose}
-            >
-              {t('button.cancel')}
-            </Button>
+            />
           </Show>
-          <Button
-            icon={<CheckIcon />}
+          <DialogSaveButton
             data-testid="dialog-button-ok"
             loading={saving() === 'ok'}
             disabled={
               !isFormValid(form(), props.principalItemId) || saving() !== null
             }
             onClick={() => void save(false)}
-          >
-            {t('button.save')}
-          </Button>
+          />
           <Show when={!isEdit()}>
-            <Button
-              icon={<ArrowRightIcon />}
-              iconPosition="end"
+            <SaveAndNextButton
               data-testid="dialog-button-save-and-next"
               loading={saving() === 'next'}
               disabled={
                 !isFormValid(form(), props.principalItemId) || saving() !== null
               }
               onClick={() => void save(true)}
-            >
-              {t('button.save-and-next')}
-            </Button>
+            />
           </Show>
         </>
       }
@@ -199,6 +198,7 @@ export const AncillaryItemEditModal: Component<
       <ItemSearch
         label={t('label.ancillary-item')}
         storeId={props.storeId}
+        focusTarget={itemSearch}
         excludeItemIds={excludeItemIds()}
         value={form().ancillaryItemId ?? undefined}
         selectedItem={selectedItem()}
@@ -207,31 +207,45 @@ export const AncillaryItemEditModal: Component<
           setForm({ ...form(), ancillaryItemId: item?.id ?? null })
         }
       />
-      <div style={{ display: 'flex', 'align-items': 'center', gap: '0.5rem' }}>
-        <NumberField
-          label={t('label.ratio')}
-          min={0}
-          decimalLimit={4}
-          disabled={saving() !== null}
-          value={form().itemQuantity}
-          onChange={itemQuantity =>
-            setForm({ ...form(), itemQuantity: itemQuantity ?? 0 })
-          }
-        />
-        <Text>:</Text>
-        <NumberField
-          label={t('label.ratio')}
-          hideLabel
-          min={0}
-          decimalLimit={4}
-          disabled={saving() !== null}
-          helperText={t('description.ancillary-ratio')}
-          value={form().ancillaryQuantity}
-          onChange={ancillaryQuantity =>
-            setForm({ ...form(), ancillaryQuantity: ancillaryQuantity ?? 0 })
-          }
-        />
-      </div>
+      {/* Ratio — two number inputs either side of a literal ":" (ui-surface
+          S5), with the explanation on its OWN line beneath them. It is NOT the
+          second field's `helperText`: helper text belongs to one field, so it
+          made that field taller than its sibling and knocked the two inputs out
+          of alignment. As a row of its own it describes the pair, which is what
+          it actually explains. */}
+      <Stack gap="sm">
+        {/* align="end", not the default centre: the first field carries a
+            visible label and the second hides its own, so the two blocks are
+            different heights and centring them leaves the second input riding
+            higher. With no helper text under either, both end at their input's
+            bottom edge — so aligning on that edge lines the inputs and the ":"
+            up exactly. */}
+        <HStack gap="sm" align="end">
+          <NumberField
+            label={t('label.ratio')}
+            min={0}
+            decimalLimit={4}
+            disabled={saving() !== null}
+            value={form().itemQuantity}
+            onChange={itemQuantity =>
+              setForm({ ...form(), itemQuantity: itemQuantity ?? 0 })
+            }
+          />
+          <Text>:</Text>
+          <NumberField
+            label={t('label.ratio')}
+            hideLabel
+            min={0}
+            decimalLimit={4}
+            disabled={saving() !== null}
+            value={form().ancillaryQuantity}
+            onChange={ancillaryQuantity =>
+              setForm({ ...form(), ancillaryQuantity: ancillaryQuantity ?? 0 })
+            }
+          />
+        </HStack>
+        <Text variant="bodySmall">{t('description.ancillary-ratio')}</Text>
+      </Stack>
     </Dialog>
   );
 };

@@ -1,19 +1,31 @@
 import {
+  createEffect,
+  createMemo,
   createResource,
   createSignal,
   Show,
   Suspense,
+  untrack,
   type Component,
 } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '../../../ui/layout/Header/HeaderButtons';
 import { Toolbar } from '../../../ui/layout/Header/Toolbar';
+import { HeaderToolbar } from '../../../ui/layout/Header/HeaderToolbar';
+import { Alert } from '../../../ui/elements/feedback/Alert';
+import { HStack } from '../../../ui/layout/Stack/HStack';
+import { StatusMarker } from '../../../ui/elements/feedback/StatusMarker';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
+import { createAddAction } from '../../../ui/utils/keyActions';
+import { ALT_M, ALT_N } from '../../../ui/utils/shortcuts';
+import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
+import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { InfoTooltip } from '../../../ui/elements/feedback/InfoTooltip';
@@ -26,24 +38,47 @@ import {
   type SortState,
 } from '../../../ui/elements/table/DataTable';
 import {
-  getCommentCell,
-  getCurrencyCell,
-  getNumberCell,
+  CommentHeader,
+  getCellDefinition,
 } from '../../../ui/elements/table/tableHelpers';
+import { sortRows } from '@/list/sortRows';
+import {
+  FilterBar,
+  FilterCheckbox,
+  FilterTextInput,
+  constructFilters,
+  type Filter,
+} from '../../../ui/elements/selectors/FilterBar';
 import { AlertTriangleIcon } from '../../../ui/icons';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
+import { recordPluginDiagnostic } from '../../../plugins/diagnostics';
+import {
+  contributionId,
+  visibleContributions,
+} from '../../../plugins/PluginSlot';
+import {
+  INTERNAL_ORDER_LINE_COLUMNS as COL,
+  mergeLineColumns,
+  type LineColumnBatch,
+} from './lineColumns';
+import {
+  toLineView,
+  toInternalOrderView,
+  lineMonthsOfStock,
+} from './pluginViews';
 import {
   InternalOrderDetail,
   type InternalOrderInfoFragment,
   type InternalOrderLineFragment,
 } from './internalOrderDetail.generated';
 import { InternalOrderDetailContext } from './detailContext.generated';
+import { StoreOwnName } from './indicators.generated';
 import {
-  StoreOwnName,
-  InternalOrderIndicators,
-} from './indicators.generated';
-import { InternalOrderIndicatorsTab } from './InternalOrderIndicatorsTab';
+  applySavedIndicatorValue,
+  ProgramIndicatorsTab,
+  ProgramIndicatorValues,
+} from '../../../domain/indicators';
 import {
   saveInternalOrderFields,
   addInternalOrderFromMasterList,
@@ -54,22 +89,23 @@ import {
   type HeaderEditFields,
 } from './InternalOrderToolbar';
 import { InternalOrderStatusFooter } from './InternalOrderStatusFooter';
-import { InternalOrderLogTab } from './InternalOrderLogTab';
+import { ActivityLogPanel } from '../../../domain/activityLog';
 import { InternalOrderSidePanel } from './InternalOrderSidePanel';
 import { InternalOrderDocumentsTab } from './InternalOrderDocumentsTab';
 import { InternalOrderAncillaryBanner } from './InternalOrderAncillaryBanner';
 import { ExportPrintInternalOrderAction } from './actions/ExportPrintInternalOrderAction';
 import { UseSuggestedQuantitiesAction } from './actions/UseSuggestedQuantitiesAction';
+import { DeleteLinesAction } from './actions/DeleteLinesAction';
 import { InternalOrderLineEditModal } from './edit-modal/InternalOrderLineEditModal';
-import { MasterListPickerModal } from './edit-modal/MasterListPickerModal';
+import { MasterListPickerModal } from '../../../domain/masterList';
 import { SplitButton } from '../../../ui/elements/buttons/SplitButton';
-import { PlusCircleIcon } from '../../../ui/icons';
+import { PlusCircleIcon, MinusCircleIcon } from '../../../ui/icons';
 
 // The internal-order detail view (spec/internal-orders S3): view, header edits,
-// send, the side panel (S5), the Documents tab, Export/Print (reports S4), the
-// Indicators tab, the ancillary Add/Update actions, and the line editor (S4 —
-// Add item + row-click edit). The master-list picker (S7), use-suggested, and
-// the editor's context charts / forecast-calculation display are a later cut.
+// send, the side panel (S5), the Documents / Indicators / Log tabs,
+// Export/Print (reports S4), the ancillary Add/Update actions, the line editor
+// (S4 — Add item + row-click edit), the master-list picker (S7),
+// use-suggested, and bulk line delete.
 //
 // ⚠️ Interim: the line table reads the NESTED `lines` connection with
 // CLIENT-side filter/sort — the spec's server-paginated `requisitionLines`
@@ -77,6 +113,14 @@ import { PlusCircleIcon } from '../../../ui/icons';
 // § "Backend gaps"). It moves server-side once the PR lands.
 
 type Line = InternalOrderLineFragment;
+
+// One shared empty map, so the non-suspending batch read returns a STABLE value
+// while nothing is loaded — a fresh `new Map()` per read would make the columns
+// memo recompute on every unrelated update.
+const EMPTY_BATCH_DATA: ReadonlyMap<
+  string,
+  ReadonlyMap<string, unknown>
+> = new Map();
 
 // The client-side sort keys the read-only line table supports.
 type SortKey =
@@ -90,11 +134,75 @@ type SortKey =
   | 'suggested'
   | 'requested';
 
+// The line filter, shaped like the wire filter the server-paginated lines
+// read will take (itemCodeOrName.like, hideOverMinimum — see the interim note
+// above), so the client-side match swaps to the server filter without a state
+// change.
+type LineFilter = {
+  itemCodeOrName?: { like: string } | null;
+  hideOverMinimum?: boolean | null;
+};
+
+// The line table's filters (ui-standards § tables → filtering): the item
+// code/name search — the same chip the stocktake detail table keeps to hand —
+// and the hide-stock-over-minimum narrowing. Client-side for now, so no
+// debounce.
+const lineFilters: Filter<LineFilter>[] = constructFilters<LineFilter>({
+  itemCodeOrName: {
+    label: () => t('label.code-or-name'),
+    render: props => (
+      <FilterTextInput
+        label={t('label.code-or-name')}
+        placeholder={t('placeholder.search')}
+        testId={props.testId}
+        debounceMs={0}
+        value={props.filter().itemCodeOrName?.like ?? ''}
+        onInput={value =>
+          props.setPartialFilter({
+            itemCodeOrName: value ? { like: value } : null,
+          })
+        }
+      />
+    ),
+  },
+  hideOverMinimum: {
+    label: () => t('label.hide-stock-over-minimum'),
+    render: props => (
+      <FilterCheckbox
+        // The chip's own label names the fact, so the bare pill checkbox —
+        // ticking narrows to the lines still under their reorder threshold;
+        // unticked writes null (the chip stays, added-but-empty), since
+        // there is no "show only over minimum" filter.
+        label={t('label.hide-stock-over-minimum')}
+        testId={props.testId}
+        checked={props.filter().hideOverMinimum === true}
+        onChange={checked =>
+          props.setPartialFilter({ hideOverMinimum: checked ? true : null })
+        }
+      />
+    ),
+  },
+});
+
 const InternalOrderDetailView: Component = () => {
   const params = useParams<{ storeId: string; orderId: string }>();
   const navigate = useNavigate();
-  const [itemFilter, setItemFilter] = createSignal('');
-  const [hideOverMin, setHideOverMin] = createSignal(false);
+  // The item search and hide-over-minimum are the screen's default filters
+  // (ui-standards § tables → filtering): seeded present-as-null so their chips
+  // are on the bar from the start; the client-side match ignores each until
+  // typed / ticked.
+  const [lineFilter, setLineFilter] = createSignal<LineFilter>({
+    itemCodeOrName: null,
+    hideOverMinimum: null,
+  });
+  // Line-table row selection (AC-LN15). Owned by the page (like sort/filter);
+  // a non-empty selection swaps the status footer for the bulk-action bar.
+  const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
+  // Lines a send's reasons-backstop refusal named (AC-R3): their Reason cells
+  // flag until the next send, or until a line edit refetches the table.
+  const [reasonFlaggedIds, setReasonFlaggedIds] = createSignal<Set<string>>(
+    new Set()
+  );
   const [sort, setSort] = createSignal<SortState<SortKey>>({
     key: 'name',
     desc: false,
@@ -106,6 +214,11 @@ const InternalOrderDetailView: Component = () => {
   const [editorLine, setEditorLine] = createSignal<
     { mode: 'add' } | { mode: 'edit'; line: Line }
   >();
+  // Narrowed once, so the editor's initialLine needs no cast (kdd/type-safety).
+  const editorInitialLine = () => {
+    const entry = editorLine();
+    return entry?.mode === 'edit' ? entry.line : undefined;
+  };
   // The Add split button's remembered choice (its primary half reflects the
   // last-picked option, spec S3 § page actions).
   const [addChoice, setAddChoice] = createSignal('item');
@@ -121,9 +234,19 @@ const InternalOrderDetailView: Component = () => {
   const tableConfig = createTableConfig({
     tableId: 'internal-order-detail',
     defaultConfig: {
+      // Comment + code are pinned inline-start so the row stays identifiable
+      // (and its comment reachable) as the wide column set scrolls.
+      base: {
+        columnPinning: { left: [COL.comment, COL.code] },
+      },
       compact: {
         viewMode: 'card',
-        columnVisibility: { unitName: false, dps: false, targetStock: false },
+        columnPinning: { left: [COL.comment, COL.code] },
+        columnVisibility: {
+          [COL.unit]: false,
+          [COL.dps]: false,
+          [COL.targetStock]: false,
+        },
       },
     },
   });
@@ -191,18 +314,44 @@ const InternalOrderDetailView: Component = () => {
       customerNameId: nameId,
     });
   };
-  const [indicators] = createResource(indicatorVariables, async serialised => {
-    const result = await graphqlFetch(
-      InternalOrderIndicators,
-      JSON.parse(serialised)
+  // Report generation seeds for an indicator program order (AC-PR4): the same
+  // program / period / customer identity the Indicators tab reads, handed to
+  // the Export/Print selector so indicator report templates can locate the
+  // program data behind the order. Undefined on any other order (and until the
+  // store's own name id resolves) — then only the standard seeds are sent.
+  const reportSeedArgs = () => {
+    const node = info();
+    const nameId = ownName.latest;
+    if (!showIndicators() || !node?.program || !node.period || !nameId)
+      return undefined;
+    return {
+      programId: node.program.id,
+      periodId: node.period.id,
+      customerNameId: nameId,
+    };
+  };
+
+  const [indicators, { mutate: mutateIndicators }] = createResource(
+    indicatorVariables,
+    async serialised => {
+      const result = await graphqlFetch(
+        ProgramIndicatorValues,
+        JSON.parse(serialised)
+      );
+      if (result.kind !== 'success') return undefined;
+      return result.data.programIndicators.nodes;
+    }
+  );
+  // A saved indicator cell goes straight back into the fetched nodes (no
+  // refetch → no remount, as the header edits do): the tab's inputs start from
+  // what they are handed, so without this the next mount of a cell — stepping
+  // to another line, re-entering the tab — would show the pre-edit figure
+  // (#957).
+  const onIndicatorSaved = (valueId: string, value: string) =>
+    mutateIndicators(prev =>
+      prev ? applySavedIndicatorValue(prev, valueId, value) : prev
     );
-    if (result.kind !== 'success') return undefined;
-    return result.data.programIndicators.nodes;
-  });
-  const indicatorNodes = () =>
-    indicators.state === 'ready' || indicators.state === 'refreshing'
-      ? (indicators.latest ?? [])
-      : [];
+  const indicatorNodes = () => gated(indicators) ?? [];
   const showDoses = () => prefs()?.manageVaccinesInDoses ?? false;
   const showPricing = () => prefs()?.showIndicativePriceInRequisitions ?? false;
   const showForecast = () =>
@@ -212,6 +361,10 @@ const InternalOrderDetailView: Component = () => {
     prefs()?.selectDestinationStoreForAnInternalOrder ?? false;
   const requiresAuth = () =>
     storePrefs()?.requestRequisitionRequiresAuthorisation ?? false;
+  // The empty-send guard's keep-zero-lines arm (AC-S4, D20).
+  const keepZeroLines = () =>
+    storePrefs()?.keepRequisitionLinesWithZeroRequestedQuantityOnFinalised ??
+    false;
   // The extended consumption columns / Area-AMC header: a program order on a
   // customer-statistics store.
   const showExtended = () =>
@@ -237,7 +390,8 @@ const InternalOrderDetailView: Component = () => {
     indicatorNodes().length > 0;
   const showCustomerBreakdown = () =>
     (storePrefs()?.useConsumptionAndStockFromCustomersForInternalOrders ??
-      false) && (storePrefs()?.extraFieldsInRequisition ?? false);
+      false) &&
+    (storePrefs()?.extraFieldsInRequisition ?? false);
 
   const editable = () => {
     const node = info();
@@ -276,6 +430,28 @@ const InternalOrderDetailView: Component = () => {
     else setEditorLine({ mode: 'add' });
   };
 
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
+  // the SCREEN, once, because two controls trigger it: the header SplitButton
+  // and the ghost button in the table's empty slot. Each carries
+  // `shortcut={ALT_N}` for its badge; neither owns the action.
+  //
+  // `run` is the single-item add, the split button's default option — not its
+  // current menu selection, which may be the master-list picker. Same gate as
+  // both controls (canAddLines), but reached through `.state` rather than
+  // `info()`: that one reads `data.latest`, which suspends on the first pending
+  // read, and the palette evaluates every action's `disabled()` in its own
+  // render (kdd/keyboard-layer § an action's `disabled` MUST NOT read a
+  // suspending source).
+  createAddAction({
+    name: 'button.add-item',
+    run: () => setEditorLine({ mode: 'add' }),
+    disabled: () => {
+      if (data.state !== 'ready' && data.state !== 'refreshing') return true;
+      const node = data.latest;
+      return !node || !isOrderEditable(node) || !!node.program;
+    },
+  });
+
   // The confirmed master-list bulk add (AC-LN7/LN8): add, then refetch the
   // page; a rejection replaces the confirmation with a notice.
   const confirmAddFromMasterList = async () => {
@@ -293,7 +469,7 @@ const InternalOrderDetailView: Component = () => {
   };
 
   // ONE debounced buffer for the as-you-type reference (comment rides the same
-  // buffer for the side panel / send, out of this cut).
+  // buffer for the side panel).
   const edit = createDebouncedEdit<HeaderEditFields>({
     id: () => info()?.id ?? '',
     initial: () => ({
@@ -306,9 +482,7 @@ const InternalOrderDetailView: Component = () => {
   // Header-level save (updateRequestRequisition), spliced back wholesale — the
   // response carries the refreshed node (with recalculated suggestions after a
   // threshold change), so no refetch is needed.
-  const saveField = async (
-    patch: Record<string, unknown>
-  ): Promise<void> => {
+  const saveField = async (patch: Record<string, unknown>): Promise<void> => {
     const node = info();
     if (!node) return;
     const result = await saveInternalOrderFields(params.storeId, {
@@ -337,10 +511,9 @@ const InternalOrderDetailView: Component = () => {
   const monthsThreshold = (node: InternalOrderInfoFragment) =>
     node.minMonthsOfStock > 0 ? node.minMonthsOfStock : node.maxMonthsOfStock;
 
-  const mos = (line: Line) =>
-    line.averageMonthlyConsumption > 0
-      ? line.availableStockOnHand / line.averageMonthlyConsumption
-      : 0;
+  // The one MOS formula, shared with the SDK line view (pluginViews) so the
+  // figure a plugin reads is the figure this column shows.
+  const mos = (line: Line) => lineMonthsOfStock(line);
   const targetStock = (line: Line) =>
     line.averageMonthlyConsumption * (info()?.maxMonthsOfStock ?? 0);
   const isExcess = (line: Line) =>
@@ -373,14 +546,14 @@ const InternalOrderDetailView: Component = () => {
     const node = info();
     if (!node) return [];
     let lines = node.lines.nodes;
-    const f = itemFilter().trim().toLowerCase();
+    const f = (lineFilter().itemCodeOrName?.like ?? '').trim().toLowerCase();
     if (f)
       lines = lines.filter(
         l =>
           l.item.code.toLowerCase().includes(f) ||
           l.itemName.toLowerCase().includes(f)
       );
-    if (hideOverMin()) {
+    if (lineFilter().hideOverMinimum === true) {
       const months = monthsThreshold(node);
       lines = lines.filter(
         l =>
@@ -388,13 +561,7 @@ const InternalOrderDetailView: Component = () => {
           (l.availableStockOnHand === 0 && l.averageMonthlyConsumption === 0)
       );
     }
-    const s = sort();
-    const dir = s.desc ? -1 : 1;
-    return [...lines].sort((a, b) => {
-      const av = sortValue(a, s.key);
-      const bv = sortValue(b, s.key);
-      return av < bv ? -dir : av > bv ? dir : 0;
-    });
+    return sortRows(lines, sort(), sortValue);
   };
 
   // Dose annotation for a unit quantity on a vaccine item under the doses
@@ -408,7 +575,6 @@ const InternalOrderDetailView: Component = () => {
     `${Math.round(value)}${doseSuffix(line, value)}`;
 
   const crumbs = (node: InternalOrderInfoFragment) => [
-    { label: t('replenishment') },
     {
       label: t('internal-order'),
       onClick: () =>
@@ -417,34 +583,46 @@ const InternalOrderDetailView: Component = () => {
     { label: String(node.requisitionNumber) },
   ];
 
-  const columns = (): Column<Line, SortKey>[] => [
+  // Details | Documents | Log | (gated) Indicators (spec S3 § tabs). An
+  // accessor, so the labels re-translate on a language switch and the gated
+  // Indicators tab appears as its gate resolves.
+  const tabs = () => [
+    { value: 'details', label: t('label.details') },
+    { value: 'documents', label: t('label.documents') },
+    { value: 'log', label: t('label.log') },
+    ...(showIndicators()
+      ? [{ value: 'indicators', label: t('label.indicators') }]
+      : []),
+  ];
+
+  const hostColumns = (): Column<Line, SortKey>[] => [
     {
-      c: { key: 'comment' },
-      header: () => t('label.comment'),
-      ...getCommentCell(),
+      c: { key: COL.comment },
+      header: () => <CommentHeader />,
+      ...getCellDefinition('comment'),
     },
     {
-      c: { accessor: line => line.item.code, id: 'code' },
+      c: { accessor: line => line.item.code, id: COL.code },
       sortKey: 'code',
       header: () => t('label.code'),
+      ...getCellDefinition('itemCode'),
     },
     {
-      c: { key: 'itemName' },
+      c: { key: COL.name },
       sortKey: 'name',
       header: () => t('label.name'),
-      meta: { headerPosition: 'primary', wrapLines: 2 },
+      // The text "sink" column: its width floor plus no growth cap lets it
+      // absorb the slack the narrow numeric columns leave behind.
+      ...getCellDefinition('itemName', {
+        headerPosition: 'primary',
+        wrapLines: 2,
+      }),
       // An ancillary line carries an "Ancillary of …" flag naming its
       // principal item(s) (AC-A8); a non-ancillary line shows a plain name.
       cell: info => {
         const line = info.row.original;
         return (
-          <span
-            style={{
-              display: 'inline-flex',
-              'align-items': 'center',
-              gap: 'var(--space-1)',
-            }}
-          >
+          <HStack gap="sm">
             {line.itemName}
             <Show when={line.ancillaryParents.length > 0}>
               <InfoTooltip
@@ -454,13 +632,14 @@ const InternalOrderDetailView: Component = () => {
                   .join(', ')}`}
               />
             </Show>
-          </span>
+          </HStack>
         );
       },
     },
     {
-      c: { accessor: line => line.item.unitName ?? '', id: 'unitName' },
+      c: { accessor: line => line.item.unitName ?? '', id: COL.unit },
       header: () => t('label.unit'),
+      ...getCellDefinition('unitName'),
     },
     // Doses per unit — gated on the vaccine-doses preference; a dash for
     // non-vaccine items.
@@ -469,48 +648,53 @@ const InternalOrderDetailView: Component = () => {
           {
             c: {
               accessor: line => (line.item.isVaccine ? line.item.doses : '-'),
-              id: 'dosesPerUnit',
+              id: COL.dosesPerUnit,
             },
             header: () => t('label.doses-per-unit'),
+            ...getCellDefinition('dosesPerUnit'),
           },
         ] satisfies Column<Line, SortKey>[])
       : []),
     {
-      c: { accessor: line => line.item.defaultPackSize, id: 'dps' },
+      c: { accessor: line => line.item.defaultPackSize, id: COL.dps },
       sortKey: 'dps',
       header: () => t('label.dps'),
-      ...getNumberCell(),
+      ...getCellDefinition('dps'),
     },
     {
       c: {
         accessor: line => numWithDoses(line, line.availableStockOnHand),
-        id: 'available',
+        id: COL.available,
       },
       sortKey: 'available',
       header: () => t('label.available-soh'),
+      ...getCellDefinition('available'),
     },
     {
       // AMC displayed rounded UP; header reads "Area AMC" under the gate.
       c: {
         accessor: line =>
           numWithDoses(line, Math.ceil(line.averageMonthlyConsumption)),
-        id: 'amc',
+        id: COL.amc,
       },
       sortKey: 'amc',
       header: () => (showExtended() ? t('label.area-amc') : t('label.amc')),
+      ...getCellDefinition('amc'),
     },
     {
-      c: { accessor: line => mos(line).toFixed(1), id: 'mos' },
+      c: { accessor: line => mos(line).toFixed(1), id: COL.mos },
       sortKey: 'mos',
       header: () => t('label.months-of-stock'),
+      ...getCellDefinition('mos'),
     },
     {
       c: {
         accessor: line => numWithDoses(line, targetStock(line)),
-        id: 'targetStock',
+        id: COL.targetStock,
       },
       sortKey: 'target',
       header: () => t('label.target-stock'),
+      ...getCellDefinition('targetStock'),
     },
     // Target stock (population) — gated on the forecasting preference; the
     // stored forecast rounded up, zero on a forecast-less line.
@@ -520,20 +704,22 @@ const InternalOrderDetailView: Component = () => {
             c: {
               accessor: line =>
                 numWithDoses(line, Math.ceil(line.forecastTotalUnits ?? 0)),
-              id: 'targetStockPopulation',
+              id: COL.targetStockPopulation,
             },
             header: () => t('label.target-stock-population'),
+            ...getCellDefinition('targetStockPopulation'),
           },
         ] satisfies Column<Line, SortKey>[])
       : []),
     {
       c: {
         accessor: line => numWithDoses(line, line.suggestedQuantity),
-        id: 'suggested',
+        id: COL.suggested,
       },
       sortKey: 'suggested',
       // The reference keys this column "forecast quantity" (cite it).
       header: () => t('label.forecast-quantity'),
+      ...getCellDefinition('suggested'),
     },
     {
       // Requested — under the excess-request preference a request ≥ 1 unit
@@ -541,28 +727,28 @@ const InternalOrderDetailView: Component = () => {
       // counterpart of the editor banner).
       c: {
         accessor: line => numWithDoses(line, line.requestedQuantity),
-        id: 'requested',
+        id: COL.requested,
       },
       sortKey: 'requested',
       header: () => t('label.requested'),
+      // The preset's width + right alignment; the custom cell below overrides
+      // its number formatting (the value is pre-formatted with a dose suffix).
+      ...getCellDefinition('requested'),
       cell: info => {
         const line = info.row.original;
         return (
-          <span
-            style={{
-              display: 'inline-flex',
-              'align-items': 'center',
-              gap: 'var(--space-1)',
-            }}
-          >
+          // justify="end" keeps the number at the cell's inline-end, where the
+          // preset's right alignment put it before the marker joined it.
+          <HStack gap="sm" justify="end">
             <Show when={isExcess(line)}>
-              <AlertTriangleIcon
-                style={{ color: 'var(--error-main)' }}
-                aria-label={t('label.requested')}
+              <StatusMarker
+                severity="error"
+                icon={AlertTriangleIcon}
+                label={t('messages.requested-exceeds-suggested')}
               />
             </Show>
             {numWithDoses(line, line.requestedQuantity)}
-          </span>
+          </HStack>
         );
       },
     },
@@ -572,19 +758,19 @@ const InternalOrderDetailView: Component = () => {
           {
             c: {
               accessor: line => line.pricePerUnit ?? '',
-              id: 'pricePerUnit',
+              id: COL.pricePerUnit,
             },
             header: () => t('label.indicative-price-per-unit'),
-            ...getCurrencyCell(),
+            ...getCellDefinition('pricePerUnit'),
           },
           {
             c: {
               accessor: line =>
                 (line.pricePerUnit ?? 0) * line.requestedQuantity,
-              id: 'indicativePrice',
+              id: COL.indicativePrice,
             },
             header: () => t('label.indicative-price'),
-            ...getCurrencyCell(),
+            ...getCellDefinition('indicativePrice'),
           },
         ] satisfies Column<Line, SortKey>[])
       : []),
@@ -593,36 +779,84 @@ const InternalOrderDetailView: Component = () => {
     ...(showExtended()
       ? ([
           {
-            c: { accessor: l => numWithDoses(l, l.initialStockOnHandUnits), id: 'initialSoh' },
+            c: {
+              accessor: l => numWithDoses(l, l.initialStockOnHandUnits),
+              id: COL.initialSoh,
+            },
             header: () => t('label.initial-stock-on-hand'),
+            ...getCellDefinition('initialSoh'),
           },
           {
-            c: { accessor: l => numWithDoses(l, l.incomingUnits), id: 'incoming' },
+            c: {
+              accessor: l => numWithDoses(l, l.incomingUnits),
+              id: COL.incoming,
+            },
             header: () => t('label.incoming'),
+            ...getCellDefinition('incoming'),
           },
           {
-            c: { accessor: l => numWithDoses(l, l.outgoingUnits), id: 'outgoing' },
+            c: {
+              accessor: l => numWithDoses(l, l.outgoingUnits),
+              id: COL.outgoing,
+            },
             header: () => t('label.outgoing'),
+            ...getCellDefinition('outgoing'),
           },
           {
-            c: { accessor: l => numWithDoses(l, l.lossInUnits), id: 'losses' },
+            c: {
+              accessor: l => numWithDoses(l, l.lossInUnits),
+              id: COL.losses,
+            },
             header: () => t('label.losses'),
+            ...getCellDefinition('losses'),
           },
           {
-            c: { accessor: l => numWithDoses(l, l.additionInUnits), id: 'additions' },
+            c: {
+              accessor: l => numWithDoses(l, l.additionInUnits),
+              id: COL.additions,
+            },
             header: () => t('label.additions'),
+            ...getCellDefinition('additions'),
           },
           {
-            c: { accessor: l => numWithDoses(l, l.expiringUnits), id: 'shortExpiry' },
+            c: {
+              accessor: l => numWithDoses(l, l.expiringUnits),
+              id: COL.shortExpiry,
+            },
             header: () => t('label.short-expiry'),
+            ...getCellDefinition('shortExpiry'),
           },
           {
-            c: { accessor: l => Math.round(l.daysOutOfStock), id: 'daysOutOfStock' },
+            c: {
+              accessor: l => Math.round(l.daysOutOfStock),
+              id: COL.daysOutOfStock,
+            },
             header: () => t('label.days-out-of-stock'),
+            ...getCellDefinition('daysOutOfStock'),
           },
           {
-            c: { accessor: l => l.reason?.reason ?? '', id: 'reason' },
+            c: { accessor: l => l.reason?.reason ?? '', id: COL.reason },
             header: () => t('label.reason'),
+            ...getCellDefinition('reason'),
+            // A send's reasons backstop flags every offending line's Reason
+            // cell (AC-R3): a red alert beside the (usually empty) reason text.
+            cell: info => {
+              const line = info.row.original;
+              return (
+                <HStack gap="sm">
+                  <Show when={reasonFlaggedIds().has(line.id)}>
+                    <StatusMarker
+                      severity="error"
+                      icon={AlertTriangleIcon}
+                      label={t(
+                        'error.reasons-not-provided-program-requisition'
+                      )}
+                    />
+                  </Show>
+                  {line.reason?.reason ?? ''}
+                </HStack>
+              );
+            },
           },
         ] satisfies Column<Line, SortKey>[])
       : []),
@@ -630,16 +864,136 @@ const InternalOrderDetailView: Component = () => {
     ...(showApproval()
       ? ([
           {
-            c: { accessor: l => Math.round(l.approvedQuantity), id: 'approvedPacks' },
+            c: {
+              accessor: l => Math.round(l.approvedQuantity),
+              id: COL.approvedPacks,
+            },
             header: () => t('label.approved-packs'),
+            ...getCellDefinition('approvedPacks'),
           },
           {
-            c: { accessor: l => l.approvalComment ?? '', id: 'approvalComment' },
+            c: {
+              accessor: l => l.approvalComment ?? '',
+              id: COL.approvalComment,
+            },
             header: () => t('label.approval-comment'),
+            ...getCellDefinition('approvalComment'),
           },
         ] satisfies Column<Line, SortKey>[])
       : []),
   ];
+
+  // --- The plugin column region (ui-surface § S8) ---
+  //
+  // ONE memo per reactive step, and the contributions read inside it: the
+  // registry hands back a fresh array on every read, so reading it anywhere a
+  // `<For>` or the table could see it directly would churn the table on every
+  // unrelated update (kdd/solid-reactivity-pitfalls). `visibleContributions`
+  // also applies each contribution's `when` gate, so a contribution hidden by
+  // the session context never reaches the merge — and therefore never gets a
+  // loader run (AC-PLUG-K3).
+  const lineColumnContributions = createMemo(() =>
+    visibleContributions('internalOrderLine.column')
+  );
+
+  // The line editor's info-panel contributions (§ S8 › editor region), composed
+  // the same way and for the same reason: ONE memo, so the array the outlet
+  // `<For>`s over keeps its identity and the mounted panels are never torn down
+  // by an unrelated update. Mapped to the outlet's shape here, so the modal
+  // stays free of the registry.
+  const infoPanelContributions = createMemo(() =>
+    visibleContributions('internalOrderLine.infoPanel').map(contribution => ({
+      id: contributionId(contribution),
+      Component: contribution.Component,
+    }))
+  );
+
+  // The lines a contributed column sees, as the SDK's published DTO.
+  const lineViews = createMemo(() => rows().map(toLineView));
+
+  // The batched per-page column data (AC-PLUG-K4): one loader call per
+  // contribution per rendered set of rows, never per cell. The resource key is
+  // the SERIALISED row-id list plus the contributing ids, so re-reading
+  // the same lines (a header save splicing the node back, a locale switch)
+  // does not refetch, while a filter/sort/refetch that changes it does.
+  const batchKey = () => {
+    const loaders = lineColumnContributions().filter(
+      contribution => contribution.loadData !== undefined
+    );
+    if (loaders.length === 0) return false;
+    return JSON.stringify({
+      rows: rows().map(line => line.id),
+      contributions: loaders.map(contributionId),
+    });
+  };
+
+  const [lineColumnData] = createResource(batchKey, async () => {
+    // The key drives the fetch; the inputs are read UNTRACKED so the fetcher
+    // never becomes a second, hidden dependency edge.
+    const { views, loaders } = untrack(() => ({
+      views: lineViews(),
+      loaders: lineColumnContributions().filter(
+        contribution => contribution.loadData !== undefined
+      ),
+    }));
+    const loaded = new Map<string, ReadonlyMap<string, unknown>>();
+    await Promise.all(
+      loaders.map(async contribution => {
+        try {
+          const entries = await contribution.loadData?.(views);
+          if (entries) loaded.set(contributionId(contribution), entries);
+        } catch (error) {
+          // One plugin's failed loader is that column's failure: it renders its
+          // empty state and every other column keeps working.
+          recordPluginDiagnostic({
+            level: 'error',
+            pluginCode: contribution.pluginCode,
+            message: `column "${contribution.id}" data loader failed: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          });
+        }
+      })
+    );
+    return loaded;
+  });
+
+  // NON-suspending: the line editor is often open ABOVE this
+  // table, and a suspending read would remount the subtree and detach the open
+  // <dialog> from the top layer (kdd/solid-reactivity-pitfalls § no remounts on
+  // interaction).
+  const lineColumnBatch = (): LineColumnBatch => ({
+    data: gated(lineColumnData) ?? EMPTY_BATCH_DATA,
+    loading: lineColumnData.loading,
+  });
+
+  const mergedColumns = createMemo(() =>
+    mergeLineColumns(
+      hostColumns(),
+      lineColumnContributions(),
+      toLineView,
+      lineColumnBatch()
+    )
+  );
+  const columns = () => mergedColumns().columns;
+
+  // Degradations are RECORDED here, not inside the merge: the merge runs in a
+  // memo, and recording is a write. Deduped per page instance so a re-merge (a
+  // preference gate resolving, the batch landing) cannot spam the same broken
+  // anchor.
+  const reportedDiagnostics = new Set<string>();
+  createEffect(() => {
+    for (const diagnostic of mergedColumns().diagnostics) {
+      const key = `${diagnostic.contributionId}:${diagnostic.message}`;
+      if (reportedDiagnostics.has(key)) continue;
+      reportedDiagnostics.add(key);
+      recordPluginDiagnostic({
+        level: 'warning',
+        pluginCode: diagnostic.contributionId.split('.')[0],
+        message: `internalOrderLine.column: ${diagnostic.contributionId} — ${diagnostic.message}`,
+      });
+    }
+  });
 
   return (
     <Suspense fallback={<Spinner center />}>
@@ -670,135 +1024,230 @@ const InternalOrderDetailView: Component = () => {
         }
       >
         {node => (
-          <Page
-            fillBody
-            sidePanelOpen={sidePanelOpen()}
-            sidePanelTitle={t('heading.details')}
-            onSidePanelClose={() => setSidePanelOpen(false)}
-            sidePanelContent={
-              <InternalOrderSidePanel
-                storeId={params.storeId}
-                node={node()}
-                editable={editable()}
-                isProgram={isProgram()}
-                showApproval={showApproval()}
-                showPricing={showPricing()}
-                showSourceLink={showSourceLink()}
-                edit={edit}
-                onSaveField={patch => void saveField(patch)}
-                onDeleted={() =>
-                  navigate(
-                    `/${params.storeId}/replenishment/internal-order`,
-                    { replace: true }
-                  )
-                }
-              />
-            }
-            header={
-              <Header>
-                <Breadcrumb crumbs={crumbs(node())} />
-                <HeaderButtons>
-                  {/* Add — a split of Add item (line editor) and Add from
+          // The <Tabs> root wraps the Page from outside (its display: contents
+          // keeps the flex chain intact): the strip renders in the Header, the
+          // panels in the body.
+          <Tabs defaultValue="details">
+            <Page
+              fillBody
+              sidePanelOpen={sidePanelOpen()}
+              sidePanelTitle={t('heading.details')}
+              onSidePanelClose={() => setSidePanelOpen(false)}
+              sidePanelContent={
+                <InternalOrderSidePanel
+                  storeId={params.storeId}
+                  node={node()}
+                  editable={editable()}
+                  isProgram={isProgram()}
+                  showApproval={showApproval()}
+                  showPricing={showPricing()}
+                  showSourceLink={showSourceLink()}
+                  edit={edit}
+                  onSaveField={patch => void saveField(patch)}
+                  onDeleted={() =>
+                    navigate(
+                      `/${params.storeId}/replenishment/internal-order`,
+                      {
+                        replace: true,
+                      }
+                    )
+                  }
+                />
+              }
+              header={
+                <Header>
+                  <Breadcrumb crumbs={crumbs(node())} />
+                  {/* Every control here collapses to its icon on a narrow
+                    viewport (`collapsible="narrow"`, label kept as the
+                    accessible name and repeated as a tooltip — the outbound
+                    header's tier). Labelled, this cluster needs ~44rem, more
+                    than a tablet's header has left beside the breadcrumb, so
+                    it wrapped onto a row of its own — and on a short screen
+                    that row costs table rows, which are worth more. */}
+                  <HeaderButtons>
+                    {/* Add — a split of Add item (line editor) and Add from
                       master list (S7 picker). Shown always but DISABLED on
                       program orders (their item set is fixed at creation) and
                       on read-only orders, with a reason tooltip (AC-LN1 —
                       "disable with an explanation", not hide). */}
-                  <SplitButton
-                    icon={<PlusCircleIcon />}
-                    testId="add-item-button"
-                    disabled={!canAddLines()}
-                    disabledTitle={t('error.cannot-add-items-to-requisition')}
-                    value={addChoice()}
-                    onValueChange={setAddChoice}
-                    onAction={onAddAction}
-                    options={[
-                      { value: 'item', label: t('button.add-item') },
-                      {
-                        value: 'master-list',
-                        label: t('button.add-from-master-list'),
-                      },
-                    ]}
-                  />
-                  {/* Use suggested quantities — fills every zero-requested line
+                    <SplitButton
+                      icon={<PlusCircleIcon />}
+                      collapsible="narrow"
+                      testId="add-item-button"
+                      disabled={!canAddLines()}
+                      disabledTitle={t('error.cannot-add-items-to-requisition')}
+                      value={addChoice()}
+                      onValueChange={setAddChoice}
+                      shortcut={ALT_N}
+                      onAction={onAddAction}
+                      options={[
+                        { value: 'item', label: t('button.add-item') },
+                        {
+                          value: 'master-list',
+                          label: t('button.add-from-master-list'),
+                        },
+                      ]}
+                    />
+                    {/* Use suggested quantities — fills every zero-requested line
                       with its suggestion (AC-Q1). Available on program orders,
                       so gated on editability alone (not canAddLines); disabled
                       on read-only orders (AC-Q2). */}
-                  <UseSuggestedQuantitiesAction
-                    storeId={params.storeId}
-                    orderId={node().id}
-                    disabled={!editable()}
-                    onApplied={() => void refetch()}
-                  />
-                  {/* Export/Print — a read, offered on every status (AC-PR1). */}
-                  <ExportPrintInternalOrderAction orderId={node().id} />
-                  {/* More — reopens the side panel; shown only while closed. */}
-                  <Show when={!sidePanelOpen()}>
-                    <Button
-                      variant="secondary"
-                      icon={<SidebarIcon />}
-                      data-testid="open-detail-panel-button"
-                      onClick={() => setSidePanelOpen(true)}
-                    >
-                      {t('button.more')}
-                    </Button>
+                    <UseSuggestedQuantitiesAction
+                      storeId={params.storeId}
+                      orderId={node().id}
+                      disabled={!editable()}
+                      onApplied={() => void refetch()}
+                    />
+                    {/* Export/Print — a read, offered on every status (AC-PR1). */}
+                    <ExportPrintInternalOrderAction
+                      orderId={node().id}
+                      seedArgs={reportSeedArgs()}
+                    />
+                    {/* More — reopens the side panel; shown only while closed. */}
+                    <Show when={!sidePanelOpen()}>
+                      <Button
+                        variant="secondary"
+                        icon={<SidebarIcon />}
+                        collapsible="narrow"
+                        title={t('button.more')}
+                        data-testid="open-detail-panel-button"
+                        // createSidePanelOpen registers Alt+M; this is the
+                        // control that advertises it (ui-surface S2).
+                        shortcut={ALT_M}
+                        onClick={() => setSidePanelOpen(true)}
+                      >
+                        {t('button.more')}
+                      </Button>
+                    </Show>
+                  </HeaderButtons>
+                  {/* The header field cluster (ui-standards → HeaderToolbar):
+                    each field labelled above its small control, sharing the
+                    row per its FormRowItem weight and wrapping as a unit. The
+                    read-only notices ride the cluster's end as compact chips —
+                    persistent low-urgency context that shouldn't cost a
+                    content row (Alert `compact`; the customer-returns kind
+                    banner's pattern). Both can show; each wraps to its own
+                    line when the row can't hold it. */}
+                  <HeaderToolbar
+                    alert={
+                      <>
+                        <Show when={node().otherParty.store?.isDisabled}>
+                          <Alert severity="info" compact>
+                            {t('info.cannot-edit-disabled-store')}
+                          </Alert>
+                        </Show>
+                        <Show when={isProgram()}>
+                          <Alert severity="info" compact>
+                            {t('info.cannot-edit-program-requisition')}
+                          </Alert>
+                        </Show>
+                      </>
+                    }
+                  >
+                    <InternalOrderToolbar
+                      storeId={params.storeId}
+                      node={node()}
+                      editable={editable()}
+                      isProgram={isProgram()}
+                      showDestination={showDestination()}
+                      edit={edit}
+                      onChangeSupplier={changeSupplier}
+                      supplierError={supplierError()}
+                      onChangeDestination={changeDestination}
+                      onChangeThreshold={changeThreshold}
+                      onChangeTarget={changeTarget}
+                    />
+                  </HeaderToolbar>
+                  {/* The ancillary banner keeps its own full-width row beneath
+                    the cluster (spec S3 § toolbar): it carries CONTROLS
+                    (Details popover + Add/Update + inline error), which the
+                    alert chip slot is not documented for — its final home is
+                    the one open operator decision (ui-migration-report.md). */}
+                  <Show
+                    when={editable() && node().ancillaryState.state !== 'NONE'}
+                  >
+                    <Toolbar>
+                      <InternalOrderAncillaryBanner
+                        storeId={params.storeId}
+                        requisitionId={node().id}
+                        ancillary={node().ancillaryState}
+                        editable={editable()}
+                        onRefreshed={() => void refetch()}
+                      />
+                    </Toolbar>
                   </Show>
-                </HeaderButtons>
-                <Toolbar>
-                  <InternalOrderToolbar
-                    storeId={params.storeId}
-                    node={node()}
-                    editable={editable()}
-                    isProgram={isProgram()}
-                    showDestination={showDestination()}
-                    edit={edit}
-                    onChangeSupplier={changeSupplier}
-                    supplierError={supplierError()}
-                    onChangeDestination={changeDestination}
-                    onChangeThreshold={changeThreshold}
-                    onChangeTarget={changeTarget}
-                    hideOverMin={hideOverMin()}
-                    onHideOverMinChange={setHideOverMin}
-                    itemFilter={itemFilter()}
-                    onItemFilterChange={setItemFilter}
-                  />
-                  {/* The ancillary banner claims its own full-width row beneath
-                      the toolbar block (spec S3 § toolbar). */}
-                  <InternalOrderAncillaryBanner
-                    storeId={params.storeId}
-                    requisitionId={node().id}
-                    ancillary={node().ancillaryState}
-                    editable={editable()}
-                    onRefreshed={() => void refetch()}
-                  />
-                </Toolbar>
-              </Header>
-            }
-            contentFooter={
-              <InternalOrderStatusFooter
-                storeId={params.storeId}
-                node={node()}
-                editable={editable()}
-                onSent={onSent}
-              />
-            }
-          >
-            {/* Details | Documents | Log | (gated) Indicators (spec S3 § tabs). */}
-            <Tabs defaultValue="details">
-              <TabList
-                tabs={[
-                  { value: 'details', label: t('label.details') },
-                  { value: 'documents', label: t('label.documents') },
-                  { value: 'log', label: t('label.log') },
-                  ...(showIndicators()
-                    ? [{ value: 'indicators', label: t('label.indicators') }]
-                    : []),
-                ]}
-              />
+                  {/* The tab strip is the Header's LAST child, so it claims the
+                    header's bottom edge (ui/docs/PAGES.md § tabs — the <Tabs>
+                    root wraps the Page frame from outside). */}
+                  <TabList tabs={tabs()} />
+                </Header>
+              }
+              contentFooter={
+                // Selection action bar while lines are selected (AC-LN15);
+                // otherwise the order's status footer. Matches OMS, which swaps
+                // the whole footer on selection. A program order's checkboxes are
+                // disabled (no delete offered — D32), so nothing selects there
+                // and this bar only ever appears on a general order.
+                <Show
+                  when={selectedIds().length > 0}
+                  fallback={
+                    <InternalOrderStatusFooter
+                      storeId={params.storeId}
+                      node={node()}
+                      editable={editable()}
+                      requiresAuthorisation={requiresAuth()}
+                      keepZeroLines={keepZeroLines()}
+                      onSent={onSent}
+                      onReasonsNotProvided={ids =>
+                        setReasonFlaggedIds(new Set(ids))
+                      }
+                    />
+                  }
+                >
+                  <ContentFooter>
+                    <strong data-testid="selected-rows-count">
+                      {selectedIds().length} {t('label.selected')}
+                    </strong>
+                    {/* On a read-only order the click explains why it can't
+                      proceed rather than confirming (AC-LN16); the whole-order
+                      delete is refused server-side regardless. onDeleted clears
+                      the selection (unmounting this bar) and refetches. */}
+                    <DeleteLinesAction
+                      storeId={params.storeId}
+                      selectedIds={selectedIds}
+                      canDelete={editable}
+                      onDeleted={() => {
+                        setSelectedIds([]);
+                        void refetch();
+                      }}
+                    />
+                    <ContentFooterActions>
+                      <Button
+                        variant="secondary"
+                        icon={<MinusCircleIcon />}
+                        onClick={() => setSelectedIds([])}
+                      >
+                        {t('label.clear-selection')}
+                      </Button>
+                    </ContentFooterActions>
+                  </ContentFooter>
+                </Show>
+              }
+            >
               <TabPanel value="details">
                 <DataTable
                   columns={columns()}
                   rows={rows()}
                   rowKey={line => line.id}
+                  // Filters live in the table's own toolbar (ui-standards §
+                  // tables → filtering), never the page header.
+                  filters={
+                    <FilterBar
+                      filters={lineFilters}
+                      filter={lineFilter()}
+                      onChange={setLineFilter}
+                    />
+                  }
                   loading={data.loading}
                   sort={sort()}
                   onSort={(key, desc) => setSort({ key, desc })}
@@ -806,13 +1255,14 @@ const InternalOrderDetailView: Component = () => {
                   // on a read-only order it opens with every control disabled.
                   onRowClick={line => setEditorLine({ mode: 'edit', line })}
                   // Placeholder lines (requested 0) read in the info tone —
-                  // whole-row blue text, de-emphasising them (ui-surface S3 line
-                  // table), matching outbound's placeholder lines.
+                  // whole-row blue text, de-emphasising them (ui-surface S3
+                  // line table), matching outbound's placeholder lines.
                   rowTone={line =>
                     line.requestedQuantity === 0 ? 'info' : undefined
                   }
                   emptyMessage={
-                    itemFilter().trim()
+                    (lineFilter().itemCodeOrName?.like ?? '').trim() ||
+                    lineFilter().hideOverMinimum === true
                       ? t('error.no-items-filter-on')
                       : t('error.no-internal-order-items')
                   }
@@ -823,7 +1273,8 @@ const InternalOrderDetailView: Component = () => {
                   empty={
                     canAddLines() ? (
                       <Button
-                        icon={<PlusCircleIcon />}
+                        variant="ghost"
+                        shortcut={ALT_N}
                         data-testid="add-item-button"
                         onClick={() => setEditorLine({ mode: 'add' })}
                       >
@@ -833,6 +1284,27 @@ const InternalOrderDetailView: Component = () => {
                   }
                   config={tableConfig.config()}
                   setConfig={tableConfig.setConfig}
+                  // Central-server admins can promote this table's layout to
+                  // the shared install-wide default, the same as the list
+                  // (issue #1118 — the detail table offered no way to save
+                  // table defaults). Gate + action both off the config
+                  // controller; undefined for everyone else, so the action
+                  // isn't offered.
+                  onSaveGlobalDefault={
+                    tableConfig.canSaveGlobalDefault()
+                      ? tableConfig.saveGlobalTableConfig
+                      : undefined
+                  }
+                  // Row selection for the bulk line delete (AC-LN15). The
+                  // column always shows; on a read-only order the delete is
+                  // refused with an explanation (AC-LN16), and on a program
+                  // order — whose line set is fixed — the checkboxes render
+                  // disabled so the affordance reads as blocked, not missing
+                  // (no delete offered, D32).
+                  enableSelection
+                  selectionDisabled={isProgram()}
+                  selectedIds={selectedIds()}
+                  onSelectionChange={setSelectedIds}
                 />
               </TabPanel>
               <TabPanel value="documents">
@@ -844,82 +1316,92 @@ const InternalOrderDetailView: Component = () => {
                 />
               </TabPanel>
               <TabPanel value="log">
-                <InternalOrderLogTab
+                {/* The shared activity-log surface; oldest first per AC-AL1
+                    (spec S3 § Log tab). */}
+                <ActivityLogPanel
                   storeId={params.storeId}
                   recordId={node().id}
+                  order="oldest-first"
                 />
               </TabPanel>
               <Show when={showIndicators()}>
                 <TabPanel value="indicators">
-                  <InternalOrderIndicatorsTab
+                  <ProgramIndicatorsTab
                     storeId={params.storeId}
                     nodes={indicatorNodes()}
                     editable={editable()}
                     showCustomerBreakdown={showCustomerBreakdown()}
+                    onSaved={onIndicatorSaved}
                   />
                 </TabPanel>
               </Show>
-            </Tabs>
 
-            {/* The line editor (S4) — add mode (general orders) or edit mode
+              {/* The line editor (S4) — add mode (general orders) or edit mode
                 (a clicked line). A committed save refetches the line table. */}
-            <InternalOrderLineEditModal
-              open={!!editorLine()}
-              onClose={() => setEditorLine(undefined)}
-              storeId={params.storeId}
-              requisitionId={node().id}
-              minMonths={node().minMonthsOfStock}
-              maxMonths={node().maxMonthsOfStock}
-              editable={editable()}
-              canAdd={canAddLines()}
-              showDoses={showDoses()}
-              showPricing={showPricing()}
-              showForecast={showForecast()}
-              showExcess={showExcess()}
-              showExtended={showExtended()}
-              orderInPacks={orderInPacks()}
-              initialLine={
-                editorLine()?.mode === 'edit'
-                  ? (editorLine() as { mode: 'edit'; line: Line }).line
-                  : undefined
-              }
-              nextLine={resolveNextLine}
-              findLineForItem={findLineForItem}
-              onCommitted={() => void refetch()}
-            />
-
-            {/* Add from master list (S7): the picker, then an are-you-sure
-                confirmation, then the bulk add. */}
-            <MasterListPickerModal
-              open={masterListPickerOpen()}
-              onClose={() => setMasterListPickerOpen(false)}
-              storeId={params.storeId}
-              onSelect={list => {
-                setMasterListPickerOpen(false);
-                setPendingMasterList(list);
-              }}
-            />
-            <Show when={pendingMasterList()}>
-              <ConfirmDialog
-                open
-                title={t('heading.are-you-sure')}
-                message={t('messages.confirm-add-from-master-list')}
-                onConfirm={() => void confirmAddFromMasterList()}
-                onClose={() => setPendingMasterList(undefined)}
+              <InternalOrderLineEditModal
+                open={!!editorLine()}
+                onClose={() => setEditorLine(undefined)}
+                storeId={params.storeId}
+                requisitionId={node().id}
+                minMonths={node().minMonthsOfStock}
+                maxMonths={node().maxMonthsOfStock}
+                editable={editable()}
+                canAdd={canAddLines()}
+                showDoses={showDoses()}
+                showPricing={showPricing()}
+                showForecast={showForecast()}
+                showExcess={showExcess()}
+                showExtended={showExtended()}
+                orderInPacks={orderInPacks()}
+                initialLine={editorInitialLine()}
+                nextLine={resolveNextLine}
+                findLineForItem={findLineForItem}
+                // The info-panel slot's other half (§ S8 › editor region): the
+                // order as the SDK's published view. A prop getter, so a header
+                // save or a status change reaches an open panel in place.
+                order={toInternalOrderView(node(), editable())}
+                infoPanelContributions={infoPanelContributions}
+                onCommitted={() => {
+                  // A line edit may have supplied a missing reason — drop the
+                  // send-backstop flags so they don't linger stale (AC-R3).
+                  setReasonFlaggedIds(new Set<string>());
+                  void refetch();
+                }}
               />
-            </Show>
-            <Show when={masterListError()}>
-              {message => (
+
+              {/* Add from master list (S7): the picker, then an are-you-sure
+                confirmation, then the bulk add. */}
+              <MasterListPickerModal
+                open={masterListPickerOpen()}
+                onClose={() => setMasterListPickerOpen(false)}
+                storeId={params.storeId}
+                onSelect={list => {
+                  setMasterListPickerOpen(false);
+                  setPendingMasterList(list);
+                }}
+              />
+              <Show when={pendingMasterList()}>
                 <ConfirmDialog
                   open
-                  title={t('error.something-wrong')}
-                  message={message()}
-                  onConfirm={() => setMasterListError(undefined)}
-                  onClose={() => setMasterListError(undefined)}
+                  title={t('heading.are-you-sure')}
+                  message={t('messages.confirm-add-from-master-list')}
+                  onConfirm={() => void confirmAddFromMasterList()}
+                  onClose={() => setPendingMasterList(undefined)}
                 />
-              )}
-            </Show>
-          </Page>
+              </Show>
+              <Show when={masterListError()}>
+                {message => (
+                  <ConfirmDialog
+                    open
+                    title={t('error.something-wrong')}
+                    message={message()}
+                    onConfirm={() => setMasterListError(undefined)}
+                    onClose={() => setMasterListError(undefined)}
+                  />
+                )}
+              </Show>
+            </Page>
+          </Tabs>
         )}
       </Show>
     </Suspense>

@@ -4,7 +4,8 @@ import { graphqlFetch } from '@/api/graphql';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { Button } from '@/ui/elements/buttons/Button';
-import { TrashIcon, XCircleIcon } from '@/ui/icons';
+import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
+import { TrashIcon } from '@/ui/icons';
 import { DeleteStocktakes } from '../stocktakes.generated';
 
 export interface DeleteStocktakesActionProps {
@@ -47,7 +48,7 @@ export const DeleteStocktakesAction: Component<
   return (
     <>
       <Button
-        variant="secondary"
+        variant="danger"
         icon={<TrashIcon />}
         data-testid="delete-lines-button"
         onClick={() => setOpen(true)}
@@ -127,17 +128,11 @@ const Body = (props: DeleteStocktakesActionProps & { onClose: () => void }) => {
             // Delete.
             <>
               <Show when={phase() === 'confirm'}>
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
-                  onClick={props.onClose}
-                >
-                  {t('button.cancel')}
-                </Button>
+                <CancelButton onClick={props.onClose} />
               </Show>
               <Button
-                variant="secondary"
-                icon={<TrashIcon />}
+                variant="danger"
+                confirms="plain"
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'deleting'}
                 onClick={() => void run()}
@@ -147,13 +142,7 @@ const Body = (props: DeleteStocktakesActionProps & { onClose: () => void }) => {
             </>
           }
         >
-          <Button
-            variant="secondary"
-            icon={<XCircleIcon />}
-            onClick={props.onClose}
-          >
-            {t('button.cancel')}
-          </Button>
+          <CancelButton onClick={props.onClose} />
         </Show>
       }
     />

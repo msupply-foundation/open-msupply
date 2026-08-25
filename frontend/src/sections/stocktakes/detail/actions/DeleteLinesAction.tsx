@@ -3,12 +3,8 @@ import { t, tPlural } from '@/intl';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { Button } from '@/ui/elements/buttons/Button';
-import {
-  CheckIcon,
-  SearchIcon,
-  TrashIcon,
-  XCircleIcon,
-} from '@/ui/icons';
+import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
+import { TrashIcon } from '@/ui/icons';
 import {
   runBatchStocktakeLines,
   type LineEditCommit,
@@ -52,7 +48,7 @@ export const DeleteLinesAction: Component<DeleteLinesActionProps> = props => {
   return (
     <>
       <Button
-        variant="secondary"
+        variant="danger"
         icon={<TrashIcon />}
         disabled={props.disabled}
         data-testid="delete-lines-button"
@@ -67,13 +63,16 @@ export const DeleteLinesAction: Component<DeleteLinesActionProps> = props => {
   );
 };
 
-type Phase = 'confirm' | 'working' | 'success' | 'error';
+// No success phase: a clean delete CLOSES the dialog — closure is the
+// confirmation and the rows vanishing behind it is the visible result
+// (spec/ui-standards/controls.md § dialogs, D22; § action feedback, D21).
+type Phase = 'confirm' | 'working' | 'error';
 
 const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
   const [phase, setPhase] = createSignal<Phase>('confirm');
   const [errorCount, setErrorCount] = createSignal(0);
-  // Count snapshotted on open (Body mounts once per open) so the
-  // confirm/success message can't shift.
+  // Count snapshotted on open (Body mounts once per open) so the confirm
+  // message can't shift.
   const count = props.selectedIds().length;
 
   const run = async () => {
@@ -82,9 +81,10 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
     const outcome = await runBatchStocktakeLines(props.storeId, {
       delete: props.selectedIds().map(id => ({ id })),
     });
-    if (!outcome) return props.onClose();
+    if (!outcome) return setPhase('confirm'); // handled globally
     props.onCommit(outcome.commit);
-    if (outcome.errors.size === 0) return setPhase('success');
+    // Clean delete: close — the rows are already gone behind the dialog.
+    if (outcome.errors.size === 0) return props.onClose();
     props.onError(outcome.errors); // stamp so the rows show the errors too
     setErrorCount(outcome.errors.size);
     setPhase('error');
@@ -97,14 +97,17 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
       onClose={props.onClose}
       icon={<TrashIcon />}
       testId="confirmation-modal"
-      title={t('heading.are-you-sure')}
+      // The error phase is no longer a question, so the heading stops asking
+      // one (it would otherwise read "Are you sure?" over a rejection).
+      title={
+        phase() === 'error'
+          ? t('heading.cannot-do-that')
+          : t('heading.are-you-sure')
+      }
       description={
         <Switch
           fallback={tPlural('messages.confirm-delete-stocktake_lines', count)}
         >
-          <Match when={phase() === 'success'}>
-            {tPlural('messages.deleted-lines', count)}
-          </Match>
           <Match when={phase() === 'error'}>
             <Alert severity="error">
               {tPlural('messages.line-errors', errorCount())}
@@ -119,19 +122,15 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
             // Delete.
             <>
               <Show when={phase() === 'confirm'}>
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
+                <CancelButton
                   data-testid="dialog-button-cancel"
                   onClick={props.onClose}
-                >
-                  {t('button.cancel')}
-                </Button>
+                />
               </Show>
               <Button
-                variant="secondary"
-                icon={<TrashIcon />}
+                variant="danger"
                 loading={phase() === 'working'}
+                confirms="plain"
                 data-testid="confirmation-modal-ok"
                 onClick={() => void run()}
               >
@@ -140,28 +139,13 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
             </>
           }
         >
-          <Match when={phase() === 'success'}>
-            <Button
-              variant="secondary"
-              icon={<CheckIcon />}
-              data-testid="dialog-button-ok"
-              onClick={props.onClose}
-            >
-              {t('button.ok')}
-            </Button>
-          </Match>
           <Match when={phase() === 'error'}>
-            <Button
-              variant="secondary"
-              icon={<XCircleIcon />}
+            <CancelButton
               data-testid="dialog-button-cancel"
               onClick={props.onClose}
-            >
-              {t('button.cancel')}
-            </Button>
+            />
             <Button
               variant="primary"
-              icon={<SearchIcon />}
               onClick={() => {
                 props.onShowErrors();
                 props.onClose();

@@ -3,7 +3,11 @@ import { t } from '../../../../intl';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
-import { CheckIcon, XCircleIcon, ZapIcon } from '../../../../ui/icons';
+import {
+  CancelButton,
+  OkButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
+import { ZapIcon } from '../../../../ui/icons';
 import { useSuggestedQuantities } from '../internalOrderUpdate';
 
 // The "Use suggested quantities" app-bar action (spec S3 § page actions → S6,
@@ -56,6 +60,10 @@ export const UseSuggestedQuantitiesAction: Component<{
       <Button
         variant="secondary"
         icon={<ZapIcon />}
+        // Icon-only on a narrow viewport, so the header's action cluster fits
+        // beside the breadcrumb instead of taking a row of its own.
+        collapsible="narrow"
+        title={t('button.requested-to-suggested')}
         disabled={props.disabled}
         data-testid="use-suggested-quantities-button"
         onClick={() => setOpen(true)}
@@ -82,32 +90,18 @@ export const UseSuggestedQuantitiesAction: Component<{
               fallback={
                 <>
                   <Show when={phase() === 'confirm'}>
-                    <Button
-                      variant="secondary"
-                      icon={<XCircleIcon />}
-                      onClick={close}
-                    >
-                      {t('button.cancel')}
-                    </Button>
+                    <CancelButton onClick={close} />
                   </Show>
-                  <Button
-                    variant="secondary"
-                    icon={<ZapIcon />}
+                  <OkButton
                     data-testid="confirmation-modal-ok"
                     loading={phase() === 'applying'}
                     onClick={() => void run()}
-                  >
-                    {t('button.ok')}
-                  </Button>
+                  />
                 </>
               }
             >
               <Match when={phase() === 'error'}>
-                <Button
-                  variant="secondary"
-                  icon={<CheckIcon />}
-                  onClick={close}
-                >
+                <Button variant="secondary" confirms="plain" onClick={close}>
                   {t('button.close')}
                 </Button>
               </Match>

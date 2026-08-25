@@ -21,10 +21,23 @@ fragment StocktakeInfo on StocktakeNode {
   verifiedBy
   stocktakeDate
   finalisedDatetime
-  # Read-only "Entered by" / "Created" in the Additional-info side panel.
+  # Read-only "Entered by" / "Created" in the Additional-info side panel —
+  # the email rides the entered-by info tooltip.
   createdDatetime
   user {
     username
+    email
+  }
+  # Files attached to this stocktake — the detail view's Documents tab (S3 § tabs).
+  # The list is read here on the info fragment; upload/delete go through the REST
+  # sync-file store (domain/syncFiles, tableName "stocktake") and re-read the node.
+  documents {
+    nodes {
+      id
+      fileName
+      createdDatetime
+      totalBytes
+    }
   }
 }
 
@@ -46,6 +59,10 @@ fragment StocktakeLine on StocktakeLineNode {
     # fact — computed as counted × packSize × item.doses).
     isVaccine
     doses
+    # Seeds an editable batch's pack size in the line editor (spec/stocktakes
+    # OMS-REG-INV-03.79/.80): a new batch starts at it, and a zero-stock item's
+    # generated line (packSize null, no stock line) is prefilled with it.
+    defaultPackSize
   }
   # The stock line this stocktake line counts (if any). The editor passes these ids as
   # excludeStockLineIds to stockLinesByItem, so a batch already on the stocktake isn't offered
@@ -169,11 +186,21 @@ query stocktakeLines(
 # delete (removed lines) in a single batchStocktake mutation. Insert/update success returns the
 # SAME StocktakeLine fragment as a detail row (spliced back with no refetch); delete returns the
 # id. Errors are per-line (each array element carries its own response union).
+#
+# continueOnError is a PER-CALL choice, so both semantics are available from the one mutation:
+#   - unset (the line editor): the server wraps the whole batch in one transaction and rolls it
+#     ALL back if any member fails — the editor's insert+update+delete is one intended-atomic
+#     save, so a half-applied edit is worse than none.
+#   - true (a bulk selection action over independent lines): every line that validates commits
+#     and the rest report their own error. Without it a single rejected line silently discards
+#     the whole selection's work — and worse, the response still lists the rolled-back lines as
+#     succeeded, so nothing downstream can tell what actually persisted (issue #1150).
 mutation batchStocktakeLines(
   $storeId: String!
   $insert: [InsertStocktakeLineInput!]
   $update: [UpdateStocktakeLineInput!]
   $delete: [DeleteStocktakeLineInput!]
+  $continueOnError: Boolean
 ) {
   batchStocktake(
     storeId: $storeId
@@ -181,6 +208,7 @@ mutation batchStocktakeLines(
       insertStocktakeLines: $insert
       updateStocktakeLines: $update
       deleteStocktakeLines: $delete
+      continueOnError: $continueOnError
     }
   ) {
     insertStocktakeLines {

@@ -5,6 +5,7 @@ import {
   FilterSelect,
   FilterMultiSelect,
   FilterDate,
+  NotChipEditor,
 } from '../../ui/elements/selectors/FilterBar';
 import { t } from '../../intl';
 import {
@@ -27,7 +28,8 @@ export const CustomFieldFilterControl = (props: {
   onChange: (value: CustomFieldFilterValue | null) => void;
   testId?: string;
 }) => {
-  // Typed reads of the current value for a given kind (null/other kind → empty).
+  // Typed reads of the current value for a given kind (null/other kind →
+  // empty).
   const asText = () =>
     props.value?.kind === 'text' ? props.value.contains : '';
   const asBoolean = (): 'true' | 'false' | '' =>
@@ -110,8 +112,9 @@ export const CustomFieldFilterControl = (props: {
               onChange={newIds => {
                 // Selection is a DIFF, so ticking/unticking one option doesn't
                 // re-lock the rest: adding a node selects its whole subtree;
-                // removing a node clears its subtree AND its ancestors (a parent
-                // is only selected while every descendant is), keeping siblings.
+                // removing a node clears its subtree AND its ancestors (a
+                // parent is only selected while every descendant is), keeping
+                // siblings.
                 const prev = new Set(asOptionIds());
                 const next = new Set<string>(newIds);
                 for (const id of newIds.filter(i => !prev.has(i)))
@@ -192,13 +195,19 @@ export const CustomFieldFilterControl = (props: {
 };
 
 // Two controls side by side for a range (number min/max, date from/to).
+//
+// Both halves are FilterBar controls, so both would otherwise claim the chip's
+// focus target and the LAST one mounted would win. `from` is where entry
+// starts, so `to` renders in an empty focus scope (kdd/focus-targets). The
+// slots are JSX props — getters, evaluated here — so `to`'s control really is
+// constructed inside that scope.
 const Range = (props: { from: JSX.Element; to: JSX.Element }) => (
   <span
     style={{ display: 'inline-flex', gap: '0.5rem', 'align-items': 'center' }}
   >
     {props.from}
     <span aria-hidden="true">–</span>
-    {props.to}
+    <NotChipEditor>{props.to}</NotChipEditor>
   </span>
 );
 

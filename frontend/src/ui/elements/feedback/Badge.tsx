@@ -2,7 +2,7 @@ import styles from './Badge.module.css';
 
 /*
  * Count / status badge — the small pill that rides on another element (the
- * current app's nav-entry sync badge: a records-to-push count, "99+", or an
+ * current app's nav-entry sync badge: a small count, "99+", or an
  * alert mark). Hand-rolled: one <span> + CSS, no interaction contract to buy.
  *
  * Meaning is carried by the label text (and the host's `title`/accessible

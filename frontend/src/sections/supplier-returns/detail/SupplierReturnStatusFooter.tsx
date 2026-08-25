@@ -1,25 +1,25 @@
 import { createSignal, Show, type Component } from 'solid-js';
-import { useNavigate, useParams } from '@solidjs/router';
 import { t } from '../../../intl';
 import { CheckboxButton } from '../../../ui/elements/buttons/CheckboxButton';
-import { Button } from '../../../ui/elements/buttons/Button';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
-import { XCircleIcon } from '../../../ui/icons';
 import { StatusChangeAction } from './actions/StatusChangeAction';
-import { currentStep, statusSteps } from './returnStatus';
+import { currentStep, filterByStatusPreference } from '@/domain/invoice';
+import { STATUS_FLOW, statusSteps } from './returnStatus';
 import type { SupplierReturnInfoFragment } from './supplierReturnDetail.generated';
 
 // The return-level footer (spec/supplier-returns/ui-surface.md S3 § layout —
 // footer): Hold toggle · lifecycle indicator (New · Picked · Shipped · Received
 // · Verified — Received/Verified for display only, filtered by the invoice-
-// status-options preference) · spacer · Close · the status-advance split button.
+// status-options preference) · spacer · Close · the status-advance split
+// button.
 //
 // Hold is a soft pause on status change only (rules § header rules): the toggle
 // stays available while the return is editable, confirms before flipping, and
-// the messages flip with direction. It hides once the return is read-only (D39).
+// the messages flip with direction. It hides once the return is read-only
+// (D39).
 
 export interface SupplierReturnStatusFooterProps {
   storeId: string;
@@ -39,11 +39,14 @@ export interface SupplierReturnStatusFooterProps {
 export const SupplierReturnStatusFooter: Component<
   SupplierReturnStatusFooterProps
 > = props => {
-  const params = useParams<{ storeId: string }>();
-  const navigate = useNavigate();
   const [holdConfirm, setHoldConfirm] = createSignal(false);
 
   const holding = () => props.node.onHold;
+  // The flow narrowed by the invoice-status-options preference (rules §
+  // preference gates); an excluded current status highlights the nearest
+  // included earlier stage.
+  const offered = () =>
+    filterByStatusPreference(STATUS_FLOW, props.statusOptions);
 
   return (
     <ContentFooter>
@@ -60,23 +63,14 @@ export const SupplierReturnStatusFooter: Component<
       </Show>
 
       <StatusIndicator
-        steps={statusSteps(props.node, props.statusOptions)}
-        current={currentStep(props.node.status, props.statusOptions)}
+        steps={statusSteps(offered(), props.node)}
+        current={currentStep(STATUS_FLOW, offered(), props.node.status)}
       />
 
-      {/* One inline-end cluster: Close sits right beside the Confirm-status
-          split button. */}
+      {/* One inline-end cluster: the Confirm-status split button alone. No
+          Close beside it (D103) — leaving the return is the breadcrumb's job,
+          in the app bar, where every other screen puts it. */}
       <ContentFooterActions>
-        <Button
-          variant="secondary"
-          icon={<XCircleIcon />}
-          data-testid="close-button"
-          onClick={() =>
-            navigate(`/${params.storeId}/replenishment/supplier-return`)
-          }
-        >
-          {t('button.close')}
-        </Button>
         <StatusChangeAction
           storeId={props.storeId}
           node={props.node}
@@ -86,18 +80,26 @@ export const SupplierReturnStatusFooter: Component<
         />
       </ContentFooterActions>
 
-      {/* Hold confirm: message flips with direction (the reversible pause). */}
-      <ConfirmDialog
-        open={holdConfirm()}
-        onClose={() => setHoldConfirm(false)}
-        title={t('heading.are-you-sure')}
-        message={
-          holding()
-            ? t('messages.off-hold-confirmation')
-            : t('messages.on-hold-confirmation')
-        }
-        onConfirm={() => props.onSetHold(!holding())}
-      />
+      {/* Hold confirm: message flips with direction (the reversible pause).
+
+          Mounted only while open (kdd/action-modal). A closed <dialog> is still
+          in the document, just hidden, so a permanently-mounted one keeps its
+          `confirmation-modal` + footer ids matchable — three of them coexist on
+          this screen, which is what forced the e2e suite's `.last()` workaround
+          (e2e/TESTIDS.md). */}
+      <Show when={holdConfirm()}>
+        <ConfirmDialog
+          open
+          onClose={() => setHoldConfirm(false)}
+          title={t('heading.are-you-sure')}
+          message={
+            holding()
+              ? t('messages.off-hold-confirmation')
+              : t('messages.on-hold-confirmation')
+          }
+          onConfirm={() => props.onSetHold(!holding())}
+        />
+      </Show>
     </ContentFooter>
   );
 };

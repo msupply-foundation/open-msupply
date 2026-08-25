@@ -11,7 +11,11 @@ import { graphqlFetch } from '../../../../api/graphql';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
-import { CheckIcon, XCircleIcon, ZapIcon } from '../../../../ui/icons';
+import {
+  CancelButton,
+  OkButton,
+} from '../../../../ui/elements/buttons/StandardButtons';
+import { ZapIcon } from '../../../../ui/icons';
 import { AllocateOutboundLine } from '../outboundDetail.generated';
 import type { OutboundLineFragment } from '../outboundDetail.generated';
 
@@ -24,15 +28,15 @@ export interface AllocateLinesActionProps {
   onCommitted: () => void;
 }
 
-// "Allocate placeholder lines" (spec S3 § bulk line actions, AC-AL1–AL5 + AC-A4):
-// auto-allocation per selected placeholder — FEFO server-side. Outcomes are
-// classified per line exactly as the current app does (fully allocated /
-// partial / failed, with the skip reasons that applied) and reported as
-// inline banners in the dialog's report phase (controls › action feedback —
-// never a toast). A clean run just closes: the updated line table is the
-// confirmation. Zero-quantity placeholders in the selection prompt a removal
-// note in the confirmation (they are deleted by allocation). Runs only when
-// explicitly invoked (rules.md § auto-allocation).
+// "Allocate placeholder lines" (spec S3 § bulk line actions, AC-AL1–AL5 +
+// OMS-REG-DIST-03.8): auto-allocation per selected placeholder — FEFO
+// server-side. Outcomes are classified per line exactly as the current app does
+// (fully allocated / partial / failed, with the skip reasons that applied) and
+// reported as inline banners in the dialog's report phase (controls › action
+// feedback — never a toast). A clean run just closes: the updated line table is
+// the confirmation. Zero-quantity placeholders in the selection prompt a
+// removal note in the confirmation (they are deleted by allocation). Runs only
+// when explicitly invoked (rules.md § auto-allocation).
 type Phase = 'confirm' | 'working' | 'report';
 
 interface Issue {
@@ -67,9 +71,10 @@ export const AllocateLinesAction: Component<
 
   // Confirm FIRST only when zero-quantity placeholders are selected — those are
   // REMOVED by allocation, the one outcome worth confirming (spec S3). Every
-  // other selection (placeholders with quantity, a real line + a placeholder for
-  // the same item, …) allocates straight away with no "Are you sure?" — old-app
-  // parity (it never confirms allocation) — surfacing only the result notice.
+  // other selection (placeholders with quantity, a real line + a placeholder
+  // for the same item, …) allocates straight away with no "Are you sure?" —
+  // old-app parity (it never confirms allocation) — surfacing only the result
+  // notice.
   const onAllocate = () => {
     setIssues([]);
     if (zeroQuantity().length > 0) {
@@ -82,10 +87,11 @@ export const AllocateLinesAction: Component<
   const close = () => {
     setOpen(false);
     setPhase('confirm'); // reset for the next run (also clears the button spinner)
-    // Refetch the grid + clear the selection only as the dialog closes. Doing it
-    // mid-run clears the selection, which unmounts this action (it lives in the
-    // selection-gated bulk bar) and would kill the report dialog before the user
-    // sees it — the outcome must be a modal notice, never a toast (spec S6, D19).
+    // Refetch the grid + clear the selection only as the dialog closes. Doing
+    // it mid-run clears the selection, which unmounts this action (it lives in
+    // the selection-gated bulk bar) and would kill the report dialog before the
+    // user sees it — the outcome must be a modal notice, never a toast (spec
+    // S6, D19).
     if (committed()) {
       setCommitted(false);
       props.onCommitted();
@@ -114,7 +120,8 @@ export const AllocateLinesAction: Component<
       // mid-loop failure so the grid isn't left stale, then bail.
       if (result.kind !== 'success') {
         // Transport/unexpected — the global modal already surfaced it. Earlier
-        // lines may already be allocated server-side; close() refetches + clears.
+        // lines may already be allocated server-side; close() refetches +
+        // clears.
         return close();
       }
       const response = result.data.allocateOutboundShipmentUnallocatedLine;
@@ -232,35 +239,21 @@ export const AllocateLinesAction: Component<
             <Show
               when={phase() !== 'report'}
               fallback={
-                <Button
-                  variant="secondary"
-                  icon={<CheckIcon />}
-                  data-testid="dialog-button-ok"
-                  onClick={close}
-                >
-                  {t('button.ok')}
-                </Button>
+                <OkButton data-testid="dialog-button-ok" onClick={close} />
               }
             >
               <Show when={phase() === 'confirm'}>
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
+                <CancelButton
                   data-testid="dialog-button-cancel"
                   onClick={close}
-                >
-                  {t('button.cancel')}
-                </Button>
+                />
               </Show>
-              <Button
-                variant="secondary"
-                icon={<CheckIcon />}
+              {/* A confirm, not a save — D55 keeps OkButton for this case. */}
+              <OkButton
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'working'}
                 onClick={() => void run()}
-              >
-                {t('button.ok')}
-              </Button>
+              />
             </Show>
           }
         />

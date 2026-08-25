@@ -10,23 +10,31 @@ import { HeaderButtons } from '@/ui/layout/Header/HeaderButtons';
 import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
 import { Button } from '@/ui/elements/buttons/Button';
+import { createAddAction } from '@/ui/utils/keyActions';
+import { ALT_N } from '@/ui/utils/shortcuts';
 import {
   DataTable,
   type Column,
   type SortState,
 } from '@/ui/elements/table/DataTable';
 import {
-  getCommentCell,
+  CommentHeader,
+  getCellDefinition,
   getDateCell,
-  getNumberCell,
 } from '@/ui/elements/table/tableHelpers';
 import { createTableConfig } from '@/api/createTableConfig';
 import { StatusChip } from '@/ui/elements/feedback/StatusChip';
 import { FilterBar } from '@/ui/elements/selectors/FilterBar';
 import { CloseIcon, PlusCircleIcon } from '@/ui/icons';
 import { useUrlQueryState } from '@/list/urlQueryState';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '@/list/pageSize';
+import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
 import { stripEmpty } from '@/typeHelpers';
-import { Stocktakes } from './stocktakes.generated';
+import { Stocktakes, StocktakeCount } from './stocktakes.generated';
 import type {
   StocktakesVariables,
   StocktakesResult,
@@ -45,8 +53,6 @@ import {
 // ContentFooter), so the page owns no CSS. The table itself is the shared
 // TanStack-driven DataTable (server sort, selection, pagination, full-screen).
 // Spec: spec/stocktakes (S1) + spec/ui-standards/{list-views,tables}.
-
-const DEFAULT_PAGE_SIZE = 20;
 
 type StocktakeRow = StocktakesResult['stocktakes']['nodes'][number];
 
@@ -95,13 +101,24 @@ const StocktakesList: Component = () => {
   // StoreGuardLayout, which requires a resolved store before routing.
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
-  const { query, setQuery } =
-    useUrlQueryState<StocktakesListState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<StocktakesListState>({
+    ...DEFAULT_STATE,
+    first: initialPageSize(),
+  });
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   // The create modal owns its own form + create logic; the list just toggles
   // it open. On a successful create it navigates away to the new stocktake's
   // detail page, so the list needs no refetch here.
   const [createOpen, setCreateOpen] = createSignal(false);
+
+  // Alt+N — this screen's add action (spec/keyboard KB-R2, AC-KB7). Declared by
+  // the SCREEN, once, because two controls trigger it: the header button and the
+  // ghost button in the table's empty slot. Each carries `shortcut={ALT_N}` for
+  // its badge; neither owns the action.
+  createAddAction({
+    name: 'label.new-stocktake',
+    run: () => setCreateOpen(true),
+  });
   // The initial (opening-balance) create action — offered from the empty state
   // only when the store has NO stocktakes at all (see hasStocktake below). Like
   // createOpen, a successful create navigates away.
@@ -169,39 +186,47 @@ const StocktakesList: Component = () => {
   // Read `data.latest`, NOT `data()`: `.latest` never suspends (it returns the
   // previous value during a refetch, and undefined before the first load),
   // whereas reading `data()` while pending suspends the whole list into the
-  // router's fallback-less <Suspense> — leaving the page BLANK on a slow initial
-  // load instead of showing the table's loading spinner (#160/#196). Keeping the
-  // read non-suspending lets the DataTable mount immediately and show its
-  // `loading` treatment (kdd/solid-reactivity-pitfalls rule 1).
+  // router's fallback-less <Suspense> — leaving the page BLANK on a slow
+  // initial load instead of showing the table's loading spinner (#160/#196).
+  // Keeping the read non-suspending lets the DataTable mount immediately and
+  // show its `loading` treatment (kdd/solid-reactivity-pitfalls rule 1).
   const rows = () => data.latest?.nodes ?? [];
+
   const totalCount = () => data.latest?.totalCount ?? 0;
+
+  // A bulk delete of the last page's rows leaves the offset past the new end
+  // (src/list/clampPageOffset.ts, issue #1117).
+  clampPageOffset({
+    total: () => settledTotal(data, page => page.totalCount),
+    offset: () => query().offset,
+    pageSize: () => query().first,
+    setOffset: offset => setQuery({ ...query(), offset }),
+  });
 
   // "Does this store have ANY stocktake?" — a SEPARATE, filter-independent
   // fetch (mirrors OMS's useHasStocktake): the main list's totalCount is
   // filter-scoped, so a filter that matches nothing would falsely read as an
-  // empty store and wrongly offer initial creation. One row is enough — we read
-  // the store-wide totalCount with no filter. Keyed on the store only, so it
-  // fetches once per store and never re-runs on filter/sort/page changes. An
-  // initial stocktake is a once-per-store opening balance; when the store has
-  // none the empty state offers "Create initial stocktake", else "New stocktake".
+  // empty store and wrongly offer initial creation. We only need the store-wide
+  // totalCount with no filter, so this uses the count-only `stocktakeCount`
+  // query (no nodes fetched). Keyed on the store only, so it fetches once per
+  // store and never re-runs on filter/sort/page changes. An initial stocktake
+  // is a once-per-store opening balance; when the store has none the empty
+  // state offers "Create initial stocktake", else "New stocktake".
   const [hasStocktakeData] = createResource(
     () => params.storeId,
     async storeId => {
-      const result = await graphqlFetch(Stocktakes, {
-        storeId,
-        page: { first: 1 },
-      });
+      const result = await graphqlFetch(StocktakeCount, { storeId });
       if (result.kind !== 'success') return undefined;
       return result.data.stocktakes.totalCount > 0;
     }
   );
-  // Read `.latest` (non-suspending), NOT `hasStocktakeData()`: a suspending read
-  // here would collapse the whole list into the router's fallback-less Suspense
-  // on first load (blank page — the same trap as `data()` above). Undefined
-  // while unresolved — treat as "has stocktakes" so we DON'T flash the
-  // initial-create affordance before we know (a store with stocktakes is the
-  // common case; showing "New stocktake" and correcting to "initial" would be
-  // the wrong direction to flicker).
+  // Read `.latest` (non-suspending), NOT `hasStocktakeData()`: a suspending
+  // read here would collapse the whole list into the router's fallback-less
+  // Suspense on first load (blank page — the same trap as `data()` above).
+  // Undefined while unresolved — treat as "has stocktakes" so we DON'T flash
+  // the initial-create affordance before we know (a store with stocktakes is
+  // the common case; showing "New stocktake" and correcting to "initial" would
+  // be the wrong direction to flicker).
   const hasStocktake = () => hasStocktakeData.latest ?? true;
 
   const currentSort = (): SortState<SortKey> | undefined => {
@@ -245,9 +270,11 @@ const StocktakesList: Component = () => {
       // Language-neutral '#' for the number column (universal symbol; no t()
       // needed).
       header: () => '#',
-      // getNumberCell merges extra meta — card:'primary' makes the number the
-      // card's title (top-left); right-aligned in table view.
-      ...getNumberCell({ headerPosition: 'primary' }),
+      // The stocktake number is a short record number (like invoiceNumber), so
+      // getCellDefinition gives it the narrow number-width preset +
+      // right-align; headerPosition:'primary' makes it the card's title
+      // (top-left).
+      ...getCellDefinition('stocktakeNumber', { headerPosition: 'primary' }),
     },
     {
       c: { key: 'status' },
@@ -275,12 +302,12 @@ const StocktakesList: Component = () => {
     {
       c: { key: 'comment' },
       // Not sortable — matches OMS's list column set.
-      header: () => t('label.comment'),
-      ...getCommentCell(),
+      header: () => <CommentHeader />,
+      ...getCellDefinition('comment'),
     },
   ];
 
-  const crumbs = () => [{ label: t('inventory') }, { label: t('stocktakes') }];
+  const crumbs = () => [{ label: t('stocktakes') }];
 
   return (
     <Page
@@ -291,6 +318,7 @@ const StocktakesList: Component = () => {
           <HeaderButtons>
             <Button
               icon={<PlusCircleIcon />}
+              shortcut={ALT_N}
               data-testid="new-stocktake-button"
               onClick={() => setCreateOpen(true)}
             >
@@ -356,16 +384,17 @@ const StocktakesList: Component = () => {
         sort={currentSort()}
         onSort={onSort}
         onRowClick={openRow}
-        emptyMessage={t('error.no-stocktakes')}
+        emptyMessage={`${t('error.no-stocktakes')} ${hasStocktake() ? '' : t('label.click-to-create-an')}`}
         // The empty-state action flips on whether the store has ANY stocktake
-        // (mirrors OMS): a store with none is offered the once-per-store INITIAL
-        // (opening-balance) create — a plain confirm, no mode controls; a store
-        // that already has stocktakes (incl. filtered-to-nothing) gets the
-        // regular "New stocktake" modal.
+        // (mirrors OMS): a store with none is offered the once-per-store
+        // INITIAL (opening-balance) create — a plain confirm, no mode controls;
+        // a store that already has stocktakes (incl. filtered-to-nothing) gets
+        // the regular "New stocktake" modal.
         empty={
           hasStocktake() ? (
             <Button
-              icon={<PlusCircleIcon />}
+              variant="ghost"
+              shortcut={ALT_N}
               data-testid="nothing-here-create-button"
               onClick={() => setCreateOpen(true)}
             >
@@ -373,7 +402,7 @@ const StocktakesList: Component = () => {
             </Button>
           ) : (
             <Button
-              icon={<PlusCircleIcon />}
+              variant="ghost"
               data-testid="nothing-here-create-button"
               onClick={() => setInitialOpen(true)}
             >
@@ -396,21 +425,28 @@ const StocktakesList: Component = () => {
             ? tableConfig.saveGlobalTableConfig
             : undefined
         }
-        // Pagination renders as an overlay INSIDE the table (bottom-inline-end),
-        // not in a page footer band — consistent with the stocktake detail view
-        // (kdd/table-state). State stays page-owned/URL-backed.
+        // Pagination renders as an overlay INSIDE the table
+        // (bottom-inline-end), not in a page footer band — consistent with the
+        // stocktake detail view (kdd/table-state). State stays
+        // page-owned/URL-backed.
         pagination={{
           offset: query().offset,
           pageSize: query().first,
           total: totalCount(),
           onOffsetChange: offset => setQuery({ ...query(), offset }),
-          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+          // The chosen size is remembered for the next visit (D106).
+          onPageSizeChange: first => {
+            rememberPageSize(first);
+            setQuery({ ...query(), first, offset: 0 });
+          },
         }}
       />
-      <CreateStocktakeModal
-        open={createOpen()}
-        onClose={() => setCreateOpen(false)}
-      />
+      {/* Mounted only while open: the modal's resources (locations + the
+          stock-line estimate) run on mount, so gating the mount keeps them from
+          firing on the list screen before the user opens the create flow. */}
+      <Show when={createOpen()}>
+        <CreateStocktakeModal open onClose={() => setCreateOpen(false)} />
+      </Show>
       <CreateInitialStocktakeAction
         open={initialOpen()}
         onClose={() => setInitialOpen(false)}

@@ -15,7 +15,7 @@ import { PatientSearch, type PatientOption } from '../../../domain/patient';
 import { ClinicianSelect } from '../../../domain/clinician';
 import { ProgramNameSelect } from '../../../domain/program';
 import { CreatePatientModal } from '../../patients';
-import { prescriptionDateInstant } from '../detail/prescriptionUpdate';
+import { newPrescriptionDate } from '../detail/prescriptionUpdate';
 import { InsertPrescription } from './createPrescription.generated';
 
 // The create-prescription modal (spec/prescriptions/ui-surface.md S2, FL2):
@@ -65,6 +65,9 @@ export const CreatePrescriptionModal: Component<
   const create = async () => {
     const chosen = patient();
     if (!chosen || busy()) return;
+    // The date only rides along when it BACKDATES — today means "not
+    // backdated", so the field is left out entirely (see newPrescriptionDate).
+    const backdatedTo = newPrescriptionDate(date());
     setBusy(true);
     setError(undefined);
     // Creation rejections are ALL non-typed (contract § creation), so opt in
@@ -80,10 +83,7 @@ export const CreatePrescriptionModal: Component<
           ...(reference().trim() ? { theirReference: reference().trim() } : {}),
           ...(clinicianId() ? { clinicianId: clinicianId() } : {}),
           ...(programId() ? { programId: programId() } : {}),
-          // The picked day rides as its end-of-day instant: today reads as
-          // not-backdated (a "future" instant the server clears — AC-B5); an
-          // earlier day backdates (AC-B1).
-          prescriptionDate: prescriptionDateInstant(date()),
+          ...(backdatedTo ? { prescriptionDate: backdatedTo } : {}),
         },
       },
       { returnGraphqlErrors: true }
@@ -123,12 +123,14 @@ export const CreatePrescriptionModal: Component<
         <>
           <Button
             variant="secondary"
+            confirms="cancel"
             data-testid="dialog-button-cancel"
             onClick={close}
           >
             {t('button.cancel')}
           </Button>
           <Button
+            confirms="plain"
             data-testid="dialog-button-ok"
             disabled={!patient()}
             loading={busy()}
@@ -175,6 +177,10 @@ export const CreatePrescriptionModal: Component<
           hideLabel
           inputTestId="clinician-select"
           value={clinicianId()}
+          // The create-clinician side flow (S8): the picker owns it, and a
+          // clinician created here comes back selected.
+          allowCreate
+          storeId={params.storeId}
           onChange={clinician => setClinicianId(clinician?.id)}
         />
       </FieldRow>
