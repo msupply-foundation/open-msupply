@@ -48,6 +48,7 @@ mod v2_20_00;
 mod v2_21_00;
 mod v2_21_01;
 mod v3_00_00;
+mod v3_01_01;
 mod version;
 mod views;
 
@@ -223,6 +224,7 @@ pub fn migrate(
         Box::new(v2_21_00::V2_21_00),
         Box::new(v2_21_01::V2_21_01),
         Box::new(v3_00_00::V3_00_00),
+        Box::new(v3_01_01::V3_01_01),
     ];
 
     // Check if the database has been initialised, if not run the base sql to kick start the process

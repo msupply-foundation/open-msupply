@@ -2,14 +2,13 @@ use super::{
     utils::{merge_legacy_custom_fields, LegacyCustomFieldsBuilder},
     FkField, IntegrationOperation, PullTranslateResult, PushTranslateResult, SyncTranslation,
 };
+use crate::sync::central_mapping_custom_fields::keys;
 use crate::sync::translations::{
     clinician::ClinicianTranslation, currency::CurrencyTranslation,
     diagnosis::DiagnosisTranslation, name::NameTranslation,
-    name_insurance_join::NameInsuranceJoinTranslation,
-    purchase_order::PurchaseOrderTranslation, shipping_method::ShippingMethodTranslation,
-    store::StoreTranslation, to_legacy_time,
+    name_insurance_join::NameInsuranceJoinTranslation, purchase_order::PurchaseOrderTranslation,
+    shipping_method::ShippingMethodTranslation, store::StoreTranslation, to_legacy_time,
 };
-use crate::sync::central_mapping_custom_fields::keys;
 use crate::sync::CentralServerConfig;
 use anyhow::Context;
 use chrono::{NaiveDate, NaiveDateTime, NaiveTime};
@@ -23,11 +22,11 @@ use repository::{
 };
 use serde::{Deserialize, Serialize};
 use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
-use util::uuid::uuid;
 use util::sync_serde::{
     date_option_to_isostring, date_to_isostring, empty_str_as_option, empty_str_as_option_string,
     naive_time, object_fields_as_option, zero_date_as_option, zero_f64_as_none,
 };
+use util::uuid::uuid;
 
 #[derive(Deserialize, Serialize, Debug, PartialEq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -182,6 +181,12 @@ pub struct LegacyTransactRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "original_PO_ID")]
     pub purchase_order_id: Option<String>,
+    /// OMS-only soft link to the prescriber's prescription_order this dispensing
+    /// invoice was generated from; OG just round-trips the om_ field.
+    #[serde(default)]
+    #[serde(rename = "om_prescription_order_id")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub prescription_order_id: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub requisition_ID: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
@@ -543,8 +548,11 @@ impl SyncTranslation for InvoiceTranslation {
         // name_id is a name id resolved to name_link on upsert; name_link.id == name.id by
         // convention, so validating the name id against name_link is correct.
         let name_id = check_fk(data.name_ID, "name_link_id", FkField::NameLink)?;
-        let default_donor_id =
-            fk_check(data.default_donor_id, "default_donor_link_id", FkField::NameLink)?;
+        let default_donor_id = fk_check(
+            data.default_donor_id,
+            "default_donor_link_id",
+            FkField::NameLink,
+        )?;
         let name_store_id = fk_check(name_store_id, "name_store_id", FkField::Store)?;
 
         let currency_id = fk_check(currency_id, "currency_id", FkField::Currency)?;
@@ -651,6 +659,7 @@ impl SyncTranslation for InvoiceTranslation {
             charges_foreign_currency: oms_fields.charges_foreign_currency,
             legacy_goods_received_id: data.goods_received_ID,
             custom_fields,
+            prescription_order_id: data.prescription_order_id,
             ..Default::default()
         };
 
@@ -783,6 +792,7 @@ impl SyncTranslation for InvoiceTranslation {
                     charges_foreign_currency,
                     legacy_goods_received_id: _,
                     custom_fields,
+                    prescription_order_id,
                 },
             name_row,
             clinician_row,
@@ -866,6 +876,7 @@ impl SyncTranslation for InvoiceTranslation {
             category_ID: category_id,
             category2_ID: category2_id,
             purchase_order_id,
+            prescription_order_id,
             shipping_method_id,
             oms_fields: Some(TransactRowOmsFields {
                 charges_local_currency,
@@ -1709,7 +1720,11 @@ mod tests {
         assert_eq!(operations.len(), 2);
         // The join id is a fresh uuid, so assert on the remaining fields
         let synthesized_join = format!("{:?}", operations[0]);
-        assert!(synthesized_join.contains("NameStoreJoinRow"), "{}", synthesized_join);
+        assert!(
+            synthesized_join.contains("NameStoreJoinRow"),
+            "{}",
+            synthesized_join
+        );
         assert!(
             synthesized_join.contains(r#"name_id: "testId""#),
             "{}",
@@ -1791,7 +1806,6 @@ mod tests {
         };
         assert_eq!(operations.len(), 1);
     }
-
 
     /// `transact.category_ID` maps to the resolved invoice type's category key
     /// in `custom_fields` — on central only (off central the value arrives via
@@ -1929,7 +1943,11 @@ mod tests {
             }))
         );
         assert_eq!(
-            build_legacy_invoice_custom_fields(&InvoiceType::InboundShipment, Some("C1"), Some("C2")),
+            build_legacy_invoice_custom_fields(
+                &InvoiceType::InboundShipment,
+                Some("C1"),
+                Some("C2")
+            ),
             Some(serde_json::json!({ "inbound_shipment_category": "C1" }))
         );
     }

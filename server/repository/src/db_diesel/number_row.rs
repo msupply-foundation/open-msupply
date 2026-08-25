@@ -43,6 +43,7 @@ pub enum NumberRowType {
     PurchaseOrder,
     PurchaseOrderLine(String),
     StockRelocation,
+    PrescriptionOrder,
 }
 
 impl fmt::Display for NumberRowType {
@@ -65,6 +66,7 @@ impl fmt::Display for NumberRowType {
                 write!(f, "PURCHASEORDERLINE_{custom_string}") // Since we split this on _ we can't use that in the main part of the name
             }
             NumberRowType::StockRelocation => write!(f, "STOCK_RELOCATION"),
+            NumberRowType::PrescriptionOrder => write!(f, "PRESCRIPTION_ORDER"),
         }
     }
 }
@@ -86,6 +88,7 @@ impl TryFrom<String> for NumberRowType {
             "CUSTOMER_RETURN" => Ok(NumberRowType::CustomerReturn),
             "PURCHASE_ORDER" => Ok(NumberRowType::PurchaseOrder),
             "STOCK_RELOCATION" => Ok(NumberRowType::StockRelocation),
+            "PRESCRIPTION_ORDER" => Ok(NumberRowType::PrescriptionOrder),
             _ => match s.split_once('_') {
                 Some((prefix, custom_string)) => match prefix {
                     "PROGRAM" => Ok(NumberRowType::Program(custom_string.to_string())),
@@ -100,7 +103,17 @@ impl TryFrom<String> for NumberRowType {
     }
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, Eq, AsChangeset, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Clone,
+    Insertable,
+    Queryable,
+    Debug,
+    PartialEq,
+    Eq,
+    AsChangeset,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[diesel(table_name = number)]
 pub struct NumberRow {
     pub id: String,
@@ -264,6 +277,7 @@ mod number_row_mapping_test {
             NumberRowType::SupplierReturn,
             NumberRowType::CustomerReturn,
             NumberRowType::StockRelocation,
+            NumberRowType::PrescriptionOrder,
         ] {
             match number_row_type {
                 NumberRowType::InboundShipment => {
@@ -361,6 +375,13 @@ mod number_row_mapping_test {
                         NumberRowType::try_from(NumberRowType::StockRelocation.to_string())
                             .unwrap()
                             == NumberRowType::StockRelocation
+                    )
+                }
+                NumberRowType::PrescriptionOrder => {
+                    assert!(
+                        NumberRowType::try_from(NumberRowType::PrescriptionOrder.to_string())
+                            .unwrap()
+                            == NumberRowType::PrescriptionOrder
                     )
                 }
             }

@@ -55,15 +55,16 @@ use graphql_plugin::{
     CentralPluginMutations, CentralPluginQueries, PluginMutations, PluginQueries,
 };
 use graphql_preference::{PreferenceMutations, PreferenceQueries};
+use graphql_prescription_order::{PrescriptionOrderMutations, PrescriptionOrderQueries};
 use graphql_printer::{PrinterMutations, PrinterQueries};
 use graphql_programs::{ProgramsMutations, ProgramsQueries};
 use graphql_purchase_order::{PurchaseOrderMutations, PurchaseOrderQueries};
 use graphql_purchase_order_line::{PurchaseOrderLineMutations, PurchaseOrderLineQueries};
 use graphql_repack::{RepackMutations, RepackQueries};
 use graphql_reports::{CentralReportMutations, ReportQueries};
-use graphql_site::{CentralSiteMutations, CentralSiteQueries};
 use graphql_requisition::{RequisitionMutations, RequisitionQueries};
 use graphql_requisition_line::RequisitionLineMutations;
+use graphql_site::{CentralSiteMutations, CentralSiteQueries};
 use graphql_stock_line::{StockLineMutations, StockLineQueries};
 use graphql_stock_relocation::{StockRelocationMutations, StockRelocationQueries};
 use graphql_stocktake::{StocktakeMutations, StocktakeQueries};
@@ -212,6 +213,7 @@ pub struct Queries(
     pub RequisitionQueries,
     pub ReportQueries,
     pub StockLineQueries,
+    pub PrescriptionOrderQueries,
     pub StockRelocationQueries,
     pub RepackQueries,
     pub PrinterQueries,
@@ -250,6 +252,7 @@ impl Queries {
             RequisitionQueries,
             ReportQueries,
             StockLineQueries,
+            PrescriptionOrderQueries,
             StockRelocationQueries,
             RepackQueries,
             PrinterQueries,
@@ -287,6 +290,7 @@ pub struct Mutations(
     pub RequisitionMutations,
     pub RequisitionLineMutations,
     pub StockLineMutations,
+    pub PrescriptionOrderMutations,
     pub StockRelocationMutations,
     pub RepackMutations,
     pub PrinterMutations,
@@ -319,6 +323,7 @@ impl Mutations {
             RequisitionMutations,
             RequisitionLineMutations,
             StockLineMutations,
+            PrescriptionOrderMutations,
             StockRelocationMutations,
             RepackMutations,
             PrinterMutations,

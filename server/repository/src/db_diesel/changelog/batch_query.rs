@@ -35,6 +35,8 @@ pub enum Row {
     PurchaseOrderLine(PurchaseOrderLineRow),
     Sensor(SensorRow),
     StockLine(StockLineRow),
+    PrescriptionOrder(PrescriptionOrderRow),
+    PrescriptionOrderLine(PrescriptionOrderLineRow),
     StockRelocation(StockRelocationRow),
     StockRelocationLine(StockRelocationLineRow),
     Stocktake(StocktakeRow),
@@ -360,6 +362,18 @@ fn fetch_rows_for_table(
             ChangelogTableName::StockLine => {
                 for r in StockLineRowRepository::new(connection).find_many_by_ids(chunk)? {
                     out.insert(r.id.clone(), Row::StockLine(r));
+                }
+            }
+            ChangelogTableName::PrescriptionOrder => {
+                for r in PrescriptionOrderRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::PrescriptionOrder(r));
+                }
+            }
+            ChangelogTableName::PrescriptionOrderLine => {
+                for r in
+                    PrescriptionOrderLineRowRepository::new(connection).find_many_by_id(chunk)?
+                {
+                    out.insert(r.id.clone(), Row::PrescriptionOrderLine(r));
                 }
             }
             ChangelogTableName::StockRelocation => {

@@ -1,6 +1,7 @@
 use crate::{
     activity_log::{activity_log_entry, log_type_from_invoice_status},
     invoice::{query::get_invoice, stock_effect::StockEffect},
+    processors::ProcessorType,
     service_provider::ServiceContext,
     NullableUpdate,
 };
@@ -109,6 +110,14 @@ pub fn update_prescription(
                 .ok_or(OutError::UpdatedInvoiceDoesNotExist)
         })
         .map_err(|error| error.to_inner_error())?;
+
+    // A verified dispensation generated from a prescription order flips the
+    // order to Dispensed via the processor. Triggering here (the same shape as
+    // trigger_invoice_transfer_processors on shipment updates) makes the flip
+    // immediate for the same-store flow instead of waiting for the post-sync
+    // trigger; the cursor makes a no-op trigger cheap.
+    ctx.processors_trigger
+        .trigger_processor(ProcessorType::PrescriptionOrderStatus);
 
     Ok(invoice)
 }

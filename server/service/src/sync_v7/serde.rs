@@ -91,6 +91,8 @@ pub fn serialize(row: &Row) -> Result<serde_json::Value, SyncRecordSerializeErro
         Row::RnrFormLine(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::SyncMessage(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::Vaccination(r) => serde_json::to_value(r).map_err(map_serde_err),
+        Row::PrescriptionOrder(r) => serde_json::to_value(r).map_err(map_serde_err),
+        Row::PrescriptionOrderLine(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::StockRelocation(r) => serde_json::to_value(r).map_err(map_serde_err),
         Row::StockRelocationLine(r) => serde_json::to_value(r).map_err(map_serde_err),
         // Wire type, not the row: carries status/error across sites (row serde skips them)
@@ -183,6 +185,8 @@ pub(crate) fn deserialize(
         ChangelogTableName::LocationType => from_value::<LocationTypeRow>(data),
         ChangelogTableName::Item => from_value::<ItemRow>(data),
         ChangelogTableName::StockLine => from_value::<StockLineRow>(data),
+        ChangelogTableName::PrescriptionOrder => from_value::<PrescriptionOrderRow>(data),
+        ChangelogTableName::PrescriptionOrderLine => from_value::<PrescriptionOrderLineRow>(data),
         ChangelogTableName::StockRelocation => from_value::<StockRelocationRow>(data),
         ChangelogTableName::StockRelocationLine => from_value::<StockRelocationLineRow>(data),
         ChangelogTableName::Invoice => from_value::<InvoiceRow>(data),

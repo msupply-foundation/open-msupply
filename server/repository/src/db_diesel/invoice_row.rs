@@ -1,6 +1,6 @@
 use super::{
-    clinician_link_row::clinician_link, currency_row::currency, item_link_row::item_link,
-    name_row::name, custom_fields_json::JsonValue, purchase_order_row::purchase_order,
+    clinician_link_row::clinician_link, currency_row::currency, custom_fields_json::JsonValue,
+    item_link_row::item_link, name_row::name, purchase_order_row::purchase_order,
     shipping_method_row::shipping_method, store_row::store, user_row::user_account,
     StorageConnection,
 };
@@ -63,6 +63,7 @@ define_linked_tables! {
         charges_foreign_currency -> Double,
         legacy_goods_received_id -> Nullable<Text>,
         custom_fields -> Nullable<crate::db_diesel::custom_fields_json::CustomFieldsJson>,
+        prescription_order_id -> Nullable<Text>,
     },
     links:{
          name_link_id -> name_id,
@@ -103,9 +104,7 @@ pub enum InvoiceType {
     CustomerReturn,
 }
 
-#[derive(
-    DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default, strum::EnumIter,
-)]
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default, strum::EnumIter)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
 pub enum InvoiceStatus {
@@ -174,6 +173,10 @@ pub struct InvoiceRow {
     /// doc). Rides this row over v7; the v5 translator maps the type's category
     /// key to/from legacy `transact.category_ID`.
     pub custom_fields: Option<JsonValue>,
+    /// Soft link (no FK) to the prescriber's prescription_order this dispensing
+    /// invoice was generated from — the order is remote-owned, so a
+    /// patient-distributed copy of this invoice can land on sites without it.
+    pub prescription_order_id: Option<String>,
     // Resolved from name_link - must be last to match view column order
     pub name_id: String,
     pub default_donor_id: Option<String>,

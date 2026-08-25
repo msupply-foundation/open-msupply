@@ -120,6 +120,11 @@ pub enum ActivityLogType {
     PurchaseOrderStatusChangedFromSentToConfirmed,
     PurchaseOrderLineStatusClosed,
     PurchaseOrderLineStatusChangedFromSentToNew,
+    // Prescription orders (prescriber-authored prescriptions)
+    PrescriptionOrderCreated,
+    PrescriptionOrderReadyToDispense,
+    PrescriptionOrderDispensed,
+    PrescriptionOrderDeleted,
     PatientUpdated,
     PatientCreated,
     InvoiceDateBackdated,
@@ -132,7 +137,17 @@ pub enum ActivityLogType {
     BundledItemDeleted,
 }
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = activity_log)]
 pub struct ActivityLogRow {

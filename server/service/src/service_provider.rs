@@ -10,6 +10,7 @@ use crate::{
     contact::{ContactService, ContactServiceTrait},
     contact_form::{ContactFormService, ContactFormServiceTrait},
     currency::{CurrencyService, CurrencyServiceTrait},
+    custom_field::{CustomFieldService, CustomFieldServiceTrait},
     dashboard::{
         invoice_count::{InvoiceCountService, InvoiceCountServiceTrait},
         item_count::{ItemCountServiceTrait, ItemServiceCount},
@@ -41,10 +42,11 @@ use crate::{
     plugin::{FrontendPluginCache, PluginService, PluginServiceTrait},
     plugin_data::{PluginDataService, PluginDataServiceTrait},
     preference::{PreferenceService, PreferenceServiceTrait},
+    prescription_order::{PrescriptionOrderService, PrescriptionOrderServiceTrait},
+    prescription_order_line::{PrescriptionOrderLineService, PrescriptionOrderLineServiceTrait},
     pricing::{PricingService, PricingServiceTrait},
     printer::{PrinterService, PrinterServiceTrait},
     processors::ProcessorsTrigger,
-    custom_field::{CustomFieldService, CustomFieldServiceTrait},
     program::ProgramServiceTrait,
     programs::{
         contact_trace::{ContactTraceService, ContactTraceServiceTrait},
@@ -71,8 +73,8 @@ use crate::{
     site::{SiteService, SiteServiceTrait},
     standalone_central::{StandaloneCentralService, StandaloneCentralServiceTrait},
     standard_reports::StandardReports,
-    stock_relocation::{StockRelocationService, StockRelocationServiceTrait},
     stock_line::{StockLineService, StockLineServiceTrait},
+    stock_relocation::{StockRelocationService, StockRelocationServiceTrait},
     stocktake::{StocktakeService, StocktakeServiceTrait},
     stocktake_line::{StocktakeLineService, StocktakeLineServiceTrait},
     store::{get_store, get_stores},
@@ -207,6 +209,9 @@ pub struct ServiceProvider {
     // Purchase Orders
     pub purchase_order_service: Box<dyn PurchaseOrderServiceTrait>,
     pub purchase_order_line_service: Box<dyn PurchaseOrderLineServiceTrait>,
+    // Prescription Orders (prescriber-authored prescriptions)
+    pub prescription_order_service: Box<dyn PrescriptionOrderServiceTrait>,
+    pub prescription_order_line_service: Box<dyn PrescriptionOrderLineServiceTrait>,
     // Contacts
     pub contact_service: Box<dyn ContactServiceTrait>,
     // Properties v2
@@ -350,6 +355,8 @@ impl ServiceProvider {
             campaign_service: Box::new(CampaignService),
             purchase_order_service: Box::new(PurchaseOrderService),
             purchase_order_line_service: Box::new(PurchaseOrderLineService),
+            prescription_order_service: Box::new(PrescriptionOrderService),
+            prescription_order_line_service: Box::new(PrescriptionOrderLineService),
             contact_service: Box::new(ContactService {}),
             custom_field_service: Box::new(CustomFieldService {}),
             sync_message_service: Box::new(SyncMessageService),
