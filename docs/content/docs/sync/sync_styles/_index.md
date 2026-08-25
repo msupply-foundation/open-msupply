@@ -78,9 +78,10 @@ The split between `Remote` and `RemoteOwned` is about write authority, not routi
 | **legacy-only** | Lives on the v5 (legacy) transport. |
 | **OMS-native** | Lives on the v6 transport. |
 | **both** | Tagged for both v5 and v6 (only `Name`). |
+| **v7-only** | Tagged for neither v5 nor v6 — no legacy filter ever selects the table, so it travels only over v7. |
 | (no v7 tag) | v7 covers every table that has any sync style. |
 
-Filters that ask for "v6 only" pull just the OMS-native tables. Filters that ask for "v5 only" pull just the legacy-only tables. Filters that pass no transport flag (used by v7) pull every table that has any sync style.
+Filters that ask for "v6 only" pull just the OMS-native tables. Filters that ask for "v5 only" pull just the legacy-only tables. Filters that pass no transport flag (used by v7) pull every table that has any sync style. A **v7-only** table is therefore invisible to v5 and v6 sites — it starts syncing only once a site is on v7.
 
 ### Multi-device flag per table
 
@@ -129,6 +130,8 @@ One row per table, grouped by matrix cell (distribution-set and transport, with 
 | `RnrFormLine` | RemoteOwned | RemoteOwned | v6 | — |
 | `StockRelocation` | RemoteOwned | RemoteOwned | v7-only | — |
 | `StockRelocationLine` | RemoteOwned | RemoteOwned | v7-only | — |
+| `PrescriptionOrder` | RemoteOwned | RemoteOwned | v7-only | — |
+| `PrescriptionOrderLine` | RemoteOwned | RemoteOwned | v7-only | — |
 | `Encounter` | Remote + Patient | Remote + Patient | v6 | — |
 | `Vaccination` | Remote + Patient | Remote + Patient | v6 | — |
 | `ContactTrace` | Remote + Patient | Remote + Patient | v6 | — |
@@ -170,6 +173,9 @@ One row per table, grouped by matrix cell (distribution-set and transport, with 
 | `Unit` | Central | Central | v5 | — |
 | `UserAccount` | Central | Central | v5 | Yes |
 | `VVMStatus` | Central | Central | v5 | — |
+| `CustomField` | Central | Central | v7-only | Yes |
+| `CustomFieldOption` | Central | Central | v7-only | Yes |
+| `CustomFieldScope` | Central | Central | v7-only | Yes |
 | `AncillaryItem` | Central | Central | v6 | — |
 | `AssetCatalogueItem` | Central | Central | v6 | Yes |
 | `AssetCatalogueType` | Central | Central | v6 | Yes |
@@ -210,11 +216,13 @@ One row per table, grouped by matrix cell (distribution-set and transport, with 
 - **RemoteOwned · RemoteOwned · v5** (`IndicatorValue`, `LocationMovement`, `StockLine`, `Stocktake`, …) — site-owned data on the legacy transport. A remote pushes these up to legacy 4D central, which fans them back out via its own routing. From the OMS central perspective there is nothing to send back, so the OMS-side return path is suppressed except at initialisation.
 - **RemoteOwned + Transfer · RemoteOwned + Transfer · v5** (`Requisition`, `RequisitionLine`) — site-owned plus a transfer counterpart store. The changelog records the row's own store and a *transfer* store, so the row routes to the owning site (RemoteOwned) and to the counterpart site (Transfer); a push is accepted from whichever site owns either store.
 - **RemoteOwned + Transfer + Patient · RemoteOwned + Transfer + Patient · v5** (`Invoice`, `InvoiceLine`) — adds patient routing on top of RemoteOwned+Transfer; an invoice also follows its patient (prescriptions only) through name-store-join.
-- **RemoteOwned · RemoteOwned · v6** (`RnrForm`, `RnrFormLine`, `StockRelocation`, `StockRelocationLine`) — site-owned data on the OMS-native transport. Central does not author edits; the return path is suppressed except at initialisation.
+- **RemoteOwned · RemoteOwned · v6** (`RnrForm`, `RnrFormLine`) — site-owned data on the OMS-native transport. Central does not author edits; the return path is suppressed except at initialisation.
+- **RemoteOwned · RemoteOwned · v7-only** (`StockRelocation`, `StockRelocationLine`, `PrescriptionOrder`, `PrescriptionOrderLine`) — site-owned OMS-native records with no legacy counterpart at all: no v5 or v6 filter ever selects them, so they move only between v7 sites and OMS central. Routing behaves like the other RemoteOwned cells — the owning site pushes, and the return path is suppressed except at initialisation.
 - **Remote + Patient · Remote + Patient · v6** (`Encounter`, `Vaccination`, `ContactTrace`) — store-scoped clinical records that should also follow the patient. Each row carries the authoring store *and* the patient. The `Remote` clause delivers it to the owning site; the `Patient` clause delivers it to every other site that knows the patient. Authoring is `Remote` (not `RemoteOwned`): the owning site keeps accepting updates even after it has initialised.
 - **Remote · Remote · v5** (`ActivityLog`, `Location`, `Sensor`, `TemperatureBreach`, `TemperatureLog`, `UserPermission`, `UserStoreJoin`) — store-scoped data on the legacy transport that routes only to the site owning the referenced store, and on **every** cycle (the `Remote` distribution clause, not `RemoteOwned`). `Remote` authoring means the owning site keeps accepting these even after it has initialised, and the every-cycle return path exists because central may legitimately author edits to push back. The cold-chain and activity tables (`ActivityLog`, `Location`, `Sensor`, `TemperatureBreach`, `TemperatureLog`) are all multi-device-tagged, and that is why they sit here rather than in the `RemoteOwned · RemoteOwned` cell: on a multi-device site an edit made on one device must relay through central to the sibling devices every cycle, and those siblings must keep accepting it after they have initialised — behaviour only the `Remote` cell provides. For the user-access tables, `UserStoreJoin` is in practice authored on central (it originates from legacy 4D's `user_store` table); the `Remote` authoring clause simply means central would also accept a push from the owning site rather than rejecting it.
 - **Central · Central · v5** (`Abbreviation`, `Barcode`, …) — central data still served from legacy 4D. This bucket also acts as a catch-all for tables that exist in the changelog but haven't been classified into a more specific cell yet.
 - **Central · Central · v6** (`AncillaryItem`, `AssetCatalogueItem`, …) — authored on OMS central, fans out to every v6 site. Some (notably the vaccine-course family) are re-published to legacy 4D so v5-only stores still receive them (see §7).
+- **Central · Central · v7-only** (`CustomField`, `CustomFieldOption`, `CustomFieldScope`) — the properties-v2 definitions, authored on OMS central and broadcast, but only over v7. They are multi-device-tagged because multi-device sites sync names (which carry custom-field *values*), so the definitions must reach those devices too.
 - **Central + Remote · Central + Remote · v6** (`PluginData`, `Preference`) — store-or-global data on the OMS-native transport. If the record carries a store it routes to the owning site (the Remote clause); if it doesn't it broadcasts to every site (the Central clause). Authoring is `Central + Remote`, so both central and the owning site may edit.
 - **Central + Patient · Central + Patient · v5 + v6** (`Name`) — names are central data — every site needs the full directory — but a patient-typed name additionally carries its own id as the patient on the changelog. Non-patient names route via the broadcast (`Central`) clause; patient names route via the `Patient` clause to every site that knows the patient. On central the `Central` authoring clause rejects and only the `Patient` clause accepts, so the only name-push central accepts is a patient name. `Name` is the only table tagged for **both** transports.
 - **Patient · Patient · v5** (`Document`, `NameInsuranceJoin`, `ProgramEnrolment`, `ProgramEvent`) — pure patient-scoped data on the legacy transport. The changelog row carries only the patient, no store, so routing is purely by Patient and the record follows the patient across stores.
@@ -257,9 +265,9 @@ When a record is mutated, a changelog row is generated. The patterns differ by w
 | Pattern | Tables (examples) | What the changelog records |
 |---|---|---|
 | Store + transfer-store | `Invoice`, `Requisition`, `RnrForm`, `NameStoreJoin` | The row's own store, plus the store backing a referenced name (resolved from the name's home store). Used for both store-owner routing and Transfer routing. `Invoice` additionally tags prescriptions with the patient id so they also route via Patient. |
-| Store only | `StockLine`, `StockRelocation`, `Stocktake`, `Location`, `PurchaseOrder`, `Preference`, `Sensor`, `TemperatureBreach`, `TemperatureLog`, `VVMStatusLog`, `LocationMovement`, `ActivityLog`, `ContactForm`, `Asset`, `PluginData`, `VaccineCourseStoreConfig`, `ClinicianStoreJoin`, `IndicatorValue`, `ItemStoreJoin`, `UserPermission`, `UserStoreJoin` | Just the row's own store. |
+| Store only | `StockLine`, `StockRelocation`, `PrescriptionOrder`, `Stocktake`, `Location`, `PurchaseOrder`, `Preference`, `Sensor`, `TemperatureBreach`, `TemperatureLog`, `VVMStatusLog`, `LocationMovement`, `ActivityLog`, `ContactForm`, `Asset`, `PluginData`, `VaccineCourseStoreConfig`, `ClinicianStoreJoin`, `IndicatorValue`, `ItemStoreJoin`, `UserPermission`, `UserStoreJoin` | Just the row's own store. |
 | Destination store | `SyncMessage` | The message's destination store (when set) is copied to the changelog's `store_id`, which makes the hybrid Remote + broadcast routing work — Remote for messages addressed to a specific store, broadcast for fanout messages. |
-| Line inherits parent | `InvoiceLine` ← `Invoice`, `StocktakeLine` ← `Stocktake`, `RequisitionLine` ← `Requisition`, `RnrFormLine` ← `RnrForm`, `StockRelocationLine` ← `StockRelocation` | The line's changelog is built from the parent's, then `table_name` and `record_id` are overridden to point at the line. Guarantees parent and line stay aligned for store / transfer-store / patient / source-site, so they route together. |
+| Line inherits parent | `InvoiceLine` ← `Invoice`, `StocktakeLine` ← `Stocktake`, `RequisitionLine` ← `Requisition`, `RnrFormLine` ← `RnrForm`, `StockRelocationLine` ← `StockRelocation`, `PrescriptionOrderLine` ← `PrescriptionOrder` | The line's changelog is built from the parent's, then `table_name` and `record_id` are overridden to point at the line. Guarantees parent and line stay aligned for store / transfer-store / patient / source-site, so they route together. |
 | Line emits parent **and** child | `PurchaseOrderLine` → `PurchaseOrder` (upsert) + `PurchaseOrderLine` | Mutating a line also emits a changelog for the parent, so the parent re-syncs and is always at least as fresh as its children on the receiver. The parent entry is always an upsert, even when the line is a delete. |
 | Patient + store | `Encounter`, `Vaccination`, `ContactTrace` | Carries both, so the Remote clause delivers to the owning site and the Patient clause fans out to every other site that knows the patient. |
 | Patient only | `Document`, `NameInsuranceJoin`, `ProgramEnrolment`, `ProgramEvent` | The changelog row has no store; routing is purely by Patient. The record follows the patient across stores. |

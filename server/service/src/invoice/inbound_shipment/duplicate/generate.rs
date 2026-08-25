@@ -46,6 +46,7 @@ pub fn generate(
         on_hold: false,
         requisition_id: None,
         purchase_order_id: None,
+        prescription_order_id: None,
 
         // --- Transport details ---
         transport_reference: source_invoice.transport_reference.clone(),

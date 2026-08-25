@@ -110,6 +110,10 @@ pub enum ActivityLogNodeType {
     PurchaseOrderStatusChangedFromSentToConfirmed,
     PurchaseOrderLineStatusClosed,
     PurchaseOrderLineStatusChangedFromSentToNew,
+    PrescriptionOrderCreated,
+    PrescriptionOrderReadyToDispense,
+    PrescriptionOrderDispensed,
+    PrescriptionOrderDeleted,
     // Patients
     PatientCreated,
     PatientUpdated,

@@ -22,7 +22,7 @@ use crate::{
 use super::{
     assign_requisition_number::AssignRequisitionNumber, contact_form::QueueContactEmailProcessor,
     load_plugin::LoadPlugin, merge_sync_message::MergeSyncMessageProcessor,
-    plugin_processor::PluginProcessor,
+    plugin_processor::PluginProcessor, prescription_order_status::PrescriptionOrderStatusProcessor,
     requisition_auto_finalise::RequisitionAutoFinaliseProcessor,
     support_upload_files::SupportUploadFilesProcessor,
 };
@@ -53,6 +53,7 @@ pub enum ProcessorType {
     LoadPlugin,
     AssignRequisitionNumber,
     AssignPrescriptionNumber,
+    PrescriptionOrderStatus,
     SupportUploadFiles,
     Plugins,
     RequisitionAutoFinalise,
@@ -72,6 +73,11 @@ impl ProcessorType {
             // Re-enable (restore `vec![Box::new(AssignPrescriptionNumber)]` and un-ignore its
             // test) once it is runtime-safe and cursor-seeded - see ideas in #12547.
             ProcessorType::AssignPrescriptionNumber => vec![],
+            // Safe from the #12547 first-run trap: its cursor is seeded at the
+            // changelog head by the migration that creates prescription_order.
+            ProcessorType::PrescriptionOrderStatus => {
+                vec![Box::new(PrescriptionOrderStatusProcessor)]
+            }
             ProcessorType::Plugins => get_plugin_processors(),
             ProcessorType::RequisitionAutoFinalise => {
                 vec![Box::new(RequisitionAutoFinaliseProcessor)]

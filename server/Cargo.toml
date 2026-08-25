@@ -101,6 +101,7 @@ members = [
   "graphql/requisition",
   "graphql/requisition_line",
   "graphql/stock_line",
+  "graphql/prescription_order",
   "graphql/stock_relocation",
   "graphql/stocktake",
   "graphql/stocktake_line",

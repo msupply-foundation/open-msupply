@@ -155,6 +155,16 @@ impl ChangelogTableName {
                 transport: V5,
                 multi_device_site: false,
             },
+            // OMS-native (no legacy 4D counterpart): the prescriber-authored
+            // prescription order — store-owned rows synced over v7 only.
+            // Distribution stays RemoteOwned for now; widen to Patient when
+            // cross-store prescribing lands.
+            PrescriptionOrder | PrescriptionOrderLine => SyncStyle {
+                authoring: vec![RemoteOwned],
+                distribution: vec![D::RemoteOwned],
+                transport: V7_ONLY,
+                multi_device_site: false,
+            },
             // OMS-native (no legacy 4D counterpart since the v2.21 stock-movement rewrite):
             // store-owned rows synced over v7 only.
             StockRelocation | StockRelocationLine => SyncStyle {
