@@ -46,7 +46,19 @@ const config: CapacitorConfig = {
           cleartext: true,
         },
       }
-    : {}),
+    : {
+        // Client mode navigates the WebView to the CHOSEN server's own
+        // origin (spec/desktop AC-DT19's Android sibling; NativeApiPlugin
+        // connectToServer) — any LAN address, undecidable at build time, so
+        // a wildcard rather than a hostname list. cleartext for http
+        // servers (dev/LAN deployments announce protocol=http). SPIKE
+        // posture, like MainActivity's SSL bypass — the real trust model is
+        // spec/android § connection trust.
+        server: {
+          allowNavigation: ['*'],
+          cleartext: true,
+        },
+      }),
 };
 
 export default config;

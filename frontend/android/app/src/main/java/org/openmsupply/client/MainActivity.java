@@ -23,6 +23,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(SaveFilePlugin.class);
         registerPlugin(PrintPlugin.class);
         registerPlugin(ReadLogPlugin.class);
+        registerPlugin(NativeApiPlugin.class);
 
         super.onCreate(savedInstanceState);
 
@@ -36,6 +37,20 @@ public class MainActivity extends BridgeActivity {
                 handler.proceed();
             }
         });
+
+        // Client mode (no embedded server, not the dev-server loop): the
+        // launch decision belongs to the platform, not the bundled app —
+        // load the discovery page (bundled at /discovery/, spec/desktop's
+        // Android sibling: spec/android § launch). The page itself decides
+        // whether to auto-connect to a remembered server or list the LAN
+        // (src/desktop/DiscoveryPage.tsx); NativeApiPlugin answers its
+        // browse/connect calls. The dev-server loop (server.url set) keeps
+        // its current boot — the vite origin serves the discovery page at
+        // /discovery.html for hand-testing instead.
+        if (!server.isAvailable() && bridge.getConfig().getServerUrl() == null) {
+            String discovery = bridge.getLocalUrl() + "/discovery/index.html";
+            bridge.getWebView().post(() -> bridge.getWebView().loadUrl(discovery));
+        }
 
         // Embedded server, only when its library is bundled (manually sourced
         // into jniLibs — the host-backend dev loop runs without it).

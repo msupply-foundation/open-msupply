@@ -9,6 +9,7 @@ lerna-debug.log*
 
 node_modules
 dist
+dist-desktop
 dist-discovery
 dist-showcase
 dist-ssr
@@ -48,3 +49,5 @@ e2e/playwright-report
 # Per-developer Claude Code notes
 CLAUDE.local.md
 __pycache__/
+desktop/dist-discovery
+desktop/node_modules

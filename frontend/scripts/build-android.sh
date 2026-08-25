@@ -43,6 +43,14 @@ if [ ! -d "$ANDROID_HOME" ]; then
 fi
 
 pnpm build
+# The discovery page, bundled at /discovery/ in the same assets (client-mode
+# launch loads it — MainActivity; spec/desktop's Android sibling). Built with
+# a matching base path so its asset URLs live under /discovery/ rather than
+# colliding with the app's /assets/. tsc/tcm already ran in `pnpm build`, so
+# this is the bare vite build.
+VITE_BASE_PATH=/discovery/ pnpm exec vite build --config vite.discovery.config.ts
+rm -rf dist/discovery
+cp -R dist-discovery dist/discovery
 # cap sync writes capacitor.config.json / capacitor.plugins.json here but does
 # not create the dir; ensure it exists (empty on a fresh checkout — all of
 # assets/ is gitignored bar a tracked .gitkeep).
