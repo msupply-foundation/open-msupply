@@ -1,5 +1,4 @@
 import {
-  createEffect,
   createMemo,
   createResource,
   createSignal,
@@ -52,7 +51,10 @@ import {
 import { AlertTriangleIcon } from '../../../ui/icons';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
-import { recordPluginDiagnostic } from '../../../plugins/diagnostics';
+import {
+  createRegionDiagnostics,
+  recordPluginDiagnostic,
+} from '../../../plugins/diagnostics';
 import {
   contributionId,
   visibleContributions,
@@ -978,22 +980,12 @@ const InternalOrderDetailView: Component = () => {
   const columns = () => mergedColumns().columns;
 
   // Degradations are RECORDED here, not inside the merge: the merge runs in a
-  // memo, and recording is a write. Deduped per page instance so a re-merge (a
-  // preference gate resolving, the batch landing) cannot spam the same broken
-  // anchor.
-  const reportedDiagnostics = new Set<string>();
-  createEffect(() => {
-    for (const diagnostic of mergedColumns().diagnostics) {
-      const key = `${diagnostic.contributionId}:${diagnostic.message}`;
-      if (reportedDiagnostics.has(key)) continue;
-      reportedDiagnostics.add(key);
-      recordPluginDiagnostic({
-        level: 'warning',
-        pluginCode: diagnostic.contributionId.split('.')[0],
-        message: `internalOrderLine.column: ${diagnostic.contributionId} — ${diagnostic.message}`,
-      });
-    }
-  });
+  // memo, and recording is a write. Deduping is the shared helper's
+  // (src/plugins/diagnostics).
+  createRegionDiagnostics(
+    () => mergedColumns().diagnostics,
+    () => 'internalOrderLine.column'
+  );
 
   return (
     <Suspense fallback={<Spinner center />}>
