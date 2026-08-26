@@ -400,6 +400,19 @@ export const CustomersIcon = (props: IconProps) => (
   </Stroke>
 );
 
+/* Supplier — the party an order is placed WITH, as distinct from CustomersIcon
+   (the party dispensed TO). The current app draws it as an inbox/tray
+   (common/src/ui/icons/Suppliers.tsx); that MUI icon is a filled 20-box, so it
+   is redrawn here stroke-first on the 24-box, same shape and meaning, so it
+   sits at the same weight as the icons it appears beside. Geometry after
+   Feather's `inbox` (MIT), which is that tray at this box and cap style. */
+export const SuppliersIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11Z" />
+    <path d="M22 12h-6l-2 3h-4l-2-3H2" />
+  </Stroke>
+);
+
 /* Cold chain */
 /* Hugeicons: ThermometerColdIcon */
 export const ThermometerIcon = (props: IconProps) => (
