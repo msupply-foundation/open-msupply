@@ -33,6 +33,13 @@ export interface SlotStorePreferences {
 }
 
 /**
+ * How the entered store is operated, as a domain word — SDK-owned (never the
+ * host's generated `storeMode` enum), so the plugin surface does not move when
+ * the host's query does; the host maps it at the slot boundary.
+ */
+export type SlotStoreMode = 'store' | 'dispensary';
+
+/**
  * The session facts a contribution's `when` gate reads. Session-scoped only —
  * per-record gating belongs in the contribution's own render (sdk-contract §
  * contributions), so a store switch re-evaluates `when` but a row change does
@@ -48,6 +55,16 @@ export interface SlotContext {
    * `UserPermission` names (e.g. 'RequisitionMutate').
    */
   permissions: readonly string[];
+  /**
+   * How the entered store is operated; undefined until the store context
+   * resolves — the mode is NOT yet known, and is never guessed.
+   *
+   * Gate POSITIVELY (`ctx.storeMode === 'dispensary'`): a positive gate is off
+   * while the mode is unresolved, so a gated surface never flashes in before
+   * its store's mode is known. A negated gate (`!== 'dispensary'`) is true in
+   * that window and does flash.
+   */
+  storeMode: SlotStoreMode | undefined;
   storePreferences: SlotStorePreferences;
 }
 
