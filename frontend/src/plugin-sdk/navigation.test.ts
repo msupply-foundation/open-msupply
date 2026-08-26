@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /*
- * The SDK's route/link primitives (spec/plugins/sdk-contract.md § SDK surface).
+ * The SDK's route/link primitives (spec/plugins/sdk-contract.md § SDK surface;
+ * AC-PLUG-P3 for the link, AC-PLUG-P4 for the route).
  *
  * Two things they exist to stop a plugin getting wrong, and both are asserted
  * at BOTH mounts: the entered store, and the mount the app is served under. A

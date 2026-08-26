@@ -35,7 +35,13 @@ const intl = pluginIntl(CODE);
  *    click (here, after doing something else first).
  *
  * Neither names the entered store or the app's mount: the same bundle is
- * correct in every store and on every deploy track.
+ * correct in every store and on every deploy track (AC-PLUG-P3/P4).
+ *
+ * The link's LOOK is the plugin's own, because the host styles no anchor
+ * globally — a bare <a> would come out browser-default blue. One host design
+ * token is all it takes to sit in key with the surrounding chrome, in either
+ * theme (sdk-contract § styling: bespoke styles self-contained, host tokens
+ * MAY be consumed — never host class names).
  */
 const Greeting = () => {
   const [clicks, setClicks] = createSignal(0);
@@ -45,7 +51,11 @@ const Greeting = () => {
       <button type="button" onClick={() => setClicks(count => count + 1)}>
         {intl.t('clicks', { count: formatNumber(clicks()) })}
       </button>{' '}
-      <a href={storeHref('inventory/stock')} data-testid="hello-world-link">
+      <a
+        href={storeHref('inventory/stock')}
+        style={{ color: 'var(--secondary-main)' }}
+        data-testid="hello-world-link"
+      >
         {intl.t('nav.stock')}
       </a>{' '}
       <button

@@ -1,6 +1,10 @@
 import { createRoot } from 'solid-js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { bindHostNavigate, hostNavigate } from './hostNavigate';
+import {
+  bindHostNavigate,
+  hostNavigate,
+  routerHostNavigate,
+} from './hostNavigate';
 
 /*
  * The one binding between the router and code that has no router context (the
@@ -84,5 +88,59 @@ describe('hostNavigate', () => {
 
     expect(assign).toHaveBeenCalledWith('/store-a/inventory/stock');
     expect(replace).toHaveBeenCalledWith('/store-a/catalogue/items');
+  });
+});
+
+/*
+ * The seam ShellLayout binds — the half neither suite covered while the
+ * adapter was an inline lambda there, and the half a nested mount depends on
+ * (AC-PLUG-P3/P4).
+ *
+ * `resolve: false` is the whole content of the adapter, and dropping it fails
+ * ONLY on a nested mount: the router would resolve an already-resolved href
+ * against the base a second time ('/rc' + '/rc/{store}/…'), match no route and
+ * drop the mount — silent at the root, where the base is '' and both settings
+ * agree. So it is asserted here rather than trusted to a comment. What a
+ * rendered `<Router base="/rc">` would add on top is the router's own
+ * behaviour, which is not this repo's to test (and has no DOM to run in).
+ */
+describe('routerHostNavigate', () => {
+  it('tells the router the href is already resolved', () => {
+    const navigate = vi.fn();
+
+    routerHostNavigate(navigate)('/rc/store-a/inventory/stock');
+
+    expect(navigate).toHaveBeenCalledWith('/rc/store-a/inventory/stock', {
+      resolve: false,
+    });
+  });
+
+  it("carries the caller's options through alongside it", () => {
+    const navigate = vi.fn();
+
+    routerHostNavigate(navigate)('/rc/store-a/catalogue/items', {
+      replace: true,
+    });
+
+    expect(navigate).toHaveBeenCalledWith('/rc/store-a/catalogue/items', {
+      replace: true,
+      resolve: false,
+    });
+  });
+
+  it('cannot be talked out of it by a caller', () => {
+    const navigate = vi.fn();
+
+    // A caller has no `resolve` in its own options type (`replace` alone), but
+    // an object carrying one still passes structurally — and resolving twice
+    // is the failure this seam exists to prevent. Pins the spread ORDER:
+    // `{ resolve: false, ...options }` would read the same and be wrong.
+    const options = { replace: false, resolve: true };
+    routerHostNavigate(navigate)('/rc/store-a/inventory/stock', options);
+
+    expect(navigate).toHaveBeenCalledWith('/rc/store-a/inventory/stock', {
+      replace: false,
+      resolve: false,
+    });
   });
 });

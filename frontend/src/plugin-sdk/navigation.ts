@@ -4,9 +4,14 @@
  * record pages, so plugins never hardcode host routes").
  *
  * This is the route/link half: everything a contribution needs to reach a host
- * screen. The typed deep-link builders — the filtered list URLs the dashboard's
- * own stats already use (src/sections/dashboard/statLinks.ts) — are promoted on
- * top of this, and produce exactly the store-relative paths these two take.
+ * screen (AC-PLUG-P3/P4). The typed deep-link builders are the other half and
+ * are NOT here yet — the contract carries that as a ⚠️ VERIFY. When they land,
+ * the filtered list URLs the dashboard's own stats use
+ * (src/sections/dashboard/statLinks.ts) are the obvious thing to promote, but
+ * they are not these functions' vocabulary as they stand: each takes a storeId
+ * and returns '/{store}/…', so a builder handed to `storeHref` unchanged would
+ * name the store twice. Promoting them means dropping that segment — the store
+ * belongs to the host on this surface, which is the whole point of it.
  *
  * A plugin never sees `@solidjs/router`: it is not in the closed import set,
  * and keeping it out is what leaves the host free to change or drop it
@@ -18,12 +23,20 @@
  * SDK-eager rule):
  *
  *  - `storeHref` is the link primitive. Its output is an href, so a plugin
- *    links with a plain `<a href>` (or hands it to an SDK component that takes
- *    one, e.g. the widget card) and gets a real anchor: middle-click, open in a
- *    new tab, the link role and keyboard activation, all for free, and the
+ *    links with a plain `<a href>` and gets a real anchor: middle-click, open
+ *    in a new tab, the link role and keyboard activation, all for free, and the
  *    router intercepts the click so it stays a client-side navigation. A
  *    component export would add markup and CSS decisions the SDK has no reason
  *    to own.
+ *
+ *    An href is NOT what an SDK component would take, though — and no SDK
+ *    export takes a destination today, so this is the rule for the first one
+ *    that does: it takes the same store-relative PATH these do. What comes out
+ *    of `storeHref` is resolved, mount base included, because a bare `<a>` gets
+ *    no resolution from anyone; the host's own link components are the router's
+ *    `<A>` (see ui/elements/typography/RecordLink.tsx), which resolves against
+ *    the base itself and would apply it twice. Two vocabularies, one rule for
+ *    telling them apart: raw anchor ⇒ href, component ⇒ path.
  *  - `navigateTo` is the route primitive, for the case an anchor cannot serve:
  *    navigating from code, after something else happened (the audited
  *    Afghanistan plugin deep-links to the prescription it just created —
