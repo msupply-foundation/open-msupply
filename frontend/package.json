@@ -11,6 +11,8 @@
     "build:plugins": "node scripts/build-plugins.mjs",
     "preview": "vite preview",
     "preview:showcase": "vite preview --config vite.showcase.config.ts",
+    "build:prototypes": "tcm --pattern '**/*.module.css' src && tsc -b && vite build --config vite.prototypes.config.ts",
+    "preview:prototypes": "vite preview --config vite.prototypes.config.ts",
     "css:types": "tcm --pattern '**/*.module.css' src",
     "check": "tcm --pattern '**/*.module.css' src && tsc -b && stylelint \"src/**/*.css\" && node scripts/check-theme-tokens.mjs && node scripts/check-page-css.mjs && node scripts/check-reduced-motion.mjs && node scripts/check-min-browser.mjs",
     "lint": "eslint .",
@@ -18,6 +20,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "codegen": "node codegen/run.cjs",
+    "translate-locale": "node scripts/translate-locale.mjs",
     "test": "vitest run",
     "test:codegen": "node --test \"codegen/__tests__/*.test.cjs\"",
     "e2e": "playwright test --config e2e/playwright.config.ts",
@@ -76,6 +79,6 @@
     ]
   },
   "browserslist": [
-    "chrome >= 138"
+    "chrome >= 132"
   ]
 }

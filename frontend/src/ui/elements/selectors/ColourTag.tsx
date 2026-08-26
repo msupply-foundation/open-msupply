@@ -1,6 +1,10 @@
-import { For } from 'solid-js';
+import { createSignal, For, Show } from 'solid-js';
 import { t } from '../../../intl';
 import { Popover, type PopoverPlacement } from '../feedback/Popover';
+import { TextField } from '../inputs/TextField';
+import { Button } from '../buttons/Button';
+import { Text } from '../typography/Text';
+import { isValidHexColour, normaliseHexColour } from './colourHex';
 import styles from './ColourTag.module.css';
 
 /*
@@ -8,6 +12,9 @@ import styles from './ColourTag.module.css';
  *
  * - `ColourTagDot`: read-only, render instead of picker.
  * - `ColourTagPicker`: the dot with a Popover that opens the colour swatches.
+ *   Opt-in custom-entry mode (`allowCustom` + `onReset`) adds a hex entry and
+ *   a Reset under the swatches (SET-05.40, the store editor's colour
+ *   preference).
  */
 export const TAG_COLOURS = [
   // `name` is the stable identifier the e2e contract's `colour-swatch-<name>`
@@ -46,40 +53,141 @@ export const ColourTagPicker = (props: {
   label?: string;
   variant?: ColourTagVariant;
   placement?: PopoverPlacement;
-}) => (
-  <span class={styles.picker} onClick={e => e.stopPropagation()}>
-    <Popover
-      placement={props.placement ?? 'bottom-start'}
-      triggerLabel={props.label ?? t('label.tag-colour')}
-      triggerTestId="colour-picker-button"
-      triggerClass={props.variant === 'field' ? styles.fieldTrigger : undefined}
-      trigger={
-        props.colour ? (
-          <span class={styles.dot} style={{ '--tag-colour': props.colour }} />
-        ) : (
-          <span class={`${styles.dot} ${styles.dotEmpty}`} />
-        )
-      }
-      closeOnClickInside
-    >
-      <div class={styles.swatches}>
-        <For each={TAG_COLOURS}>
-          {option => (
-            <button
-              type="button"
-              class={styles.swatch}
-              style={{ '--tag-colour': option.value }}
-              data-testid={`colour-swatch-${option.name}`}
-              aria-label={t(option.label)}
-              title={t(option.label)}
-              data-selected={
-                props.colour?.toLowerCase() === option.value ? '' : undefined
-              }
-              onClick={() => props.onSelect(option.value)}
-            />
-          )}
-        </For>
-      </div>
-    </Popover>
-  </span>
-);
+  /** Adds the custom hex entry section under the swatches (SET-05.40). */
+  allowCustom?: boolean;
+  /** With `allowCustom`: renders the Reset action, which commits no colour. */
+  onReset?: () => void;
+}) => {
+  // The hex entry's draft — re-seeded from the record's colour on every open,
+  // so a reopened picker shows what's stored, not last session's typing.
+  const [hex, setHex] = createSignal('');
+  const committable = () => isValidHexColour(hex());
+  // Empty input is idle, not an error (rules § The store editor › Preferences).
+  const showInvalid = () => hex().trim() !== '' && !committable();
+
+  const Swatches = (swatchProps: { onPick: (colour: string) => void }) => (
+    <div class={styles.swatches}>
+      <For each={TAG_COLOURS}>
+        {option => (
+          <button
+            type="button"
+            class={styles.swatch}
+            style={{ '--tag-colour': option.value }}
+            data-testid={`colour-swatch-${option.name}`}
+            aria-label={t(option.label)}
+            title={t(option.label)}
+            data-selected={
+              props.colour?.toLowerCase() === option.value ? '' : undefined
+            }
+            onClick={() => swatchProps.onPick(option.value)}
+          />
+        )}
+      </For>
+    </div>
+  );
+
+  return (
+    <span class={styles.picker} onClick={e => e.stopPropagation()}>
+      <Popover
+        placement={props.placement ?? 'bottom-start'}
+        triggerLabel={props.label ?? t('label.tag-colour')}
+        triggerTestId="colour-picker-button"
+        triggerClass={
+          props.variant === 'field' ? styles.fieldTrigger : undefined
+        }
+        trigger={
+          props.colour ? (
+            <span class={styles.dot} style={{ '--tag-colour': props.colour }} />
+          ) : (
+            <span class={`${styles.dot} ${styles.dotEmpty}`} />
+          )
+        }
+        // Custom mode closes on COMMIT (swatch pick, hex commit, Reset) via
+        // close() below — an inside click on the hex input must not dismiss.
+        closeOnClickInside={!props.allowCustom}
+        onOpen={
+          props.allowCustom ? () => setHex(props.colour ?? '') : undefined
+        }
+      >
+        {(close: () => void) => (
+          <Show
+            when={props.allowCustom}
+            fallback={<Swatches onPick={props.onSelect} />}
+          >
+            {(() => {
+              const commit = () => {
+                if (!committable()) return;
+                props.onSelect(normaliseHexColour(hex()));
+                close();
+              };
+              return (
+                <div class={styles.customPanel}>
+                  <Text variant="subtitle">{t('label.colour-preset')}</Text>
+                  <Swatches
+                    onPick={colour => {
+                      props.onSelect(colour);
+                      close();
+                    }}
+                  />
+                  <Text variant="subtitle">{t('label.colour-custom')}</Text>
+                  <div class={styles.customRow}>
+                    <TextField
+                      label={t('label.colour-custom')}
+                      hideLabel
+                      // A real example (the preset blue, the helper's own
+                      // example) — deliberately not the current app's
+                      // `#RRGGBB` format-notation placeholder.
+                      placeholder="#004fc4"
+                      value={hex()}
+                      error={
+                        showInvalid()
+                          ? t('message.colour-invalid-format')
+                          : undefined
+                      }
+                      helperText={t('message.colour-enter-hex')}
+                      data-testid="colour-hex-input"
+                      onInput={event => setHex(event.currentTarget.value)}
+                      onKeyDown={event => {
+                        if (event.key === 'Enter') {
+                          event.preventDefault();
+                          commit();
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      class={`${styles.swatch} ${styles.previewSwatch}`}
+                      style={{
+                        '--tag-colour': committable()
+                          ? normaliseHexColour(hex())
+                          : 'transparent',
+                      }}
+                      aria-label={t('label.colour-preview')}
+                      title={t('label.colour-preview')}
+                      data-testid="colour-hex-commit"
+                      disabled={!committable()}
+                      onClick={commit}
+                    />
+                  </div>
+                  <Show when={props.onReset}>
+                    <Button
+                      variant="secondary"
+                      class={styles.resetButton}
+                      data-testid="colour-reset"
+                      onClick={() => {
+                        props.onReset?.();
+                        close();
+                      }}
+                    >
+                      {t('button.reset')}
+                    </Button>
+                  </Show>
+                </div>
+              );
+            })()}
+          </Show>
+        )}
+      </Popover>
+    </span>
+  );
+};

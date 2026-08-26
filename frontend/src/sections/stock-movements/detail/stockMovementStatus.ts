@@ -32,6 +32,13 @@ export const STATUS_LABELS: Record<string, string> = {
 export const statusLabel = (status: MovementStatus): string =>
   STATUS_LABELS[status] ?? status;
 
+// The label for the action that advances TO a status — the verb, not the
+// generic "Confirm ‹status›" (which reads as "Confirm Confirmed"):
+// CONFIRMED → Confirm, FINALISED → Finalise. Used by the footer's split
+// button and its confirmation dialog alike, so the two always agree.
+export const advanceLabel = (status: MovementStatus): string =>
+  status === 'FINALISED' ? t('button.finalise') : t('button.confirm');
+
 // The forward statuses offered from the current one (rules § status
 // lifecycle): every later stage, in order — NEW may skip straight to
 // FINALISED. Empty = terminal.

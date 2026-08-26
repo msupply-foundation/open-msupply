@@ -32,9 +32,19 @@
      picker on a short window) must not clip: cap its height to the viewport
      minus the EDGE gap kept on each side (see EDGE in Popover.tsx) and scroll
      internally. Content shorter than this is unaffected. place() also clamps
-     `top` so the (now-bounded) panel stays fully on-screen. */
+     `top` so the (now-bounded) panel stays fully on-screen. The scrolling is on
+     `.body`, not here: the panel is the portal mount for popups opened inside
+     it (Popover.tsx), and a scroll container here would clip them. */
   max-block-size: calc(100dvh - 16px);
-  overflow-y: auto;
+  /* `visible` must be DECLARED, not merely left alone: the UA sheet gives
+     `[popover]` its own `overflow: auto`, so dropping an author `overflow-y`
+     leaves the panel a scroll container and it clips the popup mounted into it
+     (a Select listbox is absolutely positioned, and the panel is its containing
+     block — so a listbox reaching past the panel's edge is cut off and takes no
+     clicks, which is #1107 again in a smaller panel). Dialog.module.css declares
+     the same thing on the dialog box for the same reason. Content is kept off
+     the rounded corners by .body, so nothing ordinary bleeds out. */
+  overflow: visible;
   padding: var(--space-3) var(--space-4);
   border: 1px solid var(--color-border-value);
   border-radius: var(--radius-md);
@@ -50,9 +60,34 @@
   line-height: 1.5;
 }
 
-/* No reduced-motion media query: --motion-fast is zeroed in tokens.css, so the
+/* The panel's content, and the only part that scrolls. A portaled popup is
+   this element's SIBLING, so it escapes the scroll container. `min-block-size`
+   because a column flex item won't otherwise shrink below its content, and the
+   panel's cap would be overrun instead of scrolled. */
+.body {
+  min-block-size: 0;
+  overflow-y: auto;
+}
+
+/* The UA's `[popover]:not(:popover-open) { display: none }`, restated at CLASS
+   specificity so the rule below can't be undone by accident. The panel needs a
+   `display` while open (the column flex), and any `display` written on `.panel`
+   itself out-specifies the UA sheet — which paints every CLOSED panel on the
+   page as an empty box over the content. That shipped once; a comment alone only
+   tells the next person after they've done it, and no static check catches it.
+   With this rule present a plain `.panel { display: … }` (0,1,0) loses to it
+   (0,3,0) and closed panels stay hidden. */
+.panel[popover]:not(:popover-open) {
+  display: none;
+}
+
+/* Column flex, so the capped panel hands its spare height to .body — on the OPEN
+   state only, per the rule above.
+   No reduced-motion media query: --motion-fast is zeroed in tokens.css, so the
    panel simply appears at its end state. */
 .panel:popover-open {
+  display: flex;
+  flex-direction: column;
   animation: panel-in var(--motion-fast) ease;
 }
 

@@ -1,5 +1,6 @@
 import { createResource, type Component, type JSX } from 'solid-js';
 import { graphqlFetch } from '../../api/graphql';
+import { gated } from '../../api/gated';
 import { createTableConfig } from '../../api/createTableConfig';
 import { t } from '../../intl';
 import type { LocaleKey } from '../../intl/locales';
@@ -175,13 +176,11 @@ export const ActivityLogPanel: Component<{
   //
   // The Log tab mounts fresh when selected (inactive TabPanels unmount), so
   // this resource FIRST fetches on an interaction — it MUST be read
-  // non-suspending via the `.state` gate, never `resource()` or `.latest`
-  // alone, or it suspends the already-open detail screen's boundary and
-  // remounts it (kdd/solid-reactivity-pitfalls › No remounts on interaction).
-  // The table's own `loading` covers the wait.
+  // non-suspending, or it suspends the already-open detail screen's boundary
+  // and remounts it (kdd/solid-reactivity-pitfalls › No remounts on
+  // interaction). The table's own `loading` covers the wait.
   const rows = (): Log[] => {
-    const ready = logData.state === 'ready' || logData.state === 'refreshing';
-    const nodes = ready ? (logData.latest?.nodes ?? []) : [];
+    const nodes = gated(logData)?.nodes ?? [];
     const direction = props.order === 'oldest-first' ? 1 : -1;
     return [...nodes].sort((a, b) =>
       a.datetime === b.datetime

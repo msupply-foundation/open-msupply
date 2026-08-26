@@ -174,6 +174,7 @@ export const RequisitionSidePanel: Component<
                 </Popover>{' '}
                 {/* A shipment reference is neutral — no `kind` tone. */}
                 <RecordLink
+                  testId="fulfilling-shipment-link"
                   href={`/${props.storeId}/distribution/outbound-shipment/${shipment.id}`}
                 >
                   {`#${shipment.invoiceNumber}`}

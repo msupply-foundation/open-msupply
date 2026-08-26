@@ -7,6 +7,7 @@ import { Button } from '../../../ui/elements/buttons/Button';
 import { CancelButton } from '../../../ui/elements/buttons/StandardButtons';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import {
+  CommentHeader,
   getCellDefinition,
   getNumberCell,
 } from '../../../ui/elements/table/tableHelpers';
@@ -70,7 +71,7 @@ export const LinkPurchaseOrderModal: Component<
     },
     {
       c: { key: 'comment' },
-      header: () => t('label.comment'),
+      header: () => <CommentHeader />,
       ...getCellDefinition('comment'),
     },
   ];

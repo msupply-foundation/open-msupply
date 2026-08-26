@@ -12,6 +12,14 @@ export interface TextFieldProps extends Omit<
   /** Error message — presence switches the field to the error state. */
   error?: string;
   /**
+   * Advisory warning shown below the field when there's no error — the error
+   * line's icon + text anatomy in the warning colour, with none of the error
+   * semantics (no aria-invalid, border unchanged; an error displaces it). For
+   * a caution about the conditions around the value, not the value itself —
+   * PasswordField feeds its caps-lock notice through here.
+   */
+  warning?: string;
+  /**
    * `data-testid` for the error message (locale-stable test hook,
    * e2e/TESTIDS.md) — e.g. the line-edit modal's per-line errors.
    */
@@ -77,6 +85,7 @@ export const TextField = (props: TextFieldProps) => {
     'label',
     'helperText',
     'error',
+    'warning',
     'errorTestId',
     'required',
     'size',
@@ -153,7 +162,9 @@ export const TextField = (props: TextFieldProps) => {
           aria-label={local.hideLabel ? local.label : undefined}
           aria-invalid={local.error ? 'true' : undefined}
           aria-describedby={
-            local.error || local.helperText ? messageId() : undefined
+            local.error || local.warning || local.helperText
+              ? messageId()
+              : undefined
           }
           {...rest}
         />
@@ -169,9 +180,22 @@ export const TextField = (props: TextFieldProps) => {
       <Show
         when={local.error}
         fallback={
-          <Show when={local.helperText}>
-            <p id={messageId()} class={styles.helper}>
-              {local.helperText}
+          <Show
+            when={local.warning}
+            fallback={
+              <Show when={local.helperText}>
+                <p id={messageId()} class={styles.helper}>
+                  {local.helperText}
+                </p>
+              </Show>
+            }
+          >
+            {/* role="status": the warning appears while the user is typing
+                (the caps-lock notice), so it's announced politely rather than
+                relying on them to glance down mid-entry. */}
+            <p id={messageId()} class={styles.warning} role="status">
+              <AlertTriangleIcon class={styles.messageIcon} />
+              {local.warning}
             </p>
           </Show>
         }
@@ -181,7 +205,7 @@ export const TextField = (props: TextFieldProps) => {
           class={styles.error}
           data-testid={local.errorTestId}
         >
-          <AlertTriangleIcon class={styles.errorIcon} />
+          <AlertTriangleIcon class={styles.messageIcon} />
           {local.error}
         </p>
       </Show>

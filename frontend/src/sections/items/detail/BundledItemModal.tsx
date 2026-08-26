@@ -1,6 +1,7 @@
 import { generateUUID } from '../../../uuid';
 import { createResource, createSignal, Show, type Component } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
@@ -71,10 +72,7 @@ export const BundledItemModal: Component<BundledItemModalProps> = props => {
       return result.data.items.nodes[0]?.variants ?? [];
     }
   );
-  const candidateVariants = (): ItemVariantRow[] =>
-    variantsData.state === 'ready' || variantsData.state === 'refreshing'
-      ? (variantsData.latest ?? [])
-      : [];
+  const candidateVariants = (): ItemVariantRow[] => gated(variantsData) ?? [];
 
   const selectedVariant = () =>
     candidateVariants().find(v => v.id === form().variantId);

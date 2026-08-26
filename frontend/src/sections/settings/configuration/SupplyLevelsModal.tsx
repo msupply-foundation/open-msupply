@@ -7,6 +7,7 @@ import {
 } from 'solid-js';
 import { useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { IconButton } from '../../../ui/elements/buttons/IconButton';
@@ -82,10 +83,7 @@ export const SupplyLevelsModal = (props: {
         : [];
     }
   );
-  const inUse = () =>
-    inUseData.state === 'ready' || inUseData.state === 'refreshing'
-      ? (inUseData.latest ?? [])
-      : [];
+  const inUse = () => gated(inUseData) ?? [];
 
   const add = () => {
     setValues(addSupplyLevel(values(), input()));

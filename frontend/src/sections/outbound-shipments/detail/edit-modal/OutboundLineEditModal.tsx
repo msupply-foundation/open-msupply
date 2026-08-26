@@ -45,6 +45,7 @@ import { remToPx } from '../../../../ui/utils/rem';
 import { createTableConfig } from '../../../../api/createTableConfig';
 import {
   AlertCircleIcon,
+  AlertTriangleIcon,
   CheckIcon,
   InfoIcon,
   PauseIcon,
@@ -293,6 +294,7 @@ const FIELD_ORDER = [
   'inStorePacks',
   'location',
   'expired',
+  'nearExpiry',
   'onHold',
 ];
 
@@ -388,7 +390,8 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
 
   const tableConfig = createTableConfig({
     tableId: 'outbound-line-edit',
-    // Cards by DEFAULT (as the inbound + stocktake line editors) — the
+    // Cards by DEFAULT (as the inbound line editor; the stocktake one is
+    // table-by-default — counting favours the dense row grid) — the
     // DataTable's showCardToggle offers the flip to a table above the compact
     // breakpoint and setConfig persists it per user (#886). Manufacturer starts
     // hidden (the old app's defaultHidden) — declared per band, since bands
@@ -621,29 +624,28 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     isNearOrPastExpiry(line.expiryDate);
   const lineHeld = (line: DraftLine): boolean =>
     line.stockLineOnHold || !!line.location?.onHold;
-  // Row-STATUS background tint (OMS-REG-DIST-03.37–.39, D111). Precedence
-  // matches this grid's CARDS — expired red, then held amber, then allocated
-  // (packs issued) green — so a batch shows one colour whichever view
-  // renders it; the detail table alone runs allocated-first. The tint shows
-  // through the disabled grey (the status is why the row is disabled); the
-  // badges and the bold red expiry cell carry the words. Reads numberOfPacks
-  // from the draft store inside the prop function, so per-batch edits reflow
-  // the tint live.
-  const lineRowTint = (
-    line: DraftLine
-  ): 'success' | 'warning' | 'error' | undefined => {
-    if (lineExpired(line)) return 'error';
-    if (lineHeld(line)) return 'warning';
-    if (line.numberOfPacks > 0) return 'success';
-    return undefined;
-  };
-  // The card tone (tinted title + the badges after it — D111/D112): expired
-  // outranks held, matching the tint precedence; both badges still show.
-  const lineCardTone = (line: DraftLine): 'warning' | 'error' | undefined => {
-    if (lineExpired(line)) return 'error';
-    if (lineHeld(line)) return 'warning';
-    return undefined;
-  };
+  // NO status colour on this grid's rows or cards (2026-08-21, D111 revised).
+  // It carried three background tints — expired red, held amber, allocated
+  // (packs issued) green — and, on cards, a toned batch code; all are gone.
+  //
+  // Two reasons. The tints were the redundant channel by construction: every
+  // fact they showed is stated in words in the same row — the Expired / Near
+  // expiry / On hold badges beside the batch code, the On-hold column, the
+  // red-and-bold Expiry-date cell, and the issued figures for "allocated" —
+  // so removing them costs no information, while a grid washed three colours
+  // spent its whole at-a-glance channel on facts already legible. And a toned
+  // card title recoloured an IDENTIFIER: a batch code reading in an error
+  // colour says the code is wrong, not the stock it names (Ling, 2026-08-19,
+  // extended here from expiry to hold — the "On hold" chip sits immediately
+  // beside the code, exactly as the "Expired" chip does).
+  //
+  // The one colour left is the disabled grey on a barred row (rowState at the
+  // DataTable below). Outbound's one remaining status tint is the detail
+  // table's teal unfinished-work marking, which answers a question this grid
+  // does not ask ("which lines are still unissued?").
+  //
+  // NB this narrows D111 and D112 (a red identity title on an expired card) —
+  // both divergence records carry the matching edit (spec/PROCESS.md).
   const lineAutoBarReasons = (line: DraftLine) =>
     autoAllocateBarReasons(line, allocationPrefs());
   // The tick column's predicate ("will be used in auto-allocation"): auto-
@@ -1000,7 +1002,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       // a body field: a bare marker with no label of its own.
       meta: {
         headerPosition: 'badge',
-        columnSettingsLabel: () => t('description.used-in-auto-allocation'),
+        textLabel: () => t('description.used-in-auto-allocation'),
       },
       cell: info => (
         <Show when={willAutoAllocate(info.row.original)}>
@@ -1155,8 +1157,13 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
             },
             header: () => t('label.donor'),
             cardGroup: 'pricing',
-            // No CELL_DEF key — a donor name is free text like a manufacturer.
-            ...getCellDefinition('manufacturer'),
+            // The `donor` preset (shortText, 8rem floor, uncapped so it still
+            // grows into slack). NOT `manufacturer`: that is the `text` SINK
+            // (18.75rem), and a sink with no content is the worst thing to put
+            // in a table — this column is usually EMPTY, so it absorbed the
+            // modal's slack and pushed the editable Packs-issued columns off
+            // the inline-start edge.
+            ...getCellDefinition('donor'),
           } satisfies Column<DraftLine, never, GroupKey>,
         ]
       : []),
@@ -1426,10 +1433,23 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       },
       header: () => t('label.on-hold'),
       // A row-level status flag — the card's badge slot, like the inbound
-      // editor's own status badge.
+      // editor's own status badge. It stays a real table column here (D111:
+      // the editor keeps its On-hold column, old-app parity; the detail table
+      // has none) but is NOT user-hideable: `columnVisibility` is one axis
+      // across both views (CARD_TABLE_MODEL § pitfalls), so switching the
+      // column off in table view — a reasonable thing to want, the badge
+      // beside the batch code says the same thing there — would also strip
+      // this chip from the CARDS, where the badge cluster is hidden and the
+      // chip is the only worded hold indicator left now that the amber tint
+      // is gone. Same reasoning as the detail table's Batch column.
+      //
+      // The flag is enough on its own: DataTable resolves a structural column
+      // to VISIBLE whatever the persisted config says, so an `onHold: false`
+      // carried over from when this column WAS hideable cannot strand the chip
+      // (resolveColumnVisibility in columnTypes.ts) — nothing to write here.
       ...getFlagCell(
         t('label.on-hold'),
-        { headerPosition: 'badge' },
+        { headerPosition: 'badge', hideFromColumnSettings: true },
         'warning',
         () => <PauseIcon />
       ),
@@ -1437,7 +1457,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     {
       // Expired flag, CARD-ONLY (D112): the grid already reddens the Expiry
       // date cell under its header, but a card buries that in the body — the
-      // chip puts the word after the card title, with the row's error tone.
+      // chip puts the word after the card title.
       c: { accessor: lineExpired, id: 'expired' },
       header: () => t('label.expired'),
       ...getFlagCell(
@@ -1449,6 +1469,27 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
         },
         'error',
         () => <AlertCircleIcon />
+      ),
+    },
+    {
+      // Near-expiry flag, CARD-ONLY (D112's lower tier) — the companion to the
+      // chip above. The table's red "Near expiry" badge beside the batch code
+      // carries the tier; the card hides that cluster, so without this chip the
+      // tier would reach a card as the reddened Expiry-date field ALONE — colour
+      // with no word (styling principle 9 / WCAG 1.4.1), and indistinguishable
+      // at a glance from the expired tier. Tiered, never both: the predicate
+      // excludes an already-expired batch.
+      c: { accessor: lineNearExpiry, id: 'nearExpiry' },
+      header: () => t('label.near-expiry'),
+      ...getFlagCell(
+        t('label.near-expiry'),
+        {
+          headerPosition: 'badge',
+          hideOnTable: true,
+          hideFromColumnSettings: true,
+        },
+        'error',
+        () => <AlertTriangleIcon />
       ),
     },
   ];
@@ -1719,9 +1760,13 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
               // area around us) scrolls the cards and the advisories under them
               // as one. Card view only — see the prop.
               fitContent
+              // The ONE row colour this grid spends: the disabled grey on a
+              // barred or non-allocatable batch (AC-AL2/AL8/AL15). Its former
+              // status tints — expired red, held amber, allocated green — are
+              // gone (2026-08-21, D111 revised); the badges beside each batch
+              // code, the On-hold column, the reddened Expiry-date cell and
+              // the issued figures carry every one of those facts in words.
               rowState={line => (rowDisabled(line) ? 'disabled' : undefined)}
-              rowTint={lineRowTint}
-              cardTone={lineCardTone}
               emptyMessage={t('messages.no-stock-available')}
               config={tableConfig.config()}
               setConfig={tableConfig.setConfig}

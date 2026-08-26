@@ -2,6 +2,7 @@ import { generateUUID } from '../../../uuid';
 import { createResource, createSignal, Show, type JSX } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
@@ -174,17 +175,11 @@ const NewStockContent = (props: {
   // also lingers after the item is cleared, so every read stays gated on there
   // still being a chosen item — else a cleared search would keep the old item's
   // variants / location narrowing.
-  const detail = () =>
-    item() &&
-    (itemDetail.state === 'ready' || itemDetail.state === 'refreshing')
-      ? itemDetail.latest
-      : undefined;
+  const detail = () => (item() ? gated(itemDetail) : undefined);
 
   const locations = () =>
     locationsForItem(
-      allLocations.state === 'ready' || allLocations.state === 'refreshing'
-        ? (allLocations.latest ?? [])
-        : [],
+      gated(allLocations) ?? [],
       detail()?.restrictedLocationTypeId
     );
 

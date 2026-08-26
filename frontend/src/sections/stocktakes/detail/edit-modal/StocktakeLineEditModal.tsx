@@ -45,6 +45,7 @@ import { NameSearch } from '@/domain/name';
 import { CampaignOrProgramSelect } from '@/domain/campaign';
 import { stocktakePreferences } from '@/store/storeContext';
 import { dosesCounted } from '../lines/doses';
+import { defaultedPackSize, packSizeEditable } from '../lines/stocktakeLine';
 import { PlusCircleIcon, TrashIcon, CopyIcon } from '@/ui/icons';
 import {
   StockLinesByItem,
@@ -98,6 +99,12 @@ export type StocktakeLineEditItem = {
   doses: number;
   /** Read-only, shown beside the header item picker (inbound's Unit field). */
   unitName: string | null;
+  /**
+   * Seeds an editable batch's pack size (OMS-REG-INV-03.79/.80): a fresh blank
+   * batch starts at it, and a zero-stock item's generated line with no pack
+   * size is prefilled with it on load (defaultedPackSize).
+   */
+  defaultPackSize: number;
 };
 
 // One of the item's stock lines (from stockLinesByItem).
@@ -135,13 +142,6 @@ const adjustmentDirection = (
   if (delta < 0) return 'negative';
   return null;
 };
-
-// Pack size is only editable on a genuinely NEW batch — one being introduced
-// with no existing stock behind it (`isNew` and no linked stock line). An
-// existing stocktake line, or a row opting an existing stock line into the
-// count, carries that stock's real pack size and must not be re-typed here.
-const packSizeEditable = (line: DraftLine): boolean =>
-  !!line.isNew && line.stockLineId == null;
 
 // How many lines/stock lines to pull for one item (a single item never has many
 // batches — one page covers it).
@@ -219,6 +219,14 @@ const buildDraft = async (
   const fromExisting: DraftLine[] = existing.map(line => ({
     ...line,
     countThisLine: true,
+    // A line with no stock behind it and no pack size yet — a zero-stock
+    // item's generated line — is prefilled with the item's default pack size
+    // (OMS-REG-INV-03.80), so an ordinary count-and-save persists a usable
+    // pack size instead of the empty one finalise chokes on (issue #1173).
+    // Stock-backed lines keep their stock's pack size untouched.
+    packSize: packSizeEditable(line)
+      ? defaultedPackSize(item, line.packSize)
+      : line.packSize,
   }));
   const fromStock: DraftLine[] = stockLines.map(sl => ({
     id: generateUUID(),
@@ -235,6 +243,7 @@ const buildDraft = async (
       unitName: null,
       isVaccine: item.isVaccine,
       doses: item.doses,
+      defaultPackSize: item.defaultPackSize,
     },
     batch: sl.batch,
     expiryDate: sl.expiryDate,
@@ -262,9 +271,11 @@ const buildDraft = async (
   return [...fromExisting, ...fromStock];
 };
 
-// The card body groups. This modal is card-only (no table view — see the
-// createTableConfig default below), and matches the inbound-shipment line
-// editor: TWO groups, not three, and no group icons. `batch` is the
+// The card body groups. The modal now defaults to the TABLE view on a wide
+// screen (see the createTableConfig call below), but card view is still reached
+// two ways — the toolbar toggle, and unconditionally below the compact
+// breakpoint — so these groups remain live. They match the inbound-shipment
+// line editor: TWO groups, not three, and no group icons. `batch` is the
 // always-shown primary counting panel and is UNLABELLED — the card's own header
 // field already reads "Batch", so a "Batch" caption directly above it was the
 // same word twice. Everything that isn't part of the count itself collapses
@@ -276,12 +287,34 @@ const CARD_GROUPS: CardGroup<DraftLine, GroupKey>[] = [
   {
     key: 'batch',
     panel: true,
+    // TWELVE tracks, not the inbound editor's six — worked out from THIS group's
+    // fields (see CardGroup.narrowLayout). Six cannot express the split these six
+    // fields want at all: a date needs 2 of 6 (13rem), and a row of four with a
+    // date in it then overflows. Twelve is finer than the ten that first fit,
+    // because the counting fields do NOT all want the same box — Packs counted is
+    // the one field on the card the user actually types into, and Pack size is
+    // read-only on existing stock and holds "1". So the counting row is 3/3/2/4
+    // rather than an even 2/2/2/4 — the two packs figures MATCHED, because they
+    // are read against each other and a mismatched pair reads as a mistake, with
+    // the pack size beside them at two — and the row under it is 8+4, which also
+    // buys Location its widest yet (~27rem).
+    narrowLayout: { columns: 12 },
   },
   {
     key: 'pricing',
     labelKey: 'label.pricing-additional-info',
     panel: true,
     disclosure: 'closed',
+    // Twelve, as the batch panel above — one card should not read as two
+    // different grids. Its own fields happen to want the same count: the three
+    // money/volume figures at 4 each, then the four long lookups and text fields
+    // in pairs at 6. Donor pairs like the rest; Comment takes the full row, which
+    // is what absorbs the PARITY Donor changes — an extra 6-span field flips
+    // whether the 6s pair off evenly, and Comment is the one field here that
+    // reads fine at either width. So the rows tile exactly with the donor
+    // preference ON (the pairs run Donor+Campaign, Manufacturer+Note, then
+    // Comment); with it off, the Note row is left half empty.
+    narrowLayout: { columns: 12 },
   },
 ];
 
@@ -452,14 +485,16 @@ const StocktakeLineEditContent = (
     false
   );
 
-  // Cards by default at every band (compact already forces card; this extends
-  // it to desktop). Above the compact breakpoint the DataTable's showCardToggle
-  // offers the flip to a table for anyone who prefers it, and setConfig
-  // persists that choice per user (#886) — so this seed is only the default.
-  const tableConfig = createTableConfig({
-    tableId: 'stocktake-line-edit',
-    defaultConfig: { base: { viewMode: 'card' } },
-  });
+  // Table by default above the compact breakpoint — no `viewMode` seed, which
+  // is how the DataTable's own default ('table') stands. This deliberately
+  // diverges from the inbound/outbound line editors (card-by-default): counting
+  // is a dense numeric sweep down many batches, and the row grid keeps every
+  // count cell in one column. Below compact the table is ALWAYS card regardless
+  // (the toggle is suppressed there), so the card layout and its CARD_GROUPS
+  // still carry the tablet/phone case. The showCardToggle offers the flip to
+  // cards on a wide screen, and setConfig persists that choice per user (#886)
+  // — so this is only the default.
+  const tableConfig = createTableConfig({ tableId: 'stocktake-line-edit' });
 
   // Seed the draft for one item. Replaces the store (reconcile by id) so no
   // rows from the previous item linger, and resets per-item UI. countByDefault:
@@ -533,6 +568,7 @@ const StocktakeLineEditContent = (
         isVaccine: first.item.isVaccine,
         doses: first.item.doses,
         unitName: first.item.unitName,
+        defaultPackSize: first.item.defaultPackSize,
       },
       // Focus the clicked batch (falls back to the first row if it's not among
       // this item's lines, e.g. the id went stale).
@@ -617,9 +653,9 @@ const StocktakeLineEditContent = (
    * is why the binding is declared here and nowhere else (AC-KB45).
    *
    * Unlisted: the palette already offers the action under its own name via the
-   * header control, and the label names the key inline, so a second entry would
-   * be noise. Disabled until an item is picked, matching the button's own
-   * `<Show>` — the key must not add a batch to nothing.
+   * header control, so a second entry would be noise. Disabled until an item is
+   * picked, matching the button's own `<Show>` — the key must not add a batch
+   * to nothing.
    */
   createAction({
     unlisted: true,
@@ -646,13 +682,16 @@ const StocktakeLineEditContent = (
             unitName: null,
             isVaccine: item.isVaccine,
             doses: item.doses,
+            defaultPackSize: item.defaultPackSize,
           },
           batch: null,
           expiryDate: null,
           manufactureDate: null,
           snapshotNumberOfPacks: 0,
           countedNumberOfPacks: null,
-          packSize: null,
+          // Starts at the item's default pack size, not empty
+          // (OMS-REG-INV-03.79) — see defaultedPackSize.
+          packSize: defaultedPackSize(item),
           sellPricePerPack: null,
           costPricePerPack: null,
           comment: null,
@@ -700,6 +739,13 @@ const StocktakeLineEditContent = (
       isNew: true,
       snapshotNumberOfPacks: 0,
       countedNumberOfPacks: null,
+      // The duplicate carries a stock link only when the source was itself
+      // opting a stock line in (stockLineId — buildBatch then inserts against
+      // that stock). A copy of an existing line inserts by item, with no stock
+      // behind it, so the source's stockLine node must not ride along — it
+      // would misreport the link and read-only the copy's pack size
+      // (packSizeEditable keys off it).
+      stockLine: line.stockLineId ? unwrap(line).stockLine : null,
     };
     setDraft(
       produce(lines => {
@@ -939,7 +985,10 @@ const StocktakeLineEditContent = (
             c: { key: 'snapshotNumberOfPacks' },
             header: () => t('label.snapshot-num-of-packs'),
             cardGroup: 'batch',
-            ...getNumberCell({ cardWidth: 7.5 }),
+            ...getNumberCell({
+              cardWidth: { min: 7.5, max: 9, weight: 1 },
+              cardSpan: 3,
+            }),
             cell: info => {
               const line = info.row.original;
               return (
@@ -966,7 +1015,10 @@ const StocktakeLineEditContent = (
       c: { key: 'countedNumberOfPacks' },
       header: () => t('label.counted-num-of-packs'),
       cardGroup: 'batch',
-      ...getNumberCell({ cardWidth: 7.5 }),
+      ...getNumberCell({
+        cardWidth: { min: 7.5, max: 9, weight: 1 },
+        cardSpan: 3,
+      }),
       cell: info => {
         const line = info.row.original;
         return (
@@ -999,7 +1051,14 @@ const StocktakeLineEditContent = (
       c: { key: 'packSize' },
       header: () => t('label.pack-size'),
       cardGroup: 'batch',
-      ...getNumberCell({ cardWidth: 8.75 }),
+      // 7.5 = the house figure for a numeric quantity (CARD_TABLE_MODEL.md §
+      // Field widths). It was 8.75, which a pack size has no use for — and the
+      // 1.25rem it gives back is what keeps the four counting fields on one
+      // wrapped row once the dates widen below.
+      ...getNumberCell({
+        cardWidth: { min: 7.5, max: 9, weight: 1 },
+        cardSpan: 2,
+      }),
       cell: info => {
         const line = info.row.original;
         return (
@@ -1008,8 +1067,8 @@ const StocktakeLineEditContent = (
             hideLabel
             size="small"
             decimalLimit={2}
-            // Pack size is fixed for existing stock — editable only on a
-            // genuinely new batch (packSizeEditable).
+            // Pack size is fixed for stock-backed batches — editable only
+            // where no stock stands behind the row (packSizeEditable).
             disabled={!line.countThisLine || !packSizeEditable(line)}
             value={line.packSize ?? undefined}
             onChange={value => update(line.id, 'packSize', value ?? null)}
@@ -1037,7 +1096,10 @@ const StocktakeLineEditContent = (
             c: { id: 'dosesCounted' },
             header: () => t('label.doses-counted'),
             cardGroup: 'batch',
-            ...getNumberCell({ cardWidth: 7.5 }),
+            ...getNumberCell({
+              cardWidth: { min: 7.5, max: 9, weight: 1 },
+              cardSpan: 2,
+            }),
             cell: info => {
               const doses = dosesCounted(info.row.original);
               return (
@@ -1062,7 +1124,11 @@ const StocktakeLineEditContent = (
       c: { key: 'expiryDate' },
       header: () => t('label.expiry-date'),
       cardGroup: 'batch',
-      meta: { cardWidth: 10 },
+      // 11, not the 10 the width table lists for a date: 10rem was measured
+      // against a rendered VALUE ("11 Sep 2026", 74px in English), but an empty
+      // DateField shows the `DD MMM YYYY` placeholder, and all-caps is wider
+      // than the digits it stands for — at 10rem it clipped to "DD MMM YYY".
+      meta: { cardWidth: { min: 11, max: 12.5, weight: 1 }, cardSpan: 4 },
       cell: info => {
         const line = info.row.original;
         return (
@@ -1084,7 +1150,20 @@ const StocktakeLineEditContent = (
       c: { key: 'location' },
       header: () => t('label.location'),
       cardGroup: 'batch',
-      meta: { cardWidth: { min: 8, max: 17, weight: 1.2 } },
+      // max 24.5 lands this field exactly on a COLUMN EDGE, so the wrapped row
+      // still reads as a grid instead of a ragged second line. The counting row
+      // above is 7.5 + 7.5 + 7.5 + 11 with 1rem (--space-4) gaps, i.e. edges at
+      // 0 / 8.5 / 17 / 25.5, ending at 36.5. Capped at 24.5 the location stops
+      // level with Pack size's right edge — it occupies columns 1–3 — so the
+      // manufacture date after it starts at 25.5 (under Expiry) and ends at 36.5
+      // (level with the row above). The cap, not a span, is what buys that: it's
+      // the only reason a lone weighted field on a wrapped row stops anywhere
+      // predictable.
+      //
+      // NB it is arithmetic against THIS field set. A vaccine item's extra
+      // fields (doses counted, VVM status) change the counting row's
+      // composition, and the wrapped row's edges move with it.
+      meta: { cardWidth: { min: 12.5, max: 36, weight: 2 }, cardSpan: 8 },
       cell: info => {
         const line = info.row.original;
         return (
@@ -1124,7 +1203,7 @@ const StocktakeLineEditContent = (
             c: { id: 'vvmStatus' },
             header: () => t('label.vvm-status'),
             cardGroup: 'batch',
-            meta: { cardWidth: 10 },
+            meta: { cardWidth: { min: 10, max: 12, weight: 1 }, cardSpan: 4 },
             cell: info => {
               const line = info.row.original;
               return (
@@ -1158,7 +1237,9 @@ const StocktakeLineEditContent = (
       c: { key: 'manufactureDate' },
       header: () => t('label.manufacture-date'),
       cardGroup: 'batch',
-      meta: { cardWidth: 10 },
+      // 11 for the placeholder, as the expiry date above — and this is the field
+      // where it showed, since it is usually the empty one.
+      meta: { cardWidth: { min: 11, max: 12.5, weight: 1 }, cardSpan: 4 },
       cell: info => {
         const line = info.row.original;
         return (
@@ -1178,7 +1259,10 @@ const StocktakeLineEditContent = (
       c: { key: 'sellPricePerPack' },
       header: () => t('label.pack-sell-price'),
       cardGroup: 'pricing',
-      ...getNumberCell({ cardWidth: 10 }),
+      ...getNumberCell({
+        cardWidth: { min: 10, max: 12, weight: 1 },
+        cardSpan: 4,
+      }),
       cell: info => {
         const line = info.row.original;
         return (
@@ -1199,7 +1283,10 @@ const StocktakeLineEditContent = (
       c: { key: 'costPricePerPack' },
       header: () => t('label.pack-cost-price'),
       cardGroup: 'pricing',
-      ...getNumberCell({ cardWidth: 10 }),
+      ...getNumberCell({
+        cardWidth: { min: 10, max: 12, weight: 1 },
+        cardSpan: 4,
+      }),
       cell: info => {
         const line = info.row.original;
         return (
@@ -1220,7 +1307,10 @@ const StocktakeLineEditContent = (
       c: { key: 'volumePerPack' },
       header: () => t('label.volume-per-pack'),
       cardGroup: 'pricing',
-      ...getNumberCell({ cardWidth: 10 }),
+      ...getNumberCell({
+        cardWidth: { min: 10, max: 12, weight: 1 },
+        cardSpan: 4,
+      }),
       cell: info => {
         const line = info.row.original;
         return (
@@ -1250,7 +1340,7 @@ const StocktakeLineEditContent = (
             c: { id: 'donor' },
             header: () => t('label.donor'),
             cardGroup: 'pricing',
-            meta: { cardWidth: { min: 9, max: 18, weight: 1 } },
+            meta: { cardWidth: { min: 12.5, max: 36, weight: 2 }, cardSpan: 6 },
             cell: info => {
               const line = info.row.original;
               return (
@@ -1295,7 +1385,7 @@ const StocktakeLineEditContent = (
       c: { id: 'campaignOrProgram' },
       header: () => t('label.campaign'),
       cardGroup: 'pricing',
-      meta: { cardWidth: { min: 9.5, max: 20, weight: 1.2 } },
+      meta: { cardWidth: { min: 12.5, max: 36, weight: 2 }, cardSpan: 6 },
       cell: info => {
         const line = info.row.original;
         return (
@@ -1326,7 +1416,7 @@ const StocktakeLineEditContent = (
       c: { id: 'manufacturer' },
       header: () => t('label.manufacturer'),
       cardGroup: 'pricing',
-      meta: { cardWidth: { min: 10, max: 20, weight: 1.4 } },
+      meta: { cardWidth: { min: 12.5, max: 36, weight: 2 }, cardSpan: 6 },
       cell: info => {
         const line = info.row.original;
         return (
@@ -1372,7 +1462,13 @@ const StocktakeLineEditContent = (
             header: () => t('label.reason'),
             cardGroup: 'batch',
             meta: {
-              cardWidth: { min: 9, max: 20, weight: 1.2 },
+              cardWidth: { min: 12.5, max: 36, weight: 2 },
+              // A whole row of the ten when it appears. Reason comes and goes
+              // per BATCH (hideOnCardWhen below), not per table, so it's the one
+              // field here that can change a card's packing while the modal is
+              // open — a full row is the only span that leaves the rows above it
+              // untouched when it does.
+              cardSpan: 12,
               // The card shows Reason only on a batch that can actually take
               // one: counted, and counted to something other than its
               // snapshot. A level batch takes no reason at all (rules.md
@@ -1412,6 +1508,11 @@ const StocktakeLineEditContent = (
                   kind={direction() ?? 'positive'}
                   label={t('label.reason')}
                   hideLabel
+                  // The compact height its neighbours use. Without it the
+                  // picker takes the default 40px against their 36px and
+                  // stands a step taller than every field around it — the
+                  // failure its own `size` prop doc names.
+                  size="small"
                   disabled={!line.countThisLine || direction() === null}
                   value={line.reasonOption?.id}
                   error={error()}
@@ -1429,32 +1530,24 @@ const StocktakeLineEditContent = (
             },
           } satisfies Column<DraftLine, never, GroupKey>,
         ]),
-    {
-      c: { key: 'note' },
-      header: () => t('label.note'),
-      cardGroup: 'pricing',
-      meta: { cardWidth: { min: 8, max: 24, weight: 1.4 } },
-      cell: info => {
-        const line = info.row.original;
-        return (
-          <TextField
-            label={t('label.note')}
-            hideLabel
-            size="small"
-            disabled={!line.countThisLine}
-            value={line.note ?? ''}
-            onInput={e =>
-              update(line.id, 'note', e.currentTarget.value || null)
-            }
-          />
-        );
-      },
-    },
+    // NO Note field, in either view. The line carries both `note` and
+    // `comment`, and on the card they rendered as two identical free-text boxes
+    // with nothing to tell them apart. They are not duplicates, which is the
+    // point: Comment belongs to this COUNT — it starts empty on a new line —
+    // where `note` is seeded from the STOCK LINE (see the draft seeding above:
+    // `comment: null, note: sl.note`, alongside batch, expiry and the prices),
+    // so it describes the batch rather than counting it. A stocktake line
+    // editor is the wrong surface for editing a property of the stock line, in
+    // a table column as much as in a card field.
+    //
+    // The draft still carries `note` and the save still sends it back
+    // unchanged, so a note already on the stock line survives a count
+    // untouched — it is no longer EDITED here, not dropped.
     {
       c: { key: 'comment' },
       header: () => t('label.stocktake-comment'),
       cardGroup: 'pricing',
-      meta: { cardWidth: { min: 8, max: 24, weight: 1.4 } },
+      meta: { cardWidth: { min: 12.5, weight: 3 }, cardSpan: 12 },
       cell: info => {
         const line = info.row.original;
         return (

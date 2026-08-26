@@ -9,6 +9,7 @@ import {
   type JSX,
 } from 'solid-js';
 import { graphqlFetch } from '../../../../api/graphql';
+import { gated } from '../../../../api/gated';
 import { t, tPlural } from '../../../../intl';
 import { formatNumber } from '../../../../intl/formatNumber';
 import { homeCurrency } from '../../../../intl/currency';
@@ -193,10 +194,7 @@ const LineEditContent = (
     const response = result.data.requisitionLineChart;
     return response.__typename === 'ItemChartNode' ? response : undefined;
   });
-  const chartData = () =>
-    chart.state === 'ready' || chart.state === 'refreshing'
-      ? chart.latest
-      : undefined;
+  const chartData = () => gated(chart);
   // The history/evolution pair shows only when the server returned series (an
   // order with no expected-delivery-date returns both null — then only the
   // target-quantity breakdown shows, spec S4 § charts).

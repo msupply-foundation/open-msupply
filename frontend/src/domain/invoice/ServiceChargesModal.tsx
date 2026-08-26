@@ -2,6 +2,7 @@ import { generateUUID } from '../../uuid';
 import { createResource, createSignal, Show, type JSX } from 'solid-js';
 import { createStore, produce } from 'solid-js/store';
 import { graphqlFetch } from '../../api/graphql';
+import { gated } from '../../api/gated';
 import { t } from '../../intl';
 import { Dialog } from '../../ui/elements/feedback/Dialog';
 import { Alert } from '../../ui/elements/feedback/Alert';
@@ -114,15 +115,12 @@ const ServiceChargesContent = (
       ? itemsResult.data.items.nodes
       : [];
   });
-  // Read via the .state gate, never seed() directly: this accessor is reached
+  // Read via gated, never seed() directly: this accessor is reached
   // from headerActions' Add-charge `disabled` WHILE the seed is pending, and a
   // pending direct read suspends the host view's route <Suspense> — tearing
   // the side panel out from under the opening modal (kdd/solid-reactivity-
   // pitfalls › No remounts on interaction; confirmed with detect-remounts).
-  const serviceItems = () =>
-    seed.state === 'ready' || seed.state === 'refreshing'
-      ? (seed.latest ?? [])
-      : [];
+  const serviceItems = () => gated(seed) ?? [];
   // The default for a NEW charge: the "service" item, else the first (the old
   // client's default-service-item rule).
   const defaultServiceItem = () =>

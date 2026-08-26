@@ -1,4 +1,5 @@
 import { generateUUID } from '@/uuid';
+import { gated } from '@/api/gated';
 import {
   createMemo,
   createResource,
@@ -160,7 +161,6 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
       ? draftFromLine(editorLineFromLine(props.initialLine))
       : undefined
   );
-  const [dirty, setDirty] = createSignal(false);
   const [saving, setSaving] = createSignal(false);
   const [advancing, setAdvancing] = createSignal(false);
   const [loading, setLoading] = createSignal(false);
@@ -183,7 +183,6 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
     const current = draft();
     if (!current) return;
     setDraft({ ...current, ...patch });
-    setDirty(true);
   };
 
   const focusSupply = () => {
@@ -202,7 +201,6 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
     setLine(editorLine);
     covered.add(editorLine.lineId);
     setDraft(draftFromLine(editorLine));
-    setDirty(false);
     setErrorMessage(undefined);
     setReasonFlagged(false);
     if (focus) focusSupply();
@@ -237,7 +235,6 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
     setMode('add');
     setLine(undefined);
     setDraft(undefined);
-    setDirty(false);
     setErrorMessage(undefined);
     setReasonFlagged(false);
   };
@@ -289,10 +286,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
     const { id } = JSON.parse(serialised) as { id: string };
     return fetchLineStats(props.storeId, id);
   });
-  const statsNode = () =>
-    stats.state === 'ready' || stats.state === 'refreshing'
-      ? stats.latest
-      : undefined;
+  const statsNode = () => gated(stats);
 
   // The customer's volume snapshot (AC-LE12): the live item volume at the
   // supply as typed, and whether the capacity is spent — driving the Customer
@@ -434,11 +428,11 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
     setAdvancing(true);
     void (async () => {
       const editorLine = current();
-      // Nothing to save — a read-only requisition, or a clean draft — and
-      // Save & next is purely the walk: it advances without saving (see
-      // ui-migration-report.md decision 3; spec S4 § layout › footer).
-      const needsSave = props.editable && dirty();
-      const ok = needsSave ? await save() : true;
+      // Save the current line, then walk — the internal-order editor's shape.
+      // A read-only requisition has nothing to write, so Save & next is purely
+      // the walk there (advances without saving); an editable line always
+      // persists, including a fresh zero-quantity placeholder (AC-LE2).
+      const ok = props.editable ? await save() : true;
       setAdvancing(false);
       if (!ok || !editorLine) return;
       if (mode() === 'add') backToSearch();
@@ -587,6 +581,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
             kind="requisition"
             label={t('label.reason')}
             hideLabel
+            inputTestId="variance-reason-input"
             disabled={disabled() || !variance()}
             error={
               reasonFlagged()
@@ -702,7 +697,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
           label={t('label.comment')}
           hideLabel
           rows={3}
-          data-testid="line-comment-input"
+          data-testid="line-comment-field"
           disabled={disabled()}
           value={draft()?.comment ?? ''}
           onInput={e => patchDraft({ comment: e.currentTarget.value })}
@@ -752,13 +747,15 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
             data-testid="dialog-button-cancel"
             onClick={props.onClose}
           />
-          {/* Save — disabled while there is nothing to save (read-only, clean
-              draft) or a save is in flight. Save & next stays available on a
-              read-only requisition as the walk affordance: with nothing to
-              save it just advances (spec S4 § layout › footer). */}
+          {/* Save — enabled whenever a line is loaded and the requisition is
+              editable (the internal-order editor's rule), so a freshly picked
+              item saves as a zero-quantity placeholder without a prior edit
+              (AC-LE2). Disabled only with no line, mid-save, or read-only.
+              Save & next stays available on a read-only requisition as the
+              walk affordance (spec S4 § layout › footer). */}
           <DialogSaveButton
             data-testid="dialog-button-ok"
-            disabled={!current() || !dirty() || saving() || !props.editable}
+            disabled={!current() || saving() || !props.editable}
             loading={saving()}
             onClick={onOk}
           />
@@ -811,7 +808,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
           while the typed supply spends the customer's storage capacity —
           guidance only, the save is never blocked. */}
       <Show when={volumeSpent()}>
-        <Alert severity="warning">
+        <Alert severity="warning" testId="volume-full-warning">
           {t('label.location-type-full-warning', {
             locationType: volumeSnapshot()!.locationType.name,
           })}
@@ -829,7 +826,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
                   <Captions />
                   <DemandPanel />
                   <Show when={excess()}>
-                    <Alert severity="warning">
+                    <Alert severity="warning" testId="excess-request-warning">
                       {t('messages.requested-exceeds-suggested')}
                     </Alert>
                   </Show>
@@ -887,7 +884,7 @@ const LineEditContent = (props: RequisitionLineEditModalProps): JSX.Element => {
             <div class={styles.column}>
               <DemandPanel />
               <Show when={excess()}>
-                <Alert severity="warning">
+                <Alert severity="warning" testId="excess-request-warning">
                   {t('messages.requested-exceeds-suggested')}
                 </Alert>
               </Show>
