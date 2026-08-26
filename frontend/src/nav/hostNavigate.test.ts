@@ -14,14 +14,18 @@ import {
  */
 
 // jsdom's location is not assignable; the fallback path only needs to record
-// that it was taken.
+// that it was taken, plus a current URL for the same-destination guard to
+// compare against.
 const assign = vi.fn();
 const replace = vi.fn();
-vi.stubGlobal('location', { assign, replace });
+const locate = (pathname: string, search = '') =>
+  vi.stubGlobal('location', { assign, replace, pathname, search });
+locate('/rc/store-a/dashboard');
 
 afterEach(() => {
   assign.mockClear();
   replace.mockClear();
+  locate('/rc/store-a/dashboard');
 });
 
 describe('hostNavigate', () => {
@@ -89,6 +93,47 @@ describe('hostNavigate', () => {
     expect(assign).toHaveBeenCalledWith('/store-a/inventory/stock');
     expect(replace).toHaveBeenCalledWith('/store-a/catalogue/items');
   });
+
+  it('drops an unbound navigation to the URL already shown', () => {
+    // The plugin-module-scope shape: nothing bound, and the resolved href is
+    // where the document already is (before a store is entered, `storeHref`
+    // addresses the app root — the very page loading the plugin). A document
+    // navigation here is a reload that re-runs the caller: an infinite reload
+    // loop, so it is dropped rather than taken.
+    locate('/rc/');
+    hostNavigate('/rc/');
+    // Trailing slash and `replace` don't make it a different destination.
+    hostNavigate('/rc', { replace: true });
+
+    expect(assign).not.toHaveBeenCalled();
+    expect(replace).not.toHaveBeenCalled();
+  });
+
+  it('still navigates unbound when only the query differs', () => {
+    locate('/rc/store-a/inventory/stock', '?query=a');
+    hostNavigate('/rc/store-a/inventory/stock?query=b');
+    hostNavigate('/rc/store-a/inventory/stock');
+
+    expect(assign).toHaveBeenNthCalledWith(
+      1,
+      '/rc/store-a/inventory/stock?query=b'
+    );
+    expect(assign).toHaveBeenNthCalledWith(2, '/rc/store-a/inventory/stock');
+  });
+
+  it('leaves a same-destination navigation to the router when bound', () =>
+    createRoot(dispose => {
+      // The guard is the unbound fallback's own; a bound router hears about
+      // every navigation and settles same-route ones itself, without a reload.
+      const navigate = vi.fn();
+      bindHostNavigate(navigate);
+      locate('/rc/store-a/inventory/stock');
+
+      hostNavigate('/rc/store-a/inventory/stock');
+
+      expect(navigate).toHaveBeenCalledOnce();
+      dispose();
+    }));
 });
 
 /*
