@@ -360,4 +360,4 @@ export {
   hasProcurement,
   hasPermission,
 };
-export type { UserPermission };
+export type { UserPermission, StoreMode };
