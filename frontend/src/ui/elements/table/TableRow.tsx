@@ -7,6 +7,7 @@ import {
 } from '@tanstack/solid-table';
 import { t } from '../../../intl';
 import { renderTemplate } from './renderTemplate';
+import { isKeyboardFocus } from './createRowFocus';
 import { BareCheckbox } from '../inputs/BareCheckbox';
 import styles from './DataTable.module.css';
 
@@ -73,6 +74,22 @@ export function TableRow<T>(props: {
   selectionDisabled?: boolean;
   onRowClick?: (row: T) => void;
   /**
+   * Keyboard row navigation (spec/keyboard KB-N1). When set, this row can take
+   * the keyboard highlight: the arrows move real DOM focus onto it and `Enter`
+   * opens it. Absent on tables that aren't keyboard-navigable (a line editor's
+   * grid, where Tab walks the inputs instead).
+   *
+   * ACCESSORS, not values. An object literal that read the signals as it was
+   * built made Solid memoize the whole prop expression, and the row's own
+   * `onFocus` then triggered the first read from a bare native listener with no
+   * owner in scope — "computations created outside a createRoot". Lazy fields
+   * read inside the element's own bindings instead, where the owner exists.
+   */
+  rowFocus?: {
+    focused: () => boolean;
+    onFocus: () => void;
+  };
+  /**
    * Semantic row state (ui-standards § tables row states) — 'verified' /
    * 'warning' / 'disabled', derived by the page from the record's own facts
    * (see DataTable's prop doc). Stamps data-row-state, styled in CSS.
@@ -80,11 +97,26 @@ export function TableRow<T>(props: {
   rowState?: (row: T) => 'verified' | 'warning' | 'disabled' | undefined;
   /**
    * Semantic text tone for this row: 'info' for records awaiting an action
-   * (placeholder / uncounted lines), 'error' for a line the server refused
-   * (a failed bulk operation). Stamps data-tone, styled in CSS. Semantic
-   * names only, mapped to palette tokens by the CSS — never colours.
+   * (placeholder / uncounted lines), 'warning' for a record needing attention
+   * before it can proceed (a held batch), 'error' for a line the server
+   * refused (a failed bulk operation). Stamps data-tone, styled in CSS.
+   * Semantic names only, mapped to palette tokens by the CSS — never colours.
    */
-  rowTone?: (row: T) => 'info' | 'error' | undefined;
+  rowTone?: (row: T) => 'info' | 'warning' | 'error' | undefined;
+  /**
+   * Semantic record-status BACKGROUND tint, always on (see DataTable's prop
+   * doc — spec D111). Stamps data-tint, styled in CSS.
+   */
+  rowTint?: (
+    row: T
+  ) => 'unfinished' | 'success' | 'warning' | 'error' | undefined;
+  /**
+   * Semantic LEFT-EDGE accent bar (see DataTable's prop doc). Stamps
+   * data-accent, drawn in CSS on the row's leading cell.
+   */
+  rowAccent?: (
+    row: T
+  ) => 'unfinished' | 'success' | 'warning' | 'error' | undefined;
   /**
    * Sticky-pin style for a pinned data column's cell
    * (position/offset/z-index), else undefined.
@@ -129,10 +161,38 @@ export function TableRow<T>(props: {
           ? props.rowTone?.(props.row.original)
           : undefined
       }
+      data-tint={
+        !props.row.getIsGrouped()
+          ? props.rowTint?.(props.row.original)
+          : undefined
+      }
+      data-accent={
+        !props.row.getIsGrouped()
+          ? props.rowAccent?.(props.row.original)
+          : undefined
+      }
       // Selected rows get the same brand tint as selected cards (consistent
       // selection signal across both views); styled on the cells
       // (data-selected) in CSS.
       data-selected={props.row.getIsSelected() ? '' : undefined}
+      /*
+       * Programmatically focusable, never a tab stop (KB-N1/KB-T2): the <table>
+       * holds the single tabindex=0 and the arrows move DOM focus between rows
+       * from there, so the tab order cannot move underneath the user when the
+       * row set changes. KB-T1 forbids a positive tab index anywhere.
+       */
+      tabindex={props.rowFocus ? -1 : undefined}
+      // The row-focus indication (AC-KB37): "a background distinct from row
+      // striping"; styled in CSS, and a focus state rather than a meaning, so
+      // colour independence is satisfied by it also being the focused element.
+      data-row-focused={props.rowFocus?.focused() ? '' : undefined}
+      // Keep the highlight in step when focus arrives some way other than the
+      // arrows — but only when it arrived from the KEYBOARD (see
+      // isKeyboardFocus): a click focuses the row too, and painting a highlight
+      // for the instant before the click navigates is noise.
+      onFocus={event => {
+        if (isKeyboardFocus(event)) props.rowFocus?.onFocus();
+      }}
       onClick={() => props.onRowClick?.(props.row.original)}
     >
       <Show when={props.enableSelection}>

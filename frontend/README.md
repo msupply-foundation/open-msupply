@@ -36,18 +36,19 @@ Two environment variables override the defaults (see `vite.config.ts`):
 
 ## Scripts
 
-| Command              | What it does                                                                         |
-| -------------------- | ------------------------------------------------------------------------------------ |
-| `pnpm dev`           | Dev server with hot reload + CSS-module type watcher                                 |
-| `pnpm build`         | Production build (CSS types → `tsc -b` → `vite build`)                               |
-| `pnpm preview`       | Serve the production build locally                                                   |
-| `pnpm check`         | Full static check: CSS types, TypeScript, stylelint, theme-token and page-CSS checks |
-| `pnpm lint`          | ESLint (`lint:fix` to auto-fix)                                                      |
-| `pnpm format`        | Prettier write (`format:check` to verify only)                                       |
-| `pnpm test`          | Vitest                                                                               |
-| `pnpm codegen`       | Regenerate GraphQL types (needs the backend running — see below)                     |
-| `pnpm dev-android`   | One-command Android dev loop (see below)                                             |
-| `pnpm build-android` | Build the Android APK                                                                |
+| Command                 | What it does                                                                         |
+| ----------------------- | ------------------------------------------------------------------------------------ |
+| `pnpm dev`              | Dev server with hot reload + CSS-module type watcher                                 |
+| `pnpm build`            | Production build (CSS types → `tsc -b` → `vite build`)                               |
+| `pnpm preview`          | Serve the production build locally                                                   |
+| `pnpm check`            | Full static check: CSS types, TypeScript, stylelint, theme-token and page-CSS checks |
+| `pnpm lint`             | ESLint (`lint:fix` to auto-fix)                                                      |
+| `pnpm format`           | Prettier write (`format:check` to verify only)                                       |
+| `pnpm test`             | Vitest                                                                               |
+| `pnpm codegen`          | Regenerate GraphQL types (needs the backend running — see below)                     |
+| `pnpm translate-locale` | Draft-translate the English catalogs into another locale (see below)                 |
+| `pnpm dev-android`      | One-command Android dev loop (see below)                                             |
+| `pnpm build-android`    | Build the Android APK                                                                |
 
 Before committing, `pnpm check`, `pnpm lint`, `pnpm format:check`, and
 `pnpm test` should all pass.
@@ -59,6 +60,28 @@ Types are generated from the **live** backend schema, not a checked-in one.
 `SCHEMA_URL`) and writes a co-located `<name>.generated.ts` next to every
 `src/**/*.graphql` file. Re-run it whenever you add or edit a `.graphql` file,
 or after the backend schema changes. The generated files are committed.
+
+## Draft translations
+
+New locale keys go into `src/intl/locales/en/` only — translating them is a
+separate pass, owned by the translation team. To bootstrap a **new** language,
+or to temporarily paper over gaps in an existing one, machine-translate the
+English catalogs:
+
+```sh
+pnpm translate-locale fr-CA          # insert: only fills keys the target lacks
+pnpm translate-locale fr-CA update   # update: re-translates every key
+```
+
+It walks every `*.json` under `locales/en/`, masks `{{tokens}}` so they survive
+the round trip, and writes `locales/<code>/`. It asks for confirmation first
+and needs a TTY. Output is a **draft**: it can't pick plural categories (the
+English `_one`/`_other` forms are copied as-is) and must never overwrite
+reviewed translations — that's what `insert` mode protects.
+
+A brand-new catalog also has to be registered in `src/intl/locales.ts`
+(`SUPPORTED_LOCALES` + `LOCALE_META`), or the app won't offer it and
+`locales.test.ts` fails; the script reminds you when it's missing.
 
 ## Android
 

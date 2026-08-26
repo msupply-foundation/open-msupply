@@ -1,5 +1,8 @@
 import { graphqlFetch } from '../../../api/graphql';
-import { localDayToUtc } from '../../../ui/elements/inputs/dateTimeConvert';
+import {
+  localDayToUtc,
+  localTodayIso,
+} from '../../../ui/elements/inputs/dateTimeConvert';
 import {
   UpdatePrescription,
   DeletePrescriptionLines,
@@ -63,11 +66,44 @@ export const deleteLines = async (
 };
 
 /**
- * A prescription date for the wire: the picked LOCAL calendar day widened to
- * its end-of-day instant (matching the reference client), so "today" reads as
- * not-backdated — the server clears a future instant rather than storing it
- * (contract wire trap: futures are silently dropped, AC-B5 — the picker caps
- * at today so nothing sent here is meaningfully future).
+ * A prescription date for the wire: a PAST day is widened to its LOCAL
+ * end-of-day instant (matching the reference client), but **today keeps the
+ * actual current moment** — the same rule the outbound picked date already
+ * follows (outbound-shipments/detail/backdating.ts `backdatedDatetimeFor`).
+ *
+ * Today must not be widened (#1211). End-of-day today is always in the future,
+ * and a future instant is silently DROPPED by the server — it clears
+ * `backdatedDatetime` instead of storing it (contract wire trap, AC-B5). The
+ * date then displays as `backdatedDatetime ?? createdDatetime`, so a
+ * prescription created on an earlier day snapped straight back to its creation
+ * date and could never be dated today. Sending the current moment stores it
+ * (server-verified), and for a prescription created today it is
+ * indistinguishable from not backdating at all.
  */
 export const prescriptionDateInstant = (isoDay: string): string =>
-  localDayToUtc(isoDay, { endOfDay: true });
+  isoDay === localTodayIso()
+    ? new Date().toISOString()
+    : localDayToUtc(isoDay, { endOfDay: true });
+
+/**
+ * The prescription date for CREATION — `undefined` for today, meaning **send
+ * no `prescriptionDate` at all** (the same shape the stock adjust modal uses:
+ * stock/stockCalc.ts `backdatedDatetime`).
+ *
+ * Today means "not backdated", and at creation that is expressible: with the
+ * field absent, `backdatedDatetime` stays null (source-verified — prescription
+ * insert/generate.rs only calls `handle_new_backdated_datetime` when a date is
+ * given). Sending the current moment instead would backdate every new
+ * prescription to its own creation instant, and ANY non-null
+ * `backdatedDatetime` switches the item editor to historical stock, dropping
+ * batches that had no availability then (get_draft_outbound_lines.rs) — so
+ * stock received after the prescription was created could never be dispensed
+ * on it. Only an EARLIER day is a real backdate, and it rides as its
+ * end-of-day instant like everywhere else.
+ *
+ * Editing is different: there the field must always be sent, because omitting
+ * it leaves the stored date untouched (prescription update/generate.rs) — see
+ * {@link prescriptionDateInstant}.
+ */
+export const newPrescriptionDate = (isoDay: string): string | undefined =>
+  isoDay === localTodayIso() ? undefined : prescriptionDateInstant(isoDay);

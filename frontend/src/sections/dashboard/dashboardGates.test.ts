@@ -27,6 +27,7 @@ const prefs = (overrides: Partial<Preferences> = {}): Preferences => ({
   invoiceStatusOptions: [],
   useProcurementFunctionality: false,
   externalInboundShipmentLinesMustBeAuthorised: false,
+  storeCustomColour: '',
   backdating: {
     inventoryAdjustmentsEnabled: false,
     shipmentsEnabled: false,

@@ -29,6 +29,7 @@ import {
   DEFAULT_STATE,
   PAGE_SIZE_OPTIONS,
   buildRegisterVariables,
+  facilityStoreId,
   nextFacility,
   type FacilitiesFilter,
   type FacilityRegisterState,
@@ -156,6 +157,11 @@ const FacilityRegister: Component = () => {
 
   const onFilterChange = (filter: FacilitiesFilter) =>
     setQuery({ ...query(), filter, offset: 0 });
+
+  // The edited row's own store id, resolved from the page already loaded —
+  // the store editor's Preferences tab writes against it, not against the
+  // signed-in store (spec/names § the facility editor).
+  const editingStoreId = () => facilityStoreId(rows(), editingId());
 
   // Save-and-move-on walks the page of rows AS IT CURRENTLY STANDS — same
   // search, same sort, same page (`.31`). Undefined on the last row of the
@@ -305,6 +311,11 @@ const FacilityRegister: Component = () => {
             open
             storeId={params.storeId}
             nameId={id()}
+            // The chosen row's OWN store — the Preferences tab's subject. The
+            // signed-in store above is only the request's authorisation
+            // subject; passing it here would edit the wrong store's
+            // preferences behind this facility's name.
+            facilityStoreId={editingStoreId() ?? ''}
             onClose={() => setEditingId(undefined)}
             hasNext={next() !== undefined}
             onSaveAndNext={() => setEditingId(next()?.id)}

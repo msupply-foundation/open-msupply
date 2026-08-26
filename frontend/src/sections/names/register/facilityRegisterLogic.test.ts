@@ -9,6 +9,7 @@ import {
   buildRegisterVariables,
   buildTemplateVariables,
   facilityRegisterPath,
+  facilityStoreId,
   nextFacility,
   type FacilityRow,
 } from './facilityRegisterLogic';
@@ -144,6 +145,31 @@ describe('OMS-REG-MNG-02.31 — save-and-move-on advances to the next row', () =
     ];
     expect(nextFacility(rows, 'a')?.id).toBe('b');
     expect(nextFacility(rows, 'b')?.id).toBe('c');
+  });
+});
+
+describe('OMS-REG-MNG-02.30 — the editor opens on the CHOSEN row', () => {
+  it("resolves the edited row's own store, not the signed-in one", () => {
+    const rows = [
+      facility({
+        id: 'a',
+        store: { id: 'store-a', code: 'A', isDisabled: false },
+      }),
+      facility({
+        id: 'b',
+        store: { id: 'store-b', code: 'B', isDisabled: false },
+      }),
+    ];
+    // The Preferences tab is per-STORE while the register is per-NAME, so the
+    // editor needs the row's own store id. Handing it the entered store would
+    // rewrite that store's preferences behind this facility's name.
+    expect(facilityStoreId(rows, 'b')).toBe('store-b');
+  });
+
+  it('resolves nothing with no row open, or for a row off the page', () => {
+    const rows = [facility({ id: 'a' })];
+    expect(facilityStoreId(rows, undefined)).toBeUndefined();
+    expect(facilityStoreId(rows, 'gone')).toBeUndefined();
   });
 });
 

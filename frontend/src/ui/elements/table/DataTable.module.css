@@ -52,18 +52,36 @@
      the two drifted apart the shadow would come back cropped. */
   --table-frozen-shadow: 0.5rem;
 
-  /* Row background fade (ui-standards § tables: transition background
-     0.15s on body rows) — carried by the cells, which paint the hover
-     wash / selection tint. A custom property rather than a transition
-     override so reduced-motion zeroes it without a higher-specificity
-     rule. */
-  --table-bg-fade: 0.15s;
-}
+  /* Width of the row's leading accent bar (rowAccent — tr[data-accent]). A
+     rule width, so px like the hairlines and the radii (styling principle 6);
+     3px is the smallest that still reads as a bar rather than a border at a
+     glance down a long list. */
+  --table-accent-bar: 3px;
 
-@media (prefers-reduced-motion: reduce) {
-  .root {
-    --table-bg-fade: 0s;
-  }
+  /* The keyboard row focus ring (KB-N1 — see tr[data-row-focused] below): bars
+     across the row's block edges, drawn INSET on each cell because an outline
+     around a full-width row reads as a table border. One source of truth
+     because a cell that also draws a frozen-block seam has to restate the ring
+     alongside it — box-shadow is a single property, so the two cues compose in
+     one declaration or not at all.
+
+     NEUTRAL, not --primary-main. The brand orange was reported as too vibrant
+     for a transient keyboard position (Mark, PR #1114) — it competes with the
+     status/tone vocabulary the rows already carry, and the row is not a control
+     taking the app's blue focus ring either (blue is the SELECTION tint here,
+     so a blue ring on a row would read as selection). A grey rule states "the
+     keyboard is here" without claiming a meaning.
+
+     --gray-main, not the near-black --text-secondary the first pass used: at
+     2px across a full row width a text-weight grey still read as a hard rule
+     (second review pass on the same PR). The mid-grey is where softening stops,
+     not a free dial — 3.1:1 on white, and the geometry is already the minimum
+     that reads as a bar, so a lighter token or a 1px line would put a focus
+     indicator under the 3:1 that non-text contrast asks for. Dark is roomier
+     (5.1:1) but takes the same token, because two greys would be two rules to
+     keep in step for no visible gain. */
+  --row-focus-ring:
+    inset 0 2px 0 0 var(--gray-main), inset 0 -2px 0 0 var(--gray-main);
 }
 
 /* Fills the remaining height between the toolbar and the footer bar, so the
@@ -82,6 +100,21 @@
   flex: 1;
   min-block-size: 0;
   overflow: auto;
+}
+
+/* fitContent (card view only): the table stops owning a scroll box and lays
+   out at its content height, so the HOST's scroller moves the cards and
+   anything the host renders beneath them as one. `overflow: clip` on the root
+   has to go with it — it would clip the cards this mode lets grow past the
+   old box — and the scroll region becomes a plain block. */
+.root[data-fit-content] {
+  flex: 0 0 auto;
+  overflow: visible;
+}
+
+.root[data-fit-content] .tableScroll {
+  flex: 0 0 auto;
+  overflow: visible;
 }
 
 /* Empty (or initial-loading) table: become a flex column so the empty state /
@@ -134,14 +167,19 @@
   padding-block: var(--space-3);
   border-block-end: 1px solid var(--color-divider);
 
-  /* Inline padding is ALIGNMENT-AWARE (see the .th[data-align] rules below):
-     the content-side padding matches the body cell so header text lines up
-     with its column, the free side is trimmed. --th-pad-inline is that matched
-     value, defaulted here and set per density in the density block. */
+  /* The header's two inline paddings — the CONTENT side (= the body cell's, so
+     header text lines up with its column; set per density below) and the FREE
+     side (a minimum gutter, see the .th rule). The gutter does NOT scale with
+     density: it's a separation floor, not part of the density rhythm. */
   --th-pad-inline: var(--space-4);
+  --th-pad-free: var(--space-2);
 
   background: var(--bg-toolbar);
   color: var(--text-body);
+  /* 13px — one notch under the body's 14px; rationale and the measurement
+     behind the size live on the token. Full-page tables only: a table inside a
+     modal keeps the body size (see the dialog rule below). */
+  font-size: var(--table-header-font-size);
   font-weight: var(--weight-medium);
   /* Tighter than the body's --table-line-height (1.43) — a deliberate
      header deviation (Carl 2026-07-24): only ever visible when a header
@@ -154,6 +192,19 @@
      stays visible, vertically centered beside it. Body cells keep nowrap unless
      a column opts into wrapLines (.td[data-wrap]). */
   vertical-align: middle;
+}
+
+/* A table inside a modal keeps its headers at the body size (14px — what every
+   header was before the shrink). The 13px above is for full-page tables, where
+   the header row is one band among many and the smaller type separates it from
+   the data; a modal's table is already a small, dense surface inside its own
+   frame, where three or four rows need no help telling themselves apart from
+   their headings and the shrink would only cost legibility. Scoped on the
+   native <dialog> every modal renders into (Dialog/ConfirmDialog/ErrorDialog),
+   so a vertical gets this for free rather than passing a prop down to each
+   table it opens in a modal. */
+:global(dialog) .th {
+  font-size: var(--text-sm);
 }
 
 /* Sortable header (ui-standards § tables .sortable): the WHOLE cell is the
@@ -202,7 +253,7 @@
   background: transparent;
   /* The app-wide fade token (0.15s), auto-zeroed under reduced motion by the
      rule on .root — so no separate reduced-motion block is needed here. */
-  transition: background var(--table-bg-fade);
+  transition: background var(--motion-base);
 }
 
 /* Blue on hover AND while resizing — the spec draws no grey stage and no
@@ -242,7 +293,7 @@
   max-width: var(--table-cell-max-grow);
   overflow: hidden;
   text-overflow: ellipsis;
-  transition: background-color var(--table-bg-fade);
+  transition: background-color var(--motion-base);
 }
 
 /* The one body cell that must NOT clip absolutely: a frozen block's outer edge
@@ -268,14 +319,21 @@
    body cell in table view (.td) and the wrapped value span in card view
    (.card); the header label stays in the sans UI font. Sized as a proportion
    of the surrounding cell — 92.857% ≈ 13px against the 14px (--text-sm) body
-   — and muted, because Courier renders visually larger at the same px, so
+   — because a mono face renders visually larger at the same px, so
    codes/batches over-weighted the row (issue #614). Using a percentage rather
-   than a token keeps mono a fixed fraction of whatever text it sits in. */
+   than a token keeps mono a fixed fraction of whatever text it sits in.
+
+   NOT muted (Ling, 2026-08-19). The grey was the other half of the #614
+   correction, but it made a code differ from its neighbours in three ways at
+   once — face, size and colour — which is what read as "multiple fonts" rather
+   than as one code convention. It also mis-stated the content: an item code and
+   a batch are the row's IDENTITY, not de-emphasised metadata, and greying them
+   ranked them below the values they identify. With --font-mono now leading with
+   ui-monospace (see tokens.css) the face alone carries the distinction. */
 .td[data-mono],
 .card [data-mono] {
   font-family: var(--font-mono);
   font-size: 92.857%;
-  color: var(--text-secondary);
 }
 
 /* Footer cells (a column's `footer` — e.g. a summed total). A single band
@@ -315,6 +373,20 @@ tr[data-tone='info'] > .td {
   color: var(--info-main);
 }
 
+/* 'warning' = a row needing attention before it can proceed (e.g. an outbound
+   line issued from a held batch — spec D111). Text only, like 'info'; the
+   fact itself is stated in words by a cell (never colour alone). */
+tr[data-tone='warning'] > .td {
+  color: var(--warning-main);
+}
+
+/* 'error' = a row in an error state (an expired batch — spec D112; a
+   server-refused bulk line). The expired row's bold red Expiry-date cell is
+   the words the tone restates. */
+tr[data-tone='error'] > .td {
+  color: var(--error-main);
+}
+
 /* Disabled rows: cursor follows TRUE interactivity — not-allowed only
    where a click does nothing; clickable read-only rows (spec AC-L3:
    they still open) keep the pointer. The grey fill + muted text live
@@ -340,7 +412,14 @@ tr[data-row-state='disabled']:not(.rowClickable) {
      height — visible misalignment (the Name column). A genuine 2-line cell now
      centres as a block in the grown row, still aligned with its neighbours.
      Diverges from the ui-standards note that multi-line cells read from the
-     top — deliberate, since our density model uses fixed row heights. */
+     top — deliberate, since our density model uses fixed row heights.
+
+     `baseline` was also tried and reverted (2026-08-19): it zeroes the mono/sans
+     baseline disagreement in an isolated harness, but in the real tables — whose
+     cells hold clamp wrappers, flex wrappers and controls, any of which can
+     present its own box edge as its baseline — the row's baseline is set by
+     whichever cell reaches furthest, and every cell's content bumped upwards.
+     Middle is immune to that: each cell centres on its own. */
 }
 
 .tdClamp {
@@ -374,21 +453,42 @@ tr[data-row-state='disabled']:not(.rowClickable) {
   text-align: center;
 }
 
-/* Header inline padding aligns the header text with the body content below it,
-   while trimming the "free" side so labels get room (Carl 2026-07-24). Left
-   headers pad the START (= --th-pad-inline, the body cell's inline padding) and
-   zero the END; right headers mirror it so numbers line up at the end; centre
-   headers stay symmetric. The fixed leading select cell keeps its own box. */
+/* Header inline padding, per side, by what that side has to do:
+
+     CONTENT side  --th-pad-inline  = the BODY cell's inline padding at this
+                                      density, so the header text lines up with
+                                      the column it names.
+     FREE side     --th-pad-free    = a minimum gutter. Nothing aligns on this
+                                      side (it's the ragged edge), so it only
+                                      has to keep the label off its neighbour.
+
+   Which side is which follows the alignment: start-aligned headers align at the
+   start, end-aligned ones mirror it, and centre-aligned headers align on their
+   CENTRE — so both of their sides are free, and staying symmetric keeps the
+   centring at any value.
+
+   The free side is small but never ZERO (it was, until 2026-08-11): at zero a
+   long label runs flush to the cell edge and butts against the neighbouring
+   column. Full body padding on both sides is the other extreme — correct-looking
+   but it charges every column the gutter twice, which on a 20-column requisition
+   came to +100px of table width.
+
+   Both rules are written with LOGICAL padding against the logical alignment, so
+   the whole geometry mirrors itself under RTL with nothing to restate — verified
+   in العربية: every header lines up at 0px and the sort slot lands on the right
+   side of its label in both directions.
+
+   The fixed leading select cell keeps its own box (checkbox centring). */
 .th:not(.selectCell) {
-  padding-inline: var(--th-pad-inline) 0;
+  padding-inline: var(--th-pad-inline) var(--th-pad-free);
 }
 
 .th[data-align='right']:not(.selectCell) {
-  padding-inline: 0 var(--th-pad-inline);
+  padding-inline: var(--th-pad-free) var(--th-pad-inline);
 }
 
 .th[data-align='center']:not(.selectCell) {
-  padding-inline: var(--space-1);
+  padding-inline: var(--th-pad-free);
 }
 
 .thLabel {
@@ -400,7 +500,23 @@ tr[data-row-state='disabled']:not(.rowClickable) {
 }
 
 /* Header text — wraps up to 2 lines then ellipsises. min-width:0 lets it shrink so the
-   clamp engages inside the flex row rather than overflowing. */
+   clamp engages inside the flex row rather than overflowing.
+
+   break-word, NOT anywhere (Carl 2026-08-11): the two differ in their min-content
+   contribution, and that difference is what keeps a column from squeezing its own
+   name. `anywhere` lets a break happen at any character, so the element's min-content
+   width collapses to ONE CHARACTER — table auto-layout then feels no pressure to give
+   the column room, and a header that would fit whole gets chopped mid-word ("Requested"
+   rendered as "Requeste / d" at 104px). `break-word` breaks only a word that cannot fit
+   on a line of its own and leaves min-content at the LONGEST WORD, so auto-layout floors
+   the column there and the same header lays out on one line at 107px. Both still break
+   a genuinely over-long word, so nothing spills horizontally.
+
+   A label that needs more than 2 lines at its column's width still clips — and note
+   the clip is currently SILENT on right-aligned (numeric) headers: Chromium does not
+   paint the line-clamp ellipsis under `text-align: end` (start/centre are fine, and
+   neither text-overflow nor block-ellipsis overrides it). Marking + hover-revealing
+   those is a separate follow-up. */
 .thText {
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -408,7 +524,7 @@ tr[data-row-state='disabled']:not(.rowClickable) {
   line-clamp: 2;
   min-width: 0;
   overflow: hidden;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 /* Header label is a flex row, so align it with justify-content (data-align lives on the
@@ -419,6 +535,18 @@ tr[data-row-state='disabled']:not(.rowClickable) {
 
 .th[data-align='center'] .thLabel {
   justify-content: center;
+}
+
+/* A header whose label DIDN'T fit its two lines — data-clipped is stamped by
+   DataTable's markClippedHeaders (see the rationale there). Only right-aligned
+   headers need the flip: Chromium refuses to paint the line-clamp ellipsis under
+   `text-align: end`, so those headers were dropping their tail with no marker at
+   all, while start/centre ones already ellipsised correctly and are left alone.
+   The clipped label goes start-aligned, which is what makes the ellipsis appear
+   — and reads as its own cue that something is cut, backed by the `title`
+   hover-reveal. Placed after the base .thText so specificity stays ascending. */
+.th[data-align='right'][data-clipped] .thText {
+  text-align: start;
 }
 
 /* Sort indicator (ui-standards § tables .sort-arrow) — a RESERVED slot on every
@@ -432,6 +560,22 @@ tr[data-row-state='disabled']:not(.rowClickable) {
   font-size: 1.125rem;
   line-height: 1;
   text-align: center;
+}
+
+/* On a RIGHT-aligned column the reserved slot has to sit on the START side of the
+   label instead (Carl 2026-08-11). Rendered after the text — which is right for a
+   left-aligned header — it lands BETWEEN the label and the cell's padded end edge,
+   pushing the header text 16px (the --space-3 slot + its --space-1 margin) clear of
+   the very numbers it names. Measured across a program requisition: every sortable
+   right-aligned header sat 16px off, while the non-sortable ones on the same row
+   landed dead on their column — which is what identifies the slot, not the padding,
+   as the cause. Flipping the visual order restores the alignment AND keeps the slot
+   reserved, so toggling a sort still shifts nothing. Order may diverge from DOM
+   order freely here: the indicator is aria-hidden and aria-sort on the th carries
+   the semantics. The margin flips with it, staying between slot and text. */
+.th[data-align='right'] .sortIndicator {
+  order: -1;
+  margin-inline: 0 var(--space-1);
 }
 
 /* A clickable row (list → detail, or detail → edit modal); only when
@@ -467,7 +611,7 @@ tr[data-row-state='disabled']:not(.rowClickable) {
   border-block-end: 1px solid var(--color-divider);
   text-align: center;
   padding: var(--space-2) var(--space-1);
-  transition: background-color var(--table-bg-fade);
+  transition: background-color var(--motion-base);
 }
 
 /* Placement of the BareCheckbox in a selection cell: centred by margin.
@@ -580,6 +724,163 @@ tr[data-row-state='disabled'] > .selectCell {
   color: var(--text-secondary);
 }
 
+/* Record-STATUS tints (rowTint): always-on backgrounds naming the row's
+   status, unlike the rowState tints above which show only while selected.
+   Same opaque color-mix recipe over --surface-raised so pinned cells cover
+   cleanly. AFTER the disabled rule (equal specificity): a disabled toned row
+   keeps its tint background under the disabled muted text — the status is why
+   the row is disabled. Selection deepens each tint (rules with the selection
+   block below).
+
+   ONE tint per table is the standing guidance, and it earns its place by
+   answering the question that table is FOR: 'unfinished' marks the rows still
+   awaiting work (the outbound and stocktake line tables), 'error' the rows the
+   server refused (R&R forms). The severity three (success/warning/error) are
+   kept for that second kind of use, but a table that washes several statuses
+   at once spends its whole at-a-glance channel on facts its own badges already
+   state — which is why outbound's line editor gave its three tints up (D111,
+   2026-08-21). */
+tr[data-tint='success'] > .td,
+tr[data-tint='success'] > .selectCell {
+  background: color-mix(in srgb, var(--success-main) 8%, var(--surface-raised));
+}
+
+tr[data-tint='warning'] > .td,
+tr[data-tint='warning'] > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--warning-main) 10%,
+    var(--surface-raised)
+  );
+}
+
+/* 'unfinished' — a row still awaiting a step the user must take (an outbound
+   placeholder line). Its own hue, not the caution amber: see
+   --marking-unfinished in tokens.css for why none of the existing severities
+   would do. Same recipe and the same selection/hover matrix as the others.
+
+   The whole ladder went up 4 points (7/12/12/17 → 11/16/16/21) on 2026-08-19:
+   at 7% the teal sat 1.08:1 against a plain white row, which on the cheap
+   clinic monitors this runs on was barely a row at all — and this is the ONE
+   tint that answers "what is left to do?", so it is the last that should be
+   hard to see. 11% reads at 1.13:1 with the steps between the hover and
+   selection stops preserved. This is the lever the token's own note points at:
+   the accent BAR is pinned at 3.51:1 for SC 1.4.11 and must not move, while a
+   background carries no such floor — body text on the deepest stop still
+   measures 13.9:1 light / 8.3:1 dark, far past AA. */
+tr[data-tint='unfinished'] > .td,
+tr[data-tint='unfinished'] > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--marking-unfinished) 11%,
+    var(--surface-raised)
+  );
+}
+
+tr[data-tint='error'] > .td,
+tr[data-tint='error'] > .selectCell {
+  background: color-mix(in srgb, var(--error-main) 8%, var(--surface-raised));
+}
+
+/* Keyboard row focus (spec/keyboard KB-N1/AC-KB37): "the focused row is
+   indicated by a background DISTINCT FROM ROW STRIPING… the indication is a
+   focus state, not a meaning".
+
+   TWO channels, because focus and selection are orthogonal states that must
+   both stay readable on the same row: the row's own HOVER WASH as the
+   background, plus a neutral inset ring. The ring is a DIFFERENT PROPERTY, so
+   it never contends with the selection background — a selected row that also
+   holds keyboard focus keeps showing where the keyboard is, which the
+   background alone cannot do, since the selection rules legitimately outrank
+   this one (they carry an extra :not()) and out-specifying them needed either a
+   meaningless :not() or a duplicated attribute. Lives here, before the density
+   block, for the same ascending-specificity reason as the disabled tint above.
+
+   The background is the SAME grey the pointer draws, deliberately (Mark, PR
+   #1114): a keyboard position is the keyboard's equivalent of the pointer being
+   somewhere, so it earns the same weight rather than a colour of its own. The
+   opaque --surface-raised base is what the hover wash's own pinned-cell variant
+   uses further up — one declaration covers ordinary and pinned cells here.
+
+   The ring is what the current app lacks, and it is why the two cues are not
+   fully collapsed into one: there, hover and keyboard focus are near-identical
+   washes, so a pointer resting on row 3 while the arrows sit on row 7 shows two
+   rows looking the same, and neither says which one Enter will open. The ring
+   also keeps the state visible on the rows whose own fill outranks the wash —
+   selected, toned, read-only.
+
+   Colour is never the only signal: the row is simultaneously the focused
+   element. The ring is on the CELLS, not an outline on the <tr>, because a
+   focus ring around a full-width row reads as a table border, not as focus. */
+tr[data-row-focused] > .td,
+tr[data-row-focused] > .selectCell {
+  background: color-mix(in srgb, var(--text-body) 4%, var(--surface-raised));
+  box-shadow: var(--row-focus-ring);
+}
+
+/* The frozen block's outer column draws its 1px seam with box-shadow too (see
+   [data-frozen-edge] above), and box-shadow is ONE property: the seam's selector
+   outranks the ring's, so that single cell lost its bars and the highlight read
+   as a notch punched out of the row over the pinned Code column (reported on the
+   internal-order detail view). Both cues are wanted there, so the ring is
+   restated WITH the seam — which is why it is a variable rather than three
+   copies of the same two shadows. The hidden-edge state needs no partner rule:
+   once content is under the block the seam is withdrawn (that same
+   `:not([data-hidden-*])`) and its shadow is drawn on a pseudo-element, so the
+   ring above applies untouched. */
+.tableScroll:not([data-hidden-left])
+  tr[data-row-focused]
+  > [data-frozen-edge='left']:not(.selectCell) {
+  box-shadow:
+    var(--row-focus-ring),
+    inset -1px 0 0 0 var(--color-divider);
+}
+
+.tableScroll:not([data-hidden-right])
+  tr[data-row-focused]
+  > [data-frozen-edge='right'] {
+  box-shadow:
+    var(--row-focus-ring),
+    inset 1px 0 0 0 var(--color-divider);
+}
+
+tr[data-row-focused]:focus {
+  outline: none;
+}
+
+/* Arrowing a row into view must not park it UNDER the sticky header row
+   (scrollIntoView's `nearest` stops as soon as the row is inside the box, which
+   includes the strip the header is floating over). The margin is the tallest
+   header the density scale produces, so the row lands clear of it in every
+   density; the trailing value keeps the last row off the box's bottom edge. */
+:where(tbody) tr {
+  scroll-margin-block: 3rem 0.5rem;
+}
+
+/* The table is the list's single tab stop (KB-N1 — see createRowFocus.ts), so it
+   needs a focus indicator of its own for the moment before any row is
+   highlighted: reaching the list by Tab has to be visible (WCAG 2.2 SC 2.4.7).
+   Inset, so it draws inside the scroll box rather than being clipped by it, and
+   only for :focus-visible — the seeded focus a list screen arrives with is not a
+   keyboard interaction and must not flash a ring at a mouse user. */
+.table:focus-visible {
+  outline: 2px solid var(--secondary-main);
+  outline-offset: -2px;
+}
+
+/* …but NOT for the seed itself. `:focus-visible` asks whether the last input
+   was a keyboard, and the seed is a `.focus()` the page performs on arrival —
+   so a user who reached the screen BY keyboard (Enter on a row, the command
+   palette) landed on every list with the ring already drawn, on a table they
+   had not chosen to focus (reported on PR #1114: "shows on every page load on
+   every page"). The seed is a starting position, not a focus event the user
+   caused. DataTable clears the flag on the first key or the first focus change,
+   from which point the ring behaves normally — Tab onto a table still shows
+   it, which is the SC 2.4.7 case it exists for. */
+.table[data-focus-seeded]:focus-visible {
+  outline: none;
+}
+
 /* Row density (ui-standards § tables → row heights), keyed off the
    data-density the DataTable stamps on the <table> (chosen in the Settings
    popover; comfortable is the spec's ⭐ default, and the default grows to
@@ -596,10 +897,10 @@ tr[data-row-state='disabled'] > .selectCell {
    sits generously centred in the floor (vertical-align: middle), while a
    header that WRAPS to two lines grows from the small padding instead of
    ballooning to floor-plus-full-padding. Same block-size-as-minimum model
-   as .td. Inline padding is alignment-aware (the .th[data-align] rules above):
-   each density sets --th-pad-inline to the BODY cell's inline padding, applied
-   to the header's content side (start for left, end for right) so the header
-   text lines up with its column; the free side is zeroed to give labels room.
+   as .td. For inline padding each density sets --th-pad-inline to its own BODY
+   cell's inline padding, which the .th rules above apply to the header's CONTENT
+   side, so header text lines up with its column at every density (the free side
+   takes the density-independent --th-pad-free gutter).
    The leading select th keeps its own fixed box (checkbox centring). */
 .table[data-density='compact'] .td {
   block-size: 2.5rem; /* 40px */
@@ -634,6 +935,19 @@ tr[data-row-state='disabled'] > .selectCell {
   --th-pad-inline: 1.25rem; /* = body spacious inline padding */
 }
 
+/* A row both disabled and toned (a held or expired batch in a line editor's
+   grid — spec D111/D112) keeps the disabled grey fill but reads in its tone:
+   the state is WHY the row is disabled, so the tone must survive the muting.
+   Sits after the density block (higher specificity than its .td rules — the
+   lint's ascending order). */
+tr[data-row-state='disabled'][data-tone='warning'] > .td {
+  color: var(--warning-main);
+}
+
+tr[data-row-state='disabled'][data-tone='error'] > .td {
+  color: var(--error-main);
+}
+
 tr[data-selected]:not([data-row-state]) > .td,
 tr[data-selected]:not([data-row-state]) > .selectCell {
   background: color-mix(
@@ -659,6 +973,42 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
     var(--color-warning) 10%,
     var(--surface-raised)
   );
+}
+
+/* A selected STATUS-tinted row (rowTint, D111) deepens its own tint instead
+   of switching to the selection blue — the status is a durable fact of the
+   record; selection is transient. Same deepen ratios as the rules below.
+   After the selection rules (equal specificity) so the tint wins. */
+tr[data-selected][data-tint='success'] > .td,
+tr[data-selected][data-tint='success'] > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--success-main) 12%,
+    var(--surface-raised)
+  );
+}
+
+tr[data-selected][data-tint='warning'] > .td,
+tr[data-selected][data-tint='warning'] > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--warning-main) 15%,
+    var(--surface-raised)
+  );
+}
+
+tr[data-selected][data-tint='unfinished'] > .td,
+tr[data-selected][data-tint='unfinished'] > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--marking-unfinished) 16%,
+    var(--surface-raised)
+  );
+}
+
+tr[data-selected][data-tint='error'] > .td,
+tr[data-selected][data-tint='error'] > .selectCell {
+  background: color-mix(in srgb, var(--error-main) 12%, var(--surface-raised));
 }
 
 /* Hover deepens whichever selection tint is showing (spec: blue 8 → 12%,
@@ -688,6 +1038,79 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
     var(--color-warning) 15%,
     var(--surface-raised)
   );
+}
+
+/* Selected + status-tinted rows keep their own deepened tint on hover too —
+   without these the blue hover rule above (same specificity, earlier… but
+   matching :not([data-row-state])) would flash blue over the status tint. */
+:where(tbody) tr[data-selected][data-tint='success']:hover > .td,
+:where(tbody) tr[data-selected][data-tint='success']:hover > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--success-main) 12%,
+    var(--surface-raised)
+  );
+}
+
+:where(tbody) tr[data-selected][data-tint='warning']:hover > .td,
+:where(tbody) tr[data-selected][data-tint='warning']:hover > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--warning-main) 15%,
+    var(--surface-raised)
+  );
+}
+
+:where(tbody) tr[data-selected][data-tint='unfinished']:hover > .td,
+:where(tbody) tr[data-selected][data-tint='unfinished']:hover > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--marking-unfinished) 21%,
+    var(--surface-raised)
+  );
+}
+
+:where(tbody) tr[data-selected][data-tint='error']:hover > .td,
+:where(tbody) tr[data-selected][data-tint='error']:hover > .selectCell {
+  background: color-mix(in srgb, var(--error-main) 12%, var(--surface-raised));
+}
+
+/* Hovering a CLICKABLE tinted row deepens its own tint (green → darker
+   green, etc.) — the hover affordance for rows that open something (the
+   detail table). Keyed off .rowClickable, so the line editors' grids (no
+   onRowClick) keep flat tints — hover means nothing there. Deeper than the
+   selected mixes above so the pointer's row stands out of a selection too;
+   AFTER them so the hover wins on a selected clickable row. */
+:where(tbody) tr.rowClickable[data-tint='success']:hover > .td,
+:where(tbody) tr.rowClickable[data-tint='success']:hover > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--success-main) 14%,
+    var(--surface-raised)
+  );
+}
+
+:where(tbody) tr.rowClickable[data-tint='warning']:hover > .td,
+:where(tbody) tr.rowClickable[data-tint='warning']:hover > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--warning-main) 17%,
+    var(--surface-raised)
+  );
+}
+
+:where(tbody) tr.rowClickable[data-tint='unfinished']:hover > .td,
+:where(tbody) tr.rowClickable[data-tint='unfinished']:hover > .selectCell {
+  background: color-mix(
+    in srgb,
+    var(--marking-unfinished) 16%,
+    var(--surface-raised)
+  );
+}
+
+:where(tbody) tr.rowClickable[data-tint='error']:hover > .td,
+:where(tbody) tr.rowClickable[data-tint='error']:hover > .selectCell {
+  background: color-mix(in srgb, var(--error-main) 14%, var(--surface-raised));
 }
 
 /* A frozen block's freeze cue, as ONE continuous shadow down the whole column:
@@ -721,7 +1144,7 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
      so it eases in with the table's own fade token, which reduced motion
      zeroes. */
   opacity: 0;
-  transition: opacity var(--table-bg-fade);
+  transition: opacity var(--motion-base);
 }
 
 [data-frozen-edge='left']::after {
@@ -737,6 +1160,59 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
 .tableScroll[data-hidden-left] [data-frozen-edge='left']::after,
 .tableScroll[data-hidden-right] [data-frozen-edge='right']::after {
   opacity: 1;
+}
+
+/* The row's LEADING ACCENT BAR (rowAccent): a solid bar down the inline-start
+   edge of the rows that still need work, so a half-finished list reads at a
+   glance from one edge instead of from each row's contents. Drawn as an
+   OVERLAY on the leading cell (an absolutely-positioned ::before), never as a
+   border or an inline box: a border would widen the accented rows only, so
+   every cell in them would sit 3px across from its neighbours' and the whole
+   row would twitch sideways the moment it flipped state — and reserving a
+   transparent border on every row instead would push every table in the app
+   off its header alignment.
+
+   The leading cell is whatever comes first — the selection cell where the
+   table has one (fixed-width and pinned, so the bar sits in the dead space
+   beside the checkbox), else the first data cell. Only that non-pinned case
+   needs a containing block: a pinned cell is already `position: sticky`, and
+   re-declaring it relative would unstick it.
+
+   Logical inset, so the bar follows the reading direction in RTL. The frozen
+   edge's own ::after is untouched (different pseudo, different cell edge), and
+   pointer-events stay off so the bar never eats a row click. */
+tr[data-accent] > :first-child:not([data-pinned]) {
+  position: relative;
+}
+
+tr[data-accent] > :first-child::before {
+  content: '';
+  position: absolute;
+  /* The block-end overhang closes the collapsed row divider (an absolutely
+     positioned child spans the PADDING box, so `0` would stop 1px short of
+     it): two adjacent marked rows then read as one unbroken band down the
+     edge, which is the whole point of the bar. Same trick, same reason, as
+     the frozen-edge shadow strip above. */
+  inset-block: 0 -1px;
+  inset-inline-start: 0;
+  inline-size: var(--table-accent-bar);
+  pointer-events: none;
+}
+
+tr[data-accent='unfinished'] > :first-child::before {
+  background: var(--marking-unfinished);
+}
+
+tr[data-accent='success'] > :first-child::before {
+  background: var(--success-main);
+}
+
+tr[data-accent='warning'] > :first-child::before {
+  background: var(--warning-main);
+}
+
+tr[data-accent='error'] > :first-child::before {
+  background: var(--error-main);
 }
 
 /* ==========================================================================
@@ -781,6 +1257,19 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   align-items: center;
 }
 
+/* The row count — quiet text at the toolbar's inline end, just before the
+   icon controls. It takes the auto margin that would otherwise sit on the
+   controls, so the pair travels together to that edge; two auto margins would
+   split the free space and strand the count mid-row. tabular-nums keeps the
+   digits from jittering as a filter narrows the set. */
+.toolbarCount {
+  margin-inline-start: auto;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 /* The icon-control cluster — held at the inline-end by its own auto margin
    (lands correctly whether or not filters/tabs sit at the start, and hugs the
    same edge when it wraps onto its own line). */
@@ -790,6 +1279,12 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   align-self: stretch;
   gap: var(--space-1);
   margin-inline-start: auto;
+}
+
+/* With a count present, IT holds the inline-end margin and the controls simply
+   follow it. */
+.toolbarCount + .toolbarControls {
+  margin-inline-start: 0;
 }
 
 /* Inline loading spinner sitting just left of the toolbar's icon controls (a
@@ -903,6 +1398,61 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   );
 }
 
+/* Disabled card (rowState 'disabled') — the card half of table view's grey
+   read-only row: a muted fill and secondary text, so a record that cannot be
+   edited reads as one in EITHER rendering (a line editor whose grid is cards at
+   every width would otherwise show its barred batches exactly like the editable
+   ones — only the disabled inputs inside them would say so). Placed after the
+   selected rule at equal specificity: a disabled card keeps the grey even while
+   selected, as its row does.
+
+   NOT the row's --bg-toolbar: that grey is a step off the WHITE row surface,
+   and on the recessed card list it lands 5/255 from a normal card in light and
+   3/255 from the LIST in dark, where the card box dissolves into its own list
+   (Aneesh, PR #1207). Cards get their own fill token, fitted to both of a
+   card's neighbours in each theme — see the --table-card-surface-disabled note
+   in tokens.css. This reaches every card list keying rowState off an
+   editability gate (the six list screens, both line editors), which is the
+   point: those same rows are grey in table view.
+
+   The fill is the whole treatment. The identity title keeps its own colour
+   (.cardPrimary, and any tone on it) rather than being muted here — the same
+   bargain table view strikes, where a held or expired row reads in its tone
+   THROUGH the disabled muting, because the status is why the row is disabled. */
+.cardRow[data-row-state='disabled'] > .cardCell > .card {
+  background: var(--table-card-surface-disabled);
+  color: var(--text-secondary);
+}
+
+/* Card view's half of the keyboard row focus (KB-N1/AC-KB37 — the table-view
+   half is the cell background + inset ring further up): the CARD takes the
+   ring, since it already sits on its own surface and an inset cell ring would
+   land inside the card's padding instead of around it. The same neutral
+   --gray-main as table view's ring, so the two views read as one
+   indication, and it outranks the selection border above by rule order — a
+   selected card that also holds the keyboard still shows where the keyboard is.
+
+   A card is already a bordered box, so the cue is that border restated in the
+   focus colour, doubled to 2px by a 1px shadow sitting exactly on it — the
+   same weight as table view's bars. NOT the 2px halo standing off the card
+   that the first build drew: the halo is what read as vibrant (PR #1114),
+   where a thicker edge reads as an edge. */
+.cardRow[data-row-focused] > .cardCell > .card {
+  border-color: var(--gray-main);
+  box-shadow: 0 0 0 1px var(--gray-main);
+}
+
+/* The <tr> is the focused element, but the ring is drawn on the card inside it
+   (above), so the row's own outline would double it. */
+.cardRow[data-row-focused]:focus {
+  outline: none;
+}
+
+/* Toned cards carry NO border/shadow treatment — the tinted identity title
+   (below) and the corner badges are the whole card-status vocabulary; the
+   coloured borders tried here read as selection/error field states and were
+   removed (design review, 2026-08-14). */
+
 /* Header: selection checkbox, identity title and badge on one row, vertically
    centred so the checkbox, the identity's colour dot / icon / name and the badge
    all line up (the identity is single-line; a future code-beneath would move
@@ -936,6 +1486,16 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   gap: var(--space-1) var(--space-3);
 }
 
+/* STATUS flag badges sit directly after the title, not in the far corner
+   (ui-surface: "the same word-only badges directly after the title"): when
+   the header's badges are flags, the identity stops absorbing the space
+   between them, so the header reads title · statuses, left-aligned. Keyed on
+   [data-flag], so an action-bearing badge slot (row buttons) keeps the
+   corner. */
+.cardHeader:has(.cardBadge [data-flag]) .cardIdentity {
+  flex: 0 1 auto;
+}
+
 /* Identity title (ui-standards `.card-table-card-primary`). No line-height
    override — it's box-centred by .cardHeader's align-items, and every box
    centre (checkbox, colour dot, icon, title, badge) is identical, verified in
@@ -953,6 +1513,37 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   min-width: 0;
 }
 
+/* A card titled by a CODE rather than a name (the outbound + inbound batch
+   editors, whose identity is the batch code) takes a deeper mono reduction
+   than the shared 92.857%.
+
+   That fraction was measured against 14px body text (issue #614 — Courier
+   renders visually larger at the same px, so codes over-weighted the row).
+   The identity title is 16px, where the same ratio lands at ~14.9px and simply
+   scales the problem up: it left the code heavier than the "Batch" caption
+   beside it (14px) and 2px above every other code on the same card (13px).
+   87.5% puts it at 14px — level with its caption, a notch above body mono, and
+   still the title, which weight and position carry rather than size. A card
+   titled by a NAME is unaffected: it has no mono value. */
+.cardPrimary [data-mono] {
+  font-size: 87.5%;
+}
+
+/* Card view's row tone (rowTone): the tone paints the card's IDENTITY title
+   only — a whole-card repaint would recolour field labels and controls. The
+   fact itself is stated in words by a cell (never colour alone). */
+.cardRow[data-tone='info'] .cardPrimary {
+  color: var(--info-main);
+}
+
+.cardRow[data-tone='warning'] .cardPrimary {
+  color: var(--warning-main);
+}
+
+.cardRow[data-tone='error'] .cardPrimary {
+  color: var(--error-main);
+}
+
 .cardBadge {
   display: flex;
   align-items: center;
@@ -960,6 +1551,71 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
      duplicate + delete buttons); harmless for a single chip. */
   gap: var(--space-1);
   flex-shrink: 0;
+}
+
+/* Flag cells (getFlagCell + the line editors' auto-allocation tick) render
+   TWO representations, one shown per view: the bare check ([data-flag]) in
+   table view, where its named column header carries the meaning; the
+   StatusBadge CHIP ([data-flag-chip]) in a card's BADGE slot, where there is
+   no header and two flags would read as the same anonymous check. */
+[data-flag-chip] {
+  display: none;
+}
+
+.cardBadge [data-flag] {
+  display: none;
+}
+
+.cardBadge [data-flag-chip] {
+  display: inline-flex;
+}
+
+/* Inline row-status badges (StatusBadge cluster beside a name/batch value —
+   ui-standards § table interaction). TABLE VIEW ONLY: cards carry the same
+   states as their after-the-title chips (the flag columns), so the inline
+   cluster hides there rather than saying everything twice. */
+[data-row-badges] {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  vertical-align: middle;
+  /* Breathing room above the cluster when it WRAPS below the name it annotates
+     — at 0 the chip sat 1.9px under the line above, close enough to read as
+     attached to it.
+
+     SYMMETRIC, not a lone margin-block-start, and that is the whole trick: this
+     is an inline-flex, so `vertical-align: middle` centres its MARGIN box on the
+     line. Equal margins keep the border box exactly where it was when the chip
+     rides beside the name (measured: chip-vs-text-centre unmoved at 1.8px),
+     while a top-only margin dragged that inline chip 2px low. Wrapped, the top
+     half still does the separating.
+
+     2px, not 4: the row-height floor absorbs 2px of extra margin box at every
+     density, so no badged row grows. At 4px a single-line badged row went 52 →
+     54.2px and sat taller than its unbadged neighbours. */
+  margin-block: 0.125rem;
+}
+
+/* The text the cluster annotates (an item name, a batch code) carries the
+   separation on its TRAILING edge — the cluster itself must have no leading
+   margin.
+
+   Why the side matters: in a cell that WRAPS (the detail table's Name column
+   clamps to two lines), a long name pushes the cluster onto line 2. A leading
+   margin on the cluster then survives the break and renders as an indent, so
+   the chip sits --space-2 to the right of the name's own left edge and the
+   column reads ragged (issue raised on the outbound detail view). A trailing
+   margin on the name is invisible at a line end — it only makes the break
+   happen fractionally earlier — so the wrapped chip starts flush under the
+   name, and same-line rows keep the identical gap. Non-wrapping cells that
+   compose their own flex row (the line editor's batch cell) space the cluster
+   with their own `gap` for the same reason. */
+[data-row-badges-label] {
+  margin-inline-end: var(--space-2);
+}
+
+.card [data-row-badges] {
+  display: none;
 }
 
 /* Card body — divided from the header by a hairline (ui-standards
@@ -991,6 +1647,180 @@ tr[data-selected][data-row-state='warning'] > .selectCell {
   grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
 }
 
+/* The shell around a width-declaring group's grid (CardView's FieldFlow).
+   Size containment does two jobs: it stops the declared template's track minima
+   counting toward the card's min-content width — without it a 75rem template
+   widens the whole DataTable and the table scrolls sideways instead of the
+   fields reflowing — and it gives the observer a width that holds still while
+   the template inside it is swapped. */
+.cardFieldsShell {
+  container-type: inline-size;
+}
+
+/* Declared field widths (opt-in, ColumnMeta.cardWidth — see CardView's
+   FieldFlow). Equal auto-fit tracks give every field the same box, so a 1-digit
+   Difference is padded to a manufacturer name's width and a wide row runs out
+   of line before its last field. A group whose columns declare widths supplies
+   its own template instead: fixed `rem` tracks for the formatted scalars, and
+   an `fr` share per free-text field, so the width left over once the fixed
+   tracks and gaps are paid for is split in the declared ratio rather than
+   evenly (ux-testing/header-field-width.html § weighted columns). */
+.cardFields[data-field-widths] {
+  /* Both declared here (with the unsized defaults as fallbacks) so they're
+     known custom properties to the value-no-unknown-custom-properties check —
+     CardView overrides them inline per group from the columns' meta.cardWidth. */
+  --card-field-cols: repeat(auto-fit, minmax(10rem, 1fr));
+  --card-field-max: none;
+  /* The per-field trio the wrapping fallback below reads — CardView's cardFlex
+     overrides them per field, mirroring <FormRowItem>'s weight / minWidth /
+     maxWidth. Declared here with inert defaults so they're known custom
+     properties, as the two above. */
+  /* The narrow layout's track count — overridden inline per group from
+     CardGroup.narrowLayout; the 6 here is only the known-property default. */
+  --card-narrow-columns: 6;
+  --card-field-weight: 1;
+  --card-field-floor: 10rem;
+  --card-field-max-w: none;
+
+  grid-template-columns: var(--card-field-cols);
+
+  /* The group's ceiling: past the width at which every track is at its declared
+     max, the row stops growing and the slack becomes trailing space. Capping
+     the GRID rather than each field keeps the tracks proportional — a per-field
+     cap left its track's remainder as a hole mid-row. */
+  max-inline-size: var(--card-field-max);
+}
+
+/* Below the sum of the template's own minima an explicit grid would overflow the
+   card rather than wrap, so CardView measures and flips this on: the fields
+   reflow as a WRAPPING FLEX ROW, each keeping the size its column declared
+   (CardView's cardFlex sets the two custom properties per field).
+
+   Flex, not `repeat(auto-fit, minmax(10rem, 1fr))` as this fallback used to be.
+   Equal auto-fit tracks wrap, but they discard the declaration that makes the
+   wide layout right, and hand every field an identical box whatever it holds —
+   which on a tablet in PORTRAIT (always far below an editor group's minima) was
+   wrong twice over in the same row: a read-only Pack size sat in a track it had
+   no use for while Location's "code — name" value truncated next to it. A
+   wrapping flex row is the one layout that keeps per-field sizes AND reflows, so
+   the declaration now holds at every width and only the row count changes.
+
+   Trade-off, accepted: columns no longer line up across rows the way equal
+   tracks did — a wrapped row starts where the previous one ended. That is the
+   cost of sizing to the data, and it only applies here; at full width the group
+   is a single row where alignment is not a question. */
+.cardFields[data-field-widths][data-narrow] {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+/* Every field may shrink inside its track: a grid item's automatic minimum is
+   its content's min-width, which for an input is its intrinsic size, and that
+   would push the row past the card. Covers the flex items below too — a flex
+   item's automatic minimum is min-content for the same reason, and without this
+   the wrapped row could never shrink to wrap. */
+.cardFields[data-field-widths] > * {
+  min-inline-size: 0;
+}
+
+/* Sizing per field, in <FormRowItem>'s terms — see CardView's cardFlex for why
+   this borrows that component's technique rather than inventing a second one.
+
+   `flex-basis: 0` with the floor in `min-inline-size` is what makes a weight a
+   true `fr`: the whole line distributes in proportion instead of only the slack
+   left after every field has claimed a basis. `min()` caps the floor at the line
+   width so a lone field narrower than its own floor shrinks rather than
+   overflowing. The max stops a weighted field swallowing a wrapped line whole —
+   without it the last row overshot the right edge of the rows above it.
+
+   min-inline-size deliberately OVERRIDES the `0` set for grid mode above: there
+   the track's own minmax() carries the floor and a floored item would fight it,
+   here the item is the only thing that knows its floor. */
+.cardFields[data-field-widths][data-narrow] > * {
+  flex: var(--card-field-weight, 1) 1 0;
+  min-inline-size: min(var(--card-field-floor, 10rem), 100%);
+  max-inline-size: var(--card-field-max-w, none);
+}
+
+/* narrowLayout: 'columns' — the other bargain (see CardGroup.narrowLayout).
+   NARROW VIEWPORTS ONLY (≤1023px, 2026-08-20).
+
+   Equal tracks, so every row fills its width and every row shares the same
+   column edges; a field that needs more than one column says so with
+   meta.cardSpan. Fields stop being sized to their data, which is the price —
+   and on a tablet in portrait it is a price worth paying, because a third of
+   that panel is about what a field wants anyway, so the two come to nearly the
+   same thing and the rows come out even.
+
+   They come apart as the viewport grows. A span claims a FRACTION of the row
+   and a declared width does not scale, so the two agree at one panel width and
+   diverge either side of it: on a laptop's full-screen modal a third is ~27rem
+   handed to a field that asked for 7.5. Capping the field inside its track was
+   tried (and shipped for a day): it honours the width, but the leftover then
+   sits between the fields as a gap, which is worse than either the filled track
+   or the wrap. There is no third answer inside this layout — the slack in a row
+   is `panel − Σ(declared widths)` whatever the track count, and it can only go
+   between the fields, into them, or at the end of the line.
+
+   So above 1023px this layout simply doesn't run: the element keeps the
+   WRAPPING WEIGHTED ROW declared above, which puts as many fields on a line as
+   fit at the widths they asked for and lets the weighted ones absorb what is
+   left — no gaps, and the slack ends up at the end of a line instead. What is
+   given up there is that a wrapped line's edges don't align with the line
+   above. Even rows below the tablet line, sized fields above it.
+
+   1023 is not a new number: it is `breakpoints.navOverlay − 1`, the line this
+   codebase already draws between tablet and desktop. */
+@media (max-width: 1023px) {
+  .cardFields[data-field-widths][data-narrow][data-narrow-columns] {
+    display: grid;
+    /* SIX tracks, not an auto-fit count. The count has to be fixed for the spans
+       to mean anything — a field declaring 3 of 6 is asking for half the row, and
+       an auto-fit grid that resolved to 5 tracks at some width would silently make
+       that three-fifths and break every row's packing. Six is chosen so the spans
+       can express the ratios these cards need (2 against 3); see
+       CardGroup.narrowLayout for why three tracks could not. */
+    grid-template-columns: repeat(var(--card-narrow-columns, 6), 1fr);
+  }
+
+  /* The flex sizing above is inert under grid, but min/max-inline-size are not:
+     the floor would stop a field shrinking into its track, and a weighted field's
+     `max` would cap it BELOW the tracks it spans (a 17rem max against two 13rem
+     columns), leaving the hole this layout exists to avoid. Both are cleared. */
+  .cardFields[data-field-widths][data-narrow][data-narrow-columns] > * {
+    grid-column: span var(--card-field-span, 1);
+    min-inline-size: 0;
+    max-inline-size: none;
+  }
+}
+
+/* A track grid over a narrow container leaves each track too fine for an input —
+   twelve of them at 30rem is ~1.5rem each. Below that, ONE field per row: the
+   spans have to be neutralised with it, because a group declaring `span 12`
+   against a 3-track grid would force implicit columns and overflow the card
+   rather than reflow. `1 / -1` says "this row, whatever its width", so it holds
+   for any group's count without knowing the number.
+
+   NESTED in the same viewport media query as the grid it corrects, and AFTER
+   the two rules above, not before them. A container query carries no
+   specificity of its own, so at an identical selector this block only wins by
+   source order — sitting above them, its `1 / -1` lost to the span rule and
+   the spans it exists to neutralise stayed live, which is the implicit-column
+   overflow described above rather than the stacking described here. It also
+   clears the declared ceiling, for the same reason it clears the span: one
+   field to a row means that row IS the field's width. */
+@media (max-width: 1023px) {
+  @container (max-inline-size: 30rem) {
+    .cardFields[data-field-widths][data-narrow][data-narrow-columns] {
+      grid-template-columns: 1fr;
+    }
+
+    .cardFields[data-field-widths][data-narrow][data-narrow-columns] > * {
+      grid-column: 1 / -1;
+      max-inline-size: none;
+    }
+  }
+}
 /* --- Card body groups ------------------------------------------------------- */
 
 /* A body group's block (non-disclosure): its optional caption then its field

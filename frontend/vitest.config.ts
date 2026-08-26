@@ -22,6 +22,13 @@ export default defineConfig({
         import.meta.url
       ).pathname,
     },
+    // Resolve solid-js (and solid-consuming deps) to the CLIENT build — the
+    // one that ships — not the node-default server build, whose createResource
+    // refuses to run outside a hydration context. Without this, no test can
+    // construct a resource (storeScopedResource.test.ts), and solid-js and
+    // @tanstack/solid-table resolve as two disconnected instances (the
+    // limitation renderTemplate.test.tsx documents).
+    conditions: ['browser'],
   },
   test: {
     // The in-repo country plugins are covered too — co-locating them buys

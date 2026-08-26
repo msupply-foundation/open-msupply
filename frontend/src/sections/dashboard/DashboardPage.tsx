@@ -7,6 +7,7 @@ import {
   reportPermissionDenied,
   type TypedDocument,
 } from '@/api/graphql';
+import { gated } from '@/api/gated';
 import { formatNumber, t, tPlural } from '@/intl';
 import { hasPermission, storeContext } from '@/store/storeContext';
 import { Page } from '@/ui/layout/Page/Page';
@@ -136,14 +137,11 @@ const createCountResource = <TResult, TVariables>(
   // the router; a suspending read would tear down the page on refetch
   // (kdd/solid-reactivity-pitfalls rule 1).
   const value = (): CountValue<TResult> | undefined =>
-    resource.state === 'ready' || resource.state === 'refreshing'
-      ? resource.latest
-      : // A throw the fetcher didn't turn into an outcome (graphqlFetch never
-        // throws, so this needs something unexpected) still has to read as a
-        // failed panel, not a panel stuck on "Loading…" (ui-surface § S2).
-        resource.state === 'errored'
-        ? { kind: 'error' }
-        : undefined;
+    gated(resource) ??
+    // A throw the fetcher didn't turn into an outcome (graphqlFetch never
+    // throws, so this needs something unexpected) still has to read as a
+    // failed panel, not a panel stuck on "Loading…" (ui-surface § S2).
+    (resource.state === 'errored' ? { kind: 'error' } : undefined);
   return {
     state: () => {
       const display = countPanelState(value());
@@ -285,7 +283,10 @@ const DashboardPage: Component = () => {
     <Page
       header={
         <Header>
-          <Breadcrumb crumbs={[{ label: t('dashboard') }]} />
+          {/* The crumb is the destination's registry LABEL, which is Home —
+              the same key the menu entry and the brand mark use. The vertical
+              is still the dashboard; only what the user reads changed. */}
+          <Breadcrumb crumbs={[{ label: t('label.home') }]} />
         </Header>
       }
     >

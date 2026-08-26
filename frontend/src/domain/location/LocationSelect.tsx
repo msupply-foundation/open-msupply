@@ -28,11 +28,15 @@ export interface LocationSelectProps {
   disabled?: boolean;
   error?: string;
   placeholder?: string;
+  /** Max-width cap — forwarded to the Combobox, opt-in (default `full`). */
+  width?: 'compact' | 'short' | 'long' | 'full';
   /**
    * A `createFocusTarget()` handle bound to the picker's input — for an owner
    * that focuses it after an action (e.g. a dialog opening on it).
    */
   focusTarget?: FocusTarget;
+  /** `data-testid` for the text input (locale-stable test hook, e2e/TESTIDS.md). */
+  inputTestId?: string;
 }
 
 /*
@@ -62,7 +66,9 @@ export const LocationSelect = (props: LocationSelectProps): JSX.Element => (
     disabled={props.disabled}
     error={props.error}
     placeholder={props.placeholder}
+    width={props.width}
     focusTarget={props.focusTarget}
+    inputTestId={props.inputTestId}
     onChange={l => props.onChange(l)}
     // Let the popup grow past a narrow field so a location's code + name stays
     // readable rather than truncating to the field width.

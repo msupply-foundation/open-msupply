@@ -2,22 +2,30 @@ import { createContext, useContext, type Accessor } from 'solid-js';
 
 // Where a portaled popup (Select / Combobox listbox, etc.) should mount.
 //
-// A native <dialog> opened with showModal() puts everything OUTSIDE it into
-// the `inert` state (and the dialog into the top layer). A popup portaled to
-// <body> is therefore both (a) painted behind the top-layer dialog and (b)
-// inert — so it can't be clicked/selected. Mounting the popup INSIDE the dialog
-// fixes both: it's part of the dialog's content, so it's not inert and stacks
-// with it. (The dialog's own `overflow` must not clip it — see
-// Dialog.module.css, which clips on the inner body, not the dialog box.)
+// The TOP LAYER is the reason this exists: it paints above every normal-flow
+// element whatever its z-index, so a popup portaled to <body> from inside a
+// top-layer surface is drawn behind it and takes no clicks — the hit test lands
+// on the surface covering it. Mounting INSIDE shares that top-layer box. Two
+// surfaces put us there: a modal <dialog> (which also makes everything outside
+// it `inert`), and a native popover panel (where mounting inside additionally
+// keeps an option click "inside", so light dismiss doesn't fire — #1107).
+// Neither may clip the popup, so both scroll on an inner body, not on the box
+// that is the mount — and both DECLARE `overflow: visible` on that box. Not
+// declaring it is not the same as leaving it alone: the UA sheet gives
+// `<dialog>` and `[popover]` an `overflow` of their own, so a mount box that
+// says nothing is still a scroll container, and a popup reaching past its edge
+// is cut off and takes no clicks — the same failure this context exists to
+// prevent.
 //
-// A dialog provides its element here; portaled popups read it and mount in.
-// Outside a dialog the context is undefined and popups keep their default
-// <body> portal.
+// The surface provides its element here; popups read it and mount in. Outside
+// one the context is undefined and they keep their <body> portal. Nesting takes
+// the innermost, which is right: a popover opened from a dialog enters the top
+// layer after it, so it stacks above.
 export const PortalMountContext =
   createContext<Accessor<HTMLElement | undefined>>();
 
 /**
- * The element portaled popups should mount into (a containing dialog), or
- * undefined.
+ * The element portaled popups should mount into (a containing dialog or popover
+ * panel), or undefined.
  */
 export const usePortalMount = () => useContext(PortalMountContext);

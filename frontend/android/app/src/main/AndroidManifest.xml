@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- FOR THE EMBEDDED-SERVER BUILD (when libremote_server_android.so is
+         bundled into jniLibs): add android:allowNativeHeapPointerTagging=
+         "false" to <application>. The server runs backend-plugin JS in BoaJS,
+         which crashes under ARM64 heap pointer tagging (default-on targeting
+         SDK 30+) — https://github.com/boa-dev/boa/issues/4275; the current
+         app's shell carries the same workaround. Not set here because this
+         repo's APK doesn't ship the server. -->
     <application
         android:usesCleartextTraffic="true"
         android:allowBackup="true"

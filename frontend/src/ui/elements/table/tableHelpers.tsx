@@ -1,8 +1,11 @@
+import type { JSX } from 'solid-js';
 import type { ColumnDefBase, ColumnMeta } from '@tanstack/solid-table';
 import { localisedDate, localisedTime } from '../../../intl/formatDateTime';
 import { formatNumber } from '../../../intl/formatNumber';
 import { Comment } from '../feedback/Comment';
-import { CheckIcon } from '../../icons';
+import { StatusBadge } from '../feedback/StatusBadge';
+import { CheckIcon, MessageSquareIcon } from '../../icons';
+import { t } from '../../../intl';
 import type { Column } from './columnTypes';
 import { getChipListCell } from './ChipListCell';
 import { getProportionCell } from './ProportionCell';
@@ -14,7 +17,11 @@ import {
   type CellSpec,
 } from './_globalColumnConfig';
 import { remToPx } from '../../utils/rem';
-import { differenceInMonths } from 'date-fns';
+import {
+  differenceInCalendarDays,
+  differenceInMonths,
+  parseISO,
+} from 'date-fns';
 import styles from './tableHelpers.module.css';
 
 // Shared helpers for the DataTable: cell fragments pages spread into their
@@ -138,15 +145,47 @@ export const getTimeCell = <T,>(meta?: Meta): CellFragment<T> => ({
 // MINIMUM_EXPIRY_MONTHS) renders in the error colour, matching the old app's
 // ExpiryDateCell.
 const EXPIRY_WARNING_MONTHS = 3;
+
+// A date-only wire string ('YYYY-MM-DD', GraphQL NaiveDate) must be read as
+// the LOCAL day: `new Date(string)` parses it as UTC midnight, which is the
+// PREVIOUS local day anywhere west of UTC — a batch would bold as "expired"
+// a day early there, while the domain's day-stable isExpired (string
+// comparison against the local day) still said "near expiry". parseISO
+// parses date-only strings at local midnight, keeping every calendar-day
+// comparison on the store's clock.
+const asLocalDay = (value: string | Date): Date =>
+  typeof value === 'string' ? parseISO(value) : value;
+
+/**
+ * Within the shared near-expiry warning window (or already past it) — the
+ * predicate behind getExpiryDateCell's reddening, exported so a consumer can
+ * pair the cell with a "Near expiry" row-status badge (ui-standards § table
+ * interaction) without restating the threshold.
+ */
+export const isNearOrPastExpiry = (value: string | Date): boolean =>
+  differenceInMonths(asLocalDay(value), new Date()) <= EXPIRY_WARNING_MONTHS;
 export const getExpiryDateCell = <T,>(meta?: Meta): CellFragment<T> => ({
   meta: { ...meta },
   cell: info => {
     const value = info.getValue<string | Date | null | undefined>();
     if (!value) return '';
-    const almostExpired =
-      differenceInMonths(new Date(value), new Date()) <= EXPIRY_WARNING_MONTHS;
+    const almostExpired = isNearOrPastExpiry(value);
+    // ACTUALLY expired (the expiry day has arrived — calendar-day comparison,
+    // stable across the day) steps up from the near-expiry red to red + bold.
+    // Same day semantics as domain/allocation's isExpired, so the cell's
+    // tier always agrees with the row's Expired/Near-expiry badge.
+    const expired =
+      differenceInCalendarDays(asLocalDay(value), new Date()) <= 0;
     return (
-      <span class={almostExpired ? styles.expiring : undefined}>
+      <span
+        class={
+          expired
+            ? `${styles.expiring} ${styles.expired}`
+            : almostExpired
+              ? styles.expiring
+              : undefined
+        }
+      >
         {localisedDate(value)}
       </span>
     );
@@ -166,14 +205,38 @@ export const getExpiryDateCell = <T,>(meta?: Meta): CellFragment<T> => ({
 // parity) — so the caller passes the label (e.g. t('label.deceased')).
 export const getFlagCell = <T,>(
   label: string,
-  meta?: Meta
+  meta?: Meta,
+  /**
+   * Semantic tone for the CARD chip (table view is untouched — the check
+   * stands under its named header there): the card badge slot renders the
+   * flag as a StatusBadge chip in this tone. Untoned flags chip neutrally.
+   */
+  tone?: 'success' | 'warning' | 'error',
+  /**
+   * Optional marker icon for the card chip (see StatusBadge.icon) — a THUNK,
+   * called per row. A bare JSX element would be evaluated once into a single
+   * DOM node shared by every flagged row, so mounting one row's chip would
+   * steal the icon from the previous (kdd/solid-reactivity-pitfalls).
+   */
+  icon?: () => JSX.Element
 ): CellFragment<T> => ({
   meta: { align: 'center', ...meta },
+  // TWO renderings, CSS-gated per view (DataTable.module.css § flag cells):
+  // in table view the bare check ([data-flag]) stands alone under its named
+  // column header; in a card's BADGE slot the header is gone and two flags
+  // are indistinguishable checks, so the flag renders as a StatusBadge CHIP
+  // ([data-flag-chip]) instead. A body-slot card flag keeps its check +
+  // LabelledValue caption.
   cell: info =>
     info.getValue<boolean>() ? (
-      <span role="img" aria-label={label} title={label}>
-        <CheckIcon />
-      </span>
+      <>
+        <span data-flag role="img" aria-label={label} title={label}>
+          <CheckIcon />
+        </span>
+        <span data-flag-chip>
+          <StatusBadge label={label} tone={tone} icon={icon?.()} />
+        </span>
+      </>
     ) : (
       ''
     ),
@@ -182,8 +245,48 @@ export const getFlagCell = <T,>(
 // Comment: the resolved string value behind a comment icon + popover (blank →
 // nothing). The Comment component renders null when there's no value, so an
 // empty cell stays empty. Centre-aligned — the icon is the whole cell.
+/**
+ * The word standing in for a value the row hasn't got yet — an outbound
+ * placeholder line's Batch, an unassigned owner. Not a chip: a chip is a
+ * row-STATUS object, and putting one in a value column reclassifies the
+ * column and makes the cell with no data the loudest in it. This is the same
+ * word, typed so it cannot be mistaken for a value (see the CSS).
+ */
+export const AbsentValue = (props: { label: string }) => (
+  <span class={styles.absentValue}>{props.label}</span>
+);
+
+/*
+ * The comment column's HEADER — the comment icon, not the word (Carl,
+ * 2026-08-19). The column is one icon wide; spelling "Comment" over it was the
+ * only thing making it a text-width column, and the glyph names it the same way
+ * the cells beneath do. Paired with the `comment` width preset, which is sized
+ * for the icon rather than the word.
+ *
+ * The WORD still names the column everywhere an icon can't stand in — the
+ * Columns popover and a card's field label (meta.textLabel, set by
+ * getCommentCell below) — and it is the header cell's accessible name here:
+ * role="img" + aria-label on the wrapper, the svg itself staying aria-hidden
+ * (an unlabelled iconic header would leave the column nameless to a screen
+ * reader). `title` gives the same word on hover, for the sighted reader who
+ * doesn't recognise the glyph.
+ */
+export const CommentHeader = () => (
+  <span
+    class={styles.commentHeader}
+    role="img"
+    aria-label={t('label.comment')}
+    title={t('label.comment')}
+  >
+    <MessageSquareIcon />
+  </span>
+);
+
 export const getCommentCell = <T,>(meta?: Meta): CellFragment<T> => ({
-  meta: { align: 'center', ...meta },
+  // textLabel: the grid header is iconic (CommentHeader), so the column names
+  // itself in words for the Columns popover and its card field label. Set by
+  // the preset, not per call site — every comment column wants it.
+  meta: { align: 'center', textLabel: () => t('label.comment'), ...meta },
   cell: info => <Comment comment={info.getValue<string | null>()} />,
 });
 

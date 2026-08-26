@@ -1,9 +1,36 @@
 /*
- * Combobox's option-list rule: which of a client-mode caller's items are
- * actually MOUNTED. Pure and outside the component so the ordering constraint
- * below is testable without a DOM (as filterBarLogic is for FilterBar, and
- * numberFieldLogic for NumberField); Combobox is the only caller.
+ * Combobox's two list rules — what the widget is SEARCHING for, and which of a
+ * client-mode caller's items are actually MOUNTED. Pure and outside the
+ * component so both are testable without a DOM (as filterBarLogic is for
+ * FilterBar, and numberFieldLogic for NumberField); Combobox is the only
+ * caller.
  */
+
+/**
+ * The text the combobox is searching for, given what its input holds.
+ *
+ * The input serves two masters: it is where the user types a query, and it is
+ * where the widget shows the committed selection's label. Only the first is a
+ * search. Kobalte owns that text and rewrites it from the selection whenever
+ * the selection (re)emits — on a pick, and on any external change to the
+ * controlled value — so a label echo arrives through the very same channel as a
+ * keystroke, and no amount of history-keeping reliably tells them apart.
+ *
+ * So the rule is about what the text IS, not where it came from: text that is
+ * the committed selection's own label searches for nothing. A picker reopened
+ * on a selection therefore offers the full list to choose from again, rather
+ * than searching for a label the source can't match — which for a server-backed
+ * lookup fetched no rows at all, leaving the already-selected item as the only
+ * thing on offer (#985).
+ *
+ * Typing that exact label by hand lands in the same place. Accepted, and the
+ * honest reading: what has been asked for is already selected.
+ */
+export const typedQuery = <T>(
+  input: string,
+  selected: T | null | undefined,
+  labelOf: (item: T) => string
+): string => (selected == null || input !== labelOf(selected) ? input : '');
 
 export interface VisibleOptions<T> {
   /** The options to mount, in caller order, at most `cap` of them. */

@@ -10,6 +10,7 @@ import { t, localisedDate } from '../../../intl';
 import { formatNumber } from '../../../intl/formatNumber';
 import { homeCurrency } from '../../../intl/currency';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import {
   SidePanelSection,
   SidePanelActions,
@@ -34,7 +35,7 @@ import {
   runInboundBatch,
   updateInboundShipment,
 } from './inboundShipmentUpdate';
-import { kindOf, supplierIsStore } from './inboundShipmentStatus';
+import { sourceLinkOf, supplierIsStore } from './inboundShipmentStatus';
 import { isExternalScope, type InboundScope } from '../inboundShipmentScope';
 import { DeleteInboundShipmentAction } from './actions/DeleteInboundShipmentAction';
 import { DuplicateInboundShipmentAction } from './actions/DuplicateInboundShipmentAction';
@@ -133,16 +134,13 @@ export const InboundShipmentSidePanel: Component<
         : [];
     }
   );
-  // Non-suspending read — the binding read-safety gate (kdd/solid-reactivity-
-  // pitfalls → No remounts on interaction). This refetches WHILE the screen
+  // Non-suspending read (kdd/solid-reactivity-pitfalls → No remounts on
+  // interaction). This refetches WHILE the screen
   // stays open (a committed charges batch, and the tax cascade below fired from
   // a focused field), and first-fetches on the interaction that opens the panel
   // — a direct `serviceLines()` read would suspend the detail view's boundary
   // each time, unmounting the panel's own focused tax input.
-  const serviceLineRows = () =>
-    serviceLines.state === 'ready' || serviceLines.state === 'refreshing'
-      ? (serviceLines.latest ?? [])
-      : [];
+  const serviceLineRows = () => gated(serviceLines) ?? [];
   const refreshService = () => {
     setServiceVersion(v => v + 1);
     props.onRefetch();
@@ -189,7 +187,7 @@ export const InboundShipmentSidePanel: Component<
   };
 
   const pricing = () => props.node.pricing;
-  const isTransfer = () => kindOf(props.node) === 'transfer';
+  const isTransfer = () => sourceLinkOf(props.node) === 'transfer';
 
   // Derived service tax rate (blended across lines) and amount — the display
   // side of the inline editor; both zero when there's nothing to tax.
@@ -255,7 +253,6 @@ export const InboundShipmentSidePanel: Component<
           <TextArea
             label={t('label.comment')}
             hideLabel
-            width="full"
             data-testid="comment-field"
             value={props.edit.state.comment}
             disabled={props.disabled}

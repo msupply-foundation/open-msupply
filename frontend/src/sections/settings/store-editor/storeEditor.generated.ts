@@ -48,3 +48,158 @@ export type UpdateNamePropertiesResult = {
 export const UpdateNameProperties = {
   query: "mutation updateNameProperties($storeId: String!, $id: String!, $properties: String!) {\n  updateNameProperties(\n    storeId: $storeId\n    input: {id: $id, properties: $properties}\n  ) {\n    ... on NameNode {\n      __typename\n      id\n      properties\n    }\n    ... on UpdateNamePropertiesError {\n      __typename\n      error {\n        description\n      }\n    }\n  }\n}",
 } as TypedDocument<UpdateNamePropertiesResult, UpdateNamePropertiesVariables>;
+
+export type StorePreferencesVariables = {
+  storeId: string;
+};
+
+export type StorePreferencesResult = {
+  preferenceDescriptions: Array<{
+  key: "allowTrackingOfStockByDonor" | "authorisePurchaseOrder" | "customTranslations" | "customTranslationsV2" | "genderOptions" | "preventTransfersMonthsBeforeInitialisation" | "showContactTracing" | "syncRecordsDisplayThreshold" | "adjustForNumberOfDaysOutOfStock" | "daysInMonth" | "expiredStockPreventIssue" | "expiredStockIssueThreshold" | "itemMarginOverridesSupplierMargin" | "isGaps" | "displayPopulationBasedForecasting" | "globalTableConfigs" | "backdating" | "receivePaymentsFromPrescriptions" | "blindStocktake" | "manageVaccinesInDoses" | "manageVvmStatusForStock" | "orderInPacks" | "useProcurementFunctionality" | "sortByVvmStatusThenExpiry" | "useSimplifiedMobileUi" | "disableManualReturns" | "requisitionAutoFinalise" | "inboundShipmentAutoVerify" | "warningForExcessRequest" | "canCreateInternalOrderFromARequisition" | "selectDestinationStoreForAnInternalOrder" | "externalInboundShipmentLinesMustBeAuthorised" | "numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts" | "numberOfMonthsThresholdToShowLowStockAlertsForProducts" | "numberOfMonthsThresholdToShowOverStockAlertsForProducts" | "firstThresholdForExpiringItems" | "secondThresholdForExpiringItems" | "skipIntermediateStatusesInOutbound" | "storeCustomColour" | "warnWhenMissingRecentStocktake" | "invoiceStatusOptions" | "showIndicativePriceInRequisitions" | "doNotPrintPlaceholderLineLabels";
+  valueType: "BOOLEAN" | "INTEGER" | "FLOAT" | "MULTI_CHOICE" | "CUSTOM_TRANSLATIONS" | "CUSTOM_TRANSLATIONS_V2" | "WARN_WHEN_MISSING_RECENT_STOCKTAKE_DATA" | "BACKDATING_DATA" | "STRING" | "COLOUR";
+  value: unknown;
+}>;
+};
+
+export const StorePreferences = {
+  query: "query storePreferences($storeId: String!) {\n  preferenceDescriptions(\n    storeId: $storeId\n    prefType: STORE\n    prefContext: {storeId: $storeId}\n  ) {\n    key\n    valueType\n    value\n  }\n}",
+} as TypedDocument<StorePreferencesResult, StorePreferencesVariables>;
+
+export type UpsertStorePreferencesVariables = {
+  storeId: string;
+  input: {
+    allowTrackingOfStockByDonor?: boolean | null;
+    authorisePurchaseOrder?: boolean | null;
+    customTranslations?: unknown | null;
+    customTranslationsV2?: unknown | null;
+    genderOptions?: Array<"FEMALE" | "MALE" | "TRANSGENDER" | "TRANSGENDER_MALE" | "TRANSGENDER_MALE_HORMONE" | "TRANSGENDER_MALE_SURGICAL" | "TRANSGENDER_FEMALE" | "TRANSGENDER_FEMALE_HORMONE" | "TRANSGENDER_FEMALE_SURGICAL" | "UNKNOWN" | "NON_BINARY"> | null;
+    preventTransfersMonthsBeforeInitialisation?: number | null;
+    showContactTracing?: boolean | null;
+    syncRecordsDisplayThreshold?: number | null;
+    warningForExcessRequest?: boolean | null;
+    adjustForNumberOfDaysOutOfStock?: boolean | null;
+    daysInMonth?: number | null;
+    expiredStockPreventIssue?: boolean | null;
+    expiredStockIssueThreshold?: number | null;
+    itemMarginOverridesSupplierMargin?: boolean | null;
+    isGaps?: boolean | null;
+    displayPopulationBasedForecasting?: boolean | null;
+    globalTableConfigs?: unknown | null;
+    backdating?: {
+    shipmentsEnabled: boolean;
+    inventoryAdjustmentsEnabled: boolean;
+    maxDays: number;
+  } | null;
+    receivePaymentsFromPrescriptions?: boolean | null;
+    blindStocktake?: Array<{
+    storeId: string;
+    value: boolean;
+  }> | null;
+    manageVaccinesInDoses?: Array<{
+    storeId: string;
+    value: boolean;
+  }> | null;
+    manageVvmStatusForStock?: Array<{
+    storeId: string;
+    value: boolean;
+  }> | null;
+    orderInPacks?: Array<{
+    storeId: string;
+    value: boolean;
+  }> | null;
+    useProcurementFunctionality?: Array<{
+    storeId: string;
+    value: boolean;
+  }> | null;
+    sortByVvmStatusThenExpiry?: Array<{
+    storeId: string;
+    value: boolean;
+  }> | null;
+    useSimplifiedMobileUi?: Array<{
+    storeId: string;
+    value: boolean;
+  }> | null;
+    disableManualReturns?: Array<{
+    storeId: string;
+    value: boolean;
+  }> | null;
+    requisitionAutoFinalise?: Array<{
+    storeId: string;
+    value: boolean;
+  }> | null;
+    inboundShipmentAutoVerify?: Array<{
+    storeId: string;
+    value: boolean;
+  }> | null;
+    canCreateInternalOrderFromARequisition?: Array<{
+    storeId: string;
+    value: boolean;
+  }> | null;
+    selectDestinationStoreForAnInternalOrder?: Array<{
+    storeId: string;
+    value: boolean;
+  }> | null;
+    externalInboundShipmentLinesMustBeAuthorised?: Array<{
+    storeId: string;
+    value: boolean;
+  }> | null;
+    numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts?: Array<{
+    storeId: string;
+    value: number;
+  }> | null;
+    numberOfMonthsThresholdToShowLowStockAlertsForProducts?: Array<{
+    storeId: string;
+    value: number;
+  }> | null;
+    numberOfMonthsThresholdToShowOverStockAlertsForProducts?: Array<{
+    storeId: string;
+    value: number;
+  }> | null;
+    firstThresholdForExpiringItems?: Array<{
+    storeId: string;
+    value: number;
+  }> | null;
+    secondThresholdForExpiringItems?: Array<{
+    storeId: string;
+    value: number;
+  }> | null;
+    warnWhenMissingRecentStocktake?: Array<{
+    storeId: string;
+    value: {
+    enabled: boolean;
+    maxAge: number;
+    minItems: number;
+  };
+  }> | null;
+    storeCustomColour?: Array<{
+    storeId: string;
+    value: string;
+  }> | null;
+    invoiceStatusOptions?: Array<{
+    storeId: string;
+    value: Array<"NEW" | "ALLOCATED" | "PICKED" | "SHIPPED" | "DELIVERED" | "RECEIVED" | "VERIFIED" | "CANCELLED">;
+  }> | null;
+    showIndicativePriceInRequisitions?: Array<{
+    storeId: string;
+    value: boolean;
+  }> | null;
+    doNotPrintPlaceholderLineLabels?: Array<{
+    storeId: string;
+    value: boolean;
+  }> | null;
+  };
+};
+
+export type UpsertStorePreferencesResult = {
+  centralServer: {
+  preferences: {
+  upsertPreferences: {
+  ok: boolean;
+};
+};
+};
+};
+
+export const UpsertStorePreferences = {
+  query: "mutation upsertStorePreferences($storeId: String!, $input: UpsertPreferencesInput!) {\n  centralServer {\n    preferences {\n      upsertPreferences(storeId: $storeId, input: $input) {\n        ok\n      }\n    }\n  }\n}",
+} as TypedDocument<UpsertStorePreferencesResult, UpsertStorePreferencesVariables>;

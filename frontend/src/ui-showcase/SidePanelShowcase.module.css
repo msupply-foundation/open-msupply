@@ -18,8 +18,8 @@
   box-shadow: var(--shadow-4);
   transform: translateX(var(--hide-x));
   transition:
-    transform 220ms ease,
-    visibility 0s 220ms;
+    transform var(--motion-slow) ease,
+    visibility 0s var(--motion-slow);
 }
 
 :dir(rtl) .panelHolder {
@@ -30,15 +30,8 @@
   visibility: visible;
   transform: none;
   transition:
-    transform 220ms ease,
+    transform var(--motion-slow) ease,
     visibility 0s;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .panelHolder,
-  .panelHolder[data-open='true'] {
-    transition: none;
-  }
 }
 
 /* The panel itself doesn't render below the nav-overlay breakpoint (its
