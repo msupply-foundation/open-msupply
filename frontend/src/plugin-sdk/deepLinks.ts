@@ -42,10 +42,13 @@
  * is unit-testable — and builders never read session state, so they are safe
  * anywhere, including outside a component.
  *
- * Eager-surface note (kdd/bundling § the SDK-eager rule): this module needs
- * only the two small date helpers (`addDays`, `dateToIsoDate`) — the promoted
- * set filters date scalars only, so the UTC-instant machinery stays out of
- * the SDK chunk.
+ * Eager-surface note (kdd/bundling § the SDK-eager rule), as measured in
+ * kdd/bundle-size-by-pr.md (#304): this module needs only the two small date
+ * helpers (`addDays`, `dateToIsoDate`), which arrive through the existing
+ * shared dateTimeConvert chunk — one the app entry already loads at boot — so
+ * linking it costs the SDK no new download. The module itself splits out as a
+ * small shared chunk linked by both importers (the SDK entry and the
+ * dashboard's statLinks), fetched with whichever side loads first.
  */
 import { addDays, dateToIsoDate } from '../ui/elements/inputs/dateTimeConvert';
 import type { StockLinesVariables } from '../sections/stock/list/stock.generated';
