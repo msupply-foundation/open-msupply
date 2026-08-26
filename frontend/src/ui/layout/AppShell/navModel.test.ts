@@ -36,4 +36,23 @@ describe('findLeafByPath', () => {
   it('returns nothing for a route outside the menu', () => {
     expect(findLeafByPath('nowhere/at/all')).toBeUndefined();
   });
+
+  /*
+   * Home is the store root, so it is the one entry whose route is the empty
+   * string — and the one whose id therefore cannot be its path (an empty id
+   * would leave the menu entry a nameless `nav-` for e2e).
+   */
+  it('highlights Home at the store root', () => {
+    const home = findLeafByPath('');
+    expect(home?.id).toBe('home');
+    expect(home?.to).toBe('');
+    expect(home?.labelKey).toBe('label.home');
+  });
+
+  it("does not let Home's empty route claim every other screen", () => {
+    // The trap in a '' entry: a naive prefix test makes it match everything.
+    // The `/` in the prefix check is what keeps it to the root alone.
+    expect(findLeafByPath('inventory/stocktakes')?.id).not.toBe('home');
+    expect(findLeafByPath('nowhere/at/all')).toBeUndefined();
+  });
 });

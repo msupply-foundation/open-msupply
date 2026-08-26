@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   CatalogueIcon,
-  DashboardIcon,
+  HomeIcon,
   ReplenishmentIcon,
   SettingsIcon,
   StockIcon,
@@ -20,7 +20,8 @@ import { sectionIconForPath } from './navModel';
  */
 describe('sectionIconForPath', () => {
   it('gives a section landing screen its own glyph', () => {
-    expect(sectionIconForPath('dashboard')).toBe(DashboardIcon);
+    // Home IS the store root, so its path — and its key here — is ''.
+    expect(sectionIconForPath('')).toBe(HomeIcon);
     expect(sectionIconForPath('settings')).toBe(SettingsIcon);
   });
 
@@ -45,9 +46,8 @@ describe('sectionIconForPath', () => {
 
   it('has none for a path outside the nav tree', () => {
     // The router's catch-all (not-found) shows no glyph rather than a wrong
-    // one. The store root never reaches here — the shell reads it as
-    // 'dashboard'.
+    // one. '' is NOT such a path — it is Home's own, asserted above.
     expect(sectionIconForPath('nowhere/at/all')).toBeUndefined();
-    expect(sectionIconForPath('')).toBeUndefined();
+    expect(sectionIconForPath('dashboard')).toBeUndefined();
   });
 });

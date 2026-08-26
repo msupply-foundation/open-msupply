@@ -283,7 +283,10 @@ const DashboardPage: Component = () => {
     <Page
       header={
         <Header>
-          <Breadcrumb crumbs={[{ label: t('dashboard') }]} />
+          {/* The crumb is the destination's registry LABEL, which is Home —
+              the same key the menu entry and the brand mark use. The vertical
+              is still the dashboard; only what the user reads changed. */}
+          <Breadcrumb crumbs={[{ label: t('label.home') }]} />
         </Header>
       }
     >
