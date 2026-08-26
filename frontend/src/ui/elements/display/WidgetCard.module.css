@@ -31,10 +31,14 @@
     transform var(--motion-fast) ease;
 }
 
-.card:hover {
-  border-color: var(--primary-main);
-  box-shadow: var(--shadow-3);
-  transform: translateY(-0.125rem);
+/* Hover-capable pointers only: on a touch device :hover latches after a tap,
+   leaving the card stuck mid-lift (#317). */
+@media (hover: hover) {
+  .card:hover {
+    border-color: var(--primary-main);
+    box-shadow: var(--shadow-3);
+    transform: translateY(-0.125rem);
+  }
 }
 
 .card:focus-visible {
