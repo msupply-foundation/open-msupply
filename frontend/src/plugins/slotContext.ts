@@ -3,15 +3,16 @@ import {
   currentStoreId,
   currentStoreMode,
   storeContext,
+  type StoreMode,
 } from '../store/storeContext';
 
 // The host's wire `storeMode` → the SDK's domain word. A total map, keyed off
-// the host accessor's own union, so a mode added to the schema fails THIS
+// the host's own generated union, so a mode added to the schema fails THIS
 // build rather than silently arriving at plugins as the wrong word.
-const slotStoreModes: Record<
-  NonNullable<ReturnType<typeof currentStoreMode>>,
-  SlotStoreMode
-> = { STORE: 'store', DISPENSARY: 'dispensary' };
+const slotStoreModes: Record<StoreMode, SlotStoreMode> = {
+  STORE: 'store',
+  DISPENSARY: 'dispensary',
+};
 
 /*
  * The session facts a contribution's `when` gate reads
