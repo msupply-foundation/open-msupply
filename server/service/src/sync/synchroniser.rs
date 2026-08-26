@@ -413,7 +413,7 @@ pub(crate) fn run_post_sync_triggers(
         .trigger_processor(ProcessorType::AssignPrescriptionNumber);
 
     ctx.processors_trigger
-        .trigger_processor(ProcessorType::PrescriptionOrderStatus);
+        .trigger_processor(ProcessorType::PrescriptionRequestStatus);
 
     ctx.processors_trigger
         .trigger_processor(ProcessorType::Plugins);

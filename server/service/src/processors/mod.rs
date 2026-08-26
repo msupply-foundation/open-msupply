@@ -25,7 +25,7 @@ mod general_processor;
 mod load_plugin;
 mod merge_sync_message;
 mod plugin_processor;
-mod prescription_order_status;
+mod prescription_request_status;
 mod requisition_auto_finalise;
 mod support_upload_files;
 pub use general_processor::ProcessorType;

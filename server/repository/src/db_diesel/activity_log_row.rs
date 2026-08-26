@@ -120,11 +120,11 @@ pub enum ActivityLogType {
     PurchaseOrderStatusChangedFromSentToConfirmed,
     PurchaseOrderLineStatusClosed,
     PurchaseOrderLineStatusChangedFromSentToNew,
-    // Prescription orders (prescriber-authored prescriptions)
-    PrescriptionOrderCreated,
-    PrescriptionOrderReadyToDispense,
-    PrescriptionOrderDispensed,
-    PrescriptionOrderDeleted,
+    // Prescription requests (prescriber-authored prescriptions)
+    PrescriptionRequestCreated,
+    PrescriptionRequestReadyToDispense,
+    PrescriptionRequestDispensed,
+    PrescriptionRequestDeleted,
     PatientUpdated,
     PatientCreated,
     InvoiceDateBackdated,

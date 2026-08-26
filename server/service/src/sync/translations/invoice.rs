@@ -181,12 +181,12 @@ pub struct LegacyTransactRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "original_PO_ID")]
     pub purchase_order_id: Option<String>,
-    /// OMS-only soft link to the prescriber's prescription_order this dispensing
+    /// OMS-only soft link to the prescriber's prescription_request this dispensing
     /// invoice was generated from; OG just round-trips the om_ field.
     #[serde(default)]
-    #[serde(rename = "om_prescription_order_id")]
+    #[serde(rename = "om_prescription_request_id")]
     #[serde(deserialize_with = "empty_str_as_option_string")]
-    pub prescription_order_id: Option<String>,
+    pub prescription_request_id: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub requisition_ID: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
@@ -659,7 +659,7 @@ impl SyncTranslation for InvoiceTranslation {
             charges_foreign_currency: oms_fields.charges_foreign_currency,
             legacy_goods_received_id: data.goods_received_ID,
             custom_fields,
-            prescription_order_id: data.prescription_order_id,
+            prescription_request_id: data.prescription_request_id,
             ..Default::default()
         };
 
@@ -792,7 +792,7 @@ impl SyncTranslation for InvoiceTranslation {
                     charges_foreign_currency,
                     legacy_goods_received_id: _,
                     custom_fields,
-                    prescription_order_id,
+                    prescription_request_id,
                 },
             name_row,
             clinician_row,
@@ -876,7 +876,7 @@ impl SyncTranslation for InvoiceTranslation {
             category_ID: category_id,
             category2_ID: category2_id,
             purchase_order_id,
-            prescription_order_id,
+            prescription_request_id,
             shipping_method_id,
             oms_fields: Some(TransactRowOmsFields {
                 charges_local_currency,

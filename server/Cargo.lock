@@ -4307,7 +4307,7 @@ dependencies = [
  "graphql_location",
  "graphql_plugin",
  "graphql_preference",
- "graphql_prescription_order",
+ "graphql_prescription_request",
  "graphql_printer",
  "graphql_programs",
  "graphql_purchase_order",
@@ -4746,7 +4746,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "graphql_prescription_order"
+name = "graphql_prescription_request"
 version = "0.1.0"
 dependencies = [
  "actix-rt",

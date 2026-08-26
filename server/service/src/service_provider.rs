@@ -42,8 +42,8 @@ use crate::{
     plugin::{FrontendPluginCache, PluginService, PluginServiceTrait},
     plugin_data::{PluginDataService, PluginDataServiceTrait},
     preference::{PreferenceService, PreferenceServiceTrait},
-    prescription_order::{PrescriptionOrderService, PrescriptionOrderServiceTrait},
-    prescription_order_line::{PrescriptionOrderLineService, PrescriptionOrderLineServiceTrait},
+    prescription_request::{PrescriptionRequestService, PrescriptionRequestServiceTrait},
+    prescription_request_line::{PrescriptionRequestLineService, PrescriptionRequestLineServiceTrait},
     pricing::{PricingService, PricingServiceTrait},
     printer::{PrinterService, PrinterServiceTrait},
     processors::ProcessorsTrigger,
@@ -209,9 +209,9 @@ pub struct ServiceProvider {
     // Purchase Orders
     pub purchase_order_service: Box<dyn PurchaseOrderServiceTrait>,
     pub purchase_order_line_service: Box<dyn PurchaseOrderLineServiceTrait>,
-    // Prescription Orders (prescriber-authored prescriptions)
-    pub prescription_order_service: Box<dyn PrescriptionOrderServiceTrait>,
-    pub prescription_order_line_service: Box<dyn PrescriptionOrderLineServiceTrait>,
+    // Prescription Requests (prescriber-authored prescriptions)
+    pub prescription_request_service: Box<dyn PrescriptionRequestServiceTrait>,
+    pub prescription_request_line_service: Box<dyn PrescriptionRequestLineServiceTrait>,
     // Contacts
     pub contact_service: Box<dyn ContactServiceTrait>,
     // Properties v2
@@ -355,8 +355,8 @@ impl ServiceProvider {
             campaign_service: Box::new(CampaignService),
             purchase_order_service: Box::new(PurchaseOrderService),
             purchase_order_line_service: Box::new(PurchaseOrderLineService),
-            prescription_order_service: Box::new(PrescriptionOrderService),
-            prescription_order_line_service: Box::new(PrescriptionOrderLineService),
+            prescription_request_service: Box::new(PrescriptionRequestService),
+            prescription_request_line_service: Box::new(PrescriptionRequestLineService),
             contact_service: Box::new(ContactService {}),
             custom_field_service: Box::new(CustomFieldService {}),
             sync_message_service: Box::new(SyncMessageService),

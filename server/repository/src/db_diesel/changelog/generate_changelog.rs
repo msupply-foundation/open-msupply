@@ -306,21 +306,21 @@ impl LocationRow {
     }
 }
 
-impl PrescriptionOrderRow {
+impl PrescriptionRequestRow {
     pub(crate) fn generate_changelog(
-        row_or_id: RowOrId<PrescriptionOrderRow>,
+        row_or_id: RowOrId<PrescriptionRequestRow>,
         con: &StorageConnection,
         action: RowActionType,
         source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         let row = match row_or_id {
             RowOrId::Row(row) => row,
-            RowOrId::Id(row_id) => &PrescriptionOrderRowRepository::new(con)
+            RowOrId::Id(row_id) => &PrescriptionRequestRowRepository::new(con)
                 .find_one_by_id(row_id)?
                 .ok_or(RepositoryError::NotFound)?,
         };
         Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::PrescriptionOrder,
+            table_name: ChangelogTableName::PrescriptionRequest,
             record_id: row.id.clone(),
             row_action: action,
             store_id: Some(row.store_id.clone()),
@@ -330,29 +330,29 @@ impl PrescriptionOrderRow {
     }
 }
 
-impl PrescriptionOrderLineRow {
+impl PrescriptionRequestLineRow {
     pub(crate) fn generate_changelog(
-        row_or_id: RowOrId<PrescriptionOrderLineRow>,
+        row_or_id: RowOrId<PrescriptionRequestLineRow>,
         con: &StorageConnection,
         action: RowActionType,
         source_site_id: SourceSiteId,
     ) -> Result<ChangeLogInsertRow, RepositoryError> {
         let row = match row_or_id {
             RowOrId::Row(row) => row,
-            RowOrId::Id(row_id) => &PrescriptionOrderLineRowRepository::new(con)
+            RowOrId::Id(row_id) => &PrescriptionRequestLineRowRepository::new(con)
                 .find_one_by_id(row_id)?
                 .ok_or(RepositoryError::NotFound)?,
         };
-        let prescription_order_changelog = PrescriptionOrderRow::generate_changelog(
-            RowOrId::Id(&row.prescription_order_id),
+        let prescription_request_changelog = PrescriptionRequestRow::generate_changelog(
+            RowOrId::Id(&row.prescription_request_id),
             con,
             action,
             source_site_id,
         )?;
         Ok(ChangeLogInsertRow {
-            table_name: ChangelogTableName::PrescriptionOrderLine,
+            table_name: ChangelogTableName::PrescriptionRequestLine,
             record_id: row.id.clone(),
-            ..prescription_order_changelog
+            ..prescription_request_changelog
         })
     }
 }

@@ -1,11 +1,11 @@
 use super::{version::Version, Migration, MigrationFragment};
 use crate::StorageConnection;
 
-mod add_prescription_order_activity_log_types;
-mod add_prescription_order_id_to_invoice;
-mod add_prescription_order_status_processor_cursor_pg_enum;
-mod add_prescription_order_tables;
-mod seed_prescription_order_status_processor_cursor;
+mod add_prescription_request_activity_log_types;
+mod add_prescription_request_id_to_invoice;
+mod add_prescription_request_status_processor_cursor_pg_enum;
+mod add_prescription_request_tables;
+mod seed_prescription_request_status_processor_cursor;
 
 pub(crate) struct V3_01_01;
 
@@ -20,11 +20,11 @@ impl Migration for V3_01_01 {
 
     fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
         vec![
-            Box::new(add_prescription_order_tables::Migrate),
-            Box::new(add_prescription_order_id_to_invoice::Migrate),
-            Box::new(add_prescription_order_status_processor_cursor_pg_enum::Migrate),
-            Box::new(seed_prescription_order_status_processor_cursor::Migrate),
-            Box::new(add_prescription_order_activity_log_types::Migrate),
+            Box::new(add_prescription_request_tables::Migrate),
+            Box::new(add_prescription_request_id_to_invoice::Migrate),
+            Box::new(add_prescription_request_status_processor_cursor_pg_enum::Migrate),
+            Box::new(seed_prescription_request_status_processor_cursor::Migrate),
+            Box::new(add_prescription_request_activity_log_types::Migrate),
         ]
     }
 }

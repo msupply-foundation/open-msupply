@@ -143,8 +143,8 @@ pub async fn get_loaders(
         tokio::spawn,
     );
 
-    let prescription_order_lines_loader = DataLoader::new(
-        PrescriptionOrderLinesByOrderIdLoader {
+    let prescription_request_lines_loader = DataLoader::new(
+        PrescriptionRequestLinesByRequestIdLoader {
             connection_manager: connection_manager.clone(),
         },
         tokio::spawn,
@@ -312,7 +312,7 @@ pub async fn get_loaders(
     loaders.insert(item_stats_for_item_loader);
     loaders.insert(stocktake_line_loader);
     loaders.insert(stock_relocation_lines_loader);
-    loaders.insert(prescription_order_lines_loader);
+    loaders.insert(prescription_request_lines_loader);
     loaders.insert(requisition_line_supply_status_loader);
     loaders.insert(requisition_lines_remaining_to_supply_loader);
     loaders.insert(name_row_loader);

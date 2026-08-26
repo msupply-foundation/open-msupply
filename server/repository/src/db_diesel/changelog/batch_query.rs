@@ -35,8 +35,8 @@ pub enum Row {
     PurchaseOrderLine(PurchaseOrderLineRow),
     Sensor(SensorRow),
     StockLine(StockLineRow),
-    PrescriptionOrder(PrescriptionOrderRow),
-    PrescriptionOrderLine(PrescriptionOrderLineRow),
+    PrescriptionRequest(PrescriptionRequestRow),
+    PrescriptionRequestLine(PrescriptionRequestLineRow),
     StockRelocation(StockRelocationRow),
     StockRelocationLine(StockRelocationLineRow),
     Stocktake(StocktakeRow),
@@ -364,16 +364,16 @@ fn fetch_rows_for_table(
                     out.insert(r.id.clone(), Row::StockLine(r));
                 }
             }
-            ChangelogTableName::PrescriptionOrder => {
-                for r in PrescriptionOrderRowRepository::new(connection).find_many_by_id(chunk)? {
-                    out.insert(r.id.clone(), Row::PrescriptionOrder(r));
+            ChangelogTableName::PrescriptionRequest => {
+                for r in PrescriptionRequestRowRepository::new(connection).find_many_by_id(chunk)? {
+                    out.insert(r.id.clone(), Row::PrescriptionRequest(r));
                 }
             }
-            ChangelogTableName::PrescriptionOrderLine => {
+            ChangelogTableName::PrescriptionRequestLine => {
                 for r in
-                    PrescriptionOrderLineRowRepository::new(connection).find_many_by_id(chunk)?
+                    PrescriptionRequestLineRowRepository::new(connection).find_many_by_id(chunk)?
                 {
-                    out.insert(r.id.clone(), Row::PrescriptionOrderLine(r));
+                    out.insert(r.id.clone(), Row::PrescriptionRequestLine(r));
                 }
             }
             ChangelogTableName::StockRelocation => {
