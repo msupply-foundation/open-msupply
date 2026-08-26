@@ -9,7 +9,7 @@ import {
   Switch,
 } from 'solid-js';
 import type { Component, JSX } from 'solid-js';
-import { Navigate, Route, Router } from '@solidjs/router';
+import { Navigate, Route, Router, useParams } from '@solidjs/router';
 import { graphqlFetch } from './api/graphql';
 import { detectLocale, initialiseLocale, isRtl, locale, t } from './intl';
 import { InitialisationStatus } from './api/initialisation.generated';
@@ -20,7 +20,7 @@ import { InitialisationPage } from './initialisation/InitialisationPage';
 import { resolveStorePath, StoreGuardLayout } from './store/StoreGuardLayout';
 import { navDestinations } from './nav/navConfig';
 import { routerBase } from './nav/storeRelativePath';
-import { DashboardPage, dashboardRoutes } from './sections/dashboard';
+import { DashboardPage } from './sections/dashboard';
 import { stocktakesRoutes } from './sections/stocktakes';
 import { stockMovementsRoutes } from './sections/stock-movements';
 import { customersRoutes, suppliersRoutes } from './sections/names';
@@ -74,7 +74,8 @@ type Phase = 'loading' | 'failed' | 'initialisation' | 'operational';
 // section's nested route tree (list + detail etc.), whose view components are
 // lazy. Every other destination falls back to EntryPage.
 const sectionRoutes: Record<string, () => JSX.Element> = {
-  dashboard: dashboardRoutes,
+  // Home is the store root, so its registry path is '' and its route is the
+  // `/` below — it takes no entry here (see the Home route in the tree).
   'inventory/stocktakes': stocktakesRoutes,
   'inventory/stock-movement': stockMovementsRoutes,
   'distribution/customers': customersRoutes,
@@ -102,6 +103,17 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'manage/help-documents': helpDocumentsRoutes,
   'manage/custom-fields': customFieldsRoutes,
   'manage/sync-message': syncMessageRoutes,
+};
+
+/**
+ * The legacy `/{storeId}/dashboard` address, answered with the screen it names.
+ * Home moved to the store root (spec/navigation § the registry), so this keeps
+ * every bookmark, shared link and printed URL made before the move working —
+ * arriving at the canonical URL rather than at the not-found page.
+ */
+const DashboardRedirect: Component = () => {
+  const params = useParams();
+  return <Navigate href={`/${params['storeId']}`} />;
 };
 
 export const App: Component = () => {
@@ -229,10 +241,16 @@ export const App: Component = () => {
                   (empty) entry page until a real section is registered above. */}
                 <Route path="/:storeId" component={StoreGuardLayout}>
                   <Route path="/" component={ShellLayout}>
-                    {/* The store root is the landing screen — the dashboard
-                      (spec/dashboard S1), same page as the nav's `dashboard`
-                      destination. */}
+                    {/* Home: the store root IS the landing screen
+                      (spec/dashboard S1, spec/navigation § the registry). One
+                      screen, one URL — the nav entry, the brand mark and a
+                      bare store link all resolve here. */}
                     <Route path="/" component={DashboardPage} />
+                    {/* Bookmarks and links made before Home moved off its own
+                      segment. Without this the old address falls through to
+                      the not-found catch-all below, which is a worse answer
+                      than the screen the user asked for. */}
+                    <Route path="/dashboard" component={DashboardRedirect} />
                     <For each={Object.entries(sectionRoutes)}>
                       {([path, routes]) => (
                         <Route path={`/${path}`}>{routes()}</Route>
@@ -240,7 +258,9 @@ export const App: Component = () => {
                     </For>
                     <For
                       each={navDestinations.filter(
-                        dest => !sectionRoutes[dest.path]
+                        // Home's route is the `/` above, not a generated one:
+                        // its path is '' and would generate a second `/`.
+                        dest => dest.path !== '' && !sectionRoutes[dest.path]
                       )}
                     >
                       {dest => (
