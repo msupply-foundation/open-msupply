@@ -69,12 +69,19 @@
      for a transient keyboard position (Mark, PR #1114) — it competes with the
      status/tone vocabulary the rows already carry, and the row is not a control
      taking the app's blue focus ring either (blue is the SELECTION tint here,
-     so a blue ring on a row would read as selection). A mid-grey rule states
-     "the keyboard is here" without claiming a meaning; contrast stays well past
-     the 3:1 a focus indicator needs, in both themes. */
+     so a blue ring on a row would read as selection). A grey rule states "the
+     keyboard is here" without claiming a meaning.
+
+     --gray-main, not the near-black --text-secondary the first pass used: at
+     2px across a full row width a text-weight grey still read as a hard rule
+     (second review pass on the same PR). The mid-grey is where softening stops,
+     not a free dial — 3.1:1 on white, and the geometry is already the minimum
+     that reads as a bar, so a lighter token or a 1px line would put a focus
+     indicator under the 3:1 that non-text contrast asks for. Dark is roomier
+     (5.1:1) but takes the same token, because two greys would be two rules to
+     keep in step for no visible gain. */
   --row-focus-ring:
-    inset 0 2px 0 0 var(--text-secondary),
-    inset 0 -2px 0 0 var(--text-secondary);
+    inset 0 2px 0 0 var(--gray-main), inset 0 -2px 0 0 var(--gray-main);
 }
 
 /* Fills the remaining height between the toolbar and the footer bar, so the
@@ -1421,7 +1428,7 @@ tr[data-accent='error'] > :first-child::before {
    half is the cell background + inset ring further up): the CARD takes the
    ring, since it already sits on its own surface and an inset cell ring would
    land inside the card's padding instead of around it. The same neutral
-   --text-secondary as table view's ring, so the two views read as one
+   --gray-main as table view's ring, so the two views read as one
    indication, and it outranks the selection border above by rule order — a
    selected card that also holds the keyboard still shows where the keyboard is.
 
@@ -1431,8 +1438,8 @@ tr[data-accent='error'] > :first-child::before {
    that the first build drew: the halo is what read as vibrant (PR #1114),
    where a thicker edge reads as an edge. */
 .cardRow[data-row-focused] > .cardCell > .card {
-  border-color: var(--text-secondary);
-  box-shadow: 0 0 0 1px var(--text-secondary);
+  border-color: var(--gray-main);
+  box-shadow: 0 0 0 1px var(--gray-main);
 }
 
 /* The <tr> is the focused element, but the ring is drawn on the card inside it
