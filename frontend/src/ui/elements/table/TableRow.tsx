@@ -7,6 +7,7 @@ import {
 } from '@tanstack/solid-table';
 import { t } from '../../../intl';
 import { renderTemplate } from './renderTemplate';
+import { isKeyboardFocus } from './createRowFocus';
 import { BareCheckbox } from '../inputs/BareCheckbox';
 import styles from './DataTable.module.css';
 
@@ -185,9 +186,13 @@ export function TableRow<T>(props: {
       // striping"; styled in CSS, and a focus state rather than a meaning, so
       // colour independence is satisfied by it also being the focused element.
       data-row-focused={props.rowFocus?.focused() ? '' : undefined}
-      // Keep the highlight in step when focus arrives by pointer rather than by
-      // arrow key.
-      onFocus={() => props.rowFocus?.onFocus()}
+      // Keep the highlight in step when focus arrives some way other than the
+      // arrows — but only when it arrived from the KEYBOARD (see
+      // isKeyboardFocus): a click focuses the row too, and painting a highlight
+      // for the instant before the click navigates is noise.
+      onFocus={event => {
+        if (isKeyboardFocus(event)) props.rowFocus?.onFocus();
+      }}
       onClick={() => props.onRowClick?.(props.row.original)}
     >
       <Show when={props.enableSelection}>
