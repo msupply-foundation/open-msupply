@@ -122,4 +122,19 @@ describe('navigateTo', () => {
       replace: true,
     });
   });
+
+  it('reports the root redirect it takes before a store is entered', async () => {
+    const warned = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { navigateTo } = await at('/rc/');
+    state.storeId = undefined;
+
+    navigateTo('dispensary/prescription');
+
+    // The redirect still happens (the root guard re-enters a store), but the
+    // named path was dropped to get there — never silently: an href rendered
+    // early re-resolves, a navigation TAKEN early is a programming error.
+    expect(navigated).toHaveBeenCalledWith('/rc/', undefined);
+    expect(warned).toHaveBeenCalledOnce();
+    warned.mockRestore();
+  });
 });

@@ -16,11 +16,12 @@
  * anything may publish to (kdd/explicit-composition).
  *
  * The binding is MODULE STATE, so writer and reader must resolve to the SAME
- * instance of this module. That holds today because the SDK entry imports it
- * from source into the one host bundle; if the SDK is ever built separately,
- * this module duplicated into it would give plugins a copy nothing ever
- * writes, and every `navigateTo` would take the full-reload fallback below —
- * keep it shared (kdd/bundling § the SDK-eager rule).
+ * instance of this module. That holds today because a plugin's
+ * `@openmsupply/plugin-sdk` resolves through the host's import map to the
+ * host's own live instance (kdd/plugin-loading), whose entry imports this file
+ * directly. If the SDK were ever bundled separately, its own copy of this
+ * module would be one nothing writes, and every `navigateTo` would take the
+ * full-reload fallback below — keep this module shared with the SDK entry.
  */
 import { getOwner, onCleanup } from 'solid-js';
 
@@ -41,8 +42,20 @@ let bound: HostNavigate | undefined;
  * Publish the router's navigator for the lifetime of the CALLING COMPONENT —
  * so it must be called from a component body, and the binding is released with
  * that component's owner rather than by anyone remembering to unbind.
+ *
+ * A call without an owner is refused, not honoured: `onCleanup` would be a
+ * no-op, and a binding nothing releases keeps pushing routes into the router
+ * of a shell that has since unmounted (logout) — the dangling navigator this
+ * module exists to prevent. Reported as a programming error, same contract as
+ * the SDK's own no-store guards (plugin-sdk/bridge.ts).
  */
 export const bindHostNavigate = (navigate: HostNavigate): void => {
+  if (getOwner() === null) {
+    console.error(
+      'bindHostNavigate: called outside a component body — nothing would ever release the binding, so it was not made'
+    );
+    return;
+  }
   bound = navigate;
   onCleanup(() => {
     // Guarded rather than a bare clear: a remount can bind the new navigator
@@ -115,7 +128,19 @@ export const hostNavigate: HostNavigate = (href, options) => {
     bound(href, options);
     return;
   }
-  if (atDocumentHref(href)) return;
+  // Warned, not silent, on both unbound branches: taking either means a
+  // plugin navigated from module scope (or mid store switch), which is worth
+  // hearing about even though the fallback copes — same contract as the SDK's
+  // no-store reports (plugin-sdk/bridge.ts).
+  if (atDocumentHref(href)) {
+    console.warn(
+      `hostNavigate(${href}): no router bound and the document is already there — dropped (navigating would reload and re-run the caller)`
+    );
+    return;
+  }
+  console.warn(
+    `hostNavigate(${href}): no router bound — navigating through the document, which reloads the app`
+  );
   if (options?.replace) location.replace(href);
   else location.assign(href);
 };

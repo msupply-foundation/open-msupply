@@ -13,18 +13,26 @@ import {
  * pushing routes into a torn-down router.
  */
 
-// jsdom's location is not assignable; the fallback path only needs to record
-// that it was taken, plus a current URL for the same-destination guard to
-// compare against.
+// This suite runs in vitest's node environment (vitest.config.ts), where no
+// `location` global exists at all; the stub provides the pieces the fallback
+// path touches — recording that assign/replace were taken, plus a current URL
+// for the same-destination guard to compare against.
 const assign = vi.fn();
 const replace = vi.fn();
 const locate = (pathname: string, search = '') =>
   vi.stubGlobal('location', { assign, replace, pathname, search });
 locate('/rc/store-a/dashboard');
 
+// Both unbound branches report themselves, and a bad binding is refused with a
+// report — asserted where they matter, silenced everywhere else.
+const warned = vi.spyOn(console, 'warn').mockImplementation(() => {});
+const errored = vi.spyOn(console, 'error').mockImplementation(() => {});
+
 afterEach(() => {
   assign.mockClear();
   replace.mockClear();
+  warned.mockClear();
+  errored.mockClear();
   locate('/rc/store-a/dashboard');
 });
 
@@ -92,6 +100,22 @@ describe('hostNavigate', () => {
 
     expect(assign).toHaveBeenCalledWith('/store-a/inventory/stock');
     expect(replace).toHaveBeenCalledWith('/store-a/catalogue/items');
+    // Taking the fallback means module-scope (or mid-switch) navigation —
+    // worth hearing about even though it copes.
+    expect(warned).toHaveBeenCalledTimes(2);
+  });
+
+  it('refuses a binding made outside a component owner', () => {
+    const navigate = vi.fn();
+    // No createRoot: `onCleanup` would be a no-op, so nothing would ever
+    // release this binding — the dangling navigator, refused up front.
+    bindHostNavigate(navigate);
+
+    hostNavigate('/rc/store-a/inventory/stock');
+
+    expect(errored).toHaveBeenCalledOnce();
+    expect(navigate).not.toHaveBeenCalled();
+    expect(assign).toHaveBeenCalledWith('/rc/store-a/inventory/stock');
   });
 
   it('drops an unbound navigation to the URL already shown', () => {
