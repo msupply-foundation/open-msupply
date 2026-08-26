@@ -2063,8 +2063,8 @@
   "tools": "أدوات",
   "tooltip.import-fridge-tag": "استيراد ملفات سجلات Berlinger Fridge-tag و Q-tag. سيتم إنشاء مستشعر، إذا لزم الأمر، لكل ملف سجل يتم استيراده.",
   "user.logout": "تسجيل الخروج",
-  "warning.cannot-create-placeholder-packs": "هناك إجمالي عبوات {{allocatedQuantity}} متوفرة. غير قادر على تخصيص جميع {{requestedQuantity}} العبوات.",
-  "warning.cannot-create-placeholder-units": "هناك إجمالي {{allocatedQuantity}} وحدات متوفرة. غير قادر على تخصيص جميع {{requestedQuantity}} الوحدات.",
+  "warning.cannot-create-placeholder-packs": "يوجد إجمالي {{allocatedQuantity}} من العبوات المتاحة للتخصيص التلقائي.",
+  "warning.cannot-create-placeholder-units": "يوجد إجمالي {{allocatedQuantity}} من الوحدات المتاحة للتخصيص التلقائي.",
   "warning.caps-lock": "تحذير: قفل القبعات قيد التشغيل",
   "warning.field-not-parsed": "لم يتم تحليل {{field}}",
   "warning.nothing-to-supply": "لم يتبق شيء لتزويده!"

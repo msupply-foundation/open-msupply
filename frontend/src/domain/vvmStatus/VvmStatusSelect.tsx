@@ -20,6 +20,8 @@ export interface VvmStatusSelectProps {
   disabled?: boolean;
   error?: string;
   placeholder?: string;
+  /** `data-testid` for the text input (locale-stable test hook, e2e/TESTIDS.md). */
+  inputTestId?: string;
   /** Control size — 'small' for dense contexts (a batch-grid cell). */
   size?: 'default' | 'small';
   /** Max-width cap — forwarded to the Combobox, opt-in (default `full`). */
@@ -47,6 +49,7 @@ export const VvmStatusSelect = (props: VvmStatusSelectProps): JSX.Element => (
     disabled={props.disabled}
     error={props.error}
     placeholder={props.placeholder}
+    inputTestId={props.inputTestId}
     size={props.size}
     width={props.width}
     onChange={s => props.onChange(s)}

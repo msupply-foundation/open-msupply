@@ -57,6 +57,31 @@
      3px is the smallest that still reads as a bar rather than a border at a
      glance down a long list. */
   --table-accent-bar: 3px;
+
+  /* The keyboard row focus ring (KB-N1 — see tr[data-row-focused] below): bars
+     across the row's block edges, drawn INSET on each cell because an outline
+     around a full-width row reads as a table border. One source of truth
+     because a cell that also draws a frozen-block seam has to restate the ring
+     alongside it — box-shadow is a single property, so the two cues compose in
+     one declaration or not at all.
+
+     NEUTRAL, not --primary-main. The brand orange was reported as too vibrant
+     for a transient keyboard position (Mark, PR #1114) — it competes with the
+     status/tone vocabulary the rows already carry, and the row is not a control
+     taking the app's blue focus ring either (blue is the SELECTION tint here,
+     so a blue ring on a row would read as selection). A grey rule states "the
+     keyboard is here" without claiming a meaning.
+
+     --gray-main, not the near-black --text-secondary the first pass used: at
+     2px across a full row width a text-weight grey still read as a hard rule
+     (second review pass on the same PR). The mid-grey is where softening stops,
+     not a free dial — 3.1:1 on white, and the geometry is already the minimum
+     that reads as a bar, so a lighter token or a 1px line would put a focus
+     indicator under the 3:1 that non-text contrast asks for. Dark is roomier
+     (5.1:1) but takes the same token, because two greys would be two rules to
+     keep in step for no visible gain. */
+  --row-focus-ring:
+    inset 0 2px 0 0 var(--gray-main), inset 0 -2px 0 0 var(--gray-main);
 }
 
 /* Fills the remaining height between the toolbar and the footer bar, so the
@@ -699,14 +724,22 @@ tr[data-row-state='disabled'] > .selectCell {
   color: var(--text-secondary);
 }
 
-/* Record-STATUS tints (rowTint — spec D111): always-on backgrounds naming
-   the row's status (outbound lines: allocated green / expired red / held
-   amber), unlike the rowState tints above which show only while selected.
+/* Record-STATUS tints (rowTint): always-on backgrounds naming the row's
+   status, unlike the rowState tints above which show only while selected.
    Same opaque color-mix recipe over --surface-raised so pinned cells cover
-   cleanly. AFTER the disabled rule (equal specificity): a disabled held/
-   expired row keeps its tint background under the disabled muted text — the
-   status is why the row is disabled. Selection deepens each tint (rules
-   with the selection block below). */
+   cleanly. AFTER the disabled rule (equal specificity): a disabled toned row
+   keeps its tint background under the disabled muted text — the status is why
+   the row is disabled. Selection deepens each tint (rules with the selection
+   block below).
+
+   ONE tint per table is the standing guidance, and it earns its place by
+   answering the question that table is FOR: 'unfinished' marks the rows still
+   awaiting work (the outbound and stocktake line tables), 'error' the rows the
+   server refused (R&R forms). The severity three (success/warning/error) are
+   kept for that second kind of use, but a table that washes several statuses
+   at once spends its whole at-a-glance channel on facts its own badges already
+   state — which is why outbound's line editor gave its three tints up (D111,
+   2026-08-21). */
 tr[data-tint='success'] > .td,
 tr[data-tint='success'] > .selectCell {
   background: color-mix(in srgb, var(--success-main) 8%, var(--surface-raised));
@@ -747,6 +780,105 @@ tr[data-tint='unfinished'] > .selectCell {
 tr[data-tint='error'] > .td,
 tr[data-tint='error'] > .selectCell {
   background: color-mix(in srgb, var(--error-main) 8%, var(--surface-raised));
+}
+
+/* Keyboard row focus (spec/keyboard KB-N1/AC-KB37): "the focused row is
+   indicated by a background DISTINCT FROM ROW STRIPING… the indication is a
+   focus state, not a meaning".
+
+   TWO channels, because focus and selection are orthogonal states that must
+   both stay readable on the same row: the row's own HOVER WASH as the
+   background, plus a neutral inset ring. The ring is a DIFFERENT PROPERTY, so
+   it never contends with the selection background — a selected row that also
+   holds keyboard focus keeps showing where the keyboard is, which the
+   background alone cannot do, since the selection rules legitimately outrank
+   this one (they carry an extra :not()) and out-specifying them needed either a
+   meaningless :not() or a duplicated attribute. Lives here, before the density
+   block, for the same ascending-specificity reason as the disabled tint above.
+
+   The background is the SAME grey the pointer draws, deliberately (Mark, PR
+   #1114): a keyboard position is the keyboard's equivalent of the pointer being
+   somewhere, so it earns the same weight rather than a colour of its own. The
+   opaque --surface-raised base is what the hover wash's own pinned-cell variant
+   uses further up — one declaration covers ordinary and pinned cells here.
+
+   The ring is what the current app lacks, and it is why the two cues are not
+   fully collapsed into one: there, hover and keyboard focus are near-identical
+   washes, so a pointer resting on row 3 while the arrows sit on row 7 shows two
+   rows looking the same, and neither says which one Enter will open. The ring
+   also keeps the state visible on the rows whose own fill outranks the wash —
+   selected, toned, read-only.
+
+   Colour is never the only signal: the row is simultaneously the focused
+   element. The ring is on the CELLS, not an outline on the <tr>, because a
+   focus ring around a full-width row reads as a table border, not as focus. */
+tr[data-row-focused] > .td,
+tr[data-row-focused] > .selectCell {
+  background: color-mix(in srgb, var(--text-body) 4%, var(--surface-raised));
+  box-shadow: var(--row-focus-ring);
+}
+
+/* The frozen block's outer column draws its 1px seam with box-shadow too (see
+   [data-frozen-edge] above), and box-shadow is ONE property: the seam's selector
+   outranks the ring's, so that single cell lost its bars and the highlight read
+   as a notch punched out of the row over the pinned Code column (reported on the
+   internal-order detail view). Both cues are wanted there, so the ring is
+   restated WITH the seam — which is why it is a variable rather than three
+   copies of the same two shadows. The hidden-edge state needs no partner rule:
+   once content is under the block the seam is withdrawn (that same
+   `:not([data-hidden-*])`) and its shadow is drawn on a pseudo-element, so the
+   ring above applies untouched. */
+.tableScroll:not([data-hidden-left])
+  tr[data-row-focused]
+  > [data-frozen-edge='left']:not(.selectCell) {
+  box-shadow:
+    var(--row-focus-ring),
+    inset -1px 0 0 0 var(--color-divider);
+}
+
+.tableScroll:not([data-hidden-right])
+  tr[data-row-focused]
+  > [data-frozen-edge='right'] {
+  box-shadow:
+    var(--row-focus-ring),
+    inset 1px 0 0 0 var(--color-divider);
+}
+
+tr[data-row-focused]:focus {
+  outline: none;
+}
+
+/* Arrowing a row into view must not park it UNDER the sticky header row
+   (scrollIntoView's `nearest` stops as soon as the row is inside the box, which
+   includes the strip the header is floating over). The margin is the tallest
+   header the density scale produces, so the row lands clear of it in every
+   density; the trailing value keeps the last row off the box's bottom edge. */
+:where(tbody) tr {
+  scroll-margin-block: 3rem 0.5rem;
+}
+
+/* The table is the list's single tab stop (KB-N1 — see createRowFocus.ts), so it
+   needs a focus indicator of its own for the moment before any row is
+   highlighted: reaching the list by Tab has to be visible (WCAG 2.2 SC 2.4.7).
+   Inset, so it draws inside the scroll box rather than being clipped by it, and
+   only for :focus-visible — the seeded focus a list screen arrives with is not a
+   keyboard interaction and must not flash a ring at a mouse user. */
+.table:focus-visible {
+  outline: 2px solid var(--secondary-main);
+  outline-offset: -2px;
+}
+
+/* …but NOT for the seed itself. `:focus-visible` asks whether the last input
+   was a keyboard, and the seed is a `.focus()` the page performs on arrival —
+   so a user who reached the screen BY keyboard (Enter on a row, the command
+   palette) landed on every list with the ring already drawn, on a table they
+   had not chosen to focus (reported on PR #1114: "shows on every page load on
+   every page"). The seed is a starting position, not a focus event the user
+   caused. DataTable clears the flag on the first key or the first focus change,
+   from which point the ring behaves normally — Tab onto a table still shows
+   it, which is the SC 2.4.7 case it exists for. */
+.table[data-focus-seeded]:focus-visible {
+  outline: none;
 }
 
 /* Row density (ui-standards § tables → row heights), keyed off the
@@ -1264,6 +1396,56 @@ tr[data-accent='error'] > :first-child::before {
     var(--secondary-main) 5%,
     var(--surface-raised)
   );
+}
+
+/* Disabled card (rowState 'disabled') — the card half of table view's grey
+   read-only row: a muted fill and secondary text, so a record that cannot be
+   edited reads as one in EITHER rendering (a line editor whose grid is cards at
+   every width would otherwise show its barred batches exactly like the editable
+   ones — only the disabled inputs inside them would say so). Placed after the
+   selected rule at equal specificity: a disabled card keeps the grey even while
+   selected, as its row does.
+
+   NOT the row's --bg-toolbar: that grey is a step off the WHITE row surface,
+   and on the recessed card list it lands 5/255 from a normal card in light and
+   3/255 from the LIST in dark, where the card box dissolves into its own list
+   (Aneesh, PR #1207). Cards get their own fill token, fitted to both of a
+   card's neighbours in each theme — see the --table-card-surface-disabled note
+   in tokens.css. This reaches every card list keying rowState off an
+   editability gate (the six list screens, both line editors), which is the
+   point: those same rows are grey in table view.
+
+   The fill is the whole treatment. The identity title keeps its own colour
+   (.cardPrimary, and any tone on it) rather than being muted here — the same
+   bargain table view strikes, where a held or expired row reads in its tone
+   THROUGH the disabled muting, because the status is why the row is disabled. */
+.cardRow[data-row-state='disabled'] > .cardCell > .card {
+  background: var(--table-card-surface-disabled);
+  color: var(--text-secondary);
+}
+
+/* Card view's half of the keyboard row focus (KB-N1/AC-KB37 — the table-view
+   half is the cell background + inset ring further up): the CARD takes the
+   ring, since it already sits on its own surface and an inset cell ring would
+   land inside the card's padding instead of around it. The same neutral
+   --gray-main as table view's ring, so the two views read as one
+   indication, and it outranks the selection border above by rule order — a
+   selected card that also holds the keyboard still shows where the keyboard is.
+
+   A card is already a bordered box, so the cue is that border restated in the
+   focus colour, doubled to 2px by a 1px shadow sitting exactly on it — the
+   same weight as table view's bars. NOT the 2px halo standing off the card
+   that the first build drew: the halo is what read as vibrant (PR #1114),
+   where a thicker edge reads as an edge. */
+.cardRow[data-row-focused] > .cardCell > .card {
+  border-color: var(--gray-main);
+  box-shadow: 0 0 0 1px var(--gray-main);
+}
+
+/* The <tr> is the focused element, but the ring is drawn on the card inside it
+   (above), so the row's own outline would double it. */
+.cardRow[data-row-focused]:focus {
+  outline: none;
 }
 
 /* Toned cards carry NO border/shadow treatment — the tinted identity title

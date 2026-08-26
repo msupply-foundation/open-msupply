@@ -37,7 +37,7 @@ import {
 } from './inboundShipmentUpdate';
 import {
   deleteRemovesStock,
-  kindOf,
+  sourceLinkOf,
   supplierIsStore,
 } from './inboundShipmentStatus';
 import { isExternalScope, type InboundScope } from '../inboundShipmentScope';
@@ -197,7 +197,7 @@ export const InboundShipmentSidePanel: Component<
   };
 
   const pricing = () => props.node.pricing;
-  const isTransfer = () => kindOf(props.node) === 'transfer';
+  const isTransfer = () => sourceLinkOf(props.node) === 'transfer';
 
   // Derived service tax rate (blended across lines) and amount — the display
   // side of the inline editor; both zero when there's nothing to tax.

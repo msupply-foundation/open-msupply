@@ -76,6 +76,26 @@
      so the same figure/ground holds. */
   --table-card-surface: #f4f5f7;
 
+  /* A DISABLED card's fill (card view's read-only record — the grey a disabled
+     ROW takes in table view). Its own token because the row grey cannot be
+     reused: --bg-toolbar is sized as a step off the WHITE row surface, and on
+     the recessed card list it lands 5/255 from a normal card in light and 3/255
+     from the list floor in dark — invisible in one theme, and in the other the
+     card sinks BELOW its own list so the box disappears and only its 1px border
+     survives (Aneesh, PR #1207).
+
+     The figure the card must keep is its own: a disabled card has to read as a
+     muted card, so it needs perceptible distance from BOTH neighbours — the
+     card it isn't (--surface-raised) and the list it must not dissolve into
+     (--table-card-surface). Dark has room between the two (16/255) and this
+     sits inside it, 8 off each. Light has only 11/255 between them, so nothing
+     inside that gap can clear either edge; light steps PAST the list floor
+     instead — one rung further from the card (22/255) and 12 below the floor —
+     which is the same reading by the other route: a card that recedes rather
+     than lifts. The 1px --color-border-value stays darker than the fill in
+     light and lighter in dark, so the box keeps its frame either way. */
+  --table-card-surface-disabled: #e8e9f0;
+
   /* --- App shell surface ladder — "Warm stone" -------------------------
      The shell's figure/ground, from the UX surface study (ux-testing
      nav-collapsed-flyout-mockup-light.html § "App shell background & section
@@ -395,7 +415,7 @@
 
      The floor it used to carry was iOS Safari's zoom-on-focus threshold, which
      is an absolute 16px. That argument is gone: browserslist is
-     `chrome >= 138` (Chromium only, enforced by scripts/check-min-browser.mjs),
+     `chrome >= 132` (Chromium only, enforced by scripts/check-min-browser.mjs),
      so iOS Safari is not a supported target. If it ever becomes one, the floor
      comes back HERE and nowhere else.
 
@@ -589,6 +609,12 @@
   /* Recessed card-list surface — darker than the raised card so the same
      figure/ground reads in dark. */
   --table-card-surface: #1b1b24;
+
+  /* A disabled card's fill — BETWEEN the list floor above and the raised card,
+     8/255 off each: dark's card→list gap is wide enough to hold a middle rung,
+     so the muted card steps down toward the list without reaching it. (Light
+     has no such room and steps past the floor instead — see the light note.) */
+  --table-card-surface-disabled: #242433;
 
   /* App shell surface ladder — cool-neutral in dark, on the study's own advice:
      re-hued to 85° at these lightnesses a warm neutral reads as brown, and a

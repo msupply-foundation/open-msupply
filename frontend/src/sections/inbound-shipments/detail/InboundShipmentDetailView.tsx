@@ -55,6 +55,7 @@ import {
   initialPageSize,
   rememberPageSize,
 } from '../../../list/pageSize';
+import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import {
   CustomFieldsEditTab,
@@ -93,7 +94,7 @@ import { InboundShipmentStatusFooter } from './InboundShipmentStatusFooter';
 import {
   canChangeStatus,
   isEditable,
-  kindOf,
+  sourceLinkOf,
   supplierIsStore,
 } from './inboundShipmentStatus';
 import { SupplierKindIcon } from '../SupplierKindIcon';
@@ -319,6 +320,15 @@ const InboundShipmentDetailView: Component = () => {
   // create stock) are correctly excluded. Feeds the side panel's delete
   // confirmation: an empty shipment has no stock to warn about.
   const hasLines = () => totalCount() > 0;
+
+  // A bulk delete of the last page's rows leaves the offset past the new end
+  // (src/list/clampPageOffset.ts, issue #1117).
+  clampPageOffset({
+    total: () => settledTotal(linesData, page => page.totalCount),
+    offset: () => query().offset,
+    pageSize: () => query().first,
+    setOffset: offset => setQuery({ ...query(), offset }),
+  });
 
   // Total volume of the selected lines (volumePerPack × packs received) — feeds
   // the change-location picker's "Available" filter so it keeps only locations
@@ -604,12 +614,12 @@ const InboundShipmentDetailView: Component = () => {
     });
     // Add-from-internal-order — store allows the manual link, the shipment is
     // still editable, and it carries a MANUALLY linked internal order (spec
-    // AC-PG4 / AC-IO1). The distinguishing signal is linkedShipment, NOT kind:
-    // any requisition-linked shipment is inboundType FROM_REQUISITION, which
-    // kindOf() calls 'transfer', so the old `kindOf(node) !== 'transfer'` gate
-    // could never coexist with `node.requisition` — the option was dead code
-    // (H4). An INCOMING transfer has linkedShipment (arrives pre-populated, no
-    // order-line pull); a manual link has a requisition but no linkedShipment.
+    // AC-PG4 / AC-IO1). The distinguishing signal is linkedShipment: an
+    // INCOMING transfer has one (it arrives pre-populated, so there is no
+    // order-line pull to offer), a manual link has a requisition without one.
+    // That is the same signal sourceLinkOf() keys on, so a !== 'transfer' test
+    // would read equivalently here — linkedShipment is named directly because
+    // this gate is about the pre-populated lines, not about the status flow.
     // Offered only when the store enables manual IO linking (a preference
     // gate → offer-shaping, omitted otherwise). When offered,
     // disable-with-reason for the per-shipment state (M5): needs a manually
@@ -739,13 +749,9 @@ const InboundShipmentDetailView: Component = () => {
         c: { key: 'packSize' },
         sortKey: 'packSize',
         header: () => t('label.received-pack-size'),
-        ...getCellDefinition('packSize'),
-        // The `packSize` preset is sized for the header "Pack size"; this table
-        // heads the column "Received pack size", whose longest word alone
-        // outgrows the preset's text box — at 5rem it broke "Received" mid-word
-        // and clipped the third line away. Local override, not a preset change:
-        // every other table still heads it "Pack size".
-        size: remToPx(7),
+        // Not `packSize` — that preset is sized for the header "Pack size".
+        // See `receivedPackSize` in _globalColumnConfig for the measurement.
+        ...getCellDefinition('receivedPackSize'),
       },
       // Doses per unit (H5) — vaccines-in-doses pref; the item's configured
       // doses, blank for a non-vaccine item.
@@ -1013,7 +1019,7 @@ const InboundShipmentDetailView: Component = () => {
                   <HeaderToolbar
                     alert={
                       <Alert severity="info" compact>
-                        {kindOf(node()) === 'manual'
+                        {sourceLinkOf(node()) === 'none'
                           ? t('messages.inbound-manual-info')
                           : t('messages.inbound-automatic-info')}
                       </Alert>

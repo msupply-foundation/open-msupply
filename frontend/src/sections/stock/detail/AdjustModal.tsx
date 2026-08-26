@@ -339,6 +339,7 @@ const AdjustContent = (props: {
           <ReasonSelect
             kind={direction() === 'ADDITION' ? 'positive' : 'negative'}
             label={t('label.reason')}
+            inputTestId="adjust-reason"
             hideLabel
             disabled={!hasAmount()}
             value={reasonId()}
@@ -353,6 +354,7 @@ const AdjustContent = (props: {
           <FieldRow label={t('label.adjustment-date')}>
             <DateField
               label={t('label.adjustment-date')}
+              testId="adjust-date"
               hideLabel
               min={minDate()}
               max={today}

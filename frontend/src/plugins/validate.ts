@@ -25,6 +25,7 @@ const SLOT_IDS: Record<SlotId, true> = {
   'dashboard.widget': true,
   'dashboard.panel': true,
   'dashboard.stat': true,
+  'dashboard.body': true,
   'internalOrderLine.column': true,
   'internalOrderLine.infoPanel': true,
   'prescription.paymentForm': true,

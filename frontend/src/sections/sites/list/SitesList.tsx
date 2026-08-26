@@ -16,6 +16,7 @@ import { createTableConfig } from '@/api/createTableConfig';
 import { CloseIcon, PlusCircleIcon } from '@/ui/icons';
 import { useUrlQueryState } from '@/list/urlQueryState';
 import { initialPageSize, rememberPageSize } from '@/list/pageSize';
+import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
 import { Sites, SiteDeployment } from './sites.generated';
 import {
   DEFAULT_STATE,
@@ -92,6 +93,15 @@ const SitesList: Component = () => {
   // OMS-FUN-SYC-002.9 — the reported total is filter-aware, so "M–N of T" and
   // the page count narrow with the search.
   const totalCount = () => data.latest?.totalCount ?? 0;
+
+  // A bulk delete of the last page's rows leaves the offset past the new end
+  // (src/list/clampPageOffset.ts, issue #1117).
+  clampPageOffset({
+    total: () => settledTotal(data, page => page.totalCount),
+    offset: () => query().offset,
+    pageSize: () => query().first,
+    setOffset: offset => setQuery({ ...query(), offset }),
+  });
 
   // The deployment reads: the standalone gate, the multi-device feature flag
   // and the two site ids the editor needs. One fetch per visit, keyed on

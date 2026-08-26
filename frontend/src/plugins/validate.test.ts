@@ -188,6 +188,7 @@ describe('validateLoadedModule', () => {
 
   it('publishes exactly the slots the host has surfaces for', () => {
     expect([...KNOWN_SLOT_IDS].sort()).toEqual([
+      'dashboard.body',
       'dashboard.panel',
       'dashboard.stat',
       'dashboard.widget',

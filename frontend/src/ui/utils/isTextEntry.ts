@@ -11,9 +11,12 @@
  *             of the whitelist, never as a blacklist).
  *
  * A fourth reading — KB-N2, "arrow keys inside a table's input/select/textarea
- * belong to the field, not to row navigation" — arrives with list-table row
- * navigation, which is not built (kdd/keyboard-layer). `SELECT` is already
- * covered below because KB-N2 is the rule that names it.
+ * belong to the field, not to row navigation" — is NOT a consumer, though it
+ * names the same elements. List-table row navigation answers it structurally
+ * instead: the rung acts only on a key that landed on the table or on a row, so
+ * a key pressed on anything a cell contains is not its to take — which also
+ * covers a button, and a button is not text entry (see table/createRowFocus).
+ * `SELECT` is still covered below, because KB-N2 is the rule that names it.
  *
  * `type` matters: a checkbox, radio, button or file input is an <input> that
  * swallows nothing, so Alt+N pressed on a checked box must still fire.
