@@ -28,6 +28,8 @@ const DATE_FNS_LOADERS: Record<SupportedLocale, () => Promise<Locale>> = {
   es: () => import('date-fns/locale/es').then(m => m.es),
   fr: () => import('date-fns/locale/fr').then(m => m.fr),
   'fr-DJ': () => import('date-fns/locale/fr').then(m => m.fr),
+  // Lao has no date-fns locale either; English (GB), as in the current app.
+  lo: () => Promise.resolve(enGB),
   ps: () => import('date-fns/locale/fa-IR').then(m => m.faIR),
   pt: () => import('date-fns/locale/pt').then(m => m.pt),
   ru: () => import('date-fns/locale/ru').then(m => m.ru),
@@ -39,7 +41,7 @@ const DATE_FNS_LOADERS: Record<SupportedLocale, () => Promise<Locale>> = {
 // plain map) so a component formatting a date re-runs once its locale lands.
 const [dateFnsLocales, setDateFnsLocales] = createSignal<
   Partial<Record<SupportedLocale, Locale>>
->({ en: enGB, tet: enGB });
+>({ en: enGB, lo: enGB, tet: enGB });
 
 /**
  * Ensure a language's date-fns locale is resident. Awaited before the locale
@@ -97,10 +99,11 @@ export const customDate = (
 /*
  * The BCP-47 tag to hand Intl for a supported language. Mirrors the date-fns
  * substitutions above, so the two formatters never disagree about which
- * language a user is reading: Dari and Pashto borrow Persian, and Tetum — which
- * neither library carries — falls back to the app's English rather than to
- * whatever the browser happens to be set to, which is what Intl would pick on
- * its own for an unknown tag.
+ * language a user is reading: Dari and Pashto borrow Persian, and Tetum and Lao
+ * — which date-fns doesn't carry — fall back to the app's English rather than
+ * to whatever the browser happens to be set to, which is what Intl would pick
+ * on its own for an unknown tag. (Intl does know `lo`, but a Lao date beside an
+ * English one from date-fns would be worse than either alone.)
  */
 const INTL_TAGS: Record<SupportedLocale, string> = {
   ar: 'ar',
@@ -109,6 +112,7 @@ const INTL_TAGS: Record<SupportedLocale, string> = {
   es: 'es',
   fr: 'fr',
   'fr-DJ': 'fr',
+  lo: 'en-GB',
   ps: 'fa-IR',
   pt: 'pt',
   ru: 'ru',
