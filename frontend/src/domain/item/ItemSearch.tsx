@@ -47,6 +47,16 @@ export interface ItemSearchProps {
   selectedItem?: { id: string; code: string; name: string };
   /** The picked item, or null when the selection is cleared. */
   onSelect: (item: ItemOption | null) => void;
+  /**
+   * Whether the picker offers the clear (`×`) affordance. Defaults to the
+   * underlying combobox's `true`, and stays a per-call-site decision because
+   * the two shapes of caller genuinely differ (D5 — clearability follows
+   * optionality, spec/DIVERGENCES.md): an editor whose record ALWAYS has an
+   * item passes `false` (the item is replaced by picking another, never
+   * emptied), while the stocktake editor reads a clear as "back to the item
+   * search" and needs it.
+   */
+  clearable?: boolean;
   placeholder?: string;
   hideLabel?: boolean;
   /**
@@ -200,6 +210,7 @@ export const ItemSearch = (props: ItemSearchProps): JSX.Element => {
       disabled={props.disabled}
       error={props.error}
       required={props.required}
+      clearable={props.clearable}
       class={props.class}
       width={props.width}
       placeholder={props.placeholder}

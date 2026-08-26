@@ -10,11 +10,13 @@ import {
 } from 'solid-js';
 import { t } from '../../../../intl';
 import { graphqlFetch } from '../../../../api/graphql';
+import { gated } from '../../../../api/gated';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { createFocusTarget } from '../../../../ui/utils/createFocusTarget';
 import { Spinner } from '../../../../ui/elements/feedback/Spinner';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
+import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
 import { Tabs, TabList, TabPanel } from '../../../../ui/elements/tabs/Tabs';
 import { Combobox } from '../../../../ui/elements/selectors/Combobox';
 import { FieldRow } from '../../../../ui/elements/inputs/FieldRow';
@@ -94,7 +96,7 @@ export const CreateInternalOrderModal: Component<
   );
   const settled = () =>
     settings.state === 'ready' || settings.state === 'refreshing';
-  const settingsList = () => (settled() ? (settings.latest ?? []) : []);
+  const settingsList = () => gated(settings) ?? [];
   const programCapable = () => settingsList().length > 0;
 
   const [tab, setTab] = createSignal('program');
@@ -327,20 +329,28 @@ export const CreateInternalOrderModal: Component<
       testId="create-internal-order-modal"
       widthRem={44}
       minBodyHeightRem={30}
-      // Create sits in the actions row only on the Program path; the General
-      // path creates on supplier-select and has no footer button (AC-C2/AC-P3).
+      // Cancel is the house way out on both paths (ui-standards › dialogs §
+      // chrome); Create sits beside it only on the Program path — the General
+      // path creates on supplier-select and has no confirm (AC-C2/AC-P3).
       actions={
-        <Show when={activeTab() === 'program'}>
-          <Button
-            confirms="plain"
-            data-testid="create-program-order-button"
-            disabled={!createReady()}
-            loading={submitting()}
-            onClick={() => void submitProgram()}
-          >
-            {t('label.create')}
-          </Button>
-        </Show>
+        <>
+          <CancelButton
+            data-testid="dialog-button-cancel"
+            disabled={submitting()}
+            onClick={props.onClose}
+          />
+          <Show when={activeTab() === 'program'}>
+            <Button
+              confirms="plain"
+              data-testid="create-program-order-button"
+              disabled={!createReady()}
+              loading={submitting()}
+              onClick={() => void submitProgram()}
+            >
+              {t('label.create')}
+            </Button>
+          </Show>
+        </>
       }
     >
       <Show when={settled()} fallback={<Spinner center label={t('loading')} />}>

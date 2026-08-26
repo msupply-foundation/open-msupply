@@ -78,7 +78,9 @@ const Body = (props: LineActionProps & { onClose: () => void }) => {
       testId="confirmation-modal"
       title={t('heading.are-you-sure')}
       description={
-        <Switch fallback={tPlural('messages.confirm-delete-lines', count)}>
+        <Switch
+          fallback={tPlural('messages.confirm-delete-shipment-lines', count)}
+        >
           <Match when={phase() === 'error'}>
             <Alert severity="error">{errorMessage()}</Alert>
           </Match>

@@ -172,6 +172,17 @@
    doesn't have. Muted at rest so it reads as secondary to the value; the
    chevron stays put, so the control never stops looking like a combobox. */
 .clear {
+  /* A 1rem ✕ in a 1.5rem slot: 4px clear each side, which is exactly what the
+     chevron beside it has (a 1.25rem glyph in its 1.75rem slot), so the two read
+     as equally inset instead of the ✕ looking adrift in a box too big for it.
+     Overrides the shared 1.75rem above — same specificity, declared later.
+
+     1.5rem = 24px is the FLOOR here, not a preference: it's the minimum target
+     size WCAG 2.2 SC 2.5.8 allows at AA, and the chevron is a separate adjacent
+     target so the spacing exception can't be claimed. Any tighter and the
+     inset has to come from the icon's own artwork instead (its path spans 12 of
+     a 24 viewBox), which is a change to the shared CloseIcon. */
+  inline-size: 1.5rem;
   font-size: 1rem;
   color: var(--gray-main);
 }
@@ -393,16 +404,19 @@
     min-height: var(--input-height-sm-touch);
   }
 
-  /* Touch font bump — see --input-font-touch. BOTH sizes: a small field beside
-     a default one must not read at a different size on the same touch surface.
-     The small selector has to be REPEATED here — a media query adds no
-     specificity, so a bare `.input` (0,1,0) loses to `.field[data-size='small']
-     .input` (0,3,0) above and the bump silently never lands on small. The
-     borderless chip is excluded for the same reason it drops the touch height
-     below: it sits at the filter bar's own chip scale, not the field scale. */
+  /* Touch size normalisation — BOTH sizes read the same on the same surface
+     (ui-standards #field-touch-sizing). At --text-sm, not --input-font-touch:
+     see the Select trigger's note for the tablet review behind that (a picker
+     displays a value rather than taking typing, and 1rem outsized its own
+     label and its own listbox while squeezing the value). The small selector
+     has to be REPEATED here — a media query adds no specificity, so a bare
+     `.input` (0,1,0) loses to `.field[data-size='small'] .input` (0,3,0) above
+     and the rule silently never lands on small. The borderless chip is excluded
+     for the same reason it drops the touch height below: it sits at the filter
+     bar's own chip scale, not the field scale. */
   .field:not([data-borderless]) .input,
   .field:not([data-borderless])[data-size='small'] .input {
-    font-size: var(--input-font-touch);
+    font-size: var(--text-sm);
   }
 
   .item {

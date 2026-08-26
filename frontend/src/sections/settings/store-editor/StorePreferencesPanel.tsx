@@ -279,9 +279,12 @@ export const StorePreferencesPanel = (props: {
                         colour={asColour(value(preference)) || null}
                         label={label(preference)}
                         variant="field"
+                        allowCustom
                         onSelect={colour =>
                           props.onStage(preference.key, colour)
                         }
+                        // Reset stages the kind's zero — "no colour" (SET-05.40).
+                        onReset={() => props.onStage(preference.key, '')}
                       />
                     </Show>
                   </Row>

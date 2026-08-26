@@ -2,6 +2,7 @@ import { createResource, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { OkButton } from '../../../ui/elements/buttons/StandardButtons';
@@ -52,17 +53,11 @@ export const CustomerDetailModal: Component<Props> = props => {
     }
   );
 
-  // Read NON-SUSPENDING, gated on `.state`. This resource first fetches on an
-  // INTERACTION (opening the modal over the already-open list), and `.latest`
-  // alone is not safe there: Solid's `latest` falls back to the suspending read
-  // until the resource has resolved once, which would tear down this open
-  // native <dialog> (losing its modal backdrop) and the list behind it
-  // (kdd/solid-reactivity-pitfalls › no remounts on interaction).
-  // `data.loading` stays the spinner boolean.
-  const loaded = () =>
-    data.state === 'ready' || data.state === 'refreshing'
-      ? data.latest
-      : undefined;
+  // Read NON-SUSPENDING. This resource first fetches on an INTERACTION
+  // (opening the modal over the already-open list); a suspending read would
+  // tear down this open native <dialog> (losing its modal backdrop) and the
+  // list behind it. `data.loading` stays the spinner boolean.
+  const loaded = () => gated(data);
   const detail = () => loaded()?.detail;
   // The accessible name states which of the three states the viewer is in, so a
   // record that doesn't resolve never reads as "still loading" (detail-views ›

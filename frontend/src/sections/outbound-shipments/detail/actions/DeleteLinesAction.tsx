@@ -56,7 +56,7 @@ export const DeleteLinesAction: Component<DeleteLinesActionProps> = props => {
           onClose={() => setConfirmOpen(false)}
           title={t('heading.are-you-sure')}
           message={tPlural(
-            'messages.confirm-delete-invoice-lines',
+            'messages.confirm-delete-shipment-lines',
             props.selectedLines().length
           )}
           confirmVariant="danger"

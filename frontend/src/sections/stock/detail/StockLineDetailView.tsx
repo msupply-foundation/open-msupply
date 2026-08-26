@@ -11,6 +11,7 @@ import {
 import { createStore } from 'solid-js/store';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
 import { formatNumber } from '../../../intl/formatNumber';
 import { Page } from '../../../ui/layout/Page/Page';
@@ -204,9 +205,7 @@ const StockLineDetailView: Component = () => {
   // below still gives LocationVolumeSelect its spinner.
   const locations = () =>
     locationsForItem(
-      allLocations.state === 'ready' || allLocations.state === 'refreshing'
-        ? (allLocations.latest ?? [])
-        : [],
+      gated(allLocations) ?? [],
       line()?.item.restrictedLocationTypeId
     );
 

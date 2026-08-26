@@ -19,6 +19,7 @@ import { authUser, checkAuth, startActivityTracking } from './auth/authContext';
 import { InitialisationPage } from './initialisation/InitialisationPage';
 import { resolveStorePath, StoreGuardLayout } from './store/StoreGuardLayout';
 import { navDestinations } from './nav/navConfig';
+import { routerBase } from './nav/storeRelativePath';
 import { DashboardPage, dashboardRoutes } from './sections/dashboard';
 import { stocktakesRoutes } from './sections/stocktakes';
 import { stockMovementsRoutes } from './sections/stock-movements';
@@ -31,16 +32,19 @@ import { outboundShipmentsRoutes } from './sections/outbound-shipments';
 import { inboundShipmentsRoutes } from './sections/inbound-shipments';
 import { internalOrdersRoutes } from './sections/internal-orders';
 import { requisitionsRoutes } from './sections/requisitions';
+import { rnrFormsRoutes } from './sections/rnr-forms';
 import { itemsRoutes } from './sections/items';
 import { patientsRoutes } from './sections/patients';
 import { cliniciansRoutes } from './sections/clinicians';
 import { prescriptionsRoutes } from './sections/prescriptions';
 import { masterListsRoutes } from './sections/master-lists';
+import { campaignsRoutes } from './sections/campaigns';
 import { reportsRoutes } from './sections/reports';
 import { settingsRoutes } from './sections/settings';
 import { sitesRoutes } from './sections/sites';
 import { helpRoutes, helpDocumentsRoutes } from './sections/help';
 import { globalPreferencesRoutes } from './sections/global-preferences';
+import { customFieldsRoutes } from './sections/custom-fields';
 import { ShellLayout } from './nav/ShellLayout';
 import { EntryPage } from './nav/EntryPage';
 import { LoginPage } from './auth/LoginPage';
@@ -81,6 +85,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'distribution/outbound-shipment': outboundShipmentsRoutes,
   'distribution/customer-requisition': requisitionsRoutes,
   'replenishment/internal-order': internalOrdersRoutes,
+  'replenishment/r-and-r-forms': rnrFormsRoutes,
   'replenishment/inbound-shipment': inboundShipmentsRoutes,
   'catalogue/items': itemsRoutes,
   'catalogue/master-lists': masterListsRoutes,
@@ -92,7 +97,9 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'manage/sites': sitesRoutes,
   'manage/global-preferences': globalPreferencesRoutes,
   help: helpRoutes,
+  'manage/campaigns': campaignsRoutes,
   'manage/help-documents': helpDocumentsRoutes,
+  'manage/custom-fields': customFieldsRoutes,
 };
 
 export const App: Component = () => {
@@ -208,16 +215,13 @@ export const App: Component = () => {
                 waited for — it is a render-time input to each contribution's
                 visibility gate. */}
             <PluginGate>
-              {/* base matches Vite's `base` config so the same build can be
-                mounted at a non-root path (e.g. the demo server's /spec
-                track). import.meta.env.BASE_URL always ends in "/" (Vite's
-                convention); solid-router's own root-route resolution
-                doesn't strip that before concatenating an absolute `to`
-                (e.g. navigate(`/${id}`) in StoreGuardLayout), producing a
-                double slash — "/spec//id" — that fails to match any route
-                and drops the base entirely. Trimmed here, once, at the
-                source. */}
-              <Router base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+              {/* `routerBase` matches Vite's `base` config so the same build
+                can be mounted at a non-root path — the deployed /rc/ track,
+                and every branch deploy, which build-and-deploy.sh mounts at
+                its own BASE_PATH ('/pr-123/'). It is shared with
+                storeRelativePath, which has to take the same prefix back OFF
+                the location — the router never does that itself (#1141). */}
+              <Router base={routerBase}>
                 {/* Store guard wraps the routed app shell; the shell mounts once and
                   pages swap inside it. One route per nav destination renders its
                   (empty) entry page until a real section is registered above. */}

@@ -6,6 +6,7 @@ import {
   type Component,
 } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { t } from '../../../intl';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
@@ -63,13 +64,8 @@ export const ItemAncillaryPanel: Component<{
 
   // Read WITHOUT suspending: this panel mounts when its TAB is opened, so its
   // FIRST read is pending under the already-open detail screen's <Suspense> —
-  // a suspending read there tears down and remounts the whole screen. `.latest`
-  // alone is not enough (it suspends on the first pending read), so gate on
-  // `.state` (kdd/solid-reactivity-pitfalls § no remounts on interaction).
-  const rows = (): AncillaryRow[] =>
-    data.state === 'ready' || data.state === 'refreshing'
-      ? (data.latest ?? [])
-      : [];
+  // a suspending read there tears down and remounts the whole screen.
+  const rows = (): AncillaryRow[] => gated(data) ?? [];
 
   const onSaved = () => {
     props.onEditorChange(undefined);

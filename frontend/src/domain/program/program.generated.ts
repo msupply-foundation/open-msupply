@@ -81,6 +81,7 @@ export type SchedulesWithPeriodsResult = {
   name: string;
   periods: Array<{
   id: string;
+  inUse: boolean;
   period: {
   id: string;
   name: string;
@@ -93,5 +94,5 @@ export type SchedulesWithPeriodsResult = {
 };
 
 export const SchedulesWithPeriods = {
-  query: "query schedulesWithPeriods($storeId: String!, $programId: String!) {\n  schedulesWithPeriodsByProgram(storeId: $storeId, programId: $programId) {\n    ... on PeriodSchedulesConnector {\n      __typename\n      nodes {\n        id\n        name\n        periods {\n          id\n          period {\n            id\n            name\n            startDate\n            endDate\n          }\n        }\n      }\n    }\n  }\n}",
+  query: "query schedulesWithPeriods($storeId: String!, $programId: String!) {\n  schedulesWithPeriodsByProgram(storeId: $storeId, programId: $programId) {\n    ... on PeriodSchedulesConnector {\n      __typename\n      nodes {\n        id\n        name\n        periods {\n          id\n          inUse\n          period {\n            id\n            name\n            startDate\n            endDate\n          }\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<SchedulesWithPeriodsResult, SchedulesWithPeriodsVariables>;

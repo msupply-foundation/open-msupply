@@ -20,7 +20,7 @@ public class MainActivity extends BridgeActivity {
         // system (kdd/plugin-loading). This list is also the custom half of
         // the future client-mode injection list (kdd/capacitor-plugins
         // Fork 5) — keep it complete.
-        registerPlugin(SaveFilePlugin.class);
+        registerPlugin(FileTransferPlugin.class);
         registerPlugin(PrintPlugin.class);
         registerPlugin(ReadLogPlugin.class);
 

@@ -60,6 +60,9 @@ export const OutboundDetailToolbar: Component<
         <NameSearch
           label={t('label.customer-name')}
           size="small"
+          // Shared with the current app's CustomerSearchInput so the cross-FE
+          // outbound e2e suite locates the detail customer field on both FEs.
+          inputTestId="customer-search-input"
           storeId={props.storeId}
           role="customer"
           // Seed the record's current customer so the selection's label

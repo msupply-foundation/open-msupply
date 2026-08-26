@@ -2,6 +2,7 @@ import { createMemo, createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch, reportPermissionDenied } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { hasPermission } from '../../../store/storeContext';
 import { t } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
@@ -20,7 +21,10 @@ import {
   type Column,
   type SortState,
 } from '../../../ui/elements/table/DataTable';
-import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
+import {
+  CommentHeader,
+  getCellDefinition,
+} from '../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../ui/utils/rem';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { StatusChip } from '../../../ui/elements/feedback/StatusChip';
@@ -37,6 +41,7 @@ import {
   initialPageSize,
   rememberPageSize,
 } from '../../../list/pageSize';
+import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
 import { stripEmpty } from '../../../typeHelpers';
 import {
   CustomerReturns,
@@ -181,6 +186,15 @@ const CustomerReturnsList: Component = () => {
   const rows = () => data.latest?.nodes ?? [];
   const totalCount = () => data.latest?.totalCount ?? 0;
 
+  // A bulk delete of the last page's rows leaves the offset past the new end
+  // (src/list/clampPageOffset.ts, issue #1117).
+  clampPageOffset({
+    total: () => settledTotal(data, page => page.totalCount),
+    offset: () => query().offset,
+    pageSize: () => query().first,
+    setOffset: offset => setQuery({ ...query(), offset }),
+  });
+
   // The store preferences this list keys off (OMS-REG-DIST-07.18): fetched
   // once per store. `.latest` + undefined-tolerant read — while unresolved,
   // treat manual returns as ENABLED (the common case; flashing the notice would
@@ -195,14 +209,11 @@ const CustomerReturnsList: Component = () => {
   );
   // NON-suspending read (kdd/solid-reactivity-pitfalls § no remounts on
   // interaction): the status chip reads the options lazily as it renders, so a
-  // still-pending preference must never suspend this screen's boundary —
-  // `.latest` alone would, on its first pending read, tearing down the open
-  // chip. Unresolved = no restriction (and manual returns ENABLED — the common
-  // case; flashing the notice would be the wrong direction).
-  const loadedPrefs = () =>
-    prefs.state === 'ready' || prefs.state === 'refreshing'
-      ? prefs.latest
-      : undefined;
+  // still-pending preference must never suspend this screen's boundary and
+  // tear down the open chip. Unresolved = no restriction (and manual returns
+  // ENABLED — the common case; flashing the notice would be the wrong
+  // direction).
+  const loadedPrefs = () => gated(prefs);
   const manualReturnsDisabled = () =>
     loadedPrefs()?.disableManualReturns ?? false;
 
@@ -355,7 +366,7 @@ const CustomerReturnsList: Component = () => {
     },
     {
       c: { key: 'comment' },
-      header: () => t('label.comment'),
+      header: () => <CommentHeader />,
       // Shared comment cell — indicator + popover (ui-surface S1 col 5); the
       // column is not sortable (only Name / Status / Number / Created are).
       ...getCellDefinition('comment'),

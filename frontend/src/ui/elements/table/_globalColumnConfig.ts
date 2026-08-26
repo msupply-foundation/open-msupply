@@ -71,7 +71,13 @@ export const KIND_WIDTH: Record<CellKind, { size: number; maxSize?: number }> =
     // A clock ("3:45 pm") is shorter than a date, and right-aligned.
     time: { size: 6 },
     expiry: { size: 8.125 },
-    comment: { size: 5, maxSize: 8 }, // fixed — an icon, never grows
+    // Fixed — an icon in the cells AND an icon in the header (CommentHeader),
+    // so nothing here is text-sized. The floor is the CELL's: the 1.5rem
+    // trigger (16px glyph + its 4px inline padding) inside the body cell's 2rem
+    // of inline padding = 3.5rem. The header needs less (2rem — a bare glyph
+    // between two --th-pad-free gutters), so the cell governs. Was 5/8, sized
+    // for the word "Comment" back when the header spelled it out.
+    comment: { size: 3.5, maxSize: 5 },
     chipList: { size: 12 },
     // A fullness bar + its figure: the bar needs room to read as a proportion
     // (its track flexes into whatever is left after the figure), so this is a
@@ -121,6 +127,8 @@ export const CELL_DEF = {
   initials: { kind: 'shortText' },
   user: { kind: 'shortText' }, // acting user's username (log / ledger tables)
   reason: { kind: 'shortText' }, // a line's variance reason (requisitions)
+  donor: { kind: 'shortText' },
+  campaign: { kind: 'shortText' }, // a campaign OR program name
   approvalComment: { kind: 'shortText' },
   firstName: { kind: 'shortText' },
   lastName: { kind: 'shortText' },
@@ -129,9 +137,12 @@ export const CELL_DEF = {
   phone: { kind: 'shortText' },
   mobile: { kind: 'shortText' },
   unit: { kind: 'shortText' },
-  // 3rem fits the header "Unit" — with no floor beyond that, an all-empty
-  // column collapses under the label and clips it to "U n..".
-  unitName: { kind: 'shortText', size: 3 },
+  // The header "Unit" is the floor here (an all-empty column would otherwise
+  // collapse under its own label and clip it to "U n.."). MEASURED: the word is
+  // 25px at the header's 13px/500, and a th spends 1.5rem of its width on
+  // padding, so 3rem left 24px of text box and broke the label mid-word by
+  // 1px — 3.5rem clears it with room for a longer translation.
+  unitName: { kind: 'shortText', size: 3.5 },
   // A VVM status description ("Stage 1") — short text until the Status chip
   // preset exists (see docs/CELL_TYPES.md § Status).
   vvmStatus: { kind: 'shortText' },
@@ -140,15 +151,40 @@ export const CELL_DEF = {
   itemCode: { kind: 'code' },
   code2: { kind: 'code' },
   batch: { kind: 'code' },
-  location: { kind: 'code', size: 6.5 }, // header "Location"
+  // Header "Location"; the value is a location CODE. NO cap, for the reason
+  // `locationCode` below gives (#601): the kind's 7rem cap sits half a rem
+  // above this default, so the column was effectively undraggable — nobody
+  // could widen it to read a long code, or to put a longer translated header
+  // on one line.
+  location: { kind: 'code', size: 6.5, maxSize: null },
   // Header "Location code" is the binding constraint here, not the value — it
   // needs more room than a bare "Location", and the kind's 7rem growth cap
   // would stop a user widening it to fit on one line (#601). Own size, NO cap.
   locationCode: { kind: 'code', size: 8.5, maxSize: null }, // measured: 127px
   // Number — size widened where the header label is the binding constraint.
   packSize: { kind: 'number', size: 5 }, // "Pack size"
-  numberOfPacks: { kind: 'number', size: 4.5 }, // "Pack quantity"
+  // Headed "Received pack size" — three words where `packSize` has two, and the
+  // extra word is what costs the room: at packSize's 5rem the label lays out
+  // "Received" / "pack size" and the second line overruns its text box, so the
+  // 2-line clamp ellipsises the tail away ("Received pack…"). Nothing breaks
+  // mid-word — `.thText`'s `break-word` holds min-content at the longest word,
+  // so auto-layout floors the column at "Received" and the loss is the trailing
+  // word, not a chopped one. 7rem leaves both lines whole with the 1rem
+  // sort-arrow slot the inbound line table's sortable copy reserves. Its own
+  // key rather than a call-site override, so the two inbound tables that share
+  // this header cannot drift apart again (#1165).
+  receivedPackSize: { kind: 'number', size: 7 },
+  // Headed "Pack quantity" / "Packs received" / "Number of packs" depending on
+  // the table — every one of them a two-word label whose longest word ("packs",
+  // "quantity", "received", "Number") measures ~50-54px, over the 48px of text
+  // box 4.5rem left. At 4.5rem all three broke mid-word AND clipped past the
+  // 2-line clamp; 5rem fits each on two lines whole.
+  numberOfPacks: { kind: 'number', size: 5 },
   countedNumberOfPacks: { kind: 'number', size: 8 },
+  // Same 8 as its counted twin, and for the same reason: the figure is narrow
+  // but "Packs snapshot" is not, and a stocktake reads the two side by side, so
+  // a mismatched pair would read as a mistake.
+  snapshotNumberOfPacks: { kind: 'number', size: 8 },
   receivedNumberOfPacks: { kind: 'number', size: 8 },
   availablePacks: { kind: 'number', size: 7 },
   volumePerPack: { kind: 'number', size: 7 },
@@ -166,13 +202,23 @@ export const CELL_DEF = {
   // Sizes account for the header label where it outgrows the number default
   // (headers wrap to two lines, so the widest WORD is the constraint).
   dps: { kind: 'number' }, // "DPS"
-  available: { kind: 'number', size: 6 }, // "Available stock" / "Available"
-  amc: { kind: 'number' }, // "AMC" / "Area AMC"
+  available: { kind: 'number', size: 6.5 }, // "Available stock" / "Available"
+  // "AMC", but "Area AMC" under the area-statistics gate — and the same column,
+  // so the wider header sets the width. The kind default (4.5) left 32px of
+  // text box against a 31px "Area": 5rem gives the wrapped label room.
+  amc: { kind: 'number', size: 5 },
   mos: { kind: 'number' }, // "MOS"
-  targetStock: { kind: 'number', size: 7 }, // "Target" / "stock (AMC)" + sort
+  // "Target stock (AMC)" — three tokens, and at 7rem the sortable header's 72px
+  // of text box laid them out over THREE lines, so the 2-line clamp ate
+  // "(AMC)". 7.5rem wraps it "Target stock / (AMC)".
+  targetStock: { kind: 'number', size: 7.5 },
   targetStockPopulation: { kind: 'number', size: 7.5 }, // "…(population)"
   suggested: { kind: 'number', size: 7 }, // "Suggested" / "quantity" + sort
-  requested: { kind: 'number', size: 6.5 }, // "Requested" + sort — one word
+  // "Requested" + sort — ONE word, so it either fits or breaks; 6.5rem left it
+  // 64px of text box against a 66px word and broke it ("Requeste/d", the same
+  // failure RECORD_NUMBER_WIDTH above records for "Number"). 7rem clears it,
+  // and matches `suggested` — the column beside it, and its comparison.
+  requested: { kind: 'number', size: 7 },
   initialSoh: { kind: 'number', size: 5 }, // "Initial SOH"
   incoming: { kind: 'number', size: 5.5 }, // "Incoming"
   outgoing: { kind: 'number', size: 5.5 }, // "Outgoing"
@@ -216,6 +262,8 @@ export const CELL_DEF = {
   date: { kind: 'date' },
   startDatetime: { kind: 'date' },
   enrolmentDatetime: { kind: 'date' },
+  startDate: { kind: 'date' },
+  endDate: { kind: 'date' },
   // Time of day — the sibling of a Date column over the same instant.
   time: { kind: 'time' },
   // Expiry (date + near-expiry error tone).
