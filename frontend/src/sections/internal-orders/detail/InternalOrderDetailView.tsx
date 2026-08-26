@@ -86,6 +86,7 @@ import {
   addInternalOrderFromMasterList,
 } from './internalOrderUpdate';
 import { isOrderEditable } from './internalOrderDetailStatus';
+import { reportSeedArgs } from './reportSeedArgs';
 import {
   InternalOrderToolbar,
   type HeaderEditFields,
@@ -316,22 +317,9 @@ const InternalOrderDetailView: Component = () => {
       customerNameId: nameId,
     });
   };
-  // Report generation seeds for an indicator program order (AC-PR4): the same
-  // program / period / customer identity the Indicators tab reads, handed to
-  // the Export/Print selector so indicator report templates can locate the
-  // program data behind the order. Undefined on any other order (and until the
-  // store's own name id resolves) — then only the standard seeds are sent.
-  const reportSeedArgs = () => {
-    const node = info();
-    const nameId = ownName.latest;
-    if (!showIndicators() || !node?.program || !node.period || !nameId)
-      return undefined;
-    return {
-      programId: node.program.id,
-      periodId: node.period.id,
-      customerNameId: nameId,
-    };
-  };
+  // The Export/Print seeds (AC-PR4) — see reportSeedArgs.ts for why they are
+  // not gated on showIndicators().
+  const seedArgs = () => reportSeedArgs(info(), ownName.latest);
 
   const [indicators, { mutate: mutateIndicators }] = createResource(
     indicatorVariables,
@@ -1093,7 +1081,7 @@ const InternalOrderDetailView: Component = () => {
                     {/* Export/Print — a read, offered on every status (AC-PR1). */}
                     <ExportPrintInternalOrderAction
                       orderId={node().id}
-                      seedArgs={reportSeedArgs()}
+                      seedArgs={seedArgs()}
                     />
                     {/* More — reopens the side panel; shown only while closed. */}
                     <Show when={!sidePanelOpen()}>

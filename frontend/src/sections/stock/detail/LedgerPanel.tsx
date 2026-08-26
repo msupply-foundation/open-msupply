@@ -131,15 +131,19 @@ export const LedgerPanel: Component<{
 
   return (
     <Suspense fallback={<Spinner center />}>
-      <DataTable
-        columns={columns()}
-        rows={rows()}
-        rowKey={l => l.id}
-        loading={data.loading}
-        sort={currentSort()}
-        onSort={onSort}
-        emptyMessage={t('messages.no-ledger-entries')}
-      />
+      {/* ledger-table scopes the suite's row assertions to this tab's table
+          (e2e/TESTIDS.md › Stock); the current app stamps the same id. */}
+      <div data-testid="ledger-table">
+        <DataTable
+          columns={columns()}
+          rows={rows()}
+          rowKey={l => l.id}
+          loading={data.loading}
+          sort={currentSort()}
+          onSort={onSort}
+          emptyMessage={t('messages.no-ledger-entries')}
+        />
+      </div>
     </Suspense>
   );
 };

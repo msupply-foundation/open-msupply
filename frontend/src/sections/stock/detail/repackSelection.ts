@@ -1,8 +1,8 @@
 // Which repack the repack modal (spec/stock S5) is showing, and what that
 // means for the surfaces around it — the tinted history row, the panel below
-// the table, and the Export/Print gate (AC-R8). Pure, so the decision is
-// testable in node without a DOM: the modal itself renders a <dialog> and a
-// table, which the unit harness cannot mount.
+// the table, and the Export/Print gate (OMS-REG-SMV-08 `.24`–`.26`). Pure, so
+// the decision is testable in node without a DOM: the modal itself renders a
+// <dialog> and a table, which the unit harness cannot mount.
 
 // The panel below the history table wears one face at a time:
 //

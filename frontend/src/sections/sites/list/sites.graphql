@@ -95,30 +95,6 @@ query storesBySite($siteId: Int!) {
   }
 }
 
-# The store picker: EVERY store on the server, searched by code-or-name, minus
-# the ones already in the editor's draft. It deliberately does NOT exclude
-# stores belonging to another site — picking one MOVES it (rules.md § store
-# assignment).
-query storeSearch(
-  $search: String
-  $excludeIds: [String!]
-  $first: Int
-  $offset: Int
-) {
-  stores(
-    page: { first: $first, offset: $offset }
-    filter: { codeOrName: { like: $search }, id: { notEqualAll: $excludeIds } }
-    sort: [{ key: name }]
-  ) {
-    ... on StoreConnector {
-      __typename
-      totalCount
-      nodes {
-        ...SiteStoreRow
-      }
-    }
-  }
-}
 
 # Create AND update in one operation: `input.id` is required on both, there is
 # no insert operation and no server-side id allocation, and the write is an

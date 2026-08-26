@@ -30,6 +30,8 @@ export interface LocationVolumeSelectProps {
   disabled?: boolean;
   error?: string;
   placeholder?: string;
+  /** `data-testid` for the text input (locale-stable test hook, e2e/TESTIDS.md). */
+  inputTestId?: string;
   /**
    * Control size, forwarded to the Combobox — `small` matches the compact
    * inputs a dense row (a line editor's batch card) puts beside it. Without
@@ -153,6 +155,7 @@ export const LocationVolumeSelect = (
       disabled={props.disabled}
       error={props.error}
       placeholder={props.placeholder}
+      inputTestId={props.inputTestId}
       focusTarget={props.focusTarget}
       onChange={l => props.onChange(l)}
       itemDisabled={
