@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { repackPanelState } from './repackSelection';
 
-// The repack modal's selection state (spec/stock AC-R8, issue #794): which
+// The repack modal's selection state (spec/stock OMS-REG-SMV-08.24-.26,
+// issue #794): which
 // repack is current, and therefore which row is marked, what the panel shows,
 // and what Export/Print acts on. The modal itself renders a <dialog> and a
 // table, which this harness has no DOM to mount — the decision is tested here,

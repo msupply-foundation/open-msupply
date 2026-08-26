@@ -4,6 +4,7 @@ import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
 import { formatNumber } from '../../../intl/formatNumber';
+import { doseEquivalent } from '../stockCalc';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
@@ -157,16 +158,22 @@ const StockList: Component = () => {
     navigate(`/${params.storeId}/inventory/stock/${id}`);
 
   // A units figure with the dose equivalent appended as a suffix for vaccine
-  // rows when manageVaccinesInDoses is on (spec/stock AC-P2) — mirrors the
-  // items list's dose display (no bespoke styling).
+  // rows when manageVaccinesInDoses is on (spec/stock OMS-REG-INV-02.54) —
+  // mirrors the items list's dose display (no bespoke styling).
   const unitsText = (
     units: number,
     isVaccine: boolean,
     doses: number
-  ): string =>
-    prefs().manageVaccinesInDoses && isVaccine
-      ? `${formatNumber(units)} (${formatNumber(units * doses)} ${t('label.doses-short')})`
-      : formatNumber(units);
+  ): string => {
+    const asDoses = doseEquivalent(units, {
+      showDoses: prefs().manageVaccinesInDoses,
+      isVaccine,
+      doses,
+    });
+    return asDoses === undefined
+      ? formatNumber(units)
+      : `${formatNumber(units)} (${formatNumber(asDoses)} ${t('label.doses-short')})`;
+  };
 
   // Every column is shown by default; the user hides / reorders / pins them
   // from the Columns control (spec/stock S1). No default columnVisibility

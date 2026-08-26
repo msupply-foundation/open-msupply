@@ -7,7 +7,8 @@ import { StockLines, type StockLinesVariables } from '../stock.generated';
 import type { StockFilter } from '../listFilters';
 import { stockToCsv } from '../stockToCsv';
 
-// The stock list Export action (spec/stock AC-L6): the shared CSV/Excel split
+// The stock list Export action (spec/stock OMS-REG-INV-02.8): the shared
+// CSV/Excel split
 // button, fed this vertical's query. Exports EVERY stock line matching the
 // current filter (all pages, packs-on-hand only) — not just the visible page,
 // and the flat line list regardless of the grouped toggle. Delivery, the busy
