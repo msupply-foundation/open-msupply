@@ -1,0 +1,118 @@
+use crate::types::PluginDataConnector;
+use async_graphql::*;
+use graphql_core::{
+    generic_filters::{DatetimeFilterInput, EqualFilterStringInput},
+    pagination::PaginationInput,
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
+};
+use repository::{
+    DatetimeFilter, EqualFilter, PaginationOption, PluginDataFilter, PluginDataSort,
+    PluginDataSortField,
+};
+use service::auth::{Resource, ResourceAccessRequest};
+
+#[derive(Union)]
+pub enum PluginDataResponse {
+    Response(PluginDataConnector),
+}
+
+#[derive(InputObject, Clone)]
+pub struct PluginDataFilterInput {
+    pub id: Option<EqualFilterStringInput>,
+    pub store_id: Option<EqualFilterStringInput>,
+    pub related_record_id: Option<EqualFilterStringInput>,
+    pub data_identifier: Option<EqualFilterStringInput>,
+    pub datetime: Option<DatetimeFilterInput>,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(rename_items = "camelCase")]
+pub enum PluginDataSortFieldInput {
+    Id,
+    PluginCode,
+    Datetime,
+}
+
+#[derive(InputObject)]
+pub struct PluginDataSortInput {
+    /// Sort query result by `key`
+    key: PluginDataSortFieldInput,
+    /// Sort query result is sorted descending or ascending (if not provided the default is
+    /// ascending)
+    desc: Option<bool>,
+}
+
+pub fn get_plugin_data(
+    ctx: &Context<'_>,
+    store_id: &str,
+    plugin_code: &str,
+    page: Option<PaginationInput>,
+    filter: Option<PluginDataFilterInput>,
+    sort: Option<Vec<PluginDataSortInput>>,
+) -> Result<PluginDataResponse> {
+    validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::ReadPluginData,
+            store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
+        },
+    )?;
+
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.basic_context()?;
+
+    // Filter by plugin_code
+    let mut filter = filter.map(|f| f.to_domain()).unwrap_or_default();
+    filter.plugin_code = Some(EqualFilter::equal_to(plugin_code.to_owned()));
+
+    // Scope to this store's own rows + global (NULL) rows; forced server-side so
+    // a caller can't read another store's data.
+    filter.store_id = Some(EqualFilter::equal_any_or_null(vec![store_id.to_string()]));
+
+    let plugin_data = service_provider
+        .plugin_data_service
+        .get_plugin_data(
+            &service_context,
+            page.map(PaginationOption::from),
+            Some(filter),
+            sort.and_then(|mut sort_list| sort_list.pop())
+                .map(|s| s.to_domain()),
+        )
+        .map_err(StandardGraphqlError::from_repository_error)?;
+
+    Ok(PluginDataResponse::Response(
+        PluginDataConnector::from_domain(plugin_data),
+    ))
+}
+
+impl PluginDataFilterInput {
+    pub fn to_domain(self) -> PluginDataFilter {
+        PluginDataFilter {
+            id: self.id.map(EqualFilter::from),
+            store_id: self.store_id.map(EqualFilter::from),
+            plugin_code: None, // This is passed in the main graphql request as a dedicated parameter
+            related_record_id: self.related_record_id.map(EqualFilter::from),
+            data_identifier: self.data_identifier.map(EqualFilter::from),
+            datetime: self.datetime.map(DatetimeFilter::from),
+        }
+    }
+}
+
+impl PluginDataSortInput {
+    pub fn to_domain(self) -> PluginDataSort {
+        use PluginDataSortField as to;
+        use PluginDataSortFieldInput as from;
+        let key = match self.key {
+            from::Id => to::Id,
+            from::PluginCode => to::PluginCode,
+            from::Datetime => to::Datetime,
+        };
+
+        PluginDataSort {
+            key,
+            desc: self.desc,
+        }
+    }
+}

@@ -1,0 +1,11 @@
+table,
+th,
+td {
+  border: 1px dotted #fc9208;
+  border-collapse: collapse;
+}
+
+body {
+  margin: 10px 5% 10px 5%;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}

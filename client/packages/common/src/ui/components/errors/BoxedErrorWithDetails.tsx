@@ -1,0 +1,109 @@
+import React, { useState } from 'react';
+import {
+  Box,
+  AlertIcon,
+  Typography,
+  useTranslation,
+  useIntlUtils,
+  ChevronDownIcon,
+} from '@openmsupply-client/common';
+
+export type BoxedErrorWithDetailsProps = {
+  error: string;
+  details: string;
+  hint?: string;
+  width?: string | number;
+};
+
+export const BoxedErrorWithDetails = ({
+  error,
+  details,
+  hint,
+  width = 300,
+}: BoxedErrorWithDetailsProps) => {
+  const t = useTranslation();
+  const { isRtl } = useIntlUtils();
+  const [expand, setExpand] = useState(false);
+  const hasMoreInformation = !!(details || hint);
+  const chevronCommonStyles = {
+    width: '0.6em',
+    marginTop: '0.1em',
+    height: '0.6em',
+  };
+
+  return (
+    <Box
+      display="flex"
+      sx={{ backgroundColor: 'error.background', borderRadius: 2 }}
+      gap={1}
+      padding={1}
+      width={width}
+    >
+      <Box display="flex" flexDirection="column">
+        <Box display="flex" flexDirection="row">
+          <Box color="error.main">
+            <AlertIcon />
+          </Box>
+          <Box
+            sx={{
+              '& > div': { display: 'inline-block' },
+              alignContent: 'center',
+              paddingLeft: 1,
+            }}
+          >
+            <Typography
+              sx={{ color: 'inherit' }}
+              variant="body2"
+              component="span"
+            >
+              {error}
+            </Typography>
+          </Box>
+        </Box>
+        {hasMoreInformation && (
+          <Box display="flex" flexDirection="column" sx={{ paddingLeft: 4 }}>
+            <Typography
+              variant="body2"
+              alignItems="center"
+              display="flex"
+              sx={{
+                cursor: 'pointer',
+                fontSize: 12,
+                color: 'secondary.main',
+              }}
+              onClick={() => setExpand(!expand)}
+            >
+              {t('error.more-info')}
+              {expand ? (
+                <ChevronDownIcon
+                  sx={{
+                    ...chevronCommonStyles,
+                  }}
+                />
+              ) : (
+                <ChevronDownIcon
+                  sx={{
+                    transform: isRtl ? 'rotate(90deg)' : 'rotate(-90deg)',
+                    ...chevronCommonStyles,
+                  }}
+                />
+              )}
+            </Typography>
+            {expand && (
+              <Box>
+                <Typography
+                  sx={{ textWrap: 'wrap', overflowWrap: 'break-word' }}
+                  variant="body2"
+                >
+                  {!!hint && hint}
+                  {!!hint && !!details && <br />}
+                  {!!details && details}
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        )}
+      </Box>
+    </Box>
+  );
+};

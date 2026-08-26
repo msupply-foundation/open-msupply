@@ -1,0 +1,46 @@
+import { UpdateSensorInput } from '@common/types';
+import { setNullableInput, useMutation } from '@openmsupply-client/common';
+import { SENSOR } from './keys';
+import { TEMPERATURE_NOTIFICATION } from '../../../Monitoring/api/TemperatureNotification';
+import { useSensorGraphQL } from '../useSensorGraphQL';
+import { SensorFragment } from '../operations.generated';
+
+export const useSensorUpdate = () => {
+  const { sensorApi, storeId, queryClient } = useSensorGraphQL();
+
+  const mutationFn = async (sensor: SensorFragment) => {
+    const input: UpdateSensorInput = {
+      id: sensor.id,
+      isActive: sensor.isActive,
+      name: sensor.name,
+      locationId: setNullableInput('id', sensor.location),
+    };
+
+    const result = await sensorApi.updateSensor({
+      input,
+      storeId,
+    });
+
+    return result?.updateSensor;
+  };
+
+  const invalidateQueries = () => queryClient.invalidateQueries({
+    queryKey: [SENSOR]
+  });
+
+  const mutation = useMutation({
+    mutationFn,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: [SENSOR] });
+      queryClient.invalidateQueries({ queryKey: [TEMPERATURE_NOTIFICATION] });
+    },
+    onError: e => {
+      console.error(e);
+    },
+  });
+
+  return {
+    ...mutation,
+    invalidateQueries,
+  };
+};

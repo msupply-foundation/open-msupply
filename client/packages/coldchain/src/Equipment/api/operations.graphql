@@ -1,0 +1,287 @@
+fragment AssetRow on AssetNode {
+  __typename
+  assetNumber
+  id
+  notes
+  serialNumber
+  modifiedDatetime
+  installationDate
+  createdDatetime
+  replacementDate
+
+  warrantyStart
+  warrantyEnd
+  needsReplacement
+
+  statusLog {
+    logDatetime
+    reason {
+      reason
+    }
+    status
+  }
+  storeId
+  store {
+    id
+    code
+    storeName
+  }
+  catalogueItem {
+    manufacturer
+    model
+    code
+  }
+  assetCategory {
+    name
+  }
+  assetType {
+    name
+  }
+  properties
+  catalogProperties
+  lockedFields {
+    serialNumber
+    warrantyEnd
+    warrantyStart
+  }
+}
+
+fragment Asset on AssetNode {
+  __typename
+  catalogueItemId
+  assetNumber
+  createdDatetime
+  id
+  installationDate
+  documents {
+    nodes {
+      fileName
+      id
+      mimeType
+      createdDatetime
+      totalBytes
+    }
+  }
+  locations {
+    nodes {
+      id
+      code
+      name
+      onHold
+      locationType {
+        id
+        name
+        maxTemperature
+        minTemperature
+      }
+    }
+    totalCount
+  }
+  properties
+  catalogProperties
+  modifiedDatetime
+  notes
+  replacementDate
+  serialNumber
+  statusLog {
+    logDatetime
+    reason {
+      reason
+    }
+    status
+  }
+  storeId
+  store {
+    id
+    code
+    storeName
+  }
+  catalogueItem {
+    manufacturer
+    model
+  }
+  assetType {
+    id
+    name
+  }
+  assetClass {
+    id
+    name
+  }
+  assetCategory {
+    id
+    name
+  }
+  donorNameId
+  donor(storeId: $storeId) {
+    id
+    name
+  }
+  warrantyStart
+  warrantyEnd
+  needsReplacement
+  lockedFields {
+    serialNumber
+    warrantyEnd
+    warrantyStart
+  }
+}
+
+fragment ColdchainAssetLog on AssetLogNode {
+  comment
+  createdDatetime
+  id
+  logDatetime
+  reason {
+    reason
+  }
+  status
+  type
+  user {
+    firstName
+    lastName
+    username
+    jobTitle
+  }
+  documents {
+    nodes {
+      fileName
+      id
+      mimeType
+      createdDatetime
+      totalBytes
+    }
+  }
+}
+
+query assets(
+  $desc: Boolean
+  $filter: AssetFilterInput!
+  $first: Int
+  $key: AssetSortFieldInput!
+  $offset: Int
+  $storeId: String!
+) {
+  assets(
+    filter: $filter
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    storeId: $storeId
+  ) {
+    ... on AssetConnector {
+      nodes {
+        ...AssetRow
+      }
+      totalCount
+    }
+  }
+}
+
+query assetById($storeId: String!, $assetId: String!) {
+  assets(storeId: $storeId, filter: { id: { equalTo: $assetId } }) {
+    ... on AssetConnector {
+      __typename
+      nodes {
+        __typename
+        ...Asset
+      }
+      totalCount
+    }
+  }
+}
+
+query assetFromGs1Data($storeId: String!, $data: [Gs1DataElement!]!) {
+  assetFromGs1Data(storeId: $storeId, gs1: $data) {
+    ... on AssetNode {
+      ...Asset
+    }
+  }
+}
+
+query assetLogs(
+  $filter: AssetLogFilterInput!
+  $sort: [AssetLogSortInput!]
+  $storeId: String!
+) {
+  assetLogs(filter: $filter, sort: $sort, storeId: $storeId) {
+    ... on AssetLogConnector {
+      __typename
+      totalCount
+      nodes {
+        __typename
+        ...ColdchainAssetLog
+      }
+    }
+  }
+}
+
+query labelPrinterSettings {
+  labelPrinterSettings {
+    __typename
+    address
+    labelHeight
+    labelWidth
+    port
+  }
+}
+
+mutation deleteAsset($assetId: String!, $storeId: String!) {
+  deleteAsset(assetId: $assetId, storeId: $storeId) {
+    ... on DeleteResponse {
+      __typename
+      id
+    }
+    ... on DeleteAssetError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}
+
+mutation insertAsset($input: InsertAssetInput!, $storeId: String!) {
+  insertAsset(input: $input, storeId: $storeId) {
+    ... on InsertAssetError {
+      __typename
+      error {
+        description
+      }
+    }
+    ... on AssetNode {
+      __typename
+      id
+    }
+  }
+}
+
+mutation updateAsset($input: UpdateAssetInput!, $storeId: String!) {
+  updateAsset(input: $input, storeId: $storeId) {
+    ... on UpdateAssetError {
+      __typename
+      error {
+        description
+      }
+    }
+    ... on AssetNode {
+      __typename
+      id
+    }
+  }
+}
+
+mutation insertAssetLog($input: InsertAssetLogInput!, $storeId: String!) {
+  insertAssetLog(input: $input, storeId: $storeId) {
+    ... on AssetLogNode {
+      __typename
+      id
+      assetId
+    }
+    ... on InsertAssetLogError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}

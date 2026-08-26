@@ -1,0 +1,102 @@
+use crate::{
+    db_diesel::item_row::item, diesel_macros::apply_equal_filter,
+    repository_error::RepositoryError, requisition_row::requisition, DBType, ItemRow,
+    RequisitionRow, StorageConnection,
+};
+
+use diesel::{dsl::IntoBoxed, prelude::*};
+
+use super::{requisition_line_row::requisition_line, RequisitionLineFilter, RequisitionLineRow};
+
+type RequisitionLineJoin = (RequisitionLineRow, ItemRow, RequisitionRow);
+
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct RequisitionLine {
+    pub requisition_line_row: RequisitionLineRow,
+    pub item_row: ItemRow,
+    pub requisition_row: RequisitionRow,
+}
+
+pub struct RequisitionLineRepository<'a> {
+    connection: &'a StorageConnection,
+}
+
+impl<'a> RequisitionLineRepository<'a> {
+    pub fn new(connection: &'a StorageConnection) -> Self {
+        RequisitionLineRepository { connection }
+    }
+
+    pub fn count(&self, filter: Option<RequisitionLineFilter>) -> Result<i64, RepositoryError> {
+        let query = create_filtered_query(filter)?;
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
+    }
+
+    pub fn query_one(
+        &self,
+        filter: RequisitionLineFilter,
+    ) -> Result<Option<RequisitionLine>, RepositoryError> {
+        Ok(self.query_by_filter(filter)?.pop())
+    }
+
+    pub fn query_by_filter(
+        &self,
+        filter: RequisitionLineFilter,
+    ) -> Result<Vec<RequisitionLine>, RepositoryError> {
+        self.query(Some(filter))
+    }
+
+    pub fn query(
+        &self,
+        filter: Option<RequisitionLineFilter>,
+    ) -> Result<Vec<RequisitionLine>, RepositoryError> {
+        let mut query = create_filtered_query(filter)?;
+
+        query = query.order(requisition_line::id.asc());
+
+        let result = query.load::<RequisitionLineJoin>(self.connection.lock().connection())?;
+
+        Ok(result
+            .into_iter()
+            .map(
+                |(requisition_line_row, item_row, requisition_row)| RequisitionLine {
+                    requisition_line_row,
+                    item_row,
+                    requisition_row,
+                },
+            )
+            .collect())
+    }
+}
+
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    requisition_line::table
+        .inner_join(item::table)
+        .inner_join(requisition::table)
+}
+
+type BoxedRequisitionLineQuery = IntoBoxed<'static, query, DBType>;
+
+fn create_filtered_query(
+    filter: Option<RequisitionLineFilter>,
+) -> Result<BoxedRequisitionLineQuery, RepositoryError> {
+    let mut query = query().into_boxed();
+
+    if let Some(f) = filter {
+        apply_equal_filter!(query, f.id, requisition_line::id);
+        apply_equal_filter!(query, f.store_id, requisition::store_id);
+        apply_equal_filter!(query, f.requisition_id, requisition_line::requisition_id);
+        apply_equal_filter!(
+            query,
+            f.requested_quantity,
+            requisition_line::requested_quantity
+        );
+        apply_equal_filter!(query, f.item_id, item::id);
+        apply_equal_filter!(query, f.r#type, requisition::type_);
+        apply_equal_filter!(query, f.status, requisition::status);
+    }
+
+    Ok(query)
+}

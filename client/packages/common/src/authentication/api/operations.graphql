@@ -1,0 +1,186 @@
+fragment UserStoreNode on UserStoreNode {
+  code
+  id
+  nameId
+  name
+  storeMode
+  preferences {
+    id
+    responseRequisitionRequiresAuthorisation
+    requestRequisitionRequiresAuthorisation
+    packToOne
+    omProgramModule
+    vaccineModule
+    issueInForeignCurrency
+    # TODO standardise LookBack vs Lookback (lookback vs look_back)
+    monthlyConsumptionLookBackPeriod
+    monthsLeadTime
+    monthsOverstock
+    monthsUnderstock
+    monthsItemsExpire
+    stocktakeFrequency
+    extraFieldsInRequisition
+    keepRequisitionLinesWithZeroRequestedQuantityOnFinalised
+    manuallyLinkInternalOrderToInboundShipment
+    useConsumptionAndStockFromCustomersForInternalOrders
+    editPrescribedQuantityOnPrescription
+  }
+  createdDate
+  homeCurrencyCode
+  isDisabled
+}
+
+query authToken($username: String!, $password: String!) {
+  authToken(password: $password, username: $username) {
+    ... on AuthTokenError {
+      __typename
+      error {
+        ... on InvalidCredentials {
+          __typename
+          description
+        }
+        ... on NoSiteAccess {
+          __typename
+          description
+        }
+        ... on AccountBlocked {
+          __typename
+          description
+          timeoutRemaining
+        }
+        ... on CentralSyncRequired {
+          __typename
+          description
+        }
+        description
+      }
+    }
+    ... on AuthToken {
+      __typename
+      token
+    }
+  }
+}
+
+query me {
+  me {
+    ... on UserNode {
+      __typename
+      email
+      defaultStore {
+        ...UserStoreNode
+      }
+      language
+      stores {
+        totalCount
+        nodes {
+          __typename
+          ...UserStoreNode
+        }
+      }
+      username
+      userId
+      firstName
+      lastName
+      phoneNumber
+      jobTitle
+    }
+  }
+}
+
+query isCentralServer {
+  isCentralServer
+}
+
+query isCentralStandalone {
+  isCentralStandalone
+}
+
+query logout {
+  logout {
+    ... on Logout {
+      __typename
+      userId
+    }
+  }
+}
+
+query permissions($storeId: String!) {
+  me {
+    ... on UserNode {
+      __typename
+      username
+      permissions(storeId: $storeId) {
+        nodes {
+          permissions
+          storeId
+        }
+        totalCount
+      }
+    }
+  }
+}
+
+query preferences($storeId: String!) {
+  preferences(storeId: $storeId) {
+    adjustForNumberOfDaysOutOfStock
+    allowTrackingOfStockByDonor
+    authorisePurchaseOrder
+    blindStocktake
+    canCreateInternalOrderFromARequisition
+    customTranslations
+    daysInMonth
+    disableManualReturns
+    firstThresholdForExpiringItems
+    genderOptions
+    manageVaccinesInDoses
+    manageVvmStatusForStock
+    numberOfMonthsThresholdToShowLowStockAlertsForProducts
+    numberOfMonthsThresholdToShowOverStockAlertsForProducts
+    numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts
+    orderInPacks
+    preventTransfersMonthsBeforeInitialisation
+    requisitionAutoFinalise
+    secondThresholdForExpiringItems
+    selectDestinationStoreForAnInternalOrder
+    showContactTracing
+    sortByVvmStatusThenExpiry
+    storeCustomColour
+    syncRecordsDisplayThreshold
+    useProcurementFunctionality
+    useSimplifiedMobileUi
+    expiredStockPreventIssue
+    expiredStockIssueThreshold
+    displayPopulationBasedForecasting
+    warnWhenMissingRecentStocktake {
+      enabled
+      maxAge
+      minItems
+    }
+    warningForExcessRequest
+    externalInboundShipmentLinesMustBeAuthorised
+    invoiceStatusOptions
+    itemMarginOverridesSupplierMargin
+    showIndicativePriceInRequisitions
+    isGaps
+    globalTableConfigs
+    backdating {
+      shipmentsEnabled
+      inventoryAdjustmentsEnabled
+      maxDays
+    }
+  }
+}
+
+mutation saveGlobalTableConfigs(
+  $storeId: String!
+  $input: UpsertPreferencesInput!
+) {
+  centralServer {
+    preferences {
+      upsertPreferences(storeId: $storeId, input: $input) {
+        ok
+      }
+    }
+  }
+}

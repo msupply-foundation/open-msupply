@@ -1,0 +1,87 @@
+use crate::{
+    invoice::{
+        check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
+        check_status_change, check_store, custom_fields::check_unknown_custom_fields_key,
+        InvoiceRowStatusError,
+    },
+    validate::{
+        check_other_party, check_other_party_store_is_disabled, CheckOtherPartyType,
+        OtherPartyErrors,
+    },
+};
+use repository::{InvoiceLineRowRepository, InvoiceRow, InvoiceType, Name, StorageConnection};
+
+use super::{UpdateCustomerReturn, UpdateCustomerReturnError};
+
+pub fn validate(
+    connection: &StorageConnection,
+    store_id: &str,
+    patch: &UpdateCustomerReturn,
+) -> Result<(InvoiceRow, Option<Name>, bool), UpdateCustomerReturnError> {
+    use UpdateCustomerReturnError::*;
+
+    let return_row = check_invoice_exists(&patch.id, connection)?.ok_or(InvoiceDoesNotExist)?;
+
+    if !check_store(&return_row, store_id) {
+        return Err(NotThisStoreInvoice);
+    }
+    if !check_invoice_is_editable(&return_row) {
+        return Err(ReturnIsNotEditable);
+    }
+    if check_other_party_store_is_disabled(connection, store_id, &return_row.name_id)? {
+        return Err(ReturnIsNotEditable);
+    }
+    if !check_invoice_type(&return_row, InvoiceType::CustomerReturn) {
+        return Err(NotACustomerReturn);
+    }
+
+    if let Some(properties) = &patch.custom_fields {
+        if let Some(unknown) =
+            check_unknown_custom_fields_key(connection, &return_row.r#type, properties)?
+        {
+            return Err(UnknownPropertyKey(unknown));
+        }
+    }
+
+    // Status check
+    let status_changed = check_status_change(&return_row, patch.invoice_row_status_option());
+    if status_changed {
+        check_invoice_status(
+            &return_row,
+            patch.invoice_row_status_option(),
+            &patch.on_hold,
+        )
+        .map_err(|e| match e {
+            InvoiceRowStatusError::CannotChangeStatusOfInvoiceOnHold => {
+                CannotChangeStatusOfInvoiceOnHold
+            }
+            InvoiceRowStatusError::CannotReverseInvoiceStatus => CannotReverseInvoiceStatus,
+        })?;
+
+        let lines =
+            InvoiceLineRowRepository::new(connection).find_many_by_invoice_id(&patch.id)?;
+        if lines.is_empty() {
+            return Err(CannotIssueCustomerReturnWithNoLines);
+        }
+    }
+    // Other party check
+    let other_party_id = match &patch.other_party_id {
+        None => return Ok((return_row, None, status_changed)),
+        Some(other_party_id) => other_party_id,
+    };
+
+    let other_party = check_other_party(
+        connection,
+        store_id,
+        other_party_id,
+        CheckOtherPartyType::Customer,
+    )
+    .map_err(|e| match e {
+        OtherPartyErrors::OtherPartyDoesNotExist => OtherPartyDoesNotExist {},
+        OtherPartyErrors::OtherPartyNotVisible => OtherPartyNotVisible,
+        OtherPartyErrors::TypeMismatched => OtherPartyNotACustomer,
+        OtherPartyErrors::DatabaseError(repository_error) => DatabaseError(repository_error),
+    })?;
+
+    Ok((return_row, Some(other_party), status_changed))
+}

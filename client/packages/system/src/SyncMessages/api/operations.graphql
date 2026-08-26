@@ -1,0 +1,73 @@
+fragment SyncMessageRow on SyncMessageNode {
+  id
+  body
+  type
+  status
+  toStore {
+    id
+    code
+    storeName
+  }
+  fromStore {
+    id
+    code
+    storeName
+  }
+  createdDatetime
+  errorMessage
+  files {
+    __typename
+    nodes {
+      ...SyncFileReference
+    }
+  }
+}
+
+query syncMessages(
+  $first: Int
+  $offset: Int
+  $key: SyncMessageSortFieldInput!
+  $desc: Boolean
+  $filter: SyncMessageFilterInput
+  $storeId: String!
+) {
+  centralServer {
+    syncMessage {
+      syncMessages(
+        storeId: $storeId
+        page: { first: $first, offset: $offset }
+        sort: { key: $key, desc: $desc }
+        filter: $filter
+      ) {
+        ... on SyncMessageConnector {
+          __typename
+          nodes {
+            ...SyncMessageRow
+          }
+          totalCount
+        }
+      }
+    }
+  }
+}
+
+query syncMessageById($id: String!, $storeId: String!) {
+  centralServer {
+    syncMessage {
+      syncMessage(id: $id, storeId: $storeId) {
+        ... on SyncMessageNode {
+          __typename
+          ...SyncMessageRow
+        }
+      }
+    }
+  }
+}
+
+mutation insertSyncMessage($input: InsertSyncMessageInput!, $storeId: String!) {
+  insertSyncMessage(input: $input, storeId: $storeId) {
+    ... on IdResponse {
+      id
+    }
+  }
+}

@@ -1,0 +1,13 @@
+# Watches for changes in the source code and automatically recompile.
+# Creates a `.trigger` file when done.
+[tasks.watch_build]
+script = "cargo watch --ignore .trigger --exec build --shell 'touch .trigger'"
+
+# Watches for changes to the `.trigger` file and automatically restarts the server.
+# This means old version of server remains running until new version is built.
+[tasks.trigger_server_start]
+script = "cargo watch --watch .trigger --exec run"
+
+[tasks.watch]
+workspace = false
+run_task = { name = ["watch_build", "trigger_server_start"], parallel = true }

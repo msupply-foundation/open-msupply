@@ -32,7 +32,28 @@ export type InboundRowFragment = {
   pricing: {
   totalAfterTax: number;
 };
+  lines: {
+  totalCount: number;
+};
   customFields: unknown | null;
+};
+
+export type BulkDeleteResultFragment = {
+  deleteInboundShipments: Array<{
+  id: string;
+  response: ({
+  __typename: "DeleteResponse";
+} & {
+  id: string;
+}) | ({
+  __typename: "DeleteInboundShipmentError";
+} & {
+  error: {
+  __typename: string;
+  description: string;
+};
+});
+}> | null;
 };
 
 export type InboundShipmentsVariables = {
@@ -229,7 +250,7 @@ export type InboundShipmentsResult = {
 };
 
 export const InboundShipments = {
-  query: "query inboundShipments($storeId: String!, $page: PaginationInput, $filter: InvoiceFilterInput, $sort: [InvoiceSortInput!], $type: [InvoiceTypeInput!]) {\n  invoices(\n    storeId: $storeId\n    page: $page\n    filter: $filter\n    sort: $sort\n    type: $type\n  ) {\n    ... on InvoiceConnector {\n      __typename\n      totalCount\n      nodes {\n        ...InboundRow\n      }\n    }\n  }\n}\n\nfragment InboundRow on InvoiceNode {\n  id\n  invoiceNumber\n  otherPartyName\n  otherPartyId\n  otherParty(storeId: $storeId) {\n    store {\n      id\n    }\n  }\n  status\n  onHold\n  inboundType\n  colour\n  comment\n  theirReference\n  createdDatetime\n  deliveredDatetime\n  purchaseOrderId\n  requisition {\n    id\n    requisitionNumber\n  }\n  purchaseOrder {\n    id\n    number\n  }\n  pricing {\n    totalAfterTax\n  }\n  customFields\n}",
+  query: "query inboundShipments($storeId: String!, $page: PaginationInput, $filter: InvoiceFilterInput, $sort: [InvoiceSortInput!], $type: [InvoiceTypeInput!]) {\n  invoices(\n    storeId: $storeId\n    page: $page\n    filter: $filter\n    sort: $sort\n    type: $type\n  ) {\n    ... on InvoiceConnector {\n      __typename\n      totalCount\n      nodes {\n        ...InboundRow\n      }\n    }\n  }\n}\n\nfragment InboundRow on InvoiceNode {\n  id\n  invoiceNumber\n  otherPartyName\n  otherPartyId\n  otherParty(storeId: $storeId) {\n    store {\n      id\n    }\n  }\n  status\n  onHold\n  inboundType\n  colour\n  comment\n  theirReference\n  createdDatetime\n  deliveredDatetime\n  purchaseOrderId\n  requisition {\n    id\n    requisitionNumber\n  }\n  purchaseOrder {\n    id\n    number\n  }\n  pricing {\n    totalAfterTax\n  }\n  lines {\n    totalCount\n  }\n  customFields\n}",
 } as TypedDocument<InboundShipmentsResult, InboundShipmentsVariables>;
 
 export type DeleteInboundShipmentsVariables = {
@@ -240,25 +261,24 @@ export type DeleteInboundShipmentsVariables = {
 };
 
 export type DeleteInboundShipmentsResult = {
-  batchInboundShipment: {
-  deleteInboundShipments: Array<{
-  id: string;
-  response: ({
-  __typename: "DeleteResponse";
-} & {
-  id: string;
-}) | ({
-  __typename: "DeleteInboundShipmentError";
-} & {
-  error: {
-  __typename: string;
-  description: string;
-};
-});
-}> | null;
-};
+  batchInboundShipment: BulkDeleteResultFragment;
 };
 
 export const DeleteInboundShipments = {
-  query: "mutation deleteInboundShipments($storeId: String!, $ids: [DeleteInboundShipmentInput!]!) {\n  batchInboundShipment(storeId: $storeId, input: {deleteInboundShipments: $ids}) {\n    deleteInboundShipments {\n      id\n      response {\n        ... on DeleteResponse {\n          __typename\n          id\n        }\n        ... on DeleteInboundShipmentError {\n          __typename\n          error {\n            __typename\n            description\n          }\n        }\n      }\n    }\n  }\n}",
+  query: "mutation deleteInboundShipments($storeId: String!, $ids: [DeleteInboundShipmentInput!]!) {\n  batchInboundShipment(storeId: $storeId, input: {deleteInboundShipments: $ids}) {\n    ...BulkDeleteResult\n  }\n}\n\nfragment BulkDeleteResult on BatchInboundShipmentResponse {\n  deleteInboundShipments {\n    id\n    response {\n      ... on DeleteResponse {\n        __typename\n        id\n      }\n      ... on DeleteInboundShipmentError {\n        __typename\n        error {\n          __typename\n          description\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<DeleteInboundShipmentsResult, DeleteInboundShipmentsVariables>;
+
+export type DeleteInboundShipmentsExternalVariables = {
+  storeId: string;
+  ids: Array<{
+    id: string;
+  }>;
+};
+
+export type DeleteInboundShipmentsExternalResult = {
+  batchInboundShipmentExternal: BulkDeleteResultFragment;
+};
+
+export const DeleteInboundShipmentsExternal = {
+  query: "mutation deleteInboundShipmentsExternal($storeId: String!, $ids: [DeleteInboundShipmentInput!]!) {\n  batchInboundShipmentExternal(\n    storeId: $storeId\n    input: {deleteInboundShipments: $ids}\n  ) {\n    ...BulkDeleteResult\n  }\n}\n\nfragment BulkDeleteResult on BatchInboundShipmentResponse {\n  deleteInboundShipments {\n    id\n    response {\n      ... on DeleteResponse {\n        __typename\n        id\n      }\n      ... on DeleteInboundShipmentError {\n        __typename\n        error {\n          __typename\n          description\n        }\n      }\n    }\n  }\n}",
+} as TypedDocument<DeleteInboundShipmentsExternalResult, DeleteInboundShipmentsExternalVariables>;

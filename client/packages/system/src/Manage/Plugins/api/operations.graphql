@@ -1,0 +1,90 @@
+# hostRuntime is null for backend plugins, which have no host. It is selected
+# because one plugin ships a bundle per front end and the two can share a code
+# and a version — without it the list shows one row twice, and delete acts on an
+# id it never displays.
+fragment InstalledPluginNode on InstalledPluginNode {
+  __typename
+  id
+  code
+  version
+  kind
+  types
+  hostRuntime
+}
+
+query installedPlugins {
+  centralServer {
+    plugin {
+      installedPlugins {
+        __typename
+        totalCount
+        nodes {
+          ...InstalledPluginNode
+        }
+      }
+    }
+  }
+}
+
+mutation installUploadedPlugin($fileId: String!) {
+  centralServer {
+    plugins {
+      installUploadedPlugin(fileId: $fileId) {
+        pluginInfo
+      }
+    }
+  }
+}
+
+mutation uninstallPlugin($id: String!) {
+  centralServer {
+    plugins {
+      uninstallPlugin(id: $id) {
+        id
+        code
+        kind
+      }
+    }
+  }
+}
+
+query pluginConfiguration($pluginCode: String!, $storeId: String!) {
+  pluginData(
+    pluginCode: $pluginCode
+    storeId: $storeId
+    filter: { dataIdentifier: { equalTo: "configuration" } }
+  ) {
+    __typename
+    ... on PluginDataConnector {
+      nodes {
+        id
+        data
+        storeId
+      }
+    }
+  }
+}
+
+mutation insertPluginConfiguration(
+  $storeId: String!
+  $input: InsertPluginDataInput!
+) {
+  insertPluginData(input: $input, storeId: $storeId) {
+    ... on PluginDataNode {
+      __typename
+      id
+    }
+  }
+}
+
+mutation updatePluginConfiguration(
+  $storeId: String!
+  $input: UpdatePluginDataInput!
+) {
+  updatePluginData(input: $input, storeId: $storeId) {
+    ... on PluginDataNode {
+      __typename
+      id
+    }
+  }
+}

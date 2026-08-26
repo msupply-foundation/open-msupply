@@ -1,0 +1,15 @@
+pub mod contact_trace;
+pub mod document;
+pub mod document_registry;
+pub mod encounter;
+pub mod patient;
+pub mod program_enrolment;
+pub mod program_event;
+pub mod program_indicator;
+pub mod program_node;
+pub mod program_order_type;
+pub mod requisition_indicator_info;
+pub mod rnr_form;
+pub mod rnr_form_line;
+pub mod vaccination;
+pub mod vaccination_card;

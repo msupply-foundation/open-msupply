@@ -1,0 +1,112 @@
+import React from 'react';
+import Dropzone, { Accept, FileRejection } from 'react-dropzone';
+import {
+  useTranslation,
+  alpha,
+  Paper,
+  FileUploadIcon,
+  Typography,
+  BaseButton,
+  ButtonWithIcon,
+  LinkIcon,
+  useIsExtraSmallScreen,
+} from '@openmsupply-client/common';
+
+interface UploadDragAndDropProps {
+  accept?: Accept;
+  color?: 'primary' | 'secondary' | 'gray';
+  /** Maximum size per file in bytes; larger files are rejected. */
+  maxSize?: number;
+  multiple: boolean;
+  onUpload: <T extends File>(files: T[]) => void;
+  /** Called with files rejected by `accept`/`maxSize` so they can be surfaced to the user. */
+  onRejected?: (rejections: FileRejection[]) => void;
+  /** Stamped on the hidden file input for e2e locators. */
+  testId?: string;
+}
+
+export const UploadDragAndDrop = ({
+  accept,
+  color = 'secondary',
+  maxSize,
+  multiple,
+  onUpload,
+  onRejected,
+  testId,
+}: UploadDragAndDropProps) => {
+  const t = useTranslation();
+  const isExtraSmallScreen = useIsExtraSmallScreen();
+
+  return (
+    <Paper
+      sx={theme => ({
+        [theme.breakpoints.down('sm')]: {
+          border: '0px',
+          borderWidth: '0px',
+          backgroundColor: 'inherit',
+          width: '200px',
+          marginTop: '0px 0px',
+          padding: '0px',
+          boxShadow: 'none',
+        },
+        borderRadius: '16px',
+        marginTop: '20px 0',
+        backgroundColor: theme => alpha(theme.palette[color].main, 0.1),
+        padding: '24px',
+        width: '100%',
+        alignContent: 'center',
+        textAlign: 'center',
+        borderStyle: 'dashed',
+        borderWidth: '2px',
+        borderColor: `${color}.main`,
+        ':hover': {
+          borderColor: theme => theme.palette[color].dark,
+          cursor: 'pointer',
+        },
+      })}
+    >
+      <Dropzone
+        onDrop={(acceptedFiles, fileRejections) => {
+          if (fileRejections.length > 0) onRejected?.(fileRejections);
+          if (acceptedFiles.length > 0) onUpload(acceptedFiles);
+        }}
+        accept={accept}
+        maxSize={maxSize}
+        multiple={multiple}
+      >
+        {({ getRootProps, getInputProps }) => (
+          <div {...getRootProps()}>
+            <input {...getInputProps()} data-testid={testId} />
+            {!isExtraSmallScreen && (
+              <>
+                <FileUploadIcon
+                  sx={{
+                    fontSize: 36,
+                    stroke: theme => theme.palette[color].main,
+                  }}
+                />
+                <Typography sx={{ fontWeight: 'bold', color: `${color}.main` }}>
+                  {t('messages.upload-invite')}
+                </Typography>
+                <Typography color={color}>{t('messages.upload-or')}</Typography>
+                <BaseButton color="secondary" variant="outlined">
+                  {t('button.browse-files')}
+                </BaseButton>
+              </>
+            )}
+            {isExtraSmallScreen && (
+              <ButtonWithIcon
+                shouldShrink={false}
+                color="secondary"
+                variant="outlined"
+                label={t('button.browse-files')}
+                onClick={() => {}}
+                Icon={<LinkIcon />}
+              />
+            )}
+          </div>
+        )}
+      </Dropzone>
+    </Paper>
+  );
+};

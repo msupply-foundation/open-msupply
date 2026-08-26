@@ -542,6 +542,7 @@ const SupplierReturnDetailView: Component = () => {
                   <SupplierReturnSidePanel
                     node={node()}
                     disabled={disabled()}
+                    hasLines={hasLines()}
                     edit={edit}
                     onSetColour={setColour}
                   />

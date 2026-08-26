@@ -1,0 +1,124 @@
+import { useCallback } from 'react';
+import { RegexUtils } from '../../utils/regex';
+import { useCurrency } from '../currency';
+import { MAX_FRACTION_DIGITS, SupportedLocales, useIntlUtils } from '../utils';
+
+const localeNumberOverrides: { [locale: string]: /* Override */ string } = {
+  tet: 'en-US',
+  ar: 'ar-u-nu-arab',
+  // Dari (prs) & Pashto (ps), Afghanistan — both should render Eastern /
+  // extended-Arabic digits (۰-۹). We can't just tag the numbering system: ICU
+  // pins `ps` to Latin digits and *silently ignores* a `-u-nu-arabext`
+  // override on it (it resolves straight back to `latn`), so Pashto kept
+  // rendering Western numerals. Afghan Persian (`fa-AF`) natively uses the same
+  // digits and separators, so we format both languages through it. (`prs`
+  // already defaults to extended-Arabic; routed the same way for consistency.)
+  prs: 'fa-AF',
+  ps: 'fa-AF',
+};
+
+// This method needs to be used instead of Intl.NumberFormat directly
+export const intlNumberFormat = (
+  locale: string,
+  params?: Intl.NumberFormatOptions
+) => {
+  // Fall back to the base language so regional tags (e.g. `ps-AF`, `ar-SA`)
+  // still pick up the override; otherwise their digits revert to the browser
+  // default (Latin for Pashto).
+  const override =
+    localeNumberOverrides[locale] ??
+    localeNumberOverrides[locale.split('-')[0] ?? locale] ??
+    locale;
+  return new Intl.NumberFormat(override, params);
+};
+
+export const useFormatNumber = () => {
+  const { currentLanguage } = useIntlUtils();
+  const {
+    options: { separator, decimal },
+  } = useCurrency();
+
+  const format = useCallback(
+    (
+      value: number | undefined,
+      options?: Intl.NumberFormatOptions & { locale?: SupportedLocales }
+    ) => {
+      if (value === undefined || value === null) return '';
+      const locale = options?.locale ?? currentLanguage;
+
+      const {
+        maximumFractionDigits = MAX_FRACTION_DIGITS,
+        minimumFractionDigits,
+        ...otherOptions
+      } = options ?? {};
+
+      return intlNumberFormat(locale, {
+        ...otherOptions,
+        minimumFractionDigits,
+        maximumFractionDigits:
+          // If the maximumFractionDigits is less than the
+          // minimumFractionDigits, the browser throws an error, so we need
+          // raise the maximum to match.
+          minimumFractionDigits !== undefined &&
+          maximumFractionDigits < minimumFractionDigits
+            ? minimumFractionDigits
+            : (maximumFractionDigits ?? MAX_FRACTION_DIGITS),
+      }).format(value);
+    },
+    [currentLanguage]
+  );
+
+  const round = useCallback(
+    (value?: number, dp?: number): string => {
+      if (value === undefined || value === null || typeof value !== 'number')
+        return '';
+
+      const newVal = dp !== undefined ? parseFloat(value.toFixed(dp)) : value;
+      const intl = intlNumberFormat(currentLanguage, {
+        // not strictly necessary perhaps - but if you specify a minimumFractionDigits
+        // outside of the range 0,20 then an error is thrown
+        maximumFractionDigits: Math.max(
+          0,
+          Math.min(dp ?? 0, MAX_FRACTION_DIGITS)
+        ),
+      });
+      return intl.format(newVal ?? 0);
+    },
+    [currentLanguage]
+  );
+
+  const roundUpToWholeNumber = useCallback(
+    (value?: number): string => {
+      if (value === undefined || value === null || typeof value !== 'number')
+        return '';
+
+      const newVal = Math.ceil(value);
+      const intl = intlNumberFormat(currentLanguage, {
+        maximumFractionDigits: 0,
+      });
+      return intl.format(newVal ?? 0);
+    },
+    [currentLanguage]
+  );
+
+  const parse = useCallback(
+    (numberString: string, decimalChar: string = decimal) => {
+      const negative = numberString.startsWith('-') ? -1 : 1;
+
+      const num = RegexUtils.convertIndoArToArNumerals(numberString)
+        // Remove separators
+        .replace(new RegExp(`\\${separator}`, 'g'), '')
+        // Convert decimal separator to standard decimal point
+        .replace(RegexUtils.escapeChars(decimalChar), '.')
+        // Remove all other characters
+        .replace(/[^\d\.]/g, '');
+
+      if (num === '') return NaN;
+
+      return Number(num) * negative;
+    },
+    [separator, decimal]
+  );
+
+  return { format, round, roundUpToWholeNumber, parse };
+};

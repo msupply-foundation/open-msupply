@@ -42,6 +42,13 @@ query supplierReturns(
         theirReference
         colour
         onHold
+        # Line count only — the bulk delete's confirmation warns that an issued
+        # return's stock comes back, and an EMPTY return has no stock to warn
+        # about (rules § deletion rules). Batched server-side by the
+        # invoice-line loader, so it costs one query for the page.
+        lines {
+          totalCount
+        }
         # Custom-field VALUES (JSON object), scope-filtered — backs the
         # configured custom-field columns.
         customFields

@@ -6,6 +6,7 @@ import {
   type GraphqlErrorItem,
 } from '../../../api/graphql';
 import { t, type LocaleKey } from '../../../intl';
+import { deleteRejection } from '@/domain/invoice';
 import {
   UpdateCustomerReturn,
   UpdateCustomerReturnLines,
@@ -179,7 +180,9 @@ export type DeleteReturnResult =
   // modal has already been raised (D38); callers just stop, they don't
   // re-surface it.
   | { kind: 'forbidden' }
-  | { kind: 'error'; message: string }
+  // Refused, with the server's reason. `detail` carries the raw server text
+  // when the refusal arrived as a debug dump rather than a nameable reason.
+  | { kind: 'error'; message: string; detail?: string }
   | { kind: 'failed' };
 
 export const deleteReturn = async (
@@ -200,7 +203,10 @@ export const deleteReturn = async (
       reportPermissionDenied(missingPermissions(result.errors));
       return { kind: 'forbidden' };
     }
-    return { kind: 'error', message: result.message };
+    // A per-line lock arrives as an untyped internal error whose only clue is
+    // the Rust dump in extensions.details — deleteRejection names it when it
+    // can (domain/invoice).
+    return { kind: 'error', ...deleteRejection(result.errors) };
   }
   if (result.kind !== 'success') return { kind: 'failed' };
   const response = result.data.deleteCustomerReturn;

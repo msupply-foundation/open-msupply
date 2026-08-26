@@ -1,0 +1,62 @@
+query repack($dataId: String!, $storeId: String!) {
+  repack(invoiceId: $dataId, storeId: $storeId) {
+    ... on RepackNode {
+      id
+      datetime
+      repackId
+      batch
+      invoice {
+        id
+        invoiceNumber
+        status
+      }
+      from {
+        location {
+          id
+          code
+          name
+        }
+        packSize
+        numberOfPacks
+        stockLine {
+          id
+          item {
+            id
+            name
+            code
+          }
+        }
+      }
+      to {
+        location {
+          id
+          code
+          name
+          onHold
+        }
+        packSize
+        numberOfPacks
+      }
+    }
+  }
+  store(id: $storeId) {
+    ... on StoreNode {
+      code
+      storeName
+      logo
+      id
+      name(storeId: $storeId) {
+        address1
+        address2
+        chargeCode
+        code
+        comment
+        country
+        email
+        name
+        phone
+        website
+      }
+    }
+  }
+}

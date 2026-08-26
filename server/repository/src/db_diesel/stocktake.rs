@@ -1,0 +1,256 @@
+use super::{
+    stocktake_line_row::stocktake_line, stocktake_row::stocktake, StocktakeRow, StocktakeStatus,
+    StorageConnection,
+};
+
+use crate::{
+    diesel_macros::{
+        apply_date_filter, apply_date_time_filter, apply_equal_filter, apply_sort,
+        apply_sort_no_case, apply_string_filter,
+    },
+    DBType, DateFilter, DatetimeFilter, EqualFilter, Pagination, RepositoryError, Sort,
+    StocktakeLineFilter, StocktakeLineRepository, StringFilter,
+};
+
+use diesel::{dsl::IntoBoxed, prelude::*};
+
+#[derive(Clone, Default)]
+pub struct StocktakeFilter {
+    pub id: Option<EqualFilter<String>>,
+    pub store_id: Option<EqualFilter<String>>,
+    pub user_id: Option<EqualFilter<String>>,
+    pub stocktake_number: Option<EqualFilter<i64>>,
+    pub comment: Option<StringFilter>,
+    pub description: Option<StringFilter>,
+    pub status: Option<EqualFilter<StocktakeStatus>>,
+    pub created_datetime: Option<DatetimeFilter>,
+    pub stocktake_date: Option<DateFilter>,
+    pub finalised_datetime: Option<DatetimeFilter>,
+    pub is_locked: Option<bool>,
+    pub is_program_stocktake: Option<bool>,
+    pub program_id: Option<EqualFilter<String>>,
+    pub stocktake_line: Option<StocktakeLineFilter>,
+}
+
+impl StocktakeFilter {
+    pub fn new() -> StocktakeFilter {
+        Self::default()
+    }
+
+    pub fn id(mut self, filter: EqualFilter<String>) -> Self {
+        self.id = Some(filter);
+        self
+    }
+
+    pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.store_id = Some(filter);
+        self
+    }
+
+    pub fn user_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.user_id = Some(filter);
+        self
+    }
+
+    pub fn stocktake_number(mut self, filter: EqualFilter<i64>) -> Self {
+        self.stocktake_number = Some(filter);
+        self
+    }
+
+    pub fn comment(mut self, filter: StringFilter) -> Self {
+        self.comment = Some(filter);
+        self
+    }
+
+    pub fn description(mut self, filter: StringFilter) -> Self {
+        self.description = Some(filter);
+        self
+    }
+
+    pub fn status(mut self, filter: EqualFilter<StocktakeStatus>) -> Self {
+        self.status = Some(filter);
+        self
+    }
+
+    pub fn created_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.created_datetime = Some(filter);
+        self
+    }
+
+    pub fn stocktake_date(mut self, filter: DateFilter) -> Self {
+        self.stocktake_date = Some(filter);
+        self
+    }
+
+    pub fn finalised_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.finalised_datetime = Some(filter);
+        self
+    }
+
+    pub fn is_locked(mut self, filter: bool) -> Self {
+        self.is_locked = Some(filter);
+        self
+    }
+
+    pub fn is_program_stocktake(mut self, filter: bool) -> Self {
+        self.is_program_stocktake = Some(filter);
+        self
+    }
+
+    pub fn program_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.program_id = Some(filter);
+        self
+    }
+
+    pub fn stocktake_line(mut self, filter: StocktakeLineFilter) -> Self {
+        self.stocktake_line = Some(filter);
+        self
+    }
+}
+
+pub enum StocktakeSortField {
+    Status,
+    CreatedDatetime,
+    FinalisedDatetime,
+    StocktakeNumber,
+    Comment,
+    Description,
+    StocktakeDate,
+}
+
+pub type Stocktake = StocktakeRow;
+
+pub type StocktakeSort = Sort<StocktakeSortField>;
+
+type BoxedStocktakeQuery = IntoBoxed<'static, stocktake::table, DBType>;
+
+fn create_filtered_query(filter: Option<StocktakeFilter>) -> BoxedStocktakeQuery {
+    let mut query = stocktake::table.into_boxed();
+
+    if let Some(StocktakeFilter {
+        id,
+        store_id,
+        user_id,
+        stocktake_number,
+        comment,
+        description,
+        status,
+        created_datetime,
+        stocktake_date,
+        finalised_datetime,
+        is_locked,
+        is_program_stocktake,
+        program_id,
+        stocktake_line,
+    }) = filter
+    {
+        apply_equal_filter!(query, id, stocktake::id);
+        apply_equal_filter!(query, store_id, stocktake::store_id);
+        apply_equal_filter!(query, user_id, stocktake::user_id);
+        apply_equal_filter!(query, stocktake_number, stocktake::stocktake_number);
+        apply_string_filter!(query, comment, stocktake::comment);
+        apply_string_filter!(query, description, stocktake::description);
+
+        if let Some(value) = status {
+            if let Some(eq) = value.equal_to {
+                query = query.filter(stocktake::status.eq(eq));
+            }
+        }
+
+        apply_date_time_filter!(query, created_datetime, stocktake::created_datetime);
+        apply_date_filter!(query, stocktake_date, stocktake::stocktake_date);
+        apply_date_time_filter!(query, finalised_datetime, stocktake::finalised_datetime);
+
+        if let Some(value) = is_locked {
+            query = query.filter(stocktake::is_locked.eq(value));
+        }
+        if is_program_stocktake.is_some() {
+            query = query.filter(stocktake::program_id.is_not_null());
+        }
+        apply_equal_filter!(query, program_id, stocktake::program_id);
+
+        if stocktake_line.is_some() {
+            let stocktake_ids = StocktakeLineRepository::create_filtered_query(stocktake_line)
+                .select(stocktake_line::stocktake_id);
+            query = query.filter(stocktake::id.eq_any(stocktake_ids));
+        }
+    }
+    query
+}
+
+pub struct StocktakeRepository<'a> {
+    connection: &'a StorageConnection,
+}
+
+impl<'a> StocktakeRepository<'a> {
+    pub fn new(connection: &'a StorageConnection) -> Self {
+        StocktakeRepository { connection }
+    }
+
+    pub fn count(&self, filter: Option<StocktakeFilter>) -> Result<i64, RepositoryError> {
+        // TODO (beyond M1), check that store_id matches current store
+        let query = create_filtered_query(filter);
+
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
+    }
+
+    pub fn query_by_filter(
+        &self,
+        filter: StocktakeFilter,
+    ) -> Result<Vec<Stocktake>, RepositoryError> {
+        self.query(Pagination::new(), Some(filter), None)
+    }
+
+    /// Gets all invoices
+    pub fn query(
+        &self,
+        pagination: Pagination,
+        filter: Option<StocktakeFilter>,
+        sort: Option<StocktakeSort>,
+    ) -> Result<Vec<Stocktake>, RepositoryError> {
+        let mut query = create_filtered_query(filter);
+
+        if let Some(sort) = sort {
+            match sort.key {
+                StocktakeSortField::Status => apply_sort!(query, sort, stocktake::status),
+                StocktakeSortField::CreatedDatetime => {
+                    apply_sort!(query, sort, stocktake::created_datetime)
+                }
+                StocktakeSortField::FinalisedDatetime => {
+                    apply_sort!(query, sort, stocktake::finalised_datetime)
+                }
+                StocktakeSortField::StocktakeNumber => {
+                    apply_sort!(query, sort, stocktake::stocktake_number)
+                }
+                StocktakeSortField::Comment => {
+                    apply_sort_no_case!(query, sort, stocktake::comment)
+                }
+                StocktakeSortField::Description => {
+                    apply_sort_no_case!(query, sort, stocktake::description)
+                }
+                StocktakeSortField::StocktakeDate => {
+                    apply_sort!(query, sort, stocktake::stocktake_date)
+                }
+            }
+        }
+
+        // Stable tiebreaker so paginated results don't shuffle or drop rows
+        // when the primary sort column has ties.
+        let result = query
+            .then_order_by(stocktake::id.asc())
+            .offset(pagination.offset as i64)
+            .limit(pagination.limit as i64)
+            .load::<Stocktake>(self.connection.lock().connection())?;
+
+        Ok(result)
+    }
+
+    pub fn find_one_by_id(&self, record_id: &str) -> Result<Option<Stocktake>, RepositoryError> {
+        Ok(stocktake::table
+            .filter(stocktake::id.eq(record_id))
+            .first::<Stocktake>(self.connection.lock().connection())
+            .optional()?)
+    }
+}

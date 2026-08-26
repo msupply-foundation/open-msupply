@@ -1,0 +1,13 @@
+{
+  "is_custom": false,
+  "version": "2.20.1",
+  "code": "stock-movement",
+  "context": "STOCK_MOVEMENT",
+  "name": "Stock Movement",
+  "queries": {
+    "gql": "stock-movement.graphql"
+  },
+  "arguments": {},
+  "header": "header.html",
+  "footer": "footer.html"
+}

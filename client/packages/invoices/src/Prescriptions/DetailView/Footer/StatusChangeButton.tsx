@@ -1,0 +1,177 @@
+import React, { useMemo, useState, useEffect } from 'react';
+import {
+  ArrowRightIcon,
+  useTranslation,
+  useNotification,
+  InvoiceNodeStatus,
+  InvoiceNodeType,
+  SplitButton,
+  SplitButtonOption,
+  useConfirmationModal,
+  InvoiceLineNodeType,
+  useDisabledNotificationToast,
+  useEditModal,
+  useRegisterActions,
+  ALT_KEY,
+} from '@openmsupply-client/common';
+import { useInsuranceProviders } from '@openmsupply-client/system';
+import {
+  getButtonLabel,
+  getNextStatusOption,
+  getStatusTranslator,
+} from '../../../utils';
+import { PrescriptionFragment, usePrescription } from '../../api';
+import { PaymentsModal } from '../Payments';
+import { Draft } from '../../../StockOut';
+import { getStatusOptions } from '../../../statuses';
+
+const useStatusChangeButton = () => {
+  const t = useTranslation();
+  const { success, error } = useNotification();
+  const {
+    query: { data },
+    update: { update },
+    isDisabled,
+  } = usePrescription();
+
+  const {
+    query: { data: insuranceProvidersData },
+  } = useInsuranceProviders();
+
+  const { status, lines } = data ?? {};
+
+  const hasLinesToPrune =
+    data?.status !== InvoiceNodeStatus.Verified &&
+    (data?.lines?.nodes ?? []).some(line => line.numberOfPacks === 0);
+
+  // TODO: This needs to be handled in global pref
+  const showPaymentWindow =
+    lines != null &&
+    lines.nodes.filter(({ totalAfterTax }) => totalAfterTax > 0).length > 0 &&
+    insuranceProvidersData.length > 0;
+
+  const isEmptyLines =
+    lines?.totalCount === 0 ||
+    lines?.nodes?.every(
+      line => line.type === InvoiceLineNodeType.UnallocatedStock
+    );
+
+  const options = useMemo(
+    () =>
+      status
+        ? getStatusOptions(
+            InvoiceNodeType.Prescription,
+            status,
+            getButtonLabel(t)
+          )
+        : [],
+    [status, getButtonLabel]
+  );
+
+  const [selectedOption, setSelectedOption] =
+    useState<SplitButtonOption<InvoiceNodeStatus> | null>(() =>
+      getNextStatusOption(status, options)
+    );
+
+  const handleConfirm = async (data: Partial<PrescriptionFragment>) => {
+    if (!selectedOption) return null;
+    try {
+      await update({ ...data, status: selectedOption.value });
+      success(t('messages.prescription-saved'))();
+    } catch (e) {
+      error(t('messages.error-saving-prescription'))();
+    }
+  };
+
+  const onConfirmStatusChange = async () => {
+    if (!selectedOption) return null;
+    handleConfirm({ status: selectedOption.value });
+  };
+
+  const getConfirmation = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: hasLinesToPrune
+      ? t('messages.confirm-zero-quantity-status')
+      : t('messages.confirm-status-as', {
+          status: selectedOption?.value
+            ? getStatusTranslator(t)(selectedOption?.value)
+            : '',
+        }),
+    onConfirm: onConfirmStatusChange,
+  });
+
+  useEffect(() => {
+    setSelectedOption(() => getNextStatusOption(status, options));
+  }, [status, options]);
+
+  return {
+    options,
+    selectedOption,
+    setSelectedOption,
+    getConfirmation,
+    isEmptyLines,
+    isDisabled,
+    showPaymentWindow,
+    handleConfirm,
+  };
+};
+
+export const StatusChangeButton = () => {
+  const t = useTranslation();
+  const { onOpen, onClose, isOpen } = useEditModal<Draft>();
+
+  const {
+    options,
+    selectedOption,
+    setSelectedOption,
+    getConfirmation,
+    isEmptyLines,
+    isDisabled,
+    showPaymentWindow,
+    handleConfirm,
+  } = useStatusChangeButton();
+
+  const emptyLinesNotifications = useDisabledNotificationToast(
+    t('messages.no-lines')
+  );
+
+  const onStatusClick = () => {
+    if (isEmptyLines) return emptyLinesNotifications();
+    if (showPaymentWindow) return onOpen();
+    return getConfirmation();
+  };
+
+  useRegisterActions([
+    {
+      id: 'updateStatus',
+      name: `${t('button.update-status')} (${ALT_KEY}+V)`,
+      shortcut: ['Alt+KeyV'],
+      perform: onStatusClick,
+    },
+  ]);
+
+  if (!selectedOption) return null;
+  if (isDisabled) return null;
+
+  return (
+    <>
+      <SplitButton
+        testId="status-change-button"
+        label={isEmptyLines ? t('messages.no-lines') : ''}
+        options={options}
+        selectedOption={selectedOption}
+        onSelectOption={setSelectedOption}
+        Icon={<ArrowRightIcon />}
+        onClick={onStatusClick}
+        dataShortcut="Alt+V"
+      />
+      {showPaymentWindow && (
+        <PaymentsModal
+          isOpen={isOpen}
+          onClose={onClose}
+          handleConfirm={handleConfirm}
+        />
+      )}
+    </>
+  );
+};

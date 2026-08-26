@@ -1,0 +1,172 @@
+import {
+  useTranslation,
+  useAuthContext,
+  usePreferences,
+  ColumnDef,
+  ColumnType,
+  ExpiryDateCell,
+  weightedAverageByUnits,
+} from '@openmsupply-client/common';
+import { PrescriptionLineFragment } from '../api/operations.generated';
+import { useMemo } from 'react';
+import { isPrescriptionPlaceholderRow } from '../../utils';
+
+export const usePrescriptionColumn = () => {
+  const t = useTranslation();
+  const { manageVaccinesInDoses } = usePreferences();
+  const { store: { preferences } = {} } = useAuthContext();
+  const hasPrescribedQty = preferences?.editPrescribedQuantityOnPrescription;
+
+  return useMemo((): ColumnDef<PrescriptionLineFragment>[] => {
+    return [
+      {
+        accessorKey: 'note',
+        header: t('label.comment'),
+        pin: 'left',
+        columnType: ColumnType.Comment,
+      },
+      {
+        accessorKey: 'item.code',
+        header: t('label.code'),
+        size: 120,
+        pin: 'left',
+        enableColumnFilter: true,
+        enableSorting: true,
+      },
+      {
+        accessorKey: 'itemName',
+        header: t('label.name'),
+        size: 300,
+        enableColumnFilter: true,
+        enableSorting: true,
+      },
+      {
+        accessorKey: 'batch',
+        header: t('label.batch'),
+        size: 110,
+        enableSorting: true,
+        enableColumnFilter: true,
+        defaultHideOnMobile: true,
+      },
+      {
+        id: 'expiryDate',
+        accessorFn: row => (row.expiryDate ? new Date(row.expiryDate) : null),
+        header: t('label.expiry-date'),
+        size: 110,
+        columnType: ColumnType.Date,
+        Cell: ExpiryDateCell,
+        defaultHideOnMobile: true,
+        enableColumnFilter: true,
+        enableSorting: true,
+      },
+      {
+        id: 'locationCode',
+        accessorFn: row => row.location?.code ?? '',
+        header: t('label.location'),
+        enableColumnFilter: true,
+        enableSorting: true,
+        defaultHideOnMobile: true,
+        size: 100,
+      },
+      {
+        id: 'itemUnit',
+        accessorKey: 'item.unitName',
+        header: t('label.unit-name'),
+        size: 100,
+        enableColumnFilter: true,
+        filterVariant: 'select',
+        defaultHideOnMobile: true,
+      },
+      {
+        accessorKey: 'packSize',
+        header: t('label.pack-size'),
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
+        enableSorting: true,
+        size: 100,
+      },
+      {
+        id: 'itemDoses',
+        header: t('label.doses-per-unit'),
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
+        accessorFn: row => (row.item.isVaccine ? row.item.doses : undefined),
+        includeColumn: manageVaccinesInDoses,
+      },
+      {
+        id: 'unitQuantity',
+        header: t('label.unit-quantity'),
+        description: t('description.unit-quantity'),
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
+        accessorFn: row => row.packSize * row.numberOfPacks,
+        aggregationFn: 'sum',
+        size: 120,
+      },
+      {
+        id: 'doseQuantity',
+        header: t('label.doses'),
+        columnType: ColumnType.Number,
+        defaultHideOnMobile: true,
+        accessorFn: row => {
+          if (!row.item.isVaccine) return null;
+          return row.packSize * row.numberOfPacks * (row.item.doses ?? 1);
+        },
+        aggregationFn: 'sum',
+        size: 120,
+        includeColumn: manageVaccinesInDoses,
+      },
+      {
+        accessorKey: 'prescribedQuantity',
+        header: t('label.prescribed-quantity'),
+        columnType: ColumnType.Number,
+        enableSorting: true,
+        size: 120,
+        includeColumn: hasPrescribedQty,
+      },
+      {
+        accessorKey: 'numberOfPacks',
+        header: t('label.pack-quantity'),
+        columnType: ColumnType.Number,
+        enableSorting: true,
+        size: 100,
+      },
+      {
+        id: 'sellPricePerUnit',
+        header: t('label.unit-price'),
+        columnType: ColumnType.Currency,
+        defaultHideOnMobile: true,
+        accessorFn: rowData => {
+          if (isPrescriptionPlaceholderRow(rowData)) return undefined;
+          return (rowData.sellPricePerPack ?? 0) / rowData.packSize;
+        },
+        aggregationFn: weightedAverageByUnits(),
+        size: 100,
+      },
+      {
+        id: 'lineTotal',
+        header: t('label.line-total'),
+        columnType: ColumnType.Currency,
+        defaultHideOnMobile: true,
+        accessorFn: rowData => {
+          if (isPrescriptionPlaceholderRow(rowData)) return null;
+          return (rowData.sellPricePerPack ?? 0) * rowData.numberOfPacks;
+        },
+        aggregationFn: 'sum',
+        size: 120,
+      },
+      {
+        id: 'totalCostPrice',
+        header: t('label.purchase-cost-price'),
+        columnType: ColumnType.Currency,
+        defaultHideOnMobile: true,
+        accessorFn: rowData => {
+          if (isPrescriptionPlaceholderRow(rowData)) return null;
+          return (rowData.costPricePerPack ?? 0) * rowData.numberOfPacks;
+        },
+        aggregationFn: 'sum',
+        size: 120,
+      },
+    ];
+  }, [manageVaccinesInDoses, hasPrescribedQty]);
+};

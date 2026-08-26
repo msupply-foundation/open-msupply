@@ -1,0 +1,43 @@
+fragment CustomFieldConfigRow on CustomFieldNode {
+  __typename
+  id
+  key
+  name
+  valueType
+  kind
+  displayMode
+}
+
+query customFieldScopeConfig($scope: String!) {
+  centralServer {
+    customField {
+      customFieldScopeConfig(scope: $scope) {
+        __typename
+        ... on CustomFieldConnector {
+          __typename
+          totalCount
+          nodes {
+            ...CustomFieldConfigRow
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation updateCustomFieldScopes($input: UpdateCustomFieldScopesInput!) {
+  centralServer {
+    customField {
+      updateScopes(input: $input) {
+        __typename
+        ... on CustomFieldConnector {
+          __typename
+          totalCount
+          nodes {
+            ...CustomFieldConfigRow
+          }
+        }
+      }
+    }
+  }
+}

@@ -2447,8 +2447,6 @@
   "messages.cannot-view-vaccine-card": "Vous ne pouvez pas consulter la Carte de Vaccination de ce patient depuis ce dépôt, car il a été inscrit au {{ programName }} par un autre dépôt",
   "messages.cant-change-campaign-or-program-on-finalised-invoice": "Impossible de modifier la campagne ou le programme sur une facture finalisée",
   "messages.cant-change-line-status-on-received-invoice": "Impossible de modifier le statut de la ligne sur une facture reçue",
-  "messages.cant-delete-finalised-stock-movement-lines": "Les lignes ne peuvent pas être supprimées d'un mouvement de stock finalisé",
-  "messages.cant-delete-finalised-stock-movements": "Les mouvements de stock finalisés ne peuvent pas être supprimés",
   "messages.cant-delete-generic": "Vous ne pouvez pas supprimer le ou les articles sélectionnés",
   "messages.cant-delete-requisitions": "Vous pouvez uniquement supprimer les réquisitions avec un statut 'Créé'",
   "messages.cant-delete-transferred": "Vous ne pouvez pas supprimer des articles qui ont été transférés depuis un autre dépôt. Veuillez plutôt réduire ces lignes à zéro.",

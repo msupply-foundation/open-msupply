@@ -1,0 +1,171 @@
+import React from 'react';
+import {
+  useTranslation,
+  WizardStepper,
+  TabPanel,
+  TabContext,
+  RecordPatch,
+  Alert,
+  AlertColor,
+  Box,
+  Divider,
+  BasicTextInput,
+  InputWithLabelRow,
+  Typography,
+} from '@openmsupply-client/common';
+import { QuantityToReturnTable } from './ReturnQuantitiesTable';
+import { ReturnReasonsTable } from '../ReturnReasonsTable';
+import { GenerateSupplierReturnLineFragment, useReturns } from '../../api';
+
+export enum Tabs {
+  Quantity = 'Quantity',
+  Reason = 'Reason',
+}
+
+interface ReturnStepsProps {
+  currentTab: string;
+  lines: GenerateSupplierReturnLineFragment[];
+  update: (patch: RecordPatch<GenerateSupplierReturnLineFragment>) => void;
+  zeroQuantityAlert: AlertColor | undefined;
+  setZeroQuantityAlert: React.Dispatch<
+    React.SetStateAction<AlertColor | undefined>
+  >;
+  theirReference: string;
+  onTheirReferenceChange: (value: string) => void;
+  isDisabled: boolean;
+  returnToName?: string;
+  returnId?: string;
+}
+
+export const ReturnSteps = ({
+  currentTab,
+  lines,
+  update,
+  zeroQuantityAlert,
+  setZeroQuantityAlert,
+  theirReference,
+  onTheirReferenceChange,
+  isDisabled,
+  returnToName,
+  returnId,
+}: ReturnStepsProps) => {
+  const t = useTranslation();
+  const { data } = useReturns.document.supplierReturn();
+
+  const returnsSteps = [
+    { tab: Tabs.Quantity, label: t('label.select-quantity'), description: '' },
+    { tab: Tabs.Reason, label: t('label.select-reason'), description: '' },
+  ];
+
+  const getActiveStep = () => {
+    const step = returnsSteps.findIndex(step => step.tab === currentTab);
+    return step === -1 ? 0 : step;
+  };
+
+  const alertMessage =
+    zeroQuantityAlert === 'warning'
+      ? t('messages.zero-return-quantity-will-delete-lines')
+      : t('messages.alert-zero-return-quantity');
+
+  const inputsDisabled = !!returnId && isDisabled;
+
+  return (
+    <Box
+      sx={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 0,
+        overflow: 'hidden',
+      }}
+    >
+      <TabContext value={currentTab}>
+        <Box sx={{ flexShrink: 0 }}>
+          <WizardStepper activeStep={getActiveStep()} steps={returnsSteps} />
+        </Box>
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 4,
+            py: 0.5,
+            px: 2,
+          }}
+        >
+          <InputWithLabelRow
+            label={t('label.return-to')}
+            Input={
+              <Typography>
+                {returnToName ?? data?.otherPartyName ?? ''}
+              </Typography>
+            }
+          />
+          <InputWithLabelRow
+            label={t('label.supplier-reference')}
+            labelWidth={null}
+            labelProps={{ sx: { whiteSpace: 'nowrap' } }}
+            Input={
+              <BasicTextInput
+                disabled={isDisabled}
+                value={theirReference}
+                onChange={e => onTheirReferenceChange(e.target.value)}
+              />
+            }
+          />
+        </Box>
+        <Divider sx={{ mx: 2, mb: 0.5 }} />
+        <TabPanel
+          value={Tabs.Quantity}
+          sx={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            padding: 0,
+            minHeight: 0,
+            overflow: 'hidden',
+            '&[hidden]': { display: 'none' },
+          }}
+        >
+          {zeroQuantityAlert && (
+            <Alert severity={zeroQuantityAlert}>{alertMessage}</Alert>
+          )}
+          <Box
+            sx={{
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              minHeight: 0,
+            }}
+          >
+            <QuantityToReturnTable
+              isDisabled={inputsDisabled}
+              lines={lines}
+              updateLine={line => {
+                if (zeroQuantityAlert) setZeroQuantityAlert(undefined);
+                update(line);
+              }}
+            />
+          </Box>
+        </TabPanel>
+        <TabPanel
+          value={Tabs.Reason}
+          sx={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            padding: 0,
+            minHeight: 0,
+            overflow: 'hidden',
+            '&[hidden]': { display: 'none' },
+          }}
+        >
+          <ReturnReasonsTable
+            isDisabled={inputsDisabled}
+            lines={lines.filter(l => l.numberOfPacksToReturn > 0)}
+            updateLine={line => update(line)}
+            disabledLinked={false}
+          />
+        </TabPanel>
+      </TabContext>
+    </Box>
+  );
+};

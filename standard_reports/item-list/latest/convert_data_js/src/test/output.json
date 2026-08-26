@@ -1,0 +1,35 @@
+{
+  "data": {
+    "items": {
+      "nodes": [
+        {
+          "id": "101",
+          "code": "ABC001",
+          "name": "Amoxicillin",
+          "venCategory": "V",
+          "SOH": 500,
+          "locationName": "Shelf A1",
+          "categoryName": "Antibiotics"
+        },
+        {
+          "id": "103",
+          "code": "GHI003",
+          "name": "Bandages",
+          "venCategory": "NotAssigned",
+          "SOH": 200,
+          "locationName": "Shelf B2",
+          "categoryName": ""
+        },
+        {
+          "id": "102",
+          "code": "DEF002",
+          "name": "Paracetamol",
+          "venCategory": "E",
+          "SOH": 0,
+          "locationName": "",
+          "categoryName": "Analgesics"
+        }
+      ]
+    }
+  }
+}

@@ -315,6 +315,11 @@ const InboundShipmentDetailView: Component = () => {
   // keeps the current page visible instead of suspending.
   const rows = (): Line[] => gated(linesData)?.nodes ?? [];
   const totalCount = () => gated(linesData)?.totalCount ?? 0;
+  // Whether the shipment holds any STOCK-BEARING line — this query already
+  // filters to STOCK_IN / UNALLOCATED_STOCK, so service lines (which never
+  // create stock) are correctly excluded. Feeds the side panel's delete
+  // confirmation: an empty shipment has no stock to warn about.
+  const hasLines = () => totalCount() > 0;
 
   // A bulk delete of the last page's rows leaves the offset past the new end
   // (src/list/clampPageOffset.ts, issue #1117).
@@ -938,6 +943,7 @@ const InboundShipmentDetailView: Component = () => {
                   node={node()}
                   open={sidePanelOpen()}
                   disabled={isDisabled()}
+                  hasLines={hasLines()}
                   scope={scope()}
                   edit={edit}
                   donorTracking={prefs().allowTrackingOfStockByDonor}

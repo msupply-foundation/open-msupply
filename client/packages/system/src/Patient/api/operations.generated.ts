@@ -1,0 +1,1164 @@
+import * as Types from '@openmsupply-client/common';
+
+import { GraphQLClient, RequestOptions } from 'graphql-request';
+import gql from 'graphql-tag';
+type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
+export type PatientRowFragment = {
+  __typename: 'PatientNode';
+  id: string;
+  code: string;
+  code2?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  name: string;
+  dateOfBirth?: string | null;
+  address1?: string | null;
+  phone?: string | null;
+  gender?: Types.GenderTypeNode | null;
+  email?: string | null;
+  nextOfKinName?: string | null;
+  createdDatetime?: string | null;
+  isDeceased: boolean;
+  dateOfDeath?: string | null;
+  customFields?: any | null;
+  document?: { __typename: 'DocumentNode'; name: string } | null;
+  programEnrolments: {
+    __typename: 'ProgramEnrolmentConnector';
+    totalCount: number;
+    nodes: Array<{
+      __typename: 'ProgramEnrolmentNode';
+      programEnrolmentId?: string | null;
+      document: {
+        __typename: 'DocumentNode';
+        documentRegistry?: {
+          __typename: 'DocumentRegistryNode';
+          name?: string | null;
+        } | null;
+      };
+    }>;
+  };
+};
+
+export type ProgramPatientRowFragment = {
+  __typename: 'PatientNode';
+  id: string;
+  code: string;
+  code2?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  name: string;
+  dateOfBirth?: string | null;
+  address1?: string | null;
+  phone?: string | null;
+  gender?: Types.GenderTypeNode | null;
+  email?: string | null;
+  createdDatetime?: string | null;
+  documentDraft?: any | null;
+  isDeceased: boolean;
+  dateOfDeath?: string | null;
+  nextOfKinId?: string | null;
+  nextOfKinName?: string | null;
+  customFields?: any | null;
+  document?: {
+    __typename: 'DocumentNode';
+    id: string;
+    name: string;
+    type: string;
+  } | null;
+  programEnrolments: {
+    __typename: 'ProgramEnrolmentConnector';
+    totalCount: number;
+    nodes: Array<{
+      __typename: 'ProgramEnrolmentNode';
+      programEnrolmentId?: string | null;
+      document: {
+        __typename: 'DocumentNode';
+        documentRegistry?: {
+          __typename: 'DocumentRegistryNode';
+          name?: string | null;
+        } | null;
+      };
+    }>;
+  };
+};
+
+export type CustomFieldFragment = {
+  __typename: 'CustomFieldNode';
+  id: string;
+  key: string;
+  name: string;
+  valueType: Types.CustomFieldNodeValueType;
+  kind: Types.CustomFieldNodeKind;
+  options: Array<{
+    __typename: 'CustomFieldOptionNode';
+    id: string;
+    key: string;
+    name: string;
+    parentOptionId?: string | null;
+  }>;
+};
+
+export type PatientCustomFieldsQueryVariables = Types.Exact<{
+  [key: string]: never;
+}>;
+
+export type PatientCustomFieldsQuery = {
+  __typename: 'Queries';
+  customFields: {
+    __typename: 'CustomFieldConnector';
+    totalCount: number;
+    nodes: Array<{
+      __typename: 'CustomFieldNode';
+      id: string;
+      key: string;
+      name: string;
+      valueType: Types.CustomFieldNodeValueType;
+      kind: Types.CustomFieldNodeKind;
+      options: Array<{
+        __typename: 'CustomFieldOptionNode';
+        id: string;
+        key: string;
+        name: string;
+        parentOptionId?: string | null;
+      }>;
+    }>;
+  };
+};
+
+export type UpdatePatientCustomFieldsMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.UpdatePatientCustomFieldsInput;
+}>;
+
+export type UpdatePatientCustomFieldsMutation = {
+  __typename: 'Mutations';
+  updatePatientCustomFields: {
+    __typename: 'PatientNode';
+    id: string;
+    code: string;
+    code2?: string | null;
+    firstName?: string | null;
+    lastName?: string | null;
+    name: string;
+    dateOfBirth?: string | null;
+    address1?: string | null;
+    phone?: string | null;
+    gender?: Types.GenderTypeNode | null;
+    email?: string | null;
+    createdDatetime?: string | null;
+    documentDraft?: any | null;
+    isDeceased: boolean;
+    dateOfDeath?: string | null;
+    nextOfKinId?: string | null;
+    nextOfKinName?: string | null;
+    customFields?: any | null;
+    document?: {
+      __typename: 'DocumentNode';
+      id: string;
+      name: string;
+      type: string;
+    } | null;
+    programEnrolments: {
+      __typename: 'ProgramEnrolmentConnector';
+      totalCount: number;
+      nodes: Array<{
+        __typename: 'ProgramEnrolmentNode';
+        programEnrolmentId?: string | null;
+        document: {
+          __typename: 'DocumentNode';
+          documentRegistry?: {
+            __typename: 'DocumentRegistryNode';
+            name?: string | null;
+          } | null;
+        };
+      }>;
+    };
+  };
+};
+
+export type PatientsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  page?: Types.InputMaybe<Types.PaginationInput>;
+  sort?: Types.InputMaybe<
+    Array<Types.PatientSortInput> | Types.PatientSortInput
+  >;
+  filter?: Types.InputMaybe<Types.PatientFilterInput>;
+}>;
+
+export type PatientsQuery = {
+  __typename: 'Queries';
+  patients: {
+    __typename: 'PatientConnector';
+    totalCount: number;
+    nodes: Array<{
+      __typename: 'PatientNode';
+      id: string;
+      code: string;
+      code2?: string | null;
+      firstName?: string | null;
+      lastName?: string | null;
+      name: string;
+      dateOfBirth?: string | null;
+      address1?: string | null;
+      phone?: string | null;
+      gender?: Types.GenderTypeNode | null;
+      email?: string | null;
+      nextOfKinName?: string | null;
+      createdDatetime?: string | null;
+      isDeceased: boolean;
+      dateOfDeath?: string | null;
+      customFields?: any | null;
+      document?: { __typename: 'DocumentNode'; name: string } | null;
+      programEnrolments: {
+        __typename: 'ProgramEnrolmentConnector';
+        totalCount: number;
+        nodes: Array<{
+          __typename: 'ProgramEnrolmentNode';
+          programEnrolmentId?: string | null;
+          document: {
+            __typename: 'DocumentNode';
+            documentRegistry?: {
+              __typename: 'DocumentRegistryNode';
+              name?: string | null;
+            } | null;
+          };
+        }>;
+      };
+    }>;
+  };
+};
+
+export type PatientByIdQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  nameId: Types.Scalars['String']['input'];
+}>;
+
+export type PatientByIdQuery = {
+  __typename: 'Queries';
+  patients: {
+    __typename: 'PatientConnector';
+    totalCount: number;
+    nodes: Array<{
+      __typename: 'PatientNode';
+      id: string;
+      code: string;
+      code2?: string | null;
+      firstName?: string | null;
+      lastName?: string | null;
+      name: string;
+      dateOfBirth?: string | null;
+      address1?: string | null;
+      phone?: string | null;
+      gender?: Types.GenderTypeNode | null;
+      email?: string | null;
+      createdDatetime?: string | null;
+      documentDraft?: any | null;
+      isDeceased: boolean;
+      dateOfDeath?: string | null;
+      nextOfKinId?: string | null;
+      nextOfKinName?: string | null;
+      customFields?: any | null;
+      document?: {
+        __typename: 'DocumentNode';
+        id: string;
+        name: string;
+        type: string;
+      } | null;
+      programEnrolments: {
+        __typename: 'ProgramEnrolmentConnector';
+        totalCount: number;
+        nodes: Array<{
+          __typename: 'ProgramEnrolmentNode';
+          programEnrolmentId?: string | null;
+          document: {
+            __typename: 'DocumentNode';
+            documentRegistry?: {
+              __typename: 'DocumentRegistryNode';
+              name?: string | null;
+            } | null;
+          };
+        }>;
+      };
+    }>;
+  };
+};
+
+export type PatientSearchQueryVariables = Types.Exact<{
+  input: Types.PatientSearchInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type PatientSearchQuery = {
+  __typename: 'Queries';
+  patientSearch: {
+    __typename: 'PatientSearchConnector';
+    totalCount: number;
+    nodes: Array<{
+      __typename: 'PatientSearchNode';
+      score: number;
+      patient: {
+        __typename: 'PatientNode';
+        id: string;
+        code: string;
+        code2?: string | null;
+        firstName?: string | null;
+        lastName?: string | null;
+        name: string;
+        dateOfBirth?: string | null;
+        address1?: string | null;
+        phone?: string | null;
+        gender?: Types.GenderTypeNode | null;
+        email?: string | null;
+        createdDatetime?: string | null;
+        documentDraft?: any | null;
+        isDeceased: boolean;
+        dateOfDeath?: string | null;
+        nextOfKinId?: string | null;
+        nextOfKinName?: string | null;
+        customFields?: any | null;
+        document?: {
+          __typename: 'DocumentNode';
+          id: string;
+          name: string;
+          type: string;
+        } | null;
+        programEnrolments: {
+          __typename: 'ProgramEnrolmentConnector';
+          totalCount: number;
+          nodes: Array<{
+            __typename: 'ProgramEnrolmentNode';
+            programEnrolmentId?: string | null;
+            document: {
+              __typename: 'DocumentNode';
+              documentRegistry?: {
+                __typename: 'DocumentRegistryNode';
+                name?: string | null;
+              } | null;
+            };
+          }>;
+        };
+      };
+    }>;
+  };
+};
+
+export type CentralPatientSearchQueryVariables = Types.Exact<{
+  input: Types.CentralPatientSearchInput;
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type CentralPatientSearchQuery = {
+  __typename: 'Queries';
+  centralPatientSearch:
+    | {
+        __typename: 'CentralPatientSearchConnector';
+        totalCount: number;
+        nodes: Array<{
+          __typename: 'CentralPatientNode';
+          id: string;
+          code: string;
+          code2?: string | null;
+          dateOfBirth?: string | null;
+          firstName: string;
+          lastName: string;
+          gender?: Types.GenderTypeNode | null;
+          isDeceased: boolean;
+        }>;
+      }
+    | {
+        __typename: 'CentralPatientSearchError';
+        error: { __typename: 'ConnectionError'; description: string };
+      };
+};
+
+export type LinkPatientToStoreMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  nameId: Types.Scalars['String']['input'];
+}>;
+
+export type LinkPatientToStoreMutation = {
+  __typename: 'Mutations';
+  linkPatientToStore:
+    | {
+        __typename: 'LinkPatientPatientToStoreError';
+        error: { __typename: 'ConnectionError'; description: string };
+      }
+    | {
+        __typename: 'NameStoreJoinNode';
+        id: string;
+        storeId: string;
+        nameId: string;
+      };
+};
+
+export type InsertProgramPatientMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.InsertProgramPatientInput;
+}>;
+
+export type InsertProgramPatientMutation = {
+  __typename: 'Mutations';
+  insertProgramPatient: {
+    __typename: 'PatientNode';
+    id: string;
+    code: string;
+    code2?: string | null;
+    firstName?: string | null;
+    lastName?: string | null;
+    name: string;
+    dateOfBirth?: string | null;
+    address1?: string | null;
+    phone?: string | null;
+    gender?: Types.GenderTypeNode | null;
+    email?: string | null;
+    createdDatetime?: string | null;
+    documentDraft?: any | null;
+    isDeceased: boolean;
+    dateOfDeath?: string | null;
+    nextOfKinId?: string | null;
+    nextOfKinName?: string | null;
+    customFields?: any | null;
+    document?: {
+      __typename: 'DocumentNode';
+      id: string;
+      name: string;
+      type: string;
+    } | null;
+    programEnrolments: {
+      __typename: 'ProgramEnrolmentConnector';
+      totalCount: number;
+      nodes: Array<{
+        __typename: 'ProgramEnrolmentNode';
+        programEnrolmentId?: string | null;
+        document: {
+          __typename: 'DocumentNode';
+          documentRegistry?: {
+            __typename: 'DocumentRegistryNode';
+            name?: string | null;
+          } | null;
+        };
+      }>;
+    };
+  };
+};
+
+export type UpdateProgramPatientMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.UpdateProgramPatientInput;
+}>;
+
+export type UpdateProgramPatientMutation = {
+  __typename: 'Mutations';
+  updateProgramPatient: {
+    __typename: 'PatientNode';
+    id: string;
+    code: string;
+    code2?: string | null;
+    firstName?: string | null;
+    lastName?: string | null;
+    name: string;
+    dateOfBirth?: string | null;
+    address1?: string | null;
+    phone?: string | null;
+    gender?: Types.GenderTypeNode | null;
+    email?: string | null;
+    createdDatetime?: string | null;
+    documentDraft?: any | null;
+    isDeceased: boolean;
+    dateOfDeath?: string | null;
+    nextOfKinId?: string | null;
+    nextOfKinName?: string | null;
+    customFields?: any | null;
+    document?: {
+      __typename: 'DocumentNode';
+      id: string;
+      name: string;
+      type: string;
+    } | null;
+    programEnrolments: {
+      __typename: 'ProgramEnrolmentConnector';
+      totalCount: number;
+      nodes: Array<{
+        __typename: 'ProgramEnrolmentNode';
+        programEnrolmentId?: string | null;
+        document: {
+          __typename: 'DocumentNode';
+          documentRegistry?: {
+            __typename: 'DocumentRegistryNode';
+            name?: string | null;
+          } | null;
+        };
+      }>;
+    };
+  };
+};
+
+export type InsertPatientMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.InsertPatientInput;
+}>;
+
+export type InsertPatientMutation = {
+  __typename: 'Mutations';
+  insertPatient: {
+    __typename: 'PatientNode';
+    id: string;
+    code: string;
+    code2?: string | null;
+    firstName?: string | null;
+    lastName?: string | null;
+    name: string;
+    dateOfBirth?: string | null;
+    address1?: string | null;
+    phone?: string | null;
+    gender?: Types.GenderTypeNode | null;
+    email?: string | null;
+    createdDatetime?: string | null;
+    documentDraft?: any | null;
+    isDeceased: boolean;
+    dateOfDeath?: string | null;
+    nextOfKinId?: string | null;
+    nextOfKinName?: string | null;
+    customFields?: any | null;
+    document?: {
+      __typename: 'DocumentNode';
+      id: string;
+      name: string;
+      type: string;
+    } | null;
+    programEnrolments: {
+      __typename: 'ProgramEnrolmentConnector';
+      totalCount: number;
+      nodes: Array<{
+        __typename: 'ProgramEnrolmentNode';
+        programEnrolmentId?: string | null;
+        document: {
+          __typename: 'DocumentNode';
+          documentRegistry?: {
+            __typename: 'DocumentRegistryNode';
+            name?: string | null;
+          } | null;
+        };
+      }>;
+    };
+  };
+};
+
+export type UpdatePatientMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.UpdatePatientInput;
+}>;
+
+export type UpdatePatientMutation = {
+  __typename: 'Mutations';
+  updatePatient: {
+    __typename: 'PatientNode';
+    id: string;
+    code: string;
+    code2?: string | null;
+    firstName?: string | null;
+    lastName?: string | null;
+    name: string;
+    dateOfBirth?: string | null;
+    address1?: string | null;
+    phone?: string | null;
+    gender?: Types.GenderTypeNode | null;
+    email?: string | null;
+    createdDatetime?: string | null;
+    documentDraft?: any | null;
+    isDeceased: boolean;
+    dateOfDeath?: string | null;
+    nextOfKinId?: string | null;
+    nextOfKinName?: string | null;
+    customFields?: any | null;
+    document?: {
+      __typename: 'DocumentNode';
+      id: string;
+      name: string;
+      type: string;
+    } | null;
+    programEnrolments: {
+      __typename: 'ProgramEnrolmentConnector';
+      totalCount: number;
+      nodes: Array<{
+        __typename: 'ProgramEnrolmentNode';
+        programEnrolmentId?: string | null;
+        document: {
+          __typename: 'DocumentNode';
+          documentRegistry?: {
+            __typename: 'DocumentRegistryNode';
+            name?: string | null;
+          } | null;
+        };
+      }>;
+    };
+  };
+};
+
+export type LatestPatientEncounterQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  patientId: Types.Scalars['String']['input'];
+  encounterType?: Types.InputMaybe<Types.Scalars['String']['input']>;
+}>;
+
+export type LatestPatientEncounterQuery = {
+  __typename: 'Queries';
+  encounters: {
+    __typename: 'EncounterConnector';
+    totalCount: number;
+    nodes: Array<{
+      __typename: 'EncounterNode';
+      id: string;
+      type: string;
+      startDatetime: string;
+      suggestedNextEncounter?: {
+        __typename: 'SuggestedNextEncounterNode';
+        startDatetime: string;
+        label?: string | null;
+      } | null;
+    }>;
+  };
+};
+
+export const PatientRowFragmentDoc = gql`
+  fragment PatientRow on PatientNode {
+    id
+    code
+    code2
+    firstName
+    lastName
+    name
+    dateOfBirth
+    address1
+    phone
+    gender
+    email
+    nextOfKinName
+    createdDatetime
+    document {
+      name
+    }
+    isDeceased
+    dateOfDeath
+    customFields
+    programEnrolments {
+      ... on ProgramEnrolmentConnector {
+        __typename
+        nodes {
+          programEnrolmentId
+          document {
+            documentRegistry {
+              name
+            }
+          }
+        }
+        totalCount
+      }
+    }
+  }
+`;
+export const ProgramPatientRowFragmentDoc = gql`
+  fragment ProgramPatientRow on PatientNode {
+    id
+    code
+    code2
+    firstName
+    lastName
+    name
+    dateOfBirth
+    address1
+    phone
+    gender
+    email
+    createdDatetime
+    document {
+      id
+      name
+      type
+    }
+    documentDraft
+    isDeceased
+    dateOfDeath
+    nextOfKinId
+    nextOfKinName
+    customFields
+    programEnrolments {
+      ... on ProgramEnrolmentConnector {
+        __typename
+        nodes {
+          programEnrolmentId
+          document {
+            documentRegistry {
+              name
+            }
+          }
+        }
+        totalCount
+      }
+    }
+  }
+`;
+export const CustomFieldFragmentDoc = gql`
+  fragment CustomField on CustomFieldNode {
+    id
+    key
+    name
+    valueType
+    kind
+    options {
+      id
+      key
+      name
+      parentOptionId
+    }
+  }
+`;
+export const PatientCustomFieldsDocument = gql`
+  query patientCustomFields {
+    customFields(filter: { scope: { equalTo: "patient" } }) {
+      ... on CustomFieldConnector {
+        __typename
+        totalCount
+        nodes {
+          ...CustomField
+        }
+      }
+    }
+  }
+  ${CustomFieldFragmentDoc}
+`;
+export const UpdatePatientCustomFieldsDocument = gql`
+  mutation updatePatientCustomFields(
+    $storeId: String!
+    $input: UpdatePatientCustomFieldsInput!
+  ) {
+    updatePatientCustomFields(storeId: $storeId, input: $input) {
+      ... on PatientNode {
+        __typename
+        ...ProgramPatientRow
+      }
+    }
+  }
+  ${ProgramPatientRowFragmentDoc}
+`;
+export const PatientsDocument = gql`
+  query patients(
+    $storeId: String!
+    $page: PaginationInput
+    $sort: [PatientSortInput!]
+    $filter: PatientFilterInput
+  ) {
+    patients(storeId: $storeId, page: $page, sort: $sort, filter: $filter) {
+      ... on PatientConnector {
+        __typename
+        nodes {
+          ...PatientRow
+        }
+        totalCount
+      }
+    }
+  }
+  ${PatientRowFragmentDoc}
+`;
+export const PatientByIdDocument = gql`
+  query patientById($storeId: String!, $nameId: String!) {
+    patients(storeId: $storeId, filter: { id: { equalTo: $nameId } }) {
+      ... on PatientConnector {
+        __typename
+        nodes {
+          ...ProgramPatientRow
+        }
+        totalCount
+      }
+    }
+  }
+  ${ProgramPatientRowFragmentDoc}
+`;
+export const PatientSearchDocument = gql`
+  query patientSearch($input: PatientSearchInput!, $storeId: String!) {
+    patientSearch(input: $input, storeId: $storeId) {
+      ... on PatientSearchConnector {
+        __typename
+        nodes {
+          score
+          patient {
+            ...ProgramPatientRow
+          }
+        }
+        totalCount
+      }
+    }
+  }
+  ${ProgramPatientRowFragmentDoc}
+`;
+export const CentralPatientSearchDocument = gql`
+  query centralPatientSearch(
+    $input: CentralPatientSearchInput!
+    $storeId: String!
+  ) {
+    centralPatientSearch(input: $input, storeId: $storeId) {
+      __typename
+      ... on CentralPatientSearchConnector {
+        nodes {
+          id
+          code
+          code2
+          dateOfBirth
+          firstName
+          lastName
+          gender
+          isDeceased
+        }
+        totalCount
+      }
+      ... on CentralPatientSearchError {
+        error {
+          __typename
+          ... on ConnectionError {
+            description
+          }
+        }
+      }
+    }
+  }
+`;
+export const LinkPatientToStoreDocument = gql`
+  mutation linkPatientToStore($storeId: String!, $nameId: String!) {
+    linkPatientToStore(nameId: $nameId, storeId: $storeId) {
+      __typename
+      ... on NameStoreJoinNode {
+        id
+        storeId
+        nameId
+      }
+      ... on LinkPatientPatientToStoreError {
+        error {
+          __typename
+          ... on ConnectionError {
+            description
+          }
+        }
+      }
+    }
+  }
+`;
+export const InsertProgramPatientDocument = gql`
+  mutation insertProgramPatient(
+    $storeId: String!
+    $input: InsertProgramPatientInput!
+  ) {
+    insertProgramPatient(storeId: $storeId, input: $input) {
+      ... on PatientNode {
+        __typename
+        ...ProgramPatientRow
+      }
+    }
+  }
+  ${ProgramPatientRowFragmentDoc}
+`;
+export const UpdateProgramPatientDocument = gql`
+  mutation updateProgramPatient(
+    $storeId: String!
+    $input: UpdateProgramPatientInput!
+  ) {
+    updateProgramPatient(storeId: $storeId, input: $input) {
+      ... on PatientNode {
+        __typename
+        ...ProgramPatientRow
+      }
+    }
+  }
+  ${ProgramPatientRowFragmentDoc}
+`;
+export const InsertPatientDocument = gql`
+  mutation insertPatient($storeId: String!, $input: InsertPatientInput!) {
+    insertPatient(storeId: $storeId, input: $input) {
+      ... on PatientNode {
+        __typename
+        ...ProgramPatientRow
+      }
+    }
+  }
+  ${ProgramPatientRowFragmentDoc}
+`;
+export const UpdatePatientDocument = gql`
+  mutation updatePatient($storeId: String!, $input: UpdatePatientInput!) {
+    updatePatient(storeId: $storeId, input: $input) {
+      ... on PatientNode {
+        __typename
+        ...ProgramPatientRow
+      }
+    }
+  }
+  ${ProgramPatientRowFragmentDoc}
+`;
+export const LatestPatientEncounterDocument = gql`
+  query latestPatientEncounter(
+    $storeId: String!
+    $patientId: String!
+    $encounterType: String
+  ) {
+    encounters(
+      storeId: $storeId
+      filter: {
+        patientId: { equalTo: $patientId }
+        type: { equalTo: $encounterType }
+      }
+      sort: { key: startDatetime, desc: true }
+      page: { first: 1 }
+    ) {
+      ... on EncounterConnector {
+        __typename
+        nodes {
+          id
+          type
+          startDatetime
+          suggestedNextEncounter {
+            startDatetime
+            label
+          }
+        }
+        totalCount
+      }
+    }
+  }
+`;
+
+export type SdkFunctionWrapper = <T>(
+  action: (requestHeaders?: Record<string, string>) => Promise<T>,
+  operationName: string,
+  operationType?: string,
+  variables?: any
+) => Promise<T>;
+
+const defaultWrapper: SdkFunctionWrapper = (
+  action,
+  _operationName,
+  _operationType,
+  _variables
+) => action();
+
+export function getSdk(
+  client: GraphQLClient,
+  withWrapper: SdkFunctionWrapper = defaultWrapper
+) {
+  return {
+    patientCustomFields(
+      variables?: PatientCustomFieldsQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<PatientCustomFieldsQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<PatientCustomFieldsQuery>({
+            document: PatientCustomFieldsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'patientCustomFields',
+        'query',
+        variables
+      );
+    },
+    updatePatientCustomFields(
+      variables: UpdatePatientCustomFieldsMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<UpdatePatientCustomFieldsMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UpdatePatientCustomFieldsMutation>({
+            document: UpdatePatientCustomFieldsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'updatePatientCustomFields',
+        'mutation',
+        variables
+      );
+    },
+    patients(
+      variables: PatientsQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<PatientsQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<PatientsQuery>({
+            document: PatientsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'patients',
+        'query',
+        variables
+      );
+    },
+    patientById(
+      variables: PatientByIdQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<PatientByIdQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<PatientByIdQuery>({
+            document: PatientByIdDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'patientById',
+        'query',
+        variables
+      );
+    },
+    patientSearch(
+      variables: PatientSearchQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<PatientSearchQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<PatientSearchQuery>({
+            document: PatientSearchDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'patientSearch',
+        'query',
+        variables
+      );
+    },
+    centralPatientSearch(
+      variables: CentralPatientSearchQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<CentralPatientSearchQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<CentralPatientSearchQuery>({
+            document: CentralPatientSearchDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'centralPatientSearch',
+        'query',
+        variables
+      );
+    },
+    linkPatientToStore(
+      variables: LinkPatientToStoreMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<LinkPatientToStoreMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<LinkPatientToStoreMutation>({
+            document: LinkPatientToStoreDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'linkPatientToStore',
+        'mutation',
+        variables
+      );
+    },
+    insertProgramPatient(
+      variables: InsertProgramPatientMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<InsertProgramPatientMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InsertProgramPatientMutation>({
+            document: InsertProgramPatientDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'insertProgramPatient',
+        'mutation',
+        variables
+      );
+    },
+    updateProgramPatient(
+      variables: UpdateProgramPatientMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<UpdateProgramPatientMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UpdateProgramPatientMutation>({
+            document: UpdateProgramPatientDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'updateProgramPatient',
+        'mutation',
+        variables
+      );
+    },
+    insertPatient(
+      variables: InsertPatientMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<InsertPatientMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InsertPatientMutation>({
+            document: InsertPatientDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'insertPatient',
+        'mutation',
+        variables
+      );
+    },
+    updatePatient(
+      variables: UpdatePatientMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<UpdatePatientMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UpdatePatientMutation>({
+            document: UpdatePatientDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'updatePatient',
+        'mutation',
+        variables
+      );
+    },
+    latestPatientEncounter(
+      variables: LatestPatientEncounterQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<LatestPatientEncounterQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<LatestPatientEncounterQuery>({
+            document: LatestPatientEncounterDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'latestPatientEncounter',
+        'query',
+        variables
+      );
+    },
+  };
+}
+export type Sdk = ReturnType<typeof getSdk>;

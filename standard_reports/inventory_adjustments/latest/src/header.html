@@ -1,0 +1,30 @@
+<style>
+	{% include "style.css" %}</style>
+
+<div class="header-container">
+	<div class="header-title">
+		{{ t(k="report.inventory-adjustments", f="Inventory Adjustments Report") }}
+	</div>
+	<div class="header-info">
+		<div class="header-info-left">
+			<span class="header-label">{{ t(k="label.store", f="Store") }}:</span>
+			<span>{{ data.store.storeName }}</span>
+		</div>
+		<div class="header-info-right">
+			<span class="header-label">{{ t(k="label.timeframe", f="Timeframe") }}:</span>
+			{% if data.date.from and data.date.to %}
+				<span>{{ data.date.from | date(format="%d/%m/%Y") }}
+					-
+					{{ data.date.to | date(format="%d/%m/%Y") }}</span>
+			{% elif data.date.from %}
+				<span>{{ t(k="label.from", f="From") }}
+					{{ data.date.from | date(format="%d/%m/%Y") }}</span>
+			{% elif data.date.to %}
+				<span>{{ t(k="label.to", f="To") }}
+					{{ data.date.to | date(format="%d/%m/%Y") }}</span>
+			{% else %}
+				<span>{{ t(k="label.all-dates", f="All dates") }}</span>
+			{% endif %}
+		</div>
+	</div>
+</div>

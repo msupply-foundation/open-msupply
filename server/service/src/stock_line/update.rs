@@ -1,0 +1,354 @@
+use super::query::get_stock_line;
+use crate::{
+    activity_log::activity_log_entry_with_diff,
+    barcode::{self, BarcodeInput},
+    check_item_variant_exists, check_location_exists, check_location_type_is_valid,
+    common::{check_stock_line_exists, CommonStockLineError},
+    service_provider::ServiceContext,
+    validate::{check_date_is_not_in_future, check_other_party, CheckOtherPartyType, OtherPartyErrors},
+    NullableUpdate, SingleRecordError,
+};
+use chrono::{NaiveDate, Utc};
+use repository::{
+    location_movement::{LocationMovementFilter, LocationMovementRepository},
+    ActivityLogType, BarcodeRow, BarcodeRowRepository, DatetimeFilter, EqualFilter,
+    LocationMovementRow, LocationMovementRowRepository, RepositoryError, StockLine, StockLineRow,
+    StockLineRowRepository, StorageConnection,
+};
+use util::uuid::uuid;
+
+#[derive(Default, Debug, Clone, PartialEq)]
+pub struct UpdateStockLine {
+    pub id: String,
+    pub location: Option<NullableUpdate<String>>,
+    pub cost_price_per_pack: Option<f64>,
+    pub sell_price_per_pack: Option<f64>,
+    pub expiry_date: Option<NullableUpdate<NaiveDate>>,
+    pub manufacture_date: Option<NullableUpdate<NaiveDate>>,
+    pub on_hold: Option<bool>,
+    pub batch: Option<String>,
+    pub barcode: Option<String>,
+    pub vvm_status_id: Option<String>,
+    pub item_variant_id: Option<NullableUpdate<String>>,
+    pub donor_id: Option<NullableUpdate<String>>,
+    pub campaign_id: Option<NullableUpdate<String>>,
+    pub program_id: Option<NullableUpdate<String>>,
+    pub volume_per_pack: Option<f64>,
+    pub manufacturer_id: Option<NullableUpdate<String>>,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum UpdateStockLineError {
+    DatabaseError(RepositoryError),
+    StockDoesNotBelongToStore,
+    StockDoesNotExist,
+    LocationDoesNotExist,
+    ItemVariantDoesNotExist,
+    DonorDoesNotExist,
+    DonorNotVisible,
+    DonorIsNotADonor,
+    ManufacturerDoesNotExist,
+    ManufacturerIsNotAManufacturer,
+    UpdatedStockNotFound,
+    StockMovementNotFound,
+    VVMStatusDoesNotExist,
+    IncorrectLocationType,
+    CannotSetManufactureDateInFuture,
+}
+
+pub fn update_stock_line(
+    ctx: &ServiceContext,
+    input: UpdateStockLine,
+) -> Result<StockLine, UpdateStockLineError> {
+    use UpdateStockLineError::*;
+
+    let result = ctx
+        .connection
+        .transaction_sync(|connection| {
+            let existing = validate(connection, &ctx.store_id, &input)?;
+            let GenerateResult {
+                new_stock_line,
+                location_movements,
+                barcode_row,
+            } = generate(ctx.store_id.clone(), connection, existing.clone(), input)?;
+
+            if let Some(barcode_row) = barcode_row {
+                BarcodeRowRepository::new(connection).upsert_one(&barcode_row)?;
+            }
+
+            StockLineRowRepository::new(connection).upsert_one(&new_stock_line)?;
+
+            if let Some(location_movements) = location_movements {
+                for movement in location_movements {
+                    LocationMovementRowRepository::new(connection).upsert_one(&movement)?;
+                }
+            }
+
+            log_stock_changes(ctx, existing.stock_line_row, new_stock_line.clone())?;
+
+            get_stock_line(ctx, new_stock_line.id).map_err(|error| match error {
+                SingleRecordError::DatabaseError(error) => DatabaseError(error),
+                SingleRecordError::NotFound(_) => UpdatedStockNotFound,
+            })
+        })
+        .map_err(|error| error.to_inner_error())?;
+    Ok(result)
+}
+
+fn validate(
+    connection: &StorageConnection,
+    store_id: &str,
+    input: &UpdateStockLine,
+) -> Result<StockLine, UpdateStockLineError> {
+    use UpdateStockLineError::*;
+
+    let stock_line: StockLine =
+        check_stock_line_exists(connection, store_id, &input.id).map_err(|err| match err {
+            CommonStockLineError::DatabaseError(RepositoryError::NotFound) => StockDoesNotExist,
+            CommonStockLineError::StockLineDoesNotBelongToStore => StockDoesNotBelongToStore,
+            CommonStockLineError::DatabaseError(error) => DatabaseError(error),
+        })?;
+
+    if let Some(NullableUpdate {
+        value: Some(manufacture_date),
+    }) = &input.manufacture_date
+    {
+        if !check_date_is_not_in_future(manufacture_date) {
+            return Err(CannotSetManufactureDateInFuture);
+        }
+    }
+
+    if let Some(NullableUpdate {
+        value: Some(ref location),
+    }) = &input.location
+    {
+        if !check_location_exists(connection, store_id, &location.clone())? {
+            return Err(LocationDoesNotExist);
+        }
+
+        if let Some(item_restricted_type) = &stock_line.item_row.restricted_location_type_id {
+            if !check_location_type_is_valid(connection, store_id, location, item_restricted_type)?
+            {
+                return Err(IncorrectLocationType);
+            }
+        }
+    }
+
+    if let Some(NullableUpdate {
+        value: Some(item_variant_id),
+    }) = &input.item_variant_id
+    {
+        if check_item_variant_exists(connection, item_variant_id)?.is_none() {
+            return Err(ItemVariantDoesNotExist);
+        }
+    }
+
+    if let Some(NullableUpdate {
+        value: Some(donor_id),
+    }) = &input.donor_id
+    {
+        check_other_party(connection, store_id, donor_id, CheckOtherPartyType::Donor).map_err(
+            |e| match e {
+                OtherPartyErrors::OtherPartyDoesNotExist => DonorDoesNotExist {},
+                OtherPartyErrors::OtherPartyNotVisible => DonorNotVisible,
+                OtherPartyErrors::TypeMismatched => DonorIsNotADonor,
+                OtherPartyErrors::DatabaseError(repository_error) => {
+                    DatabaseError(repository_error)
+                }
+            },
+        )?;
+    };
+
+    if let Some(NullableUpdate {
+        value: Some(manufacturer_id),
+    }) = &input.manufacturer_id
+    {
+        match check_other_party(
+            connection,
+            store_id,
+            manufacturer_id,
+            CheckOtherPartyType::Manufacturer,
+        ) {
+            Ok(_) => {}
+            Err(e) => match e {
+                OtherPartyErrors::OtherPartyDoesNotExist => return Err(ManufacturerDoesNotExist),
+                // Invisible manufacturers are allowed - they can be configured centrally (e.g. on
+                // an item variant) or inherited from stock without being visible in this store
+                OtherPartyErrors::OtherPartyNotVisible => {}
+                OtherPartyErrors::TypeMismatched => return Err(ManufacturerIsNotAManufacturer),
+                OtherPartyErrors::DatabaseError(repository_error) => {
+                    return Err(DatabaseError(repository_error))
+                }
+            },
+        };
+    };
+
+    Ok(stock_line)
+}
+
+pub struct GenerateResult {
+    pub new_stock_line: StockLineRow,
+    pub location_movements: Option<Vec<LocationMovementRow>>,
+    pub barcode_row: Option<BarcodeRow>,
+}
+
+fn generate(
+    store_id: String,
+    connection: &StorageConnection,
+    existing_line: StockLine,
+    UpdateStockLine {
+        id: _,
+        location,
+        cost_price_per_pack,
+        sell_price_per_pack,
+        expiry_date,
+        manufacture_date,
+        batch,
+        on_hold,
+        barcode,
+        vvm_status_id,
+        item_variant_id,
+        donor_id,
+        campaign_id,
+        program_id,
+        volume_per_pack,
+        manufacturer_id,
+    }: UpdateStockLine,
+) -> Result<GenerateResult, UpdateStockLineError> {
+    let mut existing = existing_line.stock_line_row;
+    let location_movements = match location.clone() {
+        Some(location) => {
+            if location.value != existing.location_id {
+                Some(generate_location_movement(
+                    store_id,
+                    connection,
+                    existing.clone(),
+                    location.value.clone(),
+                )?)
+            } else {
+                None
+            }
+        }
+        _ => None,
+    };
+
+    let barcode_row = match &barcode {
+        // Don't generate row for empty gtin
+        Some(gtin) if gtin.is_empty() => None,
+        Some(gtin) => Some(barcode::generate(
+            connection,
+            BarcodeInput {
+                gtin: gtin.clone(),
+                item_id: existing_line.item_row.id,
+                pack_size: Some(existing.pack_size),
+            },
+        )?),
+        None => None,
+    };
+
+    let barcode_id = match &barcode {
+        // If it'e empty gtin unlink
+        Some(gtin) if gtin.is_empty() => None,
+        // If gtin not specified keep existing
+        None => existing.barcode_id,
+        Some(_) => barcode_row.as_ref().map(|b| b.id.clone()),
+    };
+    existing.location_id = location.map(|l| l.value).unwrap_or(existing.location_id);
+    existing.batch = batch.or(existing.batch);
+    existing.cost_price_per_pack = cost_price_per_pack.unwrap_or(existing.cost_price_per_pack);
+    existing.sell_price_per_pack = sell_price_per_pack.unwrap_or(existing.sell_price_per_pack);
+
+    existing.expiry_date = expiry_date.map(|v| v.value).unwrap_or(existing.expiry_date);
+    existing.manufacture_date = manufacture_date
+        .map(|v| v.value)
+        .unwrap_or(existing.manufacture_date);
+
+    existing.on_hold = on_hold.unwrap_or(existing.on_hold);
+    existing.barcode_id = barcode_id;
+    existing.vvm_status_id = vvm_status_id.or(existing.vvm_status_id);
+
+    existing.item_variant_id = item_variant_id
+        .map(|v| v.value)
+        .unwrap_or(existing.item_variant_id);
+    existing.donor_id = donor_id.map(|v| v.value).unwrap_or(existing.donor_id);
+    existing.manufacturer_id = manufacturer_id
+        .map(|v| v.value)
+        .unwrap_or(existing.manufacturer_id);
+    existing.campaign_id = campaign_id.map(|v| v.value).unwrap_or(existing.campaign_id);
+    existing.program_id = program_id.map(|v| v.value).unwrap_or(existing.program_id);
+
+    existing.volume_per_pack = volume_per_pack.unwrap_or(existing.volume_per_pack);
+    if let Some(volume_per_pack) = volume_per_pack {
+        existing.total_volume = volume_per_pack * existing.total_number_of_packs;
+    }
+
+    Ok(GenerateResult {
+        new_stock_line: existing,
+        location_movements,
+        barcode_row,
+    })
+}
+
+fn generate_location_movement(
+    store_id: String,
+    connection: &StorageConnection,
+    existing: StockLineRow,
+    location_id: Option<String>,
+) -> Result<Vec<LocationMovementRow>, UpdateStockLineError> {
+    let mut movement: Vec<LocationMovementRow> = Vec::new();
+    let mut exit_movement;
+
+    if let Some(location_id) = existing.location_id {
+        let filter = LocationMovementRepository::new(connection)
+            .query_by_filter(
+                LocationMovementFilter::new()
+                    .enter_datetime(DatetimeFilter::is_null(false))
+                    .exit_datetime(DatetimeFilter::is_null(true))
+                    .location_id(EqualFilter::equal_to(location_id.to_string()))
+                    .stock_line_id(EqualFilter::equal_to(existing.id.to_string()))
+                    .store_id(EqualFilter::equal_to(store_id.to_string())),
+            )?
+            .into_iter()
+            .map(|l| l.location_movement_row)
+            .min_by_key(|l| l.enter_datetime);
+
+        if let Some(filter) = filter {
+            exit_movement = filter;
+            exit_movement.exit_datetime = Some(Utc::now().naive_utc());
+            movement.push(exit_movement);
+        }
+    }
+
+    movement.push(LocationMovementRow {
+        id: uuid(),
+        store_id,
+        location_id,
+        stock_line_id: existing.id,
+        enter_datetime: Some(Utc::now().naive_utc()),
+        exit_datetime: None,
+    });
+
+    Ok(movement)
+}
+
+fn log_stock_changes(
+    ctx: &ServiceContext,
+    existing: StockLineRow,
+    new: StockLineRow,
+) -> Result<(), RepositoryError> {
+    activity_log_entry_with_diff(
+        ctx,
+        ActivityLogType::StockLineEdit,
+        Some(new.id.clone()),
+        Some(&existing),
+        &new,
+    )?;
+
+    Ok(())
+}
+
+impl From<RepositoryError> for UpdateStockLineError {
+    fn from(error: RepositoryError) -> Self {
+        UpdateStockLineError::DatabaseError(error)
+    }
+}

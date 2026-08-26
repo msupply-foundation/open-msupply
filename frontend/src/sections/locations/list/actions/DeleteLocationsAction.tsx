@@ -6,6 +6,7 @@ import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { Button } from '@/ui/elements/buttons/Button';
 import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
+import { Stack } from '@/ui/layout/Stack/Stack';
 import { TrashIcon } from '@/ui/icons';
 import { DeleteLocation } from '../locations.generated';
 import {
@@ -146,7 +147,17 @@ const Body = (props: DeleteLocationsActionProps & { onClose: () => void }) => {
       onClose={props.onClose}
       icon={<TrashIcon />}
       testId="confirmation-modal"
-      title={t('heading.are-you-sure')}
+      // The title tracks the phase: the report is never a question
+      // (kdd/action-modal). It only opens because something was refused, but
+      // these deletes are independent — when some members DID go, "Can't do
+      // that!" would sit over a report saying they are gone.
+      title={
+        phase().kind !== 'report'
+          ? t('heading.are-you-sure')
+          : (report()?.deletedCount ?? 0) > 0
+            ? t('heading.some-not-deleted')
+            : t('heading.cannot-do-that')
+      }
       description={
         <Switch
           // Confirm / deleting: how many will be deleted (OMS-REG-INV-01.34).
@@ -154,7 +165,7 @@ const Body = (props: DeleteLocationsActionProps & { onClose: () => void }) => {
         >
           <Match when={report()}>
             {summary => (
-              <>
+              <Stack gap="sm">
                 <Show when={summary().deletedCount > 0}>
                   <p>
                     {tPlural(
@@ -185,7 +196,7 @@ const Body = (props: DeleteLocationsActionProps & { onClose: () => void }) => {
                     )}
                   </Alert>
                 </Show>
-              </>
+              </Stack>
             )}
           </Match>
         </Switch>
