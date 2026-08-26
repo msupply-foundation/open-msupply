@@ -43,7 +43,7 @@
  *    kdd/plugin-loading/evidence/interface-audits/).
  */
 import { hostNavigate } from '../nav/hostNavigate';
-import { routerBase } from '../nav/storeRelativePath';
+import { routerBase, storePath } from '../nav/storeRelativePath';
 import { currentStoreId } from '../store/storeContext';
 
 /** How a navigation joins history; matches the host's own navigations. */
@@ -74,15 +74,11 @@ export interface NavigateOptions {
 export const storeHref = (path: string): string => {
   const storeId = currentStoreId();
   if (storeId === undefined) return `${routerBase}/`;
-  const relative = path.replace(/^\/+/, '');
-  const storeRoot = `${routerBase}/${storeId}`;
-  // A query-only path joins the store root directly: a slash before the `?`
-  // would spell the landing screen `/{store}/?query=…` — a second URL for the
-  // screen the empty-path case exists to keep at one (OMS-REG-NAV-01.22,
-  // exactly as ShellLayout's own storeHref does for Home).
-  if (relative === '' || relative.startsWith('?'))
-    return `${storeRoot}${relative}`;
-  return `${storeRoot}/${relative}`;
+  // The join is the shared one (storePath), so the SDK's spelling of a store
+  // address cannot drift from the menu's or the keyboard's — one screen, one
+  // URL (OMS-REG-NAV-01.22). The mount prefix is this function's own: a bare
+  // `<a href>` gets no resolution from the router.
+  return `${routerBase}${storePath(storeId, path)}`;
 };
 
 /**
