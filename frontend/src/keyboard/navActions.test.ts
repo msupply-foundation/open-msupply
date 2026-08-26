@@ -133,9 +133,10 @@ describe('palette destinations', () => {
 
   it('carries Alt+D for Home and Alt+H for Help', () => {
     withActions(actions => {
-      // Alt+D is keyed on the destination's PATH ('dashboard'), which CK-1.7
-      // left alone — only the label moved to Home, so the binding is unchanged
-      // and the row it names is the renamed one.
+      // Alt+D is keyed on the destination's PATH, which CK-1.7 moved from
+      // 'dashboard' to '' (Home IS the store root). The binding moved with it,
+      // so the shortcut a user's fingers know is unchanged while the row it
+      // names is the renamed one.
       const home = actions.find(a => actionName(a) === 'Go to: Home');
       const help = actions.find(a => actionName(a) === 'Go to: Help');
       expect(home?.shortcut).toBe(ALT_D);
