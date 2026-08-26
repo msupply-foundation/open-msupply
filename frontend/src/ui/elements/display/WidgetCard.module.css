@@ -12,6 +12,10 @@
 .card {
   display: flex;
   flex-direction: column;
+  /* Explicit, not left to the UA: Chromium's stylesheet gives <button>
+     align-items: flex-start, which would shrink-wrap the header and slot on
+     the onClick variant only — stretch keeps both variants full-width. */
+  align-items: stretch;
   justify-content: center;
   gap: var(--space-3);
   inline-size: 100%;
@@ -31,12 +35,21 @@
     transform var(--motion-fast) ease;
 }
 
-/* Hover-capable pointers only: on a touch device :hover latches after a tap,
-   leaving the card stuck mid-lift (#317). */
-@media (hover: hover) {
+/* The border + shadow change on every pointer: a latched tint after a tap is
+   inert, and it is the only press feedback a touch user gets (no :hover here
+   would leave a tapped tile visually dead). */
+.card:hover {
+  border-color: var(--primary-main);
+  box-shadow: var(--shadow-3);
+}
+
+/* Only the LIFT is gated: on a touch device :hover latches after a tap and
+   leaves the card stuck mid-lift (#317), and for reduced-motion users the card
+   would jump under the cursor — both suppressed in the query itself, not by a
+   later override the cascade could lose. The border/shadow above still change,
+   so hover is never signalled by motion alone. */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
   .card:hover {
-    border-color: var(--primary-main);
-    box-shadow: var(--shadow-3);
     transform: translateY(-0.125rem);
   }
 }
@@ -86,18 +99,14 @@
   overflow-wrap: anywhere;
 }
 
-/* The content slot — a full-width block under the header. The consumer owns
-   what's inside; min-inline-size lets it shrink with the card. */
+/* The content slot — a full-width block under the header (flex blockifies the
+   span). The consumer owns what's inside; the card owns two guarantees: an
+   unbreakable token (a grouped figure, an id) wraps rather than bursting the
+   border — .subtitle's rule — and the auto margin pins the slot to the card's
+   bottom edge, so when a grid row stretches tiles to the tallest, headers and
+   figures share baselines across the row while a slot-less card stays centred
+   (the auto margin absorbs the free space before justify-content sees it). */
 .content {
-  display: block;
-  min-inline-size: 0;
-}
-
-/* Beyond zeroing the transition (--motion-fast does that): drop the hover LIFT
-   itself, so the card doesn't jump a few pixels under the cursor. The shadow
-   and border still change, so hover is never signalled by motion alone. */
-@media (prefers-reduced-motion: reduce) {
-  .card:hover {
-    transform: none;
-  }
+  margin-block-start: auto;
+  overflow-wrap: anywhere;
 }
