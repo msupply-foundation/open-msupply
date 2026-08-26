@@ -17,8 +17,10 @@ describe('screenTitleKey', () => {
     expect(screenTitleKey('inventory')).toBe('inventory');
   });
 
-  it('names the store root the dashboard', () => {
-    expect(screenTitleKey('')).toBe('dashboard');
+  it('names the store root Home', () => {
+    // The store root is Home's own registry entry (path ''), so the title
+    // resolves straight through navTrail with no fallback path to guess.
+    expect(screenTitleKey('')).toBe('label.home');
   });
 
   it('keeps a record screen on the list it was reached from', () => {

@@ -106,7 +106,7 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
   // banner (spec/reports S5). Every generation fault surfaces there too, typed
   // (`dataError`) or not (`error` — e.g. a PDF render on a server with no
   // Chrome binary): the dialog stays open with the message, because the screen
-  // behind it is healthy and the global modal's Reload/Dashboard would only
+  // behind it is healthy and the global modal's Reload/Home would only
   // re-run the same failure or lose the user's place (AC-G6). A `failed`
   // result is a request that never completed — already on the global modal —
   // so we just drop back to idle.
