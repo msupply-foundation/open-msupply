@@ -56,7 +56,7 @@ export const displayMetadata: PageMetadata = {
     {
       id: 'display-widget-card',
       title: 'Widget card',
-      searchTerms: ['clickable', 'dashboard', 'link'],
+      searchTerms: ['clickable', 'dashboard', 'link', 'tile', 'kpi', 'slot'],
     },
     {
       id: 'display-document-frame',
@@ -211,6 +211,30 @@ export const DisplayShowcase = () => {
           <Note role="status">
             {lastClicked() ? `Clicked: ${lastClicked()}` : '\u00a0'}
           </Note>
+          <Lead>
+            The optional <strong>content slot</strong> renders full-width after
+            the icon + title/subtitle header — the place for a task tile's KPI
+            figures. The card stays one interactive element, so slot content
+            must be non-interactive (no links or buttons inside).
+          </Lead>
+          <div class={styles.grid}>
+            <WidgetCard
+              title="Internal orders"
+              subtitle="Awaiting approval"
+              icon={<TruckIcon />}
+              onClick={() => setLastClicked('Internal orders')}
+            >
+              <span class={styles.figure}>7</span>
+            </WidgetCard>
+            <WidgetCard
+              title="Stocktakes"
+              subtitle="Lines to count"
+              icon={<StockIcon />}
+              onClick={() => setLastClicked('Stocktakes')}
+            >
+              <span class={styles.figure}>{'\u2014'}</span>
+            </WidgetCard>
+          </div>
         </DashboardCard>
 
         <DashboardCard
