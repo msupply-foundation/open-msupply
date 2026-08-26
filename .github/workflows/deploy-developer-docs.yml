@@ -31,6 +31,8 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    # ubuntu-latest, not the self-hosted mac: shalzz/zola-deploy-action is a
+    # Docker container action, which GitHub only schedules on Linux runners.
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
