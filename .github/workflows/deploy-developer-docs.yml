@@ -2,9 +2,13 @@
 name: Deploy developer docs
 
 on:
-  # Runs on pushes targeting the default branch
+  # Runs on pushes targeting the default branch. The monorepo's default is
+  # develop; 'main' here is an inert copy of the pre-merge open-msupply main.
   push:
-    branches: ['main']
+    branches: ['develop']
+    paths:
+      - 'docs/**'
+      - '.github/workflows/deploy-developer-docs.yml'
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
