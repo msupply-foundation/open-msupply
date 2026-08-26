@@ -1,12 +1,9 @@
-/* Intrinsic dashboard grid — as many ~16rem tracks as fit, stacking when narrow. */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
-  gap: var(--space-4);
-}
-
-/* WidgetCard content-slot demo: a dashboard-statistic figure (— while the
-   value is in flight, per the KPI pattern the slot exists for). */
+/* WidgetCard content-slot demo: a dashboard-statistic figure. The type triple
+   is Statistic's .value (the canonical dashboard-figure treatment —
+   `--text-xl` is documented in tokens.css as "dashboard statistic values");
+   Statistic itself renders <div>s, which may not nest inside the card's
+   <button>, so the demo re-states the tokens. A consumer needing a figure
+   does the same until the figure treatment is owned (a registry decision). */
 .figure {
   font-size: var(--text-xl);
   font-weight: var(--weight-bold);
