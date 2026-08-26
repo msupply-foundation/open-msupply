@@ -99,12 +99,20 @@ export const routerHostNavigate =
  * to the current URL is a plain reload, and a reload re-runs the very
  * module-scope code that asked for it (PluginGate re-evaluates the plugin on
  * every load), which is an infinite reload loop, not a navigation.
+ *
+ * Parsed with the URL API, not by hand, so both sides of the comparison speak
+ * the browser's own normalized form: `location` comes back percent-encoded
+ * (`"` as `%22`), and a raw href compared as a string would never equal it —
+ * missing, on every re-run, exactly the loop this guard exists to break. The
+ * base is a throwaway: the href arrives already resolved from the app root,
+ * and only path and query are read off the parse.
  */
 const atDocumentHref = (href: string): boolean => {
-  const [path = '', query = ''] = href.split('?');
+  const target = new URL(href, 'http://unused-base');
   return (
-    path.replace(/\/+$/, '') === location.pathname.replace(/\/+$/, '') &&
-    query === location.search.replace(/^\?/, '')
+    target.pathname.replace(/\/+$/, '') ===
+      location.pathname.replace(/\/+$/, '') &&
+    target.search === location.search
   );
 };
 

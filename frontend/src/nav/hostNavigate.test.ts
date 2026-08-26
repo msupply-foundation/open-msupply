@@ -133,6 +133,17 @@ describe('hostNavigate', () => {
     expect(replace).not.toHaveBeenCalled();
   });
 
+  it('recognizes the shown URL through the browser\'s percent-encoding', () => {
+    // After a document navigation the browser reports `location` in encoded
+    // form (`"` as `%22`), while the module-scope caller re-runs and produces
+    // the same RAW href. A string comparison would miss the match on every
+    // re-run — the infinite reload loop the guard exists to break.
+    locate('/rc/store-a/inventory/stock', '?query={%22filter%22:{}}');
+    hostNavigate('/rc/store-a/inventory/stock?query={"filter":{}}');
+
+    expect(assign).not.toHaveBeenCalled();
+  });
+
   it('still navigates unbound when only the query differs', () => {
     locate('/rc/store-a/inventory/stock', '?query=a');
     hostNavigate('/rc/store-a/inventory/stock?query=b');
