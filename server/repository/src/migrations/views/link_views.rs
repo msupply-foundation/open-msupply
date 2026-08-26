@@ -14,8 +14,8 @@ impl ViewMigrationFragment for ViewMigration {
                 DROP VIEW IF EXISTS name_tag_join_view;
                 DROP VIEW IF EXISTS master_list_name_join_view;
                 DROP VIEW IF EXISTS invoice_view;
-                DROP VIEW IF EXISTS prescription_order_view;
-                DROP VIEW IF EXISTS prescription_order_line_view;
+                DROP VIEW IF EXISTS prescription_request_view;
+                DROP VIEW IF EXISTS prescription_request_line_view;
                 DROP VIEW IF EXISTS requisition_view;
                 DROP VIEW IF EXISTS rnr_form_view;
                 DROP VIEW IF EXISTS name_insurance_join_view;
@@ -108,23 +108,23 @@ impl ViewMigrationFragment for ViewMigration {
                 LEFT JOIN
                     name_link AS default_donor_link ON invoice.default_donor_link_id = default_donor_link.id;
 
-                CREATE VIEW prescription_order_view AS
+                CREATE VIEW prescription_request_view AS
                 SELECT
-                    prescription_order.*,
+                    prescription_request.*,
                     patient_link.name_id as patient_id
                 FROM
-                    prescription_order
+                    prescription_request
                 JOIN
-                    name_link AS patient_link ON prescription_order.patient_link_id = patient_link.id;
+                    name_link AS patient_link ON prescription_request.patient_link_id = patient_link.id;
 
-                CREATE VIEW prescription_order_line_view AS
+                CREATE VIEW prescription_request_line_view AS
                 SELECT
-                    prescription_order_line.*,
+                    prescription_request_line.*,
                     line_item_link.item_id as item_id
                 FROM
-                    prescription_order_line
+                    prescription_request_line
                 JOIN
-                    item_link AS line_item_link ON prescription_order_line.item_link_id = line_item_link.id;
+                    item_link AS line_item_link ON prescription_request_line.item_link_id = line_item_link.id;
 
                 CREATE VIEW requisition_view AS
                 SELECT

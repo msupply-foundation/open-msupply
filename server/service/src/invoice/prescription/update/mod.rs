@@ -111,13 +111,13 @@ pub fn update_prescription(
         })
         .map_err(|error| error.to_inner_error())?;
 
-    // A verified dispensation generated from a prescription order flips the
+    // A verified dispensation generated from a prescription request flips the
     // order to Dispensed via the processor. Triggering here (the same shape as
     // trigger_invoice_transfer_processors on shipment updates) makes the flip
     // immediate for the same-store flow instead of waiting for the post-sync
     // trigger; the cursor makes a no-op trigger cheap.
     ctx.processors_trigger
-        .trigger_processor(ProcessorType::PrescriptionOrderStatus);
+        .trigger_processor(ProcessorType::PrescriptionRequestStatus);
 
     Ok(invoice)
 }

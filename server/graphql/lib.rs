@@ -55,7 +55,7 @@ use graphql_plugin::{
     CentralPluginMutations, CentralPluginQueries, PluginMutations, PluginQueries,
 };
 use graphql_preference::{PreferenceMutations, PreferenceQueries};
-use graphql_prescription_order::{PrescriptionOrderMutations, PrescriptionOrderQueries};
+use graphql_prescription_request::{PrescriptionRequestMutations, PrescriptionRequestQueries};
 use graphql_printer::{PrinterMutations, PrinterQueries};
 use graphql_programs::{ProgramsMutations, ProgramsQueries};
 use graphql_purchase_order::{PurchaseOrderMutations, PurchaseOrderQueries};
@@ -213,7 +213,7 @@ pub struct Queries(
     pub RequisitionQueries,
     pub ReportQueries,
     pub StockLineQueries,
-    pub PrescriptionOrderQueries,
+    pub PrescriptionRequestQueries,
     pub StockRelocationQueries,
     pub RepackQueries,
     pub PrinterQueries,
@@ -252,7 +252,7 @@ impl Queries {
             RequisitionQueries,
             ReportQueries,
             StockLineQueries,
-            PrescriptionOrderQueries,
+            PrescriptionRequestQueries,
             StockRelocationQueries,
             RepackQueries,
             PrinterQueries,
@@ -290,7 +290,7 @@ pub struct Mutations(
     pub RequisitionMutations,
     pub RequisitionLineMutations,
     pub StockLineMutations,
-    pub PrescriptionOrderMutations,
+    pub PrescriptionRequestMutations,
     pub StockRelocationMutations,
     pub RepackMutations,
     pub PrinterMutations,
@@ -323,7 +323,7 @@ impl Mutations {
             RequisitionMutations,
             RequisitionLineMutations,
             StockLineMutations,
-            PrescriptionOrderMutations,
+            PrescriptionRequestMutations,
             StockRelocationMutations,
             RepackMutations,
             PrinterMutations,

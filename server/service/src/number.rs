@@ -62,7 +62,7 @@ pub fn next_number(
                     repo.get_next_number_for_type_and_store(r#type, store_id, None)?;
                 return Ok(next_number.number);
             }
-            NumberRowType::PrescriptionOrder => {
+            NumberRowType::PrescriptionRequest => {
                 let next_number =
                     repo.get_next_number_for_type_and_store(r#type, store_id, None)?;
                 return Ok(next_number.number);

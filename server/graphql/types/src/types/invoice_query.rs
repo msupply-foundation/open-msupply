@@ -550,10 +550,10 @@ impl InvoiceNode {
         &self.row().purchase_order_id
     }
 
-    /// The prescriber's prescription order this dispensing invoice was
+    /// The prescriber's prescription request this dispensing invoice was
     /// generated from (soft link — the order may not exist on this site)
-    pub async fn prescription_order_id(&self) -> &Option<String> {
-        &self.row().prescription_order_id
+    pub async fn prescription_request_id(&self) -> &Option<String> {
+        &self.row().prescription_request_id
     }
 
     pub async fn purchase_order(&self, ctx: &Context<'_>) -> Result<Option<PurchaseOrderNode>> {

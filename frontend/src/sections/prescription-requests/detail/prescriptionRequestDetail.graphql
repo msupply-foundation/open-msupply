@@ -1,0 +1,105 @@
+# The prescription-request detail (spec/prescription-requests/contract.md):
+# header + lines in one read (an request's line set is small; no server paging).
+fragment PrescriptionRequestFields on PrescriptionRequestNode {
+  id
+  prescriptionRequestNumber
+  status
+  createdDatetime
+  prescriptionDatetime
+  readyDatetime
+  dispensedDatetime
+  comment
+  customFields
+  patientId
+  patient {
+    id
+    name
+    code
+    dateOfBirth
+  }
+  clinicianId
+  diagnosisId
+  programId
+  user {
+    username
+    email
+  }
+  lines {
+    totalCount
+    nodes {
+      id
+      itemId
+      quantity
+      note
+      item {
+        id
+        code
+        name
+        unitName
+      }
+    }
+  }
+}
+
+query prescriptionRequestDetail($storeId: String!, $id: String!) {
+  prescriptionRequest(storeId: $storeId, id: $id) {
+    __typename
+    ... on PrescriptionRequestNode {
+      ...PrescriptionRequestFields
+    }
+    ... on RecordNotFound {
+      description
+    }
+  }
+}
+
+# One partial update carries header edits, custom-field patches, and the
+# Ready-to-dispense hand-over (contract § the hand-over). Rejections are
+# generic (contract § wire traps) and surface where the save started.
+mutation updatePrescriptionRequest(
+  $storeId: String!
+  $input: UpdatePrescriptionRequestInput!
+) {
+  updatePrescriptionRequest(storeId: $storeId, input: $input) {
+    ... on PrescriptionRequestNode {
+      ...PrescriptionRequestFields
+    }
+  }
+}
+
+mutation deletePrescriptionRequestById($storeId: String!, $id: String!) {
+  deletePrescriptionRequest(storeId: $storeId, id: $id) {
+    ... on DeleteResponse {
+      id
+    }
+  }
+}
+
+# The active diagnoses the Diagnosis picker offers (consumed read — the same
+# list dispensing's side panel uses).
+query requestDiagnosesActive {
+  diagnosesActive {
+    id
+    code
+    description
+  }
+}
+
+# The generated dispensation (contract § the hand-over): the dispensing list
+# read filtered by the back-link. The top-level type argument selects the
+# prescription permission, matching the dispensing list's own read.
+query generatedDispensations($storeId: String!, $prescriptionRequestId: EqualFilterStringInput!) {
+  invoices(
+    storeId: $storeId
+    filter: { prescriptionRequestId: $prescriptionRequestId }
+    type: [PRESCRIPTION]
+  ) {
+    ... on InvoiceConnector {
+      nodes {
+        id
+        invoiceNumber
+        status
+      }
+    }
+  }
+}
