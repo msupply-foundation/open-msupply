@@ -91,5 +91,18 @@ export const storeHref = (path: string): string => {
  * this is for navigating as the CONSEQUENCE of something (a record created, a
  * flow handed off).
  */
-export const navigateTo = (path: string, options?: NavigateOptions): void =>
+export const navigateTo = (path: string, options?: NavigateOptions): void => {
+  // Reported, not silent: with no store entered the href is the app root, so
+  // the named path (query included) is dropped and the root guard picks the
+  // landing screen — a redirect the caller did not ask for. An href rendered
+  // early is normal (it re-resolves reactively); a navigation TAKEN early is a
+  // programming error, reported on the same contract as the SDK's no-store
+  // guards (bridge.ts). The navigation still happens — the root guard
+  // re-enters a store, which beats going nowhere.
+  if (currentStoreId() === undefined) {
+    console.warn(
+      `navigateTo(${path}): no store entered — navigating to the app root instead`
+    );
+  }
   hostNavigate(storeHref(path), options);
+};
