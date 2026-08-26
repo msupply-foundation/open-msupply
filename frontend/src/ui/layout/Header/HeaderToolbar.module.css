@@ -1,0 +1,24 @@
+/*
+ * HeaderToolbar layout — the field-cluster specifics layered over the generic
+ * <Toolbar> row (see HeaderToolbar.tsx). Toolbar owns the full-width toolbar
+ * line; this owns the grow container + the trailing-Alert alignment.
+ */
+
+/* Grow container: makes the FormRow FILL the toolbar width rather than
+   content-sizing narrower and wrapping early, so it packs as-many-fields-per-
+   row-as-fit. `1 1 auto` keeps the basis at the field content, so when the
+   fields + a trailing chip don't both fit, the CHIP wraps first — not the
+   fields into a stuck two-up block. */
+.fields {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+/* A trailing compact Alert (data-compact is the Alert's own hook) drops to the
+   BOTTOM of the field row: it sits on the input-box line while every field
+   label lines up along the top (the FormRow top-aligns its items). align-self
+   resolves against the chip's flex parent — the FormRow, a row — so flex-end
+   is the bottom, not sideways. */
+.fields [data-compact] {
+  align-self: flex-end;
+}

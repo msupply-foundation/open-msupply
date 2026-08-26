@@ -1,0 +1,25 @@
+# The master-list add path (spec/internal-orders S7 + contract › editing
+# lines). The picker (and its store's-own-non-program-lists read) is the shared
+# domain/masterList MasterListPickerModal; addFromMasterList then inserts one
+# line per stock item on the chosen list not already on the order, returning
+# the order's ENTIRE line set on success (the client refetches the page
+# regardless, so only the outcome is needed here). A rejection carries a
+# description.
+
+mutation addInternalOrderFromMasterList(
+  $storeId: String!
+  $input: AddFromMasterListInput!
+) {
+  addFromMasterList(storeId: $storeId, input: $input) {
+    __typename
+    ... on RequisitionLineConnector {
+      __typename
+      totalCount
+    }
+    ... on AddFromMasterListError {
+      error {
+        description
+      }
+    }
+  }
+}

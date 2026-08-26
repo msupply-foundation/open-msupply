@@ -1,0 +1,154 @@
+import { createUniqueId, Show, splitProps, type JSX } from 'solid-js';
+import { AlertTriangleIcon } from '../../icons';
+import styles from './TextArea.module.css';
+
+export interface TextAreaProps extends JSX.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  label: string;
+  /** Shown below the field when there's no error. */
+  helperText?: string;
+  /** Error message — presence switches the field to the error state. */
+  error?: string;
+  /**
+   * `data-testid` for the error message (locale-stable test hook,
+   * e2e/TESTIDS.md).
+   */
+  errorTestId?: string;
+  required?: boolean;
+  /**
+   * Visible text lines — the native `rows` attribute, so it sets the box
+   * height. Defaults to 4 (Open mSupply's TextArea default). The height is
+   * fixed: longer content scrolls, matching OMS (no resize grip).
+   */
+  rows?: number;
+  /**
+   * Max-width cap — opt-in, as TextField, and the same `full` default. No
+   * `compact`: 10rem is a cap for a short VALUE (a number, a code), and a
+   * multi-line field by definition doesn't hold one — the value in the union
+   * would only ever be a mistake.
+   */
+  width?: 'short' | 'long' | 'full';
+  /**
+   * Type scale, as TextField: `default` (14px) or `small` (13px,
+   * `--input-font-sm`, label included) — so a multi-line field lines up with
+   * the small inputs beside it in a header field cluster (see
+   * ui/layout/Header/HeaderToolbar). The box is still `rows` tall, but block
+   * padding is derived from the size's input-height token, so `rows={1}` is
+   * exactly a TextField's height and `rows={n}` is n lines on that rhythm — in
+   * both rest and touch modes (on a coarse pointer the derivation switches to
+   * the touch tokens, and the text takes --input-font-touch at BOTH sizes).
+   */
+  size?: 'default' | 'small';
+  /**
+   * Visually hide the label (kept for a11y) — for use inside a FieldRow that
+   * shows it.
+   */
+  hideLabel?: boolean;
+  /**
+   * An affordance rendered inline after the label text — the InfoTooltip help
+   * icon whose bubble explains the field. Kept beside the label rather than in
+   * the field frame so it isn't part of the control's accessible name. Ignored
+   * under `hideLabel` (no visible label to hang it off). As TextField.
+   */
+  labelInfo?: JSX.Element;
+}
+
+/*
+ * Multi-line text input — the TextField design spec on a plain HTML
+ * <textarea> (no library): same 1px token border, TMF-orange focus + 3px
+ * glow, 0.375rem radius, 0.875rem text and label, same label/helper/error
+ * wiring (id/for + aria-describedby, aria-invalid on error). What differs is
+ * only what multi-line forces: height comes from the `rows` prop (default 4, as
+ * OMS) rather than being set outright, vertical padding joins the horizontal,
+ * and line-height opens to 1.5 for wrapped text. That padding is still DERIVED
+ * from the size's input-height token (see the CSS — from the TOUCH token on a
+ * coarse pointer), so `rows={1}` lands exactly on a TextField's height instead
+ * of ~1.5px over it, at rest and on touch alike. The box is fixed at `rows`
+ * — content scrolls, no resize grip — matching the old OMS TextArea (MUI
+ * multiline).
+ */
+export const TextArea = (props: TextAreaProps) => {
+  const [local, rest] = splitProps(props, [
+    'label',
+    'helperText',
+    'error',
+    'errorTestId',
+    'required',
+    'rows',
+    'width',
+    'size',
+    'hideLabel',
+    'labelInfo',
+    'id',
+    'class',
+  ]);
+  const autoId = createUniqueId();
+  const textareaId = () => local.id ?? autoId;
+  const messageId = () => `${textareaId()}-message`;
+
+  // The <label for> itself (text + required asterisk). A local component so it
+  // renders fresh in either branch (bare, or beside labelInfo) — reusing one
+  // JSX node across both would try to mount it in two places. As TextField.
+  const Label = () => (
+    <label
+      class={local.hideLabel ? styles.labelHidden : styles.label}
+      for={textareaId()}
+    >
+      {local.label}
+      <Show when={local.required}>
+        <span class={styles.required} aria-hidden="true">
+          *
+        </span>
+      </Show>
+    </label>
+  );
+
+  return (
+    <div
+      class={local.class ? `${styles.field} ${local.class}` : styles.field}
+      data-width={local.width ?? 'full'}
+      data-size={local.size ?? 'default'}
+    >
+      <Show when={local.labelInfo && !local.hideLabel} fallback={<Label />}>
+        {/* labelInfo sits OUTSIDE the <label for>, as a sibling: nested in the
+            label its accessible name would leak into the control's (the
+            name-from-label computation concatenates descendant controls). */}
+        <span class={styles.labelRow}>
+          <Label />
+          {local.labelInfo}
+        </span>
+      </Show>
+      <textarea
+        id={textareaId()}
+        class={styles.textarea}
+        data-size={local.size ?? 'default'}
+        rows={local.rows ?? 4}
+        data-error={local.error ? '' : undefined}
+        required={local.required}
+        aria-invalid={local.error ? 'true' : undefined}
+        aria-describedby={
+          local.error || local.helperText ? messageId() : undefined
+        }
+        {...rest}
+      />
+      <Show
+        when={local.error}
+        fallback={
+          <Show when={local.helperText}>
+            <p id={messageId()} class={styles.helper}>
+              {local.helperText}
+            </p>
+          </Show>
+        }
+      >
+        <p
+          id={messageId()}
+          class={styles.error}
+          data-testid={local.errorTestId}
+        >
+          <AlertTriangleIcon class={styles.errorIcon} />
+          {local.error}
+        </p>
+      </Show>
+    </div>
+  );
+};

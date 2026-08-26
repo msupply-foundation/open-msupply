@@ -1,0 +1,46 @@
+/* Sits inline with the label text (or whatever precedes it) without adding box
+   height; a small logical gap separates the icon from the preceding word. */
+.wrapper {
+  display: inline-flex;
+  vertical-align: middle;
+  margin-inline-start: var(--space-1);
+}
+
+/* Quiet info marker, sized off the icon's own 1em. */
+.trigger {
+  display: inline-flex;
+  color: var(--gray-main);
+  font-size: 1rem;
+}
+
+/* The standing brand-toned mark (dashboard stats; the app renders that icon
+   `color="primary"`). Padding gives the hover tint below a box to sit in.
+   Rules from here on ascend in specificity — stylelint enforces it. */
+.wrapper[data-tone='primary'] .trigger {
+  padding: 0.125rem var(--space-1);
+  color: var(--primary-main);
+}
+
+/* Quiet → louder, the treatment shared with Comment and the field-icon set. */
+.wrapper[data-tone='default'] .trigger:hover {
+  color: var(--primary-main);
+}
+
+/* Nothing is louder than primary to shift the glyph to, so hover tints its own
+   tone at 12% — the bare icon-button treatment (Dialog's close, IconButton's
+   danger) — and the glyph stays flat, as in the app. The app's marker has no
+   hover state at all, but its trigger is a div and ours is a real <button>
+   (ui-standards § conventions: every interactive element shows one). */
+.wrapper[data-tone='primary'] .trigger:hover {
+  background: color-mix(in srgb, var(--primary-main) 12%, transparent);
+}
+
+/* The gloss can run a couple of lines — cap the bubble and let it wrap. */
+.panel {
+  max-width: 22rem;
+}
+
+.body {
+  margin: 0;
+  overflow-wrap: anywhere;
+}

@@ -1,0 +1,98 @@
+# Inbound-shipment creation (spec/inbound-shipments S2, rules → creation) and
+# duplication (rules → duplicating a shipment).
+#
+# Wire trap (contract → creation): the plain vs `...External` mutation choice
+# must match `purchaseOrderId` — the `...External` variant is required whenever
+# a purchase order is linked, and the plain variant otherwise.
+
+mutation insertInboundShipment(
+  $storeId: String!
+  $input: InsertInboundShipmentInput!
+) {
+  insertInboundShipment(storeId: $storeId, input: $input) {
+    __typename
+    ... on InvoiceNode {
+      id
+      invoiceNumber
+    }
+    ... on InsertInboundShipmentError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# `...External` twin — used when a purchase order is linked at creation.
+mutation insertInboundShipmentExternal(
+  $storeId: String!
+  $input: InsertInboundShipmentInput!
+) {
+  insertInboundShipmentExternal(storeId: $storeId, input: $input) {
+    __typename
+    ... on InvoiceNode {
+      id
+      invoiceNumber
+    }
+    ... on InsertInboundShipmentError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# Copy an existing shipment to a fresh New draft (AC-DUP1/DUP2). Reachable from
+# the list (single selection) and the detail side panel.
+mutation duplicateInboundShipment($storeId: String!, $id: String!) {
+  duplicateInboundShipment(storeId: $storeId, id: $id) {
+    __typename
+    ... on DuplicateInboundShipmentNode {
+      invoice {
+        id
+        invoiceNumber
+      }
+      skippedItemCount
+    }
+    ... on DuplicateInboundShipmentError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# The store's Sent purchase orders — the from-a-purchase-order create option
+# (spec S2 → Link purchase order modal, AC-PG3). Filtered to SENT; supplier +
+# reference + comment shown as table columns so the user can pick the right one.
+fragment LinkPurchaseOrderRow on PurchaseOrderNode {
+  id
+  number
+  reference
+  comment
+  status
+  supplier {
+    id
+    name
+    code
+  }
+}
+
+query sentPurchaseOrders($storeId: String!, $filter: PurchaseOrderFilterInput) {
+  purchaseOrders(
+    storeId: $storeId
+    filter: $filter
+    sort: [{ key: number, desc: true }]
+  ) {
+    ... on PurchaseOrderConnector {
+      __typename
+      totalCount
+      nodes {
+        ...LinkPurchaseOrderRow
+      }
+    }
+  }
+}

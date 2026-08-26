@@ -1,0 +1,84 @@
+/*
+ * Checkbox — the labelled form field around BareCheckbox (which owns the box
+ * look — see BareCheckbox.module.css). Only the field layout, label and
+ * error chrome live here. All sizing rem/em, all colours tokens (the only px
+ * are hairline widths, per CLAUDE.md #6).
+ */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+/* The label + its labelInfo affordance on one line (only rendered when there
+   IS a labelInfo — as TextField.module.css). The icon aligns to the box, not
+   the middle of a wrapped label. */
+.labelRow {
+  display: flex;
+  align-items: flex-start;
+}
+
+.root {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  cursor: pointer;
+}
+
+.root[data-disabled] {
+  cursor: default;
+}
+
+/* Placement of the control in the label row: nudged to the first label
+   line (the box is 18px against the label's ~18.2px line). */
+.control {
+  margin-block-start: 0.0625rem;
+}
+
+.label {
+  color: var(--text-body);
+  font-size: var(--text-sm);
+  /* The shared field-label weight — a choice control's label-beside text reads
+     the same as a label-above field's (Carl 2026-07-30). */
+  font-weight: var(--field-label-font-weight);
+  line-height: 1.3;
+}
+
+/* The box fades itself now (BareCheckbox's --disabled-opacity, so the fade also
+   covers bare/unlabelled use); fade the label text to match, so the composed
+   disabled field renders exactly as before — box + text each at
+   --disabled-opacity — without fading the box twice. (After .label so its
+   specificity ascends — stylelint no-descending-specificity.) */
+.root[data-disabled] .label {
+  opacity: var(--disabled-opacity);
+}
+
+.error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: 1.3;
+  color: var(--error-main);
+}
+
+/* The glyph takes the error text's own colour (inherited from .error) — it is
+   part of the error line, not a caution of its own. It used to be
+   --color-warning, which rendered an amber triangle above red text and read as
+   a second, milder severity sitting on the same message. */
+.errorIcon {
+  font-size: 0.875em;
+  color: inherit;
+  flex-shrink: 0;
+}
+
+/* Comfortable touch target for the whole label on coarse pointers. */
+@media (pointer: coarse) {
+  .root {
+    min-block-size: var(--touch-target);
+    align-items: center;
+  }
+}

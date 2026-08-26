@@ -1,0 +1,43 @@
+/* The patient picker's option layout (spec/patients S4): code · date of birth ·
+   name. It was three inline-flex spans with no shrink, so in a popup capped to a
+   narrow trigger the row's min-content width overran the panel — which, because
+   the listbox scrolls on the block axis, surfaced as a horizontal scrollbar over
+   the results and clipped every name (#1041). The picker now lets its popup grow
+   past the trigger (matchTriggerWidth={false}); this row makes sure the space is
+   actually usable. */
+
+/* The identifiers hold their line and the name takes the rest, wrapping within
+   it — so a long name grows the row instead of overrunning the panel. `baseline`
+   (not `center`) keeps the code and date of birth on the name's FIRST line once
+   it wraps, which is where they read as its identifiers. `wrap` is the last
+   resort: at the narrowest widths (a header cluster's compact field) the name
+   drops to a line of its own rather than squeezing to one word per line. */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2);
+  /* The row is itself the option's only flex child: fill the option box so the
+     name has the whole width to spend, and stay shrinkable so it can give it
+     back when the popup is narrow. */
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+
+/* The code — the primary identifier, kept whole and never wrapped. */
+.code {
+  flex: none;
+  font-weight: var(--weight-bold);
+}
+
+/* The date of birth — a fixed-shape value, so it stays on one line too. */
+.dob {
+  flex: none;
+  white-space: nowrap;
+}
+
+/* The name — takes the remaining width and wraps inside it. */
+.name {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}

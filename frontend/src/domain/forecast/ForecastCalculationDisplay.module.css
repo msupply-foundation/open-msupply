@@ -1,0 +1,54 @@
+/* The population-forecast calculation display (spec/internal-orders S4, AC-PF7):
+   the bold heading over one collapsible section per course group. Sits in the
+   charts region, so it caps and centres the same way. */
+.container {
+  inline-size: 100%;
+  max-inline-size: 56rem;
+  margin-block-start: var(--space-4);
+  margin-inline: auto;
+  padding: var(--space-2) var(--space-4);
+}
+
+.heading {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-md);
+  font-weight: var(--weight-bold);
+  color: var(--text-body);
+}
+
+/* Each course's three steps, stacked with a comfortable gap. */
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.stepTitle {
+  font-weight: var(--weight-bold);
+  color: var(--text-body);
+}
+
+/* The formula, on a tinted line. */
+.formula {
+  background: var(--bg-group-light);
+  border-radius: var(--radius-md);
+  padding: var(--space-2);
+  color: var(--text-body);
+}
+
+/* The line's stored figures substituted in — muted. */
+.substitution {
+  color: var(--text-secondary);
+}
+
+/* The emphasised result. */
+.result {
+  font-weight: var(--weight-bold);
+  color: var(--success-main);
+}

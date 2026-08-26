@@ -1,0 +1,125 @@
+/*
+ * Breadcrumb — section icon + crumb trail. Ancestor links are bold and
+ * underline on hover; the current page is plain text. min-inline-size: 0
+ * lets it shrink inside the header row instead of forcing a wrap.
+ */
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  color: var(--text-body);
+  font-size: var(--text-md);
+}
+
+.icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--primary-main);
+  font-size: 1.375rem;
+}
+
+.list {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+}
+
+/*
+ * A crumb's own marker (a record-kind glyph). Smaller than the section icon
+ * above — it sits in the text line beside the label, not ahead of the trail —
+ * and toned by the page, so no colour here.
+ */
+.crumbIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+  font-size: 1.125rem;
+}
+
+/*
+ * The leaf is the page's <h1>, but visually just another crumb — heading
+ * semantics, trail looks (the UA's h1 size/weight/margins are all reset).
+ */
+.leaf {
+  margin: 0;
+  font-size: inherit;
+  font-weight: var(--weight-medium);
+}
+
+.separator {
+  color: var(--gray-main);
+}
+
+/*
+ * An ancestor crumb is the screen's way OUT — the detail → list exit — so it is
+ * a real target, not merely styled text. inline-flex (an inline box would
+ * ignore the touch min-block-size below) + a gap for the back marker.
+ */
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: inherit;
+  font-weight: var(--weight-bold);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.link:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/*
+ * The parent crumb's back marker. Shown only where the trail alone is a weak
+ * exit — a coarse pointer, or a narrow viewport (1023px = breakpoints.navOverlay
+ * - 1, the tablet-portrait-and-below line) where the crumb is the only way out
+ * on screen. At desk width with a mouse, the trail plus its hover underline
+ * already reads as navigable and a chevron there is chrome for nothing.
+ * Mirrored in RTL by the icon's own data-flip-rtl (index.css).
+ */
+.backChevron {
+  display: none;
+  flex-shrink: 0;
+  font-size: 1.125rem;
+}
+
+@media (pointer: coarse), (max-width: 1023px) {
+  .backChevron {
+    display: inline-flex;
+  }
+}
+
+/*
+ * Touch: on a tablet this link carries the whole weight of leaving a detail
+ * screen (Escape → up one level needs a keyboard), so it takes the shared
+ * tap-target token — the same pointer:coarse + min-block-size shape as a
+ * medium Button. Inline padding widens the box for a short label ("Items" sits
+ * under 44px), and the matching negative margin bleeds that padding OUTWARD:
+ * the target grows into the space either side without costing the trail any
+ * width or reflowing the crumbs. Costs no header height in practice either — a
+ * header carrying buttons is already --touch-target tall here.
+ */
+@media (pointer: coarse) {
+  .link {
+    min-block-size: var(--touch-target);
+    padding-inline: var(--space-2);
+    margin-inline: calc(-1 * var(--space-2));
+  }
+}

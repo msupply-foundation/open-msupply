@@ -1,0 +1,43 @@
+# The shared activity-log surface (a record's Log tab): the activity-log entries
+# recorded against ONE record, scoped by recordId. Read-only, non-paginated (the
+# log is append-only and short per record — a generous single page).
+#
+# NO sort is sent, deliberately. `datetime` is not a sortable key on the wire
+# (the keys are id / activityLogType / userId / recordId, and ids are UUIDs — an
+# id sort scrambles the chronology), so the ONLY chronological order the server
+# offers is its no-sort default, datetime ascending. The panel orders rows for
+# display client-side (the page holds the whole log).
+#
+# `to`/`from` carry the change detail (a scalar or a JSON blob) shown in the
+# Details column; `type` maps to a `log.*` translation key (Formatter parity:
+# TYPE → log.<kebab>).
+fragment ActivityLog on ActivityLogNode {
+  id
+  datetime
+  type
+  to
+  from
+  user {
+    username
+  }
+}
+
+query activityLog(
+  $storeId: String!
+  $recordId: String!
+  $page: PaginationInput
+) {
+  activityLogs(
+    storeId: $storeId
+    filter: { recordId: { equalTo: $recordId } }
+    page: $page
+  ) {
+    ... on ActivityLogConnector {
+      __typename
+      totalCount
+      nodes {
+        ...ActivityLog
+      }
+    }
+  }
+}

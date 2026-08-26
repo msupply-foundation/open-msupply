@@ -1,0 +1,137 @@
+/* The header cluster sits on the registry's inset grouping panel, so the four
+   pieces read as one thing the modal acts on. The panel's own block padding is
+   more than a single control row needs (it is sized for stacked blocks), and it
+   carries no bottom margin: the dialog's scroll region already gaps this from
+   the batch grid, and the two together left a dead band above the cards (#872). */
+.headerPanel {
+  padding: var(--space-3) var(--space-4);
+}
+
+/* Inside it: Item picker · Issue quantity + Allocate-in lens · Available ·
+   placeholder notice, on ONE wrapping row (spec S4, D76) — each piece drops to
+   its own row as space runs out, bottoming out at the fully stacked layout on
+   narrow screens. Bottom-aligned so every label→control pair shares a baseline. */
+.headerRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-3) var(--space-4);
+}
+
+/* The header row's slot for the table's controls (DataTable.controlsMount).
+   Its auto margin docks the cluster at the row's inline end, so it keeps that
+   edge whether the placeholder notice is present or not; flex-shrink: 0 keeps
+   the icon buttons at size when the row tightens, and the row wraps instead. */
+.headerTableControls {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  margin-inline-start: auto;
+}
+
+/* The item picker: a bounded width (it holds "code - name" labels), NOT a
+   greedy fill — the Available text and Issue fields sit immediately beside
+   it, left-packed, rather than being pushed to the row's far edge. It may
+   shrink before wrapping; the basis puts it alone on a row once tight. */
+.itemField {
+  flex: 0 1 32rem;
+  min-inline-size: min(22rem, 100%);
+}
+
+/* Available — the figure the entered quantity is judged against, so it follows
+   the two inputs and is set off from them by a hairline (Ling's mockup). It is a
+   read-only labelled value, NOT an input: the label matches Issue's and Units'
+   exactly, and the absence of a box is what says read-only. Never shrinks — the
+   count plus its pluralised unit name is the whole point of the field. */
+.availableStat {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  padding-inline-start: var(--space-4);
+  border-inline-start: 1px solid var(--color-border-value);
+}
+
+/* Occupy an input's height so the label above it sits on the label line the
+   inputs beside it use. A number, so tabular figures (ui-standards › tables ›
+   data-type alignment) — it changes as the allocation does and shouldn't jitter. */
+.availableValue {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--input-height);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Issue + Allocate-in wrap as a unit — a lens without its quantity (or vice
+   versa) on a lonely row reads as a separate control. */
+.issueGroup {
+  display: flex;
+  align-items: end;
+  gap: var(--space-4);
+}
+
+/* The "placeholder added" info notice fills what's left of the row, wrapping
+   to its own full row when the header is tight. */
+/* The working area — the ONE scroll box between the header panel and the
+   footer, holding the batch grid and the advisory messages under it. They
+   scroll together, so a message costs nothing while the user is working in the
+   cards and is met at the end of them; a pinned band would have spent that
+   height on every screen, which on a tablet is most of a card. The table lays
+   out at content height inside it (DataTable's fitContent), so this is the
+   only scroller — no box inside a box. */
+.workArea {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-block-size: 0;
+  overflow-y: auto;
+}
+
+/* The batch grid's flex region. The DataTable is flex: 1; min-block-size: 0 (it
+   fills the height its container gives it and may shrink to nothing), and it's
+   the only flex-growing child of the Dialog body. When the modal is shorter
+   than its fixed content — landscape with the soft keyboard open, where the
+   non-fullscreen .large dialog collapses well below the Available line + Issue
+   row + footer — flex hands the table 0px and scrolls the rest, so the whole
+   table vanishes. A min-block-size floor stops that: the table keeps a usable
+   height and the body's overflow: auto scrolls to it instead. flex: 1 so it
+   still grows to fill the full height in the normal (tall) case. */
+.batchGrid {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  min-block-size: 16rem;
+}
+
+/* The batch cell: batch name + (when the row carries an item variant) the
+   variant-info trigger beside it (spec S4 § batch grid). */
+/* The batch value, its variant-info marker and its row-status chips on one
+   non-wrapping row. The gap is --space-2 so the chips sit off the value by the
+   same distance as the detail table's ([data-row-badges-label]) — that cluster
+   carries no leading margin of its own, so the separation has to come from
+   here. --space-1 stays between the value and its variant marker, which reads
+   as part of the value rather than a chip beside it. */
+.batchCell {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.batchCell [data-row-badges] {
+  margin-inline-start: var(--space-1);
+}
+
+.variantInfoTrigger {
+  color: var(--gray-main);
+  font-size: 1rem;
+}
+
+.variantInfoTrigger:hover {
+  color: var(--primary-main);
+}
+
+/* The variant-info popover: the item's variants as a compact read-only table
+   (the shared static sub-table shell, which owns the row look), this batch's row
+   marked. Wider than the popover default — three text columns. */
+.variantPanel {
+  max-width: 40rem;
+}

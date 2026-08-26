@@ -1,0 +1,49 @@
+/*
+ * FieldRow — an inline "Label:  [control]" row. The label is a fixed-ish column on the
+ * inline-start (bold, right-aligned toward the control); the control fills the rest. Wraps
+ * to stacked on very narrow widths so it stays usable. Grid keeps the labels aligned across
+ * sibling rows. Colours/sizes are tokens.
+ */
+.row {
+  display: grid;
+  /* The label track defaults to "min 6rem, grow to fit" — but because each row
+     is its own grid, that only keeps VALUES aligned across sibling rows while
+     every label is short enough to sit at the 6rem floor; a longer label grows
+     its own track and shoves that row's value right. A host that stacks many
+     rows with mixed-length labels (the side panel) overrides `--field-row-label`
+     with a FIXED track so every value aligns and long labels wrap within it.
+     The control column keeps a working minimum (8rem — a full date fits; capped
+     at 60% so a very narrow row can't overflow). */
+  grid-template-columns:
+    var(--field-row-label, minmax(6rem, max-content))
+    minmax(min(8rem, 60%), 1fr);
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+/* labelWidth="auto": reserve nothing for the label — it takes its natural width
+   and the control sits right after it (a lone row with no siblings to align
+   to, e.g. a card header field). */
+.row[data-label-width='auto'] {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.label {
+  color: var(--text-body);
+  font-size: var(--text-sm);
+  /* The shared field-label weight, so an inline `label: control` row reads the
+     same as a label-above field (Carl 2026-07-30). Size/colour stay local —
+     this pattern sets its own (see DESIGN_STANDARDS § label sizing). */
+  font-weight: var(--field-label-font-weight);
+}
+
+/* Required marker — the same asterisk the label-above fields put on their
+   label, so an inline row and a stacked field read alike. */
+.required {
+  margin-inline-start: 0.125em;
+  color: var(--error-main);
+}
+
+.control {
+  min-inline-size: 0;
+}

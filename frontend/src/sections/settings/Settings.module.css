@@ -1,0 +1,69 @@
+/* Section-specific styling for the settings sections
+ * (spec/settings/ui-surface.md § S1): the section-heading icon+label, the S4
+ * supply-level value rows, the scan-result list, and the server-info block.
+ * Generic row/column layout comes from the shared Stack / HStack /
+ * ContentContainer. Values from the theme tokens only. */
+
+/* Section-heading content: leading intent icon + label, spaced apart. Layout
+ * only on our own span — the trigger keeps the accordion component's own
+ * neutral treatment (no consumer override). */
+.sectionHeading {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.sectionHeading svg {
+  font-size: 1.25em;
+}
+
+/* Supply-level value rows in the S4 modal: value + in-use tag + remove
+ * control, separated by a dashed hairline (the reference layout). */
+.chipRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-block: var(--space-2);
+  border-block-end: 1px dashed var(--gray-light);
+}
+
+.chipRow:last-child {
+  border-block-end: none;
+}
+
+.chipValue {
+  flex: 1;
+}
+
+.inUseTag {
+  font-size: 0.8em;
+  font-style: italic;
+  color: var(--text-secondary);
+}
+
+.scanResultList {
+  margin: 0;
+  padding-inline-start: var(--space-5);
+}
+
+/* Server-info block (issue #500): the QR beside the FieldRow label:value
+ * details (server URL / site / version / central-server). The only bespoke
+ * class in the block — a horizontal arrangement (QR beside the details column)
+ * for which there is no primitive (Stack is vertical-only). The details column
+ * itself is a plain div: FieldRows block-stack flush, matching the reference. */
+.serverInfo {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+/* Installed plugins: the host-identity note under the block's heading — what
+ * this app accepts, as an aside rather than a row. Deliberately NOT a FieldRow:
+ * as a label:value pair it read as the first entry of the plugin list beneath
+ * it, i.e. a loaded plugin whose code was missing. Same italic/secondary
+ * treatment as .inUseTag, the block's other parenthetical. */
+.pluginHostNote {
+  font-style: italic;
+  color: var(--text-secondary);
+}

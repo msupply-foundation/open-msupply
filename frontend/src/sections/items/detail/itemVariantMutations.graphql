@@ -1,0 +1,100 @@
+# Central-only variant/bundling management (spec/items S3/S4, rules.md §
+# central-only management). Both reach through the `centralServer` namespace,
+# whose field-level gate rejects a non-central server with a top-level "Not a
+# central server" error BEFORE the child mutation (contract wire trap) —
+# unreachable in practice since the add/edit/delete affordances don't render
+# off-central.
+#
+# upsertItemVariant's error union carries exactly UniqueValueViolation (name) /
+# DatabaseError / InternalError — cannot-change-item, manufacturer-does-not-exist,
+# and packaging not-positive rejections are NON-typed top-level errors
+# (contract.md), not part of this union, and are client-guarded already (the
+# item id is never sent as editable; the manufacturer picker only offers real
+# trading partners; Save disables until every packaging row's pack size and
+# volume per unit are > 0). deleteItemVariant has no typed error member at all
+# (DeleteResponse only).
+mutation upsertItemVariant($storeId: String!, $input: UpsertItemVariantInput!) {
+  centralServer {
+    itemVariant {
+      upsertItemVariant(storeId: $storeId, input: $input) {
+        __typename
+        ... on ItemVariantNode {
+          id
+        }
+        ... on UpsertItemVariantError {
+          error {
+            __typename
+            description
+            ... on UniqueValueViolation {
+              field
+            }
+            ... on DatabaseError {
+              __typename
+            }
+            ... on InternalError {
+              __typename
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation deleteItemVariant($storeId: String!, $input: DeleteItemVariantInput!) {
+  centralServer {
+    itemVariant {
+      deleteItemVariant(storeId: $storeId, input: $input) {
+        __typename
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+  }
+}
+
+# upsertBundledItem's error interface is vestigial — its only members are
+# internal/database (DatabaseError / InternalError). Every real rejection
+# (cannot-bundle-with-itself, duplicate pair, no-nesting) is a NON-typed
+# top-level error (contract.md), and per ui-surface.md S4 there's no
+# per-rejection message at all — one generic failure notice covers every
+# case, so this union is never switched on, only checked for its typename.
+# deleteBundledItem has no typed error member either (DeleteResponse only).
+mutation upsertBundledItem($storeId: String!, $input: UpsertBundledItemInput!) {
+  centralServer {
+    bundledItem {
+      upsertBundledItem(storeId: $storeId, input: $input) {
+        __typename
+        ... on BundledItemNode {
+          id
+        }
+        ... on UpsertBundledItemError {
+          error {
+            __typename
+            description
+            ... on DatabaseError {
+              __typename
+            }
+            ... on InternalError {
+              __typename
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation deleteBundledItem($storeId: String!, $input: DeleteBundledItemInput!) {
+  centralServer {
+    bundledItem {
+      deleteBundledItem(storeId: $storeId, input: $input) {
+        __typename
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+  }
+}

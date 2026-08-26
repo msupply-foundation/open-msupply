@@ -1,0 +1,56 @@
+/*
+ * Shared layout for the transitional boot screens (startup loading, site
+ * initialisation, store loading/selection, sync progress). Their controls are
+ * library components (TextField / Button / Alert / Dialog — the boot-screen
+ * sweep, see kdd/own-simple-buy-hard); what remains here is bare screen layout with no
+ * library equivalent yet. Each class is a candidate for a real element —
+ * loading state, card, form stack, selection list (docs/UI_ELEMENTS.md).
+ */
+
+/* Centres a boot/loading surface in the viewport. */
+.page {
+  display: flex;
+  justify-content: center;
+  padding-top: 10vh;
+}
+
+/* The initialisation form column. */
+.card {
+  width: 23.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* A vertical stack of fields/alerts (dialog forms, sync progress). */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Plain list — sync steps, the store picker. */
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* A full-width row button in the store picker's list. */
+.listButton {
+  width: 100%;
+  text-align: start;
+  padding: 0.5rem 0.75rem;
+}
+
+/* Store-selection screen (startup S3): seats the selector panel inside the
+   login frame's light panel — centred, breathing room top and bottom, its own
+   scroll when the list outgrows the viewport (the frame's .panel already
+   scrolls). */
+.storeSelectArea {
+  justify-content: center;
+  padding: var(--space-6);
+}
