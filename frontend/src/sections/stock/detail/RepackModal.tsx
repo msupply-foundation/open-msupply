@@ -137,9 +137,9 @@ const RepackContent = (props: {
     );
 
   // Which repack is current, and what that means for the row mark, the panel
-  // below the table, and the print gate (AC-R8, issue #794 — the selection used
-  // to leave no trace at all). The decision is pure and unit-tested in
-  // repackSelection.ts; here it just drives the render.
+  // below the table, and the print gate (OMS-REG-SMV-08 `.24`–`.26`, issue
+  // #794 — the selection used to leave no trace at all). The decision is pure
+  // and unit-tested in repackSelection.ts; here it just drives the render.
   const panel = createMemo(() =>
     repackPanelState({
       repacks: repacks(),
@@ -210,7 +210,7 @@ const RepackContent = (props: {
     void refetch();
     props.onRepacked();
     if (isFull && outcome.data.newStockLineId) {
-      // All packs repacked — offer navigation to the new line (spec AC-R7).
+      // All packs repacked — offer navigation to the new line (spec `.21`).
       setFullRepackNewLineId(outcome.data.newStockLineId);
     }
   };
@@ -426,6 +426,7 @@ const RepackContent = (props: {
                     <LocationVolumeSelect
                       label={t('label.new-location')}
                       hideLabel
+                      inputTestId="repack-new-location"
                       locations={locations()}
                       loading={allLocations.loading}
                       value={newLocation()?.id}
@@ -441,7 +442,7 @@ const RepackContent = (props: {
                       // This field is a DESTINATION, distinct from where the
                       // stock sits now, so the origin needs naming explicitly —
                       // repacking back into it is valid (a same-location repack
-                      // is a pure relocation, AC-R7) and its headroom already
+                      // is a pure relocation, `.22`) and its headroom already
                       // accounts for this volume.
                       originalLocationId={props.line.location?.id}
                       onChange={l =>
@@ -530,7 +531,7 @@ const RepackContent = (props: {
         )}
       </Show>
 
-      {/* Full repack → offer navigation to the new line (spec AC-R7). */}
+      {/* Full repack → offer navigation to the new line (spec `.21`). */}
       <ConfirmDialog
         open={!!fullRepackNewLineId()}
         title={t('heading.are-you-sure')}
