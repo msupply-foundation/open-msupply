@@ -1,0 +1,72 @@
+fragment LocationRow on LocationNode {
+  __typename
+  id
+  name
+  onHold
+  code
+  volume
+  volumeUsed
+  locationType {
+    id
+    name
+    maxTemperature
+    minTemperature
+  }
+  stock {
+    ... on StockLineConnector {
+      totalCount
+    }
+  }
+}
+
+fragment Sensor on SensorNode {
+  __typename
+  id
+  isActive
+  name
+  serial
+  batteryLevel
+  breach
+  type
+
+  location {
+    ...LocationRow
+  }
+
+  latestTemperatureLog {
+    totalCount
+    nodes {
+      temperature
+      datetime
+    }
+  }
+  assets {
+    totalCount
+    nodes {
+      id
+      assetNumber
+    }
+  }
+}
+
+query sensors(
+  $page: PaginationInput
+  $sort: [SensorSortInput!]
+  $filter: SensorFilterInput
+  $storeId: String!
+) {
+  sensors(page: $page, sort: $sort, filter: $filter, storeId: $storeId) {
+    ... on SensorConnector {
+      totalCount
+      nodes {
+        ...Sensor
+      }
+    }
+  }
+}
+
+mutation updateSensor($input: UpdateSensorInput!, $storeId: String!) {
+  updateSensor(input: $input, storeId: $storeId) {
+    ...Sensor
+  }
+}

@@ -1,0 +1,3676 @@
+import * as Types from '@openmsupply-client/common';
+
+import { GraphQLClient, RequestOptions } from 'graphql-request';
+import gql from 'graphql-tag';
+import { NameRowFragmentDoc } from '../../../../system/src/Name/api/operations.generated';
+import { SyncFileReferenceFragmentDoc } from '../../../../system/src/Documents/types.generated';
+type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
+export type InboundLineFragment = {
+  __typename: 'InvoiceLineNode';
+  id: string;
+  type: Types.InvoiceLineNodeType;
+  batch?: string | null;
+  costPricePerPack: number;
+  sellPricePerPack: number;
+  expiryDate?: string | null;
+  manufactureDate?: string | null;
+  numberOfPacks: number;
+  shippedNumberOfPacks?: number | null;
+  shippedPackSize?: number | null;
+  packSize: number;
+  note?: string | null;
+  invoiceId: string;
+  totalBeforeTax: number;
+  totalAfterTax: number;
+  taxPercentage?: number | null;
+  foreignCurrencyPriceBeforeTax?: number | null;
+  itemName: string;
+  itemVariantId?: string | null;
+  linkedInvoiceId?: string | null;
+  volumePerPack: number;
+  status?: Types.InvoiceLineStatusType | null;
+  donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+  manufacturer?: {
+    __typename: 'NameNode';
+    code: string;
+    id: string;
+    isCustomer: boolean;
+    isSupplier: boolean;
+    isOnHold: boolean;
+    name: string;
+    customFields?: any | null;
+    store?: {
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      isDisabled: boolean;
+    } | null;
+  } | null;
+  program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
+  campaign?: { __typename: 'CampaignNode'; id: string; name: string } | null;
+  item: {
+    __typename: 'ItemNode';
+    id: string;
+    name: string;
+    code: string;
+    unitName?: string | null;
+    defaultPackSize: number;
+    isVaccine: boolean;
+    doses: number;
+    restrictedLocationTypeId?: string | null;
+    itemStoreProperties?: {
+      __typename: 'ItemStorePropertiesNode';
+      defaultSellPricePerPack: number;
+      margin: number;
+    } | null;
+    programs?: Array<{
+      __typename: 'ProgramNode';
+      id: string;
+      name: string;
+    }> | null;
+  };
+  location?: {
+    __typename: 'LocationNode';
+    name: string;
+    id: string;
+    code: string;
+    onHold: boolean;
+  } | null;
+  stockLine?: {
+    __typename: 'StockLineNode';
+    availableNumberOfPacks: number;
+    batch?: string | null;
+    costPricePerPack: number;
+    expiryDate?: string | null;
+    id: string;
+    itemId: string;
+    packSize: number;
+    sellPricePerPack: number;
+    storeId: string;
+    totalNumberOfPacks: number;
+    onHold: boolean;
+    note?: string | null;
+    vvmStatusId?: string | null;
+  } | null;
+  vvmStatus?: {
+    __typename: 'VvmstatusNode';
+    id: string;
+    priority: number;
+    unusable: boolean;
+    description: string;
+  } | null;
+  itemVariant?: {
+    __typename: 'ItemVariantNode';
+    id: string;
+    packagingVariants: Array<{
+      __typename: 'PackagingVariantNode';
+      id: string;
+      packSize?: number | null;
+      volumePerUnit?: number | null;
+    }>;
+  } | null;
+  reasonOption?: {
+    __typename: 'ReasonOptionNode';
+    id: string;
+    reason: string;
+    type: Types.ReasonOptionNodeType;
+    isActive: boolean;
+  } | null;
+  purchaseOrderLine?: {
+    __typename: 'PurchaseOrderLineNode';
+    id: string;
+    lineNumber: number;
+    adjustedNumberOfUnits?: number | null;
+    shippedNumberOfUnits: number;
+    inTransitNumberOfUnits: number;
+    receivedNumberOfUnits: number;
+    requestedNumberOfUnits: number;
+    pricePerPackAfterDiscount: number;
+  } | null;
+};
+
+export type InboundFragment = {
+  __typename: 'InvoiceNode';
+  id: string;
+  comment?: string | null;
+  createdDatetime: string;
+  allocatedDatetime?: string | null;
+  deliveredDatetime?: string | null;
+  receivedDatetime?: string | null;
+  pickedDatetime?: string | null;
+  shippedDatetime?: string | null;
+  verifiedDatetime?: string | null;
+  invoiceNumber: number;
+  colour?: string | null;
+  onHold: boolean;
+  otherPartyId: string;
+  otherPartyName: string;
+  status: Types.InvoiceNodeStatus;
+  theirReference?: string | null;
+  transportReference?: string | null;
+  type: Types.InvoiceNodeType;
+  taxPercentage?: number | null;
+  expectedDeliveryDate?: string | null;
+  customFields?: any | null;
+  currencyRate: number;
+  chargesLocalCurrency: number;
+  chargesForeignCurrency: number;
+  inboundType: Types.InboundNodeType;
+  defaultDonor?: { __typename: 'NameNode'; id: string; name: string } | null;
+  linkedShipment?: {
+    __typename: 'InvoiceNode';
+    id: string;
+    invoiceNumber: number;
+  } | null;
+  user?: {
+    __typename: 'UserNode';
+    username: string;
+    email?: string | null;
+  } | null;
+  requisition?: {
+    __typename: 'RequisitionNode';
+    id: string;
+    requisitionNumber: number;
+    createdDatetime: string;
+    createdFromRequisitionId?: string | null;
+    user?: { __typename: 'UserNode'; username: string } | null;
+  } | null;
+  lines: {
+    __typename: 'InvoiceLineConnector';
+    totalCount: number;
+    nodes: Array<{
+      __typename: 'InvoiceLineNode';
+      id: string;
+      type: Types.InvoiceLineNodeType;
+      batch?: string | null;
+      costPricePerPack: number;
+      sellPricePerPack: number;
+      expiryDate?: string | null;
+      manufactureDate?: string | null;
+      numberOfPacks: number;
+      shippedNumberOfPacks?: number | null;
+      shippedPackSize?: number | null;
+      packSize: number;
+      note?: string | null;
+      invoiceId: string;
+      totalBeforeTax: number;
+      totalAfterTax: number;
+      taxPercentage?: number | null;
+      foreignCurrencyPriceBeforeTax?: number | null;
+      itemName: string;
+      itemVariantId?: string | null;
+      linkedInvoiceId?: string | null;
+      volumePerPack: number;
+      status?: Types.InvoiceLineStatusType | null;
+      donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+      manufacturer?: {
+        __typename: 'NameNode';
+        code: string;
+        id: string;
+        isCustomer: boolean;
+        isSupplier: boolean;
+        isOnHold: boolean;
+        name: string;
+        customFields?: any | null;
+        store?: {
+          __typename: 'StoreNode';
+          id: string;
+          code: string;
+          isDisabled: boolean;
+        } | null;
+      } | null;
+      program?: { __typename: 'ProgramNode'; id: string; name: string } | null;
+      campaign?: {
+        __typename: 'CampaignNode';
+        id: string;
+        name: string;
+      } | null;
+      item: {
+        __typename: 'ItemNode';
+        id: string;
+        name: string;
+        code: string;
+        unitName?: string | null;
+        defaultPackSize: number;
+        isVaccine: boolean;
+        doses: number;
+        restrictedLocationTypeId?: string | null;
+        itemStoreProperties?: {
+          __typename: 'ItemStorePropertiesNode';
+          defaultSellPricePerPack: number;
+          margin: number;
+        } | null;
+        programs?: Array<{
+          __typename: 'ProgramNode';
+          id: string;
+          name: string;
+        }> | null;
+      };
+      location?: {
+        __typename: 'LocationNode';
+        name: string;
+        id: string;
+        code: string;
+        onHold: boolean;
+      } | null;
+      stockLine?: {
+        __typename: 'StockLineNode';
+        availableNumberOfPacks: number;
+        batch?: string | null;
+        costPricePerPack: number;
+        expiryDate?: string | null;
+        id: string;
+        itemId: string;
+        packSize: number;
+        sellPricePerPack: number;
+        storeId: string;
+        totalNumberOfPacks: number;
+        onHold: boolean;
+        note?: string | null;
+        vvmStatusId?: string | null;
+      } | null;
+      vvmStatus?: {
+        __typename: 'VvmstatusNode';
+        id: string;
+        priority: number;
+        unusable: boolean;
+        description: string;
+      } | null;
+      itemVariant?: {
+        __typename: 'ItemVariantNode';
+        id: string;
+        packagingVariants: Array<{
+          __typename: 'PackagingVariantNode';
+          id: string;
+          packSize?: number | null;
+          volumePerUnit?: number | null;
+        }>;
+      } | null;
+      reasonOption?: {
+        __typename: 'ReasonOptionNode';
+        id: string;
+        reason: string;
+        type: Types.ReasonOptionNodeType;
+        isActive: boolean;
+      } | null;
+      purchaseOrderLine?: {
+        __typename: 'PurchaseOrderLineNode';
+        id: string;
+        lineNumber: number;
+        adjustedNumberOfUnits?: number | null;
+        shippedNumberOfUnits: number;
+        inTransitNumberOfUnits: number;
+        receivedNumberOfUnits: number;
+        requestedNumberOfUnits: number;
+        pricePerPackAfterDiscount: number;
+      } | null;
+    }>;
+  };
+  otherParty: {
+    __typename: 'NameNode';
+    id: string;
+    name: string;
+    code: string;
+    isCustomer: boolean;
+    isSupplier: boolean;
+    isOnHold: boolean;
+    margin?: number | null;
+    store?: {
+      __typename: 'StoreNode';
+      id: string;
+      code: string;
+      isDisabled: boolean;
+    } | null;
+  };
+  pricing: {
+    __typename: 'PricingNode';
+    totalAfterTax: number;
+    totalBeforeTax: number;
+    stockTotalBeforeTax: number;
+    stockTotalAfterTax: number;
+    serviceTotalAfterTax: number;
+    serviceTotalBeforeTax: number;
+    taxPercentage?: number | null;
+    foreignCurrencyTotalAfterTax?: number | null;
+  };
+  currency?: {
+    __typename: 'CurrencyNode';
+    id: string;
+    code: string;
+    rate: number;
+    isHomeCurrency: boolean;
+  } | null;
+  documents: {
+    __typename: 'SyncFileReferenceConnector';
+    nodes: Array<{
+      __typename: 'SyncFileReferenceNode';
+      id: string;
+      fileName: string;
+      recordId: string;
+      createdDatetime: string;
+      totalBytes: number;
+      status: Types.SyncFileReferenceNodeStatus;
+      error?: string | null;
+    }>;
+  };
+  shippingMethod?: {
+    __typename: 'ShippingMethodNode';
+    id: string;
+    method: string;
+  } | null;
+  purchaseOrder?: {
+    __typename: 'PurchaseOrderNode';
+    id: string;
+    number: number;
+    reference?: string | null;
+    orderTotalAfterDiscount: number;
+    currency?: {
+      __typename: 'CurrencyNode';
+      id: string;
+      code: string;
+      rate: number;
+      isHomeCurrency: boolean;
+    } | null;
+    lines: {
+      __typename: 'PurchaseOrderLineConnector';
+      nodes: Array<{
+        __typename: 'PurchaseOrderLineNode';
+        id: string;
+        item: { __typename: 'ItemNode'; id: string };
+      }>;
+    };
+  } | null;
+};
+
+export type InboundRowFragment = {
+  __typename: 'InvoiceNode';
+  comment?: string | null;
+  createdDatetime: string;
+  deliveredDatetime?: string | null;
+  receivedDatetime?: string | null;
+  id: string;
+  invoiceNumber: number;
+  otherPartyName: string;
+  status: Types.InvoiceNodeStatus;
+  colour?: string | null;
+  theirReference?: string | null;
+  taxPercentage?: number | null;
+  onHold: boolean;
+  currencyRate: number;
+  inboundType: Types.InboundNodeType;
+  customFields?: any | null;
+  pricing: {
+    __typename: 'PricingNode';
+    totalAfterTax: number;
+    taxPercentage?: number | null;
+    foreignCurrencyTotalAfterTax?: number | null;
+  };
+  requisition?: {
+    __typename: 'RequisitionNode';
+    id: string;
+    requisitionNumber: number;
+  } | null;
+  linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
+  currency?: {
+    __typename: 'CurrencyNode';
+    id: string;
+    code: string;
+    rate: number;
+    isHomeCurrency: boolean;
+  } | null;
+  purchaseOrder?: {
+    __typename: 'PurchaseOrderNode';
+    id: string;
+    number: number;
+  } | null;
+};
+
+export type InvoicesQueryVariables = Types.Exact<{
+  first?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  offset?: Types.InputMaybe<Types.Scalars['Int']['input']>;
+  key: Types.InvoiceSortFieldInput;
+  desc?: Types.InputMaybe<Types.Scalars['Boolean']['input']>;
+  filter?: Types.InputMaybe<Types.InvoiceFilterInput>;
+  storeId: Types.Scalars['String']['input'];
+  type?: Types.InputMaybe<
+    Array<Types.InvoiceTypeInput> | Types.InvoiceTypeInput
+  >;
+}>;
+
+export type InvoicesQuery = {
+  __typename: 'Queries';
+  invoices: {
+    __typename: 'InvoiceConnector';
+    totalCount: number;
+    nodes: Array<{
+      __typename: 'InvoiceNode';
+      comment?: string | null;
+      createdDatetime: string;
+      deliveredDatetime?: string | null;
+      receivedDatetime?: string | null;
+      id: string;
+      invoiceNumber: number;
+      otherPartyName: string;
+      status: Types.InvoiceNodeStatus;
+      colour?: string | null;
+      theirReference?: string | null;
+      taxPercentage?: number | null;
+      onHold: boolean;
+      currencyRate: number;
+      inboundType: Types.InboundNodeType;
+      customFields?: any | null;
+      pricing: {
+        __typename: 'PricingNode';
+        totalAfterTax: number;
+        taxPercentage?: number | null;
+        foreignCurrencyTotalAfterTax?: number | null;
+      };
+      requisition?: {
+        __typename: 'RequisitionNode';
+        id: string;
+        requisitionNumber: number;
+      } | null;
+      linkedShipment?: { __typename: 'InvoiceNode'; id: string } | null;
+      currency?: {
+        __typename: 'CurrencyNode';
+        id: string;
+        code: string;
+        rate: number;
+        isHomeCurrency: boolean;
+      } | null;
+      purchaseOrder?: {
+        __typename: 'PurchaseOrderNode';
+        id: string;
+        number: number;
+      } | null;
+    }>;
+  };
+};
+
+export type InvoiceQueryVariables = Types.Exact<{
+  id: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
+  type?: Types.InputMaybe<Types.InvoiceTypeInput>;
+}>;
+
+export type InvoiceQuery = {
+  __typename: 'Queries';
+  invoice:
+    | {
+        __typename: 'InvoiceNode';
+        id: string;
+        comment?: string | null;
+        createdDatetime: string;
+        allocatedDatetime?: string | null;
+        deliveredDatetime?: string | null;
+        receivedDatetime?: string | null;
+        pickedDatetime?: string | null;
+        shippedDatetime?: string | null;
+        verifiedDatetime?: string | null;
+        invoiceNumber: number;
+        colour?: string | null;
+        onHold: boolean;
+        otherPartyId: string;
+        otherPartyName: string;
+        status: Types.InvoiceNodeStatus;
+        theirReference?: string | null;
+        transportReference?: string | null;
+        type: Types.InvoiceNodeType;
+        taxPercentage?: number | null;
+        expectedDeliveryDate?: string | null;
+        customFields?: any | null;
+        currencyRate: number;
+        chargesLocalCurrency: number;
+        chargesForeignCurrency: number;
+        inboundType: Types.InboundNodeType;
+        defaultDonor?: {
+          __typename: 'NameNode';
+          id: string;
+          name: string;
+        } | null;
+        linkedShipment?: {
+          __typename: 'InvoiceNode';
+          id: string;
+          invoiceNumber: number;
+        } | null;
+        user?: {
+          __typename: 'UserNode';
+          username: string;
+          email?: string | null;
+        } | null;
+        requisition?: {
+          __typename: 'RequisitionNode';
+          id: string;
+          requisitionNumber: number;
+          createdDatetime: string;
+          createdFromRequisitionId?: string | null;
+          user?: { __typename: 'UserNode'; username: string } | null;
+        } | null;
+        lines: {
+          __typename: 'InvoiceLineConnector';
+          totalCount: number;
+          nodes: Array<{
+            __typename: 'InvoiceLineNode';
+            id: string;
+            type: Types.InvoiceLineNodeType;
+            batch?: string | null;
+            costPricePerPack: number;
+            sellPricePerPack: number;
+            expiryDate?: string | null;
+            manufactureDate?: string | null;
+            numberOfPacks: number;
+            shippedNumberOfPacks?: number | null;
+            shippedPackSize?: number | null;
+            packSize: number;
+            note?: string | null;
+            invoiceId: string;
+            totalBeforeTax: number;
+            totalAfterTax: number;
+            taxPercentage?: number | null;
+            foreignCurrencyPriceBeforeTax?: number | null;
+            itemName: string;
+            itemVariantId?: string | null;
+            linkedInvoiceId?: string | null;
+            volumePerPack: number;
+            status?: Types.InvoiceLineStatusType | null;
+            donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+            manufacturer?: {
+              __typename: 'NameNode';
+              code: string;
+              id: string;
+              isCustomer: boolean;
+              isSupplier: boolean;
+              isOnHold: boolean;
+              name: string;
+              customFields?: any | null;
+              store?: {
+                __typename: 'StoreNode';
+                id: string;
+                code: string;
+                isDisabled: boolean;
+              } | null;
+            } | null;
+            program?: {
+              __typename: 'ProgramNode';
+              id: string;
+              name: string;
+            } | null;
+            campaign?: {
+              __typename: 'CampaignNode';
+              id: string;
+              name: string;
+            } | null;
+            item: {
+              __typename: 'ItemNode';
+              id: string;
+              name: string;
+              code: string;
+              unitName?: string | null;
+              defaultPackSize: number;
+              isVaccine: boolean;
+              doses: number;
+              restrictedLocationTypeId?: string | null;
+              itemStoreProperties?: {
+                __typename: 'ItemStorePropertiesNode';
+                defaultSellPricePerPack: number;
+                margin: number;
+              } | null;
+              programs?: Array<{
+                __typename: 'ProgramNode';
+                id: string;
+                name: string;
+              }> | null;
+            };
+            location?: {
+              __typename: 'LocationNode';
+              name: string;
+              id: string;
+              code: string;
+              onHold: boolean;
+            } | null;
+            stockLine?: {
+              __typename: 'StockLineNode';
+              availableNumberOfPacks: number;
+              batch?: string | null;
+              costPricePerPack: number;
+              expiryDate?: string | null;
+              id: string;
+              itemId: string;
+              packSize: number;
+              sellPricePerPack: number;
+              storeId: string;
+              totalNumberOfPacks: number;
+              onHold: boolean;
+              note?: string | null;
+              vvmStatusId?: string | null;
+            } | null;
+            vvmStatus?: {
+              __typename: 'VvmstatusNode';
+              id: string;
+              priority: number;
+              unusable: boolean;
+              description: string;
+            } | null;
+            itemVariant?: {
+              __typename: 'ItemVariantNode';
+              id: string;
+              packagingVariants: Array<{
+                __typename: 'PackagingVariantNode';
+                id: string;
+                packSize?: number | null;
+                volumePerUnit?: number | null;
+              }>;
+            } | null;
+            reasonOption?: {
+              __typename: 'ReasonOptionNode';
+              id: string;
+              reason: string;
+              type: Types.ReasonOptionNodeType;
+              isActive: boolean;
+            } | null;
+            purchaseOrderLine?: {
+              __typename: 'PurchaseOrderLineNode';
+              id: string;
+              lineNumber: number;
+              adjustedNumberOfUnits?: number | null;
+              shippedNumberOfUnits: number;
+              inTransitNumberOfUnits: number;
+              receivedNumberOfUnits: number;
+              requestedNumberOfUnits: number;
+              pricePerPackAfterDiscount: number;
+            } | null;
+          }>;
+        };
+        otherParty: {
+          __typename: 'NameNode';
+          id: string;
+          name: string;
+          code: string;
+          isCustomer: boolean;
+          isSupplier: boolean;
+          isOnHold: boolean;
+          margin?: number | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
+        };
+        pricing: {
+          __typename: 'PricingNode';
+          totalAfterTax: number;
+          totalBeforeTax: number;
+          stockTotalBeforeTax: number;
+          stockTotalAfterTax: number;
+          serviceTotalAfterTax: number;
+          serviceTotalBeforeTax: number;
+          taxPercentage?: number | null;
+          foreignCurrencyTotalAfterTax?: number | null;
+        };
+        currency?: {
+          __typename: 'CurrencyNode';
+          id: string;
+          code: string;
+          rate: number;
+          isHomeCurrency: boolean;
+        } | null;
+        documents: {
+          __typename: 'SyncFileReferenceConnector';
+          nodes: Array<{
+            __typename: 'SyncFileReferenceNode';
+            id: string;
+            fileName: string;
+            recordId: string;
+            createdDatetime: string;
+            totalBytes: number;
+            status: Types.SyncFileReferenceNodeStatus;
+            error?: string | null;
+          }>;
+        };
+        shippingMethod?: {
+          __typename: 'ShippingMethodNode';
+          id: string;
+          method: string;
+        } | null;
+        purchaseOrder?: {
+          __typename: 'PurchaseOrderNode';
+          id: string;
+          number: number;
+          reference?: string | null;
+          orderTotalAfterDiscount: number;
+          currency?: {
+            __typename: 'CurrencyNode';
+            id: string;
+            code: string;
+            rate: number;
+            isHomeCurrency: boolean;
+          } | null;
+          lines: {
+            __typename: 'PurchaseOrderLineConnector';
+            nodes: Array<{
+              __typename: 'PurchaseOrderLineNode';
+              id: string;
+              item: { __typename: 'ItemNode'; id: string };
+            }>;
+          };
+        } | null;
+      }
+    | {
+        __typename: 'NodeError';
+        error:
+          | {
+              __typename: 'DatabaseError';
+              description: string;
+              fullError: string;
+            }
+          | { __typename: 'RecordNotFound'; description: string };
+      };
+};
+
+export type InboundByNumberQueryVariables = Types.Exact<{
+  invoiceNumber: Types.Scalars['Int']['input'];
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type InboundByNumberQuery = {
+  __typename: 'Queries';
+  invoiceByNumber:
+    | {
+        __typename: 'InvoiceNode';
+        id: string;
+        comment?: string | null;
+        createdDatetime: string;
+        allocatedDatetime?: string | null;
+        deliveredDatetime?: string | null;
+        receivedDatetime?: string | null;
+        pickedDatetime?: string | null;
+        shippedDatetime?: string | null;
+        verifiedDatetime?: string | null;
+        invoiceNumber: number;
+        colour?: string | null;
+        onHold: boolean;
+        otherPartyId: string;
+        otherPartyName: string;
+        status: Types.InvoiceNodeStatus;
+        theirReference?: string | null;
+        transportReference?: string | null;
+        type: Types.InvoiceNodeType;
+        taxPercentage?: number | null;
+        expectedDeliveryDate?: string | null;
+        customFields?: any | null;
+        currencyRate: number;
+        chargesLocalCurrency: number;
+        chargesForeignCurrency: number;
+        inboundType: Types.InboundNodeType;
+        defaultDonor?: {
+          __typename: 'NameNode';
+          id: string;
+          name: string;
+        } | null;
+        linkedShipment?: {
+          __typename: 'InvoiceNode';
+          id: string;
+          invoiceNumber: number;
+        } | null;
+        user?: {
+          __typename: 'UserNode';
+          username: string;
+          email?: string | null;
+        } | null;
+        requisition?: {
+          __typename: 'RequisitionNode';
+          id: string;
+          requisitionNumber: number;
+          createdDatetime: string;
+          createdFromRequisitionId?: string | null;
+          user?: { __typename: 'UserNode'; username: string } | null;
+        } | null;
+        lines: {
+          __typename: 'InvoiceLineConnector';
+          totalCount: number;
+          nodes: Array<{
+            __typename: 'InvoiceLineNode';
+            id: string;
+            type: Types.InvoiceLineNodeType;
+            batch?: string | null;
+            costPricePerPack: number;
+            sellPricePerPack: number;
+            expiryDate?: string | null;
+            manufactureDate?: string | null;
+            numberOfPacks: number;
+            shippedNumberOfPacks?: number | null;
+            shippedPackSize?: number | null;
+            packSize: number;
+            note?: string | null;
+            invoiceId: string;
+            totalBeforeTax: number;
+            totalAfterTax: number;
+            taxPercentage?: number | null;
+            foreignCurrencyPriceBeforeTax?: number | null;
+            itemName: string;
+            itemVariantId?: string | null;
+            linkedInvoiceId?: string | null;
+            volumePerPack: number;
+            status?: Types.InvoiceLineStatusType | null;
+            donor?: { __typename: 'NameNode'; id: string; name: string } | null;
+            manufacturer?: {
+              __typename: 'NameNode';
+              code: string;
+              id: string;
+              isCustomer: boolean;
+              isSupplier: boolean;
+              isOnHold: boolean;
+              name: string;
+              customFields?: any | null;
+              store?: {
+                __typename: 'StoreNode';
+                id: string;
+                code: string;
+                isDisabled: boolean;
+              } | null;
+            } | null;
+            program?: {
+              __typename: 'ProgramNode';
+              id: string;
+              name: string;
+            } | null;
+            campaign?: {
+              __typename: 'CampaignNode';
+              id: string;
+              name: string;
+            } | null;
+            item: {
+              __typename: 'ItemNode';
+              id: string;
+              name: string;
+              code: string;
+              unitName?: string | null;
+              defaultPackSize: number;
+              isVaccine: boolean;
+              doses: number;
+              restrictedLocationTypeId?: string | null;
+              itemStoreProperties?: {
+                __typename: 'ItemStorePropertiesNode';
+                defaultSellPricePerPack: number;
+                margin: number;
+              } | null;
+              programs?: Array<{
+                __typename: 'ProgramNode';
+                id: string;
+                name: string;
+              }> | null;
+            };
+            location?: {
+              __typename: 'LocationNode';
+              name: string;
+              id: string;
+              code: string;
+              onHold: boolean;
+            } | null;
+            stockLine?: {
+              __typename: 'StockLineNode';
+              availableNumberOfPacks: number;
+              batch?: string | null;
+              costPricePerPack: number;
+              expiryDate?: string | null;
+              id: string;
+              itemId: string;
+              packSize: number;
+              sellPricePerPack: number;
+              storeId: string;
+              totalNumberOfPacks: number;
+              onHold: boolean;
+              note?: string | null;
+              vvmStatusId?: string | null;
+            } | null;
+            vvmStatus?: {
+              __typename: 'VvmstatusNode';
+              id: string;
+              priority: number;
+              unusable: boolean;
+              description: string;
+            } | null;
+            itemVariant?: {
+              __typename: 'ItemVariantNode';
+              id: string;
+              packagingVariants: Array<{
+                __typename: 'PackagingVariantNode';
+                id: string;
+                packSize?: number | null;
+                volumePerUnit?: number | null;
+              }>;
+            } | null;
+            reasonOption?: {
+              __typename: 'ReasonOptionNode';
+              id: string;
+              reason: string;
+              type: Types.ReasonOptionNodeType;
+              isActive: boolean;
+            } | null;
+            purchaseOrderLine?: {
+              __typename: 'PurchaseOrderLineNode';
+              id: string;
+              lineNumber: number;
+              adjustedNumberOfUnits?: number | null;
+              shippedNumberOfUnits: number;
+              inTransitNumberOfUnits: number;
+              receivedNumberOfUnits: number;
+              requestedNumberOfUnits: number;
+              pricePerPackAfterDiscount: number;
+            } | null;
+          }>;
+        };
+        otherParty: {
+          __typename: 'NameNode';
+          id: string;
+          name: string;
+          code: string;
+          isCustomer: boolean;
+          isSupplier: boolean;
+          isOnHold: boolean;
+          margin?: number | null;
+          store?: {
+            __typename: 'StoreNode';
+            id: string;
+            code: string;
+            isDisabled: boolean;
+          } | null;
+        };
+        pricing: {
+          __typename: 'PricingNode';
+          totalAfterTax: number;
+          totalBeforeTax: number;
+          stockTotalBeforeTax: number;
+          stockTotalAfterTax: number;
+          serviceTotalAfterTax: number;
+          serviceTotalBeforeTax: number;
+          taxPercentage?: number | null;
+          foreignCurrencyTotalAfterTax?: number | null;
+        };
+        currency?: {
+          __typename: 'CurrencyNode';
+          id: string;
+          code: string;
+          rate: number;
+          isHomeCurrency: boolean;
+        } | null;
+        documents: {
+          __typename: 'SyncFileReferenceConnector';
+          nodes: Array<{
+            __typename: 'SyncFileReferenceNode';
+            id: string;
+            fileName: string;
+            recordId: string;
+            createdDatetime: string;
+            totalBytes: number;
+            status: Types.SyncFileReferenceNodeStatus;
+            error?: string | null;
+          }>;
+        };
+        shippingMethod?: {
+          __typename: 'ShippingMethodNode';
+          id: string;
+          method: string;
+        } | null;
+        purchaseOrder?: {
+          __typename: 'PurchaseOrderNode';
+          id: string;
+          number: number;
+          reference?: string | null;
+          orderTotalAfterDiscount: number;
+          currency?: {
+            __typename: 'CurrencyNode';
+            id: string;
+            code: string;
+            rate: number;
+            isHomeCurrency: boolean;
+          } | null;
+          lines: {
+            __typename: 'PurchaseOrderLineConnector';
+            nodes: Array<{
+              __typename: 'PurchaseOrderLineNode';
+              id: string;
+              item: { __typename: 'ItemNode'; id: string };
+            }>;
+          };
+        } | null;
+      }
+    | {
+        __typename: 'NodeError';
+        error:
+          | {
+              __typename: 'DatabaseError';
+              description: string;
+              fullError: string;
+            }
+          | { __typename: 'RecordNotFound'; description: string };
+      };
+};
+
+export type UpdateInboundShipmentMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.UpdateInboundShipmentInput;
+}>;
+
+export type UpdateInboundShipmentMutation = {
+  __typename: 'Mutations';
+  updateInboundShipment:
+    | { __typename: 'InvoiceNode'; id: string; invoiceNumber: number }
+    | {
+        __typename: 'UpdateInboundShipmentError';
+        error:
+          | {
+              __typename: 'CannotChangeStatusOfInvoiceOnHold';
+              description: string;
+            }
+          | { __typename: 'CannotEditInvoice'; description: string }
+          | { __typename: 'CannotIssueInForeignCurrency'; description: string }
+          | { __typename: 'CannotReceiveWithPendingLines'; description: string }
+          | { __typename: 'CannotReverseInvoiceStatus'; description: string }
+          | { __typename: 'OtherPartyNotASupplier'; description: string }
+          | { __typename: 'OtherPartyNotVisible'; description: string }
+          | { __typename: 'RecordNotFound'; description: string };
+      };
+};
+
+export type UpdateInboundShipmentExternalMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.UpdateInboundShipmentInput;
+}>;
+
+export type UpdateInboundShipmentExternalMutation = {
+  __typename: 'Mutations';
+  updateInboundShipmentExternal:
+    | { __typename: 'InvoiceNode'; id: string; invoiceNumber: number }
+    | {
+        __typename: 'UpdateInboundShipmentError';
+        error:
+          | {
+              __typename: 'CannotChangeStatusOfInvoiceOnHold';
+              description: string;
+            }
+          | { __typename: 'CannotEditInvoice'; description: string }
+          | { __typename: 'CannotIssueInForeignCurrency'; description: string }
+          | { __typename: 'CannotReceiveWithPendingLines'; description: string }
+          | { __typename: 'CannotReverseInvoiceStatus'; description: string }
+          | { __typename: 'OtherPartyNotASupplier'; description: string }
+          | { __typename: 'OtherPartyNotVisible'; description: string }
+          | { __typename: 'RecordNotFound'; description: string };
+      };
+};
+
+export type DeleteInboundShipmentsMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  deleteInboundShipments:
+    | Array<Types.DeleteInboundShipmentInput>
+    | Types.DeleteInboundShipmentInput;
+}>;
+
+export type DeleteInboundShipmentsMutation = {
+  __typename: 'Mutations';
+  batchInboundShipment: {
+    __typename: 'BatchInboundShipmentResponse';
+    deleteInboundShipments?: Array<{
+      __typename: 'DeleteInboundShipmentResponseWithId';
+      id: string;
+      response:
+        | {
+            __typename: 'DeleteInboundShipmentError';
+            error:
+              | {
+                  __typename: 'CannotDeleteInvoiceWithLines';
+                  description: string;
+                }
+              | { __typename: 'CannotEditInvoice'; description: string }
+              | { __typename: 'RecordNotFound'; description: string };
+          }
+        | { __typename: 'DeleteResponse'; id: string };
+    }> | null;
+  };
+};
+
+export type DeleteInboundShipmentsExternalMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  deleteInboundShipments:
+    | Array<Types.DeleteInboundShipmentInput>
+    | Types.DeleteInboundShipmentInput;
+}>;
+
+export type DeleteInboundShipmentsExternalMutation = {
+  __typename: 'Mutations';
+  batchInboundShipmentExternal: {
+    __typename: 'BatchInboundShipmentResponse';
+    deleteInboundShipments?: Array<{
+      __typename: 'DeleteInboundShipmentResponseWithId';
+      id: string;
+      response:
+        | {
+            __typename: 'DeleteInboundShipmentError';
+            error:
+              | {
+                  __typename: 'CannotDeleteInvoiceWithLines';
+                  description: string;
+                }
+              | { __typename: 'CannotEditInvoice'; description: string }
+              | { __typename: 'RecordNotFound'; description: string };
+          }
+        | { __typename: 'DeleteResponse'; id: string };
+    }> | null;
+  };
+};
+
+export type InsertInboundShipmentMutationVariables = Types.Exact<{
+  id: Types.Scalars['String']['input'];
+  otherPartyId: Types.Scalars['String']['input'];
+  requisitionId?: Types.InputMaybe<Types.Scalars['String']['input']>;
+  storeId: Types.Scalars['String']['input'];
+  purchaseOrderId?: Types.InputMaybe<Types.Scalars['String']['input']>;
+  insertLinesFromPurchaseOrder?: Types.InputMaybe<
+    Types.Scalars['Boolean']['input']
+  >;
+}>;
+
+export type InsertInboundShipmentMutation = {
+  __typename: 'Mutations';
+  insertInboundShipment:
+    | {
+        __typename: 'InsertInboundShipmentError';
+        error:
+          | { __typename: 'OtherPartyNotASupplier'; description: string }
+          | { __typename: 'OtherPartyNotVisible'; description: string };
+      }
+    | { __typename: 'InvoiceNode'; id: string; invoiceNumber: number };
+};
+
+export type InsertInboundShipmentExternalMutationVariables = Types.Exact<{
+  id: Types.Scalars['String']['input'];
+  otherPartyId: Types.Scalars['String']['input'];
+  requisitionId?: Types.InputMaybe<Types.Scalars['String']['input']>;
+  storeId: Types.Scalars['String']['input'];
+  purchaseOrderId?: Types.InputMaybe<Types.Scalars['String']['input']>;
+  insertLinesFromPurchaseOrder?: Types.InputMaybe<
+    Types.Scalars['Boolean']['input']
+  >;
+}>;
+
+export type InsertInboundShipmentExternalMutation = {
+  __typename: 'Mutations';
+  insertInboundShipmentExternal:
+    | {
+        __typename: 'InsertInboundShipmentError';
+        error:
+          | { __typename: 'OtherPartyNotASupplier'; description: string }
+          | { __typename: 'OtherPartyNotVisible'; description: string };
+      }
+    | { __typename: 'InvoiceNode'; id: string; invoiceNumber: number };
+};
+
+export type DuplicateInboundShipmentMutationVariables = Types.Exact<{
+  id: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type DuplicateInboundShipmentMutation = {
+  __typename: 'Mutations';
+  duplicateInboundShipment:
+    | {
+        __typename: 'DuplicateInboundShipmentError';
+        error: { __typename: 'SupplierIsInactive'; description: string };
+      }
+    | {
+        __typename: 'DuplicateInboundShipmentNode';
+        skippedItemCount: number;
+        invoice: {
+          __typename: 'InvoiceNode';
+          id: string;
+          invoiceNumber: number;
+        };
+      };
+};
+
+export type LineLinkedToTransferredInvoiceErrorFragment = {
+  __typename: 'LineLinkedToTransferredInvoice';
+  description: string;
+};
+
+export type DeleteInboundShipmentLinesMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.BatchInboundShipmentInput;
+}>;
+
+export type DeleteInboundShipmentLinesMutation = {
+  __typename: 'Mutations';
+  batchInboundShipment: {
+    __typename: 'BatchInboundShipmentResponse';
+    deleteInboundShipmentLines?: Array<{
+      __typename: 'DeleteInboundShipmentLineResponseWithId';
+      id: string;
+      response:
+        | {
+            __typename: 'DeleteInboundShipmentLineError';
+            error:
+              | { __typename: 'BatchIsReserved'; description: string }
+              | { __typename: 'CannotEditInvoice'; description: string }
+              | {
+                  __typename: 'ForeignKeyError';
+                  description: string;
+                  key: Types.ForeignKey;
+                }
+              | {
+                  __typename: 'LineLinkedToTransferredInvoice';
+                  description: string;
+                }
+              | { __typename: 'RecordNotFound'; description: string };
+          }
+        | { __typename: 'DeleteResponse'; id: string };
+    }> | null;
+  };
+};
+
+export type DeleteInboundShipmentLinesExternalMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.BatchInboundShipmentInput;
+}>;
+
+export type DeleteInboundShipmentLinesExternalMutation = {
+  __typename: 'Mutations';
+  batchInboundShipmentExternal: {
+    __typename: 'BatchInboundShipmentResponse';
+    deleteInboundShipmentLines?: Array<{
+      __typename: 'DeleteInboundShipmentLineResponseWithId';
+      id: string;
+      response:
+        | {
+            __typename: 'DeleteInboundShipmentLineError';
+            error:
+              | { __typename: 'BatchIsReserved'; description: string }
+              | { __typename: 'CannotEditInvoice'; description: string }
+              | {
+                  __typename: 'ForeignKeyError';
+                  description: string;
+                  key: Types.ForeignKey;
+                }
+              | {
+                  __typename: 'LineLinkedToTransferredInvoice';
+                  description: string;
+                }
+              | { __typename: 'RecordNotFound'; description: string };
+          }
+        | { __typename: 'DeleteResponse'; id: string };
+    }> | null;
+  };
+};
+
+export type UpsertInboundShipmentMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.BatchInboundShipmentInput;
+}>;
+
+export type UpsertInboundShipmentMutation = {
+  __typename: 'Mutations';
+  batchInboundShipment: {
+    __typename: 'BatchInboundShipmentResponse';
+    updateInboundShipments?: Array<{
+      __typename: 'UpdateInboundShipmentResponseWithId';
+      id: string;
+      response:
+        | { __typename: 'InvoiceNode'; id: string; invoiceNumber: number }
+        | {
+            __typename: 'UpdateInboundShipmentError';
+            error:
+              | {
+                  __typename: 'CannotChangeStatusOfInvoiceOnHold';
+                  description: string;
+                }
+              | { __typename: 'CannotEditInvoice'; description: string }
+              | {
+                  __typename: 'CannotIssueInForeignCurrency';
+                  description: string;
+                }
+              | {
+                  __typename: 'CannotReceiveWithPendingLines';
+                  description: string;
+                }
+              | {
+                  __typename: 'CannotReverseInvoiceStatus';
+                  description: string;
+                }
+              | { __typename: 'OtherPartyNotASupplier'; description: string }
+              | { __typename: 'OtherPartyNotVisible'; description: string }
+              | { __typename: 'RecordNotFound'; description: string };
+          };
+    }> | null;
+    insertInboundShipments?: Array<{
+      __typename: 'InsertInboundShipmentResponseWithId';
+      id: string;
+      response:
+        | {
+            __typename: 'InsertInboundShipmentError';
+            error:
+              | { __typename: 'OtherPartyNotASupplier'; description: string }
+              | { __typename: 'OtherPartyNotVisible'; description: string };
+          }
+        | { __typename: 'InvoiceNode'; id: string; invoiceNumber: number };
+    }> | null;
+    deleteInboundShipments?: Array<{
+      __typename: 'DeleteInboundShipmentResponseWithId';
+      id: string;
+      response:
+        | {
+            __typename: 'DeleteInboundShipmentError';
+            error:
+              | {
+                  __typename: 'CannotDeleteInvoiceWithLines';
+                  description: string;
+                }
+              | { __typename: 'CannotEditInvoice'; description: string }
+              | { __typename: 'RecordNotFound'; description: string };
+          }
+        | { __typename: 'DeleteResponse'; id: string };
+    }> | null;
+    updateInboundShipmentServiceLines?: Array<{
+      __typename: 'UpdateInboundShipmentServiceLineResponseWithId';
+      id: string;
+      response:
+        | { __typename: 'InvoiceLineNode'; id: string }
+        | {
+            __typename: 'UpdateInboundShipmentServiceLineError';
+            error:
+              | { __typename: 'CannotEditInvoice'; description: string }
+              | {
+                  __typename: 'ForeignKeyError';
+                  description: string;
+                  key: Types.ForeignKey;
+                }
+              | { __typename: 'RecordNotFound'; description: string };
+          };
+    }> | null;
+    updateInboundShipmentLines?: Array<{
+      __typename: 'UpdateInboundShipmentLineResponseWithId';
+      id: string;
+      response:
+        | { __typename: 'InvoiceLineNode'; id: string }
+        | {
+            __typename: 'UpdateInboundShipmentLineError';
+            error:
+              | { __typename: 'BatchIsReserved'; description: string }
+              | { __typename: 'CannotEditInvoice'; description: string }
+              | {
+                  __typename: 'ForeignKeyError';
+                  description: string;
+                  key: Types.ForeignKey;
+                }
+              | { __typename: 'NotAnInboundShipment'; description: string }
+              | { __typename: 'RecordNotFound'; description: string };
+          };
+    }> | null;
+    insertInboundShipmentServiceLines?: Array<{
+      __typename: 'InsertInboundShipmentServiceLineResponseWithId';
+      id: string;
+      response:
+        | {
+            __typename: 'InsertInboundShipmentServiceLineError';
+            error:
+              | { __typename: 'CannotEditInvoice'; description: string }
+              | {
+                  __typename: 'ForeignKeyError';
+                  description: string;
+                  key: Types.ForeignKey;
+                };
+          }
+        | { __typename: 'InvoiceLineNode'; id: string };
+    }> | null;
+    insertInboundShipmentLines?: Array<{
+      __typename: 'InsertInboundShipmentLineResponseWithId';
+      id: string;
+      response:
+        | {
+            __typename: 'InsertInboundShipmentLineError';
+            error:
+              | { __typename: 'CannotEditInvoice'; description: string }
+              | {
+                  __typename: 'ForeignKeyError';
+                  description: string;
+                  key: Types.ForeignKey;
+                };
+          }
+        | { __typename: 'InvoiceLineNode'; id: string };
+    }> | null;
+    deleteInboundShipmentServiceLines?: Array<{
+      __typename: 'DeleteInboundShipmentServiceLineResponseWithId';
+      id: string;
+      response:
+        | {
+            __typename: 'DeleteInboundShipmentServiceLineError';
+            error:
+              | { __typename: 'CannotEditInvoice'; description: string }
+              | {
+                  __typename: 'ForeignKeyError';
+                  description: string;
+                  key: Types.ForeignKey;
+                }
+              | { __typename: 'RecordNotFound'; description: string };
+          }
+        | { __typename: 'DeleteResponse'; id: string };
+    }> | null;
+    deleteInboundShipmentLines?: Array<{
+      __typename: 'DeleteInboundShipmentLineResponseWithId';
+      id: string;
+      response:
+        | {
+            __typename: 'DeleteInboundShipmentLineError';
+            error:
+              | { __typename: 'BatchIsReserved'; description: string }
+              | { __typename: 'CannotEditInvoice'; description: string }
+              | {
+                  __typename: 'ForeignKeyError';
+                  description: string;
+                  key: Types.ForeignKey;
+                }
+              | {
+                  __typename: 'LineLinkedToTransferredInvoice';
+                  description: string;
+                }
+              | { __typename: 'RecordNotFound'; description: string };
+          }
+        | { __typename: 'DeleteResponse'; id: string };
+    }> | null;
+  };
+};
+
+export type UpsertInboundShipmentExternalMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.BatchInboundShipmentInput;
+}>;
+
+export type UpsertInboundShipmentExternalMutation = {
+  __typename: 'Mutations';
+  batchInboundShipmentExternal: {
+    __typename: 'BatchInboundShipmentResponse';
+    updateInboundShipments?: Array<{
+      __typename: 'UpdateInboundShipmentResponseWithId';
+      id: string;
+      response:
+        | { __typename: 'InvoiceNode'; id: string; invoiceNumber: number }
+        | {
+            __typename: 'UpdateInboundShipmentError';
+            error:
+              | {
+                  __typename: 'CannotChangeStatusOfInvoiceOnHold';
+                  description: string;
+                }
+              | { __typename: 'CannotEditInvoice'; description: string }
+              | {
+                  __typename: 'CannotIssueInForeignCurrency';
+                  description: string;
+                }
+              | {
+                  __typename: 'CannotReceiveWithPendingLines';
+                  description: string;
+                }
+              | {
+                  __typename: 'CannotReverseInvoiceStatus';
+                  description: string;
+                }
+              | { __typename: 'OtherPartyNotASupplier'; description: string }
+              | { __typename: 'OtherPartyNotVisible'; description: string }
+              | { __typename: 'RecordNotFound'; description: string };
+          };
+    }> | null;
+    insertInboundShipments?: Array<{
+      __typename: 'InsertInboundShipmentResponseWithId';
+      id: string;
+      response:
+        | {
+            __typename: 'InsertInboundShipmentError';
+            error:
+              | { __typename: 'OtherPartyNotASupplier'; description: string }
+              | { __typename: 'OtherPartyNotVisible'; description: string };
+          }
+        | { __typename: 'InvoiceNode'; id: string; invoiceNumber: number };
+    }> | null;
+    deleteInboundShipments?: Array<{
+      __typename: 'DeleteInboundShipmentResponseWithId';
+      id: string;
+      response:
+        | {
+            __typename: 'DeleteInboundShipmentError';
+            error:
+              | {
+                  __typename: 'CannotDeleteInvoiceWithLines';
+                  description: string;
+                }
+              | { __typename: 'CannotEditInvoice'; description: string }
+              | { __typename: 'RecordNotFound'; description: string };
+          }
+        | { __typename: 'DeleteResponse'; id: string };
+    }> | null;
+    updateInboundShipmentServiceLines?: Array<{
+      __typename: 'UpdateInboundShipmentServiceLineResponseWithId';
+      id: string;
+      response:
+        | { __typename: 'InvoiceLineNode'; id: string }
+        | {
+            __typename: 'UpdateInboundShipmentServiceLineError';
+            error:
+              | { __typename: 'CannotEditInvoice'; description: string }
+              | {
+                  __typename: 'ForeignKeyError';
+                  description: string;
+                  key: Types.ForeignKey;
+                }
+              | { __typename: 'RecordNotFound'; description: string };
+          };
+    }> | null;
+    updateInboundShipmentLines?: Array<{
+      __typename: 'UpdateInboundShipmentLineResponseWithId';
+      id: string;
+      response:
+        | { __typename: 'InvoiceLineNode'; id: string }
+        | {
+            __typename: 'UpdateInboundShipmentLineError';
+            error:
+              | { __typename: 'BatchIsReserved'; description: string }
+              | { __typename: 'CannotEditInvoice'; description: string }
+              | {
+                  __typename: 'ForeignKeyError';
+                  description: string;
+                  key: Types.ForeignKey;
+                }
+              | { __typename: 'NotAnInboundShipment'; description: string }
+              | { __typename: 'RecordNotFound'; description: string };
+          };
+    }> | null;
+    insertInboundShipmentServiceLines?: Array<{
+      __typename: 'InsertInboundShipmentServiceLineResponseWithId';
+      id: string;
+      response:
+        | {
+            __typename: 'InsertInboundShipmentServiceLineError';
+            error:
+              | { __typename: 'CannotEditInvoice'; description: string }
+              | {
+                  __typename: 'ForeignKeyError';
+                  description: string;
+                  key: Types.ForeignKey;
+                };
+          }
+        | { __typename: 'InvoiceLineNode'; id: string };
+    }> | null;
+    insertInboundShipmentLines?: Array<{
+      __typename: 'InsertInboundShipmentLineResponseWithId';
+      id: string;
+      response:
+        | {
+            __typename: 'InsertInboundShipmentLineError';
+            error:
+              | { __typename: 'CannotEditInvoice'; description: string }
+              | {
+                  __typename: 'ForeignKeyError';
+                  description: string;
+                  key: Types.ForeignKey;
+                };
+          }
+        | { __typename: 'InvoiceLineNode'; id: string };
+    }> | null;
+    deleteInboundShipmentServiceLines?: Array<{
+      __typename: 'DeleteInboundShipmentServiceLineResponseWithId';
+      id: string;
+      response:
+        | {
+            __typename: 'DeleteInboundShipmentServiceLineError';
+            error:
+              | { __typename: 'CannotEditInvoice'; description: string }
+              | {
+                  __typename: 'ForeignKeyError';
+                  description: string;
+                  key: Types.ForeignKey;
+                }
+              | { __typename: 'RecordNotFound'; description: string };
+          }
+        | { __typename: 'DeleteResponse'; id: string };
+    }> | null;
+    deleteInboundShipmentLines?: Array<{
+      __typename: 'DeleteInboundShipmentLineResponseWithId';
+      id: string;
+      response:
+        | {
+            __typename: 'DeleteInboundShipmentLineError';
+            error:
+              | { __typename: 'BatchIsReserved'; description: string }
+              | { __typename: 'CannotEditInvoice'; description: string }
+              | {
+                  __typename: 'ForeignKeyError';
+                  description: string;
+                  key: Types.ForeignKey;
+                }
+              | {
+                  __typename: 'LineLinkedToTransferredInvoice';
+                  description: string;
+                }
+              | { __typename: 'RecordNotFound'; description: string };
+          }
+        | { __typename: 'DeleteResponse'; id: string };
+    }> | null;
+  };
+};
+
+export type AddToInboundShipmentFromMasterListMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  shipmentId: Types.Scalars['String']['input'];
+  masterListId: Types.Scalars['String']['input'];
+}>;
+
+export type AddToInboundShipmentFromMasterListMutation = {
+  __typename: 'Mutations';
+  addToInboundShipmentFromMasterList:
+    | {
+        __typename: 'AddToInboundShipmentFromMasterListError';
+        error:
+          | { __typename: 'CannotEditInvoice'; description: string }
+          | {
+              __typename: 'MasterListNotFoundForThisStore';
+              description: string;
+            }
+          | { __typename: 'RecordNotFound'; description: string };
+      }
+    | { __typename: 'InvoiceLineConnector'; totalCount: number };
+};
+
+export type LinkedRequestRowFragment = {
+  __typename: 'RequisitionNode';
+  id: string;
+  createdDatetime: string;
+  requisitionNumber: number;
+  theirReference?: string | null;
+  comment?: string | null;
+  user?: { __typename: 'UserNode'; username: string } | null;
+  program?: { __typename: 'ProgramNode'; name: string } | null;
+};
+
+export type LinkedRequestLineFragment = {
+  __typename: 'RequisitionLineNode';
+  id: string;
+  requestedQuantity: number;
+  item: { __typename: 'ItemNode'; id: string; code: string; name: string };
+};
+
+export type LinkedRequestWithLinesFragment = {
+  __typename: 'RequisitionNode';
+  id: string;
+  createdDatetime: string;
+  requisitionNumber: number;
+  theirReference?: string | null;
+  comment?: string | null;
+  lines: {
+    __typename: 'RequisitionLineConnector';
+    nodes: Array<{
+      __typename: 'RequisitionLineNode';
+      id: string;
+      requestedQuantity: number;
+      item: { __typename: 'ItemNode'; id: string; code: string; name: string };
+    }>;
+  };
+  user?: { __typename: 'UserNode'; username: string } | null;
+  program?: { __typename: 'ProgramNode'; name: string } | null;
+};
+
+export type RequestsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  filter?: Types.InputMaybe<Types.RequisitionFilterInput>;
+  sort?: Types.InputMaybe<
+    Array<Types.RequisitionSortInput> | Types.RequisitionSortInput
+  >;
+}>;
+
+export type RequestsQuery = {
+  __typename: 'Queries';
+  requisitions: {
+    __typename: 'RequisitionConnector';
+    totalCount: number;
+    nodes: Array<{
+      __typename: 'RequisitionNode';
+      id: string;
+      createdDatetime: string;
+      requisitionNumber: number;
+      theirReference?: string | null;
+      comment?: string | null;
+      user?: { __typename: 'UserNode'; username: string } | null;
+      program?: { __typename: 'ProgramNode'; name: string } | null;
+    }>;
+  };
+};
+
+export type RequestQueryVariables = Types.Exact<{
+  id: Types.Scalars['String']['input'];
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type RequestQuery = {
+  __typename: 'Queries';
+  requisition:
+    | { __typename: 'RecordNotFound' }
+    | {
+        __typename: 'RequisitionNode';
+        id: string;
+        createdDatetime: string;
+        requisitionNumber: number;
+        theirReference?: string | null;
+        comment?: string | null;
+        lines: {
+          __typename: 'RequisitionLineConnector';
+          nodes: Array<{
+            __typename: 'RequisitionLineNode';
+            id: string;
+            requestedQuantity: number;
+            item: {
+              __typename: 'ItemNode';
+              id: string;
+              code: string;
+              name: string;
+            };
+          }>;
+        };
+        user?: { __typename: 'UserNode'; username: string } | null;
+        program?: { __typename: 'ProgramNode'; name: string } | null;
+      };
+};
+
+export type InsertLinesFromInternalOrderMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.BatchInboundShipmentInput;
+}>;
+
+export type InsertLinesFromInternalOrderMutation = {
+  __typename: 'Mutations';
+  batchInboundShipment: {
+    __typename: 'BatchInboundShipmentResponse';
+    insertFromInternalOrderLines?: Array<{
+      __typename: 'InsertInboundShipmentLineFromInternalOrderLineResponseWithId';
+      id: string;
+      response: { __typename: 'InvoiceLineNode'; id: string };
+    }> | null;
+  };
+};
+
+export type InsertLinesFromInternalOrderExternalMutationVariables =
+  Types.Exact<{
+    storeId: Types.Scalars['String']['input'];
+    input: Types.BatchInboundShipmentInput;
+  }>;
+
+export type InsertLinesFromInternalOrderExternalMutation = {
+  __typename: 'Mutations';
+  batchInboundShipmentExternal: {
+    __typename: 'BatchInboundShipmentResponse';
+    insertFromInternalOrderLines?: Array<{
+      __typename: 'InsertInboundShipmentLineFromInternalOrderLineResponseWithId';
+      id: string;
+      response: { __typename: 'InvoiceLineNode'; id: string };
+    }> | null;
+  };
+};
+
+export type InboundShipmentPurchaseOrderLineFragment = {
+  __typename: 'PurchaseOrderNode';
+  comment?: string | null;
+  id: string;
+  number: number;
+  reference?: string | null;
+  supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
+};
+
+export type PurchaseOrdersQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  filter?: Types.InputMaybe<Types.PurchaseOrderFilterInput>;
+}>;
+
+export type PurchaseOrdersQuery = {
+  __typename: 'Queries';
+  purchaseOrders: {
+    __typename: 'PurchaseOrderConnector';
+    totalCount: number;
+    nodes: Array<{
+      __typename: 'PurchaseOrderNode';
+      comment?: string | null;
+      id: string;
+      number: number;
+      reference?: string | null;
+      supplier?: { __typename: 'NameNode'; id: string; name: string } | null;
+    }>;
+  };
+};
+
+export type StocktakeCountAfterDateQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  filter?: Types.InputMaybe<Types.StocktakeFilterInput>;
+}>;
+
+export type StocktakeCountAfterDateQuery = {
+  __typename: 'Queries';
+  stocktakes: { __typename: 'StocktakeConnector'; totalCount: number };
+};
+
+export const InboundLineFragmentDoc = gql`
+  fragment InboundLine on InvoiceLineNode {
+    __typename
+    id
+    type
+    batch
+    costPricePerPack
+    sellPricePerPack
+    expiryDate
+    manufactureDate
+    numberOfPacks
+    shippedNumberOfPacks
+    shippedPackSize
+    packSize
+    note
+    type
+    invoiceId
+    totalBeforeTax
+    totalAfterTax
+    taxPercentage
+    foreignCurrencyPriceBeforeTax
+    itemName
+    itemVariantId
+    linkedInvoiceId
+    volumePerPack
+    status
+    donor(storeId: $storeId) {
+      id
+      name
+    }
+    manufacturer(storeId: $storeId) {
+      ...NameRow
+    }
+    program {
+      id
+      name
+    }
+    campaign {
+      id
+      name
+    }
+    item {
+      __typename
+      id
+      name
+      code
+      unitName
+      defaultPackSize
+      isVaccine
+      doses
+      restrictedLocationTypeId
+      itemStoreProperties(storeId: $storeId) {
+        defaultSellPricePerPack
+        margin
+      }
+      programs(storeId: $storeId) {
+        id
+        name
+      }
+    }
+    location {
+      __typename
+      name
+      id
+      code
+      onHold
+    }
+    stockLine {
+      __typename
+      availableNumberOfPacks
+      batch
+      costPricePerPack
+      expiryDate
+      id
+      itemId
+      packSize
+      sellPricePerPack
+      storeId
+      totalNumberOfPacks
+      onHold
+      note
+      vvmStatusId
+    }
+    vvmStatus {
+      __typename
+      id
+      priority
+      unusable
+      description
+    }
+    itemVariant {
+      __typename
+      id
+      packagingVariants {
+        __typename
+        id
+        packSize
+        volumePerUnit
+      }
+    }
+    reasonOption {
+      __typename
+      id
+      reason
+      type
+      isActive
+    }
+    purchaseOrderLine {
+      __typename
+      id
+      lineNumber
+      adjustedNumberOfUnits
+      shippedNumberOfUnits
+      inTransitNumberOfUnits
+      receivedNumberOfUnits
+      requestedNumberOfUnits
+      pricePerPackAfterDiscount
+    }
+  }
+  ${NameRowFragmentDoc}
+`;
+export const InboundFragmentDoc = gql`
+  fragment Inbound on InvoiceNode {
+    __typename
+    id
+    comment
+    createdDatetime
+    allocatedDatetime
+    deliveredDatetime
+    receivedDatetime
+    pickedDatetime
+    shippedDatetime
+    verifiedDatetime
+    invoiceNumber
+    colour
+    onHold
+    otherPartyId
+    otherPartyName
+    status
+    theirReference
+    transportReference
+    type
+    taxPercentage
+    expectedDeliveryDate
+    customFields
+    defaultDonor(storeId: $storeId) {
+      id
+      name
+    }
+    linkedShipment {
+      __typename
+      id
+      invoiceNumber
+    }
+    user {
+      __typename
+      username
+      email
+    }
+    requisition {
+      __typename
+      id
+      requisitionNumber
+      createdDatetime
+      user {
+        __typename
+        username
+      }
+      createdFromRequisitionId
+    }
+    lines {
+      __typename
+      nodes {
+        ...InboundLine
+      }
+      totalCount
+    }
+    otherParty(storeId: $storeId) {
+      __typename
+      id
+      name
+      code
+      isCustomer
+      isSupplier
+      isOnHold
+      margin
+      store {
+        id
+        code
+        isDisabled
+      }
+    }
+    pricing {
+      __typename
+      totalAfterTax
+      totalBeforeTax
+      stockTotalBeforeTax
+      stockTotalAfterTax
+      serviceTotalAfterTax
+      serviceTotalBeforeTax
+      taxPercentage
+      foreignCurrencyTotalAfterTax
+    }
+    currency {
+      id
+      code
+      rate
+      isHomeCurrency
+    }
+    currencyRate
+    chargesLocalCurrency
+    chargesForeignCurrency
+    documents {
+      __typename
+      nodes {
+        ...SyncFileReference
+      }
+    }
+    shippingMethod {
+      id
+      method
+    }
+    purchaseOrder {
+      id
+      number
+      reference
+      orderTotalAfterDiscount
+      currency {
+        id
+        code
+        rate
+        isHomeCurrency
+      }
+      lines {
+        nodes {
+          id
+          item {
+            id
+          }
+        }
+      }
+    }
+    inboundType
+  }
+  ${InboundLineFragmentDoc}
+  ${SyncFileReferenceFragmentDoc}
+`;
+export const InboundRowFragmentDoc = gql`
+  fragment InboundRow on InvoiceNode {
+    __typename
+    comment
+    createdDatetime
+    deliveredDatetime
+    receivedDatetime
+    id
+    invoiceNumber
+    otherPartyName
+    status
+    colour
+    theirReference
+    taxPercentage
+    onHold
+    pricing {
+      __typename
+      totalAfterTax
+      taxPercentage
+      foreignCurrencyTotalAfterTax
+    }
+    requisition {
+      id
+      requisitionNumber
+    }
+    linkedShipment {
+      id
+    }
+    currency {
+      id
+      code
+      rate
+      isHomeCurrency
+    }
+    currencyRate
+    purchaseOrder {
+      id
+      number
+    }
+    inboundType
+    customFields
+  }
+`;
+export const LineLinkedToTransferredInvoiceErrorFragmentDoc = gql`
+  fragment LineLinkedToTransferredInvoiceError on LineLinkedToTransferredInvoice {
+    __typename
+    description
+  }
+`;
+export const LinkedRequestRowFragmentDoc = gql`
+  fragment LinkedRequestRow on RequisitionNode {
+    __typename
+    id
+    createdDatetime
+    requisitionNumber
+    theirReference
+    user {
+      username
+    }
+    program {
+      name
+    }
+    comment
+  }
+`;
+export const LinkedRequestLineFragmentDoc = gql`
+  fragment LinkedRequestLine on RequisitionLineNode {
+    __typename
+    id
+    requestedQuantity
+    item {
+      id
+      code
+      name
+    }
+  }
+`;
+export const LinkedRequestWithLinesFragmentDoc = gql`
+  fragment LinkedRequestWithLines on RequisitionNode {
+    ...LinkedRequestRow
+    lines {
+      nodes {
+        ...LinkedRequestLine
+      }
+    }
+  }
+  ${LinkedRequestRowFragmentDoc}
+  ${LinkedRequestLineFragmentDoc}
+`;
+export const InboundShipmentPurchaseOrderLineFragmentDoc = gql`
+  fragment InboundShipmentPurchaseOrderLine on PurchaseOrderNode {
+    comment
+    id
+    number
+    reference
+    supplier {
+      id
+      name
+    }
+  }
+`;
+export const InvoicesDocument = gql`
+  query invoices(
+    $first: Int
+    $offset: Int
+    $key: InvoiceSortFieldInput!
+    $desc: Boolean
+    $filter: InvoiceFilterInput
+    $storeId: String!
+    $type: [InvoiceTypeInput!]
+  ) {
+    invoices(
+      page: { first: $first, offset: $offset }
+      sort: { key: $key, desc: $desc }
+      filter: $filter
+      storeId: $storeId
+      type: $type
+    ) {
+      ... on InvoiceConnector {
+        __typename
+        totalCount
+        nodes {
+          ...InboundRow
+        }
+      }
+    }
+  }
+  ${InboundRowFragmentDoc}
+`;
+export const InvoiceDocument = gql`
+  query invoice($id: String!, $storeId: String!, $type: InvoiceTypeInput) {
+    invoice(id: $id, storeId: $storeId, type: $type) {
+      ... on InvoiceNode {
+        ...Inbound
+      }
+      ... on NodeError {
+        __typename
+        error {
+          description
+          ... on RecordNotFound {
+            __typename
+            description
+          }
+          ... on DatabaseError {
+            __typename
+            description
+            fullError
+          }
+        }
+      }
+    }
+  }
+  ${InboundFragmentDoc}
+`;
+export const InboundByNumberDocument = gql`
+  query inboundByNumber($invoiceNumber: Int!, $storeId: String!) {
+    invoiceByNumber(
+      invoiceNumber: $invoiceNumber
+      storeId: $storeId
+      type: INBOUND_SHIPMENT
+    ) {
+      ... on InvoiceNode {
+        ...Inbound
+      }
+      ... on NodeError {
+        __typename
+        error {
+          description
+          ... on RecordNotFound {
+            __typename
+            description
+          }
+          ... on DatabaseError {
+            __typename
+            description
+            fullError
+          }
+        }
+      }
+    }
+  }
+  ${InboundFragmentDoc}
+`;
+export const UpdateInboundShipmentDocument = gql`
+  mutation updateInboundShipment(
+    $storeId: String!
+    $input: UpdateInboundShipmentInput!
+  ) {
+    updateInboundShipment(storeId: $storeId, input: $input) {
+      ... on UpdateInboundShipmentError {
+        __typename
+        error {
+          description
+          ... on RecordNotFound {
+            __typename
+            description
+          }
+          ... on CannotChangeStatusOfInvoiceOnHold {
+            __typename
+            description
+          }
+          ... on CannotReceiveWithPendingLines {
+            __typename
+            description
+          }
+          ... on CannotEditInvoice {
+            __typename
+            description
+          }
+          ... on CannotReverseInvoiceStatus {
+            __typename
+            description
+          }
+          ... on OtherPartyNotASupplier {
+            __typename
+            description
+          }
+        }
+      }
+      ... on InvoiceNode {
+        __typename
+        id
+        invoiceNumber
+      }
+    }
+  }
+`;
+export const UpdateInboundShipmentExternalDocument = gql`
+  mutation updateInboundShipmentExternal(
+    $storeId: String!
+    $input: UpdateInboundShipmentInput!
+  ) {
+    updateInboundShipmentExternal(storeId: $storeId, input: $input) {
+      ... on UpdateInboundShipmentError {
+        __typename
+        error {
+          description
+          ... on RecordNotFound {
+            __typename
+            description
+          }
+          ... on CannotChangeStatusOfInvoiceOnHold {
+            __typename
+            description
+          }
+          ... on CannotReceiveWithPendingLines {
+            __typename
+            description
+          }
+          ... on CannotEditInvoice {
+            __typename
+            description
+          }
+          ... on CannotReverseInvoiceStatus {
+            __typename
+            description
+          }
+          ... on OtherPartyNotASupplier {
+            __typename
+            description
+          }
+        }
+      }
+      ... on InvoiceNode {
+        __typename
+        id
+        invoiceNumber
+      }
+    }
+  }
+`;
+export const DeleteInboundShipmentsDocument = gql`
+  mutation deleteInboundShipments(
+    $storeId: String!
+    $deleteInboundShipments: [DeleteInboundShipmentInput!]!
+  ) {
+    batchInboundShipment(
+      storeId: $storeId
+      input: { deleteInboundShipments: $deleteInboundShipments }
+    ) {
+      __typename
+      deleteInboundShipments {
+        id
+        response {
+          ... on DeleteInboundShipmentError {
+            __typename
+            error {
+              description
+            }
+          }
+          ... on DeleteResponse {
+            __typename
+            id
+          }
+        }
+      }
+    }
+  }
+`;
+export const DeleteInboundShipmentsExternalDocument = gql`
+  mutation deleteInboundShipmentsExternal(
+    $storeId: String!
+    $deleteInboundShipments: [DeleteInboundShipmentInput!]!
+  ) {
+    batchInboundShipmentExternal(
+      storeId: $storeId
+      input: { deleteInboundShipments: $deleteInboundShipments }
+    ) {
+      __typename
+      deleteInboundShipments {
+        id
+        response {
+          ... on DeleteInboundShipmentError {
+            __typename
+            error {
+              description
+            }
+          }
+          ... on DeleteResponse {
+            __typename
+            id
+          }
+        }
+      }
+    }
+  }
+`;
+export const InsertInboundShipmentDocument = gql`
+  mutation insertInboundShipment(
+    $id: String!
+    $otherPartyId: String!
+    $requisitionId: String
+    $storeId: String!
+    $purchaseOrderId: String
+    $insertLinesFromPurchaseOrder: Boolean
+  ) {
+    insertInboundShipment(
+      storeId: $storeId
+      input: {
+        id: $id
+        otherPartyId: $otherPartyId
+        requisitionId: $requisitionId
+        purchaseOrderId: $purchaseOrderId
+        insertLinesFromPurchaseOrder: $insertLinesFromPurchaseOrder
+      }
+    ) {
+      ... on InsertInboundShipmentError {
+        __typename
+        error {
+          description
+          ... on OtherPartyNotASupplier {
+            __typename
+            description
+          }
+        }
+      }
+      ... on InvoiceNode {
+        __typename
+        id
+        invoiceNumber
+      }
+    }
+  }
+`;
+export const InsertInboundShipmentExternalDocument = gql`
+  mutation insertInboundShipmentExternal(
+    $id: String!
+    $otherPartyId: String!
+    $requisitionId: String
+    $storeId: String!
+    $purchaseOrderId: String
+    $insertLinesFromPurchaseOrder: Boolean
+  ) {
+    insertInboundShipmentExternal(
+      storeId: $storeId
+      input: {
+        id: $id
+        otherPartyId: $otherPartyId
+        requisitionId: $requisitionId
+        purchaseOrderId: $purchaseOrderId
+        insertLinesFromPurchaseOrder: $insertLinesFromPurchaseOrder
+      }
+    ) {
+      ... on InsertInboundShipmentError {
+        __typename
+        error {
+          description
+          ... on OtherPartyNotASupplier {
+            __typename
+            description
+          }
+        }
+      }
+      ... on InvoiceNode {
+        __typename
+        id
+        invoiceNumber
+      }
+    }
+  }
+`;
+export const DuplicateInboundShipmentDocument = gql`
+  mutation duplicateInboundShipment($id: String!, $storeId: String!) {
+    duplicateInboundShipment(storeId: $storeId, id: $id) {
+      __typename
+      ... on DuplicateInboundShipmentNode {
+        invoice {
+          __typename
+          id
+          invoiceNumber
+        }
+        skippedItemCount
+      }
+      ... on DuplicateInboundShipmentError {
+        error {
+          __typename
+          description
+        }
+      }
+    }
+  }
+`;
+export const DeleteInboundShipmentLinesDocument = gql`
+  mutation deleteInboundShipmentLines(
+    $storeId: String!
+    $input: BatchInboundShipmentInput!
+  ) {
+    batchInboundShipment(storeId: $storeId, input: $input) {
+      deleteInboundShipmentLines {
+        id
+        response {
+          ... on DeleteInboundShipmentLineError {
+            __typename
+            error {
+              description
+              ... on RecordNotFound {
+                __typename
+                description
+              }
+              ... on BatchIsReserved {
+                __typename
+                description
+              }
+              ... on LineLinkedToTransferredInvoice {
+                ...LineLinkedToTransferredInvoiceError
+              }
+              ... on CannotEditInvoice {
+                __typename
+                description
+              }
+              ... on ForeignKeyError {
+                __typename
+                description
+                key
+              }
+            }
+          }
+          ... on DeleteResponse {
+            __typename
+            id
+          }
+        }
+      }
+    }
+  }
+  ${LineLinkedToTransferredInvoiceErrorFragmentDoc}
+`;
+export const DeleteInboundShipmentLinesExternalDocument = gql`
+  mutation deleteInboundShipmentLinesExternal(
+    $storeId: String!
+    $input: BatchInboundShipmentInput!
+  ) {
+    batchInboundShipmentExternal(storeId: $storeId, input: $input) {
+      deleteInboundShipmentLines {
+        id
+        response {
+          ... on DeleteInboundShipmentLineError {
+            __typename
+            error {
+              description
+              ... on RecordNotFound {
+                __typename
+                description
+              }
+              ... on BatchIsReserved {
+                __typename
+                description
+              }
+              ... on LineLinkedToTransferredInvoice {
+                ...LineLinkedToTransferredInvoiceError
+              }
+              ... on CannotEditInvoice {
+                __typename
+                description
+              }
+              ... on ForeignKeyError {
+                __typename
+                description
+                key
+              }
+            }
+          }
+          ... on DeleteResponse {
+            __typename
+            id
+          }
+        }
+      }
+    }
+  }
+  ${LineLinkedToTransferredInvoiceErrorFragmentDoc}
+`;
+export const UpsertInboundShipmentDocument = gql`
+  mutation upsertInboundShipment(
+    $storeId: String!
+    $input: BatchInboundShipmentInput!
+  ) {
+    batchInboundShipment(storeId: $storeId, input: $input) {
+      __typename
+      updateInboundShipments {
+        id
+        response {
+          ... on UpdateInboundShipmentError {
+            __typename
+            error {
+              description
+              ... on RecordNotFound {
+                __typename
+                description
+              }
+              ... on CannotChangeStatusOfInvoiceOnHold {
+                __typename
+                description
+              }
+              ... on CannotReceiveWithPendingLines {
+                __typename
+                description
+              }
+              ... on CannotEditInvoice {
+                __typename
+                description
+              }
+              ... on CannotReverseInvoiceStatus {
+                __typename
+                description
+              }
+              ... on OtherPartyNotASupplier {
+                __typename
+                description
+              }
+            }
+          }
+          ... on InvoiceNode {
+            __typename
+            id
+            invoiceNumber
+          }
+        }
+      }
+      insertInboundShipments {
+        id
+        response {
+          ... on InsertInboundShipmentError {
+            __typename
+            error {
+              description
+              ... on OtherPartyNotASupplier {
+                __typename
+                description
+              }
+            }
+          }
+          ... on InvoiceNode {
+            __typename
+            id
+            invoiceNumber
+          }
+        }
+      }
+      deleteInboundShipments {
+        id
+        response {
+          ... on DeleteInboundShipmentError {
+            __typename
+            error {
+              description
+              ... on RecordNotFound {
+                __typename
+                description
+              }
+              ... on CannotDeleteInvoiceWithLines {
+                __typename
+                description
+              }
+              ... on CannotEditInvoice {
+                __typename
+                description
+              }
+            }
+          }
+          ... on DeleteResponse {
+            __typename
+            id
+          }
+        }
+      }
+      updateInboundShipmentServiceLines {
+        id
+        response {
+          ... on UpdateInboundShipmentServiceLineError {
+            __typename
+            error {
+              description
+              ... on RecordNotFound {
+                __typename
+                description
+              }
+              ... on CannotEditInvoice {
+                __typename
+                description
+              }
+              ... on ForeignKeyError {
+                __typename
+                description
+                key
+              }
+            }
+          }
+          ... on InvoiceLineNode {
+            __typename
+            id
+          }
+        }
+      }
+      updateInboundShipmentLines {
+        id
+        response {
+          ... on UpdateInboundShipmentLineError {
+            __typename
+            error {
+              description
+              ... on RecordNotFound {
+                __typename
+                description
+              }
+              ... on BatchIsReserved {
+                __typename
+                description
+              }
+              ... on CannotEditInvoice {
+                __typename
+                description
+              }
+              ... on ForeignKeyError {
+                __typename
+                description
+                key
+              }
+              ... on NotAnInboundShipment {
+                __typename
+                description
+              }
+            }
+          }
+          ... on InvoiceLineNode {
+            __typename
+            id
+          }
+        }
+      }
+      insertInboundShipmentServiceLines {
+        id
+        response {
+          ... on InsertInboundShipmentServiceLineError {
+            __typename
+            error {
+              description
+              ... on CannotEditInvoice {
+                __typename
+                description
+              }
+              ... on ForeignKeyError {
+                __typename
+                description
+                key
+              }
+            }
+          }
+          ... on InvoiceLineNode {
+            __typename
+            id
+          }
+        }
+      }
+      insertInboundShipmentLines {
+        id
+        response {
+          ... on InsertInboundShipmentLineError {
+            __typename
+            error {
+              description
+              ... on CannotEditInvoice {
+                __typename
+                description
+              }
+              ... on ForeignKeyError {
+                __typename
+                description
+                key
+              }
+            }
+          }
+          ... on InvoiceLineNode {
+            __typename
+            id
+          }
+        }
+      }
+      deleteInboundShipmentServiceLines {
+        id
+        response {
+          ... on DeleteInboundShipmentServiceLineError {
+            __typename
+            error {
+              description
+              ... on RecordNotFound {
+                __typename
+                description
+              }
+              ... on CannotEditInvoice {
+                __typename
+                description
+              }
+              ... on ForeignKeyError {
+                __typename
+                description
+                key
+              }
+            }
+          }
+          ... on DeleteResponse {
+            __typename
+            id
+          }
+        }
+      }
+      deleteInboundShipmentLines {
+        id
+        response {
+          ... on DeleteInboundShipmentLineError {
+            __typename
+            error {
+              description
+              ... on RecordNotFound {
+                __typename
+                description
+              }
+              ... on BatchIsReserved {
+                __typename
+                description
+              }
+              ... on CannotEditInvoice {
+                __typename
+                description
+              }
+              ... on ForeignKeyError {
+                __typename
+                description
+                key
+              }
+            }
+          }
+          ... on DeleteResponse {
+            __typename
+            id
+          }
+        }
+      }
+    }
+  }
+`;
+export const UpsertInboundShipmentExternalDocument = gql`
+  mutation upsertInboundShipmentExternal(
+    $storeId: String!
+    $input: BatchInboundShipmentInput!
+  ) {
+    batchInboundShipmentExternal(storeId: $storeId, input: $input) {
+      __typename
+      updateInboundShipments {
+        id
+        response {
+          ... on UpdateInboundShipmentError {
+            __typename
+            error {
+              description
+              ... on RecordNotFound {
+                __typename
+                description
+              }
+              ... on CannotChangeStatusOfInvoiceOnHold {
+                __typename
+                description
+              }
+              ... on CannotReceiveWithPendingLines {
+                __typename
+                description
+              }
+              ... on CannotEditInvoice {
+                __typename
+                description
+              }
+              ... on CannotReverseInvoiceStatus {
+                __typename
+                description
+              }
+              ... on OtherPartyNotASupplier {
+                __typename
+                description
+              }
+            }
+          }
+          ... on InvoiceNode {
+            __typename
+            id
+            invoiceNumber
+          }
+        }
+      }
+      insertInboundShipments {
+        id
+        response {
+          ... on InsertInboundShipmentError {
+            __typename
+            error {
+              description
+              ... on OtherPartyNotASupplier {
+                __typename
+                description
+              }
+            }
+          }
+          ... on InvoiceNode {
+            __typename
+            id
+            invoiceNumber
+          }
+        }
+      }
+      deleteInboundShipments {
+        id
+        response {
+          ... on DeleteInboundShipmentError {
+            __typename
+            error {
+              description
+              ... on RecordNotFound {
+                __typename
+                description
+              }
+              ... on CannotDeleteInvoiceWithLines {
+                __typename
+                description
+              }
+              ... on CannotEditInvoice {
+                __typename
+                description
+              }
+            }
+          }
+          ... on DeleteResponse {
+            __typename
+            id
+          }
+        }
+      }
+      updateInboundShipmentServiceLines {
+        id
+        response {
+          ... on UpdateInboundShipmentServiceLineError {
+            __typename
+            error {
+              description
+              ... on RecordNotFound {
+                __typename
+                description
+              }
+              ... on CannotEditInvoice {
+                __typename
+                description
+              }
+              ... on ForeignKeyError {
+                __typename
+                description
+                key
+              }
+            }
+          }
+          ... on InvoiceLineNode {
+            __typename
+            id
+          }
+        }
+      }
+      updateInboundShipmentLines {
+        id
+        response {
+          ... on UpdateInboundShipmentLineError {
+            __typename
+            error {
+              description
+              ... on RecordNotFound {
+                __typename
+                description
+              }
+              ... on BatchIsReserved {
+                __typename
+                description
+              }
+              ... on CannotEditInvoice {
+                __typename
+                description
+              }
+              ... on ForeignKeyError {
+                __typename
+                description
+                key
+              }
+              ... on NotAnInboundShipment {
+                __typename
+                description
+              }
+            }
+          }
+          ... on InvoiceLineNode {
+            __typename
+            id
+          }
+        }
+      }
+      insertInboundShipmentServiceLines {
+        id
+        response {
+          ... on InsertInboundShipmentServiceLineError {
+            __typename
+            error {
+              description
+              ... on CannotEditInvoice {
+                __typename
+                description
+              }
+              ... on ForeignKeyError {
+                __typename
+                description
+                key
+              }
+            }
+          }
+          ... on InvoiceLineNode {
+            __typename
+            id
+          }
+        }
+      }
+      insertInboundShipmentLines {
+        id
+        response {
+          ... on InsertInboundShipmentLineError {
+            __typename
+            error {
+              description
+              ... on CannotEditInvoice {
+                __typename
+                description
+              }
+              ... on ForeignKeyError {
+                __typename
+                description
+                key
+              }
+            }
+          }
+          ... on InvoiceLineNode {
+            __typename
+            id
+          }
+        }
+      }
+      deleteInboundShipmentServiceLines {
+        id
+        response {
+          ... on DeleteInboundShipmentServiceLineError {
+            __typename
+            error {
+              description
+              ... on RecordNotFound {
+                __typename
+                description
+              }
+              ... on CannotEditInvoice {
+                __typename
+                description
+              }
+              ... on ForeignKeyError {
+                __typename
+                description
+                key
+              }
+            }
+          }
+          ... on DeleteResponse {
+            __typename
+            id
+          }
+        }
+      }
+      deleteInboundShipmentLines {
+        id
+        response {
+          ... on DeleteInboundShipmentLineError {
+            __typename
+            error {
+              description
+              ... on RecordNotFound {
+                __typename
+                description
+              }
+              ... on BatchIsReserved {
+                __typename
+                description
+              }
+              ... on CannotEditInvoice {
+                __typename
+                description
+              }
+              ... on ForeignKeyError {
+                __typename
+                description
+                key
+              }
+            }
+          }
+          ... on DeleteResponse {
+            __typename
+            id
+          }
+        }
+      }
+    }
+  }
+`;
+export const AddToInboundShipmentFromMasterListDocument = gql`
+  mutation addToInboundShipmentFromMasterList(
+    $storeId: String!
+    $shipmentId: String!
+    $masterListId: String!
+  ) {
+    addToInboundShipmentFromMasterList(
+      input: { shipmentId: $shipmentId, masterListId: $masterListId }
+      storeId: $storeId
+    ) {
+      ... on AddToInboundShipmentFromMasterListError {
+        __typename
+        error {
+          ... on MasterListNotFoundForThisStore {
+            __typename
+            description
+          }
+          ... on CannotEditInvoice {
+            __typename
+            description
+          }
+          ... on RecordNotFound {
+            __typename
+            description
+          }
+          description
+        }
+      }
+      ... on InvoiceLineConnector {
+        __typename
+        totalCount
+      }
+    }
+  }
+`;
+export const RequestsDocument = gql`
+  query requests(
+    $storeId: String!
+    $filter: RequisitionFilterInput
+    $sort: [RequisitionSortInput!]
+  ) {
+    requisitions(storeId: $storeId, filter: $filter, sort: $sort) {
+      ... on RequisitionConnector {
+        totalCount
+        nodes {
+          ...LinkedRequestRow
+        }
+      }
+    }
+  }
+  ${LinkedRequestRowFragmentDoc}
+`;
+export const RequestDocument = gql`
+  query request($id: String!, $storeId: String!) {
+    requisition(id: $id, storeId: $storeId) {
+      ... on RequisitionNode {
+        __typename
+        ...LinkedRequestWithLines
+      }
+    }
+  }
+  ${LinkedRequestWithLinesFragmentDoc}
+`;
+export const InsertLinesFromInternalOrderDocument = gql`
+  mutation insertLinesFromInternalOrder(
+    $storeId: String!
+    $input: BatchInboundShipmentInput!
+  ) {
+    batchInboundShipment(storeId: $storeId, input: $input) {
+      insertFromInternalOrderLines {
+        id
+        response {
+          ... on InvoiceLineNode {
+            __typename
+            id
+          }
+        }
+      }
+    }
+  }
+`;
+export const InsertLinesFromInternalOrderExternalDocument = gql`
+  mutation insertLinesFromInternalOrderExternal(
+    $storeId: String!
+    $input: BatchInboundShipmentInput!
+  ) {
+    batchInboundShipmentExternal(storeId: $storeId, input: $input) {
+      insertFromInternalOrderLines {
+        id
+        response {
+          ... on InvoiceLineNode {
+            __typename
+            id
+          }
+        }
+      }
+    }
+  }
+`;
+export const PurchaseOrdersDocument = gql`
+  query purchaseOrders($storeId: String!, $filter: PurchaseOrderFilterInput) {
+    purchaseOrders(storeId: $storeId, filter: $filter) {
+      ... on PurchaseOrderConnector {
+        totalCount
+        nodes {
+          ...InboundShipmentPurchaseOrderLine
+        }
+      }
+    }
+  }
+  ${InboundShipmentPurchaseOrderLineFragmentDoc}
+`;
+export const StocktakeCountAfterDateDocument = gql`
+  query stocktakeCountAfterDate(
+    $storeId: String!
+    $filter: StocktakeFilterInput
+  ) {
+    stocktakes(storeId: $storeId, filter: $filter) {
+      ... on StocktakeConnector {
+        totalCount
+      }
+    }
+  }
+`;
+
+export type SdkFunctionWrapper = <T>(
+  action: (requestHeaders?: Record<string, string>) => Promise<T>,
+  operationName: string,
+  operationType?: string,
+  variables?: any
+) => Promise<T>;
+
+const defaultWrapper: SdkFunctionWrapper = (
+  action,
+  _operationName,
+  _operationType,
+  _variables
+) => action();
+
+export function getSdk(
+  client: GraphQLClient,
+  withWrapper: SdkFunctionWrapper = defaultWrapper
+) {
+  return {
+    invoices(
+      variables: InvoicesQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<InvoicesQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InvoicesQuery>({
+            document: InvoicesDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'invoices',
+        'query',
+        variables
+      );
+    },
+    invoice(
+      variables: InvoiceQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<InvoiceQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InvoiceQuery>({
+            document: InvoiceDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'invoice',
+        'query',
+        variables
+      );
+    },
+    inboundByNumber(
+      variables: InboundByNumberQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<InboundByNumberQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InboundByNumberQuery>({
+            document: InboundByNumberDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'inboundByNumber',
+        'query',
+        variables
+      );
+    },
+    updateInboundShipment(
+      variables: UpdateInboundShipmentMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<UpdateInboundShipmentMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UpdateInboundShipmentMutation>({
+            document: UpdateInboundShipmentDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'updateInboundShipment',
+        'mutation',
+        variables
+      );
+    },
+    updateInboundShipmentExternal(
+      variables: UpdateInboundShipmentExternalMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<UpdateInboundShipmentExternalMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UpdateInboundShipmentExternalMutation>({
+            document: UpdateInboundShipmentExternalDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'updateInboundShipmentExternal',
+        'mutation',
+        variables
+      );
+    },
+    deleteInboundShipments(
+      variables: DeleteInboundShipmentsMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<DeleteInboundShipmentsMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<DeleteInboundShipmentsMutation>({
+            document: DeleteInboundShipmentsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'deleteInboundShipments',
+        'mutation',
+        variables
+      );
+    },
+    deleteInboundShipmentsExternal(
+      variables: DeleteInboundShipmentsExternalMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<DeleteInboundShipmentsExternalMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<DeleteInboundShipmentsExternalMutation>({
+            document: DeleteInboundShipmentsExternalDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'deleteInboundShipmentsExternal',
+        'mutation',
+        variables
+      );
+    },
+    insertInboundShipment(
+      variables: InsertInboundShipmentMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<InsertInboundShipmentMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InsertInboundShipmentMutation>({
+            document: InsertInboundShipmentDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'insertInboundShipment',
+        'mutation',
+        variables
+      );
+    },
+    insertInboundShipmentExternal(
+      variables: InsertInboundShipmentExternalMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<InsertInboundShipmentExternalMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InsertInboundShipmentExternalMutation>({
+            document: InsertInboundShipmentExternalDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'insertInboundShipmentExternal',
+        'mutation',
+        variables
+      );
+    },
+    duplicateInboundShipment(
+      variables: DuplicateInboundShipmentMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<DuplicateInboundShipmentMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<DuplicateInboundShipmentMutation>({
+            document: DuplicateInboundShipmentDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'duplicateInboundShipment',
+        'mutation',
+        variables
+      );
+    },
+    deleteInboundShipmentLines(
+      variables: DeleteInboundShipmentLinesMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<DeleteInboundShipmentLinesMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<DeleteInboundShipmentLinesMutation>({
+            document: DeleteInboundShipmentLinesDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'deleteInboundShipmentLines',
+        'mutation',
+        variables
+      );
+    },
+    deleteInboundShipmentLinesExternal(
+      variables: DeleteInboundShipmentLinesExternalMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<DeleteInboundShipmentLinesExternalMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<DeleteInboundShipmentLinesExternalMutation>({
+            document: DeleteInboundShipmentLinesExternalDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'deleteInboundShipmentLinesExternal',
+        'mutation',
+        variables
+      );
+    },
+    upsertInboundShipment(
+      variables: UpsertInboundShipmentMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<UpsertInboundShipmentMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UpsertInboundShipmentMutation>({
+            document: UpsertInboundShipmentDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'upsertInboundShipment',
+        'mutation',
+        variables
+      );
+    },
+    upsertInboundShipmentExternal(
+      variables: UpsertInboundShipmentExternalMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<UpsertInboundShipmentExternalMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<UpsertInboundShipmentExternalMutation>({
+            document: UpsertInboundShipmentExternalDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'upsertInboundShipmentExternal',
+        'mutation',
+        variables
+      );
+    },
+    addToInboundShipmentFromMasterList(
+      variables: AddToInboundShipmentFromMasterListMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<AddToInboundShipmentFromMasterListMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<AddToInboundShipmentFromMasterListMutation>({
+            document: AddToInboundShipmentFromMasterListDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'addToInboundShipmentFromMasterList',
+        'mutation',
+        variables
+      );
+    },
+    requests(
+      variables: RequestsQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<RequestsQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<RequestsQuery>({
+            document: RequestsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'requests',
+        'query',
+        variables
+      );
+    },
+    request(
+      variables: RequestQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<RequestQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<RequestQuery>({
+            document: RequestDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'request',
+        'query',
+        variables
+      );
+    },
+    insertLinesFromInternalOrder(
+      variables: InsertLinesFromInternalOrderMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<InsertLinesFromInternalOrderMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InsertLinesFromInternalOrderMutation>({
+            document: InsertLinesFromInternalOrderDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'insertLinesFromInternalOrder',
+        'mutation',
+        variables
+      );
+    },
+    insertLinesFromInternalOrderExternal(
+      variables: InsertLinesFromInternalOrderExternalMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<InsertLinesFromInternalOrderExternalMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<InsertLinesFromInternalOrderExternalMutation>({
+            document: InsertLinesFromInternalOrderExternalDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'insertLinesFromInternalOrderExternal',
+        'mutation',
+        variables
+      );
+    },
+    purchaseOrders(
+      variables: PurchaseOrdersQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<PurchaseOrdersQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<PurchaseOrdersQuery>({
+            document: PurchaseOrdersDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'purchaseOrders',
+        'query',
+        variables
+      );
+    },
+    stocktakeCountAfterDate(
+      variables: StocktakeCountAfterDateQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<StocktakeCountAfterDateQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<StocktakeCountAfterDateQuery>({
+            document: StocktakeCountAfterDateDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'stocktakeCountAfterDate',
+        'query',
+        variables
+      );
+    },
+  };
+}
+export type Sdk = ReturnType<typeof getSdk>;

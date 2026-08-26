@@ -1,0 +1,190 @@
+use chrono::NaiveDateTime;
+use diesel::prelude::*;
+use diesel_derive_enum::DbEnum;
+use std::sync::RwLock;
+
+use crate::RepositoryError;
+
+use super::StorageConnection;
+
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(test, derive(strum::EnumIter))]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum SyncApiErrorCode {
+    ConnectionError,
+    SiteNameNotFound,
+    IncorrectPassword,
+    HardwareIdMismatch,
+    SiteHasNoStore,
+    SiteAuthTimeout,
+    IntegrationTimeoutReached,
+    IntegrationError,
+    ApiVersionIncompatible,
+    CentralV6NotConfigured,
+    V6ApiVersionIncompatible,
+    V7UpgradeFailed,
+}
+
+table! {
+    sync_log(id) {
+        id -> Text,
+        started_datetime -> Timestamp,
+        finished_datetime -> Nullable<Timestamp>,
+        prepare_initial_started_datetime -> Nullable<Timestamp>,
+        prepare_initial_finished_datetime -> Nullable<Timestamp>,
+        push_started_datetime -> Nullable<Timestamp>,
+        push_finished_datetime -> Nullable<Timestamp>,
+        push_progress_total -> Nullable<Integer>,
+        push_progress_done -> Nullable<Integer>,
+        pull_central_started_datetime -> Nullable<Timestamp>,
+        pull_central_finished_datetime -> Nullable<Timestamp>,
+        pull_central_progress_total -> Nullable<Integer>,
+        pull_central_progress_done -> Nullable<Integer>,
+        pull_remote_started_datetime -> Nullable<Timestamp>,
+        pull_remote_finished_datetime -> Nullable<Timestamp>,
+        pull_remote_progress_total -> Nullable<Integer>,
+        pull_remote_progress_done -> Nullable<Integer>,
+        pull_v6_started_datetime -> Nullable<Timestamp>,
+        pull_v6_finished_datetime -> Nullable<Timestamp>,
+        pull_v6_progress_total -> Nullable<Integer>,
+        pull_v6_progress_done -> Nullable<Integer>,
+        push_v6_started_datetime -> Nullable<Timestamp>,
+        push_v6_finished_datetime -> Nullable<Timestamp>,
+        push_v6_progress_total -> Nullable<Integer>,
+        push_v6_progress_done -> Nullable<Integer>,
+        integration_started_datetime -> Nullable<Timestamp>,
+        integration_finished_datetime -> Nullable<Timestamp>,
+        integration_progress_total -> Nullable<Integer>,
+        integration_progress_done -> Nullable<Integer>,
+        error_message -> Nullable<Text>,
+        error_code -> Nullable<crate::db_diesel::sync_log_row::SyncApiErrorCodeMapping>,
+        duration_in_seconds -> Integer,
+    }
+}
+
+#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default)]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = sync_log)]
+pub struct SyncLogV5V6Row {
+    pub id: String,
+    pub started_datetime: NaiveDateTime,
+    pub finished_datetime: Option<NaiveDateTime>,
+    pub prepare_initial_started_datetime: Option<NaiveDateTime>,
+    pub prepare_initial_finished_datetime: Option<NaiveDateTime>,
+    pub push_started_datetime: Option<NaiveDateTime>,
+    pub push_finished_datetime: Option<NaiveDateTime>,
+    pub push_progress_total: Option<i32>,
+    pub push_progress_done: Option<i32>,
+    pub pull_central_started_datetime: Option<NaiveDateTime>,
+    pub pull_central_finished_datetime: Option<NaiveDateTime>,
+    pub pull_central_progress_total: Option<i32>,
+    pub pull_central_progress_done: Option<i32>,
+    pub pull_remote_started_datetime: Option<NaiveDateTime>,
+    pub pull_remote_finished_datetime: Option<NaiveDateTime>,
+    pub pull_remote_progress_total: Option<i32>,
+    pub pull_remote_progress_done: Option<i32>,
+    pub pull_v6_started_datetime: Option<NaiveDateTime>,
+    pub pull_v6_finished_datetime: Option<NaiveDateTime>,
+    pub pull_v6_progress_total: Option<i32>,
+    pub pull_v6_progress_done: Option<i32>,
+    pub push_v6_started_datetime: Option<NaiveDateTime>,
+    pub push_v6_finished_datetime: Option<NaiveDateTime>,
+    pub push_v6_progress_total: Option<i32>,
+    pub push_v6_progress_done: Option<i32>,
+    pub integration_started_datetime: Option<NaiveDateTime>,
+    pub integration_finished_datetime: Option<NaiveDateTime>,
+    pub integration_progress_total: Option<i32>,
+    pub integration_progress_done: Option<i32>,
+    pub error_message: Option<String>,
+    pub error_code: Option<SyncApiErrorCode>,
+    pub duration_in_seconds: i32,
+}
+
+pub struct SyncLogV5V6RowRepository<'a> {
+    connection: &'a StorageConnection,
+}
+
+impl<'a> SyncLogV5V6RowRepository<'a> {
+    pub fn new(connection: &'a StorageConnection) -> Self {
+        SyncLogV5V6RowRepository { connection }
+    }
+
+    pub fn _upsert_one(&self, row: &SyncLogV5V6Row) -> Result<(), RepositoryError> {
+        diesel::insert_into(sync_log::table)
+            .values(row)
+            .on_conflict(sync_log::id)
+            .do_update()
+            .set(row)
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
+    pub fn upsert_one(&self, row: &SyncLogV5V6Row) -> Result<(), RepositoryError> {
+        row.cache_row();
+        self._upsert_one(row)
+    }
+
+    pub fn find_one_by_id(&self, id: &str) -> Result<Option<SyncLogV5V6Row>, RepositoryError> {
+        let result = sync_log::table
+            .filter(sync_log::id.eq(id))
+            .first(self.connection.lock().connection())
+            .optional()?
+            .map(SyncLogV5V6Row::or_latest_row);
+        Ok(result)
+    }
+}
+
+// When starting the integration process an initial SyncLogV5V6Row is written to the database.
+// While this initial row is immediately visible, progress updates to this row are done in a
+// long-running transaction, i.e. updates are only visible after the transaction finished.
+//
+// To make progress updates visible in the UI, the latest call to SyncLogV5V6RowRepository::upsert_one()
+// is cached in memory.
+// If a database query returns the row for the current integration process, this potentially stale
+// row is replaced with the latest cached row.
+static LATEST_SYNC_LOG: RwLock<Option<SyncLogV5V6Row>> = RwLock::new(None);
+impl SyncLogV5V6Row {
+    fn cache_row(&self) {
+        *LATEST_SYNC_LOG.write().unwrap() = Some(self.clone());
+    }
+
+    pub(super) fn or_latest_row(self) -> Self {
+        let cached_row = LATEST_SYNC_LOG.read().unwrap();
+        let Some(cached_row) = cached_row.as_ref() else {
+            return self;
+        };
+        match self.id == cached_row.id {
+            true => cached_row.clone(),
+            false => self,
+        }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use strum::IntoEnumIterator;
+
+    use crate::{
+        mock::MockDataInserts, test_db::setup_all, SyncApiErrorCode, SyncLogV5V6Row,
+        SyncLogV5V6RowRepository,
+    };
+
+    #[actix_rt::test]
+    async fn sync_log_row_enum() {
+        let (_, connection, _, _) = setup_all("sync_log_row_enum", MockDataInserts::none()).await;
+
+        let repo = SyncLogV5V6RowRepository::new(&connection);
+        // Try upsert all variants of SyncApiErrorCode, confirm that diesel enums match postgres
+        for variant in SyncApiErrorCode::iter() {
+            let result = repo.upsert_one(&SyncLogV5V6Row {
+                id: "test".to_string(),
+                error_code: Some(variant.clone()),
+                ..Default::default()
+            });
+            assert_eq!(result, Ok(()));
+
+            let result = repo.find_one_by_id("test").unwrap().unwrap();
+            assert_eq!(result.error_code, Some(variant));
+        }
+    }
+}

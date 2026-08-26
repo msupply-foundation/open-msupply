@@ -1,0 +1,85 @@
+use chrono::{Duration, Utc};
+use repository::{RepositoryError, StockLine, StorageConnection};
+
+use crate::common::{check_stock_line_exists, CommonStockLineError};
+use crate::invoice::inventory_adjustment::adjust_existing_stock::AdjustmentType;
+use crate::preference::{preferences::Backdating, Preference};
+use crate::stock_line::historical_stock::get_historical_stock_line_available_quantity;
+use crate::stocktake_line::validate::{check_active_adjustment_reasons, check_reason_is_valid};
+
+use super::insert::{InsertInventoryAdjustment, InsertInventoryAdjustmentError};
+
+pub fn validate(
+    connection: &StorageConnection,
+    store_id: &str,
+    input: &InsertInventoryAdjustment,
+) -> Result<StockLine, InsertInventoryAdjustmentError> {
+    use InsertInventoryAdjustmentError::*;
+    let stock_line = check_stock_line_exists(connection, store_id, &input.stock_line_id).map_err(
+        |err| match err {
+            CommonStockLineError::DatabaseError(RepositoryError::NotFound) => StockLineDoesNotExist,
+            CommonStockLineError::StockLineDoesNotBelongToStore => InvalidStore,
+            CommonStockLineError::DatabaseError(error) => DatabaseError(error),
+        },
+    )?;
+
+    if input.adjustment <= 0.0 {
+        return Err(InvalidAdjustment);
+    };
+
+    let reduction_amount = match input.adjustment_type {
+        AdjustmentType::Reduction => input.adjustment,
+        AdjustmentType::Addition => -input.adjustment,
+    };
+
+    if check_active_adjustment_reasons(connection, reduction_amount)?.is_some()
+        && input.reason_option_id.is_none()
+    {
+        return Err(AdjustmentReasonNotProvided);
+    }
+
+    if input.reason_option_id.is_some()
+        && !check_reason_is_valid(connection, input.reason_option_id.clone(), reduction_amount)?
+    {
+        return Err(AdjustmentReasonNotValid);
+    }
+
+    // Backdating validation
+    if let Some(backdated_datetime) = input.backdated_datetime {
+        let backdating = Backdating.load(connection, None)?;
+        if !backdating.inventory_adjustments_enabled {
+            return Err(BackdatingNotEnabled);
+        }
+
+        if backdated_datetime >= Utc::now() {
+            return Err(CannotSetDateInFuture);
+        }
+        if backdating.max_days > 0 {
+            let earliest_allowed = Utc::now() - Duration::days(backdating.max_days as i64);
+            if backdated_datetime < earliest_allowed {
+                return Err(ExceedsMaximumBackdatingDays);
+            }
+        }
+
+        // For reductions, check that the ledger never goes below 0 at the backdated date
+        if matches!(input.adjustment_type, AdjustmentType::Reduction) {
+            let historical_available = get_historical_stock_line_available_quantity(
+                connection,
+                &stock_line.stock_line_row,
+                None,
+                &backdated_datetime.naive_utc(),
+            )
+            .map_err(|e| DatabaseError(e))?;
+
+            if historical_available - input.adjustment < 0.0 {
+                return Err(LedgerGoesBelowZero(stock_line));
+            }
+        }
+    }
+
+    if stock_line.stock_line_row.available_number_of_packs - reduction_amount < 0.0 {
+        return Err(StockLineReducedBelowZero(stock_line));
+    }
+
+    Ok(stock_line)
+}

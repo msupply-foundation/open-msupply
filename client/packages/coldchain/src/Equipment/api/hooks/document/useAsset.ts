@@ -1,0 +1,37 @@
+import { useMutation, useParams, useQuery } from '@openmsupply-client/common';
+import { useAssetApi } from '../utils/useAssetApi';
+
+export const useAssetId = () => {
+  const { id = '' } = useParams();
+  return id;
+};
+
+export const useAsset = () => {
+  const assetId = useAssetId();
+  return useAssetById(assetId);
+};
+
+export const useAssetById = (assetId: string | undefined) => {
+  const api = useAssetApi();
+  return useQuery({
+    queryKey: api.keys.detail(assetId || ''),
+    queryFn: () => api.get.byId(assetId || ''),
+    enabled: !!assetId
+  });
+};
+
+export const useFetchAssetById = () => {
+  const api = useAssetApi();
+  return useMutation({
+    mutationFn: api.get.byId,
+    onError: () => {}
+  });
+};
+
+export const useFetchAssetByGS1 = () => {
+  const api = useAssetApi();
+  return useMutation({
+    mutationFn: api.get.byGs1Elements,
+    onError: () => {}
+  });
+};

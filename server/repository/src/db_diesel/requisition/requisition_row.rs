@@ -1,0 +1,331 @@
+use std::any::Any;
+
+use crate::db_diesel::{
+    item_link_row::item_link, name_row::name, period::period_row::period,
+    program_requisition::program_row::program, store_row::store, user_row::user_account,
+    StorageConnection,
+};
+use crate::diesel_macros::define_linked_tables;
+use crate::repository_error::RepositoryError;
+
+use crate::db_diesel::changelog::changelog::RowOrId;
+use crate::{ChangelogRepository, RowActionType};
+use crate::{ChangelogSyncType, Delete, SourceSiteId, Upsert};
+use chrono::{NaiveDate, NaiveDateTime};
+use diesel::prelude::*;
+use diesel_derive_enum::DbEnum;
+use serde::{Deserialize, Serialize};
+use ts_rs::TS;
+
+define_linked_tables! {
+    view: requisition = "requisition_view",
+    core: requisition_with_links = "requisition",
+    struct: RequisitionRow,
+    repo: RequisitionRowRepository,
+    shared: {
+        requisition_number -> Bigint,
+        store_id -> Text,
+        user_id -> Nullable<Text>,
+        #[sql_name = "type"]
+        type_ -> crate::db_diesel::requisition::requisition_row::RequisitionTypeMapping,
+        #[sql_name = "status"]
+        status -> crate::db_diesel::requisition::requisition_row::RequisitionStatusMapping,
+        created_datetime -> Timestamp,
+        sent_datetime -> Nullable<Timestamp>,
+        finalised_datetime -> Nullable<Timestamp>,
+        expected_delivery_date -> Nullable<Date>,
+        colour -> Nullable<Text>,
+        comment -> Nullable<Text>,
+        their_reference -> Nullable<Text>,
+        max_months_of_stock -> Double,
+        min_months_of_stock -> Double,
+        approval_status -> Nullable<crate::db_diesel::requisition::requisition_row::ApprovalStatusTypeMapping>,
+        linked_requisition_id -> Nullable<Text>,
+        program_id -> Nullable<Text>,
+        period_id -> Nullable<Text>,
+        order_type -> Nullable<Text>,
+        is_emergency -> Bool,
+        created_from_requisition_id -> Nullable<Text>,
+        name_store_id -> Nullable<Text>,
+    },
+    links: {
+        name_link_id -> name_id,
+    },
+    optional_links: {
+        destination_customer_link_id -> destination_customer_id,
+    }
+
+}
+
+joinable!(requisition -> name (name_id));
+joinable!(requisition -> store (store_id));
+joinable!(requisition -> user_account (user_id));
+joinable!(requisition -> period (period_id));
+joinable!(requisition -> program (program_id));
+allow_tables_to_appear_in_same_query!(requisition, item_link);
+
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, TS, Serialize, Deserialize, Default)]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum RequisitionType {
+    #[default]
+    Request,
+    Response,
+    Imprest,
+    StockHistory,
+}
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, TS, Serialize, Deserialize, Default)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum RequisitionStatus {
+    #[default]
+    Draft,
+    New,
+    Sent,
+    Finalised,
+}
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, TS, Serialize, Deserialize)]
+#[cfg_attr(test, derive(strum::EnumIter))]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum ApprovalStatusType {
+    None,
+    Approved,
+    Pending,
+    Denied,
+    AutoApproved,
+    ApprovedByAnother,
+    DeniedByAnother,
+}
+
+#[derive(
+    Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, TS, Serialize, Deserialize, Default,
+)]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = requisition)]
+pub struct RequisitionRow {
+    pub id: String,
+    pub requisition_number: i64,
+    pub store_id: String,
+    pub user_id: Option<String>,
+    #[diesel(column_name = type_)]
+    pub r#type: RequisitionType,
+    pub status: RequisitionStatus,
+    pub created_datetime: NaiveDateTime,
+    pub sent_datetime: Option<NaiveDateTime>,
+    pub finalised_datetime: Option<NaiveDateTime>,
+    pub expected_delivery_date: Option<NaiveDate>,
+    pub colour: Option<String>,
+    pub comment: Option<String>,
+    pub their_reference: Option<String>,
+    pub max_months_of_stock: f64,
+    pub min_months_of_stock: f64,
+    pub approval_status: Option<ApprovalStatusType>,
+    pub linked_requisition_id: Option<String>,
+    pub program_id: Option<String>,
+    pub period_id: Option<String>,
+    pub order_type: Option<String>,
+    pub is_emergency: bool,
+    pub created_from_requisition_id: Option<String>, // for Internal Orders created from a Requisition
+    pub name_store_id: Option<String>,
+    // Resolved from name_link - must be last to match view column order
+    pub name_id: String,
+    pub destination_customer_id: Option<String>,
+}
+pub struct RequisitionRowRepository<'a> {
+    connection: &'a StorageConnection,
+}
+
+impl<'a> RequisitionRowRepository<'a> {
+    pub fn new(connection: &'a StorageConnection) -> Self {
+        RequisitionRowRepository { connection }
+    }
+
+    pub fn upsert_one(&self, row: &RequisitionRow) -> Result<(), RepositoryError> {
+        self._upsert(row)?;
+        let changelog = RequisitionRow::generate_changelog(
+            RowOrId::Row(row),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
+    }
+
+    pub fn delete(&self, requisition_id: &str) -> Result<(), RepositoryError> {
+        let changelog = RequisitionRow::generate_changelog(
+            RowOrId::Id(requisition_id),
+            self.connection,
+            RowActionType::Delete,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)?;
+
+        diesel::delete(
+            requisition_with_links::table.filter(requisition_with_links::id.eq(requisition_id)),
+        )
+        .execute(self.connection.lock().connection())?;
+
+        Ok(())
+    }
+
+    pub fn find_one_by_id(&self, id: &str) -> Result<Option<RequisitionRow>, RepositoryError> {
+        let result = requisition::table
+            .filter(requisition::id.eq(id))
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
+    }
+
+    pub fn find_max_requisition_number(
+        &self,
+        r#type: RequisitionType,
+        store_id: &str,
+    ) -> Result<Option<i64>, RepositoryError> {
+        let result = requisition::table
+            .filter(
+                requisition::type_
+                    .eq(r#type)
+                    .and(requisition::store_id.eq(store_id)),
+            )
+            .select(diesel::dsl::max(requisition::requisition_number))
+            .first(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<RequisitionRow>, RepositoryError> {
+        Ok(requisition::table
+            .filter(requisition::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
+
+    pub fn check_exists_by_id(&self, id: &str) -> Result<bool, RepositoryError> {
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            requisition::table.filter(requisition::id.eq(id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct RequisitionRowDelete(pub String);
+impl Delete for RequisitionRowDelete {
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => RequisitionRow::generate_changelog(
+                RowOrId::Id(&self.0),
+                con,
+                RowActionType::Delete,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        diesel::delete(
+            requisition_with_links::table.filter(requisition_with_links::id.eq(&self.0)),
+        )
+        .execute(con.lock().connection())?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            RequisitionRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        )
+    }
+}
+
+impl Upsert for RequisitionRow {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        RequisitionRowRepository::new(con)._upsert(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => RequisitionRow::generate_changelog(
+                RowOrId::Row(self),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            RequisitionRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
+    }
+
+    fn as_mut_any(&mut self) -> Option<&mut dyn Any> {
+        Some(self)
+    }
+}
+
+impl ApprovalStatusType {
+    pub fn is_approved(&self) -> bool {
+        matches!(
+            self,
+            ApprovalStatusType::ApprovedByAnother
+                | ApprovalStatusType::AutoApproved
+                | ApprovalStatusType::Approved
+        )
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{
+        mock::{mock_request_draft_requisition_all_fields, MockDataInserts},
+        test_db::setup_all,
+        ApprovalStatusType, RequisitionRow, RequisitionRowRepository,
+    };
+    use strum::IntoEnumIterator;
+
+    #[actix_rt::test]
+    async fn approval_status_enum() {
+        let (_, connection, _, _) = setup_all(
+            "approval_status_enum",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        let repo = RequisitionRowRepository::new(&connection);
+        // Try upsert all variants of RequisitionRowApprovalStatus, confirm that diesel enums match postgres
+        for variant in ApprovalStatusType::iter() {
+            let row = RequisitionRow {
+                approval_status: Some(variant),
+                ..mock_request_draft_requisition_all_fields().requisition
+            };
+            let result = repo.upsert_one(&row);
+            assert!(result.is_ok());
+
+            let result = repo
+                .find_one_by_id(&mock_request_draft_requisition_all_fields().requisition.id)
+                .unwrap()
+                .unwrap();
+            assert_eq!(result.approval_status, row.approval_status);
+        }
+
+        assert!(ApprovalStatusType::Approved.is_approved());
+        assert!(ApprovalStatusType::ApprovedByAnother.is_approved());
+        assert!(ApprovalStatusType::AutoApproved.is_approved());
+        assert!(!ApprovalStatusType::Denied.is_approved());
+        assert!(!ApprovalStatusType::DeniedByAnother.is_approved());
+        assert!(!ApprovalStatusType::Pending.is_approved());
+        assert!(!ApprovalStatusType::None.is_approved());
+    }
+}

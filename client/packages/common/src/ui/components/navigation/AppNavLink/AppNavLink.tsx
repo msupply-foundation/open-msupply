@@ -1,0 +1,222 @@
+import React, { FC } from 'react';
+import {
+  Badge,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  ListItemButton,
+  Box,
+  ListItemProps,
+  BadgeProps,
+} from '@mui/material';
+import { styled } from '@mui/material/styles';
+import { useMatch, Link } from 'react-router-dom';
+import { useDrawer, useIsExtraSmallScreen } from '@common/hooks';
+import { ChevronDownIcon } from '@common/icons';
+import { useIntlUtils } from '@common/intl';
+
+const useSelectedNavMenuItem = (
+  to: string,
+  isParent: boolean,
+  isOpen: boolean
+): boolean => {
+  // This nav menu item should be selected when lower level elements
+  // are selected. For example, the route /outbound-shipment/{id} should
+  // highlight the nav menu item for outbound-shipments.
+  // If the drawer is closed, highlight the higher level elements.
+  const highlightLowerLevels = isOpen ? isParent || to.endsWith('*') : false;
+  // If we need to highlight the higher levels append a wildcard to the match path.
+  // Note: remove the search query to enable a match
+  const path = highlightLowerLevels ? to : `${to.split('?')[0]}/*`;
+  const selected = useMatch({ path });
+  return !!selected;
+};
+
+const getListItemCommonStyles = () => ({
+  height: 40,
+  borderRadius: 20,
+  alignItems: 'center',
+});
+
+const StyledListItem = styled<
+  FC<ListItemProps & { isSelected: boolean; to: string }>
+>(ListItem, {
+  shouldForwardProp: prop => prop !== 'isSelected',
+})(({ theme, isSelected }) =>
+  isSelected
+    ? {
+        ...getListItemCommonStyles(),
+        backgroundColor: theme.mixins.drawer.selectedBackgroundColor,
+        boxShadow: theme.shadows[3],
+        fontWeight: 'bold',
+        marginTop: 5,
+      }
+    : {
+        ...getListItemCommonStyles(),
+        backgroundColor: 'transparent',
+        marginTop: 5,
+        '&:hover': {
+          boxShadow: theme.shadows[3],
+          backgroundColor: theme.mixins.drawer.hoverBackgroundColor,
+          '& .MuiTypography-root': {
+            color: theme.mixins.drawer.hoverTextColor,
+          },
+        },
+      }
+);
+
+export interface AppNavLinkProps {
+  badgeProps?: BadgeProps;
+  isParent?: boolean; // indicates that this is a parent nav item, which should be highlighted when any of its children are active
+  icon?: JSX.Element;
+  text?: string;
+  to: string;
+  visible?: boolean;
+  onClick?: React.MouseEventHandler<HTMLAnchorElement>;
+}
+
+export const AppNavLink: FC<AppNavLinkProps> = props => {
+  const {
+    badgeProps,
+    isParent = false,
+    icon = <span style={{ width: 2 }} />,
+    text,
+    to,
+    visible = true,
+    onClick,
+  } = props;
+  const drawer = useDrawer();
+  const { isRtl } = useIntlUtils();
+  // Chevron points "into" the content; mirror its rotation for RTL navigation
+  const chevronRotation = isRtl ? 'rotate(90deg)' : 'rotate(-90deg)';
+
+  const selected = useSelectedNavMenuItem(to, isParent, drawer.isOpen);
+  const match = useMatch({ path: `${to}/*` });
+  const isExtraSmallScreen = useIsExtraSmallScreen();
+  const isSelectedParentItem = isParent && !!match;
+  const showMenuSectionIcon = isParent && drawer.isOpen;
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement, MouseEvent>) => {
+    // reset the clicked nav path when navigating
+    // otherwise the child menu remains open
+    drawer.setClickedNavPath(undefined);
+    if (isExtraSmallScreen) drawer.close();
+    if (onClick) onClick(e);
+    drawer.onClick();
+  };
+
+  const CustomLink = React.useMemo(
+    () =>
+      React.forwardRef<HTMLAnchorElement>((linkProps, ref) =>
+        isParent ? (
+          <span
+            {...linkProps}
+            onClick={() => drawer.onExpand(to)}
+            data-testid={`${to}_hover`}
+          />
+        ) : (
+          <Link
+            {...linkProps}
+            ref={ref}
+            to={to}
+            role="link"
+            aria-label={text}
+            title={text}
+            data-testid={`nav-${to}`}
+            onClick={handleClick}
+          />
+        )
+      ),
+    [to]
+  );
+
+  return visible ? (
+    <StyledListItem isSelected={selected} to={to}>
+      <ListItemButton
+        sx={{
+          ...getListItemCommonStyles(),
+          justifyContent: drawer.isOpen ? 'flex-start' : 'center',
+          '&.MuiListItemButton-root:hover': {
+            backgroundColor: 'transparent',
+          },
+          '& .MuiTypography-root': {
+            textOverflow: 'ellipsis',
+            overflow: 'hidden',
+            whiteSpace: 'nowrap',
+          },
+        }}
+        disableGutters
+        component={CustomLink}
+      >
+        <ListItemIcon sx={{ minWidth: 20 }}>{icon}</ListItemIcon>
+        {showMenuSectionIcon && (
+          <ChevronDownIcon
+            className="menu_section_icon"
+            sx={{
+              color: 'gray.main',
+              fontSize: '1rem',
+              marginLeft: 0.5,
+              stroke: theme => theme.palette.gray.main,
+              strokeWidth: 1.5,
+              transform: chevronRotation,
+            }}
+          />
+        )}
+        <Box className="navLinkText">
+          {isParent && <Box width={4} />}
+          {!showMenuSectionIcon && <Box width={4} />}
+          <Badge
+            {...badgeProps}
+            sx={{
+              alignItems: 'center',
+              '& .MuiBadge-badge':
+                badgeProps?.color === 'default'
+                  ? {
+                      backgroundColor: 'gray.light',
+                      color: 'gray.dark',
+                    }
+                  : undefined,
+
+              '& .MuiBadge-badge:not(.MuiBadge-invisible)': drawer.isOpen
+                ? {
+                    transform: 'scale(0.75) translate(100%, 0)',
+                  }
+                : {
+                    top: 'unset',
+                    transform: 'scale(0.75) translate(50%, -50%)',
+                  },
+            }}
+          >
+            <ListItemText
+              primary={text}
+              className={selected ? 'selected' : ''}
+              sx={{
+                '& .MuiTypography-root': {
+                  fontWeight:
+                    selected || isSelectedParentItem ? 'bold' : 'normal',
+                  color: isSelectedParentItem ? 'primary.main' : undefined,
+                },
+              }}
+            />
+          </Badge>
+          <span style={{ flexGrow: 1 }} />
+          <ListItemIcon
+            sx={{
+              minWidth: 20,
+              display: selected && drawer.isOpen ? 'flex' : 'none',
+              alignItems: 'center',
+            }}
+            className="chevron"
+          >
+            <ChevronDownIcon
+              sx={{
+                transform: chevronRotation,
+                fontSize: '1rem',
+                color: 'primary.main',
+              }}
+            />
+          </ListItemIcon>
+        </Box>
+      </ListItemButton>
+    </StyledListItem>
+  ) : null;
+};

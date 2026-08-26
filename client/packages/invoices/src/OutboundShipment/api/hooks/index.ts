@@ -1,0 +1,42 @@
+import { Utils } from './utils';
+import { Lines } from './line';
+import { Document } from './document';
+
+export { useOutboundItems } from './line/useOutboundItems';
+export { useOutboundLines } from './line/useOutboundLines';
+export { useDuplicateOutbound } from './document/useDuplicateOutbound';
+
+export const useOutbound = {
+  utils: {
+    addFromMasterList: Utils.useAddFromMasterList,
+    api: Utils.useOutboundApi,
+    barcode: Utils.useBarcode,
+    barcodeInsert: Utils.useBarcodeInsert,
+    isDisabled: Utils.useOutboundIsDisabled,
+    id: Utils.useOutboundId,
+  },
+
+  document: {
+    get: Document.useOutbound,
+    list: Document.useOutbounds,
+    listAll: Document.useOutboundsAll,
+
+    update: Document.useOutboundUpdate,
+    delete: Document.useOutboundDelete,
+    deleteRows: Document.useOutboundDeleteRows,
+    duplicate: Document.useOutboundDuplicate,
+    insert: Document.useOutboundInsert,
+
+    fields: Document.useOutboundFields,
+    updateInvoiceTax: Document.useOutboundUpdateInvoiceTax,
+    updateTax: Document.useUpdateOutboundTax,
+    updateName: Document.useOutboundUpdateName,
+  },
+
+  line: {
+    serviceLines: Lines.useOutboundServiceLines,
+    save: Lines.useOutboundSaveLines,
+    deleteSelected: Lines.useOutboundDeleteSelectedLines,
+    allocateSelected: Lines.useOutboundAllocateSelectedLines,
+  },
+};

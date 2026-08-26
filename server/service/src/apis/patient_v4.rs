@@ -1,0 +1,229 @@
+use chrono::NaiveDate;
+use repository::GenderType;
+use reqwest::{StatusCode, Url};
+use serde::{Deserialize, Deserializer, Serialize};
+use util::{with_retries, RetrySeconds};
+
+pub struct PatientApiV4 {
+    server_url: Url,
+    /// Username to authenticate with the central server. For the backend this is usually the site
+    /// name.
+    username: String,
+    /// For example, the site password which is also used for sync.
+    password_sha256: String,
+}
+
+#[derive(Serialize)]
+pub struct PatientParamsV4 {
+    pub limit: Option<u32>,
+    pub offset: Option<u32>,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
+    pub dob: Option<NaiveDate>,
+    pub policy_number: Option<String>,
+    pub barcode: Option<String>,
+    pub is_deleted: Option<bool>,
+    pub code: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct PatientV4 {
+    #[serde(rename = "ID")]
+    pub id: String,
+    pub name: String,
+    pub phone: String,
+    pub email: String,
+    pub code: String,
+    pub last: String,
+    pub first: String,
+    #[serde(deserialize_with = "date_of_birth")]
+    pub date_of_birth: Option<NaiveDate>,
+    #[serde(default, alias = "om_gender", deserialize_with = "gender")]
+    pub gender: Option<GenderType>,
+    #[serde(default)]
+    pub code_2: Option<String>,
+    #[serde(default, alias = "isDeceased")]
+    pub is_deceased: bool,
+}
+
+#[derive(Clone, Debug, Serialize)]
+pub struct NameStoreJoinParamsV4 {
+    #[serde(rename = "name_ID")]
+    pub name_id: String,
+    #[serde(rename = "store_ID")]
+    pub store_id: String,
+}
+
+#[derive(Clone, Debug, Deserialize)]
+pub struct NameStoreJoinV2 {
+    #[serde(rename = "ID")]
+    pub id: String,
+    #[serde(rename = "name_ID")]
+    pub name_id: String,
+    #[serde(rename = "store_ID")]
+    pub store_id: String,
+    pub inactive: bool,
+}
+
+#[derive(Debug)]
+pub enum PatientV4Error {
+    AuthenticationFailed,
+    HttpStatusError(StatusCode, String),
+    InvalidResponse(serde_json::Error),
+    ConnectionError(reqwest::Error),
+}
+
+impl PatientApiV4 {
+    pub fn new(server_url: Url, username: &str, password_sha256: &str) -> Self {
+        PatientApiV4 {
+            server_url,
+            username: username.to_string(),
+            password_sha256: password_sha256.to_string(),
+        }
+    }
+
+    /// Creates a name_store_join.
+    /// Requires the sync site credentials for authentication.
+    pub async fn name_store_join(
+        &self,
+        body: NameStoreJoinParamsV4,
+    ) -> Result<NameStoreJoinV2, PatientV4Error> {
+        let response = with_retries(RetrySeconds::default(), |client| {
+            client
+                .post(self.server_url.join("/api/v4/name_store_join").unwrap())
+                .json(&body)
+                .basic_auth(&self.username, Some(&self.password_sha256))
+        })
+        .await
+        .map_err(PatientV4Error::ConnectionError)?;
+
+        if response.status() == StatusCode::UNAUTHORIZED {
+            return Err(PatientV4Error::AuthenticationFailed);
+        }
+        if response.status() != StatusCode::OK {
+            return Err(PatientV4Error::HttpStatusError(
+                response.status(),
+                response.text().await.unwrap_or_else(|_| "".to_string()),
+            ));
+        }
+        response
+            .json()
+            .await
+            .map_err(PatientV4Error::ConnectionError)
+    }
+
+    pub async fn patient(&self, params: PatientParamsV4) -> Result<Vec<PatientV4>, PatientV4Error> {
+        let response = with_retries(RetrySeconds::default(), |client| {
+            client
+                .get(self.server_url.join("/api/v4/patient").unwrap())
+                .basic_auth(&self.username, Some(&self.password_sha256))
+                .query(&params)
+        })
+        .await
+        .map_err(PatientV4Error::ConnectionError)?;
+
+        if response.status() == StatusCode::UNAUTHORIZED {
+            return Err(PatientV4Error::AuthenticationFailed);
+        }
+        response
+            .json()
+            .await
+            .map_err(PatientV4Error::ConnectionError)
+    }
+}
+
+pub fn date_of_birth<'de, D: Deserializer<'de>>(d: D) -> Result<Option<NaiveDate>, D::Error> {
+    let s: Option<String> = Option::deserialize(d)?;
+    Ok(s.filter(|s| s != "0000-00-00T00:00:00").and_then(|s| {
+        // Accept both formats so dates aren't silently dropped
+        NaiveDate::parse_from_str(&s, "%Y-%m-%dT%H:%M:%S")
+            .or_else(|_| NaiveDate::parse_from_str(&s, "%Y-%m-%d"))
+            .ok()
+    }))
+}
+
+pub fn gender<'de, D: Deserializer<'de>>(d: D) -> Result<Option<GenderType>, D::Error> {
+    let value: Option<serde_json::Value> = Option::deserialize(d)?;
+    Ok(value.and_then(|v| serde_json::from_value::<GenderType>(v).ok()))
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn deserialize_dob() {
+        let patient: PatientV4 = serde_json::from_value(serde_json::json!({
+            "ID": "p1", "name": "", "phone": "", "email": "", "code": "",
+            "last": "", "first": "", "date_of_birth": "2000-01-02T00:00:00",
+        }))
+        .unwrap();
+        assert_eq!(
+            patient.date_of_birth,
+            Some(NaiveDate::from_ymd_opt(2000, 1, 2).unwrap())
+        );
+
+        let patient: PatientV4 = serde_json::from_value(serde_json::json!({
+            "ID": "p1", "name": "", "phone": "", "email": "", "code": "",
+            "last": "", "first": "", "date_of_birth": "0000-00-00T00:00:00",
+        }))
+        .unwrap();
+        assert_eq!(patient.date_of_birth, None);
+    }
+
+    #[test]
+    fn deserialize_gender() {
+        let empty: PatientV4 = serde_json::from_value(serde_json::json!({
+            "ID": "p1", "name": "", "phone": "", "email": "", "code": "",
+            "last": "", "first": "", "date_of_birth": "2000-01-02T00:00:00",
+            "om_gender": "", "isDeceased": true,
+        }))
+        .unwrap();
+        assert_eq!(empty.gender, None);
+        assert!(empty.is_deceased);
+
+        let set: PatientV4 = serde_json::from_value(serde_json::json!({
+            "ID": "p2", "name": "", "phone": "", "email": "", "code": "",
+            "last": "", "first": "", "date_of_birth": "2000-01-02T00:00:00",
+            "om_gender": "FEMALE",
+        }))
+        .unwrap();
+        assert_eq!(set.gender, Some(GenderType::Female));
+
+        let unknown: PatientV4 = serde_json::from_value(serde_json::json!({
+            "ID": "p3", "name": "", "phone": "", "email": "", "code": "",
+            "last": "", "first": "", "date_of_birth": "2000-01-02T00:00:00",
+            "gender": "male",
+        }))
+        .unwrap();
+        assert_eq!(unknown.gender, None);
+    }
+
+    #[test]
+    fn v7_round_trip_preserves_all_fields() {
+        let patient = PatientV4 {
+            id: "p1".to_string(),
+            name: "Patient, A".to_string(),
+            phone: String::new(),
+            email: String::new(),
+            code: "1234567".to_string(),
+            last: "A".to_string(),
+            first: "Patient".to_string(),
+            date_of_birth: Some(NaiveDate::from_ymd_opt(2000, 1, 2).unwrap()),
+            gender: Some(GenderType::Female),
+            code_2: Some("CODE1234567".to_string()),
+            is_deceased: true,
+        };
+
+        let json = serde_json::to_string(&patient).unwrap();
+        let parsed: PatientV4 = serde_json::from_str(&json).unwrap();
+
+        assert_eq!(
+            parsed.date_of_birth,
+            Some(NaiveDate::from_ymd_opt(2000, 1, 2).unwrap())
+        );
+        assert_eq!(parsed.gender, Some(GenderType::Female));
+        assert_eq!(parsed.code_2, Some("CODE1234567".to_string()));
+        assert!(parsed.is_deceased);
+    }
+}

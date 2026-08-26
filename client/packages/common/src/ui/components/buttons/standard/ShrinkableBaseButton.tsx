@@ -1,0 +1,75 @@
+import React from 'react';
+import { ButtonProps, Tooltip } from '@mui/material';
+import { styled } from '@mui/material/styles';
+import { StyledBaseButton, translateColor } from './BaseButton';
+import { useAppTheme, useMediaQuery } from '@common/styles';
+
+export const StyledShrinkableBaseButton = styled(StyledBaseButton, {
+  shouldForwardProp: prop => prop !== 'shrink',
+})<{ shrink: boolean }>(({ color, shrink, theme, disabled }) => ({
+  // These magic padding numbers give a little bit of space to the left and right when
+  // the button content is extra large, such as in the "Save & Confirm Allocation" button
+  // on an outbound shipment.
+  paddingLeft: '20px',
+  paddingRight: '20px',
+  width: shrink ? '64px' : 'auto',
+  minWidth: shrink ? '64px' : '115px',
+  transition: theme.transitions.create(['min-width'], {
+    easing: theme.transitions.easing.sharp,
+    duration: theme.transitions.duration.leavingScreen,
+  }),
+  '&.MuiButton-outlined': {
+    '&.MuiButton-root:not(:hover) .MuiSvgIcon-root': {
+      color:
+        color === 'primary' && !disabled
+          ? translateColor(theme, color)
+          : undefined,
+    },
+  },
+}));
+
+interface ShrinkableBaseButtonProps extends ButtonProps {
+  label: string;
+  shouldShrink: boolean;
+  shrinkThreshold: 'sm' | 'md' | 'lg' | 'xl';
+}
+
+export const ShrinkableBaseButton = React.forwardRef<
+  HTMLButtonElement,
+  ShrinkableBaseButtonProps
+>(
+  (
+    { label, onClick, shrinkThreshold, shouldShrink, startIcon, ...props },
+    ref
+  ) => {
+    const theme = useAppTheme();
+    const isShrinkThreshold = useMediaQuery(
+      theme.breakpoints.down(shrinkThreshold)
+    );
+
+    // On small screens, if the button shouldShrink, then
+    // only display a centred icon, with no text.
+    const shrink = isShrinkThreshold && shouldShrink;
+    const centredIcon = shrink ? startIcon : null;
+    const text = shrink ? null : label;
+
+    return (
+      <Tooltip disableHoverListener={!shrink} title={label}>
+        <span>
+          <StyledShrinkableBaseButton
+            ref={ref}
+            shrink={shrink}
+            size="small"
+            aria-label={label}
+            onClick={onClick}
+            startIcon={shrink ? null : startIcon}
+            {...props}
+          >
+            {centredIcon}
+            {text}
+          </StyledShrinkableBaseButton>
+        </span>
+      </Tooltip>
+    );
+  }
+);

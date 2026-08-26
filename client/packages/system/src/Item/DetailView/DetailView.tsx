@@ -1,0 +1,154 @@
+import React from 'react';
+import {
+  DetailFormSkeleton,
+  AlertModal,
+  RouteBuilder,
+  useNavigate,
+  useParams,
+  useTranslation,
+  Box,
+  useBreadcrumbs,
+  DetailTabs,
+  useIsCentralServerApi,
+  InvoiceNodeType,
+} from '@openmsupply-client/common';
+import { ItemLedgerFragment, useItem } from '../api';
+import { Toolbar } from './Toolbar';
+import { GeneralTab } from './Tabs/General';
+import { MasterListsTab } from './Tabs/MasterLists';
+import { AppRoute } from '@openmsupply-client/config';
+import { ItemVariantsTab } from './Tabs/ItemVariants';
+import { ItemLedgerTab } from './Tabs/ItemLedger';
+import { StoreTab } from './Tabs/Store';
+import { AncillarySupplies } from './Tabs/AncillarySupplies';
+import { CustomFieldsTab } from './Tabs/CustomFields';
+import { ActivityLogList } from '../../ActivityLog';
+
+export const ItemDetailView = () => {
+  const t = useTranslation();
+  const navigate = useNavigate();
+  const { setCustomBreadcrumbs } = useBreadcrumbs();
+  const isCentralServer = useIsCentralServerApi();
+  const { id: paramId } = useParams();
+  const {
+    byId: { data, isLoading },
+  } = useItem(paramId);
+
+  React.useEffect(() => {
+    setCustomBreadcrumbs({ 1: data?.name ?? '' });
+  }, [data, setCustomBreadcrumbs]);
+
+  if (isLoading || !data) return <DetailFormSkeleton />;
+
+  const onLedgerRowClick = (ledger: ItemLedgerFragment) => {
+    switch (ledger.invoiceType) {
+      case InvoiceNodeType.InboundShipment:
+        navigate(
+          RouteBuilder.create(AppRoute.Replenishment)
+            .addPart(
+              ledger.isExternal
+                ? AppRoute.InboundShipmentExternal
+                : AppRoute.InboundShipment
+            )
+            .addPart(String(ledger.invoiceId))
+            .build()
+        );
+        break;
+      case InvoiceNodeType.SupplierReturn:
+        navigate(
+          RouteBuilder.create(AppRoute.Replenishment)
+            .addPart(AppRoute.SupplierReturn)
+            .addPart(String(ledger.invoiceId))
+            .build()
+        );
+        break;
+      case InvoiceNodeType.OutboundShipment:
+        navigate(
+          RouteBuilder.create(AppRoute.Distribution)
+            .addPart(AppRoute.OutboundShipment)
+            .addPart(String(ledger.invoiceId))
+            .build()
+        );
+        break;
+      case InvoiceNodeType.CustomerReturn:
+        navigate(
+          RouteBuilder.create(AppRoute.Distribution)
+            .addPart(AppRoute.CustomerReturn)
+            .addPart(String(ledger.invoiceId))
+            .build()
+        );
+        break;
+      case InvoiceNodeType.Prescription:
+        navigate(
+          RouteBuilder.create(AppRoute.Dispensary)
+            .addPart(AppRoute.Prescription)
+            .addPart(String(ledger.invoiceId))
+            .build()
+        );
+        break;
+      default:
+        break;
+    }
+  };
+
+  const tabs = [
+    {
+      Component: <GeneralTab item={data} isLoading={isLoading} />,
+      value: t('label.general'),
+    },
+    {
+      Component: <StoreTab item={data} />,
+      value: t('label.store'),
+    },
+    {
+      Component: <MasterListsTab itemId={data.id} />,
+      value: t('label.master-lists'),
+    },
+    {
+      Component: (
+        <ItemLedgerTab itemId={data.id} onRowClick={onLedgerRowClick} />
+      ),
+      value: t('label.ledger'),
+    },
+    {
+      Component: <AncillarySupplies item={data} />,
+      value: t('title.ancillary-supplies'),
+    },
+  ];
+
+  tabs.push({
+    Component: <CustomFieldsTab item={data} />,
+    value: t('label.custom-fields'),
+  });
+
+  isCentralServer &&
+    tabs.push({
+      Component: <ItemVariantsTab item={data} itemVariants={data.variants} />,
+      value: t('label.variants'),
+    });
+
+  tabs.push({
+    Component: <ActivityLogList recordId={data.id} />,
+    value: t('label.log'),
+  });
+
+  return !!data ? (
+    <Box style={{ width: '100%' }}>
+      <Toolbar />
+      <DetailTabs tabs={tabs} />
+    </Box>
+  ) : (
+    <AlertModal
+      open={true}
+      onOk={() =>
+        navigate(
+          RouteBuilder.create(AppRoute.Catalogue)
+            .addPart(AppRoute.Items)
+            .build()
+        )
+      }
+      title={t('error.item-not-found')}
+      message={t('messages.click-to-return-to-item-list')}
+    />
+  );
+};

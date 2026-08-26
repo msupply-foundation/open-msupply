@@ -1,0 +1,132 @@
+import React, { useEffect, useState } from 'react';
+import {
+  DetailContainer,
+  Box,
+  TabContext,
+  DialogButton,
+  useTranslation,
+  useNotification,
+  BasicSpinner,
+  SlidePanel,
+  DetailTab,
+  LoadingButton,
+  SaveIcon,
+  WizardStepper,
+  FnUtils,
+} from '@openmsupply-client/common';
+import { Tabs, useCreatePatientForm } from './useCreatePatientForm';
+import { PatientColumnData } from './PatientResultsTab';
+
+interface CreatePatientSliderProps {
+  open: boolean;
+  onClose: () => void;
+  onCreate: () => void;
+  onSelectPatient: (selectedPatient: PatientColumnData) => void;
+}
+
+export const CreatePatientSlider = ({
+  open,
+  onClose,
+  onCreate,
+  onSelectPatient: onSelect,
+}: CreatePatientSliderProps) => {
+  const t = useTranslation();
+  const { error } = useNotification();
+  const [saving, setSaving] = useState(false);
+
+  const {
+    onNext,
+    setCurrentTab,
+    setCreateNewPatient,
+    getActiveStep,
+    handleSave,
+    tabs,
+    currentTab,
+    patientSteps,
+    isLoading,
+    isDirty,
+    hasError,
+    validationError,
+  } = useCreatePatientForm(onSelect);
+
+  useEffect(() => {
+    if (open) {
+      setCreateNewPatient({
+        id: FnUtils.generateUUID(),
+      });
+    }
+  }, [open, setCreateNewPatient]);
+
+  if (isLoading) return <BasicSpinner />;
+
+  return (
+    <SlidePanel
+      title={t('label.new-patient')}
+      width="100%"
+      open={open}
+      okButton={
+        currentTab === Tabs.Patient ? (
+          <LoadingButton
+            color="secondary"
+            label={t('button.save')}
+            startIcon={<SaveIcon />}
+            onClick={async () => {
+              setSaving(true);
+              try {
+                await handleSave();
+                onCreate();
+              } catch (e) {
+                error(t('error.failed-to-save-patient'))();
+              } finally {
+                setSaving(false);
+              }
+            }}
+            isLoading={saving}
+            disabled={!isDirty || saving || !!validationError}
+          />
+        ) : (
+          <DialogButton
+            variant="next-and-ok"
+            onClick={() => onNext(tabs)}
+            disabled={hasError}
+            customLabel={
+              currentTab === Tabs.SearchResults
+                ? t('button.create-new-patient')
+                : t('messages.search')
+            }
+          />
+        )
+      }
+      cancelButton={
+        <DialogButton
+          variant="cancel"
+          onClick={() => {
+            setCurrentTab(Tabs.Form);
+            setCreateNewPatient(undefined);
+            onClose();
+          }}
+        />
+      }
+      onClose={() => {
+        (onClose(), setCurrentTab(Tabs.Form));
+      }}
+    >
+      <DetailContainer>
+        <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
+          <WizardStepper
+            activeStep={getActiveStep()}
+            steps={patientSteps}
+            nowrap
+          />
+          <TabContext value={currentTab}>
+            {tabs.map(({ Component, value }) => (
+              <DetailTab value={value} key={value}>
+                {Component}
+              </DetailTab>
+            ))}
+          </TabContext>
+        </Box>
+      </DetailContainer>
+    </SlidePanel>
+  );
+};

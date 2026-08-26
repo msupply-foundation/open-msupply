@@ -1,0 +1,355 @@
+import React, { FC, useEffect, useState } from 'react';
+import {
+  LocaleKey,
+  TypedTFunction,
+  useTranslation,
+  Box,
+  AlertIcon,
+  HorizontalStepper,
+  StepDefinition,
+  StepperColour,
+  useIsCentralServerApi,
+  useIsExtraSmallScreen,
+  ChevronsDownIcon,
+  ChevronDownIcon,
+  ClockIcon,
+  DownloadIcon,
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
+  Typography,
+  ArrayElement,
+  noOtherVariants,
+} from '@openmsupply-client/common';
+import {
+  FullSyncStatusV5V6Fragment,
+  FullSyncStatusV7Fragment,
+  SyncStatusWithProgressFragment,
+  isSyncStatusV7,
+  mapSyncError,
+} from '@openmsupply-client/system';
+
+type SyncStatus = FullSyncStatusV5V6Fragment | FullSyncStatusV7Fragment;
+
+interface SyncProgressProps {
+  syncStatus: SyncStatus;
+  // Prepare Initial status is only shown in initialisation mode
+  // and Push is only shown  in operational mode
+  isOperational: boolean;
+  colour?: StepperColour;
+}
+
+export const SyncProgress: FC<SyncProgressProps> = ({
+  syncStatus,
+  isOperational,
+  colour = 'primary',
+}) => {
+  const t = useTranslation();
+  const isCentralServer = useIsCentralServerApi();
+  const error =
+    syncStatus.error &&
+    mapSyncError(t, syncStatus.error, 'error.unknown-sync-error');
+
+  const activeCandidates = isSyncStatusV7(syncStatus)
+    ? [
+        syncStatus.push,
+        syncStatus.waitingForIntegration,
+        syncStatus.pull,
+        syncStatus.integration,
+      ]
+    : [
+        syncStatus.prepareInitial,
+        syncStatus.pullCentral,
+        syncStatus.pullRemote,
+        syncStatus.pullV6,
+        syncStatus.push,
+        syncStatus.pushV6,
+        syncStatus.integration,
+      ];
+  const hasActiveStep = activeCandidates.some(
+    s => !!s?.started && !s?.finished
+  );
+  const now = useNowEverySecond(hasActiveStep && !error);
+
+  const steps = getSteps({
+    t,
+    colour,
+    isCentralServer,
+    syncStatus,
+    isError: !!error,
+    isOperational,
+    now,
+  });
+  const isExtraSmallScreen = useIsExtraSmallScreen();
+
+  return (
+    <Box display="flex" flexDirection={'column'} alignItems="center">
+      {!isExtraSmallScreen && (
+        <Box width="100%" data-testid="sync-phases">
+          <HorizontalStepper steps={steps} colour={colour} />
+        </Box>
+      )}
+      {isSyncStatusV7(syncStatus) &&
+        syncStatus.linkedDescriptions.length > 0 && (
+          <LinkedSyncProcesses descriptions={syncStatus.linkedDescriptions} />
+        )}
+    </Box>
+  );
+};
+
+const useNowEverySecond = (active: boolean) => {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!active) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [active]);
+  return now;
+};
+
+const getStepElapsed = (
+  progress: Step | null | undefined,
+  now: number
+): string | undefined => {
+  if (!progress?.started) return undefined;
+  const startMs = new Date(progress.started).getTime();
+  if (!Number.isFinite(startMs)) return undefined;
+  const endMs = progress.finished ? new Date(progress.finished).getTime() : now;
+
+  // Compute directly from the elapsed milliseconds so that durations over a day
+  // fold into the hours field rather than being dropped (a long initial sync on
+  // a low-bandwidth link can exceed 24h).
+  const totalSeconds = Math.floor(Math.max(0, endMs - startMs) / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  if (hours > 0) return `${hours}h ${String(minutes).padStart(2, '0')}m`;
+  if (minutes > 0) return `${minutes}m ${seconds}s`;
+  return `${seconds}s`;
+};
+
+type LinkedDescriptions = FullSyncStatusV7Fragment['linkedDescriptions'];
+
+// Exhaustive renderer
+const renderDescription = (
+  t: TypedTFunction<LocaleKey>,
+  description: ArrayElement<LinkedDescriptions>
+): string => {
+  switch (description.__typename) {
+    case 'AllStoreDataDescription':
+      return t('sync-status.description.all-store-data', {
+        storeName: description.storeName,
+      });
+    case 'TableNameDescription':
+      return t('sync-status.description.table-name', {
+        tableName: description.tableName,
+      });
+    default:
+      return noOtherVariants(description);
+  }
+};
+
+const LinkedSyncProcesses = ({
+  descriptions,
+}: {
+  descriptions: LinkedDescriptions;
+}) => {
+  const t = useTranslation();
+  return (
+    <Accordion
+      disableGutters
+      sx={theme => ({
+        mt: 3,
+        borderRadius: '8px',
+        // MUI rounds only the first/last child's outer corners by default; force
+        // all four to match and clip the summary/details to the rounded shape.
+        '&:first-of-type, &:last-of-type': { borderRadius: '8px' },
+        overflow: 'hidden',
+        boxShadow: theme.shadows[2],
+        // Remove MUI's default top divider pseudo-element.
+        '&:before': { display: 'none' },
+      })}
+    >
+      <AccordionSummary expandIcon={<ChevronDownIcon />}>
+        <Typography sx={{ fontWeight: 600 }}>
+          {t('sync-status.linked-sync-requests', {
+            count: descriptions.length,
+          })}
+        </Typography>
+      </AccordionSummary>
+      <AccordionDetails>
+        <Box display="flex" flexDirection="column" gap={0.5}>
+          {descriptions.map((d, i) => (
+            <Typography key={i} variant="body2">
+              {renderDescription(t, d)}
+            </Typography>
+          ))}
+        </Box>
+      </AccordionDetails>
+    </Accordion>
+  );
+};
+
+const ProgressIndicator = ({
+  progress,
+  elapsed,
+  colour,
+}: {
+  progress?: Progress;
+  elapsed?: string;
+  colour: StepperColour;
+}) => (
+  <Box
+    display={'flex'}
+    flexDirection="column"
+    alignItems="center"
+    justifyContent="center"
+    fontSize={12}
+    color={`${colour}.light`}
+    whiteSpace="nowrap"
+    width="9em"
+  >
+    {progress ? <span>{`${progress.done} / ${progress.total}`}</span> : null}
+    {elapsed !== undefined ? <span>{elapsed}</span> : null}
+  </Box>
+);
+
+type Progress = {
+  total: number;
+  done: number;
+};
+
+type Step = Partial<Omit<SyncStatusWithProgressFragment, '__typename'>>;
+
+type RawStep = {
+  labelKey: LocaleKey;
+  step: Step;
+  icon: React.ReactNode;
+};
+
+// Locale-stable per-phase test hook, derived from the phase's locale key
+// ('sync-status.pull-central' -> 'sync-phase-pull-central') so the id can't
+// drift from the phase it marks.
+const phaseTestId = (labelKey: LocaleKey): string =>
+  `sync-phase-${labelKey.replace(/^sync-status\./, '')}`;
+
+const toStepDefinition = (
+  t: TypedTFunction<LocaleKey>,
+  colour: StepperColour,
+  isError: boolean,
+  now: number,
+  { labelKey, step, icon }: RawStep,
+  index: number,
+  furthestStartedIndex: number
+): StepDefinition => {
+  // Steps always run in order, so anything before the furthest-reached step is
+  // complete - even if its own `finished` timestamp never came back (e.g. a
+  // push with nothing to send). Deriving from progression keeps the
+  // "completed" styling consistent across every passed step, instead of only
+  // the step that happened to report a finish time. See issue #12172.
+  const isFurthest = index === furthestStartedIndex;
+  const finished = !!step.finished;
+  const completed = index < furthestStartedIndex || (isFurthest && finished);
+  const active = isFurthest && !finished;
+  const isActiveAndError = isError && active;
+
+  const progress = step.total
+    ? { total: step.total, done: step.done ?? 0 }
+    : undefined;
+
+  return {
+    active,
+    completed,
+    error: isActiveAndError,
+    icon: isActiveAndError ? <AlertIcon sx={{ color: 'error.main' }} /> : icon,
+    label: t(labelKey),
+    testId: phaseTestId(labelKey),
+    optional: (
+      <ProgressIndicator
+        progress={progress}
+        elapsed={getStepElapsed(step, now)}
+        colour={colour}
+      />
+    ),
+  };
+};
+
+const getSteps = ({
+  t,
+  colour,
+  isCentralServer,
+  syncStatus,
+  isError,
+  isOperational,
+  now,
+}: {
+  t: TypedTFunction<LocaleKey>;
+  colour: StepperColour;
+  isCentralServer: boolean;
+  syncStatus: SyncStatus;
+  isError: boolean;
+  isOperational: boolean;
+  now: number;
+}): StepDefinition[] => {
+  const pullDown = <ChevronsDownIcon />;
+  const pushUp = <ChevronsDownIcon sx={{ transform: 'rotate(180deg)' }} />;
+  const waiting = <ClockIcon sx={{ fontSize: '18px' }} />;
+  const integrate = <DownloadIcon sx={{ fontSize: '18px' }} />;
+
+  const make = (
+    labelKey: LocaleKey,
+    step: Step | null | undefined,
+    icon: React.ReactNode
+  ): RawStep => ({ labelKey, step: step ?? {}, icon });
+
+  const raws: RawStep[] = [];
+
+  if (isSyncStatusV7(syncStatus)) {
+    // Push and WaitForIntegration are skipped during initialisation.
+    if (isOperational) {
+      raws.push(make('sync-status.push', syncStatus.push, pushUp));
+      raws.push(
+        make(
+          'sync-status.waiting-for-integration',
+          syncStatus.waitingForIntegration,
+          waiting
+        )
+      );
+    }
+    raws.push(make('sync-status.pull', syncStatus.pull, pullDown));
+    raws.push(make('sync-status.integrate', syncStatus.integration, integrate));
+  } else {
+    // V5_V6
+    if (!isOperational) {
+      raws.push(make('sync-status.prepare', syncStatus?.prepareInitial, null));
+    }
+    if (isOperational) {
+      if (!isCentralServer) {
+        raws.push(make('sync-status.push-v6', syncStatus?.pushV6, pushUp));
+      }
+      raws.push(make('sync-status.push', syncStatus?.push, pushUp));
+    }
+    raws.push(
+      make('sync-status.pull-central', syncStatus?.pullCentral, pullDown)
+    );
+    raws.push(
+      make('sync-status.pull-remote', syncStatus?.pullRemote, pullDown)
+    );
+    if (!isCentralServer) {
+      raws.push(make('sync-status.pull-v6', syncStatus?.pullV6, pullDown));
+    }
+    raws.push(
+      make('sync-status.integrate', syncStatus?.integration, integrate)
+    );
+  }
+
+  // Furthest-reached step = the last one that has started.
+  let furthestStartedIndex = -1;
+  raws.forEach((raw, i) => {
+    if (raw.step.started) furthestStartedIndex = i;
+  });
+
+  return raws.map((raw, i) =>
+    toStepDefinition(t, colour, isError, now, raw, i, furthestStartedIndex)
+  );
+};

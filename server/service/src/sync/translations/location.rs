@@ -1,0 +1,173 @@
+use repository::{
+    ChangelogRow, ChangelogTableName, LocationRow, Row, StorageConnection, SyncBufferRow,
+};
+use serde::{Deserialize, Serialize};
+
+use util::sync_serde::empty_str_as_option_string;
+
+use crate::sync::translations::{location_type::LocationTypeTranslation, store::StoreTranslation};
+
+use super::{FkField, PullTranslateResult, PushTranslateResult, SyncTranslation};
+
+#[derive(Deserialize, Serialize)]
+pub struct LegacyLocationRow {
+    #[serde(rename = "ID")]
+    pub id: String,
+    #[serde(rename = "Description")]
+    pub name: String,
+    pub code: String,
+    #[serde(rename = "hold")]
+    pub on_hold: bool,
+    #[serde(rename = "store_ID")]
+    pub store_id: String,
+    #[serde(rename = "type_ID")]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub location_type_id: Option<String>,
+    #[serde(rename = "Volume")]
+    pub volume: f64,
+}
+
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(LocationTranslation)
+}
+
+pub(super) struct LocationTranslation;
+impl SyncTranslation for LocationTranslation {
+    fn table_name(&self) -> &str {
+        "Location"
+    }
+
+    fn pull_dependencies(&self) -> Vec<&str> {
+        vec![
+            StoreTranslation.table_name(),
+            LocationTypeTranslation.table_name(),
+        ]
+    }
+
+    fn change_log_type(&self) -> Option<ChangelogTableName> {
+        Some(ChangelogTableName::Location)
+    }
+
+    fn try_translate_from_upsert_sync_record(
+        &self,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
+        sync_record: &SyncBufferRow,
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        let LegacyLocationRow {
+            id,
+            name,
+            code,
+            on_hold,
+            store_id,
+            location_type_id,
+            volume,
+        } = sync_record.deserialize()?;
+
+        let fk_check = fk_checker.with_table(connection, "location", &id);
+        let check_fk = fk_checker.with_table_required(connection, "location", &id);
+
+        let result = LocationRow {
+            id,
+            name,
+            code,
+            on_hold,
+            store_id: check_fk(store_id, "store_id", FkField::Store)?,
+            location_type_id: fk_check(location_type_id, "location_type_id", FkField::LocationType)?,
+            volume,
+        };
+
+        Ok(PullTranslateResult::upsert(result))
+    }
+
+    fn try_translate_to_upsert_sync_record(
+        &self,
+        _connection: &StorageConnection,
+        changelog: &ChangelogRow,
+        row: Row,
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::Location(location_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
+        let LocationRow {
+            id,
+            name,
+            code,
+            on_hold,
+            store_id,
+            location_type_id,
+            volume,
+        } = location_row;
+
+        let legacy_row = LegacyLocationRow {
+            id: id.clone(),
+            name,
+            code,
+            on_hold,
+            store_id,
+            location_type_id,
+            volume,
+        };
+
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            serde_json::to_value(legacy_row)?,
+        ))
+    }
+
+    fn try_translate_to_delete_sync_record(
+        &self,
+        _: &StorageConnection,
+        changelog: &ChangelogRow,
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        Ok(PushTranslateResult::delete(changelog, self.table_name()))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use repository::{
+        mock::{MockData, MockDataInserts},
+        test_db::setup_all_with_data,
+        LocationTypeRow,
+    };
+
+    #[actix_rt::test]
+    async fn test_location_translation() {
+        use crate::sync::test::test_data::location as test_data;
+        let translator = LocationTranslation {};
+
+        // FK validation requires the referenced location_type to exist
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_location_translation",
+            MockDataInserts::all(),
+            MockData {
+                location_types: vec![LocationTypeRow {
+                    id: "84AA2B7A18694A2AB1E84DCABAD19617".to_string(),
+                    name: "Test Location Type".to_string(),
+                    ..Default::default()
+                }],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        for record in test_data::test_pull_upsert_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
+            let translation_result = translator
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
+                .unwrap();
+
+            assert_eq!(translation_result, record.translated_record);
+        }
+    }
+}

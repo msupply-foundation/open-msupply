@@ -1,0 +1,21 @@
+fragment StoreRow on StoreNode {
+  code
+  storeName
+  id
+}
+
+query stores($first: Int, $offset: Int, $filter: StoreFilterInput) {
+  stores(
+    page: { first: $first, offset: $offset }
+    filter: $filter
+    sort: { key: name }
+  ) {
+    ... on StoreConnector {
+      __typename
+      totalCount
+      nodes {
+        ...StoreRow
+      }
+    }
+  }
+}

@@ -223,11 +223,6 @@ const OutboundShipmentsList: Component = () => {
     if (result.kind === 'success') void refetch();
   };
 
-  const selectedRows = () =>
-    rows()
-      .filter(row => selectedIds().includes(row.id))
-      .map(row => ({ id: row.id, status: row.status }));
-
   const columns = (): Column<ShipmentRow, SortKey>[] => [
     {
       // Customer name + the shipment's colour swatch (editable in place while
@@ -349,9 +344,14 @@ const OutboundShipmentsList: Component = () => {
             <strong data-testid="selected-rows-count">
               {tPlural('label.items-selected', selectedIds().length)}
             </strong>
+            {/* Always offered on a selection: whether a shipment can be
+                deleted is the server's answer to the action, given when it is
+                submitted (validation.md § actions; issue #1134). The batch is
+                atomic, so a mixed selection deletes nothing and each refusal
+                names its own cause. */}
             <DeleteShipmentsAction
               storeId={params.storeId}
-              selectedRows={selectedRows}
+              selectedIds={selectedIds}
               onDeleted={onDeleted}
             />
             {/* Make a copy — single selection only (spec S1 bulk actions). */}

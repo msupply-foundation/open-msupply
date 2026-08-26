@@ -1,0 +1,32 @@
+overwrite: true
+schema: ['../server/schema.graphql']
+generates:
+  ./packages/common/src/types/schema.ts:
+    plugins:
+      - typescript
+    config:
+      nonOptionalTypename: true
+      scalars:
+        DateTime: string
+        NaiveDate: string
+        NaiveDateTime: string
+  packages/:
+    documents:
+      - ./**/*.graphql
+      - '!/**/node_modules/**'
+    preset: near-operation-file
+    presetConfig:
+      extension: .generated.ts
+      baseTypesPath: ~@openmsupply-client/common
+    plugins:
+      - typescript-operations
+      - typescript-graphql-request
+    config:
+      nonOptionalTypename: true
+      scalars:
+        DateTime: string
+        NaiveDate: string
+        NaiveDateTime: string
+hooks:
+  afterAllFileWrite:
+    - prettier --write

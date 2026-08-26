@@ -1,0 +1,223 @@
+use super::{
+    name_row::name, period_row::period, program_row::program, rnr_form_row::rnr_form,
+    store_row::store, DBType, NameRow, RepositoryError, RnRFormRow, RnRFormStatus,
+    StorageConnection, StoreRow,
+};
+
+use crate::{
+    diesel_macros::{apply_date_time_filter, apply_equal_filter, apply_sort, apply_sort_no_case},
+    DatetimeFilter, EqualFilter, Pagination, PeriodRow, ProgramRow, Sort,
+};
+
+use diesel::{dsl::IntoBoxed, prelude::*};
+
+#[derive(PartialEq, Debug, Clone, Default)]
+pub struct RnRForm {
+    pub rnr_form_row: RnRFormRow,
+    pub name_row: NameRow,
+    pub store_row: StoreRow,
+    pub period_row: PeriodRow,
+    pub program_row: ProgramRow,
+}
+#[derive(Clone, Default)]
+pub struct RnRFormFilter {
+    pub id: Option<EqualFilter<String>>,
+    pub store_id: Option<EqualFilter<String>>,
+    pub program_id: Option<EqualFilter<String>>,
+    pub period_schedule_id: Option<EqualFilter<String>>,
+    pub created_datetime: Option<DatetimeFilter>,
+}
+
+pub enum RnRFormSortField {
+    Program,
+    Period,
+    Status,
+    CreatedDatetime,
+    SupplierName,
+}
+
+pub type RnRFormSort = Sort<RnRFormSortField>;
+
+pub struct RnRFormRepository<'a> {
+    connection: &'a StorageConnection,
+}
+
+type RnRFormJoin = (
+    RnRFormRow,
+    NameRow,
+    StoreRow,
+    PeriodRow,
+    ProgramRow,
+);
+
+impl<'a> RnRFormRepository<'a> {
+    pub fn new(connection: &'a StorageConnection) -> Self {
+        RnRFormRepository { connection }
+    }
+
+    pub fn count(&self, filter: Option<RnRFormFilter>) -> Result<i64, RepositoryError> {
+        let query = create_filtered_query(filter);
+
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
+    }
+
+    pub fn query_by_filter(&self, filter: RnRFormFilter) -> Result<Vec<RnRForm>, RepositoryError> {
+        self.query(Pagination::all(), Some(filter), None)
+    }
+
+    pub fn query_one(&self, filter: RnRFormFilter) -> Result<Option<RnRForm>, RepositoryError> {
+        Ok(self.query_by_filter(filter)?.pop())
+    }
+
+    pub fn query(
+        &self,
+        pagination: Pagination,
+        filter: Option<RnRFormFilter>,
+        sort: Option<RnRFormSort>,
+    ) -> Result<Vec<RnRForm>, RepositoryError> {
+        let mut query = create_filtered_query(filter);
+
+        if let Some(sort) = sort {
+            match sort.key {
+                RnRFormSortField::Period => {
+                    apply_sort!(query, sort, period::end_date);
+                }
+                RnRFormSortField::Status => {
+                    apply_sort!(query, sort, rnr_form::status);
+                }
+                RnRFormSortField::CreatedDatetime => {
+                    apply_sort!(query, sort, rnr_form::created_datetime);
+                }
+                RnRFormSortField::SupplierName => {
+                    apply_sort_no_case!(query, sort, name::name_);
+                }
+                RnRFormSortField::Program => {
+                    apply_sort_no_case!(query, sort, program::name);
+                }
+            }
+        } else {
+            query = query.order(rnr_form::created_datetime.asc())
+        }
+
+        // Stable tiebreaker so paginated results don't shuffle or drop rows
+        // when the primary sort column has ties.
+        let result = query
+            .then_order_by(rnr_form::id.asc())
+            .offset(pagination.offset as i64)
+            .limit(pagination.limit as i64)
+            .load::<RnRFormJoin>(self.connection.lock().connection())?;
+
+        Ok(result.into_iter().map(to_domain).collect())
+    }
+}
+
+fn to_domain(
+    (rnr_form_row, name_row, store_row, period_row, program_row): RnRFormJoin,
+) -> RnRForm {
+    RnRForm {
+        rnr_form_row,
+        name_row,
+        store_row,
+        period_row,
+        program_row,
+    }
+}
+
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    rnr_form::table
+        .inner_join(name::table)
+        .inner_join(store::table)
+        .inner_join(period::table)
+        .inner_join(program::table)
+}
+
+type BoxedRnRFormQuery = IntoBoxed<'static, query, DBType>;
+
+fn create_filtered_query(filter: Option<RnRFormFilter>) -> BoxedRnRFormQuery {
+    let mut query = query().into_boxed();
+
+    if let Some(f) = filter {
+        let RnRFormFilter {
+            id,
+            created_datetime,
+            store_id,
+            program_id,
+            period_schedule_id,
+        } = f;
+
+        apply_equal_filter!(query, id, rnr_form::id);
+        apply_equal_filter!(query, store_id, rnr_form::store_id);
+        apply_equal_filter!(query, program_id, rnr_form::program_id);
+
+        apply_date_time_filter!(query, created_datetime, rnr_form::created_datetime);
+
+        apply_equal_filter!(query, period_schedule_id, period::period_schedule_id);
+    }
+    query
+}
+
+impl RnRFormStatus {
+    pub fn equal_to(&self) -> EqualFilter<Self> {
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            ..Default::default()
+        }
+    }
+
+    pub fn not_equal_to(&self) -> EqualFilter<Self> {
+        EqualFilter {
+            not_equal_to: Some(self.clone()),
+            ..Default::default()
+        }
+    }
+
+    pub fn equal_any(value: Vec<Self>) -> EqualFilter<Self> {
+        EqualFilter {
+            equal_any: Some(value),
+            ..Default::default()
+        }
+    }
+}
+
+impl RnRFormFilter {
+    pub fn new() -> RnRFormFilter {
+        RnRFormFilter::default()
+    }
+
+    pub fn id(mut self, filter: EqualFilter<String>) -> Self {
+        self.id = Some(filter);
+        self
+    }
+
+    pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.store_id = Some(filter);
+        self
+    }
+
+    pub fn program_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.program_id = Some(filter);
+        self
+    }
+
+    pub fn period_schedule_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.period_schedule_id = Some(filter);
+        self
+    }
+
+    pub fn created_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.created_datetime = Some(filter);
+        self
+    }
+}
+
+impl RnRForm {
+    pub fn other_party_name(&self) -> &str {
+        &self.name_row.name
+    }
+    pub fn other_party_id(&self) -> &str {
+        &self.name_row.id
+    }
+}

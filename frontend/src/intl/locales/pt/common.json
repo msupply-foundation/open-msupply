@@ -2078,7 +2078,6 @@
     "messages.cannot-view-vaccine-card": "Não é possível visualizar o cartão de vacinação deste paciente deste local porque foi inscrito no {{ programName }} por outra unidade de saúde",
     "messages.cant-change-campaign-or-program-on-finalised-invoice": "Não é possível alterar a campanha ou o programa numa fatura finalizada",
     "messages.cant-change-line-status-on-received-invoice": "Não é possível alterar o estado de uma linha numa factura recebida",
-    "messages.cant-delete-finalised-stock-movements": "Os movimentos de stock finalizados não podem ser excluídos",
     "messages.cant-delete-generic": "Você não pode excluir um ou mais dos itens selecionados",
     "messages.cant-delete-requisitions": "Só é possível excluir requisições com o status 'Rascunho'",
     "messages.cant-delete-transferred": "Não é possível excluir itens que tenham sido transferidos de outra unidade de saúde. Por favor, reduza essas linhas para zero.",

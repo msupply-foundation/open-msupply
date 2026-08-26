@@ -1,0 +1,523 @@
+use async_graphql::*;
+use chrono::DateTime;
+use chrono::Utc;
+use graphql_core::pagination::PaginationInput;
+use graphql_core::standard_graphql_error::validate_auth;
+use graphql_core::ContextExt;
+use graphql_types::types::contact_trace::ContactTraceFilterInput;
+use graphql_types::types::contact_trace::ContactTraceResponse;
+use graphql_types::types::contact_trace::ContactTraceSortInput;
+use graphql_types::types::document::DocumentNode;
+use graphql_types::types::encounter::EncounterFilterInput;
+use graphql_types::types::encounter::EncounterSortInput;
+use graphql_types::types::patient::PatientFilterInput;
+use graphql_types::types::patient::PatientNode;
+use graphql_types::types::program_enrolment::ProgramEnrolmentFilterInput;
+use graphql_types::types::program_enrolment::ProgramEnrolmentResponse;
+use graphql_types::types::program_enrolment::ProgramEnrolmentSortInput;
+use graphql_types::types::program_enrolment::ProgramEventFilterInput;
+use graphql_types::types::program_event::ProgramEventResponse;
+use graphql_types::types::program_event::ProgramEventSortInput;
+use graphql_types::types::vaccination::VaccinationNode;
+use graphql_types::types::PeriodFilterInput;
+use graphql_types::types::PeriodsResponse;
+use mutations::allocate_number::allocate_program_number;
+use mutations::allocate_number::AllocateProgramNumberInput;
+use mutations::allocate_number::AllocateProgramNumberResponse;
+use mutations::contact_trace::insert::insert_contact_trace;
+use mutations::contact_trace::insert::InsertContactTraceInput;
+use mutations::contact_trace::insert::InsertContactTraceResponse;
+use mutations::contact_trace::update::update_contact_trace;
+use mutations::contact_trace::update::UpdateContactTraceInput;
+use mutations::contact_trace::update::UpdateContactTraceResponse;
+use mutations::encounter::insert::insert_encounter;
+use mutations::encounter::insert::InsertEncounterInput;
+use mutations::encounter::insert::InsertEncounterResponse;
+use mutations::encounter::update::update_encounter;
+use mutations::encounter::update::UpdateEncounterInput;
+use mutations::encounter::update::UpdateEncounterResponse;
+use mutations::insert_document_registry::*;
+use mutations::patient::insert::insert_patient;
+use mutations::patient::insert::InsertPatientInput;
+use mutations::patient::insert::InsertPatientResponse;
+use mutations::patient::update::update_patient;
+use mutations::patient::update::UpdatePatientInput;
+use mutations::patient::update::UpdatePatientResponse;
+use mutations::patient::update_custom_fields::update_patient_custom_fields;
+use mutations::patient::update_custom_fields::UpdatePatientCustomFieldsInput;
+use mutations::patient::update_custom_fields::UpdatePatientCustomFieldsResponse;
+use mutations::program_enrolment::insert::insert_program_enrolment;
+use mutations::program_enrolment::insert::InsertProgramEnrolmentInput;
+use mutations::program_enrolment::insert::InsertProgramEnrolmentResponse;
+use mutations::program_enrolment::update::update_program_enrolment;
+use mutations::program_enrolment::update::UpdateProgramEnrolmentInput;
+use mutations::program_enrolment::update::UpdateProgramEnrolmentResponse;
+use mutations::program_patient::insert::*;
+use mutations::program_patient::update::update_program_patient;
+use mutations::program_patient::update::UpdateProgramPatientInput;
+use mutations::program_patient::update::UpdateProgramPatientResponse;
+use mutations::rnr_form::finalise::{
+    finalise_rnr_form, FinaliseRnRFormInput, FinaliseRnRFormResponse,
+};
+use mutations::rnr_form::insert::{insert_rnr_form, InsertRnRFormInput, InsertRnRFormResponse};
+use mutations::rnr_form::update::update_rnr_form;
+use mutations::rnr_form::update::UpdateRnRFormInput;
+use mutations::rnr_form::update::UpdateRnRFormResponse;
+use mutations::vaccination::insert::{
+    insert_vaccination, InsertVaccinationInput, InsertVaccinationResponse,
+};
+use mutations::vaccination::update::{
+    update_vaccination, UpdateVaccinationInput, UpdateVaccinationResponse,
+};
+use queries::contact_trace::contact_traces;
+use service::auth::Resource;
+use service::auth::ResourceAccessRequest;
+use service::programs::patient::patient_search_central;
+use types::program::ProgramFilterInput;
+use types::program::ProgramSortInput;
+use types::program::ProgramsResponse;
+use types::r_and_r_form::RnRFormResponse;
+use types::r_and_r_form::{RnRFormFilterInput, RnRFormSortInput, RnRFormsResponse};
+
+mod mutations;
+
+mod queries;
+pub mod types;
+use crate::mutations::rnr_form::delete::delete_rnr_form;
+use crate::mutations::rnr_form::delete::DeleteRnRFormInput;
+use crate::mutations::rnr_form::delete::DeleteRnRFormResponse;
+use crate::types::period_schedule::PeriodSchedulesResponse;
+
+use self::queries::*;
+
+#[derive(Default, Clone)]
+pub struct ProgramsQueries;
+
+#[Object]
+impl ProgramsQueries {
+    pub async fn documents(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "Store id")] store_id: String,
+        page: Option<PaginationInput>,
+        #[graphql(desc = "The document filter")] filter: Option<DocumentFilterInput>,
+        sort: Option<DocumentSortInput>,
+    ) -> Result<DocumentResponse> {
+        documents(ctx, store_id, page, filter, sort)
+    }
+
+    pub async fn document(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "Store id")] store_id: String,
+        #[graphql(desc = "The document name")] name: String,
+    ) -> Result<Option<DocumentNode>> {
+        document(ctx, store_id, name)
+    }
+
+    pub async fn document_history(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(desc = "Store id")] store_id: String,
+        #[graphql(desc = "The document name")] name: String,
+    ) -> Result<DocumentHistoryResponse> {
+        document_history(ctx, store_id, name)
+    }
+
+    pub async fn document_registries(
+        &self,
+        ctx: &Context<'_>,
+        filter: Option<DocumentRegistryFilterInput>,
+        sort: Option<Vec<DocumentRegistrySortInput>>,
+        store_id: String,
+    ) -> Result<DocumentRegistryResponse> {
+        document_registries(ctx, filter, sort, store_id)
+    }
+
+    pub async fn patients(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        page: Option<PaginationInput>,
+        filter: Option<PatientFilterInput>,
+        sort: Option<Vec<PatientSortInput>>,
+    ) -> Result<PatientResponse> {
+        patients(ctx, store_id, page, filter, sort)
+    }
+    pub async fn patient(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        patient_id: String,
+    ) -> Result<Option<PatientNode>> {
+        patient(ctx, store_id, patient_id)
+    }
+    pub async fn patient_search(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: PatientSearchInput,
+    ) -> Result<PatientSearchResponse> {
+        patient_search(ctx, store_id, input)
+    }
+
+    pub async fn central_patient_search(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: CentralPatientSearchInput,
+    ) -> Result<CentralPatientSearchResponse> {
+        // Note, we can't move the ctx to another async method because then it would need to be
+        // Sync. For this reason split the method as done below.
+        validate_auth(
+            ctx,
+            &ResourceAccessRequest {
+                resource: Resource::QueryPatient,
+                store_id: Some(store_id.clone()),
+                require_central_standalone: false,
+            },
+        )?;
+
+        let service_provider = ctx.service_provider();
+        let context = service_provider.basic_context()?;
+
+        let result = patient_search_central(service_provider, &context, input.to_domain()).await;
+        map_central_patient_search_result(result)
+    }
+
+    pub async fn program_enrolments(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        sort: Option<ProgramEnrolmentSortInput>,
+        filter: Option<ProgramEnrolmentFilterInput>,
+    ) -> Result<ProgramEnrolmentResponse> {
+        program_enrolments(ctx, store_id, sort, filter)
+    }
+
+    /// Returns active program events at a given date time.
+    /// This can also be achieved by using the program_events endpoint with the filter:
+    /// `active_start_datetime <= at && active_end_datetime + 1 >= at`
+    pub async fn active_program_events(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        at: Option<DateTime<Utc>>,
+        page: Option<PaginationInput>,
+        sort: Option<ProgramEventSortInput>,
+        filter: Option<ProgramEventFilterInput>,
+    ) -> Result<ProgramEventResponse> {
+        active_program_events(ctx, store_id, at, page, sort, filter)
+    }
+
+    pub async fn program_events(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        page: Option<PaginationInput>,
+        sort: Option<ProgramEventSortInput>,
+        filter: Option<ProgramEventFilterInput>,
+    ) -> Result<ProgramEventResponse> {
+        program_events(ctx, store_id, page, sort, filter)
+    }
+
+    pub async fn encounters(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        page: Option<PaginationInput>,
+        filter: Option<EncounterFilterInput>,
+        sort: Option<EncounterSortInput>,
+    ) -> Result<EncounterResponse> {
+        encounters(ctx, store_id, page, filter, sort)
+    }
+
+    pub async fn encounter_fields(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: EncounterFieldsInput,
+        page: Option<PaginationInput>,
+        filter: Option<EncounterFilterInput>,
+        sort: Option<EncounterSortInput>,
+    ) -> Result<EncounterFieldsResponse> {
+        encounter_fields(ctx, store_id, input, page, filter, sort)
+    }
+
+    pub async fn contact_traces(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        page: Option<PaginationInput>,
+        filter: Option<ContactTraceFilterInput>,
+        sort: Option<ContactTraceSortInput>,
+    ) -> Result<ContactTraceResponse> {
+        contact_traces(ctx, store_id, page, filter, sort)
+    }
+
+    pub async fn programs(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        page: Option<PaginationInput>,
+        filter: Option<ProgramFilterInput>,
+        sort: Option<ProgramSortInput>,
+    ) -> Result<ProgramsResponse> {
+        programs(ctx, store_id, page, filter, sort)
+    }
+
+    pub async fn periods(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        program_id: Option<String>,
+        page: Option<PaginationInput>,
+        filter: Option<PeriodFilterInput>,
+    ) -> Result<PeriodsResponse> {
+        periods(ctx, store_id, program_id, page, filter)
+    }
+
+    pub async fn r_and_r_forms(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        page: Option<PaginationInput>,
+        filter: Option<RnRFormFilterInput>,
+        sort: Option<RnRFormSortInput>,
+    ) -> Result<RnRFormsResponse> {
+        r_and_r_forms(ctx, store_id, page, filter, sort)
+    }
+
+    pub async fn r_and_r_form(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        rnr_form_id: String,
+    ) -> Result<RnRFormResponse> {
+        r_and_r_form(ctx, store_id, rnr_form_id)
+    }
+
+    pub async fn schedules_with_periods_by_program(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        program_id: String,
+    ) -> Result<PeriodSchedulesResponse> {
+        get_schedules_with_periods_by_program(ctx, store_id, program_id)
+    }
+
+    pub async fn vaccination(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        id: String,
+    ) -> Result<Option<VaccinationNode>> {
+        vaccination(ctx, store_id, id)
+    }
+
+    pub async fn vaccination_card(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        program_enrolment_id: String,
+    ) -> Result<VaccinationCardResponse> {
+        vaccination_card(ctx, store_id, program_enrolment_id)
+    }
+}
+
+#[derive(Default, Clone)]
+pub struct ProgramsMutations;
+
+#[Object]
+impl ProgramsMutations {
+    async fn insert_document_registry(
+        &self,
+        ctx: &Context<'_>,
+        input: InsertDocumentRegistryInput,
+    ) -> Result<InsertDocumentResponse> {
+        insert_document_registry(ctx, input)
+    }
+
+    /// Inserts a new patient (without document data)
+    pub async fn insert_patient(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: InsertPatientInput,
+    ) -> Result<InsertPatientResponse> {
+        insert_patient(ctx, store_id, input)
+    }
+
+    /// Updates a new patient (without document data)
+    pub async fn update_patient(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UpdatePatientInput,
+    ) -> Result<UpdatePatientResponse> {
+        update_patient(ctx, store_id, input)
+    }
+
+    /// Update a patient's new-system custom property values (`custom_fields`).
+    /// Accepts a key->value patch; merges it into the patient's existing blob.
+    pub async fn update_patient_custom_fields(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UpdatePatientCustomFieldsInput,
+    ) -> Result<UpdatePatientCustomFieldsResponse> {
+        update_patient_custom_fields(ctx, store_id, input)
+    }
+
+    /// Inserts a new program patient, i.e. a patient that can contain additional information stored
+    /// in a document.
+    pub async fn insert_program_patient(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: InsertProgramPatientInput,
+    ) -> Result<InsertProgramPatientResponse> {
+        insert_program_patient(ctx, store_id, input)
+    }
+
+    /// Updates a new program patient, i.e. a patient the can contain additional information stored
+    /// in a document.
+    pub async fn update_program_patient(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UpdateProgramPatientInput,
+    ) -> Result<UpdateProgramPatientResponse> {
+        update_program_patient(ctx, store_id, input)
+    }
+
+    /// Links a patient to a store and thus effectively to a site
+    pub async fn link_patient_to_store(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        name_id: String,
+    ) -> Result<LinkPatientToStoreResponse> {
+        link_patient_to_store(ctx, &store_id, &name_id).await
+    }
+
+    /// Enrols a patient into a program by adding a program document to the patient's documents.
+    /// Every patient can only have one program document of each program type.
+    pub async fn insert_program_enrolment(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: InsertProgramEnrolmentInput,
+    ) -> Result<InsertProgramEnrolmentResponse> {
+        insert_program_enrolment(ctx, store_id, input)
+    }
+
+    /// Updates an existing program document belonging to a patient.
+    pub async fn update_program_enrolment(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UpdateProgramEnrolmentInput,
+    ) -> Result<UpdateProgramEnrolmentResponse> {
+        update_program_enrolment(ctx, store_id, input)
+    }
+
+    pub async fn insert_encounter(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: InsertEncounterInput,
+    ) -> Result<InsertEncounterResponse> {
+        insert_encounter(ctx, store_id, input)
+    }
+
+    pub async fn update_encounter(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UpdateEncounterInput,
+    ) -> Result<UpdateEncounterResponse> {
+        update_encounter(ctx, store_id, input)
+    }
+
+    pub async fn allocate_program_number(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: AllocateProgramNumberInput,
+    ) -> Result<AllocateProgramNumberResponse> {
+        allocate_program_number(ctx, store_id, input)
+    }
+
+    pub async fn insert_contact_trace(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: InsertContactTraceInput,
+    ) -> Result<InsertContactTraceResponse> {
+        insert_contact_trace(ctx, store_id, input)
+    }
+
+    pub async fn update_contact_trace(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UpdateContactTraceInput,
+    ) -> Result<UpdateContactTraceResponse> {
+        update_contact_trace(ctx, store_id, input)
+    }
+
+    pub async fn insert_rnr_form(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: InsertRnRFormInput,
+    ) -> Result<InsertRnRFormResponse> {
+        insert_rnr_form(ctx, store_id, input)
+    }
+
+    pub async fn update_rnr_form(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UpdateRnRFormInput,
+    ) -> Result<UpdateRnRFormResponse> {
+        update_rnr_form(ctx, store_id, input)
+    }
+
+    pub async fn finalise_rnr_form(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: FinaliseRnRFormInput,
+    ) -> Result<FinaliseRnRFormResponse> {
+        finalise_rnr_form(ctx, store_id, input)
+    }
+
+    pub async fn delete_rnr_form(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: DeleteRnRFormInput,
+    ) -> Result<DeleteRnRFormResponse> {
+        delete_rnr_form(ctx, store_id, input)
+    }
+
+    pub async fn insert_vaccination(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: InsertVaccinationInput,
+    ) -> Result<InsertVaccinationResponse> {
+        insert_vaccination(ctx, store_id, input)
+    }
+
+    pub async fn update_vaccination(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: UpdateVaccinationInput,
+    ) -> Result<UpdateVaccinationResponse> {
+        update_vaccination(ctx, store_id, input)
+    }
+}

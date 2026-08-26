@@ -1,0 +1,1 @@
+export { MasterListDetailView } from './DetailView';

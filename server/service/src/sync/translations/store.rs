@@ -1,0 +1,170 @@
+use chrono::NaiveDate;
+use repository::{
+    NameLinkRowRepository, StorageConnection, StoreLogoRow, StoreMode, StoreRow, SyncBufferRow,
+};
+
+use crate::sync::translations::name::NameTranslation;
+use util::sync_serde::{empty_str_as_option_string, zero_date_as_option};
+
+use serde::{Deserialize, Serialize};
+
+use super::{IntegrationOperation, PullTranslateResult, SyncTranslation};
+
+#[derive(Deserialize, Serialize, Debug)]
+pub enum LegacyStoreMode {
+    #[serde(rename = "store")]
+    Store,
+    #[serde(rename = "dispensary")]
+    Dispensary,
+}
+
+#[allow(non_snake_case)]
+#[derive(Deserialize)]
+pub struct LegacyStoreRow {
+    #[serde(rename = "ID")]
+    id: String,
+    #[serde(rename = "name_ID")]
+    name_id: String,
+    code: String,
+    #[serde(rename = "sync_id_remote_site")]
+    site_id: i32,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    logo: Option<String>,
+    store_mode: LegacyStoreMode,
+    #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
+    pub created_date: Option<NaiveDate>,
+    #[serde(rename = "disabled")]
+    is_disabled: bool,
+}
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(StoreTranslation)
+}
+
+pub(super) struct StoreTranslation;
+impl SyncTranslation for StoreTranslation {
+    fn table_name(&self) -> &str {
+        "store"
+    }
+
+    fn pull_dependencies(&self) -> Vec<&str> {
+        vec![NameTranslation.table_name()]
+    }
+
+    fn try_translate_from_upsert_sync_record(
+        &self,
+        connection: &StorageConnection,
+        _fk_checker: &crate::sync::translations::FkChecker,
+        sync_record: &SyncBufferRow,
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        let data = sync_record.deserialize::<LegacyStoreRow>()?;
+
+        // Ignore the following stores as they are system stores with some properties that prevent them from being integrated
+        // HIS -> Hospital Information System (no name_id)
+        // SM -> Supervisor Store
+        // DRG -> Drug Registration (name_id exists but no name with that id)
+        // Other names that don't exist are handled below...
+        if let "HIS" | "DRG" | "SM" = &data.code[..] {
+            return Ok(PullTranslateResult::Ignored(
+                "System names not implemented for store translation".to_string(),
+            ));
+        }
+
+        if data.name_id.is_empty() {
+            return Ok(PullTranslateResult::Ignored(
+                "Store has no name".to_string(),
+            ));
+        }
+
+        // Check the name_link exists before attempting upsert — if the name was not integrated
+        // (e.g. ignored or not synced), the FK constraint would cause a costly savepoint rollback
+        // in PostgreSQL for every affected store record.
+        if NameLinkRowRepository::new(connection)
+            .find_one_by_id(&data.name_id)?
+            .is_none()
+        {
+            return Ok(PullTranslateResult::Ignored(format!(
+                "Name link not found for name_id {} linked to store_id {} ({})",
+                data.name_id, data.id, data.code
+            )));
+        }
+
+        let store_mode = match data.store_mode {
+            LegacyStoreMode::Store => StoreMode::Store,
+            LegacyStoreMode::Dispensary => StoreMode::Dispensary,
+        };
+
+        // The lean store row is upserted first so the row exists; the logo
+        // upsert is a plain UPDATE on the same row (id, logo) and would fail
+        // if it ran on its own against a brand-new store. Ordering here is
+        // load-bearing.
+        let store_row = StoreRow {
+            id: data.id.clone(),
+            name_id: data.name_id,
+            code: data.code,
+            site_id: data.site_id,
+            store_mode,
+            created_date: data.created_date,
+            is_disabled: data.is_disabled,
+        };
+        let logo_row = StoreLogoRow {
+            id: data.id,
+            logo: data.logo,
+        };
+
+        Ok(PullTranslateResult::IntegrationOperations(vec![
+            IntegrationOperation::upsert(store_row),
+            IntegrationOperation::upsert(logo_row),
+        ]))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use repository::{
+        mock::{MockData, MockDataInserts},
+        test_db::setup_all_with_data,
+        NameLinkRow, NameRow,
+    };
+
+    #[actix_rt::test]
+    async fn test_store_translation() {
+        use crate::sync::test::test_data::store as test_data;
+        let translator = StoreTranslation {};
+
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_store_translation",
+            MockDataInserts::none(),
+            MockData {
+                names: vec![NameRow {
+                    id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
+                    name: "General".to_string(),
+                    code: "GEN".to_string(),
+                    ..Default::default()
+                }],
+                name_links: vec![NameLinkRow {
+                    id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
+                    name_id: "1FB32324AF8049248D929CFB35F255BA".to_string(),
+                }],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        for record in test_data::test_pull_upsert_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
+            let translation_result = translator
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
+                .unwrap();
+
+            assert_eq!(translation_result, record.translated_record);
+        }
+    }
+}

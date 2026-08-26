@@ -1,0 +1,219 @@
+use crate::{DateFilter, DatetimeFilter, EqualFilter, Sort, StringFilter};
+
+pub mod requisition;
+pub mod requisition_row;
+
+pub use self::requisition::*;
+pub use self::requisition_row::*;
+
+#[derive(Clone, Debug, PartialEq, Default)]
+pub struct RequisitionFilter {
+    pub id: Option<EqualFilter<String>>,
+    pub user_id: Option<EqualFilter<String>>,
+    pub requisition_number: Option<EqualFilter<i64>>,
+    pub r#type: Option<EqualFilter<RequisitionType>>,
+    pub status: Option<EqualFilter<RequisitionStatus>>,
+    pub created_datetime: Option<DatetimeFilter>,
+    pub sent_datetime: Option<DatetimeFilter>,
+    pub finalised_datetime: Option<DatetimeFilter>,
+    pub expected_delivery_date: Option<DateFilter>,
+    pub name_id: Option<EqualFilter<String>>,
+    pub name: Option<StringFilter>,
+    pub colour: Option<EqualFilter<String>>,
+    pub their_reference: Option<StringFilter>,
+    pub comment: Option<StringFilter>,
+    pub store_id: Option<EqualFilter<String>>,
+    pub linked_requisition_id: Option<EqualFilter<String>>,
+    pub order_type: Option<EqualFilter<String>>,
+    pub a_shipment_has_been_created: Option<bool>,
+    pub period_id: Option<EqualFilter<String>>,
+    pub elmis_code: Option<EqualFilter<String>>,
+    pub program_id: Option<EqualFilter<String>>,
+    pub is_emergency: Option<bool>,
+    pub automatically_created: Option<bool>,
+    pub is_program_requisition: Option<bool>,
+    pub has_outstanding_lines: Option<bool>,
+}
+
+#[derive(PartialEq, Debug)]
+pub enum RequisitionSortField {
+    RequisitionNumber,
+    Type,
+    Status,
+    Comment,
+    OtherPartyName,
+    SentDatetime,
+    CreatedDatetime,
+    FinalisedDatetime,
+    ExpectedDeliveryDate,
+    TheirReference,
+    OrderType,
+    ProgramName,
+    PeriodStartDate,
+}
+
+pub type RequisitionSort = Sort<RequisitionSortField>;
+
+impl RequisitionFilter {
+    pub fn new() -> RequisitionFilter {
+        Self::default()
+    }
+
+    pub fn id(mut self, filter: EqualFilter<String>) -> Self {
+        self.id = Some(filter);
+        self
+    }
+
+    pub fn user_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.user_id = Some(filter);
+        self
+    }
+
+    pub fn name(mut self, filter: StringFilter) -> Self {
+        self.name = Some(filter);
+        self
+    }
+
+    pub fn status(mut self, filter: EqualFilter<RequisitionStatus>) -> Self {
+        self.status = Some(filter);
+        self
+    }
+
+    pub fn comment(mut self, filter: StringFilter) -> Self {
+        self.comment = Some(filter);
+        self
+    }
+
+    pub fn requisition_number(mut self, filter: EqualFilter<i64>) -> Self {
+        self.requisition_number = Some(filter);
+        self
+    }
+
+    pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.store_id = Some(filter);
+        self
+    }
+
+    pub fn r#type(mut self, filter: EqualFilter<RequisitionType>) -> Self {
+        self.r#type = Some(filter);
+        self
+    }
+
+    pub fn linked_requisition_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.linked_requisition_id = Some(filter);
+        self
+    }
+
+    pub fn created_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.created_datetime = Some(filter);
+        self
+    }
+
+    pub fn sent_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.sent_datetime = Some(filter);
+        self
+    }
+
+    pub fn finalised_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.finalised_datetime = Some(filter);
+        self
+    }
+
+    pub fn expected_delivery_date(mut self, filter: DateFilter) -> Self {
+        self.expected_delivery_date = Some(filter);
+        self
+    }
+
+    pub fn name_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.name_id = Some(filter);
+        self
+    }
+
+    pub fn colour(mut self, filter: EqualFilter<String>) -> Self {
+        self.colour = Some(filter);
+        self
+    }
+
+    pub fn their_reference(mut self, filter: StringFilter) -> Self {
+        self.their_reference = Some(filter);
+        self
+    }
+
+    pub fn by_id(id: &str) -> RequisitionFilter {
+        RequisitionFilter::new().id(EqualFilter::equal_to(id.to_string()))
+    }
+
+    pub fn by_linked_requisition_id(id: &str) -> RequisitionFilter {
+        RequisitionFilter::new().linked_requisition_id(EqualFilter::equal_to(id.to_string()))
+    }
+
+    pub fn order_type(mut self, filter: EqualFilter<String>) -> Self {
+        self.order_type = Some(filter);
+        self
+    }
+
+    pub fn a_shipment_has_been_created(mut self, filter: bool) -> Self {
+        self.a_shipment_has_been_created = Some(filter);
+        self
+    }
+
+    pub fn period_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.period_id = Some(filter);
+        self
+    }
+
+    pub fn elmis_code(mut self, filter: EqualFilter<String>) -> Self {
+        self.elmis_code = Some(filter);
+        self
+    }
+
+    pub fn program_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.program_id = Some(filter);
+        self
+    }
+
+    pub fn is_emergency(mut self, filter: bool) -> Self {
+        self.is_emergency = Some(filter);
+        self
+    }
+
+    pub fn automatically_created(mut self, filter: bool) -> Self {
+        self.automatically_created = Some(filter);
+        self
+    }
+
+    pub fn is_program_requisition(mut self, filter: bool) -> Self {
+        self.is_program_requisition = Some(filter);
+        self
+    }
+
+    pub fn has_outstanding_lines(mut self, filter: bool) -> Self {
+        self.has_outstanding_lines = Some(filter);
+        self
+    }
+}
+
+impl RequisitionStatus {
+    pub fn equal_to(&self) -> EqualFilter<Self> {
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            ..Default::default()
+        }
+    }
+
+    pub fn not_equal_to(&self) -> EqualFilter<Self> {
+        EqualFilter {
+            not_equal_to: Some(self.clone()),
+            ..Default::default()
+        }
+    }
+}
+
+impl RequisitionType {
+    pub fn equal_to(&self) -> EqualFilter<Self> {
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            ..Default::default()
+        }
+    }
+}

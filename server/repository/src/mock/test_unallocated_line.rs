@@ -1,0 +1,121 @@
+use chrono::NaiveDate;
+
+use crate::{InvoiceLineRow, InvoiceLineType, InvoiceRow, InvoiceStatus, InvoiceType};
+
+use super::MockData;
+
+pub fn mock_test_unallocated_line() -> MockData {
+    let mut result = MockData::default();
+    result
+        .invoices
+        .push(mock_new_invoice_with_unallocated_line());
+    result
+        .invoices
+        .push(mock_new_invoice_with_unallocated_line2());
+    result.invoices.push(mock_allocated_invoice());
+    result.invoice_lines.push(mock_unallocated_line());
+    result.invoice_lines.push(mock_unallocated_line2());
+    result
+}
+
+pub fn mock_new_invoice_with_unallocated_line() -> InvoiceRow {
+    InvoiceRow {
+        id: "unallocated_line_new_invoice".to_string(),
+        name_id: "name_store_a".to_string(),
+        store_id: "store_c".to_string(),
+        invoice_number: 1,
+        r#type: InvoiceType::OutboundShipment,
+        status: InvoiceStatus::New,
+        created_datetime: NaiveDate::from_ymd_opt(1970, 1, 5)
+            .unwrap()
+            .and_hms_milli_opt(15, 30, 0, 0)
+            .unwrap(),
+        ..Default::default()
+    }
+}
+
+pub fn mock_unallocated_line() -> InvoiceLineRow {
+    InvoiceLineRow {
+        id: "unallocated_line_new_invoice_line_1".to_string(),
+        invoice_id: "unallocated_line_new_invoice".to_string(),
+        item_id: "item_a".to_string(),
+        item_name: "Item A".to_string(),
+        item_code: "item_a_code".to_string(),
+        stock_line_id: None,
+        location_id: None,
+        batch: None,
+        expiry_date: None,
+        pack_size: 1.0,
+        cost_price_per_pack: 0.0,
+        sell_price_per_pack: 0.0,
+        total_before_tax: 0.0,
+        total_after_tax: 0.0,
+        tax_percentage: None,
+        r#type: InvoiceLineType::UnallocatedStock,
+        number_of_packs: 1.0,
+        ..Default::default()
+    }
+}
+
+// Used to test successfull insert where another invoice has row with the item id in unallocated line
+// to make sure filtering for `UnallocatedLineForItemAlreadyExistsInInvoice` is done for invoice (not globally)
+pub fn mock_new_invoice_with_unallocated_line2() -> InvoiceRow {
+    InvoiceRow {
+        id: "unallocated_line_new_invoice2".to_string(),
+        name_id: "name_store_a".to_string(),
+        store_id: "store_a".to_string(),
+        invoice_number: 2,
+        r#type: InvoiceType::OutboundShipment,
+        status: InvoiceStatus::New,
+        created_datetime: NaiveDate::from_ymd_opt(1970, 1, 5)
+            .unwrap()
+            .and_hms_milli_opt(15, 30, 0, 0)
+            .unwrap(),
+        ..Default::default()
+    }
+}
+
+pub fn mock_unallocated_line2() -> InvoiceLineRow {
+    InvoiceLineRow {
+        id: "unallocated_line_new_invoice2_line_1".to_string(),
+        invoice_id: "unallocated_line_new_invoice2".to_string(),
+        item_id: "item_b".to_string(),
+        item_name: "Item B".to_string(),
+        item_code: "item_b_code".to_string(),
+        stock_line_id: None,
+        location_id: None,
+        batch: None,
+        expiry_date: None,
+        pack_size: 1.0,
+        cost_price_per_pack: 0.0,
+        sell_price_per_pack: 0.0,
+        total_before_tax: 0.0,
+        total_after_tax: 0.0,
+        tax_percentage: None,
+        r#type: InvoiceLineType::UnallocatedStock,
+        number_of_packs: 1.0,
+        ..Default::default()
+    }
+}
+
+pub fn mock_allocated_invoice() -> InvoiceRow {
+    InvoiceRow {
+        id: "unallocated_line_allocated_invoice".to_string(),
+        name_id: "name_store_a".to_string(),
+        store_id: "store_a".to_string(),
+        invoice_number: 1,
+        r#type: InvoiceType::OutboundShipment,
+        status: InvoiceStatus::Allocated,
+        created_datetime: NaiveDate::from_ymd_opt(1970, 1, 5)
+            .unwrap()
+            .and_hms_milli_opt(15, 30, 0, 0)
+            .unwrap(),
+        allocated_datetime: Some(
+            NaiveDate::from_ymd_opt(1970, 1, 5)
+                .unwrap()
+                .and_hms_milli_opt(15, 30, 0, 0)
+                .unwrap(),
+        ),
+        ..Default::default()
+    }
+}

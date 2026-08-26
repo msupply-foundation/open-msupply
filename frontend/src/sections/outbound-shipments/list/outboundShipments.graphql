@@ -70,9 +70,13 @@ mutation insertOutboundShipment(
   }
 }
 
-# Bulk delete from the list (OMS-REG-DIST-01.21). Per-row server enforcement: each id's
-# response is DeleteResponse or a typed error; the UI pre-checks deletability
-# (SHIPPED+ disables the action) so an error here is a race.
+# Bulk delete from the list (OMS-REG-DIST-01.23/.24). Submitted for any
+# selection — the client does not pre-screen deletability (issue #1134). Each
+# id's response is a DeleteResponse or a typed error, and the batch is ATOMIC:
+# the server runs it in one transaction with continue_on_error defaulting to
+# false, so the first refusal rolls everything back and these per-row results
+# come back describing what WOULD have happened. Each failed row's
+# error.description is the reason shown.
 mutation deleteOutboundShipments($storeId: String!, $ids: [String!]) {
   batchOutboundShipment(
     storeId: $storeId

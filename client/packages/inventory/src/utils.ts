@@ -1,0 +1,57 @@
+import {
+  Formatter,
+  LocaleKey,
+  StocktakeNodeStatus,
+  TypedTFunction,
+} from '@openmsupply-client/common';
+import { StocktakeRowFragment } from './Stocktake/api';
+
+export const stocktakeStatuses = [
+  StocktakeNodeStatus.New,
+  StocktakeNodeStatus.Finalised,
+];
+
+const stocktakeStatusToLocaleKey: Record<StocktakeNodeStatus, LocaleKey> = {
+  [StocktakeNodeStatus.New]: 'status.new',
+  [StocktakeNodeStatus.Finalised]: 'status.finalised',
+};
+
+export const getStatusTranslation = (status: StocktakeNodeStatus) => {
+  return stocktakeStatusToLocaleKey[status];
+};
+
+export const getNextStocktakeStatus = (
+  currentStatus: StocktakeNodeStatus
+): StocktakeNodeStatus | null => {
+  const idx = stocktakeStatuses.findIndex(status => currentStatus === status);
+  const nextStatus = stocktakeStatuses[idx + 1];
+  return nextStatus ?? null;
+};
+
+export const canDeleteStocktake = (row: StocktakeRowFragment): boolean =>
+  row.status === StocktakeNodeStatus.New && !row.isLocked;
+
+export const isStocktakeDisabled = (row: StocktakeRowFragment): boolean =>
+  row.status !== StocktakeNodeStatus.New || row.isLocked;
+
+export const stocktakesToCsv = (
+  invoices: StocktakeRowFragment[],
+  t: TypedTFunction<LocaleKey>
+) => {
+  const fields: string[] = [
+    t('label.number'),
+    t('label.status'),
+    t('heading.description'),
+    t('label.created'),
+    t('label.comment'),
+  ];
+
+  const data = invoices.map(node => [
+    node.stocktakeNumber,
+    node.status,
+    node.description,
+    Formatter.csvDateTimeString(node.createdDatetime),
+    node.comment,
+  ]);
+  return Formatter.csv({ fields, data });
+};
