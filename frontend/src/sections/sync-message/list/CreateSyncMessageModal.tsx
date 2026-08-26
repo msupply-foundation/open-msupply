@@ -1,6 +1,7 @@
 import { createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { generateUUID } from '@/uuid';
+import { StoreSearch } from '@/domain/store';
 import { graphqlFetch } from '@/api/graphql';
 import { t } from '@/intl';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
@@ -25,7 +26,7 @@ import {
   type SyncMessageForm,
 } from './syncMessageCreate';
 import { authorableTypeLabel } from './syncMessageLabels';
-import { StoreSearch } from './StoreSearch';
+
 
 /*
  * S2 — the create-message modal (spec/sync-message/ui-surface.md S2): author a
