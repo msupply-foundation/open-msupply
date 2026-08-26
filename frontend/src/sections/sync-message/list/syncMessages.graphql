@@ -93,19 +93,3 @@ mutation InsertSyncMessage($storeId: String!, $input: InsertSyncMessageInput!) {
   }
 }
 
-# The destination picker's options (contract.md § contract surface — consumed
-# reads): every store the SERVER holds, searched on code-or-name, ordered by
-# name, excluding nothing — so the active store is itself offerable
-# (OMS-REG-MNG-05.10/.14).
-query SyncMessageStores($filter: StoreFilterInput, $page: PaginationInput) {
-  stores(filter: $filter, sort: [{ key: name }], page: $page) {
-    ... on StoreConnector {
-      totalCount
-      nodes {
-        id
-        code
-        storeName
-      }
-    }
-  }
-}

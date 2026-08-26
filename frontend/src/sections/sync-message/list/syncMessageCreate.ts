@@ -1,9 +1,8 @@
 import type { GraphqlResult } from '@/api/graphql';
+import type { StoreOption } from '@/domain/store';
 import type {
   InsertSyncMessageResult,
   InsertSyncMessageVariables,
-  SyncMessageStoresResult,
-  SyncMessageStoresVariables,
 } from './syncMessages.generated';
 
 /*
@@ -16,8 +15,13 @@ import type {
  * New, no failure reason — so nothing below ever names those.
  */
 
-/** One option of the destination picker (the `stores` read's node). */
-export type StoreOption = SyncMessageStoresResult['stores']['nodes'][number];
+/*
+ * The destination is the shared Store lookup's node (`src/domain/store`) — the
+ * picker became a domain module once a second vertical needed it, so this
+ * vertical holds no store type, store query or store filter of its own.
+ * Re-exported so the form type below reads in one place.
+ */
+export type { StoreOption };
 
 /** The insert input exactly as GraphQL expects it (kdd/type-safety). */
 export type InsertInput = InsertSyncMessageVariables['input'];
@@ -95,18 +99,6 @@ export const buildInsertInput = (
   body: buildBody(form),
   type: form.type,
 });
-
-/**
- * The destination picker's server filter: every store the server holds,
- * searched on code-or-name, excluding nothing — so the active store is itself
- * offerable (OMS-REG-MNG-05.10/.14). An empty search sends no filter at all
- * rather than `{ like: '' }`, which the server would treat as a real
- * substring.
- */
-export const storeSearchFilter = (
-  search: string
-): NonNullable<SyncMessageStoresVariables['filter']> =>
-  search ? { codeOrName: { like: search } } : {};
 
 /**
  * What a save attempt produced (OMS-REG-MNG-05.12/.15).

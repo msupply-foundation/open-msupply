@@ -6,7 +6,6 @@ import {
   buildInsertInput,
   createOutcome,
   kindTakesArtefacts,
-  storeSearchFilter,
   type StoreOption,
   type SyncMessageForm,
 } from './syncMessageCreate';
@@ -14,8 +13,8 @@ import {
 // Anchors: spec/sync-message/cases/OMS-REG-MNG-05.
 //   .9  — New message opens the create modal with Type preset to the only
 //         authorable kind, Support upload
-//   .10 — the destination picker offers every store on the server by code and
-//         name, searchable on either, and does not exclude the active store
+//   .10 — the destination picker's filter now lives with the shared Store
+//         lookup (src/domain/store/storeResource.test.ts)
 //   .11 — ticking Logs / Database rewrites the read-only Body preview to state
 //         exactly the artefacts ticked; the Body is never author-typed
 //   .12 — saving creates the message; From = the active store, Status New, no
@@ -27,9 +26,11 @@ import {
 // (rules.md § creating a message; contract.md § creating a message.)
 
 const store = (id: string): StoreOption => ({
+  __typename: 'StoreNode',
   id,
   code: `S-${id}`,
   storeName: `Store ${id}`,
+  siteId: 1,
 });
 
 const form = (over: Partial<SyncMessageForm> = {}): SyncMessageForm => ({
@@ -52,21 +53,6 @@ describe('OMS-REG-MNG-05.9 — the create form opens on the one authorable kind'
 
   it('takes artefacts, so the two checkboxes are live', () => {
     expect(kindTakesArtefacts('SUPPORT_UPLOAD')).toBe(true);
-  });
-});
-
-describe('OMS-REG-MNG-05.10 — the destination picker', () => {
-  it('searches on code OR name, in one operator', () => {
-    expect(storeSearchFilter('tam')).toEqual({ codeOrName: { like: 'tam' } });
-  });
-
-  it('sends NO filter for an empty search — never an empty `like`, which the server would treat as a real substring', () => {
-    expect(storeSearchFilter('')).toEqual({});
-  });
-
-  it('excludes nothing, so the active store is itself offerable', () => {
-    // The filter carries no id exclusion of any kind (.14 depends on it).
-    expect(storeSearchFilter('tam')).not.toHaveProperty('id');
   });
 });
 

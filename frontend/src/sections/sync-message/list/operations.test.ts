@@ -30,11 +30,12 @@ const documents = Object.entries(operations).filter(
 const documentText = documents.map(([, document]) => document.query).join('\n');
 
 describe('OMS-REG-MNG-05.25/.26/.27 — nothing can be edited, retried or deleted', () => {
-  it('carries exactly four operations — three reads and one write', () => {
+  it('carries exactly three operations — two reads and one write', () => {
+    // The store lookup's read moved to the shared domain module
+    // (src/domain/store) when a second vertical needed the same picker.
     expect(documents.map(([name]) => name).sort()).toEqual([
       'InsertSyncMessage',
       'SyncMessageFiles',
-      'SyncMessageStores',
       'SyncMessages',
     ]);
   });
