@@ -14,6 +14,12 @@ export interface TabDef {
   value: string;
   label: string;
   /**
+   * Disable the tab (Kobalte removes it from the roving tabindex and marks it
+   * aria-disabled) — e.g. the initialisation mode chooser locks its tabs while
+   * a submit is in flight, keeping the strip visible rather than hiding it.
+   */
+  disabled?: boolean;
+  /**
    * Override the auto `tab-<value>` test id (locale-stable e2e hook,
    * e2e/TESTIDS.md). Use when a strip already has a contracted id scheme of
    * its own — e.g. the location picker's `location-fullness-*` filter.
@@ -136,6 +142,7 @@ export const TabList = (props: {
         {tab => (
           <KTabs.Trigger
             value={tab.value}
+            disabled={tab.disabled}
             class={styles.trigger}
             // Custom id when the strip has its own contracted scheme; otherwise
             // tab-<value> per e2e/TESTIDS.md (value lowercased, spaces → '-').
@@ -164,7 +171,16 @@ export const TabList = (props: {
   );
 };
 
-export const TabPanel = (props: { value: string; children: JSX.Element }) => {
+export const TabPanel = (props: {
+  value: string;
+  /**
+   * Extra class for the panel box — e.g. the initialisation chooser, whose
+   * strip sits inline in a form column and needs its own gap to the fields
+   * below rather than the surrounding page frame's.
+   */
+  class?: string;
+  children: JSX.Element;
+}) => {
   const context = KTabs.useTabsContext();
   return (
     // aria-labelledby is passed explicitly: Kobalte fills its trigger-id map
@@ -175,7 +191,7 @@ export const TabPanel = (props: { value: string; children: JSX.Element }) => {
     <KTabs.Content
       value={props.value}
       aria-labelledby={context.generateTriggerId(props.value)}
-      class={styles.panel}
+      class={props.class ? `${styles.panel} ${props.class}` : styles.panel}
     >
       {props.children}
     </KTabs.Content>

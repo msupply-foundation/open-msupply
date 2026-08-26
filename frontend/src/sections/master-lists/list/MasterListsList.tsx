@@ -19,6 +19,7 @@ import {
 import { remToPx } from '@/ui/utils/rem';
 import { createTableConfig } from '@/api/createTableConfig';
 import { useUrlQueryState } from '@/list/urlQueryState';
+import { initialPageSize, rememberPageSize } from '@/list/pageSize';
 import {
   MasterLists,
   type MasterListsResult,
@@ -47,8 +48,10 @@ type SortKey = 'name';
 const MasterListsList: Component = () => {
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
-  const { query, setQuery } =
-    useUrlQueryState<MasterListsListState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<MasterListsListState>({
+    ...DEFAULT_STATE,
+    first: initialPageSize(),
+  });
   const tableConfig = createTableConfig({ tableId: 'master-lists' });
 
   const variables = createMemo<MasterListsVariables>(() => ({
@@ -183,7 +186,10 @@ const MasterListsList: Component = () => {
           pageSize: query().first,
           total: totalCount(),
           onOffsetChange: offset => setQuery({ ...query(), offset }),
-          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+          onPageSizeChange: first => {
+            rememberPageSize(first);
+            setQuery({ ...query(), first, offset: 0 });
+          },
         }}
       />
     </Page>

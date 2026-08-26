@@ -976,7 +976,6 @@
   "label.period": "Periodo",
   "label.phone": "Teléfono",
   "label.picked": "Recogido",
-  "label.placeholder": "Marcador de posición",
   "label.prescriber": "Prescriptor",
   "label.prescription-date": "Fecha de Prescripción",
   "label.previous-encounters": "Encuentros Anteriores",
@@ -1824,8 +1823,8 @@
   "title.stock-on-hand": "Inventario disponible",
   "tools": "Herramientas",
   "tooltip.import-fridge-tag": "Importa archivos de registro de Berlinger Fridge-tag y Q-tag. Se creará un sensor, si es necesario, para cada archivo de registro importado.",
-  "warning.cannot-create-placeholder-packs": "Hay un total de {{allocatedQuantity}} paquetes disponibles. No se pueden asignar los {{requestedQuantity}} paquetes en su totalidad.",
-  "warning.cannot-create-placeholder-units": "Hay un total de {{allocatedQuantity}} unidades disponibles. No se pueden asignar las {{requestedQuantity}} unidades en su totalidad.",
+  "warning.cannot-create-placeholder-packs": "Hay un total de {{allocatedQuantity}} paquetes disponibles para asignación automática.",
+  "warning.cannot-create-placeholder-units": "Hay un total de {{allocatedQuantity}} unidades disponibles para asignación automática.",
   "warning.caps-lock": "Advertencia: Bloq Mayús está activado",
   "warning.field-not-parsed": "{{field}} no analizado",
   "warning.nothing-to-supply": "¡No queda nada por suministrar!"

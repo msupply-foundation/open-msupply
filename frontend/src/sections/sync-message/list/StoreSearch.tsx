@@ -16,7 +16,7 @@ import { storeSearchFilter, type StoreOption } from './syncMessageCreate';
  * a thin binding: it supplies the `stores` fetcher and the option row, and the
  * library component owns the combobox, the paging loop and the deferred first
  * fetch. It excludes nothing, so the active store is itself offerable
- * (OMS-REG-MNG-04.10/.14).
+ * (OMS-REG-MNG-05.10/.14).
  */
 
 const PAGE_SIZE = 30;

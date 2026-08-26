@@ -81,7 +81,7 @@ const Body = (props: DeleteLinesActionProps & { onClose: () => void }) => {
     const outcome = await runBatchStocktakeLines(props.storeId, {
       delete: props.selectedIds().map(id => ({ id })),
     });
-    if (!outcome) return props.onClose();
+    if (!outcome) return setPhase('confirm'); // handled globally
     props.onCommit(outcome.commit);
     // Clean delete: close — the rows are already gone behind the dialog.
     if (outcome.errors.size === 0) return props.onClose();

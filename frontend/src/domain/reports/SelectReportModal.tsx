@@ -1,8 +1,11 @@
 import { createResource, createSignal, Show, type Component } from 'solid-js';
-import { t } from '../../intl';
+import { gated } from '../../api/gated';
+import { t, type LocaleKey } from '../../intl';
 import { Dialog } from '../../ui/elements/feedback/Dialog';
 import { createFocusTarget } from '../../ui/utils/createFocusTarget';
 import { Alert } from '../../ui/elements/feedback/Alert';
+import { ErrorDetails } from '../../ui/elements/feedback/ErrorDetails';
+import { Stack } from '../../ui/layout/Stack/Stack';
 import { Button } from '../../ui/elements/buttons/Button';
 import { Combobox } from '../../ui/elements/selectors/Combobox';
 import { Spinner } from '../../ui/elements/feedback/Spinner';
@@ -66,14 +69,14 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
   const picker = createFocusTarget();
 
   // The context's reports, fetched once when the dialog opens (the component is
-  // mounted only while open). Read non-suspending via `.latest` so the dialog
-  // shows its own spinner rather than tripping an outer Suspense boundary
+  // mounted only while open). `gated` read so the dialog shows its own spinner
+  // rather than tripping an outer Suspense boundary
   // (kdd/solid-reactivity-pitfalls).
   const [reports] = createResource(
     () => props.context,
     context => listReportsByContext(context, props.extraFilter)
   );
-  const options = () => reports.latest ?? [];
+  const options = () => gated(reports) ?? [];
 
   const [selected, setSelected] = createSignal<Report | null>(null);
   // 'idle' → the pick/format row; 'generating' → blocking spinner + disabled
@@ -81,6 +84,17 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
   const [phase, setPhase] = createSignal<'idle' | 'generating' | 'error'>(
     'idle'
   );
+  // The banner's headline key plus the underlying fault behind it — the
+  // server's own description, the failing data query's errors, or the
+  // platform's delivery message — shown in a disclosure
+  // (ui-standards/controls § action feedback: the user is the only route by
+  // which this gets reported). A fault with no description of its own shows the
+  // headline alone.
+  const [error, setError] = createSignal<{ key: LocaleKey; detail?: string }>();
+  const fail = (key: LocaleKey, detail?: string): void => {
+    setError({ key, detail });
+    setPhase('error');
+  };
   // When the picked report has an argument schema, we hold the chosen format
   // while the ArgumentsModal (S3) collects filters, then resume generation.
   const [pendingFormat, setPendingFormat] = createSignal<PrintFormat | null>(
@@ -89,8 +103,12 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
 
   // Deliver a generated file: fetch the handle, then print (HTML) or download
   // (Excel/PDF). fetchReportFile never throws — an error resolves to the inline
-  // banner (spec/reports S5). A dataError from generation likewise surfaces
-  // inline; a `failed` result means the global modal already showed the fault,
+  // banner (spec/reports S5). Every generation fault surfaces there too, typed
+  // (`dataError`) or not (`error` — e.g. a PDF render on a server with no
+  // Chrome binary): the dialog stays open with the message, because the screen
+  // behind it is healthy and the global modal's Reload/Dashboard would only
+  // re-run the same failure or lose the user's place (AC-G6). A `failed`
+  // result is a request that never completed — already on the global modal —
   // so we just drop back to idle.
   // The format carries the user's INTENT (HTML = print, Excel and PDF = keep)
   // and delivery forks on it; each arm's platform difference belongs to the
@@ -101,8 +119,13 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
     format: PrintFormat
   ): Promise<void> => {
     if (result.kind === 'dataError') {
-      setPhase('error');
-      return;
+      return fail(
+        'error.failed-to-generate-report',
+        JSON.stringify(result.errors, null, 2)
+      );
+    }
+    if (result.kind === 'error') {
+      return fail('error.failed-to-generate-report', result.message);
     }
     if (result.kind === 'failed') {
       setPhase('idle');
@@ -110,8 +133,7 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
     }
     const file = await fetchReportFile(result.fileId);
     if (file.kind !== 'success') {
-      setPhase('error');
-      return;
+      return fail('error.failed-to-generate-report', file.message);
     }
     // Print: system print dialog on the web, the OS print service on Android.
     // Export/download: the user picks the destination (browser download on
@@ -121,8 +143,14 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
         ? await printBlob(file.blob, file.filename)
         : await saveBlob(file.blob, file.filename);
     if (!delivered.ok) {
-      setPhase('error');
-      return;
+      // Print and save report their own platform message; `messages.cannot-
+      // save-file` is the keep intent's headline, printing keeps its own.
+      return fail(
+        format === 'HTML'
+          ? 'messages.error-printing-report'
+          : 'messages.cannot-save-file',
+        delivered.message
+      );
     }
     props.onClose();
   };
@@ -243,10 +271,24 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
               disabled={busy()}
             />
           </Show>
-          <Show when={phase() === 'error'}>
-            <Alert severity="error">
-              {t('messages.error-printing-report')}
-            </Alert>
+          {/* The fault stays here, at the control the user clicked, with the
+              dialog open and the actions live to retry (spec/reports S5). */}
+          <Show when={phase() === 'error' ? error() : undefined}>
+            {shown => (
+              <Alert severity="error">
+                <Stack gap="sm">
+                  <span>{t(shown().key)}</span>
+                  <Show when={shown().detail}>
+                    {detail => (
+                      <ErrorDetails
+                        detail={detail()}
+                        summaryLabel={t('label.click-to-view')}
+                      />
+                    )}
+                  </Show>
+                </Stack>
+              </Alert>
+            )}
           </Show>
           <Show when={busy()}>
             <Spinner center />

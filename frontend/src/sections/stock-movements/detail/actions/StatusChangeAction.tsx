@@ -7,6 +7,7 @@ import { Alert } from '@/ui/elements/feedback/Alert';
 import { CancelButton, OkButton } from '@/ui/elements/buttons/StandardButtons';
 import { ArrowRightIcon, InfoIcon } from '@/ui/icons';
 import {
+  advanceLabel,
   blockedByZeroLines,
   nextStatuses,
   statusLabel,
@@ -24,13 +25,13 @@ export interface StatusChangeActionProps {
 
 // The status-advance action (spec/stock-movements/ui-surface.md S2 § status
 // footer; the customer-returns StatusChangeAction shape): the footer's
-// "Confirm ‹status›" split button offering the forward statuses (rules
+// advance split button offering the forward statuses (rules
 // § status lifecycle — Confirmed / Finalised, skip allowed, never backward),
 // a confirm → working → error dialog, and the ZERO-LINE info dialog (rules
 // § status changes and the zero-line gate — ANY status change is blocked
 // with a notice while the movement has no lines; the button stays
 // active-and-explaining rather than dead-ending greyed-out, D39).
-// OMS-REG-SMV-09 .4/.6 (unit-anchored in stockMovementStatus.test.ts);
+// OMS-REG-SMV-10 .4/.6 (unit-anchored in stockMovementStatus.test.ts);
 // .17/.23/.24 own the server-rejection outcomes end-to-end.
 //
 // NO success phase: a successful advance CLOSES the dialog — closure is the
@@ -83,15 +84,11 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
             icon={<ArrowRightIcon />}
             options={targets().map(status => ({
               value: status,
-              label: t('button.save-and-confirm-status', {
-                status: statusLabel(status),
-              }),
+              label: advanceLabel(status),
             }))}
             value={next()}
             onAction={openConfirm}
-            menuLabel={t('button.save-and-confirm-status', {
-              status: statusLabel(next()),
-            })}
+            menuLabel={advanceLabel(next())}
             testId="status-change-button"
           />
         )}
@@ -138,9 +135,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
                     data-testid="confirmation-modal-ok"
                     onClick={() => void run()}
                   >
-                    {t('button.save-and-confirm-status', {
-                      status: statusLabel(pending() ?? 'CONFIRMED'),
-                    })}
+                    {advanceLabel(pending() ?? 'CONFIRMED')}
                   </Button>
                 </>
               }
@@ -154,7 +149,7 @@ export const StatusChangeAction: Component<StatusChangeActionProps> = props => {
       </Show>
 
       {/* The zero-line gate's explainer (rules § status changes and the
-          zero-line gate; OMS-REG-SMV-09.4) — info only; adding a line lifts
+          zero-line gate; OMS-REG-SMV-10.4) — info only; adding a line lifts
           the block. Mounted only while open. */}
       <Show when={noLinesBlocked()}>
         <Dialog

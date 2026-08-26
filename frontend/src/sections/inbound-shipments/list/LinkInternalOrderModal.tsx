@@ -1,5 +1,6 @@
 import { createSignal, Show, type Component } from 'solid-js';
 import { t } from '../../../intl';
+import { initialPageSize, rememberPageSize } from '../../../list/pageSize';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Button } from '../../../ui/elements/buttons/Button';
@@ -7,6 +8,7 @@ import { CancelButton } from '../../../ui/elements/buttons/StandardButtons';
 import { Text } from '../../../ui/elements/typography/Text';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
 import {
+  CommentHeader,
   getCellDefinition,
   getNumberCell,
 } from '../../../ui/elements/table/tableHelpers';
@@ -25,8 +27,6 @@ import type { LinkInternalOrderRowFragment } from '../detail/inboundShipmentLook
 //  - clicking a row → onLink(that order's id) (create linked),
 //  - Next          → onNext()                 (create unlinked),
 //  - Cancel        → onClose()                (abort — nothing created).
-
-const PAGE_SIZE = 20;
 
 export interface LinkInternalOrderModalProps {
   open: boolean;
@@ -48,7 +48,7 @@ export const LinkInternalOrderModal: Component<
   // Client-side pagination over the fetched orders (the parent hands in the
   // full set; a supplier normally has few, but a busy one can have many).
   const [offset, setOffset] = createSignal(0);
-  const [pageSize, setPageSize] = createSignal(PAGE_SIZE);
+  const [pageSize, setPageSize] = createSignal(initialPageSize());
   const page = () => props.orders.slice(offset(), offset() + pageSize());
 
   const columns = (): Column<LinkInternalOrderRowFragment, never>[] => [
@@ -83,7 +83,7 @@ export const LinkInternalOrderModal: Component<
     },
     {
       c: { key: 'comment' },
-      header: () => t('label.comment'),
+      header: () => <CommentHeader />,
       ...getCellDefinition('comment'),
     },
   ];
@@ -143,6 +143,7 @@ export const LinkInternalOrderModal: Component<
           total: props.orders.length,
           onOffsetChange: setOffset,
           onPageSizeChange: size => {
+            rememberPageSize(size);
             setPageSize(size);
             setOffset(0);
           },

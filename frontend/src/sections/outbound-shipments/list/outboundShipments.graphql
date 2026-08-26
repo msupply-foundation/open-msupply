@@ -1,15 +1,30 @@
 # Outbound shipments list view (spec/outbound-shipments S1). Filter / sort /
 # pagination are the GraphQL input types so URL state maps straight onto them
-# (kdd/type-safety). The type filter is pinned to OUTBOUND_SHIPMENT by the view;
-# the server forces the store scope and excludes cancellation reversals
-# (contract.md § the list).
+# (kdd/type-safety). The server forces the store scope and excludes cancellation
+# reversals (contract.md § the list).
+#
+# The top-level `type` argument does BOTH jobs, so it is the only type pin here.
+# It selects the PERMISSION — the server authorises this read against
+# OutboundShipmentQuery alone because it is named; omitted, it falls back to a
+# deprecated combined resource demanding all six invoice query permissions at
+# once. It also OVERWRITES `filter.type` server-side, so a `filter.type` sent
+# alongside is dead weight (spec/navigation/contract.md § wire traps). A literal,
+# not a variable: this query serves one screen pinned to one type, so no caller
+# can forget it — and forgetting it would now widen the rows, not just the
+# permission.
 query outboundShipments(
   $storeId: String!
   $filter: InvoiceFilterInput
   $sort: [InvoiceSortInput!]
   $page: PaginationInput
 ) {
-  invoices(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {
+  invoices(
+    storeId: $storeId
+    filter: $filter
+    sort: $sort
+    page: $page
+    type: [OUTBOUND_SHIPMENT]
+  ) {
     ... on InvoiceConnector {
       __typename
       totalCount

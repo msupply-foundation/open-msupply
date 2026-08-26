@@ -6,7 +6,7 @@
 # insert is a plain TOP-LEVEL mutation with no central gate at all
 # (contract.md ⚠️ wire trap — reach and visibility). `storeId` on the reads is
 # authorisation only: it never scopes the result, so the register is
-# server-wide (OMS-REG-MNG-04.2).
+# server-wide (OMS-REG-MNG-05.2).
 
 fragment SyncMessageRow on SyncMessageNode {
   id
@@ -96,7 +96,7 @@ mutation InsertSyncMessage($storeId: String!, $input: InsertSyncMessageInput!) {
 # The destination picker's options (contract.md § contract surface — consumed
 # reads): every store the SERVER holds, searched on code-or-name, ordered by
 # name, excluding nothing — so the active store is itself offerable
-# (OMS-REG-MNG-04.10/.14).
+# (OMS-REG-MNG-05.10/.14).
 query SyncMessageStores($filter: StoreFilterInput, $page: PaginationInput) {
   stores(filter: $filter, sort: [{ key: name }], page: $page) {
     ... on StoreConnector {

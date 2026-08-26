@@ -24,7 +24,14 @@
  * server/service/src/plugin/mod.rs — deviating breaks install or cache-busting:
  *   - entry_point = the dist file whose name starts with the plugin code;
  *   - files starting with "main" or containing "LICENSE" are skipped;
- *   - id = `frontend_{code}_{version with dots as underscores}`;
+ *   - id = `frontend_{code}_{host_runtime}_{version with dots as underscores}`
+ *     — the runtime is in there because one plugin ships a bundle per host and
+ *     the two can share a version, and install is a blind upsert, so an id of
+ *     code+version alone would make the second bundle silently overwrite the
+ *     first on the primary key. It is also what the file route is keyed on now
+ *     that a server keeps every compatible version of a code;
+ *   - host_runtime = the SDK's HOST_RUNTIME, which says this bundle is for THIS
+ *     host: a server offers it only to a client declaring the same runtime;
  *   - hash = sha256 over the files sorted by name, name bytes then content
  *     bytes, hex — the server computes this at bind time and the client appends
  *     it as `?v=`.
@@ -41,6 +48,7 @@ import {
 } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { build } from 'vite';
+import { HOST_RUNTIME } from '../src/plugin-sdk/apiVersion.ts';
 import { pluginViteConfig } from '../vite/pluginBuild.ts';
 import { backendPluginViteConfig } from '../vite/backendPluginBuild.ts';
 
@@ -252,14 +260,37 @@ const packPlugin = plugin => {
   }
 
   const versionId = plugin.version.replaceAll('.', '_');
+  const runtimeId = HOST_RUNTIME.replaceAll('.', '_');
   /* eslint-disable camelcase -- the Rust FrontendPluginRow's field names. */
   const row = {
-    id: `frontend_${plugin.code}_${versionId}`,
+    id: `frontend_${plugin.code}_${runtimeId}_${versionId}`,
     code: plugin.code,
     version: plugin.version,
     entry_point: entryPoint,
     types: plugin.types,
     files,
+    /*
+     * The second compatibility axis: which HOST can load this bundle, as
+     * against `version`'s which SERVER can serve it. Taken from the SDK the
+     * plugin was just built against rather than from its manifest, so it is
+     * true by construction and cannot drift from what the module declares at
+     * runtime.
+     *
+     * A server matches it for exact equality against the runtime the asking
+     * client declares, and never orders it — a bundle exporting Solid
+     * components cannot be rendered by a React host whichever of the two is
+     * newer, and both hosts run under one server version for the whole
+     * rollout, so nothing on the version line can separate them.
+     *
+     * The plugin-API integer is NOT packed alongside it. That gate is
+     * module-side and stays there (spec/plugins/sdk-contract.md § versioning):
+     * `examples/api_too_new` declares 999 in its MODULE and is refused by the
+     * loader after the bundle evaluates, which is the gate that fixture exists
+     * to exercise.
+     *
+     * Not overridable per plugin, deliberately.
+     */
+    host_runtime: HOST_RUNTIME,
   };
   /* eslint-enable camelcase */
 
@@ -268,6 +299,10 @@ const packPlugin = plugin => {
     hasher.update(Buffer.from(file.file_name, 'utf8'));
     hasher.update(Buffer.from(file.file_content_base64, 'base64'));
   }
+  // `path` here describes the STATIC dist layout this script writes
+  // (`{code}/{entry}`), which is why it no longer matches what a server
+  // returns: a server holds several bundles per code and addresses them by row
+  // id, whereas one dist directory holds exactly one build of each.
   const meta = {
     code: plugin.code,
     path: `${plugin.code}/${entryPoint}`,

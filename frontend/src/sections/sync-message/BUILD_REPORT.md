@@ -28,7 +28,7 @@ Shared wiring (additive only): the route entry `'manage/sync-message': syncMessa
 
 `pnpm codegen` was run against `http://localhost:8890/graphql` (the central probe server; `:8000` was down). It rewrote all 109 generated files and produced **zero** diff outside this vertical — the live schema still matches every other vertical's pinned output, which also re-confirms C7 for the sync-message types.
 
-## Anchor coverage — `spec/sync-message/cases/OMS-REG-MNG-04`
+## Anchor coverage — `spec/sync-message/cases/OMS-REG-MNG-05`
 
 | Behaviour         | Covered by                                                    | Notes                                                                                                                                                                        |
 | ----------------- | ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -76,7 +76,7 @@ Driven through the real screen on a dev server bound to the central probe server
 
 ## Divergences honoured
 
-- **D97** — the register offers **Status only**. No kind filter (the server has no `type` filter field and sending one fails the whole query at validation) and no created-date range (declared but never mapped). Both are dismissed explicitly in `list/listFilters.tsx` with the reason. D97's second half is implemented as the stale-read notice: a failed read keeps the previous page **and** says the list did not refresh.
+- **D120** — the register offers **Status only**. No kind filter (the server has no `type` filter field and sending one fails the whole query at validation) and no created-date range (declared but never mapped). Both are dismissed explicitly in `list/listFilters.tsx` with the reason. D120's second half is implemented as the stale-read notice: a failed read keeps the previous page **and** says the list did not refresh.
 - **D67** — every never-editable field is a `LabelledValue`, never a disabled input: the derived Body preview in S2 and every field of S3.
 - **D22 / D21** — a rejected create keeps the modal open with the draft intact and states the failure inline; a successful one closes, closure being the confirmation.
 - **D94 / navigation** — the reach gate is a _capability_-class gate (hide, don't refuse), matching `navConfig`'s `centralAdmin`; the route guard redirects rather than exposing the screen.
@@ -103,7 +103,7 @@ Every role the surface names resolved to a ✅ or 🔶 registry row — nothing 
 
 - **No `e2e/TESTIDS.md` section for this vertical.** The screen-specific ids placed here follow the file's conventions but are not yet registered: `new-sync-message-button`, `create-sync-message-modal`, `sync-message-modal`, `sync-message-save-error`, `sync-message-error`, `sync-messages-stale`, `sync-message-body`, `sync-message-from` / `-to` / `-status` / `-type`, `sync-message-logs-checkbox`, `sync-message-database-checkbox`, `sync-message-file-row`, `sync-message-file-error`, `store-search-input`; the filter chip is the shared `filter-input-status` → `filter-option-new|inProgress|processed|error`, and the column ids are `fromStore`, `toStore`, `createdDatetime`, `status`, `type`, `errorMessage`. TESTIDS.md is an IMPLEMENTING input, so it was left for the e2e-authoring pass to extend.
 - **A filter-definition test could not be colocated.** Importing `list/listFilters.tsx` into vitest fails at module load — `FilterBar` pulls in `@kobalte/core`, which calls a client-only API against Solid's server build, and the workspace's `solid` project externalises `node_modules` so its `browser` condition does not reach it. `.6` is therefore asserted at the list-state level instead. Inlining `@kobalte/core` in `vitest.workspace.ts` would fix it for every vertical; that is shared test infrastructure, so it was not changed here.
-- **Two upstream backend issues are still unfiled** (carried from the spec stage, restated because this build is the thing they constrain): `SyncMessageFilterInput` has no `type` field, and its declared `createdDatetime` is never mapped. Both are the substance of D97 and both should become `open-msupply` issues; until then the register cannot offer either filter.
+- **Two upstream backend issues are still unfiled** (carried from the spec stage, restated because this build is the thing they constrain): `SyncMessageFilterInput` has no `type` field, and its declared `createdDatetime` is never mapped. Both are the substance of D120 and both should become `open-msupply` issues; until then the register cannot offer either filter.
 - **The status sort's order is backend-dependent** (Postgres enum-declaration order with `IN_PROGRESS` last; SQLite lexicographic). Nothing here needs to change — the column is presented as a grouping only — but any e2e test that asserts a status-sorted sequence must know which backend it runs on.
 
 ## Probe residue

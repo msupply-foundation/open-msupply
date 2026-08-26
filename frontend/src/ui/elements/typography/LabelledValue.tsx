@@ -23,6 +23,15 @@ export interface LabelledValueProps extends JSX.HTMLAttributes<HTMLDivElement> {
    */
   size?: 'default' | 'small';
   /**
+   * Label placement. `stacked` (default) puts the label above the value — the
+   * card / detail-panel field. `inline` sets them on ONE line, label then
+   * value, baseline-aligned: for a lone read-only fact in a dense chrome row (a
+   * dialog's header context row), where the stack costs a second line of header
+   * for one word. Inline is for a SHORT value — a long one wraps under a label
+   * it no longer sits beside; stack those.
+   */
+  layout?: 'stacked' | 'inline';
+  /**
    * The value, shown below the label in body text. Pass any node (text, a
    * chip, etc.).
    */
@@ -48,6 +57,7 @@ export const LabelledValue = (props: LabelledValueProps) => {
     'children',
     'variant',
     'size',
+    'layout',
     'class',
   ]);
   return (
@@ -55,6 +65,7 @@ export const LabelledValue = (props: LabelledValueProps) => {
       class={local.class ? `${styles.field} ${local.class}` : styles.field}
       data-variant={local.variant ?? 'card'}
       data-size={local.size ?? 'default'}
+      data-layout={local.layout ?? 'stacked'}
       {...rest}
     >
       <span class={styles.label}>{local.label}</span>

@@ -3,6 +3,7 @@ import {
   FilterTextInput,
   FilterNumberInput,
   FilterSelect,
+  FilterMultiSelect,
   FilterDateRange,
   constructFilters,
   type Filter,
@@ -73,25 +74,26 @@ const FILTERS: Filter<RequisitionFilter>[] =
         />
       ),
     },
-    // Status — single-select equals (New / Finalised — the response side's
-    // whole vocabulary; DRAFT and SENT are request-side only and never
+    // Status — multi-select "any of" (D110; New / Finalised — the response
+    // side's whole vocabulary; DRAFT and SENT are request-side only and never
     // offered, unlike the reference's stray column filter, captured as-is in
-    // the spec). '' clears (→ null so the chip stays).
+    // the spec). Ticks accumulate into status.equalAny; none → null so the
+    // chip stays.
     status: {
       label: () => t('label.status'),
       render: props => (
-        <FilterSelect
+        <FilterMultiSelect
           label={t('label.status')}
           testId={props.testId}
-          value={props.filter().status?.equalTo ?? ''}
+          placeholder={t('label.any')}
+          values={props.filter().status?.equalAny ?? []}
           options={[
-            { value: '', label: t('label.any') },
             { value: 'NEW', label: t('label.new') },
             { value: 'FINALISED', label: t('label.finalised') },
           ]}
-          onChange={value =>
+          onChange={values =>
             props.setPartialFilter({
-              status: value ? { equalTo: value } : null,
+              status: values.length ? { equalAny: values } : null,
             })
           }
         />

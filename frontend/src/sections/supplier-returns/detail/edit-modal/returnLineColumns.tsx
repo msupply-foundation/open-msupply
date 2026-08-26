@@ -51,24 +51,41 @@ const targetFor = (targets: KeyedFocusTargets, key: string): FocusTarget => ({
   cancel: targets.cancel,
 });
 
+// Whose rows are these? The from-shipment host's drafts span SEVERAL items, so
+// its grids must name each row's item; the per-item host's rows are all the one
+// item the dialog title already names, so they don't — repeating it per row
+// says nothing and costs the width the quantity field needs (issue #1002). The
+// same rule every other per-item line editor follows (stocktake, inbound).
+export type ItemIdentity = { showItem: boolean };
+
+const itemColumns = ({
+  showItem,
+}: ItemIdentity): Column<DraftReturnLine, never>[] =>
+  showItem
+    ? [
+        {
+          c: { key: 'itemCode' },
+          header: () => t('label.code'),
+          ...getCellDefinition('itemCode'),
+        },
+        {
+          c: { key: 'itemName' },
+          header: () => t('label.name'),
+          ...getCellDefinition('itemName', {
+            headerPosition: 'primary',
+            wrapLines: 2,
+          }),
+        },
+      ]
+    : [];
+
 // ---- Step 1: the quantity grid (ui-surface S4 § step 1) ----
 export const quantityColumns = (
   update: UpdateLine,
-  quantityFields: KeyedFocusTargets
+  quantityFields: KeyedFocusTargets,
+  identity: ItemIdentity
 ): Column<DraftReturnLine, never>[] => [
-  {
-    c: { key: 'itemCode' },
-    header: () => t('label.code'),
-    ...getCellDefinition('itemCode'),
-  },
-  {
-    c: { key: 'itemName' },
-    header: () => t('label.name'),
-    ...getCellDefinition('itemName', {
-      headerPosition: 'primary',
-      wrapLines: 2,
-    }),
-  },
+  ...itemColumns(identity),
   {
     c: { key: 'batch' },
     header: () => t('label.batch'),
@@ -152,21 +169,10 @@ export const quantityColumns = (
 // rules). ----
 export const reasonColumns = (
   update: UpdateLine,
-  reasonFields: KeyedFocusTargets
+  reasonFields: KeyedFocusTargets,
+  identity: ItemIdentity
 ): Column<DraftReturnLine, never>[] => [
-  {
-    c: { key: 'itemCode' },
-    header: () => t('label.code'),
-    ...getCellDefinition('itemCode'),
-  },
-  {
-    c: { key: 'itemName' },
-    header: () => t('label.name'),
-    ...getCellDefinition('itemName', {
-      headerPosition: 'primary',
-      wrapLines: 2,
-    }),
-  },
+  ...itemColumns(identity),
   {
     c: { key: 'batch' },
     header: () => t('label.batch'),
@@ -189,6 +195,11 @@ export const reasonColumns = (
           kind="return"
           label={t('label.reason')}
           hideLabel
+          // The compact height every other control in this grid uses. Without
+          // it the picker takes the default 40px against their 36px and stands
+          // a step taller than the cells either side of it — the failure
+          // ReasonSelect's own `size` prop doc names.
+          size="small"
           focusTarget={targetFor(reasonFields, line.id)}
           value={line.reasonId ?? undefined}
           onChange={reason => update(line.id, 'reasonId', reason?.id ?? null)}

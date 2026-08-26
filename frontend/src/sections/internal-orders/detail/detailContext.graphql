@@ -18,6 +18,9 @@
 #   a program order) → the extended consumption columns + the Area-AMC header.
 # - preferences.canCreateInternalOrderFromARequisition → the side panel's
 #   "Created from requisition" related-document row (AC-RD2, display-only).
+# - storePreferences.keepRequisitionLinesWithZeroRequestedQuantityOnFinalised →
+#   the empty-send guard: where the store keeps zero-requested lines, an
+#   all-zero order (with ≥1 line) is sendable (rules › Lifecycle, D20).
 query internalOrderDetailContext($storeId: String!) {
   preferences(storeId: $storeId) {
     selectDestinationStoreForAnInternalOrder
@@ -36,5 +39,6 @@ query internalOrderDetailContext($storeId: String!) {
     # Paired with the above, gates the Indicators tab's customer-breakdown panel
     # (AC-I10).
     extraFieldsInRequisition
+    keepRequisitionLinesWithZeroRequestedQuantityOnFinalised
   }
 }

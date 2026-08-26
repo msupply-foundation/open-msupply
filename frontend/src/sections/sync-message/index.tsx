@@ -14,7 +14,7 @@ const SyncMessagesList = lazy(() => import('./list/SyncMessagesList'));
 
 /*
  * Central-server + server-admin gate (rules § reach and visibility,
- * OMS-REG-MNG-04.1), mirroring the help-documents management screen: the nav
+ * OMS-REG-MNG-05.1), mirroring the help-documents management screen: the nav
  * entry is already withheld elsewhere (navConfig's `centralAdmin` capability),
  * and this layout route blocks direct-URL entry so the screen is unreachable
  * either way. It renders under StoreGuardLayout, which withholds its children

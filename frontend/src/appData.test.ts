@@ -1,8 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   getLastLoginUsername,
+  getPreferredPageSize,
   getPreviousStoreId,
   recordLastLoginUsername,
+  recordPreferredPageSize,
   recordPreviousStoreId,
 } from './appData';
 
@@ -55,6 +57,35 @@ describe('lastLoginUsername (spec/startup rules § authentication)', () => {
 
     recordPreviousStoreId('u2', 's2');
     expect(getLastLoginUsername()).toBe('alice');
+  });
+});
+
+describe('preferredPageSize (conventions § View state; issue #680)', () => {
+  it('is undefined until the user has chosen a page size', () => {
+    expect(getPreferredPageSize('u1')).toBeUndefined();
+  });
+
+  it('round-trips the recorded size, replacing rather than accumulating', () => {
+    recordPreferredPageSize('u1', 50);
+    expect(getPreferredPageSize('u1')).toBe(50);
+    recordPreferredPageSize('u1', 100);
+    expect(getPreferredPageSize('u1')).toBe(100);
+  });
+
+  // The point of keying by user: a shared device must not leak one user's
+  // choice to another (same shape as previousStoreIdByUserId).
+  it('keeps each user’s choice separate on a shared device', () => {
+    recordPreferredPageSize('u1', 50);
+    recordPreferredPageSize('u2', 10);
+    expect(getPreferredPageSize('u1')).toBe(50);
+    expect(getPreferredPageSize('u2')).toBe(10);
+  });
+
+  it('shares the app-data blob without clobbering other entries', () => {
+    recordPreviousStoreId('u1', 's1');
+    recordPreferredPageSize('u1', 50);
+    expect(getPreviousStoreId('u1')).toBe('s1');
+    expect(getPreferredPageSize('u1')).toBe(50);
   });
 });
 

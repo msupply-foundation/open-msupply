@@ -1,11 +1,7 @@
-import {
-  createResource,
-  createSignal,
-  Show,
-  type Component,
-} from 'solid-js';
+import { createResource, createSignal, Show, type Component } from 'solid-js';
 import { t } from '@/intl';
 import { graphqlFetch } from '@/api/graphql';
+import { gated } from '@/api/gated';
 import { generateUUID } from '@/uuid';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
@@ -13,6 +9,7 @@ import { Button } from '@/ui/elements/buttons/Button';
 import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
 import { DataTable, type Column } from '@/ui/elements/table/DataTable';
 import {
+  CommentHeader,
   getCellDefinition,
   getNumberCell,
 } from '@/ui/elements/table/tableHelpers';
@@ -39,8 +36,7 @@ import { statusLabel } from '../requisitionStatus';
 // reference's toast is deliberately not copied), with its copy
 // (`error.failed-to-create-internal-order`).
 
-type PickerRow =
-  CreateOrderRequisitionsResult['requisitions']['nodes'][number];
+type PickerRow = CreateOrderRequisitionsResult['requisitions']['nodes'][number];
 
 export interface CreateOrderActionProps {
   storeId: string;
@@ -79,13 +75,8 @@ export const CreateOrderAction: Component<CreateOrderActionProps> = props => {
       return result.data.requisitions.nodes;
     }
   );
-  // Full .state gate — `.latest` alone suspends on the first pending read,
-  // and this resource first fetches mid-interaction inside the open step-2
-  // dialog (kdd/solid-reactivity-pitfalls › no remounts on interaction).
-  const rows = (): PickerRow[] =>
-    data.state === 'ready' || data.state === 'refreshing'
-      ? (data.latest ?? [])
-      : [];
+  // This resource first fetches mid-interaction inside the open step-2 dialog.
+  const rows = (): PickerRow[] => gated(data) ?? [];
 
   const onSupplier = (picked: NameOption | null) => {
     if (!picked) return;
@@ -161,7 +152,7 @@ export const CreateOrderAction: Component<CreateOrderActionProps> = props => {
     },
     {
       c: { key: 'comment' },
-      header: () => t('label.comment'),
+      header: () => <CommentHeader />,
       ...getCellDefinition('comment'),
     },
   ];
@@ -226,15 +217,23 @@ export const CreateOrderAction: Component<CreateOrderActionProps> = props => {
         }
         actions={<CancelButton onClick={close} />}
       >
-        <DataTable
-          columns={columns()}
-          rows={rows()}
-          rowKey={r => r.id}
-          loading={data.loading}
-          showFullScreen={false}
-          emptyMessage={t('error.no-requisitions-to-create-order-from')}
-          onRowClick={row => void pick(row)}
-        />
+        {/* Render the table only while the modal is open. The Dialog stays
+            mounted (open driven reactively — see the note above), but a
+            native <dialog> keeps its closed children in the DOM, so an
+            always-rendered table would leak its transient test hooks (a
+            second `header-status`, `table-row`, …) onto the list behind it,
+            colliding with the list's own (TESTIDS § uniqueness). */}
+        <Show when={step() === 'pick'}>
+          <DataTable
+            columns={columns()}
+            rows={rows()}
+            rowKey={r => r.id}
+            loading={data.loading}
+            showFullScreen={false}
+            emptyMessage={t('error.no-requisitions-to-create-order-from')}
+            onRowClick={row => void pick(row)}
+          />
+        </Show>
       </Dialog>
     </>
   );

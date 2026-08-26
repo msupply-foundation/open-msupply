@@ -1,6 +1,6 @@
 import { t } from '../../../intl';
 import {
-  FilterSelect,
+  FilterMultiSelect,
   FilterTextInput,
   FilterDateRange,
   constructFilters,
@@ -27,7 +27,7 @@ export type PrescriptionFilter = NonNullable<PrescriptionsVariables['filter']>;
 // restricts nothing (the permissive default, D7's precedent) — with CANCELLED
 // always offered (it is a real list state regardless of the preference).
 const statusOptions = (): {
-  value: PrescriptionStatus | '';
+  value: PrescriptionStatus;
   label: string;
 }[] => {
   const allowed = prescriptionPreferences().invoiceStatusOptions;
@@ -35,13 +35,10 @@ const statusOptions = (): {
   const offered = lifecycle.filter(
     status => allowed.length === 0 || allowed.includes(status)
   );
-  return [
-    { value: '', label: t('label.any') },
-    ...[...offered, 'CANCELLED' as const].map(status => ({
-      value: status,
-      label: t(STATUS_LABEL_KEYS[status]),
-    })),
-  ];
+  return [...offered, 'CANCELLED' as const].map(status => ({
+    value: status,
+    label: t(STATUS_LABEL_KEYS[status]),
+  }));
 };
 
 const FILTERS: Filter<PrescriptionFilter>[] =
@@ -79,19 +76,25 @@ const FILTERS: Filter<PrescriptionFilter>[] =
         />
       ),
     },
+    // Status — multi-select "any of" (D110): ticks accumulate into
+    // status.equalAny; none → null so the chip stays. NARROW, never assert:
+    // the wire field spans every invoice status (a stale URL could carry
+    // any), so keep only the prescription vocabulary.
     status: {
       label: () => t('label.status'),
       render: props => (
-        <FilterSelect
+        <FilterMultiSelect
           label={t('label.status')}
           testId={props.testId}
-          value={
-            (props.filter().status?.equalTo ?? '') as PrescriptionStatus | ''
-          }
+          placeholder={t('label.any')}
+          values={(props.filter().status?.equalAny ?? []).filter(
+            (status): status is PrescriptionStatus =>
+              status in STATUS_LABEL_KEYS
+          )}
           options={statusOptions()}
-          onChange={value =>
+          onChange={values =>
             props.setPartialFilter({
-              status: value ? { equalTo: value } : null,
+              status: values.length ? { equalAny: values } : null,
             })
           }
         />

@@ -9,7 +9,7 @@ import type {
 /*
  * Authoring a support upload (spec/sync-message/rules.md § creating a message;
  * ui-surface S2). Pure form logic, kept out of the modal so the anchor-citing
- * tests exercise it directly (OMS-REG-MNG-04 .9–.15).
+ * tests exercise it directly (OMS-REG-MNG-05 .9–.15).
  *
  * The author supplies a destination store, a kind, and which artefacts to
  * include; the SERVER fixes everything else — sender, created moment, status
@@ -47,7 +47,7 @@ export type SyncMessageForm = {
 };
 
 /** A fresh create form: the only authorable kind preselected, both artefacts
- *  unticked, no destination (OMS-REG-MNG-04.9). */
+ *  unticked, no destination (OMS-REG-MNG-05.9). */
 export const EMPTY_FORM: SyncMessageForm = {
   type: 'SUPPORT_UPLOAD',
   logs: false,
@@ -66,7 +66,7 @@ export const kindTakesArtefacts = (type: AuthorableType): boolean =>
 
 /**
  * The message body, DERIVED from the ticked artefacts and never author-typed
- * (rules § creating a message, OMS-REG-MNG-04.11). The receiving site reads it
+ * (rules § creating a message, OMS-REG-MNG-05.11). The receiving site reads it
  * as JSON and consults exactly two booleans; a missing or non-boolean member
  * counts as false, so both are always stated rather than omitted when
  * unticked — the recorded body then says what was asked for, not merely what
@@ -83,7 +83,7 @@ export const buildBody = (form: SyncMessageForm): string =>
  * The create input. `id` is minted by the CLIENT (the already-exists rejection
  * is a client-collision guard, not something a user can trigger); the
  * destination is omitted entirely when none was picked — accepted and listed,
- * with no site ever acting on it (OMS-REG-MNG-04.13). Nothing excludes the
+ * with no site ever acting on it (OMS-REG-MNG-05.13). Nothing excludes the
  * active store, so a message may be addressed to its own sender (.14).
  */
 export const buildInsertInput = (
@@ -99,7 +99,7 @@ export const buildInsertInput = (
 /**
  * The destination picker's server filter: every store the server holds,
  * searched on code-or-name, excluding nothing — so the active store is itself
- * offerable (OMS-REG-MNG-04.10/.14). An empty search sends no filter at all
+ * offerable (OMS-REG-MNG-05.10/.14). An empty search sends no filter at all
  * rather than `{ like: '' }`, which the server would treat as a real
  * substring.
  */
@@ -109,7 +109,7 @@ export const storeSearchFilter = (
   search ? { codeOrName: { like: search } } : {};
 
 /**
- * What a save attempt produced (OMS-REG-MNG-04.12/.15).
+ * What a save attempt produced (OMS-REG-MNG-05.12/.15).
  *
  * `InsertSyncMessageResponse` is a SINGLE-MEMBER union — its only member is
  * `IdResponse`, and there is no error member at all — so both service

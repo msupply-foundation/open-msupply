@@ -1,6 +1,7 @@
 import { createResource, type Component } from 'solid-js';
 import { t } from '../../../intl';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { DataTable, type Column } from '../../../ui/elements/table/DataTable';
@@ -40,13 +41,9 @@ export const HistoryModal: Component<HistoryModalProps> = props => {
       )
     );
   });
-  // State-gated (never suspends): this resource FIRST-fetches while the
-  // modal is already open over the detail — a suspending read would remount
-  // the page under it (kdd/solid-reactivity-pitfalls § no remounts).
-  const rows = (): HistoryRow[] =>
-    (data.state === 'ready' || data.state === 'refreshing'
-      ? data.latest
-      : undefined) ?? [];
+  // Never suspends: this resource FIRST-fetches while the modal is already
+  // open over the detail — a suspending read would remount the page under it.
+  const rows = (): HistoryRow[] => gated(data) ?? [];
 
   const columns = (): Column<HistoryRow, never>[] => [
     { c: { key: 'itemName' }, header: () => t('report.item-name') },

@@ -11,7 +11,7 @@ import {
   type SyncMessageForm,
 } from './syncMessageCreate';
 
-// Anchors: spec/sync-message/cases/OMS-REG-MNG-04.
+// Anchors: spec/sync-message/cases/OMS-REG-MNG-05.
 //   .9  — New message opens the create modal with Type preset to the only
 //         authorable kind, Support upload
 //   .10 — the destination picker offers every store on the server by code and
@@ -37,7 +37,7 @@ const form = (over: Partial<SyncMessageForm> = {}): SyncMessageForm => ({
   ...over,
 });
 
-describe('OMS-REG-MNG-04.9 — the create form opens on the one authorable kind', () => {
+describe('OMS-REG-MNG-05.9 — the create form opens on the one authorable kind', () => {
   it('offers exactly one kind — the contract admits no other', () => {
     expect(AUTHORABLE_TYPES).toEqual(['SUPPORT_UPLOAD']);
   });
@@ -55,7 +55,7 @@ describe('OMS-REG-MNG-04.9 — the create form opens on the one authorable kind'
   });
 });
 
-describe('OMS-REG-MNG-04.10 — the destination picker', () => {
+describe('OMS-REG-MNG-05.10 — the destination picker', () => {
   it('searches on code OR name, in one operator', () => {
     expect(storeSearchFilter('tam')).toEqual({ codeOrName: { like: 'tam' } });
   });
@@ -70,7 +70,7 @@ describe('OMS-REG-MNG-04.10 — the destination picker', () => {
   });
 });
 
-describe('OMS-REG-MNG-04.11 — the body is derived, never typed', () => {
+describe('OMS-REG-MNG-05.11 — the body is derived, never typed', () => {
   it('states both artefacts as asked for when neither is ticked', () => {
     expect(buildBody(form())).toBe('{"logs":false,"database":false}');
   });
@@ -99,7 +99,7 @@ describe('OMS-REG-MNG-04.11 — the body is derived, never typed', () => {
   });
 });
 
-describe('OMS-REG-MNG-04.12 — what the create sends', () => {
+describe('OMS-REG-MNG-05.12 — what the create sends', () => {
   it('sends the client-minted identity, the destination, the derived body and the kind — and nothing else', () => {
     const input = buildInsertInput(form({ toStore: store('b') }), 'id-1');
     expect(input).toEqual({
@@ -119,14 +119,14 @@ describe('OMS-REG-MNG-04.12 — what the create sends', () => {
   });
 });
 
-describe('OMS-REG-MNG-04.13 — a message with no destination is valid', () => {
+describe('OMS-REG-MNG-05.13 — a message with no destination is valid', () => {
   it('omits toStoreId entirely rather than sending a null', () => {
     const input = buildInsertInput(form(), 'id-1');
     expect(input).not.toHaveProperty('toStoreId');
   });
 });
 
-describe('OMS-REG-MNG-04.14 — a message may be addressed to its own sender', () => {
+describe('OMS-REG-MNG-05.14 — a message may be addressed to its own sender', () => {
   it('sends the picked store whichever store it is — nothing here excludes the active one', () => {
     const active = store('active');
     expect(buildInsertInput(form({ toStore: active }), 'id-1').toStoreId).toBe(
@@ -135,7 +135,7 @@ describe('OMS-REG-MNG-04.14 — a message may be addressed to its own sender', (
   });
 });
 
-describe('OMS-REG-MNG-04.15 — a rejected create keeps the modal open', () => {
+describe('OMS-REG-MNG-05.15 — a rejected create keeps the modal open', () => {
   it('reads a success as created', () => {
     expect(
       createOutcome({
