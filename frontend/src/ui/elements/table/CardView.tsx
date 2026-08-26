@@ -18,6 +18,7 @@ import {
   useAccordionItemExpanded,
 } from '../accordion/Accordion';
 import { t } from '../../../intl';
+import { isKeyboardFocus } from './createRowFocus';
 import { visibleOnCard, type CardGroup } from './columnTypes';
 import {
   cardFieldMaxRem,
@@ -446,7 +447,11 @@ export function CardView<T, G extends string>(props: {
             // built while it was set must drop the affordance when it does.
             tabindex={rowFocus() ? -1 : undefined}
             data-row-focused={rowFocus()?.focused() ? '' : undefined}
-            onFocus={() => rowFocus()?.onFocus()}
+            // Keyboard-arrived focus only, exactly as in table view — a click
+            // on a card must not paint the highlight (see isKeyboardFocus).
+            onFocus={event => {
+              if (isKeyboardFocus(event)) rowFocus()?.onFocus();
+            }}
             onClick={() => props.onRowClick?.(row.original)}
           >
             <td class={styles.cardCell}>

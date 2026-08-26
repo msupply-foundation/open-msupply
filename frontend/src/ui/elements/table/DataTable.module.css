@@ -63,9 +63,18 @@
      around a full-width row reads as a table border. One source of truth
      because a cell that also draws a frozen-block seam has to restate the ring
      alongside it — box-shadow is a single property, so the two cues compose in
-     one declaration or not at all. */
+     one declaration or not at all.
+
+     NEUTRAL, not --primary-main. The brand orange was reported as too vibrant
+     for a transient keyboard position (Mark, PR #1114) — it competes with the
+     status/tone vocabulary the rows already carry, and the row is not a control
+     taking the app's blue focus ring either (blue is the SELECTION tint here,
+     so a blue ring on a row would read as selection). A mid-grey rule states
+     "the keyboard is here" without claiming a meaning; contrast stays well past
+     the 3:1 a focus indicator needs, in both themes. */
   --row-focus-ring:
-    inset 0 2px 0 0 var(--primary-main), inset 0 -2px 0 0 var(--primary-main);
+    inset 0 2px 0 0 var(--text-secondary),
+    inset 0 -2px 0 0 var(--text-secondary);
 }
 
 /* Fills the remaining height between the toolbar and the footer bar, so the
@@ -771,26 +780,34 @@ tr[data-tint='error'] > .selectCell {
    focus state, not a meaning".
 
    TWO channels, because focus and selection are orthogonal states that must
-   both stay readable on the same row: a PRIMARY-tinted background (distinct
-   from striping and from the --secondary-main selection tint), plus an inset
-   ring. The ring is a DIFFERENT PROPERTY, so it never contends with the
-   selection background — a selected row that also holds keyboard focus keeps
-   showing where the keyboard is, which the background alone cannot do, since
-   the selection rules legitimately outrank this one (they carry an extra
-   :not()) and out-specifying them needed either a meaningless :not() or a
-   duplicated attribute. Lives here, before the density block, for the same
-   ascending-specificity reason as the disabled tint above.
+   both stay readable on the same row: the row's own HOVER WASH as the
+   background, plus a neutral inset ring. The ring is a DIFFERENT PROPERTY, so
+   it never contends with the selection background — a selected row that also
+   holds keyboard focus keeps showing where the keyboard is, which the
+   background alone cannot do, since the selection rules legitimately outrank
+   this one (they carry an extra :not()) and out-specifying them needed either a
+   meaningless :not() or a duplicated attribute. Lives here, before the density
+   block, for the same ascending-specificity reason as the disabled tint above.
+
+   The background is the SAME grey the pointer draws, deliberately (Mark, PR
+   #1114): a keyboard position is the keyboard's equivalent of the pointer being
+   somewhere, so it earns the same weight rather than a colour of its own. The
+   opaque --surface-raised base is what the hover wash's own pinned-cell variant
+   uses further up — one declaration covers ordinary and pinned cells here.
+
+   The ring is what the current app lacks, and it is why the two cues are not
+   fully collapsed into one: there, hover and keyboard focus are near-identical
+   washes, so a pointer resting on row 3 while the arrows sit on row 7 shows two
+   rows looking the same, and neither says which one Enter will open. The ring
+   also keeps the state visible on the rows whose own fill outranks the wash —
+   selected, toned, read-only.
 
    Colour is never the only signal: the row is simultaneously the focused
    element. The ring is on the CELLS, not an outline on the <tr>, because a
    focus ring around a full-width row reads as a table border, not as focus. */
 tr[data-row-focused] > .td,
 tr[data-row-focused] > .selectCell {
-  background: color-mix(
-    in srgb,
-    var(--primary-main) 12%,
-    var(--surface-raised)
-  );
+  background: color-mix(in srgb, var(--text-body) 4%, var(--surface-raised));
   box-shadow: var(--row-focus-ring);
 }
 
@@ -842,6 +859,19 @@ tr[data-row-focused]:focus {
 .table:focus-visible {
   outline: 2px solid var(--secondary-main);
   outline-offset: -2px;
+}
+
+/* …but NOT for the seed itself. `:focus-visible` asks whether the last input
+   was a keyboard, and the seed is a `.focus()` the page performs on arrival —
+   so a user who reached the screen BY keyboard (Enter on a row, the command
+   palette) landed on every list with the ring already drawn, on a table they
+   had not chosen to focus (reported on PR #1114: "shows on every page load on
+   every page"). The seed is a starting position, not a focus event the user
+   caused. DataTable clears the flag on the first key or the first focus change,
+   from which point the ring behaves normally — Tab onto a table still shows
+   it, which is the SC 2.4.7 case it exists for. */
+.table[data-focus-seeded]:focus-visible {
+  outline: none;
 }
 
 /* Row density (ui-standards § tables → row heights), keyed off the
@@ -1390,13 +1420,19 @@ tr[data-accent='error'] > :first-child::before {
 /* Card view's half of the keyboard row focus (KB-N1/AC-KB37 — the table-view
    half is the cell background + inset ring further up): the CARD takes the
    ring, since it already sits on its own surface and an inset cell ring would
-   land inside the card's padding instead of around it. Same --primary-main as
-   table view, so the two views read as one indication, and it outranks the
-   selection border above by rule order — a selected card that also holds the
-   keyboard still shows where the keyboard is. */
+   land inside the card's padding instead of around it. The same neutral
+   --text-secondary as table view's ring, so the two views read as one
+   indication, and it outranks the selection border above by rule order — a
+   selected card that also holds the keyboard still shows where the keyboard is.
+
+   A card is already a bordered box, so the cue is that border restated in the
+   focus colour, doubled to 2px by a 1px shadow sitting exactly on it — the
+   same weight as table view's bars. NOT the 2px halo standing off the card
+   that the first build drew: the halo is what read as vibrant (PR #1114),
+   where a thicker edge reads as an edge. */
 .cardRow[data-row-focused] > .cardCell > .card {
-  border-color: var(--primary-main);
-  box-shadow: 0 0 0 2px var(--primary-main);
+  border-color: var(--text-secondary);
+  box-shadow: 0 0 0 1px var(--text-secondary);
 }
 
 /* The <tr> is the focused element, but the ring is drawn on the card inside it

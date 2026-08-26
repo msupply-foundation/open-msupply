@@ -754,10 +754,21 @@ export function DataTable<T, K extends string, G extends string = never>(
    */
   const inDialogSurface = useSurfaceActive() !== undefined;
   let seeded = false;
+  /*
+   * The seed is a starting position, not a focus the user asked for, so it must
+   * not draw the table's focus ring — `:focus-visible` alone cannot tell the
+   * two apart (it reports "keyboard" for a programmatic focus whenever the last
+   * input was a key, which is exactly how a user arrives at the next list).
+   * This flag says "this focus is the seed"; the ring is suppressed while it is
+   * set (DataTable.module.css) and it is dropped below on the first key or the
+   * first focus change, so a later Tab onto the table shows the ring normally.
+   */
+  const [focusSeeded, setFocusSeeded] = createSignal(false);
   const seedKeyboard = () => {
     const active = document.activeElement;
     if (isTextEntry(active)) return;
     if (active?.closest('[data-datatable]')) return;
+    setFocusSeeded(true);
     tableEl?.focus({ preventScroll: true });
   };
   createEffect(() => {
@@ -1469,11 +1480,18 @@ export function DataTable<T, K extends string, G extends string = never>(
                * scroll for the same reason the highlight moves instead.
                */
               on:keydown={event => {
+                // Any key ends the seeded state, matched or not: the user is
+                // driving the table now, so its focus ring is theirs again.
+                setFocusSeeded(false);
                 if (!rowNavigation()) return;
                 if (!rowFocus.handleKey(event, rowKeys())) return;
                 event.preventDefault();
                 event.stopPropagation();
               }}
+              // …as does focus leaving, so a Tab back onto the table shows the
+              // ring: by then this is a focus the user performed.
+              onFocusOut={() => setFocusSeeded(false)}
+              data-focus-seeded={focusSeeded() ? '' : undefined}
             >
               <Show when={viewMode() === 'table'}>
                 <thead>

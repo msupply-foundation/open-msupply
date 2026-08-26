@@ -78,6 +78,30 @@ const originIsRow = (event: KeyboardEvent): boolean => {
   return target === event.currentTarget || target.tagName === 'TR';
 };
 
+/*
+ * Did this focus come from the keyboard?
+ *
+ * Rows are `tabindex=-1`, which makes them focusable by POINTER as well as
+ * programmatically — so a plain click on a row fired its `onFocus` and painted
+ * the highlight for the moment before the click navigated away (reported on PR
+ * #1114: "every row click now focuses the clicked row before navigating on
+ * mouse up"). A pointer already has its own indication, the hover wash under
+ * the cursor; the row highlight means "this is where the arrows are", which a
+ * click does not establish.
+ *
+ * `:focus-visible` is the browser's own keyboard-vs-pointer heuristic, and
+ * asking the element rather than tracking the last input device ourselves keeps
+ * one answer for the row highlight and for the table's own focus ring, which is
+ * styled with the same pseudo-class. Arrow-driven focus passes: the roving
+ * `.focus()` runs from inside a keydown, so the heuristic reports keyboard.
+ */
+export const isKeyboardFocus = (event: FocusEvent): boolean => {
+  const target = event.currentTarget as Element | null;
+  // `matches` is absent on a non-element target (never, in practice, for a row
+  // element — but the cast above is a cast, not a check).
+  return target?.matches?.(':focus-visible') ?? false;
+};
+
 export const createRowFocus = (options: {
   /** Open the row with this key — `Enter` on a focused row (KB-E5). */
   onOpenRow?: (key: string) => void;
