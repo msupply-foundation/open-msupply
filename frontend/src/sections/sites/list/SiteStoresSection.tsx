@@ -1,50 +1,16 @@
 import { For, Show, type JSX } from 'solid-js';
-import { graphqlFetch } from '@/api/graphql';
 import { t } from '@/intl';
 import { FormSection } from '@/ui/layout/Form/FormSection';
 import { Table } from '@/ui/elements/table/Table';
 import { IconButton } from '@/ui/elements/buttons/IconButton';
-import { AsyncCombobox } from '@/ui/elements/selectors/AsyncCombobox';
 import { CloseIcon } from '@/ui/icons';
-import type { Page } from '@/ui/utils/createPaginatedSearch';
-import { StoreSearch } from './sites.generated';
+import { StoreSearch } from '@/domain/store';
 import type { SiteStore } from './siteEdit';
 
 // The editor's Stores section (spec/sites/ui-surface.md S2 § stores): a store
 // lookup over EVERY store on the server, then a static sub-table of the site's
 // assigned stores. Adds and removes are DRAFT ONLY until Save, where they
 // commit in the second write (rules.md § saving a site).
-
-const PAGE_SIZE = 30;
-
-/**
- * One page of the store picker (registry role "Store lookup": every store on
- * the SERVER, searched code-or-name, code emphasised beside the name,
- * excluding ids the caller passes).
- *
- * It deliberately does NOT exclude stores belonging to another site — that is
- * what makes picking one MOVE it (OMS-FUN-SYC-002.32), silently and with no
- * warning that another site is losing it. Captured as-is (rules.md § store
- * assignment); a warning would be new behaviour this build may not invent.
- */
-const storePageFetcher =
-  (excludeIds: () => string[]) =>
-  async (
-    search: string,
-    offset: number
-  ): Promise<Page<SiteStore> | undefined> => {
-    const result = await graphqlFetch(StoreSearch, {
-      search: search === '' ? undefined : search,
-      excludeIds: excludeIds(),
-      first: PAGE_SIZE,
-      offset,
-    });
-    if (result.kind !== 'success') return undefined;
-    return {
-      nodes: result.data.stores.nodes,
-      totalCount: result.data.stores.totalCount,
-    };
-  };
 
 export interface SiteStoresSectionProps {
   /** The draft store list, in display order. */
@@ -84,24 +50,19 @@ export const SiteStoresSection = (
     data-testid="site-stores-section"
   >
     <Show when={props.showPicker}>
-      <AsyncCombobox<SiteStore>
+      <StoreSearch
         label={t('label.store')}
         inputTestId="site-store-search-input"
         disabled={props.disabled}
-        // Only the stores already in this editor's draft are withheld.
-        fetchPage={storePageFetcher(() => props.stores().map(s => s.id))}
-        itemToString={store => store.storeName}
-        itemToValue={store => store.id}
-        renderItem={store => (
-          <>
-            {/* Code emphasised beside the name — <strong> rather than a style,
-                so the screen owns no CSS (src/ui/CLAUDE.md). */}
-            <strong data-testid="item-option-code">{store.code}</strong>{' '}
-            <span data-testid="item-option-name">{store.storeName}</span>
-          </>
-        )}
+        // Only the stores already in this editor's draft are withheld. A store
+        // belonging to ANOTHER site stays offerable — that is what makes
+        // picking one MOVE it (OMS-FUN-SYC-002.32), silently and with no
+        // warning that another site is losing it. Captured as-is (rules.md
+        // § store assignment); a warning would be new behaviour.
+        excludeIds={() => props.stores().map(s => s.id)}
         // Picking one adds it to the list and clears the search, ready for the
-        // next: the picker is never a held selection, so it takes no `value`.
+        // next: the picker is never a held selection, so it passes no
+        // `selected`.
         onSelect={store => {
           if (store) props.onAdd(store);
         }}

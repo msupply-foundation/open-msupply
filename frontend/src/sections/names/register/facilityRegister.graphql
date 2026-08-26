@@ -1,0 +1,85 @@
+# The central server's FACILITY REGISTER — Manage › Stores (spec/names slice 3).
+# The third list over the same `names` entity: `isStore: true` and NOTHING else —
+# no role flag, no `type`, no `isVisible` (contract § the entity and its three
+# lists). `isStore` is evaluated against the name's OWN store row, not the
+# `storeId` argument, so the row set is independent of the active store; the
+# `storeId` still travels because it is the resolver's authorisation subject and
+# it decides what `isCustomer`/`isSupplier` report per row.
+#
+# NamesResponse is a single-member union (NameConnector) with no typed error
+# member — auth/validation failures are transport-level and handled globally in
+# graphqlFetch.
+
+# The register's list read. A NARROWER node selection than the customer/supplier
+# detail: the three flag columns, plus `store` (the editor's preferences subject
+# and the disabled marker) and `properties` (the import template builds its rows
+# from this list read, not from a per-facility read — contract § importing
+# facility properties).
+query facilities(
+  $storeId: String!
+  $filter: NameFilterInput
+  $sort: [NameSortInput!]
+  $page: PaginationInput
+) {
+  names(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {
+    ... on NameConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        code
+        name
+        # Per-active-store relationship flags (Supplier / Customer columns).
+        isSupplier
+        isCustomer
+        # A column on the name row itself (Donor column) — store-independent.
+        isDonor
+        isOnHold
+        # Non-null for every register row (that IS what isStore means); the
+        # store id is the editor's Preferences-tab subject.
+        store {
+          id
+          code
+          isDisabled
+        }
+        # The name-property document, a JSON STRING blob. Read for the import
+        # template's "current values" columns.
+        properties
+      }
+    }
+  }
+}
+
+# The property WRITE — the same `updateNameProperties` the store editor's Save
+# uses, fired ONCE PER ROW by the import (contract § importing facility
+# properties). `properties` replaces the facility's whole document, so the
+# import re-serialises the row's complete merged set.
+#
+# The only typed error is NameNotFound (a RecordNotFound); its bare
+# "Record does not exist" description is verbatim what the review shows as that
+# row's failure reason — there is no import-specific wording. An unmatched
+# facility code is submitted with an EMPTY id and answers the same error, which
+# is why an unknown code is refused at apply time rather than at review.
+# A permission failure (NamePropertiesMutate) never reaches this union — it
+# arrives as a top-level Forbidden GraphQL error.
+mutation updateFacilityProperties(
+  $storeId: String!
+  $id: String!
+  $properties: String!
+) {
+  updateNameProperties(
+    storeId: $storeId
+    input: { id: $id, properties: $properties }
+  ) {
+    ... on NameNode {
+      __typename
+      id
+    }
+    ... on UpdateNamePropertiesError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}

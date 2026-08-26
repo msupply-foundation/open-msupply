@@ -131,11 +131,15 @@ describe('palette destinations', () => {
     });
   });
 
-  it('carries Alt+D for Dashboard and Alt+H for Help', () => {
+  it('carries Alt+D for Home and Alt+H for Help', () => {
     withActions(actions => {
-      const dashboard = actions.find(a => actionName(a) === 'Go to: Dashboard');
+      // Alt+D is keyed on the destination's PATH, which CK-1.7 moved from
+      // 'dashboard' to '' (Home IS the store root). The binding moved with it,
+      // so the shortcut a user's fingers know is unchanged while the row it
+      // names is the renamed one.
+      const home = actions.find(a => actionName(a) === 'Go to: Home');
       const help = actions.find(a => actionName(a) === 'Go to: Help');
-      expect(dashboard?.shortcut).toBe(ALT_D);
+      expect(home?.shortcut).toBe(ALT_D);
       expect(help?.shortcut).toBe(ALT_H);
       // One row each — the defect that comes of registering a destination in
       // both navActions and globalActions.

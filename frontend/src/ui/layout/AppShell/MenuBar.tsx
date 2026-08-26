@@ -305,7 +305,10 @@ const BrandMark = (props: { onActivate?: () => void }) => (
       <button
         type="button"
         class={styles.logoButton}
-        data-testid="nav-home"
+        // `nav-brand`, not `nav-home`: the menu's Home ENTRY owns that id now
+        // (its registry id is 'home'). The two are separate affordances for one
+        // destination, and a test that means the logo must be able to say so.
+        data-testid="nav-brand"
         onClick={() => props.onActivate?.()}
         aria-label={t('label.home')}
       >

@@ -3,7 +3,8 @@ import { localisedDate } from '../../../intl';
 import { toCsv } from '../../../domain/reportFiles';
 import type { StockLineRowFragment } from './stock.generated';
 
-// The stock list → CSV (spec/stock AC-L6). Columns match the list's fields
+// The stock list → CSV (spec/stock OMS-REG-INV-02.8). Columns match the
+// list's fields
 // (spec/stock S1). Headers translated, dates localised, computed units/value
 // columns derived (packs × pack size / cost). Master lists join with "; ";
 // blank supplier renders the fixed "Inventory adjustment" text (list parity).

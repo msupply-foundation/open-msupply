@@ -21,11 +21,11 @@ import { LockIcon } from './ui/icons';
 // - Unexpected error: the condition-mapped error dialog (D109, ui-standards ›
 //   error dialogs). Close dismisses in place — the flow behind released its
 //   busy state, so the action can simply be repeated; the primary
-//   (Retry / Try again) reloads the current URL in place. Go to dashboard is a
+//   (Retry / Try again) reloads the current URL in place. Go to Home is a
 //   quiet tertiary affordance, only once the user is authenticated and
 //   operational (authUser is set): during startup, on the initialisation
-//   screen, and on the login screen there is no dashboard to reach, and
-//   reloading via Dashboard would only wipe entered credentials (issue
+//   screen, and on the login screen there is no Home to reach, and
+//   reloading via Home would only wipe entered credentials (issue
 //   #519.1). An edit failure (a mutation) never offers it — leaving the
 //   screen would discard the entry.
 // - Permission denied (Forbidden): the user is authenticated but lacks the
@@ -101,7 +101,7 @@ const UnexpectedError: Component = () => (
         duringEdit={info().duringEdit}
         onClose={clearUnexpectedError}
         onRetry={() => location.reload()}
-        onDashboard={
+        onHome={
           authUser()
             ? () => (location.href = import.meta.env.BASE_URL)
             : undefined

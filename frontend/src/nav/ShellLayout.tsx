@@ -75,7 +75,7 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   );
 
   // The path relative to the store root, e.g. '/{store}/inventory/stocktakes'
-  // → 'inventory/stocktakes'. The empty (store root) path is the dashboard.
+  // → 'inventory/stocktakes'. The empty (store root) path is Home's own.
   // Four things below read it — the menu highlight, the tab title, the
   // breadcrumb's section glyph and the route gates — which is why the
   // derivation is shared rather than spelled out here: getting it wrong on a
@@ -86,9 +86,9 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   // Sentinel for "no menu item matches this route": only `id` is consumed (the
   // menu highlights by id, and '' matches nothing). labelKey is never rendered
   // for it, so any valid key satisfies the type.
-  const NO_SELECTION: NavLeaf = { id: '', labelKey: 'dashboard', to: '' };
+  const NO_SELECTION: NavLeaf = { id: '', labelKey: 'label.home', to: '' };
   const selected = (): NavLeaf =>
-    findLeafByPath(relativePath() || 'dashboard') ?? NO_SELECTION;
+    findLeafByPath(relativePath()) ?? NO_SELECTION;
 
   // The browser tab names the screen the URL points at (spec/chrome § document
   // title) — the registry's label for the destination, the list entry for a
@@ -100,9 +100,20 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   // breadcrumb through the shell-section context, since the group a screen sits
   // under is the route's business, not the page's (spec/ui-standards › layout,
   // page regions; shellContext › ShellSection). Record screens inherit their
-  // list's section, the store root is the dashboard, and an off-registry path
-  // (the not-found catch-all) simply has none.
-  const sectionIcon = () => sectionIconForPath(relativePath() || 'dashboard');
+  // list's section, the store root is Home's own registry entry, and an
+  // off-registry path (the not-found catch-all) simply has none.
+  const sectionIcon = () => sectionIconForPath(relativePath());
+
+  /*
+   * A destination's absolute URL. Every affordance that reaches one goes
+   * through here, so Home cannot end up with two spellings of a single
+   * address: its store-relative path is empty (navConfig), and the naive
+   * `/{store}/{to}` would give the menu entry a trailing slash the brand mark
+   * does not have — the same screen at two URLs, which is precisely what
+   * moving Home to the root removed (OMS-REG-NAV-01.22).
+   */
+  const storeHref = (to: string) =>
+    to === '' ? `/${params.storeId}` : `/${params.storeId}/${to}`;
 
   // A permission-gated destination stays in the menu, but activating it
   // refuses instead of navigating: the permission-denied dialog opens, naming
@@ -114,7 +125,7 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
       reportPermissionDenied([denied]);
       return;
     }
-    navigate(`/${params.storeId}/${leaf.to}`);
+    navigate(storeHref(leaf.to));
   };
 
   // Nav visibility gates live in src/nav/navGates.ts, shared with the command
@@ -130,13 +141,13 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
 
   // The router is the registry's third surface (spec/navigation § one
   // registry): a capability-gated destination's URL is unreachable — it lands
-  // on the dashboard (D70 generalised; OMS-REG-NAV-01.16) — and a
+  // on Home (D70 generalised; OMS-REG-NAV-01.16) — and a
   // permission-gated one lands there WITH the permission-denied dialog
   // (OMS-REG-NAV-01.20). Sections with their own layout guards (patients,
   // prescriptions, clinicians) keep them; this covers every destination
   // uniformly, placeholder pages included. Renders under StoreGuardLayout, so
   // the gates read a settled store context (no flash of a blocked screen).
-  const access = createMemo(() => routeAccess(relativePath() || 'dashboard'));
+  const access = createMemo(() => routeAccess(relativePath()));
   createEffect(() => {
     const verdict = access();
     if (verdict.kind === 'forbidden')
@@ -225,11 +236,11 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
         lower={menuLower()}
         selected={selected()}
         onNavigate={onNavigate}
-        /* The brand mark goes home — the store root, which IS the dashboard
-           (see relativePath above, where an empty path resolves to it). The
-           conventional job for a logo in app chrome, and the reason it is not
-           wired to the rail toggle instead. */
-        onHome={() => navigate(`/${params.storeId}`)}
+        /* The brand mark goes home — the store root, which IS Home, the same
+           destination the menu's own Home entry routes to (navConfig, path '').
+           The conventional job for a logo in app chrome, and the reason it is
+           not wired to the rail toggle instead. */
+        onHome={() => navigate(storeHref(''))}
         syncStatus={syncIndicator.status()}
         syncing={syncIndicator.syncing()}
         onSyncNow={syncNow}
@@ -297,6 +308,9 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
           // The store's FACILITY record — the row the editor reads and writes.
           // Rides the me/login response's store list (UserStoreNode.nameId).
           nameId={activeStore()?.nameId ?? ''}
+          // On this path the edited store IS the entered one, so the
+          // preferences subject and the authorisation subject coincide.
+          facilityStoreId={params.storeId}
           onClose={() => setStoreEditOpen(false)}
         />
       </Show>

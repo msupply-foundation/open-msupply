@@ -40,6 +40,7 @@ export type {
   SlotPlacement,
   SlotRender,
   SlotContext,
+  SlotStoreMode,
   SlotStorePreferences,
   DashboardAnchor,
   DashboardSlotProps,
