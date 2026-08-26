@@ -106,7 +106,7 @@ const shortcut = (init: ShortcutInit): Shortcut =>
  * order.
  */
 
-/** Go to Dashboard. Always available. — globalActions */
+/** Go to Home (the `dashboard` route). Always available. — globalActions */
 export const ALT_D = shortcut({ alt: true, code: 'KeyD', tier: 'global' });
 /** Help. Always available. — globalActions */
 export const ALT_H = shortcut({ alt: true, code: 'KeyH', tier: 'global' });

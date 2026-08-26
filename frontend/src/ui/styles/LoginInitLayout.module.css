@@ -33,7 +33,11 @@
   flex-direction: column;
   justify-content: flex-end;
   align-items: flex-start;
-  padding: 0 5% 7%; /* original: bottom-left placement via panel padding */
+  /* Bottom-left placement via padding, as in the original. The bottom band is
+     only the version line's offset from the page edge — the copy's clearance
+     is the in-flow version line below it plus its margin (see
+     .versionBarHero). */
+  padding: 0 5% var(--space-4);
   background-image: var(--gradient-primary);
   color: var(--login-hero-text);
 }
@@ -142,8 +146,14 @@
 }
 
 /* The small inline padding keeps both controls' hover/focus boxes clear of the
-   button's edges rather than flush with them. Wraps on a long language name;
-   `.languageAction` keeps the selector at the inline end when it does.
+   button's edges rather than flush with them.
+
+   Grid, not a wrapping flex row (issue #1219): flex collects wrap lines from
+   UNSHRUNK item sizes, so a long pair — French's "Utiliser l'ancienne
+   interface" beside "Français (Djibouti)" — dropped the language selector onto
+   a second row, sitting lower than in other languages. The `1fr auto` columns
+   hold the selector in the end corner in EVERY language; the secondary action
+   wraps its own label inside the 1fr track instead.
 
    Type scale and tone are set HERE, once, because both controls already
    inherit them — the selector's trigger is `font: inherit; color: inherit`
@@ -152,8 +162,8 @@
    the library's small-control size; --text-secondary is the dark grey the
    library already uses for supporting text. */
 .formActions {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr auto;
   align-items: center;
   gap: var(--space-2);
   padding-inline: var(--space-2);
@@ -161,8 +171,11 @@
   color: var(--text-secondary);
 }
 
+/* Explicit column, not auto-placement: off Android the initialisation screen
+   renders no secondary action at all, and the selector must still sit in the
+   end column rather than fall into the empty 1fr track. */
 .languageAction {
-  margin-inline-start: auto;
+  grid-column: 2;
 }
 
 /* The screen's secondary action, shaped like the language selector's trigger
@@ -178,13 +191,13 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
+  justify-self: start; /* hug the label — don't stretch the hover box across the 1fr track */
   padding: var(--space-1) var(--space-2);
   border: none;
   border-radius: var(--radius-sm);
   background: transparent;
   color: inherit; /* the pair's shared tone — see .formActions */
   font: inherit;
-  white-space: nowrap;
   text-decoration: none;
   cursor: pointer;
 }
@@ -226,14 +239,14 @@
 }
 
 /* Success/error notice under the save-log button (issue #519.5), a member of
-   the action group rather than a line of its own: `order` puts it after both
-   controls and the full basis forces it onto its own wrapped row, so the
-   button and the language selector keep sharing the first one. Severity
-   carries via the text colour token — the message itself also says which it
-   is, so colour is never the only signal. */
+   the action group rather than a line of its own: `order` places it after both
+   controls and the full-width span gives it its own grid row, so the button
+   and the language selector keep sharing the first one. Severity carries via
+   the text colour token — the message itself also says which it is, so colour
+   is never the only signal. */
 .actionNotice {
   order: 1;
-  flex-basis: 100%;
+  grid-column: 1 / -1;
   margin: 0;
 }
 
@@ -258,22 +271,19 @@
   font-size: var(--text-xs);
 }
 
-/* Pinned near the bottom of the VIEWPORT rather than flowing after the hero
-   copy, which `justify-content: flex-end` would leave floating one 7% padding
-   band above the page bottom. Fixed, not absolute, so a short viewport whose
-   hero copy overflows can't carry this line off-screen with it; the hero's 7%
-   bottom padding is what keeps the copy clear of it.
-   Both insets are percentages of the page's inline size — and so is the hero's
-   own `padding: 0 5%`, since percentage padding resolves against the
-   CONTAINING BLOCK's inline size (.page), never the element's. So the start
-   inset is the same 5% the copy above is indented by, not half of it. The end
-   inset stops the line at the hero's content edge (the hero ends at 50%, plus
-   its 5% padding) rather than letting a long pair of versions run under the
-   light form panel, where the hero's white would be invisible. */
+/* The hero's LAST flex child, in flow — the hero's `justify-content:
+   flex-end` anchors it to the bottom corner, its 5% inline padding indents it
+   like the copy, and its bottom padding is the line's offset from the page
+   edge. Previously `position: fixed` to the viewport, which overlapped the
+   copy on short viewports (issue #1219): an Android text-scale bump grows the
+   fonts but not the paddings around them, so the copy reached down into the
+   pinned line's band — and the line itself wraps to two rows in the hero's
+   40% column, growing upward into the copy. In flow neither can ever
+   overlap: the copy sits above the line by this margin, and if the hero's
+   content overflows a very short viewport it is the heading that loses its
+   top (flex-end overflows at the start), never this line. */
 .versionBarHero {
-  position: fixed;
-  inset-block-end: var(--space-4); /* 1rem */
-  inset-inline: 5% 55%;
+  margin-block-start: var(--space-6);
 }
 
 /* Compact: the hero doesn't render at all, so the line moves into the panel

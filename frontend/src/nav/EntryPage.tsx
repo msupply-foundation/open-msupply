@@ -57,13 +57,13 @@ export const EntryPage: Component<{ dest?: NavItem }> = props => {
             : t('message.page-not-found')
         }
       >
-        {/* The way out. The store root is the dashboard (App routes). */}
+        {/* The way out. The store root is Home (App routes). */}
         <Show when={params.storeId}>
           <Button
             variant="ghost"
             onClick={() => navigate(`/${params.storeId}`)}
           >
-            {t('error.go-to-dashboard')}
+            {t('error.go-to-home')}
           </Button>
         </Show>
       </EmptyState>

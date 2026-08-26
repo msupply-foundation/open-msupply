@@ -46,7 +46,7 @@ export interface ErrorDialogProps {
   /**
    * The failure interrupted an edit (a mutation): adds the reassurance line
    * that the user's entries are still on the screen behind, and suppresses
-   * the dashboard affordance — leaving the screen would discard the entry.
+   * the Home affordance — leaving the screen would discard the entry.
    */
   duringEdit?: boolean;
   /** Close — dismisses in place, leaving the user exactly where they were. */
@@ -54,12 +54,12 @@ export interface ErrorDialogProps {
   /** The primary fix — Retry (unreachable) / Try again (everything else). */
   onRetry: () => void;
   /**
-   * Go to dashboard — a quiet tertiary affordance at the actions row's
+   * Go to Home — a quiet tertiary affordance at the actions row's
    * inline-start, never a peer button, for when the current page is itself
-   * the source of the error. Omit it where there is no dashboard to reach;
-   * ignored during an edit.
+   * the source of the error. Omit it where there is no Home to reach (the
+   * pre-session screens); ignored during an edit.
    */
-  onDashboard?: () => void;
+  onHome?: () => void;
   /** `data-testid` for the <dialog> element (e2e/TESTIDS.md). */
   testId?: string;
 }
@@ -150,16 +150,17 @@ export const ErrorDialog = (props: ErrorDialogProps) => {
        * role).
        */
       enterConfirms={false}
-      actionsDivider
-      actionsAlign="end"
+      // The testid keeps its `-dashboard` spelling: it is the shared cross-FE
+      // id for this recovery (e2e/TESTIDS.md), and the current app's peer
+      // button answers to it too. The LABEL is what CK-1.7 renamed.
       actionsLead={
-        <Show when={props.onDashboard && !props.duringEdit}>
+        <Show when={props.onHome && !props.duringEdit}>
           <Button
             variant="ghost"
             data-testid="unexpected-error-dashboard"
-            onClick={() => props.onDashboard?.()}
+            onClick={() => props.onHome?.()}
           >
-            {t('button.go-to-dashboard')}
+            {t('button.go-to-home')}
           </Button>
         </Show>
       }

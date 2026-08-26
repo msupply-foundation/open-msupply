@@ -10,6 +10,7 @@ import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { createFocusTarget } from '../../../ui/utils/createFocusTarget';
+import { CancelButton } from '../../../ui/elements/buttons/StandardButtons';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { NameSearch } from '../../../domain/name';
@@ -220,6 +221,14 @@ const Body: Component<CreateInboundShipmentModalProps> = props => {
         // + field + the listbox's 18rem cap + padding, measured live. Sized as
         // the outbound CustomerSearchModal, this picker's twin.
         minBodyHeightRem={27}
+        // Picking a supplier is what confirms this step, so the footer holds
+        // only the way out (ui-standards › dialogs § chrome).
+        actions={
+          <CancelButton
+            data-testid="dialog-button-cancel"
+            onClick={props.onClose}
+          />
+        }
       >
         <Show when={errorMessage()}>
           <Alert severity="error">{errorMessage()}</Alert>

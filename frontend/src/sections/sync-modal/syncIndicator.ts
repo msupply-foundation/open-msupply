@@ -8,8 +8,12 @@ import {
 import { isCentralServer } from '../../api/serverInfo';
 import { storeContext } from '../../store/storeContext';
 import { SYNC_INDICATOR_REFRESH_MS } from '../../config';
-import { localisedDistanceToNow, t, tPlural } from '../../intl';
-import { toSyncOverview, syncFooterStatus } from './syncStatus';
+import { localisedTimeAgo, t, tPlural } from '../../intl';
+import {
+  toSyncOverview,
+  syncFooterStatus,
+  syncFooterDimmed,
+} from './syncStatus';
 import type { SyncFooterTone } from './syncStatus';
 import { syncNow, triggerActive } from './syncTrigger';
 
@@ -25,7 +29,12 @@ import { syncNow, triggerActive } from './syncTrigger';
 // owns the fast/live cadence; the subscription + reconnection live in the
 // substrate store.
 export const createSyncIndicator = (): {
-  status: () => { label: string; tone: SyncFooterTone };
+  status: () => {
+    label: string;
+    detail: string | undefined;
+    tone: SyncFooterTone;
+    dimmed: boolean;
+  };
   syncing: () => boolean;
   syncNow: () => void;
 } => {
@@ -75,7 +84,7 @@ export const createSyncIndicator = (): {
 
   // The one line the cell shows. Resolved here rather than in the shell so the
   // chrome stays presentational — and so it re-translates on a language switch,
-  // since t() and localisedDistanceToNow are both read at render.
+  // since t() and localisedTimeAgo are both read at render.
   const label = (): string => {
     const state = model();
     switch (state.kind) {
@@ -84,7 +93,7 @@ export const createSyncIndicator = (): {
       case 'syncing':
         return t('sync-status.footer-syncing');
       case 'unreachable':
-        return t('error.connection-error');
+        return t('sync-status.footer-offline');
       case 'error':
         return t('sync-status.footer-error');
       case 'warning':
@@ -92,16 +101,55 @@ export const createSyncIndicator = (): {
       case 'records-queued':
         return tPlural('sync-status.footer-records-queued', state.count);
       case 'synced':
-        return t('sync-status.footer-synced', {
-          distance: localisedDistanceToNow(state.finished),
-        });
+        return t('sync-status.footer-synced');
       case 'never-synced':
         return t('sync-status.footer-never-synced');
     }
   };
 
+  // How long ago the site last succeeded, for the states that name a fault
+  // (issue #1087). A fault line that also says when the site was last whole is
+  // the difference between an alarm and a report: the outage is the news, the
+  // age is what tells the user whether it matters yet. Read from the overview
+  // rather than the status union, which carries the stamp only on the quiet
+  // line — the one state where it is the WHOLE message.
+  const lastSynced = (): string | undefined => {
+    const finished = overview()?.lastSuccessful?.finished;
+    return finished
+      ? t('sync-status.footer-last-synced', {
+          distance: localisedTimeAgo(finished, now()),
+        })
+      : undefined;
+  };
+
+  // The muted tail beside the label — the relative time on the quiet line, and
+  // the last-success age on the fault lines. States that are wholly told by
+  // their label (a queue count, a run in flight) carry none.
+  const detail = (): string | undefined => {
+    const state = model();
+    switch (state.kind) {
+      case 'synced':
+        return localisedTimeAgo(state.finished, now());
+      case 'unreachable':
+        return lastSynced() ?? t('sync-status.footer-never-synced');
+      case 'error':
+      case 'warning':
+        return lastSynced();
+      case 'waiting':
+      case 'syncing':
+      case 'records-queued':
+      case 'never-synced':
+        return undefined;
+    }
+  };
+
   return {
-    status: () => ({ label: label(), tone: model().tone }),
+    status: () => ({
+      label: label(),
+      detail: detail(),
+      tone: model().tone,
+      dimmed: syncFooterDimmed(model().kind),
+    }),
     syncing: () => model().kind === 'syncing',
     syncNow,
   };

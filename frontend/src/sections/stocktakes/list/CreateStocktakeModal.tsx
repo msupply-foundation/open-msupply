@@ -73,16 +73,35 @@ const EMPTY_FORM: FormState = {
   includeAllItems: false,
 };
 
+// The mode cards: a short name plus the sentence that says what it does, so the
+// choice is made from the cards themselves and not from the panel that appears
+// below them (#837).
 const TYPE_OPTIONS: readonly {
   value: StocktakeType;
   labelKey:
     | 'stocktake.create-full'
     | 'stocktake.create-filtered'
     | 'stocktake.create-blank';
+  descriptionKey:
+    | 'stocktake.create-full-description'
+    | 'stocktake.create-filtered-description'
+    | 'stocktake.create-blank-description';
 }[] = [
-  { value: 'full', labelKey: 'stocktake.create-full' },
-  { value: 'filtered', labelKey: 'stocktake.create-filtered' },
-  { value: 'blank', labelKey: 'stocktake.create-blank' },
+  {
+    value: 'full',
+    labelKey: 'stocktake.create-full',
+    descriptionKey: 'stocktake.create-full-description',
+  },
+  {
+    value: 'filtered',
+    labelKey: 'stocktake.create-filtered',
+    descriptionKey: 'stocktake.create-filtered-description',
+  },
+  {
+    value: 'blank',
+    labelKey: 'stocktake.create-blank',
+    descriptionKey: 'stocktake.create-blank-description',
+  },
 ];
 
 export const CreateStocktakeModal = (props: {
@@ -314,12 +333,21 @@ export const CreateStocktakeModal = (props: {
       // Blocking while the mutation is in flight (no scrim/Escape exit until
       // it resolves).
       dismissable={!creating()}
+      // An explicit dismiss affordance in the top corner, beside the heading
+      // (#837) — the same close path as Escape and the scrim, and ignored while
+      // the create is in flight (dismissable above).
+      closeButton
       onClose={close}
       widthRem={42}
-      // Reserve the tallest mode's height (filtered, ~38rem) so switching type
-      // never resizes the dialog — full/blank pad up to the filtered height, so
-      // there's no jump in any direction.
-      minBodyHeightRem={39}
+      // NO height reservation (#837): the modes differ by a filter panel's
+      // worth of content, and padding full and blank up to the filtered
+      // height left two thirds of the dialog empty — a far louder artefact
+      // than the box resizing when the user changes mode. Each mode is now
+      // sized by what it actually holds.
+      //
+      // The dropdown-room reservation other picker dialogs carry (#1029)
+      // isn't needed either: the only pickers are in the FILTERED panel,
+      // which is the tall mode anyway.
       // Bottom-pinned status banner (OMS): blue "N lines estimated" (or
       // Counting…) for full/filtered; green "blank stocktake" confirmation for
       // blank. Lives in the footer so it hugs the actions at the dialog's
@@ -356,7 +384,7 @@ export const CreateStocktakeModal = (props: {
             loading={creating()}
             onClick={() => void create()}
           >
-            {t('button.create')}
+            {t('button.create-stocktake')}
           </Button>
         </>
       }
@@ -370,14 +398,18 @@ export const CreateStocktakeModal = (props: {
         </Alert>
       </Show>
 
-      {/* The three type radios, tight together at the top. */}
+      {/* The three modes, as selectable cards (#837): each names itself and
+          says what it does, and the chosen one carries a brand rim — so the
+          mode is legible without reading the panel below for the difference. */}
       <RadioGroup
+        appearance="card"
         value={form().type}
         onChange={value => setType(value as StocktakeType)}
         disabled={creating()}
         options={TYPE_OPTIONS.map(o => ({
           value: o.value,
           label: t(o.labelKey),
+          description: t(o.descriptionKey),
           testId: `stocktake-type-${o.value}`,
         }))}
       />
@@ -386,14 +418,19 @@ export const CreateStocktakeModal = (props: {
       <Switch>
         <Match when={form().type === 'full'}>
           <InsetPanel hint={t('stocktake.description-full')}>
-            <RadioGroup
-              options={includeAllOptions()}
-              value={includeAllValue()}
-              disabled={creating()}
-              onChange={value =>
-                setForm({ ...form(), includeAllItems: value === 'all' })
-              }
-            />
+            {/* The include-all choice is a labelled row like the filtered
+                panel's fields, so the two panels read the same way (#837). */}
+            <FieldRow label={t('label.include')}>
+              <RadioGroup
+                options={includeAllOptions()}
+                value={includeAllValue()}
+                orientation="horizontal"
+                disabled={creating()}
+                onChange={value =>
+                  setForm({ ...form(), includeAllItems: value === 'all' })
+                }
+              />
+            </FieldRow>
           </InsetPanel>
         </Match>
 
@@ -410,15 +447,15 @@ export const CreateStocktakeModal = (props: {
                 onChange={id => setForm({ ...form(), masterListId: id ?? '' })}
               />
             </FieldRow>
-            {/* Include-all radios: empty-label FieldRow puts them in the control column, and
-                indentRem lines their labels up with the master-list combobox's text (past its
-                leading search icon), matching OMS. */}
-            <FieldRow label="">
+            {/* The include-all sub-choice, as its own labelled row in the same
+                column as the pickers (#837) — it reads as one of the filters
+                rather than as an unlabelled appendage to the master list. */}
+            <FieldRow label={t('label.include')}>
               <RadioGroup
                 options={includeAllOptions()}
                 value={includeAllValue()}
+                orientation="horizontal"
                 disabled={creating()}
-                indentRem={0.2}
                 onChange={value =>
                   setForm({ ...form(), includeAllItems: value === 'all' })
                 }
@@ -436,9 +473,20 @@ export const CreateStocktakeModal = (props: {
                 onChange={l => setForm({ ...form(), locationId: l?.id ?? '' })}
               />
             </FieldRow>
+            <FieldRow label={t('label.items-expiring-before')}>
+              <DateField
+                label={t('label.items-expiring-before')}
+                hideLabel
+                disabled={creating()}
+                value={form().expiryDate || null}
+                onChange={v => setForm({ ...form(), expiryDate: v ?? '' })}
+              />
+            </FieldRow>
             {/* VVM status filter — gated by manageVvmStatusForStock
-                (spec/stocktakes › store-preference gates). Sits between location
-                and expiry, matching the reference create flow. */}
+                (spec/stocktakes › store-preference gates). Last of the filters
+                (#837): the row is absent in most stores, so an optional field
+                between two permanent ones would move the expiry row up and down
+                with a store preference. */}
             <Show when={stocktakePreferences().manageVvmStatusForStock}>
               <FieldRow label={t('label.vvm-status')}>
                 <VvmStatusSelect
@@ -453,15 +501,6 @@ export const CreateStocktakeModal = (props: {
                 />
               </FieldRow>
             </Show>
-            <FieldRow label={t('label.items-expiring-before')}>
-              <DateField
-                label={t('label.items-expiring-before')}
-                hideLabel
-                disabled={creating()}
-                value={form().expiryDate || null}
-                onChange={v => setForm({ ...form(), expiryDate: v ?? '' })}
-              />
-            </FieldRow>
           </InsetPanel>
         </Match>
 

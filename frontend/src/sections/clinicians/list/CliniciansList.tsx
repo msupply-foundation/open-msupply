@@ -127,6 +127,16 @@ const CliniciansList: Component = () => {
         emptyMessage={t('error.no-clinicians')}
         config={tableConfig.config()}
         setConfig={tableConfig.setConfig}
+        // Central-server admins (EDIT_CENTRAL_DATA) can promote their current
+        // layout to the shared install-wide default; everyone else gets no
+        // action (the gate is the app's, so the generic DataTable stays
+        // agnostic). Gate + action both come off the config controller, and the
+        // gate is reactive: undefined until central + permitted both hold.
+        onSaveGlobalDefault={
+          tableConfig.canSaveGlobalDefault()
+            ? tableConfig.saveGlobalTableConfig
+            : undefined
+        }
         pagination={{
           offset: query().offset,
           pageSize: query().first,

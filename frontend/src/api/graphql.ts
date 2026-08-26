@@ -227,6 +227,31 @@ const operationName = (query: string): string =>
 const isMutation = (query: string): boolean =>
   OPERATION_RE.exec(query)?.[1] === 'mutation';
 
+// Structural sharing at the transport (kdd/state-management decision 5): when
+// a query's response body is byte-identical to the previous response for the
+// same operation + variables, graphqlFetch returns the SAME parsed object
+// instead of parsing again. State published straight off the response
+// (setUser(data.me), a resource fetcher returning nodes) then compares
+// reference-equal at its signal, so an unchanged background refresh — the
+// post-sync re-reads, the sync-status fallback poll — notifies nobody, which
+// is what makes an unchanged refresh imperceptible (spec/sync-modal › after a
+// run completes, OMS-REG-SYNC-03.31/.32). Publishers that DERIVE a new object
+// from the response instead need their own boundary — an owned memo
+// (storeContext), or an explicit compare where the value is rebuilt every
+// load (loadDictionary).
+//
+// One entry per operation document, so memory is bounded by the operation
+// count; alternating variables for one operation just miss the cache, costing
+// only the parse we always paid. Mutations are never shared — their responses
+// answer an action, not a state read. Comparing the text we already hold is
+// cheaper than any structural compare, and a hit skips JSON.parse entirely.
+// Fetched data must be treated as immutable for the shared reference to be
+// sound — kdd/type-safety already requires exactly that.
+const lastQueryResponse = new Map<
+  string,
+  { varsKey: string; text: string; data: unknown }
+>();
+
 export async function graphqlFetch<TResult, TVariables>(
   document: TypedDocument<TResult, TVariables>,
   variables: TVariables,
@@ -273,9 +298,31 @@ export async function graphqlFetch<TResult, TVariables>(
     }
     return unexpected('unknown', `HTTP ${response.status}`);
   }
+  let text: string;
+  try {
+    text = await response.text();
+  } catch (e) {
+    return unexpected('unknown', e instanceof Error ? e.message : String(e));
+  }
+  const shareable = !isMutation(document.query);
+  const varsKey = JSON.stringify(variables) ?? '';
+  if (shareable) {
+    const held = lastQueryResponse.get(document.query);
+    if (held && held.varsKey === varsKey && held.text === text) {
+      // Byte-identical response: hand back the held object (same reference —
+      // see lastQueryResponse above), skipping the parse. Held entries are
+      // always successes, so only the per-call success mapping re-applies.
+      const data = held.data as TResult;
+      const mapped = options.mapSuccessToError?.(data);
+      if (mapped !== undefined) {
+        return unexpected('unknown', mapped);
+      }
+      return { kind: 'success', data };
+    }
+  }
   let body: ResponseBody<TResult>;
   try {
-    body = (await response.json()) as ResponseBody<TResult>;
+    body = JSON.parse(text) as ResponseBody<TResult>;
   } catch (e) {
     return unexpected('unknown', e instanceof Error ? e.message : String(e));
   }
@@ -307,6 +354,9 @@ export async function graphqlFetch<TResult, TVariables>(
   const mapped = options.mapSuccessToError?.(body.data);
   if (mapped !== undefined) {
     return unexpected('unknown', mapped);
+  }
+  if (shareable) {
+    lastQueryResponse.set(document.query, { varsKey, text, data: body.data });
   }
   return { kind: 'success', data: body.data };
 }

@@ -33,7 +33,7 @@ import { ALT_D, ALT_H, type Shortcut } from '../ui/utils/shortcuts';
  * A SECTION WITH CHILDREN IS NOT ONE. Its landing page renders that section's
  * sub-menu, so "Go to: Inventory" would offer the user a menu from inside the
  * surface that exists to skip the menu. A section's children carry the reach;
- * a childless top-level entry (Dashboard, Reports, Settings, Help) is itself a
+ * a childless top-level entry (Home, Reports, Settings, Help) is itself a
  * destination and is listed.
  */
 const paletteDestinations = (): NavItem[] =>
@@ -57,13 +57,14 @@ const paletteName = (destination: NavItem): (() => string) => {
 
 /*
  * The destinations that also carry a shortcut, per the binding table: `Alt+D` →
- * "Go to Dashboard" and `Alt+H` → Help. They belong HERE rather than among the
+ * "Go to Home" and `Alt+H` → Help. They belong HERE rather than among the
  * global commands, because both are DESTINATIONS in the navigation registry —
  * registering either in both places would put two rows in the palette, one with
  * the shortcut and one without.
  */
 const DESTINATION_SHORTCUTS: Record<string, Shortcut> = {
-  dashboard: ALT_D,
+  // Keyed by the destination's PATH; Home's is the store root, so ''.
+  '': ALT_D,
   help: ALT_H,
 };
 
