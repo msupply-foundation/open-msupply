@@ -4,14 +4,10 @@
  * record pages, so plugins never hardcode host routes").
  *
  * This is the route/link half: everything a contribution needs to reach a host
- * screen (AC-PLUG-P3/P4). The typed deep-link builders are the other half and
- * are NOT here yet — the contract carries that as a ⚠️ VERIFY. When they land,
- * the filtered list URLs the dashboard's own stats use
- * (src/sections/dashboard/statLinks.ts) are the obvious thing to promote, but
- * they are not these functions' vocabulary as they stand: each takes a storeId
- * and returns '/{store}/…', so a builder handed to `storeHref` unchanged would
- * name the store twice. Promoting them means dropping that segment — the store
- * belongs to the host on this surface, which is the whole point of it.
+ * screen (AC-PLUG-P3/P4). The typed deep-link builders are the other half
+ * (./deepLinks.ts): each returns a store-relative path — the store belongs to
+ * the host on this surface, which is the whole point of it — so its output is
+ * exactly what these two functions take.
  *
  * A plugin never sees `@solidjs/router`: it is not in the closed import set,
  * and keeping it out is what leaves the host free to change or drop it
