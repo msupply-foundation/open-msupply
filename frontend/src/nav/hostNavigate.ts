@@ -14,8 +14,15 @@
  * can: ONE writer (ShellLayout, which owns navigation) and ONE reader (the
  * SDK), both nameable from here — a directly traceable call, not a registry
  * anything may publish to (kdd/explicit-composition).
+ *
+ * The binding is MODULE STATE, so writer and reader must resolve to the SAME
+ * instance of this module. That holds today because the SDK entry imports it
+ * from source into the one host bundle; if the SDK is ever built separately,
+ * this module duplicated into it would give plugins a copy nothing ever
+ * writes, and every `navigateTo` would take the full-reload fallback below —
+ * keep it shared (kdd/bundling § the SDK-eager rule).
  */
-import { onCleanup } from 'solid-js';
+import { getOwner, onCleanup } from 'solid-js';
 
 /**
  * Navigate to an ALREADY-RESOLVED href — mount base included, exactly the
@@ -74,20 +81,41 @@ export const routerHostNavigate =
     navigate(href, { ...options, resolve: false });
 
 /**
+ * Whether the document already shows `href` — path and query, trailing slash
+ * aside. Consulted only on the unbound fallback below: a document navigation
+ * to the current URL is a plain reload, and a reload re-runs the very
+ * module-scope code that asked for it (PluginGate re-evaluates the plugin on
+ * every load), which is an infinite reload loop, not a navigation.
+ */
+const atDocumentHref = (href: string): boolean => {
+  const [path = '', query = ''] = href.split('?');
+  return (
+    path.replace(/\/+$/, '') === location.pathname.replace(/\/+$/, '') &&
+    query === location.search.replace(/^\?/, '')
+  );
+};
+
+/**
  * Go to an href. With the router bound (every in-store screen) this is an
  * ordinary client-side navigation.
  *
  * Unbound — nothing routed has mounted, which for a plugin means calling this
- * from module scope during load rather than from a rendered contribution — the
- * destination is still exactly right, so we go there through the document
- * instead of dropping the navigation on the floor. It costs a reload, and the
- * app comes back up on the intended screen.
+ * from module scope during load rather than from a rendered contribution — we
+ * go through the document instead of dropping the navigation on the floor. It
+ * costs a reload, and it is best-effort rather than exact: unbound is also
+ * when the SDK's `storeHref` has the least to resolve with (no store entered
+ * addresses the app root; mid store switch it still reads the store being
+ * left), so the reload can land on the root guard rather than the named
+ * screen. The one thing it must never do is reload the URL already shown —
+ * that re-runs the module-scope caller and loops — so a same-destination href
+ * is dropped instead.
  */
 export const hostNavigate: HostNavigate = (href, options) => {
   if (bound) {
     bound(href, options);
     return;
   }
+  if (atDocumentHref(href)) return;
   if (options?.replace) location.replace(href);
   else location.assign(href);
 };

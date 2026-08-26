@@ -78,6 +78,16 @@ describe.each(mounts)('storeHref (%s)', (_name, base) => {
     expect(storeHref(filtered)).toBe(`${mount}/store-a/${filtered}`);
   });
 
+  it('joins a query-only path straight onto the store root', async () => {
+    const { storeHref } = await at(base);
+    // Not `${mount}/store-a/?query=…`: a slash before the `?` would be a
+    // second spelling of the landing screen (OMS-REG-NAV-01.22).
+    expect(storeHref('?query=%7B%22filter%22%3A%7B%7D%7D')).toBe(
+      `${mount}/store-a?query=%7B%22filter%22%3A%7B%7D%7D`
+    );
+    expect(storeHref('/?query=abc')).toBe(`${mount}/store-a?query=abc`);
+  });
+
   it('follows a store switch', async () => {
     const { storeHref } = await at(base);
     state.storeId = 'store-b';

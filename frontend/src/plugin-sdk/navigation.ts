@@ -56,8 +56,9 @@ export interface NavigateOptions {
  * An href for a host screen BELOW the store root, from the path as the
  * navigation registry spells it — `'inventory/stock'`,
  * `'dispensary/prescription'`, `''` for the store's landing screen — plus any
- * query string of its own (`'inventory/stock?query=…'`). A leading slash is
- * tolerated; the path is store-relative either way.
+ * query string of its own (`'inventory/stock?query=…'`, or `'?query=…'` on the
+ * landing screen itself). A leading slash is tolerated; the path is
+ * store-relative either way.
  *
  * Two things the plugin therefore never encodes: the entered store, and where
  * the app is MOUNTED. Both are the host's, and both move — the store on every
@@ -75,7 +76,13 @@ export const storeHref = (path: string): string => {
   if (storeId === undefined) return `${routerBase}/`;
   const relative = path.replace(/^\/+/, '');
   const storeRoot = `${routerBase}/${storeId}`;
-  return relative ? `${storeRoot}/${relative}` : storeRoot;
+  // A query-only path joins the store root directly: a slash before the `?`
+  // would spell the landing screen `/{store}/?query=…` — a second URL for the
+  // screen the empty-path case exists to keep at one (OMS-REG-NAV-01.22,
+  // exactly as ShellLayout's own storeHref does for Home).
+  if (relative === '' || relative.startsWith('?'))
+    return `${storeRoot}${relative}`;
+  return `${storeRoot}/${relative}`;
 };
 
 /**
