@@ -44,6 +44,7 @@ import { settingsRoutes } from './sections/settings';
 import { sitesRoutes } from './sections/sites';
 import { helpRoutes, helpDocumentsRoutes } from './sections/help';
 import { globalPreferencesRoutes } from './sections/global-preferences';
+import { customFieldsRoutes } from './sections/custom-fields';
 import { ShellLayout } from './nav/ShellLayout';
 import { EntryPage } from './nav/EntryPage';
 import { LoginPage } from './auth/LoginPage';
@@ -98,6 +99,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   help: helpRoutes,
   'manage/campaigns': campaignsRoutes,
   'manage/help-documents': helpDocumentsRoutes,
+  'manage/custom-fields': customFieldsRoutes,
 };
 
 export const App: Component = () => {
