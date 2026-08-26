@@ -5,6 +5,14 @@
   gap: var(--space-4);
 }
 
+/* WidgetCard content-slot demo: a dashboard-statistic figure (— while the
+   value is in flight, per the KPI pattern the slot exists for). */
+.figure {
+  font-size: var(--text-xl);
+  font-weight: var(--weight-bold);
+  line-height: var(--line-tight);
+}
+
 /* A bounded viewport so the DocumentFrame (which fills its container) has a
    height to fill in the demo. */
 .frameHolder {
