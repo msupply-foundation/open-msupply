@@ -43,3 +43,4 @@ server/target-postgres/
 
 # Playwright MCP scratch logs / page dumps
 .playwright-mcp/
+.scratch/*
