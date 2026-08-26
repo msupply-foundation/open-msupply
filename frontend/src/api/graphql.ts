@@ -278,6 +278,15 @@ export async function graphqlFetch<TResult, TVariables>(
     condition: UnexpectedErrorCondition,
     cause: string
   ): GraphqlFailure => {
+    // An abort is the caller's own doing wherever it surfaces — the fetch
+    // rejecting, `response.text()` rejecting once the body stops arriving, or
+    // a non-OK status racing the abort — so every failure path resolves to
+    // aborted rather than the global modal. Checked on the signal, not on the
+    // error's name: `AbortError` is the spec'd rejection but a polyfilled or
+    // vendored fetch can reject differently, and the signal is the fact we
+    // actually asked for. A signal that was never aborted changes nothing, so
+    // a genuine failure alongside an unused signal still reports.
+    if (options.signal?.aborted) return { kind: 'aborted' };
     if (!options.background)
       setUnexpectedError({
         condition,
@@ -300,12 +309,8 @@ export async function graphqlFetch<TResult, TVariables>(
       signal: options.signal,
     });
   } catch (e) {
-    // An abort is the caller's own doing, so it takes the aborted result rather
-    // than the global modal. Checked on the signal, not on the error's name:
-    // `AbortError` is the spec'd rejection but a polyfilled or vendored fetch
-    // can reject differently, and the signal is the fact we actually asked for.
-    if (options.signal?.aborted) return { kind: 'aborted' };
-    // The fetch itself rejected — no response reached us at all.
+    // The fetch itself rejected — no response reached us at all. (An abort
+    // surfacing here is short-circuited inside `unexpected`.)
     return unexpected(
       'unreachable',
       e instanceof Error ? e.message : String(e)

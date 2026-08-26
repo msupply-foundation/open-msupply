@@ -398,6 +398,61 @@ describe('graphqlFetch cancellation', () => {
     expect(fetchMock.mock.calls[0][1].signal).toBe(controller.signal);
   });
 
+  // `fetch` resolves the moment the response HEADERS arrive; the body is read
+  // separately. An abort landing in that window rejects `response.text()`, not
+  // the fetch — and that window is widest for exactly this PR's use case, a
+  // long generation with a large document. Verified against real fetch
+  // semantics (node:http serving 200 + half a body, then stalling): `text()`
+  // rejects AbortError rather than resolving with the partial body.
+  it('resolves to aborted when the abort lands while the body is streaming', async () => {
+    const controller = new AbortController();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation(async (_url: string, init: RequestInit) => ({
+        ok: true,
+        status: 200,
+        // Headers are in; the body never finishes arriving.
+        text: () =>
+          new Promise((_resolve, reject) => {
+            init.signal?.addEventListener('abort', () =>
+              reject(
+                new DOMException('This operation was aborted', 'AbortError')
+              )
+            );
+          }),
+      }))
+    );
+
+    const pending = graphqlFetch(document, {}, { signal: controller.signal });
+    await Promise.resolve();
+    controller.abort();
+
+    expect(await pending).toEqual({ kind: 'aborted' });
+    expect(unexpectedError()).toBeUndefined();
+  });
+
+  // The other post-headers path: an abort racing a non-OK status. Nobody is
+  // waiting for the answer, so the 500 is not a fault we should raise.
+  it('resolves to aborted when the abort races a non-OK status', async () => {
+    const controller = new AbortController();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation(async () => {
+        controller.abort();
+        return { ok: false, status: 500, text: async () => '' };
+      })
+    );
+
+    const result = await graphqlFetch(
+      document,
+      {},
+      { signal: controller.signal }
+    );
+
+    expect(result).toEqual({ kind: 'aborted' });
+    expect(unexpectedError()).toBeUndefined();
+  });
+
   // Only an ABORTED signal excuses a rejection. A genuine transport failure
   // that happens to occur while a signal is attached is still a fault, and
   // must still reach the modal.
