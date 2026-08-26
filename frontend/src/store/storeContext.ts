@@ -1,10 +1,10 @@
-import { createMemo, createRoot, createSignal } from 'solid-js';
+import { createMemo, createRoot, createSignal, type Accessor } from 'solid-js';
 import { graphqlFetch } from '../api/graphql';
 import {
   StoreContext,
   type StoreContextResult,
 } from './storeContext.generated';
-import { authUser } from '../auth/authContext';
+import { authUser, type AuthUser } from '../auth/authContext';
 
 // Spec (Store Login, Guard 3): store preferences + permissions as global state.
 // Callers invoke refetchStoreContext directly — on store entry, and from
@@ -52,13 +52,13 @@ const refetch = async (storeId: string | undefined) => {
 // wake. A plain accessor would pass the wrapper churn straight through.
 // createRoot gives the module-scope memos an owner (cf.
 // createStoreScopedResource).
-const { storeContext, currentStoreId } = createRoot(() => ({
+const { storeContext, currentStoreId } = createRoot(() => {
   // The loaded store context (Guard 3 state): store preferences + permissions.
   // Reactive; undefined until the guard's fetch lands and between store
   // switches.
-  storeContext: createMemo(
+  const storeContext = createMemo(
     (): StoreContextResult | undefined => loaded()?.result
-  ),
+  );
   // The id of the store the user has currently ENTERED (Guard 3 loaded).
   // Reactive and module-level, so store-scoped global caches
   // (createStoreScopedResource) can depend on it without a component. Set only
@@ -68,8 +68,9 @@ const { storeContext, currentStoreId } = createRoot(() => ({
   // valid to fetch. Keyed on the REQUEST (not the response's
   // storePreferences.id, which is "" for a store without a preference row).
   // Undefined between store switches (guard shows its loading state).
-  currentStoreId: createMemo(() => loaded()?.storeId),
-}));
+  const currentStoreId = createMemo(() => loaded()?.storeId);
+  return { storeContext, currentStoreId };
+});
 
 // The stocktake display-gate preferences (spec/stocktakes › store-preference
 // gates), read from the guard-3 PreferencesNode. Each defaults to `false` while
@@ -227,6 +228,48 @@ const prescriptionPreferences = () => {
 const storeCustomColour = (): string =>
   storeContext()?.preferences?.storeCustomColour ?? '';
 
+// The wire's own store-mode vocabulary, read off the generated fragment rather
+// than restated (kdd/type-safety), so a mode added to the schema lands here.
+type StoreMode = AuthUser['stores']['nodes'][number]['storeMode'];
+
+// The MODE of the store the user has currently entered, as the wire's own
+// `storeMode` value ('STORE' / 'DISPENSARY') — kept in the generated vocabulary
+// rather than remapped to a parallel one (kdd/type-safety). Read off the
+// me/login response's store list (UserStoreNode.storeMode), the same place
+// `currentStoreName` reads, so it costs no query. Undefined while the store is
+// unresolved — every caller must treat that as "mode not yet known", never as a
+// mode. Reactive — reads authUser + currentStoreId.
+//
+// A MEMO, for the same reason as the two above, and here it is the plugin slot
+// boundary that makes it load-bearing: `slotContext` (src/plugins/slotContext)
+// is read inside PluginSlot's one memo, whose array identity is what keeps
+// mounted contributions alive. A plain accessor would put the whole `me`
+// payload in that memo's dependency set, so any genuine change to it — a store
+// renamed or added centrally, isDisabled flipped, the user's own name or
+// timeout changed — would rebuild the array and remount every contribution,
+// losing typed input and re-running their fetches. The memo's output is a
+// string, so an unchanged mode stops the propagation dead.
+//
+// Created on FIRST READ rather than in the createRoot above, and that is
+// deliberate: this is the only module-level derivation here that reads
+// authContext, which imports this module back (refetchStoreContext — and again
+// via api/graphql's deliberate cycle). createMemo computes eagerly, so building
+// it at module init would call authUser() while authContext's own `const`
+// bindings are still in their temporal dead zone whenever authContext is the
+// side the bundler evaluates first. Deferring creation to the first read puts
+// that call after both modules have finished evaluating, whatever the order.
+let storeModeMemo: Accessor<StoreMode | undefined> | undefined;
+const currentStoreMode = (): StoreMode | undefined => {
+  storeModeMemo ??= createRoot(() => {
+    const memo = createMemo(() => {
+      const storeId = currentStoreId();
+      return authUser()?.stores.nodes.find(s => s.id === storeId)?.storeMode;
+    });
+    return memo;
+  });
+  return storeModeMemo();
+};
+
 // The entered store's dispensary gate (spec/patients § configuration gates ›
 // AC-G1). Dispensary mode gates the WHOLE patient surface — the Dispensary nav
 // group (ShellLayout) and its routes (the patients section's route guard). The
@@ -237,19 +280,15 @@ const storeCustomColour = (): string =>
 // loaded, so callers read a settled value. Safe default OFF (not dispensary)
 // while the store is unresolved, so the patient surface never shows for a
 // non-dispensary store. Reactive — reads authUser + currentStoreId.
-const isDispensary = (): boolean => {
-  const storeId = currentStoreId();
-  const store = authUser()?.stores.nodes.find(s => s.id === storeId);
-  return store?.storeMode === 'DISPENSARY';
-};
+const isDispensary = (): boolean => currentStoreMode() === 'DISPENSARY';
 
 // Whether the entered store has the vaccine (cold-chain) module enabled
 // (StorePreferenceNode.vaccineModule). Gates the cold-chain DESTINATIONS — the
 // menu's Cold chain section and the palette's cold-chain entries (spec/keyboard
 // AC-KB4) — which is the legitimate kind of module gate: it gates the place
-// there is to go to, not a generic action (KB-R2). Same safe-default-OFF rule as
-// the other gates, so a gated destination never flashes in before the preference
-// is known. Reactive — a post-sync refetch re-gates in place.
+// there is to go to, not a generic action (KB-R2). Same safe-default-OFF rule
+// as the other gates, so a gated destination never flashes in before the
+// preference is known. Reactive — a post-sync refetch re-gates in place.
 const hasVaccineModule = (): boolean =>
   storeContext()?.storePreferences?.vaccineModule ?? false;
 
@@ -307,6 +346,7 @@ export {
   refetch as refetchStoreContext,
   currentStoreId,
   currentStoreName,
+  currentStoreMode,
   stocktakePreferences,
   stockPreferences,
   inboundShipmentPreferences,
@@ -320,4 +360,4 @@ export {
   hasProcurement,
   hasPermission,
 };
-export type { UserPermission };
+export type { UserPermission, StoreMode };

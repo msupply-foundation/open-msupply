@@ -9,12 +9,27 @@ import {
   adjustedQuantity,
   wouldGoBelowZero,
   backdatedDatetime,
+  doseEquivalent,
 } from './stockCalc';
 
 // Unit tests for the pure stock calculations behind the screens. Behavioural
 // acceptance against the real backend lives in the e2e/ Playwright suites (the
 // conformance contract's C2); these cover the client-side arithmetic / previews
-// the UI computes, citing the AC each mirrors.
+// the UI computes, citing the behaviour each mirrors.
+//
+// Anchors: spec/stock/cases/OMS-REG-SMV-08.
+//   .7  — the new line holds the repacked packs at the new pack size
+//   .16 — a fractional converted quantity is rejected
+//   .22 — a same-size repack succeeds as a pure relocation
+// Anchors: spec/stock/cases/OMS-REG-SMV-02.
+//   .30 — the flow previews current and adjusted quantities
+//   .31 — confirm stays disabled while the amount is zero
+//   .32 — confirm stays disabled while the preview would go below zero
+//   .29 — an accepted backdated adjustment is stamped at the backdated moment
+//   .39 — the adjust tiles present the dose equivalent for a vaccine line
+// Anchors: spec/stock/cases/OMS-REG-INV-02.
+//   .54 — vaccine quantities also present the dose equivalent; off, or for a
+//         non-vaccine item, they do not
 
 describe('stock units & value (spec/stock S1 columns)', () => {
   it('units = packs × pack size, value = packs × cost', () => {
@@ -32,17 +47,17 @@ describe('total volume (spec/stock S2 — computed, not stored)', () => {
   });
 });
 
-describe('AC-R1 / AC-R3 repack split math', () => {
-  it('AC-R1: new packs = packs × old size ÷ new size', () => {
+describe('OMS-REG-SMV-08.7/.16 — repack split math', () => {
+  it('.7: new packs = packs × old size ÷ new size', () => {
     // 10 packs of size 100 → size 50 = 20 new packs.
     expect(repackNewPacks(10, 100, 50)).toBe(20);
-    // Same-size repack (pure relocation, AC-R7) conserves the count.
+    // Same-size repack (pure relocation, .22) conserves the count.
     expect(repackNewPacks(7, 20, 20)).toBe(7);
   });
   it('undefined when the new pack size is not positive', () => {
     expect(repackNewPacks(10, 100, 0)).toBeUndefined();
   });
-  it('AC-R3: whole packs only — a fractional result is not whole', () => {
+  it('.16: whole packs only — a fractional result is not whole', () => {
     // 5 packs of size 10 → size 4 = 12.5 (fractional → rejected).
     const fractional = repackNewPacks(5, 10, 4);
     expect(fractional).toBe(12.5);
@@ -52,7 +67,7 @@ describe('AC-R1 / AC-R3 repack split math', () => {
   });
 });
 
-describe('AC-A12 adjustment preview + below-zero gating', () => {
+describe('OMS-REG-SMV-02.30–.32 — adjustment preview + confirm gating', () => {
   it('direction carries the sign; the amount is positive', () => {
     expect(signedAdjustment('ADDITION', 5)).toBe(5);
     expect(signedAdjustment('REDUCTION', 5)).toBe(-5);
@@ -68,7 +83,7 @@ describe('AC-A12 adjustment preview + below-zero gating', () => {
   });
 });
 
-describe('AC-A10 / AC-A11 backdated instant', () => {
+describe('OMS-REG-SMV-02.29 — backdated instant', () => {
   const today = '2026-07-21';
   it('today or no date → not backdated', () => {
     expect(backdatedDatetime(null, today, 'REDUCTION')).toBeUndefined();
@@ -83,5 +98,32 @@ describe('AC-A10 / AC-A11 backdated instant', () => {
     expect(backdatedDatetime('2020-01-01', today, 'ADDITION')).toBe(
       new Date(2020, 0, 1).toISOString()
     );
+  });
+});
+
+describe('OMS-REG-INV-02.54 / SMV-02.39 — dose context', () => {
+  const gate = (over = {}) => ({
+    showDoses: true,
+    isVaccine: true,
+    doses: 10,
+    ...over,
+  });
+
+  it('is the unit count × doses per unit for a vaccine when the gate is on', () => {
+    expect(doseEquivalent(5, gate())).toBe(50);
+  });
+
+  it('is absent when the preference is off', () => {
+    expect(doseEquivalent(5, gate({ showDoses: false }))).toBeUndefined();
+  });
+
+  it('is absent for a non-vaccine item even with the preference on', () => {
+    expect(doseEquivalent(5, gate({ isVaccine: false }))).toBeUndefined();
+  });
+
+  it('is zero, not absent, for a vaccine with no doses configured', () => {
+    // The gate is on and the item is a vaccine, so dose context still shows —
+    // it just reads zero. Absent would hide the field entirely.
+    expect(doseEquivalent(5, gate({ doses: 0 }))).toBe(0);
   });
 });

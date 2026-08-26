@@ -71,6 +71,41 @@ export default definePlugin({
 - **A contribution that throws is contained** to its own slot. `?pluginBoom`
   turns this plugin's throwing stat on, so you can see it happen.
 
+### The dashboard body
+
+`dashboard.body` is the only **screen-level** slot: its occupant _is_ the
+dashboard body, rather than a piece joining a region of host siblings. Open it
+with **`?pluginBody`**:
+
+```text
+http://localhost:3005/<store>/dashboard?pluginBody
+```
+
+The built-in card grid is not beside it and not behind it — it is **never
+mounted**, so none of its six count queries is issued (watch the network tab).
+The frame around the body stays the host's: app frame, page header, breadcrumb,
+navigation menu, all unchanged.
+
+| Fixture detail                                                           | What it proves                                                                                                                                                                                |
+| ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mount-N` beside a click counter (`data-body-mount`, `data-body-clicks`) | the host does not **remount** the occupant when the registry or the store context churns around it — switch language, or save a store preference, and the stamp and counter survive           |
+| the facts table is an SDK `Table`; the plugin ships no CSS               | SDK components carry the host's styling across the boundary even when the contribution owns the whole screen                                                                                  |
+| `?pluginBodyBoom` **on its own**                                         | a body that throws falls back to the **built-in body**, not to the neutral piece-region text — which in a whole-body region would leave the screen empty. The failure is named in diagnostics |
+
+Two rules the slot enforces, worth knowing before you claim it:
+
+- **One occupant.** Where several contributions claim the body, the registry's
+  deterministic order (contribution `order`, then plugin code, then contribution
+  id) picks the first and **names every one passed over** in diagnostics — two
+  plugins both claiming it is a deployment mistake, not a race. With both flags
+  above on, `body` wins the id tie-break and `bodyBoom` is the one named.
+- **`when(ctx)`, never `suppress`.** A body needs no suppression to clear what it
+  replaces, and suppression could not do the job anyway: it is site-wide and
+  store-blind, so suppressing the built-in widgets to make room for a screen only
+  some stores should see would blank the dashboard of every other store on the
+  server. The host refuses that set and says so. Gate the body on `when(ctx)`
+  instead — it replaces the body only where it renders.
+
 ### Columns
 
 This plugin also contributes three columns to the internal-order line table

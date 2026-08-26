@@ -603,8 +603,8 @@ export const DialogShowcase = () => {
             }}
             onClose={() => closeErrorDemo('Closed — still on this screen.')}
             onRetry={() => closeErrorDemo('Retry — the app would reload.')}
-            onDashboard={() =>
-              closeErrorDemo('Dashboard — the app would go to the root.')
+            onHome={() =>
+              closeErrorDemo('Home — the app would go to the root.')
             }
           />
         </DashboardCard>

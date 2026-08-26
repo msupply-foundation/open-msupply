@@ -113,7 +113,7 @@ describe('isAvailable with a required volume', () => {
 });
 
 // The picker's fullness filter, and the two exemptions that stop it hiding a
-// valid choice (spec/stock AC-LV2). Both failure modes are silent — a location
+// valid choice (spec/stock OMS-REG-INV-02.57). Both failure modes are silent — a location
 // merely goes missing from a list — so they are asserted here rather than left
 // to the widget.
 const withId = (
@@ -153,7 +153,7 @@ describe('passesFullness', () => {
 
   // The repack bug this exemption exists for: capacity 100, volumeUsed 80 of
   // which THIS line contributes 30. Repacking all 30 back into it is a pure
-  // relocation (AC-R7), but 100 − 80 = 20 < 30, so without the exemption the
+  // relocation (OMS-REG-SMV-08.22), but 100 − 80 = 20 < 30, so without the exemption the
   // one location the stock certainly fits in is filtered out.
   it('keeps the location the stock is already in under "available"', () => {
     const origin = withId('orig', 100, 80, 4);
