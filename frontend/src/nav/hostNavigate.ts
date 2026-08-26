@@ -45,6 +45,34 @@ export const bindHostNavigate = (navigate: HostNavigate): void => {
   });
 };
 
+/** The router's `navigate`, as much of its shape as the adapter below uses. */
+type RouterNavigate = (
+  href: string,
+  options: { replace?: boolean; resolve: false }
+) => void;
+
+/**
+ * The router's navigator as a `HostNavigate` — the adapter ShellLayout binds,
+ * named here so the one decision in it is testable without a DOM (there is no
+ * DOM in this repo's unit tests, so a rendered `<Router base>` is not available
+ * to prove it end to end).
+ *
+ * That decision is `resolve: false`. The href handed over is ALREADY resolved,
+ * mount base included, so the router must not resolve it again: with the
+ * default `resolve: true` it prepends the base a second time
+ * ('/rc' + '/rc/{store}/…'), and a path matching no route drops the mount
+ * entirely — the #1141 failure these primitives exist to prevent, invisible at
+ * the root mount where the base is ''. It is also exactly what a click on an
+ * `<a href>` does: the router's own anchor handler navigates with
+ * `resolve: false` (@solidjs/router dist/data/events.js), which is what makes
+ * `navigateTo` and `storeHref` the same destination by construction
+ * (AC-PLUG-P4).
+ */
+export const routerHostNavigate =
+  (navigate: RouterNavigate): HostNavigate =>
+  (href, options) =>
+    navigate(href, { ...options, resolve: false });
+
 /**
  * Go to an href. With the router bound (every in-store screen) this is an
  * ordinary client-side navigation.

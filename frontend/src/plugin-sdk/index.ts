@@ -121,7 +121,8 @@ export type { PluginIntl, SupportedLocale } from './intl';
  * Reaching a host screen without knowing the entered store or the app's mount
  * — and without meeting `@solidjs/router`, which is not in the closed import
  * set (sdk-contract § imports). The typed deep-link builders the same section
- * requires produce the store-relative paths these take.
+ * requires are still to come; ./navigation.ts holds the argument for both, and
+ * what promoting the builders will take.
  */
 export { storeHref, navigateTo } from './navigation';
 export type { NavigateOptions } from './navigation';
