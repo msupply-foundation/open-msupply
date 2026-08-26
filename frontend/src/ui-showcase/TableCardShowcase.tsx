@@ -12,6 +12,7 @@ import {
   type SortState,
 } from '../ui/elements/table/DataTable';
 import {
+  CommentHeader,
   formatCurrencyCell,
   getCellDefinition,
   getNumberCell,
@@ -329,7 +330,7 @@ const CellTypesTable = () => {
     },
     {
       c: { key: 'comment' },
-      header: () => 'Comment',
+      header: () => <CommentHeader />,
       ...getCellDefinition<StockLine>('comment'),
     },
   ];
@@ -597,7 +598,7 @@ const WorkingTable = () => {
     },
     {
       c: { key: 'comment' },
-      header: () => 'Comment',
+      header: () => <CommentHeader />,
       ...getCellDefinition<StockLine>('comment'),
     },
   ];
@@ -659,6 +660,10 @@ const RowStatesDemo = () => {
     'sl-2',
     'sl-3',
   ]);
+  // Only here to power the card⇄table toggle below (the view control needs a
+  // setConfig to persist the choice into) — this demo's point is the states,
+  // not table configuration.
+  const { config, setConfig } = createViewConfig('table');
   const columns = (): Column<StockLine, SortKey>[] => [
     {
       c: { key: 'code' },
@@ -709,6 +714,13 @@ const RowStatesDemo = () => {
       enableSelection
       selectedIds={selectedIds()}
       onSelectionChange={setSelectedIds}
+      // Flip to cards to see the one state a CARD carries: `disabled` mutes the
+      // card box (its own fill token, legible against both the card list and an
+      // editable card, in either theme). The selection-gated pair has no card
+      // treatment — a card has no row background to tint.
+      showCardToggle
+      config={config()}
+      setConfig={setConfig}
       // The page's ONLY job: map each row to a state. Read-only wins (→
       // disabled, grey always); else active → verified, onHold → warning;
       // anything else — discontinued here — stays plain, so it takes the
@@ -839,7 +851,7 @@ const CardGroupsDemo = () => {
     },
     {
       c: { key: 'comment' },
-      header: () => 'Comment',
+      header: () => <CommentHeader />,
       cardGroup: 'details',
       ...getCellDefinition<StockLine>('comment'),
     },
@@ -888,7 +900,7 @@ const CardDisclosureDemo = () => {
     },
     {
       c: { key: 'comment' },
-      header: () => 'Comment',
+      header: () => <CommentHeader />,
       cardGroup: 'more',
       ...getCellDefinition<StockLine>('comment'),
     },
@@ -957,7 +969,6 @@ const CardAdvancedDemo = () => {
             label="Note"
             hideLabel
             size="small"
-            width="full"
             value={notes[row.id]}
             onInput={e => setNotes(row.id, e.currentTarget.value)}
             onClick={e => e.stopPropagation()}
@@ -1016,7 +1027,7 @@ const AssembledCardDemo = () => {
     },
     {
       c: { key: 'comment' },
-      header: () => 'Comment',
+      header: () => <CommentHeader />,
       cardGroup: 'more',
       ...getCellDefinition<StockLine>('comment'),
     },
@@ -1348,13 +1359,63 @@ const PaginationDemo = () => {
     <Pagination
       offset={offset()}
       pageSize={pageSize()}
-      total={38}
+      // Enough pages to show what the pager does with a long set: a window
+      // around the current page, an ellipsis for each break, and the number
+      // box behind it.
+      total={380}
       onOffsetChange={setOffset}
       onPageSizeChange={size => {
         setPageSize(size);
         setOffset(0);
       }}
     />
+  );
+};
+
+// The `conditional` footer's two states, each over a fixed row count so the
+// state is the thing on show: 8 rows (one page) renders nothing at all — its
+// label stands alone and the space goes to the table — while 38 rows brings the
+// bar. Paging within the second stays on the bar: the row count decides the
+// state, not where you are in it. The third demo is the same bar with `inBar`,
+// the face a detail view's status footer hosts.
+const ConditionalPaginationDemo = () => {
+  const [offset, setOffset] = createSignal(0);
+  return (
+    <Stack gap="md">
+      <div>
+        <Text variant="subtitle">8 rows (one page) — no footer</Text>
+        <Pagination
+          offset={0}
+          pageSize={20}
+          total={8}
+          onOffsetChange={() => {}}
+          onPageSizeChange={() => {}}
+        />
+      </div>
+      <div>
+        <Text variant="subtitle">38 rows — the bar</Text>
+        <Pagination
+          offset={offset()}
+          pageSize={20}
+          total={38}
+          onOffsetChange={setOffset}
+          onPageSizeChange={() => setOffset(0)}
+        />
+      </div>
+      <div>
+        <Text variant="subtitle">
+          38 rows, inBar — sized to its cluster, for a shared bar
+        </Text>
+        <Pagination
+          offset={offset()}
+          pageSize={20}
+          total={38}
+          inBar
+          onOffsetChange={setOffset}
+          onPageSizeChange={() => setOffset(0)}
+        />
+      </div>
+    </Stack>
   );
 };
 
@@ -1454,7 +1515,8 @@ export const TableCardShowcase = () => (
             <code>comment</code> (an icon + popover). A field that{' '}
             <em>isn't</em> a common key — <code>quantity</code> — uses the
             explicit <code>getNumberCell()</code> and sets its own{' '}
-            <code>size</code>. Drag a header edge to resize.
+            <code>size</code>. Drag a header edge to resize, or double-click it
+            to fit the column to its widest content.
           </Lead>
           <CellTypesTable />
         </DashboardCard>
@@ -1508,7 +1570,14 @@ export const TableCardShowcase = () => (
             meaning at rest. <code>disabled</code> is the exception: a read-only
             / locked row (greyed, with a lock) is grey <em>always</em>, selected
             or not. Three rows are pre-selected; select or deselect any to watch
-            it. Full rules are in <code>CARD_TABLE_MODEL.md</code>.
+            it. <strong>Flip to cards</strong> and <code>disabled</code> is the
+            one state that follows: the card box takes a muted fill of its own (
+            <code>--table-card-surface-disabled</code>) — a step clear of both
+            an editable card and the recessed list behind it, in light and dark
+            — because a read-only record must read as one in either rendering.
+            The selection-gated pair is stamped on the card row but unstyled: a
+            card has no row background to tint. Full rules are in{' '}
+            <code>CARD_TABLE_MODEL.md</code>.
           </Lead>
           <RowStatesDemo />
         </DashboardCard>
@@ -1527,9 +1596,22 @@ export const TableCardShowcase = () => (
             parent owns <code>offset</code>/<code>pageSize</code> (bound for URL
             params); the component is pure presentation over them and resets to
             the first page on a size change. Below 480px the selector and number
-            slots collapse to <code>‹ ›</code> + the range.
+            slots collapse to <code>‹ ›</code> + the page position and the
+            range.
           </Lead>
           <PaginationDemo />
+          <Lead>
+            The bar earns its space rather than standing as fixed chrome
+            (spec/ui-standards § tables → pagination): it renders only when
+            there is somewhere to page to. No rows, or a single page of them,
+            and there is nothing here at all — the host drops the footer band
+            with it (DataTable does this from <code>paginationState</code>), so
+            no empty strip is left behind and the height goes to the rows. A
+            detail view goes further and hosts the bar's contents in its status
+            footer, where <code>inBar</code> keeps the cluster at its content
+            width so a crowded bar wraps it whole.
+          </Lead>
+          <ConditionalPaginationDemo />
         </DashboardCard>
 
         <Text variant="heading">Cards</Text>

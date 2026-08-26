@@ -4,6 +4,7 @@ import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { t } from '../../../intl';
 import { formatNumber } from '../../../intl/formatNumber';
+import { doseEquivalent } from '../stockCalc';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
 import { Breadcrumb } from '../../../ui/layout/Header/Breadcrumb';
@@ -22,6 +23,11 @@ import { createTableConfig } from '../../../api/createTableConfig';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import { PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
 import { stripEmpty } from '../../../typeHelpers';
 import { stockPreferences } from '../../../store/storeContext';
 import {
@@ -49,10 +55,7 @@ import { ExportStockAction } from './actions/ExportStockAction';
 // (TanStack gates header sort on the accessorFn; a pure display column never
 // sorts — this is why the old id-only columns were dead, kdd/table-state).
 //
-// The grouped-by-item view is deferred this iteration (spec/stock DIVERGENCES
-// D63) — the list is the flat stock-line list only.
-
-const DEFAULT_PAGE_SIZE = 20;
+// The grouped-by-item view is deferred this iteration — the list is the flat stock-line list only.
 
 type Row = StockLineRowFragment;
 
@@ -94,7 +97,10 @@ const lineValue = (l: Row) => l.totalNumberOfPacks * l.costPricePerPack;
 const StockList: Component = () => {
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
-  const { query, setQuery } = useUrlQueryState<StockListState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<StockListState>({
+    ...DEFAULT_STATE,
+    first: initialPageSize(),
+  });
   const [createOpen, setCreateOpen] = createSignal(false);
   const prefs = () => stockPreferences();
 
@@ -152,16 +158,22 @@ const StockList: Component = () => {
     navigate(`/${params.storeId}/inventory/stock/${id}`);
 
   // A units figure with the dose equivalent appended as a suffix for vaccine
-  // rows when manageVaccinesInDoses is on (spec/stock AC-P2) — mirrors the
-  // items list's dose display (no bespoke styling).
+  // rows when manageVaccinesInDoses is on (spec/stock OMS-REG-INV-02.54) —
+  // mirrors the items list's dose display (no bespoke styling).
   const unitsText = (
     units: number,
     isVaccine: boolean,
     doses: number
-  ): string =>
-    prefs().manageVaccinesInDoses && isVaccine
-      ? `${formatNumber(units)} (${formatNumber(units * doses)} ${t('label.doses-short')})`
-      : formatNumber(units);
+  ): string => {
+    const asDoses = doseEquivalent(units, {
+      showDoses: prefs().manageVaccinesInDoses,
+      isVaccine,
+      doses,
+    });
+    return asDoses === undefined
+      ? formatNumber(units)
+      : `${formatNumber(units)} (${formatNumber(asDoses)} ${t('label.doses-short')})`;
+  };
 
   // Every column is shown by default; the user hides / reorders / pins them
   // from the Columns control (spec/stock S1). No default columnVisibility
@@ -440,7 +452,10 @@ const StockList: Component = () => {
           pageSize: query().first,
           total: totalCount(),
           onOffsetChange: offset => setQuery({ ...query(), offset }),
-          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+          onPageSizeChange: first => {
+            rememberPageSize(first);
+            setQuery({ ...query(), first, offset: 0 });
+          },
         }}
       />
       <NewStockModal

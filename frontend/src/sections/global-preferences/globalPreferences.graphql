@@ -1,0 +1,42 @@
+# The 16 global preference descriptions, served in the order the page shows
+# them (spec/global-preferences/contract.md § The catalogue). prefContext plays
+# no part in a GLOBAL read; an unset preference arrives as its fabricated
+# default — there is no is-set flag — and `value` is untyped JSON (the schema's
+# own declared type loss).
+query globalPreferences($storeId: String!) {
+  preferenceDescriptions(storeId: $storeId, prefType: GLOBAL, prefContext: {}) {
+    key
+    valueType
+    value
+  }
+}
+
+# Per-preference write: each GLOBAL field of the input is a bare optional value
+# (unlike the store-scoped `{ storeId, value }` arrays), and omitted fields are
+# untouched — so an auto-save sends a one-field input. The top-level storeId
+# authorises only (central-server root gate + EDIT_CENTRAL_DATA); the write
+# lands install-wide. Bare OkResponse with no error union, so a failure is a
+# top-level GraphQL error the caller opts into reading (returnGraphqlErrors),
+# reverting the one control in place (contract § Editing).
+mutation upsertGlobalPreferences(
+  $storeId: String!
+  $input: UpsertPreferencesInput!
+) {
+  centralServer {
+    preferences {
+      upsertPreferences(storeId: $storeId, input: $input) {
+        ok
+      }
+    }
+  }
+}
+
+# The legacy all-languages custom-translations map — the flat v1 store kept for
+# older clients, surfaced only as the translations editor's legacy view
+# (contract § The custom-translations editor). Read through the typed runtime
+# query because preferenceDescriptions deliberately never describes it.
+query legacyCustomTranslations($storeId: String!) {
+  preferences(storeId: $storeId) {
+    customTranslations
+  }
+}

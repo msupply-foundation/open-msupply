@@ -8,6 +8,7 @@ import { CloseIcon } from '../ui/icons';
 import { CommandPaletteView } from '../ui/elements/keyboard/CommandPaletteView';
 import { startKeyboardDispatcher } from '../keyboard/keyboardDispatcher';
 import {
+  actionName,
   createAction,
   createAddAction,
   registeredActions,
@@ -61,7 +62,7 @@ const DEMO_SHORTCUTS = [
 ];
 
 const DEMO_ENTRIES = [
-  { id: 'a', name: 'Go to: Dashboard', shortcut: ALT_N, run: () => {} },
+  { id: 'a', name: 'Go to: Home', shortcut: ALT_N, run: () => {} },
   { id: 'b', name: 'Go to: Stocktakes', run: () => {} },
   { id: 'c', name: 'Go to: Inbound Shipments', run: () => {} },
   {
@@ -269,7 +270,7 @@ export const KeyboardShowcase = () => {
                         <td>
                           {action.name === undefined
                             ? '— (unlisted)'
-                            : t(action.name)}
+                            : actionName(action)}
                         </td>
                         <td>
                           {action.shortcut

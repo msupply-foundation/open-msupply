@@ -9,8 +9,8 @@ import {
   OkButton,
 } from '../../../../ui/elements/buttons/StandardButtons';
 import { ArrowRightIcon, InfoIcon } from '../../../../ui/icons';
+import { filterByStatusPreference } from '@/domain/invoice';
 import {
-  filterByStatusPreference,
   nextStatuses,
   returnKind,
   statusLabel,

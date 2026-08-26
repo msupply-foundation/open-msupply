@@ -1,4 +1,5 @@
 import { createResource, type JSX } from 'solid-js';
+import { gated } from '../../api/gated';
 import { Combobox } from '../../ui/elements/selectors/Combobox';
 import { campaignsResource, type Campaign } from './campaignsResource';
 import { fetchItemPrograms, type ItemProgram } from './itemProgramsResource';
@@ -38,6 +39,13 @@ export interface CampaignOrProgramSelectProps {
   hideLabel?: boolean;
   disabled?: boolean;
   placeholder?: string;
+  /** `data-testid` for the text input (locale-stable test hook, e2e/TESTIDS.md). */
+  inputTestId?: string;
+  /**
+   * Control size, forwarded to the Combobox — `small` matches the compact
+   * inputs a dense row (a line editor's batch card) puts beside it.
+   */
+  size?: 'default' | 'small';
 }
 
 /*
@@ -66,17 +74,10 @@ export const CampaignOrProgramSelect = (
   // whole page subtree, which detaches the open <dialog>: it loses the top
   // layer (no backdrop, background not inert), so the modal looks broken on the
   // Other tab (kdd/solid-reactivity-pitfalls › No remounts on interaction,
-  // rule 1). Crucially `programs.latest` is NOT enough: `.latest` STILL
-  // suspends on the FIRST pending read (before any value exists) — the exact
-  // case here, since this per-item resource first fetches when the Other tab
-  // mounts. So we gate on `.state` (reading state/latest never suspends): only
-  // surface a value once ready/refreshing, else `[]`. Same technique as
-  // storeScopedResource's noSuspense(). `programs.loading` still drives the
-  // Combobox spinner below.
-  const programList = (): ItemProgram[] =>
-    programs.state === 'ready' || programs.state === 'refreshing'
-      ? (programs.latest ?? [])
-      : [];
+  // rule 1). The first-pending-read case matters here, since this per-item
+  // resource first fetches when the Other tab mounts. `programs.loading`
+  // still drives the Combobox spinner below.
+  const programList = (): ItemProgram[] => gated(programs) ?? [];
 
   const options = (): Option[] => [
     ...campaigns().map(node => ({ kind: 'campaign' as const, node })),
@@ -96,6 +97,7 @@ export const CampaignOrProgramSelect = (
     <Combobox<Option>
       label={props.label}
       hideLabel={props.hideLabel}
+      size={props.size}
       items={options()}
       loading={campaignsResource.loading() || programs.loading}
       itemToString={o => o.node.name}
@@ -103,6 +105,7 @@ export const CampaignOrProgramSelect = (
       value={value()}
       disabled={props.disabled}
       placeholder={props.placeholder}
+      inputTestId={props.inputTestId}
       onChange={o => {
         if (!o) return props.onChange(null);
         props.onChange(

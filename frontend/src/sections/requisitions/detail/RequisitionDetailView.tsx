@@ -8,6 +8,7 @@ import {
 } from 'solid-js';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
 import { graphqlFetch } from '@/api/graphql';
+import { gated } from '@/api/gated';
 import { t } from '@/intl';
 import { Page } from '@/ui/layout/Page/Page';
 import { Header } from '@/ui/layout/Header/Header';
@@ -27,7 +28,11 @@ import {
   type Column,
   type SortState,
 } from '@/ui/elements/table/DataTable';
-import { getCellDefinition } from '@/ui/elements/table/tableHelpers';
+import {
+  CommentHeader,
+  getCellDefinition,
+} from '@/ui/elements/table/tableHelpers';
+import { sortRows } from '@/list/sortRows';
 import { HStack } from '@/ui/layout/Stack/HStack';
 import { StatusMarker } from '@/ui/elements/feedback/StatusMarker';
 import {
@@ -41,7 +46,6 @@ import {
   MinusCircleIcon,
   PlusCircleIcon,
   SidebarIcon,
-  TruckIcon,
 } from '@/ui/icons';
 import { ContentFooter } from '@/ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '@/ui/layout/ContentFooter/ContentFooterActions';
@@ -71,6 +75,7 @@ import {
 import { RequisitionStatusFooter } from './RequisitionStatusFooter';
 import { ActivityLogPanel } from '@/domain/activityLog';
 import {
+  applySavedIndicatorValue,
   ProgramIndicatorsTab,
   ProgramIndicatorValues,
 } from '@/domain/indicators';
@@ -257,18 +262,27 @@ const RequisitionDetailView: Component = () => {
       customerNameId: node.otherPartyId,
     });
   };
-  const [indicators] = createResource(indicatorVariables, async serialised => {
-    const result = await graphqlFetch(
-      ProgramIndicatorValues,
-      JSON.parse(serialised)
+  const [indicators, { mutate: mutateIndicators }] = createResource(
+    indicatorVariables,
+    async serialised => {
+      const result = await graphqlFetch(
+        ProgramIndicatorValues,
+        JSON.parse(serialised)
+      );
+      if (result.kind !== 'success') return undefined;
+      return result.data.programIndicators.nodes;
+    }
+  );
+  // A saved indicator cell goes straight back into the fetched nodes (no
+  // refetch → no remount, as the header edits do): the tab's inputs start from
+  // what they are handed, so without this the next mount of a cell — stepping
+  // to another line, re-entering the tab — would show the pre-edit figure
+  // (#957).
+  const onIndicatorSaved = (valueId: string, value: string) =>
+    mutateIndicators(prev =>
+      prev ? applySavedIndicatorValue(prev, valueId, value) : prev
     );
-    if (result.kind !== 'success') return undefined;
-    return result.data.programIndicators.nodes;
-  });
-  const indicatorNodes = () =>
-    indicators.state === 'ready' || indicators.state === 'refreshing'
-      ? (indicators.latest ?? [])
-      : [];
+  const indicatorNodes = () => gated(indicators) ?? [];
   // Indicators tab gate (spec S2 § tabs, AC-V5): a non-emergency program
   // requisition of a store-backed customer whose program defines ≥1
   // indicator.
@@ -388,7 +402,7 @@ const RequisitionDetailView: Component = () => {
   };
 
   // The requisition's existing line for an item (add mode loads it rather
-  // than duplicating — D74, AC-LE3).
+  // than duplicating — D60, AC-LE3).
   const findLineForItem = (itemId: string): Line | undefined =>
     info()?.lines.nodes.find(line => line.itemId === itemId);
 
@@ -477,13 +491,7 @@ const RequisitionDetailView: Component = () => {
           l.item.code.toLowerCase().includes(f) ||
           l.itemName.toLowerCase().includes(f)
       );
-    const s = sort();
-    const dir = s.desc ? -1 : 1;
-    return [...lines].sort((a, b) => {
-      const av = sortValue(a, s.key);
-      const bv = sortValue(b, s.key);
-      return av < bv ? -dir : av > bv ? dir : 0;
-    });
+    return sortRows(lines, sort(), sortValue);
   };
 
   // Dose annotation for a unit quantity on a vaccine item under the doses
@@ -508,6 +516,18 @@ const RequisitionDetailView: Component = () => {
     { label: String(node.requisitionNumber) },
   ];
 
+  // Details | Documents | Log | (gated) Indicators (spec S2 § tabs). An
+  // accessor, so the labels re-translate on a language switch and the gated
+  // Indicators tab appears as its gate resolves.
+  const tabs = () => [
+    { value: 'details', label: t('label.details') },
+    { value: 'documents', label: t('label.documents') },
+    { value: 'log', label: t('label.log') },
+    ...(showIndicators()
+      ? [{ value: 'indicators', label: t('label.indicators') }]
+      : []),
+  ];
+
   // Memoized: DataTable reads this prop from several independent computations,
   // and TanStack keys its internal caches on the array's identity — a plain
   // function would rebuild the ~30 columns once per reader on any gate/locale
@@ -517,7 +537,7 @@ const RequisitionDetailView: Component = () => {
     {
       // Pinned first: an affordance revealing the line's full comment.
       c: { key: 'comment' },
-      header: () => t('label.comment'),
+      header: () => <CommentHeader />,
       ...getCellDefinition('comment'),
     },
     {
@@ -872,199 +892,206 @@ const RequisitionDetailView: Component = () => {
         }
       >
         {node => (
-          <Page
-            fillBody
-            sidePanelOpen={sidePanelOpen()}
-            sidePanelTitle={t('heading.details')}
-            onSidePanelClose={() => setSidePanelOpen(false)}
-            sidePanelContent={
-              <RequisitionSidePanel
-                storeId={params.storeId}
-                node={node()}
-                editable={editable()}
-                isProgram={isProgram()}
-                showPricing={showPricing()}
-                edit={edit}
-                onSaveField={patch => void saveField(patch)}
-              />
-            }
-            header={
-              <Header>
-                <Breadcrumb icon={<TruckIcon />} crumbs={crumbs(node())} />
-                <HeaderButtons>
-                  {/* Add — a split of Add item (the line editor, S4) and Add
+          // The <Tabs> root wraps the Page from outside (its display: contents
+          // keeps the flex chain intact): the strip renders in the Header, the
+          // panels in the body. The active tab persists in the URL.
+          <Tabs
+            value={searchParams.tab ?? 'details'}
+            onValueChange={tab => {
+              // While a deep-linked ?tab=indicators is waiting on its gate,
+              // Kobalte reports a fallback to the first tab — swallow it so
+              // the fallback never clobbers the URL; once the gate flips the
+              // requested tab registers and is selected. A requisition whose
+              // gate settles closed corrects the URL through this same path.
+              if (
+                searchParams.tab === 'indicators' &&
+                tab !== 'indicators' &&
+                indicatorGateResolving()
+              )
+                return;
+              setSearchParams({ tab });
+            }}
+          >
+            <Page
+              fillBody
+              sidePanelOpen={sidePanelOpen()}
+              sidePanelTitle={t('heading.details')}
+              onSidePanelClose={() => setSidePanelOpen(false)}
+              sidePanelContent={
+                <RequisitionSidePanel
+                  storeId={params.storeId}
+                  node={node()}
+                  editable={editable()}
+                  isProgram={isProgram()}
+                  showPricing={showPricing()}
+                  edit={edit}
+                  onSaveField={patch => void saveField(patch)}
+                />
+              }
+              header={
+                <Header>
+                  {/* The Distribution truck (ui-surface S3) rides the shell's
+                      section glyph — see RequisitionsList. */}
+                  <Breadcrumb crumbs={crumbs(node())} />
+                  {/* Every control here collapses to its icon on a narrow
+                    viewport (`collapsible="narrow"`, label kept as the
+                    accessible name and repeated as a tooltip — the outbound
+                    header's tier). Labelled, this cluster needs more width
+                    than a tablet's header has left beside the breadcrumb, so
+                    it wrapped onto a row of its own — and on a short screen
+                    that row costs table rows, which are worth more. */}
+                  <HeaderButtons>
+                    {/* Add — a split of Add item (the line editor, S4) and Add
                       from master list (the shared S7 picker). The whole
                       control is disabled on a read-only, program, or
                       transfer-linked requisition (spec S2 § page actions). */}
-                  <SplitButton
-                    icon={<PlusCircleIcon />}
-                    testId="add-item-button"
-                    disabled={!canAdd()}
-                    disabledTitle={t('error.cannot-add-items-to-requisition')}
-                    value={addChoice()}
-                    onValueChange={setAddChoice}
-                    shortcut={ALT_N}
-                    onAction={onAddAction}
-                    options={[
-                      { value: 'item', label: t('button.add-item') },
-                      {
-                        value: 'master-list',
-                        label: t('button.add-from-master-list'),
-                      },
-                    ]}
-                  />
-                  {/* Supply requested — the auto-populate (rules §
+                    <SplitButton
+                      icon={<PlusCircleIcon />}
+                      collapsible="narrow"
+                      testId="add-item-button"
+                      disabled={!canAdd()}
+                      disabledTitle={t('error.cannot-add-items-to-requisition')}
+                      value={addChoice()}
+                      onValueChange={setAddChoice}
+                      shortcut={ALT_N}
+                      onAction={onAddAction}
+                      options={[
+                        { value: 'item', label: t('button.add-item') },
+                        {
+                          value: 'master-list',
+                          label: t('button.add-from-master-list'),
+                        },
+                      ]}
+                    />
+                    {/* Supply requested — the auto-populate (rules §
                       auto-populating). Presents as Supply APPROVED when the
                       requisition carries an approval status (the server
                       writes the approved figures then); disabled while not
                       editable. onApplied re-reads the line list (the new
                       supply quantities). */}
-                  <SupplyRequestedAction
-                    storeId={params.storeId}
-                    requisitionId={node().id}
-                    toApproved={node().approvalStatus !== 'NONE'}
-                    disabled={!editable()}
-                    onApplied={() => void refetch()}
-                  />
-                  {/* Export/Print — a read, offered on every status. */}
-                  <ExportPrintRequisitionAction requisitionId={node().id} />
-                  {/* More — reopens the side panel; shown only while closed. */}
-                  <Show when={!sidePanelOpen()}>
-                    <Button
-                      variant="secondary"
-                      icon={<SidebarIcon />}
-                      data-testid="open-detail-panel-button"
-                      // createSidePanelOpen registers Alt+M; this is the
-                      // control that advertises it.
-                      shortcut={ALT_M}
-                      onClick={() => setSidePanelOpen(true)}
-                    >
-                      {t('button.more')}
-                    </Button>
-                  </Show>
-                </HeaderButtons>
-                {/* The header field cluster (ui-standards → HeaderToolbar):
+                    <SupplyRequestedAction
+                      storeId={params.storeId}
+                      requisitionId={node().id}
+                      toApproved={node().approvalStatus !== 'NONE'}
+                      disabled={!editable()}
+                      onApplied={() => void refetch()}
+                    />
+                    {/* Export/Print — a read, offered on every status. */}
+                    <ExportPrintRequisitionAction requisitionId={node().id} />
+                    {/* More — reopens the side panel; shown only while closed. */}
+                    <Show when={!sidePanelOpen()}>
+                      <Button
+                        variant="secondary"
+                        icon={<SidebarIcon />}
+                        collapsible="narrow"
+                        title={t('button.more')}
+                        data-testid="open-detail-panel-button"
+                        // createSidePanelOpen registers Alt+M; this is the
+                        // control that advertises it.
+                        shortcut={ALT_M}
+                        onClick={() => setSidePanelOpen(true)}
+                      >
+                        {t('button.more')}
+                      </Button>
+                    </Show>
+                  </HeaderButtons>
+                  {/* The header field cluster (ui-standards → HeaderToolbar):
                     each field labelled above its small control, sharing the
                     row per its FormRowItem weight and wrapping as a unit. The
                     disabled-store notice rides the cluster's end as a compact
                     chip (the internal-orders pattern — same locale key). */}
-                <HeaderToolbar
-                  alert={
-                    <Show when={node().otherParty.store?.isDisabled}>
-                      <Alert severity="info" compact>
-                        {t('info.cannot-edit-disabled-store')}
-                      </Alert>
-                    </Show>
-                  }
-                >
-                  <RequisitionToolbar
-                    node={node()}
-                    editable={editable()}
-                    showApproval={showApproval()}
-                    edit={edit}
-                  />
-                </HeaderToolbar>
-                {/* A header save's whole-record rejection (reasons guard /
+                  <HeaderToolbar
+                    alert={
+                      <Show when={node().otherParty.store?.isDisabled}>
+                        <Alert severity="info" compact>
+                          {t('info.cannot-edit-disabled-store')}
+                        </Alert>
+                      </Show>
+                    }
+                  >
+                    <RequisitionToolbar
+                      node={node()}
+                      editable={editable()}
+                      showApproval={showApproval()}
+                      edit={edit}
+                    />
+                  </HeaderToolbar>
+                  {/* A header save's whole-record rejection (reasons guard /
                     emergency cap — rules › header edits) keeps its own
                     full-width row beneath the cluster: it is record-level and
                     transient, more than the compact alert chip slot is
                     documented to hold (the internal-orders ancillary banner's
                     row treatment — see ui-migration-report.md decision 1). */}
-                <Show when={headerError()}>
-                  <Toolbar>
-                    <Alert severity="error">{headerError()}</Alert>
-                  </Toolbar>
-                </Show>
-              </Header>
-            }
-            contentFooter={
-              // Bulk-action bar while lines are selected (spec S2 § footer);
-              // otherwise the requisition's status footer — clearing the
-              // selection restores it.
-              <Show
-                when={selectedIds().length > 0}
-                fallback={
-                  <RequisitionStatusFooter
-                    storeId={params.storeId}
-                    node={node()}
-                    editable={editable()}
-                    // ONLY approval blocking → the status button shows disabled
-                    // instead of hiding (spec S2 § footer).
-                    approvalBlocked={
-                      node().status === 'NEW' &&
-                      !node().otherParty.store?.isDisabled &&
-                      isApprovalBlocked(node())
-                    }
-                    // A finalise is an order-level save: splice the returned
-                    // node back (the indicator advances, the whole screen
-                    // re-renders read-only through the shared editability
-                    // gate).
-                    onSaved={saved => mutate(() => saved)}
-                    onReasonsNotProvided={ids =>
-                      setReasonFlaggedIds(new Set(ids))
-                    }
-                  />
-                }
-              >
-                <ContentFooter>
-                  <strong data-testid="selected-rows-count">
-                    {selectedIds().length} {t('label.selected')}
-                  </strong>
-                  {/* On a read-only or transfer-linked requisition the click
+                  <Show when={headerError()}>
+                    <Toolbar>
+                      <Alert severity="error">{headerError()}</Alert>
+                    </Toolbar>
+                  </Show>
+                  {/* The tab strip is the Header's LAST child, so it claims the
+                    header's bottom edge (ui/docs/PAGES.md § tabs — the <Tabs>
+                    root wraps the Page frame from outside). */}
+                  <TabList tabs={tabs()} />
+                </Header>
+              }
+              contentFooter={
+                // Bulk-action bar while lines are selected (spec S2 § footer);
+                // otherwise the requisition's status footer — clearing the
+                // selection restores it.
+                <Show
+                  when={selectedIds().length > 0}
+                  fallback={
+                    <RequisitionStatusFooter
+                      storeId={params.storeId}
+                      node={node()}
+                      editable={editable()}
+                      // ONLY approval blocking → the status button shows disabled
+                      // instead of hiding (spec S2 § footer).
+                      approvalBlocked={
+                        node().status === 'NEW' &&
+                        !node().otherParty.store?.isDisabled &&
+                        isApprovalBlocked(node())
+                      }
+                      // A finalise is an order-level save: splice the returned
+                      // node back (the indicator advances, the whole screen
+                      // re-renders read-only through the shared editability
+                      // gate).
+                      onSaved={saved => mutate(() => saved)}
+                      onReasonsNotProvided={ids =>
+                        setReasonFlaggedIds(new Set(ids))
+                      }
+                    />
+                  }
+                >
+                  <ContentFooter>
+                    <strong data-testid="selected-rows-count">
+                      {selectedIds().length} {t('label.selected')}
+                    </strong>
+                    {/* On a read-only or transfer-linked requisition the click
                       explains why it can't proceed rather than confirming
                       (AC-LD2). onDeleted clears the selection (unmounting this
                       bar) and re-reads the line list (AC-LD1). */}
-                  <DeleteRequisitionLinesAction
-                    storeId={params.storeId}
-                    selectedIds={selectedIds}
-                    blocked={deleteBlock}
-                    onDeleted={() => {
-                      setSelectedIds([]);
-                      void refetch();
-                    }}
-                  />
-                  <ContentFooterActions>
-                    <Button
-                      variant="secondary"
-                      icon={<MinusCircleIcon />}
-                      onClick={() => setSelectedIds([])}
-                    >
-                      {t('label.clear-selection')}
-                    </Button>
-                  </ContentFooterActions>
-                </ContentFooter>
-              </Show>
-            }
-          >
-            {/* Details | Documents | Log | (gated) Indicators (spec S2 §
-                tabs). The active tab persists in the URL. */}
-            <Tabs
-              value={searchParams.tab ?? 'details'}
-              onValueChange={tab => {
-                // While a deep-linked ?tab=indicators is waiting on its gate,
-                // Kobalte reports a fallback to the first tab — swallow it so
-                // the fallback never clobbers the URL; once the gate flips the
-                // requested tab registers and is selected. A requisition whose
-                // gate settles closed corrects the URL through this same path.
-                if (
-                  searchParams.tab === 'indicators' &&
-                  tab !== 'indicators' &&
-                  indicatorGateResolving()
-                )
-                  return;
-                setSearchParams({ tab });
-              }}
+                    <DeleteRequisitionLinesAction
+                      storeId={params.storeId}
+                      selectedIds={selectedIds}
+                      blocked={deleteBlock}
+                      onDeleted={() => {
+                        setSelectedIds([]);
+                        void refetch();
+                      }}
+                    />
+                    <ContentFooterActions>
+                      <Button
+                        variant="secondary"
+                        icon={<MinusCircleIcon />}
+                        onClick={() => setSelectedIds([])}
+                      >
+                        {t('label.clear-selection')}
+                      </Button>
+                    </ContentFooterActions>
+                  </ContentFooter>
+                </Show>
+              }
             >
-              <TabList
-                tabs={[
-                  { value: 'details', label: t('label.details') },
-                  { value: 'documents', label: t('label.documents') },
-                  { value: 'log', label: t('label.log') },
-                  ...(showIndicators()
-                    ? [{ value: 'indicators', label: t('label.indicators') }]
-                    : []),
-                ]}
-              />
               <TabPanel value="details">
                 <DataTable
                   columns={columns()}
@@ -1112,6 +1139,16 @@ const RequisitionDetailView: Component = () => {
                   }
                   config={tableConfig.config()}
                   setConfig={tableConfig.setConfig}
+                  // Central-server admins can promote this table's layout to
+                  // the shared install-wide default, the same as the list
+                  // (issue #1118 — detail tables offered no way to save table
+                  // defaults). Gate + action both off the config controller;
+                  // undefined for everyone else, so the action isn't offered.
+                  onSaveGlobalDefault={
+                    tableConfig.canSaveGlobalDefault()
+                      ? tableConfig.saveGlobalTableConfig
+                      : undefined
+                  }
                   // Leading-checkbox row selection for the bulk line delete
                   // (spec S2 § line table): checkbox-only — the row click
                   // stays bound to the editor. Always offered, on every
@@ -1144,74 +1181,75 @@ const RequisitionDetailView: Component = () => {
                     nodes={indicatorNodes()}
                     editable={editable()}
                     showCustomerBreakdown={false}
+                    onSaved={onIndicatorSaved}
                   />
                 </TabPanel>
               </Show>
-            </Tabs>
 
-            {/* The line editor (S4): add mode from the Add action / empty
+              {/* The line editor (S4): add mode from the Add action / empty
                 state, edit mode from a row click. */}
-            <RequisitionLineEditModal
-              open={!!editorLine()}
-              onClose={() => setEditorLine(undefined)}
-              storeId={params.storeId}
-              requisitionId={node().id}
-              editable={editable()}
-              canAdd={canAdd()}
-              transferred={!!node().linkedRequisition}
-              showExtended={showExtended()}
-              showApproved={showApprovedFigure()}
-              finalised={node().status === 'FINALISED'}
-              showDoses={showDoses()}
-              showForecast={showForecast()}
-              showExcess={showExcess()}
-              initialLine={editorInitialLine()}
-              nextLine={resolveNextLine}
-              findLineForItem={findLineForItem}
-              onCommitted={() => {
-                // A line edit may have supplied a missing reason — drop the
-                // header save's stale flags, then re-read the line list
-                // (rules › drafts: the list is re-read, never patched).
-                setReasonFlaggedIds(new Set<string>());
-                void refetch();
-              }}
-            />
+              <RequisitionLineEditModal
+                open={!!editorLine()}
+                onClose={() => setEditorLine(undefined)}
+                storeId={params.storeId}
+                requisitionId={node().id}
+                editable={editable()}
+                canAdd={canAdd()}
+                transferred={!!node().linkedRequisition}
+                showExtended={showExtended()}
+                showApproved={showApprovedFigure()}
+                finalised={node().status === 'FINALISED'}
+                showDoses={showDoses()}
+                showForecast={showForecast()}
+                showExcess={showExcess()}
+                initialLine={editorInitialLine()}
+                nextLine={resolveNextLine}
+                findLineForItem={findLineForItem}
+                onCommitted={() => {
+                  // A line edit may have supplied a missing reason — drop the
+                  // header save's stale flags, then re-read the line list
+                  // (rules › drafts: the list is re-read, never patched).
+                  setReasonFlaggedIds(new Set<string>());
+                  void refetch();
+                }}
+              />
 
-            {/* Add from master list (S2 § page actions): the shared picker,
+              {/* Add from master list (S2 § page actions): the shared picker,
                 then an are-you-sure confirmation — only on OK are the lines
                 added (AC-ML1) — then the bulk add. */}
-            <MasterListPickerModal
-              open={masterListPickerOpen()}
-              onClose={() => setMasterListPickerOpen(false)}
-              storeId={params.storeId}
-              onSelect={list => {
-                setMasterListPickerOpen(false);
-                setPendingMasterList(list);
-              }}
-            />
-            <Show when={pendingMasterList()}>
-              <ConfirmDialog
-                open
-                title={t('heading.are-you-sure')}
-                message={t('messages.confirm-add-from-master-list')}
-                onConfirm={() => void confirmAddFromMasterList()}
-                onClose={() => setPendingMasterList(undefined)}
+              <MasterListPickerModal
+                open={masterListPickerOpen()}
+                onClose={() => setMasterListPickerOpen(false)}
+                storeId={params.storeId}
+                onSelect={list => {
+                  setMasterListPickerOpen(false);
+                  setPendingMasterList(list);
+                }}
               />
-            </Show>
-            {/* A rejection's fixed copy (AC-ML2): not-found under its own
-                message, anything else under the generic cannot-add copy. */}
-            <Show when={masterListError()}>
-              {message => (
+              <Show when={pendingMasterList()}>
                 <ConfirmDialog
                   open
-                  title={t('error.something-wrong')}
-                  message={message()}
-                  onConfirm={() => setMasterListError(undefined)}
-                  onClose={() => setMasterListError(undefined)}
+                  title={t('heading.are-you-sure')}
+                  message={t('messages.confirm-add-from-master-list')}
+                  onConfirm={() => void confirmAddFromMasterList()}
+                  onClose={() => setPendingMasterList(undefined)}
                 />
-              )}
-            </Show>
-          </Page>
+              </Show>
+              {/* A rejection's fixed copy (AC-ML2): not-found under its own
+                message, anything else under the generic cannot-add copy. */}
+              <Show when={masterListError()}>
+                {message => (
+                  <ConfirmDialog
+                    open
+                    title={t('error.something-wrong')}
+                    message={message()}
+                    onConfirm={() => setMasterListError(undefined)}
+                    onClose={() => setMasterListError(undefined)}
+                  />
+                )}
+              </Show>
+            </Page>
+          </Tabs>
         )}
       </Show>
     </Suspense>

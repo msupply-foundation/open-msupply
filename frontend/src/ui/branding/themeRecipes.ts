@@ -209,6 +209,17 @@ export const TOKEN_RECIPES: Record<string, ModeRecipes> = {
     light: mix('page', 'body', 0.96),
     dark: mix('page', 'black', 0.83),
   },
+  /* The disabled card's fill goes the OTHER way per mode, which is why its two
+     amounts don't rhyme with the card-list surface above: light steps a rung
+     PAST the list floor (darker than it), dark sits BETWEEN the floor and the
+     raised card — see the tokens.css note for why the light ladder has no room
+     inside the gap. So light mixes toward the ink like the other light greys,
+     while dark has to mix toward `muted` (the anchor `--surface-raised` itself
+     uses) to land ABOVE a floor already at page × black. */
+  '--table-card-surface-disabled': {
+    light: mix('page', 'body', 0.91),
+    dark: mix('page', 'muted', 0.96),
+  },
   '--surface-raised': {
     light: mix('page', 'body', 1),
     dark: mix('page', 'muted', 0.91),
@@ -290,6 +301,7 @@ export type RoleName =
   | 'accent'
   | 'danger'
   | 'warning'
+  | 'unfinished'
   | 'success'
   | 'surface'
   | 'text'
@@ -364,6 +376,14 @@ export const ROLES: Record<RoleName, RoleSpec> = {
     members: { base: ['--color-warning'], alert: ['--warning-main'] },
     tokens: ['--color-warning', '--warning-main'],
   },
+  unfinished: {
+    shorthand: 'base',
+    // The awaiting-a-step marking (outbound placeholder rows). Its own role,
+    // not a member of `warning`: a site rebranding its caution amber must not
+    // silently repaint "still to do" as "something is wrong".
+    members: { base: ['--marking-unfinished'] },
+    tokens: ['--marking-unfinished'],
+  },
   success: {
     shorthand: 'base',
     members: {
@@ -376,11 +396,28 @@ export const ROLES: Record<RoleName, RoleSpec> = {
     members: {
       page: ['--bg-white'],
       chrome: ['--bg-toolbar', '--bg-row', '--bg-group-light'],
-      nav: ['--bg-drawer', '--bg-menu'],
+      nav: ['--bg-drawer', '--bg-menu', '--surface-chrome'],
       navSelected: ['--drawer-selected-bg'],
       header: ['--header-bg'],
       raised: ['--surface-raised'],
-      sunken: ['--table-card-surface'],
+      /* NB `--table-card-surface-disabled` is deliberately NOT here, though it
+         is the same well one rung on: an author setting `sunken` would then
+         paint a disabled card the SAME colour as the list it sits on, which is
+         precisely the reading the token exists to prevent (see tokens.css). It
+         stays derivation-only, riding `page` with the rest of the family — as
+         --bg-group-main/-dark already do. */
+      sunken: ['--table-card-surface', '--surface-sunken'],
+      /*
+       * L0 of the app shell's surface ladder (tokens.css § "Warm stone") — the
+       * page background the rail, footer and content sit on. Settable, never
+       * derived: the ladder's warmth is a hue choice, and mixing it out of the
+       * cool `page`/`muted` anchors would produce a grey canvas, the one thing
+       * the ladder exists to avoid. Same for the ladder's other rungs, which
+       * ride the members whose surfaces they already are — `nav` (the rail and
+       * footer chrome), `sunken` (the well inside a surface) and border `base`
+       * (the chrome↔canvas rule).
+       */
+      canvas: ['--surface-canvas'],
       input: ['--bg-input'],
       disabled: ['--bg-disabled'],
       login: ['--bg-login'],
@@ -406,7 +443,7 @@ export const ROLES: Record<RoleName, RoleSpec> = {
       // author setting `border` means "make my hairlines this colour", and
       // the stock header/body distinction is not worth preserving against
       // that intent.
-      base: ['--color-border-value', '--header-border'],
+      base: ['--color-border-value', '--header-border', '--surface-edge'],
       divider: ['--color-divider'],
       input: ['--input-border'],
       strong: ['--outline-main'],
@@ -449,6 +486,7 @@ export const NEUTRAL_FAMILY: string[] = [
   '--bg-disabled',
   '--header-bg',
   '--table-card-surface',
+  '--table-card-surface-disabled',
   '--surface-raised',
   '--drawer-selected-bg',
   '--drawer-hover-bg',

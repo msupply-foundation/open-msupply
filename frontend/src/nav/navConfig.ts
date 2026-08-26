@@ -1,11 +1,16 @@
 // The navigation destination registry (spec/navigation › behaviours — the
 // registry tables there are the source of truth this file transcribes). One
 // source: the left menu renders from it, the router generates a route per
-// destination from it, and the command palette lists the destinations carrying
-// a `cmdkKey`.
+// destination from it, and the command palette lists every destination in it
+// (D107 — `cmdkKey` only renames a row, it never decides whether there is one).
 //
 // Paths are relative to the store root (/{storeId}). A section's own `path` is
 // a landing destination; its `children` are the inner sub-menu entries.
+//
+// Home's path is the EMPTY string, which is not a special case but the literal
+// reading of the line above: Home IS the store root, so its store-relative path
+// is nothing. The brand mark has always gone there, so giving the menu entry
+// the same target is what stops one screen from having two URLs.
 //
 // Labels are i18n keys, not English (kdd/type-safety: LocaleKey is derived from
 // the catalog, so a typo or an un-added key stops compiling); each key is the
@@ -53,28 +58,28 @@ export type NavItem = {
    */
   permission?: UserPermission;
   /**
-   * Offered at phone width (spec/navigation › mobile-friendly, D95). Absent =
-   * withheld from the phone menu until the destination's screens are made
-   * phone-ready; flipping this one flag is the whole change.
-   */
-  mobileFriendly?: true;
-  /**
-   * The command palette's name for this destination (spec/keyboard ui-surface
-   * S1 § Action names). A separate key from `labelKey` because the palette
-   * prefixes "Go to:" and sometimes words the destination differently — "Go to:
-   * View Stock" against the menu's "Stock".
+   * OVERRIDE for the command palette's name, complete with its "Go to:" prefix
+   * (spec/keyboard ui-surface S1 § Action names).
    *
-   * ABSENCE MEANS "not in the palette", and that is a decision rather than an
-   * oversight: the spec enumerates exactly which destinations the palette
-   * offers, so purchase orders, returns, R&R forms, stock movement, encounters,
-   * clinicians, programs, assets, stores, sites, plugins and the rest are
-   * reachable by menu only.
+   * ABSENCE IS THE NORM: every destination is in the palette, named "Go to:"
+   * plus its own `labelKey` — so a destination added here (a plugin-contributed
+   * page included) is browsable with no second registration to remember, which
+   * is the whole point of the palette deriving from this file (D107). Set this
+   * only where the menu's label does not stand up outside the menu, which is
+   * where the menu's column supplies context the palette row lacks: "Stock"
+   * under Inventory reads as "View Stock", "Equipment" under Cold chain needs
+   * saying, and Manage's "Reports" would otherwise be a second row identical to
+   * the top-level one.
    */
   cmdkKey?: LocaleKey;
 };
 
 export const navConfig: NavItem[] = [
-  { labelKey: 'dashboard', path: 'dashboard', cmdkKey: 'cmdk.goto-dashboard' },
+  // Home — the store root itself (see the empty-path note above). `label.home`
+  // is the key the brand mark's accessible name already used, so the logo and
+  // the menu entry name one destination with one word. Every surface that
+  // shows it (menu, palette, breadcrumb, tab title) reads this one key.
+  { labelKey: 'label.home', path: '' },
   {
     labelKey: 'replenishment',
     path: 'replenishment',
@@ -89,14 +94,11 @@ export const navConfig: NavItem[] = [
         labelKey: 'internal-order',
         path: 'replenishment/internal-order',
         permission: 'REQUISITION_QUERY',
-        cmdkKey: 'cmdk.goto-internal-order',
       },
       {
         labelKey: 'inbound-shipment',
         path: 'replenishment/inbound-shipment',
         permission: 'INBOUND_SHIPMENT_QUERY',
-        mobileFriendly: true,
-        cmdkKey: 'cmdk.goto-inbound',
       },
       {
         labelKey: 'supplier-returns',
@@ -112,7 +114,6 @@ export const navConfig: NavItem[] = [
       {
         labelKey: 'suppliers',
         path: 'replenishment/suppliers',
-        cmdkKey: 'cmdk.goto-suppliers',
       },
     ],
   },
@@ -129,13 +130,11 @@ export const navConfig: NavItem[] = [
       {
         labelKey: 'locations',
         path: 'inventory/locations',
-        cmdkKey: 'cmdk.goto-locations',
       },
       {
         labelKey: 'stocktakes',
         path: 'inventory/stocktakes',
         permission: 'STOCKTAKE_QUERY',
-        cmdkKey: 'cmdk.goto-stocktakes',
       },
       {
         labelKey: 'stock-movement',
@@ -158,7 +157,6 @@ export const navConfig: NavItem[] = [
         labelKey: 'outbound-shipment',
         path: 'distribution/outbound-shipment',
         permission: 'OUTBOUND_SHIPMENT_QUERY',
-        cmdkKey: 'cmdk.goto-outbound',
       },
       {
         labelKey: 'customer-returns',
@@ -168,7 +166,6 @@ export const navConfig: NavItem[] = [
       {
         labelKey: 'customers',
         path: 'distribution/customers',
-        cmdkKey: 'cmdk.goto-customers',
       },
     ],
   },
@@ -181,13 +178,11 @@ export const navConfig: NavItem[] = [
         labelKey: 'patients',
         path: 'dispensary/patients',
         permission: 'PATIENT_QUERY',
-        cmdkKey: 'cmdk.goto-patients',
       },
       {
         labelKey: 'prescriptions',
         path: 'dispensary/prescription',
         permission: 'PRESCRIPTION_QUERY',
-        cmdkKey: 'cmdk.goto-prescriptions',
       },
       {
         labelKey: 'encounter',
@@ -206,7 +201,6 @@ export const navConfig: NavItem[] = [
         labelKey: 'equipment',
         path: 'cold-chain/equipment',
         permission: 'ASSET_QUERY',
-        mobileFriendly: true,
         cmdkKey: 'cmdk.goto-cold-chain-equipment',
       },
       {
@@ -246,12 +240,10 @@ export const navConfig: NavItem[] = [
       {
         labelKey: 'items',
         path: 'catalogue/items',
-        cmdkKey: 'cmdk.goto-items',
       },
       {
         labelKey: 'master-lists',
         path: 'catalogue/master-lists',
-        cmdkKey: 'cmdk.goto-master-lists',
       },
     ],
   },
@@ -282,7 +274,16 @@ export const navConfig: NavItem[] = [
         gate: 'centralAdmin',
       },
       { labelKey: 'sites', path: 'manage/sites', gate: 'centralAdmin' },
-      { labelKey: 'reports', path: 'manage/reports', gate: 'centralAdmin' },
+      {
+        labelKey: 'reports',
+        path: 'manage/reports',
+        gate: 'centralAdmin',
+        // Shares `labelKey` with the top-level Reports destination, and a
+        // server admin is offered both — two identical palette rows going to
+        // different screens. The menu's column tells them apart; the palette
+        // needs the name to.
+        cmdkKey: 'cmdk.goto-manage-reports',
+      },
       {
         labelKey: 'sync-message',
         path: 'manage/sync-message',
@@ -300,10 +301,9 @@ export const navConfig: NavItem[] = [
     labelKey: 'reports',
     path: 'reports',
     permission: 'REPORT',
-    cmdkKey: 'cmdk.goto-reports',
   },
-  { labelKey: 'settings', path: 'settings', mobileFriendly: true },
-  { labelKey: 'help', path: 'help', mobileFriendly: true },
+  { labelKey: 'settings', path: 'settings' },
+  { labelKey: 'help', path: 'help' },
 ];
 
 // Flattened list of every destination (sections + inner entries) — used to

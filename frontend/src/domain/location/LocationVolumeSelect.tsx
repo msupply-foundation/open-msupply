@@ -30,6 +30,15 @@ export interface LocationVolumeSelectProps {
   disabled?: boolean;
   error?: string;
   placeholder?: string;
+  /** `data-testid` for the text input (locale-stable test hook, e2e/TESTIDS.md). */
+  inputTestId?: string;
+  /**
+   * Control size, forwarded to the Combobox — `small` matches the compact
+   * inputs a dense row (a line editor's batch card) puts beside it. Without
+   * this the picker rendered at the default height next to `size="small"`
+   * text fields, so the row's controls didn't line up.
+   */
+  size?: 'default' | 'small';
   /**
    * A `createFocusTarget()` handle bound to the picker's input — for an owner
    * that focuses it after an action (e.g. a dialog opening on it).
@@ -137,6 +146,7 @@ export const LocationVolumeSelect = (
     <Combobox<LocationWithVolume>
       label={props.label}
       hideLabel={props.hideLabel}
+      size={props.size}
       items={filtered()}
       loading={props.loading}
       itemToString={l => `${l.code} — ${l.name}`}
@@ -145,6 +155,7 @@ export const LocationVolumeSelect = (
       disabled={props.disabled}
       error={props.error}
       placeholder={props.placeholder}
+      inputTestId={props.inputTestId}
       focusTarget={props.focusTarget}
       onChange={l => props.onChange(l)}
       itemDisabled={

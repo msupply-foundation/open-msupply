@@ -121,6 +121,22 @@ export const nextFacility = (
   return index >= 0 ? rows[index + 1] : undefined;
 };
 
+/*
+ * The edited row's OWN store id — the store editor's Preferences tab subject
+ * (spec/names § the facility editor). Separate from the signed-in store, which
+ * is only the request's authorisation subject: from the register the two are
+ * different stores, and confusing them writes the entered store's preferences
+ * behind another facility's name. Resolved from the page already loaded, like
+ * `nextFacility` — no cursor, no extra request.
+ */
+export const facilityStoreId = (
+  rows: readonly FacilityRow[],
+  currentId: string | undefined
+): string | undefined =>
+  currentId === undefined
+    ? undefined
+    : rows.find(row => row.id === currentId)?.store?.id;
+
 /** The register's route (nav destination `manage/stores`). */
 export const facilityRegisterPath = (storeId: string): string =>
   `/${storeId}/manage/stores`;

@@ -106,14 +106,34 @@ export const CommandPaletteView = (props: CommandPaletteViewProps) => {
     return rows.find(row => row.id === picked) ?? rows[0];
   });
 
+  /*
+   * KB-N3: the highlighted option "MUST be scrolled into view". The results
+   * list scrolls (it is capped well below the length of the action list), so
+   * arrowing past its fold otherwise moved a highlight the user could no longer
+   * see — reported with the table-navigation gap in issue #1006.
+   *
+   * Read off the DOM rather than a per-row ref map: the highlight is already
+   * expressed there as aria-selected, and Solid runs effects after the DOM is
+   * patched, so the row this finds is the one just highlighted. `highlighted()`
+   * is read first to make that the effect's dependency — the query itself
+   * tracks nothing.
+   */
+  let list: HTMLUListElement | undefined;
+  createEffect(() => {
+    if (!highlighted()) return;
+    list
+      ?.querySelector<HTMLElement>('[aria-selected="true"]')
+      ?.scrollIntoView({ block: 'nearest' });
+  });
+
   const move = (delta: 1 | -1) => {
     const rows = matches();
     if (rows.length === 0) return;
     const current = rows.findIndex(row => row.id === highlighted()?.id);
     // WRAPPING, not clamping: the palette is "an option list driven from a
     // search field above it", which is KB-N3's shape — and KB-N3 wraps at both
-    // ends. KB-N1's list-table row focus clamps instead, which is why the two
-    // are separate rules; that one is not built (kdd/keyboard-layer).
+    // ends. KB-N1's list-table row focus CLAMPS instead, which is why the two
+    // are separate rules — see table/createRowFocus for that one.
     const next = rows[(current + delta + rows.length) % rows.length];
     if (next) setHighlightId(next.id);
   };
@@ -162,7 +182,6 @@ export const CommandPaletteView = (props: CommandPaletteViewProps) => {
           ref={search.ref}
           label={t('heading.keyboard-shortcuts')}
           hideLabel
-          width="full"
           placeholder={t('cmdk.placeholder')}
           value={query()}
           onInput={event => {
@@ -192,6 +211,7 @@ export const CommandPaletteView = (props: CommandPaletteViewProps) => {
           }
         >
           <ul
+            ref={list}
             class={styles.results}
             id={listId}
             role="listbox"

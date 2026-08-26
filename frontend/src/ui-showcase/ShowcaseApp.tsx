@@ -19,7 +19,7 @@ import { isRtl, locale, type LocaleKey } from '../intl';
 /*
  * Storybook shell: the showcase dogfoods the REAL app chrome — it renders the
  * library's own <AppShell> (docked MenuBar + the orange app footer with its
- * store / user / language cells) wrapping a <Page> whose header is the real
+ * store / user / sync cells) wrapping a <Page> whose header is the real
  * <Header>, so a showcase view is composed EXACTLY like an app page and only
  * the body content differs. AppShell takes the section registry as its nav
  * model (its `upper` override); the footer's store/user cells are inert demo
@@ -154,6 +154,40 @@ export function ShowcaseApp() {
     return Icon ? <Dynamic component={Icon} /> : undefined;
   });
 
+  // A fake sync run, so the footer cell's animated glyph can be seen here.
+  const [demoSyncing, setDemoSyncing] = createSignal(false);
+  let demoSyncTimer: number | undefined;
+  const runDemoSync = () => {
+    setDemoSyncing(true);
+    demoSyncTimer = window.setTimeout(() => setDemoSyncing(false), 3_000);
+  };
+  onCleanup(() => clearTimeout(demoSyncTimer));
+
+  /*
+   * The sync cell's states, cycled by the details button — the real app derives
+   * these from live sync status, which the standalone showcase has none of, and
+   * the escalated ones are exactly the ones worth eyeballing against both bar
+   * colours (dark mode flips this shell's footer to the remote grey).
+   */
+  const demoStates = [
+    { label: 'Synced', detail: 'just now', tone: 'neutral' },
+    { label: 'Synced', detail: '2 min ago', tone: 'neutral' },
+    { label: 'Synced', detail: '3 hr ago', tone: 'neutral' },
+    { label: 'Synced', detail: 'yesterday', tone: 'neutral' },
+    { label: 'Synced', detail: '14 Aug', tone: 'neutral' },
+    { label: '14 records queued', tone: 'neutral' },
+    {
+      label: 'No connection',
+      detail: 'last synced 3 hr ago',
+      tone: 'warning',
+      dimmed: true,
+    },
+    { label: 'Sync warning', detail: 'last synced yesterday', tone: 'warning' },
+    { label: 'Sync error', detail: 'last synced 14 Aug', tone: 'error' },
+  ] as const;
+  const [demoState, setDemoState] = createSignal(0);
+  const cycleDemoState = () => setDemoState(i => (i + 1) % demoStates.length);
+
   return (
     <AppShell
       // The showcase's own menu (section registry) replaces the app's navModel;
@@ -162,12 +196,24 @@ export function ShowcaseApp() {
       selected={selectedLeaf()}
       onNavigate={select}
       // The footer's store/user cells are inert demo placeholders — there is no
-      // store or session in the standalone showcase; the language cell is live.
+      // store or session in the standalone showcase. The sync cell is the one
+      // exception: it has real state to show off, so "Sync now" runs a fake
+      // three-second run and the details button steps through the states
+      // instead of opening a modal there is no sync status to fill.
       storeName="Demo store"
       onStoreClick={() => {}}
+      syncStatus={
+        demoSyncing()
+          ? { label: 'Syncing…', tone: 'neutral' }
+          : demoStates[demoState()]
+      }
+      syncing={demoSyncing()}
+      onSyncNow={runDemoSync}
+      onSyncDetails={cycleDemoState}
       username="Developer"
       displayName="Dev Eloper"
-      email="developer@example.com"
+      email="dev.eloper@msupply.foundation"
+      jobTitle="Product manager"
       onLogout={() => {}}
     >
       {/* A `fill` section (Table) is a real full-height page that composes its

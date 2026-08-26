@@ -2,6 +2,7 @@ import { createMemo, createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch, reportPermissionDenied } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { hasPermission } from '../../../store/storeContext';
 import { t } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
@@ -20,7 +21,10 @@ import {
   type Column,
   type SortState,
 } from '../../../ui/elements/table/DataTable';
-import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
+import {
+  CommentHeader,
+  getCellDefinition,
+} from '../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../ui/utils/rem';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { StatusChip } from '../../../ui/elements/feedback/StatusChip';
@@ -32,6 +36,12 @@ import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import { CloseIcon, PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
+import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
 import { stripEmpty } from '../../../typeHelpers';
 import {
   CustomerReturns,
@@ -60,8 +70,6 @@ import { statusLabel, isReturnDisabled } from '../detail/returnStatus';
 // (OMS-REG-DIST-07.12/.13); bulk Delete on selection (.40). "New return" opens
 // the customer selection (S2) — gated by the disable-manual-returns preference,
 // which is a UI-only affordance gate (OMS-REG-DIST-07.18).
-
-const DEFAULT_PAGE_SIZE = 20;
 
 type ReturnRow = Extract<
   CustomerReturnsResult['invoices'],
@@ -112,7 +120,10 @@ const statusMeta = (status: ReturnRow['status']) => ({
 const CustomerReturnsList: Component = () => {
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
-  const { query, setQuery } = useUrlQueryState<ReturnsListState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<ReturnsListState>({
+    ...DEFAULT_STATE,
+    first: initialPageSize(),
+  });
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   const [createOpen, setCreateOpen] = createSignal(false);
   // The disable-manual-returns notice (OMS-REG-DIST-07.18): shown instead of
@@ -139,14 +150,15 @@ const CustomerReturnsList: Component = () => {
     setSelectedIds([]);
   };
 
-  // GraphQL variables from URL state. The type pin lives HERE (not in the URL
-  // filter) so the list can never escape the vertical
+  // GraphQL variables from URL state. The type pin lives in the QUERY's
+  // top-level `type` argument, which both selects the permission and overwrites
+  // `filter.type` server-side — so the list can never escape the vertical, and
+  // a filter pin here would be silently discarded
   // (spec/customer-returns/contract.md § list & lookups).
   const variables = createMemo<CustomerReturnsVariables>(() => ({
     storeId: params.storeId,
     filter: {
       ...stripEmpty(query().filter),
-      type: { equalTo: 'CUSTOMER_RETURN' },
       // Custom-field filters become the dynamicFilter AST (undefined = no-op).
       dynamicFilter: buildCustomFieldDynamicFilter(query().cf),
     },
@@ -174,6 +186,15 @@ const CustomerReturnsList: Component = () => {
   const rows = () => data.latest?.nodes ?? [];
   const totalCount = () => data.latest?.totalCount ?? 0;
 
+  // A bulk delete of the last page's rows leaves the offset past the new end
+  // (src/list/clampPageOffset.ts, issue #1117).
+  clampPageOffset({
+    total: () => settledTotal(data, page => page.totalCount),
+    offset: () => query().offset,
+    pageSize: () => query().first,
+    setOffset: offset => setQuery({ ...query(), offset }),
+  });
+
   // The store preferences this list keys off (OMS-REG-DIST-07.18): fetched
   // once per store. `.latest` + undefined-tolerant read — while unresolved,
   // treat manual returns as ENABLED (the common case; flashing the notice would
@@ -188,14 +209,11 @@ const CustomerReturnsList: Component = () => {
   );
   // NON-suspending read (kdd/solid-reactivity-pitfalls § no remounts on
   // interaction): the status chip reads the options lazily as it renders, so a
-  // still-pending preference must never suspend this screen's boundary —
-  // `.latest` alone would, on its first pending read, tearing down the open
-  // chip. Unresolved = no restriction (and manual returns ENABLED — the common
-  // case; flashing the notice would be the wrong direction).
-  const loadedPrefs = () =>
-    prefs.state === 'ready' || prefs.state === 'refreshing'
-      ? prefs.latest
-      : undefined;
+  // still-pending preference must never suspend this screen's boundary and
+  // tear down the open chip. Unresolved = no restriction (and manual returns
+  // ENABLED — the common case; flashing the notice would be the wrong
+  // direction).
+  const loadedPrefs = () => gated(prefs);
   const manualReturnsDisabled = () =>
     loadedPrefs()?.disableManualReturns ?? false;
 
@@ -348,7 +366,7 @@ const CustomerReturnsList: Component = () => {
     },
     {
       c: { key: 'comment' },
-      header: () => t('label.comment'),
+      header: () => <CommentHeader />,
       // Shared comment cell — indicator + popover (ui-surface S1 col 5); the
       // column is not sortable (only Name / Status / Number / Created are).
       ...getCellDefinition('comment'),
@@ -479,7 +497,10 @@ const CustomerReturnsList: Component = () => {
           pageSize: query().first,
           total: totalCount(),
           onOffsetChange: offset => setQuery({ ...query(), offset }),
-          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+          onPageSizeChange: first => {
+            rememberPageSize(first);
+            setQuery({ ...query(), first, offset: 0 });
+          },
         }}
       />
       <NewReturnModal

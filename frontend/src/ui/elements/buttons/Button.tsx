@@ -10,17 +10,9 @@ import {
 } from '../../utils/shortcuts';
 import { createConfirmClaim } from './createConfirmClaim';
 import type { ConfirmRole } from '../feedback/dialogConfirm';
+// The collapse tiers, shared with <SplitButton> so the two can't drift.
+import { collapseTier, type Collapsible } from './collapsible';
 import styles from './Button.module.css';
-
-/*
- * Whether a labelled Button sheds its label down to just the icon on phone
- * widths (≤767px, ui-standards #btn-icons) WITHOUT an explicit `collapsible`
- * prop. Off for now — collapsing is opt-in per button. This is the single
- * switch to make collapse the app-wide default later: flip it to `true` and
- * every labelled button collapses on phones unless it passes
- * `collapsible={false}`.
- */
-const COLLAPSIBLE_BY_DEFAULT = false;
 
 export interface ButtonProps extends JSX.ButtonHTMLAttributes<HTMLButtonElement> {
   icon?: JSX.Element;
@@ -48,14 +40,22 @@ export interface ButtonProps extends JSX.ButtonHTMLAttributes<HTMLButtonElement>
    *  aria-busy (so a click can't re-fire an in-flight action). */
   loading?: boolean;
   /**
-   * Collapse to just the icon on phone widths (≤767px) to save toolbar space
-   * (ui-standards #btn-icons). Opt-in, and only meaningful with an `icon`. The
-   * label stays in the DOM (visually hidden), so the button keeps its
-   * accessible name — no aria-label needed. Omit to use the app default
-   * (COLLAPSIBLE_BY_DEFAULT, currently off); `collapsible={false}` always opts
-   * out even if that default flips.
+   * Collapse to just the icon to save toolbar space (ui-standards #btn-icons).
+   * Opt-in, and only meaningful with an `icon`. The label stays in the DOM
+   * (visually hidden), so the button keeps its accessible name — no aria-label
+   * needed; pass `title` too, since the standard asks an icon-only button to
+   * carry a tooltip.
+   *
+   *   true     — phone widths (≤767px).
+   *   'narrow' — the whole narrow-viewport range (≤1023px, breakpoints
+   *              .navOverlay). For a header whose action cluster would
+   *              otherwise wrap onto a row of its own on a tablet: a row of
+   *              chrome costs more there than the labels are worth.
+   *
+   * Omit to use the app default (COLLAPSIBLE_BY_DEFAULT, currently off);
+   * `collapsible={false}` always opts out even if that default flips.
    */
-  collapsible?: boolean;
+  collapsible?: Collapsible;
   /**
    * The key binding this button answers (spec/keyboard KB-H1, S2). ONE prop
    * drives both the accessible name of the binding (`aria-keyshortcuts`) and
@@ -164,9 +164,10 @@ export const Button = (props: ButtonProps) => {
       data-variant={local.variant ?? 'primary'}
       data-size={local.size ?? 'medium'}
       data-icon-position={local.iconPosition ?? 'start'}
-      data-collapsible={
-        (local.collapsible ?? COLLAPSIBLE_BY_DEFAULT) ? '' : undefined
-      }
+      // '' = the phone tier, 'narrow' = the whole narrow-viewport range; the
+      // CSS matches the bare attribute for the first and the value for the
+      // second, so 'narrow' collapses at both widths.
+      data-collapsible={collapseTier(local.collapsible)}
       disabled={local.disabled || local.loading}
       aria-busy={local.loading || undefined}
       // The ARIA grammar, not the platform spelling — the badge renders the

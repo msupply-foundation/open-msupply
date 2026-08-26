@@ -1,7 +1,11 @@
 import { graphqlFetch } from '../../api/graphql';
 import { locale } from '../../intl';
 import { currentStoreId } from '../../store/storeContext';
-import { mapPrintResponse, type GenerateResult } from '../reportFiles';
+import {
+  mapPrintFailure,
+  mapPrintResponse,
+  type GenerateResult,
+} from '../reportFiles';
 import { GenerateReport } from './reports.generated';
 import type { GenerateReportVariables } from './reports.generated';
 
@@ -51,7 +55,19 @@ export const generateReport = async (
     sort: params.sort,
     currentLanguage: locale(),
   };
-  const result = await graphqlFetch(GenerateReport, variables);
-  if (result.kind !== 'success') return { kind: 'failed' };
+  // `returnGraphqlErrors`: generation handles its own GraphQL errors — the
+  // opt-in kdd/state-management sanctions, the same one the store editor and
+  // the settings modals take. It earns it here because most server-side
+  // generation failures arrive as plain GraphQL errors rather than the typed
+  // member (spec/reports/contract § Generation): a broken definition, a failed
+  // transform, or a PDF render on a device whose server has no Chrome binary.
+  // On the default path those trip the global modal, which offers Reload (it
+  // re-runs the same failing generation) and Go to dashboard (it discards the
+  // user's place) for a screen that is perfectly healthy; the caller shows the
+  // message inline at the export control instead (spec/reports S5, AC-G6).
+  const result = await graphqlFetch(GenerateReport, variables, {
+    returnGraphqlErrors: true,
+  });
+  if (result.kind !== 'success') return mapPrintFailure(result);
   return mapPrintResponse(result.data.generateReport);
 };

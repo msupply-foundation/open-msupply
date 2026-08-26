@@ -2,6 +2,7 @@ import { createMemo, createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch, reportPermissionDenied } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { hasPermission } from '../../../store/storeContext';
 import { t } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
@@ -20,7 +21,10 @@ import {
   type Column,
   type SortState,
 } from '../../../ui/elements/table/DataTable';
-import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
+import {
+  CommentHeader,
+  getCellDefinition,
+} from '../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../ui/utils/rem';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { StatusChip } from '../../../ui/elements/feedback/StatusChip';
@@ -32,6 +36,12 @@ import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import { CloseIcon, PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
+import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
 import { stripEmpty } from '../../../typeHelpers';
 import {
   SupplierReturns,
@@ -60,8 +70,6 @@ import { statusLabel, isReturnDisabled } from '../detail/returnStatus';
 // bulk Delete on selection. "New return" opens the supplier selection (S2) —
 // gated by the disable-manual-returns preference (a UI-only affordance gate)
 // and the supplier-return mutate permission.
-
-const DEFAULT_PAGE_SIZE = 20;
 
 type ReturnRow = Extract<
   SupplierReturnsResult['invoices'],
@@ -112,7 +120,10 @@ const statusMeta = (status: ReturnRow['status']) => ({
 const SupplierReturnsList: Component = () => {
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
-  const { query, setQuery } = useUrlQueryState<ReturnsListState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<ReturnsListState>({
+    ...DEFAULT_STATE,
+    first: initialPageSize(),
+  });
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   const [createOpen, setCreateOpen] = createSignal(false);
   // The disable-manual-returns notice: shown instead of the supplier selection
@@ -139,14 +150,15 @@ const SupplierReturnsList: Component = () => {
     setSelectedIds([]);
   };
 
-  // GraphQL variables from URL state. The type pin lives HERE (not in the URL
-  // filter) so the list can never escape the vertical
+  // GraphQL variables from URL state. The type pin lives in the QUERY's
+  // top-level `type` argument, which both selects the permission and overwrites
+  // `filter.type` server-side — so the list can never escape the vertical, and
+  // a filter pin here would be silently discarded
   // (spec/supplier-returns/contract.md § list & lookups).
   const variables = createMemo<SupplierReturnsVariables>(() => ({
     storeId: params.storeId,
     filter: {
       ...stripEmpty(query().filter),
-      type: { equalTo: 'SUPPLIER_RETURN' },
       // Custom-field filters become the dynamicFilter AST (undefined = no-op).
       dynamicFilter: buildCustomFieldDynamicFilter(query().cf),
     },
@@ -174,6 +186,15 @@ const SupplierReturnsList: Component = () => {
   const rows = () => data.latest?.nodes ?? [];
   const totalCount = () => data.latest?.totalCount ?? 0;
 
+  // A bulk delete of the last page's rows leaves the offset past the new end
+  // (src/list/clampPageOffset.ts, issue #1117).
+  clampPageOffset({
+    total: () => settledTotal(data, page => page.totalCount),
+    offset: () => query().offset,
+    pageSize: () => query().first,
+    setOffset: offset => setQuery({ ...query(), offset }),
+  });
+
   // The store preferences this list keys off: fetched once per store.
   const [prefs] = createResource(
     () => params.storeId,
@@ -189,10 +210,7 @@ const SupplierReturnsList: Component = () => {
   // `.latest` alone would, on its first pending read, tearing down the open
   // chip. Unresolved = no restriction (and manual returns ENABLED — the common
   // case; flashing the notice would be the wrong direction).
-  const loadedPrefs = () =>
-    prefs.state === 'ready' || prefs.state === 'refreshing'
-      ? prefs.latest
-      : undefined;
+  const loadedPrefs = () => gated(prefs);
   const manualReturnsDisabled = () =>
     loadedPrefs()?.disableManualReturns ?? false;
 
@@ -339,7 +357,7 @@ const SupplierReturnsList: Component = () => {
     },
     {
       c: { key: 'comment' },
-      header: () => t('label.comment'),
+      header: () => <CommentHeader />,
       // Shared comment cell — indicator + popover (ui-surface S1 col 5); the
       // column is not sortable (only Name / Status / Number / Created are).
       ...getCellDefinition('comment'),
@@ -468,7 +486,10 @@ const SupplierReturnsList: Component = () => {
           pageSize: query().first,
           total: totalCount(),
           onOffsetChange: offset => setQuery({ ...query(), offset }),
-          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+          onPageSizeChange: first => {
+            rememberPageSize(first);
+            setQuery({ ...query(), first, offset: 0 });
+          },
         }}
       />
       <NewReturnModal

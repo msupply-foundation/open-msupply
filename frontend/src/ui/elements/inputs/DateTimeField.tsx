@@ -29,8 +29,8 @@ import styles from './DateTimeFields.module.css';
 
 export interface DateTimeFieldProps {
   label: string;
-  /** Max-width cap: `short` (default) or `full` (see FieldShell). */
-  width?: 'short' | 'full';
+  /** Max-width cap — opt-in; defaults to `full` (see FieldShell). */
+  width?: 'compact' | 'short' | 'long' | 'full';
   /**
    * The stored instant as a UTC ISO 8601 string, or null/undefined when empty.
    */

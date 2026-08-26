@@ -28,7 +28,7 @@ export type StockFilter = NonNullable<StockLinesVariables['filter']>;
 const ALL_FILTERS: Filter<StockFilter>[] = constructFilters<StockFilter>({
   // ─ user-facing, in display order ────────────────────────────────────────
   // Free-text search: matches item code, item name, OR batch (one server OR
-  // filter) — spec/stock AC-L2.
+  // filter) — spec/stock OMS-REG-INV-02.2/.3/.21.
   search: {
     label: () => t('label.search'),
     render: props => (
