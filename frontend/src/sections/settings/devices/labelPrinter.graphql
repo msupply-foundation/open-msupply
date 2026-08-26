@@ -1,0 +1,25 @@
+# Label-printer settings (spec/settings/contract.md § Devices — label printer).
+# NoPermissionRequired at both ends — any signed-in user reads and writes
+# (OMS-REG-SET-05.20). The USB preference is client-only and never part of the input
+# (OMS-REG-SET-05.22).
+query labelPrinterSettings {
+  labelPrinterSettings {
+    address
+    port
+    labelHeight
+    labelWidth
+  }
+}
+
+mutation updateLabelPrinterSettings($input: LabelPrinterSettingsInput!) {
+  updateLabelPrinterSettings(input: $input) {
+    ... on LabelPrinterUpdateResult {
+      __typename
+      success
+    }
+    ... on UpdateLabelPrinterSettingsError {
+      __typename
+      error
+    }
+  }
+}

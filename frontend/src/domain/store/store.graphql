@@ -1,0 +1,27 @@
+# The STORE LOOKUP role (spec/ui-standards/components.md § selects & lookups):
+# every store the SERVER holds — not the session's accessible ones — searched
+# on code-or-name, ordered by name, paginated for infinite scroll.
+#
+# The caller decides what, if anything, is withheld: the filter is built in TS
+# (storeResource.ts) and carries `id.notEqualAll` only when the caller actually
+# passes ids, so "exclude nothing" sends no exclusion clause at all rather than
+# an empty list the server would have to interpret.
+#
+# `siteId` is selected because the site editor reads it (a store already
+# belonging to another site is still offerable there — picking one MOVES it);
+# the destination pickers simply ignore it.
+query storeSearch($filter: StoreFilterInput, $page: PaginationInput) {
+  stores(filter: $filter, sort: [{ key: name }], page: $page) {
+    ... on StoreConnector {
+      __typename
+      totalCount
+      nodes {
+        __typename
+        id
+        code
+        storeName
+        siteId
+      }
+    }
+  }
+}

@@ -1,0 +1,37 @@
+/* An almost-expired / expired date cell (getExpiryDateCell): the date text in
+   the error tone, matching the old app's ExpiryDateCell (error.main). An
+   ACTUALLY expired date (its day has arrived) additionally steps up to
+   medium weight — the "expiring soon" → "expired" tier (spec D112). Medium,
+   not bold: 700 read too heavy against the table's regular text (design
+   review, 2026-08-14). */
+.expiring {
+  color: var(--error-main);
+}
+
+.expired {
+  font-weight: var(--weight-medium);
+}
+
+/* An ABSENT value that has a name (AbsentValue): the word standing in for a
+   value the record hasn't got yet — an outbound placeholder line's Batch. It
+   must not impersonate the values around it, and in a `code` column it would:
+   the same monospace face at the same size reads as a batch code called
+   "Unallocated". So the family reverts to the UI face and the word leans —
+   typography saying "this is a state, not a value", where a chip would put a
+   status object in a value column and out-shout every real value in it. */
+.absentValue {
+  font-family: var(--font-sans);
+  font-style: italic;
+  color: var(--text-secondary);
+}
+
+/* The comment column's iconic header (CommentHeader). Icons size off font-size
+   (1em), and the header row runs a notch smaller than the body (13px), so an
+   inherited size would draw the header glyph SMALLER than the identical glyph
+   in every cell under it. 1rem pins both to the same 16px. inline-flex so the
+   glyph sits on the header's text baseline box without adding line-box height
+   (the same reason Comment's own wrapper is inline-flex). */
+.commentHeader {
+  display: inline-flex;
+  font-size: 1rem;
+}

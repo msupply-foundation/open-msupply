@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<!-- Debug builds install alongside the production app (applicationIdSuffix
+     ".dev", app/build.gradle) — label them apart on the launcher. -->
+<resources>
+    <string name="app_name">Open mSupply (dev)</string>
+    <string name="title_activity_main">Open mSupply (dev)</string>
+</resources>

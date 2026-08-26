@@ -1,0 +1,12 @@
+# The store preferences this vertical's affordances key off
+# (spec/customer-returns/rules.md § preference & permission gates — display
+# gates only, never validation): disableManualReturns removes the list's
+# manual-creation affordance (NOT server-enforced — contract wire trap);
+# invoiceStatusOptions limits which lifecycle statuses the status controls
+# offer (empty = no restriction).
+query customerReturnPreferences($storeId: String!) {
+  preferences(storeId: $storeId) {
+    disableManualReturns
+    invoiceStatusOptions
+  }
+}

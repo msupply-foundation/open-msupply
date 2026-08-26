@@ -1,0 +1,25 @@
+/* Intrinsic dashboard grid — as many ~16rem tracks as fit, stacking when narrow. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: var(--space-4);
+}
+
+/* A bounded viewport so the DocumentFrame (which fills its container) has a
+   height to fill in the demo. */
+.frameHolder {
+  block-size: 20rem;
+}
+
+/* QR demo: the captioned symbol stacks above the click-to-expand QR. */
+.qrItem {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  align-items: flex-start;
+}
+
+.qrCaption {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}

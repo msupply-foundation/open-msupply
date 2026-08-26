@@ -1,0 +1,445 @@
+# Outbound shipment detail (spec/outbound-shipments S3). TWO separate reads
+# (rules.md § server-paginated line table): outboundDetail fetches the entity
+# (header/footer/side-panel fields — NOT the lines); outboundLines fetches one
+# server-filtered/sorted/paged lines page via the root invoiceLines. Entity
+# saves splice the returned node back; line-level changes refetch the current
+# lines page.
+
+fragment OutboundInfo on InvoiceNode {
+  id
+  status
+  invoiceNumber
+  onHold
+  createdDatetime
+  allocatedDatetime
+  pickedDatetime
+  backdatedDatetime
+  shippedDatetime
+  deliveredDatetime
+  receivedDatetime
+  verifiedDatetime
+  colour
+  comment
+  theirReference
+  transportReference
+  expectedDeliveryDate
+  taxPercentage
+  currencyRate
+  currency {
+    id
+    code
+    isHomeCurrency
+  }
+  shippingMethod {
+    id
+    method
+  }
+  user {
+    username
+    email
+  }
+  requisition {
+    id
+    requisitionNumber
+    createdDatetime
+    user {
+      username
+    }
+  }
+  linkedShipment {
+    id
+  }
+  otherParty(storeId: $storeId) {
+    id
+    name
+    code
+    isOnHold
+    store {
+      id
+    }
+  }
+  pricing {
+    totalBeforeTax
+    totalAfterTax
+    foreignCurrencyTotalAfterTax
+    stockTotalBeforeTax
+    stockTotalAfterTax
+    serviceTotalBeforeTax
+    serviceTotalAfterTax
+    taxPercentage
+    # Whole-shipment volume sum over non-service lines (placeholders
+    # included) — the line-table footer total (D45), which the client can't
+    # sum itself now the lines are server-paginated (contract § detail line
+    # table). The price total is stockTotalAfterTax above.
+    totalVolume
+  }
+  # Custom-field VALUES (JSON object), scope-filtered — backs the Custom fields
+  # tab + prominent toolbar fields.
+  customFields
+}
+
+fragment OutboundLine on InvoiceLineNode {
+  id
+  type
+  itemId
+  itemName
+  itemCode
+  item {
+    id
+    code
+    name
+    unitName
+    isVaccine
+    doses
+  }
+  packSize
+  numberOfPacks
+  shippedNumberOfPacks
+  receivedNumberOfPacks
+  batch
+  expiryDate
+  sellPricePerPack
+  totalBeforeTax
+  totalAfterTax
+  taxPercentage
+  foreignCurrencyPriceBeforeTax
+  note
+  locationName
+  location {
+    id
+    code
+    onHold
+  }
+  stockLine {
+    id
+    onHold
+  }
+  vvmStatus {
+    id
+    description
+  }
+  volumePerPack
+}
+
+query outboundDetail($storeId: String!, $id: String!) {
+  invoice(storeId: $storeId, id: $id, type: OUTBOUND_SHIPMENT) {
+    __typename
+    ... on InvoiceNode {
+      ...OutboundInfo
+    }
+    ... on NodeError {
+      error {
+        description
+      }
+    }
+  }
+}
+
+# The side panel's "Copy to clipboard" (spec S3 § record actions): the WHOLE
+# shipment — header + every line, unpaginated — in one fetch, written to the
+# clipboard as pretty JSON. The detail's own lines read is server-paged, so
+# this reads the invoice.lines connector directly (contract § detail line
+# table). Reuses the OutboundInfo / OutboundLine fragments so the copied JSON
+# mirrors the app's own shape (the fullStocktake pattern). NodeError is
+# promoted to the global error modal by the caller.
+query fullOutbound($storeId: String!, $id: String!) {
+  invoice(storeId: $storeId, id: $id, type: OUTBOUND_SHIPMENT) {
+    __typename
+    ... on InvoiceNode {
+      ...OutboundInfo
+      lines {
+        totalCount
+        nodes {
+          ...OutboundLine
+        }
+      }
+    }
+    ... on NodeError {
+      error {
+        description
+      }
+    }
+  }
+}
+
+# One server-filtered/sorted/paged lines page (contract § detail line table).
+# Callers always merge invoiceId (and, for the stock/placeholder table,
+# type notEqualTo SERVICE) into the filter; the same operation serves the
+# service-lines read (type equalTo SERVICE) and the status pre-flight count
+# probes. Wire trap: only the LAST sort key is honoured — send exactly one.
+query outboundLines(
+  $storeId: String!
+  $page: PaginationInput
+  $filter: InvoiceLineFilterInput
+  $sort: [InvoiceLineSortInput!]
+) {
+  invoiceLines(storeId: $storeId, page: $page, filter: $filter, sort: $sort) {
+    ... on InvoiceLineConnector {
+      __typename
+      totalCount
+      nodes {
+        ...OutboundLine
+      }
+    }
+  }
+}
+
+# Header / status / hold / transport / pricing updates. Returns the entity
+# only (no lines — the view refetches the lines page after a status change,
+# which can trim zero-quantity rows server-side). Typed errors are selected so
+# status-change rejections translate (OMS-REG-DIST-04.13, OMS-REG-DIST-02.10, OMS-REG-DIST-02.22, OMS-REG-DIST-03.9 — the
+# unallocated-lines member carries the offending lines).
+mutation updateOutboundShipment(
+  $storeId: String!
+  $input: UpdateOutboundShipmentInput!
+) {
+  updateOutboundShipment(storeId: $storeId, input: $input) {
+    __typename
+    ... on InvoiceNode {
+      ...OutboundInfo
+    }
+    ... on UpdateOutboundShipmentError {
+      error {
+        __typename
+        description
+        ... on CannotChangeStatusOfInvoiceOnHold {
+          description
+        }
+        ... on CannotReverseInvoiceStatus {
+          description
+        }
+        ... on InvoiceIsNotEditable {
+          description
+        }
+        ... on CannotHaveEstimatedDeliveryDateBeforeShippedDate {
+          description
+        }
+        ... on CannotIssueInForeignCurrency {
+          description
+        }
+        ... on CanOnlyChangeToAllocatedWhenNoUnallocatedLines {
+          invoiceLines {
+            nodes {
+              id
+              itemName
+            }
+          }
+        }
+      }
+    }
+    ... on NodeError {
+      error {
+        description
+      }
+    }
+  }
+}
+
+# Change the customer (OMS-REG-DIST-02.20): the response is the NEW identity (fresh id, same
+# number) — the caller renavigates to it; the old id stops resolving.
+mutation updateOutboundShipmentName(
+  $storeId: String!
+  $input: UpdateOutboundShipmentNameInput!
+) {
+  updateOutboundShipmentName(storeId: $storeId, input: $input) {
+    __typename
+    ... on InvoiceNode {
+      id
+    }
+    ... on UpdateOutboundShipmentNameError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# Delete the shipment from its detail (OMS-REG-DIST-01.7/.8).
+mutation deleteOutboundShipment($storeId: String!, $id: String!) {
+  deleteOutboundShipment(storeId: $storeId, id: $id) {
+    __typename
+    ... on DeleteResponse {
+      id
+    }
+    ... on DeleteOutboundShipmentError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# Bulk line delete (detail selection footer): stock, placeholder, and service
+# lines each go through their own batch array in one call.
+mutation deleteOutboundLines(
+  $storeId: String!
+  $stockLines: [DeleteOutboundShipmentLineInput!]
+  $placeholders: [DeleteOutboundShipmentUnallocatedLineInput!]
+  $serviceLines: [DeleteOutboundShipmentServiceLineInput!]
+) {
+  batchOutboundShipment(
+    storeId: $storeId
+    input: {
+      deleteOutboundShipmentLines: $stockLines
+      deleteOutboundShipmentUnallocatedLines: $placeholders
+      deleteOutboundShipmentServiceLines: $serviceLines
+    }
+  ) {
+    deleteOutboundShipmentLines {
+      id
+      response {
+        __typename
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+    deleteOutboundShipmentUnallocatedLines {
+      id
+      response {
+        __typename
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+    deleteOutboundShipmentServiceLines {
+      id
+      response {
+        __typename
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+  }
+}
+
+# Auto-allocate one placeholder (FEFO — the shared policy, spec/stock-allocation AC-AL1..AL5). The warning connectors feed
+# the skip/expiring-soon notices; the view refetches the shipment afterwards
+# (placeholder, lines, and pricing all move server-side).
+mutation allocateOutboundLine($storeId: String!, $lineId: String!) {
+  allocateOutboundShipmentUnallocatedLine(storeId: $storeId, lineId: $lineId) {
+    __typename
+    ... on AllocateOutboundShipmentUnallocatedLineNode {
+      inserts {
+        totalCount
+      }
+      updates {
+        totalCount
+      }
+      deletes {
+        id
+      }
+      skippedExpiredStockLines {
+        nodes {
+          batch
+          expiryDate
+        }
+      }
+      skippedOnHoldStockLines {
+        nodes {
+          batch
+        }
+      }
+      skippedUnusableVvmStatusLines {
+        nodes {
+          batch
+        }
+      }
+      issuedExpiringSoonStockLines {
+        nodes {
+          batch
+          expiryDate
+        }
+      }
+    }
+    ... on AllocateOutboundShipmentUnallocatedLineError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# Zero a placeholder's quantity (the allocate flow's zero-quantity cleanup
+# offers deletion instead; this covers the "zero it" path from the editor).
+mutation updateOutboundUnallocatedLine(
+  $storeId: String!
+  $input: UpdateOutboundShipmentUnallocatedLineInput!
+) {
+  updateOutboundShipmentUnallocatedLine(storeId: $storeId, input: $input) {
+    __typename
+    ... on InvoiceLineNode {
+      id
+      numberOfPacks
+    }
+    ... on UpdateOutboundShipmentUnallocatedLineError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# Add every stock item of a master list as zero-quantity placeholders (OMS-REG-DIST-03.10).
+mutation addToOutboundFromMasterList(
+  $storeId: String!
+  $shipmentId: String!
+  $masterListId: String!
+) {
+  addToOutboundShipmentFromMasterList(
+    storeId: $storeId
+    input: { shipmentId: $shipmentId, masterListId: $masterListId }
+  ) {
+    __typename
+    ... on InvoiceLineConnector {
+      totalCount
+    }
+    ... on AddToOutboundShipmentFromMasterListError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# Master lists joined to the CUSTOMER (rules.md § adding from a master list —
+# the list must be visible to the customer, not just the store).
+query customerMasterLists($storeId: String!, $customerNameId: String!) {
+  masterLists(
+    storeId: $storeId
+    filter: { existsForNameId: { equalTo: $customerNameId } }
+  ) {
+    ... on MasterListConnector {
+      __typename
+      nodes {
+        id
+        name
+      }
+    }
+  }
+}
+
+# Stocktake-conflict check for backdating (OMS-REG-DIST-04.27): any stocktake counted on or
+# after the chosen backdated date — its reissued lines would predate stock
+# counts already on record. (The old client's named outboundStocktakeCountAfterDate
+# query is absent on this server; this is the SAME stocktakes date filter that
+# query wrapped — verified against the old client's PickedDateInput: identical
+# stocktakeDate afterOrEqualTo, deliberately no status scoping.)
+query outboundStocktakeConflict($storeId: String!, $onOrAfter: NaiveDate) {
+  stocktakes(
+    storeId: $storeId
+    filter: { stocktakeDate: { afterOrEqualTo: $onOrAfter } }
+  ) {
+    ... on StocktakeConnector {
+      __typename
+      totalCount
+    }
+  }
+}

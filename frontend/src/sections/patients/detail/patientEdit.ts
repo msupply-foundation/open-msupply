@@ -1,0 +1,194 @@
+import { getDisplayAge, t } from '../../../intl';
+import { isoDateToDate } from '../../../ui/elements/inputs/dateTimeConvert';
+import type { FieldError } from '../../../ui/layout/Form/formValidation';
+import type { Gender } from '../../../domain/patient';
+import type { InsertPatientVariables } from '../list/insertPatient.generated';
+import type { UpdatePatientVariables } from './updatePatient.generated';
+import type { PatientResult } from './patient.generated';
+
+type PatientNode = NonNullable<PatientResult['patient']>;
+
+// The plain-path editable field set (spec/patients S3 Details, the built-in
+// default). Only fields the plain path can WRITE — address2 / country / email /
+// website are read-only through this path (contract › editing wire trap), and
+// id / kind / home store / creation time / custom fields are immutable, so none
+// appear here.
+export interface PatientDraft {
+  code: string;
+  code2: string;
+  firstName: string;
+  lastName: string;
+  gender: Gender | null;
+  dateOfBirth: string | null;
+  address1: string;
+  phone: string;
+  nextOfKinId: string | null;
+  nextOfKinName: string;
+  isDeceased: boolean;
+  dateOfDeath: string | null;
+}
+
+export const emptyDraft = (): PatientDraft => ({
+  code: '',
+  code2: '',
+  firstName: '',
+  lastName: '',
+  gender: null,
+  dateOfBirth: null,
+  address1: '',
+  phone: '',
+  nextOfKinId: null,
+  nextOfKinName: '',
+  isDeceased: false,
+  dateOfDeath: null,
+});
+
+export const seedDraft = (node: PatientNode): PatientDraft => ({
+  code: node.code,
+  code2: node.code2 ?? '',
+  firstName: node.firstName ?? '',
+  lastName: node.lastName ?? '',
+  gender: node.gender,
+  dateOfBirth: node.dateOfBirth,
+  address1: node.address1 ?? '',
+  phone: node.phone ?? '',
+  nextOfKinId: node.nextOfKinId ?? null,
+  nextOfKinName: node.nextOfKinName ?? '',
+  isDeceased: node.isDeceased,
+  dateOfDeath: node.dateOfDeath,
+});
+
+// The plain-path built-in form's required-field rules (AC-C3): code + first
+// name + last name, each a plain required error (deferred to Save). One list so
+// the create wizard and the edit tab validate identically; feed to
+// createFormValidation and read back per field / as the summary.
+//
+// `codeTaken` is the answer to "does another patient hold this code?"
+// (spec/patients § generating a code, DIS-02 `.57`) — the caller owns the check
+// because it is asynchronous and store-scoped, and runs it on the save attempt.
+// It carries a MESSAGE, so it shows the moment the answer lands rather than
+// waiting to be armed. Save stays enabled either way; the block happens on the
+// attempt.
+export const patientFieldErrors = (
+  draft: PatientDraft,
+  codeTaken = false
+): FieldError[] => [
+  { id: 'code', label: t('label.code'), failed: draft.code.trim() === '' },
+  {
+    id: 'code',
+    label: t('label.code'),
+    failed: codeTaken,
+    message: t('error.duplicated-code', { code: draft.code.trim() }),
+  },
+  {
+    id: 'firstName',
+    label: t('label.first-name'),
+    failed: draft.firstName.trim() === '',
+  },
+  {
+    id: 'lastName',
+    label: t('label.last-name'),
+    failed: draft.lastName.trim() === '',
+  },
+];
+
+// The plain-path built-in form requires code + first name + last name before it
+// will submit (AC-C3); the server itself requires only id + code.
+export const isDraftValid = (draft: PatientDraft): boolean =>
+  draft.code.trim() !== '' &&
+  draft.firstName.trim() !== '' &&
+  draft.lastName.trim() !== '';
+
+// Structural equality of two drafts (dirty check). Both are plain field bags,
+// so a stable stringify is exact and cheap.
+export const draftEquals = (a: PatientDraft, b: PatientDraft): boolean =>
+  JSON.stringify(a) === JSON.stringify(b);
+
+// Empty string → null: the plain-path write treats an omitted optional as
+// cleared, so a blank box must be sent as an explicit null, not "".
+const orNull = (value: string): string | null => (value.trim() ? value : null);
+
+// The FULL plain-path field set for a create OR an edit. updatePatient is a
+// destructive full replace — EVERY field is sent so an omitted one clears and
+// `name` recomputes from the parts (AC-E2). The same shape serves insert
+// (InsertPatientInput === UpdatePatientInput minus none). date of death rides
+// the deceased flag: only sent when deceased (the form hides it otherwise).
+const toFullInput = (id: string, draft: PatientDraft) => ({
+  id,
+  code: draft.code,
+  code2: orNull(draft.code2),
+  firstName: orNull(draft.firstName),
+  lastName: orNull(draft.lastName),
+  gender: draft.gender,
+  dateOfBirth: draft.dateOfBirth,
+  address1: orNull(draft.address1),
+  phone: orNull(draft.phone),
+  isDeceased: draft.isDeceased,
+  dateOfDeath: draft.isDeceased ? draft.dateOfDeath : null,
+  nextOfKinId: draft.nextOfKinId,
+  nextOfKinName: orNull(draft.nextOfKinName),
+});
+
+export const toInsertInput = (
+  id: string,
+  draft: PatientDraft
+): InsertPatientVariables['input'] => toFullInput(id, draft);
+
+export const toUpdateInput = (
+  id: string,
+  draft: PatientDraft
+): UpdatePatientVariables['input'] => toFullInput(id, draft);
+
+// Age in COMPLETED CALENDAR YEARS derived from date of birth (AC-M3). Undefined
+// when there is no (or a future) dob.
+//
+// Compares CALENDAR FIELDS, not instants: subtract the years, then take one
+// back if this year's birthday hasn't come round yet. Elapsed-time arithmetic
+// gets this wrong twice over — floor(days / 365) overcounts once leap days
+// accumulate (a 1 January dob three years back reads a year high late in
+// December), and even a real `differenceInYears` measures instants, so a zone
+// that has CHANGED offset since the birth year (Asia/Kathmandu moved +05:30 →
+// +05:45 in 1986) comes up 15 minutes short of the birthday and reads a year
+// low. Integer comparison on local y/m/d has neither failure mode.
+export const ageFromDob = (dob: string | null): number | undefined => {
+  if (!dob) return undefined;
+  const birth = isoDateToDate(dob);
+  if (!birth) return undefined;
+  const now = new Date();
+  const years = now.getFullYear() - birth.getFullYear();
+  const beforeBirthday =
+    now.getMonth() < birth.getMonth() ||
+    (now.getMonth() === birth.getMonth() && now.getDate() < birth.getDate());
+  const age = beforeBirthday ? years - 1 : years;
+  return age < 0 ? undefined : age;
+};
+
+/**
+ * The form's age readout for a date of birth under a year old — months and days
+ * ("5 months, 18 days", days alone under a month), the same string the summary
+ * header shows (spec/patients rules › age). Whole years cannot express an
+ * infant's age: `ageFromDob` completes no year and reads a bare `0`.
+ *
+ * Undefined at a year and over, and for a missing or future date of birth —
+ * those are the years entry box's business.
+ */
+export const ageMonthsAndDays = (dob: string | null): string | undefined => {
+  const years = ageFromDob(dob);
+  if (!dob || years === undefined || years >= 1) return undefined;
+  return getDisplayAge(dob) || undefined;
+};
+
+/**
+ * The inverse: an age entered IN PLACE of a date of birth back-fills the START
+ * OF THAT YEAR (spec/patients rules › age) — i.e. the birth year is exact and
+ * the day within it is not, which is what makes the resulting date "estimated".
+ * The estimated-ness is a property of the value, not a stored flag: the plain
+ * path has nowhere to put one (the wire input carries no such field) and the
+ * spec keeps it out of the saved record.
+ *
+ * Round-trips through ageFromDob exactly, in every timezone: the birthday is
+ * 1 January, so by any later day of the current local year that many calendar
+ * years are complete.
+ */
+export const dobFromAge = (age: number): string =>
+  `${new Date().getFullYear() - age}-01-01`;

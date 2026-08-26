@@ -1,0 +1,81 @@
+/*
+ * WidgetCard — a single interactive card (<a> or <button>). Whole surface is
+ * the control: a bordered raised tile that lifts on hover and shows the focus
+ * ring on keyboard focus. rem/em sizing; colours from tokens (only px are the
+ * hairline border + focus outline + the shadow offsets in the tokens).
+ */
+
+.card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  inline-size: 100%;
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-1);
+  color: var(--text-body);
+  font-family: inherit;
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    box-shadow var(--motion-fast) ease,
+    border-color var(--motion-fast) ease,
+    transform var(--motion-fast) ease;
+}
+
+.card:hover {
+  border-color: var(--primary-main);
+  box-shadow: var(--shadow-3);
+  transform: translateY(-0.125rem);
+}
+
+.card:focus-visible {
+  outline: none;
+  border-color: var(--primary-main);
+  box-shadow: var(--focus-ring);
+}
+
+.icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  border-radius: var(--radius-md);
+  background: var(--bg-icon);
+  color: var(--primary-main);
+  font-size: 1.375rem;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.title {
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  line-height: var(--line-tight);
+}
+
+.subtitle {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: var(--line-tight);
+  overflow-wrap: anywhere;
+}
+
+/* Beyond zeroing the transition (--motion-fast does that): drop the hover LIFT
+   itself, so the card doesn't jump a few pixels under the cursor. The shadow
+   and border still change, so hover is never signalled by motion alone. */
+@media (prefers-reduced-motion: reduce) {
+  .card:hover {
+    transform: none;
+  }
+}

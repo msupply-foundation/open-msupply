@@ -1,0 +1,269 @@
+/*
+ * MultiSelect — Kobalte multi-combobox, our markup + CSS. A wrapping field
+ * that holds tags + the input; the menu is portaled and popper-positioned
+ * under the control. rem/em + logical properties → mirrors in RTL for free.
+ */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--input-field-gap);
+  min-width: 0;
+}
+
+/* Width caps — TextField's data-width vocabulary AND its meanings, rule for
+   rule (see TextField.module.css, the reference block). Until 2026-08-13 this
+   field was hardwired to the `long` cap with no `width` prop at all, so a
+   caller couldn't correct it. `compact` caps only the control box (rule after
+   the base .control rules below, for no-descending-specificity). */
+.field[data-width='compact'],
+.field[data-width='short'] {
+  max-width: var(--input-max-short);
+}
+
+.field[data-width='long'] {
+  max-width: var(--input-max-long);
+}
+
+.field[data-width='full'] {
+  max-width: 100%;
+}
+
+/* Label + its labelInfo affordance on one line (only rendered when there IS a
+   labelInfo — as TextField.module.css). */
+.labelRow {
+  display: flex;
+  align-items: center;
+}
+
+.label {
+  /* The shared field-label token — see Select.module.css / tokens.css. */
+  font-size: var(--field-label-font-size);
+  font-weight: var(--field-label-font-weight);
+  line-height: var(--field-label-line-height);
+  color: var(--field-label-color);
+}
+
+.control {
+  display: flex;
+  align-items: flex-start;
+  min-height: var(--input-height);
+  border: 1px solid var(--input-border);
+  border-radius: var(--input-radius);
+  background: var(--bg-white);
+  transition:
+    border-color var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease;
+}
+
+.control:focus-within {
+  border-color: var(--secondary-main);
+  box-shadow: var(--focus-ring);
+}
+
+/* `compact` narrows only the control box; the field above keeps its `short`
+   cap so a longer label still reads. As TextField.module.css. */
+.field[data-width='compact'] .control {
+  max-width: var(--input-max-compact);
+}
+
+.tags {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding-block: 0.125rem;
+  padding-inline: 0.5rem 0.25rem;
+  background: var(--bg-icon);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  color: var(--text-body);
+  max-width: 100%;
+}
+
+.tagLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tagRemove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--gray-dark);
+  font-size: 0.875rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.tagRemove:hover {
+  color: var(--error-main);
+}
+
+.input {
+  flex: 1;
+  min-width: 6rem;
+  height: 1.75rem;
+  border: none;
+  background: transparent;
+  color: var(--text-body);
+  font-family: inherit;
+  font-size: var(--text-sm);
+}
+
+.input:focus {
+  outline: none;
+}
+
+.input::placeholder {
+  color: var(--gray-main);
+}
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  padding-inline: var(--space-2) var(--space-3);
+  border: none;
+  background: transparent;
+  color: var(--gray-dark);
+  cursor: pointer;
+}
+
+.toggleIcon {
+  display: inline-flex;
+  font-size: 1.25rem;
+  transition: transform var(--motion-base) ease;
+}
+
+/* Kobalte marks the icon with data-expanded while the menu is open. */
+.toggleIcon[data-expanded] {
+  transform: rotate(180deg);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  max-height: min(18rem, var(--kb-popper-content-available-height));
+  padding: var(--space-2);
+  background: var(--surface-raised);
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-4);
+  color: var(--text-body);
+  font-size: var(--text-sm);
+  z-index: 50;
+}
+
+.listbox {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+  outline: none;
+}
+
+.item {
+  /* Never shrink below the row's own text — see Combobox.module.css `.item` for
+     the full account: a scrolling column flex box shrinks its rows, and the
+     coarse-pointer touch floor below replaces the `min-height: auto` that
+     otherwise holds them open, so on a tablet a wrapped option collapsed into
+     44px and overlapped its neighbour (#1039). The touch floor still applies. */
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+  /* A wrapping row must be allowed to be narrower than its longest word, or the
+     overrun becomes a horizontal scrollbar over the options (#1041) — see
+     Combobox.module.css for why `anywhere` and not `break-word`. */
+  overflow-wrap: anywhere;
+}
+
+.item[data-highlighted] {
+  background: var(--bg-group-main);
+}
+
+.itemBody {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+}
+
+.itemIndicator {
+  margin-inline-start: auto;
+  display: inline-flex;
+  font-size: 1rem;
+  color: var(--secondary-main);
+}
+
+.status {
+  padding: var(--space-2);
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+}
+
+.helper {
+  margin: 0;
+  font-size: var(--text-xs);
+  line-height: 1.3;
+  color: var(--text-secondary);
+}
+
+/* Small variant: denser frame + 13px label/input, matching the shared input
+   size scale (--input-height-sm / --input-font-sm). */
+.field[data-size='small'] .control {
+  min-height: var(--input-height-sm);
+}
+
+.field[data-size='small'] .label,
+.field[data-size='small'] .input {
+  font-size: var(--input-font-sm);
+}
+
+@media (pointer: coarse) {
+  /* Standard 48 / small 44 (both WCAG 2.5.5 AAA), matching every other input;
+     .item rows keep the generic --touch-target tap floor. */
+  .control {
+    min-height: var(--input-height-touch);
+  }
+
+  .field[data-size='small'] .control {
+    min-height: var(--input-height-sm-touch);
+  }
+
+  /* Touch size normalisation — BOTH sizes read the same on the same surface
+     (ui-standards #field-touch-sizing). At --text-sm, not --input-font-touch:
+     see the Select trigger's note for the tablet review behind that. The small
+     selector has to be REPEATED here — a media query adds no specificity, so a
+     bare `.input` (0,1,0) loses to `.field[data-size='small'] .input` (0,3,0)
+     above and the rule silently never lands on small. */
+  .input,
+  .field[data-size='small'] .input {
+    font-size: var(--text-sm);
+  }
+
+  .item {
+    min-height: var(--touch-target);
+  }
+}

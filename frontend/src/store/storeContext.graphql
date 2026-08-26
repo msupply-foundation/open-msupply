@@ -1,0 +1,107 @@
+# Spec (Store Login, Guard 3): one query for store preferences and the user's
+# permissions in the store.
+query storeContext($storeId: String!) {
+  storePreferences(storeId: $storeId) {
+    id
+    packToOne
+    # Inbound-shipment gates (spec/inbound-shipments › store-preference gates):
+    # foreign-currency issuing and manual internal-order linking.
+    issueInForeignCurrency
+    manuallyLinkInternalOrderToInboundShipment
+    omProgramModule
+    vaccineModule
+    # Threshold defaults the reports argument form seeds (spec/reports/rules
+    # "Arguments" — defaults are client-seeded from store preferences).
+    monthsOverstock
+    monthsUnderstock
+    monthsItemsExpire
+    stocktakeFrequency
+    monthlyConsumptionLookBackPeriod
+    monthsLeadTime
+    # Prescription gate (spec/prescriptions › store-preference gates): the
+    # prescribed-quantity field/column. A legacy store preference, not a
+    # PreferencesNode field.
+    editPrescribedQuantityOnPrescription
+    # The plugin slot context's store-preference gate (spec/plugins/sdk-contract
+    # § contributions): the customer-statistics preference a contribution's
+    # `when` may gate on. Read globally here — a contribution is gated at every
+    # slot, not per screen, so it cannot ride the internal-order detail's own
+    # context query.
+    useConsumptionAndStockFromCustomersForInternalOrders
+  }
+  # Typed preferences (PreferencesNode). The chrome sync indicator's count-badge
+  # gate (spec/chrome § sync indicator); rides on guard 3 so the post-sync
+  # refresh keeps it current. The stocktake AND stock display gates
+  # (spec/stocktakes + spec/stock › store-preference gates) ride here too —
+  # global state, read by the detail line table, line editor, create modal, and
+  # the whole stock vertical (list/detail/new-stock/adjust).
+  preferences(storeId: $storeId) {
+    syncRecordsDisplayThreshold
+    # Patient gender picker (spec/patients § configuration gates › gender
+    # options): the configured subset of GenderTypeNode every gender picker
+    # (create/edit form, list gender filter) offers.
+    genderOptions
+    manageVaccinesInDoses
+    manageVvmStatusForStock
+    allowTrackingOfStockByDonor
+    # Blind stocktake (spec/stocktakes › store-preference gates): hides
+    # Snapshot/Difference while counting and Reason for the stocktake's whole
+    # life, in the detail line table, line editor, and create modal.
+    blindStocktake
+    # spec/stock: the VVM status FIELD (S2/S3) shows when this OR
+    # manageVvmStatusForStock is on; the adjust date control (S4) is gated on
+    # backdating.inventoryAdjustmentsEnabled and bounded by maxDays.
+    # (sortByVvmStatusThenExpiry is also an outbound gate — one shared field.)
+    sortByVvmStatusThenExpiry
+    # Outbound display/affordance gates (spec/outbound-shipments § store
+    # preference gates) — same global PreferencesNode, read by the list filter,
+    # status crumbs, line editor, and allocation policy.
+    expiredStockPreventIssue
+    expiredStockIssueThreshold
+    invoiceStatusOptions
+    # Inbound-shipment gates (spec/inbound-shipments): procurement (from-PO
+    # creation option), authorisation lock, and the backdating window.
+    useProcurementFunctionality
+    externalInboundShipmentLinesMustBeAuthorised
+    backdating {
+      inventoryAdjustmentsEnabled
+      shipmentsEnabled
+      maxDays
+    }
+    # Dashboard display gates + label slots (spec/dashboard › display gates):
+    # the alert / look-back / expiry thresholds that show or hide the gated
+    # stats and fill their label slots. useProcurementFunctionality above also
+    # gates the dashboard's external-inbound panel.
+    numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts
+    numberOfMonthsThresholdToShowLowStockAlertsForProducts
+    numberOfMonthsThresholdToShowOverStockAlertsForProducts
+    firstThresholdForExpiringItems
+    secondThresholdForExpiringItems
+    # The bottom bar's store colour (spec/chrome § bottom bar): the store's
+    # custom-colour preference, applied to the app footer with contrast-derived
+    # text; unset/unparseable leaves the bar's default. Set from the store
+    # editor's Preferences tab (spec/settings § the store editor).
+    storeCustomColour
+    # Internal-orders create gate (spec/internal-orders AC-C1/C5), read by the
+    # dashboard's Order-more shortcut so it runs the same recent-stocktake
+    # warning as the list's New-order button (which fetches it in its own
+    # list context).
+    warnWhenMissingRecentStocktake {
+      enabled
+      maxAge
+      minItems
+    }
+  }
+  me {
+    ... on UserNode {
+      __typename
+      userId
+      permissions(storeId: $storeId) {
+        nodes {
+          storeId
+          permissions
+        }
+      }
+    }
+  }
+}

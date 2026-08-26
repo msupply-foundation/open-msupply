@@ -1,0 +1,240 @@
+/* Pagination bar (ui-standards § tables → pagination, unit 10): ONE
+   inline-end cluster — rows-per-page, the range "1–20 of 38", the pager —
+   right-aligned in the table's footer band (the spec's .mrt-pager /
+   .pgn-pager margin-left:auto). Bar text is quiet (--text-secondary); the
+   range sits in the body tone with tabular-nums. Deviations recorded in
+   the ledger: --text-sm (14px) kept over the spec's 13px (sizes pass
+   deferred), and the pager keeps our fixed-slot layout over the spec's
+   plain pill list. */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  /* Fill the container's width so the cluster right-aligns. A no-op in a
+     block context (showcase card), but essential inside a flex parent like
+     ContentFooter, where a child otherwise shrinks to its content and the
+     whole bar would clump at the start. */
+  flex: 1;
+  /* The spec's cluster gap (.mrt-pager gap: 1.25rem — between the
+     rows-per-page control, the range and the pager; no 1.25rem space
+     token). */
+  gap: 1.25rem;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+/* A pager SHARING a bar with other content (a detail view's status footer —
+   `inBar`): it sizes to its own cluster instead of claiming the bar's free
+   space. Without this the pager's flex: 1 above would let a crowded bar
+   squeeze the cluster below its content width, since flex shrinking beats the
+   nowrap inside it; at 0 0 auto the bar wraps the whole cluster onto the next
+   line instead, which is the intended narrow-screen behaviour. */
+.inBar {
+  flex: 0 0 auto;
+}
+
+/* The range "1–20 of 38" — body tone against the quiet bar text, and
+   tabular-nums so the digits keep constant width while paging (the spec's
+   .mrt-page-range). No bold (unit 10 — the old emphasised summary is
+   retired). */
+/* The total ("of 380") — quiet, tabular so the digits hold still as pages
+   change, and never wrapping away from the pager it belongs to. */
+.total {
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.range {
+  color: var(--text-body);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* The rows-per-page Select, laid out inline for the bar: label beside a compact
+   trigger (overrides the Select field's default stacked column). No max-width
+   override: the field's own `[data-width]` rule outranks a bare class either
+   way, and none is needed — .pageSize is a content-sized flex item of the bar,
+   so the `full` default's `max-width: 100%` never stretches it. */
+.pageSize {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-2);
+  white-space: nowrap;
+}
+
+/* "Rows per page" is a plain caption here, not a form label — override the Select
+   label's medium weight so it reads as normal footer text. */
+.pageSize label {
+  font-weight: var(--weight-regular);
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  /* The ONLY spacing between pager items — no per-button margin (that stacked
+     with this gap and left the 1/‹ and ›/N pairs too far apart). Tight, since
+     these are compact controls. */
+  gap: 0.125rem;
+}
+
+/* Pager buttons (the spec's .mrt-page-btn / .pgn-pg): 2rem quiet squares —
+   transparent at rest, a soft wash on hover, --radius-sm corners (the
+   spec's 0.375rem has no token; the flat-button radius is the nearest). */
+.pageButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 var(--space-1);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-body);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+/* The prev/next arrow icons are drawn larger than the page-number text so they
+   read as chunky, clear controls (the MUI paths are filled, so size = weight). */
+.pageButton svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.pageButton:disabled {
+  /* Disabled pager arrows dim via the shared --disabled-opacity. */
+  opacity: var(--disabled-opacity);
+  cursor: default;
+}
+
+.pageButton:hover:not(:disabled) {
+  /* Spec hover: rgba(0,0,0,0.06) — a 6% body-tone wash via tokens. */
+  background: color-mix(in srgb, var(--text-body) 6%, transparent);
+}
+
+/* The current page — a plain display (not editable). The spec's active pill:
+   a 10% action-blue tint with semibold blue text, matching the pager
+   buttons' footprint so the row stays aligned. */
+.pageCurrent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: 2rem;
+  block-size: 2rem;
+  padding-inline: var(--space-1);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--secondary-main) 10%, transparent);
+  color: var(--secondary-main);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+}
+
+/* The ellipsis standing for hidden pages — a button, styled as the quiet
+   page slots are so the run reads as one row of pages rather than a control
+   dropped among them. Same footprint as a page button, so swapping it for the
+   input below shifts nothing. */
+.pageEllipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 var(--space-1);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.pageEllipsis:hover {
+  background: color-mix(in srgb, var(--text-body) 6%, transparent);
+}
+
+/* The page box the ellipsis becomes. Sized to the slot it replaces so the
+   pager keeps its width while you type; the spinners go because the pager's
+   own arrows already step a page and a 2rem box has no room for them. */
+.pageInput {
+  inline-size: 3rem;
+  block-size: 2rem;
+  padding-inline: var(--space-1);
+  border: 1px solid var(--secondary-main);
+  border-radius: var(--radius-sm);
+  background: var(--bg-white);
+  color: var(--text-body);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.pageInput::-webkit-inner-spin-button,
+.pageInput::-webkit-outer-spin-button {
+  margin: 0;
+  appearance: none;
+}
+
+/* Page position "1 / 8" — the narrow-screen stand-in for the number slots.
+   Hidden at every width where those slots render (they say the same thing,
+   better); the media query below turns it on as they go. */
+.position {
+  display: none;
+  padding-inline: var(--space-1);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* The COMPACT face (spec § pagination responsive): the pager collapses to
+   prev/next + the range — the rows-per-page selector and the NUMBER slots hide
+   (the .numberSlot class rides on the first/middle/last buttons and the
+   current-page pill; the arrows keep only themselves), with the page position
+   taking the slots' place between the arrows. The page size stays whatever was
+   last chosen (default 20).
+
+   Three triggers, because "too narrow" has three meanings and the rules are
+   identical in each:
+     1. a narrow VIEWPORT (≤480px) — a phone, whatever the pager sits in;
+     2. a narrow CONTAINER (≤30rem) — the pager owns its bar but that bar is
+        itself narrow (a table in a split layout, a card);
+     3. a SHARED bar (`inBar`) narrower than 48rem — the pager is one of four
+        clusters in a detail screen's status footer, so it must give way long
+        before it would if it had the bar to itself. This is the case the
+        viewport query kept missing: a 565px-wide screen is not ≤480px, but
+        the pager was still sharing ~530px with Hold, the status track and the
+        status button, and the bar wrapped to three rows. */
+@media (max-width: 480px) {
+  .pageSize,
+  .numberSlot {
+    display: none;
+  }
+
+  .position {
+    display: inline-block;
+  }
+}
+
+@container content-footer (max-width: 30rem) {
+  .pageSize,
+  .numberSlot {
+    display: none;
+  }
+
+  .position {
+    display: inline-block;
+  }
+}
+
+@container content-footer (max-width: 48rem) {
+  .inBar .pageSize,
+  .inBar .numberSlot {
+    display: none;
+  }
+
+  .inBar .position {
+    display: inline-block;
+  }
+}

@@ -1,0 +1,36 @@
+/*
+ * The key-combination badge revealed beside a shortcut-carrying control while
+ * Alt or Ctrl is held (spec/keyboard ui-surface S2).
+ *
+ * ABSOLUTELY POSITIONED, deliberately: the badge appears and disappears as the
+ * user presses and releases a modifier, and a badge that took part in layout
+ * would shift every toolbar on Alt-down. The carrier only has to be a
+ * positioning context — Button already is, for its ripple.
+ */
+
+.badge {
+  position: absolute;
+  /* Pinned just INSIDE the carrier's block-start inline-end corner. Inside
+     rather than outside because a carrier may clip its overflow — Button does,
+     to contain its ripple — and a badge at negative insets would simply
+     vanish. It lands over the carrier's own padding, so it does not cover a
+     label. Logical properties, so it mirrors in RTL (principle 8). */
+  inset-block-start: 0;
+  inset-inline-end: 0;
+  z-index: 1;
+  padding: 0 0.25rem;
+  border-radius: var(--radius-sm);
+  /* Monospace, because it is a key legend and not prose. */
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  line-height: 1.5;
+  white-space: nowrap;
+  background: var(--gray-dark);
+  color: var(--bg-white);
+  /* The badge sits over the control's own edge; a hairline keeps it legible
+     against either. */
+  border: 1px solid var(--color-divider);
+  /* It is an announcement, not a target. */
+  pointer-events: none;
+}

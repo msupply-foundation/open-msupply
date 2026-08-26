@@ -1,0 +1,667 @@
+/*
+ * Design tokens — the styling foundation (see kdd/ui-styling and the
+ * RnD prototype's DECISIONS.md #3).
+ *
+ * Faithful 1:1 port of the current app's MUI theme
+ *   client/packages/common/src/styles/theme.ts
+ * into plain CSS custom properties (colours copied, not invented), PLUS the
+ * company input design spec. Values carried unchanged from the RnD prototype's
+ * tokens.css; the only change here is the THEME CONTRACT structure below.
+ *
+ * SIZING IS IN rem (base 16px = 1rem), never px, so the whole UI scales from a
+ * single root font-size (see index.css). Exceptions kept in px on purpose:
+ * hairline borders (1px) and shadow offsets.
+ */
+
+:root {
+  /*
+   * ======================= THEME CONTRACT =======================
+   * Every token between the @theme-contract markers MUST be overridden by
+   * every [data-theme] block in this file, and theme blocks may ONLY override
+   * tokens declared here — enforced by scripts/check-theme-tokens.mjs (part of
+   * `npm run check`). Static tokens (spacing, sizing, typography) live below
+   * the contract and are never themed.
+   */
+  /* @theme-contract:start */
+
+  /* --- Primitive palette (theme.ts → palette) -------------------------- */
+  --primary-main: #e95c30; /* brand orange (TMF Orange) */
+  --primary-light: #ed7d59;
+  --primary-dark: #c43c11;
+  --primary-contrast: #fff;
+
+  --secondary-main: #3e7bfa; /* action blue (dialog primary button, info) */
+  --secondary-light: #5b8def;
+  --secondary-dark: #3568d4;
+
+  --error-main: #e63535;
+  --error-bg: #ffcdce;
+  --color-warning: #f2a001; /* theme.ts cceStatus/invoiceLineStatus amber */
+
+  --gray-main: #8f90a6;
+  --gray-light: #c7c9d9;
+  --gray-dark: #555770;
+  --gray-pale: #cdf; /* #ccddff */
+
+  --color-border-value: #e4e4eb;
+  --color-divider: #eaeaea;
+  --outline-main: #555770;
+  --input-border: #c0c0c4; /* input field edge (ui-standards #field default border) */
+
+  /* backgrounds (theme.ts → palette.background) */
+  --bg-white: #fff;
+  --bg-drawer: #f2f2f5;
+  --bg-menu: #f2f2f5;
+  --bg-toolbar: #fafafc;
+  --bg-row: #fafafc;
+  --bg-group-light: #fafafc;
+  --bg-group-main: #f2f2f5;
+  --bg-group-dark: #e2e2e9;
+  --bg-icon: #e5eeff;
+  /* Read-only field fill — its only consumers are TextField's two [readonly]
+     rules. Same light neutral as --bg-disabled (see the note there): read-only
+     and disabled are both INERT states, so they sit at one lightness and at
+     chroma 0, off the surface ladder's hue. Kept as its own token because the
+     two states are tuned independently (read-only keeps full text contrast). */
+  --bg-input: #f6f6f6;
+
+  /* Floating/elevated surfaces (buttons, menus, dialogs, popups). Same as the
+     content surface in light — the shadow does the lifting — but overridden
+     LIGHTER than content in dark, where lightness carries elevation. */
+  --surface-raised: var(--bg-white);
+
+  /* Recessed list surface behind discrete cards (card-view — ui-standards §
+     tables card layout `.card-table-list`): a faint grey so white cards lift
+     off it. Cards themselves stay --surface-raised. Dark: darker than the card
+     so the same figure/ground holds. */
+  --table-card-surface: #f4f5f7;
+
+  /* A DISABLED card's fill (card view's read-only record — the grey a disabled
+     ROW takes in table view). Its own token because the row grey cannot be
+     reused: --bg-toolbar is sized as a step off the WHITE row surface, and on
+     the recessed card list it lands 5/255 from a normal card in light and 3/255
+     from the list floor in dark — invisible in one theme, and in the other the
+     card sinks BELOW its own list so the box disappears and only its 1px border
+     survives (Aneesh, PR #1207).
+
+     The figure the card must keep is its own: a disabled card has to read as a
+     muted card, so it needs perceptible distance from BOTH neighbours — the
+     card it isn't (--surface-raised) and the list it must not dissolve into
+     (--table-card-surface). Dark has room between the two (16/255) and this
+     sits inside it, 8 off each. Light has only 11/255 between them, so nothing
+     inside that gap can clear either edge; light steps PAST the list floor
+     instead — one rung further from the card (22/255) and 12 below the floor —
+     which is the same reading by the other route: a card that recedes rather
+     than lifts. The 1px --color-border-value stays darker than the fill in
+     light and lighter in dark, so the box keeps its frame either way. */
+  --table-card-surface-disabled: #e8e9f0;
+
+  /* --- App shell surface ladder — "Warm stone" -------------------------
+     The shell's figure/ground, from the UX surface study (ux-testing
+     nav-collapsed-flyout-mockup-light.html § "App shell background & section
+     definition"). Warm stone is hue 85° — 48° off the brand accent, the same
+     family as TMF beige #d9d5cc — held at the same OkLab lightness as the
+     study's cool-slate default, so only hue and chroma move and every contrast
+     figure in it still holds.
+
+     THREE FILLS, NO MORE. Canvas (L0) behind everything; chrome (L1) for the
+     persistent frame — nav rail, footer bar; content (L2, --bg-white) for the
+     thing the user came for; sunken (L2−) as the ONE well allowed inside
+     chrome or content; --surface-raised (above) as L3, floating over the shell.
+     A fourth level of fill means the layout is wrong, not the palette.
+
+     The governing rule is "the canvas is the separator": chrome and content are
+     both white and must never touch — a canvas gutter always sits between them,
+     which is why neither needs a hairline to be found. Specify the fill step,
+     not the hairline: a 1px near-white rule is invisible on the cheap clinic
+     monitors this runs on, a ~4% luminance step survives.
+
+     Themable but deliberately NOT derived — branding/themeRecipes.ts lists
+     these as `surface`/`border` members with no recipe, because the warmth
+     cannot be mixed out of the cool page/body anchors; a site that recolours
+     `surface.page` sets its canvas explicitly. */
+  --surface-canvas: #f3f1ee;
+  --surface-chrome: #fff;
+  /* A well sinks to the CANVAS — the same value, deliberately, not a near-miss.
+     Held one step lighter (#f7f6f2) it sat 4/255 from the canvas, and the two
+     met on screen wherever a table's header band showed above the canvas gutter:
+     1.04:1 apart reads as a smudge or a seam, never as two levels. Tracks the
+     canvas. Distinct roles in themeRecipes either way, so a site can still pull
+     them apart. */
+  --surface-sunken: #f3f1ee;
+  /* Structural hairline where chrome meets canvas (the study's --edge-strong),
+     for the boundaries a fill step alone can't carry: the footer's top edge,
+     the flyout's outline. */
+  --surface-edge: #e1ddd4;
+
+  /* text (theme.ts → typography + palette.form) */
+  --text-body: #1c1c28; /* body1 / th */
+  --text-secondary: #555770; /* body2 / h6 / form.field */
+  --text-label: #28293d; /* form.label */
+  --button-text: #373740;
+
+  /* --- Disabled state -------------------------------------------------
+     Single source for how disabled things look; tune all disabled styling
+     here. --text-disabled is the muted ink for disabled text / icons / control
+     outlines — readable, but clearly weaker than body text; --bg-disabled is
+     the muted fill for disabled input frames. Whole-control widgets that dim as
+     a unit instead use --disabled-opacity (defined just after the theme
+     contract, since it's not a colour). */
+  --text-disabled: #7a7b90;
+  /* A LIGHT, NEUTRAL well — not a grey slab, and not a warm one. Two things were
+     wrong with the old #f2f2f5: it sat 13/255 under white, making a disabled
+     field the heaviest box inside a card, and it was on the cool line, pulling
+     against the ladder. The fix for the weight is the lightness (9/255 here);
+     the fix for the clash is NOT to warm it — a disabled fill is a STATE, not a
+     rung of the surface ladder, and at chroma 0 it reads as inert, which is
+     exactly what disabled means. This is the study's own neutral-grey palette at
+     the same OkLab lightness as its warm-stone well: stone's value, no hue.
+     Deliberately its own literal, not var(--surface-sunken) — a state fill and a
+     ladder rung are different jobs, and the table header row shouldn't move when
+     disabled fields are tuned. */
+  --bg-disabled: #f6f6f6;
+
+  /* header / drawer mixins (theme.ts → mixins) */
+  --header-bg: #fafafc;
+  --header-border: #cbced4;
+  --drawer-selected-bg: #fff;
+  --drawer-hover-bg: #fafafc;
+
+  /* login / initialisation pages (theme.ts → mixins.gradient.primary/secondary,
+     palette.background.login, typography.login.color) — Login uses primary
+     (orange), Initialisation uses secondary (blue); real OMS deliberately
+     gives the two screens different hero gradients. */
+  --gradient-primary: linear-gradient(156deg, #f80 4%, #e63535 96%);
+  --gradient-secondary: linear-gradient(156deg, #78a3fc 4%, #3e7bfa 96%);
+  --bg-login: #f2f2f5;
+  --login-hero-text: #fafafa;
+
+  /* --- Elevation (theme.ts → createTheme shadow overrides) ------------ */
+  /* Shadow offsets stay in px (sub-pixel blur/spread) — intentional. */
+  --shadow-1:
+    0 0.5px 2px 0 rgba(96, 97, 112, 0.16), 0 0 1px 0 rgba(40, 41, 61, 0.08);
+  --shadow-2:
+    0 4px 8px 0 rgba(96, 97, 112, 0.16), 0 0 2px 0 rgba(40, 41, 61, 0.04);
+  --shadow-3:
+    0 8px 16px 0 rgba(96, 97, 112, 0.16), 0 2px 4px 0 rgba(40, 41, 61, 0.04);
+  --shadow-4:
+    0 12px 24px 0 rgba(96, 97, 112, 0.16), 0 4px 8px 0 rgba(40, 41, 61, 0.3);
+  /* The rail's shadow onto the canvas, inked in the warm-stone shadow colour
+     (the study's --sh-* family): a cool grey shadow over a warm canvas reads as
+     a filter applied to the page rather than as a decision. */
+  --shadow-drawer: 4px 0 16px 0 rgba(60, 54, 42, 0.18);
+  /* A frozen table column's shadow onto the content scrolling under it. A COLOUR,
+     not a box-shadow: it's painted as a gradient strip (one continuous shadow
+     down the whole column — a real box-shadow per cell scallops at every row
+     seam). See DataTable.module.css. */
+  --shadow-frozen-col: rgba(96, 97, 112, 0.22);
+
+  /* 3px orange glow focus ring; error variant for invalid fields (red glow) */
+  --focus-ring: 0 0 0 0.1875rem rgba(62, 123, 250, 0.25); /* action blue (#3e7bfa) */
+  --focus-ring-error: 0 0 0 0.1875rem rgba(230, 53, 53, 0.2);
+
+  /* Scrim behind the mobile nav overlay / modals — warm-stone ink, for the same
+     reason as --shadow-drawer above. Alpha unchanged; the study's 0.48 belongs
+     to its modal fix, not to the palette. */
+  --overlay-scrim: rgba(44, 41, 33, 0.45);
+
+  /* Shipment-status colours (StatusChip dot + tint). Demo values carried from
+     the RnD prototype's STATUS_META — swap for the design team's palette when
+     one lands. First three alias existing palette roles; the alias tracks the
+     theme automatically, but the contract check wants explicit dark overrides,
+     so the dark block re-declares them. */
+  --status-new: var(--gray-main);
+  --status-allocated: var(--secondary-main);
+  --status-picked: var(--color-warning);
+  --status-shipped: #1fb6b6;
+  --status-delivered: #7c5cff;
+  --status-received: #5c86ff;
+  --status-verified: #38a169;
+  /* Cancelled — the error tone (a terminated record). */
+  --status-cancelled: var(--error-main);
+  /* Stocktake terminal "done" status (integration branch) — reuses the
+     verified hue. */
+  --status-finalised: #38a169;
+
+  /* Feedback severities (Alert). Error is --error-main above. Info is the
+     action blue by definition (theme.ts palette.info = #3e7bfa). Warning and
+     success are MUI's defaults — the current app's theme doesn't override
+     them, so its rendered alerts use exactly these. NB --color-warning above
+     is the unrelated cceStatus amber, not the alert warning. */
+  --info-main: var(--secondary-main);
+  --warning-main: #ed6c02;
+  --success-main: #2e7d32;
+
+  /* UNFINISHED WORK — the marking for a record still awaiting a step the user
+     must take (an outbound placeholder line: a requested quantity with no
+     batch behind it yet). Deliberately its own hue rather than a reuse:
+     - not the warning amber, because a placeholder is unfinished, not wrong,
+       and #ed6c02 sits almost on the brand orange (#e95c30) besides;
+     - not the action blue, because row SELECTION is that blue at 8% — a
+       marked row and a selected row would be the same colour;
+     - not red/amber/orange at all, the family that collapses under the common
+       colour-blindness types, which is the family this very table already
+       spends on expired and on-hold.
+     A calm teal separates from every one of those in normal and dichromatic
+     vision, and stays readable as a whole-table field on a shipment raised
+     from a requisition, where EVERY line starts unallocated. Deeper and less
+     saturated than --status-shipped's teal, so the two don't read as the same
+     thing on different screens. */
+  /* Lightened one step from the first value (#0f8b8d) after a design review:
+     softer rows without losing the bar. That step is bounded — the bar is a
+     meaningful graphic, so WCAG 2.2 SC 1.4.11 wants 3:1 against the page, and
+     this sits at 3.51:1. One more step (#17a2a4) reaches 3.12:1 and is the
+     last that passes; the pale teals past it (including --status-shipped's
+     #1fb6b6, 2.49:1) do not. Lighten the ROWS by the color-mix percentage in
+     DataTable.module.css instead — a background carries no such floor while
+     the text on it stays dark. */
+  --marking-unfinished: #14989a;
+
+  /* @theme-contract:end */
+
+  /* Disabled dimming — one opacity for whole-control widgets that fade as a
+     unit (buttons, icon buttons, checkboxes, toggles, upload zone) rather than
+     recolour. Not a colour, so it lives outside the theme contract and is the
+     same in both themes. Pairs with --text-disabled / --bg-disabled above. */
+  --disabled-opacity: 0.6;
+
+  /* QR code modules (foreground) on their quiet-zone background. Deliberately
+     theme-INVARIANT — a QR must stay dark-on-light in both themes so scanners
+     read it reliably (it does NOT flip in dark mode), so these live outside the
+     theme contract. Pure black/white for maximum scan contrast. */
+  --qr-foreground: #000;
+  --qr-background: #fff;
+
+  /* --- Spacing (4px base → rem) --------------------------------------- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+
+  /* --- Layout widths -------------------------------------------------- */
+  /* The docked details side panel. Single source of truth: SidePanel's own
+     `.panel` and the Page frame's `.panelSlot` both size from this, so the
+     panel and the slot it slides into can never drift out of sync (they did,
+     which clipped the panel's inline-end). */
+  --side-panel-width: 24rem;
+
+  /* --- Radius --------------------------------------------------------- */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 1rem; /* 16px — dashboard widget + panel cards (current app) */
+  --radius-pill: 1.25rem;
+  --radius-button: 1.5rem; /* 24px pill buttons */
+
+  /* --- Typography (theme.ts → typography) ----------------------------- */
+  --font-sans:
+    'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* Monospace — codes, batches, location IDs & dense identifiers
+     (ui-standards › typography). A system stack, no webfont bundled: fixed-
+     width glyphs align in columns and disambiguate 0/O and 1/l/I.
+
+     `ui-monospace` FIRST (Ling, 2026-08-19): it resolves to the platform's
+     UI-grade mono — SF Mono on Apple, and the named fallbacks cover the rest —
+     each drawn to sit beside a UI sans. The old stack led with Monaco, a 1984
+     terminal face with no design relationship to Inter, which read on screen as
+     a visitor from another application; review feedback on the outbound detail
+     table was "I seem to have multiple fonts in this screen". Worse, Monaco
+     ships only on macOS, so every Windows/Linux client — the tablets included —
+     fell through to Courier New: thin, cramped, and more foreign still. */
+  --font-mono:
+    ui-monospace, 'SFMono-Regular', 'Menlo', 'Consolas', 'Liberation Mono',
+    monospace;
+  --text-xs: 0.75rem; /* 12px — body2 */
+  --text-sm: 0.875rem; /* 14px — body1 / th / input */
+  --text-md: 1rem; /* 16px — h6 */
+  --text-lg: 1.25rem; /* 20px */
+  --text-xl: 1.5rem; /* 24px — dashboard statistic values (current app) */
+  --line-body: 1.71; /* body1 — roomy prose */
+  --line-tight: 1.3; /* headings, small text, single-line controls */
+  --weight-regular: 400; /* base / body — was implicit browser default */
+  --weight-medium: 500;
+  --weight-semibold: 600; /* subtitle — the app's ubiquitous subtitle1 override */
+  --weight-bold: 700;
+
+  /* --- Layout dimensions (theme.ts → mixins / AppDrawer) -------------- */
+  --drawer-width: 16.25rem; /* 260px */
+  --drawer-closed-width: 5rem; /* 80px */
+  --logo-area-height: 5.625rem; /* 90px */
+  --nav-item-height: 2.5rem; /* 40px */
+  --nav-child-height: 1.875rem; /* 30px */
+  --table-data-row: 2.5rem; /* 40px */
+  --table-header-row: 3.75rem; /* 60px */
+  /* Column-header text: 13px, one notch under the 14px cell font (--text-sm),
+     so the column names read as labels FOR the data rather than as more of it.
+     Its own token rather than --text-xs (12px, helper/caption) — 12px tested
+     too small to read comfortably across a wide table, and it left no room
+     below the header on the scale. Same shape as --input-font-sm, which notches
+     a small field down by exactly this step.
+
+     The size also earns its keep in translation: French column headers measure
+     ~24% wider than their English originals, and the 13px step gives back ~7%
+     of that, which pulls headers back inside the 2-line clamp (.thText) and
+     lowers the min-content floor a long compound word forces on its column.
+
+     Deviation from the org standards site, which sets th at 14px (= the cell
+     font) and separates the band by weight + fill alone — recorded in
+     src/ui/docs/DESIGN_STANDARDS.md. A table inside a modal opts BACK to 14px
+     (see the dialog rules in DataTable.module.css / Table.module.css). */
+  --table-header-font-size: 0.8125rem; /* 13px */
+  /* Cell line-height (ui-standards § tables): 1.43 ≈ 20px leading at the 14px
+     cell font, shared by header and body cells. */
+  --table-line-height: 1.43;
+  --footer-height: 2rem; /* 32px */
+  /* The single knob for the minimum size of every touch-restricted element —
+     labelled buttons, icon-only buttons, header controls, menu rows, etc., all
+     of which reference this token behind a `pointer: coarse` query. Tune here.
+     44px satisfies WCAG 2.5.5 (AAA).
+
+     `max(rem, px)` — the shape the touch SIZE tokens take, and the one place
+     the rem-only rule is bent. The px half is a FLOOR: a tap target must stay a
+     stable physical size and not be eroded by the root-size shrink, which fires
+     below 600px — i.e. on exactly the phones where the coarse pointer applies.
+     The rem half lets the token grow where the root font-size genuinely grows
+     (a desktop engine whose default font size the user raised — WCAG 1.4.4).
+     A floor belongs on a SIZE, never on a font-size: shrinking the type is the
+     user's choice to make, shrinking the tap target under their finger is not.
+     --input-font-touch below is pure rem for exactly that reason.
+
+     MEASURED on an Android tablet (SM-X200, system font_scale 1.3, Capacitor
+     WebView, 2026-08-14) — Android's font scaling does NOT move rem in a LENGTH
+     context, so this half is inert there, and reasoning from the root's
+     computed font-size will mislead you:
+       getComputedStyle(html).fontSize -> 20.8px   (scaled: a font-size context)
+       width: 2.75rem                  -> 44px     (NOT scaled)
+       width: 2.75em                   -> 44px     (NOT scaled, even at 20.8px)
+       width: 2.75lh                   -> 57.18px  (scaled — font-metric unit)
+     So on Android the text scales and a rem/px/em-sized box does not. Only lh
+     (and the other font-metric units) track it. --input-font-touch below is a
+     font-size context, so it scales there and the type stays in step with the
+     rest of the UI even though these boxes don't. Browser zoom, unlike font
+     scaling, scales everything, so reflow/AA zoom is unaffected either way. */
+  --touch-target: max(2.75rem, 44px); /* 44px floor — tunable */
+
+  /* --- Buttons (ui-standards #btn-sizes) ------------------------------ */
+  --button-height: 2.25rem; /* 36px — medium (default) */
+  --button-height-sm: 1.75rem; /* 28px — small (dense/inline) */
+
+  /* --- Input heights: the four-height system (tune every input here) ---
+     Every field-type input (text/number/currency, date/time/range, select,
+     multi-select, combobox) reads these four tokens and NOTHING else for its
+     height, so they stay identical side by side and tune from one place. Two
+     rest sizes in rem (scale with the root density knob) + two touch sizes
+     enforced under pointer:coarse as `max(rem, px)` — see --touch-target above
+     for the shape and for the measurement that bounds it: the px is a floor the
+     root-shrink can't erode, the rem grows the box on an engine that scales the
+     root font-size as a length (desktop), and is inert under Android's font
+     scaling, which scales the TEXT but not a rem/em length. Both touch sizes
+     clear WCAG 2.5.5 AAA (44px); standard sits a notch above at 48, and the
+     standard↔small 4px step is preserved in both modes. */
+  --input-height: 2.5rem; /* 40px — standard, rest */
+  --input-height-sm: 2.25rem; /* 36px — small, rest */
+  --input-height-touch: max(3rem, 48px); /* standard, touch-enforced */
+  --input-height-sm-touch: max(2.75rem, 44px); /* small, touch-enforced */
+  /* Font size on touch — PURE rem, deliberately NOT the `max(rem, px)` shape
+     the heights above take. That split is the rule: type scales with the root,
+     a tap target keeps a physical floor. A px floor on a font-size only ever
+     pins type against a root the user chose, and it breaks in both directions —
+     at Chrome's "Small" default (root 12px) a floored 16px left field text at
+     1.5x the 10.5px body text around it, which is exactly the inconsistency
+     this token was blamed for; on Android at font_scale 1.3 a floored 16px sat
+     BELOW the 18.2px body text. One rem tracks the root either way (12px /
+     16px / 20.8px), staying a step above body text at every setting.
+
+     The floor it used to carry was iOS Safari's zoom-on-focus threshold, which
+     is an absolute 16px. That argument is gone: browserslist is
+     `chrome >= 132` (Chromium only, enforced by scripts/check-min-browser.mjs),
+     so iOS Safari is not a supported target. If it ever becomes one, the floor
+     comes back HERE and nowhere else.
+
+     Applied to BOTH size variants on coarse pointers (ui-standards
+     #field-touch-sizing): a small field beside a default one must not read at a
+     different size on the same touch surface. NB every input module has to
+     repeat its own `[data-size='small']` selector inside its `pointer: coarse`
+     block to make that land — a media query adds no specificity, so a bare
+     class rule inside one loses to the small rule outside it. */
+  --input-font-touch: 1rem;
+  /* Small-field text (ui-standards "Text Fields — Size Variations"): 13px, a
+     notch under the 14px default (--text-sm) so a small input + its label read
+     denser. Its own token rather than --text-xs (12px, helper/caption) — the
+     spec picks 13px specifically for small fields. */
+  --input-font-sm: 0.8125rem; /* 13px */
+  /* Vertical gap between a field's stacked parts — label → control → helper
+     (ui-standards .form-field gap). 0.375rem (6px) is off the --space scale
+     (which steps 0.25 / 0.5 / 0.75), so it's its own input token. */
+  --input-field-gap: 0.375rem; /* 6px */
+
+  /* FIELD LABEL — the ONE definition of a field label's typography, shared by
+     the input components (TextField/TextArea/DateField/NumberField `.label`)
+     AND the read-only LabelledValue, so a labelled value and an input label
+     read IDENTICALLY side by side (Carl 2026-07-26). Change the label look in
+     one place. All values reference other tokens, so they stay theme-correct
+     with no dark override. (Small inputs still notch the size down via
+     --input-font-sm — a size variant, not a per-component divergence.) */
+  --field-label-font-size: var(--text-sm); /* 14px */
+  --field-label-font-weight: var(--weight-semibold); /* 600 (Carl 2026-07-30) */
+  --field-label-line-height: 1;
+  --field-label-color: var(--text-body);
+  --input-padding-x: 0.75rem; /* 12px horizontal */
+  --input-radius: 0.375rem; /* 6px */
+  --input-max-compact: 10rem; /* 160px — numbers/money (NumberField default) */
+  --input-max-short: 25rem; /* 400px — codes, short text */
+  --input-max-long: 37.5rem; /* 600px — names, descriptions */
+
+  /* --- Content measure (reading column caps for ContentContainer) ------ */
+  /* Max inline size a block of content stretches to before it stops growing
+     and centres in the page body — so a two-column form or a column of prose
+     stays readable on wide monitors instead of sprawling edge to edge. The
+     body owns the edge padding; these cap only the growth. */
+  --measure-form: 58rem; /* ~928px — a comfortable two-column form */
+  --measure-prose: 40rem; /* ~640px — single-column reading text */
+  --measure-wide: 80rem; /* ~1280px — wide dashboards / dense forms */
+
+  /* --- Motion (durations) ----------------------------------------------
+     EVERY transition/animation duration and delay in the app reads one of
+     these — no component writes a literal one (enforced by
+     scripts/check-reduced-motion.mjs). That is what makes
+     `prefers-reduced-motion` a property of the token layer rather than ~25
+     hand-written media blocks that a new component silently forgets: the
+     reduce block at the end of this file zeroes the decorative durations
+     once, app-wide. Timing FUNCTIONS stay per-component (they carry no
+     accessibility meaning).
+
+     Three decorative tiers, by what actually moves. Delays pair with the
+     tier they're sequencing (e.g. a panel's `visibility` delay uses
+     --motion-slow so it can never drift from the travel it waits on). */
+  /* @motion-decorative:start */
+  --motion-fast: 120ms; /* in-place state feedback: colour, border, shadow, opacity */
+  --motion-base: 150ms; /* small movement or an entry: chevron, dialog/popover in */
+  --motion-slow: 200ms; /* real travel: drawer, side panel, tab indicator, scrim */
+  --motion-ripple: 480ms; /* the one-shot click ripple (ui/utils/createRipple) */
+  --motion-sweep: 600ms; /* one-shot sheen along a newly filled progress connector */
+  --motion-grow: 1s; /* one-shot grow-in of the 404 page's illustration */
+  /* @motion-decorative:end */
+
+  /* Looping indicators are NOT decorative — they're the only signal that work
+     is still in flight, and a frozen one reads as a hung app. So they're
+     excluded from the reduce block above and each owner decides in its own
+     module whether reduced motion slows or stops it (Spinner and the button
+     spinners slow via the override below; ProgressList's pulse stops, since
+     its step state is also carried by colour and icon). Zeroing an infinite
+     duration is never the answer — it pins the element to one keyframe. */
+  --motion-spin: 700ms; /* indeterminate spinner ring */
+  --motion-pulse: 2s; /* sync-progress active-step pulse */
+}
+
+/*
+ * Reduced motion (WCAG 2.2 SC 2.3.3, CLAUDE.md principle #9). One block for
+ * the whole app: decorative motion collapses to zero so state changes land
+ * instantly, and the spinners drop to a slow crawl rather than stopping.
+ *
+ * Zero — not `transition: none` — on purpose: a 0s transition/animation still
+ * fires `transitionend`/`animationend`, so anything sequencing off those (the
+ * ripple's self-dismissal) keeps working instead of leaking.
+ */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0s;
+    --motion-base: 0s;
+    --motion-slow: 0s;
+    --motion-ripple: 0s;
+    --motion-sweep: 0s;
+    --motion-grow: 0s;
+    --motion-spin: 2s;
+  }
+}
+
+/*
+ * Dark theme. Activated by `data-theme='dark'` on <html> (set by the theme
+ * toggle, and pre-paint by the inline script in index.html). Only token VALUES
+ * change here — every component reads tokens, so nothing else needs to know
+ * dark mode exists. Navy-tinted to match the palette's existing navy greys,
+ * with an INVERTED surface scale (elevated surfaces get lighter) and the
+ * "-dark" emphasis variants flipped to lighter shades, since brighter reads as
+ * more emphasis on a dark ground. Ported from the RnD prototype; see its
+ * DECISIONS.md (2026-07-01, theming).
+ */
+:root[data-theme='dark'] {
+  color-scheme: dark; /* native scrollbars, form controls, autofill go dark */
+
+  /* Brand / primary — orange kept for brand integrity; -dark flips lighter */
+  --primary-main: #e95c30;
+  --primary-light: #f2916f;
+  --primary-dark: #f0805a;
+  --primary-contrast: #fff;
+
+  /* Secondary / action blue — lifted for contrast on dark */
+  --secondary-main: #5b8def;
+  --secondary-light: #7ba5f5;
+  --secondary-dark: #4a7ce8;
+
+  /* Feedback */
+  --error-main: #ff5f5f;
+  --error-bg: #4a1f22;
+  --color-warning: #ffb020;
+
+  /* Greys — light = subtle (near surface), dark = high-contrast (readable text) */
+  --gray-main: #9a9bb0;
+  --gray-light: #4a4b5c;
+  --gray-dark: #b8b9cc;
+  --gray-pale: #2a3550;
+
+  --color-border-value: #33333f;
+  /* The app-wide hairline (table row rules, side-panel section splits, accordion
+     and form-section rules, menu-bar and split-button separators). Matches
+     --color-border-value / --header-border: one hairline colour, as in light.
+     NOT the light theme's relationship mirrored literally — there the divider is
+     the WEAKEST line (#eaeaea, a shade closer to white than border-value), and
+     inverting that put it a shade closer to the dark background instead, at
+     1.16:1 against --bg-white where light's own divider manages 1.20:1. It read
+     as absent. #33333f lands at 1.28:1, matching light's border-value (1.27:1),
+     so a hairline carries the same weight in both themes (Carl, 2026-07-30). */
+  --color-divider: #33333f;
+  --outline-main: #b8b9cc;
+  --input-border: #3d3e4c; /* field edge — a touch above border-value so inputs read */
+
+  /* Backgrounds — inverted scale: content is the LIGHTEST dark surface */
+  --bg-white: #21212b;
+  --bg-drawer: #191921;
+  --bg-menu: #191921;
+  --bg-toolbar: #1e1e27;
+  --bg-row: #1e1e27;
+  --bg-group-light: #1e1e27;
+  --bg-group-main: #262631;
+  --bg-group-dark: #33333f;
+  --bg-icon: #24304a;
+  --bg-input: #2a2a36;
+
+  /* Text — soft near-white, not pure white */
+  --text-body: #ececf2;
+  --text-secondary: #a8a9bd;
+  --text-label: #d6d6e0;
+  --button-text: #d0d0da;
+
+  /* Disabled state */
+  --text-disabled: #9596ab;
+  --bg-disabled: #2a2a36;
+
+  /* Header / drawer */
+  --header-bg: #1a1a22;
+  --header-border: #33333f;
+  --drawer-selected-bg: #2a2a38;
+  --drawer-hover-bg: #21212b;
+
+  /* Login / Initialisation — the gradient hero panels are brand-invariant
+     (like --primary-main, colours kept for brand integrity), so both
+     gradients + hero text stay; only the form panel background goes dark
+     (matches the drawer surface). */
+  --gradient-primary: linear-gradient(156deg, #f80 4%, #e63535 96%);
+  --gradient-secondary: linear-gradient(156deg, #78a3fc 4%, #3e7bfa 96%);
+  --bg-login: #191921;
+  --login-hero-text: #fafafa;
+
+  /* Raised surfaces sit LIGHTER than the #21212b content — on dark, lightness
+     (not shadow) carries elevation, so buttons/menus/dialogs stand out. */
+  --surface-raised: #2b2b3a;
+
+  /* Recessed card-list surface — darker than the raised card so the same
+     figure/ground reads in dark. */
+  --table-card-surface: #1b1b24;
+
+  /* A disabled card's fill — BETWEEN the list floor above and the raised card,
+     8/255 off each: dark's card→list gap is wide enough to hold a middle rung,
+     so the muted card steps down toward the list without reaching it. (Light
+     has no such room and steps past the floor instead — see the light note.) */
+  --table-card-surface-disabled: #242433;
+
+  /* App shell surface ladder — cool-neutral in dark, on the study's own advice:
+     re-hued to 85° at these lightnesses a warm neutral reads as brown, and a
+     brown surface looks like a rendering fault (almost nobody sees both themes
+     in one session, so the two need not share a hue). Inverted like the rest of
+     the dark scale: canvas is the DARKEST rung, chrome sits above it, and the
+     sunken well sits above chrome — a well has to read LIGHTER here, as
+     --drawer-hover-bg already does. Four rungs, each its own step:
+     #16161d → #191921 → #21212b (content) → #2b2b3a (raised). */
+  --surface-canvas: #16161d;
+  --surface-chrome: #191921;
+  --surface-sunken: #21212b;
+  --surface-edge: #33333f;
+
+  /* Elevation via near-BLACK shadows. The light theme's grey shadows are
+     lighter than a dark surface, so they read as a glow — black reads as depth.
+     Paired with the lighter raised surface above (surface separates, shadow
+     reinforces), mirroring how dark UIs convey elevation. */
+  --shadow-1: 0 0.5px 2px 0 rgba(0, 0, 0, 0.45), 0 0 1px 0 rgba(0, 0, 0, 0.35);
+  --shadow-2: 0 4px 8px 0 rgba(0, 0, 0, 0.5), 0 0 2px 0 rgba(0, 0, 0, 0.35);
+  --shadow-3: 0 8px 16px 0 rgba(0, 0, 0, 0.55), 0 2px 4px 0 rgba(0, 0, 0, 0.4);
+  --shadow-4:
+    0 16px 28px 0 rgba(0, 0, 0, 0.6), 0 4px 10px 0 rgba(0, 0, 0, 0.45);
+  --shadow-drawer: 4px 0 20px 0 rgba(0, 0, 0, 0.55);
+  --shadow-frozen-col: rgba(0, 0, 0, 0.55);
+
+  /* Stronger focus glows + darker scrim read better on dark */
+  --focus-ring: 0 0 0 0.1875rem rgba(91, 141, 239, 0.45); /* action blue (#5b8def, dark) */
+  --focus-ring-error: 0 0 0 0.1875rem rgba(255, 95, 95, 0.4);
+  --overlay-scrim: rgba(0, 0, 0, 0.6);
+
+  /* Status colours — aliases track the lifted dark palette by themselves
+     (re-declared to satisfy the contract check); the three own-hue values get
+     the same lift as the rest of the dark palette. */
+  --status-new: var(--gray-main);
+  --status-allocated: var(--secondary-main);
+  --status-picked: var(--color-warning);
+  --status-shipped: #2ecbcb;
+  --status-delivered: #9678ff;
+  --status-received: #7a9dff;
+  --status-verified: #48c78e;
+  --status-cancelled: var(--error-main);
+  --status-finalised: #48c78e;
+
+  /* Feedback severities — same lift as the rest of the dark palette */
+  --info-main: var(--secondary-main);
+  --marking-unfinished: #2fb3b5;
+  --warning-main: #ff8f33;
+  --success-main: #4caf50;
+}
