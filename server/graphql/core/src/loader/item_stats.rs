@@ -4,25 +4,8 @@ use actix_web::web::Data;
 use async_graphql::dataloader::*;
 use chrono::NaiveDate;
 use ordered_float::OrderedFloat;
-use service::{
-    item_stats::{item_stats_uses_plugin, ItemStats},
-    service_provider::ServiceProvider,
-};
+use service::{item_stats::ItemStats, service_provider::ServiceProvider};
 use std::collections::HashMap;
-use tokio::sync::Semaphore;
-
-/// Batch sizes at or above this are "bulk" (report-scale) and compete for BULK_STATS_PERMITS;
-/// interactive batches (item detail, search results, list pages — typically 20-25 keys) bypass
-/// the cap so they never queue behind a report's bulk batches.
-const BULK_BATCH_SIZE: usize = 100;
-
-/// With an AMC/consumption plugin installed, each bulk stats batch is a full backend-plugin run
-/// (JS engine parse + heavy ledger SQL) that pins a pool connection for its whole duration. A
-/// report fans out into many such batches; letting them all take connections concurrently
-/// exhausted the pool and wedged the server (issue #12689). Bulk batches take a permit BEFORE
-/// checking out a connection, so however many batches a report shatters into, this loader holds
-/// at most 2 pool connections at a time (+1 for a concurrent interactive batch).
-static BULK_STATS_PERMITS: Semaphore = Semaphore::const_new(2);
 
 pub struct ItemsStatsForItemLoader {
     pub service_provider: Data<ServiceProvider>,
@@ -80,22 +63,6 @@ impl Loader<ItemStatsLoaderInput> for ItemsStatsForItemLoader {
         }
 
         let service_provider = self.service_provider.clone();
-
-        // The permit is acquired here — before the blocking task checks out a pool connection —
-        // so queued bulk batches wait without holding anything. Acquiring it after the
-        // connection would let 10 queued batches pin all 10 connections while they wait, which
-        // is exactly the exhaustion this guards against. Held (moved into scope) until the
-        // batch's computation finishes. Interactive-sized batches skip the queue entirely.
-        let _bulk_permit = if loader_inputs.len() >= BULK_BATCH_SIZE && item_stats_uses_plugin() {
-            Some(
-                BULK_STATS_PERMITS
-                    .acquire()
-                    .await
-                    .expect("BULK_STATS_PERMITS is never closed"),
-            )
-        } else {
-            None
-        };
 
         // get_item_stats is synchronous and may invoke the average_monthly_consumption /
         // get_consumption plugins (the whole boajs interpreter, including any blocking http). Run
