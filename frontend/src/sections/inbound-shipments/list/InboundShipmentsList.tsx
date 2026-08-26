@@ -65,8 +65,8 @@ import {
   heldInboundQueryScopes,
   inboundShipmentHref,
   scopeOf,
-  type InboundScope,
 } from '../inboundShipmentScope';
+import type { InboundSelection } from './deleteInboundShipments';
 import { linkedOrderOf } from '../linkedOrder';
 import { SupplierKindIcon } from '../SupplierKindIcon';
 import {
@@ -115,7 +115,6 @@ const InboundShipmentsList: Component = () => {
     ...DEFAULT_STATE,
     first: initialPageSize(),
   });
-  const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   // The create modal: plain manual create, or the from-a-purchase-order flow
   // (offered only when the store's procurement preference is on).
   const [createMode, setCreateMode] = createSignal<
@@ -211,33 +210,31 @@ const InboundShipmentsList: Component = () => {
   const rows = (): Row[] => data.latest?.nodes ?? [];
   const totalCount = () => data.latest?.totalCount ?? 0;
 
+  // The selection carries the SCOPE of each shipment alongside its id, because
+  // the bulk delete is twinned per scope (issue #1213 — see
+  // deleteInboundShipments). A selection survives a page change, outliving the
+  // row that carried `purchaseOrderId`, so the scope is read off the row as the
+  // id is selected — it was on the page at that moment — and travels with the
+  // id until it leaves the selection. ONE signal, not an id list beside a scope
+  // map: there is then no invariant to keep, and no id that could reach the
+  // wire with a guessed scope.
+  const [selection, setSelection] = createSignal<InboundSelection[]>([]);
+  const selectedIds = createMemo(() => selection().map(s => s.id));
+  const onSelectionChange = (ids: string[]) => {
+    const known = new Map(selection().map(s => [s.id, s.scope]));
+    setSelection(
+      ids.map(id => ({
+        id,
+        scope:
+          known.get(id) ??
+          scopeOf(rows().find(r => r.id === id)?.purchaseOrderId),
+      }))
+    );
+  };
+  const clearSelection = () => setSelection([]);
+
   const singleSelectedId = () =>
     selectedIds().length === 1 ? selectedIds()[0] : undefined;
-
-  // The bulk delete is twinned per scope, so it needs the SCOPE of every
-  // selected shipment, not just its id (issue #1213 — see
-  // deleteInboundShipments). A selection survives a page change, outliving the
-  // row that carried `purchaseOrderId`, so the scope is recorded as each id is
-  // selected — it was on the page at that moment — and carried until the id
-  // leaves the selection.
-  const [scopeById, setScopeById] = createSignal<Record<string, InboundScope>>(
-    {}
-  );
-  const onSelectionChange = (ids: string[]) => {
-    const known = scopeById();
-    const next: Record<string, InboundScope> = {};
-    for (const id of ids)
-      next[id] =
-        known[id] ?? scopeOf(rows().find(r => r.id === id)?.purchaseOrderId);
-    setScopeById(next);
-    setSelectedIds(ids);
-  };
-  const selection = () =>
-    selectedIds().map(id => ({
-      id,
-      scope: scopeById()[id] ?? 'INBOUND_SHIPMENT',
-    }));
-  const clearSelection = () => onSelectionChange([]);
 
   // Whether deleting the selection reverses a receipt, which the confirmation
   // warns about (rules → deletion). Not a gate — it only picks the copy. Both

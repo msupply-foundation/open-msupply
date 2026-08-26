@@ -118,7 +118,7 @@ describe('deleteInboundShipments', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(twinOf(0)).toBe('INBOUND_SHIPMENT');
     expect(idsOf(0)).toEqual([{ id: 'a' }, { id: 'b' }]);
-    expect(outcome).toEqual({ deleted: 2 });
+    expect(outcome).toEqual({ deleted: 2, result: { kind: 'ok' } });
   });
 
   it('sends a PO-linked-only selection to the external twin — no plain call', async () => {
@@ -126,7 +126,7 @@ describe('deleteInboundShipments', () => {
     const outcome = await deleteInboundShipments('s1', [external('a')]);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(twinOf(0)).toBe('INBOUND_SHIPMENT_EXTERNAL');
-    expect(outcome).toEqual({ deleted: 1 });
+    expect(outcome).toEqual({ deleted: 1, result: { kind: 'ok' } });
   });
 
   it('.33: a mixed selection goes as one batch PER SCOPE, plain first, each carrying only its own ids', async () => {
@@ -143,7 +143,7 @@ describe('deleteInboundShipments', () => {
     expect(idsOf(0)).toEqual([{ id: 'a' }, { id: 'c' }]);
     expect(twinOf(1)).toBe('INBOUND_SHIPMENT_EXTERNAL');
     expect(idsOf(1)).toEqual([{ id: 'b' }]);
-    expect(outcome).toEqual({ deleted: 3 });
+    expect(outcome).toEqual({ deleted: 3, result: { kind: 'ok' } });
   });
 
   it('.34: a refusal in the second scope reports the reason AND what the first scope deleted', async () => {
@@ -154,13 +154,19 @@ describe('deleteInboundShipments', () => {
       plain('a'),
       external('b'),
     ]);
-    expect(outcome).toEqual({ deleted: 1, message: 'Cannot delete invoice' });
+    expect(outcome).toEqual({
+      deleted: 1,
+      result: { kind: 'refused', message: 'Cannot delete invoice' },
+    });
   });
 
   it('.21: a batch is all-or-nothing — a typed refusal removes nothing in it, whatever its siblings reported', async () => {
     fetchMock.mockResolvedValue(refusedExternal('Cannot delete invoice'));
     const outcome = await deleteInboundShipments('s1', [external('b')]);
-    expect(outcome).toEqual({ deleted: 0, message: 'Cannot delete invoice' });
+    expect(outcome).toEqual({
+      deleted: 0,
+      result: { kind: 'refused', message: 'Cannot delete invoice' },
+    });
   });
 
   it('stops at the first refusal rather than stacking a second rejection', async () => {
@@ -174,7 +180,7 @@ describe('deleteInboundShipments', () => {
     ]);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(outcome.deleted).toBe(0);
-    expect(outcome.message).toBeDefined();
+    expect(outcome.result.kind).toBe('refused');
   });
 
   it('routes a Forbidden scope to the global permission-denied modal, not an inline refusal', async () => {
@@ -189,19 +195,31 @@ describe('deleteInboundShipments', () => {
     ]);
     expect(deniedMock).toHaveBeenCalled();
     // The plain scope still committed — the caller has to refetch on it.
-    expect(outcome).toEqual({ deleted: 1, forbidden: true });
-    expect(outcome.message).toBeUndefined();
+    expect(outcome).toEqual({ deleted: 1, result: { kind: 'forbidden' } });
   });
 
   it('reports a transport failure as failed, not as a refusal', async () => {
     fetchMock.mockResolvedValue({ kind: 'error' } as never);
     const outcome = await deleteInboundShipments('s1', [plain('a')]);
-    expect(outcome).toEqual({ deleted: 0, failed: true });
+    expect(outcome).toEqual({ deleted: 0, result: { kind: 'failed' } });
+  });
+
+  // The count travels with EVERY verdict, not just the refusals — a caller
+  // that offers a retry has to know the earlier batch already committed.
+  it('carries the committed count through a transport failure in the second scope', async () => {
+    fetchMock
+      .mockResolvedValueOnce(deleted('a'))
+      .mockResolvedValueOnce({ kind: 'error' } as never);
+    const outcome = await deleteInboundShipments('s1', [
+      plain('a'),
+      external('b'),
+    ]);
+    expect(outcome).toEqual({ deleted: 1, result: { kind: 'failed' } });
   });
 
   it('sends nothing for an empty selection', async () => {
     const outcome = await deleteInboundShipments('s1', []);
     expect(fetchMock).not.toHaveBeenCalled();
-    expect(outcome).toEqual({ deleted: 0 });
+    expect(outcome).toEqual({ deleted: 0, result: { kind: 'ok' } });
   });
 });

@@ -24,22 +24,30 @@ import { isExternalScope, type InboundScope } from '../inboundShipmentScope';
 // before `returnGraphqlErrors`, took the global unexpected-error modal (whose
 // "Try again" is a page reload) with it.
 //
-// So the selection is partitioned by the scope each row carries and submitted
-// as one batch per scope. Each batch keeps its own all-or-nothing guarantee
-// (AC-BA1); ACROSS the two, a refusal in the second leaves the first one's
-// shipments deleted, which is why the outcome reports a count rather than a
-// bare ok/failed — the caller reports the partial outcome and refetches.
+// ⚠️ Workaround, not the shape we want: one batch accepting both scopes (or a
+// wrong-scope id answered as a per-id TYPED error instead of a top-level abort)
+// would delete this file. Until the server offers that, the selection is
+// partitioned by the scope each row carries and submitted as one batch per
+// scope. Each batch keeps its own all-or-nothing guarantee (AC-BA1); ACROSS the
+// two, a refusal in the second leaves the first one's shipments deleted, which
+// is why the outcome carries a count alongside its verdict.
+
+/** A selected row, with the scope that picks which twin its delete goes to. */
+export type InboundSelection = { id: string; scope: InboundScope };
+
 export type BulkDeleteOutcome = {
-  /** How many shipments the server actually removed. */
+  /** How many shipments the server removed, across every batch sent. */
   deleted: number;
-  /** The server's reason, when a batch was refused. */
-  message?: string;
-  /** Raw server text behind a disclosure, when the refusal arrived untyped. */
-  detail?: string;
-  /** A standing permission block — the global modal (D38) already shows it. */
-  forbidden?: true;
-  /** Transport/unexpected failure — graphqlFetch already surfaced it. */
-  failed?: true;
+  /** How the run ended. `deleted` can be non-zero under any of these. */
+  result:
+    | { kind: 'ok' }
+    /** A batch was refused — the server's reason, and its raw text when the
+     *  refusal arrived untyped. */
+    | { kind: 'refused'; message: string; detail?: string }
+    /** A standing permission block — the global modal (D38) shows it. */
+    | { kind: 'forbidden' }
+    /** Transport/unexpected failure — graphqlFetch already surfaced it. */
+    | { kind: 'failed' };
 };
 
 // Plain before external. The order is fixed rather than selection-order so a
@@ -52,7 +60,7 @@ const SCOPE_ORDER: InboundScope[] = [
 
 export const deleteInboundShipments = async (
   storeId: string,
-  selection: readonly { id: string; scope: InboundScope }[]
+  selection: readonly InboundSelection[]
 ): Promise<BulkDeleteOutcome> => {
   let deleted = 0;
   for (const scope of SCOPE_ORDER) {
@@ -65,10 +73,10 @@ export const deleteInboundShipments = async (
     // A refusal in one scope says nothing about the other, but the user asked
     // for one action: stop and report, rather than pressing on and stacking a
     // second rejection on the first.
-    if (outcome.message || outcome.forbidden || outcome.failed)
-      return { ...outcome, deleted };
+    if (outcome.result.kind !== 'ok')
+      return { deleted, result: outcome.result };
   }
-  return { deleted };
+  return { deleted, result: { kind: 'ok' } };
 };
 
 const runScopeBatch = async (
@@ -76,7 +84,8 @@ const runScopeBatch = async (
   scope: InboundScope,
   ids: { id: string }[]
 ): Promise<BulkDeleteOutcome> => {
-  // Branch (not a document union) so graphqlFetch infers each twin's types.
+  // Branch (not a document union) so graphqlFetch infers each twin's types —
+  // as inboundShipmentUpdate does for the detail's twinned writes.
   const result = isExternalScope(scope)
     ? await graphqlFetch(
         DeleteInboundShipmentsExternal,
@@ -101,11 +110,15 @@ const runScopeBatch = async (
     // a user may hold the plain scope's and not the external one's.
     if (isForbidden(result.errors)) {
       reportPermissionDenied(missingPermissions(result.errors));
-      return { deleted: 0, forbidden: true };
+      return { deleted: 0, result: { kind: 'forbidden' } };
     }
-    return { deleted: 0, ...deleteRejection(result.errors) };
+    return {
+      deleted: 0,
+      result: { kind: 'refused', ...deleteRejection(result.errors) },
+    };
   }
-  if (result.kind !== 'success') return { deleted: 0, failed: true };
+  if (result.kind !== 'success')
+    return { deleted: 0, result: { kind: 'failed' } };
 
   const batch: BulkDeleteResultFragment =
     'batchInboundShipmentExternal' in result.data
@@ -125,9 +138,13 @@ const summariseScopeBatch = (
     i => i.response.__typename === 'DeleteInboundShipmentError'
   );
   if (refused && refused.response.__typename === 'DeleteInboundShipmentError')
-    return { deleted: 0, message: refused.response.error.description };
+    return {
+      deleted: 0,
+      result: { kind: 'refused', message: refused.response.error.description },
+    };
   return {
     deleted: items.filter(i => i.response.__typename === 'DeleteResponse')
       .length,
+    result: { kind: 'ok' },
   };
 };

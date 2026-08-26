@@ -7,8 +7,10 @@ import { Button } from '../../../../ui/elements/buttons/Button';
 import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
 import { Stack } from '../../../../ui/layout/Stack/Stack';
 import { TrashIcon } from '../../../../ui/icons';
-import { deleteInboundShipments } from '../deleteInboundShipments';
-import type { InboundScope } from '../../inboundShipmentScope';
+import {
+  deleteInboundShipments,
+  type InboundSelection,
+} from '../deleteInboundShipments';
 
 export interface DeleteInboundShipmentsActionProps {
   storeId: string;
@@ -17,7 +19,7 @@ export interface DeleteInboundShipmentsActionProps {
    * is twinned per scope (see deleteInboundShipments), so the id alone is not
    * enough to submit it.
    */
-  selection: () => { id: string; scope: InboundScope }[];
+  selection: () => InboundSelection[];
   /**
    * Whether the selection includes a shipment that has already introduced stock
    * (anything past New) — the confirmation says so, because that stock goes
@@ -98,44 +100,45 @@ const Body = (
   const removesStock = props.removesStock();
 
   // Ending the interaction: close FIRST, then hand back — clearing the
-  // selection unmounts the selection-gated footer this dialog lives in. The
-  // selection is dropped only when rows actually went; a refusal that removed
-  // nothing leaves the list untouched, so the user keeps their selection to
-  // adjust it.
+  // selection unmounts the selection-gated footer this dialog lives in (so
+  // read the count before closing disposes this scope). The selection is
+  // dropped only when rows actually went; a refusal that removed nothing
+  // leaves the list untouched, so the user keeps their selection to adjust it.
   const finish = () => {
+    const removed = deletedCount() > 0;
     props.onClose();
-    if (deletedCount() > 0) props.clearSelection();
+    if (removed) props.clearSelection();
   };
 
   const run = async () => {
     if (phase() !== 'confirm') return;
     setPhase('deleting');
-    const outcome = await deleteInboundShipments(
+    const { deleted, result } = await deleteInboundShipments(
       props.storeId,
       props.selection()
     );
-    setDeletedCount(outcome.deleted);
+    setDeletedCount(deleted);
     // Whatever else happened, rows that went have to leave the list.
-    if (outcome.deleted > 0) props.refetchList();
+    if (deleted > 0) props.refetchList();
 
-    if (outcome.forbidden) {
-      // The global permission-denied modal (D38) is already showing; this
-      // dialog has nothing to add.
-      finish();
-      return;
-    }
-    if (outcome.failed) {
-      // Transport/unexpected — graphqlFetch already surfaced it globally. Back
-      // to the confirmation so the action can be retried.
-      setPhase('confirm');
-      return;
-    }
-    if (outcome.message) {
-      setErrorMessage(outcome.message);
-      setErrorDetail(outcome.detail);
+    if (result.kind === 'refused') {
+      setErrorMessage(result.message);
+      setErrorDetail(result.detail);
       setPhase('error');
       return;
     }
+    // A transport failure that removed NOTHING is the one retryable outcome —
+    // graphqlFetch has already surfaced it globally, and the confirmation
+    // behind it still describes the selection truthfully. Once a batch has
+    // committed, the snapshotted count and the selection both name rows that
+    // are gone, so re-submitting would only earn a RecordNotFound.
+    if (result.kind === 'failed' && deleted === 0) {
+      setPhase('confirm');
+      return;
+    }
+    // 'ok', 'forbidden' (the global permission-denied modal — D38 — is already
+    // showing and this dialog has nothing to add), and a partial 'failed': the
+    // run is over.
     finish();
   };
 
