@@ -284,6 +284,11 @@ export const selectorsMetadata: PageMetadata = {
       searchTerms: ['select', 'status', 'enum'],
     },
     {
+      id: 'selectors-select-clearable',
+      title: 'Clearable drop-down',
+      searchTerms: ['clearable', 'clear', 'cross', 'empty', 'optional'],
+    },
+    {
       id: 'selectors-label-info',
       title: 'Label help tooltip',
       searchTerms: ['labelInfo', 'tooltip', 'info', 'help', 'explanation'],
@@ -292,6 +297,11 @@ export const selectorsMetadata: PageMetadata = {
       id: 'selectors-autocomplete',
       title: 'Autocomplete / combobox',
       searchTerms: ['combobox', 'search', 'async', 'multi-select', 'typeahead'],
+    },
+    {
+      id: 'selectors-no-options',
+      title: 'No options',
+      searchTerms: ['empty', 'no options', 'blank', 'misconfigured'],
     },
     {
       id: 'selectors-in-dialog',
@@ -311,8 +321,57 @@ export const selectorsMetadata: PageMetadata = {
   ],
 };
 
+/*
+ * The empty-option-set case for the two CHIP dropdowns — the shape #906 was
+ * reported as: a live chip whose option list is empty, so opening it used to
+ * show a blank box. Both keys are seeded present-as-null below, so both chips
+ * are on the bar from the start and can be opened without adding them first.
+ */
+interface EmptyOptionFilter {
+  category?: string | null;
+  categories?: string[] | null;
+}
+
+const EMPTY_OPTION_FILTERS: Filter<EmptyOptionFilter>[] = [
+  {
+    key: 'category',
+    label: () => 'Category',
+    render: props => (
+      <FilterSelect
+        label="Category"
+        testId={props.testId}
+        value={props.filter().category ?? ''}
+        options={[]}
+        onChange={value => props.setPartialFilter({ category: value || null })}
+      />
+    ),
+  },
+  {
+    key: 'categories',
+    label: () => 'Categories',
+    render: props => (
+      <FilterMultiSelect
+        label="Categories"
+        placeholder="Any"
+        testId={props.testId}
+        options={[]}
+        values={props.filter().categories ?? []}
+        onChange={values =>
+          props.setPartialFilter({ categories: values.length ? values : null })
+        }
+      />
+    ),
+  },
+];
+
 export const SelectorsShowcase = () => {
   const [status, setStatus] = createSignal('allocated');
+  const [adjustmentType, setAdjustmentType] = createSignal<string | undefined>(
+    'addition'
+  );
+  // The no-options demo: both chips seeded present so they're openable on load.
+  const [emptyOptionFilter, setEmptyOptionFilter] =
+    createSignal<EmptyOptionFilter>({ category: null, categories: null });
   const [picked, setPicked] = createSignal<DemoItem | null>(null);
   // Seeded to the LAST item (not on the first page) to show AsyncCombobox
   // rendering a selected value whose row hasn't been loaded yet.
@@ -390,6 +449,38 @@ export const SelectorsShowcase = () => {
             }))}
             helperText="Coloured dots + check indicator — styled, still accessible"
           />
+        </DashboardCard>
+
+        <DashboardCard
+          id="selectors-select-clearable"
+          title="Clearable drop-down — an optional pick"
+        >
+          <Lead>
+            An <em>optional</em> pick — a report filter's enum argument — must
+            be emptiable again without cancelling the whole form.{' '}
+            <code>clearable</code> puts a ✕ in its own slot beside the chevron
+            while a value is selected; it calls <code>onClear</code> and the
+            owner empties its bound state. Requires controlled usage (
+            <code>value</code>).
+          </Lead>
+          <Select
+            label="Adjustment type"
+            clearable
+            value={adjustmentType()}
+            onClear={() => setAdjustmentType(undefined)}
+            onValueChange={setAdjustmentType}
+            options={[
+              { value: 'addition', label: 'Addition' },
+              { value: 'reduction', label: 'Reduction' },
+            ]}
+            helperText="Pick a value to see the clear affordance"
+          />
+          <Note>
+            Default off — most selects are a must-have pick (a direction, a
+            rows-per-page count) where emptiness is meaningless. The ✕ keeps its
+            own slot rather than replacing the chevron on hover, exactly as the
+            Combobox's clear.
+          </Note>
         </DashboardCard>
 
         <DashboardCard
@@ -524,6 +615,63 @@ export const SelectorsShowcase = () => {
             placeholder="Search to add items…"
             helperText={`${multi().length} selected`}
           />
+        </DashboardCard>
+
+        <DashboardCard
+          id="selectors-no-options"
+          title="Nothing to choose from — the No options row"
+        >
+          <Lead>
+            Every selector can be handed an <strong>empty option set</strong> —
+            usually a misconfiguration rather than a bug (an option custom field
+            saved with no options, a reason list nobody populated). The control
+            still opens, because a trigger that silently does nothing reads as
+            broken; what it must not do is open a <em>blank box</em> (#906).
+            Open all four:
+          </Lead>
+          <Select label="Reason (none configured)" options={[]} />
+          <Combobox<DemoItem>
+            label="Item (empty list)"
+            items={[]}
+            itemToString={item => item.code}
+            onChange={() => {}}
+          />
+          <MultiSelect<DemoItem>
+            label="Items (empty list)"
+            items={[]}
+            itemToString={item => item.code}
+            selectedItems={[]}
+            onChange={() => {}}
+          />
+          <FilterBar
+            filters={EMPTY_OPTION_FILTERS}
+            filter={emptyOptionFilter()}
+            onChange={setEmptyOptionFilter}
+          />
+          <Note>
+            <strong>Not search copy.</strong> "No results" and "Start typing"
+            both invite the user to keep typing at a list that was never
+            populated, so the default becomes <code>label.no-options</code> — a
+            muted, non-interactive row. A caller's own{' '}
+            <code>noResultsMessage</code> / <code>emptyQueryMessage</code> still
+            wins, and a <em>server</em>-mode combobox is untouched (an empty{' '}
+            <code>items</code> there means the fetch hasn't landed or hasn't
+            matched, which those two already describe).
+          </Note>
+          <Note>
+            <strong>The drop-down needed a different trick.</strong> Combobox
+            and MultiSelect pass Kobalte's <code>allowsEmptyCollection</code>{' '}
+            and render a status row in the popup; the chip dropdowns are menus,
+            with no collection at all. But Kobalte <em>Select</em>'s{' '}
+            <code>open()</code> early-returns on{' '}
+            <code>options.length &lt;= 0</code> with no opt-out — the popup
+            never mounts, so a status row inside it is unreachable. So Select's
+            empty state <em>is</em> an option: one{' '}
+            <strong>disabled sentinel</strong>, which satisfies the length check
+            and arrives greyed and unselectable through the existing{' '}
+            <code>.item[data-disabled]</code> styling. Its value is never handed
+            back to the caller.
+          </Note>
         </DashboardCard>
 
         <DashboardCard
@@ -670,6 +818,22 @@ export const SelectorsShowcase = () => {
               Side panel variant: use <code>placement="bottom-end"</code> so the
               <code>&lt;Popover&gt;</code> grows back into the viewport from the
               panel's edge.{' '}
+            </span>
+          </div>
+          <div class={styles.tagRow}>
+            <ColourTagPicker
+              colour={tagColour()}
+              onSelect={setTagColour}
+              variant="field"
+              allowCustom
+              onReset={() => setTagColour(null)}
+            />
+            <span class={styles.tagRowLabel}>
+              Custom-entry mode (<code>allowCustom</code> + <code>onReset</code>
+              , the store editor's colour preference): the popover adds a hex
+              entry — six digits, <code>#</code> optional, committed via the
+              preview swatch or Enter — and a Reset that commits no colour.{' '}
+              {tagColour() ? `Current: ${tagColour()}` : 'No colour set'}
             </span>
           </div>
         </DashboardCard>

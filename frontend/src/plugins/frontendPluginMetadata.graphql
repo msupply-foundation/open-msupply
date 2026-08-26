@@ -4,8 +4,19 @@
 #
 # Unauthenticated and store-agnostic on the server, so the loader may run it as
 # soon as a session exists and never has to wait for store context.
-query frontendPluginMetadata {
-  frontendPluginMetadata {
+#
+# `hostRuntime` is how this app declares what it IS: the component runtime a
+# bundle's contributions must target. One server serves several hosts at once
+# (this app at `/`, the old React UI at `/old-ui/`), so it cannot work out per
+# server which bundles the caller can load — omitting it means the React UI as
+# it shipped before any of this existed. Sending ours is what stops us being
+# offered a bundle we would fetch, evaluate, and only then refuse.
+#
+# Whether a bundle is new ENOUGH is a separate question and is not asked here:
+# the server settles that against the plugin's version, and the plugin-API gate
+# this app runs locally is checked module-side after the bundle loads.
+query frontendPluginMetadata($hostRuntime: String) {
+  frontendPluginMetadata(hostRuntime: $hostRuntime) {
     code
     path
     hash

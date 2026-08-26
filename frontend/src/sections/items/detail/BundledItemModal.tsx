@@ -1,6 +1,7 @@
 import { generateUUID } from '../../../uuid';
 import { createResource, createSignal, Show, type Component } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
@@ -71,10 +72,7 @@ export const BundledItemModal: Component<BundledItemModalProps> = props => {
       return result.data.items.nodes[0]?.variants ?? [];
     }
   );
-  const candidateVariants = (): ItemVariantRow[] =>
-    variantsData.state === 'ready' || variantsData.state === 'refreshing'
-      ? (variantsData.latest ?? [])
-      : [];
+  const candidateVariants = (): ItemVariantRow[] => gated(variantsData) ?? [];
 
   const selectedVariant = () =>
     candidateVariants().find(v => v.id === form().variantId);
@@ -117,6 +115,10 @@ export const BundledItemModal: Component<BundledItemModalProps> = props => {
       title={t('title.bundle-with')}
       dismissable={!saving()}
       onClose={props.onClose}
+      // Room for the item search's open listbox inside the dialog (#1029) —
+      // it opens with the dialog (initialFocus) and is the bottom-most field:
+      // header + field + the listbox's 18rem cap + padding.
+      minBodyHeightRem={27}
       footer={
         <Show when={failed()}>
           <Alert severity="error" testId="bundled-item-save-error">

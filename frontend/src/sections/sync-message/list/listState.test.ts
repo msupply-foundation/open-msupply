@@ -9,7 +9,7 @@ import {
 } from './listState';
 import type { SyncMessagesResult } from './syncMessages.generated';
 
-// Anchors: spec/sync-message/cases/OMS-REG-MNG-04.
+// Anchors: spec/sync-message/cases/OMS-REG-MNG-05.
 //   .2  — the register lists messages for EVERY store the server holds
 //   .3  — the register's columns, default-sorted newest-created first
 //   .5  — sortable by Created date and Status; From/To store and Type are not
@@ -32,7 +32,7 @@ const page = (
   centralServer: { syncMessage: { syncMessages: { nodes, totalCount } } },
 });
 
-describe('OMS-REG-MNG-04.2 — the register is server-wide', () => {
+describe('OMS-REG-MNG-05.2 — the register is server-wide', () => {
   it('carries the store only as the read’s authorisation argument', () => {
     const variables = buildListVariables(DEFAULT_STATE, 'store-a');
     expect(variables.storeId).toBe('store-a');
@@ -45,7 +45,7 @@ describe('OMS-REG-MNG-04.2 — the register is server-wide', () => {
   });
 });
 
-describe('OMS-REG-MNG-04.3 — default ordering is newest created first', () => {
+describe('OMS-REG-MNG-05.3 — default ordering is newest created first', () => {
   it('sorts by created datetime, descending', () => {
     expect(DEFAULT_STATE.sort).toEqual([
       { key: 'createdDatetime', desc: true },
@@ -59,7 +59,7 @@ describe('OMS-REG-MNG-04.3 — default ordering is newest created first', () => 
   });
 });
 
-describe('OMS-REG-MNG-04.5 — which columns sort', () => {
+describe('OMS-REG-MNG-05.5 — which columns sort', () => {
   it('offers exactly Created date and Status', () => {
     expect(Object.values(SORT_KEYS)).toEqual(['createdDatetime', 'status']);
   });
@@ -85,7 +85,7 @@ describe('OMS-REG-MNG-04.5 — which columns sort', () => {
   });
 });
 
-describe('OMS-REG-MNG-04.28 — the Status sort is a grouping, never progress', () => {
+describe('OMS-REG-MNG-05.28 — the Status sort is a grouping, never progress', () => {
   it('sends ONE sort key: the resolver takes the last element and ignores the rest, so a multi-key sort would silently reduce', () => {
     const variables = buildListVariables(
       state({ sort: [{ key: SORT_KEYS.status, desc: false }] }),
@@ -103,7 +103,7 @@ describe('OMS-REG-MNG-04.28 — the Status sort is a grouping, never progress', 
   });
 });
 
-describe('OMS-REG-MNG-04.6 — Status is the only filter, and it narrows', () => {
+describe('OMS-REG-MNG-05.6 — Status is the only filter, and it narrows', () => {
   it('seeds the Status chip present-but-empty, constraining nothing', () => {
     expect(DEFAULT_STATE.filter).toEqual({ status: null });
     expect(buildListVariables(DEFAULT_STATE, 's').filter).toEqual({});
@@ -125,7 +125,7 @@ describe('OMS-REG-MNG-04.6 — Status is the only filter, and it narrows', () =>
     expect(variables.filter).toEqual({});
   });
 
-  it('carries NO kind and NO created-date filter in its state, so neither can reach the wire (D97)', () => {
+  it('carries NO kind and NO created-date filter in its state, so neither can reach the wire (D120)', () => {
     // The kind filter the current app offers is not merely inert: the server
     // has no `type` filter field, so a filter object carrying one fails the
     // WHOLE query at validation. createdDatetime is declared but never mapped,
@@ -138,7 +138,7 @@ describe('OMS-REG-MNG-04.6 — Status is the only filter, and it narrows', () =>
   });
 });
 
-describe('OMS-REG-MNG-04.7 — server-side pagination', () => {
+describe('OMS-REG-MNG-05.7 — server-side pagination', () => {
   it('defaults to the first page of 20', () => {
     expect(DEFAULT_STATE.offset).toBe(0);
     expect(DEFAULT_STATE.first).toBe(DEFAULT_PAGE_SIZE);
@@ -155,7 +155,7 @@ describe('OMS-REG-MNG-04.7 — server-side pagination', () => {
   });
 });
 
-describe('OMS-REG-MNG-04.29 — a failed read does not read as a result', () => {
+describe('OMS-REG-MNG-05.29 — a failed read does not read as a result', () => {
   it('yields the page a successful read returned', () => {
     const result = pageFromResult({ kind: 'success', data: page([], 7) });
     expect(result).toEqual({ nodes: [], totalCount: 7 });

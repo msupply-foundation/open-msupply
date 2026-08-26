@@ -13,7 +13,7 @@ import type {
   SyncMessageRowFragment,
 } from './syncMessages.generated';
 
-// Anchors: spec/sync-message/cases/OMS-REG-MNG-04.
+// Anchors: spec/sync-message/cases/OMS-REG-MNG-05.
 //   .19 — a logs support upload lists one attached file per server log file,
 //         current and rotated, in FILE-NAME order
 //   .20 — a support upload asking for no artefacts shows NO Files section
@@ -50,7 +50,7 @@ const message = (
   ...over,
 });
 
-describe('OMS-REG-MNG-04.19 — harvested files read as a sequence', () => {
+describe('OMS-REG-MNG-05.19 — harvested files read as a sequence', () => {
   it('lists the current log and its rotated history in file-name order', () => {
     const harvested = [
       file({ id: 'b', fileName: 'remote_server.log.2.gz' }),
@@ -75,7 +75,7 @@ describe('OMS-REG-MNG-04.19 — harvested files read as a sequence', () => {
   });
 });
 
-describe('OMS-REG-MNG-04.20 — no artefacts, no Files section', () => {
+describe('OMS-REG-MNG-05.20 — no artefacts, no Files section', () => {
   it('shows NO section for a support upload that produced none, rather than an empty one', () => {
     expect(showFilesSection('supportUpload', [])).toBe(false);
   });
@@ -88,7 +88,7 @@ describe('OMS-REG-MNG-04.20 — no artefacts, no Files section', () => {
   });
 });
 
-describe('OMS-REG-MNG-04.21 — a recorded processing failure is shown', () => {
+describe('OMS-REG-MNG-05.21 — a recorded processing failure is shown', () => {
   it('shows the raw server reason verbatim on an errored message', () => {
     const reason =
       '(support upload) Failed to process support upload: Other error: (support upload): Invalid JSON in body: this is not json';
@@ -111,7 +111,7 @@ describe('OMS-REG-MNG-04.21 — a recorded processing failure is shown', () => {
   });
 });
 
-describe('OMS-REG-MNG-04.24 — a refused database snapshot fails the whole message', () => {
+describe('OMS-REG-MNG-05.24 — a refused database snapshot fails the whole message', () => {
   it('reads as an errored message with its reason and NO files', () => {
     const refused = message({
       status: 'error',
@@ -126,7 +126,7 @@ describe('OMS-REG-MNG-04.24 — a refused database snapshot fails the whole mess
   });
 });
 
-describe('OMS-REG-MNG-04.23 — a per-artefact failure is not a message failure', () => {
+describe('OMS-REG-MNG-05.23 — a per-artefact failure is not a message failure', () => {
   it('shows the file’s own reason', () => {
     expect(fileErrorNotice(file({ error: 'upload timed out' }))).toBe(
       'upload timed out'
@@ -145,7 +145,7 @@ describe('OMS-REG-MNG-04.23 — a per-artefact failure is not a message failure'
   });
 });
 
-describe('OMS-REG-MNG-04.22 — a file opens from the message', () => {
+describe('OMS-REG-MNG-05.22 — a file opens from the message', () => {
   it('addresses the sync-file endpoint by table, message id and file id — not through the register’s own data', () => {
     expect(syncFileUrl(SYNC_MESSAGE_TABLE, 'm1', 'f1')).toBe(
       '/sync_files/sync_message/m1/f1'

@@ -54,7 +54,7 @@ import { SyncMessageModal } from './SyncMessageModal';
  * modal (S3), and the one page action opens the create modal (S2). It also has
  * NO row selection, NO bulk actions and NO per-record actions of any kind —
  * nothing about a sync message can be acted on once created (rules §
- * immutability, OMS-REG-MNG-04.25/.27), so the screen carries no action footer
+ * immutability, OMS-REG-MNG-05.25/.27), so the screen carries no action footer
  * at all. There is no Export CSV either (ui-surface S1 § layout).
  */
 
@@ -62,7 +62,7 @@ const SyncMessagesList: Component = () => {
   // storeId is guaranteed present: this section renders only inside
   // StoreGuardLayout, which requires a resolved store before routing. It is
   // AUTHORISATION for the read (server admin against this store), never a
-  // narrowing — the register is server-wide (OMS-REG-MNG-04.2).
+  // narrowing — the register is server-wide (OMS-REG-MNG-05.2).
   const params = useParams<{ storeId: string }>();
   const { query, setQuery } =
     useUrlQueryState<SyncMessagesListState>(DEFAULT_STATE);
@@ -100,8 +100,8 @@ const SyncMessagesList: Component = () => {
   //
   // A failed read KEEPS the previous page — held in `held` across fetches —
   // and reports itself as `stale`, so the register both leaves the last page
-  // on screen and states that the list did not refresh (OMS-REG-MNG-04.29,
-  // D97): a silently stale table is indistinguishable from a filter that
+  // on screen and states that the list did not refresh (OMS-REG-MNG-05.29,
+  // D120): a silently stale table is indistinguishable from a filter that
   // matched everything.
   let held: RegisterPage = { nodes: [], totalCount: 0 };
   const [data, { refetch }] = createResource(
@@ -155,7 +155,7 @@ const SyncMessagesList: Component = () => {
     },
     {
       // The destination's store name — BLANK where the message has no
-      // destination, which is a valid message (OMS-REG-MNG-04.13).
+      // destination, which is a valid message (OMS-REG-MNG-05.13).
       c: { accessor: row => row.toStore?.storeName ?? '', id: 'toStore' },
       header: () => t('label.to-store'),
       ...getTextCell(),
@@ -170,9 +170,9 @@ const SyncMessagesList: Component = () => {
       ...getCellDefinition('createdDatetime'),
     },
     {
-      // Resolved name, never the raw value (OMS-REG-MNG-04.4). Sortable — but
+      // Resolved name, never the raw value (OMS-REG-MNG-05.4). Sortable — but
       // the sort GROUPS equal statuses without ordering them by lifecycle, and
-      // nothing here presents it as progress (OMS-REG-MNG-04.28): it is a
+      // nothing here presents it as progress (OMS-REG-MNG-05.28): it is a
       // plain sortable text column, with no lifecycle affordance anywhere on
       // the register.
       c: { accessor: row => statusLabel(row.status), id: 'status' },
@@ -221,7 +221,7 @@ const SyncMessagesList: Component = () => {
       }
     >
       {/* The list did not refresh — stated rather than left implicit, so a
-          stale page is never read as the filter's result (D97). Sits above the
+          stale page is never read as the filter's result (D120). Sits above the
           table as the fill-body region's other child; the table still claims
           the rest of the region (its own flex). */}
       <Show when={staleRead()}>
@@ -248,7 +248,7 @@ const SyncMessagesList: Component = () => {
         onRowClick={row => setOpened(row)}
         // The empty state carries NO action of its own: New message is
         // always present as the page action and is not repeated
-        // (OMS-REG-MNG-04.8).
+        // (OMS-REG-MNG-05.8).
         emptyMessage={t('error.no-sync-messages')}
         config={tableConfig.config()}
         setConfig={tableConfig.setConfig}

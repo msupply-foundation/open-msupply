@@ -1,5 +1,6 @@
 import { createResource, createSignal, Show, type JSX } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
 import { formatNumber } from '../../../intl/formatNumber';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
@@ -10,6 +11,7 @@ import { NumberField } from '../../../ui/elements/inputs/NumberField';
 import { DateField } from '../../../ui/elements/inputs/DateField';
 import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { StatComparisonTile } from '../../../ui/elements/display/StatComparisonTile';
+import { RecordLink } from '../../../ui/elements/typography/RecordLink';
 import { ReasonSelect, reasonsOfKind } from '../../../domain/reasonOptions';
 import { XCircleIcon, CheckIcon } from '../../../ui/icons';
 import { stockPreferences } from '../../../store/storeContext';
@@ -70,15 +72,17 @@ const AdjustContent = (props: {
   const [direction, setDirection] = createSignal<Direction>('ADDITION');
   const [amount, setAmount] = createSignal<number | undefined>();
   const [reasonId, setReasonId] = createSignal<string | undefined>();
-  const [date, setDate] = createSignal<string | null>(null);
+  // Local (wall-clock) today, not UTC — so a store whose date differs from UTC
+  // never treats its own today as backdated (spec/stock S4).
+  const today = localTodayIso();
+  // The date field starts at today (spec/stock S4) — today means "not
+  // backdated", so the default still submits with no backdatedDatetime.
+  const [date, setDate] = createSignal<string | null>(today);
   const [saving, setSaving] = createSignal(false);
   const [error, setError] = createSignal<string | undefined>();
 
   const prefs = () => stockPreferences();
   const backdating = () => prefs().backdating;
-  // Local (wall-clock) today, not UTC — so a store whose date differs from UTC
-  // never treats its own today as backdated (spec/stock S4).
-  const today = localTodayIso();
   const minDate = () => {
     const maxDays = backdating().maxDays;
     return maxDays <= 0 ? undefined : localIsoDaysAgo(maxDays);
@@ -119,13 +123,10 @@ const AdjustContent = (props: {
   // open — and `.latest` alone still suspends on that first pending read, which
   // collapses the detail view's <Suspense> boundary and detaches the open
   // <dialog>: it loses the top layer, so the backdrop vanishes and the modal
-  // re-renders in normal flow further down the page (#469 / #601). Gating on
-  // `.state` never suspends (kdd/solid-reactivity-pitfalls › No remounts on
-  // interaction); `historical.loading` is still free to drive a spinner.
-  const historicalLine = () =>
-    historical.state === 'ready' || historical.state === 'refreshing'
-      ? historical.latest
-      : undefined;
+  // re-renders in normal flow further down the page (#469 / #601).
+  // `historical.loading` is still free to drive a spinner
+  // (kdd/solid-reactivity-pitfalls › No remounts on interaction).
+  const historicalLine = () => gated(historical);
 
   // Current quantities: the historical values when backdated (once loaded),
   // otherwise the line's live quantities.
@@ -203,6 +204,10 @@ const AdjustContent = (props: {
       widthRem={34}
       testId="adjust-modal"
       title={t('heading.stock-adjustment')}
+      // Room for the reason picker's open listbox inside the dialog (#1029) —
+      // it is the bottom row whenever backdating is off, so its list (commonly
+      // 5–10 reasons) would otherwise hang below the dialog.
+      minBodyHeightRem={30}
       actionsLead={
         <Show when={error() || belowZero()}>
           <Alert severity="error">
@@ -242,7 +247,8 @@ const AdjustContent = (props: {
           gap: 'var(--space-4)',
         }}
       >
-        {/* Context card: item code · pack size · name. */}
+        {/* Context card: item code · pack size · name (the name links to its
+            catalogue record — spec/stock S4). */}
         <div
           style={{
             display: 'flex',
@@ -250,7 +256,13 @@ const AdjustContent = (props: {
             gap: 'var(--space-1)',
           }}
         >
-          <strong>{props.line.itemName}</strong>
+          <strong>
+            <RecordLink
+              href={`/${props.storeId}/catalogue/items/${props.line.itemId}`}
+            >
+              {props.line.itemName}
+            </RecordLink>
+          </strong>
           <span
             style={{
               color: 'var(--text-secondary)',

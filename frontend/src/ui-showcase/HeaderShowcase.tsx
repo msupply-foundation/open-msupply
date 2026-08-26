@@ -270,7 +270,6 @@ export const HeaderShowcase = () => {
                 <Select
                   label="Supplier name"
                   size="small"
-                  width="full"
                   options={SUPPLIERS}
                   value={supplier()}
                   onValueChange={setSupplier}
@@ -278,14 +277,12 @@ export const HeaderShowcase = () => {
                 <TextField
                   label="Reference"
                   size="small"
-                  width="full"
                   value={reference()}
                   onInput={e => setReference(e.currentTarget.value)}
                 />
                 <DateField
                   label="Received"
                   size="small"
-                  width="full"
                   format="dd MMM yyyy"
                   value="2026-05-19"
                   disabled
@@ -362,7 +359,6 @@ export const HeaderShowcase = () => {
                   <Combobox<string>
                     label="Patient"
                     size="small"
-                    width="full"
                     items={PATIENTS}
                     itemToString={name => name}
                     value={patient()}
@@ -375,7 +371,6 @@ export const HeaderShowcase = () => {
                   <Combobox<string>
                     label="Clinician"
                     size="small"
-                    width="full"
                     items={CLINICIANS}
                     itemToString={name => name}
                     value={clinician()}
@@ -386,7 +381,6 @@ export const HeaderShowcase = () => {
                   <DateField
                     label="Date"
                     size="small"
-                    width="full"
                     format="dd MMM yyyy"
                     value={prescribed()}
                     onChange={setPrescribed}
@@ -396,7 +390,6 @@ export const HeaderShowcase = () => {
                   <Combobox<string>
                     label="Program"
                     size="small"
-                    width="full"
                     items={PROGRAMS}
                     itemToString={name => name}
                     value={program()}
@@ -410,7 +403,6 @@ export const HeaderShowcase = () => {
                   <Combobox<string>
                     label="Priority"
                     size="small"
-                    width="full"
                     items={PRIORITIES}
                     itemToString={name => name}
                     value={priority()}
@@ -469,7 +461,6 @@ export const HeaderShowcase = () => {
                 <Select
                   label="Supplier name"
                   size="small"
-                  width="full"
                   options={SUPPLIERS}
                   value={errorSupplier()}
                   onValueChange={setErrorSupplier}
@@ -477,14 +468,12 @@ export const HeaderShowcase = () => {
                 <TextField
                   label="Reference"
                   size="small"
-                  width="full"
                   value={errorReference()}
                   onInput={e => setErrorReference(e.currentTarget.value)}
                 />
                 <DateField
                   label="Received"
                   size="small"
-                  width="full"
                   format="dd MMM yyyy"
                   value={received()}
                   error={receivedError()}
@@ -493,7 +482,6 @@ export const HeaderShowcase = () => {
                 <Select
                   label="Category"
                   size="small"
-                  width="full"
                   options={CATEGORIES}
                   value={category()}
                   onValueChange={setCategory}
@@ -515,8 +503,12 @@ export const HeaderShowcase = () => {
             stock), and a <code>&lt;ToggleSwitch&gt;</code>. The four inputs
             share the <code>&lt;HeaderToolbar&gt;</code> row; the toggle hugs
             its content and — like the Alert in the section above — sits on the
-            bottom baseline, so the input labels still line up along the top. No
-            Alert here: the pattern doesn't require one.
+            bottom baseline, so the input labels still line up along the top.
+            The four fields carry the real order's weights: the MOS selects are
+            capped at 12rem (a months value can't use more) but keep the row's
+            10rem floor, because a floor is also the width the LABEL gets and
+            "Reorder threshold MOS" wraps below it — which would drop that one
+            control half a row. No Alert here: the pattern doesn't require one.
           </Lead>
           <PageFrame>
             <Header>
@@ -527,41 +519,49 @@ export const HeaderShowcase = () => {
               <HeaderButtons>
                 <Button icon={<PlusCircleIcon />}>Add item</Button>
               </HeaderButtons>
+              {/* The real cluster's weights (InternalOrderToolbar): the
+                  supplier lookup takes the larger share, and each MOS select
+                  is capped at 12rem because a months value can't use more.
+                  Their FLOOR stays the row's 10rem — narrow it and the label
+                  wraps, dropping the control below its neighbours'. */}
               <HeaderToolbar>
-                <Select
-                  label="Supplier name"
-                  size="small"
-                  width="full"
-                  options={STORE_OPTIONS}
-                  value="android"
-                  disabled
-                />
-                <TextField
-                  label="Supplier reference"
-                  size="small"
-                  width="full"
-                  value=""
-                  disabled
-                />
-                <Select
-                  label="Reorder threshold MOS"
-                  size="small"
-                  width="full"
-                  options={MOS_OPTIONS}
-                  value={reorderMos()}
-                  onValueChange={setReorderMos}
-                />
-                <Select
-                  label="Target MOS"
-                  size="small"
-                  width="full"
-                  options={MOS_OPTIONS}
-                  value={targetMos()}
-                  onValueChange={setTargetMos}
-                />
-                {/* The toggle hugs its content and bottom-aligns (like the
-                    compact Alert), so the four input labels line up on top
-                    while it sits on the control baseline. */}
+                <FormRowItem weight={1.5}>
+                  <Select
+                    label="Supplier name"
+                    size="small"
+                    options={STORE_OPTIONS}
+                    value="android"
+                    disabled
+                  />
+                </FormRowItem>
+                <FormRowItem weight={1}>
+                  <TextField
+                    label="Supplier reference"
+                    size="small"
+                    value=""
+                    disabled
+                  />
+                </FormRowItem>
+                <FormRowItem weight={0.7} maxWidth="12rem">
+                  <Select
+                    label="Reorder threshold MOS"
+                    size="small"
+                    options={MOS_OPTIONS}
+                    value={reorderMos()}
+                    onValueChange={setReorderMos}
+                  />
+                </FormRowItem>
+                <FormRowItem weight={0.7} maxWidth="12rem">
+                  <Select
+                    label="Target MOS"
+                    size="small"
+                    options={MOS_OPTIONS}
+                    value={targetMos()}
+                    onValueChange={setTargetMos}
+                  />
+                </FormRowItem>
+                {/* The toggle hugs its content, so it sits on the control
+                    line the rest of the cluster aligns to. */}
                 <div style={{ flex: '0 1 auto', 'align-self': 'flex-end' }}>
                   <ToggleSwitch
                     label="Hide stock over minimum"

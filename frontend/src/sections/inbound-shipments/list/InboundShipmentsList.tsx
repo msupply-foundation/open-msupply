@@ -16,7 +16,10 @@ import {
   type Column,
   type SortState,
 } from '../../../ui/elements/table/DataTable';
-import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
+import {
+  CommentHeader,
+  getCellDefinition,
+} from '../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../ui/utils/rem';
 import { HStack } from '../../../ui/layout/Stack/HStack';
 import { createTableConfig } from '../../../api/createTableConfig';
@@ -26,8 +29,14 @@ import {
   ColourTagPicker,
 } from '../../../ui/elements/selectors/ColourTag';
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
-import { HomeIcon, PlusCircleIcon, TruckIcon } from '../../../ui/icons';
+import { PlusCircleIcon } from '../../../ui/icons';
 import { useUrlQueryState } from '../../../list/urlQueryState';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
+import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
 import { inboundShipmentPreferences } from '../../../store/storeContext';
 import {
   InboundShipments,
@@ -58,6 +67,7 @@ import {
   scopeOf,
 } from '../inboundShipmentScope';
 import { linkedOrderOf } from '../linkedOrder';
+import { SupplierKindIcon } from '../SupplierKindIcon';
 import {
   customFieldDefinitions,
   customFieldColumns,
@@ -66,7 +76,6 @@ import {
   type CustomFieldFilterState,
 } from '../../../domain/customFields';
 import { RecordLink } from '../../../ui/elements/typography/RecordLink';
-import styles from './InboundShipmentsList.module.css';
 
 // The inbound-shipments list view (spec S1). Mirrors the stocktakes reference
 // list: URL-backed filter/sort/pagination, the shared DataTable, a selection
@@ -74,8 +83,6 @@ import styles from './InboundShipmentsList.module.css';
 // never-throwing query method; the resource is keyed on the SERIALISED
 // variables so an empty filter chip doesn't reflash the list
 // (kdd/solid-reactivity-pitfalls).
-
-const DEFAULT_PAGE_SIZE = 20;
 
 type Row = InboundRowFragment;
 type SortKey = NonNullable<InboundShipmentsVariables['sort']>[number]['key'];
@@ -103,7 +110,10 @@ const DEFAULT_STATE: ListState = {
 const InboundShipmentsList: Component = () => {
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
-  const { query, setQuery } = useUrlQueryState<ListState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<ListState>({
+    ...DEFAULT_STATE,
+    first: initialPageSize(),
+  });
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   // The create modal: plain manual create, or the from-a-purchase-order flow
   // (offered only when the store's procurement preference is on).
@@ -200,6 +210,15 @@ const InboundShipmentsList: Component = () => {
   const rows = (): Row[] => data.latest?.nodes ?? [];
   const totalCount = () => data.latest?.totalCount ?? 0;
 
+  // A bulk delete of the last page's rows leaves the offset past the new end
+  // (src/list/clampPageOffset.ts, issue #1117).
+  clampPageOffset({
+    total: () => settledTotal(data, page => page.totalCount),
+    offset: () => query().offset,
+    pageSize: () => query().first,
+    setOffset: offset => setQuery({ ...query(), offset }),
+  });
+
   // Bulk delete is offered only while EVERY selected row is New (spec S1 — a
   // deliberate UI narrowing of the server's wider delete window).
   const selectedRows = () => rows().filter(r => selectedIds().includes(r.id));
@@ -277,11 +296,7 @@ const InboundShipmentsList: Component = () => {
                 onSelect={colour => void setColour(row, colour)}
               />
             </Show>
-            {supplierIsStore(row) ? (
-              <HomeIcon class={styles.kindInternal} />
-            ) : (
-              <TruckIcon class={styles.kindExternal} />
-            )}
+            <SupplierKindIcon isStore={supplierIsStore(row)} />
             <span>{row.otherPartyName}</span>
           </HStack>
         );
@@ -357,7 +372,7 @@ const InboundShipmentsList: Component = () => {
     },
     {
       c: { key: 'comment' },
-      header: () => t('label.comment'),
+      header: () => <CommentHeader />,
       ...getCellDefinition('comment'),
     },
     {
@@ -511,7 +526,11 @@ const InboundShipmentsList: Component = () => {
           pageSize: query().first,
           total: totalCount(),
           onOffsetChange: offset => setQuery({ ...query(), offset }),
-          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+          // The chosen size is remembered for the next visit (D106).
+          onPageSizeChange: first => {
+            rememberPageSize(first);
+            setQuery({ ...query(), first, offset: 0 });
+          },
         }}
       />
       <CreateInboundShipmentModal

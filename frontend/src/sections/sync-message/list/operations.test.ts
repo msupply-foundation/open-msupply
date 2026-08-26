@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import * as operations from './syncMessages.generated';
 import { buildInsertInput, EMPTY_FORM } from './syncMessageCreate';
 
-// Anchors: spec/sync-message/cases/OMS-REG-MNG-04.
+// Anchors: spec/sync-message/cases/OMS-REG-MNG-05.
 //   .16 — a message stays New until the site holding its destination store
 //         next synchronises — CREATING it advances nothing
 //   .17 — a message whose destination store is on another site stays New here
@@ -29,7 +29,7 @@ const documents = Object.entries(operations).filter(
 
 const documentText = documents.map(([, document]) => document.query).join('\n');
 
-describe('OMS-REG-MNG-04.25/.26/.27 — nothing can be edited, retried or deleted', () => {
+describe('OMS-REG-MNG-05.25/.26/.27 — nothing can be edited, retried or deleted', () => {
   it('carries exactly four operations — three reads and one write', () => {
     expect(documents.map(([name]) => name).sort()).toEqual([
       'InsertSyncMessage',
@@ -64,7 +64,7 @@ describe('OMS-REG-MNG-04.25/.26/.27 — nothing can be edited, retried or delete
   });
 });
 
-describe('OMS-REG-MNG-04.16/.17/.18 — the client never advances a status', () => {
+describe('OMS-REG-MNG-05.16/.17/.18 — the client never advances a status', () => {
   it('sends no status on the create — the server stamps New', () => {
     expect(buildInsertInput(EMPTY_FORM, 'id-1')).not.toHaveProperty('status');
   });

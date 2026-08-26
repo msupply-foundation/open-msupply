@@ -68,6 +68,15 @@ export const SupplyRequestedAction: Component<{
       <Button
         variant="secondary"
         icon={<ZapIcon />}
+        // Icon-only on a narrow viewport, so the header's action cluster fits
+        // beside the breadcrumb instead of taking a row of its own. The
+        // tooltip tracks the label, which names the quantity supplied to.
+        collapsible="narrow"
+        title={
+          props.toApproved
+            ? t('button.supply-to-approved')
+            : t('button.supply-to-requested')
+        }
         disabled={props.disabled}
         data-testid="supply-to-requested-button"
         onClick={() => setOpen(true)}

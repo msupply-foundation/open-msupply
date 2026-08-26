@@ -34,7 +34,7 @@ export {
   localisedTime,
   localisedDateTime,
   customDate,
-  localisedDistanceToNow,
+  localisedTimeAgo,
   getDisplayAge,
 } from './formatDateTime';
 export { formatFileSize } from './formatFileSize';

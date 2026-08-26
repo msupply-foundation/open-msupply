@@ -31,6 +31,13 @@ export interface LocationVolumeSelectProps {
   error?: string;
   placeholder?: string;
   /**
+   * Control size, forwarded to the Combobox — `small` matches the compact
+   * inputs a dense row (a line editor's batch card) puts beside it. Without
+   * this the picker rendered at the default height next to `size="small"`
+   * text fields, so the row's controls didn't line up.
+   */
+  size?: 'default' | 'small';
+  /**
    * A `createFocusTarget()` handle bound to the picker's input — for an owner
    * that focuses it after an action (e.g. a dialog opening on it).
    */
@@ -137,6 +144,7 @@ export const LocationVolumeSelect = (
     <Combobox<LocationWithVolume>
       label={props.label}
       hideLabel={props.hideLabel}
+      size={props.size}
       items={filtered()}
       loading={props.loading}
       itemToString={l => `${l.code} — ${l.name}`}

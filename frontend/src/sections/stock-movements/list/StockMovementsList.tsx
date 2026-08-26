@@ -19,8 +19,8 @@ import {
   type SortState,
 } from '@/ui/elements/table/DataTable';
 import {
+  CommentHeader,
   getCellDefinition,
-  getCommentCell,
   getDateCell,
   getNumberCell,
 } from '@/ui/elements/table/tableHelpers';
@@ -29,6 +29,12 @@ import { StatusChip } from '@/ui/elements/feedback/StatusChip';
 import { FilterBar } from '@/ui/elements/selectors/FilterBar';
 import { CloseIcon, PlusCircleIcon } from '@/ui/icons';
 import { useUrlQueryState } from '@/list/urlQueryState';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '@/list/pageSize';
+import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
 import { stripEmpty } from '@/typeHelpers';
 import { hasPermission } from '@/store/storeContext';
 import { reportPermissionDenied } from '@/api/graphql';
@@ -46,8 +52,6 @@ import { DeleteStockMovementsAction } from './actions';
 // the standard list screen: URL-backed filter/sort/pagination, the shared
 // DataTable, and an IMMEDIATE create (no dialog — one action inserts an empty
 // movement and navigates straight to its detail).
-
-const DEFAULT_PAGE_SIZE = 20;
 
 type MovementRow = StockMovementsResult['stockRelocations']['nodes'][number];
 
@@ -94,8 +98,10 @@ const statusMeta = (status: MovementRow['status']) => ({
 const StockMovementsList: Component = () => {
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
-  const { query, setQuery } =
-    useUrlQueryState<StockMovementsListState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<StockMovementsListState>({
+    ...DEFAULT_STATE,
+    first: initialPageSize(),
+  });
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   const [creating, setCreating] = createSignal(false);
 
@@ -164,6 +170,15 @@ const StockMovementsList: Component = () => {
   const rows = () => data.latest?.nodes ?? [];
   const totalCount = () => data.latest?.totalCount ?? 0;
 
+  // A bulk delete of the last page's rows leaves the offset past the new end
+  // (src/list/clampPageOffset.ts, issue #1117).
+  clampPageOffset({
+    total: () => settledTotal(data, page => page.totalCount),
+    offset: () => query().offset,
+    pageSize: () => query().first,
+    setOffset: offset => setQuery({ ...query(), offset }),
+  });
+
   const currentSort = (): SortState<SortKey> | undefined => {
     const s = query().sort?.[0];
     return s ? { key: s.key, desc: s.desc ?? false } : undefined;
@@ -213,8 +228,8 @@ const StockMovementsList: Component = () => {
     },
     {
       c: { key: 'comment' },
-      header: () => t('label.comment'),
-      ...getCommentCell(),
+      header: () => <CommentHeader />,
+      ...getCellDefinition('comment'),
     },
     {
       c: { key: 'createdDatetime' },
@@ -320,7 +335,10 @@ const StockMovementsList: Component = () => {
           pageSize: query().first,
           total: totalCount(),
           onOffsetChange: offset => setQuery({ ...query(), offset }),
-          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+          onPageSizeChange: first => {
+            rememberPageSize(first);
+            setQuery({ ...query(), first, offset: 0 });
+          },
         }}
       />
     </Page>

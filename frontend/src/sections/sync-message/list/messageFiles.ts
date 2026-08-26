@@ -7,7 +7,7 @@ import type {
  * Inspecting one message (spec/sync-message/rules.md § attached files,
  * § lifecycle; ui-surface S3). Pure display logic, kept out of the modal so
  * the anchor-citing tests exercise it directly
- * (OMS-REG-MNG-04 .19–.24).
+ * (OMS-REG-MNG-05 .19–.24).
  */
 
 /** The table the attached files are recorded against — the sync-file
@@ -29,7 +29,7 @@ export const producesArtefacts = (type: SyncMessageRowFragment['type']) =>
 
 /**
  * Whether the message modal shows a Files section at all
- * (OMS-REG-MNG-04.20): only for a kind that produces artefacts AND only when
+ * (OMS-REG-MNG-05.20): only for a kind that produces artefacts AND only when
  * at least one file exists. A message that produced none shows NO section
  * rather than an empty one — the section's presence is itself the signal that
  * artefacts exist.
@@ -42,7 +42,7 @@ export const showFilesSection = (
 /**
  * The files in display order: file NAME ascending, so a log file and its
  * rotated history read as a sequence (rules § attached files,
- * OMS-REG-MNG-04.19). The server's loader already sorts this way; sorting a
+ * OMS-REG-MNG-05.19). The server's loader already sorts this way; sorting a
  * copy here makes the order the screen's own guarantee rather than an
  * assumption about the read, and costs nothing at this row count.
  */
@@ -53,7 +53,7 @@ export const filesInNameOrder = (
 
 /**
  * The message's own recorded failure reason, shown as an error notice
- * (OMS-REG-MNG-04.21) — only when the status IS Error and a reason was
+ * (OMS-REG-MNG-05.21) — only when the status IS Error and a reason was
  * recorded. The string is a raw, developer-facing server string, shown
  * verbatim and never translated (contract § lifecycle).
  */
@@ -65,7 +65,7 @@ export const messageErrorNotice = (
     : undefined;
 
 /**
- * A per-artefact failure is NOT a message failure (OMS-REG-MNG-04.23): the
+ * A per-artefact failure is NOT a message failure (OMS-REG-MNG-05.23): the
  * file carries its own reason, the message stays Processed, and the file list
  * is the only place the failure is visible. So this reads the FILE's own
  * `error` and nothing about the message's status.

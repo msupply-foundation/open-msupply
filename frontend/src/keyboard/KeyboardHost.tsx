@@ -7,6 +7,7 @@ import { startKeyboardDispatcher } from './keyboardDispatcher';
 import { createAction } from '../ui/utils/keyActions';
 import { MOD_K } from '../ui/utils/shortcuts';
 import { useFullScreen } from '../ui/layout/AppShell/shellContext';
+import { storeRelativePath } from '../nav/storeRelativePath';
 
 /*
  * Where the keyboard layer is switched on (spec/keyboard). Mounted inside
@@ -25,7 +26,9 @@ import { useFullScreen } from '../ui/layout/AppShell/shellContext';
  */
 
 export interface KeyboardHostProps {
-  /** Open the sync window (AC-KB6). */
+  /** Start a manual sync (AC-KB6) — what the Alt+Shift+S binding now does. */
+  onSyncNow: () => void;
+  /** Open the sync window (AC-KB6) — the palette's `Sync details` row. */
   onSyncOpen: () => void;
   /** Ask to confirm, then log out (AC-KB5). */
   onLogoutRequest: () => void;
@@ -39,21 +42,16 @@ export const KeyboardHost = (props: KeyboardHostProps) => {
 
   const [paletteOpen, setPaletteOpen] = createSignal(false);
 
-  // Store-relative path, as ShellLayout derives it: '/{store}/inventory/
-  // stocktakes/{id}' → 'inventory/stocktakes/{id}'.
-  const relativePath = (): string => {
-    const prefix = `/${params.storeId}`;
-    const rest = location.pathname.startsWith(prefix)
-      ? location.pathname.slice(prefix.length)
-      : location.pathname;
-    return rest.replace(/^\/+|\/+$/g, '');
-  };
+  // Store-relative path, from the same derivation ShellLayout uses:
+  // '/{store}/inventory/stocktakes/{id}' → 'inventory/stocktakes/{id}'.
+  const relativePath = (): string =>
+    storeRelativePath(location.pathname, params.storeId);
 
   const go = (path: string) => navigate(`/${params.storeId}/${path}`);
 
   /*
-   * KB-X5: "navigates up one level — from a detail screen to its list, and so on
-   * toward the root."
+   * KB-X5: "navigates up one level — from a detail screen to its list, and so
+   * on toward the root."
    *
    * One segment off the path, which IS the hierarchy the routes already encode:
    * a detail's id drops to its list, a list drops to its section's entry page,
@@ -72,9 +70,12 @@ export const KeyboardHost = (props: KeyboardHostProps) => {
   };
 
   createGlobalActions({
-    navigate: go,
-    openSync: props.onSyncOpen,
-    requestLogout: props.onLogoutRequest,
+    // Called through props rather than captured: an action's `run` outlives
+    // this component body, so reading the handler at registration time would
+    // freeze whichever function the shell passed on first render.
+    syncNow: () => props.onSyncNow(),
+    openSync: () => props.onSyncOpen(),
+    requestLogout: () => props.onLogoutRequest(),
     // KB-X4: exit full screen if engaged, and report it so the tail stops there
     // rather than also navigating.
     exitFullScreen: () => {

@@ -18,8 +18,8 @@ import {
   type SortState,
 } from '@/ui/elements/table/DataTable';
 import {
+  CommentHeader,
   getCellDefinition,
-  getCommentCell,
   getDateCell,
 } from '@/ui/elements/table/tableHelpers';
 import { createTableConfig } from '@/api/createTableConfig';
@@ -27,6 +27,12 @@ import { StatusChip } from '@/ui/elements/feedback/StatusChip';
 import { FilterBar } from '@/ui/elements/selectors/FilterBar';
 import { CloseIcon, PlusCircleIcon } from '@/ui/icons';
 import { useUrlQueryState } from '@/list/urlQueryState';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '@/list/pageSize';
+import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
 import { stripEmpty } from '@/typeHelpers';
 import { Stocktakes, StocktakeCount } from './stocktakes.generated';
 import type {
@@ -47,8 +53,6 @@ import {
 // ContentFooter), so the page owns no CSS. The table itself is the shared
 // TanStack-driven DataTable (server sort, selection, pagination, full-screen).
 // Spec: spec/stocktakes (S1) + spec/ui-standards/{list-views,tables}.
-
-const DEFAULT_PAGE_SIZE = 20;
 
 type StocktakeRow = StocktakesResult['stocktakes']['nodes'][number];
 
@@ -97,8 +101,10 @@ const StocktakesList: Component = () => {
   // StoreGuardLayout, which requires a resolved store before routing.
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
-  const { query, setQuery } =
-    useUrlQueryState<StocktakesListState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<StocktakesListState>({
+    ...DEFAULT_STATE,
+    first: initialPageSize(),
+  });
   const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   // The create modal owns its own form + create logic; the list just toggles
   // it open. On a successful create it navigates away to the new stocktake's
@@ -187,6 +193,15 @@ const StocktakesList: Component = () => {
   const rows = () => data.latest?.nodes ?? [];
 
   const totalCount = () => data.latest?.totalCount ?? 0;
+
+  // A bulk delete of the last page's rows leaves the offset past the new end
+  // (src/list/clampPageOffset.ts, issue #1117).
+  clampPageOffset({
+    total: () => settledTotal(data, page => page.totalCount),
+    offset: () => query().offset,
+    pageSize: () => query().first,
+    setOffset: offset => setQuery({ ...query(), offset }),
+  });
 
   // "Does this store have ANY stocktake?" — a SEPARATE, filter-independent
   // fetch (mirrors OMS's useHasStocktake): the main list's totalCount is
@@ -287,8 +302,8 @@ const StocktakesList: Component = () => {
     {
       c: { key: 'comment' },
       // Not sortable — matches OMS's list column set.
-      header: () => t('label.comment'),
-      ...getCommentCell(),
+      header: () => <CommentHeader />,
+      ...getCellDefinition('comment'),
     },
   ];
 
@@ -419,7 +434,11 @@ const StocktakesList: Component = () => {
           pageSize: query().first,
           total: totalCount(),
           onOffsetChange: offset => setQuery({ ...query(), offset }),
-          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+          // The chosen size is remembered for the next visit (D106).
+          onPageSizeChange: first => {
+            rememberPageSize(first);
+            setQuery({ ...query(), first, offset: 0 });
+          },
         }}
       />
       {/* Mounted only while open: the modal's resources (locations + the

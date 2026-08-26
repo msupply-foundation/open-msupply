@@ -1,19 +1,9 @@
-import {
-  createSignal,
-  Match,
-  Show,
-  Switch,
-  type Component,
-} from 'solid-js';
+import { createSignal, Match, Show, Switch, type Component } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { t, tPlural } from '@/intl';
 import { hasPermission } from '@/store/storeContext';
 import { Button } from '@/ui/elements/buttons/Button';
-import {
-  CancelButton,
-  CloseButton,
-  OkButton,
-} from '@/ui/elements/buttons/StandardButtons';
+import { CancelButton, OkButton } from '@/ui/elements/buttons/StandardButtons';
 import { SplitButton } from '@/ui/elements/buttons/SplitButton';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
@@ -52,12 +42,7 @@ import type { RequisitionInfoFragment } from './requisitionDetail.generated';
 // The finalise dialog's phases; the raise dialog's cover its three
 // client-side refusals too.
 type FinalisePhase = 'confirm' | 'saving' | 'error';
-type RaisePhase =
-  | 'permission'
-  | 'blocked'
-  | 'confirm'
-  | 'creating'
-  | 'error';
+type RaisePhase = 'permission' | 'blocked' | 'confirm' | 'creating' | 'error';
 
 export interface RequisitionStatusFooterProps {
   storeId: string;
@@ -204,14 +189,8 @@ export const RequisitionStatusFooter: Component<
         current={currentStatusStep(props.node.status)}
       />
       <ContentFooterActions>
-        {/* Leave without saving — the standard labelled footer close
-            (registry › action-footer close). */}
-        <CloseButton
-          data-testid="close-button"
-          onClick={() =>
-            navigate(`/${props.storeId}/distribution/customer-requisition`)
-          }
-        />
+        {/* No Close here (D103): leaving the requisition is the breadcrumb's
+            job, in the app bar, where every other screen puts it. */}
         {/* Hidden when not editable — except approval-only blocking, which
             shows it disabled (spec S2 § footer). */}
         <Show when={props.editable || props.approvalBlocked}>
@@ -254,9 +233,7 @@ export const RequisitionStatusFooter: Component<
               : t('heading.cannot-do-that')
           }
           description={
-            <Switch
-              fallback={t('messages.create-outbound-from-requisition')}
-            >
+            <Switch fallback={t('messages.create-outbound-from-requisition')}>
               <Match when={raisePhase() === 'permission'}>
                 <Alert severity="warning">
                   {t('error.no-create-outbound-shipment-permission')}
@@ -284,7 +261,10 @@ export const RequisitionStatusFooter: Component<
                 // (controls › dialogs, D55).
                 <>
                   <Show when={raisePhase() === 'confirm'}>
-                    <CancelButton onClick={() => setRaiseOpen(false)} />
+                    <CancelButton
+                      data-testid="dialog-button-cancel"
+                      onClick={() => setRaiseOpen(false)}
+                    />
                   </Show>
                   <OkButton
                     data-testid="confirmation-modal-ok"
@@ -357,7 +337,10 @@ export const RequisitionStatusFooter: Component<
                 // confirm / saving: the standard icon-less pair (D55).
                 <>
                   <Show when={finalisePhase() === 'confirm'}>
-                    <CancelButton onClick={() => setFinaliseOpen(false)} />
+                    <CancelButton
+                      data-testid="dialog-button-cancel"
+                      onClick={() => setFinaliseOpen(false)}
+                    />
                   </Show>
                   <OkButton
                     data-testid="confirmation-modal-ok"

@@ -22,6 +22,7 @@ import { Alert } from '../../../ui/elements/feedback/Alert';
 import { ErrorDetails } from '../../../ui/elements/feedback/ErrorDetails';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { DocumentFrame } from '../../../ui/elements/display/DocumentFrame';
+import { Stack } from '../../../ui/layout/Stack/Stack';
 import {
   Accordion,
   AccordionContent,
@@ -49,6 +50,29 @@ import styles from './ReportDetailView.module.css';
 // it opens the arguments modal (S3) first; otherwise it generates immediately.
 
 type ReportNode = Extract<ReportResult['report'], { __typename: 'ReportNode' }>;
+
+// The screen's one error presentation (spec S5): a headline the user can read,
+// the raw fault one click away. Both places that show one — the action banner
+// above the document and the document region itself — render this, so a
+// generation failure and a print failure look the same.
+const GenerationAlert: Component<{
+  message: string;
+  detail?: string;
+}> = props => (
+  <Alert severity="error">
+    <Stack gap="sm">
+      <span>{props.message}</span>
+      <Show when={props.detail}>
+        {detail => (
+          <ErrorDetails
+            detail={detail()}
+            summaryLabel={t('label.click-to-view')}
+          />
+        )}
+      </Show>
+    </Stack>
+  </Alert>
+);
 
 const ReportDetailView: Component = () => {
   const params = useParams<{ storeId: string; reportId: string }>();
@@ -177,9 +201,16 @@ const ReportDetailView: Component = () => {
       ? `${FILES_URL}?id=${encodeURIComponent(r.fileId)}`
       : undefined;
   };
-  const errorsJson = (): string => {
+  // The generation fault behind the document region, as the banner shows it:
+  // the typed data-fetch failure's raw query errors, or an untyped fault's
+  // description (a broken definition, a failed transform, a PDF render with no
+  // Chrome binary — spec/reports/contract § Generation). The wrapper takes both
+  // (AC-G6), so the region says what happened rather than going blank behind a
+  // global modal.
+  const generationDetail = (): string | undefined => {
     const r = result();
-    return r?.kind === 'dataError' ? JSON.stringify(r.errors, null, 2) : '';
+    if (r?.kind === 'dataError') return JSON.stringify(r.errors, null, 2);
+    return r?.kind === 'error' ? r.message : undefined;
   };
 
   // Initial loading: no report yet, or a request is in flight with no prior
@@ -191,8 +222,15 @@ const ReportDetailView: Component = () => {
   const openFilters = () => setArgsModalOpen(true);
 
   // Print/export failures surface inline in the document region (no toasts —
-  // spec S5). Cleared when a new action starts or new arguments regenerate.
-  const [actionError, setActionError] = createSignal<LocaleKey | undefined>();
+  // spec S5), each with the underlying message behind a disclosure
+  // (ui-standards/controls § action feedback). Cleared when a new action starts
+  // or new arguments regenerate.
+  const [actionError, setActionError] = createSignal<
+    { key: LocaleKey; detail?: string } | undefined
+  >();
+  const failAction = (key: LocaleKey, detail?: string): void => {
+    setActionError({ key, detail });
+  };
 
   // Submit from S3: S2 owns navigation — write the arguments into the URL
   // query, which re-keys the generation resource (AC-U2 / AC-R1).
@@ -223,13 +261,21 @@ const ReportDetailView: Component = () => {
       format,
       args: reportArgs() ?? timezoneArgument(),
     });
+    // `failed` alone is silent — the request never completed, and the global
+    // modal owns that; every other non-file outcome is described here.
+    if (gen.kind === 'failed') return null;
     if (gen.kind !== 'fileId') {
-      setActionError('error.failed-to-generate-report');
+      failAction(
+        'error.failed-to-generate-report',
+        gen.kind === 'dataError'
+          ? JSON.stringify(gen.errors, null, 2)
+          : gen.message
+      );
       return null;
     }
     const file = await fetchReportFile(gen.fileId);
     if (file.kind !== 'success') {
-      setActionError('error.failed-to-generate-report');
+      failAction('error.failed-to-generate-report', file.message);
       return null;
     }
     return file;
@@ -245,11 +291,12 @@ const ReportDetailView: Component = () => {
     setActionError(undefined);
     const file = await fetchReportFile(r.fileId);
     if (file.kind !== 'success') {
-      setActionError('error.failed-to-generate-report');
+      failAction('error.failed-to-generate-report', file.message);
       return;
     }
     const printed = await printBlob(file.blob, file.filename);
-    if (!printed.ok) setActionError('messages.error-printing-report');
+    if (!printed.ok)
+      failAction('messages.error-printing-report', printed.message);
   };
 
   // Export — a KEEP intent: the same report as an Excel workbook, delivered
@@ -258,7 +305,8 @@ const ReportDetailView: Component = () => {
     const file = await generateFile('EXCEL');
     if (!file) return;
     const delivered = await saveBlob(file.blob, file.filename);
-    if (!delivered.ok) setActionError('messages.cannot-save-file');
+    if (!delivered.ok)
+      failAction('messages.cannot-save-file', delivered.message);
   };
 
   // Crumbs are an accessor so t() + the report name re-resolve on locale change
@@ -323,9 +371,9 @@ const ReportDetailView: Component = () => {
         )}
       </Show>
       <Show when={actionError()}>
-        {key => (
+        {shown => (
           <div style={{ padding: 'var(--space-5) var(--space-5) 0' }}>
-            <Alert severity="error">{t(key())}</Alert>
+            <GenerationAlert message={t(shown().key)} detail={shown().detail} />
           </div>
         )}
       </Show>
@@ -334,27 +382,35 @@ const ReportDetailView: Component = () => {
           <Spinner center />
         </Match>
         <Match when={result()?.kind === 'fileId'}>
-          <DocumentFrame title={displayName()} src={fileSrc()} />
+          {/* A report document runs its own scripts (AC-U10) — a template may
+              chart, paginate, or lay itself out in script, and a blocked one
+              takes the console with it (issue #1112). So the frame takes
+              `allow-scripts` INSTEAD of the default `allow-same-origin`, never
+              both: the document lands on an opaque origin where its scripts
+              execute but reach no cookie, no storage, and no part of the app.
+              Dropping same-origin costs nothing, because a generated report is
+              self-contained — its images arrive as data URLs, which is what
+              lets the server render the same HTML to PDF with no session at
+              all. */}
+          <DocumentFrame
+            title={displayName()}
+            src={fileSrc()}
+            sandbox="allow-scripts"
+          />
         </Match>
-        <Match when={result()?.kind === 'dataError'}>
-          {/* Data-fetch failure (AC-G4): the headline in the banner, the raw
-              query errors tucked into a details affordance (spec S5). */}
+        <Match
+          when={result()?.kind === 'dataError' || result()?.kind === 'error'}
+        >
+          {/* Generation failure (AC-G4/G6): the headline in the banner, the
+              underlying fault tucked into a details affordance (spec S5) —
+              the typed failure's raw query errors, or an untyped fault's
+              description. Either way the region says what happened, and the
+              breadcrumb stays live so leaving is one ordinary click. */}
           <div style={{ padding: 'var(--space-5)' }}>
-            <Alert severity="error">
-              <div
-                style={{
-                  display: 'flex',
-                  'flex-direction': 'column',
-                  gap: 'var(--space-2)',
-                }}
-              >
-                <span>{t('error.failed-to-generate-report')}</span>
-                <ErrorDetails
-                  detail={errorsJson()}
-                  summaryLabel={t('label.click-to-view')}
-                />
-              </div>
-            </Alert>
+            <GenerationAlert
+              message={t('error.failed-to-generate-report')}
+              detail={generationDetail()}
+            />
           </div>
         </Match>
       </Switch>

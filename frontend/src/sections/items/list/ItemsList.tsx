@@ -2,6 +2,7 @@ import { createMemo, createResource } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
@@ -14,6 +15,11 @@ import {
 import { FilterBar } from '../../../ui/elements/selectors/FilterBar';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { useUrlQueryState } from '../../../list/urlQueryState';
+import {
+  DEFAULT_PAGE_SIZE,
+  initialPageSize,
+  rememberPageSize,
+} from '../../../list/pageSize';
 import { Items, type ItemsVariables } from './items.generated';
 import { ItemPreferences } from '../itemPreferences.generated';
 import { ItemMasterLists } from './itemMasterLists.generated';
@@ -40,8 +46,6 @@ import {
 // (Page / Header / Toolbar / FilterBar / DataTable) so the page owns no CSS.
 // The UI filter vocabulary (lens etc.) maps to the wire filter via
 // buildItemFilter (see itemFilter.ts).
-
-const DEFAULT_PAGE_SIZE = 20;
 
 type ItemsListState = {
   filter: ItemsListFilter;
@@ -72,7 +76,10 @@ const DEFAULT_STATE: ItemsListState = {
 const ItemsList: Component = () => {
   const params = useParams<{ storeId: string }>();
   const navigate = useNavigate();
-  const { query, setQuery } = useUrlQueryState<ItemsListState>(DEFAULT_STATE);
+  const { query, setQuery } = useUrlQueryState<ItemsListState>({
+    ...DEFAULT_STATE,
+    first: initialPageSize(),
+  });
 
   const tableConfig = createTableConfig({ tableId: 'items' });
 
@@ -108,15 +115,11 @@ const ItemsList: Component = () => {
       return result.data.items;
     }
   );
-  // Read WITHOUT suspending, gated on `.state`: `.latest` alone suspends on the
-  // first pending read, which on this screen's initial load would collapse the
-  // list into the router's fallback-less boundary (a blank page) instead of
-  // letting the DataTable mount and show its own loading treatment
-  // (kdd/solid-reactivity-pitfalls; issues #160/#196).
-  const page = () =>
-    data.state === 'ready' || data.state === 'refreshing'
-      ? data.latest
-      : undefined;
+  // Read WITHOUT suspending: on this screen's initial load a suspending read
+  // would collapse the list into the router's fallback-less boundary (a blank
+  // page) instead of letting the DataTable mount and show its own loading
+  // treatment (issues #160/#196).
+  const page = () => gated(data);
   const rows = (): ItemRow[] => page()?.nodes ?? [];
   const totalCount = () => page()?.totalCount ?? 0;
 
@@ -129,11 +132,8 @@ const ItemsList: Component = () => {
       return result.data.preferences;
     }
   );
-  // Same non-suspending `.state` gate as the list read above.
-  const prefs = () =>
-    prefsData.state === 'ready' || prefsData.state === 'refreshing'
-      ? prefsData.latest
-      : undefined;
+  // Same non-suspending gate as the list read above.
+  const prefs = () => gated(prefsData);
   const showDoses = () => prefs()?.manageVaccinesInDoses ?? false;
   // At-risk filter offered only when the recent-consumption window is set.
   const showAtRisk = () =>
@@ -151,10 +151,7 @@ const ItemsList: Component = () => {
       return result.data.masterLists.nodes;
     }
   );
-  const masterListOptions = () =>
-    masterListsData.state === 'ready' || masterListsData.state === 'refreshing'
-      ? (masterListsData.latest ?? [])
-      : [];
+  const masterListOptions = () => gated(masterListsData) ?? [];
 
   // createMemo, NOT a plain function: TanStack memoizes on this array's
   // REFERENCE, so a fresh one per read invalidates four layers of its internal
@@ -255,7 +252,10 @@ const ItemsList: Component = () => {
           pageSize: query().first,
           total: totalCount(),
           onOffsetChange: offset => setQuery({ ...query(), offset }),
-          onPageSizeChange: first => setQuery({ ...query(), first, offset: 0 }),
+          onPageSizeChange: first => {
+            rememberPageSize(first);
+            setQuery({ ...query(), first, offset: 0 });
+          },
         }}
       />
     </Page>

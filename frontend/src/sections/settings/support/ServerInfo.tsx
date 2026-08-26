@@ -1,5 +1,6 @@
 import { createResource, Show } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { isCentralServer } from '../../../api/serverInfo';
 import { InitialisationStatus } from '../../../api/initialisation.generated';
 import { QrCode } from '../../../ui/elements/display/QrCode';
@@ -27,8 +28,8 @@ import styles from '../Settings.module.css';
 const serverUrl = window.location.origin;
 
 export const ServerInfo = () => {
-  // Site name from the initialisation status. Read via the .state gate, never
-  // suspending — this lives inside the already-open Settings page
+  // Site name from the initialisation status. Non-suspending read — this
+  // lives inside the already-open Settings page
   // (kdd/solid-reactivity-pitfalls § no remounts).
   const [statusData] = createResource(async () => {
     const result = await graphqlFetch(InitialisationStatus, {});
@@ -36,10 +37,7 @@ export const ServerInfo = () => {
       ? result.data.initialisationStatus
       : undefined;
   });
-  const siteName = () =>
-    statusData.state === 'ready' || statusData.state === 'refreshing'
-      ? (statusData.latest?.siteName ?? undefined)
-      : undefined;
+  const siteName = () => gated(statusData)?.siteName ?? undefined;
 
   return (
     <div class={styles.serverInfo}>

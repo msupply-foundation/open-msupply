@@ -9,3 +9,18 @@
  */
 export const PLUGIN_API_VERSION = 1;
 export const PLUGIN_API_MIN_SUPPORTED = 1;
+
+/*
+ * Which host this is — the component runtime a plugin's contributions must be
+ * written against. It names the number line PLUGIN_API_VERSION counts along:
+ * `1` here and `1` in another host are unrelated facts, because a bundle
+ * exporting Solid components cannot be rendered by a host that is not Solid,
+ * whatever integer either of them declares.
+ *
+ * Sent at discovery and stamped into every bundle we pack, so a server can
+ * match the two without knowing what either value means (spec/plugins/
+ * contract.md § compatibility gates). It changes only if this app changes
+ * component runtime — which would make it a different host, not a newer API —
+ * so it is a separate constant rather than something a version bump encodes.
+ */
+export const HOST_RUNTIME = 'solid';

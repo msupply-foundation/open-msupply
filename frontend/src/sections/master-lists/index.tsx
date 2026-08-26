@@ -5,7 +5,7 @@ import { Route } from '@solidjs/router';
 // `catalogue/master-lists` path (spec/master-lists). ONE screen: the list at
 // the section root. There is no per-list detail route — selecting a row opens
 // the ITEMS list scoped to that master list, which is the richer view of the
-// same membership fact (spec/DIVERGENCES D80, issue #776). Read-only end to
+// same membership fact (issue #776). Read-only end to
 // end.
 const MasterListsList = lazy(() => import('./list/MasterListsList'));
 

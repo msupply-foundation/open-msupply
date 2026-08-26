@@ -6,7 +6,9 @@ import {
   type JSX,
 } from 'solid-js';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
+import { localisedDateTime } from '../../../intl/formatDateTime';
 import { formatNumber } from '../../../intl/formatNumber';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
@@ -30,6 +32,7 @@ import { hasPermission } from '../../../store/storeContext';
 import { runInsertRepack } from '../stockApi';
 import { repackNewPacks, isWholePacks } from '../stockCalc';
 import { fetchStockLocations, locationsForItem } from '../stockLocations';
+import { repackPanelState } from './repackSelection';
 import {
   RepacksByStockLine,
   type StockLineDetailFragment,
@@ -118,24 +121,32 @@ const RepackContent = (props: {
   // `.latest` alone still suspends on a first pending read, which collapses the
   // detail view's <Suspense> and detaches the just-opened <dialog> — it loses
   // the top layer, so the backdrop vanishes and the modal lands in normal flow
-  // (kdd/solid-reactivity-pitfalls › No remounts on interaction). Gate on
-  // `.state`; `.loading` still drives the spinners.
+  // (kdd/solid-reactivity-pitfalls › No remounts on interaction). `.loading`
+  // still drives the spinners.
   const locations = () =>
     locationsForItem(
-      allLocations.state === 'ready' || allLocations.state === 'refreshing'
-        ? (allLocations.latest ?? [])
-        : [],
+      gated(allLocations) ?? [],
       props.line.item.restrictedLocationTypeId
     );
 
   // Newest-first by the repack's verified time (spec/stock rules › repack
   // history).
   const repacks = (): RepackNode[] =>
-    repacksData.state === 'ready' || repacksData.state === 'refreshing'
-      ? [...(repacksData.latest?.nodes ?? [])].sort((a, b) =>
-          a.datetime < b.datetime ? 1 : -1
-        )
-      : [];
+    [...(gated(repacksData)?.nodes ?? [])].sort((a, b) =>
+      a.datetime < b.datetime ? 1 : -1
+    );
+
+  // Which repack is current, and what that means for the row mark, the panel
+  // below the table, and the print gate (AC-R8, issue #794 — the selection used
+  // to leave no trace at all). The decision is pure and unit-tested in
+  // repackSelection.ts; here it just drives the render.
+  const panel = createMemo(() =>
+    repackPanelState({
+      repacks: repacks(),
+      selectedInvoiceId: selectedInvoiceId(),
+      creating: creating(),
+    })
+  );
 
   const available = () => props.line.availableNumberOfPacks;
 
@@ -239,13 +250,6 @@ const RepackContent = (props: {
     },
   ];
 
-  const arrow = (
-    <ArrowRightIcon
-      aria-hidden="true"
-      style={{ color: 'var(--text-secondary)' }}
-    />
-  );
-
   return (
     <>
       <Dialog
@@ -297,7 +301,7 @@ const RepackContent = (props: {
             <Button
               variant="secondary"
               icon={<PrinterIcon />}
-              disabled={!selectedInvoiceId()}
+              disabled={!panel().canPrint}
               data-testid="repack-print-button"
               onClick={() => setPrintOpen(true)}
             >
@@ -345,119 +349,171 @@ const RepackContent = (props: {
               rows={repacks()}
               rowKey={r => r.id}
               onRowClick={selectRepack}
+              // Highlight-only selection (no checkbox column): the clicked row
+              // stays tinted while its detail shows below, so it is never a
+              // guess which repack Export/Print will print (issue #794).
+              selectedIds={panel().selectedRowIds}
               showFullScreen={false}
               emptyMessage={t('messages.no-repacks')}
             />
           </Show>
 
-          {/* Edit panel — from (this line) → to (the new line). */}
-          <Show when={creating()}>
+          {/* The panel below the history table (spec/stock S5) wears one of the
+              faces repackPanelState decides: the new-repack editor, the
+              SELECTED repack read-only, or the prompt to pick one. Its caption
+              names which repack is on screen, so "what will Export/Print print"
+              is answered in words as well as by the tinted row (issue #794). */}
+          <Show when={panel().face === 'editor'}>
+            <RepackPanel
+              caption={t('heading.new-repack')}
+              testId="repack-new-panel"
+              from={
+                <>
+                  <FieldRow label={t('label.packs-available')}>
+                    <span>{formatNumber(available())}</span>
+                  </FieldRow>
+                  <FieldRow label={t('label.packs-to-repack')}>
+                    <NumberField
+                      label={t('label.packs-to-repack')}
+                      hideLabel
+                      data-testid="repack-number-of-packs"
+                      min={0}
+                      max={available()}
+                      decimalLimit={2}
+                      value={numberToRepack()}
+                      error={
+                        exceedsAvailable()
+                          ? t('error.stock-reduced-below-zero')
+                          : undefined
+                      }
+                      onChange={setNumberToRepack}
+                    />
+                  </FieldRow>
+                  <FieldRow label={t('label.pack-size')}>
+                    <span>{formatNumber(props.line.packSize)}</span>
+                  </FieldRow>
+                  <FieldRow label={t('label.location')}>
+                    <span>{props.line.location?.code ?? '—'}</span>
+                  </FieldRow>
+                </>
+              }
+              to={
+                <>
+                  <FieldRow label={t('label.new-number-of-packs')}>
+                    <span data-testid="repack-new-number-of-packs">
+                      {newPacks() === undefined
+                        ? '—'
+                        : formatNumber(newPacks() as number)}
+                    </span>
+                  </FieldRow>
+                  <FieldRow label={t('label.new-pack-size')}>
+                    <NumberField
+                      label={t('label.new-pack-size')}
+                      hideLabel
+                      data-testid="repack-new-pack-size"
+                      min={1}
+                      decimalLimit={2}
+                      value={newPackSize()}
+                      error={
+                        isFractional()
+                          ? t('error.repack-cannot-be-fractional')
+                          : undefined
+                      }
+                      onChange={setNewPackSize}
+                    />
+                  </FieldRow>
+                  <FieldRow label={t('label.new-location')}>
+                    <LocationVolumeSelect
+                      label={t('label.new-location')}
+                      hideLabel
+                      locations={locations()}
+                      loading={allLocations.loading}
+                      value={newLocation()?.id}
+                      placeholder={t('label.none')}
+                      // A repack conserves volume across the split, so what the
+                      // new location must hold is the volume LEAVING the
+                      // original line: its volume per pack × the packs being
+                      // repacked (spec/stock/rules.md › location fields).
+                      requiredVolume={
+                        (props.line.volumePerPack ?? 0) *
+                        (numberToRepack() ?? 0)
+                      }
+                      // This field is a DESTINATION, distinct from where the
+                      // stock sits now, so the origin needs naming explicitly —
+                      // repacking back into it is valid (a same-location repack
+                      // is a pure relocation, AC-R7) and its headroom already
+                      // accounts for this volume.
+                      originalLocationId={props.line.location?.id}
+                      onChange={l =>
+                        setNewLocation(
+                          l ? { id: l.id, code: l.code, name: l.name } : null
+                        )
+                      }
+                    />
+                  </FieldRow>
+                </>
+              }
+            />
+          </Show>
+
+          {/* A selected repack, read-only: the same from → to shape as the
+              editor, filled with what that repack actually moved. */}
+          <Show
+            when={panel().face === 'selected' ? panel().selected : undefined}
+          >
+            {repack => (
+              <RepackPanel
+                caption={t('heading.selected-repack', {
+                  datetime: localisedDateTime(repack().datetime),
+                })}
+                testId="repack-selected-panel"
+                from={
+                  <>
+                    <FieldRow label={t('label.number-of-packs')}>
+                      <span>{formatNumber(repack().from.numberOfPacks)}</span>
+                    </FieldRow>
+                    <FieldRow label={t('label.pack-size')}>
+                      <span>{formatNumber(repack().from.packSize)}</span>
+                    </FieldRow>
+                    <FieldRow label={t('label.location')}>
+                      <span>{repack().from.location?.code ?? '—'}</span>
+                    </FieldRow>
+                  </>
+                }
+                to={
+                  <>
+                    <FieldRow label={t('label.new-number-of-packs')}>
+                      <span data-testid="repack-selected-number-of-packs">
+                        {formatNumber(repack().to.numberOfPacks)}
+                      </span>
+                    </FieldRow>
+                    <FieldRow label={t('label.new-pack-size')}>
+                      <span data-testid="repack-selected-pack-size">
+                        {formatNumber(repack().to.packSize)}
+                      </span>
+                    </FieldRow>
+                    <FieldRow label={t('label.new-location')}>
+                      <span>{repack().to.location?.code ?? '—'}</span>
+                    </FieldRow>
+                  </>
+                }
+              />
+            )}
+          </Show>
+
+          {/* Nothing picked yet, with a history to pick from: name the
+              affordance rather than leaving a dead table and a disabled
+              Export/Print. */}
+          <Show when={panel().face === 'prompt'}>
             <div
+              data-testid="repack-no-selection"
               style={{
-                display: 'grid',
-                'grid-template-columns': '1fr auto 1fr',
-                gap: 'var(--space-4)',
-                'align-items': 'center',
+                color: 'var(--text-secondary)',
                 'border-top': '1px solid var(--gray-light)',
                 'padding-top': 'var(--space-4)',
               }}
             >
-              <div
-                style={{
-                  display: 'flex',
-                  'flex-direction': 'column',
-                  gap: 'var(--space-2)',
-                }}
-              >
-                <FieldRow label={t('label.packs-available')}>
-                  <span>{formatNumber(available())}</span>
-                </FieldRow>
-                <FieldRow label={t('label.packs-to-repack')}>
-                  <NumberField
-                    label={t('label.packs-to-repack')}
-                    hideLabel
-                    data-testid="repack-number-of-packs"
-                    min={0}
-                    max={available()}
-                    decimalLimit={2}
-                    value={numberToRepack()}
-                    error={
-                      exceedsAvailable()
-                        ? t('error.stock-reduced-below-zero')
-                        : undefined
-                    }
-                    onChange={setNumberToRepack}
-                  />
-                </FieldRow>
-                <FieldRow label={t('label.pack-size')}>
-                  <span>{formatNumber(props.line.packSize)}</span>
-                </FieldRow>
-                <FieldRow label={t('label.location')}>
-                  <span>{props.line.location?.code ?? '—'}</span>
-                </FieldRow>
-              </div>
-
-              {arrow}
-
-              <div
-                style={{
-                  display: 'flex',
-                  'flex-direction': 'column',
-                  gap: 'var(--space-2)',
-                }}
-              >
-                <FieldRow label={t('label.new-number-of-packs')}>
-                  <span data-testid="repack-new-number-of-packs">
-                    {newPacks() === undefined
-                      ? '—'
-                      : formatNumber(newPacks() as number)}
-                  </span>
-                </FieldRow>
-                <FieldRow label={t('label.new-pack-size')}>
-                  <NumberField
-                    label={t('label.new-pack-size')}
-                    hideLabel
-                    data-testid="repack-new-pack-size"
-                    min={1}
-                    decimalLimit={2}
-                    value={newPackSize()}
-                    error={
-                      isFractional()
-                        ? t('error.repack-cannot-be-fractional')
-                        : undefined
-                    }
-                    onChange={setNewPackSize}
-                  />
-                </FieldRow>
-                <FieldRow label={t('label.new-location')}>
-                  <LocationVolumeSelect
-                    label={t('label.new-location')}
-                    hideLabel
-                    locations={locations()}
-                    loading={allLocations.loading}
-                    value={newLocation()?.id}
-                    placeholder={t('label.none')}
-                    // A repack conserves volume across the split, so what the
-                    // new location must hold is the volume LEAVING the original
-                    // line: its volume per pack × the packs being repacked
-                    // (spec/stock/rules.md › location fields).
-                    requiredVolume={
-                      (props.line.volumePerPack ?? 0) * (numberToRepack() ?? 0)
-                    }
-                    // This field is a DESTINATION, distinct from where the
-                    // stock sits now, so the origin needs naming explicitly —
-                    // repacking back into it is valid (a same-location repack
-                    // is a pure relocation, AC-R7) and its headroom already
-                    // accounts for this volume.
-                    originalLocationId={props.line.location?.id}
-                    onChange={l =>
-                      setNewLocation(
-                        l ? { id: l.id, code: l.code, name: l.name } : null
-                      )
-                    }
-                  />
-                </FieldRow>
-              </div>
+              {t('messages.no-repack-detail')}
             </div>
           </Show>
         </div>
@@ -488,3 +544,61 @@ const RepackContent = (props: {
     </>
   );
 };
+
+// The panel under the history table: a captioned from → to pair with the
+// direction arrow between (spec/stock S5 › edit panel). One shape, two fillings
+// — the editable new repack and a selected repack read-only — so the two read
+// as the same thing in two states rather than two different screens. The
+// caption is what names WHICH repack is on screen.
+const RepackPanel = (props: {
+  caption: string;
+  testId: string;
+  /** The originating line's side of the split. */
+  from: JSX.Element;
+  /** The new line's side. */
+  to: JSX.Element;
+}): JSX.Element => (
+  <div
+    data-testid={props.testId}
+    style={{
+      display: 'flex',
+      'flex-direction': 'column',
+      gap: 'var(--space-3)',
+      'border-top': '1px solid var(--gray-light)',
+      'padding-top': 'var(--space-4)',
+    }}
+  >
+    <strong>{props.caption}</strong>
+    <div
+      style={{
+        display: 'grid',
+        'grid-template-columns': '1fr auto 1fr',
+        gap: 'var(--space-4)',
+        'align-items': 'center',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          'flex-direction': 'column',
+          gap: 'var(--space-2)',
+        }}
+      >
+        {props.from}
+      </div>
+      <ArrowRightIcon
+        aria-hidden="true"
+        style={{ color: 'var(--text-secondary)' }}
+      />
+      <div
+        style={{
+          display: 'flex',
+          'flex-direction': 'column',
+          gap: 'var(--space-2)',
+        }}
+      >
+        {props.to}
+      </div>
+    </div>
+  </div>
+);

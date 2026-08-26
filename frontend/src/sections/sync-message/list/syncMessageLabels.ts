@@ -31,6 +31,21 @@ const STATUS_KEYS: Record<MessageStatus, LocaleKey> = {
   error: 'status.error',
 };
 
+/**
+ * Every message status the SCHEMA declares, in display order.
+ *
+ * A TypeScript union is erased at runtime, so the generated wire enum cannot
+ * yield a runtime list on its own. `STATUS_KEYS` is the bridge: it is typed
+ * `Record<MessageStatus, LocaleKey>`, so codegen adding a status breaks THIS
+ * file until the new member is given a label — and every consumer that derives
+ * its options from here (the register's Status filter) then picks it up
+ * without being touched. No hand-maintained second list of statuses exists.
+ *
+ * Key order is insertion order for non-numeric string keys, so this is the
+ * declaration order above — the order ui-surface S1 § filters lists.
+ */
+export const MESSAGE_STATUSES = Object.keys(STATUS_KEYS) as MessageStatus[];
+
 // The three kinds the record carries (rules § kinds). `other` is a genuine
 // catch-all — an unrecognised kind AND the record's internal merge kind both
 // read as Other, and the register shows them without distinguishing which
@@ -52,7 +67,7 @@ const FILE_STATUS_KEYS: Record<FileStatus, LocaleKey> = {
 
 /**
  * The locale key a status renders as — never the raw wire value
- * (OMS-REG-MNG-04.4). A value neither enum names falls back to the
+ * (OMS-REG-MNG-05.4). A value neither enum names falls back to the
  * not-applicable copy, so a schema that grows a member degrades to "N/A"
  * rather than leaking `inProgress` onto the screen.
  */

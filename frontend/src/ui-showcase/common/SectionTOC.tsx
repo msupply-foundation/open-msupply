@@ -1,4 +1,5 @@
 import { For, Show } from 'solid-js';
+import { smoothScrollOptions } from '@/ui/utils/createMediaQuery';
 import type { PageMetadata } from '../metadata';
 import styles from './SectionTOC.module.css';
 
@@ -45,16 +46,11 @@ export const SectionTOC = (props: { page: PageMetadata }) => (
   </Show>
 );
 
-// Scroll the anchored card into view, honouring reduced-motion. No-op if the
-// id isn't on the page (a metadata/DOM mismatch) rather than throwing.
+// Scroll the anchored card into view, honouring reduced motion (the shared
+// helper drops `smooth` back to an instant jump). No-op if the id isn't on the
+// page (a metadata/DOM mismatch) rather than throwing.
 const scrollToAnchor = (id: string): void => {
   const target = document.getElementById(id);
   if (!target) return;
-  const reduceMotion = window.matchMedia(
-    '(prefers-reduced-motion: reduce)'
-  ).matches;
-  target.scrollIntoView({
-    behavior: reduceMotion ? 'auto' : 'smooth',
-    block: 'start',
-  });
+  target.scrollIntoView(smoothScrollOptions({ block: 'start' }));
 };

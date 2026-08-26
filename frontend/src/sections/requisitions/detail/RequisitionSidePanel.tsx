@@ -131,7 +131,6 @@ export const RequisitionSidePanel: Component<
           <TextArea
             label={t('heading.comment')}
             hideLabel
-            width="full"
             data-testid="comment-field"
             value={props.edit.state.comment}
             disabled={!props.editable}
@@ -175,6 +174,7 @@ export const RequisitionSidePanel: Component<
                 </Popover>{' '}
                 {/* A shipment reference is neutral — no `kind` tone. */}
                 <RecordLink
+                  testId="fulfilling-shipment-link"
                   href={`/${props.storeId}/distribution/outbound-shipment/${shipment.id}`}
                 >
                   {`#${shipment.invoiceNumber}`}

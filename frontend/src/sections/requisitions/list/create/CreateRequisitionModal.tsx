@@ -10,10 +10,12 @@ import {
 } from 'solid-js';
 import { t } from '@/intl';
 import { graphqlFetch } from '@/api/graphql';
+import { gated } from '@/api/gated';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { createFocusTarget } from '@/ui/utils/createFocusTarget';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { Button } from '@/ui/elements/buttons/Button';
+import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
 import { Tabs, TabList, TabPanel } from '@/ui/elements/tabs/Tabs';
 import { Combobox } from '@/ui/elements/selectors/Combobox';
 import { FieldRow } from '@/ui/elements/inputs/FieldRow';
@@ -128,9 +130,7 @@ export const CreateRequisitionModal: Component<
       return result.data.programRequisitionSettingsByCustomer.programSettings;
     }
   );
-  const settingsSettled = () =>
-    settings.state === 'ready' || settings.state === 'refreshing';
-  const settingsList = () => (settingsSettled() ? (settings.latest ?? []) : []);
+  const settingsList = () => gated(settings) ?? [];
 
   // Programs the chosen customer orders under, rendered
   // "masterListName (tagName)" — the program identity is carried by the order
@@ -331,22 +331,30 @@ export const CreateRequisitionModal: Component<
       testId="create-requisition-modal"
       widthRem={44}
       minBodyHeightRem={30}
-      // Create sits in the actions row only on the Program path; the General
-      // path creates on customer-select and has no footer button (spec S3a).
+      // Cancel is the house way out on both paths (ui-standards › dialogs §
+      // chrome); Create sits beside it only on the Program path — the General
+      // path creates on customer-select and has no confirm (spec S3a).
       actions={
-        <Show when={activeTab() === 'program'}>
-          {/* Icon-less dialog-footer confirm (controls › dialogs, D55);
-              confirms="plain" wires Enter-to-confirm + the Alt+S badge. */}
-          <Button
-            confirms="plain"
-            data-testid="create-program-requisition-button"
-            disabled={!createReady()}
-            loading={submitting()}
-            onClick={() => void submitProgram()}
-          >
-            {t('label.create')}
-          </Button>
-        </Show>
+        <>
+          <CancelButton
+            data-testid="dialog-button-cancel"
+            disabled={submitting()}
+            onClick={props.onClose}
+          />
+          <Show when={activeTab() === 'program'}>
+            {/* Icon-less dialog-footer confirm (controls › dialogs, D55);
+                confirms="plain" wires Enter-to-confirm + the Alt+S badge. */}
+            <Button
+              confirms="plain"
+              data-testid="create-program-requisition-button"
+              disabled={!createReady()}
+              loading={submitting()}
+              onClick={() => void submitProgram()}
+            >
+              {t('label.create')}
+            </Button>
+          </Show>
+        </>
       }
     >
       <Show when={props.programCapable} fallback={<GeneralPath />}>

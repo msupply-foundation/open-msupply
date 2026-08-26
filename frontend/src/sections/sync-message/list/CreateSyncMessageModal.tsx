@@ -72,7 +72,7 @@ export const CreateSyncMessageModal: Component<
       // rejections (SyncMessageAlreadyExists, ToStoreDoesNotExist) arrive as
       // top-level GraphQL errors — there is no typed error branch to read
       // (contract ⚠️ wire trap). Handling them here keeps the modal open with
-      // the draft intact (OMS-REG-MNG-04.15, D22) instead of tripping the
+      // the draft intact (OMS-REG-MNG-05.15, D22) instead of tripping the
       // global unexpected-error modal over a rejection this screen can state.
       { returnGraphqlErrors: true }
     );

@@ -5,11 +5,12 @@ import { createSignal } from 'solid-js';
  * loading — "the failure is surfaced (visible in diagnostics, not silently
  * swallowed)"; ui-surface § S3).
  *
- * Two sinks, deliberately: a signal any future surface can render, and the
- * console, so a failure is discoverable in a support session today. The
- * administrator-facing on-screen surface stays a spec ⚠️ VERIFY — nothing in
- * the app renders this yet; the loader also publishes the accessor on
- * `globalThis.__oms__` so a walk (or an e2e test) can read it.
+ * Two sinks, deliberately: a signal, and the console, so a failure is
+ * discoverable in a support session today. The signal is rendered by Settings ›
+ * Support › Installed plugins (spec/settings/ui-surface.md § Support) — the
+ * administrator-facing surface ui-surface § S3 used to leave open. The loader
+ * also publishes the accessor on `globalThis.__oms__` so a walk (or an e2e
+ * test) can read it.
  */
 
 export type PluginDiagnosticLevel = 'error' | 'warning' | 'info';

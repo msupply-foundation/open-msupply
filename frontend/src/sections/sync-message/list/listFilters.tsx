@@ -5,6 +5,7 @@ import {
   type Filter,
 } from '@/ui/elements/selectors/FilterBar';
 import type { SyncMessagesVariables } from './syncMessages.generated';
+import { MESSAGE_STATUSES, statusLabel } from './syncMessageLabels';
 
 // The filter object exactly as GraphQL expects it (kdd/type-safety: no
 // remapping — this is the generated variables' filter shape). It flows straight
@@ -13,7 +14,7 @@ export type SyncMessageFilter = NonNullable<SyncMessagesVariables['filter']>;
 
 /*
  * Type-driven, EXHAUSTIVE filter definitions for the sync-message register
- * (spec/sync-message/ui-surface.md S1 § filters, OMS-REG-MNG-04.6): STATUS is
+ * (spec/sync-message/ui-surface.md S1 § filters, OMS-REG-MNG-05.6): STATUS is
  * the only filter offered. The map is keyed by EVERY key of the generated
  * SyncMessageFilterInput — a key maps to a definition to expose it, or `null`
  * to dismiss it — so when the schema gains a filter, codegen adds the key and
@@ -39,12 +40,19 @@ const FILTERS: Filter<SyncMessageFilter>[] =
           label={t('label.status')}
           testId={props.testId}
           value={props.filter().status?.equalTo ?? ''}
+          // DERIVED from the schema, never hand-listed: MESSAGE_STATUSES
+          // comes from the generated wire enum via the exhaustive
+          // STATUS_KEYS map, so a status added to the backend and picked up
+          // by codegen appears here as soon as it is given a label — and the
+          // compiler refuses the build until it is. The labels are the same
+          // ones the Status column renders, so filter and column can never
+          // disagree about what a status is called.
           options={[
             { value: '', label: t('label.any') },
-            { value: 'new', label: t('label.new') },
-            { value: 'inProgress', label: t('status.in-progress') },
-            { value: 'processed', label: t('label.processed') },
-            { value: 'error', label: t('status.error') },
+            ...MESSAGE_STATUSES.map(status => ({
+              value: status,
+              label: statusLabel(status),
+            })),
           ]}
           onChange={value =>
             props.setPartialFilter({
@@ -58,13 +66,13 @@ const FILTERS: Filter<SyncMessageFilter>[] =
     // ─ dismissed (not user-facing) ─────────────────────────────────────────
     // Kind has NO filter field on this input at all — the register offers no
     // kind filter for that reason, and offering the schema's `type` is not
-    // even possible here (D97; contract ⚠️ wire trap — a filter object
+    // even possible here (D120; contract ⚠️ wire trap — a filter object
     // carrying one fails the WHOLE query at validation).
     //
     // Created-date range: the input DECLARES createdDatetime but
     // SyncMessageFilterInput::to_domain never maps it, so a range narrows
     // nothing and reports no error. Withheld until the server honours it
-    // (D97, contract § backend gaps) — a filter that cannot narrow is not
+    // (D120, contract § backend gaps) — a filter that cannot narrow is not
     // offered at all.
     createdDatetime: null,
     // Sender / destination narrowing works on the wire, but only as exact

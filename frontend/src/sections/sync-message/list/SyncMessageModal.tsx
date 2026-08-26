@@ -152,7 +152,7 @@ export const SyncMessageModal: Component<SyncMessageModalProps> = props => {
 
       {/* 4 — the Files section, only for a kind that produces artefacts and
           only when at least one exists: the section's PRESENCE is itself the
-          signal that artefacts exist (OMS-REG-MNG-04.20). A short, fixed row
+          signal that artefacts exist (OMS-REG-MNG-05.20). A short, fixed row
           set inside another surface, so it is the static sub-table, not the
           data table. */}
       <Show when={showFilesSection(props.message.type, files())}>
@@ -184,7 +184,7 @@ export const SyncMessageModal: Component<SyncMessageModalProps> = props => {
                       {/* The file's OWN failure reason, where it has one —
                           the only place a per-artefact failure is visible; the
                           message's own status does not reflect it
-                          (OMS-REG-MNG-04.23). */}
+                          (OMS-REG-MNG-05.23). */}
                       <Show when={fileErrorNotice(file)}>
                         {reason => (
                           <Text

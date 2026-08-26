@@ -17,13 +17,27 @@
   block-size: 100%;
 }
 
+/* `min-inline-size: 0` on both halves, because `flex: 1 0 50%` cannot shrink
+   and `min-width: auto` would otherwise floor each half at its min-content
+   width — here, the heading's longest word. Android applies the system font
+   scale as WebView text zoom, which multiplies font sizes but NOT the vw/rem
+   lengths around them, so at 1.1x "Pharmaceutical" outgrows the hero's 40%
+   column (50% less its 5% padding either side) and pushes the page past 100%.
+   The WebView then shrink-to-fits the whole page, which leaves a band of empty
+   viewport below it. Flooring the minimum at 0 holds the split at exactly
+   50/50 whatever the text scale. */
 .hero {
   flex: 1 0 50%;
+  min-inline-size: 0;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   align-items: flex-start;
-  padding: 0 5% 7%; /* original: bottom-left placement via panel padding */
+  /* Bottom-left placement via padding, as in the original. The bottom band is
+     only the version line's offset from the page edge — the copy's clearance
+     is the in-flow version line below it plus its margin (see
+     .versionBarHero). */
+  padding: 0 5% var(--space-4);
   background-image: var(--gradient-primary);
   color: var(--login-hero-text);
 }
@@ -39,6 +53,11 @@
   font-weight: var(--weight-bold);
   line-height: normal;
   white-space: pre-line; /* line breaks are in the copy itself */
+  /* The safety valve behind .hero's `min-inline-size: 0`: a word that outgrows
+     the column wraps rather than spilling over the panel beside it. At the text
+     scales seen in practice the word still fits inside the hero's 5% padding,
+     so this only engages at extreme ones. */
+  overflow-wrap: break-word;
 }
 
 /* Original: 45px below the heading, 14→20px, semibold */
@@ -51,6 +70,7 @@
 
 .panel {
   flex: 1 0 50%;
+  min-inline-size: 0; /* see .hero */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -67,11 +87,19 @@
 }
 
 /* The logo (285px in the original) sets the column width, like the original's
-   intrinsically-sized form; 85vw keeps it inside narrow viewports. */
+   intrinsically-sized form; 85vw keeps it inside narrow viewports.
+
+   --space-5, not the original's 40px Stack rhythm: at that spacing a field's
+   INPUT sat further from the NEXT field's label than that label sat from its
+   own input, so the pairs stopped reading as pairs. --space-5 keeps a clear
+   break between fields while binding each label to its input. Initialisation
+   needs it more than login, not less — three fields plus a disclosure, an
+   error panel and a progress list is the column that actually risks running
+   past the fold. */
 .form {
   display: flex;
   flex-direction: column;
-  gap: 2.5rem; /* original: Stack spacing 5 = 40px */
+  gap: var(--space-5);
   inline-size: min(17.8125rem, 85vw);
 }
 
@@ -88,95 +116,193 @@
   align-self: center;
 }
 
-.buttonRow {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.panelFooter {
+/* --- The action group -------------------------------------------------
+   Both screens. The primary action spans the whole form column, with the
+   secondary controls tucked directly under it — the screen's own secondary
+   action at the inline start (login: the old-UI switch; initialisation: the
+   Android save-log button), the language selector at the inline end. They are
+   ONE form child so the form's rhythm applies above the group rather than
+   between the button and the controls that belong with it. */
+.submitGroup {
   display: flex;
   flex-direction: column;
+  gap: var(--space-2);
+}
+
+.submitButton {
+  inline-size: 100%;
+}
+
+/* Initialisation's counterpart to `.submitGroup`. Its secondary controls sit
+   OUTSIDE the form — the mode chooser can swap one form for another beneath
+   them (spec S2 § layout), so they belong to the panel's column, not to
+   whichever form is showing. This wrapper gives the pair the same tight
+   spacing `.submitGroup` gives login's, instead of the column's field
+   rhythm. */
+.formWithActions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* The small inline padding keeps both controls' hover/focus boxes clear of the
+   button's edges rather than flush with them.
+
+   Grid, not a wrapping flex row (issue #1219): flex collects wrap lines from
+   UNSHRUNK item sizes, so a long pair — French's "Utiliser l'ancienne
+   interface" beside "Français (Djibouti)" — dropped the language selector onto
+   a second row, sitting lower than in other languages. The `1fr auto` columns
+   hold the selector in the end corner in EVERY language; the secondary action
+   wraps its own label inside the 1fr track instead.
+
+   Type scale and tone are set HERE, once, because both controls already
+   inherit them — the selector's trigger is `font: inherit; color: inherit`
+   and `.secondaryAction` matches it — so the pair can never drift apart.
+   --text-xs is the same token Button's `size="small"` uses, so these read at
+   the library's small-control size; --text-secondary is the dark grey the
+   library already uses for supporting text. */
+.formActions {
+  display: grid;
+  grid-template-columns: 1fr auto;
   align-items: center;
   gap: var(--space-2);
-  inline-size: 100%;
-  padding-block-end: var(--space-4);
-}
-
-.version {
-  display: flex;
-  gap: var(--space-2);
-  margin: 0;
-  align-self: flex-end;
-  padding-inline-end: var(--space-4);
-  font-size: var(--text-sm);
-  color: var(--text-secondary); /* not the original's opacity 0.4 — see top */
-}
-
-/* The language selector sits at the bottom-right of the footer on both the
-   login and initialisation screens (issue #519 — consistent placement). The
-   selector component owns its own look; this wrapper only positions it, with
-   the same trailing inset as the version line so their right edges align. */
-.languageRow {
-  align-self: flex-end;
-  padding-inline-end: var(--space-4);
-}
-
-/* Unobtrusive text link in the footer (the sibling old-UI link on login, the
-   Save-log link on initialisation). Secondary tone so it never competes with
-   the primary button; underlined so it reads as a link without relying on
-   colour alone. Button chrome is reset so a <button> using it matches an <a>. */
-.switchLink {
-  align-self: center;
-  margin: 0;
-  padding: 0;
-  border: none;
-  background: none;
-  font: inherit;
-  font-size: var(--text-sm);
+  padding-inline: var(--space-2);
+  font-size: var(--text-xs);
   color: var(--text-secondary);
-  text-decoration: underline;
+}
+
+/* Explicit column, not auto-placement: off Android the initialisation screen
+   renders no secondary action at all, and the selector must still sit in the
+   end column rather than fall into the empty 1fr track. */
+.languageAction {
+  grid-column: 2;
+}
+
+/* The screen's secondary action, shaped like the language selector's trigger
+   beside it. Login's is an <a>: a real document navigation to the sibling app,
+   so it keeps link semantics (middle-click, open in new tab, copy link) —
+   only the look is borrowed; initialisation's save-log is a <button>, and the
+   button chrome reset below is what lets the two look identical. Tint and ring
+   derive from currentColor, exactly as the selector's trigger does, so both
+   sit on the light panel with one rule. Padding matches the trigger's rather
+   than the small Button's, because these two sit side by side and must agree
+   with each other first. */
+.secondaryAction {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  justify-self: start; /* hug the label — don't stretch the hover box across the 1fr track */
+  padding: var(--space-1) var(--space-2);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit; /* the pair's shared tone — see .formActions */
+  font: inherit;
+  text-decoration: none;
   cursor: pointer;
 }
 
-.switchLink:hover,
-.switchLink:focus-visible {
-  color: var(--primary-main);
+.secondaryAction:focus-visible {
+  outline: 2px solid currentcolor;
+  outline-offset: -0.125rem;
 }
 
-.switchLink:focus-visible {
-  outline: 2px solid var(--primary-main);
-  outline-offset: 0.125rem;
-}
-
-.switchLink[disabled] {
+/* Busy (the save-log write in flight): the DOM disabled attribute already
+   blocks activation, this only shows it. */
+.secondaryAction:disabled {
   cursor: default;
   opacity: 0.6;
 }
 
-/* Save-log success/error notice under the link (issue #519.5). Centered under
-   the footer column; severity carries via the text colour token. */
-.footerNotice {
-  align-self: center;
-  margin: 0;
-  max-inline-size: 22rem;
-  font-size: var(--text-sm);
-  text-align: center;
+/* Last, and :not(:disabled) — a disabled control must not light up under the
+   pointer (stylelint wants the ascending specificity, hence the order). */
+.secondaryAction:not(:disabled):hover {
+  background: color-mix(in srgb, currentcolor 15%, transparent);
 }
 
-.footerNotice[data-severity='success'] {
+.secondaryActionIcon {
+  flex-shrink: 0;
+  inline-size: 1rem;
+  block-size: 1rem;
+}
+
+/* The form's heading (and, via aria-labelledby, its accessible name), carried
+   for the document outline and assistive technology only. Out of flow, so it
+   costs the form's flex rhythm nothing. */
+.srOnly {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Success/error notice under the save-log button (issue #519.5), a member of
+   the action group rather than a line of its own: `order` places it after both
+   controls and the full-width span gives it its own grid row, so the button
+   and the language selector keep sharing the first one. Severity carries via
+   the text colour token — the message itself also says which it is, so colour
+   is never the only signal. */
+.actionNotice {
+  order: 1;
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.actionNotice[data-severity='success'] {
   color: var(--success-main);
 }
 
-.footerNotice[data-severity='error'] {
+.actionNotice[data-severity='error'] {
   color: var(--error-main);
 }
 
+/* --- The version line -------------------------------------------------
+   Both version strings on ONE line, at the bottom of the page's left half.
+   Small and quiet: reference information, not part of the login or setup
+   task. No colour of its own — inside the hero it inherits --login-hero-text
+   (white), which is the whole point of putting it there. */
+.versionBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin: 0;
+  font-size: var(--text-xs);
+}
+
+/* The hero's LAST flex child, in flow — the hero's `justify-content:
+   flex-end` anchors it to the bottom corner, its 5% inline padding indents it
+   like the copy, and its bottom padding is the line's offset from the page
+   edge. Previously `position: fixed` to the viewport, which overlapped the
+   copy on short viewports (issue #1219): an Android text-scale bump grows the
+   fonts but not the paddings around them, so the copy reached down into the
+   pinned line's band — and the line itself wraps to two rows in the hero's
+   40% column, growing upward into the copy. In flow neither can ever
+   overlap: the copy sits above the line by this margin, and if the hero's
+   content overflows a very short viewport it is the heading that loses its
+   top (flex-end overflows at the start), never this line. */
+.versionBarHero {
+  margin-block-start: var(--space-6);
+}
+
+/* Compact: the hero doesn't render at all, so the line moves into the panel
+   and takes the panel's text colour — the hero's white would be invisible
+   there. Which of the two renders is decided in JS (CLAUDE.md #7), so only
+   one exists at a time and the version testid stays a single match. */
+.versionBarPanel {
+  align-self: flex-start;
+  padding-inline-start: var(--space-4);
+  padding-block-end: var(--space-4);
+  color: var(--text-secondary);
+}
+
 /* Short viewports (landscape tablets/phones): the constraint is vertical — the
-   full-size logo pushes the footer off-screen. Shrink it so the whole form +
-   footer fit without scrolling. Matches the current app, which drops its login
-   logo from 285×180 to 155×90 on small screens; 9.6875rem keeps the 19:12 box
-   (155×90). Keyed on height, not width, because a landscape tablet is wide but
-   short — a width breakpoint would miss it. */
+   full-size logo pushes the button and the controls under it off-screen. Shrink
+   it so the whole form fits without scrolling. Matches the current app, which
+   drops its login logo from 285×180 to 155×90 on small screens; 9.6875rem
+   keeps the 19:12 box (155×90). Keyed on height, not width, because a landscape
+   tablet is wide but short — a width breakpoint would miss it. */
 @media (max-height: 50rem) {
   .logo {
     inline-size: 9.6875rem;

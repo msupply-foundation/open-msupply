@@ -1,14 +1,13 @@
 import { createSignal, Show, type Component } from 'solid-js';
-import { useNavigate, useParams } from '@solidjs/router';
 import { t } from '../../../intl';
 import { CheckboxButton } from '../../../ui/elements/buttons/CheckboxButton';
-import { CloseButton } from '../../../ui/elements/buttons/StandardButtons';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
 import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { StatusChangeAction } from './actions/StatusChangeAction';
-import { currentStep, statusSteps } from './returnStatus';
+import { currentStep, filterByStatusPreference } from '@/domain/invoice';
+import { STATUS_FLOW, statusSteps } from './returnStatus';
 import type { SupplierReturnInfoFragment } from './supplierReturnDetail.generated';
 
 // The return-level footer (spec/supplier-returns/ui-surface.md S3 § layout —
@@ -40,11 +39,14 @@ export interface SupplierReturnStatusFooterProps {
 export const SupplierReturnStatusFooter: Component<
   SupplierReturnStatusFooterProps
 > = props => {
-  const params = useParams<{ storeId: string }>();
-  const navigate = useNavigate();
   const [holdConfirm, setHoldConfirm] = createSignal(false);
 
   const holding = () => props.node.onHold;
+  // The flow narrowed by the invoice-status-options preference (rules §
+  // preference gates); an excluded current status highlights the nearest
+  // included earlier stage.
+  const offered = () =>
+    filterByStatusPreference(STATUS_FLOW, props.statusOptions);
 
   return (
     <ContentFooter>
@@ -61,19 +63,14 @@ export const SupplierReturnStatusFooter: Component<
       </Show>
 
       <StatusIndicator
-        steps={statusSteps(props.node, props.statusOptions)}
-        current={currentStep(props.node.status, props.statusOptions)}
+        steps={statusSteps(offered(), props.node)}
+        current={currentStep(STATUS_FLOW, offered(), props.node.status)}
       />
 
-      {/* One inline-end cluster: Close sits right beside the Confirm-status
-          split button. */}
+      {/* One inline-end cluster: the Confirm-status split button alone. No
+          Close beside it (D103) — leaving the return is the breadcrumb's job,
+          in the app bar, where every other screen puts it. */}
       <ContentFooterActions>
-        <CloseButton
-          data-testid="close-button"
-          onClick={() =>
-            navigate(`/${params.storeId}/replenishment/supplier-return`)
-          }
-        />
         <StatusChangeAction
           storeId={props.storeId}
           node={props.node}
