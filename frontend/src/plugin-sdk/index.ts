@@ -51,6 +51,21 @@ export type {
   NoPlacement,
 } from './types';
 
+// ── Auth & context ──────────────────────────────────────────────────────────
+/*
+ * The session surface (sdk-contract § SDK surface — Auth & context): the same
+ * facts a contribution's `when(ctx)` receives, as a plain accessor for code
+ * that runs OUTSIDE a gate — above all a contribution's own core-schema reads,
+ * which need the entered store id as a query variable (`storeId: String!`
+ * everywhere on the schema; graphqlQuery injects nothing). Reactive: it reads
+ * the store-context signals fresh on every call, so a resource keyed on
+ * `slotContext().storeId` re-fetches on a store switch, and every field an
+ * unresolved session cannot answer is `undefined` — the same no-guessing rule
+ * the gates rely on. Costs nothing eager: the store context is already in
+ * this barrel's graph (navigation.ts reads it).
+ */
+export { slotContext } from '../plugins/slotContext';
+
 // ── Slot API — the internal-order line slots ────────────────────────────────
 export type {
   InternalOrderLineView,
