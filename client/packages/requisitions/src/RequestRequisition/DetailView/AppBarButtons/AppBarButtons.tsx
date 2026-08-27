@@ -14,13 +14,11 @@ import { AddButton } from './AddButton';
 interface AppBarButtonProps {
   isDisabled: boolean;
   onAddItem: () => void;
-  showIndicators?: boolean;
 }
 
 export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
   onAddItem,
   isDisabled,
-  showIndicators = false,
 }) => {
   const { store } = useAuthContext();
   const isProgram = useRequest.utils.isProgram();
@@ -46,12 +44,18 @@ export const AppBarButtonsComponent: FC<AppBarButtonProps> = ({
           // Filters out reports that have a subContext (i.e. `R&R`)
           queryParams={{ filterBy: { subContext: { equalAnyOrNull: [] } } }}
           dataId={data?.id ?? ''}
+          // Sent for every program order, not just one showing the indicators
+          // tab: a report declaring $programId / $periodId / $customerNameId
+          // fails outright when they are absent from the arguments, so tying
+          // them to a display gate could only break such a report (#12713).
+          // Sending null instead is not an option — the indicator value fields
+          // take String! arguments and reject it.
           extraArguments={
-            showIndicators
+            data?.program?.id && data?.period?.id && store?.nameId
               ? {
-                  periodId: data?.period?.id,
-                  programId: data?.program?.id,
-                  customerNameId: store?.nameId,
+                  periodId: data.period.id,
+                  programId: data.program.id,
+                  customerNameId: store.nameId,
                 }
               : undefined
           }
