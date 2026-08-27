@@ -89,6 +89,12 @@ export type {
  */
 export { Table } from '../ui/elements/table/Table';
 export type { TableProps } from '../ui/elements/table/Table';
+// The clickable-titled-card role (registry: Widget card) — the navigator task
+// tile (#317): whole-card <a>/<button> activation, accessible name, and the
+// no-nested-interactive guarantee come from the host component, with the
+// content slot taking the plugin's KPI block.
+export { WidgetCard } from '../ui/elements/display/WidgetCard';
+export type { WidgetCardProps } from '../ui/elements/display/WidgetCard';
 export { InfoTooltip } from '../ui/elements/feedback/InfoTooltip';
 export type { InfoTooltipProps } from '../ui/elements/feedback/InfoTooltip';
 // The form set, added with the payment-form slot — the union of what the
