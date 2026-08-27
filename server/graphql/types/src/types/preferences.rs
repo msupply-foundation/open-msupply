@@ -87,6 +87,14 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.item_margin_overrides_supplier_margin)
     }
 
+    pub async fn transfer_stock_to_internal_customers_at_cost_price(&self) -> Result<bool> {
+        self.load_preference(
+            &self
+                .preferences
+                .transfer_stock_to_internal_customers_at_cost_price,
+        )
+    }
+
     pub async fn is_gaps(&self) -> Result<bool> {
         self.load_preference(&self.preferences.is_gaps)
     }
@@ -303,6 +311,7 @@ pub enum PreferenceKey {
     ExpiredStockPreventIssue,
     ExpiredStockIssueThreshold,
     ItemMarginOverridesSupplierMargin,
+    TransferStockToInternalCustomersAtCostPrice,
     IsGaps,
     DisplayPopulationBasedForecasting,
     GlobalTableConfigs,
