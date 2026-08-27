@@ -92,9 +92,6 @@ impl<'a> AssetTypeRepository<'a> {
         }
 
         let final_query = query
-            // Stable tiebreaker so paginated results don't shuffle or drop rows
-            // when the primary sort column has ties.
-            .then_order_by(asset_catalogue_type::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64);
 

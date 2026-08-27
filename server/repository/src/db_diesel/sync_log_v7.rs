@@ -152,9 +152,6 @@ impl<'a> SyncLogV7Repository<'a> {
         }
 
         Ok(query
-            // Stable tiebreaker so paginated results don't shuffle or drop rows
-            // when the primary sort column has ties.
-            .then_order_by(sync_log_v7::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
             .load::<SyncLogV7Row>(self.connection.lock().connection())?)
