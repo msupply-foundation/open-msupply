@@ -7,7 +7,7 @@ import { startKeyboardDispatcher } from './keyboardDispatcher';
 import { createAction } from '../ui/utils/keyActions';
 import { MOD_K } from '../ui/utils/shortcuts';
 import { useFullScreen } from '../ui/layout/AppShell/shellContext';
-import { storeRelativePath } from '../nav/storeRelativePath';
+import { storePath, storeRelativePath } from '../nav/storeRelativePath';
 
 /*
  * Where the keyboard layer is switched on (spec/keyboard). Mounted inside
@@ -47,11 +47,11 @@ export const KeyboardHost = (props: KeyboardHostProps) => {
   const relativePath = (): string =>
     storeRelativePath(location.pathname, params.storeId);
 
-  // Same URL rule as the menu's (ShellLayout § storeHref): Home's path is
-  // empty, and `/{store}/` would be a second spelling of `/{store}` — one
-  // screen, one address (OMS-REG-NAV-01.22).
-  const go = (path: string) =>
-    navigate(path === '' ? `/${params.storeId}` : `/${params.storeId}/${path}`);
+  // Same URL rule as the menu's, by construction — the shared join
+  // (storeRelativePath § storePath): Home's path is empty, and `/{store}/`
+  // would be a second spelling of `/{store}` — one screen, one address
+  // (OMS-REG-NAV-01.22).
+  const go = (path: string) => navigate(storePath(params.storeId, path));
 
   /*
    * KB-X5: "navigates up one level — from a detail screen to its list, and so
