@@ -12,6 +12,7 @@ dist
 dist-desktop
 dist-discovery
 dist-showcase
+dist-prototypes
 dist-ssr
 *.local
 

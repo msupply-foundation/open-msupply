@@ -1,0 +1,196 @@
+import { AuthError, AuthState, setAuthState } from '../../AuthContext';
+import { useGetAuthToken } from './useGetAuthToken';
+import {
+  AuthenticationCredentials,
+  LocalStorage,
+  useAuthApi,
+  useGetUserDetails,
+  useGetUserPermissions,
+  useGql,
+  useLocalStorage,
+  useQueryClient,
+  LanguageTypeNode,
+  UserNode,
+  UserStoreNodeFragment,
+  useIntlUtils,
+} from '@openmsupply-client/common';
+import { DefinitionNode, DocumentNode, OperationDefinitionNode } from 'graphql';
+
+const authNameQueries = ['authToken', 'me'];
+const isAuthRequest = (definitionNode: DefinitionNode) => {
+  const operationNode = definitionNode as OperationDefinitionNode;
+  if (!operationNode) return false;
+  if (operationNode.operation !== 'query') return false;
+
+  return authNameQueries.indexOf(operationNode.name?.value ?? '') !== -1;
+};
+
+const skipNoStoreRequests = (documentNode?: DocumentNode) => {
+  if (!documentNode) return false;
+
+  if (documentNode.definitions.some(isAuthRequest)) return false;
+
+  switch (LocalStorage.getItem('/error/auth')) {
+    case AuthError.NoStoreAssigned:
+    case AuthError.Unauthenticated:
+    case AuthError.Timeout:
+    case AuthError.ServerError:
+      return true;
+    default:
+      return false;
+  }
+};
+
+// mostly this is as a migration fix - previous format is a single object, not an array
+export const getMostRecentCredentials = (
+  mostRecentlyUsedCredentials:
+    | AuthenticationCredentials
+    | AuthenticationCredentials[]
+    | null
+) => {
+  if (mostRecentlyUsedCredentials === null) return [];
+
+  if (Array.isArray(mostRecentlyUsedCredentials))
+    return mostRecentlyUsedCredentials;
+
+  if (typeof mostRecentlyUsedCredentials === 'object')
+    return [mostRecentlyUsedCredentials];
+
+  return [];
+};
+
+// returns MRU store, if set or the first store in the list
+export const getStore = async (
+  userDetails?: Partial<UserNode>,
+  mostRecentCredentials?: AuthenticationCredentials[]
+) => {
+  const defaultStore = userDetails?.defaultStore;
+  const stores = userDetails?.stores?.nodes.filter(s => !s.isDisabled);
+  const mru = mostRecentCredentials?.find(
+    item => item.username.toLowerCase() === userDetails?.username?.toLowerCase()
+  );
+
+  if (
+    mru?.store &&
+    stores?.some(store => store.id === mru?.store?.id && !store.isDisabled)
+  ) {
+    return stores.find(store => store.id === mru.store?.id) ?? mru.store;
+  }
+
+  if (!!defaultStore && !defaultStore.isDisabled) return defaultStore;
+
+  return !!stores && stores?.length > 0 ? stores?.[0] : undefined;
+};
+
+export const useLogin = () => {
+  const { mutateAsync, isPending: isLoggingIn } = useGetAuthToken();
+  const { changeLanguage, getLocaleCode, getUserLocale } = useIntlUtils();
+  const { setSkipRequest } = useGql();
+  const { mutateAsync: getUserDetails } = useGetUserDetails();
+  const queryClient = useQueryClient();
+  const api = useAuthApi();
+  const [mostRecentlyUsedCredentials, setMRUCredentials] =
+    useLocalStorage('/mru/credentials');
+  const getUserPermissions = useGetUserPermissions();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [_error, setError, removeError] = useLocalStorage('/error/auth');
+  const mostRecentCredentials = getMostRecentCredentials(
+    mostRecentlyUsedCredentials
+  );
+  const upsertMostRecentCredential = (
+    username: string,
+    store?: UserStoreNodeFragment
+  ) => {
+    const newMRU = [
+      { username, store },
+      ...mostRecentCredentials.filter(
+        mru => mru.username.toLowerCase() !== username.toLowerCase()
+      ),
+    ];
+    setMRUCredentials(newMRU);
+  };
+
+  const setLoginError = (isLoggedIn: boolean, hasValidStore: boolean) => {
+    if (LocalStorage.getItem('/error/auth') === AuthError.ServerError) return;
+
+    switch (true) {
+      case isLoggedIn && hasValidStore: {
+        removeError();
+        break;
+      }
+      case !isLoggedIn: {
+        setError(AuthError.Unauthenticated);
+        break;
+      }
+      case !hasValidStore: {
+        setError(AuthError.NoStoreAssigned);
+        break;
+      }
+    }
+  };
+
+  const login = async (username: string, password: string) => {
+    // The session cookie is set by the server in the `Set-Cookie` response header — JS never
+    // touches the token. We only use the response's `token` field as a "did login succeed?"
+    // signal for legacy reasons.
+    const { token, error } = await mutateAsync({ username, password });
+    const isLoggedIn = !!token;
+    if (!isLoggedIn) return { token, error };
+
+    let userDetails;
+    try {
+      userDetails = await getUserDetails();
+    } catch (e) {
+      return {
+        token: '',
+        error: {
+          message: 'ConnectionError',
+          detail: (e as Error)?.message,
+        },
+      };
+    }
+    queryClient.setQueryData(api.keys.me(), userDetails);
+    const store = await getStore(userDetails, mostRecentCredentials);
+    const permissions = await getUserPermissions(store);
+    setSkipRequest(skipNoStoreRequests);
+
+    const next: AuthState = {
+      isAuthenticated: isLoggedIn,
+      store,
+      user: {
+        id: userDetails?.userId ?? '',
+        name: username,
+        permissions,
+        firstName: userDetails?.firstName,
+        lastName: userDetails?.lastName,
+        phoneNumber: userDetails?.phoneNumber,
+        jobTitle: userDetails?.jobTitle,
+        email: userDetails?.email,
+      },
+    };
+
+    if (isLoggedIn) {
+      const userLocale = getUserLocale(username);
+      if (userLocale === undefined) {
+        changeLanguage(
+          getLocaleCode(userDetails?.language as LanguageTypeNode)
+        );
+      }
+      upsertMostRecentCredential(username, store);
+      setAuthState(next);
+    }
+    setLoginError(isLoggedIn, !!store);
+    setSkipRequest(
+      () => LocalStorage.getItem('/error/auth') === AuthError.NoStoreAssigned
+    );
+
+    return { token, error };
+  };
+
+  return {
+    isLoggingIn,
+    login,
+    upsertMostRecentCredential,
+    mostRecentCredentials,
+  };
+};

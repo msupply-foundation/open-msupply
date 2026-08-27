@@ -15,7 +15,7 @@ import { PatientSearch, type PatientOption } from '../../../domain/patient';
 import { ClinicianSelect } from '../../../domain/clinician';
 import { ProgramNameSelect } from '../../../domain/program';
 import { CreatePatientModal } from '../../patients';
-import { prescriptionDateInstant } from '../detail/prescriptionUpdate';
+import { newPrescriptionDate } from '../detail/prescriptionUpdate';
 import { InsertPrescription } from './createPrescription.generated';
 
 // The create-prescription modal (spec/prescriptions/ui-surface.md S2, FL2):
@@ -65,6 +65,9 @@ export const CreatePrescriptionModal: Component<
   const create = async () => {
     const chosen = patient();
     if (!chosen || busy()) return;
+    // The date only rides along when it BACKDATES — today means "not
+    // backdated", so the field is left out entirely (see newPrescriptionDate).
+    const backdatedTo = newPrescriptionDate(date());
     setBusy(true);
     setError(undefined);
     // Creation rejections are ALL non-typed (contract § creation), so opt in
@@ -80,10 +83,7 @@ export const CreatePrescriptionModal: Component<
           ...(reference().trim() ? { theirReference: reference().trim() } : {}),
           ...(clinicianId() ? { clinicianId: clinicianId() } : {}),
           ...(programId() ? { programId: programId() } : {}),
-          // The picked day rides as its end-of-day instant: today reads as
-          // not-backdated (a "future" instant the server clears — AC-B5); an
-          // earlier day backdates (AC-B1).
-          prescriptionDate: prescriptionDateInstant(date()),
+          ...(backdatedTo ? { prescriptionDate: backdatedTo } : {}),
         },
       },
       { returnGraphqlErrors: true }

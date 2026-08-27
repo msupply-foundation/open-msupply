@@ -19,7 +19,7 @@ import { poLabel } from '../linkedOrder';
 import { NameSearch, type NameOption } from '../../../domain/name';
 import type { InboundInfoFragment } from './inboundShipmentDetail.generated';
 import type { InboundFieldEdit } from './inboundShipmentEdit';
-import { kindOf, supplierIsStore } from './inboundShipmentStatus';
+import { sourceLinkOf, supplierIsStore } from './inboundShipmentStatus';
 import type { UpdateInboundShipmentVariables } from './inboundShipmentDetail.generated';
 
 export interface InboundShipmentDetailToolbarProps {
@@ -47,7 +47,7 @@ export interface InboundShipmentDetailToolbarProps {
 export const InboundShipmentDetailToolbar: Component<
   InboundShipmentDetailToolbarProps
 > = props => {
-  const kind = () => kindOf(props.node);
+  const sourceLink = () => sourceLinkOf(props.node);
 
   // The received date is enabled while Received + backdating-on, yet the server
   // can still refuse the save (moving the date forward, or beyond the store's
@@ -73,9 +73,11 @@ export const InboundShipmentDetailToolbar: Component<
   // onConfirm) must not revert the draft while it is.
   let confirmInFlight = false;
 
-  // Supplier is editable only on a manual shipment that isn't Verified — never
-  // on a transfer or a PO-linked shipment (spec S3 header fields).
-  const supplierLocked = () => props.disabled || kind() !== 'manual';
+  // Supplier is editable only on a shipment with no source link that isn't
+  // Verified — never on a transfer or a PO-linked shipment (spec S3 header
+  // fields). Deliberately wider than "manual": a shipment linked only to an
+  // internal order has no source link, and its supplier stays editable.
+  const supplierLocked = () => props.disabled || sourceLink() !== 'none';
 
   const selectedSupplier = (): NameOption => ({
     id: props.node.otherPartyId,
@@ -138,6 +140,13 @@ export const InboundShipmentDetailToolbar: Component<
         role="supplier"
         selected={selectedSupplier()}
         disabled={supplierLocked()}
+        // Replace-only: a shipment always names a supplier, so the field is
+        // never nullable and offers no clear affordance (D5, clearability
+        // follows optionality — spec/DIVERGENCES.md; the internal-orders
+        // supplier picker is specced the same way). The ✕ it inherited from the
+        // combobox default was also inert here — `onSelect` discards a null, so
+        // clearing emptied the control on screen and saved nothing.
+        clearable={false}
         onSelect={name => name && props.onSaveField({ otherPartyId: name.id })}
       />
 

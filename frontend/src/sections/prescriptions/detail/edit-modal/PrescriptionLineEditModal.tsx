@@ -810,9 +810,12 @@ const Body = (props: PrescriptionLineEditModalProps) => {
           {/* The warning banners sit between the quantity fields and the batch
             list (ui-surface S4 § layout). The shortfall banner (stock-
             allocation § reporting — nothing narrows silently; the
-            prescription has no placeholder) carries the current app's own
-            copy: "There is a total of X units available. Unable to allocate
-            all Y units."… */}
+            prescription has no placeholder) states the bound and stops:
+            "There is a total of X units available for auto allocation." The
+            current app follows it with "Unable to allocate all Y units.",
+            which only restates the request the field already shows. Dropping
+            it took every catalog: an unmatched {{ token }} renders as itself,
+            so a stale translation would have shown the raw name. */}
           <Show when={shortfall() > 0}>
             <Alert severity="warning" testId="prescription-shortfall-warning">
               {t(
@@ -822,9 +825,6 @@ const Body = (props: PrescriptionLineEditModalProps) => {
                 {
                   allocatedQuantity: formatNumber(
                     unitsToLens(allocatedUnits(), allocateLens())
-                  ),
-                  requestedQuantity: formatNumber(
-                    unitsToLens(allocatedUnits() + shortfall(), allocateLens())
                   ),
                 }
               )}

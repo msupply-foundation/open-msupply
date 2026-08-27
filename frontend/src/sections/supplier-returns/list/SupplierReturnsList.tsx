@@ -2,6 +2,7 @@ import { createMemo, createResource, createSignal, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch, reportPermissionDenied } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { hasPermission } from '../../../store/storeContext';
 import { t } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
@@ -20,7 +21,10 @@ import {
   type Column,
   type SortState,
 } from '../../../ui/elements/table/DataTable';
-import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
+import {
+  CommentHeader,
+  getCellDefinition,
+} from '../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../ui/utils/rem';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { StatusChip } from '../../../ui/elements/feedback/StatusChip';
@@ -37,6 +41,7 @@ import {
   initialPageSize,
   rememberPageSize,
 } from '../../../list/pageSize';
+import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
 import { stripEmpty } from '../../../typeHelpers';
 import {
   SupplierReturns,
@@ -53,10 +58,15 @@ import {
   buildCustomFieldDynamicFilter,
   type CustomFieldFilterState,
 } from '../../../domain/customFields';
+import { DeleteReturnsAction } from '../../../domain/invoice';
 import { NewReturnModal } from './NewReturnModal';
-import { DeleteReturnsAction } from './actions/DeleteReturnsAction';
 import { ExportSupplierReturnsAction } from './actions/ExportSupplierReturnsAction';
-import { statusLabel, isReturnDisabled } from '../detail/returnStatus';
+import { deleteReturn } from '../detail/returnUpdate';
+import {
+  deleteRestoresStock,
+  statusLabel,
+  isReturnDisabled,
+} from '../detail/returnStatus';
 
 // The supplier-returns list (spec/supplier-returns/ui-surface.md S1): the
 // standard list screen over the invoices query pinned to SUPPLIER_RETURN.
@@ -181,6 +191,15 @@ const SupplierReturnsList: Component = () => {
   const rows = () => data.latest?.nodes ?? [];
   const totalCount = () => data.latest?.totalCount ?? 0;
 
+  // A bulk delete of the last page's rows leaves the offset past the new end
+  // (src/list/clampPageOffset.ts, issue #1117).
+  clampPageOffset({
+    total: () => settledTotal(data, page => page.totalCount),
+    offset: () => query().offset,
+    pageSize: () => query().first,
+    setOffset: offset => setQuery({ ...query(), offset }),
+  });
+
   // The store preferences this list keys off: fetched once per store.
   const [prefs] = createResource(
     () => params.storeId,
@@ -196,10 +215,7 @@ const SupplierReturnsList: Component = () => {
   // `.latest` alone would, on its first pending read, tearing down the open
   // chip. Unresolved = no restriction (and manual returns ENABLED — the common
   // case; flashing the notice would be the wrong direction).
-  const loadedPrefs = () =>
-    prefs.state === 'ready' || prefs.state === 'refreshing'
-      ? prefs.latest
-      : undefined;
+  const loadedPrefs = () => gated(prefs);
   const manualReturnsDisabled = () =>
     loadedPrefs()?.disableManualReturns ?? false;
 
@@ -261,11 +277,25 @@ const SupplierReturnsList: Component = () => {
     void refetch();
   };
 
-  // Id + status for the bulk delete's client-side pre-check.
-  const selectedRows = () =>
-    rows()
-      .filter(row => selectedIds().includes(row.id))
-      .map(row => ({ id: row.id, status: row.status }));
+  // Whether deleting the selection brings issued stock back, which the bulk
+  // delete's confirmation says (rules § deleting an issued return restores its
+  // stock). Not a gate — it only picks the copy. Both halves have to hold for
+  // there to be stock the delete would actually return: the status must admit it
+  // (deleteRestoresStock — PICKED alone: NEW issued nothing, and SHIPPED onwards
+  // is refused outright), and the row must have lines, since only lines issued
+  // anything.
+  //
+  // Reads the CURRENT page's rows, since status and line count come from them:
+  // a selection carried across a page change is still deleted in full (the
+  // delete works from the ids), but a stock-bearing row left behind on another
+  // page cannot raise the notice. The inbound list has the same shape.
+  const selectionRestoresStock = () =>
+    rows().some(
+      row =>
+        selectedIds().includes(row.id) &&
+        deleteRestoresStock(row.status) &&
+        row.lines.totalCount > 0
+    );
 
   const openRow = (row: ReturnRow) =>
     navigate(`/${params.storeId}/replenishment/supplier-return/${row.id}`);
@@ -346,7 +376,7 @@ const SupplierReturnsList: Component = () => {
     },
     {
       c: { key: 'comment' },
-      header: () => t('label.comment'),
+      header: () => <CommentHeader />,
       // Shared comment cell — indicator + popover (ui-surface S1 col 5); the
       // column is not sortable (only Name / Status / Number / Created are).
       ...getCellDefinition('comment'),
@@ -399,9 +429,22 @@ const SupplierReturnsList: Component = () => {
             <strong data-testid="selected-rows-count">
               {selectedIds().length} {t('label.selected')}
             </strong>
+            {/* The shared returns bulk delete (domain/invoice): one
+                deleteSupplierReturn per selected id, since there is no batch
+                mutation. Deleting a PICKED return RESTORES its stock — the
+                server deletes each stock-out line, which returns the packs to
+                the stock line (rules § deleting an issued return restores its
+                stock). The confirmation says so: stock moving is worth
+                stating, even when it moves back. */}
             <DeleteReturnsAction
               storeId={params.storeId}
-              selectedRows={selectedRows}
+              selectedIds={selectedIds}
+              deleteOne={deleteReturn}
+              stockNotice={{
+                applies: selectionRestoresStock,
+                message: t('messages.delete-restores-issued-stock'),
+                testId: 'delete-restores-stock',
+              }}
               onDeleted={onDeleted}
             />
             <ContentFooterActions>

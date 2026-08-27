@@ -19,7 +19,23 @@ void registerAndroidBackButton();
  * showcase/app boundary takes a reload; sections inside the showcase still
  * switch live. See src/ui-showcase/README.md.
  */
-if (import.meta.env.DEV && window.location.hash.startsWith('#/showcase')) {
+/*
+ * Dev-only design prototypes: opening the app at #/prototypes(/<id>) renders
+ * the prototypes area instead of the app. Same mechanism, same guarantees and
+ * same reasons as the showcase branch below — a statically-false branch in
+ * production, so the whole src/prototypes/ tree is dead-code-eliminated and no
+ * chunk is emitted. See src/prototypes/README.md.
+ */
+if (import.meta.env.DEV && window.location.hash.startsWith('#/prototypes')) {
+  void Promise.all([
+    import('./prototypes/PrototypesApp'),
+    import('./intl').then(({ initialiseLocale, detectLocale }) =>
+      initialiseLocale(detectLocale())
+    ),
+  ]).then(([{ PrototypesApp }]) => {
+    render(() => <PrototypesApp />, root);
+  });
+} else if (import.meta.env.DEV && window.location.hash.startsWith('#/showcase')) {
   // Library components resolve their strings through the reactive t(), so load
   // the locale dictionary first — same as the app's startup — to avoid a flash
   // of raw keys. (Showcase section labels are literal, not keys; see

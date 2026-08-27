@@ -102,6 +102,20 @@ export const createGlobalActions = (handlers: GlobalActionHandlers): void => {
     unlisted: true,
     shortcut: ESCAPE,
     run: () => {
+      // An open native popover (popover="auto" — table settings, a filter
+      // panel) is the innermost open surface, but unlike a <dialog> it brings
+      // no element handler that would stop the key reaching this action — and
+      // the dispatcher has already preventDefault()ed by the time run() is
+      // called, which CANCELS the platform's own Escape close-request. So this
+      // rung both claims the press and performs it: close the popover (the
+      // last-opened one; hiding it also hides any above it in the auto stack)
+      // and stop the ladder.
+      const popovers = document.querySelectorAll<HTMLElement>(':popover-open');
+      const topmost = popovers[popovers.length - 1];
+      if (topmost) {
+        topmost.hidePopover();
+        return;
+      }
       if (handlers.exitFullScreen()) return;
       handlers.navigateUp();
     },

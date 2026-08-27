@@ -1,0 +1,745 @@
+use super::{name_row::name, DBType, NameRow, StorageConnection};
+
+use crate::{
+    diesel_extensions::date_coalesce,
+    diesel_macros::{
+        apply_date_filter, apply_equal_filter, apply_sort, apply_sort_no_case, apply_string_filter,
+        apply_string_or_filter,
+    },
+    repository_error::RepositoryError,
+    DateFilter, EqualFilter, GenderType, NameCondition, NameRowType, Pagination,
+    ProgramEnrolmentFilter, ProgramEnrolmentRepository, Sort, StringFilter,
+};
+
+use chrono::NaiveDate;
+use diesel::{dsl::IntoBoxed, prelude::*};
+use serde::{Deserialize, Serialize};
+
+pub type Patient = NameRow;
+
+#[derive(Clone, Default, PartialEq, Debug, Serialize, Deserialize)]
+pub struct PatientFilter {
+    pub id: Option<EqualFilter<String>>,
+    pub name: Option<StringFilter>,
+    pub code: Option<StringFilter>,
+    pub code_2: Option<StringFilter>,
+    pub first_name: Option<StringFilter>,
+    pub last_name: Option<StringFilter>,
+    pub gender: Option<EqualFilter<GenderType>>,
+    pub date_of_birth: Option<DateFilter>,
+    pub date_of_death: Option<DateFilter>,
+    pub phone: Option<StringFilter>,
+    pub address1: Option<StringFilter>,
+    pub address2: Option<StringFilter>,
+    pub country: Option<StringFilter>,
+    pub email: Option<StringFilter>,
+    pub next_of_kin_name: Option<StringFilter>,
+
+    /// Filter for any identifier associated with a name entry.
+    /// Currently:
+    /// - name::code
+    /// - name::name
+    /// - name::national_health_number
+    /// - program_enrolment::program_enrolment_id
+    pub identifier: Option<StringFilter>,
+    pub program_enrolment_name: Option<StringFilter>,
+
+    /// Client-provided dynamic filter AST (currently property conditions only).
+    /// ANDs with the other filters. Keys must be validated against the "patient"
+    /// table scope's allowed property keys in the service layer.
+    pub dynamic_filter: Option<NameCondition::Inner>,
+}
+
+#[derive(PartialEq, Debug)]
+pub enum PatientSortField {
+    Name,
+    Code,
+    Code2,
+    FirstName,
+    LastName,
+    Gender,
+    DateOfBirth,
+    Phone,
+    Address1,
+    Address2,
+    Country,
+    Email,
+    DateOfDeath,
+    CreatedDatetime,
+}
+
+pub type PatientSort = Sort<PatientSortField>;
+
+pub struct PatientRepository<'a> {
+    connection: &'a StorageConnection,
+}
+
+impl<'a> PatientRepository<'a> {
+    pub fn new(connection: &'a StorageConnection) -> Self {
+        PatientRepository { connection }
+    }
+
+    pub fn count(
+        &self,
+        filter: Option<PatientFilter>,
+        allowed_ctx: Option<&[String]>,
+    ) -> Result<i64, RepositoryError> {
+        let query = Self::create_filtered_query(filter, allowed_ctx);
+
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
+    }
+
+    pub fn query_by_filter(
+        &self,
+        filter: PatientFilter,
+        allowed_ctx: Option<&[String]>,
+    ) -> Result<Vec<Patient>, RepositoryError> {
+        self.query(Pagination::new(), Some(filter), None, allowed_ctx)
+    }
+
+    pub fn query_one(
+        &self,
+        filter: PatientFilter,
+        allowed_ctx: Option<&[String]>,
+    ) -> Result<Option<Patient>, RepositoryError> {
+        Ok(self.query_by_filter(filter, allowed_ctx)?.pop())
+    }
+
+    pub fn query(
+        &self,
+        pagination: Pagination,
+        filter: Option<PatientFilter>,
+        sort: Option<PatientSort>,
+        allowed_ctx: Option<&[String]>,
+    ) -> Result<Vec<Patient>, RepositoryError> {
+        let mut query = Self::create_filtered_query(filter, allowed_ctx);
+
+        if let Some(sort) = sort {
+            match sort.key {
+                PatientSortField::Name => {
+                    apply_sort_no_case!(query, sort, name::name_);
+                }
+                PatientSortField::Code => {
+                    apply_sort_no_case!(query, sort, name::code);
+                }
+                PatientSortField::FirstName => {
+                    apply_sort_no_case!(query, sort, name::first_name)
+                }
+                PatientSortField::LastName => apply_sort_no_case!(query, sort, name::last_name),
+                PatientSortField::Gender => apply_sort!(query, sort, name::gender),
+                PatientSortField::DateOfBirth => {
+                    apply_sort!(query, sort, name::date_of_birth)
+                }
+                PatientSortField::Phone => apply_sort_no_case!(query, sort, name::phone),
+                PatientSortField::Address1 => apply_sort_no_case!(query, sort, name::address1),
+                PatientSortField::Address2 => apply_sort_no_case!(query, sort, name::address2),
+                PatientSortField::Country => apply_sort_no_case!(query, sort, name::country),
+                PatientSortField::Email => apply_sort_no_case!(query, sort, name::email),
+                PatientSortField::Code2 => {
+                    apply_sort_no_case!(query, sort, name::national_health_number)
+                }
+                PatientSortField::DateOfDeath => {
+                    apply_sort!(query, sort, name::date_of_death)
+                }
+                PatientSortField::CreatedDatetime => {
+                    apply_sort!(query, sort, name::created_datetime)
+                }
+            }
+        }
+
+        // Stable tiebreaker so paginated results don't shuffle or drop rows
+        // when the primary sort column has ties.
+        let final_query = query
+            .then_order_by(name::id.asc())
+            .offset(pagination.offset as i64)
+            .limit(pagination.limit as i64);
+
+        // Debug diesel query
+        // println!(
+        //     "{}",
+        //     diesel::debug_query::<DBType, _>(&final_query).to_string()
+        // );
+
+        let result = final_query.load::<NameRow>(self.connection.lock().connection())?;
+
+        Ok(result)
+    }
+
+    /// Returns a list of names left joined to name_store_join (for name_store_joins matching store_id parameter)
+    /// Names will still be present in result even if name_store_join doesn't match store_id in parameters
+    /// but it's considered invisible in subseqent filters.
+    pub fn create_filtered_query(
+        filter: Option<PatientFilter>,
+        allowed_ctx: Option<&[String]>,
+    ) -> BoxedNameQuery {
+        let mut query = name::table.into_boxed();
+        // Note, below are some OR filters which needs to go first to work
+        // TODO: able to make this more robust in Diesel 2?
+        if let Some(f) = filter {
+            let PatientFilter {
+                id,
+                name,
+                code,
+                code_2: national_health_number,
+                first_name,
+                last_name,
+                gender,
+                date_of_birth,
+                date_of_death,
+                phone,
+                address1,
+                address2,
+                country,
+                email,
+                identifier,
+                program_enrolment_name,
+                next_of_kin_name,
+                dynamic_filter,
+            } = f;
+
+            // or filters need to be applied first
+            if identifier.is_some() {
+                apply_string_filter!(query, identifier.clone(), name::code);
+                apply_string_or_filter!(query, identifier.clone(), name::national_health_number);
+                apply_string_or_filter!(query, identifier.clone(), name::name_);
+
+                let sub_query = ProgramEnrolmentRepository::create_filtered_query(Some(
+                    ProgramEnrolmentFilter {
+                        program_enrolment_id: identifier,
+                        program_context_id: allowed_ctx
+                            .map(|ctxs| EqualFilter::default().restrict_results(ctxs)),
+                        ..Default::default()
+                    },
+                ))
+                .select(name::id);
+
+                query = query.or_filter(name::id.eq_any(sub_query))
+            }
+
+            if next_of_kin_name.is_some() {
+                let sub_query = Self::create_filtered_query(
+                    Some(PatientFilter {
+                        name: next_of_kin_name.clone(),
+                        ..Default::default()
+                    }),
+                    None,
+                )
+                .select(name::id);
+
+                query = query.filter(name::next_of_kin_id.eq_any(sub_query.nullable()));
+
+                apply_string_or_filter!(query, next_of_kin_name, name::next_of_kin_name);
+            }
+
+            if program_enrolment_name.is_some() {
+                let sub_query = ProgramEnrolmentRepository::create_filtered_query(Some(
+                    ProgramEnrolmentFilter {
+                        program_name: program_enrolment_name,
+                        program_context_id: allowed_ctx
+                            .map(|ctxs| EqualFilter::default().restrict_results(ctxs)),
+                        ..Default::default()
+                    },
+                ))
+                .select(name::id);
+
+                query = query.filter(name::id.eq_any(sub_query))
+            }
+
+            apply_equal_filter!(query, id, name::id);
+            apply_string_filter!(query, code, name::code);
+            apply_string_filter!(query, national_health_number, name::national_health_number);
+            apply_string_filter!(query, name, name::name_);
+
+            apply_string_filter!(query, first_name, name::first_name);
+            apply_string_filter!(query, last_name, name::last_name);
+            apply_equal_filter!(query, gender, name::gender);
+            apply_date_filter!(query, date_of_birth, name::date_of_birth);
+            apply_date_filter!(
+                query,
+                date_of_death,
+                date_coalesce::coalesce(
+                    name::date_of_death,
+                    NaiveDate::from_ymd_opt(9999, 12, 31).unwrap()
+                )
+            );
+            apply_string_filter!(query, phone, name::phone);
+            apply_string_filter!(query, address1, name::address1);
+            apply_string_filter!(query, address2, name::address2);
+            apply_string_filter!(query, country, name::country);
+            apply_string_filter!(query, email, name::email);
+
+            // This query selects from the bare name table, so the condition
+            // (compiled against name::table) applies directly
+            if let Some(condition) = dynamic_filter {
+                query = query.filter(condition.to_boxed());
+            }
+        };
+
+        // Only return active (not deleted) patients
+        query = query.filter(name::deleted_datetime.is_null());
+        apply_equal_filter!(
+            query,
+            Some(NameRowType::equal_to(&NameRowType::Patient)),
+            name::type_
+        );
+        query
+    }
+}
+
+type BoxedNameQuery = IntoBoxed<'static, name::table, DBType>;
+
+impl PatientFilter {
+    pub fn new() -> PatientFilter {
+        PatientFilter::default()
+    }
+
+    pub fn id(mut self, filter: EqualFilter<String>) -> Self {
+        self.id = Some(filter);
+        self
+    }
+
+    pub fn name(mut self, filter: StringFilter) -> Self {
+        self.name = Some(filter);
+        self
+    }
+
+    pub fn code(mut self, filter: StringFilter) -> Self {
+        self.code = Some(filter);
+        self
+    }
+
+    pub fn code_2(mut self, filter: StringFilter) -> Self {
+        self.code_2 = Some(filter);
+        self
+    }
+
+    pub fn identifier(mut self, filter: StringFilter) -> Self {
+        self.identifier = Some(filter);
+        self
+    }
+
+    pub fn first_name(mut self, filter: StringFilter) -> Self {
+        self.first_name = Some(filter);
+        self
+    }
+
+    pub fn last_name(mut self, filter: StringFilter) -> Self {
+        self.last_name = Some(filter);
+        self
+    }
+
+    pub fn next_of_kin_name(mut self, filter: StringFilter) -> Self {
+        self.next_of_kin_name = Some(filter);
+        self
+    }
+
+    pub fn gender(mut self, filter: EqualFilter<GenderType>) -> Self {
+        self.gender = Some(filter);
+        self
+    }
+
+    pub fn date_of_birth(mut self, filter: DateFilter) -> Self {
+        self.date_of_birth = Some(filter);
+        self
+    }
+
+    pub fn date_of_death(mut self, filter: DateFilter) -> Self {
+        self.date_of_death = Some(filter);
+        self
+    }
+
+    pub fn phone(mut self, filter: StringFilter) -> Self {
+        self.phone = Some(filter);
+        self
+    }
+
+    pub fn address1(mut self, filter: StringFilter) -> Self {
+        self.address1 = Some(filter);
+        self
+    }
+    pub fn address2(mut self, filter: StringFilter) -> Self {
+        self.address2 = Some(filter);
+        self
+    }
+    pub fn country(mut self, filter: StringFilter) -> Self {
+        self.country = Some(filter);
+        self
+    }
+
+    pub fn email(mut self, filter: StringFilter) -> Self {
+        self.email = Some(filter);
+        self
+    }
+
+    pub fn program_enrolment_name(mut self, filter: StringFilter) -> Self {
+        self.program_enrolment_name = Some(filter);
+        self
+    }
+
+    pub fn dynamic_filter(mut self, condition: NameCondition::Inner) -> Self {
+        self.dynamic_filter = Some(condition);
+        self
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use chrono::{NaiveDate, Utc};
+
+    use crate::{
+        mock::{mock_program_a, MockDataInserts},
+        test_db, DateFilter, EqualFilter, NameRow, NameRowRepository, NameRowType, PatientFilter,
+        PatientRepository, ProgramEnrolmentRow, ProgramEnrolmentRowRepository, StringFilter,
+    };
+
+    #[actix_rt::test]
+    async fn test_patient_query() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "patient_query",
+            MockDataInserts::none().names().stores().name_store_joins(),
+        )
+        .await;
+
+        // Make sure we don't return names that are not patients
+        let result = PatientRepository::new(&connection)
+            .query_by_filter(
+                PatientFilter::new().identifier(StringFilter::equal_to("code2")),
+                None,
+            )
+            .unwrap();
+        assert_eq!(result.first(), None);
+
+        let patient_row = NameRow {
+            id: "patient_1".to_string(),
+            r#type: NameRowType::Patient,
+            code: "codePatient".to_string(),
+            national_health_number: Some("nhnPatient".to_string()),
+            ..Default::default()
+        };
+        NameRowRepository::new(&connection)
+            .upsert_one(&patient_row)
+            .unwrap();
+
+        let result = PatientRepository::new(&connection)
+            .query_by_filter(
+                PatientFilter::new().id(EqualFilter::equal_to("patient_1".to_string())),
+                None,
+            )
+            .unwrap();
+        result.first().unwrap();
+    }
+
+    #[actix_rt::test]
+    async fn test_patient_next_of_kin_name_query() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "patient_next_of_kin_name_query",
+            MockDataInserts::none().names().stores().name_store_joins(),
+        )
+        .await;
+
+        let next_of_kin_patient_row = NameRow {
+            id: "next_of_kin".to_string(),
+            name: "Bestie guy".to_string(),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        };
+
+        let patient_1_row = NameRow {
+            id: "patient_1".to_string(),
+            // NOK recorded via next_of_kin_id
+            next_of_kin_id: Some(next_of_kin_patient_row.id.clone()),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        };
+
+        let patient_2_row = NameRow {
+            id: "patient_2".to_string(),
+            r#type: NameRowType::Patient,
+            // NOK recorded via name plaintext
+            next_of_kin_name: Some("Bestie guy".to_string()),
+            ..Default::default()
+        };
+
+        let name_repo = NameRowRepository::new(&connection);
+
+        name_repo.upsert_one(&next_of_kin_patient_row).unwrap();
+        name_repo.upsert_one(&patient_1_row).unwrap();
+        name_repo.upsert_one(&patient_2_row).unwrap();
+
+        let result = PatientRepository::new(&connection)
+            .query_by_filter(
+                PatientFilter::new().next_of_kin_name(StringFilter::like("Bestie")),
+                None,
+            )
+            .unwrap();
+
+        assert_eq!(result.len(), 2);
+    }
+
+    #[actix_rt::test]
+    async fn test_patient_identifier_query() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "patient_identifier_query",
+            MockDataInserts::none()
+                .units()
+                .items()
+                .names()
+                .stores()
+                .name_store_joins()
+                .full_master_lists()
+                .contexts()
+                .programs(),
+        )
+        .await;
+
+        // add name and name_store_join
+
+        let patient_row = NameRow {
+            id: "patient_1".to_string(),
+            name: "test_name".to_string(),
+            r#type: NameRowType::Patient,
+            code: "codePatient".to_string(),
+            national_health_number: Some("nhnPatient".to_string()),
+            ..Default::default()
+        };
+        NameRowRepository::new(&connection)
+            .upsert_one(&patient_row)
+            .unwrap();
+
+        // test identifier OR
+        let patient_row_a = NameRow {
+            id: "patient_a".to_string(),
+            name: "patient_a_name".to_string(),
+            r#type: NameRowType::Patient,
+            code: "example111".to_string(),
+            national_health_number: Some("patient_a_nhn".to_string()),
+            ..Default::default()
+        };
+
+        let patient_row_b = NameRow {
+            id: "patient_b".to_string(),
+            name: "patient_b_name".to_string(),
+            r#type: NameRowType::Patient,
+            code: "patient_b_code".to_string(),
+            national_health_number: Some("example222".to_string()),
+            ..Default::default()
+        };
+
+        let patient_row_c = NameRow {
+            id: "patient_c".to_string(),
+            name: "example_name".to_string(),
+            r#type: NameRowType::Patient,
+            code: "code333".to_string(),
+            national_health_number: Some("patient_c_nhn".to_string()),
+            ..Default::default()
+        };
+        NameRowRepository::new(&connection)
+            .upsert_one(&patient_row_a)
+            .unwrap();
+        NameRowRepository::new(&connection)
+            .upsert_one(&patient_row_b)
+            .unwrap();
+        NameRowRepository::new(&connection)
+            .upsert_one(&patient_row_c)
+            .unwrap();
+
+        // Test identifier search
+        ProgramEnrolmentRowRepository::new(&connection)
+            .upsert_one(&ProgramEnrolmentRow {
+                id: util::uuid::uuid(),
+                document_name: "doc_name".to_string(),
+                patient_id: patient_row.id.clone(),
+                document_type: "ProgramType".to_string(),
+                program_id: mock_program_a().id,
+                enrolment_datetime: Utc::now().naive_utc(),
+                program_enrolment_id: Some("program_enrolment_id".to_string()),
+                status: Some("Active".to_string()),
+                store_id: None,
+            })
+            .unwrap();
+
+        let repo = PatientRepository::new(&connection);
+        let result = repo
+            .query_by_filter(
+                PatientFilter::new().identifier(StringFilter::equal_to("codePatient")),
+                None,
+            )
+            .unwrap();
+        assert_eq!(result.first().unwrap().id, patient_row.id);
+        let result = repo
+            .query_by_filter(
+                PatientFilter::new().identifier(StringFilter::equal_to("nhnPatient")),
+                None,
+            )
+            .unwrap();
+        assert_eq!(result.first().unwrap().id, patient_row.id);
+        let result = repo
+            .query_by_filter(
+                PatientFilter::new().identifier(StringFilter::equal_to("program_enrolment_id")),
+                None,
+            )
+            .unwrap();
+        assert_eq!(result.first().unwrap().id, patient_row.id);
+        let result = repo
+            .query_by_filter(
+                PatientFilter::new()
+                    .code(StringFilter::equal_to("codePatient"))
+                    .identifier(StringFilter::equal_to("program_enrolment_id")),
+                None,
+            )
+            .unwrap();
+        assert_eq!(result.first().unwrap().id, patient_row.id);
+        // no result when having an `AND code is "does not exist"` clause
+        let result = repo
+            .query_by_filter(
+                PatientFilter::new()
+                    .code(StringFilter::equal_to("code does not exist"))
+                    .identifier(StringFilter::equal_to("program_enrolment_id")),
+                None,
+            )
+            .unwrap();
+        assert_eq!(result.len(), 0);
+        let result = repo
+            .query_by_filter(
+                PatientFilter::new()
+                    .identifier(StringFilter::equal_to("identifier does not exist")),
+                None,
+            )
+            .unwrap();
+        assert_eq!(result.len(), 0);
+        let result = repo
+            .query_by_filter(
+                PatientFilter::new().identifier(StringFilter::like("test_name")),
+                None,
+            )
+            .unwrap();
+        assert_eq!(result.first().unwrap().id, patient_row.id);
+
+        // Test identifier OR
+        let result = repo
+            .query_by_filter(
+                PatientFilter::new().identifier(StringFilter::like("example")),
+                None,
+            )
+            .unwrap();
+        assert_eq!(result.len(), 3);
+    }
+
+    #[actix_rt::test]
+    async fn test_patient_program_enrolment_id_allowed_ctx() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "test_patient_program_enrolment_id_allowed_ctx",
+            MockDataInserts::none()
+                .units()
+                .items()
+                .names()
+                .stores()
+                .name_store_joins()
+                .full_master_lists()
+                .contexts()
+                .programs(),
+        )
+        .await;
+
+        // add name and name_store_join
+        let patient_row = NameRow {
+            id: "patient_1".to_string(),
+            r#type: NameRowType::Patient,
+            code: "codePatient".to_string(),
+            national_health_number: Some("nhnPatient".to_string()),
+            ..Default::default()
+        };
+        NameRowRepository::new(&connection)
+            .upsert_one(&patient_row)
+            .unwrap();
+
+        // Searching by program enrolment id requires correct context access
+        ProgramEnrolmentRowRepository::new(&connection)
+            .upsert_one(&ProgramEnrolmentRow {
+                id: util::uuid::uuid(),
+                document_name: "doc_name".to_string(),
+                patient_id: patient_row.id.clone(),
+                document_type: "ProgramType".to_string(),
+                program_id: mock_program_a().id,
+                enrolment_datetime: Utc::now().naive_utc(),
+                program_enrolment_id: Some("program_enrolment_id".to_string()),
+                status: Some("Active".to_string()),
+                store_id: None,
+            })
+            .unwrap();
+        let repo = PatientRepository::new(&connection);
+        let result = repo
+            .query_by_filter(
+                PatientFilter::new().identifier(StringFilter::equal_to("program_enrolment_id")),
+                Some(&["WrongContext".to_string()]),
+            )
+            .unwrap();
+        assert!(result.is_empty());
+        let result = repo
+            .query_by_filter(
+                PatientFilter::new().identifier(StringFilter::equal_to("program_enrolment_id")),
+                Some(&[mock_program_a().id]),
+            )
+            .unwrap();
+        assert!(!result.is_empty());
+    }
+
+    #[actix_rt::test]
+    async fn test_name_date_of_death() {
+        let (_, connection, _, _) =
+            test_db::setup_all("test_name_date_of_death", MockDataInserts::none()).await;
+
+        let patient_row = NameRow {
+            id: "patient_1".to_string(),
+            r#type: NameRowType::Patient,
+            ..Default::default()
+        };
+        NameRowRepository::new(&connection)
+            .upsert_one(&patient_row)
+            .unwrap();
+
+        // Query if patient is still alive if date of death is not set
+        let result = PatientRepository::new(&connection)
+            .query_by_filter(
+                PatientFilter::new().date_of_death(DateFilter::after_or_equal_to(
+                    NaiveDate::from_ymd_opt(2023, 5, 20).unwrap(),
+                )),
+                None,
+            )
+            .unwrap();
+        assert_eq!(result.len(), 1);
+
+        // Add date of death
+        let patient_row = NameRow {
+            id: "patient_1".to_string(),
+            r#type: NameRowType::Patient,
+            date_of_death: Some(NaiveDate::from_ymd_opt(2023, 9, 20).unwrap()),
+            ..Default::default()
+        };
+        NameRowRepository::new(&connection)
+            .upsert_one(&patient_row)
+            .unwrap();
+        // Query if patient is not alive after date_of_death
+        let result = PatientRepository::new(&connection)
+            .query_by_filter(
+                PatientFilter::new().date_of_death(DateFilter::after_or_equal_to(
+                    NaiveDate::from_ymd_opt(2023, 9, 22).unwrap(),
+                )),
+                None,
+            )
+            .unwrap();
+        assert_eq!(result.len(), 0);
+        // Query if patient is still alive before date_of_death
+        let result = PatientRepository::new(&connection)
+            .query_by_filter(
+                PatientFilter::new().date_of_death(DateFilter::after_or_equal_to(
+                    NaiveDate::from_ymd_opt(2023, 5, 20).unwrap(),
+                )),
+                None,
+            )
+            .unwrap();
+        assert_eq!(result.len(), 1);
+    }
+}

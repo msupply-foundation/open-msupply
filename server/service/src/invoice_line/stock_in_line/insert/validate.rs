@@ -1,0 +1,166 @@
+use crate::common::check_program_exists;
+use crate::invoice::inbound_shipment::InboundShipmentType;
+use crate::{
+    check_item_variant_exists, check_location_exists, check_location_type_is_valid,
+    check_vvm_status_exists,
+    invoice::{
+        check_invoice_exists, check_invoice_lines_are_editable, check_invoice_type, check_store,
+    },
+    invoice_line::{
+        stock_in_line::{check_lines_locked_by_authorisation, check_pack_size},
+        validate::{
+            check_item_exists, check_line_exists, check_number_of_packs,
+            check_price_is_not_negative,
+        },
+    },
+    validate::{
+        check_date_is_not_in_future, check_other_party, check_other_party_store_is_disabled,
+        CheckOtherPartyType, OtherPartyErrors,
+    },
+    NullableUpdate,
+};
+use repository::{InvoiceRow, ItemRow, PurchaseOrderLineRowRepository, StorageConnection};
+
+use super::{InsertStockInLine, InsertStockInLineError};
+
+pub fn validate(
+    input: &InsertStockInLine,
+    store_id: &str,
+    connection: &StorageConnection,
+    inbound_shipment_type: Option<InboundShipmentType>,
+) -> Result<(ItemRow, InvoiceRow), InsertStockInLineError> {
+    use InsertStockInLineError::*;
+    if (check_line_exists(connection, &input.id)?).is_some() {
+        return Err(LineAlreadyExists);
+    }
+    if !check_pack_size(Some(input.pack_size)) {
+        return Err(PackSizeBelowOne);
+    }
+    if !check_number_of_packs(Some(input.number_of_packs)) {
+        return Err(NumberOfPacksBelowZero);
+    }
+    if !check_price_is_not_negative(Some(input.sell_price_per_pack)) {
+        return Err(SellPricePerPackBelowZero);
+    }
+    if !check_price_is_not_negative(Some(input.cost_price_per_pack)) {
+        return Err(CostPricePerPackBelowZero);
+    }
+
+    if let Some(manufacture_date) = &input.manufacture_date {
+        if !check_date_is_not_in_future(manufacture_date) {
+            return Err(CannotSetManufactureDateInFuture);
+        }
+    }
+
+    let item = check_item_exists(connection, &input.item_id)?.ok_or(ItemNotFound)?;
+
+    if let Some(NullableUpdate {
+        value: Some(ref location),
+    }) = &input.location
+    {
+        if !check_location_exists(connection, store_id, location)? {
+            return Err(LocationDoesNotExist);
+        }
+        if let Some(item_restricted_type) = &item.restricted_location_type_id {
+            if !check_location_type_is_valid(connection, store_id, location, item_restricted_type)?
+            {
+                return Err(IncorrectLocationType);
+            }
+        }
+    }
+
+    if let Some(item_variant_id) = &input.item_variant_id {
+        if check_item_variant_exists(connection, item_variant_id)?.is_none() {
+            return Err(ItemVariantDoesNotExist);
+        }
+    }
+
+    if let Some(vvm_status_id) = &input.vvm_status_id {
+        if check_vvm_status_exists(connection, vvm_status_id)?.is_none() {
+            return Err(VVMStatusDoesNotExist);
+        }
+    }
+
+    let invoice =
+        check_invoice_exists(&input.invoice_id, connection)?.ok_or(InvoiceDoesNotExist)?;
+
+    if !check_store(&invoice, store_id) {
+        return Err(NotThisStoreInvoice);
+    };
+    if !check_invoice_type(&invoice, input.r#type.to_domain()) {
+        return Err(NotAStockIn);
+    }
+    if let Some(inbound_type) = inbound_shipment_type {
+        if !inbound_type.matches_input(invoice.purchase_order_id.is_some()) {
+            return Err(WrongInboundShipmentType);
+        }
+    }
+    if !check_invoice_lines_are_editable(&invoice) {
+        return Err(CannotEditFinalised);
+    }
+    if check_other_party_store_is_disabled(connection, store_id, &invoice.name_id)? {
+        return Err(OtherPartyStoreDisabled);
+    }
+    if check_lines_locked_by_authorisation(connection, &invoice)? {
+        return Err(CannotAddLinesToAuthorisedReceivedInvoice);
+    }
+
+    if let Some(donor_id) = &input.donor_id {
+        match check_other_party(connection, store_id, donor_id, CheckOtherPartyType::Donor) {
+            Ok(_) => {}
+            Err(e) => match e {
+                OtherPartyErrors::OtherPartyDoesNotExist => return Err(DonorDoesNotExist),
+                OtherPartyErrors::OtherPartyNotVisible => {} // Invisible donors are allowed as it's possible to have a stock in from a donor that is not visible
+                OtherPartyErrors::TypeMismatched => return Err(SelectedDonorPartyIsNotADonor),
+                OtherPartyErrors::DatabaseError(repository_error) => {
+                    return Err(DatabaseError(repository_error))
+                }
+            },
+        };
+    };
+
+    if let Some(manufacturer_id) = &input.manufacturer_id {
+        match check_other_party(
+            connection,
+            store_id,
+            manufacturer_id,
+            CheckOtherPartyType::Manufacturer,
+        ) {
+            Ok(_) => {}
+            Err(e) => match e {
+                OtherPartyErrors::OtherPartyDoesNotExist => return Err(ManufacturerDoesNotExist),
+                // Invisible manufacturers are allowed - they can be configured centrally (e.g. on
+                // an item variant) or inherited from stock without being visible in this store
+                OtherPartyErrors::OtherPartyNotVisible => {}
+                OtherPartyErrors::TypeMismatched => return Err(ManufacturerIsNotAManufacturer),
+                OtherPartyErrors::DatabaseError(repository_error) => {
+                    return Err(DatabaseError(repository_error))
+                }
+            },
+        };
+    };
+
+    if let Some(program_id) = &input.program_id {
+        if check_program_exists(connection, program_id)?.is_none() {
+            return Err(ProgramDoesNotExist);
+        }
+    }
+
+    // External inbound shipments (with purchase_order_id) require a purchase_order_line_id
+    if invoice.purchase_order_id.is_some() {
+        match &input.purchase_order_line_id {
+            None => return Err(PurchaseOrderLineIdRequired),
+            Some(pol_id) => {
+                // REVIEW: is it ok to do a repository call in the validation step?
+                let pol = PurchaseOrderLineRowRepository::new(connection).find_one_by_id(pol_id)?;
+                if pol.is_none() {
+                    return Err(PurchaseOrderLineDoesNotExist);
+                }
+            }
+        }
+    }
+
+    // TODO: LocationDoesNotBelongToCurrentStore
+
+    Ok((item, invoice))
+}

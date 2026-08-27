@@ -1,0 +1,93 @@
+fragment MasterListItem on ItemNode {
+  __typename
+  id
+  code
+  name
+  unitName
+}
+
+fragment MasterListLine on MasterListLineNode {
+  __typename
+  id
+  item {
+    ...MasterListItem
+  }
+}
+
+fragment MasterListRow on MasterListNode {
+  __typename
+  name
+  code
+  description
+  id
+  linesCount
+}
+
+query masterLists(
+  $first: Int
+  $offset: Int
+  $key: MasterListSortFieldInput!
+  $desc: Boolean
+  $filter: MasterListFilterInput
+  $storeId: String!
+) {
+  masterLists(
+    filter: $filter
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    storeId: $storeId
+  ) {
+    ... on MasterListConnector {
+      __typename
+      totalCount
+      nodes {
+        ...MasterListRow
+      }
+    }
+  }
+}
+
+query masterList($filter: MasterListFilterInput, $storeId: String!) {
+  masterLists(filter: $filter, storeId: $storeId) {
+    ... on MasterListConnector {
+      __typename
+      totalCount
+      nodes {
+        ...MasterListRow
+      }
+    }
+  }
+}
+
+query masterListLines(
+  $storeId: String!
+  $masterListId: String!
+  $page: PaginationInput
+  $sort: [MasterListLineSortInput!]
+  $filter: MasterListLineFilterInput
+) {
+  masterListLines(
+    storeId: $storeId
+    masterListId: $masterListId
+    page: $page
+    sort: $sort
+    filter: $filter
+  ) {
+    ... on MasterListLineConnector {
+      __typename
+      totalCount
+      nodes {
+        ...MasterListLine
+      }
+    }
+  }
+}
+
+query masterListLineCount($storeId: String!, $masterListId: String!) {
+  masterListLines(storeId: $storeId, masterListId: $masterListId) {
+    ... on MasterListLineConnector {
+      __typename
+      totalCount
+    }
+  }
+}

@@ -1,0 +1,222 @@
+use super::{
+    campaign_row::campaign, item_row::item, item_variant::item_variant_row::item_variant,
+    location_row::location, name_row::name, store_row::store, StorageConnection,
+};
+
+use crate::{
+    db_diesel::barcode_row::barcode, db_diesel::changelog::changelog::RowOrId,
+    db_diesel::vvm_status::vvm_status_row::vvm_status, diesel_macros::define_linked_tables,
+    repository_error::RepositoryError, ChangelogSyncType, Delete, SourceSiteId, Upsert,
+};
+use crate::{ChangelogRepository, RowActionType};
+
+use diesel::prelude::*;
+
+use chrono::NaiveDate;
+use serde::{Deserialize, Serialize};
+
+define_linked_tables! {
+    view: stock_line = "stock_line_view",
+    core: stock_line_with_links = "stock_line",
+    struct: StockLineRow,
+    repo: StockLineRowRepository,
+    shared: {
+        store_id -> Text,
+        location_id -> Nullable<Text>,
+        batch -> Nullable<Text>,
+        pack_size -> Double,
+        cost_price_per_pack -> Double,
+        sell_price_per_pack -> Double,
+        available_number_of_packs -> Double,
+        total_number_of_packs -> Double,
+        expiry_date -> Nullable<Date>,
+        on_hold -> Bool,
+        note -> Nullable<Text>,
+        barcode_id -> Nullable<Text>,
+        item_variant_id -> Nullable<Text>,
+        vvm_status_id -> Nullable<Text>,
+        campaign_id -> Nullable<Text>,
+        program_id -> Nullable<Text>,
+        total_volume -> Double,
+        volume_per_pack -> Double,
+        manufacture_date -> Nullable<Date>,
+    },
+    links: {
+        item_link_id -> item_id,
+    },
+    optional_links: {
+        supplier_link_id -> supplier_id,
+        donor_link_id -> donor_id,
+        manufacturer_link_id -> manufacturer_id,
+    }
+}
+
+joinable!(stock_line -> item (item_id));
+joinable!(stock_line -> item_variant (item_variant_id));
+joinable!(stock_line -> store (store_id));
+joinable!(stock_line -> location (location_id));
+joinable!(stock_line -> barcode (barcode_id));
+joinable!(stock_line -> vvm_status (vvm_status_id));
+joinable!(stock_line -> campaign (campaign_id));
+joinable!(stock_line -> name (supplier_id));
+allow_tables_to_appear_in_same_query!(stock_line, item_variant);
+
+#[derive(Clone, Queryable, Debug, PartialEq, Default, Serialize, Deserialize)]
+#[diesel(table_name = stock_line)]
+pub struct StockLineRow {
+    pub id: String,
+    pub store_id: String,
+    pub location_id: Option<String>,
+    pub batch: Option<String>,
+    pub pack_size: f64,
+    pub cost_price_per_pack: f64,
+    pub sell_price_per_pack: f64,
+    pub available_number_of_packs: f64,
+    pub total_number_of_packs: f64,
+    pub expiry_date: Option<NaiveDate>,
+    pub on_hold: bool,
+    pub note: Option<String>,
+    pub barcode_id: Option<String>,
+    pub item_variant_id: Option<String>,
+    pub vvm_status_id: Option<String>,
+    pub campaign_id: Option<String>,
+    pub program_id: Option<String>,
+    pub total_volume: f64,
+    pub volume_per_pack: f64,
+    pub manufacture_date: Option<NaiveDate>,
+    // Resolved from link tables - must be last to match view column order
+    pub item_id: String,
+    pub supplier_id: Option<String>,
+    pub donor_id: Option<String>,
+    pub manufacturer_id: Option<String>,
+}
+pub struct StockLineRowRepository<'a> {
+    connection: &'a StorageConnection,
+}
+
+impl<'a> StockLineRowRepository<'a> {
+    pub fn new(connection: &'a StorageConnection) -> Self {
+        StockLineRowRepository { connection }
+    }
+
+    pub fn upsert_one(&self, row: &StockLineRow) -> Result<(), RepositoryError> {
+        self._upsert(row)?;
+        let changelog = StockLineRow::generate_changelog(
+            RowOrId::Row(row),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
+    }
+
+    fn _delete(&self, id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(stock_line_with_links::table.filter(stock_line_with_links::id.eq(id)))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
+    pub fn delete(&self, id: &str) -> Result<(), RepositoryError> {
+        let changelog = StockLineRow::generate_changelog(
+            RowOrId::Id(id),
+            self.connection,
+            RowActionType::Delete,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)?;
+        self._delete(id)?;
+        Ok(())
+    }
+
+    pub fn find_one_by_id(&self, id: &str) -> Result<Option<StockLineRow>, RepositoryError> {
+        let result = stock_line::table
+            .filter(stock_line::id.eq(id))
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
+    }
+
+    pub fn check_exists_by_id(&self, lookup_id: &str) -> Result<bool, RepositoryError> {
+        let exists: bool = diesel::select(diesel::dsl::exists(
+            stock_line::table.filter(stock_line::id.eq(lookup_id)),
+        ))
+        .get_result(self.connection.lock().connection())?;
+        Ok(exists)
+    }
+
+    pub fn find_many_by_ids(&self, ids: &[String]) -> Result<Vec<StockLineRow>, RepositoryError> {
+        stock_line::table
+            .filter(stock_line::id.eq_any(ids))
+            .load::<StockLineRow>(self.connection.lock().connection())
+            .map_err(RepositoryError::from)
+    }
+
+    pub fn find_by_store_id(&self, store_id: &str) -> Result<Vec<StockLineRow>, RepositoryError> {
+        stock_line::table
+            .filter(stock_line::store_id.eq(store_id))
+            .load::<StockLineRow>(self.connection.lock().connection())
+            .map_err(RepositoryError::from)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct StockLineRowDelete(pub String);
+// For tests only
+impl Delete for StockLineRowDelete {
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => StockLineRow::generate_changelog(
+                RowOrId::Id(&self.0),
+                con,
+                RowActionType::Delete,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        StockLineRowRepository::new(con)._delete(&self.0)?;
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert_eq!(
+            StockLineRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(None)
+        )
+    }
+}
+
+impl Upsert for StockLineRow {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        StockLineRowRepository::new(con)._upsert(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => StockLineRow::generate_changelog(
+                RowOrId::Row(self),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            StockLineRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
+    }
+}

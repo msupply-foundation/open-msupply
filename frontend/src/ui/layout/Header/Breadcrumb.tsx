@@ -1,5 +1,6 @@
 import { children, For, Show, type JSX } from 'solid-js';
 import { t } from '../../../intl';
+import { ChevronLeftIcon } from '../../icons';
 import { useShellSection } from '../AppShell/shellContext';
 import styles from './Breadcrumb.module.css';
 
@@ -53,6 +54,13 @@ export interface BreadcrumbProps {
  */
 export const Breadcrumb = (props: BreadcrumbProps) => {
   const isLast = (index: number) => index === props.crumbs.length - 1;
+  /*
+   * The immediate parent — where "up one level" goes (KB-X5's destination, and
+   * on a touch device the only visible way off a detail screen). It alone gets
+   * the back marker; crumbs further up the trail stay plain links, so the
+   * marker keeps meaning "out of here" rather than "this is a link".
+   */
+  const isParent = (index: number) => index === props.crumbs.length - 2;
   // The nav group's glyph for the current route, supplied by the shell — every
   // page in the shell shows one without asking (shellContext › ShellSection).
   const section = useShellSection();
@@ -112,6 +120,14 @@ export const Breadcrumb = (props: BreadcrumbProps) => {
                       })
                     }
                   >
+                    {/* Inside the link, not beside it: the marker is part of
+                        the thing you press, so it grows the tap target instead
+                        of sitting next to it as dead pixels. It carries the
+                        icon set's own aria-hidden, so the link's accessible
+                        name stays the label alone. */}
+                    <Show when={isParent(index())}>
+                      <ChevronLeftIcon class={styles.backChevron} />
+                    </Show>
                     {crumb.label}
                   </a>
                 </Show>

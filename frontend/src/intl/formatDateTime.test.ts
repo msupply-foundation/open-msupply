@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { getDisplayAge } from './formatDateTime';
+import { getDisplayAge, localisedTimeAgo } from './formatDateTime';
 import { setDictionaries, setLocale } from './intl';
 import commonEn from './locales/en/common.json';
 
@@ -49,5 +49,68 @@ describe('getDisplayAge (spec/patients — age display)', () => {
     expect(getDisplayAge('2025-09-21')).toBe('10 days');
     expect(getDisplayAge('2025-04-01')).toBe('6 months, 0 days');
     expect(getDisplayAge('1994-06-30')).toBe('31 years');
+  });
+});
+
+/*
+ * The sync cell's relative-time ladder (spec/chrome § sync status,
+ * OMS-REG-FTR-03.23). `now` is passed explicitly rather than read off the fake
+ * clock, because the caller ticks its own minutely `now` signal and the
+ * formatter must age against THAT — a formatter reading the wall clock would
+ * disagree with the re-render that produced it.
+ */
+describe('localisedTimeAgo — the sync line’s timing half', () => {
+  const now = new Date(2025, 9, 1, 12, 0, 0); // 2025-10-01 12:00 local
+  const ago = (ms: number) =>
+    localisedTimeAgo(new Date(now.getTime() - ms), now);
+  const SECOND = 1000;
+  const MINUTE = 60 * SECOND;
+  const HOUR = 60 * MINUTE;
+
+  it('says "just now" under a minute — a count of seconds is noise', () => {
+    expect(ago(0)).toBe('just now');
+    expect(ago(45 * SECOND)).toBe('just now');
+    expect(ago(59 * SECOND)).toBe('just now');
+  });
+
+  it('counts minutes in the narrow form, not the long one', () => {
+    expect(ago(MINUTE)).toBe('1 min ago');
+    expect(ago(2 * MINUTE)).toBe('2 min ago');
+    // Truncates rather than rounds: a 119-second-old sync has not been 2
+    // minutes, and a status line must never overstate the age.
+    expect(ago(119 * SECOND)).toBe('1 min ago');
+    expect(ago(59 * MINUTE)).toBe('59 min ago');
+  });
+
+  it('switches to hours at the hour', () => {
+    expect(ago(HOUR)).toBe('1 hr ago');
+    expect(ago(3 * HOUR)).toBe('3 hr ago');
+    expect(ago(23 * HOUR)).toBe('23 hr ago');
+  });
+
+  it('names yesterday as a word, then gives up on relative entirely', () => {
+    expect(ago(24 * HOUR)).toBe('yesterday'); // 2025-09-30 12:00
+    expect(ago(6 * 24 * HOUR)).toBe('25 Sep');
+    expect(ago(48 * HOUR)).toBe('29 Sep');
+  });
+
+  it('treats "yesterday" as a CALENDAR day, not a 24-hour window', () => {
+    // 30 hours before midday is the previous date, so it IS yesterday…
+    expect(
+      localisedTimeAgo(new Date(2025, 9, 1, 6, 0), new Date(2025, 9, 2, 12, 0))
+    ).toBe('yesterday');
+    // …but 30 hours before 06:00 is two dates back, and must not claim to be.
+    expect(
+      localisedTimeAgo(new Date(2025, 9, 1, 0, 0), new Date(2025, 9, 2, 6, 0))
+    ).toBe('yesterday');
+    expect(
+      localisedTimeAgo(new Date(2025, 8, 30, 20, 0), new Date(2025, 9, 2, 6, 0))
+    ).toBe('30 Sep');
+  });
+
+  it('reads a clock skewed into the future as the present, never a countdown', () => {
+    expect(localisedTimeAgo(new Date(now.getTime() + 5 * MINUTE), now)).toBe(
+      'just now'
+    );
   });
 });

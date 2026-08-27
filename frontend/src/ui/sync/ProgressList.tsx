@@ -35,6 +35,11 @@ export interface ProgressStep {
    * omitted.
    */
   icon?: Component<IconProps>;
+  /**
+   * Locale-stable test hook for this step (`data-testid` on the row) — the
+   * label is translated, so identifying one step needs an id of its own.
+   */
+  testId?: string;
 }
 
 // Compact elapsed label, the current app's decomposition: exact seconds under
@@ -110,6 +115,8 @@ export const ProgressList = (props: {
    * The latest run failed: the in-flight step is marked as the failure point.
    */
   error?: boolean;
+  /** `data-testid` for the list element (locale-stable test hook). */
+  testId?: string;
 }) => {
   // The furthest-started step: everything before it is completed, whatever
   // its own finished flag says.
@@ -147,7 +154,11 @@ export const ProgressList = (props: {
   });
 
   return (
-    <ol class={styles.list} data-variant={props.variant ?? 'primary'}>
+    <ol
+      class={styles.list}
+      data-variant={props.variant ?? 'primary'}
+      data-testid={props.testId}
+    >
       <Index each={props.steps}>
         {(step, index) => {
           const state = () => stateOf(index, step());
@@ -219,6 +230,7 @@ export const ProgressList = (props: {
               data-state={state()}
               data-error={errored() || undefined}
               aria-current={state() === 'active' ? 'step' : undefined}
+              data-testid={step().testId}
             >
               <Show
                 when={state() === 'completed' && (count() || elapsed())}

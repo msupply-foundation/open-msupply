@@ -1,7 +1,9 @@
+import { canConfirmNewStock, packSizeValid } from './newStockEntry';
 import { generateUUID } from '../../../uuid';
 import { createResource, createSignal, Show, type JSX } from 'solid-js';
 import { createStore } from 'solid-js/store';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
@@ -174,17 +176,11 @@ const NewStockContent = (props: {
   // also lingers after the item is cleared, so every read stays gated on there
   // still being a chosen item — else a cleared search would keep the old item's
   // variants / location narrowing.
-  const detail = () =>
-    item() &&
-    (itemDetail.state === 'ready' || itemDetail.state === 'refreshing')
-      ? itemDetail.latest
-      : undefined;
+  const detail = () => (item() ? gated(itemDetail) : undefined);
 
   const locations = () =>
     locationsForItem(
-      allLocations.state === 'ready' || allLocations.state === 'refreshing'
-        ? (allLocations.latest ?? [])
-        : [],
+      gated(allLocations) ?? [],
       detail()?.restrictedLocationTypeId
     );
 
@@ -213,18 +209,19 @@ const NewStockContent = (props: {
   const positiveReasonsRequired = () => reasonsOfKind('positive').length > 0;
 
   const chosenItem = () => item();
-  const packSizeValid = () => (draft.packSize ?? 0) >= 1;
-  const packsValid = () =>
-    draft.numberOfPacks != null && draft.numberOfPacks >= 0;
 
-  // OK is available once item + pack size + pack quantity are set (spec AC-N5),
-  // pack size >= 1 (pre-validation), and — when positive reasons are configured
-  // — a reason is chosen.
+  // OK is available once item + pack size + pack quantity are set
+  // (spec OMS-REG-SMV-02.37), pack size >= 1 (pre-validation), and — when
+  // positive reasons are configured — a reason is chosen. The conditions
+  // themselves are pure, in newStockEntry.ts.
   const canConfirm = () =>
-    !!chosenItem() &&
-    packSizeValid() &&
-    packsValid() &&
-    (!positiveReasonsRequired() || !!draft.reasonOption);
+    canConfirmNewStock({
+      hasItem: !!chosenItem(),
+      packSize: draft.packSize,
+      numberOfPacks: draft.numberOfPacks,
+      positiveReasonsRequired: positiveReasonsRequired(),
+      hasReason: !!draft.reasonOption,
+    });
 
   const onOk = async () => {
     const it = chosenItem();
@@ -351,9 +348,11 @@ const NewStockContent = (props: {
                 <FormSection title={t('heading.stock-levels')}>
                   <FormRow>
                     {/* NumberField's default min is 0 (no negatives), so the pack
-                      count can't go negative from the input (spec AC-N2). */}
+                      count can't go negative from the input
+                          (spec OMS-REG-SMV-02.34). */}
                     <NumberField
                       label={t('label.pack-qty')}
+                      data-testid="field-pack-quantity"
                       required
                       decimalLimit={2}
                       value={draft.numberOfPacks}
@@ -361,12 +360,13 @@ const NewStockContent = (props: {
                     />
                     <NumberField
                       label={t('label.pack-size')}
+                      data-testid="field-pack-size"
                       required
                       min={1}
                       decimalLimit={2}
                       value={draft.packSize}
                       error={
-                        draft.packSize != null && !packSizeValid()
+                        draft.packSize != null && !packSizeValid(draft.packSize)
                           ? t('error.pack-size-min')
                           : undefined
                       }
@@ -378,28 +378,33 @@ const NewStockContent = (props: {
                 <FormSection title={t('heading.batches-and-dates')}>
                   <TextField
                     label={t('label.batch')}
+                    data-testid="field-batch"
                     value={draft.batch}
                     onInput={e => setDraft('batch', e.currentTarget.value)}
                   />
                   <TextField
                     label={t('label.barcode')}
+                    data-testid="field-barcode"
                     value={draft.barcode}
                     onInput={e => setDraft('barcode', e.currentTarget.value)}
                   />
                   <FormRow>
                     <DateField
                       label={t('label.expiry-date')}
+                      testId="field-expiry-date"
                       value={draft.expiryDate}
                       onChange={v => setDraft('expiryDate', v)}
                     />
                     <DateField
                       label={t('label.manufacture-date')}
+                      testId="field-manufacture-date"
                       max={today}
                       value={draft.manufactureDate}
                       onChange={v => setDraft('manufactureDate', v)}
                     />
                   </FormRow>
-                  {/* VVM status editable when the gate is on (spec AC-P1: the field
+                  {/* VVM status editable when the gate is on
+                      (spec OMS-REG-INV-06.11: the field
                     shows when manageVvmStatusForStock OR sortByVvmStatusThenExpiry). */}
                   <Show
                     when={
@@ -409,6 +414,7 @@ const NewStockContent = (props: {
                   >
                     <VvmStatusSelect
                       label={t('label.vvm-status')}
+                      inputTestId="field-vvm-status"
                       value={draft.vvmStatus?.id}
                       placeholder={t('label.none')}
                       onChange={s =>
@@ -431,22 +437,26 @@ const NewStockContent = (props: {
                   <FormRow>
                     <CurrencyField
                       label={t('label.cost-price')}
+                      data-testid="field-cost-price"
                       value={draft.costPricePerPack}
                       onChange={v => setDraft('costPricePerPack', v)}
                     />
                     <CurrencyField
                       label={t('label.sell-price')}
+                      data-testid="field-sell-price"
                       value={draft.sellPricePerPack}
                       onChange={v => setDraft('sellPricePerPack', v)}
                     />
                   </FormRow>
                   {/* Required iff active positive reasons are configured (spec
-                    AC-N4) — the same condition that gates OK, marked on the
+                    OMS-REG-SMV-02.36) — the same condition that gates OK,
+                    marked on the
                     field so a disabled OK is explained rather than mysterious
                     (#601). */}
                   <ReasonSelect
                     kind="positive"
                     label={t('label.reason')}
+                    inputTestId="field-reason"
                     required={positiveReasonsRequired()}
                     value={draft.reasonOption?.id}
                     placeholder={t('label.select-reason')}
@@ -464,6 +474,7 @@ const NewStockContent = (props: {
                 <FormSection title={t('heading.storage-and-pack')}>
                   <LocationVolumeSelect
                     label={t('label.location')}
+                    inputTestId="field-location"
                     locations={locations()}
                     loading={allLocations.loading}
                     value={draft.location?.id}
@@ -484,11 +495,13 @@ const NewStockContent = (props: {
                   <FormRow>
                     <Checkbox
                       label={t('label.on-hold')}
+                      testId="field-on-hold"
                       checked={draft.onHold}
                       onChange={v => setDraft('onHold', v)}
                     />
                     <NumberField
                       label={t('label.volume-per-pack')}
+                      data-testid="field-volume-per-pack"
                       decimalLimit={10}
                       value={draft.volumePerPack}
                       onChange={v => setDraft('volumePerPack', v)}
@@ -499,6 +512,7 @@ const NewStockContent = (props: {
                 <FormSection title={t('heading.supply-chain')}>
                   <NameSearch
                     label={t('label.manufacturer')}
+                    inputTestId="field-manufacturer"
                     storeId={props.storeId}
                     role="manufacturer"
                     selected={
@@ -528,10 +542,12 @@ const NewStockContent = (props: {
                     }}
                   />
                   <FormRow>
-                    {/* Donor field gated by allowTrackingOfStockByDonor (spec AC-P3). */}
+                    {/* Donor field gated by allowTrackingOfStockByDonor
+                        (spec OMS-REG-SMV-02.40). */}
                     <Show when={prefs().allowTrackingOfStockByDonor}>
                       <NameSearch
                         label={t('label.donor')}
+                        inputTestId="field-donor"
                         storeId={props.storeId}
                         role="donor"
                         selected={
@@ -556,6 +572,7 @@ const NewStockContent = (props: {
                     </Show>
                     <CampaignOrProgramSelect
                       label={t('label.campaign')}
+                      inputTestId="field-campaign-or-program"
                       storeId={props.storeId}
                       itemId={chosenItem()?.id ?? ''}
                       campaignId={draft.campaignId ?? undefined}

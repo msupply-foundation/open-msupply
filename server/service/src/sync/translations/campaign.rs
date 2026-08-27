@@ -1,0 +1,118 @@
+use repository::{
+    campaign::campaign_row::CampaignRow, ChangelogRow, ChangelogTableName, Row, StorageConnection,
+    SyncBufferRow,
+};
+
+use crate::sync::translations::{
+    PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+};
+
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(CampaignTranslation)
+}
+
+pub(super) struct CampaignTranslation;
+
+impl SyncTranslation for CampaignTranslation {
+    fn table_name(&self) -> &str {
+        "campaign"
+    }
+
+    fn pull_dependencies(&self) -> Vec<&str> {
+        Vec::new()
+    }
+
+    fn try_translate_from_upsert_sync_record(
+        &self,
+        _: &StorageConnection,
+        _fk_checker: &crate::sync::translations::FkChecker,
+        sync_record: &SyncBufferRow,
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        Ok(PullTranslateResult::upsert(serde_json::from_value::<
+            CampaignRow,
+        >(
+            sync_record.data.0.clone()
+        )?))
+    }
+
+    fn change_log_type(&self) -> Option<ChangelogTableName> {
+        Some(ChangelogTableName::Campaign)
+    }
+
+    // Only translating and pulling from central server
+    fn should_translate_to_sync_record(
+        &self,
+        row: &ChangelogRow,
+        r#type: &ToSyncRecordTranslationType,
+    ) -> bool {
+        match r#type {
+            ToSyncRecordTranslationType::PullFromOmSupplyCentral => {
+                self.change_log_type().as_ref() == Some(&row.table_name)
+            }
+            _ => false,
+        }
+    }
+
+    fn try_translate_to_upsert_sync_record(
+        &self,
+        _connection: &StorageConnection,
+        changelog: &ChangelogRow,
+        row: Row,
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::Campaign(campaign_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
+        let row = campaign_row;
+
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            serde_json::to_value(row)?,
+        ))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use repository::{mock::MockDataInserts, test_db::setup_all, SyncRecordData};
+
+    #[actix_rt::test]
+    async fn test_campaign_pull_translation() {
+        let translator = CampaignTranslation;
+        let (_, connection, _, _) =
+            setup_all("test_campaign_pull_translation", MockDataInserts::none()).await;
+
+        let test_campaign = CampaignRow {
+            id: "campaign1".to_string(),
+            name: "Test Campaign".to_string(),
+            start_date: None,
+            end_date: None,
+            deleted_datetime: None,
+        };
+
+        let sync_buffer_row = SyncBufferRow {
+            table_name: translator.table_name().to_string(),
+            record_id: test_campaign.id.clone(),
+            data: SyncRecordData(serde_json::to_value(&test_campaign).unwrap()),
+            ..Default::default()
+        };
+
+        assert!(translator.should_translate_from_sync_record(&sync_buffer_row));
+        let translation_result = translator
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &sync_buffer_row,
+            )
+            .unwrap();
+
+        match translation_result {
+            PullTranslateResult::IntegrationOperations(ops) => {
+                assert_eq!(ops.len(), 1);
+            }
+            _ => panic!("Expected IntegrationOperations"),
+        }
+    }
+}

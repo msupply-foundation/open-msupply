@@ -1,0 +1,450 @@
+use std::io::ErrorKind;
+
+use actix_files as fs;
+use actix_multipart::form::tempfile::TempFile;
+use actix_multipart::form::MultipartForm;
+
+use actix_web::error::InternalError;
+use actix_web::http::header::{ContentDisposition, DispositionParam, DispositionType};
+use actix_web::http::StatusCode;
+use actix_web::web::Data;
+use actix_web::{delete, get, guard, post, web, Error, HttpRequest, HttpResponse};
+
+use fs::NamedFile;
+use repository::sync_file_reference_row::SyncFileReferenceRowRepository;
+use repository::sync_file_reference_row::SyncFileStatus;
+use repository::SyncFileDirection;
+use repository::{
+    EqualFilter, PurchaseOrderFilter, PurchaseOrderRepository, PurchaseOrderStatus, RepositoryError,
+};
+use serde::Deserialize;
+
+use repository::sync_file_reference_row::SyncFileReferenceRow;
+
+use service::auth_data::AuthData;
+use service::service_provider::ServiceProvider;
+use service::settings::Settings;
+use service::static_files::StaticFile;
+use service::static_files::{StaticFileCategory, StaticFileService};
+use service::sync::file_sync_driver::{file_sync_central_url, get_sync_settings};
+use service::sync::file_synchroniser::{self, FileSynchroniser};
+use service::sync::CentralServerConfig;
+use service::usize_to_i32;
+use std::sync::Arc;
+use thiserror::Error;
+use util::format_error;
+
+use crate::authentication::validate_cookie_auth;
+use crate::middleware::limit_content_length;
+
+#[derive(Debug, MultipartForm)]
+pub(crate) struct UploadForm {
+    #[multipart(rename = "files")]
+    pub(crate) file: Vec<TempFile>,
+}
+
+/// Maximum size of a single uploaded sync file. The frontend enforces the same
+/// limit client-side (see DocumentUpload) so users get immediate feedback.
+pub(crate) const MAX_SYNC_FILE_SIZE_BYTES: usize = 50 * 1024 * 1024; // 50MB
+
+// this function could be located in different module
+pub fn config_static_files(cfg: &mut web::ServiceConfig) {
+    cfg.service(web::resource("/files").guard(guard::Get()).to(files));
+    cfg.service(
+        web::scope("/sync_files")
+            // The default multipart total limit (50MiB) would reject an upload
+            // just over the per-file limit with an opaque error before the
+            // clearer per-file size check in upload_sync_file could run. Raise
+            // it to match the content-length middleware (100MB); the per-file
+            // MAX_SYNC_FILE_SIZE_BYTES check is what users should hit.
+            .app_data(
+                actix_multipart::form::MultipartFormConfig::default()
+                    .total_limit(100 * 1024 * 1024),
+            )
+            .service(download_sync_file)
+            .service(delete_sync_file)
+            .service(upload_sync_file)
+            .wrap(limit_content_length()),
+    );
+}
+
+/// Rejects the upload with a 413 (naming the offending file, since the
+/// frontend shows the response body) if any file exceeds MAX_SYNC_FILE_SIZE_BYTES.
+fn check_file_sizes(files: &[TempFile]) -> Result<(), actix_web::Error> {
+    for f in files {
+        if f.size > MAX_SYNC_FILE_SIZE_BYTES {
+            let file_name = f.file_name.as_deref().unwrap_or("file");
+            return Err(InternalError::new(
+                format!(
+                    "'{}' exceeds the maximum file size of {}MB",
+                    file_name,
+                    MAX_SYNC_FILE_SIZE_BYTES / (1024 * 1024)
+                ),
+                StatusCode::PAYLOAD_TOO_LARGE,
+            )
+            .into());
+        }
+    }
+    Ok(())
+}
+
+/// Returns an error response if the record is a purchase order in Sent or Finalised status,
+/// meaning documents cannot be uploaded or deleted.
+fn check_purchase_order_document_editable(
+    service_provider: &ServiceProvider,
+    table_name: &str,
+    record_id: &str,
+) -> Result<(), actix_web::Error> {
+    if table_name != "purchase_order" {
+        return Ok(());
+    }
+
+    let connection = service_provider
+        .connection()
+        .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
+
+    let purchase_order = PurchaseOrderRepository::new(&connection)
+        .query_by_filter(
+            PurchaseOrderFilter::new().id(EqualFilter::equal_to(record_id.to_string())),
+        )
+        .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?
+        .pop();
+
+    if let Some(po) = purchase_order {
+        if matches!(
+            po.purchase_order_row.status,
+            PurchaseOrderStatus::Sent | PurchaseOrderStatus::Finalised
+        ) {
+            return Err(InternalError::new(
+                "Cannot upload or delete documents for a sent or finalised purchase order",
+                StatusCode::BAD_REQUEST,
+            )
+            .into());
+        }
+    }
+
+    Ok(())
+}
+
+#[derive(Debug, Deserialize)]
+pub struct FileRequestQuery {
+    id: String,
+}
+
+async fn files(
+    req: HttpRequest,
+    query: web::Query<FileRequestQuery>,
+    settings: Data<Settings>,
+) -> Result<HttpResponse, Error> {
+    let service = StaticFileService::new(&settings.server.base_dir)
+        .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
+
+    let static_file_category = StaticFileCategory::Temporary;
+    let file = service
+        .find_file(&query.id, static_file_category)
+        .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?
+        .ok_or_else(|| std::io::Error::new(ErrorKind::NotFound, "Static file not found"))?;
+
+    let response = fs::NamedFile::open(file.path)?
+        .set_content_disposition(ContentDisposition {
+            disposition: DispositionType::Inline,
+            parameters: vec![DispositionParam::Filename(file.name)],
+        })
+        .into_response(&req);
+
+    Ok(response)
+}
+
+#[delete("/{table_name}/{record_id}/{file_id}")]
+async fn delete_sync_file(
+    settings: Data<Settings>,
+    service_provider: Data<ServiceProvider>,
+    path: web::Path<(String, String, String)>,
+    request: HttpRequest,
+    auth_data: Data<AuthData>,
+) -> Result<HttpResponse, Error> {
+    validate_cookie_auth(request.clone(), &auth_data).map_err(|_err| {
+        InternalError::new(
+            "You must be logged in to delete files",
+            StatusCode::INTERNAL_SERVER_ERROR,
+        )
+    })?;
+
+    let (table_name, record_id, file_id) = path.into_inner();
+
+    check_purchase_order_document_editable(&service_provider, &table_name, &record_id)?;
+
+    let static_file_category = StaticFileCategory::SyncFile(table_name, record_id);
+
+    // delete local file, if it exists
+    let service = StaticFileService::new(&settings.server.base_dir)
+        .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
+
+    match service.find_file(&file_id, static_file_category) {
+        Ok(Some(file)) => {
+            std::fs::remove_file(file.path)?;
+        }
+        Ok(None) => {}
+        Err(_) => {}
+    };
+
+    // mark file reference as deleted
+    let db_connection = service_provider
+        .connection()
+        .map_err(|err| InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR))?;
+
+    let repo = SyncFileReferenceRowRepository::new(&db_connection);
+
+    match repo.delete(&file_id) {
+        Ok(_) => Ok(HttpResponse::Ok().body("file deleted")),
+        Err(err) => {
+            log::error!("Error deleting file reference: {err}");
+            Err(InternalError::new(err, StatusCode::INTERNAL_SERVER_ERROR).into())
+        }
+    }
+}
+
+#[post("/{table_name}/{record_id}")]
+async fn upload_sync_file(
+    MultipartForm(UploadForm { file }): MultipartForm<UploadForm>,
+    settings: Data<Settings>,
+    service_provider: Data<ServiceProvider>,
+    path: web::Path<(String, String)>,
+    request: HttpRequest,
+    auth_data: Data<AuthData>,
+) -> Result<HttpResponse, Error> {
+    // For now, we just check that the user is authenticated
+    // In future we might want to check that the user has access to the record
+    // Access to the file UUID should normally only be exposed to users with access from the frontend
+    validate_cookie_auth(request.clone(), &auth_data).map_err(|_err| {
+        InternalError::new(
+            "You need to be logged in",
+            StatusCode::INTERNAL_SERVER_ERROR,
+        )
+    })?;
+
+    let path_inner = path.into_inner();
+
+    check_purchase_order_document_editable(&service_provider, &path_inner.0, &path_inner.1)?;
+
+    check_file_sizes(&file)?;
+
+    let mut static_file_ids: Vec<String> = vec![];
+
+    for f in file {
+        let static_file =
+            upload_sync_file_inner(&service_provider, &settings, path_inner.clone(), f)
+                .await
+                .map_err(|error| {
+                    log::error!("Error while uploading file: {}", format_error(&error));
+                    InternalError::new(
+                        "Error uploading file, please check server logs",
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                    )
+                })?;
+
+        static_file_ids.push(static_file.id);
+    }
+
+    Ok(HttpResponse::Ok().json(static_file_ids))
+}
+
+#[derive(Error, Debug)]
+enum UploadFileError {
+    #[error("Database error")]
+    DatabaseError(#[from] RepositoryError),
+    #[error("Other")]
+    Other(#[from] anyhow::Error),
+}
+
+async fn upload_sync_file_inner(
+    service_provider: &ServiceProvider,
+    settings: &Settings,
+    (table_name, record_id): (String, String),
+    file: TempFile,
+) -> Result<StaticFile, UploadFileError> {
+    let db_connection = service_provider.connection()?;
+
+    let file_service = StaticFileService::new(&settings.server.base_dir)?;
+    // File is 'moved' need these values for SyncFileReferenceRow
+    let total_bytes = usize_to_i32(file.size);
+    let mime_type = file.content_type.as_ref().map(|mime| mime.to_string());
+
+    let static_file = file_service.move_temp_file(
+        &file,
+        &StaticFileCategory::SyncFile(table_name.clone(), record_id.clone()),
+        None,
+    )?;
+
+    let repo = SyncFileReferenceRowRepository::new(&db_connection);
+
+    repo.upsert_one(&SyncFileReferenceRow {
+        id: static_file.id.clone(),
+        file_name: static_file.name.clone(),
+        table_name,
+        total_bytes,
+        mime_type,
+        record_id,
+        uploaded_bytes: 0, // This is how many bytes are uploaded to the central server
+        created_datetime: chrono::Utc::now().naive_utc(),
+        deleted_datetime: None,
+        status: SyncFileStatus::New,
+        direction: SyncFileDirection::Upload,
+        ..Default::default()
+    })?;
+
+    Ok(static_file)
+}
+
+#[get("/{table_name}/{record_id}/{file_id}")]
+async fn download_sync_file(
+    req: HttpRequest,
+    settings: Data<Settings>,
+    path: web::Path<(String, String, String)>,
+    auth_data: Data<AuthData>,
+    service_provider: Data<ServiceProvider>,
+) -> Result<HttpResponse, Error> {
+    // For now, we just check that the user is authenticated
+    // In future we might want to check that the user has access to the record
+    // Access to the file UUID should normally only be exposed to users with access from the frontend
+    validate_cookie_auth(req.clone(), &auth_data).map_err(|_err| {
+        InternalError::new(
+            "You need to be logged in",
+            StatusCode::INTERNAL_SERVER_ERROR,
+        )
+    })?;
+
+    let error = match download_sync_file_inner(service_provider, &settings, path.into_inner()).await
+    {
+        Ok((named_file, file_name)) => {
+            let response = named_file
+                .set_content_disposition(ContentDisposition {
+                    disposition: DispositionType::Inline,
+                    parameters: vec![DispositionParam::Filename(file_name)],
+                })
+                .into_response(&req);
+
+            return Ok(response);
+        }
+        Err(error) => error,
+    };
+
+    let error = match error {
+        DownloadFileError::NotFoundLocallyAndThisIsCentralServer
+        | DownloadFileError::ErrorDownloadingFile(
+            file_synchroniser::DownloadFileError::FileDoesNotExist(_)
+            | file_synchroniser::DownloadFileError::SyncApiV7Error(
+                repository::syncv7::SyncError::SyncFileNotFound(_),
+            ),
+        ) => {
+            // Expected while the origin site hasn't uploaded/synced yet — not an error state.
+            log::info!("Sync file not available yet: {}", format_error(&error));
+            InternalError::new(
+                "File not found, it may not have been synced from the remote site yet...",
+                StatusCode::NOT_FOUND,
+            )
+        }
+        _ => {
+            log::error!("Error downloading sync file: {}", format_error(&error));
+            InternalError::new(
+                "Error downloading file, please see server logs",
+                StatusCode::INTERNAL_SERVER_ERROR,
+            )
+        }
+    };
+
+    Err(error.into())
+}
+
+#[derive(Error, Debug)]
+enum DownloadFileError {
+    #[error("Database error")]
+    DatabaseError(#[from] RepositoryError),
+    #[error("File IO error")]
+    FileIOError(#[from] std::io::Error),
+    #[error("File not found locally and this is the central server")]
+    NotFoundLocallyAndThisIsCentralServer,
+    #[error("Error downloading file from central")]
+    ErrorDownloadingFile(#[from] file_synchroniser::DownloadFileError),
+    #[error("Other")]
+    Other(#[from] anyhow::Error),
+}
+
+async fn download_sync_file_inner(
+    service_provider: Data<ServiceProvider>,
+    settings: &Settings,
+    (table_name, parent_record_id, file_id): (String, String, String),
+) -> Result<(NamedFile, /* file_name */ String), DownloadFileError> {
+    let file_service = StaticFileService::new(&settings.server.base_dir)?;
+    let static_file_category = StaticFileCategory::SyncFile(table_name, parent_record_id);
+
+    if let Some(file) = file_service.find_file(&file_id, static_file_category.clone())? {
+        return Ok((NamedFile::open(file.path)?, file.name));
+    }
+
+    // Not on disk. Central *is* the source of file bytes — nothing to fall back to
+    // (the origin site hasn't uploaded the file yet).
+    if CentralServerConfig::is_central_server() {
+        return Err(DownloadFileError::NotFoundLocallyAndThisIsCentralServer);
+    }
+
+    // On a remote, fetch the bytes from central on demand and cache them locally, so a
+    // synced file reference is openable as soon as central holds the bytes.
+    let Some(url) = file_sync_central_url(&service_provider) else {
+        return Err(DownloadFileError::Other(anyhow::anyhow!(
+            "File not found locally and no central server URL is available to download it from"
+        )));
+    };
+
+    log::info!("Sync file {file_id} not found locally, downloading from central");
+
+    let file_synchroniser = FileSynchroniser::new(
+        &url,
+        get_sync_settings(&service_provider),
+        service_provider.into_inner(),
+        Arc::new(file_service),
+    )?;
+
+    let file = file_synchroniser
+        .download_file_from_central(&file_id)
+        .await?;
+
+    Ok((NamedFile::open(file.path)?, file.name))
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use actix_web::body::to_bytes;
+
+    fn temp_file(name: &str, size: usize) -> TempFile {
+        TempFile {
+            file: tempfile::NamedTempFile::new().unwrap(),
+            content_type: None,
+            file_name: Some(name.to_string()),
+            size,
+        }
+    }
+
+    #[actix_rt::test]
+    async fn check_file_sizes_enforces_per_file_limit() {
+        // At the limit: accepted
+        assert!(check_file_sizes(&[temp_file("ok.pdf", MAX_SYNC_FILE_SIZE_BYTES)]).is_ok());
+
+        // One byte over: rejected, even when other files in the batch are fine
+        let error = check_file_sizes(&[
+            temp_file("ok.pdf", 1),
+            temp_file("big.pdf", MAX_SYNC_FILE_SIZE_BYTES + 1),
+        ])
+        .unwrap_err();
+
+        // The frontend relies on the status and shows the body verbatim
+        let response = error.error_response();
+        assert_eq!(response.status(), StatusCode::PAYLOAD_TOO_LARGE);
+        let body = to_bytes(response.into_body()).await.unwrap();
+        assert_eq!(
+            std::str::from_utf8(&body).unwrap(),
+            "'big.pdf' exceeds the maximum file size of 50MB"
+        );
+    }
+}

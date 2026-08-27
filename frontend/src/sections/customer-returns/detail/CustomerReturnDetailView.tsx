@@ -8,6 +8,7 @@ import {
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { t, tPlural } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
@@ -51,6 +52,7 @@ import {
   initialPageSize,
   rememberPageSize,
 } from '../../../list/pageSize';
+import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
 import {
   CustomFieldsEditTab,
@@ -219,18 +221,23 @@ const CustomerReturnDetailView: Component = () => {
   // interaction): a line save, a bulk delete, and every "Save & next" page
   // advance refetch this while the return-items modal is OPEN. A suspending
   // read would tear down the page's Suspense boundary and detach the <dialog>
-  // (backdrop gone, focus lost). The `.state` gate keeps the current page on
+  // (backdrop gone, focus lost). gated keeps the current page on
   // screen while the fresh one lands.
-  const linesReady = () =>
-    linesData.state === 'ready' || linesData.state === 'refreshing';
-  const rows = (): Line[] =>
-    linesReady() ? (linesData.latest?.nodes ?? []) : [];
+  const rows = (): Line[] => gated(linesData)?.nodes ?? [];
   // The return's WHOLE line count, not the held page's — the pager reads it,
   // and so does the no-lines status precondition (OMS-REG-DIST-07.38): a page
   // can be empty while later pages hold lines.
-  const totalCount = () =>
-    linesReady() ? (linesData.latest?.totalCount ?? 0) : 0;
+  const totalCount = () => gated(linesData)?.totalCount ?? 0;
   const hasLines = () => totalCount() > 0;
+
+  // A bulk delete of the last page's rows leaves the offset past the new end
+  // (src/list/clampPageOffset.ts, issue #1117).
+  clampPageOffset({
+    total: () => settledTotal(linesData, page => page.totalCount),
+    offset: () => query().offset,
+    pageSize: () => query().first,
+    setOffset: offset => setQuery({ ...query(), offset }),
+  });
   // Selection is per page (the deferred multi-page selection pattern —
   // spec/customer-returns README § known gaps), so the selected rows are always
   // resolvable from the held page.
@@ -274,12 +281,9 @@ const CustomerReturnDetailView: Component = () => {
   );
   // NON-suspending read (kdd/solid-reactivity-pitfalls § no remounts on
   // interaction): the page body renders as soon as the return resolves, so a
-  // still-pending preferences read must never suspend this screen's boundary —
-  // `.latest` alone would, on its first pending read. Empty = no restriction.
-  const statusOptions = () =>
-    prefs.state === 'ready' || prefs.state === 'refreshing'
-      ? (prefs.latest?.invoiceStatusOptions ?? [])
-      : [];
+  // still-pending preferences read must never suspend this screen's boundary.
+  // Empty = no restriction.
+  const statusOptions = () => gated(prefs)?.invoiceStatusOptions ?? [];
 
   // --- Return-level saves (updateCustomerReturn, spliced back, no refetch) ---
 
@@ -598,6 +602,7 @@ const CustomerReturnDetailView: Component = () => {
                   <CustomerReturnSidePanel
                     node={node()}
                     disabled={disabled()}
+                    hasLines={hasLines()}
                     edit={edit}
                     onSetColour={setColour}
                   />

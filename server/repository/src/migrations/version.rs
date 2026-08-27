@@ -1,0 +1,227 @@
+use std::{
+    cmp::Ordering,
+    fmt::{Display, Formatter},
+};
+
+use rust_embed::RustEmbed;
+use serde::{Deserialize, Serialize};
+use ts_rs::TS;
+
+#[derive(RustEmbed)]
+// Relative to repository/Cargo.toml
+#[folder = "../../package.json"]
+struct PackageJsonAsset;
+
+#[derive(Deserialize)]
+struct PackageJson {
+    version: String,
+}
+
+impl PackageJsonAsset {
+    fn raw_version() -> String {
+        // Since #[folder] of RustEmbed is pointed at a file, need to use empty string to access the file
+        let package_json = PackageJsonAsset::get("").expect("Embedded package json not found");
+        let package: PackageJson = serde_json::from_slice(&package_json.data)
+            .expect("Embedded package json cannot be parsed");
+
+        package.version
+    }
+
+    fn version() -> String {
+        // strip out the -rc1 or -test detail from the version
+        let mut version = Self::raw_version();
+        if let Some(idx) = version.find('-') {
+            version.truncate(idx);
+        }
+        version
+    }
+}
+
+/// The app version exactly as written in the repo-root package.json (e.g. "3.00.00-RC"),
+/// for display. `Version::from_package_json()` instead normalises the numbers and drops
+/// the pre-release suffix, for comparisons (migrations, sync, plugin compatibility).
+pub fn raw_app_version() -> String {
+    PackageJsonAsset::raw_version()
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone, TS)]
+pub struct Version {
+    pub major: i16,
+    pub minor: i16,
+    pub patch: i16,
+    // RC or TEST etc
+    pre_release: Option<String>,
+}
+
+impl Display for Version {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let Version {
+            major,
+            minor,
+            patch,
+            pre_release,
+        } = self;
+
+        write!(f, "{major}.{minor}.{patch}")?;
+
+        if let Some(pre_release) = pre_release {
+            write!(f, "-{pre_release}")?;
+        }
+
+        Ok(())
+    }
+}
+
+impl Version {
+    pub fn from_package_json() -> Self {
+        Self::from_str(&PackageJsonAsset::version())
+    }
+
+    pub fn from_str(version: &str) -> Self {
+        let mut version_split = version.split('.');
+        let major = version_split.next().unwrap_or("0");
+        let minor = version_split.next().unwrap_or("0");
+        let patch_and_extra = version_split.next().unwrap_or("0");
+
+        let mut patch_and_extra_split = patch_and_extra.splitn(2, '-');
+        let patch = patch_and_extra_split.next().unwrap_or("");
+        let extra = patch_and_extra_split.next();
+
+        Version {
+            major: major.parse().unwrap_or(0),
+            minor: minor.parse().unwrap_or(0),
+            patch: patch.parse().unwrap_or(0),
+            pre_release: extra.map(String::from),
+        }
+    }
+
+    // If "self" (plugin/report etc..) major and minor below or equal to app_version
+    // it is compatible with that app_version. We rely on report/plugin upgrade to fix
+    // compatibility issues rather then max app_version compatibiilty for self.
+    pub fn is_compatible_by_major_and_minor(&self, app_version: &Version) -> bool {
+        if self.major != app_version.major {
+            return self.major < app_version.major;
+        }
+        // When major equals
+        self.minor <= app_version.minor
+    }
+}
+
+impl Ord for Version {
+    fn cmp(&self, other: &Self) -> Ordering {
+        if self.major != other.major {
+            return self.major.cmp(&other.major);
+        }
+
+        if self.minor != other.minor {
+            return self.minor.cmp(&other.minor);
+        }
+
+        if self.patch != other.patch {
+            return self.patch.cmp(&other.patch);
+        }
+
+        Ordering::Equal
+
+        // pre release version (RC or TEST etc), are not compared
+    }
+}
+
+impl PartialOrd for Version {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Eq for Version {}
+
+impl PartialEq for Version {
+    fn eq(&self, other: &Self) -> bool {
+        self.major == other.major && self.minor == other.minor && self.patch == other.patch
+    }
+
+    fn ne(&self, other: &Self) -> bool {
+        !self.eq(other)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn raw_app_version_is_the_package_json_version() {
+        let raw = raw_app_version();
+        assert!(!raw.is_empty());
+        // Same version the migrations use, but with the package.json
+        // formatting (zero padding, pre-release suffix) intact.
+        assert_eq!(Version::from_str(&raw), Version::from_package_json());
+    }
+
+    #[test]
+    fn parsing_version() {
+        assert_eq!(
+            Version::from_str("10.11.99"),
+            Version {
+                major: 10,
+                minor: 11,
+                patch: 99,
+                pre_release: None
+            }
+        );
+
+        assert_eq!(
+            Version::from_str("1.2.3-RC1"),
+            Version {
+                major: 1,
+                minor: 2,
+                patch: 3,
+                pre_release: Some("RC1".to_string())
+            }
+        );
+
+        assert_eq!(
+            Version::from_str("3.2.1-TEST-IT_1"),
+            Version {
+                major: 3,
+                minor: 2,
+                patch: 1,
+                pre_release: Some("TEST-IT_1".to_string())
+            }
+        );
+    }
+
+    #[test]
+    fn parsing_version_poorly_formatted_1() {
+        let version = Version::from_str("10.11");
+        assert!(version.major == 10);
+        assert!(version.minor == 11);
+        assert!(version.patch == 0);
+    }
+    #[test]
+    fn parsing_version_poorly_formatted_2() {
+        let version = Version::from_str("10.11.99RC1");
+        assert!(version.major == 10);
+        assert!(version.minor == 11);
+        assert!(version.patch == 0);
+    }
+    #[test]
+    fn parsing_version_poorly_formatted_3() {
+        let version = Version::from_str("10.11b.99");
+        assert!(version.major == 10);
+        assert!(version.minor == 0);
+        assert!(version.patch == 99);
+    }
+
+    #[test]
+    fn comparing_versions() {
+        assert!(Version::from_str("10.11.01") > Version::from_str("01.11.2"));
+        assert!(Version::from_str("12.10.03") < Version::from_str("12.11.02"));
+        assert!(Version::from_str("10.11.01") < Version::from_str("10.11.2"));
+
+        assert_eq!(
+            Version::from_str("10.11.01-RC1"),
+            Version::from_str("10.11.1-RC2")
+        );
+    }
+}

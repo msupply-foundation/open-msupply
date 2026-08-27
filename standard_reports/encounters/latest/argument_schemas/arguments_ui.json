@@ -1,0 +1,18 @@
+{
+  "type": "VerticalLayout",
+  "elements": [
+    {
+      "type": "PatientProgramSearch",
+      "scope": "#/properties/programId",
+      "label": "T#label.program"
+    },
+    {
+      "label": "",
+      "type": "DateRange",
+      "scope": "#/properties/startDatetime",
+      "options": {
+        "dateOnly": true
+      }
+    }
+  ]
+}

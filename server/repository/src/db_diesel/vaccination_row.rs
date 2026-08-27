@@ -1,0 +1,179 @@
+use crate::diesel_macros::define_linked_tables;
+use crate::{
+    ChangelogRepository, ChangelogSyncType,
+    RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
+};
+
+use super::{
+    clinician_link_row::clinician_link, clinician_row::clinician, item_row::item, name_row::name,
+    name_store_join::name_store_join, store_row::store,
+    vaccine_course::vaccine_course_dose_row::vaccine_course_dose,
+};
+
+use chrono::{NaiveDate, NaiveDateTime};
+use diesel_derive_enum::DbEnum;
+use serde::{Deserialize, Serialize};
+
+use diesel::prelude::*;
+
+define_linked_tables! {
+    view: vaccination = "vaccination_view",
+    core: vaccination_with_links = "vaccination",
+    struct: VaccinationRow,
+    repo: VaccinationRowRepository,
+    shared: {
+        store_id -> Text,
+        given_store_id -> Nullable<Text>,
+        program_enrolment_id -> Text,
+        encounter_id -> Text,
+        user_id -> Text,
+        vaccine_course_dose_id -> Text,
+        created_datetime -> Timestamp,
+        facility_free_text -> Nullable<Text>,
+        invoice_id -> Nullable<Text>,
+        stock_line_id -> Nullable<Text>,
+        clinician_link_id -> Nullable<Text>,
+        vaccination_date -> Date,
+        given -> Bool,
+        not_given_reason -> Nullable<Text>,
+        comment -> Nullable<Text>,
+    },
+    links: {
+        patient_link_id -> patient_id,
+    },
+    optional_links: {
+        item_link_id -> item_id,
+        facility_name_link_id -> facility_name_id,
+    }
+}
+
+joinable!(vaccination -> clinician_link (clinician_link_id));
+joinable!(vaccination -> item (item_id));
+joinable!(vaccination -> vaccine_course_dose (vaccine_course_dose_id));
+joinable!(vaccination -> name (facility_name_id));
+
+allow_tables_to_appear_in_same_query!(vaccination, name);
+allow_tables_to_appear_in_same_query!(vaccination, clinician_link);
+allow_tables_to_appear_in_same_query!(vaccination, clinician);
+allow_tables_to_appear_in_same_query!(vaccination, item);
+allow_tables_to_appear_in_same_query!(vaccination, vaccine_course_dose);
+allow_tables_to_appear_in_same_query!(vaccination, name_store_join);
+allow_tables_to_appear_in_same_query!(vaccination, store);
+
+#[derive(Clone, Queryable, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[diesel(table_name = vaccination)]
+pub struct VaccinationRow {
+    pub id: String,
+    // Store where record was originally created
+    pub store_id: String,
+    // Store where vaccination was marked as Given
+    pub given_store_id: Option<String>,
+    pub program_enrolment_id: String,
+    pub encounter_id: String,
+    pub user_id: String,
+    pub vaccine_course_dose_id: String,
+    pub created_datetime: NaiveDateTime,
+    pub facility_free_text: Option<String>,
+    pub invoice_id: Option<String>,
+    pub stock_line_id: Option<String>,
+    pub clinician_link_id: Option<String>,
+    /// Event date (e.g. date given, or date marked not given)
+    pub vaccination_date: NaiveDate,
+    pub given: bool,
+    pub not_given_reason: Option<String>,
+    pub comment: Option<String>,
+    // Resolved from link tables - must be last to match view column order.
+    // Serialise as `*_id`; the sync translator also emits the legacy `*_link_id` aliases
+    // for cross-version compatibility (see `RenamedKeys`).
+    pub patient_id: String,
+    pub item_id: Option<String>,
+    pub facility_name_id: Option<String>,
+}
+
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum VaccinationStatus {
+    #[default]
+    Draft,
+    Finalised,
+}
+pub struct VaccinationRowRepository<'a> {
+    connection: &'a StorageConnection,
+}
+
+impl<'a> VaccinationRowRepository<'a> {
+    pub fn new(connection: &'a StorageConnection) -> Self {
+        VaccinationRowRepository { connection }
+    }
+
+    pub fn _upsert_one(&self, vaccination_row: &VaccinationRow) -> Result<(), RepositoryError> {
+        self._upsert(vaccination_row)?;
+        Ok(())
+    }
+
+    pub fn upsert_one(&self, vaccination_row: &VaccinationRow) -> Result<(), RepositoryError> {
+        self._upsert_one(vaccination_row)?;
+        let changelog = vaccination_row.generate_changelog(
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
+    }
+
+    pub fn find_one_by_id(
+        &self,
+        vaccination_id: &str,
+    ) -> Result<Option<VaccinationRow>, RepositoryError> {
+        let result = vaccination::table
+            .filter(vaccination::id.eq(vaccination_id))
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
+    }
+
+    pub fn delete(&self, vaccination_id: &str) -> Result<(), RepositoryError> {
+        diesel::delete(
+            vaccination_with_links::table.filter(vaccination_with_links::id.eq(vaccination_id)),
+        )
+        .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<VaccinationRow>, RepositoryError> {
+        Ok(vaccination::table
+            .filter(vaccination::id.eq_any(ids))
+            .load(self.connection.lock().connection())?)
+    }
+}
+
+impl Upsert for VaccinationRow {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        VaccinationRowRepository::new(con)._upsert_one(self)?;
+
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => self.generate_changelog(
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
+
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            VaccinationRowRepository::new(con).find_one_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
+    }
+}

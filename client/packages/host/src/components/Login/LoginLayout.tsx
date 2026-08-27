@@ -1,0 +1,195 @@
+import React from 'react';
+import {
+  Box,
+  Stack,
+  Typography,
+  useTranslation,
+} from '@openmsupply-client/common';
+import { LoginIcon } from './LoginIcon';
+import { Theme } from '@common/styles';
+import { AppVersion } from '../AppVersion';
+import { LanguageButton } from '../LanguageButton';
+
+export type LoginLayoutProps = {
+  UsernameInput: React.ReactNode;
+  PasswordInput: React.ReactNode;
+  LoginButton: React.ReactNode;
+  ErrorMessage: React.ReactNode;
+  SiteInfo: React.ReactNode;
+  onLogin: () => Promise<void>;
+  fullSize: boolean;
+  StoreSelector?: React.ReactNode;
+  showStoreSelector?: boolean;
+  TryNewUiLink?: React.ReactNode;
+};
+
+export const LoginLayout = ({
+  UsernameInput,
+  PasswordInput,
+  LoginButton,
+  ErrorMessage,
+  SiteInfo,
+  onLogin,
+  fullSize,
+  StoreSelector,
+  showStoreSelector = false,
+  TryNewUiLink,
+}: LoginLayoutProps) => {
+  const t = useTranslation();
+
+  const loginForm = (
+    <LoginForm
+      UsernameInput={UsernameInput}
+      PasswordInput={PasswordInput}
+      LoginButton={LoginButton}
+      ErrorMessage={ErrorMessage}
+      SiteInfo={SiteInfo}
+      onLogin={onLogin}
+      fullSize={fullSize}
+      TryNewUiLink={TryNewUiLink}
+    />
+  );
+
+  return !fullSize ? (
+    loginForm
+  ) : (
+    <Box display="flex" style={{ width: '100%' }}>
+      <Box
+        flex="1 0 50%"
+        sx={theme => ({
+          [theme.breakpoints.down('sm')]: {
+            display: 'none',
+          },
+          backgroundImage: (theme: Theme) => theme.mixins.gradient.primary,
+          backgroundSize: (theme: Theme) => theme.mixins.gradient.size,
+          backgroundPosition: (theme: Theme) => theme.mixins.gradient.position,
+          padding: '0 5% 7%',
+        })}
+        display="flex"
+        alignItems="flex-start"
+        justifyContent="flex-end"
+        flexDirection="column"
+      >
+        <Box>
+          <Typography
+            sx={{
+              color: (theme: Theme) => theme.typography.login.color,
+              fontSize: {
+                xs: '28px',
+                sm: '30px',
+                md: '48px',
+                lg: '64px',
+                xl: '64px',
+              },
+              fontWeight: 'bold',
+              lineHeight: 'normal',
+              whiteSpace: 'pre-line',
+            }}
+          >
+            {t('login.heading')}
+          </Typography>
+        </Box>
+        <Box style={{ marginTop: 45 }}>
+          <Typography
+            sx={{
+              fontSize: {
+                xs: '12px',
+                sm: '14px',
+                md: '16px',
+                lg: '20px',
+                xl: '20px',
+              },
+              color: (theme: Theme) => theme.typography.login.color,
+              fontWeight: 600,
+            }}
+          >
+            {t('login.body')}
+          </Typography>
+        </Box>
+      </Box>
+      <Box
+        flex="1 0 50%"
+        sx={{
+          backgroundColor: 'background.login',
+          overflow: 'hidden',
+          position: 'relative',
+        }}
+      >
+        <Box
+          inert={showStoreSelector}
+          aria-hidden={showStoreSelector}
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            overflowY: 'auto',
+            transition: 'transform 0.35s ease-in-out',
+            transform: showStoreSelector ? 'translateX(-100%)' : 'translateX(0)',
+          }}
+        >
+          <Box display="flex" flexGrow={1} sx={{ alignItems: 'center' }}>
+            {loginForm}
+          </Box>
+          <AppVersion style={{ opacity: 0.4 }} SiteInfo={SiteInfo} testId="login-version" />
+          <LanguageButton />
+        </Box>
+        <Box
+          inert={!showStoreSelector}
+          aria-hidden={!showStoreSelector}
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            overflowY: 'auto',
+            transition: 'transform 0.35s ease-in-out',
+            transform: showStoreSelector ? 'translateX(0)' : 'translateX(100%)',
+          }}
+        >
+          {StoreSelector}
+        </Box>
+      </Box>
+    </Box>
+  );
+};
+
+const LoginForm = ({
+  UsernameInput,
+  PasswordInput,
+  LoginButton,
+  ErrorMessage,
+  onLogin,
+  fullSize,
+  TryNewUiLink,
+}: LoginLayoutProps) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
+    if (e.key === 'Enter') {
+      onLogin();
+    }
+  };
+
+  return (
+    <form onSubmit={onLogin} onKeyDown={handleKeyDown}>
+      <Stack spacing={fullSize ? 5 : 2}>
+        {fullSize && (
+          <Box display="flex" justifyContent="center">
+            <LoginIcon />
+          </Box>
+        )}
+        {UsernameInput}
+        {PasswordInput}
+        {ErrorMessage}
+        <Box display="flex" justifyContent="flex-end">
+          {LoginButton}
+        </Box>
+        {TryNewUiLink && (
+          <Box display="flex" justifyContent="center">
+            {TryNewUiLink}
+          </Box>
+        )}
+      </Stack>
+    </form>
+  );
+};

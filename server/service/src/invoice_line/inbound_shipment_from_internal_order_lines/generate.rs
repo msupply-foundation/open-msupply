@@ -1,0 +1,111 @@
+use crate::{
+    invoice::common::generate_invoice_user_id_update,
+    invoice_line::stock_in_line::{generate_batch, should_update_stock, StockLineInput},
+};
+use repository::{
+    InvoiceLineRow, InvoiceLineType, InvoiceRow, ItemRow, RepositoryError, RequisitionLineRow,
+    StockLineRow, StorageConnection,
+};
+use util::uuid::uuid;
+
+pub struct GenerateResult {
+    pub invoice: Option<InvoiceRow>,
+    pub invoice_line: InvoiceLineRow,
+    pub stock_line: Option<StockLineRow>,
+}
+
+pub fn generate(
+    connection: &StorageConnection,
+    user_id: &str,
+    item_row: ItemRow,
+    existing_invoice_row: InvoiceRow,
+    requisition_row: RequisitionLineRow,
+) -> Result<GenerateResult, RepositoryError> {
+    let mut invoice_line = generate_line(requisition_row, item_row, existing_invoice_row.clone());
+
+    let stock_line = if should_update_stock(&existing_invoice_row) {
+        let batch = generate_batch(
+            connection,
+            invoice_line.clone(),
+            StockLineInput {
+                stock_line_id: None,
+                store_id: existing_invoice_row.store_id.clone(),
+                supplier_id: existing_invoice_row.name_id.clone(),
+                on_hold: false,
+                barcode_id: None,
+                overwrite_stock_levels: true,
+            },
+        )?;
+        // If a new stock line has been created, update the stock_line_id on the invoice line
+        invoice_line.stock_line_id = Some(batch.id.clone());
+        Some(batch)
+    } else {
+        None
+    };
+
+    Ok(GenerateResult {
+        invoice: generate_invoice_user_id_update(user_id, existing_invoice_row),
+        invoice_line,
+        stock_line,
+    })
+}
+
+fn generate_line(
+    RequisitionLineRow {
+        requested_quantity,
+        comment: note,
+        ..
+    }: RequisitionLineRow,
+    ItemRow {
+        id: item_id,
+        name: item_name,
+        code: item_code,
+        ..
+    }: ItemRow,
+    InvoiceRow {
+        id: invoice_id,
+        tax_percentage,
+        ..
+    }: InvoiceRow,
+) -> InvoiceLineRow {
+    InvoiceLineRow {
+        id: uuid(),
+        invoice_id,
+        item_id,
+        pack_size: 1.0,
+        note,
+        r#type: InvoiceLineType::StockIn,
+        number_of_packs: requested_quantity,
+        item_name,
+        item_code,
+        tax_percentage,
+        // Defaults
+        stock_line_id: None,
+        prescribed_quantity: None,
+        total_before_tax: 0.0,
+        total_after_tax: 0.0,
+        sell_price_per_pack: 0.0,
+        cost_price_per_pack: 0.0,
+        batch: None,
+        expiry_date: None,
+        manufacture_date: None,
+        purchase_order_line_id: None,
+        item_variant_id: None,
+        location_id: None,
+        foreign_currency_price_before_tax: None,
+        linked_invoice_id: None,
+        donor_id: None,
+        manufacturer_id: None,
+        legacy_goods_received_line_id: None,
+        vvm_status_id: None,
+        reason_option_id: None,
+        campaign_id: None,
+        program_id: None,
+        shipped_number_of_packs: None,
+        volume_per_pack: 0.0,
+        shipped_pack_size: None,
+        status: None,
+        received_number_of_packs: None,
+        linked_invoice_line_id: None,
+    }
+}

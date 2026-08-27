@@ -1,6 +1,7 @@
 import { createResource, createSignal, Show, type Component } from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import {
@@ -68,10 +69,7 @@ export const EditPatientModal: Component<EditPatientModalProps> = props => {
         : undefined;
     }
   );
-  const node = () =>
-    data.state === 'ready' || data.state === 'refreshing'
-      ? data.latest
-      : undefined;
+  const node = () => gated(data);
 
   const editor = createPatientEditor({ storeId: () => props.storeId, node });
 
@@ -82,10 +80,7 @@ export const EditPatientModal: Component<EditPatientModalProps> = props => {
     () => props.storeId,
     fetchInsuranceProviders
   );
-  const providerList = () =>
-    providers.state === 'ready' || providers.state === 'refreshing'
-      ? (providers.latest ?? [])
-      : [];
+  const providerList = () => gated(providers) ?? [];
   const hasInsurance = () => providerList().length > 0;
 
   const [insuranceState, setInsuranceState] = createSignal<{
@@ -99,10 +94,7 @@ export const EditPatientModal: Component<EditPatientModalProps> = props => {
         : undefined,
     fetchInsurancePolicies
   );
-  const policies = () =>
-    policiesData.state === 'ready' || policiesData.state === 'refreshing'
-      ? (policiesData.latest ?? [])
-      : [];
+  const policies = () => gated(policiesData) ?? [];
 
   // Alt+N while this modal is open and the Insurance tab is active — the same
   // registration PatientDetailView makes; mounted-fresh-per-open means plain

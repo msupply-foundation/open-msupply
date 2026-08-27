@@ -84,3 +84,38 @@
     block-size: var(--touch-target);
   }
 }
+
+/* Custom-entry mode (SET-05.40): swatches, then the hex entry + preview, then
+   Reset, stacked in the popover panel (which owns the outer padding). */
+.customPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  inline-size: 17.5rem;
+  max-inline-size: 100%;
+}
+
+.customRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+/* The preview doubles as the commit control: filled with the typed colour
+   once it parses, a dashed ring (the "no colour" vocabulary above) while
+   there is nothing valid to commit. Sized to sit flush beside the input box. */
+.previewSwatch {
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+}
+
+.previewSwatch:disabled {
+  cursor: not-allowed;
+  border: 1px dashed var(--gray-main);
+  background: transparent;
+  box-shadow: none;
+}
+
+.resetButton {
+  inline-size: 100%;
+}

@@ -30,7 +30,9 @@ import {
 import { sortKeyToId, sortIdToKey } from './tableHelpers';
 import { renderTemplate } from './renderTemplate';
 import { hiddenEdges } from './scrollEdges';
+import { autoFitWidth } from './autoFitWidth';
 import {
+  resolveColumnVisibility,
   toColumnDef,
   type CardGroup,
   type Column,
@@ -38,6 +40,7 @@ import {
 } from './columnTypes';
 import { HeaderCell } from './HeaderCell';
 import { TableRow } from './TableRow';
+import { createRowFocus } from './createRowFocus';
 import { InTableCellContext } from './inTableCell';
 import { CardView } from './CardView';
 import {
@@ -48,6 +51,8 @@ import {
 } from './tableConfig';
 import { pxToRem, remToPx } from '../../utils/rem';
 import { useIsNavOverlay, useIsCompact } from '../../utils/createMediaQuery';
+import { isTextEntry } from '../../utils/isTextEntry';
+import { useSurfaceActive } from '../../utils/surfaceActive';
 import { useFullScreen } from '../../layout/AppShell/shellContext';
 import {
   CardViewIcon,
@@ -155,6 +160,24 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    * edit
    *  modal. Rows get a pointer cursor only when this is set. */
   onRowClick?: (row: T) => void;
+  /**
+   * Arrow-key row navigation: `ArrowDown`/`ArrowUp` move a row highlight
+   * (clamped at the ends, scrolled into view), `Enter` opens the highlighted
+   * row through the SAME `onRowClick` a mouse click uses, `Escape` clears the
+   * highlight (spec/keyboard KB-N1/KB-E5, AC-KB37–40; issue #1006).
+   *
+   * DEFAULTS to whether `onRowClick` is set, so every list table answers the
+   * arrows without its page opting in — a table whose rows open nothing has
+   * nothing for `Enter` to do, and a highlight there would promise an action it
+   * cannot perform. Pass `false` to opt a clickable table out (nothing does
+   * today), or `true` to give a non-clickable one the highlight.
+   *
+   * The table also SEEDS itself once its first rows land (KB-F1: "a list screen
+   * seeds its table, making arrow-key row navigation available immediately"),
+   * which is what makes the arrows work on arrival without a click — see
+   * `seedKeyboard` below for the three things it yields to.
+   */
+  rowNavigation?: boolean;
   /**
    * Semantic row state (ui-standards § tables row states), derived by the
    * page from the record's own facts — 'disabled' from the vertical's
@@ -274,7 +297,23 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
   minBodyRem?: number;
 
   // --- Row selection, owned by the page. ---
+  /**
+   * Show the leading checkbox column (the multi-select affordance,
+   * ui-standards § tables → selection). Pair with selectedIds +
+   * onSelectionChange.
+   */
   enableSelection?: boolean;
+  /**
+   * The selected rows, by rowKey. Selected rows carry the brand tint in both
+   * views.
+   *
+   * Valid WITHOUT `enableSelection` too: a master-detail table where the row
+   * click reveals that row's detail beside/below it passes the clicked row's
+   * key here, so the row the detail belongs to stays marked. No checkbox
+   * column is drawn — the tint is the whole affordance, and nothing is
+   * toggleable, so the page keeps sole control of what's current (the repack
+   * modal's history table, issue #794).
+   */
   selectedIds?: string[];
   onSelectionChange?: (ids: string[]) => void;
   /**
@@ -482,10 +521,19 @@ export function DataTable<T, K extends string, G extends string = never>(
   // (renderTemplate), CardView.columnHeaderText and ColumnSettings.label; none
   // of our headers read the context argument, so an empty one is safe. The
   // sortKey stays the last resort for a column with no header at all.
-  const columnLabel = (c: Column<T, K, G>): JSX.Element =>
-    typeof c.header === 'function'
+  const columnLabel = (c: Column<T, K, G>): JSX.Element => {
+    // A column whose grid header renders iconic or empty names itself with
+    // meta.textLabel (the comment column's glyph, the line editor's
+    // auto-allocation tick). A sort option has to read as a word, so it wins
+    // over the header here exactly as it does in the Columns popover and a
+    // card's field caption. Latent while no such column is sortable; wired up
+    // so the next one that is doesn't put a glyph in the Sort menu.
+    const textLabel = c.meta?.textLabel;
+    if (textLabel) return textLabel();
+    return typeof c.header === 'function'
       ? c.header({} as HeaderContext<T, unknown>)
       : (c.header ?? c.sortKey ?? '');
+  };
   const activeSortColumn = (): Column<T, K, G> | undefined =>
     props.sort
       ? sortableColumns().find(c => c.sortKey === props.sort!.key)
@@ -570,6 +618,16 @@ export function DataTable<T, K extends string, G extends string = never>(
   // breaks that: the mapped array is only rebuilt when the caller's columns
   // actually change.
   const columnDefs = createMemo(() => props.columns.map(toColumnDef));
+
+  // The visibility TanStack is run on — the persisted map with every STRUCTURAL
+  // column forced visible (resolveColumnVisibility explains why the flag alone
+  // isn't enough). Resolved here rather than per page so it's one rule for
+  // every caller, and the change handler below resolves TanStack's updater
+  // against THIS map, so the next visibility write heals a stale entry.
+  const resolvedColumnVisibility = createMemo<VisibilityState>(() =>
+    resolveColumnVisibility(columnVisibility(), columnDefs())
+  );
+
   const table = createSolidTable<T>({
     get data() {
       return props.rows;
@@ -594,7 +652,7 @@ export function DataTable<T, K extends string, G extends string = never>(
         return columnPinning();
       },
       get columnVisibility() {
-        return columnVisibility();
+        return resolvedColumnVisibility();
       },
     },
     manualSorting: true,
@@ -625,7 +683,7 @@ export function DataTable<T, K extends string, G extends string = never>(
     onColumnVisibilityChange: u =>
       props.setConfig?.(
         'columnVisibility',
-        functionalUpdate(u, columnVisibility())
+        functionalUpdate(u, resolvedColumnVisibility())
       ),
     getRowId: row => props.rowKey(row),
     getCoreRowModel: getCoreRowModel(),
@@ -646,6 +704,79 @@ export function DataTable<T, K extends string, G extends string = never>(
       }
     })
   );
+
+  // --- Keyboard row navigation (KB-N1/KB-E5, issue #1006) ---
+  // Table-owned, unlike sort/selection which the page owns — row focus is
+  // ephemeral keyboard position, not URL state (kdd/table-state). `Enter` opens
+  // the focused row through the SAME onRowClick a mouse uses, so the two paths
+  // cannot diverge (KB-E5). See createRowFocus.ts for why the TABLE is the tab
+  // stop and the rows are not.
+  let tableEl: HTMLTableElement | undefined;
+  const rowNavigation = () =>
+    props.rowNavigation ?? props.onRowClick !== undefined;
+  const rowKeys = createMemo(() => table.getRowModel().rows.map(row => row.id));
+  const rowFocus = createRowFocus({
+    onOpenRow: key => {
+      const row = table
+        .getRowModel()
+        .rows.find(candidate => candidate.id === key);
+      if (row) props.onRowClick?.(row.original);
+    },
+  });
+
+  // A highlight that outlives its row is dropped (a filter, a page change, a
+  // delete, a reordering refetch). `on` so it fires on the row set changing and
+  // not on the focus signal keepInRange itself writes.
+  createEffect(
+    on(rowKeys, keys => {
+      if (rowNavigation()) rowFocus.keepInRange(keys, tableEl);
+    })
+  );
+
+  /*
+   * KB-F1: "A list screen seeds its table, making arrow-key row navigation
+   * available immediately… It MUST NOT steal focus from a text field that
+   * already holds it — an arrival that races a search field or a just-dismissed
+   * palette yields to the field" (AC-KB28/AC-KB29).
+   *
+   * Done HERE rather than by each page handing in a focus target (the shape
+   * that was removed with the first build): the seed is the same on all ~30
+   * list screens, and one that every page must remember is one that a new page
+   * silently lacks — which is the state issue #1006 reports.
+   *
+   * Three things it yields to, each a case where the keyboard is already
+   * claimed: a text field mid-word (the spec's own carve-out, which covers the
+   * command palette's search since the palette is still up while the route
+   * commits), anything inside a table (a second table on the same screen, or
+   * this table's own filter bar), and a table inside a dialog — there the
+   * dialog's `initialFocus` decides where the keyboard lands, and the surface
+   * context is how a component knows it is in one.
+   */
+  const inDialogSurface = useSurfaceActive() !== undefined;
+  let seeded = false;
+  /*
+   * The seed is a starting position, not a focus the user asked for, so it must
+   * not draw the table's focus ring — `:focus-visible` alone cannot tell the
+   * two apart (it reports "keyboard" for a programmatic focus whenever the last
+   * input was a key, which is exactly how a user arrives at the next list).
+   * This flag says "this focus is the seed"; the ring is suppressed while it is
+   * set (DataTable.module.css) and it is dropped below on the first key or the
+   * first focus change, so a later Tab onto the table shows the ring normally.
+   */
+  const [focusSeeded, setFocusSeeded] = createSignal(false);
+  const seedKeyboard = () => {
+    const active = document.activeElement;
+    if (isTextEntry(active)) return;
+    if (active?.closest('[data-datatable]')) return;
+    setFocusSeeded(true);
+    tableEl?.focus({ preventScroll: true });
+  };
+  createEffect(() => {
+    if (seeded || inDialogSurface || !rowNavigation()) return;
+    if (rowKeys().length === 0) return;
+    seeded = true;
+    seedKeyboard();
+  });
 
   // --- Column pinning: freeze a pinned column against the left/right edge on
   // horizontal scroll --- TanStack tracks WHICH columns are pinned
@@ -741,7 +872,8 @@ export function DataTable<T, K extends string, G extends string = never>(
     for (const cell of [...headerRow.children] as HTMLElement[]) {
       const label = cell.querySelector<HTMLElement>(`.${styles.thText}`);
       if (!label) continue; // the leading select cell carries no label
-      // The clamp hides whole LINES, so an over-long label overflows vertically.
+      // The clamp hides whole LINES, so an over-long label overflows
+      // vertically.
       if (label.scrollHeight > label.clientHeight) {
         cell.dataset.clipped = 'true';
         cell.title = label.textContent ?? '';
@@ -750,6 +882,143 @@ export function DataTable<T, K extends string, G extends string = never>(
         cell.removeAttribute('title');
       }
     }
+  };
+
+  // --- Auto-fit a column to its widest content (issue #651) ---
+  // The Excel gesture: double-clicking a header's resize divider snaps that
+  // column to the width its content actually needs (HeaderCell's onDblClick).
+  // What it writes is exactly what a DRAG writes — the column's `size`, i.e.
+  // its min-width floor — so the fitted width persists, layers, and clears with
+  // "Reset table to default" like any other user width.
+  //
+  // Measured, not computed: only the DOM knows what the cells rendered (a
+  // formatted number, a localised date, a status chip, this locale's glyph
+  // widths at this density). Scope is one column of the CURRENT page — the only
+  // "widest content" available without fetching every row.
+  //
+  // Same flex-sink caveat as a drag (docs/TABLE_PLAN.md Phase 3): under the
+  // min-width-floor + auto-layout model, the column that absorbs the table's
+  // slack re-absorbs anything auto-fit gives back, so fitting the WIDEST column
+  // narrower can leave it where it was. Fitting a clipped column WIDER — the
+  // gesture people actually reach for — works.
+
+  // A cell's own inline padding, added back to its content width: a column
+  // sized to bare text would clip against its own padding.
+  const inlinePadding = (cell: HTMLElement): number => {
+    const style = getComputedStyle(cell);
+    return (
+      parseFloat(style.paddingInlineStart) + parseFloat(style.paddingInlineEnd)
+    );
+  };
+
+  // What a column's body / footer cells WANT, px — one entry per cell.
+  //
+  // Each cell is measured by a Range over its contents: a single-line cell is
+  // `nowrap` + `overflow: hidden`, so its text lays out at full width and only
+  // PAINTS clipped — the range's rect is the untruncated width even while an
+  // ellipsis is on screen, and unlike scrollWidth it needs no engine-specific
+  // padding correction.
+  //
+  // But a cell whose content is a BLOCK — an `HStack` of colour dot + kind icon
+  // + name (the inbound Supplier column), a line-clamp wrapper — has a box that
+  // STRETCHES to fill the cell, so measuring it where it stands reports the
+  // width the column already has. Adding the cell's padding to that made every
+  // double-click grow the column by its own padding, a ratchet (measured on
+  // that column: 300 → 314 → 323 → …). So every element child is forced to
+  // `width: max-content` first, which collapses such a box to the width its
+  // content truly needs — the same unclamp-then-measure trick the header uses
+  // below. Inline content ignores `width` and is measured as it lays out, which
+  // is already intrinsic for a nowrap cell.
+  //
+  // Consequence worth knowing: a WRAPPING column (meta.wrapLines) is fitted to
+  // its text on ONE line — bounded by the cap — not to N wrapped lines.
+  //
+  // The whole column is unconstrained before anything is read, then restored in
+  // one pass: two layout flushes for the column instead of two per cell, and
+  // nothing yields in between, so no frame paints the unconstrained cells.
+  const cellContentWidths = (cells: HTMLElement[]): number[] => {
+    const forced = cells.flatMap(cell =>
+      ([...cell.children] as HTMLElement[]).map(child => {
+        const width = child.style.width;
+        child.style.width = 'max-content';
+        return { child, width };
+      })
+    );
+    const widths = cells.map(cell => {
+      const range = document.createRange();
+      range.selectNodeContents(cell);
+      return range.getBoundingClientRect().width + inlinePadding(cell);
+    });
+    for (const { child, width } of forced) child.style.width = width;
+    return widths;
+  };
+
+  // What the HEADER wants — measured differently, because its label is a
+  // two-line clamp (.thText) inside a flex row (.thLabel): laid out it is
+  // always exactly as wide as the column allows, so a Range would just hand the
+  // column's own width back. Unclamp it for ONE synchronous measurement (a
+  // max-content row, label on a single line), then restore. Nothing yields
+  // between the two writes, so no frame ever paints the unclamped header. The
+  // reserved sort-indicator slot sits inside .thLabel, so its width comes
+  // along.
+  const headerContentWidth = (th: HTMLElement): number => {
+    const label = th.querySelector<HTMLElement>(`.${styles.thLabel}`);
+    if (!label) return 0; // the leading select cell carries no label
+    const text = label.querySelector<HTMLElement>(`.${styles.thText}`);
+    label.style.width = 'max-content';
+    if (text) {
+      text.style.display = 'block';
+      text.style.whiteSpace = 'nowrap';
+    }
+    const wanted = label.getBoundingClientRect().width;
+    label.style.width = '';
+    if (text) {
+      text.style.display = '';
+      text.style.whiteSpace = '';
+    }
+    return wanted + inlinePadding(th);
+  };
+
+  const autoFitColumn = (column: TanColumn<T>) => {
+    if (!scrollBox || !column.getCanResize()) return;
+    // Cells are addressed by their PUBLISHED ids (e2e/TESTIDS.md —
+    // `header-`/`cell-`/`footer-<columnId>`), escaped because a column id can
+    // carry dots (`item.code`).
+    const id = CSS.escape(column.id);
+    const header = scrollBox.querySelector<HTMLElement>(
+      `thead [data-column-id="${id}"]`
+    );
+    const cells = [
+      ...scrollBox.querySelectorAll<HTMLElement>(
+        `tbody [data-testid="cell-${id}"], tfoot [data-testid="footer-${id}"]`
+      ),
+    ];
+    // The cap is READ off a rendered cell rather than recomputed: a cell's
+    // resolved max-width already IS the column's cap in px — its own `maxSize`
+    // when it declares one, else the table's --table-cell-max-grow default, and
+    // `none` for a wrapping column (which needs no cap: its content wraps
+    // instead of running on). Measuring it keeps that token defined once, in
+    // CSS.
+    const capSource = cells[0] ?? header;
+    const cap = capSource
+      ? parseFloat(getComputedStyle(capSource).maxWidth)
+      : NaN;
+    const width = autoFitWidth(
+      [
+        ...(header ? [headerContentWidth(header)] : []),
+        ...cellContentWidths(cells),
+      ],
+      {
+        current: column.getSize(),
+        cap: Number.isFinite(cap) ? cap : undefined,
+      }
+    );
+    // Commit through TanStack's own setter, so it lands in
+    // onColumnSizingChange like every other sizing change (kdd/table-state —
+    // the brains stay TanStack's). No drag is in flight on a double-click, so
+    // that handler persists it as rem immediately instead of parking it in the
+    // transient signal.
+    table.setColumnSizing(current => ({ ...current, [column.id]: width }));
   };
 
   // The edge offset is MEASURED (pinnedOffsets, above), because the only widths
@@ -912,8 +1181,11 @@ export function DataTable<T, K extends string, G extends string = never>(
     const def = columnDefs().map(d => d.id);
     return order.length !== def.length || order.some((id, i) => id !== def[i]);
   };
+  // Reads the RESOLVED map, not the raw config: a stale `false` on a structural
+  // column is inert (see resolvedColumnVisibility), so it must not light up a
+  // "Show all columns" reset that has nothing left to reveal.
   const anyColumnHidden = () =>
-    Object.values(props.config?.columnVisibility ?? {}).some(v => v === false);
+    Object.values(resolvedColumnVisibility()).some(v => v === false);
   const anyColumnSized = () =>
     Object.keys(props.config?.columnSizing ?? {}).length > 0;
   const anyColumnPinned = () => {
@@ -1051,6 +1323,10 @@ export function DataTable<T, K extends string, G extends string = never>(
           trigger={<SettingsIcon />}
           triggerLabel={t('table.settings')}
           triggerProps={{ title: t('table.settings') }}
+          // The panel's CONTENTS carry ids; so must what opens them, or a test
+          // has to find this button by its translated title — which also
+          // collides with the nav's own Settings entry (e2e/TESTIDS.md).
+          triggerTestId="table-settings"
           triggerClass={styles.controlButton}
           class={styles.controlPopover}
         >
@@ -1178,7 +1454,45 @@ export function DataTable<T, K extends string, G extends string = never>(
               per <td> (see inTableCell.ts); <Dialog> resets it, so a line editor
               opened from a row does not inherit it. */}
           <InTableCellContext.Provider value={true}>
-            <table class={styles.table} data-density={viewDensity()}>
+            <table
+              class={styles.table}
+              data-density={viewDensity()}
+              ref={tableEl}
+              /*
+               * The table is the list's ONE tab stop and the keyboard's
+               * landing place (KB-N1; KB-T1 permits only 0 and -1, and KB-T2
+               * keeps cells out of the tab order — the rows carry -1, see
+               * TableRow). From here ArrowDown moves to the first row.
+               */
+              tabindex={rowNavigation() ? 0 : undefined}
+              /*
+               * KB-N1's rung. `on:keydown` (a real listener on this element),
+               * not the delegated `onKeyDown`: Solid delegates keydown at
+               * `document`, so a delegated handler runs after the event
+               * already reached there and could not stop the window-level
+               * Escape tail.
+               *
+               * Consumes with preventDefault AND stopPropagation, because
+               * stopPropagation alone does not CONSUME Escape — and without
+               * the preventDefault, clearing row focus inside a line-edit
+               * modal would ALSO let the UA close request through and shut the
+               * modal, losing the draft. Arrow keys prevent the default page
+               * scroll for the same reason the highlight moves instead.
+               */
+              on:keydown={event => {
+                // Any key ends the seeded state, matched or not: the user is
+                // driving the table now, so its focus ring is theirs again.
+                setFocusSeeded(false);
+                if (!rowNavigation()) return;
+                if (!rowFocus.handleKey(event, rowKeys())) return;
+                event.preventDefault();
+                event.stopPropagation();
+              }}
+              // …as does focus leaving, so a Tab back onto the table shows the
+              // ring: by then this is a focus the user performed.
+              onFocusOut={() => setFocusSeeded(false)}
+              data-focus-seeded={focusSeeded() ? '' : undefined}
+            >
               <Show when={viewMode() === 'table'}>
                 <thead>
                   <For each={table.getHeaderGroups()}>
@@ -1214,11 +1528,12 @@ export function DataTable<T, K extends string, G extends string = never>(
                                   table.getIsAllRowsSelected() ||
                                   table.getIsSomeRowsSelected();
                                 table.toggleAllRowsSelected(!anySelected);
-                                // The native click already flipped the DOM box to
-                                // checked; toggling OFF from indeterminate leaves
-                                // the controlled `checked` value false→false, so
-                                // Solid's binding never re-runs to undo it. Sync
-                                // the box to the state we just set.
+                                // The native click already flipped the DOM box
+                                // to checked; toggling OFF from indeterminate
+                                // leaves the controlled `checked` value
+                                // false→false, so Solid's binding never re-runs
+                                // to undo it. Sync the box to the state we just
+                                // set.
                                 e.currentTarget.checked = !anySelected;
                               }}
                             />
@@ -1235,6 +1550,7 @@ export function DataTable<T, K extends string, G extends string = never>(
                                 header={header}
                                 pinnedStyle={pinnedStyle}
                                 frozenEdge={frozenEdge}
+                                onAutoFit={autoFitColumn}
                               />
                             </Show>
                           )}
@@ -1261,6 +1577,17 @@ export function DataTable<T, K extends string, G extends string = never>(
                         rowTone={row =>
                           (props.cardTone ?? props.rowTone)?.(row)
                         }
+                        rowFocus={row =>
+                          rowNavigation()
+                            ? {
+                                // Lazy, for the reason TableRow's prop doc
+                                // gives.
+                                focused: () => rowFocus.focusedKey() === row.id,
+                                onFocus: () => rowFocus.setFocused(row.id),
+                              }
+                            : undefined
+                        }
+                        rowState={props.rowState}
                       />
                     </Match>
                     <Match when={viewMode() === 'table'}>
@@ -1268,6 +1595,21 @@ export function DataTable<T, K extends string, G extends string = never>(
                         {row => (
                           <TableRow
                             row={row}
+                            rowFocus={
+                              rowNavigation()
+                                ? {
+                                    // LAZY. Reading the signals as this object
+                                    // is built makes Solid memoize the whole
+                                    // prop expression, and the row's own
+                                    // onFocus then reads it from a bare native
+                                    // listener with no owner in scope. See
+                                    // TableRow's prop doc.
+                                    focused: () =>
+                                      rowFocus.focusedKey() === row.id,
+                                    onFocus: () => rowFocus.setFocused(row.id),
+                                  }
+                                : undefined
+                            }
                             enableSelection={props.enableSelection ?? false}
                             selectionDisabled={props.selectionDisabled ?? false}
                             onRowClick={props.onRowClick}
