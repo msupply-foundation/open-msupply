@@ -106,7 +106,16 @@
 /* The preview's own scaffolding — a viewport frame, so the height trade can be
    judged at the priority device's size without owning a tablet. */
 .frame {
-  overflow: hidden;
+  /*
+   * `auto`, not `hidden`: the frame stands in for the page body, and the real
+   * one scrolls (ui/layout/Page/Page.module.css § .body). Clipping here made
+   * the preview claim a limit the app does not have — at a short height the
+   * tiles simply vanished, which reads as the grid failing to fit rather than
+   * as the frame running out. `auto` still bounds the box, so the height trade
+   * is judged at the same size, and it keeps `resize` working (a resize handle
+   * needs a non-visible overflow).
+   */
+  overflow: auto;
   border: 1px dashed var(--color-border-value);
   border-radius: var(--radius-md);
   resize: both;
