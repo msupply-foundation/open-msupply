@@ -161,6 +161,7 @@ const FILTERS: Filter<PrescriptionFilter>[] =
     isProgramInvoice: null,
     purchaseOrderId: null,
     purchaseOrderNumber: null,
+    prescriptionRequestId: null,
     linkedOrderNumber: null,
     programId: null,
     dynamicFilter: null,

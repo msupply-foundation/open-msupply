@@ -1,8 +1,7 @@
 use chrono::{NaiveDateTime, Utc};
 use repository::{
-    ActivityLogType, ClinicianRowRepository, ClinicianRowRepositoryTrait,
-    PrescriptionRequestLineRowRepository, PrescriptionRequestRow, PrescriptionRequestRowRepository,
-    PrescriptionRequestStatus, RepositoryError, TransactionError,
+    ActivityLogType, PrescriptionRequestLineRowRepository, PrescriptionRequestRow,
+    PrescriptionRequestRowRepository, PrescriptionRequestStatus, RepositoryError, TransactionError,
 };
 
 use crate::activity_log::activity_log_entry;
@@ -30,7 +29,6 @@ pub enum UpdatePrescriptionRequestStatus {
 pub struct UpdatePrescriptionRequest {
     pub id: String,
     pub patient_id: Option<String>,
-    pub clinician_id: Option<NullableUpdate<String>>,
     pub diagnosis_id: Option<NullableUpdate<String>>,
     pub program_id: Option<NullableUpdate<String>>,
     pub prescription_datetime: Option<NaiveDateTime>,
@@ -50,7 +48,6 @@ pub enum UpdatePrescriptionRequestError {
     /// Only New requests can be edited or set to Ready to dispense.
     NotEditable,
     PatientDoesNotExist,
-    ClinicianDoesNotExist,
     UnknownCustomFieldKey(String),
     /// Ready to dispense with no lines would generate an empty dispensation.
     NoLines,
@@ -83,14 +80,6 @@ pub fn update_prescription_request(
                     return Err(PatientDoesNotExist);
                 }
             }
-            if let Some(NullableUpdate {
-                value: Some(clinician_id),
-            }) = &input.clinician_id
-            {
-                ClinicianRowRepository::new(connection)
-                    .find_one_by_id(clinician_id)?
-                    .ok_or(ClinicianDoesNotExist)?;
-            }
             if let Some(patch) = &input.custom_fields {
                 if let Some(unknown_key) = check_unknown_custom_field_key(
                     connection,
@@ -104,7 +93,6 @@ pub fn update_prescription_request(
             let UpdatePrescriptionRequest {
                 id: _,
                 patient_id,
-                clinician_id,
                 diagnosis_id,
                 program_id,
                 prescription_datetime,
@@ -115,9 +103,6 @@ pub fn update_prescription_request(
 
             let mut updated = PrescriptionRequestRow {
                 patient_id: patient_id.unwrap_or(existing.patient_id.clone()),
-                clinician_link_id: clinician_id
-                    .map(|u| u.value)
-                    .unwrap_or(existing.clinician_link_id.clone()),
                 diagnosis_id: diagnosis_id
                     .map(|u| u.value)
                     .unwrap_or(existing.diagnosis_id.clone()),

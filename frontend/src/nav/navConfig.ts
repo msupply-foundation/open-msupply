@@ -314,22 +314,108 @@ export const navConfig: NavItem[] = [
   { labelKey: 'help', path: 'help' },
 ];
 
+/**
+ * The SECOND registry: what a prescriber-mode user is offered
+ * (spec/prescription-requests § prescriber mode). A user holding the
+ * PRESCRIBER_MODE permission in the entered store navigates from this tree
+ * instead of `navConfig` — navGates' `activeNavConfig` picks between them, and
+ * every surface reads the result, so the menu, the command palette and the
+ * router agree here exactly as they do for the full registry.
+ *
+ * A SEPARATE TREE rather than a `notPrescriber` gate on the ~37 destinations
+ * this omits. Prescriber mode is not "the app minus a section" — it is three
+ * destinations plus the two chrome entries every user needs — and spelling that
+ * out as an inverse gate on nearly every row of the registry above would smear
+ * one decision across the whole file, where the next person to add a
+ * destination would have to remember to exclude it. Here, forgetting is the
+ * safe direction: a new destination is absent from prescriber mode until
+ * somebody adds it deliberately.
+ *
+ * Paths and label keys are COPIED from their rows above, not re-invented: these
+ * are the same destinations, reached the same way, and App.tsx keys the same
+ * `sectionRoutes` off them.
+ *
+ * What is missing and why:
+ *   Home        prescribers land on the request list, which is the screen they
+ *               came for; a dashboard of stock widgets with the stock removed
+ *               is a worse landing page than no dashboard.
+ *   Dispensing  stock allocation, pricing and payments — the dispenser's job,
+ *               and where the data a prescriber has no use for lives.
+ *   Reports     the one remaining route that surfaces stock and financial
+ *               figures; its permission gates HAVING reports, not which ones.
+ *   Clinicians  there is no clinician picker any more (§ who prescribed), so
+ *               the list has nothing to feed.
+ *
+ * The dispensary gate is kept on the two dispensary destinations even though a
+ * prescriber-mode user cannot reach a non-dispensary store (the store picker
+ * withholds it): the gate is what makes that unreachability true on the route
+ * as well, and a registry that only works because of a filter somewhere else is
+ * one refactor from being wrong.
+ */
+export const prescriberNavConfig: NavItem[] = [
+  {
+    labelKey: 'dispensary',
+    path: 'dispensary',
+    gate: 'dispensary',
+    children: [
+      {
+        // "Prescriptions" — the prescriber's own record. The landing screen
+        // (see PRESCRIBER_HOME_PATH), and the redirect target for anything
+        // this registry does not offer.
+        labelKey: 'prescriptions',
+        path: 'dispensary/prescription-request',
+        permission: 'PRESCRIPTION_QUERY',
+      },
+      {
+        labelKey: 'patients',
+        path: 'dispensary/patients',
+        permission: 'PATIENT_QUERY',
+      },
+    ],
+  },
+  {
+    labelKey: 'catalogue',
+    path: 'catalogue',
+    children: [
+      // What can be prescribed. A prescriber who cannot look an item up
+      // prescribes things the dispensary cannot fill.
+      { labelKey: 'items', path: 'catalogue/items' },
+    ],
+  },
+  // Chrome, not function: language and the logout path live behind Settings,
+  // so cutting it would strand the user in the three screens above.
+  { labelKey: 'settings', path: 'settings' },
+  { labelKey: 'help', path: 'help' },
+];
+
+/**
+ * Where a prescriber-mode user starts, and where the router sends them when
+ * they reach for a destination this registry does not offer (a bookmark from
+ * before the mode was granted, a typed URL, a link from someone else's
+ * session). The full registry redirects to Home for the same case; prescriber
+ * mode has no Home, so it names its landing screen instead.
+ */
+export const PRESCRIBER_HOME_PATH = 'dispensary/prescription-request';
+
 // Flattened list of every destination (sections + inner entries) — used to
-// generate one route each.
-export const navDestinations: NavItem[] = navConfig.flatMap(item => [
-  item,
-  ...(item.children ?? []),
-]);
+// generate one route each. Takes the registry rather than reading `navConfig`,
+// so prescriber mode gets the same treatment from the same code.
+export const flattenNav = (config: NavItem[]): NavItem[] =>
+  config.flatMap(item => [item, ...(item.children ?? [])]);
+
+export const navDestinations: NavItem[] = flattenNav(navConfig);
 
 // The trail from the top-level section down to a destination, root first — the
 // breadcrumb a page shows (e.g. 'inventory/stocktakes' → [Inventory,
 // Stocktakes]). A top-level destination is its own single-crumb trail; an
 // unknown path has none.
-export const navTrail = (path: string): NavItem[] => {
-  for (const section of navConfig) {
+export const trailIn = (config: NavItem[], path: string): NavItem[] => {
+  for (const section of config) {
     if (section.path === path) return [section];
     const child = section.children?.find(entry => entry.path === path);
     if (child) return [section, child];
   }
   return [];
 };
+
+export const navTrail = (path: string): NavItem[] => trailIn(navConfig, path);

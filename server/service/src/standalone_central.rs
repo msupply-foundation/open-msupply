@@ -125,7 +125,7 @@ impl StandaloneCentralServiceTrait for StandaloneCentralService {
                 })?;
 
                 let perm_repo = UserPermissionRowRepository::new(con);
-                for permission in PermissionType::known_iter() {
+                for permission in PermissionType::grantable_iter() {
                     perm_repo.upsert_one(&UserPermissionRow {
                         id: uuid(),
                         user_id: admin.id.clone(),
@@ -329,7 +329,7 @@ mod test {
                 UserPermissionFilter::new().user_id(EqualFilter::equal_to(admin.id.clone())),
             )
             .unwrap();
-        let expected = PermissionType::known_iter().count();
+        let expected = PermissionType::grantable_iter().count();
         assert_eq!(permissions.len(), expected);
         assert!(permissions
             .iter()

@@ -13,6 +13,9 @@ use super::update::UpdatePrescriptionRequestError;
 /// a New prescription invoice linked back via `invoice.prescription_request_id`,
 /// with one unallocated line per prescribed item carrying the prescribed
 /// quantity and directions — stock allocation stays the dispenser's job.
+///
+/// Runs in the session of whoever set the request Ready to dispense, so the
+/// generated invoice's `user_id` names the prescriber.
 pub(crate) fn create_dispensation(
     ctx: &ServiceContext,
     connection: &StorageConnection,
@@ -29,8 +32,12 @@ pub(crate) fn create_dispensation(
             diagnosis_id: request.diagnosis_id.clone(),
             program_id: request.program_id.clone(),
             their_reference: None,
-            // clinician_link_id.id == clinician.id by convention (same as name_link)
-            clinician_id: request.clinician_link_id.clone(),
+            // No clinician: a request records who prescribed as `created_by`,
+            // and `insert_prescription` stamps the same session's user onto
+            // `invoice.user_id` — so the dispensation carries the prescriber
+            // without a clinician record (spec/prescription-requests § who
+            // prescribed).
+            clinician_id: None,
             prescription_date: Some(request.prescription_datetime),
             // Links the dispensation back to its source request
             prescription_request_id: Some(request.id.clone()),

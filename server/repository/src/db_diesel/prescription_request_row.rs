@@ -1,7 +1,6 @@
 use super::{
-    clinician_link_row::clinician_link, clinician_row::clinician, custom_fields_json::JsonValue,
-    diagnosis_row::diagnosis, name_row::name, program_row::program, store_row::store,
-    StorageConnection,
+    custom_fields_json::JsonValue, diagnosis_row::diagnosis, name_row::name, program_row::program,
+    store_row::store, StorageConnection,
 };
 
 use crate::db_diesel::changelog::changelog::RowOrId;
@@ -24,7 +23,6 @@ define_linked_tables! {
         store_id -> Text,
         prescription_request_number -> BigInt,
         status -> crate::db_diesel::prescription_request_row::PrescriptionRequestStatusMapping,
-        clinician_link_id -> Nullable<Text>,
         diagnosis_id -> Nullable<Text>,
         program_id -> Nullable<Text>,
         created_datetime -> Timestamp,
@@ -43,14 +41,11 @@ define_linked_tables! {
 }
 
 joinable!(prescription_request -> store (store_id));
-joinable!(prescription_request -> clinician_link (clinician_link_id));
 joinable!(prescription_request -> diagnosis (diagnosis_id));
 joinable!(prescription_request -> program (program_id));
 joinable!(prescription_request -> name (patient_id));
 
 allow_tables_to_appear_in_same_query!(prescription_request, name);
-allow_tables_to_appear_in_same_query!(prescription_request, clinician_link);
-allow_tables_to_appear_in_same_query!(prescription_request, clinician);
 allow_tables_to_appear_in_same_query!(prescription_request, diagnosis);
 allow_tables_to_appear_in_same_query!(prescription_request, program);
 allow_tables_to_appear_in_same_query!(prescription_request, store);
@@ -82,7 +77,6 @@ pub struct PrescriptionRequestRow {
     pub store_id: String,
     pub prescription_request_number: i64,
     pub status: PrescriptionRequestStatus,
-    pub clinician_link_id: Option<String>,
     pub diagnosis_id: Option<String>,
     pub program_id: Option<String>,
     pub created_datetime: NaiveDateTime,
@@ -91,6 +85,10 @@ pub struct PrescriptionRequestRow {
     pub prescription_datetime: NaiveDateTime,
     pub ready_datetime: Option<NaiveDateTime>,
     pub dispensed_datetime: Option<NaiveDateTime>,
+    /// The user who entered the request — the SOLE record of who prescribed
+    /// (spec/prescription-requests § who prescribed). There is no clinician
+    /// column: the picker was removed and the generated dispensation carries
+    /// the same identity in `invoice.user_id`.
     pub created_by: String,
     pub comment: Option<String>,
     /// Properties-v2 values keyed by `custom_field.key` (weight, patient unit,

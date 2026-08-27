@@ -7,7 +7,8 @@ import { Header } from '../ui/layout/Header/Header';
 import { Breadcrumb } from '../ui/layout/Header/Breadcrumb';
 import { EmptyState } from '../ui/elements/feedback/EmptyState';
 import { Button } from '../ui/elements/buttons/Button';
-import { navTrail, type NavItem } from './navConfig';
+import { type NavItem } from './navConfig';
+import { activeNavTrail } from './navGates';
 
 // The not-found page's whimsy (issue #867) — the current app's lost-on-the-moon
 // illustration. Lazy so its ~3 KB gzip rides in its own chunk, fetched only
@@ -34,7 +35,7 @@ export const EntryPage: Component<{ dest?: NavItem }> = props => {
   // never a crumb (ui-standards › layout, app bar). A not-found route has no
   // destination, so its single crumb is the "Not found" leaf.
   const crumbs = () => {
-    const trail = props.dest ? navTrail(props.dest.path) : [];
+    const trail = props.dest ? activeNavTrail(props.dest.path) : [];
     const leaf = trail[trail.length - 1];
     if (leaf) return [{ label: t(leaf.labelKey) }];
     return [{ label: t(props.dest?.labelKey ?? 'heading.not-found') }];

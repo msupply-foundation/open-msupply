@@ -67,6 +67,14 @@ fragment UserInfo on UserNode {
   defaultStore {
     id
   }
+  # The stores this user is restricted to PRESCRIBER MODE in
+  # (spec/prescription-requests § prescriber mode). The store picker runs
+  # BEFORE any store is entered, so the per-store permission read the in-store
+  # gates use (storeContext.graphql) is not available to it — and the picker is
+  # where a prescriber-mode user's non-dispensary stores have to be withheld.
+  # One list for every store rather than a flag per store, so it costs one
+  # query however many stores the user has.
+  prescriberModeStoreIds
   stores {
     nodes {
       id

@@ -7,8 +7,8 @@
 
 import { createEffect } from 'solid-js';
 import { t, type LocaleKey } from './intl';
-import { navTrail } from './nav/navConfig';
-import { findLeafByPath } from './ui/layout/AppShell/navModel';
+import { activeNavConfig, activeNavTrail } from './nav/navGates';
+import { buildNavModel, findLeafIn } from './ui/layout/AppShell/navModel';
 
 /**
  * "<Screen> | Open mSupply" — the screen leads, because a tab strip truncates
@@ -28,9 +28,10 @@ export const pageTitle = (screenKey: LocaleKey | undefined): string =>
  * sits beneath, resolved exactly as the menu highlight resolves it.
  */
 export const screenTitleKey = (relativePath: string): LocaleKey | undefined => {
-  const trail = navTrail(relativePath);
+  const trail = activeNavTrail(relativePath);
   return (
-    trail[trail.length - 1]?.labelKey ?? findLeafByPath(relativePath)?.labelKey
+    trail[trail.length - 1]?.labelKey ??
+    findLeafIn(buildNavModel(activeNavConfig()).leaves, relativePath)?.labelKey
   );
 };
 

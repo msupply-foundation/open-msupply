@@ -7,7 +7,6 @@ export type InsertPrescriptionRequestVariables = {
   input: {
     id: string;
     patientId: string;
-    clinicianId?: string | null;
     diagnosisId?: string | null;
     programId?: string | null;
     prescriptionDatetime?: string | null;

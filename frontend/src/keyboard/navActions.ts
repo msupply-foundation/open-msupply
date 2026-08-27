@@ -1,6 +1,6 @@
 import { createAction, type KeyAction } from '../ui/utils/keyActions';
-import { navConfig, type NavItem } from '../nav/navConfig';
-import { deniedPermission, gateNav } from '../nav/navGates';
+import { type NavItem } from '../nav/navConfig';
+import { activeNavConfig, deniedPermission, gateNav } from '../nav/navGates';
 import { reportPermissionDenied } from '../api/graphql';
 import { t } from '../intl';
 import { ALT_D, ALT_H, type Shortcut } from '../ui/utils/shortcuts';
@@ -37,7 +37,7 @@ import { ALT_D, ALT_H, type Shortcut } from '../ui/utils/shortcuts';
  * destination and is listed.
  */
 const paletteDestinations = (): NavItem[] =>
-  gateNav(navConfig).flatMap(item => item.children ?? [item]);
+  gateNav(activeNavConfig()).flatMap(item => item.children ?? [item]);
 
 /**
  * The destination's palette row, complete with its "Go to:" prefix — the

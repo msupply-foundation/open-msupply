@@ -2,8 +2,13 @@ use crate::migrations::*;
 
 /// Prescriber-authored prescription (distinct from the dispensing record,
 /// which is an invoice of type PRESCRIPTION). When the prescriber sets the
-/// order to READY_TO_DISPENSE a dispensing invoice is generated from it
+/// request to READY_TO_DISPENSE a dispensing invoice is generated from it
 /// (invoice.prescription_request_id points back here).
+///
+/// There is no clinician column: `created_by` — the user who entered the
+/// request — is the sole record of who prescribed (spec/prescription-requests
+/// § who prescribed). The generated dispensation carries the same identity in
+/// `invoice.user_id`.
 pub(crate) struct Migrate;
 
 impl MigrationFragment for Migrate {
@@ -33,7 +38,6 @@ impl MigrationFragment for Migrate {
                     prescription_request_number BIGINT NOT NULL,
                     status {status_type} NOT NULL,
                     patient_link_id TEXT NOT NULL REFERENCES name_link(id),
-                    clinician_link_id TEXT REFERENCES clinician_link(id),
                     diagnosis_id TEXT REFERENCES diagnosis(id),
                     program_id TEXT REFERENCES program(id),
                     created_datetime {DATETIME} NOT NULL,

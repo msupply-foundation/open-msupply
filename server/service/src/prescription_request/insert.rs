@@ -1,8 +1,7 @@
 use chrono::{NaiveDateTime, Utc};
 use repository::{
-    ActivityLogType, ClinicianRowRepository, ClinicianRowRepositoryTrait, NumberRowType,
-    PrescriptionRequestRow, PrescriptionRequestRowRepository, PrescriptionRequestStatus, RepositoryError,
-    TransactionError,
+    ActivityLogType, NumberRowType, PrescriptionRequestRow, PrescriptionRequestRowRepository,
+    PrescriptionRequestStatus, RepositoryError, TransactionError,
 };
 
 use crate::activity_log::activity_log_entry;
@@ -14,7 +13,6 @@ use crate::validate::check_patient_exists;
 pub struct InsertPrescriptionRequest {
     pub id: String,
     pub patient_id: String,
-    pub clinician_id: Option<String>,
     pub diagnosis_id: Option<String>,
     pub program_id: Option<String>,
     pub prescription_datetime: Option<NaiveDateTime>,
@@ -24,7 +22,6 @@ pub struct InsertPrescriptionRequest {
 pub enum InsertPrescriptionRequestError {
     PrescriptionRequestAlreadyExists,
     PatientDoesNotExist,
-    ClinicianDoesNotExist,
     DatabaseError(RepositoryError),
 }
 
@@ -44,11 +41,6 @@ pub fn insert_prescription_request(
             if check_patient_exists(connection, &input.patient_id)?.is_none() {
                 return Err(PatientDoesNotExist);
             }
-            if let Some(clinician_id) = &input.clinician_id {
-                ClinicianRowRepository::new(connection)
-                    .find_one_by_id(clinician_id)?
-                    .ok_or(ClinicianDoesNotExist)?;
-            }
 
             let current_datetime = Utc::now().naive_utc();
             let row = PrescriptionRequestRow {
@@ -61,13 +53,14 @@ pub fn insert_prescription_request(
                 )?,
                 status: PrescriptionRequestStatus::New,
                 patient_id: input.patient_id,
-                clinician_link_id: input.clinician_id,
                 diagnosis_id: input.diagnosis_id,
                 program_id: input.program_id,
                 created_datetime: current_datetime,
                 prescription_datetime: input.prescription_datetime.unwrap_or(current_datetime),
                 ready_datetime: None,
                 dispensed_datetime: None,
+                // The sole record of who prescribed — there is no clinician
+                // picker (spec/prescription-requests § who prescribed).
                 created_by: ctx.user_id.clone(),
                 comment: None,
                 custom_fields: None,

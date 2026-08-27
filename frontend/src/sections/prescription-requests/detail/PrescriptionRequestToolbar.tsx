@@ -10,7 +10,6 @@ import {
   minimalPatientOption,
   type PatientOption,
 } from '../../../domain/patient';
-import { ClinicianSelect } from '../../../domain/clinician';
 import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
 import { UserLabel } from '../../../ui/elements/typography/UserLabel';
 import { ProgramNameSelect } from '../../../domain/program';
@@ -31,11 +30,10 @@ import {
 
 // The detail header's field cluster (spec/prescription-requests/ui-surface.md
 // S3 § header toolbar), rendered as the children of the page's
-// <HeaderToolbar>: Patient · Clinician · Date · Program · Diagnosis · Entered
-// by, then the scope's prominent custom fields. Weighted shares follow the
-// dispensing toolbar's measured layout (person-name fields take the biggest
-// shares; the date is pinned at its 9rem format width). Every field is
-// read-only past New
+// <HeaderToolbar>: Patient · Date · Program · Diagnosis · Prescriber, then the
+// scope's prominent custom fields. Weighted shares follow the dispensing
+// toolbar's measured layout (person-name fields take the biggest shares; the
+// date is pinned at its 9rem format width). Every field is read-only past New
 // (AC-N5); unlike dispensing, a date or program change never touches lines —
 // the request's lines carry no stock, so nothing needs clearing.
 
@@ -91,20 +89,6 @@ export const PrescriptionRequestToolbar: Component<
           }
         />
       </FormRowItem>
-      <FormRowItem weight={1.55}>
-        <ClinicianSelect
-          label={t('label.clinician')}
-          size="small"
-          inputTestId="clinician-select"
-          allowCreate
-          storeId={props.storeId}
-          value={props.node.clinicianId ?? undefined}
-          disabled={props.disabled}
-          onChange={clinician =>
-            props.onSave({ clinicianId: { value: clinician?.id ?? null } })
-          }
-        />
-      </FormRowItem>
       <FormRowItem weight={0} minWidth="9rem">
         <DateField
           label={t('label.date')}
@@ -150,22 +134,23 @@ export const PrescriptionRequestToolbar: Component<
           }
         />
       </FormRowItem>
-      {/* The prescriber — the account that created the request. Provenance,
-          never editable, so it closes the fixed cluster as a read-only value
-          rather than a disabled input (kdd/form-layout); `variant="field"`
-          lines it up with the small inputs beside it. NOT the same person as
-          Clinician, which is picked (rules § creation) — hence the app's
-          "Entered by" wording here too, matching the side panel's row. */}
+      {/* The prescriber — the account that created the request, which on a
+          request IS who prescribed it (spec/prescription-requests § who
+          prescribed). Provenance, never editable, so it closes the fixed
+          cluster as a read-only value rather than a disabled input
+          (kdd/form-layout); `variant="field"` lines it up with the small
+          inputs beside it. The testid keeps its name — it identifies the
+          field, and e2e/TESTIDS.md is a cross-front-end contract. */}
       <FormRowItem weight={1} minWidth="8rem">
         <LabelledValue
           variant="field"
           size="small"
-          label={t('label.entered-by')}
+          label={t('label.prescriber')}
         >
           <UserLabel
             username={props.node.user?.username}
             email={props.node.user?.email}
-            label={t('label.entered-by')}
+            label={t('label.prescriber')}
             testId="toolbar-entered-by-field"
           />
         </LabelledValue>

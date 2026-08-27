@@ -16,7 +16,6 @@ use crate::types::PrescriptionRequestNode;
 pub struct InsertInput {
     pub id: String,
     pub patient_id: String,
-    pub clinician_id: Option<String>,
     pub diagnosis_id: Option<String>,
     pub program_id: Option<String>,
     pub prescription_datetime: Option<DateTime<Utc>>,
@@ -27,7 +26,6 @@ impl InsertInput {
         let InsertInput {
             id,
             patient_id,
-            clinician_id,
             diagnosis_id,
             program_id,
             prescription_datetime,
@@ -35,7 +33,6 @@ impl InsertInput {
         ServiceInput {
             id,
             patient_id,
-            clinician_id,
             diagnosis_id,
             program_id,
             prescription_datetime: prescription_datetime.map(|d| d.naive_utc()),
@@ -86,9 +83,9 @@ fn map_response(from: Result<PrescriptionRequestRow, ServiceError>) -> Result<In
 fn map_error(error: ServiceError) -> async_graphql::Error {
     let formatted_error = format!("{error:#?}");
     match error {
-        ServiceError::PrescriptionRequestAlreadyExists
-        | ServiceError::PatientDoesNotExist
-        | ServiceError::ClinicianDoesNotExist => BadUserInput(formatted_error),
+        ServiceError::PrescriptionRequestAlreadyExists | ServiceError::PatientDoesNotExist => {
+            BadUserInput(formatted_error)
+        }
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     }
     .extend()

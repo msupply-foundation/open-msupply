@@ -25,7 +25,6 @@ pub enum UpdatePrescriptionRequestStatusInput {
 pub struct UpdateInput {
     pub id: String,
     pub patient_id: Option<String>,
-    pub clinician_id: Option<NullableUpdateInput<String>>,
     pub diagnosis_id: Option<NullableUpdateInput<String>>,
     pub program_id: Option<NullableUpdateInput<String>>,
     pub prescription_datetime: Option<DateTime<Utc>>,
@@ -41,7 +40,6 @@ impl UpdateInput {
         let UpdateInput {
             id,
             patient_id,
-            clinician_id,
             diagnosis_id,
             program_id,
             prescription_datetime,
@@ -52,7 +50,6 @@ impl UpdateInput {
         ServiceInput {
             id,
             patient_id,
-            clinician_id: clinician_id.map(|u| NullableUpdate { value: u.value }),
             diagnosis_id: diagnosis_id.map(|u| NullableUpdate { value: u.value }),
             program_id: program_id.map(|u| NullableUpdate { value: u.value }),
             prescription_datetime: prescription_datetime.map(|d| d.naive_utc()),
@@ -114,7 +111,6 @@ fn map_error(error: ServiceError) -> async_graphql::Error {
         | ServiceError::NotThisStorePrescriptionRequest
         | ServiceError::NotEditable
         | ServiceError::PatientDoesNotExist
-        | ServiceError::ClinicianDoesNotExist
         | ServiceError::UnknownCustomFieldKey(_)
         | ServiceError::NoLines => BadUserInput(formatted_error),
         ServiceError::CreatedDispensationError(_) | ServiceError::DatabaseError(_) => {

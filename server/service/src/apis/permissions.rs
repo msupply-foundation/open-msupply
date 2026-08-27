@@ -611,6 +611,17 @@ pub fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permissio
             Permissions::FinaliseSupplierInvoices => {
                 output.insert(PermissionType::InboundShipmentVerify);
             }
+            // `PermissionType::PrescriberMode` is deliberately NOT mapped
+            // here, and no legacy slot stands in for it
+            // (spec/prescription-requests § prescriber mode). Slot 13,
+            // `LogOnInDispensaryMode`, is the near miss: it is already ticked
+            // for real dispensary staff at existing sites, so mapping it would
+            // strip dispensing, stock and inventory from the very users whose
+            // job needs them, the first time they upgraded. mSupply central
+            // must allocate a permission of its own before prescriber mode can
+            // ship — until then it is grantable only from seed/test data, and
+            // adding the mapping here is the last step of the feature.
+            //
             // Remaining `Permissions` variants are legacy mSupply permissions
             // with no equivalent in open mSupply's `PermissionType` — e.g. they
             // gate features that don't exist here (builds, tenders, drug

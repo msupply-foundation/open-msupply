@@ -77,6 +77,20 @@ impl<'a> UserAccountService<'a> {
 
                 // Context permissions are managed by sync, not the login flow —
                 // left untouched, as before (has_context(false)).
+                //
+                // RESTRICTIONS are excluded too (`is_restriction`), for the same
+                // reason in a different guise. The delete pass below revokes
+                // whatever the login payload does not mention, which is only
+                // sound while the payload CAN mention everything. It cannot
+                // mention `PrescriberMode`: no legacy mSupply permission maps to
+                // it (see `apis::permissions`), so its absence carries no
+                // intent, and treating that absence as a revocation would strip
+                // the permission on the holder's very next login. Absence must
+                // mean "not expressible here", not "taken away".
+                //
+                // The exclusion becomes moot once central can express it — the
+                // payload will then say so either way — but leaving it costs
+                // nothing and keeps the rule honest.
                 let existing_permissions: HashMap<String, UserPermissionRow> =
                     UserPermissionRepository::new(con)
                         .query_by_filter(
@@ -85,6 +99,7 @@ impl<'a> UserAccountService<'a> {
                                 .has_context(false),
                         )?
                         .into_iter()
+                        .filter(|p| !p.permission.is_restriction())
                         .map(|p| (p.id.clone(), p))
                         .collect();
                 let incoming_permission_ids: HashSet<&str> = stores_permissions
@@ -572,6 +587,58 @@ mod user_account_test {
             .unwrap();
         assert_eq!(remaining.len(), 1);
         assert_eq!(remaining[0].id, "reconcile_p1");
+    }
+
+    /// spec/prescription-requests § prescriber mode.
+    ///
+    /// A login payload that CANNOT express `PrescriberMode` must not be read as
+    /// revoking it. No legacy mSupply permission maps to it, so every login
+    /// arrives without it — and if that counted as a revocation, a seeded
+    /// prescriber would lose the permission the first time they signed in.
+    #[actix_rt::test]
+    async fn upsert_user_keeps_restrictions_the_payload_cannot_express() {
+        let (_, connection, _, _) = setup_all(
+            "upsert_user_keeps_restrictions_the_payload_cannot_express",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+        let service = UserAccountService::new(&connection);
+
+        service
+            .upsert_user(
+                reconcile_user(),
+                store_a_permissions(vec![
+                    permission("reconcile_p1", PermissionType::StoreAccess),
+                    permission("reconcile_prescriber", PermissionType::PrescriberMode),
+                ]),
+            )
+            .unwrap();
+
+        // A later login carrying only what the legacy payload can express.
+        service
+            .upsert_user(
+                reconcile_user(),
+                store_a_permissions(vec![permission(
+                    "reconcile_p1",
+                    PermissionType::StoreAccess,
+                )]),
+            )
+            .unwrap();
+
+        let remaining: Vec<_> = UserPermissionRepository::new(&connection)
+            .query_by_filter(
+                UserPermissionFilter::new().user_id(EqualFilter::equal_to(reconcile_user().id)),
+            )
+            .unwrap()
+            .into_iter()
+            .map(|p| p.id)
+            .collect();
+
+        assert!(
+            remaining.contains(&"reconcile_prescriber".to_string()),
+            "PrescriberMode was revoked by a payload that cannot express it: {remaining:?}"
+        );
+        assert!(remaining.contains(&"reconcile_p1".to_string()));
     }
 
     #[actix_rt::test]

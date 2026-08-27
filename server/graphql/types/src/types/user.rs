@@ -8,7 +8,7 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{User, UserStore};
+use repository::{PermissionType, User, UserStore};
 use service::permission::permissions;
 
 pub struct UserStoreNode {
@@ -149,6 +149,33 @@ impl UserNode {
         )?;
 
         Ok(UserStorePermissionConnector::from_vec(result))
+    }
+
+    /// The ids of the user's stores in which they are restricted to PRESCRIBER
+    /// MODE (spec/prescription-requests § prescriber mode). Rides the me/login
+    /// response so the store picker can withhold a store the user could enter
+    /// but could not work in — the picker runs before any store is entered, so
+    /// the per-store `permissions(storeId)` read the in-store gates use is not
+    /// available to it yet.
+    ///
+    /// One query for every store, rather than a boolean resolved per store: a
+    /// user with many stores would otherwise cost one permission lookup each
+    /// on every me/login.
+    pub async fn prescriber_mode_store_ids(&self, ctx: &Context<'_>) -> Result<Vec<String>> {
+        let service_context = ctx.service_provider().basic_context()?;
+
+        let result = permissions(&service_context.connection, &self.user.user_row.id, None)?;
+
+        Ok(result
+            .into_iter()
+            .filter(|store_permissions| {
+                store_permissions
+                    .permissions
+                    .iter()
+                    .any(|p| p.permission == PermissionType::PrescriberMode)
+            })
+            .map(|store_permissions| store_permissions.store_row.id)
+            .collect())
     }
 
     pub async fn language(&self) -> LanguageTypeNode {

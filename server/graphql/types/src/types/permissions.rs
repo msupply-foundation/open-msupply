@@ -72,6 +72,7 @@ pub enum UserPermission {
     ViewAndEditVvmStatus,
     MutateClinician,
     CancelFinalisedInvoices,
+    PrescriberMode,
 }
 
 impl UserPermission {
@@ -146,6 +147,7 @@ impl UserPermission {
             PermissionType::EditCentralData => UserPermission::EditCentralData,
             PermissionType::ViewAndEditVvmStatus => UserPermission::ViewAndEditVvmStatus,
             PermissionType::MutateClinician => UserPermission::MutateClinician,
+            PermissionType::PrescriberMode => UserPermission::PrescriberMode,
             PermissionType::Unknown(_) => return None,
         })
     }

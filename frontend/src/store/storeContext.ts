@@ -341,6 +341,25 @@ const hasPermission = (permission: UserPermission): boolean => {
   );
 };
 
+// Whether the current user is restricted to PRESCRIBER MODE in the entered
+// store (spec/prescription-requests § prescriber mode). Selects the cut-down
+// navigation registry — prescriptions, patients and the item catalogue, and
+// nothing else — in place of the full one.
+//
+// A restriction, not a grant: it is the one permission whose PRESENCE takes
+// capability away. It gates the client's own navigation and NOTHING on the
+// server, so a prescriber-mode user keeps every other permission they hold and
+// the API still answers accordingly. Hiding a screen here is a simplification,
+// never a confidentiality boundary — do not use it to withhold data.
+//
+// Per store, because that is how `user_permission` is keyed: the same person
+// can be a prescriber at the clinic and a manager at the warehouse, and the
+// navigation reshapes when they switch. Reads the store-context permissions
+// like every other gate, so it settles under StoreGuardLayout before anything
+// renders. Safe default OFF, so a prescriber-mode user briefly seeing the whole
+// app is the failure mode rather than every user losing most of it.
+const isPrescriberMode = (): boolean => hasPermission('PRESCRIBER_MODE');
+
 export {
   storeContext,
   refetch as refetchStoreContext,
@@ -359,5 +378,6 @@ export {
   hasProgramModule,
   hasProcurement,
   hasPermission,
+  isPrescriberMode,
 };
 export type { UserPermission, StoreMode };
