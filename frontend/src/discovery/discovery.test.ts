@@ -1,18 +1,25 @@
-import { describe, expect, it } from 'vitest';
-import type { FrontEndHost } from './hostBridge';
+import { describe, expect, it, vi } from 'vitest';
+import type { HostInfo, RawAnnouncement } from './hostContract';
 import {
+  ANSWER_CHECK_TIMEOUT_MS,
   autoconnectTarget,
+  connectToServer,
+  connectUrl,
   discoveryReturnAddress,
   frontEndHostDisplay,
   isCompleteAnnouncement,
+  isLocalServer,
   mergeServers,
   parseDiscoveryFlags,
   parseManualServer,
+  probeUrl,
   readPreviousServer,
   recordPreviousServer,
   serverKey,
   STANDALONE_LOCAL_SERVER,
   standaloneSeededFailure,
+  toFrontEndHost,
+  type FrontEndHost,
 } from './discovery';
 
 const host = (overrides: Partial<FrontEndHost> = {}): FrontEndHost => ({
@@ -108,7 +115,6 @@ describe('parseManualServer (AC-DT14)', () => {
       clientVersion: 'unspecified',
       hardwareId: 'UUID-1',
       isLocal: false,
-      path: 'login',
     });
   });
 
@@ -282,5 +288,203 @@ describe('previous server persistence (AC-DT13–15)', () => {
   it('survives an absent storage (node, blocked storage)', () => {
     expect(readPreviousServer(undefined)).toBeUndefined();
     expect(() => recordPreviousServer(host(), undefined)).not.toThrow();
+  });
+});
+
+const announcement = (
+  overrides: Partial<RawAnnouncement> = {}
+): RawAnnouncement => ({
+  protocol: 'https',
+  port: 8000,
+  ip: '192.168.1.10',
+  clientVersion: '3.1.0',
+  hardwareId: 'HW-A',
+  ...overrides,
+});
+
+const info = (overrides: Partial<HostInfo> = {}): HostInfo => ({
+  platform: 'electron',
+  hardwareId: 'HW-THIS',
+  lanAddresses: ['192.168.1.20'],
+  ...overrides,
+});
+
+describe('isLocalServer (spec/android § server discovery, AC-DT5)', () => {
+  it('marks a server by hardware id, never by address', () => {
+    // Announced at loopback — an address compare would call this remote.
+    expect(
+      isLocalServer(announcement({ hardwareId: 'HW-THIS', ip: '127.0.0.1' }), info())
+    ).toBe(true);
+    // Announced at this machine's own LAN address but a DIFFERENT machine's
+    // id — an address compare would call this local.
+    expect(
+      isLocalServer(announcement({ ip: '192.168.1.20' }), info())
+    ).toBe(false);
+  });
+
+  it('matches case-insensitively (machine_uid vs a shell reading the same OS id)', () => {
+    expect(
+      isLocalServer(
+        announcement({ hardwareId: 'ab-cd-ef' }),
+        info({ hardwareId: 'AB-CD-EF' })
+      )
+    ).toBe(true);
+  });
+
+  it('never matches when either side has no id — the mark just never shows', () => {
+    expect(
+      isLocalServer(announcement({ hardwareId: 'HW-THIS' }), info({ hardwareId: '' }))
+    ).toBe(false);
+    expect(
+      isLocalServer(announcement({ hardwareId: '' }), info({ hardwareId: '' }))
+    ).toBe(false);
+  });
+});
+
+describe('toFrontEndHost (AC-DT22 address rewriting)', () => {
+  const local = { hardwareId: 'HW-THIS' };
+
+  it("rewrites this machine's server to an address other machines can reach", () => {
+    // Loopback (desktop's old special case) and an arbitrary interface's
+    // address (Android's NsdManager resolution) rewrite alike.
+    expect(toFrontEndHost(announcement({ ...local, ip: '127.0.0.1' }), info()).ip).toBe(
+      '192.168.1.20'
+    );
+    expect(toFrontEndHost(announcement({ ...local, ip: '10.0.0.9' }), info()).ip).toBe(
+      '192.168.1.20'
+    );
+  });
+
+  it('keeps an already-reachable resolution', () => {
+    const resolved = toFrontEndHost(
+      announcement({ ...local, ip: '192.168.1.20' }),
+      info()
+    );
+    expect(resolved.ip).toBe('192.168.1.20');
+    expect(resolved.isLocal).toBe(true);
+  });
+
+  it('keeps the resolved address when there is nothing better to offer (offline)', () => {
+    expect(
+      toFrontEndHost(
+        announcement({ ...local, ip: '127.0.0.1' }),
+        info({ lanAddresses: [] })
+      ).ip
+    ).toBe('127.0.0.1');
+  });
+
+  it("never rewrites another machine's server", () => {
+    expect(toFrontEndHost(announcement({ ip: '127.0.0.1' }), info()).ip).toBe(
+      '127.0.0.1'
+    );
+  });
+
+  it('carries the identity attributes verbatim', () => {
+    expect(toFrontEndHost(announcement(), info())).toEqual({
+      protocol: 'https',
+      port: 8000,
+      ip: '192.168.1.10',
+      clientVersion: '3.1.0',
+      hardwareId: 'HW-A',
+      isLocal: false,
+    });
+  });
+});
+
+describe('server URLs (single source for every host)', () => {
+  it('probes where the GraphQL endpoint should be (AC-DT12)', () => {
+    expect(probeUrl(host())).toBe('https://192.168.1.10:8000/graphql');
+  });
+
+  it('connects to the hand-off path (AC-DT19/23)', () => {
+    expect(connectUrl(host(), 'login?x=1')).toBe(
+      'https://192.168.1.10:8000/login?x=1'
+    );
+  });
+});
+
+describe('connectToServer (probe → record → navigate)', () => {
+  const memoryStorage = (): Storage => {
+    const map = new Map<string, string>();
+    return {
+      getItem: key => map.get(key) ?? null,
+      setItem: (key, value) => void map.set(key, value),
+      removeItem: key => void map.delete(key),
+      clear: () => map.clear(),
+      key: () => null,
+      get length() {
+        return map.size;
+      },
+    };
+  };
+
+  it('a failed probe leaves the window here: no record, no navigation (AC-DT12)', async () => {
+    const storage = memoryStorage();
+    const navigate = vi.fn();
+    const connected = await connectToServer(
+      { probe: async () => false, navigate },
+      host(),
+      { path: 'login', remember: true, storage }
+    );
+    expect(connected).toBe(false);
+    expect(navigate).not.toHaveBeenCalled();
+    expect(readPreviousServer(storage)).toBeUndefined();
+  });
+
+  it('records BEFORE navigating — the ordering that made every host grace-delay unnecessary (AC-DT13/14)', async () => {
+    const storage = memoryStorage();
+    const order: string[] = [];
+    const connected = await connectToServer(
+      {
+        probe: async () => true,
+        navigate: () => {
+          order.push('navigate');
+          // The record must already be readable at the moment the host is
+          // asked to tear the page down.
+          expect(readPreviousServer(storage)).toEqual(host());
+        },
+      },
+      host(),
+      { path: 'login', remember: true, storage }
+    );
+    expect(connected).toBe(true);
+    expect(order).toEqual(['navigate']);
+  });
+
+  it('navigates to the hand-off path with the page-owned timeout on the probe', async () => {
+    const probe = vi.fn(async () => true);
+    const navigate = vi.fn();
+    await connectToServer({ probe, navigate }, host(), {
+      path: 'login?discovery-return=x',
+      remember: false,
+    });
+    expect(probe).toHaveBeenCalledWith(
+      'https://192.168.1.10:8000/graphql',
+      ANSWER_CHECK_TIMEOUT_MS
+    );
+    expect(navigate).toHaveBeenCalledWith(
+      'https://192.168.1.10:8000/login?discovery-return=x'
+    );
+  });
+
+  it('remember: false (standalone) records nothing (AC-DT20/21)', async () => {
+    const storage = memoryStorage();
+    await connectToServer(
+      { probe: async () => true, navigate: () => {} },
+      STANDALONE_LOCAL_SERVER,
+      { path: 'login', remember: false, storage }
+    );
+    expect(readPreviousServer(storage)).toBeUndefined();
+  });
+
+  it('a probe that rejects counts as unanswered, never as a crash', async () => {
+    const navigate = vi.fn();
+    const connected = await connectToServer(
+      { probe: async () => Promise.reject(new Error('boom')), navigate },
+      host(),
+      { path: 'login', remember: false }
+    );
+    expect(connected).toBe(false);
+    expect(navigate).not.toHaveBeenCalled();
   });
 });

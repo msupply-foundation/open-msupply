@@ -1,44 +1,56 @@
-// The Android adapter for the desktop-host bridge (src/desktop/hostBridge.ts):
-// the same contract the electron shell exposes as window.electronNativeAPI,
-// answered on Android by the NativeApi Capacitor plugin
-// (android/.../NativeApiPlugin.java — NsdManager browse, bounded answer
-// check, WebView navigation). Lives here, not in src/desktop, because
-// @capacitor/* imports stay confined to src/platform/ capability wrappers
-// (./index.ts — importing @capacitor/core CREATES window.Capacitor on the
-// web, so the platform check must come first and the plugin handle is built
-// lazily).
-import { registerPlugin } from '@capacitor/core';
+// Resolving THE discovery host (src/discovery/hostContract.ts) — the one
+// place that knows which shell is answering, so the page itself never asks
+// "which platform am I on":
+// - a shell that can inject (the Electron preload; entry.tsx's dev mock)
+//   provides `window.discoveryHostApi` directly, and it wins;
+// - the Android shell answers through the DiscoveryHost Capacitor plugin
+//   (android/.../DiscoveryHostPlugin.java — NsdManager browse, bounded answer
+//   check, WebView navigation). Adapted here, not in src/discovery, because
+//   @capacitor/* imports stay confined to src/platform/ capability wrappers
+//   (./index.ts — importing @capacitor/core CREATES window.Capacitor on the
+//   web, so the platform check comes first and the module is imported lazily
+//   INSIDE the function, the readServerLog.ts convention);
+// - otherwise there is no host (a plain browser tab): undefined, and the page
+//   states it rather than searching nothing (DiscoveryPage's no-host notice).
 import { isAndroid } from './index';
 import type {
-  ConnectionResult,
-  DesktopHostApi,
-  FrontEndHost,
-} from '../desktop/hostBridge';
+  DiscoveryHostApi,
+  HostInfo,
+  RawAnnouncement,
+} from '../discovery/hostContract';
 
-// The plugin's own wire shape: every Capacitor method returns a promise, and
-// a "null" result is an empty object rather than null.
-type NativeApiPlugin = {
-  startServerDiscovery: () => Promise<void>;
-  discoveredServers: () => Promise<{ servers: FrontEndHost[] }>;
-  connectToServer: (server: FrontEndHost) => Promise<ConnectionResult>;
-  connectedServer: () => Promise<{ server?: FrontEndHost }>;
-  goBackToDiscovery: () => Promise<void>;
+// The plugin's own wire shape: every Capacitor method returns a promise and
+// takes one options object; the adapter below flattens both back to the
+// contract.
+type DiscoveryHostPlugin = {
+  hostInfo: () => Promise<HostInfo>;
+  startDiscovery: () => Promise<void>;
+  announcements: () => Promise<{ announcements: RawAnnouncement[] }>;
+  probe: (options: {
+    url: string;
+    timeoutMs: number;
+  }) => Promise<{ answered: boolean }>;
+  navigate: (options: { url: string }) => Promise<void>;
 };
 
-let plugin: NativeApiPlugin | undefined;
-const nativeApi = (): NativeApiPlugin =>
-  (plugin ??= registerPlugin<NativeApiPlugin>('NativeApi'));
+let plugin: DiscoveryHostPlugin | undefined;
 
-/** The desktop-host contract, answered by the Android shell — undefined
- * anywhere but the Android app (a browser tab, the electron shell, node). */
-export const androidDesktopHost = (): DesktopHostApi | undefined =>
-  !isAndroid()
-    ? undefined
-    : {
-        startServerDiscovery: () => void nativeApi().startServerDiscovery(),
-        discoveredServers: () => nativeApi().discoveredServers(),
-        connectToServer: server => nativeApi().connectToServer(server),
-        connectedServer: async () =>
-          (await nativeApi().connectedServer()).server ?? null,
-        goBackToDiscovery: () => void nativeApi().goBackToDiscovery(),
-      };
+export const getDiscoveryHost = async (): Promise<
+  DiscoveryHostApi | undefined
+> => {
+  if (typeof window === 'undefined') return undefined;
+  if (window.discoveryHostApi) return window.discoveryHostApi;
+  if (!isAndroid()) return undefined;
+  if (!plugin) {
+    const { registerPlugin } = await import('@capacitor/core');
+    plugin = registerPlugin<DiscoveryHostPlugin>('DiscoveryHost');
+  }
+  const p = plugin;
+  return {
+    hostInfo: () => p.hostInfo(),
+    startDiscovery: () => void p.startDiscovery(),
+    announcements: () => p.announcements(),
+    probe: async (url, timeoutMs) => (await p.probe({ url, timeoutMs })).answered,
+    navigate: url => void p.navigate({ url }),
+  };
+};
