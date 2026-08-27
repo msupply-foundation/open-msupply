@@ -87,9 +87,6 @@ impl<'a> TemperatureBreachConfigRepository<'a> {
         }
 
         let result = query
-            // Stable tiebreaker so paginated results don't shuffle or drop rows
-            // when the primary sort column has ties.
-            .then_order_by(temperature_breach_config::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
             .load::<TemperatureBreachConfigRow>(self.connection.lock().connection())?;

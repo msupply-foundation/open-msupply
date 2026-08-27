@@ -73,9 +73,6 @@ impl<'a> ReasonOptionRepository<'a> {
         }
 
         let result = query
-            // Stable tiebreaker so paginated results don't shuffle or drop rows
-            // when the primary sort column has ties.
-            .then_order_by(reason_option::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
             .load::<ReasonOptionRow>(self.connection.lock().connection())?;
