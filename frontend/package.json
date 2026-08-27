@@ -7,7 +7,6 @@
   "scripts": {
     "dev": "concurrently -k -n vite,css-types -c auto \"vite\" \"tcm --watch --pattern '**/*.module.css' src\"",
     "build": "tcm --pattern '**/*.module.css' src && tsc -b && vite build",
-    "build:discovery": "tcm --pattern '**/*.module.css' src && tsc -b && vite build --config vite.discovery.config.ts",
     "build:showcase": "tcm --pattern '**/*.module.css' src && tsc -b && vite build --config vite.showcase.config.ts",
     "build:plugins": "node scripts/build-plugins.mjs",
     "electron": "pnpm build:discovery && electron desktop/main.cjs",
