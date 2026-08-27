@@ -7,11 +7,11 @@ mod add_prescription_request_status_processor_cursor_pg_enum;
 mod add_prescription_request_tables;
 mod seed_prescription_request_status_processor_cursor;
 
-pub(crate) struct V3_01_01;
+pub(crate) struct V3_02_00;
 
-impl Migration for V3_01_01 {
+impl Migration for V3_02_00 {
     fn version(&self) -> Version {
-        Version::from_str("3.01.1")
+        Version::from_str("3.02.0")
     }
 
     fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
@@ -32,14 +32,14 @@ impl Migration for V3_01_01 {
 #[cfg(test)]
 mod test {
     #[actix_rt::test]
-    async fn migration_3_01_01() {
+    async fn migration_3_02_00() {
         use crate::migrations::*;
         use crate::test_db::*;
         use v3_00_00::V3_00_00;
-        use v3_01_01::V3_01_01;
+        use v3_02_00::V3_02_00;
 
         let previous_version = V3_00_00.version();
-        let version = V3_01_01.version();
+        let version = V3_02_00.version();
 
         let SetupResult { connection, .. } = setup_test(SetupOption {
             db_name: &format!("migration_{version}"),

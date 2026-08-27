@@ -1,7 +1,6 @@
 use repository::{
-    InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRowRepository,
-    ItemRowRepository, PrescriptionRequestLineRow, PrescriptionRequestRow, RepositoryError,
-    StorageConnection,
+    InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, ItemRowRepository,
+    PrescriptionRequestLineRow, PrescriptionRequestRow, RepositoryError, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -33,19 +32,13 @@ pub(crate) fn create_dispensation(
             // clinician_link_id.id == clinician.id by convention (same as name_link)
             clinician_id: request.clinician_link_id.clone(),
             prescription_date: Some(request.prescription_datetime),
+            // Links the dispensation back to its source request
+            prescription_request_id: Some(request.id.clone()),
         },
     )
     .map_err(|error| {
         UpdatePrescriptionRequestError::CreatedDispensationError(format!("{:?}", error))
     })?;
-
-    // Link the dispensation back to its source request
-    let invoice_repo = InvoiceRowRepository::new(connection);
-    let mut invoice = invoice_repo
-        .find_one_by_id(&invoice_id)?
-        .ok_or(RepositoryError::NotFound)?;
-    invoice.prescription_request_id = Some(request.id.clone());
-    invoice_repo.upsert_one(&invoice)?;
 
     // One unallocated line per prescribed item (same shape the dispensing
     // module's set_prescribed_quantity creates), plus the directions note.
