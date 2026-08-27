@@ -1,18 +1,19 @@
 #!/usr/bin/env bash
-# Package the desktop shell + the built discovery page into a distributable
-# app (spec/desktop; the shell itself is desktop/ — see src/desktop/README.md
-# for the shell/page contract). Layout for @electron/packager: desktop/ is the
-# app dir; the discovery bundle is copied beside main.cjs (which prefers the
-# sibling copy over the repo-level dev build), and the shell's one runtime
-# dependency is installed flat with npm (a pnpm symlink tree doesn't survive
-# packaging).
+# Package the desktop shell + the discovery page's slice of the app build
+# into a distributable app (spec/desktop; the shell itself is desktop/ — see
+# src/discovery/README.md for the host/page contract). Layout for
+# @electron/packager: desktop/ is the app dir; the page's transitive files
+# are pruned out of dist/ to a directory beside main.cjs (which prefers the
+# sibling copy over the repo-level dev build) — the installer carries the
+# page, not the product — and the shell's one runtime dependency is installed
+# flat with npm (a pnpm symlink tree doesn't survive packaging).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-[ -d dist-discovery ] || { echo "dist-discovery/ missing — run pnpm build:discovery first" >&2; exit 1; }
+[ -f dist/.vite/manifest.json ] || { echo "dist/ missing or built without a manifest — run pnpm build first" >&2; exit 1; }
 
 rm -rf desktop/dist-discovery desktop/node_modules
-cp -R dist-discovery desktop/dist-discovery
+node scripts/prune-discovery-dist.mjs dist desktop/dist-discovery
 npm install --prefix desktop --omit=dev --no-audit --no-fund --loglevel=error
 
 pnpm exec electron-packager desktop "Open mSupply" \

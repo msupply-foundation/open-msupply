@@ -1,12 +1,14 @@
-// The shell half of the host bridge (src/desktop/hostBridge.ts): expose the
-// typed surface the discovery page drives. Channel names match the current
-// product shell's preload so the two stay one recognisable contract.
+// The shell half of the discovery host contract
+// (src/discovery/hostContract.ts): expose the primitive surface the page
+// drives. Nothing here decides anything — facts and capabilities cross the
+// bridge, policy stays in the page.
 const { contextBridge, ipcRenderer } = require('electron');
 
-contextBridge.exposeInMainWorld('electronNativeAPI', {
-  startServerDiscovery: () => ipcRenderer.send('start-server-discovery'),
-  discoveredServers: () => ipcRenderer.invoke('discovered-servers'),
-  connectToServer: server => ipcRenderer.invoke('connect-to-server', server),
-  connectedServer: () => ipcRenderer.invoke('connected-server'),
-  goBackToDiscovery: () => ipcRenderer.send('go-back-to-discovery'),
+contextBridge.exposeInMainWorld('discoveryHostApi', {
+  hostInfo: () => ipcRenderer.invoke('discovery:host-info'),
+  startDiscovery: () => ipcRenderer.send('discovery:start'),
+  announcements: () => ipcRenderer.invoke('discovery:announcements'),
+  probe: (url, timeoutMs) =>
+    ipcRenderer.invoke('discovery:probe', url, timeoutMs),
+  navigate: url => ipcRenderer.send('discovery:navigate', url),
 });
