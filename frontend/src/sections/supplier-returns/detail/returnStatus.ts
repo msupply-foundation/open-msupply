@@ -20,6 +20,29 @@ export const STATUS_FLOW = [
   'VERIFIED',
 ] as const;
 
+// Whether the return has actually taken stock off the shelf. Issuing happens on
+// reaching PICKED (rules § what issuing does), so only NEW holds none.
+const hasIssuedStock = (status: string): boolean => status !== 'NEW';
+
+// Whether DELETING the return would put that stock back, which is what the
+// delete confirmation says (rules § deleting an issued return restores its
+// stock).
+//
+// Having issued is not enough. A stock-OUT record's delete window closes at
+// PICKED: the server admits New/Allocated/Picked only (server
+// invoice/supplier_return/delete/validate.rs → check_invoice_is_editable), so a
+// SHIPPED, RECEIVED or VERIFIED return is refused outright and its stock stays
+// where it is. Promising it back would describe an outcome that cannot happen;
+// the user meets the finalised refusal instead. Nor is this a gate: delete stays
+// offered and submitted (issue #1134); the status only picks the copy.
+//
+// So this comes out as PICKED alone — a narrower window than the stock-in twins,
+// which stay deletable until VERIFIED.
+const DELETABLE = ['NEW', 'ALLOCATED', 'PICKED'];
+
+export const deleteRestoresStock = (status: string): boolean =>
+  hasIssuedStock(status) && DELETABLE.includes(status);
+
 export const statusIndex = (status: ReturnStatus): number =>
   (STATUS_FLOW as readonly string[]).indexOf(status);
 

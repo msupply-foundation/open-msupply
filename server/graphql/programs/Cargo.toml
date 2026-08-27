@@ -1,0 +1,37 @@
+[package]
+name = "graphql_programs"
+version = "0.1.0"
+edition = "2018"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+
+repository = { path = "../../repository" }
+service = { path = "../../service" }
+util = { path = "../../util" }
+graphql_core = { path = "../core" }
+graphql_types = { path = "../types" }
+
+actix-web = { workspace = true }
+anymap = { workspace = true }
+async-graphql = { workspace = true }
+async-graphql-actix-web = { workspace = true }
+async-trait = { workspace = true }
+chrono = { workspace = true }
+log = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+[dev-dependencies]
+actix-rt = { workspace = true }
+assert-json-diff = { workspace = true }
+
+
+[features]
+default = ["repository/sqlite"]
+postgres = ["repository/postgres"]
+
+[lints]
+workspace = true

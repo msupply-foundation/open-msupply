@@ -1,0 +1,1091 @@
+use anyhow::anyhow;
+use chrono::Utc;
+use clap::{ArgAction, Parser};
+use colored::Colorize;
+use graphql::{Mutations, OperationalSchema, Queries, Subscriptions};
+use log::info;
+
+use report_builder::{
+    print::{generate_report_inner, Config, ReportGenerateData},
+    Format,
+};
+use repository::{
+    get_storage_connection_manager,
+    migrations::{migrate, MigrationConfig},
+    schema_from_row, test_db, ContextType, EqualFilter, FormSchemaRow, FormSchemaRowRepository,
+    KeyType, KeyValueStoreRepository, ReportFilter, ReportRepository, ReportRow,
+    ReportRowRepository, StringFilter, SyncBufferRepository, SyncBufferRowInsert, SyncVersion,
+};
+use serde::{Deserialize, Serialize};
+use server::{configuration, logging_init};
+use service::{
+    apis::login_v4::LoginUserInfoV4,
+    auth_data::AuthData,
+    login::{LoginInput, LoginService},
+    plugin::validation::sign_plugin,
+    service_provider::{ServiceContext, ServiceProvider},
+    session_store::SessionStore,
+    settings::Settings,
+    standard_reports::{ReportData, ReportsData, StandardReports},
+    sync::{
+        file_sync_driver::FileSyncDriver, settings::SyncSettings, sync_status::logger::SyncLogger,
+        synchroniser::integrate_and_translate_sync_buffer, synchroniser_driver::SynchroniserDriver,
+    },
+    sync_v7::{
+        synchroniser::SynchroniserV7,
+        validate_translate_integrate::integrate_pending_sync_buffer_v7,
+    },
+};
+use std::{
+    env::current_dir,
+    ffi::OsStr,
+    fs,
+    path::{Path, PathBuf},
+    process::Command,
+    sync::{Arc, RwLock},
+};
+use tokio::task::spawn_blocking;
+
+mod backup;
+use backup::*;
+
+mod reintegrate_buffer;
+use reintegrate_buffer::reintegrate_buffer;
+
+#[cfg(feature = "integration_test")]
+use cli::LoadTest;
+use cli::{
+    all_tests, generate_and_install_plugin_bundle, generate_plugin_bundle,
+    generate_plugin_typescript_types, generate_report_data, generate_reports_recursive,
+    install_plugin_bundle, list_installed_plugins, uninstall_plugin,
+    GenerateAndInstallPluginBundle, GeneratePluginBundle, InstallPluginBundle,
+    ListInstalledPlugins, RefreshDatesRepository, ReportError, SyncThroughputCsv, TestCredentials,
+    TestData, UninstallPlugin,
+};
+
+const DATA_EXPORT_FOLDER: &str = "data";
+
+/// omSupply remote server cli
+#[derive(clap::Parser)]
+#[clap(version, about)]
+struct Args {
+    #[clap(subcommand)]
+    action: Action,
+
+    #[clap(flatten)]
+    config_args: configuration::ConfigArgs,
+}
+
+#[derive(clap::Subcommand)]
+enum Action {
+    /// Export graphql schema
+    ExportGraphqlSchema {
+        #[clap(short, long)]
+        path: Option<PathBuf>,
+    },
+    /// Initialise empty database (existing database will be dropped, and new one created and migrated)
+    InitialiseDatabase,
+    /// Apply any pending migrations to the database, drop and build views
+    Migrate,
+    /// Initialise from running mSupply server (uses configuration/.*yaml for sync credentials), drops existing database, creates new database with latest schema and initialises (syncs) initial data from central server (including users)
+    /// Can use env variables to override .yaml configurations, i.e. to override sync username `APP_SYNC__USERNAME='demo' remote_server_cli initialise-from-central -u "user1:user1password,user2:user2password" -p "sync_site_password"
+    InitialiseFromCentral {
+        /// Users to sync, in format "username:password,username2:password2"
+        #[clap(short, long)]
+        users: String,
+    },
+    /// Export initialisation data from running mSupply server (uses configuration/.*yaml for sync credentials).
+    /// Can use env variables to override .yaml configurations, i.e. to override sync username `APP_SYNC__USERNAME='demo' remote_server_cli export-initialisation -u "user1:user1password,user2:user2password" -n "demoexport"
+    /// IMPORTANT: Should not be used on large data files
+    ExportInitialisation {
+        /// Name for export of initialisation data (will be saved inside `data` folder)
+        #[clap(short, long)]
+        name: String,
+        /// Users to sync in format "username:password,username2:password2"
+        #[clap(short, long)]
+        users: String,
+        /// Prettify json output
+        #[clap(long, action = ArgAction::SetTrue)]
+        pretty: bool,
+    },
+    /// Initialise from OMS central server via sync v7 (uses configuration/.*yaml for sync credentials), drops existing database,
+    /// creates new database with latest schema and initialises (syncs) initial data from central server.
+    /// Unlike the v5/v6 variant no users are needed — user accounts, store joins and permissions sync as regular v7 records.
+    InitialiseFromCentralV7,
+    /// Export initialisation data pulled from OMS central server via sync v7 (uses configuration/.*yaml for sync credentials).
+    /// Unlike the v5/v6 variant no users are needed — user accounts sync as regular v7 records and end up in the exported sync buffer.
+    /// IMPORTANT: Should not be used on large data files
+    ExportInitialisationV7 {
+        /// Name for export of initialisation data (will be saved inside `data` folder)
+        #[clap(short, long)]
+        name: String,
+        /// Prettify json output
+        #[clap(long, action = ArgAction::SetTrue)]
+        pretty: bool,
+    },
+    /// Initialise database from exported data), drops existing database, creates new database with latest schema and initialises (syncs) from exported file, also disabling sync to avoid initialised data syncing to any server
+    InitialiseFromExport {
+        /// Name for import of initialisation data (from `data` folder)
+        #[clap(short, long)]
+        name: String,
+        /// Refresh dates (see refresh-dates --help)
+        #[clap(short, long, action = ArgAction::SetTrue)]
+        refresh: bool,
+    },
+    /// Make data current, based on the difference between the latest date to the current date (takes the latest datetime out of all datetimes, compares to now and adjust all dates and datetimes by the difference)
+    /// This process also disables sync to avoid refreshed data syncing, unless you use the `--enable-sync` flag
+    RefreshDates {
+        /// Enable sync after refresh, by default the sync is disabled after refreshing
+        #[clap(short, long, action = ArgAction::SetTrue)]
+        enable_sync: bool,
+    },
+
+    SignPlugin {
+        /// Path to the plugin.
+        /// The plugin manifest and signature will be placed into the plugin directory
+        #[clap(short, long)]
+        path: String,
+
+        /// Path to the private key file for signing the plugin
+        #[clap(short, long)]
+        key: String,
+
+        /// Path to the certificate file matching the private key
+        #[clap(short, long)]
+        cert: String,
+    },
+    /// Helper tool to upsert report to local omSupply instance, helpful when developing reports, especially with argument schema
+    UpsertReport {
+        /// Report id (any user defined id)
+        #[clap(short, long)]
+        id: String,
+
+        /// Path to the report
+        #[clap(short, long)]
+        report_path: PathBuf,
+
+        /// Path to the arguments json form schema
+        #[clap(long)]
+        arguments_path: Option<PathBuf>,
+
+        /// Path to the arguments json form UI schema
+        #[clap(long)]
+        arguments_ui_path: Option<PathBuf>,
+
+        /// Path to the excel template
+        #[clap(long)]
+        excel_template_path: Option<PathBuf>,
+
+        /// Report name
+        #[clap(short, long)]
+        name: String,
+
+        /// Report type/context
+        #[clap(short, long)]
+        context: ContextType,
+
+        /// Report sub context
+        #[clap(short, long)]
+        sub_context: Option<String>,
+    },
+    /// Will back up database to a generated folder (the name of which will be returned).
+    /// Folder will be generated in the backup directory specified by configuration file.
+    /// User can specify max number of backup to keep, see example configuration file
+    Backup,
+    Restore(RestoreArguments),
+    BuildReports {
+        /// Optional reports path. If supplied, this dir should be the same structure as per standard reports.
+        /// Will generate a json of all reports within this directory
+        #[clap(short, long, num_args=0..)]
+        path: Option<Vec<PathBuf>>,
+    },
+    /// Will generate a plugin bundle
+    GeneratePluginBundle(GeneratePluginBundle),
+    /// Will insert generated plugin bundle
+    InstallPluginBundle(InstallPluginBundle),
+    /// Will generate and then install  plugin bundle
+    GenerateAndInstallPluginBundle(GenerateAndInstallPluginBundle),
+    /// Uninstall a single plugin row by id (use list-installed-plugins to discover ids)
+    UninstallPlugin(UninstallPlugin),
+    /// List installed plugins as JSON (stdout)
+    ListInstalledPlugins(ListInstalledPlugins),
+    UpsertReports {
+        /// Optional reports json path. This needs to be of type ReportsData. If none supplied, will upload the standard generated reports
+        #[clap(short, long, num_args=0..)]
+        path: Option<Vec<PathBuf>>,
+
+        /// Overwrite any pre-existing reports
+        #[clap(short, long, action = ArgAction::SetTrue)]
+        overwrite: bool,
+    },
+    /// Reload and overwrite the embedded reports
+    ReloadEmbeddedReports,
+    ShowReport {
+        /// Path to report source files which will be built and displayed
+        #[clap(short, long)]
+        path: PathBuf,
+        /// Optional
+        /// Path to dir containing test-config.json file
+        #[clap(short, long)]
+        config: Option<PathBuf>,
+        /// Output format
+        #[clap(long)]
+        format: Option<Format>,
+    },
+    /// Enable or disable a report in the database.
+    ToggleReport {
+        /// Code of the report to toggle
+        #[clap(short, long)]
+        code: String,
+
+        /// Filter by custom status
+        #[clap(short, long)]
+        is_custom: Option<bool>,
+
+        /// Set is_enabled to true
+        #[clap(short, long, action = ArgAction::SetTrue, conflicts_with="disable")]
+        enable: bool,
+
+        /// Set is_enabled to false
+        #[clap(short, long, action = ArgAction::SetTrue, conflicts_with="enable")]
+        disable: bool,
+    },
+    /// Test connectivity to configured services (config, database, ping, sync, mail)
+    TestConnection {
+        /// Username for the login test
+        #[clap(short, long)]
+        username: Option<String>,
+        /// Password for the login test
+        #[clap(short, long)]
+        password: Option<String>,
+        /// Log level for the tests, by default set to off to avoid noisy console logging
+        #[clap(short, default_value = "off")]
+        log_level: log::LevelFilter,
+    },
+    #[cfg(feature = "integration_test")]
+    LoadTest(LoadTest),
+    /// Aggregate sync_v7 push/pull throughput from a central server's log file(s) into a CSV,
+    /// bucketing records into fixed-width time windows (default 5 seconds). Works on any logs
+    /// captured at level Info (or lower) to file, not only on load test output.
+    SyncThroughputCsv(SyncThroughputCsv),
+    GeneratePluginTypescriptTypes {
+        /// Optional path to save typescript types, if not provided will save to `../client/packages/plugins/backendCommon/generated`
+        #[clap(
+            short,
+            long,
+            default_value = "../client/packages/plugins/backendCommon/generated"
+        )]
+        path: PathBuf,
+        /// Run prettier on the generated typescript files
+        #[clap(long, short, default_value = "false")]
+        skip_prettify: bool,
+    },
+    /// Re-run sync buffer integration against the sync_buffer already in the database.
+    /// Resets the buffer's integration state, then re-runs translate + integrate.
+    /// Useful for re-processing already-pulled records after fixing a translator, or for
+    /// replaying a `sync_buffer` dump loaded into a database.
+    ReintegrateBuffer {
+        /// Source site id whose records to integrate (V5/V6 buffer rows for this site).
+        #[clap(short, long, default_value = "1")]
+        source_site_id: i32,
+        /// Wrap integration in a transaction (outer batch + per-record sub-transactions).
+        /// Off by default for speed; turn on to integrate the whole batch atomically.
+        #[clap(short, long)]
+        use_transaction: bool,
+        /// Run pending database migrations before reintegrating.
+        #[clap(short, long)]
+        migrate: bool,
+        /// Skip resetting the buffer's integration state — re-run integration against the
+        /// buffer as it already is (e.g. to only retry rows that are still pending).
+        #[clap(long)]
+        skip_buffer_reset: bool,
+        /// Only reintegrate records that previously errored: the buffer reset clears integration
+        /// state for rows with an integration_error (excluding deliberately-ignored rows) and
+        /// leaves successfully-integrated rows alone. Errored rows are integrated (not pending),
+        /// so this requires a reset — it conflicts with --skip-buffer-reset.
+        #[clap(short, long, conflicts_with = "skip_buffer_reset")]
+        errors_only: bool,
+        /// Restrict integration to these sync buffer tables (comma-separated, matched against
+        /// `sync_buffer.table_name`, e.g. `--tables item,name`). Defaults to all tables.
+        /// Diagnostic use only — scoping can skip rows the chosen tables depend on.
+        #[clap(long, value_delimiter = ',')]
+        tables: Vec<String>,
+    },
+}
+
+#[derive(Serialize, Deserialize)]
+struct InitialisationData {
+    sync_buffer_rows: Vec<repository::SyncBufferRow>,
+    #[serde(default)]
+    users: Vec<(LoginInput, LoginUserInfoV4)>,
+    site_id: i32,
+    /// Which sync transport produced this export. Defaults to V5_V6 so that export files
+    /// created before this field existed keep loading.
+    #[serde(default)]
+    sync_version: SyncVersion,
+    /// The central server's site id — v7 buffer rows are stamped with it as `source_site_id`
+    /// and v7 integration filters on it. Only present in v7 exports.
+    #[serde(default)]
+    central_site_id: Option<i32>,
+}
+
+async fn initialise_from_central(
+    settings: Settings,
+    users: &str,
+) -> anyhow::Result<(Arc<ServiceProvider>, ServiceContext)> {
+    info!("Reseting database");
+    test_db::setup(&settings.database).await;
+    info!("Finished database reset");
+
+    let connection_manager = get_storage_connection_manager(&settings.database);
+    let service_provider = Arc::new(ServiceProvider::new(connection_manager.clone()));
+
+    let sync_settings = settings
+        .clone()
+        .sync
+        .filter(|s| s.has_core_sync_settings())
+        .ok_or(anyhow!("sync settings not set in yaml configurations"))?;
+    let central_server_url = sync_settings.url.clone();
+
+    let auth_data = AuthData {
+        session_store: Arc::new(RwLock::new(SessionStore::new())),
+        cookie_suffix: "cli".to_string(),
+        no_ssl: true,
+        debug_no_access_control: false,
+    };
+
+    let service_context = service_provider.basic_context()?;
+    info!("Initialising from central");
+    service_provider
+        .site_auth_service
+        .request_and_set_site_auth(&service_provider, &sync_settings)
+        .await?;
+    service_provider
+        .settings
+        .update_sync_settings(&service_context, &sync_settings)?;
+
+    // file_sync_trigger is not used here, but easier to just create it rather than making file sync trigger optional
+    let (file_sync_trigger, _file_sync_driver) = FileSyncDriver::init(&settings);
+    let (_, sync_driver) = SynchroniserDriver::init(file_sync_trigger);
+    sync_driver.sync(service_provider.clone()).await;
+
+    info!("Syncing users");
+    for user in users.split(',') {
+        let user = user.split(':').collect::<Vec<&str>>();
+        let input = LoginInput {
+            username: user[0].to_string(),
+            password: user[1].to_string(),
+            central_server_url: central_server_url.clone(),
+        };
+        LoginService::login(&service_provider, &auth_data, input.clone(), 0)
+            .await
+            .map_err(|_| anyhow!("Cannot login with user {input:?}"))?;
+    }
+    info!("Initialisation finished");
+    Ok((service_provider, service_context))
+}
+
+/// V7 counterpart of [`initialise_from_central`]. No user syncing step: with v7, user
+/// accounts (including password hashes), store joins and permissions arrive with the
+/// initial pull like any other record.
+async fn initialise_from_central_v7(
+    settings: Settings,
+) -> anyhow::Result<(Arc<ServiceProvider>, ServiceContext)> {
+    info!("Reseting database");
+    test_db::setup(&settings.database).await;
+    info!("Finished database reset");
+
+    let connection_manager = get_storage_connection_manager(&settings.database);
+    let service_provider = Arc::new(ServiceProvider::new(connection_manager.clone()));
+
+    let sync_settings = settings
+        .clone()
+        .sync
+        .filter(|s| s.has_core_sync_settings())
+        .ok_or(anyhow!("sync settings not set in yaml configurations"))?;
+
+    let service_context = service_provider.basic_context()?;
+    // A fresh database defaults to the v5/v6 transport — select v7 before requesting site
+    // auth and syncing, both dispatch on the stored SyncVersion.
+    SyncVersion::set(&service_context.connection, SyncVersion::V7)?;
+
+    info!("Initialising from central (sync v7)");
+    service_provider
+        .site_auth_service
+        .request_and_set_site_auth(&service_provider, &sync_settings)
+        .await?;
+    service_provider
+        .settings
+        .update_sync_settings(&service_context, &sync_settings)?;
+
+    SynchroniserV7::new(sync_settings, service_provider.clone())
+        .sync()
+        .await
+        .map_err(|e| anyhow!("V7 sync failed: {e:?}"))?;
+
+    // The v7 synchroniser writes the sync log's 'done' (finished_datetime) itself on success —
+    // the server relies on that log to start as initialised, so verify rather than assume.
+    if !service_provider
+        .sync_status_service
+        .is_initialised(&service_context)?
+    {
+        return Err(anyhow!(
+            "V7 sync finished but site is not reported as initialised (no successful sync_log_v7 entry)"
+        ));
+    }
+
+    info!("Initialisation finished");
+    Ok((service_provider, service_context))
+}
+
+fn set_server_is_initialised(ctx: &ServiceContext) -> anyhow::Result<()> {
+    SyncLogger::start(&ctx.connection)?.done()?;
+    Ok(())
+}
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    let args = Args::parse();
+
+    let settings: Settings =
+        configuration::get_configuration(args.config_args).expect("Problem loading configurations");
+
+    let log_level = settings.logging.clone().map(|l| l.level);
+
+    // Initialise logger with default config (i.e. to console), don't want CLI errors logging to
+    // runtime log file, but respect the configured log level
+    logging_init(None, log_level);
+
+    match args.action {
+        Action::ExportGraphqlSchema { path } => {
+            info!("Exporting graphql schema");
+            let schema = OperationalSchema::build(
+                Queries::new(),
+                Mutations::new(),
+                Subscriptions::default(),
+            )
+            .finish();
+            fs::write(
+                path.unwrap_or(PathBuf::from("schema.graphql")),
+                schema.sdl(),
+            )?;
+            info!("Schema exported in schema.graphql");
+        }
+        Action::InitialiseDatabase => {
+            info!("Resetting database");
+            test_db::setup(&settings.database).await;
+            info!("Finished database reset");
+        }
+        Action::Migrate => {
+            info!("Applying database migrations");
+            let connection_manager = get_storage_connection_manager(&settings.database);
+            if let Some(init_sql) = &settings.database.startup_sql() {
+                connection_manager.execute(init_sql).unwrap();
+            }
+            let migration_config = MigrationConfig {
+                changelog_partition: settings
+                    .changelog_partition
+                    .clone()
+                    .unwrap_or_default()
+                    .to_migration_config(),
+            };
+            migrate(
+                &connection_manager.connection().unwrap(),
+                None,
+                migration_config,
+            )
+            .expect("Failed to run DB migrations");
+
+            info!("Finished applying database migrations");
+        }
+        Action::ReintegrateBuffer {
+            source_site_id,
+            use_transaction,
+            migrate: should_migrate,
+            skip_buffer_reset,
+            errors_only,
+            tables,
+        } => {
+            reintegrate_buffer(
+                &settings,
+                source_site_id,
+                use_transaction,
+                should_migrate,
+                skip_buffer_reset,
+                errors_only,
+                // empty `--tables` means no scoping (integrate everything)
+                (!tables.is_empty()).then_some(tables),
+            )?;
+        }
+        Action::InitialiseFromCentral { users } => {
+            initialise_from_central(settings, &users).await?;
+        }
+        Action::InitialiseFromCentralV7 => {
+            initialise_from_central_v7(settings).await?;
+        }
+        Action::ExportInitialisationV7 { name, pretty } => {
+            let (service_provider, ctx) = initialise_from_central_v7(settings).await?;
+
+            let central_site_id = KeyValueStoreRepository::new(&ctx.connection)
+                .get_i32(KeyType::SettingsSyncCentralServerSiteId)?
+                .ok_or(anyhow!(
+                    "Central server site id not set after v7 initialisation"
+                ))?;
+
+            let data = InitialisationData {
+                sync_buffer_rows: SyncBufferRepository::new(&ctx.connection).get_all()?,
+                // No users in a v7 export — user accounts sync as regular records and are
+                // already part of the sync buffer rows above.
+                users: Vec::new(),
+                site_id: service_provider
+                    .site_auth_service
+                    .get_site_id(&ctx)?
+                    .unwrap(),
+                sync_version: SyncVersion::V7,
+                central_site_id: Some(central_site_id),
+            };
+
+            let data_string = if pretty {
+                serde_json::to_string_pretty(&data)
+            } else {
+                serde_json::to_string(&data)
+            }?;
+
+            info!("Saving export");
+            let (folder, export_file, users_file) = export_paths(&name);
+            if fs::create_dir(&folder).is_err() {
+                info!("Export directory already exists, replacing {folder:#?}")
+            };
+            fs::write(export_file, data_string)?;
+            fs::write(
+                users_file,
+                "(v7 export — users sync as part of the data, log in with any user that has access to this site)",
+            )?;
+            info!("Export saved in {}", folder.to_str().unwrap());
+        }
+        Action::ExportInitialisation {
+            name,
+            users,
+            pretty,
+        } => {
+            let url = settings
+                .sync
+                .clone()
+                .filter(|s| s.has_core_sync_settings())
+                .ok_or(anyhow!("sync settings not set in yaml configurations"))?
+                .url;
+            let (service_provider, ctx) = initialise_from_central(settings, &users).await?;
+
+            info!("Syncing users");
+            let mut synced_user_info_rows = Vec::new();
+            for user in users.split(',') {
+                let user = user.split(':').collect::<Vec<&str>>();
+                let input = LoginInput {
+                    username: user[0].to_string(),
+                    password: user[1].to_string(),
+                    central_server_url: url.to_string(),
+                };
+                synced_user_info_rows.push((
+                    input.clone(),
+                    LoginService::fetch_user_from_central(&service_provider.clone(), &input)
+                        .await
+                        .unwrap_or_else(|_| panic!("Cannot find user {:?}", input)),
+                ));
+            }
+
+            let data = InitialisationData {
+                // Sync Buffer Rows
+                sync_buffer_rows: SyncBufferRepository::new(&ctx.connection).get_all()?,
+                users: synced_user_info_rows,
+                site_id: service_provider
+                    .site_auth_service
+                    .get_site_id(&ctx)?
+                    .unwrap(),
+                sync_version: SyncVersion::V5V6,
+                central_site_id: None,
+            };
+
+            let data_string = if pretty {
+                serde_json::to_string_pretty(&data)
+            } else {
+                serde_json::to_string(&data)
+            }?;
+
+            info!("Saving export");
+            let (folder, export_file, users_file) = export_paths(&name);
+            if fs::create_dir(&folder).is_err() {
+                info!("Export directory already exists, replacing {folder:#?}")
+            };
+            fs::write(export_file, data_string)?;
+            fs::write(users_file, users)?;
+            info!("Export saved in {}", folder.to_str().unwrap());
+        }
+        Action::InitialiseFromExport { name, refresh } => {
+            test_db::setup(&settings.database).await;
+
+            let connection_manager = get_storage_connection_manager(&settings.database);
+            let service_provider = Arc::new(ServiceProvider::new(connection_manager.clone()));
+            let ctx = service_provider.basic_context()?;
+
+            let (_, import_file, users_file) = export_paths(&name);
+
+            info!("Initialising from {}", import_file.to_str().unwrap());
+
+            let data: InitialisationData = serde_json::from_slice(&fs::read(import_file)?)?;
+
+            info!("Integrate sync buffer");
+            // Need to set site_id before integration
+            KeyValueStoreRepository::new(&ctx.connection)
+                .set_i32(KeyType::SettingsSyncSiteId, Some(data.site_id))?;
+            let buffer_repo = SyncBufferRepository::new(&ctx.connection);
+            let buffer_rows: Vec<SyncBufferRowInsert> = data
+                .sync_buffer_rows
+                .into_iter()
+                .map(|mut r| {
+                    // Reset integration state — we want re-init to retry integration
+                    r.integration_started_datetime = None;
+                    r.integration_datetime = None;
+                    r.integration_error = None;
+                    r.integration_result = None;
+                    SyncBufferRowInsert::from(r)
+                })
+                .collect();
+            buffer_repo.insert_many(&buffer_rows)?;
+
+            match data.sync_version {
+                SyncVersion::V5V6 => {
+                    let mut logger = SyncLogger::start(&ctx.connection).unwrap();
+                    integrate_and_translate_sync_buffer(
+                        &ctx.connection,
+                        Some(&mut logger),
+                        0,
+                        true,
+                    )?;
+
+                    info!("Initialising users");
+                    for (input, user_info) in data.users {
+                        LoginService::update_user(&ctx, &input.password, user_info).unwrap();
+                    }
+                }
+                SyncVersion::V7 => {
+                    // Match the exporting site's transport — login and any future sync
+                    // dispatch on the stored SyncVersion.
+                    SyncVersion::set(&ctx.connection, SyncVersion::V7)?;
+                    // v7 buffer rows are stamped with the central server's site id as
+                    // `source_site_id`, and integration filters on it.
+                    let central_site_id = data.central_site_id.ok_or(anyhow!(
+                        "v7 export is missing central_site_id — re-create it with export-initialisation-v7"
+                    ))?;
+                    KeyValueStoreRepository::new(&ctx.connection).set_i32(
+                        KeyType::SettingsSyncCentralServerSiteId,
+                        Some(central_site_id),
+                    )?;
+
+                    integrate_pending_sync_buffer_v7(&ctx.connection, central_site_id)?;
+                    // No user initialisation step — user accounts (with password hashes)
+                    // came through the buffer like any other record.
+                }
+            }
+
+            if refresh {
+                info!("Refreshing dates");
+                let result = RefreshDatesRepository::new(&ctx.connection)
+                    .refresh_dates(Utc::now().naive_utc())?;
+                info!("Refresh data result: {result:#?}");
+            }
+
+            info!("Disabling sync");
+            // Need to store SyncSettings in db to avoid bootstrap mode
+            let service = &service_provider.settings;
+            service.update_sync_settings(
+                &ctx,
+                &SyncSettings {
+                    url: "http://0.0.0.0:0".to_string(),
+                    interval_seconds: 100000000,
+                    username: "Sync is disabled (datafile initialise from file".to_string(),
+                    ..Default::default()
+                },
+            )?;
+            service.disable_sync(&ctx)?;
+
+            // Allows server to start without initialisation or accessing central server
+            set_server_is_initialised(&ctx)?;
+
+            info!(
+                "Initialisation done, available users: {}",
+                fs::read_to_string(users_file)?
+            );
+        }
+        Action::RefreshDates { enable_sync } => {
+            let connection_manager = get_storage_connection_manager(&settings.database);
+            let connection = connection_manager.connection()?;
+
+            info!("Refreshing dates");
+            let result =
+                RefreshDatesRepository::new(&connection).refresh_dates(Utc::now().naive_utc())?;
+
+            let service_provider = Arc::new(ServiceProvider::new(connection_manager.clone()));
+            let ctx = service_provider.basic_context()?;
+            let service = &service_provider.settings;
+
+            if !enable_sync {
+                info!("Disabling sync");
+                service.disable_sync(&ctx)?;
+            }
+
+            info!("Refresh data result: {result:#?}");
+        }
+        Action::SignPlugin { path, key, cert } => sign_plugin(&path, &key, &cert)?,
+        Action::BuildReports { path } => {
+            let dir_list = match path.clone() {
+                Some(path) => path,
+                None => vec![
+                    PathBuf::new().join("../standard_reports"),
+                    PathBuf::new().join("../standard_forms"),
+                ],
+            };
+
+            for base_dir in dir_list {
+                let mut reports_data = ReportsData { reports: vec![] };
+                let ignore_paths = vec![OsStr::new("node_modules")];
+                let manifest_name = OsStr::new("report-manifest.json");
+
+                generate_reports_recursive(
+                    &mut reports_data,
+                    &ignore_paths,
+                    manifest_name,
+                    &base_dir,
+                )?;
+
+                let output_name = if path.is_some() {
+                    "reports.json"
+                } else {
+                    // Name the output after the base_dir
+                    // standard_reports.json and standard_forms.json
+                    &format!("{}.json", base_dir.file_stem().unwrap().to_str().unwrap())
+                };
+
+                let output_path = base_dir.join("generated").join(output_name);
+
+                fs::create_dir_all(output_path.parent().ok_or(anyhow::Error::msg(format!(
+                    "Invalid output path: {output_path:?}"
+                )))?)?;
+
+                fs::write(&output_path, serde_json::to_string_pretty(&reports_data)?).map_err(
+                    |_| {
+                        anyhow::Error::msg(format!(
+                            "Failed to write to {output_path:?}. Does output dir exist?"
+                        ))
+                    },
+                )?;
+
+                if path.is_some() {
+                    info!("All reports built in custom path {:?}", base_dir.display());
+                } else {
+                    info!(
+                        "All standard reports built in path {:?}",
+                        base_dir.display()
+                    )
+                };
+            }
+        }
+        Action::UpsertReports { path, overwrite } => {
+            let standard_reports_dir = Path::new("../standard_reports")
+                .join("generated")
+                .join("standard_reports.json");
+            let standard_forms_dir = Path::new("../standard_forms")
+                .join("generated")
+                .join("standard_forms.json");
+
+            let file_list = match path {
+                Some(path) => path,
+                None => vec![standard_reports_dir, standard_forms_dir],
+            };
+
+            let connection_manager = get_storage_connection_manager(&settings.database);
+            let con = connection_manager.connection()?;
+
+            for file_path in file_list {
+                let json_file = fs::File::open(file_path.clone())
+                    .unwrap_or_else(|_| panic!("{} not found for report", file_path.display()));
+                let reports_data: ReportsData = serde_json::from_reader(json_file)
+                    .expect("json incorrectly formatted for report");
+
+                StandardReports::upsert_reports(reports_data, &con, overwrite)?;
+            }
+        }
+        // TODO fix these inputs. Should extract these fields from the report manifest
+        // also not necessarily custom / version 1.0 etc.
+        // Command currently unsafe.
+        Action::UpsertReport {
+            id,
+            report_path,
+            arguments_path,
+            arguments_ui_path,
+            name,
+            context,
+            sub_context,
+            excel_template_path,
+        } => {
+            let connection_manager = get_storage_connection_manager(&settings.database);
+            let con = connection_manager.connection()?;
+
+            let filter = ReportFilter::new().id(EqualFilter::equal_to(id.to_string()));
+            let existing_report = ReportRepository::new(&con).query_by_filter(filter)?.pop();
+
+            let argument_schema_id =
+                existing_report.and_then(|r| r.argument_schema.as_ref().map(|r| r.id.clone()));
+
+            let form_schema_json = match (arguments_path, arguments_ui_path) {
+                (Some(_), None) | (None, Some(_)) => {
+                    return Err(anyhow!(
+                        "When arguments path are specified both paths must be present"
+                    ))
+                }
+                (Some(arguments_path), Some(arguments_ui_path)) => {
+                    Some(schema_from_row(FormSchemaRow {
+                        id: argument_schema_id.unwrap_or(format!("for_report_{id}")),
+                        r#type: "reportArgument".to_string(),
+                        json_schema: fs::read_to_string(arguments_path)?,
+                        ui_schema: fs::read_to_string(arguments_ui_path)?,
+                    })?)
+                }
+                (None, None) => None,
+            };
+
+            if let Some(form_schema_json) = &form_schema_json {
+                FormSchemaRowRepository::new(&con).upsert_one(form_schema_json)?;
+            }
+
+            let excel_template_buffer = excel_template_path
+                .map(|path| fs::read(&path))
+                .transpose()?;
+
+            ReportRowRepository::new(&con).upsert_one(&ReportRow {
+                id: id.clone(),
+                name,
+                template: fs::read_to_string(report_path)?,
+                context,
+                sub_context,
+                argument_schema_id: form_schema_json.map(|r| r.id.clone()),
+                comment: None,
+                is_custom: true,
+                version: "1.0".to_string(),
+                code: id,
+                is_active: true,
+                excel_template_buffer,
+            })?;
+
+            info!("Report upserted");
+        }
+        Action::ReloadEmbeddedReports => {
+            let connection_manager = get_storage_connection_manager(&settings.database);
+            let con = connection_manager.connection()?;
+
+            StandardReports::load_reports(&con, true)?;
+        }
+        Action::Backup => {
+            backup(&settings)?;
+        }
+        Action::Restore(arguments) => {
+            restore(&settings, arguments)?;
+        }
+        Action::GeneratePluginBundle(arguments) => {
+            generate_plugin_bundle(arguments)?;
+        }
+        Action::InstallPluginBundle(arguments) => {
+            install_plugin_bundle(arguments).await?;
+        }
+        Action::GenerateAndInstallPluginBundle(arguments) => {
+            generate_and_install_plugin_bundle(arguments).await?;
+        }
+        Action::UninstallPlugin(arguments) => {
+            uninstall_plugin(arguments).await?;
+        }
+        Action::ListInstalledPlugins(arguments) => {
+            list_installed_plugins(arguments).await?;
+        }
+        Action::ShowReport {
+            path,
+            config,
+            format,
+        } => {
+            let report_data: ReportData = generate_report_data(&path)?;
+
+            let report_json =
+                serde_json::to_value(report_data.template).expect("fail to convert report to json");
+
+            let test_config_path = if let Some(config) = config {
+                config
+            } else {
+                Path::new("../standard_reports").to_path_buf()
+            };
+
+            let test_config_file = fs::File::open(test_config_path.join("test-config.json"))
+                .map_err(|e| {
+                    ReportError::CannotOpenTestConfigFile(test_config_path.to_path_buf(), e)
+                })?;
+            let test_config: TestConfig =
+                serde_json::from_reader(test_config_file).map_err(|e| {
+                    ReportError::CannotReadTestConfigFile(test_config_path.clone().to_path_buf(), e)
+                })?;
+
+            let config = Config {
+                url: test_config.url,
+                username: test_config.username,
+                password: test_config.password,
+            };
+
+            let output_name = match &format {
+                Some(Format::Html) | None => {
+                    format!("{}.html", test_config.output_filename.clone())
+                }
+                Some(Format::Excel) => format!("{}.xlsx", test_config.output_filename.clone()),
+                Some(_) => {
+                    return Err(anyhow::Error::msg(
+                        "Format not supported, use html or excel",
+                    ));
+                }
+            };
+
+            let report_generate_data = ReportGenerateData {
+                report: report_json,
+                config,
+                store_id: Some(test_config.store_id),
+                store_name: None,
+                output_filename: Some(output_name.clone()),
+                format: format.unwrap_or(Format::Html),
+                data_id: Some(test_config.data_id),
+                arguments: Some(test_config.arguments),
+                excel_template_buffer: report_data.excel_template_buffer,
+            };
+
+            // spawn blocking used to prevent the following error: "Cannot drop a runtime in a context where blocking is not allowed"
+            spawn_blocking(|| generate_report_inner(report_generate_data))
+                .await?
+                .map_err(|e| ReportError::FailedToGenerateReport(path, e))?;
+
+            let generated_file_path = current_dir()?.join(&output_name);
+            #[cfg(windows)]
+            Command::new("cmd")
+                .args(["/C", "start"])
+                .arg(generated_file_path.clone())
+                .status()
+                .expect(&format!("failed to open file {:?}", generated_file_path));
+            #[cfg(not(windows))]
+            Command::new("open")
+                .arg(generated_file_path.clone())
+                .status()
+                .unwrap_or_else(|_| panic!("{}", "failed to open file {generated_file_path:?}"));
+        }
+        Action::ToggleReport {
+            code,
+            is_custom,
+            enable,
+            disable,
+        } => {
+            let connection_manager = get_storage_connection_manager(&settings.database);
+            let con = connection_manager.connection()?;
+
+            let mut filter = ReportFilter::new().code(StringFilter::equal_to(&code));
+            if let Some(value) = is_custom {
+                filter = filter.is_custom(value);
+            }
+
+            let report_list = ReportRepository::new(&con).query_by_filter(filter)?;
+            let row_repository = ReportRowRepository::new(&con);
+
+            info!("Found {} reports matching code {}", report_list.len(), code);
+
+            for mut report in report_list {
+                let initial_value = report.report_row.is_active;
+                let updated_value = {
+                    if enable {
+                        true
+                    } else if disable {
+                        false
+                    } else {
+                        !report.report_row.is_active
+                    }
+                };
+                report.report_row.is_active = updated_value;
+                row_repository.upsert_one(&report.report_row)?;
+
+                info!(
+                    "{}: {} => {}",
+                    report.report_row.id,
+                    if initial_value { "ACTIVE" } else { "INACTIVE" },
+                    if updated_value { "ACTIVE" } else { "INACTIVE" }
+                );
+            }
+        }
+        Action::GeneratePluginTypescriptTypes {
+            path,
+            skip_prettify,
+        } => {
+            generate_plugin_typescript_types(path, skip_prettify)?;
+        }
+        Action::TestConnection {
+            username,
+            password,
+            log_level,
+        } => {
+            let credentials = TestCredentials {
+                username: username.unwrap_or_default(),
+                password: password.unwrap_or_default(),
+            };
+            let mut test_data = TestData {
+                server_config: None,
+                sync_api_v5: None,
+                credentials,
+            };
+            let tests = all_tests();
+            let current_log_level = log::max_level();
+            // Set log level, defaults to off to suppress noise
+            log::set_max_level(log_level);
+
+            for test in &tests {
+                println!();
+                println!("Running {} test...", test.name());
+                match test.run(&mut test_data).await {
+                    Ok(msg) => println!("{} {}: {}", "[PASS]".green(), test.name(), msg),
+                    Err(err) => {
+                        println!("{} {}: {}", "[FAIL]".red(), test.name(), err);
+                    }
+                }
+            }
+
+            log::set_max_level(current_log_level);
+        }
+        #[cfg(feature = "integration_test")]
+        Action::LoadTest(load_test) => {
+            load_test.run().await?;
+        }
+        Action::SyncThroughputCsv(args) => {
+            args.run()?;
+        }
+    }
+
+    Ok(())
+}
+
+#[derive(serde::Deserialize, Clone)]
+
+pub struct TestConfig {
+    data_id: String,
+    store_id: String,
+    url: String,
+    username: String,
+    password: String,
+    arguments: serde_json::Value,
+    _locale: Option<String>,
+    output_filename: String,
+}
+
+fn export_paths(name: &str) -> (PathBuf, PathBuf, PathBuf) {
+    let export_folder = Path::new(DATA_EXPORT_FOLDER).join(name);
+    let export_file_path = export_folder.join("export.json");
+    let users_file_path = export_folder.join("users.txt");
+
+    (export_folder, export_file_path, users_file_path)
+}

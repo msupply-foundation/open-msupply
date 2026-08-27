@@ -1,0 +1,256 @@
+use repository::{
+    indicator_line::{IndicatorLineFilter, IndicatorLineRepository},
+    indicator_value::{IndicatorValue, IndicatorValueFilter, IndicatorValueRepository},
+    EqualFilter, IndicatorColumnRowRepository, IndicatorValueRow, IndicatorValueRowRepository,
+    IndicatorValueType, RepositoryError, StorageConnection,
+};
+
+use crate::{requisition::common::indicator_value_type, service_provider::ServiceContext};
+
+#[derive(Debug, PartialEq, Clone, Default)]
+pub struct UpdateIndicatorValue {
+    pub id: String,
+    pub value: String,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum UpdateIndicatorValueError {
+    DatabaseError(RepositoryError),
+    IndicatorValueDoesNotExist,
+    NotThisStoreValue,
+    ValueTypeNotCorrect,
+    IndicatorLineDoesNotExist,
+    IndicatorColumnDoesNotExist,
+}
+
+type OutError = UpdateIndicatorValueError;
+
+pub fn update_indicator_value(
+    ctx: &ServiceContext,
+    input: UpdateIndicatorValue,
+) -> Result<IndicatorValueRow, OutError> {
+    let indicator_value = ctx
+        .connection
+        .transaction_sync(|connection| {
+            let indicator_value_row = validate(connection, &input, ctx.store_id.clone())?;
+
+            let updated_row = generate(indicator_value_row, input);
+
+            IndicatorValueRowRepository::new(connection).upsert_one(&updated_row)?;
+
+            IndicatorValueRepository::new(connection)
+                .query_one(
+                    IndicatorValueFilter::new()
+                        .id(EqualFilter::equal_to(updated_row.id.to_string())),
+                )
+                .map_err(OutError::DatabaseError)?
+                .ok_or(OutError::IndicatorValueDoesNotExist)
+        })
+        .map_err(|error| error.to_inner_error())?;
+    Ok(indicator_value.indicator_value_row)
+}
+
+fn validate(
+    connection: &StorageConnection,
+    input: &UpdateIndicatorValue,
+    store_id: String,
+) -> Result<IndicatorValueRow, OutError> {
+    let indicator_value_row = check_indicator_value_exists(connection, &input.id)?
+        .ok_or(OutError::IndicatorValueDoesNotExist)?
+        .indicator_value_row;
+
+    if store_id != indicator_value_row.store_id {
+        return Err(OutError::NotThisStoreValue);
+    }
+
+    let indicator_line = IndicatorLineRepository::new(connection)
+        .query_by_filter(IndicatorLineFilter::new().id(EqualFilter::equal_to(
+            indicator_value_row.indicator_line_id.to_string(),
+        )))?
+        .pop()
+        .ok_or(OutError::IndicatorLineDoesNotExist)?;
+
+    let indicator_column = IndicatorColumnRowRepository::new(connection)
+        .find_one_by_id(&indicator_value_row.indicator_column_id)?
+        .ok_or(OutError::IndicatorColumnDoesNotExist)?;
+
+    // TODO: Future when mSupply supports enabling and disabling columns (or OMS Central)
+    // Check that the colum is active before allowing update of value.
+
+    if let Some(IndicatorValueType::Number) =
+        indicator_value_type(&indicator_line, &indicator_column)
+    {
+        if input.value.parse::<f64>().is_err() {
+            return Err(OutError::ValueTypeNotCorrect);
+        };
+    }
+
+    Ok(indicator_value_row)
+}
+
+fn check_indicator_value_exists(
+    connection: &StorageConnection,
+    id: &str,
+) -> Result<Option<IndicatorValue>, RepositoryError> {
+    IndicatorValueRepository::new(connection)
+        .query_one(IndicatorValueFilter::new().id(EqualFilter::equal_to(id.to_string())))
+}
+
+fn generate(
+    indicator_value_row: IndicatorValueRow,
+    input: UpdateIndicatorValue,
+) -> IndicatorValueRow {
+    IndicatorValueRow {
+        id: indicator_value_row.id,
+        customer_name_id: indicator_value_row.customer_name_id,
+        store_id: indicator_value_row.store_id,
+        period_id: indicator_value_row.period_id,
+        indicator_line_id: indicator_value_row.indicator_line_id,
+        indicator_column_id: indicator_value_row.indicator_column_id,
+        value: input.value,
+    }
+}
+
+impl From<RepositoryError> for UpdateIndicatorValueError {
+    fn from(error: RepositoryError) -> Self {
+        UpdateIndicatorValueError::DatabaseError(error)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{
+        requisition::indicator_value::{UpdateIndicatorValue, UpdateIndicatorValueError},
+        service_provider::ServiceProvider,
+    };
+    use chrono::NaiveDate;
+    use repository::{
+        mock::{
+            mock_indicator_column_a, mock_indicator_line_c, mock_indicator_value_a,
+            mock_name_store_b, mock_period, mock_store_a, mock_store_b, MockData, MockDataInserts,
+        },
+        test_db::setup_all_with_data,
+        IndicatorValueRow, RequisitionRow, RequisitionStatus, RequisitionType,
+    };
+
+    fn response_program_req() -> RequisitionRow {
+        RequisitionRow {
+            id: "response_program_req".to_string(),
+            requisition_number: 3,
+            name_id: mock_name_store_b().id,
+            store_id: mock_store_a().id,
+            r#type: RequisitionType::Response,
+            status: RequisitionStatus::New,
+            created_datetime: NaiveDate::from_ymd_opt(2021, 1, 1)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap(),
+            max_months_of_stock: 1.0,
+            min_months_of_stock: 0.9,
+            period_id: Some(mock_period().id),
+            ..Default::default()
+        }
+    }
+
+    fn test_indicator_value() -> IndicatorValueRow {
+        IndicatorValueRow {
+            id: "test_indicator_value".to_string(),
+            customer_name_id: mock_name_store_b().id,
+            store_id: mock_store_a().id,
+            period_id: mock_period().id,
+            indicator_line_id: mock_indicator_line_c().id,
+            indicator_column_id: mock_indicator_column_a().id,
+            value: "2".to_string(),
+        }
+    }
+
+    #[actix_rt::test]
+    async fn update_indicator_value_errors() {
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "update_indicator_value_errors",
+            MockDataInserts::all(),
+            MockData {
+                requisitions: vec![response_program_req()],
+                indicator_values: vec![test_indicator_value()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let mut context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.indicator_value_service;
+
+        // IndicatorValueDoesNotExist
+        assert_eq!(
+            service.update_indicator_value(
+                &context,
+                UpdateIndicatorValue {
+                    id: "invalid_id".to_string(),
+                    value: "new_value".to_string(),
+                    ..Default::default()
+                },
+            ),
+            Err(UpdateIndicatorValueError::IndicatorValueDoesNotExist)
+        );
+
+        // ValueNotCorrectType
+        assert_eq!(
+            service.update_indicator_value(
+                &context,
+                UpdateIndicatorValue {
+                    id: test_indicator_value().id,
+                    value: "new value".to_string(),
+                    ..Default::default()
+                },
+            ),
+            Err(UpdateIndicatorValueError::ValueTypeNotCorrect)
+        );
+
+        context.store_id = mock_store_b().id;
+        // NotThisStoreValue
+        assert_eq!(
+            service.update_indicator_value(
+                &context,
+                UpdateIndicatorValue {
+                    id: mock_indicator_value_a().id,
+                    value: "new value".to_string(),
+                    ..Default::default()
+                },
+            ),
+            Err(UpdateIndicatorValueError::NotThisStoreValue)
+        );
+    }
+
+    #[actix_rt::test]
+    async fn update_indicator_value_success() {
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "update_indicator_value_success",
+            MockDataInserts::all(),
+            MockData {
+                requisitions: vec![response_program_req()],
+                indicator_values: vec![test_indicator_value()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.indicator_value_service;
+
+        service
+            .update_indicator_value(
+                &context,
+                UpdateIndicatorValue {
+                    id: test_indicator_value().id,
+                    value: "6".to_string(),
+                },
+            )
+            .unwrap();
+    }
+}

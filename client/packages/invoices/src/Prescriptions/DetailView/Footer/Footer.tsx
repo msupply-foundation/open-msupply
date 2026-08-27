@@ -1,0 +1,156 @@
+import React, { memo } from 'react';
+import {
+  Box,
+  ButtonWithIcon,
+  StatusCrumbs,
+  XCircleIcon,
+  useTranslation,
+  AppFooterPortal,
+  InvoiceNodeStatus,
+  useBreadcrumbs,
+  useDeleteConfirmation,
+  DeleteIcon,
+  Action,
+  ActionsFooter,
+  PrinterIcon,
+  AlertModal,
+  InvoiceNodeType,
+} from '@openmsupply-client/common';
+import { getStatusTranslator } from '../../../utils';
+import { createStatusLog, getStatusSequence } from '../../../statuses';
+import { StatusChangeButton } from './StatusChangeButton';
+import {
+  PrescriptionLineFragment,
+  usePrescription,
+  usePrescriptionLines,
+} from '../../api';
+import { usePrintLabels } from '../hooks/usePrinter';
+
+const prescriptionSequence = getStatusSequence(InvoiceNodeType.Prescription);
+
+export const FooterComponent = ({
+  selectedRows,
+  resetRowSelection,
+}: {
+  selectedRows: PrescriptionLineFragment[];
+  resetRowSelection: () => void;
+}) => {
+  const t = useTranslation();
+  const {
+    query: { data: prescription },
+    isDisabled,
+  } = usePrescription();
+  const { navigateUpOne } = useBreadcrumbs();
+
+  const {
+    delete: { deleteLines },
+  } = usePrescriptionLines();
+
+  const deleteAction = async () => {
+    await deleteLines(selectedRows);
+    resetRowSelection();
+  };
+
+  const confirmAndDelete = useDeleteConfirmation({
+    selectedRows,
+    deleteAction,
+    canDelete: !isDisabled,
+    messages: {
+      confirmMessage: t('messages.confirm-delete-lines', {
+        count: selectedRows.length,
+      }),
+      deleteSuccess: t('messages.deleted-lines', {
+        count: selectedRows.length,
+      }),
+    },
+  });
+
+  const {
+    printLabels: printPrescriptionLabels,
+    isPrintingLabels,
+    printerExists,
+    setPrinterExists,
+  } = usePrintLabels();
+
+  const handlePrintLabels = () => {
+    if (prescription) {
+      printPrescriptionLabels(prescription, selectedRows);
+    }
+  };
+
+  const actions: Action[] = [
+    {
+      label: t('button.delete-lines'),
+      icon: <DeleteIcon />,
+      onClick: confirmAndDelete,
+      testId: 'delete-lines-button',
+    },
+    {
+      label: t('button.print-prescription-label'),
+      icon: <PrinterIcon />,
+      onClick: handlePrintLabels,
+      loading: isPrintingLabels,
+    },
+  ];
+
+  // Don't show "Cancelled" status unless this prescription is already cancelled
+  const statusList = prescriptionSequence.filter(status =>
+    prescription?.status === InvoiceNodeStatus.Cancelled
+      ? true
+      : status !== InvoiceNodeStatus.Cancelled
+  );
+
+  return (
+    <AppFooterPortal
+      Content={
+        <>
+          {selectedRows.length !== 0 && (
+            <>
+              <ActionsFooter
+                actions={actions}
+                selectedRowCount={selectedRows.length}
+                resetRowSelection={resetRowSelection}
+              />
+              <AlertModal
+                title={t('heading.unable-to-print')}
+                message={t('error.label-printer-not-configured')}
+                open={printerExists}
+                onOk={() => setPrinterExists(false)}
+              />
+            </>
+          )}
+          {prescription?.id && selectedRows.length === 0 && (
+            <Box
+              gap={2}
+              display="flex"
+              flexDirection="row"
+              alignItems="center"
+              height={64}
+            >
+              <StatusCrumbs
+                statuses={statusList}
+                statusLog={createStatusLog(prescription, statusList)}
+                statusFormatter={getStatusTranslator(t)}
+              />
+
+              <Box flex={1} display="flex" justifyContent="flex-end" gap={2}>
+                <ButtonWithIcon
+                  data-testid="close-button"
+                  shrinkThreshold="lg"
+                  Icon={<XCircleIcon />}
+                  label={t('button.close')}
+                  color="secondary"
+                  sx={{ fontSize: '12px' }}
+                  onClick={() => navigateUpOne()}
+                />
+                <StatusChangeButton />
+              </Box>
+            </Box>
+          )}
+        </>
+      }
+    />
+  );
+};
+
+export const Footer = memo(FooterComponent);

@@ -1,5 +1,4 @@
 import {
-  createEffect,
   createMemo,
   createResource,
   createSignal,
@@ -10,6 +9,7 @@ import {
 } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
@@ -36,7 +36,11 @@ import {
   type Column,
   type SortState,
 } from '../../../ui/elements/table/DataTable';
-import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
+import {
+  CommentHeader,
+  getCellDefinition,
+} from '../../../ui/elements/table/tableHelpers';
+import { sortRows } from '@/list/sortRows';
 import {
   FilterBar,
   FilterCheckbox,
@@ -47,7 +51,10 @@ import {
 import { AlertTriangleIcon } from '../../../ui/icons';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { createDebouncedEdit } from '../../../domain/debouncedEdit';
-import { recordPluginDiagnostic } from '../../../plugins/diagnostics';
+import {
+  createRegionDiagnostics,
+  recordPluginDiagnostic,
+} from '../../../plugins/diagnostics';
 import {
   contributionId,
   visibleContributions,
@@ -79,6 +86,7 @@ import {
   addInternalOrderFromMasterList,
 } from './internalOrderUpdate';
 import { isOrderEditable } from './internalOrderDetailStatus';
+import { reportSeedArgs } from './reportSeedArgs';
 import {
   InternalOrderToolbar,
   type HeaderEditFields,
@@ -309,22 +317,9 @@ const InternalOrderDetailView: Component = () => {
       customerNameId: nameId,
     });
   };
-  // Report generation seeds for an indicator program order (AC-PR4): the same
-  // program / period / customer identity the Indicators tab reads, handed to
-  // the Export/Print selector so indicator report templates can locate the
-  // program data behind the order. Undefined on any other order (and until the
-  // store's own name id resolves) — then only the standard seeds are sent.
-  const reportSeedArgs = () => {
-    const node = info();
-    const nameId = ownName.latest;
-    if (!showIndicators() || !node?.program || !node.period || !nameId)
-      return undefined;
-    return {
-      programId: node.program.id,
-      periodId: node.period.id,
-      customerNameId: nameId,
-    };
-  };
+  // The Export/Print seeds (AC-PR4) — see reportSeedArgs.ts for why they are
+  // not gated on showIndicators().
+  const seedArgs = () => reportSeedArgs(info(), ownName.latest);
 
   const [indicators, { mutate: mutateIndicators }] = createResource(
     indicatorVariables,
@@ -346,10 +341,7 @@ const InternalOrderDetailView: Component = () => {
     mutateIndicators(prev =>
       prev ? applySavedIndicatorValue(prev, valueId, value) : prev
     );
-  const indicatorNodes = () =>
-    indicators.state === 'ready' || indicators.state === 'refreshing'
-      ? (indicators.latest ?? [])
-      : [];
+  const indicatorNodes = () => gated(indicators) ?? [];
   const showDoses = () => prefs()?.manageVaccinesInDoses ?? false;
   const showPricing = () => prefs()?.showIndicativePriceInRequisitions ?? false;
   const showForecast = () =>
@@ -559,13 +551,7 @@ const InternalOrderDetailView: Component = () => {
           (l.availableStockOnHand === 0 && l.averageMonthlyConsumption === 0)
       );
     }
-    const s = sort();
-    const dir = s.desc ? -1 : 1;
-    return [...lines].sort((a, b) => {
-      const av = sortValue(a, s.key);
-      const bv = sortValue(b, s.key);
-      return av < bv ? -dir : av > bv ? dir : 0;
-    });
+    return sortRows(lines, sort(), sortValue);
   };
 
   // Dose annotation for a unit quantity on a vaccine item under the doses
@@ -602,7 +588,7 @@ const InternalOrderDetailView: Component = () => {
   const hostColumns = (): Column<Line, SortKey>[] => [
     {
       c: { key: COL.comment },
-      header: () => t('label.comment'),
+      header: () => <CommentHeader />,
       ...getCellDefinition('comment'),
     },
     {
@@ -962,16 +948,12 @@ const InternalOrderDetailView: Component = () => {
     return loaded;
   });
 
-  // NON-suspending, `.state`-gated: the line editor is often open ABOVE this
+  // NON-suspending: the line editor is often open ABOVE this
   // table, and a suspending read would remount the subtree and detach the open
   // <dialog> from the top layer (kdd/solid-reactivity-pitfalls § no remounts on
-  // interaction). `.latest` alone is not safe — it suspends on the first
-  // pending read.
+  // interaction).
   const lineColumnBatch = (): LineColumnBatch => ({
-    data:
-      lineColumnData.state === 'ready' || lineColumnData.state === 'refreshing'
-        ? (lineColumnData.latest ?? EMPTY_BATCH_DATA)
-        : EMPTY_BATCH_DATA,
+    data: gated(lineColumnData) ?? EMPTY_BATCH_DATA,
     loading: lineColumnData.loading,
   });
 
@@ -986,22 +968,12 @@ const InternalOrderDetailView: Component = () => {
   const columns = () => mergedColumns().columns;
 
   // Degradations are RECORDED here, not inside the merge: the merge runs in a
-  // memo, and recording is a write. Deduped per page instance so a re-merge (a
-  // preference gate resolving, the batch landing) cannot spam the same broken
-  // anchor.
-  const reportedDiagnostics = new Set<string>();
-  createEffect(() => {
-    for (const diagnostic of mergedColumns().diagnostics) {
-      const key = `${diagnostic.contributionId}:${diagnostic.message}`;
-      if (reportedDiagnostics.has(key)) continue;
-      reportedDiagnostics.add(key);
-      recordPluginDiagnostic({
-        level: 'warning',
-        pluginCode: diagnostic.contributionId.split('.')[0],
-        message: `internalOrderLine.column: ${diagnostic.contributionId} — ${diagnostic.message}`,
-      });
-    }
-  });
+  // memo, and recording is a write. Deduping is the shared helper's
+  // (src/plugins/diagnostics).
+  createRegionDiagnostics(
+    () => mergedColumns().diagnostics,
+    () => 'internalOrderLine.column'
+  );
 
   return (
     <Suspense fallback={<Spinner center />}>
@@ -1109,7 +1081,7 @@ const InternalOrderDetailView: Component = () => {
                     {/* Export/Print — a read, offered on every status (AC-PR1). */}
                     <ExportPrintInternalOrderAction
                       orderId={node().id}
-                      seedArgs={reportSeedArgs()}
+                      seedArgs={seedArgs()}
                     />
                     {/* More — reopens the side panel; shown only while closed. */}
                     <Show when={!sidePanelOpen()}>
@@ -1292,6 +1264,17 @@ const InternalOrderDetailView: Component = () => {
                   }
                   config={tableConfig.config()}
                   setConfig={tableConfig.setConfig}
+                  // Central-server admins can promote this table's layout to
+                  // the shared install-wide default, the same as the list
+                  // (issue #1118 — the detail table offered no way to save
+                  // table defaults). Gate + action both off the config
+                  // controller; undefined for everyone else, so the action
+                  // isn't offered.
+                  onSaveGlobalDefault={
+                    tableConfig.canSaveGlobalDefault()
+                      ? tableConfig.saveGlobalTableConfig
+                      : undefined
+                  }
                   // Row selection for the bulk line delete (AC-LN15). The
                   // column always shows; on a read-only order the delete is
                   // refused with an explanation (AC-LN16), and on a program

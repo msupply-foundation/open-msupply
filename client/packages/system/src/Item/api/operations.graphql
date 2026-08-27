@@ -1,0 +1,627 @@
+fragment StockLine on StockLineNode {
+  availableNumberOfPacks
+  batch
+  expiryDate
+  manufactureDate
+  id
+  itemId
+  location {
+    code
+    id
+    name
+    onHold
+    locationType {
+      id
+      name
+    }
+  }
+  item {
+    name
+    code
+    unitName
+    defaultPackSize
+    doses
+    isVaccine
+    restrictedLocationTypeId
+    itemDirections {
+      ...ItemDirection
+    }
+    warnings {
+      ...Warning
+    }
+  }
+  note
+  onHold
+  packSize
+  sellPricePerPack
+  costPricePerPack
+  storeId
+  totalNumberOfPacks
+  itemVariantId
+  volumePerPack
+
+  donor(storeId: $storeId) {
+    id
+  }
+  vvmStatus {
+    __typename
+    id
+    priority
+    unusable
+    description
+  }
+  program {
+    id
+    name
+  }
+  campaign {
+    id
+    name
+  }
+}
+
+fragment ItemRow on ItemNode {
+  __typename
+  id
+  code
+  name
+  unitName
+  isVaccine
+  doses
+  restrictedLocationTypeId
+}
+
+fragment ItemDirection on ItemDirectionNode {
+  __typename
+  directions
+  id
+  itemId
+  priority
+}
+
+fragment ItemRowWithWarnings on ItemNode {
+  ...ItemRow
+  warnings {
+    ...Warning
+  }
+}
+
+fragment Warning on WarningNode {
+  __typename
+  warningText
+  id
+  itemId
+  priority
+  code
+}
+
+fragment ItemWithPackSize on ItemNode {
+  ...ItemRow
+  defaultPackSize
+}
+fragment ItemStockOnHand on ItemNode {
+  ...ItemWithPackSize
+  availableStockOnHand(storeId: $storeId)
+  itemStoreProperties(storeId: $storeId) {
+    defaultSellPricePerPack
+    ignoreForOrders
+  }
+  stockOnHand(storeId: $storeId)
+}
+
+fragment LocationType on LocationTypeNode {
+  __typename
+  id
+  name
+  minTemperature
+  maxTemperature
+}
+
+fragment PackagingVariant on PackagingVariantNode {
+  __typename
+  id
+  name
+  packagingLevel
+  packSize
+  volumePerUnit
+}
+
+fragment BundledItemVariant on ItemVariantNode {
+  id
+  name
+  itemId
+  itemName
+}
+
+fragment BundledItem on BundledItemNode {
+  __typename
+  id
+  ratio
+  principalItemVariant {
+    ...BundledItemVariant
+  }
+  bundledItemVariant {
+    ...BundledItemVariant
+  }
+}
+
+fragment AncillaryItemRow on ItemNode {
+  __typename
+  id
+  name
+  code
+  unitName
+}
+
+fragment AncillaryItem on AncillaryItemNode {
+  __typename
+  id
+  itemQuantity
+  ancillaryQuantity
+  itemId
+  ancillaryItemId
+  item {
+    ...AncillaryItemRow
+  }
+  ancillaryItem {
+    ...AncillaryItemRow
+  }
+}
+
+fragment ItemVariant on ItemVariantNode {
+  __typename
+  id
+  name
+  itemId
+  item {
+    id
+    name
+    isVaccine
+    restrictedLocationTypeId
+  }
+  manufacturerId
+  manufacturer(storeId: $storeId) {
+    ...NameRow
+  }
+  locationTypeId
+  locationType {
+    ...LocationType
+  }
+  packagingVariants {
+    ...PackagingVariant
+  }
+  bundledItemVariants {
+    ...BundledItem
+  }
+  bundlesWith {
+    ...BundledItem
+  }
+  vvmType
+}
+
+fragment Item on ItemNode {
+  __typename
+  id
+  code
+  name
+  atcCategory
+  ddd
+  defaultPackSize
+  doses
+  isVaccine
+  margin
+  msupplyUniversalCode
+  msupplyUniversalName
+  outerPackSize
+  strength
+  type
+  unitName
+  volumePerOuterPack
+  volumePerPack
+  weight
+  restrictedLocationTypeId
+  restrictedLocationType {
+    ...LocationType
+  }
+  availableStockOnHand(storeId: $storeId)
+  availableBatches(storeId: $storeId) {
+    __typename
+    totalCount
+    nodes {
+      __typename
+      ...StockLine
+    }
+  }
+  stats(storeId: $storeId) {
+    __typename
+    averageMonthlyConsumption
+    availableStockOnHand
+    availableMonthsOfStockOnHand
+    monthsOfStockOnHand
+    totalConsumption
+    stockOnHand
+  }
+  variants {
+    ...ItemVariant
+  }
+  ancillaryItems {
+    ...AncillaryItem
+  }
+  itemDirections {
+    ...ItemDirection
+  }
+  itemStoreProperties(storeId: $storeId) {
+    defaultSellPricePerPack
+    ignoreForOrders
+    margin
+  }
+  customFields
+}
+
+query items(
+  $first: Int
+  $offset: Int
+  $key: ItemSortFieldInput!
+  $desc: Boolean
+  $filter: ItemFilterInput
+  $storeId: String!
+) {
+  items(
+    storeId: $storeId
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on ItemConnector {
+      __typename
+      nodes {
+        ...ItemRow
+      }
+      totalCount
+    }
+  }
+}
+
+query itemStockOnHand(
+  $storeId: String!
+  $key: ItemSortFieldInput!
+  $isDesc: Boolean
+  $filter: ItemFilterInput
+  $first: Int
+  $offset: Int
+) {
+  items(
+    storeId: $storeId
+    sort: { key: $key, desc: $isDesc }
+    filter: $filter
+    page: { first: $first, offset: $offset }
+  ) {
+    ... on ItemConnector {
+      __typename
+      nodes {
+        ...ItemStockOnHand
+      }
+      totalCount
+    }
+  }
+}
+
+fragment ItemsWithStats on ItemNode {
+  __typename
+  code
+  id
+  name
+  unitName
+  defaultPackSize
+  isVaccine
+  doses
+  customFields
+  availableStockOnHand(storeId: $storeId)
+  masterLists(storeId: $storeId) {
+    id
+    name
+  }
+  stats(storeId: $storeId) {
+    __typename
+    averageMonthlyConsumption
+    availableStockOnHand
+    availableMonthsOfStockOnHand
+    monthsOfStockOnHand
+    totalConsumption
+    stockOnHand
+  }
+}
+
+query itemsWithStats(
+  $storeId: String!
+  $key: ItemSortFieldInput!
+  $isDesc: Boolean
+  $filter: ItemFilterInput
+  $first: Int
+  $offset: Int
+) {
+  items(
+    storeId: $storeId
+    sort: { key: $key, desc: $isDesc }
+    filter: $filter
+    page: { first: $first, offset: $offset }
+  ) {
+    ... on ItemConnector {
+      __typename
+      nodes {
+        ...ItemsWithStats
+      }
+      totalCount
+    }
+  }
+}
+
+query itemById($storeId: String!, $itemId: String!) {
+  items(
+    storeId: $storeId
+    filter: { id: { equalTo: $itemId }, isActive: true }
+  ) {
+    ... on ItemConnector {
+      __typename
+      nodes {
+        __typename
+        ...Item
+        stockOnHand(storeId: $storeId)
+        stats(storeId: $storeId) {
+          __typename
+          averageMonthlyConsumption
+          availableStockOnHand
+          availableMonthsOfStockOnHand
+        }
+        availableBatches(storeId: $storeId) {
+          totalCount
+          nodes {
+            ...StockLine
+          }
+        }
+      }
+      totalCount
+    }
+  }
+}
+
+query itemPrice($storeId: String!, $itemId: String!) {
+  itemPrice(storeId: $storeId, input: { itemId: $itemId }) {
+    ... on ItemPriceNode {
+      __typename
+      itemId
+      defaultPricePerUnit
+    }
+  }
+}
+
+query itemVariantsConfigured($storeId: String!) {
+  itemVariantsConfigured(storeId: $storeId)
+}
+
+query itemVariants($storeId: String!, $itemId: String!) {
+  items(
+    storeId: $storeId
+    filter: { id: { equalTo: $itemId }, isActive: true }
+  ) {
+    ... on ItemConnector {
+      __typename
+      nodes {
+        __typename
+        isVaccine
+        restrictedLocationTypeId
+        variants {
+          ...ItemVariant
+        }
+      }
+    }
+  }
+}
+
+query getHistoricalStockLines(
+  $storeId: String!
+  $itemId: String!
+  $datetime: DateTime
+) {
+  historicalStockLines(
+    storeId: $storeId
+    itemId: $itemId
+    datetime: $datetime
+  ) {
+    ... on StockLineConnector {
+      nodes {
+        ...StockLine
+      }
+    }
+  }
+}
+
+mutation upsertItemVariant($storeId: String!, $input: UpsertItemVariantInput!) {
+  centralServer {
+    itemVariant {
+      upsertItemVariant(storeId: $storeId, input: $input) {
+        __typename
+        ... on ItemVariantNode {
+          ...ItemVariant
+        }
+        ... on UpsertItemVariantError {
+          __typename
+          error {
+            __typename
+            description
+            ... on UniqueValueViolation {
+              description
+              field
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation deleteItemVariant($storeId: String!, $input: DeleteItemVariantInput!) {
+  centralServer {
+    itemVariant {
+      deleteItemVariant(storeId: $storeId, input: $input) {
+        __typename
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+      }
+    }
+  }
+}
+
+query locationTypes($storeId: String!) {
+  locationTypes(storeId: $storeId, sort: { key: minTemperature, desc: true }) {
+    ... on LocationTypeConnector {
+      nodes {
+        ...LocationType
+      }
+    }
+  }
+}
+
+mutation upsertBundledItem($storeId: String!, $input: UpsertBundledItemInput!) {
+  centralServer {
+    bundledItem {
+      upsertBundledItem(storeId: $storeId, input: $input) {
+        __typename
+        ... on BundledItemNode {
+          ...BundledItem
+        }
+      }
+    }
+  }
+}
+
+mutation deleteBundledItem($storeId: String!, $input: DeleteBundledItemInput!) {
+  centralServer {
+    bundledItem {
+      deleteBundledItem(storeId: $storeId, input: $input) {
+        __typename
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+      }
+    }
+  }
+}
+
+mutation upsertAncillaryItem(
+  $storeId: String!
+  $input: UpsertAncillaryItemInput!
+) {
+  centralServer {
+    ancillaryItem {
+      upsertAncillaryItem(storeId: $storeId, input: $input) {
+        __typename
+        ... on AncillaryItemNode {
+          ...AncillaryItem
+        }
+        ... on UpsertAncillaryItemError {
+          error {
+            __typename
+            description
+            ... on AncillaryMaxDepthExceeded {
+              max
+              actual
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation deleteAncillaryItem(
+  $storeId: String!
+  $input: DeleteAncillaryItemInput!
+) {
+  centralServer {
+    ancillaryItem {
+      deleteAncillaryItem(storeId: $storeId, input: $input) {
+        __typename
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+      }
+    }
+  }
+}
+
+fragment ItemLedger on ItemLedgerNode {
+  id
+  balance
+  batch
+  costPricePerPack
+  datetime
+  expiryDate
+  invoiceNumber
+  invoiceId
+  invoiceStatus
+  invoiceType
+  isExternal
+  name
+  packSize
+  movementInUnits
+  reason
+  sellPricePerPack
+  totalBeforeTax
+  numberOfPacks
+  user {
+    username
+  }
+}
+
+query itemLedger(
+  $first: Int
+  $offset: Int
+  $filter: ItemLedgerFilterInput
+  $storeId: String!
+) {
+  itemLedger(
+    storeId: $storeId
+    filter: $filter
+    page: { first: $first, offset: $offset }
+  ) {
+    ... on ItemLedgerConnector {
+      __typename
+      nodes {
+        __typename
+        ...ItemLedger
+      }
+      totalCount
+    }
+  }
+}
+
+fragment CustomField on CustomFieldNode {
+  id
+  key
+  name
+  valueType
+  kind
+  options {
+    id
+    key
+    name
+    parentOptionId
+  }
+}
+
+query itemCustomFields {
+  customFields(filter: { scope: { equalTo: "item" } }) {
+    ... on CustomFieldConnector {
+      __typename
+      totalCount
+      nodes {
+        ...CustomField
+      }
+    }
+  }
+}

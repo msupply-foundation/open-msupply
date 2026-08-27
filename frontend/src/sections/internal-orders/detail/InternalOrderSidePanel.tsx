@@ -197,6 +197,7 @@ export const InternalOrderSidePanel: Component<
                     shipment.id,
                     scopeOf(shipment.purchaseOrderId)
                   )}
+                  testId="fulfilling-shipment-link"
                 >
                   {`#${shipment.invoiceNumber}`}
                 </RecordLink>
@@ -223,6 +224,7 @@ export const InternalOrderSidePanel: Component<
               <RecordLink
                 href={`/${props.storeId}/distribution/customer-requisition/${source().id}`}
                 kind="io"
+                testId="created-from-requisition-link"
               >
                 {`#${source().requisitionNumber}`}
               </RecordLink>

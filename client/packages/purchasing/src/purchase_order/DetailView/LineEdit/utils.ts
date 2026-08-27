@@ -1,0 +1,156 @@
+import { ItemStockOnHandFragment } from '@openmsupply-client/system/src';
+import { DraftPurchaseOrderLine } from '../../api/hooks/usePurchaseOrderLine';
+import { FnUtils } from '@common/utils';
+import {
+  PurchaseOrderLineStatusNode,
+  PurchaseOrderNodeStatus,
+} from '@common/types';
+
+export const createDraftPurchaseOrderLine = (
+  item: ItemStockOnHandFragment,
+  purchaseOrderId: string,
+  headerDates?: {
+    requestedDeliveryDate?: string | null;
+    expectedDeliveryDate?: string | null;
+  }
+): DraftPurchaseOrderLine => {
+  return {
+    id: FnUtils.generateUUID(),
+    purchaseOrderId,
+    itemId: item.id,
+    requestedPackSize: 0,
+    requestedDeliveryDate: headerDates?.requestedDeliveryDate ?? null,
+    expectedDeliveryDate: headerDates?.expectedDeliveryDate ?? null,
+    requestedNumberOfUnits: 0,
+    lineNumber: 0,
+    adjustedNumberOfUnits: null,
+    pricePerPackBeforeDiscount: 0,
+    pricePerPackAfterDiscount: 0,
+    unit: item.unitName,
+    item: {
+      __typename: 'ItemNode',
+      id: item.id,
+      code: item.code,
+      name: item.name,
+      unitName: item.unitName,
+      defaultPackSize: item.defaultPackSize,
+      isVaccine: item.isVaccine,
+      doses: item.doses,
+      restrictedLocationTypeId: item.restrictedLocationTypeId,
+      stats: {
+        __typename: 'ItemStatsNode',
+        stockOnHand: item.stockOnHand || 0,
+      },
+    },
+    // This value not actually saved to DB
+    discountPercentage: 0,
+    numberOfPacks: 0,
+    receivedNumberOfUnits: 0,
+    status: PurchaseOrderLineStatusNode.New,
+    unitsOrderedInOthers: 0,
+  };
+};
+
+type PriceField =
+  | 'pricePerPackBeforeDiscount'
+  | 'discountPercentage'
+  | 'pricePerPackAfterDiscount';
+
+/**
+ * Calculates any of the these values from the other two, based on which have
+ * most recently changed.
+ *
+ * `changingField` is the fields being updated by the user, and `data` contains
+ * the current state of all 3.
+ */
+export const calculatePricesAndDiscount = (
+  changingField: PriceField,
+  data: Partial<DraftPurchaseOrderLine>
+) => {
+  const {
+    discountPercentage,
+    pricePerPackAfterDiscount = 0,
+    pricePerPackBeforeDiscount = 0,
+  } = data;
+  const discount = Math.min(Math.max(discountPercentage || 0, 0), 100);
+
+  switch (changingField) {
+    case 'pricePerPackBeforeDiscount':
+    case 'discountPercentage': {
+      return {
+        pricePerPackBeforeDiscount,
+        discountPercentage,
+        pricePerPackAfterDiscount:
+          pricePerPackBeforeDiscount * (1 - discount / 100),
+      };
+    }
+    case 'pricePerPackAfterDiscount': {
+      const discountPercentage = pricePerPackBeforeDiscount
+        ? ((pricePerPackBeforeDiscount - pricePerPackAfterDiscount) /
+            pricePerPackBeforeDiscount) *
+          100
+        : 0;
+
+      return {
+        pricePerPackBeforeDiscount,
+        discountPercentage,
+        pricePerPackAfterDiscount,
+      };
+    }
+  }
+};
+
+export const calculateUnitQuantities = (
+  status: PurchaseOrderNodeStatus,
+  data: Partial<DraftPurchaseOrderLine>
+) => {
+  const numberOfPacks = data?.numberOfPacks ?? 0;
+  const requestedPackSize = data?.requestedPackSize ?? 0;
+  const totalUnits = numberOfPacks * requestedPackSize;
+
+  // Only adjust the requested number of units if the status is not confirmed yet
+  if (
+    status === PurchaseOrderNodeStatus.Confirmed ||
+    status === PurchaseOrderNodeStatus.Sent
+  ) {
+    return {
+      adjustedNumberOfUnits: totalUnits,
+    };
+  }
+  return {
+    requestedNumberOfUnits: totalUnits,
+    adjustedNumberOfUnits: totalUnits,
+  };
+};
+
+type LineStatusOption = {
+  value: PurchaseOrderLineStatusNode;
+  disabled: boolean;
+};
+
+export const lineStatusOptions = (
+  status: PurchaseOrderNodeStatus
+): LineStatusOption[] => {
+  const disableNewOption =
+    status === PurchaseOrderNodeStatus.Confirmed ||
+    status === PurchaseOrderNodeStatus.Sent
+      ? true
+      : false;
+  const disableOtherOptions =
+    status === PurchaseOrderNodeStatus.New ||
+    status === PurchaseOrderNodeStatus.RequestApproval
+      ? true
+      : false;
+
+  return [
+    {
+      value: PurchaseOrderLineStatusNode.New,
+      disabled: disableNewOption,
+    },
+    { value: PurchaseOrderLineStatusNode.Sent, disabled: disableOtherOptions },
+    {
+      value: PurchaseOrderLineStatusNode.Closed,
+      disabled: disableOtherOptions,
+    },
+  ];
+};

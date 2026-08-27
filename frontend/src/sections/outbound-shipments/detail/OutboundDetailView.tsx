@@ -1,5 +1,4 @@
 import {
-  createEffect,
   createMemo,
   createResource,
   createSignal,
@@ -39,7 +38,10 @@ import {
   type PaginationProps,
 } from '../../../ui/elements/table/Pagination';
 import { remToPx } from '../../../ui/utils/rem';
-import { useIsNavOverlay } from '../../../ui/utils/createMediaQuery';
+import {
+  useIsNavOverlay,
+  useIsShortViewport,
+} from '../../../ui/utils/createMediaQuery';
 import { createTableConfig } from '../../../api/createTableConfig';
 import { createSidePanelOpen } from '../../../ui/layout/SidePanel/createSidePanelOpen';
 import { createAddAction } from '../../../ui/utils/keyActions';
@@ -48,6 +50,7 @@ import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { RowStatusBadges, uncapped } from './RowStatusBadges';
 import {
   AlertCircleIcon,
+  AlertTriangleIcon,
   InfoIcon,
   MinusCircleIcon,
   PauseIcon,
@@ -62,6 +65,7 @@ import {
   initialPageSize,
   rememberPageSize,
 } from '../../../list/pageSize';
+import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
 import { stripEmpty } from '../../../typeHelpers';
 import { CustomFieldsEditTab } from '../../../domain/customFields';
 import {
@@ -184,24 +188,25 @@ const LineStatusBadges = (props: { line: Line }) => (
 // unfinished ones no louder than the rest, and it spent the row background —
 // the screen's one at-a-glance channel — on a fact each row already states.
 // The expiry and hold facts keep their own words: the row-status badges
-// beside the item name and the reddened Expiry-date cell, plus the card
-// tones below.
-const lineRowTint = (
-  line: Line
-): 'unfinished' | 'success' | 'warning' | 'error' | undefined =>
+// beside the item name and the reddened Expiry-date cell. This is the ONE
+// row colour outbound spends, here and in the line editor (2026-08-21) — the
+// editor's own status tints are gone for the same reason.
+const lineRowTint = (line: Line): 'unfinished' | undefined =>
   lineNeedsAction(line) ? 'unfinished' : undefined;
 
-// The card tone (tinted title + the chips after it — D111/D112). Expired
-// outranks held, which outranks needs-action — the amber a card takes for a
-// held batch and for an unissued line is the same amber, and a held line is
-// unissued by definition, so the order only decides which chip tone leads;
-// both chips still show. A placeholder has nothing but its needs-action
-// state, so it now reads amber where D111 left it plain.
-const lineCardTone = (line: Line): 'warning' | 'error' | undefined => {
-  if (line.type !== 'UNALLOCATED_STOCK' && lineExpired(line)) return 'error';
-  if (line.type !== 'UNALLOCATED_STOCK' && lineOnHold(line)) return 'warning';
-  return lineNeedsAction(line) ? 'warning' : undefined;
-};
+// The card tone — the tinted identity title, the card's stand-in for the row
+// marking it has no background to carry (D111). ONE fact tones a card now:
+// the needs-action state this screen's whole marking is about.
+//
+// Expiry and hold no longer tone it (2026-08-21): a card states each of them
+// TWICE in words already — the chip sits immediately after the title, and the
+// body's Expiry-date field is red — so the colour on the title added nothing
+// and, on a red title, read as though the item NAME were wrong rather than the
+// stock it names. Every state keeps its chip; only this one keeps a colour.
+// Narrows D112 (which specifies a red identity title on an expired card) — the
+// divergence record carries the matching edit.
+const lineCardTone = (line: Line): 'warning' | undefined =>
+  lineNeedsAction(line) ? 'warning' : undefined;
 
 // The server sort-field union (from codegen) — a column can only ever name a
 // real server sort key (kdd/type-safety). Columns whose data the server can't
@@ -365,8 +370,15 @@ const OutboundDetailView: Component = () => {
   // function, not a stored element: the two footer faces each need their own
   // instance, and one element can't be in two places.
   const narrowViewport = useIsNavOverlay();
+  // …and the same trade on a SHORT one. The rule was written for tablet
+  // portrait, but a landscape tablet is the case that needs it most: wide
+  // enough that the width query never fires, short enough that a third stacked
+  // bar under the table costs a row of the thing the user came to work on.
+  // Measured at 1434×742, chrome took 52% of the screen.
+  const shortViewport = useIsShortViewport();
+  const foldTotalsIntoBar = () => narrowViewport() || shortViewport();
   const inlineTotals = () => (
-    <Show when={narrowViewport()}>
+    <Show when={foldTotalsIntoBar()}>
       <OutboundTotalsStrip
         inline
         totals={totalCount() > 0 ? shipmentTotals : undefined}
@@ -391,16 +403,13 @@ const OutboundDetailView: Component = () => {
       setSelectedIds([]);
     },
   });
-  // Deleting the last page's rows can leave the offset past the end (an
-  // empty "41–40 of 40" page) — clamp back to the last real page when a
-  // resolved page proves the offset overshot. Idempotent: the clamped offset
-  // satisfies the guard, so the effect settles in one step.
-  createEffect(() => {
-    const total = linesData.latest?.totalCount;
-    const { offset, first } = query();
-    if (total == null || offset === 0 || offset < total) return;
-    const lastPage = Math.floor(Math.max(0, total - 1) / first) * first;
-    setQuery({ ...query(), offset: lastPage });
+  // Deleting the last page's rows leaves the offset past the end — an empty
+  // "41-40 of 40" page (src/list/clampPageOffset.ts, where this rule started).
+  clampPageOffset({
+    total: () => settledTotal(linesData, page => page.totalCount),
+    offset: () => query().offset,
+    pageSize: () => query().first,
+    setOffset: offset => setQuery({ ...query(), offset }),
   });
 
   // Service lines — a small dedicated read (spec S5; the side panel's service
@@ -718,10 +727,15 @@ const OutboundDetailView: Component = () => {
           headerPosition: 'primary',
           wrapLines: 2,
         }),
-        // Name + the row-status badges (LineStatusBadges above).
+        // Name + the row-status badges (LineStatusBadges above). The name is
+        // wrapped so it can carry the gap on its TRAILING edge: this cell
+        // clamps to two lines, and a long name pushes the chips onto line 2,
+        // where a leading margin on the cluster would render as an indent
+        // instead of lining the chip up under the name (see
+        // [data-row-badges-label] in DataTable.module.css).
         cell: info => (
           <>
-            {info.row.original.itemName}
+            <span data-row-badges-label>{info.row.original.itemName}</span>
             <LineStatusBadges line={info.row.original} />
           </>
         ),
@@ -810,7 +824,29 @@ const OutboundDetailView: Component = () => {
         ),
       },
       {
-        // Needs-action flag, CARD-ONLY: in the table the amber tint, the
+        // Near-expiry flag, CARD-ONLY (D112's lower tier): the table's red
+        // "Near expiry" badge beside the item name carries the tier, and the
+        // card hides that cluster — without this chip the tier would reach a
+        // card as the reddened Expiry-date field ALONE, i.e. colour with no
+        // word (styling principle 9 / WCAG 1.4.1), and would be
+        // indistinguishable at a glance from the expired tier the chip above
+        // names. Tiered with `expired`, never both: the predicate excludes an
+        // already-expired line.
+        c: { accessor: lineNearExpiry, id: 'nearExpiry' },
+        header: () => t('label.near-expiry'),
+        ...getFlagCell(
+          t('label.near-expiry'),
+          {
+            headerPosition: 'badge',
+            hideOnTable: true,
+            hideFromColumnSettings: true,
+          },
+          'error',
+          () => <AlertTriangleIcon />
+        ),
+      },
+      {
+        // Needs-action flag, CARD-ONLY: in the table the teal tint, the
         // leading bar and the "Not issued" badge beside the item name carry
         // it; a card has none of those, and its Batch field ("Unallocated")
         // sits in the body where nothing distinguishes it — so the corner
@@ -1107,10 +1143,11 @@ const OutboundDetailView: Component = () => {
                 <>
                   {/* The totals band, above BOTH footer faces — a document
                       fact, so a live row selection doesn't take it away.
-                      WIDE viewports only: on a narrow one the same figures
-                      ride the bar itself (below), because a row of height is
-                      the scarcer resource there. */}
-                  <Show when={!narrowViewport()}>
+                      Only where there is ROOM for it: on a narrow viewport, or
+                      a short one (landscape), the same figures ride the bar
+                      itself (below) rather than stacking a third band under
+                      the table, because height is the scarcer resource. */}
+                  <Show when={!foldTotalsIntoBar()}>
                     <OutboundTotalsStrip
                       totals={totalCount() > 0 ? shipmentTotals : undefined}
                     />
@@ -1244,6 +1281,16 @@ const OutboundDetailView: Component = () => {
                   onSelectionChange={setSelectedIds}
                   config={tableConfig.config()}
                   setConfig={tableConfig.setConfig}
+                  // Central-server admins can promote this table's layout to
+                  // the shared install-wide default, the same as the list
+                  // (issue #1118 — detail tables offered no way to save table
+                  // defaults). Gate + action both off the config controller;
+                  // undefined for everyone else, so the action isn't offered.
+                  onSaveGlobalDefault={
+                    tableConfig.canSaveGlobalDefault()
+                      ? tableConfig.saveGlobalTableConfig
+                      : undefined
+                  }
                 />
               </TabPanel>
               <TabPanel value="custom-fields">

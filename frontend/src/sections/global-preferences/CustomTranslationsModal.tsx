@@ -8,6 +8,8 @@ import {
   untrack,
 } from 'solid-js';
 import { graphqlFetch } from '../../api/graphql';
+import { gated } from '../../api/gated';
+import { saveBlob } from '../../platform/openDocument';
 import { invalidateCustomTranslations, locale, t } from '../../intl';
 import { currentLanguageName } from '../../intl/intlUtils';
 import { loadedPlugins } from '../../plugins/registry';
@@ -125,7 +127,7 @@ export const CustomTranslationsModal = (props: {
       : {};
   });
   createEffect(() => {
-    const served = legacyData.state === 'ready' ? legacyData.latest : undefined;
+    const served = gated(legacyData);
     if (served && !legacyLoaded()) {
       setLegacy(served);
       setLegacyLoaded(true);
@@ -155,10 +157,7 @@ export const CustomTranslationsModal = (props: {
       enNs: await loadBundle('en', ns),
     })
   );
-  const loadedBundles = () =>
-    bundles.state === 'ready' || bundles.state === 'refreshing'
-      ? bundles.latest
-      : undefined;
+  const loadedBundles = () => gated(bundles);
 
   /* The default text a key seeds/compares against (rules § The
      custom-translations editor): the bundled string for the bundled
@@ -302,20 +301,20 @@ export const CustomTranslationsModal = (props: {
   // ---------------------------------------------------------------------
   // Import / export / delete all / copy legacy
 
-  const exportTranslations = () => {
+  // Through the platform layer, not a download-attributed anchor: that idiom
+  // is a silent no-op in the Android WebView (#1169), so the export button
+  // would simply do nothing on a tablet. saveBlob picks the browser download
+  // or the Android save picker as appropriate.
+  const exportTranslations = async () => {
     const committed = commitCurrentView();
     const exportObject = buildExportObject(committed.nested, committed.legacy);
     const blob = new Blob([JSON.stringify(exportObject, null, 2)], {
       type: 'application/json',
     });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'custom-translations.json';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    const result = await saveBlob(blob, 'custom-translations.json');
+    // saved === false = the user dismissed the OS save picker (declined, not a
+    // failure), so only a real error raises a notice.
+    if (!result.ok) setNotice({ kind: 'error', message: result.message });
   };
 
   const importFile = async (file: File, mode: ImportMode) => {

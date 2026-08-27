@@ -1,0 +1,17 @@
+import { useMutation, useQueryClient } from '@openmsupply-client/common';
+import { useReturnsApi } from '../utils/useReturnsApi';
+
+export const useUpdateSupplierReturnOtherParty = () => {
+  const queryClient = useQueryClient();
+  const api = useReturnsApi();
+
+  return useMutation({
+    mutationFn: api.updateOtherParty,
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: api.keys.base()
+      });
+    }
+  });
+};

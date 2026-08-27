@@ -1,5 +1,6 @@
 import { createResource, createRoot } from 'solid-js';
 import { graphqlFetch } from '../../api/graphql';
+import { gated } from '../../api/gated';
 import { CustomFieldDefinitions } from './customFields.generated';
 import type { CustomFieldDef } from './parse';
 
@@ -37,10 +38,7 @@ const build = (scope: string): CustomFieldDefinitionsReader =>
       }
     );
     return {
-      noSuspense: () =>
-        resource.state === 'ready' || resource.state === 'refreshing'
-          ? (resource.latest ?? [])
-          : [],
+      noSuspense: () => gated(resource) ?? [],
       loading: () => resource.loading,
     };
   });

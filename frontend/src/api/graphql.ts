@@ -56,7 +56,13 @@ export type GraphqlFailure =
   | { kind: 'unexpectedError' }
   // GraphQL errors from the response, returned only when the caller opts in via
   // returnGraphqlErrors to handle them itself.
-  | { kind: 'graphqlError'; message: string; errors: GraphqlErrorItem[] };
+  | { kind: 'graphqlError'; message: string; errors: GraphqlErrorItem[] }
+  // The caller aborted the request through its own `signal` — it asked for this,
+  // so it is NOT a fault: no global modal, no error description, nothing for the
+  // user to read. Distinct from unexpectedError precisely so a caller that
+  // cancels superseded work can tell "I dropped this" apart from "this broke",
+  // and drop the result silently instead of reporting it.
+  | { kind: 'aborted' };
 
 export type GraphqlResult<TResult> =
   { kind: 'success'; data: TResult } | GraphqlFailure;
@@ -85,6 +91,16 @@ type FetchOptions<TResult> = {
   // the unexpected-error modal is suppressed.
   background?: boolean;
   endpoint?: string;
+  // Cancel the request. Aborting resolves to { kind: 'aborted' } — never the
+  // global unexpected-error modal — so a caller can drop work it no longer
+  // wants (a superseded refetch, a screen the user navigated away from) without
+  // the abandoned request reporting itself as a failure.
+  //
+  // Aborting releases the CLIENT's hold on the request; it does not stop the
+  // server, which finishes the work it started. Worth knowing where that work
+  // is expensive: a cancelled report generation still occupies its server
+  // worker to completion (msupply-foundation/open-msupply#12710).
+  signal?: AbortSignal;
 };
 
 export const isUnauthenticated = (errors: GraphqlErrorItem[]): boolean =>
@@ -227,6 +243,31 @@ const operationName = (query: string): string =>
 const isMutation = (query: string): boolean =>
   OPERATION_RE.exec(query)?.[1] === 'mutation';
 
+// Structural sharing at the transport (kdd/state-management decision 5): when
+// a query's response body is byte-identical to the previous response for the
+// same operation + variables, graphqlFetch returns the SAME parsed object
+// instead of parsing again. State published straight off the response
+// (setUser(data.me), a resource fetcher returning nodes) then compares
+// reference-equal at its signal, so an unchanged background refresh — the
+// post-sync re-reads, the sync-status fallback poll — notifies nobody, which
+// is what makes an unchanged refresh imperceptible (spec/sync-modal › after a
+// run completes, OMS-REG-SYNC-03.31/.32). Publishers that DERIVE a new object
+// from the response instead need their own boundary — an owned memo
+// (storeContext), or an explicit compare where the value is rebuilt every
+// load (loadDictionary).
+//
+// One entry per operation document, so memory is bounded by the operation
+// count; alternating variables for one operation just miss the cache, costing
+// only the parse we always paid. Mutations are never shared — their responses
+// answer an action, not a state read. Comparing the text we already hold is
+// cheaper than any structural compare, and a hit skips JSON.parse entirely.
+// Fetched data must be treated as immutable for the shared reference to be
+// sound — kdd/type-safety already requires exactly that.
+const lastQueryResponse = new Map<
+  string,
+  { varsKey: string; text: string; data: unknown }
+>();
+
 export async function graphqlFetch<TResult, TVariables>(
   document: TypedDocument<TResult, TVariables>,
   variables: TVariables,
@@ -237,6 +278,15 @@ export async function graphqlFetch<TResult, TVariables>(
     condition: UnexpectedErrorCondition,
     cause: string
   ): GraphqlFailure => {
+    // An abort is the caller's own doing wherever it surfaces — the fetch
+    // rejecting, `response.text()` rejecting once the body stops arriving, or
+    // a non-OK status racing the abort — so every failure path resolves to
+    // aborted rather than the global modal. Checked on the signal, not on the
+    // error's name: `AbortError` is the spec'd rejection but a polyfilled or
+    // vendored fetch can reject differently, and the signal is the fact we
+    // actually asked for. A signal that was never aborted changes nothing, so
+    // a genuine failure alongside an unused signal still reports.
+    if (options.signal?.aborted) return { kind: 'aborted' };
     if (!options.background)
       setUnexpectedError({
         condition,
@@ -256,9 +306,11 @@ export async function graphqlFetch<TResult, TVariables>(
       headers: { 'Content-Type': 'application/json' },
       credentials: 'same-origin',
       body: JSON.stringify({ query: document.query, variables }),
+      signal: options.signal,
     });
   } catch (e) {
-    // The fetch itself rejected — no response reached us at all.
+    // The fetch itself rejected — no response reached us at all. (An abort
+    // surfacing here is short-circuited inside `unexpected`.)
     return unexpected(
       'unreachable',
       e instanceof Error ? e.message : String(e)
@@ -273,9 +325,31 @@ export async function graphqlFetch<TResult, TVariables>(
     }
     return unexpected('unknown', `HTTP ${response.status}`);
   }
+  let text: string;
+  try {
+    text = await response.text();
+  } catch (e) {
+    return unexpected('unknown', e instanceof Error ? e.message : String(e));
+  }
+  const shareable = !isMutation(document.query);
+  const varsKey = JSON.stringify(variables) ?? '';
+  if (shareable) {
+    const held = lastQueryResponse.get(document.query);
+    if (held && held.varsKey === varsKey && held.text === text) {
+      // Byte-identical response: hand back the held object (same reference —
+      // see lastQueryResponse above), skipping the parse. Held entries are
+      // always successes, so only the per-call success mapping re-applies.
+      const data = held.data as TResult;
+      const mapped = options.mapSuccessToError?.(data);
+      if (mapped !== undefined) {
+        return unexpected('unknown', mapped);
+      }
+      return { kind: 'success', data };
+    }
+  }
   let body: ResponseBody<TResult>;
   try {
-    body = (await response.json()) as ResponseBody<TResult>;
+    body = JSON.parse(text) as ResponseBody<TResult>;
   } catch (e) {
     return unexpected('unknown', e instanceof Error ? e.message : String(e));
   }
@@ -307,6 +381,9 @@ export async function graphqlFetch<TResult, TVariables>(
   const mapped = options.mapSuccessToError?.(body.data);
   if (mapped !== undefined) {
     return unexpected('unknown', mapped);
+  }
+  if (shareable) {
+    lastQueryResponse.set(document.query, { varsKey, text, data: body.data });
   }
   return { kind: 'success', data: body.data };
 }

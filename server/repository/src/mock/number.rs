@@ -1,0 +1,26 @@
+use crate::{NumberRow, NumberRowType};
+
+pub fn mock_inbound_shipment_number_store_a() -> NumberRow {
+    NumberRow {
+        id: String::from("inbound_shipment_number_store_a"),
+        r#type: NumberRowType::InboundShipment.to_string(),
+        store_id: "store_a".to_string(),
+        value: 1000,
+    }
+}
+
+pub fn mock_outbound_shipment_number_store_a() -> NumberRow {
+    NumberRow {
+        id: String::from("outbound_shipment_number_store_a"),
+        r#type: NumberRowType::OutboundShipment.to_string(),
+        store_id: "store_a".to_string(),
+        value: 100,
+    }
+}
+
+pub fn mock_numbers() -> Vec<NumberRow> {
+    vec![
+        mock_inbound_shipment_number_store_a(),
+        mock_outbound_shipment_number_store_a(),
+    ]
+}

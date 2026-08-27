@@ -7,8 +7,10 @@ import {
   IDLE_TRIGGER,
   statusLineKind,
   syncDurationParts,
+  syncFooterDimmed,
   syncFooterStatus,
   toSyncOverview,
+  type SyncFooterStatus,
   type SyncSurfaceContext,
 } from './syncStatus';
 
@@ -443,6 +445,24 @@ describe('Sync-now busy state machine (SYNC-03.25)', () => {
       IDLE_TRIGGER
     );
   });
+
+  it('once released, a replay of the armed signature does NOT re-arm it', () => {
+    // Release is one-way, and only the STORED state carries that: the guard
+    // that makes it so reads prev.active, so it can only bite on a state that
+    // was written back. Fed its own output — which is what storing the advance
+    // does — a redelivered pre-run frame is inert. Derived fresh from the arm
+    // each time, that same frame would read as armed again and wedge the cell
+    // on "Syncing…" with sync-now a no-op.
+    const released = advanceTriggerState(
+      armed,
+      v7({ lastSuccessfulSync: { started: 'a', finished: 'c' } })
+    );
+    expect(released).toEqual(IDLE_TRIGGER);
+    expect(advanceTriggerState(released, idleStatus)).toEqual(IDLE_TRIGGER);
+    expect(advanceTriggerState(released, v7({ isSyncing: true }))).toEqual(
+      IDLE_TRIGGER
+    );
+  });
 });
 
 describe('a failed run preserves the last-successful record (SYNC-03.29)', () => {
@@ -487,7 +507,7 @@ describe('a later successful run clears the error (SYNC-03.30)', () => {
   });
 });
 
-describe('syncFooterStatus — the bottom bar\'s sync cell (spec/chrome § sync status)', () => {
+describe("syncFooterStatus — the bottom bar's sync cell (spec/chrome § sync status)", () => {
   const now = new Date('2026-01-10T00:00:00Z');
   const errored = (
     variant: 'CONNECTION_ERROR' | 'INVALID_SITE_NAME_OR_PASSWORD'
@@ -622,5 +642,48 @@ describe('syncFooterStatus — the bottom bar\'s sync cell (spec/chrome § sync 
       tone: 'neutral',
       count: 5,
     });
+  });
+});
+
+describe('syncFooterDimmed — the offline level (OMS-REG-FTR-03.21)', () => {
+  it('dims only while the central server is out of reach', () => {
+    expect(syncFooterDimmed('unreachable')).toBe(true);
+    for (const kind of [
+      'waiting',
+      'syncing',
+      'error',
+      'warning',
+      'records-queued',
+      'synced',
+      'never-synced',
+    ] as SyncFooterStatus['kind'][])
+      expect(syncFooterDimmed(kind)).toBe(false);
+  });
+
+  it('is a level BELOW the tone, not a replacement for it', () => {
+    // The outage keeps its warning tone — it must not read as synced, and a
+    // sustained one still escalates through the staleness rungs (FTR-03.3) —
+    // while dimming keeps it visually apart from a site that has gone stale.
+    const unreachable = toSyncOverview(
+      v7({ error: { variantV7: 'CONNECTION_ERROR', fullError: 'x' } }),
+      MODAL
+    );
+    const state = syncFooterStatus(unreachable, 0, 0, new Date());
+    expect(state.tone).toBe('warning');
+    expect(syncFooterDimmed(state.kind)).toBe(true);
+    // A stale site shares the tone but is NOT dimmed — different mark.
+    expect(syncFooterDimmed('warning')).toBe(false);
+  });
+
+  it('shows no queue count while offline (OMS-REG-FTR-03.24)', () => {
+    // The precedence ladder is what enforces this: the outage outranks the
+    // queue, so a waiting backlog cannot appear beside "No connection".
+    const unreachable = toSyncOverview(
+      v7({ error: { variantV7: 'CONNECTION_ERROR', fullError: 'x' } }),
+      MODAL
+    );
+    const state = syncFooterStatus(unreachable, 14, 0, new Date());
+    expect(state.kind).toBe('unreachable');
+    expect(state).not.toHaveProperty('count');
   });
 });

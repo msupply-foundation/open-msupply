@@ -236,8 +236,22 @@ export const DialogShowcase = () => {
             jump as content changes — the slack falls above the footer, so
             footer + actions stay on the bottom edge. The browser moves focus to
             the first control and Tab cycles inside while the page behind is
-            inert. (Opening a Combobox / Select <em>inside</em> a dialog needs
-            extra care — see the "in a dialog" card under Selectors.)
+            inert.
+          </Lead>
+          <Lead>
+            The <strong>chrome is not a choice</strong> (#837): every dialog
+            draws a full-bleed rule under the heading and another above the
+            actions, with the buttons grouped at the <strong>inline-end</strong>{' '}
+            — dismiss first, emphasised confirm last. Nothing is passed to get
+            it, and there is no prop to opt out; what the error modal introduced
+            is now simply what a <code>Dialog</code> is. Two edges worth
+            knowing: a <code>footer</code> band sits <em>above</em> the actions
+            rule (it is the content's last word, not part of the button row),
+            and <code>titleHidden</code> drops the heading rule with the heading
+            while <code>chromeless</code> drops both — a hairline needs a
+            surface to divide. (Opening a Combobox / Select <em>inside</em> a
+            dialog needs extra care — see the "in a dialog" card under
+            Selectors.)
           </Lead>
           <Row>
             <Button
@@ -589,8 +603,8 @@ export const DialogShowcase = () => {
             }}
             onClose={() => closeErrorDemo('Closed — still on this screen.')}
             onRetry={() => closeErrorDemo('Retry — the app would reload.')}
-            onDashboard={() =>
-              closeErrorDemo('Dashboard — the app would go to the root.')
+            onHome={() =>
+              closeErrorDemo('Home — the app would go to the root.')
             }
           />
         </DashboardCard>
@@ -646,6 +660,9 @@ export const DialogShowcase = () => {
               defaultStoreId="AFCA0C9F0743AB43B779FB9EA2E64EAF"
               lastUsedStoreId="5B28901C52396E4BB098B9862CCF5DF9"
               currentStoreId="5B28901C52396E4BB098B9862CCF5DF9"
+              // A saved always-open store, so the toggle arrives ON and its
+              // line NAMES that store rather than using the pending wording.
+              alwaysOpenStoreId="demo-4"
               pinnedCount={2}
               onConfirm={(id, alwaysOpen) => {
                 const store = STORES.find(s => s.id === id);

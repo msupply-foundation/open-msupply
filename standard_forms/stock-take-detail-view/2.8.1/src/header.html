@@ -1,0 +1,34 @@
+<table class="header_image_section" style="width: 100%;height: 98%;">
+    <tr>
+        {% if data.store.logo %}
+        <th style="text-align:left;width:10%;height:70%;">
+            <img class="logo" src="{{ data.store.logo }}" />
+        </th>
+        {% endif %}
+        <th style="text-align:left;width:20%;">
+            <span style="font-weight:bold;">{{ data.store.storeName }}</span><br>
+            <span style="font-size:6pt;">{{ data.store.name.address1 }}</span><br>
+            <span style="font-size:6pt;">{{ data.store.name.address2 }}</span><br>
+            <span style="font-size:6pt;">
+                {{t(k="label.phone",f="Telephone")}}: {{ data.store.name.phone }}
+            </span><br>
+            <span style="font-size:6pt;">
+                {{t(k="label.email",f="Email")}}: {{ data.store.name.email }}
+            </span>
+            <br>
+            <br>
+        </th>
+        <th style="text-align:right;width:70%;font-size:28pt;">
+            {{ t(k="label.stocktake", f="Stocktake") }}<br>
+        </th>
+    </tr>
+</table>
+
+<div class="header_supplied_section" style="display: flex; flex-direction: column;">
+    <div style="display: flex; justify-content: flex-end;">
+        <span>{{ t(k="label.number", f="Number") }}: {{ data.stocktake.stocktakeNumber }}</span>
+    </div>
+    <div style="display: flex; justify-content: flex-end; padding-bottom: 10px;">
+        <span>{{ t(k="label.comment", f="Comment") }}: {{ data.stocktake.description }}</span>
+    </div>
+</div>

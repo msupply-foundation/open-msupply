@@ -76,6 +76,26 @@
      so the same figure/ground holds. */
   --table-card-surface: #f4f5f7;
 
+  /* A DISABLED card's fill (card view's read-only record — the grey a disabled
+     ROW takes in table view). Its own token because the row grey cannot be
+     reused: --bg-toolbar is sized as a step off the WHITE row surface, and on
+     the recessed card list it lands 5/255 from a normal card in light and 3/255
+     from the list floor in dark — invisible in one theme, and in the other the
+     card sinks BELOW its own list so the box disappears and only its 1px border
+     survives (Aneesh, PR #1207).
+
+     The figure the card must keep is its own: a disabled card has to read as a
+     muted card, so it needs perceptible distance from BOTH neighbours — the
+     card it isn't (--surface-raised) and the list it must not dissolve into
+     (--table-card-surface). Dark has room between the two (16/255) and this
+     sits inside it, 8 off each. Light has only 11/255 between them, so nothing
+     inside that gap can clear either edge; light steps PAST the list floor
+     instead — one rung further from the card (22/255) and 12 below the floor —
+     which is the same reading by the other route: a card that recedes rather
+     than lifts. The 1px --color-border-value stays darker than the fill in
+     light and lighter in dark, so the box keeps its frame either way. */
+  --table-card-surface-disabled: #e8e9f0;
+
   /* --- App shell surface ladder — "Warm stone" -------------------------
      The shell's figure/ground, from the UX surface study (ux-testing
      nav-collapsed-flyout-mockup-light.html § "App shell background & section
@@ -279,8 +299,19 @@
     'Inter Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   /* Monospace — codes, batches, location IDs & dense identifiers
      (ui-standards › typography). A system stack, no webfont bundled: fixed-
-     width glyphs align in columns and disambiguate 0/O and 1/l/I. */
-  --font-mono: 'Monaco', 'Courier New', monospace;
+     width glyphs align in columns and disambiguate 0/O and 1/l/I.
+
+     `ui-monospace` FIRST (Ling, 2026-08-19): it resolves to the platform's
+     UI-grade mono — SF Mono on Apple, and the named fallbacks cover the rest —
+     each drawn to sit beside a UI sans. The old stack led with Monaco, a 1984
+     terminal face with no design relationship to Inter, which read on screen as
+     a visitor from another application; review feedback on the outbound detail
+     table was "I seem to have multiple fonts in this screen". Worse, Monaco
+     ships only on macOS, so every Windows/Linux client — the tablets included —
+     fell through to Courier New: thin, cramped, and more foreign still. */
+  --font-mono:
+    ui-monospace, 'SFMono-Regular', 'Menlo', 'Consolas', 'Liberation Mono',
+    monospace;
   --text-xs: 0.75rem; /* 12px — body2 */
   --text-sm: 0.875rem; /* 14px — body1 / th / input */
   --text-md: 1rem; /* 16px — h6 */
@@ -301,6 +332,23 @@
   --nav-child-height: 1.875rem; /* 30px */
   --table-data-row: 2.5rem; /* 40px */
   --table-header-row: 3.75rem; /* 60px */
+  /* Column-header text: 13px, one notch under the 14px cell font (--text-sm),
+     so the column names read as labels FOR the data rather than as more of it.
+     Its own token rather than --text-xs (12px, helper/caption) — 12px tested
+     too small to read comfortably across a wide table, and it left no room
+     below the header on the scale. Same shape as --input-font-sm, which notches
+     a small field down by exactly this step.
+
+     The size also earns its keep in translation: French column headers measure
+     ~24% wider than their English originals, and the 13px step gives back ~7%
+     of that, which pulls headers back inside the 2-line clamp (.thText) and
+     lowers the min-content floor a long compound word forces on its column.
+
+     Deviation from the org standards site, which sets th at 14px (= the cell
+     font) and separates the band by weight + fill alone — recorded in
+     src/ui/docs/DESIGN_STANDARDS.md. A table inside a modal opts BACK to 14px
+     (see the dialog rules in DataTable.module.css / Table.module.css). */
+  --table-header-font-size: 0.8125rem; /* 13px */
   /* Cell line-height (ui-standards § tables): 1.43 ≈ 20px leading at the 14px
      cell font, shared by header and body cells. */
   --table-line-height: 1.43;
@@ -367,7 +415,7 @@
 
      The floor it used to carry was iOS Safari's zoom-on-focus threshold, which
      is an absolute 16px. That argument is gone: browserslist is
-     `chrome >= 138` (Chromium only, enforced by scripts/check-min-browser.mjs),
+     `chrome >= 132` (Chromium only, enforced by scripts/check-min-browser.mjs),
      so iOS Safari is not a supported target. If it ever becomes one, the floor
      comes back HERE and nowhere else.
 
@@ -561,6 +609,12 @@
   /* Recessed card-list surface — darker than the raised card so the same
      figure/ground reads in dark. */
   --table-card-surface: #1b1b24;
+
+  /* A disabled card's fill — BETWEEN the list floor above and the raised card,
+     8/255 off each: dark's card→list gap is wide enough to hold a middle rung,
+     so the muted card steps down toward the list without reaching it. (Light
+     has no such room and steps past the floor instead — see the light note.) */
+  --table-card-surface-disabled: #242433;
 
   /* App shell surface ladder — cool-neutral in dark, on the study's own advice:
      re-hued to 85° at these lightnesses a warm neutral reads as brown, and a

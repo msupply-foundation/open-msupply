@@ -1,0 +1,75 @@
+import React, { FC } from 'react';
+import {
+  CustomersIcon,
+  Collapse,
+  List,
+  useTranslation,
+  RouteBuilder,
+  AppNavLink,
+  AppNavSection,
+  UserStoreNodeFragment,
+  StoreModeNodeType,
+} from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
+import { useNestedNav } from './useNestedNav';
+import { usePluginNavLinksForCategory } from './usePluginNavLinks';
+
+export interface DispensaryNavProps {
+  store?: UserStoreNodeFragment;
+}
+
+export const DispensaryNav: FC<DispensaryNavProps> = ({ store }) => {
+  const { isActive } = useNestedNav(
+    RouteBuilder.create(AppRoute.Dispensary).addWildCard().build()
+  );
+  const t = useTranslation();
+  const visible = store?.storeMode === StoreModeNodeType.Dispensary;
+  const isProgramModule = store?.preferences.omProgramModule;
+  const pluginLinks = usePluginNavLinksForCategory(AppRoute.Dispensary);
+
+  return (
+    <AppNavSection isActive={isActive} to={AppRoute.Dispensary}>
+      <AppNavLink
+        visible={visible}
+        isParent
+        to={AppRoute.Dispensary}
+        icon={<CustomersIcon color="primary" fontSize="small" />}
+        text={t('dispensary')}
+      />
+      <Collapse in={isActive}>
+        <List>
+          <AppNavLink
+            visible={visible}
+            to={RouteBuilder.create(AppRoute.Dispensary)
+              .addPart(AppRoute.Patients)
+              .addQuery({ sort: 'createdDatetime', dir: 'desc' })
+              .build()}
+            text={t('patients')}
+          />
+          <AppNavLink
+            visible={visible}
+            to={RouteBuilder.create(AppRoute.Dispensary)
+              .addPart(AppRoute.Prescription)
+              .build()}
+            text={t('prescriptions')}
+          />
+          <AppNavLink
+            visible={isProgramModule}
+            to={RouteBuilder.create(AppRoute.Dispensary)
+              .addPart(AppRoute.Encounter)
+              .build()}
+            text={t('encounter')}
+          />
+          <AppNavLink
+            visible={visible}
+            to={RouteBuilder.create(AppRoute.Dispensary)
+              .addPart(AppRoute.Clinicians)
+              .build()}
+            text={t('clinicians')}
+          />
+          {pluginLinks}
+        </List>
+      </Collapse>
+    </AppNavSection>
+  );
+};

@@ -1,0 +1,190 @@
+use super::{StorePreferenceNode, UserStorePermissionConnector};
+use async_graphql::{
+    dataloader::DataLoader, Context, Enum, ErrorExtensions, Object, Result, SimpleObject,
+};
+use chrono::NaiveDate;
+use graphql_core::{
+    loader::{HomeCurrencyLoader, NameRowLoader},
+    standard_graphql_error::StandardGraphqlError,
+    ContextExt,
+};
+use repository::{User, UserStore};
+use service::permission::permissions;
+
+pub struct UserStoreNode {
+    user_store: UserStore,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(remote = "repository::db_diesel::store_row
+::StoreMode")]
+pub enum StoreModeNodeType {
+    Store,
+    Dispensary,
+}
+
+#[Object]
+impl UserStoreNode {
+    pub async fn id(&self) -> &str {
+        &self.user_store.store_row.id
+    }
+
+    pub async fn code(&self) -> &str {
+        &self.user_store.store_row.code
+    }
+
+    pub async fn name_id(&self) -> &str {
+        &self.user_store.store_row.name_id
+    }
+
+    pub async fn name(&self, ctx: &Context<'_>) -> Result<String> {
+        let loader = ctx.get_loader::<DataLoader<NameRowLoader>>();
+
+        let name_row = loader
+            .load_one(self.user_store.store_row.name_id.clone())
+            .await?
+            .ok_or(
+                StandardGraphqlError::InternalError(format!(
+                    "Cannot find name ({}) for store ({})",
+                    self.user_store.store_row.name_id, self.user_store.store_row.id
+                ))
+                .extend(),
+            )?;
+
+        Ok(name_row.name)
+    }
+
+    pub async fn preferences(&self) -> StorePreferenceNode {
+        StorePreferenceNode::from_domain(self.user_store.store_preferences.clone())
+    }
+
+    pub async fn store_mode(&self) -> StoreModeNodeType {
+        StoreModeNodeType::from(self.user_store.store_row.store_mode.clone())
+    }
+
+    pub async fn created_date(&self) -> &Option<NaiveDate> {
+        &self.user_store.store_row.created_date
+    }
+    pub async fn home_currency_code(&self, ctx: &Context<'_>) -> Result<Option<String>> {
+        let loader = ctx.get_loader::<DataLoader<HomeCurrencyLoader>>();
+        Ok(loader.load_one(()).await?)
+    }
+
+    pub async fn is_disabled(&self) -> bool {
+        self.user_store.store_row.is_disabled
+    }
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(remote = "repository::db_diesel::user_row::LanguageType")]
+pub enum LanguageTypeNode {
+    English,
+    French,
+    Spanish,
+    Laos,
+    Khmer,
+    Portuguese,
+    Russian,
+    Tetum,
+}
+
+#[derive(SimpleObject)]
+pub struct UserStoreConnector {
+    total_count: u32,
+    nodes: Vec<UserStoreNode>,
+}
+
+pub struct UserNode {
+    pub user: User,
+}
+
+#[Object]
+impl UserNode {
+    /// Internal user id
+    pub async fn user_id(&self) -> &str {
+        &self.user.user_row.id
+    }
+
+    /// The user's email address
+    pub async fn email(&self) -> &Option<String> {
+        &self.user.user_row.email
+    }
+
+    pub async fn username(&self) -> &str {
+        &self.user.user_row.username
+    }
+
+    pub async fn default_store(&self) -> Option<UserStoreNode> {
+        self.user.default_store().map(|user_store| UserStoreNode {
+            user_store: user_store.clone(),
+        })
+    }
+
+    pub async fn stores(&self) -> UserStoreConnector {
+        let nodes: Vec<UserStoreNode> = self
+            .user
+            .stores
+            .iter()
+            .map(|user_store| UserStoreNode {
+                user_store: user_store.clone(),
+            })
+            .collect();
+        UserStoreConnector {
+            total_count: nodes.len() as u32,
+            nodes,
+        }
+    }
+
+    pub async fn permissions(
+        &self,
+        ctx: &Context<'_>,
+        store_id: Option<String>,
+    ) -> Result<UserStorePermissionConnector> {
+        let service_context = ctx.service_provider().basic_context()?;
+
+        let result = permissions(
+            &service_context.connection,
+            &self.user.user_row.id,
+            store_id,
+        )?;
+
+        Ok(UserStorePermissionConnector::from_vec(result))
+    }
+
+    pub async fn language(&self) -> LanguageTypeNode {
+        LanguageTypeNode::from(self.user.user_row.language.clone())
+    }
+
+    pub async fn first_name(&self) -> &Option<String> {
+        &self.user.user_row.first_name
+    }
+    pub async fn last_name(&self) -> &Option<String> {
+        &self.user.user_row.last_name
+    }
+    pub async fn phone_number(&self) -> &Option<String> {
+        &self.user.user_row.phone_number
+    }
+    pub async fn job_title(&self) -> &Option<String> {
+        &self.user.user_row.job_title
+    }
+
+    /// How long (in seconds) the user may be inactive before the client should force a re-login.
+    /// Sourced from server configuration (`server.inactivity_timeout_seconds`); advisory — the
+    /// server does not enforce it.
+    pub async fn inactivity_timeout_seconds(&self, ctx: &Context<'_>) -> u32 {
+        ctx.get_settings().server.inactivity_timeout_seconds
+    }
+
+    /// If the user is active but no API call has happened for this long (in seconds), the client
+    /// should call the refresh endpoint (`refreshToken`) to keep the session alive. Sourced from
+    /// server configuration (`server.token_refresh_interval_seconds`).
+    pub async fn token_refresh_interval_seconds(&self, ctx: &Context<'_>) -> u32 {
+        ctx.get_settings().server.token_refresh_interval_seconds
+    }
+}
+
+impl UserNode {
+    pub fn from_domain(user: User) -> Self {
+        UserNode { user }
+    }
+}

@@ -7,6 +7,12 @@ import type { GraphqlErrorItem } from '../../api/graphql';
 // exactly what we assert (that each server identifier maps to the right message
 // KEY). The full behavioural rejections are exercised against the real backend
 // in the e2e/ suites (conformance C2).
+//
+// Anchors: spec/stock/cases/ — the rejection each identifier surfaces.
+//   OMS-REG-SMV-02 .10 .18 .22 .25 .26 .27 .28 .34 .35 — adjustment and
+//     new-stock rejections
+//   OMS-REG-SMV-08 .16 .17 — repack rejections
+//   OMS-REG-INV-02 .49 — an edit against another store's line
 
 describe('rejectionDetail — the identifier from a plain GraphQL error', () => {
   it('reads extensions.details when present', () => {
@@ -24,49 +30,49 @@ describe('rejectionDetail — the identifier from a plain GraphQL error', () => 
 });
 
 describe('stockErrorMessage — identifier → message key (spec/stock S7)', () => {
-  it('AC-A4/AC-R4: below-zero maps to the reduced-below-zero message', () => {
+  it('SMV-02.19/SMV-08.17: below-zero maps to the reduced-below-zero message', () => {
     expect(stockErrorMessage('StockLineReducedBelowZero')).toBe(
       'error.stock-reduced-below-zero'
     );
   });
-  it('AC-A11: ledger-below-zero maps to its message', () => {
+  it('SMV-02.28: ledger-below-zero maps to its message', () => {
     expect(stockErrorMessage('LedgerWouldGoBelowZero')).toBe(
       'error.ledger-would-go-below-zero'
     );
   });
-  it('AC-A7: reason-required defaults to the adjusting-stock copy', () => {
+  it('SMV-02.10: reason-required defaults to the adjusting-stock copy', () => {
     expect(stockErrorMessage('AdjustmentReasonNotProvided')).toBe(
       'error.provide-reason-stock-adjustment'
     );
   });
-  it('AC-N4: the new-stock override supplies the adding-stock copy', () => {
+  it('SMV-02.36: the new-stock override supplies the adding-stock copy', () => {
     expect(
       stockErrorMessage('AdjustmentReasonNotProvided', {
         AdjustmentReasonNotProvided: 'error.provide-reason-new-stock',
       })
     ).toBe('error.provide-reason-new-stock');
   });
-  it('AC-A8: wrong-direction reason maps to the not-valid message', () => {
+  it('SMV-02.22: wrong-direction reason maps to the not-valid message', () => {
     expect(stockErrorMessage('AdjustmentReasonNotValid')).toBe(
       'error.provide-valid-reason'
     );
   });
-  it('AC-A3: a non-positive amount maps to the invalid-adjustment message', () => {
+  it('SMV-02.18: a non-positive amount maps to the invalid-adjustment message', () => {
     expect(stockErrorMessage('InvalidAdjustment')).toBe(
       'error.invalid-adjustment'
     );
   });
-  it('AC-R3: fractional packs map to the fractional message', () => {
+  it('SMV-08.16: fractional packs map to the fractional message', () => {
     expect(stockErrorMessage('CannotHaveFractionalPack')).toBe(
       'error.repack-cannot-be-fractional'
     );
   });
-  it('AC-N3: duplicate identity maps to the already-exists message', () => {
+  it('SMV-02.35: duplicate identity maps to the already-exists message', () => {
     expect(stockErrorMessage('StockLineAlreadyExists')).toBe(
       'error.stock-line-already-exists'
     );
   });
-  it('AC-A10: backdating rejections map to their messages', () => {
+  it('SMV-02.25–.27: backdating rejections map to their messages', () => {
     expect(stockErrorMessage('BackdatingNotEnabled')).toBe(
       'error.backdating-not-enabled'
     );
@@ -77,7 +83,7 @@ describe('stockErrorMessage — identifier → message key (spec/stock S7)', () 
       'error.exceeds-max-backdating-days'
     );
   });
-  it("AC-E9: another store's line maps to the not-found message", () => {
+  it("INV-02.49: another store's line maps to the not-found message", () => {
     expect(stockErrorMessage('StockDoesNotBelongToStore')).toBe(
       'error.stock-not-found'
     );

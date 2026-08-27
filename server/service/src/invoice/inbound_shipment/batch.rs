@@ -1,0 +1,389 @@
+use repository::{
+    Invoice, InvoiceLine, InvoiceLineRowRepository, InvoiceRowRepository, RepositoryError,
+};
+
+use crate::{
+    invoice_line::{
+        inbound_shipment_from_internal_order_lines::{
+            insert_from_internal_order_line, InsertFromInternalOrderLine,
+            InsertFromInternalOrderLineError,
+        },
+        inbound_shipment_service_line::{
+            delete_inbound_shipment_service_line, insert_inbound_shipment_service_line,
+            update_inbound_shipment_service_line, DeleteInboundShipmentServiceLineError,
+            InsertInboundShipmentServiceLine, InsertInboundShipmentServiceLineError,
+            UpdateInboundShipmentServiceLine, UpdateInboundShipmentServiceLineError,
+        },
+        stock_in_line::{
+            delete_stock_in_line, insert_stock_in_line, update_stock_in_line, DeleteStockInLine,
+            DeleteStockInLineError, InsertStockInLine, InsertStockInLineError, UpdateStockInLine,
+            UpdateStockInLineError,
+        },
+    },
+    service_provider::ServiceContext,
+    BatchMutationsProcessor, InputWithResult, WithDBError,
+};
+
+use super::{
+    delete_inbound_shipment, insert_inbound_shipment, update_inbound_shipment,
+    DeleteInboundShipment, DeleteInboundShipmentError, InboundShipmentType, InsertInboundShipment,
+    InsertInboundShipmentError, UpdateInboundShipment, UpdateInboundShipmentError,
+};
+
+#[derive(Clone)]
+pub struct BatchInboundShipment {
+    pub insert_shipment: Option<Vec<InsertInboundShipment>>,
+    pub insert_line: Option<Vec<InsertStockInLine>>,
+    pub insert_from_internal_order_lines: Option<Vec<InsertFromInternalOrderLine>>,
+    pub update_line: Option<Vec<UpdateStockInLine>>,
+    pub delete_line: Option<Vec<DeleteStockInLine>>,
+    pub insert_service_line: Option<Vec<InsertInboundShipmentServiceLine>>,
+    pub update_service_line: Option<Vec<UpdateInboundShipmentServiceLine>>,
+    pub delete_service_line: Option<Vec<DeleteStockInLine>>,
+    pub update_shipment: Option<Vec<UpdateInboundShipment>>,
+    pub delete_shipment: Option<Vec<DeleteInboundShipment>>,
+    pub continue_on_error: Option<bool>,
+    pub r#type: InboundShipmentType,
+}
+
+pub type InsertShipmentsResult =
+    Vec<InputWithResult<InsertInboundShipment, Result<Invoice, InsertInboundShipmentError>>>;
+pub type InsertLinesResult =
+    Vec<InputWithResult<InsertStockInLine, Result<InvoiceLine, InsertStockInLineError>>>;
+pub type InsertFromInternalOrderLinesResult = Vec<
+    InputWithResult<
+        InsertFromInternalOrderLine,
+        Result<InvoiceLine, InsertFromInternalOrderLineError>,
+    >,
+>;
+pub type UpdateLinesResult =
+    Vec<InputWithResult<UpdateStockInLine, Result<InvoiceLine, UpdateStockInLineError>>>;
+pub type DeleteLinesResult =
+    Vec<InputWithResult<DeleteStockInLine, Result<String, DeleteStockInLineError>>>;
+pub type InsertServiceLinesResult = Vec<
+    InputWithResult<
+        InsertInboundShipmentServiceLine,
+        Result<InvoiceLine, InsertInboundShipmentServiceLineError>,
+    >,
+>;
+pub type UpdateServiceLinesResult = Vec<
+    InputWithResult<
+        UpdateInboundShipmentServiceLine,
+        Result<InvoiceLine, UpdateInboundShipmentServiceLineError>,
+    >,
+>;
+pub type DeleteServiceLinesResult =
+    Vec<InputWithResult<DeleteStockInLine, Result<String, DeleteInboundShipmentServiceLineError>>>;
+pub type UpdateShipmentsResult =
+    Vec<InputWithResult<UpdateInboundShipment, Result<Invoice, UpdateInboundShipmentError>>>;
+pub type DeleteShipmentsResult =
+    Vec<InputWithResult<DeleteInboundShipment, Result<String, DeleteInboundShipmentError>>>;
+
+#[derive(Debug, Default)]
+pub struct BatchInboundShipmentResult {
+    pub insert_shipment: InsertShipmentsResult,
+    pub insert_line: InsertLinesResult,
+    pub insert_from_internal_order_lines: InsertFromInternalOrderLinesResult,
+    pub update_line: UpdateLinesResult,
+    pub delete_line: DeleteLinesResult,
+    pub insert_service_line: InsertServiceLinesResult,
+    pub update_service_line: UpdateServiceLinesResult,
+    pub delete_service_line: DeleteServiceLinesResult,
+    pub update_shipment: UpdateShipmentsResult,
+    pub delete_shipment: DeleteShipmentsResult,
+}
+
+/// Check if an invoice's purchase_order status matches the filter.
+/// Returns true if no filter is set, or if the invoice matches.
+fn check_invoice_type(
+    ctx: &ServiceContext,
+    invoice_id: &str,
+    r#type: InboundShipmentType,
+) -> Result<bool, RepositoryError> {
+    let Some(invoice) = InvoiceRowRepository::new(&ctx.connection).find_one_by_id(invoice_id)?
+    else {
+        return Ok(true); // invoice doesn't exist — will fail in the actual operation
+    };
+    Ok(r#type.matches_input(invoice.purchase_order_id.is_some()))
+}
+
+/// Check if a line's parent invoice matches the purchase_order filter.
+fn check_line_type(
+    ctx: &ServiceContext,
+    line_id: &str,
+    r#type: InboundShipmentType,
+) -> Result<bool, RepositoryError> {
+    let Some(line) = InvoiceLineRowRepository::new(&ctx.connection).find_one_by_id(line_id)? else {
+        return Ok(true); // line doesn't exist — will fail in the actual operation
+    };
+    check_invoice_type(ctx, &line.invoice_id, r#type)
+}
+
+pub fn batch_inbound_shipment(
+    ctx: &ServiceContext,
+    input: BatchInboundShipment,
+) -> Result<BatchInboundShipmentResult, RepositoryError> {
+    let result = ctx
+        .connection
+        .transaction_sync(|_| {
+            let continue_on_error = input.continue_on_error.unwrap_or(false);
+            let r#type = input.r#type;
+            let mut results = BatchInboundShipmentResult::default();
+            let mutations_processor = BatchMutationsProcessor::new(ctx);
+
+            // Insert Shipment
+            let (has_errors, result) =
+                mutations_processor.do_mutations(input.insert_shipment, |ctx, input| {
+                    // type checked in validate function so don't need to check here
+                    insert_inbound_shipment(ctx, input, r#type)
+                });
+            results.insert_shipment = result;
+            if has_errors && !continue_on_error {
+                return Err(WithDBError::err(results));
+            }
+
+            let (has_errors, result) = mutations_processor.do_mutations(
+                input.insert_from_internal_order_lines,
+                |ctx, input: InsertFromInternalOrderLine| {
+                    if !check_invoice_type(ctx, &input.invoice_id, r#type)? {
+                        return Err(InsertFromInternalOrderLineError::InvoiceDoesNotExist);
+                    }
+                    insert_from_internal_order_line(ctx, input)
+                },
+            );
+            results.insert_from_internal_order_lines = result;
+            if has_errors && !continue_on_error {
+                return Err(WithDBError::err(results));
+            }
+
+            // Normal Line
+            let (has_errors, result) = mutations_processor.do_mutations(
+                input.insert_line,
+                |ctx, input: InsertStockInLine| {
+                    if !check_invoice_type(ctx, &input.invoice_id, r#type)? {
+                        return Err(InsertStockInLineError::InvoiceDoesNotExist);
+                    }
+                    insert_stock_in_line(ctx, input, Some(r#type))
+                },
+            );
+            results.insert_line = result;
+            if has_errors && !continue_on_error {
+                return Err(WithDBError::err(results));
+            }
+
+            let (has_errors, result) = mutations_processor.do_mutations(
+                input.update_line,
+                |ctx, input: UpdateStockInLine| {
+                    if !check_line_type(ctx, &input.id, r#type)? {
+                        return Err(UpdateStockInLineError::InvoiceDoesNotExist);
+                    }
+                    update_stock_in_line(ctx, input, Some(r#type))
+                },
+            );
+            results.update_line = result;
+            if has_errors && !continue_on_error {
+                return Err(WithDBError::err(results));
+            }
+
+            let (has_errors, result) = mutations_processor.do_mutations(
+                input.delete_line,
+                |ctx, input: DeleteStockInLine| {
+                    if !check_line_type(ctx, &input.id, r#type)? {
+                        return Err(DeleteStockInLineError::InvoiceDoesNotExist);
+                    }
+                    delete_stock_in_line(ctx, input, Some(r#type))
+                },
+            );
+            results.delete_line = result;
+            if has_errors && !continue_on_error {
+                return Err(WithDBError::err(results));
+            }
+
+            // Service Line
+            let (has_errors, result) = mutations_processor.do_mutations(
+                input.insert_service_line,
+                |ctx, input: InsertInboundShipmentServiceLine| {
+                    if !check_invoice_type(ctx, &input.invoice_id, r#type)? {
+                        return Err(InsertInboundShipmentServiceLineError::InvoiceDoesNotExist);
+                    }
+                    insert_inbound_shipment_service_line(ctx, input, Some(r#type))
+                },
+            );
+            results.insert_service_line = result;
+            if has_errors && !continue_on_error {
+                return Err(WithDBError::err(results));
+            }
+
+            let (has_errors, result) = mutations_processor.do_mutations(
+                input.update_service_line,
+                |ctx, input: UpdateInboundShipmentServiceLine| {
+                    if !check_line_type(ctx, &input.id, r#type)? {
+                        return Err(UpdateInboundShipmentServiceLineError::InvoiceDoesNotExist);
+                    }
+                    update_inbound_shipment_service_line(ctx, input, Some(r#type))
+                },
+            );
+            results.update_service_line = result;
+            if has_errors && !continue_on_error {
+                return Err(WithDBError::err(results));
+            }
+
+            let (has_errors, result) = mutations_processor.do_mutations(
+                input.delete_service_line,
+                |ctx, input: DeleteStockInLine| {
+                    if !check_line_type(ctx, &input.id, r#type)? {
+                        return Err(DeleteInboundShipmentServiceLineError::InvoiceDoesNotExist);
+                    }
+                    delete_inbound_shipment_service_line(ctx, input, Some(r#type))
+                },
+            );
+            results.delete_service_line = result;
+            if has_errors && !continue_on_error {
+                return Err(WithDBError::err(results));
+            }
+
+            // Update and delete shipment
+            let (has_errors, result) = mutations_processor.do_mutations(
+                input.update_shipment,
+                |ctx, input: UpdateInboundShipment| {
+                    // type checked in validate function so don't need to check here
+                    update_inbound_shipment(ctx, input, None, r#type)
+                },
+            );
+            results.update_shipment = result;
+            if has_errors && !continue_on_error {
+                return Err(WithDBError::err(results));
+            }
+
+            let (has_errors, result) = mutations_processor.do_mutations(
+                input.delete_shipment,
+                |ctx, input: DeleteInboundShipment| {
+                    // type checked in validate function so don't need to check here
+                    delete_inbound_shipment(ctx, input, r#type)
+                },
+            );
+            results.delete_shipment = result;
+            if has_errors && !continue_on_error {
+                return Err(WithDBError::err(results));
+            }
+
+            Ok(results)
+                as Result<BatchInboundShipmentResult, WithDBError<BatchInboundShipmentResult>>
+        })
+        .map_err(|error| error.to_inner_error())
+        .or_else(|error| match error {
+            WithDBError::DatabaseError(repository_error) => Err(repository_error),
+            WithDBError::Error(batch_response) => Ok(batch_response),
+        })?;
+
+    Ok(result)
+}
+
+#[cfg(test)]
+mod test {
+    use repository::{
+        mock::{mock_item_a, mock_name_a, mock_outbound_shipment_b, mock_store_c, MockDataInserts},
+        test_db::setup_all,
+        InvoiceLineRowRepository, InvoiceRowRepository,
+    };
+
+    use crate::{
+        invoice::inbound_shipment::{
+            BatchInboundShipment, DeleteInboundShipment, DeleteInboundShipmentError,
+            InboundShipmentType, InsertInboundShipment,
+        },
+        invoice_line::stock_in_line::{InsertStockInLine, StockInType},
+        service_provider::ServiceProvider,
+        InputWithResult,
+    };
+
+    #[actix_rt::test]
+    async fn batch_inbound_shipment_service() {
+        let (_, connection, connection_manager, _) =
+            setup_all("batch_inbound_shipment_service", MockDataInserts::all()).await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_c().id, "".to_string())
+            .unwrap();
+        let service = service_provider.invoice_service;
+
+        let delete_shipment_input = DeleteInboundShipment {
+            id: mock_outbound_shipment_b().id,
+            ..Default::default()
+        };
+
+        let mut input = BatchInboundShipment {
+            insert_shipment: Some(vec![InsertInboundShipment {
+                id: "new_id".to_string(),
+                other_party_id: mock_name_a().id,
+                ..Default::default()
+            }]),
+            insert_line: Some(vec![InsertStockInLine {
+                invoice_id: "new_id".to_string(),
+                id: "new_line_id".to_string(),
+                item_id: mock_item_a().id,
+                pack_size: 1.0,
+                number_of_packs: 1.0,
+                r#type: StockInType::InboundShipment,
+                ..Default::default()
+            }]),
+            insert_from_internal_order_lines: None,
+            update_line: None,
+            delete_line: None,
+            update_shipment: None,
+            delete_shipment: Some(vec![delete_shipment_input.clone()]),
+            continue_on_error: None,
+            insert_service_line: None,
+            update_service_line: None,
+            delete_service_line: None,
+            r#type: InboundShipmentType::InboundShipment,
+        };
+
+        // Test rollback
+        let result = service
+            .batch_inbound_shipment(&context, input.clone())
+            .unwrap();
+
+        assert_eq!(
+            result.delete_shipment,
+            vec![InputWithResult {
+                input: delete_shipment_input,
+                result: Err(DeleteInboundShipmentError::NotAnInboundShipment {})
+            }]
+        );
+
+        assert_eq!(
+            InvoiceRowRepository::new(&connection)
+                .find_one_by_id("new_id")
+                .unwrap(),
+            None
+        );
+
+        assert_eq!(
+            InvoiceLineRowRepository::new(&connection)
+                .find_one_by_id("new_line_id")
+                .unwrap(),
+            None
+        );
+
+        // Test no rollback
+        input.continue_on_error = Some(true);
+
+        service.batch_inbound_shipment(&context, input).unwrap();
+
+        assert_ne!(
+            InvoiceRowRepository::new(&connection)
+                .find_one_by_id("new_id")
+                .unwrap(),
+            None
+        );
+
+        assert_ne!(
+            InvoiceLineRowRepository::new(&connection)
+                .find_one_by_id("new_line_id")
+                .unwrap(),
+            None
+        );
+    }
+}

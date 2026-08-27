@@ -1,0 +1,135 @@
+import React, { useState } from 'react';
+import { Typography } from '@mui/material';
+import { BasicModal } from '../BasicModal';
+import { DialogButton, LoadingButton } from '../../buttons';
+import { useTranslation } from '@common/intl';
+import { AlertIcon, CheckIcon, HelpIcon, InfoIcon } from '@common/icons';
+import { Grid, Alert } from '@openmsupply-client/common';
+
+interface ConfirmationModalProps {
+  open: boolean;
+  width?: number;
+  height?: number;
+  onConfirm: (() => void) | (() => Promise<void>) | undefined;
+  onCancel: () => void;
+  title: string;
+  message: string;
+  info?: string | undefined;
+  iconType?: 'alert' | 'info' | 'help';
+  buttonLabel?: string | undefined;
+  cancelButtonLabel?: string | undefined;
+  otherButtons?: Array<React.ReactNode>;
+  placeCancelButtonFirst?: boolean;
+  /** Overrides the default `confirmation-modal` test id. */
+  testId?: string;
+  /** Overrides the default `confirmation-modal-ok` test id. */
+  confirmTestId?: string;
+}
+
+const iconLookup = {
+  alert: AlertIcon,
+  help: HelpIcon,
+  info: InfoIcon,
+};
+
+export const ConfirmationModal = ({
+  open,
+  width = 400,
+  height = 200,
+  onConfirm,
+  title,
+  message,
+  info,
+  onCancel,
+  iconType = 'alert',
+  buttonLabel,
+  cancelButtonLabel,
+  otherButtons,
+  placeCancelButtonFirst = false,
+  testId = 'confirmation-modal',
+  confirmTestId = 'confirmation-modal-ok',
+}: ConfirmationModalProps) => {
+  const [loading, setLoading] = useState(false);
+  const Icon = iconLookup[iconType];
+  const t = useTranslation();
+
+  const cancelButton = (
+    <Grid>
+      <DialogButton
+        variant="cancel"
+        customLabel={cancelButtonLabel}
+        disabled={loading}
+        onClick={onCancel}
+      />
+    </Grid>
+  );
+
+  return (
+    <BasicModal
+      width={width}
+      height={height}
+      open={open}
+      onClose={onCancel}
+      data-testid={testId}
+    >
+      <Grid container gap={1} flex={1} padding={4} flexDirection="column">
+        <Grid container gap={1} flexDirection="row">
+          <Grid>
+            <Icon color={iconType === 'alert' ? 'primary' : 'secondary'} />
+          </Grid>
+          <Grid>
+            <Typography variant="h6">{title}</Typography>
+          </Grid>
+        </Grid>
+        {info && (
+          <Grid paddingY={1}>
+            <Alert
+              style={{ whiteSpace: 'pre-line' }}
+              severity={iconType === 'alert' ? 'warning' : 'info'}
+            >
+              {info}
+            </Alert>
+          </Grid>
+        )}
+        <Grid>
+          <Typography style={{ whiteSpace: 'pre-line' }}>{message}</Typography>
+        </Grid>
+        <Grid
+          container
+          gap={1}
+          flexDirection="row"
+          alignItems="flex-end"
+          justifyContent="flex-end"
+          flex={1}
+          display="flex"
+        >
+          {placeCancelButtonFirst && cancelButton}
+          {otherButtons &&
+            otherButtons.map((button, idx) => <Grid key={idx}>{button}</Grid>)}
+          {!placeCancelButtonFirst && cancelButton}
+          <Grid>
+            <LoadingButton
+              autoFocus
+              color="secondary"
+              startIcon={<CheckIcon />}
+              isLoading={loading}
+              data-testid={confirmTestId}
+              onClick={async () => {
+                const result = onConfirm && onConfirm();
+                if (result instanceof Promise) {
+                  setLoading(true);
+                  try {
+                    await result;
+                  } finally {
+                    setLoading(false);
+                  }
+                }
+              }}
+              label={buttonLabel ? buttonLabel : t('button.ok')}
+            />
+          </Grid>
+        </Grid>
+      </Grid>
+    </BasicModal>
+  );
+};

@@ -6,6 +6,7 @@ import {
   type GraphqlErrorItem,
 } from '../../../api/graphql';
 import { t, type LocaleKey } from '../../../intl';
+import { deleteRejection } from '@/domain/invoice';
 import {
   UpdateSupplierReturn,
   UpdateSupplierReturnLines,
@@ -203,7 +204,9 @@ export type DeleteReturnResult =
   // The server rejected the write as Forbidden — the global permission-denied
   // modal has already been raised (D38); callers just stop.
   | { kind: 'forbidden' }
-  | { kind: 'error'; message: string }
+  // Refused, with the server's reason. `detail` carries the raw server text
+  // when the refusal arrived as a debug dump rather than a nameable reason.
+  | { kind: 'error'; message: string; detail?: string }
   | { kind: 'failed' };
 
 export const deleteReturn = async (
@@ -223,7 +226,9 @@ export const deleteReturn = async (
       reportPermissionDenied(missingPermissions(result.errors));
       return { kind: 'forbidden' };
     }
-    return { kind: 'error', message: result.message };
+    // An untyped refusal names its Rust variant in extensions.details;
+    // deleteRejection translates it when it can (domain/invoice).
+    return { kind: 'error', ...deleteRejection(result.errors) };
   }
   if (result.kind !== 'success') return { kind: 'failed' };
   const response = result.data.deleteSupplierReturn;
@@ -247,7 +252,9 @@ export const deleteReturn = async (
 export type CreateReturnResult =
   | { kind: 'created'; id: string }
   | { kind: 'forbidden' }
-  | { kind: 'error'; message: string }
+  // Refused, with the server's reason. `detail` carries the raw server text
+  // when the refusal arrived as a debug dump rather than a nameable reason.
+  | { kind: 'error'; message: string; detail?: string }
   | { kind: 'failed' };
 
 export const createReturnFromShipment = async (

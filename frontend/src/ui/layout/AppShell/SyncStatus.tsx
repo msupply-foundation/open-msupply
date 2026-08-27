@@ -1,9 +1,10 @@
-import { Show } from 'solid-js';
+import { Match, Show, Switch } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 import {
   AlertTriangleIcon,
-  InfoIcon,
+  ChevronsUpIcon,
   SyncIcon,
+  WifiOffIcon,
   XCircleIcon,
 } from '../../icons';
 import { t } from '../../../intl';
@@ -11,22 +12,42 @@ import styles from './SyncStatus.module.css';
 
 export interface SyncStatusProps {
   /**
-   * The status line, already resolved and localised by the host — "Synced 3
-   * minutes ago", "14 records queued", "Sync error". The shell stays
+   * The state, in a word or two, already resolved and localised by the host —
+   * "Synced", "14 records queued", "Sync error". The shell stays
    * presentational: what the wire status MEANS is the sync-modal vertical's
    * derivation (spec/sync-modal › contract § Substrate).
    */
   label: string;
   /**
-   * How loudly the cell reads. It picks the GLYPH, not a colour: the bar is
-   * brand orange on a central server, where an error-red or warning-orange
-   * line is unreadable against it. Text and glyph keep the bar's own contrast-
-   * checked content colour at every tone, and the escalation shows as a
-   * different mark — which also satisfies colour independence outright rather
-   * than leaning on the label to carry it.
+   * The quieter half of the line — "3 minutes ago" beside Synced, "last synced
+   * 2 hours ago" beside a fault. Split from the label so the state itself is
+   * what the eye lands on and the timing sits behind it; absent where the
+   * label is the whole message (a queue count, a run in flight).
+   */
+  detail?: string;
+  /**
+   * How loudly the cell reads. It picks the GLYPH, not a colour: the bar's
+   * ground is store data — brand orange on a central server, an arbitrary hex
+   * wherever a store sets one — so no colour drawn on it can be held to a
+   * contrast ratio, and a hue that lands near the store's own simply
+   * disappears. Text and glyph keep the bar's own contrast-checked content
+   * colour at every tone, and the escalation shows as a different mark — which
+   * also satisfies colour independence outright rather than leaning on the
+   * label to carry it.
    */
   tone: 'neutral' | 'warning' | 'error';
-  /** A run is in flight — the glyph's arcs pulse outward while true. */
+  /**
+   * Sync is not running and cannot, because the server is out of reach (issue
+   * #1087). Its own level, below the tones — an outage is not a fault to answer
+   * but a fact to report, and nothing is lost while it lasts. The cell recedes
+   * AND takes the disconnected mark, which outranks any tone glyph: naming the
+   * cause is more use than an alarm the user can do nothing about. Receding is
+   * a loss of WEIGHT, never of contrast — this bar has none to spend (see the
+   * measurements in SyncStatus.module.css), and an outage is the state with the
+   * most to say.
+   */
+  dimmed?: boolean;
+  /** A run is in flight — the sync glyph spins while true. */
   syncing?: boolean;
   /**
    * Start a manual sync. One click, no dialog (issue #9229): the status line
@@ -54,20 +75,26 @@ export interface SyncStatusProps {
  */
 
 /*
- * The glyph the tone escalates to. A run in flight always keeps the broadcast
- * mark — it is the one that animates, and "syncing" is not a fault state.
+ * The mark an escalated tone takes, in place of the sync glyph. Error is the
+ * crossed circle rather than the exclamation circle: the two are barely
+ * separable at 16px, and the crossed circle also says "did not happen", which
+ * is what a failed run means.
  *
- * Error is the crossed circle, not the exclamation circle: at 16px the latter
- * is barely distinguishable from the details button's info circle sitting
- * immediately beside it, which is the one comparison a reader actually makes.
+ * Escalation is a change of SHAPE — that is what keeps the ladder readable
+ * without colour, on a bar whose own colour is not ours to predict.
  */
 const toneIcon = {
-  neutral: SyncIcon,
   warning: AlertTriangleIcon,
   error: XCircleIcon,
 };
+
 export const SyncStatus = (props: SyncStatusProps) => (
-  <div class={styles.group} data-tone={props.tone} data-testid="footer-sync">
+  <div
+    class={styles.group}
+    data-tone={props.tone}
+    data-dimmed={props.dimmed ? '' : undefined}
+    data-testid="footer-sync"
+  >
     {/* aria-disabled, not disabled: a disabled control drops keyboard focus to
         the body at the very moment it was activated, and vanishes from the tab
         order mid-run. The guard below makes the in-flight no-op real; the
@@ -82,20 +109,49 @@ export const SyncStatus = (props: SyncStatusProps) => (
       aria-disabled={props.syncing ? 'true' : undefined}
       data-testid="footer-sync-now"
     >
-      {/* The animated state rides a wrapper rather than the <svg> itself:
-          the icon set's components take styling props, not state ones (and
-          MenuBar's dimmed icon is wrapped for the same reason). */}
+      {/* The animated state rides a wrapper rather than the <svg> itself: the
+          icon set's components take styling props, not state ones. */}
       <span
         class={styles.icon}
         data-syncing={props.syncing ? '' : undefined}
         aria-hidden="true"
       >
-        <Show when={!props.syncing} fallback={<SyncIcon />}>
-          <Dynamic component={toneIcon[props.tone]} />
-        </Show>
+        {/* Order is the rule here, so read it top-down.
+
+            A run in flight always keeps the sync glyph: it is the one that can
+            spin, and "syncing" is not a fault state. Today no state is both
+            in-flight and escalated (arming a run resets the tone to neutral),
+            but the animation contract shouldn't rest on that holding.
+
+            DIMMED OUTRANKS THE TONE. An unreachable server is a warning by the
+            precedence ladder, yet it must not wear the same mark as a site that
+            has gone stale: one says sync cannot happen, the other that sync is
+            behind. Naming the cause outright — no connection — is more use than
+            an alarm the user can do nothing about. */}
+        <Switch fallback={<SyncIcon />}>
+          <Match when={props.syncing}>
+            <SyncIcon />
+          </Match>
+          <Match when={props.dimmed}>
+            <WifiOffIcon />
+          </Match>
+          <Match when={props.tone !== 'neutral'}>
+            <Dynamic
+              component={toneIcon[props.tone === 'error' ? 'error' : 'warning']}
+            />
+          </Match>
+        </Switch>
       </span>
       <span class={styles.srOnly}>{`${t('button.sync-now')}: `}</span>
       <span class={styles.label}>{props.label}</span>
+      <Show when={props.detail}>
+        {/* The comma is read, not seen: on screen the lighter weight and the
+            gap separate the two halves, while a screen reader (and any text
+            assertion) gets one properly punctuated sentence rather than two
+            clauses run together. */}
+        <span class={styles.srOnly}>, </span>
+        <span class={styles.detail}>{props.detail}</span>
+      </Show>
     </button>
     {/* Announce the run starting (the visible response a sighted user gets from
         the glyph). Populated ONLY while in flight — a live region on the label
@@ -113,7 +169,7 @@ export const SyncStatus = (props: SyncStatusProps) => (
       data-testid="footer-sync-details"
     >
       <span class={styles.icon} aria-hidden="true">
-        <InfoIcon />
+        <ChevronsUpIcon />
       </span>
     </button>
   </div>

@@ -1,0 +1,34 @@
+fragment ActivityLogRow on ActivityLogNode {
+  id
+  datetime
+  to
+  from
+  recordId
+  storeId
+  type
+  user {
+    username
+  }
+}
+
+query activityLogs(
+  $storeId: String!
+  $first: Int
+  $offset: Int
+  $sort: [ActivityLogSortInput!]
+  $filter: ActivityLogFilterInput
+) {
+  activityLogs(
+    storeId: $storeId
+    filter: $filter
+    page: { first: $first, offset: $offset }
+    sort: $sort
+  ) {
+    ... on ActivityLogConnector {
+      nodes {
+        ...ActivityLogRow
+      }
+      totalCount
+    }
+  }
+}

@@ -1,0 +1,47 @@
+import { useState, useCallback } from 'react';
+import { useToggle } from '../useToggle';
+
+export enum ModalMode {
+  Create,
+  Update,
+}
+
+interface EditModalState<T> {
+  entity: T | null;
+  mode: ModalMode | null;
+  setMode: (mode: ModalMode) => void;
+  onOpen: (entity?: T | null) => void;
+  onClose: () => void;
+  isOpen: boolean;
+}
+
+export const useEditModal = <T>(): EditModalState<T> => {
+  const modalControl = useToggle(false);
+  const { toggleOn, toggleOff } = modalControl;
+  const [entity, setEntity] = useState<T | null>(null);
+  const [mode, setMode] = useState<ModalMode | null>(null);
+
+  const onOpen = useCallback(
+    (entity: T | null = null) => {
+      setEntity(entity);
+      setMode(entity ? ModalMode.Update : ModalMode.Create);
+      toggleOn();
+    },
+    [toggleOn, setEntity, setMode]
+  );
+
+  const onClose = useCallback(() => {
+    setMode(null);
+    setEntity(null);
+    toggleOff();
+  }, [toggleOff, setMode, setEntity]);
+
+  return {
+    onOpen,
+    onClose,
+    entity,
+    mode,
+    setMode,
+    isOpen: modalControl.isOn,
+  };
+};

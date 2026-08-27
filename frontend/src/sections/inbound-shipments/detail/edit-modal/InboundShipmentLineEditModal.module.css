@@ -64,13 +64,11 @@
 
 /* The units-received hint under Packs received ("2,000 Tablets"). Secondary
    type, aligned under the figure it derives from (the packs input is
-   right-aligned, so is this). Its line box is reserved whether or not there is
-   anything to say — an empty span still lays out at this height — so the row
-   never changes height as the user types, which is what the reference design
-   uses absolute positioning to achieve. */
+   right-aligned, so is this). Rendered only when there is a figure — the
+   packs cell's Show owns that choice and the row-height trade it makes, so
+   nothing here reserves space for an empty hint. */
 .unitsHint {
   display: block;
-  min-block-size: 1rem;
   margin-block-start: var(--space-1);
   color: var(--text-secondary);
   font-size: var(--text-xs);
