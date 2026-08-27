@@ -27,6 +27,14 @@ query prescriptionRequests(
           id
           name
         }
+        # The prescriber — the account that created the request (S1 column,
+        # and the username the Prescriber filter matches).
+        user {
+          username
+        }
+        # Filtered server-side to the keys visible for the request scope; the
+        # list turns each configured field into a column (AC-CF4).
+        customFields
       }
     }
   }

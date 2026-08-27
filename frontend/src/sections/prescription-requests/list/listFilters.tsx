@@ -13,9 +13,10 @@ import {
 import type { PrescriptionRequestsVariables } from './prescriptionRequests.generated';
 
 // The prescription-requests list filters (spec/prescription-requests/ui-surface.md
-// S1): Patient + the prescription-date range are on by default; Status joins
-// via the filter menu. The filter object is exactly the generated GraphQL
-// shape (kdd/type-safety — no remapping); the map is exhaustive over
+// S1): Patient + the prescription-date range are on by default; Status and
+// Entered by join via the filter menu. The filter object is exactly the
+// generated GraphQL shape (kdd/type-safety — no remapping); the map is
+// exhaustive over
 // PrescriptionRequestFilterInput so a schema addition stops compiling until a
 // decision is made (the stocktakes listFilters pattern).
 export type PrescriptionRequestFilter = NonNullable<
@@ -63,6 +64,24 @@ const FILTERS: Filter<PrescriptionRequestFilter>[] =
         />
       ),
     },
+    // The account that created the request — matched on its username, the
+    // only handle the record carries (the wire filter is a sub-select on
+    // user_account; there is no user picker in the app to select from).
+    username: {
+      label: () => t('label.entered-by'),
+      render: props => (
+        <FilterTextInput
+          label={t('label.entered-by')}
+          testId={props.testId}
+          value={props.filter().username?.like ?? ''}
+          onInput={value =>
+            props.setPartialFilter({
+              username: value ? { like: value } : null,
+            })
+          }
+        />
+      ),
+    },
     status: {
       label: () => t('label.status'),
       render: props => (
@@ -86,8 +105,11 @@ const FILTERS: Filter<PrescriptionRequestFilter>[] =
 
     // ─ dismissed (not user-facing) ────────────────────────────────────────
     // The store scope is the server's; id/patientId/number serve deep links
-    // and tests, not chips.
+    // and tests, not chips. `dynamicFilter` carries the custom-field filters,
+    // built from the FilterBar's separate custom-field group (see the list
+    // view), not a chip in this wire-filter map.
     id: null,
+    dynamicFilter: null,
     patientId: null,
     prescriptionRequestNumber: null,
     createdDatetime: null,

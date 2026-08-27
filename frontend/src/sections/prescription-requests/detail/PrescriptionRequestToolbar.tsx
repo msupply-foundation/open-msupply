@@ -11,6 +11,8 @@ import {
   type PatientOption,
 } from '../../../domain/patient';
 import { ClinicianSelect } from '../../../domain/clinician';
+import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
+import { UserLabel } from '../../../ui/elements/typography/UserLabel';
 import { ProgramNameSelect } from '../../../domain/program';
 import { CustomFieldsToolbar } from '../../../domain/customFields';
 import {
@@ -29,10 +31,11 @@ import {
 
 // The detail header's field cluster (spec/prescription-requests/ui-surface.md
 // S3 § header toolbar), rendered as the children of the page's
-// <HeaderToolbar>: Patient · Clinician · Date · Program · Diagnosis, then the
-// scope's prominent custom fields. Weighted shares follow the dispensing
-// toolbar's measured layout (person-name fields take the biggest shares; the
-// date is pinned at its 9rem format width). Every field is read-only past New
+// <HeaderToolbar>: Patient · Clinician · Date · Program · Diagnosis · Entered
+// by, then the scope's prominent custom fields. Weighted shares follow the
+// dispensing toolbar's measured layout (person-name fields take the biggest
+// shares; the date is pinned at its 9rem format width). Every field is
+// read-only past New
 // (AC-N5); unlike dispensing, a date or program change never touches lines —
 // the request's lines carry no stock, so nothing needs clearing.
 
@@ -146,6 +149,26 @@ export const PrescriptionRequestToolbar: Component<
             props.onSave({ diagnosisId: { value: diagnosis?.id ?? null } })
           }
         />
+      </FormRowItem>
+      {/* The prescriber — the account that created the request. Provenance,
+          never editable, so it closes the fixed cluster as a read-only value
+          rather than a disabled input (kdd/form-layout); `variant="field"`
+          lines it up with the small inputs beside it. NOT the same person as
+          Clinician, which is picked (rules § creation) — hence the app's
+          "Entered by" wording here too, matching the side panel's row. */}
+      <FormRowItem weight={1} minWidth="8rem">
+        <LabelledValue
+          variant="field"
+          size="small"
+          label={t('label.entered-by')}
+        >
+          <UserLabel
+            username={props.node.user?.username}
+            email={props.node.user?.email}
+            label={t('label.entered-by')}
+            testId="toolbar-entered-by-field"
+          />
+        </LabelledValue>
       </FormRowItem>
       {/* Prominent custom fields — save-on-change, the prescription_request
           scope (rules § custom fields; AC-F1). */}

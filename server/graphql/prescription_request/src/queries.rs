@@ -1,5 +1,6 @@
 use async_graphql::*;
 use graphql_core::{
+    dynamic_filter::{parse_dynamic_filter, validate_custom_field_filter_keys},
     generic_filters::{
         DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput, StringFilterInput,
     },
@@ -10,10 +11,12 @@ use graphql_core::{
     ContextExt,
 };
 use repository::{
-    DatetimeFilter, EqualFilter, PaginationOption, PrescriptionRequestFilter, PrescriptionRequestSort,
-    PrescriptionRequestSortField, PrescriptionRequestStatus, StringFilter,
+    DatetimeFilter, EqualFilter, PaginationOption, PrescriptionRequestCondition,
+    PrescriptionRequestFilter, PrescriptionRequestSort, PrescriptionRequestSortField,
+    PrescriptionRequestStatus, StringFilter,
 };
 use service::auth::{Resource, ResourceAccessRequest};
+use service::prescription_request::update::PRESCRIPTION_REQUEST_CUSTOM_FIELD_SCOPE;
 
 use crate::types::{
     PrescriptionRequestConnector, PrescriptionRequestNode, PrescriptionRequestNodeStatus,
@@ -62,6 +65,13 @@ pub struct PrescriptionRequestFilterInput {
     pub patient_name: Option<StringFilterInput>,
     pub created_datetime: Option<DatetimeFilterInput>,
     pub prescription_datetime: Option<DatetimeFilterInput>,
+    /// The prescriber — the username of the account that created the request
+    pub username: Option<StringFilterInput>,
+
+    /// Dynamic filter condition AST, currently supporting custom field
+    /// conditions on keys visible for the "prescription_request" scope, e.g.
+    /// `{"And": [{"CustomField": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`
+    pub dynamic_filter: Option<serde_json::Value>,
 }
 
 impl PrescriptionRequestFilterInput {
@@ -78,6 +88,9 @@ impl PrescriptionRequestFilterInput {
             patient_name: self.patient_name.map(StringFilter::from),
             created_datetime: self.created_datetime.map(DatetimeFilter::from),
             prescription_datetime: self.prescription_datetime.map(DatetimeFilter::from),
+            username: self.username.map(StringFilter::from),
+            // Parsed and key-validated at the query boundary, not here
+            dynamic_filter: None,
         }
     }
 }
@@ -142,13 +155,33 @@ pub fn get_prescription_requests(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
+    // Custom-field filter keys are validated against this scope's visible keys
+    // at the trust boundary — an unknown or hidden key is an error, not a
+    // silent no-match (same shape as the items/names queries).
+    let filter = filter
+        .map(|filter| -> Result<PrescriptionRequestFilter> {
+            let dynamic_filter: Option<PrescriptionRequestCondition::Inner> =
+                parse_dynamic_filter(filter.dynamic_filter.clone())?;
+            if let Some(condition) = &dynamic_filter {
+                validate_custom_field_filter_keys(
+                    &service_context.connection,
+                    PRESCRIPTION_REQUEST_CUSTOM_FIELD_SCOPE,
+                    &condition.custom_field_conditions(),
+                )?;
+            }
+            let mut filter = filter.to_domain();
+            filter.dynamic_filter = dynamic_filter;
+            Ok(filter)
+        })
+        .transpose()?;
+
     let result = service_provider
         .prescription_request_service
         .get_prescription_requests(
             &service_context,
             Some(store_id),
             page.map(PaginationOption::from),
-            filter.map(|filter| filter.to_domain()),
+            filter,
             sort.and_then(|mut sort_list| sort_list.pop())
                 .map(|sort| sort.to_domain()),
         )

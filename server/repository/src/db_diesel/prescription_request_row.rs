@@ -94,7 +94,8 @@ pub struct PrescriptionRequestRow {
     pub created_by: String,
     pub comment: Option<String>,
     /// Properties-v2 values keyed by `custom_field.key` (weight, patient unit,
-    /// category, occupation, ... per deployment config).
+    /// occupation, ... per deployment config). The patient's category is NOT
+    /// here — it is a `patient`-scoped field on the name record.
     pub custom_fields: Option<JsonValue>,
     // Resolved from name_link - must be last to match view column order
     pub patient_id: String,
