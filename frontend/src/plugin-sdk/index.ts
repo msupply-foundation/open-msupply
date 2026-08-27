@@ -12,8 +12,8 @@
  * MUST stay free of module-scope side effects: this module is evaluated by
  * the facade entry before any plugin code runs.
  *
- * This is the v1 surface. `pages`, `register`, navigation builders, and lazy
- * component wrappers are later.
+ * This is the v1 surface. `pages`, `register`, and lazy component wrappers
+ * are later.
  */
 
 // ── Compatibility gate ──────────────────────────────────────────────────────
@@ -121,6 +121,35 @@ export {
   localisedDateTime,
 } from './intl';
 export type { PluginIntl, SupportedLocale } from './intl';
+
+// ── Navigation ──────────────────────────────────────────────────────────────
+/*
+ * Reaching a host screen without knowing the entered store or the app's mount
+ * — and without meeting `@solidjs/router`, which is not in the closed import
+ * set (sdk-contract § imports). Two halves: the route/link primitives, and
+ * the typed deep-link builders whose store-relative paths they take
+ * (./deepLinks.ts — promoted from the dashboard's stat links, #304). The
+ * builders' host-shared helpers (listPath, itemCataloguePath) are deliberately
+ * NOT here: a raw (path, filter) pair is the hand-encoding the named builders
+ * exist to prevent.
+ */
+export { storeHref, navigateTo } from './navigation';
+export type { NavigateOptions } from './navigation';
+export {
+  DAYS_TILL_EXPIRED,
+  expiredStockPath,
+  expiringBetweenThresholdsStockPath,
+  expiringNextThreeMonthsStockPath,
+  expiringSoonStockPath,
+  inboundShipmentListPath,
+  internalOrderListPath,
+  lowStockItemsPath,
+  outboundShipmentListPath,
+  outOfStockItemsPath,
+  prescriptionListPath,
+  stockListPath,
+  stocktakeListPath,
+} from './deepLinks';
 
 // ── Data access — the core schema ───────────────────────────────────────────
 export { graphqlQuery } from './graphql';

@@ -8,6 +8,14 @@
 // target lists' own filter types, so a drift in their contract stops compiling
 // here).
 //
+// The links a plugin can also build — the stock/items set and the bare task
+// lists — are PROMOTED to the plugin SDK (@/plugin-sdk/deepLinks, issue #304)
+// and delegated to from here, so the dashboard's links and the SDK's cannot
+// drift. The SDK's vocabulary is store-relative paths (the store is the
+// host's on that surface); these builders remain the store-prefixed hrefs the
+// dashboard's own router links take, so each wraps its SDK path with the
+// entered store.
+//
 // A list that doesn't exist yet gets its registered placeholder, unfiltered,
 // and begins filtering once the list ships (contract.md § navigation
 // correspondence, OMS-REG-DB-01.57) — no built-in stat is in that state now
@@ -21,48 +29,45 @@ import {
   startOfWeek,
   utcBoundsFromLocalDays,
 } from '@/ui/elements/inputs/dateTimeConvert';
+import {
+  expiredStockPath,
+  expiringBetweenThresholdsStockPath,
+  expiringNextThreeMonthsStockPath,
+  expiringSoonStockPath,
+  inboundShipmentListPath,
+  internalOrderListPath,
+  itemCataloguePath,
+  listPath,
+  lowStockItemsPath,
+  outboundShipmentListPath,
+  outOfStockItemsPath,
+  stockListPath,
+} from '@/plugin-sdk/deepLinks';
 import type { InboundListFilter } from '@/sections/inbound-shipments/list/listFilters';
 import type { InternalOrderFilter } from '@/sections/internal-orders/list/listFilters';
 import type { OutboundFilter } from '@/sections/outbound-shipments/list/listFilters';
 import type { RequisitionFilter } from '@/sections/requisitions/list/listFilters';
-import type { StockFilter } from '@/sections/stock/list/listFilters';
 import type { ItemsListFilter } from '@/sections/items/list/itemFilter';
 
-// "Expiring soon" / the soon link's window, in days — the app's client constant
-// (rules.md § thresholds; the server default of 7 is a fallback the app never
-// relies on).
-export const DAYS_TILL_EXPIRED = 30;
+// The window constant travels with the promoted builders; the dashboard's
+// stockCounts query still reads it from here.
+export { DAYS_TILL_EXPIRED } from '@/plugin-sdk/deepLinks';
 
-// A local-day window → a dated field's filter bounds. `type` is REQUIRED (like
-// FilterDateRange): 'dateTime' widens each day to inclusive UTC instants via
-// the shared conversion (#456); 'date' passes the plain ISO day through
-// (`Date` scalar). Open-ended when a bound is null. So every dated stat link
-// declares its field's scalar and gets the right conversion — none hand-rolls
-// it.
-const dayRange = (
-  type: 'date' | 'dateTime',
-  from: Date | null,
-  to: Date | null
-) => {
-  const a = from ? dateToIsoDate(from) : null;
-  const b = to ? dateToIsoDate(to) : null;
-  if (type === 'dateTime') return utcBoundsFromLocalDays(a, b);
-  return a || b
-    ? {
-        ...(a ? { afterOrEqualTo: a } : {}),
-        ...(b ? { beforeOrEqualTo: b } : {}),
-      }
-    : null;
-};
+// A local-day window → a datetime field's filter bounds: each day widened to
+// inclusive UTC instants via the shared conversion (#456). The remaining
+// dashboard-only windows all filter `DateTime` scalars; the `Date`-scalar
+// windows (stock expiry) live with the promoted builders.
+const dayRange = (from: Date, to: Date) =>
+  utcBoundsFromLocalDays(dateToIsoDate(from), dateToIsoDate(to));
 
-// One link shape for every stat: the target list path (store-relative) plus
-// the `?query=` filter the list's useUrlQueryState reads (partial state merges
-// over the list's defaults, so only the filter travels).
-const listHref = (storeId: string, path: string, filter?: object): string => {
-  const base = `/${storeId}/${path}`;
-  if (!filter || Object.keys(filter).length === 0) return base;
-  return `${base}?query=${encodeURIComponent(JSON.stringify({ filter }))}`;
-};
+// One link shape for every stat: the entered store prefixed onto the
+// store-relative list target (path + `?query=` filter — the SDK's listPath,
+// so the dashboard and the SDK share one encoding).
+const withStore = (storeId: string, relativePath: string): string =>
+  `/${storeId}/${relativePath}`;
+
+const listHref = (storeId: string, path: string, filter?: object): string =>
+  withStore(storeId, listPath(path, filter));
 
 // ── Replenishment ────────────────────────────────────────────────────────────
 // Internal vs external: the inbound list's URL contract carries the origin
@@ -75,7 +80,7 @@ const inboundKind = (external: boolean) =>
   external ? { kind: 'fromPurchaseOrder' as const } : {};
 
 export const inboundListHref = (storeId: string, external = false): string =>
-  listHref(storeId, 'replenishment/inbound-shipment', {
+  listHref(storeId, inboundShipmentListPath(), {
     ...inboundKind(external),
   } satisfies InboundListFilter);
 
@@ -87,8 +92,8 @@ export const inboundTodayHref = (
   today: Date,
   external = false
 ): string =>
-  listHref(storeId, 'replenishment/inbound-shipment', {
-    createdDatetime: dayRange('dateTime', today, today),
+  listHref(storeId, inboundShipmentListPath(), {
+    createdDatetime: dayRange(today, today),
     ...inboundKind(external),
   } satisfies InboundListFilter);
 
@@ -97,12 +102,8 @@ export const inboundThisWeekHref = (
   today: Date,
   external = false
 ): string =>
-  listHref(storeId, 'replenishment/inbound-shipment', {
-    createdDatetime: dayRange(
-      'dateTime',
-      startOfWeek(today),
-      addDays(startOfWeek(today), 6)
-    ),
+  listHref(storeId, inboundShipmentListPath(), {
+    createdDatetime: dayRange(startOfWeek(today), addDays(startOfWeek(today), 6)),
     ...inboundKind(external),
   } satisfies InboundListFilter);
 
@@ -111,31 +112,31 @@ export const inboundNotDeliveredHref = (
   storeId: string,
   external = false
 ): string =>
-  listHref(storeId, 'replenishment/inbound-shipment', {
+  listHref(storeId, inboundShipmentListPath(), {
     status: { equalAny: ['NEW', 'SHIPPED'] },
     ...inboundKind(external),
   } satisfies InboundListFilter);
 
 export const internalOrderListHref = (storeId: string): string =>
-  listHref(storeId, 'replenishment/internal-order');
+  withStore(storeId, internalOrderListPath());
 
 // Draft = request requisitions still in Draft (rules.md § internal orders;
 // OMS-REG-DB-01.40) — the internal-order list's multi-select status filter,
 // one value ticked.
 export const internalOrderDraftHref = (storeId: string): string =>
-  listHref(storeId, 'replenishment/internal-order', {
+  listHref(storeId, internalOrderListPath(), {
     status: { equalAny: ['DRAFT'] },
   } satisfies InternalOrderFilter);
 
 // ── Distribution ─────────────────────────────────────────────────────────────
 
 export const outboundListHref = (storeId: string): string =>
-  listHref(storeId, 'distribution/outbound-shipment');
+  withStore(storeId, outboundShipmentListPath());
 
 // Not shipped = New/Allocated/Picked (rules.md § outbound shipments;
 // OMS-REG-DB-01.37).
 export const outboundNotShippedHref = (storeId: string): string =>
-  listHref(storeId, 'distribution/outbound-shipment', {
+  listHref(storeId, outboundShipmentListPath(), {
     status: { equalAny: ['NEW', 'ALLOCATED', 'PICKED'] },
   } satisfies OutboundFilter);
 
@@ -164,53 +165,34 @@ export const customerRequisitionEmergencyHref = (storeId: string): string =>
   } satisfies RequisitionFilter);
 
 // ── Inventory ────────────────────────────────────────────────────────────────
+// The stock and item-level links are the promoted SDK builders, store-wrapped;
+// their windows and OMS-REG-DB citations live with them
+// (@/plugin-sdk/deepLinks).
 
 export const stockListHref = (storeId: string): string =>
-  listHref(storeId, 'inventory/stock');
+  withStore(storeId, stockListPath());
 
-// Expired: expiry ≤ today (OMS-REG-DB-01.41).
 export const expiredHref = (storeId: string, today: Date): string =>
-  listHref(storeId, 'inventory/stock', {
-    expiryDate: dayRange('date', null, today),
-  } satisfies StockFilter);
+  withStore(storeId, expiredStockPath(today));
 
-// Expiring soon: tomorrow … today + 30d — exactly the count's window (the
-// count subtracts expired, so today's expiries belong to the expired stat).
-// Diverges from the current app's today … +1 calendar month link (D71).
 export const expiringSoonHref = (storeId: string, today: Date): string =>
-  listHref(storeId, 'inventory/stock', {
-    expiryDate: dayRange(
-      'date',
-      addDays(today, 1),
-      addDays(today, DAYS_TILL_EXPIRED)
-    ),
-  } satisfies StockFilter);
+  withStore(storeId, expiringSoonStockPath(today));
 
-// Next three months: the fixed 30–89-day slice (OMS-REG-DB-01.44 — the 90th
-// day excluded).
 export const expiringNextThreeMonthsHref = (
   storeId: string,
   today: Date
-): string =>
-  listHref(storeId, 'inventory/stock', {
-    expiryDate: dayRange('date', addDays(today, 30), addDays(today, 89)),
-  } satisfies StockFilter);
+): string => withStore(storeId, expiringNextThreeMonthsStockPath(today));
 
-// Between thresholds: today + first … today + second (whole days —
-// OMS-REG-DB-01.45).
 export const expiringBetweenThresholdsHref = (
   storeId: string,
   today: Date,
   firstDays: number,
   secondDays: number
 ): string =>
-  listHref(storeId, 'inventory/stock', {
-    expiryDate: dayRange(
-      'date',
-      addDays(today, firstDays),
-      addDays(today, secondDays)
-    ),
-  } satisfies StockFilter);
+  withStore(
+    storeId,
+    expiringBetweenThresholdsStockPath(today, firstDays, secondDays)
+  );
 
 // Item catalogue (spec/items). The stock-level stats link into this list
 // filtered to the records each counts (OMS-REG-DB-01.55). The dashboard
@@ -222,24 +204,22 @@ export const expiringBetweenThresholdsHref = (
 // report). Total items and the panel title use the unfiltered catalogue.
 
 export const itemCatalogueHref = (storeId: string): string =>
-  listHref(storeId, 'catalogue/items');
+  withStore(storeId, itemCataloguePath());
 
 // Out of stock (recently used): zero on hand + recent consumption
 // (OMS-REG-DB-01.48 count).
 export const itemsOutOfStockRecentlyUsedHref = (storeId: string): string =>
-  listHref(storeId, 'catalogue/items', {
+  listHref(storeId, itemCataloguePath(), {
     lens: 'out-of-stock-recent',
   } satisfies ItemsListFilter);
 
 // Out of stock (all items): zero on hand (OMS-REG-DB-01.47 count).
 export const itemsOutOfStockHref = (storeId: string): string =>
-  listHref(storeId, 'catalogue/items', {
-    lens: 'out-of-stock',
-  } satisfies ItemsListFilter);
+  withStore(storeId, outOfStockItemsPath());
 
 // At risk of stock-out (OMS-REG-DB-01.51 count) — the list's at-risk lens.
 export const itemsAtRiskHref = (storeId: string): string =>
-  listHref(storeId, 'catalogue/items', {
+  listHref(storeId, itemCataloguePath(), {
     atRisk: 'at-risk',
   } satisfies ItemsListFilter);
 
@@ -248,10 +228,7 @@ export const itemsAtRiskHref = (storeId: string): string =>
 export const itemsLowStockHref = (
   storeId: string,
   understockMonths: number
-): string =>
-  listHref(storeId, 'catalogue/items', {
-    monthsOfStock: { to: understockMonths },
-  } satisfies ItemsListFilter);
+): string => withStore(storeId, lowStockItemsPath(understockMonths));
 
 // High stock: months of stock above the overstock threshold (OMS-REG-DB-01.50
 // count).
@@ -259,7 +236,7 @@ export const itemsHighStockHref = (
   storeId: string,
   overstockMonths: number
 ): string =>
-  listHref(storeId, 'catalogue/items', {
+  listHref(storeId, itemCataloguePath(), {
     monthsOfStock: { from: overstockMonths },
   } satisfies ItemsListFilter);
 
@@ -270,6 +247,6 @@ export const itemsOverstockedHref = (
   storeId: string,
   overstockAlertMonths: number
 ): string =>
-  listHref(storeId, 'catalogue/items', {
+  listHref(storeId, itemCataloguePath(), {
     monthsOfStock: { from: overstockAlertMonths },
   } satisfies ItemsListFilter);

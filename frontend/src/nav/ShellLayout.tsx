@@ -26,7 +26,8 @@ import { storeCustomColour } from '../store/storeContext';
 import { isCentralServer } from '../api/serverInfo';
 import { reportPermissionDenied } from '../api/graphql';
 import { deniedPermission, gateNav, routeAccess } from './navGates';
-import { storeRelativePath } from './storeRelativePath';
+import { bindHostNavigate, routerHostNavigate } from './hostNavigate';
+import { storePath, storeRelativePath } from './storeRelativePath';
 import { KeyboardHost } from '../keyboard/KeyboardHost';
 import { createDocumentTitle, screenTitleKey } from '../documentTitle';
 import { startSyncWatch, stopSyncWatch } from '../api/syncStore';
@@ -61,6 +62,13 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Programmatic navigation for host-adjacent code with no router context —
+  // today the plugin SDK's `navigateTo` (src/nav/hostNavigate.ts, which owns
+  // the adapter and why it resolves the way it does). Bound here because this
+  // shell is where navigation lives and it mounts once for the whole in-store
+  // app, which every plugin contribution renders inside.
+  bindHostNavigate(routerHostNavigate(navigate));
+
   // The path relative to the store root, e.g. '/{store}/inventory/stocktakes'
   // → 'inventory/stocktakes'. The empty (store root) path is Home's own.
   // Four things below read it — the menu highlight, the tab title, the
@@ -92,15 +100,13 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   const sectionIcon = () => sectionIconForPath(relativePath());
 
   /*
-   * A destination's absolute URL. Every affordance that reaches one goes
-   * through here, so Home cannot end up with two spellings of a single
-   * address: its store-relative path is empty (navConfig), and the naive
-   * `/{store}/{to}` would give the menu entry a trailing slash the brand mark
-   * does not have — the same screen at two URLs, which is precisely what
-   * moving Home to the root removed (OMS-REG-NAV-01.22).
+   * A destination's URL, via the ONE join rule for store addresses
+   * (storeRelativePath § storePath) — so Home's empty path (navConfig) cannot
+   * give the menu entry a trailing slash the brand mark does not have: the
+   * same screen at two URLs, which is precisely what moving Home to the root
+   * removed (OMS-REG-NAV-01.22).
    */
-  const storeHref = (to: string) =>
-    to === '' ? `/${params.storeId}` : `/${params.storeId}/${to}`;
+  const storeHref = (to: string) => storePath(params.storeId, to);
 
   // A permission-gated destination stays in the menu, but activating it
   // refuses instead of navigating: the permission-denied dialog opens, naming
