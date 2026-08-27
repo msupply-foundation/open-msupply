@@ -1,6 +1,5 @@
 import type { Component } from 'solid-js';
 import { CatalogueItemsPrototype } from './catalogue-items/CatalogueItemsPrototype';
-import { CkHomeNavigatorPrototype } from './ck-home-navigator/CkHomeNavigatorPrototype';
 
 /*
  * The prototype registry.
@@ -78,24 +77,6 @@ export interface PrototypeDef {
 }
 
 export const prototypes: PrototypeDef[] = [
-  {
-    id: 'ck-home-navigator',
-    title: 'Cook Islands Home Navigator layout',
-    status: 'in-review',
-    summary:
-      "CK-2.3's layout shell with stand-in tiles, so the hero/block trade and how the screen fits at tablet height can be judged before CK-2.2 builds the real ones.",
-    proposes:
-      'That the navigator reflows off the space it is actually given rather than off the viewport: the hero and the two-by-two block share a row until they no longer fit and then wrap, the block falls to one column when its tracks cannot hold two, and both rows take their content’s height rather than stretching to fill the region — fitting, not filling, so the room left over stays at the bottom. No media query is involved, because the nav rail is user-toggleable and its state persists — one viewport width yields two different content widths, so a breakpoint would be wrong for one of them.',
-    relationToSpec:
-      'The GRID is built and specified — plugins/cook_islands/ui-surface.md § S1 Layout, delivered by CK-2.3 in plugins/cook_islands/src/navigator/. Everything INSIDE a tile is scenery: the KPI blocks and the Stock Management strip belong to CK-2.2 and are discarded when it lands. The stand-in strip in particular does NOT solve the sibling-target problem the real one must (§ S3), and the figures are invented.',
-    openQuestions: [
-      'The hero and block basis values (--ck-hero-basis / --ck-block-basis, 20rem and 30rem) set where the row wraps. They are a first cut and want settling against a real landscape tablet — roughly 1280×715 with app chrome taken off — with the nav rail both docked and collapsed.',
-      'The height trade, now settled the other way: nothing is capped, so both rows take their content’s height and the leftover room stays at the bottom. Stretching to fill put a hand’s width of nothing between each label and its figure, which read as empty rather than compact. Confirm that still holds once the real tiles carry their KPI blocks — a taller tile is what would bring the question back.',
-      'Tile minimum width (--ck-tile-min, 13rem) decides when the two-by-two becomes one column. Worth checking against the longest label in the spec table, "Send stock to another facility".',
-      'Whether the real tiles will change these numbers materially: the stand-ins carry one or two figures at --text-xl, which is the current guess at the KPI block’s bulk.',
-    ],
-    component: CkHomeNavigatorPrototype,
-  },
   {
     id: 'catalogue-items',
     title: 'Catalogue items admin',
