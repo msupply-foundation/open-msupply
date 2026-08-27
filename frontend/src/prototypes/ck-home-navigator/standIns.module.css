@@ -115,6 +115,19 @@
    * needs a non-visible overflow).
    */
   overflow: auto;
+  /*
+   * `resize` writes an inline width that outlives the drag, so a frame pulled
+   * wider than the page keeps that width when the window narrows — and the
+   * page shell cannot scroll horizontally to reach it (Page.module.css's
+   * body clips on that axis), so whatever sat past the edge was simply gone
+   * until a reload. It was read as the grid overflowing on a portrait tablet.
+   *
+   * Clamping costs the ability to preview WIDER than the window, which sounds
+   * like the point of a resizable frame — but that never worked: the width
+   * beyond the page was unreachable, not merely off-screen. Judging the
+   * 1280x715 target on a narrower window means widening the window.
+   */
+  max-inline-size: 100%;
   border: 1px dashed var(--color-border-value);
   border-radius: var(--radius-md);
   resize: both;
