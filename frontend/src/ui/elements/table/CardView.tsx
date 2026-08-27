@@ -3,6 +3,7 @@ import type { JSX } from 'solid-js';
 import {
   type Cell as TanCell,
   type HeaderContext,
+  type Row as TanRow,
   type Table,
 } from '@tanstack/solid-table';
 import { renderTemplate } from './renderTemplate';
@@ -17,7 +18,14 @@ import {
   useAccordionItemExpanded,
 } from '../accordion/Accordion';
 import { t } from '../../../intl';
-import type { CardGroup } from './columnTypes';
+import { isKeyboardFocus } from './createRowFocus';
+import { visibleOnCard, type CardGroup } from './columnTypes';
+import {
+  cardFieldMaxRem,
+  cardFlex,
+  cardTrack,
+  cardTracksMinRem,
+} from './cardWidths';
 import styles from './DataTable.module.css';
 
 // A cell's card HEADER slot, or undefined when it belongs to the body.
@@ -38,9 +46,15 @@ const cellGroup = <T,>(cell: TanCell<T, unknown>): string | undefined =>
 // empty one is safe. A non-function header (or none) yields no label — the cell
 // then fills its slot unlabelled. Called from a JSX position (never stored in a
 // local), so the label re-resolves on a locale change like the value does.
+// A column whose grid header is ICONIC (the comment glyph) or empty captions
+// its card field with meta.textLabel instead — the same word the Columns
+// popover lists it under. A card field is a label BESIDE or ABOVE its value, so
+// repeating the cell's own glyph as its caption would say nothing.
 const columnHeaderText = <T,>(
   cell: TanCell<T, unknown>
 ): JSX.Element | undefined => {
+  const textLabel = cell.column.columnDef.meta?.textLabel;
+  if (textLabel) return textLabel();
   const header = cell.column.columnDef.header;
   return typeof header === 'function'
     ? header({} as HeaderContext<T, unknown>)
@@ -63,31 +77,13 @@ const showsLabel = <T,>(
 const cellTestId = <T,>(cell: TanCell<T, unknown>): string =>
   `cell-${cell.column.id}`;
 
-// One column's grid TRACK. A number is a fixed `rem` track — a formatted scalar
-// whose longest value is known. `{ min, weight }` is `minmax(<min>rem,
-// <weight>fr)`: an `fr` is one share of the space left over once every fixed
-// track and gap is paid for, so the weighted fields split the remainder in
-// their declared ratio (ux-testing/header-field-width.html § weighted columns).
-// An undeclared column falls back to a 1fr share off a readable floor.
-const cardTrack = <T,>(cell: TanCell<T, unknown>): string => {
-  const width = cell.column.columnDef.meta?.cardWidth;
-  if (width === undefined) return 'minmax(10rem, 1fr)';
-  return typeof width === 'number'
-    ? `${width}rem`
-    : `minmax(${width.min}rem, ${width.weight}fr)`;
-};
-
-// The width, in rem, below which this group's declared template cannot fit —
-// every track's minimum plus the 1rem column gaps between them. An explicit
-// grid does not wrap, so below this the row would overflow its card; the flow
-// falls back to the equal auto-fit tracks instead (see FieldFlow).
-const cardTracksMinRem = <T,>(cells: TanCell<T, unknown>[]): number =>
-  cells.reduce((total, cell) => {
-    const width = cell.column.columnDef.meta?.cardWidth;
-    const min =
-      width === undefined ? 10 : typeof width === 'number' ? width : width.min;
-    return total + min;
-  }, 0) + Math.max(0, cells.length - 1);
+// The width facts a column tells its group. The arithmetic they feed —
+// tracks, the wrapping-fallback flex trio, floors, ceilings, the measure —
+// lives in cardWidths.ts, pure and cell-free so it is unit-testable.
+const cardWidthOf = <T,>(cell: TanCell<T, unknown>) =>
+  cell.column.columnDef.meta?.cardWidth;
+const cardSpanOf = <T,>(cell: TanCell<T, unknown>) =>
+  cell.column.columnDef.meta?.cardSpan;
 
 // A card cell, optionally captioned by the column's string header. Unlabelled,
 // the cell fills its slot directly. Labelled, the wrapper follows the slot: a
@@ -124,7 +120,12 @@ function cellField<T>(
       // An unlabelled body cell is a direct child of the auto-fit field grid,
       // so a plain wrapper keeps the same layout — and it has no LabelledValue
       // to carry the id.
-      <div data-testid={cellTestId(cell)}>{value()}</div>
+      <div
+        data-testid={cellTestId(cell)}
+        style={cardFlex(cardWidthOf(cell), cardSpanOf(cell))}
+      >
+        {value()}
+      </div>
     );
   // The label is read as a JSX prop (compiled to a getter), NOT hoisted into a
   // local — hoisting would resolve it once, outside any tracking scope, and
@@ -147,6 +148,7 @@ function cellField<T>(
       // detail-panel gap. At 4px the label crowded the box beneath it.
       variant="field"
       data-testid={cellTestId(cell)}
+      style={cardFlex(cardWidthOf(cell), cardSpanOf(cell))}
     >
       {value()}
     </LabelledValue>
@@ -165,40 +167,18 @@ function cellField<T>(
 //
 // An explicit template does not wrap, so it only holds while the container can
 // pay every track's minimum. `narrow` measures that: below the sum of the
-// minima the flow reverts to the equal auto-fit tracks, which do wrap. The
+// minima the flow reverts to the wrapping weighted flex row, which does. The
 // threshold comes from the group's own declarations (so it follows conditional
 // columns automatically) rather than a breakpoint literal — a container query
 // can't read it, since its condition can't reference a custom property.
-// The width past which this group stops growing — every fixed track at its
-// size, every weighted track at its declared max, plus the gaps. Beyond it the
-// extra space is not distributed at all; the row simply ends and the remainder
-// is trailing space.
-//
-// A GROUP-level ceiling, not a per-field one. Capping each field inside its own
-// `fr` track left the track's remainder as a hole in the MIDDLE of the row —
-// Location stopping at its max while its track kept growing put a visible gap
-// between it and Manufacturer. Capping the grid keeps every track proportional
-// and moves the slack to the end, where it reads as margin.
-//
-// `undefined` when any column declares no width: its track is an open-ended
-// sink, so the group has no meaningful ceiling.
-const cardTracksMaxRem = <T,>(
-  cells: TanCell<T, unknown>[]
-): number | undefined => {
-  let total = 0;
-  for (const cell of cells) {
-    const width = cell.column.columnDef.meta?.cardWidth;
-    if (width === undefined) return undefined;
-    total += typeof width === 'number' ? width : width.max;
-  }
-  return total + Math.max(0, cells.length - 1);
-};
-
-function FieldFlow<T>(props: { cells: TanCell<T, unknown>[] }): JSX.Element {
-  const sized = () =>
-    props.cells.some(c => c.column.columnDef.meta?.cardWidth !== undefined);
+function FieldFlow<T>(props: {
+  cells: TanCell<T, unknown>[];
+  /** The owning group's `narrowLayout` (undefined → the weighted flex row). */
+  narrowLayout?: { columns: number };
+}): JSX.Element {
+  const sized = () => props.cells.some(c => cardWidthOf(c) !== undefined);
   const [narrow, setNarrow] = createSignal(false);
-  const maxRem = () => cardTracksMaxRem(props.cells);
+  const widths = () => props.cells.map(cardWidthOf);
 
   // Measured on the SHELL, which is size-contained (container-type in the CSS),
   // for two reasons. It holds still: the grid's own width is what we're about
@@ -211,7 +191,7 @@ function FieldFlow<T>(props: { cells: TanCell<T, unknown>[] }): JSX.Element {
       parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
     const check = () =>
       setNarrow(
-        shell.clientWidth < cardTracksMinRem(props.cells) * rootFontSize()
+        shell.clientWidth < cardTracksMinRem(widths()) * rootFontSize()
       );
     check();
     const observer = new ResizeObserver(check);
@@ -224,11 +204,21 @@ function FieldFlow<T>(props: { cells: TanCell<T, unknown>[] }): JSX.Element {
       class={styles.cardFields}
       data-field-widths={sized() ? '' : undefined}
       data-narrow={sized() && narrow() ? '' : undefined}
+      data-narrow-columns={
+        sized() && narrow() && props.narrowLayout ? '' : undefined
+      }
       style={
         sized()
           ? {
-              '--card-field-cols': props.cells.map(cardTrack).join(' '),
-              '--card-field-max': maxRem() ? `${maxRem()}rem` : 'none',
+              '--card-field-cols': widths().map(cardTrack).join(' '),
+              // The group's ceiling held to the measure — see cardFieldMaxRem.
+              '--card-field-max': `${cardFieldMaxRem(widths())}rem`,
+              // The narrow layout's track count, when the group declares one —
+              // a group's own number, worked out from its fields (see
+              // CardGroup.narrowLayout), not a house constant.
+              ...(props.narrowLayout
+                ? { '--card-narrow-columns': `${props.narrowLayout.columns}` }
+                : {}),
             }
           : undefined
       }
@@ -255,9 +245,20 @@ function GroupFields<T, G extends string>(props: {
   cells: TanCell<T, unknown>[];
 }): JSX.Element {
   return (
-    <Show when={props.group.panel} fallback={<FieldFlow cells={props.cells} />}>
+    <Show
+      when={props.group.panel}
+      fallback={
+        <FieldFlow
+          cells={props.cells}
+          narrowLayout={props.group.narrowLayout}
+        />
+      }
+    >
       <div class={styles.cardPanel}>
-        <FieldFlow cells={props.cells} />
+        <FieldFlow
+          cells={props.cells}
+          narrowLayout={props.group.narrowLayout}
+        />
       </div>
     </Show>
   );
@@ -364,6 +365,29 @@ export function CardView<T, G extends string>(props: {
    * recolour field labels and controls). Stamps data-tone on the card row.
    */
   rowTone?: (row: T) => 'info' | 'warning' | 'error' | undefined;
+  /**
+   * Keyboard row navigation, per row (see TableRow's prop of the same name —
+   * same accessors, same reason they must stay lazy). Card view is the SAME
+   * rows in the same table, so the arrows work identically here; only the
+   * highlight's painting differs (a ring on the card, not on cells).
+   */
+  rowFocus?: (
+    row: TanRow<T>
+  ) => { focused: () => boolean; onFocus: () => void } | undefined;
+  /**
+   * Semantic row state (see DataTable's rowState) — in card view only
+   * 'disabled' has a treatment: the card takes a muted fill + secondary text,
+   * because a read-only record must read as one in either rendering (the
+   * outbound line editor's barred batches are cards at every width). The fill
+   * is the card's OWN token (`--table-card-surface-disabled`), not the grey a
+   * disabled row takes: that one is a step off the white row surface and reads
+   * backwards against the recessed card list — see the rule in
+   * DataTable.module.css. 'verified' / 'warning' are selection-only tints in
+   * table view and a card has no row background to tint, so they are stamped
+   * for parity but styled only for 'disabled'. Stamps data-row-state on the
+   * card row.
+   */
+  rowState?: (row: T) => 'verified' | 'warning' | 'disabled' | undefined;
 }): JSX.Element {
   // The DataTable renders the empty state itself (before this view), so cards
   // always have ≥1 row here — no empty branch.
@@ -373,11 +397,18 @@ export function CardView<T, G extends string>(props: {
     <For each={rows()}>
       {row => {
         // Card view drops table-only columns (meta.hideOnCard) at the source,
-        // so they appear in neither the header nor the body.
+        // so they appear in neither the header nor the body — and, per ROW,
+        // any column whose meta.hideOnCardWhen answers true for it (a field
+        // meaningless for this record: a stocktake batch counted level has no
+        // adjustment reason). Filtering HERE, at the one source every later
+        // split reads, is what makes the withdrawal complete: the field leaves
+        // its group, its caption goes with it, and the group's width template
+        // and narrow-fallback threshold are computed without it, so the
+        // neighbours close up instead of leaving a hole.
         const cells = () =>
           row
             .getVisibleCells()
-            .filter(c => !c.column.columnDef.meta?.hideOnCard);
+            .filter(c => visibleOnCard(c.column.columnDef.meta, row.original));
         const inHeader = (slot: 'primary' | 'badge') =>
           cells().filter(c => headerSlot(c) === slot);
         // Body cells = everything not in the header row.
@@ -393,15 +424,34 @@ export function CardView<T, G extends string>(props: {
         // A declared group's cells, in body order.
         const groupCells = (key: G) =>
           bodyCells().filter(c => cellGroup(c) === key);
+        // This row's keyboard-focus handle, re-resolved on each read like every
+        // other per-row fact here (see the bindings below).
+        const rowFocus = () => props.rowFocus?.(row);
         return (
           <tr
             class={`${styles.cardRow} ${props.onRowClick ? styles.rowClickable : ''}`}
             data-selected={row.getIsSelected() ? '' : undefined}
             data-tone={props.rowTone?.(row.original)}
+            // The same attribute TableRow stamps, so one selector addresses a
+            // read-only record's row in either rendering.
+            data-row-state={props.rowState?.(row.original)}
             data-testid="table-row"
             // The row's key, exactly as table view stamps it (TableRow), so a
             // caller can address one row in the DOM in either rendering.
             data-row-key={row.id}
+            // Keyboard row navigation (KB-N1): -1, never 0 — the <table> is the
+            // tab stop and the arrows move real DOM focus between rows, exactly
+            // as in table view (see createRowFocus.ts). Resolved per read, not
+            // hoisted into the row's scope: `rowFocus` answers undefined once a
+            // record turns read-only (its onRowClick goes with it), and a row
+            // built while it was set must drop the affordance when it does.
+            tabindex={rowFocus() ? -1 : undefined}
+            data-row-focused={rowFocus()?.focused() ? '' : undefined}
+            // Keyboard-arrived focus only, exactly as in table view — a click
+            // on a card must not paint the highlight (see isKeyboardFocus).
+            onFocus={event => {
+              if (isKeyboardFocus(event)) rowFocus()?.onFocus();
+            }}
             onClick={() => props.onRowClick?.(row.original)}
           >
             <td class={styles.cardCell}>

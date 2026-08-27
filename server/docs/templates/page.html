@@ -1,0 +1,17 @@
+{% extends "adidoks/templates/page.html" %}
+
+<!-- seo block is defined in theme base.html insead head tag -->
+{% block seo %}
+    {{ super() }}
+    <!-- using prism for code blocks, see documentation THIS DOC section -->
+    <link href="/prism.css" rel="stylesheet" />
+    <link href="/theme_override.css" rel="stylesheet" />
+
+{% endblock seo %}
+
+<!-- footer block is where scripts live -->
+{% block footer %}
+    {{ super() }}
+    <!-- using prism for code blocks, see documentation THIS DOC section -->
+    <script src="/js/prism.js"></script>
+{% endblock footer %}

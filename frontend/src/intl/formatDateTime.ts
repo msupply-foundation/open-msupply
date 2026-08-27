@@ -1,9 +1,9 @@
 import {
   format,
-  formatDistanceToNow,
   differenceInYears,
   differenceInMonths,
   differenceInDays,
+  differenceInCalendarDays,
   addMonths,
 } from 'date-fns';
 import type { Locale } from 'date-fns';
@@ -12,7 +12,7 @@ import { createSignal } from 'solid-js';
 // one locale worth carrying statically.
 import { enGB } from 'date-fns/locale/en-GB';
 import type { SupportedLocale } from './locales';
-import { locale, tPlural } from './intl';
+import { locale, t, tPlural } from './intl';
 
 // The rest load on demand, one chunk each, alongside the language's dictionary
 // (changeLanguage → loadLocaleAssets): a date-fns locale is 7–14 KB gzipped and
@@ -28,6 +28,8 @@ const DATE_FNS_LOADERS: Record<SupportedLocale, () => Promise<Locale>> = {
   es: () => import('date-fns/locale/es').then(m => m.es),
   fr: () => import('date-fns/locale/fr').then(m => m.fr),
   'fr-DJ': () => import('date-fns/locale/fr').then(m => m.fr),
+  // Lao has no date-fns locale either; English (GB), as in the current app.
+  lo: () => Promise.resolve(enGB),
   ps: () => import('date-fns/locale/fa-IR').then(m => m.faIR),
   pt: () => import('date-fns/locale/pt').then(m => m.pt),
   ru: () => import('date-fns/locale/ru').then(m => m.ru),
@@ -39,7 +41,7 @@ const DATE_FNS_LOADERS: Record<SupportedLocale, () => Promise<Locale>> = {
 // plain map) so a component formatting a date re-runs once its locale lands.
 const [dateFnsLocales, setDateFnsLocales] = createSignal<
   Partial<Record<SupportedLocale, Locale>>
->({ en: enGB, tet: enGB });
+>({ en: enGB, lo: enGB, tet: enGB });
 
 /**
  * Ensure a language's date-fns locale is resident. Awaited before the locale
@@ -94,11 +96,74 @@ export const customDate = (
   formatString: string
 ): string => format(toDate(value), formatString, { locale: dateFnsLocale() });
 
-export const localisedDistanceToNow = (value: Date | string | number): string =>
-  formatDistanceToNow(toDate(value), {
-    locale: dateFnsLocale(),
-    addSuffix: true,
-  });
+/*
+ * The BCP-47 tag to hand Intl for a supported language. Mirrors the date-fns
+ * substitutions above, so the two formatters never disagree about which
+ * language a user is reading: Dari and Pashto borrow Persian, and Tetum and Lao
+ * — which date-fns doesn't carry — fall back to the app's English rather than
+ * to whatever the browser happens to be set to, which is what Intl would pick
+ * on its own for an unknown tag. (Intl does know `lo`, but a Lao date beside an
+ * English one from date-fns would be worse than either alone.)
+ */
+const INTL_TAGS: Record<SupportedLocale, string> = {
+  ar: 'ar',
+  prs: 'fa-IR',
+  en: 'en-GB',
+  es: 'es',
+  fr: 'fr',
+  'fr-DJ': 'fr',
+  lo: 'en-GB',
+  ps: 'fa-IR',
+  pt: 'pt',
+  ru: 'ru',
+  tet: 'en-GB',
+};
+
+const MINUTE_MS = 60_000;
+const HOUR_MS = 3_600_000;
+
+/*
+ * How long ago a moment was, in the fewest words that stay honest (issue
+ * #1087) — for a standing indicator that is re-read at a glance, many times a
+ * day, and must not grow wider than the state it qualifies:
+ *
+ *   under a minute → "just now"      (a count of seconds is noise)
+ *   under an hour  → "2 min ago"
+ *   under a day    → "3 hr ago"
+ *   yesterday      → "yesterday"     (a calendar day, not a 24-hour window)
+ *   older          → "14 Aug"        (relative stops being informative)
+ *
+ * Intl.RelativeTimeFormat, not date-fns's formatDistance: `style: 'narrow'`
+ * yields the short forms above and the correct short forms in every other
+ * language, where date-fns gives full words and hedges ("about 9 hours ago").
+ * It is also native, so it costs no locale chunk.
+ *
+ * `numeric: 'auto'` is what turns the day rung into the word "yesterday"
+ * instead of "1 day ago"; the rungs above pass 'always', since "this minute"
+ * would be a worse reading of a 40-second-old sync than "just now".
+ */
+export const localisedTimeAgo = (
+  value: Date | string | number,
+  now: Date = new Date()
+): string => {
+  const then = toDate(value);
+  const elapsed = now.getTime() - then.getTime();
+  const tag = INTL_TAGS[locale()];
+  const rtf = (numeric: 'always' | 'auto') =>
+    new Intl.RelativeTimeFormat(tag, { style: 'narrow', numeric });
+
+  // A clock skewed into the future reads as the present, never as a countdown.
+  if (elapsed < MINUTE_MS) return t('label.just-now');
+  if (elapsed < HOUR_MS)
+    return rtf('always').format(-Math.floor(elapsed / MINUTE_MS), 'minute');
+  if (elapsed < 24 * HOUR_MS)
+    return rtf('always').format(-Math.floor(elapsed / HOUR_MS), 'hour');
+  // Past a day, "yesterday" is a CALENDAR fact: 30 hours ago can be two dates
+  // back, and calling that yesterday would be wrong.
+  const days = differenceInCalendarDays(now, then);
+  if (days === 1) return rtf('auto').format(-1, 'day');
+  return format(then, 'd MMM', { locale: dateFnsLocale() });
+};
 
 // Friendly age for display, relative to today: whole years once a patient is
 // at least one year old ("31 years", "1 year"), otherwise months and days

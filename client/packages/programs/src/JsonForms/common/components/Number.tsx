@@ -1,0 +1,86 @@
+import React, { useState } from 'react';
+import { ControlProps, rankWith, schemaTypeIs } from '@jsonforms/core';
+import { withJsonFormsControlProps } from '@jsonforms/react';
+import {
+  DetailInputWithLabelRow,
+  LocaleKey,
+  NumericTextInput,
+  NumericTextInputProps,
+  useDebounceCallback,
+  useTranslation,
+} from '@openmsupply-client/common';
+import { FORM_LABEL_WIDTH, DefaultFormRowSx } from '../styleConstants';
+import { formatErrors } from '../formatErrors';
+import { z } from 'zod';
+import { useZodOptionsValidation } from '../hooks/useZodOptionsValidation';
+
+export const numberTester = rankWith(3, schemaTypeIs('number'));
+
+const Options = z
+  .object({
+    inputAlignment: z.enum(['start', 'end']).optional(),
+    paddingRight: z.number().optional(),
+  })
+  .optional();
+
+type Options = z.infer<typeof Options>;
+
+const UIComponent = (props: ControlProps) => {
+  const { data, handleChange, label, path, errors, schema, uischema } = props;
+
+  const t = useTranslation();
+  const [localData, setLocalData] = useState<number | undefined>(data);
+  const onChange = useDebounceCallback(
+    (value: number | undefined) => handleChange(path, value),
+    [path]
+  );
+  const { errors: zErrors, options } = useZodOptionsValidation(
+    Options,
+    uischema.options
+  );
+  const error = !!zErrors || !!errors;
+
+  if (!props.visible) {
+    return null;
+  }
+  const inputProps: NumericTextInputProps & {
+    onChange: (newValue: number) => void;
+  } = {
+    slotProps: {
+      input: {
+        sx: { '& .MuiInput-input': { textAlign: 'right' } },
+      },
+    },
+    onChange: value => {
+      setLocalData(value);
+      onChange(value);
+    },
+    disabled: !props.enabled,
+    error: error,
+    helperText: formatErrors(errors || zErrors),
+    value: localData,
+  };
+
+  const inputAlignment = options?.inputAlignment ?? 'start';
+  const paddingRight = options?.paddingRight ?? 0;
+
+  return (
+    <DetailInputWithLabelRow
+      sx={DefaultFormRowSx}
+      label={t(label as LocaleKey)}
+      labelWidthPercentage={FORM_LABEL_WIDTH}
+      inputAlignment={inputAlignment}
+      inputSx={{ paddingRight: `${paddingRight}px` }}
+      Input={
+        <NumericTextInput
+          {...inputProps}
+          decimalLimit={10}
+          min={schema.minimum}
+          max={schema.maximum}
+        />
+      }
+    />
+  );
+};
+
+export const NumberField = withJsonFormsControlProps(UIComponent);

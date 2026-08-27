@@ -2,6 +2,7 @@ import { createMemo, createResource } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { t } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
@@ -114,15 +115,11 @@ const ItemsList: Component = () => {
       return result.data.items;
     }
   );
-  // Read WITHOUT suspending, gated on `.state`: `.latest` alone suspends on the
-  // first pending read, which on this screen's initial load would collapse the
-  // list into the router's fallback-less boundary (a blank page) instead of
-  // letting the DataTable mount and show its own loading treatment
-  // (kdd/solid-reactivity-pitfalls; issues #160/#196).
-  const page = () =>
-    data.state === 'ready' || data.state === 'refreshing'
-      ? data.latest
-      : undefined;
+  // Read WITHOUT suspending: on this screen's initial load a suspending read
+  // would collapse the list into the router's fallback-less boundary (a blank
+  // page) instead of letting the DataTable mount and show its own loading
+  // treatment (issues #160/#196).
+  const page = () => gated(data);
   const rows = (): ItemRow[] => page()?.nodes ?? [];
   const totalCount = () => page()?.totalCount ?? 0;
 
@@ -135,11 +132,8 @@ const ItemsList: Component = () => {
       return result.data.preferences;
     }
   );
-  // Same non-suspending `.state` gate as the list read above.
-  const prefs = () =>
-    prefsData.state === 'ready' || prefsData.state === 'refreshing'
-      ? prefsData.latest
-      : undefined;
+  // Same non-suspending gate as the list read above.
+  const prefs = () => gated(prefsData);
   const showDoses = () => prefs()?.manageVaccinesInDoses ?? false;
   // At-risk filter offered only when the recent-consumption window is set.
   const showAtRisk = () =>
@@ -157,10 +151,7 @@ const ItemsList: Component = () => {
       return result.data.masterLists.nodes;
     }
   );
-  const masterListOptions = () =>
-    masterListsData.state === 'ready' || masterListsData.state === 'refreshing'
-      ? (masterListsData.latest ?? [])
-      : [];
+  const masterListOptions = () => gated(masterListsData) ?? [];
 
   // createMemo, NOT a plain function: TanStack memoizes on this array's
   // REFERENCE, so a fresh one per read invalidates four layers of its internal

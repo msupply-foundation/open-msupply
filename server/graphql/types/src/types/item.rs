@@ -1,0 +1,660 @@
+use super::{
+    AncillaryItemNode, ItemDirectionNode, ItemStatsNode, ItemVariantNode, MasterListNode,
+    StockLineConnector, WarningNode,
+};
+use crate::types::{program_node::ProgramNode, ItemStorePropertiesNode, LocationTypeNode};
+
+use async_graphql::dataloader::DataLoader;
+use async_graphql::*;
+use chrono::NaiveDate;
+use graphql_core::{
+    loader::{
+        AllowedCustomFieldKeysByScopeLoader, AncillaryItemsByAncillaryIdLoader,
+        AncillaryItemsByItemIdLoader, ItemCategoryLoader, ItemDirectionsByItemIdLoader,
+        ItemStatsLoaderInput, ItemStoreJoinLoader, ItemStoreJoinLoaderInput,
+        ItemVariantsByItemIdLoader, ItemsStatsForItemLoader, ItemsStockOnHandLoader,
+        ItemsStockOnHandLoaderInput, LocationTypeLoader, MasterListByItemIdLoader,
+        MasterListByItemIdLoaderInput, ProgramsByItemIdLoader, ProgramsByItemIdLoaderInput,
+        StockLineByItemAndStoreIdLoader, StockLineByItemAndStoreIdLoaderInput, WarningLoader,
+    },
+    simple_generic_errors::InternalError,
+    standard_graphql_error::StandardGraphqlError,
+    ContextExt,
+};
+use repository::{category_row::CategoryRow, Item, ItemRow};
+use serde_json::json;
+use service::{item_stats::ItemStats, ListResult};
+
+#[derive(PartialEq, Debug)]
+pub struct ItemNode {
+    item: Item,
+}
+
+#[derive(SimpleObject)]
+pub struct ItemConnector {
+    total_count: u32,
+    nodes: Vec<ItemNode>,
+}
+
+#[Object]
+impl ItemNode {
+    pub async fn id(&self) -> &str {
+        &self.row().id
+    }
+
+    pub async fn name(&self) -> &str {
+        &self.row().name
+    }
+
+    pub async fn code(&self) -> &str {
+        &self.row().code
+    }
+
+    pub async fn unit_name(&self) -> Option<&str> {
+        self.item.unit_name()
+    }
+
+    pub async fn r#type(&self) -> ItemNodeType {
+        ItemNodeType::from(self.row().r#type.clone())
+    }
+
+    pub async fn strength(&self) -> &Option<String> {
+        &self.row().strength
+    }
+
+    pub async fn ven_category(&self) -> VenCategoryType {
+        VenCategoryType::from(self.row().ven_category.clone())
+    }
+
+    pub async fn is_vaccine(&self) -> &bool {
+        &self.row().is_vaccine
+    }
+
+    pub async fn default_pack_size(&self) -> f64 {
+        self.row().default_pack_size
+    }
+
+    pub async fn doses(&self) -> i32 {
+        self.row().vaccine_doses
+    }
+
+    pub async fn restricted_location_type_id(&self) -> &Option<String> {
+        &self.row().restricted_location_type_id
+    }
+
+    /// Properties v2 values for this item. The raw `item.custom_fields` JSONB
+    /// blob is filtered server-side to keys that are (a) defined in
+    /// `custom_field` and not soft-deleted, (b) marked visible for the `item`
+    /// table via `custom_field_scope`. Stray keys never reach the client.
+    /// Imported from legacy mSupply `[item]user_field_1..7`; read-only.
+    pub async fn custom_fields(&self, ctx: &Context<'_>) -> Result<Option<serde_json::Value>> {
+        let Some(raw) = self.row().custom_fields.clone() else {
+            return Ok(None);
+        };
+
+        let loader = ctx.get_loader::<DataLoader<AllowedCustomFieldKeysByScopeLoader>>();
+        let allowed_keys = loader
+            .load_one("item".to_string())
+            .await?
+            .unwrap_or_default();
+
+        Ok(Some(crate::types::filter_custom_fields(raw, &allowed_keys)))
+    }
+
+    pub async fn restricted_location_type(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<LocationTypeNode>> {
+        let restricted_location_type_id = match &self.row().restricted_location_type_id {
+            Some(restricted_location_type_id) => restricted_location_type_id,
+            None => return Ok(None),
+        };
+
+        let loader = ctx.get_loader::<DataLoader<LocationTypeLoader>>();
+        Ok(loader
+            .load_one(restricted_location_type_id.clone())
+            .await?
+            .map(LocationTypeNode::from_domain))
+    }
+
+    pub async fn stats(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        #[graphql(desc = "Defaults to 3 months")] amc_lookback_months: Option<f64>,
+        period_end: Option<NaiveDate>,
+    ) -> Result<ItemStatsNode> {
+        // The full item-stats path computes consumption and runs the AMC backend plugin —
+        // far too expensive when the query only selects stock on hand (e.g. the item list
+        // export asks for stats { stockOnHand } across every item). Serve those selections
+        // from the cheap batched stock_on_hand loader instead.
+        let only_stock_on_hand = ctx.field().selection_set().all(|field| {
+            matches!(
+                field.name(),
+                "stockOnHand" | "availableStockOnHand" | "__typename"
+            )
+        });
+        if only_stock_on_hand {
+            let loader = ctx.get_loader::<DataLoader<ItemsStockOnHandLoader>>();
+            let stock_on_hand = loader
+                .load_one(ItemsStockOnHandLoaderInput::new(&store_id, &self.row().id))
+                .await?
+                .unwrap_or_default();
+
+            return Ok(ItemStatsNode::from_domain(ItemStats {
+                item_id: self.row().id.clone(),
+                available_stock_on_hand: stock_on_hand.available_stock_on_hand,
+                total_stock_on_hand: stock_on_hand.total_stock_on_hand,
+                ..Default::default()
+            }));
+        }
+
+        let loader = ctx.get_loader::<DataLoader<ItemsStatsForItemLoader>>();
+        let result = loader
+            .load_one(ItemStatsLoaderInput::new(
+                &store_id,
+                &self.row().id,
+                amc_lookback_months,
+                period_end,
+            ))
+            .await?
+            .ok_or(
+                StandardGraphqlError::InternalError(format!(
+                    "Cannot find item stats for item {} and store {}",
+                    &self.row().id,
+                    store_id
+                ))
+                .extend(),
+            )?;
+
+        Ok(ItemStatsNode::from_domain(result))
+    }
+
+    async fn available_batches(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<StockLineConnector> {
+        let loader = ctx.get_loader::<DataLoader<StockLineByItemAndStoreIdLoader>>();
+        let result_option = loader
+            .load_one(StockLineByItemAndStoreIdLoaderInput::new(
+                &store_id,
+                &self.row().id,
+            ))
+            .await?;
+
+        Ok(StockLineConnector::from_vec(
+            result_option.unwrap_or(vec![]),
+        ))
+    }
+
+    pub async fn available_stock_on_hand(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<u32> {
+        let loader = ctx.get_loader::<DataLoader<ItemsStockOnHandLoader>>();
+        let result = loader
+            .load_one(ItemsStockOnHandLoaderInput::new(&store_id, &self.row().id))
+            .await?
+            .map(|soh| soh.available_stock_on_hand as u32)
+            .unwrap_or(0);
+
+        Ok(result)
+    }
+
+    /// Total stock on hand (all packs, not just available) for this item + store.
+    /// Backed by the same batched `ItemsStockOnHandLoader` as `availableStockOnHand`,
+    /// so unlike `stats { stockOnHand }` it does not trigger the item-stats / AMC
+    /// backend-plugin path.
+    pub async fn stock_on_hand(&self, ctx: &Context<'_>, store_id: String) -> Result<u32> {
+        let loader = ctx.get_loader::<DataLoader<ItemsStockOnHandLoader>>();
+        let result = loader
+            .load_one(ItemsStockOnHandLoaderInput::new(&store_id, &self.row().id))
+            .await?
+            .map(|soh| soh.total_stock_on_hand as u32)
+            .unwrap_or(0);
+
+        Ok(result)
+    }
+
+    pub async fn variants(&self, ctx: &Context<'_>) -> Result<Vec<ItemVariantNode>> {
+        let loader = ctx.get_loader::<DataLoader<ItemVariantsByItemIdLoader>>();
+        let result = loader
+            .load_one(self.row().id.clone())
+            .await?
+            .unwrap_or_default();
+
+        Ok(ItemVariantNode::from_vec(result))
+    }
+
+    /// Ancillary items configured against this item — i.e. items that should be
+    /// ordered alongside it (e.g. syringes that go with a vaccine).
+    pub async fn ancillary_items(&self, ctx: &Context<'_>) -> Result<Vec<AncillaryItemNode>> {
+        let loader = ctx.get_loader::<DataLoader<AncillaryItemsByItemIdLoader>>();
+        let result = loader
+            .load_one(self.row().id.clone())
+            .await?
+            .unwrap_or_default();
+
+        Ok(AncillaryItemNode::from_vec(result))
+    }
+
+    /// Ancillary item links where this item is the ancillary supply for some
+    /// other (principal) item.
+    pub async fn ancillary_for(&self, ctx: &Context<'_>) -> Result<Vec<AncillaryItemNode>> {
+        let loader = ctx.get_loader::<DataLoader<AncillaryItemsByAncillaryIdLoader>>();
+        let result = loader
+            .load_one(self.row().id.clone())
+            .await?
+            .unwrap_or_default();
+
+        Ok(AncillaryItemNode::from_vec(result))
+    }
+
+    pub async fn item_directions(&self, ctx: &Context<'_>) -> Result<Vec<ItemDirectionNode>> {
+        let loader = ctx.get_loader::<DataLoader<ItemDirectionsByItemIdLoader>>();
+        let result = loader
+            .load_one(self.row().id.clone())
+            .await?
+            .unwrap_or_default();
+
+        Ok(ItemDirectionNode::from_vec(result))
+    }
+
+    pub async fn warnings(&self, ctx: &Context<'_>) -> Result<Vec<WarningNode>> {
+        let loader = ctx.get_loader::<DataLoader<WarningLoader>>();
+        let result = loader
+            .load_one(self.row().id.clone())
+            .await?
+            .unwrap_or_default();
+
+        Ok(WarningNode::from_vec(result))
+    }
+
+    pub async fn categories(&self, ctx: &Context<'_>) -> Result<Vec<ItemCategoryNode>> {
+        let loader = ctx.get_loader::<DataLoader<ItemCategoryLoader>>();
+        let result = loader
+            .load_one(self.row().id.clone())
+            .await?
+            .unwrap_or_default();
+
+        Ok(result
+            .into_iter()
+            .map(ItemCategoryNode::from_domain)
+            .collect())
+    }
+
+    #[graphql(deprecation = "Since 2.16.0. Use universalCode instead")]
+    pub async fn msupply_universal_code(&self) -> String {
+        self.row().universal_code.clone().unwrap_or_default()
+    }
+
+    pub async fn universal_code(&self) -> String {
+        self.row().universal_code.clone().unwrap_or_default()
+    }
+
+    pub async fn msupply_universal_name(&self) -> String {
+        self.legacy_string("universalcodes_name")
+    }
+
+    pub async fn outer_pack_size(&self) -> i64 {
+        self.legacy_i64("outer_pack_size")
+    }
+
+    pub async fn volume_per_outer_pack(&self) -> f64 {
+        self.legacy_f64("volume_per_outer_pack")
+    }
+
+    pub async fn volume_per_pack(&self) -> f64 {
+        self.legacy_f64("volume_per_pack")
+    }
+
+    pub async fn margin(&self) -> f64 {
+        self.legacy_f64("margin")
+    }
+
+    pub async fn weight(&self) -> f64 {
+        self.legacy_f64("weight")
+    }
+
+    pub async fn atc_category(&self) -> String {
+        self.legacy_string("atc_category")
+    }
+
+    pub async fn ddd(&self) -> String {
+        self.legacy_string("ddd_value")
+    }
+
+    pub async fn master_lists(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<Option<Vec<MasterListNode>>> {
+        let loader = ctx.get_loader::<DataLoader<MasterListByItemIdLoader>>();
+        let master_list_option = loader
+            .load_one(MasterListByItemIdLoaderInput::new(
+                &store_id,
+                &self.row().id,
+            ))
+            .await?;
+
+        Ok(master_list_option.map(|master_list| {
+            master_list
+                .into_iter()
+                .map(MasterListNode::from_domain)
+                .collect()
+        }))
+    }
+
+    pub async fn item_store_properties(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<Option<ItemStorePropertiesNode>> {
+        let loader = ctx.get_loader::<DataLoader<ItemStoreJoinLoader>>();
+        let result: Vec<repository::ItemStoreJoinRow> = loader
+            .load_one(ItemStoreJoinLoaderInput::new(&store_id, &self.row().id))
+            .await?
+            .unwrap_or_default();
+
+        if result.is_empty() {
+            return Ok(None);
+        }
+
+        Ok(Some(ItemStorePropertiesNode::from_domain(
+            result.first().cloned().unwrap(),
+        )))
+    }
+
+    pub async fn programs(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+    ) -> Result<Option<Vec<ProgramNode>>> {
+        let loader = ctx.get_loader::<DataLoader<ProgramsByItemIdLoader>>();
+        let result = loader
+            .load_one(ProgramsByItemIdLoaderInput::new(&store_id, &self.row().id))
+            .await?;
+
+        Ok(result.map(|programs| {
+            programs
+                .into_iter()
+                .map(|program_row| ProgramNode { program_row })
+                .collect()
+        }))
+    }
+
+    pub async fn user_field_4(&self) -> bool {
+        self.legacy_bool("user_field_4")
+    }
+}
+
+#[derive(Union)]
+pub enum ItemResponseError {
+    InternalError(InternalError),
+}
+
+#[derive(SimpleObject)]
+pub struct ItemError {
+    pub error: ItemResponseError,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(remote = "repository::db_diesel::item_row::ItemType")]
+pub enum ItemNodeType {
+    Service,
+    Stock,
+    NonStock,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(remote = "repository::db_diesel::item_row::VENCategory")]
+pub enum VenCategoryType {
+    V,
+    E,
+    N,
+    NotAssigned,
+}
+
+#[derive(PartialEq, Debug)]
+pub struct ItemCategoryNode {
+    category_row: CategoryRow,
+}
+
+#[Object]
+impl ItemCategoryNode {
+    pub async fn id(&self) -> &str {
+        &self.category_row.id
+    }
+
+    pub async fn name(&self) -> &str {
+        &self.category_row.name
+    }
+}
+
+impl ItemCategoryNode {
+    pub fn from_domain(category_row: CategoryRow) -> Self {
+        ItemCategoryNode { category_row }
+    }
+}
+
+#[derive(Union)]
+pub enum ItemResponse {
+    Error(ItemError),
+    Response(ItemNode),
+}
+
+impl ItemNode {
+    pub fn from_domain(item: Item) -> ItemNode {
+        ItemNode { item }
+    }
+
+    pub fn row(&self) -> &ItemRow {
+        &self.item.item_row
+    }
+
+    pub fn legacy_string(&self, key: &str) -> String {
+        let json_value: serde_json::Value = match serde_json::from_str(&self.row().legacy_record) {
+            Ok(value) => value,
+            Err(_) => return "".to_string(),
+        };
+
+        json_value
+            .get(key)
+            .unwrap_or(&json!(""))
+            .as_str()
+            .unwrap()
+            .to_string()
+    }
+
+    pub fn legacy_bool(&self, key: &str) -> bool {
+        let json_value: serde_json::Value = match serde_json::from_str(&self.row().legacy_record) {
+            Ok(value) => value,
+            Err(_) => return false,
+        };
+
+        json_value
+            .get(key)
+            .unwrap_or(&json!(false))
+            .as_bool()
+            .unwrap()
+    }
+
+    pub fn legacy_i64(&self, key: &str) -> i64 {
+        let json_value: serde_json::Value = match serde_json::from_str(&self.row().legacy_record) {
+            Ok(value) => value,
+            Err(_) => return 0,
+        };
+
+        json_value.get(key).unwrap_or(&json!(0)).as_i64().unwrap()
+    }
+
+    pub fn legacy_f64(&self, key: &str) -> f64 {
+        let json_value: serde_json::Value = match serde_json::from_str(&self.row().legacy_record) {
+            Ok(value) => value,
+            Err(_) => return 0.0,
+        };
+
+        json_value.get(key).unwrap_or(&json!(0.0)).as_f64().unwrap()
+    }
+}
+
+impl ItemConnector {
+    pub fn from_domain(items: ListResult<Item>) -> ItemConnector {
+        ItemConnector {
+            total_count: items.count,
+            nodes: items.rows.into_iter().map(ItemNode::from_domain).collect(),
+        }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use async_graphql::Object;
+    use graphql_core::{assert_graphql_query, test_helpers::setup_graphql_test};
+    use repository::mock::MockDataInserts;
+    use serde_json::json;
+
+    use super::*;
+
+    #[actix_rt::test]
+    async fn graphql_test_item_node_details() {
+        #[derive(Clone)]
+        struct TestQuery;
+
+        let (_, _, _, settings) = setup_graphql_test(
+            TestQuery,
+            EmptyMutation,
+            "graphql_test_item_node_details",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        #[Object]
+        impl TestQuery {
+            pub async fn test_query(&self) -> ItemNode {
+                ItemNode {
+                    item: Item {
+                        item_row: ItemRow {
+                            legacy_record: r#"{
+                                "ID": "AA460A207402434A89B1F6EEAC08DA43",
+                                "item_name": "test_item",
+                                "start_of_year_date": "0000-00-00",
+                                "manufacture_method": "",
+                                "default_pack_size": 0,
+                                "dose_picture": "[object Picture]",
+                                "atc_category": "",
+                                "medication_purpose": "",
+                                "instructions": "",
+                                "user_field_7": false,
+                                "flags": "",
+                                "ddd_value": "0.1",
+                                "code": "test_item",
+                                "other_names": "",
+                                "type_of": "general",
+                                "price_editable": false,
+                                "margin": 0.3,
+                                "barcode_spare": "",
+                                "spare_ignore_for_orders": false,
+                                "sms_pack_size": 0,
+                                "expiry_date_mandatory": false,
+                                "volume_per_pack": 0.5,
+                                "department_ID": "",
+                                "weight": 10.5,
+                                "essential_drug_list": false,
+                                "catalogue_code": "",
+                                "indic_price": 0,
+                                "user_field_1": "",
+                                "spare_hold_for_issue": false,
+                                "builds_only": false,
+                                "reference_bom_quantity": 0,
+                                "use_bill_of_materials": false,
+                                "description": "",
+                                "spare_hold_for_receive": false,
+                                "Message": "",
+                                "interaction_group_ID": "",
+                                "spare_pack_to_one_on_receive": false,
+                                "cross_ref_item_ID": "",
+                                "strength": "1.5mg",
+                                "user_field_4": false,
+                                "user_field_6": "",
+                                "spare_internal_analysis": 0,
+                                "user_field_2": "",
+                                "user_field_3": "",
+                                "ddd factor": 0,
+                                "account_stock_ID": "CB81F6CD62C1476F9411362053D49E84",
+                                "account_purchases_ID": "0BE743A3727E49118BEB01CC26D129AD",
+                                "account_income_ID": "522C7F3C06CD444CB1FB360D19E337D0",
+                                "unit_ID": "",
+                                "outer_pack_size": 10,
+                                "category_ID": "",
+                                "ABC_category": "",
+                                "warning_quantity": 0,
+                                "user_field_5": 0,
+                                "print_units_in_dis_labels": false,
+                                "volume_per_outer_pack": 11.2,
+                                "normal_stock": false,
+                                "critical_stock": false,
+                                "spare_non_stock": false,
+                                "non_stock_name_ID": "",
+                                "is_sync": false,
+                                "sms_code": "",
+                                "category2_ID": "",
+                                "category3_ID": "",
+                                "buy_price": 0,
+                                "VEN_category": "",
+                                "universalcodes_name": "universal name",
+                                "kit_data": null,
+                                "custom_data": null,
+                                "doses": 11,
+                                "is_vaccine": true,
+                                "restricted_location_type_ID": "84AA2B7A18694A2AB1E84DCABAD19617"
+                            }"#
+                            .to_string(),
+                            universal_code: Some("universal code".to_string()),
+                            ..Default::default()
+                        },
+                        ..Default::default()
+                    },
+                }
+            }
+        }
+
+        let expected = json!({
+            "testQuery": {
+              "__typename": "ItemNode",
+              "atcCategory": "",
+              "ddd": "0.1",
+              "margin": 0.3,
+              "msupplyUniversalCode": "universal code",
+              "universalCode": "universal code",
+              "msupplyUniversalName": "universal name",
+              "outerPackSize": 10,
+              "volumePerOuterPack": 11.2,
+              "volumePerPack": 0.5,
+              "weight": 10.5
+            }
+          }
+        );
+
+        let query = r#"
+        query {
+            testQuery {
+                __typename
+               msupplyUniversalCode
+               universalCode
+               msupplyUniversalName
+               outerPackSize
+               volumePerPack
+               volumePerOuterPack
+               margin
+               weight
+               atcCategory
+               ddd
+            }
+        }
+        "#;
+        assert_graphql_query!(&settings, &query, &None, expected, None);
+    }
+}

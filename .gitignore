@@ -1,0 +1,63 @@
+.DS_Store
+# common location for local config file containing connection credentials
+server/report_builder/config.yaml
+.vscode/*
+!.vscode/extensions.json
+
+# Temp export files
+server/data
+.gitmodules
+scripts/plugin-management/pluginRepoMap.json
+scripts/plugin-management/pluginAuth.json
+node_modules/
+
+# Yarn 4
+**/.yarn/*
+!**/.yarn/patches
+!**/.yarn/plugins
+!**/.yarn/releases
+!**/.yarn/sdks
+!**/.yarn/versions
+.pnp.*
+
+standard_reports/test-config.json
+client/dist
+# New FE dist staged for docker builds (fetched by build/fetch-frontend.js)
+frontend-dist/
+
+# IDEs
+.idea/
+
+## Claude
+# `claude -w "feature-name"` will create "/.claude/worktrees/feature-name" for your worktree. Back at root though, git picks up this whole directory copy of the repo!
+worktrees
+**/.claude/*.local.json
+# Default path for backups
+backup/
+!docs/content/server/cli/backup/
+server/configuration/*.yaml
+# Keep the example and base configuration files
+!configuration/base.yaml
+!configuration/example.yaml
+server/target-postgres/
+
+# Playwright MCP scratch logs / page dumps
+.playwright-mcp/
+.scratch/*
+
+frontend/dist/
+frontend/dist-showcase/
+frontend/dist-prototypes/
+frontend/dist-ssr/
+# Generated CSS type declarations, both CSS-module (*.module.css.d.ts) and
+# global stylesheets (index.css, tokens.css → *.css.d.ts)
+*.css.d.ts
+frontend/e2e/test-results/
+frontend/e2e/playwright-report/
+# Deploy bookkeeping, written by deploy/build-and-deploy.sh into the server's
+# build checkout (untracked so `git reset --hard` in the poller leaves it be)
+frontend/.deploy-state
+frontend/.deploy-last-success
+# Per-developer Claude Code notes
+CLAUDE.local.md
+__pycache__/

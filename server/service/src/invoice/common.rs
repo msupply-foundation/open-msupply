@@ -1,0 +1,199 @@
+use crate::store_preference::get_store_preferences;
+use chrono::Utc;
+use repository::{
+    vvm_status::vvm_status_log_row::VVMStatusLogRow, CurrencyFilter, CurrencyRepository,
+    EqualFilter, InvoiceLine, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineType,
+    InvoiceRow, ItemFilter, ItemRepository, MasterList, MasterListFilter, MasterListRepository,
+    RepositoryError, StockLineRow, StorageConnection,
+};
+use std::collections::HashSet;
+use util::uuid::uuid;
+
+pub fn generate_invoice_user_id_update(
+    user_id: &str,
+    existing_invoice_row: InvoiceRow,
+) -> Option<InvoiceRow> {
+    let user_id_option = Some(user_id.to_string());
+    let user_id_has_changed = existing_invoice_row.user_id != user_id_option;
+    user_id_has_changed.then_some(InvoiceRow {
+        user_id: user_id_option,
+        ..existing_invoice_row
+    })
+}
+
+pub(crate) fn get_lines_for_invoice(
+    connection: &StorageConnection,
+    invoice_id: &str,
+) -> Result<Vec<InvoiceLine>, RepositoryError> {
+    let result = InvoiceLineRepository::new(connection).query_by_filter(
+        InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(invoice_id.to_string())),
+    )?;
+
+    Ok(result)
+}
+
+pub fn generate_duplicate_comment(source_number: i64, source_comment: &Option<String>) -> String {
+    match source_comment {
+        Some(comment) => format!("Copied from shipment #{source_number} ({comment})"),
+        None => format!("Copied from shipment #{source_number}"),
+    }
+}
+
+pub fn active_items(
+    connection: &StorageConnection,
+    store_id: &str,
+    item_ids: Vec<String>,
+) -> Result<HashSet<String>, RepositoryError> {
+    if item_ids.is_empty() {
+        return Ok(HashSet::new());
+    }
+
+    let items = ItemRepository::new(connection).query_by_filter(
+        ItemFilter::new()
+            .id(EqualFilter::equal_any(item_ids))
+            .is_visible(true)
+            .is_active(true),
+        Some(store_id.to_string()),
+    )?;
+
+    Ok(items.into_iter().map(|item| item.item_row.id).collect())
+}
+
+pub fn calculate_total_after_tax(total_before_tax: f64, tax: Option<f64>) -> f64 {
+    match tax {
+        Some(tax) => total_before_tax * (1.0 + tax / 100.0),
+        None => total_before_tax,
+    }
+}
+
+pub fn calculate_foreign_currency_total(
+    connection: &StorageConnection,
+    total: f64,
+    currency_id: Option<String>,
+    currency_rate: &f64,
+) -> Result<Option<f64>, RepositoryError> {
+    let Some(currency_id) = currency_id else {
+        return Ok(None);
+    };
+
+    let currency = CurrencyRepository::new(connection)
+        .query_by_filter(CurrencyFilter::new().is_home_currency(true))?
+        .pop()
+        .ok_or(RepositoryError::NotFound)?;
+    if currency_id == currency.currency_row.id {
+        return Ok(None);
+    }
+
+    Ok(Some(total / currency_rate))
+}
+
+#[derive(Debug, PartialEq)]
+pub struct AddToShipmentFromMasterListInput {
+    pub shipment_id: String,
+    pub master_list_id: String,
+}
+
+pub fn check_master_list_for_name_id(
+    connection: &StorageConnection,
+    name_id: &str,
+    master_list_id: &str,
+) -> Result<Option<MasterList>, RepositoryError> {
+    let mut rows = MasterListRepository::new(connection).query_by_filter(
+        MasterListFilter::new()
+            .id(EqualFilter::equal_to(master_list_id.to_string()))
+            .exists_for_name_id(EqualFilter::equal_to(name_id.to_string())),
+    )?;
+    Ok(rows.pop())
+}
+
+pub fn check_master_list_for_store(
+    connection: &StorageConnection,
+    store_id: &str,
+    master_list_id: &str,
+) -> Result<Option<MasterList>, RepositoryError> {
+    let mut rows = MasterListRepository::new(connection).query_by_filter(
+        MasterListFilter::new()
+            .id(EqualFilter::equal_to(master_list_id.to_string()))
+            .exists_for_store_id(EqualFilter::equal_to(store_id.to_string())),
+    )?;
+    Ok(rows.pop())
+}
+
+pub fn check_can_issue_in_foreign_currency(
+    connection: &StorageConnection,
+    store_id: &str,
+) -> Result<bool, RepositoryError> {
+    let store_preferences = get_store_preferences(connection, store_id)?;
+    Ok(store_preferences.issue_in_foreign_currency)
+}
+
+pub enum InvoiceLineHasNoStockLine {
+    InvoiceLineHasNoStockLine(String),
+    DatabaseError(RepositoryError),
+}
+
+// Returns a list of stock lines that need to be updated
+pub fn generate_batches_total_number_of_packs_update(
+    invoice_id: &str,
+    connection: &StorageConnection,
+) -> Result<Vec<StockLineRow>, InvoiceLineHasNoStockLine> {
+    let invoice_lines = InvoiceLineRepository::new(connection)
+        .query_by_filter(
+            InvoiceLineFilter::new()
+                .invoice_id(EqualFilter::equal_to(invoice_id.to_string()))
+                .r#type(InvoiceLineType::StockOut.equal_to()),
+        )
+        .map_err(InvoiceLineHasNoStockLine::DatabaseError)?;
+
+    let mut result = Vec::new();
+    for invoice_line in invoice_lines {
+        let invoice_line_row = invoice_line.invoice_line_row;
+        let mut stock_line = invoice_line.stock_line_option.ok_or(
+            InvoiceLineHasNoStockLine::InvoiceLineHasNoStockLine(invoice_line_row.id.to_string()),
+        )?;
+
+        stock_line.total_number_of_packs -= invoice_line_row.number_of_packs;
+        stock_line.total_volume -= stock_line.volume_per_pack * invoice_line_row.number_of_packs;
+        result.push(stock_line);
+    }
+    Ok(result)
+}
+
+pub(crate) fn get_invoice_status_datetime(invoice: &InvoiceRow) -> chrono::NaiveDateTime {
+    invoice
+        .backdated_datetime
+        .unwrap_or_else(|| chrono::Utc::now().naive_utc())
+}
+
+pub struct GenerateVVMStatusLogInput {
+    pub id: Option<String>,
+    pub store_id: String,
+    pub created_by: String,
+    pub vvm_status_id: String,
+    pub stock_line_id: String,
+    pub invoice_line_id: String,
+    pub comment: Option<String>,
+}
+
+pub fn generate_vvm_status_log(
+    GenerateVVMStatusLogInput {
+        id,
+        store_id,
+        vvm_status_id,
+        stock_line_id,
+        invoice_line_id,
+        created_by,
+        comment,
+    }: GenerateVVMStatusLogInput,
+) -> VVMStatusLogRow {
+    VVMStatusLogRow {
+        id: id.unwrap_or(uuid()),
+        store_id: store_id.to_string(),
+        created_by: created_by.to_string(),
+        created_datetime: Utc::now().naive_utc(),
+        status_id: vvm_status_id.to_string(),
+        stock_line_id: stock_line_id.to_string(),
+        invoice_line_id: Some(invoice_line_id.to_string()),
+        comment,
+    }
+}

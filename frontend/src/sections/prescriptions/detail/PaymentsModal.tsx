@@ -14,6 +14,7 @@ import {
   t,
 } from '../../../intl';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { Dialog } from '../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../ui/elements/feedback/Alert';
 import { Button } from '../../../ui/elements/buttons/Button';
@@ -140,13 +141,11 @@ export const PaymentsModal: Component<PaymentsModalProps> = props => {
     }
   );
   const today = localTodayIso();
-  // State-gated (never suspends) — the window first-fetches while open.
+  // Never suspends — the window first-fetches while open.
   const policies = (): Policy[] =>
-    (
-      (policiesData.state === 'ready' || policiesData.state === 'refreshing'
-        ? policiesData.latest
-        : undefined) ?? []
-    ).filter(policy => policy.isActive && policy.expiryDate >= today);
+    (gated(policiesData) ?? []).filter(
+      policy => policy.isActive && policy.expiryDate >= today
+    );
 
   const selected = () => policies().find(policy => policy.id === policyId());
   const total = () => props.node.pricing.totalAfterTax;

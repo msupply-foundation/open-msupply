@@ -1,0 +1,20 @@
+{
+  "name": "@openmsupply-client/dashboard",
+  "version": "0.0.0",
+  "sideEffects": false,
+  "main": "./src/index.ts",
+  "private": true,
+  "scripts": {
+    "tsc": "tsc",
+    "eslint": "eslint ./src"
+  },
+  "dependencies": {
+    "@openmsupply-client/common": "^0.0.1",
+    "@openmsupply-client/config": "^0.0.0",
+    "@openmsupply-client/invoices": "^0.0.0",
+    "@openmsupply-client/requisitions": "^0.0.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "recharts": "^2.5.0"
+  }
+}

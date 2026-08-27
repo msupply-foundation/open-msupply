@@ -1,0 +1,170 @@
+import React, { useState } from 'react';
+import {
+  ArrowRightIcon,
+  Box,
+  Divider,
+  InputWithLabelRow,
+  NumericTextDisplay,
+  NumericTextInput,
+  TextWithLabelRow,
+  UNDEFINED_STRING_VALUE,
+  useTranslation,
+} from '@openmsupply-client/common';
+import { LocationRowFragment, RepackDraft } from '@openmsupply-client/system';
+import { LocationSearchInput } from '../../..';
+
+const INPUT_WIDTH = 100;
+
+interface RepackEditFormProps {
+  onChange: (repack: Partial<RepackDraft>) => void;
+  data: RepackDraft;
+  isNew: boolean;
+  availableNumberOfPacks: number;
+}
+
+export const RepackEditForm = ({
+  onChange,
+  data,
+  isNew,
+  availableNumberOfPacks,
+}: RepackEditFormProps) => {
+  const t = useTranslation();
+
+  const [location, setLocation] = useState<LocationRowFragment | null>(null);
+  const textProps = { textAlign: 'end' as 'end' | 'start' };
+  const labelProps = { sx: { width: 0 } };
+  const numberDisplaySx = { padding: '4px 8px' };
+
+  return (
+    <Box justifyContent="center">
+      <Divider />
+      <Box display="flex">
+        <Box display="flex" flexDirection="column" padding={2} gap={1} flex={1}>
+          {isNew && (
+            <InputWithLabelRow
+              label={t('label.packs-available')}
+              testId="repack-packs-available"
+              labelWidth="100%"
+              Input={
+                <NumericTextDisplay
+                  value={availableNumberOfPacks}
+                  sx={numberDisplaySx}
+                />
+              }
+            />
+          )}
+          <InputWithLabelRow
+            label={t('label.packs-to-repack')}
+            testId="repack-number-of-packs"
+            labelWidth="100%"
+            Input={
+              <NumericTextInput
+                autoFocus
+                onChange={numberOfPacks =>
+                  onChange({
+                    numberOfPacks,
+                  })
+                }
+                width={INPUT_WIDTH}
+                value={data.numberOfPacks}
+                max={availableNumberOfPacks}
+                disabled={!isNew}
+              />
+            }
+          />
+          <InputWithLabelRow
+            label={t('label.pack-size')}
+            labelWidth="100%"
+            Input={
+              <NumericTextDisplay value={data.packSize} sx={numberDisplaySx} />
+            }
+          />
+          <TextWithLabelRow
+            label={t('label.location')}
+            text={data?.locationName ?? UNDEFINED_STRING_VALUE}
+            textProps={textProps}
+            labelProps={labelProps}
+          />
+        </Box>
+        <Box
+          alignItems="center"
+          display="flex"
+          paddingLeft={2}
+          paddingRight={6}
+        >
+          <ArrowRightIcon color="primary" />
+        </Box>
+        <Box
+          display="flex"
+          flexDirection="column"
+          gap={1}
+          paddingTop={2}
+          flex={1}
+        >
+          {isNew && <Box height={24} />}
+          <InputWithLabelRow
+            label={t('label.new-num-packs')}
+            testId="repack-new-number-of-packs"
+            labelWidth="100%"
+            Input={
+              <NumericTextDisplay
+                value={
+                  ((data.numberOfPacks ?? 0) * (data?.packSize ?? 0)) /
+                  (data.newPackSize || 1)
+                }
+                sx={numberDisplaySx}
+              />
+            }
+          />
+          <InputWithLabelRow
+            label={t('label.new-pack-size')}
+            testId="repack-new-pack-size"
+            labelWidth="100%"
+            Input={
+              <NumericTextInput
+                onChange={newPackSize =>
+                  onChange({
+                    newPackSize,
+                  })
+                }
+                width={INPUT_WIDTH}
+                value={data.newPackSize}
+                disabled={!isNew}
+                max={data?.numberOfPacks * (data?.packSize ?? 1)}
+              />
+            }
+          />
+          {data.newLocationName || !isNew ? (
+            <TextWithLabelRow
+              label={t('label.new-location')}
+              text={data.newLocationName ?? UNDEFINED_STRING_VALUE}
+              textProps={textProps}
+              labelProps={labelProps}
+            />
+          ) : (
+            <InputWithLabelRow
+              label={t('label.new-location')}
+              labelWidth="100%"
+              testId="repack-new-location"
+              Input={
+                <LocationSearchInput
+                  autoFocus={false}
+                  disabled={!isNew}
+                  selectedLocation={location}
+                  width={160}
+                  onChange={location => {
+                    setLocation(location);
+                    onChange({
+                      newLocationId: location?.id,
+                    });
+                  }}
+                  restrictedToLocationTypeId={data.restrictedToLocationType}
+                />
+              }
+            />
+          )}
+        </Box>
+      </Box>
+    </Box>
+  );
+};

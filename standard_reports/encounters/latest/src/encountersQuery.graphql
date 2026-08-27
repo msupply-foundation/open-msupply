@@ -1,0 +1,59 @@
+query encountersQuery(
+  $storeId: String!
+  $programId: String!
+  $startDatetime: DatetimeFilterInput
+) {
+  encounters(
+    storeId: $storeId
+    filter: {
+      programId: { equalTo: $programId }
+      status: { equalTo: "PENDING" }
+      startDatetime: $startDatetime
+    }
+    sort: { key: "startDatetime", desc: false }
+  ) {
+    ... on EncounterConnector {
+      nodes {
+        ... on EncounterNode {
+          id
+          startDatetime
+          type
+          patient {
+            firstName
+            lastName
+            dateOfBirth
+            phone
+            nextOfKinName
+          }
+          programEnrolment {
+            programEnrolmentId
+          }
+          previousEncounter {
+            startDatetime
+          }
+        }
+      }
+    }
+  }
+  store(id: $storeId) {
+    ... on StoreNode {
+      code
+      storeName
+      logo
+      name(storeId: $storeId) {
+        ... on NameNode {
+          address1
+          address2
+          chargeCode
+          code
+          comment
+          country
+          email
+          name
+          phone
+          website
+        }
+      }
+    }
+  }
+}

@@ -52,7 +52,7 @@ export const CommandPalette = (props: CommandPaletteProps) => {
           };
         })
         // KB-P3: alphabetically BY NAME. Sorting on the name alone, before the
-        // view appends the parenthesised keys, so "Go to: Dashboard (Option+D)"
+        // view appends the parenthesised keys, so "Go to: Home (Option+D)"
         // does not sort under its modifier.
         .sort((a, b) => collator.compare(a.name, b.name))
     );

@@ -1,0 +1,122 @@
+import { useWindowDimensions } from '@common/hooks';
+import { CheckIcon, ChevronDownIcon } from '@common/icons';
+import { useIntlUtils } from '@common/intl';
+import {
+  List,
+  ListItemIcon,
+  ListItem,
+  ListItemText,
+  Divider,
+  Box,
+  Typography,
+} from '@mui/material';
+import React from 'react';
+
+export type ListOptionValues = {
+  id: string;
+  value: string;
+  /** Optional `data-testid` stamped on the rendered list item (e2e locators). */
+  testId?: string;
+};
+
+interface ListProps {
+  onClick: (id: string) => void;
+  options: ListOptionValues[];
+  currentId?: string;
+  enteredLineIds?: string[];
+  scrollRef: React.MutableRefObject<HTMLLIElement | null>;
+}
+
+export const ListOptions = ({
+  onClick,
+  options,
+  currentId,
+  enteredLineIds,
+  scrollRef,
+}: ListProps) => {
+  const { height } = useWindowDimensions();
+  const { isRtl } = useIntlUtils();
+
+  const startIcon = (
+    <CheckIcon
+      style={{
+        backgroundColor: '#33A901',
+        borderRadius: '50%',
+        padding: '2px',
+        color: 'white',
+        height: 18,
+        width: 18,
+      }}
+    />
+  );
+
+  const endIcon = (
+    <ChevronDownIcon
+      style={{
+        width: 17,
+        height: 17,
+        transform: isRtl ? 'rotate(90deg)' : 'rotate(-90deg)',
+      }}
+    />
+  );
+
+  return (
+    <List
+      sx={{
+        padding: 0,
+        overflow: 'auto',
+        scrollBehavior: 'smooth',
+        maxHeight: height - 200,
+      }}
+    >
+      {options?.map((option, _) => {
+        const shortcut = option.id === 'new' ? 'Alt+N' : undefined;
+        return (
+          <React.Fragment key={option.id}>
+            <ListItem
+              sx={{ padding: '5px 0px', cursor: 'pointer' }}
+              onClick={() => onClick(option.id)}
+              ref={option.id === currentId ? scrollRef : null}
+              aria-keyshortcuts={shortcut}
+              data-testid={option.testId}
+            >
+              <ListItemIcon sx={{ padding: 0, minWidth: 25 }}>
+                <Box
+                  style={{
+                    visibility: enteredLineIds?.includes(option.id)
+                      ? 'visible'
+                      : 'hidden',
+                  }}
+                >
+                  {startIcon}
+                </Box>
+              </ListItemIcon>
+              <ListItemText
+                primary={
+                  <Typography
+                    style={{
+                      fontWeight: option.id === currentId ? 'bold' : 'normal',
+                    }}
+                  >
+                    {option.value}
+                  </Typography>
+                }
+                sx={{ margin: 0, padding: 0 }}
+              />
+              <ListItemIcon sx={{ padding: 0, minWidth: 15 }}>
+                <Box
+                  style={{
+                    visibility: option.id === currentId ? 'visible' : 'hidden',
+                  }}
+                >
+                  {endIcon}
+                </Box>
+              </ListItemIcon>
+            </ListItem>
+            <Divider component="li" />
+          </React.Fragment>
+        );
+      })}
+    </List>
+  );
+};

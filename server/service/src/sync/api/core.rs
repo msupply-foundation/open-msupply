@@ -1,0 +1,413 @@
+use std::{collections::HashMap, convert::TryInto};
+
+use crate::{
+    apis::api_on_central::CentralApiError,
+    service_provider::{ServiceContext, ServiceProvider},
+    sync::settings::SyncSettings,
+};
+use repository::{migrations::Version, KeyType, KeyValueStoreRepository};
+use reqwest::{header::HeaderMap, Response, Url};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde_json::json;
+use thiserror::Error;
+use url::ParseError;
+use util::{format_error, log_body_read, with_retries_opts, RetrySeconds};
+
+use super::*;
+
+// The site's client-application identity, reported to the central server (legacy
+// v5 here, and sync v7 via `Common`/`GetTokenInput`, see #11784). Re-exported from
+// `crate::sync::api` via `pub use self::core::*`.
+#[cfg(target_os = "android")]
+pub const APP_NAME: &str = "Open mSupply Android";
+
+#[cfg(not(target_os = "android"))]
+pub const APP_NAME: &str = "Open mSupply Desktop";
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SyncApiSettings {
+    pub server_url: String,
+    pub username: String,
+    pub password_sha256: String,
+    pub site_uuid: String,
+    pub app_version: String,
+    pub app_name: String,
+    pub sync_version: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct SyncApiV5 {
+    pub url: Url,
+    pub settings: SyncApiSettings,
+}
+
+fn tuple_vec_to_header(tuple_vec: Vec<(&str, &str)>) -> HeaderMap {
+    let map = tuple_vec
+        .into_iter()
+        .map(|(s1, s2)| (s1.to_string(), s2.to_string()))
+        .collect::<HashMap<String, String>>();
+    // Can unwrap here, will be caught in unit tests
+    (&map).try_into().unwrap()
+}
+
+#[derive(Error, Debug)]
+pub enum SyncApiV5CreatingError {
+    #[error("Cannot parse url while creating SyncApiV5 instance url: '{0}'")]
+    CannotParseSyncUrl(String, #[source] ParseError),
+    #[error("Error while creating SyncApiV5 instance")]
+    Other(#[source] anyhow::Error),
+}
+
+impl SyncApiV5 {
+    pub fn new_settings(
+        settings: &SyncSettings,
+        service_provider: &ServiceProvider,
+        sync_version: u32,
+    ) -> Result<SyncApiSettings, SyncApiV5CreatingError> {
+        use SyncApiV5CreatingError as Error;
+
+        let SyncSettings {
+            username,
+            password_sha256,
+            url,
+            ..
+        } = settings.clone();
+
+        Ok(SyncApiSettings {
+            server_url: url,
+            site_uuid: service_provider
+                .app_data_service
+                .get_hardware_id()
+                .map_err(|error| Error::Other(error.into()))?,
+            app_version: Version::from_package_json().to_string(),
+            app_name: APP_NAME.to_string(),
+            sync_version: sync_version.to_string(),
+            username,
+            password_sha256,
+        })
+    }
+
+    pub fn new(settings: SyncApiSettings) -> Result<Self, SyncApiV5CreatingError> {
+        Ok(Self {
+            url: Url::parse(&settings.server_url).map_err(|error| {
+                SyncApiV5CreatingError::CannotParseSyncUrl(settings.server_url.clone(), error)
+            })?,
+            settings,
+        })
+    }
+
+    #[cfg(test)]
+    pub(crate) fn new_test(url: &str, site_name: &str, password: &str, hardware_id: &str) -> Self {
+        use crate::sync::settings::SYNC_V5_VERSION;
+        use util::hash::sha256;
+
+        SyncApiV5 {
+            url: Url::parse(url).unwrap(),
+            settings: SyncApiSettings {
+                server_url: url.to_string(),
+                username: site_name.to_string(),
+                password_sha256: sha256(password),
+                site_uuid: hardware_id.to_string(),
+                sync_version: SYNC_V5_VERSION.to_string(),
+                app_version: Version::from_package_json().to_string(),
+                app_name: APP_NAME.to_string(),
+            },
+        }
+    }
+
+    pub(crate) async fn do_get<T>(&self, route: &str, query: &T) -> Result<Response, SyncApiError>
+    where
+        T: Serialize + ?Sized,
+    {
+        let SyncApiSettings {
+            server_url: _,
+            username,
+            password_sha256,
+            site_uuid,
+            app_version,
+            app_name,
+            sync_version,
+        } = &self.settings;
+
+        let url = self
+            .url
+            .join(route)
+            .map_err(|error| self.api_error(route, error.into()))?;
+
+        // Don't retry idle-timeouts: legacy sync v5 requests can run for minutes server-side
+        // and continue after the client gives up; retrying would overlap the same site's
+        // in-flight request and trip `sync_is_running`. Connect errors are still retried.
+        let result = with_retries_opts(RetrySeconds::default(), false, |client| {
+            client
+                .get(url.clone())
+                .headers(tuple_vec_to_header(vec![
+                    ("msupply-site-uuid", site_uuid),
+                    ("app-version", app_version),
+                    ("app-name", app_name),
+                    ("version", sync_version),
+                ]))
+                .basic_auth(username, Some(password_sha256))
+                .query(query)
+        })
+        .await;
+
+        response_or_err(result)
+            .await
+            .map_err(|error| self.api_error(route, error))
+    }
+
+    pub(crate) async fn do_post<T>(&self, route: &str, body: &T) -> Result<Response, SyncApiError>
+    where
+        T: Serialize,
+    {
+        let SyncApiSettings {
+            server_url: _,
+            username,
+            password_sha256,
+            site_uuid,
+            app_version,
+            app_name,
+            sync_version,
+        } = &self.settings;
+
+        let url = self
+            .url
+            .join(route)
+            .map_err(|error| self.api_error(route, error.into()))?;
+
+        // See `do_get`: don't retry idle-timeouts for sync v5 (avoids same-site self-overlap).
+        let result = with_retries_opts(RetrySeconds::default(), false, |client| {
+            client
+                .post(url.clone())
+                .headers(tuple_vec_to_header(vec![
+                    ("msupply-site-uuid", site_uuid),
+                    ("app-version", app_version),
+                    ("app-name", app_name),
+                    ("version", sync_version),
+                ]))
+                .basic_auth(username, Some(password_sha256))
+                // Re unwrap, from to_string documentation:
+                // Serialization can fail if T's implementation of Serialize decides to fail, or if T contains a map with non-string keys.
+                .body(serde_json::to_string(&body).unwrap())
+        })
+        .await;
+
+        response_or_err(result)
+            .await
+            .map_err(|error| self.api_error(route, error))
+    }
+
+    pub(crate) async fn do_empty_post(&self, route: &str) -> Result<Response, SyncApiError> {
+        self.do_post(route, &json!({})).await
+    }
+
+    /// Poll `/sync/v5/site_status` until central reports `Idle`. Used to wait out a
+    /// "central busy" response (another sync session for this site is in progress;
+    /// legacy central gates sync per-site) before retrying. Errors on timeout.
+    pub(crate) async fn wait_until_central_idle(
+        &self,
+        poll_period_seconds: u64,
+        timeout_seconds: u64,
+    ) -> Result<(), SyncApiError> {
+        let route = "/sync/v5/site_status";
+        let start = std::time::SystemTime::now();
+        let poll_period = std::time::Duration::from_secs(poll_period_seconds);
+        let timeout = std::time::Duration::from_secs(timeout_seconds);
+        log::info!("Central server busy with another sync session for this site; waiting for it to become idle...");
+        loop {
+            tokio::time::sleep(poll_period).await;
+
+            match self.get_site_status().await {
+                Ok(status) if status.code == SiteStatusCodeV5::Idle => {
+                    log::info!("Central server is idle; retrying request");
+                    return Ok(());
+                }
+                Ok(_) => {}
+                // Transient poll failures don't mean central is still busy; retry until timeout.
+                Err(error) if error.is_transient() => {
+                    log::warn!(
+                        "Polling central site status failed while waiting for idle (will retry): {:#?}",
+                        error
+                    );
+                }
+                Err(error) => return Err(error),
+            }
+
+            if start.elapsed().unwrap_or(timeout) >= timeout {
+                return Err(self.api_error(
+                    route,
+                    SyncApiErrorVariantV5::Other(anyhow::anyhow!(
+                        "Timed out waiting for central server to become idle"
+                    )),
+                ));
+            }
+        }
+    }
+}
+
+// When central is busy with another sync session for this site, poll site status
+// this often, up to this long, before giving up.
+pub(crate) const CENTRAL_BUSY_POLL_PERIOD_SECONDS: u64 = 15;
+pub(crate) const CENTRAL_BUSY_TIMEOUT_SECONDS: u64 = 30 * 60;
+
+#[derive(Error, Debug)]
+pub enum ParsingResponseError {
+    #[error("Cannot retrieve response body")]
+    CannotGetTextResponse(#[from] reqwest::Error),
+    #[error("Could not parse response body, response: '{response_text}'")]
+    ParseError {
+        source: serde_json::Error,
+        response_text: String,
+    },
+}
+
+pub(crate) async fn to_json<T: DeserializeOwned>(
+    response: Response,
+) -> Result<T, ParsingResponseError> {
+    let url = util::redact_url_for_log(response.url());
+    let started = std::time::Instant::now();
+    // TODO not owned (to avoid double parsing)
+    let response_text = response.text().await?;
+    log_body_read(&url, response_text.len(), started.elapsed());
+    let result = serde_json::from_str(&response_text).map_err(|source| {
+        ParsingResponseError::ParseError {
+            source,
+            response_text,
+        }
+    })?;
+    Ok(result)
+}
+
+async fn response_or_err(
+    result: Result<Response, reqwest::Error>,
+) -> Result<Response, SyncApiErrorVariantV5> {
+    let response = match result {
+        Ok(result) => result,
+        Err(error) => {
+            if error.is_connect() {
+                return Err(SyncApiErrorVariantV5::ConnectionError(error));
+            } else {
+                return Err(SyncApiErrorVariantV5::Other(error.into()));
+            }
+        }
+    };
+
+    if response.status().is_success() {
+        return Ok(response);
+    }
+
+    Err(SyncApiErrorVariantV5::from_response_and_status(response.status(), response).await)
+}
+
+// OMS Central does not yet do auth validation for site credentials
+// So we call Legacy central server for this
+// (Use sync API for simplest auth)
+pub async fn validate_site_auth(
+    ctx: &ServiceContext,
+    sync_v5_settings: &SyncApiSettings,
+) -> Result<SiteInfoV5, CentralApiError> {
+    // We need to ignore the OG server URL provided by the remote and ensure we use the one that the OMS central server is expecting
+    let kv_repo = KeyValueStoreRepository::new(&ctx.connection);
+    let kv_url = kv_repo
+        .get_string(KeyType::SettingsSyncUrl)?
+        .ok_or_else(|| {
+            CentralApiError::InternalError("Key Value Store missing sync URL".to_string())
+        })?;
+    let sync_v5_settings = sync_v5_settings.clone();
+    let sync_v5_settings = SyncApiSettings {
+        server_url: kv_url,
+        ..sync_v5_settings
+    };
+    let response = SyncApiV5::new(sync_v5_settings)
+        .map_err(|e| CentralApiError::ConnectionError(format_error(&e)))?
+        .get_site_info()
+        .await
+        .map_err(|e| CentralApiError::LegacyServerError(format_error(&e)))?;
+
+    Ok(response)
+}
+
+#[cfg(test)]
+mod tests {
+    use httpmock::{Method::POST, MockServer};
+    use reqwest::header::AUTHORIZATION;
+    use util::assert_matches;
+
+    use super::*;
+
+    #[actix_rt::test]
+    async fn test_headers() {
+        let mock_server = MockServer::start();
+        let url = mock_server.base_url();
+
+        let mock = mock_server.mock(|when, then| {
+            when.method(POST)
+                .header("msupply-site-uuid", "site_id")
+                .header("app-version", Version::from_package_json().to_string())
+                .header("app-name", "Open mSupply Desktop")
+                .path("/sync/v5/acknowledged_records");
+            then.status(204);
+        });
+
+        let api = SyncApiV5::new_test(&url, "", "", "site_id");
+
+        let result = api.post_acknowledged_records(Vec::new()).await;
+
+        mock.assert();
+
+        assert!(result.is_ok());
+    }
+
+    #[actix_rt::test]
+    async fn test_authorisation() {
+        let mock_server = MockServer::start();
+        let url = mock_server.base_url();
+
+        let mock_authorisation_header =
+	    "Basic dXNlcm5hbWU6NWU4ODQ4OThkYTI4MDQ3MTUxZDBlNTZmOGRjNjI5Mjc3MzYwM2QwZDZhYWJiZGQ2MmExMWVmNzIxZDE1NDJkOA=="
+	    .to_owned();
+
+        let mock = mock_server.mock(|when, then| {
+            when.method(POST)
+                .header(AUTHORIZATION.to_string(), mock_authorisation_header)
+                .path("/sync/v5/acknowledged_records");
+            then.status(204);
+        });
+
+        let sync_connection_with_auth = create_api(&url, "username", "password");
+        let result_with_auth = sync_connection_with_auth
+            .post_acknowledged_records(Vec::new())
+            .await;
+
+        mock.assert();
+        assert!(result_with_auth.is_ok());
+
+        let sync_connection_with_auth = create_api(&url, "username", "invalid");
+        let result_with_auth = sync_connection_with_auth
+            .post_acknowledged_records(Vec::new())
+            .await;
+
+        assert!(result_with_auth.is_err());
+    }
+
+    /// A transient (connection) failure polling `/sync/v5/site_status` must not abort the wait
+    /// outright - it should be tolerated and retried until the timeout below, same as central
+    /// genuinely still being busy. (Old behaviour: a bare `?` on the failing poll would return
+    /// `Err` immediately here, on the very first iteration, well before the 1s timeout - this is
+    /// the regression this PR followup fixes.)
+    #[actix_rt::test]
+    async fn test_wait_until_central_idle_tolerates_transient_poll_errors() {
+        let api = SyncApiV5::new_test("http://localhost:9999", "", "", "site_id");
+
+        let result = api.wait_until_central_idle(0, 1).await;
+
+        assert_matches!(
+            result,
+            Err(SyncApiError {
+                source: SyncApiErrorVariantV5::Other(_),
+                ..
+            })
+        );
+    }
+}

@@ -1,0 +1,50 @@
+fragment TemperatureNotificationBreach on TemperatureBreachNode {
+  __typename
+  id
+  startDatetime
+  maxOrMinTemperature
+
+  sensor {
+    id
+    name
+  }
+
+  location {
+    name
+  }
+}
+
+fragment TemperatureExcursion on TemperatureExcursionNode {
+  __typename
+  id
+  startDatetime
+  maxOrMinTemperature
+
+  sensor {
+    id
+    name
+  }
+
+  location {
+    name
+  }
+}
+
+query temperatureNotifications($page: PaginationInput, $storeId: String!) {
+  temperatureNotifications(page: $page, storeId: $storeId) {
+    ... on TemperatureNotificationConnector {
+      breaches {
+        totalCount
+        nodes {
+          ...TemperatureNotificationBreach
+        }
+      }
+      excursions {
+        totalCount
+        nodes {
+          ...TemperatureExcursion
+        }
+      }
+    }
+  }
+}

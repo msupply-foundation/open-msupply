@@ -1,0 +1,68 @@
+use actix_web::web::Data;
+use async_graphql::dataloader::*;
+use repository::EqualFilter;
+use service::service_provider::ServiceProvider;
+use std::collections::HashMap;
+
+use repository::{Name, NameFilter};
+
+use crate::standard_graphql_error::StandardGraphqlError;
+
+#[derive(Clone, PartialEq, Eq, Debug, Hash)]
+pub struct NameByIdLoaderInput {
+    pub store_id: String,
+    pub name_id: String,
+}
+impl NameByIdLoaderInput {
+    pub fn new(store_id: &str, name_id: &str) -> Self {
+        NameByIdLoaderInput {
+            store_id: store_id.to_string(),
+            name_id: name_id.to_string(),
+        }
+    }
+}
+pub struct NameByIdLoader {
+    pub service_provider: Data<ServiceProvider>,
+}
+
+impl Loader<NameByIdLoaderInput> for NameByIdLoader {
+    type Value = Name;
+    type Error = async_graphql::Error;
+
+    async fn load(
+        &self,
+        ids_with_store_id: &[NameByIdLoaderInput],
+    ) -> Result<HashMap<NameByIdLoaderInput, Self::Value>, Self::Error> {
+        let service_context = self.service_provider.basic_context()?;
+
+        // store_id -> Vec of name_id
+        let mut store_name_map = HashMap::<String, Vec<String>>::new();
+        for item in ids_with_store_id {
+            let entry = store_name_map.entry(item.store_id.clone()).or_default();
+            entry.push(item.name_id.clone())
+        }
+        let mut output = HashMap::<NameByIdLoaderInput, Self::Value>::new();
+        for (store_id, names) in store_name_map {
+            let names = self
+                .service_provider
+                .name_service
+                .get_names(
+                    &service_context,
+                    &store_id,
+                    None, // TODO this needs to be ALL without limit
+                    // Names referenced by an existing record should still show
+                    Some(
+                        NameFilter::new()
+                            .id(EqualFilter::equal_any(names))
+                            .include_disabled(true),
+                    ),
+                    None,
+                )
+                .map_err(|err| StandardGraphqlError::InternalError(format!("{err:?}")))?;
+            for name in names.rows {
+                output.insert(NameByIdLoaderInput::new(&store_id, &name.name_row.id), name);
+            }
+        }
+        Ok(output)
+    }
+}

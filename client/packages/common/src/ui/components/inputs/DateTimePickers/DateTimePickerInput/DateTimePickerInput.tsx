@@ -1,0 +1,252 @@
+import React, { useMemo, useState } from 'react';
+import {
+  DateTimePicker,
+  DateTimePickerProps,
+  DateTimeValidationError,
+  DateValidationError,
+  PickersActionBarAction,
+} from '@mui/x-date-pickers';
+import { Box, SxProps, Typography, useMediaQuery } from '@mui/material';
+import {
+  DateUtils,
+  LocaleKey,
+  TypedTFunction,
+  useTranslation,
+} from '@common/intl';
+import { CustomErrorValue, useBufferState, useFormField } from '@common/hooks';
+import { FormErrorBinding } from '../../TextInput';
+import { getActionBarSx, getPaperSx, getTextFieldSx } from '../styles';
+
+export const getFormattedDateError = (
+  t: TypedTFunction<LocaleKey>,
+  validationError: DateValidationError | DateTimeValidationError
+) => {
+  switch (validationError) {
+    case 'invalidDate':
+      return t('error.date_invalidDate');
+    case 'minDate':
+      return t('error.date_minDate');
+    case 'maxDate':
+      return t('error.date_maxDate');
+    case 'disablePast':
+      return t('error.date_disablePast');
+    case 'disableFuture':
+      return t('error.date_disableFuture');
+    default:
+      return validationError ?? '';
+  }
+};
+
+export const DateTimePickerInput = ({
+  onChange,
+  onError,
+  setIsOpen,
+  width,
+  label,
+  minDate,
+  maxDate,
+  showTime,
+  actions,
+  dateAsEndOfDay,
+  disableFuture,
+  error: errorProp,
+  errorText,
+  required,
+  textFieldSx: inputSx,
+  textFieldTestId,
+  slotProps,
+  formError,
+  customError,
+  validate,
+  ...props
+}: Omit<DateTimePickerProps<true>, 'onChange'> & {
+  error?: boolean;
+  errorText?: React.ReactNode;
+  width?: number | string;
+  label?: string;
+  onChange: (value: Date | null) => void;
+  onError?: (validationError: string, date?: Date | null) => void;
+  // This allows a calling component to know whether the date was changed via
+  // keyboard input or the picker UI
+  setIsOpen?: (open: boolean) => void;
+  showTime?: boolean;
+  actions?: PickersActionBarAction[];
+  dateAsEndOfDay?: boolean;
+  disableFuture?: boolean;
+  required?: boolean;
+  textFieldSx?: SxProps;
+  // Stamps data-testid on the underlying text input so e2e can locate the
+  // picker without depending on its translated label.
+  textFieldTestId?: string;
+  formError?: FormErrorBinding;
+  customError?: CustomErrorValue;
+  validate?: (value: Date | null | undefined) => string | null;
+}) => {
+  const [internalError, setInternalError] = useState<string | null>(null);
+  const [value, setValue] = useBufferState<Date | null>(props.value ?? null);
+  const [isInitialEntry, setIsInitialEntry] = useState(true);
+  const [currentView, setCurrentView] = useState<string | null>(null);
+  const t = useTranslation();
+
+  // Form-error system integration. Combines the picker's internal validation
+  // state, the optional consumer-supplied `validate` callback, and any
+  // reactive customError into the global store.
+  const fieldValidator = useMemo(
+    () =>
+      formError
+        ? (val: Date | null | undefined) => {
+            if (internalError) return internalError;
+            return validate ? validate(val) : null;
+          }
+        : undefined,
+    [formError, internalError, validate]
+  );
+  const { error: storeError } = useFormField({
+    formId: formError?.formId ?? '',
+    fieldId: formError?.fieldId ?? '',
+    label: formError?.label ?? '',
+    value,
+    required,
+    customError,
+    validate: fieldValidator,
+  });
+  const format =
+    props.format === undefined ? (showTime ? 'P p' : 'P') : props.format;
+
+  // Month/year selections are intermediate only when a day view exists.
+  // Default views always include 'day'; only explicit overrides (e.g. ExpiryDateInput) omit it.
+  const hasDayView = !props.views || (props.views as string[]).includes('day');
+
+  const isDesktop = useMediaQuery('(pointer: fine)');
+
+  const updateDate = (date: Date | null) => {
+    setValue(date);
+    onChange(date);
+  };
+
+  // Max/Min should be restricted by the UI, but it's not restricting TIME input
+  // (only Date component). So this function will enforce the max/min after
+  // input
+  const handleDateInput = (date: Date | null) => {
+    if (minDate && date && date < minDate) {
+      updateDate(minDate);
+      return;
+    }
+    if (maxDate && date && date > maxDate) {
+      updateDate(maxDate);
+      return;
+    }
+
+    const dateToSave = date && dateAsEndOfDay ? DateUtils.endOfDay(date) : date;
+    updateDate(dateToSave);
+  };
+
+  return (
+    <Box sx={{ display: 'flex', width: '100%', maxWidth: width }}>
+      <DateTimePicker
+        format={format}
+        onChange={(date, context) => {
+          const { validationError } = context;
+
+          if (validationError) {
+            const translatedError = getFormattedDateError(t, validationError);
+            if (onError) onError(translatedError, date);
+            else setInternalError(validationError ? translatedError : null);
+
+            // If there is a validation error, set internal value (so user can
+            // keep typing) but not the external one via handleDateInput
+            setValue(date);
+            return;
+          }
+          if (!validationError) {
+            setIsInitialEntry(false);
+            setInternalError(null);
+          }
+
+          // Month/year picks should navigate, not set the date (unless there's no day view)
+          if (
+            date !== null &&
+            hasDayView &&
+            (currentView === 'month' || currentView === 'year')
+          ) {
+            return;
+          }
+
+          handleDateInput(date);
+        }}
+        label={label}
+        slotProps={{
+          mobilePaper: { sx: getPaperSx() },
+          desktopPaper: { sx: getPaperSx() },
+          actionBar: {
+            actions: actions ?? ['clear', 'accept'],
+            sx: getActionBarSx(),
+          },
+          textField: {
+            onBlur: () => {
+              if (props.disabled) return;
+              setIsInitialEntry(false);
+              // Apply max/mins on blur only if the user changed the value
+              // (e.g. by typing). Without this check, existing values
+              // outside the min/max range get clamped on every blur.
+              if ((minDate || maxDate) && value !== props.value) {
+                setInternalError(null);
+                handleDateInput(value);
+              }
+            },
+            error:
+              !!errorProp ||
+              !!errorText ||
+              (!!formError && storeError) ||
+              (!isInitialEntry && !!internalError),
+            helperText:
+              errorText ?? (!isInitialEntry ? (internalError ?? '') : ''),
+            sx: {
+              ...getTextFieldSx(!!label, !showTime, inputSx, width),
+              width,
+              minWidth: showTime ? 200 : undefined,
+            },
+            ...(textFieldTestId
+              ? { inputProps: { 'data-testid': textFieldTestId } }
+              : {}),
+          },
+
+          tabs: {
+            hidden: showTime && !isDesktop ? false : true,
+          },
+          ...slotProps,
+        }}
+        views={
+          showTime
+            ? ['year', 'month', 'day', 'hours', 'minutes']
+            : ['year', 'month', 'day']
+        }
+        minDate={minDate}
+        maxDate={maxDate}
+        disableFuture={disableFuture}
+        closeOnSelect={true}
+        {...props}
+        onViewChange={newView => setCurrentView(newView)}
+        onOpen={() => setIsOpen?.(true)}
+        onClose={() => {
+          setCurrentView(null);
+          setIsOpen?.(false);
+        }}
+        value={value}
+      />
+      {required && (
+        <Typography
+          sx={{
+            width: '0px', // Prevents asterisk from taking up space - hack but consistent with other inputs
+            color: 'primary.light',
+            fontSize: '17px',
+            marginRight: 0.5,
+            pl: 0.2,
+          }}
+        >
+          *
+        </Typography>
+      )}
+    </Box>
+  );
+};

@@ -8,6 +8,7 @@ import {
 } from 'solid-js';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
 import { graphqlFetch } from '@/api/graphql';
+import { gated } from '@/api/gated';
 import { t } from '@/intl';
 import { Page } from '@/ui/layout/Page/Page';
 import { Header } from '@/ui/layout/Header/Header';
@@ -27,7 +28,11 @@ import {
   type Column,
   type SortState,
 } from '@/ui/elements/table/DataTable';
-import { getCellDefinition } from '@/ui/elements/table/tableHelpers';
+import {
+  CommentHeader,
+  getCellDefinition,
+} from '@/ui/elements/table/tableHelpers';
+import { sortRows } from '@/list/sortRows';
 import { HStack } from '@/ui/layout/Stack/HStack';
 import { StatusMarker } from '@/ui/elements/feedback/StatusMarker';
 import {
@@ -277,10 +282,7 @@ const RequisitionDetailView: Component = () => {
     mutateIndicators(prev =>
       prev ? applySavedIndicatorValue(prev, valueId, value) : prev
     );
-  const indicatorNodes = () =>
-    indicators.state === 'ready' || indicators.state === 'refreshing'
-      ? (indicators.latest ?? [])
-      : [];
+  const indicatorNodes = () => gated(indicators) ?? [];
   // Indicators tab gate (spec S2 § tabs, AC-V5): a non-emergency program
   // requisition of a store-backed customer whose program defines ≥1
   // indicator.
@@ -489,13 +491,7 @@ const RequisitionDetailView: Component = () => {
           l.item.code.toLowerCase().includes(f) ||
           l.itemName.toLowerCase().includes(f)
       );
-    const s = sort();
-    const dir = s.desc ? -1 : 1;
-    return [...lines].sort((a, b) => {
-      const av = sortValue(a, s.key);
-      const bv = sortValue(b, s.key);
-      return av < bv ? -dir : av > bv ? dir : 0;
-    });
+    return sortRows(lines, sort(), sortValue);
   };
 
   // Dose annotation for a unit quantity on a vaccine item under the doses
@@ -541,7 +537,7 @@ const RequisitionDetailView: Component = () => {
     {
       // Pinned first: an affordance revealing the line's full comment.
       c: { key: 'comment' },
-      header: () => t('label.comment'),
+      header: () => <CommentHeader />,
       ...getCellDefinition('comment'),
     },
     {
@@ -1143,6 +1139,16 @@ const RequisitionDetailView: Component = () => {
                   }
                   config={tableConfig.config()}
                   setConfig={tableConfig.setConfig}
+                  // Central-server admins can promote this table's layout to
+                  // the shared install-wide default, the same as the list
+                  // (issue #1118 — detail tables offered no way to save table
+                  // defaults). Gate + action both off the config controller;
+                  // undefined for everyone else, so the action isn't offered.
+                  onSaveGlobalDefault={
+                    tableConfig.canSaveGlobalDefault()
+                      ? tableConfig.saveGlobalTableConfig
+                      : undefined
+                  }
                   // Leading-checkbox row selection for the bulk line delete
                   // (spec S2 § line table): checkbox-only — the row click
                   // stays bound to the editor. Always offered, on every

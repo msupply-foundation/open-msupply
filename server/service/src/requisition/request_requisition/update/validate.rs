@@ -1,0 +1,178 @@
+use super::{OutError, UpdateRequestRequisition};
+use crate::{
+    requisition::common::{
+        check_emergency_order_within_max_items_limit, check_requisition_row_exists,
+        OrderTypeNotFoundError,
+    },
+    store_preference::get_store_preferences,
+    validate::{
+        check_other_party, check_other_party_store_is_disabled, CheckOtherPartyType,
+        OtherPartyErrors,
+    },
+    NullableUpdate,
+};
+use repository::{
+    reason_option_row::ReasonOptionType,
+    requisition_row::{RequisitionRow, RequisitionStatus, RequisitionType},
+    EqualFilter, ReasonOptionFilter, ReasonOptionRepository, RequisitionLineFilter,
+    RequisitionLineRepository, StorageConnection,
+};
+
+pub fn validate(
+    connection: &StorageConnection,
+    store_id: &str,
+    input: &UpdateRequestRequisition,
+) -> Result<(RequisitionRow, bool), OutError> {
+    let requisition_row = check_requisition_row_exists(connection, &input.id)?
+        .ok_or(OutError::RequisitionDoesNotExist)?;
+    let requisition_lines = RequisitionLineRepository::new(connection).query_by_filter(
+        RequisitionLineFilter::new()
+            .requisition_id(EqualFilter::equal_to(requisition_row.id.to_string())),
+    )?;
+    let status_changed = input.status.is_some();
+
+    if requisition_row.program_id.is_some()
+        && (input.other_party_id.is_some()
+            || input.min_months_of_stock.is_some()
+            || input.max_months_of_stock.is_some())
+    {
+        return Err(OutError::CannotEditProgramRequisitionInformation);
+    }
+
+    if requisition_row.store_id != store_id {
+        return Err(OutError::NotThisStoreRequisition);
+    }
+
+    if requisition_row.r#type != RequisitionType::Request {
+        return Err(OutError::NotARequestRequisition);
+    }
+
+    if requisition_row.status != RequisitionStatus::Draft {
+        return Err(OutError::CannotEditRequisition);
+    }
+
+    if check_other_party_store_is_disabled(connection, store_id, &requisition_row.name_id)? {
+        return Err(OutError::CannotEditRequisition);
+    }
+
+    if let (Some(program_id), Some(order_type)) =
+        (&requisition_row.program_id, &requisition_row.order_type)
+    {
+        match check_emergency_order_within_max_items_limit(
+            connection,
+            program_id,
+            order_type,
+            requisition_lines.clone(),
+        ) {
+            Ok((within_limit, max_items)) => {
+                if !within_limit {
+                    return Err(OutError::OrderingTooManyItems(max_items));
+                }
+            }
+            Err(OrderTypeNotFoundError::OrderTypeNotFound) => {
+                // If order types are edited in mSupply this check will fail.
+                // We don't want to block the operation, just log it.
+                log::warn!(
+                    "Order type not found when checking emergency order item limit (requisition_id={}, program_id={}, order_type={})",
+                    requisition_row.id,
+                    program_id,
+                    order_type,
+                );
+            }
+            Err(OrderTypeNotFoundError::DatabaseError(e)) => return Err(e.into()),
+        }
+    }
+
+    let reason_options = ReasonOptionRepository::new(connection).query_by_filter(
+        ReasonOptionFilter::new().r#type(ReasonOptionType::equal_to(
+            &ReasonOptionType::RequisitionLineVariance,
+        )),
+    )?;
+
+    let prefs = get_store_preferences(connection, store_id)?;
+
+    if requisition_row.program_id.is_some()
+        && prefs.use_consumption_and_stock_from_customers_for_internal_orders
+        && !reason_options.is_empty()
+    {
+        let mut lines_missing_reason = Vec::new();
+
+        for line in requisition_lines {
+            if (line.requisition_line_row.requested_quantity
+                != line.requisition_line_row.suggested_quantity)
+                && line.requisition_line_row.option_id.is_none()
+            {
+                lines_missing_reason.push(line.clone())
+            }
+        }
+
+        if !lines_missing_reason.is_empty() {
+            return Err(OutError::ReasonsNotProvided(lines_missing_reason));
+        }
+    }
+
+    let Some(supplier_id) = &input.other_party_id else {
+        return Ok((requisition_row, status_changed));
+    };
+    validate_supplier(connection, store_id, supplier_id)?;
+
+    let destination_customer_id = match &input.destination_customer_id {
+        Some(NullableUpdate { value: Some(id) }) => id,
+        _ => return Ok((requisition_row, status_changed)),
+    };
+    validate_destination_customer(connection, store_id, destination_customer_id)?;
+
+    Ok((requisition_row, status_changed))
+}
+
+fn validate_supplier(
+    connection: &StorageConnection,
+    store_id: &str,
+    supplier_id: &str,
+) -> Result<(), OutError> {
+    let supplier = check_other_party(
+        connection,
+        store_id,
+        supplier_id,
+        CheckOtherPartyType::Supplier,
+    )
+    .map_err(|e| match e {
+        OtherPartyErrors::OtherPartyDoesNotExist => OutError::OtherPartyDoesNotExist {},
+        OtherPartyErrors::OtherPartyNotVisible => OutError::OtherPartyNotVisible,
+        OtherPartyErrors::TypeMismatched => OutError::OtherPartyNotASupplier,
+        OtherPartyErrors::DatabaseError(repository_error) => {
+            OutError::DatabaseError(repository_error)
+        }
+    })?;
+
+    supplier.store_id().ok_or(OutError::OtherPartyIsNotAStore)?;
+
+    Ok(())
+}
+
+fn validate_destination_customer(
+    connection: &StorageConnection,
+    store_id: &str,
+    destination_customer_id: &str,
+) -> Result<(), OutError> {
+    let destination_customer = check_other_party(
+        connection,
+        store_id,
+        destination_customer_id,
+        CheckOtherPartyType::Customer,
+    )
+    .map_err(|e| match e {
+        OtherPartyErrors::OtherPartyDoesNotExist => OutError::DestinationCustomerDoesNotExist,
+        OtherPartyErrors::OtherPartyNotVisible => OutError::DestinationCustomerNotVisible,
+        OtherPartyErrors::TypeMismatched => OutError::DestinationCustomerNotACustomer,
+        OtherPartyErrors::DatabaseError(repository_error) => {
+            OutError::DatabaseError(repository_error)
+        }
+    })?;
+
+    destination_customer
+        .store_id()
+        .ok_or(OutError::DestinationCustomerIsNotAStore)?;
+
+    Ok(())
+}

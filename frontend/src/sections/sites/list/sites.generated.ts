@@ -100,26 +100,6 @@ export const StoresBySite = {
   query: "query storesBySite($siteId: Int!) {\n  stores(filter: {siteId: {equalTo: $siteId}}, page: {first: 1000}) {\n    ... on StoreConnector {\n      __typename\n      totalCount\n      nodes {\n        ...SiteStoreRow\n      }\n    }\n  }\n}\n\nfragment SiteStoreRow on StoreNode {\n  __typename\n  id\n  code\n  storeName\n  siteId\n}",
 } as TypedDocument<StoresBySiteResult, StoresBySiteVariables>;
 
-export type StoreSearchVariables = {
-  search?: string | null;
-  excludeIds?: Array<string> | null;
-  first?: number | null;
-  offset?: number | null;
-};
-
-export type StoreSearchResult = {
-  stores: ({
-  __typename: "StoreConnector";
-} & {
-  totalCount: number;
-  nodes: Array<SiteStoreRowFragment>;
-});
-};
-
-export const StoreSearch = {
-  query: "query storeSearch($search: String, $excludeIds: [String!], $first: Int, $offset: Int) {\n  stores(\n    page: {first: $first, offset: $offset}\n    filter: {codeOrName: {like: $search}, id: {notEqualAll: $excludeIds}}\n    sort: [{key: name}]\n  ) {\n    ... on StoreConnector {\n      __typename\n      totalCount\n      nodes {\n        ...SiteStoreRow\n      }\n    }\n  }\n}\n\nfragment SiteStoreRow on StoreNode {\n  __typename\n  id\n  code\n  storeName\n  siteId\n}",
-} as TypedDocument<StoreSearchResult, StoreSearchVariables>;
-
 export type UpsertSiteVariables = {
   input: {
     id: number;

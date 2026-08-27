@@ -36,11 +36,7 @@ import {
   getNumberCell,
 } from '../../../../ui/elements/table/tableHelpers';
 import { createTableConfig } from '../../../../api/createTableConfig';
-import {
-  CopyIcon,
-  PlusCircleIcon,
-  TrashIcon,
-} from '../../../../ui/icons';
+import { CopyIcon, PlusCircleIcon, TrashIcon } from '../../../../ui/icons';
 import { ItemSearch, type ItemOption } from '../../../../domain/item';
 import {
   createFocusTarget,
@@ -269,12 +265,37 @@ const CARD_GROUPS: CardGroup<DraftBatch, GroupKey>[] = [
   {
     key: 'batch',
     panel: true,
+    // No narrowLayout — nothing here forces a row count. The fields lay out as
+    // the wrapping weighted row: as many to a line as fit at the widths they
+    // declare, each free to grow between its own min and max, and whatever is
+    // still left over passes to the fields with the most room to give (Location
+    // at 1.2, against 1 for the scalars).
+    //
+    // It used to carry `{ columns: 6 }`, an equal-track grid the fields took
+    // spans of. That gave even rows, and a span claims a FRACTION of the row
+    // while a declared width does not scale, so the two only agree at one panel
+    // width: at 6 tracks a third of a laptop's modal is ~27rem handed to a
+    // field that asked for 7.5. Filling that track makes a two-digit count read
+    // as a text box; capping it inside the track leaves the difference as a gap
+    // between the fields. Both were shipped and both were wrong, because the
+    // slack in such a row is `panel − Σ(declared widths)` however the tracks
+    // are counted, and the only good place for it is the END of a line — which
+    // is what a wrapping row does by construction.
+    //
+    // What that costs is the alignment the grid was chosen for: when a line
+    // wraps, its right edge won't line up with the line above. Accepted
+    // knowingly, and mitigated by the ranges above — a line fills by growing
+    // its fields within their permitted widths before any slack is left at all.
   },
   {
     key: 'pricing',
     labelKey: 'label.pricing-additional-info',
     panel: true,
     disclosure: 'closed',
+    // Likewise none. This group's spans had a second problem the batch panel's
+    // did not: they tiled exactly with the track-by-donor preference ON and
+    // left a row a quarter empty with it OFF, because one fixed set of spans
+    // cannot suit two field counts. A wrapping row has nothing to re-tile.
   },
 ];
 
@@ -795,7 +816,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { key: 'numberOfPacks' },
       header: () => t('label.packs-received'),
       cardGroup: 'batch',
-      ...getNumberCell({ cardWidth: 7.5 }),
+      ...getNumberCell({ cardWidth: { min: 7.5, max: 9, weight: 1 } }),
       cell: info => {
         const b = info.row.original;
         return (
@@ -816,10 +837,19 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             {/* Units received, as a HINT under the packs figure rather than a
                 field of its own (reference design). It is packs × pack size —
                 derived, never typed — so a whole labelled input for it cost the
-                row ~140px that the fields either side of it needed. Rendered
-                unconditionally (empty when there's nothing to say) so the row
-                height is constant and typing never makes the card jump. */}
-            <span class={styles.unitsHint}>{unitsHint(b)}</span>
+                row ~140px that the fields either side of it needed.
+                Rendered only when there IS a figure. It used to render always,
+                empty, so the card's height never changed as the user typed —
+                but a flex line is as tall as its tallest cell, so an empty hint
+                reserved 20px (1rem + its margin) on every line holding this
+                field. Against a 12px row gap that made the space between the
+                first and second row of fields read as ~32px: nearly three times
+                the gap, and the reason the card looked loosely spaced. The cost
+                is a one-time shift of the rows below when the first pack count
+                is entered. */}
+            <Show when={unitsHint(b)}>
+              {hint => <span class={styles.unitsHint}>{hint()}</span>}
+            </Show>
           </>
         );
       },
@@ -834,7 +864,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             c: { id: 'shippedNumberOfPacks' },
             header: () => t('label.shipped-number-of-packs'),
             cardGroup: 'batch',
-            ...getNumberCell({ cardWidth: 7.5 }),
+            ...getNumberCell({ cardWidth: { min: 7.5, max: 9, weight: 1 } }),
             cell: info => {
               const b = info.row.original;
               return (
@@ -865,7 +895,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             // which is what a locked Cost price is; a difference is arithmetic
             // and is never typed, so greying it conflates the two. Sized to the
             // input row so the columns still line up.
-            ...getNumberCell({ cardWidth: 5 }),
+            ...getNumberCell({ cardWidth: { min: 5, max: 6, weight: 1 } }),
             cell: info => {
               const b = info.row.original;
               // A getter, not a hoisted const: read inside JSX it stays
@@ -910,7 +940,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { key: 'packSize' },
       header: () => t('label.received-pack-size'),
       cardGroup: 'batch',
-      ...getNumberCell({ cardWidth: 8.75 }),
+      ...getNumberCell({ cardWidth: { min: 8.75, max: 10.5, weight: 1 } }),
       cell: info => {
         const b = info.row.original;
         return (
@@ -939,7 +969,9 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             c: { id: 'shippedPackSize' },
             header: () => t('label.shipped-pack-size'),
             cardGroup: 'batch',
-            ...getNumberCell({ cardWidth: 8.75 }),
+            ...getNumberCell({
+              cardWidth: { min: 8.75, max: 10.5, weight: 1 },
+            }),
             cell: info => {
               const b = info.row.original;
               return (
@@ -979,7 +1011,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { key: 'expiryDate' },
       header: () => t('label.expiry'),
       cardGroup: 'batch',
-      meta: { cardWidth: 10 },
+      meta: { cardWidth: { min: 10, max: 11.5, weight: 1 } },
       cell: info => {
         const b = info.row.original;
         return (
@@ -1000,7 +1032,20 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { id: 'location' },
       header: () => t('label.location'),
       cardGroup: 'batch',
-      meta: { cardWidth: { min: 8, max: 17, weight: 1.2 } },
+      // 12.5–36rem, weight 2 (ui-standards § Field Widths by Content Type).
+      // The WEIGHT is what decides its width on a line it shares: with
+      // flex-basis 0 each field takes weight/Σweights of the line, so at the
+      // 1.2 it used to carry it got barely more of a shared line than a date
+      // field did, and a `code — name` value came out ~15rem while its ceiling
+      // sat unused at 36. Two says what is true — a lookup's value runs several
+      // times longer than any scalar beside it. A location renders as
+      // `code — name` ("fr — Central
+      // Regional Medical Logistics & …"), so its length is UNPREDICTABLE, which
+      // is what puts a field in that group — it is not the short pick from a
+      // fixed list that VVM and Auth status are. The 8rem floor it carried left
+      // ~4.5rem of text once the picker's own clear and chevron were paid for,
+      // about nine characters, and a browser narrowed a little took it there.
+      meta: { cardWidth: { min: 12.5, max: 36, weight: 2 } },
       cell: info => {
         const b = info.row.original;
         return (
@@ -1012,44 +1057,6 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             value={b.locationId ?? undefined}
             requiredVolume={b.volumePerPack * b.numberOfPacks}
             onChange={loc => updateBatch(b.id, 'locationId', loc?.id ?? null)}
-          />
-        );
-      },
-    },
-    // Manufacturer (spec S4) — a name lookup, manufacturer role. Primary panel
-    // too (reference design): it arrives pre-filled and is confirm-only, but it
-    // is part of what the receiver checks off the delivery against.
-    {
-      c: { id: 'manufacturer' },
-      header: () => t('label.manufacturer'),
-      cardGroup: 'batch',
-      meta: { cardWidth: { min: 10, max: 20, weight: 1.4 } },
-      cell: info => {
-        const b = info.row.original;
-        return (
-          <NameSearch
-            label={t('label.manufacturer')}
-            hideLabel
-            size="small"
-            storeId={props.storeId}
-            role="manufacturer"
-            selected={
-              b.manufacturerId
-                ? ({
-                    id: b.manufacturerId,
-                    name: b.manufacturerName ?? '',
-                    code: '',
-                    isSupplier: false,
-                    isDonor: false,
-                    isOnHold: false,
-                    isStore: false,
-                  } satisfies NameOption)
-                : undefined
-            }
-            onSelect={m => {
-              updateBatch(b.id, 'manufacturerId', m?.id ?? null);
-              updateBatch(b.id, 'manufacturerName', m?.name ?? null);
-            }}
           />
         );
       },
@@ -1069,7 +1076,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             c: { id: 'authStatus' },
             header: () => t('label.auth-status'),
             cardGroup: 'batch',
-            meta: { cardWidth: 10 },
+            // A pick from a fixed list, so its longest value is known — a
+            // tight scalar range at weight 1, not the lookup range (see
+            // Location for the distinction).
+            meta: { cardWidth: { min: 10, max: 12, weight: 1 } },
             cell: info => {
               const b = info.row.original;
               // The styled Kobalte Select (not a Combobox — no point searching
@@ -1120,7 +1130,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             c: { id: 'dosesPerUnit' },
             header: () => t('label.doses-per-unit'),
             cardGroup: 'batch',
-            ...getNumberCell({ cardWidth: 7.5 }),
+            ...getNumberCell({ cardWidth: { min: 7.5, max: 9, weight: 1 } }),
             cell: () => (
               <NumberField
                 label={t('label.doses-per-unit')}
@@ -1141,7 +1151,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             c: { id: 'vvmStatus' },
             header: () => t('label.vvm-status'),
             cardGroup: 'batch',
-            meta: { cardWidth: 10 },
+            // A pick from a fixed list, like Auth status: the longest value is
+            // known, so a tight scalar range at weight 1 rather than the
+            // lookup range.
+            meta: { cardWidth: { min: 10, max: 12, weight: 1 } },
             cell: info => {
               const b = info.row.original;
               return (
@@ -1163,7 +1176,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { key: 'costPricePerPack' },
       header: () => t('label.pack-cost-price'),
       cardGroup: 'pricing',
-      ...getNumberCell({ cardWidth: 10 }),
+      ...getNumberCell({ cardWidth: { min: 10, max: 12, weight: 1 } }),
       cell: info => {
         const b = info.row.original;
         return (
@@ -1182,7 +1195,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { key: 'sellPricePerPack' },
       header: () => t('label.pack-sell-price'),
       cardGroup: 'pricing',
-      ...getNumberCell({ cardWidth: 10 }),
+      ...getNumberCell({ cardWidth: { min: 10, max: 12, weight: 1 } }),
       cell: info => {
         const b = info.row.original;
         return (
@@ -1203,7 +1216,13 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       cardGroup: 'pricing',
       // A read-only value, like Difference — packs × cost price is derived,
       // never typed.
-      ...getNumberCell({ cardWidth: 5 }),
+      // 8, not the 5 a small count takes: this is a CURRENCY total, and at 5rem
+      // (80px) "$19,536,000.00" wrapped onto a second line in the wide template,
+      // where the track is fixed and cannot grow. The 3rem comes out of Note's
+      // floor below rather than being added, so the group's minima — and with
+      // them the width at which it drops to the narrow grid — do not move; Note
+      // is weighted and grows past its floor anyway, so it loses nothing.
+      ...getNumberCell({ cardWidth: { min: 8, max: 10, weight: 1 } }),
       cell: info => {
         const b = info.row.original;
         return (
@@ -1220,7 +1239,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
             c: { id: 'donor' },
             header: () => t('label.donor'),
             cardGroup: 'pricing',
-            meta: { cardWidth: { min: 9, max: 18, weight: 1 } },
+            meta: { cardWidth: { min: 12.5, max: 36, weight: 2 } },
             cell: info => {
               const b = info.row.original;
               return (
@@ -1260,7 +1279,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { id: 'campaignOrProgram' },
       header: () => t('label.campaign'),
       cardGroup: 'pricing',
-      meta: { cardWidth: { min: 9.5, max: 20, weight: 1.2 } },
+      meta: { cardWidth: { min: 12.5, max: 36, weight: 2 } },
       cell: info => {
         const b = info.row.original;
         return (
@@ -1284,7 +1303,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { key: 'manufactureDate' },
       header: () => t('label.manufacture-date'),
       cardGroup: 'pricing',
-      meta: { cardWidth: 10 },
+      meta: { cardWidth: { min: 10, max: 11.5, weight: 1 } },
       cell: info => {
         const b = info.row.original;
         return (
@@ -1299,12 +1318,67 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         );
       },
     },
+    // Manufacturer (spec S4) — a name lookup, manufacturer role. In the
+    // "Pricing & additional info" disclosure, not the primary receiving panel.
+    // It sits on the group's own stated line — "everything that arrives
+    // pre-filled or is confirm-only" (see CARD_GROUPS) — which is exactly what
+    // its own note used to say while claiming the primary panel anyway: it
+    // arrives pre-filled and is confirm-only.
+    //
+    // The move is a WIDTH decision as much as a grouping one. The primary
+    // panel's floors are what decide whether it holds its declared-width
+    // template, and at eight fields they came to ~72.5rem — more than a
+    // full-screen modal has on a narrower laptop, so the panel dropped to the
+    // equal-track fallback and its fields either filled tracks several times
+    // their size or (capped) left the leftover as a gap. Taking Manufacturer
+    // out drops the panel to seven fields and ~61.5rem, which a ~1000px panel
+    // can pay, so the fields it leaves behind are sized by their data again.
+    // The reference design (ux-testing/inbound_shipments_modal.html) keeps its
+    // own primary zone to about this count for the same reason.
+    {
+      c: { id: 'manufacturer' },
+      header: () => t('label.manufacturer'),
+      cardGroup: 'pricing',
+      // A name lookup of unpredictable length ("Serum Institute of India
+      // Pvt. Ltd.") — the lookup range, as Donor and Campaign carry above; see
+      // Location for the range's reasoning.
+      meta: { cardWidth: { min: 12.5, max: 36, weight: 2 } },
+      cell: info => {
+        const b = info.row.original;
+        return (
+          <NameSearch
+            label={t('label.manufacturer')}
+            hideLabel
+            size="small"
+            storeId={props.storeId}
+            role="manufacturer"
+            selected={
+              b.manufacturerId
+                ? ({
+                    id: b.manufacturerId,
+                    name: b.manufacturerName ?? '',
+                    code: '',
+                    isSupplier: false,
+                    isDonor: false,
+                    isOnHold: false,
+                    isStore: false,
+                  } satisfies NameOption)
+                : undefined
+            }
+            onSelect={m => {
+              updateBatch(b.id, 'manufacturerId', m?.id ?? null);
+              updateBatch(b.id, 'manufacturerName', m?.name ?? null);
+            }}
+          />
+        );
+      },
+    },
     // Volume per pack (spec S4).
     {
       c: { id: 'volumePerPack' },
       header: () => t('label.volume-per-pack'),
       cardGroup: 'pricing',
-      ...getNumberCell({ cardWidth: 10 }),
+      ...getNumberCell({ cardWidth: { min: 10, max: 12, weight: 1 } }),
       cell: info => {
         const b = info.row.original;
         return (
@@ -1324,7 +1398,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       c: { key: 'note' },
       header: () => t('label.note'),
       cardGroup: 'pricing',
-      meta: { cardWidth: { min: 8, max: 24, weight: 1.4 } },
+      meta: { cardWidth: { min: 12.5, weight: 3 } },
       cell: info => {
         const b = info.row.original;
         return (
@@ -1442,6 +1516,11 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                 value={item()?.id}
                 selectedItem={item() ?? undefined}
                 disabled={mode() === 'update'}
+                // No clear affordance: a shipment line always HAS an item, so
+                // the field is never nullable — it is changed by picking
+                // another, never emptied (D5, clearability follows optionality
+                // — spec/DIVERGENCES.md; as prescriptions' patient picker).
+                clearable={false}
                 onSelect={chooseItem}
               />
             )}

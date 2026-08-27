@@ -1,0 +1,278 @@
+fragment PatientRow on PatientNode {
+  id
+  code
+  code2
+  firstName
+  lastName
+  name
+  dateOfBirth
+  address1
+  phone
+  gender
+  email
+  nextOfKinName
+  createdDatetime
+  document {
+    name
+  }
+  isDeceased
+  dateOfDeath
+  customFields
+  programEnrolments {
+    ... on ProgramEnrolmentConnector {
+      __typename
+      nodes {
+        programEnrolmentId
+        document {
+          documentRegistry {
+            name
+          }
+        }
+      }
+      totalCount
+    }
+  }
+}
+
+fragment ProgramPatientRow on PatientNode {
+  id
+  code
+  code2
+  firstName
+  lastName
+  name
+  dateOfBirth
+  address1
+  phone
+  gender
+  email
+  createdDatetime
+  document {
+    id
+    name
+    type
+  }
+  documentDraft
+  isDeceased
+  dateOfDeath
+  nextOfKinId
+  nextOfKinName
+  customFields
+  programEnrolments {
+    ... on ProgramEnrolmentConnector {
+      __typename
+      nodes {
+        programEnrolmentId
+        document {
+          documentRegistry {
+            name
+          }
+        }
+      }
+      totalCount
+    }
+  }
+}
+
+fragment CustomField on CustomFieldNode {
+  id
+  key
+  name
+  valueType
+  kind
+  options {
+    id
+    key
+    name
+    parentOptionId
+  }
+}
+
+query patientCustomFields {
+  customFields(filter: { scope: { equalTo: "patient" } }) {
+    ... on CustomFieldConnector {
+      __typename
+      totalCount
+      nodes {
+        ...CustomField
+      }
+    }
+  }
+}
+
+mutation updatePatientCustomFields(
+  $storeId: String!
+  $input: UpdatePatientCustomFieldsInput!
+) {
+  updatePatientCustomFields(storeId: $storeId, input: $input) {
+    ... on PatientNode {
+      __typename
+      ...ProgramPatientRow
+    }
+  }
+}
+
+query patients(
+  $storeId: String!
+  $page: PaginationInput
+  $sort: [PatientSortInput!]
+  $filter: PatientFilterInput
+) {
+  patients(storeId: $storeId, page: $page, sort: $sort, filter: $filter) {
+    ... on PatientConnector {
+      __typename
+      nodes {
+        ...PatientRow
+      }
+      totalCount
+    }
+  }
+}
+
+query patientById($storeId: String!, $nameId: String!) {
+  patients(storeId: $storeId, filter: { id: { equalTo: $nameId } }) {
+    ... on PatientConnector {
+      __typename
+      nodes {
+        ...ProgramPatientRow
+      }
+      totalCount
+    }
+  }
+}
+
+query patientSearch($input: PatientSearchInput!, $storeId: String!) {
+  patientSearch(input: $input, storeId: $storeId) {
+    ... on PatientSearchConnector {
+      __typename
+      nodes {
+        score
+        patient {
+          ...ProgramPatientRow
+        }
+      }
+      totalCount
+    }
+  }
+}
+
+query centralPatientSearch(
+  $input: CentralPatientSearchInput!
+  $storeId: String!
+) {
+  centralPatientSearch(input: $input, storeId: $storeId) {
+    __typename
+    ... on CentralPatientSearchConnector {
+      nodes {
+        id
+        code
+        code2
+        dateOfBirth
+        firstName
+        lastName
+        gender
+        isDeceased
+      }
+      totalCount
+    }
+    ... on CentralPatientSearchError {
+      error {
+        __typename
+        ... on ConnectionError {
+          description
+        }
+      }
+    }
+  }
+}
+
+mutation linkPatientToStore($storeId: String!, $nameId: String!) {
+  linkPatientToStore(nameId: $nameId, storeId: $storeId) {
+    __typename
+    ... on NameStoreJoinNode {
+      id
+      storeId
+      nameId
+    }
+    ... on LinkPatientPatientToStoreError {
+      error {
+        __typename
+        ... on ConnectionError {
+          description
+        }
+      }
+    }
+  }
+}
+
+mutation insertProgramPatient(
+  $storeId: String!
+  $input: InsertProgramPatientInput!
+) {
+  insertProgramPatient(storeId: $storeId, input: $input) {
+    ... on PatientNode {
+      __typename
+      ...ProgramPatientRow
+    }
+  }
+}
+
+mutation updateProgramPatient(
+  $storeId: String!
+  $input: UpdateProgramPatientInput!
+) {
+  updateProgramPatient(storeId: $storeId, input: $input) {
+    ... on PatientNode {
+      __typename
+      ...ProgramPatientRow
+    }
+  }
+}
+
+mutation insertPatient($storeId: String!, $input: InsertPatientInput!) {
+  insertPatient(storeId: $storeId, input: $input) {
+    ... on PatientNode {
+      __typename
+      ...ProgramPatientRow
+    }
+  }
+}
+
+mutation updatePatient($storeId: String!, $input: UpdatePatientInput!) {
+  updatePatient(storeId: $storeId, input: $input) {
+    ... on PatientNode {
+      __typename
+      ...ProgramPatientRow
+    }
+  }
+}
+
+query latestPatientEncounter(
+  $storeId: String!
+  $patientId: String!
+  $encounterType: String
+) {
+  encounters(
+    storeId: $storeId
+    filter: {
+      patientId: { equalTo: $patientId }
+      type: { equalTo: $encounterType }
+    }
+    sort: { key: startDatetime, desc: true }
+    page: { first: 1 }
+  ) {
+    ... on EncounterConnector {
+      __typename
+      nodes {
+        id
+        type
+        startDatetime
+        suggestedNextEncounter {
+          startDatetime
+          label
+        }
+      }
+      totalCount
+    }
+  }
+}

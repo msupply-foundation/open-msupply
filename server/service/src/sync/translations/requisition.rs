@@ -1,0 +1,900 @@
+use chrono::{DateTime, NaiveDate, NaiveDateTime};
+use repository::{
+    requisition_row::{RequisitionStatus, RequisitionType},
+    ApprovalStatusType, ChangelogRow, ChangelogTableName, EqualFilter, InvoiceFilter,
+    InvoiceRepository, ProgramRowRepository, Requisition, RequisitionFilter, RequisitionRepository,
+    RequisitionRow, RequisitionRowDelete, Row, StorageConnection, SyncBufferRow,
+};
+
+use serde::{Deserialize, Serialize};
+use util::constants::{APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30, MISSING_PROGRAM};
+
+use super::{FkField, PullTranslateResult, PushTranslateResult, SyncTranslation};
+use crate::sync::translations::{
+    master_list::MasterListTranslation, name::NameTranslation, period::PeriodTranslation,
+    store::StoreTranslation,
+};
+use util::sync_serde::{
+    date_and_time_to_datetime, date_from_date_time, date_option_to_isostring, date_to_isostring,
+    empty_str_as_option, empty_str_as_option_string, zero_date_as_option,
+};
+
+#[allow(non_snake_case)]
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
+pub struct OmsFields {
+    #[serde(default)]
+    pub created_from_requisition_id: Option<String>,
+    #[serde(default)]
+    #[serde(rename = "original_customer_id")]
+    #[serde(alias = "destination_customer_id")]
+    pub destination_customer_id: Option<String>,
+}
+
+#[derive(Deserialize, Serialize, Debug, PartialEq)]
+pub enum LegacyRequisitionType {
+    /// A response to the request created for the supplying store
+    #[serde(rename = "response")]
+    Response,
+    /// A request from a facility where they determine the quantity. If between facilities,
+    /// duplicate supply requisition is created on finalisation in the supplying store
+    #[serde(rename = "request")]
+    Request,
+    /// for stock history, where the facility submits stock on hand, and their history is used to
+    /// determine a supply quantity
+    #[serde(rename = "sh")]
+    Sh,
+    /// for imprest (where each item has a pre-determined max quantity and the facility submits
+    /// their current stock on hand)
+    #[serde(rename = "im")]
+    Im,
+    /// the supplying store's copy of a request requisition
+    #[serde(rename = "supply")]
+    Supply,
+    /// A requisition that is for reporting purposes only.
+    #[serde(rename = "report")]
+    Report,
+    /// Bucket to catch all other variants
+    #[serde(other)]
+    Others,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub enum LegacyRequisitionStatus {
+    /// suggested
+    #[serde(rename = "sg")]
+    Sg,
+    /// confirmed
+    #[serde(rename = "cn")]
+    Cn,
+    /// finalised
+    #[serde(rename = "fn")]
+    Fn,
+    /// new
+    /// Note: this shouldn't be possible in mSupply but is seen in historical datasets
+    #[serde(rename = "nw")]
+    Nw,
+    /// Bucket to catch all other variants
+    /// E.g. "wp" (web progress), "wf" (web finalised)
+    #[serde(other)]
+    Others,
+}
+
+// https://github.com/sussol/msupply/blob/master/Project/Sources/Methods/AUTHORISATION_STATUSES.4dm
+#[derive(Deserialize, Serialize, Debug)]
+#[serde(rename_all = "lowercase")]
+pub enum LegacyAuthorisationStatus {
+    None,
+    Pending,
+    Authorised,
+    Denied,
+    #[serde(rename = "auto-authorised")]
+    AutoAuthorised,
+    #[serde(rename = "authorised by another authoriser")]
+    AuthorisedByAnother,
+    #[serde(rename = "denied by another authoriser")]
+    DeniedByAnother,
+}
+
+#[allow(non_snake_case)]
+#[derive(Deserialize, Serialize)]
+pub struct LegacyRequisitionRow {
+    pub ID: String,
+    pub serial_number: i64,
+    pub name_ID: String,
+    pub store_ID: String,
+    pub r#type: LegacyRequisitionType,
+    pub status: LegacyRequisitionStatus,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(rename = "user_ID")]
+    pub user_id: Option<String>,
+    // created_datetime
+    #[serde(serialize_with = "date_to_isostring")]
+    pub date_entered: NaiveDate,
+
+    #[serde(rename = "lastModifiedAt")]
+    pub last_modified_at: i64,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub requester_reference: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub linked_requisition_id: Option<String>,
+    /// min_months_of_stock
+    pub thresholdMOS: f64,
+    /// relates to max_months_of_stock
+    pub daysToSupply: i64,
+
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub comment: Option<String>,
+
+    #[serde(default)]
+    #[serde(rename = "om_created_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub created_datetime: Option<NaiveDateTime>,
+
+    #[serde(default)]
+    #[serde(rename = "om_sent_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub sent_datetime: Option<NaiveDateTime>,
+
+    #[serde(default)]
+    #[serde(rename = "om_finalised_datetime")]
+    #[serde(deserialize_with = "empty_str_as_option")]
+    pub finalised_datetime: Option<NaiveDateTime>,
+
+    #[serde(default)]
+    #[serde(rename = "om_expected_delivery_date")]
+    #[serde(deserialize_with = "zero_date_as_option")]
+    #[serde(serialize_with = "date_option_to_isostring")]
+    pub expected_delivery_date: Option<NaiveDate>,
+
+    #[serde(rename = "om_max_months_of_stock")]
+    pub max_months_of_stock: Option<f64>,
+
+    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(default)]
+    pub om_status: Option<RequisitionStatus>,
+    /// We ignore the legacy colour field
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(default)]
+    pub om_colour: Option<String>,
+
+    #[serde(deserialize_with = "empty_str_as_option")]
+    #[serde(rename = "authorisationStatus")]
+    pub approval_status: Option<LegacyAuthorisationStatus>,
+
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub orderType: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub periodID: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub programID: Option<String>,
+    #[serde(default)]
+    pub is_emergency: bool,
+    #[serde(default)]
+    pub oms_fields: Option<OmsFields>,
+}
+
+/// When mSupply central creates transfers it copies over all of the data
+/// from existing record. When omSupply sends requisition to mSupply the new
+/// response requisition will have all of the omSupply fields copied over from
+/// request requisition. This create a problem when mSupply store is converted
+/// to omSupply store, as it will use om fields in favour of deducing them
+/// This method will sanitise om_fields if it sees a mismatch between legacy
+/// and new omSupply fields (for response requisition)
+#[allow(non_snake_case)]
+#[derive(Deserialize, Serialize)]
+struct PartialLegacyRequisitionRow {
+    pub r#type: LegacyRequisitionType,
+    pub status: LegacyRequisitionStatus,
+    pub om_status: Option<RequisitionStatus>,
+}
+
+fn sanitize_legacy_record(data: serde_json::Value) -> serde_json::Value {
+    let mut sanitized_data = data.clone();
+    let Ok(PartialLegacyRequisitionRow {
+        r#type,
+        status,
+        om_status,
+    }) = serde_json::from_value(data)
+    else {
+        return sanitized_data;
+    };
+    let Some(om_status) = om_status else {
+        return sanitized_data;
+    };
+    if r#type == LegacyRequisitionType::Response
+        && from_legacy_status(&r#type, &status) != Some(om_status)
+    {
+        let Some(obj) = sanitized_data.as_object_mut() else {
+            return sanitized_data;
+        };
+        obj.retain(|key, _| !key.starts_with("om_"));
+    }
+
+    sanitized_data
+}
+
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(RequisitionTranslation)
+}
+
+pub(super) struct RequisitionTranslation;
+impl SyncTranslation for RequisitionTranslation {
+    fn table_name(&self) -> &str {
+        "requisition"
+    }
+
+    fn pull_dependencies(&self) -> Vec<&str> {
+        vec![
+            NameTranslation.table_name(),
+            StoreTranslation.table_name(),
+            PeriodTranslation.table_name(),
+            MasterListTranslation.table_name(),
+        ]
+    }
+
+    fn change_log_type(&self) -> Option<ChangelogTableName> {
+        Some(ChangelogTableName::Requisition)
+    }
+
+    fn try_translate_from_upsert_sync_record(
+        &self,
+        conn: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
+        sync_record: &SyncBufferRow,
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        let json_data = sync_record.deserialize::<serde_json::Value>()?;
+        let sanitised_data = sanitize_legacy_record(json_data);
+        let data = serde_json::from_value::<LegacyRequisitionRow>(sanitised_data)?;
+        let r#type = match from_legacy_type(&data.r#type) {
+            Some(r#type) => r#type,
+            None => {
+                return Ok(PullTranslateResult::Ignored(format!(
+                    "Unsupported requisition type: {:?}",
+                    data.r#type
+                )))
+            }
+        };
+
+        let (
+            created_datetime,
+            sent_datetime,
+            finalised_datetime,
+            max_months_of_stock,
+            status,
+            colour,
+        ) = match data.created_datetime {
+            // use new om_* fields
+            Some(created_datetime) => (
+                created_datetime,
+                data.sent_datetime,
+                data.finalised_datetime,
+                data.max_months_of_stock.unwrap_or(0.0),
+                data.om_status.ok_or(anyhow::Error::msg(
+                    "Invalid data: om_created_datetime set but om_status missing",
+                ))?,
+                data.om_colour,
+            ),
+            None => (
+                date_and_time_to_datetime(data.date_entered, 0),
+                from_legacy_sent_datetime(data.last_modified_at, &r#type, &data.status),
+                from_legacy_finalised_datetime(data.last_modified_at, &r#type, &data.status),
+                data.daysToSupply as f64 / APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30,
+                from_legacy_status(&data.r#type, &data.status).ok_or(anyhow::Error::msg(
+                    format!("Unsupported requisition status: {:?}", data.status),
+                ))?,
+                None,
+            ),
+        };
+
+        // TODO: Delete when soft delete for master list is implemented
+        let program_id = if let Some(program_id) = data.programID {
+            let program = ProgramRowRepository::new(conn).find_one_by_id(&program_id)?;
+
+            match program {
+                Some(program) => Some(program.id),
+                None => Some(MISSING_PROGRAM.to_string()),
+            }
+        } else {
+            None
+        };
+
+        let fk_check = fk_checker.with_table(conn, "requisition", &data.ID);
+        let check_fk = fk_checker.with_table_required(conn, "requisition", &data.ID);
+
+        let result = RequisitionRow {
+            id: data.ID.to_string(),
+            user_id: data.user_id,
+            requisition_number: data.serial_number,
+            name_id: check_fk(data.name_ID, "name_link_id", FkField::NameLink)?,
+            store_id: check_fk(data.store_ID, "store_id", FkField::Store)?,
+            r#type,
+            status,
+            created_datetime,
+            sent_datetime,
+            finalised_datetime,
+            colour,
+            comment: data.comment,
+            their_reference: data.requester_reference,
+            max_months_of_stock,
+            min_months_of_stock: data.thresholdMOS,
+            linked_requisition_id: data.linked_requisition_id,
+            expected_delivery_date: data.expected_delivery_date,
+            approval_status: data.approval_status.map(|s| s.to()),
+            program_id,
+            period_id: fk_check(data.periodID, "period_id", FkField::Period)?,
+            order_type: data.orderType,
+            is_emergency: data.is_emergency,
+            created_from_requisition_id: data
+                .oms_fields
+                .clone()
+                .and_then(|f| f.created_from_requisition_id),
+            destination_customer_id: fk_check(
+                data.oms_fields.and_then(|f| f.destination_customer_id),
+                "destination_customer_link_id",
+                FkField::NameLink,
+            )?,
+            ..Default::default()
+        };
+
+        Ok(PullTranslateResult::upsert(result))
+    }
+
+    fn try_translate_from_delete_sync_record(
+        &self,
+        _: &StorageConnection,
+        sync_record: &SyncBufferRow,
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        // TODO, check site ? (should never get delete records for this site, only transfer other half)
+        Ok(PullTranslateResult::delete(RequisitionRowDelete(
+            sync_record.record_id.clone(),
+        )))
+    }
+
+    fn try_translate_to_upsert_sync_record(
+        &self,
+        connection: &StorageConnection,
+        changelog: &ChangelogRow,
+        row: Row,
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::Requisition(requisition_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
+        let Requisition {
+            requisition_row:
+                RequisitionRow {
+                    id,
+                    user_id,
+                    requisition_number,
+                    name_id: _,
+                    store_id,
+                    r#type,
+                    status,
+                    created_datetime,
+                    sent_datetime,
+                    finalised_datetime,
+                    colour,
+                    comment,
+                    their_reference,
+                    max_months_of_stock,
+                    min_months_of_stock,
+                    linked_requisition_id,
+                    expected_delivery_date,
+                    approval_status,
+                    program_id,
+                    period_id,
+                    order_type,
+                    is_emergency,
+                    created_from_requisition_id,
+                    destination_customer_id,
+                    name_store_id: _,
+                },
+            name_row,
+            ..
+        } = RequisitionRepository::new(connection)
+            .query_by_filter(
+                RequisitionFilter::new().id(EqualFilter::equal_to(requisition_row.id.clone())),
+            )?
+            .pop()
+            .ok_or_else(|| anyhow::anyhow!("Requisition not found"))?;
+
+        let has_outbound_shipment = !InvoiceRepository::new(connection)
+            .query_by_filter(
+                InvoiceFilter::new().requisition_id(EqualFilter::equal_to(id.to_string())),
+            )?
+            .is_empty();
+
+        let oms_fields =
+            if created_from_requisition_id.is_some() || destination_customer_id.is_some() {
+                Some(OmsFields {
+                    created_from_requisition_id,
+                    destination_customer_id,
+                })
+            } else {
+                None
+            };
+
+        let legacy_row = LegacyRequisitionRow {
+            ID: id.clone(),
+            user_id,
+            serial_number: requisition_number,
+            name_ID: name_row.id,
+            store_ID: store_id.clone(),
+            r#type: to_legacy_type(&r#type),
+            status: match to_legacy_status(&r#type, &status, has_outbound_shipment) {
+                Some(status) => status,
+                None => {
+                    return Ok(PushTranslateResult::Ignored(format!(
+                        "Unsupported requisition status: {:?} (type: {:?}) row id: {}",
+                        status, r#type, requisition_row.id
+                    )))
+                }
+            },
+            om_status: Some(status),
+            date_entered: date_from_date_time(&created_datetime),
+            created_datetime: Some(created_datetime),
+            last_modified_at: to_legacy_last_modified_at(
+                &r#type,
+                sent_datetime,
+                finalised_datetime,
+            ),
+            sent_datetime,
+            finalised_datetime,
+            expected_delivery_date,
+            requester_reference: their_reference,
+            linked_requisition_id,
+            thresholdMOS: min_months_of_stock,
+            daysToSupply: (APPROX_NUMBER_OF_DAYS_IN_A_MONTH_IS_30 * max_months_of_stock) as i64,
+            max_months_of_stock: Some(max_months_of_stock),
+            om_colour: colour.clone(),
+            comment,
+            approval_status: approval_status.map(LegacyAuthorisationStatus::from),
+            programID: program_id,
+            periodID: period_id,
+            orderType: order_type,
+            is_emergency,
+            oms_fields,
+        };
+
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            serde_json::to_value(legacy_row)?,
+        ))
+    }
+
+    fn try_translate_to_delete_sync_record(
+        &self,
+        _: &StorageConnection,
+        changelog: &ChangelogRow,
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        Ok(PushTranslateResult::delete(changelog, self.table_name()))
+    }
+}
+
+fn from_legacy_sent_datetime(
+    last_modified_at: i64,
+    r#type: &RequisitionType,
+    status: &LegacyRequisitionStatus,
+) -> Option<NaiveDateTime> {
+    match r#type {
+        RequisitionType::Request | RequisitionType::Imprest | RequisitionType::StockHistory => {
+            // In OG, a finalised "fn" request requisition is the equivalent of a "sent" request requisition in OMS.
+            // There are no date/time fields in OG requisition table for this, there are logs though. Hence using last_modified_at.
+            if last_modified_at > 0 && matches!(status, LegacyRequisitionStatus::Fn) {
+                Some(
+                    DateTime::from_timestamp(last_modified_at, 0)
+                        .unwrap()
+                        .naive_utc(),
+                )
+            } else {
+                None
+            }
+        }
+        // In OMS a response requisition should never be "sent" so the concept doesn't map here
+        RequisitionType::Response => None,
+    }
+}
+
+fn from_legacy_finalised_datetime(
+    last_modified_at: i64,
+    r#type: &RequisitionType,
+    status: &LegacyRequisitionStatus,
+) -> Option<NaiveDateTime> {
+    match r#type {
+        RequisitionType::Request | RequisitionType::Imprest | RequisitionType::StockHistory => None,
+        RequisitionType::Response => {
+            if last_modified_at > 0 && matches!(status, LegacyRequisitionStatus::Fn) {
+                Some(
+                    DateTime::from_timestamp(last_modified_at, 0)
+                        .unwrap()
+                        .naive_utc(),
+                )
+            } else {
+                None
+            }
+        }
+    }
+}
+
+fn to_legacy_last_modified_at(
+    r#type: &RequisitionType,
+    sent_datetime: Option<NaiveDateTime>,
+    finalised_datetime: Option<NaiveDateTime>,
+) -> i64 {
+    match r#type {
+        RequisitionType::Request | RequisitionType::Imprest | RequisitionType::StockHistory => {
+            sent_datetime
+                .map(|time| time.and_utc().timestamp())
+                .unwrap_or(0)
+        }
+        RequisitionType::Response => finalised_datetime
+            .map(|time| time.and_utc().timestamp())
+            .unwrap_or(0),
+    }
+}
+
+fn from_legacy_type(t: &LegacyRequisitionType) -> Option<RequisitionType> {
+    let t = match t {
+        LegacyRequisitionType::Response => RequisitionType::Response,
+        LegacyRequisitionType::Request => RequisitionType::Request,
+        LegacyRequisitionType::Im => RequisitionType::Imprest,
+        LegacyRequisitionType::Sh => RequisitionType::StockHistory,
+        _ => return None,
+    };
+    Some(t)
+}
+
+fn to_legacy_type(t: &RequisitionType) -> LegacyRequisitionType {
+    match t {
+        RequisitionType::Request => LegacyRequisitionType::Request,
+        RequisitionType::Response => LegacyRequisitionType::Response,
+        RequisitionType::Imprest => LegacyRequisitionType::Im,
+        RequisitionType::StockHistory => LegacyRequisitionType::Sh,
+    }
+}
+
+fn from_legacy_status(
+    r#type: &LegacyRequisitionType,
+    status: &LegacyRequisitionStatus,
+) -> Option<RequisitionStatus> {
+    let status = match r#type {
+        LegacyRequisitionType::Request => match status {
+            LegacyRequisitionStatus::Sg => RequisitionStatus::Draft,
+            LegacyRequisitionStatus::Cn => RequisitionStatus::Sent,
+            LegacyRequisitionStatus::Fn => RequisitionStatus::Sent,
+            // Note, nw shouldn't be possible but is seen historical data:
+            LegacyRequisitionStatus::Nw => RequisitionStatus::Draft,
+            LegacyRequisitionStatus::Others => return None,
+        },
+        LegacyRequisitionType::Response | LegacyRequisitionType::Im | LegacyRequisitionType::Sh => {
+            match status {
+                LegacyRequisitionStatus::Sg => RequisitionStatus::New,
+                LegacyRequisitionStatus::Cn => RequisitionStatus::New,
+                LegacyRequisitionStatus::Fn => RequisitionStatus::Finalised,
+                // Note, nw shouldn't be possible but is seen historical data:
+                LegacyRequisitionStatus::Nw => RequisitionStatus::New,
+                LegacyRequisitionStatus::Others => return None,
+            }
+        }
+        _ => return None,
+    };
+    Some(status)
+}
+
+fn to_legacy_status(
+    r#type: &RequisitionType,
+    status: &RequisitionStatus,
+    has_outbound_shipment: bool,
+) -> Option<LegacyRequisitionStatus> {
+    let status = match r#type {
+        RequisitionType::Request => match status {
+            RequisitionStatus::Draft => LegacyRequisitionStatus::Sg,
+            RequisitionStatus::Sent => LegacyRequisitionStatus::Fn,
+            RequisitionStatus::Finalised => LegacyRequisitionStatus::Fn,
+            _ => return None,
+        },
+        RequisitionType::Response | RequisitionType::Imprest | RequisitionType::StockHistory => {
+            match status {
+                RequisitionStatus::New if has_outbound_shipment => LegacyRequisitionStatus::Cn,
+                RequisitionStatus::New => LegacyRequisitionStatus::Sg,
+                RequisitionStatus::Finalised => LegacyRequisitionStatus::Fn,
+                _ => return None,
+            }
+        }
+    };
+    Some(status)
+}
+
+impl LegacyAuthorisationStatus {
+    fn to(self) -> ApprovalStatusType {
+        use ApprovalStatusType as to;
+        use LegacyAuthorisationStatus as from;
+        match self {
+            from::None => to::None,
+            from::Pending => to::Pending,
+            from::Authorised => to::Approved,
+            from::Denied => to::Denied,
+            from::AutoAuthorised => to::AutoApproved,
+            from::AuthorisedByAnother => to::ApprovedByAnother,
+            from::DeniedByAnother => to::DeniedByAnother,
+        }
+    }
+
+    fn from(status: ApprovalStatusType) -> LegacyAuthorisationStatus {
+        use ApprovalStatusType as from;
+        use LegacyAuthorisationStatus as to;
+        match status {
+            from::None => to::None,
+            from::Pending => to::Pending,
+            from::Approved => to::Authorised,
+            from::Denied => to::Denied,
+            from::AutoApproved => to::AutoAuthorised,
+            from::ApprovedByAnother => to::AuthorisedByAnother,
+            from::DeniedByAnother => to::DeniedByAnother,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::sync::{
+        test::merge_helpers::merge_all_name_links,
+        translations::{IntegrationOperation, ToSyncRecordTranslationType},
+    };
+
+    use super::*;
+    use repository::{
+        mock::{mock_period, mock_store_a, MockDataInserts},
+        test_db::setup_all,
+        ChangelogCondition, ChangelogRepository, CursorAndLimit, FilterBuilder, NameLinkRow,
+        NameLinkRowRepository, PeriodRow, PeriodRowRepository, RowOrDelete, StoreRow,
+        StoreRowRepository, SyncAction, SyncBufferRow, SyncRecordData,
+    };
+    use serde_json::json;
+    use util::assert_variant;
+
+    #[actix_rt::test]
+    async fn test_requisition_translation() {
+        use crate::sync::test::test_data::requisition as test_data;
+        let translator = RequisitionTranslation {};
+
+        let (_, connection, _, _) =
+            setup_all("test_requisition_translation", MockDataInserts::all()).await;
+
+        // Seed the periods the requisition records' optional period_id points at, so they aren't cleared.
+        for (i, period_id) in [
+            "641A3560C84A44BC9E6DDC01F3D75923",
+            "772B3984DBA14A5F941ED0EF857FDB31",
+        ]
+        .iter()
+        .enumerate()
+        {
+            PeriodRowRepository::new(&connection)
+                .upsert_one(&PeriodRow {
+                    id: period_id.to_string(),
+                    name: format!("test_period_{i}"),
+                    ..mock_period()
+                })
+                .unwrap();
+        }
+
+        for record in test_data::test_pull_upsert_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
+            let translation_result = translator
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
+                .unwrap();
+
+            assert_eq!(translation_result, record.translated_record);
+        }
+
+        for record in test_data::test_pull_delete_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
+            let translation_result = translator
+                .try_translate_from_delete_sync_record(&connection, &record.sync_buffer_row)
+                .unwrap();
+
+            assert_eq!(translation_result, record.translated_record);
+        }
+    }
+
+    #[actix_rt::test]
+    async fn test_requisition_wp_status_errors() {
+        let translator = RequisitionTranslation {};
+        let (_, connection, _, _) =
+            setup_all("test_requisition_wp_status_errors", MockDataInserts::none()).await;
+
+        // An imprest requisition with "wp" (web in progress) status should error
+        // because "wp" deserializes to LegacyRequisitionStatus::Others which is unsupported
+        let wp_imprest_json = r#"{
+          "ID": "WP_TEST_RECORD_ID",
+          "date_stock_take": "2021-03-15",
+          "user_ID": "0763E2E3053D4C478E1E6B6B03FEC207",
+          "name_ID": "name_store_a",
+          "status": "wp",
+          "date_entered": "2021-03-16",
+          "nsh_custInv_ID": "",
+          "daysToSupply": 30,
+          "store_ID": "store_b",
+          "type": "im",
+          "date_order_received": "0000-00-00",
+          "previous_csh_id": "",
+          "serial_number": 20,
+          "requester_reference": "",
+          "comment": "",
+          "colour": 0,
+          "custom_data": null,
+          "linked_requisition_id": "",
+          "linked_purchase_order_ID": "",
+          "authorisationStatus": "",
+          "thresholdMOS": 0,
+          "orderType": "",
+          "periodID": "",
+          "programID": "",
+          "lastModifiedAt": 1615900000,
+          "is_emergency": false,
+          "isRemoteOrder": false,
+          "om_created_datetime": "",
+          "om_sent_datetime": "",
+          "om_finalised_datetime": "",
+          "om_expected_delivery_date": "0000-00-00",
+          "om_max_months_of_stock": 0,
+          "om_status": "",
+          "om_colour": "",
+          "oms_fields": {}
+        
+        }"#;
+
+        let sync_buffer_row = SyncBufferRow {
+            table_name: "requisition".to_string(),
+            record_id: "WP_TEST_RECORD_ID".to_string(),
+            data: SyncRecordData(serde_json::from_str(wp_imprest_json).unwrap()),
+            action: SyncAction::Upsert,
+            ..Default::default()
+        };
+
+        assert!(translator.should_translate_from_sync_record(&sync_buffer_row));
+        let result = translator.try_translate_from_upsert_sync_record(
+            &connection,
+            &crate::sync::translations::FkChecker::new(),
+            &sync_buffer_row,
+        );
+        assert!(
+            result.is_err(),
+            "Expected error for unsupported 'wp' status on imprest requisition, got: {:?}",
+            result
+        );
+    }
+
+    #[actix_rt::test]
+    async fn test_requisition_push_merged() {
+        let (mock_data, connection, _, _) = setup_all(
+            "test_requisition_push_merged",
+            MockDataInserts::none().names().stores().requisitions(),
+        )
+        .await;
+
+        merge_all_name_links(&connection, &mock_data).unwrap();
+
+        let entries = ChangelogRepository::new(&connection)
+            .query_with_data(
+                ChangelogCondition::table_name::equal(ChangelogTableName::Requisition),
+                CursorAndLimit {
+                    cursor: -1,
+                    limit: 1_000_000,
+                },
+            )
+            .unwrap();
+
+        let translator = RequisitionTranslation {};
+        for entry in entries.rows {
+            let RowOrDelete::Row { changelog, row } = entry else {
+                panic!("expected upsert row")
+            };
+            assert!(translator.should_translate_to_sync_record(
+                &changelog,
+                &ToSyncRecordTranslationType::PushToLegacyCentral
+            ));
+            let translated = translator
+                .try_translate_to_upsert_sync_record(&connection, &changelog, row)
+                .unwrap();
+
+            assert!(matches!(translated, PushTranslateResult::PushRecord(_)));
+
+            let PushTranslateResult::PushRecord(translated) = translated else {
+                panic!("Test fail, should translate")
+            };
+
+            assert_eq!(translated[0].record.record_data["name_ID"], json!("name_a"));
+        }
+    }
+
+    #[actix_rt::test]
+    async fn test_sanitise() {
+        let translator = RequisitionTranslation {};
+
+        let (_, connection, _, _) = setup_all("test_sanitise", MockDataInserts::all()).await;
+
+        // Seed the required name_link + store the requisition points at.
+        NameLinkRowRepository::new(&connection)
+            .upsert_one(&NameLinkRow {
+                id: "947274E3A24D4900996CA516379A1FFD".to_string(),
+                name_id: "name_a".to_string(),
+            })
+            .unwrap();
+        StoreRowRepository::new(&connection)
+            .upsert_one(&StoreRow {
+                id: "8659A64D2CF245A1B1BCC7C8F7CDC577".to_string(),
+                name_id: "name_a".to_string(),
+                code: "sanitise_test".to_string(),
+                ..mock_store_a()
+            })
+            .unwrap();
+
+        let sync_record = SyncBufferRow {
+            data: SyncRecordData(json!({
+                "//": "Status is set to sent, should be changed to draft",
+                "om_status": "SENT",
+
+                "ID": "50AB29075A7A4A1DA3CDB34465244A61",
+                "authorisationStatus": "none",
+                "colour": 0,
+                "comment": "From request requisition 1 (Approved by test. Email: - and Phone Number: -.)",
+                "custom_data": null,
+                "date_entered": "2024-07-01",
+                "date_order_received": "2024-07-01",
+                "date_required": "0000-00-00",
+                "date_stock_take": "2024-07-01",
+                "daysToSupply": 30,
+                "donor_ID": "",
+                "isRemoteOrder": false,
+                "is_emergency": false,
+                "lastModifiedAt": 1719800437,
+                "linked_purchase_order_ID": "",
+                "linked_requisition_id": "01906c17-0f49-7c13-b6ab-6fab0abb1d20",
+                "name_ID": "947274E3A24D4900996CA516379A1FFD",
+                "nsh_custInv_ID": "",
+                "orderType": "",
+                "periodID": "",
+                "previous_csh_id": "",
+                "programID": "",
+                "requester_reference": "From request requisition 1",
+                "requisition_category_ID": "",
+                "serial_number": 0,
+                "status": "sg",
+                "store_ID": "8659A64D2CF245A1B1BCC7C8F7CDC577",
+                "thresholdMOS": 0,
+                "type": "response",
+                "user_ID": ""
+            })),
+            ..Default::default()
+        };
+
+        let mut op = assert_variant!(
+            translator.try_translate_from_upsert_sync_record(&connection, &crate::sync::translations::FkChecker::new(), &sync_record),
+            Ok( PullTranslateResult::IntegrationOperations(out)) => out
+        );
+
+        let mut upsert = assert_variant!(op.pop(), Some(IntegrationOperation::Upsert(out)) => out);
+
+        let requisition_row = upsert
+            .as_mut_any()
+            .and_then(|any| any.downcast_mut::<RequisitionRow>())
+            .unwrap()
+            .clone();
+
+        assert_eq!(
+            requisition_row.clone(),
+            RequisitionRow {
+                status: RequisitionStatus::New,
+                ..requisition_row
+            }
+        )
+    }
+}

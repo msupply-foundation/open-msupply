@@ -1,0 +1,154 @@
+import React, { FC, useState } from 'react';
+import {
+  Box,
+  CircularProgress,
+  FlatButton,
+  PaperPopover,
+  PaperPopoverSection,
+  useAuthContext,
+  useTranslation,
+  useNavigate,
+  useUserDetails,
+  useConfirmationModal,
+  RouteBuilder,
+  PowerIcon,
+  TextWithLabelRow,
+  UNDEFINED_STRING_VALUE,
+  useIntlUtils,
+} from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
+import { PropsWithChildrenOnly } from '@common/types';
+
+export const UserDetails: FC<PropsWithChildrenOnly> = ({ children }) => {
+  const { user } = useAuthContext();
+  const navigate = useNavigate();
+  const [popoverAnchor, setPopoverAnchor] = useState<HTMLElement | null>(null);
+  const { isLoading } = useUserDetails();
+  const t = useTranslation();
+  const { getLocalisedFullName } = useIntlUtils();
+  const LABEL_WIDTH = 150;
+
+  const handleLogout = () => {
+    navigate(RouteBuilder.create(AppRoute.Login).build());
+  };
+
+  const showConfirmation = useConfirmationModal({
+    onConfirm: handleLogout,
+    message: t('messages.logout-confirm'),
+    title: t('heading.logout-confirm'),
+  });
+
+  const logoutButton = (
+    <FlatButton
+      testId="logout-button"
+      startIcon={<PowerIcon fontSize="small" color="primary" />}
+      label={t('logout')}
+      onClick={async () => {
+        setPopoverAnchor(null);
+        showConfirmation();
+      }}
+      sx={{
+        whiteSpace: 'nowrap',
+        overflowX: 'hidden',
+        overflowY: 'visible',
+        textOverflow: 'ellipsis',
+      }}
+    />
+  );
+
+  return user ? (
+    <PaperPopover
+      mode="click"
+      placement={{
+        vertical: 'top',
+        horizontal: 'center',
+      }}
+      anchorEl={popoverAnchor}
+      onAnchorElChange={setPopoverAnchor}
+      Content={
+        <Box data-testid="user-popup">
+          <PaperPopoverSection
+            label={getLocalisedFullName(user.firstName, user.lastName)}
+          >
+            {isLoading ? (
+              <CircularProgress size={12} />
+            ) : (
+              <Box
+                sx={{
+                  overflowY: 'auto',
+                  overflowX: 'auto',
+                  maxHeight: 300,
+                  margin: '.5rem',
+                }}
+              >
+                <Box data-testid="user-popup-username">
+                  <TextWithLabelRow
+                    label={t('heading.username')}
+                    text={user.name}
+                    textProps={{
+                      lineHeight: 1.5,
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                    }}
+                    labelProps={{
+                      sx: {
+                        width: LABEL_WIDTH,
+                        lineHeight: 1.5,
+                      },
+                    }}
+                    showToolTip={true}
+                    sx={{ overflow: 'hidden' }}
+                  />
+                </Box>
+                <Box data-testid="user-popup-email">
+                  <TextWithLabelRow
+                    label={t('label.email')}
+                    text={user.email ?? UNDEFINED_STRING_VALUE}
+                    textProps={{
+                      lineHeight: 1.5,
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                    }}
+                    labelProps={{
+                      sx: {
+                        width: LABEL_WIDTH,
+                        lineHeight: 1.5,
+                      },
+                    }}
+                    showToolTip={true}
+                    sx={{ overflow: 'hidden' }}
+                  />
+                </Box>
+                <TextWithLabelRow
+                  label={t('label.job-title')}
+                  text={user.jobTitle ?? UNDEFINED_STRING_VALUE}
+                  textProps={{
+                    lineHeight: 1.5,
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                  }}
+                  labelProps={{
+                    sx: {
+                      width: LABEL_WIDTH,
+                      lineHeight: 1.5,
+                    },
+                  }}
+                  showToolTip={true}
+                  sx={{ overflow: 'hidden' }}
+                />
+              </Box>
+            )}
+            {logoutButton}
+          </PaperPopoverSection>
+        </Box>
+      }
+    >
+      {children}
+    </PaperPopover>
+  ) : (
+    <></>
+  );
+};

@@ -8,6 +8,7 @@ import {
 import type { Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { t, tPlural } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
@@ -47,6 +48,7 @@ import {
   initialPageSize,
   rememberPageSize,
 } from '../../../list/pageSize';
+import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
 import {
   getCellDefinition,
   getNumberCell,
@@ -200,18 +202,23 @@ const SupplierReturnDetailView: Component = () => {
   // interaction): a line save, a bulk delete, and every "Save & next" page
   // advance refetch this while the return-items modal is OPEN. A suspending
   // read would tear down the page's Suspense boundary and detach the <dialog>
-  // (backdrop gone, focus lost). The `.state` gate keeps the current page on
-  // screen while the fresh one lands.
-  const linesReady = () =>
-    linesData.state === 'ready' || linesData.state === 'refreshing';
-  const rows = (): Line[] =>
-    linesReady() ? (linesData.latest?.nodes ?? []) : [];
+  // (backdrop gone, focus lost). The gate keeps the current page on screen
+  // while the fresh one lands.
+  const rows = (): Line[] => gated(linesData)?.nodes ?? [];
   // The return's WHOLE line count, not the held page's — the pager reads it, and
   // so does the no-lines status precondition: a page can be empty while later
   // pages hold lines.
-  const totalCount = () =>
-    linesReady() ? (linesData.latest?.totalCount ?? 0) : 0;
+  const totalCount = () => gated(linesData)?.totalCount ?? 0;
   const hasLines = () => totalCount() > 0;
+
+  // A bulk delete of the last page's rows leaves the offset past the new end
+  // (src/list/clampPageOffset.ts, issue #1117).
+  clampPageOffset({
+    total: () => settledTotal(linesData, page => page.totalCount),
+    offset: () => query().offset,
+    pageSize: () => query().first,
+    setOffset: offset => setQuery({ ...query(), offset }),
+  });
   // Selection is per page, so the selected rows are always resolvable from the
   // held page.
   const selectedLines = (): Line[] =>
@@ -257,10 +264,7 @@ const SupplierReturnDetailView: Component = () => {
   // render, so a still-pending preference must never suspend this screen's
   // boundary — `.latest` alone would, on its first pending read, tearing down
   // the open screen. Unresolved = no restriction.
-  const statusOptions = () =>
-    prefs.state === 'ready' || prefs.state === 'refreshing'
-      ? (prefs.latest?.invoiceStatusOptions ?? [])
-      : [];
+  const statusOptions = () => gated(prefs)?.invoiceStatusOptions ?? [];
 
   // --- Return-level saves (updateSupplierReturn, spliced back, no refetch) ---
 
@@ -445,12 +449,13 @@ const SupplierReturnDetailView: Component = () => {
     {
       c: { accessor: line => line.item.unitName ?? '', id: 'unitName' },
       header: () => t('label.unit'),
-      // The `unit` preset, not `unitName`: same cell type, but a width that
-      // allows for the "Unit" header (the `unitName` preset's 2rem is narrower
-      // than the header word — see LIB-4 in the migration report). Matches the
-      // items / stock lists and the inbound Financial tab, which head this
-      // column the same way.
-      ...getCellDefinition('unit'),
+      // The `unitName` preset, as every other line table's Unit column uses
+      // (inbound, internal orders, outbound, stocktakes, requisitions). It
+      // moved here from `unit` (8rem) once `unitName` was widened to fit the
+      // "Unit" header — the reason LIB-4 in the migration report gave for
+      // reaching past it. `unit` remains 8rem for the items / stock lists;
+      // consolidating those two presets is an open follow-up.
+      ...getCellDefinition('unitName'),
     },
     {
       c: { key: 'packSize' },
@@ -537,6 +542,7 @@ const SupplierReturnDetailView: Component = () => {
                   <SupplierReturnSidePanel
                     node={node()}
                     disabled={disabled()}
+                    hasLines={hasLines()}
                     edit={edit}
                     onSetColour={setColour}
                   />

@@ -1,0 +1,21 @@
+import {
+  useMutation,
+  useParams,
+  useQueryClient,
+} from '@openmsupply-client/common';
+import { useReturnsApi } from '../utils/useReturnsApi';
+
+export const useUpdateCustomerReturnLines = () => {
+  const queryClient = useQueryClient();
+  const api = useReturnsApi();
+  const { invoiceId = '' } = useParams();
+
+  return useMutation({
+    mutationFn: api.updateCustomerReturnLines,
+
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: api.keys.customerDetail(invoiceId)
+      })
+  });
+};

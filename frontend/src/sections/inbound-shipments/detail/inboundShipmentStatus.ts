@@ -2,13 +2,13 @@ import { t } from '../../../intl';
 import type { InboundInfoFragment } from './inboundShipmentDetail.generated';
 
 // The inbound-shipment status lifecycle (spec/inbound-shipments › status
-// lifecycle). Which stages appear depends on the shipment's KIND — the user
-// only ever advances forward through its kind's sequence:
-//   Manual (external/internal)
+// lifecycle). Which stages appear depends on the shipment's SOURCE LINK — the
+// user only ever advances forward through its own sequence:
+//   None — manual (external/internal), or linked only to an internal order
 //     New → Delivered → Received → Verified
-//   From a purchase order
+//   A purchase order
 //     New → Shipped → Delivered → Received → Verified
-//   Transfer (requisition/link)
+//   A sending shipment (a transfer)
 //     New → Picked → Shipped → Delivered → Received → Verified
 //
 // Shared by the list status chip, the detail status footer's StatusIndicator
@@ -18,36 +18,51 @@ import type { InboundInfoFragment } from './inboundShipmentDetail.generated';
 export type InboundStatus =
   'NEW' | 'PICKED' | 'SHIPPED' | 'DELIVERED' | 'RECEIVED' | 'VERIFIED';
 
-export type ShipmentKind = 'manual' | 'purchaseOrder' | 'transfer';
+// The link through which something outside this store supplies the shipment's
+// prices and drives its status (rules § source link). NOT the shipment's origin
+// ("kind"): `'none'` covers both a manual shipment and one linked only to an
+// internal order, and deliberately does not spell either — naming it 'manual'
+// is what conflated the two (issue #1132), since the list's Type filter calls
+// an internal-order-linked shipment "From internal order", not "Manual".
+export type SourceLink = 'none' | 'purchaseOrder' | 'transfer';
 
-// Origin classification for status-flow purposes. `inboundType` is the
-// server-computed authority (contract → origin); a transfer is a requisition
-// origin OR a bare shipment-to-shipment link (the MANUAL_INTERNAL + linked
-// wire trap), so we treat a present linkedShipment as a transfer too.
-export const kindOf = (info: {
+// A shipment's source link, read off its own links rather than its
+// `inboundType`. Two different questions: `inboundType` answers where the
+// shipment originated (and stays authoritative for the list's Type filter),
+// while this answers what drives it.
+//
+// A requisition link ALONE is not a source link. A shipment created here and
+// manually linked to an internal order is `inboundType: FROM_REQUISITION` with
+// no linkedShipment, and the server refuses Shipped on it — its guard is
+// exactly "no purchase order and no linked shipment" (_cannot set shipped
+// status on a manual shipment_, whose name is narrower than the rule). So it
+// gets the unlinked flow, and its banner says the status will not update
+// automatically: nothing is driving it from the other side.
+//
+// Behaviours OMS-REG-REPL-03.11 / .12.
+export const sourceLinkOf = (info: {
   inboundType: InboundInfoFragment['inboundType'];
   linkedShipment?: { id: string } | null;
-}): ShipmentKind => {
-  if (info.inboundType === 'FROM_REQUISITION' || info.linkedShipment)
-    return 'transfer';
+}): SourceLink => {
   if (info.inboundType === 'FROM_PURCHASE_ORDER') return 'purchaseOrder';
-  return 'manual';
+  if (info.linkedShipment) return 'transfer';
+  return 'none';
 };
 
-const FLOWS: Record<ShipmentKind, InboundStatus[]> = {
-  manual: ['NEW', 'DELIVERED', 'RECEIVED', 'VERIFIED'],
+const FLOWS: Record<SourceLink, InboundStatus[]> = {
+  none: ['NEW', 'DELIVERED', 'RECEIVED', 'VERIFIED'],
   purchaseOrder: ['NEW', 'SHIPPED', 'DELIVERED', 'RECEIVED', 'VERIFIED'],
   transfer: ['NEW', 'PICKED', 'SHIPPED', 'DELIVERED', 'RECEIVED', 'VERIFIED'],
 };
 
-// The ordered stages shown for a shipment of this kind. If the actual status
-// somehow falls outside the kind's nominal flow, it's spliced in so the track
-// never hides the current stage.
+// The ordered stages shown for a shipment with this source link. If the actual
+// status somehow falls outside the nominal flow, the widest flow stands in so
+// the track never hides the current stage.
 export const statusFlow = (
-  kind: ShipmentKind,
+  link: SourceLink,
   current: string
 ): InboundStatus[] => {
-  const flow = FLOWS[kind];
+  const flow = FLOWS[link];
   return flow.includes(current as InboundStatus) ? flow : FLOWS.transfer; // widest flow as a safe fallback
 };
 
@@ -109,6 +124,37 @@ const EDITABLE: InboundStatus[] = ['NEW', 'DELIVERED', 'RECEIVED'];
 export const isEditable = (status: string): boolean =>
   EDITABLE.includes(status as InboundStatus);
 
+// Whether the shipment has actually put stock on the shelf.
+//
+// Stock first exists at RECEIVED, never before: the SDL doc-comment claiming
+// DELIVERED introduces it is wrong, and a line's `stockLine` is null through
+// New/Shipped/Delivered (contract → what receiving does).
+//
+// Caveat carried deliberately: a line INSERTED while the shipment sits at
+// Shipped is stocked immediately (mechanism 2), so such a shipment holds stock
+// this predicate does not admit. That path needs a PO-linked or transfer
+// shipment plus a line added after shipping, and the alternative — warning
+// every Shipped/Delivered shipment — was wrong far more often than right.
+const HAS_INTRODUCED_STOCK: InboundStatus[] = ['RECEIVED', 'VERIFIED'];
+
+const hasIntroducedStock = (status: string): boolean =>
+  HAS_INTRODUCED_STOCK.includes(status as InboundStatus);
+
+// Whether DELETING the shipment would take that stock back out, which is what
+// the delete confirmation warns about (rules → deletion).
+//
+// Holding stock is not enough. A Verified shipment is finalised, so its delete
+// is refused outright (server invoice/inbound_shipment/delete/validate.rs →
+// check_invoice_is_editable admits New/Shipped/Delivered/Received) — warning
+// that its stock "will be removed as well" promises an outcome that cannot
+// happen, and the user meets the finalised refusal instead. Nor is this a gate:
+// delete stays offered and submitted at every status (issue #1134); the status
+// only picks the copy. Shipped and Delivered hold no stock yet, so they get the
+// plain confirmation too — telling someone their Shipped shipment "has already
+// been received" was both false and alarming.
+export const deleteRemovesStock = (status: string): boolean =>
+  hasIntroducedStock(status) && status !== 'VERIFIED';
+
 // Whether the status footer offers an advance — a SEPARATE, deliberately looser
 // gate than `isEditable`. An advance travels through updateInboundShipment, so
 // reusing the edit gate would strand a Shipped shipment with no route to
@@ -128,10 +174,10 @@ const SETTABLE: InboundStatus[] = [
 ];
 
 export const reachableStatuses = (
-  kind: ShipmentKind,
+  link: SourceLink,
   current: string
 ): InboundStatus[] => {
-  const flow = statusFlow(kind, current);
+  const flow = statusFlow(link, current);
   const currentIdx = statusIndex(flow, current);
   return flow.filter((s, i) => i > currentIdx && SETTABLE.includes(s));
 };

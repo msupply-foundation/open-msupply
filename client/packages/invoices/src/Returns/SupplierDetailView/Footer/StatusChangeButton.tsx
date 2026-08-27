@@ -1,0 +1,130 @@
+import React, { useMemo, useState, useEffect } from 'react';
+import {
+  ArrowRightIcon,
+  useTranslation,
+  useNotification,
+  InvoiceNodeStatus,
+  InvoiceNodeType,
+  SplitButton,
+  SplitButtonOption,
+  useConfirmationModal,
+  usePreferences,
+} from '@openmsupply-client/common';
+import {
+  getButtonLabel,
+  getNextStatusOption,
+  getPreviousStatus,
+  getStatusTranslator,
+} from '../../../utils';
+import { useReturns } from '../../api';
+import { getStatusOptions, getStatusSequence } from '../../../statuses';
+
+const useStatusChangeButton = () => {
+  const t = useTranslation();
+  const { invoiceStatusOptions } = usePreferences();
+  const { success, error } = useNotification();
+  const { data } = useReturns.document.supplierReturn();
+  const { mutateAsync } = useReturns.document.updateSupplierReturn();
+
+  const status = data?.status ?? InvoiceNodeStatus.New;
+  const lineCount = data?.lines?.totalCount ?? 0;
+
+  const options = useMemo(() => {
+    let statusOptions = getStatusOptions(
+      InvoiceNodeType.SupplierReturn,
+      status,
+      getButtonLabel(t)
+    );
+    if (invoiceStatusOptions) {
+      statusOptions = statusOptions.filter(
+        option => !!option.value && invoiceStatusOptions.includes(option.value)
+      );
+    }
+    return statusOptions;
+  }, [status, invoiceStatusOptions]);
+
+  const currentStatus =
+    !invoiceStatusOptions || invoiceStatusOptions.includes(status)
+      ? status
+      : getPreviousStatus(
+          status,
+          invoiceStatusOptions,
+          getStatusSequence(InvoiceNodeType.SupplierReturn)
+        );
+
+  const [selectedOption, setSelectedOption] =
+    useState<SplitButtonOption<InvoiceNodeStatus> | null>(() =>
+      getNextStatusOption(currentStatus, options)
+    );
+
+  const onConfirmStatusChange = async () => {
+    if (!selectedOption || !data) return null;
+    try {
+      await mutateAsync({ id: data?.id, status: selectedOption.value });
+
+      success(t('messages.return-saved'))();
+    } catch (e) {
+      console.error(e);
+      error(t('messages.error-saving-return'))();
+    }
+  };
+
+  const getConfirmation = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('messages.confirm-status-as', {
+      status: selectedOption?.value
+        ? getStatusTranslator(t)(selectedOption?.value)
+        : '',
+    }),
+    onConfirm: onConfirmStatusChange,
+  });
+
+  // When the status of the invoice changes (after an update), set the selected
+  // option to the next status. It would be set to the current status, which is
+  // now a disabled option.
+  useEffect(() => {
+    setSelectedOption(() => getNextStatusOption(currentStatus, options));
+  }, [currentStatus, options]);
+
+  return {
+    options,
+    selectedOption,
+    setSelectedOption,
+    getConfirmation,
+    onHold: data?.onHold ?? false,
+    lineCount,
+  };
+};
+
+export const StatusChangeButton = () => {
+  const {
+    options,
+    selectedOption,
+    setSelectedOption,
+    getConfirmation,
+    onHold,
+    lineCount,
+  } = useStatusChangeButton();
+  const isDisabled = useReturns.utils.supplierIsDisabled();
+  const t = useTranslation();
+  const noLines = lineCount === 0;
+
+  if (!selectedOption) return null;
+  if (isDisabled) return null;
+
+  const onStatusClick = () => {
+    return getConfirmation();
+  };
+
+  return (
+    <SplitButton
+      label={noLines ? t('messages.no-lines') : ''}
+      isDisabled={noLines || onHold}
+      options={options}
+      selectedOption={selectedOption}
+      onSelectOption={setSelectedOption}
+      Icon={<ArrowRightIcon />}
+      onClick={onStatusClick}
+    />
+  );
+};

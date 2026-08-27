@@ -1,0 +1,194 @@
+fragment NameRow on NameNode {
+  code
+  id
+  isCustomer
+  isSupplier
+  isOnHold
+  name
+  customFields
+  store {
+    id
+    code
+    isDisabled
+  }
+}
+
+fragment FacilityNameRow on NameNode {
+  code
+  id
+  isCustomer
+  isSupplier
+  isDonor
+  isOnHold
+  name
+  store {
+    id
+    code
+    isDisabled
+  }
+  properties
+}
+
+fragment Name on NameNode {
+  address1
+  address2
+  chargeCode
+  code
+  comment
+  country
+  createdDatetime
+  email
+  id
+  isCustomer
+  isDonor
+  isManufacturer
+  isOnHold
+  isSupplier
+  isSystemName
+  name
+  phone
+  website
+  store {
+    id
+    code
+    isDisabled
+  }
+  properties
+  customFields
+  hshCode
+  hshName
+  margin
+  freightFactor
+  currency {
+    id
+    code
+  }
+}
+
+fragment Property on PropertyNode {
+  id
+  key
+  name
+  allowedValues
+  valueType
+}
+
+fragment CustomField on CustomFieldNode {
+  id
+  key
+  name
+  valueType
+  kind
+  options {
+    id
+    key
+    name
+    parentOptionId
+  }
+}
+
+query names(
+  $storeId: String!
+  $key: NameSortFieldInput!
+  $desc: Boolean
+  $first: Int
+  $offset: Int
+  $filter: NameFilterInput
+) {
+  names(
+    storeId: $storeId
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on NameConnector {
+      __typename
+      nodes {
+        ...NameRow
+      }
+      totalCount
+    }
+  }
+}
+
+query facilities(
+  $storeId: String!
+  $key: NameSortFieldInput!
+  $desc: Boolean
+  $first: Int
+  $offset: Int
+  $filter: NameFilterInput
+) {
+  names(
+    storeId: $storeId
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on NameConnector {
+      __typename
+      nodes {
+        ...FacilityNameRow
+      }
+      totalCount
+    }
+  }
+}
+
+query nameById($storeId: String!, $nameId: String!) {
+  names(storeId: $storeId, filter: { id: { equalTo: $nameId } }) {
+    ... on NameConnector {
+      __typename
+      nodes {
+        ...Name
+      }
+      totalCount
+    }
+  }
+}
+
+query nameProperties {
+  nameProperties {
+    ... on NamePropertyConnector {
+      __typename
+      nodes {
+        __typename
+        id
+        remoteEditable
+        property {
+          ...Property
+        }
+      }
+    }
+  }
+}
+
+query nameCustomFields($scope: String!) {
+  customFields(filter: { scope: { equalTo: $scope } }) {
+    ... on CustomFieldConnector {
+      __typename
+      totalCount
+      nodes {
+        ...CustomField
+      }
+    }
+  }
+}
+
+mutation updateNameProperties(
+  $storeId: String!
+  $input: UpdateNamePropertiesInput!
+) {
+  updateNameProperties(storeId: $storeId, input: $input) {
+    __typename
+    ... on NameNode {
+      ...Name
+    }
+    ... on UpdateNamePropertiesError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}

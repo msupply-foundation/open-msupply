@@ -72,7 +72,8 @@ query periods($storeId: String!, $programId: String, $today: NaiveDate!) {
 # A program's period schedules, each with its CLOSED periods (ended on or
 # before today — server-enforced) — the schedule + period steps of the report
 # argument schedule cascade (spec/reports contract "Arguments", AC-R17). A
-# consumed read owned by R&R forms.
+# consumed read owned by R&R forms: inUse marks periods already consumed by a
+# form (spec/rnr-forms contract § creation rules).
 query schedulesWithPeriods($storeId: String!, $programId: String!) {
   schedulesWithPeriodsByProgram(storeId: $storeId, programId: $programId) {
     ... on PeriodSchedulesConnector {
@@ -82,6 +83,7 @@ query schedulesWithPeriods($storeId: String!, $programId: String!) {
         name
         periods {
           id
+          inUse
           period {
             id
             name

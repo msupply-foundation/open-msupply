@@ -1,0 +1,6 @@
+node_modules/
+screenshots/
+playwright-report/
+test-results/
+.auth/
+.env

@@ -1,0 +1,173 @@
+use super::{
+    UpsertVaccineCourseDoseInput, UpsertVaccineCourseItemInput, UpsertVaccineCourseStoreConfigInput,
+};
+use async_graphql::*;
+use graphql_core::{
+    simple_generic_errors::{RecordAlreadyExist, RecordProgramCombinationAlreadyExists},
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
+};
+use graphql_types::types::VaccineCourseNode;
+use service::{
+    auth::{Resource, ResourceAccessRequest},
+    vaccine_course::{
+        insert::{InsertVaccineCourse, InsertVaccineCourseError as ServiceError},
+        update::{VaccineCourseDoseInput, VaccineCourseItemInput, VaccineCourseStoreConfigInput},
+    },
+    NullableUpdate,
+};
+
+pub fn insert_vaccine_course(
+    ctx: &Context<'_>,
+    store_id: &str,
+    input: InsertVaccineCourseInput,
+) -> Result<InsertVaccineCourseResponse> {
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: Resource::MutateVaccineCourse,
+            store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
+        },
+    )?;
+
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
+
+    match service_provider
+        .vaccine_course_service
+        .insert_vaccine_course(&service_context, input.into())
+    {
+        Ok(vaccine_course) => Ok(InsertVaccineCourseResponse::Response(
+            VaccineCourseNode::from_domain(vaccine_course),
+        )),
+        Err(error) => Ok(InsertVaccineCourseResponse::Error(
+            InsertVaccineCourseError {
+                error: map_error(error)?,
+            },
+        )),
+    }
+}
+
+#[derive(InputObject, Clone)]
+pub struct InsertVaccineCourseInput {
+    pub id: String,
+    pub name: String,
+    pub program_id: String,
+    pub vaccine_items: Vec<UpsertVaccineCourseItemInput>,
+    pub doses: Vec<UpsertVaccineCourseDoseInput>,
+    pub store_configs: Option<Vec<UpsertVaccineCourseStoreConfigInput>>,
+    pub demographic_id: Option<String>,
+    pub coverage_rate: f64,
+    pub use_in_gaps_calculations: bool,
+    pub wastage_rate: f64,
+    pub can_skip_dose: bool,
+}
+
+impl From<InsertVaccineCourseInput> for InsertVaccineCourse {
+    fn from(
+        InsertVaccineCourseInput {
+            id,
+            name,
+            program_id,
+            vaccine_items,
+            doses,
+            store_configs,
+            demographic_id,
+            coverage_rate,
+            use_in_gaps_calculations,
+            wastage_rate,
+            can_skip_dose,
+        }: InsertVaccineCourseInput,
+    ) -> Self {
+        InsertVaccineCourse {
+            id,
+            name,
+            program_id,
+            vaccine_items: vaccine_items
+                .into_iter()
+                .map(|i| VaccineCourseItemInput {
+                    id: i.id,
+                    item_id: i.item_id,
+                })
+                .collect(),
+            doses: doses
+                .into_iter()
+                .map(|d| VaccineCourseDoseInput {
+                    id: d.id,
+                    label: d.label,
+                    min_age: d.min_age,
+                    max_age: d.max_age,
+                    custom_age_label: d.custom_age_label,
+                    min_interval_days: d.min_interval_days,
+                })
+                .collect(),
+            store_configs: store_configs
+                .unwrap_or_default()
+                .into_iter()
+                .map(|config| VaccineCourseStoreConfigInput {
+                    id: config.id,
+                    store_id: config.store_id,
+                    wastage_rate: config
+                        .wastage_rate
+                        .map(|r| NullableUpdate { value: r.value }),
+                    coverage_rate: config
+                        .coverage_rate
+                        .map(|r| NullableUpdate { value: r.value }),
+                })
+                .collect(),
+            demographic_id,
+            coverage_rate,
+            use_in_gaps_calculations,
+            wastage_rate,
+            can_skip_dose,
+        }
+    }
+}
+#[derive(SimpleObject)]
+pub struct InsertVaccineCourseError {
+    pub error: InsertVaccineCourseErrorInterface,
+}
+
+#[derive(Union)]
+pub enum InsertVaccineCourseResponse {
+    Error(InsertVaccineCourseError),
+    Response(VaccineCourseNode),
+}
+
+#[derive(Interface)]
+#[graphql(field(name = "description", ty = "String"))]
+pub enum InsertVaccineCourseErrorInterface {
+    ItemAlreadyExists(RecordAlreadyExist),
+    VaccineCourseNameExistsForThisProgram(RecordProgramCombinationAlreadyExists),
+}
+
+fn map_error(error: ServiceError) -> Result<InsertVaccineCourseErrorInterface> {
+    use StandardGraphqlError::*;
+    let formatted_error = format!("{error:#?}");
+
+    let graphql_error = match error {
+        // Structured Errors
+        ServiceError::VaccineCourseAlreadyExists => {
+            return Ok(InsertVaccineCourseErrorInterface::ItemAlreadyExists(
+                RecordAlreadyExist {},
+            ))
+        }
+        ServiceError::VaccineCourseNameExistsForThisProgram => {
+            return Ok(
+                InsertVaccineCourseErrorInterface::VaccineCourseNameExistsForThisProgram(
+                    RecordProgramCombinationAlreadyExists {},
+                ),
+            )
+        }
+        // Standard Graphql Errors
+        ServiceError::ProgramDoesNotExist
+        | ServiceError::DemographicIndicatorDoesNotExist
+        | ServiceError::DoseMinAgesAreNotInOrder => BadUserInput(formatted_error),
+        ServiceError::CreatedRecordNotFound | ServiceError::DatabaseError(_) => {
+            InternalError(formatted_error)
+        }
+    };
+
+    Err(graphql_error.extend())
+}

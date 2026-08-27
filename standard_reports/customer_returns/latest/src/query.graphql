@@ -1,0 +1,37 @@
+query CustomerReturns(
+  $storeId: String
+  $otherPartyId: String
+  $before: String
+  $after: String
+) {
+  invoices(
+    storeId: $storeId
+    filter: {
+      type: { equalTo: CUSTOMER_RETURN }
+      otherPartyId: { equalTo: $otherPartyId }
+      createdDatetime: { afterOrEqualTo: $after, beforeOrEqualTo: $before }
+    }
+  ) {
+    ... on InvoiceConnector {
+      nodes {
+        id
+        otherPartyName
+        lines {
+          nodes {
+            id
+            item {
+              id
+              code
+              name
+            }
+            batch
+            expiryDate
+            numberOfPacks
+            packSize
+            costPricePerPack
+          }
+        }
+      }
+    }
+  }
+}
