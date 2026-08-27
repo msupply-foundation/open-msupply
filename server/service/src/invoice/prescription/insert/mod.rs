@@ -22,6 +22,9 @@ pub struct InsertPrescription {
     pub their_reference: Option<String>,
     pub clinician_id: Option<String>,
     pub prescription_date: Option<NaiveDateTime>,
+    /// Set when the dispensation is generated from a prescription request, to
+    /// link the invoice back to its source request.
+    pub prescription_request_id: Option<String>,
 }
 
 #[derive(Debug, PartialEq)]
