@@ -12,8 +12,8 @@
  * MUST stay free of module-scope side effects: this module is evaluated by
  * the facade entry before any plugin code runs.
  *
- * This is the v1 surface. `pages`, `register`, navigation builders, and lazy
- * component wrappers are later.
+ * This is the v1 surface. `pages`, `register`, and lazy component wrappers
+ * are later.
  */
 
 // ── Compatibility gate ──────────────────────────────────────────────────────
@@ -107,6 +107,36 @@ export type { SelectOption } from '../ui/elements/selectors/Select';
 export { FormColumn } from '../ui/layout/Form/FormColumn';
 export { FormColumns } from '../ui/layout/Form/FormColumns';
 
+// ── UI kit — icons that carry meaning ───────────────────────────────────────
+/*
+ * The six the Cook Islands navigator names for its tiles (plugins/cook_islands
+ * ui-surface.md § S2/S3): patient, inbox tray, truck, box-out, document, stock
+ * — in that order below. That file describes the PICTURE and never names an
+ * export, so this list is the mapping; keep the two in step.
+ * Re-exported rather than copied into the plugin, so a fix to a path, an RTL
+ * flip or an a11y attribute on the host icon reaches the contributed surface
+ * too — a copied SVG would fork on the first such change.
+ *
+ * Cheap because '../ui/icons' is ALREADY in this barrel's graph: InfoTooltip
+ * pulls InfoIcon and Select pulls CheckIcon/ChevronDownIcon/CloseIcon, both
+ * eager. So this keeps six more small components alive in a module that ships
+ * regardless — path data only, no new module (measured: kdd/bundle-size-by-pr).
+ *
+ * Not an open door to the whole barrel: it grows one icon at a time, for an
+ * icon an audited plugin's specified surface names.
+ */
+export {
+  CustomersIcon,
+  InboxIcon,
+  TruckIcon,
+  UploadIcon,
+  FileIcon,
+  StockIcon,
+} from '../ui/icons';
+// Needed to hold one in a typed table of tiles (Component<IconProps>); a type
+// export, so it weighs nothing at runtime.
+export type { IconProps } from '../ui/icons';
+
 // ── Intl ────────────────────────────────────────────────────────────────────
 export {
   pluginIntl,
@@ -121,6 +151,35 @@ export {
   localisedDateTime,
 } from './intl';
 export type { PluginIntl, SupportedLocale } from './intl';
+
+// ── Navigation ──────────────────────────────────────────────────────────────
+/*
+ * Reaching a host screen without knowing the entered store or the app's mount
+ * — and without meeting `@solidjs/router`, which is not in the closed import
+ * set (sdk-contract § imports). Two halves: the route/link primitives, and
+ * the typed deep-link builders whose store-relative paths they take
+ * (./deepLinks.ts — promoted from the dashboard's stat links, #304). The
+ * builders' host-shared helpers (listPath, itemCataloguePath) are deliberately
+ * NOT here: a raw (path, filter) pair is the hand-encoding the named builders
+ * exist to prevent.
+ */
+export { storeHref, navigateTo } from './navigation';
+export type { NavigateOptions } from './navigation';
+export {
+  DAYS_TILL_EXPIRED,
+  expiredStockPath,
+  expiringBetweenThresholdsStockPath,
+  expiringNextThreeMonthsStockPath,
+  expiringSoonStockPath,
+  inboundShipmentListPath,
+  internalOrderListPath,
+  lowStockItemsPath,
+  outboundShipmentListPath,
+  outOfStockItemsPath,
+  prescriptionListPath,
+  stockListPath,
+  stocktakeListPath,
+} from './deepLinks';
 
 // ── Data access — the core schema ───────────────────────────────────────────
 export { graphqlQuery } from './graphql';
