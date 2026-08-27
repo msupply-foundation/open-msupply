@@ -75,11 +75,19 @@ const StandInTile = (props: {
   subtitle: string;
   icon: JSX.Element;
   figures: Figure[];
+  /*
+   * The hero spans both of the block's rows, so it has no row-mate whose figure
+   * baseline it could share — spreading would only open a gap between its label
+   * and its figure. The four task tiles keep the default: they DO sit in rows
+   * of two, and a shared baseline across each row is the point.
+   */
+  contentPlacement?: 'spread' | 'grouped';
 }) => (
   <WidgetCard
     title={props.title}
     subtitle={props.subtitle}
     icon={props.icon}
+    contentPlacement={props.contentPlacement}
     onClick={() => {}}
   >
     <StandInFigures figures={props.figures} />
@@ -195,6 +203,7 @@ export const CkHomeNavigatorPrototype = () => (
             subtitle="Dispense to a patient"
             icon={<UserIcon />}
             figures={[{ label: 'Dispensed today', value: '1284' }]}
+            contentPlacement="grouped"
           />
         }
         tasks={
