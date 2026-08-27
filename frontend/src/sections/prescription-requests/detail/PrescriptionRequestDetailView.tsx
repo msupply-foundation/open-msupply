@@ -59,7 +59,7 @@ import { RequestLineEditModal } from './edit-modal/RequestLineEditModal';
 import { EditPatientModal } from '../../patients';
 
 // The prescription-request detail (spec/prescription-requests/ui-surface.md S3):
-// toolbar (patient / clinician / date / program / diagnosis / prominent
+// toolbar (patient / date / program / diagnosis / prominent
 // custom fields), Details + Custom fields + Log tabs over the line table, the
 // side panel, and the status footer with the Ready-to-dispense hand-over.
 // Read-only past New: dead affordances are hidden and a row click opens the

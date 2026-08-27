@@ -11,6 +11,7 @@ const state = {
   procurement: false,
   central: false,
   permissions: new Set<string>(),
+  prescriber: false,
 };
 
 vi.mock('../store/storeContext', () => ({
@@ -19,13 +20,20 @@ vi.mock('../store/storeContext', () => ({
   hasVaccineModule: () => state.vaccineModule,
   hasProcurement: () => state.procurement,
   hasPermission: (permission: string) => state.permissions.has(permission),
+  isPrescriberMode: () => state.prescriber,
 }));
 vi.mock('../api/serverInfo', () => ({
   isCentralServer: () => state.central,
 }));
 
 import { navConfig } from './navConfig';
-import { deniedPermission, gateNav, routeAccess } from './navGates';
+import {
+  activeNavConfig,
+  deniedPermission,
+  gateNav,
+  navHomePath,
+  routeAccess,
+} from './navGates';
 
 beforeEach(() => {
   state.dispensary = false;
@@ -34,6 +42,7 @@ beforeEach(() => {
   state.procurement = false;
   state.central = false;
   state.permissions = new Set();
+  state.prescriber = false;
 });
 
 const gatedPaths = () =>
@@ -182,5 +191,113 @@ describe('deniedPermission (D94 refusal names)', () => {
     expect(
       deniedPermission({ permission: 'OUTBOUND_SHIPMENT_QUERY' })
     ).toBeUndefined();
+  });
+});
+
+/*
+ * Prescriber mode: the second registry (spec/prescription-requests §
+ * prescriber mode, PM-1..PM-6).
+ *
+ * These assert the REGISTRY SWAP, which is the whole mechanism: every surface
+ * reads the registry in force through these helpers, so what the gated tree
+ * contains is what the menu shows, what the palette lists and what the router
+ * admits — the three cannot disagree because there is nothing for them to
+ * disagree with.
+ */
+describe('prescriber mode registry (PM-1, PM-3, PM-4)', () => {
+  const prescriberPaths = () =>
+    gateNav(activeNavConfig()).flatMap(item => [
+      item.path,
+      ...(item.children ?? []).map(child => child.path),
+    ]);
+
+  beforeEach(() => {
+    state.prescriber = true;
+    state.dispensary = true;
+    state.permissions = new Set(['PRESCRIPTION_QUERY', 'PATIENT_QUERY']);
+  });
+
+  it('offers prescriptions, patients, items, settings and help — and nothing else', () => {
+    expect(prescriberPaths().sort()).toEqual(
+      [
+        'catalogue',
+        'catalogue/items',
+        'dispensary',
+        'dispensary/patients',
+        'dispensary/prescription-request',
+        'help',
+        'settings',
+      ].sort()
+    );
+  });
+
+  it('withholds dispensing, stock, reports and Home', () => {
+    const paths = prescriberPaths();
+    expect(paths).not.toContain('dispensary/prescription');
+    expect(paths).not.toContain('inventory/stock');
+    expect(paths).not.toContain('reports');
+    // Home is the empty path, and prescriber mode has none (PM-5).
+    expect(paths).not.toContain('');
+  });
+
+  it('leaves the full registry alone for everyone else', () => {
+    state.prescriber = false;
+    expect(activeNavConfig()).toBe(navConfig);
+    expect(prescriberPaths()).toContain('dispensary/prescription');
+  });
+
+  it('reshapes when the flag changes, without anything being rebuilt', () => {
+    // PM-2: switching to a store where the user is a prescriber changes the
+    // registry in place — the accessor is read fresh, never captured.
+    expect(activeNavConfig()).not.toBe(navConfig);
+    state.prescriber = false;
+    expect(activeNavConfig()).toBe(navConfig);
+  });
+});
+
+describe('prescriber mode routing (PM-5)', () => {
+  beforeEach(() => {
+    state.prescriber = true;
+    state.dispensary = true;
+    state.permissions = new Set(['PRESCRIPTION_QUERY', 'PATIENT_QUERY']);
+  });
+
+  it('admits the three offered destinations and their record screens', () => {
+    expect(routeAccess('dispensary/prescription-request')).toEqual({
+      kind: 'ok',
+    });
+    expect(routeAccess('dispensary/prescription-request/abc-123')).toEqual({
+      kind: 'ok',
+    });
+    expect(routeAccess('dispensary/patients')).toEqual({ kind: 'ok' });
+    expect(routeAccess('catalogue/items')).toEqual({ kind: 'ok' });
+  });
+
+  it('blocks a destination the registry does not offer', () => {
+    // Reachable for an ordinary user in the same store; absent here.
+    expect(routeAccess('dispensary/prescription')).toEqual({ kind: 'blocked' });
+    expect(routeAccess('inventory/stock')).toEqual({ kind: 'blocked' });
+    expect(routeAccess('reports')).toEqual({ kind: 'blocked' });
+  });
+
+  it('blocks Home and unknown paths rather than showing a dead end', () => {
+    // The full registry passes these to the not-found page; prescriber mode
+    // has no Home to fall back to, so they redirect to the landing screen.
+    expect(routeAccess('')).toEqual({ kind: 'blocked' });
+    expect(routeAccess('no-such-place')).toEqual({ kind: 'blocked' });
+  });
+
+  it('sends a blocked route to the request list, not the store root', () => {
+    expect(navHomePath()).toBe('dispensary/prescription-request');
+    state.prescriber = false;
+    expect(navHomePath()).toBe('');
+  });
+
+  it('still refuses a permission the user lacks (PM-8)', () => {
+    state.permissions = new Set(['PATIENT_QUERY']);
+    expect(routeAccess('dispensary/prescription-request')).toEqual({
+      kind: 'forbidden',
+      permission: 'PrescriptionQuery',
+    });
   });
 });

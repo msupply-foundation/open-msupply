@@ -16,6 +16,7 @@ const state = {
   procurement: false,
   central: false,
   permissions: new Set<string>(),
+  prescriber: false,
 };
 
 vi.mock('../store/storeContext', () => ({
@@ -24,6 +25,7 @@ vi.mock('../store/storeContext', () => ({
   hasVaccineModule: () => state.vaccineModule,
   hasProcurement: () => state.procurement,
   hasPermission: (permission: string) => state.permissions.has(permission),
+  isPrescriberMode: () => state.prescriber,
 }));
 vi.mock('../api/serverInfo', () => ({
   isCentralServer: () => state.central,

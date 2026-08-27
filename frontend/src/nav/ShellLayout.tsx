@@ -14,10 +14,9 @@ import { AppShell } from '../ui/layout/AppShell/AppShell';
 import { ConfirmDialog } from '../ui/elements/feedback/ConfirmDialog';
 import { t } from '../intl';
 import {
-  findLeafByPath,
-  lowerNav,
+  buildNavModel,
+  findLeafIn,
   sectionIconForPath,
-  upperNav,
   type NavLeaf,
 } from '../ui/layout/AppShell/navModel';
 import { ShellSectionContext } from '../ui/layout/AppShell/shellContext';
@@ -25,7 +24,13 @@ import { authUser, logout, userDisplayName } from '../auth/authContext';
 import { storeCustomColour } from '../store/storeContext';
 import { isCentralServer } from '../api/serverInfo';
 import { reportPermissionDenied } from '../api/graphql';
-import { deniedPermission, gateNav, routeAccess } from './navGates';
+import {
+  activeNavConfig,
+  deniedPermission,
+  gateNav,
+  navHomePath,
+  routeAccess,
+} from './navGates';
 import { bindHostNavigate, routerHostNavigate } from './hostNavigate';
 import { storePath, storeRelativePath } from './storeRelativePath';
 import { KeyboardHost } from '../keyboard/KeyboardHost';
@@ -82,8 +87,16 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   // menu highlights by id, and '' matches nothing). labelKey is never rendered
   // for it, so any valid key satisfies the type.
   const NO_SELECTION: NavLeaf = { id: '', labelKey: 'label.home', to: '' };
+
+  // The menu model for the registry in force — the full one, or the cut-down
+  // prescriber registry (spec/prescription-requests § prescriber mode). A memo,
+  // so the model is rebuilt only when the mode actually changes and MenuBar's
+  // <For> keeps stable section objects across ordinary re-renders
+  // (kdd/solid-reactivity-pitfalls).
+  const navModel = createMemo(() => buildNavModel(activeNavConfig()));
+
   const selected = (): NavLeaf =>
-    findLeafByPath(relativePath()) ?? NO_SELECTION;
+    findLeafIn(navModel().leaves, relativePath()) ?? NO_SELECTION;
 
   // The browser tab names the screen the URL points at (spec/chrome § document
   // title) — the registry's label for the destination, the list entry for a
@@ -129,8 +142,8 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   // child is dropped — keep stable references; otherwise MenuBar's <For> would
   // remount nav sections on every shell re-render
   // (kdd/solid-reactivity-pitfalls).
-  const menuUpper = createMemo(() => gateNav(upperNav));
-  const menuLower = createMemo(() => gateNav(lowerNav));
+  const menuUpper = createMemo(() => gateNav(navModel().upper));
+  const menuLower = createMemo(() => gateNav(navModel().lower));
 
   // The router is the registry's third surface (spec/navigation § one
   // registry): a capability-gated destination's URL is unreachable — it lands
@@ -232,8 +245,10 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
         /* The brand mark goes home — the store root, which IS Home, the same
            destination the menu's own Home entry routes to (navConfig, path '').
            The conventional job for a logo in app chrome, and the reason it is
-           not wired to the rail toggle instead. */
-        onHome={() => navigate(storeHref(''))}
+           not wired to the rail toggle instead. In prescriber mode there is no
+           Home, so navHomePath names the landing screen instead — the mark
+           still goes wherever "home" is for this user. */
+        onHome={() => navigate(storeHref(navHomePath()))}
         syncStatus={syncIndicator.status()}
         syncing={syncIndicator.syncing()}
         onSyncNow={syncNow}
@@ -260,7 +275,7 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
         />
         <Show
           when={access().kind === 'ok'}
-          fallback={<Navigate href={`/${params.storeId}`} />}
+          fallback={<Navigate href={storeHref(navHomePath())} />}
         >
           {/* Wraps the PAGE, not the shell chrome: the only consumer is the
               page header's breadcrumb. */}

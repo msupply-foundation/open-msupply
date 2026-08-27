@@ -287,6 +287,7 @@ const FILTERS: Filter<InboundListFilter>[] =
     isProgramInvoice: null,
     purchaseOrderId: null,
     purchaseOrderNumber: null,
+    prescriptionRequestId: null,
     programId: null,
   });
 

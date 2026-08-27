@@ -11,7 +11,6 @@ import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { DateField } from '../../../ui/elements/inputs/DateField';
 import { localTodayIso } from '../../../ui/elements/inputs/dateTimeConvert';
 import { PatientSearch, type PatientOption } from '../../../domain/patient';
-import { ClinicianSelect } from '../../../domain/clinician';
 import { ProgramNameSelect } from '../../../domain/program';
 import { CreatePatientModal } from '../../patients';
 import { newPrescriptionRequestDate } from '../detail/prescriptionRequestUpdate';
@@ -19,11 +18,13 @@ import { InsertPrescriptionRequest } from './createPrescriptionRequest.generated
 
 // The create-request dialog (spec/prescription-requests/ui-surface.md S2, AC-C1..
 // C3): patient (the one required field — the reusable patient picker), date
-// (defaults today, capped at today), clinician (picked, with the
-// create-clinician side flow), and program. Create is unavailable until a
+// (defaults today, capped at today), and program. Create is unavailable until a
 // patient is chosen; a rejection shows in-dialog with entries intact
 // (rejections here are all generic — contract § wire traps); success
 // navigates to the new request's detail.
+//
+// There is NO clinician field: the request records who prescribed as the user
+// who entered it (§ who prescribed), so there is nothing to pick.
 
 export interface CreatePrescriptionRequestModalProps {
   open: boolean;
@@ -38,7 +39,6 @@ export const CreatePrescriptionRequestModal: Component<
 
   const [patient, setPatient] = createSignal<PatientOption | null>(null);
   const [date, setDate] = createSignal<string>(localTodayIso());
-  const [clinicianId, setClinicianId] = createSignal<string>();
   const [programId, setProgramId] = createSignal<string>();
   const [busy, setBusy] = createSignal(false);
   const [error, setError] = createSignal<string>();
@@ -49,7 +49,6 @@ export const CreatePrescriptionRequestModal: Component<
   const reset = () => {
     setPatient(null);
     setDate(localTodayIso());
-    setClinicianId(undefined);
     setProgramId(undefined);
     setError(undefined);
   };
@@ -76,7 +75,6 @@ export const CreatePrescriptionRequestModal: Component<
         input: {
           id: generateUUID(),
           patientId: chosen.id,
-          ...(clinicianId() ? { clinicianId: clinicianId() } : {}),
           ...(programId() ? { programId: programId() } : {}),
           ...(backdatedTo ? { prescriptionDatetime: backdatedTo } : {}),
         },
@@ -154,17 +152,6 @@ export const CreatePrescriptionRequestModal: Component<
           value={date()}
           max={localTodayIso()}
           onChange={value => setDate(value ?? localTodayIso())}
-        />
-      </FieldRow>
-      <FieldRow label={t('label.clinician')}>
-        <ClinicianSelect
-          label={t('label.clinician')}
-          hideLabel
-          inputTestId="clinician-select"
-          value={clinicianId()}
-          allowCreate
-          storeId={params.storeId}
-          onChange={clinician => setClinicianId(clinician?.id)}
         />
       </FieldRow>
       <FieldRow label={t('label.program')}>

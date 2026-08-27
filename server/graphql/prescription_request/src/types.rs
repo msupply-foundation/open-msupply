@@ -2,15 +2,12 @@ use async_graphql::dataloader::DataLoader;
 use async_graphql::*;
 use chrono::{DateTime, Utc};
 use graphql_core::loader::{
-    AllowedCustomFieldKeysByScopeLoader, ClinicianLoader, ClinicianLoaderInput, DiagnosisLoader,
-    ItemLoader, PatientLoader, PrescriptionRequestLinesByRequestIdLoader, ProgramByIdLoader,
-    UserLoader,
+    AllowedCustomFieldKeysByScopeLoader, DiagnosisLoader, ItemLoader, PatientLoader,
+    PrescriptionRequestLinesByRequestIdLoader, ProgramByIdLoader, UserLoader,
 };
 use graphql_core::ContextExt;
 use graphql_types::types::program::{patient::PatientNode, program_node::ProgramNode};
-use graphql_types::types::{
-    filter_custom_fields, ClinicianNode, DiagnosisNode, ItemNode, UserNode,
-};
+use graphql_types::types::{filter_custom_fields, DiagnosisNode, ItemNode, UserNode};
 use repository::{PrescriptionRequest, PrescriptionRequestLineRow, PrescriptionRequestRow};
 use service::prescription_request::update::PRESCRIPTION_REQUEST_CUSTOM_FIELD_SCOPE;
 use service::ListResult;
@@ -87,23 +84,6 @@ impl PrescriptionRequestNode {
         Ok(Some(result))
     }
 
-    pub async fn clinician_id(&self) -> &Option<String> {
-        &self.row().clinician_link_id
-    }
-    pub async fn clinician(&self, ctx: &Context<'_>) -> Result<Option<ClinicianNode>> {
-        let Some(clinician_id) = &self.row().clinician_link_id else {
-            return Ok(None);
-        };
-        let loader = ctx.get_loader::<DataLoader<ClinicianLoader>>();
-        Ok(loader
-            .load_one(ClinicianLoaderInput::new(
-                &self.row().store_id,
-                clinician_id,
-            ))
-            .await?
-            .map(ClinicianNode::from_domain))
-    }
-
     pub async fn diagnosis_id(&self) -> &Option<String> {
         &self.row().diagnosis_id
     }
@@ -134,6 +114,10 @@ impl PrescriptionRequestNode {
             }))
     }
 
+    /// The user who entered the request — and so, the prescriber
+    /// (spec/prescription-requests § who prescribed). There is no clinician
+    /// field on this node: the picker was removed, and `created_by` is the
+    /// sole record of who prescribed.
     pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
         let loader = ctx.get_loader::<DataLoader<UserLoader>>();
         Ok(loader

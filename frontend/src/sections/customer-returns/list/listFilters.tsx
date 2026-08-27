@@ -118,6 +118,7 @@ export const createFilters = (
     invoiceNumber: null,
     invoiceNumberOrStatus: null,
     purchaseOrderNumber: null,
+    prescriptionRequestId: null,
     linkedOrderNumber: null,
     theirReference: null,
     transportReference: null,

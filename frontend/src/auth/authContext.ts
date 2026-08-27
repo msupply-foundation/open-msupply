@@ -86,10 +86,31 @@ const reLoginRequiredWasPersisted = (): boolean => {
 // `stores` nor refuses a login into a disabled one (contract § login errors).
 // Takes the user rather than reading the signal so callers stay reactive on
 // their own read of it.
+//
+// Nor is a store a prescriber-mode user could reach but not work in
+// (spec/prescription-requests § prescriber mode). Prescriber mode offers the
+// dispensary's own screens, and those sit behind the `dispensary` capability
+// gate — so in a store that is not a dispensary such a user would arrive to an
+// EMPTY menu, every destination gated away, with no way onward. That is a store
+// they cannot enter, and a store nobody can enter should not be offered: the
+// reason is site configuration they cannot act on, so failing on selection
+// would only add a dead end to click.
+//
+// Per store on BOTH sides — the mode and the store's own mode — so this
+// withholds the clinic-less warehouse from someone who is a prescriber there
+// while leaving them every store where they are an ordinary user.
 export const loginableStores = (
   u: AuthUser | undefined
-): AuthUser['stores']['nodes'] =>
-  u?.stores.nodes.filter(store => !store.isDisabled) ?? [];
+): AuthUser['stores']['nodes'] => {
+  const prescriberIn = new Set(u?.prescriberModeStoreIds ?? []);
+  return (
+    u?.stores.nodes.filter(
+      store =>
+        !store.isDisabled &&
+        !(prescriberIn.has(store.id) && store.storeMode !== 'DISPENSARY')
+    ) ?? []
+  );
+};
 
 // The store code for a store id, from the logged-in user's store list — the
 // list StoreGuardLayout itself resolves stores from, so any routed storeId is
