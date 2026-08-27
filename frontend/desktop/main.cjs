@@ -1,15 +1,10 @@
-// The desktop shell (spec/desktop) — the host side of the split tabled in
-// src/desktop/README.md: it serves the bundled discovery page, browses mDNS,
-// answer-checks a chosen server, navigates the window, and owns the way back.
-// The page (src/desktop/, built to dist-discovery/) owns everything the user
-// sees and decides.
-//
-// Two gaps of the CURRENT product shell (open-msupply electron.ts), named in
-// src/desktop/hostBridge.ts, are deliberately NOT reproduced here:
-// - connectToServer honours the server's `path`, which carries the login
-//   hand-off's discovery-return + lng parameters (AC-DT23/24);
-// - a failed load falls back to discovery with ?timedout=true, so the
-//   could-not-connect notice is seeded (AC-DT2, AC-DT4).
+// The desktop shell (spec/desktop) — the host side of the contract in
+// src/discovery/hostContract.ts: it serves the bundled discovery page,
+// browses mDNS and hands announcements over verbatim, states this machine's
+// facts (hostInfo), answer-checks a URL on request (probe), and navigates
+// the window (navigate). The page owns everything the user sees and every
+// decision — locality marking, address rewriting, what is remembered, the
+// probe → record → navigate ordering — so this file holds no policy.
 //
 // The discovery page is served over LOOPBACK HTTP, not file:// — the page's
 // return address must be an http(s) URL: its own validation drops other
@@ -22,28 +17,29 @@ const fs = require('node:fs');
 const http = require('node:http');
 const https = require('node:https');
 const os = require('node:os');
-const { app, BrowserWindow, ipcMain, session } = require('electron');
+const { execSync } = require('node:child_process');
+const { app, BrowserWindow, dialog, ipcMain, session } = require('electron');
 const Bonjour = require('bonjour-service').Bonjour;
 
-// Same IPC channel names as the current product shell's preload, so the two
-// stay recognisably one contract.
 const IPC = {
-  START_SERVER_DISCOVERY: 'start-server-discovery',
-  DISCOVERED_SERVERS: 'discovered-servers',
-  CONNECT_TO_SERVER: 'connect-to-server',
-  CONNECTED_SERVER: 'connected-server',
-  GO_BACK_TO_DISCOVERY: 'go-back-to-discovery',
+  HOST_INFO: 'discovery:host-info',
+  START: 'discovery:start',
+  ANNOUNCEMENTS: 'discovery:announcements',
+  PROBE: 'discovery:probe',
+  NAVIGATE: 'discovery:navigate',
 };
 
 const DISCOVERY_PAGE_PORT = 8317; // fixed: the page's localStorage lives on this origin
-const ANSWER_CHECK_TIMEOUT_MS = 5000; // the bounded launch/choice check (spec § launch)
 const STANDALONE = process.argv.includes('--standalone');
+const PAGE = 'discovery.html';
 
-// Packaged layout has dist-discovery beside main.cjs; a dev run
-// (`pnpm electron`) uses the repo build one level up.
+// Packaged layout has the pruned page bundle beside main.cjs
+// (scripts/prune-discovery-dist.mjs — discovery.html + its transitive chunks
+// out of the app build); a dev run (`pnpm electron`) serves the repo's full
+// dist/, of which the page's files are a subset.
 const DISCOVERY_DIR = fs.existsSync(path.join(__dirname, 'dist-discovery'))
   ? path.join(__dirname, 'dist-discovery')
-  : path.join(__dirname, '..', 'dist-discovery');
+  : path.join(__dirname, '..', 'dist');
 
 // --- Serve the bundled discovery page over loopback ------------------------
 
@@ -61,84 +57,129 @@ const MIME = {
 const servePage = () =>
   new Promise((resolve, reject) => {
     const server = http.createServer((req, res) => {
-      const urlPath = decodeURIComponent(new URL(req.url, 'http://x').pathname);
-      let file = path.normalize(path.join(DISCOVERY_DIR, urlPath));
-      // no traversal outside the bundle; directories get the SPA index
-      if (!file.startsWith(DISCOVERY_DIR)) file = path.join(DISCOVERY_DIR, 'index.html');
+      const fallback = path.join(DISCOVERY_DIR, PAGE);
+      let file = fallback;
+      try {
+        const urlPath = decodeURIComponent(
+          new URL(req.url, 'http://x').pathname
+        );
+        file = path.normalize(path.join(DISCOVERY_DIR, urlPath));
+      } catch {
+        // A malformed percent-sequence is just a bad request; anything on
+        // this machine can hit the loopback port, and a URIError here would
+        // take the whole main process down.
+      }
+      // no traversal outside the bundle; directories get the SPA page
+      if (!file.startsWith(DISCOVERY_DIR + path.sep)) file = fallback;
       if (!fs.existsSync(file) || fs.statSync(file).isDirectory())
-        file = path.join(DISCOVERY_DIR, 'index.html');
-      res.setHeader('content-type', MIME[path.extname(file)] ?? 'application/octet-stream');
+        file = fallback;
+      res.setHeader(
+        'content-type',
+        MIME[path.extname(file)] ?? 'application/octet-stream'
+      );
       fs.createReadStream(file).pipe(res);
     });
     server.once('error', reject);
     // loopback only: this server exists for this window, not the network
     server.listen(DISCOVERY_PAGE_PORT, '127.0.0.1', () =>
-      resolve(`http://127.0.0.1:${DISCOVERY_PAGE_PORT}/index.html`)
+      resolve(`http://127.0.0.1:${DISCOVERY_PAGE_PORT}/${PAGE}`)
     );
   });
+
+// --- Host facts (hostInfo) ---------------------------------------------------
+
+const lanAddresses = () =>
+  Object.values(os.networkInterfaces())
+    .flat()
+    .filter(i => i && i.family === 'IPv4' && !i.internal)
+    .map(i => i.address);
+
+// This machine's id, from the SAME OS sources the server's announced
+// hardware_id comes from (the machine_uid crate: IOPlatformUUID on macOS,
+// /var/lib/dbus/machine-id on Linux, the MachineGuid registry value on
+// Windows) — so the page's hardware-id locality compare matches the local
+// server's announcement. '' when unreadable: the this-machine mark just
+// never shows.
+let machineIdCached;
+const machineId = () => {
+  if (machineIdCached !== undefined) return machineIdCached;
+  try {
+    if (process.platform === 'darwin') {
+      const out = execSync('ioreg -rd1 -c IOPlatformExpertDevice', {
+        stdio: ['ignore', 'pipe', 'ignore'],
+      }).toString();
+      machineIdCached = /"IOPlatformUUID"\s*=\s*"([^"]+)"/.exec(out)?.[1] ?? '';
+    } else if (process.platform === 'win32') {
+      const out = execSync(
+        'reg query HKLM\\SOFTWARE\\Microsoft\\Cryptography /v MachineGuid',
+        { stdio: ['ignore', 'pipe', 'ignore'] }
+      ).toString();
+      machineIdCached = /MachineGuid\s+REG_SZ\s+(\S+)/.exec(out)?.[1] ?? '';
+    } else {
+      const read = p => {
+        try {
+          return fs.readFileSync(p, 'utf8').trim();
+        } catch {
+          return '';
+        }
+      };
+      machineIdCached =
+        read('/var/lib/dbus/machine-id') || read('/etc/machine-id');
+    }
+  } catch {
+    machineIdCached = '';
+  }
+  return machineIdCached;
+};
 
 // --- mDNS browse ------------------------------------------------------------
 
 const bonjour = new Bonjour();
 let browser;
-let discovered = [];
-let connectedServer = null;
+let announcements = [];
 
-const localAddresses = () =>
-  Object.values(os.networkInterfaces())
-    .flat()
-    .filter(i => i && i.family === 'IPv4')
-    .map(i => i.address);
-
-const lanAddress = () =>
-  Object.values(os.networkInterfaces())
-    .flat()
-    .find(i => i && i.family === 'IPv4' && !i.internal)?.address;
-
-// One announcement → the wire shape the page expects (FrontEndHost,
-// src/desktop/hostBridge.ts). Identity comes from the TXT record; the page
-// re-checks completeness, so a partial record can pass through as-is.
-const toFrontEndHost = service => {
+// One resolved service → the verbatim announcement shape
+// (hostContract.ts § RawAnnouncement): resolved IPv4 + TXT identity, nothing
+// marked, nothing rewritten — locality and address policy are the page's.
+const toAnnouncement = service => {
   const txt = service.txt ?? {};
-  let ip = (service.addresses ?? []).find(a => /^\d+\.\d+\.\d+\.\d+$/.test(a));
+  const ip = (service.addresses ?? []).find(a =>
+    /^\d+\.\d+\.\d+\.\d+$/.test(a)
+  );
   if (!ip) return undefined;
-  // Address rewriting (AC-DT22): a loopback announcement on a CLIENT machine
-  // is this machine's own server — display and share an address other
-  // machines can reach.
-  if (/^127\./.test(ip)) ip = lanAddress() ?? ip;
   return {
-    protocol: txt.protocol === 'http' ? 'http' : 'https',
-    port: service.port,
     ip,
+    port: service.port,
+    protocol: txt.protocol ?? '',
     clientVersion: txt.client_version ?? '',
     hardwareId: txt.hardware_id ?? '',
-    isLocal: localAddresses().includes(ip),
   };
 };
 
 const startDiscovery = () => {
   browser?.stop();
-  discovered = [];
+  announcements = [];
   browser = bonjour.find({ type: 'omsupply', protocol: 'tcp' }, service => {
-    const host = toFrontEndHost(service);
-    if (host) discovered.push(host);
+    const announcement = toAnnouncement(service);
+    if (announcement) announcements.push(announcement);
   });
 };
 
-// --- The bounded answer check ------------------------------------------------
+// --- The bounded answer check (probe) ----------------------------------------
 
-const serverUrl = s => `${s.protocol}://${s.ip}:${s.port}`;
-
-// Does the server answer at all? Any HTTP response counts (the page lands on
-// /login of whatever the server serves); certificates are accepted — the
-// current shell's check does the same, a weakness spec/desktop's README
-// carries as its open trust question rather than this shell deciding it.
-const answers = target =>
+// Does anything answer HTTP at this URL? Any response counts; certificates
+// are accepted — the legacy shell's check does the same, a weakness
+// spec/desktop's README carries as its open trust question rather than this
+// shell deciding it. The timeout is the page's (clamped here only against a
+// nonsense value crossing the bridge).
+const answers = (target, timeoutMs) =>
   new Promise(resolve => {
+    if (!/^https?:\/\//.test(target)) return resolve(false);
+    const timeout = Math.min(Math.max(Number(timeoutMs) || 5000, 500), 30000);
     const lib = target.startsWith('https') ? https : http;
     const req = lib.get(
       target,
-      { rejectUnauthorized: false, timeout: ANSWER_CHECK_TIMEOUT_MS },
+      { rejectUnauthorized: false, timeout },
       res => {
         res.resume();
         resolve(true);
@@ -157,8 +198,32 @@ const discoveryQuery = extra => {
   return qs ? `?${qs}` : '';
 };
 
+const fatal = (title, detail) => {
+  dialog.showErrorBox(title, detail);
+  app.quit();
+};
+
 const createWindow = async () => {
-  const pageUrl = await servePage();
+  if (!fs.existsSync(path.join(DISCOVERY_DIR, PAGE)))
+    return fatal(
+      'Open mSupply: discovery page missing',
+      `${path.join(DISCOVERY_DIR, PAGE)} does not exist — run \`pnpm build\` first.`
+    );
+
+  let pageUrl;
+  try {
+    pageUrl = await servePage();
+  } catch (e) {
+    // Almost always EADDRINUSE — another instance, or another app, on the
+    // fixed port. Without this the whenReady promise swallowed the rejection
+    // and the process sat alive with no window and no message.
+    return fatal(
+      'Open mSupply: cannot serve the discovery page',
+      `Port ${DISCOVERY_PAGE_PORT} on 127.0.0.1 is unavailable (${e.code ?? e.message}). Close the application using it and relaunch.`
+    );
+  }
+  const pageOrigin = `http://127.0.0.1:${DISCOVERY_PAGE_PORT}`;
+
   const win = new BrowserWindow({
     width: 1280,
     height: 800,
@@ -171,37 +236,42 @@ const createWindow = async () => {
 
   const loadDiscovery = extra => win.loadURL(pageUrl + discoveryQuery(extra));
 
-  ipcMain.on(IPC.START_SERVER_DISCOVERY, startDiscovery);
-  ipcMain.handle(IPC.DISCOVERED_SERVERS, () => ({ servers: discovered }));
-  ipcMain.handle(IPC.CONNECTED_SERVER, () => connectedServer);
-  ipcMain.on(IPC.GO_BACK_TO_DISCOVERY, () => {
-    // The page told not to bounce straight back (AC-DT16); its own
-    // discovery-return URL carries the same flags, this covers a
-    // bridge-initiated return.
-    void loadDiscovery({ autoconnect: 'false' });
-  });
-  ipcMain.handle(IPC.CONNECT_TO_SERVER, async (_event, server) => {
-    if (!(await answers(`${serverUrl(server)}/graphql`)))
-      return { success: false, error: 'server did not answer' };
-    connectedServer = server;
-    // Resolve first (the page records the choice), then navigate — WITH the
-    // path: it carries the discovery-return + lng hand-off (AC-DT23/24).
-    setTimeout(() => {
-      void win.loadURL(`${serverUrl(server)}/${server.path ?? ''}`);
-    }, 50);
-    return { success: true };
+  ipcMain.handle(IPC.HOST_INFO, () => ({
+    platform: 'electron',
+    hardwareId: machineId(),
+    lanAddresses: lanAddresses(),
+  }));
+  ipcMain.on(IPC.START, startDiscovery);
+  ipcMain.handle(IPC.ANNOUNCEMENTS, () => ({ announcements }));
+  ipcMain.handle(IPC.PROBE, (_event, url, timeoutMs) =>
+    answers(url, timeoutMs)
+  );
+  ipcMain.on(IPC.NAVIGATE, (_event, url) => {
+    // Plain navigation, immediately: the page has already persisted what it
+    // needs (record-before-navigate, src/discovery/discovery.ts), so the old
+    // resolve-then-wait-50ms dance is gone. Scheme-checked because the URL
+    // crosses the bridge.
+    if (/^https?:\/\//.test(String(url))) void win.loadURL(url);
   });
 
-  // A server that answered the check but whose UI then fails to load stays in
-  // app-owned content (AC-DT4): back to discovery, the failure named by the
-  // seeded could-not-connect notice (AC-DT2's ?timedout).
-  win.webContents.on('did-fail-load', (_e, code, _desc, _url, isMainFrame) => {
+  // Host duty (hostContract.ts, AC-DT4): a server that answered the probe but
+  // whose UI then fails to load stays in app-owned content — back to
+  // discovery, the failure named by the seeded could-not-connect notice
+  // (?timedout). A failure on the page's OWN origin is a packaging fault, not
+  // a server failure: reloading would just fail again forever, so say so and
+  // stop.
+  win.webContents.on('did-fail-load', (_e, code, desc, url, isMainFrame) => {
     if (!isMainFrame || code === -3 /* user-aborted */) return;
+    if (url.startsWith(pageOrigin))
+      return fatal(
+        'Open mSupply: discovery page failed to load',
+        `${url} failed (${desc || code}).`
+      );
     void loadDiscovery({ autoconnect: 'false', timedout: 'true' });
   });
 
-  // Closing the app ends the session (AC-DT18) — same mechanism as the
-  // current shell: clear cookies while everything is still alive.
+  // Host duty (AC-DT18): closing the app ends the session — same mechanism as
+  // the legacy shell: clear cookies while everything is still alive.
   let closing = false;
   win.on('close', event => {
     if (closing) return;
@@ -215,8 +285,21 @@ const createWindow = async () => {
   await loadDiscovery();
 };
 
-app.whenReady().then(createWindow);
-app.on('window-all-closed', () => {
-  bonjour.destroy();
+// One instance: the loopback port is per-machine, and a second instance would
+// otherwise die on it invisibly. The first instance gets focused instead.
+if (!app.requestSingleInstanceLock()) {
   app.quit();
-});
+} else {
+  app.on('second-instance', () => {
+    const [win] = BrowserWindow.getAllWindows();
+    if (win) {
+      if (win.isMinimized()) win.restore();
+      win.focus();
+    }
+  });
+  app.whenReady().then(createWindow);
+  app.on('window-all-closed', () => {
+    bonjour.destroy();
+    app.quit();
+  });
+}

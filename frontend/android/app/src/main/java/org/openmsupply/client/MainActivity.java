@@ -4,6 +4,8 @@ import android.net.http.SslError;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.webkit.SslErrorHandler;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 
 import com.getcapacitor.BridgeActivity;
@@ -13,16 +15,17 @@ public class MainActivity extends BridgeActivity {
     private static final int SERVER_PORT = 8000;
     private final RemoteServer server = new RemoteServer();
 
-    // Host-initiated navigations (client-mode boot, connectToServer,
-    // goBackToDiscovery) are each a fresh start: once the target page has
-    // loaded, drop the WebView history beneath it. Otherwise hardware back
-    // resurrects a dead document (the serverless bundled app under the
-    // discovery page) or re-enters discovery WITHOUT ?autoconnect=false —
-    // which immediately reconnects to the just-remembered server, the bounce
-    // AC-DT16 forbids. With history pinned to the current page, back falls
-    // through to the App plugin's default (leave the app); the designed ways
-    // back — the login hand-off's discovery-return link and goBackToDiscovery
-    // — both carry autoconnect=false. Set on and read from the UI thread.
+    // Host-initiated navigations (the client-mode boot, every
+    // DiscoveryHostPlugin.navigate, the failed-load recovery below) are each
+    // a fresh start: once the target page has loaded, drop the WebView
+    // history beneath it. Otherwise hardware back resurrects a dead document
+    // (the serverless bundled app under the discovery page) or re-enters
+    // discovery WITHOUT ?autoconnect=false — which immediately reconnects to
+    // the just-remembered server, the bounce AC-DT16 forbids. With history
+    // pinned to the current page, back falls through to the App plugin's
+    // default (leave the app); the designed way back — the login hand-off's
+    // discovery-return link — carries autoconnect=false. Set on and read
+    // from the UI thread.
     private String pendingHistoryClearPrefix;
 
     public void clearHistoryWhenLoaded(String urlPrefix) {
@@ -39,14 +42,20 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(FileTransferPlugin.class);
         registerPlugin(PrintPlugin.class);
         registerPlugin(ReadLogPlugin.class);
-        registerPlugin(NativeApiPlugin.class);
+        registerPlugin(DiscoveryHostPlugin.class);
 
         super.onCreate(savedInstanceState);
 
-        // SPIKE ONLY: trust any cert so fetch() from the capacitor origin can
-        // reach the embedded server's self-signed https. The real app ports
-        // CertWebViewClient (validate local cert + TOFU for remote servers).
-        bridge.setWebViewClient(new BridgeWebViewClient(bridge) {
+        // Client mode: no embedded server, and not the dev-server loop. The
+        // launch decision then belongs to the platform, not the bundled app.
+        boolean clientMode = !this.server.isAvailable() && this.bridge.getConfig().getServerUrl() == null;
+        String discoveryUrl = this.bridge.getLocalUrl() + "/discovery.html";
+
+        // SPIKE ONLY (SSL): trust any cert so fetch() from the capacitor
+        // origin can reach the embedded server's self-signed https. The real
+        // app ports CertWebViewClient (validate local cert + TOFU for remote
+        // servers).
+        this.bridge.setWebViewClient(new BridgeWebViewClient(this.bridge) {
             @Override
             public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
                 android.util.Log.w("OpenMSupply", "Proceeding through SSL error for: " + error.getUrl());
@@ -59,33 +68,51 @@ public class MainActivity extends BridgeActivity {
                 // clearHistory only drops committed entries, so it must run
                 // after the target page loads — matched by prefix because the
                 // final URL can carry a query or a same-origin redirect.
-                if (pendingHistoryClearPrefix != null
+                if (MainActivity.this.pendingHistoryClearPrefix != null
                         && url != null
-                        && url.startsWith(pendingHistoryClearPrefix)) {
+                        && url.startsWith(MainActivity.this.pendingHistoryClearPrefix)) {
                     view.clearHistory();
-                    pendingHistoryClearPrefix = null;
+                    MainActivity.this.pendingHistoryClearPrefix = null;
                 }
+            }
+
+            @Override
+            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                super.onReceivedError(view, request, error);
+                // Host duty (src/discovery/hostContract.ts, AC-DT4): a
+                // connected server whose UI fails to load must land back on
+                // app-owned content — the discovery page, with the
+                // could-not-connect notice seeded (?timedout) and autoconnect
+                // off. Main frame only (a failed subresource is the page's
+                // own business), client mode only (a local-mode fetch error
+                // must never yank the bundled app to discovery), and never
+                // for the local origin itself — that is a packaging fault a
+                // reload cannot fix, not a server failure, so reloading would
+                // just loop.
+                if (!clientMode || !request.isForMainFrame()) return;
+                if (request.getUrl().toString().startsWith(MainActivity.this.bridge.getLocalUrl())) return;
+                MainActivity.this.clearHistoryWhenLoaded(discoveryUrl);
+                view.loadUrl(discoveryUrl + "?autoconnect=false&timedout=true");
             }
         });
 
-        // Client mode (no embedded server, not the dev-server loop): the
-        // launch decision belongs to the platform, not the bundled app —
-        // load the discovery page (bundled at /discovery/, spec/desktop's
+        // Client mode boot: load the discovery page (a second page of the
+        // bundled app build, served at /discovery.html — spec/desktop's
         // Android sibling: spec/android § launch). The page itself decides
         // whether to auto-connect to a remembered server or list the LAN
-        // (src/desktop/DiscoveryPage.tsx); NativeApiPlugin answers its
-        // browse/connect calls. The dev-server loop (server.url set) keeps
-        // its current boot — the vite origin serves the discovery page at
-        // /discovery.html for hand-testing instead.
-        if (!server.isAvailable() && bridge.getConfig().getServerUrl() == null) {
-            String discovery = bridge.getLocalUrl() + "/discovery/index.html";
-            clearHistoryWhenLoaded(bridge.getLocalUrl() + "/discovery/");
-            bridge.getWebView().post(() -> {
+        // (src/discovery/DiscoveryPage.tsx); DiscoveryHostPlugin answers its
+        // hostInfo/browse/probe/navigate calls. The dev-server loop
+        // (server.url set) keeps its current boot — the vite origin serves
+        // the discovery page at the same /discovery.html for hand-testing
+        // instead.
+        if (clientMode) {
+            this.clearHistoryWhenLoaded(discoveryUrl);
+            this.bridge.getWebView().post(() -> {
                 // Abort the default boot (the bundled app, which has no server
                 // to talk to in client mode) before it commits: discovery is
                 // the sole history entry and the doomed bundle never flashes.
-                bridge.getWebView().stopLoading();
-                bridge.getWebView().loadUrl(discovery);
+                this.bridge.getWebView().stopLoading();
+                this.bridge.getWebView().loadUrl(discoveryUrl);
             });
         }
 
