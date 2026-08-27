@@ -107,6 +107,13 @@
    figures share baselines across the row while a slot-less card stays centred
    (the auto margin absorbs the free space before justify-content sees it). */
 .content {
-  margin-block-start: auto;
   overflow-wrap: anywhere;
+}
+
+/* The auto margin absorbs the card's free space before justify-content sees it,
+   pinning the slot to the bottom edge — see `contentPlacement`. Under
+   'grouped' there is no margin, so the free space stays split above and below
+   and justify-content centres header and content together. */
+.card[data-content-placement='spread'] .content {
+  margin-block-start: auto;
 }
