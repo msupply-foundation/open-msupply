@@ -15,13 +15,34 @@ import {
   Table,
   definePlugin,
   formatNumber,
+  navigateTo,
   pluginIntl,
+  storeHref,
   type InternalOrderLineInfoPanelProps,
 } from '@openmsupply/plugin-sdk';
 
 const CODE = 'hello_world';
 const intl = pluginIntl(CODE);
 
+/*
+ * Both navigation primitives (spec/plugins/sdk-contract.md § SDK surface), in
+ * the two shapes a contribution reaches a host screen by:
+ *
+ *  - the LINK — `storeHref` gives an href, so this is a plain <a> with a real
+ *    link role, middle-click and open-in-new-tab, and the host's router
+ *    intercepts the click into a client-side navigation;
+ *  - the ROUTE — `navigateTo` goes from code, for when there is no anchor to
+ *    click (here, after doing something else first).
+ *
+ * Neither names the entered store or the app's mount: the same bundle is
+ * correct in every store and on every deploy track (AC-PLUG-P3/P4).
+ *
+ * The link's LOOK is the plugin's own, because the host styles no anchor
+ * globally — a bare <a> would come out browser-default blue. One host design
+ * token is all it takes to sit in key with the surrounding chrome, in either
+ * theme (sdk-contract § styling: bespoke styles self-contained, host tokens
+ * MAY be consumed — never host class names).
+ */
 const Greeting = () => {
   const [clicks, setClicks] = createSignal(0);
   return (
@@ -29,6 +50,23 @@ const Greeting = () => {
       <p>{intl.t('greeting')}</p>
       <button type="button" onClick={() => setClicks(count => count + 1)}>
         {intl.t('clicks', { count: formatNumber(clicks()) })}
+      </button>{' '}
+      <a
+        href={storeHref('inventory/stock')}
+        style={{ color: 'var(--secondary-main)' }}
+        data-testid="hello-world-link"
+      >
+        {intl.t('nav.stock')}
+      </a>{' '}
+      <button
+        type="button"
+        data-testid="hello-world-navigate"
+        onClick={() => {
+          setClicks(count => count + 1);
+          navigateTo('catalogue/items');
+        }}
+      >
+        {intl.t('nav.items')}
       </button>
     </div>
   );
@@ -253,6 +291,8 @@ export default definePlugin({
       greeting: 'Hello from a plugin',
       clicks: 'Clicked {{count}} times',
       loading: '…',
+      'nav.stock': 'Stock (link)',
+      'nav.items': 'Items (from code)',
       'column.total-stock': 'Total stock',
       'column.total-stock-description': 'Initial stock on hand plus incoming',
       'column.arrivals': 'Arrivals',
@@ -281,6 +321,8 @@ export default definePlugin({
       greeting: 'Bonjour depuis un plugin',
       clicks: 'Cliqué {{count}} fois',
       loading: '…',
+      'nav.stock': 'Stock (lien)',
+      'nav.items': 'Articles (depuis le code)',
       'column.total-stock': 'Stock total',
       'column.total-stock-description': 'Stock initial plus arrivages',
       'column.arrivals': 'Arrivages',
