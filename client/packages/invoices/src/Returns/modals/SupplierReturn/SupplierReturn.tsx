@@ -1,0 +1,237 @@
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  useTranslation,
+  useDialog,
+  DialogButton,
+  useTabs,
+  Box,
+  ModalMode,
+  AlertColor,
+  useNotification,
+} from '@openmsupply-client/common';
+import { ItemSelector } from './ItemSelector';
+import { ReturnSteps, Tabs } from './ReturnSteps';
+import { useReturns } from '../../api';
+import { useDraftSupplierReturnLines } from './useDraftSupplierReturnLines';
+
+interface SupplierReturnEditModalProps {
+  isOpen: boolean;
+  stockLineIds: string[];
+  onClose: () => void;
+  onCreate?: () => void;
+  supplierId: string;
+  returnId?: string;
+  inboundShipment?: {
+    id: string;
+    otherPartyName: string;
+    theirReference?: string | null;
+    linkedShipment?: { invoiceNumber: number } | null;
+  };
+  initialItemId?: string | null;
+  loadNextItem?: () => void;
+  hasNextItem?: boolean;
+  modalMode: ModalMode | null;
+  isNewReturn?: boolean;
+}
+
+export const SupplierReturnEditModal = ({
+  isOpen,
+  stockLineIds,
+  onClose,
+  onCreate,
+  supplierId,
+  returnId,
+  initialItemId,
+  modalMode,
+  inboundShipment,
+  loadNextItem,
+  hasNextItem = false,
+  isNewReturn = false,
+}: SupplierReturnEditModalProps) => {
+  const t = useTranslation();
+  const { currentTab, onChangeTab } = useTabs(Tabs.Quantity);
+  const { success, error } = useNotification();
+  const [itemId, setItemId] = useState<string | undefined>(
+    initialItemId ?? undefined
+  );
+  const alertRef = useRef<HTMLDivElement>(null);
+
+  const [zeroQuantityAlert, setZeroQuantityAlert] = useState<
+    AlertColor | undefined
+  >();
+
+  const sourceInvoiceNumber =
+    inboundShipment?.linkedShipment?.invoiceNumber ??
+    inboundShipment?.theirReference ??
+    null;
+  const defaultReference =
+    isNewReturn && sourceInvoiceNumber !== null
+      ? t('messages.default-supplier-return-reference', {
+          invoiceNumber: sourceInvoiceNumber,
+        })
+      : '';
+  const [theirReference, setTheirReference] = useState(defaultReference);
+
+  // For existing returns, initialise theirReference from the return data once
+  // loaded
+  const { data: returnData } = useReturns.document.supplierReturn();
+  useEffect(() => {
+    if (!isNewReturn && returnData?.theirReference !== undefined) {
+      setTheirReference(returnData.theirReference ?? '');
+    }
+  }, [returnData?.theirReference, isNewReturn]);
+
+  // The inboundIsDisabled hook returns true when there is no data, so in the
+  // case of a new return, we want to make sure it is *not* disabled
+  const isDisabled = useReturns.utils.supplierIsDisabled() && !isNewReturn;
+
+  const { Modal } = useDialog({ isOpen, onClose, disableBackdrop: true });
+
+  const { lines, update, save } = useDraftSupplierReturnLines({
+    supplierId,
+    stockLineIds,
+    returnId,
+    itemId,
+    inboundShipmentId: inboundShipment?.id,
+  });
+
+  useEffect(() => {
+    if (initialItemId === undefined) return;
+    setItemId(initialItemId === null ? undefined : initialItemId);
+  }, [initialItemId]);
+
+  const onOk = async () => {
+    try {
+      const supplierReturn = !isDisabled && (await save(theirReference));
+      onCreate?.();
+      !!supplierReturn &&
+        supplierReturn?.originalShipment?.id &&
+        isNewReturn &&
+        success(t('messages.supplier-return-created-shipped'))();
+      onClose();
+    } catch (e) {
+      const errorMessage =
+        (e as Error)?.message ?? t('error.failed-to-save-return');
+      error(errorMessage)();
+    }
+  };
+
+  const handleNextItem = async () => {
+    try {
+      !isDisabled && (await save(theirReference));
+      loadNextItem && loadNextItem();
+      onChangeTab(Tabs.Quantity);
+    } catch (e) {
+      const errorMessage =
+        (e as Error)?.message ?? t('error.failed-to-save-return');
+      error(errorMessage)();
+    }
+  };
+
+  const handleNextStep = () => {
+    if (lines.some(line => line.numberOfPacksToReturn !== 0)) {
+      onChangeTab(Tabs.Reason);
+      return;
+    }
+    switch (modalMode) {
+      case ModalMode.Create: {
+        setZeroQuantityAlert('error');
+        break;
+      }
+      case ModalMode.Update: {
+        setZeroQuantityAlert('warning');
+        break;
+      }
+    }
+    alertRef?.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const CancelButton = <DialogButton onClick={onClose} variant="cancel" />;
+  const BackButton = (
+    <DialogButton onClick={() => onChangeTab(Tabs.Quantity)} variant="back" />
+  );
+  const NextStepButton = (
+    <DialogButton
+      onClick={handleNextStep}
+      variant="next-and-ok"
+      disabled={!lines.length}
+      customLabel={t('button.next-step')}
+    />
+  );
+  const OkButton = <DialogButton onClick={onOk} variant="ok" />;
+  const OkAndNextButton = (
+    <DialogButton
+      onClick={handleNextItem}
+      variant="next-and-ok"
+      disabled={
+        currentTab !== Tabs.Reason ||
+        (isDisabled && !hasNextItem) ||
+        (modalMode === ModalMode.Update && !hasNextItem)
+      }
+    />
+  );
+
+  return (
+    <Modal
+      title={t('heading.return-items')}
+      cancelButton={currentTab === Tabs.Quantity ? CancelButton : BackButton}
+      // zeroQuantityAlert === warning implies all lines are 0 and user has
+      // been already warned, so we act immediately to update them
+      okButton={
+        currentTab === Tabs.Quantity && zeroQuantityAlert !== 'warning'
+          ? NextStepButton
+          : OkButton
+      }
+      nextButton={!isNewReturn ? OkAndNextButton : undefined}
+      height={650}
+      width={1200}
+      sx={{
+        '& .MuiDialogTitle-root': { py: 1.25 },
+        '& .MuiDialogActions-root': { marginTop: '4px', marginBottom: '4px' },
+      }}
+      contentProps={{
+        sx: {
+          overflowY: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          paddingTop: '2px',
+          paddingBottom: 0,
+        },
+      }}
+    >
+      <Box
+        ref={alertRef}
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
+          overflow: 'hidden',
+        }}
+      >
+        {returnId && (
+          <ItemSelector
+            key={itemId}
+            disabled={!!itemId}
+            itemId={itemId}
+            onChangeItemId={setItemId}
+          />
+        )}
+        {lines.length > 0 && (
+          <ReturnSteps
+            currentTab={currentTab}
+            lines={lines}
+            update={update}
+            returnId={returnId}
+            zeroQuantityAlert={zeroQuantityAlert}
+            setZeroQuantityAlert={setZeroQuantityAlert}
+            theirReference={theirReference}
+            onTheirReferenceChange={setTheirReference}
+            isDisabled={isDisabled}
+            returnToName={inboundShipment?.otherPartyName}
+          />
+        )}
+      </Box>
+    </Modal>
+  );
+};

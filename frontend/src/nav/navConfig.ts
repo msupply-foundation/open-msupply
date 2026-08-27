@@ -7,6 +7,11 @@
 // Paths are relative to the store root (/{storeId}). A section's own `path` is
 // a landing destination; its `children` are the inner sub-menu entries.
 //
+// Home's path is the EMPTY string, which is not a special case but the literal
+// reading of the line above: Home IS the store root, so its store-relative path
+// is nothing. The brand mark has always gone there, so giving the menu entry
+// the same target is what stops one screen from having two URLs.
+//
 // Labels are i18n keys, not English (kdd/type-safety: LocaleKey is derived from
 // the catalog, so a typo or an un-added key stops compiling); each key is the
 // one spec/navigation cites from the reference app's call sites. Every renderer
@@ -70,7 +75,11 @@ export type NavItem = {
 };
 
 export const navConfig: NavItem[] = [
-  { labelKey: 'dashboard', path: 'dashboard' },
+  // Home — the store root itself (see the empty-path note above). `label.home`
+  // is the key the brand mark's accessible name already used, so the logo and
+  // the menu entry name one destination with one word. Every surface that
+  // shows it (menu, palette, breadcrumb, tab title) reads this one key.
+  { labelKey: 'label.home', path: '' },
   {
     labelKey: 'replenishment',
     path: 'replenishment',

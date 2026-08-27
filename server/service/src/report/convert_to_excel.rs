@@ -1,0 +1,1486 @@
+use super::report_service::{GeneratedReport, ReportError};
+use crate::static_files::{StaticFile, StaticFileCategory, StaticFileService};
+use chrono::{DateTime, Utc};
+use csv::{Reader, StringRecord};
+use scraper::{ElementRef, Html, Selector};
+use std::{collections::HashMap, fs, time::SystemTime};
+use umya_spreadsheet::{
+    helper::coordinate::{column_index_from_string, coordinate_from_index, index_from_coordinate},
+    writer::xlsx,
+    Cell, FontSize, Spreadsheet, Worksheet,
+};
+use util::sanitize_filename;
+
+pub fn csv_to_excel(
+    base_dir: &str,
+    csv_data: &str,
+    filename: &str,
+    sheet_name: Option<&str>,
+) -> Result<String, ReportError> {
+    // Parse CSV data
+    let mut reader = Reader::from_reader(csv_data.as_bytes());
+    let headers = reader
+        .headers()
+        .map_err(|e| ReportError::DocGenerationError(e.to_string()))?
+        .clone();
+    let records: Vec<StringRecord> = reader
+        .records()
+        .collect::<Result<_, _>>()
+        .map_err(|e| ReportError::DocGenerationError(e.to_string()))?;
+    let sanitized_filename = sanitize_filename(filename.to_string());
+    let reserved_file = reserve_file(base_dir, &sanitized_filename)?;
+
+    // Create Excel workbook
+    let mut book = umya_spreadsheet::new_file();
+    if let Some(name) = sheet_name
+        .map(sanitize_sheet_name)
+        .filter(|n| !n.is_empty())
+    {
+        // Failure to rename the default sheet is non-fatal — fall through with the default name.
+        let _ = book.set_sheet_name(0, &name);
+    }
+    let sheet = book
+        .get_sheet_mut(&0)
+        .ok_or_else(|| ReportError::DocGenerationError("Failed to get worksheet".to_string()))?;
+
+    // Write headers
+    for (col_idx, header) in headers.iter().enumerate() {
+        let cell = sheet.get_cell_mut((col_idx as u32 + 1, 1));
+        cell.set_value(header.to_string());
+        cell.get_style_mut().get_font_mut().set_bold(true);
+    }
+
+    // Write data rows
+    for (row_idx, record) in records.iter().enumerate() {
+        let row = row_idx as u32 + 2;
+        for (col_idx, field) in record.iter().enumerate() {
+            let cell = sheet.get_cell_mut((col_idx as u32 + 1, row));
+            cell.set_value(field);
+        }
+    }
+
+    // Save to temporary file
+    xlsx::write(&book, reserved_file.path)
+        .map_err(|err| ReportError::DocGenerationError(format!("{err}")))?;
+
+    Ok(reserved_file.id)
+}
+
+/// Converts the report to an Excel file and returns the file id
+pub fn export_html_report_to_excel(
+    base_dir: &str,
+    report: GeneratedReport,
+    report_name: String,
+    template_as_buffer: &Option<Vec<u8>>,
+    sheet_name: Option<&str>,
+) -> Result<String, ReportError> {
+    let reserved_file = reserve_file(base_dir, &report_name)?;
+    let mut book = get_workbook(template_as_buffer, &reserved_file.path, sheet_name)?;
+
+    // We work with the first sheet in the book
+    let sheet = book
+        .get_sheet_mut(&0)
+        .ok_or(ReportError::DocGenerationError(
+            "Couldn't find Excel sheet".to_string(),
+        ))?;
+
+    // Parse HTML report and apply it to the sheet
+    apply_report(sheet, report, &report_name);
+
+    // Save the report to tmp dir, for download
+    xlsx::write(&book, reserved_file.path)
+        .map_err(|err| ReportError::DocGenerationError(format!("{err}")))?;
+
+    Ok(reserved_file.id)
+}
+
+/// Coerce a free-form string into a value Excel will accept as a sheet name.
+/// Excel forbids `\ / ? * [ ] :`, leading/trailing apostrophes, names longer
+/// than 31 chars, and empty names.
+fn sanitize_sheet_name(name: &str) -> String {
+    let cleaned: String = name
+        .chars()
+        .map(|c| match c {
+            '\\' | '/' | '?' | '*' | '[' | ']' | ':' => '_',
+            _ => c,
+        })
+        .collect();
+    let trimmed = cleaned.trim().trim_matches('\'');
+    trimmed.chars().take(31).collect()
+}
+
+/// Hold a file in the temporary directory
+fn reserve_file(base_dir: &str, report_name: &str) -> Result<StaticFile, ReportError> {
+    let now: DateTime<Utc> = SystemTime::now().into();
+    let file_service = StaticFileService::new(base_dir)
+        .map_err(|err| ReportError::DocGenerationError(format!("{err}")))?;
+
+    let reserved_file = file_service
+        .reserve_file(
+            &format!("{}_{}.xlsx", now.format("%Y%m%d_%H%M%S"), report_name),
+            &StaticFileCategory::Temporary,
+            None,
+        )
+        .map_err(|err| ReportError::DocGenerationError(format!("{err}")))?;
+
+    Ok(reserved_file)
+}
+
+/// Generates excel spreadsheet from a template or creates a new one
+fn get_workbook(
+    template_as_buffer: &Option<Vec<u8>>,
+    path: &str,
+    sheet_name: Option<&str>,
+) -> Result<Spreadsheet, ReportError> {
+    let book = match template_as_buffer {
+        Some(template) => {
+            // Save a copy of the template to the reserved file path
+            fs::write(path, template)
+                .map_err(|err| ReportError::DocGenerationError(format!("{err}")))?;
+
+            // Read in the template as a mutable XLSX book. The template's own
+            // sheet name is kept
+            umya_spreadsheet::reader::xlsx::read(path)
+                .map_err(|err| ReportError::DocGenerationError(format!("{err}")))?
+        }
+        None => {
+            // Create a new xlsx file if no template is provided
+            let mut book = umya_spreadsheet::new_file();
+            let name = sheet_name
+                .map(sanitize_sheet_name)
+                .filter(|n| !n.is_empty())
+                .unwrap_or_else(|| "Report".to_string());
+            book.set_sheet_name(0, &name)
+                .map_err(|err| ReportError::DocGenerationError(err.to_string()))?;
+            book
+        }
+    };
+    Ok(book)
+}
+
+/// Maps a generated HTML report to an Excel worksheet
+fn apply_report(sheet: &mut Worksheet, report: GeneratedReport, report_name: &str) {
+    let mut row_idx: u32 = 1;
+
+    // HEADER
+    let header_rows_used = report.header.as_ref().map_or(0, |h| {
+        // If header is present, apply it and return the number of rows used
+        apply_header(sheet, h)
+    });
+
+    // MAIN DATA
+    let body = Selectors::new(&report.document);
+
+    if let Some(start_row) = body.table_start_row() {
+        // If the table start row is specified, use it
+        row_idx = start_row;
+    } else {
+        // Otherwise, we start after the header rows
+        if header_rows_used > 0 {
+            // IMPORTANT: add a row before the main data table
+            // needed to support pivot tables/post processing in Excel
+            row_idx += header_rows_used + 1;
+        }
+    }
+
+    // Table headers
+    let index_to_column_map = apply_data_table_headers(&body, sheet, row_idx);
+
+    // Every data cell is placed by looking its index up in this map, so an empty
+    // one drops the lot and still writes a perfectly valid — but empty — sheet.
+    // That is how the repack slip shipped without a <thead>, and it stayed unnoticed
+    // until a user reported it. Say so in the log rather than failing quietly.
+    if index_to_column_map.is_empty() {
+        warn_no_columns_mapped(&body, report_name);
+    }
+
+    // Data rows
+    // remove _ when idx needed for footer
+    let _row_idx = apply_data_rows(&body, sheet, row_idx + 1, &index_to_column_map);
+
+    // FOOTER
+    // Currently not implemented, but could be added later
+}
+
+/// Applies the header HTML to the worksheet
+fn apply_header(sheet: &mut Worksheet, header_html: &str) -> u32 /* rows used */ {
+    let header_selectors = Selectors::new(header_html);
+    let header_cells = header_selectors.excel_cells();
+
+    let mut used_rows: u32 = 0; // Start from the first row
+
+    // Apply any header content to the specified coordinates
+    for (coordinate, el) in header_cells.into_iter() {
+        let sheet_cell = sheet.get_cell_mut(coordinate);
+
+        sheet_cell.set_value(inner_text(el));
+
+        apply_known_styles(sheet_cell, el);
+
+        let (_, row, _, _) = index_from_coordinate(coordinate);
+        let row_index = row.unwrap_or(0);
+
+        if used_rows < row_index {
+            used_rows = row_index;
+        }
+    }
+    used_rows
+}
+
+/// Applies the data table header row to the worksheet
+fn apply_data_table_headers(
+    body: &Selectors,
+    sheet: &mut Worksheet,
+    row_idx: u32,
+) -> HashMap<u32, u32> {
+    let mut index_to_column_map = HashMap::new();
+
+    let data_header_row = body.data_headers();
+
+    let has_custom_columns = data_header_row
+        .iter()
+        .any(|(custom_column, _)| custom_column.is_some());
+
+    for (index, (custom_column_coord, header)) in data_header_row.into_iter().enumerate() {
+        if has_custom_columns && custom_column_coord.is_none() {
+            // If there are custom columns, we skip the default ones
+            continue;
+        }
+        let html_index = index as u32;
+
+        let column_index = custom_column_coord
+            .map(column_index_from_string)
+            .unwrap_or(html_index + 1);
+
+        // Store the mapping from HTML index to column index - used for data rows
+        index_to_column_map.insert(html_index, column_index);
+
+        if !body.ignore_table_header() {
+            let cell = sheet.get_cell_mut((column_index, row_idx));
+            cell.set_value(header);
+            cell.get_style_mut().get_font_mut().set_bold(true);
+        }
+    }
+
+    index_to_column_map
+}
+
+/// Warns that a report has rows to export but no columns to place them in.
+///
+/// Only called once the header has already resolved to nothing, so the extra
+/// selector runs cost nothing on the normal path. A report with no rows at all
+/// is left alone — an empty sheet is the honest answer for one of those.
+fn warn_no_columns_mapped(body: &Selectors, report_name: &str) {
+    let data_rows = body.rows_and_cells().len();
+    let total_rows = body.total_rows().len();
+
+    if data_rows + total_rows == 0 {
+        return;
+    }
+
+    log::warn!(
+        "Excel export of '{report_name}' dropped every row: {data_rows} data row(s) and \
+         {total_rows} total row(s) had no column to go in, because the table header resolved \
+         to no columns. Check the template's table has a <thead> holding a row of cells, and \
+         that any excel-column attributes are on that row."
+    );
+}
+
+/// Maps each row of data to the worksheet
+fn apply_data_rows(
+    body: &Selectors,
+    sheet: &mut Worksheet,
+    row_index: u32,
+    index_to_column_index_map: &HashMap<u32, u32>,
+) -> u32 {
+    let mut row_idx = row_index;
+    let body_rows = body.rows_and_cells();
+    let rows_len = body_rows.len() as u32;
+
+    // Insert new rows below the first row. We'll copy the styles and formulae from the first row down.
+    // Formulae cell references will be adjusted by umya i.e "=A2*3" will be adjusted to "=A3*3"
+    // Any footer in the excel will be pushed down appropriately.
+    sheet.insert_new_row(&(row_idx + 1), &rows_len);
+
+    for row in body_rows.into_iter() {
+        // Duplicate any formulae/formatting to the next row before populating
+        for col in 0..sheet.get_highest_column() {
+            let col = col + 1;
+
+            if let Some(cell) = sheet.get_cell((col, row_idx)) {
+                let mut cell = cell.clone();
+                cell.set_coordinate(coordinate_from_index(&col, &(row_idx + 1)));
+                sheet.set_cell(cell.clone());
+            }
+        }
+
+        for (cell_index, cell) in row.into_iter().enumerate() {
+            // If no custom columns, every column will be mapped, otherwise only custom columns
+            if let Some(column_index) = index_to_column_index_map.get(&(cell_index as u32)).cloned()
+            {
+                let sheet_cell = sheet
+                    .get_cell_mut((column_index, row_idx))
+                    .set_value(inner_text(cell));
+                apply_known_styles(sheet_cell, cell);
+            }
+        }
+        row_idx += 1; // Next row
+    }
+    // Add a blank row before the total rows
+    row_idx += 1;
+
+    // Total rows - each on a new row
+    for total_row in body.total_rows().into_iter() {
+        for (cell_index, cell) in total_row.into_iter().enumerate() {
+            if let Some(column_index) = index_to_column_index_map.get(&(cell_index as u32)).cloned()
+            {
+                let sheet_cell = sheet.get_cell_mut((column_index, row_idx));
+                sheet_cell.set_value(cell);
+                sheet_cell.get_style_mut().get_font_mut().set_bold(true);
+            }
+        }
+        row_idx += 1; // Move to next row for next total row
+    }
+
+    row_idx
+}
+
+struct Selectors {
+    html: Html,
+}
+
+impl Selectors {
+    fn new(html_str: &str) -> Self {
+        let formatted = format!(
+            r#"
+              <div>
+                  {html_str}
+              </div>
+            "#
+        );
+
+        let html = Html::parse_fragment(&formatted);
+
+        Self { html }
+    }
+
+    fn excel_cells<'a>(&'a self) -> Vec<(&'a str, ElementRef<'a>)> {
+        let cell_selector = Selector::parse("[excel-cell]").unwrap();
+        self.html
+            .select(&cell_selector)
+            .map(|element| {
+                let coordinate = element.attr("excel-cell").unwrap_or_default();
+                (coordinate, element)
+            })
+            .collect()
+    }
+
+    fn table_start_row(&self) -> Option<u32> {
+        let cell_selector = Selector::parse("[excel-table-start-row]").unwrap();
+        self.html.select(&cell_selector).next().map(|element| {
+            element
+                .attr("excel-table-start-row")
+                .and_then(|val| val.parse::<u32>().ok())
+        })?
+    }
+
+    /// Put excel-ignore-table-header on any element to not copy the HTML headers into the
+    /// spreadsheet. Useful if the excel template has custom/styled headers
+    fn ignore_table_header(&self) -> bool {
+        let cell_selector = Selector::parse("[excel-ignore-table-header]").unwrap();
+        self.html.select(&cell_selector).next().is_some()
+    }
+
+    /// One column label per column of data, in the order the data cells come in.
+    ///
+    /// A data cell is placed by its index within its own `<tbody>` row, so the
+    /// header has to be flattened to exactly one label per data column. Most
+    /// forms have a single header row, where flattening is the identity.
+    ///
+    /// A grouped header is not: a banner row spanning several columns sits above
+    /// the row that names them (the repack slip's Original/New), and outer
+    /// columns may instead span downwards past the labels (`rowspan`, as some
+    /// custom reports do). Taking every cell of every header row would count the
+    /// banners as columns of their own and shift the data; taking only the bottom
+    /// row would drop the spanning outer columns. So the header is resolved as a
+    /// grid, and each column's label is whichever cell occupies it in the bottom
+    /// row — the one that lines up with the data. A cell spanning several columns
+    /// is one label, not one per column it covers.
+    ///
+    /// Header rows of separate tables are concatenated, as they always have been.
+    fn data_headers(&self) -> Vec<(Option<&str>, &str)> {
+        let thead_selector = Selector::parse("thead").unwrap();
+        let row_selector = Selector::parse("tr").unwrap();
+        let cell_selector = Selector::parse("td,th").unwrap();
+
+        self.html
+            .select(&thead_selector)
+            .flat_map(|thead| {
+                let rows: Vec<ElementRef> = thead.select(&row_selector).collect();
+                header_columns(&rows, &cell_selector)
+            })
+            .map(|element| (element.attr("excel-column"), inner_text(element)))
+            .collect()
+    }
+
+    fn rows_and_cells<'a>(&'a self) -> Vec<Vec<ElementRef<'a>>> {
+        let rows_selector = Selector::parse("tbody tr:not([excel-type=\"total-row\"])").unwrap();
+        let cells_selector = Selector::parse("td").unwrap();
+        self.html
+            .select(&rows_selector)
+            .map(|row| row.select(&cells_selector).collect())
+            .collect()
+    }
+
+    fn total_rows(&self) -> Vec<Vec<&str>> {
+        let rows_selector = Selector::parse("tbody tr[excel-type=\"total-row\"]").unwrap();
+        let cells_selector = Selector::parse("td").unwrap();
+        self.html
+            .select(&rows_selector)
+            .map(|row| row.select(&cells_selector).map(inner_text).collect())
+            .collect()
+    }
+}
+
+/// Lays the header rows out as a grid, honouring `colspan`/`rowspan`, and
+/// returns the cell occupying each column of the bottom row — the row the data
+/// cells line up with. A cell covering several columns is returned once.
+fn header_columns<'a>(rows: &[ElementRef<'a>], cell_selector: &Selector) -> Vec<ElementRef<'a>> {
+    // grid[row][column] = the cell covering that slot, and the column it starts
+    // in — so a cell covering several columns can be recognised as one column.
+    let mut grid: Vec<Vec<Option<(ElementRef<'a>, usize)>>> = vec![Vec::new(); rows.len()];
+
+    for (row_index, row) in rows.iter().enumerate() {
+        let mut column = 0;
+
+        for cell in row.select(cell_selector) {
+            // Step over slots already covered by a rowspan from a row above
+            while grid[row_index]
+                .get(column)
+                .is_some_and(|slot| slot.is_some())
+            {
+                column += 1;
+            }
+
+            let colspan = span(cell, "colspan");
+            // A rowspan reaching past the last header row simply stops there
+            let last_row = (row_index + span(cell, "rowspan")).min(rows.len());
+
+            for covered_row in grid[row_index..last_row].iter_mut() {
+                if covered_row.len() < column + colspan {
+                    covered_row.resize(column + colspan, None);
+                }
+                for slot in covered_row[column..column + colspan].iter_mut() {
+                    *slot = Some((cell, column));
+                }
+            }
+
+            column += colspan;
+        }
+    }
+
+    let Some(bottom_row) = grid.last() else {
+        return Vec::new();
+    };
+
+    bottom_row
+        .iter()
+        .enumerate()
+        .filter_map(|(column, slot)| match slot {
+            // Only where the cell starts, so a cell spanning columns counts once
+            Some((cell, start_column)) if *start_column == column => Some(*cell),
+            _ => None,
+        })
+        .collect()
+}
+
+/// A `colspan`/`rowspan`, defaulting to the one row/column the cell itself
+/// occupies. HTML's "span to the end of the section" (`rowspan="0"`) is not
+/// used by any form, and is read as a single row.
+fn span(cell: ElementRef, attribute: &str) -> usize {
+    cell.attr(attribute)
+        .and_then(|value| value.trim().parse::<usize>().ok())
+        .unwrap_or(1)
+        .max(1)
+}
+
+fn inner_text<'a>(element_ref: ElementRef<'a>) -> &'a str {
+    element_ref
+        .text()
+        .find(|t| !t.trim().is_empty())
+        .map(|t| t.trim())
+        .unwrap_or_default()
+}
+
+fn apply_known_styles(cell: &mut Cell, el: ElementRef) {
+    let style = cell.get_style_mut();
+
+    if let Some(cell_type) = el.attr("excel-type") {
+        match cell_type {
+            "title" => {
+                let mut font_size = FontSize::default();
+                font_size.set_val(14.0);
+                style.get_font_mut().set_bold(true).set_font_size(font_size);
+            }
+            "bold" => {
+                style.get_font_mut().set_bold(true);
+            }
+            _ => {
+                // Unknown type, leave as is
+            }
+        };
+    }
+
+    if let Some(color) = el.attr("excel-bg-color") {
+        let color = color.trim_start_matches('#');
+        style.set_background_color(color);
+    }
+
+    if let Some(border) = el.attr("excel-border") {
+        let border_mut = style.get_borders_mut();
+        let border_style = match border {
+            "thin" => umya_spreadsheet::Border::BORDER_THIN,
+            "medium" => umya_spreadsheet::Border::BORDER_MEDIUM,
+            "thick" => umya_spreadsheet::Border::BORDER_THICK,
+            "dashed" => umya_spreadsheet::Border::BORDER_DASHED,
+            "dotted" => umya_spreadsheet::Border::BORDER_DOTTED,
+            _ => umya_spreadsheet::Border::BORDER_NONE,
+        };
+
+        border_mut.get_left_mut().set_border_style(border_style);
+        border_mut.get_right_mut().set_border_style(border_style);
+        border_mut.get_top_mut().set_border_style(border_style);
+        border_mut.get_bottom_mut().set_border_style(border_style);
+    }
+}
+
+#[cfg(test)]
+mod report_to_excel_test {
+    use std::time::Duration;
+
+    use super::*;
+    use scraper::Html;
+
+    fn get_value(sheet: &Worksheet, coordinate: &str) -> String {
+        sheet
+            .get_cell(coordinate)
+            .map(|c| c.get_raw_value().to_string())
+            .unwrap_or_default()
+    }
+
+    fn test_base_dir(test_name: &str) -> String {
+        std::env::temp_dir()
+            .join(format!("oms_convert_to_excel_{test_name}"))
+            .to_string_lossy()
+            .to_string()
+    }
+
+    #[test]
+    fn test_generate_excel_no_attributes() {
+        let report: GeneratedReport = GeneratedReport {
+            document: r#"
+          <table>
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Unit</th>
+                <th>Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Acetylsalicylic Acid 100mg tabs</td>
+                <td>Tablets</td>
+                <td>10.00</td>
+              </tr>
+              <tr>
+                <td>Ibuprofen 200mg tabs</td>
+                <td>Tablets</td>
+                <td>15.00</td>
+              </tr>
+              <tr excel-type="total-row">
+                <td></td>
+                <td>Total:</td>
+                <td>25.00</td>
+              </tr>
+            </tbody>
+          </table>
+        "#
+            .to_string(),
+            header: Some(
+                r#"
+                <div>Something here but with no excel-cell attribute</div>
+            "#
+                .to_string(),
+            ),
+            footer: None,
+        };
+
+        let mut book = umya_spreadsheet::new_file();
+        book.set_sheet_name(0, "test").unwrap();
+        let sheet = book.get_sheet_by_name_mut("test").unwrap();
+
+        apply_report(sheet, report, "test");
+
+        let get_value = |coord: &str| get_value(sheet, coord);
+
+        // Header is ignored, data table headers are in the first row
+        assert_eq!(get_value("A1"), "Item");
+        // all headers are in the first row, in order
+        assert_eq!(get_value("B1"), "Unit");
+        assert_eq!(get_value("C1"), "Price");
+        // Data rows start from the second row
+        assert_eq!(get_value("A2"), "Acetylsalicylic Acid 100mg tabs");
+        assert_eq!(get_value("A3"), "Ibuprofen 200mg tabs");
+        // Blank row before the total row
+        assert_eq!(get_value("B4"), "");
+        assert_eq!(get_value("B5"), "Total:");
+    }
+
+    #[test]
+    fn test_generate_excel_with_attributes() {
+        let report: GeneratedReport = GeneratedReport {
+            document: r#"
+          <table>
+            <thead>
+              <tr>
+                <th excel-column="C">Item</th>
+                <th>Unit</th>
+                <th excel-column="B">Consumed</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Acetylsalicylic Acid 100mg tabs</td>
+                <td>Tablets</td>
+                <td>3</td>
+              </tr>
+              <tr>
+                <td>Ibuprofen 200mg tabs</td>
+                <td>Tablets</td>
+                <td>3</td>
+              </tr>
+              <tr>
+                <td>Paracetamol 500mg tabs</td>
+                <td>Tablets</td>
+                <td>5</td>
+              </tr>
+            </tbody>
+          </table>
+        "#
+            .to_string(),
+            header: Some(
+                r#"
+                <div excel-cell="A2">Title Here</div>
+            "#
+                .to_string(),
+            ),
+            footer: None,
+        };
+
+        let mut book = umya_spreadsheet::new_file();
+        book.set_sheet_name(0, "test").unwrap();
+
+        let sheet = book.get_sheet_by_name_mut("test").unwrap();
+
+        apply_report(sheet, report, "test");
+
+        let get_value = |coord: &str| get_value(sheet, coord);
+
+        // Custom header cells are populated
+        assert_eq!(get_value("A2"), "Title Here");
+
+        // Header takes 2 rows, plus one empty row before the data table
+        assert_eq!(get_value("B3"), "");
+        // Data table headers start from row 4, using custom specified columns
+        assert_eq!(get_value("A4"), "");
+        assert_eq!(get_value("B4"), "Consumed");
+        assert_eq!(get_value("C4"), "Item");
+        // Data also mapped to the right columns
+        assert_eq!(get_value("C6"), "Ibuprofen 200mg tabs");
+        assert_eq!(get_value("A6"), "");
+    }
+
+    /// A grouped header — a banner row spanning the two sides of a repack above
+    /// the row that names their columns (standard_forms/repack). The labels are
+    /// the bottom row, and the data must land under them, not shifted by the
+    /// three cells of the banner above.
+    #[test]
+    fn test_generate_excel_grouped_header() {
+        let report: GeneratedReport = GeneratedReport {
+            document: r#"
+          <table>
+            <thead>
+              <tr>
+                <th colspan="2">Original</th>
+                <th>&rarr;</th>
+                <th colspan="2">New</th>
+              </tr>
+              <tr>
+                <th>Location</th>
+                <th>Pack size</th>
+                <th></th>
+                <th>Location</th>
+                <th>Pack size</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>A1</td>
+                <td>100</td>
+                <td></td>
+                <td>B2</td>
+                <td>10</td>
+              </tr>
+            </tbody>
+          </table>
+        "#
+            .to_string(),
+            header: None,
+            footer: None,
+        };
+
+        let mut book = umya_spreadsheet::new_file();
+        book.set_sheet_name(0, "test").unwrap();
+        let sheet = book.get_sheet_by_name_mut("test").unwrap();
+
+        apply_report(sheet, report, "test");
+
+        let get_value = |coord: &str| get_value(sheet, coord);
+
+        // The labels are the header row; the banner above them is not written.
+        assert_eq!(get_value("A1"), "Location");
+        assert_eq!(get_value("B1"), "Pack size");
+        assert_eq!(get_value("D1"), "Location");
+        assert_eq!(get_value("E1"), "Pack size");
+        // Each side's data sits under its own labels — the "New" side is not
+        // shifted by the banner's cells.
+        assert_eq!(get_value("A2"), "A1");
+        assert_eq!(get_value("B2"), "100");
+        assert_eq!(get_value("D2"), "B2");
+        assert_eq!(get_value("E2"), "10");
+    }
+
+    /// A grouped header whose outer columns span *downwards* past the labels
+    /// rather than sitting above them, as custom reports with an Excel template
+    /// do: Date and Sign are one column each across both header rows, and only
+    /// the Received group is subdivided. Every column the data has must be
+    /// mapped — the spanning outer columns are as real as the subdivided ones.
+    #[test]
+    fn test_generate_excel_grouped_header_with_spanned_columns() {
+        let report: GeneratedReport = GeneratedReport {
+            document: r#"
+          <table>
+            <thead>
+              <tr>
+                <th rowspan="2" excel-column="A">Date</th>
+                <th colspan="2" excel-column="B">Received</th>
+                <th rowspan="2" excel-column="D">Sign</th>
+              </tr>
+              <tr>
+                <th excel-column="B">From</th>
+                <th excel-column="C">Quantity</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>01/01/2026</td>
+                <td>Supplier</td>
+                <td>50</td>
+                <td>EH</td>
+              </tr>
+            </tbody>
+          </table>
+        "#
+            .to_string(),
+            header: None,
+            footer: None,
+        };
+
+        let mut book = umya_spreadsheet::new_file();
+        book.set_sheet_name(0, "test").unwrap();
+        let sheet = book.get_sheet_by_name_mut("test").unwrap();
+
+        apply_report(sheet, report, "test");
+
+        let get_value = |coord: &str| get_value(sheet, coord);
+
+        // Four columns of labels: the two that span both rows, and the two the
+        // "Received" group is subdivided into. The group banner is not a column.
+        assert_eq!(get_value("A1"), "Date");
+        assert_eq!(get_value("B1"), "From");
+        assert_eq!(get_value("C1"), "Quantity");
+        assert_eq!(get_value("D1"), "Sign");
+        // Every data cell lands under its own label — none is dropped.
+        assert_eq!(get_value("A2"), "01/01/2026");
+        assert_eq!(get_value("B2"), "Supplier");
+        assert_eq!(get_value("C2"), "50");
+        assert_eq!(get_value("D2"), "EH");
+    }
+
+    /// A single header row is flattened as-is, and a cell spanning columns is
+    /// one column, not one per column it covers — otherwise the data behind it
+    /// would be shifted right.
+    #[test]
+    fn test_generate_excel_single_header_row_with_colspan() {
+        let report: GeneratedReport = GeneratedReport {
+            document: r#"
+          <table>
+            <thead>
+              <tr>
+                <th colspan="2">Item</th>
+                <th>Unit</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Ibuprofen 200mg tabs</td>
+                <td>Tablets</td>
+              </tr>
+            </tbody>
+          </table>
+        "#
+            .to_string(),
+            header: None,
+            footer: None,
+        };
+
+        let mut book = umya_spreadsheet::new_file();
+        book.set_sheet_name(0, "test").unwrap();
+        let sheet = book.get_sheet_by_name_mut("test").unwrap();
+
+        apply_report(sheet, report, "test");
+
+        let get_value = |coord: &str| get_value(sheet, coord);
+
+        assert_eq!(get_value("A1"), "Item");
+        assert_eq!(get_value("B1"), "Unit");
+        assert_eq!(get_value("A2"), "Ibuprofen 200mg tabs");
+        assert_eq!(get_value("B2"), "Tablets");
+    }
+
+    /// A report of two tables, each with its own header. Their headers are
+    /// concatenated, so the wider table's later columns stay mapped — reading
+    /// only the last table's header would silently drop them.
+    #[test]
+    fn test_generate_excel_headers_from_separate_tables() {
+        let report: GeneratedReport = GeneratedReport {
+            document: r#"
+          <table>
+            <thead>
+              <tr>
+                <th>Vaccine</th>
+                <th>Batch</th>
+                <th>Doses used</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>BCG</td>
+                <td>B1</td>
+                <td>20</td>
+              </tr>
+            </tbody>
+          </table>
+          <table>
+            <thead>
+              <tr>
+                <th>Supply item</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Syringes</td>
+              </tr>
+            </tbody>
+          </table>
+        "#
+            .to_string(),
+            header: None,
+            footer: None,
+        };
+
+        let mut book = umya_spreadsheet::new_file();
+        book.set_sheet_name(0, "test").unwrap();
+        let sheet = book.get_sheet_by_name_mut("test").unwrap();
+
+        apply_report(sheet, report, "test");
+
+        let get_value = |coord: &str| get_value(sheet, coord);
+
+        // Both headers, one after the other, as before
+        assert_eq!(get_value("A1"), "Vaccine");
+        assert_eq!(get_value("C1"), "Doses used");
+        assert_eq!(get_value("D1"), "Supply item");
+        // The first table keeps all three of its columns
+        assert_eq!(get_value("A2"), "BCG");
+        assert_eq!(get_value("B2"), "B1");
+        assert_eq!(get_value("C2"), "20");
+        // The second table's rows follow, from column A again
+        assert_eq!(get_value("A3"), "Syringes");
+    }
+
+    #[test]
+    fn test_inner_text() {
+        let html = Html::parse_fragment(
+            r#"
+               <div> 
+                  <span class="out-of-stock">Out of Stock</span>
+               </div>
+                <div> 
+                  Some other text
+               </div>
+        "#,
+        );
+
+        let divs_selector = Selector::parse("div").unwrap();
+
+        let mut divs = html.select(&divs_selector);
+        let div_with_child = divs.next().unwrap();
+
+        assert_eq!(inner_text(div_with_child), "Out of Stock");
+
+        let div = divs.next().unwrap();
+
+        assert_eq!(inner_text(div), "Some other text");
+    }
+
+    #[test]
+    fn test_excel_attribute_selector() {
+        let selectors = Selectors::new(
+            r#"
+          <span excel-cell="B2">First</span>
+          <span>Second</span>
+          <span excel-cell="A1">Third</span>
+        "#,
+        );
+
+        let cells = selectors.excel_cells();
+        assert_eq!(cells.len(), 2);
+
+        let (first_cell_coord, first_cell) = cells[0];
+        assert_eq!(first_cell_coord, "B2");
+        assert_eq!(inner_text(first_cell), "First");
+
+        let (second_cell_coord, second_cell) = cells[1];
+        assert_eq!(second_cell_coord, "A1");
+        assert_eq!(inner_text(second_cell), "Third");
+    }
+    #[test]
+    fn test_body_selectors() {
+        let html = r#"
+                  <div class="container">
+                     <table>
+                        <thead>
+                           <tr class="heading">
+                              <td>First Header</td>
+                              <td excel-column="A">Second Header</td>
+                           </tr>
+                        </thead>
+                        <tbody>
+                           <tr>
+                              <td>Row One Cell One</td>
+                              <td>Row One Cell Two</td>
+                           </tr>
+                           <tr>
+                              <td>Row Two Cell One</td>
+                              <td>Row Two Cell Two</td>
+                           </tr>
+                        </tbody>
+                     </table>
+                  </div>
+    "#;
+
+        let selectors = Selectors::new(html);
+
+        assert_eq!(
+            selectors.data_headers(),
+            // Some() where custom column is specified
+            vec![(None, "First Header"), (Some("A"), "Second Header")]
+        );
+
+        let res = selectors.rows_and_cells();
+        assert_eq!(res.len(), 2);
+
+        assert_eq!(
+            res.first()
+                .unwrap()
+                .iter()
+                .map(|e| inner_text(*e))
+                .collect::<Vec<&str>>(),
+            vec!["Row One Cell One", "Row One Cell Two"],
+        );
+    }
+
+    /// The shape the repack slip shipped in: `<tr>`s sitting straight in the
+    /// `<table>`, no row groups. There is no header to resolve, so no column is
+    /// mapped and every row is dropped — a valid, empty workbook. Pinned here as
+    /// the condition `warn_no_columns_mapped` exists to report, so the export
+    /// says something instead of quietly handing back an empty sheet.
+    #[test]
+    fn test_table_without_row_groups_maps_no_columns() {
+        let selectors = Selectors::new(
+            r#"
+              <table>
+                <tr>
+                  <th>Location</th>
+                  <th>Quantity</th>
+                </tr>
+                <tr>
+                  <td>A1</td>
+                  <td>100</td>
+                </tr>
+              </table>
+        "#,
+        );
+
+        // No <thead>, so nothing to map the data cells onto
+        assert_eq!(selectors.data_headers(), vec![]);
+        // ...and rows that would have been exported had there been
+        assert!(!selectors.rows_and_cells().is_empty());
+    }
+
+    #[tokio::test]
+    async fn test_generate_excel_performance() {
+        // We want to ensure that excel export takes a sensible amount of time.
+        // Many reports may have several thousand rows with dozens of columns
+
+        const NUM_COLUMNS: u32 = 12;
+        const NUM_ROWS: u32 = 10000;
+
+        let mut headers = String::new();
+        for i in 1..=NUM_COLUMNS {
+            headers += &format!("<th>colHeader{i}</th>\n");
+        }
+
+        let mut rows = String::new();
+        for row_num in 1..=NUM_ROWS {
+            rows += "<tr>\n";
+            for col_num in 1..=NUM_COLUMNS {
+                rows += &format!("<td>{row_num}.{col_num}</td>\n");
+            }
+            rows += "</tr>\n";
+        }
+
+        let document = format!(
+            r#"<table>
+<thead>
+    <tr>
+        {headers}
+    </tr>
+</thead>
+<tbody>
+    {rows}
+</tbody>
+</table>"#
+        );
+
+        let report: GeneratedReport = GeneratedReport {
+            document,
+            header: Some(
+                r#"
+                <div>Something here but with no excel-cell attribute</div>
+            "#
+                .to_string(),
+            ),
+            footer: None,
+        };
+
+        let mut book = umya_spreadsheet::new_file();
+        book.set_sheet_name(0, "test").unwrap();
+
+        let handle = tokio::spawn(async move {
+            let sheet = book.get_sheet_by_name_mut("test").unwrap();
+            let start = std::time::Instant::now();
+            apply_report(sheet, report, "test");
+            start.elapsed().as_millis()
+        });
+
+        let duration_millisec = tokio::time::timeout(Duration::from_secs(10), handle)
+            .await
+            .unwrap()
+            .unwrap();
+
+        // Note: this was tested on a M3 Macbook Pro and took around 1.6s. If your testing environment
+        // is significantly slower it may fail this assertion! Just make it bigger... for lack of an
+        // elegant way of scaling based on hardware info ;)
+        assert!(
+            duration_millisec < 5000,
+            "Generate to excel should be FAST. Took: {}ms",
+            duration_millisec
+        );
+    }
+
+    #[test]
+    fn test_csv_to_excel() {
+        let csv_data = "Name,Status,Invoice Number\nHarry Potter,Picked,2\nHermione Granger,New,3\nRon Weasley,New,4\n";
+
+        let base_dir = test_base_dir("csv_export");
+        let result = csv_to_excel(&base_dir, csv_data, "test_csv_export", None);
+        assert!(result.is_ok(), "CSV to Excel conversion should succeed");
+
+        let file_id = result.unwrap();
+        assert!(!file_id.is_empty(), "File ID should not be empty");
+
+        let file_service = StaticFileService::new(&base_dir).unwrap();
+        let generated_file = file_service
+            .find_file(&file_id, StaticFileCategory::Temporary)
+            .unwrap()
+            .unwrap();
+        let generated_book = umya_spreadsheet::reader::xlsx::read(&generated_file.path).unwrap();
+        let sheet = generated_book.get_sheet(&0).unwrap();
+
+        let get_value = |coord: &str| {
+            sheet
+                .get_cell(coord)
+                .map(|c| c.get_raw_value().to_string())
+                .unwrap_or_default()
+        };
+
+        assert_eq!(get_value("A1"), "Name");
+        assert_eq!(get_value("B1"), "Status");
+        assert_eq!(get_value("C1"), "Invoice Number");
+
+        assert_eq!(get_value("A2"), "Harry Potter");
+        assert_eq!(get_value("B2"), "Picked");
+        assert_eq!(get_value("C2"), "2");
+
+        assert_eq!(get_value("A3"), "Hermione Granger");
+        assert_eq!(get_value("B3"), "New");
+        assert_eq!(get_value("C3"), "3");
+
+        assert_eq!(get_value("A4"), "Ron Weasley");
+        assert_eq!(get_value("B4"), "New");
+        assert_eq!(get_value("C4"), "4");
+    }
+
+    #[test]
+    fn test_csv_to_excel_sets_sheet_name() {
+        let base_dir = test_base_dir("sheet_name");
+        let read_sheet_name = |file_id: &str| {
+            let file_service = StaticFileService::new(&base_dir).unwrap();
+            let generated_file = file_service
+                .find_file(file_id, StaticFileCategory::Temporary)
+                .unwrap()
+                .unwrap();
+            let book = umya_spreadsheet::reader::xlsx::read(&generated_file.path).unwrap();
+            book.get_sheet(&0).unwrap().get_name().to_string()
+        };
+
+        // sheet after the store code
+        let csv_data = "Name,Status\nHarry Potter,Picked\n";
+        let file_id =
+            csv_to_excel(&base_dir, csv_data, "test_sheet_name", Some("fsmclinic")).unwrap();
+        assert_eq!(read_sheet_name(&file_id), "fsmclinic");
+
+        let export = |file_name: &str, store_code: Option<&str>| {
+            let report = GeneratedReport {
+                document: r#"
+              <table>
+                <thead><tr><th>Item</th></tr></thead>
+                <tbody><tr><td>Ibuprofen 200mg tabs</td></tr></tbody>
+              </table>
+            "#
+                .to_string(),
+                header: None,
+                footer: None,
+            };
+            export_html_report_to_excel(&base_dir, report, file_name.to_string(), &None, store_code)
+                .unwrap()
+        };
+
+        assert_eq!(
+            read_sheet_name(&export("test_sheet_store_code", Some("GEN"))),
+            "GEN"
+        );
+        // and falls back to "Report" without one
+        assert_eq!(
+            read_sheet_name(&export("test_sheet_fallback", None)),
+            "Report"
+        );
+    }
+
+    #[test]
+    fn test_sanitize_sheet_name_strips_forbidden_chars_and_truncates() {
+        // Forbidden characters become underscores
+        assert_eq!(sanitize_sheet_name("a/b\\c?d*e[f]g:h"), "a_b_c_d_e_f_g_h");
+        // Leading/trailing apostrophes and whitespace stripped
+        assert_eq!(sanitize_sheet_name("  'name'  "), "name");
+        // Truncated to 31 chars
+        let long = "a".repeat(50);
+        assert_eq!(sanitize_sheet_name(&long).len(), 31);
+    }
+
+    #[test]
+    fn test_csv_to_excel_sanitizes_filename() {
+        // mSupply allows store codes with crazy characters — make sure they
+        // can't escape the temp dir or break the path on disk.
+        let csv_data = "Name\nHarry\n";
+        let base_dir = test_base_dir("sanitizes_filename");
+        let file_id =
+            csv_to_excel(&base_dir, csv_data, "../etc/passwd_stock", Some("any")).unwrap();
+
+        let file_service = StaticFileService::new(&base_dir).unwrap();
+        let generated_file = file_service
+            .find_file(&file_id, StaticFileCategory::Temporary)
+            .unwrap()
+            .unwrap();
+        // No path separators survive — the stored name is a plain filename.
+        assert!(!generated_file.name.contains('/'));
+        assert!(!generated_file.name.contains('\\'));
+    }
+
+    #[test]
+    fn test_generate_excel_with_template() {
+        // Create a template Excel file with header and footer
+        let mut template_book = umya_spreadsheet::new_file();
+        template_book.set_sheet_name(0, "Report Template").unwrap();
+        let template_sheet = template_book
+            .get_sheet_by_name_mut("Report Template")
+            .unwrap();
+
+        // Add template header content
+        template_sheet
+            .get_cell_mut("A1")
+            .set_value("Company Report")
+            .get_style_mut()
+            .get_font_mut()
+            .set_bold(true);
+
+        template_sheet
+            .get_cell_mut("A2")
+            .set_value("Generated on: [Date]");
+
+        // Add template footer content (assume data ends around row 20, footer starts at row 22)
+        template_sheet
+            .get_cell_mut("A10")
+            .set_value("End of Report")
+            .get_style_mut()
+            .get_font_mut()
+            .set_bold(true);
+
+        template_sheet
+            .get_cell_mut("A11")
+            .set_value("Company Footer Info");
+
+        // Convert template to bytes (simulate how it would come from file storage)
+        let temp_path = "/tmp/test_template.xlsx";
+        umya_spreadsheet::writer::xlsx::write(&template_book, temp_path).unwrap();
+        let template_bytes = std::fs::read(temp_path).unwrap();
+
+        // Create HTML report with 10 rows of data
+        let mut data_rows = String::new();
+        for i in 1..=10 {
+            data_rows += &format!(
+                r#"<tr>
+                    <td>Item {}</td>
+                    <td>Unit {}</td>
+                    <td>{}.00</td>
+                </tr>"#,
+                i,
+                i,
+                i * 10
+            );
+        }
+
+        let report = GeneratedReport {
+            document: format!(
+                r#"<table excel-table-start-row="5">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Unit</th>
+                            <th>Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {data_rows}
+                        <tr excel-type="total-row">
+                            <td></td>
+                            <td>Total:</td>
+                            <td>550.00</td>
+                        </tr>
+                    </tbody>
+                </table>"#
+            ),
+            header: Some(r#"<div excel-cell="C2">Report Date: 2025-07-17</div>"#.to_string()),
+            footer: None,
+        };
+
+        // Test the full export function with template. The store code must
+        // NOT override the template's own sheet name
+        let base_dir = test_base_dir("with_template");
+        let result = export_html_report_to_excel(
+            &base_dir,
+            report,
+            "test_with_template".to_string(),
+            &Some(template_bytes),
+            Some("GEN"),
+        );
+
+        assert!(result.is_ok(), "Export should succeed with template");
+        let file_id = result.unwrap();
+
+        // Read back the generated file to verify content
+        let file_service = StaticFileService::new(&base_dir).unwrap();
+        let generated_file = file_service
+            .find_file(&file_id, StaticFileCategory::Temporary)
+            .unwrap()
+            .unwrap();
+        let generated_book = umya_spreadsheet::reader::xlsx::read(&generated_file.path).unwrap();
+        let sheet = generated_book.get_sheet(&0).unwrap();
+
+        assert_eq!(sheet.get_name(), "Report Template");
+
+        let get_value = |coord: &str| get_value(sheet, coord);
+
+        let is_bold = |coord: &str| {
+            sheet
+                .get_cell(coord)
+                .and_then(|c| c.get_style().get_font())
+                .map(|f| *f.get_bold())
+                .unwrap_or(false)
+        };
+
+        // Verify original template header is preserved
+        assert_eq!(get_value("A1"), "Company Report");
+        assert!(is_bold("A1"), "Template header should remain bold");
+        assert_eq!(get_value("A2"), "Generated on: [Date]");
+
+        // Verify custom header from HTML was inserted
+        assert_eq!(get_value("C2"), "Report Date: 2025-07-17");
+
+        // Verify data table headers start at the specified row (5)
+        assert_eq!(get_value("A5"), "Product");
+        assert_eq!(get_value("B5"), "Unit");
+        assert_eq!(get_value("C5"), "Price");
+        assert!(is_bold("A5"), "Data headers should be bold");
+
+        // Verify first few data rows
+        assert_eq!(get_value("A6"), "Item 1");
+        assert_eq!(get_value("B6"), "Unit 1");
+        assert_eq!(get_value("C6"), "10"); // Note: Excel may strip trailing zeros
+
+        assert_eq!(get_value("A10"), "Item 5");
+
+        // Item 9 should be at row 14 (5 + 1 header + 8 data rows)
+        assert_eq!(get_value("A14"), "Item 9");
+        assert_eq!(get_value("C14"), "90"); // Item 9
+
+        // Verify total row (should be at row 17: 5 + 1 header + 10 data + 1 blank)
+        assert_eq!(get_value("B17"), "Total:");
+        assert_eq!(get_value("C17"), "550"); // Note: Excel may strip trailing zeros
+        assert!(is_bold("B17"), "Total row should be bold");
+
+        // Verify template footer is preserved
+        assert_eq!(get_value("A20"), "End of Report");
+        assert!(is_bold("A20"), "Template footer should remain bold");
+        assert_eq!(get_value("A21"), "Company Footer Info");
+
+        // Clean up temp file
+        std::fs::remove_file(temp_path).ok();
+    }
+
+    #[test]
+    fn generate_excel_with_ignore_table_header() {
+        let report: GeneratedReport = GeneratedReport {
+            document: r#"
+          <table excel-ignore-table-header>
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Unit</th>
+                <th>Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Acetylsalicylic Acid 100mg tabs</td>
+                <td>tab</td>
+                <td>10.5</td>
+              </tr>
+              <tr>
+                <td>Ibuprofen 200mg tabs</td>
+                <td>tab</td>
+                <td>5.25</td>
+              </tr>
+            </tbody>
+          </table>
+        "#
+            .to_string(),
+            header: None,
+            footer: None,
+        };
+
+        let mut book = umya_spreadsheet::new_file();
+        book.set_sheet_name(0, "test").unwrap();
+        let sheet = book.get_sheet_by_name_mut("test").unwrap();
+
+        apply_report(sheet, report, "test");
+
+        let get_value = |coord: &str| get_value(sheet, coord);
+
+        // With excel-ignore-table-header present, table headers should be ignored
+        assert_eq!(get_value("A1"), "");
+        assert_eq!(get_value("B1"), "");
+        assert_eq!(get_value("C1"), "");
+
+        // Data rows start from the first row instead of second
+        assert_eq!(get_value("A2"), "Acetylsalicylic Acid 100mg tabs");
+        assert_eq!(get_value("B2"), "tab");
+        assert_eq!(get_value("C2"), "10.5");
+
+        assert_eq!(get_value("A3"), "Ibuprofen 200mg tabs");
+        assert_eq!(get_value("B3"), "tab");
+        assert_eq!(get_value("C3"), "5.25");
+    }
+
+    #[test]
+    fn test_apply_known_styles_only_on_marked_cells() {
+        let html = r#"<table><tbody>
+            <tr>
+                <td excel-border="thin">A</td>
+                <td>B</td>
+                <td excel-border="medium">C</td>
+            </tr>
+        </tbody></table>"#;
+        let fragment = Html::parse_fragment(html);
+        let td_sel = Selector::parse("td").unwrap();
+        let mut tds = fragment.select(&td_sel);
+
+        let mut book = umya_spreadsheet::new_file();
+        book.set_sheet_name(0, "test").unwrap();
+        let sheet = book.get_sheet_by_name_mut("test").unwrap();
+
+        let coords = [(1_u32, 1_u32), (2_u32, 1_u32), (3_u32, 1_u32)];
+        for (coord, td) in coords.iter().zip(tds.by_ref()) {
+            let cell = sheet.get_cell_mut(*coord);
+            cell.set_value(inner_text(td));
+            apply_known_styles(cell, td);
+        }
+
+        // First cell has thin border
+        let c1 = sheet.get_cell((1_u32, 1_u32)).unwrap();
+        let c1_border = c1.get_style().get_borders().unwrap();
+        assert_eq!(
+            c1_border.get_left().get_border_style(),
+            umya_spreadsheet::Border::BORDER_THIN
+        );
+
+        // Second cell has no border (default none)
+        let c2 = sheet.get_cell((2_u32, 1_u32)).unwrap();
+        let c2_border = c2.get_style().get_borders().cloned().unwrap_or_default();
+        assert_eq!(
+            c2_border.get_left().get_border_style(),
+            umya_spreadsheet::Border::BORDER_NONE
+        );
+
+        // Third cell has medium border
+        let c3 = sheet.get_cell((3_u32, 1_u32)).unwrap();
+        let c3_border = c3.get_style().get_borders().unwrap();
+        assert_eq!(
+            c3_border.get_left().get_border_style(),
+            umya_spreadsheet::Border::BORDER_MEDIUM
+        );
+    }
+}

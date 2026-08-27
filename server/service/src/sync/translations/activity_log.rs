@@ -1,0 +1,151 @@
+use chrono::NaiveDateTime;
+use repository::{
+    ActivityLogRow, ActivityLogType, ChangelogRow, ChangelogTableName, Row, StorageConnection,
+    SyncBufferRow,
+};
+use serde::{Deserialize, Serialize};
+
+use super::{FkField, PullTranslateResult, PushTranslateResult, SyncTranslation};
+use crate::sync::translations::store::StoreTranslation;
+use util::sync_serde::empty_str_as_option_string;
+
+#[allow(non_snake_case)]
+#[derive(Deserialize, Serialize)]
+pub struct LegacyActivityLogRow {
+    #[serde(rename = "ID")]
+    pub id: String,
+    #[serde(rename = "type")]
+    pub r#type: ActivityLogType,
+    #[serde(rename = "user_ID")]
+    pub user_id: String,
+    #[serde(rename = "store_ID")]
+    pub store_id: String,
+    #[serde(rename = "record_ID")]
+    pub record_id: String,
+    pub datetime: NaiveDateTime,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(default)]
+    pub changed_to: Option<String>,
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    #[serde(default)]
+    pub changed_from: Option<String>,
+}
+
+// Needs to be added to all_translators()
+#[deny(dead_code)]
+pub(crate) fn boxed() -> Box<dyn SyncTranslation> {
+    Box::new(ActivityLogTranslation)
+}
+
+pub(super) struct ActivityLogTranslation;
+impl SyncTranslation for ActivityLogTranslation {
+    fn table_name(&self) -> &str {
+        "om_activity_log"
+    }
+
+    fn pull_dependencies(&self) -> Vec<&str> {
+        vec![StoreTranslation.table_name()]
+    }
+
+    fn try_translate_from_upsert_sync_record(
+        &self,
+        connection: &StorageConnection,
+        fk_checker: &crate::sync::translations::FkChecker,
+        sync_record: &SyncBufferRow,
+    ) -> Result<PullTranslateResult, anyhow::Error> {
+        let data = sync_record.deserialize::<LegacyActivityLogRow>()?;
+
+        let fk_check = fk_checker.with_table(connection, "om_activity_log", &data.id);
+
+        let result = ActivityLogRow {
+            id: data.id.to_string(),
+            r#type: data.r#type,
+            user_id: Some(data.user_id),
+            store_id: fk_check(Some(data.store_id), "store_id", FkField::Store)?,
+            record_id: Some(data.record_id),
+            datetime: data.datetime,
+            changed_to: data.changed_to,
+            changed_from: data.changed_from,
+        };
+
+        Ok(PullTranslateResult::upsert(result))
+    }
+
+    fn change_log_type(&self) -> Option<ChangelogTableName> {
+        Some(ChangelogTableName::ActivityLog)
+    }
+
+    fn try_translate_to_upsert_sync_record(
+        &self,
+        _connection: &StorageConnection,
+        changelog: &ChangelogRow,
+        row: Row,
+    ) -> Result<PushTranslateResult, anyhow::Error> {
+        let Row::ActivityLog(activity_log_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
+        let ActivityLogRow {
+            id,
+            r#type,
+            user_id,
+            store_id,
+            record_id,
+            datetime,
+            changed_to,
+            changed_from,
+        } = activity_log_row;
+
+        let (Some(store_id), Some(record_id), Some(user_id)) = (store_id, record_id, user_id)
+        else {
+            return Ok(PushTranslateResult::Ignored(
+                "Ignoring activity logs without store, user or record id".to_string(),
+            ));
+        };
+
+        let legacy_row = LegacyActivityLogRow {
+            id,
+            r#type,
+            user_id,
+            store_id,
+            record_id,
+            datetime,
+            changed_to,
+            changed_from,
+        };
+
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            serde_json::to_value(legacy_row)?,
+        ))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use repository::{mock::MockDataInserts, test_db::setup_all};
+
+    #[actix_rt::test]
+    async fn test_activity_log_translation() {
+        use crate::sync::test::test_data::activity_log as test_data;
+        let translator = ActivityLogTranslation {};
+
+        let (_, connection, _, _) =
+            setup_all("test_activity_log_translation", MockDataInserts::all()).await;
+
+        for record in test_data::test_pull_upsert_records() {
+            assert!(translator.should_translate_from_sync_record(&record.sync_buffer_row));
+            let translation_result = translator
+                .try_translate_from_upsert_sync_record(
+                    &connection,
+                    &crate::sync::translations::FkChecker::new(),
+                    &record.sync_buffer_row,
+                )
+                .unwrap();
+
+            assert_eq!(translation_result, record.translated_record);
+        }
+    }
+}

@@ -1,0 +1,614 @@
+#[cfg(test)]
+mod query {
+    use chrono::{NaiveDate, NaiveDateTime};
+    use repository::mock::{mock_item_a, mock_name_customer_a, mock_name_store_b, mock_store_a};
+    use repository::mock::{mock_user_account_a, MockDataInserts};
+    use repository::{
+        InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, InvoiceRow,
+        InvoiceRowRepository, InvoiceStatus, InvoiceType, StockLineRow, StockLineRowRepository,
+    };
+    use util::date_now;
+
+    use crate::service_provider::ServiceContext;
+    use crate::test_helpers::{setup_all_and_service_provider, ServiceTestContext};
+
+    static mut INVOICE_NUMBER: i64 = 0;
+
+    // These are all from default mock data
+    static ITEM_ID: &str = "item_a";
+    static STORE_ID: &str = "store_a";
+
+    static STOCK_LINE_A: &str = "stock_line_a";
+    static STOCK_LINE_B: &str = "stock_line_b";
+    static STOCK_LINE_C: &str = "stock_line_c";
+
+    fn get_midnight(year: i32, month: u32, day: u32) -> NaiveDateTime {
+        NaiveDate::from_ymd_opt(year, month, day)
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap()
+    }
+
+    fn get_midday(year: i32, month: u32, day: u32) -> NaiveDateTime {
+        NaiveDate::from_ymd_opt(year, month, day)
+            .unwrap()
+            .and_hms_opt(12, 0, 0)
+            .unwrap()
+    }
+
+    fn next_invoice_number() -> i64 {
+        unsafe {
+            INVOICE_NUMBER += 1;
+            INVOICE_NUMBER
+        }
+    }
+
+    fn update_stock(
+        ctx: &ServiceContext,
+        datetime: NaiveDateTime,
+        stock_line_id: String,
+        pack_size: f64,
+        number_of_packs: f64,
+        batch: String,
+    ) {
+        let invoice_type = if number_of_packs > 0.0 {
+            InvoiceType::InboundShipment
+        } else {
+            InvoiceType::OutboundShipment
+        };
+        let invoice_line_type = if number_of_packs > 0.0 {
+            InvoiceLineType::StockIn
+        } else {
+            InvoiceLineType::StockOut
+        };
+        let name = if number_of_packs > 0.0 {
+            mock_name_store_b().id // Supplier
+        } else {
+            mock_name_customer_a().id // Customer
+        };
+
+        let old_stock_line = StockLineRowRepository::new(&ctx.connection)
+            .find_one_by_id(&stock_line_id)
+            .unwrap()
+            .unwrap_or_default();
+        let new_number_of_packs = old_stock_line.total_number_of_packs + number_of_packs;
+
+        let invoice_number = next_invoice_number();
+        let invoice = InvoiceRow {
+            id: format!("invoice_{invoice_number}"),
+            invoice_number,
+            name_id: name.to_string(),
+            r#type: invoice_type,
+            store_id: STORE_ID.to_string(),
+            created_datetime: datetime,
+            picked_datetime: Some(datetime),
+            received_datetime: Some(datetime),
+            verified_datetime: Some(datetime),
+            status: InvoiceStatus::Verified,
+            ..Default::default()
+        };
+
+        InvoiceRowRepository::new(&ctx.connection).upsert_one(&invoice).unwrap();
+
+        let stock_line = StockLineRow {
+            id: stock_line_id.clone(),
+            item_id: ITEM_ID.to_string(),
+            pack_size,
+            available_number_of_packs: new_number_of_packs,
+            total_number_of_packs: new_number_of_packs,
+            store_id: STORE_ID.to_string(),
+            batch: Some(batch.clone()),
+            ..old_stock_line
+        };
+
+        StockLineRowRepository::new(&ctx.connection).upsert_one(&stock_line).unwrap();
+
+        let invoice_line = InvoiceLineRow {
+            id: format!("invoice_line_{invoice_number}"),
+            invoice_id: invoice.id.clone(),
+            item_id: ITEM_ID.to_string(),
+            stock_line_id: Some(stock_line_id),
+            pack_size,
+            number_of_packs: number_of_packs.abs(),
+            batch: Some(batch.clone()),
+            r#type: invoice_line_type,
+            ..Default::default()
+        };
+
+        InvoiceLineRowRepository::new(&ctx.connection).upsert_one(&invoice_line).unwrap();
+    }
+
+    struct TestStockAdjustment {
+        datetime: NaiveDateTime,
+        stock_line_a: Option<f64>,
+        stock_line_b: Option<f64>,
+        stock_line_c: Option<f64>,
+    }
+
+    fn adjust_test_stock(ctx: &ServiceContext, adjustments: Vec<TestStockAdjustment>) {
+        for adjustment in adjustments {
+            if let Some(stock_line_a) = adjustment.stock_line_a {
+                update_stock(
+                    ctx,
+                    adjustment.datetime,
+                    STOCK_LINE_A.to_string(),
+                    1.0,
+                    stock_line_a,
+                    "batchA".to_string(),
+                );
+            }
+
+            if let Some(stock_line_b) = adjustment.stock_line_b {
+                update_stock(
+                    ctx,
+                    adjustment.datetime,
+                    STOCK_LINE_B.to_string(),
+                    10.0,
+                    stock_line_b,
+                    "batchB".to_string(),
+                );
+            }
+
+            if let Some(stock_line_c) = adjustment.stock_line_c {
+                update_stock(
+                    ctx,
+                    adjustment.datetime,
+                    STOCK_LINE_C.to_string(),
+                    100.0,
+                    stock_line_c,
+                    "batchC".to_string(),
+                );
+            }
+        }
+    }
+
+    #[actix_rt::test]
+    async fn historical_stock_lines() {
+        let ServiceTestContext {
+            service_provider, ..
+        } = setup_all_and_service_provider(
+            "historical_stock_lines",
+            MockDataInserts::none()
+                .names()
+                .stores()
+                .items()
+                .locations()
+                .numbers(),
+        )
+        .await;
+
+        let store_id = mock_store_a().id;
+        let item_id = mock_item_a().id;
+
+        // Service context needs correct store for stock line adjustments logic
+        let ctx = service_provider
+            .context(store_id.clone(), mock_user_account_a().id)
+            .unwrap();
+
+        // Check there's no stock to start with, if there is some mocks might have slipped through?
+        let result = service_provider
+            .stock_line_service
+            .get_historical_stock_lines(
+                &ctx,
+                store_id.clone(),
+                item_id.clone(),
+                date_now().into(),
+                false,
+            )
+            .unwrap();
+
+        assert!(result.rows.is_empty());
+
+        // Here's our test scenario
+        // 3 stock lines, A, B, &C
+        // C is introduced later
+        // Stock line A has been fully consumed (as per latest data) so it can't be allocated in the past
+        // Stock line B has some stock available at historical dates
+        // Stock line C is introduced later so it can't be allocated until it's introduced
+
+        /*
+        ## Stock Movements
+
+        | Date       | StockLine A | StockLine B | StockLine C |
+        |------------|-------------|-------------|-------------|
+        | 2020-01-01 | 100         | 1000        | None        |
+        | 2020-01-02 | -50         | -500        | None        |
+        | 2020-01-03 | -50         | None        | None        |
+        | 2020-01-04 | 100         | 100         | None        |
+        | 2020-01-05 | -100        | None        | None        |
+        | 2021-01-06 | None        | None        | 1000        |
+
+        ## Running Totals
+
+        | Date       | StockLine A | StockLine B | StockLine C |
+        |------------|-------------|-------------|-------------|
+        | 2020-01-01 | 100         | 1000        |             |
+        | 2020-01-02 | 50          | 500         | 0           |
+        | 2020-01-03 | 0           | 500         | 0           |
+        | 2020-01-04 | 100         | 600         | 0           |
+        | 2020-01-05 | 0           | 600         | 0           |
+        | 2021-01-06 | 0           | 600         | 1000        |
+
+        ## Expected Available Stock for backdated date
+
+        | Date       | StockLine A | StockLine B | StockLine C | Comment
+        |------------|-------------|-------------|-------------|
+        | 2020-01-01 | 0           | 500         | 0           |  # StockLine A has been all consumed the future, StockLine B has 1000 available stock at that date, but if we allocated more than 500 we'd have a date with negative stock, StockLine |C doesn't exist yet
+        | 2020-01-02 | 0           | 500         | 0           |  # StockLine A has been all consumed the future, StockLine B has 500 available at that date less than the 600 we have in future
+        | 2020-01-03 | 0           | 500         | 0           |  # StockLine A has been all consumed the future so extra consumption doesn't change anything, No change for StockLine B
+        | 2020-01-04 | 0           | 600         | 0           |  # StockLine A has been all consumed the future, StockLine B has 600 available at that date, it could be allocated from now
+        | 2020-01-05 | 0           | 600         | 0           |  # StockLine A has been all consumed the future so extra consumption doesn't change anything, StockLine B has 600 available at that date, it could be allocated from now
+        | 2021-01-06 | 0           | 600         | 1000        |  # StockLine A has been all consumed the future, StockLine B has 600 available at that date, it could be allocated from now, StockLine C is introduced
+        */
+
+        let stock_movements = vec![
+            TestStockAdjustment {
+                datetime: get_midnight(2020, 1, 1),
+                stock_line_a: Some(100.0),
+                stock_line_b: Some(1000.0),
+                stock_line_c: None,
+            },
+            TestStockAdjustment {
+                datetime: get_midnight(2020, 1, 2),
+                stock_line_a: Some(-50.0),
+                stock_line_b: Some(-500.0),
+                stock_line_c: None,
+            },
+            TestStockAdjustment {
+                datetime: get_midnight(2020, 1, 3),
+                stock_line_a: Some(-50.0),
+                stock_line_b: None,
+                stock_line_c: None,
+            },
+            TestStockAdjustment {
+                datetime: get_midnight(2020, 1, 4),
+                stock_line_a: Some(100.0),
+                stock_line_b: Some(100.0),
+                stock_line_c: None,
+            },
+            TestStockAdjustment {
+                datetime: get_midnight(2020, 1, 5),
+                stock_line_a: Some(-100.0),
+                stock_line_b: None,
+                stock_line_c: None,
+            },
+            TestStockAdjustment {
+                datetime: get_midnight(2020, 1, 6),
+                stock_line_a: None,
+                stock_line_b: None,
+                stock_line_c: Some(1000.0),
+            },
+        ];
+
+        adjust_test_stock(&ctx, stock_movements);
+
+        // // Check we can see 2 stock lines now (stock line A is fully consumed)
+        let result = service_provider
+            .stock_line_service
+            .get_historical_stock_lines(
+                &ctx,
+                store_id.clone(),
+                item_id.clone(),
+                date_now().into(),
+                false,
+            )
+            .unwrap();
+
+        assert_eq!(result.rows.len(), 2);
+
+        // +++ 2020-01-01
+        let result = service_provider
+            .stock_line_service
+            .get_historical_stock_lines(
+                &ctx,
+                store_id.clone(),
+                item_id.clone(),
+                get_midday(2020, 1, 1), // midday to check after the time the stock was introduced
+                false,
+            )
+            .unwrap();
+        // StockLine A is already excluded by `is_available(true)` in the base query
+        // (fully consumed at current date). StockLine C has 0 available on this date
+        // but is kept in the result so callers can show historical availability.
+        assert_eq!(result.rows.len(), 2);
+        // Expected available stock for 2020-01-01
+        // | 2020-01-01 | (excluded)  | 500         | 0           |
+        // # StockLine A has been all consumed — not in base query (is_available = false)
+        // # StockLine B had 1000 available stock at that date, but the lowest stock level we saw was 500
+        // # StockLine C doesn't exist yet — 0 available
+        let stock_line_b = result
+            .rows
+            .iter()
+            .find(|r| r.stock_line_row.id == STOCK_LINE_B);
+
+        assert_eq!(
+            stock_line_b
+                .unwrap()
+                .stock_line_row
+                .available_number_of_packs,
+            500.0
+        );
+        // Total at 2020-01-01 was 1000 (differs from min available of 500)
+        assert_eq!(
+            stock_line_b.unwrap().stock_line_row.total_number_of_packs,
+            1000.0
+        );
+        let stock_line_c = result
+            .rows
+            .iter()
+            .find(|r| r.stock_line_row.id == STOCK_LINE_C);
+        assert_eq!(
+            stock_line_c
+                .unwrap()
+                .stock_line_row
+                .available_number_of_packs,
+            0.0
+        );
+
+        // +++ 2020-01-02
+        let result = service_provider
+            .stock_line_service
+            .get_historical_stock_lines(
+                &ctx,
+                store_id.clone(),
+                item_id.clone(),
+                get_midday(2020, 1, 2), // midday to check after the time the stock was introduced
+                false,
+            )
+            .unwrap();
+        assert_eq!(result.rows.len(), 2);
+        // Expected available stock for 2020-01-02
+        // | 2020-01-02 | (excluded)  | 500         | 0           |
+        // # StockLine A excluded from base query (is_available = false)
+        // # StockLine B had 500 available stock at that date
+        // # StockLine C 0 available — doesn't exist yet
+        let stock_line_b = result
+            .rows
+            .iter()
+            .find(|r| r.stock_line_row.id == STOCK_LINE_B);
+
+        assert_eq!(
+            stock_line_b
+                .unwrap()
+                .stock_line_row
+                .available_number_of_packs,
+            500.0
+        );
+
+        // +++ 2020-01-03
+        let result = service_provider
+            .stock_line_service
+            .get_historical_stock_lines(
+                &ctx,
+                store_id.clone(),
+                item_id.clone(),
+                get_midday(2020, 1, 3), // midday to check after the time the stock was introduced
+                false,
+            )
+            .unwrap();
+        assert_eq!(result.rows.len(), 2);
+        // Expected available stock for 2020-01-03
+        // | 2020-01-03 | (excluded)  | 500         | 0           |
+        // # StockLine A excluded from base query (is_available = false)
+        // # StockLine B had 500 available stock at that date
+        // # StockLine C 0 available — doesn't exist yet
+        let stock_line_b = result
+            .rows
+            .iter()
+            .find(|r| r.stock_line_row.id == STOCK_LINE_B);
+
+        assert_eq!(
+            stock_line_b
+                .unwrap()
+                .stock_line_row
+                .available_number_of_packs,
+            500.0
+        );
+
+        // +++ 2020-01-04
+        let result = service_provider
+            .stock_line_service
+            .get_historical_stock_lines(
+                &ctx,
+                store_id.clone(),
+                item_id.clone(),
+                get_midday(2020, 1, 4), // midday to check after the time the stock was introduced
+                false,
+            )
+            .unwrap();
+        assert_eq!(result.rows.len(), 2);
+        // Expected available stock for 2020-01-04
+        // | 2020-01-04 | (excluded)  | 600         | 0           |
+        // # StockLine A excluded from base query (is_available = false)
+        // # StockLine B had 600 available stock at that date (100 added at midnight)
+        // # StockLine C 0 available — doesn't exist yet
+
+        let stock_line_b = result
+            .rows
+            .iter()
+            .find(|r| r.stock_line_row.id == STOCK_LINE_B);
+
+        assert_eq!(
+            stock_line_b
+                .unwrap()
+                .stock_line_row
+                .available_number_of_packs,
+            600.0
+        );
+
+        // +++ 2020-01-05
+        let result = service_provider
+            .stock_line_service
+            .get_historical_stock_lines(
+                &ctx,
+                store_id.clone(),
+                item_id.clone(),
+                get_midday(2020, 1, 5), // midday to check after the time the stock was introduced
+                false,
+            )
+            .unwrap();
+
+        assert_eq!(result.rows.len(), 2);
+        // Expected available stock for 2020-01-05
+        // | 2020-01-05 | (excluded)  | 600         | 0           |
+        // # StockLine A excluded from base query (is_available = false)
+        // # StockLine B had 600 available stock at that date
+        // # StockLine C 0 available — doesn't exist yet
+
+        let stock_line_b = result
+            .rows
+            .iter()
+            .find(|r| r.stock_line_row.id == STOCK_LINE_B);
+
+        assert_eq!(
+            stock_line_b
+                .unwrap()
+                .stock_line_row
+                .available_number_of_packs,
+            600.0
+        );
+
+        // +++ 2021-01-06
+        let result = service_provider
+            .stock_line_service
+            .get_historical_stock_lines(
+                &ctx,
+                store_id.clone(),
+                item_id.clone(),
+                get_midday(2021, 1, 6), // midday to check after the time the stock was introduced
+                false,
+            )
+            .unwrap();
+
+        assert_eq!(result.rows.len(), 2);
+        // Expected available stock for 2021-01-06
+        // | 2021-01-06 | 0           | 600         | 1000        |
+        // # StockLine A has been all consumed the future,
+        // # StockLine B had 600 available stock at that date
+        // # StockLine C has 1000 available stock at that date (introduced at midnight)
+
+        let stock_line_b = result
+            .rows
+            .iter()
+            .find(|r| r.stock_line_row.id == STOCK_LINE_B);
+
+        assert_eq!(
+            stock_line_b
+                .unwrap()
+                .stock_line_row
+                .available_number_of_packs,
+            600.0
+        );
+
+        let stock_line_c = result
+            .rows
+            .iter()
+            .find(|r| r.stock_line_row.id == STOCK_LINE_C);
+
+        assert_eq!(
+            stock_line_c
+                .unwrap()
+                .stock_line_row
+                .available_number_of_packs,
+            1000.0
+        );
+        assert_eq!(
+            stock_line_c.unwrap().stock_line_row.total_number_of_packs,
+            1000.0
+        );
+    }
+
+    /// Regression test: a stock line that's currently empty but had stock at
+    /// the historical datetime must be returned when
+    /// `include_currently_unavailable` is true.
+    ///
+    /// Bug: the backdated inventory adjustment modal queries by item, then
+    /// matches the response by stock-line id. If the resolver filtered out
+    /// currently-empty lines, the modal silently fell back to displaying
+    /// *current* values labelled "Current" — even though the user had picked a
+    /// historical date.
+    #[actix_rt::test]
+    async fn historical_stock_lines_include_currently_unavailable() {
+        let ServiceTestContext {
+            service_provider, ..
+        } = setup_all_and_service_provider(
+            "historical_stock_lines_include_currently_unavailable",
+            MockDataInserts::none()
+                .names()
+                .stores()
+                .items()
+                .locations()
+                .numbers(),
+        )
+        .await;
+
+        let store_id = mock_store_a().id;
+        let item_id = mock_item_a().id;
+
+        let ctx = service_provider
+            .context(store_id.clone(), mock_user_account_a().id)
+            .unwrap();
+
+        // Line A: +100 on 2020-01-01, fully consumed by 2020-01-03.
+        // Line B: +500 on 2020-01-01, still has stock now.
+        adjust_test_stock(
+            &ctx,
+            vec![
+                TestStockAdjustment {
+                    datetime: get_midnight(2020, 1, 1),
+                    stock_line_a: Some(100.0),
+                    stock_line_b: Some(500.0),
+                    stock_line_c: None,
+                },
+                TestStockAdjustment {
+                    datetime: get_midnight(2020, 1, 3),
+                    stock_line_a: Some(-100.0),
+                    stock_line_b: None,
+                    stock_line_c: None,
+                },
+            ],
+        );
+
+        // With include_currently_unavailable = false (e.g. outbound allocation),
+        // line A is excluded because it's empty now.
+        let excluding = service_provider
+            .stock_line_service
+            .get_historical_stock_lines(
+                &ctx,
+                store_id.clone(),
+                item_id.clone(),
+                get_midday(2020, 1, 2),
+                false,
+            )
+            .unwrap();
+        assert!(excluding
+            .rows
+            .iter()
+            .all(|r| r.stock_line_row.id != STOCK_LINE_A));
+
+        // With include_currently_unavailable = true (e.g. backdated inventory
+        // adjustment display), line A is now returned. The crucial
+        // regression-guard is presence: without this, the modal silently fell
+        // back to current values labelled "Current". The historical *total* at
+        // 2020-01-02 is 100; available is reported as the min over the window
+        // from datetime to now (0 here, since the -100 consumption later
+        // brings the running balance down to 0).
+        let including = service_provider
+            .stock_line_service
+            .get_historical_stock_lines(
+                &ctx,
+                store_id.clone(),
+                item_id.clone(),
+                get_midday(2020, 1, 2),
+                true,
+            )
+            .unwrap();
+        let line_a = including
+            .rows
+            .iter()
+            .find(|r| r.stock_line_row.id == STOCK_LINE_A)
+            .expect("line A should be present when include_currently_unavailable is true");
+        assert_eq!(line_a.stock_line_row.total_number_of_packs, 100.0);
+        assert_eq!(line_a.stock_line_row.available_number_of_packs, 0.0);
+    }
+}

@@ -86,6 +86,11 @@ const IndicatorCellInput: Component<{
     save(value());
   });
 
+  // Locale-stable test hook, keyed by the cell's header (e2e/TESTIDS.md):
+  // "Value" → indicator-input-value.
+  const testId = () =>
+    `indicator-input-${props.cell.label.toLowerCase().replace(/\s+/g, '-')}`;
+
   return (
     <Show
       when={props.cell.type === 'NUMBER'}
@@ -93,6 +98,7 @@ const IndicatorCellInput: Component<{
         <TextField
           label={props.cell.label}
           autofocus={props.autofocus}
+          data-testid={testId()}
           value={value()}
           disabled={props.disabled}
           error={error()}
@@ -109,6 +115,7 @@ const IndicatorCellInput: Component<{
         autofocus={props.autofocus}
         allowNegative
         decimalLimit={10}
+        data-testid={testId()}
         value={value() === '' ? undefined : Number(value())}
         disabled={props.disabled}
         error={error()}

@@ -10,6 +10,7 @@ import { t, localisedDate } from '../../../intl';
 import { formatNumber } from '../../../intl/formatNumber';
 import { homeCurrency } from '../../../intl/currency';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import {
   SidePanelSection,
   SidePanelActions,
@@ -34,7 +35,11 @@ import {
   runInboundBatch,
   updateInboundShipment,
 } from './inboundShipmentUpdate';
-import { kindOf, supplierIsStore } from './inboundShipmentStatus';
+import {
+  deleteRemovesStock,
+  sourceLinkOf,
+  supplierIsStore,
+} from './inboundShipmentStatus';
 import { isExternalScope, type InboundScope } from '../inboundShipmentScope';
 import { DeleteInboundShipmentAction } from './actions/DeleteInboundShipmentAction';
 import { DuplicateInboundShipmentAction } from './actions/DuplicateInboundShipmentAction';
@@ -60,6 +65,12 @@ export interface InboundShipmentSidePanelProps {
   open: boolean;
   /** True once Verified (global edit lock). */
   disabled: boolean;
+  /**
+   * Whether the shipment holds any stock-bearing lines — only those carry
+   * stock, so this and the status together decide the delete confirmation's
+   * stock warning.
+   */
+  hasLines: boolean;
   /**
    * The shipment's permission scope, from the route (see
    * inboundShipmentScope). Selects `type` on the whole-shipment copy read and
@@ -133,16 +144,13 @@ export const InboundShipmentSidePanel: Component<
         : [];
     }
   );
-  // Non-suspending read — the binding read-safety gate (kdd/solid-reactivity-
-  // pitfalls → No remounts on interaction). This refetches WHILE the screen
+  // Non-suspending read (kdd/solid-reactivity-pitfalls → No remounts on
+  // interaction). This refetches WHILE the screen
   // stays open (a committed charges batch, and the tax cascade below fired from
   // a focused field), and first-fetches on the interaction that opens the panel
   // — a direct `serviceLines()` read would suspend the detail view's boundary
   // each time, unmounting the panel's own focused tax input.
-  const serviceLineRows = () =>
-    serviceLines.state === 'ready' || serviceLines.state === 'refreshing'
-      ? (serviceLines.latest ?? [])
-      : [];
+  const serviceLineRows = () => gated(serviceLines) ?? [];
   const refreshService = () => {
     setServiceVersion(v => v + 1);
     props.onRefetch();
@@ -189,7 +197,7 @@ export const InboundShipmentSidePanel: Component<
   };
 
   const pricing = () => props.node.pricing;
-  const isTransfer = () => kindOf(props.node) === 'transfer';
+  const isTransfer = () => sourceLinkOf(props.node) === 'transfer';
 
   // Derived service tax rate (blended across lines) and amount — the display
   // side of the inline editor; both zero when there's nothing to tax.
@@ -459,17 +467,22 @@ export const InboundShipmentSidePanel: Component<
           heading + padding as the info sections above. */}
       <SidePanelSection value="actions" title={t('heading.actions')}>
         <SidePanelActions>
-          {/* Delete only while New (client narrowing). */}
-          <Show when={props.node.status === 'NEW'}>
-            <DeleteInboundShipmentAction
-              storeId={props.storeId}
-              invoiceId={props.node.id}
-              isExternal={isExternal()}
-              number={() => props.node.invoiceNumber}
-              disabled={false}
-              onDeleted={props.onDeleted}
-            />
-          </Show>
+          {/* Delete — offered at every status, matching the list's bulk
+              delete: it is submitted and the server's own reason surfaced,
+              never pre-screened here (issue #1134). The confirmation warns
+              that the shipment's stock goes with it ONLY where the delete
+              would actually take stock: Received (Verified is refused
+              outright), and holding at least one line. */}
+          <DeleteInboundShipmentAction
+            storeId={props.storeId}
+            invoiceId={props.node.id}
+            isExternal={isExternal()}
+            number={() => props.node.invoiceNumber}
+            removesStock={() =>
+              deleteRemovesStock(props.node.status) && props.hasLines
+            }
+            onDeleted={props.onDeleted}
+          />
           <DuplicateInboundShipmentAction
             invoiceId={props.node.id}
             number={() => props.node.invoiceNumber}

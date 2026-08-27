@@ -165,7 +165,10 @@ describe('routeAccess (OMS-REG-NAV-01.16, .19/.20)', () => {
 
   it('passes unknown paths through (the not-found page owns them)', () => {
     expect(routeAccess('no-such-place')).toEqual({ kind: 'ok' });
+    // The legacy Home address is no longer a destination — it redirects.
     expect(routeAccess('dashboard')).toEqual({ kind: 'ok' });
+    // Home itself is ungated, reached at the store root.
+    expect(routeAccess('')).toEqual({ kind: 'ok' });
   });
 });
 

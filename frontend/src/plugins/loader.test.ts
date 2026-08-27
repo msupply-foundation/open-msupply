@@ -1,13 +1,22 @@
-import { describe, expect, it, vi } from 'vitest';
-import { PLUGIN_API_VERSION } from '../plugin-sdk/apiVersion';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { HOST_RUNTIME, PLUGIN_API_VERSION } from '../plugin-sdk/apiVersion';
 import { definePlugin } from '../plugin-sdk/definePlugin';
 import type { PluginDiagnostic } from './diagnostics';
+import { FrontendPluginMetadata } from './frontendPluginMetadata.generated';
 import {
+  fetchPluginMetadata,
   loadPlugins,
   type LoadPluginsDeps,
   type PluginMetadataEntry,
 } from './loader';
 import type { LoadedPlugin } from './registry';
+
+// Only `fetchPluginMetadata` reaches the wire — the pipeline tests below take
+// discovery as an injected dependency, so this mock is inert for them.
+// `vi.hoisted` because the factory is lifted above these imports, and loader.ts
+// is imported statically here.
+const { graphqlFetch } = vi.hoisted(() => ({ graphqlFetch: vi.fn() }));
+vi.mock('../api/graphql', () => ({ graphqlFetch }));
 
 const Component = () => null;
 
@@ -193,5 +202,49 @@ describe('loadPlugins', () => {
     });
     await loadPlugins(deps);
     expect(registered.map(p => p.code).sort()).toEqual(['fast', 'slow']);
+  });
+});
+
+/*
+ * The wire, as against the pipeline above. One server serves both this app and
+ * the old React UI, so what the query declares is the only thing that decides
+ * which of two same-code bundles comes back — and a wrong value there is
+ * silent, indistinguishable from a server with no plugins installed
+ * (spec/plugins/rules.md § compatibility gates).
+ */
+describe('fetchPluginMetadata — declaring which host is asking', () => {
+  beforeEach(() => {
+    graphqlFetch.mockReset();
+  });
+
+  it('sends this host runtime, so the other host bundles are withheld', async () => {
+    graphqlFetch.mockResolvedValue({
+      kind: 'success',
+      data: { frontendPluginMetadata: [entry('civ_plugins')] },
+    });
+
+    const metadata = await fetchPluginMetadata();
+
+    expect(graphqlFetch).toHaveBeenCalledWith(FrontendPluginMetadata, {
+      hostRuntime: HOST_RUNTIME,
+    });
+    // Pinned literally as well as by constant: the server matches this for
+    // EQUALITY against the value packed into every bundle, so a rename is a
+    // fleet-wide outage rather than a refactor. Omitting it entirely means the
+    // React UI, which is the one wrong answer that still parses.
+    expect(graphqlFetch.mock.calls[0]?.[1]).toEqual({ hostRuntime: 'solid' });
+    // The document has to carry the argument for the variable to mean
+    // anything — codegen regenerating from a query without it would leave the
+    // assertion above passing against a server that never sees the value.
+    expect(FrontendPluginMetadata.query).toContain(
+      'frontendPluginMetadata(hostRuntime: $hostRuntime)'
+    );
+    expect(metadata).toEqual([entry('civ_plugins')]);
+  });
+
+  it('reports failure as undefined, so the app runs plugin-less', async () => {
+    graphqlFetch.mockResolvedValue({ kind: 'unexpectedError' });
+
+    expect(await fetchPluginMetadata()).toBeUndefined();
   });
 });

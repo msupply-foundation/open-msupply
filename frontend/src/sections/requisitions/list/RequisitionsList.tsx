@@ -13,7 +13,10 @@ import {
   type Column,
   type SortState,
 } from '@/ui/elements/table/DataTable';
-import { getCellDefinition } from '@/ui/elements/table/tableHelpers';
+import {
+  CommentHeader,
+  getCellDefinition,
+} from '@/ui/elements/table/tableHelpers';
 import { remToPx } from '@/ui/utils/rem';
 import { createTableConfig } from '@/api/createTableConfig';
 import { StatusChip } from '@/ui/elements/feedback/StatusChip';
@@ -32,6 +35,7 @@ import {
   initialPageSize,
   rememberPageSize,
 } from '@/list/pageSize';
+import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
 import { stripEmpty } from '@/typeHelpers';
 import {
   Requisitions,
@@ -152,6 +156,15 @@ const RequisitionsList: Component = () => {
 
   const rows = (): Row[] => data.latest?.nodes ?? [];
   const totalCount = () => data.latest?.totalCount ?? 0;
+
+  // A bulk delete of the last page's rows leaves the offset past the new end
+  // (src/list/clampPageOffset.ts, issue #1117).
+  clampPageOffset({
+    total: () => settledTotal(data, page => page.totalCount),
+    offset: () => query().offset,
+    pageSize: () => query().first,
+    setOffset: offset => setQuery({ ...query(), offset }),
+  });
 
   // The store-context gates for the conditional surfaces
   // (OMS-REG-DIST-05.22–.24), fetched once per store, read non-suspending.
@@ -327,7 +340,7 @@ const RequisitionsList: Component = () => {
     },
     {
       c: { key: 'comment' },
-      header: () => t('label.comment'),
+      header: () => <CommentHeader />,
       ...getCellDefinition('comment'),
     },
     // Program / Order type / Period — only when the store has customer

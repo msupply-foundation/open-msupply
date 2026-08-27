@@ -1,0 +1,88 @@
+import React from 'react';
+import {
+  CircularProgress,
+  Button as MuiButton,
+  styled,
+  SxProps,
+  Theme,
+} from '@mui/material';
+import { Property } from 'csstype';
+import { useAppTheme, useMediaQuery } from '@common/styles';
+interface ButtonProps {
+  color?: 'inherit' | 'primary' | 'secondary';
+  endIcon?: React.ReactNode;
+  startIcon?: React.ReactNode;
+  label: string;
+  onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
+  sx?: SxProps<Theme>;
+  disabled?: boolean;
+  name?: string;
+  shouldShrink?: boolean;
+  shrinkThreshold?: 'sm' | 'md' | 'lg' | 'xl';
+  loading?: boolean;
+  testId?: string;
+}
+
+const StyledButton = styled(MuiButton, {
+  shouldForwardProp: prop => prop !== 'shrink',
+})<{ shrink: boolean }>(({ color, theme, disabled }) => {
+  const iconColor = theme.palette.primary.main;
+
+  return {
+    fontSize: '0.875rem',
+    marginLeft: 5,
+    marginRight: 5,
+    textTransform: 'none' as Property.TextTransform,
+    color: color === 'primary' ? theme.mixins.button.textColor : undefined,
+    '& .MuiButton-startIcon, .MuiSvgIcon-root': {
+      color: color === 'primary' && !disabled ? iconColor : color,
+    },
+  };
+});
+
+export const FlatButton: React.FC<ButtonProps> = ({
+  color = 'primary',
+  endIcon,
+  label,
+  onClick,
+  startIcon,
+  sx,
+  name,
+  disabled = false,
+  shouldShrink = false,
+  shrinkThreshold = 'md',
+  loading = false,
+  testId,
+}) => {
+  const theme = useAppTheme();
+  const isShrinkThreshold = useMediaQuery(
+    theme.breakpoints.down(shrinkThreshold)
+  );
+
+  // On small screens, if the button shouldShrink, then
+  // only display a centred icon, with no text.
+  const shrink = isShrinkThreshold && shouldShrink;
+  const regularIcon = shrink ? null : startIcon;
+  const centredIcon = shrink ? startIcon : null;
+  const text = shrink ? null : label;
+
+  return (
+    <StyledButton
+      shrink={shrink}
+      {...(testId ? { 'data-testid': testId } : {})}
+      onClick={onClick}
+      endIcon={endIcon}
+      variant="text"
+      color={color}
+      sx={sx}
+      name={name}
+      disabled={loading || disabled}
+      startIcon={
+        loading ? <CircularProgress size={20} sx={{ color }} /> : regularIcon
+      }
+    >
+      {centredIcon}
+      {text}
+    </StyledButton>
+  );
+};

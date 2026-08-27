@@ -1,0 +1,176 @@
+use super::{
+    query::get_vaccine_course,
+    update::{VaccineCourseDoseInput, VaccineCourseItemInput, VaccineCourseStoreConfigInput},
+    validate::{check_dose_min_ages_are_in_order, check_vaccine_course_name_exists_for_program},
+};
+use crate::{
+    activity_log::activity_log_entry, common::check_program_exists,
+    service_provider::ServiceContext, vaccine_course::validate::check_vaccine_course_exists,
+    SingleRecordError,
+};
+
+use repository::{
+    vaccine_course::{
+        vaccine_course_dose_row::VaccineCourseDoseRowRepository,
+        vaccine_course_item_row::VaccineCourseItemRowRepository,
+        vaccine_course_row::{VaccineCourseRow, VaccineCourseRowRepository},
+        vaccine_course_store_config_row::{
+            VaccineCourseStoreConfigRow, VaccineCourseStoreConfigRowRepository,
+        },
+    },
+    ActivityLogType, RepositoryError, StorageConnection,
+};
+
+#[derive(PartialEq, Debug)]
+pub enum InsertVaccineCourseError {
+    VaccineCourseNameExistsForThisProgram,
+    VaccineCourseAlreadyExists,
+    CreatedRecordNotFound,
+    ProgramDoesNotExist,
+    DoseMinAgesAreNotInOrder,
+    DemographicIndicatorDoesNotExist,
+    DatabaseError(RepositoryError),
+}
+
+#[derive(PartialEq, Debug, Clone, Default)]
+pub struct InsertVaccineCourse {
+    pub id: String,
+    pub name: String,
+    pub program_id: String,
+    pub vaccine_items: Vec<VaccineCourseItemInput>,
+    pub doses: Vec<VaccineCourseDoseInput>,
+    pub store_configs: Vec<VaccineCourseStoreConfigInput>,
+    pub demographic_id: Option<String>,
+    pub coverage_rate: f64,
+    pub use_in_gaps_calculations: bool,
+    pub wastage_rate: f64,
+    pub can_skip_dose: bool,
+}
+
+pub fn insert_vaccine_course(
+    ctx: &ServiceContext,
+    input: InsertVaccineCourse,
+) -> Result<VaccineCourseRow, InsertVaccineCourseError> {
+    let vaccine_course = ctx
+        .connection
+        .transaction_sync(|connection| {
+            validate(&input, connection)?;
+            let (new_vaccine_course, store_config_rows) = generate(input.clone());
+            VaccineCourseRowRepository::new(connection).upsert_one(&new_vaccine_course)?;
+
+            // Insert the new vaccine course items
+            let item_repo = VaccineCourseItemRowRepository::new(connection);
+            for item in input.clone().vaccine_items {
+                item_repo.upsert_one(&item.to_domain(input.clone().id))?;
+            }
+
+            // Insert the new vaccine course doses
+            let dose_repo = VaccineCourseDoseRowRepository::new(connection);
+            for dose in input.clone().doses {
+                dose_repo.upsert_one(&dose.to_domain(input.clone().id))?;
+            }
+
+            let store_config_repo = VaccineCourseStoreConfigRowRepository::new(connection);
+            for config_row in store_config_rows {
+                store_config_repo.upsert_one(&config_row)?;
+            }
+
+            activity_log_entry(
+                ctx,
+                ActivityLogType::VaccineCourseCreated,
+                Some(new_vaccine_course.id.clone()),
+                None,
+                None,
+            )?;
+
+            get_vaccine_course(&ctx.connection, new_vaccine_course.id)
+                .map_err(InsertVaccineCourseError::from)
+        })
+        .map_err(|error| error.to_inner_error())?;
+    Ok(vaccine_course)
+}
+
+pub fn validate(
+    input: &InsertVaccineCourse,
+    connection: &StorageConnection,
+) -> Result<(), InsertVaccineCourseError> {
+    if check_vaccine_course_exists(&input.id, connection)?.is_some() {
+        return Err(InsertVaccineCourseError::VaccineCourseAlreadyExists);
+    }
+
+    if check_program_exists(connection, &input.program_id)?.is_none() {
+        return Err(InsertVaccineCourseError::ProgramDoesNotExist);
+    }
+
+    if !check_vaccine_course_name_exists_for_program(
+        &input.name,
+        &input.program_id,
+        None,
+        connection,
+    )? {
+        return Err(InsertVaccineCourseError::VaccineCourseNameExistsForThisProgram);
+    }
+
+    if !check_dose_min_ages_are_in_order(&input.doses) {
+        return Err(InsertVaccineCourseError::DoseMinAgesAreNotInOrder);
+    }
+
+    Ok(())
+}
+
+pub fn generate(
+    InsertVaccineCourse {
+        id,
+        name,
+        program_id,
+        vaccine_items: _, // Updated in main function
+        doses: _,         // Updated in main function
+        store_configs,
+        demographic_id,
+        coverage_rate,
+        use_in_gaps_calculations,
+        wastage_rate,
+        can_skip_dose,
+    }: InsertVaccineCourse,
+) -> (VaccineCourseRow, Vec<VaccineCourseStoreConfigRow>) {
+    let row = VaccineCourseRow {
+        id: id.clone(),
+        name,
+        program_id,
+        demographic_id,
+        coverage_rate,
+        use_in_gaps_calculations,
+        wastage_rate,
+        deleted_datetime: None,
+        can_skip_dose,
+    };
+
+    let store_config_rows = store_configs
+        .into_iter()
+        .map(|config| VaccineCourseStoreConfigRow {
+            id: config.id,
+            vaccine_course_id: id.clone(),
+            store_id: config.store_id,
+            wastage_rate: config.wastage_rate.and_then(|nu| nu.value),
+            coverage_rate: config.coverage_rate.and_then(|nu| nu.value),
+        })
+        .collect();
+
+    (row, store_config_rows)
+}
+
+impl From<RepositoryError> for InsertVaccineCourseError {
+    fn from(error: RepositoryError) -> Self {
+        InsertVaccineCourseError::DatabaseError(error)
+    }
+}
+
+impl From<SingleRecordError> for InsertVaccineCourseError {
+    fn from(error: SingleRecordError) -> Self {
+        use InsertVaccineCourseError::*;
+        match error {
+            SingleRecordError::DatabaseError(error) => DatabaseError(error),
+            SingleRecordError::NotFound(_) => CreatedRecordNotFound,
+        }
+    }
+}

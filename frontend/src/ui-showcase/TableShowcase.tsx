@@ -8,7 +8,10 @@ import {
   type Column,
   type SortState,
 } from '../ui/elements/table/DataTable';
-import { getCellDefinition } from '../ui/elements/table/tableHelpers';
+import {
+  CommentHeader,
+  getCellDefinition,
+} from '../ui/elements/table/tableHelpers';
 import {
   resolveTableConfig,
   type Band,
@@ -173,6 +176,9 @@ const DATA: Row[] = Array.from({ length: 120 }, (_, i): Row => {
     requisition: hasIo ? { id: `req-${i}`, requisitionNumber: 90 + i } : null,
     purchaseOrder: hasPo ? { id: `po-${i}`, number: 11 + i } : null,
     pricing: { totalAfterTax: Number((((i * 37) % 5000) + 12.5).toFixed(2)) },
+    // Every fourth row is an empty shipment — the real list reads this to
+    // decide whether a delete warns about the stock it takes with it.
+    lines: { totalCount: i % 4 === 0 ? 0 : (i % 7) + 1 },
   };
 });
 
@@ -339,11 +345,9 @@ const TableShowcaseDemo = () => {
     setSelectedIds([]);
   };
 
-  // Footer gating, mirroring the real page: delete only while every selected
-  // row is New; make-a-copy only for a single selection.
-  const selectedRows = () => DATA.filter(r => selectedIds().includes(r.id));
-  const allSelectedNew = () =>
-    selectedRows().length > 0 && selectedRows().every(r => r.status === 'NEW');
+  // Footer gating, mirroring the real page: make-a-copy only for a single
+  // selection. Delete is not gated — whether a row can be deleted is the
+  // server's answer, given when the action is submitted.
   const singleSelected = () => selectedIds().length === 1;
 
   const columns = (): Column<Row, SortKey, GroupKey>[] => [
@@ -482,7 +486,7 @@ const TableShowcaseDemo = () => {
     },
     {
       c: { key: 'comment' },
-      header: () => t('label.comment'),
+      header: () => <CommentHeader />,
       cardGroup: 'more',
       ...getCellDefinition<Row>('comment'),
     },
@@ -598,26 +602,15 @@ const TableShowcaseDemo = () => {
         onSelectionChange={setSelectedIds}
         // The bulk actions for the table's selection footer (the table adds
         // the count + Clear and swaps its pager for the bar while rows are
-        // selected), carrying the same gating as the real page: delete only
-        // while every selected row is New, make-a-copy only for a single
-        // selection. Inert here (demo only).
+        // selected), carrying the same gating as the real page: make-a-copy
+        // only for a single selection, and Delete always offered — that one is
+        // an admissibility question for the server, so it is submitted rather
+        // than pre-screened. Inert here (demo only).
         selectionActions={
           <>
-            <span
-              title={
-                allSelectedNew()
-                  ? undefined
-                  : 'Only New shipments can be deleted'
-              }
-            >
-              <Button
-                variant="danger"
-                icon={<TrashIcon />}
-                disabled={!allSelectedNew()}
-              >
-                Delete
-              </Button>
-            </span>
+            <Button variant="danger" icon={<TrashIcon />}>
+              Delete
+            </Button>
             <span
               title={
                 singleSelected()

@@ -1,0 +1,114 @@
+use std::cmp;
+
+use super::{
+    api::{
+        CommonSyncRecord, ParsingSyncRecordError, SyncApiError, SyncApiV5,
+        CENTRAL_BUSY_POLL_PERIOD_SECONDS, CENTRAL_BUSY_TIMEOUT_SECONDS,
+    },
+    sync_status::logger::{SyncLogger, SyncLoggerError, SyncStepProgress},
+};
+use crate::{cursor_controller::CursorController, sync::api::CentralSyncBatchV5};
+use repository::{
+    KeyType, KeyValueStoreRepository, RepositoryError, StorageConnection, SyncBufferRepository,
+};
+use thiserror::Error;
+
+#[derive(Error, Debug)]
+pub(crate) enum CentralPullError {
+    #[error(transparent)]
+    SyncApiError(#[from] SyncApiError),
+    #[error("Failed to save sync buffer or cursor")]
+    SaveSyncBufferOrCursorsError(#[from] RepositoryError),
+    #[error(transparent)]
+    ParsingRecordError(#[from] ParsingSyncRecordError),
+    #[error(transparent)]
+    SyncLoggerError(#[from] SyncLoggerError),
+    #[error("Central server site id not configured (SettingsSyncCentralServerSiteId)")]
+    CentralServerSiteIdNotSet,
+}
+
+pub(crate) struct CentralDataSynchroniser {
+    pub(crate) sync_api_v5: SyncApiV5,
+}
+
+impl CentralDataSynchroniser {
+    pub(crate) async fn pull<'a>(
+        &self,
+        connection: &StorageConnection,
+        batch_size: u32,
+        logger: &mut SyncLogger<'a>,
+    ) -> Result<(), CentralPullError> {
+        // TODO protection from infinite loop
+
+        let cursor_controller = CursorController::new(KeyType::CentralSyncPullCursor);
+
+        let msupply_central_server_id = KeyValueStoreRepository::new(connection)
+            .get_i32(KeyType::SettingsSyncCentralServerSiteId)?
+            .ok_or(CentralPullError::CentralServerSiteIdNotSet)?;
+
+        log::info!(
+            "Pulling central data with batch size {} and msupply_central_server_id {}",
+            batch_size,
+            msupply_central_server_id
+        );
+
+        loop {
+            let start_cursor = cursor_controller.get(connection)?;
+
+            // Retry while central is busy with another sync session for this site
+            // (legacy central gates sync per-site); wait for idle then re-request the
+            // same cursor.
+            let CentralSyncBatchV5 { max_cursor, data } = loop {
+                match self
+                    .sync_api_v5
+                    .get_central_records(start_cursor, batch_size)
+                    .await
+                {
+                    Ok(batch) => break batch,
+                    Err(error) if error.is_central_busy() => {
+                        self.sync_api_v5
+                            .wait_until_central_idle(
+                                CENTRAL_BUSY_POLL_PERIOD_SECONDS,
+                                CENTRAL_BUSY_TIMEOUT_SECONDS,
+                            )
+                            .await?;
+                    }
+                    Err(error) => return Err(error.into()),
+                }
+            };
+            let batch_length = data.len();
+
+            logger.progress(SyncStepProgress::PullCentral, max_cursor - start_cursor)?;
+
+            let last_cursor_in_batch = data.last().map(|r| r.cursor).unwrap_or(start_cursor);
+            let sync_buffer_rows = CommonSyncRecord::to_buffer_rows(
+                data.into_iter().map(|r| r.record).collect(),
+                msupply_central_server_id,
+            )?;
+
+            // Insert sync buffer rows in a transaction together with cursor update
+            connection
+                .transaction_sync(|t_con| {
+                    SyncBufferRepository::new(t_con).insert_many(&sync_buffer_rows)?;
+                    cursor_controller.update(t_con, last_cursor_in_batch)
+                })
+                .map_err(|e| e.to_inner_error())?;
+
+            logger.progress(
+                SyncStepProgress::PullCentral,
+                // During integration tests got attempt to 'substract with overflow'
+                // There is a chance that max_cursor is lower the last cursor in batch
+                max_cursor - cmp::min(max_cursor, last_cursor_in_batch),
+            )?;
+
+            match (batch_length, last_cursor_in_batch < max_cursor) {
+                (0, false) => break,
+                // It's possible for batch_length in response to be zero even though we haven't reached max_cursor
+                // in this case we should increment cursor manually
+                (0, true) => cursor_controller.update(connection, last_cursor_in_batch + 1)?,
+                _ => continue,
+            }
+        }
+        Ok(())
+    }
+}

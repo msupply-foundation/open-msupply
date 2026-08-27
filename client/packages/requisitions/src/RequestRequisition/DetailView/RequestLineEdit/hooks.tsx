@@ -1,0 +1,175 @@
+import { useState, useEffect, useCallback, useRef } from 'react';
+import {
+  FnUtils,
+  QuantityUtils,
+  useTranslation,
+} from '@openmsupply-client/common';
+import {
+  useRequest,
+  RequestLineFragment,
+  ItemWithAvailableStockFragment,
+  ItemWithStatsFragment,
+  RequestFragment,
+} from '../../api';
+
+export type DraftRequestLine = Omit<
+  RequestLineFragment,
+  '__typename' | 'item'
+> & {
+  isCreated: boolean;
+  requisitionId: string;
+};
+
+const createDraftFromItem = (
+  item: ItemWithStatsFragment,
+  request: RequestFragment
+): DraftRequestLine => {
+  const { stats } = item;
+  const { averageMonthlyConsumption, availableStockOnHand } = stats;
+  const suggested = QuantityUtils.suggestedQuantity(
+    averageMonthlyConsumption,
+    availableStockOnHand,
+    request.maxMonthsOfStock
+  );
+
+  return {
+    id: FnUtils.generateUUID(),
+    requisitionId: request.id,
+    itemId: item.id,
+    requestedQuantity: 0,
+    suggestedQuantity: suggested,
+    isCreated: true,
+    itemStats: item.stats,
+    itemName: item.name,
+    requisitionNumber: request.requisitionNumber,
+    initialStockOnHandUnits: 0,
+    incomingUnits: 0,
+    outgoingUnits: 0,
+    lossInUnits: 0,
+    additionInUnits: 0,
+    daysOutOfStock: 0,
+    expiringUnits: 0,
+    ancillaryParents: [],
+  };
+};
+
+const createDraftFromRequestLine = (
+  line: RequestLineFragment,
+  request: RequestFragment
+): DraftRequestLine => ({
+  ...line,
+  requisitionId: request.id,
+  itemId: line.item.id,
+  requestedQuantity: line.requestedQuantity,
+  suggestedQuantity: line.suggestedQuantity,
+  isCreated: false,
+  itemStats: line.itemStats,
+});
+
+export const useDraftRequisitionLine = (
+  item?: ItemWithAvailableStockFragment | ItemWithStatsFragment | null
+) => {
+  const t = useTranslation();
+  const [isReasonsError, setIsReasonsError] = useState(false);
+  const { lines } = useRequest.line.list(item?.id);
+  const { data } = useRequest.document.get();
+  const { mutateAsync: saveMutation, isPending: isLoading } = useRequest.line.save();
+  const isSavingRef = useRef(false);
+
+  const [draft, setDraft] = useState<DraftRequestLine | null>(null);
+  useEffect(() => {
+    if (isReasonsError) {
+      return;
+    }
+
+    if (lines && item && data) {
+      const existingLine = lines.find(
+        ({ item: reqItem }) => reqItem.id === item.id
+      );
+      if (existingLine) {
+        setDraft(createDraftFromRequestLine(existingLine, data));
+      } else if ('stats' in item) {
+        setDraft(createDraftFromItem(item, data));
+      }
+    } else {
+      setDraft(null);
+    }
+  }, [lines, item, data, isReasonsError]);
+
+  const update = useCallback((patch: Partial<DraftRequestLine>) => {
+    setDraft(current => (current ? { ...current, ...patch } : null));
+  }, []);
+
+  const save = useCallback(async () => {
+    if (!draft) return null;
+    // Guard against concurrent saves: the modal auto-saves new lines on creation
+    // and the user's OK click can call save() again before the first one resolves.
+    // Without this, both calls take the INSERT path (draft.isCreated still true)
+    // and the server rejects the second with RequisitionLineAlreadyExists.
+    if (isSavingRef.current) return null;
+    isSavingRef.current = true;
+    try {
+      const result = await saveMutation(draft);
+
+      if (draft.isCreated) {
+        setDraft(current => (current ? { ...current, isCreated: false } : null));
+      }
+
+      setIsReasonsError(false);
+      if (result?.__typename === 'UpdateRequestRequisitionLineError') {
+        let errorMessage: string;
+
+        switch (result.error.__typename) {
+          case 'RequisitionReasonNotProvided':
+            setIsReasonsError(true);
+            errorMessage = t('error.provide-reason-requisition');
+            break;
+          case 'CannotEditRequisition':
+            errorMessage = t('error.cannot-edit-requisition');
+            break;
+          default:
+            errorMessage = t('error.database-error');
+            break;
+        }
+
+        return {
+          error: errorMessage,
+        };
+      }
+
+      return {
+        data: result,
+      };
+    } finally {
+      isSavingRef.current = false;
+    }
+  }, [draft, saveMutation]);
+
+  return {
+    draft,
+    isLoading,
+    save,
+    update,
+    isReasonsError,
+  };
+};
+
+export const useNextRequestLine = (
+  getSortedItems: () => RequestLineFragment['item'][],
+  currentItem?: ItemWithAvailableStockFragment | null
+) => {
+  const [items] = useState(getSortedItems);
+
+  if (!items || !currentItem) {
+    return { hasNext: false, next: null };
+  }
+
+  const idx = items.findIndex(item => item?.id === currentItem?.id);
+  const next = items[idx + 1];
+
+  if (idx === -1 || !next) {
+    return { hasNext: false, next: null };
+  }
+
+  return { hasNext: true, next };
+};

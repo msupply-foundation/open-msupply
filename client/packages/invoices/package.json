@@ -1,0 +1,22 @@
+{
+  "name": "@openmsupply-client/invoices",
+  "version": "0.0.0",
+  "sideEffects": false,
+  "private": true,
+  "main": "./src/index.ts",
+  "devDependencies": {
+    "@types/pluralize": "^0.0.33",
+    "find-up": "^7.0.0"
+  },
+  "scripts": {
+    "tsc": "tsc",
+    "eslint": "eslint ./src"
+  },
+  "dependencies": {
+    "@openmsupply-client/common": "^0.0.1",
+    "@openmsupply-client/config": "^0.0.0",
+    "@openmsupply-client/system": "^0.0.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  }
+}

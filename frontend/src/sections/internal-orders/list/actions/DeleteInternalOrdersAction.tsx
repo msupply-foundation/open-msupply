@@ -122,7 +122,13 @@ const Body = (
       onClose={props.onClose}
       icon={<TrashIcon />}
       testId="confirmation-modal"
-      title={t('heading.are-you-sure')}
+      // The title tracks the phase — neither a blocked selection nor a
+      // rejection is a question (kdd/action-modal).
+      title={
+        phase() === 'blocked' || phase() === 'error'
+          ? t('heading.cannot-do-that')
+          : t('heading.are-you-sure')
+      }
       description={
         <Switch
           fallback={tPlural('messages.confirm-delete-internal-orders', count)}
@@ -160,7 +166,11 @@ const Body = (
         >
           {/* Blocked / error: nothing to submit — a single Close. */}
           <Match when={phase() === 'blocked' || phase() === 'error'}>
-            <Button variant="secondary" confirms="plain" onClick={props.onClose}>
+            <Button
+              variant="secondary"
+              confirms="plain"
+              onClick={props.onClose}
+            >
               {t('button.close')}
             </Button>
           </Match>

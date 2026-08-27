@@ -1,0 +1,75 @@
+query itemCounts(
+  $storeId: String!
+  $lowStockThreshold: Float!
+  $highStockThreshold: Float!
+) {
+  itemCounts(
+    lowStockThreshold: $lowStockThreshold
+    highStockThreshold: $highStockThreshold
+    storeId: $storeId
+  ) {
+    itemCounts {
+      lowStock
+      noStock
+      highStock
+      total
+      outOfStockProducts
+      productsAtRiskOfBeingOutOfStock
+      productsOverstocked
+    }
+  }
+}
+
+query inboundInternalCounts($storeId: String!) {
+  inboundShipmentCounts(storeId: $storeId) {
+    created {
+      today
+      thisWeek
+    }
+    notDelivered
+  }
+}
+
+query inboundExternalCounts($storeId: String!) {
+  inboundShipmentExternalCounts(storeId: $storeId) {
+    created {
+      today
+      thisWeek
+    }
+    notDelivered
+  }
+}
+
+query outboundCounts($storeId: String!) {
+  outboundShipmentCounts(storeId: $storeId) {
+    notShipped
+  }
+}
+
+query internalOrderCounts($storeId: String!) {
+  requisitionCounts(storeId: $storeId) {
+    request {
+      draft
+    }
+  }
+}
+
+query requisitionCounts($storeId: String!) {
+  requisitionCounts(storeId: $storeId) {
+    response {
+      new
+    }
+    emergency {
+      new
+    }
+  }
+}
+
+query stockCounts($storeId: String!, $daysTillExpired: Int) {
+  stockCounts(storeId: $storeId, daysTillExpired: $daysTillExpired) {
+    expired
+    expiringSoon
+    expiringBetweenThresholds
+    expiringInNextThreeMonths
+  }
+}

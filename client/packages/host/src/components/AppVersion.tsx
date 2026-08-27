@@ -1,0 +1,60 @@
+import React, { FC, CSSProperties } from 'react';
+import {
+  Grid,
+  Typography,
+  useIsCentralServerApi,
+  useTranslation,
+} from '@openmsupply-client/common';
+// Version is shared for client and server and is located in repo root package.json
+const appVersion = require('../../../../../package.json').version; // eslint-disable-line @typescript-eslint/no-var-requires
+
+interface AppVersionProps {
+  SiteInfo?: React.ReactNode;
+  style?: CSSProperties;
+  /** data-testid for the version line (e.g. 'login-version' on the login page) */
+  testId?: string;
+}
+
+export const AppVersion: FC<AppVersionProps> = ({
+  SiteInfo,
+  style,
+  testId = 'app-version',
+}) => {
+  const t = useTranslation();
+  const isCentralServer = useIsCentralServerApi();
+
+  return (
+    <Grid
+      style={{
+        width: '100%',
+        alignSelf: 'flex-end',
+        ...style,
+      }}
+    >
+      <Grid padding={1} paddingBottom={0} display="flex" flexDirection="column">
+        <Grid container gap={1} justifyContent="flex-end">
+          <Grid>
+            <Typography fontWeight={700}>{t('label.app-version')}</Typography>
+          </Grid>
+          <Grid>
+            <Typography whiteSpace="nowrap" data-testid={testId}>
+              {appVersion}
+            </Typography>
+          </Grid>
+        </Grid>
+        {isCentralServer && (
+          <Grid display="flex" justifyContent="flex-end" gap={1}>
+            <Grid>
+              <Typography fontWeight={700} sx={{ whiteSpace: 'nowrap' }}>
+                {t('label.central-server')}
+              </Typography>
+            </Grid>
+          </Grid>
+        )}
+      </Grid>
+      <Grid padding={1} paddingTop={0}>
+        {SiteInfo}
+      </Grid>
+    </Grid>
+  );
+};

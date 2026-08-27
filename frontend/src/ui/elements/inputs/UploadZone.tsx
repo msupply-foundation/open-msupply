@@ -19,6 +19,11 @@ export interface UploadZoneProps extends PartitionOptions {
   multiple?: boolean;
   disabled?: boolean;
   class?: string;
+  /**
+   * `data-testid` for the hidden `<input type="file">` (locale-stable test
+   * hook, e2e/TESTIDS.md) — the setInputFiles target in e2e.
+   */
+  inputTestId?: string;
 }
 
 /*
@@ -39,6 +44,7 @@ export const UploadZone = (props: UploadZoneProps): JSX.Element => {
     'accept',
     'maxSize',
     'class',
+    'inputTestId',
   ]);
 
   const [dragging, setDragging] = createSignal(false);
@@ -100,6 +106,7 @@ export const UploadZone = (props: UploadZoneProps): JSX.Element => {
         disabled={local.disabled}
         tabindex={-1}
         aria-hidden="true"
+        data-testid={local.inputTestId}
         onChange={event => {
           dispatch(event.currentTarget.files);
           // Reset so re-selecting the same file fires change again.

@@ -213,7 +213,7 @@ const emitRecipe = (
     }
     case 'shade':
       // Relative colour syntax: keeps the hue, steps lightness and chroma.
-      // Supported since Chromium 119, far under the enforced floor of 138
+      // Supported since Chromium 119, far under the enforced floor of 132
       // (scripts/check-min-browser.mjs).
       return `oklch(from ${anchorRef(recipe.from)} calc(l * ${recipe.l}) calc(c * ${recipe.c}) h)`;
     case 'ring':

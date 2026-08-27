@@ -1,0 +1,148 @@
+use chrono::Utc;
+
+use repository::NameRowRepository;
+use repository::{
+    InvoiceRow, InvoiceStatus, InvoiceType, NumberRowType, RepositoryError, StorageConnection,
+};
+use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
+use util::uuid::uuid;
+
+use crate::invoice::inventory_adjustment::UpdateInventoryAdjustmentReason;
+use crate::invoice_line::stock_in_line::{InsertStockInLine, StockInType};
+use crate::number::next_number;
+
+use super::AddNewStockLine;
+
+pub struct GenerateResult {
+    pub invoice: InvoiceRow,
+    pub stock_in_line: InsertStockInLine,
+    pub update_inventory_adjustment_reason: UpdateInventoryAdjustmentReason,
+}
+
+pub fn generate(
+    connection: &StorageConnection,
+    store_id: &str,
+    user_id: &str,
+    AddNewStockLine {
+        stock_line_id,
+        item_id,
+        number_of_packs,
+        reason_option_id,
+        cost_price_per_pack,
+        sell_price_per_pack,
+        pack_size,
+        on_hold,
+        batch,
+        location,
+        expiry_date,
+        manufacture_date,
+        barcode,
+        item_variant_id,
+        vvm_status_id,
+        donor_id,
+        campaign_id,
+        program_id,
+        volume_per_pack,
+        manufacturer_id,
+    }: AddNewStockLine,
+) -> Result<GenerateResult, RepositoryError> {
+    let current_datetime = Utc::now().naive_utc();
+
+    let inventory_adjustment_name = NameRowRepository::new(connection)
+        .find_one_by_code(INVENTORY_ADJUSTMENT_NAME_CODE)?
+        .ok_or(RepositoryError::NotFound)?;
+
+    let invoice_number = next_number(connection, &NumberRowType::InventoryAddition, store_id)?;
+
+    let invoice_id = uuid();
+
+    let invoice = InvoiceRow {
+        id: invoice_id.clone(),
+        user_id: Some(user_id.to_string()),
+        name_id: inventory_adjustment_name.id,
+        r#type: InvoiceType::InventoryAddition,
+        invoice_number,
+        store_id: store_id.to_string(),
+        created_datetime: current_datetime,
+        status: InvoiceStatus::New,
+        original_shipment_id: None,
+        // Default
+        currency_id: None,
+        currency_rate: 1.0,
+        on_hold: false,
+        colour: None,
+        comment: None,
+        their_reference: None,
+        tax_percentage: None,
+        name_store_id: None,
+        transport_reference: None,
+        allocated_datetime: None,
+        picked_datetime: None,
+        shipped_datetime: None,
+        delivered_datetime: None,
+        received_datetime: None,
+        verified_datetime: None,
+        cancelled_datetime: None,
+        linked_invoice_id: None,
+        requisition_id: None,
+        clinician_link_id: None,
+        backdated_datetime: None,
+        diagnosis_id: None,
+        program_id: None,
+        name_insurance_join_id: None,
+        insurance_discount_amount: None,
+        insurance_discount_percentage: None,
+        is_cancellation: false,
+        expected_delivery_date: None,
+        default_donor_id: None,
+        purchase_order_id: None,
+        shipping_method_id: None,
+        charges_local_currency: 0.0,
+        charges_foreign_currency: 0.0,
+        ..Default::default()
+    };
+
+    let invoice_line_id = uuid();
+    let stock_in_line = InsertStockInLine {
+        id: invoice_line_id.clone(),
+        invoice_id,
+        item_id,
+        stock_line_id: Some(stock_line_id),
+        location,
+        pack_size,
+        batch,
+        cost_price_per_pack,
+        sell_price_per_pack,
+        expiry_date,
+        manufacture_date,
+        number_of_packs,
+        stock_on_hold: on_hold,
+        r#type: StockInType::InventoryAddition,
+        barcode,
+        item_variant_id,
+        donor_id,
+        manufacturer_id,
+        vvm_status_id,
+        campaign_id,
+        program_id,
+        volume_per_pack,
+        total_before_tax: None,
+        tax_percentage: None,
+        note: None,
+        shipped_number_of_packs: None,
+        shipped_pack_size: None,
+        purchase_order_line_id: None,
+        reason_option_id: None,
+    };
+
+    let update_inventory_adjustment_reason = UpdateInventoryAdjustmentReason {
+        reason_option_id,
+        invoice_line_id,
+    };
+
+    Ok(GenerateResult {
+        invoice,
+        stock_in_line,
+        update_inventory_adjustment_reason,
+    })
+}

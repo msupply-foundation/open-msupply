@@ -35,8 +35,12 @@
   gap: var(--space-1);
 }
 
+/* A row of options WRAPS: an option is an unshrinkable flex item (its label sets
+   its width), so on a narrow control column — the include-all choice in the
+   create-stocktake modal's FieldRow, on a phone — an unwrapped row would push
+   past the column and scroll the dialog body sideways. */
 .items[data-orientation='horizontal'] {
-  flex-direction: row;
+  flex-flow: row wrap;
   gap: var(--space-4);
 }
 
@@ -106,4 +110,63 @@
 .description {
   color: var(--text-secondary);
   font-size: var(--text-xs);
+}
+
+/*
+ * Card appearance (RadioGroup appearance="card") — each option in its own
+ * bordered box, the whole box the click target. For a short set of mutually
+ * exclusive MODES: the selected one takes the brand rim plus a wash of the same
+ * colour, so which mode is active reads from the shape of the box and not from
+ * one 1.125rem dot.
+ *
+ * Cards need room to breathe between them; the plain list's --space-1 is for
+ * rows that read as one block. The appearance is declared ONCE, on the group —
+ * every rule below reaches its options as descendants, so an option carries no
+ * attribute of its own. Placed after the base rules so specificity ascends
+ * (a descendant of the group always outweighs the bare .item / .text / .label
+ * it overrides) — stylelint's no-descending-specificity.
+ */
+.items[data-appearance='card'] {
+  gap: var(--space-2);
+}
+
+.items[data-appearance='card'] .item {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  transition:
+    border-color var(--motion-fast) ease,
+    background var(--motion-fast) ease;
+}
+
+.items[data-appearance='card'] .item:hover:not([data-disabled]) {
+  border-color: var(--gray-light);
+}
+
+/* Selected. :has() on the native radio — no JS mirror of the checked state, so
+   the box and the dot can never disagree. */
+.items[data-appearance='card'] .item:has(.input:checked) {
+  border-color: var(--secondary-main);
+  background: color-mix(
+    in srgb,
+    var(--secondary-main) 6%,
+    var(--surface-raised)
+  );
+}
+
+/* The card's text runs as ONE sentence: a bold label with the description
+   flowing inline after it (and wrapping under it), rather than the plain
+   appearance's stacked two lines. */
+.items[data-appearance='card'] .text {
+  display: block;
+}
+
+.items[data-appearance='card'] .label {
+  font-weight: var(--weight-bold);
+}
+
+.items[data-appearance='card'] .description {
+  margin-inline-start: 0.35em;
+  font-size: var(--text-sm);
 }

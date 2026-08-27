@@ -9,6 +9,7 @@ import {
   type JSX,
 } from 'solid-js';
 import { graphqlFetch } from '../../../../api/graphql';
+import { gated } from '../../../../api/gated';
 import { t, tPlural } from '../../../../intl';
 import { formatNumber } from '../../../../intl/formatNumber';
 import { homeCurrency } from '../../../../intl/currency';
@@ -193,10 +194,7 @@ const LineEditContent = (
     const response = result.data.requisitionLineChart;
     return response.__typename === 'ItemChartNode' ? response : undefined;
   });
-  const chartData = () =>
-    chart.state === 'ready' || chart.state === 'refreshing'
-      ? chart.latest
-      : undefined;
+  const chartData = () => gated(chart);
   // The history/evolution pair shows only when the server returned series (an
   // order with no expected-delivery-date returns both null — then only the
   // target-quantity breakdown shows, spec S4 § charts).
@@ -495,7 +493,11 @@ const LineEditContent = (
       titleHidden
       actionsLead={
         <Show when={errorMessage()}>
-          {message => <Alert severity="error">{message()}</Alert>}
+          {message => (
+            <Alert severity="error" testId="line-edit-error">
+              {message()}
+            </Alert>
+          )}
         </Show>
       }
       actions={
@@ -686,6 +688,7 @@ const LineEditContent = (
                     <Select
                       label={t('label.units')}
                       hideLabel
+                      testId="entry-mode-select"
                       value={entryMode()}
                       options={entryOptions()}
                       disabled={disabled() || saving()}
@@ -699,7 +702,7 @@ const LineEditContent = (
 
                 {/* Excess-request warning (AC-LN13). */}
                 <Show when={excess()}>
-                  <Alert severity="warning">
+                  <Alert severity="warning" testId="excess-request-warning">
                     {t('warning.requested-exceeds-suggested')}
                   </Alert>
                 </Show>
@@ -730,6 +733,7 @@ const LineEditContent = (
                       kind="requisition"
                       label={t('label.reason')}
                       hideLabel
+                      inputTestId="variance-reason-input"
                       disabled={disabled() || saving() || !variance()}
                       value={variance() ? (reasonId() ?? undefined) : undefined}
                       onChange={reason => setReasonId(reason?.id ?? null)}
@@ -742,6 +746,7 @@ const LineEditContent = (
                     label={t('label.comment')}
                     hideLabel
                     rows={3}
+                    data-testid="line-comment-field"
                     disabled={disabled() || saving()}
                     value={comment()}
                     onInput={e => setComment(e.currentTarget.value)}

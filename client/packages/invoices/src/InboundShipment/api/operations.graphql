@@ -1,0 +1,1407 @@
+fragment InboundLine on InvoiceLineNode {
+  __typename
+  id
+  type
+  batch
+  costPricePerPack
+  sellPricePerPack
+  expiryDate
+  manufactureDate
+  numberOfPacks
+  shippedNumberOfPacks
+  shippedPackSize
+  packSize
+  note
+  type
+  invoiceId
+  totalBeforeTax
+  totalAfterTax
+  taxPercentage
+  foreignCurrencyPriceBeforeTax
+  itemName
+  itemVariantId
+  linkedInvoiceId
+  volumePerPack
+  status
+
+  donor(storeId: $storeId) {
+    id
+    name
+  }
+
+  manufacturer(storeId: $storeId) {
+    ...NameRow
+  }
+
+  program {
+    id
+    name
+  }
+  campaign {
+    id
+    name
+  }
+
+  item {
+    __typename
+    id
+    name
+    code
+    unitName
+    defaultPackSize
+    isVaccine
+    doses
+    restrictedLocationTypeId
+    itemStoreProperties(storeId: $storeId) {
+      defaultSellPricePerPack
+      margin
+    }
+    programs(storeId: $storeId) {
+      id
+      name
+    }
+  }
+
+  location {
+    __typename
+    name
+    id
+    code
+    onHold
+  }
+
+  stockLine {
+    __typename
+    availableNumberOfPacks
+    batch
+    costPricePerPack
+    expiryDate
+    id
+    itemId
+    packSize
+    sellPricePerPack
+    storeId
+    totalNumberOfPacks
+    onHold
+    note
+    vvmStatusId
+  }
+
+  vvmStatus {
+    __typename
+    id
+    priority
+    unusable
+    description
+  }
+
+  itemVariant {
+    __typename
+    id
+    packagingVariants {
+      __typename
+      id
+      packSize
+      volumePerUnit
+    }
+  }
+
+  reasonOption {
+    __typename
+    id
+    reason
+    type
+    isActive
+  }
+
+  purchaseOrderLine {
+    __typename
+    id
+    lineNumber
+    adjustedNumberOfUnits
+    shippedNumberOfUnits
+    inTransitNumberOfUnits
+    receivedNumberOfUnits
+    requestedNumberOfUnits
+    pricePerPackAfterDiscount
+  }
+}
+
+fragment Inbound on InvoiceNode {
+  __typename
+  id
+  comment
+  createdDatetime
+  allocatedDatetime
+  deliveredDatetime
+  receivedDatetime
+  pickedDatetime
+  shippedDatetime
+  verifiedDatetime
+  invoiceNumber
+  colour
+  onHold
+  otherPartyId
+  otherPartyName
+  status
+  theirReference
+  transportReference
+  type
+  taxPercentage
+  expectedDeliveryDate
+  customFields
+  defaultDonor(storeId: $storeId) {
+    id
+    name
+  }
+
+  linkedShipment {
+    __typename
+    id
+    invoiceNumber
+  }
+
+  user {
+    __typename
+    username
+    email
+  }
+
+  requisition {
+    __typename
+    id
+    requisitionNumber
+    createdDatetime
+
+    user {
+      __typename
+      username
+    }
+
+    createdFromRequisitionId
+  }
+
+  lines {
+    __typename
+    nodes {
+      ...InboundLine
+    }
+    totalCount
+  }
+
+  otherParty(storeId: $storeId) {
+    __typename
+    id
+    name
+    code
+    isCustomer
+    isSupplier
+    isOnHold
+    margin
+    store {
+      id
+      code
+      isDisabled
+    }
+  }
+
+  pricing {
+    __typename
+    totalAfterTax
+    totalBeforeTax
+    stockTotalBeforeTax
+    stockTotalAfterTax
+    serviceTotalAfterTax
+    serviceTotalBeforeTax
+    taxPercentage
+    foreignCurrencyTotalAfterTax
+  }
+
+  currency {
+    id
+    code
+    rate
+    isHomeCurrency
+  }
+
+  currencyRate
+  chargesLocalCurrency
+  chargesForeignCurrency
+
+  documents {
+    __typename
+    nodes {
+      ...SyncFileReference
+    }
+  }
+
+  shippingMethod {
+    id
+    method
+  }
+
+  purchaseOrder {
+    id
+    number
+    reference
+    orderTotalAfterDiscount
+    currency {
+      id
+      code
+      rate
+      isHomeCurrency
+    }
+    lines {
+      nodes {
+        id
+        item {
+          id
+        }
+      }
+    }
+  }
+
+  inboundType
+}
+
+fragment InboundRow on InvoiceNode {
+  __typename
+  comment
+  createdDatetime
+  deliveredDatetime
+  receivedDatetime
+  id
+  invoiceNumber
+  otherPartyName
+  status
+  colour
+  theirReference
+  taxPercentage
+  onHold
+  pricing {
+    __typename
+    totalAfterTax
+    taxPercentage
+    foreignCurrencyTotalAfterTax
+  }
+  requisition {
+    id
+    requisitionNumber
+  }
+  linkedShipment {
+    id
+  }
+  currency {
+    id
+    code
+    rate
+    isHomeCurrency
+  }
+  currencyRate
+  purchaseOrder {
+    id
+    number
+  }
+  inboundType
+  customFields
+}
+
+query invoices(
+  $first: Int
+  $offset: Int
+  $key: InvoiceSortFieldInput!
+  $desc: Boolean
+  $filter: InvoiceFilterInput
+  $storeId: String!
+  $type: [InvoiceTypeInput!]
+) {
+  invoices(
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+    storeId: $storeId
+    type: $type
+  ) {
+    ... on InvoiceConnector {
+      __typename
+      totalCount
+      nodes {
+        ...InboundRow
+      }
+    }
+  }
+}
+
+query invoice($id: String!, $storeId: String!, $type: InvoiceTypeInput) {
+  invoice(id: $id, storeId: $storeId, type: $type) {
+    ... on InvoiceNode {
+      ...Inbound
+    }
+
+    ... on NodeError {
+      __typename
+      error {
+        description
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+      }
+    }
+  }
+}
+
+query inboundByNumber($invoiceNumber: Int!, $storeId: String!) {
+  invoiceByNumber(
+    invoiceNumber: $invoiceNumber
+    storeId: $storeId
+    type: INBOUND_SHIPMENT
+  ) {
+    ... on InvoiceNode {
+      ...Inbound
+    }
+
+    ... on NodeError {
+      __typename
+      error {
+        description
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        ... on DatabaseError {
+          __typename
+          description
+          fullError
+        }
+      }
+    }
+  }
+}
+
+mutation updateInboundShipment(
+  $storeId: String!
+  $input: UpdateInboundShipmentInput!
+) {
+  updateInboundShipment(storeId: $storeId, input: $input) {
+    ... on UpdateInboundShipmentError {
+      __typename
+      error {
+        description
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        ... on CannotChangeStatusOfInvoiceOnHold {
+          __typename
+          description
+        }
+        ... on CannotReceiveWithPendingLines {
+          __typename
+          description
+        }
+        ... on CannotEditInvoice {
+          __typename
+          description
+        }
+        ... on CannotReverseInvoiceStatus {
+          __typename
+          description
+        }
+        ... on OtherPartyNotASupplier {
+          __typename
+          description
+        }
+      }
+    }
+    ... on InvoiceNode {
+      __typename
+      id
+      invoiceNumber
+    }
+  }
+}
+
+mutation updateInboundShipmentExternal(
+  $storeId: String!
+  $input: UpdateInboundShipmentInput!
+) {
+  updateInboundShipmentExternal(storeId: $storeId, input: $input) {
+    ... on UpdateInboundShipmentError {
+      __typename
+      error {
+        description
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        ... on CannotChangeStatusOfInvoiceOnHold {
+          __typename
+          description
+        }
+        ... on CannotReceiveWithPendingLines {
+          __typename
+          description
+        }
+        ... on CannotEditInvoice {
+          __typename
+          description
+        }
+        ... on CannotReverseInvoiceStatus {
+          __typename
+          description
+        }
+        ... on OtherPartyNotASupplier {
+          __typename
+          description
+        }
+      }
+    }
+    ... on InvoiceNode {
+      __typename
+      id
+      invoiceNumber
+    }
+  }
+}
+
+mutation deleteInboundShipments(
+  $storeId: String!
+  $deleteInboundShipments: [DeleteInboundShipmentInput!]!
+) {
+  batchInboundShipment(
+    storeId: $storeId
+    input: { deleteInboundShipments: $deleteInboundShipments }
+  ) {
+    __typename
+    deleteInboundShipments {
+      id
+      response {
+        ... on DeleteInboundShipmentError {
+          __typename
+          error {
+            description
+          }
+        }
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+      }
+    }
+  }
+}
+
+mutation deleteInboundShipmentsExternal(
+  $storeId: String!
+  $deleteInboundShipments: [DeleteInboundShipmentInput!]!
+) {
+  batchInboundShipmentExternal(
+    storeId: $storeId
+    input: { deleteInboundShipments: $deleteInboundShipments }
+  ) {
+    __typename
+    deleteInboundShipments {
+      id
+      response {
+        ... on DeleteInboundShipmentError {
+          __typename
+          error {
+            description
+          }
+        }
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+      }
+    }
+  }
+}
+
+mutation insertInboundShipment(
+  $id: String!
+  $otherPartyId: String!
+  $requisitionId: String
+  $storeId: String!
+  $purchaseOrderId: String
+  $insertLinesFromPurchaseOrder: Boolean
+) {
+  insertInboundShipment(
+    storeId: $storeId
+    input: {
+      id: $id
+      otherPartyId: $otherPartyId
+      requisitionId: $requisitionId
+      purchaseOrderId: $purchaseOrderId
+      insertLinesFromPurchaseOrder: $insertLinesFromPurchaseOrder
+    }
+  ) {
+    ... on InsertInboundShipmentError {
+      __typename
+      error {
+        description
+        ... on OtherPartyNotASupplier {
+          __typename
+          description
+        }
+      }
+    }
+    ... on InvoiceNode {
+      __typename
+      id
+      invoiceNumber
+    }
+  }
+}
+
+mutation insertInboundShipmentExternal(
+  $id: String!
+  $otherPartyId: String!
+  $requisitionId: String
+  $storeId: String!
+  $purchaseOrderId: String
+  $insertLinesFromPurchaseOrder: Boolean
+) {
+  insertInboundShipmentExternal(
+    storeId: $storeId
+    input: {
+      id: $id
+      otherPartyId: $otherPartyId
+      requisitionId: $requisitionId
+      purchaseOrderId: $purchaseOrderId
+      insertLinesFromPurchaseOrder: $insertLinesFromPurchaseOrder
+    }
+  ) {
+    ... on InsertInboundShipmentError {
+      __typename
+      error {
+        description
+        ... on OtherPartyNotASupplier {
+          __typename
+          description
+        }
+      }
+    }
+    ... on InvoiceNode {
+      __typename
+      id
+      invoiceNumber
+    }
+  }
+}
+
+mutation duplicateInboundShipment($id: String!, $storeId: String!) {
+  duplicateInboundShipment(storeId: $storeId, id: $id) {
+    __typename
+    ... on DuplicateInboundShipmentNode {
+      invoice {
+        __typename
+        id
+        invoiceNumber
+      }
+      skippedItemCount
+    }
+    ... on DuplicateInboundShipmentError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+fragment LineLinkedToTransferredInvoiceError on LineLinkedToTransferredInvoice {
+  __typename
+  description
+}
+
+mutation deleteInboundShipmentLines(
+  $storeId: String!
+  $input: BatchInboundShipmentInput!
+) {
+  batchInboundShipment(storeId: $storeId, input: $input) {
+    deleteInboundShipmentLines {
+      id
+      response {
+        ... on DeleteInboundShipmentLineError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on BatchIsReserved {
+              __typename
+              description
+            }
+            ... on LineLinkedToTransferredInvoice {
+              ...LineLinkedToTransferredInvoiceError
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+            ... on ForeignKeyError {
+              __typename
+              description
+              key
+            }
+          }
+        }
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+      }
+    }
+  }
+}
+
+mutation deleteInboundShipmentLinesExternal(
+  $storeId: String!
+  $input: BatchInboundShipmentInput!
+) {
+  batchInboundShipmentExternal(storeId: $storeId, input: $input) {
+    deleteInboundShipmentLines {
+      id
+      response {
+        ... on DeleteInboundShipmentLineError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on BatchIsReserved {
+              __typename
+              description
+            }
+            ... on LineLinkedToTransferredInvoice {
+              ...LineLinkedToTransferredInvoiceError
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+            ... on ForeignKeyError {
+              __typename
+              description
+              key
+            }
+          }
+        }
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+      }
+    }
+  }
+}
+
+mutation upsertInboundShipment(
+  $storeId: String!
+  $input: BatchInboundShipmentInput!
+) {
+  batchInboundShipment(storeId: $storeId, input: $input) {
+    __typename
+    updateInboundShipments {
+      id
+      response {
+        ... on UpdateInboundShipmentError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotChangeStatusOfInvoiceOnHold {
+              __typename
+              description
+            }
+            ... on CannotReceiveWithPendingLines {
+              __typename
+              description
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+            ... on CannotReverseInvoiceStatus {
+              __typename
+              description
+            }
+            ... on OtherPartyNotASupplier {
+              __typename
+              description
+            }
+          }
+        }
+        ... on InvoiceNode {
+          __typename
+          id
+          invoiceNumber
+        }
+      }
+    }
+    insertInboundShipments {
+      id
+      response {
+        ... on InsertInboundShipmentError {
+          __typename
+          error {
+            description
+            ... on OtherPartyNotASupplier {
+              __typename
+              description
+            }
+          }
+        }
+        ... on InvoiceNode {
+          __typename
+          id
+          invoiceNumber
+        }
+      }
+    }
+    deleteInboundShipments {
+      id
+      response {
+        ... on DeleteInboundShipmentError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotDeleteInvoiceWithLines {
+              __typename
+              description
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+          }
+        }
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+      }
+    }
+    updateInboundShipmentServiceLines {
+      id
+      response {
+        ... on UpdateInboundShipmentServiceLineError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+            ... on ForeignKeyError {
+              __typename
+              description
+              key
+            }
+          }
+        }
+        ... on InvoiceLineNode {
+          __typename
+          id
+        }
+      }
+    }
+    updateInboundShipmentLines {
+      id
+      response {
+        ... on UpdateInboundShipmentLineError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on BatchIsReserved {
+              __typename
+              description
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+            ... on ForeignKeyError {
+              __typename
+              description
+              key
+            }
+            ... on NotAnInboundShipment {
+              __typename
+              description
+            }
+          }
+        }
+        ... on InvoiceLineNode {
+          __typename
+          id
+        }
+      }
+    }
+    insertInboundShipmentServiceLines {
+      id
+      response {
+        ... on InsertInboundShipmentServiceLineError {
+          __typename
+          error {
+            description
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+            ... on ForeignKeyError {
+              __typename
+              description
+              key
+            }
+          }
+        }
+        ... on InvoiceLineNode {
+          __typename
+          id
+        }
+      }
+    }
+    insertInboundShipmentLines {
+      id
+      response {
+        ... on InsertInboundShipmentLineError {
+          __typename
+          error {
+            description
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+            ... on ForeignKeyError {
+              __typename
+              description
+              key
+            }
+          }
+        }
+        ... on InvoiceLineNode {
+          __typename
+          id
+        }
+      }
+    }
+    deleteInboundShipmentServiceLines {
+      id
+      response {
+        ... on DeleteInboundShipmentServiceLineError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+            ... on ForeignKeyError {
+              __typename
+              description
+              key
+            }
+          }
+        }
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+      }
+    }
+    deleteInboundShipmentLines {
+      id
+      response {
+        ... on DeleteInboundShipmentLineError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on BatchIsReserved {
+              __typename
+              description
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+            ... on ForeignKeyError {
+              __typename
+              description
+              key
+            }
+          }
+        }
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+      }
+    }
+  }
+}
+
+mutation upsertInboundShipmentExternal(
+  $storeId: String!
+  $input: BatchInboundShipmentInput!
+) {
+  batchInboundShipmentExternal(storeId: $storeId, input: $input) {
+    __typename
+    updateInboundShipments {
+      id
+      response {
+        ... on UpdateInboundShipmentError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotChangeStatusOfInvoiceOnHold {
+              __typename
+              description
+            }
+            ... on CannotReceiveWithPendingLines {
+              __typename
+              description
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+            ... on CannotReverseInvoiceStatus {
+              __typename
+              description
+            }
+            ... on OtherPartyNotASupplier {
+              __typename
+              description
+            }
+          }
+        }
+        ... on InvoiceNode {
+          __typename
+          id
+          invoiceNumber
+        }
+      }
+    }
+    insertInboundShipments {
+      id
+      response {
+        ... on InsertInboundShipmentError {
+          __typename
+          error {
+            description
+            ... on OtherPartyNotASupplier {
+              __typename
+              description
+            }
+          }
+        }
+        ... on InvoiceNode {
+          __typename
+          id
+          invoiceNumber
+        }
+      }
+    }
+    deleteInboundShipments {
+      id
+      response {
+        ... on DeleteInboundShipmentError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotDeleteInvoiceWithLines {
+              __typename
+              description
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+          }
+        }
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+      }
+    }
+    updateInboundShipmentServiceLines {
+      id
+      response {
+        ... on UpdateInboundShipmentServiceLineError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+            ... on ForeignKeyError {
+              __typename
+              description
+              key
+            }
+          }
+        }
+        ... on InvoiceLineNode {
+          __typename
+          id
+        }
+      }
+    }
+    updateInboundShipmentLines {
+      id
+      response {
+        ... on UpdateInboundShipmentLineError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on BatchIsReserved {
+              __typename
+              description
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+            ... on ForeignKeyError {
+              __typename
+              description
+              key
+            }
+            ... on NotAnInboundShipment {
+              __typename
+              description
+            }
+          }
+        }
+        ... on InvoiceLineNode {
+          __typename
+          id
+        }
+      }
+    }
+    insertInboundShipmentServiceLines {
+      id
+      response {
+        ... on InsertInboundShipmentServiceLineError {
+          __typename
+          error {
+            description
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+            ... on ForeignKeyError {
+              __typename
+              description
+              key
+            }
+          }
+        }
+        ... on InvoiceLineNode {
+          __typename
+          id
+        }
+      }
+    }
+    insertInboundShipmentLines {
+      id
+      response {
+        ... on InsertInboundShipmentLineError {
+          __typename
+          error {
+            description
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+            ... on ForeignKeyError {
+              __typename
+              description
+              key
+            }
+          }
+        }
+        ... on InvoiceLineNode {
+          __typename
+          id
+        }
+      }
+    }
+    deleteInboundShipmentServiceLines {
+      id
+      response {
+        ... on DeleteInboundShipmentServiceLineError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+            ... on ForeignKeyError {
+              __typename
+              description
+              key
+            }
+          }
+        }
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+      }
+    }
+    deleteInboundShipmentLines {
+      id
+      response {
+        ... on DeleteInboundShipmentLineError {
+          __typename
+          error {
+            description
+            ... on RecordNotFound {
+              __typename
+              description
+            }
+            ... on BatchIsReserved {
+              __typename
+              description
+            }
+            ... on CannotEditInvoice {
+              __typename
+              description
+            }
+            ... on ForeignKeyError {
+              __typename
+              description
+              key
+            }
+          }
+        }
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+      }
+    }
+  }
+}
+
+mutation addToInboundShipmentFromMasterList(
+  $storeId: String!
+  $shipmentId: String!
+  $masterListId: String!
+) {
+  addToInboundShipmentFromMasterList(
+    input: { shipmentId: $shipmentId, masterListId: $masterListId }
+    storeId: $storeId
+  ) {
+    ... on AddToInboundShipmentFromMasterListError {
+      __typename
+      error {
+        ... on MasterListNotFoundForThisStore {
+          __typename
+          description
+        }
+        ... on CannotEditInvoice {
+          __typename
+          description
+        }
+        ... on RecordNotFound {
+          __typename
+          description
+        }
+        description
+      }
+    }
+    ... on InvoiceLineConnector {
+      __typename
+      totalCount
+    }
+  }
+}
+
+fragment LinkedRequestRow on RequisitionNode {
+  __typename
+  id
+  createdDatetime
+  requisitionNumber
+  theirReference
+  user {
+    username
+  }
+  program {
+    name
+  }
+  comment
+}
+
+fragment LinkedRequestLine on RequisitionLineNode {
+  __typename
+  id
+  requestedQuantity
+  item {
+    id
+    code
+    name
+  }
+}
+
+fragment LinkedRequestWithLines on RequisitionNode {
+  ...LinkedRequestRow
+  lines {
+    nodes {
+      ...LinkedRequestLine
+    }
+  }
+}
+
+query requests(
+  $storeId: String!
+  $filter: RequisitionFilterInput
+  $sort: [RequisitionSortInput!]
+) {
+  requisitions(storeId: $storeId, filter: $filter, sort: $sort) {
+    ... on RequisitionConnector {
+      totalCount
+      nodes {
+        ...LinkedRequestRow
+      }
+    }
+  }
+}
+
+query request($id: String!, $storeId: String!) {
+  requisition(id: $id, storeId: $storeId) {
+    ... on RequisitionNode {
+      __typename
+      ...LinkedRequestWithLines
+    }
+  }
+}
+
+mutation insertLinesFromInternalOrder(
+  $storeId: String!
+  $input: BatchInboundShipmentInput!
+) {
+  batchInboundShipment(storeId: $storeId, input: $input) {
+    insertFromInternalOrderLines {
+      id
+      response {
+        ... on InvoiceLineNode {
+          __typename
+          id
+        }
+      }
+    }
+  }
+}
+
+mutation insertLinesFromInternalOrderExternal(
+  $storeId: String!
+  $input: BatchInboundShipmentInput!
+) {
+  batchInboundShipmentExternal(storeId: $storeId, input: $input) {
+    insertFromInternalOrderLines {
+      id
+      response {
+        ... on InvoiceLineNode {
+          __typename
+          id
+        }
+      }
+    }
+  }
+}
+
+fragment InboundShipmentPurchaseOrderLine on PurchaseOrderNode {
+  comment
+  id
+  number
+  reference
+  supplier {
+    id
+    name
+  }
+}
+
+query purchaseOrders(
+  $storeId: String!
+  $filter: PurchaseOrderFilterInput
+) {
+  purchaseOrders(storeId: $storeId, filter: $filter) {
+    ... on PurchaseOrderConnector {
+      totalCount
+      nodes {
+        ...InboundShipmentPurchaseOrderLine
+      }
+    }
+  }
+}
+
+query stocktakeCountAfterDate(
+  $storeId: String!
+  $filter: StocktakeFilterInput
+) {
+  stocktakes(storeId: $storeId, filter: $filter) {
+    ... on StocktakeConnector {
+      totalCount
+    }
+  }
+}

@@ -16,7 +16,10 @@ import {
   type Column,
   type SortState,
 } from '../../../ui/elements/table/DataTable';
-import { getCellDefinition } from '../../../ui/elements/table/tableHelpers';
+import {
+  CommentHeader,
+  getCellDefinition,
+} from '../../../ui/elements/table/tableHelpers';
 import { remToPx } from '../../../ui/utils/rem';
 import { HStack } from '../../../ui/layout/Stack/HStack';
 import { createTableConfig } from '../../../api/createTableConfig';
@@ -33,6 +36,7 @@ import {
   initialPageSize,
   rememberPageSize,
 } from '../../../list/pageSize';
+import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
 import { inboundShipmentPreferences } from '../../../store/storeContext';
 import {
   InboundShipments,
@@ -52,6 +56,7 @@ import {
 } from './actions';
 import { DuplicateInboundShipmentAction } from '../detail/actions/DuplicateInboundShipmentAction';
 import {
+  deleteRemovesStock,
   isEditable,
   statusColour,
   statusLabel,
@@ -62,6 +67,7 @@ import {
   inboundShipmentHref,
   scopeOf,
 } from '../inboundShipmentScope';
+import type { InboundSelection } from './deleteInboundShipments';
 import { linkedOrderOf } from '../linkedOrder';
 import { SupplierKindIcon } from '../SupplierKindIcon';
 import {
@@ -110,7 +116,6 @@ const InboundShipmentsList: Component = () => {
     ...DEFAULT_STATE,
     first: initialPageSize(),
   });
-  const [selectedIds, setSelectedIds] = createSignal<string[]>([]);
   // The create modal: plain manual create, or the from-a-purchase-order flow
   // (offered only when the store's procurement preference is on).
   const [createMode, setCreateMode] = createSignal<
@@ -206,13 +211,58 @@ const InboundShipmentsList: Component = () => {
   const rows = (): Row[] => data.latest?.nodes ?? [];
   const totalCount = () => data.latest?.totalCount ?? 0;
 
-  // Bulk delete is offered only while EVERY selected row is New (spec S1 — a
-  // deliberate UI narrowing of the server's wider delete window).
-  const selectedRows = () => rows().filter(r => selectedIds().includes(r.id));
-  const allSelectedNew = () =>
-    selectedRows().length > 0 && selectedRows().every(r => r.status === 'NEW');
+  // The selection carries the SCOPE of each shipment alongside its id, because
+  // the bulk delete is twinned per scope (issue #1213 — see
+  // deleteInboundShipments). A selection survives a page change, outliving the
+  // row that carried `purchaseOrderId`, so the scope is read off the row as the
+  // id is selected — it was on the page at that moment — and travels with the
+  // id until it leaves the selection. ONE signal, not an id list beside a scope
+  // map: there is then no invariant to keep, and no id that could reach the
+  // wire with a guessed scope.
+  const [selection, setSelection] = createSignal<InboundSelection[]>([]);
+  const selectedIds = createMemo(() => selection().map(s => s.id));
+  const onSelectionChange = (ids: string[]) => {
+    const known = new Map(selection().map(s => [s.id, s.scope]));
+    setSelection(
+      ids.map(id => ({
+        id,
+        scope:
+          known.get(id) ??
+          scopeOf(rows().find(r => r.id === id)?.purchaseOrderId),
+      }))
+    );
+  };
+  const clearSelection = () => setSelection([]);
+
+  // A bulk delete of the last page's rows leaves the offset past the new end
+  // (src/list/clampPageOffset.ts, issue #1117).
+  clampPageOffset({
+    total: () => settledTotal(data, page => page.totalCount),
+    offset: () => query().offset,
+    pageSize: () => query().first,
+    setOffset: offset => setQuery({ ...query(), offset }),
+  });
+
   const singleSelectedId = () =>
     selectedIds().length === 1 ? selectedIds()[0] : undefined;
+
+  // Whether deleting the selection reverses a receipt, which the confirmation
+  // warns about (rules → deletion). Not a gate — it only picks the copy. Both
+  // halves have to hold for there to be stock the delete would actually take:
+  // the status must admit it (deleteRemovesStock — Received alone: Shipped and
+  // Delivered hold none, Verified is refused outright), and the row must have
+  // lines, since stock only ever comes from those.
+  //
+  // Reads the CURRENT page's rows, since status and line count come from them:
+  // a selection carried across a page change is still submitted in full, but a
+  // stock-bearing row left behind on another page cannot raise the notice.
+  const selectionRemovesStock = () =>
+    rows().some(
+      r =>
+        selectedIds().includes(r.id) &&
+        deleteRemovesStock(r.status) &&
+        r.lines.totalCount > 0
+    );
 
   const currentSort = (): SortState<SortKey> | undefined => {
     const s = query().sort?.[0];
@@ -222,15 +272,11 @@ const InboundShipmentsList: Component = () => {
     setQuery({ ...query(), sort: [{ key, desc }], offset: 0 });
   const onFilterChange = (filter: InboundListFilter) => {
     setQuery({ ...query(), filter, offset: 0 });
-    setSelectedIds([]);
+    clearSelection();
   };
   const onCustomFieldChange = (cf: CustomFieldFilterState) => {
     setQuery({ ...query(), cf, offset: 0 });
-    setSelectedIds([]);
-  };
-  const onDeleted = () => {
-    setSelectedIds([]);
-    void refetch();
+    clearSelection();
   };
 
   // Both scopes share one detail route; the row's purchaseOrderId names which
@@ -359,7 +405,7 @@ const InboundShipmentsList: Component = () => {
     },
     {
       c: { key: 'comment' },
-      header: () => t('label.comment'),
+      header: () => <CommentHeader />,
       ...getCellDefinition('comment'),
     },
     {
@@ -462,23 +508,23 @@ const InboundShipmentsList: Component = () => {
         }
         enableSelection
         selectedIds={selectedIds()}
-        onSelectionChange={setSelectedIds}
+        onSelectionChange={onSelectionChange}
         // The bulk actions for the table's selection footer (the table adds
         // the count + Clear around them, and swaps its pager for the bar
         // while rows are selected).
         selectionActions={
           <>
-            {/* Delete — enabled only while every selected row is New (spec S1).
-                Disabled-with-reason: the reason rides the button's own hover
-                text, never a wrapper element. */}
+            {/* Delete — always offered on a selection. Deletability is the
+                admissibility of an action, not a standing property of the rows,
+                so it is submitted and the server's own reason is surfaced in
+                the dialog rather than pre-screened here
+                (spec/ui-standards/validation.md § actions; issue #1134). */}
             <DeleteInboundShipmentsAction
               storeId={params.storeId}
-              selectedIds={selectedIds}
-              onDeleted={onDeleted}
-              disabled={!allSelectedNew()}
-              title={
-                allSelectedNew() ? undefined : t('messages.delete-only-new')
-              }
+              selection={selection}
+              removesStock={selectionRemovesStock}
+              refetchList={() => void refetch()}
+              clearSelection={clearSelection}
             />
             {/* Make a copy — enabled only for a single selection (spec AC-L4);
                 shown disabled-with-reason otherwise (M5). Number/supplier come

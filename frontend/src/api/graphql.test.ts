@@ -5,6 +5,7 @@ import {
   forbiddenError,
   graphqlFetch,
   unexpectedError,
+  type GraphqlResult,
   type TypedDocument,
 } from './graphql';
 import { clearUnauthenticated, unauthenticated } from '../auth/authContext';
@@ -17,7 +18,7 @@ const document: TypedDocument<Result, Record<string, never>> = {
 const mockFetch = (body: unknown, ok = true, status = 200) => {
   const fetchMock = vi
     .fn()
-    .mockResolvedValue({ ok, status, json: async () => body });
+    .mockResolvedValue({ ok, status, text: async () => JSON.stringify(body) });
   vi.stubGlobal('fetch', fetchMock);
   return fetchMock;
 };
@@ -176,7 +177,7 @@ describe('graphqlFetch', () => {
       vi.fn().mockResolvedValue({
         ok: true,
         status: 200,
-        json: async () => {
+        text: async () => {
           throw new SyntaxError('Unexpected token < in JSON');
         },
       })
@@ -281,5 +282,191 @@ describe('graphqlFetch', () => {
     const result = await graphqlFetch(document, {}, { background: true });
     expect(result).toEqual({ kind: 'forbidden' });
     expect(forbiddenError()).toBeUndefined();
+  });
+});
+
+/*
+ * Structural sharing (kdd/state-management decision 5): a query whose response
+ * body is byte-identical to its previous response returns the SAME parsed
+ * object, so state published straight off the response compares
+ * reference-equal at its signal and an unchanged background refresh notifies
+ * nobody. Distinct documents per test — the share cache is module state.
+ */
+describe('graphqlFetch structural sharing', () => {
+  const successData = <T>(result: GraphqlResult<T>): T => {
+    if (result.kind !== 'success') throw new Error(`got ${result.kind}`);
+    return result.data;
+  };
+
+  it('returns the same parsed object for a byte-identical query response', async () => {
+    const doc: TypedDocument<Result, Record<string, never>> = {
+      query: 'query shareIdentical { thing { id } }',
+    };
+    mockFetch({ data: { thing: { id: '1' } } });
+    const first = successData(await graphqlFetch(doc, {}));
+    const second = successData(await graphqlFetch(doc, {}));
+    expect(second).toBe(first);
+  });
+
+  it('parses fresh when the response changes, then shares the new response', async () => {
+    const doc: TypedDocument<Result, Record<string, never>> = {
+      query: 'query shareChanges { thing { id } }',
+    };
+    const fetchMock = vi.fn();
+    for (const id of ['1', '2', '2']) {
+      fetchMock.mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify({ data: { thing: { id } } }),
+      });
+    }
+    vi.stubGlobal('fetch', fetchMock);
+    const first = successData(await graphqlFetch(doc, {}));
+    const second = successData(await graphqlFetch(doc, {}));
+    expect(second).not.toBe(first);
+    expect(second.thing.id).toBe('2');
+    const third = successData(await graphqlFetch(doc, {}));
+    expect(third).toBe(second);
+  });
+
+  it('does not share across different variables for the same operation', async () => {
+    const doc: TypedDocument<Result, { n: number }> = {
+      query: 'query shareVars($n: Int!) { thing(n: $n) { id } }',
+    };
+    mockFetch({ data: { thing: { id: '1' } } });
+    const first = successData(await graphqlFetch(doc, { n: 1 }));
+    const second = successData(await graphqlFetch(doc, { n: 2 }));
+    expect(second).not.toBe(first);
+    expect(second).toEqual(first);
+  });
+
+  it('never shares mutation responses', async () => {
+    const doc: TypedDocument<Result, Record<string, never>> = {
+      query: 'mutation shareMutation { thing { id } }',
+    };
+    mockFetch({ data: { thing: { id: '1' } } });
+    const first = successData(await graphqlFetch(doc, {}));
+    const second = successData(await graphqlFetch(doc, {}));
+    expect(second).not.toBe(first);
+    expect(second).toEqual(first);
+  });
+
+  it('re-applies the success mapper on a shared response', async () => {
+    const doc: TypedDocument<Result, Record<string, never>> = {
+      query: 'query shareMapped { thing { id } }',
+    };
+    mockFetch({ data: { thing: { id: 'bad' } } });
+    const mapper = (data: Result) =>
+      data.thing.id === 'bad' ? 'Record does not exist' : undefined;
+    successData(await graphqlFetch(doc, {}));
+    const mapped = await graphqlFetch(doc, {}, { mapSuccessToError: mapper });
+    expect(mapped).toEqual({ kind: 'unexpectedError' });
+  });
+});
+
+describe('graphqlFetch cancellation', () => {
+  // A cancelled request is the caller's own decision, so it must not reach the
+  // global unexpected-error modal — that modal offers Reload and Go to
+  // dashboard, which are the wrong answers for work nobody is waiting for.
+  it('resolves to aborted, leaving the global error modal untouched', async () => {
+    const controller = new AbortController();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation((_url: string, init: RequestInit) => {
+        // Reject the way a real fetch does once its signal is aborted.
+        return new Promise((_resolve, reject) => {
+          init.signal?.addEventListener('abort', () =>
+            reject(new DOMException('The user aborted a request.', 'AbortError'))
+          );
+        });
+      })
+    );
+
+    const pending = graphqlFetch(document, {}, { signal: controller.signal });
+    controller.abort();
+
+    expect(await pending).toEqual({ kind: 'aborted' });
+    expect(unexpectedError()).toBeUndefined();
+  });
+
+  it('passes the signal through to fetch', async () => {
+    const controller = new AbortController();
+    const fetchMock = mockFetch({ data: { thing: { id: '1' } } });
+
+    await graphqlFetch(document, {}, { signal: controller.signal });
+
+    expect(fetchMock.mock.calls[0][1].signal).toBe(controller.signal);
+  });
+
+  // `fetch` resolves the moment the response HEADERS arrive; the body is read
+  // separately. An abort landing in that window rejects `response.text()`, not
+  // the fetch — and that window is widest for exactly this PR's use case, a
+  // long generation with a large document. Verified against real fetch
+  // semantics (node:http serving 200 + half a body, then stalling): `text()`
+  // rejects AbortError rather than resolving with the partial body.
+  it('resolves to aborted when the abort lands while the body is streaming', async () => {
+    const controller = new AbortController();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation(async (_url: string, init: RequestInit) => ({
+        ok: true,
+        status: 200,
+        // Headers are in; the body never finishes arriving.
+        text: () =>
+          new Promise((_resolve, reject) => {
+            init.signal?.addEventListener('abort', () =>
+              reject(
+                new DOMException('This operation was aborted', 'AbortError')
+              )
+            );
+          }),
+      }))
+    );
+
+    const pending = graphqlFetch(document, {}, { signal: controller.signal });
+    await Promise.resolve();
+    controller.abort();
+
+    expect(await pending).toEqual({ kind: 'aborted' });
+    expect(unexpectedError()).toBeUndefined();
+  });
+
+  // The other post-headers path: an abort racing a non-OK status. Nobody is
+  // waiting for the answer, so the 500 is not a fault we should raise.
+  it('resolves to aborted when the abort races a non-OK status', async () => {
+    const controller = new AbortController();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation(async () => {
+        controller.abort();
+        return { ok: false, status: 500, text: async () => '' };
+      })
+    );
+
+    const result = await graphqlFetch(
+      document,
+      {},
+      { signal: controller.signal }
+    );
+
+    expect(result).toEqual({ kind: 'aborted' });
+    expect(unexpectedError()).toBeUndefined();
+  });
+
+  // Only an ABORTED signal excuses a rejection. A genuine transport failure
+  // that happens to occur while a signal is attached is still a fault, and
+  // must still reach the modal.
+  it('still reports a real transport failure when the signal is unused', async () => {
+    const controller = new AbortController();
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
+
+    const result = await graphqlFetch(
+      document,
+      {},
+      { signal: controller.signal }
+    );
+
+    expect(result).toEqual({ kind: 'unexpectedError' });
+    expect(unexpectedError()?.cause).toBe('offline');
   });
 });

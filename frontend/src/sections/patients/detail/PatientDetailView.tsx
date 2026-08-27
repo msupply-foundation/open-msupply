@@ -7,6 +7,7 @@ import {
 } from 'solid-js';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
+import { gated } from '../../../api/gated';
 import { t, localisedDate, getDisplayAge } from '../../../intl';
 import { Page } from '../../../ui/layout/Page/Page';
 import { Header } from '../../../ui/layout/Header/Header';
@@ -114,22 +115,17 @@ const PatientDetailView: Component = () => {
   // load only once that surface is shown. Modal state: undefined = closed,
   // { policy? } = open (a policy present ⇒ edit, absent ⇒ add).
   //
-  // Every secondary resource below is read through a `state` GATE, never
-  // `.latest` alone: `.latest` SUSPENDS on a first pending read, and these are
-  // read inside tab panels, which Kobalte unmounts while inactive — so the
-  // first read happens on the tab click. Suspending then would tear down this
-  // whole screen (and detach an open dialog) mid-interaction
-  // (kdd/solid-reactivity-pitfalls › no remounts on interaction). Only the
-  // patient resource above reads suspending: that is the screen's first load,
-  // which has no live user state to lose.
+  // Every secondary resource below is read through `gated`, never `.latest`
+  // alone: these are read inside tab panels, which Kobalte unmounts while
+  // inactive — so the first read happens on the tab click, and suspending then
+  // would tear down this whole screen (and detach an open dialog)
+  // mid-interaction. Only the patient resource above reads suspending: that is
+  // the screen's first load, which has no live user state to lose.
   const [providers] = createResource(
     () => params.storeId,
     fetchInsuranceProviders
   );
-  const providerList = () =>
-    providers.state === 'ready' || providers.state === 'refreshing'
-      ? (providers.latest ?? [])
-      : [];
+  const providerList = () => gated(providers) ?? [];
   const hasInsurance = () => providerList().length > 0;
 
   const [insuranceState, setInsuranceState] = createSignal<{
@@ -158,10 +154,7 @@ const PatientDetailView: Component = () => {
         : undefined,
     fetchInsurancePolicies
   );
-  const policies = () =>
-    policiesData.state === 'ready' || policiesData.state === 'refreshing'
-      ? (policiesData.latest ?? [])
-      : [];
+  const policies = () => gated(policiesData) ?? [];
 
   // Program-module tabs (spec § program-module tabs): Programs / Encounters /
   // Vaccinations, read-only lists gated on the program module. Enrolments load
@@ -180,10 +173,7 @@ const PatientDetailView: Component = () => {
         : undefined,
     fetchPatientProgramEnrolments
   );
-  const enrolments = () =>
-    enrolmentsData.state === 'ready' || enrolmentsData.state === 'refreshing'
-      ? (enrolmentsData.latest ?? [])
-      : [];
+  const enrolments = () => gated(enrolmentsData) ?? [];
   const immunisationEnrolments = () =>
     enrolments().filter(e => e.isImmunisationProgram);
 
@@ -198,10 +188,7 @@ const PatientDetailView: Component = () => {
         : undefined,
     fetchPatientEncounters
   );
-  const encounters = () =>
-    encountersData.state === 'ready' || encountersData.state === 'refreshing'
-      ? (encountersData.latest ?? [])
-      : [];
+  const encounters = () => gated(encountersData) ?? [];
 
   const openEncounter = (encounter: { id: string }) =>
     navigate(`/${params.storeId}/dispensary/encounter/${encounter.id}`);

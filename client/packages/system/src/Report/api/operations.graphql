@@ -1,0 +1,126 @@
+fragment ReportRow on ReportNode {
+  __typename
+  context
+  id
+  name
+  code
+  subContext
+  isCustom
+  isActive
+  argumentSchema {
+    id
+    type
+    jsonSchema
+    uiSchema
+  }
+}
+
+query report($storeId: String!, $userLanguage: String!, $id: String!) {
+  report(storeId: $storeId, userLanguage: $userLanguage, id: $id) {
+    ... on ReportNode {
+      ...ReportRow
+    }
+    ... on QueryReportError {
+      __typename
+      error {
+        ... on FailedTranslation {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}
+
+query reports(
+  $storeId: String!
+  $userLanguage: String!
+  $key: ReportSortFieldInput!
+  $desc: Boolean
+  $filter: ReportFilterInput
+) {
+  reports(
+    storeId: $storeId
+    userLanguage: $userLanguage
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    __typename
+    ... on ReportConnector {
+      nodes {
+        ...ReportRow
+      }
+      totalCount
+    }
+    ... on QueryReportsError {
+      __typename
+      error {
+        ... on FailedTranslation {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}
+
+query generateReport(
+  $storeId: String!
+  $reportId: String!
+  $dataId: String
+  $arguments: JSON
+  $format: PrintFormat
+  $sort: PrintReportSortInput
+  $currentLanguage: String
+) {
+  generateReport(
+    dataId: $dataId
+    reportId: $reportId
+    storeId: $storeId
+    format: $format
+    arguments: $arguments
+    sort: $sort
+    currentLanguage: $currentLanguage
+  ) {
+    ... on PrintReportNode {
+      __typename
+      fileId
+    }
+    ... on PrintReportError {
+      __typename
+      error {
+        ... on FailedToFetchReportData {
+          __typename
+          description
+          errors
+        }
+        description
+      }
+    }
+  }
+}
+
+query csvToExcel(
+  $storeId: String!
+  $csvData: String!
+  $filename: String!
+  $sheetName: String
+) {
+  csvToExcel(
+    storeId: $storeId
+    csvData: $csvData
+    filename: $filename
+    sheetName: $sheetName
+  ) {
+    ... on PrintReportNode {
+      __typename
+      fileId
+    }
+    ... on PrintReportError {
+      __typename
+      error {
+        description
+      }
+    }
+  }
+}

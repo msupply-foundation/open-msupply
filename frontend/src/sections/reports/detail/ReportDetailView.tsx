@@ -5,11 +5,13 @@ import {
   createSignal,
   Match,
   on,
+  onCleanup,
   Show,
   Switch,
 } from 'solid-js';
 import type { Component } from 'solid-js';
 import { useNavigate, useParams, useSearchParams } from '@solidjs/router';
+import { gated } from '../../../api/gated';
 import { graphqlFetch } from '../../../api/graphql';
 import { locale, t } from '../../../intl';
 import { FILES_URL } from '../../../config';
@@ -172,10 +174,28 @@ const ReportDetailView: Component = () => {
     };
   });
 
+  // The in-flight generation, so a new one can cancel the one it replaces.
+  // Generation is the longest request the app makes, and re-keying the resource
+  // below does NOT cancel the previous fetch — so without this, changing a
+  // filter twice leaves two (or three) generations running, each holding a
+  // server worker to completion (msupply-foundation/open-msupply#12710). The
+  // superseded document could never be shown anyway: only the newest key's
+  // result is rendered.
+  let inFlight: AbortController | undefined;
+  const supersede = (): AbortSignal => {
+    inFlight?.abort();
+    inFlight = new AbortController();
+    return inFlight.signal;
+  };
+  // Leaving the screen abandons the generation too — nothing is left to show it
+  // to.
+  onCleanup(() => inFlight?.abort());
+
   // Regenerates whenever the serialised request changes (new report, new
-  // arguments, or language). `.latest` keeps the current document on screen
-  // during a regenerate rather than tearing the frame down
-  // (kdd/solid-reactivity-pitfalls).
+  // arguments, or language). Read via `gated` so the current document stays on
+  // screen during a regenerate rather than tearing the frame down, and so the
+  // first pending read doesn't suspend an already-open screen
+  // (kdd/solid-reactivity-pitfalls › No remounts on interaction).
   const [generated] = createResource(
     () => {
       const vars = generateVars();
@@ -190,10 +210,17 @@ const ReportDetailView: Component = () => {
         reportId: vars.reportId,
         format: 'HTML',
         args: vars.args,
+        signal: supersede(),
       });
     }
   );
-  const result = () => generated.latest;
+  // An aborted generation is reported as nothing at all: it was superseded, so
+  // the resource is already fetching its replacement, and showing either an
+  // error or the stale document would misrepresent that.
+  const result = () => {
+    const r = gated(generated);
+    return r?.kind === 'aborted' ? undefined : r;
+  };
 
   const fileSrc = (): string | undefined => {
     const r = result();
@@ -262,8 +289,11 @@ const ReportDetailView: Component = () => {
       args: reportArgs() ?? timezoneArgument(),
     });
     // `failed` alone is silent — the request never completed, and the global
-    // modal owns that; every other non-file outcome is described here.
-    if (gen.kind === 'failed') return null;
+    // modal owns that. `aborted` is silent for the opposite reason: nobody
+    // asked to see it. (This export passes no signal, so it can only arrive if
+    // one is added later — handled here so that stays a safe change.) Every
+    // other non-file outcome is described to the user.
+    if (gen.kind === 'failed' || gen.kind === 'aborted') return null;
     if (gen.kind !== 'fileId') {
       failAction(
         'error.failed-to-generate-report',
@@ -382,7 +412,21 @@ const ReportDetailView: Component = () => {
           <Spinner center />
         </Match>
         <Match when={result()?.kind === 'fileId'}>
-          <DocumentFrame title={displayName()} src={fileSrc()} />
+          {/* A report document runs its own scripts (AC-U10) — a template may
+              chart, paginate, or lay itself out in script, and a blocked one
+              takes the console with it (issue #1112). So the frame takes
+              `allow-scripts` INSTEAD of the default `allow-same-origin`, never
+              both: the document lands on an opaque origin where its scripts
+              execute but reach no cookie, no storage, and no part of the app.
+              Dropping same-origin costs nothing, because a generated report is
+              self-contained — its images arrive as data URLs, which is what
+              lets the server render the same HTML to PDF with no session at
+              all. */}
+          <DocumentFrame
+            title={displayName()}
+            src={fileSrc()}
+            sandbox="allow-scripts"
+          />
         </Match>
         <Match
           when={result()?.kind === 'dataError' || result()?.kind === 'error'}

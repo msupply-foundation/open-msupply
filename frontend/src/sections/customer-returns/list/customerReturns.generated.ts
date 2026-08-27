@@ -203,13 +203,16 @@ export type CustomerReturnsResult = {
   linkedShipment: {
   id: string;
 } | null;
+  lines: {
+  totalCount: number;
+};
   customFields: unknown | null;
 }>;
 });
 };
 
 export const CustomerReturns = {
-  query: "query customerReturns($storeId: String!, $filter: InvoiceFilterInput, $sort: [InvoiceSortInput!], $page: PaginationInput) {\n  invoices(\n    storeId: $storeId\n    filter: $filter\n    sort: $sort\n    page: $page\n    type: [CUSTOMER_RETURN]\n  ) {\n    ... on InvoiceConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        otherPartyName\n        status\n        invoiceNumber\n        createdDatetime\n        comment\n        theirReference\n        colour\n        onHold\n        linkedShipment {\n          id\n        }\n        customFields\n      }\n    }\n  }\n}",
+  query: "query customerReturns($storeId: String!, $filter: InvoiceFilterInput, $sort: [InvoiceSortInput!], $page: PaginationInput) {\n  invoices(\n    storeId: $storeId\n    filter: $filter\n    sort: $sort\n    page: $page\n    type: [CUSTOMER_RETURN]\n  ) {\n    ... on InvoiceConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        otherPartyName\n        status\n        invoiceNumber\n        createdDatetime\n        comment\n        theirReference\n        colour\n        onHold\n        linkedShipment {\n          id\n        }\n        lines {\n          totalCount\n        }\n        customFields\n      }\n    }\n  }\n}",
 } as TypedDocument<CustomerReturnsResult, CustomerReturnsVariables>;
 
 export type InsertCustomerReturnVariables = {

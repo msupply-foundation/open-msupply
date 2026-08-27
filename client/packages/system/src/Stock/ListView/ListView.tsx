@@ -1,0 +1,335 @@
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useTranslation,
+  NothingHere,
+  useUrlQueryParams,
+  TextWithTooltipCell,
+  useNavigate,
+  usePluginProvider,
+  useEditModal,
+  usePreferences,
+  MaterialTable,
+  usePaginatedMaterialTable,
+  ColumnDef,
+  ColumnType,
+  ChipTableCell,
+  ExpiryDateCell,
+  UnitsAndDosesCell,
+} from '@openmsupply-client/common';
+import { StockLineListRowFragment } from '../api';
+import { AppBarButtons } from './AppBarButtons';
+import { useStockList } from '../api/hooks/useStockList';
+import { useGroupedStockList } from '../api/hooks/useGroupedStockList';
+import { NewStockLineModal } from '../Components/NewStockLineModal';
+import { Toolbar } from './Toolbar';
+
+export const StockListView = () => {
+  const t = useTranslation();
+  const navigate = useNavigate();
+  const { plugins } = usePluginProvider();
+  const { manageVvmStatusForStock } = usePreferences();
+  const { isOpen, onClose, onOpen } = useEditModal();
+
+  const [isGrouped, setIsGrouped] = useState<boolean | null>(null);
+
+  const {
+    queryParams: { sortBy, first, offset, filterBy },
+    updateFilterQuery,
+  } = useUrlQueryParams({
+    initialSort: { key: 'name', dir: 'asc' },
+    filters: [
+      { key: 'vvmStatusId', condition: 'equalTo' },
+      { key: 'search' },
+      {
+        key: 'location.codeOrName',
+      },
+      {
+        key: 'name',
+      },
+      {
+        key: 'code',
+      },
+      {
+        key: 'expiryDate',
+        condition: 'between',
+      },
+      {
+        key: 'masterList.id',
+        condition: 'equalTo',
+      },
+      { key: 'campaignId', condition: 'equalTo' },
+    ],
+  });
+
+  // Stock-line-specific filters don't apply in grouped mode (and vice versa
+  // there are no grouped-only filters yet). Clear them on toggle so stale URL
+  // params don't silently affect the ungrouped query when the user switches back.
+  const stockLineFilterKeys = [
+    'location.codeOrName',
+    'expiryDate',
+    'vvmStatusId',
+  ];
+  const initialRender = useRef(true);
+  useEffect(() => {
+    if (initialRender.current) {
+      initialRender.current = false;
+      return;
+    }
+    if (isGrouped) {
+      stockLineFilterKeys.forEach(key => updateFilterQuery(key, ''));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isGrouped]);
+
+  const queryParams = {
+    filterBy: { ...filterBy },
+    offset,
+    sortBy,
+    first,
+  };
+
+  // Both hooks are always called (React rules), but only one is active
+  const ungroupedResult = useStockList(queryParams, {
+    enabled: isGrouped === false,
+  });
+  const groupedResult = useGroupedStockList(queryParams, {
+    enabled: isGrouped === true,
+  });
+
+  const data = isGrouped ? groupedResult.data : ungroupedResult.data;
+  const isFetching = isGrouped
+    ? groupedResult.isFetching
+    : ungroupedResult.isFetching;
+  const isError = isGrouped ? groupedResult.isError : ungroupedResult.isError;
+
+  const mrtColumns = useMemo(
+    (): ColumnDef<StockLineListRowFragment>[] => [
+      {
+        id: 'code',
+        accessorKey: 'item.code',
+        header: t('label.code'),
+        Cell: TextWithTooltipCell,
+        size: 100,
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
+      {
+        id: 'name',
+        accessorKey: 'item.name',
+        header: t('label.name'),
+        Cell: TextWithTooltipCell,
+        size: 350,
+        enableSorting: true,
+        enableColumnFilter: true,
+      },
+      {
+        id: 'masterList.name',
+        header: t('label.master-lists'),
+        accessorFn: row => row.item?.masterLists?.map(m => m.name) ?? [],
+        Cell: ChipTableCell,
+        size: 150,
+        enableColumnFilter: true,
+      },
+      {
+        accessorKey: 'batch',
+        header: t('label.batch'),
+        Cell: TextWithTooltipCell,
+        size: 100,
+        defaultHideOnMobile: true,
+        enableSorting: !isGrouped,
+      },
+      {
+        id: 'expiryDate',
+        header: t('label.expiry'),
+        accessorFn: row => (row.expiryDate ? new Date(row.expiryDate) : null),
+        columnType: ColumnType.Date,
+        Cell: ExpiryDateCell,
+        size: 100,
+        defaultHideOnMobile: true,
+        enableColumnFilter: true,
+        dateFilterFormat: 'date',
+        enableSorting: !isGrouped,
+      },
+      {
+        id: 'manufactureDate',
+        header: t('label.manufacture-date'),
+        accessorFn: row =>
+          row.manufactureDate ? new Date(row.manufactureDate) : null,
+        columnType: ColumnType.Date,
+        size: 100,
+        defaultHideOnMobile: true,
+        enableColumnFilter: true,
+        enableSorting: !isGrouped,
+      },
+      {
+        id: 'vvmStatus',
+        header: t('label.vvm-status'),
+        accessorFn: row => row.vvmStatus?.description ?? '',
+        Cell: TextWithTooltipCell,
+        size: 150,
+        defaultHideOnMobile: true,
+        includeColumn: manageVvmStatusForStock,
+        enableSorting: !isGrouped,
+      },
+      {
+        id: 'location.code',
+        accessorFn: row => row.location?.code || '',
+        header: t('label.location-code'),
+        Cell: TextWithTooltipCell,
+        size: 100,
+        defaultHideOnMobile: true,
+        enableSorting: !isGrouped,
+        enableColumnFilter: true,
+      },
+      {
+        id: 'location.name',
+        accessorFn: row => row.location?.name || '',
+        header: t('label.location-name'),
+        Cell: TextWithTooltipCell,
+        size: 150,
+        defaultHideOnMobile: true,
+        enableSorting: false,
+      },
+      {
+        id: 'itemUnit',
+        accessorKey: 'item.unitName',
+        header: t('label.unit'),
+        enableSorting: false,
+        Cell: TextWithTooltipCell,
+        size: 75,
+        defaultHideOnMobile: true,
+      },
+      {
+        header: t('label.pack-size'),
+        accessorKey: 'packSize',
+        Cell: TextWithTooltipCell,
+        align: 'right',
+        size: 90,
+        defaultHideOnMobile: true,
+        enableSorting: !isGrouped,
+      },
+      {
+        header: t('label.pack-quantity'),
+        accessorKey: 'totalNumberOfPacks',
+        columnType: ColumnType.Number,
+        align: 'right',
+        size: 100,
+        enableSorting: !isGrouped,
+      },
+      {
+        header: t('label.soh'),
+        description: t('description.soh'),
+        accessorFn: row => row.totalNumberOfPacks * row.packSize,
+        Cell: UnitsAndDosesCell,
+        aggregationFn: 'sum',
+        align: 'right',
+        size: 100,
+        enableSorting: false,
+        defaultHideOnMobile: true,
+      },
+      {
+        id: 'availableStockOnHand',
+        header: t('label.available-soh'),
+        description: t('description.available-soh'),
+        accessorFn: row => row.availableNumberOfPacks * row.packSize,
+        Cell: UnitsAndDosesCell,
+        aggregationFn: 'sum',
+        align: 'right',
+        size: 125,
+        enableSorting: false,
+        defaultHideOnMobile: true,
+      },
+      {
+        header: t('label.pack-cost-price'),
+        accessorKey: 'costPricePerPack',
+        description: t('description.pack-cost'),
+        columnType: ColumnType.Currency,
+        size: 125,
+        defaultHideOnMobile: true,
+        enableSorting: !isGrouped,
+      },
+      {
+        header: t('label.pack-sell-price'),
+        accessorKey: 'sellPricePerPack',
+        columnType: ColumnType.Currency,
+        size: 125,
+        defaultHideOnMobile: true,
+        enableSorting: !isGrouped,
+      },
+      {
+        id: 'totalCost',
+        header: t('label.total'),
+        description: t('description.total-cost'),
+        accessorFn: row => row.totalNumberOfPacks * row.costPricePerPack,
+        columnType: ColumnType.Currency,
+        aggregationFn: 'sum',
+        enableSorting: false,
+        size: 100,
+        defaultHideOnMobile: true,
+      },
+      {
+        id: 'manufacturer',
+        header: t('label.manufacturer'),
+        accessorFn: row => row.manufacturer?.name ?? '',
+        Cell: TextWithTooltipCell,
+        size: 150,
+        defaultHideOnMobile: true,
+      },
+      {
+        id: 'campaign',
+        header: t('label.campaign-only'),
+        accessorFn: row => row.campaign?.name ?? '',
+        Cell: TextWithTooltipCell,
+        size: 150,
+        defaultHideOnMobile: true,
+        enableSorting: !isGrouped,
+      },
+      {
+        id: 'supplierName',
+        header: t('label.supplier'),
+        accessorFn: row =>
+          row.supplierName ? row.supplierName : t('message.no-supplier'),
+        Cell: TextWithTooltipCell,
+        size: 190,
+        defaultHideOnMobile: true,
+        enableSorting: !isGrouped,
+      },
+      ...(plugins.stockLine?.tableColumn || []),
+    ],
+    [isGrouped, manageVvmStatusForStock, plugins.stockLine?.tableColumn, t]
+  );
+
+  const { table } = usePaginatedMaterialTable<StockLineListRowFragment>({
+    tableId: 'stock-list',
+    isLoading: isFetching,
+    isError,
+    onRowClick: row => navigate(row.id),
+    columns: mrtColumns,
+    data: data?.nodes,
+    totalCount: data?.totalCount ?? 0,
+    enableRowSelection: false,
+    grouping: {
+      field: 'code',
+      onToggle: setIsGrouped,
+    },
+    noDataElement: (
+      <NothingHere
+        body={t('error.no-stock')}
+        onCreate={onOpen}
+        buttonText={t('button.new-stock')}
+      />
+    ),
+  });
+
+  return (
+    <>
+      <Toolbar isGrouped={!!isGrouped} />
+      <AppBarButtons exportFilter={filterBy} />
+      {plugins.stockLine?.tableStateLoader?.map((StateLoader, index) => (
+        <StateLoader key={index} stockLines={data?.nodes ?? []} />
+      ))}
+      {isOpen && <NewStockLineModal isOpen={isOpen} onClose={onClose} />}
+      <MaterialTable table={table} />
+    </>
+  );
+};

@@ -1,0 +1,36 @@
+import {
+  useQueryClient,
+  useMutation,
+  useNotification,
+  useTranslation,
+} from '@openmsupply-client/common';
+import { useResponseId } from '../document/useResponse';
+import { useResponseFields } from '../document/useResponseFields';
+import { useResponseApi } from './useResponseApi';
+
+export const useCreateOutboundFromResponse = () => {
+  const responseId = useResponseId();
+  const queryClient = useQueryClient();
+  const { error, warning } = useNotification();
+  const t = useTranslation();
+  const { id } = useResponseFields('id');
+  const api = useResponseApi();
+  return useMutation({
+    mutationFn: () => api.createOutboundFromResponse(id),
+
+    onError: e => {
+      const errorObj = e as Error;
+      if (errorObj.message === 'NothingRemainingToSupply') {
+        warning(t('warning.nothing-to-supply'))();
+      } else {
+        error(t('error.failed-to-create-outbound'))();
+      }
+    },
+
+    onSettled: () => {
+      queryClient.invalidateQueries({
+        queryKey: api.keys.detail(responseId)
+      });
+    }
+  });
+};

@@ -1,0 +1,67 @@
+# build
+**/target
+/target-postgres
+/target-amd64
+/target-postgres-amd64
+schema.graphql
+
+# emacs
+*~
+\#*#
+.\#*
+.DS_Store
+
+# zola dev docs
+/docs/public
+
+# test databases
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+# test template DB marker
+___template_needs_update.marker
+___template_needs_update_pg.marker
+# test template DB lock files
+___template*.lock
+___db_*.lock
+
+# directories used by the server at runtime
+plugins
+certs
+static_files
+
+# default local sqlite database
+omsupply-database
+omsupply-database-wal
+omsupply-database-shm
+
+# local configuration file (generated from example.yaml)
+configuration/local.yaml
+# Other local configuration files
+configuration/*.yaml
+# Keep the example and base configuration files
+!configuration/base.yaml
+!configuration/example.yaml
+app_data/
+
+# operational logfiles
+**/*.log
+**/*.gz
+log/
+
+# report builder server credentials
+report_builder/config.yaml
+
+# report builder outputs
+/*.html
+/*.xlsx
+
+# fridge tag imports
+sensor_*.txt
+
+# Load test artifacts
+load_test/
+
+# frontend build artifacts
+frontend/
