@@ -1,6 +1,7 @@
 import { createSignal } from 'solid-js';
 import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
 import { Stack } from '../ui/layout/Stack/Stack';
+import { CardGrid } from '../ui/layout/CardGrid/CardGrid';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
 import { WidgetCard } from '../ui/elements/display/WidgetCard';
 import { DocumentFrame } from '../ui/elements/display/DocumentFrame';
@@ -56,7 +57,7 @@ export const displayMetadata: PageMetadata = {
     {
       id: 'display-widget-card',
       title: 'Widget card',
-      searchTerms: ['clickable', 'dashboard', 'link'],
+      searchTerms: ['clickable', 'dashboard', 'link', 'tile', 'kpi', 'slot'],
     },
     {
       id: 'display-document-frame',
@@ -151,7 +152,7 @@ export const DisplayShowcase = () => {
               onChange={setAdjustBy}
             />
           </div>
-          <div class={styles.grid}>
+          <CardGrid minColumnWidth="16rem">
             <StatComparisonTile
               label="Available packs"
               current={String(CURRENT_PACKS)}
@@ -168,7 +169,7 @@ export const DisplayShowcase = () => {
                   : `${Number(adjusted()) * 50} doses`
               }
             />
-          </div>
+          </CardGrid>
         </DashboardCard>
         <DashboardCard
           id="display-widget-card"
@@ -182,7 +183,7 @@ export const DisplayShowcase = () => {
             decorative. Hover lifts it; keyboard focus shows the ring. Lay them
             in an intrinsic grid for a dashboard.
           </Lead>
-          <div class={styles.grid}>
+          <CardGrid minColumnWidth="16rem">
             <WidgetCard
               title="Reports"
               subtitle="Generate and print"
@@ -207,7 +208,34 @@ export const DisplayShowcase = () => {
               icon={<PrinterIcon />}
               href="#/showcase/icons"
             />
-          </div>
+          </CardGrid>
+          <Lead>
+            The optional <strong>content slot</strong> renders full-width after
+            the icon + title/subtitle header — the place for a task tile's KPI
+            figures. The card stays one interactive element, so slot content
+            must be non-interactive (no links or buttons inside; dev builds
+            warn). Slot text is the control's accessible{' '}
+            <strong>description</strong>, not part of its name — a live figure
+            never renames the card. A figure of <code>0</code> still renders.
+          </Lead>
+          <CardGrid minColumnWidth="16rem">
+            <WidgetCard
+              title="Internal orders"
+              subtitle="Awaiting approval"
+              icon={<TruckIcon />}
+              onClick={() => setLastClicked('Internal orders')}
+            >
+              <span class={styles.figure}>7</span>
+            </WidgetCard>
+            <WidgetCard
+              title="Stocktakes"
+              subtitle="Lines to count"
+              icon={<StockIcon />}
+              onClick={() => setLastClicked('Stocktakes')}
+            >
+              <span class={styles.figure}>0</span>
+            </WidgetCard>
+          </CardGrid>
           <Note role="status">
             {lastClicked() ? `Clicked: ${lastClicked()}` : '\u00a0'}
           </Note>
