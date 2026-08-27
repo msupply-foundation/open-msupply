@@ -27,6 +27,7 @@ pub enum PrefKey {
     ExpiredStockPreventIssue,
     ExpiredStockIssueThreshold,
     ItemMarginOverridesSupplierMargin,
+    TransferStockToInternalCustomersAtCostPrice,
     IsGaps,
     DisplayPopulationBasedForecasting,
     GlobalTableConfigs,
