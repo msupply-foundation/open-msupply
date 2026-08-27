@@ -169,6 +169,20 @@ export const UploadIcon = (props: IconProps) => (
   </Stroke>
 );
 
+/* Inbox tray — where an order arrives from the party it was placed
+   with, as distinct from CustomersIcon (the party dispensed TO). Named
+   for the picture, like TruckIcon and FileIcon: no section owns it, and
+   the Cook Islands navigator's Internal Order tile (its first consumer)
+   maps a tile icon to the ACT rather than to that section's menu glyph,
+   which is ReplenishmentIcon. */
+/* Hugeicons: InboxIcon */
+export const InboxIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M2.5 12C2.5 7.52166 2.5 5.28249 3.89124 3.89124C5.28249 2.5 7.52166 2.5 12 2.5C16.4783 2.5 18.7175 2.5 20.1088 3.89124C21.5 5.28249 21.5 7.52166 21.5 12C21.5 16.4783 21.5 18.7175 20.1088 20.1088C18.7175 21.5 16.4783 21.5 12 21.5C7.52166 21.5 5.28249 21.5 3.89124 20.1088C2.5 18.7175 2.5 16.4783 2.5 12Z" />
+    <path d="M21.5 13.5H16.5743C15.7322 13.5 15.0706 14.2036 14.6995 14.9472C14.2963 15.7551 13.4889 16.5 12 16.5C10.5111 16.5 9.70373 15.7551 9.30054 14.9472C8.92942 14.2036 8.26777 13.5 7.42566 13.5H2.5" />
+  </Stroke>
+);
+
 /* Save */
 /* Hugeicons: FloppyDiskIcon */
 export const SaveIcon = (props: IconProps) => (
@@ -397,19 +411,6 @@ export const CustomersIcon = (props: IconProps) => (
     <path d="M12.75 9.75C12.75 11.5449 11.2949 13 9.5 13C7.70508 13 6.25 11.5449 6.25 9.75C6.25 7.95507 7.70508 6.5 9.5 6.5C11.2949 6.5 12.75 7.95507 12.75 9.75Z" />
     <path d="M21 17.501C20.7709 14.6314 18.4541 12.2748 15.5 11.9961" />
     <path d="M15.9877 9C16.8965 8.42434 17.5001 7.40788 17.5001 6.25C17.5001 4.45507 16.0496 3 14.2602 3C13.3811 3 12.5838 3.35121 12.0001 3.92139" />
-  </Stroke>
-);
-
-/* Supplier — the party an order is placed WITH, as distinct from CustomersIcon
-   (the party dispensed TO). The current app draws it as an inbox/tray
-   (common/src/ui/icons/Suppliers.tsx); that MUI icon is a filled 20-box, so it
-   is redrawn here stroke-first on the 24-box, same shape and meaning, so it
-   sits at the same weight as the icons it appears beside. Geometry after
-   Feather's `inbox` (MIT), which is that tray at this box and cap style. */
-export const SuppliersIcon = (props: IconProps) => (
-  <Stroke viewBox="0 0 24 24" {...props}>
-    <path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11Z" />
-    <path d="M22 12h-6l-2 3h-4l-2-3H2" />
   </Stroke>
 );
 
