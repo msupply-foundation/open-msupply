@@ -117,7 +117,11 @@ export const ListExportAction: Component<ListExportActionProps> = props => {
         // `failed` never reached the server and is already on the global
         // modal; a fault the server returned reached nothing and is reported
         // here — `dataError` carries its own JSON, `error` its description.
-        if (generated.kind === 'failed') return;
+        // `aborted` joins `failed` in silence: one has already been reported
+        // globally, the other was cancelled on purpose. This export passes no
+        // signal today, so it is unreachable — handled so adding one stays a
+        // safe change.
+        if (generated.kind === 'failed' || generated.kind === 'aborted') return;
         if (generated.kind === 'dataError') {
           return fail(
             'error.failed-to-generate-report',
