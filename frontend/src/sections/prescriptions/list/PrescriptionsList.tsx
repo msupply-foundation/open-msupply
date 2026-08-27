@@ -286,7 +286,7 @@ const PrescriptionsList: Component = () => {
     ),
   ];
 
-  const crumbs = () => [{ label: t('prescriptions') }];
+  const crumbs = () => [{ label: t('dispensing') }];
 
   return (
     <Page
