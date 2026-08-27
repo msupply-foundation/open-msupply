@@ -1,16 +1,107 @@
 // Server discovery logic (spec/desktop/behaviours.md § server discovery /
 // § server selection) — everything the page decides, kept pure so the
 // acceptance-relevant behaviour is unit-testable without a shell: which
-// announcements are listable, how the list accumulates, what a manual entry
-// parses to, which server (if any) launch auto-connects to, and what is
-// remembered between launches.
-import type { FrontEndHost } from './hostBridge';
+// announcements are listable, which server is this machine's own and at what
+// address it is shown, how the list accumulates, what a manual entry parses
+// to, which server (if any) launch auto-connects to, what is remembered
+// between launches, and the ordering of a connection attempt. Hosts only
+// supply facts and inherently-native capabilities (./hostContract.ts).
+import type {
+  DiscoveryHostApi,
+  HostInfo,
+  RawAnnouncement,
+} from './hostContract';
 
 // The current shell's cadence (open-msupply useNativeClient/types.ts): poll
 // found servers every 2 s; if nothing has landed after 7 s the bounded wait
 // elapses and the page states no server was found (AC-DT9).
 export const DISCOVERY_POLL_MS = 2000;
 export const DISCOVERY_TIMEOUT_MS = 7000;
+
+// The bounded answer check's budget (AC-DT12) — the page's constant, passed
+// to every host's probe(), so no host carries its own copy to drift.
+export const ANSWER_CHECK_TIMEOUT_MS = 5000;
+
+/** A listable server as the page computes it from a raw announcement plus
+ * this machine's facts (§ toFrontEndHost below): identity attributes, the
+ * this-machine marking, and the address the server is reached at. */
+export type FrontEndHost = {
+  protocol: 'http' | 'https';
+  port: number;
+  ip: string;
+  // From the announcement's TXT record.
+  clientVersion: string;
+  hardwareId: string;
+  // This server runs on this machine (AC-DT5) — a hardware-id match,
+  // § isLocalServer below.
+  isLocal: boolean;
+};
+
+// --- Announcement → listable server ----------------------------------------
+
+// ONE locality predicate (spec/android § server discovery, AC-DT5): a server
+// is this machine's own iff its announced hardware_id is this machine's —
+// never an address compare, which any multi-interface machine defeats (its
+// own announcement may resolve to any of its interfaces). Case-insensitive:
+// the server's machine_uid and a shell's own reading of the same OS id can
+// differ in casing. A host that cannot know its id ('' — the mark just never
+// shows) or an announcement without one never matches.
+export const isLocalServer = (
+  announcement: RawAnnouncement,
+  info: HostInfo
+): boolean =>
+  info.hardwareId !== '' &&
+  announcement.hardwareId !== '' &&
+  announcement.hardwareId.toLowerCase() === info.hardwareId.toLowerCase();
+
+// ONE rewrite predicate (spec/desktop/behaviours.md § address rewriting,
+// AC-DT22): this machine's own server must be shown — and remembered, and
+// handed off — at an address OTHER machines can reach, so rewrite whenever
+// the resolved address isn't already one of them. That covers both hosts'
+// old special cases (a loopback resolution on desktop, an arbitrary-interface
+// NsdManager resolution on Android) with no per-host code. With no reachable
+// address to offer (offline), the resolved one is kept rather than nothing.
+// A standalone install never passes through here — it connects to
+// STANDALONE_LOCAL_SERVER at loopback deliberately (AC-DT21).
+export const toFrontEndHost = (
+  announcement: RawAnnouncement,
+  info: HostInfo
+): FrontEndHost => {
+  const isLocal = isLocalServer(announcement, info);
+  const ip =
+    isLocal && !info.lanAddresses.includes(announcement.ip)
+      ? (info.lanAddresses[0] ?? announcement.ip)
+      : announcement.ip;
+  return {
+    // Completeness (isCompleteAnnouncement) rejects anything but http(s);
+    // this narrowing only satisfies the type on the way there.
+    protocol: announcement.protocol === 'http' ? 'http' : 'https',
+    port: announcement.port,
+    ip,
+    clientVersion: announcement.clientVersion,
+    hardwareId: announcement.hardwareId,
+    isLocal,
+  };
+};
+
+// --- Server URLs (single source — the page's, the mock's and every host's
+// probe/navigate all receive these; no host builds its own) -----------------
+
+export const serverUrl = ({ protocol, ip, port }: FrontEndHost): string =>
+  `${protocol}://${ip}:${port}`;
+
+/** What the answer check asks: does anything answer HTTP where the GraphQL
+ * endpoint should be (AC-DT12). */
+export const probeUrl = (server: FrontEndHost): string =>
+  `${serverUrl(server)}/graphql`;
+
+/** Where a successful connection navigates: the server's UI (AC-DT19) at the
+ * given path — the login hand-off (./discoveryReturn.ts § handoffPath), an
+ * argument rather than a FrontEndHost field because it is per-ATTEMPT data
+ * (it carries the return URL and the language active at click time,
+ * AC-DT23/24), never part of a server's identity or its remembered record. */
+export const connectUrl = (server: FrontEndHost, path: string): string =>
+  `${serverUrl(server)}/${path}`;
 
 // A standalone install's own server: always reached at loopback, which
 // survives the machine moving between networks (spec/desktop/behaviours.md §
@@ -31,9 +122,9 @@ export const serverKey = (server: FrontEndHost): string =>
   `${server.hardwareId}:${server.port}`;
 
 // AC-DT7: an announcement missing any identity attribute, or offering no
-// address, is ignored rather than listed as an unusable entry. The host
-// filters too — this is the page's defensive copy of the same rule, so a
-// hole in one layer doesn't put an unconnectable row in front of the user.
+// address, is ignored rather than listed as an unusable entry. Hosts hand
+// announcements over verbatim (hostContract.ts § RawAnnouncement), so this
+// is THE filter, not a defensive copy of a host's.
 export const isCompleteAnnouncement = (server: FrontEndHost): boolean =>
   (server.protocol === 'http' || server.protocol === 'https') &&
   server.ip !== '' &&
@@ -102,7 +193,6 @@ export const parseManualServer = (
     clientVersion: 'unspecified',
     hardwareId,
     isLocal: false,
-    path: 'login',
   };
 };
 
@@ -220,4 +310,32 @@ export const recordPreviousServer = (
   } catch {
     // Blocked storage only costs the next launch its auto-connect.
   }
+};
+
+// --- Connection attempt -----------------------------------------------------
+
+/** One connection attempt, its ordering owned here so it is testable and no
+ * host can get it wrong: probe first — a failed check resolves false and the
+ * window stays on the page, list intact (AC-DT12); then record the choice —
+ * only a server that ANSWERED is ever remembered (AC-DT13/14, and
+ * spec/desktop/README.md § Status: the legacy shell's remember-at-choice gap,
+ * deliberately not reproduced); then navigate. Recording BEFORE navigation is
+ * the point: the old bridge resolved a fused check-and-navigate and every
+ * host invented its own grace delay (50/0/400 ms) for the page to persist
+ * under teardown — here there is nothing to race.
+ *
+ * `remember: false` is the standalone install's arm: it always reconnects to
+ * its own server, so there is nothing to record (AC-DT20/21). */
+export const connectToServer = async (
+  host: Pick<DiscoveryHostApi, 'probe' | 'navigate'>,
+  server: FrontEndHost,
+  { path, remember, storage }: { path: string; remember: boolean; storage?: Storage }
+): Promise<boolean> => {
+  const answered = await host
+    .probe(probeUrl(server), ANSWER_CHECK_TIMEOUT_MS)
+    .catch(() => false);
+  if (!answered) return false;
+  if (remember) recordPreviousServer(server, storage);
+  host.navigate(connectUrl(server, path));
+  return true;
 };

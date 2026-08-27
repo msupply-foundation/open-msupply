@@ -17,7 +17,7 @@ import {
   ClockIcon,
   TransferHorizontalIcon,
 } from '../ui/icons';
-import { discoveryReturnUrl, withLng } from '../desktop/discoveryReturn';
+import { discoveryReturnUrl, withLng } from '../discovery/discoveryReturn';
 import { AppLogo } from '../ui/branding/AppLogo';
 import { LanguageSelector } from '../ui/layout/AppShell/LanguageSelector';
 import { changeLanguage, locale, t } from '../intl';
@@ -72,8 +72,8 @@ export const LoginPage: Component = () => {
   // Only decides WHERE the version line renders — see versionLine() below.
   const compact = useIsCompact();
 
-  // Set when the desktop discovery page handed off to this server
-  // (src/desktop/discoveryReturn.ts) — offers the way back beneath the form.
+  // Set when the discovery page handed off to this server
+  // (src/discovery/discoveryReturn.ts) — offers the way back beneath the form.
   const changeServerUrl = discoveryReturnUrl(window.location.search);
 
   const submitting = () => submitState().kind === 'submitting';

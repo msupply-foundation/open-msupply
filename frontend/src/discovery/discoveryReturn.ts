@@ -2,17 +2,19 @@
 // "the user MUST be able to leave the current server and return to
 // discovery", AC-DT16).
 //
-// In a shell-hosted world the shell owns the way back (goBackToDiscovery on
-// the host bridge) — but the screen the hand-off LANDS on is the connected
-// server's app, which can't assume a bridge exists. So the discovery page
-// names its own address in the hand-off URL: it connects to
+// The screen the hand-off LANDS on is the connected server's app, which may
+// run under any shell or none and can't assume a host exists — so the way
+// back is not a host capability at all. The discovery page names its own
+// address in the hand-off URL: it connects to
 // `login?discovery-return=<discovery page URL>`, and the pre-session screens
 // (login, initialisation) that see the parameter offer "Change server" as a
 // plain navigation back. The return URL carries `autoconnect=false`, so
 // arriving back never bounces straight to the server just left (AC-DT16).
 //
-// Split from ./discovery.ts because BOTH bundles read it: the discovery page
-// writes the parameter, the app's login/initialisation screens read it.
+// Split from ./discovery.ts because BOTH pages read it: the discovery page
+// writes the parameter, the app's login/initialisation screens read it — and
+// this leaf (no imports) is the only discovery module in the served app's
+// graph (kdd/bundle-size-by-pr.md).
 
 export const DISCOVERY_RETURN_PARAM = 'discovery-return';
 
