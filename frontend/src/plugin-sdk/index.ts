@@ -104,10 +104,9 @@ export { FormColumns } from '../ui/layout/Form/FormColumns';
 // ── UI kit — icons that carry meaning ───────────────────────────────────────
 /*
  * The six the Cook Islands navigator names for its tiles (plugins/cook_islands
- * ui-surface.md § S2/S3): patient, supplier, truck, box-out, document, stock —
- * in that order below. § S2 names the MEANING, not an export: "supplier" is the
- * party an internal order is placed with, and the picture for it is an inbox
- * tray (InboxIcon), not a glyph named after the party.
+ * ui-surface.md § S2/S3): patient, inbox tray, truck, box-out, document, stock
+ * — in that order below. That file describes the PICTURE and never names an
+ * export, so this list is the mapping; keep the two in step.
  * Re-exported rather than copied into the plugin, so a fix to a path, an RTL
  * flip or an a11y attribute on the host icon reaches the contributed surface
  * too — a copied SVG would fork on the first such change.
