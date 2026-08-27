@@ -1,0 +1,121 @@
+/*
+ * Stand-in styling for the CK home-navigator preview — the KPI block inside a
+ * tile, and the Stock Management strip.
+ *
+ * Both are CK-2.2's to build for real, in the plugin, with sibling targets for
+ * the strip's cells. Everything here exists only so CK-2.3's layout can be
+ * looked at before that lands, and is thrown away when it does. It is kept
+ * deliberately plain: the point of the preview is the GRID's behaviour — how
+ * the hero and the block share a row, when they wrap, whether the strip keeps
+ * its height — and a convincing tile would only make it harder to tell which
+ * of the two is being judged.
+ */
+
+.figures {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-block-start: var(--space-2);
+}
+
+.figure {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.value {
+  /* --text-xl is the token annotated "dashboard statistic values" — the same
+     role a navigator figure plays. */
+  font-size: var(--text-xl);
+  font-weight: var(--weight-semibold);
+  line-height: var(--line-tight);
+  color: var(--text-body);
+}
+
+.figureLabel {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: var(--line-tight);
+}
+
+/* The strip. A card-shaped block only — the five cells and the card body are
+   SIBLING targets in the real thing (ui-surface.md § S3, and the trap CK-2.2
+   calls out), and nothing here attempts that. */
+.strip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  inline-size: 100%;
+  block-size: 100%;
+  padding: var(--space-4);
+  border: 1px solid var(--color-border-value);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-1);
+  color: var(--text-body);
+}
+
+.stripIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  border-radius: var(--radius-md);
+  background: var(--bg-icon);
+  color: var(--primary-main);
+}
+
+.stripTitle {
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
+}
+
+.stripCells {
+  /*
+   * "The strip's figures shrink to stay side by side rather than clipping or
+   * wrapping" (ui-surface.md § S1 Layout) — the one strip behaviour worth
+   * having in the preview, because it is what decides whether the strip can
+   * hold its single-row height as the grid narrows.
+   */
+  display: flex;
+  flex: 1;
+  gap: var(--space-4);
+  min-inline-size: 0;
+}
+
+.stripCell {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.stripCellLabel {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  line-height: var(--line-tight);
+  overflow-wrap: anywhere;
+}
+
+/* The preview's own scaffolding — a viewport frame, so the height trade can be
+   judged at the priority device's size without owning a tablet. */
+.frame {
+  overflow: hidden;
+  border: 1px dashed var(--color-border-value);
+  border-radius: var(--radius-md);
+  resize: both;
+  padding: var(--space-4);
+  background: var(--surface-canvas);
+}
+
+.frameNote {
+  margin-block-end: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
