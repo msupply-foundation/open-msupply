@@ -17,6 +17,7 @@ use repository::{
 };
 
 use crate::prescription_request::update::PRESCRIPTION_REQUEST_CUSTOM_FIELD_SCOPE;
+use crate::programs::patient::PATIENT_PROPERTY_TABLE;
 
 /// Stable identifiers for the code-defined builtin custom fields.
 ///
@@ -31,8 +32,13 @@ use crate::prescription_request::update::PRESCRIPTION_REQUEST_CUSTOM_FIELD_SCOPE
 pub mod keys {
     pub const PRESCRIPTION_REQUEST_WEIGHT: &str = "prescription_request_weight";
     pub const PRESCRIPTION_REQUEST_PATIENT_UNIT: &str = "prescription_request_patient_unit";
-    pub const PRESCRIPTION_REQUEST_PATIENT_CATEGORY: &str = "prescription_request_patient_category";
     pub const PRESCRIPTION_REQUEST_OCCUPATION: &str = "prescription_request_occupation";
+    /// The patient's category. It belongs to the PATIENT, not to any one
+    /// request — a category is a standing fact about the person, and holding it
+    /// per-request would fork it into as many diverging copies as the patient
+    /// has prescriptions. It briefly shipped on `prescription_request`; that key
+    /// is gone from the registry and so soft-deleted by the seeder's sweep.
+    pub const PATIENT_CATEGORY: &str = "patient_category";
 }
 
 /// Where builtin `sort_order` ranks start, against the legacy seeder's
@@ -111,14 +117,27 @@ fn builtin_custom_fields() -> Vec<BuiltinCustomField> {
             scopes: &[PRESCRIPTION_REQUEST_CUSTOM_FIELD_SCOPE],
             options: &[],
         },
-        // The patient's category — the only OPTION builtin, and a flat
-        // vocabulary (no `parent_option_id`).
         BuiltinCustomField {
-            key: PRESCRIPTION_REQUEST_PATIENT_CATEGORY,
+            key: PRESCRIPTION_REQUEST_OCCUPATION,
+            name: "Occupation",
+            value_type: Text,
+            display_mode: Visible,
+            scopes: &[PRESCRIPTION_REQUEST_CUSTOM_FIELD_SCOPE],
+            options: &[],
+        },
+        // ===== patient: standing facts about the person =====
+        //
+        // The patient's category — the only OPTION builtin, and a flat
+        // vocabulary (no `parent_option_id`). `Visible`, not `Prominent`: the
+        // patient scope has no prominent surface to promote a field onto (the
+        // toolbar treatment is an invoice-detail affordance), so the mode would
+        // be a lie.
+        BuiltinCustomField {
+            key: PATIENT_CATEGORY,
             name: "Category",
             value_type: Option,
-            display_mode: Prominent,
-            scopes: &[PRESCRIPTION_REQUEST_CUSTOM_FIELD_SCOPE],
+            display_mode: Visible,
+            scopes: &[PATIENT_PROPERTY_TABLE],
             options: &[
                 BuiltinOption {
                     key: "pregnant",
@@ -147,14 +166,6 @@ fn builtin_custom_fields() -> Vec<BuiltinCustomField> {
                     name: "Other",
                 },
             ],
-        },
-        BuiltinCustomField {
-            key: PRESCRIPTION_REQUEST_OCCUPATION,
-            name: "Occupation",
-            value_type: Text,
-            display_mode: Visible,
-            scopes: &[PRESCRIPTION_REQUEST_CUSTOM_FIELD_SCOPE],
-            options: &[],
         },
     ]
 }
@@ -364,19 +375,45 @@ mod tests {
             "unit is free text"
         );
 
+        // Category is a PATIENT field, not a prescription_request one — it
+        // describes the person, so it lives on the patient record and is edited
+        // there.
         let category = field_repo
-            .find_one_by_id("prescription_request_patient_category")
+            .find_one_by_id("patient_category")
             .unwrap()
-            .expect("missing prescription_request_patient_category");
+            .expect("missing patient_category");
         assert_eq!(category.value_type, CustomFieldValueType::Option);
+        assert!(
+            field_repo
+                .find_one_by_id("prescription_request_patient_category")
+                .unwrap()
+                .is_none(),
+            "the pre-move key must not be re-seeded"
+        );
 
         assert_eq!(field_repo.find_all().unwrap().len(), 4);
 
-        // Every field is scoped to prescription_request, at the display mode the
-        // detail's layout calls for.
+        // Each field is scoped where it belongs, at the display mode that
+        // scope's layout calls for.
         let scopes = scope_repo.find_all().unwrap();
         assert_eq!(scopes.len(), 4);
-        assert!(scopes.iter().all(|row| row.scope == "prescription_request"));
+        assert_eq!(
+            scopes
+                .iter()
+                .filter(|row| row.scope == "prescription_request")
+                .count(),
+            3
+        );
+        let category_scope = scope_repo
+            .find_one_by_id("patient_category__patient")
+            .unwrap()
+            .expect("missing category scope row");
+        assert_eq!(category_scope.scope, "patient");
+        assert_eq!(
+            category_scope.display_mode,
+            CustomFieldDisplayMode::Visible,
+            "the patient scope has no prominent surface"
+        );
         let occupation_scope = scope_repo
             .find_one_by_id("prescription_request_occupation__prescription_request")
             .unwrap()
@@ -397,9 +434,9 @@ mod tests {
         assert!(options.iter().all(|row| row.parent_option_id.is_none()));
         assert!(options
             .iter()
-            .all(|row| row.custom_field_id == "prescription_request_patient_category"));
+            .all(|row| row.custom_field_id == "patient_category"));
         let under_5 = option_repo
-            .find_one_by_id("prescription_request_patient_category__under_5")
+            .find_one_by_id("patient_category__under_5")
             .unwrap()
             .expect("missing under_5 option");
         assert_eq!(under_5.name, "Under-5");
@@ -486,8 +523,8 @@ mod tests {
             .unwrap();
         option_repo
             .upsert_one(&CustomFieldOptionRow {
-                id: "prescription_request_patient_category__widowed".to_string(),
-                custom_field_id: "prescription_request_patient_category".to_string(),
+                id: "patient_category__widowed".to_string(),
+                custom_field_id: "patient_category".to_string(),
                 key: "widowed".to_string(),
                 name: "Widowed".to_string(),
                 parent_option_id: None,
@@ -509,7 +546,7 @@ mod tests {
         );
         assert!(
             option_repo
-                .find_one_by_id("prescription_request_patient_category__widowed")
+                .find_one_by_id("patient_category__widowed")
                 .unwrap()
                 .unwrap()
                 .deleted_datetime
@@ -579,8 +616,17 @@ mod tests {
         let allowed = CustomFieldRepository::new(&connection)
             .allowed_keys_for_scope("prescription_request")
             .unwrap();
-        assert_eq!(allowed.len(), 4);
-        assert!(allowed.contains("prescription_request_patient_category"));
+        assert_eq!(allowed.len(), 3);
+        assert!(allowed.contains("prescription_request_weight"));
+        assert!(
+            !allowed.contains("patient_category"),
+            "category is a patient key — a request patch naming it is rejected"
+        );
+
+        let patient_allowed = CustomFieldRepository::new(&connection)
+            .allowed_keys_for_scope("patient")
+            .unwrap();
+        assert!(patient_allowed.contains("patient_category"));
 
         // And the definitions read the client makes, which must surface the
         // BUILTIN kind rather than filtering it out.
@@ -590,7 +636,7 @@ mod tests {
                     .scope(EqualFilter::equal_to("prescription_request".to_string())),
             )
             .unwrap();
-        assert_eq!(definitions.len(), 4);
+        assert_eq!(definitions.len(), 3);
         assert!(definitions
             .iter()
             .all(|row| row.custom_field.kind == CustomFieldKind::Builtin));

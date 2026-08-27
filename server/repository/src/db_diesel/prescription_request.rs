@@ -1,11 +1,13 @@
 use super::{
     name_row::name,
     prescription_request_row::{prescription_request, PrescriptionRequestRow, PrescriptionRequestStatus},
+    user_row::user_account,
     DBType, RepositoryError, StorageConnection,
 };
 use crate::diesel_macros::{
     apply_date_time_filter, apply_equal_filter, apply_sort, apply_string_filter,
 };
+use crate::dynamic_query_filter::create_condition;
 use crate::{DatetimeFilter, EqualFilter, Pagination, Sort, StringFilter};
 use diesel::{dsl::IntoBoxed, prelude::*};
 
@@ -24,7 +26,24 @@ pub struct PrescriptionRequestFilter {
     pub patient_name: Option<StringFilter>,
     pub created_datetime: Option<DatetimeFilter>,
     pub prescription_datetime: Option<DatetimeFilter>,
+    /// The prescriber — the username of the account that created the request
+    /// (`created_by`), matched through a sub-select on `user_account`.
+    pub username: Option<StringFilter>,
+    pub dynamic_filter: Option<PrescriptionRequestCondition::Inner>,
 }
+
+// Dynamic query filter for the prescription_request table (customFields list
+// filters). The query is unjoined, so the condition compiles against the same
+// table it is applied to — no sub-select needed, unlike `InvoiceCondition`.
+create_condition!(
+    PrescriptionRequestCondition,
+    prescription_request::table,
+    (
+        CustomField,
+        custom_fields,
+        prescription_request::custom_fields
+    ),
+);
 
 #[derive(PartialEq, Debug)]
 pub enum PrescriptionRequestSortField {
@@ -116,6 +135,8 @@ impl<'a> PrescriptionRequestRepository<'a> {
                 patient_name,
                 created_datetime,
                 prescription_datetime,
+                username,
+                dynamic_filter,
             } = f;
 
             apply_equal_filter!(query, id, prescription_request::id);
@@ -142,6 +163,16 @@ impl<'a> PrescriptionRequestRepository<'a> {
                 let mut sub_query = name::table.select(name::id).into_boxed();
                 apply_string_filter!(sub_query, Some(patient_name), name::name_);
                 query = query.filter(prescription_request::patient_id.eq_any(sub_query));
+            }
+
+            if let Some(username) = username {
+                let mut sub_query = user_account::table.select(user_account::id).into_boxed();
+                apply_string_filter!(sub_query, Some(username), user_account::username);
+                query = query.filter(prescription_request::created_by.eq_any(sub_query));
+            }
+
+            if let Some(condition) = dynamic_filter {
+                query = query.filter(condition.to_boxed());
             }
         }
 
@@ -176,6 +207,14 @@ impl PrescriptionRequestFilter {
     }
     pub fn patient_id(mut self, filter: EqualFilter<String>) -> Self {
         self.patient_id = Some(filter);
+        self
+    }
+    pub fn username(mut self, filter: StringFilter) -> Self {
+        self.username = Some(filter);
+        self
+    }
+    pub fn dynamic_filter(mut self, condition: PrescriptionRequestCondition::Inner) -> Self {
+        self.dynamic_filter = Some(condition);
         self
     }
 }

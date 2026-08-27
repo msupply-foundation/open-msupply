@@ -46,6 +46,11 @@ export type PrescriptionRequestsVariables = {
     beforeOrEqualTo?: string | null;
     afterOrEqualTo?: string | null;
   } | null;
+    username?: {
+    equalTo?: string | null;
+    like?: string | null;
+  } | null;
+    dynamicFilter?: unknown | null;
   } | null;
   sort?: Array<{
     key: "prescriptionRequestNumber" | "createdDatetime" | "prescriptionDatetime" | "status";
@@ -71,12 +76,16 @@ export type PrescriptionRequestsResult = {
   id: string;
   name: string;
 } | null;
+  user: {
+  username: string;
+} | null;
+  customFields: unknown | null;
 }>;
 });
 };
 
 export const PrescriptionRequests = {
-  query: "query prescriptionRequests($storeId: String!, $filter: PrescriptionRequestFilterInput, $sort: [PrescriptionRequestSortInput!], $page: PaginationInput) {\n  prescriptionRequests(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {\n    ... on PrescriptionRequestConnector {\n      totalCount\n      nodes {\n        id\n        prescriptionRequestNumber\n        status\n        createdDatetime\n        prescriptionDatetime\n        comment\n        patient {\n          id\n          name\n        }\n      }\n    }\n  }\n}",
+  query: "query prescriptionRequests($storeId: String!, $filter: PrescriptionRequestFilterInput, $sort: [PrescriptionRequestSortInput!], $page: PaginationInput) {\n  prescriptionRequests(\n    storeId: $storeId\n    filter: $filter\n    sort: $sort\n    page: $page\n  ) {\n    ... on PrescriptionRequestConnector {\n      totalCount\n      nodes {\n        id\n        prescriptionRequestNumber\n        status\n        createdDatetime\n        prescriptionDatetime\n        comment\n        patient {\n          id\n          name\n        }\n        user {\n          username\n        }\n        customFields\n      }\n    }\n  }\n}",
 } as TypedDocument<PrescriptionRequestsResult, PrescriptionRequestsVariables>;
 
 export type DeletePrescriptionRequestVariables = {

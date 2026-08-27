@@ -35,6 +35,13 @@ import {
 } from '../../../list/pageSize';
 import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
 import { stripEmpty } from '../../../typeHelpers';
+import {
+  customFieldDefinitions,
+  customFieldColumns,
+  customFieldFilters,
+  buildCustomFieldDynamicFilter,
+  type CustomFieldFilterState,
+} from '../../../domain/customFields';
 import { PrescriptionRequests } from './prescriptionRequests.generated';
 import type {
   PrescriptionRequestsVariables,
@@ -55,11 +62,19 @@ import { DeletePrescriptionRequestsAction } from './actions/DeletePrescriptionRe
 // read-only row treatment but stay clickable; default sort is created
 // datetime, newest first (AC-L1).
 
-type RequestRow = PrescriptionRequestsResult['prescriptionRequests']['nodes'][number];
-type SortKey = NonNullable<PrescriptionRequestsVariables['sort']>[number]['key'];
+type RequestRow =
+  PrescriptionRequestsResult['prescriptionRequests']['nodes'][number];
+type SortKey = NonNullable<
+  PrescriptionRequestsVariables['sort']
+>[number]['key'];
 
 type PrescriptionRequestsListState = {
   filter: PrescriptionRequestFilter;
+  /**
+   * Typed per-custom-field filter values → the dynamicFilter AST at query
+   * time.
+   */
+  cf?: CustomFieldFilterState;
   sort?: PrescriptionRequestsVariables['sort'];
   offset: number;
   first: number;
@@ -110,9 +125,23 @@ const PrescriptionRequestsList: Component = () => {
     },
   });
 
+  // Custom-field definitions for the request scope — shared scope-keyed cache,
+  // read non-suspending. Empty ⇒ no custom-field columns/filters.
+  const cfReader = customFieldDefinitions('prescription_request');
+  const cfDefs = () => cfReader.noSuspense();
+  const cfFilters = createMemo(() => customFieldFilters(cfDefs()));
+  const onCustomFieldChange = (cf: CustomFieldFilterState) => {
+    setQuery({ ...query(), cf, offset: 0 });
+    setSelectedIds([]);
+  };
+
   const variables = createMemo<PrescriptionRequestsVariables>(() => ({
     storeId: params.storeId,
-    filter: stripEmpty(query().filter),
+    filter: {
+      ...stripEmpty(query().filter),
+      // Custom-field filters become the dynamicFilter AST (undefined = no-op).
+      dynamicFilter: buildCustomFieldDynamicFilter(query().cf),
+    },
     sort: query().sort,
     page: { first: query().first, offset: query().offset },
   }));
@@ -165,6 +194,16 @@ const PrescriptionRequestsList: Component = () => {
     navigate(`/${params.storeId}/dispensary/prescription-request/${row.id}`);
 
   const columns = (): Column<RequestRow, SortKey>[] => [
+    // The request number leads the table: it is how a paper script and a
+    // dispensary conversation identify the record, so it is what the eye
+    // lands on first. The narrow-viewport card keeps Patient in the lead
+    // instead (the number is hidden there — see the compact config above).
+    {
+      c: { key: 'prescriptionRequestNumber' },
+      sortKey: 'prescriptionRequestNumber',
+      header: () => t('label.number'),
+      ...getNumberCell(),
+    },
     {
       c: { accessor: row => row.patient?.name ?? '', id: 'patientName' },
       header: () => t('label.patient'),
@@ -186,12 +225,6 @@ const PrescriptionRequestsList: Component = () => {
       meta: { headerPosition: 'badge' },
     },
     {
-      c: { key: 'prescriptionRequestNumber' },
-      sortKey: 'prescriptionRequestNumber',
-      header: () => t('label.number'),
-      ...getNumberCell(),
-    },
-    {
       c: { key: 'prescriptionDatetime' },
       sortKey: 'prescriptionDatetime',
       header: () => t('label.prescription-date'),
@@ -203,11 +236,25 @@ const PrescriptionRequestsList: Component = () => {
       header: () => t('label.created'),
       ...getDateCell(),
     },
+    // The prescriber — the account that created the request. No server sort
+    // key backs it, so it displays only; the matching filter is a username
+    // contains-match (listFilters).
+    {
+      c: { accessor: row => row.user?.username ?? '', id: 'username' },
+      header: () => t('label.entered-by'),
+      enableSorting: false,
+    },
     {
       c: { key: 'comment' },
       header: () => <CommentHeader />,
       ...getCellDefinition('comment'),
     },
+    // A column per configured request custom field (AC-CF4) — not sortable;
+    // value chosen by kind.
+    ...customFieldColumns<RequestRow, SortKey>(
+      cfDefs(),
+      row => row.customFields
+    ),
   ];
 
   const crumbs = () => [{ label: t('prescriptions') }];
@@ -268,6 +315,11 @@ const PrescriptionRequestsList: Component = () => {
             filters={filterFields()}
             filter={query().filter}
             onChange={onFilterChange}
+            extra={{
+              filters: cfFilters(),
+              filter: query().cf ?? {},
+              onChange: onCustomFieldChange,
+            }}
           />
         }
         // Past-New rows take the read-only treatment — de-emphasised but

@@ -48,7 +48,9 @@ export interface RequestLineEditModalProps {
   onSaved: () => void;
 }
 
-export const RequestLineEditModal: Component<RequestLineEditModalProps> = props => {
+export const RequestLineEditModal: Component<
+  RequestLineEditModalProps
+> = props => {
   const [item, setItem] = createSignal<ItemOption | null>(null);
   const [quantity, setQuantity] = createSignal<number | undefined>(
     props.line?.quantity
@@ -213,12 +215,19 @@ export const RequestLineEditModal: Component<RequestLineEditModalProps> = props 
           </LabelledValue>
         )}
       </Show>
+      {/* The quantity is in UNITS (rules § lines), and which unit is item
+          master data — so it rides the field as an end adornment rather than
+          spending a row of the dialog on one word, exactly as dispensing's
+          line editor carries it (PrescriptionLineEditModal § Issue). Falls
+          back to the generic word before an item is picked, and never becomes
+          a second entry field: nothing here converts between measures. */}
       <NumberField
         label={t('label.quantity')}
         data-testid="quantity-field"
         value={quantity()}
         min={0}
         disabled={props.readOnly}
+        endAdornment={chosenItem()?.unitName ?? t('label.units')}
         onChange={value => setQuantity(value ?? undefined)}
       />
       {/* Directions, laid out as the prescription line editor lays them

@@ -10,7 +10,7 @@ use crate::service_provider::{ServiceContext, ServiceProvider};
 /// share the underlying mSupply name custom fields with suppliers, but their
 /// visible set is controlled independently via this scope (see
 /// `central_mapping_custom_fields`).
-const PATIENT_PROPERTY_TABLE: &str = "patient";
+pub const PATIENT_PROPERTY_TABLE: &str = "patient";
 
 #[derive(PartialEq, Debug)]
 pub enum UpdatePatientCustomFieldsError {
