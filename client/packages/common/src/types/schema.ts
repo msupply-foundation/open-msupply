@@ -7924,12 +7924,20 @@ export type PrescriptionRequestConnector = {
 
 export type PrescriptionRequestFilterInput = {
   createdDatetime?: InputMaybe<DatetimeFilterInput>;
+  /**
+   * Dynamic filter condition AST, currently supporting custom field
+   * conditions on keys visible for the "prescription_request" scope, e.g.
+   * `{"And": [{"CustomField": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`
+   */
+  dynamicFilter?: InputMaybe<Scalars['JSON']['input']>;
   id?: InputMaybe<EqualFilterStringInput>;
   patientId?: InputMaybe<EqualFilterStringInput>;
   patientName?: InputMaybe<StringFilterInput>;
   prescriptionDatetime?: InputMaybe<DatetimeFilterInput>;
   prescriptionRequestNumber?: InputMaybe<EqualFilterBigNumberInput>;
   status?: InputMaybe<EqualFilterPrescriptionRequestStatusInput>;
+  /** The prescriber — the username of the account that created the request */
+  username?: InputMaybe<StringFilterInput>;
 };
 
 export type PrescriptionRequestLineConnector = {
@@ -7984,7 +7992,9 @@ export enum PrescriptionRequestNodeStatus {
   ReadyToDispense = 'READY_TO_DISPENSE',
 }
 
-export type PrescriptionRequestResponse = PrescriptionRequestNode | RecordNotFound;
+export type PrescriptionRequestResponse =
+  | PrescriptionRequestNode
+  | RecordNotFound;
 
 export enum PrescriptionRequestSortFieldInput {
   CreatedDatetime = 'createdDatetime',
@@ -12226,7 +12236,7 @@ export type UpdatePrescriptionRequestInput = {
 export type UpdatePrescriptionRequestResponse = PrescriptionRequestNode;
 
 export enum UpdatePrescriptionRequestStatusInput {
-  /** Locks the order and generates the dispensing invoice */
+  /** Locks the request and generates the dispensing invoice */
   ReadyToDispense = 'READY_TO_DISPENSE',
 }
 
