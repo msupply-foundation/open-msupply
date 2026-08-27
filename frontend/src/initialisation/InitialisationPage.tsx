@@ -52,15 +52,15 @@ import {
 } from '../ui/layout/Form/formValidation';
 import { SaveServerLogLink } from '../platform/SaveServerLogLink';
 import { TransferHorizontalIcon } from '../ui/icons';
-import { discoveryReturnUrl, withLng } from '../desktop/discoveryReturn';
+import { discoveryReturnUrl, withLng } from '../discovery/discoveryReturn';
 import styles from '../ui/styles/LoginInitLayout.module.css';
 import pageStyles from './Initialisation.module.css';
 
 export const InitialisationPage: Component<{
   onComplete: () => void;
 }> = props => {
-  // Set when the desktop discovery page handed off to this server
-  // (src/desktop/discoveryReturn.ts) — offers the way back among the
+  // Set when the discovery page handed off to this server
+  // (src/discovery/discoveryReturn.ts) — offers the way back among the
   // secondary controls. Read once: the URL is fixed while this page shows.
   const changeServerUrl = discoveryReturnUrl(window.location.search);
 
