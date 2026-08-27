@@ -129,7 +129,7 @@ export {
   CustomersIcon,
   InboxIcon,
   TruckIcon,
-  DownloadIcon,
+  UploadIcon,
   FileIcon,
   StockIcon,
 } from '../ui/icons';
