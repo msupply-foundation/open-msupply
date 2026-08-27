@@ -1,4 +1,5 @@
 import { createSignal, Show, type Component } from 'solid-js';
+import { useNavigate } from '@solidjs/router';
 import { t } from '../../../intl';
 import { genderLabel } from '@/domain/patient';
 import { localisedDate } from '../../../intl/formatDateTime';
@@ -29,6 +30,7 @@ import {
 import {
   DeletePrescription,
   DiagnosesActive,
+  SourcePrescriptionRequest,
   type PrescriptionFieldsFragment,
   type DiagnosesActiveResult,
 } from './prescriptionDetail.generated';
@@ -72,6 +74,7 @@ type Diagnosis = DiagnosesActiveResult['diagnosesActive'][number];
 export const PrescriptionSidePanel: Component<
   PrescriptionSidePanelProps
 > = props => {
+  const navigate = useNavigate();
   const [deleteConfirm, setDeleteConfirm] = createSignal(false);
   const [cancelConfirm, setCancelConfirm] = createSignal(false);
   const [deleting, setDeleting] = createSignal(false);
@@ -98,6 +101,25 @@ export const PrescriptionSidePanel: Component<
   };
 
   const insurance = () => props.node.insurancePolicy;
+
+  // The prescription request this dispensation was generated from (AC-R4's
+  // other direction). Keyed on the soft link, so it only fetches for a
+  // generated prescription; a request that isn't on this site simply resolves
+  // to nothing and the section stays hidden. Read non-suspending — the panel
+  // lives under the already-open detail.
+  const [sourceRequest] = createResource(
+    () => props.node.prescriptionRequestId ?? undefined,
+    async id => {
+      const result = await graphqlFetch(SourcePrescriptionRequest, {
+        storeId: props.storeId,
+        id,
+      });
+      return result.kind === 'success'
+        ? (result.data.prescriptionRequest ?? undefined)
+        : undefined;
+    }
+  );
+  const sourceRequestNode = () => gated(sourceRequest);
 
   return (
     <>
@@ -263,6 +285,34 @@ export const PrescriptionSidePanel: Component<
           />
         </FieldRow>
       </SidePanelSection>
+
+      {/* The source request — reachable from the dispensation it generated
+          (spec/prescriptions/ui-surface.md S3 § side panel). The mirror of the
+          request side's own Related documents section; the section only exists
+          for a dispensation that came from a hand-over. */}
+      <Show when={sourceRequestNode()}>
+        {request => (
+          <SidePanelSection
+            value="related-documents"
+            title={t('heading.related-documents')}
+            collapsible
+          >
+            <FieldRow label={t('label.prescription-request')}>
+              <Button
+                variant="ghost"
+                data-testid="source-prescription-request-link"
+                onClick={() =>
+                  navigate(
+                    `/${props.storeId}/dispensary/prescription-request/${request().id}`
+                  )
+                }
+              >
+                {`#${request().prescriptionRequestNumber}`}
+              </Button>
+            </FieldRow>
+          </SidePanelSection>
+        )}
+      </Show>
 
       <SidePanelSection value="actions" title={t('heading.actions')}>
         <SidePanelActions>

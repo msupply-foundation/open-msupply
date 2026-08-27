@@ -521,7 +521,7 @@ const PrescriptionDetailView: Component = () => {
 
   const crumbs = (node?: PrescriptionFieldsFragment) => [
     {
-      label: t('prescriptions'),
+      label: t('dispensing'),
       to: `/${params.storeId}/dispensary/prescription`,
     },
     { label: node ? `${node.invoiceNumber}` : '…' },
