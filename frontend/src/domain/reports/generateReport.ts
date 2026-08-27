@@ -41,6 +41,14 @@ export interface GenerateReportParams {
   args?: Record<string, unknown>;
   /** Optional row sort, from the host screen's table. */
   sort?: ReportSort;
+  /**
+   * Cancels this generation, resolving it to `{ kind: 'aborted' }`. Generation
+   * is the app's longest single request, so a caller that can supersede one (the
+   * dashboard re-generating on an argument change) or walk away from one
+   * (navigating off the screen) should pass a signal rather than leave it in
+   * flight holding a connection and a pending resource.
+   */
+  signal?: AbortSignal;
 }
 
 export const generateReport = async (
@@ -67,6 +75,7 @@ export const generateReport = async (
   // message inline at the export control instead (spec/reports S5, AC-G6).
   const result = await graphqlFetch(GenerateReport, variables, {
     returnGraphqlErrors: true,
+    signal: params.signal,
   });
   if (result.kind !== 'success') return mapPrintFailure(result);
   return mapPrintResponse(result.data.generateReport);
