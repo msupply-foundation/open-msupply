@@ -36,7 +36,11 @@ export type GenerateResult =
   | { kind: 'fileId'; fileId: string }
   | { kind: 'dataError'; errors: unknown }
   | { kind: 'error'; message: string }
-  | { kind: 'failed' };
+  | { kind: 'failed' }
+  // - `aborted` — the caller cancelled it (a superseded regenerate, a screen
+  //   left behind). Not a fault and not the user's business: callers drop it
+  //   silently, showing neither an error nor a stale document.
+  | { kind: 'aborted' };
 
 // PrintReportResponse as this module's operation selects it; the reports
 // vertical's generateReport selects the identical shape, so its response is
@@ -74,7 +78,9 @@ export const mapPrintResponse = (response: PrintResponse): GenerateResult => {
 export const mapPrintFailure = (failure: GraphqlFailure): GenerateResult =>
   failure.kind === 'graphqlError'
     ? { kind: 'error', message: failure.message }
-    : { kind: 'failed' };
+    : failure.kind === 'aborted'
+      ? { kind: 'aborted' }
+      : { kind: 'failed' };
 
 // Convert CSV text to an Excel workbook (list-screen exports). A root query
 // despite creating a server-side file (spec/reports/contract) — no
