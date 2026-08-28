@@ -100,13 +100,18 @@
 }
 
 /* The content slot — a full-width block under the header (flex blockifies the
-   span). The consumer owns what's inside; the card owns two guarantees: an
-   unbreakable token (a grouped figure, an id) wraps rather than bursting the
-   border — .subtitle's rule — and the auto margin pins the slot to the card's
-   bottom edge, so when a grid row stretches tiles to the tallest, headers and
-   figures share baselines across the row while a slot-less card stays centred
-   (the auto margin absorbs the free space before justify-content sees it). */
+   span). The consumer owns what's inside; the card owns one unconditional
+   guarantee: an unbreakable token (a grouped figure, an id) wraps rather than
+   bursting the border — .subtitle's rule. Where the slot sits when the card is
+   stretched past its content is `contentPlacement`'s call, below. */
 .content {
-  margin-block-start: auto;
   overflow-wrap: anywhere;
+}
+
+/* The auto margin absorbs the card's free space before justify-content sees it,
+   pinning the slot to the bottom edge — see `contentPlacement`. Under
+   'grouped' there is no margin, so the free space stays split above and below
+   and justify-content centres header and content together. */
+.card[data-content-placement='spread'] .content {
+  margin-block-start: auto;
 }

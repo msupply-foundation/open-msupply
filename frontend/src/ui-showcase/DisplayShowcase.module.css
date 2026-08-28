@@ -28,3 +28,13 @@
   font-size: var(--text-sm);
   color: var(--text-secondary);
 }
+
+/* The contentPlacement demo needs its cards STRETCHED to the tallest, which is
+   the only condition under which the prop does anything. CardGrid aligns to
+   `start` by design, so this demo brings its own row rather than bending it. */
+.stretchedRow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr));
+  gap: var(--space-5);
+  align-items: stretch;
+}

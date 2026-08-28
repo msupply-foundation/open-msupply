@@ -32,6 +32,22 @@ export interface WidgetCardProps {
    * part of its name (see the component note).
    */
   children?: JSX.Element;
+  /**
+   * Where the content slot sits when the card is TALLER than what it holds —
+   * which only happens when something stretches it, so a card sized by its own
+   * content is unaffected either way.
+   *
+   * `'spread'` (default) pushes the content to the card's bottom edge. In a row
+   * of cards stretched to a common height that is what puts their figures on a
+   * shared baseline, and it is the right default because a row is what these
+   * cards are usually in.
+   *
+   * `'grouped'` keeps the content with the header as one block, centred in the
+   * card. For a card with no row-mates to line up with — one spanning two rows
+   * of a grid beside them — spreading has nothing to align to and only opens a
+   * gap between the label and the figure.
+   */
+  contentPlacement?: 'spread' | 'grouped';
   class?: string;
   testId?: string;
 }
@@ -104,6 +120,7 @@ export const WidgetCard = (props: WidgetCardProps) => {
       type={isLink() ? undefined : 'button'}
       onClick={isLink() ? undefined : () => props.onClick?.()}
       aria-describedby={hasContent() ? contentId : undefined}
+      data-content-placement={props.contentPlacement ?? 'spread'}
       data-testid={props.testId}
     >
       <span class={styles.header}>
