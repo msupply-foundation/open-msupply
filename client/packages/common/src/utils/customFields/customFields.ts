@@ -301,11 +301,43 @@ export const optionFilterQueryIds = (
 ];
 
 /**
+ * Whether a stored value has the JSON shape its definition's value type means:
+ * TEXT/DATE/OPTION a string, INTEGER/REAL a number, BOOLEAN a boolean,
+ * MULTI_OPTION an array of strings. The server enforces these on write, so a
+ * value that fails here is one no reader can render honestly — a scalar left
+ * behind by a retyped definition, say — and every surface shows nothing for it
+ * rather than a coerced guess. A value type this build doesn't know has no
+ * shape to check, so nothing is shown for it either.
+ */
+export const customFieldValueMatchesType = (
+  definition: CustomFieldDefinitionLike,
+  value: unknown
+): boolean => {
+  switch (definition.valueType) {
+    case CustomFieldNodeValueType.Text:
+    case CustomFieldNodeValueType.Date:
+    case CustomFieldNodeValueType.Option:
+      return typeof value === 'string';
+    case CustomFieldNodeValueType.Integer:
+    case CustomFieldNodeValueType.Real:
+      return typeof value === 'number';
+    case CustomFieldNodeValueType.Boolean:
+      return typeof value === 'boolean';
+    case CustomFieldNodeValueType.MultiOption:
+      return Array.isArray(value) && value.every(id => typeof id === 'string');
+    default:
+      return false;
+  }
+};
+
+/**
  * Format a single customFields value for read-only text display, given its
- * definition. OPTION values resolve option-id → option name; DATE values are
- * localised when parseable; everything else (TEXT, REAL, INTEGER) is
- * stringified. BOOLEAN values are typically rendered as a checkbox by the
- * presenter rather than via this function.
+ * definition. OPTION values resolve option-id → option name; MULTI_OPTION
+ * values resolve their top-most ids and join them; DATE values are localised
+ * when parseable; everything else (TEXT, REAL, INTEGER) is stringified. A value
+ * whose shape isn't what its type means shows nothing
+ * ({@link customFieldValueMatchesType}). BOOLEAN values are typically rendered
+ * as a checkbox by the presenter rather than via this function.
  */
 export const formatCustomFieldValue = (
   definition: CustomFieldDefinitionLike,
@@ -313,6 +345,7 @@ export const formatCustomFieldValue = (
   localisedDate: (date: Date) => string
 ): string => {
   if (value === null || value === undefined) return '';
+  if (!customFieldValueMatchesType(definition, value)) return '';
   switch (definition.valueType) {
     case CustomFieldNodeValueType.Option:
       return resolveOptionValue(definition, value);

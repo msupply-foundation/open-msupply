@@ -2,11 +2,11 @@ import { formatNumber } from '../../intl/formatNumber';
 import { localisedDate } from '../../intl/formatDateTime';
 import { t } from '../../intl';
 import {
-  customFieldValue,
   inConfiguredOrder,
   multiOptionIds,
   resolveOptionName,
   topMostIds,
+  typedCustomFieldValue,
   type ParsedCustomField,
 } from './parse';
 
@@ -29,7 +29,10 @@ export const customFieldDisplayString = (
   field: ParsedCustomField,
   raw: unknown
 ): string => {
-  const value = customFieldValue(raw, field.def.key);
+  // Shape-matched or nothing: a stored value that isn't what its value type
+  // means reads as unset rather than as a coerced guess (parse ›
+  // typedCustomFieldValue).
+  const value = typedCustomFieldValue(field, raw);
   if (value == null || value === '') return '';
   switch (field.kind) {
     case 'boolean':
@@ -75,7 +78,7 @@ export const customFieldFormText = (
   field: ParsedCustomField,
   raw: unknown
 ): string => {
-  const value = customFieldValue(raw, field.def.key);
+  const value = typedCustomFieldValue(field, raw);
   if (value == null || value === '') return EMPTY_FIELD_VALUE;
   if (field.kind === 'boolean')
     return value ? t('messages.yes') : t('messages.no');

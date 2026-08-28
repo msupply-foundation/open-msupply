@@ -252,6 +252,42 @@ export const parseCustomField = (def: CustomFieldDef): ParsedCustomField => {
   }
 };
 
+// A value ONLY when its JSON shape matches what the field's value type means.
+// Anything else — a number under a TEXT field, a bare id under a MULTI_OPTION
+// one, a value left behind by a retyped definition — reads as UNSET wherever it
+// renders. Nothing coerces: these shapes are what the server enforces on write
+// (custom_field › value_matches_type), so a value that doesn't match is a value
+// this field never had, and a coerced guess would be inventing one.
+export const shapeMatchedValue = (
+  field: ParsedCustomField,
+  value: unknown
+): unknown => {
+  if (value == null) return undefined;
+  switch (field.kind) {
+    case 'text':
+    case 'date':
+    case 'option':
+      return typeof value === 'string' ? value : undefined;
+    case 'number':
+      return typeof value === 'number' ? value : undefined;
+    case 'boolean':
+      return typeof value === 'boolean' ? value : undefined;
+    case 'multiOption':
+      return Array.isArray(value) && value.every(id => typeof id === 'string')
+        ? value
+        : undefined;
+    // A value type this client can't render has no shape to check against.
+    case 'unsupported':
+      return undefined;
+  }
+};
+
+// The same, read out of a record's whole `customFields` blob by key.
+export const typedCustomFieldValue = (
+  field: ParsedCustomField,
+  raw: unknown
+): unknown => shapeMatchedValue(field, customFieldValue(raw, field.def.key));
+
 // A field the deployment shows on the scope: not HIDDEN, and a display mode we
 // understand (OTHER/null from a newer server is treated as not-shown). The read
 // is already scope-filtered server-side; this drops the non-shown ones.

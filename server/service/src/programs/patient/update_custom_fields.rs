@@ -1,9 +1,9 @@
 use repository::{
-    EqualFilter, NameRowRepository, NameRowType, Patient, PatientFilter, RepositoryError,
-    TransactionError,
+    CustomFieldValueType, EqualFilter, NameRowRepository, NameRowType, Patient, PatientFilter,
+    RepositoryError, TransactionError,
 };
 
-use crate::custom_field::{check_unknown_custom_field_key, merge_patch};
+use crate::custom_field::{check_custom_fields_patch, merge_patch, CustomFieldPatchProblem};
 use crate::service_provider::{ServiceContext, ServiceProvider};
 
 /// `custom_field_scope.table_name` scope for patient custom custom_fields. Patients
@@ -19,8 +19,27 @@ pub enum UpdatePatientCustomFieldsError {
     /// A patched key is not a visible patient custom_field — reject rather than
     /// writing a key the read path would silently filter out.
     UnknownCustomFieldKey(String),
+    /// A patched key is given a value of the wrong shape for its value type —
+    /// reject rather than writing something no reader can render.
+    InvalidCustomFieldValue {
+        key: String,
+        expected: CustomFieldValueType,
+    },
     InternalError(String),
     DatabaseError(RepositoryError),
+}
+
+impl From<CustomFieldPatchProblem> for UpdatePatientCustomFieldsError {
+    fn from(problem: CustomFieldPatchProblem) -> Self {
+        match problem {
+            CustomFieldPatchProblem::UnknownKey(key) => {
+                UpdatePatientCustomFieldsError::UnknownCustomFieldKey(key)
+            }
+            CustomFieldPatchProblem::WrongValueType { key, expected } => {
+                UpdatePatientCustomFieldsError::InvalidCustomFieldValue { key, expected }
+            }
+        }
+    }
 }
 
 pub struct UpdatePatientCustomFields {
@@ -47,11 +66,12 @@ pub(crate) fn update_patient_custom_fields(
                 return Err(UpdatePatientCustomFieldsError::NotAPatient);
             }
 
-            // Only allow patched keys that are defined and visible for patients.
-            if let Some(unknown) =
-                check_unknown_custom_field_key(con, PATIENT_PROPERTY_TABLE, &input.custom_fields)?
+            // Only allow patched keys that are defined and visible for
+            // patients, each carrying a value of its defined shape.
+            if let Some(problem) =
+                check_custom_fields_patch(con, PATIENT_PROPERTY_TABLE, &input.custom_fields)?
             {
-                return Err(UpdatePatientCustomFieldsError::UnknownCustomFieldKey(unknown));
+                return Err(problem.into());
             }
 
             // Merge the patch over the existing blob (preserves keys not in the
@@ -89,9 +109,9 @@ impl From<RepositoryError> for UpdatePatientCustomFieldsError {
 #[cfg(test)]
 mod test {
     use repository::{
-        NameRow, NameRowRepository, NameRowType, CustomFieldDisplayMode, CustomFieldKind,
-        CustomFieldScopeRow, CustomFieldScopeRowRepository, CustomFieldRow, CustomFieldRowRepository,
-        CustomFieldValueType,
+        CustomFieldDisplayMode, CustomFieldKind, CustomFieldRow, CustomFieldRowRepository,
+        CustomFieldScopeRow, CustomFieldScopeRowRepository, CustomFieldValueType, NameRow,
+        NameRowRepository, NameRowType,
     };
     use serde_json::json;
     use util::uuid::uuid;

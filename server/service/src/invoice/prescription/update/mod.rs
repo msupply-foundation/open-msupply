@@ -1,3 +1,4 @@
+use crate::custom_field::CustomFieldPatchProblem;
 use crate::{
     activity_log::{activity_log_entry, log_type_from_invoice_status},
     invoice::{query::get_invoice, stock_effect::StockEffect},
@@ -7,9 +8,9 @@ use crate::{
 };
 use chrono::{Duration, NaiveDateTime, Utc};
 use repository::{
-    EqualFilter, Invoice, InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowRepository,
-    InvoiceRow, InvoiceRowRepository, InvoiceStatus, RepositoryError, StockLineRowRepository,
-    StorageConnection,
+    CustomFieldValueType, EqualFilter, Invoice, InvoiceLineFilter, InvoiceLineRepository,
+    InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, InvoiceStatus, RepositoryError,
+    StockLineRowRepository, StorageConnection,
 };
 use util::uuid::uuid;
 
@@ -57,6 +58,12 @@ pub enum UpdatePrescriptionError {
     ClinicianDoesNotExist,
     PatientDoesNotExist,
     UnknownPropertyKey(String),
+    /// A customFields patch gives a defined property a value of the wrong
+    /// shape for its value type.
+    InvalidPropertyValue {
+        key: String,
+        expected: CustomFieldValueType,
+    },
     // Internal
     UpdatedInvoiceDoesNotExist,
     DatabaseError(RepositoryError),
@@ -64,6 +71,19 @@ pub enum UpdatePrescriptionError {
     InvoiceLineHasNoStockLine(String),
     /// Can't backdate an invoice with allocated lines
     CantBackDate(String),
+}
+
+impl From<CustomFieldPatchProblem> for UpdatePrescriptionError {
+    fn from(problem: CustomFieldPatchProblem) -> Self {
+        match problem {
+            CustomFieldPatchProblem::UnknownKey(key) => {
+                UpdatePrescriptionError::UnknownPropertyKey(key)
+            }
+            CustomFieldPatchProblem::WrongValueType { key, expected } => {
+                UpdatePrescriptionError::InvalidPropertyValue { key, expected }
+            }
+        }
+    }
 }
 
 type OutError = UpdatePrescriptionError;

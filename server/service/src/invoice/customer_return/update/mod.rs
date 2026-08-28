@@ -1,9 +1,12 @@
 use crate::activity_log::{activity_log_entry, log_type_from_invoice_status};
-use crate::{invoice::query::get_invoice, service_provider::ServiceContext, WithDBError};
+use crate::{
+    custom_field::CustomFieldPatchProblem, invoice::query::get_invoice,
+    service_provider::ServiceContext, WithDBError,
+};
 use repository::Invoice;
 use repository::{
-    InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus, RepositoryError,
-    StockLineRowRepository,
+    CustomFieldValueType, InvoiceLineRowRepository, InvoiceRowRepository, InvoiceStatus,
+    RepositoryError, StockLineRowRepository,
 };
 
 mod generate;
@@ -104,9 +107,28 @@ pub enum UpdateCustomerReturnError {
     OtherPartyNotVisible,
     OtherPartyNotACustomer,
     UnknownPropertyKey(String),
+    /// A customFields patch gives a defined property a value of the wrong
+    /// shape for its value type.
+    InvalidPropertyValue {
+        key: String,
+        expected: CustomFieldValueType,
+    },
     // Internal
     DatabaseError(RepositoryError),
     UpdatedInvoiceDoesNotExist,
+}
+
+impl From<CustomFieldPatchProblem> for UpdateCustomerReturnError {
+    fn from(problem: CustomFieldPatchProblem) -> Self {
+        match problem {
+            CustomFieldPatchProblem::UnknownKey(key) => {
+                UpdateCustomerReturnError::UnknownPropertyKey(key)
+            }
+            CustomFieldPatchProblem::WrongValueType { key, expected } => {
+                UpdateCustomerReturnError::InvalidPropertyValue { key, expected }
+            }
+        }
+    }
 }
 
 impl From<RepositoryError> for UpdateCustomerReturnError {

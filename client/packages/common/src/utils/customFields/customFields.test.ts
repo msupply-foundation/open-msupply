@@ -291,6 +291,24 @@ describe('formatCustomFieldValue', () => {
     );
   });
 
+  it('shows nothing for a value whose shape is not what its type means', () => {
+    // What a definition retyped on central leaves behind, and what the server
+    // refuses to write: a list under a single-valued field, a bare id under a
+    // multi-valued one, a number under text.
+    const single = def({
+      valueType: CustomFieldNodeValueType.Option,
+      options: [option('opt_1', 'Red')],
+    });
+    expect(formatCustomFieldValue(single, ['opt_1'], () => '')).toBe('');
+    const multi = def({
+      valueType: CustomFieldNodeValueType.MultiOption,
+      options: [option('opt_1', 'Red')],
+    });
+    expect(formatCustomFieldValue(multi, 'opt_1', () => '')).toBe('');
+    const text = def({ valueType: CustomFieldNodeValueType.Text });
+    expect(formatCustomFieldValue(text, 42, () => '')).toBe('');
+  });
+
   it('resolves OPTION values via the definition options', () => {
     const optDef = def({
       valueType: CustomFieldNodeValueType.Option,

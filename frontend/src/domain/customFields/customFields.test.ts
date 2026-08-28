@@ -383,6 +383,29 @@ describe('cell text vs read-only field text', () => {
     expect(customFieldFormText(cat, { cat: [] })).toBe(EMPTY_FIELD_VALUE);
   });
 
+  it('shows nothing for a value whose shape is not what its type means', () => {
+    // What a definition retyped on central leaves behind, and what the server
+    // now refuses to write: a bare id under a multi-valued field, a list under
+    // a single-valued one, a number under text.
+    const multi = parsed({
+      key: 'cat',
+      valueType: 'MULTI_OPTION',
+      options: [option({ id: 'o1', name: 'Pregnant' })],
+    });
+    expect(customFieldDisplayString(multi, { cat: 'o1' })).toBe('');
+    expect(customFieldFormText(multi, { cat: 'o1' })).toBe(EMPTY_FIELD_VALUE);
+    const single = parsed({
+      key: 'cat',
+      valueType: 'OPTION',
+      options: [option({ id: 'o1', name: 'Pregnant' })],
+    });
+    expect(customFieldFormText(single, { cat: ['o1'] })).toBe(
+      EMPTY_FIELD_VALUE
+    );
+    const text = parsed({ key: 'note' });
+    expect(customFieldDisplayString(text, { note: 42 })).toBe('');
+  });
+
   it('a field resolves an option to its name, and localises numbers', () => {
     const opt = parsed({
       key: 'cat',
