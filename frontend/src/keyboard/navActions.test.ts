@@ -151,11 +151,21 @@ describe('palette destinations', () => {
 
   it('drops a destination whose capability gate fails, with the menu', () => {
     withActions(actions => {
-      expect(names(actions)).not.toContain('Go to: Prescriptions');
+      expect(names(actions)).not.toContain('Go to: Dispensing');
     });
     state.dispensary = true;
     withActions(actions => {
-      expect(names(actions)).toContain('Go to: Prescriptions');
+      expect(names(actions)).toContain('Go to: Dispensing');
+    });
+  });
+
+  it('omits the prescriber-only destinations (spec/prescription-requests PM-9)', () => {
+    // Prescriptions — the prescriber's own list — is not in this registry at
+    // all, so a dispensary user's palette cannot offer it. The palette derives
+    // from the registry in force, which is the whole point of D107.
+    state.dispensary = true;
+    withActions(actions => {
+      expect(names(actions)).not.toContain('Go to: Prescriptions');
     });
   });
 

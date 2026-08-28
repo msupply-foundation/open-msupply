@@ -208,7 +208,9 @@ async fn verify_via_dispensing_service_flips_request_immediately() {
             "store_a",
             UpdatePrescriptionRequest {
                 id: request.id.clone(),
-                status: Some(UpdatePrescriptionRequestStatus::ReadyToDispense),
+                status: Some(UpdatePrescriptionRequestStatus::ReadyToDispense {
+                    clinician_id: None,
+                }),
                 ..Default::default()
             },
         )
@@ -216,7 +218,8 @@ async fn verify_via_dispensing_service_flips_request_immediately() {
 
     let dispensation = InvoiceRepository::new(&ctx.connection)
         .query_one(
-            InvoiceFilter::new().prescription_request_id(EqualFilter::equal_to(request.id.to_string())),
+            InvoiceFilter::new()
+                .prescription_request_id(EqualFilter::equal_to(request.id.to_string())),
         )
         .unwrap()
         .expect("generated dispensation not found");

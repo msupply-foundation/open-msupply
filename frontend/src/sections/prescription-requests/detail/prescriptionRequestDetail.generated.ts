@@ -78,6 +78,7 @@ export type UpdatePrescriptionRequestVariables = {
   } | null;
     customFields?: unknown | null;
     status?: "READY_TO_DISPENSE" | null;
+    clinicianId?: string | null;
   };
 };
 

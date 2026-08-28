@@ -33,6 +33,11 @@ pub struct UpdateInput {
     /// must be visible for the "prescription_request" scope.
     pub custom_fields: Option<Json<serde_json::Map<String, serde_json::Value>>>,
     pub status: Option<UpdatePrescriptionRequestStatusInput>,
+    /// The clinician the generated dispensation names. Read ONLY alongside
+    /// `status: READY_TO_DISPENSE` — a request holds no clinician of its own,
+    /// so without the hand-over there is nothing for this to write and it is
+    /// dropped.
+    pub clinician_id: Option<String>,
 }
 
 impl UpdateInput {
@@ -46,6 +51,7 @@ impl UpdateInput {
             comment,
             custom_fields,
             status,
+            clinician_id,
         } = self;
         ServiceInput {
             id,
@@ -55,9 +61,12 @@ impl UpdateInput {
             prescription_datetime: prescription_datetime.map(|d| d.naive_utc()),
             comment: comment.map(|u| NullableUpdate { value: u.value }),
             custom_fields: custom_fields.map(|json| json.0),
+            // The clinician rides the transition, not the struct: it is the
+            // hand-over's parameter, and folding it in here is what makes
+            // "sent without the hand-over" unrepresentable downstream.
             status: status.map(|status| match status {
                 UpdatePrescriptionRequestStatusInput::ReadyToDispense => {
-                    UpdatePrescriptionRequestStatus::ReadyToDispense
+                    UpdatePrescriptionRequestStatus::ReadyToDispense { clinician_id }
                 }
             }),
         }

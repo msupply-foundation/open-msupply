@@ -246,6 +246,13 @@ describe('prescriber mode registry (PM-1, PM-3, PM-4)', () => {
     expect(prescriberPaths()).toContain('dispensary/prescription');
   });
 
+  it('keeps prescription requests OUT of the full registry (PM-9)', () => {
+    // Prescriber mode is the only way in, so the destination is absent from
+    // the menu and the palette of every other user in the same dispensary.
+    state.prescriber = false;
+    expect(prescriberPaths()).not.toContain('dispensary/prescription-request');
+  });
+
   it('reshapes when the flag changes, without anything being rebuilt', () => {
     // PM-2: switching to a store where the user is a prescriber changes the
     // registry in place — the accessor is read fresh, never captured.
@@ -291,6 +298,30 @@ describe('prescriber mode routing (PM-5)', () => {
     expect(navHomePath()).toBe('dispensary/prescription-request');
     state.prescriber = false;
     expect(navHomePath()).toBe('');
+  });
+
+  it('refuses the prescriber destinations to everyone else (PM-9)', () => {
+    // A dispensary user with every prescription permission still cannot reach
+    // the prescriber's screens — by address any more than by menu. The refusal
+    // names the mode, not the reads the user does hold.
+    state.prescriber = false;
+    state.permissions = new Set([
+      'PRESCRIPTION_QUERY',
+      'PRESCRIPTION_MUTATE',
+      'PATIENT_QUERY',
+    ]);
+    expect(routeAccess('dispensary/prescription-request')).toEqual({
+      kind: 'forbidden',
+      permission: 'PrescriberMode',
+    });
+    expect(routeAccess('dispensary/prescription-request/abc-123')).toEqual({
+      kind: 'forbidden',
+      permission: 'PrescriberMode',
+    });
+    // The destinations the two registries SHARE stay reachable.
+    expect(routeAccess('dispensary/patients')).toEqual({ kind: 'ok' });
+    expect(routeAccess('catalogue/items')).toEqual({ kind: 'ok' });
+    expect(routeAccess('dispensary/prescription')).toEqual({ kind: 'ok' });
   });
 
   it('still refuses a permission the user lacks (PM-8)', () => {

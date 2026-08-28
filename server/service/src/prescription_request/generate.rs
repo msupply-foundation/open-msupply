@@ -16,11 +16,15 @@ use super::update::UpdatePrescriptionRequestError;
 ///
 /// Runs in the session of whoever set the request Ready to dispense, so the
 /// generated invoice's `user_id` names the prescriber.
+///
+/// `clinician_id` is the clinician asked for at the hand-over, and is the one
+/// thing here the request itself does not hold.
 pub(crate) fn create_dispensation(
     ctx: &ServiceContext,
     connection: &StorageConnection,
     request: &PrescriptionRequestRow,
     lines: Vec<PrescriptionRequestLineRow>,
+    clinician_id: Option<String>,
 ) -> Result<String, UpdatePrescriptionRequestError> {
     let invoice_id = uuid();
 
@@ -32,12 +36,13 @@ pub(crate) fn create_dispensation(
             diagnosis_id: request.diagnosis_id.clone(),
             program_id: request.program_id.clone(),
             their_reference: None,
-            // No clinician: a request records who prescribed as `created_by`,
-            // and `insert_prescription` stamps the same session's user onto
-            // `invoice.user_id` — so the dispensation carries the prescriber
-            // without a clinician record (spec/prescription-requests § who
-            // prescribed).
-            clinician_id: None,
+            // The clinician the hand-over named, if any. It does NOT record
+            // who prescribed — a request records that as `created_by`, and
+            // `insert_prescription` stamps the same session's user onto
+            // `invoice.user_id` (spec/prescription-requests § who prescribed).
+            // This is the dispensary's own clinician field, filled in at the
+            // hand-over so the dispenser does not have to guess it.
+            clinician_id,
             prescription_date: Some(request.prescription_datetime),
             // Links the dispensation back to its source request
             prescription_request_id: Some(request.id.clone()),
