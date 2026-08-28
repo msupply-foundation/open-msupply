@@ -138,6 +138,26 @@ export const WidgetCard = (props: WidgetCardProps) => {
       data-size={props.size ?? 'md'}
       data-testid={props.testId}
     >
+      {/*
+       * The go-arrow: the card's standing affordance that activating it leads
+       * somewhere. It sits at the card's own top corner, NOT with the header —
+       * a card taller than its content centres that header, and an arrow
+       * riding along with it drifts to the middle of the card. Out of flow, so
+       * it stays put however the header is placed; `.header` reserves the room
+       * it would otherwise overlap.
+       *
+       * Decorative and aria-hidden — the card is already one control with the
+       * header text as its name, so announcing an arrow would add a second,
+       * meaningless thing to hear. A plain <span>, never a control: a second
+       * focusable target inside the card is the nested-interactive trap this
+       * component exists to avoid.
+       *
+       * Always present rather than a hover reveal: on touch there is no hover
+       * to reveal it with, and the priority device here is a tablet.
+       */}
+      <span class={styles.go} aria-hidden="true">
+        <ArrowRightIcon />
+      </span>
       <span class={styles.header}>
         <Show when={icon()}>
           <span class={styles.icon} aria-hidden="true">
@@ -149,20 +169,6 @@ export const WidgetCard = (props: WidgetCardProps) => {
           <Show when={props.subtitle}>
             <span class={styles.subtitle}>{props.subtitle}</span>
           </Show>
-        </span>
-        {/*
-         * The go-arrow: the card's standing affordance that activating it
-         * leads somewhere. Decorative and aria-hidden — the card is already
-         * one control with the header text as its name, so announcing an
-         * arrow would add a second, meaningless thing to hear. It is a plain
-         * <span>, never a control: a second focusable target inside the card
-         * is the nested-interactive trap this component exists to avoid.
-         *
-         * Always present rather than a hover reveal: on touch there is no
-         * hover to reveal it with, and the priority device here is a tablet.
-         */}
-        <span class={styles.go} aria-hidden="true">
-          <ArrowRightIcon />
         </span>
       </span>
       <Show when={hasContent()}>
