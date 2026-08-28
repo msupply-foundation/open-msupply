@@ -25,6 +25,8 @@
   background: var(--surface-raised);
   box-shadow: var(--shadow-1);
   color: var(--text-body);
+  /* Anchors the go-arrow, which is out of flow at the card's top corner. */
+  position: relative;
   font-family: inherit;
   text-align: start;
   text-decoration: none;
@@ -64,6 +66,9 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  /* The go-arrow is out of flow, so nothing else reserves its column: without
+     this a long title runs underneath it. Its own size plus the card's gutter. */
+  padding-inline-end: var(--space-5);
 }
 
 .icon {
@@ -134,18 +139,16 @@
   font-size: var(--text-lg);
 }
 
-/* The go-arrow (WidgetCard.tsx): pushed to the header's trailing edge, so it
-   sits at the card's top corner whatever the title's length. `margin-inline-
-   start: auto` rather than justify-content, so the icon + text keep their own
-   gap and only the arrow is pushed away. Muted by default — it is a standing
-   affordance, not a call to action — and takes the action tone on hover with
-   the rest of the card's chrome. */
+/* The go-arrow (WidgetCard.tsx): the card's own top corner, out of flow, so a
+   centred header cannot drag it to the middle of the card. Inset by the card's
+   own padding, so it lines up with the content rather than the border. Muted by
+   default — a standing affordance, not a call to action — and it takes the
+   action tone with the rest of the card's hover chrome. */
 .go {
+  position: absolute;
+  inset-block-start: var(--space-4);
+  inset-inline-end: var(--space-4);
   display: inline-flex;
-  flex-shrink: 0;
-  align-items: center;
-  margin-inline-start: auto;
-  align-self: flex-start;
   color: var(--text-secondary);
   font-size: 1.125rem;
   transition: color var(--motion-fast) ease;
