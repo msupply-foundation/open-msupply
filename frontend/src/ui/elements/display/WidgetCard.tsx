@@ -6,6 +6,7 @@ import {
   type JSX,
 } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
+import { ArrowRightIcon } from '../../icons';
 import styles from './WidgetCard.module.css';
 
 export interface WidgetCardProps {
@@ -148,6 +149,20 @@ export const WidgetCard = (props: WidgetCardProps) => {
           <Show when={props.subtitle}>
             <span class={styles.subtitle}>{props.subtitle}</span>
           </Show>
+        </span>
+        {/*
+         * The go-arrow: the card's standing affordance that activating it
+         * leads somewhere. Decorative and aria-hidden — the card is already
+         * one control with the header text as its name, so announcing an
+         * arrow would add a second, meaningless thing to hear. It is a plain
+         * <span>, never a control: a second focusable target inside the card
+         * is the nested-interactive trap this component exists to avoid.
+         *
+         * Always present rather than a hover reveal: on touch there is no
+         * hover to reveal it with, and the priority device here is a tablet.
+         */}
+        <span class={styles.go} aria-hidden="true">
+          <ArrowRightIcon />
         </span>
       </span>
       <Show when={hasContent()}>
