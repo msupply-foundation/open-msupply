@@ -50,6 +50,18 @@ pub enum CustomFieldValueFilter {
     /// expands a parent selection to `In(parent_id + descendant ids)` (see
     /// client custom_fieldListSupport.ts), so no expansion happens server-side.
     Option(GeneralFilter<String>),
+    /// MULTI_OPTION custom_fields — the stored value is a JSON ARRAY of option
+    /// ids, so membership is SET OVERLAP rather than equality: the record
+    /// matches when ANY of its stored ids is one of the filtered ids. The
+    /// client sends the chosen ids expanded BOTH ways — down to descendants
+    /// (filtering a parent finds records stored under its children) and up to
+    /// ancestors (filtering a child finds records stored, minimally, as its
+    /// parent) — so again no hierarchy walking happens server-side.
+    ///
+    /// Only membership questions are meaningful over a set: `In`/`Equal` test
+    /// overlap, `IsNull`/`IsNotNull` test whether the key holds anything at
+    /// all, and ordering/substring operators match nothing.
+    MultiOption(GeneralFilter<String>),
 }
 
 /// SQL-type-level config for `JsonCustomField`: how the extracted text value is
@@ -167,6 +179,119 @@ where
     }
 }
 
+/// Diesel expression asking whether the JSON ARRAY stored at one key SHARES any
+/// element with a set of ids — the MULTI_OPTION membership test. Its SQL type is
+/// `Nullable<Bool>` so it drops straight into the same boxed WHERE clause as the
+/// scalar comparisons above.
+///
+/// Both backends must be **shape-safe**: a value that is not an array (a scalar
+/// left over from an OPTION field retyped to MULTI_OPTION, say) must fail to
+/// match rather than fail the query.
+///   • SQLite `json_each` raises "malformed JSON" when handed the bare text a
+///     scalar `json_extract` returns, so the array is fetched through a
+///     `json_type(...) = 'array'` CASE that substitutes an empty array for
+///     everything else — a guard inside the expression rather than a
+///     short-circuiting `AND`, which SQLite does not promise.
+///   • Postgres `jsonb_exists_any` is null- and scalar-tolerant by definition
+///     (it asks about top-level keys/elements), so it needs no guard.
+#[derive(Debug, Clone, QueryId)]
+pub struct JsonCustomFieldArrayOverlap<C> {
+    column: C,
+    /// Bound on Postgres (`->` takes the bare key).
+    #[allow(dead_code)]
+    key: String,
+    /// Bound on SQLite (`json_type`/`json_extract` take a `$.key` path).
+    #[allow(dead_code)]
+    path: String,
+    /// The ids to test for overlap. Never empty — the caller maps an empty set
+    /// to a false condition.
+    values: Vec<String>,
+}
+
+impl<C> JsonCustomFieldArrayOverlap<C> {
+    pub fn new(column: C, key: String, values: Vec<String>) -> Self {
+        // Quoted object label, as JsonCustomField::new — see the note there.
+        let path = format!("$.\"{key}\"");
+        JsonCustomFieldArrayOverlap {
+            column,
+            key,
+            path,
+            values,
+        }
+    }
+}
+
+impl<C> Expression for JsonCustomFieldArrayOverlap<C>
+where
+    C: Expression,
+{
+    type SqlType = Nullable<Bool>;
+}
+
+impl<C, QS> AppearsOnTable<QS> for JsonCustomFieldArrayOverlap<C>
+where
+    Self: Expression,
+    C: AppearsOnTable<QS>,
+{
+}
+
+impl<C, QS> SelectableExpression<QS> for JsonCustomFieldArrayOverlap<C>
+where
+    Self: AppearsOnTable<QS>,
+    C: SelectableExpression<QS>,
+{
+}
+
+impl<C, GB> ValidGrouping<GB> for JsonCustomFieldArrayOverlap<C>
+where
+    C: ValidGrouping<GB>,
+{
+    type IsAggregate = C::IsAggregate;
+}
+
+impl<C> QueryFragment<DBType> for JsonCustomFieldArrayOverlap<C>
+where
+    C: QueryFragment<DBType>,
+{
+    fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, DBType>) -> QueryResult<()> {
+        #[cfg(feature = "postgres")]
+        {
+            out.push_sql("jsonb_exists_any(");
+            self.column.walk_ast(out.reborrow())?;
+            out.push_sql(" -> ");
+            out.push_bind_param::<Text, _>(&self.key)?;
+            out.push_sql(", ARRAY[");
+            for (index, value) in self.values.iter().enumerate() {
+                if index > 0 {
+                    out.push_sql(", ");
+                }
+                out.push_bind_param::<Text, _>(value)?;
+            }
+            out.push_sql("]::text[])");
+        }
+        #[cfg(not(feature = "postgres"))]
+        {
+            out.push_sql("EXISTS (SELECT 1 FROM json_each(CASE WHEN json_type(");
+            self.column.walk_ast(out.reborrow())?;
+            out.push_sql(", ");
+            out.push_bind_param::<Text, _>(&self.path)?;
+            out.push_sql(") = 'array' THEN json_extract(");
+            self.column.walk_ast(out.reborrow())?;
+            out.push_sql(", ");
+            out.push_bind_param::<Text, _>(&self.path)?;
+            out.push_sql(") ELSE '[]' END) WHERE value IN (");
+            for (index, value) in self.values.iter().enumerate() {
+                if index > 0 {
+                    out.push_sql(", ");
+                }
+                out.push_bind_param::<Text, _>(value)?;
+            }
+            out.push_sql("))");
+        }
+        Ok(())
+    }
+}
+
 /// Same shape as the BoxedCondition generated by create_condition!, but generic
 /// over the query source. BoxableExpression has Send as a supertrait, so this is
 /// usable inside boxed queries and subqueries (whose WHERE clauses require Send).
@@ -221,6 +346,46 @@ where
         CustomFieldValueFilter::Boolean(f) => {
             bool_filter_to_boxed(JsonCustomFieldBool::new(column, key), f)
         }
+        CustomFieldValueFilter::MultiOption(f) => multi_option_filter_to_boxed(column, key, f),
+    }
+}
+
+fn multi_option_filter_to_boxed<QS, C>(
+    column: C,
+    key: String,
+    filter: GeneralFilter<String>,
+) -> BoxedCustomFieldCondition<QS>
+where
+    QS: diesel::Table,
+    C: CustomFieldsColumn<QS>,
+{
+    match filter {
+        // An empty set overlaps nothing. (The client omits an empty selection
+        // rather than sending it, so this is a guard, not a UI path.)
+        GeneralFilter::In(values) if values.is_empty() => false_condition(),
+        GeneralFilter::In(values) => {
+            Box::new(JsonCustomFieldArrayOverlap::new(column, key, values))
+        }
+        GeneralFilter::Equal(value) => {
+            Box::new(JsonCustomFieldArrayOverlap::new(column, key, vec![value]))
+        }
+        // Presence of the key, not of any particular id — the extraction is
+        // non-null for a stored array on either backend.
+        GeneralFilter::IsNull => {
+            Box::new(JsonCustomFieldText::new(column, key).is_null().nullable())
+        }
+        GeneralFilter::IsNotNull => Box::new(
+            JsonCustomFieldText::new(column, key)
+                .is_not_null()
+                .nullable(),
+        ),
+        // Ordering and substring have no meaning over a set of ids.
+        GeneralFilter::NotEqual(_)
+        | GeneralFilter::GreaterThan(_)
+        | GeneralFilter::LowerThan(_)
+        | GeneralFilter::GreaterThanOrEqual(_)
+        | GeneralFilter::LowerThanOrEqual(_)
+        | GeneralFilter::Like(_) => false_condition(),
     }
 }
 
@@ -343,6 +508,7 @@ mod tests {
                 "date_key": "2024-03-05",
                 "bool_key": true,
                 "option_key": "option_a",
+                "multi_key": ["option_a", "option_b"],
             })),
         ))
         .unwrap();
@@ -354,14 +520,21 @@ mod tests {
                 "date_key": "2023-12-31",
                 "bool_key": false,
                 "option_key": "option_b",
+                // A SCALAR on a multi-valued key — what a field retyped from
+                // OPTION to MULTI_OPTION leaves behind. Must not match, and
+                // must not blow the query up (SQLite json_each would).
+                "multi_key": "option_b",
             })),
         ))
         .unwrap();
         // No custom_fields at all
         repo.upsert_one(&name_row("name3", None)).unwrap();
         // JSON null value (extracts to SQL NULL, same as a missing key)
-        repo.upsert_one(&name_row("name4", Some(json!({ "text_key": null }))))
-            .unwrap();
+        repo.upsert_one(&name_row(
+            "name4",
+            Some(json!({ "text_key": null, "multi_key": ["option_c"] })),
+        ))
+        .unwrap();
 
         connection
     }
@@ -424,6 +597,71 @@ mod tests {
             ),
             ["name2"]
         );
+    }
+
+    #[actix_rt::test]
+    async fn json_custom_field_filter_multi_option() {
+        let connection = setup("json_custom_field_filter_multi_option").await;
+
+        let any_of = |ids: &[&str]| {
+            Value::MultiOption(GeneralFilter::In(
+                ids.iter().map(|id| id.to_string()).collect(),
+            ))
+        };
+
+        // Overlap: one shared id is enough, and the SCALAR on name2 neither
+        // matches nor errors.
+        assert_eq!(
+            ids(
+                &connection,
+                custom_field("multi_key", any_of(&["option_b"]))
+            ),
+            ["name1"]
+        );
+        // Several rows, each matching on a different id.
+        assert_eq!(
+            ids(
+                &connection,
+                custom_field("multi_key", any_of(&["option_a", "option_c"]))
+            ),
+            ["name1", "name4"]
+        );
+        // Nothing shared.
+        assert!(ids(
+            &connection,
+            custom_field("multi_key", any_of(&["option_z"]))
+        )
+        .is_empty());
+        // An empty set overlaps nothing.
+        assert!(ids(&connection, custom_field("multi_key", any_of(&[]))).is_empty());
+        // Equal is overlap with a single id.
+        assert_eq!(
+            ids(
+                &connection,
+                custom_field(
+                    "multi_key",
+                    Value::MultiOption(GeneralFilter::Equal("option_c".to_string()))
+                )
+            ),
+            ["name4"]
+        );
+        // Presence of the key, whatever shape it holds.
+        assert_eq!(
+            ids(
+                &connection,
+                custom_field("multi_key", Value::MultiOption(GeneralFilter::IsNotNull))
+            ),
+            ["name1", "name2", "name4"]
+        );
+        // Substring has no meaning over a set.
+        assert!(ids(
+            &connection,
+            custom_field(
+                "multi_key",
+                Value::MultiOption(GeneralFilter::Like("option".to_string()))
+            )
+        )
+        .is_empty());
     }
 
     #[actix_rt::test]

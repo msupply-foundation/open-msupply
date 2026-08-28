@@ -16,6 +16,8 @@ pub enum CustomFieldNodeValueType {
     Date,
     Real,
     Option,
+    /// Several options at once — the record's value is an ARRAY of option ids.
+    MultiOption,
     Boolean,
 }
 
@@ -28,6 +30,7 @@ impl From<repository::CustomFieldValueType> for CustomFieldNodeValueType {
             RepoType::Date => Self::Date,
             RepoType::Real => Self::Real,
             RepoType::Option => Self::Option,
+            RepoType::MultiOption => Self::MultiOption,
             RepoType::Boolean => Self::Boolean,
             // Any unrecognised value type from a newer central. Rows whose
             // value type is the `Other` catch-all are filtered out at the
@@ -160,9 +163,9 @@ impl CustomFieldNode {
             .map(|mode| CustomFieldNodeDisplayMode::from(mode.clone()))
     }
 
-    /// Options for OPTION-type custom_fields. Empty list for any other value
-    /// type. Resolved via dataloader so a list of N custom_fields triggers a
-    /// single batched lookup.
+    /// Options for OPTION- and MULTI_OPTION-type custom_fields. Empty list for
+    /// any other value type. Resolved via dataloader so a list of N
+    /// custom_fields triggers a single batched lookup.
     pub async fn options(&self, ctx: &Context<'_>) -> Result<Vec<CustomFieldOptionNode>> {
         let loader = ctx.get_loader::<DataLoader<CustomFieldOptionsByCustomFieldIdLoader>>();
         let options = loader

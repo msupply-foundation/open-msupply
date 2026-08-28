@@ -1,7 +1,10 @@
 import React from 'react';
 import { BasicTextInput } from '../TextInput';
 import { Checkbox } from '../Checkbox';
-import { HierarchicalOptionAutocomplete } from '../Autocomplete';
+import {
+  HierarchicalOptionAutocomplete,
+  HierarchicalOptionAutocompleteMulti,
+} from '../Autocomplete';
 import { PropertyInput } from './PropertyInput';
 import { CustomFieldNodeValueType } from '@common/types';
 import { useFormatDateTime } from '@common/intl';
@@ -10,9 +13,15 @@ import {
   getHierarchicalOptions,
   CustomFieldDefinitionLike,
   toLegacyPropertyInput,
+  applyOptionToggle,
+  collapseToStoredOptionIds,
+  expandStoredOptionIds,
+  readMultiOptionIds,
 } from '@common/utils';
 
-type PropertyValue = string | number | boolean | undefined;
+/** A scalar the legacy `PropertyInput` understands. */
+type LegacyPropertyValue = string | number | boolean | undefined;
+type PropertyValue = LegacyPropertyValue | string[];
 
 interface CustomFieldInputProps {
   /** The customField definition that drives which control is rendered. */
@@ -35,6 +44,11 @@ interface CustomFieldInputProps {
  *   levels are indented, non-selectable headers and only leaves can be picked
  *   (flat dimensions are a plain list). The stored value is the leaf option id.
  *   Read-only is the same control, disabled — so display and edit stay in sync.
+ * - MULTI_OPTION renders the same hierarchy as a multi-select: any node can be
+ *   picked, ticking a parent ticks its subtree, and what gets stored is the
+ *   MINIMAL covering set (all children ticked → the parent alone). The control
+ *   holds the expanded set; the conversion is `expandStoredOptionIds` /
+ *   `collapseToStoredOptionIds`.
  * - TEXT/INTEGER/REAL/DATE render via the shared legacy `PropertyInput` when
  *   editable, otherwise as a disabled text row.
  */
@@ -85,12 +99,44 @@ export const CustomFieldInput = ({
     );
   }
 
+  if (definition.valueType === CustomFieldNodeValueType.MultiOption) {
+    const hierarchical = getHierarchicalOptions(definition);
+    const stored = readMultiOptionIds(value);
+    // Ids with no option row (deleted before ever syncing) can't be listed, so
+    // they can't be unticked; carrying them through keeps an unrelated edit
+    // from silently dropping a value the user can't see.
+    const listed = new Set(definition.options.map(o => o.id));
+    const unlisted = stored.filter(id => !listed.has(id));
+    const ticked = expandStoredOptionIds(definition, stored);
+
+    return (
+      <HierarchicalOptionAutocompleteMulti
+        width="100%"
+        options={hierarchical}
+        values={ticked}
+        disabled={disabled || !editable}
+        onChange={
+          editable
+            ? picked =>
+                onChange?.([
+                  ...collapseToStoredOptionIds(
+                    definition,
+                    applyOptionToggle(definition, ticked, picked)
+                  ),
+                  ...unlisted,
+                ])
+            : undefined
+        }
+      />
+    );
+  }
+
   const legacy = editable ? toLegacyPropertyInput(definition.valueType) : null;
   if (legacy && onChange) {
     return (
       <PropertyInput
         valueType={legacy.valueType}
-        value={(value as PropertyValue) ?? null}
+        value={(value as LegacyPropertyValue) ?? null}
         disabled={disabled}
         onChange={v => onChange(v ?? null)}
       />

@@ -1,10 +1,17 @@
 import { CustomFieldNodeValueType } from '@common/types';
 import {
+  applyOptionToggle,
+  collapseToStoredOptionIds,
+  expandStoredOptionIds,
   formatCustomFieldValue,
   getHierarchicalOptions,
+  getOptionAncestorIds,
   getOptionAndDescendantIds,
   getSelectableOptions,
+  getTopMostOptionIds,
   getVisiblePropertyRows,
+  optionFilterQueryIds,
+  readMultiOptionIds,
   resolveOptionValue,
   CustomFieldDefinitionLike,
 } from './customFields';
@@ -290,6 +297,80 @@ describe('formatCustomFieldValue', () => {
       options: [option('opt_1', 'Red')],
     });
     expect(formatCustomFieldValue(optDef, 'opt_1', localisedDate)).toBe('Red');
+  });
+});
+
+// MULTI_OPTION stores the MINIMAL covering set — a parent stands for its whole
+// subtree — while the picker works in the expanded set. The rewrite implements
+// the same rules (frontend/src/domain/customFields/parse.ts); these pin them
+// here so the two apps can't disagree about what a value means.
+describe('multi-option values', () => {
+  const hierarchy = def({
+    valueType: CustomFieldNodeValueType.MultiOption,
+    options: [
+      { id: 'root', name: 'Vulnerable', parentOptionId: null },
+      { id: 'child', name: 'Under-5', parentOptionId: 'root' },
+      { id: 'sibling', name: 'Disabled', parentOptionId: 'root' },
+      { id: 'flat', name: 'Pregnant', parentOptionId: null },
+    ],
+  });
+
+  it('reads only an array of strings as a value', () => {
+    expect(readMultiOptionIds(['a', 'b'])).toEqual(['a', 'b']);
+    // A scalar is what a field retyped from OPTION leaves behind.
+    expect(readMultiOptionIds('a')).toEqual([]);
+    expect(readMultiOptionIds(['a', 2])).toEqual([]);
+    expect(readMultiOptionIds(undefined)).toEqual([]);
+  });
+
+  it('expands a stored parent and collapses a fully ticked subtree back', () => {
+    expect(expandStoredOptionIds(hierarchy, ['root']).sort()).toEqual([
+      'child',
+      'root',
+      'sibling',
+    ]);
+    expect(
+      collapseToStoredOptionIds(hierarchy, ['root', 'child', 'sibling'])
+    ).toEqual(['root']);
+    // A partially ticked parent stores its ticked child, in definition order.
+    expect(collapseToStoredOptionIds(hierarchy, ['flat', 'child'])).toEqual([
+      'child',
+      'flat',
+    ]);
+  });
+
+  it('ticking a node takes its subtree; unticking one takes its ancestors', () => {
+    expect(applyOptionToggle(hierarchy, [], ['root']).sort()).toEqual([
+      'child',
+      'root',
+      'sibling',
+    ]);
+    expect(
+      applyOptionToggle(
+        hierarchy,
+        ['root', 'child', 'sibling'],
+        ['root', 'child']
+      ).sort()
+    ).toEqual(['child']);
+  });
+
+  it('expands a filter both ways so minimal storage still matches', () => {
+    // Up: a record stored minimally as `root` must answer a filter on `child`.
+    expect(optionFilterQueryIds(hierarchy, 'child').sort()).toEqual([
+      'child',
+      'root',
+    ]);
+    expect(getOptionAncestorIds(hierarchy, 'child')).toEqual(['root']);
+  });
+
+  it('displays the top-most ids only', () => {
+    expect(getTopMostOptionIds(hierarchy, ['root', 'child'])).toEqual(['root']);
+    expect(formatCustomFieldValue(hierarchy, ['root', 'child'], () => '')).toBe(
+      'Vulnerable'
+    );
+    expect(formatCustomFieldValue(hierarchy, ['child', 'flat'], () => '')).toBe(
+      'Under-5, Pregnant'
+    );
   });
 });
 

@@ -91,7 +91,7 @@ struct BuiltinCustomField {
 fn builtin_custom_fields() -> Vec<BuiltinCustomField> {
     use keys::*;
     use CustomFieldDisplayMode::{Prominent, Visible};
-    use CustomFieldValueType::{Option, Real, Text};
+    use CustomFieldValueType::{MultiOption, Real, Text};
 
     vec![
         // ===== prescription_request: the prescriber's clinical extras =====
@@ -127,15 +127,17 @@ fn builtin_custom_fields() -> Vec<BuiltinCustomField> {
         },
         // ===== patient: standing facts about the person =====
         //
-        // The patient's category — the only OPTION builtin, and a flat
-        // vocabulary (no `parent_option_id`). `Visible`, not `Prominent`: the
-        // patient scope has no prominent surface to promote a field onto (the
-        // toolbar treatment is an invoice-detail affordance), so the mode would
-        // be a lie.
+        // The patient's category — the only OPTION-family builtin, and a flat
+        // vocabulary (no `parent_option_id`). MULTI_OPTION because a patient is
+        // routinely in several of these at once (pregnant AND destitute), which
+        // the single-valued OPTION could not say. `Visible`, not `Prominent`:
+        // the patient scope has no prominent surface to promote a field onto
+        // (the toolbar treatment is an invoice-detail affordance), so the mode
+        // would be a lie.
         BuiltinCustomField {
             key: PATIENT_CATEGORY,
             name: "Category",
-            value_type: Option,
+            value_type: MultiOption,
             display_mode: Visible,
             scopes: &[PATIENT_PROPERTY_TABLE],
             options: &[
@@ -382,7 +384,11 @@ mod tests {
             .find_one_by_id("patient_category")
             .unwrap()
             .expect("missing patient_category");
-        assert_eq!(category.value_type, CustomFieldValueType::Option);
+        assert_eq!(
+            category.value_type,
+            CustomFieldValueType::MultiOption,
+            "a patient can be in several categories at once"
+        );
         assert!(
             field_repo
                 .find_one_by_id("prescription_request_patient_category")

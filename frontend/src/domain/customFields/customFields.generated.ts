@@ -15,7 +15,14 @@ export type CustomFieldDefinitionsResult = {
   id: string;
   key: string;
   name: string;
-  valueType: "INTEGER" | "TEXT" | "DATE" | "REAL" | "OPTION" | "BOOLEAN";
+  valueType:
+    | "INTEGER"
+    | "TEXT"
+    | "DATE"
+    | "REAL"
+    | "OPTION"
+    | "MULTI_OPTION"
+    | "BOOLEAN";
   kind: "STANDARD" | "LEGACY";
   displayMode: "HIDDEN" | "VISIBLE" | "PROMINENT" | "OTHER" | null;
   options: Array<{

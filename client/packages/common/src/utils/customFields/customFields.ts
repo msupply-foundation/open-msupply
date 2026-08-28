@@ -179,6 +179,128 @@ export const resolveOptionValue = (
 };
 
 /**
+ * The id's ancestor chain (parent, grandparent, …), nearest first. The mirror
+ * of {@link getOptionAndDescendantIds}, needed by MULTI_OPTION: a record that
+ * stores a parent holds every child of it, so a filter on a child must still
+ * find it. Cycle-guarded, like its sibling.
+ */
+export const getOptionAncestorIds = (
+  definition: CustomFieldDefinitionLike,
+  optionId: string
+): string[] => {
+  const parentOf = new Map(
+    definition.options.map(o => [o.id, o.parentOptionId ?? null])
+  );
+  const result: string[] = [];
+  const seen = new Set<string>([optionId]);
+  let current = parentOf.get(optionId) ?? null;
+  while (current && parentOf.has(current) && !seen.has(current)) {
+    result.push(current);
+    seen.add(current);
+    current = parentOf.get(current) ?? null;
+  }
+  return result;
+};
+
+/* ── MULTI_OPTION values ────────────────────────────────────────────────────
+ *
+ * A MULTI_OPTION value is an ARRAY of option ids in which a PARENT STANDS FOR
+ * ITS WHOLE SUBTREE, so what is stored is the MINIMAL covering set: tick every
+ * child and the parent is what gets written. The picker works in the expanded
+ * set (every ticked node), and these functions convert between the two.
+ *
+ * The rewrite implements the same rules in `frontend/src/domain/customFields/
+ * parse.ts` — two apps, one behaviour; change both together.
+ */
+
+/** One MULTI_OPTION stored value → the ids it holds. An array of strings and
+ *  nothing else: a scalar (what a field retyped from OPTION leaves behind) or
+ *  a mixed array is not a value of this field and reads as empty. */
+export const readMultiOptionIds = (value: unknown): string[] =>
+  Array.isArray(value) && value.every(entry => typeof entry === 'string')
+    ? (value as string[])
+    : [];
+
+/** The TOP-MOST ids of a set: those whose parent isn't also in it. What a
+ *  minimal value already is, and what any value DISPLAYS as. */
+export const getTopMostOptionIds = (
+  definition: CustomFieldDefinitionLike,
+  ids: string[]
+): string[] => {
+  const set = new Set(ids);
+  const parentOf = new Map(
+    definition.options.map(o => [o.id, o.parentOptionId ?? null])
+  );
+  return ids.filter(id => {
+    const parent = parentOf.get(id);
+    return !parent || !set.has(parent);
+  });
+};
+
+/** Stored (minimal) → the set the picker ticks: each stored id plus its
+ *  descendants. */
+export const expandStoredOptionIds = (
+  definition: CustomFieldDefinitionLike,
+  stored: string[]
+): string[] => {
+  const out = new Set<string>();
+  for (const id of stored)
+    for (const descendant of getOptionAndDescendantIds(definition, id))
+      out.add(descendant);
+  return [...out];
+};
+
+/** The ticked set → what to store: the minimal covering set, in definition
+ *  order so the value reads the same wherever it renders. */
+export const collapseToStoredOptionIds = (
+  definition: CustomFieldDefinitionLike,
+  selected: string[]
+): string[] => {
+  const topMost = new Set(getTopMostOptionIds(definition, selected));
+  const ordered = definition.options
+    .filter(o => topMost.has(o.id))
+    .map(o => o.id);
+  const unknown = selected.filter(
+    id => topMost.has(id) && !definition.options.some(o => o.id === id)
+  );
+  return [...ordered, ...unknown];
+};
+
+/** The shared TICK RULE: selection is a DIFF, so ticking or unticking one
+ *  option doesn't re-lock the rest. Adding a node selects its whole subtree;
+ *  removing one clears its subtree AND its ancestors — a parent is only
+ *  selected while every descendant is. */
+export const applyOptionToggle = (
+  definition: CustomFieldDefinitionLike,
+  previous: string[],
+  next: string[]
+): string[] => {
+  const before = new Set(previous);
+  const after = new Set(next);
+  for (const added of next.filter(id => !before.has(id)))
+    for (const descendant of getOptionAndDescendantIds(definition, added))
+      after.add(descendant);
+  for (const removed of [...before].filter(id => !after.has(id))) {
+    for (const descendant of getOptionAndDescendantIds(definition, removed))
+      after.delete(descendant);
+    for (const ancestor of getOptionAncestorIds(definition, removed))
+      after.delete(ancestor);
+  }
+  return [...after];
+};
+
+/** The ids a MULTI_OPTION filter asks the server about: the chosen id expanded
+ *  BOTH ways — down because a record may store a child of it, up because a
+ *  record storing a parent minimally holds every child of it. */
+export const optionFilterQueryIds = (
+  definition: CustomFieldDefinitionLike,
+  optionId: string
+): string[] => [
+  ...getOptionAndDescendantIds(definition, optionId),
+  ...getOptionAncestorIds(definition, optionId),
+];
+
+/**
  * Format a single customFields value for read-only text display, given its
  * definition. OPTION values resolve option-id → option name; DATE values are
  * localised when parseable; everything else (TEXT, REAL, INTEGER) is
@@ -194,6 +316,13 @@ export const formatCustomFieldValue = (
   switch (definition.valueType) {
     case CustomFieldNodeValueType.Option:
       return resolveOptionValue(definition, value);
+    case CustomFieldNodeValueType.MultiOption:
+      // The TOP-MOST stored ids only: a stored parent stands for its subtree,
+      // so it reads as the parent rather than as its enumerated children.
+      return resolveOptionValue(
+        definition,
+        getTopMostOptionIds(definition, readMultiOptionIds(value))
+      );
     case CustomFieldNodeValueType.Date: {
       const date = new Date(String(value));
       return isNaN(date.getTime()) ? String(value) : localisedDate(date);
