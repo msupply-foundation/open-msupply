@@ -1067,6 +1067,7 @@
   "label.custom-field-scope-outbound-shipment": "Outbound shipment",
   "label.custom-field-scope-patient": "Patients",
   "label.custom-field-scope-prescription": "Prescriptions",
+  "label.custom-field-scope-prescription-request": "Prescription requests",
   "label.custom-field-scope-supplier": "Suppliers",
   "label.custom-field-scope-supplier-return": "Supplier return",
   "label.custom-field-type-boolean": "Boolean",
@@ -2680,12 +2681,12 @@
   "preference.transferStockToInternalCustomersAtCostPrice": "Transfer stock to internal customers at cost price",
   "preference.useProcurementFunctionality": "Use procurement functionality",
   "preference.useSimplifiedMobileUi": "Use simplified mobile UI",
+  "preference.warningForExcessRequest": "Warn when requested quantity exceeds suggested quantity in requisitions",
   "preference.warnWhenMissingRecentStocktake": "Warn users when creating internal order if there is no recent stocktake",
   "preference.warnWhenMissingRecentStocktake.description": "Display a warning when stocktake data is older than the specified max age or recent stock takes have fewer than the minimum number of items so isn't considered a valid stocktake for calculating stock levels.",
   "preference.warnWhenMissingRecentStocktake.enabled": "Enable",
   "preference.warnWhenMissingRecentStocktake.maxAge": "Max age (days since last stocktake containing min items)",
   "preference.warnWhenMissingRecentStocktake.minItems": "Min items (stocktake counted items)",
-  "preference.warningForExcessRequest": "Warn when requested quantity exceeds suggested quantity in requisitions",
   "prescription": "Prescriptions",
   "prescriptions": "Prescriptions",
   "programs": "Programs",
@@ -3038,6 +3039,5 @@
   "warning.insufficient-recent-stocktake-items": "You have not completed stocktake(s) containing at least {{ minItems }} items within the last {{maxAge}} days. Your stock levels may not be accurate. Are you sure that you want to continue?",
   "warning.manual-store-requisition": "Entering a requisition for this store may result in duplicates if the store also submits an internal order.",
   "warning.nothing-to-supply": "Nothing left to supply!",
-  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested",
-  "label.custom-field-scope-prescription-request": "Prescription requests"
+  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested"
 }
