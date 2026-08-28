@@ -280,6 +280,42 @@ export const DisplayShowcase = () => {
         </DashboardCard>
 
         <DashboardCard
+          id="display-widget-card-size"
+          title="Widget card — the card that leads a grid"
+        >
+          <Lead>
+            <code>size="lg"</code> enlarges the icon chip and the title for the
+            one card a screen leads with — where matching its neighbours&rsquo;
+            type makes the primary task read as a peer. The title goes to{' '}
+            <code>--text-lg</code>, deliberately below the slot figure&rsquo;s{' '}
+            <code>--text-xl</code>, so it does not compete with the number it
+            introduces. Emphasis only: nothing about the card&rsquo;s semantics
+            changes. Every card also carries a decorative go-arrow at its
+            trailing top corner — the standing affordance that activating it
+            leads somewhere, never announced and never a control of its own.
+          </Lead>
+          <div class={styles.stretchedRow}>
+            <WidgetCard
+              title="Default"
+              subtitle="One of the grid"
+              icon={<StockIcon />}
+              onClick={() => setLastClicked('Default size')}
+            >
+              <span class={styles.figure}>128</span>
+            </WidgetCard>
+            <WidgetCard
+              title="Leads the grid"
+              subtitle="Given more room than its neighbours"
+              icon={<StockIcon />}
+              size="lg"
+              onClick={() => setLastClicked('Large size')}
+            >
+              <span class={styles.figure}>128</span>
+            </WidgetCard>
+          </div>
+        </DashboardCard>
+
+        <DashboardCard
           id="display-document-frame"
           title="Document frame — sandboxed report output"
         >

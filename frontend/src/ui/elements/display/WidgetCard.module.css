@@ -133,3 +133,25 @@
 .card[data-size='lg'] .title {
   font-size: var(--text-lg);
 }
+
+/* The go-arrow (WidgetCard.tsx): pushed to the header's trailing edge, so it
+   sits at the card's top corner whatever the title's length. `margin-inline-
+   start: auto` rather than justify-content, so the icon + text keep their own
+   gap and only the arrow is pushed away. Muted by default — it is a standing
+   affordance, not a call to action — and takes the action tone on hover with
+   the rest of the card's chrome. */
+.go {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  margin-inline-start: auto;
+  align-self: flex-start;
+  color: var(--text-secondary);
+  font-size: 1.125rem;
+  transition: color var(--motion-fast) ease;
+}
+
+.card:hover .go,
+.card:focus-visible .go {
+  color: var(--primary-main);
+}
