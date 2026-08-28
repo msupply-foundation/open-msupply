@@ -48,6 +48,19 @@ export interface WidgetCardProps {
    * gap between the label and the figure.
    */
   contentPlacement?: 'spread' | 'grouped';
+  /**
+   * How much visual weight the card's header carries.
+   *
+   * `'md'` (default) is the dashboard grid's card. `'lg'` enlarges the icon
+   * chip and the title for a card that LEADS a grid — one given more room than
+   * its neighbours, where matching their type size reads as an oversized
+   * version of a peer rather than the screen's primary action.
+   *
+   * Emphasis only: it changes no semantics, and the heading level a card
+   * contributes is unaffected (it contributes none — the title is the
+   * control's accessible name).
+   */
+  size?: 'md' | 'lg';
   class?: string;
   testId?: string;
 }
@@ -121,6 +134,7 @@ export const WidgetCard = (props: WidgetCardProps) => {
       onClick={isLink() ? undefined : () => props.onClick?.()}
       aria-describedby={hasContent() ? contentId : undefined}
       data-content-placement={props.contentPlacement ?? 'spread'}
+      data-size={props.size ?? 'md'}
       data-testid={props.testId}
     >
       <span class={styles.header}>

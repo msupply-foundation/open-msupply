@@ -117,3 +117,19 @@
 .card[data-content-placement='spread'] .content {
   margin-block-start: auto;
 }
+
+/* size="lg" — the card that LEADS a grid, given more room than its
+   neighbours. Emphasis is carried by the icon chip and the title only: the
+   subtitle, the content slot and every piece of chrome stay the family's, so
+   a large card still reads as the same component rather than a second one. */
+.card[data-size='lg'] .icon {
+  inline-size: 3rem;
+  block-size: 3rem;
+  font-size: 1.75rem;
+}
+
+/* --text-lg, not --text-xl: the figure in the content slot is --text-xl, and a
+   title at the same size would compete with the number it introduces. */
+.card[data-size='lg'] .title {
+  font-size: var(--text-lg);
+}
