@@ -180,14 +180,10 @@ export const navConfig: NavItem[] = [
         permission: 'PATIENT_QUERY',
       },
       {
-        // The prescriber's side (spec/prescription-requests) — takes the
-        // "Prescriptions" name; the dispensing vertical below is relabelled
-        // "Dispensing" (its path and spec folder keep their old names).
-        labelKey: 'prescriptions',
-        path: 'dispensary/prescription-request',
-        permission: 'PRESCRIPTION_QUERY',
-      },
-      {
+        // The dispensing vertical, relabelled "Dispensing" (its path and spec
+        // folder keep their old names) — the "Prescriptions" name belongs to
+        // the prescriber's side, which this registry does NOT offer: prescriber
+        // mode is the only way into it (§ prescriber mode, PM-9).
         labelKey: 'dispensing',
         path: 'dispensary/prescription',
         permission: 'PRESCRIPTION_QUERY',
@@ -404,6 +400,25 @@ export const flattenNav = (config: NavItem[]): NavItem[] =>
   config.flatMap(item => [item, ...(item.children ?? [])]);
 
 export const navDestinations: NavItem[] = flattenNav(navConfig);
+
+/**
+ * Destinations the PRESCRIBER registry offers that the full one does not —
+ * today, the prescription-request list alone (spec/prescription-requests §
+ * prescriber mode, PM-9). Prescriber mode is the only way in, so outside it
+ * these addresses are REFUSED rather than merely absent: an ordinary user in
+ * the same store would otherwise reach the prescriber's screens by typing the
+ * URL, since Dispensary's own gate admits everything beneath it.
+ *
+ * DERIVED, not listed: the two trees above are the statement, and a destination
+ * moved into or out of either one changes this set with it — a hand-kept list
+ * would be the third place to remember. Computed once at module scope: both
+ * trees are static.
+ */
+export const prescriberOnlyPaths: string[] = flattenNav(
+  prescriberNavConfig
+).flatMap(dest =>
+  navDestinations.some(offered => offered.path === dest.path) ? [] : [dest.path]
+);
 
 // The trail from the top-level section down to a destination, root first — the
 // breadcrumb a page shows (e.g. 'inventory/stocktakes' → [Inventory,

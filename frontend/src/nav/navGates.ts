@@ -11,6 +11,7 @@ import {
   flattenNav,
   navConfig,
   prescriberNavConfig,
+  prescriberOnlyPaths,
   trailIn,
   PRESCRIBER_HOME_PATH,
   type NavCapability,
@@ -179,7 +180,29 @@ export type RouteAccess =
 const destinationsByDepth = (): NavConfigItem[] =>
   [...activeNavDestinations()].sort((a, b) => b.path.length - a.path.length);
 
+/**
+ * The PascalCase spelling of the prescriber-mode permission, as
+ * reportPermissionDenied's dialog wants it (see `deniedPermission`).
+ */
+const PRESCRIBER_MODE_DENIAL = 'PrescriberMode';
+
+/** Whether a path is one of the prescriber registry's own (or beneath it). */
+const isPrescriberOnly = (relativePath: string): boolean =>
+  prescriberOnlyPaths.some(
+    path => relativePath === path || relativePath.startsWith(`${path}/`)
+  );
+
 export const routeAccess = (relativePath: string): RouteAccess => {
+  // PRESCRIBER MODE IS THE ONLY WAY IN (spec/prescription-requests § prescriber
+  // mode, PM-9). Its own destinations are absent from the full registry, but
+  // absence alone would not stop an ordinary user typing the address:
+  // Dispensary claims every path beneath it, so a typed
+  // 'dispensary/prescription-request' would pass on the section's gate.
+  // Refusing is also the more honest answer than a silent redirect — the user
+  // is told what they lack, in the dialog every other refusal uses.
+  if (!isPrescriberMode() && isPrescriberOnly(relativePath))
+    return { kind: 'forbidden', permission: PRESCRIBER_MODE_DENIAL };
+
   // A SECTION must be matched exactly in prescriber mode. The prefix rule
   // exists so a record screen is judged by its list ('inventory/stocktakes/123'
   // by 'inventory/stocktakes'), but a section's landing page has no record

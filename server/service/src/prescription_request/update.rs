@@ -25,7 +25,14 @@ pub enum UpdatePrescriptionRequestStatus {
     /// Locks the request and generates the dispensing invoice. `Dispensed` is
     /// never set through this input — the status processor flips it when the
     /// generated dispensation is verified.
-    ReadyToDispense,
+    ReadyToDispense {
+        /// The clinician the generated dispensation names — optional, and
+        /// asked for at the hand-over rather than held on the request, which
+        /// records its prescriber as the user who entered it (see
+        /// `create_dispensation`). It rides the transition rather than the
+        /// struct so it cannot be set by an edit that is not a hand-over.
+        clinician_id: Option<String>,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -141,11 +148,8 @@ pub fn update_prescription_request(
                 ..existing.clone()
             };
 
-            let set_ready = matches!(
-                status,
-                Some(UpdatePrescriptionRequestStatus::ReadyToDispense)
-            );
-            if set_ready {
+            if let Some(UpdatePrescriptionRequestStatus::ReadyToDispense { clinician_id }) = status
+            {
                 let lines = PrescriptionRequestLineRowRepository::new(connection)
                     .find_many_by_prescription_request_id(&updated.id)?;
                 if lines.is_empty() {
@@ -158,7 +162,7 @@ pub fn update_prescription_request(
                 // The dispensation copies the freshly-updated header, so write
                 // the request first, then generate.
                 PrescriptionRequestRowRepository::new(connection).upsert_one(&updated)?;
-                create_dispensation(ctx, connection, &updated, lines)?;
+                create_dispensation(ctx, connection, &updated, lines, clinician_id)?;
 
                 activity_log_entry(
                     ctx,
@@ -185,7 +189,7 @@ impl From<RepositoryError> for UpdatePrescriptionRequestError {
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{mock_item_a, mock_patient, MockDataInserts},
+        mock::{clinician_a, mock_item_a, mock_patient, MockDataInserts},
         test_db::setup_all,
         EqualFilter, InvoiceFilter, InvoiceLineRowRepository, InvoiceLineType, InvoiceRepository,
         InvoiceStatus, InvoiceType, PrescriptionRequestStatus,
@@ -266,7 +270,9 @@ mod test {
                     "store_a",
                     UpdatePrescriptionRequest {
                         id: request.id.clone(),
-                        status: Some(UpdatePrescriptionRequestStatus::ReadyToDispense),
+                        status: Some(UpdatePrescriptionRequestStatus::ReadyToDispense {
+                            clinician_id: None,
+                        }),
                         ..Default::default()
                     },
                 ),
@@ -288,7 +294,9 @@ mod test {
                 "store_a",
                 UpdatePrescriptionRequest {
                     id: request.id.clone(),
-                    status: Some(UpdatePrescriptionRequestStatus::ReadyToDispense),
+                    status: Some(UpdatePrescriptionRequestStatus::ReadyToDispense {
+                        clinician_id: Some(clinician_a().id),
+                    }),
                     ..Default::default()
                 },
             )
@@ -307,6 +315,12 @@ mod test {
         assert_eq!(invoice.invoice_row.r#type, InvoiceType::Prescription);
         assert_eq!(invoice.invoice_row.status, InvoiceStatus::New);
         assert_eq!(invoice.invoice_row.name_id, mock_patient().id);
+        // The clinician asked for at the hand-over fills the dispensation's own
+        // clinician field — the request holds none of its own.
+        assert_eq!(
+            invoice.invoice_row.clinician_link_id,
+            Some(clinician_a().id)
+        );
 
         // ...with one unallocated line carrying the prescribed quantity + directions
         let lines = InvoiceLineRowRepository::new(&ctx.connection)
