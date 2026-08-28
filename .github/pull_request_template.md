@@ -7,12 +7,17 @@ Fixes #
 <!-- Explain the changes you made and importantly why -->
 <!-- AI AGENTS should NEVER fill in this section. High level description should always be written by a human -->
 
-## Screenshots
+_Author to complete._
+
+## 📸 Screenshots
 
 <!-- Mandatory for all PRs introducing new UI, including new components, and new functionality -->
 <!-- Include all expected breakpoints if relevant e.g. How does it look on tablet, vs desktop? -->
 
 <!-- Please include links to videos/demos of new functionality if possible -->
+<!-- AI AGENTS cannot attach images — leave the line below in place for the author to complete -->
+
+_Author to attach._
 
 ## 💌 Any notes for the reviewer?
 
@@ -48,6 +53,8 @@ Anything half cooked but going to be finished off in a different PR?
 
 <!-- What did you do to verify this works? -->
 <!-- AI AGENTS should NEVER fill in this section. A human should always document their own testing steps. -->
+
+_Author to complete._
 
 - _(e.g.)_ Set up a Central Sync server with 1 Legacy Desktop remote site and 1 OMS remote site running this PR (sample datafile: _google drive link_)
 - _(e.g.)_ Opened a requisition, added some lines, and made a couple of invoices supplying some of those lines
