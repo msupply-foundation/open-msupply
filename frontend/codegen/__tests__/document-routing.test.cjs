@@ -165,9 +165,16 @@ test("every committed plugin .generated.ts imports only the SDK", () => {
   const fs = require("node:fs");
   const generated = PLUGIN_DIRS.flatMap(dir =>
     walk(dir).map(doc => doc.replace(/\.graphql$/, ".generated.ts"))
-  ).filter(fs.existsSync);
+  );
 
   for (const file of generated) {
+    // A document that was never generated would otherwise escape the backstop
+    // entirely — and its module import would fail at build time anyway.
+    assert.ok(
+      fs.existsSync(file),
+      `${path.relative(FRONTEND, file)} is missing — its .graphql has never ` +
+        `been generated (run: node codegen/run.cjs plugins)`
+    );
     for (const line of fs.readFileSync(file, "utf8").split("\n")) {
       const match = line.match(/^\s*import\s[^;]*?from\s+["']([^"']+)["']/);
       if (!match) continue;
