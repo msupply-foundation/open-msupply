@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import type { InlineConfig, Plugin } from 'vite';
 
 /*
@@ -21,11 +22,14 @@ import type { InlineConfig, Plugin } from 'vite';
  *     time. A plugin declares them ambiently (see the reference plugin's
  *     `host.d.ts`); out of tree they come from `@common/types`.
  *
- * NOT how the deployed CIV bundle is built: that one is built by the
- * open-msupply client toolchain (webpack + ts-loader + `backendCommon`) and
- * committed at `prebuilt/plugin.js`, which the packer ships verbatim. A
- * committed prebuilt always wins; this preset is for a plugin that has source
- * and no prebuilt.
+ * `@common/*` resolves here, to the SAME `backendCommon` the legacy client
+ * toolchain aliases it to (`backend-plugin-webpack.config.js` in that same
+ * directory). It is not a client-app import and not a copy: the `generated/`
+ * half is emitted by `remote_server_cli generate-plugin-typescript-types`, so
+ * the server owns those types and every backend plugin — in this repo or out
+ * of it — compiles against one generated surface. Aliasing rather than
+ * vendoring is what keeps that true; a copy under `frontend/` would silently
+ * drift from the Rust rows it mirrors.
  */
 
 export interface BackendPluginBuildOptions {
@@ -41,6 +45,15 @@ export interface BackendPluginBuildOptions {
 
 /** The export the server looks the callable up under. */
 const REQUIRED_EXPORT = 'plugins';
+
+/**
+ * The generated backend-plugin surface (host globals, the `PluginTypes` map,
+ * the Rust row mirrors) that country plugins import as `@common/*`. Outside
+ * `frontend/` on purpose — see the header.
+ */
+export const BACKEND_COMMON = fileURLToPath(
+  new URL('../../client/packages/plugins/backendCommon', import.meta.url)
+);
 
 const conformancePlugin = (code: string): Plugin => {
   const fail = (message: string): never => {
@@ -109,6 +122,7 @@ export const backendPluginViteConfig = ({
   root,
   plugins: [conformancePlugin(code)],
   publicDir: false,
+  resolve: { alias: { '@common': BACKEND_COMMON } },
   build: {
     outDir,
     emptyOutDir: true,

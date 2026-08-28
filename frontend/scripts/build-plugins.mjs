@@ -11,11 +11,9 @@
  *      installable server artifact, byte-for-byte in the format
  *      `remote_server_cli generate-plugin-bundle` produces. Both of a plugin's
  *      halves go in its own bundle and nobody else's; a plugin's BACKEND half
- *      (`plugins/<dir>/backend`, a BoaJS bundle built by the open-msupply
- *      client toolchain) is packed VERBATIM from its committed
- *      `prebuilt/plugin.js` — never rebuilt, re-encoded or reformatted here,
- *      the same rule as civ-plugins' make-bundle.mjs: the backend half moves
- *      only when its own build runs;
+ *      (`plugins/<dir>/backend`, BoaJS code) is built here too, from its own
+ *      source, through `vite/backendPluginBuild.ts` — so ONE command produces
+ *      a country plugin's whole bundle;
  *   3. writes `dist/frontend_plugins/metadata.json`, the
  *      `frontendPluginMetadata` discovery response, so the built app can load
  *      them through its production path without a server.
@@ -95,15 +93,21 @@ const readManifest = dir => {
  * from the manifest (BOA_JS), and the id convention matches the server CLI's
  * `backend_{code}_{version}`.
  *
- * TWO SOURCES, and a committed build always wins:
- *   - `prebuilt/plugin.js` — packed VERBATIM, never rebuilt or re-encoded.
- *     This is how a deployed country plugin ships: CIV's is built by the
- *     open-msupply client toolchain and moves only when that build runs, so
- *     touching it here would break byte-identity with the field bundle.
- *   - `src/plugin.ts` — built here (vite/backendPluginBuild.ts) for a plugin
- *     whose source this repo owns, which today is the reference plugin. A
- *     bundle built here is NOT byte-comparable with a webpack-built one; that
- *     is exactly why a prebuilt takes precedence rather than being refreshed.
+ * TWO SOURCES, and SOURCE WINS:
+ *   - `src/plugin.ts` — built here (vite/backendPluginBuild.ts). Now that
+ *     `@common/*` resolves to the server-generated `backendCommon` in this
+ *     same repo, a country plugin's backend half builds here exactly as the
+ *     reference plugin does: one command produces both halves of a bundle.
+ *   - `prebuilt/plugin.js` — packed VERBATIM, never rebuilt or re-encoded, and
+ *     only for a plugin this repo has no source for. It is the escape hatch
+ *     for a bundle that arrives already built, not the normal path.
+ *
+ * Source used to lose to a committed build, because CIV's was produced by the
+ * legacy client toolchain (webpack + ts-loader) and had to stay byte-identical
+ * to the field bundle. A vite-built bundle is NOT byte-comparable with a
+ * webpack-built one, so that precedence froze the source: editing it changed
+ * nothing that shipped. Building from source is what makes the source the
+ * truth; the artifact is derived, and re-derived on every build.
  */
 const BACKEND_ENTRY = 'src/plugin.ts';
 
@@ -118,19 +122,19 @@ const readBackendManifest = dir => {
     : undefined;
   if (!existsSync(prebuilt) && !entry) {
     throw new Error(
-      `${dir}: declares a backend plugin but has neither prebuilt/plugin.js ` +
-        `nor ${BACKEND_ENTRY} — ship a committed build (packed verbatim, see ` +
-        'plugins/civ/backend/README.md) or source to build from'
+      `${dir}: declares a backend plugin but has neither ${BACKEND_ENTRY} ` +
+        'nor prebuilt/plugin.js — ship source to build from (see ' +
+        'plugins/civ/backend/README.md) or a committed build to pack verbatim'
     );
   }
   const code = manifest.name;
   return {
     dir,
     code,
-    // A prebuilt is the shipped artifact; source is only built when there is
-    // none, so a plugin can carry its source without its bundle drifting.
-    prebuilt: existsSync(prebuilt) ? prebuilt : undefined,
-    entry: existsSync(prebuilt) ? undefined : entry,
+    // Source is the truth: a plugin that has it is built, and its committed
+    // artifact (if any) is ignored rather than shipped stale.
+    entry,
+    prebuilt: entry ? undefined : prebuilt,
     outDir: resolve(BACKEND_OUT_DIR, code),
     version: manifest.version ?? '0.0.0',
     types: manifest.omSupplyPlugin.types ?? [],
@@ -336,8 +340,8 @@ if (plugins.length === 0 && backendPlugins.length === 0) {
 }
 
 for (const plugin of plugins) await buildPlugin(plugin);
-// Only the ones with source and no committed build — a prebuilt is shipped as
-// it stands (readBackendManifest).
+// Every one that has source, which is all of them bar a bundle that arrived
+// pre-built (readBackendManifest).
 for (const plugin of backendPlugins) {
   if (plugin.entry) await buildBackendPlugin(plugin);
 }
@@ -418,7 +422,7 @@ for (const [i, row] of backendRows.entries()) {
   const bytes = Buffer.from(row.bundle_base64, 'base64').length;
   // Which source it came from, named: a prebuilt shipping verbatim and a
   // bundle this run produced are very different things to be looking at when
-  // a backend plugin misbehaves.
+  // a backend plugin misbehaves (`built` is the normal answer).
   const origin = backendPlugins[i].prebuilt ? 'prebuilt, verbatim' : 'built';
   console.info(
     `[build-plugins] ${row.id}  ${row.variant_type}  ` +

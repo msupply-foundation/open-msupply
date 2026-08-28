@@ -2,8 +2,8 @@ import { defineWorkspace } from 'vitest/config';
 import solid from 'vite-plugin-solid';
 
 /*
- * Two vitest projects, because the two kinds of unit test need different module
- * resolution — `pnpm test` runs both.
+ * Three vitest projects, because the kinds of unit test need different module
+ * resolution — `pnpm test` runs them all.
  *
  * - `node`: the plain logic tests (`*.test.ts`). Unchanged from vitest.config.ts.
  * - `solid`: the component tests (`*.test.tsx`). JSX needs the Solid transform,
@@ -13,6 +13,15 @@ import solid from 'vite-plugin-solid';
  *   The environment stays `node`: components under test render no DOM (they
  *   return values and run effects), so nothing needs a document, and the suite
  *   costs no jsdom dependency.
+ * - `backend-plugins`: the BoaJS halves of the country plugins
+ *   (`plugins/<name>/backend/src`). Two differences, both about running code
+ *   written for another host: the `@common` specifier resolves to the
+ *   server-generated `backendCommon` (the same alias
+ *   vite/backendPluginBuild.ts gives the build), and `globals: true` lets the
+ *   suites keep the bare
+ *   `describe`/`it`/`expect` they arrive with — these files are SYNCED from
+ *   msupply-foundation/civ-plugins, so every edit made to suit this repo is an
+ *   edit to redo on the next sync.
  */
 
 const define = { APP_VERSION: JSON.stringify('0.0.0-test') };
@@ -29,6 +38,22 @@ export default defineWorkspace([
     test: {
       name: 'solid',
       include: ['src/**/*.test.tsx'],
+      environment: 'node',
+    },
+  },
+  {
+    resolve: {
+      alias: {
+        '@common': new URL(
+          '../client/packages/plugins/backendCommon',
+          import.meta.url
+        ).pathname,
+      },
+    },
+    test: {
+      name: 'backend-plugins',
+      include: ['plugins/*/backend/src/**/*.test.ts'],
+      globals: true,
       environment: 'node',
     },
   },
