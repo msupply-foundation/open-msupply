@@ -236,6 +236,44 @@ export const DisplayShowcase = () => {
               <span class={styles.figure}>0</span>
             </WidgetCard>
           </CardGrid>
+          <Lead>
+            When something <strong>stretches</strong> a card past its content —
+            a grid row sized to the tallest, or a card spanning two rows —{' '}
+            <code>contentPlacement</code> decides where the slot goes. The
+            default <code>spread</code> pushes it to the bottom edge, which is
+            what puts a row&rsquo;s figures on a shared baseline. Use{' '}
+            <code>grouped</code> for a card with no row-mates to line up with:
+            spreading has nothing to align to there and only opens a gap between
+            the label and the figure. Both cards below are stretched to the same
+            height by the row.
+          </Lead>
+          <div class={styles.stretchedRow}>
+            <WidgetCard
+              title="Spread"
+              subtitle="Figure at the bottom edge"
+              icon={<StockIcon />}
+              onClick={() => setLastClicked('Spread')}
+            >
+              <span class={styles.figure}>1284</span>
+            </WidgetCard>
+            <WidgetCard
+              title="Grouped"
+              subtitle="Figure stays with the header"
+              icon={<StockIcon />}
+              contentPlacement="grouped"
+              onClick={() => setLastClicked('Grouped')}
+            >
+              <span class={styles.figure}>1284</span>
+            </WidgetCard>
+            <WidgetCard
+              title="Taller neighbour"
+              subtitle="Sets the row's height, so the two cards beside it are stretched and the difference shows"
+              icon={<ReportsIcon />}
+              onClick={() => setLastClicked('Taller neighbour')}
+            >
+              <span class={styles.figure}>1284</span>
+            </WidgetCard>
+          </div>
           <Note role="status">
             {lastClicked() ? `Clicked: ${lastClicked()}` : '\u00a0'}
           </Note>
