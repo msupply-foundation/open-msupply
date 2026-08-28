@@ -1,3 +1,4 @@
 {
-  "core": "https://github.com/msupply-foundation/open-msupply-plugins"
+  "core": "https://github.com/msupply-foundation/open-msupply-plugins",
+  "civ": "git@github.com:msupply-foundation/civ-plugins"
 }
