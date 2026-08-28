@@ -14,6 +14,7 @@ import {
   CustomFieldDefinitionLike,
   toLegacyPropertyInput,
   applyOptionToggle,
+  customFieldValueMatchesType,
   collapseToStoredOptionIds,
   expandStoredOptionIds,
   readMultiOptionIds,
@@ -61,10 +62,17 @@ export const CustomFieldInput = ({
   const { localisedDate } = useFormatDateTime();
   const editable = !!onChange;
 
+  // Shape-matched or nothing: a stored value that isn't what its value type
+  // means (a scalar left behind by a retyped definition, say) reads as unset in
+  // every control, rather than as a coerced guess.
+  const matched = customFieldValueMatchesType(definition, value)
+    ? value
+    : undefined;
+
   if (definition.valueType === CustomFieldNodeValueType.Boolean) {
     return (
       <Checkbox
-        checked={Boolean(value)}
+        checked={matched === true}
         disabled={disabled || !editable}
         onChange={editable ? e => onChange?.(e.target.checked) : undefined}
       />
@@ -76,7 +84,7 @@ export const CustomFieldInput = ({
     // non-selectable headers; only leaves can be picked. Flat dimensions come
     // back as a plain depth-0 list (every option selectable).
     const hierarchical = getHierarchicalOptions(definition);
-    const existing = definition.options.find(o => o.id === value) ?? null;
+    const existing = definition.options.find(o => o.id === matched) ?? null;
     // Always keep the current value selectable, even if it's a non-leaf, a
     // not-yet-synced id, or an option since deleted, so an existing value still
     // shows. A deleted option reaches the list only this way — via the value
@@ -91,7 +99,7 @@ export const CustomFieldInput = ({
       <HierarchicalOptionAutocomplete
         width="100%"
         options={options}
-        value={typeof value === 'string' ? value : null}
+        value={typeof matched === 'string' ? matched : null}
         disabled={disabled || !editable}
         clearable={editable}
         onChange={editable ? id => onChange?.(id) : undefined}
@@ -101,7 +109,7 @@ export const CustomFieldInput = ({
 
   if (definition.valueType === CustomFieldNodeValueType.MultiOption) {
     const hierarchical = getHierarchicalOptions(definition);
-    const stored = readMultiOptionIds(value);
+    const stored = readMultiOptionIds(matched);
     // Ids with no option row (deleted before ever syncing) can't be listed, so
     // they can't be unticked; carrying them through keeps an unrelated edit
     // from silently dropping a value the user can't see.
@@ -136,7 +144,7 @@ export const CustomFieldInput = ({
     return (
       <PropertyInput
         valueType={legacy.valueType}
-        value={(value as LegacyPropertyValue) ?? null}
+        value={(matched as LegacyPropertyValue) ?? null}
         disabled={disabled}
         onChange={v => onChange(v ?? null)}
       />

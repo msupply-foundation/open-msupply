@@ -87,6 +87,17 @@ Seeding runs from two call sites: the sync cycle gated on `is_central_server()`,
 > **Why a new kind, and the cost** \
 > `Standard` can't be told apart from the admin-configured fields a future create-UI will mint, and the seeder needs to recognise its own fields vs user ones.
 
+## What a write may store
+
+`custom_fields` is a JSON blob with no column types behind it, so the write paths carry the type enforcement. Every API patch goes through `check_custom_fields_patch`, which reports the first of two problems and rejects:
+
+- an **unknown key** — one the scope doesn't define, doesn't show, or defines with a value type this build can't parse (`value_types_for_scope` drops those, so a field we couldn't validate can't be written on trust);
+- a **wrong value type** — a value whose JSON kind isn't what the field's type means (`value_matches_type`). A `null` clears the key, so it passes whatever the type.
+
+The check is the JSON kind and no more: no date parsing, no integrality test, no option-membership lookup. It protects the readers — each of which assumes its type's shape — rather than making the blob a schema. Each caller maps the two onto its own error enum (`UnknownPropertyKey` / `InvalidPropertyValue` on the invoice updates, `UnknownCustomFieldKey` / `InvalidCustomFieldValue` on the patient and prescription-request ones), all of them bad-user-input.
+
+**API writes only.** Sync translators write the blob directly and are deliberately not checked: a rejected row would stall the sync buffer, and the readers already show nothing for a value whose shape doesn't match, so a legacy oddity is inert rather than dangerous.
+
 ## Currently Implemented
 
 ### Patient Custom fields

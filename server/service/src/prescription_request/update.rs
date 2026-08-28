@@ -1,11 +1,14 @@
 use chrono::{NaiveDateTime, Utc};
 use repository::{
-    ActivityLogType, PrescriptionRequestLineRowRepository, PrescriptionRequestRow,
-    PrescriptionRequestRowRepository, PrescriptionRequestStatus, RepositoryError, TransactionError,
+    ActivityLogType, CustomFieldValueType, PrescriptionRequestLineRowRepository,
+    PrescriptionRequestRow, PrescriptionRequestRowRepository, PrescriptionRequestStatus,
+    RepositoryError, TransactionError,
 };
 
 use crate::activity_log::activity_log_entry;
-use crate::custom_field::{apply_custom_fields_patch, check_unknown_custom_field_key};
+use crate::custom_field::{
+    apply_custom_fields_patch, check_custom_fields_patch, CustomFieldPatchProblem,
+};
 use crate::service_provider::ServiceContext;
 use crate::validate::check_patient_exists;
 use crate::NullableUpdate;
@@ -49,11 +52,30 @@ pub enum UpdatePrescriptionRequestError {
     NotEditable,
     PatientDoesNotExist,
     UnknownCustomFieldKey(String),
+    /// A custom-field patch gives a defined key a value of the wrong shape for
+    /// its value type.
+    InvalidCustomFieldValue {
+        key: String,
+        expected: CustomFieldValueType,
+    },
     /// Ready to dispense with no lines would generate an empty dispensation.
     NoLines,
     /// The generated dispensing invoice could not be created.
     CreatedDispensationError(String),
     DatabaseError(RepositoryError),
+}
+
+impl From<CustomFieldPatchProblem> for UpdatePrescriptionRequestError {
+    fn from(problem: CustomFieldPatchProblem) -> Self {
+        match problem {
+            CustomFieldPatchProblem::UnknownKey(key) => {
+                UpdatePrescriptionRequestError::UnknownCustomFieldKey(key)
+            }
+            CustomFieldPatchProblem::WrongValueType { key, expected } => {
+                UpdatePrescriptionRequestError::InvalidCustomFieldValue { key, expected }
+            }
+        }
+    }
 }
 
 pub fn update_prescription_request(
@@ -81,12 +103,12 @@ pub fn update_prescription_request(
                 }
             }
             if let Some(patch) = &input.custom_fields {
-                if let Some(unknown_key) = check_unknown_custom_field_key(
+                if let Some(problem) = check_custom_fields_patch(
                     connection,
                     PRESCRIPTION_REQUEST_CUSTOM_FIELD_SCOPE,
                     patch,
                 )? {
-                    return Err(UnknownCustomFieldKey(unknown_key));
+                    return Err(problem.into());
                 }
             }
 
@@ -119,7 +141,10 @@ pub fn update_prescription_request(
                 ..existing.clone()
             };
 
-            let set_ready = matches!(status, Some(UpdatePrescriptionRequestStatus::ReadyToDispense));
+            let set_ready = matches!(
+                status,
+                Some(UpdatePrescriptionRequestStatus::ReadyToDispense)
+            );
             if set_ready {
                 let lines = PrescriptionRequestLineRowRepository::new(connection)
                     .find_many_by_prescription_request_id(&updated.id)?;
@@ -183,7 +208,10 @@ mod test {
         (service_provider, context)
     }
 
-    fn new_request(service_provider: &ServiceProvider, ctx: &ServiceContext) -> PrescriptionRequestRow {
+    fn new_request(
+        service_provider: &ServiceProvider,
+        ctx: &ServiceContext,
+    ) -> PrescriptionRequestRow {
         service_provider
             .prescription_request_service
             .insert_prescription_request(
