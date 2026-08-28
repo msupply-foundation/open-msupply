@@ -1991,6 +1991,7 @@ export enum CustomFieldNodeValueType {
   Boolean = 'BOOLEAN',
   Date = 'DATE',
   Integer = 'INTEGER',
+  MultiOption = 'MULTI_OPTION',
   Option = 'OPTION',
   Real = 'REAL',
   Text = 'TEXT',

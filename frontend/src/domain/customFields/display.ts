@@ -3,7 +3,10 @@ import { localisedDate } from '../../intl/formatDateTime';
 import { t } from '../../intl';
 import {
   customFieldValue,
+  inConfiguredOrder,
+  multiOptionIds,
   resolveOptionName,
+  topMostIds,
   type ParsedCustomField,
 } from './parse';
 
@@ -39,6 +42,18 @@ export const customFieldDisplayString = (
       return localisedDate(String(value));
     case 'option':
       return resolveOptionName(field.def, String(value));
+    case 'multiOption': {
+      // The TOP-MOST stored ids only: a stored parent stands for its subtree,
+      // so it reads as the parent — the shorter true statement, and one that
+      // doesn't rewrite itself when an option is added beneath it. Configured
+      // order, comma-joined, as the value would be read aloud.
+      const ids = multiOptionIds(value);
+      const names = inConfiguredOrder(
+        field.def.options,
+        topMostIds(field.def.options, ids)
+      ).map(id => resolveOptionName(field.def, id));
+      return names.join(', ');
+    }
     case 'text':
       return String(value);
     case 'unsupported':

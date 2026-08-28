@@ -5,7 +5,8 @@ import { NumberField } from '../../ui/elements/inputs/NumberField';
 import { DateField } from '../../ui/elements/inputs/DateField';
 import { t } from '../../intl';
 import { CustomFieldOptionSelect } from './CustomFieldOptionSelect';
-import type { ParsedCustomField } from './parse';
+import { CustomFieldOptionMultiSelect } from './CustomFieldOptionMultiSelect';
+import { multiOptionIds, type ParsedCustomField } from './parse';
 
 // A number-typed stored value coerced back to a number for the NumberField;
 // undefined (empty) for anything non-numeric.
@@ -99,6 +100,25 @@ export const CustomFieldInput = (props: {
           disabled={props.disabled}
           onChange={d => props.onChange(d)}
         />
+      </Match>
+      <Match when={props.field.kind === 'multiOption' && props.field}>
+        {multiField => (
+          <CustomFieldOptionMultiSelect
+            def={multiField().def}
+            value={multiOptionIds(props.value)}
+            // A locked record renders this one READ-ONLY rather than disabled:
+            // the trigger only summarises the selection, so a control that
+            // can't be opened would hide values (spec/ui-standards/
+            // custom-fields › value types).
+            readOnly={props.disabled}
+            hideLabel={props.hideLabel}
+            size={props.size}
+            testId={testId()}
+            // Cleared emits null, not [] — as the other cleared values do, so
+            // the server's patch-merge removes the key.
+            onChange={ids => props.onChange(ids.length ? ids : null)}
+          />
+        )}
       </Match>
       <Match when={props.field.kind === 'option' && props.field}>
         {optionField => (

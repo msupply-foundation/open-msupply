@@ -25,6 +25,12 @@ diesel_string_enum! {
         Date,
         Real,
         Option,
+        /// Several options at once: the stored value is a JSON ARRAY of
+        /// `custom_field_option` ids rather than a single id. A parent id in
+        /// that array stands for its whole subtree, so the array is the
+        /// minimal covering set of what was chosen (see the client's
+        /// `collapseToMinimal`).
+        MultiOption,
         Boolean,
         #[strum(default, transparent)]
         Other(String),

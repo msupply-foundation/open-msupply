@@ -87,6 +87,125 @@ export const ancestorIds = (
   return out;
 };
 
+// ── MULTI_OPTION: a set of option ids, stored minimally ──────────────────────
+//
+// A MULTI_OPTION value is a JSON ARRAY of option ids in which a PARENT STANDS
+// FOR ITS WHOLE SUBTREE (spec › option fields). The picker works in the
+// expanded set (every ticked node, so the checkboxes are literal), storage
+// keeps the minimal covering set (all children ticked → just the parent), and
+// these four pure functions are the only places that know the difference:
+//
+//   stored ──expandStoredToSelection──▶ ticked set
+//   ticked set ──collapseSelectionToStored──▶ stored
+//
+// Ids that resolve to no current option (deleted, or from a newer central) have
+// no parent here, so they survive every step as top-level values rather than
+// being dropped.
+
+// One MULTI_OPTION stored value → the ids it holds. The shape is an array of
+// strings and nothing else: a bare string (what a field retyped from OPTION
+// leaves behind) or a mixed array is not a value of this field and reads as
+// empty, matching the server's write-side check.
+export const multiOptionIds = (value: unknown): string[] =>
+  Array.isArray(value) && value.every(entry => typeof entry === 'string')
+    ? (value as string[])
+    : [];
+
+// The TOP-MOST ids of a set: those whose parent isn't also in it. What a
+// minimal value already is, and what a non-minimal one displays as — a stored
+// parent renders as the parent, never as its enumerated children.
+export const topMostIds = (
+  options: CustomFieldOption[],
+  ids: readonly string[]
+): string[] => {
+  const set = new Set(ids);
+  const parentOf = new Map(options.map(o => [o.id, o.parentOptionId]));
+  return [...set].filter(id => {
+    const parent = parentOf.get(id);
+    return !parent || !set.has(parent);
+  });
+};
+
+// Ids in the definition's configured (depth-first) order, so a value reads the
+// same wherever it is rendered. Ids the definition doesn't know keep their
+// given order, after the known ones.
+export const inConfiguredOrder = (
+  options: CustomFieldOption[],
+  ids: readonly string[]
+): string[] => {
+  const rank = new Map(
+    orderOptionsHierarchically(options).map((o, index) => [o.option.id, index])
+  );
+  const known = ids.filter(id => rank.has(id));
+  const unknown = ids.filter(id => !rank.has(id));
+  known.sort((a, b) => (rank.get(a) ?? 0) - (rank.get(b) ?? 0));
+  return [...known, ...unknown];
+};
+
+// Stored (minimal) → the set the picker ticks: each stored id plus everything
+// beneath it.
+export const expandStoredToSelection = (
+  options: CustomFieldOption[],
+  stored: readonly string[]
+): string[] => {
+  const out = new Set<string>();
+  for (const id of stored)
+    for (const descendant of optionAndDescendantIds(options, id))
+      out.add(descendant);
+  return [...out];
+};
+
+// The ticked set → what to store: the minimal covering set, in configured
+// order. Ticking every child of a parent stores the PARENT (the picker ticks
+// the parent too, so this is what the user sees), and a partially ticked
+// parent stores its ticked children.
+export const collapseSelectionToStored = (
+  options: CustomFieldOption[],
+  selected: readonly string[]
+): string[] => inConfiguredOrder(options, topMostIds(options, selected));
+
+// The shared TICK RULE, used by the editor and by the list filter so the two
+// can never drift: selection is a DIFF over the previous set, so ticking or
+// unticking one option doesn't re-lock the rest. Adding a node selects its
+// whole subtree; removing one clears its subtree AND its ancestors — a parent
+// is only selected while every descendant is.
+export const applyOptionToggle = (
+  options: CustomFieldOption[],
+  previous: readonly string[],
+  next: readonly string[]
+): string[] => {
+  const before = new Set(previous);
+  const after = new Set(next);
+  for (const added of next.filter(id => !before.has(id)))
+    for (const descendant of optionAndDescendantIds(options, added))
+      after.add(descendant);
+  for (const removed of [...before].filter(id => !after.has(id))) {
+    for (const descendant of optionAndDescendantIds(options, removed))
+      after.delete(descendant);
+    for (const ancestor of ancestorIds(options, removed))
+      after.delete(ancestor);
+  }
+  return [...after];
+};
+
+// The ids a MULTI_OPTION filter asks the server about: the chosen set expanded
+// BOTH ways. Downward because a record may store a child of what was chosen;
+// upward because a record storing a parent MINIMALLY holds each of its
+// children, so filtering on a child must still find it. Overlap against this
+// set is the whole hierarchy question — the server walks no tree.
+export const filterQueryIds = (
+  options: CustomFieldOption[],
+  chosen: readonly string[]
+): string[] => {
+  const out = new Set<string>();
+  for (const id of chosen) {
+    for (const descendant of optionAndDescendantIds(options, id))
+      out.add(descendant);
+    for (const ancestor of ancestorIds(options, id)) out.add(ancestor);
+  }
+  return [...out];
+};
+
 export const resolveOptionName = (def: CustomFieldDef, id: string): string =>
   def.options.find(o => o.id === id)?.name ?? id;
 
@@ -100,6 +219,7 @@ export type ParsedCustomField =
   | { kind: 'date'; def: CustomFieldDef }
   | { kind: 'boolean'; def: CustomFieldDef }
   | { kind: 'option'; def: CustomFieldDef; options: OrderedOption[] }
+  | { kind: 'multiOption'; def: CustomFieldDef; options: OrderedOption[] }
   | { kind: 'unsupported'; def: CustomFieldDef; rawType: string };
 
 export const parseCustomField = (def: CustomFieldDef): ParsedCustomField => {
@@ -117,6 +237,12 @@ export const parseCustomField = (def: CustomFieldDef): ParsedCustomField => {
     case 'OPTION':
       return {
         kind: 'option',
+        def,
+        options: orderOptionsHierarchically(def.options),
+      };
+    case 'MULTI_OPTION':
+      return {
+        kind: 'multiOption',
         def,
         options: orderOptionsHierarchically(def.options),
       };
