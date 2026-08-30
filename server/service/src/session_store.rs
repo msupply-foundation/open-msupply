@@ -37,6 +37,12 @@ struct SessionEntry {
 #[derive(Default, Debug)]
 pub struct SessionStore {
     sessions: HashMap<SessionToken, SessionEntry>,
+    /// The password hash each user's live sessions were issued against, as last seen by
+    /// `revoke_if_credentials_changed`. Kept here rather than read from the database
+    /// because it is only meaningful for as long as the sessions are: a restart clears
+    /// the sessions, so it must clear this too. Keyed by user, so it is bounded by the
+    /// number of users who have logged in since the process started, not by logins.
+    issued_against: HashMap<String, String>,
 }
 
 impl SessionStore {
@@ -88,6 +94,38 @@ impl SessionStore {
     /// Remove all sessions for a user (e.g. password change, admin force-logout).
     pub fn revoke_all_for_user(&mut self, user_id: &str) {
         self.sessions.retain(|_, entry| entry.user_id != user_id);
+    }
+
+    /// Records the password hash this user's sessions are being issued against, and
+    /// revokes every session issued against a different one. Returns whether anything
+    /// was revoked.
+    ///
+    /// Call this on login, before the new session is created, so the login's own session
+    /// survives.
+    ///
+    /// Comparing against what the store remembers - rather than against the row as it
+    /// looked earlier in the same login call - is what makes this catch a *central*
+    /// password reset. The hash can reach the local row without a login at all: the
+    /// `user` sync translation writes `password_hash` whenever central sends the row, and
+    /// the v7 login flow never writes the row itself. Once sync has landed the new hash,
+    /// a before/after comparison inside the login sees no change, while this still sees
+    /// that the live sessions belong to the old one.
+    ///
+    /// The first call for a user records the hash and revokes nothing: with no earlier
+    /// call there are no sessions this store issued to that user, so there is nothing a
+    /// changed password should evict.
+    pub fn revoke_if_credentials_changed(&mut self, user_id: &str, hashed_password: &str) -> bool {
+        let previous = self
+            .issued_against
+            .insert(user_id.to_string(), hashed_password.to_string());
+
+        match previous {
+            Some(previous) if previous != hashed_password => {
+                self.revoke_all_for_user(user_id);
+                true
+            }
+            _ => false,
+        }
     }
 
     /// Drop every entry that can no longer be validated.
@@ -179,6 +217,31 @@ mod tests {
 
         assert_eq!(store.sessions.len(), 2, "expired sessions should be purged");
         assert!(store.validate_and_slide(&live).is_some());
+    }
+
+    /// Security audit DS-4: the store remembers which password hash a user's live
+    /// sessions were issued against, so a login under a different hash evicts them
+    /// however that hash got there — including a sync that landed it with no login.
+    #[test]
+    fn revoke_if_credentials_changed_evicts_sessions_issued_under_the_old_hash() {
+        let mut store = SessionStore::new();
+
+        // First login for this user: nothing was issued before, so nothing to evict
+        assert!(!store.revoke_if_credentials_changed("u", "hash-1"));
+        let first = store.create("u");
+        let other_user = store.create("other");
+
+        // Same credentials again — the user's other devices stay logged in
+        assert!(!store.revoke_if_credentials_changed("u", "hash-1"));
+        assert!(store.validate_and_slide(&first).is_some());
+
+        // Changed credentials — every session for that user goes, and only that user's
+        assert!(store.revoke_if_credentials_changed("u", "hash-2"));
+        assert!(store.validate_and_slide(&first).is_none());
+        assert!(store.validate_and_slide(&other_user).is_some());
+
+        // The new hash is now the one on record, so the next login under it is quiet
+        assert!(!store.revoke_if_credentials_changed("u", "hash-2"));
     }
 
     #[test]
