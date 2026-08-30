@@ -7,8 +7,9 @@ use actix_multipart::form::tempfile::TempFile;
 use chrono::Utc;
 use repository::{SyncFileDirection, SyncFileStatus};
 use repository::{
-    ChangelogCondition, ChangelogFilter, ChangelogRepository, CursorAndLimit, QueryWithData,
-    SyncBufferRepository, SyncFileReferenceRow, SyncFileReferenceRowRepository, SyncVersions,
+    Authoring, ChangelogCondition, ChangelogFilter, ChangelogRepository, CursorAndLimit,
+    QueryWithData, SyncBufferRepository, SyncBufferRowInsert, SyncFileReferenceRow,
+    SyncFileReferenceRowRepository, SyncVersions,
 };
 use util::format_error;
 
@@ -20,7 +21,7 @@ use crate::{
         api::{validate_site_auth, CommonSyncRecord},
         api_v6::SiteStatusV6,
         synchroniser::integrate_and_translate_sync_buffer,
-        translations::ToSyncRecordTranslationType,
+        translations::{all_translators, ToSyncRecordTranslationType},
         CentralServerConfig,
     },
 };
@@ -179,6 +180,10 @@ pub async fn push(
         response.site_id,
     )?;
 
+    // A site may only push tables it is allowed to author, checked before anything
+    // reaches the buffer so hostile rows are never stored or integrated.
+    validate_site_authored_tables(&sync_buffer_rows, response.site_id)?;
+
     ctx.connection
         .transaction_sync(|t_con| SyncBufferRepository::new(t_con).insert_many(&sync_buffer_rows))
         .map_err(|e| e.to_inner_error())?;
@@ -189,6 +194,68 @@ pub async fn push(
 
     Ok(SyncPushSuccessV6 {
         records_pushed: records_in_this_batch,
+    })
+}
+
+/// Rejects a pushed batch that contains a table the sending site may not author.
+///
+/// The whole batch is refused rather than the offending rows dropped: a legitimate
+/// site never sends one (`build_v6_push_filter` only picks up locally originated
+/// records, and version skew is already ruled out by the sync version handshake), so
+/// a record reaching here means the site is broken or hostile, and silently dropping
+/// it would hide that.
+fn validate_site_authored_tables(
+    rows: &[SyncBufferRowInsert],
+    site_id: i32,
+) -> Result<(), SyncParsedErrorV6> {
+    for row in rows {
+        if !site_may_author(&row.table_name) {
+            log::error!(
+                "Site {} pushed a record for table '{}', which only central may author (record id '{}')",
+                site_id,
+                row.table_name,
+                row.record_id
+            );
+            return Err(SyncParsedErrorV6::TableNotAuthoredBySite(
+                row.table_name.clone(),
+            ));
+        }
+    }
+
+    Ok(())
+}
+
+/// Whether a remote site is allowed to author records for this table.
+///
+/// `SyncStyle.authoring` is where the rule is declared: a table listing only
+/// `Central` (or `LegacyOnly`, which includes tables this server doesn't know) is
+/// central's to write, and a site pushing one is either broken or hostile. V7
+/// enforces this in `sync_v7::validate::validate_on_central`; this is the same rule
+/// for the v6 push path.
+///
+/// Only the table-level half of the v7 check is applied here. The row-level arms
+/// (`Remote`, `Patient`, ...) match a record against the source site's active stores,
+/// which v6 buffer rows can't answer — `CommonSyncRecord::to_buffer_row` leaves
+/// `store_id` and `patient_id` unset, so every store-scoped table would be rejected.
+///
+/// The wire table name is resolved to its changelog table through the translator that
+/// handles it rather than by parsing the name, because a translator may push under a
+/// different name than the changelog uses (`SyncMessage` pushes as `om_sync_message`).
+fn site_may_author(table_name: &str) -> bool {
+    all_translators().iter().any(|translator| {
+        if !translator.table_names().contains(&table_name) {
+            return false;
+        }
+
+        let Some(change_log_type) = translator.change_log_type() else {
+            return false;
+        };
+
+        change_log_type
+            .sync_style()
+            .authoring
+            .iter()
+            .any(|authoring| !matches!(authoring, Authoring::Central | Authoring::LegacyOnly))
     })
 }
 
@@ -514,7 +581,136 @@ pub(crate) fn adjust_v6_cursor(v6_cursor: u64) -> i64 {
 
 #[cfg(test)]
 mod tests {
-    use super::adjust_v6_cursor;
+    use super::{adjust_v6_cursor, site_may_author, validate_site_authored_tables};
+    use crate::sync::{
+        api::{CommonSyncRecord, SyncAction},
+        api_v6::SyncParsedErrorV6,
+        translations::{all_translators, ToSyncRecordTranslationType},
+    };
+    use repository::ChangelogRow;
+    use serde_json::json;
+
+    /// The two payloads from security audit DS-1, as they arrive at
+    /// `POST /central/sync/push` from a rogue site: server-side code execution via
+    /// `backend_plugin`, and an admin password hash via `user`. Runs the same
+    /// `to_buffer_rows` → validate sequence `push` runs after site authentication.
+    #[test]
+    fn v6_push_rejects_central_only_records_from_a_site() {
+        let attacks = [
+            (
+                "backend_plugin",
+                json!({
+                    "id": "evil-plugin", "code": "evil", "version": "1.0.0",
+                    "bundle_base64": "ZXZpbA==",
+                    "types": ["processor"], "variant_type": "BOA_JS"
+                }),
+            ),
+            (
+                "user",
+                json!({
+                    "ID": "admin-user", "name": "admin", "Language": 0, "active": true,
+                    "password_hash": "ATTACKER-CONTROLLED-HASH"
+                }),
+            ),
+        ];
+
+        for (table_name, record_data) in attacks {
+            let records = vec![CommonSyncRecord {
+                table_name: table_name.to_string(),
+                record_id: "attacker-record".to_string(),
+                action: SyncAction::Update,
+                record_data,
+            }];
+
+            let rows = CommonSyncRecord::to_buffer_rows(records, 42).unwrap();
+            let error = validate_site_authored_tables(&rows, 42)
+                .expect_err(&format!("site push of '{table_name}' should be rejected"));
+
+            assert!(
+                matches!(error, SyncParsedErrorV6::TableNotAuthoredBySite(rejected) if rejected == table_name)
+            );
+        }
+    }
+
+    /// A batch of the tables sites really do push must pass untouched.
+    #[test]
+    fn v6_push_accepts_ordinary_site_records() {
+        let records = ["asset", "rnr_form", "vaccination", "om_sync_message"]
+            .into_iter()
+            .map(|table_name| CommonSyncRecord {
+                table_name: table_name.to_string(),
+                record_id: "some-record".to_string(),
+                action: SyncAction::Update,
+                record_data: json!({}),
+            })
+            .collect();
+
+        let rows = CommonSyncRecord::to_buffer_rows(records, 42).unwrap();
+        assert!(validate_site_authored_tables(&rows, 42).is_ok());
+    }
+
+    /// Tables only central may author must be refused at v6 ingest, however a site
+    /// names them. `backend_plugin` is server-side code execution and `user` carries
+    /// the password hash; the rest are ordinary central-managed reference data.
+    #[test]
+    fn site_may_not_author_central_only_tables() {
+        for table_name in [
+            "backend_plugin",
+            "user",
+            "report",
+            "store",
+            "item_variant",
+            "vaccine_course",
+            "user_permission",
+            "table_that_does_not_exist",
+        ] {
+            assert!(
+                !site_may_author(table_name),
+                "site push of '{}' should be rejected",
+                table_name
+            );
+        }
+    }
+
+    /// The other half: every table a site legitimately pushes over v6 must pass, or
+    /// the check breaks sync. Derived from the translators themselves, so a table
+    /// added later is covered without editing this test — and one that becomes
+    /// site-pushable while still declaring `Authoring::Central` fails here.
+    #[test]
+    fn site_may_author_every_table_pushed_over_v6() {
+        let mut checked = 0;
+
+        for translator in all_translators() {
+            let Some(change_log_type) = translator.change_log_type() else {
+                continue;
+            };
+            let changelog_row = ChangelogRow {
+                table_name: change_log_type.clone(),
+                ..Default::default()
+            };
+            if !translator.should_translate_to_sync_record(
+                &changelog_row,
+                &ToSyncRecordTranslationType::PushToOmSupplyCentral,
+            ) {
+                continue;
+            }
+
+            for table_name in translator.table_names() {
+                assert!(
+                    site_may_author(table_name),
+                    "'{}' is pushed to central over v6 but would be rejected at ingest",
+                    table_name
+                );
+                checked += 1;
+            }
+        }
+
+        // Guard against the loop silently checking nothing
+        assert!(
+            checked > 10,
+            "expected the v6 push table set, got {checked}"
+        );
+    }
 
     #[test]
     /// This test is simply to capture the intent. During automation tests ensure v6 cursors
