@@ -48,12 +48,16 @@ impl SessionStore {
     /// it is not stored anywhere else server-side.
     pub fn create(&mut self, user_id: &str) -> SessionToken {
         let token = generate_token();
-        let expires_at = Utc::now() + SESSION_LIFETIME;
+        let now = Utc::now();
+        // Logins are rare next to authenticated requests, and the sweep is cheap beside
+        // the bcrypt verify that precedes it, so this is the natural place to collect
+        // the sessions nobody came back to.
+        self.purge_expired(now);
         self.sessions.insert(
             token.clone(),
             SessionEntry {
                 user_id: user_id.to_string(),
-                expires_at,
+                expires_at: now + SESSION_LIFETIME,
             },
         );
         token
@@ -84,6 +88,17 @@ impl SessionStore {
     /// Remove all sessions for a user (e.g. password change, admin force-logout).
     pub fn revoke_all_for_user(&mut self, user_id: &str) {
         self.sessions.retain(|_, entry| entry.user_id != user_id);
+    }
+
+    /// Drop every entry that can no longer be validated.
+    ///
+    /// `validate_and_slide` only removes an expired entry when that same token is
+    /// presented again, so a session nobody returns to — the common case, since users
+    /// close the tab rather than log out — would otherwise sit in the map for the life
+    /// of the process. Every authenticated request takes a write lock on this map, so
+    /// the leak costs contention as well as memory.
+    fn purge_expired(&mut self, now: DateTime<Utc>) {
+        self.sessions.retain(|_, entry| entry.expires_at >= now);
     }
 }
 
@@ -142,6 +157,28 @@ mod tests {
             !store.sessions.contains_key(&token),
             "expired session should be removed"
         );
+    }
+
+    /// Security audit DS-6: entries were only dropped when their own token came back,
+    /// so sessions nobody returns to accumulated for the life of the process.
+    #[test]
+    fn expired_sessions_are_purged_without_being_presented() {
+        let mut store = SessionStore::new();
+
+        let abandoned: Vec<_> = (0..5).map(|_| store.create("u")).collect();
+        // One that stays live
+        let live = store.create("u");
+        for token in &abandoned {
+            store.sessions.get_mut(token).unwrap().expires_at = Utc::now() - Duration::seconds(1);
+        }
+
+        assert_eq!(store.sessions.len(), 6);
+
+        // A login by anyone sweeps them — none of the abandoned tokens is presented
+        store.create("someone-else");
+
+        assert_eq!(store.sessions.len(), 2, "expired sessions should be purged");
+        assert!(store.validate_and_slide(&live).is_some());
     }
 
     #[test]

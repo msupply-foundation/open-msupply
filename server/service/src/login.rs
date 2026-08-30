@@ -158,7 +158,7 @@ impl LoginService {
 
     async fn do_login(
         service_provider: &ServiceProvider,
-        _auth_data: &AuthData,
+        auth_data: &AuthData,
         input: LoginInput,
     ) -> Result<LoginSuccess, LoginError> {
         // Pick login flow based on which sync version this site is running.
@@ -173,10 +173,33 @@ impl LoginService {
             )?
         };
 
+        // Both login flows refresh the local user row from central, so a password
+        // changed centrally lands during this call. Remember the hash we had first.
+        let hashed_password_before = Self::stored_password_hash(service_provider, &input.username)?;
+
         let user_account = match sync_version {
             SyncVersion::V5V6 => Self::authenticate_v5v6(service_provider, &input).await?,
             SyncVersion::V7 => Self::authenticate_v7(service_provider, &input).await?,
         };
+
+        // Sessions issued against the old credentials are no longer the user's to
+        // hold: evict them before this login gets its own. Nothing else invalidates
+        // a session when a password changes.
+        if let Some(hashed_password_before) = hashed_password_before {
+            if hashed_password_before != user_account.hashed_password {
+                log::info!(
+                    "Password changed for user {}, revoking existing sessions",
+                    user_account.id
+                );
+                auth_data
+                    .session_store
+                    .write()
+                    .map_err(|err| {
+                        LoginError::InternalError(format!("Session store lock poisoned: {err}"))
+                    })?
+                    .revoke_all_for_user(&user_account.id);
+            }
+        }
 
         let mut service_ctx = service_provider.basic_context()?;
         let user_service = UserAccountService::new(&service_ctx.connection);
@@ -423,6 +446,19 @@ impl LoginService {
         Ok(user_info)
     }
 
+    /// The password hash currently stored for a username, if the user exists locally.
+    /// `None` for a first login on this site, where there is nothing to revoke.
+    fn stored_password_hash(
+        service_provider: &ServiceProvider,
+        username: &str,
+    ) -> Result<Option<String>, LoginError> {
+        let service_ctx = service_provider.basic_context()?;
+
+        Ok(UserAccountRowRepository::new(&service_ctx.connection)
+            .find_one_by_user_name(username)?
+            .map(|user| user.hashed_password))
+    }
+
     pub fn update_user(
         service_ctx: &ServiceContext,
         password: &str,
@@ -559,6 +595,148 @@ mod test {
         UserAccountRowRepository::new(&ctx.connection)
             .upsert_one(&user)
             .unwrap();
+    }
+
+    /// Security audit DS-4: a session issued against the old credentials must not
+    /// survive the password changing. Before this, `revoke_all_for_user` had no
+    /// production caller and only a server restart evicted a stolen token.
+    #[actix_rt::test]
+    async fn login_revokes_existing_sessions_when_the_password_hash_changes() {
+        let (_, _, connection_manager, _) = setup_all(
+            "login_revokes_existing_sessions_on_password_change",
+            MockDataInserts::none().names().stores().user_accounts(),
+        )
+        .await;
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context("".to_string(), "".to_string())
+            .unwrap();
+
+        SyncVersion::set(&context.connection, SyncVersion::V5V6).unwrap();
+
+        let auth_data = AuthData {
+            session_store: Arc::new(RwLock::new(SessionStore::new())),
+            cookie_suffix: "test".to_string(),
+            no_ssl: true,
+            debug_no_access_control: false,
+        };
+
+        let expected: LoginResponseV4 = serde_json::from_str(LOGIN_V4_RESPONSE_1).unwrap();
+        let user_id = expected.user_info.unwrap().user.id;
+
+        let mock_server = MockServer::start();
+        mock_server.mock(|when, then| {
+            when.method(POST).path("/api/v4/login".to_string());
+            then.status(200).body(LOGIN_V4_RESPONSE_1);
+        });
+        let central_server_url = mock_server.base_url();
+
+        KeyValueStoreRepository::new(&context.connection)
+            .set_i32(KeyType::SettingsSyncSiteId, Some(mock_store_a().site_id))
+            .unwrap();
+
+        let login_input = || LoginInput {
+            username: "Gryffindor".to_string(),
+            password: "password".to_string(),
+            central_server_url: central_server_url.clone(),
+        };
+
+        // First login writes the user row locally
+        LoginService::login(&service_provider, &auth_data, login_input(), 0)
+            .await
+            .unwrap();
+
+        // A session held against those credentials — another device, or an attacker
+        let existing_session = auth_data.session_store.write().unwrap().create(&user_id);
+        assert!(auth_data
+            .session_store
+            .write()
+            .unwrap()
+            .validate_and_slide(&existing_session)
+            .is_some());
+
+        // The credentials change: the stored hash is no longer one the user's
+        // password verifies against, so the next login re-hashes it
+        let user_repo = UserAccountRowRepository::new(&context.connection);
+        let mut user = user_repo.find_one_by_id(&user_id).unwrap().unwrap();
+        user.hashed_password = "ATTACKER-CONTROLLED-HASH".to_string();
+        user_repo.upsert_one(&user).unwrap();
+
+        LoginService::login(&service_provider, &auth_data, login_input(), 0)
+            .await
+            .unwrap();
+
+        assert!(
+            auth_data
+                .session_store
+                .write()
+                .unwrap()
+                .validate_and_slide(&existing_session)
+                .is_none(),
+            "session issued against the old password should have been revoked"
+        );
+    }
+
+    /// The other direction: an ordinary re-login leaves other sessions alone.
+    #[actix_rt::test]
+    async fn login_keeps_existing_sessions_when_the_password_is_unchanged() {
+        let (_, _, connection_manager, _) = setup_all(
+            "login_keeps_existing_sessions_when_unchanged",
+            MockDataInserts::none().names().stores().user_accounts(),
+        )
+        .await;
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context("".to_string(), "".to_string())
+            .unwrap();
+
+        SyncVersion::set(&context.connection, SyncVersion::V5V6).unwrap();
+
+        let auth_data = AuthData {
+            session_store: Arc::new(RwLock::new(SessionStore::new())),
+            cookie_suffix: "test".to_string(),
+            no_ssl: true,
+            debug_no_access_control: false,
+        };
+
+        let expected: LoginResponseV4 = serde_json::from_str(LOGIN_V4_RESPONSE_1).unwrap();
+        let user_id = expected.user_info.unwrap().user.id;
+
+        let mock_server = MockServer::start();
+        mock_server.mock(|when, then| {
+            when.method(POST).path("/api/v4/login".to_string());
+            then.status(200).body(LOGIN_V4_RESPONSE_1);
+        });
+        let central_server_url = mock_server.base_url();
+
+        KeyValueStoreRepository::new(&context.connection)
+            .set_i32(KeyType::SettingsSyncSiteId, Some(mock_store_a().site_id))
+            .unwrap();
+
+        let login_input = || LoginInput {
+            username: "Gryffindor".to_string(),
+            password: "password".to_string(),
+            central_server_url: central_server_url.clone(),
+        };
+
+        LoginService::login(&service_provider, &auth_data, login_input(), 0)
+            .await
+            .unwrap();
+
+        let existing_session = auth_data.session_store.write().unwrap().create(&user_id);
+
+        // Same password again — the stored hash is kept (see update_user), so nothing
+        // is revoked and the user's other device stays logged in
+        LoginService::login(&service_provider, &auth_data, login_input(), 0)
+            .await
+            .unwrap();
+
+        assert!(auth_data
+            .session_store
+            .write()
+            .unwrap()
+            .validate_and_slide(&existing_session)
+            .is_some());
     }
 
     /// V5V6 (legacy /api/v4/login) login flow. Exercises the original
