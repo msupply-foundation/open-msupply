@@ -1,4 +1,5 @@
 use std::{
+    collections::HashSet,
     sync::{Arc, RwLock},
     vec,
 };
@@ -7,8 +8,8 @@ use actix_multipart::form::tempfile::TempFile;
 use chrono::Utc;
 use repository::{SyncFileDirection, SyncFileStatus};
 use repository::{
-    Authoring, ChangelogCondition, ChangelogFilter, ChangelogRepository, CursorAndLimit,
-    QueryWithData, SyncBufferRepository, SyncBufferRowInsert, SyncFileReferenceRow,
+    Authoring, ChangelogCondition, ChangelogFilter, ChangelogRepository, ChangelogRow,
+    CursorAndLimit, QueryWithData, SyncBufferRepository, SyncBufferRowInsert, SyncFileReferenceRow,
     SyncFileReferenceRowRepository, SyncVersions,
 };
 use util::format_error;
@@ -201,17 +202,28 @@ pub async fn push(
 ///
 /// The whole batch is refused rather than the offending rows dropped: a legitimate
 /// site never sends one (`build_v6_push_filter` only picks up locally originated
-/// records, and version skew is already ruled out by the sync version handshake), so
-/// a record reaching here means the site is broken or hostile, and silently dropping
-/// it would hide that.
+/// records), so a record reaching here means the site is broken or hostile, and
+/// silently dropping it would hide that.
+///
+/// # Changing the allowed set is a breaking change for sites
+///
+/// The set is derived from *this* server's translators, but the sites pushing into it
+/// may be running older code. Narrowing it — flipping a table's `SyncStyle.authoring`
+/// to `Central`, or taking a table out of the v6 push set — makes central start
+/// refusing a batch that a not-yet-upgraded site keeps retrying, which stops that
+/// site's sync outright with no way to drain its queue. Either change has to be paired
+/// with a `MIN_VERSION` bump in `sync::api_v6` so the handshake refuses those sites
+/// first, with an error that says so.
 fn validate_site_authored_tables(
     rows: &[SyncBufferRowInsert],
     site_id: i32,
 ) -> Result<(), SyncParsedErrorV6> {
+    let authored_by_sites = site_authored_tables();
+
     for row in rows {
-        if !site_may_author(&row.table_name) {
+        if !authored_by_sites.contains(row.table_name.as_str()) {
             log::error!(
-                "Site {} pushed a record for table '{}', which only central may author (record id '{}')",
+                "Site {} pushed a record for table '{}', which sites may not author over v6 (record id '{}')",
                 site_id,
                 row.table_name,
                 row.record_id
@@ -225,38 +237,73 @@ fn validate_site_authored_tables(
     Ok(())
 }
 
-/// Whether a remote site is allowed to author records for this table.
+/// The wire table names a remote site is allowed to author over v6.
 ///
-/// `SyncStyle.authoring` is where the rule is declared: a table listing only
-/// `Central` (or `LegacyOnly`, which includes tables this server doesn't know) is
-/// central's to write, and a site pushing one is either broken or hostile. V7
-/// enforces this in `sync_v7::validate::validate_on_central`; this is the same rule
-/// for the v6 push path.
+/// Two conditions, both read off the translators so there is no second list to keep in
+/// step:
 ///
-/// Only the table-level half of the v7 check is applied here. The row-level arms
-/// (`Remote`, `Patient`, ...) match a record against the source site's active stores,
-/// which v6 buffer rows can't answer — `CommonSyncRecord::to_buffer_row` leaves
-/// `store_id` and `patient_id` unset, so every store-scoped table would be rejected.
+/// 1. The table is one a site actually pushes to omSupply central. Asking the
+///    translator (rather than reading `SyncStyle`) is what keeps this to the real v6
+///    push set — `authoring` alone would also admit every store-owned table that only
+///    travels over v5, `invoice` and `stock_line` among them, which central would then
+///    buffer and integrate for a site that has no business writing them.
+/// 2. `SyncStyle.authoring` allows someone other than central to write it. A table
+///    listing only `Central` (or `LegacyOnly`, which covers tables this server doesn't
+///    know) is central's alone. V7 enforces the same declaration in
+///    `sync_v7::validate::validate_on_central`.
 ///
-/// The wire table name is resolved to its changelog table through the translator that
-/// handles it rather than by parsing the name, because a translator may push under a
-/// different name than the changelog uses (`SyncMessage` pushes as `om_sync_message`).
-fn site_may_author(table_name: &str) -> bool {
-    all_translators().iter().any(|translator| {
-        if !translator.table_names().contains(&table_name) {
-            return false;
-        }
+/// Only the table-level half of the v7 check is applied. The row-level arms (`Remote`,
+/// `Patient`, ...) match a record against the source site's active stores, which v6
+/// buffer rows can't answer — `CommonSyncRecord::to_buffer_row` leaves `store_id` and
+/// `patient_id` unset, so every store-scoped table would be rejected.
+///
+/// The residual that leaves is `name`, whose authoring is `[Central, Patient]`: a site
+/// may legitimately author a patient name, and with no row-level check a site can
+/// therefore write *any* name row, facility and supplier names included. Closing that
+/// needs the patient check v7 does, which needs a `patient_id` on the buffer row.
+///
+/// The wire name is resolved to its changelog table through the translator that handles
+/// it rather than by parsing it, because a translator may push under a different name
+/// than the changelog uses (`SyncMessage` pushes as `om_sync_message`).
+fn site_authored_tables() -> HashSet<String> {
+    all_translators()
+        .iter()
+        .filter_map(|translator| {
+            let change_log_type = translator.change_log_type()?;
 
-        let Some(change_log_type) = translator.change_log_type() else {
-            return false;
-        };
+            // `should_translate_to_sync_record` decides per changelog row, but every
+            // implementation answers this question by table alone, so a row carrying
+            // just the table name is enough to ask it.
+            let changelog_row = ChangelogRow {
+                table_name: change_log_type.clone(),
+                ..Default::default()
+            };
+            let pushed_by_sites = translator.should_translate_to_sync_record(
+                &changelog_row,
+                &ToSyncRecordTranslationType::PushToOmSupplyCentral,
+            );
+            if !pushed_by_sites {
+                return None;
+            }
 
-        change_log_type
-            .sync_style()
-            .authoring
-            .iter()
-            .any(|authoring| !matches!(authoring, Authoring::Central | Authoring::LegacyOnly))
-    })
+            let site_may_author = change_log_type
+                .sync_style()
+                .authoring
+                .iter()
+                .any(|authoring| !matches!(authoring, Authoring::Central | Authoring::LegacyOnly));
+            if !site_may_author {
+                return None;
+            }
+
+            Some(
+                translator
+                    .table_names()
+                    .into_iter()
+                    .map(|table_name| table_name.to_string()),
+            )
+        })
+        .flatten()
+        .collect()
 }
 
 /// Send Records to a remote open-mSupply Server
@@ -581,7 +628,7 @@ pub(crate) fn adjust_v6_cursor(v6_cursor: u64) -> i64 {
 
 #[cfg(test)]
 mod tests {
-    use super::{adjust_v6_cursor, site_may_author, validate_site_authored_tables};
+    use super::{adjust_v6_cursor, site_authored_tables, validate_site_authored_tables};
     use crate::sync::{
         api::{CommonSyncRecord, SyncAction},
         api_v6::SyncParsedErrorV6,
@@ -589,6 +636,10 @@ mod tests {
     };
     use repository::ChangelogRow;
     use serde_json::json;
+
+    fn site_may_author(table_name: &str) -> bool {
+        site_authored_tables().contains(table_name)
+    }
 
     /// The two payloads from security audit DS-1, as they arrive at
     /// `POST /central/sync/push` from a rogue site: server-side code execution via
@@ -672,10 +723,43 @@ mod tests {
         }
     }
 
+    /// A site may not author a table it never pushes over v6 either, even where the
+    /// authoring rule alone would allow it. These are all store-owned or transferred
+    /// tables that travel over v5 — reading `SyncStyle.authoring` on its own would let a
+    /// site drop any of them into central's buffer, with no store-scope check to say the
+    /// row was the sending site's to write.
+    #[test]
+    fn site_may_not_author_tables_that_are_not_pushed_over_v6() {
+        for table_name in [
+            "invoice",
+            "invoice_line",
+            "stock_line",
+            "stocktake",
+            "stocktake_line",
+            "requisition",
+            "requisition_line",
+            "location",
+            "activity_log",
+            "barcode",
+            "temperature_log",
+        ] {
+            assert!(
+                !site_may_author(table_name),
+                "'{}' is not pushed over v6, so a site push of it should be rejected",
+                table_name
+            );
+        }
+    }
+
     /// The other half: every table a site legitimately pushes over v6 must pass, or
     /// the check breaks sync. Derived from the translators themselves, so a table
     /// added later is covered without editing this test — and one that becomes
     /// site-pushable while still declaring `Authoring::Central` fails here.
+    ///
+    /// If this fails after a deliberate narrowing, see the note on
+    /// `validate_site_authored_tables`: sites already in the field keep pushing the old
+    /// set, so the change needs a `MIN_VERSION` bump to shut them out with a clear error
+    /// rather than a batch central silently refuses forever.
     #[test]
     fn site_may_author_every_table_pushed_over_v6() {
         let mut checked = 0;
@@ -708,7 +792,30 @@ mod tests {
         // Guard against the loop silently checking nothing
         assert!(
             checked > 10,
-            "expected the v6 push table set, got {checked}"
+            "expected the v6 push table set, got {}",
+            checked
+        );
+    }
+
+    /// The allowed set has to stay a small, deliberate list. A regression that widened it
+    /// to "anything not declared `Authoring::Central`" would sail past the tests above,
+    /// which only name tables one at a time.
+    #[test]
+    fn site_authored_tables_is_the_v6_push_set_and_no_wider() {
+        let authored = site_authored_tables();
+
+        let translators = all_translators();
+        let every_table_a_site_could_name = translators
+            .iter()
+            .flat_map(|translator| translator.table_names())
+            .collect::<std::collections::HashSet<_>>();
+
+        assert!(
+            authored.len() * 2 < every_table_a_site_could_name.len(),
+            "site-authored set ({}) should be a small fraction of the {} tables a site \
+             could name; has it widened past the v6 push set?",
+            authored.len(),
+            every_table_a_site_could_name.len()
         );
     }
 
