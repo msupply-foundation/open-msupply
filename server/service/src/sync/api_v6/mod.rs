@@ -40,6 +40,8 @@ pub enum SyncParsedErrorV6 {
     SyncFileNotFound(String),
     #[error("Sync V6 API version not compatible, minVersion: {0}, maxVersion: {1}, received: {2}")]
     SyncVersionMismatch(u32, u32, u32),
+    #[error("Site is not allowed to author records for table: {0}")]
+    TableNotAuthoredBySite(String),
 }
 
 impl From<anyhow::Error> for SyncParsedErrorV6 {
