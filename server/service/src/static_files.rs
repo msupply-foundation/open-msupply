@@ -112,6 +112,50 @@ impl StaticFileService {
         Ok(dir)
     }
 
+    /// The on-disk path for one file in a category, guaranteed to sit directly in that
+    /// category's directory.
+    ///
+    /// The directory components are not the only untrusted parts of the path. `id`
+    /// reaches this layer from client-supplied TUS `Upload-Metadata` (`server/src/central/tus.rs`)
+    /// and from `sync_file_reference` rows, which any site may author (that table's
+    /// `SyncStyle.authoring` is `Anyone`), and `file_name` arrives beside it from the same
+    /// two places. Both are joined into the path, so both need the same treatment as
+    /// `table_name` and `record_id`.
+    fn resolve_file_path(
+        &self,
+        category: &StaticFileCategory,
+        id: &str,
+        file_name: &str,
+    ) -> anyhow::Result<(PathBuf, String)> {
+        // An id is machine-generated (a uuid) everywhere it is legitimately produced, so
+        // requiring a plain segment rejects a hostile one without narrowing anything real.
+        validate_path_segment(id)?;
+
+        // A file name is a human's, so it is repaired rather than refused - the same
+        // treatment `move_temp_file` already gave it, moved to the sink so every caller
+        // gets it.
+        let file_name = sanitize_filename(file_name.to_string());
+        if file_name.is_empty() {
+            return Err(anyhow::anyhow!(
+                "File name is empty once sanitized, nothing left to store it under"
+            ));
+        }
+
+        // After the components are settled, so a refused one creates no directory
+        let dir = self.ensure_category_dir(category)?;
+        let file_path = dir.join(format!("{id}_{file_name}"));
+
+        // Whatever those two components were, the file must land in the directory
+        // `ensure_category_dir` just proved is inside the base.
+        if file_path.parent() != Some(dir.as_path()) {
+            return Err(anyhow::anyhow!(
+                "Static file path {file_path:?} is not directly inside {dir:?}"
+            ));
+        }
+
+        Ok((file_path, file_name))
+    }
+
     // Temp file in this case refers to system 'TempFile' not our own definition of Temporary file
     // at the time of method creation TempFile only comes from web multipart
     pub fn move_temp_file(
@@ -124,9 +168,9 @@ impl StaticFileService {
             .file_name
             .clone()
             .context("Filename not provided")?;
-        let sanitized_filename = sanitize_filename(file_name);
 
-        let static_file = self.reserve_file(&sanitized_filename, category, file_id)?;
+        // reserve_file sanitizes the name (see resolve_file_path)
+        let static_file = self.reserve_file(&file_name, category, file_id)?;
         let destination = Path::new(&static_file.path);
         // Is this blocking ? If it is it a problem ?
         move_file(temp_file.file.path(), destination).context("Problem moving file")?;
@@ -161,12 +205,11 @@ impl StaticFileService {
             None => uuid(),
         };
 
-        let dir = self.ensure_category_dir(category)?;
+        let (file_path, file_name) = self.resolve_file_path(category, &id, file_name)?;
 
-        let file_path = dir.join(format!("{id}_{file_name}"));
         Ok(StaticFile {
             id,
-            name: file_name.to_string(),
+            name: file_name,
             path: file_path.to_string_lossy().to_string(),
         })
     }
@@ -179,12 +222,11 @@ impl StaticFileService {
     ) -> anyhow::Result<StaticFile> {
         let id = uuid();
 
-        let dir = self.ensure_category_dir(&category)?;
+        let (file_path, file_name) = self.resolve_file_path(&category, &id, file_name)?;
 
-        let file_path = dir.join(format!("{id}_{file_name}"));
         let file = StaticFile {
             id,
-            name: file_name.to_string(),
+            name: file_name,
             path: file_path.to_string_lossy().to_string(),
         };
         std::fs::write(&file.path, bytes)?;
@@ -282,7 +324,9 @@ impl StaticFileService {
 
         Ok(StaticFile {
             id: sync_file.id.clone(),
-            name: sync_file.file_name.clone(),
+            // The reserved name, not the row's - reserve_file sanitizes, and this has to
+            // describe what is actually on disk
+            name: file.name,
             path: file.path.to_string(),
         })
     }
@@ -359,11 +403,16 @@ fn delete_temporary_files(file_dir: &PathBuf, max_life_time_millis: u64) -> Resu
 
 #[cfg(test)]
 mod test {
-    use std::{fs, path::PathBuf, str::FromStr, time::Duration};
+    use std::{
+        fs,
+        path::{Path, PathBuf},
+        str::FromStr,
+        time::Duration,
+    };
 
     use crate::static_files::StaticFileCategory;
 
-    use super::StaticFileService;
+    use super::{StaticFileService, STATIC_FILE_DIR};
 
     const TEST_DIR: &str = "test_static_files";
 
@@ -433,11 +482,43 @@ mod test {
     /// Security audit DS-2: `table_name`/`record_id` are URL path segments, and actix
     /// percent-decodes them after routing, so `..%2F..%2F..` reaches this layer as real
     /// traversal. Nothing may be created, found or served outside the base directory.
+    /// A service whose base directory is nested inside `temp_dir`, so anything that
+    /// escapes the base lands somewhere the test owns and can look at, rather than in
+    /// the shared system temp directory.
+    fn service_in(temp_dir: &tempfile::TempDir) -> StaticFileService {
+        let mut service = StaticFileService::new(".").unwrap();
+        service.dir = temp_dir.path().join("data").join(STATIC_FILE_DIR);
+        std::fs::create_dir_all(&service.dir).unwrap();
+        service
+    }
+
+    /// Every entry below `temp_dir` that is not inside the service's base directory.
+    fn escaped_entries(temp_dir: &tempfile::TempDir, service: &StaticFileService) -> Vec<PathBuf> {
+        fn walk(dir: &Path, into: &mut Vec<PathBuf>) {
+            let Ok(entries) = std::fs::read_dir(dir) else {
+                return;
+            };
+            for entry in entries.filter_map(|entry| entry.ok()) {
+                into.push(entry.path());
+                if entry.path().is_dir() {
+                    walk(&entry.path(), into);
+                }
+            }
+        }
+
+        let mut found = Vec::new();
+        walk(temp_dir.path(), &mut found);
+        found
+            .into_iter()
+            .filter(|path| !path.starts_with(&service.dir))
+            .filter(|path| !service.dir.starts_with(path))
+            .collect()
+    }
+
     #[test]
     fn sync_file_path_segments_cannot_escape_the_base_dir() {
         let temp_dir = tempfile::tempdir().unwrap();
-        let mut service = StaticFileService::new(".").unwrap();
-        service.dir = temp_dir.path().to_path_buf();
+        let service = service_in(&temp_dir);
 
         let traversals = [
             "../../../../escaped",
@@ -455,17 +536,20 @@ mod test {
                 StaticFileCategory::SyncFile(traversal.to_string(), "rec".to_string());
             assert!(
                 service.reserve_file("payload.js", &category, None).is_err(),
-                "reserve_file accepted table_name {traversal:?}"
+                "reserve_file accepted table_name {:?}",
+                traversal
             );
             assert!(
                 service.find_file("some_id", category.clone()).is_err(),
-                "find_file accepted table_name {traversal:?}"
+                "find_file accepted table_name {:?}",
+                traversal
             );
             assert!(
                 service
                     .store_file("payload.js", category, "data".as_bytes())
                     .is_err(),
-                "store_file accepted table_name {traversal:?}"
+                "store_file accepted table_name {:?}",
+                traversal
             );
 
             // …and as the record id
@@ -473,21 +557,74 @@ mod test {
                 StaticFileCategory::SyncFile("asset".to_string(), traversal.to_string());
             assert!(
                 service.reserve_file("payload.js", &category, None).is_err(),
-                "reserve_file accepted record_id {traversal:?}"
+                "reserve_file accepted record_id {:?}",
+                traversal
             );
         }
 
         // Nothing was created outside the base directory by any of the above
-        let escaped = temp_dir.path().parent().unwrap().join("escaped");
-        assert!(!escaped.exists(), "traversal created {escaped:?}");
+        let escaped = escaped_entries(&temp_dir, &service);
+        assert!(escaped.is_empty(), "traversal created {:?}", escaped);
+    }
+
+    /// The directory is only half the path. `file_id` comes from client-supplied TUS
+    /// `Upload-Metadata` and from `sync_file_reference` rows (which any site may author),
+    /// and both it and `file_name` are joined into the file name, so a traversal there
+    /// escapes just as a traversal in `record_id` would.
+    #[test]
+    fn sync_file_id_and_name_cannot_escape_the_base_dir() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let service = service_in(&temp_dir);
+
+        let category = StaticFileCategory::SyncFile("asset".to_string(), "rec".to_string());
+        let category_dir = service.dir.join("sync_files").join("asset").join("rec");
+
+        for traversal in ["../../../../escaped", "..", "a/b", "/etc", ".", ""] {
+            // As the file id, which is refused outright - an id is machine-generated
+            // everywhere it is legitimately produced
+            let reserved =
+                service.reserve_file("payload.js", &category, Some(traversal.to_string()));
+            assert!(
+                reserved.is_err(),
+                "reserve_file accepted file_id {:?}, reserving {:?}",
+                traversal,
+                reserved.map(|file| file.path)
+            );
+
+            // As the file name, which is repaired rather than refused - either way it
+            // must not leave the category directory
+            if let Ok(file) = service.reserve_file(traversal, &category, None) {
+                let path = PathBuf::from(&file.path);
+                assert_eq!(
+                    path.parent(),
+                    Some(category_dir.as_path()),
+                    "reserve_file put file_name {:?} at {:?}",
+                    traversal,
+                    path
+                );
+                assert!(!file.name.contains('/') && !file.name.contains('\\'));
+            }
+            if let Ok(file) = service.store_file(traversal, category.clone(), "data".as_bytes()) {
+                let path = PathBuf::from(&file.path);
+                assert_eq!(
+                    path.parent(),
+                    Some(category_dir.as_path()),
+                    "store_file put file_name {:?} at {:?}",
+                    traversal,
+                    path
+                );
+            }
+        }
+
+        let escaped = escaped_entries(&temp_dir, &service);
+        assert!(escaped.is_empty(), "traversal created {:?}", escaped);
     }
 
     /// The other direction: ordinary ids must still work.
     #[test]
     fn ordinary_sync_file_paths_are_accepted() {
         let temp_dir = tempfile::tempdir().unwrap();
-        let mut service = StaticFileService::new(".").unwrap();
-        service.dir = temp_dir.path().to_path_buf();
+        let service = service_in(&temp_dir);
 
         let category = StaticFileCategory::SyncFile(
             "asset".to_string(),
