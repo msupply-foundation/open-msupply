@@ -3,6 +3,7 @@ package org.openmsupply.client;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.content.Context;
+import android.net.Uri;
 import android.provider.Settings;
 
 import com.getcapacitor.JSArray;
@@ -69,6 +70,11 @@ public class DiscoveryHostPlugin extends Plugin {
     private final Deque<NsdServiceInfo> resolveQueue = new ArrayDeque<>();
     private volatile boolean resolving = false;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    // Host of the server the page last connected to (navigate). The one host
+    // this WebView may follow links and redirects on — see
+    // shouldOverrideLoad. Written from the bridge thread, read on the UI
+    // thread.
+    private volatile String connectedHost;
 
     @PluginMethod
     public void hostInfo(PluginCall call) {
@@ -276,9 +282,20 @@ public class DiscoveryHostPlugin extends Plugin {
     public void navigate(PluginCall call) {
         String url = call.getString("url", "");
         if (!url.startsWith("http://") && !url.startsWith("https://")) {
-            call.reject("navigate: not an http(s) URL");
+            // Ignored, not rejected: navigate() returns void in the contract
+            // (hostContract.ts), so there is no channel to report on, and the
+            // Electron host drops a bad URL the same silent way. The page
+            // never sends one — this only guards the bridge crossing.
+            android.util.Log.w("OpenMSupply", "navigate: not an http(s) URL, ignored");
+            call.resolve();
             return;
         }
+        // Browsing stops when the page stops being on screen: mDNS is
+        // continuous multicast, and nothing polls announcements() once the
+        // window has left for a server. A return to discovery starts a fresh
+        // search of its own (DiscoveryPage § search).
+        this.stopDiscovery();
+        this.connectedHost = this.hostOf(url);
         // Resolve immediately: the page has already persisted what it needs
         // (record-before-navigate, discovery.ts § connectToServer), so there
         // is no grace delay to time.
@@ -306,5 +323,45 @@ public class DiscoveryHostPlugin extends Plugin {
         } catch (Exception e) {
             return url;
         }
+    }
+
+    private String hostOf(String url) {
+        try {
+            return new URL(url).getHost();
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /**
+     * The navigation allowlist, as ONE host decided at run time.
+     * Bridge.launchIntent asks every plugin before consulting its own
+     * allowNavigation mask, so this is where the chosen server is granted the
+     * WebView: false means "load it here", null means "not my business,
+     * Capacitor decides" (which sends it to the browser).
+     *
+     * It has to be a runtime answer — the server's address is the user's, so
+     * capacitor.config.ts cannot name it, and the wildcard that would have
+     * covered it hands out the native bridge and the Java page proxy as well
+     * (see the config's comment).
+     *
+     * Host, not full origin: a server that answered on http and redirects to
+     * https, or moves port, is still the machine the user chose. Only its own
+     * pages navigate here — anything else keeps Capacitor's default.
+     */
+    @Override
+    public Boolean shouldOverrideLoad(Uri url) {
+        String host = this.connectedHost;
+        return host != null && host.equalsIgnoreCase(url.getHost()) ? Boolean.FALSE : null;
+    }
+
+    /** mDNS browsing and the probe thread belong to this activity, not to the
+     * process: leaving them running would keep multicasting for a page that
+     * is no longer on screen. */
+    @Override
+    protected void handleOnDestroy() {
+        this.stopDiscovery();
+        this.executor.shutdownNow();
+        super.handleOnDestroy();
     }
 }
