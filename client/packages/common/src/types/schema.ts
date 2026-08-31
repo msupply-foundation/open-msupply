@@ -7734,6 +7734,7 @@ export enum PreferenceKey {
   SortByVvmStatusThenExpiry = 'sortByVvmStatusThenExpiry',
   StoreCustomColour = 'storeCustomColour',
   SyncRecordsDisplayThreshold = 'syncRecordsDisplayThreshold',
+  TransferStockToInternalCustomersAtCostPrice = 'transferStockToInternalCustomersAtCostPrice',
   UseProcurementFunctionality = 'useProcurementFunctionality',
   UseSimplifiedMobileUi = 'useSimplifiedMobileUi',
   WarnWhenMissingRecentStocktake = 'warnWhenMissingRecentStocktake',
@@ -7814,6 +7815,7 @@ export type PreferencesNode = {
   sortByVvmStatusThenExpiry: Scalars['Boolean']['output'];
   storeCustomColour: Scalars['String']['output'];
   syncRecordsDisplayThreshold: Scalars['Int']['output'];
+  transferStockToInternalCustomersAtCostPrice: Scalars['Boolean']['output'];
   useProcurementFunctionality: Scalars['Boolean']['output'];
   useSimplifiedMobileUi: Scalars['Boolean']['output'];
   warnWhenMissingRecentStocktake: WarnWhenMissingRecentStocktakeDataNode;
@@ -12736,6 +12738,9 @@ export type UpsertPreferencesInput = {
   sortByVvmStatusThenExpiry?: InputMaybe<Array<BoolStorePrefInput>>;
   storeCustomColour?: InputMaybe<Array<StringStorePrefInput>>;
   syncRecordsDisplayThreshold?: InputMaybe<Scalars['Int']['input']>;
+  transferStockToInternalCustomersAtCostPrice?: InputMaybe<
+    Scalars['Boolean']['input']
+  >;
   useProcurementFunctionality?: InputMaybe<Array<BoolStorePrefInput>>;
   useSimplifiedMobileUi?: InputMaybe<Array<BoolStorePrefInput>>;
   warnWhenMissingRecentStocktake?: InputMaybe<

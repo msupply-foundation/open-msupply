@@ -157,6 +157,45 @@ Two rules a real panel must follow, both visible here:
   A `when` that depended on the record would add and remove the contribution as
   the user steps, which is a remount by another name.
 
+## Navigation
+
+Two primitives, both over a path **below the store root**, spelled as the
+navigation registry spells it — `'inventory/stock'`, `'catalogue/items'`, `''`
+for the store's landing screen — plus any query string of its own:
+
+- `storeHref(path)` — the href. Put it on an `<a>` and you get a real link:
+  middle-click, open in a new tab, the link role and keyboard activation, and
+  the host's router turns the click into a client-side navigation.
+- `navigateTo(path, { replace })` — the same destination from code, for when
+  there is no anchor to click (after creating a record, say). Prefer the link
+  wherever the user is choosing to go somewhere.
+
+**Never build a host URL by hand.** Two things you would have to encode are the
+host's and both move: the entered store, and where the app is _mounted_ — the
+deployed `/rc/` track and every branch deploy sit under their own prefix, and a
+link missing it is one the router declines to intercept, so it 404s instead of
+navigating. `storeHref` reads the entered store reactively, so an href read in
+your JSX re-resolves when the user switches store.
+
+An href goes on a raw `<a>`, and only there. Should an SDK component ever take a
+destination, it will take the **path** instead — host link components resolve
+the mount themselves, so handing one a resolved href applies it twice. Same
+input either way; you never choose.
+
+**Styling a link is yours.** The host sets no global anchor style — its own
+links are styled per component — so an `<a>` of yours renders in the browser's
+default link colour until you say otherwise. Style it in your own bundle
+(bespoke styles must be self-contained) and reach for the host's design tokens
+so it stays in key: `var(--secondary-main)` is the action blue the host's own
+record links use, `var(--primary-main)` the brand accent, `var(--text-body)`
+body text — each following the active theme, light or dark. Nothing here depends
+on a host class name; those aren't yours to use. The greeting stat's link shows
+the whole of it.
+
+The reference plugin's greeting stat has one of each, both carrying a
+`data-testid` so a session driving the app can tell them apart (example-plugin
+ids: they are not part of `e2e/TESTIDS.md`, which is the app's own contract).
+
 ## Data
 
 Three ways in, all never-throwing (match on `result.kind`):

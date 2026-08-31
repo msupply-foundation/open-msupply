@@ -128,6 +128,9 @@ impl<'a> StoreRepository<'a> {
             query = query.order(store::id.asc())
         }
         let result = query
+            // Stable tiebreaker so paginated results don't shuffle or drop rows
+            // when the primary sort column has ties.
+            .then_order_by(store::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
             .load::<StoreJoin>(self.connection.lock().connection())?;
