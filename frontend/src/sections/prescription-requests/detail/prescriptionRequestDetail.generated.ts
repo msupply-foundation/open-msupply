@@ -18,7 +18,7 @@ export type PrescriptionRequestFieldsFragment = {
   name: string;
   code: string;
   dateOfBirth: string | null;
-} | null;
+};
   diagnosisId: string | null;
   programId: string | null;
   user: {

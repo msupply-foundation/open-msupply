@@ -1,28 +1,18 @@
 use crate::service_provider::ServiceContext;
-use repository::{
-    PrescriptionRequestLine, PrescriptionRequestLineFilter, PrescriptionRequestLineRow, RepositoryError,
-};
+use repository::PrescriptionRequestLineRow;
 
 pub mod delete;
-pub mod query;
 pub mod upsert;
 
 use self::delete::{delete_prescription_request_line, DeletePrescriptionRequestLineError};
-use self::query::get_prescription_request_lines;
 use self::upsert::{
     upsert_prescription_request_line, UpsertPrescriptionRequestLine, UpsertPrescriptionRequestLineError,
 };
 
+// No filtered read here: lines are only ever read through their parent request,
+// which GraphQL resolves with PrescriptionRequestLinesByRequestIdLoader — and
+// that parent has already been store-scoped by the query that produced it.
 pub trait PrescriptionRequestLineServiceTrait: Sync + Send {
-    fn get_prescription_request_lines(
-        &self,
-        ctx: &ServiceContext,
-        store_id: &str,
-        filter: PrescriptionRequestLineFilter,
-    ) -> Result<Vec<PrescriptionRequestLine>, RepositoryError> {
-        get_prescription_request_lines(ctx, store_id, filter)
-    }
-
     fn upsert_prescription_request_line(
         &self,
         ctx: &ServiceContext,

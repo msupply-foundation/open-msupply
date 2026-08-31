@@ -67,9 +67,15 @@ impl PrescriptionRequestNode {
     pub async fn patient_id(&self) -> &str {
         &self.row().patient_id
     }
-    pub async fn patient(&self, ctx: &Context<'_>) -> Result<Option<PatientNode>> {
+    /// Non-null: a request cannot exist without one. `patient_link_id` is NOT
+    /// NULL with an FK, and the insert validates the id through the same
+    /// PatientFilter the loader reads, so a miss here means the row is corrupt
+    /// rather than the patient being absent — which is why it errors instead of
+    /// answering null. Typed `Option` it could only ever have been Some or an
+    /// error, which told the client the one thing that cannot happen.
+    pub async fn patient(&self, ctx: &Context<'_>) -> Result<PatientNode> {
         let loader = ctx.get_loader::<DataLoader<PatientLoader>>();
-        let result = loader
+        loader
             .load_one(self.row().patient_id.clone())
             .await?
             .map(|patient| PatientNode {
@@ -77,11 +83,12 @@ impl PrescriptionRequestNode {
                 allowed_ctx: vec![],
                 patient,
             })
-            .ok_or(Error::new(format!(
-                "Failed to load patient: {}",
-                self.row().patient_id
-            )))?;
-        Ok(Some(result))
+            .ok_or_else(|| {
+                Error::new(format!(
+                    "Failed to load patient: {}",
+                    self.row().patient_id
+                ))
+            })
     }
 
     pub async fn diagnosis_id(&self) -> &Option<String> {

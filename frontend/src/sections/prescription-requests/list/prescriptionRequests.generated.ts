@@ -75,7 +75,7 @@ export type PrescriptionRequestsResult = {
   patient: {
   id: string;
   name: string;
-} | null;
+};
   user: {
   username: string;
 } | null;
