@@ -7,6 +7,7 @@
 // between launches, and the ordering of a connection attempt. Hosts only
 // supply facts and inherently-native capabilities (./hostContract.ts).
 import type {
+  ConnectedServer,
   DiscoveryHostApi,
   HostInfo,
   RawAnnouncement,
@@ -94,6 +95,16 @@ export const serverUrl = ({ protocol, ip, port }: FrontEndHost): string =>
  * endpoint should be (AC-DT12). */
 export const probeUrl = (server: FrontEndHost): string =>
   `${serverUrl(server)}/graphql`;
+
+/** What the host is told about the server it is being pointed at, for its
+ * certificate trust (hostContract.ts § ConnectedServer). Derived here, from
+ * the same record the page decided everything else from, so no host ever
+ * works out for itself whose server this is. */
+export const connectedServer = ({
+  hardwareId,
+  port,
+  isLocal,
+}: FrontEndHost): ConnectedServer => ({ hardwareId, port, isLocal });
 
 /** Where a successful connection navigates: the server's UI (AC-DT19) at the
  * given path — the login hand-off (./discoveryReturn.ts § handoffPath), an
@@ -428,6 +439,6 @@ export const connectToServer = async (
     .catch(() => false);
   if (!answered) return false;
   if (remember) recordPreviousServer(server, storage);
-  host.navigate(connectUrl(server, path));
+  host.navigate(connectUrl(server, path), connectedServer(server));
   return true;
 };

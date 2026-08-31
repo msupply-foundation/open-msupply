@@ -24,6 +24,7 @@ if (pageOrigin && location.origin === pageOrigin) {
     announcements: () => ipcRenderer.invoke('discovery:announcements'),
     probe: (url, timeoutMs) =>
       ipcRenderer.invoke('discovery:probe', url, timeoutMs),
-    navigate: url => ipcRenderer.send('discovery:navigate', url),
+    navigate: (url, server) =>
+      ipcRenderer.send('discovery:navigate', url, server),
   });
 }

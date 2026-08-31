@@ -285,7 +285,7 @@ const createWindow = async () => {
   ipcMain.handle(IPC.PROBE, (event, url, timeoutMs) =>
     fromPage(event) ? answers(url, timeoutMs) : false
   );
-  ipcMain.on(IPC.NAVIGATE, (_event, url) => {
+  ipcMain.on(IPC.NAVIGATE, (_event, url, server) => {
     // Plain navigation, immediately: the page has already persisted what it
     // needs (record-before-navigate, src/discovery/discovery.ts), so the old
     // resolve-then-wait-50ms dance is gone. Scheme-checked because the URL
@@ -293,6 +293,13 @@ const createWindow = async () => {
     //
     // No fromPage() gate: a page navigating this window is something any
     // document can do with location.href, so refusing here would buy nothing.
+    //
+    // `server` (hostContract.ts § ConnectedServer) is accepted and unused:
+    // this shell accepts any certificate, the weakness spec/desktop carries as
+    // its open trust question. It is where a fingerprint check would key from
+    // when that is answered — the legacy desktop shell stores fingerprints
+    // under exactly this hardware id and port.
+    void server;
     if (/^https?:\/\//.test(String(url))) {
       stopDiscovery();
       void win.loadURL(url);

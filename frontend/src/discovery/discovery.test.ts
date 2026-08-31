@@ -600,8 +600,43 @@ describe('connectToServer (probe → record → navigate)', () => {
       ANSWER_CHECK_TIMEOUT_MS
     );
     expect(navigate).toHaveBeenCalledWith(
-      'https://192.168.1.10:8000/login?discovery-return=x'
+      'https://192.168.1.10:8000/login?discovery-return=x',
+      { hardwareId: 'HW-A', port: 8000, isLocal: false }
     );
+  });
+
+  // The host cannot answer a self-signed server's certificate error without
+  // knowing whose server it is: its own it can prove exactly, anyone else's it
+  // can only trust on first use, keyed by hardware id and port
+  // (hostContract.ts § ConnectedServer, spec/android § connection trust).
+  it('tells the host whose server it is, for certificate trust', async () => {
+    const navigate = vi.fn();
+    await connectToServer(
+      { probe: async () => true, navigate },
+      host({ hardwareId: 'HW-MINE', port: 8001, isLocal: true }),
+      { path: 'login', remember: false }
+    );
+    expect(navigate).toHaveBeenLastCalledWith(expect.any(String), {
+      hardwareId: 'HW-MINE',
+      port: 8001,
+      isLocal: true,
+    });
+  });
+
+  it('a manually entered server has no announced id to key on', async () => {
+    const navigate = vi.fn();
+    const manual = parseManualServer('https://10.9.9.9:8000', 'UUID-1')!;
+    await connectToServer({ probe: async () => true, navigate }, manual, {
+      path: 'login',
+      remember: false,
+    });
+    // parseManualServer mints an id purely to key the list entry; it is not an
+    // announced hardware_id, and the host must not treat it as one.
+    expect(navigate).toHaveBeenLastCalledWith(expect.any(String), {
+      hardwareId: 'UUID-1',
+      port: 8000,
+      isLocal: false,
+    });
   });
 
   it('remember: false (standalone) records nothing (AC-DT20/21)', async () => {
