@@ -85,8 +85,8 @@ export const installDevHostMock = (): DiscoveryHostApi => {
     announcements: async () => ({ announcements: [...found] }),
     probe: (url, timeoutMs) =>
       scenario === 'fail' ? Promise.resolve(false) : answers(url, timeoutMs),
-    navigate: url => {
-      console.info('[devHostMock] navigating to', url);
+    navigate: (url, server) => {
+      console.info('[devHostMock] navigating to', url, server);
       window.location.assign(url);
     },
   };

@@ -82,6 +82,26 @@ export type RawAnnouncement = {
   hardwareId: string;
 };
 
+/** Who the window is being navigated to, for the host's certificate trust
+ * (see `navigate` below). Deliberately narrower than the page's own
+ * FrontEndHost: only what a trust decision needs, so it stays obvious why
+ * each field crosses the bridge. The URL carries the rest. */
+export type ConnectedServer = {
+  /** The server's announced `hardware_id` — with `port`, the key both legacy
+   * shells store certificate fingerprints under, so an upgraded install still
+   * recognises a server it already trusted. `''` for a manually entered
+   * server, which was never announced and has no id to key on. */
+  hardwareId: string;
+  /** The server's port, the other half of that key. Passed rather than parsed
+   * back out of the URL, where a default port is not written down. */
+  port: number;
+  /** This machine's own server (the page's hardware-id compare,
+   * ./discovery.ts § isLocalServer). Picks exact-certificate proof over
+   * trust-on-first-use — and means the host never has to recognise its own
+   * server by address, which loopback-vs-hostname spellings make unreliable. */
+  isLocal: boolean;
+};
+
 export type DiscoveryHostApi = {
   /** Static facts about this machine. Re-read per search — the network (and
    * with it lanAddresses) can change while the page is open. Never rejects. */
@@ -101,10 +121,26 @@ export type DiscoveryHostApi = {
    * elapsing is false; never rejects. The timeout is the caller's
    * (./discovery.ts § ANSWER_CHECK_TIMEOUT_MS) so the constant exists once. */
   probe: (url: string, timeoutMs: number) => Promise<boolean>;
-  /** Plain navigation of this window/WebView to the URL. The page persists
-   * everything it needs BEFORE calling this (./discovery.ts §
-   * connectToServer), so the host adds no delay and resolves nothing. */
-  navigate: (url: string) => void;
+  /** Navigate this window/WebView to the URL, told which server it belongs
+   * to. The page persists everything it needs BEFORE calling this
+   * (./discovery.ts § connectToServer), so the host adds no delay and
+   * resolves nothing.
+   *
+   * `server` is here because certificate trust is a host capability that
+   * cannot be done blind. open-mSupply servers are self-signed, so every
+   * connection raises a certificate error the shell — not the page — has to
+   * answer, and the answer depends on WHICH server this is: this machine's
+   * own can be proved exactly against the certificate it wrote to disk, while
+   * anyone else's can only be trusted on first use, keyed by identity
+   * (spec/android § connection trust, AC-AN8–11). A host handed only a URL
+   * cannot tell those apart and cannot find what it recorded last time —
+   * both legacy shells key their fingerprint store on hardware id and port
+   * (spec/desktop/README.md § Status).
+   *
+   * This is still not policy: the page decides which server, whether it is
+   * this machine's, and when to go. The host is told what it needs to do the
+   * one job only it can do. */
+  navigate: (url: string, server: ConnectedServer) => void;
 };
 
 declare global {

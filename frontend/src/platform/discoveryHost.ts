@@ -31,7 +31,12 @@ type DiscoveryHostPlugin = {
     url: string;
     timeoutMs: number;
   }) => Promise<{ answered: boolean }>;
-  navigate: (options: { url: string }) => Promise<void>;
+  navigate: (options: {
+    url: string;
+    hardwareId: string;
+    port: number;
+    isLocal: boolean;
+  }) => Promise<void>;
 };
 
 let plugin: DiscoveryHostPlugin | undefined;
@@ -76,6 +81,7 @@ export const getDiscoveryHost = async (): Promise<
     announcements: () => p.announcements(),
     probe: async (url, timeoutMs) =>
       (await p.probe({ url, timeoutMs })).answered,
-    navigate: url => fireAndForget('navigate', p.navigate({ url })),
+    navigate: (url, server) =>
+      fireAndForget('navigate', p.navigate({ url, ...server })),
   };
 };
