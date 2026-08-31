@@ -46,11 +46,21 @@ export const getDiscoveryHost = async (): Promise<
     plugin = registerPlugin<DiscoveryHostPlugin>('DiscoveryHost');
   }
   const p = plugin;
+  // The two fire-and-forget methods swallow their own failures: the contract
+  // gives them no way to report one (both return void), and an uncaught
+  // bridge rejection would surface as an unhandled promise rejection in the
+  // page instead. Logged so a broken bridge is still findable.
+  const fireAndForget = (method: string, call: Promise<void>): void => {
+    void call.catch((error: unknown) =>
+      console.error(`DiscoveryHost.${method} failed`, error)
+    );
+  };
   return {
     hostInfo: () => p.hostInfo(),
-    startDiscovery: () => void p.startDiscovery(),
+    startDiscovery: () => fireAndForget('startDiscovery', p.startDiscovery()),
     announcements: () => p.announcements(),
-    probe: async (url, timeoutMs) => (await p.probe({ url, timeoutMs })).answered,
-    navigate: url => void p.navigate({ url }),
+    probe: async (url, timeoutMs) =>
+      (await p.probe({ url, timeoutMs })).answered,
+    navigate: url => fireAndForget('navigate', p.navigate({ url })),
   };
 };
