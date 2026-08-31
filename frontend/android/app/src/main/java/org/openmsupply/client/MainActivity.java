@@ -12,7 +12,7 @@ import android.webkit.WebView;
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.BridgeWebViewClient;
 
-public class MainActivity extends BridgeActivity {
+public class MainActivity extends BridgeActivity implements DiscoveryHostActivity {
     private static final int SERVER_PORT = 8000;
     private final RemoteServer server = new RemoteServer();
 
@@ -34,6 +34,7 @@ public class MainActivity extends BridgeActivity {
     // session clear in onDestroy.
     private boolean clientMode;
 
+    @Override
     public void clearHistoryWhenLoaded(String urlPrefix) {
         pendingHistoryClearPrefix = urlPrefix;
     }

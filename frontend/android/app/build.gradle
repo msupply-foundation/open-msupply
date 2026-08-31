@@ -17,6 +17,15 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // Java compiled by BOTH Android projects — the discovery host plugin
+    // (android-shared/README.md). One implementation per platform is the point
+    // of the host contract; two copies would drift.
+    sourceSets {
+        main {
+            java.srcDirs += '../../../android-shared'
+        }
+    }
+
     buildTypes {
         debug {
             // distinct identity so dev builds coexist with the legacy production
