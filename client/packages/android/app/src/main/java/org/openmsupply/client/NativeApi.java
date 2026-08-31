@@ -2,6 +2,7 @@ package org.openmsupply.client;
 
 import static android.content.Context.NSD_SERVICE;
 
+import android.app.Activity;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdServiceInfo;
 import android.os.Handler;
@@ -56,9 +57,48 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     JSArray discoveredServers;
     Deque<NsdServiceInfo> serversToResolve;
     FrontEndHost connectedServer;
+
+    // The server the DISCOVERY PAGE chose (hostContract.ts § ConnectedServer,
+    // delivered via MainActivity.onServerChosen). The page drives connections
+    // as probe → record → navigate, so the fused connectToServer below — and
+    // the `connectedServer` it populated — never runs on that path, and
+    // certificate trust would have nothing to key on. Static because the
+    // choice belongs to the app's session, not to a plugin instance.
+    //
+    // Kept ALONGSIDE connectedServer rather than replacing it: the old front
+    // end at /old-ui/ still connects through connectToServer, and both paths
+    // must keep working while both front ends ship.
+    private static String chosenUrl;
+    private static String chosenHardwareId = "";
+    private static int chosenPort;
+    private static boolean chosenIsLocal;
+
+    static void chosenServer(String url, String hardwareId, int port, boolean isLocal) {
+        chosenUrl = url;
+        chosenHardwareId = hardwareId;
+        chosenPort = port;
+        chosenIsLocal = isLocal;
+    }
+
+    /** The URL the discovery page navigated to, or null if it has not. */
+    public static String getChosenUrl() {
+        return chosenUrl;
+    }
+
+    /** Fingerprint-store key for the chosen server, matching the identifier
+     * CertWebViewClient.validateNonLocalCertificate has always used, so a
+     * server already trusted on this device is still recognised. */
+    public static String getChosenFingerprintKey() {
+        return chosenHardwareId + "-" + chosenPort;
+    }
+
+    public static boolean getChosenIsLocal() {
+        return chosenIsLocal;
+    }
     NsdManager discoveryManager;
     boolean isDebug;
     boolean isAdvertising;
+    static final String DISCOVERY_PATH = "/discovery.html";
     String localUrl;
     String serverUrl;
     boolean isDiscovering;
@@ -214,7 +254,10 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
 
                 // .post to run on UI thread in the two calls below
                 if (isServerRunning) {
-                    final String targetUrl = localUrl + "/android";
+                    // The discovery page decides what happens next: the mode
+                    // chooser on a first run, this device's own server, or the
+                    // LAN list (frontend/src/discovery/DiscoveryPage.tsx).
+                    final String targetUrl = discoveryUrl(true, false);
                     Log.i(OM_SUPPLY, "Loading WebView url=" + targetUrl);
                     frontendLoaded = true;
                     webView.post(() -> webView.loadUrl(targetUrl));
@@ -235,12 +278,40 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         stopServerDiscovery();
     }
 
+    /** The bundled discovery page, served by the local server as a second page
+     * of the new front end's build (frontend/src/discovery). Replaces the old
+     * front end's /discovery and /android routes, which the new front end does
+     * not have.
+     *
+     * `canhost=true` says this machine could run the server everyone uses OR
+     * connect to someone else's — this app always ships the server library, so
+     * it always could be either, and that is what lets the page ask once and
+     * remember the answer (AC-AN21) instead of the retired /android chooser. */
+    String discoveryUrl(boolean autoconnect, boolean timedout) {
+        String url = localUrl + DISCOVERY_PATH + "?canhost=true";
+        if (!autoconnect) url += "&autoconnect=false";
+        if (timedout) url += "&timedout=true";
+        return url;
+    }
+
+    /** Send the WebView back to discovery, never bouncing straight back to the
+     * server just left (AC-DT16). `timedout` seeds the could-not-connect
+     * notice (AC-DT2/AC-DT4). */
+    void returnToDiscovery(boolean timedout) {
+        WebView webView = this.getBridge().getWebView();
+        String url = discoveryUrl(false, timedout);
+        webView.post(() -> {
+            Activity activity = this.getActivity();
+            if (activity instanceof DiscoveryHostActivity) {
+                ((DiscoveryHostActivity) activity).clearHistoryWhenLoaded(localUrl + DISCOVERY_PATH);
+            }
+            webView.loadUrl(url);
+        });
+    }
+
     @PluginMethod()
     public void goBackToDiscovery(PluginCall call) {
-        Bridge bridge = this.getBridge();
-        WebView webView = bridge.getWebView();
-        // .post to run on UI thread
-        webView.post(() -> webView.loadUrl(localUrl + "/discovery?autoconnect=false"));
+        this.returnToDiscovery(false);
     }
 
     // Advertise local remote server on network
