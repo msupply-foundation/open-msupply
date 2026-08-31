@@ -126,6 +126,7 @@ pub enum TransactMode {
     #[serde(other)]
     Others,
 }
+
 #[derive(Deserialize, Serialize, Default)]
 pub struct TransactRowOmsFields {
     #[serde(default)]
@@ -181,12 +182,6 @@ pub struct LegacyTransactRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(rename = "original_PO_ID")]
     pub purchase_order_id: Option<String>,
-    /// OMS-only soft link to the prescriber's prescription_request this dispensing
-    /// invoice was generated from; OG just round-trips the om_ field.
-    #[serde(default)]
-    #[serde(rename = "om_prescription_request_id")]
-    #[serde(deserialize_with = "empty_str_as_option_string")]
-    pub prescription_request_id: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub requisition_ID: Option<String>,
     #[serde(deserialize_with = "empty_str_as_option_string")]
@@ -583,9 +578,10 @@ impl SyncTranslation for InvoiceTranslation {
         // record must not wipe them. On central we refresh the owned keys
         // (`category_ID`) from OG and keep the rest; off central we leave
         // `custom_fields` untouched — it arrives via v7 instead.
-        let existing_custom_fields = InvoiceRowRepository::new(connection)
-            .find_one_by_id(&data.ID)?
-            .and_then(|row| row.custom_fields);
+        let existing_row = InvoiceRowRepository::new(connection).find_one_by_id(&data.ID)?;
+        let existing_custom_fields = existing_row
+            .as_ref()
+            .and_then(|row| row.custom_fields.clone());
         let custom_fields = if CentralServerConfig::is_central_server() {
             merge_legacy_custom_fields(
                 existing_custom_fields,
@@ -659,7 +655,13 @@ impl SyncTranslation for InvoiceTranslation {
             charges_foreign_currency: oms_fields.charges_foreign_currency,
             legacy_goods_received_id: data.goods_received_ID,
             custom_fields,
-            prescription_request_id: data.prescription_request_id,
+            // Prescription requests are OMS-native and v7-only, so OG has no
+            // column for this and no site that holds one uses this translator
+            // (a v7 site syncs invoices as rows). Nothing is read off the wire —
+            // but the local value is carried over rather than defaulted away, so
+            // a v5 re-import of the transact cannot null a link it never knew
+            // about. Same hazard as `custom_fields` above.
+            prescription_request_id: existing_row.and_then(|row| row.prescription_request_id),
             ..Default::default()
         };
 
@@ -792,7 +794,8 @@ impl SyncTranslation for InvoiceTranslation {
                     charges_foreign_currency,
                     legacy_goods_received_id: _,
                     custom_fields,
-                    prescription_request_id,
+                    // OMS-native and v7-only — never pushed to OG
+                    prescription_request_id: _,
                 },
             name_row,
             clinician_row,
@@ -876,7 +879,6 @@ impl SyncTranslation for InvoiceTranslation {
             category_ID: category_id,
             category2_ID: category2_id,
             purchase_order_id,
-            prescription_request_id,
             shipping_method_id,
             oms_fields: Some(TransactRowOmsFields {
                 charges_local_currency,
@@ -1444,6 +1446,110 @@ mod tests {
     /// shipping_method_id and purchase_order_id all reference records that don't exist, the
     /// translator should null each one on the translated row and write a SyncTranslationFkError
     /// for each.
+    /// A prescription request is OMS-native and v7-only, so OG has no column
+    /// for `invoice.prescription_request_id` and never sends one. A v5 re-import
+    /// of the transact must therefore leave the local link alone rather than
+    /// rebuilding the row without it — the same hazard `custom_fields` has.
+    #[actix_rt::test]
+    async fn test_invoice_v5_reimport_keeps_prescription_request_link() {
+        let translator = InvoiceTranslation {};
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_invoice_v5_reimport_keeps_prescription_request_link",
+            MockDataInserts::none().names().stores().currencies(),
+            MockData {
+                key_value_store_rows: vec![KeyValueStoreRow {
+                    id: KeyType::SettingsSyncSiteId,
+                    value_int: Some(mock_store_a().site_id),
+                    ..Default::default()
+                }],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        // The dispensation as a v7 site already holds it, linked to its request
+        InvoiceRowRepository::new(&connection)
+            .upsert_one(&InvoiceRow {
+                id: "INVOICE_FROM_REQUEST".to_string(),
+                name_id: "name_store_a".to_string(),
+                store_id: "store_b".to_string(),
+                invoice_number: 1,
+                r#type: InvoiceType::Prescription,
+                status: InvoiceStatus::New,
+                prescription_request_id: Some("prescription_request_a".to_string()),
+                ..Default::default()
+            })
+            .unwrap();
+
+        let sync_record = SyncBufferRow {
+            table_name: "transact".to_string(),
+            record_id: "INVOICE_FROM_REQUEST".to_string(),
+            data: SyncRecordData(
+                serde_json::from_str(
+                    r#"{
+              "ID": "INVOICE_FROM_REQUEST",
+              "name_ID": "name_store_a",
+              "store_ID": "store_b",
+              "invoice_num": 1,
+              "type": "ci",
+              "status": "nw",
+              "hold": false,
+              "comment": "",
+              "their_ref": "",
+              "om_transport_reference": "",
+              "requisition_ID": "",
+              "linked_transaction_id": "",
+              "entry_date": "2021-07-30",
+              "entry_time": 47046,
+              "finalised_date": "0000-00-00",
+              "finalised_time": 0,
+              "confirm_date": "2021-07-30",
+              "confirm_time": 47046,
+              "mode": "dispensary",
+              "om_created_datetime": "",
+              "om_allocated_datetime": "",
+              "om_picked_datetime": null,
+              "om_shipped_datetime": "",
+              "om_delivered_datetime": "",
+              "om_verified_datetime": "",
+              "om_expected_delivery_date": "",
+              "tax_rate": 0,
+              "currency_ID": "",
+              "currency_rate": 1.0,
+              "prescriber_ID": "",
+              "diagnosis_ID": "",
+              "nameInsuranceJoinID": "",
+              "donor_default_id": "",
+              "ship_method_ID": "",
+              "user_ID": "",
+              "is_cancellation": false,
+              "insuranceDiscountAmount": 0,
+              "insuranceDiscountRate": 0,
+              "goods_received_ID": "",
+              "original_PO_ID": ""
+            }"#,
+                )
+                .unwrap(),
+            ),
+            action: SyncAction::Upsert,
+            ..Default::default()
+        };
+
+        let result = translator
+            .try_translate_from_upsert_sync_record(
+                &connection,
+                &crate::sync::translations::FkChecker::new(),
+                &sync_record,
+            )
+            .unwrap();
+        let debug = format!("{result:?}");
+        assert!(
+            debug.contains(r#"prescription_request_id: Some("prescription_request_a")"#),
+            "{}",
+            format!("re-import dropped the request link; got:\n{debug}")
+        );
+    }
+
     #[actix_rt::test]
     async fn test_invoice_clears_invalid_optional_fks_and_writes_system_log() {
         let translator = InvoiceTranslation {};

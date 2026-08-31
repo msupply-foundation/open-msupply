@@ -8,7 +8,7 @@ export type UpsertPrescriptionRequestLineVariables = {
     id: string;
     prescriptionRequestId: string;
     itemId: string;
-    quantity: number;
+    numberOfUnits: number;
     note?: string | null;
   };
 };

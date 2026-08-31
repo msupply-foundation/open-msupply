@@ -1,4 +1,11 @@
-import { createResource, createSignal, Show, type Component } from 'solid-js';
+import {
+  createEffect,
+  createResource,
+  createSignal,
+  on,
+  Show,
+  type Component,
+} from 'solid-js';
 import { generateUUID } from '../../../../uuid';
 import { t } from '../../../../intl';
 import { formatNumber } from '../../../../intl';
@@ -52,10 +59,25 @@ export const RequestLineEditModal: Component<
   RequestLineEditModalProps
 > = props => {
   const [item, setItem] = createSignal<ItemOption | null>(null);
+  // The editable fields seed from the line being edited. A signal initialiser
+  // reads props ONCE and outside any tracking scope, so it would not notice a
+  // different line arriving — today the parent mounts this keyed and it never
+  // does, but that is the parent's business, not a property of this dialog.
+  // Re-seed on the line's identity instead, so the two cannot drift apart.
   const [quantity, setQuantity] = createSignal<number | undefined>(
-    props.line?.quantity
+    props.line?.numberOfUnits
   );
   const [note, setNote] = createSignal(props.line?.note ?? '');
+  createEffect(
+    on(
+      () => props.line,
+      line => {
+        setQuantity(line?.numberOfUnits);
+        setNote(line?.note ?? '');
+      },
+      { defer: true }
+    )
+  );
   const [abbrevEntry, setAbbrevEntry] = createSignal('');
   const [busy, setBusy] = createSignal(false);
   const [error, setError] = createSignal<string>();
@@ -122,7 +144,7 @@ export const RequestLineEditModal: Component<
           id: props.line?.id ?? generateUUID(),
           prescriptionRequestId: props.requestId,
           itemId: chosenId,
-          quantity: chosenQuantity,
+          numberOfUnits: chosenQuantity,
           note: note().trim() || null,
         },
       },

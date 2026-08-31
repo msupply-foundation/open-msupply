@@ -240,7 +240,6 @@ fn transact_1_push_legacy_row() -> LegacyTransactRow {
         category_ID: None,
         category2_ID: None,
         purchase_order_id: Some("test_purchase_order_a".to_string()),
-        prescription_request_id: None,
         shipping_method_id: Some("SHIPPING_METHOD_1_ID".to_string()),
         oms_fields: Some(TransactRowOmsFields {
             charges_local_currency: 15.5,
@@ -454,7 +453,6 @@ fn transact_2_push_record() -> TestSyncOutgoingRecord {
             category_ID: None,
             category2_ID: None,
             purchase_order_id: None,
-            prescription_request_id: None,
             shipping_method_id: None,
             oms_fields: Some(TransactRowOmsFields {
                 charges_local_currency: 0.0,
@@ -729,7 +727,6 @@ fn transact_om_fields_push_record() -> TestSyncOutgoingRecord {
             category_ID: None,
             category2_ID: None,
             purchase_order_id: None,
-            prescription_request_id: None,
             shipping_method_id: None,
             oms_fields: Some(TransactRowOmsFields {
                 charges_local_currency: 0.0,
@@ -956,7 +953,6 @@ fn inventory_addition_push_record() -> TestSyncOutgoingRecord {
             category_ID: None,
             category2_ID: None,
             purchase_order_id: None,
-            prescription_request_id: None,
             shipping_method_id: None,
             oms_fields: Some(TransactRowOmsFields {
                 charges_local_currency: 0.0,
@@ -1182,7 +1178,6 @@ fn inventory_reduction_push_record() -> TestSyncOutgoingRecord {
             category_ID: None,
             category2_ID: None,
             purchase_order_id: None,
-            prescription_request_id: None,
             shipping_method_id: None,
             oms_fields: Some(TransactRowOmsFields {
                 charges_local_currency: 0.0,
@@ -1405,7 +1400,6 @@ fn prescription_1_push_record() -> TestSyncOutgoingRecord {
             category_ID: None,
             category2_ID: None,
             purchase_order_id: None,
-            prescription_request_id: None,
             shipping_method_id: None,
             oms_fields: Some(TransactRowOmsFields {
                 charges_local_currency: 0.0,
@@ -1639,7 +1633,6 @@ fn cancelled_prescription_push_record() -> TestSyncOutgoingRecord {
             category_ID: None,
             category2_ID: None,
             purchase_order_id: None,
-            prescription_request_id: None,
             shipping_method_id: None,
             oms_fields: Some(TransactRowOmsFields {
                 charges_local_currency: 0.0,

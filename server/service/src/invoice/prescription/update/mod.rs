@@ -147,6 +147,13 @@ pub fn create_reverse_prescription(
     orig_invoice: &InvoiceRow,
 ) -> Result<(), UpdatePrescriptionError> {
     // Create a new invoice row based on original invoice
+    //
+    // The clone carries `prescription_request_id` onto the reversal, and that is
+    // deliberate: the cancellation is part of the same episode of prescribing,
+    // and a reversal that named no request would read as an unrelated
+    // adjustment. Cancelling does NOT reopen the request — it stays Dispensed,
+    // because it was: cancellation is only reachable once the dispensation is
+    // Verified.
     let mut new_invoice = orig_invoice.clone();
 
     new_invoice.id = uuid();

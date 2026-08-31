@@ -19,7 +19,7 @@ define_linked_tables! {
     repo: PrescriptionRequestLineRowRepository,
     shared: {
         prescription_request_id -> Text,
-        quantity -> Double,
+        number_of_units -> Double,
         note -> Nullable<Text>,
     },
     links: {
@@ -41,9 +41,10 @@ allow_tables_to_appear_in_same_query!(prescription_request_line, item_link);
 pub struct PrescriptionRequestLineRow {
     pub id: String,
     pub prescription_request_id: String,
-    /// Prescribed quantity in units; copied to the dispensing invoice line's
+    /// Prescribed quantity, in units (never packs — the prescriber does not
+    /// know the pack size); copied to the dispensing invoice line's
     /// prescribed_quantity when the request converts.
-    pub quantity: f64,
+    pub number_of_units: f64,
     /// Directions text (abbreviations already expanded); copied to the
     /// dispensing invoice line's note on conversion.
     pub note: Option<String>,
@@ -133,7 +134,9 @@ impl<'a> PrescriptionRequestLineRowRepository<'a> {
         prescription_request_ids: &[String],
     ) -> Result<Vec<PrescriptionRequestLineRow>, RepositoryError> {
         let result = prescription_request_line::table
-            .filter(prescription_request_line::prescription_request_id.eq_any(prescription_request_ids))
+            .filter(
+                prescription_request_line::prescription_request_id.eq_any(prescription_request_ids),
+            )
             .load(self.connection.lock().connection())?;
         Ok(result)
     }

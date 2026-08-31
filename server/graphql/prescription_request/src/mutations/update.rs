@@ -120,6 +120,8 @@ fn map_error(error: ServiceError) -> async_graphql::Error {
         | ServiceError::NotThisStorePrescriptionRequest
         | ServiceError::NotEditable
         | ServiceError::PatientDoesNotExist
+        | ServiceError::DiagnosisDoesNotExist
+        | ServiceError::ProgramDoesNotExist
         | ServiceError::UnknownCustomFieldKey(_)
         | ServiceError::InvalidCustomFieldValue { .. }
         | ServiceError::NoLines => BadUserInput(formatted_error),

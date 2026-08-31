@@ -1,3 +1,6 @@
+use self::batch::{
+    batch_prescription_request, BatchPrescriptionRequest, BatchPrescriptionRequestResult,
+};
 use self::delete::{delete_prescription_request, DeletePrescriptionRequestError};
 use self::insert::{
     insert_prescription_request, InsertPrescriptionRequest, InsertPrescriptionRequestError,
@@ -12,6 +15,7 @@ use repository::{
     PrescriptionRequestSort, RepositoryError,
 };
 
+pub mod batch;
 pub mod delete;
 pub mod generate;
 pub mod insert;
@@ -65,6 +69,15 @@ pub trait PrescriptionRequestServiceTrait: Sync + Send {
         id: String,
     ) -> Result<String, DeletePrescriptionRequestError> {
         delete_prescription_request(ctx, store_id, id)
+    }
+
+    fn batch_prescription_request(
+        &self,
+        ctx: &ServiceContext,
+        store_id: &str,
+        input: BatchPrescriptionRequest,
+    ) -> Result<BatchPrescriptionRequestResult, RepositoryError> {
+        batch_prescription_request(ctx, store_id, input)
     }
 }
 

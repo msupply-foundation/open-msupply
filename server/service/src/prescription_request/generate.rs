@@ -1,10 +1,11 @@
 use repository::{
-    InvoiceLineRow, InvoiceLineRowRepository, InvoiceLineType, ItemRowRepository,
-    PrescriptionRequestLineRow, PrescriptionRequestRow, RepositoryError, StorageConnection,
+    InvoiceLineRowRepository, ItemRowRepository, PrescriptionRequestLineRow,
+    PrescriptionRequestRow, RepositoryError, StorageConnection,
 };
 use util::uuid::uuid;
 
 use crate::invoice::prescription::{insert_prescription, InsertPrescription};
+use crate::invoice_line::stock_out_line::set_prescribed_quantity::generate::unallocated_prescribed_line;
 use crate::service_provider::ServiceContext;
 
 use super::update::UpdatePrescriptionRequestError;
@@ -52,8 +53,9 @@ pub(crate) fn create_dispensation(
         UpdatePrescriptionRequestError::CreatedDispensationError(format!("{:?}", error))
     })?;
 
-    // One unallocated line per prescribed item (same shape the dispensing
-    // module's set_prescribed_quantity creates), plus the directions note.
+    // One unallocated line per prescribed item, in the shape a dispenser's own
+    // prescribed-quantity entry produces (unallocated_prescribed_line), plus
+    // the prescriber's directions as the note.
     let item_repo = ItemRowRepository::new(connection);
     let invoice_line_repo = InvoiceLineRowRepository::new(connection);
     for line in lines {
@@ -61,48 +63,13 @@ pub(crate) fn create_dispensation(
             .find_one_by_id(&line.item_id)?
             .ok_or(RepositoryError::NotFound)?;
 
-        let invoice_line = InvoiceLineRow {
-            id: uuid(),
-            invoice_id: invoice_id.clone(),
-            item_name: item.name,
-            item_code: item.code,
-            item_id: line.item_id,
-            r#type: InvoiceLineType::UnallocatedStock,
-            prescribed_quantity: Some(line.quantity),
-            note: line.note,
-
-            // Default
-            pack_size: 0.0,
-            number_of_packs: 0.0,
-            total_before_tax: 0.0,
-            total_after_tax: 0.0,
-            tax_percentage: None,
-            location_id: None,
-            batch: None,
-            expiry_date: None,
-            manufacture_date: None,
-            purchase_order_line_id: None,
-            sell_price_per_pack: 0.0,
-            cost_price_per_pack: 0.0,
-            stock_line_id: None,
-            foreign_currency_price_before_tax: None,
-            item_variant_id: None,
-            linked_invoice_id: None,
-            donor_id: None,
-            manufacturer_id: None,
-            legacy_goods_received_line_id: None,
-            vvm_status_id: None,
-            reason_option_id: None,
-            campaign_id: None,
-            program_id: None,
-            shipped_number_of_packs: None,
-            volume_per_pack: 0.0,
-            shipped_pack_size: None,
-            status: None,
-            received_number_of_packs: None,
-            linked_invoice_line_id: None,
-        };
-        invoice_line_repo.upsert_one(&invoice_line)?;
+        invoice_line_repo.upsert_one(&unallocated_prescribed_line(
+            uuid(),
+            invoice_id.clone(),
+            item,
+            line.number_of_units,
+            line.note,
+        ))?;
     }
 
     Ok(invoice_id)
