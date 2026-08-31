@@ -20,6 +20,25 @@ export interface OrderedOption {
   option: CustomFieldOption;
   depth: number;
 }
+/**
+ * The options a user may CHOOSE: everything the definition carries, minus the
+ * deleted ones.
+ *
+ * The server returns deleted options on purpose — a stored value is only ever
+ * an option id, so dropping them would leave every record still holding one
+ * rendering a raw id instead of a name. They stay **resolvable but never
+ * offered** (spec/ui-standards/custom-fields.md), which means the display path
+ * (`resolveOptionName`) reads the whole list and every picker reads this.
+ *
+ * Hierarchy maths — `expandStoredToSelection`, `applyOptionToggle`,
+ * `collapseSelectionToStored` — also reads the whole list: a stored value has
+ * to keep resolving to its place in the tree whatever its option's state. A
+ * deleted parent leaves its children as orphans, which the walkers already
+ * treat as roots.
+ */
+export const liveOptions = (options: CustomFieldOption[]): CustomFieldOption[] =>
+  options.filter(option => !option.deletedDatetime);
+
 export const orderOptionsHierarchically = (
   options: CustomFieldOption[]
 ): OrderedOption[] => {
@@ -234,17 +253,19 @@ export const parseCustomField = (def: CustomFieldDef): ParsedCustomField => {
       return { kind: 'date', def };
     case 'BOOLEAN':
       return { kind: 'boolean', def };
+    // `options` is the OFFERED list, so deleted ones are dropped here. `def`
+    // rides along untouched for the resolve/hierarchy paths that need them.
     case 'OPTION':
       return {
         kind: 'option',
         def,
-        options: orderOptionsHierarchically(def.options),
+        options: orderOptionsHierarchically(liveOptions(def.options)),
       };
     case 'MULTI_OPTION':
       return {
         kind: 'multiOption',
         def,
-        options: orderOptionsHierarchically(def.options),
+        options: orderOptionsHierarchically(liveOptions(def.options)),
       };
     default:
       // Unreachable for the current enum; the forward-compat degrade path.

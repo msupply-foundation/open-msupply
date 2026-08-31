@@ -243,11 +243,14 @@ export type SourcePrescriptionRequestVariables = {
 
 export type SourcePrescriptionRequestResult = {
   prescriptionRequest: ({
+  __typename: "PrescriptionRequestNode";
   id: string;
   prescriptionRequestNumber: number;
+}) | ({
+  __typename: "RecordNotFound";
 });
 };
 
 export const SourcePrescriptionRequest = {
-  query: "query sourcePrescriptionRequest($storeId: String!, $id: String!) {\n  prescriptionRequest(storeId: $storeId, id: $id) {\n    ... on PrescriptionRequestNode {\n      id\n      prescriptionRequestNumber\n    }\n  }\n}",
+  query: "query sourcePrescriptionRequest($storeId: String!, $id: String!) {\n  prescriptionRequest(storeId: $storeId, id: $id) {\n    __typename\n    ... on PrescriptionRequestNode {\n      id\n      prescriptionRequestNumber\n    }\n  }\n}",
 } as TypedDocument<SourcePrescriptionRequestResult, SourcePrescriptionRequestVariables>;

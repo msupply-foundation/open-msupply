@@ -23,18 +23,19 @@ export type CustomFieldDefinitionsResult = {
     | "OPTION"
     | "MULTI_OPTION"
     | "BOOLEAN";
-  kind: "STANDARD" | "LEGACY";
+  kind: "STANDARD" | "LEGACY" | "BUILTIN";
   displayMode: "HIDDEN" | "VISIBLE" | "PROMINENT" | "OTHER" | null;
   options: Array<{
   id: string;
   key: string;
   name: string;
   parentOptionId: string | null;
+  deletedDatetime: string | null;
 }>;
 }>;
 });
 };
 
 export const CustomFieldDefinitions = {
-  query: "query customFieldDefinitions($scope: String!) {\n  customFields(filter: {scope: {equalTo: $scope}}) {\n    ... on CustomFieldConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        key\n        name\n        valueType\n        kind\n        displayMode\n        options {\n          id\n          key\n          name\n          parentOptionId\n        }\n      }\n    }\n  }\n}",
+  query: "query customFieldDefinitions($scope: String!) {\n  customFields(filter: {scope: {equalTo: $scope}}) {\n    ... on CustomFieldConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        key\n        name\n        valueType\n        kind\n        displayMode\n        options {\n          id\n          key\n          name\n          parentOptionId\n          deletedDatetime\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<CustomFieldDefinitionsResult, CustomFieldDefinitionsVariables>;

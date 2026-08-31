@@ -201,8 +201,14 @@ query labelPrinterSettings {
 # (spec/prescriptions/ui-surface.md S3 § side panel). The mirror of the request
 # side's dispensation lookup: that one filters invoices by request, this one
 # reads the request the invoice names.
+# `__typename` is selected because the union's other member is RecordNotFound,
+# which arrives as `{}` — truthy, and indistinguishable from a node without it.
+# The request is a SOFT link (no FK): it is RemoteOwned while the invoice is
+# patient-distributed, so any other site holding this invoice legitimately has
+# no request to find.
 query sourcePrescriptionRequest($storeId: String!, $id: String!) {
   prescriptionRequest(storeId: $storeId, id: $id) {
+    __typename
     ... on PrescriptionRequestNode {
       id
       prescriptionRequestNumber

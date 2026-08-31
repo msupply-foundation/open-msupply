@@ -5,6 +5,7 @@ import {
   collapseSelectionToStored,
   expandStoredToSelection,
   filterQueryIds,
+  liveOptions,
   multiOptionIds,
   optionAndDescendantIds,
   orderOptionsHierarchically,
@@ -33,6 +34,7 @@ const option = (over: Partial<CustomFieldOption> = {}): CustomFieldOption => ({
   key: 'o1',
   name: 'Option 1',
   parentOptionId: null,
+  deletedDatetime: null,
   ...over,
 });
 
@@ -141,6 +143,41 @@ describe('option hierarchy', () => {
 // subtree — while the picker works in the expanded set. These pin the round
 // trip between the two, since every surface depends on it: what displays, what
 // is stored, and what the filter asks the server.
+describe('deleted options: resolvable, never offered', () => {
+  // The server returns deleted options deliberately (a stored value is only an
+  // id), so the split has to be enforced client-side.
+  const def = (): CustomFieldDef =>
+    ({
+      id: 'cf',
+      key: 'k',
+      name: 'Field',
+      valueType: 'OPTION',
+      kind: 'STANDARD',
+      displayMode: 'VISIBLE',
+      options: [
+        option({ id: 'live', name: 'Live' }),
+        option({ id: 'gone', name: 'Gone', deletedDatetime: '2026-01-01T00:00:00' }),
+      ],
+    }) as CustomFieldDef;
+
+  it('drops deleted options from the offered list', () => {
+    expect(liveOptions(def().options).map(o => o.id)).toEqual(['live']);
+  });
+
+  it('keeps them out of what a picker renders', () => {
+    const parsed = parseCustomField(def());
+    expect(
+      parsed.kind === 'option' ? parsed.options.map(o => o.option.id) : []
+    ).toEqual(['live']);
+  });
+
+  it('still resolves a stored deleted id to its name, not a raw id', () => {
+    expect(
+      customFieldDisplayString(parseCustomField(def()), { k: 'gone' })
+    ).toBe('Gone');
+  });
+});
+
 describe('multi-option: the minimal covering set', () => {
   const options = [
     option({ id: 'root', parentOptionId: null }),

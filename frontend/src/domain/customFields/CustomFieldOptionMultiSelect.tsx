@@ -34,11 +34,20 @@ export const CustomFieldOptionMultiSelect = (props: {
   size?: 'default' | 'small';
   testId?: string;
 }) => {
-  const items = (): OrderedOption[] =>
-    orderOptionsHierarchically(props.def.options);
-  // The picker's ticked set: the stored value expanded down each subtree.
+  // The picker's ticked set: the stored value expanded down each subtree. Read
+  // from the WHOLE list — a stored value has to keep resolving to its place in
+  // the tree whether or not its option has since been deleted.
   const ticked = (): string[] =>
     expandStoredToSelection(props.def.options, props.value);
+  // Deleted options are never offered, but ones already ticked stay listed so
+  // they render their names and can be unticked. Dropping them would leave the
+  // value silently in place with nothing on screen to remove it.
+  const items = (): OrderedOption[] =>
+    orderOptionsHierarchically(
+      props.def.options.filter(
+        option => !option.deletedDatetime || ticked().includes(option.id)
+      )
+    );
   const selected = (): OrderedOption[] =>
     items().filter(o => ticked().includes(o.option.id));
   // Stored ids the definition doesn't know (an option deleted before its row
