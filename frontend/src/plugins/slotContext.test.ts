@@ -16,7 +16,11 @@ const [storeMode, setStoreMode] = createSignal<
   'STORE' | 'DISPENSARY' | undefined
 >(undefined);
 const [preferences, setPreferences] = createSignal<
-  { useConsumptionAndStockFromCustomersForInternalOrders: boolean } | undefined
+  | {
+      useConsumptionAndStockFromCustomersForInternalOrders: boolean;
+      monthsUnderstock: number;
+    }
+  | undefined
 >(undefined);
 
 vi.mock('../store/storeContext', () => ({
@@ -106,6 +110,7 @@ describe('the rest of the session surface still rides along', () => {
     setStoreId('store-a');
     setPreferences({
       useConsumptionAndStockFromCustomersForInternalOrders: true,
+      monthsUnderstock: 3,
     });
 
     const ctx = slotContext();
@@ -114,5 +119,31 @@ describe('the rest of the session surface still rides along', () => {
       ctx.storePreferences.useConsumptionAndStockFromCustomersForInternalOrders
     ).toBe(true);
     expect(ctx.permissions).toEqual([]);
+  });
+
+  it('carries the understock threshold', () => {
+    setPreferences({
+      useConsumptionAndStockFromCustomersForInternalOrders: false,
+      monthsUnderstock: 6,
+    });
+
+    expect(slotContext().storePreferences.monthsUnderstock).toBe(6);
+  });
+
+  /*
+   * The threshold has no safe default, unlike the boolean beside it. A
+   * consumer computes a figure from it and states it in a label, so a
+   * substituted value would be confidently wrong where `undefined` merely
+   * holds the figure at its dash.
+   */
+  it('leaves the threshold undefined while the store context is unresolved — never a default', () => {
+    setPreferences(undefined);
+
+    const { monthsUnderstock, ...gates } = slotContext().storePreferences;
+    expect(monthsUnderstock).toBeUndefined();
+    // The booleans DO default, and to OFF — the two rules coexist.
+    expect(gates.useConsumptionAndStockFromCustomersForInternalOrders).toBe(
+      false
+    );
   });
 });

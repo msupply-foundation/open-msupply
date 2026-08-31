@@ -317,6 +317,7 @@
   --text-md: 1rem; /* 16px — h6 */
   --text-lg: 1.25rem; /* 20px */
   --text-xl: 1.5rem; /* 24px — dashboard statistic values (current app) */
+  --text-2xl: 2rem; /* 32px — the one figure a screen leads with */
   --line-body: 1.71; /* body1 — roomy prose */
   --line-tight: 1.3; /* headings, small text, single-line controls */
   --weight-regular: 400; /* base / body — was implicit browser default */
