@@ -3,8 +3,6 @@ use repository::{
     PrescriptionRequestStatus, RepositoryError, StorageConnection,
 };
 
-use crate::common::check_program_exists;
-
 #[derive(Debug, PartialEq)]
 pub enum CommonPrescriptionRequestError {
     DoesNotExist,
@@ -54,13 +52,6 @@ pub fn check_diagnosis_exists(
     Ok(DiagnosisRowRepository::new(connection)
         .find_one_by_id(diagnosis_id)?
         .is_some())
-}
-
-pub fn check_program_id_exists(
-    connection: &StorageConnection,
-    program_id: &str,
-) -> Result<bool, RepositoryError> {
-    Ok(check_program_exists(connection, program_id)?.is_some())
 }
 
 impl From<RepositoryError> for CommonPrescriptionRequestError {
