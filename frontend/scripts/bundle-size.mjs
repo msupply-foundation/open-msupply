@@ -35,9 +35,7 @@ const reach = roots => {
 };
 
 const jsFiles = keys =>
-  new Set(
-    [...keys].map(k => manifest[k].file).filter(f => f.endsWith('.js'))
-  );
+  new Set([...keys].map(k => manifest[k].file).filter(f => f.endsWith('.js')));
 const cssFiles = keys => new Set([...keys].flatMap(k => manifest[k].css ?? []));
 const gz = files =>
   [...files].reduce(
@@ -57,7 +55,9 @@ const discoveryOnlyCss = [...cssFiles(all)].filter(f => !appCss.has(f));
 console.log(
   `served app JS gzip:      ${kb(gz(appJs))} (${appJs.size} chunks)  <- the tracked number`
 );
-console.log(`served app CSS gzip:     ${kb(gz(appCss))} (${appCss.size} files)`);
+console.log(
+  `served app CSS gzip:     ${kb(gz(appCss))} (${appCss.size} files)`
+);
 console.log(
   `discovery-only JS gzip:  ${kb(gz(new Set(discoveryOnlyJs)))} (${discoveryOnlyJs.length} chunks)`
 );
