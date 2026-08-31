@@ -66,3 +66,6 @@ frontend/.deploy-last-success
 # Per-developer Claude Code notes
 CLAUDE.local.md
 __pycache__/
+
+# Staged discovery-page slice for the desktop installer (yarn stage-discovery-page)
+client/packages/electron/discovery-page/

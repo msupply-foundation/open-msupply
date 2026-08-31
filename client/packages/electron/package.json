@@ -10,7 +10,9 @@
     "package": "electron-forge package",
     "premake": "electron-rebuild",
     "make": "node updateElectronVersion.js && prettier --write package.json && electron-forge make",
-    "eslint": "eslint ./src"
+    "eslint": "eslint ./src",
+    "stage-discovery-page": "node ../../../frontend/scripts/prune-discovery-dist.mjs ../../../frontend/dist ./discovery-page",
+    "prepackage": "yarn stage-discovery-page"
   },
   "author": {
     "name": "mSupply Foundation"
