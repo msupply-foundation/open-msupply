@@ -9,7 +9,8 @@ use crate::number::next_number;
 use crate::service_provider::ServiceContext;
 use crate::validate::check_patient_exists;
 
-use super::validate::{check_diagnosis_exists, check_program_id_exists};
+use super::validate::check_diagnosis_exists;
+use crate::common::check_program_exists;
 
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct InsertPrescriptionRequest {
@@ -51,7 +52,7 @@ pub fn insert_prescription_request(
                 }
             }
             if let Some(program_id) = &input.program_id {
-                if !check_program_id_exists(connection, program_id)? {
+                if check_program_exists(connection, program_id)?.is_none() {
                     return Err(ProgramDoesNotExist);
                 }
             }

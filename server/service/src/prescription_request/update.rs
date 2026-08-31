@@ -6,6 +6,7 @@ use repository::{
 };
 
 use crate::activity_log::{activity_log_entry, activity_log_entry_with_diff};
+use crate::common::check_program_exists;
 use crate::custom_field::{
     apply_custom_fields_patch, check_custom_fields_patch, CustomFieldPatchProblem,
 };
@@ -15,7 +16,7 @@ use crate::NullableUpdate;
 
 use super::generate::create_dispensation;
 use super::validate::{
-    check_diagnosis_exists, check_prescription_request_editable, check_program_id_exists,
+    check_diagnosis_exists, check_prescription_request_editable,
     CommonPrescriptionRequestError,
 };
 
@@ -122,7 +123,7 @@ pub fn update_prescription_request(
                 }
             }
             if let Some(program_id) = input.program_id.as_ref().and_then(|u| u.value.as_ref()) {
-                if !check_program_id_exists(connection, program_id)? {
+                if check_program_exists(connection, program_id)?.is_none() {
                     return Err(ProgramDoesNotExist);
                 }
             }

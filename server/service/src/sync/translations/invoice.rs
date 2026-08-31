@@ -662,6 +662,14 @@ impl SyncTranslation for InvoiceTranslation {
             // a v5 re-import of the transact cannot null a link it never knew
             // about. Same hazard as `custom_fields` above.
             prescription_request_id: existing_row.and_then(|row| row.prescription_request_id),
+            // NO `..Default::default()`. Every field is named above, so the
+            // spread was already filling nothing — but it stood ready to fill
+            // the NEXT one silently. A column added to InvoiceRow would have
+            // compiled here and quietly written its default on every v5 pull,
+            // which is exactly how `prescription_request_id` and
+            // `custom_fields` came to be nulled. Without it the compiler
+            // refuses the file until whoever adds a column decides what this
+            // translator owes it.
         };
 
         // HACK...

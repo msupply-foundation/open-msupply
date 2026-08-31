@@ -51,6 +51,13 @@ export interface RequestLineEditModalProps {
   line?: Line;
   /** The request is past New — the read-only face (AC-N5). */
   readOnly?: boolean;
+  /**
+   * The request's program, when it has one — the item search is scoped to it
+   * (rules § lines). A program shares its master list's id, so it goes
+   * straight to `masterListId`, exactly as dispensing's line editor passes
+   * the prescription's own program.
+   */
+  programId?: string;
   onClose: () => void;
   onSaved: () => void;
 }
@@ -218,6 +225,11 @@ export const RequestLineEditModal: Component<
           value={item()?.id}
           focusTarget={itemSearch}
           clearable={false}
+          // A request carrying a program prescribes from that program's
+          // items only — the same scoping dispensing's line editor applies
+          // to a prescription's program (PrescriptionLineEditModal).
+          // Undefined on a request with no program: the whole catalogue.
+          masterListId={props.programId}
           onSelect={setItem}
         />
       </Show>

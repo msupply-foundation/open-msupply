@@ -385,6 +385,7 @@ const PrescriptionRequestDetailView: Component = () => {
                 requestId={node().id}
                 line={state.line}
                 readOnly={disabled()}
+                programId={node().programId ?? undefined}
                 onClose={() => setEditState(undefined)}
                 onSaved={() => void refetch()}
               />
