@@ -202,6 +202,9 @@ pub enum Permissions {
     ConfirmInternalOrderSent,
     ColdChainApi,
     EditCentralData,
+    /// Legacy 205, "Restrict to prescriptions" (msupply 655443ac, #18622).
+    /// A RESTRICTION, not a grant — see the mapping below.
+    RestrictToPrescriptions,
 }
 
 pub fn permission_mapping() -> HashMap<i16, Permissions> {
@@ -392,6 +395,7 @@ pub fn permission_mapping() -> HashMap<i16, Permissions> {
         (201, Permissions::ColdChainApi),
         (202, Permissions::EditCentralData),
         (203, Permissions::AddAssetsViaDataMatrix),
+        (205, Permissions::RestrictToPrescriptions),
         (501, Permissions::HISAddPatients),
         (502, Permissions::HISEditPatientsInfo),
         (503, Permissions::HISCreateEncounters),
@@ -611,16 +615,17 @@ pub fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permissio
             Permissions::FinaliseSupplierInvoices => {
                 output.insert(PermissionType::InboundShipmentVerify);
             }
-            // `PermissionType::PrescriberMode` is deliberately NOT mapped
-            // here, and no legacy slot stands in for it
-            // (spec/prescription-requests § prescriber mode). Slot 13,
-            // `LogOnInDispensaryMode`, is the near miss: it is already ticked
-            // for real dispensary staff at existing sites, so mapping it would
-            // strip dispensing, stock and inventory from the very users whose
-            // job needs them, the first time they upgraded. mSupply central
-            // must allocate a permission of its own before prescriber mode can
-            // ship — until then it is grantable only from seed/test data, and
-            // adding the mapping here is the last step of the feature.
+            // The one RESTRICTION in this map: it narrows what the holder can
+            // reach rather than granting anything
+            // (spec/prescription-requests § prescriber mode). Legacy allocated
+            // it its own slot, 205, precisely so it would not have to borrow
+            // slot 13 (`LogOnInDispensaryMode`) — that one is already ticked
+            // for real dispensary staff, so reusing it would have stripped
+            // dispensing, stock and inventory from the very users whose job
+            // needs them, the first time they upgraded.
+            Permissions::RestrictToPrescriptions => {
+                output.insert(PermissionType::PrescriberMode);
+            }
             //
             // Remaining `Permissions` variants are legacy mSupply permissions
             // with no equivalent in open mSupply's `PermissionType` — e.g. they
@@ -632,4 +637,43 @@ pub fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permissio
         }
     }
     output
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    /// spec/prescription-requests § prescriber mode.
+    ///
+    /// Legacy slot 205 ("Restrict to prescriptions", msupply 655443ac) is the
+    /// only way `PrescriberMode` can reach a site from central. It is also the
+    /// only RESTRICTION in this map, so the two assertions that matter are that
+    /// 205 produces it, and that nothing else does — a slot quietly standing in
+    /// for it would take dispensing away from ordinary staff on upgrade.
+    #[test]
+    fn legacy_205_is_prescriber_mode_and_nothing_else_is() {
+        // The wire is a bool per slot, 1-indexed, so 205 sits at index 204
+        let mut payload = vec![false; 205];
+        payload[204] = true;
+
+        assert!(
+            permissions_to_domain(map_api_permissions(payload))
+                .contains(&PermissionType::PrescriberMode),
+            "legacy 205 must grant PrescriberMode"
+        );
+
+        for slot in 1..=600usize {
+            if slot == 205 {
+                continue;
+            }
+            let mut payload = vec![false; slot];
+            payload[slot - 1] = true;
+            assert!(
+                !permissions_to_domain(map_api_permissions(payload))
+                    .contains(&PermissionType::PrescriberMode),
+                "legacy {} must not grant PrescriberMode",
+                slot
+            );
+        }
+    }
 }

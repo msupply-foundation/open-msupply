@@ -81,16 +81,19 @@ impl<'a> UserAccountService<'a> {
                 // RESTRICTIONS are excluded too (`is_restriction`), for the same
                 // reason in a different guise. The delete pass below revokes
                 // whatever the login payload does not mention, which is only
-                // sound while the payload CAN mention everything. It cannot
-                // mention `PrescriberMode`: no legacy mSupply permission maps to
-                // it (see `apis::permissions`), so its absence carries no
-                // intent, and treating that absence as a revocation would strip
-                // the permission on the holder's very next login. Absence must
-                // mean "not expressible here", not "taken away".
+                // sound while the payload CAN mention everything.
                 //
-                // The exclusion becomes moot once central can express it — the
-                // payload will then say so either way — but leaving it costs
-                // nothing and keeps the rule honest.
+                // The exclusion predates slot 205 ("Restrict to prescriptions",
+                // see `apis::permissions`), which central had not allocated yet:
+                // nothing could express `PrescriberMode`, so its absence from a
+                // payload carried no intent and revoking on it would have
+                // stripped the permission on the holder's next login.
+                //
+                // A central that grants it now does express it either way, so
+                // the exclusion is arguably no longer earning its keep. Left as
+                // it is because turning it off is a change to what a login can
+                // take away, which wants deciding on its own rather than riding
+                // along with the mapping.
                 let existing_permissions: HashMap<String, UserPermissionRow> =
                     UserPermissionRepository::new(con)
                         .query_by_filter(
@@ -591,10 +594,9 @@ mod user_account_test {
 
     /// spec/prescription-requests § prescriber mode.
     ///
-    /// A login payload that CANNOT express `PrescriberMode` must not be read as
-    /// revoking it. No legacy mSupply permission maps to it, so every login
-    /// arrives without it — and if that counted as a revocation, a seeded
-    /// prescriber would lose the permission the first time they signed in.
+    /// A restriction the login payload does not mention survives it. Pins the
+    /// `is_restriction` exclusion in `upsert_user` — whatever the reconcile
+    /// pass revokes, it does not reach restrictions.
     #[actix_rt::test]
     async fn upsert_user_keeps_restrictions_the_payload_cannot_express() {
         let (_, connection, _, _) = setup_all(
