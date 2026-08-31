@@ -104,9 +104,13 @@ export const PrescriptionSidePanel: Component<
 
   // The prescription request this dispensation was generated from (AC-R4's
   // other direction). Keyed on the soft link, so it only fetches for a
-  // generated prescription; a request that isn't on this site simply resolves
-  // to nothing and the section stays hidden. Read non-suspending — the panel
-  // lives under the already-open detail.
+  // generated prescription. The request genuinely may not be here — it is
+  // RemoteOwned while the invoice is patient-distributed, so a second site
+  // holding this invoice has the link but not its target — and that answers
+  // RecordNotFound, which is a member of the union rather than an error. It
+  // has to be told apart by `__typename`: without that it deserialises to `{}`
+  // and reads as a node whose every field is undefined. Read non-suspending —
+  // the panel lives under the already-open detail.
   const [sourceRequest] = createResource(
     () => props.node.prescriptionRequestId ?? undefined,
     async id => {
@@ -114,8 +118,10 @@ export const PrescriptionSidePanel: Component<
         storeId: props.storeId,
         id,
       });
-      return result.kind === 'success'
-        ? (result.data.prescriptionRequest ?? undefined)
+      if (result.kind !== 'success') return undefined;
+      const request = result.data.prescriptionRequest;
+      return request?.__typename === 'PrescriptionRequestNode'
+        ? request
         : undefined;
     }
   );

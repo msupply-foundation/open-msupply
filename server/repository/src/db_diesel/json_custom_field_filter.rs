@@ -192,8 +192,12 @@ where
 ///     `json_type(...) = 'array'` CASE that substitutes an empty array for
 ///     everything else — a guard inside the expression rather than a
 ///     short-circuiting `AND`, which SQLite does not promise.
-///   • Postgres `jsonb_exists_any` is null- and scalar-tolerant by definition
-///     (it asks about top-level keys/elements), so it needs no guard.
+///   • Postgres `jsonb_exists_any` does not error on a scalar, but it does
+///     MATCH one: a top-level string is treated as a one-element array, so
+///     `jsonb_exists_any('"option_b"'::jsonb, ARRAY['option_b'])` is true. It
+///     therefore needs the same shape guard as SQLite, spelled
+///     `jsonb_typeof(...) = 'array'`. Without it the two backends disagree on
+///     exactly the case this section exists to pin down.
 #[derive(Debug, Clone, QueryId)]
 pub struct JsonCustomFieldArrayOverlap<C> {
     column: C,
@@ -256,7 +260,11 @@ where
     fn walk_ast<'b>(&'b self, mut out: AstPass<'_, 'b, DBType>) -> QueryResult<()> {
         #[cfg(feature = "postgres")]
         {
-            out.push_sql("jsonb_exists_any(");
+            out.push_sql("(jsonb_typeof(");
+            self.column.walk_ast(out.reborrow())?;
+            out.push_sql(" -> ");
+            out.push_bind_param::<Text, _>(&self.key)?;
+            out.push_sql(") = 'array' AND jsonb_exists_any(");
             self.column.walk_ast(out.reborrow())?;
             out.push_sql(" -> ");
             out.push_bind_param::<Text, _>(&self.key)?;
@@ -267,7 +275,7 @@ where
                 }
                 out.push_bind_param::<Text, _>(value)?;
             }
-            out.push_sql("]::text[])");
+            out.push_sql("]::text[]))");
         }
         #[cfg(not(feature = "postgres"))]
         {
