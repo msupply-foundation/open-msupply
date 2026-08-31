@@ -143,3 +143,23 @@ export type GeneratedDispensationsResult = {
 export const GeneratedDispensations = {
   query: "query generatedDispensations($storeId: String!, $prescriptionRequestId: EqualFilterStringInput!) {\n  invoices(\n    storeId: $storeId\n    filter: {prescriptionRequestId: $prescriptionRequestId}\n    type: [PRESCRIPTION]\n  ) {\n    ... on InvoiceConnector {\n      nodes {\n        id\n        invoiceNumber\n        status\n      }\n    }\n  }\n}",
 } as TypedDocument<GeneratedDispensationsResult, GeneratedDispensationsVariables>;
+
+export type DeletePrescriptionRequestLinesVariables = {
+  storeId: string;
+  ids: string[];
+};
+
+export type DeletePrescriptionRequestLinesResult = {
+  batchPrescriptionRequest: {
+  deletePrescriptionRequestLines?: Array<{
+  id: string;
+  response: ({
+  id: string;
+});
+}> | null;
+};
+};
+
+export const DeletePrescriptionRequestLines = {
+  query: "mutation deletePrescriptionRequestLines($storeId: String!, $ids: [String!]!) {\n  batchPrescriptionRequest(\n    storeId: $storeId\n    input: {deletePrescriptionRequestLines: $ids}\n  ) {\n    deletePrescriptionRequestLines {\n      id\n      response {\n        ... on DeleteResponse {\n          id\n        }\n      }\n    }\n  }\n}",
+} as TypedDocument<DeletePrescriptionRequestLinesResult, DeletePrescriptionRequestLinesVariables>;

@@ -7,11 +7,16 @@ use service::prescription_request::batch::{
 };
 
 use super::delete::{map_delete_response, DeleteResponse};
+use super::line::{map_delete_line_response, DeleteLineResponse};
 
 #[derive(SimpleObject)]
 #[graphql(concrete(
     name = "DeletePrescriptionRequestResponseWithId",
     params(DeleteResponse)
+))]
+#[graphql(concrete(
+    name = "DeletePrescriptionRequestLineResponseWithId",
+    params(DeleteLineResponse)
 ))]
 pub struct MutationWithId<T: OutputType> {
     pub id: String,
@@ -22,6 +27,7 @@ pub struct MutationWithId<T: OutputType> {
 #[graphql(name = "BatchPrescriptionRequestInput")]
 pub struct BatchInput {
     pub delete_prescription_requests: Option<Vec<String>>,
+    pub delete_prescription_request_lines: Option<Vec<String>>,
     pub continue_on_error: Option<bool>,
 }
 
@@ -29,10 +35,12 @@ impl BatchInput {
     fn to_domain(self) -> ServiceInput {
         let BatchInput {
             delete_prescription_requests,
+            delete_prescription_request_lines,
             continue_on_error,
         } = self;
         ServiceInput {
             delete: delete_prescription_requests,
+            delete_lines: delete_prescription_request_lines,
             continue_on_error,
         }
     }
@@ -42,6 +50,7 @@ impl BatchInput {
 #[graphql(name = "BatchPrescriptionRequestResponse")]
 pub struct BatchResponse {
     delete_prescription_requests: Option<Vec<MutationWithId<DeleteResponse>>>,
+    delete_prescription_request_lines: Option<Vec<MutationWithId<DeleteLineResponse>>>,
 }
 
 /// The list's mass delete. One refusal fails the whole call and nothing is
@@ -70,7 +79,12 @@ pub fn batch_prescription_request(
     map_response(response)
 }
 
-fn map_response(ServiceResult { delete }: ServiceResult) -> Result<BatchResponse> {
+fn map_response(
+    ServiceResult {
+        delete,
+        delete_lines,
+    }: ServiceResult,
+) -> Result<BatchResponse> {
     // A refusal anywhere in the batch has already rolled the transaction back,
     // and surfaces as the request's own error rather than a per-id result — the
     // whole call failed, and saying so once is truer than reporting an outcome
@@ -83,8 +97,17 @@ fn map_response(ServiceResult { delete }: ServiceResult) -> Result<BatchResponse
         });
     }
 
+    let mut delete_line_result = Vec::new();
+    for line in delete_lines {
+        delete_line_result.push(MutationWithId {
+            id: line.input.clone(),
+            response: map_delete_line_response(line.result)?,
+        });
+    }
+
     Ok(BatchResponse {
         delete_prescription_requests: vec_or_none(delete_result),
+        delete_prescription_request_lines: vec_or_none(delete_line_result),
     })
 }
 

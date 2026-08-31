@@ -8,7 +8,9 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{PermissionType, User, UserStore};
+use repository::{
+    EqualFilter, PermissionType, User, UserPermissionFilter, UserPermissionRepository, UserStore,
+};
 use service::permission::permissions;
 
 pub struct UserStoreNode {
@@ -161,20 +163,25 @@ impl UserNode {
     /// One query for every store, rather than a boolean resolved per store: a
     /// user with many stores would otherwise cost one permission lookup each
     /// on every me/login.
+    ///
+    /// Narrowed to the PrescriberMode rows in SQL rather than read whole and
+    /// filtered here. This rides the UserInfo fragment, so it runs on every
+    /// `me` and `authToken` — every token refresh included — for a value only
+    /// the store picker reads. For almost every user it now answers from an
+    /// empty result set instead of their entire permission list plus the store
+    /// join that `permissions()` does to build rows this only takes an id from.
     pub async fn prescriber_mode_store_ids(&self, ctx: &Context<'_>) -> Result<Vec<String>> {
         let service_context = ctx.service_provider().basic_context()?;
 
-        let result = permissions(&service_context.connection, &self.user.user_row.id, None)?;
+        let rows = UserPermissionRepository::new(&service_context.connection).query_by_filter(
+            UserPermissionFilter::new()
+                .user_id(EqualFilter::equal_to(self.user.user_row.id.clone()))
+                .permission(PermissionType::PrescriberMode.equal_to()),
+        )?;
 
-        Ok(result
+        Ok(rows
             .into_iter()
-            .filter(|store_permissions| {
-                store_permissions
-                    .permissions
-                    .iter()
-                    .any(|p| p.permission == PermissionType::PrescriberMode)
-            })
-            .map(|store_permissions| store_permissions.store_row.id)
+            .filter_map(|row| row.store_id)
             .collect())
     }
 

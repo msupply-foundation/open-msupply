@@ -5,21 +5,29 @@ use crate::{
 };
 
 use super::delete::{delete_prescription_request, DeletePrescriptionRequestError};
+use crate::prescription_request_line::delete::{
+    delete_prescription_request_line, DeletePrescriptionRequestLineError,
+};
 
-/// A mass delete from the request list. Deletes only — a request is created and
-/// edited one at a time, and only the list selects several at once.
+/// The two mass deletes this vertical has: requests from the list, and lines
+/// from the detail's line table. Deletes only — both are created and edited one
+/// at a time, and only a selection acts on several at once.
 #[derive(Clone, Debug, Default)]
 pub struct BatchPrescriptionRequest {
     pub delete: Option<Vec<String>>,
+    pub delete_lines: Option<Vec<String>>,
     pub continue_on_error: Option<bool>,
 }
 
 pub type DeletePrescriptionRequestsResult =
     Vec<InputWithResult<String, Result<String, DeletePrescriptionRequestError>>>;
+pub type DeletePrescriptionRequestLinesResult =
+    Vec<InputWithResult<String, Result<String, DeletePrescriptionRequestLineError>>>;
 
 #[derive(Debug, Default)]
 pub struct BatchPrescriptionRequestResult {
     pub delete: DeletePrescriptionRequestsResult,
+    pub delete_lines: DeletePrescriptionRequestLinesResult,
 }
 
 /// All or nothing unless `continue_on_error`: one refusal rolls the transaction
@@ -38,6 +46,17 @@ pub fn batch_prescription_request(
             let mut results = BatchPrescriptionRequestResult::default();
 
             let processor = BatchMutationsProcessor::new(ctx);
+
+            // Lines first: deleting a request takes its lines with it, so a
+            // batch naming both would otherwise have the line delete fail on a
+            // row its own batch had already removed.
+            let (has_errors, result) = processor.do_mutations(input.delete_lines, |ctx, id| {
+                delete_prescription_request_line(ctx, store_id, id)
+            });
+            results.delete_lines = result;
+            if has_errors && !continue_on_error {
+                return Err(WithDBError::err(results));
+            }
 
             let (has_errors, result) = processor.do_mutations(input.delete, |ctx, id| {
                 delete_prescription_request(ctx, store_id, id)

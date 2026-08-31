@@ -457,7 +457,7 @@ mod test {
                 "store_a",
                 BatchPrescriptionRequest {
                     delete: Some(vec![deletable.id.clone(), handed_over.id.clone()]),
-                    continue_on_error: None,
+                    ..Default::default()
                 },
             )
             .unwrap();
