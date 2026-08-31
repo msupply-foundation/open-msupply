@@ -1,6 +1,7 @@
 import { createSignal } from 'solid-js';
 import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
 import { Stack } from '../ui/layout/Stack/Stack';
+import { CardGrid } from '../ui/layout/CardGrid/CardGrid';
 import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
 import { WidgetCard } from '../ui/elements/display/WidgetCard';
 import { DocumentFrame } from '../ui/elements/display/DocumentFrame';
@@ -56,7 +57,7 @@ export const displayMetadata: PageMetadata = {
     {
       id: 'display-widget-card',
       title: 'Widget card',
-      searchTerms: ['clickable', 'dashboard', 'link'],
+      searchTerms: ['clickable', 'dashboard', 'link', 'tile', 'kpi', 'slot'],
     },
     {
       id: 'display-document-frame',
@@ -151,7 +152,7 @@ export const DisplayShowcase = () => {
               onChange={setAdjustBy}
             />
           </div>
-          <div class={styles.grid}>
+          <CardGrid minColumnWidth="16rem">
             <StatComparisonTile
               label="Available packs"
               current={String(CURRENT_PACKS)}
@@ -168,7 +169,7 @@ export const DisplayShowcase = () => {
                   : `${Number(adjusted()) * 50} doses`
               }
             />
-          </div>
+          </CardGrid>
         </DashboardCard>
         <DashboardCard
           id="display-widget-card"
@@ -182,7 +183,7 @@ export const DisplayShowcase = () => {
             decorative. Hover lifts it; keyboard focus shows the ring. Lay them
             in an intrinsic grid for a dashboard.
           </Lead>
-          <div class={styles.grid}>
+          <CardGrid minColumnWidth="16rem">
             <WidgetCard
               title="Reports"
               subtitle="Generate and print"
@@ -207,10 +208,111 @@ export const DisplayShowcase = () => {
               icon={<PrinterIcon />}
               href="#/showcase/icons"
             />
+          </CardGrid>
+          <Lead>
+            The optional <strong>content slot</strong> renders full-width after
+            the icon + title/subtitle header — the place for a task tile's KPI
+            figures. The card stays one interactive element, so slot content
+            must be non-interactive (no links or buttons inside; dev builds
+            warn). Slot text is the control's accessible{' '}
+            <strong>description</strong>, not part of its name — a live figure
+            never renames the card. A figure of <code>0</code> still renders.
+          </Lead>
+          <CardGrid minColumnWidth="16rem">
+            <WidgetCard
+              title="Internal orders"
+              subtitle="Awaiting approval"
+              icon={<TruckIcon />}
+              onClick={() => setLastClicked('Internal orders')}
+            >
+              <span class={styles.figure}>7</span>
+            </WidgetCard>
+            <WidgetCard
+              title="Stocktakes"
+              subtitle="Lines to count"
+              icon={<StockIcon />}
+              onClick={() => setLastClicked('Stocktakes')}
+            >
+              <span class={styles.figure}>0</span>
+            </WidgetCard>
+          </CardGrid>
+          <Lead>
+            When something <strong>stretches</strong> a card past its content —
+            a grid row sized to the tallest, or a card spanning two rows —{' '}
+            <code>contentPlacement</code> decides where the slot goes. The
+            default <code>spread</code> pushes it to the bottom edge, which is
+            what puts a row&rsquo;s figures on a shared baseline. Use{' '}
+            <code>grouped</code> for a card with no row-mates to line up with:
+            spreading has nothing to align to there and only opens a gap between
+            the label and the figure. Both cards below are stretched to the same
+            height by the row.
+          </Lead>
+          <div class={styles.stretchedRow}>
+            <WidgetCard
+              title="Spread"
+              subtitle="Figure at the bottom edge"
+              icon={<StockIcon />}
+              onClick={() => setLastClicked('Spread')}
+            >
+              <span class={styles.figure}>1284</span>
+            </WidgetCard>
+            <WidgetCard
+              title="Grouped"
+              subtitle="Figure stays with the header"
+              icon={<StockIcon />}
+              contentPlacement="grouped"
+              onClick={() => setLastClicked('Grouped')}
+            >
+              <span class={styles.figure}>1284</span>
+            </WidgetCard>
+            <WidgetCard
+              title="Taller neighbour"
+              subtitle="Sets the row's height, so the two cards beside it are stretched and the difference shows"
+              icon={<ReportsIcon />}
+              onClick={() => setLastClicked('Taller neighbour')}
+            >
+              <span class={styles.figure}>1284</span>
+            </WidgetCard>
           </div>
           <Note role="status">
             {lastClicked() ? `Clicked: ${lastClicked()}` : '\u00a0'}
           </Note>
+        </DashboardCard>
+
+        <DashboardCard
+          id="display-widget-card-size"
+          title="Widget card — the card that leads a grid"
+        >
+          <Lead>
+            <code>size="lg"</code> enlarges the icon chip and the title for the
+            one card a screen leads with — where matching its neighbours&rsquo;
+            type makes the primary task read as a peer. The title goes to{' '}
+            <code>--text-lg</code>, deliberately below the slot figure&rsquo;s{' '}
+            <code>--text-xl</code>, so it does not compete with the number it
+            introduces. Emphasis only: nothing about the card&rsquo;s semantics
+            changes. Every card also carries a decorative go-arrow at its
+            trailing top corner — the standing affordance that activating it
+            leads somewhere, never announced and never a control of its own.
+          </Lead>
+          <div class={styles.stretchedRow}>
+            <WidgetCard
+              title="Default"
+              subtitle="One of the grid"
+              icon={<StockIcon />}
+              onClick={() => setLastClicked('Default size')}
+            >
+              <span class={styles.figure}>128</span>
+            </WidgetCard>
+            <WidgetCard
+              title="Leads the grid"
+              subtitle="Given more room than its neighbours"
+              icon={<StockIcon />}
+              size="lg"
+              onClick={() => setLastClicked('Large size')}
+            >
+              <span class={styles.figure}>128</span>
+            </WidgetCard>
+          </div>
         </DashboardCard>
 
         <DashboardCard
