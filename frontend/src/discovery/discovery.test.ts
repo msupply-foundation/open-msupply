@@ -7,6 +7,7 @@ import {
   connectToServer,
   connectUrl,
   discoveryReturnAddress,
+  effectiveFlags,
   frontEndHostDisplay,
   isCompleteAnnouncement,
   isLocalServer,
@@ -23,6 +24,7 @@ import {
   STANDALONE_LOCAL_SERVER,
   standaloneSeededFailure,
   toFrontEndHost,
+  withLocality,
   type FrontEndHost,
 } from './discovery';
 
@@ -344,6 +346,94 @@ describe('shouldAskInstallMode (AC-AN21)', () => {
     expect(
       shouldAskInstallMode({ ...flags, autoconnect: false }, 'client')
     ).toBe(false);
+  });
+
+  // AC-AN22: answering has to close the question. Neither the stored role nor
+  // the launch flags change when the user answers, so on the re-ask case above
+  // the SAME answer keeps satisfying it — re-picking "this device runs the
+  // server" would re-render the question for ever and the only answer that
+  // could be given is the other one.
+  it('stops asking once answered on this page-load', () => {
+    const returned = { ...flags, autoconnect: false };
+    expect(shouldAskInstallMode(returned, 'server', true)).toBe(false);
+    expect(shouldAskInstallMode(returned, 'client', true)).toBe(false);
+    expect(shouldAskInstallMode(flags, undefined, true)).toBe(false);
+  });
+});
+
+describe('effectiveFlags (AC-AN21/AC-AN22, AC-DT20)', () => {
+  const flags = {
+    autoconnect: true,
+    timedout: false,
+    standalone: false,
+    canHostServer: true,
+  };
+
+  it('sets the ONE flag downstream reads for a server-mode device', () => {
+    expect(effectiveFlags(flags, 'server')).toEqual({
+      ...flags,
+      standalone: true,
+    });
+  });
+
+  it('leaves a client-mode or undecided device exactly as launched', () => {
+    expect(effectiveFlags(flags, 'client')).toBe(flags);
+    expect(effectiveFlags(flags, undefined)).toBe(flags);
+  });
+
+  it('never rewrites a standalone install — it decided for itself (AC-DT20)', () => {
+    const standalone = { ...flags, standalone: true, autoconnect: false };
+    expect(effectiveFlags(standalone, 'client', true)).toBe(standalone);
+  });
+
+  it('a deliberate return does not auto-connect to the role already stored', () => {
+    // AC-DT16: the user asked to come back, so nothing bounces them to the
+    // server they just left — including this device's own.
+    expect(
+      effectiveFlags({ ...flags, autoconnect: false }, 'server').autoconnect
+    ).toBe(false);
+  });
+
+  it('but a role chosen HERE is the go-ahead to connect (AC-AN22)', () => {
+    // Without this the answer lands on the seeded could-not-connect notice
+    // (§ standaloneSeededFailure) with no attempt ever made.
+    const effective = effectiveFlags(
+      { ...flags, autoconnect: false },
+      'server',
+      true
+    );
+    expect(effective.autoconnect).toBe(true);
+    expect(standaloneSeededFailure(effective)).toBe(false);
+    expect(autoconnectTarget(effective, undefined)).toBe(
+      STANDALONE_LOCAL_SERVER
+    );
+  });
+});
+
+describe('withLocality', () => {
+  const info = (hardwareId: string): HostInfo => ({
+    platform: 'electron',
+    hardwareId,
+    lanAddresses: [],
+  });
+
+  it("re-decides a remembered record's locality against this machine", () => {
+    // The stored answer is as old as the record, and an ADOPTED one was worked
+    // out by the legacy address compare. It decides whether the shell proves
+    // this server's certificate or trusts it on first use, so it cannot be
+    // taken on trust (hostContract.ts § ConnectedServer).
+    expect(
+      withLocality(host({ hardwareId: 'HW-A' }), info('HW-A')).isLocal
+    ).toBe(true);
+    expect(
+      withLocality(host({ hardwareId: 'HW-A', isLocal: true }), info('HW-B'))
+        .isLocal
+    ).toBe(false);
+  });
+
+  it('changes nothing else about the record', () => {
+    const remembered = host({ hardwareId: 'HW-A', isLocal: false });
+    expect(withLocality(remembered, info('HW-B'))).toEqual(remembered);
   });
 });
 

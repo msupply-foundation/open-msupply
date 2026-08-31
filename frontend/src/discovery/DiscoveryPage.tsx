@@ -29,6 +29,7 @@ import {
   DISCOVERY_POLL_MS,
   DISCOVERY_TIMEOUT_MS,
   discoveryReturnAddress,
+  effectiveFlags,
   frontEndHostDisplay,
   mergeServers,
   parseDiscoveryFlags,
@@ -41,6 +42,7 @@ import {
   STANDALONE_LOCAL_SERVER,
   standaloneSeededFailure,
   toFrontEndHost,
+  withLocality,
   type DiscoveryFlags,
   type FrontEndHost,
   type InstallMode,
@@ -129,19 +131,22 @@ export const DiscoveryPage: Component<{ host: DiscoveryHostApi }> = props => {
   // The stored answer to "what is this device for" (discovery.ts § install
   // mode). A signal, not a read-once, because choosing rewrites the screen.
   const [mode, setMode] = createSignal(readInstallMode());
+  // Whether the role was answered HERE, on this page-load, rather than read
+  // back from storage. Neither the stored role nor the launch flags change
+  // when the user answers, so without this the re-ask case cannot be answered
+  // at all (discovery.ts § shouldAskInstallMode / § effectiveFlags).
+  const [answered, setAnswered] = createSignal(false);
 
   // This machine serves everyone iff the install was built that way
   // (standalone=true, AC-DT20) OR its user said so. The launch flag wins:
   // a standalone install is never offered a choice, whatever is stored.
-  const servesItself = () => flags.standalone || mode() === 'server';
-  // Downstream sees ONE flag set, so StandaloneConnect, autoconnectTarget and
-  // standaloneSeededFailure keep reading `flags.standalone` and need no idea
-  // that a stored mode exists.
+  // One flag set, downstream (discovery.ts § effectiveFlags).
   const effective = (): DiscoveryFlags =>
-    servesItself() ? { ...flags, standalone: true } : flags;
+    effectiveFlags(flags, mode(), answered());
+  const servesItself = () => effective().standalone;
 
   // Whether to ask the role (discovery.ts § shouldAskInstallMode).
-  const undecided = () => shouldAskInstallMode(flags, mode());
+  const undecided = () => shouldAskInstallMode(flags, mode(), answered());
 
   // Where the landing screen can send the user back to (AC-DT16): this page,
   // told not to bounce straight back and told the install's mode, so a
@@ -155,7 +160,10 @@ export const DiscoveryPage: Component<{ host: DiscoveryHostApi }> = props => {
 
   const choose = (chosen: InstallMode) => {
     recordInstallMode(chosen);
-    setMode(chosen);
+    batch(() => {
+      setMode(chosen);
+      setAnswered(true);
+    });
   };
 
   return (
@@ -418,6 +426,22 @@ const ServerChooser: Component<{
   const chooseServer = (server: FrontEndHost) =>
     void connect(server, serverKey(server));
 
+  // The auto-connection to a remembered server (AC-DT1). Its locality is
+  // re-decided against this machine first (discovery.ts § withLocality): a
+  // listed server's is computed fresh every poll, but a remembered — or
+  // adopted — record's is as old as the record, and it is what tells the host
+  // how to answer that server's certificate error. This machine's facts are
+  // asked for here rather than waited on from the search beneath, so the two
+  // stay independent.
+  const autoconnect = async (target: FrontEndHost) => {
+    const info = await props.host.hostInfo().catch(() => undefined);
+    if (disposed) return;
+    await connect(
+      info ? withLocality(target, info) : target,
+      serverKey(target)
+    );
+  };
+
   const submitManual = (event: SubmitEvent) => {
     event.preventDefault();
     const server = parseManualServer(manualUrl(), generateUUID().toUpperCase());
@@ -435,7 +459,7 @@ const ServerChooser: Component<{
     // after the shell's launch check failed or the user chose to come back
     // (AC-DT2, AC-DT16).
     const target = autoconnectTarget(props.flags, props.previous);
-    if (target) void connect(target, serverKey(target));
+    if (target) void autoconnect(target);
     void search();
   });
 

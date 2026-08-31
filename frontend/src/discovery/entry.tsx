@@ -29,8 +29,8 @@ const boot = async () => {
   await initialiseLocale(detectLocale());
   // Before anything reads this page's own storage: take over what the legacy
   // shell saved somewhere this page cannot look (./discovery.ts §
-  // adoptLegacyPreferences). Only the old Android shell reports any, and only
-  // on the first launch after an upgrade.
+  // adoptLegacyPreferences). Only the two OLD shells report any, and only
+  // an upgraded install has anything for them to report.
   if (host?.hostInfo) {
     const { adoptLegacyPreferences } = await import('./discovery');
     const info = await host.hostInfo().catch(() => undefined);
