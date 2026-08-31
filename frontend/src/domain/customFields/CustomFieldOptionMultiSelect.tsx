@@ -1,3 +1,4 @@
+import { createMemo } from 'solid-js';
 import { MultiSelect } from '../../ui/elements/selectors/MultiSelect';
 import {
   applyOptionToggle,
@@ -37,19 +38,25 @@ export const CustomFieldOptionMultiSelect = (props: {
   // The picker's ticked set: the stored value expanded down each subtree. Read
   // from the WHOLE list — a stored value has to keep resolving to its place in
   // the tree whether or not its option has since been deleted.
-  const ticked = (): string[] =>
-    expandStoredToSelection(props.def.options, props.value);
+  const ticked = createMemo((): string[] =>
+    expandStoredToSelection(props.def.options, props.value)
+  );
   // Deleted options are never offered, but ones already ticked stay listed so
   // they render their names and can be unticked. Dropping them would leave the
   // value silently in place with nothing on screen to remove it.
-  const items = (): OrderedOption[] =>
+  // Memoised: every read of these mints a fresh array of fresh wrapper objects,
+  // and MultiSelect compares by identity — without this the list and its
+  // selection churn on every render (kdd/solid-reactivity-pitfalls §14).
+  const items = createMemo((): OrderedOption[] =>
     orderOptionsHierarchically(
       props.def.options.filter(
         option => !option.deletedDatetime || ticked().includes(option.id)
       )
-    );
-  const selected = (): OrderedOption[] =>
-    items().filter(o => ticked().includes(o.option.id));
+    )
+  );
+  const selected = createMemo((): OrderedOption[] =>
+    items().filter(o => ticked().includes(o.option.id))
+  );
   // Stored ids the definition doesn't know (an option deleted before its row
   // ever synced). They can't be listed, so they can't be unticked — carrying
   // them through an edit keeps a value the user can't see from being silently

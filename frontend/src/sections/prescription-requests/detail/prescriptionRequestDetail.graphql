@@ -105,3 +105,23 @@ query generatedDispensations(
     }
   }
 }
+
+# The line table's bulk delete (spec/prescription-requests § deletion). ONE
+# atomic batch, like the list's: a refusal anywhere rolls the whole thing back,
+# so the table never ends up half-emptied behind a dialog that says nothing
+# happened.
+mutation deletePrescriptionRequestLines($storeId: String!, $ids: [String!]!) {
+  batchPrescriptionRequest(
+    storeId: $storeId
+    input: { deletePrescriptionRequestLines: $ids }
+  ) {
+    deletePrescriptionRequestLines {
+      id
+      response {
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+  }
+}

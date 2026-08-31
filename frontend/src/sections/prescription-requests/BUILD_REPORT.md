@@ -30,7 +30,7 @@ First implementation of the **greenfield** prescription-requests vertical ([`spe
 - **Not live-driven.** The dev server + a login could not be driven from this environment (the MCP bridge needed an interactive auth flow). Every AC marked "built" above needs a live pass — the FL1 end-to-end walk (create → lines → Ready to dispense → allocate + verify in Dispensing → the request reads Dispensed) is the one that matters.
 - **A full `pnpm codegen` run currently requires a server carrying every in-flight branch.** This build used a scoped codegen over the four new documents; a full run against a `prescription-requests`-only server would fail on `campaigns.graphql` (`deleteCampaigns` lives on `campaigns-atomic-delete`). Once both backend branches merge, a full run also adds `prescriptionRequestId` to dispensing's generated `InvoiceFilterInput` — its exhaustive `listFilters` map will then need the one-line `prescriptionRequestId: null` entry.
 - **No e2e suite yet** — the TESTIDS section is in place; a `prescription-requests-regression.spec.ts` needs the backend in the e2e datafile export first (the reference export predates the tables).
-- **No list CSV export, custom-field list columns/filters, or printing** — deliberate v1 scope (spec § out of scope / README gaps).
+- **No list CSV export or printing** — deliberate v1 scope (spec § out of scope / README gaps). Custom-field list columns and filters were added later in the stack and are no longer a gap.
 - **Behaviour-case conversion** pending a QA-signed `OMS-*` namespace (spec README status).
 - **Dismissed-affordance note:** the list's status filter offers all three statuses unconditionally (no preference gates exist for this vertical).
 

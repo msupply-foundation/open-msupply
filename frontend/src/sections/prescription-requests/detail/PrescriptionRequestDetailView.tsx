@@ -44,7 +44,7 @@ import {
   PrescriptionRequestDetail,
   type PrescriptionRequestFieldsFragment,
 } from './prescriptionRequestDetail.generated';
-import { DeletePrescriptionRequestLine } from './edit-modal/requestLineEdit.generated';
+import { DeletePrescriptionRequestLines } from './prescriptionRequestDetail.generated';
 import {
   savePrescriptionRequest,
   type UpdateInput,
@@ -147,15 +147,18 @@ const PrescriptionRequestDetailView: Component = () => {
       ),
   });
 
+  // ONE atomic batch, not a line at a time: a refusal used to stop the loop
+  // partway, leaving some lines gone and the rest still selected, with nothing
+  // said about it. Now either every selected line goes or none does — and a
+  // refusal leaves the selection alone, so the user can see what they asked for
+  // and try again.
   const runDeleteLines = async () => {
-    for (const id of selectedIds()) {
-      const result = await graphqlFetch(DeletePrescriptionRequestLine, {
-        storeId: params.storeId,
-        id,
-      });
-      if (result.kind !== 'success') break;
-    }
+    const result = await graphqlFetch(DeletePrescriptionRequestLines, {
+      storeId: params.storeId,
+      ids: selectedIds(),
+    });
     setDeleteLinesConfirm(false);
+    if (result.kind !== 'success') return;
     setSelectedIds([]);
     void refetch();
   };
