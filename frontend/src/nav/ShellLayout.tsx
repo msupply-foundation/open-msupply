@@ -13,6 +13,7 @@ import type { RouteSectionProps } from '@solidjs/router';
 import { AppShell } from '../ui/layout/AppShell/AppShell';
 import { ConfirmDialog } from '../ui/elements/feedback/ConfirmDialog';
 import { t } from '../intl';
+import { EmptyState } from '../ui/elements/feedback/EmptyState';
 import {
   buildNavModel,
   findLeafIn,
@@ -275,7 +276,28 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
         />
         <Show
           when={access().kind === 'ok'}
-          fallback={<Navigate href={storeHref(navHomePath())} />}
+          fallback={
+            // Landing the user on `navHomePath()` only works while the landing
+            // screen is itself reachable. In prescriber mode it is the request
+            // list, and a prescriber who lacks the prescription-query
+            // permission is refused THAT — so redirecting would send them to
+            // the path they were just refused, leaving a blank body under the
+            // permission dialog forever (AC-PM8). When the refused path is the
+            // landing path, stop and say so: the dialog names the permission,
+            // and this is what is behind it.
+            <Show
+              when={relativePath() !== navHomePath()}
+              fallback={
+                <EmptyState
+                  title={t('heading.cannot-do-that')}
+                  message={t('messages.no-permission-for-landing-screen')}
+                  data-testid="landing-screen-refused"
+                />
+              }
+            >
+              <Navigate href={storeHref(navHomePath())} />
+            </Show>
+          }
         >
           {/* Wraps the PAGE, not the shell chrome: the only consumer is the
               page header's breadcrumb. */}
