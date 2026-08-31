@@ -30,6 +30,18 @@ export interface PluginManifest {
 export interface SlotStorePreferences {
   /** Gates the CIV aggregate-AMC surfaces on internal-order lines. */
   useConsumptionAndStockFromCustomersForInternalOrders: boolean;
+  /**
+   * The store's understock threshold, in months — the low-stock boundary.
+   *
+   * `undefined` until the store context resolves. There is no safe default
+   * here: unlike the booleans above, whose safe default is OFF, a threshold
+   * guessed wrong yields a figure that is confidently wrong, and a consumer
+   * states the store's own value in its label. So a consumer waits for it
+   * rather than substituting one — the same rule the dashboard holds itself
+   * to, where an unresolved threshold pauses the fetch instead of sending
+   * threshold-less variables (OMS-REG-DB-01.54).
+   */
+  monthsUnderstock: number | undefined;
 }
 
 /**

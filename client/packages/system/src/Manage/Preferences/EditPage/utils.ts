@@ -15,6 +15,10 @@ export const PREFERENCE_GROUP_CONFIG: Partial<
     PreferenceKey.ExpiredStockIssueThreshold,
   ],
   'label.backdating': [PreferenceKey.Backdating],
+  'label.pricing': [
+    PreferenceKey.ItemMarginOverridesSupplierMargin,
+    PreferenceKey.TransferStockToInternalCustomersAtCostPrice,
+  ],
 };
 
 export const isAnyAmcPrefOn = (
