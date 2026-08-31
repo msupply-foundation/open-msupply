@@ -205,10 +205,17 @@ export const parseManualServer = (
 //   elapsed (AC-DT2): tell the user, and do not reconnect to it.
 // - standalone=true — this install carries its own server (AC-DT20): connect
 //   to it without asking, and never offer a choice.
+// - canhost=true — this machine COULD run the server everyone uses, but which
+//   role it plays has not been decided by the install (spec/android §
+//   deployment modes: "the role is a deployment fact, not a build"). Only
+//   then is the mode chooser offered, once, and the answer remembered
+//   (§ install mode below). A desktop client install never sets it, so it
+//   goes straight to the list as it always has (AC-DT3).
 export type DiscoveryFlags = {
   autoconnect: boolean;
   timedout: boolean;
   standalone: boolean;
+  canHostServer: boolean;
 };
 
 export const parseDiscoveryFlags = (search: string): DiscoveryFlags => {
@@ -217,6 +224,7 @@ export const parseDiscoveryFlags = (search: string): DiscoveryFlags => {
     autoconnect: params.get('autoconnect') !== 'false',
     timedout: params.get('timedout') === 'true',
     standalone: params.get('standalone') === 'true',
+    canHostServer: params.get('canhost') === 'true',
   };
 };
 
@@ -250,7 +258,8 @@ export const discoveryReturnAddress = (
   flags: DiscoveryFlags
 ): string =>
   `${origin}${pathname}?autoconnect=false` +
-  (flags.standalone ? '&standalone=true' : '');
+  (flags.standalone ? '&standalone=true' : '') +
+  (flags.canHostServer ? '&canhost=true' : '');
 
 // Standalone with no attempt to make this page-load (the user chose to come
 // back, or the shell's own launch check already elapsed): the failure state
@@ -309,6 +318,85 @@ export const recordPreviousServer = (
     storage?.setItem(PREVIOUS_SERVER_KEY, JSON.stringify(server));
   } catch {
     // Blocked storage only costs the next launch its auto-connect.
+  }
+};
+
+// --- Install mode ---------------------------------------------------------
+// Which role this install plays (spec/android § deployment modes): 'server' —
+// this device runs the server other devices connect to — or 'client'.
+// Undefined means nobody has said yet, which is what puts the chooser on
+// screen, and only where the machine could actually be either
+// (DiscoveryFlags.canHostServer).
+//
+// Page-owned, exactly like the remembered server above: the shell always
+// boots this page and THIS decides what renders, so no host carries mode
+// logic that could drift from the other's. The desktop's `standalone=true` is
+// a different thing — a launch fact from an install built that way
+// (AC-DT20) — and it always wins over anything stored here.
+//
+// Key and encoding match the legacy screen's (`preference/mode`, a
+// JSON-encoded string), so an upgrade keeps its answer. The legacy 'none'
+// simply fails the check below and the chooser is offered again.
+
+export type InstallMode = 'client' | 'server';
+
+const MODE_KEY = 'preference/mode';
+
+export const readInstallMode = (
+  storage = defaultStorage()
+): InstallMode | undefined => {
+  try {
+    const raw = storage?.getItem(MODE_KEY);
+    if (!raw) return undefined;
+    const parsed: unknown = JSON.parse(raw);
+    return parsed === 'client' || parsed === 'server' ? parsed : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+export const recordInstallMode = (
+  mode: InstallMode,
+  storage = defaultStorage()
+): void => {
+  try {
+    storage?.setItem(MODE_KEY, JSON.stringify(mode));
+  } catch {
+    // Blocked storage only costs the next launch its chooser again.
+  }
+};
+
+// --- Adopting what the legacy shell stored --------------------------------
+
+/** Take over the legacy shell's saved answers, once.
+ *
+ * The legacy app stored preferences per platform: localStorage under
+ * `preference/<key>` on the web and in Electron's renderer, but Android's
+ * native Preferences (SharedPreferences) on a device
+ * (client/packages/common/src/hooks/useNativeClient/helpers.ts). This page
+ * can only read the former — so on an upgraded tablet the remembered server
+ * and the chosen mode are both invisible, and the user re-picks each of them
+ * for no reason.
+ *
+ * A host that can read that native store states the raw values as facts
+ * (HostInfo.legacy) and this decides what to do with them: adopt only where
+ * the page has written nothing itself, because anything the page wrote is by
+ * definition the newer answer. Values are stored verbatim — the readers above
+ * already reject anything unusable, so a stale or foreign record costs
+ * nothing. One-way: nothing is ever written back to the legacy store. */
+export const adoptLegacyPreferences = (
+  legacy: HostInfo['legacy'],
+  storage = defaultStorage()
+): void => {
+  if (!legacy || !storage) return;
+  const adopt = (key: string, value: string | undefined) => {
+    if (value && storage.getItem(key) === null) storage.setItem(key, value);
+  };
+  try {
+    adopt(PREVIOUS_SERVER_KEY, legacy.previousServer);
+    adopt(MODE_KEY, legacy.mode);
+  } catch {
+    // Blocked storage: the user re-picks once, as they would have anyway.
   }
 };
 

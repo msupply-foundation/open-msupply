@@ -130,3 +130,14 @@
 .manualConnect {
   margin-block-start: 1.4rem;
 }
+
+/* The install-mode chooser (AC-AN21): two equal choices, so they read as a
+   pair rather than as two buttons that happen to sit together. Stretched
+   because the labels differ in length and a ragged pair reads as accidental. */
+.modeChoices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: stretch;
+  align-self: stretch;
+}

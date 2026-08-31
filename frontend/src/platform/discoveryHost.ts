@@ -46,6 +46,20 @@ export const getDiscoveryHost = async (): Promise<
     plugin = registerPlugin<DiscoveryHostPlugin>('DiscoveryHost');
   }
   const p = plugin;
+  // registerPlugin hands back a proxy whether or not the shell registered
+  // anything, so being on Android is not evidence that a host is there — an
+  // older shell serving this page has no DiscoveryHost. Ask one question
+  // before claiming to be a host: without this the page renders the chooser
+  // against a bridge that rejects every call, and states "no server found"
+  // for ever instead of the honest no-host notice.
+  const answers = await p
+    .hostInfo()
+    .then(() => true)
+    .catch(() => false);
+  if (!answers) {
+    plugin = undefined;
+    return undefined;
+  }
   // The two fire-and-forget methods swallow their own failures: the contract
   // gives them no way to report one (both return void), and an uncaught
   // bridge rejection would surface as an unhandled promise rejection in the
