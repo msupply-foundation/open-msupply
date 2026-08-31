@@ -5,7 +5,7 @@ use repository::{
     RepositoryError, TransactionError,
 };
 
-use crate::activity_log::activity_log_entry;
+use crate::activity_log::{activity_log_entry, activity_log_entry_with_diff};
 use crate::custom_field::{
     apply_custom_fields_patch, check_custom_fields_patch, CustomFieldPatchProblem,
 };
@@ -165,6 +165,21 @@ pub fn update_prescription_request(
                 ..existing.clone()
             };
 
+            // What an edit changed, before the status transition below adds its
+            // own fields to the row — so this records the header the user
+            // touched and the transition is logged as itself. Writes nothing
+            // when nothing differs, so a no-op update leaves no trace.
+            //
+            // A request records who CREATED it, and until this there was no
+            // record that anyone else had touched it since.
+            activity_log_entry_with_diff(
+                ctx,
+                ActivityLogType::PrescriptionRequestUpdated,
+                Some(updated.id.clone()),
+                Some(&existing),
+                &updated,
+            )?;
+
             if let Some(UpdatePrescriptionRequestStatus::ReadyToDispense { clinician_id }) = status
             {
                 let lines = PrescriptionRequestLineRowRepository::new(connection)
@@ -208,8 +223,9 @@ mod test {
     use repository::{
         mock::{clinician_a, mock_item_a, mock_patient, MockDataInserts},
         test_db::setup_all,
-        EqualFilter, InvoiceFilter, InvoiceLineRowRepository, InvoiceLineType, InvoiceRepository,
-        InvoiceStatus, InvoiceType, PrescriptionRequestStatus,
+        ActivityLogRowRepository, ActivityLogType, EqualFilter, InvoiceFilter,
+        InvoiceLineRowRepository, InvoiceLineType, InvoiceRepository, InvoiceStatus, InvoiceType,
+        PrescriptionRequestStatus,
     };
     use util::uuid::uuid;
 
@@ -377,6 +393,66 @@ mod test {
                 .delete_prescription_request(&ctx, "store_a", request.id.clone()),
             Err(DeletePrescriptionRequestError::NotEditable)
         );
+    }
+
+    /// A request records who CREATED it, so without this nothing said that
+    /// anyone else had touched it since.
+    #[actix_rt::test]
+    async fn an_edit_is_recorded_and_a_no_op_is_not() {
+        let (service_provider, ctx) = setup("prescription_request_edit_is_logged").await;
+        let request = new_request(&service_provider, &ctx);
+
+        let updates = |id: &str| {
+            ActivityLogRowRepository::new(&ctx.connection)
+                .find_many_by_record_id(id)
+                .unwrap()
+                .into_iter()
+                .filter(|log| log.r#type == ActivityLogType::PrescriptionRequestUpdated)
+                .collect::<Vec<_>>()
+        };
+
+        assert!(updates(&request.id).is_empty(), "creation is not an edit");
+
+        service_provider
+            .prescription_request_service
+            .update_prescription_request(
+                &ctx,
+                "store_a",
+                UpdatePrescriptionRequest {
+                    id: request.id.clone(),
+                    comment: Some(NullableUpdate {
+                        value: Some("second thoughts".to_string()),
+                    }),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let logged = updates(&request.id);
+        assert_eq!(logged.len(), 1, "an edit was not recorded");
+        // The diff names what changed, not merely that something did
+        let to = logged[0].changed_to.clone().unwrap();
+        assert!(
+            to.contains("second thoughts"),
+            "the log did not carry the new value: {to}"
+        );
+
+        // Submitting the same values again changes nothing, so records nothing
+        service_provider
+            .prescription_request_service
+            .update_prescription_request(
+                &ctx,
+                "store_a",
+                UpdatePrescriptionRequest {
+                    id: request.id.clone(),
+                    comment: Some(NullableUpdate {
+                        value: Some("second thoughts".to_string()),
+                    }),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+        assert_eq!(updates(&request.id).len(), 1, "a no-op update was recorded");
     }
 
     /// The generated dispensation is the request's only route to being

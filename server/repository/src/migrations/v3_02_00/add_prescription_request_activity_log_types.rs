@@ -13,6 +13,7 @@ impl MigrationFragment for Migrate {
                 connection,
                 r#"
                     ALTER TYPE activity_log_type ADD VALUE IF NOT EXISTS 'PRESCRIPTION_REQUEST_CREATED';
+                    ALTER TYPE activity_log_type ADD VALUE IF NOT EXISTS 'PRESCRIPTION_REQUEST_UPDATED';
                     ALTER TYPE activity_log_type ADD VALUE IF NOT EXISTS 'PRESCRIPTION_REQUEST_READY_TO_DISPENSE';
                     ALTER TYPE activity_log_type ADD VALUE IF NOT EXISTS 'PRESCRIPTION_REQUEST_DISPENSED';
                     ALTER TYPE activity_log_type ADD VALUE IF NOT EXISTS 'PRESCRIPTION_REQUEST_DELETED';
