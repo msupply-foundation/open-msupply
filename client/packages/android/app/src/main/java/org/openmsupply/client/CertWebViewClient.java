@@ -14,6 +14,7 @@ import android.util.Log;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 
 import androidx.annotation.Nullable;
@@ -71,6 +72,31 @@ class CertWebViewClient extends ExtendedWebViewClient {
         // connect path has its own error handling and must not be yanked here.
         if (chosenUrl == null || !failed.startsWith(chosenUrl)) return;
         this.nativeApi.returnToDiscovery(true);
+    }
+
+    /**
+     * The discovery page is not in every bundle this shell can be built with:
+     * the debug web bundle stages the old UI alone (capacitor.config.ts §
+     * webDir, DEBUG_BUILD), and the embedded server answers a missing file
+     * with a real 404 rather than an index fallback
+     * (server/server/src/serve_frontend.rs). Without this, a debug build boots
+     * to "file not found".
+     *
+     * So: a 404 for the discovery page ON THIS DEVICE'S OWN SERVER falls back
+     * to the old front end's own chooser, which such a bundle does have. Only
+     * that one URL, only the main frame, and only a 404 — anything else is a
+     * real error and stays visible.
+     */
+    @Override
+    public void onReceivedHttpError(WebView view, WebResourceRequest request, WebResourceResponse errorResponse) {
+        super.onReceivedHttpError(view, request, errorResponse);
+        if (!request.isForMainFrame()) return;
+        if (errorResponse.getStatusCode() != 404) return;
+        String failed = request.getUrl().toString();
+        if (!failed.startsWith(this.nativeApi.getLocalUrl() + NativeApi.DISCOVERY_PATH)) return;
+        Log.w(NativeApi.OM_SUPPLY, "No " + NativeApi.DISCOVERY_PATH
+                + " in this bundle, falling back to the old front end's chooser");
+        this.nativeApi.loadLegacyDiscovery();
     }
 
     private Certificate get_self_signed_cert() {
@@ -207,9 +233,15 @@ class CertWebViewClient extends ExtendedWebViewClient {
         // ConnectedServer). Both ship, so both are honoured — and neither
         // recognises a server by address, which loopback-versus-hostname
         // spellings make unreliable.
+        //
+        // Both match by ORIGIN, not by the URL that was navigated to: this
+        // callback fires per REQUEST, so the document, every script and style,
+        // and every GraphQL call each arrive here separately. A rule scoped to
+        // the hand-off URL would answer the first and drop the rest to the
+        // refusal below (NativeApi.getChosenOrigin).
         NativeApi.FrontEndHost connectedServer = nativeApi.getConnectedServer();
-        String chosenUrl = NativeApi.getChosenUrl();
-        Boolean isChosenByPage = chosenUrl != null && url.startsWith(chosenUrl);
+        String chosenOrigin = NativeApi.getChosenOrigin();
+        Boolean isChosenByPage = chosenOrigin != null && url.startsWith(chosenOrigin);
         Boolean isConnectedToServer = connectedServer != null && url.startsWith(connectedServer.getUrl());
 
         // Default behaviour if not connected to a server or not discovery

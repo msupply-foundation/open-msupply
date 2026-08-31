@@ -1,0 +1,9 @@
+# `cap copy` populates this folder with the web bundle (capacitor.config.ts §
+# webDir — the staged dual-frontend bundle for a release build, the old UI's
+# own build for a debug one); on app start FrontendAssets copies it to
+# <filesDir>/frontend for the embedded server to serve (server.frontend_dir)
+# This file allows commiting empty folder in git (and webpack clean: { keep: './gitignore' } allows for this file to be kept during build)
+
+# Ignore all except this file
+*
+!.gitignore
