@@ -313,13 +313,16 @@ describe('isLocalServer (spec/android § server discovery, AC-DT5)', () => {
   it('marks a server by hardware id, never by address', () => {
     // Announced at loopback — an address compare would call this remote.
     expect(
-      isLocalServer(announcement({ hardwareId: 'HW-THIS', ip: '127.0.0.1' }), info())
+      isLocalServer(
+        announcement({ hardwareId: 'HW-THIS', ip: '127.0.0.1' }),
+        info()
+      )
     ).toBe(true);
     // Announced at this machine's own LAN address but a DIFFERENT machine's
     // id — an address compare would call this local.
-    expect(
-      isLocalServer(announcement({ ip: '192.168.1.20' }), info())
-    ).toBe(false);
+    expect(isLocalServer(announcement({ ip: '192.168.1.20' }), info())).toBe(
+      false
+    );
   });
 
   it('matches case-insensitively (machine_uid vs a shell reading the same OS id)', () => {
@@ -333,7 +336,10 @@ describe('isLocalServer (spec/android § server discovery, AC-DT5)', () => {
 
   it('never matches when either side has no id — the mark just never shows', () => {
     expect(
-      isLocalServer(announcement({ hardwareId: 'HW-THIS' }), info({ hardwareId: '' }))
+      isLocalServer(
+        announcement({ hardwareId: 'HW-THIS' }),
+        info({ hardwareId: '' })
+      )
     ).toBe(false);
     expect(
       isLocalServer(announcement({ hardwareId: '' }), info({ hardwareId: '' }))
@@ -347,12 +353,12 @@ describe('toFrontEndHost (AC-DT22 address rewriting)', () => {
   it("rewrites this machine's server to an address other machines can reach", () => {
     // Loopback (desktop's old special case) and an arbitrary interface's
     // address (Android's NsdManager resolution) rewrite alike.
-    expect(toFrontEndHost(announcement({ ...local, ip: '127.0.0.1' }), info()).ip).toBe(
-      '192.168.1.20'
-    );
-    expect(toFrontEndHost(announcement({ ...local, ip: '10.0.0.9' }), info()).ip).toBe(
-      '192.168.1.20'
-    );
+    expect(
+      toFrontEndHost(announcement({ ...local, ip: '127.0.0.1' }), info()).ip
+    ).toBe('192.168.1.20');
+    expect(
+      toFrontEndHost(announcement({ ...local, ip: '10.0.0.9' }), info()).ip
+    ).toBe('192.168.1.20');
   });
 
   it('keeps an already-reachable resolution', () => {

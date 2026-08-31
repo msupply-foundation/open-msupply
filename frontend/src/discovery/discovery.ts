@@ -329,7 +329,11 @@ export const recordPreviousServer = (
 export const connectToServer = async (
   host: Pick<DiscoveryHostApi, 'probe' | 'navigate'>,
   server: FrontEndHost,
-  { path, remember, storage }: { path: string; remember: boolean; storage?: Storage }
+  {
+    path,
+    remember,
+    storage,
+  }: { path: string; remember: boolean; storage?: Storage }
 ): Promise<boolean> => {
   const answered = await host
     .probe(probeUrl(server), ANSWER_CHECK_TIMEOUT_MS)
