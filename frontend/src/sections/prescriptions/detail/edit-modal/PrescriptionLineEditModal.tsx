@@ -781,7 +781,17 @@ const Body = (props: PrescriptionLineEditModalProps) => {
               row can't hold them): prescribed quantity — when the preference
               shows it — PRECEDES the issue field (.61). */}
           <FormRow class={styles.quantityRow}>
-            <Show when={prefs().editPrescribedQuantity}>
+            {/* Shown whenever the preference allows entry, AND always on a
+                generated dispensation regardless of it: there the figure is
+                the prescriber's and is the target the dispenser allocates
+                towards, so hiding it would leave nothing to allocate against.
+                Locked either way — see `lockPrescribedQuantity`. */}
+            <Show
+              when={
+                prefs().editPrescribedQuantity ||
+                props.lockPrescribedQuantity === true
+              }
+            >
               <NumberField
                 label={t('label.prescribed-quantity')}
                 class={styles.quantityField}
