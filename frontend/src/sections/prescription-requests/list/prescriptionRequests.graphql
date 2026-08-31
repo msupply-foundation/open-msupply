@@ -27,8 +27,8 @@ query prescriptionRequests(
           id
           name
         }
-        # The prescriber — the account that created the request (S1 column,
-        # and the username the Prescriber filter matches).
+        # Entered by — the account that created the request (S1 column, and
+        # the username the Entered by filter matches).
         user {
           username
         }

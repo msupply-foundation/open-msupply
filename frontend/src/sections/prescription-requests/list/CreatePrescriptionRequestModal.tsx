@@ -23,8 +23,9 @@ import { InsertPrescriptionRequest } from './createPrescriptionRequest.generated
 // (rejections here are all generic — contract § wire traps); success
 // navigates to the new request's detail.
 //
-// There is NO clinician field: the request records who prescribed as the user
-// who entered it (§ who prescribed), so there is nothing to pick.
+// There is NO clinician field: a request records only the user who entered it
+// (§ who is recorded), and carries no clinician of its own, so there is
+// nothing to pick.
 
 export interface CreatePrescriptionRequestModalProps {
   open: boolean;

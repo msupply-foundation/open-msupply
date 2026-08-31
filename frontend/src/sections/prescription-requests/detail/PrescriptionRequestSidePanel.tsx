@@ -89,17 +89,17 @@ export const PrescriptionRequestSidePanel: Component<
         title={t('heading.additional-info')}
         collapsible
       >
-        {/* Labelled PRESCRIBER, not "entered by": on a request the creating
-            user IS who prescribed, because there is no clinician picker
-            (spec/prescription-requests § who prescribed). Naming it after the
-            data-entry act would leave a reader looking for a prescriber and
-            finding none. The testid keeps its name — it identifies the field,
-            and e2e/TESTIDS.md is a cross-front-end contract. */}
-        <FieldRow label={t('label.prescriber')}>
+        {/* ENTERED BY — the account that typed the request, and nothing more
+            (spec/prescription-requests § who is recorded). Deliberately not
+            "prescriber": the app cannot tell a clinician entering their own
+            request from a clerk entering it for one, so a label claiming the
+            clinical fact would assert what nothing here knows. A clinician is
+            a separate, named person, and this request has none. */}
+        <FieldRow label={t('label.entered-by')}>
           <UserLabel
             username={props.node.user?.username}
             email={props.node.user?.email}
-            label={t('label.prescriber')}
+            label={t('label.entered-by')}
             testId="entered-by-field"
           />
         </FieldRow>
