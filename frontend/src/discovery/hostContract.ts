@@ -46,17 +46,24 @@ export type HostInfo = {
   /** IPv4 addresses OTHER machines can reach this machine at — never
    * loopback or link-local. Preference order; may be empty (no network). */
   lanAddresses: string[];
-  /** What the LEGACY shell saved where this page cannot look. Android kept
-   * preferences in the native store, not localStorage
-   * (client/packages/common/src/hooks/useNativeClient/helpers.ts), so an
-   * upgraded tablet's remembered server and chosen mode are invisible here
-   * and the user re-picks both for nothing.
+  /** What the LEGACY shell saved where this page cannot look — so that an
+   * upgraded install does not re-pick answers it has already given.
+   *
+   * "Where this page cannot look" is per shell, and neither case is
+   * localStorage as this page sees it:
+   *
+   * - the old ANDROID shell kept preferences in the device's native store
+   *   (client/packages/common/src/hooks/useNativeClient/helpers.ts), so an
+   *   upgraded tablet's remembered server and chosen mode are both invisible;
+   * - the old ELECTRON shell kept the remembered server in its own main-process
+   *   store, and its renderer's `preference/*` entries sit under a different
+   *   origin from the loopback one this page is served on.
    *
    * Facts, verbatim and unvalidated — a host reads the raw stored strings and
    * says what it found; the page decides whether to adopt them
    * (./discovery.ts § adoptLegacyPreferences) and its own readers reject
    * anything unusable. Omitted entirely by a host with no legacy store to
-   * read, which is every host but the old Android shell. */
+   * read, which is both of the new shells. */
   legacy?: {
     /** The legacy `mode` preference as stored (JSON-encoded 'client' |
      * 'server' | 'none'). */
@@ -89,8 +96,18 @@ export type RawAnnouncement = {
 export type ConnectedServer = {
   /** The server's announced `hardware_id` — with `port`, the key both legacy
    * shells store certificate fingerprints under, so an upgraded install still
-   * recognises a server it already trusted. `''` for a manually entered
-   * server, which was never announced and has no id to key on. */
+   * recognises a server it already trusted.
+   *
+   * Not always an announced id. A MANUALLY entered server was never
+   * announced, so the page mints one per attempt purely to key the list entry
+   * (./discovery.ts § parseManualServer) and that is what arrives here — as it
+   * did from the legacy screen, which minted one for the same reason
+   * (client/packages/common/src/ui/discovery/ManualServerConfig.tsx). A host
+   * therefore records a fresh fingerprint for each freshly typed server and
+   * compares nothing; only once such a server is REMEMBERED does its key hold
+   * still. Same behaviour as the shipping app, stated here because the key
+   * looks stabler than it is. `''` for this install's own standalone server,
+   * which is proved by `isLocal` and never keyed. */
   hardwareId: string;
   /** The server's port, the other half of that key. Passed rather than parsed
    * back out of the URL, where a default port is not written down. */

@@ -332,6 +332,26 @@ export const recordPreviousServer = (
   }
 };
 
+/** Re-decide whether a REMEMBERED record is this machine's own server, against
+ * this machine as it is now (§ isLocalServer).
+ *
+ * A listed server's locality is computed fresh from the announcement every
+ * poll (§ toFrontEndHost), but a remembered — or adopted — record carries the
+ * answer from whenever it was written, and an adopted legacy record carries
+ * one the legacy shells worked out by comparing ADDRESSES, which is exactly
+ * the compare spec/android § server discovery rejects. That answer is not
+ * cosmetic: it tells the host whether to prove this server's certificate
+ * against the one it wrote to disk or to trust it on first use
+ * (hostContract.ts § ConnectedServer), so a stale `true` refuses a remote
+ * server outright and a stale `false` quietly downgrades this machine's own.
+ *
+ * Not for STANDALONE_LOCAL_SERVER, which is deliberately local with no
+ * announced id to compare (AC-DT21) — this would unmark it. */
+export const withLocality = (
+  server: FrontEndHost,
+  info: HostInfo
+): FrontEndHost => ({ ...server, isLocal: isLocalServer(server, info) });
+
 // --- Install mode ---------------------------------------------------------
 // Which role this install plays (spec/android § deployment modes): 'server' —
 // this device runs the server other devices connect to — or 'client'.
@@ -387,16 +407,49 @@ export const recordInstallMode = (
  * choosing "runs the server" is a one-way door out of which the only route is
  * clearing app data.
  *
+ * `answeredThisLoad` is what closes the question again. The stored role and
+ * the launch flags are both fixed for a page-load, so on the second case
+ * ANSWERING does not change either of them: without this, re-picking "this
+ * device runs the server" re-renders the same question for ever and the only
+ * answer that can be given is the other one.
+ *
  * A launch flag is a different thing: a standalone INSTALL decided for itself
  * and is never offered the question (AC-DT20). Client mode returns straight to
  * the list, as it always has. */
 export const shouldAskInstallMode = (
   flags: DiscoveryFlags,
-  mode: InstallMode | undefined
+  mode: InstallMode | undefined,
+  answeredThisLoad = false
 ): boolean =>
+  !answeredThisLoad &&
   flags.canHostServer &&
   !flags.standalone &&
   (mode === undefined || (mode === 'server' && !flags.autoconnect));
+
+/** The flags the rest of the page runs against once the role is settled.
+ *
+ * Downstream sees ONE flag set, so StandaloneConnect, autoconnectTarget and
+ * standaloneSeededFailure keep reading `standalone` and need no idea that a
+ * stored mode exists.
+ *
+ * `autoconnect` is re-opened by an answer given on THIS page-load, and that
+ * is not a detail: the launch flag says whether the user was sent back here
+ * deliberately, which is a reason not to bounce them to the server they just
+ * left (AC-DT16) — it is not a reason to refuse the role they have just this
+ * moment chosen. Without it, answering "this device runs the server" on a
+ * return lands on the seeded could-not-connect notice with no attempt made. */
+export const effectiveFlags = (
+  flags: DiscoveryFlags,
+  mode: InstallMode | undefined,
+  answeredThisLoad = false
+): DiscoveryFlags =>
+  flags.standalone || mode !== 'server'
+    ? flags
+    : {
+        ...flags,
+        standalone: true,
+        autoconnect: flags.autoconnect || answeredThisLoad,
+      };
 
 // --- Adopting what the legacy shell stored --------------------------------
 
@@ -405,12 +458,14 @@ export const shouldAskInstallMode = (
  * The legacy app stored preferences per platform: localStorage under
  * `preference/<key>` on the web and in Electron's renderer, but Android's
  * native Preferences (SharedPreferences) on a device
- * (client/packages/common/src/hooks/useNativeClient/helpers.ts). This page
- * can only read the former — so on an upgraded tablet the remembered server
- * and the chosen mode are both invisible, and the user re-picks each of them
- * for no reason.
+ * (client/packages/common/src/hooks/useNativeClient/helpers.ts). Neither is
+ * readable here: the native store this page has no access to at all, and the
+ * renderer's localStorage belongs to a DIFFERENT ORIGIN from the loopback one
+ * the old Electron shell serves this page on. So on an upgraded install the
+ * remembered server (and on a tablet the chosen mode) is invisible, and the
+ * user re-picks it for no reason.
  *
- * A host that can read that native store states the raw values as facts
+ * A host that can read what it stored states the raw values as facts
  * (HostInfo.legacy) and this decides what to do with them: adopt only where
  * the page has written nothing itself, because anything the page wrote is by
  * definition the newer answer. Values are stored verbatim — the readers above
