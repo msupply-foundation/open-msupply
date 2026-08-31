@@ -142,9 +142,13 @@ export const PrescriptionRequestSidePanel: Component<
         </FieldRow>
       </SidePanelSection>
 
-      {/* The generated dispensation — reachable from the request (AC-R4); the
-          section only exists once a hand-over can have produced one. */}
-      <Show when={!isEditable(status())}>
+      {/* The generated dispensation — reachable from the request (AC-R4). Past
+          New a hand-over COULD have produced one, but the section waits until
+          one is actually there: the dispensation is patient-distributed while
+          the request is store-owned, so a site can legitimately hold the
+          request and not the record it generated, and an empty
+          Related-documents heading tells that reader nothing. */}
+      <Show when={relatedDispensations().length > 0}>
         <SidePanelSection
           value="related-documents"
           title={t('heading.related-documents')}
