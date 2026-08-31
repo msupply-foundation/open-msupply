@@ -64,9 +64,11 @@ const FILTERS: Filter<PrescriptionRequestFilter>[] =
         />
       ),
     },
-    // The account that created the request — matched on its username, the
-    // only handle the record carries (the wire filter is a sub-select on
-    // user_account; there is no user picker in the app to select from).
+    // Entered by: the account that created the request (rules § who is
+    // recorded) — a data-entry fact, never presented as the prescriber.
+    // Matched on its username, the only handle the record carries: the wire
+    // filter is a sub-select on user_account, and there is no user picker in
+    // the app to select from.
     username: {
       label: () => t('label.entered-by'),
       render: props => (

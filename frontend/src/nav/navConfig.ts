@@ -339,7 +339,7 @@ export const navConfig: NavItem[] = [
  *               and where the data a prescriber has no use for lives.
  *   Reports     the one remaining route that surfaces stock and financial
  *               figures; its permission gates HAVING reports, not which ones.
- *   Clinicians  there is no clinician picker any more (§ who prescribed), so
+ *   Clinicians  there is no clinician picker any more (§ who is recorded), so
  *               the list has nothing to feed.
  *
  * The dispensary gate is kept on the two dispensary destinations even though a

@@ -116,9 +116,12 @@ diesel_string_enum! {
         /// were granted and the API still answers accordingly — this is a UI
         /// simplification, not a confidentiality boundary.
         ///
-        /// No legacy permission maps to it yet (`apis::permissions`), so it can
-        /// only be granted by seed/test data. mSupply central must allocate a
-        /// real permission before prescriber mode can ship.
+        /// Reaches a site from mSupply slot 205, "Restrict to prescriptions"
+        /// (`apis::permissions`) — the only source of it. It gets a slot of its
+        /// own rather than borrowing one because slot 13
+        /// (`LogOnInDispensaryMode`) is already ticked for real dispensary
+        /// staff, so reusing it would have stripped dispensing, stock and
+        /// inventory from the very users whose job needs them.
         PrescriberMode,
         #[strum(default, transparent)]
         Unknown(String),

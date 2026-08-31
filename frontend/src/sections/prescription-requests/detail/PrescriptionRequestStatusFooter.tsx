@@ -30,7 +30,7 @@ import type { PrescriptionRequestFieldsFragment } from './prescriptionRequestDet
 // The confirmation also ASKS FOR A CLINICIAN (AC-R6): the one field the
 // dispensation needs that the request does not hold. It is optional, and it is
 // asked here rather than on the header because it is the hand-over's parameter
-// — the request itself never names a clinician (rules § who prescribed).
+// — the request itself never names a clinician (rules § who is recorded).
 
 export interface PrescriptionRequestStatusFooterProps {
   storeId: string;

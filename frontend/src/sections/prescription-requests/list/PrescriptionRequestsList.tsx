@@ -236,9 +236,10 @@ const PrescriptionRequestsList: Component = () => {
       header: () => t('label.created'),
       ...getDateCell(),
     },
-    // The prescriber — the account that created the request. No server sort
-    // key backs it, so it displays only; the matching filter is a username
-    // contains-match (listFilters).
+    // Entered by — the account that created the request (rules § who is
+    // recorded); a data-entry fact, not a claim about who prescribed. No
+    // server sort key backs it, so it displays only; the matching filter is a
+    // username contains-match (listFilters).
     {
       c: { accessor: row => row.user?.username ?? '', id: 'username' },
       header: () => t('label.entered-by'),

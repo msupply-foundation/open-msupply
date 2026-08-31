@@ -78,22 +78,27 @@ impl<'a> UserAccountService<'a> {
                 // Context permissions are managed by sync, not the login flow —
                 // left untouched, as before (has_context(false)).
                 //
-                // RESTRICTIONS are excluded too (`is_restriction`), for the same
-                // reason in a different guise. The delete pass below revokes
-                // whatever the login payload does not mention, which is only
-                // sound while the payload CAN mention everything.
+                // Everything else the payload can express, including the one
+                // RESTRICTION (`is_restriction` — `PrescriberMode`), is the
+                // payload's to state: present means granted, absent means
+                // revoked. `user_store_permissions`, the sync half of this same
+                // reconcile, has always read silence that way, and a login and
+                // a sync record disagreeing about what silence means is a bug
+                // whichever answer is right.
                 //
-                // The exclusion predates slot 205 ("Restrict to prescriptions",
-                // see `apis::permissions`), which central had not allocated yet:
-                // nothing could express `PrescriberMode`, so its absence from a
-                // payload carried no intent and revoking on it would have
-                // stripped the permission on the holder's next login.
-                //
-                // A central that grants it now does express it either way, so
-                // the exclusion is arguably no longer earning its keep. Left as
-                // it is because turning it off is a change to what a login can
-                // take away, which wants deciding on its own rather than riding
-                // along with the mapping.
+                // Restrictions were briefly excluded here, when central had not
+                // allocated slot 205 ("Restrict to prescriptions", see
+                // `apis::permissions`) and nothing could express
+                // `PrescriberMode`: absence carried no intent then, so revoking
+                // on it would have stripped the permission on the holder's next
+                // login. A central without that slot cannot grant it either,
+                // though, so the exclusion only ever protected a user who could
+                // not exist — while leaving a real one locked into three screens
+                // with no way back short of a hand-edited row. It also hid the
+                // held row from the `changed_permissions` comparison below, so
+                // the row was re-upserted on EVERY login: the per-login
+                // changelog churn this delta-write exists to avoid (#12610,
+                // #12612).
                 let existing_permissions: HashMap<String, UserPermissionRow> =
                     UserPermissionRepository::new(con)
                         .query_by_filter(
@@ -102,7 +107,6 @@ impl<'a> UserAccountService<'a> {
                                 .has_context(false),
                         )?
                         .into_iter()
-                        .filter(|p| !p.permission.is_restriction())
                         .map(|p| (p.id.clone(), p))
                         .collect();
                 let incoming_permission_ids: HashSet<&str> = stores_permissions
@@ -594,13 +598,19 @@ mod user_account_test {
 
     /// spec/prescription-requests § prescriber mode.
     ///
-    /// A restriction the login payload does not mention survives it. Pins the
-    /// `is_restriction` exclusion in `upsert_user` — whatever the reconcile
-    /// pass revokes, it does not reach restrictions.
+    /// A RESTRICTION is revoked by a payload that stops naming it, exactly like
+    /// a grant. Central states prescriber mode either way (slot 205, see
+    /// `apis::permissions`), so a login carrying every permission the user has
+    /// and not this one is a revocation — and it must land, or a user who is
+    /// released from the mode in central stays locked into three screens.
+    ///
+    /// The sync half of this reconcile (`user_store_permissions`) has always
+    /// read a payload's silence this way; this pins the login half to the same
+    /// reading.
     #[actix_rt::test]
-    async fn upsert_user_keeps_restrictions_the_payload_cannot_express() {
+    async fn upsert_user_revokes_a_restriction_the_payload_stops_naming() {
         let (_, connection, _, _) = setup_all(
-            "upsert_user_keeps_restrictions_the_payload_cannot_express",
+            "upsert_user_revokes_a_restriction_the_payload_stops_naming",
             MockDataInserts::none().names().stores(),
         )
         .await;
@@ -616,7 +626,7 @@ mod user_account_test {
             )
             .unwrap();
 
-        // A later login carrying only what the legacy payload can express.
+        // A later login from a central that no longer grants slot 205.
         service
             .upsert_user(
                 reconcile_user(),
@@ -637,10 +647,54 @@ mod user_account_test {
             .collect();
 
         assert!(
-            remaining.contains(&"reconcile_prescriber".to_string()),
-            "PrescriberMode was revoked by a payload that cannot express it: {remaining:?}"
+            !remaining.contains(&"reconcile_prescriber".to_string()),
+            "PrescriberMode survived a payload that stopped naming it: {:?}",
+            remaining
         );
         assert!(remaining.contains(&"reconcile_p1".to_string()));
+    }
+
+    /// The other half of the same rule: a payload that DOES name the
+    /// restriction grants it, and a repeat login neither drops it nor rewrites
+    /// it. The rewrite matters — while restrictions were excluded from
+    /// `existing_permissions`, the held row was invisible to the
+    /// `changed_permissions` comparison and re-upserted on every login.
+    #[actix_rt::test]
+    async fn upsert_user_keeps_a_restriction_the_payload_still_names() {
+        let (_, connection, _, _) = setup_all(
+            "upsert_user_keeps_a_restriction_the_payload_still_names",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+        let service = UserAccountService::new(&connection);
+
+        let payload = || {
+            store_a_permissions(vec![
+                permission("reconcile_p1", PermissionType::StoreAccess),
+                permission("reconcile_prescriber", PermissionType::PrescriberMode),
+            ])
+        };
+
+        service.upsert_user(reconcile_user(), payload()).unwrap();
+        let mark = ChangelogRepository::new(&connection).max_cursor().unwrap();
+
+        service.upsert_user(reconcile_user(), payload()).unwrap();
+
+        let remaining: Vec<_> = UserPermissionRepository::new(&connection)
+            .query_by_filter(
+                UserPermissionFilter::new().user_id(EqualFilter::equal_to(reconcile_user().id)),
+            )
+            .unwrap()
+            .into_iter()
+            .map(|p| p.id)
+            .collect();
+
+        assert!(remaining.contains(&"reconcile_prescriber".to_string()));
+        assert_eq!(
+            changelogs_after(&connection, mark),
+            vec![],
+            "an unchanged restriction was re-upserted, writing a changelog row"
+        );
     }
 
     #[actix_rt::test]
