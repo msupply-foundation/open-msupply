@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.util.Base64;
 import android.util.Log;
 import android.webkit.SslErrorHandler;
+import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 
@@ -46,6 +47,30 @@ class CertWebViewClient extends ExtendedWebViewClient {
         savedCertFingerprints = bridge.getContext().getSharedPreferences("savedCertFingerprints", Context.MODE_PRIVATE);
         this.nativeApi = nativeApi;
         this.filesDir = filesDir;
+    }
+
+    /**
+     * Host duty (frontend/src/discovery/hostContract.ts, AC-DT4): a server that
+     * answered the reachability check but then fails to serve its UI must land
+     * back on app-owned content — the discovery page, with the
+     * could-not-connect notice seeded — never on WebView error content.
+     *
+     * Main frame only: a failed subresource is the served page's own business.
+     * And never for this device's own server, whose failure is the local server
+     * dying — the readiness poll and ErrorPage already own that, and reloading
+     * discovery would not fix it.
+     */
+    @Override
+    public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+        super.onReceivedError(view, request, error);
+        if (!request.isForMainFrame()) return;
+        String failed = request.getUrl().toString();
+        if (failed.startsWith(this.nativeApi.getLocalUrl())) return;
+        String chosenUrl = NativeApi.getChosenUrl();
+        // Only a server the discovery page sent us to: the old front end's
+        // connect path has its own error handling and must not be yanked here.
+        if (chosenUrl == null || !failed.startsWith(chosenUrl)) return;
+        this.nativeApi.returnToDiscovery(true);
     }
 
     private Certificate get_self_signed_cert() {
@@ -122,6 +147,16 @@ class CertWebViewClient extends ExtendedWebViewClient {
      * certificate validation.
      */
     private boolean validateNonLocalCertificate(SslCertificate targetCert, NativeApi.FrontEndHost connectedServer) {
+        // Match by hardware id and port
+        return validateFingerprint(targetCert, connectedServer.getHardwareId() + "-" + connectedServer.getPort());
+    }
+
+    /** Trust on first use, against the fingerprint recorded under
+     * {@code identifier}: record it the first time, require the same one
+     * afterwards (AC-AN9/AC-AN10). The identifier is hardware id and port for
+     * both front ends, so a server already trusted on this device stays
+     * trusted after an upgrade. */
+    private boolean validateFingerprint(SslCertificate targetCert, String identifier) {
         // Calculate SSL fingerprint
         MessageDigest md = null;
         try {
@@ -133,9 +168,6 @@ class CertWebViewClient extends ExtendedWebViewClient {
         }
         String fingerprint = Base64.encodeToString(md.digest(), Base64.DEFAULT).trim();
 
-        // Match SSL fingerprint for server stored in app data
-        // Match by hardware id and port
-        String identifier = connectedServer.getHardwareId() + "-" + connectedServer.getPort();
         String savedCertFingerprint = savedCertFingerprints.getString(identifier, "");
         // Save if fingerprint was not found for server
         if (savedCertFingerprint.length() == 0) {
@@ -166,18 +198,40 @@ class CertWebViewClient extends ExtendedWebViewClient {
 
         String url = error.getUrl();
         Boolean isDiscovery = url.startsWith(nativeApi.getLocalUrl());
+
+        // Which server this is, from whichever front end chose it. The old
+        // front end still connects through NativeApi.connectToServer, which
+        // records a FrontEndHost; the new front end's discovery page drives
+        // probe -> record -> navigate itself and states the identity through
+        // DiscoveryHostPlugin.navigate instead (hostContract.ts §
+        // ConnectedServer). Both ship, so both are honoured — and neither
+        // recognises a server by address, which loopback-versus-hostname
+        // spellings make unreliable.
         NativeApi.FrontEndHost connectedServer = nativeApi.getConnectedServer();
+        String chosenUrl = NativeApi.getChosenUrl();
+        Boolean isChosenByPage = chosenUrl != null && url.startsWith(chosenUrl);
         Boolean isConnectedToServer = connectedServer != null && url.startsWith(connectedServer.getUrl());
 
         // Default behaviour if not connected to a server or not discovery
-        if (!(isConnectedToServer || isDiscovery)) {
+        if (!(isConnectedToServer || isChosenByPage || isDiscovery)) {
             super.onReceivedSslError(view, handler, error);
             return;
         }
 
-        // Local certificate check for local server connections
-        Boolean valid = isDiscovery || connectedServer.isLocal() ? validateLocalCertificate(error.getCertificate())
-                : validateNonLocalCertificate(error.getCertificate(), connectedServer);
+        // This machine's own server can be PROVED: it wrote its certificate to
+        // this device, so compare against that. Anyone else's can only be
+        // trusted on first use, keyed by identity so a changed certificate is
+        // caught (AC-AN9/AC-AN10).
+        Boolean isOwnServer = isDiscovery
+                || (isChosenByPage ? NativeApi.getChosenIsLocal() : connectedServer.isLocal());
+        Boolean valid;
+        if (isOwnServer) {
+            valid = validateLocalCertificate(error.getCertificate());
+        } else if (isChosenByPage) {
+            valid = validateFingerprint(error.getCertificate(), NativeApi.getChosenFingerprintKey());
+        } else {
+            valid = validateNonLocalCertificate(error.getCertificate(), connectedServer);
+        }
 
         if (valid) {
             handler.proceed();
