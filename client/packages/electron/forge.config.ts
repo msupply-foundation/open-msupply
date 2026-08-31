@@ -13,6 +13,12 @@ const config: ForgeConfig = {
     asar: {
       unpack: '**/*.node',
     },
+    // The new front end's discovery page, served over loopback by
+    // src/discoveryHost.ts because no server can serve the screen you choose a
+    // server on. Only the page's own transitive slice of the front end build —
+    // assembled by `yarn stage-discovery-page`, which walks the build manifest
+    // — so the installer carries the page, not the whole product.
+    extraResource: ['./discovery-page'],
   },
   rebuildConfig: {},
   makers: [
