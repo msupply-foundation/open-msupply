@@ -157,12 +157,21 @@ const toAnnouncement = service => {
 };
 
 const startDiscovery = () => {
-  browser?.stop();
-  announcements = [];
+  stopDiscovery();
   browser = bonjour.find({ type: 'omsupply', protocol: 'tcp' }, service => {
     const announcement = toAnnouncement(service);
     if (announcement) announcements.push(announcement);
   });
+};
+
+// Browsing stops when the page stops being on screen (navigate, below): mDNS
+// is continuous multicast, and nothing polls announcements() once the window
+// has left for a server. A return to discovery starts a fresh search of its
+// own (DiscoveryPage § search).
+const stopDiscovery = () => {
+  browser?.stop();
+  browser = undefined;
+  announcements = [];
 };
 
 // --- The bounded answer check (probe) ----------------------------------------
@@ -177,16 +186,24 @@ const answers = (target, timeoutMs) =>
     if (!/^https?:\/\//.test(target)) return resolve(false);
     const timeout = Math.min(Math.max(Number(timeoutMs) || 5000, 500), 30000);
     const lib = target.startsWith('https') ? https : http;
-    const req = lib.get(
-      target,
-      { rejectUnauthorized: false, timeout },
-      res => {
-        res.resume();
-        resolve(true);
-      }
-    );
-    req.on('timeout', () => req.destroy(new Error('timeout')));
-    req.on('error', () => resolve(false));
+    try {
+      const req = lib.get(
+        target,
+        { rejectUnauthorized: false, timeout },
+        res => {
+          res.resume();
+          resolve(true);
+        }
+      );
+      req.on('timeout', () => req.destroy(new Error('timeout')));
+      req.on('error', () => resolve(false));
+    } catch {
+      // The scheme test above is not a parse: a manually entered
+      // `http://a b` passes it and throws ERR_INVALID_URL right here. The
+      // contract says probe never rejects (hostContract.ts), and the Android
+      // host already answers false for the same input.
+      resolve(false);
+    }
   });
 
 // --- Window + wiring ---------------------------------------------------------
@@ -231,27 +248,55 @@ const createWindow = async () => {
       preload: path.join(__dirname, 'preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
+      // The preload exposes the host API on this origin only; it reads the
+      // origin from here rather than repeating the port (preload.cjs).
+      additionalArguments: [`--discovery-origin=${pageOrigin}`],
     },
   });
 
   const loadDiscovery = extra => win.loadURL(pageUrl + discoveryQuery(extra));
 
-  ipcMain.handle(IPC.HOST_INFO, () => ({
-    platform: 'electron',
-    hardwareId: machineId(),
-    lanAddresses: lanAddresses(),
+  // The preload only reaches the page's own origin, but a renderer is the
+  // untrusted side of the bridge either way: every handler answers the
+  // discovery page and nothing else.
+  const fromPage = event => {
+    try {
+      return new URL(event.senderFrame?.url ?? '').origin === pageOrigin;
+    } catch {
+      return false;
+    }
+  };
+
+  ipcMain.handle(IPC.HOST_INFO, event =>
+    fromPage(event)
+      ? {
+          platform: 'electron',
+          hardwareId: machineId(),
+          lanAddresses: lanAddresses(),
+        }
+      : { platform: 'electron', hardwareId: '', lanAddresses: [] }
+  );
+  ipcMain.on(IPC.START, event => {
+    if (fromPage(event)) startDiscovery();
+  });
+  ipcMain.handle(IPC.ANNOUNCEMENTS, event => ({
+    announcements: fromPage(event) ? announcements : [],
   }));
-  ipcMain.on(IPC.START, startDiscovery);
-  ipcMain.handle(IPC.ANNOUNCEMENTS, () => ({ announcements }));
-  ipcMain.handle(IPC.PROBE, (_event, url, timeoutMs) =>
-    answers(url, timeoutMs)
+  ipcMain.handle(IPC.PROBE, (event, url, timeoutMs) =>
+    fromPage(event) ? answers(url, timeoutMs) : false
   );
   ipcMain.on(IPC.NAVIGATE, (_event, url) => {
     // Plain navigation, immediately: the page has already persisted what it
     // needs (record-before-navigate, src/discovery/discovery.ts), so the old
     // resolve-then-wait-50ms dance is gone. Scheme-checked because the URL
     // crosses the bridge.
-    if (/^https?:\/\//.test(String(url))) void win.loadURL(url);
+    //
+    // No fromPage() gate: a page navigating this window is something any
+    // document can do with location.href, so refusing here would buy nothing.
+    if (/^https?:\/\//.test(String(url))) {
+      stopDiscovery();
+      void win.loadURL(url);
+    }
   });
 
   // Host duty (hostContract.ts, AC-DT4): a server that answered the probe but
