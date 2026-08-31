@@ -27,6 +27,15 @@ const boot = async () => {
   const [{ DiscoveryPage, NoHostPage }, { initialiseLocale, detectLocale }] =
     await Promise.all([import('./DiscoveryPage'), import('../intl')]);
   await initialiseLocale(detectLocale());
+  // Before anything reads this page's own storage: take over what the legacy
+  // shell saved somewhere this page cannot look (./discovery.ts §
+  // adoptLegacyPreferences). Only the old Android shell reports any, and only
+  // on the first launch after an upgrade.
+  if (host?.hostInfo) {
+    const { adoptLegacyPreferences } = await import('./discovery');
+    const info = await host.hostInfo().catch(() => undefined);
+    adoptLegacyPreferences(info?.legacy);
+  }
   const resolved = host;
   render(
     () => (resolved ? <DiscoveryPage host={resolved} /> : <NoHostPage />),

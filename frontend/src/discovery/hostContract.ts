@@ -46,6 +46,24 @@ export type HostInfo = {
   /** IPv4 addresses OTHER machines can reach this machine at — never
    * loopback or link-local. Preference order; may be empty (no network). */
   lanAddresses: string[];
+  /** What the LEGACY shell saved where this page cannot look. Android kept
+   * preferences in the native store, not localStorage
+   * (client/packages/common/src/hooks/useNativeClient/helpers.ts), so an
+   * upgraded tablet's remembered server and chosen mode are invisible here
+   * and the user re-picks both for nothing.
+   *
+   * Facts, verbatim and unvalidated — a host reads the raw stored strings and
+   * says what it found; the page decides whether to adopt them
+   * (./discovery.ts § adoptLegacyPreferences) and its own readers reject
+   * anything unusable. Omitted entirely by a host with no legacy store to
+   * read, which is every host but the old Android shell. */
+  legacy?: {
+    /** The legacy `mode` preference as stored (JSON-encoded 'client' |
+     * 'server' | 'none'). */
+    mode?: string;
+    /** The legacy `previousServer` record as stored (JSON). */
+    previousServer?: string;
+  };
 };
 
 /** One resolved mDNS announcement (`_omsupply._tcp`), verbatim: the resolved

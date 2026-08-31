@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { HostInfo, RawAnnouncement } from './hostContract';
 import {
+  adoptLegacyPreferences,
   ANSWER_CHECK_TIMEOUT_MS,
   autoconnectTarget,
   connectToServer,
@@ -12,6 +13,8 @@ import {
   mergeServers,
   parseDiscoveryFlags,
   parseManualServer,
+  readInstallMode,
+  recordInstallMode,
   probeUrl,
   readPreviousServer,
   recordPreviousServer,
@@ -145,18 +148,36 @@ describe('parseDiscoveryFlags', () => {
       autoconnect: true,
       timedout: false,
       standalone: false,
+      canHostServer: false,
     });
+  });
+
+  it('reads canhost, the flag that offers the mode chooser (AC-AN21)', () => {
+    expect(parseDiscoveryFlags('?canhost=true').canHostServer).toBe(true);
+    // absent on every desktop client install, which goes straight to the list
+    expect(parseDiscoveryFlags('').canHostServer).toBe(false);
+    expect(parseDiscoveryFlags('?canhost=yes').canHostServer).toBe(false);
   });
 
   it('reads the shell-set parameters', () => {
     expect(
       parseDiscoveryFlags('?autoconnect=false&timedout=true&standalone=true')
-    ).toEqual({ autoconnect: false, timedout: true, standalone: true });
+    ).toEqual({
+      autoconnect: false,
+      timedout: true,
+      standalone: true,
+      canHostServer: false,
+    });
   });
 });
 
 describe('autoconnectTarget', () => {
-  const flags = { autoconnect: true, timedout: false, standalone: false };
+  const flags = {
+    autoconnect: true,
+    timedout: false,
+    standalone: false,
+    canHostServer: false,
+  };
   const previous = host();
 
   it('goes to the remembered server without asking (AC-DT1)', () => {
@@ -194,7 +215,12 @@ describe('discoveryReturnAddress (AC-DT16, AC-DT20)', () => {
     origin: 'http://localhost:3007',
     pathname: '/discovery.html',
   };
-  const flags = { autoconnect: true, timedout: false, standalone: false };
+  const flags = {
+    autoconnect: true,
+    timedout: false,
+    standalone: false,
+    canHostServer: false,
+  };
 
   it('returns without auto-connection (AC-DT16)', () => {
     expect(discoveryReturnAddress(location, flags)).toBe(
@@ -210,6 +236,13 @@ describe('discoveryReturnAddress (AC-DT16, AC-DT20)', () => {
     );
   });
 
+  it('carries canhost, so the way back can still offer the chooser', () => {
+    expect(
+      discoveryReturnAddress(location, { ...flags, canHostServer: true })
+    ).toContain('&canhost=true');
+    expect(discoveryReturnAddress(location, flags)).not.toContain('canhost');
+  });
+
   it('does not carry timedout — it described the arrival, not the return', () => {
     expect(
       discoveryReturnAddress(location, { ...flags, timedout: true })
@@ -218,7 +251,12 @@ describe('discoveryReturnAddress (AC-DT16, AC-DT20)', () => {
 });
 
 describe('standaloneSeededFailure', () => {
-  const flags = { autoconnect: true, timedout: false, standalone: true };
+  const flags = {
+    autoconnect: true,
+    timedout: false,
+    standalone: true,
+    canHostServer: false,
+  };
 
   it('a plain standalone launch attempts its own server — nothing seeded', () => {
     expect(standaloneSeededFailure(flags)).toBe(false);
@@ -237,26 +275,119 @@ describe('standaloneSeededFailure', () => {
         autoconnect: false,
         timedout: true,
         standalone: false,
+        canHostServer: false,
       })
     ).toBe(false);
   });
 });
 
-describe('previous server persistence (AC-DT13–15)', () => {
-  const memoryStorage = (): Storage => {
-    const map = new Map<string, string>();
-    return {
-      getItem: key => map.get(key) ?? null,
-      setItem: (key, value) => void map.set(key, value),
-      removeItem: key => void map.delete(key),
-      clear: () => map.clear(),
-      key: () => null,
-      get length() {
-        return map.size;
-      },
-    };
+const memoryStorage = (): Storage => {
+  const map = new Map<string, string>();
+  return {
+    getItem: key => map.get(key) ?? null,
+    setItem: (key, value) => void map.set(key, value),
+    removeItem: key => void map.delete(key),
+    clear: () => map.clear(),
+    key: () => null,
+    get length() {
+      return map.size;
+    },
   };
+};
 
+describe('install mode (AC-AN21)', () => {
+  it('round-trips the chosen role', () => {
+    const storage = memoryStorage();
+    recordInstallMode('server', storage);
+    expect(readInstallMode(storage)).toBe('server');
+    recordInstallMode('client', storage);
+    expect(readInstallMode(storage)).toBe('client');
+  });
+
+  it('nothing chosen reads as undefined — that is what offers the chooser', () => {
+    expect(readInstallMode(memoryStorage())).toBeUndefined();
+  });
+
+  it("the legacy screen's 'none' counts as undecided, not as a role", () => {
+    const storage = memoryStorage();
+    // exactly what the legacy setPreference wrote: JSON.stringify(NativeMode)
+    storage.setItem('preference/mode', '"none"');
+    expect(readInstallMode(storage)).toBeUndefined();
+  });
+
+  it('reads a role the legacy screen wrote, so an upgrade is not re-asked', () => {
+    const storage = memoryStorage();
+    storage.setItem('preference/mode', '"server"');
+    expect(readInstallMode(storage)).toBe('server');
+  });
+
+  it('ignores anything else rather than rendering an impossible arm', () => {
+    const storage = memoryStorage();
+    for (const raw of ['not json', '"nonsense"', '42', 'null']) {
+      storage.setItem('preference/mode', raw);
+      expect(readInstallMode(storage)).toBeUndefined();
+    }
+  });
+
+  it('survives an absent storage', () => {
+    expect(readInstallMode(undefined)).toBeUndefined();
+    expect(() => recordInstallMode('client', undefined)).not.toThrow();
+  });
+});
+
+describe('adoptLegacyPreferences (Android upgrades)', () => {
+  const legacyServer = JSON.stringify(host());
+
+  it("takes over the legacy store's values when this page has none", () => {
+    const storage = memoryStorage();
+    adoptLegacyPreferences(
+      { mode: '"client"', previousServer: legacyServer },
+      storage
+    );
+    expect(readInstallMode(storage)).toBe('client');
+    expect(readPreviousServer(storage)).toEqual(host());
+  });
+
+  it('never overwrites what this page already wrote — that answer is newer', () => {
+    const storage = memoryStorage();
+    recordInstallMode('server', storage);
+    const chosen = parseManualServer('https://10.9.9.9:8000', 'U2')!;
+    recordPreviousServer(chosen, storage);
+
+    adoptLegacyPreferences(
+      { mode: '"client"', previousServer: legacyServer },
+      storage
+    );
+
+    expect(readInstallMode(storage)).toBe('server');
+    expect(readPreviousServer(storage)?.ip).toBe('10.9.9.9');
+  });
+
+  it('a host with no legacy store to read changes nothing', () => {
+    const storage = memoryStorage();
+    adoptLegacyPreferences(undefined, storage);
+    expect(readInstallMode(storage)).toBeUndefined();
+    expect(readPreviousServer(storage)).toBeUndefined();
+  });
+
+  it('adopted junk is rejected by the readers, not by adoption', () => {
+    const storage = memoryStorage();
+    adoptLegacyPreferences(
+      { mode: '"none"', previousServer: 'not json' },
+      storage
+    );
+    expect(readInstallMode(storage)).toBeUndefined();
+    expect(readPreviousServer(storage)).toBeUndefined();
+  });
+
+  it('survives an absent storage', () => {
+    expect(() =>
+      adoptLegacyPreferences({ mode: '"client"' }, undefined)
+    ).not.toThrow();
+  });
+});
+
+describe('previous server persistence (AC-DT13–15)', () => {
   it('round-trips the last successful connection', () => {
     const storage = memoryStorage();
     recordPreviousServer(host(), storage);

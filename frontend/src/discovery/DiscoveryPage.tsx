@@ -33,13 +33,16 @@ import {
   mergeServers,
   parseDiscoveryFlags,
   parseManualServer,
+  readInstallMode,
   readPreviousServer,
+  recordInstallMode,
   serverKey,
   STANDALONE_LOCAL_SERVER,
   standaloneSeededFailure,
   toFrontEndHost,
   type DiscoveryFlags,
   type FrontEndHost,
+  type InstallMode,
 } from './discovery';
 import layout from '../ui/styles/LoginInitLayout.module.css';
 import styles from './Discovery.module.css';
@@ -122,36 +125,96 @@ export const DiscoveryPage: Component<{ host: DiscoveryHostApi }> = props => {
   // page (a successful connection navigates away).
   const flags = parseDiscoveryFlags(window.location.search);
   const previous = readPreviousServer();
+  // The stored answer to "what is this device for" (discovery.ts § install
+  // mode). A signal, not a read-once, because choosing rewrites the screen.
+  const [mode, setMode] = createSignal(readInstallMode());
+
+  // This machine serves everyone iff the install was built that way
+  // (standalone=true, AC-DT20) OR its user said so. The launch flag wins:
+  // a standalone install is never offered a choice, whatever is stored.
+  const servesItself = () => flags.standalone || mode() === 'server';
+  // Downstream sees ONE flag set, so StandaloneConnect, autoconnectTarget and
+  // standaloneSeededFailure keep reading `flags.standalone` and need no idea
+  // that a stored mode exists.
+  const effective = (): DiscoveryFlags =>
+    servesItself() ? { ...flags, standalone: true } : flags;
+
+  // Nobody has decided yet, and this machine could be either — the one case
+  // that gets the chooser (AC-AN21). Elsewhere the install already decided.
+  const undecided = () =>
+    flags.canHostServer && !flags.standalone && mode() === undefined;
+
   // Where the landing screen can send the user back to (AC-DT16): this page,
   // told not to bounce straight back and told the install's mode, so a
   // standalone return is never offered the chooser (AC-DT20). Passed on every
   // hand-off via the connect path (./discoveryReturn.ts).
-  const returnUrl = discoveryReturnAddress(window.location, flags);
+  const returnUrl = () => discoveryReturnAddress(window.location, effective());
+
+  const choose = (chosen: InstallMode) => {
+    recordInstallMode(chosen);
+    setMode(chosen);
+  };
 
   return (
     <DiscoveryFrame>
-      {/* The install's ONE mode fork: a standalone install is never offered a
-          choice (AC-DT20), a client install always is. */}
-      <Show
-        when={flags.standalone}
-        fallback={
+      <Switch>
+        {/* Asked once, on a machine that could serve or be served. */}
+        <Match when={undecided()}>
+          <ModeChooser onChoose={choose} />
+        </Match>
+        {/* This machine's own server, used without asking (AC-DT20). */}
+        <Match when={servesItself()}>
+          <StandaloneConnect
+            host={props.host}
+            flags={effective()}
+            returnUrl={returnUrl()}
+          />
+        </Match>
+        {/* A client install: the list. */}
+        <Match when={true}>
           <ServerChooser
             host={props.host}
             flags={flags}
             previous={previous}
-            returnUrl={returnUrl}
+            returnUrl={returnUrl()}
           />
-        }
-      >
-        <StandaloneConnect
-          host={props.host}
-          flags={flags}
-          returnUrl={returnUrl}
-        />
-      </Show>
+        </Match>
+      </Switch>
     </DiscoveryFrame>
   );
 };
+
+/** The one-time question a machine that could be either has to answer
+ * (spec/android § deployment modes: "the role is a deployment fact, not a
+ * build", so the same installed app must be able to be either). Kept on this
+ * page rather than given a screen of its own: it is the same pre-server
+ * moment, in the same frame, and the answer decides which arm of this page
+ * renders next. Remembered, so it is asked once. */
+const ModeChooser: Component<{
+  onChoose: (mode: InstallMode) => void;
+}> = props => (
+  <section class={styles.outcome} aria-labelledby="discovery-mode-heading">
+    <h2 id="discovery-mode-heading" class={styles.sectionHeading}>
+      {t('discovery.mode-heading')}
+    </h2>
+    <div class={styles.modeChoices}>
+      <Button
+        variant="secondary"
+        onClick={() => props.onChoose('server')}
+        data-testid="discovery-mode-server"
+      >
+        {t('discovery.mode-server')}
+      </Button>
+      <Button
+        variant="secondary"
+        onClick={() => props.onChoose('client')}
+        data-testid="discovery-mode-client"
+      >
+        {t('discovery.mode-client')}
+      </Button>
+    </div>
+  </section>
+);
 
 // The landing path of every successful connection: login, carrying the way
 // back here (AC-DT16) and the language active at click time (chosen on this
