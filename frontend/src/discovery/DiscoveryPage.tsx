@@ -223,9 +223,7 @@ const StandaloneConnect: Component<{
             sizeRem={1.25}
             label={t('discovery.connecting-standalone')}
           />
-          <span aria-hidden="true">
-            {t('discovery.connecting-standalone')}
-          </span>
+          <span aria-hidden="true">{t('discovery.connecting-standalone')}</span>
         </div>
       </Match>
     </Switch>
@@ -312,13 +310,21 @@ const ServerChooser: Component<{
     props.host.startDiscovery();
     pollTimer = setInterval(() => void poll(), DISCOVERY_POLL_MS);
     timeoutTimer = setTimeout(() => {
-      // Poll results land through setServers above; an empty list here means
-      // the wait genuinely elapsed with nothing (AC-DT9). Stop polling — the
-      // outcome offers "search again" rather than silently continuing.
-      if (servers().length === 0) {
-        stopTimers();
-        setNotFound(true);
-      }
+      void (async () => {
+        // One last read before deciding. The interval's final tick is up to
+        // DISCOVERY_POLL_MS before this moment, so a server that announced
+        // in between is sitting in the host's list unpolled — reaching the
+        // not-found outcome with it there is exactly what AC-DT10 forbids.
+        await poll();
+        if (disposed) return;
+        // An empty list now means the wait genuinely elapsed with nothing
+        // (AC-DT9). Stop polling — the outcome offers "search again" rather
+        // than silently continuing.
+        if (servers().length === 0) {
+          stopTimers();
+          setNotFound(true);
+        }
+      })();
     }, DISCOVERY_TIMEOUT_MS);
   };
 
