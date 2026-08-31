@@ -167,13 +167,13 @@ public class MainActivity extends BridgeActivity implements DiscoveryHostActivit
     }
 
     @Override
-    public void onServerChosen(String url, String hardwareId, int port, boolean isLocal) {
+    public void onServerChosen(String url, String origin, String hardwareId, int port, boolean isLocal) {
         // Certificate trust is the shell's job and cannot be done blind, so
         // the page says whose server this is (hostContract.ts §
         // ConnectedServer). NativeApi keeps it because that is where
         // CertWebViewClient already looks.
         this.connectedToChosenServer = true;
-        NativeApi.chosenServer(url, hardwareId, port, isLocal);
+        NativeApi.chosenServer(url, origin, hardwareId, port, isLocal);
     }
 
     // ActivityResult needs to be overridden in the main, not UI thread

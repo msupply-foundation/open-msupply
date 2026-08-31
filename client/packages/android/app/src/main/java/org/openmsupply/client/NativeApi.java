@@ -69,20 +69,35 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     // end at /old-ui/ still connects through connectToServer, and both paths
     // must keep working while both front ends ship.
     private static String chosenUrl;
+    private static String chosenOrigin;
     private static String chosenHardwareId = "";
     private static int chosenPort;
     private static boolean chosenIsLocal;
 
-    static void chosenServer(String url, String hardwareId, int port, boolean isLocal) {
+    static void chosenServer(String url, String origin, String hardwareId, int port, boolean isLocal) {
         chosenUrl = url;
+        chosenOrigin = origin;
         chosenHardwareId = hardwareId;
         chosenPort = port;
         chosenIsLocal = isLocal;
     }
 
-    /** The URL the discovery page navigated to, or null if it has not. */
+    /** The exact URL the discovery page navigated to, or null if it has not.
+     * The hand-off itself — used by the failed-load duty (AC-DT4), which is
+     * about THIS load failing, not a later navigation on a server the user is
+     * already signed in to. Certificate trust wants getChosenOrigin(). */
     public static String getChosenUrl() {
         return chosenUrl;
+    }
+
+    /** scheme://host[:port] of that URL, or null. What certificate trust
+     * matches on: the SSL error is raised per REQUEST — the document, then
+     * every script, style and GraphQL call — so matching the full URL would
+     * answer only the first and leave the rest of the page to the default
+     * refusal. Origin-scoped is also what the old front end's path has always
+     * been (FrontEndHost.getUrl()). */
+    public static String getChosenOrigin() {
+        return chosenOrigin;
     }
 
     /** Fingerprint-store key for the chosen server, matching the identifier
@@ -307,6 +322,19 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
             }
             webView.loadUrl(url);
         });
+    }
+
+    /** The old front end's own chooser, the boot target this shell used before
+     * the page existed. Reached only when the web bundle in THIS build has no
+     * discovery.html — a debug build stages the old UI alone
+     * (capacitor.config.ts § webDir) — so that a debug build still boots to a
+     * server chooser rather than to the server's 404
+     * (CertWebViewClient.onReceivedHttpError). A release bundle always carries
+     * the page and never comes here. */
+    void loadLegacyDiscovery() {
+        WebView webView = this.getBridge().getWebView();
+        String url = localUrl + "/android";
+        webView.post(() -> webView.loadUrl(url));
     }
 
     @PluginMethod()
