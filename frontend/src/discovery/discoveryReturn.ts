@@ -40,19 +40,30 @@ export const withLng = (url: string, lng: string): string => {
   }
 };
 
+// Every real host serves this page from loopback: the Electron shell over
+// its fixed 127.0.0.1 port (desktop/main.cjs), the Android shell from
+// Capacitor's local origin (https://localhost), the dev server from
+// localhost. So the way back is always a loopback address, and saying so is
+// what keeps the parameter from being useful to anyone else.
+const LOOPBACK_HOSTS = ['localhost', '127.0.0.1', '[::1]', '::1'];
+
 /**
  * The validated return URL in a landing screen's query string, or undefined.
- * Only http(s) URLs pass — the value becomes an anchor's href, and a query
- * parameter is attacker-writable in a shared link, so anything that could
- * run script (javascript:) or leave the web (custom schemes) is dropped
- * rather than rendered.
+ *
+ * A query parameter is attacker-writable in a shared link and this value
+ * becomes an anchor's href on the server's own login screen, so it is
+ * validated twice over: http(s) only, dropping anything that could run
+ * script (javascript:) or leave the web (custom schemes); and loopback only,
+ * so a crafted link cannot dress an outside site up as this app's "change
+ * server" affordance. A hand-off from a real shell always passes both.
  */
 export const discoveryReturnUrl = (search: string): string | undefined => {
   const value = new URLSearchParams(search).get(DISCOVERY_RETURN_PARAM);
   if (!value) return undefined;
   try {
     const url = new URL(value);
-    return url.protocol === 'http:' || url.protocol === 'https:'
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return undefined;
+    return LOOPBACK_HOSTS.includes(url.hostname.toLowerCase())
       ? url.href
       : undefined;
   } catch {
