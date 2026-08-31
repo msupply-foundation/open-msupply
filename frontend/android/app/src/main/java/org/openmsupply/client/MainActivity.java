@@ -3,6 +3,7 @@ package org.openmsupply.client;
 import android.net.http.SslError;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.webkit.CookieManager;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
@@ -28,6 +29,11 @@ public class MainActivity extends BridgeActivity {
     // from the UI thread.
     private String pendingHistoryClearPrefix;
 
+    // Client mode = no embedded server library and not the dev-server loop.
+    // Decided once in onCreate; read by the failed-load duty and by the
+    // session clear in onDestroy.
+    private boolean clientMode;
+
     public void clearHistoryWhenLoaded(String urlPrefix) {
         pendingHistoryClearPrefix = urlPrefix;
     }
@@ -48,7 +54,8 @@ public class MainActivity extends BridgeActivity {
 
         // Client mode: no embedded server, and not the dev-server loop. The
         // launch decision then belongs to the platform, not the bundled app.
-        boolean clientMode = !this.server.isAvailable() && this.bridge.getConfig().getServerUrl() == null;
+        this.clientMode = !this.server.isAvailable() && this.bridge.getConfig().getServerUrl() == null;
+        boolean clientMode = this.clientMode;
         String discoveryUrl = this.bridge.getLocalUrl() + "/discovery.html";
 
         // SPIKE ONLY (SSL): trust any cert so fetch() from the capacitor
@@ -157,6 +164,23 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onDestroy() {
+        // Host duty (src/discovery/hostContract.ts, AC-DT18): the session ends
+        // with the app. In client mode the session belongs to the connected
+        // server and lives in the WebView's cookie jar, which otherwise
+        // survives to the next launch — so signing in would NOT be required
+        // after the auto-reconnect AC-DT1 performs. Clearing all cookies (not
+        // just the non-persistent ones) matches what the Electron shell does
+        // on window close, and in client mode the only origins with cookies
+        // here are servers. Local mode keeps its own cookies: its session is
+        // the device's, not a chosen server's.
+        //
+        // onDestroy is not guaranteed on a process kill; the same is true of
+        // the Electron close handler, and the server's own token expiry is
+        // the backstop in both.
+        if (this.clientMode) {
+            CookieManager.getInstance().removeAllCookies(null);
+            CookieManager.getInstance().flush();
+        }
         server.stop();
         super.onDestroy();
     }

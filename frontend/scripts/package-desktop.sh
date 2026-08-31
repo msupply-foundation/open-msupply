@@ -12,6 +12,13 @@ cd "$(dirname "$0")/.."
 
 [ -f dist/.vite/manifest.json ] || { echo "dist/ missing or built without a manifest — run pnpm build first" >&2; exit 1; }
 
+# The staged slice and the flat node_modules exist only for the packager to
+# copy. They must not outlive this run: main.cjs prefers a sibling
+# dist-discovery over the repo's dist/, so one left behind would make every
+# later `pnpm electron` serve THIS build's frozen page and ignore `pnpm
+# build`. Cleared on the way out, however this exits.
+trap 'rm -rf desktop/dist-discovery desktop/node_modules' EXIT
+
 rm -rf desktop/dist-discovery desktop/node_modules
 node scripts/prune-discovery-dist.mjs dist desktop/dist-discovery
 npm install --prefix desktop --omit=dev --no-audit --no-fund --loglevel=error
