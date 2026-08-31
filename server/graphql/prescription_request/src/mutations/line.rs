@@ -18,8 +18,8 @@ pub struct UpsertLineInput {
     pub id: String,
     pub prescription_request_id: String,
     pub item_id: String,
-    /// Prescribed quantity in units
-    pub quantity: f64,
+    /// Prescribed quantity, in units
+    pub number_of_units: f64,
     /// Directions
     pub note: Option<String>,
 }
@@ -30,14 +30,14 @@ impl UpsertLineInput {
             id,
             prescription_request_id,
             item_id,
-            quantity,
+            number_of_units,
             note,
         } = self;
         UpsertServiceInput {
             id,
             prescription_request_id,
             item_id,
-            quantity,
+            number_of_units,
             note,
         }
     }

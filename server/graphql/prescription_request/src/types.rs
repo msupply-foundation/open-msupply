@@ -152,7 +152,9 @@ impl PrescriptionRequestNode {
 
 impl PrescriptionRequestNode {
     pub fn from_domain(prescription_request: PrescriptionRequest) -> PrescriptionRequestNode {
-        PrescriptionRequestNode { prescription_request }
+        PrescriptionRequestNode {
+            prescription_request,
+        }
     }
 
     pub fn row(&self) -> &PrescriptionRequestRow {
@@ -201,9 +203,9 @@ impl PrescriptionRequestLineNode {
             .await?
             .map(ItemNode::from_domain))
     }
-    /// Prescribed quantity in units
-    pub async fn quantity(&self) -> f64 {
-        self.line.quantity
+    /// Prescribed quantity, in units
+    pub async fn number_of_units(&self) -> f64 {
+        self.line.number_of_units
     }
     /// Directions
     pub async fn note(&self) -> &Option<String> {

@@ -53,9 +53,18 @@ impl MigrationFragment for Migrate {
                     id TEXT NOT NULL PRIMARY KEY,
                     prescription_request_id TEXT NOT NULL REFERENCES prescription_request(id),
                     item_link_id TEXT NOT NULL REFERENCES item_link(id),
-                    quantity {DOUBLE} NOT NULL,
+                    number_of_units {DOUBLE} NOT NULL,
                     note TEXT
                 );
+
+                CREATE INDEX index_prescription_request_store_id
+                    ON prescription_request (store_id);
+                CREATE INDEX index_prescription_request_patient_link_id
+                    ON prescription_request (patient_link_id);
+                CREATE INDEX index_prescription_request_line_prescription_request_id
+                    ON prescription_request_line (prescription_request_id);
+                CREATE INDEX index_prescription_request_line_item_link_id
+                    ON prescription_request_line (item_link_id);
             "#
         )?;
 

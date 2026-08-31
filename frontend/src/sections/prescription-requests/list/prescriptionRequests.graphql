@@ -40,13 +40,24 @@ query prescriptionRequests(
   }
 }
 
-# List delete (spec/prescription-requests/contract.md § deletion). Per-request —
-# the selection is pre-checked client-side to New rows (AC-D2); rejections are
-# generic (contract § wire traps) and route to the global error surface.
-mutation deletePrescriptionRequest($storeId: String!, $id: String!) {
-  deletePrescriptionRequest(storeId: $storeId, id: $id) {
-    ... on DeleteResponse {
+# List delete (spec/prescription-requests/contract.md § deletion). ONE atomic
+# batch, not a request each: a refusal anywhere rolls the whole thing back, so
+# a selection is never partly deleted and the list behind the dialog stays
+# true. The selection is still pre-checked client-side to New rows (AC-D2);
+# rejections are generic (contract § wire traps) and route to the global error
+# surface.
+mutation deletePrescriptionRequests($storeId: String!, $ids: [String!]!) {
+  batchPrescriptionRequest(
+    storeId: $storeId
+    input: { deletePrescriptionRequests: $ids }
+  ) {
+    deletePrescriptionRequests {
       id
+      response {
+        ... on DeleteResponse {
+          id
+        }
+      }
     }
   }
 }

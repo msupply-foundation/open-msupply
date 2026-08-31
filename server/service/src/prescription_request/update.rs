@@ -14,7 +14,10 @@ use crate::validate::check_patient_exists;
 use crate::NullableUpdate;
 
 use super::generate::create_dispensation;
-use super::validate::{check_prescription_request_editable, CommonPrescriptionRequestError};
+use super::validate::{
+    check_diagnosis_exists, check_prescription_request_editable, check_program_id_exists,
+    CommonPrescriptionRequestError,
+};
 
 /// Scope prescription_request custom_fields are configured under (see
 /// `custom_field_scope.scope`).
@@ -58,6 +61,8 @@ pub enum UpdatePrescriptionRequestError {
     /// Only New requests can be edited or set to Ready to dispense.
     NotEditable,
     PatientDoesNotExist,
+    DiagnosisDoesNotExist,
+    ProgramDoesNotExist,
     UnknownCustomFieldKey(String),
     /// A custom-field patch gives a defined key a value of the wrong shape for
     /// its value type.
@@ -107,6 +112,18 @@ pub fn update_prescription_request(
             if let Some(patient_id) = &input.patient_id {
                 if check_patient_exists(connection, patient_id)?.is_none() {
                     return Err(PatientDoesNotExist);
+                }
+            }
+            // Only a patch that names one gets checked; clearing it (a
+            // NullableUpdate holding None) has nothing to look up.
+            if let Some(diagnosis_id) = input.diagnosis_id.as_ref().and_then(|u| u.value.as_ref()) {
+                if !check_diagnosis_exists(connection, diagnosis_id)? {
+                    return Err(DiagnosisDoesNotExist);
+                }
+            }
+            if let Some(program_id) = input.program_id.as_ref().and_then(|u| u.value.as_ref()) {
+                if !check_program_id_exists(connection, program_id)? {
+                    return Err(ProgramDoesNotExist);
                 }
             }
             if let Some(patch) = &input.custom_fields {
@@ -196,6 +213,8 @@ mod test {
     };
     use util::uuid::uuid;
 
+    use crate::invoice::prescription::DeletePrescriptionError;
+    use crate::prescription_request::batch::BatchPrescriptionRequest;
     use crate::prescription_request::delete::DeletePrescriptionRequestError;
     use crate::prescription_request::insert::InsertPrescriptionRequest;
     use crate::prescription_request_line::upsert::UpsertPrescriptionRequestLine;
@@ -234,7 +253,7 @@ mod test {
         service_provider: &ServiceProvider,
         ctx: &ServiceContext,
         request_id: &str,
-        quantity: f64,
+        number_of_units: f64,
         note: Option<&str>,
     ) {
         service_provider
@@ -246,7 +265,7 @@ mod test {
                     id: uuid(),
                     prescription_request_id: request_id.to_string(),
                     item_id: mock_item_a().id,
-                    quantity,
+                    number_of_units,
                     note: note.map(|n| n.to_string()),
                 },
             )
@@ -358,6 +377,99 @@ mod test {
                 .delete_prescription_request(&ctx, "store_a", request.id.clone()),
             Err(DeletePrescriptionRequestError::NotEditable)
         );
+    }
+
+    /// The generated dispensation is the request's only route to being
+    /// dispensed, so the dispensary cannot delete it out from under the
+    /// prescriber — otherwise the request sits on Ready to dispense forever.
+    #[actix_rt::test]
+    async fn generated_dispensation_cannot_be_deleted() {
+        let (service_provider, ctx) = setup("generated_dispensation_cannot_be_deleted").await;
+
+        let request = new_request(&service_provider, &ctx);
+        add_line(&service_provider, &ctx, &request.id, 5.0, None);
+        service_provider
+            .prescription_request_service
+            .update_prescription_request(
+                &ctx,
+                "store_a",
+                UpdatePrescriptionRequest {
+                    id: request.id.clone(),
+                    status: Some(UpdatePrescriptionRequestStatus::ReadyToDispense {
+                        clinician_id: None,
+                    }),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let invoice = InvoiceRepository::new(&ctx.connection)
+            .query_one(
+                InvoiceFilter::new()
+                    .prescription_request_id(EqualFilter::equal_to(request.id.to_string())),
+            )
+            .unwrap()
+            .expect("generated dispensation not found");
+        // It is New, so the ordinary editable check would have let it through
+        assert_eq!(invoice.invoice_row.status, InvoiceStatus::New);
+
+        assert_eq!(
+            service_provider
+                .invoice_service
+                .delete_prescription(&ctx, invoice.invoice_row.id.clone()),
+            Err(DeletePrescriptionError::CannotDeleteGeneratedDispensation)
+        );
+        assert!(InvoiceRepository::new(&ctx.connection)
+            .query_one(
+                InvoiceFilter::new().id(EqualFilter::equal_to(invoice.invoice_row.id.to_string()))
+            )
+            .unwrap()
+            .is_some());
+    }
+
+    /// A selection holding one request that cannot go takes none of them.
+    #[actix_rt::test]
+    async fn batch_delete_is_all_or_nothing() {
+        let (service_provider, ctx) = setup("prescription_request_batch_delete_atomic").await;
+
+        let deletable = new_request(&service_provider, &ctx);
+        let handed_over = new_request(&service_provider, &ctx);
+        add_line(&service_provider, &ctx, &handed_over.id, 5.0, None);
+        service_provider
+            .prescription_request_service
+            .update_prescription_request(
+                &ctx,
+                "store_a",
+                UpdatePrescriptionRequest {
+                    id: handed_over.id.clone(),
+                    status: Some(UpdatePrescriptionRequestStatus::ReadyToDispense {
+                        clinician_id: None,
+                    }),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let result = service_provider
+            .prescription_request_service
+            .batch_prescription_request(
+                &ctx,
+                "store_a",
+                BatchPrescriptionRequest {
+                    delete: Some(vec![deletable.id.clone(), handed_over.id.clone()]),
+                    continue_on_error: None,
+                },
+            )
+            .unwrap();
+
+        assert_eq!(
+            result.delete[1].result,
+            Err(DeletePrescriptionRequestError::NotEditable)
+        );
+        // The rollback means the deletable one is still there too
+        let repo = PrescriptionRequestRowRepository::new(&ctx.connection);
+        assert!(repo.find_one_by_id(&deletable.id).unwrap().is_some());
+        assert!(repo.find_one_by_id(&handed_over.id).unwrap().is_some());
     }
 
     #[actix_rt::test]

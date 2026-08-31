@@ -1,5 +1,6 @@
 use super::{
     prescription_request_line_row::{prescription_request_line, PrescriptionRequestLineRow},
+    prescription_request_row::prescription_request,
     DBType, RepositoryError, StorageConnection,
 };
 use crate::diesel_macros::apply_equal_filter;
@@ -16,6 +17,10 @@ pub struct PrescriptionRequestLineFilter {
     pub id: Option<EqualFilter<String>>,
     pub prescription_request_id: Option<EqualFilter<String>>,
     pub item_id: Option<EqualFilter<String>>,
+    /// The store of the line's parent request. Lines carry no store of their
+    /// own, so this is the only way to scope them — and every caller outside
+    /// sync must set it.
+    pub store_id: Option<EqualFilter<String>>,
 }
 
 pub struct PrescriptionRequestLineRepository<'a> {
@@ -71,7 +76,24 @@ impl<'a> PrescriptionRequestLineRepository<'a> {
                 id,
                 prescription_request_id,
                 item_id,
+                store_id,
             } = f;
+
+            // Scoping by store means reaching the parent request, so this is a
+            // sub-select rather than a second round trip.
+            if let Some(store_id) = store_id {
+                let mut request_query = prescription_request::table
+                    .select(prescription_request::id)
+                    .into_boxed();
+                apply_equal_filter!(
+                    request_query,
+                    Some(store_id),
+                    prescription_request::store_id
+                );
+                query = query.filter(
+                    prescription_request_line::prescription_request_id.eq_any(request_query),
+                );
+            }
 
             apply_equal_filter!(query, id, prescription_request_line::id);
             apply_equal_filter!(
@@ -92,7 +114,8 @@ fn to_domain(prescription_request_line_row: PrescriptionRequestLineRow) -> Presc
     }
 }
 
-type BoxedPrescriptionRequestLineQuery = IntoBoxed<'static, prescription_request_line::table, DBType>;
+type BoxedPrescriptionRequestLineQuery =
+    IntoBoxed<'static, prescription_request_line::table, DBType>;
 
 impl PrescriptionRequestLineFilter {
     pub fn new() -> PrescriptionRequestLineFilter {
@@ -105,6 +128,10 @@ impl PrescriptionRequestLineFilter {
     }
     pub fn prescription_request_id(mut self, filter: EqualFilter<String>) -> Self {
         self.prescription_request_id = Some(filter);
+        self
+    }
+    pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.store_id = Some(filter);
         self
     }
 }

@@ -28,7 +28,7 @@ fragment PrescriptionRequestFields on PrescriptionRequestNode {
     nodes {
       id
       itemId
-      quantity
+      numberOfUnits
       note
       item {
         id
@@ -87,7 +87,10 @@ query requestDiagnosesActive {
 # The generated dispensation (contract § the hand-over): the dispensing list
 # read filtered by the back-link. The top-level type argument selects the
 # prescription permission, matching the dispensing list's own read.
-query generatedDispensations($storeId: String!, $prescriptionRequestId: EqualFilterStringInput!) {
+query generatedDispensations(
+  $storeId: String!
+  $prescriptionRequestId: EqualFilterStringInput!
+) {
   invoices(
     storeId: $storeId
     filter: { prescriptionRequestId: $prescriptionRequestId }

@@ -28,10 +28,15 @@ pub fn delete_prescription_request(
     let service_provider = ctx.service_provider();
     let service_context = service_provider.context(store_id.to_string(), user.user_id)?;
 
-    match service_provider
-        .prescription_request_service
-        .delete_prescription_request(&service_context, store_id, id)
-    {
+    map_delete_response(
+        service_provider
+            .prescription_request_service
+            .delete_prescription_request(&service_context, store_id, id),
+    )
+}
+
+pub fn map_delete_response(from: Result<String, ServiceError>) -> Result<DeleteResponse> {
+    match from {
         Ok(id) => Ok(DeleteResponse::Response(GenericDeleteResponse(id))),
         Err(error) => Err(map_error(error)),
     }

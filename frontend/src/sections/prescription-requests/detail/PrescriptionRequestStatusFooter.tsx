@@ -123,13 +123,20 @@ export const PrescriptionRequestStatusFooter: Component<
         </Show>
       </ContentFooterActions>
 
-      {/* The no-lines blocking notice (AC-R1) — a notice, never a toast. */}
+      {/* The no-lines blocking notice (AC-R1) — a notice, never a toast. It
+          offers nothing to do but close, so it is not a question; and it gets
+          its own wording rather than the shared one, which talks about
+          placeholder lines a prescription request cannot have. */}
       <Dialog
         open={noLinesOpen()}
         onClose={() => setNoLinesOpen(false)}
-        title={t('heading.are-you-sure')}
+        title={t('heading.cannot-do-that')}
         testId="confirmation-modal"
-        description={<Alert severity="info">{t('messages.no-lines')}</Alert>}
+        description={
+          <Alert severity="info">
+            {t('messages.no-lines-prescription-request')}
+          </Alert>
+        }
         actions={
           <Button
             confirms="plain"

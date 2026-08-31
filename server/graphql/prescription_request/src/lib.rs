@@ -6,9 +6,10 @@ pub mod queries;
 pub mod types;
 
 use mutations::{
-    delete_prescription_request, delete_prescription_request_line, insert_prescription_request,
-    update_prescription_request, upsert_prescription_request_line, DeleteLineResponse, DeleteResponse,
-    InsertInput, InsertResponse, UpdateInput, UpdateResponse, UpsertLineInput, UpsertLineResponse,
+    batch_prescription_request, delete_prescription_request, delete_prescription_request_line,
+    insert_prescription_request, update_prescription_request, upsert_prescription_request_line,
+    BatchInput, BatchResponse, DeleteLineResponse, DeleteResponse, InsertInput, InsertResponse,
+    UpdateInput, UpdateResponse, UpsertLineInput, UpsertLineResponse,
 };
 use queries::{
     get_prescription_request, get_prescription_requests, PrescriptionRequestFilterInput,
@@ -89,5 +90,15 @@ impl PrescriptionRequestMutations {
         id: String,
     ) -> Result<DeleteLineResponse> {
         delete_prescription_request_line(ctx, &store_id, id)
+    }
+
+    /// The list's mass delete — atomic, so a selection is never partly removed.
+    async fn batch_prescription_request(
+        &self,
+        ctx: &Context<'_>,
+        store_id: String,
+        input: BatchInput,
+    ) -> Result<BatchResponse> {
+        batch_prescription_request(ctx, &store_id, input)
     }
 }

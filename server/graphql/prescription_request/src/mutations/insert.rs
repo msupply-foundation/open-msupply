@@ -83,9 +83,10 @@ fn map_response(from: Result<PrescriptionRequestRow, ServiceError>) -> Result<In
 fn map_error(error: ServiceError) -> async_graphql::Error {
     let formatted_error = format!("{error:#?}");
     match error {
-        ServiceError::PrescriptionRequestAlreadyExists | ServiceError::PatientDoesNotExist => {
-            BadUserInput(formatted_error)
-        }
+        ServiceError::PrescriptionRequestAlreadyExists
+        | ServiceError::PatientDoesNotExist
+        | ServiceError::DiagnosisDoesNotExist
+        | ServiceError::ProgramDoesNotExist => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     }
     .extend()

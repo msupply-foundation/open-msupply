@@ -197,7 +197,7 @@ const PrescriptionRequestDetailView: Component = () => {
       meta: { headerPosition: 'primary' },
     },
     {
-      c: { key: 'quantity' },
+      c: { key: 'numberOfUnits' },
       header: () => t('label.quantity'),
       ...getNumberCell(),
     },

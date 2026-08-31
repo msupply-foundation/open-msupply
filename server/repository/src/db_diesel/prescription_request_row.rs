@@ -60,16 +60,6 @@ pub enum PrescriptionRequestStatus {
     Dispensed,
 }
 
-impl PrescriptionRequestStatus {
-    pub fn index(&self) -> u8 {
-        match self {
-            PrescriptionRequestStatus::New => 1,
-            PrescriptionRequestStatus::ReadyToDispense => 2,
-            PrescriptionRequestStatus::Dispensed => 3,
-        }
-    }
-}
-
 #[derive(Clone, Queryable, Debug, PartialEq, Default, Serialize, Deserialize)]
 #[diesel(table_name = prescription_request)]
 pub struct PrescriptionRequestRow {
@@ -122,7 +112,8 @@ impl<'a> PrescriptionRequestRowRepository<'a> {
 
     fn _delete(&self, id: &str) -> Result<(), RepositoryError> {
         diesel::delete(
-            prescription_request_with_links::table.filter(prescription_request_with_links::id.eq(id)),
+            prescription_request_with_links::table
+                .filter(prescription_request_with_links::id.eq(id)),
         )
         .execute(self.connection.lock().connection())?;
         Ok(())

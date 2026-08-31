@@ -2,23 +2,31 @@ use repository::{InvoiceLineRow, InvoiceLineType, ItemRow};
 
 use super::{SetPrescribedQuantity, SetPrescribedQuantityError};
 
-pub fn generate(
+/// The unallocated line a prescribed quantity lives on until a dispenser
+/// allocates stock against it: no packs, no stock line, no prices — just the
+/// item, the figure and (optionally) the prescriber's directions.
+///
+/// Two things create one: a dispenser typing a prescribed quantity straight
+/// onto a dispensing record, and a prescription request being handed over
+/// (`prescription_request::generate::create_dispensation`). They must agree on
+/// the shape, so they share this constructor rather than each spelling out
+/// every defaulted field.
+pub fn unallocated_prescribed_line(
     id: String,
+    invoice_id: String,
     item: ItemRow,
-    SetPrescribedQuantity {
-        invoice_id,
-        item_id,
-        prescribed_quantity,
-    }: SetPrescribedQuantity,
-) -> Result<InvoiceLineRow, SetPrescribedQuantityError> {
-    let invoice_line = InvoiceLineRow {
+    prescribed_quantity: f64,
+    note: Option<String>,
+) -> InvoiceLineRow {
+    InvoiceLineRow {
         id,
         invoice_id,
         item_name: item.name,
         item_code: item.code,
-        item_id,
+        item_id: item.id,
         r#type: InvoiceLineType::UnallocatedStock,
         prescribed_quantity: Some(prescribed_quantity),
+        note,
 
         // Default
         pack_size: 0.0,
@@ -26,7 +34,6 @@ pub fn generate(
         total_before_tax: 0.0,
         total_after_tax: 0.0,
         tax_percentage: None,
-        note: None,
         location_id: None,
         batch: None,
         expiry_date: None,
@@ -51,7 +58,23 @@ pub fn generate(
         status: None,
         received_number_of_packs: None,
         linked_invoice_line_id: None,
-    };
+    }
+}
 
-    Ok(invoice_line)
+pub fn generate(
+    id: String,
+    item: ItemRow,
+    SetPrescribedQuantity {
+        invoice_id,
+        item_id: _,
+        prescribed_quantity,
+    }: SetPrescribedQuantity,
+) -> Result<InvoiceLineRow, SetPrescribedQuantityError> {
+    Ok(unallocated_prescribed_line(
+        id,
+        invoice_id,
+        item,
+        prescribed_quantity,
+        None,
+    ))
 }

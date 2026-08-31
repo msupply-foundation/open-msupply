@@ -196,7 +196,7 @@ async fn verify_via_dispensing_service_flips_request_immediately() {
                 id: uuid(),
                 prescription_request_id: request.id.clone(),
                 item_id: mock_item_a().id,
-                quantity: 10.0,
+                number_of_units: 10.0,
                 note: None,
             },
         )

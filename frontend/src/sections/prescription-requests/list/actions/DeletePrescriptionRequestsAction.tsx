@@ -6,7 +6,7 @@ import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
 import { TrashIcon, XCircleIcon } from '../../../../ui/icons';
 import { asRequestStatus, isEditable } from '../../prescriptionRequestStatus';
-import { DeletePrescriptionRequest } from '../prescriptionRequests.generated';
+import { DeletePrescriptionRequests } from '../prescriptionRequests.generated';
 
 export interface DeletePrescriptionRequestsActionProps {
   storeId: string;
@@ -23,7 +23,9 @@ export interface DeletePrescriptionRequestsActionProps {
 // client-side — a past-New row in the selection refuses the whole batch with
 // a blocking notice and no server call (a sanctioned UI-only guard; the
 // server rejection is generic, so the honest outcome is never sending a
-// doomed row). The wire delete is per-request, applied sequentially.
+// doomed row). The wire delete is ONE atomic batch: a refusal rolls the whole
+// thing back, so the list can never end up half-deleted behind a dialog that
+// says nothing happened.
 type Phase = 'refused' | 'confirm' | 'deleting' | 'error';
 
 export const DeletePrescriptionRequestsAction: Component<
@@ -63,15 +65,13 @@ const Body = (
   const run = async () => {
     if (phase() !== 'confirm') return; // re-entry guard
     setPhase('deleting');
-    for (const id of props.selectedIds()) {
-      const result = await graphqlFetch(DeletePrescriptionRequest, {
-        storeId: props.storeId,
-        id,
-      });
-      if (result.kind !== 'success') {
-        setPhase('error');
-        return;
-      }
+    const result = await graphqlFetch(DeletePrescriptionRequests, {
+      storeId: props.storeId,
+      ids: props.selectedIds(),
+    });
+    if (result.kind !== 'success') {
+      setPhase('error');
+      return;
     }
     props.onClose();
     props.onDeleted();
@@ -84,7 +84,14 @@ const Body = (
       onClose={props.onClose}
       icon={<TrashIcon />}
       testId="confirmation-modal"
-      title={t('heading.are-you-sure')}
+      // The title tracks the phase — neither a refused selection nor a
+      // rejection is a question (kdd/action-modal), and the dialog offers no
+      // action once it is either.
+      title={
+        phase() === 'refused' || phase() === 'error'
+          ? t('heading.cannot-do-that')
+          : t('heading.are-you-sure')
+      }
       description={
         <Show
           when={phase() === 'refused' || phase() === 'error'}

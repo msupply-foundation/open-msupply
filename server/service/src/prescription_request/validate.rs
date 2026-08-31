@@ -1,7 +1,9 @@
 use repository::{
-    PrescriptionRequestRow, PrescriptionRequestRowRepository, PrescriptionRequestStatus, RepositoryError,
-    StorageConnection,
+    DiagnosisRowRepository, PrescriptionRequestRow, PrescriptionRequestRowRepository,
+    PrescriptionRequestStatus, RepositoryError, StorageConnection,
 };
+
+use crate::common::check_program_exists;
 
 #[derive(Debug, PartialEq)]
 pub enum CommonPrescriptionRequestError {
@@ -40,6 +42,25 @@ pub fn check_prescription_request_editable(
         return Err(CommonPrescriptionRequestError::NotEditable);
     }
     Ok(request)
+}
+
+/// The header's optional references, checked before they reach the row. The
+/// FKs would catch these anyway, but as an opaque database error the caller
+/// cannot map to anything a user can read.
+pub fn check_diagnosis_exists(
+    connection: &StorageConnection,
+    diagnosis_id: &str,
+) -> Result<bool, RepositoryError> {
+    Ok(DiagnosisRowRepository::new(connection)
+        .find_one_by_id(diagnosis_id)?
+        .is_some())
+}
+
+pub fn check_program_id_exists(
+    connection: &StorageConnection,
+    program_id: &str,
+) -> Result<bool, RepositoryError> {
+    Ok(check_program_exists(connection, program_id)?.is_some())
 }
 
 impl From<RepositoryError> for CommonPrescriptionRequestError {

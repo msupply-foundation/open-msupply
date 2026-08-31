@@ -1,5 +1,5 @@
 # Line writes (spec/prescription-requests/contract.md § lines): id + request +
-# item + quantity (units) + directions. Rejections are generic (contract §
+# item + numberOfUnits + directions. Rejections are generic (contract §
 # wire traps) and show in-dialog.
 mutation upsertPrescriptionRequestLine(
   $storeId: String!
