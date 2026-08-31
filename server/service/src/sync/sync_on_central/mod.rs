@@ -212,8 +212,8 @@ pub async fn push(
 /// to `Central`, or taking a table out of the v6 push set — makes central start
 /// refusing a batch that a not-yet-upgraded site keeps retrying, which stops that
 /// site's sync outright with no way to drain its queue. Either change has to be paired
-/// with a `MIN_VERSION` bump in `sync::api_v6` so the handshake refuses those sites
-/// first, with an error that says so.
+/// with a bump to `MIN_VERSION` above (see ../README.md) so the version handshake
+/// refuses those sites first, with an error that says so.
 fn validate_site_authored_tables(
     rows: &[SyncBufferRowInsert],
     site_id: i32,
