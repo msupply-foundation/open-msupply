@@ -1,5 +1,6 @@
 import { defineWorkspace } from 'vitest/config';
 import solid from 'vite-plugin-solid';
+import { BACKEND_COMMON } from './vite/backendPluginBuild';
 
 /*
  * Three vitest projects, because the kinds of unit test need different module
@@ -16,12 +17,14 @@ import solid from 'vite-plugin-solid';
  * - `backend-plugins`: the BoaJS halves of the country plugins
  *   (`plugins/<name>/backend/src`). Two differences, both about running code
  *   written for another host: the `@common` specifier resolves to the
- *   server-generated `backendCommon` (the same alias
- *   vite/backendPluginBuild.ts gives the build), and `globals: true` lets the
- *   suites keep the bare
- *   `describe`/`it`/`expect` they arrive with — these files are SYNCED from
- *   msupply-foundation/civ-plugins, so every edit made to suit this repo is an
- *   edit to redo on the next sync.
+ *   server-generated `backendCommon`, and `globals: true` lets the suites keep
+ *   the bare `describe`/`it`/`expect` they arrive with — these files are SYNCED
+ *   from msupply-foundation/civ-plugins, so every edit made to suit this repo
+ *   is an edit to redo on the next sync.
+ *
+ *   `@common` comes from vite/backendPluginBuild.ts's own constant rather than
+ *   a second copy of the path: what the suites import has to be what the build
+ *   bundles, and two hand-written paths only agree until one of them moves.
  */
 
 const define = { APP_VERSION: JSON.stringify('0.0.0-test') };
@@ -42,14 +45,7 @@ export default defineWorkspace([
     },
   },
   {
-    resolve: {
-      alias: {
-        '@common': new URL(
-          '../client/packages/plugins/backendCommon',
-          import.meta.url
-        ).pathname,
-      },
-    },
+    resolve: { alias: { '@common': BACKEND_COMMON } },
     test: {
       name: 'backend-plugins',
       include: ['plugins/*/backend/src/**/*.test.ts'],
