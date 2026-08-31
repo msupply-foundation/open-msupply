@@ -160,6 +160,7 @@ export enum ActivityLogNodeType {
   PrescriptionRequestDeleted = 'PRESCRIPTION_REQUEST_DELETED',
   PrescriptionRequestDispensed = 'PRESCRIPTION_REQUEST_DISPENSED',
   PrescriptionRequestReadyToDispense = 'PRESCRIPTION_REQUEST_READY_TO_DISPENSE',
+  PrescriptionRequestUpdated = 'PRESCRIPTION_REQUEST_UPDATED',
   PrescriptionStatusCancelled = 'PRESCRIPTION_STATUS_CANCELLED',
   PrescriptionStatusPicked = 'PRESCRIPTION_STATUS_PICKED',
   PrescriptionStatusVerified = 'PRESCRIPTION_STATUS_VERIFIED',
@@ -1084,6 +1085,24 @@ export type BatchPrescriptionInput = {
   updatePrescriptions?: InputMaybe<Array<UpdatePrescriptionInput>>;
 };
 
+export type BatchPrescriptionRequestInput = {
+  continueOnError?: InputMaybe<Scalars['Boolean']['input']>;
+  deletePrescriptionRequestLines?: InputMaybe<
+    Array<Scalars['String']['input']>
+  >;
+  deletePrescriptionRequests?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+export type BatchPrescriptionRequestResponse = {
+  __typename: 'BatchPrescriptionRequestResponse';
+  deletePrescriptionRequestLines?: Maybe<
+    Array<DeletePrescriptionRequestLineResponseWithId>
+  >;
+  deletePrescriptionRequests?: Maybe<
+    Array<DeletePrescriptionRequestResponseWithId>
+  >;
+};
+
 export type BatchPrescriptionResponse = {
   __typename: 'BatchPrescriptionResponse';
   deletePrescriptionLines?: Maybe<Array<DeletePrescriptionLineResponseWithId>>;
@@ -1296,6 +1315,12 @@ export type CannotDeleteCentralSite = DeleteSiteErrorInterface & {
   __typename: 'CannotDeleteCentralSite';
   description: Scalars['String']['output'];
 };
+
+export type CannotDeleteGeneratedDispensation =
+  DeletePrescriptionErrorInterface & {
+    __typename: 'CannotDeleteGeneratedDispensation';
+    description: Scalars['String']['output'];
+  };
 
 export type CannotDeleteInvoiceWithLines = DeleteCustomerReturnErrorInterface &
   DeleteErrorInterface &
@@ -1947,9 +1972,9 @@ export type CustomFieldNode = {
   kind: CustomFieldNodeKind;
   name: Scalars['String']['output'];
   /**
-   * Options for OPTION-type custom_fields. Empty list for any other value
-   * type. Resolved via dataloader so a list of N custom_fields triggers a
-   * single batched lookup.
+   * Options for OPTION- and MULTI_OPTION-type custom_fields. Empty list for
+   * any other value type. Resolved via dataloader so a list of N
+   * custom_fields triggers a single batched lookup.
    */
   options: Array<CustomFieldOptionNode>;
   valueType: CustomFieldNodeValueType;
@@ -1991,6 +2016,7 @@ export enum CustomFieldNodeValueType {
   Boolean = 'BOOLEAN',
   Date = 'DATE',
   Integer = 'INTEGER',
+  /** Several options at once — the record's value is an ARRAY of option ids. */
   MultiOption = 'MULTI_OPTION',
   Option = 'OPTION',
   Real = 'REAL',
@@ -2457,7 +2483,19 @@ export type DeletePrescriptionLineResponseWithId = {
 
 export type DeletePrescriptionRequestLineResponse = DeleteResponse;
 
+export type DeletePrescriptionRequestLineResponseWithId = {
+  __typename: 'DeletePrescriptionRequestLineResponseWithId';
+  id: Scalars['String']['output'];
+  response: DeletePrescriptionRequestLineResponse;
+};
+
 export type DeletePrescriptionRequestResponse = DeleteResponse;
+
+export type DeletePrescriptionRequestResponseWithId = {
+  __typename: 'DeletePrescriptionRequestResponseWithId';
+  id: Scalars['String']['output'];
+  response: DeletePrescriptionRequestResponse;
+};
 
 export type DeletePrescriptionResponse =
   | DeletePrescriptionError
@@ -4403,7 +4441,6 @@ export type InsertPrescriptionLineResponseWithId = {
 };
 
 export type InsertPrescriptionRequestInput = {
-  clinicianId?: InputMaybe<Scalars['String']['input']>;
   diagnosisId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   patientId: Scalars['String']['input'];
@@ -6154,6 +6191,8 @@ export type Mutations = {
   batchInboundShipmentExternal: BatchInboundShipmentResponse;
   batchOutboundShipment: BatchOutboundShipmentResponse;
   batchPrescription: BatchPrescriptionResponse;
+  /** The list's mass delete — atomic, so a selection is never partly removed. */
+  batchPrescriptionRequest: BatchPrescriptionRequestResponse;
   batchRequestRequisition: BatchRequestRequisitionResponse;
   batchResponseRequisition: BatchResponseRequisitionResponse;
   batchStockRelocationLine: BatchStockRelocationLineResponse;
@@ -6382,6 +6421,11 @@ export type MutationsBatchOutboundShipmentArgs = {
 
 export type MutationsBatchPrescriptionArgs = {
   input: BatchPrescriptionInput;
+  storeId: Scalars['String']['input'];
+};
+
+export type MutationsBatchPrescriptionRequestArgs = {
+  input: BatchPrescriptionRequestInput;
   storeId: Scalars['String']['input'];
 };
 
@@ -7954,15 +7998,13 @@ export type PrescriptionRequestLineNode = {
   itemId: Scalars['String']['output'];
   /** Directions */
   note?: Maybe<Scalars['String']['output']>;
+  /** Prescribed quantity, in units */
+  numberOfUnits: Scalars['Float']['output'];
   prescriptionRequestId: Scalars['String']['output'];
-  /** Prescribed quantity in units */
-  quantity: Scalars['Float']['output'];
 };
 
 export type PrescriptionRequestNode = {
   __typename: 'PrescriptionRequestNode';
-  clinician?: Maybe<ClinicianNode>;
-  clinicianId?: Maybe<Scalars['String']['output']>;
   comment?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['DateTime']['output'];
   /**
@@ -7975,7 +8017,15 @@ export type PrescriptionRequestNode = {
   dispensedDatetime?: Maybe<Scalars['DateTime']['output']>;
   id: Scalars['String']['output'];
   lines: PrescriptionRequestLineConnector;
-  patient?: Maybe<PatientNode>;
+  /**
+   * Non-null: a request cannot exist without one. `patient_link_id` is NOT
+   * NULL with an FK, and the insert validates the id through the same
+   * PatientFilter the loader reads, so a miss here means the row is corrupt
+   * rather than the patient being absent — which is why it errors instead of
+   * answering null. Typed `Option` it could only ever have been Some or an
+   * error, which told the client the one thing that cannot happen.
+   */
+  patient: PatientNode;
   patientId: Scalars['String']['output'];
   prescriptionDatetime: Scalars['DateTime']['output'];
   prescriptionRequestNumber: Scalars['Int']['output'];
@@ -7984,6 +8034,12 @@ export type PrescriptionRequestNode = {
   readyDatetime?: Maybe<Scalars['DateTime']['output']>;
   status: PrescriptionRequestNodeStatus;
   storeId: Scalars['String']['output'];
+  /**
+   * The user who entered the request — and so, the prescriber
+   * (spec/prescription-requests § who prescribed). There is no clinician
+   * field on this node: the picker was removed, and `created_by` is the
+   * sole record of who prescribed.
+   */
   user?: Maybe<UserNode>;
 };
 
@@ -12219,7 +12275,13 @@ export type UpdatePrescriptionLineResponseWithId = {
 };
 
 export type UpdatePrescriptionRequestInput = {
-  clinicianId?: InputMaybe<NullableStringUpdate>;
+  /**
+   * The clinician the generated dispensation names. Read ONLY alongside
+   * `status: READY_TO_DISPENSE` — a request holds no clinician of its own,
+   * so without the hand-over there is nothing for this to write and it is
+   * dropped.
+   */
+  clinicianId?: InputMaybe<Scalars['String']['input']>;
   comment?: InputMaybe<NullableStringUpdate>;
   /**
    * Patch of customFields key -> value; a JSON null deletes that key. Keys
@@ -12975,9 +13037,9 @@ export type UpsertPrescriptionRequestLineInput = {
   itemId: Scalars['String']['input'];
   /** Directions */
   note?: InputMaybe<Scalars['String']['input']>;
+  /** Prescribed quantity, in units */
+  numberOfUnits: Scalars['Float']['input'];
   prescriptionRequestId: Scalars['String']['input'];
-  /** Prescribed quantity in units */
-  quantity: Scalars['Float']['input'];
 };
 
 export type UpsertPrescriptionRequestLineResponse = PrescriptionRequestLineNode;
@@ -13082,6 +13144,26 @@ export type UserNode = {
   lastName?: Maybe<Scalars['String']['output']>;
   permissions: UserStorePermissionConnector;
   phoneNumber?: Maybe<Scalars['String']['output']>;
+  /**
+   * The ids of the user's stores in which they are restricted to PRESCRIBER
+   * MODE (spec/prescription-requests § prescriber mode). Rides the me/login
+   * response so the store picker can withhold a store the user could enter
+   * but could not work in — the picker runs before any store is entered, so
+   * the per-store `permissions(storeId)` read the in-store gates use is not
+   * available to it yet.
+   *
+   * One query for every store, rather than a boolean resolved per store: a
+   * user with many stores would otherwise cost one permission lookup each
+   * on every me/login.
+   *
+   * Narrowed to the PrescriberMode rows in SQL rather than read whole and
+   * filtered here. This rides the UserInfo fragment, so it runs on every
+   * `me` and `authToken` — every token refresh included — for a value only
+   * the store picker reads. For almost every user it now answers from an
+   * empty result set instead of their entire permission list plus the store
+   * join that `permissions()` does to build rows this only takes an id from.
+   */
+  prescriberModeStoreIds: Array<Scalars['String']['output']>;
   stores: UserStoreConnector;
   /**
    * If the user is active but no API call has happened for this long (in seconds), the client
@@ -13130,6 +13212,7 @@ export enum UserPermission {
   OutboundShipmentQuery = 'OUTBOUND_SHIPMENT_QUERY',
   PatientMutate = 'PATIENT_MUTATE',
   PatientQuery = 'PATIENT_QUERY',
+  PrescriberMode = 'PRESCRIBER_MODE',
   PrescriptionMutate = 'PRESCRIPTION_MUTATE',
   PrescriptionQuery = 'PRESCRIPTION_QUERY',
   PurchaseOrderAuthorise = 'PURCHASE_ORDER_AUTHORISE',
