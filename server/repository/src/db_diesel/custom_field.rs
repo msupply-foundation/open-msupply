@@ -93,6 +93,7 @@ impl<'a> CustomFieldRepository<'a> {
         let scope_meta: HashMap<String, (CustomFieldDisplayMode, String)> = match &scope_table {
             Some(scope) => custom_field_scope::table
                 .filter(custom_field_scope::scope.eq(scope))
+                .filter(custom_field_scope::deleted_datetime.is_null())
                 .filter(custom_field_scope::display_mode.ne(CustomFieldDisplayMode::Hidden))
                 .select((
                     custom_field_scope::custom_field_id,
@@ -164,6 +165,7 @@ impl<'a> CustomFieldRepository<'a> {
         let rows: Vec<(String, CustomFieldValueType, CustomFieldKind)> = custom_field::table
             .inner_join(custom_field_scope::table)
             .filter(custom_field::deleted_datetime.is_null())
+            .filter(custom_field_scope::deleted_datetime.is_null())
             .filter(custom_field_scope::scope.eq(target_scope))
             .filter(custom_field_scope::display_mode.ne(CustomFieldDisplayMode::Hidden))
             .select((
@@ -198,6 +200,7 @@ impl<'a> CustomFieldRepository<'a> {
         let rows: Vec<(CustomFieldRow, CustomFieldDisplayMode, String)> = custom_field::table
             .inner_join(custom_field_scope::table)
             .filter(custom_field::deleted_datetime.is_null())
+            .filter(custom_field_scope::deleted_datetime.is_null())
             .filter(custom_field_scope::scope.eq(target_scope))
             .select((
                 custom_field::all_columns,
@@ -249,6 +252,7 @@ impl<'a> CustomFieldRepository<'a> {
 
                 if let Some(scopes) = scopes {
                     let allowed_ids = custom_field_scope::table
+                        .filter(custom_field_scope::deleted_datetime.is_null())
                         .filter(custom_field_scope::display_mode.ne(CustomFieldDisplayMode::Hidden))
                         .filter(custom_field_scope::scope.eq_any(scopes))
                         .into_boxed();
@@ -549,6 +553,7 @@ mod tests {
                     scope: "name".to_string(),
                     display_mode: CustomFieldDisplayMode::Visible,
                     sort_order: rank.to_string(),
+                    deleted_datetime: None,
                 })
                 .unwrap();
         }

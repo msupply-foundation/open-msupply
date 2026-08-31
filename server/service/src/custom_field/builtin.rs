@@ -241,6 +241,9 @@ pub fn seed_builtin_custom_fields(connection: &StorageConnection) -> Result<(), 
                     |row| row.display_mode.clone(),
                 ),
                 sort_order: sort_order.clone(),
+                // Always cleared, same as the field: a scope returning to a
+                // definition comes back rather than staying invisible.
+                deleted_datetime: None,
             };
             if existing_scope.as_ref() != Some(&scope_row) {
                 scope_repo.upsert_one(&scope_row)?;
@@ -270,8 +273,8 @@ pub fn seed_builtin_custom_fields(connection: &StorageConnection) -> Result<(), 
     Ok(())
 }
 
-/// Soft-delete builtin fields, and options of builtin fields, that the registry
-/// no longer defines.
+/// Soft-delete builtin fields, and the options and scope rows of builtin fields,
+/// that the registry no longer defines.
 ///
 /// Soft delete, never a hard one: a stored value is only ever an option's id, so
 /// the row has to survive for a record still holding it to render a name rather
@@ -286,6 +289,7 @@ fn soft_delete_removed(
 ) -> Result<(), RepositoryError> {
     let field_repo = CustomFieldRowRepository::new(connection);
     let option_repo = CustomFieldOptionRowRepository::new(connection);
+    let scope_repo = CustomFieldScopeRowRepository::new(connection);
     let now = Utc::now().naive_utc();
 
     let live_field_keys: Vec<&str> = definitions.iter().map(|d| d.key).collect();
@@ -316,18 +320,49 @@ fn soft_delete_removed(
         })?;
     }
 
-    let builtin_ids: Vec<&str> = builtin_rows.iter().map(|row| row.id.as_str()).collect();
-    for option in option_repo.find_all()? {
-        let belongs_to_builtin = builtin_ids.contains(&option.custom_field_id.as_str());
-        if !belongs_to_builtin
-            || live_option_ids.contains(&option.id)
-            || option.deleted_datetime.is_some()
-        {
+    let builtin_ids: Vec<String> = builtin_rows.iter().map(|row| row.id.clone()).collect();
+
+    for option in option_repo.find_many_by_custom_field_ids(&builtin_ids)? {
+        if live_option_ids.contains(&option.id) || option.deleted_datetime.is_some() {
             continue;
         }
         option_repo.upsert_one(&CustomFieldOptionRow {
             deleted_datetime: Some(now),
             ..option
+        })?;
+    }
+
+    // Scopes too. A field that keeps its key but drops a scope stays live, so
+    // nothing else would ever stop that scope applying: the read paths join on
+    // a field that is not deleted and a scope row that says the scope, and both
+    // would still be true. Left alone, narrowing a definition's `scopes` would
+    // silently do nothing.
+    //
+    // Rows under a soft-deleted FIELD are swept as well. They are already
+    // unreachable — every read path drops the field first — but leaving them
+    // would mean the same key returning to the registry with a scope it no
+    // longer names, still attached.
+    //
+    // Soft rather than hard for a mechanical reason, not because the row earns
+    // its keep: nothing references a scope row, but the family has no v7 delete
+    // translator, so a removal only reaches remotes as an upsert. See the
+    // migration that added the column.
+    let live_scope_ids: Vec<String> = definitions
+        .iter()
+        .flat_map(|d| {
+            d.scopes
+                .iter()
+                .map(move |scope| scope_row_id(d.key, scope))
+        })
+        .collect();
+
+    for scope_row in scope_repo.find_many_by_custom_field_ids(&builtin_ids)? {
+        if live_scope_ids.contains(&scope_row.id) || scope_row.deleted_datetime.is_some() {
+            continue;
+        }
+        scope_repo.upsert_one(&CustomFieldScopeRow {
+            deleted_datetime: Some(now),
+            ..scope_row
         })?;
     }
 
@@ -581,6 +616,75 @@ mod tests {
                 .is_none(),
             "a key still in the registry stayed deleted"
         );
+    }
+
+    /// The case a live field hides: dropping a scope from a definition that
+    /// keeps its key. The field stays live, so nothing in the read paths would
+    /// ever stop the stale scope applying — `custom_field.deleted_datetime IS
+    /// NULL` still passes and the row still names the scope. Before scopes were
+    /// swept, narrowing `scopes` silently did nothing.
+    #[actix_rt::test]
+    async fn removed_scopes_soft_delete_and_stop_applying() {
+        let (_, connection, _, _) =
+            setup_all("builtin_scope_soft_delete", MockDataInserts::none()).await;
+
+        let scope_repo = CustomFieldScopeRowRepository::new(&connection);
+        let custom_field_repo = CustomFieldRepository::new(&connection);
+        seed_builtin_custom_fields(&connection).unwrap();
+
+        // Stand in for a scope the definition used to name and no longer does.
+        // The FIELD is untouched and still in the registry — that is the point.
+        let key = keys::PRESCRIPTION_REQUEST_WEIGHT;
+        let stale_id = scope_row_id(key, "name");
+        scope_repo
+            .upsert_one(&CustomFieldScopeRow {
+                id: stale_id.clone(),
+                custom_field_id: key.to_string(),
+                scope: "name".to_string(),
+                display_mode: CustomFieldDisplayMode::Visible,
+                sort_order: "0100".to_string(),
+                deleted_datetime: None,
+            })
+            .unwrap();
+
+        // Before the sweep it applies to that scope, which is the bug
+        assert!(
+            custom_field_repo
+                .value_types_for_scope("name")
+                .unwrap()
+                .contains_key(key),
+            "test setup did not reproduce the stale scope"
+        );
+
+        seed_builtin_custom_fields(&connection).unwrap();
+
+        assert!(
+            scope_repo
+                .find_one_by_id(&stale_id)
+                .unwrap()
+                .unwrap()
+                .deleted_datetime
+                .is_some(),
+            "a scope dropped from the registry was not soft-deleted"
+        );
+        assert!(
+            !custom_field_repo
+                .value_types_for_scope("name")
+                .unwrap()
+                .contains_key(key),
+            "a soft-deleted scope still applied"
+        );
+
+        // The field itself is untouched, and still applies where it belongs
+        let field = CustomFieldRowRepository::new(&connection)
+            .find_one_by_id(key)
+            .unwrap()
+            .unwrap();
+        assert!(field.deleted_datetime.is_none());
+        assert!(custom_field_repo
+            .value_types_for_scope(PRESCRIPTION_REQUEST_CUSTOM_FIELD_SCOPE)
+            .unwrap()
+            .contains_key(key));
     }
 
     #[actix_rt::test]
