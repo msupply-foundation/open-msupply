@@ -377,6 +377,27 @@ export const recordInstallMode = (
   }
 };
 
+/** Whether to put the role question on screen (AC-AN21).
+ *
+ * Only where the machine could genuinely be either (`canHostServer`), and
+ * then in two cases: nobody has answered yet, or the user answered "this
+ * device runs the server" and has now deliberately come back here
+ * (`autoconnect=false` — the landing screen's change-server link). A stored
+ * role is a CHOICE, so it has to be changeable; without the second case,
+ * choosing "runs the server" is a one-way door out of which the only route is
+ * clearing app data.
+ *
+ * A launch flag is a different thing: a standalone INSTALL decided for itself
+ * and is never offered the question (AC-DT20). Client mode returns straight to
+ * the list, as it always has. */
+export const shouldAskInstallMode = (
+  flags: DiscoveryFlags,
+  mode: InstallMode | undefined
+): boolean =>
+  flags.canHostServer &&
+  !flags.standalone &&
+  (mode === undefined || (mode === 'server' && !flags.autoconnect));
+
 // --- Adopting what the legacy shell stored --------------------------------
 
 /** Take over the legacy shell's saved answers, once.

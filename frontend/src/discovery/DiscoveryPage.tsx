@@ -37,6 +37,7 @@ import {
   readPreviousServer,
   recordInstallMode,
   serverKey,
+  shouldAskInstallMode,
   STANDALONE_LOCAL_SERVER,
   standaloneSeededFailure,
   toFrontEndHost,
@@ -139,16 +140,18 @@ export const DiscoveryPage: Component<{ host: DiscoveryHostApi }> = props => {
   const effective = (): DiscoveryFlags =>
     servesItself() ? { ...flags, standalone: true } : flags;
 
-  // Nobody has decided yet, and this machine could be either — the one case
-  // that gets the chooser (AC-AN21). Elsewhere the install already decided.
-  const undecided = () =>
-    flags.canHostServer && !flags.standalone && mode() === undefined;
+  // Whether to ask the role (discovery.ts § shouldAskInstallMode).
+  const undecided = () => shouldAskInstallMode(flags, mode());
 
   // Where the landing screen can send the user back to (AC-DT16): this page,
   // told not to bounce straight back and told the install's mode, so a
   // standalone return is never offered the chooser (AC-DT20). Passed on every
   // hand-off via the connect path (./discoveryReturn.ts).
-  const returnUrl = () => discoveryReturnAddress(window.location, effective());
+  // Built from the LAUNCH flags, not the effective ones: standalone=true must
+  // mean "this install carries its own server", so a stored role does not
+  // disguise itself as one on the way back — that is what lets the return
+  // offer the chooser above.
+  const returnUrl = () => discoveryReturnAddress(window.location, flags);
 
   const choose = (chosen: InstallMode) => {
     recordInstallMode(chosen);

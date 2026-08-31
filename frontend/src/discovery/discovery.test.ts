@@ -15,6 +15,7 @@ import {
   parseManualServer,
   readInstallMode,
   recordInstallMode,
+  shouldAskInstallMode,
   probeUrl,
   readPreviousServer,
   recordPreviousServer,
@@ -294,6 +295,57 @@ const memoryStorage = (): Storage => {
     },
   };
 };
+
+describe('shouldAskInstallMode (AC-AN21)', () => {
+  const flags = {
+    autoconnect: true,
+    timedout: false,
+    standalone: false,
+    canHostServer: true,
+  };
+
+  it('asks when nobody has answered yet', () => {
+    expect(shouldAskInstallMode(flags, undefined)).toBe(true);
+  });
+
+  it('never asks where the machine cannot be the server', () => {
+    // every desktop client install: it goes straight to the list (AC-DT3)
+    expect(
+      shouldAskInstallMode({ ...flags, canHostServer: false }, undefined)
+    ).toBe(false);
+  });
+
+  it('never asks a standalone install — it decided for itself (AC-DT20)', () => {
+    expect(
+      shouldAskInstallMode({ ...flags, standalone: true }, undefined)
+    ).toBe(false);
+    expect(
+      shouldAskInstallMode(
+        { ...flags, standalone: true, autoconnect: false },
+        'server'
+      )
+    ).toBe(false);
+  });
+
+  it('does not re-ask on an ordinary launch once answered', () => {
+    expect(shouldAskInstallMode(flags, 'server')).toBe(false);
+    expect(shouldAskInstallMode(flags, 'client')).toBe(false);
+  });
+
+  it('asks again when a server-mode device is deliberately brought back', () => {
+    // the landing screen's change-server link (autoconnect=false): the role is
+    // a choice, so it must be changeable rather than a one-way door
+    expect(
+      shouldAskInstallMode({ ...flags, autoconnect: false }, 'server')
+    ).toBe(true);
+  });
+
+  it('a client device brought back goes to the list, not the question', () => {
+    expect(
+      shouldAskInstallMode({ ...flags, autoconnect: false }, 'client')
+    ).toBe(false);
+  });
+});
 
 describe('install mode (AC-AN21)', () => {
   it('round-trips the chosen role', () => {
