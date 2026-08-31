@@ -122,6 +122,7 @@ pub enum ActivityLogType {
     PurchaseOrderLineStatusChangedFromSentToNew,
     // Prescription requests (prescriber-authored prescriptions)
     PrescriptionRequestCreated,
+    PrescriptionRequestUpdated,
     PrescriptionRequestReadyToDispense,
     PrescriptionRequestDispensed,
     PrescriptionRequestDeleted,

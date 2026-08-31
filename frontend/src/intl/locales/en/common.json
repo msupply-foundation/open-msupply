@@ -2200,6 +2200,7 @@
   "log.prescription-request-deleted": "Deleted",
   "log.prescription-request-dispensed": "Dispensed",
   "log.prescription-request-ready-to-dispense": "Sent to dispensary",
+  "log.prescription-request-updated": "Updated",
   "log.prescription-status-cancelled": "Cancelled",
   "log.prescription-status-picked": "Picked",
   "log.prescription-status-verified": "Verified",
