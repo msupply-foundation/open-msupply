@@ -194,9 +194,18 @@ let announcements: RawAnnouncement[] = [];
 // Certificate trust needs it and cannot be done blind: the page drives
 // probe -> record -> navigate itself, so the fused CONNECT_TO_SERVER that used
 // to set connectedServer never runs on that path.
-let chosenServer:
-  | { url: string; hardwareId: string; port: number; isLocal: boolean }
-  | null = null;
+//
+// `origin`, not the URL that was navigated to, is what trust matches on: the
+// certificate-error event fires per REQUEST, so the document, every script and
+// style, and every GraphQL call each arrive separately. A rule scoped to the
+// hand-off URL would answer the first and refuse the rest — and the old front
+// end's path has always matched by origin (frontEndHostUrl).
+let chosenServer: {
+  origin: string;
+  hardwareId: string;
+  port: number;
+  isLocal: boolean;
+} | null = null;
 
 // The served discovery page's URL, once the loopback server is listening.
 let discoveryPageUrl = '';
@@ -223,6 +232,21 @@ const getDebugHost = () => {
 const startUrl = () => {
   if (getDebugHost()) return `${getDebugHost()}/discovery.html`;
   return discoveryPageUrl || MAIN_WINDOW_WEBPACK_ENTRY;
+};
+
+// The origin the discovery page is actually served from — the loopback server
+// normally, the dev server under ELECTRON_HOST. The preload exposes the host
+// API on this origin and nowhere else (./preload.ts), so it has to follow
+// startUrl(): pinned to loopback, a debug run would load the page from the dev
+// server and find no host at all.
+const pageOrigin = (): string => {
+  const debugHost = getDebugHost();
+  if (!debugHost) return DISCOVERY_PAGE_ORIGIN;
+  try {
+    return new URL(debugHost).origin;
+  } catch {
+    return DISCOVERY_PAGE_ORIGIN;
+  }
 };
 
 const buildStartUrl = (extra: Record<string, string> = {}) => {
@@ -306,8 +330,8 @@ const start = async (): Promise<void> => {
     webPreferences: {
       preload: MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY,
       // The preload exposes the discovery host API on this origin only; it
-      // reads the origin from here rather than repeating the port.
-      additionalArguments: [`--discovery-origin=${DISCOVERY_PAGE_ORIGIN}`],
+      // reads the origin from here rather than working it out for itself.
+      additionalArguments: [`--discovery-origin=${pageOrigin()}`],
     },
   });
 
@@ -358,26 +382,62 @@ const start = async (): Promise<void> => {
   // Answers are the same shape both shells give, so the page cannot tell them
   // apart (frontend/src/discovery/hostContract.ts).
 
-  ipcMain.handle(IPC_MESSAGES.DISCOVERY_HOST_INFO, async () => ({
-    platform: 'electron',
-    hardwareId: machineId(),
-    lanAddresses: lanAddresses(),
-  }));
+  // The preload only reaches the page's own origin (./preload.ts), but a
+  // renderer is the untrusted side of the bridge either way, and this window
+  // goes on to load the connected server's UI through the same preload: every
+  // handler answers the discovery page and nothing else. Matches the new
+  // shell's gate (frontend/desktop/main.cjs § fromPage).
+  const fromPage = (event: { senderFrame?: { url: string } | null }) => {
+    try {
+      return new URL(event.senderFrame?.url ?? '').origin === pageOrigin();
+    } catch {
+      return false;
+    }
+  };
 
-  ipcMain.on(IPC_MESSAGES.DISCOVERY_START, () => {
+  ipcMain.handle(IPC_MESSAGES.DISCOVERY_HOST_INFO, async event =>
+    fromPage(event)
+      ? {
+          platform: 'electron',
+          hardwareId: machineId(),
+          lanAddresses: lanAddresses(),
+          // What the LEGACY screen saved where the page cannot look
+          // (hostContract.ts § HostInfo.legacy). On this shell that is not the
+          // renderer's localStorage — the page is served from a loopback
+          // origin of its own, so the legacy `preference/*` entries under the
+          // webpack renderer's origin are invisible to it and unreadable from
+          // here — but this shell's OWN electron-store record, written by every
+          // successful CONNECT_TO_SERVER since the app shipped. Adopting it is
+          // what stops an upgraded install re-picking a server it has used for
+          // years. Handed over as stored: the page's readers validate it, and
+          // the shape is the same FrontEndHost (useNativeClient/types.ts).
+          //
+          // `mode` is not reported: this install is a desktop client, which is
+          // never offered the role question (no canhost flag), so there is
+          // nothing for the page to do with it.
+          legacy: {
+            previousServer: store.get(PREVIOUS_SERVER_KEY, null) ?? undefined,
+          },
+        }
+      : { platform: 'electron', hardwareId: '', lanAddresses: [] }
+  );
+
+  ipcMain.on(IPC_MESSAGES.DISCOVERY_START, event => {
+    if (!fromPage(event)) return;
     discovery.stop();
     announcements = [];
     discoveredServers = [];
     discovery.start();
   });
 
-  ipcMain.handle(IPC_MESSAGES.DISCOVERY_ANNOUNCEMENTS, async () => ({
-    announcements,
+  ipcMain.handle(IPC_MESSAGES.DISCOVERY_ANNOUNCEMENTS, async event => ({
+    announcements: fromPage(event) ? announcements : [],
   }));
 
   ipcMain.handle(
     IPC_MESSAGES.DISCOVERY_PROBE,
-    async (_event, url: string, timeoutMs: number) => answers(url, timeoutMs)
+    async (event, url: string, timeoutMs: number) =>
+      fromPage(event) ? answers(url, timeoutMs) : false
   );
 
   ipcMain.on(
@@ -388,10 +448,32 @@ const start = async (): Promise<void> => {
       server: { hardwareId: string; port: number; isLocal: boolean }
     ) => {
       if (!/^https?:\/\//.test(String(url))) return;
+      let target: URL;
+      try {
+        target = new URL(url);
+      } catch {
+        return;
+      }
       // Remember whose server this is BEFORE navigating: the certificate error
       // arrives during the load, and the handler below needs the identity to
       // find the fingerprint recorded for it.
-      chosenServer = { url, ...server };
+      chosenServer = { origin: target.origin, ...server };
+      // And keep THIS shell's own launch record in step. It is consulted
+      // before the page is ever loaded (§ start: a returning user goes
+      // straight to their server), and it was previously written only by the
+      // fused CONNECT_TO_SERVER — which the page never uses. Left unwritten,
+      // an install that changes server here would be sent back to the old one
+      // on every relaunch, with the page's own record never consulted.
+      storePreviousServer({
+        protocol: target.protocol === 'http:' ? 'http' : 'https',
+        ip: target.hostname,
+        port: server.port,
+        // Not announced over the bridge; nothing this record is used for reads
+        // it (§ isServerAlive, § connectToServer).
+        clientVersion: '',
+        hardwareId: server.hardwareId,
+        isLocal: server.isLocal,
+      });
       discovery.stop();
       window.loadURL(url);
     }
@@ -504,10 +586,10 @@ const start = async (): Promise<void> => {
       // must land back on app-owned content — the discovery page, with the
       // could-not-connect notice seeded and auto-connect off — never on
       // Chromium's error page. A failure on the PAGE's own origin is a
-      // packaging fault a reload cannot fix, so that keeps the error screen.
-      const failedTheServedPage = validatedURL.startsWith(
-        DISCOVERY_PAGE_ORIGIN
-      );
+      // packaging fault (or, under ELECTRON_HOST, a dev server that is not
+      // running) which a reload cannot fix, so that keeps the error screen
+      // rather than reloading the page that just failed.
+      const failedTheServedPage = validatedURL.startsWith(pageOrigin());
       if (discoveryPageUrl && !failedTheServedPage) {
         hasLoadingError = false;
         window.loadURL(
@@ -606,7 +688,7 @@ app.addListener(
     // are honoured — and trust needs the identity, not the address, because
     // the fingerprint is recorded per server rather than per URL.
     const chosen =
-      chosenServer && url.startsWith(chosenServer.url) ? chosenServer : null;
+      chosenServer && url.startsWith(chosenServer.origin) ? chosenServer : null;
     const connected =
       connectedServer && url.startsWith(frontEndHostUrl(connectedServer))
         ? connectedServer
