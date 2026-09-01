@@ -1,0 +1,237 @@
+/*
+ * Page frame — geometry only (see Page.tsx). A flex ROW at the top level: the main column beside
+ * the full-height details panel, so the panel spans the WHOLE page height (alongside the header
+ * and footer) and pushes them all when open. The main column is header / middle / content footer
+ * stacked; header + footer carry their own flex-shrink: 0, so only the middle row flexes.
+ * overflow: hidden here plus overflow: auto on the body keeps every pinned region pinned.
+ */
+
+.page {
+  display: flex;
+  flex: 1;
+  min-block-size: 0;
+  min-inline-size: 0;
+  /* `clip`, not `hidden`: this box clips, it is never a scroller. A closed
+     docked panel overflows it, and an `overflow: hidden` box is still
+     scrollable programmatically — so anything revealing what's parked out
+     there would scroll the whole frame sideways with no way back. */
+  overflow: clip;
+}
+
+/* The main column — everything except the details panel: header, scrolling middle, footer. */
+.main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-block-size: 0;
+  min-inline-size: 0;
+  overflow: hidden;
+}
+
+.middle {
+  display: flex;
+  flex: 1;
+  min-block-size: 0;
+}
+
+.body {
+  flex: 1;
+  min-inline-size: 0;
+  padding: var(--space-5);
+  overflow: auto;
+  background: var(--bg-white);
+}
+
+/* The details-panel slot. The panel stays MOUNTED whether open or closed — it
+   parks off-frame rather than unmounting — so form state survives open/close
+   with no remount and the shared e2e suites can assert on panel content before
+   opening it. Width comes from the shared `--side-panel-width` token, the same
+   one SidePanel's own `.panel` sizes from, so the slot and the panel it holds
+   can't drift out of sync. Two modes, split at the navOverlay breakpoint
+   (mirroring the nav drawer, on the opposite edge — spec ui-standards/layout.md
+   → page regions, D27). */
+.panelSlot {
+  position: relative; /* stack the drop shadow over the body, incl. the table's sticky header (z 3) */
+  z-index: 4;
+  display: flex;
+  min-block-size: 0;
+  inline-size: var(--side-panel-width);
+}
+
+.panelSlot > * {
+  flex: 0 0 auto;
+  max-inline-size: none;
+}
+
+/* Drop shadow rides the panel, only while open — in BOTH modes a parked panel
+   would otherwise bleed a stray shadow back along the inline-end edge (docked,
+   it sits just past the page's clip; overlaid, it is fixed and nothing clips
+   it at all). The slot itself never clips, so the shadow paints leftward over
+   the body, including the table's sticky header. */
+.panelSlot:not([data-closed]) > * {
+  box-shadow: var(--shadow-4);
+}
+
+/* Parked when closed — out of the tab order + a11y tree once slid away; the
+   delay keeps it there through the slide-out (both modes). */
+.panelSlot[data-closed] {
+  visibility: hidden;
+}
+
+.panelSlot:not([data-closed]) {
+  visibility: visible;
+}
+
+/* The scrim exists only in overlay mode (below). */
+.scrim {
+  display: none;
+}
+
+/* Docked (>= navOverlay): a column in the page's flex row. The slot's WIDTH
+   animates, so the panel and the body move TOGETHER — the panel slides in from
+   the inline-end AS the body makes room, never leaving a gap. Cheap here: the
+   detail table overflows (horizontal scroll), so the body's scroll viewport
+   just narrows rather than the columns relaying out. `ease-out` starts fast, so
+   it reads as immediate — the old `ease` slow-start is what felt like lag. */
+@media (min-width: 1024px) {
+  .panelSlot {
+    transition:
+      inline-size var(--motion-slow) ease-out,
+      visibility 0s;
+  }
+
+  /* The visibility DELAY is the same token as the travel it waits on, so the
+     two can never drift (and both collapse together under reduced motion). */
+  .panelSlot[data-closed] {
+    inline-size: 0;
+    transition:
+      inline-size var(--motion-slow) ease-out,
+      visibility 0s var(--motion-slow);
+  }
+}
+
+/* Overlay (< navOverlay): the panel leaves the page's box and slides OVER the
+   viewport from the inline-end edge behind a scrim — no body reflow, no push,
+   so nothing to keep in sync (D27). The exact mirror of the nav drawer on the
+   opposite edge (MenuBar.module.css `.overlayPanel`), down to the widths, the
+   z-indices and the `--hide-x` flip. Page.tsx pairs it with `inert` on the
+   covered main column + Esc-to-close; a scrim tap closes it too. 1023 = the
+   navOverlay breakpoint in breakpoints.ts minus 1 (CSS can't read the JS token).
+
+   `fixed` is load-bearing: parked off-frame INSIDE the page it sat in that
+   box's scrollable overflow, so the focus hand-off KB-X2 requires scrolled the
+   whole page sideways to reveal it (kdd/page-composition). Out of every
+   ancestor's scroll box there is nothing left to scroll. The scrim goes fixed
+   with it, covering the menu bar and app footer — already `inert` here. */
+@media (max-width: 1023px) {
+  .panelSlot {
+    /* Where the panel parks: past the inline-end edge. `transform` is physical,
+       so the direction is a token the RTL rule flips (as MenuBar does). */
+    --hide-x: 100%;
+
+    position: fixed;
+    inset-block: 0;
+    inset-inline-end: 0;
+    z-index: 40;
+    max-inline-size: 85vw;
+    transform: translateX(var(--hide-x));
+    transition:
+      transform var(--motion-slow) ease-out,
+      visibility 0s;
+  }
+
+  :dir(rtl) .panelSlot {
+    --hide-x: -100%;
+  }
+
+  .panelSlot:not([data-closed]) {
+    transform: none;
+  }
+
+  /* The visibility DELAY is the same token as the travel it waits on, so the
+     two can never drift (and both collapse together under reduced motion): the
+     panel stays visible for the whole slide out, then parks. */
+  .panelSlot[data-closed] {
+    transition:
+      transform var(--motion-slow) ease-out,
+      visibility 0s var(--motion-slow);
+  }
+
+  .scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 39;
+    background: var(--overlay-scrim);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--motion-slow) ease-out;
+  }
+
+  .scrim[data-open='true'] {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+/* Really narrow (< compact): the drawer takes the whole viewport, like a modal
+   — a fixed-width panel would leave only a sliver of content behind it. Both
+   insets pinned with an auto inline size, so it fills rather than being sized.
+   599 = the compact breakpoint minus 1. */
+@media (max-width: 599px) {
+  .panelSlot {
+    inset-inline-start: 0;
+    inline-size: auto;
+    max-inline-size: none;
+  }
+
+  .panelSlot > * {
+    inline-size: 100%;
+    border-inline-start: none;
+  }
+}
+
+/* Fill mode (Page fillBody): the body stops scrolling and becomes a flex column with no
+   padding, so a single self-scrolling child (e.g. the DataTable) fills the region and
+   owns its own scroll + sticky headers. */
+.bodyFill {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* A DataTable that FILLS the region (the single self-scrolling child) drops its
+   own card frame — a full-bleed table reads better than a rounded card hugging
+   the region edges. Scoped to the table root's data hook so ONLY the filling
+   table loses its frame, not another fill-body child (a documents list, an
+   EmptyState). Cross-module: .bodyFill and the table's .root are hashed in
+   separate CSS Modules, so this reaches the table via its unhashed
+   data-datatable attribute rather than a class.
+
+   `:not(dialog *)` holds the rule to the region itself. A modal's table is a
+   card in a dialog and keeps its frame — but a Dialog mounted in the body
+   subtree (a vertical's line editor, rendered beside the table it edits) is a
+   DOM descendant of .bodyFill, so without this it lost the frame while the same
+   modal mounted from a footer slot kept it (issue #1002). Frame is a property of
+   the table's own context, not of where its host chose to mount the dialog. */
+.bodyFill [data-datatable]:not(dialog *) {
+  border: none;
+  border-radius: 0;
+}
+
+/* Tabbed fill-body page: <Tabs> renders as display:contents, so the active tab
+   panel is the direct flex child of the body — it must be the "single filling
+   child" the fill mode expects, or its own scrolling content (the DataTable,
+   the documents list) overflows the clipped body with no way to scroll. Give
+   it the fill + a column context so that inner child gets a bounded height.
+   overflow: auto lets a panel whose content is NOT itself a scroller (the
+   documents list) scroll within that bounded height; it's inert for a
+   self-scrolling child like the DataTable, which fills the panel exactly. */
+.bodyFill [role='tabpanel'] {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-block-size: 0;
+  overflow: auto;
+}

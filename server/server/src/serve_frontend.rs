@@ -35,31 +35,49 @@ fn read_asset(root: &Path, path: &str) -> Option<Vec<u8>> {
 }
 
 fn frontend_root(settings: &Settings) -> Option<PathBuf> {
-    let configured = Path::new(&settings.server.frontend_dir).canonicalize().ok();
-
-    // In debug builds fall back to the in-repo client build, so `cargo run`
-    // serves the frontend without any configuration (as rust_embed used to)
-    #[cfg(debug_assertions)]
-    let configured = configured.or_else(|| {
-        Path::new(concat!(
-            env!("CARGO_MANIFEST_DIR"),
-            "/../../client/packages/host/dist"
-        ))
-        .canonicalize()
-        .ok()
-    });
-
-    configured
+    frontend_roots(settings).0
 }
 
-/// Root for the legacy ("old UI") frontend: by convention the `old-ui`
-/// subdirectory of the frontend dir. Packaging nests the old UI there on every
-/// platform (windows/mac/android/docker), so all deployments serve it at
-/// `/old-ui/` with no configuration — deliberately not configurable, so every
-/// customer gets the same URL convention. `None` when the subdirectory doesn't
-/// exist, in which case nothing is mounted at `/old-ui/`.
+/// Root for the legacy ("old UI") frontend, served under `/old-ui/`. `None`
+/// when it doesn't exist, in which case nothing is mounted at `/old-ui/`.
 fn old_ui_frontend_root(settings: &Settings) -> Option<PathBuf> {
-    frontend_root(settings)?.join("old-ui").canonicalize().ok()
+    frontend_roots(settings).1
+}
+
+/// Resolve the (new FE, old UI) roots as a pair.
+///
+/// When `server.frontend_dir` exists it is authoritative: the new FE is served
+/// from it and the old UI from its `old-ui` subdirectory — by convention, not
+/// configuration, so every deployment gets the same URL layout. Packaging
+/// nests the old UI there on every platform (windows/mac/android/docker).
+///
+/// In debug builds, when the configured directory doesn't exist, fall back to
+/// the in-repo builds so `cargo run` serves both UIs with no configuration and
+/// no copying:
+///
+///   /        <- frontend/dist              (cd frontend && pnpm build)
+///   /old-ui/ <- client/packages/host/dist  (cd client && yarn build:old-ui)
+///
+/// A leftover `server/frontend` directory from the pre-monorepo staged-copy
+/// workflow shadows the fallback — delete it.
+fn frontend_roots(settings: &Settings) -> (Option<PathBuf>, Option<PathBuf>) {
+    if let Ok(configured) = Path::new(&settings.server.frontend_dir).canonicalize() {
+        let old_ui = configured.join("old-ui").canonicalize().ok();
+        (Some(configured), old_ui)
+    } else if cfg!(debug_assertions) {
+        let in_repo = |rel: &str| {
+            Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join(rel)
+                .canonicalize()
+                .ok()
+        };
+        (
+            in_repo("../../frontend/dist"),
+            in_repo("../../client/packages/host/dist"),
+        )
+    } else {
+        (None, None)
+    }
 }
 
 /// Cache-control for a frontend asset by path. The index and translation files

@@ -1,0 +1,86 @@
+# The patient detail's program-module tabs (spec/patients § program-module
+# tabs). READ-ONLY lists only — the enrolment/encounter document editors and the
+# vaccination card are owned by their own (unbuilt) verticals; these queries
+# feed plain tables. Program display name is the document registry name
+# (document.documentRegistry.name), matching the reference columns.
+#
+# Reads gate on QueryProgram (enrolments) / QueryEncounter (encounters); results
+# are already scoped to the caller's allowed program contexts server-side.
+
+fragment ProgramEnrolmentRow on ProgramEnrolmentNode {
+  __typename
+  id
+  type
+  programEnrolmentId
+  status
+  enrolmentDatetime
+  isImmunisationProgram
+  document {
+    __typename
+    documentRegistry {
+      __typename
+      name
+    }
+  }
+}
+
+fragment EncounterRow on EncounterNode {
+  __typename
+  id
+  type
+  startDatetime
+  status
+  document {
+    __typename
+    documentRegistry {
+      __typename
+      name
+    }
+  }
+  programEnrolment {
+    __typename
+    document {
+      __typename
+      documentRegistry {
+        __typename
+        name
+      }
+    }
+  }
+}
+
+# All of one patient's program enrolments (spec ui-surface › Programs tab). The
+# Vaccinations tab reuses the same rows, filtered client-side to immunisation
+# programs (isImmunisationProgram).
+query patientProgramEnrolments(
+  $storeId: String!
+  $filter: ProgramEnrolmentFilterInput
+  $sort: ProgramEnrolmentSortInput
+) {
+  programEnrolments(storeId: $storeId, filter: $filter, sort: $sort) {
+    ... on ProgramEnrolmentConnector {
+      __typename
+      totalCount
+      nodes {
+        ...ProgramEnrolmentRow
+      }
+    }
+  }
+}
+
+# One patient's encounters (spec ui-surface › Encounters tab), newest first.
+query patientEncounters(
+  $storeId: String!
+  $filter: EncounterFilterInput
+  $sort: EncounterSortInput
+) {
+  encounters(storeId: $storeId, filter: $filter, sort: $sort) {
+    ... on EncounterConnector {
+      __typename
+      totalCount
+      nodes {
+        ...EncounterRow
+      }
+    }
+  }
+}

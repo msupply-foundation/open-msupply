@@ -258,6 +258,21 @@ else
   echo "=== Skipping client build (using existing build in client/packages/host/dist) ==="
 fi
 
+# --- Stage the new frontend dist (the Dockerfile COPYs frontend-dist/) ---
+
+if [ ! -f "frontend-dist/index.html" ]; then
+  echo "=== Building new frontend into frontend-dist/ ==="
+  # Built in-tree from frontend/ — same commit as everything else in the image,
+  # so there is no pin to bump and no token needed for a separate FE repo.
+  if ! ( cd frontend && corepack pnpm install --frozen-lockfile && corepack pnpm build ); then
+    echo "ERROR: Could not build the new frontend into frontend-dist/. Aborting."
+    exit 1
+  fi
+  rm -rf frontend-dist && cp -R frontend/dist frontend-dist
+else
+  echo "=== Using existing frontend-dist/ (delete it to rebuild) ==="
+fi
+
 # --- Compile, build, and push per (db, arch) combination ---
 
 COMPILED=""
@@ -282,7 +297,7 @@ for i in "${!ALL_TAGS[@]}"; do
 
       COMPILE_OK=true
       if [ "$ARCH" = "arm64" ]; then
-        if ! docker run --rm --user "$(id -u)":"$(id -g)" \
+        if ! docker run --rm --platform linux/arm64 --user "$(id -u)":"$(id -g)" \
           -v "$PWD":/usr/src/omsupply \
           -w /usr/src/omsupply/server \
           "$RUST_IMAGE" \
@@ -351,9 +366,10 @@ for i in "${!ALL_TAGS[@]}"; do
     fi
   fi
 
-  PLATFORM_FLAG=""
   if [ "$ARCH" = "amd64" ]; then
     PLATFORM_FLAG="--platform linux/amd64"
+  else
+    PLATFORM_FLAG="--platform linux/arm64"
   fi
 
   DOCKER_TARGET=$(docker_target_for "$DB" "$VARIANT")

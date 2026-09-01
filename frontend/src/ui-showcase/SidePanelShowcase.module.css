@@ -1,0 +1,62 @@
+/*
+ * The demo's slide rigging: a fixed holder pinned to the viewport's
+ * inline-end edge, full height, that the panel slides out of over the page —
+ * the MenuBar overlay-panel pattern, mirrored (translateX from +100%, RTL
+ * flips the sign via the --hide-x custom property). The holder shrink-wraps
+ * the panel's own width (the panel owns it); the delayed visibility flip keeps the
+ * closed panel out of the tab order and the accessibility tree.
+ */
+.panelHolder {
+  --hide-x: 100%; /* slides in from the inline-end; flipped for RTL below */
+
+  position: fixed;
+  z-index: 40;
+  inset-block: 0;
+  inset-inline-end: 0;
+  display: flex;
+  visibility: hidden;
+  box-shadow: var(--shadow-4);
+  transform: translateX(var(--hide-x));
+  transition:
+    transform var(--motion-slow) ease,
+    visibility 0s var(--motion-slow);
+}
+
+:dir(rtl) .panelHolder {
+  --hide-x: -100%;
+}
+
+.panelHolder[data-open='true'] {
+  visibility: visible;
+  transform: none;
+  transition:
+    transform var(--motion-slow) ease,
+    visibility 0s;
+}
+
+/* The panel itself doesn't render below the nav-overlay breakpoint (its
+   known gap — see SidePanel.tsx); hide the rigging too so an empty holder's
+   shadow never paints. The demo button is disabled there. */
+@media (width < 1024px) {
+  .panelHolder {
+    display: none;
+  }
+}
+
+/* The building-blocks cheat sheet: a definition list of the panel's parts.
+   Explanatory documentation chrome (like the common/ helpers' own CSS), NOT
+   styling of the demoed SidePanel surface. */
+.blocks {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.blocks dt {
+  margin-block-end: var(--space-1);
+}
+
+.blocks dd {
+  margin: 0;
+  color: var(--text-secondary);
+}

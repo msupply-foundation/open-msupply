@@ -1,0 +1,422 @@
+import { For } from 'solid-js';
+import { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
+import { Stack } from '../ui/layout/Stack/Stack';
+import { DashboardCard } from '../ui/elements/dashboard/DashboardCard';
+import { Alert } from '../ui/elements/feedback/Alert';
+import { StatusMarker } from '../ui/elements/feedback/StatusMarker';
+import { Badge } from '../ui/elements/feedback/Badge';
+import { StatusBadge } from '../ui/elements/feedback/StatusBadge';
+import { StatusChip } from '../ui/elements/feedback/StatusChip';
+import { Popover } from '../ui/elements/feedback/Popover';
+import { Comment } from '../ui/elements/feedback/Comment';
+import { InfoTooltip } from '../ui/elements/feedback/InfoTooltip';
+import { ErrorDetails } from '../ui/elements/feedback/ErrorDetails';
+import { Spinner } from '../ui/elements/feedback/Spinner';
+import { TextField } from '../ui/elements/inputs/TextField';
+import { Checkbox } from '../ui/elements/inputs/Checkbox';
+import {
+  AlertCircleIcon,
+  AlertTriangleIcon,
+  CheckCircleIcon,
+  CheckIcon,
+  CircleDashedIcon,
+  HelpIcon,
+  LockIcon,
+  MessageSquareIcon,
+  PauseIcon,
+} from '../ui/icons';
+import { Lead, Note, Row, SectionTOC } from './common';
+import type { PageMetadata } from './metadata';
+import styles from './FeedbackShowcase.module.css';
+
+/* Chip colours come from the --status-* contract tokens (with dark
+   overrides) — never literals here, per the no-hard-coded-colours rule. */
+const STATUS_CHIPS: { label: string; colour: string }[] = [
+  { label: 'New', colour: 'var(--status-new)' },
+  { label: 'Allocated', colour: 'var(--status-allocated)' },
+  { label: 'Picked', colour: 'var(--status-picked)' },
+  { label: 'Shipped', colour: 'var(--status-shipped)' },
+  { label: 'Delivered', colour: 'var(--status-delivered)' },
+  { label: 'Verified', colour: 'var(--status-verified)' },
+];
+
+export const feedbackMetadata: PageMetadata = {
+  id: 'feedback',
+  title: 'Feedback',
+  searchTerms: ['status', 'message', 'notification'],
+  items: [
+    {
+      id: 'feedback-chips-badges',
+      title: 'Chips & badges',
+      searchTerms: [
+        'status chip',
+        'badge',
+        'count',
+        'pill',
+        'status badge',
+        'row status',
+        'on hold',
+        'expired',
+        'near expiry',
+        'unallocated',
+      ],
+    },
+    {
+      id: 'feedback-alerts',
+      title: 'Alerts',
+      searchTerms: [
+        'error',
+        'warning',
+        'info',
+        'success',
+        'banner',
+        'compact',
+        'inline',
+        'chip',
+        'status marker',
+        'inline marker',
+        'glyph',
+      ],
+    },
+    {
+      id: 'feedback-error-details',
+      title: 'Error details',
+      searchTerms: ['error', 'details', 'disclosure', 'raw', 'json', 'expand'],
+    },
+    {
+      id: 'feedback-popovers',
+      title: 'Popovers & tooltips',
+      searchTerms: ['popover', 'tooltip', 'comment', 'hint', 'help'],
+    },
+    {
+      id: 'feedback-spinner',
+      title: 'Spinner',
+      searchTerms: ['loading', 'wait', 'progress', 'busy', 'ring'],
+    },
+  ],
+};
+
+export const FeedbackShowcase = () => {
+  return (
+    <ContentContainer size="form" align="start">
+      <Stack gap="lg">
+        <SectionTOC page={feedbackMetadata} />
+        <DashboardCard id="feedback-chips-badges" title="Status chips">
+          <Lead>
+            Hand-rolled, pure CSS — a chip has no interaction or a11y contract
+            to buy. One <code>colour</code> prop (always a{' '}
+            <code>var(--status-*)</code> token) drives both the dot and the{' '}
+            <code>color-mix</code> pill tint; the label keeps the normal text
+            colour, so contrast holds in both themes and colour never carries
+            the meaning alone.
+          </Lead>
+          <Row gap="sm">
+            <For each={STATUS_CHIPS}>
+              {chip => <StatusChip label={chip.label} colour={chip.colour} />}
+            </For>
+          </Row>
+        </DashboardCard>
+
+        <DashboardCard title="Badge — count / status pill">
+          <Lead>
+            The small pill riding on another element (the sidebar's sync entry):
+            a count, a capped <code>99+</code>, or an alert mark. Meaning is the
+            label text (plus the host's accessible text) — the semantic{' '}
+            <code>tone</code> only escalates it, never stands alone.
+          </Lead>
+          <Row gap="sm">
+            <Badge label="3" title="3 records to push" />
+            <Badge label="99+" title="250 records to push" />
+            <Badge label="42" tone="warning" title="42 records to push" />
+            <Badge label="!" tone="error" title="Sync error" />
+          </Row>
+        </DashboardCard>
+
+        <DashboardCard title="StatusBadge — inline row-status word chip">
+          <Lead>
+            The org standard's row-status badge (table interaction): the word
+            chip beside a record's name marking a line state. Meaning is the
+            label; the semantic <code>tone</code> tints it and the optional icon
+            reinforces it. <code>appearance="outline"</code> is the dashed
+            not-yet-filled look (an unallocated placeholder, whose name also
+            reads italic).
+          </Lead>
+          <Row gap="sm">
+            <StatusBadge label="On hold" tone="warning" icon={<PauseIcon />} />
+            <StatusBadge
+              label="Expired"
+              tone="error"
+              icon={<AlertCircleIcon />}
+            />
+            <StatusBadge
+              label="Near expiry"
+              tone="error"
+              icon={<AlertTriangleIcon />}
+            />
+            <StatusBadge
+              label="Unallocated"
+              appearance="outline"
+              icon={<CircleDashedIcon />}
+            />
+            <StatusBadge
+              label="Will auto-allocate"
+              tone="success"
+              icon={<CheckIcon />}
+            />
+            <StatusBadge label="Disabled" icon={<LockIcon />} />
+          </Row>
+        </DashboardCard>
+
+        <DashboardCard
+          id="feedback-alerts"
+          title="Alerts — error / warning / info / success / neutral"
+        >
+          <Lead>
+            Hand-rolled, one <code>&lt;div&gt;</code> + CSS — the current app's
+            MUI Alert look (pale tinted panel, 10px radius, severity icon)
+            without the library. Panel and text colours are{' '}
+            <code>color-mix</code> derivations from the severity tokens over
+            themed surfaces, so dark mode needs no extra rules; each severity
+            keeps a distinct icon shape, so colour never stands alone.
+          </Lead>
+          <Stack gap="sm" class={styles.hugStart}>
+            <Alert severity="error">
+              Cannot delete: this shipment has already been shipped.
+            </Alert>
+            <Alert severity="warning">
+              Quantity reduced to 12 packs — no more stock is available.
+            </Alert>
+            <Alert severity="info">
+              This shipment was created from requisition RQ-1024.
+            </Alert>
+            <Alert severity="success">All lines allocated.</Alert>
+            <Alert severity="neutral" icon={CheckCircleIcon}>
+              Last successful sync 09:37 (completed in 1 second) — the untinted
+              notice, glyph overridden by intent.
+            </Alert>
+          </Stack>
+
+          <Lead>
+            <strong>Compact footprint.</strong> The <code>compact</code> prop is
+            the ui-standards <code>fb-banner--compact</code>: the same alert
+            (severity, tint, icon) shrunk to an inline chip that tucks into a
+            page-header meta strip — persistent, low-urgency context (read-only
+            / auto-created record, locked document) that shouldn't cost a
+            content row. It's a single line while it fits and wraps once it hits
+            the container rather than overflowing. Same colour language, smaller
+            footprint; never shrink an error the user must fix.
+          </Lead>
+          <Stack gap="sm" class={styles.hugStart}>
+            <Alert severity="info">
+              This shipment is updated automatically; its status follows the
+              sending side.
+            </Alert>
+            <Alert severity="info" compact>
+              This shipment is updated automatically; its status follows the
+              sending side.
+            </Alert>
+          </Stack>
+          <Row gap="sm">
+            <Alert severity="warning" compact>
+              Auto-created — status won't update
+            </Alert>
+            <Alert severity="neutral" compact icon={CheckCircleIcon}>
+              Read-only
+            </Alert>
+            <Alert severity="success" compact>
+              Verified
+            </Alert>
+          </Row>
+
+          <Lead>
+            <strong>StatusMarker.</strong> The same severity vocabulary shrunk
+            to a bare inline glyph beside a value — a table cell's
+            excess-request warning, an option row's emergency flag — where even
+            the compact chip is too heavy. The marker <em>requires</em> its
+            meaning as <code>label</code> (icons alone render{' '}
+            <code>aria-hidden</code>, so a bare toned icon is silent and
+            colour-only); it announces via <code>role="img"</code>, and{' '}
+            <code>icon</code> overrides the severity's default glyph by intent.
+          </Lead>
+          <Row>
+            <Row gap="sm">
+              128
+              <StatusMarker
+                severity="error"
+                icon={AlertTriangleIcon}
+                label="The quantity requested exceeds the suggested quantity"
+              />
+            </Row>
+            <Row gap="sm">
+              Emergency order
+              <StatusMarker severity="warning" label="Emergency" />
+            </Row>
+            <Row gap="sm">
+              Batch B-102
+              <StatusMarker severity="success" label="Allocated" />
+            </Row>
+            <Row gap="sm">
+              Auto-generated
+              <StatusMarker severity="info" label="Created by the system" />
+            </Row>
+          </Row>
+        </DashboardCard>
+
+        <DashboardCard
+          id="feedback-error-details"
+          title="ErrorDetails — raw error behind a disclosure"
+        >
+          <Lead>
+            The raw error or JSON a caller tucks behind a native{' '}
+            <code>&lt;details&gt;</code> disclosure inside an error{' '}
+            <code>Alert</code>, so the message stays terse and the full
+            technical detail is one click away. <code>detail</code> shows in a
+            scrolling <code>&lt;pre&gt;</code>; an optional <code>hint</code>{' '}
+            sits above it and <code>summaryLabel</code>
+            renames the trigger.
+          </Lead>
+          <Alert severity="error">
+            <div>Sync failed — the server rejected the credentials.</div>
+            <ErrorDetails
+              detail={
+                'POST /sync → 401 Unauthorized\n{\n  "error": "invalid_site_credentials"\n}'
+              }
+              hint="Check the site name and password, then try again."
+            />
+          </Alert>
+        </DashboardCard>
+
+        <DashboardCard
+          id="feedback-popovers"
+          title="Popover — content bubble on click/focus"
+        >
+          <Lead>
+            Native Popover API (<code>popover="auto"</code>), no library — top
+            layer (no portal, no clipping), light dismiss, Escape and{' '}
+            <code>aria-expanded</code> come from the platform; only the
+            placement is our own measured geometry, because CSS anchor
+            positioning is too newly Baseline to rely on. For content bubbles
+            like a row's comment — a menu still buys Kobalte DropdownMenu.
+          </Lead>
+          <div class={styles.popoverRow}>
+            <Popover
+              trigger={<MessageSquareIcon />}
+              triggerLabel="Show comment"
+              triggerClass={styles.commentTrigger}
+            >
+              Split delivery agreed with the customer — second carton follows on
+              Thursday's flight to Buka.
+            </Popover>
+            <Popover
+              trigger={
+                <>
+                  <HelpIcon /> What's a pack size?
+                </>
+              }
+              placement="top-start"
+            >
+              The number of units in one pack of this item — quantities on a
+              shipment line are counted in packs, not units. This one prefers{' '}
+              <code>top-start</code> and flips below when there's no room above.
+            </Popover>
+          </div>
+        </DashboardCard>
+
+        <DashboardCard title="Comment — a note behind an icon">
+          <Lead>
+            The list table's comment column (and any note that hides behind an
+            icon): a quiet <code>MessageSquareIcon</code> that reveals its text
+            in a popover — a bold heading over the body — on hover / focus, and
+            on click / tap too (so it opens on touch). A thin wrapper over{' '}
+            <code>Popover</code>; renders nothing when there is no comment, so a
+            cell can drop it in unconditionally.
+          </Lead>
+          <div class={styles.popoverRow}>
+            <Comment comment="Split delivery agreed with the customer — second carton follows on Thursday's flight to Buka." />
+            <span>
+              ← hover or tap the icon. An empty comment renders nothing:{' '}
+            </span>
+            <Comment comment={null} />
+          </div>
+        </DashboardCard>
+
+        <DashboardCard title="InfoTooltip — help text behind an icon">
+          <Lead>
+            The help-text sibling of <code>Comment</code>: a quiet{' '}
+            <code>InfoIcon</code> that reveals a short gloss on hover / focus /
+            tap. Pass it to an input's <code>labelInfo</code> slot to explain a
+            field (below), or drop it inline beside any term.
+          </Lead>
+          <Lead>
+            <code>tone</code> sets the marker's emphasis. The default grey suits
+            a marker beside a label — the label carries the weight, and the icon
+            brightens on hover. <code>primary</code> is the standing brand-toned
+            mark for one that stands alone in a muted row (dashboard stats,
+            where the current app renders it that way): it doesn't brighten, it
+            tints its own background on hover instead.
+          </Lead>
+          <div class={styles.popoverRow}>
+            <span>Standalone: </span>
+            <InfoTooltip text="The number of local (home) currency units per one PO currency unit." />
+            <span>Primary tone: </span>
+            <InfoTooltip
+              tone="primary"
+              text="The standing brand-toned marker — as used on a dashboard stat."
+            />
+          </div>
+          <TextField
+            label="Currency rate"
+            labelInfo={
+              <InfoTooltip text="The number of local (home) currency units per one PO currency unit — e.g. a rate of 1.6 means 1 USD = 1.6 NZD." />
+            }
+            value="1.6"
+          />
+          <Checkbox
+            label="On hold"
+            labelInfo={
+              <InfoTooltip text="A held record can't be picked or shipped until the hold is lifted." />
+            }
+          />
+          <Note>
+            <strong>Every labelled input and selector takes it</strong> — see{' '}
+            <a href="#/showcase/inputs">Inputs › Label help tooltip</a> and{' '}
+            <a href="#/showcase/selectors">Selectors › Label help tooltip</a>.
+            The icon always sits outside the label element, keeping it out of
+            the control's accessible name — as on the Checkbox above, one of the
+            self-labelling controls, where it also keeps a click on the icon
+            from toggling the control.
+          </Note>
+        </DashboardCard>
+
+        <DashboardCard
+          id="feedback-spinner"
+          title="Spinner — loading indicator"
+        >
+          <Lead>
+            A spinning-ring loading indicator carrying{' '}
+            <code>role="status"</code> and an accessible label (defaults to
+            "Loading…"), so a screen reader announces the wait. Colour follows{' '}
+            <code>currentColor</code> and the size is a rem prop (
+            <code>sizeRem</code>, default 2).{' '}
+            <code>prefers-reduced-motion</code> slows it rather than stopping —
+            a stopped ring reads as broken.
+          </Lead>
+          <Row>
+            <Spinner sizeRem={1} label="Loading, small" />
+            <Spinner label="Loading" />
+            <Spinner sizeRem={3} label="Loading, large" />
+          </Row>
+          <Note>
+            <code>center</code> fills its container and centres the ring — the
+            full-body wait used as a <code>&lt;Suspense&gt;</code> fallback and
+            in the DataTable's initial load. Following <code>currentColor</code>
+            , it takes the surrounding text colour:
+          </Note>
+          <div style={{ 'block-size': '8rem' }}>
+            <Spinner center label="Loading report" />
+          </div>
+        </DashboardCard>
+      </Stack>
+    </ContentContainer>
+  );
+};

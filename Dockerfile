@@ -12,6 +12,21 @@ FROM rust:1.94-slim as base
 COPY --from=faketime-builder /usr/local/lib/faketime/libfaketime.so.1 /usr/local/lib/faketime/
 RUN echo "/usr/local/lib/faketime/libfaketime.so.1" > /etc/ld.so.preload
 
+# PDF report export renders HTML through headless Chromium. Install the headless
+# shell (chromium-headless-shell) — the GUI-less build, roughly half the installed
+# size of the full chromium package — plus a metric-compatible font set (Liberation
+# ~= the Helvetica/Arial the report CSS asks for; the slim base image ships no fonts,
+# so text would otherwise render as blank boxes). See issue #12289.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends chromium-headless-shell fonts-liberation && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+# headless_chrome finds the binary via the CHROME env var. chromium-headless-shell
+# is not one of the names it auto-detects, so point CHROME at it explicitly. Chromium
+# also refuses to run as root inside a container unless the sandbox is disabled, so
+# signal the server to launch it with --no-sandbox (read in report::html_printing).
+ENV CHROME=/usr/bin/chromium-headless-shell
+ENV OMS_HEADLESS_CHROME_NO_SANDBOX=true
+
 WORKDIR /usr/src/omsupply/server
 COPY --chmod=755 docker/entry.sh .
 COPY server/data data

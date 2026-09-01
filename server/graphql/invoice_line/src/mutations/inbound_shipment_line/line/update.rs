@@ -237,13 +237,14 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         ServiceError::NotThisStoreInvoice
         | ServiceError::NotAStockIn
         | ServiceError::NumberOfPacksBelowZero
+        | ServiceError::SellPricePerPackBelowZero
+        | ServiceError::CostPricePerPackBelowZero
         | ServiceError::NotThisInvoiceLine(_)
         | ServiceError::PackSizeBelowOne
         | ServiceError::LocationDoesNotExist
         | ServiceError::ItemVariantDoesNotExist
         | ServiceError::VVMStatusDoesNotExist
         | ServiceError::ManufacturerDoesNotExist
-        | ServiceError::ManufacturerNotVisible
         | ServiceError::ManufacturerIsNotAManufacturer
         | ServiceError::ProgramDoesNotExist
         | ServiceError::CampaignDoesNotExist

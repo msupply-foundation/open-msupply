@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
+  Alert,
   Tab,
   TabList,
   useTranslation,
@@ -185,6 +186,7 @@ const RemoteForm: React.FC<RemoteFormProps> = ({
     setBatchSize,
     siteCredentialsError: error,
     syncStatus,
+    waitingForCentral,
   } = formState;
 
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -276,6 +278,11 @@ const RemoteForm: React.FC<RemoteFormProps> = ({
               </Box>
             </Collapse>
           </Box>
+          {waitingForCentral && (
+            <Alert severity="info">
+              {t('messages.waiting-for-central-server')}
+            </Alert>
+          )}
           {error && <BoxedErrorWithDetails {...error} />}
           <Box display="flex" justifyContent="flex-end">
             <LoadingButton

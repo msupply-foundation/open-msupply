@@ -42,14 +42,12 @@ mkdir $DESTINATION/bin
 cp "server/target/${TARGET}/release/remote_server" $DESTINATION/bin 
 cp "server/target/${TARGET}/release/remote_server_cli" $DESTINATION/bin 
 
-# New FE at / : fetch the pinned, checksum-verified dist zip from the
-# open-msupply-frontend repo and unpack it into frontend/ (served from
-# frontend_dir, relative to the launch script's working directory). The FE repo
-# is private and has no release yet, so drive this with FRONTEND_DIST_URL (and a
-# token once releases exist) until frontend-version.json is pinned to a real tag
-# — see server/README.md ('Serving front-end'). No silent fallback to the in-tree
-# build: the wrong FE at / is worse than a loud failure.
-node build/fetch-frontend.js "$DESTINATION/frontend"
+# New FE at / : built in-tree (`corepack pnpm` — version pinned by
+# frontend/package.json) and copied into frontend/ (served from frontend_dir,
+# relative to the launch script's working directory) — same commit as the
+# server binaries above. See server/README.md ('Serving front-end').
+(cd frontend && corepack pnpm install --frozen-lockfile && corepack pnpm build)
+cp -R frontend/dist "$DESTINATION/frontend"
 
 # Old UI at /old-ui/ : the client build above (PUBLIC_PATH=/old-ui/) goes here.
 cp -R client/packages/host/dist "$DESTINATION/frontend/old-ui"

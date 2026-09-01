@@ -194,6 +194,8 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::LineAlreadyExists
         | ServiceError::NotAStockIn
         | ServiceError::NumberOfPacksBelowZero
+        | ServiceError::SellPricePerPackBelowZero
+        | ServiceError::CostPricePerPackBelowZero
         | ServiceError::PackSizeBelowOne
         | ServiceError::LocationDoesNotExist
         | ServiceError::ItemVariantDoesNotExist
@@ -202,7 +204,6 @@ fn map_error(error: ServiceError) -> Result<InsertErrorInterface> {
         | ServiceError::DonorNotVisible
         | ServiceError::SelectedDonorPartyIsNotADonor
         | ServiceError::ManufacturerDoesNotExist
-        | ServiceError::ManufacturerNotVisible
         | ServiceError::ManufacturerIsNotAManufacturer
         | ServiceError::ProgramDoesNotExist
         | ServiceError::PurchaseOrderLineIdRequired
