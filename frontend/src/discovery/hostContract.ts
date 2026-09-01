@@ -73,35 +73,22 @@ export type HostInfo = {
   };
 };
 
-/** One resolved mDNS announcement (`_omsupply._tcp`), verbatim: the resolved
- * address and port plus the TXT record's identity attributes
- * (server/server/src/discovery.rs). A missing TXT key is ''. No filtering,
- * no locality marking, no address rewriting — the page's policy does all of
- * that (./discovery.ts § toFrontEndHost). */
-export type RawAnnouncement = {
-  ip: string;
-  port: number;
-  /** TXT `protocol`. */
-  protocol: string;
-  /** TXT `client_version`. */
-  clientVersion: string;
-  /** TXT `hardware_id`. */
-  hardwareId: string;
-};
-
-/** Who the window is being navigated to, for the host's certificate trust
- * (see `navigate` below). Deliberately narrower than the page's own
- * FrontEndHost: only what a trust decision needs, so it stays obvious why
- * each field crosses the bridge. The URL carries the rest. */
-export type ConnectedServer = {
-  /** The server's announced `hardware_id` — with `port`, the key both legacy
-   * shells store certificate fingerprints under, so an upgraded install still
-   * recognises a server it already trusted.
+/** What names ONE server, everywhere in this feature.
+ *
+ * Declared once and composed into everything below (and into the page's own
+ * FrontEndHost) rather than re-typed per shape: `hardwareId` and `port`
+ * together are the identity every layer keys on — the list's dedupe, the
+ * locality compare, and both legacy shells' certificate fingerprint store —
+ * so a shape that re-declares them can drift from the one beside it. */
+export type ServerIdentity = {
+  /** The server's announced `hardware_id` (TXT). With `port`, the key both
+   * legacy shells store certificate fingerprints under, so an upgraded
+   * install still recognises a server it already trusted.
    *
    * Not always an announced id. A MANUALLY entered server was never
    * announced, so the page mints one per attempt purely to key the list entry
-   * (./discovery.ts § parseManualServer) and that is what arrives here — as it
-   * did from the legacy screen, which minted one for the same reason
+   * (./discovery.ts § parseManualServer) and that is what travels — as it did
+   * from the legacy screen, which minted one for the same reason
    * (client/packages/common/src/ui/discovery/ManualServerConfig.tsx). A host
    * therefore records a fresh fingerprint for each freshly typed server and
    * compares nothing; only once such a server is REMEMBERED does its key hold
@@ -109,9 +96,35 @@ export type ConnectedServer = {
    * looks stabler than it is. `''` for this install's own standalone server,
    * which is proved by `isLocal` and never keyed. */
   hardwareId: string;
-  /** The server's port, the other half of that key. Passed rather than parsed
-   * back out of the URL, where a default port is not written down. */
+  /** The other half of that key. Where this crosses the bridge it is passed
+   * rather than parsed back out of a URL, in which a default port is not
+   * written down. */
   port: number;
+};
+
+/** One resolved mDNS announcement (`_omsupply._tcp`), verbatim: the resolved
+ * address and port plus the TXT record's identity attributes
+ * (server/server/src/discovery.rs). A missing TXT key is ''. No filtering,
+ * no locality marking, no address rewriting — the page's policy does all of
+ * that (./discovery.ts § toFrontEndHost).
+ *
+ * `protocol` is deliberately a bare string here and narrowed only once the
+ * page has checked it (§ isCompleteAnnouncement): this is unvalidated input
+ * from a host, and typing it as the narrow union would be a lie the compiler
+ * then propagates. */
+export type RawAnnouncement = ServerIdentity & {
+  ip: string;
+  /** TXT `protocol`. */
+  protocol: string;
+  /** TXT `client_version`. */
+  clientVersion: string;
+};
+
+/** Who the window is being navigated to, for the host's certificate trust
+ * (see `navigate` below). Deliberately narrower than the page's own
+ * FrontEndHost: only what a trust decision needs, so it stays obvious why
+ * each field crosses the bridge. The URL carries the rest. */
+export type ConnectedServer = ServerIdentity & {
   /** This machine's own server (the page's hardware-id compare,
    * ./discovery.ts § isLocalServer). Picks exact-certificate proof over
    * trust-on-first-use — and means the host never has to recognise its own

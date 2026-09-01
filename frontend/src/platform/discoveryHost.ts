@@ -15,6 +15,7 @@
 //   states it rather than searching nothing (DiscoveryPage's no-host notice).
 import { isAndroid } from './index';
 import type {
+  ConnectedServer,
   DiscoveryHostApi,
   HostInfo,
   RawAnnouncement,
@@ -31,12 +32,10 @@ type DiscoveryHostPlugin = {
     url: string;
     timeoutMs: number;
   }) => Promise<{ answered: boolean }>;
-  navigate: (options: {
-    url: string;
-    hardwareId: string;
-    port: number;
-    isLocal: boolean;
-  }) => Promise<void>;
+  // The contract's own ConnectedServer, flattened into the options object
+  // Capacitor requires — spelled as the contract type rather than re-typed,
+  // so a field added there cannot be silently dropped on the way across.
+  navigate: (options: { url: string } & ConnectedServer) => Promise<void>;
 };
 
 let plugin: DiscoveryHostPlugin | undefined;
