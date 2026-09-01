@@ -1,7 +1,6 @@
 import { createAction, type KeyAction } from '../ui/utils/keyActions';
 import { type NavItem } from '../nav/navConfig';
-import { activeNavConfig, deniedPermission, gateNav } from '../nav/navGates';
-import { reportPermissionDenied } from '../api/graphql';
+import { activeNavConfig, gateNav } from '../nav/navGates';
 import { t } from '../intl';
 import { ALT_D, ALT_H, type Shortcut } from '../ui/utils/shortcuts';
 
@@ -17,8 +16,9 @@ import { ALT_D, ALT_H, type Shortcut } from '../ui/utils/shortcuts';
  * beside the derived tree, which had drifted exactly as you would expect:
  * customer returns was reachable by menu only.
  *
- * The gating is the shared `gateNav`, so the dispensary, vaccine-module and
- * central rules are applied once for both surfaces (AC-KB4).
+ * The gating is the shared `gateNav`, so the dispensary, vaccine-module,
+ * central, and query-permission rules are applied once for both surfaces
+ * (AC-KB4; spec/navigation § permission gates, D94).
  *
  * KB-R2's line about mode and module gates applies exactly here: they
  * "legitimately gate an action whose DESTINATION they gate — Prescriptions and
@@ -85,17 +85,6 @@ export const createNavActions = (
     return createAction({
       name: paletteName(destination),
       ...(shortcut ? { shortcut } : {}),
-      // A permission-gated destination is listed but refuses at run time, the
-      // same refusal as the menu (spec/navigation § permission gates, D94) —
-      // checked when fired, not at registration, so a permission granted after
-      // login is honoured without re-registering.
-      run: () => {
-        const denied = deniedPermission(destination);
-        if (denied !== undefined) {
-          reportPermissionDenied([denied]);
-          return;
-        }
-        navigate(destination.path);
-      },
+      run: () => navigate(destination.path),
     });
   });
