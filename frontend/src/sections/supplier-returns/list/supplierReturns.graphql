@@ -1,0 +1,118 @@
+# Supplier-returns list view (spec/supplier-returns S1). A supplier return is an
+# InvoiceNode; the list is the shared invoices query pinned to
+# type SUPPLIER_RETURN (the fetcher merges the type filter in — the URL-backed
+# filter carries only the user's own choices). Filter / sort / pagination are
+# carried as the GraphQL input types (InvoiceFilterInput, InvoiceSortInput,
+# PaginationInput) so URL state maps straight onto them (kdd/type-safety).
+# Read-only rows are driven by status (SHIPPED is terminal for this store —
+# spec/supplier-returns/rules.md § editability), not by any transfer link.
+#
+# The top-level `type` argument does BOTH jobs, so it is the only type pin here.
+# It selects the PERMISSION — the server authorises this read against
+# SupplierReturnQuery alone because it is named; omitted, it falls back to a
+# deprecated combined resource demanding all six invoice query permissions at
+# once. It also OVERWRITES `filter.type` server-side, so a `filter.type` sent
+# alongside is dead weight (spec/navigation/contract.md § wire traps). A literal,
+# not a variable: this query serves one screen pinned to one type, so no caller
+# can forget it — and forgetting it would now widen the rows, not just the
+# permission.
+query supplierReturns(
+  $storeId: String!
+  $filter: InvoiceFilterInput
+  $sort: [InvoiceSortInput!]
+  $page: PaginationInput
+) {
+  invoices(
+    storeId: $storeId
+    filter: $filter
+    sort: $sort
+    page: $page
+    type: [SUPPLIER_RETURN]
+  ) {
+    ... on InvoiceConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        otherPartyName
+        status
+        invoiceNumber
+        createdDatetime
+        comment
+        theirReference
+        colour
+        onHold
+        # Line count only — the bulk delete's confirmation warns that an issued
+        # return's stock comes back, and an EMPTY return has no stock to warn
+        # about (rules § deletion rules). Batched server-side by the
+        # invoice-line loader, so it costs one query for the page.
+        lines {
+          totalCount
+        }
+        # Custom-field VALUES (JSON object), scope-filtered — backs the
+        # configured custom-field columns.
+        customFields
+      }
+    }
+  }
+}
+
+# Manual creation (spec/supplier-returns/rules.md § manual, from scratch): pick a
+# supplier → an EMPTY NEW return exists immediately (no lines — items are added on
+# the detail). The two typed rejections (supplier not visible / not a supplier)
+# surface inline in the create modal; everything else is non-typed and falls
+# through the generic error path (spec/supplier-returns/contract.md § creation).
+mutation insertSupplierReturn($storeId: String!, $input: SupplierReturnInput!) {
+  insertSupplierReturn(storeId: $storeId, input: $input) {
+    __typename
+    ... on InvoiceNode {
+      id
+    }
+    ... on InsertSupplierReturnError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# The list Name cell's colour-swatch setter (spec/supplier-returns/ui-surface.md
+# S1): a header-level updateSupplierReturn carrying only the colour.
+# UpdateSupplierReturnResponse is a single-member union (InvoiceNode) — no typed
+# error branch (spec/supplier-returns/contract.md § header rules — wire trap); a
+# rejection arrives as a non-typed GraphQL error routed to the global modal.
+mutation updateSupplierReturnColour(
+  $storeId: String!
+  $id: String!
+  $colour: String!
+) {
+  updateSupplierReturn(storeId: $storeId, input: { id: $id, colour: $colour }) {
+    __typename
+    ... on InvoiceNode {
+      id
+      colour
+    }
+  }
+}
+
+# Bulk delete (spec/supplier-returns/rules.md § deletion). There is no batch
+# mutation — the list's bulk action runs one delete per selected id. Every
+# rejection (not editable / finalised / wrong store) is NON-typed: the three
+# declared error members are dead schema
+# (spec/supplier-returns/contract.md § deletion — wire trap), so the action reads
+# only DeleteResponse and treats a graphqlError result as that row failing.
+mutation deleteSupplierReturn($storeId: String!, $id: String!) {
+  deleteSupplierReturn(storeId: $storeId, id: $id) {
+    __typename
+    ... on DeleteResponse {
+      id
+    }
+    ... on DeleteSupplierReturnError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}

@@ -1,0 +1,125 @@
+# Internal-order LINE editor (spec/internal-orders S4).
+#
+# Two save paths (contract › editing lines):
+#  · ADD  — batchRequestRequisition inserts the line (server generates the
+#    snapshot, suggestion, and the gated price/forecast captures) then updates
+#    it with the drafted requested quantity / comment / reason, in one call
+#    (its insert phase runs before its update phase). A client-generated line
+#    id ties the two phases.
+#  · EDIT — updateRequestRequisitionLine carries the changed fields; the reason
+#    is cleared server-side when the quantity returns to the suggestion (D30).
+#
+# ADD mode previews the item's statistics from a live read BEFORE any line
+# exists (AC-LN3 — a reload before the first save finds nothing): the item's
+# current stock/consumption figures, from which the client previews the
+# suggestion. The real snapshot + suggestion are the server's, taken at save.
+
+# One item's current figures for the add-mode statistics preview. `stats`
+# triggers the AMC calculation — acceptable for a single picked item (contrast
+# item.graphql's search, which sums availableBatches to avoid it).
+query internalOrderItemStats($storeId: String!, $itemId: String!) {
+  items(storeId: $storeId, filter: { id: { equalTo: $itemId } }) {
+    ... on ItemConnector {
+      __typename
+      nodes {
+        id
+        code
+        name
+        unitName
+        defaultPackSize
+        doses
+        isVaccine
+        stats(storeId: $storeId) {
+          averageMonthlyConsumption
+          availableStockOnHand
+          availableMonthsOfStockOnHand
+        }
+      }
+    }
+  }
+}
+
+# ADD: insert + update in one batch. The insert response is only checked for an
+# error typename (a typed insert error gets the generic failure surface,
+# error-handling parity); the update response carries the realised line.
+mutation addInternalOrderLine(
+  $storeId: String!
+  $input: BatchRequestRequisitionInput!
+) {
+  batchRequestRequisition(storeId: $storeId, input: $input) {
+    insertRequestRequisitionLines {
+      id
+      response {
+        __typename
+      }
+    }
+    updateRequestRequisitionLines {
+      id
+      response {
+        __typename
+        ... on RequisitionLineNode {
+          id
+        }
+        ... on UpdateRequestRequisitionLineError {
+          error {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+}
+
+# DELETE (AC-LN15): remove the selected lines in one batch. The batch is ATOMIC
+# — any member error rolls the whole batch back, so nothing is removed on a
+# partial failure. A validating member still reports DeleteResponse on a
+# rolled-back batch (contract › deletion wire trap), so the caller judges the
+# batch by whether ANY member errored, never a member's own response.
+mutation deleteInternalOrderLines(
+  $storeId: String!
+  $ids: [DeleteRequestRequisitionLineInput!]!
+) {
+  batchRequestRequisition(
+    storeId: $storeId
+    input: { deleteRequestRequisitionLines: $ids }
+  ) {
+    deleteRequestRequisitionLines {
+      id
+      response {
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+        ... on DeleteRequestRequisitionLineError {
+          __typename
+          error {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+}
+
+# EDIT: a single line update. Typed errors surface inline (contract › editing
+# lines); the success payload is the refreshed line (the parent refetches the
+# page regardless, AC-LN21).
+mutation updateInternalOrderLine(
+  $storeId: String!
+  $input: UpdateRequestRequisitionLineInput!
+) {
+  updateRequestRequisitionLine(storeId: $storeId, input: $input) {
+    __typename
+    ... on RequisitionLineNode {
+      id
+    }
+    ... on UpdateRequestRequisitionLineError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}

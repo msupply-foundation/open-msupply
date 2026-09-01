@@ -1,0 +1,64 @@
+/* Coloured status dot for the Select options. */
+.dot {
+  display: inline-block;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+}
+
+/* Two-line item option. */
+.itemRow {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.itemName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.itemMeta {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+.outOfStock {
+  color: var(--error-main);
+}
+
+/* Live readout under the filter bar demo — spacing comes from the card
+   body's flex gap; margin 0 cancels the UA <p> margins. */
+.filterReadout {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.filterReadout code {
+  padding: 0.1em 0.3em;
+  background: var(--bg-group-main);
+  border-radius: var(--radius-sm);
+  font-size: 0.85em;
+}
+
+/* Colour-tag demo rows: picker/dots beside their explainer text. */
+.tagRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.tagRowLabel {
+  margin-inline-start: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+}
+
+.tagRowLabel code {
+  font-size: 0.85em;
+  padding: 0.1em 0.3em;
+  background: var(--bg-group-main);
+  border-radius: var(--radius-sm);
+}

@@ -40,16 +40,18 @@ fn validate_request(
     // the session token from the HttpOnly cookie. There's no longer a separate refresh token —
     // the session cookie IS the auth token, and `validate_auth` slides its expiry as a side
     // effect of validation.
+    // HTTP/2+ clients split the cookie list into one Cookie header field per cookie
+    // (RFC 9113 §8.2.3), so scan every field — not just the first — the same way as the
+    // GraphQL pipeline's `session_cookie_value`.
     let cookie_name = format!("session_{}", auth_data.cookie_suffix);
-    let session_token = request.headers().get(COOKIE).and_then(|header_value| {
-        header_value.to_str().ok().and_then(|header| {
-            header
-                .split("; ")
-                .filter_map(|raw_cookie| Cookie::parse(raw_cookie).ok())
-                .find(|cookie| cookie.name() == cookie_name)
-                .map(|cookie| cookie.value().to_owned())
-        })
-    });
+    let session_token = request
+        .headers()
+        .get_all(COOKIE)
+        .filter_map(|header_value| header_value.to_str().ok())
+        .flat_map(|header| header.split(';'))
+        .filter_map(|raw_cookie| Cookie::parse(raw_cookie.trim()).ok())
+        .find(|cookie| cookie.name() == cookie_name)
+        .map(|cookie| cookie.value().to_owned());
 
     if session_token.is_none() {
         return Err(AuthError::Denied(AuthDeniedKind::NotAuthenticated(

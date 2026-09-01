@@ -651,6 +651,34 @@ mod test {
     }
 
     #[actix_rt::test]
+    async fn integrate_strips_nul_characters() {
+        // Sqlite sites accept NUL padded strings (as sent by legacy mSupply), and can
+        // push them on over v7. Postgres text columns cannot store a NUL, so they are
+        // stripped before integration rather than failing the record with
+        // `invalid byte sequence for encoding "UTF8": 0x00`.
+        let connection = setup("integrate_strips_nul_characters", MockDataInserts::none()).await;
+
+        let mut data = unit_data("u1");
+        data["name"] = serde_json::json!("Tablet\u{0000}\u{0000}");
+
+        SyncBufferRepository::new(&connection)
+            .insert_many(&[buffer_row("u1", SyncAction::Upsert, data)])
+            .unwrap();
+
+        integrate(&connection, None);
+
+        let unit = UnitRowRepository::new(&connection)
+            .find_one_by_id("u1")
+            .unwrap()
+            .expect("unit must exist after integration");
+        assert_eq!(unit.name, "Tablet");
+
+        let (result, error) = buffer_result(&connection, 1);
+        assert_eq!(result, Some(IntegrationResult::Success));
+        assert_eq!(error, None);
+    }
+
+    #[actix_rt::test]
     async fn integrate_marks_stale_delete_superseded() {
         // The #12610 shape: a stale Delete arrives in an earlier batch than the
         // record's re-create Upsert. The delete must be superseded, not applied

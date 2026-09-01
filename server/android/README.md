@@ -24,10 +24,12 @@ remote-server-android-<version>-<profile>.zip
 └── VERSION.txt   (version, profile, commit, abis)
 ```
 
-Consumers (e.g. the [open-msupply-frontend](https://github.com/msupply-foundation/open-msupply-frontend)
-Android app) pin a version and fetch + checksum-verify the zip at build time,
-unpacking `jniLibs/` into their gradle project. No Rust/NDK toolchain needed
-on the consumer side.
+The APK build produces these libs in-tree
+(`client/packages/android/build_remote_server_libs.sh`, driven by `NDK_BIN`).
+For the new frontend's opt-in embedded-server flow (`frontend/android`), build
+the same way and place the `.so` under `jniLibs/arm64-v8a/` manually — the
+old cross-repo publish workflow (build-android-server-lib.yaml) is deleted;
+nothing consumed its release assets.
 
 ## Building locally
 

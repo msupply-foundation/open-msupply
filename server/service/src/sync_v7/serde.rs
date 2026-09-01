@@ -4,6 +4,7 @@ use repository::{
     syncv7::SyncRecordSerializeError, *,
 };
 use serde::de::DeserializeOwned;
+use util::json_without_nulls;
 
 use crate::sync_v7::{
     translations::{
@@ -151,7 +152,13 @@ pub(crate) fn deserialize(
     sync_context: &SyncContext,
 ) -> DeserializeResult {
     let changelog_insert = create_changelog(table_name.clone(), RowActionType::Upsert, row);
-    let data = &row.data;
+    // Postgres text columns cannot store the NUL character (0x00). Sqlite sites do accept
+    // NULs, so a NUL padded string that came from legacy mSupply can be pushed on to a
+    // Postgres server over v7, where it would fail to integrate with
+    // `invalid byte sequence for encoding "UTF8": 0x00`. Records containing a NUL are very
+    // rare, so the common case here is a read only scan of the record, no clone.
+    let data = json_without_nulls(&row.data);
+    let data = &*data;
     let upsert = match table_name {
         // Special
         ChangelogTableName::Store => return translate_store(connection, changelog_insert, data),

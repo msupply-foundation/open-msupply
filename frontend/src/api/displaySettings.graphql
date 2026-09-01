@@ -1,0 +1,33 @@
+# Display settings (spec/settings/contract.md § Display settings). The query's
+# DisplaySettingsHash carries the client's last-known logo/theme hash so the
+# server can omit an unchanged value — this page always sends empty hashes to
+# get the current values outright (the cache-busting path belongs to startup's
+# boot-time mirror, not to this editor).
+query displaySettings($input: DisplaySettingsHash!) {
+  displaySettings(input: $input) {
+    customTheme {
+      value
+      hash
+    }
+    customLogo {
+      value
+      hash
+    }
+  }
+}
+
+# One field per call — the two toggle rows save independently (contract § Display
+# settings). Clearing sends the field as an empty string.
+mutation updateDisplaySettings($input: DisplaySettingsInput!) {
+  updateDisplaySettings(input: $input) {
+    ... on UpdateResult {
+      __typename
+      theme
+      logo
+    }
+    ... on UpdateDisplaySettingsError {
+      __typename
+      error
+    }
+  }
+}

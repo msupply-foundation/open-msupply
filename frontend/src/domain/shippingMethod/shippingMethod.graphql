@@ -1,0 +1,13 @@
+# Shipping-method lookup (spec/ui-standards/components.md § shipping-method
+# lookup) — the transport-details picker on shipment detail screens.
+query shippingMethods($storeId: String!) {
+  shippingMethods(storeId: $storeId) {
+    ... on ShippingMethodConnector {
+      __typename
+      nodes {
+        id
+        method
+      }
+    }
+  }
+}

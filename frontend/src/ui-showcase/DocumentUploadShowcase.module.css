@@ -1,0 +1,5 @@
+/* The panel caps its own width (max-width in DocumentUploadPanel); this wrapper
+   just scopes it so it reads as it would inside a detail-view tab. */
+.frame {
+  display: flow-root;
+}

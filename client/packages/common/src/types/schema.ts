@@ -7723,6 +7723,7 @@ export enum PreferenceKey {
   ExternalInboundShipmentLinesMustBeAuthorised = 'externalInboundShipmentLinesMustBeAuthorised',
   FirstThresholdForExpiringItems = 'firstThresholdForExpiringItems',
   GenderOptions = 'genderOptions',
+  GlobalLogo = 'globalLogo',
   GlobalTableConfigs = 'globalTableConfigs',
   InboundShipmentAutoVerify = 'inboundShipmentAutoVerify',
   InvoiceStatusOptions = 'invoiceStatusOptions',
@@ -7745,6 +7746,7 @@ export enum PreferenceKey {
   SortByVvmStatusThenExpiry = 'sortByVvmStatusThenExpiry',
   StoreCustomColour = 'storeCustomColour',
   SyncRecordsDisplayThreshold = 'syncRecordsDisplayThreshold',
+  TransferStockToInternalCustomersAtCostPrice = 'transferStockToInternalCustomersAtCostPrice',
   UseProcurementFunctionality = 'useProcurementFunctionality',
   UseSimplifiedMobileUi = 'useSimplifiedMobileUi',
   WarnWhenMissingRecentStocktake = 'warnWhenMissingRecentStocktake',
@@ -7773,6 +7775,7 @@ export enum PreferenceValueNodeType {
   CustomTranslations = 'CUSTOM_TRANSLATIONS',
   CustomTranslationsV2 = 'CUSTOM_TRANSLATIONS_V2',
   Float = 'FLOAT',
+  Image = 'IMAGE',
   Integer = 'INTEGER',
   MultiChoice = 'MULTI_CHOICE',
   String = 'STRING',
@@ -7798,6 +7801,11 @@ export type PreferencesNode = {
   externalInboundShipmentLinesMustBeAuthorised: Scalars['Boolean']['output'];
   firstThresholdForExpiringItems: Scalars['Int']['output'];
   genderOptions: Array<GenderTypeNode>;
+  /**
+   * Base64 data-URL logo used as fallback when a store has no logo.
+   * Large - don't add to eagerly-fetched preference queries.
+   */
+  globalLogo: Scalars['String']['output'];
   globalTableConfigs: Scalars['JSON']['output'];
   inboundShipmentAutoVerify: Scalars['Boolean']['output'];
   invoiceStatusOptions: Array<InvoiceNodeStatus>;
@@ -7819,6 +7827,7 @@ export type PreferencesNode = {
   sortByVvmStatusThenExpiry: Scalars['Boolean']['output'];
   storeCustomColour: Scalars['String']['output'];
   syncRecordsDisplayThreshold: Scalars['Int']['output'];
+  transferStockToInternalCustomersAtCostPrice: Scalars['Boolean']['output'];
   useProcurementFunctionality: Scalars['Boolean']['output'];
   useSimplifiedMobileUi: Scalars['Boolean']['output'];
   warnWhenMissingRecentStocktake: WarnWhenMissingRecentStocktakeDataNode;
@@ -10786,7 +10795,8 @@ export type StoreNode = {
   /** Whether the store has been disabled, either by a user or as a result of a store merge. */
   isDisabled: Scalars['Boolean']['output'];
   /**
-   * Returns the associated store logo.
+   * Returns the associated store logo, falling back to the global logo
+   * preference when the store has none.
    * The logo is returned as a data URL schema, e.g. "data:image/png;base64,..."
    * Lazy-loaded — the logo is not pulled with the default store row.
    */
@@ -12708,6 +12718,7 @@ export type UpsertPreferencesInput = {
   >;
   firstThresholdForExpiringItems?: InputMaybe<Array<IntegerStorePrefInput>>;
   genderOptions?: InputMaybe<Array<GenderTypeNode>>;
+  globalLogo?: InputMaybe<Scalars['String']['input']>;
   globalTableConfigs?: InputMaybe<Scalars['JSON']['input']>;
   inboundShipmentAutoVerify?: InputMaybe<Array<BoolStorePrefInput>>;
   invoiceStatusOptions?: InputMaybe<Array<InvoiceStatusOptionsInput>>;
@@ -12739,6 +12750,9 @@ export type UpsertPreferencesInput = {
   sortByVvmStatusThenExpiry?: InputMaybe<Array<BoolStorePrefInput>>;
   storeCustomColour?: InputMaybe<Array<StringStorePrefInput>>;
   syncRecordsDisplayThreshold?: InputMaybe<Scalars['Int']['input']>;
+  transferStockToInternalCustomersAtCostPrice?: InputMaybe<
+    Scalars['Boolean']['input']
+  >;
   useProcurementFunctionality?: InputMaybe<Array<BoolStorePrefInput>>;
   useSimplifiedMobileUi?: InputMaybe<Array<BoolStorePrefInput>>;
   warnWhenMissingRecentStocktake?: InputMaybe<

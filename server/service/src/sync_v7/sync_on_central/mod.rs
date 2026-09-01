@@ -165,7 +165,8 @@ pub async fn get_token(
 ///   until every store's data has been moved to COMS — that error is propagated
 ///   unchanged so ROMS retries. On success the legacy server has flipped to v7,
 ///   but COMS must wait for that to arrive via sync, so we return
-///   `WaitingForCentralV7Upgrade` rather than upgrading locally.
+///   `WaitingForCentralV7Upgrade` rather than upgrading locally — after
+///   triggering COMS's own sync, so the wait is seconds, not a sync interval.
 ///
 /// Acquires a connection per DB touch rather than holding one across the legacy
 /// server roundtrip, so a pool slot isn't tied up during the network call.
@@ -202,6 +203,15 @@ async fn ensure_site_is_v7(
     // don't let ROMS initialise before this site's data is fully integrated on
     // COMS. ROMS retries; the early return above succeeds once the v7 `site` row
     // has synced + integrated.
+    //
+    // That arrival only happens on a COMS sync cycle, so kick one off now rather
+    // than leaving ROMS to wait out COMS's sync interval
+    // (open-msupply-frontend#504 — ROMS retries for ~a minute before showing the
+    // error). The trigger's single-slot channel coalesces: concurrent get_token
+    // calls while a sync is already queued are no-ops, and deliberately NOT
+    // triggering on the `stores_not_migrated` path above — that needs stores
+    // moved to COMS by an operator, which no sync cycle can do.
+    service_provider.sync_trigger.trigger();
     Err(SyncError::WaitingForCentralV7Upgrade)
 }
 
@@ -656,7 +666,7 @@ fn set_site_lock(site_id: i32, error: Option<SiteLockError>) {
 mod tests {
     use super::*;
     use crate::{
-        sync::test_util_set_is_central_server,
+        sync::{synchroniser_driver::SyncTrigger, test_util_set_is_central_server},
         test_helpers::{setup_all_and_service_provider, ServiceTestContext},
     };
     use httpmock::MockServer;
@@ -1027,7 +1037,7 @@ mod tests {
 
         let ServiceTestContext {
             connection,
-            service_provider,
+            connection_manager,
             ..
         } = setup_all_and_service_provider(
             "ensure_site_is_v7_waits_for_central",
@@ -1035,6 +1045,11 @@ mod tests {
         )
         .await;
         test_util_set_is_central_server(true);
+
+        // A service provider whose sync trigger the test can observe.
+        let (sync_trigger, mut sync_receiver) = SyncTrigger::new_test();
+        let mut service_provider = ServiceProvider::new(connection_manager);
+        service_provider.sync_trigger = sync_trigger;
 
         let site = non_v7_site(&connection, &mock_server.base_url());
 
@@ -1044,6 +1059,10 @@ mod tests {
             .await
             .unwrap_err();
         assert!(matches!(err, SyncError::WaitingForCentralV7Upgrade));
+
+        // ...and it must have kicked off its own sync to fetch that row, so the
+        // wait is seconds rather than a sync interval (open-msupply-frontend#504).
+        assert!(sync_receiver.try_recv().is_ok());
 
         // The local site row must be untouched (still V5_V6).
         let stored = SiteRowRepository::new(&connection)
@@ -1066,7 +1085,7 @@ mod tests {
 
         let ServiceTestContext {
             connection,
-            service_provider,
+            connection_manager,
             ..
         } = setup_all_and_service_provider(
             "ensure_site_is_v7_stores_not_migrated",
@@ -1074,6 +1093,10 @@ mod tests {
         )
         .await;
         test_util_set_is_central_server(true);
+
+        let (sync_trigger, mut sync_receiver) = SyncTrigger::new_test();
+        let mut service_provider = ServiceProvider::new(connection_manager);
+        service_provider.sync_trigger = sync_trigger;
 
         let site = non_v7_site(&connection, &mock_server.base_url());
 
@@ -1083,6 +1106,10 @@ mod tests {
             .await
             .unwrap_err();
         assert!(!matches!(err, SyncError::WaitingForCentralV7Upgrade));
+
+        // No sync is kicked off for this path: syncing cannot move stores to
+        // COMS — that is an operator task on the legacy server.
+        assert!(sync_receiver.try_recv().is_err());
 
         // The local site row must remain V5_V6.
         let stored = SiteRowRepository::new(&connection)

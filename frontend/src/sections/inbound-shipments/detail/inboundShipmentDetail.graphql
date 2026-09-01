@@ -1,0 +1,544 @@
+# Inbound-shipment DETAIL (spec/inbound-shipments S3–S6). Mirrors the stocktake
+# detail split: one `info` query (header/footer/side-panel/charges — a single
+# node) and one server-paginated `lines` query. Header saves mutate `info` in
+# place; a line change refetches the lines page. Fragments are per-file
+# (codegen generates each .graphql in isolation) so they live here.
+#
+# donor/manufacturer/defaultDonor take a storeId arg — the fragments reference
+# the operation's $storeId variable, so every operation spreading them supplies
+# it.
+
+fragment InboundInfo on InvoiceNode {
+  __typename
+  id
+  invoiceNumber
+  otherPartyId
+  otherPartyName
+  # A non-null `store` marks a supplier that is itself another store in the
+  # system (internal) vs an external supplier — the kind-icon signal (spec S1
+  # column 1), matching the NameSearch truck-vs-building convention. Its
+  # `isDisabled` is an editability input: the server refuses every edit to a
+  # shipment whose supplier store has been disabled (rules → editability).
+  otherParty(storeId: $storeId) {
+    store {
+      id
+      isDisabled
+    }
+  }
+  status
+  onHold
+  inboundType
+  comment
+  theirReference
+  transportReference
+  colour
+  createdDatetime
+  pickedDatetime
+  shippedDatetime
+  deliveredDatetime
+  receivedDatetime
+  verifiedDatetime
+  backdatedDatetime
+  expectedDeliveryDate
+  taxPercentage
+  currencyRate
+  chargesLocalCurrency
+  chargesForeignCurrency
+  purchaseOrderId
+  linkedShipment {
+    id
+  }
+  # Edited-by in the side panel — the email rides the info tooltip.
+  user {
+    username
+    email
+  }
+  currency {
+    id
+    code
+    isHomeCurrency
+  }
+  defaultDonor(storeId: $storeId) {
+    id
+    name
+  }
+  requisition {
+    id
+    requisitionNumber
+  }
+  purchaseOrder {
+    id
+    number
+    reference
+    orderTotalAfterDiscount
+    currency {
+      id
+      code
+      isHomeCurrency
+    }
+  }
+  documents {
+    nodes {
+      id
+      fileName
+      createdDatetime
+      totalBytes
+    }
+  }
+  shippingMethod {
+    id
+    method
+  }
+  pricing {
+    totalBeforeTax
+    totalAfterTax
+    stockTotalBeforeTax
+    stockTotalAfterTax
+    serviceTotalBeforeTax
+    serviceTotalAfterTax
+    foreignCurrencyTotalAfterTax
+    taxPercentage
+  }
+  # Custom-field VALUES (JSON object), server-filtered to the inbound_shipment
+  # scope's visible keys — backs the Custom fields tab + prominent toolbar fields.
+  customFields
+}
+
+fragment InboundLine on InvoiceLineNode {
+  id
+  type
+  itemId
+  itemName
+  itemCode
+  batch
+  expiryDate
+  manufactureDate
+  packSize
+  numberOfPacks
+  shippedNumberOfPacks
+  shippedPackSize
+  costPricePerPack
+  sellPricePerPack
+  foreignCurrencyPriceBeforeTax
+  totalBeforeTax
+  totalAfterTax
+  taxPercentage
+  note
+  volumePerPack
+  status
+  linkedInvoiceId
+  locationId
+  location {
+    id
+    code
+    name
+  }
+  vvmStatusId
+  vvmStatus {
+    id
+    code
+    description
+  }
+  stockLine {
+    id
+    availableNumberOfPacks
+    totalNumberOfPacks
+  }
+  item {
+    id
+    code
+    name
+    unitName
+    isVaccine
+    doses
+    defaultPackSize
+  }
+  donor(storeId: $storeId) {
+    id
+    name
+  }
+  manufacturer(storeId: $storeId) {
+    id
+    name
+  }
+  reasonOption {
+    id
+    reason
+  }
+  campaign {
+    id
+    name
+  }
+  program {
+    id
+    name
+  }
+  itemVariant {
+    id
+    name
+  }
+  purchaseOrderLine {
+    id
+    lineNumber
+    requestedPackSize
+    requestedNumberOfUnits
+    adjustedNumberOfUnits
+    shippedNumberOfUnits
+    inTransitNumberOfUnits
+    receivedNumberOfUnits
+    pricePerPackAfterDiscount
+  }
+}
+
+# Header/side-panel/footer fields — one node. `type` is the permission scope
+# selector (contract → permissions): it must be the shipment's OWN scope —
+# INBOUND_SHIPMENT_EXTERNAL for a PO-linked shipment, INBOUND_SHIPMENT
+# otherwise. A wrong-scope fetch returns RecordNotFound (the auth passes but the
+# purchaseOrderId filter excludes it), and omitting `type` falls back to the
+# broader generic QueryInvoice permission — so the caller probes its held scopes
+# rather than omitting it (see InboundShipmentDetailView).
+query inboundShipment(
+  $storeId: String!
+  $id: String!
+  $type: InvoiceTypeInput
+) {
+  invoice(storeId: $storeId, id: $id, type: $type) {
+    __typename
+    ... on InvoiceNode {
+      ...InboundInfo
+    }
+    ... on NodeError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# The side panel's "Copy to clipboard" (contract § copy to clipboard): the
+# WHOLE shipment — header + every line, stock-in and service alike — in one
+# fetch, written to the clipboard as indented JSON. The detail's own lines read
+# is server-paged and drops SERVICE rows, so this reads the invoice.lines
+# connector directly (it takes no page/filter/sort arguments and so returns the
+# whole line set). Reuses the InboundInfo / InboundLine fragments so the copied
+# JSON mirrors the app's own shape. `type` is the same permission-scope selector
+# the detail read passes; NodeError is promoted to the global error modal by the
+# caller.
+query fullInboundShipment(
+  $storeId: String!
+  $id: String!
+  $type: InvoiceTypeInput
+) {
+  invoice(storeId: $storeId, id: $id, type: $type) {
+    __typename
+    ... on InvoiceNode {
+      ...InboundInfo
+      lines {
+        totalCount
+        nodes {
+          ...InboundLine
+        }
+      }
+    }
+    ... on NodeError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# Deep-link by human number (spec AC-L5). `type` is required here and is the
+# permission scope selector (contract → permissions) — the caller probes its
+# held scopes since the number alone does not reveal the shipment's scope.
+query inboundShipmentByNumber(
+  $storeId: String!
+  $invoiceNumber: Int!
+  $type: InvoiceTypeInput!
+) {
+  invoiceByNumber(
+    storeId: $storeId
+    invoiceNumber: $invoiceNumber
+    type: $type
+  ) {
+    __typename
+    ... on InvoiceNode {
+      id
+    }
+    ... on NodeError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# One server-paginated page of the shipment's stock lines (the detail table):
+# STOCK_IN plus UNALLOCATED_STOCK, since a line rejected during authorisation
+# flips to UNALLOCATED_STOCK yet must stay visible (its type is forced by the
+# caller). SERVICE lines are excluded — they belong to the service-charge modal.
+query inboundShipmentLines(
+  $storeId: String!
+  $filter: InvoiceLineFilterInput
+  $sort: [InvoiceLineSortInput!]
+  $page: PaginationInput
+) {
+  invoiceLines(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {
+    ... on InvoiceLineConnector {
+      __typename
+      totalCount
+      nodes {
+        ...InboundLine
+      }
+    }
+  }
+}
+
+# Service lines (SERVICE type) for the service-charge modal (S6). Few per
+# shipment — fetched unpaginated.
+query inboundServiceLines($storeId: String!, $filter: InvoiceLineFilterInput) {
+  invoiceLines(storeId: $storeId, filter: $filter) {
+    ... on InvoiceLineConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        itemId
+        itemName
+        totalBeforeTax
+        totalAfterTax
+        taxPercentage
+        note
+      }
+    }
+  }
+}
+
+# Header edits (supplier, reference, comment, colour, hold, tax, currency,
+# charges, default donor, received date, status). Returns the whole node so the
+# view can splice it in place (tax/charge/currency cascades reflect on refetch
+# of the lines page).
+mutation updateInboundShipment(
+  $storeId: String!
+  $input: UpdateInboundShipmentInput!
+) {
+  updateInboundShipment(storeId: $storeId, input: $input) {
+    __typename
+    ... on InvoiceNode {
+      ...InboundInfo
+    }
+    ... on UpdateInboundShipmentError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# `...External` twin — required whenever the shipment has a purchaseOrderId
+# (contract → creation wire trap: the type check gates every twinned mutation).
+mutation updateInboundShipmentExternal(
+  $storeId: String!
+  $input: UpdateInboundShipmentInput!
+) {
+  updateInboundShipmentExternal(storeId: $storeId, input: $input) {
+    __typename
+    ... on InvoiceNode {
+      ...InboundInfo
+    }
+    ... on UpdateInboundShipmentError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# Line + service-line CRUD, batched (spec → batch operation). All-or-nothing by
+# default. External twin for PO-linked shipments.
+mutation batchInboundShipment(
+  $storeId: String!
+  $input: BatchInboundShipmentInput!
+) {
+  batchInboundShipment(storeId: $storeId, input: $input) {
+    ...BatchResult
+  }
+}
+
+mutation batchInboundShipmentExternal(
+  $storeId: String!
+  $input: BatchInboundShipmentInput!
+) {
+  batchInboundShipmentExternal(storeId: $storeId, input: $input) {
+    ...BatchResult
+  }
+}
+
+fragment BatchResult on BatchInboundShipmentResponse {
+  insertInboundShipmentLines {
+    id
+    response {
+      __typename
+      ... on InvoiceLineNode {
+        id
+        stockLine {
+          id
+          totalNumberOfPacks
+        }
+      }
+      ... on InsertInboundShipmentLineError {
+        error {
+          __typename
+          description
+        }
+      }
+    }
+  }
+  updateInboundShipmentLines {
+    id
+    response {
+      __typename
+      ... on InvoiceLineNode {
+        id
+      }
+      ... on UpdateInboundShipmentLineError {
+        error {
+          __typename
+          description
+        }
+      }
+    }
+  }
+  deleteInboundShipmentLines {
+    id
+    response {
+      __typename
+      ... on DeleteResponse {
+        id
+      }
+      ... on DeleteInboundShipmentLineError {
+        error {
+          __typename
+          description
+        }
+      }
+    }
+  }
+  insertFromInternalOrderLines {
+    id
+    response {
+      __typename
+      ... on InvoiceLineNode {
+        id
+      }
+    }
+  }
+  insertInboundShipmentServiceLines {
+    id
+    response {
+      __typename
+      ... on InvoiceLineNode {
+        id
+      }
+      ... on InsertInboundShipmentServiceLineError {
+        error {
+          __typename
+          description
+        }
+      }
+    }
+  }
+  updateInboundShipmentServiceLines {
+    id
+    response {
+      __typename
+      ... on InvoiceLineNode {
+        id
+      }
+      ... on UpdateInboundShipmentServiceLineError {
+        error {
+          __typename
+          description
+        }
+      }
+    }
+  }
+  deleteInboundShipmentServiceLines {
+    id
+    response {
+      __typename
+      ... on DeleteResponse {
+        id
+      }
+      ... on DeleteInboundShipmentServiceLineError {
+        error {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}
+
+# Bulk-add empty stock lines from a master list (spec AC-ML1; internal
+# shipments only — server-enforced).
+mutation addToInboundShipmentFromMasterList(
+  $storeId: String!
+  $input: AddToShipmentFromMasterListInput!
+) {
+  addToInboundShipmentFromMasterList(storeId: $storeId, input: $input) {
+    __typename
+    ... on InvoiceLineConnector {
+      totalCount
+    }
+    ... on AddToInboundShipmentFromMasterListError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# Delete a whole shipment (side panel; cascades to lines + stock). Uses the
+# plain vs external twin per purchaseOrderId.
+mutation deleteInboundShipment(
+  $storeId: String!
+  $input: DeleteInboundShipmentInput!
+) {
+  deleteInboundShipment(storeId: $storeId, input: $input) {
+    __typename
+    ... on DeleteResponse {
+      id
+    }
+    ... on DeleteInboundShipmentError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+mutation deleteInboundShipmentExternal(
+  $storeId: String!
+  $input: DeleteInboundShipmentInput!
+) {
+  deleteInboundShipmentExternal(storeId: $storeId, input: $input) {
+    __typename
+    ... on DeleteResponse {
+      id
+    }
+    ... on DeleteInboundShipmentError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}

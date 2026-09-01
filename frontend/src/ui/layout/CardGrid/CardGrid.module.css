@@ -1,0 +1,12 @@
+.grid {
+  display: grid;
+  /* Intrinsic auto-fit: as many equal columns of at least --card-grid-min as fit,
+     the rest wrap. `min(…, 100%)` keeps a single column from overflowing a narrow
+     viewport. No breakpoints. */
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(var(--card-grid-min, 20rem), 100%), var(--card-grid-max, 1fr))
+  );
+  gap: var(--space-5);
+  align-items: start;
+}

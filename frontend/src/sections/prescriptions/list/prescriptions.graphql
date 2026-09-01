@@ -1,0 +1,67 @@
+# The prescriptions list (spec/prescriptions/contract.md § the list): the
+# shared invoices query pinned to type PRESCRIPTION. The server forces the
+# store scope and excludes cancellation reversals; exactly ONE sort key is
+# sent (contract wire trap — the resolver honours only the last).
+#
+# The top-level `type` argument does BOTH jobs, so it is the only type pin here.
+# It selects the PERMISSION — the server authorises this read against
+# PrescriptionQuery alone because it is named; omitted, it falls back to a
+# deprecated combined resource demanding all six invoice query permissions at
+# once. It also OVERWRITES `filter.type` server-side, so a `filter.type` sent
+# alongside is dead weight (spec/navigation/contract.md § wire traps). A literal,
+# not a variable: this query serves one screen pinned to one type, so no caller
+# can forget it — and forgetting it would now widen the rows, not just the
+# permission.
+query prescriptions(
+  $storeId: String!
+  $filter: InvoiceFilterInput
+  $sort: [InvoiceSortInput!]
+  $page: PaginationInput
+) {
+  invoices(
+    storeId: $storeId
+    filter: $filter
+    sort: $sort
+    page: $page
+    type: [PRESCRIPTION]
+  ) {
+    ... on InvoiceConnector {
+      totalCount
+      nodes {
+        id
+        invoiceNumber
+        status
+        otherPartyName
+        colour
+        comment
+        theirReference
+        createdDatetime
+        backdatedDatetime
+        customFields
+      }
+    }
+  }
+}
+
+# List bulk delete (spec/prescriptions/contract.md § deletion). The selection
+# is pre-checked client-side (AC-D3) so only deletable rows are ever sent —
+# load-bearing, because the batch is all-or-nothing AND misreports rolled-back
+# rows as deleted (contract wire trap).
+mutation deletePrescriptions($storeId: String!, $ids: [String!]!) {
+  batchPrescription(storeId: $storeId, input: { deletePrescriptions: $ids }) {
+    deletePrescriptions {
+      id
+      response {
+        ... on DeleteResponse {
+          id
+        }
+        ... on DeletePrescriptionError {
+          error {
+            __typename
+            description
+          }
+        }
+      }
+    }
+  }
+}

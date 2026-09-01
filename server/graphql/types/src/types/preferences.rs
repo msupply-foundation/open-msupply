@@ -1,9 +1,7 @@
 use std::collections::BTreeMap;
 
 use crate::types::{
-    backdating::BackdatingNode,
-    invoice_query::InvoiceNodeStatus,
-    patient::GenderTypeNode,
+    backdating::BackdatingNode, invoice_query::InvoiceNodeStatus, patient::GenderTypeNode,
     warn_when_missing_recent_stocktake::WarnWhenMissingRecentStocktakeDataNode,
 };
 use async_graphql::*;
@@ -89,6 +87,14 @@ impl PreferencesNode {
         self.load_preference(&self.preferences.item_margin_overrides_supplier_margin)
     }
 
+    pub async fn transfer_stock_to_internal_customers_at_cost_price(&self) -> Result<bool> {
+        self.load_preference(
+            &self
+                .preferences
+                .transfer_stock_to_internal_customers_at_cost_price,
+        )
+    }
+
     pub async fn is_gaps(&self) -> Result<bool> {
         self.load_preference(&self.preferences.is_gaps)
     }
@@ -109,6 +115,12 @@ impl PreferencesNode {
 
     pub async fn receive_payments_from_prescriptions(&self) -> Result<bool> {
         self.load_preference(&self.preferences.receive_payments_from_prescriptions)
+    }
+
+    /// Base64 data-URL logo used as fallback when a store has no logo.
+    /// Large - don't add to eagerly-fetched preference queries.
+    pub async fn global_logo(&self) -> Result<String> {
+        self.load_preference(&self.preferences.global_logo)
     }
 
     // Store preferences
@@ -299,11 +311,13 @@ pub enum PreferenceKey {
     ExpiredStockPreventIssue,
     ExpiredStockIssueThreshold,
     ItemMarginOverridesSupplierMargin,
+    TransferStockToInternalCustomersAtCostPrice,
     IsGaps,
     DisplayPopulationBasedForecasting,
     GlobalTableConfigs,
     Backdating,
     ReceivePaymentsFromPrescriptions,
+    GlobalLogo,
     // Store preferences
     BlindStocktake,
     ManageVaccinesInDoses,
@@ -346,10 +360,11 @@ pub enum PreferenceValueNodeType {
     Integer,
     Float,
     MultiChoice,
-    CustomTranslations, // Specific type for CustomTranslations preference
+    CustomTranslations,   // Specific type for CustomTranslations preference
     CustomTranslationsV2, // Specific type for v2 CustomTranslations preference
     WarnWhenMissingRecentStocktakeData,
     BackdatingData,
     String,
     Colour,
+    Image,
 }

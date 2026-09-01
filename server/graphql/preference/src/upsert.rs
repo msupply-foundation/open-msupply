@@ -1,13 +1,16 @@
 use std::collections::BTreeMap;
 
 use async_graphql::*;
-use graphql_core::{standard_graphql_error::validate_auth, ContextExt};
+use graphql_core::{
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
+};
 use graphql_types::types::{patient::GenderTypeNode, InvoiceNodeStatus};
 use repository::{GenderType, InvoiceStatus};
 use service::{
     auth::{Resource, ResourceAccessRequest},
     preference::{
-        BackdatingData, StorePrefUpdate, UpsertPreferences,
+        BackdatingData, StorePrefUpdate, UpsertPreferenceError, UpsertPreferences,
         WarnWhenMissingRecentStocktakeData,
     },
 };
@@ -81,11 +84,13 @@ pub struct UpsertPreferencesInput {
     pub expired_stock_prevent_issue: Option<bool>,
     pub expired_stock_issue_threshold: Option<i32>,
     pub item_margin_overrides_supplier_margin: Option<bool>,
+    pub transfer_stock_to_internal_customers_at_cost_price: Option<bool>,
     pub is_gaps: Option<bool>,
     pub display_population_based_forecasting: Option<bool>,
     pub global_table_configs: Option<serde_json::Value>,
     pub backdating: Option<BackdatingInput>,
     pub receive_payments_from_prescriptions: Option<bool>,
+    pub global_logo: Option<String>,
 
     // Store preferences
     pub blind_stocktake: Option<Vec<BoolStorePrefInput>>,
@@ -134,7 +139,14 @@ pub fn upsert_preferences(
 
     service_provider
         .preference_service
-        .upsert(&service_context, input.to_domain())?;
+        .upsert(&service_context, input.to_domain())
+        .map_err(|error| match error {
+            // Failed validation is the caller's error, not a server fault
+            UpsertPreferenceError::InvalidValue(_, _) => {
+                StandardGraphqlError::BadUserInput(error.to_string()).extend()
+            }
+            _ => error.into(),
+        })?;
 
     Ok(())
 }
@@ -157,11 +169,13 @@ impl UpsertPreferencesInput {
             expired_stock_prevent_issue,
             expired_stock_issue_threshold,
             item_margin_overrides_supplier_margin,
+            transfer_stock_to_internal_customers_at_cost_price,
             is_gaps,
             display_population_based_forecasting,
             global_table_configs,
             backdating,
             receive_payments_from_prescriptions,
+            global_logo,
             // Store preferences
             blind_stocktake,
             manage_vaccines_in_doses,
@@ -209,6 +223,8 @@ impl UpsertPreferencesInput {
             expired_stock_prevent_issue: *expired_stock_prevent_issue,
             expired_stock_issue_threshold: *expired_stock_issue_threshold,
             item_margin_overrides_supplier_margin: *item_margin_overrides_supplier_margin,
+            transfer_stock_to_internal_customers_at_cost_price:
+                *transfer_stock_to_internal_customers_at_cost_price,
             is_gaps: *is_gaps,
             display_population_based_forecasting: *display_population_based_forecasting,
 
@@ -219,6 +235,7 @@ impl UpsertPreferencesInput {
                 max_days: b.max_days,
             }),
             receive_payments_from_prescriptions: *receive_payments_from_prescriptions,
+            global_logo: global_logo.clone(),
             // Store preferences
             blind_stocktake: blind_stocktake
                 .as_ref()

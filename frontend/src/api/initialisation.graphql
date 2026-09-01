@@ -1,0 +1,212 @@
+query initialisationStatus {
+  initialisationStatus {
+    status
+    siteName
+  }
+}
+
+# Server role for the phase-visibility matrix (spec/sync-modal/rules.md
+# § phase visibility). Served without authentication on both schemas, so the
+# initialisation screen can read it pre-session.
+query isCentralServer {
+  isCentralServer
+}
+
+# The server's own version, displayed on the pre-session screens
+# (spec/startup/contract.md § App version). Unauthenticated on both schemas —
+# but the field only exists on servers carrying open-msupply#12566 (apiVersion
+# is deliberately not reused: reserved for API versioning); kept off the
+# isCentralServer document so its absence on older servers can't fail the
+# role read.
+query serverVersion {
+  serverVersion
+}
+
+mutation initialiseSite($input: SyncSettingsInput!) {
+  initialiseSite(input: $input) {
+    ... on SyncSettingsNode {
+      __typename
+      username
+    }
+    ... on SyncErrorNode {
+      __typename
+      variant
+      fullError
+    }
+    ... on SyncErrorV7Node {
+      __typename
+      variantV7: variant
+      fullError
+    }
+  }
+}
+
+mutation manualSync {
+  manualSync
+}
+
+# Standalone central initialisation (spec/startup/contract.md
+# § Initialisation): creates the store + admin user and completes
+# initialisation immediately — no sync settings, no sync run. Hardware-id and
+# database failures arrive as top-level GraphQL errors, not union members.
+mutation initialiseAsCentralServer(
+  $input: InitialiseAsCentralServerInputNode!
+) {
+  initialiseAsCentralServer(input: $input) {
+    ... on StandaloneCentralInitialisedNode {
+      __typename
+      success
+    }
+    ... on InitialiseAsCentralServerError {
+      __typename
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+# Status-only poll — used by the initialisation page, which runs BEFORE a
+# session exists. numberOfRecordsInPushQueue requires auth, so it must not ride
+# on this document (it would fail the whole pre-login poll).
+query latestSyncStatus {
+  latestSyncStatus {
+    ...SyncStatus
+  }
+}
+
+# Post-login polled fallback for the sync modal (spec/sync-modal: subscription
+# primary, polling fallback): status + push-queue count in one poll.
+# ⚠️ The polled count and the subscription's count are DIFFERENT derivations on
+# the server — see spec/sync-modal/contract.md § Records to push.
+query syncStatusAndQueue {
+  latestSyncStatus {
+    ...SyncStatus
+  }
+  numberOfRecordsInPushQueue
+}
+
+subscription syncInfoUpdated {
+  syncInfoUpdated {
+    syncStatus {
+      ...SyncStatus
+    }
+    numberOfRecordsInPushQueue
+  }
+}
+
+# Both protocol generations, phases in execution order (spec/sync-modal/rules.md
+# § Sync runs and status). error.variant is the localisation discriminant.
+fragment SyncStatus on FullSyncStatusNode {
+  ... on FullSyncStatusV7Node {
+    __typename
+    isSyncing
+    summary {
+      started
+    }
+    warningThreshold
+    errorThreshold
+    error {
+      # Aliased: the same response key can't return SyncErrorVariantV7 on one
+      # union branch and SyncErrorVariant on the other (overlapping-fields rule).
+      variantV7: variant
+      fullError
+    }
+    push {
+      started
+      finished
+      total
+      done
+    }
+    waitingForIntegration {
+      started
+      finished
+    }
+    pull {
+      started
+      finished
+      total
+      done
+    }
+    integration {
+      started
+      finished
+      total
+      done
+    }
+    lastSuccessfulSync {
+      started
+      finished
+    }
+    # Backfill descriptions for a central-initiated re-send (a store transfer's
+    # data, or a whole table) — the modal's "Special syncs" list. Empty for an
+    # ordinary run. V7 only (spec/sync-modal/contract.md § Sync runs and status).
+    linkedDescriptions {
+      __typename
+      ... on AllStoreDataDescription {
+        storeName
+      }
+      ... on TableNameDescription {
+        tableName
+      }
+    }
+  }
+  ... on FullSyncStatusV5V6Node {
+    __typename
+    isSyncing
+    summary {
+      started
+    }
+    warningThreshold
+    errorThreshold
+    error {
+      variant
+      fullError
+    }
+    prepareInitial {
+      started
+      finished
+    }
+    push {
+      started
+      finished
+      total
+      done
+    }
+    pushV6 {
+      started
+      finished
+      total
+      done
+    }
+    pullCentral {
+      started
+      finished
+      total
+      done
+    }
+    pullRemote {
+      started
+      finished
+      total
+      done
+    }
+    pullV6 {
+      started
+      finished
+      total
+      done
+    }
+    integration {
+      started
+      finished
+      total
+      done
+    }
+    lastSuccessfulSync {
+      started
+      finished
+    }
+  }
+}
