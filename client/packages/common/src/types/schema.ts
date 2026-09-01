@@ -1226,11 +1226,16 @@ export type CampaignFilterInput = {
 export type CampaignMutations = {
   __typename: 'CampaignMutations';
   deleteCampaign: DeleteCampaignResponse;
+  deleteCampaigns: DeleteCampaignsResponse;
   upsertCampaign: UpsertCampaignResponse;
 };
 
 export type CampaignMutationsDeleteCampaignArgs = {
   input: DeleteCampaignInput;
+};
+
+export type CampaignMutationsDeleteCampaignsArgs = {
+  ids: Array<Scalars['String']['input']>;
 };
 
 export type CampaignMutationsUpsertCampaignArgs = {
@@ -2181,6 +2186,13 @@ export type DeleteCampaignSuccess = {
   __typename: 'DeleteCampaignSuccess';
   id: Scalars['String']['output'];
 };
+
+export type DeleteCampaignsNode = {
+  __typename: 'DeleteCampaignsNode';
+  ids: Array<Scalars['String']['output']>;
+};
+
+export type DeleteCampaignsResponse = DeleteCampaignsNode;
 
 export type DeleteCustomerReturnError = {
   __typename: 'DeleteCustomerReturnError';

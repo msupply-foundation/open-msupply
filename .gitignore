@@ -61,3 +61,6 @@ frontend/.deploy-last-success
 # Per-developer Claude Code notes
 CLAUDE.local.md
 __pycache__/
+
+# Security audit reports and working notes (agent-generated artifacts)
+/security/

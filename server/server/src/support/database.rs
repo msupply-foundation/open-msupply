@@ -118,17 +118,121 @@ fn get_postgres_database(
     Ok(response)
 }
 
-pub async fn vacuum_database(service_provider: Data<ServiceProvider>) -> HttpResponse {
+pub async fn vacuum_database(
+    request: HttpRequest,
+    service_provider: Data<ServiceProvider>,
+    auth_data: Data<AuthData>,
+) -> HttpResponse {
+    // Same ServerAdmin session-cookie requirement as GET /support/database — an
+    // unauthenticated VACUUM is a sustained database lock-out (DoS) primitive.
+    let auth_result = super::validate_request(request, &service_provider, &auth_data);
+    if auth_result.is_err() {
+        return HttpResponse::Unauthorized().body("Access Denied");
+    }
+
     if cfg!(feature = "postgres") {
         return HttpResponse::InternalServerError().body("Postgres Databases vacuum not supported");
     }
 
-    // Vacuum the database first
     let result = service_provider.connection_manager.execute("VACUUM");
     match result {
         Ok(_) => HttpResponse::Ok().body("Vacuumed database successfully"),
         Err(e) => {
             HttpResponse::InternalServerError().body(format!("Error vacuuming database: {e:#?}"))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::{Arc, RwLock};
+
+    use actix_web::{http::StatusCode, test, web::Data, App};
+    use repository::{mock::MockDataInserts, test_db::setup_all};
+    use service::{
+        auth_data::AuthData, service_provider::ServiceProvider, session_store::SessionStore,
+        settings::test_settings,
+    };
+
+    use crate::support::config_support;
+
+    // Build the support router exactly as the server wires it, against a real
+    // (empty) test database, with the dev-mode blanket-allow switched off so the
+    // assertions exercise the real auth path. Macro (not fn) because the return
+    // type of `init_service` is unnameable without a direct actix_http dep.
+    // Works on both sqlite and postgres legs: the auth check runs before any
+    // database-specific work.
+    macro_rules! support_test_app {
+        ($db_name:expr) => {{
+            let (_, _, connection_manager, db_settings) =
+                setup_all($db_name, MockDataInserts::none()).await;
+
+            let mut settings = test_settings(db_settings, None);
+            settings.server.debug_no_access_control = false;
+
+            let service_provider = Data::new(ServiceProvider::new(connection_manager));
+            let auth_data = Data::new(AuthData {
+                session_store: Arc::new(RwLock::new(SessionStore::new())),
+                cookie_suffix: "test".to_string(),
+                no_ssl: true,
+                debug_no_access_control: false,
+            });
+
+            test::init_service(
+                App::new()
+                    .app_data(Data::new(settings))
+                    .app_data(service_provider)
+                    .app_data(auth_data)
+                    .configure(config_support),
+            )
+            .await
+        }};
+    }
+
+    // Regression test for security finding F-1 (issue #361): POST
+    // /support/vacuum previously ran `VACUUM` without any authentication,
+    // letting any network actor force repeated full-database rebuilds (DoS).
+    // The auth check runs before the postgres guard, so the 401 pins hold
+    // identically on the postgres CI leg.
+    #[actix_web::test]
+    async fn vacuum_requires_server_admin_session_cookie() {
+        let app = support_test_app!("vacuum_requires_auth");
+
+        // No session cookie -> must be rejected before any VACUUM runs.
+        let response = test::call_service(
+            &app,
+            test::TestRequest::post()
+                .uri("/support/vacuum")
+                .to_request(),
+        )
+        .await;
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+
+        // A syntactically valid but unknown session token must also be rejected.
+        let response = test::call_service(
+            &app,
+            test::TestRequest::post()
+                .uri("/support/vacuum")
+                .insert_header(("Cookie", "session_test=not-a-real-token"))
+                .to_request(),
+        )
+        .await;
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    }
+
+    // Contrast pin: the sibling GET /support/database already requires auth;
+    // keep both endpoints honest in this module's tests.
+    #[actix_web::test]
+    async fn get_database_requires_server_admin_session_cookie() {
+        let app = support_test_app!("database_download_requires_auth");
+
+        let response = test::call_service(
+            &app,
+            test::TestRequest::get()
+                .uri("/support/database")
+                .to_request(),
+        )
+        .await;
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
     }
 }

@@ -184,6 +184,9 @@ impl<'a> StockLineLedgerRepository<'a> {
         // );
 
         let result = final_query
+            // Stable tiebreaker so paginated results don't shuffle or drop rows
+            // when the primary sort column has ties.
+            .then_order_by(stock_line_ledger::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
             .load::<StockLineLedgerRow>(self.connection.lock().connection())?;

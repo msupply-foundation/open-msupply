@@ -57,6 +57,12 @@ export const slotContext = (): SlotContext => {
       useConsumptionAndStockFromCustomersForInternalOrders:
         context?.storePreferences
           .useConsumptionAndStockFromCustomersForInternalOrders ?? false,
+      // The low-stock threshold, from the same guard-3 read. NOT defaulted:
+      // a threshold is a number a figure is computed from and a label states,
+      // so "not known yet" must stay distinguishable from a real value —
+      // `undefined` holds the consumer at its dash rather than letting it
+      // count against a guess. Reactive, like the flag above.
+      monthsUnderstock: context?.storePreferences.monthsUnderstock,
     },
   };
 };
