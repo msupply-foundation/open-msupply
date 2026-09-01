@@ -456,9 +456,55 @@ process.on('uncaughtException', error => {
  */
 });
 
+// A certificate change raises a certificate-error for every request in flight,
+// so share one prompt (and one answer) per server and certificate instead of
+// opening a dialog for each event
+const pendingCertificatePrompts = new Map<string, Promise<boolean>>();
+
+const promptToAcceptCertificate = (
+  identifier: string,
+  fingerprint: string,
+  parent: BrowserWindow | null
+): Promise<boolean> => {
+  const key = `${identifier}-${fingerprint}`;
+  const pendingPrompt = pendingCertificatePrompts.get(key);
+  if (pendingPrompt) return pendingPrompt;
+
+  const options: Electron.MessageBoxOptions = {
+    type: 'warning',
+    buttons: ['No', 'Yes'],
+    title: 'SSL Error',
+    message:
+      'The security certificate on the server has changed!\r\n\r\nThis can happen when the server is reinstalled, so may be normal, but please check with your IT department if you are unsure.\r\n\r\nWould you like to accept the new certificate? ',
+  };
+
+  const prompt = (
+    parent
+      ? dialog.showMessageBox(parent, options)
+      : dialog.showMessageBox(options)
+  )
+    .then(({ response }) => {
+      if (response === 0) {
+        ipcMain.emit(IPC_MESSAGES.GO_BACK_TO_DISCOVERY);
+        return false;
+      }
+
+      // Update stored fingerprint
+      store.set(identifier, fingerprint);
+      return true;
+    })
+    .finally(() => {
+      pendingCertificatePrompts.delete(key);
+    });
+
+  pendingCertificatePrompts.set(key, prompt);
+
+  return prompt;
+};
+
 app.addListener(
   'certificate-error',
-  async (event, _webContents, url, error, certificate, callback) => {
+  async (event, contents, url, error, certificate, callback) => {
     // We are only handling self signed certificate errors
     if (
       error != 'net::ERR_CERT_INVALID' &&
@@ -493,23 +539,16 @@ app.addListener(
       store.set(identifier, storedFingerprint);
       // If fingerprint does not match
     } else if (storedFingerprint != certificate.fingerprint) {
-      // Display error message and go back to discovery
-      const returnValue = await dialog.showMessageBox({
-        type: 'warning',
-        buttons: ['No', 'Yes'],
-        title: 'SSL Error',
-        message:
-          'The security certificate on the server has changed!\r\n\r\nThis can happen when the server is reinstalled, so may be normal, but please check with your IT department if you are unsure.\r\n\r\nWould you like to accept the new certificate? ',
-      });
+      // Display error message and go back to discovery if not accepted
+      const accepted = await promptToAcceptCertificate(
+        identifier,
+        certificate.fingerprint,
+        BrowserWindow.fromWebContents(contents) ??
+          BrowserWindow.getAllWindows()[0] ??
+          null
+      );
 
-      if (returnValue.response === 0) {
-        ipcMain.emit(IPC_MESSAGES.GO_BACK_TO_DISCOVERY);
-        return callback(false);
-      }
-
-      // Update stored fingerprint
-      storedFingerprint = certificate.fingerprint;
-      store.set(identifier, storedFingerprint);
+      if (!accepted) return callback(false);
     }
 
     // storedFingerprint did not exist or it matched certificate fingerprint
