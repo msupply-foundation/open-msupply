@@ -26,15 +26,14 @@ export const ANSWER_CHECK_TIMEOUT_MS = 5000;
 /** A listable server as the page computes it from a raw announcement plus
  * this machine's facts (§ toFrontEndHost below): identity attributes, the
  * this-machine marking, and the address the server is reached at. */
-export type FrontEndHost = {
+export type FrontEndHost = RawAnnouncement & {
+  // The announcement's protocol, NARROWED — the page has checked it by the
+  // time a record is one of these (§ isCompleteAnnouncement), which is the
+  // whole difference between a fact a host stated and a server the page will
+  // act on.
   protocol: 'http' | 'https';
-  port: number;
-  ip: string;
-  // From the announcement's TXT record.
-  clientVersion: string;
-  hardwareId: string;
   // This server runs on this machine (AC-DT5) — a hardware-id match,
-  // § isLocalServer below.
+  // § isLocalServer below. The one field the page adds.
   isLocal: boolean;
 };
 
