@@ -222,6 +222,9 @@ impl<'a> ProgramEventRepository<'a> {
         }
 
         let result = query
+            // Stable tiebreaker so paginated results don't shuffle or drop rows
+            // when the primary sort column has ties.
+            .then_order_by(program_event::id.asc())
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
             .load::<ProgramEventJoin>(self.connection.lock().connection())?

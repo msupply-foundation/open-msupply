@@ -51,6 +51,21 @@ export type {
   NoPlacement,
 } from './types';
 
+// ── Auth & context ──────────────────────────────────────────────────────────
+/*
+ * The session surface (sdk-contract § SDK surface — Auth & context): the same
+ * facts a contribution's `when(ctx)` receives, as a plain accessor for code
+ * that runs OUTSIDE a gate — above all a contribution's own core-schema reads,
+ * which need the entered store id as a query variable (`storeId: String!`
+ * everywhere on the schema; graphqlQuery injects nothing). Reactive: it reads
+ * the store-context signals fresh on every call, so a resource keyed on
+ * `slotContext().storeId` re-fetches on a store switch, and every field an
+ * unresolved session cannot answer is `undefined` — the same no-guessing rule
+ * the gates rely on. Costs nothing eager: the store context is already in
+ * this barrel's graph (navigation.ts reads it).
+ */
+export { slotContext } from '../plugins/slotContext';
+
 // ── Slot API — the internal-order line slots ────────────────────────────────
 export type {
   InternalOrderLineView,
@@ -106,6 +121,36 @@ export { Select } from '../ui/elements/selectors/Select';
 export type { SelectOption } from '../ui/elements/selectors/Select';
 export { FormColumn } from '../ui/layout/Form/FormColumn';
 export { FormColumns } from '../ui/layout/Form/FormColumns';
+
+// ── UI kit — icons that carry meaning ───────────────────────────────────────
+/*
+ * The six the Cook Islands navigator names for its tiles (plugins/cook_islands
+ * ui-surface.md § S2/S3): patient, inbox tray, truck, box-out, document, stock
+ * — in that order below. That file describes the PICTURE and never names an
+ * export, so this list is the mapping; keep the two in step.
+ * Re-exported rather than copied into the plugin, so a fix to a path, an RTL
+ * flip or an a11y attribute on the host icon reaches the contributed surface
+ * too — a copied SVG would fork on the first such change.
+ *
+ * Cheap because '../ui/icons' is ALREADY in this barrel's graph: InfoTooltip
+ * pulls InfoIcon and Select pulls CheckIcon/ChevronDownIcon/CloseIcon, both
+ * eager. So this keeps six more small components alive in a module that ships
+ * regardless — path data only, no new module (measured: kdd/bundle-size-by-pr).
+ *
+ * Not an open door to the whole barrel: it grows one icon at a time, for an
+ * icon an audited plugin's specified surface names.
+ */
+export {
+  CustomersIcon,
+  InboxIcon,
+  TruckIcon,
+  UploadIcon,
+  FileIcon,
+  StockIcon,
+} from '../ui/icons';
+// Needed to hold one in a typed table of tiles (Component<IconProps>); a type
+// export, so it weighs nothing at runtime.
+export type { IconProps } from '../ui/icons';
 
 // ── Intl ────────────────────────────────────────────────────────────────────
 export {
