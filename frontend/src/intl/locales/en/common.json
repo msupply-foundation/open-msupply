@@ -347,7 +347,7 @@
   "discovery.manual-url": "Server URL",
   "discovery.mode-client": "Connect to a server on the network",
   "discovery.mode-heading": "How will this device be used?",
-  "discovery.mode-server": "This device runs the server",
+  "discovery.mode-server": "Run the server on this device",
   "discovery.no-host": "This screen is part of the desktop app — a browser tab can't search the network for servers. Open it from the Open mSupply desktop application.",
   "discovery.search-again": "Search again",
   "discovery.select-server": "Available servers",
