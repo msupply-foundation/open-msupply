@@ -220,7 +220,7 @@ export type DeletePrescriptionsResult = {
   id: string;
 }) | ({
   error: {
-  __typename: string;
+  __typename: "CannotDeleteInvoiceWithLines" | "CannotEditInvoice" | "RecordNotFound";
   description: string;
 };
 });
