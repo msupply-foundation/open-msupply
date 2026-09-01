@@ -45,7 +45,8 @@ Two environment variables override the defaults (see `vite.config.ts`):
 | `pnpm lint`             | ESLint (`lint:fix` to auto-fix)                                                      |
 | `pnpm format`           | Prettier write (`format:check` to verify only)                                       |
 | `pnpm test`             | Vitest                                                                               |
-| `pnpm codegen`          | Regenerate GraphQL types from the pinned schema (no backend needed — see below)      |
+| `pnpm codegen`          | Regenerate GraphQL types from the pinned schema — fast, no Rust needed (see below)   |
+| `pnpm generate`         | Refresh the pinned schema from `server/`, then run codegen (needs cargo — see below) |
 | `pnpm translate-locale` | Draft-translate the English catalogs into another locale (see below)                 |
 | `pnpm dev-android`      | One-command Android dev loop (see below)                                             |
 | `pnpm build-android`    | Build the Android APK                                                                |
@@ -56,32 +57,45 @@ Before committing, `pnpm check`, `pnpm lint`, `pnpm format:check`, and
 ## GraphQL codegen
 
 Types are generated from the **pinned** schema at [`spec/schema.graphql`](spec/schema.graphql),
-not from a running server — so `pnpm codegen` needs no backend, and the same
-tree generates the same types on every machine and in CI. It writes a
-co-located `<name>.generated.ts` next to every `.graphql` file under `src/` and
-the plugin trees. Re-run it whenever you add or edit a `.graphql` file. The
-generated files are committed, and CI fails if they don't match what codegen
-produces — so commit the regenerated output alongside the query that changed.
+not from a running server — so the same tree generates the same types on every
+machine and in CI. Codegen writes a co-located `<name>.generated.ts` next to
+every `.graphql` file under `src/` and the plugin trees. The generated files
+and the pin are both committed and neither is ever hand-edited; CI fails if
+either drifts, so commit regenerated output alongside the change that caused it.
 
-Neither the pin nor the generated files are ever hand-edited. The pin is the
-committed output of the server's own exporter, refreshed from the `server/`
-in this repo:
+### Which command to run
+
+**Changed a `.graphql` document and nothing on the server?** `pnpm codegen`.
+It reads the committed pin, takes about a second, and needs no Rust toolchain
+and no running backend. This is the common case — a new query, an added field
+on an existing one — and it stays fast precisely because it doesn't rebuild
+anything.
+
+**Changed the server's schema, or pulled someone else's change to it?**
+`pnpm generate`. That refreshes the pin from `server/` with the backend's own
+exporter and then runs codegen, mirroring `yarn generate` in `client/`:
 
 ```sh
-cd ../server
-cargo run --bin remote_server_cli -- export-graphql-schema \
-  --path ../frontend/spec/schema.graphql
+pnpm generate   # ≈ cargo export-graphql-schema → spec/schema.graphql, then pnpm codegen
 ```
 
-That needs no database and no running server — the schema is built from the
-Rust types. Refresh it when the backend's schema changes, then re-run
-`pnpm codegen` and commit both.
+The export builds the schema from the Rust types, so it needs cargo but no
+database and no running server. It is slower only because it compiles the
+server.
+
+If you're unsure, `pnpm generate` is always correct — `pnpm codegen` is the
+shortcut for when you know the schema hasn't moved. When you get it wrong CI
+tells you: the frontend workflow fails if the generated types don't match the
+pin, and the schema workflow fails if the pin doesn't match the server.
+
+### Working against an unreleased backend change
 
 To try a query against a backend whose schema hasn't reached the pin yet, set
 `SCHEMA_URL` to introspect a running server instead
 (`SCHEMA_URL=http://localhost:8000/graphql pnpm codegen`). That is a local
 check only — what it generates must not be committed, because the committed
-types belong to the pin.
+types belong to the pin. Once the server change lands, `pnpm generate` is what
+makes it official.
 
 ## Draft translations
 
