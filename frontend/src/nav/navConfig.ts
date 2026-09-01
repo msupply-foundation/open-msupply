@@ -52,9 +52,9 @@ export type NavItem = {
   /**
    * The user permission the destination's primary read requires
    * (spec/navigation › permission gates, values per its contract). Failing it
-   * does NOT hide the entry — the store has the function, so the user should
-   * see it — but activating it (menu, palette, or direct URL) refuses with the
-   * permission-denied dialog instead of navigating (D94).
+   * withholds the entry for that user exactly as a failed capability gate does
+   * — absent from menu and palette, its URL landing on Home with no dialog
+   * (D94). The server stays the real guard.
    */
   permission?: UserPermission;
   /**

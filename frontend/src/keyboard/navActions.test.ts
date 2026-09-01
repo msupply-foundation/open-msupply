@@ -15,6 +15,9 @@ const state = {
   vaccineModule: false,
   procurement: false,
   central: false,
+  // Permissions default to all-granted so the capability-gate tests read
+  // clean; the permission-gate test opts out (navGates.test does the same).
+  grantAll: true,
   permissions: new Set<string>(),
   prescriber: false,
 };
@@ -24,17 +27,12 @@ vi.mock('../store/storeContext', () => ({
   hasProgramModule: () => state.programModule,
   hasVaccineModule: () => state.vaccineModule,
   hasProcurement: () => state.procurement,
-  hasPermission: (permission: string) => state.permissions.has(permission),
+  hasPermission: (permission: string) =>
+    state.grantAll || state.permissions.has(permission),
   isPrescriberMode: () => state.prescriber,
 }));
 vi.mock('../api/serverInfo', () => ({
   isCentralServer: () => state.central,
-}));
-
-const reportPermissionDenied = vi.fn();
-vi.mock('../api/graphql', () => ({
-  reportPermissionDenied: (permissions: string[]) =>
-    reportPermissionDenied(permissions),
 }));
 
 import { navConfig } from '../nav/navConfig';
@@ -57,8 +55,8 @@ beforeEach(() => {
   state.vaccineModule = false;
   state.procurement = false;
   state.central = false;
+  state.grantAll = true;
   state.permissions = new Set();
-  reportPermissionDenied.mockClear();
 });
 
 // Registration is ownerless here, so each test disposes what it made — the
@@ -169,17 +167,11 @@ describe('palette destinations', () => {
     });
   });
 
-  it('lists a permission-gated destination but refuses on activation', () => {
-    withActions((actions, navigate) => {
-      const stocktakes = actions.find(
-        a => actionName(a) === 'Go to: Stocktakes'
-      );
-      expect(stocktakes).toBeDefined();
-
-      // D94: visible, refused when fired.
-      stocktakes?.run();
-      expect(navigate).not.toHaveBeenCalled();
-      expect(reportPermissionDenied).toHaveBeenCalledWith(['StocktakeQuery']);
+  it('drops a permission-gated destination the user lacks, with the menu', () => {
+    // D94: hidden, exactly as the menu hides it — no listed-but-refused rows.
+    state.grantAll = false;
+    withActions(actions => {
+      expect(names(actions)).not.toContain('Go to: Stocktakes');
     });
 
     state.permissions = new Set(['STOCKTAKE_QUERY']);

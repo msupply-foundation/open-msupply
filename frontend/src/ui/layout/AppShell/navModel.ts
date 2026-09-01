@@ -37,7 +37,7 @@ export interface NavLeaf {
   to: string;
   /** Capability gate (see navConfig NavItem.gate). */
   gate?: NavCapability;
-  /** Permission-gated read — visible, refused on activation (navConfig). */
+  /** Permission-gated read — withheld without it (navConfig). */
   permission?: NavConfigItem['permission'];
 }
 
@@ -48,7 +48,7 @@ export interface NavItem {
   icon: Component<IconProps>;
   /** Capability gate (see navConfig NavItem.gate). */
   gate?: NavCapability;
-  /** Permission-gated read — visible, refused on activation (navConfig). */
+  /** Permission-gated read — withheld without it (navConfig). */
   permission?: NavConfigItem['permission'];
   /** Present → expandable parent section. Absent → a leaf link. */
   children?: NavLeaf[];

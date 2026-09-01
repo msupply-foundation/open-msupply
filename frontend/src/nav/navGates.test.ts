@@ -10,6 +10,10 @@ const state = {
   vaccineModule: false,
   procurement: false,
   central: false,
+  // Most tests exercise the capability gates on destinations that also carry
+  // a query permission, so permissions default to all-granted; tests about the
+  // permission gates themselves opt out.
+  grantAll: true,
   permissions: new Set<string>(),
   prescriber: false,
 };
@@ -19,7 +23,8 @@ vi.mock('../store/storeContext', () => ({
   hasProgramModule: () => state.programModule,
   hasVaccineModule: () => state.vaccineModule,
   hasProcurement: () => state.procurement,
-  hasPermission: (permission: string) => state.permissions.has(permission),
+  hasPermission: (permission: string) =>
+    state.grantAll || state.permissions.has(permission),
   isPrescriberMode: () => state.prescriber,
 }));
 vi.mock('../api/serverInfo', () => ({
@@ -27,13 +32,7 @@ vi.mock('../api/serverInfo', () => ({
 }));
 
 import { navConfig } from './navConfig';
-import {
-  activeNavConfig,
-  deniedPermission,
-  gateNav,
-  navHomePath,
-  routeAccess,
-} from './navGates';
+import { activeNavConfig, gateNav, navHomePath, routeAccess } from './navGates';
 
 beforeEach(() => {
   state.dispensary = false;
@@ -41,6 +40,7 @@ beforeEach(() => {
   state.vaccineModule = false;
   state.procurement = false;
   state.central = false;
+  state.grantAll = true;
   state.permissions = new Set();
   state.prescriber = false;
 });
@@ -94,6 +94,7 @@ describe('capability gates (OMS-REG-NAV-01.1–.14)', () => {
 
   it('withholds the admin-only Manage entries without server-admin (.11)', () => {
     state.central = true;
+    state.grantAll = false;
     for (const path of [
       'manage/custom-fields',
       'manage/sites',
@@ -132,18 +133,42 @@ describe('capability gates (OMS-REG-NAV-01.1–.14)', () => {
     expect(gatedPaths()).not.toContain('programs');
   });
 
-  it('never hides a permission-gated destination (D94: visible, refused)', () => {
-    // No permissions at all — Stocktakes (STOCKTAKE_QUERY) stays offered.
-    expect(gatedPaths()).toContain('inventory/stocktakes');
-  });
-
   it('keeps section references stable when nothing under them changed', () => {
     const inventory = navConfig.find(item => item.path === 'inventory');
     expect(gateNav(navConfig)).toContain(inventory);
   });
 });
 
-describe('routeAccess (OMS-REG-NAV-01.16, .19/.20)', () => {
+describe('permission gates (OMS-REG-NAV-01.18/.20 — D94: hidden)', () => {
+  it('hides a destination whose query permission the user lacks (.18)', () => {
+    state.grantAll = false;
+    expect(gatedPaths()).not.toContain('inventory/stocktakes');
+    state.permissions = new Set(['STOCKTAKE_QUERY']);
+    expect(gatedPaths()).toContain('inventory/stocktakes');
+  });
+
+  it('keeps an unpermissioned destination offered alongside hidden ones', () => {
+    // Locations carries no query permission, so a user with none still gets it
+    // — and its section with it.
+    state.grantAll = false;
+    expect(gatedPaths()).toContain('inventory/locations');
+    expect(gatedPaths()).toContain('inventory');
+  });
+
+  it('drops a section left empty by permission gates (.20)', () => {
+    // Cold chain's three destinations are all permission-gated: with the
+    // vaccine module on but no permissions, the section itself must go.
+    state.vaccineModule = true;
+    state.grantAll = false;
+    expect(gatedPaths()).not.toContain('cold-chain');
+    state.permissions = new Set(['SENSOR_QUERY']);
+    expect(gatedPaths()).toContain('cold-chain');
+    expect(gatedPaths()).toContain('cold-chain/sensors');
+    expect(gatedPaths()).not.toContain('cold-chain/equipment');
+  });
+});
+
+describe('routeAccess (OMS-REG-NAV-01.16, .19)', () => {
   it('blocks a capability-gated destination and its subpaths (.16)', () => {
     expect(routeAccess('cold-chain/equipment')).toEqual({ kind: 'blocked' });
     expect(routeAccess('cold-chain/equipment/some-asset-id')).toEqual({
@@ -162,11 +187,11 @@ describe('routeAccess (OMS-REG-NAV-01.16, .19/.20)', () => {
     expect(routeAccess('dispensary/encounter')).toEqual({ kind: 'ok' });
   });
 
-  it('refuses a permission-gated destination with the PascalCase name (.20)', () => {
+  it('blocks a permission-gated destination the user lacks, silently (.19)', () => {
     state.programModule = true;
+    state.grantAll = false;
     expect(routeAccess('replenishment/r-and-r-forms')).toEqual({
-      kind: 'forbidden',
-      permission: 'RnrFormQuery',
+      kind: 'blocked',
     });
     state.permissions = new Set(['RNR_FORM_QUERY']);
     expect(routeAccess('replenishment/r-and-r-forms')).toEqual({ kind: 'ok' });
@@ -178,19 +203,6 @@ describe('routeAccess (OMS-REG-NAV-01.16, .19/.20)', () => {
     expect(routeAccess('dashboard')).toEqual({ kind: 'ok' });
     // Home itself is ungated, reached at the store root.
     expect(routeAccess('')).toEqual({ kind: 'ok' });
-  });
-});
-
-describe('deniedPermission (D94 refusal names)', () => {
-  it('converts the enum name to the PascalCase the modal humanises', () => {
-    expect(deniedPermission({ permission: 'OUTBOUND_SHIPMENT_QUERY' })).toBe(
-      'OutboundShipmentQuery'
-    );
-    expect(deniedPermission({ permission: undefined })).toBeUndefined();
-    state.permissions = new Set(['OUTBOUND_SHIPMENT_QUERY']);
-    expect(
-      deniedPermission({ permission: 'OUTBOUND_SHIPMENT_QUERY' })
-    ).toBeUndefined();
   });
 });
 
@@ -214,6 +226,9 @@ describe('prescriber mode registry (PM-1, PM-3, PM-4)', () => {
   beforeEach(() => {
     state.prescriber = true;
     state.dispensary = true;
+    // Opt out of all-granted: these suites turn on which reads the prescriber
+    // holds, and D94 makes that decide what the registry even offers.
+    state.grantAll = false;
     state.permissions = new Set(['PRESCRIPTION_QUERY', 'PATIENT_QUERY']);
   });
 
@@ -253,6 +268,15 @@ describe('prescriber mode registry (PM-1, PM-3, PM-4)', () => {
     expect(prescriberPaths()).not.toContain('dispensary/prescription-request');
   });
 
+  it('withholds the request list from a prescriber lacking its read (PM-8)', () => {
+    // The prescriber registry is gated like any other: the destination the
+    // user cannot read is absent from their menu and palette (D94), which
+    // leaves this prescriber with patients and the catalogue.
+    state.permissions = new Set(['PATIENT_QUERY']);
+    expect(prescriberPaths()).not.toContain('dispensary/prescription-request');
+    expect(prescriberPaths()).toContain('dispensary/patients');
+  });
+
   it('reshapes when the flag changes, without anything being rebuilt', () => {
     // PM-2: switching to a store where the user is a prescriber changes the
     // registry in place — the accessor is read fresh, never captured.
@@ -266,6 +290,9 @@ describe('prescriber mode routing (PM-5)', () => {
   beforeEach(() => {
     state.prescriber = true;
     state.dispensary = true;
+    // Opt out of all-granted: these suites turn on which reads the prescriber
+    // holds, and D94 makes that decide what the registry even offers.
+    state.grantAll = false;
     state.permissions = new Set(['PRESCRIPTION_QUERY', 'PATIENT_QUERY']);
   });
 
@@ -324,11 +351,15 @@ describe('prescriber mode routing (PM-5)', () => {
     expect(routeAccess('dispensary/prescription')).toEqual({ kind: 'ok' });
   });
 
-  it('still refuses a permission the user lacks (PM-8)', () => {
+  it('blocks the landing screen from a prescriber who lacks its read (PM-8)', () => {
+    // D94 hides the destination instead of refusing it, so the verdict is a
+    // silent block — but the blocked path IS navHomePath here, so redirecting
+    // would send the prescriber back to what they were just refused. That case
+    // is ShellLayout's: it stops and renders the refusal in the page body.
     state.permissions = new Set(['PATIENT_QUERY']);
     expect(routeAccess('dispensary/prescription-request')).toEqual({
-      kind: 'forbidden',
-      permission: 'PrescriptionQuery',
+      kind: 'blocked',
     });
+    expect(navHomePath()).toBe('dispensary/prescription-request');
   });
 });

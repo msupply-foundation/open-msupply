@@ -25,13 +25,7 @@ import { authUser, logout, userDisplayName } from '../auth/authContext';
 import { storeCustomColour } from '../store/storeContext';
 import { isCentralServer } from '../api/serverInfo';
 import { reportPermissionDenied } from '../api/graphql';
-import {
-  activeNavConfig,
-  deniedPermission,
-  gateNav,
-  navHomePath,
-  routeAccess,
-} from './navGates';
+import { activeNavConfig, gateNav, navHomePath, routeAccess } from './navGates';
 import { bindHostNavigate, routerHostNavigate } from './hostNavigate';
 import { storePath, storeRelativePath } from './storeRelativePath';
 import { KeyboardHost } from '../keyboard/KeyboardHost';
@@ -122,39 +116,36 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
    */
   const storeHref = (to: string) => storePath(params.storeId, to);
 
-  // A permission-gated destination stays in the menu, but activating it
-  // refuses instead of navigating: the permission-denied dialog opens, naming
-  // the missing permission, and the user stays where they were
-  // (spec/navigation § permission gates, D94; OMS-REG-NAV-01.19).
-  const onNavigate = (leaf: NavLeaf) => {
-    const denied = deniedPermission(leaf);
-    if (denied !== undefined) {
-      reportPermissionDenied([denied]);
-      return;
-    }
-    navigate(storeHref(leaf.to));
-  };
+  const onNavigate = (leaf: NavLeaf) => navigate(storeHref(leaf.to));
 
   // Nav visibility gates live in src/nav/navGates.ts, shared with the command
   // palette so the menu and the palette can never disagree about where the user
-  // can go (spec/keyboard AC-KB4). The menu offers the same gated destinations
-  // at every viewport width, phone included (spec/navigation § mobile-friendly).
-  // Memoised so the gated arrays — and the section objects rebuilt when a
-  // child is dropped — keep stable references; otherwise MenuBar's <For> would
-  // remount nav sections on every shell re-render
+  // can go (spec/keyboard AC-KB4). The menu offers only what this user, in this
+  // store, can open — permission-withheld destinations are absent, not refused
+  // (spec/navigation § permission gates, D94; OMS-REG-NAV-01.18) — and the same
+  // gated set at every viewport width, phone included (spec/navigation §
+  // mobile-friendly). Memoised so the gated arrays — and the section objects
+  // rebuilt when a child is dropped — keep stable references; otherwise
+  // MenuBar's <For> would remount nav sections on every shell re-render
   // (kdd/solid-reactivity-pitfalls).
   const menuUpper = createMemo(() => gateNav(navModel().upper));
   const menuLower = createMemo(() => gateNav(navModel().lower));
 
   // The router is the registry's third surface (spec/navigation § one
-  // registry): a capability-gated destination's URL is unreachable — it lands
-  // on Home (D70 generalised; OMS-REG-NAV-01.16) — and a
-  // permission-gated one lands there WITH the permission-denied dialog
-  // (OMS-REG-NAV-01.20). Sections with their own layout guards (patients,
-  // prescriptions, clinicians) keep them; this covers every destination
-  // uniformly, placeholder pages included. Renders under StoreGuardLayout, so
-  // the gates read a settled store context (no flash of a blocked screen).
+  // registry): a gated destination's URL is unreachable — capability-gated or
+  // permission-withheld alike, it lands on the landing screen silently (D70
+  // generalised; D94; OMS-REG-NAV-01.16/.19). Sections with their own layout
+  // guards (patients, prescriptions, clinicians) keep them; this covers every
+  // destination uniformly, placeholder pages included. Renders under
+  // StoreGuardLayout, so the gates read a settled store context (no flash of a
+  // blocked screen).
   const access = createMemo(() => routeAccess(relativePath()));
+
+  // The one verdict that still speaks: a prescriber-only URL typed by someone
+  // who is not in prescriber mode (spec/prescription-requests § prescriber
+  // mode, PM-9). D94 silenced the destination permission gates, but this one
+  // answers "you are not a prescriber" — a silent redirect would leave the
+  // user with no idea why the address they were given does nothing.
   createEffect(() => {
     const verdict = access();
     if (verdict.kind === 'forbidden')
