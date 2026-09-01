@@ -662,7 +662,6 @@ impl SyncTranslation for InvoiceTranslation {
             // a v5 re-import of the transact cannot null a link it never knew
             // about. Same hazard as `custom_fields` above.
             prescription_request_id: existing_row.and_then(|row| row.prescription_request_id),
-            ..Default::default()
         };
 
         // HACK...
