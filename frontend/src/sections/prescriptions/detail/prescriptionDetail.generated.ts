@@ -143,7 +143,7 @@ export type UpdatePrescriptionResult = {
   __typename: "UpdatePrescriptionError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CanOnlyChangeToPickedWhenNoUnallocatedLines" | "CannotReverseInvoiceStatus" | "InvalidStockSelection" | "InvoiceIsNotEditable" | "RecordNotFound";
   description: string;
 };
 }) | ({
@@ -169,7 +169,7 @@ export type DeletePrescriptionResult = {
   id: string;
 }) | ({
   error: {
-  __typename: string;
+  __typename: "CannotDeleteInvoiceWithLines" | "CannotEditInvoice" | "RecordNotFound";
   description: string;
 };
 });
@@ -208,7 +208,7 @@ export type DeletePrescriptionLinesResult = {
   id: string;
 }) | ({
   error: {
-  __typename: string;
+  __typename: "CannotEditInvoice" | "ForeignKeyError" | "RecordNotFound";
   description: string;
 };
 });

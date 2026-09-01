@@ -232,7 +232,7 @@ export type InsertOutboundShipmentResult = {
   __typename: "InsertOutboundShipmentError";
 } & {
   error: {
-  __typename: string;
+  __typename: "OtherPartyNotACustomer" | "OtherPartyNotVisible";
   description: string;
 };
 });
@@ -259,7 +259,7 @@ export type DeleteOutboundShipmentsResult = {
   __typename: "DeleteOutboundShipmentError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotDeleteInvoiceWithLines" | "CannotEditInvoice" | "RecordNotFound";
   description: string;
 };
 });
@@ -288,7 +288,7 @@ export type DuplicateOutboundShipmentResult = {
   __typename: "DuplicateOutboundShipmentError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CustomerIsInactive";
   description: string;
 };
 });
