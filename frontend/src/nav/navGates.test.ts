@@ -187,14 +187,24 @@ describe('routeAccess (OMS-REG-NAV-01.16, .19)', () => {
     expect(routeAccess('dispensary/encounter')).toEqual({ kind: 'ok' });
   });
 
-  it('blocks a permission-gated destination the user lacks, silently (.19)', () => {
+  it('denies a permission-gated destination the user lacks, in place (.19)', () => {
     state.programModule = true;
+    state.grantAll = false;
+    expect(routeAccess('replenishment/r-and-r-forms')).toEqual({
+      kind: 'denied',
+    });
+    state.permissions = new Set(['RNR_FORM_QUERY']);
+    expect(routeAccess('replenishment/r-and-r-forms')).toEqual({ kind: 'ok' });
+  });
+
+  it('blocks, not denies, when the capability gate fails too', () => {
+    // The store has no program module AND the user lacks the read: the
+    // capability verdict wins — a no-permission notice would send the user
+    // chasing a permission for a function the store does not have.
     state.grantAll = false;
     expect(routeAccess('replenishment/r-and-r-forms')).toEqual({
       kind: 'blocked',
     });
-    state.permissions = new Set(['RNR_FORM_QUERY']);
-    expect(routeAccess('replenishment/r-and-r-forms')).toEqual({ kind: 'ok' });
   });
 
   it('passes unknown paths through (the not-found page owns them)', () => {
@@ -351,14 +361,14 @@ describe('prescriber mode routing (PM-5)', () => {
     expect(routeAccess('dispensary/prescription')).toEqual({ kind: 'ok' });
   });
 
-  it('blocks the landing screen from a prescriber who lacks its read (PM-8)', () => {
-    // D94 hides the destination instead of refusing it, so the verdict is a
-    // silent block — but the blocked path IS navHomePath here, so redirecting
-    // would send the prescriber back to what they were just refused. That case
-    // is ShellLayout's: it stops and renders the refusal in the page body.
+  it('denies the landing screen to a prescriber who lacks its read (PM-8)', () => {
+    // A permission refusal renders in place (D94) — and the denied path IS
+    // navHomePath here, so ShellLayout swaps the generic no-permission notice
+    // for the terminal landing-screen one: this was the only destination the
+    // mode had to offer (AC-PM8).
     state.permissions = new Set(['PATIENT_QUERY']);
     expect(routeAccess('dispensary/prescription-request')).toEqual({
-      kind: 'blocked',
+      kind: 'denied',
     });
     expect(navHomePath()).toBe('dispensary/prescription-request');
   });
