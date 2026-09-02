@@ -111,7 +111,8 @@ BUILT_TAGS=()
 for DB in "${DBS[@]}"; do
   for ARCH in "${ARCHS[@]}"; do
 
-    TAG="${IMAGE}:${VERSION}-${DATE}-${DB}-${ARCH}"
+    # The v prefix matches the git tags CI names its images after (v2.19.1-...).
+    TAG="${IMAGE}:v${VERSION}-${DATE}-${DB}-${ARCH}"
 
     # Warn rather than silently overwrite a tag built earlier today.
     if docker image inspect "$TAG" > /dev/null 2>&1; then
