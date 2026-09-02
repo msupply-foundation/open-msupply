@@ -24,6 +24,7 @@ import { CopyToClipboardButton } from '../../../ui/elements/buttons/CopyToClipbo
 import { MinusCircleIcon, TrashIcon } from '../../../ui/icons';
 import { graphqlFetch } from '../../../api/graphql';
 import { gated } from '../../../api/gated';
+import { hasPermission } from '../../../store/storeContext';
 import { CurrencyField } from '../../../ui/elements/inputs/CurrencyField';
 import {
   canCancelPrescription,
@@ -145,8 +146,18 @@ export const PrescriptionSidePanel: Component<
   // has to be told apart by `__typename`: without that it deserialises to `{}`
   // and reads as a node whose every field is undefined. Read non-suspending —
   // the panel lives under the already-open detail.
+  //
+  // GATED ON THE REQUEST VERTICAL'S OWN READ, which a dispenser need not hold
+  // (spec/prescription-requests § permissions): the request read authorises on
+  // it, so asking without it would answer Forbidden and raise the global
+  // permission-denied modal over an unrelated screen — every time such a
+  // dispensation is opened. Not asking is also the honest answer for the
+  // section: a link that cannot open is not offered (D94).
   const [sourceRequest] = createResource(
-    () => props.node.prescriptionRequestId ?? undefined,
+    () =>
+      hasPermission('PRESCRIPTION_REQUEST_QUERY')
+        ? (props.node.prescriptionRequestId ?? undefined)
+        : undefined,
     async id => {
       const result = await graphqlFetch(SourcePrescriptionRequest, {
         storeId: props.storeId,
@@ -430,9 +441,7 @@ export const PrescriptionSidePanel: Component<
                 fallback={
                   <>
                     <Show when={phase() === 'confirm'}>
-                      <CancelButton
-                        onClick={() => setDeletePhase(undefined)}
-                      />
+                      <CancelButton onClick={() => setDeletePhase(undefined)} />
                     </Show>
                     <Button
                       variant="danger"
