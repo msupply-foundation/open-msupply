@@ -15,9 +15,6 @@ const user: UserInfoFragment = {
   __typename: 'UserNode',
   userId: 'u1',
   username: 'alice',
-  // Not a prescriber anywhere — the ordinary case (spec/prescription-requests
-  // § prescriber mode).
-  prescriberModeStoreIds: [],
   firstName: 'Alice',
   lastName: null,
   email: null,
@@ -53,22 +50,9 @@ const store = (id: string, isDisabled: boolean): StoreNode => ({
   isDisabled,
 });
 
-const dispensary = (id: string): StoreNode => ({
-  ...store(id, false),
-  storeMode: 'DISPENSARY',
-});
-
 const userWithStores = (...nodes: StoreNode[]): UserInfoFragment => ({
   ...user,
   stores: { nodes },
-});
-
-const prescriberIn = (
-  storeIds: string[],
-  ...nodes: StoreNode[]
-): UserInfoFragment => ({
-  ...userWithStores(...nodes),
-  prescriberModeStoreIds: storeIds,
 });
 
 const meSuccess = (): GraphqlResult<{ me: UserInfoFragment }> => ({
@@ -335,63 +319,6 @@ describe('the device remembers the last username (OMS-REG-LGN-01.21/.22)', () =>
     await auth.login('bob', 'pw');
 
     expect(await rememberedUsername()).toBe('bob');
-  });
-});
-
-/*
- * Prescriber mode and the store picker (spec/prescription-requests §
- * prescriber mode, PM-7).
- *
- * A prescriber-mode user's destinations all sit behind the dispensary gate, so
- * in a non-dispensary store they would arrive to an empty menu with no way
- * onward. loginableStores is where that store stops being offered — the same
- * single list SL-8 filters, so the store is unlisted, unreachable by URL, and
- * uncounted for single-store auto-entry, all from one rule.
- */
-describe('prescriber mode withholds unworkable stores (PM-7)', () => {
-  it('drops a non-dispensary store where the user is a prescriber', async () => {
-    const auth = await freshModule();
-
-    expect(
-      auth
-        .loginableStores(
-          prescriberIn(['warehouse'], store('warehouse', false), dispensary('clinic'))
-        )
-        .map(s => s.id)
-    ).toEqual(['clinic']);
-  });
-
-  it('keeps a non-dispensary store where the user is NOT a prescriber', async () => {
-    const auth = await freshModule();
-
-    // Per store on both sides: prescriber at the clinic, ordinary user at the
-    // warehouse, so the warehouse stays (PM-2).
-    expect(
-      auth
-        .loginableStores(
-          prescriberIn(['clinic'], store('warehouse', false), dispensary('clinic'))
-        )
-        .map(s => s.id)
-    ).toEqual(['warehouse', 'clinic']);
-  });
-
-  it('leaves every store for a user who is a prescriber nowhere', async () => {
-    const auth = await freshModule();
-
-    expect(
-      auth
-        .loginableStores(userWithStores(store('warehouse', false), dispensary('clinic')))
-        .map(s => s.id)
-    ).toEqual(['warehouse', 'clinic']);
-  });
-
-  it('still drops a DISABLED dispensary store (SL-8 keeps applying)', async () => {
-    const auth = await freshModule();
-    const closed: StoreNode = { ...dispensary('clinic'), isDisabled: true };
-
-    expect(
-      auth.loginableStores(prescriberIn(['clinic'], closed))
-    ).toEqual([]);
   });
 });
 

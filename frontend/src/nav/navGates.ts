@@ -4,16 +4,11 @@ import {
   hasProgramModule,
   hasVaccineModule,
   isDispensary,
-  isPrescriberMode,
 } from '../store/storeContext';
 import { isCentralServer } from '../api/serverInfo';
 import {
-  flattenNav,
-  navConfig,
-  prescriberNavConfig,
-  prescriberOnlyPaths,
-  trailIn,
-  PRESCRIBER_HOME_PATH,
+  navDestinations,
+  navTrail,
   type NavCapability,
   type NavItem as NavConfigItem,
 } from './navConfig';
@@ -43,43 +38,6 @@ import {
  * stays a plain declarative tree. Reactive: call them inside a memo or a
  * render.
  */
-
-/**
- * WHICH REGISTRY is in force for the user in the entered store — the full
- * `navConfig`, or the cut-down `prescriberNavConfig`
- * (spec/prescription-requests § prescriber mode).
- *
- * The registry choice sits HERE, one level above the gates, because it answers
- * a different question from them: a gate asks whether one destination is
- * offered, this asks which set of destinations exists at all. Every surface
- * that used to read `navConfig` directly reads this instead, so the menu, the
- * palette and the router keep agreeing about where the user can go — the
- * property spec/navigation is built on — with prescriber mode as just another
- * thing they agree about.
- *
- * Reactive (reads isPrescriberMode → the store context): switching to a store
- * where the user is a prescriber reshapes all three surfaces in place. Call it
- * inside a memo or a render, like the predicates below.
- */
-export const activeNavConfig = (): NavConfigItem[] =>
-  isPrescriberMode() ? prescriberNavConfig : navConfig;
-
-/** Every destination in the registry in force — one route each (App.tsx). */
-export const activeNavDestinations = (): NavConfigItem[] =>
-  flattenNav(activeNavConfig());
-
-/** The breadcrumb trail for a path, within the registry in force. */
-export const activeNavTrail = (path: string): NavConfigItem[] =>
-  trailIn(activeNavConfig(), path);
-
-/**
- * Where a route the registry in force does not offer sends the user. Home for
- * everyone else; prescriber mode has no Home, so its landing screen stands in
- * (spec/prescription-requests § prescriber mode). Store-relative — the caller
- * prefixes the store id.
- */
-export const navHomePath = (): string =>
-  isPrescriberMode() ? PRESCRIBER_HOME_PATH : '';
 
 const CAPABILITY_PREDICATES: Record<NavCapability, () => boolean> = {
   dispensary: isDispensary,
@@ -148,106 +106,48 @@ export const gateNav = <
  * by the 'inventory/stocktakes' destination — and composes the trail's gates,
  * so a child is unreachable while its section is.
  *
- * A blocked or forbidden verdict lands the user on `navHomePath()` — Home for
- * the full registry, the request list in prescriber mode, which has none. A
- * denied verdict stays put: the page body is a no-permission notice.
+ * A blocked verdict lands the user on Home, silently: the router never explains
+ * a destination the store does not have, because there is nothing the user can
+ * do about it here and the menu never advertised it. A denied verdict stays
+ * put: the page body is a no-permission notice.
  *
- *   { kind: 'ok' }                     navigate normally (also: unknown paths,
- *                                      under the FULL registry — the catch-all
- *                                      not-found page owns those. Prescriber
- *                                      mode blocks them instead: most of the
- *                                      app is unknown to its registry, and a
- *                                      not-found page would offer no way back)
- *   { kind: 'blocked' }                a capability gate fails, or the registry
- *                                      in force does not offer the path at all
- *                                      → the landing screen, silently (D70
- *                                      generalised). The function does not
- *                                      exist here, so there is nothing to
- *                                      explain — the address is as dead as a
- *                                      typo.
- *   { kind: 'denied' }                 the function exists, this user lacks the
- *                                      destination's query permission → a
- *                                      no-permission notice in place of the
- *                                      screen, no dialog, no redirect (D94;
- *                                      OMS-REG-NAV-01.19). The URL stays as
- *                                      typed, so gaining the permission makes
- *                                      the same address work.
- *   { kind: 'forbidden', permission }  prescriber mode is the only way in and
- *                                      this user is not in it → the landing
- *                                      screen + the permission-denied dialog,
- *                                      naming `permission` (PascalCase, ready
- *                                      for reportPermissionDenied). It answers
- *                                      "you are not a prescriber", not "you
- *                                      lack this read", which the destination
- *                                      gates never name.
+ *   { kind: 'ok' }       navigate normally (also: unknown paths — the catch-all
+ *                        not-found page owns those)
+ *   { kind: 'blocked' }  a capability gate fails — the function does not exist
+ *                        here, so there is nothing to explain and the address
+ *                        is as dead as a typo (D70 generalised)
+ *   { kind: 'denied' }   the function exists, this user lacks the destination's
+ *                        query permission → a no-permission notice in place of
+ *                        the screen, no dialog, no redirect (D94;
+ *                        OMS-REG-NAV-01.19). The URL stays as typed, so gaining
+ *                        the permission makes the same address work.
  */
 export type RouteAccess =
   | { kind: 'ok' }
   | { kind: 'blocked' }
-  | { kind: 'denied' }
-  | { kind: 'forbidden'; permission: string };
+  | { kind: 'denied' };
 
-// Longest path first, so 'inventory/stocktakes' wins over 'inventory'. Sorted
-// per call rather than once at module scope: which registry is in force is a
-// runtime fact now (activeNavConfig), and a module-level sort would freeze
-// whichever one happened to be in force at import time.
-const destinationsByDepth = (): NavConfigItem[] =>
-  [...activeNavDestinations()].sort((a, b) => b.path.length - a.path.length);
-
-/**
- * The PascalCase spelling of the prescriber-mode permission — the wire's
- * HasPermission(...) form, which reportPermissionDenied's dialog humanises.
- */
-const PRESCRIBER_MODE_DENIAL = 'PrescriberMode';
-
-/** Whether a path is one of the prescriber registry's own (or beneath it). */
-const isPrescriberOnly = (relativePath: string): boolean =>
-  prescriberOnlyPaths.some(
-    path => relativePath === path || relativePath.startsWith(`${path}/`)
-  );
+// Longest path first, so 'inventory/stocktakes' wins over 'inventory'. The
+// registry is static; sort once.
+const destinationsByDepth = [...navDestinations].sort(
+  (a, b) => b.path.length - a.path.length
+);
 
 export const routeAccess = (relativePath: string): RouteAccess => {
-  // PRESCRIBER MODE IS THE ONLY WAY IN (spec/prescription-requests § prescriber
-  // mode, PM-9). Its own destinations are absent from the full registry, but
-  // absence alone would not stop an ordinary user typing the address:
-  // Dispensary claims every path beneath it, so a typed
-  // 'dispensary/prescription-request' would pass on the section's gate.
-  // Refusing is also the more honest answer than a silent redirect — the user
-  // is told what they lack, in the dialog every other refusal uses.
-  if (!isPrescriberMode() && isPrescriberOnly(relativePath))
-    return { kind: 'forbidden', permission: PRESCRIBER_MODE_DENIAL };
-
-  // A SECTION must be matched exactly in prescriber mode. The prefix rule
-  // exists so a record screen is judged by its list ('inventory/stocktakes/123'
-  // by 'inventory/stocktakes'), but a section's landing page has no record
-  // screens — and letting Dispensary claim everything beneath it would admit
-  // 'dispensary/prescription', a destination the prescriber registry
-  // deliberately does not offer (§ PM-3). For the full registry the rule is
-  // unchanged: an unknown path under a gated section still redirects rather
-  // than reaching the not-found page (D70).
-  const exactSectionsOnly = isPrescriberMode();
-  const dest = destinationsByDepth().find(
-    d =>
-      relativePath === d.path ||
-      ((!exactSectionsOnly || !d.children) &&
-        relativePath.startsWith(`${d.path}/`))
+  const dest = destinationsByDepth.find(
+    d => relativePath === d.path || relativePath.startsWith(`${d.path}/`)
   );
-  // Unknown to the registry in force. For everyone else that is the
-  // not-found page's business, and it still is — but in prescriber mode most
-  // of the app is unknown to the registry, and a prescriber who followed a
-  // stale /inventory/stock link should land on their own screen, not on a
-  // not-found page that offers no way back. So: unknown paths pass for the
-  // full registry, and are blocked (→ the prescriber's landing screen) for the
-  // cut-down one. The catch-all not-found route still owns genuinely
-  // nonexistent paths for everyone with the full registry.
-  if (!dest) return isPrescriberMode() ? { kind: 'blocked' } : { kind: 'ok' };
+  // Unknown to the registry — the catch-all not-found page's business, not the
+  // gates'. An unknown path under a gated section is still judged by that
+  // section, since the section matches as a prefix (D70).
+  if (!dest) return { kind: 'ok' };
 
-  // The trail resolves a destination to [section, child?]; compose their gates.
+  // navTrail resolves a destination to [section, child?]; compose their gates.
   // Capability is judged first: a function the store does not have redirects
   // (blocked) even when the user would also lack its read — a notice about
   // permissions on a screen the store cannot show would send the user chasing
   // the wrong fix.
-  const trail = activeNavTrail(dest.path);
+  const trail = navTrail(dest.path);
   if (!trail.every(item => capabilityPasses(item.gate)))
     return { kind: 'blocked' };
   return trail.every(permissionPasses) ? { kind: 'ok' } : { kind: 'denied' };

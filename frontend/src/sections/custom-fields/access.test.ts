@@ -15,7 +15,6 @@ vi.mock('../../store/storeContext', () => ({
   hasVaccineModule: () => false,
   hasProcurement: () => false,
   hasPermission: (permission: string) => state.permissions.has(permission),
-  isPrescriberMode: () => false,
 }));
 vi.mock('../../api/serverInfo', () => ({
   isCentralServer: () => state.central,

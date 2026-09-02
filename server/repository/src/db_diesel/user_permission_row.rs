@@ -66,10 +66,18 @@ diesel_string_enum! {
         // customer return
         CustomerReturnQuery,
         CustomerReturnMutate,
-        // prescription
+        // prescription (the DISPENSING vertical)
         PrescriptionQuery,
         PrescriptionMutate,
         CancelFinalisedInvoices,
+        // prescription request (the PRESCRIBER's vertical, upstream of
+        // dispensing — spec/prescription-requests). Its own pair rather than
+        // dispensing's: the two verticals are separate screens for separate
+        // jobs, and a clinician who prescribes need not be able to dispense.
+        // Reaches a site from mSupply slot 205, "Restrict to prescriptions"
+        // (`apis::permissions`).
+        PrescriptionRequestQuery,
+        PrescriptionRequestMutate,
         // purchase orders
         PurchaseOrderQuery,
         PurchaseOrderMutate,
@@ -106,23 +114,6 @@ diesel_string_enum! {
         ViewAndEditVvmStatus,
         // clinician
         MutateClinician,
-        /// Restricts the user to the PRESCRIBER-MODE client: a cut-down
-        /// navigation registry offering prescriptions, patients and the item
-        /// catalogue only (spec/prescription-requests § prescriber mode).
-        ///
-        /// Deliberately has no `Resource` entry and no `all_permissions()` row:
-        /// it authorises NOTHING on the server. It restricts a client's own
-        /// navigation, so a user who holds it keeps every other permission they
-        /// were granted and the API still answers accordingly — this is a UI
-        /// simplification, not a confidentiality boundary.
-        ///
-        /// Reaches a site from mSupply slot 205, "Restrict to prescriptions"
-        /// (`apis::permissions`) — the only source of it. It gets a slot of its
-        /// own rather than borrowing one because slot 13
-        /// (`LogOnInDispensaryMode`) is already ticked for real dispensary
-        /// staff, so reusing it would have stripped dispensing, stock and
-        /// inventory from the very users whose job needs them.
-        PrescriberMode,
         #[strum(default, transparent)]
         Unknown(String),
     }
@@ -149,24 +140,6 @@ impl PermissionType {
         PermissionType::iter().filter(|p| !matches!(p, PermissionType::Unknown(_)))
     }
 
-    /// Whether this permission RESTRICTS the user rather than granting them
-    /// something — holding it takes capability away.
-    ///
-    /// `user_permission` is a grant table with one exception so far,
-    /// `PrescriberMode`, which narrows the client's navigation to the
-    /// prescriber's own screens. That makes "give this user everything"
-    /// ambiguous, and the honest reading is that a restriction is not part of
-    /// everything: a bootstrap admin granted the whole enum must not come out
-    /// the other side locked into prescriber mode.
-    pub fn is_restriction(&self) -> bool {
-        matches!(self, PermissionType::PrescriberMode)
-    }
-
-    /// Every permission a "grant them everything" path should hand out —
-    /// `known_iter` minus the restrictions (see `is_restriction`).
-    pub fn grantable_iter() -> impl Iterator<Item = PermissionType> {
-        PermissionType::known_iter().filter(|p| !p.is_restriction())
-    }
 }
 
 impl UserPermissionRow {
@@ -344,27 +317,6 @@ mod test {
         mock::MockDataInserts, test_db::setup_all, PermissionType, UserPermissionRow,
         UserPermissionRowRepository,
     };
-
-    /// spec/prescription-requests § prescriber mode, AC-PM9.
-    ///
-    /// `PrescriberMode` RESTRICTS the user, so a "grant them everything" path
-    /// must not hand it out — a bootstrap admin granted the whole enum would
-    /// otherwise come out the other side locked into the prescriber's three
-    /// screens, unable to administer the server they were just made admin of.
-    #[test]
-    fn grantable_iter_withholds_restrictions() {
-        let grantable: Vec<_> = PermissionType::grantable_iter().collect();
-
-        assert!(!grantable.contains(&PermissionType::PrescriberMode));
-        // Everything else known is still granted — this withholds restrictions,
-        // not an arbitrary deny-list.
-        assert!(grantable.contains(&PermissionType::ServerAdmin));
-        assert_eq!(
-            grantable.len(),
-            PermissionType::known_iter().count() - 1,
-            "PrescriberMode is the only restriction; update this if that changes"
-        );
-    }
 
     #[actix_rt::test]
     async fn user_permission_row_type_enum() {

@@ -15,7 +15,6 @@ const state = {
   // permission gates themselves opt out.
   grantAll: true,
   permissions: new Set<string>(),
-  prescriber: false,
 };
 
 vi.mock('../store/storeContext', () => ({
@@ -25,14 +24,13 @@ vi.mock('../store/storeContext', () => ({
   hasProcurement: () => state.procurement,
   hasPermission: (permission: string) =>
     state.grantAll || state.permissions.has(permission),
-  isPrescriberMode: () => state.prescriber,
 }));
 vi.mock('../api/serverInfo', () => ({
   isCentralServer: () => state.central,
 }));
 
 import { navConfig } from './navConfig';
-import { activeNavConfig, gateNav, navHomePath, routeAccess } from './navGates';
+import { gateNav, routeAccess } from './navGates';
 
 beforeEach(() => {
   state.dispensary = false;
@@ -42,7 +40,6 @@ beforeEach(() => {
   state.central = false;
   state.grantAll = true;
   state.permissions = new Set();
-  state.prescriber = false;
 });
 
 const gatedPaths = () =>
@@ -217,159 +214,69 @@ describe('routeAccess (OMS-REG-NAV-01.16, .19)', () => {
 });
 
 /*
- * Prescriber mode: the second registry (spec/prescription-requests §
- * prescriber mode, PM-1..PM-6).
+ * The prescriber's vertical is an ORDINARY destination
+ * (spec/prescription-requests § permissions).
  *
- * These assert the REGISTRY SWAP, which is the whole mechanism: every surface
- * reads the registry in force through these helpers, so what the gated tree
- * contains is what the menu shows, what the palette lists and what the router
- * admits — the three cannot disagree because there is nothing for them to
- * disagree with.
+ * It used to be reached through a second registry, chosen by a permission that
+ * took capability away. It is now one row of the one registry, gated by its own
+ * read like every other row — so what a prescriber is offered follows from the
+ * permissions they hold, and the cut-down menu is what NOT holding the others
+ * produces (D94).
  */
-describe('prescriber mode registry (PM-1, PM-3, PM-4)', () => {
-  const prescriberPaths = () =>
-    gateNav(activeNavConfig()).flatMap(item => [
-      item.path,
-      ...(item.children ?? []).map(child => child.path),
-    ]);
-
+describe('prescription requests, gated like anything else', () => {
   beforeEach(() => {
-    state.prescriber = true;
     state.dispensary = true;
-    // Opt out of all-granted: these suites turn on which reads the prescriber
-    // holds, and D94 makes that decide what the registry even offers.
     state.grantAll = false;
-    state.permissions = new Set(['PRESCRIPTION_QUERY', 'PATIENT_QUERY']);
   });
 
-  it('offers prescriptions, patients, items, settings and help — and nothing else', () => {
-    expect(prescriberPaths().sort()).toEqual(
-      [
-        'catalogue',
-        'catalogue/items',
-        'dispensary',
-        'dispensary/patients',
-        'dispensary/prescription-request',
-        'help',
-        'settings',
-      ].sort()
-    );
+  it('offers Prescriptions to whoever holds its read, and only them', () => {
+    expect(gatedPaths()).not.toContain('dispensary/prescription-request');
+    state.permissions = new Set(['PRESCRIPTION_REQUEST_QUERY']);
+    expect(gatedPaths()).toContain('dispensary/prescription-request');
   });
 
-  it('withholds dispensing, stock, reports and Home', () => {
-    const paths = prescriberPaths();
-    expect(paths).not.toContain('dispensary/prescription');
-    expect(paths).not.toContain('inventory/stock');
-    expect(paths).not.toContain('reports');
-    // Home is the empty path, and prescriber mode has none (PM-5).
-    expect(paths).not.toContain('');
+  it('separates prescribing from dispensing', () => {
+    // The two verticals sit side by side under Dispensary with a permission
+    // each: a clinic user gets the prescriber's list without the dispenser's,
+    // and a dispenser the reverse.
+    state.permissions = new Set(['PRESCRIPTION_REQUEST_QUERY']);
+    expect(gatedPaths()).toContain('dispensary/prescription-request');
+    expect(gatedPaths()).not.toContain('dispensary/prescription');
+
+    state.permissions = new Set(['PRESCRIPTION_QUERY']);
+    expect(gatedPaths()).toContain('dispensary/prescription');
+    expect(gatedPaths()).not.toContain('dispensary/prescription-request');
   });
 
-  it('leaves the full registry alone for everyone else', () => {
-    state.prescriber = false;
-    expect(activeNavConfig()).toBe(navConfig);
-    expect(prescriberPaths()).toContain('dispensary/prescription');
-  });
-
-  it('keeps prescription requests OUT of the full registry (PM-9)', () => {
-    // Prescriber mode is the only way in, so the destination is absent from
-    // the menu and the palette of every other user in the same dispensary.
-    state.prescriber = false;
-    expect(prescriberPaths()).not.toContain('dispensary/prescription-request');
-  });
-
-  it('withholds the request list from a prescriber lacking its read (PM-8)', () => {
-    // The prescriber registry is gated like any other: the destination the
-    // user cannot read is absent from their menu and palette (D94), which
-    // leaves this prescriber with patients and the catalogue.
-    state.permissions = new Set(['PATIENT_QUERY']);
-    expect(prescriberPaths()).not.toContain('dispensary/prescription-request');
-    expect(prescriberPaths()).toContain('dispensary/patients');
-  });
-
-  it('reshapes when the flag changes, without anything being rebuilt', () => {
-    // PM-2: switching to a store where the user is a prescriber changes the
-    // registry in place — the accessor is read fresh, never captured.
-    expect(activeNavConfig()).not.toBe(navConfig);
-    state.prescriber = false;
-    expect(activeNavConfig()).toBe(navConfig);
-  });
-});
-
-describe('prescriber mode routing (PM-5)', () => {
-  beforeEach(() => {
-    state.prescriber = true;
-    state.dispensary = true;
-    // Opt out of all-granted: these suites turn on which reads the prescriber
-    // holds, and D94 makes that decide what the registry even offers.
-    state.grantAll = false;
-    state.permissions = new Set(['PRESCRIPTION_QUERY', 'PATIENT_QUERY']);
-  });
-
-  it('admits the three offered destinations and their record screens', () => {
-    expect(routeAccess('dispensary/prescription-request')).toEqual({
-      kind: 'ok',
-    });
-    expect(routeAccess('dispensary/prescription-request/abc-123')).toEqual({
-      kind: 'ok',
-    });
-    expect(routeAccess('dispensary/patients')).toEqual({ kind: 'ok' });
-    expect(routeAccess('catalogue/items')).toEqual({ kind: 'ok' });
-  });
-
-  it('blocks a destination the registry does not offer', () => {
-    // Reachable for an ordinary user in the same store; absent here.
-    expect(routeAccess('dispensary/prescription')).toEqual({ kind: 'blocked' });
-    expect(routeAccess('inventory/stock')).toEqual({ kind: 'blocked' });
-    expect(routeAccess('reports')).toEqual({ kind: 'blocked' });
-  });
-
-  it('blocks Home and unknown paths rather than showing a dead end', () => {
-    // The full registry passes these to the not-found page; prescriber mode
-    // has no Home to fall back to, so they redirect to the landing screen.
-    expect(routeAccess('')).toEqual({ kind: 'blocked' });
-    expect(routeAccess('no-such-place')).toEqual({ kind: 'blocked' });
-  });
-
-  it('sends a blocked route to the request list, not the store root', () => {
-    expect(navHomePath()).toBe('dispensary/prescription-request');
-    state.prescriber = false;
-    expect(navHomePath()).toBe('');
-  });
-
-  it('refuses the prescriber destinations to everyone else (PM-9)', () => {
-    // A dispensary user with every prescription permission still cannot reach
-    // the prescriber's screens — by address any more than by menu. The refusal
-    // names the mode, not the reads the user does hold.
-    state.prescriber = false;
-    state.permissions = new Set([
-      'PRESCRIPTION_QUERY',
-      'PRESCRIPTION_MUTATE',
-      'PATIENT_QUERY',
-    ]);
-    expect(routeAccess('dispensary/prescription-request')).toEqual({
-      kind: 'forbidden',
-      permission: 'PrescriberMode',
-    });
-    expect(routeAccess('dispensary/prescription-request/abc-123')).toEqual({
-      kind: 'forbidden',
-      permission: 'PrescriberMode',
-    });
-    // The destinations the two registries SHARE stay reachable.
-    expect(routeAccess('dispensary/patients')).toEqual({ kind: 'ok' });
-    expect(routeAccess('catalogue/items')).toEqual({ kind: 'ok' });
-    expect(routeAccess('dispensary/prescription')).toEqual({ kind: 'ok' });
-  });
-
-  it('denies the landing screen to a prescriber who lacks its read (PM-8)', () => {
-    // A permission refusal renders in place (D94) — and the denied path IS
-    // navHomePath here, so ShellLayout swaps the generic no-permission notice
-    // for the terminal landing-screen one: this was the only destination the
-    // mode had to offer (AC-PM8).
-    state.permissions = new Set(['PATIENT_QUERY']);
+  it('gates the route the same way, record screens included', () => {
+    // A withheld read denies in place rather than redirecting (D94 as PR #466
+    // settled it) — the vertical's own permission is no exception.
     expect(routeAccess('dispensary/prescription-request')).toEqual({
       kind: 'denied',
     });
-    expect(navHomePath()).toBe('dispensary/prescription-request');
+    expect(routeAccess('dispensary/prescription-request/abc-123')).toEqual({
+      kind: 'denied',
+    });
+    state.permissions = new Set(['PRESCRIPTION_REQUEST_QUERY']);
+    expect(routeAccess('dispensary/prescription-request')).toEqual({
+      kind: 'ok',
+    });
+    expect(routeAccess('dispensary/prescription-request/abc-123')).toEqual({
+      kind: 'ok',
+    });
+  });
+
+  it('leaves a clinic-only user the destinations that carry no read', () => {
+    // What the old mode arranged by omission, permissions arrange by absence —
+    // as far as gates reach. Home, Settings and Help carry no permission, so
+    // they stay: chrome the user needs, not the app's functions.
+    state.permissions = new Set(['PRESCRIPTION_REQUEST_QUERY']);
+    const paths = gatedPaths();
+    expect(paths).toContain('dispensary/prescription-request');
+    expect(paths).not.toContain('inventory/stock');
+    expect(paths).not.toContain('reports');
+    expect(paths).toContain('');
+    expect(paths).toContain('settings');
+    expect(paths).toContain('help');
   });
 });

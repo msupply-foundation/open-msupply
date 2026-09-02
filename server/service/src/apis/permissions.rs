@@ -615,16 +615,20 @@ pub fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permissio
             Permissions::FinaliseSupplierInvoices => {
                 output.insert(PermissionType::InboundShipmentVerify);
             }
-            // The one RESTRICTION in this map: it narrows what the holder can
-            // reach rather than granting anything
-            // (spec/prescription-requests § prescriber mode). Legacy allocated
-            // it its own slot, 205, precisely so it would not have to borrow
-            // slot 13 (`LogOnInDispensaryMode`) — that one is already ticked
-            // for real dispensary staff, so reusing it would have stripped
-            // dispensing, stock and inventory from the very users whose job
-            // needs them, the first time they upgraded.
+            // Slot 205, "Restrict to prescriptions" — the prescriber's
+            // vertical (spec/prescription-requests). Legacy phrased it as a
+            // restriction because it had no way to say "may prescribe"; here it
+            // is read as the grant it always meant, and a prescriber's cut-down
+            // navigation follows from the permissions they are NOT given rather
+            // than from one that takes capability away.
+            //
+            // It keeps its own slot rather than borrowing 13
+            // (`LogOnInDispensaryMode`), which is ticked for ordinary dispensary
+            // staff: prescribing and dispensing are separate jobs, and a site
+            // may grant either without the other.
             Permissions::RestrictToPrescriptions => {
-                output.insert(PermissionType::PrescriberMode);
+                output.insert(PermissionType::PrescriptionRequestQuery);
+                output.insert(PermissionType::PrescriptionRequestMutate);
             }
             //
             // Remaining `Permissions` variants are legacy mSupply permissions
@@ -643,23 +647,27 @@ pub fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permissio
 mod test {
     use super::*;
 
-    /// spec/prescription-requests § prescriber mode.
+    /// spec/prescription-requests § permissions.
     ///
     /// Legacy slot 205 ("Restrict to prescriptions", msupply 655443ac) is the
-    /// only way `PrescriberMode` can reach a site from central. It is also the
-    /// only RESTRICTION in this map, so the two assertions that matter are that
-    /// 205 produces it, and that nothing else does — a slot quietly standing in
-    /// for it would take dispensing away from ordinary staff on upgrade.
+    /// only way the prescription-request permissions can reach a site from
+    /// central, and it grants BOTH halves: legacy has one tick for the whole
+    /// job, so a prescriber who can open the list can also write to it.
+    ///
+    /// The "nothing else does" half matters as much: a slot quietly standing in
+    /// for 205 would hand the prescriber's vertical to ordinary dispensary
+    /// staff on upgrade.
     #[test]
-    fn legacy_205_is_prescriber_mode_and_nothing_else_is() {
+    fn legacy_205_grants_the_prescription_request_pair_and_nothing_else_does() {
         // The wire is a bool per slot, 1-indexed, so 205 sits at index 204
         let mut payload = vec![false; 205];
         payload[204] = true;
+        let granted = permissions_to_domain(map_api_permissions(payload));
 
         assert!(
-            permissions_to_domain(map_api_permissions(payload))
-                .contains(&PermissionType::PrescriberMode),
-            "legacy 205 must grant PrescriberMode"
+            granted.contains(&PermissionType::PrescriptionRequestQuery)
+                && granted.contains(&PermissionType::PrescriptionRequestMutate),
+            "legacy 205 must grant both prescription-request permissions"
         );
 
         for slot in 1..=600usize {
@@ -668,10 +676,11 @@ mod test {
             }
             let mut payload = vec![false; slot];
             payload[slot - 1] = true;
+            let granted = permissions_to_domain(map_api_permissions(payload));
             assert!(
-                !permissions_to_domain(map_api_permissions(payload))
-                    .contains(&PermissionType::PrescriberMode),
-                "legacy {} must not grant PrescriberMode",
+                !granted.contains(&PermissionType::PrescriptionRequestQuery)
+                    && !granted.contains(&PermissionType::PrescriptionRequestMutate),
+                "legacy {} must not grant the prescription-request permissions",
                 slot
             );
         }

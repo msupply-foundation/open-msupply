@@ -80,6 +80,7 @@ pub enum Resource {
     QueryOutboundShipment,
     QueryInboundShipment,
     QueryPrescription,
+    QueryPrescriptionRequest,
     QuerySupplierReturn,
     QueryCustomerReturn,
     // outbound shipment
@@ -93,6 +94,7 @@ pub enum Resource {
     MutateCustomerReturn,
     // prescription
     MutatePrescription,
+    MutatePrescriptionRequest,
     // reporting
     Report,
     ReportDev,
@@ -451,6 +453,13 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         ]),
     );
     map.insert(
+        Resource::QueryPrescriptionRequest,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::PrescriptionRequestQuery),
+        ]),
+    );
+    map.insert(
         Resource::QuerySupplierReturn,
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
@@ -548,6 +557,13 @@ fn all_permissions() -> HashMap<Resource, PermissionDSL> {
         PermissionDSL::And(vec![
             PermissionDSL::HasStoreAccess,
             PermissionDSL::HasPermission(PermissionType::PrescriptionMutate),
+        ]),
+    );
+    map.insert(
+        Resource::MutatePrescriptionRequest,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::PrescriptionRequestMutate),
         ]),
     );
 

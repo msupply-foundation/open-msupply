@@ -57,7 +57,7 @@ pub fn upsert_prescription_request_line(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutatePrescription,
+            resource: Resource::MutatePrescriptionRequest,
             store_id: Some(store_id.to_string()),
             require_central_standalone: false,
         },
@@ -105,7 +105,7 @@ pub fn delete_prescription_request_line(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutatePrescription,
+            resource: Resource::MutatePrescriptionRequest,
             store_id: Some(store_id.to_string()),
             require_central_standalone: false,
         },

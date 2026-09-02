@@ -92,9 +92,6 @@ const loggedIn: UserInfoFragment = {
   __typename: 'UserNode',
   userId: 'u1',
   username: 'alice',
-  // Not a prescriber anywhere — the ordinary case (spec/prescription-requests
-  // § prescriber mode).
-  prescriberModeStoreIds: [],
   firstName: 'Alice',
   lastName: null,
   email: null,

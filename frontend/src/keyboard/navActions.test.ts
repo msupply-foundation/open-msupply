@@ -19,7 +19,6 @@ const state = {
   // clean; the permission-gate test opts out (navGates.test does the same).
   grantAll: true,
   permissions: new Set<string>(),
-  prescriber: false,
 };
 
 vi.mock('../store/storeContext', () => ({
@@ -29,7 +28,6 @@ vi.mock('../store/storeContext', () => ({
   hasProcurement: () => state.procurement,
   hasPermission: (permission: string) =>
     state.grantAll || state.permissions.has(permission),
-  isPrescriberMode: () => state.prescriber,
 }));
 vi.mock('../api/serverInfo', () => ({
   isCentralServer: () => state.central,
@@ -164,13 +162,19 @@ describe('palette destinations', () => {
     });
   });
 
-  it('omits the prescriber-only destinations (spec/prescription-requests PM-9)', () => {
-    // Prescriptions — the prescriber's own list — is not in this registry at
-    // all, so a dispensary user's palette cannot offer it. The palette derives
-    // from the registry in force, which is the whole point of D107.
+  it('lists the prescriber vertical for whoever holds its read', () => {
+    // Prescriptions is one row of the one registry now, so the palette derives
+    // it like any other (D107) and its own permission decides — no second
+    // registry for the palette to disagree with the menu about.
     state.dispensary = true;
+    state.grantAll = false;
     withActions(actions => {
       expect(names(actions)).not.toContain('Go to: Prescriptions');
+    });
+
+    state.permissions = new Set(['PRESCRIPTION_REQUEST_QUERY']);
+    withActions(actions => {
+      expect(names(actions)).toContain('Go to: Prescriptions');
     });
   });
 

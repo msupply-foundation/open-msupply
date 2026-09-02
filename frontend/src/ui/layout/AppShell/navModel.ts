@@ -110,55 +110,31 @@ const toNavItem = (item: NavConfigItem): NavItem => ({
   })),
 });
 
-/**
- * The menu model for a registry — the upper/lower clusters and the flat leaf
- * list, in one pass.
- *
- * Takes the registry rather than reading `navConfig`, because which registry is
- * in force is a runtime fact: a prescriber-mode user navigates from
- * `prescriberNavConfig` instead (spec/prescription-requests § prescriber mode).
- * The choice itself is not made here — this layer stays presentation-only, and
- * `src/nav/navGates` owns `activeNavConfig`; this file would otherwise need the
- * store context, deepening a library→app import the showcase harness KDD
- * already records as a boundary exception to consolidate.
- *
- * Sync is NOT a menu entry (issue #9229): it never navigated anywhere, and its
- * status now lives in the bottom bar's sync cell (spec/chrome § sync status),
- * where one click starts a run and a second control opens the modal.
- */
-export const buildNavModel = (
-  config: NavConfigItem[]
-): { upper: NavItem[]; lower: NavItem[]; leaves: NavLeaf[] } => {
-  const items = config.map(toNavItem);
-  return {
-    upper: items.filter(item => !LOWER_IDS.has(item.id)),
-    lower: items.filter(item => LOWER_IDS.has(item.id)),
-    // Every selectable destination as a flat NavLeaf list (top-level leaves +
-    // all children) — used to derive the menu highlight from the current route.
-    leaves: items.flatMap(item =>
-      item.children
-        ? item.children
-        : [
-            {
-              id: item.id,
-              labelKey: item.labelKey,
-              to: item.to,
-              gate: item.gate,
-              permission: item.permission,
-            },
-          ]
-    ),
-  };
-};
+// Sync is NOT a menu entry (issue #9229): it never navigated anywhere, and its
+// status now lives in the bottom bar's sync cell (spec/chrome § sync status),
+// where one click starts a run and a second control opens the modal.
+const items = navConfig.map(toNavItem);
 
-// The FULL registry's model. AppShell falls back to these when a host supplies
-// no menu (the showcase); the app itself passes the model for the registry in
-// force, which is not always this one.
-const fullNav = buildNavModel(navConfig);
+export const upperNav: NavItem[] = items.filter(
+  item => !LOWER_IDS.has(item.id)
+);
+export const lowerNav: NavItem[] = items.filter(item => LOWER_IDS.has(item.id));
 
-export const upperNav: NavItem[] = fullNav.upper;
-export const lowerNav: NavItem[] = fullNav.lower;
-export const navLeaves: NavLeaf[] = fullNav.leaves;
+// Every selectable destination as a flat NavLeaf list (top-level leaves + all
+// children) — used to derive the menu highlight from the current route.
+export const navLeaves: NavLeaf[] = items.flatMap(item =>
+  item.children
+    ? item.children
+    : [
+        {
+          id: item.id,
+          labelKey: item.labelKey,
+          to: item.to,
+          gate: item.gate,
+          permission: item.permission,
+        },
+      ]
+);
 
 /**
  * The menu entry a route belongs to — its own, or the one it sits beneath.
@@ -173,15 +149,8 @@ export const navLeaves: NavLeaf[] = fullNav.leaves;
  * must not claim `inventory/stocktakes/1`), and the longest match wins so a
  * deeper entry beats the shallower one it nests under.
  */
-export const findLeafIn = (
-  leaves: NavLeaf[],
-  relativePath: string
-): NavLeaf | undefined =>
-  leaves.find(leaf => leaf.to === relativePath) ??
-  leaves
+export const findLeafByPath = (relativePath: string): NavLeaf | undefined =>
+  navLeaves.find(leaf => leaf.to === relativePath) ??
+  navLeaves
     .filter(leaf => relativePath.startsWith(`${leaf.to}/`))
     .sort((a, b) => b.to.length - a.to.length)[0];
-
-/** As `findLeafIn`, over the full registry's leaves. */
-export const findLeafByPath = (relativePath: string): NavLeaf | undefined =>
-  findLeafIn(navLeaves, relativePath);
