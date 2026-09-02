@@ -132,13 +132,14 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   const menuLower = createMemo(() => gateNav(navModel().lower));
 
   // The router is the registry's third surface (spec/navigation § one
-  // registry): a gated destination's URL is unreachable — capability-gated or
-  // permission-withheld alike, it lands on the landing screen silently (D70
-  // generalised; D94; OMS-REG-NAV-01.16/.19). Sections with their own layout
-  // guards (patients, prescriptions, clinicians) keep them; this covers every
-  // destination uniformly, placeholder pages included. Renders under
-  // StoreGuardLayout, so the gates read a settled store context (no flash of a
-  // blocked screen).
+  // registry): a gated destination's URL never opens the screen. A
+  // capability-gated one lands on the landing screen silently (D70
+  // generalised; OMS-REG-NAV-01.16); a permission-withheld one stays put and
+  // shows a no-permission notice in the page body — no dialog, no redirect
+  // (D94; OMS-REG-NAV-01.19). Sections with their own layout guards (patients,
+  // prescriptions, clinicians) keep them; this covers every destination
+  // uniformly, placeholder pages included. Renders under StoreGuardLayout, so
+  // the gates read a settled store context (no flash of a blocked screen).
   const access = createMemo(() => routeAccess(relativePath()));
 
   // The one verdict that still speaks: a prescriber-only URL typed by someone
@@ -268,14 +269,11 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
         <Show
           when={access().kind === 'ok'}
           fallback={
-            // Landing the user on `navHomePath()` only works while the landing
-            // screen is itself reachable. In prescriber mode it is the request
-            // list, and a prescriber who lacks the prescription-query
-            // permission is refused THAT — so redirecting would send them to
-            // the path they were just refused, leaving a blank body under the
-            // permission dialog forever (AC-PM8). When the refused path is the
-            // landing path, stop and say so: the dialog names the permission,
-            // and this is what is behind it.
+            // The landing path gets its own terminal notice: in prescriber
+            // mode the landing screen is the request list, and a prescriber
+            // who lacks the prescription-query permission is refused THAT —
+            // there is nowhere else to send them, and the message must also
+            // say this was their only destination here (AC-PM8).
             <Show
               when={relativePath() !== navHomePath()}
               fallback={
@@ -286,7 +284,22 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
                 />
               }
             >
-              <Navigate href={storeHref(navHomePath())} />
+              {/* A permission-withheld destination refuses in place: the URL
+                  stays as typed under a no-permission notice, no dialog, no
+                  redirect (spec/navigation § permission gates, D94;
+                  OMS-REG-NAV-01.19). Capability-blocked and forbidden routes
+                  still redirect — that function does not exist here, so there
+                  is nothing to explain in place. */}
+              <Show
+                when={access().kind === 'denied'}
+                fallback={<Navigate href={storeHref(navHomePath())} />}
+              >
+                <EmptyState
+                  title={t('heading.cannot-do-that')}
+                  message={t('messages.no-permission-for-screen')}
+                  data-testid="no-permission-screen"
+                />
+              </Show>
             </Show>
           }
         >

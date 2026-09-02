@@ -27,14 +27,15 @@ import {
  * KB-R1/KB-R2).
  *
  * Two gate classes, distinguished by whose condition they read (spec/navigation
- * § the gate vocabulary), with the same failure behaviour — absence:
+ * § the gate vocabulary). Both hide the destination; they differ at the URL:
  *
  *   capability  the store/deployment lacks the function → the destination is
  *               ABSENT everywhere and its route redirects to the dashboard
  *               (D70 generalised).
  *   permission  the store has the function, the user lacks the query
- *               permission → the destination is ABSENT for that user, its URL
- *               landing on the dashboard with no dialog (D94). The server
+ *               permission → the destination is ABSENT for that user, and its
+ *               URL shows a no-permission notice in place of the screen — no
+ *               dialog, no redirect (D94; OMS-REG-NAV-01.19). The server
  *               stays the real guard.
  *
  * Both are applied by gateNav / routeAccess. These read runtime signals the
@@ -148,7 +149,8 @@ export const gateNav = <
  * so a child is unreachable while its section is.
  *
  * A blocked or forbidden verdict lands the user on `navHomePath()` — Home for
- * the full registry, the request list in prescriber mode, which has none.
+ * the full registry, the request list in prescriber mode, which has none. A
+ * denied verdict stays put: the page body is a no-permission notice.
  *
  *   { kind: 'ok' }                     navigate normally (also: unknown paths,
  *                                      under the FULL registry — the catch-all
@@ -156,23 +158,33 @@ export const gateNav = <
  *                                      mode blocks them instead: most of the
  *                                      app is unknown to its registry, and a
  *                                      not-found page would offer no way back)
- *   { kind: 'blocked' }                a capability gate fails, the user lacks
- *                                      the destination's query permission, or
- *                                      the registry in force does not offer the
- *                                      path at all → the landing screen,
- *                                      silently (D70 generalised; D94)
+ *   { kind: 'blocked' }                a capability gate fails, or the registry
+ *                                      in force does not offer the path at all
+ *                                      → the landing screen, silently (D70
+ *                                      generalised). The function does not
+ *                                      exist here, so there is nothing to
+ *                                      explain — the address is as dead as a
+ *                                      typo.
+ *   { kind: 'denied' }                 the function exists, this user lacks the
+ *                                      destination's query permission → a
+ *                                      no-permission notice in place of the
+ *                                      screen, no dialog, no redirect (D94;
+ *                                      OMS-REG-NAV-01.19). The URL stays as
+ *                                      typed, so gaining the permission makes
+ *                                      the same address work.
  *   { kind: 'forbidden', permission }  prescriber mode is the only way in and
  *                                      this user is not in it → the landing
  *                                      screen + the permission-denied dialog,
  *                                      naming `permission` (PascalCase, ready
- *                                      for reportPermissionDenied). The one
- *                                      refusal D94 leaves standing: it answers
+ *                                      for reportPermissionDenied). It answers
  *                                      "you are not a prescriber", not "you
- *                                      lack this read", which now hides.
+ *                                      lack this read", which the destination
+ *                                      gates never name.
  */
 export type RouteAccess =
   | { kind: 'ok' }
   | { kind: 'blocked' }
+  | { kind: 'denied' }
   | { kind: 'forbidden'; permission: string };
 
 // Longest path first, so 'inventory/stocktakes' wins over 'inventory'. Sorted
@@ -230,9 +242,13 @@ export const routeAccess = (relativePath: string): RouteAccess => {
   // nonexistent paths for everyone with the full registry.
   if (!dest) return isPrescriberMode() ? { kind: 'blocked' } : { kind: 'ok' };
 
-  // The trail resolves a destination to [section, child?]; compose their gates
-  // — both classes, so a permission-withheld URL is as unreachable as a
-  // capability-gated one (D94).
+  // The trail resolves a destination to [section, child?]; compose their gates.
+  // Capability is judged first: a function the store does not have redirects
+  // (blocked) even when the user would also lack its read — a notice about
+  // permissions on a screen the store cannot show would send the user chasing
+  // the wrong fix.
   const trail = activeNavTrail(dest.path);
-  return trail.every(offered) ? { kind: 'ok' } : { kind: 'blocked' };
+  if (!trail.every(item => capabilityPasses(item.gate)))
+    return { kind: 'blocked' };
+  return trail.every(permissionPasses) ? { kind: 'ok' } : { kind: 'denied' };
 };

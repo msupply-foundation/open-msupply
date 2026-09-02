@@ -2747,6 +2747,7 @@
   "messages.no-patient-record": "Can't access detailed information for this patient.",
   "messages.no-patients-found": "No patients found",
   "messages.no-permission-for-landing-screen": "You do not have permission to view this screen, and it is the only one available to you here. Ask an administrator for access, or switch to another store.",
+  "messages.no-permission-for-screen": "You do not have permission to view this screen. Ask an administrator for access.",
   "messages.no-programs": "This patient is not enrolled in any programs.",
   "messages.no-properties": "No properties defined",
   "messages.no-purchase-order-details": "No purchase order details available",
