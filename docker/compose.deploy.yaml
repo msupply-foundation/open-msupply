@@ -1,0 +1,41 @@
+# Deployment target for continuous deployment from develop.
+#
+# Explicitly a dev/demo environment: this runs the postgres-flavoured image,
+# which bundles its own postgres inside the container. That is convenient - one
+# container, no orchestration - but it couples the app's lifecycle to the
+# database's, which is the wrong shape for anything holding data you would miss.
+# If this ever needs to be more than a demo, split the database out and point
+# the server at it with APP__DATABASE__* rather than growing this file.
+
+name: omsupply-develop
+
+services:
+  server:
+    image: ${OMS_IMAGE:?OMS_IMAGE must be set}
+    container_name: omsupply-develop
+    restart: unless-stopped
+    ports:
+      - "${OMS_PORT:-8000}:8000"
+    volumes:
+      # entry-postgres.sh puts PG_DATA at /database/postgres/data, and the image
+      # declares no VOLUME - so without this line every deploy silently destroys
+      # the database. At several merges a day that is not a subtle failure.
+      - omsupply-data:/database
+    healthcheck:
+      # The server runs migrations on boot and exits if they fail, so "process
+      # alive and answering" is already a meaningful signal. __typename needs no
+      # auth and proves actix is routing and the graphql schema loaded.
+      test:
+        - CMD-SHELL
+        - >-
+          curl -fsS -X POST http://localhost:8000/graphql
+          -H 'Content-Type: application/json'
+          -d '{"query":"{ __typename }"}' > /dev/null || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      # First boot runs initdb and the full migration set; later boots are quick.
+      start_period: 180s
+
+volumes:
+  omsupply-data:

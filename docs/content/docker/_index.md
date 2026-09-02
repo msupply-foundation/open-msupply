@@ -33,7 +33,7 @@ The rest of this page documents the CI pipeline and manual steps if you need mor
 
 ## CI/CD (GitHub Actions)
 
-The `dockerise.yaml` workflow fires automatically when a tag starting with `v` is pushed:
+The `docker-release.yaml` workflow fires automatically when a tag starting with `v` is pushed:
 
 ```bash
 git tag v2.8.0
@@ -51,14 +51,20 @@ Non-release tags are typically created automatically by the nightly build proces
 
 ### How it works
 
-1. **Check tag** — determines if the tag is a release or non-release
-2. **Build client** — installs Node dependencies and runs `yarn build`
-3. **Build server** (2 or 4 parallel jobs) — compiles `remote_server` and `remote_server_cli` for each (db, arch) combination:
-   - **amd64** builds run natively on the amd64 GitHub runner
-   - **arm64** builds use cross-compilation (`gcc-aarch64-linux-gnu`) from the amd64 runner, which is much faster than QEMU emulation (release tags only)
-   - **Postgres** builds use `rust:1.94` (includes `libpq-dev`), SQLite builds use `rust:1.94-slim`
-4. **Dockerise** (2 or 4 parallel jobs) — builds and pushes Docker images using the compiled binaries
-5. **Trigger plugin tests** — runs downstream plugin test suite against the new dev images (release tags only)
+The build itself is defined once, in `docker-image.yaml`, which has no triggers of its own — it is called by `docker-release.yaml` (tags) and `docker-cd.yaml` (continuous deployment). Each caller passes a matrix, a version, and whether it wants floating aliases and dev images; the shared build has no idea which one called it.
+
+1. **Classify** (`docker-release.yaml`) — decides from the tag whether it is a release or a nightly, and produces the variant matrix and floating alias prefix. The CD workflow has an equivalent `plan` job that just names the commit.
+2. **Image** (1, 2 or 4 parallel jobs) — one `docker buildx build` per (db, arch). Everything is compiled inside the Dockerfile: the server, the old UI, and the new frontend. Release tags additionally build the `-dev` images.
+   - **amd64** builds run natively on the runner
+   - **arm64** builds cross-compile — the Dockerfile pins its compile stages to `$BUILDPLATFORM`, so `rustc` never runs emulated (release tags only)
+3. **Deploy** (`docker-cd.yaml`) — brings the develop environment up on the new image. Never runs for tags.
+4. **Trigger plugin tests** (`docker-release.yaml`) — runs the downstream plugin test suite against the new dev images (release tags only)
+
+Both callers share the build cache. BuildKit keys on the build's content, not on the workflow that invoked it, so a develop merge warms what the nightly tag needs.
+
+There is no separate client or server build job and no artifact hand-off between jobs. That shape suited GitHub-hosted runners, where each job gets a fresh VM; on a self-hosted box the jobs serialise on a lane and the artifacts move ~100MB between two steps on the same disk. BuildKit runs the frontend build concurrently with the server compile inside one job instead. Use `--progress plain` (already set) rather than splitting it back out for per-step visibility.
+
+Everything publishes to `msupplyfoundation/omsupply`. Continuous-deployment builds (`docker-cd.yaml`) are tagged `develop-<sha>-<db>-amd64` and get **no** floating tag: `latest-develop*` is the nightly pointer that demo servers follow, and repointing it on every merge would push unvetted commits at them several times a day. CD tags are immutable and the nightly cleanup sweeps them after 30 days like any other non-release tag.
 
 ### Image tags
 
@@ -146,148 +152,60 @@ git push origin :refs/tags/v0.0.0-test
 
 Since `v0.0.0-test` is a non-release tag, this will only build the amd64 variants (no arm64, no dev images).
 
-## Manual build
+## Building an image
 
-The Dockerfile has two pre-requisites: `remote_server` and `remote_server_cli` built in release mode (after building the client).
-
-If building on a non-Linux host (e.g. macOS), use a Docker container to cross-compile a Linux binary. The `-v` flag mounts your source code into the container and the compiled binary is written back to your host filesystem.
-
-If building natively on Linux, you can use `cargo build` directly.
-
-### SQLite (default)
-
-Via Docker (for macOS or other non-Linux hosts — uses `rust:1.94-slim` since SQLite is compiled from source and needs no system libraries):
+Everything - the server, the legacy client, and the new frontend - is compiled
+inside the Dockerfile. One command produces a complete image:
 
 ```bash
-docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:1.94-slim cargo build --release --bin remote_server --bin remote_server_cli
+docker buildx build --target postgres -t msupplyfoundation/omsupply:dev .
 ```
 
-Native Linux:
+There is no separate compile step and nothing to stage beforehand. The previous
+process (build the client, build the frontend into `frontend-dist/`, compile the
+server with `docker run ... cargo build`, then `docker build` to assemble) has
+been folded into the Dockerfile's stage graph, which is drawn at the top of that
+file.
+
+Interactively, with prompts for architecture, database and pushing:
 
 ```bash
-cd server && cargo build --release --bin remote_server --bin remote_server_cli
+yarn dockerise
 ```
 
-### Postgres
+### Targets
 
-Via Docker (for macOS or other non-Linux hosts — uses `rust:1.94` non-slim because it includes `libpq-dev`):
+| `--target`     | contents |
+| -------------- | -------- |
+| `sqlite`       | SQLite server. The default if `--target` is omitted |
+| `postgres`     | Postgres server, with a Postgres instance bundled in the image |
+| `dev`          | `sqlite` plus Node, Yarn and the client source |
+| `postgres-dev` | `postgres` plus the same |
+
+BuildKit only runs the stages a target needs, so `--target sqlite` never
+compiles the Postgres binaries.
+
+### Other architectures
 
 ```bash
-docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:1.94 cargo build --release --bin remote_server --bin remote_server_cli --no-default-features --features postgres --target-dir target-postgres
+docker buildx build --platform linux/arm64 --target postgres -t <tag> .
 ```
 
-Native Linux (requires `libpq-dev` installed, e.g. `apt-get install libpq-dev`):
+The compile stages are pinned to the *build* platform and cross-compile to the
+target, so `rustc` runs natively rather than under emulation. Do **not** add
+QEMU to work around this - it is what the pinning exists to avoid, and it makes
+the build several times slower.
+
+### Rebuilds
+
+The cargo target directory and the package caches are BuildKit cache mounts, so
+an unchanged rebuild costs seconds and a changed one recompiles only what the
+change reaches. To force a genuinely cold build:
 
 ```bash
-cd server && cargo build --release --bin remote_server --bin remote_server_cli --no-default-features --features postgres --target-dir target-postgres
+docker builder prune --filter type=exec.cachemount
 ```
 
-**Important:** When using Docker, the rust image version must match the version in the Dockerfile (`rust:1.94-slim`) to avoid glibc version mismatches.
-
-`entry.sh` calls cli before starting server or allows use of cli as an argument.
-
-`entry-postgres.sh` starts an embedded PostgreSQL instance, optionally imports a dump file, then hands off to `entry.sh`.
-
-## Docker targets
-
-| Target         | Database | Description                                                            |
-| -------------- | -------- | ---------------------------------------------------------------------- |
-| `sqlite`       | SQLite   | Default runtime image                                                  |
-| `dev`          | SQLite   | Includes client with Node/Yarn for frontend development                |
-| `postgres`     | Postgres | Runtime image with embedded PostgreSQL server                          |
-| `postgres-dev` | Postgres | Embedded PostgreSQL with client and Node/Yarn for frontend development |
-
-## Building image locally
-
-By default, `docker build` produces an image matching your host architecture. On Apple Silicon Macs this means `linux/arm64`, which won't run on typical x86_64 Linux servers. Use `--platform linux/amd64` on **both** the cargo compile step and the `docker build` step to produce an amd64 image.
-
-### SQLite
-
-#### For linux/amd64 servers (built on Apple Silicon Mac)
-
-QEMU cannot reliably emulate `rustc` on Apple Silicon, so we cross-compile from a native ARM container instead. The `docker build` step still uses `--platform linux/amd64` to get the correct base image layers.
-
-```bash
-# Build client
-cd client && yarn && yarn build
-# Cross-compile server for amd64 from native ARM container
-cd ../ && docker run --rm --platform linux/arm64 -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:1.94-slim bash -c "\
-  apt-get update && apt-get install -y gcc-x86-64-linux-gnu libc6-dev-amd64-cross && \
-  rustup target add x86_64-unknown-linux-gnu && \
-  CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=x86_64-linux-gnu-gcc \
-    cargo build --release --target x86_64-unknown-linux-gnu --target-dir target-amd64 --bin remote_server --bin remote_server_cli && \
-  mkdir -p target/release && \
-  cp target-amd64/x86_64-unknown-linux-gnu/release/remote_server target/release/remote_server && \
-  cp target-amd64/x86_64-unknown-linux-gnu/release/remote_server_cli target/release/remote_server_cli && \
-  chown -R $(id -u):$(id -g) target/release"
-# Dockerise with tag
-docker build --platform linux/amd64 . -t msupplyfoundation/omsupply:v2.7.3 && \
-docker build --platform linux/amd64 . -t msupplyfoundation/omsupply:v2.7.3-dev --target dev
-# "docker hub" in bitwarden
-docker login
-docker push msupplyfoundation/omsupply:v2.7.3 && \
-docker push msupplyfoundation/omsupply:v2.7.3-dev
-```
-
-#### For Apple Silicon (arm64) Macs
-
-```bash
-# Build client
-cd client && yarn && yarn build
-# Build server (native arm64)
-cd ../ && docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:1.94-slim cargo build --release --bin remote_server --bin remote_server_cli
-# Dockerise with tag
-docker build . -t msupplyfoundation/omsupply:v2.7.3-arm64 && \
-docker build . -t msupplyfoundation/omsupply:v2.7.3-arm64-dev --target dev
-# "docker hub" in bitwarden
-docker login
-docker push msupplyfoundation/omsupply:v2.7.3-arm64 && \
-docker push msupplyfoundation/omsupply:v2.7.3-arm64-dev
-```
-
-### Postgres
-
-#### For linux/amd64 servers (built on Apple Silicon Mac)
-
-Same cross-compilation approach as SQLite above:
-
-```bash
-# Build client
-cd client && yarn && yarn build
-# Cross-compile server for amd64 with postgres feature
-cd ../ && docker run --rm --platform linux/arm64 -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:1.94 bash -c "\
-  apt-get update && apt-get install -y gcc-x86-64-linux-gnu libc6-dev-amd64-cross && \
-  rustup target add x86_64-unknown-linux-gnu && \
-  CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=x86_64-linux-gnu-gcc \
-    cargo build --release --target x86_64-unknown-linux-gnu --target-dir target-postgres-amd64 --bin remote_server --bin remote_server_cli --no-default-features --features postgres && \
-  mkdir -p target-postgres/release && \
-  cp target-postgres-amd64/x86_64-unknown-linux-gnu/release/remote_server target-postgres/release/remote_server && \
-  cp target-postgres-amd64/x86_64-unknown-linux-gnu/release/remote_server_cli target-postgres/release/remote_server_cli && \
-  chown -R $(id -u):$(id -g) target-postgres/release"
-# Dockerise with tag
-docker build --platform linux/amd64 . -t msupplyfoundation/omsupply:v2.7.3-postgres --target postgres && \
-docker build --platform linux/amd64 . -t msupplyfoundation/omsupply:v2.7.3-postgres-dev --target postgres-dev
-# "docker hub" in bitwarden
-docker login
-docker push msupplyfoundation/omsupply:v2.7.3-postgres && \
-docker push msupplyfoundation/omsupply:v2.7.3-postgres-dev
-```
-
-#### For Apple Silicon (arm64) Macs
-
-```bash
-# Build client
-cd client && yarn && yarn build
-# Build server with postgres feature (native arm64)
-cd ../ && docker run --rm --user "$(id -u)":"$(id -g)" -v "$PWD":/usr/src/omsupply -w /usr/src/omsupply/server rust:1.94 cargo build --release --bin remote_server --bin remote_server_cli --no-default-features --features postgres --target-dir target-postgres
-# Dockerise with tag
-docker build . -t msupplyfoundation/omsupply:v2.7.3-arm64-postgres --target postgres && \
-docker build . -t msupplyfoundation/omsupply:v2.7.3-arm64-postgres-dev --target postgres-dev
-# "docker hub" in bitwarden
-docker login
-docker push msupplyfoundation/omsupply:v2.7.3-arm64-postgres && \
-docker push msupplyfoundation/omsupply:v2.7.3-arm64-postgres-dev
-```
 
 ## Running the images
 
