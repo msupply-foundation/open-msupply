@@ -1,11 +1,15 @@
 # Deployment target for continuous deployment from develop.
 #
-# Explicitly a dev/demo environment: this runs the postgres-flavoured image,
-# which bundles its own postgres inside the container. That is convenient - one
-# container, no orchestration - but it couples the app's lifecycle to the
-# database's, which is the wrong shape for anything holding data you would miss.
-# If this ever needs to be more than a demo, split the database out and point
-# the server at it with APP__DATABASE__* rather than growing this file.
+# Defaults to a dev/demo shape: the postgres-flavoured image bundling its own
+# postgres inside the container. That is convenient - one container, no
+# orchestration - but it couples the app's lifecycle to the database's, which is
+# the wrong shape for anything holding data you would miss.
+#
+# Pointing it at an external postgres instead needs no second file and no
+# override layer: set OMS_ENTRYPOINT and the PG_* variables below. The topology
+# is identical either way - one service, three mount points - so the difference
+# is entirely values, and compose interpolation covers it. Values come from the
+# deploy job, which reads them from the `develop` GitHub environment.
 
 name: omsupply-develop
 
@@ -16,11 +20,45 @@ services:
     restart: unless-stopped
     ports:
       - "${OMS_PORT:-8000}:8000"
+
+    # The postgres-flavoured image's default entrypoint runs
+    # initdb/pg_ctl/createdb against a cluster *inside* the container, so an
+    # external database needs this set to the image's plain entrypoint,
+    # /usr/src/omsupply/server/entry.sh - hardware id, optional reference-data
+    # load, exec the server - or a second, unused postgres boots alongside the
+    # real one. Either way the image must stay postgres-flavoured: the binary
+    # has to be compiled against the postgres backend.
+    entrypoint: ${OMS_ENTRYPOINT:-/usr/src/omsupply/server/entry-postgres.sh}
+
+    environment:
+      # The defaults restate what local.postgres.yaml already bakes into the
+      # image, so the bundled shape behaves exactly as before - but they put the
+      # database settings somewhere visible rather than hidden in the image, and
+      # they are what the PG_* variables replace for an external server. An
+      # unset GitHub variable arrives as the empty string, which `:-` treats as
+      # absent, so these apply as written.
+      APP__DATABASE__HOST: ${PG_HOST:-localhost}
+      APP__DATABASE__PORT: ${PG_PORT:-5432}
+      APP__DATABASE__USERNAME: ${PG_USER:-postgres}
+      APP__DATABASE__PASSWORD: ${PG_PASSWORD:-password}
+      APP__DATABASE__DATABASE_NAME: ${PG_DATABASE:-omsupply-database}
+
     volumes:
+      # A bare name is a named volume; a host path is a bind mount. That is the
+      # whole difference between the demo shape and a real deployment, so both
+      # are this one file with different values.
+      #
       # entry-postgres.sh puts PG_DATA at /database/postgres/data, and the image
       # declares no VOLUME - so without this line every deploy silently destroys
       # the database. At several merges a day that is not a subtle failure.
-      - omsupply-data:/database
+      # (With an external database nothing writes here, and the mount is inert.)
+      - ${OMS_DATABASE_DIR:-omsupply-data}:/database
+      # server.base_dir (static and sync files, the validated plugin bucket) and
+      # logging.directory from base.yaml, resolved against the image's workdir -
+      # so neither is under /database, and until now every deploy silently
+      # discarded both, bundled postgres or not.
+      - ${OMS_APP_DATA_DIR:-omsupply-app-data}:/usr/src/omsupply/server/app_data
+      - ${OMS_LOG_DIR:-omsupply-log}:/usr/src/omsupply/server/log
     healthcheck:
       # The server runs migrations on boot and exits if they fail, so "process
       # alive and answering" is already a meaningful signal. __typename needs no
@@ -37,5 +75,9 @@ services:
       # First boot runs initdb and the full migration set; later boots are quick.
       start_period: 180s
 
+# Used by the default shape. When the OMS_*_DIR variables point at host paths
+# instead, these declarations go unreferenced and compose prunes them.
 volumes:
   omsupply-data:
+  omsupply-app-data:
+  omsupply-log:
