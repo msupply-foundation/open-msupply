@@ -1,6 +1,6 @@
 import { createAction, type KeyAction } from '../ui/utils/keyActions';
-import { type NavItem } from '../nav/navConfig';
-import { activeNavConfig, gateNav } from '../nav/navGates';
+import { navConfig, type NavItem } from '../nav/navConfig';
+import { gateNav } from '../nav/navGates';
 import { t } from '../intl';
 import { ALT_D, ALT_H, type Shortcut } from '../ui/utils/shortcuts';
 
@@ -37,7 +37,7 @@ import { ALT_D, ALT_H, type Shortcut } from '../ui/utils/shortcuts';
  * destination and is listed.
  */
 const paletteDestinations = (): NavItem[] =>
-  activeNavConfig().flatMap(item => item.children ?? [item]);
+  navConfig.flatMap(item => item.children ?? [item]);
 
 /**
  * The leaf paths the gates offer RIGHT NOW — the menu's set, recomputed per
@@ -46,7 +46,7 @@ const paletteDestinations = (): NavItem[] =>
  */
 const offeredPaths = (): ReadonlySet<string> =>
   new Set(
-    gateNav(activeNavConfig()).flatMap(item =>
+    gateNav(navConfig).flatMap(item =>
       (item.children ?? [item]).map(destination => destination.path)
     )
   );

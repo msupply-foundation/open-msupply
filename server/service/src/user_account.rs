@@ -78,27 +78,15 @@ impl<'a> UserAccountService<'a> {
                 // Context permissions are managed by sync, not the login flow —
                 // left untouched, as before (has_context(false)).
                 //
-                // Everything else the payload can express, including the one
-                // RESTRICTION (`is_restriction` — `PrescriberMode`), is the
-                // payload's to state: present means granted, absent means
-                // revoked. `user_store_permissions`, the sync half of this same
+                // Everything else the payload can express is the payload's to
+                // state: present means granted, absent means revoked.
+                // `user_store_permissions`, the sync half of this same
                 // reconcile, has always read silence that way, and a login and
                 // a sync record disagreeing about what silence means is a bug
-                // whichever answer is right.
-                //
-                // Restrictions were briefly excluded here, when central had not
-                // allocated slot 205 ("Restrict to prescriptions", see
-                // `apis::permissions`) and nothing could express
-                // `PrescriberMode`: absence carried no intent then, so revoking
-                // on it would have stripped the permission on the holder's next
-                // login. A central without that slot cannot grant it either,
-                // though, so the exclusion only ever protected a user who could
-                // not exist — while leaving a real one locked into three screens
-                // with no way back short of a hand-edited row. It also hid the
-                // held row from the `changed_permissions` comparison below, so
-                // the row was re-upserted on EVERY login: the per-login
-                // changelog churn this delta-write exists to avoid (#12610,
-                // #12612).
+                // whichever answer is right. Reading silence as revocation is
+                // also what makes the delta-write below work: a permission the
+                // payload still names compares equal and is not re-upserted, so
+                // login stops churning the changelog (#12610, #12612).
                 let existing_permissions: HashMap<String, UserPermissionRow> =
                     UserPermissionRepository::new(con)
                         .query_by_filter(
@@ -596,21 +584,18 @@ mod user_account_test {
         assert_eq!(remaining[0].id, "reconcile_p1");
     }
 
-    /// spec/prescription-requests § prescriber mode.
-    ///
-    /// A RESTRICTION is revoked by a payload that stops naming it, exactly like
-    /// a grant. Central states prescriber mode either way (slot 205, see
-    /// `apis::permissions`), so a login carrying every permission the user has
-    /// and not this one is a revocation — and it must land, or a user who is
-    /// released from the mode in central stays locked into three screens.
+    /// A permission is revoked by a payload that stops naming it. Central
+    /// states every permission either way, so a login carrying all the others
+    /// and not this one is a revocation — and it must land, or a user whose
+    /// access is withdrawn in central keeps it here.
     ///
     /// The sync half of this reconcile (`user_store_permissions`) has always
     /// read a payload's silence this way; this pins the login half to the same
     /// reading.
     #[actix_rt::test]
-    async fn upsert_user_revokes_a_restriction_the_payload_stops_naming() {
+    async fn upsert_user_revokes_a_permission_the_payload_stops_naming() {
         let (_, connection, _, _) = setup_all(
-            "upsert_user_revokes_a_restriction_the_payload_stops_naming",
+            "upsert_user_revokes_a_permission_the_payload_stops_naming",
             MockDataInserts::none().names().stores(),
         )
         .await;
@@ -621,7 +606,7 @@ mod user_account_test {
                 reconcile_user(),
                 store_a_permissions(vec![
                     permission("reconcile_p1", PermissionType::StoreAccess),
-                    permission("reconcile_prescriber", PermissionType::PrescriberMode),
+                    permission("reconcile_request", PermissionType::PrescriptionRequestQuery),
                 ]),
             )
             .unwrap();
@@ -647,22 +632,22 @@ mod user_account_test {
             .collect();
 
         assert!(
-            !remaining.contains(&"reconcile_prescriber".to_string()),
-            "PrescriberMode survived a payload that stopped naming it: {:?}",
+            !remaining.contains(&"reconcile_request".to_string()),
+            "a permission survived a payload that stopped naming it: {:?}",
             remaining
         );
         assert!(remaining.contains(&"reconcile_p1".to_string()));
     }
 
     /// The other half of the same rule: a payload that DOES name the
-    /// restriction grants it, and a repeat login neither drops it nor rewrites
-    /// it. The rewrite matters — while restrictions were excluded from
-    /// `existing_permissions`, the held row was invisible to the
-    /// `changed_permissions` comparison and re-upserted on every login.
+    /// permission grants it, and a repeat login neither drops it nor rewrites
+    /// it. The rewrite matters — a row invisible to the `changed_permissions`
+    /// comparison is re-upserted on every login, which is the changelog churn
+    /// the delta-write exists to avoid (#12610, #12612).
     #[actix_rt::test]
-    async fn upsert_user_keeps_a_restriction_the_payload_still_names() {
+    async fn upsert_user_keeps_a_permission_the_payload_still_names() {
         let (_, connection, _, _) = setup_all(
-            "upsert_user_keeps_a_restriction_the_payload_still_names",
+            "upsert_user_keeps_a_permission_the_payload_still_names",
             MockDataInserts::none().names().stores(),
         )
         .await;
@@ -671,7 +656,7 @@ mod user_account_test {
         let payload = || {
             store_a_permissions(vec![
                 permission("reconcile_p1", PermissionType::StoreAccess),
-                permission("reconcile_prescriber", PermissionType::PrescriberMode),
+                permission("reconcile_request", PermissionType::PrescriptionRequestQuery),
             ])
         };
 
@@ -689,11 +674,11 @@ mod user_account_test {
             .map(|p| p.id)
             .collect();
 
-        assert!(remaining.contains(&"reconcile_prescriber".to_string()));
+        assert!(remaining.contains(&"reconcile_request".to_string()));
         assert_eq!(
             changelogs_after(&connection, mark),
             vec![],
-            "an unchanged restriction was re-upserted, writing a changelog row"
+            "an unchanged permission was re-upserted, writing a changelog row"
         );
     }
 

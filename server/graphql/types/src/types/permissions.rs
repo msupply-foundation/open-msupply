@@ -44,6 +44,8 @@ pub enum UserPermission {
     CustomerReturnMutate,
     PrescriptionQuery,
     PrescriptionMutate,
+    PrescriptionRequestQuery,
+    PrescriptionRequestMutate,
     PurchaseOrderQuery,
     PurchaseOrderMutate,
     PurchaseOrderAuthorise,
@@ -72,7 +74,6 @@ pub enum UserPermission {
     ViewAndEditVvmStatus,
     MutateClinician,
     CancelFinalisedInvoices,
-    PrescriberMode,
 }
 
 impl UserPermission {
@@ -110,6 +111,10 @@ impl UserPermission {
             PermissionType::CustomerReturnMutate => UserPermission::CustomerReturnMutate,
             PermissionType::PrescriptionQuery => UserPermission::PrescriptionQuery,
             PermissionType::PrescriptionMutate => UserPermission::PrescriptionMutate,
+            PermissionType::PrescriptionRequestQuery => UserPermission::PrescriptionRequestQuery,
+            PermissionType::PrescriptionRequestMutate => {
+                UserPermission::PrescriptionRequestMutate
+            }
             PermissionType::CancelFinalisedInvoices => UserPermission::CancelFinalisedInvoices,
             PermissionType::PurchaseOrderQuery => UserPermission::PurchaseOrderQuery,
             PermissionType::PurchaseOrderMutate => UserPermission::PurchaseOrderMutate,
@@ -147,7 +152,6 @@ impl UserPermission {
             PermissionType::EditCentralData => UserPermission::EditCentralData,
             PermissionType::ViewAndEditVvmStatus => UserPermission::ViewAndEditVvmStatus,
             PermissionType::MutateClinician => UserPermission::MutateClinician,
-            PermissionType::PrescriberMode => UserPermission::PrescriberMode,
             PermissionType::Unknown(_) => return None,
         })
     }

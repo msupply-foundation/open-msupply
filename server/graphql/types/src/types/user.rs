@@ -8,9 +8,7 @@ use graphql_core::{
     standard_graphql_error::StandardGraphqlError,
     ContextExt,
 };
-use repository::{
-    EqualFilter, PermissionType, User, UserPermissionFilter, UserPermissionRepository, UserStore,
-};
+use repository::{User, UserStore};
 use service::permission::permissions;
 
 pub struct UserStoreNode {
@@ -151,38 +149,6 @@ impl UserNode {
         )?;
 
         Ok(UserStorePermissionConnector::from_vec(result))
-    }
-
-    /// The ids of the user's stores in which they are restricted to PRESCRIBER
-    /// MODE (spec/prescription-requests § prescriber mode). Rides the me/login
-    /// response so the store picker can withhold a store the user could enter
-    /// but could not work in — the picker runs before any store is entered, so
-    /// the per-store `permissions(storeId)` read the in-store gates use is not
-    /// available to it yet.
-    ///
-    /// One query for every store, rather than a boolean resolved per store: a
-    /// user with many stores would otherwise cost one permission lookup each
-    /// on every me/login.
-    ///
-    /// Narrowed to the PrescriberMode rows in SQL rather than read whole and
-    /// filtered here. This rides the UserInfo fragment, so it runs on every
-    /// `me` and `authToken` — every token refresh included — for a value only
-    /// the store picker reads. For almost every user it now answers from an
-    /// empty result set instead of their entire permission list plus the store
-    /// join that `permissions()` does to build rows this only takes an id from.
-    pub async fn prescriber_mode_store_ids(&self, ctx: &Context<'_>) -> Result<Vec<String>> {
-        let service_context = ctx.service_provider().basic_context()?;
-
-        let rows = UserPermissionRepository::new(&service_context.connection).query_by_filter(
-            UserPermissionFilter::new()
-                .user_id(EqualFilter::equal_to(self.user.user_row.id.clone()))
-                .permission(PermissionType::PrescriberMode.equal_to()),
-        )?;
-
-        Ok(rows
-            .into_iter()
-            .filter_map(|row| row.store_id)
-            .collect())
     }
 
     pub async fn language(&self) -> LanguageTypeNode {

@@ -1,5 +1,4 @@
 import {
-  createEffect,
   createMemo,
   createSignal,
   lazy,
@@ -12,20 +11,20 @@ import { Navigate, useLocation, useNavigate, useParams } from '@solidjs/router';
 import type { RouteSectionProps } from '@solidjs/router';
 import { AppShell } from '../ui/layout/AppShell/AppShell';
 import { ConfirmDialog } from '../ui/elements/feedback/ConfirmDialog';
-import { t } from '../intl';
 import { EmptyState } from '../ui/elements/feedback/EmptyState';
+import { t } from '../intl';
 import {
-  buildNavModel,
-  findLeafIn,
+  findLeafByPath,
+  lowerNav,
   sectionIconForPath,
+  upperNav,
   type NavLeaf,
 } from '../ui/layout/AppShell/navModel';
 import { ShellSectionContext } from '../ui/layout/AppShell/shellContext';
 import { authUser, logout, userDisplayName } from '../auth/authContext';
 import { storeCustomColour } from '../store/storeContext';
 import { isCentralServer } from '../api/serverInfo';
-import { reportPermissionDenied } from '../api/graphql';
-import { activeNavConfig, gateNav, navHomePath, routeAccess } from './navGates';
+import { gateNav, routeAccess } from './navGates';
 import { bindHostNavigate, routerHostNavigate } from './hostNavigate';
 import { storePath, storeRelativePath } from './storeRelativePath';
 import { KeyboardHost } from '../keyboard/KeyboardHost';
@@ -83,15 +82,8 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   // for it, so any valid key satisfies the type.
   const NO_SELECTION: NavLeaf = { id: '', labelKey: 'label.home', to: '' };
 
-  // The menu model for the registry in force — the full one, or the cut-down
-  // prescriber registry (spec/prescription-requests § prescriber mode). A memo,
-  // so the model is rebuilt only when the mode actually changes and MenuBar's
-  // <For> keeps stable section objects across ordinary re-renders
-  // (kdd/solid-reactivity-pitfalls).
-  const navModel = createMemo(() => buildNavModel(activeNavConfig()));
-
   const selected = (): NavLeaf =>
-    findLeafIn(navModel().leaves, relativePath()) ?? NO_SELECTION;
+    findLeafByPath(relativePath()) ?? NO_SELECTION;
 
   // The browser tab names the screen the URL points at (spec/chrome § document
   // title) — the registry's label for the destination, the list entry for a
@@ -128,8 +120,8 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   // rebuilt when a child is dropped — keep stable references; otherwise
   // MenuBar's <For> would remount nav sections on every shell re-render
   // (kdd/solid-reactivity-pitfalls).
-  const menuUpper = createMemo(() => gateNav(navModel().upper));
-  const menuLower = createMemo(() => gateNav(navModel().lower));
+  const menuUpper = createMemo(() => gateNav(upperNav));
+  const menuLower = createMemo(() => gateNav(lowerNav));
 
   // The router is the registry's third surface (spec/navigation § one
   // registry): a gated destination's URL never opens the screen. A
@@ -141,17 +133,6 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   // uniformly, placeholder pages included. Renders under StoreGuardLayout, so
   // the gates read a settled store context (no flash of a blocked screen).
   const access = createMemo(() => routeAccess(relativePath()));
-
-  // The one verdict that still speaks: a prescriber-only URL typed by someone
-  // who is not in prescriber mode (spec/prescription-requests § prescriber
-  // mode, PM-9). D94 silenced the destination permission gates, but this one
-  // answers "you are not a prescriber" — a silent redirect would leave the
-  // user with no idea why the address they were given does nothing.
-  createEffect(() => {
-    const verdict = access();
-    if (verdict.kind === 'forbidden')
-      reportPermissionDenied([verdict.permission]);
-  });
 
   // The active store + signed-in user shown in the bottom bar. The store list
   // and user come from the me/login response (authContext); the active store is
@@ -238,10 +219,8 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
         /* The brand mark goes home — the store root, which IS Home, the same
            destination the menu's own Home entry routes to (navConfig, path '').
            The conventional job for a logo in app chrome, and the reason it is
-           not wired to the rail toggle instead. In prescriber mode there is no
-           Home, so navHomePath names the landing screen instead — the mark
-           still goes wherever "home" is for this user. */
-        onHome={() => navigate(storeHref(navHomePath()))}
+           not wired to the rail toggle instead. */
+        onHome={() => navigate(storeHref(''))}
         syncStatus={syncIndicator.status()}
         syncing={syncIndicator.syncing()}
         onSyncNow={syncNow}
@@ -269,37 +248,21 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
         <Show
           when={access().kind === 'ok'}
           fallback={
-            // The landing path gets its own terminal notice: in prescriber
-            // mode the landing screen is the request list, and a prescriber
-            // who lacks the prescription-query permission is refused THAT —
-            // there is nowhere else to send them, and the message must also
-            // say this was their only destination here (AC-PM8).
+            /* A permission-withheld destination refuses in place: the URL
+               stays as typed under a no-permission notice, no dialog, no
+               redirect (spec/navigation § permission gates, D94;
+               OMS-REG-NAV-01.19). A capability-blocked route still redirects —
+               that function does not exist here, so there is nothing to
+               explain in place, and Home is always reachable. */
             <Show
-              when={relativePath() !== navHomePath()}
-              fallback={
-                <EmptyState
-                  title={t('heading.cannot-do-that')}
-                  message={t('messages.no-permission-for-landing-screen')}
-                  data-testid="landing-screen-refused"
-                />
-              }
+              when={access().kind === 'denied'}
+              fallback={<Navigate href={storeHref('')} />}
             >
-              {/* A permission-withheld destination refuses in place: the URL
-                  stays as typed under a no-permission notice, no dialog, no
-                  redirect (spec/navigation § permission gates, D94;
-                  OMS-REG-NAV-01.19). Capability-blocked and forbidden routes
-                  still redirect — that function does not exist here, so there
-                  is nothing to explain in place. */}
-              <Show
-                when={access().kind === 'denied'}
-                fallback={<Navigate href={storeHref(navHomePath())} />}
-              >
-                <EmptyState
-                  title={t('heading.cannot-do-that')}
-                  message={t('messages.no-permission-for-screen')}
-                  data-testid="no-permission-screen"
-                />
-              </Show>
+              <EmptyState
+                title={t('heading.cannot-do-that')}
+                message={t('messages.no-permission-for-screen')}
+                data-testid="no-permission-screen"
+              />
             </Show>
           }
         >

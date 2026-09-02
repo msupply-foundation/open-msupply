@@ -87,7 +87,7 @@ pub fn update_prescription_request(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::MutatePrescription,
+            resource: Resource::MutatePrescriptionRequest,
             store_id: Some(store_id.to_string()),
             require_central_standalone: false,
         },

@@ -18,7 +18,7 @@ import { fetchDisplaySettings } from './api/displaySettings';
 import { authUser, checkAuth, startActivityTracking } from './auth/authContext';
 import { InitialisationPage } from './initialisation/InitialisationPage';
 import { resolveStorePath, StoreGuardLayout } from './store/StoreGuardLayout';
-import { activeNavDestinations } from './nav/navGates';
+import { navDestinations } from './nav/navConfig';
 import { routerBase } from './nav/storeRelativePath';
 import { DashboardPage } from './sections/dashboard';
 import { stocktakesRoutes } from './sections/stocktakes';
@@ -266,7 +266,7 @@ export const App: Component = () => {
                       )}
                     </For>
                     <For
-                      each={activeNavDestinations().filter(
+                      each={navDestinations.filter(
                         // Home's route is the `/` above, not a generated one:
                         // its path is '' and would generate a second `/`.
                         dest => dest.path !== '' && !sectionRoutes[dest.path]

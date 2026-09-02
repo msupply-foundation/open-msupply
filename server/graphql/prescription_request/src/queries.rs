@@ -114,7 +114,7 @@ pub fn get_prescription_request(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryPrescription,
+            resource: Resource::QueryPrescriptionRequest,
             store_id: Some(store_id.to_string()),
             require_central_standalone: false,
         },
@@ -146,7 +146,7 @@ pub fn get_prescription_requests(
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
-            resource: Resource::QueryPrescription,
+            resource: Resource::QueryPrescriptionRequest,
             store_id: Some(store_id.to_string()),
             require_central_standalone: false,
         },
