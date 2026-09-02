@@ -7,11 +7,35 @@
 # Usage: yarn dockerise
 # Docs:  docs/content/docker/_index.md
 #
+# The server and both frontends are compiled inside the Dockerfile, so this
+# script no longer orchestrates a build - it collects choices and calls
+# `docker buildx build` once per variant. The old "Build client?" and "Compile
+# server?" prompts are gone with the steps they controlled: skipping them used
+# to mean reusing whatever happened to be in client/packages/host/dist and
+# server/target, which is exactly the stale-artifact trap the single Dockerfile
+# removes. BuildKit's cache makes an unchanged rebuild cheap without it.
+#
 # Authored by Claude Code (claude.ai/code)
 
-# If docker is not found but podman is, alias docker to podman
-if ! command -v docker &> /dev/null && command -v podman &> /dev/null; then
-  alias docker=podman
+set -e
+
+# `buildx build` is required, not just `build`: the Dockerfile uses cache mounts
+# and $BUILDPLATFORM pinning. buildx is a CLI plugin and can go missing - a
+# stale symlink in ~/.docker/cli-plugins left by an uninstalled Docker Desktop
+# or OrbStack shadows the working one, and docker then parses --target as a
+# top-level flag, so the failure reads "unknown flag: --target" against docker's
+# own usage rather than anything about buildx.
+#
+# Not on Docker? This script wants a `docker` on PATH that speaks buildx.
+# Podman needs a wrapper for that regardless, since buildah rejects the
+# Dockerfile's sharing=private cache mounts and supplies no BUILDARCH.
+if ! docker buildx version &> /dev/null; then
+  echo "ERROR: 'docker buildx' is unavailable, so the image cannot be built."
+  echo ""
+  echo "  Check for dangling plugin symlinks:"
+  echo "    ls -la ~/.docker/cli-plugins/"
+  echo "  Remove any pointing at an app you have uninstalled, then re-run."
+  exit 1
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -61,356 +85,92 @@ esac
 echo ""
 echo "For Y/N prompts, the capitalised letter is the default."
 
-read -p "Build client? [Y/n]: " BUILD_CLIENT
-BUILD_CLIENT=${BUILD_CLIENT:-Y}
-
-read -p "Compile server? [Y/n]: " BUILD_SERVER
-BUILD_SERVER=${BUILD_SERVER:-Y}
-
 read -p "Build dev image too? [y/N]: " BUILD_DEV
 BUILD_DEV=${BUILD_DEV:-N}
 
 read -p "Push to Docker Hub after build? [y/N]: " PUSH
 PUSH=${PUSH:-N}
 
-# --- Helper functions ---
-
-rust_image_for_db() {
-  if [ "$1" = "sqlite" ]; then
-    echo "rust:1.94-slim"
-  else
-    echo "rust:1.94"
-  fi
-}
-
-cargo_features_for_db() {
-  if [ "$1" = "postgres" ]; then
-    echo "--no-default-features --features postgres"
-  fi
-}
-
-# Each (db, arch) gets its own target directory to avoid cache conflicts
-target_dir_for() {
-  local DB="$1" ARCH="$2"
-  if [ "$DB" = "sqlite" ] && [ "$ARCH" = "arm64" ]; then
-    echo "target"
-  elif [ "$DB" = "sqlite" ] && [ "$ARCH" = "amd64" ]; then
-    echo "target-amd64"
-  elif [ "$DB" = "postgres" ] && [ "$ARCH" = "arm64" ]; then
-    echo "target-postgres"
-  elif [ "$DB" = "postgres" ] && [ "$ARCH" = "amd64" ]; then
-    echo "target-postgres-amd64"
-  fi
-}
-
-# Where the Dockerfile expects to find binaries
-dockerfile_binary_dir() {
-  if [ "$1" = "sqlite" ]; then
-    echo "server/target/release"
-  else
-    echo "server/target-postgres/release"
-  fi
-}
-
-docker_target_for() {
-  local DB="$1" DEV="$2"
-  if [ "$DB" = "sqlite" ]; then
-    if [ "$DEV" = "dev" ]; then echo "dev"; else echo ""; fi
-  else
-    if [ "$DEV" = "dev" ]; then echo "postgres-dev"; else echo "postgres"; fi
-  fi
-}
-
-make_tag() {
-  local DB="$1" ARCH="$2" DEV="$3"
-  local TAG_BASE="v${VERSION}-${DATE}-${DB}-${ARCH}"
-  if [ "$DEV" = "dev" ]; then
-    echo "${IMAGE}:${TAG_BASE}-dev"
-  else
-    echo "${IMAGE}:${TAG_BASE}"
-  fi
-}
-
-check_existing_tag() {
-  local CURRENT_TAG="$1"
-  if docker image inspect "$CURRENT_TAG" > /dev/null 2>&1; then
-    echo "" >&2
-    echo "WARNING: Tag '$CURRENT_TAG' already exists locally." >&2
-    TIMESTAMP=$(date +%H-%M-%S)
-    ALT_TAG=$(echo "$CURRENT_TAG" | sed "s/${DATE}/${DATE}_${TIMESTAMP}/")
-    echo "  [1] Continue & overwrite" >&2
-    echo "  [2] Stop script" >&2
-    echo "  [3] Use alternative tag (default: $ALT_TAG)" >&2
-    read -p "Choice [1/2/3]: " TAG_CHOICE
-    case "$TAG_CHOICE" in
-      1) ;; # continue with existing tag
-      2) echo "STOPPED" ; exit 0 ;;
-      3)
-        read -p "Tag name [$ALT_TAG]: " CUSTOM_TAG
-        CURRENT_TAG="${CUSTOM_TAG:-$ALT_TAG}"
-        ;;
-      *) echo "Invalid choice" >&2; exit 1 ;;
-    esac
-  fi
-  echo "$CURRENT_TAG"
-}
-
-# Stage binaries from arch-specific target dir into the path the Dockerfile expects
-stage_binaries() {
-  local DB="$1" ARCH="$2"
-  local TARGET_DIR=$(target_dir_for "$DB" "$ARCH")
-  local DEST_DIR=$(dockerfile_binary_dir "$DB")
-
-  if [ "$ARCH" = "arm64" ]; then
-    local SRC="server/${TARGET_DIR}/release"
-  else
-    local SRC="server/${TARGET_DIR}/x86_64-unknown-linux-gnu/release"
-  fi
-
-  # If source and dest are the same, nothing to do (sqlite arm64 case)
-  if [ "$SRC" = "$DEST_DIR" ]; then
-    return 0
-  fi
-
-  mkdir -p "$DEST_DIR"
-  cp "$SRC/remote_server" "$DEST_DIR/remote_server"
-  cp "$SRC/remote_server_cli" "$DEST_DIR/remote_server_cli"
-}
-
-# --- Build result tracking ---
-
-REPORT_LINES=""
-SUCCESSFUL_TAGS=""
-
-record_result() {
-  local DB="$1" ARCH="$2" VARIANT="$3" STATUS="$4" TAG="$5"
-  local LABEL
-  if [ -n "$VARIANT" ]; then
-    LABEL=$(printf "  %-10s %-10s %-6s" "$DB" "$ARCH" "$VARIANT")
-  else
-    LABEL=$(printf "  %-10s %-10s %-6s" "$DB" "$ARCH" "")
-  fi
-  if [ "$STATUS" = "OK" ]; then
-    REPORT_LINES="${REPORT_LINES}${LABEL} OK     ${TAG}\n"
-    SUCCESSFUL_TAGS="${SUCCESSFUL_TAGS} ${TAG}"
-  else
-    REPORT_LINES="${REPORT_LINES}${LABEL} FAIL   ${TAG}\n"
-  fi
-}
-
-# --- Check for existing tags ---
-
-declare -a ALL_TAGS=()
-declare -a ALL_DBS=()
-declare -a ALL_ARCHS=()
-declare -a ALL_VARIANTS=()
-
-for DB in "${DBS[@]}"; do
-  for ARCH in "${ARCHS[@]}"; do
-    TAG=$(make_tag "$DB" "$ARCH" "")
-    TAG=$(check_existing_tag "$TAG")
-    if [ "$TAG" = "STOPPED" ]; then echo "Stopped."; exit 0; fi
-    ALL_TAGS+=("$TAG")
-    ALL_DBS+=("$DB")
-    ALL_ARCHS+=("$ARCH")
-    ALL_VARIANTS+=("")
-
-    if [[ "$BUILD_DEV" =~ ^[Yy] ]]; then
-      TAG_DEV=$(make_tag "$DB" "$ARCH" "dev")
-      TAG_DEV=$(check_existing_tag "$TAG_DEV")
-      if [ "$TAG_DEV" = "STOPPED" ]; then echo "Stopped."; exit 0; fi
-      ALL_TAGS+=("$TAG_DEV")
-      ALL_DBS+=("$DB")
-      ALL_ARCHS+=("$ARCH")
-      ALL_VARIANTS+=("dev")
-    fi
-  done
-done
-
-# --- Show build configuration ---
+# --- Build ---
 
 echo ""
 echo "=== Build Configuration ==="
-echo "  Architecture: ${ARCHS[*]}"
-echo "  Database:     ${DBS[*]}"
-echo "  Images to build:"
-for TAG in "${ALL_TAGS[@]}"; do
-  echo "    $TAG"
-done
-echo "  Push: $PUSH"
+echo "  Architectures: ${ARCHS[*]}"
+echo "  Databases:     ${DBS[*]}"
+echo "  Dev image:     $BUILD_DEV"
+echo "  Push:          $PUSH"
 echo ""
 
-# --- Build client (fatal if fails — all variants depend on it) ---
-
-if [[ "$BUILD_CLIENT" =~ ^[Yy] ]]; then
-  echo "=== Building client ==="
-  if ! (cd client && yarn && yarn build); then
-    echo "ERROR: Client build failed. Aborting."
-    exit 1
-  fi
-  cd "$REPO_ROOT"
-else
-  if [ ! -d "client/packages/host/dist" ]; then
-    echo "ERROR: Client not built. Expected client/packages/host/dist to exist."
-    echo "Run 'cd client && yarn && yarn build' first, or select 'Y' for Build client."
-    exit 1
-  fi
-  echo "=== Skipping client build (using existing build in client/packages/host/dist) ==="
+if [[ "$PUSH" =~ ^[Yy]$ ]]; then
+  echo "=== Logging in to Docker Hub ==="
+  docker login
 fi
 
-# --- Stage the new frontend dist (the Dockerfile COPYs frontend-dist/) ---
+BUILT_TAGS=()
 
-if [ ! -f "frontend-dist/index.html" ]; then
-  echo "=== Building new frontend into frontend-dist/ ==="
-  # Built in-tree from frontend/ — same commit as everything else in the image,
-  # so there is no pin to bump and no token needed for a separate FE repo.
-  if ! ( cd frontend && corepack pnpm install --frozen-lockfile && corepack pnpm build ); then
-    echo "ERROR: Could not build the new frontend into frontend-dist/. Aborting."
-    exit 1
-  fi
-  rm -rf frontend-dist && cp -R frontend/dist frontend-dist
-else
-  echo "=== Using existing frontend-dist/ (delete it to rebuild) ==="
-fi
+for DB in "${DBS[@]}"; do
+  for ARCH in "${ARCHS[@]}"; do
 
-# --- Compile, build, and push per (db, arch) combination ---
+    TAG="${IMAGE}:${VERSION}-${DATE}-${DB}-${ARCH}"
 
-COMPILED=""
-
-for i in "${!ALL_TAGS[@]}"; do
-  TAG="${ALL_TAGS[$i]}"
-  DB="${ALL_DBS[$i]}"
-  ARCH="${ALL_ARCHS[$i]}"
-  VARIANT="${ALL_VARIANTS[$i]}"
-  KEY="${DB}-${ARCH}"
-
-  # --- Compile (once per db+arch, skip for dev since it shares the same binary) ---
-
-  if ! echo "$COMPILED" | grep -q "$KEY"; then
-    if [[ "$BUILD_SERVER" =~ ^[Yy] ]]; then
-      RUST_IMAGE=$(rust_image_for_db "$DB")
-      CARGO_FEATURES=$(cargo_features_for_db "$DB")
-      TARGET_DIR=$(target_dir_for "$DB" "$ARCH")
-      TARGET_DIR_FLAG="--target-dir $TARGET_DIR"
-
-      echo "=== Compiling server ($DB, $ARCH) ==="
-
-      COMPILE_OK=true
-      if [ "$ARCH" = "arm64" ]; then
-        if ! docker run --rm --platform linux/arm64 --user "$(id -u)":"$(id -g)" \
-          -v "$PWD":/usr/src/omsupply \
-          -w /usr/src/omsupply/server \
-          "$RUST_IMAGE" \
-          cargo build --release --bin remote_server --bin remote_server_cli $CARGO_FEATURES $TARGET_DIR_FLAG; then
-          COMPILE_OK=false
-        fi
-      else
-        # Postgres cross-compile needs amd64 libpq-dev for linking
-        CROSS_EXTRA_DEPS=""
-        if [ "$DB" = "postgres" ]; then
-          CROSS_EXTRA_DEPS="&& dpkg --add-architecture amd64 && apt-get update && apt-get install -y libpq-dev:amd64"
-        fi
-
-        if ! docker run --rm --platform linux/arm64 \
-          -v "$PWD":/usr/src/omsupply \
-          -w /usr/src/omsupply/server \
-          "$RUST_IMAGE" bash -c "\
-            apt-get update && apt-get install -y gcc-x86-64-linux-gnu libc6-dev-amd64-cross \
-            $CROSS_EXTRA_DEPS && \
-            rustup target add x86_64-unknown-linux-gnu && \
-            CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=x86_64-linux-gnu-gcc \
-            PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig \
-            PQ_LIB_DIR=/usr/lib/x86_64-linux-gnu \
-              cargo build --release --target x86_64-unknown-linux-gnu $TARGET_DIR_FLAG --bin remote_server --bin remote_server_cli $CARGO_FEATURES && \
-            chown -R $(id -u):$(id -g) $TARGET_DIR"; then
-          COMPILE_OK=false
-        fi
-      fi
-
-      if [ "$COMPILE_OK" = false ]; then
-        echo "WARNING: Compilation failed for $DB $ARCH — skipping this variant."
-        COMPILED="$COMPILED $KEY:FAIL"
-      else
-        COMPILED="$COMPILED $KEY:OK"
-      fi
-    else
-      # Not compiling — check binary exists
-      BINARY_DIR=$(dockerfile_binary_dir "$DB")
-      if [ -f "$BINARY_DIR/remote_server" ]; then
-        COMPILED="$COMPILED $KEY:OK"
-      else
-        echo "WARNING: Server binary not found at $BINARY_DIR/remote_server — marking as failed."
-        COMPILED="$COMPILED $KEY:FAIL"
-      fi
+    # Warn rather than silently overwrite a tag built earlier today.
+    if docker image inspect "$TAG" > /dev/null 2>&1; then
+      echo ""
+      echo "WARNING: Tag '$TAG' already exists locally and will be overwritten."
+      read -p "Continue? [Y/n]: " OVERWRITE
+      OVERWRITE=${OVERWRITE:-Y}
+      [[ "$OVERWRITE" =~ ^[Yy]$ ]] || { echo "Aborted."; exit 1; }
     fi
-  fi
 
-  # --- Check if compilation succeeded for this combo ---
+    echo ""
+    echo "=== Building $DB / $ARCH ==="
+    echo "    $TAG"
 
-  if echo "$COMPILED" | grep -q "$KEY:FAIL"; then
-    echo "Skipping $TAG (compilation failed)"
-    record_result "$DB" "$ARCH" "$VARIANT" "FAIL" "(compilation failed)"
-    continue
-  fi
+    # One command builds everything: the server (cross-compiled natively for
+    # the target arch), both frontends, and the runtime image. BuildKit skips
+    # any stage this target does not need.
+    docker buildx build \
+      --target "$DB" \
+      --platform "linux/${ARCH}" \
+      --load \
+      -t "$TAG" \
+      .
+    BUILT_TAGS+=("$TAG")
 
-  # --- Stage binaries and Docker build ---
-
-  echo "=== Building Docker image: $TAG ==="
-
-  # Copy binaries from arch-specific target dir to where Dockerfile expects them
-  if [[ "$BUILD_SERVER" =~ ^[Yy] ]]; then
-    if ! stage_binaries "$DB" "$ARCH"; then
-      echo "WARNING: Failed to stage binaries for $TAG"
-      record_result "$DB" "$ARCH" "$VARIANT" "FAIL" "(staging failed)"
-      continue
+    if [[ "$BUILD_DEV" =~ ^[Yy]$ ]]; then
+      if [ "$DB" = "sqlite" ]; then DEV_TARGET="dev"; else DEV_TARGET="postgres-dev"; fi
+      DEV_TAG="${TAG}-dev"
+      echo ""
+      echo "=== Building $DB / $ARCH (dev) ==="
+      echo "    $DEV_TAG"
+      docker buildx build \
+        --target "$DEV_TARGET" \
+        --platform "linux/${ARCH}" \
+        --load \
+        -t "$DEV_TAG" \
+        .
+      BUILT_TAGS+=("$DEV_TAG")
     fi
-  fi
 
-  if [ "$ARCH" = "amd64" ]; then
-    PLATFORM_FLAG="--platform linux/amd64"
-  else
-    PLATFORM_FLAG="--platform linux/arm64"
-  fi
-
-  DOCKER_TARGET=$(docker_target_for "$DB" "$VARIANT")
-  TARGET_FLAG=""
-  if [ -n "$DOCKER_TARGET" ]; then
-    TARGET_FLAG="--target $DOCKER_TARGET"
-  fi
-
-  if docker build $PLATFORM_FLAG $TARGET_FLAG . -t "$TAG"; then
-    echo "Built: $TAG"
-    record_result "$DB" "$ARCH" "$VARIANT" "OK" "$TAG"
-
-    # Push immediately if requested
-    if [[ "$PUSH" =~ ^[Yy] ]]; then
-      if docker push "$TAG"; then
-        echo "Pushed: $TAG"
-      else
-        echo "WARNING: Failed to push $TAG"
-      fi
-    fi
-  else
-    echo "WARNING: Docker build failed for $TAG"
-    record_result "$DB" "$ARCH" "$VARIANT" "FAIL" "(docker build failed)"
-  fi
-done
-
-# --- Build Report ---
-
-echo ""
-echo "=== Build Report ==="
-printf "$REPORT_LINES"
-
-if [ -n "$SUCCESSFUL_TAGS" ]; then
-  echo ""
-  echo "Successfully built images:"
-  for TAG in $SUCCESSFUL_TAGS; do
-    echo "  $TAG"
   done
-  exit 0
-else
+done
+
+if [[ "$PUSH" =~ ^[Yy]$ ]]; then
   echo ""
-  echo "All builds failed."
-  exit 1
+  echo "=== Pushing ==="
+  for T in "${BUILT_TAGS[@]}"; do
+    echo "  $T"
+    docker push "$T"
+  done
+fi
+
+echo ""
+echo "=== Done ==="
+for T in "${BUILT_TAGS[@]}"; do
+  echo "  $T"
+done
+if [ ${#BUILT_TAGS[@]} -gt 0 ]; then
+  echo ""
+  echo "Run one with:"
+  echo "  docker run --rm -p 8000:8000 ${BUILT_TAGS[0]}"
 fi
