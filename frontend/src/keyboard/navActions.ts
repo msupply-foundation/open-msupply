@@ -27,8 +27,8 @@ import { ALT_D, ALT_H, type Shortcut } from '../ui/utils/shortcuts';
  */
 
 /*
- * Every gated destination the palette lists, sections flattened into their
- * children.
+ * Every destination the registry holds, sections flattened into their
+ * children — UNGATED here; the gates are each row's `disabled` (below).
  *
  * A SECTION WITH CHILDREN IS NOT ONE. Its landing page renders that section's
  * sub-menu, so "Go to: Inventory" would offer the user a menu from inside the
@@ -37,7 +37,19 @@ import { ALT_D, ALT_H, type Shortcut } from '../ui/utils/shortcuts';
  * destination and is listed.
  */
 const paletteDestinations = (): NavItem[] =>
-  gateNav(activeNavConfig()).flatMap(item => item.children ?? [item]);
+  activeNavConfig().flatMap(item => item.children ?? [item]);
+
+/**
+ * The leaf paths the gates offer RIGHT NOW — the menu's set, recomputed per
+ * read so the palette and the menu agree at the moment of asking, not the
+ * moment of registration.
+ */
+const offeredPaths = (): ReadonlySet<string> =>
+  new Set(
+    gateNav(activeNavConfig()).flatMap(item =>
+      (item.children ?? [item]).map(destination => destination.path)
+    )
+  );
 
 /**
  * The destination's palette row, complete with its "Go to:" prefix — the
@@ -69,13 +81,19 @@ const DESTINATION_SHORTCUTS: Record<string, Shortcut> = {
 };
 
 /**
- * Register one action per reachable destination, for as long as the caller's
+ * Register one action per registry destination, for as long as the caller's
  * owner lives.
  *
  * Called from KeyboardHost inside the store-scoped shell, so the gates read a
- * settled store context. It registers the set ONCE for the session rather than
- * tracking the gates: a store change re-enters through StoreGuardLayout, which
- * remounts the shell and so re-runs this with the new store's gates.
+ * settled store context. The SET is registered once per shell mount — a store
+ * change re-enters through StoreGuardLayout, which remounts the shell and so
+ * re-runs this with the registry the new store puts in force. The GATES are
+ * not baked into that set: each row's `disabled` re-reads them, and the
+ * palette evaluates it per open (the dispatcher per keypress) — so a
+ * permission withdrawn mid-session, e.g. by the post-sync context refresh, is
+ * gone from the palette at its next open, exactly as the menu's reactive memo
+ * drops the entry (AC-KB4; OMS-REG-NAV-01.15). Gating at registration time
+ * was the defect: the row outlived the permission.
  */
 export const createNavActions = (
   navigate: (path: string) => void
@@ -85,6 +103,7 @@ export const createNavActions = (
     return createAction({
       name: paletteName(destination),
       ...(shortcut ? { shortcut } : {}),
+      disabled: () => !offeredPaths().has(destination.path),
       run: () => navigate(destination.path),
     });
   });
