@@ -82,6 +82,19 @@ case "$DB_CHOICE" in
   *) echo "Invalid choice"; exit 1 ;;
 esac
 
+# Debug is offered because skipping the optimisation pass makes it the cheap way
+# to check an image change end to end. It is NOT a shippable image: unoptimised,
+# and unstripped where release sets strip = true. The tag carries a -debug
+# suffix so one can never be mistaken for a release build of the same version,
+# here or on Docker Hub.
+read -p "Cargo profile [1] release (default)  [2] debug (faster build, unoptimised): " PROFILE_CHOICE
+PROFILE_CHOICE=${PROFILE_CHOICE:-1}
+case "$PROFILE_CHOICE" in
+  1) CARGO_PROFILE="release" ;;
+  2) CARGO_PROFILE="debug" ;;
+  *) echo "Invalid choice"; exit 1 ;;
+esac
+
 echo ""
 echo "For Y/N prompts, the capitalised letter is the default."
 
@@ -98,6 +111,7 @@ echo "=== Build Configuration ==="
 echo "  Architectures: ${ARCHS[*]}"
 echo "  Databases:     ${DBS[*]}"
 echo "  Dev image:     $BUILD_DEV"
+echo "  Cargo profile: $CARGO_PROFILE"
 echo "  Push:          $PUSH"
 echo ""
 
@@ -113,6 +127,7 @@ for DB in "${DBS[@]}"; do
 
     # The v prefix matches the git tags CI names its images after (v2.19.1-...).
     TAG="${IMAGE}:v${VERSION}-${DATE}-${DB}-${ARCH}"
+    [ "$CARGO_PROFILE" = "release" ] || TAG="${TAG}-${CARGO_PROFILE}"
 
     # Warn rather than silently overwrite a tag built earlier today.
     if docker image inspect "$TAG" > /dev/null 2>&1; then
@@ -133,6 +148,7 @@ for DB in "${DBS[@]}"; do
     docker buildx build \
       --target "$DB" \
       --platform "linux/${ARCH}" \
+      --build-arg "CARGO_PROFILE=${CARGO_PROFILE}" \
       --load \
       -t "$TAG" \
       .
@@ -147,6 +163,7 @@ for DB in "${DBS[@]}"; do
       docker buildx build \
         --target "$DEV_TARGET" \
         --platform "linux/${ARCH}" \
+        --build-arg "CARGO_PROFILE=${CARGO_PROFILE}" \
         --load \
         -t "$DEV_TAG" \
         .
