@@ -1067,6 +1067,7 @@
   "label.custom-field-scope-outbound-shipment": "Outbound shipment",
   "label.custom-field-scope-patient": "Patients",
   "label.custom-field-scope-prescription": "Prescriptions",
+  "label.custom-field-scope-prescription-request": "Prescription requests",
   "label.custom-field-scope-supplier": "Suppliers",
   "label.custom-field-scope-supplier-return": "Supplier return",
   "label.custom-field-type-boolean": "Boolean",

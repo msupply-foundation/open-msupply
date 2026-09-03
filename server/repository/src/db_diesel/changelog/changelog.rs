@@ -133,6 +133,8 @@ diesel_string_enum! {
         CustomField,
         CustomFieldOption,
         CustomFieldScope,
+        PrescriptionRequest,
+        PrescriptionRequestLine,
         PurchaseOrder,
         PurchaseOrderLine,
         ReasonOption,

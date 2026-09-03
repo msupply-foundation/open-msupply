@@ -235,7 +235,8 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ServiceError::CannotSetShippedStatusOnManualInboundShipment
         | ServiceError::CannotReceiveWithNoLines
         | ServiceError::CurrencyRateMustBePositive
-        | ServiceError::UnknownPropertyKey(_) => BadUserInput(formatted_error),
+        | ServiceError::UnknownPropertyKey(_)
+        | ServiceError::InvalidPropertyValue { .. } => BadUserInput(formatted_error),
         ServiceError::PreferenceError(_) => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
         ServiceError::UpdatedInvoiceDoesNotExist => InternalError(formatted_error),

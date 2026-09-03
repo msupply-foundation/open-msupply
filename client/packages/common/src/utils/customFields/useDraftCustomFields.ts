@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import isEqual from 'lodash/isEqual';
 
-export type DraftProperties = Record<string, string | number | boolean | null>;
+/** A customFields value as edited: the scalars, plus the ARRAY of option ids a
+ *  MULTI_OPTION field holds. `null` clears the key. */
+export type DraftPropertyValue = string | number | boolean | string[] | null;
+export type DraftProperties = Record<string, DraftPropertyValue>;
 
 /**
  * Drop `null` entries so dirtiness compares by effective value: clearing a field
