@@ -52,9 +52,10 @@ export type NavItem = {
   /**
    * The user permission the destination's primary read requires
    * (spec/navigation › permission gates, values per its contract). Failing it
-   * does NOT hide the entry — the store has the function, so the user should
-   * see it — but activating it (menu, palette, or direct URL) refuses with the
-   * permission-denied dialog instead of navigating (D94).
+   * withholds the entry for that user — absent from menu and palette — but
+   * differs at the URL: where a capability-gated route redirects, this one
+   * stays as typed and shows a no-permission notice in place of the screen,
+   * with no dialog (D94). The server stays the real guard.
    */
   permission?: UserPermission;
   /**
@@ -180,7 +181,20 @@ export const navConfig: NavItem[] = [
         permission: 'PATIENT_QUERY',
       },
       {
+        // "Prescriptions" — the PRESCRIBER's record, upstream of dispensing
+        // (spec/prescription-requests). Offered to whoever holds its read, like
+        // every other destination: a clinic user granted this and little else
+        // simply sees this, which is what the old prescriber MODE arranged with
+        // a second registry (D94).
         labelKey: 'prescriptions',
+        path: 'dispensary/prescription-request',
+        permission: 'PRESCRIPTION_REQUEST_QUERY',
+      },
+      {
+        // The dispensing vertical, relabelled "Dispensing" (its path and spec
+        // folder keep their old names) — "Prescriptions" names the prescriber's
+        // side above.
+        labelKey: 'dispensing',
         path: 'dispensary/prescription',
         permission: 'PRESCRIPTION_QUERY',
       },
@@ -308,20 +322,22 @@ export const navConfig: NavItem[] = [
 
 // Flattened list of every destination (sections + inner entries) — used to
 // generate one route each.
-export const navDestinations: NavItem[] = navConfig.flatMap(item => [
-  item,
-  ...(item.children ?? []),
-]);
+export const flattenNav = (config: NavItem[]): NavItem[] =>
+  config.flatMap(item => [item, ...(item.children ?? [])]);
+
+export const navDestinations: NavItem[] = flattenNav(navConfig);
 
 // The trail from the top-level section down to a destination, root first — the
 // breadcrumb a page shows (e.g. 'inventory/stocktakes' → [Inventory,
 // Stocktakes]). A top-level destination is its own single-crumb trail; an
 // unknown path has none.
-export const navTrail = (path: string): NavItem[] => {
-  for (const section of navConfig) {
+export const trailIn = (config: NavItem[], path: string): NavItem[] => {
+  for (const section of config) {
     if (section.path === path) return [section];
     const child = section.children?.find(entry => entry.path === path);
     if (child) return [section, child];
   }
   return [];
 };
+
+export const navTrail = (path: string): NavItem[] => trailIn(navConfig, path);

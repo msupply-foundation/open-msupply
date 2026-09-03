@@ -39,6 +39,23 @@ interface MultiSelectProps<T> {
    * isn't part of the control's accessible name. As TextField.
    */
   labelInfo?: JSX.Element;
+  /**
+   * Name the input with `aria-label` instead of rendering the label element —
+   * for a surrounding row (a toolbar FieldRow) that already shows the label.
+   * As <Combobox>: same accessible name, no duplicate text node.
+   */
+  hideLabel?: boolean;
+  /** `data-testid` for the input. As <Combobox>'s inputTestId. */
+  inputTestId?: string;
+  /**
+   * READ-ONLY, not disabled: the field still takes focus and its list still
+   * OPENS, but nothing in it can be ticked and no tag can be removed. A
+   * multi-value control summarises what it holds ("A, B +2 more"), so a
+   * disabled one would hide values the reader can never reach — the reason the
+   * read-only rendering of a MULTI_OPTION custom field is this and not
+   * `disabled` (spec/ui-standards/custom-fields › value types).
+   */
+  readOnly?: boolean;
   class?: string;
 }
 
@@ -92,6 +109,7 @@ export const MultiSelect = <T,>(props: MultiSelectProps<T>) => {
       multiple
       class={props.class ? `${styles.field} ${props.class}` : styles.field}
       data-width={props.width ?? 'full'}
+      data-readonly={props.readOnly ? 'true' : undefined}
       data-size={props.size ?? 'default'}
       options={props.items}
       optionValue={item => (props.itemToValue ?? props.itemToString)(item as T)}
@@ -99,7 +117,14 @@ export const MultiSelect = <T,>(props: MultiSelectProps<T>) => {
       optionLabel={item => props.itemToString(item as T)}
       defaultFilter={(item, input) => matches(item as T, input)}
       value={props.selectedItems}
-      onChange={items => props.onChange(items)}
+      onChange={items => {
+        if (props.readOnly) return;
+        props.onChange(items);
+      }}
+      // Read-only marks every option aria-disabled (Kobalte's own mechanism),
+      // so the list reads as non-interactive rather than merely ignoring
+      // clicks.
+      optionDisabled={() => props.readOnly ?? false}
       onInputChange={setInputValue}
       allowsEmptyCollection
       // Open the listbox as soon as the field is focused/clicked, as <Combobox>
@@ -127,7 +152,11 @@ export const MultiSelect = <T,>(props: MultiSelectProps<T>) => {
       <Show
         when={props.labelInfo}
         fallback={
-          <KCombobox.Label class={styles.label}>{props.label}</KCombobox.Label>
+          <Show when={!props.hideLabel}>
+            <KCombobox.Label class={styles.label}>
+              {props.label}
+            </KCombobox.Label>
+          </Show>
         }
       >
         {/* labelInfo sits OUTSIDE the label element, as a sibling: nested in it
@@ -148,18 +177,25 @@ export const MultiSelect = <T,>(props: MultiSelectProps<T>) => {
                     <span class={styles.tagLabel}>
                       {props.itemToString(item)}
                     </span>
-                    <button
-                      type="button"
-                      class={styles.tagRemove}
-                      aria-label={`Remove ${props.itemToString(item)}`}
-                      onClick={() => state.remove(item)}
-                    >
-                      <CloseIcon />
-                    </button>
+                    <Show when={!props.readOnly}>
+                      <button
+                        type="button"
+                        class={styles.tagRemove}
+                        aria-label={`Remove ${props.itemToString(item)}`}
+                        onClick={() => state.remove(item)}
+                      >
+                        <CloseIcon />
+                      </button>
+                    </Show>
                   </span>
                 )}
               </For>
-              <KCombobox.Input class={styles.input} />
+              <KCombobox.Input
+                class={styles.input}
+                readOnly={props.readOnly}
+                data-testid={props.inputTestId}
+                aria-label={props.hideLabel ? props.label : undefined}
+              />
             </div>
             <KCombobox.Trigger
               class={styles.toggle}

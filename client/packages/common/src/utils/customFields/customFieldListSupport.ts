@@ -13,6 +13,7 @@ import {
   formatCustomFieldValue,
   getHierarchicalOptions,
   getOptionAndDescendantIds,
+  optionFilterQueryIds,
   CustomFieldDefinitionLike,
 } from './customFields';
 
@@ -53,7 +54,11 @@ export type PropertyValueFilter =
   | { Number: GeneralFilterValue<number> }
   | { Date: GeneralFilterValue<string> }
   | { Boolean: GeneralFilterValue<boolean> }
-  | { Option: GeneralFilterValue<string> };
+  | { Option: GeneralFilterValue<string> }
+  // MULTI_OPTION: the stored value is an ARRAY of option ids, so the server
+  // tests SET OVERLAP rather than equality — the record matches when any id it
+  // holds is one of the filtered ids.
+  | { MultiOption: GeneralFilterValue<string> };
 
 export type DynamicFilterCondition =
   | { CustomField: { key: string; filter: PropertyValueFilter } }
@@ -88,7 +93,10 @@ export const buildCustomFieldFilterDefinitions = (
       switch (property.valueType) {
         case CustomFieldNodeValueType.Text:
           return [{ type: 'text' as const, name, urlParameter }];
+        // Both option kinds offer the same control — pick one option, at any
+        // level. They differ only in the condition it becomes below.
         case CustomFieldNodeValueType.Option:
+        case CustomFieldNodeValueType.MultiOption:
           return [
             {
               type: 'hierarchicalEnum' as const,
@@ -162,6 +170,7 @@ export const buildPropertyUrlFilterConfigs = (
       case CustomFieldNodeValueType.Text:
         return [{ key }]; // default condition: like
       case CustomFieldNodeValueType.Option:
+      case CustomFieldNodeValueType.MultiOption:
         return [{ key, condition: 'equalTo' }];
       case CustomFieldNodeValueType.Integer:
       case CustomFieldNodeValueType.Real:
@@ -201,6 +210,16 @@ const propertyValueFilters = (
       return ids.length > 1
         ? [{ Option: { In: ids } }]
         : [{ Option: { Equal: String(equalTo) } }];
+    }
+    case CustomFieldNodeValueType.MultiOption: {
+      const equalTo = (entry as FilterRule)?.equalTo;
+      if (equalTo === undefined || equalTo === null) return [];
+      // Overlap against the chosen id expanded BOTH ways: DOWN because a
+      // record may store a child of it, UP because a record storing a parent
+      // minimally holds every child of it, so filtering on a child must still
+      // find it. The server walks no tree.
+      const ids = optionFilterQueryIds(property, String(equalTo));
+      return [{ MultiOption: { In: ids } }];
     }
     case CustomFieldNodeValueType.Integer:
     case CustomFieldNodeValueType.Real: {

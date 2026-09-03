@@ -68,6 +68,9 @@ impl InsertInput {
             program_id,
             clinician_id,
             prescription_date: prescription_date.map(|date| date.naive_utc()),
+            // Only set when the server generates the dispensation from a
+            // prescription request; never client-supplied.
+            prescription_request_id: None,
         }
     }
 }

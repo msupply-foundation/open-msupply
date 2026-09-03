@@ -1,0 +1,63 @@
+# The prescription-requests list (spec/prescription-requests/contract.md § the
+# list): store-scoped server-side (the storeId argument is the scope — any
+# store filter sent alongside is overwritten). Exactly ONE sort key is sent,
+# matching the app-wide single-sort convention.
+query prescriptionRequests(
+  $storeId: String!
+  $filter: PrescriptionRequestFilterInput
+  $sort: [PrescriptionRequestSortInput!]
+  $page: PaginationInput
+) {
+  prescriptionRequests(
+    storeId: $storeId
+    filter: $filter
+    sort: $sort
+    page: $page
+  ) {
+    ... on PrescriptionRequestConnector {
+      totalCount
+      nodes {
+        id
+        prescriptionRequestNumber
+        status
+        createdDatetime
+        prescriptionDatetime
+        comment
+        patient {
+          id
+          name
+        }
+        # Entered by — the account that created the request (S1 column, and
+        # the username the Entered by filter matches).
+        user {
+          username
+        }
+        # Filtered server-side to the keys visible for the request scope; the
+        # list turns each configured field into a column (AC-CF4).
+        customFields
+      }
+    }
+  }
+}
+
+# List delete (spec/prescription-requests/contract.md § deletion). ONE atomic
+# batch, not a request each: a refusal anywhere rolls the whole thing back, so
+# a selection is never partly deleted and the list behind the dialog stays
+# true. The selection is still pre-checked client-side to New rows (AC-D2);
+# rejections are generic (contract § wire traps) and route to the global error
+# surface.
+mutation deletePrescriptionRequests($storeId: String!, $ids: [String!]!) {
+  batchPrescriptionRequest(
+    storeId: $storeId
+    input: { deletePrescriptionRequests: $ids }
+  ) {
+    deletePrescriptionRequests {
+      id
+      response {
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+  }
+}

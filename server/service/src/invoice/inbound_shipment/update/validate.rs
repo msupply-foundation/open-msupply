@@ -1,8 +1,8 @@
 use crate::invoice::{
     check_invoice_exists, check_invoice_is_editable, check_invoice_status, check_invoice_type,
     check_status_change, check_store, common::check_can_issue_in_foreign_currency,
-    inbound_shipment::UpdateInboundShipmentStatus, custom_fields::check_unknown_custom_fields_key,
-    InvoiceRowStatusError,
+    custom_fields::check_invoice_custom_fields_patch,
+    inbound_shipment::UpdateInboundShipmentStatus, InvoiceRowStatusError,
 };
 use crate::preference::{preferences::Backdating, Preference};
 use crate::validate::{
@@ -43,10 +43,10 @@ pub fn validate(
     }
 
     if let Some(properties) = &patch.custom_fields {
-        if let Some(unknown) =
-            check_unknown_custom_fields_key(connection, &invoice.r#type, properties)?
+        if let Some(problem) =
+            check_invoice_custom_fields_patch(connection, &invoice.r#type, properties)?
         {
-            return Err(UnknownPropertyKey(unknown));
+            return Err(problem.into());
         }
     }
 

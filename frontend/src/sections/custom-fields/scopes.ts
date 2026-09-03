@@ -1,6 +1,6 @@
 import type { LocaleKey } from '../../intl';
 
-// The nine custom-field SCOPES, in the fixed order the screen offers them
+// The ten custom-field SCOPES, in the fixed order the screen offers them
 // (spec/custom-fields ui-surface S1 § scope tabs; rules § definitions are
 // configuration).
 //
@@ -16,7 +16,7 @@ import type { LocaleKey } from '../../intl';
 // any scope; it simply has nowhere to render there and behaves as VISIBLE.
 
 export interface CustomFieldScope {
-  /** The wire value — one of the nine fixed scope strings. */
+  /** The wire value — one of the ten fixed scope strings. */
   value: string;
   /** Tab label; each scope renders its own key (ui-surface S1). */
   labelKey: LocaleKey;
@@ -58,6 +58,16 @@ export const CUSTOM_FIELD_SCOPES: readonly CustomFieldScope[] = [
   {
     value: 'prescription',
     labelKey: 'label.custom-field-scope-prescription',
+    offersProminent: true,
+  },
+  {
+    // The prescriber-side request, distinct from the dispensing `prescription`
+    // scope above. Its fields are shipped by open-mSupply itself rather than
+    // configured per deployment (`service/src/custom_field/builtin.rs`), so
+    // this tab is never empty — it is where a deployment hides or promotes
+    // what it was given (rules § custom fields, AC-F3).
+    value: 'prescription_request',
+    labelKey: 'label.custom-field-scope-prescription-request',
     offersProminent: true,
   },
   {

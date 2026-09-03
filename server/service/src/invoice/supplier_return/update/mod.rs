@@ -1,7 +1,9 @@
 use repository::{
-    Invoice, InvoiceRowRepository, InvoiceStatus, RepositoryError, StockLineRowRepository,
+    CustomFieldValueType, Invoice, InvoiceRowRepository, InvoiceStatus, RepositoryError,
+    StockLineRowRepository,
 };
 
+use crate::custom_field::CustomFieldPatchProblem;
 use crate::{
     activity_log::{activity_log_entry, log_type_from_invoice_status},
     invoice::get_invoice,
@@ -48,8 +50,27 @@ pub enum UpdateSupplierReturnError {
     CannotIssueSupplierReturnWithNoLines,
     InvoiceLineHasNoStockLine(String), // holds the id of the invalid invoice line
     UnknownPropertyKey(String),
+    /// A customFields patch gives a defined property a value of the wrong
+    /// shape for its value type.
+    InvalidPropertyValue {
+        key: String,
+        expected: CustomFieldValueType,
+    },
     UpdatedReturnDoesNotExist,
     DatabaseError(RepositoryError),
+}
+
+impl From<CustomFieldPatchProblem> for UpdateSupplierReturnError {
+    fn from(problem: CustomFieldPatchProblem) -> Self {
+        match problem {
+            CustomFieldPatchProblem::UnknownKey(key) => {
+                UpdateSupplierReturnError::UnknownPropertyKey(key)
+            }
+            CustomFieldPatchProblem::WrongValueType { key, expected } => {
+                UpdateSupplierReturnError::InvalidPropertyValue { key, expected }
+            }
+        }
+    }
 }
 
 pub fn update_supplier_return(

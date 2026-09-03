@@ -17,6 +17,8 @@ import { Tabs, TabList, TabPanel } from '../../../ui/elements/tabs/Tabs';
 import { EditIcon } from '../../../ui/icons';
 import { createAddAction } from '../../../ui/utils/keyActions';
 import { FormErrorSummary } from '../../../ui/layout/Form/FormErrorSummary';
+import { CustomFieldsEditTab } from '../../../domain/customFields';
+import { runUpdatePatientCustomFields } from '../patientApi';
 import { Patient, type PatientVariables } from './patient.generated';
 import { createPatientEditor } from './patientEditor';
 import { PatientDetailsForm } from './PatientDetailsForm';
@@ -36,14 +38,22 @@ export interface EditPatientModalProps {
   onSaved?: () => void;
 }
 
-type ModalTab = 'details' | 'insurance';
+type ModalTab = 'details' | 'insurance' | 'custom-fields';
 
 /**
  * The patient picker's edit-patient modal (spec/patients S4 allow-edit): a
- * two-tab **Patient details** / **Insurance** dialog reusing the S3 Details
- * form, opened from any surface that holds a patient without navigating away
- * from it — today, the prescription header's picker (PatientSearch's
+ * **Patient details** / **Insurance** / **Custom fields** dialog reusing the S3
+ * Details form and the shared custom-fields editor, opened from any surface
+ * that holds a patient without navigating away from it — the prescription
+ * header's picker and the prescription-request header's (PatientSearch's
  * `onEditPatient`, spec/prescriptions ui-surface S3 § header fields; #1038).
+ *
+ * Custom fields earn a tab here because standing facts about the person —
+ * Category among them — are captured mid-prescribing, and sending the
+ * prescriber to the full patient screen to set one would lose the request they
+ * are in the middle of authoring. The tab owns its own explicit Save (the
+ * patient-specific merge write), independent of the footer's details Save,
+ * exactly as the full patient screen's tab does.
  *
  * Mounted fresh per open (the stocktakes/PrescriptionLineEditModal shape — a
  * call site keys it to the id it's opened for) so the edit state always starts
@@ -116,9 +126,27 @@ export const EditPatientModal: Component<EditPatientModalProps> = props => {
     props.onClose();
   };
 
+  // Custom-fields merge write (spec/patients AC-CF1–CF3) — the same call the
+  // full patient screen's tab makes. Sends only the changed keys; a cleared
+  // field is sent as `null` (never '', which would persist a literal empty
+  // value — AC-CF2). Returns true on success so the tab clears its dirty state.
+  const saveCustomFields = async (
+    patch: Record<string, unknown>
+  ): Promise<boolean> => {
+    const customFields: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(patch)) {
+      customFields[key] = value === '' || value === undefined ? null : value;
+    }
+    const outcome = await runUpdatePatientCustomFields(props.storeId, {
+      id: props.patientId,
+      customFields,
+    });
+    return outcome?.kind === 'ok';
+  };
+
   // The escape hatch to the full patient screen (spec/patients S4: "Save and
   // View patient actions") — for everything this modal doesn't cover
-  // (Programs / Encounters / Vaccinations / Custom fields / Log).
+  // (Programs / Encounters / Vaccinations / Log).
   const viewPatient = () => {
     props.onClose();
     navigate(`/${props.storeId}/dispensary/patients/${props.patientId}`);
@@ -172,6 +200,7 @@ export const EditPatientModal: Component<EditPatientModalProps> = props => {
                 ...(hasInsurance()
                   ? [{ value: 'insurance', label: t('label.insurance') }]
                   : []),
+                { value: 'custom-fields', label: t('label.custom-fields') },
               ]}
             />
             <TabPanel value="details">
@@ -204,6 +233,18 @@ export const EditPatientModal: Component<EditPatientModalProps> = props => {
                 />
               </TabPanel>
             </Show>
+            <TabPanel value="custom-fields">
+              {/* No toolbar on this surface, so the tab shows every configured
+                  field — the full patient screen's tab renders identically. */}
+              <ContentContainer size="form" padded>
+                <CustomFieldsEditTab
+                  scope="patient"
+                  disabled={!editor.canMutate()}
+                  values={node()?.customFields}
+                  onSave={saveCustomFields}
+                />
+              </ContentContainer>
+            </TabPanel>
           </Tabs>
         </Show>
       </Dialog>

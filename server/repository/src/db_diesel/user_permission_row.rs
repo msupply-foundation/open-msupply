@@ -66,10 +66,18 @@ diesel_string_enum! {
         // customer return
         CustomerReturnQuery,
         CustomerReturnMutate,
-        // prescription
+        // prescription (the DISPENSING vertical)
         PrescriptionQuery,
         PrescriptionMutate,
         CancelFinalisedInvoices,
+        // prescription request (the PRESCRIBER's vertical, upstream of
+        // dispensing — spec/prescription-requests). Its own pair rather than
+        // dispensing's: the two verticals are separate screens for separate
+        // jobs, and a clinician who prescribes need not be able to dispense.
+        // Reaches a site from mSupply slot 205, "Restrict to prescriptions"
+        // (`apis::permissions`).
+        PrescriptionRequestQuery,
+        PrescriptionRequestMutate,
         // purchase orders
         PurchaseOrderQuery,
         PurchaseOrderMutate,
@@ -131,6 +139,7 @@ impl PermissionType {
         use strum::IntoEnumIterator;
         PermissionType::iter().filter(|p| !matches!(p, PermissionType::Unknown(_)))
     }
+
 }
 
 impl UserPermissionRow {

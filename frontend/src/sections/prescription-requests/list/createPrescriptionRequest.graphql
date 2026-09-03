@@ -1,0 +1,13 @@
+# Creation (spec/prescription-requests/contract.md § creation): patient is the
+# one required field; omitting prescriptionDatetime stores the creation
+# moment. Rejections are generic (contract § wire traps) and show in-dialog.
+mutation insertPrescriptionRequest(
+  $storeId: String!
+  $input: InsertPrescriptionRequestInput!
+) {
+  insertPrescriptionRequest(storeId: $storeId, input: $input) {
+    ... on PrescriptionRequestNode {
+      id
+    }
+  }
+}

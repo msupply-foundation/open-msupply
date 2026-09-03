@@ -4,7 +4,8 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::{
-    generic_errors::CannotDeleteInvoiceWithLines, types::DeleteResponse as GenericDeleteResponse,
+    generic_errors::{CannotDeleteGeneratedDispensation, CannotDeleteInvoiceWithLines},
+    types::DeleteResponse as GenericDeleteResponse,
 };
 
 use async_graphql::*;
@@ -61,6 +62,7 @@ pub enum DeletePrescriptionErrorInterface {
     RecordNotFound(RecordNotFound),
     CannotEditInvoice(CannotEditInvoice),
     CannotDeleteInvoiceWithLines(CannotDeleteInvoiceWithLines),
+    CannotDeleteGeneratedDispensation(CannotDeleteGeneratedDispensation),
 }
 
 fn map_error(error: ServiceError) -> Result<DeletePrescriptionErrorInterface> {
@@ -78,6 +80,13 @@ fn map_error(error: ServiceError) -> Result<DeletePrescriptionErrorInterface> {
             return Ok(DeletePrescriptionErrorInterface::CannotEditInvoice(
                 CannotEditInvoice {},
             ))
+        }
+        ServiceError::CannotDeleteGeneratedDispensation => {
+            return Ok(
+                DeletePrescriptionErrorInterface::CannotDeleteGeneratedDispensation(
+                    CannotDeleteGeneratedDispensation,
+                ),
+            )
         }
         // Standard Graphql Errors
         ServiceError::NotThisStoreInvoice | ServiceError::NotAPrescriptionInvoice => {

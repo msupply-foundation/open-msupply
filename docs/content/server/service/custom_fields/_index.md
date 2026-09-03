@@ -78,6 +78,26 @@ Note the value rides the **whole host-record row** over v7, so concurrent edits 
 
 **Forwards compatibility on read.** When a value blob is rendered, the resolver filters it to keys that are defined and visible in `custom_field` for that table. A remote therefore silently ignores values for custom fields it doesn't yet know about — so a newer central can start sending a value before every remote understands it, without breaking the older remote.
 
+## OMS-authored custom fields (`Builtin`)
+
+The custom fields above all exist because OG has a field to map. `prescription_request` is the first record kind with no 4D counterpart at all. So there is a third kind: `Builtin`. It is seeded as deployment defaults. Code owns the key, value type, name and options. The deployment owns only `display_mode` - it hides what it doesn't want, and that choice survives later releases (display mode is defaulted on create only). Distribution is unchanged: central-authored, v7 to remotes, never seeded on a remote.
+
+Seeding runs from two call sites: the sync cycle gated on `is_central_server()`, and server startup for a standalone central. A synced COMS only learns it's central after its first sync, while a standalone central never runs the sync loop at all, so neither call site alone covers both.
+
+> **Why a new kind, and the cost** \
+> `Standard` can't be told apart from the admin-configured fields a future create-UI will mint, and the seeder needs to recognise its own fields vs user ones.
+
+## What a write may store
+
+`custom_fields` is a JSON blob with no column types behind it, so the write paths carry the type enforcement. Every API patch goes through `check_custom_fields_patch`, which reports the first of two problems and rejects:
+
+- an **unknown key** — one the scope doesn't define, doesn't show, or defines with a value type this build can't parse (`value_types_for_scope` drops those, so a field we couldn't validate can't be written on trust);
+- a **wrong value type** — a value whose JSON kind isn't what the field's type means (`value_matches_type`). A `null` clears the key, so it passes whatever the type.
+
+The check is the JSON kind and no more: no date parsing, no integrality test, no option-membership lookup. It protects the readers — each of which assumes its type's shape — rather than making the blob a schema. Each caller maps the two onto its own error enum (`UnknownPropertyKey` / `InvalidPropertyValue` on the invoice updates, `UnknownCustomFieldKey` / `InvalidCustomFieldValue` on the patient and prescription-request ones), all of them bad-user-input.
+
+**API writes only.** Sync translators write the blob directly and are deliberately not checked: a rejected row would stall the sync buffer, and the readers already show nothing for a value whose shape doesn't match, so a legacy oddity is inert rather than dangerous.
+
 ## Currently Implemented
 
 ### Patient Custom fields
@@ -130,3 +150,18 @@ OG's `transaction_category` table is one pool of categories partitioned by a 3-c
 > Patients have a dedicated `updatePatientCustomFields` mutation while invoices deliberately don't. The per-type invoice update endpoints already own the full validation stack — store/type/permission checks and the status gating above — so a standalone custom fields endpoint would re-implement all of it per type. Patients have no equivalent single update service to ride (patient edits flow through the programs/document system) and no status to gate, so a dedicated mutation is the simpler shape there. Both paths share the same patch helpers (`merge_patch` / key validation in `service/src/custom_field`), so the write semantics stay identical — only the transport differs.
 
 > **First OG push-back.** Unlike every custom field above, the categories **are pushed to OG** (`category_ID`/`category2_ID` on the v5 invoice push): invoices are *store* data OMS actively authors, so the "values are never pushed on to OG" rule is relaxed — OG reports keep seeing categories on OMS-created invoices. Only the category fields round-trip.
+
+### Prescription request fields
+
+The first `Builtin` set (see above) — four fields on the `prescription_request` scope, present on every deployment with no configuration:
+
+| Key | Scope | Value type | Seeded display mode |
+| --- | ----- | ---------- | ------------------- |
+| `prescription_request_weight` | `prescription_request` | `Real` | `Prominent` (toolbar) |
+| `prescription_request_patient_unit` | `prescription_request` | `Text` | `Prominent` (toolbar) |
+| `prescription_request_occupation` | `prescription_request` | `Text` | `Visible` (tab) |
+| `patient_category` | `patient` | `MultiOption` | `Visible` (tab) |
+
+`patient_category` describes the person rather than the script, so it is scoped to `patient` and rides `name.custom_fields`: a flat vocabulary of `pregnant`, `lactating`, `under_5`, `disabled`, `destitute`, `other` (option ids are `<field_key>__<option_key>`). It is `MultiOption` because a patient is routinely in several of these at once. `other` has no free-text companion — adding one means a second field.
+
+None of the four is read by OMS code; they're captured, displayed and printed. A value that ever feeds a calculation, a shipped report or a validation belongs in a real column instead — the JSON blob has no type enforcement and no required constraint.

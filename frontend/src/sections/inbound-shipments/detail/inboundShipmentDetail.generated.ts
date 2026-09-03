@@ -705,6 +705,7 @@ export type BatchInboundShipmentVariables = {
     colour?: string | null;
     requisitionId?: string | null;
     purchaseOrderId?: string | null;
+    prescriptionRequestId?: string | null;
     insertLinesFromPurchaseOrder?: boolean | null;
   }> | null;
     insertInboundShipmentLines?: Array<{
@@ -864,6 +865,7 @@ export type BatchInboundShipmentExternalVariables = {
     colour?: string | null;
     requisitionId?: string | null;
     purchaseOrderId?: string | null;
+    prescriptionRequestId?: string | null;
     insertLinesFromPurchaseOrder?: boolean | null;
   }> | null;
     insertInboundShipmentLines?: Array<{

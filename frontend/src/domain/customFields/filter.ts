@@ -1,3 +1,5 @@
+import { filterQueryIds, type CustomFieldDef } from './parse';
+
 // The custom-field LIST FILTER logic (spec/ui-standards/custom-fields › lists).
 // Pure and node-testable. Custom-field filter values are a UI vocabulary, typed
 // per value-kind, that this module expands to the server's `dynamicFilter` AST
@@ -12,6 +14,11 @@ export type CustomFieldFilterValue =
   | { kind: 'text'; contains: string }
   | { kind: 'boolean'; value: boolean }
   | { kind: 'option'; optionIds: string[] }
+  // The ids TICKED in the control, and only those: the query expansion —
+  // down to descendants and up to ancestors — happens at condition-build
+  // time below, so ticking a child never lights up its parent in the
+  // control, and the URL-backed state stays what the user actually chose.
+  | { kind: 'multiOption'; optionIds: string[] }
   | { kind: 'number'; min?: number; max?: number }
   | { kind: 'date'; from?: string; to?: string };
 
@@ -25,7 +32,11 @@ export type CustomFieldFilterState = Record<
 
 // One value → its dynamicFilter condition node(s). A range expands to two nodes
 // (>= min, <= max); a value carrying no bound contributes nothing.
-const conditionsFor = (key: string, v: CustomFieldFilterValue): unknown[] => {
+const conditionsFor = (
+  key: string,
+  v: CustomFieldFilterValue,
+  def: CustomFieldDef | undefined
+): unknown[] => {
   const cf = (filter: unknown) => ({ CustomField: { key, filter } });
   switch (v.kind) {
     case 'text':
@@ -34,6 +45,17 @@ const conditionsFor = (key: string, v: CustomFieldFilterValue): unknown[] => {
       return [cf({ Boolean: { Equal: v.value } })];
     case 'option':
       return v.optionIds.length ? [cf({ Option: { In: v.optionIds } })] : [];
+    case 'multiOption': {
+      // Overlap against the chosen ids expanded BOTH ways: down, because a
+      // record may store a child of what was chosen; up, because a record
+      // storing a parent minimally holds every child of it, so filtering on a
+      // child must still find it (spec/ui-standards/custom-fields › lists).
+      // Without the definition there is no tree to walk, so the chosen ids
+      // stand as they are — a narrower filter, never a wrong one.
+      if (!v.optionIds.length) return [];
+      const ids = def ? filterQueryIds(def.options, v.optionIds) : v.optionIds;
+      return ids.length ? [cf({ MultiOption: { In: ids } })] : [];
+    }
     case 'number': {
       const out: unknown[] = [];
       if (v.min !== undefined)
@@ -55,11 +77,15 @@ const conditionsFor = (key: string, v: CustomFieldFilterValue): unknown[] => {
 // }` of CustomField nodes), or undefined when nothing is set (a no-op). Every
 // condition ANDs with the others and with the rest of the query's filter.
 export const buildCustomFieldDynamicFilter = (
-  state: CustomFieldFilterState | undefined
+  state: CustomFieldFilterState | undefined,
+  // The scope's definitions — the option hierarchy a MULTI_OPTION condition is
+  // expanded against. The list already reads them to render its filters.
+  defs?: CustomFieldDef[]
 ): unknown | undefined => {
   if (!state) return undefined;
+  const defByKey = new Map((defs ?? []).map(def => [def.key, def]));
   const conditions = Object.entries(state).flatMap(([key, v]) =>
-    v ? conditionsFor(key, v) : []
+    v ? conditionsFor(key, v, defByKey.get(key)) : []
   );
   return conditions.length ? { And: conditions } : undefined;
 };

@@ -69,6 +69,9 @@ pub enum DeletePrescriptionError {
         error: DeleteStockOutLineError,
     },
     NotAPrescriptionInvoice,
+    /// The invoice was generated from a prescription request — see
+    /// [`validate`].
+    CannotDeleteGeneratedDispensation,
 }
 
 impl From<RepositoryError> for DeletePrescriptionError {

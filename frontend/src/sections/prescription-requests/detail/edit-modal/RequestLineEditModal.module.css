@@ -1,0 +1,9 @@
+/* The abbreviation entry holds a few characters, so it keeps its compact width
+   and hands the rest of the directions row to the item-default-directions
+   select (which grows to fill it) — the prescription line editor's directions
+   row, rule for rule. Two-class selector so it deterministically beats
+   FormRow's own single-class equal-share rule. Below the row's min item width
+   the pair wraps to stacked, FormRow's own behaviour. */
+.directionsEntryRow > .abbreviationField {
+  flex: 0 1 var(--input-max-compact);
+}

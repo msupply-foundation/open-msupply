@@ -210,6 +210,13 @@ export type InboundShipmentsVariables = {
     equalAnyOrNull?: Array<string> | null;
     notEqualAll?: Array<string> | null;
   } | null;
+    prescriptionRequestId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
     purchaseOrderNumber?: {
     equalTo?: number | null;
     equalAny?: Array<number> | null;

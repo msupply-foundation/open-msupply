@@ -100,7 +100,7 @@ export const NamesList: Component<NamesListProps> = props => {
       storeId: params.storeId,
       role: props.role,
       state: query(),
-      dynamicFilter: buildCustomFieldDynamicFilter(query().cf),
+      dynamicFilter: buildCustomFieldDynamicFilter(query().cf, cfDefs()),
     })
   );
 

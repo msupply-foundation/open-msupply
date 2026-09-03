@@ -26,6 +26,7 @@ export type InsertInboundShipmentVariables = {
     colour?: string | null;
     requisitionId?: string | null;
     purchaseOrderId?: string | null;
+    prescriptionRequestId?: string | null;
     insertLinesFromPurchaseOrder?: boolean | null;
   };
 };
@@ -61,6 +62,7 @@ export type InsertInboundShipmentExternalVariables = {
     colour?: string | null;
     requisitionId?: string | null;
     purchaseOrderId?: string | null;
+    prescriptionRequestId?: string | null;
     insertLinesFromPurchaseOrder?: boolean | null;
   };
 };

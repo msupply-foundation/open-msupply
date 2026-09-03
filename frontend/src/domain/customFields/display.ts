@@ -2,8 +2,11 @@ import { formatNumber } from '../../intl/formatNumber';
 import { localisedDate } from '../../intl/formatDateTime';
 import { t } from '../../intl';
 import {
-  customFieldValue,
+  inConfiguredOrder,
+  multiOptionIds,
   resolveOptionName,
+  topMostIds,
+  typedCustomFieldValue,
   type ParsedCustomField,
 } from './parse';
 
@@ -26,7 +29,10 @@ export const customFieldDisplayString = (
   field: ParsedCustomField,
   raw: unknown
 ): string => {
-  const value = customFieldValue(raw, field.def.key);
+  // Shape-matched or nothing: a stored value that isn't what its value type
+  // means reads as unset rather than as a coerced guess (parse ›
+  // typedCustomFieldValue).
+  const value = typedCustomFieldValue(field, raw);
   if (value == null || value === '') return '';
   switch (field.kind) {
     case 'boolean':
@@ -39,6 +45,18 @@ export const customFieldDisplayString = (
       return localisedDate(String(value));
     case 'option':
       return resolveOptionName(field.def, String(value));
+    case 'multiOption': {
+      // The TOP-MOST stored ids only: a stored parent stands for its subtree,
+      // so it reads as the parent — the shorter true statement, and one that
+      // doesn't rewrite itself when an option is added beneath it. Configured
+      // order, comma-joined, as the value would be read aloud.
+      const ids = multiOptionIds(value);
+      const names = inConfiguredOrder(
+        field.def.options,
+        topMostIds(field.def.options, ids)
+      ).map(id => resolveOptionName(field.def, id));
+      return names.join(', ');
+    }
     case 'text':
       return String(value);
     case 'unsupported':
@@ -60,7 +78,7 @@ export const customFieldFormText = (
   field: ParsedCustomField,
   raw: unknown
 ): string => {
-  const value = customFieldValue(raw, field.def.key);
+  const value = typedCustomFieldValue(field, raw);
   if (value == null || value === '') return EMPTY_FIELD_VALUE;
   if (field.kind === 'boolean')
     return value ? t('messages.yes') : t('messages.no');

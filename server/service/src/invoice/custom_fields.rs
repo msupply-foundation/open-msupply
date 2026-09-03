@@ -1,7 +1,7 @@
 use repository::{InvoiceType, RepositoryError, StorageConnection};
 
-use crate::custom_field::check_unknown_custom_field_key;
 pub(crate) use crate::custom_field::apply_custom_fields_patch;
+use crate::custom_field::{check_custom_fields_patch, CustomFieldPatchProblem};
 
 /// `custom_field_scope.scope` scope an invoice type's custom_fields are
 /// configured under — the UI record kind the type renders as. `None` for types
@@ -23,16 +23,20 @@ pub fn invoice_custom_field_scope(invoice_type: &InvoiceType) -> Option<&'static
 
 /// Validate a `custom_fields` patch against the invoice type's visible scope:
 /// resolves the type's `scope` and delegates to the generic
-/// [`check_unknown_custom_field_key`]. A type with no scope allows no keys.
-pub fn check_unknown_custom_fields_key(
+/// [`check_custom_fields_patch`]. A type with no scope allows no keys.
+pub fn check_invoice_custom_fields_patch(
     connection: &StorageConnection,
     invoice_type: &InvoiceType,
     patch: &serde_json::Map<String, serde_json::Value>,
-) -> Result<Option<String>, RepositoryError> {
+) -> Result<Option<CustomFieldPatchProblem>, RepositoryError> {
     let Some(scope) = invoice_custom_field_scope(invoice_type) else {
-        return Ok(patch.keys().next().cloned());
+        return Ok(patch
+            .keys()
+            .next()
+            .cloned()
+            .map(CustomFieldPatchProblem::UnknownKey));
     };
-    check_unknown_custom_field_key(connection, scope, patch)
+    check_custom_fields_patch(connection, scope, patch)
 }
 
 #[cfg(test)]
@@ -40,8 +44,8 @@ mod test {
     use repository::mock::MockDataInserts;
     use repository::test_db::setup_all;
     use repository::{
-        InvoiceType, CustomFieldDisplayMode, CustomFieldKind, CustomFieldScopeRow,
-        CustomFieldScopeRowRepository, CustomFieldRow, CustomFieldRowRepository, CustomFieldValueType,
+        CustomFieldDisplayMode, CustomFieldKind, CustomFieldRow, CustomFieldRowRepository,
+        CustomFieldScopeRow, CustomFieldScopeRowRepository, CustomFieldValueType, InvoiceType,
     };
     use serde_json::json;
 
@@ -55,9 +59,9 @@ mod test {
     }
 
     #[actix_rt::test]
-    async fn check_unknown_custom_fields_key_validates_scope() {
+    async fn check_invoice_custom_fields_patch_validates_scope_and_shape() {
         let (_, connection, _, _) = setup_all(
-            "check_unknown_custom_fields_key_validates_scope",
+            "check_invoice_custom_fields_patch_validates_scope",
             MockDataInserts::none(),
         )
         .await;
@@ -84,7 +88,7 @@ mod test {
 
         // Known key for the type's scope passes.
         assert_eq!(
-            check_unknown_custom_fields_key(
+            check_invoice_custom_fields_patch(
                 &connection,
                 &InvoiceType::InboundShipment,
                 &patch(&[("inbound_shipment_category", json!("CAT_1"))]),
@@ -94,33 +98,63 @@ mod test {
         );
         // Unknown key is reported.
         assert_eq!(
-            check_unknown_custom_fields_key(
+            check_invoice_custom_fields_patch(
                 &connection,
                 &InvoiceType::InboundShipment,
                 &patch(&[("not_a_custom_field", json!("x"))]),
             )
             .unwrap(),
-            Some("not_a_custom_field".to_string())
+            Some(CustomFieldPatchProblem::UnknownKey(
+                "not_a_custom_field".to_string()
+            ))
         );
         // Another scope's key is unknown for this type.
         assert_eq!(
-            check_unknown_custom_fields_key(
+            check_invoice_custom_fields_patch(
                 &connection,
                 &InvoiceType::OutboundShipment,
                 &patch(&[("inbound_shipment_category", json!("CAT_1"))]),
             )
             .unwrap(),
-            Some("inbound_shipment_category".to_string())
+            Some(CustomFieldPatchProblem::UnknownKey(
+                "inbound_shipment_category".to_string()
+            ))
         );
         // Types without a custom_fields scope allow no keys.
         assert_eq!(
-            check_unknown_custom_fields_key(
+            check_invoice_custom_fields_patch(
                 &connection,
                 &InvoiceType::Repack,
                 &patch(&[("inbound_shipment_category", json!("CAT_1"))]),
             )
             .unwrap(),
-            Some("inbound_shipment_category".to_string())
+            Some(CustomFieldPatchProblem::UnknownKey(
+                "inbound_shipment_category".to_string()
+            ))
+        );
+        // A known key given the wrong SHAPE is rejected too — an OPTION holds
+        // an id, so a number is not a value of it.
+        assert_eq!(
+            check_invoice_custom_fields_patch(
+                &connection,
+                &InvoiceType::InboundShipment,
+                &patch(&[("inbound_shipment_category", json!(42))]),
+            )
+            .unwrap(),
+            Some(CustomFieldPatchProblem::WrongValueType {
+                key: "inbound_shipment_category".to_string(),
+                expected: CustomFieldValueType::Option,
+            })
+        );
+        // A null clears the key, whatever the type.
+        assert_eq!(
+            check_invoice_custom_fields_patch(
+                &connection,
+                &InvoiceType::InboundShipment,
+                &patch(&[("inbound_shipment_category", serde_json::Value::Null)]),
+            )
+            .unwrap(),
+            None
         );
     }
 

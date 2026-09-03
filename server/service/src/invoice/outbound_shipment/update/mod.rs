@@ -1,8 +1,8 @@
 use chrono::{DateTime, NaiveDate, Utc};
 use repository::{
-    Invoice, InvoiceLine, InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository,
-    InvoiceStatus, LocationMovementRowRepository, RepositoryError, StockLineRowRepository,
-    TransactionError,
+    CustomFieldValueType, Invoice, InvoiceLine, InvoiceLineRowRepository, InvoiceRow,
+    InvoiceRowRepository, InvoiceStatus, LocationMovementRowRepository, RepositoryError,
+    StockLineRowRepository, TransactionError,
 };
 
 pub mod generate;
@@ -12,6 +12,7 @@ use generate::generate;
 use validate::validate;
 
 use crate::activity_log::{activity_log_entry, log_type_from_invoice_status};
+use crate::custom_field::CustomFieldPatchProblem;
 use crate::invoice::outbound_shipment::update::generate::GenerateResult;
 use crate::invoice::query::get_invoice;
 use crate::invoice_line::stock_out_line::{
@@ -63,6 +64,12 @@ pub enum UpdateOutboundShipmentError {
     ShippingMethodDoesNotExist,
     /// A customFields patch key is not a visible outbound shipment property.
     UnknownPropertyKey(String),
+    /// A customFields patch gives a defined property a value of the wrong
+    /// shape for its value type.
+    InvalidPropertyValue {
+        key: String,
+        expected: CustomFieldValueType,
+    },
     // Error applies to unallocated lines with above zero quantity
     CanOnlyChangeToAllocatedWhenNoUnallocatedLines(Vec<InvoiceLine>),
     CannotHaveEstimatedDeliveryDateBeforeShippedDate,
@@ -79,6 +86,19 @@ pub enum UpdateOutboundShipmentError {
         line_id: String,
         error: DeleteStockOutLineError,
     },
+}
+
+impl From<CustomFieldPatchProblem> for UpdateOutboundShipmentError {
+    fn from(problem: CustomFieldPatchProblem) -> Self {
+        match problem {
+            CustomFieldPatchProblem::UnknownKey(key) => {
+                UpdateOutboundShipmentError::UnknownPropertyKey(key)
+            }
+            CustomFieldPatchProblem::WrongValueType { key, expected } => {
+                UpdateOutboundShipmentError::InvalidPropertyValue { key, expected }
+            }
+        }
+    }
 }
 
 type OutError = UpdateOutboundShipmentError;
