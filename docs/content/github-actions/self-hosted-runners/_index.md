@@ -166,12 +166,57 @@ Two roles, and a lane carries exactly one:
 | label | what runs there |
 |---|---|
 | `build` | the image build and its planning job — CPU-bound, ~19 minutes cold |
-| `deploy` | `docker compose up` against the develop environment — about a minute |
+| `deploy` | `docker compose up` against a deployed environment — about a minute |
 
 They are separate because the deploy job must land on the machine hosting the
-develop environment, and that is a different box. Nothing in the deploy job
-assumes a locally built image: it logs in and pulls by tag, so the two roles
-never need to share a machine.
+environment, and that is a different box. Nothing in the deploy job assumes a
+locally built image: it logs in and pulls by tag, so the two roles never need to
+share a machine.
+
+### The deploy box hosts more than one thing
+
+A `deploy` lane runs the develop environment *and* every per-PR preview
+(`docker-pr-preview.yaml`). Each preview is a compose project of its own —
+container, network and volumes — so they cost real resources on that box:
+
+- **RAM**: each preview is one container running the server *and* its own
+  bundled postgres. Budget as you would for a small server per open, labelled
+  PR, not per lane.
+- **Disk**: a per-commit image per push, plus a database per preview. The
+  teardown prunes dangling images when a preview goes, but a box with many
+  long-lived labelled PRs still grows.
+- **Ports**: previews publish on a range, `PREVIEW_PORT_BASE` to
+  `PREVIEW_PORT_BASE + PREVIEW_PORT_COUNT - 1` (default 18000–18099). That range
+  must be reachable by whoever is meant to test the previews. Allocation only
+  looks at what *docker* has bound, so nothing else on the box should use it.
+
+Repository variables that configure this:
+
+| variable | default | what it does |
+|---|---|---|
+| `PREVIEW_PORT_BASE` | `18000` | first port in the allocation range |
+| `PREVIEW_PORT_COUNT` | `100` | how many ports the range holds |
+| `PREVIEW_URL_TEMPLATE` | `http://localhost:{port}` | how a preview is addressed. `{port}` and `{pr}` are substituted |
+| `PREVIEW_REFERENCE_FILE` | `e2e` | which dataset a new preview is seeded from |
+
+Teardown also deletes the PR's GitHub environment, which needs
+**Administration: write** — a scope `GITHUB_TOKEN` does not have. It uses the
+same `tmf-ci-bot` App as the JIT runner config above rather than a PAT, so
+nothing new needs provisioning; if the App lacks that permission the teardown
+still succeeds and the empty environment simply lingers in settings.
+
+`PREVIEW_URL_TEMPLATE` is a template rather than a hostname because the two
+shapes are not alike. A published port is `http://ci.example.com:{port}`; the
+wildcard-subdomain routing this is built to move to is
+`https://pr-{pr}.preview.example.com`, which has no port in it at all. Switching
+between them is then a variable change, not a workflow edit.
+
+> **One `deploy` lane per box, unless you add a lock.** Preview ports are
+> allocated by looking at what is currently bound and taking the lowest free
+> one. That is safe while a single lane means allocations happen one at a time.
+> Two lanes on the same box can allocate the same port simultaneously, and the
+> second `compose up` fails on the binding. Adding a second lane means putting
+> an `flock` around the allocation step first.
 
 **This runbook sets up a build box.** Every lane on it is a `build` lane, and
 that is all the rest of this page configures.
