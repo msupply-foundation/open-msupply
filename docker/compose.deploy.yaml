@@ -1,4 +1,11 @@
-# Deployment target for continuous deployment from develop.
+# The single definition of a deployed omSupply server.
+#
+# One file, several targets. `docker-deploy.yaml` supplies the values; the
+# topology - one service, three mount points - is identical for every one of
+# them, so the difference between the develop environment and a per-PR preview
+# is entirely interpolation. OMS_PROJECT is what separates them: compose
+# namespaces named volumes by project, so two projects on one daemon share
+# nothing.
 #
 # Defaults to a dev/demo shape: the postgres-flavoured image bundling its own
 # postgres inside the container. That is convenient - one container, no
@@ -6,17 +13,23 @@
 # the wrong shape for anything holding data you would miss.
 #
 # Pointing it at an external postgres instead needs no second file and no
-# override layer: set OMS_ENTRYPOINT and the PG_* variables below. The topology
-# is identical either way - one service, three mount points - so the difference
-# is entirely values, and compose interpolation covers it. Values come from the
-# deploy job, which reads them from the `develop` GitHub environment.
+# override layer: set OMS_ENTRYPOINT and the PG_* variables below.
+#
+# Every default below reproduces the develop environment exactly, so a bare
+# `docker compose -f docker/compose.deploy.yaml ...` with only OMS_IMAGE set
+# behaves as it always has.
 
-name: omsupply-develop
+name: ${OMS_PROJECT:-omsupply-develop}
 
 services:
   server:
     image: ${OMS_IMAGE:?OMS_IMAGE must be set}
-    container_name: omsupply-develop
+    # Pinned rather than left to compose's `<project>-server-1`, because it is
+    # the stable handle everything else addresses this container by: the deploy
+    # job's health inspection, the teardown, and - once previews move behind a
+    # reverse proxy - the hostname-to-upstream mapping, which is what lets that
+    # proxy hold one static route instead of a generated one per PR.
+    container_name: ${OMS_PROJECT:-omsupply-develop}
     restart: unless-stopped
     ports:
       - "${OMS_PORT:-8000}:8000"
@@ -42,6 +55,31 @@ services:
       APP__DATABASE__USERNAME: ${PG_USER:-postgres}
       APP__DATABASE__PASSWORD: ${PG_PASSWORD:-password}
       APP__DATABASE__DATABASE_NAME: ${PG_DATABASE:-omsupply-database}
+
+      # Seeding, and the reason it is passed per deploy rather than baked in:
+      # `initialise-from-export` starts by DROPPING AND RECREATING the database
+      # (server/cli/src/cli.rs, Action::InitialiseFromExport). Left set, it would
+      # wipe the deployment on every redeploy. The caller therefore passes it
+      # only when it knows the database does not exist yet - see the `allocate`
+      # job in docker-pr-preview.yaml - and passes nothing on every deploy after
+      # that, so the server migrates the existing data instead.
+      #
+      # It also disables sync unconditionally, so a seeded deployment cannot
+      # reach a central server.
+      LOAD_REFERENCE_FILE: ${OMS_LOAD_REFERENCE_FILE:-}
+      # Only meaningful alongside the above, and gated the same way: entry.sh
+      # runs `refresh-dates` whenever this is true, reference file or not, so
+      # left on it would shift a live deployment's dates forward on every
+      # redeploy. It exists because a dataset is a snapshot of whenever it was
+      # exported, and stale dates make a preview misleading.
+      SHOULD_REFRESH_DATES: ${OMS_REFRESH_DATES:-}
+
+      # mDNS discovery is pointless on a server reached over a published port,
+      # and is noise on a box running many stacks at once. `Auto` is the enum's
+      # own #[default] (server/service/src/settings.rs), so the fallback is a
+      # no-op rather than a new opinion - it is spelled out because an empty
+      # string here would fail to deserialise as a DiscoveryMode.
+      APP__SERVER__DISCOVERY: ${OMS_DISCOVERY:-Auto}
 
     volumes:
       # A bare name is a named volume; a host path is a bind mount. That is the
