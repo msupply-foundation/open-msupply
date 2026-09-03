@@ -51,7 +51,9 @@ Non-release tags are typically created automatically by the nightly build proces
 
 ### How it works
 
-The build itself is defined once, in `docker-image.yaml`, which has no triggers of its own — it is called by `docker-release.yaml` (tags) and `docker-cd.yaml` (continuous deployment). Each caller passes a matrix, a version, and whether it wants floating aliases and dev images; the shared build has no idea which one called it.
+The build itself is defined once, in `docker-image.yaml`, which has no triggers of its own — it is called by `docker-release.yaml` (tags), `docker-cd.yaml` (continuous deployment to develop) and `docker-pr-preview.yaml` (per-PR previews). Each caller passes a matrix, a version, and whether it wants floating aliases and dev images; the shared build has no idea which one called it.
+
+The *deploy* is defined once in the same way, in `docker-deploy.yaml`: pull an immutable tag, `docker compose up --wait`, report health to a GitHub environment. `docker-cd.yaml` and `docker-pr-preview.yaml` both call it, so `develop` and a preview come up through identical code.
 
 1. **Classify** (`docker-release.yaml`) — decides from the tag whether it is a release or a nightly, and produces the variant matrix and floating alias prefix. The CD workflow has an equivalent `plan` job that just names the commit.
 2. **Image** (1, 2 or 4 parallel jobs) — one `docker buildx build` per (db, arch). Everything is compiled inside the Dockerfile: the server, the old UI, and the new frontend. Release tags additionally build the `-dev` images.
@@ -77,10 +79,32 @@ Images are pushed to `msupplyfoundation/omsupply` with the naming convention:
 | `latest[-{db}]`              | `latest`, `latest-postgres` | Repointed on every release tag     |
 | `latest-develop[-{db}]`      | `latest-develop`            | Repointed on every develop nightly |
 | `latest-rc[-{db}]`           | `latest-rc-postgres`        | Repointed on every RC nightly      |
+| `pr-{number}-{sha}-{db}-{arch}` | `pr-470-abc1234-postgres-amd64` | Every push to a PR labelled `deploy` |
 
 Dev images (which include Node/Yarn and the client source for frontend development) are only built for amd64 on release tags.
 
 The `latest*` floating tags always point at **amd64** images, and the bare tags (`latest`, `latest-develop`, `latest-rc`) are the **sqlite** flavour. If more than one RC branch (or more than one develop-family branch) receives commits on the same day, the nightly build tags each of them and the shared floating tag ends up on whichever build pushed last.
+
+### Per-PR preview deployments
+
+Add the **`deploy`** label to a pull request and every push to it builds an image and brings up a server of its own. Remove the label, or close the PR, and the server and its database are removed. A comment on the PR carries the link and is rewritten on each push, so it always points at what is currently running.
+
+Each preview is a compose project of its own (`omsupply-pr-<number>`), which is what keeps them isolated: compose namespaces volumes by project, so no two previews — or a preview and the develop environment — share a database. Ports are allocated from a range on the deploy box and stay stable for the life of the PR, and how a preview is addressed is set by the `PREVIEW_URL_TEMPLATE` repository variable (`{port}` and `{pr}` are substituted) rather than fixed in the workflow.
+
+A preview never attaches to an external database, whatever the repository is configured with: it always gets the bundled postgres in volumes namespaced by its own compose project. That is deliberate rather than incidental — a preview is destroyed with `docker compose down -v`, so anything it were attached to would go with it.
+
+**The database persists across pushes.** It is seeded once, on the first deploy, and left alone after that. Set a preview up how you need it, share the link, and pushing more commits will not wipe it — the server migrates the existing data instead, which incidentally means every push after the first tests that PR's migrations against data that already exists.
+
+Two situations need a clean database, and both are the same fix — run the workflow manually with `reseed`, or remove and re-add the label:
+
+- a migration that was added and then dropped again leaves the database ahead of the binary, and the server will refuse to start
+- a first deploy that failed part-way through leaves a database that looks seeded but is not
+
+Previews cannot sync: initialising from a reference dataset disables sync unconditionally, so a preview can never reach a central server.
+
+Preview images are swept from Docker Hub after 7 days rather than the usual 30 — one push makes one tag, and a tag is dead as soon as the next push supersedes it.
+
+Previews only work for branches in this repository. A PR from a fork gets a read-only token and no secrets, so the workflow says so and stops rather than failing at the registry twenty minutes later.
 
 ### Auto-updating demo/test servers (Watchtower)
 
@@ -194,15 +218,15 @@ swaps it for the `dev` profile:
 docker buildx build --build-arg CARGO_PROFILE=debug --target postgres -t <tag> .
 ```
 
-What changes, mechanically: the optimisation pass is skipped, so the compile is faster and the binary slower; the output is not stripped, where release sets `strip = true` in `server/Cargo.toml`; and debug assertions and integer-overflow checks are on. That last one is arguably a feature for a throwaway build - an overflow that would silently wrap in production panics instead.
+What changes, mechanically: the optimisation pass is skipped, so the compile is faster and the binary slower; the output is not stripped, where release sets `strip = true` in `server/Cargo.toml`; and debug assertions and integer-overflow checks are on. That last one is arguably a feature for a preview - an overflow that would silently wrap in production panics instead.
 
-**Nothing in CI builds `debug`.** Release tags, nightlies and CD to `develop` all build `release`, and the `profile` input on `docker-image.yaml` exists so a future caller can choose otherwise. For now debug is reached by building locally, or by picking it at `dockerise.sh`'s prompt. Never benchmark a debug image or quote its size.
+PR previews build `debug` by default, since a preview is the containerised equivalent of checking a PR out and running it, which is already a debug build. Everything that ships - release tags, nightlies, CD to `develop` - builds `release`, and nothing changes that. Never benchmark a preview or quote its image size.
 
 #### What the deltas actually are
 
 Not yet measured. The job summary of each image build records the profile, image
-size and build time, so the numbers accumulate as builds run; for both halves on
-one commit, build it each way and compare the two summaries.
+size and build time, so the numbers accumulate as previews run; to get both
+halves on one commit, dispatch the *PR preview* workflow with `profile: release`.
 
 The one thing worth knowing before reading those numbers is the baseline. A
 *stripped release* `remote_server` is already large, because `rust-embed` bakes
