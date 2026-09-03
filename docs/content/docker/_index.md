@@ -167,7 +167,7 @@ server with `docker run ... cargo build`, then `docker build` to assemble) has
 been folded into the Dockerfile's stage graph, which is drawn at the top of that
 file.
 
-Interactively, with prompts for architecture, database and pushing:
+Interactively, with prompts for architecture, database, cargo profile and pushing:
 
 ```bash
 yarn dockerise
@@ -184,6 +184,41 @@ yarn dockerise
 
 BuildKit only runs the stages a target needs, so `--target sqlite` never
 compiles the Postgres binaries.
+
+### Debug builds
+
+The server compile defaults to cargo's `release` profile. `CARGO_PROFILE=debug`
+swaps it for the `dev` profile:
+
+```bash
+docker buildx build --build-arg CARGO_PROFILE=debug --target postgres -t <tag> .
+```
+
+What changes, mechanically: the optimisation pass is skipped, so the compile is faster and the binary slower; the output is not stripped, where release sets `strip = true` in `server/Cargo.toml`; and debug assertions and integer-overflow checks are on. That last one is arguably a feature for a throwaway build - an overflow that would silently wrap in production panics instead.
+
+**Nothing in CI builds `debug`.** Release tags, nightlies and CD to `develop` all build `release`, and the `profile` input on `docker-image.yaml` exists so a future caller can choose otherwise. For now debug is reached by building locally, or by picking it at `dockerise.sh`'s prompt. Never benchmark a debug image or quote its size.
+
+#### What the deltas actually are
+
+Not yet measured. The job summary of each image build records the profile, image
+size and build time, so the numbers accumulate as builds run; for both halves on
+one commit, build it each way and compare the two summaries.
+
+The one thing worth knowing before reading those numbers is the baseline. A
+*stripped release* `remote_server` is already large, because `rust-embed` bakes
+both frontends, the locales and the standard reports and forms into it:
+
+| image                                       | `remote_server` | `remote_server_cli` |
+| ------------------------------------------- | --------------- | ------------------- |
+| `latest-develop-postgres` (amd64)           | 386 MB          | 110 MB              |
+| `3.01.01-2026-09-02-sqlite-arm64`           | 316 MB          | 86 MB               |
+
+So roughly 300MB of that is embedded assets, which is the same in either
+profile. Debug adds unoptimised code and DWARF on top of that floor rather than
+multiplying it, so expect the *ratio* to be less alarming than the raw delta.
+If size turns out to be the binding constraint rather than build time,
+`debug = "line-tables-only"` on `[profile.dev]` keeps usable backtraces for a
+fraction of the debug info.
 
 ### Other architectures
 

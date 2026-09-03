@@ -62,6 +62,16 @@ ARG RUST_VERSION=1.94
 ARG NODE_VERSION=24
 # Runtime base. rust:<ver>-slim is Debian 13, so this tracks it.
 ARG DEBIAN_VERSION=trixie
+# Cargo profile for the server compile. `release` for anything shipped;
+# `debug` (cargo's `dev` profile) skips the optimisation pass, so it compiles
+# faster and produces a slower binary, and is not stripped where release sets
+# `strip = true`. The size and speed deltas here are UNMEASURED - see the
+# `debug` section of docs/content/docker for what is and is not known.
+#
+# Accepts any profile name in server/Cargo.toml - `debug` and `dev` are both
+# spelled the way cargo names the OUTPUT DIRECTORY, because that is the name
+# the copy-out below has to agree with.
+ARG CARGO_PROFILE=release
 
 # ---------------------------------------------------------------- server build
 # --platform=$BUILDPLATFORM pins this stage to the machine doing the building,
@@ -112,15 +122,15 @@ COPY server server
 # assignment PREFIX plus a command, so the shell tries to run the triple and
 # the build dies with "command not found" before cargo is ever reached.
 #
-# Native builds get an empty TARGET_FLAG and cargo's usual
-# target/release path; cross builds get --target, which moves the output under
-# target/<triple>/release and needs the linker and lib dirs pointed at the
-# target arch. Deliberately NOT passing --target on native builds: it would
-# force proc-macros and build scripts to be compiled twice.
+# Native builds get an empty TARGET_FLAG and cargo's usual target/ path; cross
+# builds get --target, which moves the output under target/<triple>/ and needs
+# the linker and lib dirs pointed at the target arch. Deliberately NOT passing
+# --target on native builds: it would force proc-macros and build scripts to be
+# compiled twice.
 RUN set -eux; \
     if [ "$TARGETARCH" = "$BUILDARCH" ]; then \
       echo 'TARGET_FLAG=' > /cross.env; \
-      echo 'OUT_DIR=target/release' >> /cross.env; \
+      echo 'TARGET_SUBDIR=target' >> /cross.env; \
     else \
       case "$TARGETARCH" in \
         arm64) TRIPLE=aarch64-unknown-linux-gnu; GNU=aarch64-linux-gnu ;; \
@@ -129,7 +139,7 @@ RUN set -eux; \
       rustup target add "$TRIPLE"; \
       { \
         echo "TARGET_FLAG='--target $TRIPLE'"; \
-        echo "OUT_DIR=target/$TRIPLE/release"; \
+        echo "TARGET_SUBDIR=target/$TRIPLE"; \
         echo "CARGO_TARGET_$(echo "$TRIPLE" | tr 'a-z-' 'A-Z_')_LINKER=${GNU}-gcc"; \
         echo "CC_$(echo "$TRIPLE" | tr 'a-z-' 'a-z_')=${GNU}-gcc"; \
         echo "PKG_CONFIG_PATH=/usr/lib/${GNU}/pkgconfig"; \
@@ -138,6 +148,24 @@ RUN set -eux; \
       } > /cross.env; \
     fi; \
     cat /cross.env
+
+# Profile resolution, in its own RUN and with the ARG declared here rather than
+# at the top of the stage: everything above is profile-independent, so a debug
+# and a release build differ only in this one echo and share the apt install,
+# the source COPY and the cross setup above it.
+#
+# Two names because cargo does not use one. The FLAG wants the profile as
+# Cargo.toml spells it (`dev`), the DIRECTORY is what cargo actually writes
+# (`debug`) - the pair only diverges for the dev profile, which is precisely the
+# one being asked for here. `--profile release` is accepted and identical to
+# `--release`, so release needs no special case.
+ARG CARGO_PROFILE
+RUN set -eux; \
+    case "$CARGO_PROFILE" in \
+      debug|dev) echo 'PROFILE_ARG=dev'; echo 'PROFILE_DIR=debug' ;; \
+      *) echo "PROFILE_ARG=$CARGO_PROFILE"; echo "PROFILE_DIR=$CARGO_PROFILE" ;; \
+    esac > /profile.env; \
+    cat /profile.env
 
 # rust-embed reaches OUTSIDE server/ at compile time, so these are build inputs
 # even though nothing under server/ references them as paths. Miss one and the
@@ -168,6 +196,15 @@ ARG TARGETARCH
 # different artifacts, so sharing one target dir would make them evict each
 # other on every release.
 #
+# It deliberately does NOT carry CARGO_PROFILE. Cargo already separates profiles
+# into target/debug and target/release with their own fingerprints, so the two
+# coexist in one mount without interfering - and keeping the id as it is means
+# adding debug builds does not orphan the warm release cache that every release
+# and every develop merge depends on. The cost is a bigger mount (a debug target
+# dir is several times a release one, and the dev profile has incremental
+# compilation on by default); `docker builder prune --filter
+# type=exec.cachemount` is the release valve.
+#
 # sharing=private, not locked: if two builds want the SAME id at once (a tag
 # build overlapping a develop merge, say), locked makes the second wait for the
 # first - blocking a whole lane. private hands it its own cache instead, so it
@@ -184,9 +221,11 @@ RUN --mount=type=cache,id=cargo-target-sqlite-$TARGETARCH,target=/src/server/tar
     --mount=type=cache,id=cargo-registry,target=/usr/local/cargo/registry,sharing=shared \
     set -eux; \
     . /cross.env; export $(cut -d= -f1 /cross.env); \
-    cargo build --release --manifest-path server/Cargo.toml $TARGET_FLAG \
+    . /profile.env; \
+    cargo build --profile "$PROFILE_ARG" --manifest-path server/Cargo.toml $TARGET_FLAG \
         --bin remote_server --bin remote_server_cli; \
     mkdir -p /out; \
+    OUT_DIR="$TARGET_SUBDIR/$PROFILE_DIR"; \
     cp "server/$OUT_DIR/remote_server" "server/$OUT_DIR/remote_server_cli" /out/
 
 FROM server-base AS server-build-postgres
@@ -198,10 +237,12 @@ RUN --mount=type=cache,id=cargo-target-postgres-$TARGETARCH,target=/src/server/t
     --mount=type=cache,id=cargo-registry,target=/usr/local/cargo/registry,sharing=shared \
     set -eux; \
     . /cross.env; export $(cut -d= -f1 /cross.env); \
-    cargo build --release --manifest-path server/Cargo.toml $TARGET_FLAG \
+    . /profile.env; \
+    cargo build --profile "$PROFILE_ARG" --manifest-path server/Cargo.toml $TARGET_FLAG \
         --no-default-features --features postgres \
         --bin remote_server --bin remote_server_cli; \
     mkdir -p /out; \
+    OUT_DIR="$TARGET_SUBDIR/$PROFILE_DIR"; \
     cp "server/$OUT_DIR/remote_server" "server/$OUT_DIR/remote_server_cli" /out/
 
 # -------------------------------------------------------------- frontend build
