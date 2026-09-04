@@ -3830,5 +3830,6 @@
   "label.packs-plural_one": "",
   "label.packs-plural_other": "",
   "pagination.rows-total_one": "",
-  "pagination.rows-total_other": ""
+  "pagination.rows-total_other": "",
+  "messages.confirm-clear-hardware-id": ""
 }
