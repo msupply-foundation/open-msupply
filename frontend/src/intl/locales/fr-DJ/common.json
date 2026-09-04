@@ -3895,5 +3895,6 @@
   "warning.insufficient-recent-stocktake-items": "",
   "warning.manual-store-requisition": "",
   "warning.nothing-to-supply": "",
-  "warning.requested-exceeds-suggested": ""
+  "warning.requested-exceeds-suggested": "",
+  "messages.confirm-clear-hardware-id": ""
 }
