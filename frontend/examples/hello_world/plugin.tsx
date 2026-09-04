@@ -293,6 +293,10 @@ export default definePlugin({
       loading: '…',
       'nav.stock': 'Stock (link)',
       'nav.items': 'Items (from code)',
+      'pages.section': 'Hello world',
+      'pages.hello': 'Hello page',
+      'pages.blurb':
+        'This whole screen is a plugin page: the menu section, the route, the breadcrumb and this body all came from one pages declaration.',
       'column.total-stock': 'Total stock',
       'column.total-stock-description': 'Initial stock on hand plus incoming',
       'column.arrivals': 'Arrivals',
@@ -323,6 +327,10 @@ export default definePlugin({
       loading: '…',
       'nav.stock': 'Stock (lien)',
       'nav.items': 'Articles (depuis le code)',
+      'pages.section': 'Bonjour le monde',
+      'pages.hello': 'Page bonjour',
+      'pages.blurb':
+        'Cet écran entier est une page de plugin : la section du menu, la route, le fil d’Ariane et ce corps proviennent d’une seule déclaration de pages.',
       'column.total-stock': 'Stock total',
       'column.total-stock-description': 'Stock initial plus arrivages',
       'column.arrivals': 'Arrivages',
@@ -348,6 +356,32 @@ export default definePlugin({
       'body.not-mounted': 'non montés — aucune requête de comptage émise',
     },
   },
+  /*
+   * The PAGE contribution (plugins sdk-contract § the page contribution),
+   * behind `?pluginPages`: a labelled nav section holding one routed screen.
+   * What it proves: the section joins the menu and the command palette, the
+   * route mounts under the host frame, and the page's code — its own module,
+   * inlined into this bundle by the build but a real chunk in dev — is
+   * imported on first navigation, never at startup (AC-PLUG-P2). The gate here
+   * is a demo flag; a real plugin gates on the session context it is handed
+   * (`ctx.storeMode === 'dispensary'`), and MAY add `permissions` to guard the
+   * nav entry and the URL with one condition (AC-PLUG-P1).
+   */
+  pages: [
+    {
+      id: 'helloSection',
+      labelKey: 'pages.section',
+      path: 'hello-world',
+      when: () => flag('pluginPages'),
+      pages: [
+        {
+          path: 'hello',
+          labelKey: 'pages.hello',
+          load: () => import('./HelloPage'),
+        },
+      ],
+    },
+  ],
   contributions: [
     {
       slot: 'dashboard.stat',

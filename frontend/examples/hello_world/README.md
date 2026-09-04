@@ -157,6 +157,33 @@ Two rules a real panel must follow, both visible here:
   A `when` that depended on the record would add and remove the contribution as
   the user steps, which is a remount by another name.
 
+### A page and its navigation section
+
+`pages` is not a slot: it contributes **whole routed screens**, grouped under a
+labelled section in the primary nav menu
+([`sdk-contract` § the page contribution](../../spec/plugins/sdk-contract.md#the-page-contribution-specified-in-full)).
+Turn this plugin's section on with **`?pluginPages`**:
+
+```text
+http://localhost:3005/<store>/?pluginPages
+```
+
+A **Hello world** section appears at the end of the menu holding one page,
+reachable from the menu, from the command palette ("Go to: Hello page"), and at
+`/<store>/hello-world/hello` directly — one registry, three surfaces.
+
+| Fixture detail                                            | What it proves                                                                                                                                                                                                |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| the page body lives in its own module (`HelloPage.tsx`)   | **page code loads on first navigation, never at startup** (AC-PLUG-P2): its console line prints on the first visit, not at boot. The build inlines it into the one bundle; the dev loop keeps it a real chunk |
+| the header, breadcrumb and menu are untouched host chrome | the host owns the app frame and page frame; the contribution is the **body only**, like a dashboard body occupant                                                                                             |
+| `when: () => flag('pluginPages')`                         | the section-level withhold: absent from menu and palette, and the URL **redirects** — a real plugin gates on `ctx` (`ctx.storeMode === 'dispensary'`), same context, same behaviour                           |
+| labels are keys (`pages.section`, `pages.hello`)          | nav labels, the breadcrumb and the tab title all resolve from the plugin's own catalogue, per locale                                                                                                          |
+
+Add `permissions: ['...']` to the section to guard the nav entry and direct
+navigation with **one** condition (AC-PLUG-P1): without the permission the entry
+is absent and the URL shows the host's no-permission notice in place of the
+screen.
+
 ## Navigation
 
 Two primitives, both over a path **below the store root**, spelled as the
