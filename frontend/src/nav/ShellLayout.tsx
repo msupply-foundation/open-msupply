@@ -133,15 +133,17 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   // rebuilt when a child is dropped — keep stable references; otherwise
   // MenuBar's <For> would remount nav sections on every shell re-render
   // (kdd/solid-reactivity-pitfalls).
-  // Plugin sections join the upper list after the host's own sections, already
-  // gated by their own two gate classes; their item identities are cached
-  // against the frozen declarations, so this memo hands MenuBar stable objects
-  // exactly as gateNav does (kdd/solid-reactivity-pitfalls).
-  const menuUpper = createMemo(() => [
-    ...gateNav(upperNav),
+  // Plugin sections come AFTER every host section — the end of the menu, below
+  // the lower cluster (sdk-contract § the page contribution: "after the host's
+  // own sections") — already gated by their own two gate classes; their item
+  // identities are cached against the frozen declarations, so this memo hands
+  // MenuBar stable objects exactly as gateNav does
+  // (kdd/solid-reactivity-pitfalls).
+  const menuUpper = createMemo(() => gateNav(upperNav));
+  const menuLower = createMemo(() => [
+    ...gateNav(lowerNav),
     ...pluginNavItems(),
   ]);
-  const menuLower = createMemo(() => gateNav(lowerNav));
 
   // The router is the registry's third surface (spec/navigation § one
   // registry): a gated destination's URL never opens the screen. A

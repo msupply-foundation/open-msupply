@@ -520,7 +520,8 @@ export type AnyContribution = {
 export interface PluginPage {
   /**
    * The page's path below its section's path — URL segments (letters, digits,
-   * `-`, `_`), unique within the section. The page's full store-relative path
+   * `-`, `_`; each segment starts with a letter or digit), unique within the
+   * section. The page's full store-relative path
    * is `${section.path}/${page.path}`; the SDK's own navigation primitives
    * take exactly that path.
    */

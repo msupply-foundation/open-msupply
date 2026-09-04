@@ -18,7 +18,7 @@ import { fetchDisplaySettings } from './api/displaySettings';
 import { authUser, checkAuth, startActivityTracking } from './auth/authContext';
 import { InitialisationPage } from './initialisation/InitialisationPage';
 import { resolveStorePath, StoreGuardLayout } from './store/StoreGuardLayout';
-import { navDestinations } from './nav/navConfig';
+import { DASHBOARD_LEGACY_PATH, navDestinations } from './nav/navConfig';
 import { routerBase } from './nav/storeRelativePath';
 import { DashboardPage } from './sections/dashboard';
 import { stocktakesRoutes } from './sections/stocktakes';
@@ -260,7 +260,14 @@ export const App: Component = () => {
                       segment. Without this the old address falls through to
                       the not-found catch-all below, which is a worse answer
                       than the screen the user asked for. */}
-                    <Route path="/dashboard" component={DashboardRedirect} />
+                    <Route
+                      /* The shared constant, not a literal: validate.ts
+                         reserves this path against plugin sections through the
+                         same export, so the redirect and the reservation
+                         cannot drift apart. */
+                      path={`/${DASHBOARD_LEGACY_PATH}`}
+                      component={DashboardRedirect}
+                    />
                     <For each={Object.entries(sectionRoutes)}>
                       {([path, routes]) => (
                         <Route path={`/${path}`}>{routes()}</Route>
@@ -291,7 +298,13 @@ export const App: Component = () => {
                     <For each={pluginPageRoutes()}>
                       {route => (
                         <Route
-                          path={`/${route.path}`}
+                          /* Exact path AND everything below it: paths below a
+                             page are the page's own to interpret (sdk-contract
+                             § Paths) — a plugin's record screen at
+                             `.../count/item-7` must mount the page, not fall
+                             through to the not-found catch-all the highlight
+                             and tab title already disown. */
+                          path={[`/${route.path}`, `/${route.path}/*`]}
                           component={route.Component}
                         />
                       )}
