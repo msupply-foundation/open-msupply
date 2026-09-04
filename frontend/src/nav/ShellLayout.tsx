@@ -26,10 +26,11 @@ import { storeCustomColour } from '../store/storeContext';
 import { isCentralServer } from '../api/serverInfo';
 import { gateNav, routeAccess } from './navGates';
 import {
+  mergeUpperNav,
   pluginLeafByPath,
-  pluginNavItems,
   pluginSectionIconForPath,
 } from '../plugins/pluginPages';
+import { createRegionDiagnostics } from '../plugins/diagnostics';
 import { bindHostNavigate, routerHostNavigate } from './hostNavigate';
 import { storePath, storeRelativePath } from './storeRelativePath';
 import { KeyboardHost } from '../keyboard/KeyboardHost';
@@ -133,17 +134,19 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   // rebuilt when a child is dropped — keep stable references; otherwise
   // MenuBar's <For> would remount nav sections on every shell re-render
   // (kdd/solid-reactivity-pitfalls).
-  // Plugin sections join the UPPER list after the host's own upper sections
-  // (sdk-contract § the page contribution): operational screens stay with the
-  // operational sections, above the pinned Catalogue/Manage/Settings/Help
-  // cluster. Already gated by their own two gate classes; their item
+  // Plugin sections join the UPPER list, each placed by its declared anchor
+  // against the host's published section ids — default the end of the list,
+  // above the pinned Catalogue/Manage/Settings/Help cluster (sdk-contract §
+  // the page contribution). Already gated by their own two gate classes; item
   // identities are cached against the frozen declarations, so this memo hands
   // MenuBar stable objects exactly as gateNav does
-  // (kdd/solid-reactivity-pitfalls).
-  const menuUpper = createMemo(() => [
-    ...gateNav(upperNav),
-    ...pluginNavItems(),
-  ]);
+  // (kdd/solid-reactivity-pitfalls). The merge is pure and REPORTS an anchor
+  // that names no rendered section (absent, or gate-hidden right now);
+  // recording is a write, so it happens in the region-diagnostics effect, the
+  // same split every anchored surface uses.
+  const menuMerge = createMemo(() => mergeUpperNav(gateNav(upperNav)));
+  createRegionDiagnostics(() => menuMerge().diagnostics, () => 'menu');
+  const menuUpper = () => menuMerge().items;
   const menuLower = createMemo(() => gateNav(lowerNav));
 
   // The router is the registry's third surface (spec/navigation § one

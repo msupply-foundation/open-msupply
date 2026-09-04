@@ -168,8 +168,9 @@ Turn this plugin's section on with **`?pluginPages`**:
 http://localhost:3005/<store>/?pluginPages
 ```
 
-A **Hello world** section appears at the end of the menu's upper list (above
-the pinned bottom cluster) holding one page,
+A **Hello world** section appears in the menu just above Inventory
+(`anchor: { before: 'inventory' }`; without an anchor it would sit at the end
+of the upper list, above the pinned bottom cluster) holding one page,
 reachable from the menu, from the command palette ("Go to: Hello page"), and at
 `/<store>/hello-world/hello` directly — one registry, three surfaces.
 
@@ -178,6 +179,7 @@ reachable from the menu, from the command palette ("Go to: Hello page"), and at
 | the page body lives in its own module (`HelloPage.tsx`)   | **page code loads on first navigation, never at startup** (AC-PLUG-P2): its console line prints on the first visit, not at boot. The build inlines it into the one bundle; the dev loop keeps it a real chunk |
 | the header, breadcrumb and menu are untouched host chrome | the host owns the app frame and page frame; the contribution is the **body only**, like a dashboard body occupant                                                                                             |
 | `when: () => pagesFlagAtBoot` (the flag, captured at boot) | the section-level withhold: absent from menu and palette, and the URL **redirects** — a real plugin gates on `ctx` (`ctx.storeMode === 'dispensary'`), same context, same behaviour. Captured at boot because in-app navigation drops the query string |
+| `anchor: { before: 'inventory' }`                          | menu placement against a published host section id — the same `{ before / after / end }` shape the dashboard slots use. An anchor naming a gate-hidden section degrades to the end of the upper list, named in diagnostics                              |
 | labels are keys (`pages.section`, `pages.hello`)          | nav labels, the breadcrumb and the tab title all resolve from the plugin's own catalogue, per locale                                                                                                          |
 
 Add `permissions: ['...']` to the section to guard the nav entry and direct

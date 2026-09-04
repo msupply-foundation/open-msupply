@@ -7,9 +7,11 @@ import { Header } from '../ui/layout/Header/Header';
 import { Breadcrumb } from '../ui/layout/Header/Breadcrumb';
 import {
   matchLeaf,
+  upperNav,
   type NavItem,
   type NavLeaf,
 } from '../ui/layout/AppShell/navModel';
+import { anchorMerge, type AnchorDiagnostic } from './anchorMerge';
 import type { RouteAccess } from '../nav/navGates';
 import { namespacedPluginKey } from '../plugin-sdk/intl';
 import type { PluginPage, PluginPageSection } from '../plugin-sdk/types';
@@ -216,11 +218,56 @@ const toNavItem = (registered: RegisteredPageSection): NavItem => {
 };
 
 /**
- * The plugin sections the gates offer right now, as menu items — appended
- * after the host's own upper sections (ShellLayout). Call inside a memo.
+ * The plugin sections the gates offer right now, as menu items, in registry
+ * order — the anchor-free view (tests, and any surface that only needs the
+ * set). The menu itself goes through `mergeUpperNav`, which places each item
+ * by its declared anchor.
  */
 export const pluginNavItems = (): NavItem[] =>
   offeredPageSections().map(toNavItem);
+
+/**
+ * The menu's upper list: the gated host sections with every offered plugin
+ * section placed by its declared anchor (sdk-contract § the page contribution)
+ * — the same anchored merge every contributing surface uses (anchorMerge).
+ *
+ * `gated` is the host list AFTER gateNav, so a section the store's gates hide
+ * is a published id with no rendered position: anchoring to it degrades to the
+ * end, reported in `diagnostics` — which the caller records
+ * (createRegionDiagnostics), because this runs inside the menu memo and
+ * recording is a write. `order` is the section's index in the deterministic
+ * registry order, so sections sharing a coordinate keep the "plugin code, then
+ * declaration order" rule the registry guarantees. Item identities come from
+ * the per-declaration cache, so the merge hands MenuBar the same objects every
+ * read and nothing remounts.
+ */
+export const mergeUpperNav = (
+  gated: readonly NavItem[]
+): { items: NavItem[]; diagnostics: AnchorDiagnostic[] } => {
+  const rendered = new Map(gated.map(item => [item.id, item]));
+  const hosts = upperNav.map(section => ({
+    id: section.id,
+    hidden: !rendered.has(section.id),
+  }));
+  const contributions = offeredPageSections().map(registered => ({
+    id: `${registered.pluginCode}.${registered.section.id}`,
+    anchor: registered.section.anchor,
+    order: activePageSections().indexOf(registered),
+    item: toNavItem(registered),
+  }));
+  const { entries, diagnostics } = anchorMerge(hosts, contributions);
+  return {
+    // A host entry resolves through `rendered` (always present — the merge
+    // drops hidden hosts); the flatMap shape just keeps that fact out of the
+    // type system instead of asserting it.
+    items: entries.flatMap(entry => {
+      const item =
+        entry.kind === 'host' ? rendered.get(entry.item.id) : entry.item.item;
+      return item ? [item] : [];
+    }),
+    diagnostics,
+  };
+};
 
 /**
  * Every plugin page as a palette destination, UNGATED — rows are registered

@@ -31,6 +31,7 @@ export type {
   PluginMessages,
   PluginPage,
   PluginPageSection,
+  HostNavSectionId,
   Contribution,
   ContributionCore,
   AnyContribution,

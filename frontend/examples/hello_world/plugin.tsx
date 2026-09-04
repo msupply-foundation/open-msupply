@@ -376,6 +376,11 @@ export default definePlugin({
       id: 'helloSection',
       labelKey: 'pages.section',
       path: 'hello-world',
+      // Placement against a published host section id (one shape, every
+      // anchored surface): the section renders just above Inventory. An anchor
+      // naming a section the store's gates hide falls to the end of the upper
+      // list, named in diagnostics — placement is a preference, never a gate.
+      anchor: { before: 'inventory' },
       // The flag is captured at module evaluation (boot, when the query string
       // is still in the URL), NOT read live: in-app navigation rewrites the
       // URL without the query, so a live read would fail its own gate the
