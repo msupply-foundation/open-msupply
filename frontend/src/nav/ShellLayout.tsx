@@ -25,6 +25,11 @@ import { authUser, logout, userDisplayName } from '../auth/authContext';
 import { storeCustomColour } from '../store/storeContext';
 import { isCentralServer } from '../api/serverInfo';
 import { gateNav, routeAccess } from './navGates';
+import {
+  pluginLeafByPath,
+  pluginNavItems,
+  pluginSectionIconForPath,
+} from '../plugins/pluginPages';
 import { bindHostNavigate, routerHostNavigate } from './hostNavigate';
 import { storePath, storeRelativePath } from './storeRelativePath';
 import { KeyboardHost } from '../keyboard/KeyboardHost';
@@ -82,8 +87,14 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   // for it, so any valid key satisfies the type.
   const NO_SELECTION: NavLeaf = { id: '', labelKey: 'label.home', to: '' };
 
+  // Plugin-contributed pages are the registry's other half (spec/navigation §
+  // plugin destinations): the highlight, the breadcrumb glyph and the menu all
+  // consult them after the host's own registry, so a contributed page behaves
+  // like a host destination on every surface (src/plugins/pluginPages.tsx).
   const selected = (): NavLeaf =>
-    findLeafByPath(relativePath()) ?? NO_SELECTION;
+    findLeafByPath(relativePath()) ??
+    pluginLeafByPath(relativePath()) ??
+    NO_SELECTION;
 
   // The browser tab names the screen the URL points at (spec/chrome § document
   // title) — the registry's label for the destination, the list entry for a
@@ -97,7 +108,9 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   // page regions; shellContext › ShellSection). Record screens inherit their
   // list's section, the store root is Home's own registry entry, and an
   // off-registry path (the not-found catch-all) simply has none.
-  const sectionIcon = () => sectionIconForPath(relativePath());
+  const sectionIcon = () =>
+    sectionIconForPath(relativePath()) ??
+    pluginSectionIconForPath(relativePath());
 
   /*
    * A destination's URL, via the ONE join rule for store addresses
@@ -120,7 +133,14 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   // rebuilt when a child is dropped — keep stable references; otherwise
   // MenuBar's <For> would remount nav sections on every shell re-render
   // (kdd/solid-reactivity-pitfalls).
-  const menuUpper = createMemo(() => gateNav(upperNav));
+  // Plugin sections join the upper list after the host's own sections, already
+  // gated by their own two gate classes; their item identities are cached
+  // against the frozen declarations, so this memo hands MenuBar stable objects
+  // exactly as gateNav does (kdd/solid-reactivity-pitfalls).
+  const menuUpper = createMemo(() => [
+    ...gateNav(upperNav),
+    ...pluginNavItems(),
+  ]);
   const menuLower = createMemo(() => gateNav(lowerNav));
 
   // The router is the registry's third surface (spec/navigation § one

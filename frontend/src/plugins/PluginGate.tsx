@@ -3,6 +3,7 @@ import type { JSX } from 'solid-js';
 import { t } from '../intl';
 import styles from '../ui/styles/shared.module.css';
 import { ensurePluginsLoaded } from './loader';
+import { recordPageSectionCollisions } from './pluginPages';
 
 /*
  * The boot gate (spec/plugins/rules.md § lifecycle).
@@ -28,7 +29,13 @@ export const PluginGate = (props: { children?: JSX.Element }): JSX.Element => {
   const [ready, setReady] = createSignal(false);
 
   onMount(() => {
-    void ensurePluginsLoaded().then(() => setReady(true));
+    void ensurePluginsLoaded().then(() => {
+      // A page-section path collision is a fact about the loaded SET, so it is
+      // checked once the set is complete — the winner is deterministic either
+      // way (pluginPages.activePageSections); this only names the loser.
+      recordPageSectionCollisions();
+      setReady(true);
+    });
   });
 
   return (
