@@ -3949,5 +3949,6 @@
   "label.packs-plural_other": "",
   "login.failed-attempts_one": "",
   "login.failed-attempts_many": "",
-  "login.failed-attempts_other": ""
+  "login.failed-attempts_other": "",
+  "messages.confirm-clear-hardware-id": ""
 }
