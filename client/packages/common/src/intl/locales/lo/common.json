@@ -1062,6 +1062,7 @@
   "label.custom-field-scope-outbound-shipment": "ໃບສົ່ງສິນຄ້າອອກ",
   "label.custom-field-scope-patient": "ຄົນເຈັບ",
   "label.custom-field-scope-prescription": "ໃບສັ່ງຢາ",
+  "label.custom-field-scope-prescription-request": "",
   "label.custom-field-scope-supplier": "ຜູ້ສະໜອງ",
   "label.custom-field-scope-supplier-return": "ການສົ່ງຄືນໃຫ້ຜູ້ສະໜອງ",
   "label.custom-field-type-boolean": "ຄ່າແທ້/ຜິດ",
@@ -2580,6 +2581,7 @@
   "preference.sortByVvmStatusThenExpiry": "ຈັດລຳດັບຊຸດທີ່ມີໃຫ້ໃຊ້ຕາມສະຖານະ VVM ແລ້ວຕາມວັນໝົດອາຍຸ",
   "preference.storeCustomColour": "ສີກຳນົດເອງຂອງແຖບລຸ່ມໜ້າ (ລະຫັດ hex, ຕົວຢ່າງ #000000 ສຳລັບສີດຳ)",
   "preference.syncRecordsDisplayThreshold": "ຂີດຈຳກັດການສະແດງລາຍການຂໍ້ມູນຊິງຄ໌",
+  "preference.transferStockToInternalCustomersAtCostPrice": "",
   "preference.useProcurementFunctionality": "ໃຊ້ຄຸນສົມບັດການຈັດຊື້ຈັດຈ້າງ",
   "preference.useSimplifiedMobileUi": "ໃຊ້ໜ້າຈໍມືຖືແບບງ່າຍ",
   "preference.warnWhenMissingRecentStocktake": "ເຕືອນຜູ້ໃຊ້ໃນເວລາສ້າງໃບສັ່ງຊື້ພາຍໃນ ຖ້າບໍ່ມີການກວດນັບສະຕ໋ອກຫຼ້າສຸດ",
@@ -2938,7 +2940,5 @@
   "warning.insufficient-recent-stocktake-items": "ທ່ານຍັງບໍ່ໄດ້ເຮັດການກວດນັບສະຕ໋ອກທີ່ມີຢ່າງໜ້ອຍ {{ minItems }} ລາຍການ ໃນ {{maxAge}} ວັນຜ່ານມາ. ລະດັບສະຕ໋ອກຂອງທ່ານອາດບໍ່ຖືກຕ້ອງ. ທ່ານແນ່ໃຈບໍວ່າຕ້ອງການດຳເນີນການຕໍ່?",
   "warning.manual-store-requisition": "ການໃສ່ໃບສະເໜີຂໍສຳລັບສາງນີ້ອາດເຮັດໃຫ້ມີຂໍ້ມູນຊ້ຳກັນ ຖ້າສາງນັ້ນສົ່ງໃບສັ່ງຊື້ພາຍໃນນຳ.",
   "warning.nothing-to-supply": "ບໍ່ມີຫຍັງເຫຼືອໃຫ້ສະໜອງ!",
-  "warning.requested-exceeds-suggested": "ຈຳນວນທີ່ທ່ານຮ້ອງຂໍສູງກວ່າຈຳນວນທີ່ແນະນຳ",
-  "label.custom-field-scope-prescription-request": "",
-  "preference.transferStockToInternalCustomersAtCostPrice": ""
+  "warning.requested-exceeds-suggested": "ຈຳນວນທີ່ທ່ານຮ້ອງຂໍສູງກວ່າຈຳນວນທີ່ແນະນຳ"
 }
