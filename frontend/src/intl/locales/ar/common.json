@@ -4267,5 +4267,6 @@
   "warning.high-number-records-to-sync": "",
   "warning.insufficient-recent-stocktake-items": "",
   "warning.manual-store-requisition": "",
-  "warning.requested-exceeds-suggested": ""
+  "warning.requested-exceeds-suggested": "",
+  "messages.confirm-clear-hardware-id": ""
 }
