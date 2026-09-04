@@ -81,6 +81,10 @@ const Boom = () => {
 
 const flag = (name: string) => new URLSearchParams(location.search).has(name);
 
+// See the pages contribution below: its gate must survive in-app navigation,
+// which drops the query string, so this one is a boot-time fact.
+const pagesFlagAtBoot = flag('pluginPages');
+
 /*
  * The internal-order line COLUMN slot (plugins sdk-contract § the column
  * slot). Three contributions, one per thing the slot has to prove:
@@ -372,7 +376,13 @@ export default definePlugin({
       id: 'helloSection',
       labelKey: 'pages.section',
       path: 'hello-world',
-      when: () => flag('pluginPages'),
+      // The flag is captured at module evaluation (boot, when the query string
+      // is still in the URL), NOT read live: in-app navigation rewrites the
+      // URL without the query, so a live read would fail its own gate the
+      // moment the user follows the menu entry it enabled — bouncing them off
+      // the page while the menu still lists it. A real plugin gates on the
+      // ctx it is handed, which never has this problem.
+      when: () => pagesFlagAtBoot,
       pages: [
         {
           path: 'hello',

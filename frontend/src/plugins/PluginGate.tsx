@@ -33,7 +33,14 @@ export const PluginGate = (props: { children?: JSX.Element }): JSX.Element => {
       // A page-section path collision is a fact about the loaded SET, so it is
       // checked once the set is complete — the winner is deterministic either
       // way (pluginPages.activePageSections); this only names the loser.
-      recordPageSectionCollisions();
+      // Guarded because it runs between loading settling and the gate opening:
+      // diagnostics are advisory, and a throw here would otherwise hold the
+      // whole app at the loading screen forever, silently.
+      try {
+        recordPageSectionCollisions();
+      } catch (error) {
+        console.error('[plugins] recording page collisions failed', error);
+      }
       setReady(true);
     });
   });

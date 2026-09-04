@@ -138,6 +138,46 @@ describe('the store-context withhold (capability-class, OMS-REG-PLG-CK-02.1/.2)'
   });
 });
 
+describe('gate containment (rules § error isolation)', () => {
+  it('withholds a section whose when gate throws — named in diagnostics once, never crashing the shell', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    register('ck', [
+      section({
+        when: () => {
+          throw new Error('broken plugin gate');
+        },
+      }),
+    ]);
+    // The gate runs inside the shell's own memos (menu, route verdict,
+    // palette): a throw must degrade to "withheld", exactly like a false.
+    expect(pluginNavItems()).toEqual([]);
+    expect(pluginOfferedPaths()).toEqual([]);
+    expect(pluginRouteAccess('stock-count/count')).toEqual({
+      kind: 'blocked',
+    });
+    const failures = pluginDiagnostics().filter(
+      diagnostic =>
+        diagnostic.pluginCode === 'ck' &&
+        diagnostic.message.includes('when gate threw')
+    );
+    expect(failures).toHaveLength(1);
+    expect(failures[0]?.level).toBe('error');
+  });
+
+  it('accepts a truthy non-boolean gate result (a JS-authored `a && b` gate)', () => {
+    register('ck', [
+      // A JS plugin gets no type checking: `permissions.length && storeMode`
+      // style gates legitimately return a non-boolean truthy value.
+      section({
+        when: context => context.storeMode as unknown as boolean,
+      }),
+    ]);
+    setContext({ storeMode: 'dispensary' });
+    expect(pluginNavItems()).toHaveLength(1);
+    expect(pluginRouteAccess('stock-count/count')).toEqual({ kind: 'ok' });
+  });
+});
+
 describe('the permission gate (AC-PLUG-P1: one condition, two doors)', () => {
   const gated = () =>
     register('ck', [section({ permissions: ['STOCKTAKE_QUERY'] })]);
@@ -299,11 +339,19 @@ describe('highlight, title and breadcrumb glyph', () => {
     );
   });
 
-  it('supplies a section glyph for plugin-owned paths only', () => {
+  it('supplies a section glyph exactly where an entry claims the path', () => {
     register('ck', [section()]);
     expect(pluginSectionIconForPath('stock-count/count')).toBeTypeOf(
       'function'
     );
+    // A record screen keeps its page's glyph, like its highlight.
+    expect(pluginSectionIconForPath('stock-count/count/item-7')).toBeTypeOf(
+      'function'
+    );
     expect(pluginSectionIconForPath('inventory/stock')).toBeUndefined();
+    // The section root has no route — it renders the not-found page, which
+    // highlights nothing and gets no glyph, exactly like a host unknown path.
+    expect(pluginSectionIconForPath('stock-count')).toBeUndefined();
+    expect(pluginLeafByPath('stock-count')).toBeUndefined();
   });
 });

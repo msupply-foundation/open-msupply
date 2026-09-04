@@ -48,6 +48,12 @@ export type RegisteredContribution<S extends SlotId> = SlotContribution<S> & {
 
 const [plugins, setPlugins] = createSignal<readonly LoadedPlugin[]>([]);
 
+// The one plugin-code comparator — the determinism guarantee both accessors
+// below document. A single definition, so the pages surfaces and the slot
+// contributions can never order plugins differently.
+const compareCodes = (a: string, b: string): number =>
+  a < b ? -1 : a > b ? 1 : 0;
+
 /** Every loaded plugin, in load-completion order. Reactive. */
 export const loadedPlugins = plugins;
 
@@ -101,11 +107,7 @@ export const contributionsFor =
       (a, b) =>
         (a.order ?? Number.POSITIVE_INFINITY) -
           (b.order ?? Number.POSITIVE_INFINITY) ||
-        (a.pluginCode < b.pluginCode
-          ? -1
-          : a.pluginCode > b.pluginCode
-            ? 1
-            : 0) ||
+        compareCodes(a.pluginCode, b.pluginCode) ||
         (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
     );
   };
@@ -121,6 +123,14 @@ export interface RegisteredPageSection {
   section: PluginPageSection;
 }
 
+// pageSections' cache, keyed on the plugins() array's identity: registerPlugin
+// replaces the array wholesale, so reference equality IS "nothing changed".
+// The signal read stays inside the accessor, so reactivity is untouched — the
+// cache only stops every navigation, palette open and menu re-derive from
+// re-sorting a list that changes once per session.
+let pageSectionsInput: readonly LoadedPlugin[] | undefined;
+let pageSectionsResult: readonly RegisteredPageSection[] = [];
+
 /**
  * Every loaded plugin's page sections, in deterministic order — plugin code,
  * then declaration order — independent of which bundle finished loading first
@@ -128,18 +138,21 @@ export interface RegisteredPageSection {
  * `contributionsFor`: compose it into a single `createMemo` where the read
  * feeds a `<For>`. Cross-plugin path collisions are NOT resolved here — the
  * order is what makes their resolution (first claim wins) deterministic
- * downstream (src/plugins/pluginPages.tsx).
+ * downstream (src/plugins/pluginPages.tsx). The result keeps its identity
+ * until the registry changes, so downstream derivations can cache against it.
  */
 export const pageSections = (): readonly RegisteredPageSection[] => {
+  const current = plugins();
+  if (current === pageSectionsInput) return pageSectionsResult;
   const found: RegisteredPageSection[] = [];
-  const byCode = [...plugins()].sort((a, b) =>
-    a.code < b.code ? -1 : a.code > b.code ? 1 : 0
-  );
+  const byCode = [...current].sort((a, b) => compareCodes(a.code, b.code));
   for (const plugin of byCode) {
     for (const section of plugin.module.pages ?? []) {
       found.push({ pluginCode: plugin.code, section });
     }
   }
+  pageSectionsInput = current;
+  pageSectionsResult = found;
   return found;
 };
 

@@ -3,7 +3,7 @@ import {
   PLUGIN_API_VERSION,
 } from '../plugin-sdk/apiVersion';
 import type { PluginModule, SlotId } from '../plugin-sdk/types';
-import { navDestinations } from '../nav/navConfig';
+import { DASHBOARD_LEGACY_PATH, navDestinations } from '../nav/navConfig';
 
 /*
  * The gate every loaded bundle passes before the host trusts it
@@ -54,27 +54,36 @@ export type ValidationVerdict =
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
-// A page or section path: URL segments of word characters and hyphens. No
-// leading/trailing/double slashes, no params, no dots — a path is an address,
-// and everything else about a page is declared, not encoded.
+// A page or section path: URL segments of letters, digits, `-` and `_`, each
+// starting with a letter or digit (the spec states the same leading-character
+// rule — sdk-contract § Paths). No leading/trailing/double slashes, no params,
+// no dots — a path is an address, and everything else about a page is
+// declared, not encoded.
 const PATH_SEGMENT = /^[a-z0-9][a-z0-9_-]*$/i;
 const isValidPagePath = (path: unknown): path is string =>
   typeof path === 'string' &&
   path.length > 0 &&
   path.split('/').every(segment => PATH_SEGMENT.test(segment));
 
-// Two paths claim the same URL space when either is a segment-prefix of the
-// other — the router judges a path by its deepest matching destination, so
-// nesting under a host section would silently inherit (or shadow) its gates.
-const pathsCollide = (a: string, b: string): boolean =>
+/**
+ * Two paths claim the same URL space when either is a segment-prefix of the
+ * other — the router judges a path by its deepest matching destination, so
+ * nesting under a host section would silently inherit (or shadow) its gates.
+ * ONE definition, exported: the runtime resolver (pluginPages.tsx) applies the
+ * same rule to plugin-vs-plugin collisions, and the two must never drift —
+ * validation refusing one set of paths while the registry resolves another
+ * would let a bundle pass the gate yet lose its section silently.
+ */
+export const pathsCollide = (a: string, b: string): boolean =>
   a === b || a.startsWith(`${b}/`) || b.startsWith(`${a}/`);
 
 // The host's own address space: every registry destination, plus the routes
 // the router owns outside the registry (Home's empty path is unreachable by a
-// valid section path; '/dashboard' is the legacy redirect).
+// valid section path; the dashboard legacy redirect is declared beside the
+// registry so it cannot drift from App.tsx's route).
 const HOST_RESERVED_PATHS: readonly string[] = [
   ...navDestinations.map(dest => dest.path).filter(path => path !== ''),
-  'dashboard',
+  DASHBOARD_LEGACY_PATH,
 ];
 
 /**

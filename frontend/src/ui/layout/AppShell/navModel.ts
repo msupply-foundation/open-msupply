@@ -137,6 +137,25 @@ export const navLeaves: NavLeaf[] = items.flatMap(item =>
 );
 
 /**
+ * The one leaf-matching rule: the exact entry, or the deepest one the path
+ * sits beneath. Shared with the plugin half of the registry
+ * (src/plugins/pluginPages.tsx), so a plugin page's record screens highlight
+ * by exactly the rule a host detail screen does.
+ *
+ * The `/` in the prefix test keeps it on segment boundaries (`inventory/stock`
+ * must not claim `inventory/stocktakes/1`), and the longest match wins so a
+ * deeper entry beats the shallower one it nests under.
+ */
+export const matchLeaf = (
+  leaves: readonly NavLeaf[],
+  relativePath: string
+): NavLeaf | undefined =>
+  leaves.find(leaf => leaf.to === relativePath) ??
+  leaves
+    .filter(leaf => relativePath.startsWith(`${leaf.to}/`))
+    .sort((a, b) => b.to.length - a.to.length)[0];
+
+/**
  * The menu entry a route belongs to — its own, or the one it sits beneath.
  *
  * A record screen has no menu entry of its own: `inventory/stocktakes/{id}` is
@@ -144,13 +163,6 @@ export const navLeaves: NavLeaf[] = items.flatMap(item =>
  * (ui-standards/layout § app bar), so the menu must keep showing Stocktakes.
  * Matching the path exactly left every detail screen in the app with nothing
  * highlighted at all — no entry, and no section either.
- *
- * The `/` in the prefix test keeps it on segment boundaries (`inventory/stock`
- * must not claim `inventory/stocktakes/1`), and the longest match wins so a
- * deeper entry beats the shallower one it nests under.
  */
 export const findLeafByPath = (relativePath: string): NavLeaf | undefined =>
-  navLeaves.find(leaf => leaf.to === relativePath) ??
-  navLeaves
-    .filter(leaf => relativePath.startsWith(`${leaf.to}/`))
-    .sort((a, b) => b.to.length - a.to.length)[0];
+  matchLeaf(navLeaves, relativePath);
