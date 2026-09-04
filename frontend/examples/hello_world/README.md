@@ -168,7 +168,8 @@ Turn this plugin's section on with **`?pluginPages`**:
 http://localhost:3005/<store>/?pluginPages
 ```
 
-A **Hello world** section appears at the end of the menu holding one page,
+A **Hello world** section appears at the end of the menu's upper list (above
+the pinned bottom cluster) holding one page,
 reachable from the menu, from the command palette ("Go to: Hello page"), and at
 `/<store>/hello-world/hello` directly — one registry, three surfaces.
 
