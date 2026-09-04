@@ -4,5 +4,15 @@
   "no": "No",
   "paste": "Pegar",
   "reload": "Recargar",
-  "yes": "Sí"
+  "yes": "Sí",
+  "about-oms": "",
+  "clear-data": "",
+  "clear-data-confirm-message": "",
+  "confirmation": "",
+  "developer-tools": "",
+  "documentation": "",
+  "file": "",
+  "help": "",
+  "quit": "",
+  "select-all": ""
 }
