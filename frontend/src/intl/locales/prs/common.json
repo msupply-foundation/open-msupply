@@ -3830,5 +3830,6 @@
   "messages.deleted-help-documents_one": "",
   "messages.deleted-help-documents_other": "",
   "messages.deleted-sites_one": "",
-  "messages.deleted-sites_other": ""
+  "messages.deleted-sites_other": "",
+  "messages.confirm-clear-hardware-id": ""
 }
