@@ -3,6 +3,7 @@ import {
   PLUGIN_API_VERSION,
 } from '../plugin-sdk/apiVersion';
 import type { PluginModule, SlotId } from '../plugin-sdk/types';
+import { navDestinations } from '../nav/navConfig';
 
 /*
  * The gate every loaded bundle passes before the host trusts it
@@ -52,6 +53,104 @@ export type ValidationVerdict =
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
+
+// A page or section path: URL segments of word characters and hyphens. No
+// leading/trailing/double slashes, no params, no dots — a path is an address,
+// and everything else about a page is declared, not encoded.
+const PATH_SEGMENT = /^[a-z0-9][a-z0-9_-]*$/i;
+const isValidPagePath = (path: unknown): path is string =>
+  typeof path === 'string' &&
+  path.length > 0 &&
+  path.split('/').every(segment => PATH_SEGMENT.test(segment));
+
+// Two paths claim the same URL space when either is a segment-prefix of the
+// other — the router judges a path by its deepest matching destination, so
+// nesting under a host section would silently inherit (or shadow) its gates.
+const pathsCollide = (a: string, b: string): boolean =>
+  a === b || a.startsWith(`${b}/`) || b.startsWith(`${a}/`);
+
+// The host's own address space: every registry destination, plus the routes
+// the router owns outside the registry (Home's empty path is unreachable by a
+// valid section path; '/dashboard' is the legacy redirect).
+const HOST_RESERVED_PATHS: readonly string[] = [
+  ...navDestinations.map(dest => dest.path).filter(path => path !== ''),
+  'dashboard',
+];
+
+/**
+ * Validate one section of a `pages` contribution. Returns the refusal message,
+ * or undefined when the section is well-formed. Collisions with the HOST are
+ * refused here (they are knowable from this module alone); collisions between
+ * two plugins are a load-order fact, so the registry's consumers resolve them
+ * deterministically and record the loser in diagnostics instead.
+ */
+const validatePageSection = (
+  section: unknown,
+  seenIds: Set<string>,
+  seenPaths: string[]
+): string | undefined => {
+  if (!isRecord(section)) return 'a pages section is not an object';
+  const id = section['id'];
+  if (typeof id !== 'string' || id.length === 0) {
+    return 'a pages section has no id';
+  }
+  if (seenIds.has(id)) return `duplicate pages section id "${id}"`;
+  seenIds.add(id);
+
+  if (typeof section['labelKey'] !== 'string' || !section['labelKey']) {
+    return `pages section "${id}" has no labelKey`;
+  }
+  const path = section['path'];
+  if (!isValidPagePath(path)) {
+    return `pages section "${id}" has an invalid path ${JSON.stringify(path)}`;
+  }
+  const hostCollision = HOST_RESERVED_PATHS.find(host =>
+    pathsCollide(host, path)
+  );
+  if (hostCollision) {
+    return `pages section "${id}" path "${path}" collides with the host destination "${hostCollision}"`;
+  }
+  const priorPath = seenPaths.find(seen => pathsCollide(seen, path));
+  if (priorPath !== undefined) {
+    return `pages section "${id}" path "${path}" collides with this plugin's own "${priorPath}"`;
+  }
+  seenPaths.push(path);
+
+  if (section['when'] !== undefined && typeof section['when'] !== 'function') {
+    return `pages section "${id}" has a non-function when gate`;
+  }
+  const permissions = section['permissions'];
+  if (
+    permissions !== undefined &&
+    (!Array.isArray(permissions) ||
+      permissions.some(entry => typeof entry !== 'string' || entry === ''))
+  ) {
+    return `pages section "${id}" has an invalid permissions list`;
+  }
+
+  const pages = section['pages'];
+  if (!Array.isArray(pages) || pages.length === 0) {
+    return `pages section "${id}" declares no pages`;
+  }
+  const pagePaths = new Set<string>();
+  for (const page of pages as readonly unknown[]) {
+    if (!isRecord(page)) return `pages section "${id}" has a non-object page`;
+    if (!isValidPagePath(page['path'])) {
+      return `pages section "${id}" has a page with an invalid path ${JSON.stringify(page['path'])}`;
+    }
+    if (pagePaths.has(page['path'])) {
+      return `pages section "${id}" declares the page path "${page['path']}" twice`;
+    }
+    pagePaths.add(page['path']);
+    if (typeof page['labelKey'] !== 'string' || !page['labelKey']) {
+      return `pages section "${id}" page "${page['path']}" has no labelKey`;
+    }
+    if (typeof page['load'] !== 'function') {
+      return `pages section "${id}" page "${page['path']}" has no load function`;
+    }
+  }
+  return undefined;
+};
 
 /**
  * Validate a plugin bundle's evaluated module namespace against the metadata
@@ -175,6 +274,19 @@ export const validateLoadedModule = (
         };
       }
       seen.add(key);
+    }
+  }
+
+  const pages = candidate['pages'];
+  if (pages !== undefined) {
+    if (!Array.isArray(pages)) {
+      return { kind: 'refused', message: 'pages is not an array' };
+    }
+    const sectionIds = new Set<string>();
+    const sectionPaths: string[] = [];
+    for (const section of pages as readonly unknown[]) {
+      const refusal = validatePageSection(section, sectionIds, sectionPaths);
+      if (refusal) return { kind: 'refused', message: refusal };
     }
   }
 

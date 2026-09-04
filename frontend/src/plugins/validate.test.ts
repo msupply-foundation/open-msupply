@@ -365,3 +365,131 @@ describe('validateLoadedModule', () => {
     expect(validateLoadedModule('demo', asModule(module)).kind).toBe('ok');
   });
 });
+
+describe('validateLoadedModule — pages', () => {
+  const load = async () => ({ default: Component });
+
+  const pageSection = (over: Record<string, unknown> = {}) => ({
+    id: 'stock-count',
+    labelKey: 'nav.section',
+    path: 'stock-count',
+    pages: [{ path: 'count', labelKey: 'nav.count', load }],
+    ...over,
+  });
+
+  const withPages = (pages: unknown) =>
+    asModule(
+      definePlugin({
+        manifest: {
+          code: 'demo',
+          version: '1.0.0',
+          pluginApiVersion: PLUGIN_API_VERSION,
+        },
+        pages: pages as never,
+      })
+    );
+
+  const pagesRefusal = (pages: unknown) =>
+    refusal(validateLoadedModule('demo', withPages(pages)));
+
+  it('accepts a well-formed pages declaration, gates included', () => {
+    const verdict = validateLoadedModule(
+      'demo',
+      withPages([
+        pageSection({
+          when: () => true,
+          permissions: ['STOCKTAKE_QUERY'],
+          pages: [
+            { path: 'count', labelKey: 'nav.count', load },
+            { path: 'count-log', labelKey: 'nav.count-log', load },
+          ],
+        }),
+      ])
+    );
+    expect(verdict.kind).toBe('ok');
+  });
+
+  it('refuses a non-array pages field', () => {
+    expect(pagesRefusal({})).toContain('pages is not an array');
+  });
+
+  it('refuses a section without an id, and a duplicate section id', () => {
+    expect(pagesRefusal([pageSection({ id: '' })])).toContain('has no id');
+    expect(
+      pagesRefusal([pageSection(), pageSection({ path: 'other' })])
+    ).toContain('duplicate pages section id');
+  });
+
+  it('refuses a section without a labelKey', () => {
+    expect(pagesRefusal([pageSection({ labelKey: '' })])).toContain(
+      'has no labelKey'
+    );
+  });
+
+  it('refuses malformed paths — empty, slashed edges, params', () => {
+    for (const path of ['', '/count', 'count/', 'a//b', 'a b', 'x/:id']) {
+      expect(pagesRefusal([pageSection({ path })])).toContain('invalid path');
+    }
+  });
+
+  it('refuses a path colliding with a host destination, at any depth', () => {
+    // Exact, below a host destination, and the off-registry legacy redirect —
+    // the router judges by deepest prefix, so nesting would inherit or shadow
+    // the host's own gates.
+    for (const path of ['inventory', 'inventory/stock/extra', 'dashboard']) {
+      expect(pagesRefusal([pageSection({ path })])).toContain(
+        'collides with the host destination'
+      );
+    }
+  });
+
+  it("refuses two of the plugin's own sections claiming one URL space", () => {
+    expect(
+      pagesRefusal([
+        pageSection(),
+        pageSection({ id: 'other', path: 'stock-count/deeper' }),
+      ])
+    ).toContain("collides with this plugin's own");
+  });
+
+  it('refuses a section with no pages', () => {
+    expect(pagesRefusal([pageSection({ pages: [] })])).toContain(
+      'declares no pages'
+    );
+  });
+
+  it('refuses a page without a load function, a labelKey, or a unique path', () => {
+    expect(
+      pagesRefusal([
+        pageSection({ pages: [{ path: 'count', labelKey: 'nav.count' }] }),
+      ])
+    ).toContain('has no load function');
+    expect(
+      pagesRefusal([
+        pageSection({ pages: [{ path: 'count', labelKey: '', load }] }),
+      ])
+    ).toContain('has no labelKey');
+    expect(
+      pagesRefusal([
+        pageSection({
+          pages: [
+            { path: 'count', labelKey: 'nav.count', load },
+            { path: 'count', labelKey: 'nav.count-again', load },
+          ],
+        }),
+      ])
+    ).toContain('twice');
+  });
+
+  it('refuses a non-function when gate and a malformed permissions list', () => {
+    expect(pagesRefusal([pageSection({ when: true })])).toContain(
+      'non-function when gate'
+    );
+    expect(pagesRefusal([pageSection({ permissions: ['ok', 42] })])).toContain(
+      'invalid permissions list'
+    );
+    expect(pagesRefusal([pageSection({ permissions: [''] })])).toContain(
+      'invalid permissions list'
+    );
+  });
+});
