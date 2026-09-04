@@ -1,6 +1,10 @@
 import { createAction, type KeyAction } from '../ui/utils/keyActions';
 import { navConfig, type NavItem } from '../nav/navConfig';
 import { gateNav } from '../nav/navGates';
+import {
+  pluginOfferedPaths,
+  pluginPaletteDestinations,
+} from '../plugins/pluginPages';
 import { t } from '../intl';
 import { ALT_D, ALT_H, type Shortcut } from '../ui/utils/shortcuts';
 
@@ -45,11 +49,15 @@ const paletteDestinations = (): NavItem[] =>
  * moment of registration.
  */
 const offeredPaths = (): ReadonlySet<string> =>
-  new Set(
-    gateNav(navConfig).flatMap(item =>
+  new Set([
+    ...gateNav(navConfig).flatMap(item =>
       (item.children ?? [item]).map(destination => destination.path)
-    )
-  );
+    ),
+    // Plugin pages, through their own two gates — the same menu set, so the
+    // palette and the menu agree about contributed destinations too
+    // (spec/navigation § plugin destinations; AC-KB4).
+    ...pluginOfferedPaths(),
+  ]);
 
 /**
  * The destination's palette row, complete with its "Go to:" prefix — the
@@ -97,8 +105,8 @@ const DESTINATION_SHORTCUTS: Record<string, Shortcut> = {
  */
 export const createNavActions = (
   navigate: (path: string) => void
-): KeyAction[] =>
-  paletteDestinations().map(destination => {
+): KeyAction[] => [
+  ...paletteDestinations().map(destination => {
     const shortcut = DESTINATION_SHORTCUTS[destination.path];
     return createAction({
       name: paletteName(destination),
@@ -106,4 +114,18 @@ export const createNavActions = (
       disabled: () => !offeredPaths().has(destination.path),
       run: () => navigate(destination.path),
     });
-  });
+  }),
+  // Plugin pages get the derived-wholesale treatment host destinations get
+  // (D107): every page a loaded plugin contributes is a row — the set is
+  // settled before the shell mounts (plugins load behind the boot gate) — and
+  // its gates live in `disabled`, re-read per open like every row above. A
+  // plugin SECTION is not a destination, same as a host section: its pages
+  // carry the reach.
+  ...pluginPaletteDestinations().map(destination =>
+    createAction({
+      name: () => t('cmdk.goto', { destination: t(destination.labelKey) }),
+      disabled: () => !offeredPaths().has(destination.path),
+      run: () => navigate(destination.path),
+    })
+  ),
+];

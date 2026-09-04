@@ -63,6 +63,7 @@ import { StaleBundleModal } from './StaleBundleModal';
 import { startStaleBundleWatch } from './staleBundle';
 import { startUpdateWatch } from './appUpdate';
 import { PluginGate } from './plugins/PluginGate';
+import { pluginPageRoutes } from './plugins/pluginPages';
 import styles from './ui/styles/shared.module.css';
 
 // 'failed' is what the loading phase becomes once a startup pass cannot
@@ -276,6 +277,22 @@ export const App: Component = () => {
                         <Route
                           path={`/${dest.path}`}
                           component={() => <EntryPage dest={dest} />}
+                        />
+                      )}
+                    </For>
+                    {/* Plugin-contributed pages (spec/plugins/rules.md § pages
+                      & navigation): one route per page a loaded plugin
+                      declares — the set is settled here, since PluginGate has
+                      already opened. Each component is the host frame around
+                      the plugin's lazy body, and the gates are ShellLayout's
+                      reactive routeAccess verdict, exactly as for the routes
+                      above. A plugin section's own root has no route: it falls
+                      to the catch-all below, judged by the section's gates. */}
+                    <For each={pluginPageRoutes()}>
+                      {route => (
+                        <Route
+                          path={`/${route.path}`}
+                          component={route.Component}
                         />
                       )}
                     </For>
