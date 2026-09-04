@@ -26,10 +26,13 @@ const ctx = vi.hoisted(() => ({
 vi.mock('./slotContext', () => ({ slotContext: () => ctx.current }));
 
 import { definePlugin } from '../plugin-sdk/definePlugin';
+import { HOST_NAV_SECTION_IDS } from '../plugin-sdk/types';
+import { upperNav } from '../ui/layout/AppShell/navModel';
 import { pluginDiagnostics } from './diagnostics';
 import { clearPlugins, registerPlugin } from './registry';
 import {
   activePageSections,
+  mergeUpperNav,
   pluginLeafByPath,
   pluginNavItems,
   pluginOfferedPaths,
@@ -291,6 +294,60 @@ describe('menu items and palette rows', () => {
     register('ck', [section({ permissions: ['STOCKTAKE_QUERY'] })]);
     expect(pluginPaletteDestinations()).toHaveLength(2);
     expect(pluginOfferedPaths()).toEqual([]);
+  });
+});
+
+describe('menu placement (anchors)', () => {
+  // The gated host list as ShellLayout hands it in — everything offered.
+  const allHosts = () => [...upperNav];
+  const menuIds = (hosts = allHosts()) =>
+    mergeUpperNav(hosts).items.map(item => item.id);
+
+  it('publishes exactly the real upper sections as anchor targets', () => {
+    // The SDK's const union and the live menu can never drift: this is the
+    // honesty guard, like SLOT_IDS' exhaustive Record for slot ids.
+    expect([...HOST_NAV_SECTION_IDS]).toEqual(upperNav.map(item => item.id));
+  });
+
+  it('defaults an unanchored section to the end of the upper list', () => {
+    register('ck', [section()]);
+    const ids = menuIds();
+    expect(ids[ids.length - 1]).toBe('stock-count');
+  });
+
+  it('places a section before / after its anchor target', () => {
+    register('ck', [section({ anchor: { before: 'inventory' } })]);
+    const ids = menuIds();
+    expect(ids.indexOf('stock-count')).toBe(ids.indexOf('inventory') - 1);
+
+    clearPlugins();
+    register('ck', [section({ anchor: { after: 'inventory' } })]);
+    const after = menuIds();
+    expect(after.indexOf('stock-count')).toBe(after.indexOf('inventory') + 1);
+  });
+
+  it('degrades an anchor to a gate-hidden section to the end, reported', () => {
+    register('ck', [section({ anchor: { before: 'dispensary' } })]);
+    // The store is not a dispensary: gateNav dropped the section, so the
+    // published id has no rendered position.
+    const hosts = allHosts().filter(item => item.id !== 'dispensary');
+    const { items, diagnostics } = mergeUpperNav(hosts);
+    expect(items[items.length - 1]?.id).toBe('stock-count');
+    expect(diagnostics).toHaveLength(1);
+    expect(diagnostics[0]?.contributionId).toBe('ck.stock-count');
+    expect(diagnostics[0]?.message).toContain('dispensary');
+  });
+
+  it('keeps registry order between sections sharing a coordinate', () => {
+    register('zebra', [
+      section({ id: 'z', path: 'z-pages', anchor: { before: 'inventory' } }),
+    ]);
+    register('aardvark', [
+      section({ id: 'a', path: 'a-pages', anchor: { before: 'inventory' } }),
+    ]);
+    const ids = menuIds();
+    const inventory = ids.indexOf('inventory');
+    expect(ids.slice(inventory - 2, inventory)).toEqual(['a-pages', 'z-pages']);
   });
 });
 

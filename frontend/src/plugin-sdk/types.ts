@@ -516,6 +516,28 @@ export type AnyContribution = {
 // the host's one navigation registry so the menu, the command palette, and the
 // router can never disagree about them (rules § pages & navigation).
 
+/**
+ * The host's upper menu sections, as published anchor targets — a plugin
+ * section MAY place itself against one of these ids (a section's id is its
+ * root path; Home's, whose path is empty, is `'home'`). The pinned lower
+ * cluster (Catalogue, Manage, Settings, Help) is not anchorable: plugin
+ * sections live in the upper list. A host-side test keeps this list identical
+ * to the real menu, so it can never drift.
+ */
+export const HOST_NAV_SECTION_IDS = [
+  'home',
+  'replenishment',
+  'inventory',
+  'distribution',
+  'dispensary',
+  'cold-chain',
+  'programs',
+  'reports',
+] as const;
+
+/** A published host upper-section id — a nav anchor target. */
+export type HostNavSectionId = (typeof HOST_NAV_SECTION_IDS)[number];
+
 /** One routed screen a plugin contributes — a navigation entry plus a body. */
 export interface PluginPage {
   /**
@@ -562,6 +584,15 @@ export interface PluginPageSection {
    * holds skips this section, visibly in diagnostics.
    */
   path: string;
+  /**
+   * Where the section sits in the menu's upper list, against the published
+   * host section ids ({@link HOST_NAV_SECTION_IDS}) — the one placement shape
+   * every anchored surface uses. Absent (or `{ end: true }`) means the end of
+   * the upper list. An anchor naming a section the store's gates currently
+   * hide degrades to the end, named in plugin diagnostics — placement is a
+   * preference, never a gate.
+   */
+  anchor?: Anchor<HostNavSectionId>;
   /**
    * Store-context withhold — the capability-class gate: while it fails, the
    * section is absent from the menu and the palette, and its URLs redirect to
