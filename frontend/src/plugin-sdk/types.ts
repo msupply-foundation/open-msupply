@@ -545,7 +545,8 @@ export interface PluginPage {
 /**
  * A labelled navigation section holding a plugin's pages — what the `pages`
  * key of a plugin definition declares. The host places it in the primary nav
- * menu after its own sections, generates a route per page, and lists every
+ * menu's upper list after its own upper sections (above the pinned lower
+ * cluster), generates a route per page, and lists every
  * page in the command palette; both gates below act on all three surfaces at
  * once, so a withheld page is exactly as absent as a withheld host screen.
  */
