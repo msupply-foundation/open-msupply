@@ -510,19 +510,90 @@ export type AnyContribution = {
     SlotRender[S];
 }[SlotId];
 
+// ── Pages & navigation ──────────────────────────────────────────────────────
+// The page contribution — NOT a slot (sdk-contract § the page contribution):
+// whole routed screens, plus the labelled menu section holding them, joined to
+// the host's one navigation registry so the menu, the command palette, and the
+// router can never disagree about them (rules § pages & navigation).
+
+/** One routed screen a plugin contributes — a navigation entry plus a body. */
+export interface PluginPage {
+  /**
+   * The page's path below its section's path — URL segments (letters, digits,
+   * `-`, `_`), unique within the section. The page's full store-relative path
+   * is `${section.path}/${page.path}`; the SDK's own navigation primitives
+   * take exactly that path.
+   */
+  path: string;
+  /**
+   * The navigation entry's label — also the page's breadcrumb and browser-tab
+   * title — as a key in the plugin's catalogue, never a literal.
+   */
+  labelKey: PluginLocaleKey;
+  /**
+   * Loads the page's BODY component: called on first navigation to the page,
+   * never at startup (AC-PLUG-P2), behind the host's route-level pending
+   * boundary — `load: () => import('./CountPage')`. The host supplies the app
+   * frame and page frame (header, breadcrumb, the menu); the component owns
+   * only the body, receives no props, and fetches its own data through the
+   * SDK, like a dashboard body contribution does.
+   */
+  load: () => Promise<{ default: Component }>;
+}
+
+/**
+ * A labelled navigation section holding a plugin's pages — what the `pages`
+ * key of a plugin definition declares. The host places it in the primary nav
+ * menu after its own sections, generates a route per page, and lists every
+ * page in the command palette; both gates below act on all three surfaces at
+ * once, so a withheld page is exactly as absent as a withheld host screen.
+ */
+export interface PluginPageSection {
+  /** Unique within the plugin. */
+  id: string;
+  /** The section's menu label — a key in the plugin's catalogue. */
+  labelKey: PluginLocaleKey;
+  /**
+   * The section's store-relative root path (e.g. `'stock-count'`) — URL
+   * segments every page mounts below. A path a host destination already holds
+   * refuses the whole plugin at validation; one an earlier plugin's section
+   * holds skips this section, visibly in diagnostics.
+   */
+  path: string;
+  /**
+   * Store-context withhold — the capability-class gate: while it fails, the
+   * section is absent from the menu and the palette, and its URLs redirect to
+   * the landing screen, exactly as a function the store does not have. Gate
+   * POSITIVELY (`ctx.storeMode === 'dispensary'`) — see
+   * {@link SlotContext.storeMode}.
+   */
+  when?: (ctx: SlotContext) => boolean;
+  /**
+   * The permissions this section's pages require — ALL of them, as
+   * {@link SlotContext.permissions}' own server names. The permission-class
+   * gate, and the one condition behind both doors (AC-PLUG-P1): without them
+   * the entries are absent, and a page's URL shows the host's no-permission
+   * notice in place of the screen.
+   */
+  permissions?: readonly string[];
+  /** The section's pages, in menu order. At least one. */
+  pages: readonly PluginPage[];
+}
+
 // ── The plugin module ───────────────────────────────────────────────────────
 
 /** A flat message catalogue — `key` → template, `{{ token }}` interpolated. */
 export type PluginMessages = Readonly<Record<string, string>>;
 
 /**
- * What the author passes to `definePlugin`. `pages` and `register` (the
- * imperative escape hatch) are not in v1 — they join here when a host surface
- * needs them.
+ * What the author passes to `definePlugin`. `register` (the imperative escape
+ * hatch) is not in v1 — it joins here when a host surface needs it.
  */
 export interface PluginDefinition {
   manifest: PluginManifest;
   contributions?: readonly AnyContribution[];
+  /** Whole routed screens, each set under its own labelled menu section. */
+  pages?: readonly PluginPageSection[];
   /**
    * Registered under namespace = the plugin's code, layered under server
    * overrides.

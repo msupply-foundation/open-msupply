@@ -3,6 +3,7 @@ import type {
   AnyContribution,
   DashboardPieceId,
   PluginModule,
+  PluginPageSection,
   SlotId,
 } from '../plugin-sdk/types';
 
@@ -108,6 +109,39 @@ export const contributionsFor =
         (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
     );
   };
+
+/**
+ * A page section as the host consumes it: the plugin's own frozen declaration
+ * plus the code that supplied it. The declaration keeps its identity (no
+ * spread) so consumers can cache derived objects against it — the same object
+ * for the registry's whole life, however often this accessor is read.
+ */
+export interface RegisteredPageSection {
+  pluginCode: string;
+  section: PluginPageSection;
+}
+
+/**
+ * Every loaded plugin's page sections, in deterministic order — plugin code,
+ * then declaration order — independent of which bundle finished loading first
+ * (rules § contributions). A plain accessor over the registry signal, like
+ * `contributionsFor`: compose it into a single `createMemo` where the read
+ * feeds a `<For>`. Cross-plugin path collisions are NOT resolved here — the
+ * order is what makes their resolution (first claim wins) deterministic
+ * downstream (src/plugins/pluginPages.tsx).
+ */
+export const pageSections = (): readonly RegisteredPageSection[] => {
+  const found: RegisteredPageSection[] = [];
+  const byCode = [...plugins()].sort((a, b) =>
+    a.code < b.code ? -1 : a.code > b.code ? 1 : 0
+  );
+  for (const plugin of byCode) {
+    for (const section of plugin.module.pages ?? []) {
+      found.push({ pluginCode: plugin.code, section });
+    }
+  }
+  return found;
+};
 
 /**
  * The built-in dashboard pieces the loaded plugins ask to hide, by published id
