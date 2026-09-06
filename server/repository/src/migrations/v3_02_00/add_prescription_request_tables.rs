@@ -5,10 +5,9 @@ use crate::migrations::*;
 /// request to READY_TO_DISPENSE a dispensing invoice is generated from it
 /// (invoice.prescription_request_id points back here).
 ///
-/// There is no clinician column: `created_by` — the user who entered the
-/// request — is the sole record of who prescribed (spec/prescription-requests
-/// § who prescribed). The generated dispensation carries the same identity in
-/// `invoice.user_id`.
+/// `created_by` records the account that ENTERED the request; the clinician it
+/// is written on behalf of arrives later, in
+/// `add_clinician_to_prescription_request`.
 pub(crate) struct Migrate;
 
 impl MigrationFragment for Migrate {

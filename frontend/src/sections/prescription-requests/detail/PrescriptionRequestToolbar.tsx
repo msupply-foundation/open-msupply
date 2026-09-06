@@ -10,6 +10,7 @@ import {
   minimalPatientOption,
   type PatientOption,
 } from '../../../domain/patient';
+import { ClinicianSelect } from '../../../domain/clinician';
 import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
 import { UserLabel } from '../../../ui/elements/typography/UserLabel';
 import { ProgramNameSelect } from '../../../domain/program';
@@ -30,12 +31,13 @@ import {
 
 // The detail header's field cluster (spec/prescription-requests/ui-surface.md
 // S3 § header toolbar), rendered as the children of the page's
-// <HeaderToolbar>: Patient · Date · Program · Diagnosis · Entered by, then the
-// scope's prominent custom fields. Weighted shares follow the dispensing
-// toolbar's measured layout (person-name fields take the biggest shares; the
-// date is pinned at its 9rem format width). Every field is read-only past New
-// (AC-N5); unlike dispensing, a date or program change never touches lines —
-// the request's lines carry no stock, so nothing needs clearing.
+// <HeaderToolbar>: Patient · Clinician · Date · Program · Diagnosis · Entered
+// by, then the scope's prominent custom fields. Weighted shares follow the
+// dispensing toolbar's measured layout (person-name fields take the biggest
+// shares; the date is pinned at its 9rem format width). Every field is
+// read-only past New (AC-N5); unlike dispensing, a date or program change
+// never touches lines — the request's lines carry no stock, so nothing needs
+// clearing.
 
 type Diagnosis = RequestDiagnosesActiveResult['diagnosesActive'][number];
 
@@ -86,6 +88,26 @@ export const PrescriptionRequestToolbar: Component<
           onEditPatient={props.onEditPatient}
           onSelect={patient =>
             patient && props.onSave({ patientId: patient.id })
+          }
+        />
+      </FormRowItem>
+      {/* The clinician the request names — an ordinary editable field while
+          New, chosen at creation, and NOT the same fact as Entered by below
+          (rules § who is recorded). It is what fills the generated
+          dispensation's own clinician at the hand-over. */}
+      <FormRowItem weight={1.55}>
+        <ClinicianSelect
+          label={t('label.clinician')}
+          size="small"
+          inputTestId="clinician-select"
+          // The create-clinician side flow, under this cluster's editability
+          // gate — the picker withholds it while disabled.
+          allowCreate
+          storeId={props.storeId}
+          value={props.node.clinicianId ?? undefined}
+          disabled={props.disabled}
+          onChange={clinician =>
+            props.onSave({ clinicianId: { value: clinician?.id ?? null } })
           }
         />
       </FormRowItem>

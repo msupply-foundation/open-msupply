@@ -16,16 +16,12 @@ use super::update::UpdatePrescriptionRequestError;
 /// quantity and directions — stock allocation stays the dispenser's job.
 ///
 /// Runs in the session of whoever set the request Ready to dispense, so the
-/// generated invoice's `user_id` names the prescriber.
-///
-/// `clinician_id` is the clinician asked for at the hand-over, and is the one
-/// thing here the request itself does not hold.
+/// generated invoice's `user_id` records that account.
 pub(crate) fn create_dispensation(
     ctx: &ServiceContext,
     connection: &StorageConnection,
     request: &PrescriptionRequestRow,
     lines: Vec<PrescriptionRequestLineRow>,
-    clinician_id: Option<String>,
 ) -> Result<String, UpdatePrescriptionRequestError> {
     let invoice_id = uuid();
 
@@ -37,13 +33,14 @@ pub(crate) fn create_dispensation(
             diagnosis_id: request.diagnosis_id.clone(),
             program_id: request.program_id.clone(),
             their_reference: None,
-            // The clinician the hand-over named, if any. It does NOT record
-            // who prescribed — a request records that as `created_by`, and
-            // `insert_prescription` stamps the same session's user onto
-            // `invoice.user_id` (spec/prescription-requests § who prescribed).
-            // This is the dispensary's own clinician field, filled in at the
-            // hand-over so the dispenser does not have to guess it.
-            clinician_id,
+            // The clinician the request names, if any. It does NOT record who
+            // entered either record — the request holds that as `created_by`,
+            // and `insert_prescription` stamps this session's user onto
+            // `invoice.user_id` (spec/prescription-requests § who is
+            // recorded). Both sides are link ids, which is why this copies
+            // across unresolved: `insert_prescription` writes what it is
+            // given straight to `invoice.clinician_link_id`.
+            clinician_id: request.clinician_link_id.clone(),
             prescription_date: Some(request.prescription_datetime),
             // Links the dispensation back to its source request
             prescription_request_id: Some(request.id.clone()),

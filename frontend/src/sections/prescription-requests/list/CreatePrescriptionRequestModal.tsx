@@ -1,5 +1,5 @@
 import { generateUUID } from '../../../uuid';
-import { createSignal, Show, type Component } from 'solid-js';
+import { createEffect, createSignal, Show, type Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { t } from '../../../intl';
 import { graphqlFetch } from '../../../api/graphql';
@@ -11,6 +11,10 @@ import { FieldRow } from '../../../ui/elements/inputs/FieldRow';
 import { DateField } from '../../../ui/elements/inputs/DateField';
 import { localTodayIso } from '../../../ui/elements/inputs/dateTimeConvert';
 import { PatientSearch, type PatientOption } from '../../../domain/patient';
+import {
+  ClinicianSelect,
+  clinicianMatchingUser,
+} from '../../../domain/clinician';
 import { ProgramNameSelect } from '../../../domain/program';
 import { CreatePatientModal } from '../../patients';
 import { newPrescriptionRequestDate } from '../detail/prescriptionRequestUpdate';
@@ -18,14 +22,16 @@ import { InsertPrescriptionRequest } from './createPrescriptionRequest.generated
 
 // The create-request dialog (spec/prescription-requests/ui-surface.md S2, AC-C1..
 // C3): patient (the one required field — the reusable patient picker), date
-// (defaults today, capped at today), and program. Create is unavailable until a
-// patient is chosen; a rejection shows in-dialog with entries intact
-// (rejections here are all generic — contract § wire traps); success
-// navigates to the new request's detail.
+// (defaults today, capped at today), clinician and program. Create is
+// unavailable until a patient is chosen; a rejection shows in-dialog with
+// entries intact (rejections here are all generic — contract § wire traps);
+// success navigates to the new request's detail.
 //
-// There is NO clinician field: a request records only the user who entered it
-// (§ who is recorded), and carries no clinician of its own, so there is
-// nothing to pick.
+// The clinician is chosen HERE rather than at the hand-over (AC-C6): it is a
+// field of the request, like the patient beside it, and asking for it at the
+// one moment the request can no longer be edited put it in the wrong place. It
+// defaults to the clinician whose code is the signed-in username, because the
+// prescriber usually enters their own script (see clinicianMatchingUser).
 
 export interface CreatePrescriptionRequestModalProps {
   open: boolean;
@@ -40,16 +46,31 @@ export const CreatePrescriptionRequestModal: Component<
 
   const [patient, setPatient] = createSignal<PatientOption | null>(null);
   const [date, setDate] = createSignal<string>(localTodayIso());
+  const [clinicianId, setClinicianId] = createSignal<string>();
   const [programId, setProgramId] = createSignal<string>();
+  // The default only ever applies to an UNTOUCHED field: once the user has
+  // picked (or cleared) a clinician, the seed below leaves it alone.
+  const [clinicianTouched, setClinicianTouched] = createSignal(false);
   const [busy, setBusy] = createSignal(false);
   const [error, setError] = createSignal<string>();
   // The create-patient-on-no-match sub-flow (the patients vertical's create
   // modal over this dialog); on success the new patient is selected here.
   const [createPatientOpen, setCreatePatientOpen] = createSignal(false);
 
+  // Seed the default. An EFFECT rather than an initial value, because the
+  // clinician list loads asynchronously — the match is unknown while the
+  // dialog is opening and arrives a moment later.
+  createEffect(() => {
+    if (!props.open || clinicianTouched()) return;
+    const match = clinicianMatchingUser();
+    if (match) setClinicianId(match.id);
+  });
+
   const reset = () => {
     setPatient(null);
     setDate(localTodayIso());
+    setClinicianId(undefined);
+    setClinicianTouched(false);
     setProgramId(undefined);
     setError(undefined);
   };
@@ -76,6 +97,7 @@ export const CreatePrescriptionRequestModal: Component<
         input: {
           id: generateUUID(),
           patientId: chosen.id,
+          ...(clinicianId() ? { clinicianId: clinicianId() } : {}),
           ...(programId() ? { programId: programId() } : {}),
           ...(backdatedTo ? { prescriptionDatetime: backdatedTo } : {}),
         },
@@ -153,6 +175,22 @@ export const CreatePrescriptionRequestModal: Component<
           value={date()}
           max={localTodayIso()}
           onChange={value => setDate(value ?? localTodayIso())}
+        />
+      </FieldRow>
+      <FieldRow label={t('label.clinician')}>
+        <ClinicianSelect
+          label={t('label.clinician')}
+          hideLabel
+          inputTestId="clinician-select"
+          value={clinicianId()}
+          // The create-clinician side flow: the picker owns it, and a clinician
+          // created here comes back selected.
+          allowCreate
+          storeId={params.storeId}
+          onChange={clinician => {
+            setClinicianTouched(true);
+            setClinicianId(clinician?.id);
+          }}
         />
       </FieldRow>
       <FieldRow label={t('label.program')}>

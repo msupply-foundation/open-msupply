@@ -17,6 +17,7 @@ fragment PrescriptionRequestFields on PrescriptionRequestNode {
     code
     dateOfBirth
   }
+  clinicianId
   diagnosisId
   programId
   user {

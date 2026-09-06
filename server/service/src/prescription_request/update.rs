@@ -1,8 +1,8 @@
 use chrono::{NaiveDateTime, Utc};
 use repository::{
-    ActivityLogType, CustomFieldValueType, PrescriptionRequestLineRowRepository,
-    PrescriptionRequestRow, PrescriptionRequestRowRepository, PrescriptionRequestStatus,
-    RepositoryError, TransactionError,
+    ActivityLogType, CustomFieldValueType, PrescriptionRequest,
+    PrescriptionRequestLineRowRepository, PrescriptionRequestRow, PrescriptionRequestRowRepository,
+    PrescriptionRequestStatus, RepositoryError, TransactionError,
 };
 
 use crate::activity_log::{activity_log_entry, activity_log_entry_with_diff};
@@ -15,8 +15,9 @@ use crate::validate::check_patient_exists;
 use crate::NullableUpdate;
 
 use super::generate::create_dispensation;
+use super::query::get_prescription_request;
 use super::validate::{
-    check_diagnosis_exists, check_prescription_request_editable,
+    check_clinician_exists, check_diagnosis_exists, check_prescription_request_editable,
     CommonPrescriptionRequestError,
 };
 
@@ -29,20 +30,17 @@ pub enum UpdatePrescriptionRequestStatus {
     /// Locks the request and generates the dispensing invoice. `Dispensed` is
     /// never set through this input — the status processor flips it when the
     /// generated dispensation is verified.
-    ReadyToDispense {
-        /// The clinician the generated dispensation names — optional, and
-        /// asked for at the hand-over rather than held on the request, which
-        /// records its prescriber as the user who entered it (see
-        /// `create_dispensation`). It rides the transition rather than the
-        /// struct so it cannot be set by an edit that is not a hand-over.
-        clinician_id: Option<String>,
-    },
+    ///
+    /// It carries no clinician: the request holds its own, chosen when it was
+    /// created, and that is what the dispensation is filled from (issue #513).
+    ReadyToDispense,
 }
 
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct UpdatePrescriptionRequest {
     pub id: String,
     pub patient_id: Option<String>,
+    pub clinician_id: Option<NullableUpdate<String>>,
     pub diagnosis_id: Option<NullableUpdate<String>>,
     pub program_id: Option<NullableUpdate<String>>,
     pub prescription_datetime: Option<NaiveDateTime>,
@@ -62,6 +60,7 @@ pub enum UpdatePrescriptionRequestError {
     /// Only New requests can be edited or set to Ready to dispense.
     NotEditable,
     PatientDoesNotExist,
+    ClinicianDoesNotExist,
     DiagnosisDoesNotExist,
     ProgramDoesNotExist,
     UnknownCustomFieldKey(String),
@@ -75,6 +74,8 @@ pub enum UpdatePrescriptionRequestError {
     NoLines,
     /// The generated dispensing invoice could not be created.
     CreatedDispensationError(String),
+    /// The row was written but could not be read back — internal.
+    UpdatedPrescriptionRequestDoesNotExist,
     DatabaseError(RepositoryError),
 }
 
@@ -95,7 +96,7 @@ pub fn update_prescription_request(
     ctx: &ServiceContext,
     store_id: &str,
     input: UpdatePrescriptionRequest,
-) -> Result<PrescriptionRequestRow, UpdatePrescriptionRequestError> {
+) -> Result<PrescriptionRequest, UpdatePrescriptionRequestError> {
     use UpdatePrescriptionRequestError::*;
 
     ctx.connection
@@ -117,6 +118,11 @@ pub fn update_prescription_request(
             }
             // Only a patch that names one gets checked; clearing it (a
             // NullableUpdate holding None) has nothing to look up.
+            if let Some(clinician_id) = input.clinician_id.as_ref().and_then(|u| u.value.as_ref()) {
+                if !check_clinician_exists(connection, clinician_id)? {
+                    return Err(ClinicianDoesNotExist);
+                }
+            }
             if let Some(diagnosis_id) = input.diagnosis_id.as_ref().and_then(|u| u.value.as_ref()) {
                 if !check_diagnosis_exists(connection, diagnosis_id)? {
                     return Err(DiagnosisDoesNotExist);
@@ -140,6 +146,7 @@ pub fn update_prescription_request(
             let UpdatePrescriptionRequest {
                 id: _,
                 patient_id,
+                clinician_id,
                 diagnosis_id,
                 program_id,
                 prescription_datetime,
@@ -150,6 +157,11 @@ pub fn update_prescription_request(
 
             let mut updated = PrescriptionRequestRow {
                 patient_id: patient_id.unwrap_or(existing.patient_id.clone()),
+                // Written as the link id, under the same convention as the
+                // insert: a clinician's own id is its link id until a merge.
+                clinician_link_id: clinician_id
+                    .map(|u| u.value)
+                    .unwrap_or(existing.clinician_link_id.clone()),
                 diagnosis_id: diagnosis_id
                     .map(|u| u.value)
                     .unwrap_or(existing.diagnosis_id.clone()),
@@ -181,8 +193,7 @@ pub fn update_prescription_request(
                 &updated,
             )?;
 
-            if let Some(UpdatePrescriptionRequestStatus::ReadyToDispense { clinician_id }) = status
-            {
+            if let Some(UpdatePrescriptionRequestStatus::ReadyToDispense) = status {
                 let lines = PrescriptionRequestLineRowRepository::new(connection)
                     .find_many_by_prescription_request_id(&updated.id)?;
                 if lines.is_empty() {
@@ -195,7 +206,7 @@ pub fn update_prescription_request(
                 // The dispensation copies the freshly-updated header, so write
                 // the request first, then generate.
                 PrescriptionRequestRowRepository::new(connection).upsert_one(&updated)?;
-                create_dispensation(ctx, connection, &updated, lines, clinician_id)?;
+                create_dispensation(ctx, connection, &updated, lines)?;
 
                 activity_log_entry(
                     ctx,
@@ -208,7 +219,10 @@ pub fn update_prescription_request(
                 PrescriptionRequestRowRepository::new(connection).upsert_one(&updated)?;
             }
 
-            Ok(updated)
+            // Read back joined, so the response carries the clinician resolved
+            // through its link rather than the raw link id.
+            get_prescription_request(ctx, Some(store_id), &updated.id)?
+                .ok_or(UpdatedPrescriptionRequestDoesNotExist)
         })
         .map_err(|error: TransactionError<UpdatePrescriptionRequestError>| error.to_inner_error())
 }
@@ -264,6 +278,7 @@ mod test {
                 },
             )
             .unwrap()
+            .prescription_request_row
     }
 
     fn add_line(
@@ -306,9 +321,7 @@ mod test {
                     "store_a",
                     UpdatePrescriptionRequest {
                         id: request.id.clone(),
-                        status: Some(UpdatePrescriptionRequestStatus::ReadyToDispense {
-                            clinician_id: None,
-                        }),
+                        status: Some(UpdatePrescriptionRequestStatus::ReadyToDispense),
                         ..Default::default()
                     },
                 ),
@@ -323,6 +336,23 @@ mod test {
             Some("one three times a day"),
         );
 
+        // The clinician is the request's own field, set while it is still New
+        // — the hand-over takes no clinician of its own (issue #513).
+        service_provider
+            .prescription_request_service
+            .update_prescription_request(
+                &ctx,
+                "store_a",
+                UpdatePrescriptionRequest {
+                    id: request.id.clone(),
+                    clinician_id: Some(NullableUpdate {
+                        value: Some(clinician_a().id),
+                    }),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
         let updated = service_provider
             .prescription_request_service
             .update_prescription_request(
@@ -330,13 +360,12 @@ mod test {
                 "store_a",
                 UpdatePrescriptionRequest {
                     id: request.id.clone(),
-                    status: Some(UpdatePrescriptionRequestStatus::ReadyToDispense {
-                        clinician_id: Some(clinician_a().id),
-                    }),
+                    status: Some(UpdatePrescriptionRequestStatus::ReadyToDispense),
                     ..Default::default()
                 },
             )
-            .unwrap();
+            .unwrap()
+            .prescription_request_row;
         assert_eq!(updated.status, PrescriptionRequestStatus::ReadyToDispense);
         assert!(updated.ready_datetime.is_some());
 
@@ -351,8 +380,8 @@ mod test {
         assert_eq!(invoice.invoice_row.r#type, InvoiceType::Prescription);
         assert_eq!(invoice.invoice_row.status, InvoiceStatus::New);
         assert_eq!(invoice.invoice_row.name_id, mock_patient().id);
-        // The clinician asked for at the hand-over fills the dispensation's own
-        // clinician field — the request holds none of its own.
+        // The clinician the REQUEST names fills the dispensation's own
+        // clinician field.
         assert_eq!(
             invoice.invoice_row.clinician_link_id,
             Some(clinician_a().id)
@@ -472,9 +501,7 @@ mod test {
                 "store_a",
                 UpdatePrescriptionRequest {
                     id: request.id.clone(),
-                    status: Some(UpdatePrescriptionRequestStatus::ReadyToDispense {
-                        clinician_id: None,
-                    }),
+                    status: Some(UpdatePrescriptionRequestStatus::ReadyToDispense),
                     ..Default::default()
                 },
             )
@@ -519,9 +546,7 @@ mod test {
                 "store_a",
                 UpdatePrescriptionRequest {
                     id: handed_over.id.clone(),
-                    status: Some(UpdatePrescriptionRequestStatus::ReadyToDispense {
-                        clinician_id: None,
-                    }),
+                    status: Some(UpdatePrescriptionRequestStatus::ReadyToDispense),
                     ..Default::default()
                 },
             )
