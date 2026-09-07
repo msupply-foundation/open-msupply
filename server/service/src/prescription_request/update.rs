@@ -236,7 +236,7 @@ impl From<RepositoryError> for UpdatePrescriptionRequestError {
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{clinician_a, mock_item_a, mock_patient, MockDataInserts},
+        mock::{clinician_a, mock_item_a, mock_patient, mock_patient_b, MockDataInserts},
         test_db::setup_all,
         ActivityLogRowRepository, ActivityLogType, EqualFilter, InvoiceFilter,
         InvoiceLineRowRepository, InvoiceLineType, InvoiceRepository, InvoiceStatus, InvoiceType,
@@ -244,7 +244,12 @@ mod test {
     };
     use util::uuid::uuid;
 
-    use crate::invoice::prescription::DeletePrescriptionError;
+    use crate::invoice::prescription::{
+        DeletePrescriptionError, UpdatePrescription, UpdatePrescriptionError,
+    };
+    use crate::invoice_line::stock_out_line::{
+        SetPrescribedQuantity, SetPrescribedQuantityError,
+    };
     use crate::prescription_request::batch::BatchPrescriptionRequest;
     use crate::prescription_request::delete::DeletePrescriptionRequestError;
     use crate::prescription_request::insert::InsertPrescriptionRequest;
@@ -529,6 +534,140 @@ mod test {
             )
             .unwrap()
             .is_some());
+    }
+
+    /// The prescriber's fields are locked on the dispensation the hand-over
+    /// generated — enforced by the server, not just withheld by the UI
+    /// (issue #513). Re-sending an unchanged value is not a change and passes.
+    #[actix_rt::test]
+    async fn generated_dispensation_locks_the_prescribers_fields() {
+        let (service_provider, ctx) = setup("generated_dispensation_locks_fields").await;
+
+        // A request carrying all three of the fields at stake.
+        let request = service_provider
+            .prescription_request_service
+            .insert_prescription_request(
+                &ctx,
+                "store_a",
+                InsertPrescriptionRequest {
+                    id: uuid(),
+                    patient_id: mock_patient().id,
+                    clinician_id: Some(clinician_a().id),
+                    ..Default::default()
+                },
+            )
+            .unwrap()
+            .prescription_request_row;
+        add_line(&service_provider, &ctx, &request.id, 5.0, None);
+        service_provider
+            .prescription_request_service
+            .update_prescription_request(
+                &ctx,
+                "store_a",
+                UpdatePrescriptionRequest {
+                    id: request.id.clone(),
+                    status: Some(UpdatePrescriptionRequestStatus::ReadyToDispense),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let invoice = InvoiceRepository::new(&ctx.connection)
+            .query_one(
+                InvoiceFilter::new()
+                    .prescription_request_id(EqualFilter::equal_to(request.id.to_string())),
+            )
+            .unwrap()
+            .expect("generated dispensation not found");
+        let invoice_id = invoice.invoice_row.id.clone();
+        // New, so the ordinary editable check would have let all of these through.
+        assert_eq!(invoice.invoice_row.status, InvoiceStatus::New);
+
+        let update = |input: UpdatePrescription| {
+            service_provider.invoice_service.update_prescription(
+                &ctx,
+                UpdatePrescription {
+                    id: invoice_id.clone(),
+                    ..input
+                },
+            )
+        };
+
+        assert_eq!(
+            update(UpdatePrescription {
+                patient_id: Some(mock_patient_b().id),
+                ..Default::default()
+            })
+            .map(|_| ()),
+            Err(UpdatePrescriptionError::CannotChangePrescriberField("patient"))
+        );
+        assert_eq!(
+            update(UpdatePrescription {
+                clinician_id: Some(NullableUpdate { value: None }),
+                ..Default::default()
+            })
+            .map(|_| ()),
+            Err(UpdatePrescriptionError::CannotChangePrescriberField(
+                "clinician"
+            ))
+        );
+        assert_eq!(
+            update(UpdatePrescription {
+                // Refused before anything looks the id up — the guard runs
+                // ahead of the write, and nothing validates a diagnosis here.
+                diagnosis_id: Some(NullableUpdate {
+                    value: Some("any-diagnosis".to_string())
+                }),
+                ..Default::default()
+            })
+            .map(|_| ()),
+            Err(UpdatePrescriptionError::CannotChangePrescriberField(
+                "diagnosis"
+            ))
+        );
+
+        // Re-sending what it already holds is not a change: it passes, and so
+        // does an ordinary edit alongside it. A client that echoes unchanged
+        // fields is not refused for fields it never touched.
+        assert!(update(UpdatePrescription {
+            patient_id: Some(mock_patient().id),
+            clinician_id: Some(NullableUpdate {
+                value: Some(clinician_a().id)
+            }),
+            comment: Some("dispenser's note".to_string()),
+            ..Default::default()
+        })
+        .is_ok());
+
+        // The program is NOT the prescriber's: re-scoping the catalogue stays
+        // the dispenser's decision.
+        assert!(update(UpdatePrescription {
+            program_id: Some(NullableUpdate { value: None }),
+            ..Default::default()
+        })
+        .is_ok());
+
+        // The prescribed quantity is the prescriber's too, and is written
+        // through its own mutation rather than the header's.
+        let set_prescribed = |quantity: f64| {
+            service_provider.invoice_line_service.set_prescribed_quantity(
+                &ctx,
+                SetPrescribedQuantity {
+                    invoice_id: invoice_id.clone(),
+                    item_id: mock_item_a().id,
+                    prescribed_quantity: quantity,
+                },
+            )
+        };
+
+        assert_eq!(
+            set_prescribed(99.0).map(|_| ()),
+            Err(SetPrescribedQuantityError::CannotChangePrescribedQuantity)
+        );
+        // Re-sending the prescriber's own figure passes — BOTH front ends echo
+        // it back on every line save of the item, so refusing on mention would
+        // break allocation on exactly the records this protects.
+        assert!(set_prescribed(5.0).is_ok());
     }
 
     /// A selection holding one request that cannot go takes none of them.
