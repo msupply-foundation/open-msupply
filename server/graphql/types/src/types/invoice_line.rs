@@ -339,19 +339,14 @@ impl InvoiceLineNode {
         &self.row().supplier_comment
     }
 
-    /// The internal-order line behind this shipment line: the line of the
-    /// shipment's linked requisition carrying the same item. Null when the
-    /// shipment has no requisition link, or the order has no line for the item.
+    /// The line of the shipment's linked requisition carrying the same item.
+    /// Null when the shipment has no requisition link, or the order has no line
+    /// for the item. Matched on item alone — there is no per-line link — so
+    /// every batch of one item resolves the same order line.
     ///
-    /// The match is on item alone — there is no per-line link between a
-    /// shipment line and an order line — so every batch of one item resolves
-    /// the same order line.
-    ///
-    /// ⚠️ `InvoiceRow.requisition_id` is not store-scoped, so a requisition
-    /// link that arrived by sync can resolve a requisition belonging to another
-    /// store (or a customer requisition rather than one of this store's
-    /// internal orders). `requestedQuantity` means the same thing on both sides
-    /// of a requisition pair, so the figure itself stays right either way.
+    /// ⚠️ `InvoiceRow.requisition_id` is not store-scoped: a link that arrived
+    /// by sync can resolve another store's requisition. `requestedQuantity`
+    /// means the same on both sides of a pair, so the figure stays right.
     pub async fn requisition_line(
         &self,
         ctx: &Context<'_>,

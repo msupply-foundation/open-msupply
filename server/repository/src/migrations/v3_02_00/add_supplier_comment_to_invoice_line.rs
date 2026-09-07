@@ -8,14 +8,8 @@ impl MigrationFragment for Migrate {
     }
 
     fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
-        // The supplying store's explanation of why the quantity sent differs
-        // from the quantity requested. Authored on the outbound (customer
-        // invoice) side, carried to the receiving store's inbound line by the
-        // shipment-transfer processor, and read-only there. Legacy mSupply
-        // holds the same value in `trans_line.supplier_comment`.
-        //
-        // No index: it is never filtered or sorted on, only displayed beside
-        // the line it belongs to.
+        // Never filtered or sorted on, only displayed beside its line, so no
+        // index. See `InvoiceLineRow::supplier_comment` for what it holds.
         sql!(
             connection,
             r#"

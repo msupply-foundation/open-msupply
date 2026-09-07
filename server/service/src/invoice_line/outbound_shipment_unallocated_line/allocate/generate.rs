@@ -48,10 +48,8 @@ pub fn generate(
         })?;
 
     let allocated_lines = get_allocated_lines(connection, &unallocated_line)?;
-    // The item's supplier comment is held on every line of the item (spec
-    // /outbound-shipments rules.md § supplier comment), so a batch allocated
-    // here inherits it rather than landing without the reason its siblings
-    // carry.
+    // The comment is held on every line of the item, so a batch allocated here
+    // inherits it rather than landing without the reason its siblings carry.
     let item_supplier_comment = allocated_lines
         .iter()
         .find_map(|line| line.invoice_line_row.supplier_comment.clone());
@@ -238,8 +236,7 @@ fn try_allocate_existing_line(
                 note: None,
                 received_number_of_packs: None,
                 reason_option_id: None,
-                // None leaves the stored value alone — allocating more packs
-                // onto an existing line must not clear its reason.
+                // None preserves: adding packs must not clear the reason.
                 supplier_comment: None,
             }
         })

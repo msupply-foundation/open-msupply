@@ -78,7 +78,6 @@ impl SavePrescriptionLinesInput {
             lines: lines
                 .into_iter()
                 .map(|line| SaveStockOutInvoiceLine {
-                    // Dispensing has no customer requisition to explain.
                     supplier_comment: None,
                     id: line.id,
                     number_of_packs: line.number_of_packs,

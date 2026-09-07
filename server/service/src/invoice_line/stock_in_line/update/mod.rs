@@ -1037,12 +1037,9 @@ mod test {
         .is_ok());
     }
 
-    /// OMS-REG-ISH-01.17 — the supplier comment is the SUPPLYING store's
-    /// statement, arriving with the line. Nothing on an inbound shipment can
-    /// set, change or clear it: `UpdateStockInLine` has no field for it, and an
-    /// edit to the line around it leaves it exactly as it arrived
-    /// (spec/inbound-shipments rules.md § requested quantity and supplier
-    /// comment).
+    /// OMS-REG-ISH-01.17 — nothing on an inbound shipment can set, change or
+    /// clear the supplier comment: `UpdateStockInLine` has no field for it, and
+    /// an edit to the line around it leaves it exactly as it arrived.
     #[actix_rt::test]
     async fn update_stock_in_line_leaves_supplier_comment_untouched() {
         fn invoice() -> InvoiceRow {

@@ -110,11 +110,9 @@ export interface InboundShipmentLineEditModalProps {
    */
   purchaseOrderId?: string;
   /**
-   * The shipment's linked internal order, when it has one — however the link
-   * arose (linked by hand, or created with an incoming transfer). Presence
-   * alone gates the internal-order context band: the item's requested quantity
-   * and the supplying store's comment (spec S4 § internal-order context,
-   * OMS-REG-ISH-01.15/.16). Undefined on a shipment with no such link.
+   * The shipment's linked internal order. Presence alone gates the
+   * internal-order banner (spec S4); undefined where there is no such link, or
+   * where ./internalOrderContext rules the context out.
    */
   requisitionId?: string;
   /** Cost price is read-only for a store-linked or PO-linked supplier. */
@@ -349,12 +347,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // & next" advance) so the body shows a spinner instead of flashing its empty
   // state. Starts true; add mode clears it once the selector is ready.
   const [loadingLines, setLoadingLines] = createSignal(true);
-  // The two per-ITEM facts the internal-order context band states, read off the
-  // item's existing shipment lines (every batch of an item carries the same
-  // pair, so the first line answers for all of them). Null in add mode, where
-  // the item has no line here yet — the supplier comment is then genuinely
-  // absent (nothing has been supplied), and the requested quantity falls back
-  // to the order's own lines. Cleared whenever the open item changes.
+  // The banner's two per-ITEM facts, read off the item's existing lines (every
+  // batch carries the same pair, so the first answers for all). Null in add
+  // mode: nothing has been supplied yet, so there is genuinely no comment, and
+  // the requested quantity falls back to the order's own lines.
   const [loadedRequested, setLoadedRequested] = createSignal<number | null>(
     null
   );
@@ -507,17 +503,13 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     batchFields.focus(batch.id);
   };
 
-  // The linked internal order's lines, for the context band's Requested figure.
-  // Fetched once, sequentially, into a plain signal — same shape as the PO-line
-  // load below, and for the same reason: no createResource, so an item change
-  // mid-walk never suspends the open dialog
-  // (kdd/solid-reactivity-pitfalls › No remounts on interaction).
-  //
-  // Needed even though every loaded LINE already carries its own
-  // `requisitionLine`: in ADD mode the chosen item has no line on the shipment
-  // yet, so the order itself is the only place the figure can come from — and
-  // it is what tells an item that simply isn't on the order apart from one
-  // that is (OMS-REG-ISH-01.16).
+  // The linked order's lines. Fetched once into a plain signal, like the
+  // PO-line load below and for the same reason: no createResource, so an item
+  // change mid-walk never suspends the open dialog
+  // (kdd/solid-reactivity-pitfalls › No remounts on interaction). Needed even
+  // though a loaded LINE carries its own `requisitionLine` — in add mode there
+  // is no line yet, and this is what tells an item that isn't on the order
+  // apart from one that is (OMS-REG-ISH-01.16).
   const [orderLines, setOrderLines] = createSignal<
     InternalOrderLineRowFragment[]
   >([]);
@@ -685,14 +677,9 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     }
   });
 
-  // ── Internal-order context (spec S4 § internal-order context) ─────────────
-  // Both facts are per ITEM, not per batch, so they don't move as batches are
-  // added or edited, and both are always STATED — a dash where there is no
-  // value — rather than hidden (OMS-REG-ISH-01.15).
-
-  // The units requested for the open item. Resolved by ../internalOrderContext
-  // from the two sources this editor has: the loaded lines' own
-  // `requisitionLine`, and the order's own line set (add mode).
+  // Internal-order context (spec S4). Both facts are per ITEM, so they don't
+  // move as batches are added or edited, and both are always stated — a dash
+  // where there is no value — rather than hidden (OMS-REG-ISH-01.15).
   const requestedQuantity = (): number | undefined =>
     props.requisitionId
       ? requestedQuantityForItem(item()?.id, loadedRequested(), orderLines())
@@ -1690,16 +1677,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         >
           {/* Unit is a labelled fact in the header now, not a field row here. */}
           <>
-            {/* Internal-order context (spec S4) — an INFO banner holding the
-                item's two read-only facts, so the band reads as context about
-                the item rather than as two more fields of the batch form below
-                it. Per ITEM, and stated in full — a dash where a value is
-                missing — so the receiver reads "asked for 100, nothing said
-                about the shortfall" rather than inferring it from an absent
-                row. The not-on-the-order case swaps the whole banner for the
-                neutral notice the spec names for it. Absent entirely on a
-                shipment with no internal-order link, and (via the enclosing
-                no-item fallback) until an item is chosen in add mode. */}
+            {/* Internal-order context (spec S4). An item with no line on the
+                order swaps the whole banner for the neutral notice. Absent on a
+                shipment with no internal-order link, and — via the enclosing
+                no-item fallback — until an item is chosen in add mode. */}
             <Show when={props.requisitionId}>
               <div class={styles.orderContext}>
                 <Show

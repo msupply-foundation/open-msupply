@@ -25,11 +25,9 @@ export const toSaveLineInputs = (
     | 'reasonOption'
     | 'vvmStatus'
   >[],
-  // The item's ONE supplier comment, repeated onto every line of the item
-  // (OMS-REG-DIST-03.41) — an item's batches can never disagree about the
-  // reason. Empty means "no comment": it is sent as null, which clears any
-  // stored value, so an untouched comment reaches here as its own seeded text
-  // rather than as ''.
+  // The item's ONE supplier comment, repeated onto every line of it
+  // (OMS-REG-DIST-03.41). Empty is sent as null, which clears any stored value
+  // — an untouched comment arrives here as its own seeded text, not as ''.
   supplierComment = ''
 ): SaveOutboundItemLinesVariables['input']['lines'] =>
   lines.map(line => ({

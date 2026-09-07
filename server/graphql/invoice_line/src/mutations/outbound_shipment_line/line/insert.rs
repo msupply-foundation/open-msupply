@@ -96,8 +96,6 @@ impl InsertInput {
         } = self;
 
         ServiceInput {
-            // The supplier comment is authored per ITEM on the set-save
-            // (saveOutboundShipmentItemLines), never on a single-line insert.
             supplier_comment: None,
             id,
             r#type: StockOutType::OutboundShipment,
