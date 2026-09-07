@@ -1,6 +1,7 @@
 import { createMemo, createResource, type Component } from 'solid-js';
 import { FormRowItem } from '@/ui/layout/Form/FormRowItem';
 import { t } from '../../../intl';
+import { localisedDate } from '../../../intl/formatDateTime';
 import { graphqlFetch } from '../../../api/graphql';
 import { gated } from '../../../api/gated';
 import { DateField } from '../../../ui/elements/inputs/DateField';
@@ -12,9 +13,11 @@ import {
 } from '../../../domain/patient';
 import { ClinicianSelect } from '../../../domain/clinician';
 import { LabelledValue } from '../../../ui/elements/typography/LabelledValue';
-import { UserLabel } from '../../../ui/elements/typography/UserLabel';
-import { ProgramNameSelect } from '../../../domain/program';
-import { CustomFieldsToolbar } from '../../../domain/customFields';
+import { Text } from '../../../ui/elements/typography/Text';
+import {
+  CustomFieldsToolbar,
+  EMPTY_FIELD_VALUE,
+} from '../../../domain/customFields';
 import {
   localTodayIso,
   utcToLocalParts,
@@ -31,13 +34,20 @@ import {
 
 // The detail header's field cluster (spec/prescription-requests/ui-surface.md
 // S3 § header toolbar), rendered as the children of the page's
-// <HeaderToolbar>: Patient · Clinician · Date · Program · Diagnosis · Entered
-// by, then the scope's prominent custom fields. Weighted shares follow the
-// dispensing toolbar's measured layout (person-name fields take the biggest
-// shares; the date is pinned at its 9rem format width). Every field is
-// read-only past New (AC-N5); unlike dispensing, a date or program change
-// never touches lines — the request's lines carry no stock, so nothing needs
-// clearing.
+// <HeaderToolbar>: Patient · Date of birth · Clinician · Date · Diagnosis,
+// then the scope's prominent custom fields (weight, unit, category,
+// occupation). Weighted shares follow the dispensing toolbar's measured layout
+// (person-name fields take the biggest shares; the date is pinned at its 9rem
+// format width). Every field is read-only past New (AC-N5); unlike dispensing,
+// a date change never touches lines — the request's lines carry no stock, so
+// nothing needs clearing.
+//
+// Date of birth is here, not in the side panel, because the prescriber reads it
+// while they prescribe: it is what the weight beside it is judged against
+// (issue #514). It is the patient's fact, read live from the patient record and
+// never editable here — the patient picker's edit affordance is the way to
+// change it. Entered by went the other way, to the side panel: it is
+// provenance, not something anyone prescribes against.
 
 type Diagnosis = RequestDiagnosesActiveResult['diagnosesActive'][number];
 
@@ -91,9 +101,28 @@ export const PrescriptionRequestToolbar: Component<
           }
         />
       </FormRowItem>
+      {/* Date of birth — the patient's, read live from the patient record
+          (rules § patient data is live) and never editable from here. A
+          read-only value rather than a disabled input, so read-only reads from
+          the absence of an input box (kdd/form-layout); `variant="field"`
+          lines it up with the small inputs beside it, and the 9rem floor is the
+          date's own format width, as the prescription date below. */}
+      <FormRowItem weight={0} minWidth="9rem">
+        <LabelledValue
+          variant="field"
+          size="small"
+          label={t('label.date-of-birth')}
+        >
+          <Text variant="body" data-testid="toolbar-date-of-birth-field">
+            {props.node.patient?.dateOfBirth
+              ? localisedDate(props.node.patient.dateOfBirth)
+              : EMPTY_FIELD_VALUE}
+          </Text>
+        </LabelledValue>
+      </FormRowItem>
       {/* The clinician the request names — an ordinary editable field while
-          New, chosen at creation, and NOT the same fact as Entered by below
-          (rules § who is recorded). It is what fills the generated
+          New, chosen at creation, and NOT the same fact as the side panel's
+          Entered by (rules § who is recorded). It is what fills the generated
           dispensation's own clinician at the hand-over. */}
       <FormRowItem weight={1.55}>
         <ClinicianSelect
@@ -128,18 +157,6 @@ export const PrescriptionRequestToolbar: Component<
         />
       </FormRowItem>
       <FormRowItem weight={1.2}>
-        <ProgramNameSelect
-          label={t('label.program')}
-          size="small"
-          testId="program-select"
-          value={props.node.programId ?? undefined}
-          disabled={props.disabled}
-          onChange={programId =>
-            props.onSave({ programId: { value: programId ?? null } })
-          }
-        />
-      </FormRowItem>
-      <FormRowItem weight={1.2}>
         <Combobox<Diagnosis>
           label={t('heading.diagnosis')}
           size="small"
@@ -155,27 +172,6 @@ export const PrescriptionRequestToolbar: Component<
             props.onSave({ diagnosisId: { value: diagnosis?.id ?? null } })
           }
         />
-      </FormRowItem>
-      {/* Entered by — the account that created the request, and only that
-          (spec/prescription-requests § who is recorded). Not "prescriber":
-          nothing here can tell a clinician entering their own request from a
-          clerk entering it for one. Provenance, never editable, so it closes
-          the fixed cluster as a read-only value rather than a disabled input
-          (kdd/form-layout); `variant="field"` lines it up with the small
-          inputs beside it. */}
-      <FormRowItem weight={1} minWidth="8rem">
-        <LabelledValue
-          variant="field"
-          size="small"
-          label={t('label.entered-by')}
-        >
-          <UserLabel
-            username={props.node.user?.username}
-            email={props.node.user?.email}
-            label={t('label.entered-by')}
-            testId="toolbar-entered-by-field"
-          />
-        </LabelledValue>
       </FormRowItem>
       {/* Prominent custom fields — save-on-change, the prescription_request
           scope (rules § custom fields; AC-F1). */}

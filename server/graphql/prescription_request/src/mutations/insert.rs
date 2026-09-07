@@ -18,7 +18,6 @@ pub struct InsertInput {
     pub patient_id: String,
     pub clinician_id: Option<String>,
     pub diagnosis_id: Option<String>,
-    pub program_id: Option<String>,
     pub prescription_datetime: Option<DateTime<Utc>>,
 }
 
@@ -29,7 +28,6 @@ impl InsertInput {
             patient_id,
             clinician_id,
             diagnosis_id,
-            program_id,
             prescription_datetime,
         } = self;
         ServiceInput {
@@ -37,7 +35,6 @@ impl InsertInput {
             patient_id,
             clinician_id,
             diagnosis_id,
-            program_id,
             prescription_datetime: prescription_datetime.map(|d| d.naive_utc()),
         }
     }
@@ -87,8 +84,7 @@ fn map_error(error: ServiceError) -> async_graphql::Error {
         ServiceError::PrescriptionRequestAlreadyExists
         | ServiceError::PatientDoesNotExist
         | ServiceError::ClinicianDoesNotExist
-        | ServiceError::DiagnosisDoesNotExist
-        | ServiceError::ProgramDoesNotExist => BadUserInput(formatted_error),
+        | ServiceError::DiagnosisDoesNotExist => BadUserInput(formatted_error),
         ServiceError::NewlyCreatedPrescriptionRequestDoesNotExist
         | ServiceError::DatabaseError(_) => InternalError(formatted_error),
     }

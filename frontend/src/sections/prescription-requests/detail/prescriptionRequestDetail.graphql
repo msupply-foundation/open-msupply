@@ -19,7 +19,6 @@ fragment PrescriptionRequestFields on PrescriptionRequestNode {
   }
   clinicianId
   diagnosisId
-  programId
   user {
     username
     email

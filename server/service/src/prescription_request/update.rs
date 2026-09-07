@@ -6,7 +6,6 @@ use repository::{
 };
 
 use crate::activity_log::{activity_log_entry, activity_log_entry_with_diff};
-use crate::common::check_program_exists;
 use crate::custom_field::{
     apply_custom_fields_patch, check_custom_fields_patch, CustomFieldPatchProblem,
 };
@@ -42,7 +41,6 @@ pub struct UpdatePrescriptionRequest {
     pub patient_id: Option<String>,
     pub clinician_id: Option<NullableUpdate<String>>,
     pub diagnosis_id: Option<NullableUpdate<String>>,
-    pub program_id: Option<NullableUpdate<String>>,
     pub prescription_datetime: Option<NaiveDateTime>,
     pub comment: Option<NullableUpdate<String>>,
     /// Patch of customFields key -> value merged into
@@ -62,7 +60,6 @@ pub enum UpdatePrescriptionRequestError {
     PatientDoesNotExist,
     ClinicianDoesNotExist,
     DiagnosisDoesNotExist,
-    ProgramDoesNotExist,
     UnknownCustomFieldKey(String),
     /// A custom-field patch gives a defined key a value of the wrong shape for
     /// its value type.
@@ -128,11 +125,6 @@ pub fn update_prescription_request(
                     return Err(DiagnosisDoesNotExist);
                 }
             }
-            if let Some(program_id) = input.program_id.as_ref().and_then(|u| u.value.as_ref()) {
-                if check_program_exists(connection, program_id)?.is_none() {
-                    return Err(ProgramDoesNotExist);
-                }
-            }
             if let Some(patch) = &input.custom_fields {
                 if let Some(problem) = check_custom_fields_patch(
                     connection,
@@ -148,7 +140,6 @@ pub fn update_prescription_request(
                 patient_id,
                 clinician_id,
                 diagnosis_id,
-                program_id,
                 prescription_datetime,
                 comment,
                 custom_fields,
@@ -165,9 +156,6 @@ pub fn update_prescription_request(
                 diagnosis_id: diagnosis_id
                     .map(|u| u.value)
                     .unwrap_or(existing.diagnosis_id.clone()),
-                program_id: program_id
-                    .map(|u| u.value)
-                    .unwrap_or(existing.program_id.clone()),
                 prescription_datetime: prescription_datetime
                     .unwrap_or(existing.prescription_datetime),
                 comment: comment.map(|u| u.value).unwrap_or(existing.comment.clone()),
