@@ -181,6 +181,7 @@ fn map_error(error: ServiceError) -> Result<UpdatePrescriptionErrorInterface> {
         | ServiceError::ClinicianDoesNotExist
         | ServiceError::NotThisStoreInvoice
         | ServiceError::PatientDoesNotExist
+        | ServiceError::CannotChangePrescriberField(_)
         | ServiceError::UnknownPropertyKey(_)
         | ServiceError::InvalidPropertyValue { .. } => BadUserInput(formatted_error),
         ServiceError::DatabaseError(_)

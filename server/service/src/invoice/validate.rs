@@ -50,6 +50,21 @@ pub fn can_cancel_invoice(invoice: &InvoiceRow) -> bool {
     true
 }
 
+/// Whether this invoice is a dispensation GENERATED from a prescription
+/// request, rather than one created in the dispensing vertical.
+///
+/// Such a record carries the prescriber's own entries — patient, clinician,
+/// diagnosis and the prescribed quantities — copied at the hand-over from a
+/// request the hand-over then locked. Changing any of them here could only make
+/// the two records disagree, with nothing on either side to say which is right,
+/// so the dispensing writes refuse a CHANGE to them
+/// (spec/prescriptions § fields the prescriber owns, § prescribed quantity).
+/// The program is not among them: re-scoping the catalogue is a dispensing
+/// decision.
+pub fn is_generated_dispensation(invoice: &InvoiceRow) -> bool {
+    invoice.prescription_request_id.is_some()
+}
+
 pub fn check_invoice_is_editable(invoice: &InvoiceRow) -> bool {
     let status = invoice.status.clone();
     let is_editable = match &invoice.r#type {
