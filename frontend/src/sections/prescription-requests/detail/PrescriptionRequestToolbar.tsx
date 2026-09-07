@@ -92,7 +92,7 @@ export const PrescriptionRequestToolbar: Component<
           storeId={props.storeId}
           selected={patientOption()}
           disabled={props.disabled}
-          // An request always HAS a patient: never cleared, only swapped
+          // A request always HAS a patient: never cleared, only swapped
           // (ui-standards/controls § clearability follows optionality).
           clearable={false}
           onEditPatient={props.onEditPatient}
