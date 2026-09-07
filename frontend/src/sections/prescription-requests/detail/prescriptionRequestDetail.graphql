@@ -1,5 +1,5 @@
 # The prescription-request detail (spec/prescription-requests/contract.md):
-# header + lines in one read (an request's line set is small; no server paging).
+# header + lines in one read (a request's line set is small; no server paging).
 fragment PrescriptionRequestFields on PrescriptionRequestNode {
   id
   prescriptionRequestNumber
