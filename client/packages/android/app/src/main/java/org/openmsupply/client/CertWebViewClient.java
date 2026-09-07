@@ -31,8 +31,10 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 class CertWebViewClient extends ExtendedWebViewClient {
     public static final String TAG = "CertWebViewClient";
@@ -41,6 +43,9 @@ class CertWebViewClient extends ExtendedWebViewClient {
     @Nullable
     Certificate selfSignedCert;
     private final SharedPreferences savedCertFingerprints;
+    /** Keys ({@code identifier:fingerprint}) of the SSL notices currently on
+     * screen, so the requests that fail together share one dialog (#544). */
+    private final Set<String> sslDialogsShowing = new HashSet<>();
 
     public CertWebViewClient(Bridge bridge, File filesDir, NativeApi nativeApi) {
         super(bridge);
@@ -167,14 +172,13 @@ class CertWebViewClient extends ExtendedWebViewClient {
     }
 
     /**
-     * In this scenario, we are connecting to a non-local server with uses a
-     * self-signed certificate.
-     * It needs to be checked that we know/trust the server before performing the
-     * certificate validation.
+     * Fingerprint-store key for a non-local server the old front end connected
+     * to: hardware id and port, the identifier this store has always used
+     * (NativeApi.getChosenFingerprintKey spells the same key for the new
+     * front end's chosen server).
      */
-    private boolean validateNonLocalCertificate(SslCertificate targetCert, NativeApi.FrontEndHost connectedServer) {
-        // Match by hardware id and port
-        return validateFingerprint(targetCert, connectedServer.getHardwareId() + "-" + connectedServer.getPort());
+    private String nonLocalFingerprintKey(NativeApi.FrontEndHost connectedServer) {
+        return connectedServer.getHardwareId() + "-" + connectedServer.getPort();
     }
 
     /** Trust on first use, against the fingerprint recorded under
@@ -183,16 +187,10 @@ class CertWebViewClient extends ExtendedWebViewClient {
      * both front ends, so a server already trusted on this device stays
      * trusted after an upgrade. */
     private boolean validateFingerprint(SslCertificate targetCert, String identifier) {
-        // Calculate SSL fingerprint
-        MessageDigest md = null;
-        try {
-            md = MessageDigest.getInstance("SHA-256");
-            md.update(get_x509(targetCert).getEncoded());
-        } catch (Exception e) {
-            Log.e(TAG, "Problem hashing certificate" + e);
+        String fingerprint = this.certificateFingerprint(targetCert);
+        if (fingerprint == null) {
             return false;
         }
-        String fingerprint = Base64.encodeToString(md.digest(), Base64.DEFAULT).trim();
 
         String savedCertFingerprint = savedCertFingerprints.getString(identifier, "");
         // Save if fingerprint was not found for server
@@ -204,6 +202,19 @@ class CertWebViewClient extends ExtendedWebViewClient {
         }
 
         return savedCertFingerprint.equals(fingerprint);
+    }
+
+    /** SHA-256 of the certificate, base64 — the value the fingerprint store
+     * records. Null when the certificate cannot be extracted or hashed. */
+    private String certificateFingerprint(SslCertificate targetCert) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            md.update(this.get_x509(targetCert).getEncoded());
+            return Base64.encodeToString(md.digest(), Base64.DEFAULT).trim();
+        } catch (Exception e) {
+            Log.e(TAG, "Problem hashing certificate" + e);
+            return null;
+        }
     }
 
     @SuppressLint("WebViewClientOnReceivedSslError")
@@ -257,28 +268,44 @@ class CertWebViewClient extends ExtendedWebViewClient {
         Boolean isOwnServer = isDiscovery
                 || (isChosenByPage ? NativeApi.getChosenIsLocal() : connectedServer.isLocal());
         Boolean valid;
+        String identifier;
         if (isOwnServer) {
-            valid = validateLocalCertificate(error.getCertificate());
+            valid = this.validateLocalCertificate(error.getCertificate());
+            identifier = "local";
         } else if (isChosenByPage) {
-            valid = validateFingerprint(error.getCertificate(), NativeApi.getChosenFingerprintKey());
+            identifier = NativeApi.getChosenFingerprintKey();
+            valid = this.validateFingerprint(error.getCertificate(), identifier);
         } else {
-            valid = validateNonLocalCertificate(error.getCertificate(), connectedServer);
+            identifier = this.nonLocalFingerprintKey(connectedServer);
+            valid = this.validateFingerprint(error.getCertificate(), identifier);
         }
 
         if (valid) {
             handler.proceed();
             return;
-        } else {
-            // Display error message
+        }
+
+        // Every failing request is refused either way — the dialog is only a
+        // notice. This callback fires per REQUEST (see above), so without
+        // sharing, a changed certificate stacked one identical dialog per
+        // request in flight (#544). Show one per server and certificate:
+        // events that arrive while it is up refuse silently, and the key
+        // includes the certificate, so a DIFFERENT bad certificate later
+        // still gets its own notice.
+        String dialogKey = identifier + ":" + this.certificateFingerprint(error.getCertificate());
+        // UI thread only (WebViewClient callbacks and dialog dismissal both
+        // run there), so plain check-then-add is race-free.
+        if (this.sslDialogsShowing.add(dialogKey)) {
             new AlertDialog.Builder(this.bridge.getContext())
                     .setTitle("SSL Error")
                     .setMessage("Certificate fingerprint for server was changed")
                     .setNegativeButton("OK", null)
                     .setIcon(android.R.drawable.ic_dialog_alert)
+                    .setOnDismissListener(dialog -> this.sslDialogsShowing.remove(dialogKey))
                     .show();
-
-            super.onReceivedSslError(view, handler, error);
         }
+
+        super.onReceivedSslError(view, handler, error);
     }
 
 
