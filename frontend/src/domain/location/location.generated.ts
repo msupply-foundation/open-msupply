@@ -19,7 +19,7 @@ export type LocationsResult = {
 };
 
 export const Locations = {
-  query: "query locations($storeId: String!) {\n  locations(storeId: $storeId) {\n    ... on LocationConnector {\n      __typename\n      nodes {\n        id\n        code\n        name\n      }\n    }\n  }\n}",
+  query: "query locations($storeId: String!) {\n  locations(storeId: $storeId, sort: [{key: name}]) {\n    ... on LocationConnector {\n      __typename\n      nodes {\n        id\n        code\n        name\n      }\n    }\n  }\n}",
 } as TypedDocument<LocationsResult, LocationsVariables>;
 
 export type LocationsWithVolumeVariables = {
@@ -49,5 +49,5 @@ export type LocationsWithVolumeResult = {
 };
 
 export const LocationsWithVolume = {
-  query: "query locationsWithVolume($storeId: String!) {\n  locations(storeId: $storeId) {\n    ... on LocationConnector {\n      __typename\n      nodes {\n        id\n        code\n        name\n        onHold\n        volume\n        volumeUsed\n        locationType {\n          id\n        }\n        stock {\n          ... on StockLineConnector {\n            __typename\n            totalCount\n          }\n        }\n      }\n    }\n  }\n}",
+  query: "query locationsWithVolume($storeId: String!) {\n  locations(storeId: $storeId, sort: [{key: name}]) {\n    ... on LocationConnector {\n      __typename\n      nodes {\n        id\n        code\n        name\n        onHold\n        volume\n        volumeUsed\n        locationType {\n          id\n        }\n        stock {\n          ... on StockLineConnector {\n            __typename\n            totalCount\n          }\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<LocationsWithVolumeResult, LocationsWithVolumeVariables>;
