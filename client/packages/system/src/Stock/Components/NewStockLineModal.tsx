@@ -148,10 +148,7 @@ export const NewStockLineModal = ({
         gap={1}
       >
         <ModalRow>
-          <ModalLabel
-            label={t('label.item', { count: 1 })}
-            justifyContent="flex-end"
-          />
+          <ModalLabel label={t('label.item')} justifyContent="flex-end" />
           <Grid flex={1}>
             <StockItemSearchInput
               autoFocus={!draft.itemId}

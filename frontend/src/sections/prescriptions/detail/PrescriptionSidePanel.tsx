@@ -1,4 +1,5 @@
 import { createSignal, Show, type Component } from 'solid-js';
+import { useNavigate } from '@solidjs/router';
 import { t } from '../../../intl';
 import { genderLabel } from '@/domain/patient';
 import { localisedDate } from '../../../intl/formatDateTime';
@@ -14,12 +15,16 @@ import { UserLabel } from '../../../ui/elements/typography/UserLabel';
 import { Text } from '../../../ui/elements/typography/Text';
 import { Button } from '../../../ui/elements/buttons/Button';
 import { ConfirmDialog } from '../../../ui/elements/feedback/ConfirmDialog';
+import { Dialog } from '../../../ui/elements/feedback/Dialog';
+import { Alert } from '../../../ui/elements/feedback/Alert';
+import { CancelButton } from '../../../ui/elements/buttons/StandardButtons';
 import { ColourTagPicker } from '../../../ui/elements/selectors/ColourTag';
 import { Combobox } from '../../../ui/elements/selectors/Combobox';
 import { CopyToClipboardButton } from '../../../ui/elements/buttons/CopyToClipboardButton';
 import { MinusCircleIcon, TrashIcon } from '../../../ui/icons';
 import { graphqlFetch } from '../../../api/graphql';
 import { gated } from '../../../api/gated';
+import { hasPermission } from '../../../store/storeContext';
 import { CurrencyField } from '../../../ui/elements/inputs/CurrencyField';
 import {
   canCancelPrescription,
@@ -29,6 +34,7 @@ import {
 import {
   DeletePrescription,
   DiagnosesActive,
+  SourcePrescriptionRequest,
   type PrescriptionFieldsFragment,
   type DiagnosesActiveResult,
 } from './prescriptionDetail.generated';
@@ -72,9 +78,19 @@ type Diagnosis = DiagnosesActiveResult['diagnosesActive'][number];
 export const PrescriptionSidePanel: Component<
   PrescriptionSidePanelProps
 > = props => {
-  const [deleteConfirm, setDeleteConfirm] = createSignal(false);
+  const navigate = useNavigate();
   const [cancelConfirm, setCancelConfirm] = createSignal(false);
-  const [deleting, setDeleting] = createSignal(false);
+  // The delete dialog's phase; undefined is closed. Phased rather than a
+  // ConfirmDialog because a refusal has to be SHOWN: ConfirmDialog closes
+  // itself on confirm, so the server's verdict had nowhere to land and a
+  // refused delete was a silent no-op. Same three phases and the same wording
+  // as the list's delete action, which already had this.
+  const [deletePhase, setDeletePhase] = createSignal<
+    'confirm' | 'deleting' | 'error'
+  >();
+  const [deleteError, setDeleteError] = createSignal(
+    t('messages.cant-delete-generic')
+  );
 
   const status = () => asPrescriptionStatus(props.node.status);
 
@@ -87,17 +103,74 @@ export const PrescriptionSidePanel: Component<
   });
 
   const runDelete = async () => {
-    setDeleting(true);
+    if (deletePhase() !== 'confirm') return; // re-entry guard
+    setDeletePhase('deleting');
     const result = await graphqlFetch(DeletePrescription, {
       storeId: props.storeId,
       id: props.node.id,
     });
-    setDeleting(false);
-    if (result.kind !== 'success') return;
-    if ('id' in result.data.deletePrescription) props.onDeleted();
+    if (result.kind !== 'success') {
+      setDeletePhase('confirm');
+      return;
+    }
+    const response = result.data.deletePrescription;
+    if ('id' in response) {
+      setDeletePhase(undefined);
+      props.onDeleted();
+      return;
+    }
+    // Reacting to the server's verdict, keyed to its cause (ui-standards §
+    // validation, controls § action feedback). A dispensation generated from
+    // a prescription request refuses at any status and nothing on this record
+    // distinguishes it from a deletable one, so the generic line would leave
+    // the user clicking Delete with no idea why nothing happens. Read
+    // defensively: a union member neither fragment covers arrives as `{}`, and
+    // that is a refusal we have nothing specific to say about, not a crash.
+    setDeleteError(
+      'error' in response &&
+        response.error.__typename === 'CannotDeleteGeneratedDispensation'
+        ? t('messages.cant-delete-generated-dispensation')
+        : t('messages.cant-delete-generic')
+    );
+    setDeletePhase('error');
   };
 
   const insurance = () => props.node.insurancePolicy;
+
+  // The prescription request this dispensation was generated from (AC-R4's
+  // other direction). Keyed on the soft link, so it only fetches for a
+  // generated prescription. The request genuinely may not be here — it is
+  // RemoteOwned while the invoice is patient-distributed, so a second site
+  // holding this invoice has the link but not its target — and that answers
+  // RecordNotFound, which is a member of the union rather than an error. It
+  // has to be told apart by `__typename`: without that it deserialises to `{}`
+  // and reads as a node whose every field is undefined. Read non-suspending —
+  // the panel lives under the already-open detail.
+  //
+  // GATED ON THE REQUEST VERTICAL'S OWN READ, which a dispenser need not hold
+  // (spec/prescription-requests § permissions): the request read authorises on
+  // it, so asking without it would answer Forbidden and raise the global
+  // permission-denied modal over an unrelated screen — every time such a
+  // dispensation is opened. Not asking is also the honest answer for the
+  // section: a link that cannot open is not offered (D94).
+  const [sourceRequest] = createResource(
+    () =>
+      hasPermission('PRESCRIPTION_REQUEST_QUERY')
+        ? (props.node.prescriptionRequestId ?? undefined)
+        : undefined,
+    async id => {
+      const result = await graphqlFetch(SourcePrescriptionRequest, {
+        storeId: props.storeId,
+        id,
+      });
+      if (result.kind !== 'success') return undefined;
+      const request = result.data.prescriptionRequest;
+      return request?.__typename === 'PrescriptionRequestNode'
+        ? request
+        : undefined;
+    }
+  );
+  const sourceRequestNode = () => gated(sourceRequest);
 
   return (
     <>
@@ -264,6 +337,34 @@ export const PrescriptionSidePanel: Component<
         </FieldRow>
       </SidePanelSection>
 
+      {/* The source request — reachable from the dispensation it generated
+          (spec/prescriptions/ui-surface.md S3 § side panel). The mirror of the
+          request side's own Related documents section; the section only exists
+          for a dispensation that came from a hand-over. */}
+      <Show when={sourceRequestNode()}>
+        {request => (
+          <SidePanelSection
+            value="related-documents"
+            title={t('heading.related-documents')}
+            collapsible
+          >
+            <FieldRow label={t('label.prescription-request')}>
+              <Button
+                variant="ghost"
+                data-testid="source-prescription-request-link"
+                onClick={() =>
+                  navigate(
+                    `/${props.storeId}/dispensary/prescription-request/${request().id}`
+                  )
+                }
+              >
+                {`#${request().prescriptionRequestNumber}`}
+              </Button>
+            </FieldRow>
+          </SidePanelSection>
+        )}
+      </Show>
+
       <SidePanelSection value="actions" title={t('heading.actions')}>
         <SidePanelActions>
           {/* Delete — hidden once no longer deletable (permanently dead
@@ -274,8 +375,8 @@ export const PrescriptionSidePanel: Component<
               variant="danger"
               icon={<TrashIcon />}
               data-testid="delete-prescription-button"
-              loading={deleting()}
-              onClick={() => setDeleteConfirm(true)}
+              loading={deletePhase() === 'deleting'}
+              onClick={() => setDeletePhase('confirm')}
             >
               {t('label.delete')}
             </Button>
@@ -309,16 +410,63 @@ export const PrescriptionSidePanel: Component<
         </SidePanelActions>
       </SidePanelSection>
 
-      <ConfirmDialog
-        open={deleteConfirm()}
-        onClose={() => setDeleteConfirm(false)}
-        title={t('heading.are-you-sure')}
-        message={t('messages.confirm-delete-prescription', {
-          number: `${props.node.invoiceNumber}`,
-        })}
-        confirmVariant="danger"
-        onConfirm={() => void runDelete()}
-      />
+      <Show when={deletePhase()}>
+        {phase => (
+          <Dialog
+            open
+            dismissable={phase() !== 'deleting'}
+            onClose={() => setDeletePhase(undefined)}
+            icon={<TrashIcon />}
+            testId="confirmation-modal"
+            // The title tracks the phase — a rejection is not a question
+            // (kdd/action-modal).
+            title={
+              phase() === 'error'
+                ? t('heading.cannot-do-that')
+                : t('heading.are-you-sure')
+            }
+            description={
+              <Show
+                when={phase() === 'error'}
+                fallback={t('messages.confirm-delete-prescription', {
+                  number: `${props.node.invoiceNumber}`,
+                })}
+              >
+                <Alert severity="error">{deleteError()}</Alert>
+              </Show>
+            }
+            actions={
+              <Show
+                when={phase() === 'error'}
+                fallback={
+                  <>
+                    <Show when={phase() === 'confirm'}>
+                      <CancelButton onClick={() => setDeletePhase(undefined)} />
+                    </Show>
+                    <Button
+                      variant="danger"
+                      confirms="plain"
+                      data-testid="confirmation-modal-ok"
+                      loading={phase() === 'deleting'}
+                      onClick={() => void runDelete()}
+                    >
+                      {t('button.ok')}
+                    </Button>
+                  </>
+                }
+              >
+                <Button
+                  variant="secondary"
+                  confirms="plain"
+                  onClick={() => setDeletePhase(undefined)}
+                >
+                  {t('button.close')}
+                </Button>
+              </Show>
+            }
+          />
+        )}
+      </Show>
       <ConfirmDialog
         open={cancelConfirm()}
         onClose={() => setCancelConfirm(false)}

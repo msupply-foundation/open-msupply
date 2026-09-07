@@ -147,6 +147,7 @@ const FILTERS: Filter<OutboundFilter>[] = constructFilters<OutboundFilter>({
   linkedInvoiceId: null,
   purchaseOrderId: null,
   purchaseOrderNumber: null,
+  prescriptionRequestId: null,
   linkedOrderNumber: null,
   programId: null,
   isProgramInvoice: null,

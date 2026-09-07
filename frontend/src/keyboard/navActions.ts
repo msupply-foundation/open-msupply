@@ -1,7 +1,6 @@
 import { createAction, type KeyAction } from '../ui/utils/keyActions';
 import { navConfig, type NavItem } from '../nav/navConfig';
-import { deniedPermission, gateNav } from '../nav/navGates';
-import { reportPermissionDenied } from '../api/graphql';
+import { gateNav } from '../nav/navGates';
 import { t } from '../intl';
 import { ALT_D, ALT_H, type Shortcut } from '../ui/utils/shortcuts';
 
@@ -17,8 +16,9 @@ import { ALT_D, ALT_H, type Shortcut } from '../ui/utils/shortcuts';
  * beside the derived tree, which had drifted exactly as you would expect:
  * customer returns was reachable by menu only.
  *
- * The gating is the shared `gateNav`, so the dispensary, vaccine-module and
- * central rules are applied once for both surfaces (AC-KB4).
+ * The gating is the shared `gateNav`, so the dispensary, vaccine-module,
+ * central, and query-permission rules are applied once for both surfaces
+ * (AC-KB4; spec/navigation § permission gates, D94).
  *
  * KB-R2's line about mode and module gates applies exactly here: they
  * "legitimately gate an action whose DESTINATION they gate — Prescriptions and
@@ -27,8 +27,8 @@ import { ALT_D, ALT_H, type Shortcut } from '../ui/utils/shortcuts';
  */
 
 /*
- * Every gated destination the palette lists, sections flattened into their
- * children.
+ * Every destination the registry holds, sections flattened into their
+ * children — UNGATED here; the gates are each row's `disabled` (below).
  *
  * A SECTION WITH CHILDREN IS NOT ONE. Its landing page renders that section's
  * sub-menu, so "Go to: Inventory" would offer the user a menu from inside the
@@ -37,7 +37,19 @@ import { ALT_D, ALT_H, type Shortcut } from '../ui/utils/shortcuts';
  * destination and is listed.
  */
 const paletteDestinations = (): NavItem[] =>
-  gateNav(navConfig).flatMap(item => item.children ?? [item]);
+  navConfig.flatMap(item => item.children ?? [item]);
+
+/**
+ * The leaf paths the gates offer RIGHT NOW — the menu's set, recomputed per
+ * read so the palette and the menu agree at the moment of asking, not the
+ * moment of registration.
+ */
+const offeredPaths = (): ReadonlySet<string> =>
+  new Set(
+    gateNav(navConfig).flatMap(item =>
+      (item.children ?? [item]).map(destination => destination.path)
+    )
+  );
 
 /**
  * The destination's palette row, complete with its "Go to:" prefix — the
@@ -69,13 +81,19 @@ const DESTINATION_SHORTCUTS: Record<string, Shortcut> = {
 };
 
 /**
- * Register one action per reachable destination, for as long as the caller's
+ * Register one action per registry destination, for as long as the caller's
  * owner lives.
  *
  * Called from KeyboardHost inside the store-scoped shell, so the gates read a
- * settled store context. It registers the set ONCE for the session rather than
- * tracking the gates: a store change re-enters through StoreGuardLayout, which
- * remounts the shell and so re-runs this with the new store's gates.
+ * settled store context. The SET is registered once per shell mount — a store
+ * change re-enters through StoreGuardLayout, which remounts the shell and so
+ * re-runs this with the registry the new store puts in force. The GATES are
+ * not baked into that set: each row's `disabled` re-reads them, and the
+ * palette evaluates it per open (the dispatcher per keypress) — so a
+ * permission withdrawn mid-session, e.g. by the post-sync context refresh, is
+ * gone from the palette at its next open, exactly as the menu's reactive memo
+ * drops the entry (AC-KB4; OMS-REG-NAV-01.15). Gating at registration time
+ * was the defect: the row outlived the permission.
  */
 export const createNavActions = (
   navigate: (path: string) => void
@@ -85,17 +103,7 @@ export const createNavActions = (
     return createAction({
       name: paletteName(destination),
       ...(shortcut ? { shortcut } : {}),
-      // A permission-gated destination is listed but refuses at run time, the
-      // same refusal as the menu (spec/navigation § permission gates, D94) —
-      // checked when fired, not at registration, so a permission granted after
-      // login is honoured without re-registering.
-      run: () => {
-        const denied = deniedPermission(destination);
-        if (denied !== undefined) {
-          reportPermissionDenied([denied]);
-          return;
-        }
-        navigate(destination.path);
-      },
+      disabled: () => !offeredPaths().has(destination.path),
+      run: () => navigate(destination.path),
     });
   });

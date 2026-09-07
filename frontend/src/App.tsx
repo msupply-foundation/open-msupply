@@ -41,6 +41,7 @@ import { itemsRoutes } from './sections/items';
 import { patientsRoutes } from './sections/patients';
 import { cliniciansRoutes } from './sections/clinicians';
 import { prescriptionsRoutes } from './sections/prescriptions';
+import { prescriptionRequestsRoutes } from './sections/prescription-requests';
 import { masterListsRoutes } from './sections/master-lists';
 import { campaignsRoutes } from './sections/campaigns';
 import { reportsRoutes } from './sections/reports';
@@ -98,6 +99,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'dispensary/patients': patientsRoutes,
   'dispensary/clinicians': cliniciansRoutes,
   'dispensary/prescription': prescriptionsRoutes,
+  'dispensary/prescription-request': prescriptionRequestsRoutes,
   reports: reportsRoutes,
   settings: settingsRoutes,
   'manage/sites': sitesRoutes,

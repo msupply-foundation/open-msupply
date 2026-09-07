@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { expandAbbreviations } from './directions';
+import { expandAbbreviations } from './index';
 
 const ABBREVIATIONS = [
   { text: '2t', expansion: 'Take TWO tablets' },

@@ -213,7 +213,7 @@ const UIComponent = (props: ControlProps) => {
           <Box sx={{ marginLeft: 5 }}>
             <PrescriptionInfo prescription={prescription} />
             <TextWithLabelRow
-              label={t('label.item_one')}
+              label={t('label.item')}
               text={selectedItem.name}
               textProps={{ textAlign: 'end' }}
             />

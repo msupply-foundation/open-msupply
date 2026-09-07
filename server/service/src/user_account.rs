@@ -77,6 +77,16 @@ impl<'a> UserAccountService<'a> {
 
                 // Context permissions are managed by sync, not the login flow —
                 // left untouched, as before (has_context(false)).
+                //
+                // Everything else the payload can express is the payload's to
+                // state: present means granted, absent means revoked.
+                // `user_store_permissions`, the sync half of this same
+                // reconcile, has always read silence that way, and a login and
+                // a sync record disagreeing about what silence means is a bug
+                // whichever answer is right. Reading silence as revocation is
+                // also what makes the delta-write below work: a permission the
+                // payload still names compares equal and is not re-upserted, so
+                // login stops churning the changelog (#12610, #12612).
                 let existing_permissions: HashMap<String, UserPermissionRow> =
                     UserPermissionRepository::new(con)
                         .query_by_filter(
@@ -572,6 +582,104 @@ mod user_account_test {
             .unwrap();
         assert_eq!(remaining.len(), 1);
         assert_eq!(remaining[0].id, "reconcile_p1");
+    }
+
+    /// A permission is revoked by a payload that stops naming it. Central
+    /// states every permission either way, so a login carrying all the others
+    /// and not this one is a revocation — and it must land, or a user whose
+    /// access is withdrawn in central keeps it here.
+    ///
+    /// The sync half of this reconcile (`user_store_permissions`) has always
+    /// read a payload's silence this way; this pins the login half to the same
+    /// reading.
+    #[actix_rt::test]
+    async fn upsert_user_revokes_a_permission_the_payload_stops_naming() {
+        let (_, connection, _, _) = setup_all(
+            "upsert_user_revokes_a_permission_the_payload_stops_naming",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+        let service = UserAccountService::new(&connection);
+
+        service
+            .upsert_user(
+                reconcile_user(),
+                store_a_permissions(vec![
+                    permission("reconcile_p1", PermissionType::StoreAccess),
+                    permission("reconcile_request", PermissionType::PrescriptionRequestQuery),
+                ]),
+            )
+            .unwrap();
+
+        // A later login from a central that no longer grants slot 205.
+        service
+            .upsert_user(
+                reconcile_user(),
+                store_a_permissions(vec![permission(
+                    "reconcile_p1",
+                    PermissionType::StoreAccess,
+                )]),
+            )
+            .unwrap();
+
+        let remaining: Vec<_> = UserPermissionRepository::new(&connection)
+            .query_by_filter(
+                UserPermissionFilter::new().user_id(EqualFilter::equal_to(reconcile_user().id)),
+            )
+            .unwrap()
+            .into_iter()
+            .map(|p| p.id)
+            .collect();
+
+        assert!(
+            !remaining.contains(&"reconcile_request".to_string()),
+            "a permission survived a payload that stopped naming it: {:?}",
+            remaining
+        );
+        assert!(remaining.contains(&"reconcile_p1".to_string()));
+    }
+
+    /// The other half of the same rule: a payload that DOES name the
+    /// permission grants it, and a repeat login neither drops it nor rewrites
+    /// it. The rewrite matters — a row invisible to the `changed_permissions`
+    /// comparison is re-upserted on every login, which is the changelog churn
+    /// the delta-write exists to avoid (#12610, #12612).
+    #[actix_rt::test]
+    async fn upsert_user_keeps_a_permission_the_payload_still_names() {
+        let (_, connection, _, _) = setup_all(
+            "upsert_user_keeps_a_permission_the_payload_still_names",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+        let service = UserAccountService::new(&connection);
+
+        let payload = || {
+            store_a_permissions(vec![
+                permission("reconcile_p1", PermissionType::StoreAccess),
+                permission("reconcile_request", PermissionType::PrescriptionRequestQuery),
+            ])
+        };
+
+        service.upsert_user(reconcile_user(), payload()).unwrap();
+        let mark = ChangelogRepository::new(&connection).max_cursor().unwrap();
+
+        service.upsert_user(reconcile_user(), payload()).unwrap();
+
+        let remaining: Vec<_> = UserPermissionRepository::new(&connection)
+            .query_by_filter(
+                UserPermissionFilter::new().user_id(EqualFilter::equal_to(reconcile_user().id)),
+            )
+            .unwrap()
+            .into_iter()
+            .map(|p| p.id)
+            .collect();
+
+        assert!(remaining.contains(&"reconcile_request".to_string()));
+        assert_eq!(
+            changelogs_after(&connection, mark),
+            vec![],
+            "an unchanged permission was re-upserted, writing a changelog row"
+        );
     }
 
     #[actix_rt::test]

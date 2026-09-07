@@ -6,7 +6,7 @@ use util::uuid::uuid;
 
 use crate::{invoice_line::query::get_invoice_line, service_provider::ServiceContext};
 
-mod generate;
+pub mod generate;
 use generate::generate;
 mod validate;
 use validate::validate;
