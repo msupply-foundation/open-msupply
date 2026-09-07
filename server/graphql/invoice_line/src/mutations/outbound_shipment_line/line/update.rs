@@ -103,6 +103,9 @@ impl UpdateInput {
             reason_option_id,
         } = self;
         ServiceInput {
+            // Not offered here: the supplier comment is edited per ITEM on
+            // the set-save. `None` leaves the stored value alone.
+            supplier_comment: None,
             id,
             r#type: Some(StockOutType::OutboundShipment),
             stock_line_id,

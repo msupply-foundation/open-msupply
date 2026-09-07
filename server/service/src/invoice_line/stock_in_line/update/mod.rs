@@ -1036,4 +1036,67 @@ mod test {
         )
         .is_ok());
     }
+
+    /// OMS-REG-ISH-01.17 — the supplier comment is the SUPPLYING store's
+    /// statement, arriving with the line. Nothing on an inbound shipment can
+    /// set, change or clear it: `UpdateStockInLine` has no field for it, and an
+    /// edit to the line around it leaves it exactly as it arrived
+    /// (spec/inbound-shipments rules.md § requested quantity and supplier
+    /// comment).
+    #[actix_rt::test]
+    async fn update_stock_in_line_leaves_supplier_comment_untouched() {
+        fn invoice() -> InvoiceRow {
+            cost_price_test_invoice("supplier_comment_inbound", None, None, None)
+        }
+        fn line() -> InvoiceLineRow {
+            InvoiceLineRow {
+                supplier_comment: Some("Only 2 packs left in stock".to_string()),
+                ..cost_price_test_line("supplier_comment_line", &invoice().id)
+            }
+        }
+
+        let (_, connection, connection_manager, _) = setup_all_with_data(
+            "update_stock_in_line_leaves_supplier_comment_untouched",
+            MockDataInserts::all(),
+            MockData {
+                invoices: vec![invoice()],
+                invoice_lines: vec![line()],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_b().id, mock_user_account_a().id)
+            .unwrap();
+
+        // Edit everything around it that this vertical does offer.
+        update_stock_in_line(
+            &context,
+            UpdateStockInLine {
+                id: line().id,
+                r#type: StockInType::InboundShipment,
+                number_of_packs: Some(7.0),
+                batch: Some("NEW-BATCH".to_string()),
+                cost_price_per_pack: Some(12.0),
+                note: Some(NullableUpdate {
+                    value: Some("Received short".to_string()),
+                }),
+                ..Default::default()
+            },
+            None,
+        )
+        .unwrap();
+
+        let updated = InvoiceLineRowRepository::new(&connection)
+            .find_one_by_id(&line().id)
+            .unwrap()
+            .unwrap();
+
+        assert_eq!(updated.number_of_packs, 7.0);
+        assert_eq!(updated.note, Some("Received short".to_string()));
+        // The line's own note is editable; the supplier's comment is not.
+        assert_eq!(updated.supplier_comment, line().supplier_comment);
+    }
 }

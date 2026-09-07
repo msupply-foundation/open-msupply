@@ -678,6 +678,10 @@ impl InvoiceTransferTester {
             stock_line_id: Some(stock_line1.id.clone()),
             location_id: Some(location.id.clone()),
             tax_percentage: Some(0.0),
+            // The supplying store's reason for a short supply — it must reach
+            // the receiving store's line (spec/inbound-shipments rules.md
+            // § requested quantity and supplier comment).
+            supplier_comment: Some("Only 2 packs left in stock".to_string()),
             ..Default::default()
         };
 
@@ -1546,6 +1550,12 @@ fn check_line(connection: &StorageConnection, inbound_id: &str, outbound_line: &
     assert_eq!(inbound_line.stock_line_id, None);
     assert_eq!(inbound_line.location_id, None);
     assert_eq!(inbound_line.tax_percentage, outbound_line.tax_percentage);
+    // The supplier comment travels with the line, unchanged (OMS-REG-ISH-01.15,
+    // OMS-REG-DIST-03.44).
+    assert_eq!(
+        inbound_line.supplier_comment,
+        outbound_line.supplier_comment
+    );
 }
 
 // Check pricing is calculated correctly for each line

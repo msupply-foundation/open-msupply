@@ -94,6 +94,8 @@ impl UpdateInput {
             note,
         } = self;
         ServiceInput {
+            // Dispensing has no customer requisition to explain.
+            supplier_comment: None,
             id,
             r#type: Some(StockOutType::Prescription),
             stock_line_id,

@@ -104,6 +104,7 @@ import { InboundCurrencyPanel } from './tabs/InboundCurrencyPanel';
 import { InboundFinancialPanel } from './tabs/InboundFinancialPanel';
 import { InboundDeliveryPanel } from './tabs/InboundDeliveryPanel';
 import { InboundShipmentLineEditModal } from './edit-modal/InboundShipmentLineEditModal';
+import { showsInternalOrderContext } from './internalOrderContext';
 import { AddFromMasterListModal } from './modals/AddFromMasterListModal';
 import { AddFromInternalOrderModal } from './modals/AddFromInternalOrderModal';
 import {
@@ -146,7 +147,8 @@ const NARROW_HIDDEN: Record<string, boolean> = {
   unitName: false,
   dosesPerUnit: false,
   difference: false,
-  unitQuantity: false,
+  unitsReceived: false,
+  requested: false,
   doses: false,
   costPricePerPack: false,
   sellPricePerPack: false,
@@ -396,6 +398,11 @@ const InboundShipmentDetailView: Component = () => {
   const statusLocked = () =>
     writeBlocked() || !canChangeStatus(current()?.status ?? '');
   const isExternal = () => isExternalScope(scope());
+  // Whether this shipment states internal-order context — the Requested column
+  // here and the line editor's band. The rule (and why a PO-linked shipment is
+  // excluded) lives in ./internalOrderContext.
+  const showsOrderContext = () =>
+    showsInternalOrderContext(!!current()?.requisition, isExternal());
 
   const refetchAll = () => {
     void refetchInfo();
@@ -788,16 +795,46 @@ const InboundShipmentDetailView: Component = () => {
         header: () => t('label.difference'),
         ...getCellDefinition('difference'),
       },
-      // Unit quantity (H6) — pack size × pack quantity; manual shipments only.
+      // Units received (H6) — received pack size × packs received. Gated on
+      // "not purchase-order-linked" (spec S3 line table col 14), which is
+      // exactly what `isManual` is here: the two inbound scopes split on
+      // purchaseOrderId alone (inboundShipmentScope.ts). A PO-linked shipment
+      // states its quantities against the order instead.
       ...(isManual
         ? [
             {
               c: {
                 accessor: line => line.packSize * line.numberOfPacks,
-                id: 'unitQuantity',
+                id: 'unitsReceived',
               },
-              header: () => t('label.unit-quantity'),
+              // "Units received", built from the {{unit}}-parameterised key the
+              // line editor's per-batch field uses — one column across items of
+              // differing units, so the generic word stands in for the unit.
+              header: () =>
+                t('label.units-received', { unit: t('label.units') }),
+              // The `unitQuantity` preset: same 5rem two-word measurement as
+              // "Packs received" beside it.
               ...getCellDefinition('unitQuantity'),
+            } satisfies Column<Line, SortKey>,
+          ]
+        : []),
+      // Requested (spec S3 line table col 15) — the units requested for this
+      // line's ITEM on the linked internal order, so every batch of one item
+      // shows the same figure and a line whose item has no order line shows
+      // none (rules § requested quantity and supplier comment). Present only
+      // while the shipment is internal-order-linked; a PO-linked shipment is
+      // excluded because its requested quantities come from the order itself.
+      // Never summed — a per-item figure repeated down the batches of an item
+      // would total to a multiple of itself.
+      ...(showsOrderContext()
+        ? [
+            {
+              c: {
+                accessor: line => line.requisitionLine?.requestedQuantity ?? '',
+                id: 'requested',
+              },
+              header: () => t('label.requested-quantity'),
+              ...getCellDefinition('requestedQuantity'),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
@@ -1257,6 +1294,14 @@ const InboundShipmentDetailView: Component = () => {
                 initialItemId={editState()?.itemId}
                 initialLineId={editState()?.lineId}
                 purchaseOrderId={node().purchaseOrderId ?? undefined}
+                // Gates the editor's internal-order context band — the item's
+                // requested quantity and the supplying store's comment
+                // (spec S4 § internal-order context). Same rule as the
+                // Requested column, so the two can't disagree about whether
+                // this shipment has that context.
+                requisitionId={
+                  showsOrderContext() ? node().requisition?.id : undefined
+                }
                 // Cost price is read-only only when the shipment carries a
                 // source link — a purchase order or a linked shipment (a
                 // transfer) — NOT merely because the supplier is another store

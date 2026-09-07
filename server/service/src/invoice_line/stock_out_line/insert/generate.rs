@@ -117,6 +117,7 @@ fn generate_batch_update(
         tax_percentage: _,
         received_number_of_packs: _,
         reason_option_id: _,
+        supplier_comment: _,
     }: InsertStockOutLine,
     batch: StockLineRow,
     adjust_total_number_of_packs: bool,
@@ -186,6 +187,7 @@ fn generate_line(
         vvm_status_id: _,
         received_number_of_packs,
         reason_option_id,
+        supplier_comment,
     }: InsertStockOutLine,
     ItemRow {
         id: item_id,
@@ -278,6 +280,7 @@ fn generate_line(
         received_number_of_packs,
         linked_invoice_line_id: None,
         legacy_goods_received_line_id: None,
+        supplier_comment,
     })
 }
 

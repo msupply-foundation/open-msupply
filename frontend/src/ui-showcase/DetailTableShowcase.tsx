@@ -207,6 +207,14 @@ const DATA: Line[] = Array.from({ length: 52 }, (_, i): Line => {
       : Number((cost * numberOfPacks * 1.1).toFixed(2)),
     taxPercentage: 10,
     note: NOTES[i % NOTES.length] || null,
+    // Every third item carries the supplying store's reason for a short
+    // supply, and a requested quantity from the linked internal order.
+    supplierComment:
+      i % 3 === 0 ? 'Partial supply — stock on back order' : null,
+    requisitionLine:
+      i % 4 === 3
+        ? null
+        : { id: `rl-${i}`, requestedQuantity: numberOfPacks * packSize + 10 },
     volumePerPack: Number(((i % 5) * 0.25 + 0.1).toFixed(2)),
     status: null,
     // A line that arrived via another store's transfer can't be independently

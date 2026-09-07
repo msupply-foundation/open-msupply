@@ -162,6 +162,10 @@ fn generate_line(new_invoice_id: &str, line: InvoiceLineRow) -> InvoiceLineRow {
             linked_invoice_id: line.linked_invoice_id,
             linked_invoice_line_id: line.linked_invoice_line_id,
             legacy_goods_received_line_id: None,
+            // The copy is raised against no customer requisition
+            // (`requisition_id: None` above), so there is no requested quantity
+            // for a supplier comment to explain — reset, don't copy.
+            supplier_comment: None,
         };
     }
 
@@ -211,5 +215,6 @@ fn generate_line(new_invoice_id: &str, line: InvoiceLineRow) -> InvoiceLineRow {
         linked_invoice_id: None,
         linked_invoice_line_id: None,
         legacy_goods_received_line_id: None,
+        supplier_comment: None,
     }
 }

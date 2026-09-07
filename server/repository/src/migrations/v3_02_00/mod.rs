@@ -6,6 +6,7 @@ mod add_prescription_request_activity_log_types;
 mod add_prescription_request_id_to_invoice;
 mod add_prescription_request_status_processor_cursor_pg_enum;
 mod add_prescription_request_tables;
+mod add_supplier_comment_to_invoice_line;
 mod seed_prescription_request_status_processor_cursor;
 
 pub(crate) struct V3_02_00;
@@ -27,6 +28,7 @@ impl Migration for V3_02_00 {
             Box::new(seed_prescription_request_status_processor_cursor::Migrate),
             Box::new(add_prescription_request_activity_log_types::Migrate),
             Box::new(add_custom_field_scope_deleted_datetime::Migrate),
+            Box::new(add_supplier_comment_to_invoice_line::Migrate),
         ]
     }
 }
