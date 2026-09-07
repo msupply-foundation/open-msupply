@@ -7,7 +7,7 @@ import { round } from '../../intl/formatNumber';
 import { type LocationWithVolume } from './locationResource';
 import {
   getVolumeUsedPercentage,
-  passesFullness,
+  visibleLocations,
   type Fullness,
 } from './volume';
 import styles from './LocationVolumeSelect.module.css';
@@ -89,9 +89,10 @@ export interface LocationVolumeSelectProps {
  *      volume, suppressed when that figure would be misleading (see volume.ts).
  *   2. A fullness filter (All / Empty / Available) offered as a tab strip
  *      pinned inside the dropdown — by default; `fullnessFilter={false}`
- *      suppresses it for a field that places no stock (a sensor's location). "Empty" keeps locations holding no
- *      stock; "Available" keeps those that are not on hold and have room for
- *      the volume being placed (requiredVolume — not-full when none is given).
+ *      suppresses it for a field that places no stock (a sensor's location).
+ *      "Empty" keeps locations holding no stock; "Available" keeps those that
+ *      are not on hold and have room for the volume being placed
+ *      (requiredVolume — not-full when none is given).
  *      Two locations are exempt so the filter can never hide a valid choice:
  *      the currently-selected one (under every mode, so an already-placed line
  *      can be re-saved unchanged) and, under "Available", the one the stock is
@@ -109,21 +110,17 @@ export const LocationVolumeSelect = (
 
   const showFullness = () => props.fullnessFilter ?? true;
 
-  const filtered = createMemo<LocationWithVolume[]>(() => {
-    const mode = fullness();
-    // Without the filter there is no mode to apply — the signal can only be
-    // 'all' anyway, but reading the gate keeps the two from ever drifting.
-    if (!showFullness() || mode === 'all') return props.locations;
-    // The filter and both its exemptions are the pure `passesFullness`
-    // (./volume) so they can be unit-tested away from this widget.
-    return props.locations.filter(l =>
-      passesFullness(l, mode, {
-        selectedId: props.value,
-        originalLocationId: props.originalLocationId,
-        requiredVolume: props.requiredVolume,
-      })
-    );
-  });
+  // The filter, its two exemptions and the suppression gate are all the pure
+  // `visibleLocations` (./volume), so they can be unit-tested away from this
+  // widget — each is invisible when wrong (a location merely goes missing).
+  const filtered = createMemo<LocationWithVolume[]>(() =>
+    visibleLocations(props.locations, fullness(), {
+      selectedId: props.value,
+      originalLocationId: props.originalLocationId,
+      requiredVolume: props.requiredVolume,
+      fullnessFilter: props.fullnessFilter,
+    })
+  );
 
   const percentUsedLabel = (l: LocationWithVolume): string => {
     const pct = getVolumeUsedPercentage(l);
