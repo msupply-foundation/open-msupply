@@ -28,6 +28,7 @@ const SLOT_IDS: Record<SlotId, true> = {
   'dashboard.body': true,
   'internalOrderLine.column': true,
   'internalOrderLine.infoPanel': true,
+  'internalOrder.sidePanelSection': true,
   'prescription.paymentForm': true,
 };
 
