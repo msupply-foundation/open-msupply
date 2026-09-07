@@ -3,10 +3,10 @@ use async_graphql::*;
 use chrono::{DateTime, Utc};
 use graphql_core::loader::{
     AllowedCustomFieldKeysByScopeLoader, DiagnosisLoader, ItemLoader, PatientLoader,
-    PrescriptionRequestLinesByRequestIdLoader, ProgramByIdLoader, UserLoader,
+    PrescriptionRequestLinesByRequestIdLoader, UserLoader,
 };
 use graphql_core::ContextExt;
-use graphql_types::types::program::{patient::PatientNode, program_node::ProgramNode};
+use graphql_types::types::program::patient::PatientNode;
 use graphql_types::types::{
     filter_custom_fields, ClinicianNode, DiagnosisNode, ItemNode, UserNode,
 };
@@ -117,22 +117,6 @@ impl PrescriptionRequestNode {
             .load_one(diagnosis_id.to_string())
             .await?
             .map(DiagnosisNode::from_domain))
-    }
-
-    pub async fn program_id(&self) -> &Option<String> {
-        &self.row().program_id
-    }
-    pub async fn program(&self, ctx: &Context<'_>) -> Result<Option<ProgramNode>> {
-        let Some(program_id) = self.row().program_id.clone() else {
-            return Ok(None);
-        };
-        let loader = ctx.get_loader::<DataLoader<ProgramByIdLoader>>();
-        Ok(loader
-            .load_one(program_id)
-            .await?
-            .map(|program| ProgramNode {
-                program_row: program,
-            }))
     }
 
     /// The account that ENTERED the request. Never presented as the

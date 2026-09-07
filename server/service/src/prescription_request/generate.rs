@@ -31,7 +31,9 @@ pub(crate) fn create_dispensation(
             id: invoice_id.clone(),
             patient_id: request.patient_id.clone(),
             diagnosis_id: request.diagnosis_id.clone(),
-            program_id: request.program_id.clone(),
+            // The prescriber's side carries no program (issue #514), so the
+            // dispensation it generates has none either.
+            program_id: None,
             their_reference: None,
             // The clinician the request names, if any. It does NOT record who
             // entered either record — the request holds that as `created_by`,

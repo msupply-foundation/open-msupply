@@ -11,7 +11,6 @@ use crate::validate::check_patient_exists;
 
 use super::query::get_prescription_request;
 use super::validate::{check_clinician_exists, check_diagnosis_exists};
-use crate::common::check_program_exists;
 
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct InsertPrescriptionRequest {
@@ -21,7 +20,6 @@ pub struct InsertPrescriptionRequest {
     /// record of who entered it (that is the session's user).
     pub clinician_id: Option<String>,
     pub diagnosis_id: Option<String>,
-    pub program_id: Option<String>,
     pub prescription_datetime: Option<NaiveDateTime>,
 }
 
@@ -31,7 +29,6 @@ pub enum InsertPrescriptionRequestError {
     PatientDoesNotExist,
     ClinicianDoesNotExist,
     DiagnosisDoesNotExist,
-    ProgramDoesNotExist,
     /// The row was written but could not be read back — internal.
     NewlyCreatedPrescriptionRequestDoesNotExist,
     DatabaseError(RepositoryError),
@@ -63,12 +60,6 @@ pub fn insert_prescription_request(
                     return Err(DiagnosisDoesNotExist);
                 }
             }
-            if let Some(program_id) = &input.program_id {
-                if check_program_exists(connection, program_id)?.is_none() {
-                    return Err(ProgramDoesNotExist);
-                }
-            }
-
             let current_datetime = Utc::now().naive_utc();
             let row = PrescriptionRequestRow {
                 id: input.id,
@@ -85,7 +76,6 @@ pub fn insert_prescription_request(
                 // clinician reference is written under.
                 clinician_link_id: input.clinician_id,
                 diagnosis_id: input.diagnosis_id,
-                program_id: input.program_id,
                 created_datetime: current_datetime,
                 prescription_datetime: input.prescription_datetime.unwrap_or(current_datetime),
                 ready_datetime: None,
@@ -186,19 +176,6 @@ mod test {
                 }
             ),
             Err(InsertPrescriptionRequestError::DiagnosisDoesNotExist)
-        );
-
-        // ProgramDoesNotExist
-        assert_eq!(
-            service.insert_prescription_request(
-                &ctx,
-                "store_a",
-                InsertPrescriptionRequest {
-                    program_id: Some("does not exist".to_string()),
-                    ..valid.clone()
-                }
-            ),
-            Err(InsertPrescriptionRequestError::ProgramDoesNotExist)
         );
 
         // PrescriptionRequestAlreadyExists

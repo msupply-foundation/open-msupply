@@ -30,7 +30,6 @@ pub struct UpdateInput {
     /// clinician at the hand-over.
     pub clinician_id: Option<NullableUpdateInput<String>>,
     pub diagnosis_id: Option<NullableUpdateInput<String>>,
-    pub program_id: Option<NullableUpdateInput<String>>,
     pub prescription_datetime: Option<DateTime<Utc>>,
     pub comment: Option<NullableUpdateInput<String>>,
     /// Patch of customFields key -> value; a JSON null deletes that key. Keys
@@ -46,7 +45,6 @@ impl UpdateInput {
             patient_id,
             clinician_id,
             diagnosis_id,
-            program_id,
             prescription_datetime,
             comment,
             custom_fields,
@@ -57,7 +55,6 @@ impl UpdateInput {
             patient_id,
             clinician_id: clinician_id.map(|u| NullableUpdate { value: u.value }),
             diagnosis_id: diagnosis_id.map(|u| NullableUpdate { value: u.value }),
-            program_id: program_id.map(|u| NullableUpdate { value: u.value }),
             prescription_datetime: prescription_datetime.map(|d| d.naive_utc()),
             comment: comment.map(|u| NullableUpdate { value: u.value }),
             custom_fields: custom_fields.map(|json| json.0),
@@ -117,7 +114,6 @@ fn map_error(error: ServiceError) -> async_graphql::Error {
         | ServiceError::PatientDoesNotExist
         | ServiceError::ClinicianDoesNotExist
         | ServiceError::DiagnosisDoesNotExist
-        | ServiceError::ProgramDoesNotExist
         | ServiceError::UnknownCustomFieldKey(_)
         | ServiceError::InvalidCustomFieldValue { .. }
         | ServiceError::NoLines => BadUserInput(formatted_error),
