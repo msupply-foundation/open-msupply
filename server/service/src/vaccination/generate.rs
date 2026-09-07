@@ -62,6 +62,7 @@ pub fn generate_create_prescription(
         manufacturer_id: None,
         received_number_of_packs: None,
         reason_option_id: None,
+        supplier_comment: None,
     };
 
     let finalise_prescription = UpdatePrescription {

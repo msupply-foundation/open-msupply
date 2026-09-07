@@ -44,6 +44,10 @@ pub struct InsertStockOutLine {
     pub manufacturer_id: Option<NullableUpdate<String>>,
     pub received_number_of_packs: Option<f64>,
     pub reason_option_id: Option<String>,
+    /// This store's explanation of why the quantity issued differs from the
+    /// quantity the customer requested (outbound shipments only). Carried to
+    /// the receiving store's inbound line by the transfer processor.
+    pub supplier_comment: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq)]

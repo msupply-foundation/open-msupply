@@ -81,6 +81,7 @@ pub(crate) fn generate_inbound_lines(
                     purchase_order_line_id,
                     received_number_of_packs: _,
                     legacy_goods_received_line_id: _,
+                    supplier_comment,
                 },
                 ItemRow {
                     id: item_id,
@@ -179,6 +180,11 @@ pub(crate) fn generate_inbound_lines(
                     status,
                     received_number_of_packs: None,
                     legacy_goods_received_line_id: None,
+                    // The supplying store's explanation of a short supply
+                    // travels with the line and is read-only at the receiving
+                    // store (spec/inbound-shipments rules.md § requested
+                    // quantity and supplier comment).
+                    supplier_comment,
                 }
             },
         )

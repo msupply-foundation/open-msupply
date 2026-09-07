@@ -210,6 +210,14 @@ impl DraftStockOutLineNode {
         self.shipment_line.received_number_of_packs
     }
 
+    /// The item's supplier comment (spec/outbound-shipments rules.md § supplier
+    /// comment) — one value per item, repeated on every draft row of that item,
+    /// so the editor can show one field and echo it back on save. Null on a
+    /// batch that has no invoice line yet.
+    pub async fn supplier_comment(&self) -> &Option<String> {
+        &self.shipment_line.supplier_comment
+    }
+
     pub async fn reason_option(&self, ctx: &Context<'_>) -> Result<Option<ReasonOptionNode>> {
         let reason_id = match &self.shipment_line.reason_option_id {
             None => return Ok(None),

@@ -2,16 +2,17 @@ use crate::types::{program_node::ProgramNode, PurchaseOrderLineNode, VVMStatusNo
 
 use super::{
     CampaignNode, InventoryAdjustmentReasonNode, ItemNode, ItemVariantNode, LocationNode, NameNode,
-    PricingNode, ReasonOptionNode, ReturnReasonNode, StockLineNode,
+    PricingNode, ReasonOptionNode, RequisitionLineNode, ReturnReasonNode, StockLineNode,
 };
 use async_graphql::*;
 use chrono::NaiveDate;
 use dataloader::DataLoader;
 use graphql_core::{
     loader::{
-        CampaignByIdLoader, ItemLoader, ItemVariantByItemVariantIdLoader, NameByIdLoader,
-        NameByIdLoaderInput, ProgramByIdLoader, PurchaseOrderLineByIdLoader, ReasonOptionLoader,
-        StockLineByIdLoader, VVMStatusByIdLoader,
+        CampaignByIdLoader, ItemLoader, ItemVariantByItemVariantIdLoader,
+        LinkedRequisitionLineLoader, NameByIdLoader, NameByIdLoaderInput, ProgramByIdLoader,
+        PurchaseOrderLineByIdLoader, ReasonOptionLoader, RequisitionAndItemId, StockLineByIdLoader,
+        VVMStatusByIdLoader,
     },
     simple_generic_errors::NodeError,
     standard_graphql_error::StandardGraphqlError,
@@ -327,6 +328,47 @@ impl InvoiceLineNode {
             .status
             .as_ref()
             .map(|status| InvoiceLineStatusType::from(status.clone()))
+    }
+
+    /// The supplying store's explanation of why the quantity sent differs from
+    /// the quantity requested (spec/inbound-shipments rules.md § requested
+    /// quantity and supplier comment). Authored on the outbound side and
+    /// carried across by the shipment transfer — read-only on an inbound
+    /// shipment: no inbound mutation input accepts it.
+    pub async fn supplier_comment(&self) -> &Option<String> {
+        &self.row().supplier_comment
+    }
+
+    /// The internal-order line behind this shipment line: the line of the
+    /// shipment's linked requisition carrying the same item. Null when the
+    /// shipment has no requisition link, or the order has no line for the item.
+    ///
+    /// The match is on item alone — there is no per-line link between a
+    /// shipment line and an order line — so every batch of one item resolves
+    /// the same order line.
+    ///
+    /// ⚠️ `InvoiceRow.requisition_id` is not store-scoped, so a requisition
+    /// link that arrived by sync can resolve a requisition belonging to another
+    /// store (or a customer requisition rather than one of this store's
+    /// internal orders). `requestedQuantity` means the same thing on both sides
+    /// of a requisition pair, so the figure itself stays right either way.
+    pub async fn requisition_line(
+        &self,
+        ctx: &Context<'_>,
+    ) -> Result<Option<RequisitionLineNode>> {
+        let Some(requisition_id) = &self.invoice_line.invoice_row.requisition_id else {
+            return Ok(None);
+        };
+
+        let loader = ctx.get_loader::<DataLoader<LinkedRequisitionLineLoader>>();
+        let result = loader
+            .load_one(RequisitionAndItemId::new(
+                requisition_id,
+                &self.item_row().id,
+            ))
+            .await?;
+
+        Ok(result.map(RequisitionLineNode::from_domain))
     }
 
     pub async fn purchase_order_line(

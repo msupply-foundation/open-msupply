@@ -56,10 +56,13 @@ import {
   type BatchInboundShipmentVariables,
 } from '../inboundShipmentDetail.generated';
 import {
+  InternalOrderLines,
+  type InternalOrderLineRowFragment,
   PurchaseOrderLines,
   type PurchaseOrderLinesResult,
 } from '../inboundShipmentLookups.generated';
 import { runInboundBatch } from '../inboundShipmentUpdate';
+import { requestedQuantityForItem } from '../internalOrderContext';
 import styles from './InboundShipmentLineEditModal.module.css';
 
 // One line of the linked purchase order — the PO-line picker's options (derived
@@ -106,6 +109,14 @@ export interface InboundShipmentLineEditModalProps {
    * purchaseOrderId to switch the add selector to the PO-line picker.
    */
   purchaseOrderId?: string;
+  /**
+   * The shipment's linked internal order, when it has one — however the link
+   * arose (linked by hand, or created with an incoming transfer). Presence
+   * alone gates the internal-order context band: the item's requested quantity
+   * and the supplying store's comment (spec S4 § internal-order context,
+   * OMS-REG-ISH-01.15/.16). Undefined on a shipment with no such link.
+   */
+  requisitionId?: string;
   /** Cost price is read-only for a store-linked or PO-linked supplier. */
   costLocked: boolean;
   locations: LocationWithVolume[];
@@ -338,6 +349,18 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // & next" advance) so the body shows a spinner instead of flashing its empty
   // state. Starts true; add mode clears it once the selector is ready.
   const [loadingLines, setLoadingLines] = createSignal(true);
+  // The two per-ITEM facts the internal-order context band states, read off the
+  // item's existing shipment lines (every batch of an item carries the same
+  // pair, so the first line answers for all of them). Null in add mode, where
+  // the item has no line here yet — the supplier comment is then genuinely
+  // absent (nothing has been supplied), and the requested quantity falls back
+  // to the order's own lines. Cleared whenever the open item changes.
+  const [loadedRequested, setLoadedRequested] = createSignal<number | null>(
+    null
+  );
+  const [supplierComment, setSupplierComment] = createSignal<string | null>(
+    null
+  );
   // Mode: 'update' (opened from a row — "OK & next" walks to the next item on
   // the shipment) or 'add' ("Add item", or fallen into when an update walk
   // runs out — "OK & next" then resets to add another). Only ever flips update
@@ -410,6 +433,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       return;
     }
     setBatches(lines.map(fromLine));
+    setLoadedRequested(first.requisitionLine?.requestedQuantity ?? null);
+    setSupplierComment(first.supplierComment);
     setItem({
       id: first.itemId,
       code: first.itemCode,
@@ -455,6 +480,10 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // editor). State for any item currently in the editor is lost, by design.
   const chooseItem = (option: ItemOption | null) => {
     setMode('add');
+    // A fresh item has no line on this shipment, so neither per-item fact
+    // carries over from whatever was open before.
+    setLoadedRequested(null);
+    setSupplierComment(null);
     if (!option) {
       setItem(null);
       setBatches([]);
@@ -476,6 +505,33 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     setBatches([batch]);
     // Picking an item drops focus straight onto its first batch's packs field.
     batchFields.focus(batch.id);
+  };
+
+  // The linked internal order's lines, for the context band's Requested figure.
+  // Fetched once, sequentially, into a plain signal — same shape as the PO-line
+  // load below, and for the same reason: no createResource, so an item change
+  // mid-walk never suspends the open dialog
+  // (kdd/solid-reactivity-pitfalls › No remounts on interaction).
+  //
+  // Needed even though every loaded LINE already carries its own
+  // `requisitionLine`: in ADD mode the chosen item has no line on the shipment
+  // yet, so the order itself is the only place the figure can come from — and
+  // it is what tells an item that simply isn't on the order apart from one
+  // that is (OMS-REG-ISH-01.16).
+  const [orderLines, setOrderLines] = createSignal<
+    InternalOrderLineRowFragment[]
+  >([]);
+  const loadOrderLines = async () => {
+    if (!props.requisitionId) return;
+    const result = await graphqlFetch(InternalOrderLines, {
+      storeId: props.storeId,
+      requisitionId: props.requisitionId,
+    });
+    if (
+      result.kind === 'success' &&
+      result.data.requisition.__typename === 'RequisitionNode'
+    )
+      setOrderLines(result.data.requisition.lines.nodes);
   };
 
   // PO-linked add mode: pick a purchase-order LINE instead of an item search
@@ -501,6 +557,8 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     const line = poLines().find(l => l.id === id);
     if (!line) return;
     setPoLineId(id);
+    setLoadedRequested(null);
+    setSupplierComment(null);
     // The PO-line lookup carries only id/code/name for the item; unit/vaccine
     // attributes fill in once the line is saved and reloaded via the full line
     // fragment (edit mode). Default them for the pre-save PO-add view.
@@ -618,6 +676,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   // walk exhausts). Matches the stocktake editor.
   onMount(() => {
     void loadPoLines();
+    void loadOrderLines();
     if (props.initialItemId)
       void loadItemById(props.initialItemId, props.initialLineId);
     else {
@@ -625,6 +684,29 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       topSelector.focus();
     }
   });
+
+  // ── Internal-order context (spec S4 § internal-order context) ─────────────
+  // Both facts are per ITEM, not per batch, so they don't move as batches are
+  // added or edited, and both are always STATED — a dash where there is no
+  // value — rather than hidden (OMS-REG-ISH-01.15).
+
+  // The units requested for the open item. Resolved by ../internalOrderContext
+  // from the two sources this editor has: the loaded lines' own
+  // `requisitionLine`, and the order's own line set (add mode).
+  const requestedQuantity = (): number | undefined =>
+    props.requisitionId
+      ? requestedQuantityForItem(item()?.id, loadedRequested(), orderLines())
+      : undefined;
+
+  // The band's content, or undefined when the item has no line on the linked
+  // order — which gets the neutral notice in place of BOTH values
+  // (OMS-REG-ISH-01.16). Wrapped rather than handed to `<Show>` bare: a
+  // genuine requested quantity of ZERO is a figure, and `<Show when={0}>`
+  // would render the not-on-the-order fallback for it.
+  const orderContext = () => {
+    const requested = requestedQuantity();
+    return requested == null ? undefined : { requested };
+  };
 
   const buildBatch = (): BatchInboundShipmentVariables['input'] | null => {
     const chosen = item();
@@ -1608,6 +1690,55 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
         >
           {/* Unit is a labelled fact in the header now, not a field row here. */}
           <>
+            {/* Internal-order context (spec S4) — an INFO banner holding the
+                item's two read-only facts, so the band reads as context about
+                the item rather than as two more fields of the batch form below
+                it. Per ITEM, and stated in full — a dash where a value is
+                missing — so the receiver reads "asked for 100, nothing said
+                about the shortfall" rather than inferring it from an absent
+                row. The not-on-the-order case swaps the whole banner for the
+                neutral notice the spec names for it. Absent entirely on a
+                shipment with no internal-order link, and (via the enclosing
+                no-item fallback) until an item is chosen in add mode. */}
+            <Show when={props.requisitionId}>
+              <div class={styles.orderContext}>
+                <Show
+                  when={orderContext()}
+                  fallback={
+                    <Alert severity="neutral">
+                      {t('messages.item-not-on-internal-order')}
+                    </Alert>
+                  }
+                >
+                  {context => (
+                    <Alert severity="info">
+                      <HStack gap="lg" align="center" wrap>
+                        <LabelledValue
+                          label={t('label.requested-quantity')}
+                          variant="field"
+                          layout="inline"
+                          size="small"
+                          data-testid="requested-quantity-value"
+                        >
+                          {formatNumber(context().requested)}
+                        </LabelledValue>
+                        <LabelledValue
+                          label={t('label.supplier-comment')}
+                          variant="field"
+                          layout="inline"
+                          size="small"
+                          data-testid="supplier-comment-value"
+                        >
+                          {/* Always stated, dash and all: an empty comment on
+                              a short supply is itself worth seeing. */}
+                          {supplierComment() || '—'}
+                        </LabelledValue>
+                      </HStack>
+                    </Alert>
+                  )}
+                </Show>
+              </div>
+            </Show>
             <Show when={hasMismatch()}>
               <Alert severity="warning">
                 {t('messages.received-shipped-mismatch')}

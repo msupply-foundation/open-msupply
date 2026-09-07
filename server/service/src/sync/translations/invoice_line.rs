@@ -143,6 +143,14 @@ pub struct LegacyTransLineRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub goods_received_lines_ID: Option<String>,
+    // The supplying store's reason for a short supply. ⚠️ The column does not
+    // exist in legacy mSupply yet (spec/inbound-shipments contract.md
+    // § requested quantity and supplier comment), hence `default` — a legacy
+    // record simply carries none. It is still serialised on push so a value
+    // authored here survives the round trip unchanged.
+    #[serde(default)]
+    #[serde(deserialize_with = "empty_str_as_option_string")]
+    pub supplier_comment: Option<String>,
 }
 
 // Needs to be added to all_translators()
@@ -212,6 +220,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             shipped_pack_size,
             manufacturer_id,
             goods_received_lines_ID,
+            supplier_comment,
         } = sync_record.deserialize()?;
 
         let line_type = match to_invoice_line_type(&r#type) {
@@ -396,6 +405,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             received_number_of_packs,
             manufacturer_id: fk_check(manufacturer_id, "manufacturer_link_id", FkField::NameLink)?,
             legacy_goods_received_line_id: goods_received_lines_ID,
+            supplier_comment,
         };
 
         let result = adjust_negative_values(result);
@@ -470,6 +480,7 @@ impl SyncTranslation for InvoiceLineTranslation {
                     linked_invoice_line_id,
                     manufacturer_id,
                     legacy_goods_received_line_id: _,
+                    supplier_comment,
                 },
             item_row,
             ..
@@ -522,6 +533,7 @@ impl SyncTranslation for InvoiceLineTranslation {
             shipped_pack_size,
             manufacturer_id,
             goods_received_lines_ID: None,
+            supplier_comment,
         };
         Ok(PushTranslateResult::upsert(
             changelog,
