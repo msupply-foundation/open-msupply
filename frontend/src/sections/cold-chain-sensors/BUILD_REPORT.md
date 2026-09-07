@@ -68,9 +68,16 @@ One routed screen (the list) and one modal over it, plus its save confirmation. 
 ### Spec gaps hit
 
 1. **`ui-surface.md` contradicts itself on the absent-value treatment.** Column 8 (Date time) says "blank when there is none", while the note under the table says columns **6–8** carry a dash. Built to the per-column rows (battery and last reading dash, date time blank), which is also what the current app does. The note should read 6–7.
-2. **`ui-surface.md` names the current app's clearing mechanism, not a role.** It says a **Remove** entry (`label.remove`) at the foot of the location list clears the assignment. That is one library's implementation; the registry's Location lookup clears with its own affordance, which is what this build uses. The behaviour (AC-P3) is unaffected. The surface should say the assignment is clearable and leave the affordance to the role.
-3. **A genuine 0 °C reading is unspecified.** AC-D2 covers a sensor that has _never_ reported; it does not say what a real reading of exactly 0 shows. Built to show `0°C` — see [deliberate differences](#deliberate-differences-from-the-current-app).
-4. **The active-only control's placement is not reproducible as written.** `ui-surface.md` puts it at the toolbar's trailing end; in this library that end is the table's own control cluster (Columns · Settings · full screen), which a vertical does not compose into. It is rendered at the trailing end of the **filter region** instead — the same bar, inside the slot a vertical owns.
+2. **`ui-surface.md` under-transcribes the location option.** It records the
+   option as `<code> - <name>` and the Remove entry, but not the `% used` suffix
+   the current app also renders there. The suffix is a consequence of that app
+   reaching for the volume-aware picker, and the spec's choice of the plain role
+   is the right answer to it — but the surface should say the option carries the
+   code and name **and nothing else**, so the difference is a stated one rather
+   than a surprise to anyone comparing screens.
+3. **`ui-surface.md` names the current app's clearing mechanism, not a role.** It says a **Remove** entry (`label.remove`) at the foot of the location list clears the assignment. That is one library's implementation; the registry's Location lookup clears with its own affordance, which is what this build uses. The behaviour (AC-P3) is unaffected. The surface should say the assignment is clearable and leave the affordance to the role.
+4. **A genuine 0 °C reading is unspecified.** AC-D2 covers a sensor that has _never_ reported; it does not say what a real reading of exactly 0 shows. Built to show `0°C` — see [deliberate differences](#deliberate-differences-from-the-current-app).
+5. **The active-only control's placement is not reproducible as written.** `ui-surface.md` puts it at the toolbar's trailing end; in this library that end is the table's own control cluster (Columns · Settings · full screen), which a vertical does not compose into. It is rendered at the trailing end of the **filter region** instead — the same bar, inside the slot a vertical owns.
 
 ### `⚠️ VERIFY` items encountered
 
@@ -88,7 +95,19 @@ All built (no ⛔ roles): data table (list) · filter bar · empty state · list
 
 Both follow the spec rather than the reference screen, and both are worth a reviewer's eye:
 
-- **A 0 °C reading shows as `0°C`, not as "no reading".** The current app gates the cell on a truthiness check, so a genuine zero renders as its absent-value dash. Confirmed live on both front ends, side by side, against the same sensor.
+- **A 0 °C reading shows as `0°C`, not as "no reading".** The current app gates
+  the cell on a truthiness check (`!!temperature`), so a genuine zero renders as
+  its absent-value dash — on both the list and the editor. Confirmed live on both
+  front ends, side by side, against the same sensor (a stored reading of `0.0`).
+  Worth filing against the current app in its own right: 0 °C is the reading a
+  cold-chain user least wants silently hidden.
+- **The location picker shows no "% used".** The current app reaches for the
+  volume-aware picker here, so every option carries a capacity figure — and on
+  locations with no volume recorded that renders as `-% used`, a dash where a
+  number should be, on a field where capacity is irrelevant anyway. The registry's
+  placement test decides it: a sensor merely _references_ a location, it does not
+  put stock in one, so the **plain** lookup is the role — which is what
+  `ui-surface.md` names. Options read `<code> — <name>` and stop there.
 - **The device kind reads `LogTag` everywhere.** The current app labels the column by enum-casing the wire value ("Log Tag") while its own type filter offers "LogTag" — the same kind under two names on one screen. This build uses `label.log-tag` for both, as `ui-surface.md` specifies.
 
 ## Live verification
