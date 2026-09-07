@@ -59,14 +59,20 @@ impl SyncTranslation for NameOmsFieldsTranslation {
     fn try_translate_to_upsert_sync_record(
         &self,
         _connection: &StorageConnection,
-        _changelog: &ChangelogRow,
-        _row: Row,
+        changelog: &ChangelogRow,
+        row: Row,
     ) -> Result<PushTranslateResult, anyhow::Error> {
-        // NameOmsFields is not represented in the `Row` enum (no
-        // standalone bare-row repository), so `query_with_data` cannot
-        // surface it on the push path. Until the table is added to
-        // `Row`, this translator is unreachable for push.
-        Ok(PushTranslateResult::NotMatched)
+        let Row::NameOmsFields(name_oms_fields_row) = row else {
+            return Ok(PushTranslateResult::NotMatched);
+        };
+
+        let row = name_oms_fields_row;
+
+        Ok(PushTranslateResult::upsert(
+            changelog,
+            self.table_name(),
+            serde_json::to_value(row)?,
+        ))
     }
 }
 
