@@ -69,10 +69,15 @@ One routed screen (the list) and one modal over it, plus its save confirmation. 
 
 ### Spec gaps hit
 
-1. **`ui-surface.md` contradicts itself on the absent-value treatment.** Column 8 (Date time) says "blank when there is none", while the note under the table says columns **6–8** carry a dash. Built to the per-column rows (battery and last reading dash, date time blank), which is also what the current app does. The note should read 6–7.
-2. **`ui-surface.md` names the current app's clearing mechanism, not a role.** It says a **Remove** entry (`label.remove`) at the foot of the location list clears the assignment. That is one library's implementation; the registry's Location lookup clears with its own affordance, which is what this build uses. The behaviour (AC-P3) is unaffected. The surface should say the assignment is clearable and leave the affordance to the role.
-3. **A genuine 0 °C reading is unspecified.** AC-D2 covers a sensor that has _never_ reported; it does not say what a real reading of exactly 0 shows. Built to show `0°C` — see [deliberate differences](#deliberate-differences-from-the-current-app).
-4. **The active-only control's placement is not reproducible as written.** `ui-surface.md` puts it at the toolbar's trailing end; in this library that end is the table's own control cluster (Columns · Settings · full screen), which a vertical does not compose into. It is rendered at the trailing end of the **filter region** instead — the same bar, inside the slot a vertical owns.
+Two gaps this build hit have since been closed on the spec branch and are no
+longer listed: `ui-surface.md`'s self-contradiction over which columns take a
+dash (closed by the merge of `41ee52b7`, which made the note read 6–7 and put
+Date time with the blanks — what this build already rendered), and its naming of
+the current app's **Remove** entry rather than the clearing affordance the role
+owns (closed by `b51d78d5`). This list holds the gaps that still stand.
+
+1. **A genuine 0 °C reading is unspecified.** AC-D2 covers a sensor that has _never_ reported; it does not say what a real reading of exactly 0 shows. Built to show `0°C` — see [deliberate differences](#deliberate-differences-from-the-current-app).
+2. **The active-only control's placement is not reproducible as written.** `ui-surface.md` puts it at the toolbar's trailing end; in this library that end is the table's own control cluster (Columns · Settings · full screen), which a vertical does not compose into. It is rendered at the trailing end of the **filter region** instead — the same bar, inside the slot a vertical owns.
 
 ### `⚠️ VERIFY` items encountered
 
