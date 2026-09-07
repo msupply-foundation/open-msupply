@@ -398,9 +398,8 @@ const InboundShipmentDetailView: Component = () => {
   const statusLocked = () =>
     writeBlocked() || !canChangeStatus(current()?.status ?? '');
   const isExternal = () => isExternalScope(scope());
-  // Whether this shipment states internal-order context — the Requested column
-  // here and the line editor's band. The rule (and why a PO-linked shipment is
-  // excluded) lives in ./internalOrderContext.
+  // The rule, and why a PO-linked shipment is excluded, lives in
+  // ./internalOrderContext.
   const showsOrderContext = () =>
     showsInternalOrderContext(!!current()?.requisition, isExternal());
 
@@ -795,11 +794,9 @@ const InboundShipmentDetailView: Component = () => {
         header: () => t('label.difference'),
         ...getCellDefinition('difference'),
       },
-      // Units received (H6) — received pack size × packs received. Gated on
-      // "not purchase-order-linked" (spec S3 line table col 14), which is
-      // exactly what `isManual` is here: the two inbound scopes split on
-      // purchaseOrderId alone (inboundShipmentScope.ts). A PO-linked shipment
-      // states its quantities against the order instead.
+      // Units received (H6) — received pack size × packs received. `isManual`
+      // IS "not purchase-order-linked" here: the two inbound scopes split on
+      // purchaseOrderId alone (inboundShipmentScope.ts).
       ...(isManual
         ? [
             {
@@ -807,25 +804,20 @@ const InboundShipmentDetailView: Component = () => {
                 accessor: line => line.packSize * line.numberOfPacks,
                 id: 'unitsReceived',
               },
-              // "Units received", built from the {{unit}}-parameterised key the
-              // line editor's per-batch field uses — one column across items of
-              // differing units, so the generic word stands in for the unit.
+              // The generic word stands in for {{unit}}: one column spans items
+              // of differing units.
               header: () =>
                 t('label.units-received', { unit: t('label.units') }),
-              // The `unitQuantity` preset: same 5rem two-word measurement as
+              // `unitQuantity` preset: the same 5rem two-word measurement as
               // "Packs received" beside it.
               ...getCellDefinition('unitQuantity'),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
-      // Requested (spec S3 line table col 15) — the units requested for this
-      // line's ITEM on the linked internal order, so every batch of one item
-      // shows the same figure and a line whose item has no order line shows
-      // none (rules § requested quantity and supplier comment). Present only
-      // while the shipment is internal-order-linked; a PO-linked shipment is
-      // excluded because its requested quantities come from the order itself.
-      // Never summed — a per-item figure repeated down the batches of an item
-      // would total to a multiple of itself.
+      // Requested (spec S3 col 15) — the units requested for this line's ITEM,
+      // so every batch of one item shows the same figure and a line whose item
+      // has no order line shows none. Never summed: a per-item figure repeated
+      // down an item's batches would total to a multiple of itself.
       ...(showsOrderContext()
         ? [
             {
@@ -1294,11 +1286,8 @@ const InboundShipmentDetailView: Component = () => {
                 initialItemId={editState()?.itemId}
                 initialLineId={editState()?.lineId}
                 purchaseOrderId={node().purchaseOrderId ?? undefined}
-                // Gates the editor's internal-order context band — the item's
-                // requested quantity and the supplying store's comment
-                // (spec S4 § internal-order context). Same rule as the
-                // Requested column, so the two can't disagree about whether
-                // this shipment has that context.
+                // Gates the editor's internal-order banner, on the same rule as
+                // the Requested column so the two can't disagree.
                 requisitionId={
                   showsOrderContext() ? node().requisition?.id : undefined
                 }

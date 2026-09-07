@@ -361,11 +361,9 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // row), so the parent's next-item walk never offers one twice — across page
   // advances too. Seeded with each item as it loads; not reactive.
   const coveredItemIds = new Set<string>();
-  // The ITEM's supplier comment (rules.md § supplier comment): one value for
-  // the whole batch set, written onto every line of the item on save. Seeded
-  // from the draft — the server repeats the stored value on each draft row —
-  // and echoed back unchanged when the user doesn't touch it, because the
-  // set-save OVERWRITES the column like every other line field
+  // The ITEM's supplier comment: one value for the whole batch set, written
+  // onto every line of the item on save. Seeded from the draft and echoed back
+  // untouched — the set-save OVERWRITES the column like every other line field
   // (contract § supplier comment wire trap, OMS-REG-DIST-03.43).
   const [supplierComment, setSupplierComment] = createSignal('');
   // Each batch row's packs-issued field, bound per row and addressed by draft
@@ -486,8 +484,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
       ...sorted.filter(line => nonAllocatableIds.has(line.id)),
     ];
     setDraft(reconcile(ordered, { key: 'id' }));
-    // Per ITEM, so any draft row backed by an existing line answers for all of
-    // them; rows with no line yet carry none.
+    // Per ITEM, so any row backed by an existing line answers for all of them.
     setSupplierComment(
       sorted.find(line => line.supplierComment)?.supplierComment ?? ''
     );

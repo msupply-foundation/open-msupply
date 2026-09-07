@@ -158,7 +158,6 @@ impl InsertInput {
         } = self;
 
         ServiceInput {
-            // Dispensing has no customer requisition to explain.
             supplier_comment: None,
             id,
             r#type: StockOutType::Prescription,

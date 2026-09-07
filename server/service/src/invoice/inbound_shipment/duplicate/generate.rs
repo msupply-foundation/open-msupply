@@ -155,10 +155,7 @@ pub fn generate(
             vvm_status_id: None,
             shipped_number_of_packs: None,
             legacy_goods_received_line_id: None,
-            // The copy carries no internal-order link (`requisition_id: None`
-            // above), so there is no requested quantity for a supplier comment
-            // to explain — and it is the supplying store's statement about a
-            // supply this copy is not part of.
+            // No requisition link on the copy, so no request to explain.
             supplier_comment: None,
         });
     }

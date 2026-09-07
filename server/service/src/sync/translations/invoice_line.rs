@@ -143,11 +143,6 @@ pub struct LegacyTransLineRow {
     #[serde(deserialize_with = "empty_str_as_option_string")]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub goods_received_lines_ID: Option<String>,
-    // The supplying store's reason for a short supply. ⚠️ The column does not
-    // exist in legacy mSupply yet (spec/inbound-shipments contract.md
-    // § requested quantity and supplier comment), hence `default` — a legacy
-    // record simply carries none. It is still serialised on push so a value
-    // authored here survives the round trip unchanged.
     #[serde(default)]
     #[serde(deserialize_with = "empty_str_as_option_string")]
     pub supplier_comment: Option<String>,

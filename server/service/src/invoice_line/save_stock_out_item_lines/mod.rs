@@ -42,10 +42,9 @@ pub struct SaveStockOutInvoiceLine {
     pub vvm_status_id: Option<String>,
     pub received_number_of_packs: Option<f64>,
     pub reason_option_id: Option<String>,
-    /// The item's supplier comment (spec/outbound-shipments rules.md § supplier
-    /// comment). One value per item, so the caller sends the same one on every
-    /// line of the item — and, as with `received_number_of_packs`, the set-save
-    /// OVERWRITES it, so an omitted value clears the stored one.
+    /// One value per item, so the caller sends the same one on every line of
+    /// it — and, as with `received_number_of_packs`, the set-save OVERWRITES
+    /// it, so an omitted value clears the stored one.
     pub supplier_comment: Option<String>,
 }
 
@@ -526,11 +525,8 @@ mod test {
         );
     }
 
-    /// The item's supplier comment (spec/outbound-shipments rules.md § supplier
-    /// comment): one value per item, written onto EVERY line of that item, and
-    /// — like `received_number_of_packs` — OVERWRITTEN by the set-save, so a
-    /// caller that omits it clears the stored value (contract.md wire trap,
-    /// OMS-REG-DIST-03.41/.43).
+    /// OMS-REG-DIST-03.41/.43 — the item's one comment reaches every line of
+    /// it, and an omitted value clears the stored one (contract.md wire trap).
     #[actix_rt::test]
     async fn test_save_outbound_item_lines_writes_supplier_comment_to_every_line() {
         fn outbound() -> InvoiceRow {
@@ -617,8 +613,8 @@ mod test {
 
         assert_eq!(comment_of("sc_line_a"), Some("Short supply".to_string()));
 
-        // Omitted: the set-save overwrites, so the stored value is CLEARED.
-        // This is the wire trap the client guards against by echoing.
+        // Omitted: the set-save overwrites, so the stored value is CLEARED —
+        // the wire trap the client guards against by echoing.
         service_provider
             .invoice_line_service
             .save_stock_out_item_lines(

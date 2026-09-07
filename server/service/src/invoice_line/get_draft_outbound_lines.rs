@@ -45,9 +45,7 @@ pub struct DraftStockOutLine {
     pub volume_per_pack: f64,
     pub received_number_of_packs: Option<f64>,
     pub reason_option_id: Option<String>,
-    /// The item's supplier comment, from the existing invoice line (a batch
-    /// with no line yet carries none). Per item, not per batch — the editor
-    /// shows one field and echoes the value back on every line it saves.
+    /// From the existing invoice line; a batch with no line yet carries none.
     pub supplier_comment: Option<String>,
 }
 
