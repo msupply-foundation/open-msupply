@@ -39,6 +39,11 @@ server/configuration/*.yaml
 # Keep the example and base configuration files
 !configuration/base.yaml
 !configuration/example.yaml
+# Per-developer server config copies. The server reads configuration/ relative
+# to its working directory (server/server/src/configuration.rs), so nothing
+# under server/.config/ is a config the repo needs; only nextest.toml there is
+# tracked, and it is unaffected by this pattern.
+server/.config/*.yaml
 server/target-postgres/
 
 # Playwright MCP scratch logs / page dumps
