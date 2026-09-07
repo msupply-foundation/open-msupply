@@ -8,7 +8,7 @@ One routed screen (the list) and one modal over it, plus its save confirmation. 
 
 ## Anchor coverage
 
-`listState` = `list/listState.test.ts` · `sensorEdit` = `list/sensorEdit.test.ts` · `sensorDisplay` = `list/sensorDisplay.test.ts` · `access` = `access.test.ts`. **live** = driven through the built screen against a real `remote_server` (v3.02.00) on seeded data — see [Live verification](#live-verification).
+`listState` = `list/listState.test.ts` · `sensorEdit` = `list/sensorEdit.test.ts` · `sensorDisplay` = `list/sensorDisplay.test.ts` · `access` = `access.test.ts` · `volume` = `src/domain/location/volume.test.ts` (the shared picker's own tests, where this field's behaviour lives). **live** = driven through the built screen against a real `remote_server` (v3.02.00) on seeded data — see [Live verification](#live-verification).
 
 | AC                                                       | Covered by                                                                                                           |
 | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
@@ -38,7 +38,7 @@ One routed screen (the list) and one modal over it, plus its save confirmation. 
 | **AC-P4** assignment re-attributes history               | **live** — the sensor's existing reading re-pointed at the new location                                              |
 | **AC-P5** clearing does not                              | **live** — the reading stayed on the old location                                                                    |
 | **AC-P6 / AC-P7** activity trail, both ways              | **live** — two `SENSOR_LOCATION_CHANGED` rows with from/to                                                           |
-| **AC-P8** picker shows % used, offers no fullness filter | `sensorEdit` (composition); **live** — options carry `0% used`, no `location-fullness-*` control present             |
+| **AC-P8** picker shows % used, offers no fullness filter | `volume` — a suppressed filter narrows nothing; **live** — `0% used` per option, no `location-fullness-*` control    |
 | **AC-V1** device values read-only                        | `sensorEdit` (draft holds three keys); **live** (a11y tree: no inputs for them)                                      |
 | **AC-V2** a save moves neither battery nor interval      | `sensorEdit` — the input carries four keys and no more                                                               |
 | **AC-V3** serial trimmed                                 | `sensorDisplay`; **live**                                                                                            |
@@ -63,6 +63,7 @@ One routed screen (the list) and one modal over it, plus its save confirmation. 
 
 - **AC-S2, AC-S3, AC-L10 (server half), AC-G2** — a server rejection with no client path to reach it. The list only ever shows the active store's sensors, so the UI cannot address another store's sensor or a non-existent id, and it never sends a page below one. Each was fired directly at the running server during the reverse-spec pass and is recorded in [`contract.md`](../../../spec/cold-chain-sensors/contract.md#the-error-union-is-decorative); none has a colocated test because there is nothing in this code to exercise.
 - **AC-G3** — unauthenticated access is the shared startup gate, covered by that vertical.
+- **AC-P8, second half** — that the fullness tabs are not _rendered_ needs a rendered widget, and vitest here runs in the node environment with no DOM and no component-render harness at all, so no colocated test can hold it. Its consequence is held instead: `visibleLocations` proves a suppressed filter narrows nothing, which is the half that fails invisibly. The render half is live-verified and owed to the e2e suite, which already contracts `location-fullness-*` ids for it.
 
 ## Flags
 
@@ -81,14 +82,27 @@ None — the spec carries no `⚠️ VERIFY` markers.
 
 **Met for every anchor with a client path.** Unusually for a build here, the whole vertical was driven against a real `remote_server` on seeded data rather than covered at the logic level alone (see [Live verification](#live-verification)). The remaining server-only anchors are the [exemptions](#exempt-but-listed) above.
 
-### Shared component changed
+### Shared code changed
 
-`LocationVolumeSelect` (`src/domain/location`) gains **`fullnessFilter`**, default
-`true`. Additive and defaulted, so its four existing consumers (stocktakes ×2,
-inbound ×2) are untouched; this field passes `false`. The registry entry moved
-with it — the fullness filter is documented as suppressible rather than
-always-on, for the case where a field references a location without placing
-stock in it. Both changes ride the spec commit, not this one.
+Two changes in `src/domain/location`, both reaching past this vertical:
+
+- **`LocationVolumeSelect` gains `fullnessFilter`**, default `true`. Additive
+  and defaulted, so its four existing consumers (stocktakes ×2, inbound ×2) are
+  untouched; this field passes `false`. The registry entry moved with it — the
+  fullness filter is documented as suppressible rather than always-on, for the
+  case where a field references a location without placing stock in it; that
+  wording rides the spec commit, not this one. The gate itself is the pure
+  `visibleLocations` (`./volume`), so it is unit-tested beside the filter it
+  suppresses rather than asserted through the widget.
+- **Both location queries now sort by name.** `ui-surface.md` S2 asks for "the
+  active store's locations, ordered by name", and the current app sorts them
+  explicitly — but `location.graphql` sent no `sort`, and absent one the server
+  orders by `id`, a UUID (`repository/src/db_diesel/location.rs`). Every
+  location picker in this app was therefore listing in an order no user can
+  read. Fixed at the query rather than in this one field, because no caller
+  wants the other behaviour: it also reorders the stocktake, inbound and
+  stock-movement pickers, each toward the current app. Query strings only — no
+  generated type moved, so nothing downstream had to change.
 
 ### Registry roles used
 
