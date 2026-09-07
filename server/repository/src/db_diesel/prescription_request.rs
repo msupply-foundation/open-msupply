@@ -34,6 +34,10 @@ pub struct PrescriptionRequestFilter {
     pub patient_name: Option<StringFilter>,
     pub created_datetime: Option<DatetimeFilter>,
     pub prescription_datetime: Option<DatetimeFilter>,
+    /// When the request was dispensed — null until the hand-over's status flip
+    /// sets it, so a window on this counts exactly the requests dispensed in
+    /// the period (the column is nullable; the filter macro handles that).
+    pub dispensed_datetime: Option<DatetimeFilter>,
     /// The prescriber — the username of the account that created the request
     /// (`created_by`), matched through a sub-select on `user_account`.
     pub username: Option<StringFilter>,
@@ -148,6 +152,7 @@ impl<'a> PrescriptionRequestRepository<'a> {
                 patient_name,
                 created_datetime,
                 prescription_datetime,
+                dispensed_datetime,
                 username,
                 dynamic_filter,
             } = f;
@@ -170,6 +175,11 @@ impl<'a> PrescriptionRequestRepository<'a> {
                 query,
                 prescription_datetime,
                 prescription_request::prescription_datetime
+            );
+            apply_date_time_filter!(
+                query,
+                dispensed_datetime,
+                prescription_request::dispensed_datetime
             );
 
             if let Some(patient_name) = patient_name {
@@ -240,6 +250,10 @@ impl PrescriptionRequestFilter {
     }
     pub fn patient_id(mut self, filter: EqualFilter<String>) -> Self {
         self.patient_id = Some(filter);
+        self
+    }
+    pub fn dispensed_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.dispensed_datetime = Some(filter);
         self
     }
     pub fn username(mut self, filter: StringFilter) -> Self {
