@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   buildUpdateInput,
@@ -117,6 +118,24 @@ describe('AC-P2 / AC-P3 assigning and clearing a location', () => {
       'sensor-1'
     );
     expect(input.locationId).toEqual({ value: null });
+  });
+});
+
+describe('AC-P8 the picker informs without asking a stock question', () => {
+  it('reads its options with capacity, so each can show its proportion used', () => {
+    // The field takes the volume-aware lookup with its fullness filter
+    // suppressed (ui-surface S2). Asserted at the composition level: the modal
+    // fetches the capacity-bearing list and passes fullnessFilter={false}.
+    const source = readFileSync(
+      new URL('./SensorEditModal.tsx', import.meta.url),
+      'utf8'
+    );
+    expect(source).toContain('fetchLocationsWithVolume');
+    expect(source).toContain('<LocationVolumeSelect');
+    expect(source).toContain('fullnessFilter={false}');
+    // The volume-blind picker must not creep back in — it fetches no capacity,
+    // so the percentages would silently vanish.
+    expect(source).not.toContain('<LocationSelect');
   });
 });
 
