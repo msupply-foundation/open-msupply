@@ -1,10 +1,10 @@
-use repository::{
-    EqualFilter, InvoiceLineFilter, InvoiceLineRepository, InvoiceType, ItemRow, ItemType,
-    StorageConnection,
-};
+use repository::{InvoiceType, ItemRow, ItemType, StorageConnection};
 
 use crate::{
-    invoice::{check_invoice_exists, check_store, is_generated_dispensation},
+    invoice::{
+        check_invoice_exists, check_store, is_generated_dispensation,
+        prescriber_prescribed_quantity,
+    },
     invoice_line::validate::check_item_exists,
 };
 
@@ -34,35 +34,23 @@ pub fn validate(
 
     // On a generated dispensation the figure is the prescriber's: shown, never
     // offered for entry, and refused here if a change reaches the wire anyway
-    // (spec/prescriptions § prescribed quantity). Re-sending the recorded value
-    // passes — both front ends echo it back on every line save of the item, so
-    // refusing on mention rather than on change would break allocation on
-    // exactly the records this protects.
+    // (spec/prescriptions § prescribed quantity). Read-only covers the whole
+    // record, so an item the dispenser adds — one the prescriber ordered none
+    // of — has no writable figure either, and stays at nothing.
+    //
+    // Re-sending the prescriber's own figure passes: both front ends echo it
+    // back on every line save of the item, so refusing on mention rather than
+    // on change would break allocation on exactly the records this protects.
+    // Measured against the REQUEST, not the dispensation's own lines — the save
+    // that allocates stock deletes the line holding the figure before
+    // re-applying it, so a line-based comparison refused the dispenser's first
+    // allocation on every prescribed item.
     if is_generated_dispensation(&invoice_row)
-        && recorded_prescribed_quantity(connection, &input.invoice_id, &input.item_id)?
+        && prescriber_prescribed_quantity(connection, &invoice_row, &input.item_id)?
             != Some(input.prescribed_quantity)
     {
         return Err(SetPrescribedQuantityError::CannotChangePrescribedQuantity);
     }
 
     Ok(item_row)
-}
-
-/// The prescribed quantity recorded for an item on an invoice. It lives on
-/// whichever ONE of the item's lines carries it — `set_prescribed_quantity`
-/// keeps it to a single line — so this reads the first that has one.
-fn recorded_prescribed_quantity(
-    connection: &StorageConnection,
-    invoice_id: &str,
-    item_id: &str,
-) -> Result<Option<f64>, SetPrescribedQuantityError> {
-    let lines = InvoiceLineRepository::new(connection).query_by_filter(
-        InvoiceLineFilter::new()
-            .invoice_id(EqualFilter::equal_to(invoice_id.to_string()))
-            .item_id(EqualFilter::equal_to(item_id.to_string())),
-    )?;
-
-    Ok(lines
-        .iter()
-        .find_map(|line| line.invoice_line_row.prescribed_quantity))
 }

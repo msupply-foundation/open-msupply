@@ -236,7 +236,10 @@ impl From<RepositoryError> for UpdatePrescriptionRequestError {
 #[cfg(test)]
 mod test {
     use repository::{
-        mock::{clinician_a, mock_item_a, mock_patient, mock_patient_b, MockDataInserts},
+        mock::{
+            clinician_a, mock_item_a, mock_item_b, mock_patient, mock_patient_b, mock_stock_line_a,
+            MockDataInserts,
+        },
         test_db::setup_all,
         ActivityLogRowRepository, ActivityLogType, EqualFilter, InvoiceFilter,
         InvoiceLineRowRepository, InvoiceLineType, InvoiceRepository, InvoiceStatus, InvoiceType,
@@ -247,8 +250,12 @@ mod test {
     use crate::invoice::prescription::{
         DeletePrescriptionError, UpdatePrescription, UpdatePrescriptionError,
     };
+    use crate::invoice_line::save_stock_out_item_lines::{
+        SaveStockOutInvoiceLine, SaveStockOutItemLines, SaveStockOutItemLinesError,
+    };
     use crate::invoice_line::stock_out_line::{
-        SetPrescribedQuantity, SetPrescribedQuantityError,
+        SetPrescribedQuantity, SetPrescribedQuantityError, StockOutType, UpdateStockOutLine,
+        UpdateStockOutLineError,
     };
     use crate::prescription_request::batch::BatchPrescriptionRequest;
     use crate::prescription_request::delete::DeletePrescriptionRequestError;
@@ -668,6 +675,144 @@ mod test {
         // it back on every line save of the item, so refusing on mention would
         // break allocation on exactly the records this protects.
         assert!(set_prescribed(5.0).is_ok());
+    }
+
+    /// Locking the prescribed quantity must not lock the dispenser out of
+    /// DISPENSING. The figure arrives on an unallocated line, and the line save
+    /// that allocates stock against it deletes that line (as it would a
+    /// placeholder) before re-applying the figure — so the guard has to measure
+    /// against the source request, not against invoice lines the save itself is
+    /// rearranging. Regression: it once refused the first allocation on every
+    /// prescribed item.
+    #[actix_rt::test]
+    async fn dispenser_can_allocate_against_a_prescribed_item() {
+        let (service_provider, ctx) = setup("dispenser_can_allocate_prescribed_item").await;
+
+        let request = new_request(&service_provider, &ctx);
+        add_line(&service_provider, &ctx, &request.id, 5.0, None);
+        service_provider
+            .prescription_request_service
+            .update_prescription_request(
+                &ctx,
+                "store_a",
+                UpdatePrescriptionRequest {
+                    id: request.id.clone(),
+                    status: Some(UpdatePrescriptionRequestStatus::ReadyToDispense),
+                    ..Default::default()
+                },
+            )
+            .unwrap();
+
+        let invoice_id = InvoiceRepository::new(&ctx.connection)
+            .query_one(
+                InvoiceFilter::new()
+                    .prescription_request_id(EqualFilter::equal_to(request.id.to_string())),
+            )
+            .unwrap()
+            .expect("generated dispensation not found")
+            .invoice_row
+            .id;
+
+        // What the front ends send when a dispenser allocates stock: the lines,
+        // plus the prescribed quantity echoed back unchanged.
+        let save = |item_id: &str, packs: f64, prescribed_quantity: Option<f64>| {
+            service_provider
+                .invoice_line_service
+                .save_stock_out_item_lines(
+                    &ctx,
+                    SaveStockOutItemLines {
+                        invoice_id: invoice_id.clone(),
+                        item_id: item_id.to_string(),
+                        lines: vec![SaveStockOutInvoiceLine {
+                            id: "allocated_line".to_string(),
+                            number_of_packs: packs,
+                            stock_line_id: mock_stock_line_a().id,
+                            ..Default::default()
+                        }],
+                        prescribed_quantity,
+                        ..Default::default()
+                    },
+                )
+        };
+
+        let lines = || {
+            InvoiceLineRowRepository::new(&ctx.connection)
+                .find_many_by_invoice_id(&invoice_id)
+                .unwrap()
+        };
+
+        // The first allocation: passes, and lands the prescriber's figure on
+        // the allocated line with the unallocated one gone.
+        save(&mock_item_a().id, 5.0, Some(5.0)).unwrap();
+        let allocated = lines();
+        assert_eq!(allocated.len(), 1);
+        assert_eq!(allocated[0].r#type, InvoiceLineType::StockOut);
+        assert_eq!(allocated[0].number_of_packs, 5.0);
+        assert_eq!(allocated[0].prescribed_quantity, Some(5.0));
+
+        // A second save of the same item — now with the figure on a stock line
+        // rather than an unallocated one — passes too.
+        save(&mock_item_a().id, 3.0, Some(5.0)).unwrap();
+        assert_eq!(lines()[0].number_of_packs, 3.0);
+
+        // The line-update path carries the same guard, and measures it the same
+        // way. Nothing sends the field there today — both front ends write the
+        // figure through set_prescribed_quantity — so this is the wire closed.
+        let update_line = |prescribed_quantity: f64| {
+            service_provider.invoice_line_service.update_stock_out_line(
+                &ctx,
+                UpdateStockOutLine {
+                    id: "allocated_line".to_string(),
+                    r#type: Some(StockOutType::Prescription),
+                    prescribed_quantity: Some(prescribed_quantity),
+                    ..Default::default()
+                },
+            )
+        };
+        assert_eq!(
+            update_line(6.0).map(|_| ()),
+            Err(UpdateStockOutLineError::CannotChangePrescribedQuantity)
+        );
+        assert!(update_line(5.0).is_ok());
+
+        // Deallocating deletes the line the figure sat on; the figure is the
+        // prescriber's still, so it survives on an unallocated line.
+        save(&mock_item_a().id, 0.0, Some(5.0)).unwrap();
+        let deallocated = lines();
+        assert_eq!(deallocated.len(), 1);
+        assert_eq!(deallocated[0].r#type, InvoiceLineType::UnallocatedStock);
+        assert_eq!(deallocated[0].prescribed_quantity, Some(5.0));
+
+        // A real change is still refused, whichever line holds it.
+        assert_eq!(
+            save(&mock_item_a().id, 5.0, Some(6.0)).map(|_| ()),
+            Err(SaveStockOutItemLinesError::PrescribedQuantityError(
+                SetPrescribedQuantityError::CannotChangePrescribedQuantity
+            ))
+        );
+
+        // Read-only covers the whole record, not just its prescribed items: an
+        // item the dispenser adds has no figure of the prescriber's to echo, so
+        // there is nothing writable and it stays at nothing. The field is not
+        // offered for it, so no front end sends this.
+        assert_eq!(
+            service_provider
+                .invoice_line_service
+                .save_stock_out_item_lines(
+                    &ctx,
+                    SaveStockOutItemLines {
+                        invoice_id: invoice_id.clone(),
+                        item_id: mock_item_b().id,
+                        prescribed_quantity: Some(7.0),
+                        ..Default::default()
+                    },
+                )
+                .map(|_| ()),
+            Err(SaveStockOutItemLinesError::PrescribedQuantityError(
+                SetPrescribedQuantityError::CannotChangePrescribedQuantity
+            ))
+        );
+        assert!(!lines().iter().any(|line| line.item_id == mock_item_b().id));
     }
 
     /// A selection holding one request that cannot go takes none of them.
