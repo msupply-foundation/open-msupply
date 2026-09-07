@@ -38,7 +38,7 @@ describe('AC-L1 default order is serial number descending', () => {
     ]);
   });
 
-  it('sends a single-element sort list — the server reads only the first', () => {
+  it('sends a single-element sort list — the server reads only one entry', () => {
     const vars = buildListVariables(
       state({ sort: [{ key: 'name', desc: false }] }),
       'storeA'
