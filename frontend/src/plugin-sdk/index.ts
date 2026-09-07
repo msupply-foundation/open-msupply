@@ -71,6 +71,7 @@ export type {
   InternalOrderLineView,
   InternalOrderView,
   InternalOrderLineInfoPanelProps,
+  InternalOrderSidePanelSectionProps,
   ColumnId,
   ColumnAnchor,
   ColumnValue,
