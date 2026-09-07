@@ -11,8 +11,11 @@ import { TextField } from '@/ui/elements/inputs/TextField';
 import { ToggleSwitch } from '@/ui/elements/inputs/ToggleSwitch';
 import { LabelledValue } from '@/ui/elements/typography/LabelledValue';
 import { FieldRow } from '@/ui/elements/inputs/FieldRow';
-import { LocationSelect, fetchLocations } from '@/domain/location';
-import type { Location } from '@/domain/location';
+import {
+  LocationVolumeSelect,
+  fetchLocationsWithVolume,
+} from '@/domain/location';
+import type { LocationWithVolume } from '@/domain/location';
 import { UpdateSensor } from '../sensors.generated';
 import {
   ABSENT,
@@ -71,15 +74,20 @@ export const SensorEditModal: Component<SensorEditModalProps> = props => {
    * frontend's own obligation: the server accepts any location it is sent,
    * including another store's (rules › assigning a location, AC-P1).
    *
+   * Read WITH capacity (AC-P8): each option shows its proportion used, so the
+   * heavier `locationsWithVolume` read is the one this field needs. `volumeUsed`
+   * is server-computed and shifts as stock moves, so it is fetched per open
+   * rather than cached (see the domain module).
+   *
    * Read WITHOUT suspending: this modal renders under AppShell's <Suspense>,
    * and a pending read there would remount the section and reset the form
    * (kdd/solid-reactivity-pitfalls § no remounts).
    */
   const [locationData] = createResource(
     () => props.storeId,
-    storeId => fetchLocations(storeId)
+    storeId => fetchLocationsWithVolume(storeId)
   );
-  const locations = (): Location[] => gated(locationData) ?? [];
+  const locations = (): LocationWithVolume[] => gated(locationData) ?? [];
 
   const nameEditable = () => isNameEditable(props.sensor);
   const unchanged = () => isUnchanged(form(), props.sensor);
@@ -153,7 +161,7 @@ export const SensorEditModal: Component<SensorEditModalProps> = props => {
           />
         </FieldRow>
         <FieldRow label={t('label.location')}>
-          <LocationSelect
+          <LocationVolumeSelect
             label={t('label.location')}
             hideLabel
             focusTarget={locationField}
@@ -162,6 +170,11 @@ export const SensorEditModal: Component<SensorEditModalProps> = props => {
             loading={locationData.loading}
             disabled={saving()}
             value={form().locationId || undefined}
+            // Options carry each location's % used (AC-P8) — which cold room
+            // is in use is worth seeing when placing a sensor. The fullness
+            // filter is not: it asks where stock will fit, and a sensor places
+            // none (ui-surface S2).
+            fullnessFilter={false}
             // Clearable, because the assignment is optional — clearing it is
             // how a sensor comes off a location (AC-P3).
             onChange={location =>

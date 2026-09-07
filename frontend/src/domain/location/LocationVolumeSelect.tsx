@@ -67,6 +67,18 @@ export interface LocationVolumeSelectProps {
    * fullness filter still narrows independently of it.
    */
   itemDisabledReason?: (l: LocationWithVolume) => string | undefined;
+  /**
+   * Offer the All / Empty / Available fullness filter inside the dropdown.
+   * Default true — every stock-placing field wants it.
+   *
+   * Set false on a field that references a location **without placing stock in
+   * it** (a sensor's assignment): the percentages still inform — which cold
+   * room is in use — but "where will this fit" is not a question that field
+   * asks, so the filter is noise there. The reference app draws the same line,
+   * gating its filter on whether a volume is being placed
+   * (spec/ui-standards/components.md → Location lookup (volume-aware)).
+   */
+  fullnessFilter?: boolean;
 }
 
 /*
@@ -75,8 +87,9 @@ export interface LocationVolumeSelectProps {
  * from the plain LocationSelect in two ways:
  *   1. Each option shows its "% used" (right-aligned, muted) — volumeUsed ÷
  *      volume, suppressed when that figure would be misleading (see volume.ts).
- *   2. A fullness filter (All / Empty / Available) is always offered as a tab
- *      strip pinned inside the dropdown. "Empty" keeps locations holding no
+ *   2. A fullness filter (All / Empty / Available) offered as a tab strip
+ *      pinned inside the dropdown — by default; `fullnessFilter={false}`
+ *      suppresses it for a field that places no stock (a sensor's location). "Empty" keeps locations holding no
  *      stock; "Available" keeps those that are not on hold and have room for
  *      the volume being placed (requiredVolume — not-full when none is given).
  *      Two locations are exempt so the filter can never hide a valid choice:
@@ -94,9 +107,13 @@ export const LocationVolumeSelect = (
 ): JSX.Element => {
   const [fullness, setFullness] = createSignal<Fullness>('all');
 
+  const showFullness = () => props.fullnessFilter ?? true;
+
   const filtered = createMemo<LocationWithVolume[]>(() => {
     const mode = fullness();
-    if (mode === 'all') return props.locations;
+    // Without the filter there is no mode to apply — the signal can only be
+    // 'all' anyway, but reading the gate keeps the two from ever drifting.
+    if (!showFullness() || mode === 'all') return props.locations;
     // The filter and both its exemptions are the pure `passesFullness`
     // (./volume) so they can be unit-tested away from this widget.
     return props.locations.filter(l =>
@@ -167,7 +184,7 @@ export const LocationVolumeSelect = (
       // code + name (and % used) stay readable rather than truncating to the
       // field width.
       matchTriggerWidth={false}
-      listboxHeader={filterHeader}
+      listboxHeader={showFullness() ? filterHeader : undefined}
       renderItem={l => {
         const reason = props.itemDisabledReason?.(l);
         return (
