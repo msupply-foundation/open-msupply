@@ -37,7 +37,7 @@ export interface NavLeaf {
   to: string;
   /** Capability gate (see navConfig NavItem.gate). */
   gate?: NavCapability;
-  /** Permission-gated read — visible, refused on activation (navConfig). */
+  /** Permission-gated read — withheld without it (navConfig). */
   permission?: NavConfigItem['permission'];
 }
 
@@ -48,7 +48,7 @@ export interface NavItem {
   icon: Component<IconProps>;
   /** Capability gate (see navConfig NavItem.gate). */
   gate?: NavCapability;
-  /** Permission-gated read — visible, refused on activation (navConfig). */
+  /** Permission-gated read — withheld without it (navConfig). */
   permission?: NavConfigItem['permission'];
   /** Present → expandable parent section. Absent → a leaf link. */
   children?: NavLeaf[];
@@ -110,11 +110,11 @@ const toNavItem = (item: NavConfigItem): NavItem => ({
   })),
 });
 
-const items = navConfig.map(toNavItem);
-
 // Sync is NOT a menu entry (issue #9229): it never navigated anywhere, and its
 // status now lives in the bottom bar's sync cell (spec/chrome § sync status),
 // where one click starts a run and a second control opens the modal.
+const items = navConfig.map(toNavItem);
+
 export const upperNav: NavItem[] = items.filter(
   item => !LOWER_IDS.has(item.id)
 );

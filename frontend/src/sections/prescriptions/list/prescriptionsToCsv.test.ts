@@ -45,7 +45,15 @@ describe('prescriptionsToCsv (OMS-REG-DIS-03.52 — the list columns, in file fo
     valueType: 'OPTION',
     kind: 'STANDARD',
     displayMode: 'PROMINENT',
-    options: [{ id: 'o1', key: 'acute', name: 'Acute', parentOptionId: null }],
+    options: [
+      {
+        id: 'o1',
+        key: 'acute',
+        name: 'Acute',
+        parentOptionId: null,
+        deletedDatetime: null,
+      },
+    ],
   };
   const patientTypeDef: CustomFieldDef = {
     id: 'cf2',

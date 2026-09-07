@@ -27,8 +27,15 @@ export const CustomFieldOptionSelect = (props: {
   size?: 'default' | 'small';
   testId?: string;
 }) => {
+  // Deleted options are never offered, but one already stored stays listed so
+  // it still renders its name and can be changed away from — dropping it would
+  // show the picker as empty over a value that is really there.
   const items = (): OrderedOption[] =>
-    orderOptionsHierarchically(props.def.options);
+    orderOptionsHierarchically(
+      props.def.options.filter(
+        option => !option.deletedDatetime || option.id === props.value
+      )
+    );
   const selected = () => items().find(o => o.option.id === props.value);
   return (
     <Combobox<OrderedOption>
