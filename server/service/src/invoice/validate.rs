@@ -1,6 +1,6 @@
 use repository::{
-    InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType, RepositoryError,
-    StorageConnection,
+    InvoiceRow, InvoiceRowRepository, InvoiceStatus, InvoiceType,
+    PrescriptionRequestLineRowRepository, RepositoryError, StorageConnection,
 };
 
 pub fn check_invoice_type(invoice: &InvoiceRow, r#type: InvoiceType) -> bool {
@@ -63,6 +63,41 @@ pub fn can_cancel_invoice(invoice: &InvoiceRow) -> bool {
 /// decision.
 pub fn is_generated_dispensation(invoice: &InvoiceRow) -> bool {
     invoice.prescription_request_id.is_some()
+}
+
+/// What the prescriber ordered of an item on this invoice — `None` where they
+/// ordered none of it, whether because the invoice is not a generated
+/// dispensation at all or because the item was never on the request. Pair it
+/// with `is_generated_dispensation`, which decides whether a `None` means "no
+/// rule to apply here" or "nothing the prescriber ordered, so nothing writable"
+/// (spec/prescriptions § prescribed quantity: read-only on such a record, an
+/// item the dispenser adds included).
+///
+/// Read from the SOURCE REQUEST rather than from the dispensing invoice's own
+/// lines. The two agree, but only the request is stable while a save is in
+/// flight: the figure sits on the item's unallocated line until stock is
+/// allocated against it, and that line is deleted mid-save (as a placeholder
+/// would be) with the figure re-applied to an allocated line afterwards. A
+/// guard reading the invoice lines would compare against a value that the save
+/// itself had just cleared, and refuse the dispenser's first allocation on
+/// every prescribed item — the records this rule exists to protect.
+///
+/// In units, both sides: `number_of_units` is what the hand-over copies into
+/// `invoice_line.prescribed_quantity` (the prescriber does not know pack sizes).
+pub fn prescriber_prescribed_quantity(
+    connection: &StorageConnection,
+    invoice: &InvoiceRow,
+    item_id: &str,
+) -> Result<Option<f64>, RepositoryError> {
+    let Some(request_id) = &invoice.prescription_request_id else {
+        return Ok(None);
+    };
+
+    Ok(PrescriptionRequestLineRowRepository::new(connection)
+        .find_many_by_prescription_request_id(request_id)?
+        .into_iter()
+        .find(|line| line.item_id == item_id)
+        .map(|line| line.number_of_units))
 }
 
 pub fn check_invoice_is_editable(invoice: &InvoiceRow) -> bool {

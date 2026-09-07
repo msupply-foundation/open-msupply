@@ -4,7 +4,7 @@ use crate::{
     check_vvm_status_exists,
     invoice::{
         check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store,
-        is_generated_dispensation,
+        is_generated_dispensation, prescriber_prescribed_quantity,
     },
     invoice_line::{
         check_batch_exists, check_batch_on_hold, check_existing_stock_line, check_location_on_hold,
@@ -47,13 +47,15 @@ pub fn validate(
         return Err(NotThisStoreInvoice);
     }
     // The prescribed quantity on a generated dispensation is the prescriber's
-    // (spec/prescriptions § prescribed quantity). Change-only, as everywhere
-    // else this rule is applied: re-sending the line's own figure passes.
-    // Neither front end sends the field on this path at all — they write it
-    // through set_prescribed_quantity — so this closes the wire, not a flow.
+    // (spec/prescriptions § prescribed quantity). Change-only, and measured
+    // against the source request, for the same reasons as in
+    // set_prescribed_quantity. Neither front end sends the field on this path
+    // at all — they write it through set_prescribed_quantity — so this closes
+    // the wire, not a flow.
     if let Some(prescribed_quantity) = input.prescribed_quantity {
         if is_generated_dispensation(&invoice)
-            && Some(prescribed_quantity) != line_row.prescribed_quantity
+            && prescriber_prescribed_quantity(connection, &invoice, &line_row.item_id)?
+                != Some(prescribed_quantity)
         {
             return Err(CannotChangePrescribedQuantity);
         }
