@@ -102,12 +102,26 @@ Both follow the spec rather than the reference screen, and both are worth a revi
   Worth filing against the current app in its own right: 0 °C is the reading a
   cold-chain user least wants silently hidden.
 - **The location picker shows no "% used".** The current app reaches for the
-  volume-aware picker here, so every option carries a capacity figure — and on
-  locations with no volume recorded that renders as `-% used`, a dash where a
-  number should be, on a field where capacity is irrelevant anyway. The registry's
-  placement test decides it: a sensor merely _references_ a location, it does not
-  put stock in one, so the **plain** lookup is the role — which is what
-  `ui-surface.md` names. Options read `<code> — <name>` and stop there.
+  volume-aware picker here, so every option carries a capacity figure. Two things
+  decide against carrying that over, and neither is about how the figure renders:
+
+  1. **The registry's placement test.** A field that writes a location onto a
+     _stock-bearing_ record takes the volume-aware lookup; one that merely
+     _references_ a location takes the plain one. A sensor is not stock and
+     placing one consumes no capacity, so the **plain** lookup is the role —
+     which is what `ui-surface.md` names.
+  2. **The current app's own call site agrees.** `SensorLineForm` passes no
+     `volumeRequired`, so the fullness filter (All / Empty / Available) is
+     suppressed there — that app is already saying this field has no volume
+     requirement. The `% used` suffix survives anyway because it is applied to
+     every option unconditionally, inside the component. It is reuse, not a
+     decision for this field.
+
+  Options here read `<code> — <name>` and stop there. (On the probe datafile the
+  current app's suffix reads `-% used` because no location has a volume recorded;
+  give one capacity and it renders a real percentage. The dash is the seed data,
+  not the argument.)
+
 - **The device kind reads `LogTag` everywhere.** The current app labels the column by enum-casing the wire value ("Log Tag") while its own type filter offers "LogTag" — the same kind under two names on one screen. This build uses `label.log-tag` for both, as `ui-surface.md` specifies.
 
 ## Live verification
