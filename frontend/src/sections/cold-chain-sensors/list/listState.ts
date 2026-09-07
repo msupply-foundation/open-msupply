@@ -69,7 +69,9 @@ export const DEFAULT_STATE: SensorsListState = {
  *   offer.
  * - `stripEmpty` drops added-but-empty filter chips so the query carries only
  *   live filters.
- * - `sort` is a single-element list: the server evaluates only the first entry.
+ * - `sort` is a single-element list: the server evaluates exactly one entry,
+ *   and it is the LAST one, not the first its schema promises (contract ⚠️
+ *   wire trap) — at one element the distinction cannot bite.
  */
 export const buildListVariables = (
   state: SensorsListState,

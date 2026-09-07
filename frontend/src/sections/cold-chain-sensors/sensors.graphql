@@ -45,8 +45,10 @@ fragment SensorRow on SensorNode {
 
 # The S1 list population. Store-scoped server-side by `storeId` — the resolver
 # intersects any filter with the requested store, and SensorFilterInput carries
-# no store field, so the scope cannot be widened from here. Only the FIRST sort
-# entry is evaluated; send a single-element list.
+# no store field, so the scope cannot be widened from here. Exactly ONE sort
+# entry is evaluated, and it is the LAST — the schema's own description says
+# "first", but the resolver pops the list (contract ⚠️ wire trap). Send a
+# single-element list and the two readings coincide.
 query sensorsList(
   $storeId: String!
   $filter: SensorFilterInput
