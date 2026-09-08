@@ -9,8 +9,13 @@
 # `locations` — code + name only. Backs the volume-BLIND picker (LocationSelect),
 # used where a location is merely referenced (scoping a stocktake count, a list
 # filter). No capacity fetched.
-query locations($storeId: String!) {
-  locations(storeId: $storeId, sort: [{ key: name }]) {
+#
+# The optional `filter` is for callers that need a narrower set than "every
+# location in the store": cold-chain Equipment asks for the ones no asset holds
+# (`assignedToAsset: false`), because a storage location is held by at most one
+# asset. Omitted, the read is exactly what it always was.
+query locations($storeId: String!, $filter: LocationFilterInput) {
+  locations(storeId: $storeId, filter: $filter, sort: [{ key: name }]) {
     ... on LocationConnector {
       __typename
       nodes {

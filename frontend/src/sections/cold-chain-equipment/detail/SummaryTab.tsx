@@ -1,0 +1,297 @@
+import { createResource, createSignal, Show } from 'solid-js';
+import type { Component } from 'solid-js';
+import { gated } from '@/api/gated';
+import { hasPermission } from '@/store/storeContext';
+import { localisedDate, t } from '@/intl';
+import { FormColumns } from '@/ui/layout/Form/FormColumns';
+import { Stack } from '@/ui/layout/Stack/Stack';
+import { FormSection } from '@/ui/layout/Form/FormSection';
+import { FieldRow } from '@/ui/elements/inputs/FieldRow';
+import { TextField } from '@/ui/elements/inputs/TextField';
+import { TextArea } from '@/ui/elements/inputs/TextArea';
+import { DateField } from '@/ui/elements/inputs/DateField';
+import { Checkbox } from '@/ui/elements/inputs/Checkbox';
+import { MultiSelect } from '@/ui/elements/selectors/MultiSelect';
+import { LabelledValue } from '@/ui/elements/typography/LabelledValue';
+import { StatusChip } from '@/ui/elements/feedback/StatusChip';
+import { InfoTooltip } from '@/ui/elements/feedback/InfoTooltip';
+import { NameSearch, type NameOption } from '@/domain/name';
+import { StoreSearch, type StoreOption } from '@/domain/store';
+import { fetchLocations } from '@/domain/location';
+import { ABSENT, statusColour, statusLabelKey } from '../equipment';
+import type { AssetDetailFragment } from '../equipment.generated';
+import { isLockedField, type AssetFormState } from './assetEdit';
+
+// S2.1 — the Summary tab (ui-surface S2.1). Two columns of form sections: the
+// asset's identity and where its stock goes on the left, its condition, notes
+// and donor on the right.
+//
+// Read-only rows render as LABELLED VALUES, never disabled inputs
+// (ui-standards/detail-views § never-editable fields) — except the scan-locked
+// ones, which ARE controls the user simply may not use, and carry a standing
+// explanation of why (AC-B5).
+
+export interface SummaryTabProps {
+  storeId: string;
+  asset: AssetDetailFragment;
+  form: AssetFormState;
+  onChange: (patch: Partial<AssetFormState>) => void;
+  isCentral: boolean;
+  disabled: boolean;
+}
+
+type LocationOption = { id: string; code: string; name: string };
+
+export const SummaryTab: Component<SummaryTabProps> = props => {
+  // Only a server administrator may override a scan lock (AC-B5).
+  const isServerAdmin = () => hasPermission('SERVER_ADMIN');
+  const locked = (
+    field: 'serialNumber' | 'warrantyStart' | 'warrantyEnd'
+  ): boolean => isLockedField(props.asset, field, isServerAdmin());
+
+  // Whether the storage locations are this screen's to change: on a central
+  // server an asset held by another store shows them but cannot edit them
+  // (AC-S5). `locationIds` is undefined exactly then.
+  const canEditLocations = () => props.form.locationIds !== undefined;
+
+  /*
+   * The location picker's options — the ASSET's own store's locations, read
+   * WITHOUT suspending because this tab renders under an already-open screen's
+   * boundary and a pending read would reset the draft
+   * (kdd/solid-reactivity-pitfalls § no remounts).
+   *
+   * The server would accept a location of any store; keeping the picker to the
+   * asset's own is the frontend's obligation, and it is also the only set the
+   * server will store (AC-P7, AC-P8).
+   */
+  const [locationData] = createResource(
+    () => props.asset.storeId ?? props.storeId,
+    storeId =>
+      // Only the locations NO asset holds — one held by another asset never
+      // appears, so the "already held" rejection is unreachable from the
+      // screen (AC-P6/AC-P8).
+      fetchLocations(storeId, { assignedToAsset: false })
+  );
+  // The store's unassigned locations PLUS the ones this asset already holds:
+  // the filter above excludes the latter (they are assigned — to this asset),
+  // so they are added back from what the asset itself reports.
+  const options = (): LocationOption[] => {
+    const seen = new Set<string>();
+    return [...(gated(locationData) ?? []), ...props.asset.locations.nodes]
+      .filter(location => {
+        if (seen.has(location.id)) return false;
+        seen.add(location.id);
+        return true;
+      });
+  };
+  const selected = () =>
+    options().filter(option => props.form.locationIds?.includes(option.id));
+
+  // `<code> (<location type>)`, or the code alone where it has none — the
+  // option's own composition, not this vertical's copy.
+  const optionLabel = (option: LocationOption) => option.code;
+
+  const [donor, setDonor] = createSignal<NameOption | undefined>();
+  const [store, setStore] = createSignal<StoreOption | undefined>();
+
+  const status = () => props.asset.statusLog?.status;
+
+  return (
+    <FormColumns>
+      <Stack>
+        <FormSection title={t('heading.asset-identification')}>
+          <Show when={props.isCentral}>
+            <FieldRow label={t('label.store')}>
+              <StoreSearch
+                label={t('label.store')}
+                inputTestId="store-input"
+                disabled={props.disabled}
+                selected={store()}
+                onSelect={picked => {
+                  setStore(picked ?? undefined);
+                  props.onChange({ storeId: picked?.id ?? '' });
+                }}
+              />
+            </FieldRow>
+          </Show>
+          {/* Fixed after creation — a labelled value, not a disabled box
+              (AC-C6). */}
+          <LabelledValue variant="field" label={t('label.category')}>
+            {props.asset.assetCategory?.name ?? ABSENT}
+          </LabelledValue>
+          <LabelledValue variant="field" label={t('label.type')}>
+            {props.asset.assetType?.name ?? ABSENT}
+          </LabelledValue>
+          <FieldRow label={t('label.serial')}>
+            <TextField
+              label={t('label.serial')}
+              hideLabel
+              data-testid="serial-input"
+              disabled={props.disabled || locked('serialNumber')}
+              labelInfo={
+                locked('serialNumber') ? (
+                  <InfoTooltip text={t('tooltip.defined-by-gs1-matrix')} />
+                ) : undefined
+              }
+              value={props.form.serialNumber}
+              onInput={e =>
+                props.onChange({ serialNumber: e.currentTarget.value })
+              }
+            />
+          </FieldRow>
+          <FieldRow label={t('label.asset-number')}>
+            <TextField
+              label={t('label.asset-number')}
+              hideLabel
+              data-testid="asset-number-input"
+              disabled={props.disabled}
+              value={props.form.assetNumber}
+              onInput={e =>
+                props.onChange({ assetNumber: e.currentTarget.value })
+              }
+            />
+          </FieldRow>
+          <FieldRow label={t('label.installation-date')}>
+            <DateField
+              label={t('label.installation-date')}
+              hideLabel
+              disabled={props.disabled}
+              value={props.form.installationDate || null}
+              onChange={value =>
+                props.onChange({ installationDate: value ?? '' })
+              }
+            />
+          </FieldRow>
+          <FieldRow label={t('label.replacement-date')}>
+            <DateField
+              label={t('label.replacement-date')}
+              hideLabel
+              disabled={props.disabled}
+              value={props.form.replacementDate || null}
+              onChange={value =>
+                props.onChange({ replacementDate: value ?? '' })
+              }
+            />
+          </FieldRow>
+          <FieldRow label={t('label.warranty-start-date')}>
+            <DateField
+              label={t('label.warranty-start-date')}
+              hideLabel
+              disabled={props.disabled || locked('warrantyStart')}
+              labelInfo={
+                locked('warrantyStart') ? (
+                  <InfoTooltip text={t('tooltip.defined-by-gs1-matrix')} />
+                ) : undefined
+              }
+              value={props.form.warrantyStart || null}
+              onChange={value => props.onChange({ warrantyStart: value ?? '' })}
+            />
+          </FieldRow>
+          <FieldRow label={t('label.warranty-end-date')}>
+            <DateField
+              label={t('label.warranty-end-date')}
+              hideLabel
+              disabled={props.disabled || locked('warrantyEnd')}
+              labelInfo={
+                locked('warrantyEnd') ? (
+                  <InfoTooltip text={t('tooltip.defined-by-gs1-matrix')} />
+                ) : undefined
+              }
+              value={props.form.warrantyEnd || null}
+              onChange={value => props.onChange({ warrantyEnd: value ?? '' })}
+            />
+          </FieldRow>
+        </FormSection>
+
+        {/* Absent entirely when the assignment is not this screen's to change
+            (AC-S5) — the section is the assignment, so an uneditable one has
+            nothing to show. */}
+        <Show when={canEditLocations()}>
+          <FormSection title={t('heading.cold-chain')}>
+            <FieldRow label={t('label.location')}>
+              <MultiSelect<LocationOption>
+                label={t('label.location')}
+                hideLabel
+                inputTestId="location-input"
+                items={options()}
+                itemToString={optionLabel}
+                itemToValue={option => option.id}
+                selectedItems={selected()}
+                // The set the user leaves is the set the asset holds — the
+                // assignment is WHOLESALE (AC-P9).
+                onChange={items =>
+                  props.onChange({ locationIds: items.map(item => item.id) })
+                }
+              />
+            </FieldRow>
+          </FormSection>
+        </Show>
+      </Stack>
+
+      <Stack>
+        <FormSection title={t('heading.functional-status')}>
+          <LabelledValue variant="field" label={t('label.current-status')}>
+            <Show when={status()} fallback={ABSENT}>
+              {value => (
+                <StatusChip
+                  label={t(statusLabelKey(value()))}
+                  colour={statusColour(value())}
+                />
+              )}
+            </Show>
+          </LabelledValue>
+          <LabelledValue variant="field" label={t('label.last-updated')}>
+            {props.asset.statusLog
+              ? localisedDate(props.asset.statusLog.logDatetime)
+              : ABSENT}
+          </LabelledValue>
+          <LabelledValue variant="field" label={t('label.reason')}>
+            {props.asset.statusLog?.reason?.reason ?? ABSENT}
+          </LabelledValue>
+          <FieldRow label={t('label.needs-replacement')}>
+            <Checkbox
+              label={t('label.needs-replacement')}
+              testId="needs-replacement-checkbox"
+              disabled={props.disabled}
+              checked={props.form.needsReplacement}
+              onChange={needsReplacement =>
+                props.onChange({ needsReplacement })
+              }
+            />
+          </FieldRow>
+        </FormSection>
+
+        <FormSection title={t('label.additional-info')}>
+          <FieldRow label={t('label.notes')}>
+            <TextArea
+              label={t('label.notes')}
+              hideLabel
+              data-testid="notes-input"
+              rows={4}
+              disabled={props.disabled}
+              value={props.form.notes}
+              onInput={e => props.onChange({ notes: e.currentTarget.value })}
+            />
+          </FieldRow>
+        </FormSection>
+
+        <FormSection title={t('label.donor')}>
+          <FieldRow label={t('label.donor')}>
+            <NameSearch
+              label={t('label.donor')}
+              storeId={props.storeId}
+              role="donor"
+              inputTestId="donor-input"
+              disabled={props.disabled}
+              selected={donor()}
+              onSelect={picked => {
+                setDonor(picked ?? undefined);
+                props.onChange({ donorNameId: picked?.id ?? '' });
+              }}
+            />
+          </FieldRow>
+        </FormSection>
+      </Stack>
+    </FormColumns>
+  );
+};

@@ -1,0 +1,321 @@
+# Cold chain — Equipment (spec/cold-chain-equipment). The asset register's own
+# operations: the list, one asset in full, the status history and its reasons,
+# and the four mutations.
+#
+# EVERY declared error member on all four mutations is unreachable — each
+# resolver's error mapper raises a top-level GraphQL error instead of ever
+# constructing the error branch (contract ⚠️ wire trap). So each mutation below
+# selects the SUCCESS shape only: a failure fails the whole request and surfaces
+# through the global error path.
+
+# The list row. `catalogueItemId` is what the Non-catalogue column reads — an
+# asset with no catalogue item is a non-catalogue asset (contract › where an
+# asset comes from).
+fragment AssetRow on AssetNode {
+  __typename
+  id
+  storeId
+  assetNumber
+  serialNumber
+  notes
+  installationDate
+  replacementDate
+  catalogueItemId
+  catalogueItem {
+    manufacturer
+    model
+  }
+  assetCategory {
+    id
+    name
+  }
+  assetType {
+    id
+    name
+  }
+  # The asset's functional status is NOT stored on it: this is the latest
+  # STATUS_UPDATE entry, and it is null for an asset that has none (contract ›
+  # functional status).
+  statusLog {
+    status
+    logDatetime
+  }
+  store {
+    id
+    code
+    storeName
+  }
+}
+
+# One asset in full — everything the detail screen edits or shows.
+fragment AssetDetail on AssetNode {
+  __typename
+  id
+  storeId
+  assetNumber
+  serialNumber
+  notes
+  catalogueItemId
+  installationDate
+  replacementDate
+  warrantyStart
+  warrantyEnd
+  needsReplacement
+  donorNameId
+  createdDatetime
+  modifiedDatetime
+  # Both are JSON STRINGS, not structured fields. `properties` fabricates the
+  # two-character string "{}" for absent data — it is never null — while
+  # `catalogProperties` IS null with no catalogue item (contract ⚠️ wire trap).
+  properties
+  catalogProperties
+  catalogueItem {
+    id
+    code
+    manufacturer
+    model
+  }
+  assetClass {
+    id
+    name
+  }
+  assetCategory {
+    id
+    name
+  }
+  assetType {
+    id
+    name
+  }
+  statusLog {
+    status
+    logDatetime
+    reason {
+      reason
+    }
+  }
+  store {
+    id
+    code
+    storeName
+  }
+  donor(storeId: $storeId) {
+    id
+    name
+  }
+  # The storage places the asset HOLDS. Created for it at insert from its
+  # declared storage capacities, then chosen by hand (contract › storage
+  # locations).
+  locations {
+    totalCount
+    nodes {
+      id
+      code
+      name
+      locationType {
+        id
+        name
+      }
+    }
+  }
+  documents {
+    nodes {
+      id
+      fileName
+      mimeType
+      createdDatetime
+      totalBytes
+    }
+  }
+  # Advisory only: the server never consults it, and there is no input to change
+  # it after insert. The read-only presentation is the frontend's obligation
+  # (contract ⚠️ wire trap, AC-B5).
+  lockedFields {
+    serialNumber
+    catalogueItemId
+    warrantyStart
+    warrantyEnd
+  }
+}
+
+fragment AssetLogRow on AssetLogNode {
+  __typename
+  id
+  status
+  type
+  comment
+  logDatetime
+  reason {
+    id
+    reason
+  }
+  user {
+    username
+    firstName
+    lastName
+    jobTitle
+  }
+  documents {
+    nodes {
+      id
+      fileName
+    }
+  }
+}
+
+# The S1 list population.
+#
+# NOT store-scoped by the server: `storeId` is used for authorisation and the
+# service context only, never to scope the data (contract ⚠️ wire trap). The
+# store restriction that makes Cold chain › Equipment the active store's
+# register is a CLIENT-SENT `filter.storeId`, built in listState.
+#
+# Exactly ONE sort entry is evaluated, and it is the LAST — the schema's own
+# description says "first", but the resolver pops the list. Send a
+# single-element list and the two readings coincide.
+query assetsList(
+  $storeId: String!
+  $filter: AssetFilterInput
+  $sort: [AssetSortInput!]
+  $page: PaginationInput
+) {
+  assets(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {
+    ... on AssetConnector {
+      __typename
+      totalCount
+      nodes {
+        ...AssetRow
+      }
+    }
+  }
+}
+
+# One asset. There is no single-asset query in the schema — the list filtered by
+# id is the only way to fetch one (contract › contract surface).
+query assetById($storeId: String!, $assetId: String!) {
+  assets(storeId: $storeId, filter: { id: { equalTo: $assetId } }) {
+    ... on AssetConnector {
+      __typename
+      totalCount
+      nodes {
+        ...AssetDetail
+      }
+    }
+  }
+}
+
+# The status history (S2.3). Ordered by datetime descending; the kind filter is
+# the caller's — there is no "has a status" predicate, so narrowing to status
+# entries enumerates all six statuses (contract › temperature mapping).
+query assetLogsList(
+  $storeId: String!
+  $filter: AssetLogFilterInput
+  $sort: [AssetLogSortInput!]
+) {
+  assetLogs(storeId: $storeId, filter: $filter, sort: $sort) {
+    ... on AssetLogConnector {
+      __typename
+      totalCount
+      nodes {
+        ...AssetLogRow
+      }
+    }
+  }
+}
+
+# The reasons configured for one status. Each reason belongs to exactly one
+# status, and `commentsRequired` is what makes observations mandatory
+# (contract › functional status).
+query assetLogReasonsList(
+  $storeId: String!
+  $filter: AssetLogReasonFilterInput
+) {
+  assetLogReasons(storeId: $storeId, filter: $filter) {
+    ... on AssetLogReasonConnector {
+      __typename
+      totalCount
+      nodes {
+        id
+        assetLogStatus
+        reason
+        commentsRequired
+      }
+    }
+  }
+}
+
+mutation insertAsset($storeId: String!, $input: InsertAssetInput!) {
+  insertAsset(storeId: $storeId, input: $input) {
+    ... on AssetNode {
+      __typename
+      id
+    }
+  }
+}
+
+# `assetNumber`, `notes`, `properties` and `needsReplacement` are NOT partial —
+# omitting one ERASES it (contract ⚠️ wire trap). Callers MUST send the whole
+# draft; assetEdit.buildUpdateInput is the one place that shape is built.
+mutation updateAsset($storeId: String!, $input: UpdateAssetInput!) {
+  updateAsset(storeId: $storeId, input: $input) {
+    ... on AssetNode {
+      __typename
+      id
+    }
+  }
+}
+
+# A SOFT delete: the row stops being listed and readable but is not destroyed,
+# and its location assignments are hard-deleted (contract › deletion).
+mutation deleteAsset($storeId: String!, $assetId: String!) {
+  deleteAsset(storeId: $storeId, assetId: $assetId) {
+    ... on DeleteResponse {
+      __typename
+      id
+    }
+  }
+}
+
+mutation insertAssetLog($storeId: String!, $input: InsertAssetLogInput!) {
+  insertAssetLog(storeId: $storeId, input: $input) {
+    ... on AssetLogNode {
+      __typename
+      id
+    }
+  }
+}
+
+# The export's own read (rules › export). Unpaginated — `assets` has no upper
+# page limit and omitting `page` returns every matching row (contract ⚠️ wire
+# trap) — and its selection is wider than the list's: the export also carries
+# the warranty dates, the replacement flag, the specification and the
+# timestamps, none of which the list shows.
+#
+# ⚠️ Its filter is `classId` ALONE. The export drops the screen's active
+# filters AND the store restriction, so it covers the whole register (contract
+# ⚠️ wire trap). Captured as-is.
+query assetsExport(
+  $storeId: String!
+  $filter: AssetFilterInput
+  $sort: [AssetSortInput!]
+) {
+  assets(storeId: $storeId, filter: $filter, sort: $sort) {
+    ... on AssetConnector {
+      __typename
+      totalCount
+      nodes {
+        ...AssetRow
+        warrantyStart
+        warrantyEnd
+        needsReplacement
+        createdDatetime
+        modifiedDatetime
+        properties
+        catalogProperties
+        catalogueItem {
+          code
+        }
+      }
+    }
+  }
+}
