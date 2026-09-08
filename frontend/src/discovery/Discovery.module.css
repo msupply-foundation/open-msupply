@@ -142,3 +142,18 @@
   align-items: stretch;
   align-self: stretch;
 }
+
+/* With the hero out of the way (LoginInitLayout § data-compact-at) the panel is
+   the whole page, and THIS page's content has real use for the width: server
+   addresses are long, and the URL field shares its row with a button. The
+   24rem above is a form column's measure — on its own, collapsing the hero
+   just traded a cramped column for the same column in a field of whitespace.
+   On a phone the 90vw arm governs, as 85vw did, so that layout is unchanged
+   in kind.
+   Attribute + class, so this does not depend on which stylesheet the bundler
+   emits last. */
+@media (max-width: 1023px) {
+  [data-compact-at='tablet'] .column {
+    inline-size: min(34rem, 90vw);
+  }
+}
