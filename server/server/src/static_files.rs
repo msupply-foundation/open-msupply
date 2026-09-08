@@ -427,16 +427,26 @@ mod test {
     use super::*;
     use actix_web::body::to_bytes;
 
-    /// Minimal Settings for route tests; only `server.base_dir` is read by these handlers.
+    /// Minimal Settings for route tests; only `server.base_dir` is read by these
+    /// handlers. Built through the shared helper rather than deserialised from a JSON
+    /// literal, so a field added to `Settings` is a compile error here instead of a
+    /// panic at the first `unwrap`.
     fn test_settings() -> Settings {
-        serde_json::from_value(serde_json::json!({
-            "server": { "port": 8000, "cors_origins": [] },
-            "database": {
-                "username": "", "password": "", "port": 5432,
-                "host": "", "database_name": "test"
-            }
-        }))
-        .unwrap()
+        service::settings::test_settings(
+            repository::database_settings::DatabaseSettings {
+                username: String::new(),
+                password: String::new(),
+                port: 0,
+                host: String::new(),
+                database_name: "test".to_string(),
+                database_path: None,
+                connection_pool_max_connections: None,
+                connection_pool_min_idle: None,
+                connection_pool_timeout_seconds: None,
+                init_sql: None,
+            },
+            None,
+        )
     }
 
     fn temp_file(name: &str, size: usize) -> TempFile {
