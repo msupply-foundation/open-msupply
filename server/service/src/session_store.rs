@@ -37,12 +37,25 @@ struct SessionEntry {
 #[derive(Default, Debug)]
 pub struct SessionStore {
     sessions: HashMap<SessionToken, SessionEntry>,
-    /// The password hash each user's live sessions were issued against, as last seen by
-    /// `revoke_if_credentials_changed`. Kept here rather than read from the database
-    /// because it is only meaningful for as long as the sessions are: a restart clears
-    /// the sessions, so it must clear this too. Keyed by user, so it is bounded by the
-    /// number of users who have logged in since the process started, not by logins.
-    issued_against: HashMap<String, String>,
+    /// What each user's live sessions were issued against, as last seen by
+    /// `revoke_if_credentials_changed` / `revoke_for_credentials_changed_at_central`.
+    /// Kept here rather than read from the database because it is only meaningful for as
+    /// long as the sessions are: a restart clears the sessions, so it must clear this
+    /// too. Keyed by user, so it is bounded by the number of users who have logged in
+    /// since the process started, not by logins.
+    issued_against: HashMap<String, IssuedAgainst>,
+}
+
+/// The credentials a user's live sessions were issued against.
+#[derive(Debug, PartialEq)]
+enum IssuedAgainst {
+    /// The `hashed_password` on the user row at the time. A login that finds a different
+    /// one there is a login after a password change.
+    StoredHash(String),
+    /// A password central accepted while the local row still held a hash it did not
+    /// verify against, so there was no hash to name these credentials by. Only the v7
+    /// login flow reaches this - see `revoke_for_credentials_changed_at_central`.
+    PasswordAcceptedByCentral,
 }
 
 impl SessionStore {
@@ -115,16 +128,54 @@ impl SessionStore {
     /// call there are no sessions this store issued to that user, so there is nothing a
     /// changed password should evict.
     pub fn revoke_if_credentials_changed(&mut self, user_id: &str, hashed_password: &str) -> bool {
+        let previous = self.issued_against.insert(
+            user_id.to_string(),
+            IssuedAgainst::StoredHash(hashed_password.to_string()),
+        );
+
+        let changed = match previous {
+            Some(IssuedAgainst::StoredHash(previous)) => previous != hashed_password,
+            // The live sessions were issued against a password central vouched for, with
+            // no hash to name it by. A usable hash exists now, and nothing here can say
+            // whether it is that same change or a later one, so revoke rather than guess.
+            Some(IssuedAgainst::PasswordAcceptedByCentral) => true,
+            None => false,
+        };
+
+        if changed {
+            self.revoke_all_for_user(user_id);
+        }
+        changed
+    }
+
+    /// The same eviction for a login that learned the password changed without ever
+    /// seeing the new hash. Returns whether anything was revoked.
+    ///
+    /// A v7 remote can be in exactly that position: central accepts the password, that
+    /// flow never writes the user row, and until the `user` sync translation lands the
+    /// reset the row still holds the old hash. `revoke_if_credentials_changed` is blind
+    /// to it - the hash it would compare is the same old one the sessions were issued
+    /// against - so the login flow reports the mismatch it saw instead.
+    ///
+    /// The sessions this login is about to be issued belong to the new password, and
+    /// there is no hash for it to record, so the state is recorded as such. A second
+    /// login before sync catches up then finds the same state and leaves the first
+    /// alone; the first login that does find a usable hash revokes once, which is the
+    /// safe direction - it is also what covers a *second* reset inside the same window.
+    pub fn revoke_for_credentials_changed_at_central(&mut self, user_id: &str) -> bool {
         let previous = self
             .issued_against
-            .insert(user_id.to_string(), hashed_password.to_string());
+            .insert(user_id.to_string(), IssuedAgainst::PasswordAcceptedByCentral);
 
         match previous {
-            Some(previous) if previous != hashed_password => {
+            Some(IssuedAgainst::StoredHash(_)) => {
                 self.revoke_all_for_user(user_id);
                 true
             }
-            _ => false,
+            // Already in this state: the sessions are the ones a previous login in this
+            // same window issued, against the password central has just accepted again.
+            Some(IssuedAgainst::PasswordAcceptedByCentral) => false,
+            None => false,
         }
     }
 
@@ -242,6 +293,47 @@ mod tests {
 
         // The new hash is now the one on record, so the next login under it is quiet
         assert!(!store.revoke_if_credentials_changed("u", "hash-2"));
+    }
+
+    /// The v7 case: the login knows the password changed but has no hash for it, so the
+    /// change is recorded as such. A second login before sync catches up finds the same
+    /// state and is quiet; the first one to find a hash again revokes, because it cannot
+    /// tell that hash arriving from a further change since.
+    #[test]
+    fn revoke_for_credentials_changed_at_central_evicts_without_a_hash_to_compare() {
+        let mut store = SessionStore::new();
+
+        assert!(!store.revoke_if_credentials_changed("u", "hash-1"));
+        let issued_under_the_old_password = store.create("u");
+        let other_user = store.create("other");
+
+        // Central accepts a password the stored hash does not verify against
+        assert!(store.revoke_for_credentials_changed_at_central("u"));
+        assert!(store
+            .validate_and_slide(&issued_under_the_old_password)
+            .is_none());
+        assert!(store.validate_and_slide(&other_user).is_some());
+
+        // Sync still hasn't landed the new hash, and a second device logs in with the
+        // same new password: the first device stays logged in
+        let first_device = store.create("u");
+        assert!(!store.revoke_for_credentials_changed_at_central("u"));
+        assert!(store.validate_and_slide(&first_device).is_some());
+
+        // A hash lands. It may be this reset or a later one, so the sessions go.
+        assert!(store.revoke_if_credentials_changed("u", "hash-2"));
+        assert!(store.validate_and_slide(&first_device).is_none());
+
+        // ...and from there the ordinary comparison is back in charge
+        assert!(!store.revoke_if_credentials_changed("u", "hash-2"));
+    }
+
+    /// The first call for a user records the state and evicts nothing: with no earlier
+    /// call there are no sessions this store issued them.
+    #[test]
+    fn revoke_for_credentials_changed_at_central_is_quiet_on_a_first_login() {
+        let mut store = SessionStore::new();
+        assert!(!store.revoke_for_credentials_changed_at_central("u"));
     }
 
     #[test]
