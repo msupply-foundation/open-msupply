@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { discoveryReturnUrl, handoffPath, withLng } from './discoveryReturn';
+import {
+  discoveryReturnUrl,
+  handoffPath,
+  rememberedDiscoveryReturn,
+  withLng,
+} from './discoveryReturn';
 
 describe('handoffPath → discoveryReturnUrl round trip (AC-DT16)', () => {
   it('lands on login carrying the way back', () => {
@@ -88,5 +93,78 @@ describe('language carried both ways', () => {
 
   it('withLng leaves an unparseable url alone', () => {
     expect(withLng('not a url', 'ar')).toBe('not a url');
+  });
+});
+
+describe('rememberedDiscoveryReturn', () => {
+  const memoryStorage = (): Storage => {
+    const map = new Map<string, string>();
+    return {
+      getItem: key => map.get(key) ?? null,
+      setItem: (key, value) => void map.set(key, value),
+      removeItem: key => void map.delete(key),
+      clear: () => map.clear(),
+      key: () => null,
+      get length() {
+        return map.size;
+      },
+    };
+  };
+  const arrival =
+    '?discovery-return=http%3A%2F%2F127.0.0.1%3A8317%2Fdiscovery.html';
+  const url = 'http://127.0.0.1:8317/discovery.html';
+
+  it('survives the served app navigating away from the hand-off URL', () => {
+    const storage = memoryStorage();
+    expect(rememberedDiscoveryReturn(arrival, storage)).toBe(url);
+    // the app has since routed elsewhere and, on sign-out, rendered login back
+    // over a route with no query on it at all
+    expect(rememberedDiscoveryReturn('', storage)).toBe(url);
+    expect(rememberedDiscoveryReturn('?tab=ledger', storage)).toBe(url);
+  });
+
+  it('offers nothing when this window never arrived from discovery', () => {
+    expect(rememberedDiscoveryReturn('', memoryStorage())).toBeUndefined();
+  });
+
+  it('a fresh arrival replaces what was remembered', () => {
+    const storage = memoryStorage();
+    rememberedDiscoveryReturn(arrival, storage);
+    const other =
+      '?discovery-return=http%3A%2F%2Flocalhost%3A8318%2Fdiscovery.html';
+    expect(rememberedDiscoveryReturn(other, storage)).toBe(
+      'http://localhost:8318/discovery.html'
+    );
+    expect(rememberedDiscoveryReturn('', storage)).toBe(
+      'http://localhost:8318/discovery.html'
+    );
+  });
+
+  it('re-validates what it stored, so a tampered store is no more trusted', () => {
+    const storage = memoryStorage();
+    storage.setItem('preference/discovery-return', 'https://evil.example/x');
+    expect(rememberedDiscoveryReturn('', storage)).toBeUndefined();
+    storage.setItem('preference/discovery-return', 'javascript:alert(1)');
+    expect(rememberedDiscoveryReturn('', storage)).toBeUndefined();
+  });
+
+  // Passing `undefined` would select the default parameter and reach the real
+  // sessionStorage, so a refusing one is how "storage is unavailable" gets
+  // expressed — which is also the case that actually happens (private
+  // browsing, blocked site data).
+  it('survives a storage that refuses', () => {
+    const blocked = {
+      getItem: () => {
+        throw new Error('blocked');
+      },
+      setItem: () => {
+        throw new Error('blocked');
+      },
+    } as unknown as Storage;
+
+    // still answers from the URL it arrived on...
+    expect(rememberedDiscoveryReturn(arrival, blocked)).toBe(url);
+    // ...and simply has nothing to offer once that is gone
+    expect(rememberedDiscoveryReturn('', blocked)).toBeUndefined();
   });
 });
