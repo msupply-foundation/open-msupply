@@ -68,13 +68,16 @@ describe('variable validation (OMS-REG-GPREF-01.18)', () => {
 describe('adding (OMS-REG-GPREF-01.17)', () => {
   it('adding one pluralisation variant selects the whole family', () => {
     const options = [
-      { key: 'label.item_one', default: '{{count}} item' },
-      { key: 'label.item_other', default: '{{count}} items' },
+      { key: 'label.items-selected_one', default: '{{count}} item selected' },
+      {
+        key: 'label.items-selected_other',
+        default: '{{count}} items selected',
+      },
       { key: 'label.other', default: 'Other' },
     ];
     expect(pluralisationFamily(options[0]!, options).map(o => o.key)).toEqual([
-      'label.item_one',
-      'label.item_other',
+      'label.items-selected_one',
+      'label.items-selected_other',
     ]);
     expect(pluralisationFamily(options[2]!, options).map(o => o.key)).toEqual([
       'label.other',

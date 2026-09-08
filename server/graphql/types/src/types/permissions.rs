@@ -44,6 +44,8 @@ pub enum UserPermission {
     CustomerReturnMutate,
     PrescriptionQuery,
     PrescriptionMutate,
+    PrescriptionRequestQuery,
+    PrescriptionRequestMutate,
     PurchaseOrderQuery,
     PurchaseOrderMutate,
     PurchaseOrderAuthorise,
@@ -109,6 +111,10 @@ impl UserPermission {
             PermissionType::CustomerReturnMutate => UserPermission::CustomerReturnMutate,
             PermissionType::PrescriptionQuery => UserPermission::PrescriptionQuery,
             PermissionType::PrescriptionMutate => UserPermission::PrescriptionMutate,
+            PermissionType::PrescriptionRequestQuery => UserPermission::PrescriptionRequestQuery,
+            PermissionType::PrescriptionRequestMutate => {
+                UserPermission::PrescriptionRequestMutate
+            }
             PermissionType::CancelFinalisedInvoices => UserPermission::CancelFinalisedInvoices,
             PermissionType::PurchaseOrderQuery => UserPermission::PurchaseOrderQuery,
             PermissionType::PurchaseOrderMutate => UserPermission::PurchaseOrderMutate,

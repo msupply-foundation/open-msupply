@@ -7,7 +7,8 @@ import { Header } from '../ui/layout/Header/Header';
 import { Breadcrumb } from '../ui/layout/Header/Breadcrumb';
 import { EmptyState } from '../ui/elements/feedback/EmptyState';
 import { Button } from '../ui/elements/buttons/Button';
-import { navTrail, type NavItem } from './navConfig';
+import { type NavItem } from './navConfig';
+import { navTrail } from './navConfig';
 
 // The not-found page's whimsy (issue #867) — the current app's lost-on-the-moon
 // illustration. Lazy so its ~3 KB gzip rides in its own chunk, fetched only
