@@ -41,6 +41,7 @@ import { itemsRoutes } from './sections/items';
 import { patientsRoutes } from './sections/patients';
 import { cliniciansRoutes } from './sections/clinicians';
 import { coldChainSensorsRoutes } from './sections/cold-chain-sensors';
+import { coldChainEquipmentRoutes } from './sections/cold-chain-equipment';
 import { prescriptionsRoutes } from './sections/prescriptions';
 import { prescriptionRequestsRoutes } from './sections/prescription-requests';
 import { masterListsRoutes } from './sections/master-lists';
@@ -99,6 +100,11 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'catalogue/master-lists': masterListsRoutes,
   'dispensary/patients': patientsRoutes,
   'dispensary/clinicians': cliniciansRoutes,
+  // ONE section, TWO destinations: the same list and detail screens, differing
+  // only in whether the list is pinned to the active store (spec/cold-chain-
+  // equipment › rules § the two destinations).
+  'cold-chain/equipment': coldChainEquipmentRoutes,
+  'manage/equipment': coldChainEquipmentRoutes,
   'cold-chain/sensors': coldChainSensorsRoutes,
   'dispensary/prescription': prescriptionsRoutes,
   'dispensary/prescription-request': prescriptionRequestsRoutes,

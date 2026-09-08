@@ -4,6 +4,43 @@ import type { TypedDocument } from "../../api/graphql";
 
 export type LocationsVariables = {
   storeId: string;
+  filter?: {
+    name?: {
+    equalTo?: string | null;
+    like?: string | null;
+  } | null;
+    code?: {
+    equalTo?: string | null;
+    like?: string | null;
+  } | null;
+    codeOrName?: {
+    equalTo?: string | null;
+    like?: string | null;
+  } | null;
+    onHold?: boolean | null;
+    assignedToAsset?: boolean | null;
+    storeId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+    id?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+    locationTypeId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+  } | null;
 };
 
 export type LocationsResult = {
@@ -19,7 +56,7 @@ export type LocationsResult = {
 };
 
 export const Locations = {
-  query: "query locations($storeId: String!) {\n  locations(storeId: $storeId, sort: [{key: name}]) {\n    ... on LocationConnector {\n      __typename\n      nodes {\n        id\n        code\n        name\n      }\n    }\n  }\n}",
+  query: "query locations($storeId: String!, $filter: LocationFilterInput) {\n  locations(storeId: $storeId, filter: $filter, sort: [{key: name}]) {\n    ... on LocationConnector {\n      __typename\n      nodes {\n        id\n        code\n        name\n      }\n    }\n  }\n}",
 } as TypedDocument<LocationsResult, LocationsVariables>;
 
 export type LocationsWithVolumeVariables = {

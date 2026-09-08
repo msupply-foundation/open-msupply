@@ -434,7 +434,10 @@ const OutboundDetailView: Component = () => {
 
   // The store's locations (code/name only) for the Location filter chip.
   // Volume-blind — the chip narrows a line list, capacity is irrelevant.
-  const [locationsData] = createResource(() => params.storeId, fetchLocations);
+  const [locationsData] = createResource(
+    () => params.storeId,
+    storeId => fetchLocations(storeId)
+  );
   const locations = () => locationsData.latest ?? [];
 
   // A save-triggered refetch is SILENT — no refreshing bar (the table stays
