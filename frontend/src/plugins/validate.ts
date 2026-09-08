@@ -86,6 +86,13 @@ const HOST_RESERVED_PATHS: readonly string[] = [
   DASHBOARD_LEGACY_PATH,
 ];
 
+// The `pages` entry kinds this host provides. A `pages` entry is a
+// discriminated union (PluginPageContribution) with one arm today; an entry
+// whose kind is not listed here was built for a newer arm, and refusing it BY
+// NAME is what lets future arms join additively — an old host names the gap
+// instead of misreading the entry as a malformed section.
+const KNOWN_PAGE_KINDS: readonly string[] = ['section'];
+
 /**
  * Validate one section of a `pages` contribution. Returns the refusal message,
  * or undefined when the section is well-formed. Collisions with the HOST are
@@ -99,6 +106,13 @@ const validatePageSection = (
   seenPaths: string[]
 ): string | undefined => {
   if (!isRecord(section)) return 'a pages section is not an object';
+  const kind = section['kind'];
+  if (
+    kind !== undefined &&
+    (typeof kind !== 'string' || !KNOWN_PAGE_KINDS.includes(kind))
+  ) {
+    return `a pages entry declares the kind ${JSON.stringify(kind)}, which this app's plugin API does not provide (known: ${KNOWN_PAGE_KINDS.map(known => `"${known}"`).join(', ')})`;
+  }
   const id = section['id'];
   if (typeof id !== 'string' || id.length === 0) {
     return 'a pages section has no id';
