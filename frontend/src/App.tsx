@@ -41,6 +41,7 @@ import { itemsRoutes } from './sections/items';
 import { patientsRoutes } from './sections/patients';
 import { cliniciansRoutes } from './sections/clinicians';
 import { coldChainSensorsRoutes } from './sections/cold-chain-sensors';
+import { coldChainMonitoringRoutes } from './sections/cold-chain-monitoring';
 import { prescriptionsRoutes } from './sections/prescriptions';
 import { prescriptionRequestsRoutes } from './sections/prescription-requests';
 import { masterListsRoutes } from './sections/master-lists';
@@ -100,6 +101,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'dispensary/patients': patientsRoutes,
   'dispensary/clinicians': cliniciansRoutes,
   'cold-chain/sensors': coldChainSensorsRoutes,
+  'cold-chain/monitoring': coldChainMonitoringRoutes,
   'dispensary/prescription': prescriptionsRoutes,
   'dispensary/prescription-request': prescriptionRequestsRoutes,
   reports: reportsRoutes,

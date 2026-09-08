@@ -151,6 +151,17 @@ export const SunIcon = (props: IconProps) => (
   </Stroke>
 );
 
+/* Cold — the cold half of a temperature breach kind (cold-chain monitoring),
+   paired with SunIcon for hot so the direction is never colour alone */
+/* Hugeicons: SnowIcon */
+export const SnowflakeIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M12 2V22M12 2L9.5 4.5M12 2L14.5 4.5M12 22L9.5 19.5M12 22L14.5 19.5" />
+    <path d="M3.33984 7L20.6603 17M3.33984 7L2.42462 10.4151M3.33984 7L6.75491 6.08478M20.6603 17L21.5755 13.5849M20.6603 17L17.2452 17.9152" />
+    <path d="M3.33984 17L20.6603 7M3.33984 17L6.75491 17.9152M3.33984 17L2.42462 13.5849M20.6603 7L17.2452 6.08478M20.6603 7L21.5755 10.4151" />
+  </Stroke>
+);
+
 /* Export / download — arrow pointing down into the tray */
 /* Hugeicons: Download01Icon */
 export const DownloadIcon = (props: IconProps) => (

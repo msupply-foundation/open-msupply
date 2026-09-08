@@ -1085,6 +1085,39 @@ export const FilterDateTimeRange = (props: {
 };
 
 /**
+ * A single date-TIME bound — one DateTimeField de-boxed onto the chip pill via
+ * .bareField, the one-sided sibling of FilterDateTimeRange. For a screen whose
+ * surface names its two bounds as two separately-removable filters ("From
+ * start date/time" / "To start date/time" — the cold-chain monitoring filter
+ * set), each bound is its own chip and each chip is this. Value is a UTC ISO
+ * instant or null (the field's own contract), so a vertical binds it straight
+ * onto one side of its DatetimeFilterInput.
+ */
+export const FilterDateTime = (props: {
+  value: string | null | undefined;
+  onChange: (value: string | null) => void;
+  label: string;
+  /** `data-testid` stamped on the field's DATE input (FilterBar supplies
+   *  `filter-input-<key>`). */
+  testId?: string;
+}) => {
+  const chipFocus = useChipFocus();
+  return (
+    <span class={styles.bareField}>
+      <DateTimeField
+        label={props.label}
+        hideLabel
+        size="small"
+        testId={props.testId}
+        focusTarget={chipFocus}
+        value={props.value}
+        onChange={props.onChange}
+      />
+    </span>
+  );
+};
+
+/**
  * A date filter — a native date input behind the calendar icon, sharing the
  * text-filter chrome. Value is an ISO `yyyy-mm-dd` string (native date input's
  * format); '' clears it. Used for a SINGLE date bound (the patients list's
