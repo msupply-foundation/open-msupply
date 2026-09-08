@@ -25,7 +25,7 @@ use service::auth_data::AuthData;
 use service::service_provider::ServiceProvider;
 use service::settings::Settings;
 use service::static_files::StaticFile;
-use service::static_files::{StaticFileCategory, StaticFileService};
+use service::static_files::{InvalidFilePath, StaticFileCategory, StaticFileService};
 use service::sync::file_sync_driver::{file_sync_central_url, get_sync_settings};
 use service::sync::file_synchroniser::{self, FileSynchroniser};
 use service::sync::CentralServerConfig;
@@ -338,6 +338,15 @@ async fn download_sync_file(
         }
         Err(error) => error,
     };
+
+    // The table name, record id and file id are all URL path segments, so one that can't
+    // be a path component is a malformed request rather than a fault on this server
+    if let DownloadFileError::Other(ref err) = error {
+        if InvalidFilePath::is_in(err) {
+            log::warn!("Rejected sync file download: {}", format_error(&error));
+            return Err(InternalError::new(err.to_string(), StatusCode::BAD_REQUEST).into());
+        }
+    }
 
     let error = match error {
         DownloadFileError::NotFoundLocallyAndThisIsCentralServer
