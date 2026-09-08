@@ -79,7 +79,8 @@ fn map_error(error: ServiceError) -> Result<UpdateResponse> {
         | ServiceError::CannotChangeStatusOfInvoiceOnHold
         | ServiceError::CannotIssueSupplierReturnWithNoLines
         | ServiceError::ReturnDoesNotExist
-        | ServiceError::UnknownPropertyKey(_) => BadUserInput(formatted_error),
+        | ServiceError::UnknownPropertyKey(_)
+        | ServiceError::InvalidPropertyValue { .. } => BadUserInput(formatted_error),
 
         ServiceError::InvoiceLineHasNoStockLine(_)
         | ServiceError::UpdatedReturnDoesNotExist

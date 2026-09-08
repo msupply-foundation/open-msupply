@@ -396,6 +396,9 @@ pub(crate) fn seed_central_mapping_custom_fields(
                     .as_ref()
                     .map_or_else(|| def.display_mode.clone(), |row| row.display_mode.clone()),
                 sort_order: sort_order.clone(),
+                // Legacy mapping fields are never withdrawn, so this is only
+                // ever cleared — the sweep that sets it is builtin-only.
+                deleted_datetime: None,
             };
             // Change-aware: only write when the row differs, so steady-state
             // re-seeds add no changelog churn.

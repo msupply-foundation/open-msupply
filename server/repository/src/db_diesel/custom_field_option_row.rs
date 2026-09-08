@@ -98,16 +98,24 @@ impl<'a> CustomFieldOptionRowRepository<'a> {
     }
 
     /// Used by the `CustomFieldNode.options` GraphQL dataloader to batch
-    /// option lookups across many custom_fields in a single request. Soft-deleted
-    /// options are excluded; rows are ordered by `sort_order` then `id` for a
-    /// deterministic UI (unranked `''` sort_order falls back to `id` order).
+    /// option lookups across many custom_fields in a single request. Rows are
+    /// ordered by `sort_order` then `id` for a deterministic UI (unranked `''`
+    /// sort_order falls back to `id` order).
+    ///
+    /// Soft-deleted options **are included**, and carry their
+    /// `deleted_datetime` to the client. A stored value is only ever the
+    /// option's id, so excluding deleted options here would make every record
+    /// still holding one render a raw id instead of its name — for legacy
+    /// categories (deleted whenever OG deletes one) as much as for the
+    /// code-defined builtin vocabularies. Resolution therefore reads the whole
+    /// list and the client filters deleted options out of its picker: readable
+    /// forever, selectable no longer.
     pub fn find_many_by_custom_field_ids(
         &self,
         custom_field_ids: &[String],
     ) -> Result<Vec<CustomFieldOptionRow>, RepositoryError> {
         Ok(custom_field_option::table
             .filter(custom_field_option::custom_field_id.eq_any(custom_field_ids))
-            .filter(custom_field_option::deleted_datetime.is_null())
             .order((
                 custom_field_option::sort_order.asc(),
                 custom_field_option::id.asc(),

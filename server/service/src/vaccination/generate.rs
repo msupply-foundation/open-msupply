@@ -30,6 +30,7 @@ pub fn generate_create_prescription(
         their_reference: None,
         clinician_id: None,
         prescription_date: None,
+        prescription_request_id: None,
     };
 
     let number_of_packs =
