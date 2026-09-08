@@ -413,6 +413,25 @@ describe('validateLoadedModule — pages', () => {
     expect(pagesRefusal({})).toContain('pages is not an array');
   });
 
+  // A pages entry is a discriminated union with one arm today; the explicit
+  // discriminant and the absent default are the same entry.
+  it('accepts an explicit kind: "section" — the union discriminant', () => {
+    const verdict = validateLoadedModule(
+      'demo',
+      withPages([pageSection({ kind: 'section' })])
+    );
+    expect(verdict.kind).toBe('ok');
+  });
+
+  it('refuses an unknown pages entry kind, naming it and the known set (AC-PLUG-P5)', () => {
+    expect(pagesRefusal([pageSection({ kind: 'host-entry' })])).toContain(
+      'declares the kind "host-entry", which this app\'s plugin API does not provide (known: "section")'
+    );
+    expect(pagesRefusal([pageSection({ kind: 42 })])).toContain(
+      'declares the kind 42'
+    );
+  });
+
   it('refuses a section without an id, and a duplicate section id', () => {
     expect(pagesRefusal([pageSection({ id: '' })])).toContain('has no id');
     expect(

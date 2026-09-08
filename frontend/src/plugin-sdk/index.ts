@@ -30,6 +30,7 @@ export type {
   PluginModule,
   PluginMessages,
   PluginPage,
+  PluginPageContribution,
   PluginPageSection,
   HostNavSectionId,
   Contribution,

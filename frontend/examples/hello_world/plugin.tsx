@@ -373,6 +373,11 @@ export default definePlugin({
    */
   pages: [
     {
+      // The entry's kind — the union discriminant. 'section' (a labelled nav
+      // section of the plugin's own) is the only arm today and the default
+      // when absent; future placements join as new kinds, and a host refuses
+      // a kind it does not provide, by name (AC-PLUG-P5).
+      kind: 'section',
       id: 'helloSection',
       labelKey: 'pages.section',
       path: 'hello-world',

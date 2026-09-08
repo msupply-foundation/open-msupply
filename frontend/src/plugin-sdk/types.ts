@@ -573,6 +573,12 @@ export interface PluginPage {
  * once, so a withheld page is exactly as absent as a withheld host screen.
  */
 export interface PluginPageSection {
+  /**
+   * Discriminant of {@link PluginPageContribution}. Optional while the union
+   * has one arm — absent means `'section'`. A kind this host does not know
+   * refuses the plugin at validation, by name.
+   */
+  kind?: 'section';
   /** Unique within the plugin. */
   id: string;
   /** The section's menu label — a key in the plugin's catalogue. */
@@ -613,6 +619,18 @@ export interface PluginPageSection {
   pages: readonly PluginPage[];
 }
 
+/**
+ * One entry of a definition's `pages` key, discriminated by `kind` — a union
+ * of one arm today: the plugin's own labelled menu section (`'section'`, the
+ * default when `kind` is absent). Future placements — an entry inside a host
+ * section, a root-level menu entry, a routed page with no menu entry, a
+ * host-route override — join as new arms, additive within an API major, so a
+ * second registration key is never needed. A host refuses an entry whose
+ * `kind` it does not provide, named in the refusal, so a bundle built for a
+ * newer arm degrades to a clear diagnostic instead of misregistering.
+ */
+export type PluginPageContribution = PluginPageSection;
+
 // ── The plugin module ───────────────────────────────────────────────────────
 
 /** A flat message catalogue — `key` → template, `{{ token }}` interpolated. */
@@ -625,8 +643,11 @@ export type PluginMessages = Readonly<Record<string, string>>;
 export interface PluginDefinition {
   manifest: PluginManifest;
   contributions?: readonly AnyContribution[];
-  /** Whole routed screens, each set under its own labelled menu section. */
-  pages?: readonly PluginPageSection[];
+  /**
+   * Whole routed screens — a {@link PluginPageContribution} union per entry,
+   * today always a labelled menu section of the plugin's own.
+   */
+  pages?: readonly PluginPageContribution[];
   /**
    * Registered under namespace = the plugin's code, layered under server
    * overrides.
