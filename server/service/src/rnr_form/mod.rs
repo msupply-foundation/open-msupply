@@ -1,8 +1,9 @@
 use self::finalise::{finalise_rnr_form, FinaliseRnRForm, FinaliseRnRFormError};
 use self::insert::{insert_rnr_form, InsertRnRForm, InsertRnRFormError};
 use self::query::{get_rnr_form, get_rnr_forms};
-use self::schedules_with_periods::{get_schedules_with_periods_by_program, PeriodSchedule};
+use self::schedules_with_periods::get_schedules_with_periods_by_program;
 use self::update::{update_rnr_form, UpdateRnRForm, UpdateRnRFormError};
+use crate::period_schedule::PeriodSchedule;
 use crate::rnr_form::delete::{delete_rnr_form, DeleteRnRForm, DeleteRnRFormError};
 use crate::{service_provider::ServiceContext, ListError, ListResult};
 use repository::{
