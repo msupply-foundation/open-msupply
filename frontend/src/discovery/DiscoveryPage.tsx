@@ -82,7 +82,11 @@ const DiscoveryFrame: Component<{ children: JSX.Element }> = props => {
   });
 
   return (
-    <div class={layout.page}>
+    /* data-compact-at: this page's panel needs the full width sooner than a phone
+       breakpoint gives it — the server list, its refresh control and the URL
+       field with a button beside it are cramped in half a tablet's portrait
+       width (LoginInitLayout § opt-in). */
+    <div class={layout.page} data-compact-at="tablet">
       <section class={layout.hero} aria-label={t('discovery.heading')}>
         <h1 class={layout.heroHeading}>
           {t('discovery.heading')} {t('discovery.sub-heading')}
