@@ -331,6 +331,12 @@ const ServerChooser: Component<{
     props.previous ? frontEndHostDisplay(props.previous) : 'https://'
   );
   const [manualError, setManualError] = createSignal<string>();
+  // An auto-connection from launch is in flight, so nothing of the chooser is
+  // on screen yet (AC-DT1). False from the start when there is nothing to
+  // attempt — a first launch, or a return that must not reconnect.
+  const [launchAttempt, setLaunchAttempt] = createSignal(
+    autoconnectTarget(props.flags, props.previous) !== undefined
+  );
 
   let pollTimer: ReturnType<typeof setInterval> | undefined;
   let timeoutTimer: ReturnType<typeof setTimeout> | undefined;
@@ -416,11 +422,12 @@ const ServerChooser: Component<{
       remember: true,
     });
     // Connected: the window is navigating away — leave the row's spinner on.
-    if (disposed || connected) return;
+    if (disposed || connected) return connected;
     batch(() => {
       setConnecting(undefined);
       setFailedServer(frontEndHostDisplay(server));
     });
+    return connected;
   };
 
   const chooseServer = (server: FrontEndHost) =>
@@ -433,12 +440,14 @@ const ServerChooser: Component<{
   // how to answer that server's certificate error. This machine's facts are
   // asked for here rather than waited on from the search beneath, so the two
   // stay independent.
-  const autoconnect = async (target: FrontEndHost) => {
+  const autoconnect = async (target: FrontEndHost): Promise<boolean> => {
     const info = await props.host.hostInfo().catch(() => undefined);
-    if (disposed) return;
-    await connect(
-      info ? withLocality(target, info) : target,
-      serverKey(target)
+    if (disposed) return false;
+    return (
+      (await connect(
+        info ? withLocality(target, info) : target,
+        serverKey(target)
+      )) ?? false
     );
   };
 
@@ -459,12 +468,36 @@ const ServerChooser: Component<{
     // after the shell's launch check failed or the user chose to come back
     // (AC-DT2, AC-DT16).
     const target = autoconnectTarget(props.flags, props.previous);
-    if (target) void autoconnect(target);
+    if (target) {
+      // ...and while that attempt is in flight the chooser is NOT drawn.
+      // AC-DT1 is "the discovery screen is never shown", so painting the
+      // list and then navigating away flashed a screen the returning user
+      // was never meant to see.
+      //
+      // Dropped only when the attempt FAILS, which is exactly when the
+      // chooser becomes the right thing to show. On success the window is
+      // already navigating away, and clearing it there put the chooser back
+      // on screen for the duration of the teardown — the same flash, moved.
+      void autoconnect(target).then(connected => {
+        if (!connected) setLaunchAttempt(false);
+      });
+    }
     void search();
   });
 
   return (
-    <>
+    <Show
+      when={!launchAttempt()}
+      fallback={
+        /* A returning user is not shown the chooser at all while their
+           remembered server is being reached (AC-DT1) — only that something
+           is happening. */
+        <div class={styles.searching} role="status">
+          <Spinner sizeRem={1.25} label={t('discovery.connecting')} />
+          <span aria-hidden="true">{t('discovery.connecting')}</span>
+        </div>
+      }
+    >
       <Show when={failedServer()}>
         {/* Told which server could not be connected to, still on the list
             (AC-DT2, AC-DT12). role=alert announces it when a choice fails
@@ -556,6 +589,13 @@ const ServerChooser: Component<{
           <div class={styles.manualField}>
             <TextField
               label={t('discovery.manual-url')}
+              /* Matched to the Connect button beside it: a secondary Button is
+                 --button-height (36px) and a standard field --input-height
+                 (40px), so the button read as undersized next to the URL it
+                 belongs to. Both scales agree at small — 36px, and 44px once
+                 (pointer: coarse) applies, which clears WCAG 2.5.5 AAA on the
+                 tablets where this was noticed. */
+              size="small"
               type="text"
               name="server-url"
               autocomplete="off"
@@ -577,6 +617,6 @@ const ServerChooser: Component<{
           </Button>
         </div>
       </form>
-    </>
+    </Show>
   );
 };

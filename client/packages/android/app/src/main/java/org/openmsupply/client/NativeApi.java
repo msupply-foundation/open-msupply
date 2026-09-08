@@ -275,7 +275,24 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
                     final String targetUrl = discoveryUrl(true, false);
                     Log.i(OM_SUPPLY, "Loading WebView url=" + targetUrl);
                     frontendLoaded = true;
-                    webView.post(() -> webView.loadUrl(targetUrl));
+                    webView.post(() -> {
+                        // Host duty (AC-DT16, AC-AN20): the boot lands on
+                        // discovery from the static loading page, so without
+                        // pinning history here hardware back resurrects that
+                        // page — which only ever spins, since the readiness
+                        // poll that drives it has already finished. Same clear
+                        // the new frontend's shell does on its client-mode
+                        // boot; every host-initiated navigation is a fresh
+                        // start.
+                        // NativeApi.this, not this: the lambda sits inside
+                        // the readiness poll's Runnable.
+                        Activity bootActivity = NativeApi.this.getActivity();
+                        if (bootActivity instanceof DiscoveryHostActivity) {
+                            ((DiscoveryHostActivity) bootActivity)
+                                .clearHistoryWhenLoaded(localUrl + DISCOVERY_PATH);
+                        }
+                        webView.loadUrl(targetUrl);
+                    });
                 } else {
                     Log.e(OM_SUPPLY, "Server not running, displaying error page");
                     final ErrorPage errorPage = new ErrorPage(getContext(), localUrl);

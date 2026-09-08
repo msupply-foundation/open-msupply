@@ -12,12 +12,11 @@ import { TextField } from '../ui/elements/inputs/TextField';
 import { PasswordField } from '../ui/elements/inputs/PasswordField';
 import { Button } from '../ui/elements/buttons/Button';
 import { Alert } from '../ui/elements/feedback/Alert';
+import { ArrowRightIcon, ClockIcon, TransferHorizontalIcon } from '../ui/icons';
 import {
-  ArrowRightIcon,
-  ClockIcon,
-  TransferHorizontalIcon,
-} from '../ui/icons';
-import { discoveryReturnUrl, withLng } from '../discovery/discoveryReturn';
+  rememberedDiscoveryReturn,
+  withLng,
+} from '../discovery/discoveryReturn';
 import { AppLogo } from '../ui/branding/AppLogo';
 import { LanguageSelector } from '../ui/layout/AppShell/LanguageSelector';
 import { changeLanguage, locale, t } from '../intl';
@@ -74,7 +73,7 @@ export const LoginPage: Component = () => {
 
   // Set when the discovery page handed off to this server
   // (src/discovery/discoveryReturn.ts) — offers the way back beneath the form.
-  const changeServerUrl = discoveryReturnUrl(window.location.search);
+  const changeServerUrl = rememberedDiscoveryReturn(window.location.search);
 
   const submitting = () => submitState().kind === 'submitting';
   const submitError = () => {

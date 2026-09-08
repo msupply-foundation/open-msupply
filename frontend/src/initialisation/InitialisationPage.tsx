@@ -52,7 +52,10 @@ import {
 } from '../ui/layout/Form/formValidation';
 import { SaveServerLogLink } from '../platform/SaveServerLogLink';
 import { TransferHorizontalIcon } from '../ui/icons';
-import { discoveryReturnUrl, withLng } from '../discovery/discoveryReturn';
+import {
+  rememberedDiscoveryReturn,
+  withLng,
+} from '../discovery/discoveryReturn';
 import styles from '../ui/styles/LoginInitLayout.module.css';
 import pageStyles from './Initialisation.module.css';
 
@@ -62,7 +65,7 @@ export const InitialisationPage: Component<{
   // Set when the discovery page handed off to this server
   // (src/discovery/discoveryReturn.ts) — offers the way back among the
   // secondary controls. Read once: the URL is fixed while this page shows.
-  const changeServerUrl = discoveryReturnUrl(window.location.search);
+  const changeServerUrl = rememberedDiscoveryReturn(window.location.search);
 
   // The tab names this screen too (spec/chrome § document title): an
   // un-initialised site is the whole app until it finishes.

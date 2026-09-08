@@ -128,6 +128,7 @@
 
 /* Align the button with the field's input box (the label sits above it). */
 .manualConnect {
+  /* Clears the field's label so the two line up. */
   margin-block-start: 1.4rem;
 }
 
