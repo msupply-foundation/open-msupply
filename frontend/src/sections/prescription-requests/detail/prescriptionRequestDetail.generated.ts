@@ -19,6 +19,7 @@ export type PrescriptionRequestFieldsFragment = {
   code: string;
   dateOfBirth: string | null;
 };
+  clinicianId: string | null;
   diagnosisId: string | null;
   programId: string | null;
   user: {
@@ -58,7 +59,7 @@ export type PrescriptionRequestDetailResult = {
 };
 
 export const PrescriptionRequestDetail = {
-  query: "query prescriptionRequestDetail($storeId: String!, $id: String!) {\n  prescriptionRequest(storeId: $storeId, id: $id) {\n    __typename\n    ... on PrescriptionRequestNode {\n      ...PrescriptionRequestFields\n    }\n    ... on RecordNotFound {\n      description\n    }\n  }\n}\n\nfragment PrescriptionRequestFields on PrescriptionRequestNode {\n  id\n  prescriptionRequestNumber\n  status\n  createdDatetime\n  prescriptionDatetime\n  readyDatetime\n  dispensedDatetime\n  comment\n  customFields\n  patientId\n  patient {\n    id\n    name\n    code\n    dateOfBirth\n  }\n  diagnosisId\n  programId\n  user {\n    username\n    email\n  }\n  lines {\n    totalCount\n    nodes {\n      id\n      itemId\n      numberOfUnits\n      note\n      item {\n        id\n        code\n        name\n        unitName\n      }\n    }\n  }\n}",
+  query: "query prescriptionRequestDetail($storeId: String!, $id: String!) {\n  prescriptionRequest(storeId: $storeId, id: $id) {\n    __typename\n    ... on PrescriptionRequestNode {\n      ...PrescriptionRequestFields\n    }\n    ... on RecordNotFound {\n      description\n    }\n  }\n}\n\nfragment PrescriptionRequestFields on PrescriptionRequestNode {\n  id\n  prescriptionRequestNumber\n  status\n  createdDatetime\n  prescriptionDatetime\n  readyDatetime\n  dispensedDatetime\n  comment\n  customFields\n  patientId\n  patient {\n    id\n    name\n    code\n    dateOfBirth\n  }\n  clinicianId\n  diagnosisId\n  programId\n  user {\n    username\n    email\n  }\n  lines {\n    totalCount\n    nodes {\n      id\n      itemId\n      numberOfUnits\n      note\n      item {\n        id\n        code\n        name\n        unitName\n      }\n    }\n  }\n}",
 } as TypedDocument<PrescriptionRequestDetailResult, PrescriptionRequestDetailVariables>;
 
 export type UpdatePrescriptionRequestVariables = {
@@ -66,6 +67,9 @@ export type UpdatePrescriptionRequestVariables = {
   input: {
     id: string;
     patientId?: string | null;
+    clinicianId?: {
+    value?: string | null;
+  } | null;
     diagnosisId?: {
     value?: string | null;
   } | null;
@@ -78,7 +82,6 @@ export type UpdatePrescriptionRequestVariables = {
   } | null;
     customFields?: unknown | null;
     status?: "READY_TO_DISPENSE" | null;
-    clinicianId?: string | null;
   };
 };
 
@@ -87,7 +90,7 @@ export type UpdatePrescriptionRequestResult = {
 };
 
 export const UpdatePrescriptionRequest = {
-  query: "mutation updatePrescriptionRequest($storeId: String!, $input: UpdatePrescriptionRequestInput!) {\n  updatePrescriptionRequest(storeId: $storeId, input: $input) {\n    ... on PrescriptionRequestNode {\n      ...PrescriptionRequestFields\n    }\n  }\n}\n\nfragment PrescriptionRequestFields on PrescriptionRequestNode {\n  id\n  prescriptionRequestNumber\n  status\n  createdDatetime\n  prescriptionDatetime\n  readyDatetime\n  dispensedDatetime\n  comment\n  customFields\n  patientId\n  patient {\n    id\n    name\n    code\n    dateOfBirth\n  }\n  diagnosisId\n  programId\n  user {\n    username\n    email\n  }\n  lines {\n    totalCount\n    nodes {\n      id\n      itemId\n      numberOfUnits\n      note\n      item {\n        id\n        code\n        name\n        unitName\n      }\n    }\n  }\n}",
+  query: "mutation updatePrescriptionRequest($storeId: String!, $input: UpdatePrescriptionRequestInput!) {\n  updatePrescriptionRequest(storeId: $storeId, input: $input) {\n    ... on PrescriptionRequestNode {\n      ...PrescriptionRequestFields\n    }\n  }\n}\n\nfragment PrescriptionRequestFields on PrescriptionRequestNode {\n  id\n  prescriptionRequestNumber\n  status\n  createdDatetime\n  prescriptionDatetime\n  readyDatetime\n  dispensedDatetime\n  comment\n  customFields\n  patientId\n  patient {\n    id\n    name\n    code\n    dateOfBirth\n  }\n  clinicianId\n  diagnosisId\n  programId\n  user {\n    username\n    email\n  }\n  lines {\n    totalCount\n    nodes {\n      id\n      itemId\n      numberOfUnits\n      note\n      item {\n        id\n        code\n        name\n        unitName\n      }\n    }\n  }\n}",
 } as TypedDocument<UpdatePrescriptionRequestResult, UpdatePrescriptionRequestVariables>;
 
 export type DeletePrescriptionRequestByIdVariables = {
@@ -146,12 +149,12 @@ export const GeneratedDispensations = {
 
 export type DeletePrescriptionRequestLinesVariables = {
   storeId: string;
-  ids: string[];
+  ids: Array<string>;
 };
 
 export type DeletePrescriptionRequestLinesResult = {
   batchPrescriptionRequest: {
-  deletePrescriptionRequestLines?: Array<{
+  deletePrescriptionRequestLines: Array<{
   id: string;
   response: ({
   id: string;

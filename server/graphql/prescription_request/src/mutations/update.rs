@@ -4,7 +4,7 @@ use graphql_core::generic_inputs::NullableUpdateInput;
 use graphql_core::standard_graphql_error::validate_auth;
 use graphql_core::standard_graphql_error::StandardGraphqlError::{BadUserInput, InternalError};
 use graphql_core::ContextExt;
-use repository::{PrescriptionRequest, PrescriptionRequestRow};
+use repository::PrescriptionRequest;
 use service::auth::{Resource, ResourceAccessRequest};
 use service::prescription_request::update::{
     UpdatePrescriptionRequest as ServiceInput, UpdatePrescriptionRequestError as ServiceError,
@@ -25,6 +25,10 @@ pub enum UpdatePrescriptionRequestStatusInput {
 pub struct UpdateInput {
     pub id: String,
     pub patient_id: Option<String>,
+    /// The clinician the request names — an ordinary editable field, like the
+    /// patient beside it, and what fills the generated dispensation's own
+    /// clinician at the hand-over.
+    pub clinician_id: Option<NullableUpdateInput<String>>,
     pub diagnosis_id: Option<NullableUpdateInput<String>>,
     pub program_id: Option<NullableUpdateInput<String>>,
     pub prescription_datetime: Option<DateTime<Utc>>,
@@ -33,11 +37,6 @@ pub struct UpdateInput {
     /// must be visible for the "prescription_request" scope.
     pub custom_fields: Option<Json<serde_json::Map<String, serde_json::Value>>>,
     pub status: Option<UpdatePrescriptionRequestStatusInput>,
-    /// The clinician the generated dispensation names. Read ONLY alongside
-    /// `status: READY_TO_DISPENSE` — a request holds no clinician of its own,
-    /// so without the hand-over there is nothing for this to write and it is
-    /// dropped.
-    pub clinician_id: Option<String>,
 }
 
 impl UpdateInput {
@@ -45,28 +44,26 @@ impl UpdateInput {
         let UpdateInput {
             id,
             patient_id,
+            clinician_id,
             diagnosis_id,
             program_id,
             prescription_datetime,
             comment,
             custom_fields,
             status,
-            clinician_id,
         } = self;
         ServiceInput {
             id,
             patient_id,
+            clinician_id: clinician_id.map(|u| NullableUpdate { value: u.value }),
             diagnosis_id: diagnosis_id.map(|u| NullableUpdate { value: u.value }),
             program_id: program_id.map(|u| NullableUpdate { value: u.value }),
             prescription_datetime: prescription_datetime.map(|d| d.naive_utc()),
             comment: comment.map(|u| NullableUpdate { value: u.value }),
             custom_fields: custom_fields.map(|json| json.0),
-            // The clinician rides the transition, not the struct: it is the
-            // hand-over's parameter, and folding it in here is what makes
-            // "sent without the hand-over" unrepresentable downstream.
             status: status.map(|status| match status {
                 UpdatePrescriptionRequestStatusInput::ReadyToDispense => {
-                    UpdatePrescriptionRequestStatus::ReadyToDispense { clinician_id }
+                    UpdatePrescriptionRequestStatus::ReadyToDispense
                 }
             }),
         }
@@ -102,12 +99,10 @@ pub fn update_prescription_request(
     )
 }
 
-fn map_response(from: Result<PrescriptionRequestRow, ServiceError>) -> Result<UpdateResponse> {
+fn map_response(from: Result<PrescriptionRequest, ServiceError>) -> Result<UpdateResponse> {
     match from {
-        Ok(prescription_request_row) => Ok(UpdateResponse::Response(
-            PrescriptionRequestNode::from_domain(PrescriptionRequest {
-                prescription_request_row,
-            }),
+        Ok(prescription_request) => Ok(UpdateResponse::Response(
+            PrescriptionRequestNode::from_domain(prescription_request),
         )),
         Err(error) => Err(map_error(error)),
     }
@@ -120,14 +115,15 @@ fn map_error(error: ServiceError) -> async_graphql::Error {
         | ServiceError::NotThisStorePrescriptionRequest
         | ServiceError::NotEditable
         | ServiceError::PatientDoesNotExist
+        | ServiceError::ClinicianDoesNotExist
         | ServiceError::DiagnosisDoesNotExist
         | ServiceError::ProgramDoesNotExist
         | ServiceError::UnknownCustomFieldKey(_)
         | ServiceError::InvalidCustomFieldValue { .. }
         | ServiceError::NoLines => BadUserInput(formatted_error),
-        ServiceError::CreatedDispensationError(_) | ServiceError::DatabaseError(_) => {
-            InternalError(formatted_error)
-        }
+        ServiceError::CreatedDispensationError(_)
+        | ServiceError::UpdatedPrescriptionRequestDoesNotExist
+        | ServiceError::DatabaseError(_) => InternalError(formatted_error),
     }
     .extend()
 }
