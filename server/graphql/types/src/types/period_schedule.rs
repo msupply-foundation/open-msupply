@@ -1,8 +1,8 @@
 use async_graphql::*;
 
-use graphql_types::types::PeriodNode;
+use crate::types::PeriodNode;
 use repository::{Period, PeriodScheduleRow};
-use service::rnr_form::schedules_with_periods::PeriodSchedule;
+use service::period_schedule::PeriodSchedule;
 
 #[derive(SimpleObject)]
 pub struct PeriodSchedulesConnector {

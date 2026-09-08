@@ -1,17 +1,12 @@
+use crate::period_schedule::PeriodSchedule;
 use crate::service_provider::ServiceContext;
 
 use chrono::Utc;
 use repository::{
-    DateFilter, EqualFilter, Pagination, Period, PeriodFilter, PeriodRepository, PeriodScheduleRow,
+    DateFilter, EqualFilter, Pagination, PeriodFilter, PeriodRepository,
     PeriodScheduleRowRepository, PeriodSort, PeriodSortField,
     ProgramRequisitionSettingsRowRepository, RepositoryError,
 };
-
-#[derive(Debug)]
-pub struct PeriodSchedule {
-    pub schedule_row: PeriodScheduleRow,
-    pub periods: Vec<Period>,
-}
 
 // R&R form
 pub fn get_schedules_with_periods_by_program(
