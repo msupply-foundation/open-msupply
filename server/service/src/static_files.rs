@@ -28,6 +28,26 @@ pub enum StaticFileCategory {
     SyncFile(String, String), // Files to be synced (Table Name, Record Id)
 }
 
+/// A path component a caller supplied that cannot be used as one.
+///
+/// A type of its own rather than a bare `anyhow!`, so the HTTP layers can answer 400
+/// instead of 500: every one of these is the request's fault, not the server's. The
+/// signatures around it stay `anyhow::Result`, so it travels as a cause to downcast on.
+#[derive(Debug, thiserror::Error)]
+pub enum InvalidFilePath {
+    #[error("Invalid sync file path segment: {0:?}")]
+    Segment(String),
+    #[error("File name is empty once sanitized, nothing left to store it under")]
+    EmptyFileName,
+}
+
+impl InvalidFilePath {
+    /// Whether an error raised anywhere under this module is one of these.
+    pub fn is_in(error: &anyhow::Error) -> bool {
+        error.downcast_ref::<InvalidFilePath>().is_some()
+    }
+}
+
 /// One component of a sync file's directory, which must be a plain path segment.
 ///
 /// `table_name` and `record_id` reach this module as URL path segments (and, for
@@ -40,9 +60,7 @@ fn validate_path_segment(segment: &str) -> anyhow::Result<()> {
     match (components.next(), components.next()) {
         // Exactly one component, and the path didn't normalise anything away
         (Some(Component::Normal(name)), None) if name.to_str() == Some(segment) => Ok(()),
-        _ => Err(anyhow::anyhow!(
-            "Invalid sync file path segment: {segment:?}"
-        )),
+        _ => Err(InvalidFilePath::Segment(segment.to_string()).into()),
     }
 }
 
@@ -136,9 +154,7 @@ impl StaticFileService {
         // gets it.
         let file_name = sanitize_filename(file_name.to_string());
         if file_name.is_empty() {
-            return Err(anyhow::anyhow!(
-                "File name is empty once sanitized, nothing left to store it under"
-            ));
+            return Err(InvalidFilePath::EmptyFileName.into());
         }
 
         // After the components are settled, so a refused one creates no directory
@@ -412,7 +428,7 @@ mod test {
 
     use crate::static_files::StaticFileCategory;
 
-    use super::{StaticFileService, STATIC_FILE_DIR};
+    use super::{InvalidFilePath, StaticFileService, STATIC_FILE_DIR};
 
     const TEST_DIR: &str = "test_static_files";
 
@@ -618,6 +634,46 @@ mod test {
 
         let escaped = escaped_entries(&temp_dir, &service);
         assert!(escaped.is_empty(), "traversal created {:?}", escaped);
+    }
+
+    /// The HTTP layers tell a bad request from a server fault by downcasting to this,
+    /// so the type has to survive the trip out of each entry point rather than being
+    /// flattened into a message on the way.
+    #[test]
+    fn a_refused_path_component_is_reported_as_an_invalid_file_path() {
+        let temp_dir = tempfile::tempdir().unwrap();
+        let service = service_in(&temp_dir);
+        let traversing = StaticFileCategory::SyncFile("..".to_string(), "rec".to_string());
+        let ordinary = StaticFileCategory::SyncFile("asset".to_string(), "rec".to_string());
+
+        let error = service
+            .reserve_file("payload.js", &traversing, None)
+            .expect_err("a traversing table name should be refused");
+        assert!(InvalidFilePath::is_in(&error), "{error:?}");
+
+        let error = service
+            .find_file("some_id", traversing.clone())
+            .expect_err("a traversing table name should be refused");
+        assert!(InvalidFilePath::is_in(&error), "{error:?}");
+
+        let error = service
+            .store_file("payload.js", traversing, "data".as_bytes())
+            .expect_err("a traversing table name should be refused");
+        assert!(InvalidFilePath::is_in(&error), "{error:?}");
+
+        let error = service
+            .reserve_file("payload.js", &ordinary, Some("..".to_string()))
+            .expect_err("a traversing file id should be refused");
+        assert!(InvalidFilePath::is_in(&error), "{error:?}");
+
+        // A name with nothing left after sanitizing is the same kind of thing
+        let error = service
+            .reserve_file("", &ordinary, None)
+            .expect_err("a file name that sanitizes to nothing should be refused");
+        assert!(InvalidFilePath::is_in(&error), "{error:?}");
+
+        // ...and an ordinary failure is not, or every one of them would answer 400
+        assert!(!InvalidFilePath::is_in(&anyhow::anyhow!("disk on fire")));
     }
 
     /// The other direction: ordinary ids must still work.
