@@ -7,8 +7,12 @@ use graphql_core::loader::{
 };
 use graphql_core::ContextExt;
 use graphql_types::types::program::{patient::PatientNode, program_node::ProgramNode};
-use graphql_types::types::{filter_custom_fields, DiagnosisNode, ItemNode, UserNode};
-use repository::{PrescriptionRequest, PrescriptionRequestLineRow, PrescriptionRequestRow};
+use graphql_types::types::{
+    filter_custom_fields, ClinicianNode, DiagnosisNode, ItemNode, UserNode,
+};
+use repository::{
+    ClinicianRow, PrescriptionRequest, PrescriptionRequestLineRow, PrescriptionRequestRow,
+};
 use service::prescription_request::update::PRESCRIPTION_REQUEST_CUSTOM_FIELD_SCOPE;
 use service::ListResult;
 
@@ -83,12 +87,22 @@ impl PrescriptionRequestNode {
                 allowed_ctx: vec![],
                 patient,
             })
-            .ok_or_else(|| {
-                Error::new(format!(
-                    "Failed to load patient: {}",
-                    self.row().patient_id
-                ))
-            })
+            .ok_or_else(|| Error::new(format!("Failed to load patient: {}", self.row().patient_id)))
+    }
+
+    /// The clinician the request names — resolved through `clinician_link`,
+    /// so this is the clinician's own id and stays right across a merge. Null
+    /// when none was chosen; distinct from `user`, which is who entered the
+    /// request (spec/prescription-requests § who is recorded).
+    pub async fn clinician_id(&self) -> Option<String> {
+        self.clinician_row()
+            .as_ref()
+            .map(|clinician| clinician.id.clone())
+    }
+    pub async fn clinician(&self) -> Option<ClinicianNode> {
+        self.clinician_row()
+            .as_ref()
+            .map(|clinician| ClinicianNode::from_domain(clinician.clone()))
     }
 
     pub async fn diagnosis_id(&self) -> &Option<String> {
@@ -121,10 +135,9 @@ impl PrescriptionRequestNode {
             }))
     }
 
-    /// The user who entered the request — and so, the prescriber
-    /// (spec/prescription-requests § who prescribed). There is no clinician
-    /// field on this node: the picker was removed, and `created_by` is the
-    /// sole record of who prescribed.
+    /// The account that ENTERED the request. Never presented as the
+    /// prescriber, and not the same fact as `clinician`
+    /// (spec/prescription-requests § who is recorded).
     pub async fn user(&self, ctx: &Context<'_>) -> Result<Option<UserNode>> {
         let loader = ctx.get_loader::<DataLoader<UserLoader>>();
         Ok(loader
@@ -166,6 +179,10 @@ impl PrescriptionRequestNode {
 
     pub fn row(&self) -> &PrescriptionRequestRow {
         &self.prescription_request.prescription_request_row
+    }
+
+    pub fn clinician_row(&self) -> &Option<ClinicianRow> {
+        &self.prescription_request.clinician_row
     }
 }
 
