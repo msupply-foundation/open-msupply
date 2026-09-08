@@ -124,6 +124,21 @@ export { Select } from '../ui/elements/selectors/Select';
 export type { SelectOption } from '../ui/elements/selectors/Select';
 export { FormColumn } from '../ui/layout/Form/FormColumn';
 export { FormColumns } from '../ui/layout/Form/FormColumns';
+// The settings-form set — what the Stocktake Helper's Settings screen needs
+// (plugins/cook_islands, #489): save/discard actions, the numeric thresholds,
+// the item search box, and the per-item Essential toggle.
+// NumberField and TextField are already in this barrel's graph (CurrencyField
+// wraps NumberField, which renders through TextField), so exporting them keeps
+// two modules alive that ship regardless; Button and ToggleSwitch are new
+// CSS-bearing modules in the SDK chunk (measured: kdd/bundle-size-by-pr).
+export { Button } from '../ui/elements/buttons/Button';
+export type { ButtonProps } from '../ui/elements/buttons/Button';
+export { NumberField } from '../ui/elements/inputs/NumberField';
+export type { NumberFieldProps } from '../ui/elements/inputs/NumberField';
+export { TextField } from '../ui/elements/inputs/TextField';
+export type { TextFieldProps } from '../ui/elements/inputs/TextField';
+export { ToggleSwitch } from '../ui/elements/inputs/ToggleSwitch';
+export type { ToggleSwitchProps } from '../ui/elements/inputs/ToggleSwitch';
 
 // ── UI kit — icons that carry meaning ───────────────────────────────────────
 /*
