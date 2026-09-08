@@ -42,6 +42,18 @@ const SyncModal = lazy(() =>
   }))
 );
 
+// The cold-chain notification band (spec/cold-chain-monitoring § S5) stands
+// above EVERY screen while the store runs the vaccine module and a breach or
+// excursion is outstanding, so it is mounted here — once, above the page —
+// rather than by the monitoring screen. Its own gate decides whether anything
+// renders or is even fetched; a store without the module costs nothing. Lazy,
+// so the band's chunk loads with the shell only once a session exists.
+const ColdChainNotification = lazy(() =>
+  import('../sections/cold-chain-monitoring/notification/ColdChainNotification').then(
+    m => ({ default: m.ColdChainNotification })
+  )
+);
+
 // The store editor is the settings vertical's chunk (spec/settings § S5) —
 // loaded on first open from the store picker's Edit action, not with the shell.
 const StoreEditorModal = lazy(() =>
@@ -245,6 +257,11 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
           onSyncOpen={openSync}
           onLogoutRequest={() => setLogoutConfirmOpen(true)}
         />
+        {/* The cold-chain notification band, above the page's own app bar
+            (spec/cold-chain-monitoring ui-surface S5 § layout). Renders
+            nothing on a store without the vaccine module or with nothing
+            outstanding. */}
+        <ColdChainNotification />
         <Show
           when={access().kind === 'ok'}
           fallback={
