@@ -1,11 +1,16 @@
 # Locations for the current store, two shapes for two picker roles (see
 # spec/ui-standards/components.md → Location lookup — plain vs volume-aware).
 #
+# BOTH sort by name, explicitly: absent a sort the server orders locations by
+# `id` — a UUID, so the picker's options arrive in an order no user can read
+# (repository/src/db_diesel/location.rs). Every surface that lists locations
+# wants them alphabetical, so the sort belongs here rather than at each caller.
+#
 # `locations` — code + name only. Backs the volume-BLIND picker (LocationSelect),
 # used where a location is merely referenced (scoping a stocktake count, a list
 # filter). No capacity fetched.
 query locations($storeId: String!) {
-  locations(storeId: $storeId) {
+  locations(storeId: $storeId, sort: [{ key: name }]) {
     ... on LocationConnector {
       __typename
       nodes {
@@ -28,7 +33,7 @@ query locations($storeId: String!) {
 # volume is shown rather than cached — the consuming route/view fetches this
 # locally and passes it down.
 query locationsWithVolume($storeId: String!) {
-  locations(storeId: $storeId) {
+  locations(storeId: $storeId, sort: [{ key: name }]) {
     ... on LocationConnector {
       __typename
       nodes {
