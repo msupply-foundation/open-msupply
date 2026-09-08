@@ -493,8 +493,14 @@ pub struct JsonRawRow {
     #[diesel(sql_type = Text)]
     pub json_row: String,
 }
+/// Runs an arbitrary statement with nothing standing between it and the database.
+///
+/// `pub(crate)` on purpose: `raw_query_read_only` is the only entry point that should be
+/// reachable from outside this crate, and the two sit next to each other. Making this one
+/// public again would put the guard one `use` away from being bypassed by the next
+/// binding that wants raw SQL.
 // TODO should accept parameters
-pub fn raw_query(
+pub(crate) fn raw_query(
     connection: &StorageConnection,
     query: String,
 ) -> Result<Vec<JsonRawRow>, RepositoryError> {
@@ -514,14 +520,39 @@ pub fn raw_query(
 /// keep working, and the connection here is often lent by the caller
 /// (`service::boajs::context::with_shared_connection`), so any state this sets has to be
 /// undone before returning.
+///
+/// # The connection must not already be in a transaction
+///
+/// Enforced below, because on postgres it is what keeps the read-only setting from
+/// escaping. `transaction_sync_etc(_, false)` opens a `SAVEPOINT` rather than a fresh
+/// transaction when one is already open, and `SET TRANSACTION READ ONLY` applies to the
+/// whole enclosing transaction and outlives the `RELEASE` — so the caller's transaction
+/// would be left read-only for the rest of its life.
+///
+/// The plugin path never arrives in a transaction: `with_shared_connection` refuses to
+/// lend an in-transaction connection and the fallback checks out a fresh one.
 pub fn raw_query_read_only(
     connection: &StorageConnection,
     query: String,
 ) -> Result<Vec<JsonRawRow>, RepositoryError> {
+    let transaction_level = connection
+        .lock()
+        .transaction_level::<RepositoryError>()
+        .map_err(TransactionError::to_inner_error)?;
+    if transaction_level > 0 {
+        return Err(RepositoryError::DBError {
+            msg: "Refusing to run a read-only query on a connection that is already in a \
+                  transaction"
+                .to_string(),
+            extra: format!("transaction level {transaction_level}"),
+        });
+    }
+
     if cfg!(feature = "postgres") {
         // `SET TRANSACTION READ ONLY` applies to the transaction it opens and ends with it,
         // so nothing leaks back to a lent connection. It must be the first statement in the
-        // transaction, which is why this doesn't reuse an outer one.
+        // transaction, which is why this opens its own rather than reusing an outer one —
+        // and why the check above insists there is no outer one to reuse.
         connection
             .transaction_sync_etc(
                 |connection| -> Result<Vec<JsonRawRow>, RepositoryError> {
@@ -605,6 +636,38 @@ mod raw_query_test {
             .unwrap()
             .unwrap();
         assert_eq!(user.hashed_password, "ORIGINAL-HASH");
+    }
+
+    /// The read-only setting is transaction-scoped on postgres, and `transaction_sync_etc`
+    /// gives an already-in-transaction connection a `SAVEPOINT` whose `RELEASE` would not
+    /// undo it - so a connection with a transaction open is refused outright rather than
+    /// left read-only for the rest of the caller's transaction.
+    #[actix_rt::test]
+    async fn raw_query_read_only_refuses_a_connection_already_in_a_transaction() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "raw_query_read_only_refuses_in_transaction",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        connection
+            .transaction_sync(|transaction_connection| {
+                assert!(
+                    raw_query_read_only(transaction_connection, "SELECT 1".to_string()).is_err(),
+                    "read-only query accepted a connection already in a transaction"
+                );
+                Ok(()) as Result<(), RepositoryError>
+            })
+            .unwrap();
+
+        // The caller's transaction was not left read-only by the refusal
+        let store = StoreRowRepository::new(&connection)
+            .find_one_by_id("store_a")
+            .unwrap()
+            .unwrap();
+        StoreRowRepository::new(&connection)
+            .upsert_one(&store)
+            .unwrap();
     }
 
     /// The reads plugins actually make must still work, and the connection must be usable
