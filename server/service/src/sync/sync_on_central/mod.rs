@@ -1,6 +1,6 @@
 use std::{
     collections::HashSet,
-    sync::{Arc, RwLock},
+    sync::{Arc, LazyLock, RwLock},
     vec,
 };
 
@@ -198,12 +198,27 @@ pub async fn push(
     })
 }
 
+/// The wire table names a remote site is allowed to author over v6.
+static SITE_AUTHORED_TABLES: LazyLock<HashSet<String>> = LazyLock::new(site_authored_tables);
+
+/// Every wire table name this server has a translator for.
+static TRANSLATED_TABLES: LazyLock<HashSet<String>> = LazyLock::new(translated_tables);
+
 /// Rejects a pushed batch that contains a table the sending site may not author.
 ///
 /// The whole batch is refused rather than the offending rows dropped: a legitimate
 /// site never sends one (`build_v6_push_filter` only picks up locally originated
 /// records), so a record reaching here means the site is broken or hostile, and
 /// silently dropping it would hide that.
+///
+/// A table this server has no translator for is a different thing and is let through.
+/// Central holds no opinion about it — nothing can integrate it, so the row lands in
+/// the buffer and fails there with `Translator for record not found`, exactly as it did
+/// before this check existed. Refusing the batch instead would turn a site running
+/// ahead of central into a site that cannot sync at all: it would retry the same batch
+/// forever and its push queue would never drain. Everything the authoring rule is
+/// actually protecting — `backend_plugin`, `user`, `report`, `store` — is a table
+/// central does have a translator for, so this costs the check nothing.
 ///
 /// # Changing the allowed set is a breaking change for sites
 ///
@@ -218,20 +233,30 @@ fn validate_site_authored_tables(
     rows: &[SyncBufferRowInsert],
     site_id: i32,
 ) -> Result<(), SyncParsedErrorV6> {
-    let authored_by_sites = site_authored_tables();
-
     for row in rows {
-        if !authored_by_sites.contains(row.table_name.as_str()) {
-            log::error!(
-                "Site {} pushed a record for table '{}', which sites may not author over v6 (record id '{}')",
+        if SITE_AUTHORED_TABLES.contains(row.table_name.as_str()) {
+            continue;
+        }
+
+        if !TRANSLATED_TABLES.contains(row.table_name.as_str()) {
+            log::warn!(
+                "Site {} pushed a record for table '{}', which no translator on this server handles - leaving it to fail at integration (record id '{}')",
                 site_id,
                 row.table_name,
                 row.record_id
             );
-            return Err(SyncParsedErrorV6::TableNotAuthoredBySite(
-                row.table_name.clone(),
-            ));
+            continue;
         }
+
+        log::error!(
+            "Site {} pushed a record for table '{}', which sites may not author over v6 (record id '{}')",
+            site_id,
+            row.table_name,
+            row.record_id
+        );
+        return Err(SyncParsedErrorV6::TableNotAuthoredBySite(
+            row.table_name.clone(),
+        ));
     }
 
     Ok(())
@@ -251,6 +276,12 @@ fn validate_site_authored_tables(
 ///    listing only `Central` (or `LegacyOnly`, which covers tables this server doesn't
 ///    know) is central's alone. V7 enforces the same declaration in
 ///    `sync_v7::validate::validate_on_central`.
+///
+/// The name taken is `table_name()`, not `table_names()`, because that is the one the
+/// push side writes onto the wire: `PushTranslateResult::upsert`/`delete` are called
+/// with `self.table_name()` everywhere. `table_names()` is the pull-side match, and a
+/// translator that answered to several names there would otherwise make all of them
+/// site-authorable on the strength of the one it can actually send.
 ///
 /// Only the table-level half of the v7 check is applied. The row-level arms (`Remote`,
 /// `Patient`, ...) match a record against the source site's active stores, which v6
@@ -295,14 +326,28 @@ fn site_authored_tables() -> HashSet<String> {
                 return None;
             }
 
-            Some(
-                translator
-                    .table_names()
-                    .into_iter()
-                    .map(|table_name| table_name.to_string()),
-            )
+            Some(translator.table_name().to_string())
         })
-        .flatten()
+        .collect()
+}
+
+/// Every wire table name this server has a translator for.
+///
+/// Integration matches a buffer row to a translator with
+/// `should_translate_from_sync_record`, which is `table_names()` by default, so this is
+/// the set of names that can be integrated at all. A name outside it has nothing to run
+/// against and fails integration with `Translator for record not found` — which is why
+/// `validate_site_authored_tables` can safely leave it to the buffer instead of
+/// refusing the batch it arrived in.
+fn translated_tables() -> HashSet<String> {
+    all_translators()
+        .iter()
+        .flat_map(|translator| {
+            translator
+                .table_names()
+                .into_iter()
+                .map(|table_name| table_name.to_string())
+        })
         .collect()
 }
 
@@ -628,7 +673,9 @@ pub(crate) fn adjust_v6_cursor(v6_cursor: u64) -> i64 {
 
 #[cfg(test)]
 mod tests {
-    use super::{adjust_v6_cursor, site_authored_tables, validate_site_authored_tables};
+    use super::{
+        adjust_v6_cursor, validate_site_authored_tables, SITE_AUTHORED_TABLES, TRANSLATED_TABLES,
+    };
     use crate::sync::{
         api::{CommonSyncRecord, SyncAction},
         api_v6::SyncParsedErrorV6,
@@ -638,7 +685,21 @@ mod tests {
     use serde_json::json;
 
     fn site_may_author(table_name: &str) -> bool {
-        site_authored_tables().contains(table_name)
+        SITE_AUTHORED_TABLES.contains(table_name)
+    }
+
+    fn buffer_rows(table_names: &[&str]) -> Vec<repository::SyncBufferRowInsert> {
+        let records = table_names
+            .iter()
+            .map(|table_name| CommonSyncRecord {
+                table_name: table_name.to_string(),
+                record_id: "some-record".to_string(),
+                action: SyncAction::Update,
+                record_data: json!({}),
+            })
+            .collect();
+
+        CommonSyncRecord::to_buffer_rows(records, 42).unwrap()
     }
 
     /// The two payloads from security audit DS-1, as they arrive at
@@ -686,17 +747,7 @@ mod tests {
     /// A batch of the tables sites really do push must pass untouched.
     #[test]
     fn v6_push_accepts_ordinary_site_records() {
-        let records = ["asset", "rnr_form", "vaccination", "om_sync_message"]
-            .into_iter()
-            .map(|table_name| CommonSyncRecord {
-                table_name: table_name.to_string(),
-                record_id: "some-record".to_string(),
-                action: SyncAction::Update,
-                record_data: json!({}),
-            })
-            .collect();
-
-        let rows = CommonSyncRecord::to_buffer_rows(records, 42).unwrap();
+        let rows = buffer_rows(&["asset", "rnr_form", "vaccination", "om_sync_message"]);
         assert!(validate_site_authored_tables(&rows, 42).is_ok());
     }
 
@@ -779,14 +830,19 @@ mod tests {
                 continue;
             }
 
-            for table_name in translator.table_names() {
-                assert!(
-                    site_may_author(table_name),
-                    "'{}' is pushed to central over v6 but would be rejected at ingest",
-                    table_name
-                );
-                checked += 1;
-            }
+            // The name the push side writes onto the wire, which is the one ingest sees
+            let table_name = translator.table_name();
+            assert!(
+                !table_name.is_empty(),
+                "a translator that pushes to central over v6 must implement table_name(): \
+                 it is what PushTranslateResult sends and what ingest matches on"
+            );
+            assert!(
+                site_may_author(table_name),
+                "'{}' is pushed to central over v6 but would be rejected at ingest",
+                table_name
+            );
+            checked += 1;
         }
 
         // Guard against the loop silently checking nothing
@@ -797,25 +853,58 @@ mod tests {
         );
     }
 
-    /// The allowed set has to stay a small, deliberate list. A regression that widened it
-    /// to "anything not declared `Authoring::Central`" would sail past the tests above,
-    /// which only name tables one at a time.
+    /// The allowed set written out, because it is the security boundary and nothing else
+    /// states it in one place. A regression that widened the derivation — dropping the
+    /// "is it pushed over v6" condition, say, and admitting anything not declared
+    /// `Authoring::Central` — would sail past the tests above, which only name tables one
+    /// at a time.
+    ///
+    /// Deliberately adding a table to the v6 push set means adding it here. Read the note
+    /// on `validate_site_authored_tables` first if a name is coming *out*: sites already
+    /// in the field keep pushing the old set.
     #[test]
-    fn site_authored_tables_is_the_v6_push_set_and_no_wider() {
-        let authored = site_authored_tables();
+    fn site_authored_tables_is_this_exact_set() {
+        let mut authored = SITE_AUTHORED_TABLES.iter().cloned().collect::<Vec<_>>();
+        authored.sort();
 
-        let translators = all_translators();
-        let every_table_a_site_could_name = translators
-            .iter()
-            .flat_map(|translator| translator.table_names())
-            .collect::<std::collections::HashSet<_>>();
+        assert_eq!(
+            authored,
+            [
+                "asset",
+                "asset_internal_location",
+                "asset_log",
+                "contact_form",
+                "name",
+                "name_oms_fields",
+                "name_store_join",
+                "om_sync_message",
+                "plugin_data",
+                "rnr_form",
+                "rnr_form_line",
+                "sync_file_reference",
+                "system_log",
+                "vaccination",
+            ]
+        );
+    }
 
+    /// A table central has no translator for is not central's to protect: nothing can
+    /// integrate it, so it goes to the buffer and errors there. Refusing the batch would
+    /// leave a site running ahead of central retrying it forever, with its whole push
+    /// queue stuck behind it.
+    #[test]
+    fn v6_push_lets_through_a_table_this_server_does_not_know() {
+        let unknown = "table_from_a_newer_site";
+        assert!(!TRANSLATED_TABLES.contains(unknown));
+
+        assert!(validate_site_authored_tables(&buffer_rows(&[unknown]), 42).is_ok());
+
+        // ...but a table central *does* know and reserves to itself is still refused,
+        // even alongside one it doesn't
+        let error = validate_site_authored_tables(&buffer_rows(&[unknown, "backend_plugin"]), 42)
+            .expect_err("a central-only table should still be rejected");
         assert!(
-            authored.len() * 2 < every_table_a_site_could_name.len(),
-            "site-authored set ({}) should be a small fraction of the {} tables a site \
-             could name; has it widened past the v6 push set?",
-            authored.len(),
-            every_table_a_site_could_name.len()
+            matches!(error, SyncParsedErrorV6::TableNotAuthoredBySite(rejected) if rejected == "backend_plugin")
         );
     }
 
