@@ -76,7 +76,7 @@ query periods($storeId: String!, $programId: String, $today: NaiveDate!) {
 # form (spec/rnr-forms contract § creation rules).
 query schedulesWithPeriods($storeId: String!, $programId: String!) {
   schedulesWithPeriodsByProgram(storeId: $storeId, programId: $programId) {
-    ... on SchedulesWithPeriodsConnector {
+    ... on PeriodSchedulesConnector {
       __typename
       nodes {
         id
