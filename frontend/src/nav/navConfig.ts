@@ -205,11 +205,12 @@ export const navConfig: NavItem[] = [
         permission: 'PRESCRIPTION_REQUEST_QUERY',
       },
       {
-        // The dispensing vertical, relabelled "Dispensing" (its path and spec
-        // folder keep their old names) — "Prescriptions" names the prescriber's
-        // side above.
+        // The dispensing vertical, relabelled "Dispensing" and moved onto a
+        // matching path (issue #551; the old segment redirects, see App.tsx).
+        // Its spec folder keeps the old `prescriptions/` name —
+        // "Prescriptions" now names the prescriber's side above.
         labelKey: 'dispensing',
-        path: 'dispensary/prescription',
+        path: 'dispensary/dispensing',
         permission: 'PRESCRIPTION_QUERY',
       },
       {
@@ -225,7 +226,7 @@ export const navConfig: NavItem[] = [
         // (spec/navigation › supporting destinations).
         supporting: [
           'dispensary/prescription-request',
-          'dispensary/prescription',
+          'dispensary/dispensing',
           'dispensary/encounter',
         ],
       },

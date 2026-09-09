@@ -19,6 +19,7 @@ import { authUser, checkAuth, startActivityTracking } from './auth/authContext';
 import { InitialisationPage } from './initialisation/InitialisationPage';
 import { resolveStorePath, StoreGuardLayout } from './store/StoreGuardLayout';
 import { navDestinations } from './nav/navConfig';
+import { dispensingHref } from './nav/legacyPaths';
 import { routerBase } from './nav/storeRelativePath';
 import { DashboardPage } from './sections/dashboard';
 import { stocktakesRoutes } from './sections/stocktakes';
@@ -98,7 +99,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'catalogue/master-lists': masterListsRoutes,
   'dispensary/patients': patientsRoutes,
   'dispensary/clinicians': cliniciansRoutes,
-  'dispensary/prescription': prescriptionsRoutes,
+  'dispensary/dispensing': prescriptionsRoutes,
   'dispensary/prescription-request': prescriptionRequestsRoutes,
   reports: reportsRoutes,
   settings: settingsRoutes,
@@ -123,6 +124,20 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
 const DashboardRedirect: Component = () => {
   const params = useParams();
   return <Navigate href={`/${params['storeId']}`} />;
+};
+
+/**
+ * The legacy `/{storeId}/dispensary/prescription` addresses, answered with the
+ * screen they name. The dispensing vertical was relabelled "Dispensing" and its
+ * path moved with the label (issue #551), so this keeps every bookmark, shared
+ * link and plugin deep link made under the old segment working — including the
+ * detail addresses, whose trailing segments are carried across unchanged.
+ */
+const DispensingRedirect: Component = () => {
+  const params = useParams();
+  return (
+    <Navigate href={dispensingHref(params['storeId'] ?? '', params['rest'])} />
+  );
 };
 
 export const App: Component = () => {
@@ -260,6 +275,16 @@ export const App: Component = () => {
                       the not-found catch-all below, which is a worse answer
                       than the screen the user asked for. */}
                     <Route path="/dashboard" component={DashboardRedirect} />
+                    {/* Likewise for the dispensing vertical's old segment
+                      (issue #551) — both the list and any detail beneath it. */}
+                    <Route
+                      path="/dispensary/prescription/*rest"
+                      component={DispensingRedirect}
+                    />
+                    <Route
+                      path="/dispensary/prescription"
+                      component={DispensingRedirect}
+                    />
                     <For each={Object.entries(sectionRoutes)}>
                       {([path, routes]) => (
                         <Route path={`/${path}`}>{routes()}</Route>
