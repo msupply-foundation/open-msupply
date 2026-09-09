@@ -5,21 +5,21 @@ use repository::{Period, PeriodScheduleRow};
 use service::rnr_form::schedules_with_periods::PeriodSchedule;
 
 #[derive(SimpleObject)]
-pub struct SchedulesWithPeriodsConnector {
+pub struct PeriodSchedulesConnector {
     // If this is ever paginated, should add `totalCount` here
-    pub nodes: Vec<ScheduleWithPeriodsNode>,
+    pub nodes: Vec<PeriodScheduleNode>,
 }
 
-impl SchedulesWithPeriodsConnector {
-    pub fn from_domain(schedules: Vec<PeriodSchedule>) -> SchedulesWithPeriodsConnector {
-        SchedulesWithPeriodsConnector {
+impl PeriodSchedulesConnector {
+    pub fn from_domain(schedules: Vec<PeriodSchedule>) -> PeriodSchedulesConnector {
+        PeriodSchedulesConnector {
             nodes: schedules
                 .into_iter()
                 .map(
                     |PeriodSchedule {
                          schedule_row,
                          periods,
-                     }| ScheduleWithPeriodsNode {
+                     }| PeriodScheduleNode {
                         schedule_row,
                         periods,
                     },
@@ -30,17 +30,17 @@ impl SchedulesWithPeriodsConnector {
 }
 
 #[derive(Union)]
-pub enum SchedulesWithPeriodsResponse {
-    Response(SchedulesWithPeriodsConnector),
+pub enum PeriodSchedulesResponse {
+    Response(PeriodSchedulesConnector),
 }
 
-pub struct ScheduleWithPeriodsNode {
+pub struct PeriodScheduleNode {
     pub schedule_row: PeriodScheduleRow,
     pub periods: Vec<Period>,
 }
 
 #[Object]
-impl ScheduleWithPeriodsNode {
+impl PeriodScheduleNode {
     pub async fn id(&self) -> &str {
         &self.schedule_row.id
     }

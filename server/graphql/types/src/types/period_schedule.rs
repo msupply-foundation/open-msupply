@@ -3,23 +3,23 @@ use graphql_core::generic_filters::EqualFilterStringInput;
 use repository::{EqualFilter, PeriodScheduleFilter, PeriodScheduleRow};
 use service::ListResult;
 
-pub struct PeriodScheduleNode {
+pub struct PeriodScheduleRowNode {
     period_schedule: PeriodScheduleRow,
 }
 
 #[derive(SimpleObject)]
-pub struct PeriodSchedulesConnector {
-    pub nodes: Vec<PeriodScheduleNode>,
+pub struct PeriodScheduleConnector {
+    pub nodes: Vec<PeriodScheduleRowNode>,
     pub total_count: u32,
 }
 
 #[derive(Union)]
-pub enum PeriodSchedulesResponse {
-    Response(PeriodSchedulesConnector),
+pub enum PeriodScheduleResponse {
+    Response(PeriodScheduleConnector),
 }
 
 #[Object]
-impl PeriodScheduleNode {
+impl PeriodScheduleRowNode {
     pub async fn id(&self) -> &str {
         &self.row().id
     }
@@ -29,9 +29,9 @@ impl PeriodScheduleNode {
     }
 }
 
-impl PeriodScheduleNode {
-    pub fn from_domain(period_schedule: PeriodScheduleRow) -> PeriodScheduleNode {
-        PeriodScheduleNode { period_schedule }
+impl PeriodScheduleRowNode {
+    pub fn from_domain(period_schedule: PeriodScheduleRow) -> PeriodScheduleRowNode {
+        PeriodScheduleRowNode { period_schedule }
     }
 
     pub fn row(&self) -> &PeriodScheduleRow {
@@ -39,13 +39,13 @@ impl PeriodScheduleNode {
     }
 }
 
-impl PeriodSchedulesConnector {
-    pub fn from_domain(schedules: ListResult<PeriodScheduleRow>) -> PeriodSchedulesConnector {
-        PeriodSchedulesConnector {
+impl PeriodScheduleConnector {
+    pub fn from_domain(schedules: ListResult<PeriodScheduleRow>) -> PeriodScheduleConnector {
+        PeriodScheduleConnector {
             nodes: schedules
                 .rows
                 .into_iter()
-                .map(PeriodScheduleNode::from_domain)
+                .map(PeriodScheduleRowNode::from_domain)
                 .collect(),
             total_count: schedules.count,
         }
