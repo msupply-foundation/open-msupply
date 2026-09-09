@@ -1041,19 +1041,19 @@ mod test {
     /// clear the supplier comment: `UpdateStockInLine` has no field for it, and
     /// an edit to the line around it leaves it exactly as it arrived.
     #[actix_rt::test]
-    async fn update_stock_in_line_leaves_supplier_comment_untouched() {
+    async fn update_stock_in_line_leaves_transfer_comment_untouched() {
         fn invoice() -> InvoiceRow {
-            cost_price_test_invoice("supplier_comment_inbound", None, None, None)
+            cost_price_test_invoice("transfer_comment_inbound", None, None, None)
         }
         fn line() -> InvoiceLineRow {
             InvoiceLineRow {
-                supplier_comment: Some("Only 2 packs left in stock".to_string()),
-                ..cost_price_test_line("supplier_comment_line", &invoice().id)
+                transfer_comment: Some("Only 2 packs left in stock".to_string()),
+                ..cost_price_test_line("transfer_comment_line", &invoice().id)
             }
         }
 
         let (_, connection, connection_manager, _) = setup_all_with_data(
-            "update_stock_in_line_leaves_supplier_comment_untouched",
+            "update_stock_in_line_leaves_transfer_comment_untouched",
             MockDataInserts::all(),
             MockData {
                 invoices: vec![invoice()],
@@ -1094,6 +1094,6 @@ mod test {
         assert_eq!(updated.number_of_packs, 7.0);
         assert_eq!(updated.note, Some("Received short".to_string()));
         // The line's own note is editable; the supplier's comment is not.
-        assert_eq!(updated.supplier_comment, line().supplier_comment);
+        assert_eq!(updated.transfer_comment, line().transfer_comment);
     }
 }

@@ -209,7 +209,7 @@ const DATA: Line[] = Array.from({ length: 52 }, (_, i): Line => {
     note: NOTES[i % NOTES.length] || null,
     // Every third item carries the supplying store's reason for a short
     // supply, and a requested quantity from the linked internal order.
-    supplierComment:
+    transferComment:
       i % 3 === 0 ? 'Partial supply — stock on back order' : null,
     requisitionLine:
       i % 4 === 3

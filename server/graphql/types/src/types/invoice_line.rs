@@ -335,8 +335,8 @@ impl InvoiceLineNode {
     /// quantity and supplier comment). Authored on the outbound side and
     /// carried across by the shipment transfer — read-only on an inbound
     /// shipment: no inbound mutation input accepts it.
-    pub async fn supplier_comment(&self) -> &Option<String> {
-        &self.row().supplier_comment
+    pub async fn transfer_comment(&self) -> &Option<String> {
+        &self.row().transfer_comment
     }
 
     /// The line of the shipment's linked requisition carrying the same item.

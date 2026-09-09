@@ -46,7 +46,7 @@ pub struct DraftStockOutLine {
     pub received_number_of_packs: Option<f64>,
     pub reason_option_id: Option<String>,
     /// From the existing invoice line; a batch with no line yet carries none.
-    pub supplier_comment: Option<String>,
+    pub transfer_comment: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -326,7 +326,7 @@ impl DraftStockOutLine {
             volume_per_pack,
             received_number_of_packs: None,
             reason_option_id: None,
-            supplier_comment: None,
+            transfer_comment: None,
         }
     }
 
@@ -348,7 +348,7 @@ impl DraftStockOutLine {
             program_id,
             received_number_of_packs,
             reason_option_id,
-            supplier_comment,
+            transfer_comment,
             ..
         } = line.invoice_line_row;
 
@@ -398,7 +398,7 @@ impl DraftStockOutLine {
             volume_per_pack,
             received_number_of_packs,
             reason_option_id,
-            supplier_comment,
+            transfer_comment,
         })
     }
 }

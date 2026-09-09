@@ -33,7 +33,7 @@ pub struct UpdateStockOutLine {
     pub reason_option_id: Option<NullableUpdate<String>>,
     /// `None` leaves the stored value alone; `Some(NullableUpdate { value:
     /// None })` clears it.
-    pub supplier_comment: Option<NullableUpdate<String>>,
+    pub transfer_comment: Option<NullableUpdate<String>>,
 }
 
 #[derive(Clone, Debug, PartialEq)]

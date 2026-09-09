@@ -47,7 +47,7 @@ const TRANS_LINE_1: (&str, &str) = (
         "quantity": 700.36363636,
         "repeat_ID": "",
         "sell_price": 0,
-        "supplier_comment": "Only 2 packs left in stock",
+        "transfer_comment": "Only 2 packs left in stock",
         "sentQuantity": 0,
         "sent_pack_size": 1,
         "source_backorder_id": "",
@@ -113,7 +113,7 @@ fn trans_line_1_pull_record() -> TestSyncIncomingRecord {
             status: None,
             received_number_of_packs: None,
             legacy_goods_received_line_id: None,
-            supplier_comment: Some("Only 2 packs left in stock".to_string()),
+            transfer_comment: Some("Only 2 packs left in stock".to_string()),
         },
     )
 }
@@ -161,7 +161,7 @@ fn trans_line_1_push_record() -> TestSyncOutgoingRecord {
             volume_per_pack: 10.0,
             shipped_pack_size: Some(1.0),
             goods_received_lines_ID: None,
-            supplier_comment: Some("Only 2 packs left in stock".to_string()),
+            transfer_comment: Some("Only 2 packs left in stock".to_string()),
         }),
     }
 }
@@ -267,7 +267,7 @@ fn trans_line_2_pull_record() -> TestSyncIncomingRecord {
             status: None,
             received_number_of_packs: None,
             legacy_goods_received_line_id: None,
-            supplier_comment: None,
+            transfer_comment: None,
         },
     )
 }
@@ -315,7 +315,7 @@ fn trans_line_2_push_record() -> TestSyncOutgoingRecord {
             volume_per_pack: 0.0,
             shipped_pack_size: Some(100.0),
             goods_received_lines_ID: None,
-            supplier_comment: None,
+            transfer_comment: None,
         }),
     }
 }
@@ -429,7 +429,7 @@ fn trans_line_om_fields_pull_record() -> TestSyncIncomingRecord {
             status: Some(repository::InvoiceLineStatus::Pending),
             received_number_of_packs: None,
             legacy_goods_received_line_id: None,
-            supplier_comment: None,
+            transfer_comment: None,
         },
     )
 }
@@ -477,7 +477,7 @@ fn trans_line_om_fields_push_record() -> TestSyncOutgoingRecord {
             volume_per_pack: 0.0,
             shipped_pack_size: Some(100.0),
             goods_received_lines_ID: None,
-            supplier_comment: None,
+            transfer_comment: None,
         }),
     }
 }
@@ -586,7 +586,7 @@ fn trans_line_om_fields_unset_tax_pull_record() -> TestSyncIncomingRecord {
             status: None,
             received_number_of_packs: None,
             legacy_goods_received_line_id: None,
-            supplier_comment: None,
+            transfer_comment: None,
         },
     )
 }
@@ -634,7 +634,7 @@ fn trans_line_om_fields_unset_tax_push_record() -> TestSyncOutgoingRecord {
             volume_per_pack: 0.0,
             shipped_pack_size: Some(100.0),
             goods_received_lines_ID: None,
-            supplier_comment: None,
+            transfer_comment: None,
         }),
     }
 }
@@ -743,7 +743,7 @@ fn trans_line_negative_pull_record() -> TestSyncIncomingRecord {
             status: None,
             received_number_of_packs: None,
             legacy_goods_received_line_id: None,
-            supplier_comment: None,
+            transfer_comment: None,
         },
     )
 }
@@ -791,7 +791,7 @@ fn trans_line_negative_push_record() -> TestSyncOutgoingRecord {
             volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
             goods_received_lines_ID: None,
-            supplier_comment: None,
+            transfer_comment: None,
         }),
     }
 }
@@ -901,7 +901,7 @@ fn trans_line_prescribed_quantity_pull_record() -> TestSyncIncomingRecord {
             status: None,
             received_number_of_packs: None,
             legacy_goods_received_line_id: None,
-            supplier_comment: None,
+            transfer_comment: None,
         },
     )
 }
@@ -950,7 +950,7 @@ fn trans_line_prescribed_quantity_push_record() -> TestSyncOutgoingRecord {
             volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
             goods_received_lines_ID: None,
-            supplier_comment: None,
+            transfer_comment: None,
         }),
     }
 }
@@ -1058,7 +1058,7 @@ fn trans_line_invalid_stockline_pull_record() -> TestSyncIncomingRecord {
             status: None,
             received_number_of_packs: None,
             legacy_goods_received_line_id: None,
-            supplier_comment: None,
+            transfer_comment: None,
         },
     )
 }
@@ -1106,7 +1106,7 @@ fn trans_line_invalid_stockline_push_record() -> TestSyncOutgoingRecord {
             volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
             goods_received_lines_ID: None,
-            supplier_comment: None,
+            transfer_comment: None,
         }),
     }
 }
@@ -1214,7 +1214,7 @@ fn trans_line_empty_stockline_pull_record() -> TestSyncIncomingRecord {
             status: None,
             received_number_of_packs: None,
             legacy_goods_received_line_id: None,
-            supplier_comment: None,
+            transfer_comment: None,
         },
     )
 }
@@ -1263,7 +1263,7 @@ fn trans_line_empty_stockline_push_record() -> TestSyncOutgoingRecord {
             volume_per_pack: 0.0,
             shipped_pack_size: Some(0.0),
             goods_received_lines_ID: None,
-            supplier_comment: None,
+            transfer_comment: None,
         }),
     }
 }

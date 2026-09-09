@@ -94,7 +94,7 @@ impl UpdateInput {
             note,
         } = self;
         ServiceInput {
-            supplier_comment: None,
+            transfer_comment: None,
             id,
             r#type: Some(StockOutType::Prescription),
             stock_line_id,

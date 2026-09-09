@@ -37,7 +37,7 @@ export type DraftStockOutLinesResult = {
 } | null;
   itemVariantId: string | null;
   receivedNumberOfPacks: number | null;
-  supplierComment: string | null;
+  transferComment: string | null;
   reasonOption: {
   id: string;
 } | null;
@@ -58,7 +58,7 @@ export type DraftStockOutLinesResult = {
 };
 
 export const DraftStockOutLines = {
-  query: "query draftStockOutLines($storeId: String!, $itemId: String!, $invoiceId: String!) {\n  draftStockOutLines(storeId: $storeId, itemId: $itemId, invoiceId: $invoiceId) {\n    placeholderQuantity\n    draftLines {\n      id\n      numberOfPacks\n      stockLineId\n      batch\n      expiryDate\n      packSize\n      sellPricePerPack\n      inStorePacks\n      availablePacks\n      stockLineOnHold\n      dosesPerUnit\n      volumePerPack\n      location {\n        id\n        code\n        onHold\n      }\n      vvmStatus {\n        id\n        description\n        unusable\n        priority\n      }\n      itemVariantId\n      receivedNumberOfPacks\n      supplierComment\n      reasonOption {\n        id\n      }\n      campaign {\n        name\n      }\n      program {\n        name\n      }\n      donor(storeId: $storeId) {\n        name\n      }\n      manufacturer(storeId: $storeId) {\n        name\n      }\n    }\n  }\n}",
+  query: "query draftStockOutLines($storeId: String!, $itemId: String!, $invoiceId: String!) {\n  draftStockOutLines(storeId: $storeId, itemId: $itemId, invoiceId: $invoiceId) {\n    placeholderQuantity\n    draftLines {\n      id\n      numberOfPacks\n      stockLineId\n      batch\n      expiryDate\n      packSize\n      sellPricePerPack\n      inStorePacks\n      availablePacks\n      stockLineOnHold\n      dosesPerUnit\n      volumePerPack\n      location {\n        id\n        code\n        onHold\n      }\n      vvmStatus {\n        id\n        description\n        unusable\n        priority\n      }\n      itemVariantId\n      receivedNumberOfPacks\n      transferComment\n      reasonOption {\n        id\n      }\n      campaign {\n        name\n      }\n      program {\n        name\n      }\n      donor(storeId: $storeId) {\n        name\n      }\n      manufacturer(storeId: $storeId) {\n        name\n      }\n    }\n  }\n}",
 } as TypedDocument<DraftStockOutLinesResult, DraftStockOutLinesVariables>;
 
 export type ItemVariantsVariables = {
@@ -102,7 +102,7 @@ export type SaveOutboundItemLinesVariables = {
     vvmStatusId?: string | null;
     receivedNumberOfPacks?: number | null;
     reasonOptionId?: string | null;
-    supplierComment?: string | null;
+    transferComment?: string | null;
   }>;
     placeholderQuantity?: number | null;
   };

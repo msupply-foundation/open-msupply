@@ -163,7 +163,7 @@ fn generate_line(new_invoice_id: &str, line: InvoiceLineRow) -> InvoiceLineRow {
             linked_invoice_line_id: line.linked_invoice_line_id,
             legacy_goods_received_line_id: None,
             // No requisition link on the copy, so no request to explain.
-            supplier_comment: None,
+            transfer_comment: None,
         };
     }
 
@@ -213,6 +213,6 @@ fn generate_line(new_invoice_id: &str, line: InvoiceLineRow) -> InvoiceLineRow {
         linked_invoice_id: None,
         linked_invoice_line_id: None,
         legacy_goods_received_line_id: None,
-        supplier_comment: None,
+        transfer_comment: None,
     }
 }
