@@ -1,8 +1,7 @@
 +++
 title = "Invoice Transfer Processor"
-weight = 10
-sort_by = "weight"
-template = "docs/section.html"
+weight = 20
+template = "docs/page.html"
 
 [extra]
 source = "code"

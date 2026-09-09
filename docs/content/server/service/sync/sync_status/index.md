@@ -1,8 +1,8 @@
 +++
 title = "Sync Logger and Sync Status"
 weight = 10
-sort_by = "weight"
-template = "docs/section.html"
+template = "docs/page.html"
+path = "server/service/sync/sync_status"
 
 [extra]
 source = "code"
