@@ -510,19 +510,168 @@ export type AnyContribution = {
     SlotRender[S];
 }[SlotId];
 
+// ── Pages & navigation ──────────────────────────────────────────────────────
+// The page contribution — NOT a slot (sdk-contract § the page contribution):
+// whole routed screens, each carrying its own routing, gating and (optional)
+// menu placement, joined to the host's one navigation registry so the menu,
+// the command palette, and the router can never disagree about them
+// (rules § pages & navigation). A menu group is a menu object, not a page —
+// it declares itself (`navSections`) and pages place themselves into it.
+
+/**
+ * The host's upper menu sections, as published placement targets — a plugin
+ * page or nav section MAY place itself against (or, for a page, inside) one of
+ * these ids (a section's id is its root path; Home's, whose path is empty, is
+ * `'home'`). The pinned lower cluster (Catalogue, Manage, Settings, Help) is
+ * not a target: plugin entries live in the upper list. A host-side test keeps
+ * this list identical to the real menu, so it can never drift.
+ */
+export const HOST_NAV_SECTION_IDS = [
+  'home',
+  'replenishment',
+  'inventory',
+  'distribution',
+  'dispensary',
+  'cold-chain',
+  'programs',
+  'reports',
+] as const;
+
+/** A published host upper-section id — a nav placement target. */
+export type HostNavSectionId = (typeof HOST_NAV_SECTION_IDS)[number];
+
+/**
+ * Where a page's navigation entry goes — one shape that covers every
+ * placement, so a new placement is never a new registration key:
+ *
+ * - `{ in }` — inside a menu section: one of the plugin's own
+ *   ({@link PluginNavSection} ids) or a published host section
+ *   ({@link HOST_NAV_SECTION_IDS}). An id that is neither refuses the plugin
+ *   at validation, by name. Inside a HOST section, `anchor` places the entry
+ *   against the section's own entry ids (an entry's id is its store-relative
+ *   path, e.g. `'inventory/stock'`); inside the plugin's own section, entries
+ *   keep `pages` declaration order and `anchor` is not read.
+ * - `{ root: true }` — a top-level entry in the menu's upper list, anchored
+ *   against the published host section ids.
+ *
+ * Absent `nav` means routed with no menu entry (and no palette row) — a
+ * detail-ish screen reached from the plugin's own UI, exactly like a host
+ * record screen.
+ *
+ * An anchor naming an entry the store's gates currently hide degrades to the
+ * container's end, named in plugin diagnostics — placement is a preference,
+ * never a gate.
+ */
+export type PluginNavPlacement =
+  | { in: HostNavSectionId | string; anchor?: Anchor<string>; root?: never }
+  | { root: true; anchor?: Anchor<HostNavSectionId>; in?: never };
+
+/** One routed screen a plugin contributes — a body, gates, and its address. */
+export interface PluginPage {
+  /** Unique within the plugin. */
+  id: string;
+  /**
+   * The page's full store-relative path — URL segments (letters, digits, `-`,
+   * `_`; each segment starts with a letter or digit). The SDK's own navigation
+   * primitives take exactly this path; the page owns everything below it
+   * (`stock-count/count/{something}` is the page's own to interpret). A path a
+   * host destination already holds refuses the whole plugin at validation; one
+   * an earlier plugin's page holds skips this page, visibly in diagnostics.
+   */
+  path: string;
+  /**
+   * The page's name — its breadcrumb, its browser-tab title, and its menu and
+   * palette label when placed — as a key in the plugin's catalogue, never a
+   * literal.
+   */
+  labelKey: PluginLocaleKey;
+  /**
+   * Loads the page's BODY component: called on first navigation to the page,
+   * never at startup (AC-PLUG-P2), behind the host's route-level pending
+   * boundary — `load: () => import('./CountPage')`. The host supplies the app
+   * frame and page frame (header, breadcrumb, the menu); the component owns
+   * only the body, receives no props, and fetches its own data through the
+   * SDK, like a dashboard body contribution does.
+   */
+  load: () => Promise<{ default: Component }>;
+  /**
+   * Store-context withhold — the capability-class gate: while it fails, the
+   * page is absent from the menu and the palette, and its URLs redirect to
+   * the landing screen, exactly as a function the store does not have. Gate
+   * POSITIVELY (`ctx.storeMode === 'dispensary'`) — see
+   * {@link SlotContext.storeMode}. Composed with the gate of the plugin nav
+   * section the page is placed in, where it is placed in one.
+   */
+  when?: (ctx: SlotContext) => boolean;
+  /**
+   * The permissions this page requires — ALL of them, as
+   * {@link SlotContext.permissions}' own server names. The permission-class
+   * gate, and the one condition behind both doors (AC-PLUG-P1): without them
+   * the entries are absent, and the page's URL shows the host's no-permission
+   * notice in place of the screen. Composed with its plugin nav section's,
+   * where the page is placed in one.
+   */
+  permissions?: readonly string[];
+  /** The menu placement; absent = routed, no menu entry. */
+  nav?: PluginNavPlacement;
+}
+
+/**
+ * A labelled menu group of the plugin's own — what the `navSections` key of a
+ * plugin definition declares. Purely a menu object: it has no path and no
+ * route of its own; pages join it by naming its id in their `nav.in`, and a
+ * section no offered page is placed in simply does not render.
+ */
+export interface PluginNavSection {
+  /** Unique within the plugin — the id pages name in `nav.in`. */
+  id: string;
+  /** The section's menu label — a key in the plugin's catalogue. */
+  labelKey: PluginLocaleKey;
+  /**
+   * Where the section sits in the menu's upper list, against the published
+   * host section ids ({@link HOST_NAV_SECTION_IDS}) — the one placement shape
+   * every anchored surface uses. Absent (or `{ end: true }`) means the end of
+   * the upper list, above the pinned lower cluster. An anchor naming a section
+   * the store's gates currently hide degrades to the end, named in plugin
+   * diagnostics — placement is a preference, never a gate.
+   */
+  anchor?: Anchor<HostNavSectionId>;
+  /**
+   * The group's capability-class gate, composed with each placed page's own:
+   * while it fails, every page placed in the section is withheld everywhere —
+   * menu, palette, and URL (redirect) — exactly as if each page's own `when`
+   * failed.
+   */
+  when?: (ctx: SlotContext) => boolean;
+  /**
+   * The group's permission-class gate, composed with each placed page's own:
+   * every named permission is required for every page placed in the section.
+   */
+  permissions?: readonly string[];
+}
+
 // ── The plugin module ───────────────────────────────────────────────────────
 
 /** A flat message catalogue — `key` → template, `{{ token }}` interpolated. */
 export type PluginMessages = Readonly<Record<string, string>>;
 
 /**
- * What the author passes to `definePlugin`. `pages` and `register` (the
- * imperative escape hatch) are not in v1 — they join here when a host surface
- * needs them.
+ * What the author passes to `definePlugin`. `register` (the imperative escape
+ * hatch) is not in v1 — it joins here when a host surface needs it.
  */
 export interface PluginDefinition {
   manifest: PluginManifest;
   contributions?: readonly AnyContribution[];
+  /**
+   * Whole routed screens — a flat list of {@link PluginPage}s, each carrying
+   * its own path, gates, and (optional) menu placement.
+   */
+  pages?: readonly PluginPage[];
+  /**
+   * The plugin's own labelled menu groups — the sections a page's
+   * `nav: { in }` places it into.
+   */
+  navSections?: readonly PluginNavSection[];
   /**
    * Registered under namespace = the plugin's code, layered under server
    * overrides.
