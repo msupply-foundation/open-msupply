@@ -86,7 +86,7 @@ export const fetchPeriods = async (
 // cascade (AC-R17).
 export type ScheduleWithPeriods = Extract<
   SchedulesWithPeriodsResult['schedulesWithPeriodsByProgram'],
-  { __typename: 'SchedulesWithPeriodsConnector' }
+  { __typename: 'PeriodSchedulesConnector' }
 >['nodes'][number];
 
 // A program's schedules with their closed periods — the schedule + period
