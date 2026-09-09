@@ -57,7 +57,6 @@
     "@graphql-codegen/core": "^6.2.0",
     "@playwright/test": "^1.61.1",
     "@types/node": "^24.13.2",
-    "bonjour-service": "^1.4.4",
     "concurrently": "^9.2.3",
     "electron": "^44.0.0",
     "eslint": "^9.39.5",
