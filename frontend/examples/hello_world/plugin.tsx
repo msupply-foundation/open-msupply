@@ -362,8 +362,9 @@ export default definePlugin({
   },
   /*
    * The PAGE contribution (plugins sdk-contract § the page contribution),
-   * behind `?pluginPages`: a labelled nav section holding one routed screen.
-   * What it proves: the section joins the menu and the command palette, the
+   * behind `?pluginPages`: a routed screen placed in a labelled nav section
+   * of the plugin's own.
+   * What it proves: the page joins the menu and the command palette, the
    * route mounts under the host frame, and the page's code — its own module,
    * inlined into this bundle by the build but a real chunk in dev — is
    * imported on first navigation, never at startup (AC-PLUG-P2). The gate here
@@ -371,16 +372,13 @@ export default definePlugin({
    * (`ctx.storeMode === 'dispensary'`), and MAY add `permissions` to guard the
    * nav entry and the URL with one condition (AC-PLUG-P1).
    */
-  pages: [
+  navSections: [
     {
-      // The entry's kind — the union discriminant. 'section' (a labelled nav
-      // section of the plugin's own) is the only arm today and the default
-      // when absent; future placements join as new kinds, and a host refuses
-      // a kind it does not provide, by name (AC-PLUG-P5).
-      kind: 'section',
+      // A menu group is a menu object, not a page: it has no path and no
+      // route of its own — pages join it by naming its id in their `nav.in`,
+      // and a group nothing offered is placed in simply does not render.
       id: 'helloSection',
       labelKey: 'pages.section',
-      path: 'hello-world',
       // Placement against a published host section id (one shape, every
       // anchored surface): the section renders just above Inventory. An anchor
       // naming a section the store's gates hide falls to the end of the upper
@@ -391,15 +389,25 @@ export default definePlugin({
       // URL without the query, so a live read would fail its own gate the
       // moment the user follows the menu entry it enabled — bouncing them off
       // the page while the menu still lists it. A real plugin gates on the
-      // ctx it is handed, which never has this problem.
+      // ctx it is handed, which never has this problem. A group gate composes
+      // with each placed page's own, on every surface at once.
       when: () => pagesFlagAtBoot,
-      pages: [
-        {
-          path: 'hello',
-          labelKey: 'pages.hello',
-          load: () => import('./HelloPage'),
-        },
-      ],
+    },
+  ],
+  pages: [
+    {
+      id: 'hello',
+      // The page's FULL store-relative path — routing is the page's own,
+      // independent of where (or whether) its menu entry is placed.
+      path: 'hello-world/hello',
+      labelKey: 'pages.hello',
+      load: () => import('./HelloPage'),
+      // The placement: inside the plugin's own group above. `{ in }` also
+      // takes a published host section id; `{ root: true }` is a top-level
+      // entry of its own; absent means routed with no menu entry (a detail
+      // screen). An `in` id the host and the plugin both lack refuses the
+      // plugin at validation, by name (AC-PLUG-P5).
+      nav: { in: 'helloSection' },
     },
   ],
   contributions: [
