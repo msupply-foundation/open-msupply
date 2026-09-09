@@ -23,7 +23,7 @@ use service::sync::CentralServerConfig;
 use crate::store_preference::store_preferences;
 use graphql_types::types::{
     AbbreviationNode, CurrenciesResponse, CurrencyFilterInput, CurrencySortInput,
-    CustomFieldsResponse, DiagnosisNode, MasterListFilterInput, PeriodFilterInput,
+    CustomFieldsResponse, DiagnosisNode, MasterListFilterInput, PeriodScheduleFilterInput,
     PeriodSchedulesResponse, StorePreferenceNode,
 };
 use mutations::{
@@ -185,11 +185,9 @@ impl GeneralQueries {
         &self,
         ctx: &Context<'_>,
         store_id: String,
-        #[graphql(desc = "Filters the periods within each schedule")] period_filter: Option<
-            PeriodFilterInput,
-        >,
+        filter: Option<PeriodScheduleFilterInput>,
     ) -> Result<PeriodSchedulesResponse> {
-        period_schedules(ctx, store_id, period_filter)
+        period_schedules(ctx, store_id, filter)
     }
 
     /// Query omSupply "item" entries

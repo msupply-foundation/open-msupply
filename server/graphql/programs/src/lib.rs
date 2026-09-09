@@ -86,7 +86,7 @@ pub mod types;
 use crate::mutations::rnr_form::delete::delete_rnr_form;
 use crate::mutations::rnr_form::delete::DeleteRnRFormInput;
 use crate::mutations::rnr_form::delete::DeleteRnRFormResponse;
-use graphql_types::types::period_schedule::PeriodSchedulesResponse;
+use crate::types::period_schedule::SchedulesWithPeriodsResponse;
 
 use self::queries::*;
 
@@ -302,7 +302,7 @@ impl ProgramsQueries {
         ctx: &Context<'_>,
         store_id: String,
         program_id: String,
-    ) -> Result<PeriodSchedulesResponse> {
+    ) -> Result<SchedulesWithPeriodsResponse> {
         get_schedules_with_periods_by_program(ctx, store_id, program_id)
     }
 
