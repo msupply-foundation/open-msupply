@@ -3,6 +3,7 @@ lockfileVersion: '9.0'
 settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
+  injectWorkspacePackages: true
 
 importers:
 
@@ -72,9 +73,6 @@ importers:
       '@types/node':
         specifier: ^24.13.2
         version: 24.13.3
-      bonjour-service:
-        specifier: ^1.4.4
-        version: 1.4.4
       concurrently:
         specifier: ^9.2.3
         version: 9.2.3
@@ -132,6 +130,12 @@ importers:
       vitest:
         specifier: ^2.1.8
         version: 2.1.9(@types/node@24.13.3)(lightningcss@1.32.0)
+
+  desktop:
+    dependencies:
+      bonjour-service:
+        specifier: ^1.4.4
+        version: 1.4.4
 
 packages:
 
