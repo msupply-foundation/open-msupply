@@ -369,7 +369,8 @@ export function CardView<T, G extends string>(props: {
    * Keyboard row navigation, per row (see TableRow's prop of the same name —
    * same accessors, same reason they must stay lazy). Card view is the SAME
    * rows in the same table, so the arrows work identically here; only the
-   * highlight's painting differs (a ring on the card, not on cells).
+   * highlight's painting differs (a ring on the card; table view takes the
+   * pointer's hover wash on its cells — #397).
    */
   rowFocus?: (
     row: TanRow<T>

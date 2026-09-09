@@ -637,7 +637,7 @@ export const DashboardBuiltInBody: Component = () => {
                   <Statistic
                     testId="dashboard-stat-inventory.expiring-stock.expired"
                     label={tPlural(
-                      'label.expired',
+                      'label.expired-batches',
                       stock.data()?.stockCounts.expired ?? 0
                     )}
                     value={num(stock.data()?.stockCounts.expired)}
@@ -653,7 +653,7 @@ export const DashboardBuiltInBody: Component = () => {
                   <Statistic
                     testId="dashboard-stat-inventory.expiring-stock.expiring-soon"
                     label={tPlural(
-                      'label.expiring-soon',
+                      'label.batches-expiring-soon',
                       stock.data()?.stockCounts.expiringSoon ?? 0
                     )}
                     value={num(stock.data()?.stockCounts.expiringSoon)}

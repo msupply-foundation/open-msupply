@@ -59,6 +59,17 @@ export type NavItem = {
    */
   permission?: UserPermission;
   /**
+   * Marks a SUPPORTING destination — reference data in service of other
+   * destinations' workflow, carrying no query permission of its own
+   * (spec/navigation › supporting destinations). Offered only while at least
+   * one destination it supports (a principal) is offered: `true` names every
+   * non-supporting sibling in its section; a path list names exactly those
+   * destinations (Clinicians lists the records a clinician appears on, so a
+   * Patients-only user is not offered it). The derived gate is evaluated in
+   * navGates, like the others.
+   */
+  supporting?: true | string[];
+  /**
    * OVERRIDE for the command palette's name, complete with its "Go to:" prefix
    * (spec/keyboard ui-surface S1 § Action names).
    *
@@ -115,6 +126,7 @@ export const navConfig: NavItem[] = [
       {
         labelKey: 'suppliers',
         path: 'replenishment/suppliers',
+        supporting: true,
       },
     ],
   },
@@ -131,6 +143,7 @@ export const navConfig: NavItem[] = [
       {
         labelKey: 'locations',
         path: 'inventory/locations',
+        supporting: true,
       },
       {
         labelKey: 'stocktakes',
@@ -167,6 +180,7 @@ export const navConfig: NavItem[] = [
       {
         labelKey: 'customers',
         path: 'distribution/customers',
+        supporting: true,
       },
     ],
   },
@@ -203,7 +217,18 @@ export const navConfig: NavItem[] = [
         path: 'dispensary/encounter',
         gate: 'programModule',
       },
-      { labelKey: 'clinicians', path: 'dispensary/clinicians' },
+      {
+        labelKey: 'clinicians',
+        path: 'dispensary/clinicians',
+        // The records a clinician appears on — NOT patients, so a
+        // patients-only user is not offered the clinician register
+        // (spec/navigation › supporting destinations).
+        supporting: [
+          'dispensary/prescription-request',
+          'dispensary/prescription',
+          'dispensary/encounter',
+        ],
+      },
     ],
   },
   {
