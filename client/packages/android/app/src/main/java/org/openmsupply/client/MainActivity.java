@@ -46,9 +46,10 @@ public class MainActivity extends BridgeActivity implements DiscoveryHostActivit
         registerPlugin(FileTransferPlugin.class);
         registerPlugin(PrintPlugin.class);
         registerPlugin(ReadLogPlugin.class);
-        // The discovery page's host (android-shared/, shared with the new
-        // frontend's shell). Registering is only half the job here — the UI is
-        // served by the embedded server, so the name must ALSO be in
+        // The discovery page's host, compiled straight out of the new shell
+        // (frontend/android/app/src/shared) rather than copied here, so the
+        // two shells cannot drift. Registering is only half the job here — the
+        // UI is served by the embedded server, so the name must ALSO be in
         // ExtendedWebViewClient.generatePluginScript().
         registerPlugin(DiscoveryHostPlugin.class);
         super.onCreate(savedInstanceState);
