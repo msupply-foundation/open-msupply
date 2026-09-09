@@ -86,7 +86,7 @@ import {
 } from './statLinks';
 
 // The create shortcuts hand off to the owning verticals' flows (rules.md §
-// create shortcuts): both modals are self-contained (they navigate to the
+// create shortcuts): every modal is self-contained (they navigate to the
 // created record themselves) and lazy, so the dashboard bundle doesn't carry
 // them until a shortcut is used. Each gets its OWN <Suspense> where it mounts
 // (below) — a lazy component's first read suspends the nearest boundary, which
@@ -116,6 +116,13 @@ const StocktakeWarningDialog = lazy(() =>
   import('@/sections/internal-orders/list/create/StocktakeWarningDialog').then(
     m => ({
       default: m.StocktakeWarningDialog,
+    })
+  )
+);
+const CreatePrescriptionRequestModal = lazy(() =>
+  import('@/sections/prescription-requests/list/CreatePrescriptionRequestModal').then(
+    m => ({
+      default: m.CreatePrescriptionRequestModal,
     })
   )
 );
@@ -186,10 +193,10 @@ const createCountResource = <TResult, TVariables>(
 
 // S1 — the BUILT-IN dashboard body (spec/dashboard/ui-surface.md): four widgets
 // in the card grid (Replenishment, Distribution, Inventory Management,
-// Prescriptions), each a DashboardCard of StatsPanels — the first three with a
-// footer create shortcut. Read-only and store-scoped (OMS-REG-DB-01.21/.24) —
-// the only actions are the stat links and the three permission-gated create
-// shortcuts (OMS-REG-DB-01.56).
+// Prescriptions), each a DashboardCard of StatsPanels with a footer create
+// shortcut. Read-only and store-scoped (OMS-REG-DB-01.21/.24) — the only
+// actions are the stat links and the four permission-gated create shortcuts
+// (OMS-REG-DB-01.56).
 //
 // Every panel is gated twice over — by the permission its counts need and by
 // its store gate, both stated in regionBuiltIns' panelVisibility. A panel the
@@ -301,6 +308,8 @@ export const DashboardBuiltInBody: Component = () => {
   // ── create shortcuts (OMS-REG-DB-01.56) ───────────────────────────────────
   const [inboundCreateOpen, setInboundCreateOpen] = createSignal(false);
   const [outboundCreateOpen, setOutboundCreateOpen] = createSignal(false);
+  const [prescriptionCreateOpen, setPrescriptionCreateOpen] =
+    createSignal(false);
 
   const newInboundShipment = () => {
     if (!hasPermission('INBOUND_SHIPMENT_MUTATE')) {
@@ -315,6 +324,13 @@ export const DashboardBuiltInBody: Component = () => {
       return;
     }
     setOutboundCreateOpen(true);
+  };
+  const newPrescription = () => {
+    if (!hasPermission('PRESCRIPTION_REQUEST_MUTATE')) {
+      reportPermissionDenied(['PrescriptionRequestMutate']);
+      return;
+    }
+    setPrescriptionCreateOpen(true);
   };
   // Order more hands off to the internal-orders vertical's create flow —
   // including its recent-stocktake warning gate (spec/internal-orders
@@ -959,12 +975,23 @@ export const DashboardBuiltInBody: Component = () => {
         </Show>
         {/* id: prescriptions — the PRESCRIBER's record (the navigation
             registry's "Prescriptions"), gated on its read permission and a
-            dispensary store (OMS-REG-DB-01.65). No create shortcut: raising a
-            request is the vertical's own flow, and this widget is a summary. */}
+            dispensary store (OMS-REG-DB-01.65). Its shortcut opens the
+            vertical's own create dialog — the same one its list opens, so a
+            prescriber who lands here starts a script without the detour
+            through the list (OMS-REG-DB-01.66). */}
         <Show when={widgetShown(DASHBOARD_IDS.prescriptions.id)}>
           <DashboardCard
             title={t('prescriptions')}
             testId="dashboard-widget-prescriptions"
+            footer={
+              <Button
+                icon={<PlusCircleIcon />}
+                onClick={newPrescription}
+                data-testid="dashboard-create-prescriptions"
+              >
+                {t('button.new-prescription')}
+              </Button>
+            }
           >
             {/* id: prescriptions.requests */}
             <Show when={panelShown(DASHBOARD_IDS.prescriptions.requests.id)}>
@@ -1086,6 +1113,14 @@ export const DashboardBuiltInBody: Component = () => {
               setInternalOrderCreateOpen(false);
               navigate(`/${params.storeId}/replenishment/internal-order/${id}`);
             }}
+          />
+        </Suspense>
+      </Show>
+      <Show when={prescriptionCreateOpen()}>
+        <Suspense>
+          <CreatePrescriptionRequestModal
+            open
+            onClose={() => setPrescriptionCreateOpen(false)}
           />
         </Suspense>
       </Show>
