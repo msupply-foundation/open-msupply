@@ -136,7 +136,7 @@ export const routeAccess = (relativePath: string): RouteAccess => {
   const dest = destinationsByDepth.find(
     d => relativePath === d.path || relativePath.startsWith(`${d.path}/`)
   );
-  // Not the static registry's — a plugin section may claim it (their address
+  // Not the static registry's — a plugin page may claim it (their address
   // spaces are disjoint by validation, so this is a fallthrough, never a
   // tie-break). Failing that, unknown paths are the catch-all not-found page's
   // business, not the gates'. An unknown path under a gated section is still

@@ -3,7 +3,7 @@ import type { JSX } from 'solid-js';
 import { t } from '../intl';
 import styles from '../ui/styles/shared.module.css';
 import { ensurePluginsLoaded } from './loader';
-import { recordPageSectionCollisions } from './pluginPages';
+import { recordPagePathCollisions } from './pluginPages';
 
 /*
  * The boot gate (spec/plugins/rules.md § lifecycle).
@@ -30,14 +30,14 @@ export const PluginGate = (props: { children?: JSX.Element }): JSX.Element => {
 
   onMount(() => {
     void ensurePluginsLoaded().then(() => {
-      // A page-section path collision is a fact about the loaded SET, so it is
+      // A page path collision is a fact about the loaded SET, so it is
       // checked once the set is complete — the winner is deterministic either
-      // way (pluginPages.activePageSections); this only names the loser.
+      // way (pluginPages.activePages); this only names the loser.
       // Guarded because it runs between loading settling and the gate opening:
       // diagnostics are advisory, and a throw here would otherwise hold the
       // whole app at the loading screen forever, silently.
       try {
-        recordPageSectionCollisions();
+        recordPagePathCollisions();
       } catch (error) {
         console.error('[plugins] recording page collisions failed', error);
       }
