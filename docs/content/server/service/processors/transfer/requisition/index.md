@@ -1,8 +1,7 @@
 +++
 title = "Requisition Transfer Processor"
 weight = 10
-sort_by = "weight"
-template = "docs/section.html"
+template = "docs/page.html"
 
 [extra]
 source = "code"
