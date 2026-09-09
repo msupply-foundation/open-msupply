@@ -6,6 +6,7 @@ import {
   isDispensary,
 } from '../store/storeContext';
 import { isCentralServer } from '../api/serverInfo';
+import { pluginRouteAccess } from '../plugins/pluginPages';
 import {
   navDestinations,
   navTrail,
@@ -65,6 +66,27 @@ const offered = (item: {
   permission?: NavConfigItem['permission'];
 }): boolean => capabilityPasses(item.gate) && permissionPasses(item);
 
+/** Whether the destination at a registry path is offered, trail composed. */
+const destinationOffered = (path: string): boolean => {
+  const trail = navTrail(path);
+  return trail.length > 0 && trail.every(offered);
+};
+
+/**
+ * The supporting gate — whether a supporting destination's principals justify
+ * offering it (spec/navigation § supporting destinations;
+ * OMS-REG-NAV-01.24/.25). `true` reads the section's other offered children —
+ * any non-supporting one will do; a path list reads the named destinations
+ * through the registry, composing each one's own trail of gates.
+ */
+const principalOffered = (
+  supporting: NonNullable<NavConfigItem['supporting']>,
+  offeredSiblings: readonly { supporting?: NavConfigItem['supporting'] }[]
+): boolean =>
+  supporting === true
+    ? offeredSiblings.some(sibling => sibling.supporting === undefined)
+    : supporting.some(destinationOffered);
+
 /**
  * Gate a nav tree for display: drop items whose capability gate fails or whose
  * query permission the user lacks (a child's gates compose with its
@@ -84,7 +106,11 @@ export const gateNav = <
     permission?: NavConfigItem['permission'];
     children?: C[];
   },
-  C extends { gate?: NavCapability; permission?: NavConfigItem['permission'] },
+  C extends {
+    gate?: NavCapability;
+    permission?: NavConfigItem['permission'];
+    supporting?: NavConfigItem['supporting'];
+  },
 >(
   items: T[]
 ): T[] =>
@@ -92,7 +118,15 @@ export const gateNav = <
     .filter(offered)
     .map(item => {
       if (!item.children) return item;
-      const kept = item.children.filter(offered);
+      const gated = item.children.filter(offered);
+      // A supporting destination goes with the work it supports: none of its
+      // principals offered → it is withheld too, and a section this empties
+      // disappears below like any other (OMS-REG-NAV-01.24/.25).
+      const kept = gated.filter(
+        child =>
+          child.supporting === undefined ||
+          principalOffered(child.supporting, gated)
+      );
       return kept.length === item.children.length
         ? item
         : { ...item, children: kept };
@@ -123,9 +157,7 @@ export const gateNav = <
  *                        the permission makes the same address work.
  */
 export type RouteAccess =
-  | { kind: 'ok' }
-  | { kind: 'blocked' }
-  | { kind: 'denied' };
+  { kind: 'ok' } | { kind: 'blocked' } | { kind: 'denied' };
 
 // Longest path first, so 'inventory/stocktakes' wins over 'inventory'. The
 // registry is static; sort once.
@@ -137,10 +169,12 @@ export const routeAccess = (relativePath: string): RouteAccess => {
   const dest = destinationsByDepth.find(
     d => relativePath === d.path || relativePath.startsWith(`${d.path}/`)
   );
-  // Unknown to the registry — the catch-all not-found page's business, not the
-  // gates'. An unknown path under a gated section is still judged by that
-  // section, since the section matches as a prefix (D70).
-  if (!dest) return { kind: 'ok' };
+  // Not the static registry's — a plugin page may claim it (their address
+  // spaces are disjoint by validation, so this is a fallthrough, never a
+  // tie-break). Failing that, unknown paths are the catch-all not-found page's
+  // business, not the gates'. An unknown path under a gated section is still
+  // judged by that section, since the section matches as a prefix (D70).
+  if (!dest) return pluginRouteAccess(relativePath) ?? { kind: 'ok' };
 
   // navTrail resolves a destination to [section, child?]; compose their gates.
   // Capability is judged first: a function the store does not have redirects
@@ -150,5 +184,28 @@ export const routeAccess = (relativePath: string): RouteAccess => {
   const trail = navTrail(dest.path);
   if (!trail.every(item => capabilityPasses(item.gate)))
     return { kind: 'blocked' };
-  return trail.every(permissionPasses) ? { kind: 'ok' } : { kind: 'denied' };
+  if (!trail.every(permissionPasses)) return { kind: 'denied' };
+  if (dest.supporting === undefined) return { kind: 'ok' };
+
+  // A supporting destination composes its principals' gates as an OR, and its
+  // verdict takes the class of what withheld them (spec/navigation §
+  // supporting destinations; OMS-REG-NAV-01.26): any principal offered → ok;
+  // otherwise denied while some principal's function exists here (gaining its
+  // read brings both destinations back at this address), blocked when none
+  // does.
+  const principals =
+    dest.supporting === true
+      ? (trail[0]?.children ?? []).filter(
+          sibling => sibling.supporting === undefined
+        )
+      : dest.supporting.flatMap(
+          path => navDestinations.find(d => d.path === path) ?? []
+        );
+  if (principals.some(principal => destinationOffered(principal.path)))
+    return { kind: 'ok' };
+  return principals.some(principal =>
+    navTrail(principal.path).every(item => capabilityPasses(item.gate))
+  )
+    ? { kind: 'denied' }
+    : { kind: 'blocked' };
 };
