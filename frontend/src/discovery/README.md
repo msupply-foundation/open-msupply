@@ -16,7 +16,7 @@ This directory builds the **page**; a shell hosts it. The contract is deliberate
 
 **Host duties** (non-callable contract obligations, [`hostContract.ts`](./hostContract.ts)) — each host implements these natively, and a new host must too:
 
-- **Failed main-frame load → this page, flagged** (AC-DT4): a connected server that answered the probe but fails to serve its UI must land back here with `?autoconnect=false&timedout=true` (+`&standalone=true` when launched standalone), never on shell/browser error content — with a self-loop guard when the discovery page's own origin is what failed.
+- **Failed main-frame load → this page, flagged** (AC-DT4): a connected server that answered the probe but fails to serve its UI must land back here with `?autoconnect=false&timedout=true` (+`&standalone=true` when launched standalone), never on shell/browser error content — with a self-loop guard when the discovery page's own origin is what failed. **An error status counts as failing**, not just a network-level failure: an address can pass the probe and still have no app on it, and a server's own error page carries no way back, so without this a remembered wrong address is a dead end only clearing app data escapes (AC-DT25).
 - **The session ends with the app** (AC-DT18).
 - **Back-stack pinning** where the platform has a back gesture: Android's `navigate` clears WebView history once the destination commits, so hardware-back cannot re-enter this page without its flags (AC-DT16).
 

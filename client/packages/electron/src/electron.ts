@@ -604,6 +604,28 @@ const start = async (): Promise<void> => {
     }
   );
 
+  // The same duty for a load that REACHED its address and was answered with an
+  // error, which did-fail-load never reports. An address can pass the
+  // reachability check and still have no app on it — the likeliest is the
+  // server's own discovery port, at port + 1, which answers 404 to everything
+  // but a POSTed query. Landing there is otherwise a dead end: the error page
+  // is the server's own content, so it carries no way back, and the address is
+  // remembered, so the next launch goes straight there again. Any error status
+  // counts; none of them is an app.
+  //
+  // Scoped to a server the discovery PAGE chose: the old front end's connect
+  // path has error handling of its own and must not be yanked to a screen it
+  // never asked for.
+  window.webContents.on('did-navigate', (_event, url, httpResponseCode) => {
+    if (!httpResponseCode || httpResponseCode < 400) return;
+    if (!discoveryPageUrl) return;
+    if (!chosenServer || !url.startsWith(chosenServer.origin)) return;
+    console.error(
+      `${url} answered ${httpResponseCode} — no app is served there`
+    );
+    window.loadURL(buildStartUrl({ autoconnect: 'false', timedout: 'true' }));
+  });
+
   // Attempt to connect directly to a known server before loading any URL so the
   // discovery screen is never shown to returning users or standalone installs.
   // IPC handlers must all be registered above before this point.

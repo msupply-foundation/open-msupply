@@ -75,28 +75,51 @@ class CertWebViewClient extends ExtendedWebViewClient {
     }
 
     /**
-     * The discovery page is not in every bundle this shell can be built with:
-     * the debug web bundle stages the old UI alone (capacitor.config.ts §
-     * webDir, DEBUG_BUILD), and the embedded server answers a missing file
-     * with a real 404 rather than an index fallback
-     * (server/server/src/serve_frontend.rs). Without this, a debug build boots
-     * to "file not found".
+     * Two duties, both about a load that REACHED its address and was answered
+     * with an error — which onReceivedError above never sees.
      *
-     * So: a 404 for the discovery page ON THIS DEVICE'S OWN SERVER falls back
-     * to the old front end's own chooser, which such a bundle does have. Only
-     * that one URL, only the main frame, and only a 404 — anything else is a
-     * real error and stays visible.
+     * One: the discovery page is not in every bundle this shell can be built
+     * with. The debug web bundle stages the old UI alone (capacitor.config.ts §
+     * webDir, DEBUG_BUILD), and the embedded server answers a missing file with
+     * a real 404 rather than an index fallback
+     * (server/server/src/serve_frontend.rs). So a 404 for the discovery page ON
+     * THIS DEVICE'S OWN SERVER falls back to the old front end's own chooser,
+     * which such a bundle does have. Without it a debug build boots to "file
+     * not found". Only that one URL, and only a 404 — anything else on the
+     * local origin is a real error and stays visible.
+     *
+     * Two: the same AC-DT4 recovery onReceivedError does, for a server the
+     * discovery page chose. An address can pass the reachability check and
+     * still have no app on it — the likeliest is the server's own discovery
+     * port, at port + 1, which answers 404 to everything but a POSTed query.
+     * Landing there is otherwise a dead end: the 404 is the server's own
+     * content, so it carries no way back, and the address is remembered, so the
+     * next launch goes straight there again. Clearing app data was the only way
+     * out. Any error status counts, since none of them is an app.
      */
     @Override
     public void onReceivedHttpError(WebView view, WebResourceRequest request, WebResourceResponse errorResponse) {
         super.onReceivedHttpError(view, request, errorResponse);
         if (!request.isForMainFrame()) return;
-        if (errorResponse.getStatusCode() != 404) return;
         String failed = request.getUrl().toString();
-        if (!failed.startsWith(this.nativeApi.getLocalUrl() + NativeApi.DISCOVERY_PATH)) return;
-        Log.w(NativeApi.OM_SUPPLY, "No " + NativeApi.DISCOVERY_PATH
-                + " in this bundle, falling back to the old front end's chooser");
-        this.nativeApi.loadLegacyDiscovery();
+        int status = errorResponse.getStatusCode();
+
+        if (failed.startsWith(this.nativeApi.getLocalUrl())) {
+            if (status != 404) return;
+            if (!failed.startsWith(this.nativeApi.getLocalUrl() + NativeApi.DISCOVERY_PATH)) return;
+            Log.w(NativeApi.OM_SUPPLY, "No " + NativeApi.DISCOVERY_PATH
+                    + " in this bundle, falling back to the old front end's chooser");
+            this.nativeApi.loadLegacyDiscovery();
+            return;
+        }
+
+        // Only a server the discovery page sent us to: the old front end's
+        // connect path has its own error handling and must not be yanked here.
+        String chosenUrl = NativeApi.getChosenUrl();
+        if (chosenUrl == null || !failed.startsWith(chosenUrl)) return;
+        Log.w(NativeApi.OM_SUPPLY, "Chosen server answered " + status + " for " + failed
+                + " — no app is served there, returning to discovery");
+        this.nativeApi.returnToDiscovery(true);
     }
 
     private Certificate get_self_signed_cert() {

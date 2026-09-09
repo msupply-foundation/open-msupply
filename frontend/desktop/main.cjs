@@ -176,11 +176,14 @@ const stopDiscovery = () => {
 
 // --- The bounded answer check (probe) ----------------------------------------
 
-// Does anything answer HTTP at this URL? Any response counts; certificates
-// are accepted — the legacy shell's check does the same, a weakness
-// spec/desktop's README carries as its open trust question rather than this
-// shell deciding it. The timeout is the page's (clamped here only against a
-// nonsense value crossing the bridge).
+// Is the app served at this URL? A SUCCESSFUL status only (hostContract.ts §
+// probe): an error status is an answer, but not from an app, and counting it
+// is how a server's own discovery port — port + 1, which answers 404 to
+// everything but a POSTed query — got itself remembered as a server.
+// Certificates are accepted — the legacy shell's check does the same, a
+// weakness spec/desktop's README carries as its open trust question rather
+// than this shell deciding it. The timeout is the page's (clamped here only
+// against a nonsense value crossing the bridge).
 const answers = (target, timeoutMs) =>
   new Promise(resolve => {
     if (!/^https?:\/\//.test(target)) return resolve(false);
@@ -192,7 +195,7 @@ const answers = (target, timeoutMs) =>
         { rejectUnauthorized: false, timeout },
         res => {
           res.resume();
-          resolve(true);
+          resolve((res.statusCode ?? 0) > 0 && (res.statusCode ?? 0) < 400);
         }
       );
       req.on('timeout', () => req.destroy(new Error('timeout')));
@@ -319,6 +322,23 @@ const createWindow = async () => {
         'Open mSupply: discovery page failed to load',
         `${url} failed (${desc || code}).`
       );
+    void loadDiscovery({ autoconnect: 'false', timedout: 'true' });
+  });
+
+  // The same duty for a load that REACHED its address and was answered with an
+  // error, which did-fail-load never reports. An address can pass the probe
+  // and still have no app on it — the likeliest is the server's own discovery
+  // port, at port + 1, which answers 404 to everything but a POSTed query.
+  // Landing there is otherwise a dead end: the error page is the server's own
+  // content, so it carries no way back, and the address is remembered, so the
+  // next launch goes straight there again. Any error status counts; none of
+  // them is an app.
+  win.webContents.on('did-navigate', (_e, url, httpResponseCode) => {
+    if (!httpResponseCode || httpResponseCode < 400) return;
+    if (url.startsWith(pageOrigin)) return;
+    console.error(
+      `${url} answered ${httpResponseCode} — no app is served there`
+    );
     void loadDiscovery({ autoconnect: 'false', timedout: 'true' });
   });
 

@@ -671,8 +671,13 @@ describe('toFrontEndHost (AC-DT22 address rewriting)', () => {
 });
 
 describe('server URLs (single source for every host)', () => {
-  it('probes where the GraphQL endpoint should be (AC-DT12)', () => {
-    expect(probeUrl(host())).toBe('https://192.168.1.10:8000/graphql');
+  // The ROOT, not /graphql: the check is "is the app served here", and the
+  // root is the same catch-all route the hand-off below then navigates to. A
+  // socket that answers where no app is served — the server's own discovery
+  // port, at port + 1 — is what this plus the host's successful-status rule
+  // refuses (AC-DT25).
+  it('probes where the app should be served (AC-DT12/25)', () => {
+    expect(probeUrl(host())).toBe('https://192.168.1.10:8000/');
   });
 
   it('connects to the hand-off path (AC-DT19/23)', () => {
@@ -697,7 +702,12 @@ describe('connectToServer (probe → record → navigate)', () => {
     };
   };
 
-  it('a failed probe leaves the window here: no record, no navigation (AC-DT12)', async () => {
+  // Also AC-DT25: an address that answers with an error is a failed probe as
+  // far as the page is concerned — the host reports the status (hostContract.ts
+  // § probe), so "answered but not an app" arrives here as plain false and
+  // takes this same path: nothing remembered, so no later launch can be sent
+  // back to it.
+  it('a failed probe leaves the window here: no record, no navigation (AC-DT12/25)', async () => {
     const storage = memoryStorage();
     const navigate = vi.fn();
     const connected = await connectToServer(
@@ -738,7 +748,7 @@ describe('connectToServer (probe → record → navigate)', () => {
       remember: false,
     });
     expect(probe).toHaveBeenCalledWith(
-      'https://192.168.1.10:8000/graphql',
+      'https://192.168.1.10:8000/',
       ANSWER_CHECK_TIMEOUT_MS
     );
     expect(navigate).toHaveBeenCalledWith(
