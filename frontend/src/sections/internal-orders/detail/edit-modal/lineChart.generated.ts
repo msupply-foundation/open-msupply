@@ -34,7 +34,7 @@ export type RequisitionLineChartResult = {
   __typename: "RequisitionLineChartError";
 } & {
   error: {
-  __typename: string;
+  __typename: "RecordNotFound";
   description: string;
 };
 });

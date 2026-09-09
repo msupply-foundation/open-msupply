@@ -20,6 +20,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "codegen": "node codegen/run.cjs",
+    "generate": "cd ../server && cargo run --bin remote_server_cli -- export-graphql-schema --path ../frontend/spec/schema.graphql && cd ../frontend && pnpm codegen",
     "translate-locale": "node scripts/translate-locale.mjs",
     "test": "vitest run",
     "test:codegen": "node --test \"codegen/__tests__/*.test.cjs\"",
