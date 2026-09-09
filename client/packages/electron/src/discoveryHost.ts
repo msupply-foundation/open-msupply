@@ -19,6 +19,9 @@ import path from 'path';
 // can be installed during the transition, and each keeps its own origin — and
 // with it the page's localStorage, where the remembered server and the chosen
 // language live.
+//
+// PREFERRED rather than required — see servePage: this app has no
+// single-instance lock, so a second window would find the port taken.
 export const DISCOVERY_PAGE_PORT = 8318;
 export const DISCOVERY_PAGE_ORIGIN = `http://127.0.0.1:${DISCOVERY_PAGE_PORT}`;
 
@@ -53,7 +56,18 @@ const pageDir = (): string => {
 /** Serve the page over loopback HTTP, not file:// — the page hands the server
  * its own address so the login screen can offer a way back (AC-DT23), and that
  * address has to be http(s): the page's own validation drops anything else,
- * and a served page could not navigate to file:// even if it did. */
+ * and a served page could not navigate to file:// even if it did.
+ *
+ * Resolves the page's URL, which the caller must then treat as the page's
+ * origin (electron.ts § pageOrigin) rather than assuming the fixed port: a
+ * port already in use falls back to whatever the OS gives. This app has no
+ * single-instance lock, so a user opening it twice is the ordinary way that
+ * happens, and the alternative is worse — a rejection here drops the whole
+ * window to the old front end's own discovery screen, which nothing tests any
+ * more. The cost is only what lives on the page's origin: the remembered
+ * server survives regardless (this shell reports its own record as
+ * HostInfo.legacy and the page adopts it), the language chosen on the page
+ * does not. */
 export const servePage = (): Promise<string> =>
   new Promise((resolve, reject) => {
     const dir = pageDir();
@@ -91,11 +105,28 @@ export const servePage = (): Promise<string> =>
       stream.on('error', () => response.destroy());
       stream.pipe(response);
     });
-    server.once('error', reject);
     // Loopback only: this server exists for this window, not for the network.
-    server.listen(DISCOVERY_PAGE_PORT, '127.0.0.1', () =>
-      resolve(`${DISCOVERY_PAGE_ORIGIN}/${PAGE}`)
-    );
+    const listen = (port: number) =>
+      server.listen(port, '127.0.0.1', () => {
+        const bound = server.address();
+        const actual = typeof bound === 'object' && bound ? bound.port : port;
+        resolve(`http://127.0.0.1:${actual}/${PAGE}`);
+      });
+    let onPreferredPort = true;
+    server.on('error', (error: NodeJS.ErrnoException) => {
+      if (onPreferredPort && error.code === 'EADDRINUSE') {
+        onPreferredPort = false;
+        console.warn(
+          `Port ${DISCOVERY_PAGE_PORT} is in use (another window of this app, most likely) — serving the discovery page on a free port instead.`
+        );
+        listen(0);
+        return;
+      }
+      // Once listening this can only be a later runtime error, by which point
+      // the promise is settled and rejecting it is a no-op.
+      reject(error);
+    });
+    listen(DISCOVERY_PAGE_PORT);
   });
 
 /** This machine's id, read from the SAME OS sources the server's announced
@@ -149,12 +180,17 @@ export const lanAddresses = (): string[] =>
     .map(i => i?.address ?? '')
     .filter(Boolean);
 
-/** The bounded does-anything-answer check (AC-DT12). Host-side by necessity,
- * not convenience: a release server's CORS rejects unknown cross-origins and a
- * self-signed certificate needs host-side trust, so the page's own fetch
- * cannot do this. Any HTTP answer is true; a refusal or the timeout elapsing
- * is false; it never rejects. The timeout is the page's, clamped here only
- * against a nonsense value crossing the bridge. */
+/** The bounded is-the-app-there check (AC-DT12, AC-DT25). Host-side by
+ * necessity, not convenience: a release server's CORS rejects unknown
+ * cross-origins and a self-signed certificate needs host-side trust, so the
+ * page's own fetch cannot do this.
+ *
+ * A SUCCESSFUL status only (frontend/src/discovery/hostContract.ts § probe):
+ * an error status is an answer, but not from an app, and counting it is how a
+ * server's own discovery port — port + 1, which answers 404 to everything but
+ * a POSTed query — got itself remembered as a server. A refusal or the timeout
+ * elapsing is false too; it never rejects. The timeout is the page's, clamped
+ * here only against a nonsense value crossing the bridge. */
 export const answers = (target: string, timeoutMs: number): Promise<boolean> =>
   new Promise(resolve => {
     if (!/^https?:\/\//.test(target)) {
@@ -169,7 +205,8 @@ export const answers = (target: string, timeoutMs: number): Promise<boolean> =>
         { rejectUnauthorized: false, timeout },
         response => {
           response.resume();
-          resolve(true);
+          const status = response.statusCode ?? 0;
+          resolve(status > 0 && status < 400);
         }
       );
       request.on('timeout', () => request.destroy(new Error('timeout')));
