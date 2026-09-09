@@ -45,7 +45,7 @@ pub struct InsertStockOutLine {
     pub received_number_of_packs: Option<f64>,
     pub reason_option_id: Option<String>,
     /// The item's supplier comment (outbound shipments only).
-    pub supplier_comment: Option<String>,
+    pub transfer_comment: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq)]

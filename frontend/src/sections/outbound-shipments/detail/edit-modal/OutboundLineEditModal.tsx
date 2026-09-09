@@ -365,7 +365,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
   // onto every line of the item on save. Seeded from the draft and echoed back
   // untouched — the set-save OVERWRITES the column like every other line field
   // (contract § supplier comment wire trap, OMS-REG-DIST-03.43).
-  const [supplierComment, setSupplierComment] = createSignal('');
+  const [transferComment, setTransferComment] = createSignal('');
   // Each batch row's packs-issued field, bound per row and addressed by draft
   // row id — where a row-click open or an advance lands focus. The handle waits
   // for the row to attach, so no load gate is needed here.
@@ -485,8 +485,8 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
     ];
     setDraft(reconcile(ordered, { key: 'id' }));
     // Per ITEM, so any row backed by an existing line answers for all of them.
-    setSupplierComment(
-      sorted.find(line => line.supplierComment)?.supplierComment ?? ''
+    setTransferComment(
+      sorted.find(line => line.transferComment)?.transferComment ?? ''
     );
     const placeholder = data.placeholderQuantity ?? 0;
     setPlaceholderUnits(placeholder);
@@ -885,7 +885,7 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
           // explicit placeholder quantity creates/updates/deletes the
           // placeholder to match (OMS-REG-DIST-03.20). Received counts and
           // variance reasons are echoed through (see ./saveLineInputs).
-          lines: toSaveLineInputs(draft, supplierComment()),
+          lines: toSaveLineInputs(draft, transferComment()),
           placeholderQuantity: placeholderUnits(),
         },
       },
@@ -1745,10 +1745,10 @@ const LineEditContent = (props: OutboundLineEditModalProps): JSX.Element => {
                 <TextField
                   label={t('label.supplier-comment')}
                   data-testid="supplier-comment-input"
-                  value={supplierComment()}
+                  value={transferComment()}
                   disabled={!props.editable || saving()}
                   onInput={e => {
-                    setSupplierComment(e.currentTarget.value);
+                    setTransferComment(e.currentTarget.value);
                     setDirty(true);
                   }}
                 />

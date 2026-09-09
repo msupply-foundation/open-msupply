@@ -156,7 +156,7 @@ pub fn generate(
             shipped_number_of_packs: None,
             legacy_goods_received_line_id: None,
             // No requisition link on the copy, so no request to explain.
-            supplier_comment: None,
+            transfer_comment: None,
         });
     }
 

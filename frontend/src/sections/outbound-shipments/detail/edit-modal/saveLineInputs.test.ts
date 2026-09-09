@@ -33,7 +33,7 @@ describe('toSaveLineInputs', () => {
         receivedNumberOfPacks: 3,
         reasonOptionId: 'r1',
         vvmStatusId: null,
-        supplierComment: null,
+        transferComment: null,
       },
     ]);
   });
@@ -71,23 +71,23 @@ describe('toSaveLineInputs', () => {
       [line({ id: 'a' }), line({ id: 'b' }), line({ id: 'c' })],
       'Short supply'
     );
-    expect(inputs.map(i => i.supplierComment)).toEqual([
+    expect(inputs.map(i => i.transferComment)).toEqual([
       'Short supply',
       'Short supply',
       'Short supply',
     ]);
   });
 
-  // OMS-REG-DIST-03.43 — the set-save OVERWRITES supplierComment like every
+  // OMS-REG-DIST-03.43 — the set-save OVERWRITES transferComment like every
   // other line field (contract § supplier comment wire trap), so a comment the
   // user never touched has to be echoed back rather than omitted.
   it('echoes an untouched supplier comment back unchanged', () => {
     const [input] = toSaveLineInputs([line()], 'Back order until March');
-    expect(input?.supplierComment).toBe('Back order until March');
+    expect(input?.transferComment).toBe('Back order until March');
   });
 
   it('no comment sends null — the wire has no empty-string state', () => {
     const [input] = toSaveLineInputs([line()], '');
-    expect(input?.supplierComment).toBeNull();
+    expect(input?.transferComment).toBeNull();
   });
 });

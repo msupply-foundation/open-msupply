@@ -43,7 +43,7 @@ query draftStockOutLines(
       # The ITEM's supplier comment, repeated on every draft row of the item
       # (spec rules § supplier comment) — the editor shows one field for it and
       # echoes it back on every line it saves.
-      supplierComment
+      transferComment
       reasonOption {
         id
       }

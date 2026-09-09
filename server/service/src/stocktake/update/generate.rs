@@ -259,7 +259,7 @@ fn generate_stock_in_out_or_update(
             prescribed_quantity: None,
             received_number_of_packs: None,
             reason_option_id: None,
-            supplier_comment: None,
+            transfer_comment: None,
         })
     };
 

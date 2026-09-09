@@ -354,7 +354,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
   const [loadedRequested, setLoadedRequested] = createSignal<number | null>(
     null
   );
-  const [supplierComment, setSupplierComment] = createSignal<string | null>(
+  const [transferComment, setTransferComment] = createSignal<string | null>(
     null
   );
   // Mode: 'update' (opened from a row — "OK & next" walks to the next item on
@@ -430,7 +430,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     }
     setBatches(lines.map(fromLine));
     setLoadedRequested(first.requisitionLine?.requestedQuantity ?? null);
-    setSupplierComment(first.supplierComment);
+    setTransferComment(first.transferComment);
     setItem({
       id: first.itemId,
       code: first.itemCode,
@@ -479,7 +479,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     // A fresh item has no line on this shipment, so neither per-item fact
     // carries over from whatever was open before.
     setLoadedRequested(null);
-    setSupplierComment(null);
+    setTransferComment(null);
     if (!option) {
       setItem(null);
       setBatches([]);
@@ -550,7 +550,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
     if (!line) return;
     setPoLineId(id);
     setLoadedRequested(null);
-    setSupplierComment(null);
+    setTransferComment(null);
     // The PO-line lookup carries only id/code/name for the item; unit/vaccine
     // attributes fill in once the line is saved and reloaded via the full line
     // fragment (edit mode). Default them for the pre-save PO-add view.
@@ -1712,7 +1712,7 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                         >
                           {/* Always stated, dash and all: an empty comment on
                               a short supply is itself worth seeing. */}
-                          {supplierComment() || '—'}
+                          {transferComment() || '—'}
                         </LabelledValue>
                       </HStack>
                     </Alert>

@@ -679,7 +679,7 @@ impl InvoiceTransferTester {
             location_id: Some(location.id.clone()),
             tax_percentage: Some(0.0),
             // Must reach the receiving store's line.
-            supplier_comment: Some("Only 2 packs left in stock".to_string()),
+            transfer_comment: Some("Only 2 packs left in stock".to_string()),
             ..Default::default()
         };
 
@@ -1550,8 +1550,8 @@ fn check_line(connection: &StorageConnection, inbound_id: &str, outbound_line: &
     assert_eq!(inbound_line.tax_percentage, outbound_line.tax_percentage);
     // OMS-REG-ISH-01.15, OMS-REG-DIST-03.44.
     assert_eq!(
-        inbound_line.supplier_comment,
-        outbound_line.supplier_comment
+        inbound_line.transfer_comment,
+        outbound_line.transfer_comment
     );
 }
 

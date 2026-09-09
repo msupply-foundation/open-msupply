@@ -58,7 +58,7 @@ define_linked_tables! {
         received_number_of_packs -> Nullable<Double>,
         linked_invoice_line_id -> Nullable<Text>,
         legacy_goods_received_line_id -> Nullable<Text>,
-        supplier_comment -> Nullable<Text>,
+        transfer_comment -> Nullable<Text>,
     },
     links: {
         item_link_id -> item_id,
@@ -158,8 +158,8 @@ pub struct InvoiceLineRow {
     /// the quantity requested. Written only on the stock-out (outbound /
     /// customer invoice) side and copied onto the receiving store's stock-in
     /// line by the shipment-transfer processor — nothing on the inbound side
-    /// ever sets it. Legacy mSupply's `trans_line.supplier_comment`.
-    pub supplier_comment: Option<String>,
+    /// ever sets it. Legacy mSupply's `trans_line.transfer_comment`.
+    pub transfer_comment: Option<String>,
     // Resolved from link tables - must be last to match view column order
     pub item_id: String,
     pub donor_id: Option<String>,

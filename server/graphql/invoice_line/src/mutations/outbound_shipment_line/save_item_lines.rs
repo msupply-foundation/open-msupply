@@ -32,7 +32,7 @@ pub struct OutboundShipmentLineInput {
     /// requested. One value per ITEM — send the same one on every line of the
     /// item. ⚠️ Like `receivedNumberOfPacks`, the set-save OVERWRITES it, so
     /// omitting it on an updated line CLEARS the stored value.
-    pub supplier_comment: Option<String>,
+    pub transfer_comment: Option<String>,
 }
 
 pub fn save_outbound_shipment_item_lines(
@@ -92,7 +92,7 @@ impl SaveOutboundShipmentLinesInput {
                     vvm_status_id: line.vvm_status_id,
                     received_number_of_packs: line.received_number_of_packs,
                     reason_option_id: line.reason_option_id,
-                    supplier_comment: line.supplier_comment,
+                    transfer_comment: line.transfer_comment,
                 })
                 .collect(),
             prescribed_quantity: None, // Only used for prescription lines

@@ -216,7 +216,7 @@ fn generate_line(
         received_number_of_packs: None,
         linked_invoice_line_id: None,
         legacy_goods_received_line_id: None,
-        supplier_comment: None,
+        transfer_comment: None,
     }
 }
 

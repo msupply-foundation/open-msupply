@@ -213,8 +213,8 @@ impl DraftStockOutLineNode {
     /// The item's supplier comment, repeated on every draft row of that item so
     /// the editor can show one field and echo it back on save. Null on a batch
     /// with no invoice line yet.
-    pub async fn supplier_comment(&self) -> &Option<String> {
-        &self.shipment_line.supplier_comment
+    pub async fn transfer_comment(&self) -> &Option<String> {
+        &self.shipment_line.transfer_comment
     }
 
     pub async fn reason_option(&self, ctx: &Context<'_>) -> Result<Option<ReasonOptionNode>> {

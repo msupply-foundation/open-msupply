@@ -104,7 +104,7 @@ impl UpdateInput {
         } = self;
         ServiceInput {
             // Edited per ITEM on the set-save; None leaves it alone.
-            supplier_comment: None,
+            transfer_comment: None,
             id,
             r#type: Some(StockOutType::OutboundShipment),
             stock_line_id,

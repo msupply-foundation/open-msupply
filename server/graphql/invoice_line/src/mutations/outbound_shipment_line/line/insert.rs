@@ -96,7 +96,7 @@ impl InsertInput {
         } = self;
 
         ServiceInput {
-            supplier_comment: None,
+            transfer_comment: None,
             id,
             r#type: StockOutType::OutboundShipment,
             invoice_id,

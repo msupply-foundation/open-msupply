@@ -62,7 +62,7 @@ pub fn generate(
             manufacturer_id: None,
             received_number_of_packs: None,
             reason_option_id: None,
-            supplier_comment: None,
+            transfer_comment: None,
         })
         .collect();
 
@@ -84,7 +84,7 @@ pub fn generate(
             vvm_status_id: None,
             received_number_of_packs: None,
             reason_option_id: None,
-            supplier_comment: None,
+            transfer_comment: None,
         })
         .collect();
 

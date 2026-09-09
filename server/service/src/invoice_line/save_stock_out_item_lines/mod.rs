@@ -45,7 +45,7 @@ pub struct SaveStockOutInvoiceLine {
     /// One value per item, so the caller sends the same one on every line of
     /// it — and, as with `received_number_of_packs`, the set-save OVERWRITES
     /// it, so an omitted value clears the stored one.
-    pub supplier_comment: Option<String>,
+    pub transfer_comment: Option<String>,
 }
 
 #[derive(PartialEq, Debug)]
@@ -338,7 +338,7 @@ mod test {
                             vvm_status_id: None,
                             received_number_of_packs: None,
                             reason_option_id: None,
-                            supplier_comment: None,
+                            transfer_comment: None,
                         }],
                         ..Default::default()
                     }
@@ -528,10 +528,10 @@ mod test {
     /// OMS-REG-DIST-03.41/.43 — the item's one comment reaches every line of
     /// it, and an omitted value clears the stored one (contract.md wire trap).
     #[actix_rt::test]
-    async fn test_save_outbound_item_lines_writes_supplier_comment_to_every_line() {
+    async fn test_save_outbound_item_lines_writes_transfer_comment_to_every_line() {
         fn outbound() -> InvoiceRow {
             InvoiceRow {
-                id: "outbound_supplier_comment".to_string(),
+                id: "outbound_transfer_comment".to_string(),
                 store_id: mock_store_b().id,
                 name_id: mock_name_store_b().id,
                 r#type: InvoiceType::OutboundShipment,
@@ -541,7 +541,7 @@ mod test {
         }
 
         let (_, connection, connection_manager, _) = setup_all_with_data(
-            "test_save_outbound_item_lines_writes_supplier_comment_to_every_line",
+            "test_save_outbound_item_lines_writes_transfer_comment_to_every_line",
             MockDataInserts::all(),
             MockData {
                 invoices: vec![outbound()],
@@ -566,7 +566,7 @@ mod test {
                 .find_one_by_id(id)
                 .unwrap()
                 .unwrap()
-                .supplier_comment
+                .transfer_comment
         };
 
         // Two batches of the same item, both carrying the item's one comment.
@@ -579,14 +579,14 @@ mod test {
                         id: "sc_line_a".to_string(),
                         number_of_packs: 1.0,
                         stock_line_id: mock_stock_line_a().id,
-                        supplier_comment: Some("Short supply".to_string()),
+                        transfer_comment: Some("Short supply".to_string()),
                         ..Default::default()
                     },
                     SaveStockOutInvoiceLine {
                         id: "sc_line_b".to_string(),
                         number_of_packs: 1.0,
                         stock_line_id: mock_stock_line_b().id,
-                        supplier_comment: Some("Short supply".to_string()),
+                        transfer_comment: Some("Short supply".to_string()),
                         ..Default::default()
                     },
                 ]),
@@ -605,7 +605,7 @@ mod test {
                     id: "sc_line_a".to_string(),
                     number_of_packs: 4.0,
                     stock_line_id: mock_stock_line_a().id,
-                    supplier_comment: Some("Short supply".to_string()),
+                    transfer_comment: Some("Short supply".to_string()),
                     ..Default::default()
                 }]),
             )
