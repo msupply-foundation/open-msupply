@@ -201,7 +201,7 @@ export type InitialiseAsCentralServerResult = {
   __typename: "InitialiseAsCentralServerError";
 } & {
   error: {
-  __typename: string;
+  __typename: "AdminPasswordRequired" | "AdminUserCreationFailed" | "AdminUsernameRequired" | "AlreadyInitialised" | "NotSupportedOnAndroid" | "StoreNameRequired";
   description: string;
 };
 });

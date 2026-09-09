@@ -3,7 +3,8 @@ import type {
   AnyContribution,
   DashboardPieceId,
   PluginModule,
-  PluginPageSection,
+  PluginNavSection,
+  PluginPage,
   SlotId,
 } from '../plugin-sdk/types';
 
@@ -113,27 +114,35 @@ export const contributionsFor =
   };
 
 /**
- * A page section as the host consumes it: the plugin's own frozen declaration
- * plus the code that supplied it. The declaration keeps its identity (no
- * spread) so consumers can cache derived objects against it — the same object
- * for the registry's whole life, however often this accessor is read.
+ * A page as the host consumes it: the plugin's own frozen declaration plus the
+ * code that supplied it. The declaration keeps its identity (no spread) so
+ * consumers can cache derived objects against it — the same object for the
+ * registry's whole life, however often this accessor is read.
  */
-export interface RegisteredPageSection {
+export interface RegisteredPage {
   pluginCode: string;
-  section: PluginPageSection;
+  page: PluginPage;
 }
 
-// pageSections' cache, keyed on the plugins() array's identity: registerPlugin
-// replaces the array wholesale, so reference equality IS "nothing changed".
-// The signal read stays inside the accessor, so reactivity is untouched — the
-// cache only stops every navigation, palette open and menu re-derive from
-// re-sorting a list that changes once per session.
-let pageSectionsInput: readonly LoadedPlugin[] | undefined;
-let pageSectionsResult: readonly RegisteredPageSection[] = [];
+/** A nav section as the host consumes it — same identity contract. */
+export interface RegisteredNavSection {
+  pluginCode: string;
+  section: PluginNavSection;
+}
+
+// The accessors' caches, keyed on the plugins() array's identity:
+// registerPlugin replaces the array wholesale, so reference equality IS
+// "nothing changed". The signal read stays inside each accessor, so reactivity
+// is untouched — the cache only stops every navigation, palette open and menu
+// re-derive from re-sorting a list that changes once per session.
+let pagesInput: readonly LoadedPlugin[] | undefined;
+let pagesResult: readonly RegisteredPage[] = [];
+let navSectionsInput: readonly LoadedPlugin[] | undefined;
+let navSectionsResult: readonly RegisteredNavSection[] = [];
 
 /**
- * Every loaded plugin's page sections, in deterministic order — plugin code,
- * then declaration order — independent of which bundle finished loading first
+ * Every loaded plugin's pages, in deterministic order — plugin code, then
+ * declaration order — independent of which bundle finished loading first
  * (rules § contributions). A plain accessor over the registry signal, like
  * `contributionsFor`: compose it into a single `createMemo` where the read
  * feeds a `<For>`. Cross-plugin path collisions are NOT resolved here — the
@@ -141,18 +150,37 @@ let pageSectionsResult: readonly RegisteredPageSection[] = [];
  * downstream (src/plugins/pluginPages.tsx). The result keeps its identity
  * until the registry changes, so downstream derivations can cache against it.
  */
-export const pageSections = (): readonly RegisteredPageSection[] => {
+export const registeredPages = (): readonly RegisteredPage[] => {
   const current = plugins();
-  if (current === pageSectionsInput) return pageSectionsResult;
-  const found: RegisteredPageSection[] = [];
+  if (current === pagesInput) return pagesResult;
+  const found: RegisteredPage[] = [];
   const byCode = [...current].sort((a, b) => compareCodes(a.code, b.code));
   for (const plugin of byCode) {
-    for (const section of plugin.module.pages ?? []) {
+    for (const page of plugin.module.pages ?? []) {
+      found.push({ pluginCode: plugin.code, page });
+    }
+  }
+  pagesInput = current;
+  pagesResult = found;
+  return found;
+};
+
+/**
+ * Every loaded plugin's nav sections, in the same deterministic order and with
+ * the same identity contract as `registeredPages`.
+ */
+export const registeredNavSections = (): readonly RegisteredNavSection[] => {
+  const current = plugins();
+  if (current === navSectionsInput) return navSectionsResult;
+  const found: RegisteredNavSection[] = [];
+  const byCode = [...current].sort((a, b) => compareCodes(a.code, b.code));
+  for (const plugin of byCode) {
+    for (const section of plugin.module.navSections ?? []) {
       found.push({ pluginCode: plugin.code, section });
     }
   }
-  pageSectionsInput = current;
-  pageSectionsResult = found;
+  navSectionsInput = current;
+  navSectionsResult = found;
   return found;
 };
 

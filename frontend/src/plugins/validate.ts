@@ -2,6 +2,7 @@ import {
   PLUGIN_API_MIN_SUPPORTED,
   PLUGIN_API_VERSION,
 } from '../plugin-sdk/apiVersion';
+import { HOST_NAV_SECTION_IDS } from '../plugin-sdk/types';
 import type { PluginModule, SlotId } from '../plugin-sdk/types';
 import { DASHBOARD_LEGACY_PATH, navDestinations } from '../nav/navConfig';
 
@@ -86,91 +87,131 @@ const HOST_RESERVED_PATHS: readonly string[] = [
   DASHBOARD_LEGACY_PATH,
 ];
 
-// The `pages` entry kinds this host provides. A `pages` entry is a
-// discriminated union (PluginPageContribution) with one arm today; an entry
-// whose kind is not listed here was built for a newer arm, and refusing it BY
-// NAME is what lets future arms join additively — an old host names the gap
-// instead of misreading the entry as a malformed section.
-const KNOWN_PAGE_KINDS: readonly string[] = ['section'];
+// The two gates share one shape wherever they appear (a page, a nav section),
+// so their checks live once.
+const gateShapeRefusal = (
+  entry: Record<string, unknown>,
+  described: string
+): string | undefined => {
+  if (entry['when'] !== undefined && typeof entry['when'] !== 'function') {
+    return `${described} has a non-function when gate`;
+  }
+  const permissions = entry['permissions'];
+  if (
+    permissions !== undefined &&
+    (!Array.isArray(permissions) ||
+      permissions.some(item => typeof item !== 'string' || item === ''))
+  ) {
+    return `${described} has an invalid permissions list`;
+  }
+  return undefined;
+};
 
 /**
- * Validate one section of a `pages` contribution. Returns the refusal message,
- * or undefined when the section is well-formed. Collisions with the HOST are
- * refused here (they are knowable from this module alone); collisions between
- * two plugins are a load-order fact, so the registry's consumers resolve them
- * deterministically and record the loser in diagnostics instead.
+ * Validate one `navSections` entry — a menu group of the plugin's own: pure
+ * menu object, no path, no route. Returns the refusal message, or undefined
+ * when well-formed.
  */
-const validatePageSection = (
+const validateNavSection = (
   section: unknown,
-  seenIds: Set<string>,
-  seenPaths: string[]
+  seenIds: Set<string>
 ): string | undefined => {
-  if (!isRecord(section)) return 'a pages section is not an object';
-  const kind = section['kind'];
-  if (
-    kind !== undefined &&
-    (typeof kind !== 'string' || !KNOWN_PAGE_KINDS.includes(kind))
-  ) {
-    return `a pages entry declares the kind ${JSON.stringify(kind)}, which this app's plugin API does not provide (known: ${KNOWN_PAGE_KINDS.map(known => `"${known}"`).join(', ')})`;
-  }
+  if (!isRecord(section)) return 'a nav section is not an object';
   const id = section['id'];
   if (typeof id !== 'string' || id.length === 0) {
-    return 'a pages section has no id';
+    return 'a nav section has no id';
   }
-  if (seenIds.has(id)) return `duplicate pages section id "${id}"`;
+  if (seenIds.has(id)) return `duplicate nav section id "${id}"`;
+  // A plugin section id that shadows a published host section id would make
+  // every `nav.in` naming it ambiguous — refused while it is knowable from
+  // this module alone, like a host path collision.
+  if ((HOST_NAV_SECTION_IDS as readonly string[]).includes(id)) {
+    return `nav section id "${id}" shadows the host section of the same id`;
+  }
+  seenIds.add(id);
+  if (typeof section['labelKey'] !== 'string' || !section['labelKey']) {
+    return `nav section "${id}" has no labelKey`;
+  }
+  return gateShapeRefusal(section, `nav section "${id}"`);
+};
+
+/**
+ * Validate one page of a flat `pages` declaration. Returns the refusal
+ * message, or undefined when the page is well-formed. Collisions with the
+ * HOST — a path a host destination holds, a `nav.in` id the host and the
+ * plugin both lack — are refused here (they are knowable from this module
+ * alone); path collisions between two plugins are a load-order fact, so the
+ * registry's consumers resolve them deterministically and record the loser in
+ * diagnostics instead.
+ */
+const validatePage = (
+  page: unknown,
+  seenIds: Set<string>,
+  seenPaths: string[],
+  navSectionIds: ReadonlySet<string>
+): string | undefined => {
+  if (!isRecord(page)) return 'a page is not an object';
+  const id = page['id'];
+  if (typeof id !== 'string' || id.length === 0) return 'a page has no id';
+  if (seenIds.has(id)) return `duplicate page id "${id}"`;
   seenIds.add(id);
 
-  if (typeof section['labelKey'] !== 'string' || !section['labelKey']) {
-    return `pages section "${id}" has no labelKey`;
+  if (typeof page['labelKey'] !== 'string' || !page['labelKey']) {
+    return `page "${id}" has no labelKey`;
   }
-  const path = section['path'];
+  const path = page['path'];
   if (!isValidPagePath(path)) {
-    return `pages section "${id}" has an invalid path ${JSON.stringify(path)}`;
+    return `page "${id}" has an invalid path ${JSON.stringify(path)}`;
   }
   const hostCollision = HOST_RESERVED_PATHS.find(host =>
     pathsCollide(host, path)
   );
   if (hostCollision) {
-    return `pages section "${id}" path "${path}" collides with the host destination "${hostCollision}"`;
+    return `page "${id}" path "${path}" collides with the host destination "${hostCollision}"`;
   }
   const priorPath = seenPaths.find(seen => pathsCollide(seen, path));
   if (priorPath !== undefined) {
-    return `pages section "${id}" path "${path}" collides with this plugin's own "${priorPath}"`;
+    return `page "${id}" path "${path}" collides with this plugin's own "${priorPath}"`;
   }
   seenPaths.push(path);
 
-  if (section['when'] !== undefined && typeof section['when'] !== 'function') {
-    return `pages section "${id}" has a non-function when gate`;
+  if (typeof page['load'] !== 'function') {
+    return `page "${id}" has no load function`;
   }
-  const permissions = section['permissions'];
-  if (
-    permissions !== undefined &&
-    (!Array.isArray(permissions) ||
-      permissions.some(entry => typeof entry !== 'string' || entry === ''))
-  ) {
-    return `pages section "${id}" has an invalid permissions list`;
-  }
+  const gateRefusal = gateShapeRefusal(page, `page "${id}"`);
+  if (gateRefusal) return gateRefusal;
 
-  const pages = section['pages'];
-  if (!Array.isArray(pages) || pages.length === 0) {
-    return `pages section "${id}" declares no pages`;
+  // The placement: absent (routed, no menu entry), { in }, or { root: true }.
+  // A shape that is neither, or an `in` id neither the host nor this plugin
+  // provides, is refused BY NAME — that is what lets placements grow
+  // additively: an old host names the gap instead of misreading the entry.
+  const nav = page['nav'];
+  if (nav === undefined) return undefined;
+  if (!isRecord(nav)) {
+    return `page "${id}" has a non-object nav placement`;
   }
-  const pagePaths = new Set<string>();
-  for (const page of pages as readonly unknown[]) {
-    if (!isRecord(page)) return `pages section "${id}" has a non-object page`;
-    if (!isValidPagePath(page['path'])) {
-      return `pages section "${id}" has a page with an invalid path ${JSON.stringify(page['path'])}`;
+  const inId = nav['in'];
+  const root = nav['root'];
+  if (inId !== undefined && root !== undefined) {
+    return `page "${id}" nav declares both "in" and "root" — a placement is one of the two`;
+  }
+  if (root !== undefined) {
+    if (root !== true) {
+      return `page "${id}" nav declares root: ${JSON.stringify(root)} — only \`root: true\` is a placement`;
     }
-    if (pagePaths.has(page['path'])) {
-      return `pages section "${id}" declares the page path "${page['path']}" twice`;
-    }
-    pagePaths.add(page['path']);
-    if (typeof page['labelKey'] !== 'string' || !page['labelKey']) {
-      return `pages section "${id}" page "${page['path']}" has no labelKey`;
-    }
-    if (typeof page['load'] !== 'function') {
-      return `pages section "${id}" page "${page['path']}" has no load function`;
-    }
+    return undefined;
+  }
+  if (inId === undefined) {
+    return `page "${id}" nav declares neither "in" nor "root" — this app's plugin API provides { in } and { root: true } placements`;
+  }
+  if (typeof inId !== 'string' || inId.length === 0) {
+    return `page "${id}" nav has an invalid "in" id ${JSON.stringify(inId)}`;
+  }
+  if (
+    !navSectionIds.has(inId) &&
+    !(HOST_NAV_SECTION_IDS as readonly string[]).includes(inId)
+  ) {
+    return `page "${id}" nav places it in "${inId}", which is neither one of this plugin's nav sections nor a host section this app's plugin API provides (host sections: ${HOST_NAV_SECTION_IDS.map(known => `"${known}"`).join(', ')})`;
   }
   return undefined;
 };
@@ -300,15 +341,28 @@ export const validateLoadedModule = (
     }
   }
 
+  // Nav sections first: a page's `nav.in` is checked against their ids.
+  const navSections = candidate['navSections'];
+  const navSectionIds = new Set<string>();
+  if (navSections !== undefined) {
+    if (!Array.isArray(navSections)) {
+      return { kind: 'refused', message: 'navSections is not an array' };
+    }
+    for (const section of navSections as readonly unknown[]) {
+      const refusal = validateNavSection(section, navSectionIds);
+      if (refusal) return { kind: 'refused', message: refusal };
+    }
+  }
+
   const pages = candidate['pages'];
   if (pages !== undefined) {
     if (!Array.isArray(pages)) {
       return { kind: 'refused', message: 'pages is not an array' };
     }
-    const sectionIds = new Set<string>();
-    const sectionPaths: string[] = [];
-    for (const section of pages as readonly unknown[]) {
-      const refusal = validatePageSection(section, sectionIds, sectionPaths);
+    const pageIds = new Set<string>();
+    const pagePaths: string[] = [];
+    for (const page of pages as readonly unknown[]) {
+      const refusal = validatePage(page, pageIds, pagePaths, navSectionIds);
       if (refusal) return { kind: 'refused', message: refusal };
     }
   }

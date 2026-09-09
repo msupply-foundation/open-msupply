@@ -90,12 +90,12 @@ export const PrescriptionRequests = {
 
 export type DeletePrescriptionRequestsVariables = {
   storeId: string;
-  ids: string[];
+  ids: Array<string>;
 };
 
 export type DeletePrescriptionRequestsResult = {
   batchPrescriptionRequest: {
-  deletePrescriptionRequests?: Array<{
+  deletePrescriptionRequests: Array<{
   id: string;
   response: ({
   id: string;
