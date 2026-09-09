@@ -5,7 +5,7 @@ import type { LocaleKey } from '../../intl';
 // (spec/prescription-requests/rules.md § the lifecycle, § editability, §
 // deletion). Pure — the screens read these; the server is the real guard.
 
-/** The statuses an request can hold (contract.md § the lifecycle). */
+/** The statuses a request can hold (contract.md § the lifecycle). */
 export type PrescriptionRequestStatus = 'NEW' | 'READY_TO_DISPENSE' | 'DISPENSED';
 
 // Narrow a wire value to the vocabulary, treating anything unexpected as the

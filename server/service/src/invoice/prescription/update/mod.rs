@@ -57,6 +57,9 @@ pub enum UpdatePrescriptionError {
     NotThisStoreInvoice,
     ClinicianDoesNotExist,
     PatientDoesNotExist,
+    /// A change to a field the prescriber owns, on a dispensation generated
+    /// from a prescription request. Holds the field's name.
+    CannotChangePrescriberField(&'static str),
     UnknownPropertyKey(String),
     /// A customFields patch gives a defined property a value of the wrong
     /// shape for its value type.

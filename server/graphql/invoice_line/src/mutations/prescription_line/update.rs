@@ -178,6 +178,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ReasonOptionDoesNotExist
         | ReasonOptionIsNotActive
         | ReasonOptionTypeInvalid
+        | CannotChangePrescribedQuantity
         | LineDoesNotReferenceStockLine => StandardGraphqlError::BadUserInput(formatted_error),
         AutoPickFailed(_) | DatabaseError(_) | UpdatedLineDoesNotExist => {
             StandardGraphqlError::InternalError(formatted_error)
