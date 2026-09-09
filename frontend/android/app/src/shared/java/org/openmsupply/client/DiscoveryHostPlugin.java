@@ -302,6 +302,10 @@ public class DiscoveryHostPlugin extends Plugin {
         });
     }
 
+    /** A SUCCESSFUL answer only (hostContract.ts § probe): an error status is
+     * an answer, but not from an app, and counting it is how a server's own
+     * discovery port — port + 1, which answers 404 to everything but a POSTed
+     * query — got itself remembered as a server. */
     private boolean answers(String target, int timeoutMs) {
         try {
             HttpURLConnection connection = (HttpURLConnection) new URL(target).openConnection();
@@ -310,9 +314,9 @@ public class DiscoveryHostPlugin extends Plugin {
             }
             connection.setConnectTimeout(timeoutMs);
             connection.setReadTimeout(timeoutMs);
-            connection.getResponseCode(); // any HTTP answer counts
+            int status = connection.getResponseCode();
             connection.disconnect();
-            return true;
+            return status > 0 && status < 400;
         } catch (Exception e) {
             return false;
         }

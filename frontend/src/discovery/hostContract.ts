@@ -143,13 +143,23 @@ export type DiscoveryHostApi = {
    * Accumulation and dedup are the page's job (./discovery.ts §
    * mergeServers). */
   announcements: () => Promise<{ announcements: RawAnnouncement[] }>;
-  /** The bounded does-anything-answer check (AC-DT12). Host-side by
+  /** The bounded is-the-app-there check (AC-DT12, AC-DT25). Host-side by
    * necessity, not convenience: the release server's CORS rejects unknown
    * cross-origins and a self-signed certificate needs host-side trust
    * (spec/desktop § connection trust — spike posture), so the page's own
-   * fetch cannot do this. Any HTTP answer is true; refusal or the timeout
-   * elapsing is false; never rejects. The timeout is the caller's
-   * (./discovery.ts § ANSWER_CHECK_TIMEOUT_MS) so the constant exists once. */
+   * fetch cannot do this.
+   *
+   * A SUCCESSFUL HTTP answer (a status below 400) is true; an error status,
+   * a refusal, or the timeout elapsing is false; never rejects. The status
+   * matters, and is the host's to check because only the host makes the
+   * request: the page asks about the URL an app should be served at
+   * (./discovery.ts § probeUrl), and a host that counted any answer would
+   * accept anything with a socket open — which is how a server's own
+   * discovery port (port + 1, no UI on it) got remembered and then made every
+   * launch land on a 404.
+   *
+   * The timeout is the caller's (./discovery.ts § ANSWER_CHECK_TIMEOUT_MS) so
+   * the constant exists once. */
   probe: (url: string, timeoutMs: number) => Promise<boolean>;
   /** Navigate this window/WebView to the URL, told which server it belongs
    * to. The page persists everything it needs BEFORE calling this

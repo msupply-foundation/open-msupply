@@ -29,7 +29,13 @@ const DEV_HARDWARE_ID = 'DEV-LOCAL';
 
 // Bounded probe: does anything answer HTTP at this address? `no-cors` keeps a
 // cross-origin server's opaque answer countable as "answered" — reachability,
-// not a readable body (the shells' checks are the same yes/no).
+// not a readable body.
+//
+// Weaker than a real shell's on purpose, because a tab cannot do better: the
+// hosts require a SUCCESSFUL status (hostContract.ts § probe) and an opaque
+// response reports none, so this mock still accepts an address that answers
+// 404. The one thing that costs — a server's discovery port passing the check
+// — is a dev-mock-only difference; check that path against a shell.
 const answers = async (url: string, timeoutMs: number): Promise<boolean> => {
   const abort = new AbortController();
   const timer = setTimeout(() => abort.abort(), timeoutMs);
@@ -50,7 +56,7 @@ let found: RawAnnouncement[] = [];
 
 const probeLocalServers = () => {
   for (const port of LOCAL_CANDIDATE_PORTS) {
-    void answers(`http://127.0.0.1:${port}/graphql`, 1500).then(up => {
+    void answers(`http://127.0.0.1:${port}/`, 1500).then(up => {
       if (up)
         found.push({
           protocol: 'http',

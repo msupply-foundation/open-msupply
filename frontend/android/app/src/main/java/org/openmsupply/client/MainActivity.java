@@ -7,6 +7,7 @@ import android.webkit.CookieManager;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 
 import com.getcapacitor.BridgeActivity;
@@ -99,6 +100,28 @@ public class MainActivity extends BridgeActivity implements DiscoveryHostActivit
                 // just loop.
                 if (!clientMode || !request.isForMainFrame()) return;
                 if (request.getUrl().toString().startsWith(MainActivity.this.bridge.getLocalUrl())) return;
+                MainActivity.this.clearHistoryWhenLoaded(discoveryUrl);
+                view.loadUrl(discoveryUrl + "?autoconnect=false&timedout=true");
+            }
+
+            @Override
+            public void onReceivedHttpError(WebView view, WebResourceRequest request,
+                    WebResourceResponse errorResponse) {
+                super.onReceivedHttpError(view, request, errorResponse);
+                // The same AC-DT4 duty for a load that REACHED its address and
+                // was answered with an error, which onReceivedError never sees.
+                // An address can pass the reachability check and still have no
+                // app on it — the likeliest is the server's own discovery port,
+                // at port + 1, which answers 404 to everything but a POSTed
+                // query. Landing there is otherwise a dead end: the error page
+                // is the server's own content, so it carries no way back, and
+                // the address is remembered, so the next launch goes straight
+                // there again. Any error status counts; none of them is an app.
+                if (!clientMode || !request.isForMainFrame()) return;
+                if (request.getUrl().toString().startsWith(MainActivity.this.bridge.getLocalUrl())) return;
+                android.util.Log.w("OpenMSupply", "Server answered "
+                        + errorResponse.getStatusCode() + " for " + request.getUrl()
+                        + " — no app is served there, returning to discovery");
                 MainActivity.this.clearHistoryWhenLoaded(discoveryUrl);
                 view.loadUrl(discoveryUrl + "?autoconnect=false&timedout=true");
             }

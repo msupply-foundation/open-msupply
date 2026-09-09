@@ -90,10 +90,22 @@ export const toFrontEndHost = (
 export const serverUrl = ({ protocol, ip, port }: FrontEndHost): string =>
   `${protocol}://${ip}:${port}`;
 
-/** What the answer check asks: does anything answer HTTP where the GraphQL
- * endpoint should be (AC-DT12). */
+/** What the answer check asks: is the app served at this address (AC-DT12,
+ * AC-DT25)?
+ *
+ * The server's ROOT, which is the same catch-all route the hand-off then
+ * navigates to (server/server/src/serve_frontend.rs answers every
+ * extension-less path with the app's index), so a successful answer here means
+ * the page after it will load too. A live socket on its own is not enough, and
+ * the address a user is most likely to type is the one where that difference
+ * bites: the server's own discovery GraphQL port sits at port + 1
+ * (service/src/settings.rs discovery_address) and answers nothing but a POSTed
+ * query — so it looked reachable, was remembered, and then every launch
+ * navigated to a 404 that only clearing app data could escape. Hosts require a
+ * SUCCESSFUL status for this reason (hostContract.ts § probe); a 404 there is
+ * an answer, but not from an app. */
 export const probeUrl = (server: FrontEndHost): string =>
-  `${serverUrl(server)}/graphql`;
+  `${serverUrl(server)}/`;
 
 /** What the host is told about the server it is being pointed at, for its
  * certificate trust (hostContract.ts § ConnectedServer). Derived here, from
