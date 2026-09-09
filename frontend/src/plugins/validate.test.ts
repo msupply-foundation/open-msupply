@@ -366,18 +366,25 @@ describe('validateLoadedModule', () => {
   });
 });
 
-describe('validateLoadedModule — pages', () => {
+describe('validateLoadedModule — pages & nav sections', () => {
   const load = async () => ({ default: Component });
 
-  const pageSection = (over: Record<string, unknown> = {}) => ({
-    id: 'stock-count',
+  const navSection = (over: Record<string, unknown> = {}) => ({
+    id: 'stockCount',
     labelKey: 'nav.section',
-    path: 'stock-count',
-    pages: [{ path: 'count', labelKey: 'nav.count', load }],
     ...over,
   });
 
-  const withPages = (pages: unknown) =>
+  const page = (over: Record<string, unknown> = {}) => ({
+    id: 'count',
+    path: 'stock-count/count',
+    labelKey: 'nav.count',
+    load,
+    nav: { in: 'stockCount' },
+    ...over,
+  });
+
+  const withPages = (pages: unknown, navSections: unknown = [navSection()]) =>
     asModule(
       definePlugin({
         manifest: {
@@ -385,69 +392,58 @@ describe('validateLoadedModule — pages', () => {
           version: '1.0.0',
           pluginApiVersion: PLUGIN_API_VERSION,
         },
+        navSections: navSections as never,
         pages: pages as never,
       })
     );
 
-  const pagesRefusal = (pages: unknown) =>
-    refusal(validateLoadedModule('demo', withPages(pages)));
+  const pagesRefusal = (pages: unknown, navSections?: unknown) =>
+    refusal(validateLoadedModule('demo', withPages(pages, navSections)));
 
-  it('accepts a well-formed pages declaration, gates included', () => {
+  it('accepts a well-formed declaration — gates, placements and all', () => {
     const verdict = validateLoadedModule(
       'demo',
-      withPages([
-        pageSection({
-          when: () => true,
-          permissions: ['STOCKTAKE_QUERY'],
-          pages: [
-            { path: 'count', labelKey: 'nav.count', load },
-            { path: 'count-log', labelKey: 'nav.count-log', load },
-          ],
-        }),
-      ])
+      withPages(
+        [
+          page({ when: () => true, permissions: ['STOCKTAKE_QUERY'] }),
+          page({
+            id: 'countLog',
+            path: 'stock-count/count-log',
+            labelKey: 'nav.count-log',
+          }),
+          // Every placement arm: a host section, the root, and none at all.
+          page({ id: 'inv', path: 'ck-inv', nav: { in: 'inventory' } }),
+          page({ id: 'top', path: 'ck-top', nav: { root: true } }),
+          page({ id: 'detail', path: 'ck-detail', nav: undefined }),
+        ],
+        [navSection({ when: () => true, permissions: ['STOCKTAKE_QUERY'] })]
+      )
     );
     expect(verdict.kind).toBe('ok');
   });
 
-  it('refuses a non-array pages field', () => {
+  it('refuses a non-array pages field, and a non-array navSections field', () => {
     expect(pagesRefusal({})).toContain('pages is not an array');
+    expect(pagesRefusal([page()], {})).toContain('navSections is not an array');
   });
 
-  // A pages entry is a discriminated union with one arm today; the explicit
-  // discriminant and the absent default are the same entry.
-  it('accepts an explicit kind: "section" — the union discriminant', () => {
-    const verdict = validateLoadedModule(
-      'demo',
-      withPages([pageSection({ kind: 'section' })])
-    );
-    expect(verdict.kind).toBe('ok');
-  });
-
-  it('refuses an unknown pages entry kind, naming it and the known set (AC-PLUG-P5)', () => {
-    expect(pagesRefusal([pageSection({ kind: 'host-entry' })])).toContain(
-      'declares the kind "host-entry", which this app\'s plugin API does not provide (known: "section")'
-    );
-    expect(pagesRefusal([pageSection({ kind: 42 })])).toContain(
-      'declares the kind 42'
-    );
-  });
-
-  it('refuses a section without an id, and a duplicate section id', () => {
-    expect(pagesRefusal([pageSection({ id: '' })])).toContain('has no id');
+  it('refuses a page without an id, and a duplicate page id', () => {
+    expect(pagesRefusal([page({ id: '' })])).toContain('has no id');
     expect(
-      pagesRefusal([pageSection(), pageSection({ path: 'other' })])
-    ).toContain('duplicate pages section id');
+      pagesRefusal([page(), page({ path: 'other' })])
+    ).toContain('duplicate page id');
   });
 
-  it('refuses a section without a labelKey', () => {
-    expect(pagesRefusal([pageSection({ labelKey: '' })])).toContain(
+  it('refuses a page or nav section without a labelKey', () => {
+    expect(pagesRefusal([page({ labelKey: '' })])).toContain('has no labelKey');
+    expect(pagesRefusal([page()], [navSection({ labelKey: '' })])).toContain(
       'has no labelKey'
     );
   });
 
   it('refuses malformed paths — empty, slashed edges, params', () => {
     for (const path of ['', '/count', 'count/', 'a//b', 'a b', 'x/:id']) {
-      expect(pagesRefusal([pageSection({ path })])).toContain('invalid path');
+      expect(pagesRefusal([page({ path })])).toContain('invalid path');
     }
   });
 
@@ -456,59 +452,88 @@ describe('validateLoadedModule — pages', () => {
     // the router judges by deepest prefix, so nesting would inherit or shadow
     // the host's own gates.
     for (const path of ['inventory', 'inventory/stock/extra', 'dashboard']) {
-      expect(pagesRefusal([pageSection({ path })])).toContain(
+      expect(pagesRefusal([page({ path })])).toContain(
         'collides with the host destination'
       );
     }
   });
 
-  it("refuses two of the plugin's own sections claiming one URL space", () => {
+  it("refuses two of the plugin's own pages claiming one URL space", () => {
     expect(
       pagesRefusal([
-        pageSection(),
-        pageSection({ id: 'other', path: 'stock-count/deeper' }),
+        page(),
+        page({ id: 'other', path: 'stock-count/count/deeper' }),
       ])
     ).toContain("collides with this plugin's own");
   });
 
-  it('refuses a section with no pages', () => {
-    expect(pagesRefusal([pageSection({ pages: [] })])).toContain(
-      'declares no pages'
+  it('refuses a page without a load function', () => {
+    expect(pagesRefusal([page({ load: undefined })])).toContain(
+      'has no load function'
     );
   });
 
-  it('refuses a page without a load function, a labelKey, or a unique path', () => {
-    expect(
-      pagesRefusal([
-        pageSection({ pages: [{ path: 'count', labelKey: 'nav.count' }] }),
-      ])
-    ).toContain('has no load function');
-    expect(
-      pagesRefusal([
-        pageSection({ pages: [{ path: 'count', labelKey: '', load }] }),
-      ])
-    ).toContain('has no labelKey');
-    expect(
-      pagesRefusal([
-        pageSection({
-          pages: [
-            { path: 'count', labelKey: 'nav.count', load },
-            { path: 'count', labelKey: 'nav.count-again', load },
-          ],
-        }),
-      ])
-    ).toContain('twice');
-  });
-
-  it('refuses a non-function when gate and a malformed permissions list', () => {
-    expect(pagesRefusal([pageSection({ when: true })])).toContain(
+  it('refuses a non-function when gate and a malformed permissions list, page or nav section', () => {
+    expect(pagesRefusal([page({ when: true })])).toContain(
       'non-function when gate'
     );
-    expect(pagesRefusal([pageSection({ permissions: ['ok', 42] })])).toContain(
+    expect(pagesRefusal([page({ permissions: ['ok', 42] })])).toContain(
       'invalid permissions list'
     );
-    expect(pagesRefusal([pageSection({ permissions: [''] })])).toContain(
+    expect(pagesRefusal([page()], [navSection({ when: true })])).toContain(
+      'non-function when gate'
+    );
+    expect(pagesRefusal([page()], [navSection({ permissions: [''] })])).toContain(
       'invalid permissions list'
+    );
+  });
+
+  it('refuses a nav section without an id, and a duplicate nav section id', () => {
+    expect(pagesRefusal([page()], [navSection({ id: '' })])).toContain(
+      'has no id'
+    );
+    expect(
+      pagesRefusal([page()], [navSection(), navSection()])
+    ).toContain('duplicate nav section id');
+  });
+
+  it('refuses a nav section id that shadows a host section id', () => {
+    // Shadowing would make every `nav.in` naming the id ambiguous.
+    expect(
+      pagesRefusal(
+        [page({ nav: { in: 'inventory' } })],
+        [navSection({ id: 'inventory' })]
+      )
+    ).toContain('shadows the host section');
+  });
+
+  // The placement is where new arms join additively; a shape or an id this
+  // host does not provide is refused BY NAME, so a bundle built for a newer
+  // surface degrades to a clear diagnostic instead of misregistering.
+  it('refuses an `in` id that is neither a plugin nav section nor a host section, naming the known set (AC-PLUG-P5)', () => {
+    expect(pagesRefusal([page({ nav: { in: 'no-such-section' } })])).toContain(
+      'neither one of this plugin\'s nav sections nor a host section'
+    );
+    expect(pagesRefusal([page({ nav: { in: 'no-such-section' } })])).toContain(
+      '"inventory"'
+    );
+  });
+
+  it('refuses a malformed nav placement, naming the provided shapes', () => {
+    expect(pagesRefusal([page({ nav: 'inventory' })])).toContain(
+      'non-object nav placement'
+    );
+    expect(pagesRefusal([page({ nav: {} })])).toContain(
+      'declares neither "in" nor "root"'
+    );
+    expect(
+      pagesRefusal([page({ nav: { in: 'stockCount', root: true } })])
+    ).toContain('both "in" and "root"');
+    expect(pagesRefusal([page({ nav: { root: 'yes' } })])).toContain(
+      'only `root: true` is a placement'
+    );
+    expect(pagesRefusal([page({ nav: { in: 42 } })])).toContain(
+      'invalid "in" id'
     );
   });
 });

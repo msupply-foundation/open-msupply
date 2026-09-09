@@ -22,7 +22,7 @@ export type InsertHelpDocumentResult = {
   __typename: "InsertHelpDocumentError";
 } & {
   error: {
-  __typename: string;
+  __typename: "DatabaseError" | "InternalError" | "RecordAlreadyExist";
   description: string;
 };
 });
@@ -51,7 +51,7 @@ export type DeleteHelpDocumentResult = {
   __typename: "DeleteHelpDocumentError";
 } & {
   error: {
-  __typename: string;
+  __typename: "DatabaseError" | "InternalError" | "RecordNotFound";
   description: string;
 };
 });

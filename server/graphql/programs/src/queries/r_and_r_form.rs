@@ -10,10 +10,12 @@ use graphql_types::types::rnr_form::RnRFormNode;
 use repository::{PaginationOption, RnRFormFilter};
 use service::auth::{Resource, ResourceAccessRequest};
 
-use crate::types::r_and_r_form::{
-    RnRFormConnector, RnRFormFilterInput, RnRFormResponse, RnRFormSortInput, RnRFormsResponse,
+use crate::types::{
+    period_schedule::{PeriodSchedulesConnector, PeriodSchedulesResponse},
+    r_and_r_form::{
+        RnRFormConnector, RnRFormFilterInput, RnRFormResponse, RnRFormSortInput, RnRFormsResponse,
+    },
 };
-use graphql_types::types::period_schedule::{PeriodSchedulesConnector, PeriodSchedulesResponse};
 
 pub fn r_and_r_forms(
     ctx: &Context<'_>,

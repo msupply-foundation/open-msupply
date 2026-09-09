@@ -160,12 +160,12 @@ describe('permission gates (OMS-REG-NAV-01.18/.20 — D94: hidden)', () => {
     expect(gatedPaths()).toContain('inventory/stocktakes');
   });
 
-  it('keeps an unpermissioned destination offered alongside hidden ones', () => {
-    // Locations carries no query permission, so a user with none still gets it
-    // — and its section with it.
+  it('keeps an unpermissioned, non-supporting destination offered', () => {
+    // Items carries no query permission and supports nothing, so a user with
+    // no permissions still gets it — and its section with it.
     state.grantAll = false;
-    expect(gatedPaths()).toContain('inventory/locations');
-    expect(gatedPaths()).toContain('inventory');
+    expect(gatedPaths()).toContain('catalogue/items');
+    expect(gatedPaths()).toContain('catalogue');
   });
 
   it('drops a section left empty by permission gates (.20)', () => {
@@ -178,6 +178,78 @@ describe('permission gates (OMS-REG-NAV-01.18/.20 — D94: hidden)', () => {
     expect(gatedPaths()).toContain('cold-chain');
     expect(gatedPaths()).toContain('cold-chain/sensors');
     expect(gatedPaths()).not.toContain('cold-chain/equipment');
+  });
+});
+
+describe('supporting destinations (OMS-REG-NAV-01.24–.26)', () => {
+  beforeEach(() => {
+    state.grantAll = false;
+  });
+
+  it('hides Suppliers while no other Replenishment destination is offered (.24)', () => {
+    // The reference list goes with the work it supports — and the section,
+    // left with nothing, goes too.
+    expect(gatedPaths()).not.toContain('replenishment/suppliers');
+    expect(gatedPaths()).not.toContain('replenishment');
+    state.permissions = new Set(['INBOUND_SHIPMENT_QUERY']);
+    expect(gatedPaths()).toContain('replenishment/suppliers');
+    expect(gatedPaths()).toContain('replenishment');
+  });
+
+  it("hides Locations and Customers with their sections' work (.24)", () => {
+    expect(gatedPaths()).not.toContain('inventory/locations');
+    expect(gatedPaths()).not.toContain('inventory');
+    expect(gatedPaths()).not.toContain('distribution/customers');
+    expect(gatedPaths()).not.toContain('distribution');
+    state.permissions = new Set([
+      'STOCK_LINE_QUERY',
+      'OUTBOUND_SHIPMENT_QUERY',
+    ]);
+    expect(gatedPaths()).toContain('inventory/locations');
+    expect(gatedPaths()).toContain('distribution/customers');
+  });
+
+  it('hides Clinicians from a Patients-only user (.25)', () => {
+    // Clinicians names its principals — the records a clinician appears on —
+    // and Patients is not among them, so Patients alone does not keep it.
+    state.dispensary = true;
+    state.permissions = new Set(['PATIENT_QUERY']);
+    const paths = gatedPaths();
+    expect(paths).toContain('dispensary/patients');
+    expect(paths).not.toContain('dispensary/clinicians');
+  });
+
+  it('offers Clinicians with any of the records a clinician appears on (.25)', () => {
+    state.dispensary = true;
+    state.permissions = new Set(['PRESCRIPTION_QUERY']);
+    expect(gatedPaths()).toContain('dispensary/clinicians');
+    state.permissions = new Set(['PRESCRIPTION_REQUEST_QUERY']);
+    expect(gatedPaths()).toContain('dispensary/clinicians');
+    // Encounters carries no read permission, only the program-module gate — a
+    // module-on store offers it, and Clinicians with it.
+    state.permissions = new Set();
+    state.programModule = true;
+    expect(gatedPaths()).toContain('dispensary/clinicians');
+  });
+
+  it("denies a withheld supporting destination's URL in place (.26)", () => {
+    expect(routeAccess('inventory/locations')).toEqual({ kind: 'denied' });
+    expect(routeAccess('replenishment/suppliers/some-id')).toEqual({
+      kind: 'denied',
+    });
+    state.permissions = new Set(['STOCK_LINE_QUERY']);
+    expect(routeAccess('inventory/locations')).toEqual({ kind: 'ok' });
+  });
+
+  it('keeps Clinicians blocked, not denied, outside a dispensary store', () => {
+    // The section's capability gate is still judged first: no dispensary, no
+    // notice about permissions.
+    state.permissions = new Set(['PATIENT_QUERY']);
+    expect(routeAccess('dispensary/clinicians')).toEqual({ kind: 'blocked' });
+    state.dispensary = true;
+    expect(routeAccess('dispensary/clinicians')).toEqual({ kind: 'denied' });
+    state.permissions = new Set(['PATIENT_QUERY', 'PRESCRIPTION_QUERY']);
+    expect(routeAccess('dispensary/clinicians')).toEqual({ kind: 'ok' });
   });
 });
 
@@ -289,7 +361,13 @@ describe('prescription requests, gated like anything else', () => {
     state.permissions = new Set(['PRESCRIPTION_REQUEST_QUERY']);
     const paths = gatedPaths();
     expect(paths).toContain('dispensary/prescription-request');
+    // Clinicians supports Prescriptions, so the prescriber keeps the register.
+    expect(paths).toContain('dispensary/clinicians');
     expect(paths).not.toContain('inventory/stock');
+    // Locations goes with Inventory's work — and the emptied section with it
+    // (OMS-REG-NAV-01.24).
+    expect(paths).not.toContain('inventory/locations');
+    expect(paths).not.toContain('inventory');
     expect(paths).not.toContain('reports');
     expect(paths).toContain('');
     expect(paths).toContain('settings');

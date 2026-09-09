@@ -279,3 +279,67 @@ test("a branch's fields can come from a fragment spread (referenced by type)", (
 }`,
   );
 });
+
+/**
+ * `__typename` on an abstract type WITHOUT inline fragments.
+ *
+ * Selecting just the discriminant is the cheap way to ask "which of these is
+ * it?" when the branches carry no distinct fields — the shape mSupply's error
+ * interfaces use (`error { __typename description }`). There are no branches to
+ * hang a literal off, so the type comes from the schema instead: the union of
+ * everything the abstract type can resolve to. Emitting `string` here would
+ * throw away the one piece of information the field exists to carry.
+ */
+test("__typename on a union with no branches → union of the member names", () => {
+  const out = generate({
+    schema: UNION_SCHEMA,
+    document: "query Q { r { __typename } }",
+  });
+
+  assert.equal(
+    resultType(out, "Q"),
+    `{
+  r: {
+  __typename: "Cat" | "Dog" | "Fish";
+};
+}`,
+  );
+});
+
+test("__typename on an interface with no branches → union of the implementors", () => {
+  const out = generate({
+    schema: `
+      type Query { e: E! }
+      interface E { description: String! }
+      type NotFound implements E { description: String! }
+      type Denied implements E { description: String! }
+    `,
+    document: "query Q { e { __typename description } }",
+  });
+
+  assert.equal(
+    resultType(out, "Q"),
+    `{
+  e: {
+  __typename: "NotFound" | "Denied";
+  description: string;
+};
+}`,
+  );
+});
+
+test("a branched selection still uses per-branch literals, not the whole union", () => {
+  // Guards the boundary between the two paths: once inline fragments are
+  // present each member gets its own concrete literal, so the narrowing above
+  // must not leak in and widen every branch to "Cat" | "Dog" | "Fish".
+  const out = generate({
+    schema: UNION_SCHEMA,
+    document: "query Q { r { __typename ... on Cat { meow } } }",
+  });
+
+  assert.ok(out.includes('__typename: "Cat";'), "branch keeps its own literal");
+  assert.ok(
+    !out.includes('"Cat" | "Dog" | "Fish"'),
+    "branched selection must not fall back to the possible-types union",
+  );
+});

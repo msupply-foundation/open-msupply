@@ -262,7 +262,7 @@ export const App: Component = () => {
                       than the screen the user asked for. */}
                     <Route
                       /* The shared constant, not a literal: validate.ts
-                         reserves this path against plugin sections through the
+                         reserves this path against plugin pages through the
                          same export, so the redirect and the reservation
                          cannot drift apart. */
                       path={`/${DASHBOARD_LEGACY_PATH}`}
@@ -293,8 +293,8 @@ export const App: Component = () => {
                       already opened. Each component is the host frame around
                       the plugin's lazy body, and the gates are ShellLayout's
                       reactive routeAccess verdict, exactly as for the routes
-                      above. A plugin section's own root has no route: it falls
-                      to the catch-all below, judged by the section's gates. */}
+                      above. A plugin nav group has no path and no route: an
+                      unclaimed prefix falls to the catch-all below. */}
                     <For each={pluginPageRoutes()}>
                       {route => (
                         <Route
