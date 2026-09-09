@@ -10,10 +10,12 @@ use graphql_types::types::rnr_form::RnRFormNode;
 use repository::{PaginationOption, RnRFormFilter};
 use service::auth::{Resource, ResourceAccessRequest};
 
-use crate::types::r_and_r_form::{
-    RnRFormConnector, RnRFormFilterInput, RnRFormResponse, RnRFormSortInput, RnRFormsResponse,
+use crate::types::{
+    period_schedule::{SchedulesWithPeriodsConnector, SchedulesWithPeriodsResponse},
+    r_and_r_form::{
+        RnRFormConnector, RnRFormFilterInput, RnRFormResponse, RnRFormSortInput, RnRFormsResponse,
+    },
 };
-use graphql_types::types::period_schedule::{PeriodSchedulesConnector, PeriodSchedulesResponse};
 
 pub fn r_and_r_forms(
     ctx: &Context<'_>,
@@ -90,7 +92,7 @@ pub fn get_schedules_with_periods_by_program(
     ctx: &Context<'_>,
     store_id: String,
     program_id: String,
-) -> Result<PeriodSchedulesResponse> {
+) -> Result<SchedulesWithPeriodsResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -107,7 +109,7 @@ pub fn get_schedules_with_periods_by_program(
         .get_schedules_with_periods_by_program(&context, &store_id, &program_id)
         .map_err(StandardGraphqlError::from_repository_error)?;
 
-    Ok(PeriodSchedulesResponse::Response(
-        PeriodSchedulesConnector::from_domain(result),
+    Ok(SchedulesWithPeriodsResponse::Response(
+        SchedulesWithPeriodsConnector::from_domain(result),
     ))
 }
