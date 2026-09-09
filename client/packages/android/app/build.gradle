@@ -54,12 +54,13 @@ android {
             }
         }
     }
-    // Java compiled by BOTH Android projects — the discovery host plugin
-    // (android-shared/README.md). One implementation per platform is the point
-    // of the host contract; two copies would drift.
+    // The discovery host plugin, compiled straight out of the NEW shell
+    // rather than copied here (frontend/android/app/src/shared/README.md).
+    // One implementation per platform is the point of the host contract; two
+    // copies would drift.
     sourceSets {
         main {
-            java.srcDirs += '../../../../android-shared'
+            java.srcDirs += '../../../../frontend/android/app/src/shared/java'
         }
     }
 

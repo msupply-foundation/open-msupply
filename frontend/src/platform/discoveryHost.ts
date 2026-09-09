@@ -4,9 +4,10 @@
 // - a shell that can inject (the Electron preload; entry.tsx's dev mock)
 //   provides `window.discoveryHostApi` directly, and it wins;
 // - the Android shell answers through the DiscoveryHost Capacitor plugin
-//   (android-shared/org/openmsupply/client/DiscoveryHostPlugin.java, compiled
-//   by both Android projects — NsdManager browse, bounded answer
-//   check, WebView navigation). Adapted here, not in src/discovery, because
+//   (android/app/src/shared/java/org/openmsupply/client/
+//   DiscoveryHostPlugin.java, compiled by both Android projects — NsdManager
+//   browse, bounded answer check, WebView navigation). Adapted here, not in
+//   src/discovery, because
 //   @capacitor/* imports stay confined to src/platform/ capability wrappers
 //   (./index.ts — importing @capacitor/core CREATES window.Capacitor on the
 //   web, so the platform check comes first and the module is imported lazily
