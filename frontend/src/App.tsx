@@ -9,7 +9,13 @@ import {
   Switch,
 } from 'solid-js';
 import type { Component, JSX } from 'solid-js';
-import { Navigate, Route, Router, useParams } from '@solidjs/router';
+import {
+  Navigate,
+  Route,
+  Router,
+  useLocation,
+  useParams,
+} from '@solidjs/router';
 import { graphqlFetch } from './api/graphql';
 import { detectLocale, initialiseLocale, isRtl, locale, t } from './intl';
 import { InitialisationStatus } from './api/initialisation.generated';
@@ -19,7 +25,7 @@ import { authUser, checkAuth, startActivityTracking } from './auth/authContext';
 import { InitialisationPage } from './initialisation/InitialisationPage';
 import { resolveStorePath, StoreGuardLayout } from './store/StoreGuardLayout';
 import { navDestinations } from './nav/navConfig';
-import { dispensingHref } from './nav/legacyPaths';
+import { dispensingHref, storeHomeHref } from './nav/legacyPaths';
 import { routerBase } from './nav/storeRelativePath';
 import { DashboardPage } from './sections/dashboard';
 import { stocktakesRoutes } from './sections/stocktakes';
@@ -119,11 +125,14 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
  * The legacy `/{storeId}/dashboard` address, answered with the screen it names.
  * Home moved to the store root (spec/navigation § the registry), so this keeps
  * every bookmark, shared link and printed URL made before the move working —
- * arriving at the canonical URL rather than at the not-found page.
+ * arriving at the canonical URL rather than at the not-found page. The query
+ * and fragment ride along, so nothing the address was carrying is dropped on
+ * the way (`location` supplies both).
  */
 const DashboardRedirect: Component = () => {
   const params = useParams();
-  return <Navigate href={`/${params['storeId']}`} />;
+  const location = useLocation();
+  return <Navigate href={storeHomeHref(params['storeId'] ?? '', location)} />;
 };
 
 /**
@@ -131,12 +140,17 @@ const DashboardRedirect: Component = () => {
  * screen they name. The dispensing vertical was relabelled "Dispensing" and its
  * path moved with the label (issue #551), so this keeps every bookmark, shared
  * link and plugin deep link made under the old segment working — including the
- * detail addresses, whose trailing segments are carried across unchanged.
+ * detail addresses, whose trailing segments are carried across unchanged, and
+ * the `?query=…` a filtered, sorted or paged list keeps its state in, which
+ * would otherwise be answered with the unfiltered list.
  */
 const DispensingRedirect: Component = () => {
   const params = useParams();
+  const location = useLocation();
   return (
-    <Navigate href={dispensingHref(params['storeId'] ?? '', params['rest'])} />
+    <Navigate
+      href={dispensingHref(params['storeId'] ?? '', params['rest'], location)}
+    />
   );
 };
 
