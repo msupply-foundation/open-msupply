@@ -63,6 +63,10 @@ pub enum UpdateStockOutLineError {
         line_id: String,
     },
     VVMStatusDoesNotExist,
+    /// The prescribed quantity is the prescriber's, on a dispensation generated
+    /// from a prescription request, and this input would change it. Only ever
+    /// reachable on a PRESCRIPTION line — nothing else carries the field.
+    CannotChangePrescribedQuantity,
     ReasonOptionDoesNotExist,
     ReasonOptionIsNotActive,
     ReasonOptionTypeInvalid,

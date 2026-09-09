@@ -13144,26 +13144,6 @@ export type UserNode = {
   lastName?: Maybe<Scalars['String']['output']>;
   permissions: UserStorePermissionConnector;
   phoneNumber?: Maybe<Scalars['String']['output']>;
-  /**
-   * The ids of the user's stores in which they are restricted to PRESCRIBER
-   * MODE (spec/prescription-requests § prescriber mode). Rides the me/login
-   * response so the store picker can withhold a store the user could enter
-   * but could not work in — the picker runs before any store is entered, so
-   * the per-store `permissions(storeId)` read the in-store gates use is not
-   * available to it yet.
-   *
-   * One query for every store, rather than a boolean resolved per store: a
-   * user with many stores would otherwise cost one permission lookup each
-   * on every me/login.
-   *
-   * Narrowed to the PrescriberMode rows in SQL rather than read whole and
-   * filtered here. This rides the UserInfo fragment, so it runs on every
-   * `me` and `authToken` — every token refresh included — for a value only
-   * the store picker reads. For almost every user it now answers from an
-   * empty result set instead of their entire permission list plus the store
-   * join that `permissions()` does to build rows this only takes an id from.
-   */
-  prescriberModeStoreIds: Array<Scalars['String']['output']>;
   stores: UserStoreConnector;
   /**
    * If the user is active but no API call has happened for this long (in seconds), the client
@@ -13212,9 +13192,10 @@ export enum UserPermission {
   OutboundShipmentQuery = 'OUTBOUND_SHIPMENT_QUERY',
   PatientMutate = 'PATIENT_MUTATE',
   PatientQuery = 'PATIENT_QUERY',
-  PrescriberMode = 'PRESCRIBER_MODE',
   PrescriptionMutate = 'PRESCRIPTION_MUTATE',
   PrescriptionQuery = 'PRESCRIPTION_QUERY',
+  PrescriptionRequestMutate = 'PRESCRIPTION_REQUEST_MUTATE',
+  PrescriptionRequestQuery = 'PRESCRIPTION_REQUEST_QUERY',
   PurchaseOrderAuthorise = 'PURCHASE_ORDER_AUTHORISE',
   PurchaseOrderFinalise = 'PURCHASE_ORDER_FINALISE',
   PurchaseOrderMutate = 'PURCHASE_ORDER_MUTATE',

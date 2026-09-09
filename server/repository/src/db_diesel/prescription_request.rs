@@ -1,6 +1,10 @@
 use super::{
+    clinician_link_row::{clinician_link, ClinicianLinkRow},
+    clinician_row::{clinician, ClinicianRow},
     name_row::name,
-    prescription_request_row::{prescription_request, PrescriptionRequestRow, PrescriptionRequestStatus},
+    prescription_request_row::{
+        prescription_request, PrescriptionRequestRow, PrescriptionRequestStatus,
+    },
     user_row::user_account,
     DBType, RepositoryError, StorageConnection,
 };
@@ -14,6 +18,10 @@ use diesel::{dsl::IntoBoxed, prelude::*};
 #[derive(PartialEq, Debug, Clone, Default)]
 pub struct PrescriptionRequest {
     pub prescription_request_row: PrescriptionRequestRow,
+    /// The named clinician, resolved THROUGH `clinician_link` — the row's own
+    /// `clinician_link_id` is a link id, and a merge repoints it, so it is
+    /// never the clinician's id (same shape as `Invoice`/`Vaccination`).
+    pub clinician_row: Option<ClinicianRow>,
 }
 
 #[derive(Clone, Default)]
@@ -33,8 +41,9 @@ pub struct PrescriptionRequestFilter {
 }
 
 // Dynamic query filter for the prescription_request table (customFields list
-// filters). The query is unjoined, so the condition compiles against the same
-// table it is applied to — no sub-select needed, unlike `InvoiceCondition`.
+// filters). The condition compiles against the bare table, so it is applied
+// through a sub-select on ids — the query itself is joined (`InvoiceCondition`
+// does the same).
 create_condition!(
     PrescriptionRequestCondition,
     prescription_request::table,
@@ -96,7 +105,11 @@ impl<'a> PrescriptionRequestRepository<'a> {
         if let Some(sort) = sort {
             match sort.key {
                 PrescriptionRequestSortField::PrescriptionRequestNumber => {
-                    apply_sort!(query, sort, prescription_request::prescription_request_number)
+                    apply_sort!(
+                        query,
+                        sort,
+                        prescription_request::prescription_request_number
+                    )
                 }
                 PrescriptionRequestSortField::CreatedDatetime => {
                     apply_sort!(query, sort, prescription_request::created_datetime)
@@ -115,7 +128,7 @@ impl<'a> PrescriptionRequestRepository<'a> {
         let result = query
             .offset(pagination.offset as i64)
             .limit(pagination.limit as i64)
-            .load::<PrescriptionRequestRow>(self.connection.lock().connection())?;
+            .load::<PrescriptionRequestJoin>(self.connection.lock().connection())?;
 
         Ok(result.into_iter().map(to_domain).collect())
     }
@@ -123,7 +136,7 @@ impl<'a> PrescriptionRequestRepository<'a> {
     fn create_filtered_query(
         filter: Option<PrescriptionRequestFilter>,
     ) -> BoxedPrescriptionRequestQuery {
-        let mut query = prescription_request::table.into_boxed();
+        let mut query = query().into_boxed();
 
         if let Some(f) = filter {
             let PrescriptionRequestFilter {
@@ -172,7 +185,14 @@ impl<'a> PrescriptionRequestRepository<'a> {
             }
 
             if let Some(condition) = dynamic_filter {
-                query = query.filter(condition.to_boxed());
+                // The condition is built against the bare table, so it cannot
+                // be applied to this joined query directly — match ids instead
+                // (the InvoiceCondition pattern).
+                let request_ids = prescription_request::table
+                    .filter(condition.to_boxed())
+                    .select(prescription_request::id)
+                    .into_boxed();
+                query = query.filter(prescription_request::id.eq_any(request_ids));
             }
         }
 
@@ -180,13 +200,26 @@ impl<'a> PrescriptionRequestRepository<'a> {
     }
 }
 
-fn to_domain(prescription_request_row: PrescriptionRequestRow) -> PrescriptionRequest {
+type PrescriptionRequestJoin = (
+    PrescriptionRequestRow,
+    Option<(ClinicianLinkRow, ClinicianRow)>,
+);
+
+fn to_domain(
+    (prescription_request_row, clinician_link_join): PrescriptionRequestJoin,
+) -> PrescriptionRequest {
     PrescriptionRequest {
         prescription_request_row,
+        clinician_row: clinician_link_join.map(|(_, clinician_row)| clinician_row),
     }
 }
 
-type BoxedPrescriptionRequestQuery = IntoBoxed<'static, prescription_request::table, DBType>;
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    prescription_request::table.left_join(clinician_link::table.inner_join(clinician::table))
+}
+
+type BoxedPrescriptionRequestQuery = IntoBoxed<'static, query, DBType>;
 
 impl PrescriptionRequestFilter {
     pub fn new() -> PrescriptionRequestFilter {
