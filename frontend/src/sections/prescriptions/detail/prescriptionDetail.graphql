@@ -90,8 +90,16 @@ fragment PrescriptionFields on InvoiceNode {
   }
 }
 
+# The `type` argument does BOTH jobs, so it is the only type pin here. It
+# selects the PERMISSION — the server authorises this read against
+# PrescriptionQuery alone because it is named; omitted, it falls back to a
+# deprecated combined resource demanding all six invoice query permissions at
+# once, which locks a dispensary-only user out of the screen the nav already
+# let them open (nav gates this route on PRESCRIPTION_QUERY). It also FILTERS,
+# so a non-prescription id now reads as RecordNotFound rather than handing back
+# a shipment. Singular `type`, not the list the `invoices` queries take.
 query prescriptionDetail($storeId: String!, $id: String!) {
-  invoice(storeId: $storeId, id: $id) {
+  invoice(storeId: $storeId, id: $id, type: PRESCRIPTION) {
     __typename
     ... on InvoiceNode {
       ...PrescriptionFields
