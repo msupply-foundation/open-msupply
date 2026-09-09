@@ -472,7 +472,7 @@ export type InboundShipmentLinesVariables = {
     isProgramInvoice?: boolean | null;
   } | null;
   sort?: Array<{
-    key: "itemCode" | "itemName" | "batch" | "expiryDate" | "packSize" | "locationName";
+    key: "itemCode" | "itemName" | "batch" | "expiryDate" | "packSize" | "locationName" | "requestedQuantity";
     desc?: boolean | null;
   }> | null;
   page?: {

@@ -159,7 +159,7 @@ type DraftBatch = {
   sellPricePerPack: number;
   note: string;
   vvmStatusId: string | null;
-  /** Line authorisation status (spec col 16); null on shipments without it. */
+  /** Line authorisation status (spec col 18); null on shipments without it. */
   status: InboundLineFragment['status'];
   donorId: string | null;
   donorName: string | null;
@@ -182,7 +182,7 @@ type DraftBatch = {
 // The three authorisation states a line can hold (the fragment's non-null set).
 type AuthStatus = NonNullable<DraftBatch['status']>;
 
-// Each auth state's dot class (spec col 16): amber awaiting, green approved,
+// Each auth state's dot class (spec col 18): amber awaiting, green approved,
 // red rejected — the colours live in the CSS module, one class per state.
 const AUTH_STATUS_CLASS: Record<AuthStatus, string> = {
   PENDING: styles.statusPending,
@@ -685,11 +685,12 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
       ? requestedQuantityForItem(item()?.id, loadedRequested(), orderLines())
       : undefined;
 
-  // The band's content, or undefined when the item has no line on the linked
-  // order — which gets the neutral notice in place of BOTH values
-  // (OMS-REG-ISH-01.16). Wrapped rather than handed to `<Show>` bare: a
-  // genuine requested quantity of ZERO is a figure, and `<Show when={0}>`
-  // would render the not-on-the-order fallback for it.
+  // The requested quantity's content, or undefined when the item has no line
+  // on the linked order — which gets the neutral notice in its place, the
+  // supplier comment staying put beside it (OMS-REG-ISH-01.16). Wrapped rather
+  // than handed to `<Show>` bare: a genuine requested quantity of ZERO is a
+  // figure, and `<Show when={0}>` would render the not-on-the-order fallback
+  // for it.
   const orderContext = () => {
     const requested = requestedQuantity();
     return requested == null ? undefined : { requested };
@@ -1678,22 +1679,21 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
           {/* Unit is a labelled fact in the header now, not a field row here. */}
           <>
             {/* Internal-order context (spec S4). An item with no line on the
-                order swaps the whole banner for the neutral notice. Absent on a
+                order swaps the requested quantity for the neutral notice but
+                KEEPS the supplier comment: the supplying store often uses it to
+                say why an unordered item was included, which is exactly the
+                case where the reader has no other explanation. Absent on a
                 shipment with no internal-order link, and — via the enclosing
                 no-item fallback — until an item is chosen in add mode. */}
             <Show when={props.requisitionId}>
               <div class={styles.orderContext}>
-                <Show
-                  when={orderContext()}
-                  fallback={
-                    <Alert severity="neutral">
-                      {t('messages.item-not-on-internal-order')}
-                    </Alert>
-                  }
-                >
-                  {context => (
-                    <Alert severity="info">
-                      <HStack gap="lg" align="center" wrap>
+                <Alert severity={orderContext() ? 'info' : 'neutral'}>
+                  <HStack gap="lg" align="center" wrap>
+                    <Show
+                      when={orderContext()}
+                      fallback={t('messages.item-not-on-internal-order')}
+                    >
+                      {context => (
                         <LabelledValue
                           label={t('label.requested-quantity')}
                           variant="field"
@@ -1703,21 +1703,21 @@ const Body: Component<InboundShipmentLineEditModalProps> = props => {
                         >
                           {formatNumber(context().requested)}
                         </LabelledValue>
-                        <LabelledValue
-                          label={t('label.supplier-comment')}
-                          variant="field"
-                          layout="inline"
-                          size="small"
-                          data-testid="supplier-comment-value"
-                        >
-                          {/* Always stated, dash and all: an empty comment on
-                              a short supply is itself worth seeing. */}
-                          {transferComment() || '—'}
-                        </LabelledValue>
-                      </HStack>
-                    </Alert>
-                  )}
-                </Show>
+                      )}
+                    </Show>
+                    <LabelledValue
+                      label={t('label.supplier-comment')}
+                      variant="field"
+                      layout="inline"
+                      size="small"
+                      data-testid="supplier-comment-value"
+                    >
+                      {/* Always stated, dash and all: an empty comment on a
+                          short supply is itself worth seeing. */}
+                      {transferComment() || '—'}
+                    </LabelledValue>
+                  </HStack>
+                </Alert>
               </div>
             </Show>
             <Show when={hasMismatch()}>

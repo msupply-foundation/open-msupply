@@ -5,6 +5,7 @@ use super::{
 };
 
 use crate::diesel_macros::define_linked_tables;
+use crate::db_diesel::requisition_line::requisition_line_row::requisition_line;
 use crate::item_row::item;
 use crate::repository_error::RepositoryError;
 use crate::{
@@ -92,6 +93,13 @@ allow_tables_to_appear_in_same_query!(invoice_line_stats, location);
 allow_tables_to_appear_in_same_query!(invoice_line_stats, stock_line);
 allow_tables_to_appear_in_same_query!(invoice_line_stats, reason_option);
 allow_tables_to_appear_in_same_query!(invoice_line_stats, item);
+// Sorting invoice lines by the linked requisition's requested quantity
+// (InvoiceLineSortField::RequestedQuantity) puts a requisition_line subquery
+// alongside this query's tables. The rest of the pairing is declared globally
+// in diesel_schema.rs; these two tables are local to this module, so they are
+// declared here.
+allow_tables_to_appear_in_same_query!(invoice_line_stats, requisition_line);
+allow_tables_to_appear_in_same_query!(reason_option, requisition_line);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
