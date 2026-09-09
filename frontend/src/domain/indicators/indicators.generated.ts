@@ -75,7 +75,7 @@ export type UpdateIndicatorValueResult = {
   __typename: "UpdateIndicatorValueError";
 } & {
   error: {
-  __typename: string;
+  __typename: "RecordNotFound" | "ValueTypeNotCorrect";
   description: string;
 };
 });

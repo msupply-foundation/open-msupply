@@ -86,7 +86,7 @@ pub mod types;
 use crate::mutations::rnr_form::delete::delete_rnr_form;
 use crate::mutations::rnr_form::delete::DeleteRnRFormInput;
 use crate::mutations::rnr_form::delete::DeleteRnRFormResponse;
-use graphql_types::types::period_schedule::PeriodSchedulesResponse;
+use crate::types::period_schedule::PeriodSchedulesResponse;
 
 use self::queries::*;
 

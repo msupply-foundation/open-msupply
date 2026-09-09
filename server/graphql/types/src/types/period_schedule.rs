@@ -1,84 +1,68 @@
 use async_graphql::*;
+use graphql_core::generic_filters::EqualFilterStringInput;
+use repository::{EqualFilter, PeriodScheduleFilter, PeriodScheduleRow};
+use service::ListResult;
 
-use crate::types::PeriodNode;
-use repository::{Period, PeriodScheduleRow};
-use service::period_schedule::PeriodSchedule;
-
-#[derive(SimpleObject)]
-pub struct PeriodSchedulesConnector {
-    // If this is ever paginated, should add `totalCount` here
-    pub nodes: Vec<PeriodScheduleNode>,
+pub struct PeriodScheduleRowNode {
+    period_schedule: PeriodScheduleRow,
 }
 
-impl PeriodSchedulesConnector {
-    pub fn from_domain(schedules: Vec<PeriodSchedule>) -> PeriodSchedulesConnector {
-        PeriodSchedulesConnector {
+#[derive(SimpleObject)]
+pub struct PeriodScheduleConnector {
+    pub nodes: Vec<PeriodScheduleRowNode>,
+    pub total_count: u32,
+}
+
+#[derive(Union)]
+pub enum PeriodScheduleResponse {
+    Response(PeriodScheduleConnector),
+}
+
+#[Object]
+impl PeriodScheduleRowNode {
+    pub async fn id(&self) -> &str {
+        &self.row().id
+    }
+
+    pub async fn name(&self) -> &str {
+        &self.row().name
+    }
+}
+
+impl PeriodScheduleRowNode {
+    pub fn from_domain(period_schedule: PeriodScheduleRow) -> PeriodScheduleRowNode {
+        PeriodScheduleRowNode { period_schedule }
+    }
+
+    pub fn row(&self) -> &PeriodScheduleRow {
+        &self.period_schedule
+    }
+}
+
+impl PeriodScheduleConnector {
+    pub fn from_domain(schedules: ListResult<PeriodScheduleRow>) -> PeriodScheduleConnector {
+        PeriodScheduleConnector {
             nodes: schedules
+                .rows
                 .into_iter()
-                .map(
-                    |PeriodSchedule {
-                         schedule_row,
-                         periods,
-                     }| PeriodScheduleNode {
-                        schedule_row,
-                        periods,
-                    },
-                )
+                .map(PeriodScheduleRowNode::from_domain)
                 .collect(),
+            total_count: schedules.count,
         }
     }
 }
 
-#[derive(Union)]
-pub enum PeriodSchedulesResponse {
-    Response(PeriodSchedulesConnector),
+#[derive(InputObject)]
+pub struct PeriodScheduleFilterInput {
+    pub id: Option<EqualFilterStringInput>,
+    pub name: Option<EqualFilterStringInput>,
 }
 
-pub struct PeriodScheduleNode {
-    pub schedule_row: PeriodScheduleRow,
-    pub periods: Vec<Period>,
-}
-
-#[Object]
-impl PeriodScheduleNode {
-    pub async fn id(&self) -> &str {
-        &self.schedule_row.id
-    }
-
-    pub async fn name(&self) -> &str {
-        &self.schedule_row.name
-    }
-
-    pub async fn periods(&self) -> Vec<SchedulePeriodNode> {
-        self.periods
-            .clone()
-            .into_iter()
-            .map(SchedulePeriodNode::from_domain)
-            .collect()
-    }
-}
-
-pub struct SchedulePeriodNode {
-    period: Period,
-}
-
-#[Object]
-impl SchedulePeriodNode {
-    pub async fn id(&self) -> &str {
-        &self.period.period_row.id
-    }
-
-    pub async fn period(&self) -> PeriodNode {
-        PeriodNode::from_domain(self.period.period_row.clone())
-    }
-
-    pub async fn in_use(&self) -> bool {
-        self.period.rnr_form_row.is_some()
-    }
-}
-
-impl SchedulePeriodNode {
-    pub fn from_domain(period: Period) -> SchedulePeriodNode {
-        SchedulePeriodNode { period }
+impl PeriodScheduleFilterInput {
+    pub fn to_domain(self) -> PeriodScheduleFilter {
+        PeriodScheduleFilter {
+            id: self.id.map(EqualFilter::from),
+            name: self.name.map(EqualFilter::from),
+        }
     }
 }

@@ -104,8 +104,8 @@ const renderRow = (patient: PatientOption): JSX.Element => (
  * affordance (spec/patients S4) is `onEditPatient`: an edit button at the end
  * of the field — the current app's placement — so it costs the label row
  * nothing and stays live while the picker itself is disabled. The consumer
- * decides where the affordance leads — prescriptions opens the S4 two-tab edit
- * modal (`EditPatientModal`, `src/sections/patients`) in place, never a
+ * decides where the affordance leads — prescriptions opens the S4 edit modal
+ * (`EditPatientModal`, `src/sections/patients`) in place, never a
  * navigate-away (#1038).
  */
 export const PatientSearch = (props: PatientSearchProps): JSX.Element => (

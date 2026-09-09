@@ -39,6 +39,8 @@ export interface NavLeaf {
   gate?: NavCapability;
   /** Permission-gated read — withheld without it (navConfig). */
   permission?: NavConfigItem['permission'];
+  /** Supporting destination — offered only with its principals (navConfig). */
+  supporting?: NavConfigItem['supporting'];
 }
 
 export interface NavItem {
@@ -107,6 +109,7 @@ const toNavItem = (item: NavConfigItem): NavItem => ({
     to: child.path,
     gate: child.gate,
     permission: child.permission,
+    supporting: child.supporting,
   })),
 });
 
