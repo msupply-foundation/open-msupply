@@ -239,9 +239,22 @@ const startUrl = () => {
 // API on this origin and nowhere else (./preload.ts), so it has to follow
 // startUrl(): pinned to loopback, a debug run would load the page from the dev
 // server and find no host at all.
+//
+// Read from the URL the server reported rather than from the preferred port,
+// because that port is only preferred (./discoveryHost.ts § servePage): a
+// second window of this app serves the page on a free port instead, and a
+// hard-coded origin would then gate the host API onto a page that is not
+// there.
 const pageOrigin = (): string => {
   const debugHost = getDebugHost();
-  if (!debugHost) return DISCOVERY_PAGE_ORIGIN;
+  const served = discoveryPageUrl || DISCOVERY_PAGE_ORIGIN;
+  if (!debugHost) {
+    try {
+      return new URL(served).origin;
+    } catch {
+      return DISCOVERY_PAGE_ORIGIN;
+    }
+  }
   try {
     return new URL(debugHost).origin;
   } catch {
@@ -313,12 +326,21 @@ const connectToServer = (window: BrowserWindow, server: FrontEndHost) => {
 
 const start = async (): Promise<void> => {
   // Serve the discovery page over loopback before anything loads. A failure
-  // here is not fatal: the shell falls back to the webpack renderer, so the
-  // app still starts and says what went wrong.
+  // here is not fatal: the shell falls back to the old front end's own
+  // discovery screen in the webpack renderer, so the app still starts.
+  //
+  // That fallback is a last resort, not a supported second path — nothing
+  // exercises it, and the shell APIs underneath it keep moving — so the one
+  // failure a user can actually cause, the preferred port being taken by a
+  // second window, is handled inside servePage by taking a free port instead.
+  // Getting here means the page is missing from the install.
   try {
     discoveryPageUrl = await servePage();
   } catch (error) {
-    console.error('Could not serve the discovery page:', error);
+    console.error(
+      "Could not serve the discovery page — falling back to the old front end's discovery screen:",
+      error
+    );
   }
 
   // Create the browser window.
