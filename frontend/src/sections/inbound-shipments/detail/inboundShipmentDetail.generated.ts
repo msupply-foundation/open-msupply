@@ -191,7 +191,7 @@ export type BatchResultFragment = {
   __typename: "InsertInboundShipmentLineError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotEditInvoice" | "ForeignKeyError";
   description: string;
 };
 });
@@ -206,7 +206,7 @@ export type BatchResultFragment = {
   __typename: "UpdateInboundShipmentLineError";
 } & {
   error: {
-  __typename: string;
+  __typename: "BatchIsReserved" | "CannotEditInvoice" | "ForeignKeyError" | "NotAnInboundShipment" | "RecordNotFound";
   description: string;
 };
 });
@@ -221,7 +221,7 @@ export type BatchResultFragment = {
   __typename: "DeleteInboundShipmentLineError";
 } & {
   error: {
-  __typename: string;
+  __typename: "BatchIsReserved" | "CannotEditInvoice" | "ForeignKeyError" | "LineLinkedToTransferredInvoice" | "RecordNotFound";
   description: string;
 };
 });
@@ -244,7 +244,7 @@ export type BatchResultFragment = {
   __typename: "InsertInboundShipmentServiceLineError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotEditInvoice" | "ForeignKeyError";
   description: string;
 };
 });
@@ -259,7 +259,7 @@ export type BatchResultFragment = {
   __typename: "UpdateInboundShipmentServiceLineError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotEditInvoice" | "ForeignKeyError" | "RecordNotFound";
   description: string;
 };
 });
@@ -274,7 +274,7 @@ export type BatchResultFragment = {
   __typename: "DeleteInboundShipmentServiceLineError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotEditInvoice" | "ForeignKeyError" | "RecordNotFound";
   description: string;
 };
 });
@@ -294,7 +294,7 @@ export type InboundShipmentResult = {
   __typename: "NodeError";
 } & {
   error: {
-  __typename: string;
+  __typename: "DatabaseError" | "RecordNotFound";
   description: string;
 };
 });
@@ -322,7 +322,7 @@ export type FullInboundShipmentResult = {
   __typename: "NodeError";
 } & {
   error: {
-  __typename: string;
+  __typename: "DatabaseError" | "RecordNotFound";
   description: string;
 };
 });
@@ -347,7 +347,7 @@ export type InboundShipmentByNumberResult = {
   __typename: "NodeError";
 } & {
   error: {
-  __typename: string;
+  __typename: "DatabaseError" | "RecordNotFound";
   description: string;
 };
 });
@@ -439,6 +439,13 @@ export type InboundShipmentLinesVariables = {
     notEqualAll?: Array<string> | null;
   } | null;
     reasonOption?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+    inventoryAdjustmentReason?: {
     equalTo?: string | null;
     equalAny?: Array<string> | null;
     notEqualTo?: string | null;
@@ -570,6 +577,13 @@ export type InboundServiceLinesVariables = {
     equalAnyOrNull?: Array<string> | null;
     notEqualAll?: Array<string> | null;
   } | null;
+    inventoryAdjustmentReason?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
     verifiedDatetime?: {
     equalTo?: string | null;
     beforeOrEqualTo?: string | null;
@@ -640,7 +654,7 @@ export type UpdateInboundShipmentResult = {
   __typename: "UpdateInboundShipmentError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotChangeStatusOfInvoiceOnHold" | "CannotEditInvoice" | "CannotIssueInForeignCurrency" | "CannotReceiveWithPendingLines" | "CannotReverseInvoiceStatus" | "OtherPartyNotASupplier" | "OtherPartyNotVisible" | "RecordNotFound";
   description: string;
 };
 });
@@ -683,7 +697,7 @@ export type UpdateInboundShipmentExternalResult = {
   __typename: "UpdateInboundShipmentError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotChangeStatusOfInvoiceOnHold" | "CannotEditInvoice" | "CannotIssueInForeignCurrency" | "CannotReceiveWithPendingLines" | "CannotReverseInvoiceStatus" | "OtherPartyNotASupplier" | "OtherPartyNotVisible" | "RecordNotFound";
   description: string;
 };
 });
@@ -705,7 +719,6 @@ export type BatchInboundShipmentVariables = {
     colour?: string | null;
     requisitionId?: string | null;
     purchaseOrderId?: string | null;
-    prescriptionRequestId?: string | null;
     insertLinesFromPurchaseOrder?: boolean | null;
   }> | null;
     insertInboundShipmentLines?: Array<{
@@ -865,7 +878,6 @@ export type BatchInboundShipmentExternalVariables = {
     colour?: string | null;
     requisitionId?: string | null;
     purchaseOrderId?: string | null;
-    prescriptionRequestId?: string | null;
     insertLinesFromPurchaseOrder?: boolean | null;
   }> | null;
     insertInboundShipmentLines?: Array<{
@@ -1030,7 +1042,7 @@ export type AddToInboundShipmentFromMasterListResult = {
   __typename: "AddToInboundShipmentFromMasterListError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotEditInvoice" | "MasterListNotFoundForThisStore" | "RecordNotFound";
   description: string;
 };
 });
@@ -1056,7 +1068,7 @@ export type DeleteInboundShipmentResult = {
   __typename: "DeleteInboundShipmentError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotDeleteInvoiceWithLines" | "CannotEditInvoice" | "RecordNotFound";
   description: string;
 };
 });
@@ -1082,7 +1094,7 @@ export type DeleteInboundShipmentExternalResult = {
   __typename: "DeleteInboundShipmentError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotDeleteInvoiceWithLines" | "CannotEditInvoice" | "RecordNotFound";
   description: string;
 };
 });

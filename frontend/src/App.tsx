@@ -18,7 +18,7 @@ import { fetchDisplaySettings } from './api/displaySettings';
 import { authUser, checkAuth, startActivityTracking } from './auth/authContext';
 import { InitialisationPage } from './initialisation/InitialisationPage';
 import { resolveStorePath, StoreGuardLayout } from './store/StoreGuardLayout';
-import { navDestinations } from './nav/navConfig';
+import { DASHBOARD_LEGACY_PATH, navDestinations } from './nav/navConfig';
 import { routerBase } from './nav/storeRelativePath';
 import { DashboardPage } from './sections/dashboard';
 import { stocktakesRoutes } from './sections/stocktakes';
@@ -63,6 +63,7 @@ import { StaleBundleModal } from './StaleBundleModal';
 import { startStaleBundleWatch } from './staleBundle';
 import { startUpdateWatch } from './appUpdate';
 import { PluginGate } from './plugins/PluginGate';
+import { pluginPageRoutes } from './plugins/pluginPages';
 import styles from './ui/styles/shared.module.css';
 
 // 'failed' is what the loading phase becomes once a startup pass cannot
@@ -259,7 +260,14 @@ export const App: Component = () => {
                       segment. Without this the old address falls through to
                       the not-found catch-all below, which is a worse answer
                       than the screen the user asked for. */}
-                    <Route path="/dashboard" component={DashboardRedirect} />
+                    <Route
+                      /* The shared constant, not a literal: validate.ts
+                         reserves this path against plugin pages through the
+                         same export, so the redirect and the reservation
+                         cannot drift apart. */
+                      path={`/${DASHBOARD_LEGACY_PATH}`}
+                      component={DashboardRedirect}
+                    />
                     <For each={Object.entries(sectionRoutes)}>
                       {([path, routes]) => (
                         <Route path={`/${path}`}>{routes()}</Route>
@@ -276,6 +284,28 @@ export const App: Component = () => {
                         <Route
                           path={`/${dest.path}`}
                           component={() => <EntryPage dest={dest} />}
+                        />
+                      )}
+                    </For>
+                    {/* Plugin-contributed pages (spec/plugins/rules.md § pages
+                      & navigation): one route per page a loaded plugin
+                      declares — the set is settled here, since PluginGate has
+                      already opened. Each component is the host frame around
+                      the plugin's lazy body, and the gates are ShellLayout's
+                      reactive routeAccess verdict, exactly as for the routes
+                      above. A plugin nav group has no path and no route: an
+                      unclaimed prefix falls to the catch-all below. */}
+                    <For each={pluginPageRoutes()}>
+                      {route => (
+                        <Route
+                          /* Exact path AND everything below it: paths below a
+                             page are the page's own to interpret (sdk-contract
+                             § Paths) — a plugin's record screen at
+                             `.../count/item-7` must mount the page, not fall
+                             through to the not-found catch-all the highlight
+                             and tab title already disown. */
+                          path={[`/${route.path}`, `/${route.path}/*`]}
+                          component={route.Component}
                         />
                       )}
                     </For>

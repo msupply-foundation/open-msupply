@@ -11,8 +11,8 @@ use self::update::{
 };
 use crate::{service_provider::ServiceContext, ListError, ListResult};
 use repository::{
-    PaginationOption, PrescriptionRequest, PrescriptionRequestFilter, PrescriptionRequestRow,
-    PrescriptionRequestSort, RepositoryError,
+    PaginationOption, PrescriptionRequest, PrescriptionRequestFilter, PrescriptionRequestSort,
+    RepositoryError,
 };
 
 pub mod batch;
@@ -49,7 +49,7 @@ pub trait PrescriptionRequestServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         store_id: &str,
         input: InsertPrescriptionRequest,
-    ) -> Result<PrescriptionRequestRow, InsertPrescriptionRequestError> {
+    ) -> Result<PrescriptionRequest, InsertPrescriptionRequestError> {
         insert_prescription_request(ctx, store_id, input)
     }
 
@@ -58,7 +58,7 @@ pub trait PrescriptionRequestServiceTrait: Sync + Send {
         ctx: &ServiceContext,
         store_id: &str,
         input: UpdatePrescriptionRequest,
-    ) -> Result<PrescriptionRequestRow, UpdatePrescriptionRequestError> {
+    ) -> Result<PrescriptionRequest, UpdatePrescriptionRequestError> {
         update_prescription_request(ctx, store_id, input)
     }
 

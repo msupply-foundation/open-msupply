@@ -1,6 +1,7 @@
 use repository::{
-    DiagnosisRowRepository, PrescriptionRequestRow, PrescriptionRequestRowRepository,
-    PrescriptionRequestStatus, RepositoryError, StorageConnection,
+    ClinicianRowRepository, ClinicianRowRepositoryTrait, DiagnosisRowRepository,
+    PrescriptionRequestRow, PrescriptionRequestRowRepository, PrescriptionRequestStatus,
+    RepositoryError, StorageConnection,
 };
 
 #[derive(Debug, PartialEq)]
@@ -51,6 +52,19 @@ pub fn check_diagnosis_exists(
 ) -> Result<bool, RepositoryError> {
     Ok(DiagnosisRowRepository::new(connection)
         .find_one_by_id(diagnosis_id)?
+        .is_some())
+}
+
+/// The clinician a request names. Checked against `clinician`, not
+/// `clinician_link`: the caller hands in a clinician id, and a freshly created
+/// link carries the same id, so the id written to `clinician_link_id` is the
+/// one validated here.
+pub fn check_clinician_exists(
+    connection: &StorageConnection,
+    clinician_id: &str,
+) -> Result<bool, RepositoryError> {
+    Ok(ClinicianRowRepository::new(connection)
+        .find_one_by_id(clinician_id)?
         .is_some())
 }
 
