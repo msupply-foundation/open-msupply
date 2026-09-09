@@ -94,6 +94,12 @@ export const PrescriptionSidePanel: Component<
 
   const status = () => asPrescriptionStatus(props.node.status);
 
+  // A dispensation GENERATED from a prescription request carries the
+  // prescriber's Diagnosis, copied at the hand-over from a request that is
+  // itself locked — so it is read-only here however editable the record is
+  // (issue #513; the toolbar does the same for Patient and Clinician).
+  const fromRequest = () => props.node.prescriptionRequestId != null;
+
   // The active diagnoses the Diagnosis picker offers (the picker is the only
   // guard — an unknown id fails opaquely, contract wire trap). Read
   // non-suspending: the panel lives under the already-open detail.
@@ -328,7 +334,7 @@ export const PrescriptionSidePanel: Component<
             itemToString={d => d.description}
             itemToValue={d => d.id}
             value={props.node.diagnosisId ?? undefined}
-            disabled={props.disabled}
+            disabled={props.disabled || fromRequest()}
             clearable
             onChange={diagnosis =>
               props.onSave({ diagnosisId: { value: diagnosis?.id ?? null } })
