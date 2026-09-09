@@ -162,7 +162,7 @@ export type UpdateStockLineResult = {
   __typename: "UpdateStockLineError";
 } & {
   error: {
-  __typename: string;
+  __typename: "RecordNotFound";
   description: string;
 };
 });
@@ -239,6 +239,7 @@ export type CreateInventoryAdjustmentVariables = {
     stockLineId: string;
     adjustment: number;
     adjustmentType: "ADDITION" | "REDUCTION";
+    inventoryAdjustmentReasonId?: string | null;
     reasonOptionId?: string | null;
     backdatedDatetime?: string | null;
   };
@@ -388,7 +389,7 @@ export type StockRepackResult = {
   __typename: "NodeError";
 } & {
   error: {
-  __typename: string;
+  __typename: "DatabaseError" | "RecordNotFound";
   description: string;
 };
 });
@@ -427,7 +428,7 @@ export type InsertRepackResult = {
   __typename: "InsertRepackError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotHaveFractionalPack" | "StockLineReducedBelowZero";
   description: string;
 };
 });

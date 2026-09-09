@@ -12,8 +12,7 @@
  * MUST stay free of module-scope side effects: this module is evaluated by
  * the facade entry before any plugin code runs.
  *
- * This is the v1 surface. `pages`, `register`, and lazy component wrappers
- * are later.
+ * This is the v1 surface. `register` and lazy component wrappers are later.
  */
 
 // ── Compatibility gate ──────────────────────────────────────────────────────
@@ -30,6 +29,10 @@ export type {
   PluginDefinition,
   PluginModule,
   PluginMessages,
+  PluginPage,
+  PluginNavPlacement,
+  PluginNavSection,
+  HostNavSectionId,
   Contribution,
   ContributionCore,
   AnyContribution,
