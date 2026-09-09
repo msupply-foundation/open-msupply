@@ -58,12 +58,12 @@ import { PrescriptionRequestStatusFooter } from './PrescriptionRequestStatusFoot
 import { RequestLineEditModal } from './edit-modal/RequestLineEditModal';
 import { EditPatientModal } from '../../patients';
 
-// The prescription-request detail (spec/prescription-requests/ui-surface.md S3):
-// toolbar (patient / date / program / diagnosis / prominent
-// custom fields), Details + Custom fields + Log tabs over the line table, the
-// side panel, and the status footer with the Ready-to-dispense hand-over.
-// Read-only past New: dead affordances are hidden and a row click opens the
-// line editor's read-only face (AC-N5, AC-R3).
+// The prescription-request detail (spec/prescription-requests/ui-surface.md
+// S3): toolbar (patient / date of birth / clinician / date / diagnosis /
+// prominent custom fields), Details + Custom fields + Log tabs over the line
+// table, the side panel, and the status footer with the Ready-to-dispense
+// hand-over. Read-only past New: dead affordances are hidden and a row click
+// opens the line editor's read-only face (AC-N5, AC-R3).
 
 type Line = PrescriptionRequestFieldsFragment['lines']['nodes'][number];
 
@@ -385,7 +385,6 @@ const PrescriptionRequestDetailView: Component = () => {
                 requestId={node().id}
                 line={state.line}
                 readOnly={disabled()}
-                programId={node().programId ?? undefined}
                 onClose={() => setEditState(undefined)}
                 onSaved={() => void refetch()}
               />

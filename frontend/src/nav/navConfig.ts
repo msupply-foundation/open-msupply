@@ -59,6 +59,17 @@ export type NavItem = {
    */
   permission?: UserPermission;
   /**
+   * Marks a SUPPORTING destination — reference data in service of other
+   * destinations' workflow, carrying no query permission of its own
+   * (spec/navigation › supporting destinations). Offered only while at least
+   * one destination it supports (a principal) is offered: `true` names every
+   * non-supporting sibling in its section; a path list names exactly those
+   * destinations (Clinicians lists the records a clinician appears on, so a
+   * Patients-only user is not offered it). The derived gate is evaluated in
+   * navGates, like the others.
+   */
+  supporting?: true | string[];
+  /**
    * OVERRIDE for the command palette's name, complete with its "Go to:" prefix
    * (spec/keyboard ui-surface S1 § Action names).
    *
@@ -115,6 +126,7 @@ export const navConfig: NavItem[] = [
       {
         labelKey: 'suppliers',
         path: 'replenishment/suppliers',
+        supporting: true,
       },
     ],
   },
@@ -131,6 +143,7 @@ export const navConfig: NavItem[] = [
       {
         labelKey: 'locations',
         path: 'inventory/locations',
+        supporting: true,
       },
       {
         labelKey: 'stocktakes',
@@ -167,6 +180,7 @@ export const navConfig: NavItem[] = [
       {
         labelKey: 'customers',
         path: 'distribution/customers',
+        supporting: true,
       },
     ],
   },
@@ -203,7 +217,18 @@ export const navConfig: NavItem[] = [
         path: 'dispensary/encounter',
         gate: 'programModule',
       },
-      { labelKey: 'clinicians', path: 'dispensary/clinicians' },
+      {
+        labelKey: 'clinicians',
+        path: 'dispensary/clinicians',
+        // The records a clinician appears on — NOT patients, so a
+        // patients-only user is not offered the clinician register
+        // (spec/navigation › supporting destinations).
+        supporting: [
+          'dispensary/prescription-request',
+          'dispensary/prescription',
+          'dispensary/encounter',
+        ],
+      },
     ],
   },
   {
@@ -326,6 +351,13 @@ export const flattenNav = (config: NavItem[]): NavItem[] =>
   config.flatMap(item => [item, ...(item.children ?? [])]);
 
 export const navDestinations: NavItem[] = flattenNav(navConfig);
+
+// Home's pre-move address (CK-1.7 moved Home to the store root): App.tsx keeps
+// a redirect route for it, OUTSIDE the registry. Declared here, beside the
+// registry, because the plugin validation gate reserves the host's whole
+// address space (validate.ts HOST_RESERVED_PATHS) — a literal in either file
+// alone would let the two drift and hand a plugin a path the router owns.
+export const DASHBOARD_LEGACY_PATH = 'dashboard';
 
 // The trail from the top-level section down to a destination, root first — the
 // breadcrumb a page shows (e.g. 'inventory/stocktakes' → [Inventory,

@@ -157,6 +157,41 @@ Two rules a real panel must follow, both visible here:
   A `when` that depended on the record would add and remove the contribution as
   the user steps, which is a remount by another name.
 
+### A page and its navigation section
+
+`pages` is not a slot: it contributes **whole routed screens**, flat — each
+`PluginPage` carries its own full path, its own gates, and one optional `nav`
+placement: inside a menu group of the plugin's own (declared under
+`navSections`), inside a host section, at the root of the upper list, or none
+at all (routed, no menu entry)
+([`sdk-contract` § the page contribution](../../spec/plugins/sdk-contract.md#the-page-contribution-specified-in-full)).
+A placement the host does not provide is refused, naming it (AC-PLUG-P5). Turn
+this plugin's section on with **`?pluginPages`**:
+
+```text
+http://localhost:3005/<store>/?pluginPages
+```
+
+A **Hello world** group appears in the menu just above Inventory
+(`anchor: { before: 'inventory' }`; without an anchor it would sit at the end
+of the upper list, above the pinned bottom cluster) holding one page,
+reachable from the menu, from the command palette ("Go to: Hello page"), and at
+`/<store>/hello-world/hello` directly — one registry, three surfaces.
+
+| Fixture detail                                            | What it proves                                                                                                                                                                                                |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| the page body lives in its own module (`HelloPage.tsx`)   | **page code loads on first navigation, never at startup** (AC-PLUG-P2): its console line prints on the first visit, not at boot. The build inlines it into the one bundle; the dev loop keeps it a real chunk |
+| the header, breadcrumb and menu are untouched host chrome | the host owns the app frame and page frame; the contribution is the **body only**, like a dashboard body occupant                                                                                             |
+| `when: () => pagesFlagAtBoot` (the flag, captured at boot) | the group-level withhold, composed with each placed page's own: absent from menu and palette, and the URL **redirects** — a real plugin gates on `ctx` (`ctx.storeMode === 'dispensary'`), same context, same behaviour. Captured at boot because in-app navigation drops the query string |
+| `nav: { in: 'helloSection' }`                              | the placement — one field of one shape. `{ in }` also takes a published host section id (the entry joins that section's children); `{ root: true }` is a top-level entry; absent means routed with no menu entry, like a host record screen               |
+| `anchor: { before: 'inventory' }`                          | menu placement against a published host section id — the same `{ before / after / end }` shape the dashboard slots use. An anchor naming a gate-hidden section degrades to the end of the upper list, named in diagnostics                              |
+| labels are keys (`pages.section`, `pages.hello`)          | nav labels, the breadcrumb and the tab title all resolve from the plugin's own catalogue, per locale                                                                                                          |
+
+Add `permissions: ['...']` to the page (or the group — the two compose) to
+guard the nav entry and direct navigation with **one** condition (AC-PLUG-P1):
+without the permission the entry is absent and the URL shows the host's
+no-permission notice in place of the screen.
+
 ## Navigation
 
 Two primitives, both over a path **below the store root**, spelled as the

@@ -74,7 +74,7 @@ export type SupplierReturnDetailResult = {
   __typename: "NodeError";
 } & {
   error: {
-  __typename: string;
+  __typename: "DatabaseError" | "RecordNotFound";
   description: string;
 };
 });
@@ -192,6 +192,13 @@ export type SupplierReturnLinesVariables = {
     equalAnyOrNull?: Array<string> | null;
     notEqualAll?: Array<string> | null;
   } | null;
+    inventoryAdjustmentReason?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
     verifiedDatetime?: {
     equalTo?: string | null;
     beforeOrEqualTo?: string | null;
@@ -292,7 +299,7 @@ export type UpdateSupplierReturnOtherPartyResult = {
   __typename: "UpdateSupplierReturnOtherPartyError";
 } & {
   error: {
-  __typename: string;
+  __typename: "InvoiceIsNotEditable" | "OtherPartyNotASupplier" | "OtherPartyNotVisible" | "RecordNotFound";
   description: string;
 };
 });
