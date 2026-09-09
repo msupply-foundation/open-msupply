@@ -44,7 +44,7 @@ use serde::Deserialize;
 use service::{
     service_provider::{ServiceContext, ServiceProvider},
     settings::Settings,
-    static_files::{StaticFileCategory, StaticFileService},
+    static_files::{InvalidFilePath, StaticFileCategory, StaticFileService},
     sync::{
         api::{validate_site_auth, SyncApiSettings},
         CentralServerConfig,
@@ -152,7 +152,7 @@ async fn create(
             &category,
             Some(file_id.clone()),
         )
-        .map_err(internal)?;
+        .map_err(file_path_error)?;
 
     // Create an empty file at the reserved path — subsequent PATCHes will append to it.
     // If a partial file already exists from a previous abandoned upload at the same file_id,
@@ -232,7 +232,7 @@ async fn patch_chunk(
     let category = StaticFileCategory::SyncFile(row.table_name.clone(), row.record_id.clone());
     let file = file_service
         .reserve_file(&row.file_name, &category, Some(file_id.clone()))
-        .map_err(internal)?;
+        .map_err(file_path_error)?;
 
     // The file is expected to exist (created at POST). If absent — e.g. someone PATCHed without
     // POSTing first, or the server was restarted with a wiped base_dir — refuse rather than
@@ -445,7 +445,7 @@ fn current_offset(
         StaticFileCategory::SyncFile(row.table_name.clone(), row.record_id.clone());
     let file = file_service
         .reserve_file(&row.file_name, &category, Some(file_id.to_string()))
-        .map_err(internal)?;
+        .map_err(file_path_error)?;
     match std::fs::metadata(&file.path) {
         Ok(m) => Ok(m.len()),
         Err(_) => Ok(0),
@@ -454,6 +454,16 @@ fn current_offset(
 
 fn internal<E: Display>(e: E) -> TusError {
     TusError::Internal(e.to_string())
+}
+
+/// For the static file service, whose path components come from the request: a segment
+/// that can't be one is the client's fault, so it gets a 400 rather than a 500.
+fn file_path_error(e: anyhow::Error) -> TusError {
+    if InvalidFilePath::is_in(&e) {
+        TusError::BadRequest(e.to_string())
+    } else {
+        internal(e)
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -523,6 +533,30 @@ mod tests {
             );
         }
         map
+    }
+
+    /// A path component that came in on the request is the request's fault. Before this
+    /// the traversal guard's rejections came back as 500s, which reads as a server bug.
+    #[test]
+    fn file_path_error_answers_bad_request_for_a_refused_segment() {
+        let service = StaticFileService::new(".").unwrap();
+        let error = service
+            .reserve_file(
+                "payload.js",
+                &StaticFileCategory::SyncFile("../../escaped".to_string(), "rec".to_string()),
+                Some("file-id".to_string()),
+            )
+            .expect_err("a traversing table name should be refused");
+
+        assert!(matches!(file_path_error(error), TusError::BadRequest(_)));
+    }
+
+    #[test]
+    fn file_path_error_leaves_everything_else_a_server_error() {
+        assert!(matches!(
+            file_path_error(anyhow::anyhow!("disk on fire")),
+            TusError::Internal(_)
+        ));
     }
 
     #[test]
