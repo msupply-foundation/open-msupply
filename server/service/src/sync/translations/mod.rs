@@ -586,6 +586,8 @@ fn translate_row_or_delete(
             continue;
         }
 
+        let is_upsert = matches!(row_or_delete, RowOrDelete::Row { .. });
+
         let translation_result = match &row_or_delete {
             RowOrDelete::Row { row, .. } => translator.try_translate_to_upsert_sync_record(
                 connection,
@@ -602,7 +604,19 @@ fn translate_row_or_delete(
             PushTranslateResult::Ignored(ignore_message) => {
                 log::debug!("Ignored record in push translation: {ignore_message}")
             }
-            PushTranslateResult::NotMatched => {}
+            // The translator claimed this row in should_translate_to_sync_record but
+            // produced nothing. Deletes are excluded: most translators have no
+            // delete-push implementation and fall through to the trait default.
+            PushTranslateResult::NotMatched => {
+                if is_upsert {
+                    log::warn!(
+                        "Push translation produced no record: table={:?} record_id={} translator={}",
+                        changelog.table_name,
+                        changelog.record_id,
+                        translator.table_name()
+                    )
+                }
+            }
         }
     }
 

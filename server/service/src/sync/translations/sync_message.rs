@@ -127,7 +127,9 @@ impl SyncTranslation for MessageTranslation {
         // OmSyncMessageTranslation owns that path; we skip here so we don't
         // double-sync the same row to both centrals.
         if matches!(message.r#type, SyncMessageRowType::SupportUpload) {
-            return Ok(PushTranslateResult::NotMatched);
+            return Ok(PushTranslateResult::Ignored(
+                "SupportUpload message".to_string(),
+            ));
         }
 
         let SyncMessageRow {
