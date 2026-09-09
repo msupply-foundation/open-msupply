@@ -11,7 +11,7 @@ use repository::{PaginationOption, RnRFormFilter};
 use service::auth::{Resource, ResourceAccessRequest};
 
 use crate::types::{
-    period_schedule::{SchedulesWithPeriodsConnector, SchedulesWithPeriodsResponse},
+    period_schedule::{PeriodSchedulesConnector, PeriodSchedulesResponse},
     r_and_r_form::{
         RnRFormConnector, RnRFormFilterInput, RnRFormResponse, RnRFormSortInput, RnRFormsResponse,
     },
@@ -92,7 +92,7 @@ pub fn get_schedules_with_periods_by_program(
     ctx: &Context<'_>,
     store_id: String,
     program_id: String,
-) -> Result<SchedulesWithPeriodsResponse> {
+) -> Result<PeriodSchedulesResponse> {
     let user = validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -109,7 +109,7 @@ pub fn get_schedules_with_periods_by_program(
         .get_schedules_with_periods_by_program(&context, &store_id, &program_id)
         .map_err(StandardGraphqlError::from_repository_error)?;
 
-    Ok(SchedulesWithPeriodsResponse::Response(
-        SchedulesWithPeriodsConnector::from_domain(result),
+    Ok(PeriodSchedulesResponse::Response(
+        PeriodSchedulesConnector::from_domain(result),
     ))
 }
