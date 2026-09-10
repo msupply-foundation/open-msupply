@@ -238,7 +238,7 @@
      lets its own `width` take effect — the inline floor can't be overridden from
      here. Cap ONLY: the panel still fills the positioner it's given. */
   inline-size: 100%;
-  min-inline-size: 0;
+  min-inline-size: min-content;
   max-inline-size: var(--kb-popper-anchor-width, none);
   /* The 18rem cap is load-bearing beyond this file: dialogs size their
      minBodyHeightRem reservations to it (#1029 — "header + field + the
