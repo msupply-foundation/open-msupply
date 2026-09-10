@@ -4,8 +4,8 @@ use super::{
     vvm_status::vvm_status_row::vvm_status, StorageConnection,
 };
 
-use crate::diesel_macros::define_linked_tables;
 use crate::db_diesel::requisition_line::requisition_line_row::requisition_line;
+use crate::diesel_macros::define_linked_tables;
 use crate::item_row::item;
 use crate::repository_error::RepositoryError;
 use crate::{
