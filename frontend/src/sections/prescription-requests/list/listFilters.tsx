@@ -6,7 +6,6 @@ import {
   constructFilters,
   type Filter,
 } from '../../../ui/elements/selectors/FilterBar';
-import { localTodayIso } from '@/ui/elements/inputs/dateTimeConvert';
 import {
   STATUS_LABEL_KEYS,
   type PrescriptionRequestStatus,
@@ -61,7 +60,7 @@ const FILTERS: Filter<PrescriptionRequestFilter>[] =
           type="dateTime"
           label={t('label.prescription-date')}
           testId={props.testId}
-          max={localTodayIso()}
+          disableFuture
           value={props.filter().prescriptionDatetime}
           onChange={value =>
             props.setPartialFilter({ prescriptionDatetime: value })
@@ -80,7 +79,7 @@ const FILTERS: Filter<PrescriptionRequestFilter>[] =
           type="dateTime"
           label={t('label.dispensed-date')}
           testId={props.testId}
-          max={localTodayIso()}
+          disableFuture
           value={props.filter().dispensedDatetime}
           onChange={value =>
             props.setPartialFilter({ dispensedDatetime: value })
