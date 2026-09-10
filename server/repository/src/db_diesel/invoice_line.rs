@@ -14,10 +14,7 @@ use crate::{
     EqualFilter, InvoiceStatus, InvoiceType, ItemRow, Pagination, Sort, StockLineRow, StringFilter,
 };
 
-use diesel::{
-    dsl::IntoBoxed,
-    prelude::*,
-};
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 table! {
     invoice_stats (invoice_id) {

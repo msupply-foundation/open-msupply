@@ -22,7 +22,8 @@ use crate::{
 use super::{
     assign_requisition_number::AssignRequisitionNumber, contact_form::QueueContactEmailProcessor,
     load_plugin::LoadPlugin, merge_sync_message::MergeSyncMessageProcessor,
-    plugin_processor::PluginProcessor, prescription_request_status::PrescriptionRequestStatusProcessor,
+    plugin_processor::PluginProcessor,
+    prescription_request_status::PrescriptionRequestStatusProcessor,
     requisition_auto_finalise::RequisitionAutoFinaliseProcessor,
     support_upload_files::SupportUploadFilesProcessor,
 };

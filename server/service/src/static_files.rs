@@ -548,8 +548,7 @@ mod test {
 
         for traversal in traversals {
             // As the table name…
-            let category =
-                StaticFileCategory::SyncFile(traversal.to_string(), "rec".to_string());
+            let category = StaticFileCategory::SyncFile(traversal.to_string(), "rec".to_string());
             assert!(
                 service.reserve_file("payload.js", &category, None).is_err(),
                 "reserve_file accepted table_name {:?}",
@@ -569,8 +568,7 @@ mod test {
             );
 
             // …and as the record id
-            let category =
-                StaticFileCategory::SyncFile("asset".to_string(), traversal.to_string());
+            let category = StaticFileCategory::SyncFile("asset".to_string(), traversal.to_string());
             assert!(
                 service.reserve_file("payload.js", &category, None).is_err(),
                 "reserve_file accepted record_id {:?}",
@@ -730,7 +728,10 @@ mod test {
         assert_eq!(fs::read_to_string(&file.path).unwrap(), "hello file bytes");
 
         // The completed file is served under its final name…
-        assert!(service.find_file("file1", category.clone()).unwrap().is_some());
+        assert!(service
+            .find_file("file1", category.clone())
+            .unwrap()
+            .is_some());
 
         // …and no partial_ working file remains in the directory.
         let dir = temp_dir.path().join(category.to_path_buf());

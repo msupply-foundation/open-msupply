@@ -245,7 +245,6 @@ mod test_sync_v7_client_api {
                     value_string: Some("test_token".to_string()),
                     ..Default::default()
                 },
-
                 // After initialisation cursor gets advanced and is persisted
                 // across tests due to key value cache (its only disabled in repository tests)
                 // Hence we reset the cursors back

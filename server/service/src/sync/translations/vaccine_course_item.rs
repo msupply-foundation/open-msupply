@@ -7,7 +7,8 @@ use crate::sync::translations::{item::ItemTranslation, vaccine_course::VaccineCo
 
 use super::{
     utils::{from_renamed_keys_str, to_renamed_keys_value, RenamedKeys},
-    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
+    ToSyncRecordTranslationType,
 };
 
 /// FK column renamed during the entity-link abstraction. Central emits both the canonical
@@ -48,8 +49,11 @@ impl SyncTranslation for VaccineCourseItemTranslation {
 
         let check_fk = fk_checker.with_table_required(connection, "vaccine_course_item", &row.id);
 
-        row.vaccine_course_id =
-            check_fk(row.vaccine_course_id, "vaccine_course_id", FkField::VaccineCourse)?;
+        row.vaccine_course_id = check_fk(
+            row.vaccine_course_id,
+            "vaccine_course_id",
+            FkField::VaccineCourse,
+        )?;
         row.item_id = check_fk(row.item_id, "item_link_id", FkField::ItemLink)?;
 
         Ok(PullTranslateResult::upsert(row))

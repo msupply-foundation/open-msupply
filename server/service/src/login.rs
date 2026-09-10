@@ -511,9 +511,7 @@ impl LoginService {
         let hashed_password = UserAccountRowRepository::new(&service_ctx.connection)
             .find_one_by_id(&user_info.user.id)
             .map_err(UpdateUserError::DatabaseError)?
-            .filter(|existing| {
-                bcrypt::verify(password, &existing.hashed_password).unwrap_or(false)
-            })
+            .filter(|existing| bcrypt::verify(password, &existing.hashed_password).unwrap_or(false))
             .map(|existing| existing.hashed_password);
         let hashed_password = match hashed_password {
             Some(existing_hash) => existing_hash,
@@ -806,7 +804,8 @@ mod test {
     /// production caller and only a server restart evicted a stolen token.
     #[actix_rt::test]
     async fn login_revokes_existing_sessions_when_the_password_hash_changes() {
-        let fixture = SessionFixture::new("login_revokes_existing_sessions_on_password_change").await;
+        let fixture =
+            SessionFixture::new("login_revokes_existing_sessions_on_password_change").await;
 
         // First login writes the user row locally
         fixture.login().await;

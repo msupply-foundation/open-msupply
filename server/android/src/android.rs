@@ -62,7 +62,8 @@ pub mod android {
                 standalone_admin_password: None,
                 workers: None,
                 inactivity_timeout_seconds: service::settings::DEFAULT_INACTIVITY_TIMEOUT_SECONDS,
-                token_refresh_interval_seconds: service::settings::DEFAULT_TOKEN_REFRESH_INTERVAL_SECONDS,
+                token_refresh_interval_seconds:
+                    service::settings::DEFAULT_TOKEN_REFRESH_INTERVAL_SECONDS,
                 // The app shell copies its APK-bundled web UI here on startup,
                 // before starting the server (see MainActivity.copyFrontendAssets).
                 // The bundle nests the transition ("old UI") build under old-ui/,

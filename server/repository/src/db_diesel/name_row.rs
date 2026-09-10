@@ -1,8 +1,8 @@
 use super::{
-    currency_row::currency, location_type_row::location_type,
+    currency_row::currency, custom_fields_json::JsonValue, location_type_row::location_type,
     master_list_name_join::master_list_name_join, master_list_row::master_list,
-    name_store_join::name_store_join, program_row::program, custom_fields_json::JsonValue,
-    store_row::store, NameType, StorageConnection,
+    name_store_join::name_store_join, program_row::program, store_row::store, NameType,
+    StorageConnection,
 };
 use crate::{
     item_link, name_link, repository_error::RepositoryError, ChangelogRepository, Delete,
@@ -536,9 +536,7 @@ mod test {
         let properties = Some("{\"key\": \"test\"}".to_string());
 
         // Add properties to name
-        row_repo
-            .update_properties(&row.id, &properties)
-            .unwrap();
+        row_repo.update_properties(&row.id, &properties).unwrap();
 
         let name_filter = NameFilter::new().id(EqualFilter::equal_to(row.id.to_string()));
         let name = name_repo

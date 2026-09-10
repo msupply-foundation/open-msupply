@@ -6,12 +6,12 @@ use std::{
 
 use actix_multipart::form::tempfile::TempFile;
 use chrono::Utc;
-use repository::{SyncFileDirection, SyncFileStatus};
 use repository::{
     Authoring, ChangelogCondition, ChangelogFilter, ChangelogRepository, ChangelogRow,
     CursorAndLimit, QueryWithData, SyncBufferRepository, SyncBufferRowInsert, SyncFileReferenceRow,
     SyncFileReferenceRowRepository, SyncVersions,
 };
+use repository::{SyncFileDirection, SyncFileStatus};
 use util::format_error;
 
 use crate::{
@@ -529,11 +529,10 @@ pub async fn download_file(
         .map_err(|e| Error::OtherServerError(format_error(&e)))?;
 
     let service = StaticFileService::new(&settings.server.base_dir)?;
-    let (named_file, file_description) = service
-        .open_sync_file(table_name, record_id, &id)?
-        .ok_or(SyncParsedErrorV6::OtherServerError(
-            "File not found".to_string(),
-        ))?;
+    let (named_file, file_description) =
+        service.open_sync_file(table_name, record_id, &id)?.ok_or(
+            SyncParsedErrorV6::OtherServerError("File not found".to_string()),
+        )?;
 
     Ok((named_file, file_description))
 }
