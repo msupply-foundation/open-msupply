@@ -990,6 +990,10 @@ export const FilterDateRange = (props: {
   /** The target field's wire scalar — governs conversion, not the UI. */
   type: 'date' | 'dateTime';
   label: string;
+  /** Latest selectable day, plain ISO `YYYY-MM-DD` (local). A filter over a
+   *  recorded date passes today so future days are unselectable
+   *  (spec: ui-standards/list-views.md § Filters). */
+  max?: string;
   /** `data-testid` for the trigger (FilterBar supplies
    *  `filter-input-<key>`). */
   testId?: string;
@@ -1023,6 +1027,7 @@ export const FilterDateRange = (props: {
           start: toLocal(props.value?.afterOrEqualTo),
           end: toLocal(props.value?.beforeOrEqualTo),
         }}
+        max={props.max}
         onChange={({ start, end }) => props.onChange(toWire(start, end))}
       />
     </span>
@@ -1051,6 +1056,10 @@ export const FilterDateTimeRange = (props: {
   onChange: (value: IsoDateTimeRange) => void;
   fromLabel: string;
   toLabel: string;
+  /** Latest selectable instant, UTC ISO (a date-level bound on each calendar).
+   *  A filter over recorded instants passes now, so future days are
+   *  unselectable (spec: ui-standards/list-views.md § Filters). */
+  max?: string;
   /** `data-testid` stem for the two fields (FilterBar supplies
    *  `filter-input-<key>`), stamped on each field's DATE input as
    *  `<testId>-from` / `<testId>-to`. */
@@ -1069,6 +1078,7 @@ export const FilterDateTimeRange = (props: {
         testId={props.testId && `${props.testId}-from`}
         focusTarget={chipFocus}
         value={props.value.start}
+        max={props.max}
         onChange={start => props.onChange({ ...props.value, start })}
       />
       <span aria-hidden="true">–</span>
@@ -1078,6 +1088,7 @@ export const FilterDateTimeRange = (props: {
         size="small"
         testId={props.testId && `${props.testId}-to`}
         value={props.value.end}
+        max={props.max}
         onChange={end => props.onChange({ ...props.value, end })}
       />
     </span>
@@ -1094,6 +1105,10 @@ export const FilterDate = (props: {
   value: string;
   onInput: (value: string) => void;
   label: string;
+  /** Latest selectable day, ISO `YYYY-MM-DD` — a filter over a recorded date
+   *  passes today so the native calendar offers no future day
+   *  (spec: ui-standards/list-views.md § Filters). */
+  max?: string;
   /**
    * `data-testid` for the input (FilterBar's render supplies
    * `filter-input-<key>`).
@@ -1112,6 +1127,7 @@ export const FilterDate = (props: {
         data-testid={props.testId}
         ref={(el: HTMLInputElement) => chipFocus?.ref(el)}
         value={props.value}
+        max={props.max}
         aria-label={props.label}
         onInput={e => props.onInput(e.currentTarget.value)}
       />
