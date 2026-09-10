@@ -1,0 +1,69 @@
+/*
+ * The standing-context banner: Alert's severity tint (a pale mix of the
+ * severity over the surface, text leaning toward it, the glyph in the severity
+ * itself) on a full-width chrome row — no radius, a hairline under it so it
+ * reads as a band of the frame rather than a panel floating in content. The
+ * message cluster fills the row and wraps; the actions pin to the inline-end
+ * and drop under the message once the row is too narrow to hold both.
+ */
+
+.banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  inline-size: 100%;
+  padding: var(--space-2) var(--space-5);
+  background: color-mix(in srgb, var(--banner-colour) 10%, var(--bg-white));
+  color: color-mix(in srgb, var(--banner-colour) 40%, var(--text-body));
+  border-block-end: 1px solid
+    color-mix(in srgb, var(--banner-colour) 30%, var(--bg-white));
+  font-size: var(--text-sm);
+  line-height: 1.43;
+}
+
+.banner[data-severity='error'] {
+  --banner-colour: var(--error-main);
+}
+
+.banner[data-severity='warning'] {
+  --banner-colour: var(--warning-main);
+}
+
+.banner[data-severity='info'] {
+  --banner-colour: var(--info-main);
+}
+
+.banner[data-severity='success'] {
+  --banner-colour: var(--success-main);
+}
+
+.banner[data-severity='neutral'] {
+  --banner-colour: var(--gray-dark);
+
+  background: var(--bg-drawer);
+  color: var(--text-body);
+}
+
+.icon {
+  display: flex;
+  flex-shrink: 0;
+  font-size: 1.25rem;
+  color: var(--banner-colour);
+}
+
+/* Fills the row; min-inline-size 0 so a long message wraps inside the row
+   rather than forcing the actions off it. */
+.content {
+  flex: 1 1 12rem;
+  min-inline-size: 0;
+}
+
+/* Pinned to the end; wraps below the message as a whole when squeezed. */
+.actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-2);
+  margin-inline-start: auto;
+}

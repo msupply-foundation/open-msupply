@@ -30,6 +30,13 @@ export const PRINT_LABEL_PRESCRIPTION_URL = '/print/label-prescription';
 // Proxied to the backend in dev (see vite.config.ts).
 export const SUPPORT_DATABASE_URL = '/support/database';
 
+// Fridge-sensor (Berlinger fridge-tag / Q-tag) log import
+// (spec/cold-chain-monitoring/contract.md § importing a fridge-sensor file) —
+// REST, not GraphQL: POST multipart (field "files") with `?store-id=<id>`,
+// session-cookie auth, answering the import's counts as JSON. Proxied to the
+// backend in dev (see vite.config.ts).
+export const FRIDGE_TAG_URL = '/fridge-tag';
+
 // Label-printer connection test (spec/settings/contract.md § Devices — label
 // printer): POST with no body, expects { is_valid: boolean } (500 + text on
 // failure). The server probes the STORED printer settings, not anything the
