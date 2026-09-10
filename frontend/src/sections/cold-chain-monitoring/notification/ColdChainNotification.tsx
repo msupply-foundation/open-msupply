@@ -1,4 +1,4 @@
-import { For, onCleanup, onMount, Show } from 'solid-js';
+import { onCleanup, onMount, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import {
   useLocation,
@@ -11,6 +11,7 @@ import { unauthenticated } from '@/auth/authContext';
 import { hasPermission, hasVaccineModule } from '@/store/storeContext';
 import { storePath, storeRelativePath } from '@/nav/storeRelativePath';
 import { StandingBanner } from '@/ui/layout/Header/StandingBanner';
+import { HStack } from '@/ui/layout/Stack/HStack';
 import { Button } from '@/ui/elements/buttons/Button';
 import { AlertCircleIcon } from '@/ui/icons';
 import {
@@ -21,7 +22,7 @@ import {
 import { tabFromParam } from '../monitoring/monitoringState';
 import {
   MONITORING_PATH,
-  bandRows,
+  bandRow,
   detailsFilter,
   detailsTab,
   notificationGate,
@@ -47,6 +48,87 @@ import styles from './ColdChainNotification.module.css';
 // The counts are the store's whole outstanding history, independent of the
 // monitoring screen's filters (the query takes none — contract), so this
 // band's number and the Breaches tab's row count legitimately differ.
+//
+// The two kinds are two FIXED blocks, not a list: each row is one stable
+// banner whose text a poll updates in place, so the polite live region
+// announces the change and a focused "View details" keeps its focus.
+
+// How long ago an alert began — an elapsed span, since the headline copy
+// supplies its own "ago".
+const since = (start: string) =>
+  formatDuration(start, new Date().toISOString());
+
+/**
+ * One row of the band. The row's elements, in the surface's order, divided
+ * by separators: headline · temperature · device + location · count. The
+ * temperature is shown wherever one is KNOWN — 0 °C included (rules ›
+ * temperature display) — and the location only where there is one.
+ */
+const AlertRow: Component<{
+  row: BandRow;
+  /** The way through is withheld while the user is already on that tab. */
+  withheld: boolean;
+  onViewDetails: () => void;
+}> = props => (
+  <StandingBanner
+    severity="error"
+    icon={AlertCircleIcon}
+    testId={`coldchain-notification-${props.row.kind}`}
+    actions={
+      <Show when={!props.withheld}>
+        <Button
+          variant="secondary"
+          size="small"
+          data-testid={`coldchain-notification-${props.row.kind}-details`}
+          onClick={() => props.onViewDetails()}
+        >
+          {t('button.view-details')}
+        </Button>
+      </Show>
+    }
+  >
+    <HStack gap="sm" wrap align="baseline">
+      <strong>
+        {t(
+          props.row.kind === 'breach'
+            ? 'messages.notification-breach-detected'
+            : 'messages.notification-excursion-detected',
+          { time: since(props.row.alert.startDatetime) }
+        )}
+      </strong>
+      <Show when={hasTemperature(props.row.alert.maxOrMinTemperature)}>
+        <span class={styles.item}>
+          {t('messages.last-temperature', {
+            temperature: formatTemperatureValue(
+              props.row.alert.maxOrMinTemperature!
+            ),
+          })}
+        </span>
+      </Show>
+      <span class={styles.item}>
+        {t('messages.device')} <strong>{props.row.alert.sensor?.name}</strong>
+        <Show when={props.row.alert.location}>
+          {location => (
+            <>
+              {' '}
+              {t('messages.location')} <strong>{location().name}</strong>
+            </>
+          )}
+        </Show>
+      </span>
+      <Show when={showsCount(props.row.total)}>
+        <span class={styles.item}>
+          {t(
+            props.row.kind === 'breach'
+              ? 'messages.total-breaches'
+              : 'messages.total-excursions',
+            { count: props.row.total }
+          )}
+        </span>
+      </Show>
+    </HStack>
+  </StandingBanner>
+);
 
 export const ColdChainNotification: Component = () => {
   const params = useParams<{ storeId: string }>();
@@ -59,7 +141,8 @@ export const ColdChainNotification: Component = () => {
   onMount(() => onCleanup(startNotificationPoll()));
 
   const gate = () => notificationGate(hasVaccineModule(), hasPermission);
-  const rows = () => bandRows(notifications());
+  const breachRow = () => bandRow(notifications(), 'breach');
+  const excursionRow = () => bandRow(notifications(), 'excursion');
 
   // Where the user is, for withholding a way through that would go nowhere.
   const current = () => ({
@@ -77,11 +160,6 @@ export const ColdChainNotification: Component = () => {
     );
   };
 
-  // How long ago the alert began — an elapsed span, since the headline copy
-  // supplies its own "ago".
-  const since = (start: string) =>
-    formatDuration(start, new Date().toISOString());
-
   return (
     <Show when={gate()}>
       {/* A failed re-read is reported, not silent — as a standing notice
@@ -96,74 +174,25 @@ export const ColdChainNotification: Component = () => {
           {t('error.fetch-notifications')}
         </StandingBanner>
       </Show>
-      <For each={rows()}>
+      {/* Breach row first, then the excursion row (ui-surface S5). */}
+      <Show when={breachRow()}>
         {row => (
-          <StandingBanner
-            severity="error"
-            icon={AlertCircleIcon}
-            testId={`coldchain-notification-${row.kind}`}
-            actions={
-              <Show when={!viewDetailsWithheld(row.kind, current())}>
-                <Button
-                  variant="secondary"
-                  size="small"
-                  data-testid={`coldchain-notification-${row.kind}-details`}
-                  onClick={() => viewDetails(row)}
-                >
-                  {t('button.view-details')}
-                </Button>
-              </Show>
-            }
-          >
-            {/* The row's elements, in the surface's order, divided by
-                separators: headline · temperature · device + location · count.
-                The temperature is shown wherever one is KNOWN — 0 °C included
-                (rules › temperature display) — and the location only where
-                there is one. */}
-            <span class={styles.row}>
-              <strong>
-                {t(
-                  row.kind === 'breach'
-                    ? 'messages.notification-breach-detected'
-                    : 'messages.notification-excursion-detected',
-                  { time: since(row.alert.startDatetime) }
-                )}
-              </strong>
-              <Show when={hasTemperature(row.alert.maxOrMinTemperature)}>
-                <span class={styles.item}>
-                  {t('messages.last-temperature', {
-                    temperature: formatTemperatureValue(
-                      row.alert.maxOrMinTemperature!
-                    ),
-                  })}
-                </span>
-              </Show>
-              <span class={styles.item}>
-                {t('messages.device')} <strong>{row.alert.sensor?.name}</strong>
-                <Show when={row.alert.location}>
-                  {location => (
-                    <>
-                      {' '}
-                      {t('messages.location')}{' '}
-                      <strong>{location().name}</strong>
-                    </>
-                  )}
-                </Show>
-              </span>
-              <Show when={showsCount(row.total)}>
-                <span class={styles.item}>
-                  {t(
-                    row.kind === 'breach'
-                      ? 'messages.total-breaches'
-                      : 'messages.total-excursions',
-                    { count: row.total }
-                  )}
-                </span>
-              </Show>
-            </span>
-          </StandingBanner>
+          <AlertRow
+            row={row()}
+            withheld={viewDetailsWithheld('breach', current())}
+            onViewDetails={() => viewDetails(row())}
+          />
         )}
-      </For>
+      </Show>
+      <Show when={excursionRow()}>
+        {row => (
+          <AlertRow
+            row={row()}
+            withheld={viewDetailsWithheld('excursion', current())}
+            onViewDetails={() => viewDetails(row())}
+          />
+        )}
+      </Show>
     </Show>
   );
 };

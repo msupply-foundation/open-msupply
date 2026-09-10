@@ -1045,10 +1045,12 @@ export interface IsoDateTimeRange {
  * de-boxed onto the chip pill via .bareField. Unlike FilterDateRange (one
  * corvu range-mode calendar, date-only), there is no shared range primitive
  * that also picks time, so this composes two whole fields rather than
- * extending DateRangeField — the items Ledger tab is the first caller
- * (spec/items/ui-surface.md § Ledger tab: "From date/time" / "To date/time").
- * Value is a `{ start, end }` pair of UTC ISO instants; the caller maps it
- * onto its filter's bounds (e.g. after/beforeOrEqualTo).
+ * extending DateRangeField. Callers: the items Ledger tab
+ * (spec/items/ui-surface.md § Ledger tab: "From date/time" / "To date/time")
+ * and the cold-chain monitoring screen's breach-start window. Either side
+ * clears on its own, so a one-sided range is one chip, not two. Value is a
+ * `{ start, end }` pair of UTC ISO instants; the caller maps it onto its
+ * filter's bounds (e.g. after/beforeOrEqualTo).
  */
 export const FilterDateTimeRange = (props: {
   value: IsoDateTimeRange;
@@ -1083,39 +1085,6 @@ export const FilterDateTimeRange = (props: {
         testId={props.testId && `${props.testId}-to`}
         value={props.value.end}
         onChange={end => props.onChange({ ...props.value, end })}
-      />
-    </span>
-  );
-};
-
-/**
- * A single date-TIME bound — one DateTimeField de-boxed onto the chip pill via
- * .bareField, the one-sided sibling of FilterDateTimeRange. For a screen whose
- * surface names its two bounds as two separately-removable filters ("From
- * start date/time" / "To start date/time" — the cold-chain monitoring filter
- * set), each bound is its own chip and each chip is this. Value is a UTC ISO
- * instant or null (the field's own contract), so a vertical binds it straight
- * onto one side of its DatetimeFilterInput.
- */
-export const FilterDateTime = (props: {
-  value: string | null | undefined;
-  onChange: (value: string | null) => void;
-  label: string;
-  /** `data-testid` stamped on the field's DATE input (FilterBar supplies
-   *  `filter-input-<key>`). */
-  testId?: string;
-}) => {
-  const chipFocus = useChipFocus();
-  return (
-    <span class={styles.bareField}>
-      <DateTimeField
-        label={props.label}
-        hideLabel
-        size="small"
-        testId={props.testId}
-        focusTarget={chipFocus}
-        value={props.value}
-        onChange={props.onChange}
       />
     </span>
   );

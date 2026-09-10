@@ -1,7 +1,7 @@
 import { t } from '@/intl';
 import {
   FilterCheckbox,
-  FilterDateTime,
+  FilterDateTimeRange,
   FilterSelect,
   FilterTextInput,
   constructFilters,
@@ -63,27 +63,20 @@ const FILTERS: Filter<MonitoringFilter>[] = constructFilters<MonitoringFilter>({
       />
     ),
   },
-  // The two bounds are two chips, each removable on its own, each a single
-  // date-time. On the bar from arrival (monitoringState › DEFAULT_STATE).
-  fromStart: {
-    label: () => t('label.from-start-datetime'),
+  // The breach-start window: ONE chip holding both date-time bounds, as the
+  // reference client groups them and as the items Ledger tab composes the same
+  // shape. Either side clears on its own, so a one-sided window never needs
+  // the chip removed. On the bar from arrival (monitoringState ›
+  // DEFAULT_STATE).
+  startDatetime: {
+    label: () => t('label.start-datetime'),
     render: props => (
-      <FilterDateTime
-        label={t('label.from-start-datetime')}
+      <FilterDateTimeRange
+        fromLabel={t('label.from-start-datetime')}
+        toLabel={t('label.to-start-datetime')}
         testId={props.testId}
-        value={props.filter().fromStart ?? null}
-        onChange={value => props.setPartialFilter({ fromStart: value })}
-      />
-    ),
-  },
-  toStart: {
-    label: () => t('label.to-start-datetime'),
-    render: props => (
-      <FilterDateTime
-        label={t('label.to-start-datetime')}
-        testId={props.testId}
-        value={props.filter().toStart ?? null}
-        onChange={value => props.setPartialFilter({ toStart: value })}
+        value={props.filter().startDatetime ?? { start: null, end: null }}
+        onChange={range => props.setPartialFilter({ startDatetime: range })}
       />
     ),
   },

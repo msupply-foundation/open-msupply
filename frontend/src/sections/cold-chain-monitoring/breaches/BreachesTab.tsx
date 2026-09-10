@@ -21,6 +21,7 @@ import {
 } from '@/ui/elements/table/tableHelpers';
 import { Comment } from '@/ui/elements/feedback/Comment';
 import { IconButton } from '@/ui/elements/buttons/IconButton';
+import { FilterBar } from '@/ui/elements/selectors/FilterBar';
 import { AlertCircleIcon } from '@/ui/icons';
 import { remToPx } from '@/ui/utils/rem';
 import { createTableConfig } from '@/api/createTableConfig';
@@ -32,8 +33,10 @@ import {
   BREACH_SORT_KEYS,
   buildBreachesVariables,
   type BreachSortKey,
+  type MonitoringFilter,
   type MonitoringState,
 } from '../monitoring/monitoringState';
+import { filterFields } from '../monitoring/monitoringFilters';
 import {
   formatDuration,
   formatTemperature,
@@ -116,6 +119,9 @@ export interface BreachesTabProps {
   storeId: string;
   state: MonitoringState;
   setState: (next: MonitoringState) => void;
+  /** The screen's one filter edit — the bar in this table's toolbar writes
+   *  through it, so the change reaches every tab. */
+  onFilterChange: (filter: MonitoringFilter) => void;
   refreshVersion: number;
 }
 
@@ -176,9 +182,11 @@ export const BreachesTab: Component<BreachesTabProps> = props => {
       breachOffset: 0,
     });
 
-  // Columns are an accessor: their text comes from t(), read in a reactive
-  // scope so it re-translates on a language switch.
-  const columns = (): Column<BreachRow, SortKey>[] => [
+  // createMemo, NOT a plain function: TanStack memoises on the array's
+  // REFERENCE, so a fresh array per read would rebuild its whole column chain
+  // (kdd/solid-reactivity-pitfalls §14). Still re-derives on a language
+  // switch, since every header reads t().
+  const columns = createMemo((): Column<BreachRow, SortKey>[] => [
     {
       // Column 1, unlabelled: the acknowledge action, the comment, or nothing
       // (rules › acknowledging a breach). Structural — hiding it would remove
@@ -271,7 +279,7 @@ export const BreachesTab: Component<BreachesTabProps> = props => {
       }),
       size: remToPx(6),
     },
-  ];
+  ]);
 
   return (
     <>
@@ -279,6 +287,15 @@ export const BreachesTab: Component<BreachesTabProps> = props => {
         columns={columns()}
         rows={rows()}
         rowKey={row => row.id}
+        // The screen's shared filter bar, in this table's own toolbar
+        // (ui-standards › tables › toolbar); its state is the screen's.
+        filters={
+          <FilterBar
+            filters={filterFields()}
+            filter={props.state.filter}
+            onChange={props.onFilterChange}
+          />
+        }
         loading={data.loading}
         sort={currentSort()}
         onSort={onSort}

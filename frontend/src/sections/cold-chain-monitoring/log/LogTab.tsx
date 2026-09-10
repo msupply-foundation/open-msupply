@@ -12,6 +12,7 @@ import {
   getCellDefinition,
   getTextCell,
 } from '@/ui/elements/table/tableHelpers';
+import { FilterBar } from '@/ui/elements/selectors/FilterBar';
 import { remToPx } from '@/ui/utils/rem';
 import { createTableConfig } from '@/api/createTableConfig';
 import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
@@ -25,8 +26,10 @@ import {
   LOG_SORT_KEYS,
   buildLogsVariables,
   type LogSortKey,
+  type MonitoringFilter,
   type MonitoringState,
 } from '../monitoring/monitoringState';
+import { filterFields } from '../monitoring/monitoringFilters';
 import { formatTemperature } from '../monitoring/breachDisplay';
 import { BreachTypeCell } from '../monitoring/BreachTypeCell';
 
@@ -39,6 +42,9 @@ export interface LogTabProps {
   storeId: string;
   state: MonitoringState;
   setState: (next: MonitoringState) => void;
+  /** The screen's one filter edit — the bar in this table's toolbar writes
+   *  through it, so the change reaches every tab. */
+  onFilterChange: (filter: MonitoringFilter) => void;
   refreshVersion: number;
 }
 
@@ -86,7 +92,11 @@ export const LogTab: Component<LogTabProps> = props => {
   const onSort = (key: SortKey, desc: boolean) =>
     props.setState({ ...props.state, logSort: [{ key, desc }], logOffset: 0 });
 
-  const columns = (): Column<LogRow, SortKey>[] => [
+  // createMemo, NOT a plain function: TanStack memoises on the array's
+  // REFERENCE, so a fresh array per read would rebuild its whole column chain
+  // (kdd/solid-reactivity-pitfalls §14). Still re-derives on a language
+  // switch, since every header reads t().
+  const columns = createMemo((): Column<LogRow, SortKey>[] => [
     {
       c: { accessor: row => localisedDateTime(row.datetime), id: 'datetime' },
       sortKey: LOG_SORT_KEYS[0],
@@ -128,13 +138,22 @@ export const LogTab: Component<LogTabProps> = props => {
         <BreachTypeCell type={info.row.original.temperatureBreach?.type} />
       ),
     },
-  ];
+  ]);
 
   return (
     <DataTable
       columns={columns()}
       rows={rows()}
       rowKey={row => row.id}
+      // The screen's shared filter bar, in this table's own toolbar
+      // (ui-standards › tables › toolbar); its state is the screen's.
+      filters={
+        <FilterBar
+          filters={filterFields()}
+          filter={props.state.filter}
+          onChange={props.onFilterChange}
+        />
+      }
       loading={data.loading}
       sort={currentSort()}
       onSort={onSort}

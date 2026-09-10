@@ -8,7 +8,7 @@ import { Alert } from '@/ui/elements/feedback/Alert';
 import { CancelButton, OkButton } from '@/ui/elements/buttons/StandardButtons';
 import { TextArea } from '@/ui/elements/inputs/TextArea';
 import { LabelledValue } from '@/ui/elements/typography/LabelledValue';
-import { Text } from '@/ui/elements/typography/Text';
+import { FormSection } from '@/ui/layout/Form/FormSection';
 import { InsetPanel } from '@/ui/layout/InsetPanel/InsetPanel';
 import { Stack } from '@/ui/layout/Stack/Stack';
 import { createFocusTarget } from '@/ui/utils/createFocusTarget';
@@ -29,11 +29,12 @@ import {
 
 // S3 — Acknowledge breach (spec/cold-chain-monitoring ui-surface S3; rules ›
 // acknowledging a breach). A modal over the Breaches tab, mounted fresh per
-// open so the comment seeds empty. Details first — a bordered block naming
-// the breach — then, by the breach's state, EITHER the ongoing notice (no
-// comment field at all, confirm disabled) OR the comment field. Both guards
-// are this modal's alone: the server would acknowledge an ongoing breach and
-// accept a blank comment (contract).
+// open so the comment seeds empty. Details first — a titled form section
+// holding the bordered block that names the breach — then, by the breach's
+// state, EITHER the ongoing notice (no comment field at all, confirm disabled)
+// OR the comment field under its own label. Both guards are this modal's
+// alone: the server would acknowledge an ongoing breach and accept a blank
+// comment (contract).
 //
 // Success closes the modal; the row's change to Acknowledged and the band's
 // falling count are the confirmation (ui-standards › action feedback — no
@@ -123,46 +124,51 @@ export const AcknowledgeBreachModal: Component<
       }
     >
       <Stack gap="md">
-        <Text variant="heading" level={3}>
-          {t('heading.details')}
-        </Text>
-        <InsetPanel>
-          <Stack gap="sm">
-            <LabelledValue variant="field" label={t('label.breach-start')}>
-              {t('messages.ago', {
-                time: formatDuration(
-                  props.breach.startDatetime,
-                  new Date().toISOString()
-                ),
-              })}
-            </LabelledValue>
-            <LabelledValue variant="field" label={t('label.duration')}>
-              {isOngoing(props.breach)
-                ? t('label.ongoing')
-                : formatDuration(
+        {/* A top-level group of the dialog, whose title already holds the h2:
+            rank h3, treatment `group` (the registry's form-section row). */}
+        <FormSection
+          title={t('heading.details')}
+          headingLevel="h3"
+          heading="group"
+        >
+          <InsetPanel>
+            <Stack gap="sm">
+              <LabelledValue variant="field" label={t('label.breach-start')}>
+                {t('messages.ago', {
+                  time: formatDuration(
                     props.breach.startDatetime,
-                    props.breach.endDatetime!
-                  )}
-            </LabelledValue>
-            {/* Shown wherever a temperature exists — 0 °C included; omitted
-                  only where the breach has none (rules › temperature display). */}
-            <Show when={hasTemperature(props.breach.maxOrMinTemperature)}>
-              <LabelledValue
-                variant="field"
-                label={t('messages.max-or-min-temperature')}
-              >
-                {t('messages.temperature', {
-                  temperature: formatTemperatureValue(
-                    props.breach.maxOrMinTemperature!
+                    new Date().toISOString()
                   ),
                 })}
               </LabelledValue>
-            </Show>
-            <LabelledValue variant="field" label={t('label.sensor-name')}>
-              {props.breach.sensor?.name ?? ''}
-            </LabelledValue>
-          </Stack>
-        </InsetPanel>
+              <LabelledValue variant="field" label={t('label.duration')}>
+                {isOngoing(props.breach)
+                  ? t('label.ongoing')
+                  : formatDuration(
+                      props.breach.startDatetime,
+                      props.breach.endDatetime!
+                    )}
+              </LabelledValue>
+              {/* Shown wherever a temperature exists — 0 °C included; omitted
+                  only where the breach has none (rules › temperature display). */}
+              <Show when={hasTemperature(props.breach.maxOrMinTemperature)}>
+                <LabelledValue
+                  variant="field"
+                  label={t('messages.max-or-min-temperature')}
+                >
+                  {t('messages.temperature', {
+                    temperature: formatTemperatureValue(
+                      props.breach.maxOrMinTemperature!
+                    ),
+                  })}
+                </LabelledValue>
+              </Show>
+              <LabelledValue variant="field" label={t('label.sensor-name')}>
+                {props.breach.sensor?.name ?? ''}
+              </LabelledValue>
+            </Stack>
+          </InsetPanel>
+        </FormSection>
         <Show
           when={state() === 'ended'}
           fallback={
@@ -173,13 +179,11 @@ export const AcknowledgeBreachModal: Component<
             </Alert>
           }
         >
-          <Text variant="heading" level={3}>
-            {t('label.comment')}
-          </Text>
+          {/* The field stands alone, so its own label is the "Comment" over
+              it (registry › labelled field row). */}
           <TextArea
             ref={commentField.ref}
             label={t('label.comment')}
-            hideLabel
             data-testid="acknowledge-breach-comment"
             helperText={t('messages.acknowledge-breach-helptext')}
             disabled={saving()}

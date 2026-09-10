@@ -32,19 +32,28 @@ export type ImportResponse = {
   endDatetime: string | null;
 };
 
-export type ImportOutcome =
-  /** Readings and/or breaches were taken in (`.34`). */
-  | { kind: 'imported'; response: ImportResponse }
-  /**
-   * A 200 that took in neither readings nor breaches — treated as a FAILURE,
-   * not an empty success (rules; `.35`). This is the client's reading of an
-   * otherwise-successful response, and it is what an unparseable file
-   * produces too: no file content reaches the server's failure branch
-   * (contract ⚠️ wire trap; `.36`).
-   */
-  | { kind: 'empty'; response: ImportResponse }
-  /** A non-200, carrying the server's plain-text reason verbatim (`.36`). */
-  | { kind: 'failed'; message: string };
+/** Readings and/or breaches were taken in (`.34`). */
+export type ImportedOutcome = { kind: 'imported'; response: ImportResponse };
+/**
+ * A 200 that took in neither readings nor breaches — treated as a FAILURE,
+ * not an empty success (rules; `.35`). This is the client's reading of an
+ * otherwise-successful response, and it is what an unparseable file
+ * produces too: no file content reaches the server's failure branch
+ * (contract ⚠️ wire trap; `.36`).
+ */
+export type EmptyOutcome = { kind: 'empty'; response: ImportResponse };
+/** A non-200, carrying the server's plain-text reason verbatim (`.36`). */
+export type FailedOutcome = { kind: 'failed'; message: string };
+
+export type ImportOutcome = ImportedOutcome | EmptyOutcome | FailedOutcome;
+
+// Narrowing accessors for the screen's `<Match when={…}>` blocks: each answers
+// the member or null, so a match renders the narrowed value without a cast
+// (kdd/type-safety — `as` stays out of the vertical).
+export const importedOf = (outcome: ImportOutcome): ImportedOutcome | null =>
+  outcome.kind === 'imported' ? outcome : null;
+export const failedOf = (outcome: ImportOutcome): FailedOutcome | null =>
+  outcome.kind === 'failed' ? outcome : null;
 
 /** A 200 response → imported or empty, on the two counts alone. */
 export const classifyResponse = (response: ImportResponse): ImportOutcome =>

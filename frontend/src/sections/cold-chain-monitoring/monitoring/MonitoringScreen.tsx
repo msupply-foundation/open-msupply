@@ -15,7 +15,6 @@ import { Breadcrumb } from '@/ui/layout/Header/Breadcrumb';
 import { HeaderButtons } from '@/ui/layout/Header/HeaderButtons';
 import { Toolbar } from '@/ui/layout/Header/Toolbar';
 import { Tabs, TabList, TabPanel } from '@/ui/elements/tabs/Tabs';
-import { FilterBar } from '@/ui/elements/selectors/FilterBar';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { useUrlQueryState } from '@/list/urlQueryState';
 import { initialPageSize } from '@/list/pageSize';
@@ -30,12 +29,15 @@ import {
   type MonitoringFilter,
   type MonitoringState,
 } from './monitoringState';
-import { filterFields } from './monitoringFilters';
 import { ChartTab } from '../chart/ChartTab';
 import { BreachesTab } from '../breaches/BreachesTab';
 import { LogTab } from '../log/LogTab';
 import { ImportFridgeTagAction } from '../import/ImportFridgeTagAction';
-import type { ImportOutcome } from '../import/importFridgeTag';
+import {
+  failedOf,
+  importedOf,
+  type ImportOutcome,
+} from '../import/importFridgeTag';
 
 // S1 — the Monitoring screen (spec/cold-chain-monitoring ui-surface S1): one
 // screen, three tabs over the same temperature record — Chart · Breaches ·
@@ -45,10 +47,11 @@ import type { ImportOutcome } from '../import/importFridgeTag';
 // reload. Offered in full at every width: no chart-only phone screen.
 //
 // App bar: breadcrumb (Cold chain glyph / Monitoring); the import page action
-// at the inline-end; the filter bar in the page-content row — it serves the
-// chart as well as the two tables, so it lives here rather than in a table's
-// own toolbar; the tab strip as the header's bottom edge. No footer, no side
-// panel: a read surface with one per-row action.
+// at the inline-end; the tab strip as the header's bottom edge. The shared
+// filter bar rides each tab over this screen's ONE URL-backed filter — in the
+// two tables' own toolbars, and above the plot on the Chart tab (ui-standards
+// › tables › toolbar: a filter bar lives with its table, never in the app
+// bar). No footer, no side panel: a read surface with one per-row action.
 
 const MonitoringScreen: Component = () => {
   // storeId is guaranteed present: this section renders only inside
@@ -131,9 +134,10 @@ const MonitoringScreen: Component = () => {
   return (
     <Tabs value={tab()} onValueChange={setTab}>
       <Page
-        // The two tables fill and scroll themselves; the chart tab is
-        // ordinary padded, scrolling content.
-        fillBody={tab() !== 'chart'}
+        // The two tables fill and scroll themselves; the Chart tab supplies
+        // its own measure and padding (ChartTab), the way every mixed
+        // table-and-content tabbed screen does.
+        fillBody
         header={
           <Header>
             <Breadcrumb crumbs={[{ label: t('monitoring') }]} />
@@ -145,42 +149,20 @@ const MonitoringScreen: Component = () => {
                 onNarrow={onFilterChange}
               />
             </HeaderButtons>
-            <Toolbar>
-              <FilterBar
-                filters={filterFields()}
-                filter={query().filter}
-                onChange={onFilterChange}
-              />
-            </Toolbar>
             <Show when={importOutcome()}>
               {outcome => (
                 <Toolbar>
                   <Switch>
-                    <Match when={outcome().kind === 'imported' && outcome()}>
-                      {o => (
+                    <Match when={importedOf(outcome())}>
+                      {imported => (
                         <Alert
                           severity="success"
                           testId="import-fridge-tag-outcome"
                         >
                           {t('messages.fridge-tag-import-successful', {
-                            numberOfLogs:
-                              o().kind === 'imported'
-                                ? (
-                                    o() as Extract<
-                                      ImportOutcome,
-                                      { kind: 'imported' }
-                                    >
-                                  ).response.numberOfLogs
-                                : 0,
+                            numberOfLogs: imported().response.numberOfLogs,
                             numberOfBreaches:
-                              o().kind === 'imported'
-                                ? (
-                                    o() as Extract<
-                                      ImportOutcome,
-                                      { kind: 'imported' }
-                                    >
-                                  ).response.numberOfBreaches
-                                : 0,
+                              imported().response.numberOfBreaches,
                           })}
                         </Alert>
                       )}
@@ -197,22 +179,14 @@ const MonitoringScreen: Component = () => {
                         })}
                       </Alert>
                     </Match>
-                    <Match when={outcome().kind === 'failed' && outcome()}>
-                      {o => (
+                    <Match when={failedOf(outcome())}>
+                      {failed => (
                         <Alert
                           severity="error"
                           testId="import-fridge-tag-outcome"
                         >
                           {t('error.fridge-tag-import', {
-                            message:
-                              o().kind === 'failed'
-                                ? (
-                                    o() as Extract<
-                                      ImportOutcome,
-                                      { kind: 'failed' }
-                                    >
-                                  ).message
-                                : '',
+                            message: failed().message,
                           })}
                         </Alert>
                       )}
@@ -229,6 +203,7 @@ const MonitoringScreen: Component = () => {
           <ChartTab
             storeId={params.storeId}
             filter={query().filter}
+            onFilterChange={onFilterChange}
             refreshVersion={refreshVersion()}
             onViewAllBreaches={viewAllBreaches}
           />
@@ -238,6 +213,7 @@ const MonitoringScreen: Component = () => {
             storeId={params.storeId}
             state={query()}
             setState={setQuery}
+            onFilterChange={onFilterChange}
             refreshVersion={refreshVersion()}
           />
         </TabPanel>
@@ -246,6 +222,7 @@ const MonitoringScreen: Component = () => {
             storeId={params.storeId}
             state={query()}
             setState={setQuery}
+            onFilterChange={onFilterChange}
             refreshVersion={refreshVersion()}
           />
         </TabPanel>
