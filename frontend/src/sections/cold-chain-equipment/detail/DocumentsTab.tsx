@@ -13,6 +13,7 @@ import {
   uploadSyncFiles,
 } from '@/domain/syncFiles';
 import type { AssetDetailFragment } from '../equipment.generated';
+import styles from './DocumentsTab.module.css';
 
 // S2.4 — the Documents tab (ui-surface S2.4): two halves side by side.
 //
@@ -96,32 +97,34 @@ export const DocumentsTab: Component<{
         <Show when={errorMessage()}>
           {message => <Alert severity="error">{message()}</Alert>}
         </Show>
-        <FormColumns>
-          <FormColumn>
-            {/* The catalogue half — list only, no upload zone: a model's
+        <div class={styles.halves}>
+          <FormColumns>
+            <FormColumn>
+              {/* The catalogue half — list only, no upload zone: a model's
                 documents are the catalogue's to publish, not this store's. */}
-            <DocumentUploadPanel
-              documents={[]}
-              listHeading={t('heading.download-catalogue-documents')}
-            />
-          </FormColumn>
-          <FormColumn>
-            <DocumentUploadPanel
-              documents={props.asset.documents.nodes.map(document => ({
-                id: document.id,
-                fileName: document.fileName,
-                createdDatetime: document.createdDatetime,
-                totalBytes: document.totalBytes,
-                url: syncFileUrl(TABLE_NAME, props.asset.id, document.id),
-              }))}
-              accept={ACCEPT}
-              maxSize={MAX_FILE_BYTES}
-              onUpload={files => void onUpload(files)}
-              onDelete={document => void onDelete(document)}
-              onRejected={onRejected}
-            />
-          </FormColumn>
-        </FormColumns>
+              <DocumentUploadPanel
+                documents={[]}
+                listHeading={t('heading.download-catalogue-documents')}
+              />
+            </FormColumn>
+            <FormColumn class={styles.trailing}>
+              <DocumentUploadPanel
+                documents={props.asset.documents.nodes.map(document => ({
+                  id: document.id,
+                  fileName: document.fileName,
+                  createdDatetime: document.createdDatetime,
+                  totalBytes: document.totalBytes,
+                  url: syncFileUrl(TABLE_NAME, props.asset.id, document.id),
+                }))}
+                accept={ACCEPT}
+                maxSize={MAX_FILE_BYTES}
+                onUpload={files => void onUpload(files)}
+                onDelete={document => void onDelete(document)}
+                onRejected={onRejected}
+              />
+            </FormColumn>
+          </FormColumns>
+        </div>
       </Stack>
     </ContentContainer>
   );
