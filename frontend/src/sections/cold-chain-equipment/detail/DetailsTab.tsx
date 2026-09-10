@@ -1,4 +1,4 @@
-import { createResource, Show, For } from 'solid-js';
+import { createResource, Index, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { graphqlFetch } from '@/api/graphql';
 import { gated } from '@/api/gated';
@@ -111,13 +111,26 @@ export const DetailsTab: Component<DetailsTabProps> = props => {
           when={rows().length > 0}
           fallback={<Text>{t('messages.no-properties')}</Text>}
         >
-          <For each={pairs()}>
+          {/*
+            <Index>, NOT <For>, at both levels. `propertyRows` mints fresh row
+            objects on every read and it reads the draft — so every keystroke
+            in a property field produces a whole new set. <For> is keyed by
+            object identity and would remount every field on each character,
+            taking the focus out of the box being typed in
+            (kdd/solid-reactivity-pitfalls § no remounts on interaction; the
+            shared ProgressList carries the same note for the same reason).
+
+            <Index> keys by POSITION, which is what is actually stable here:
+            the property list's length and order come from the catalogue, and
+            only the values change under them.
+          */}
+          <Index each={pairs()}>
             {pair => (
               <FormRow>
-                <For each={pair}>
+                <Index each={pair()}>
                   {row => (
                     <Show
-                      when={row.editable}
+                      when={row().editable}
                       fallback={
                         // The catalogue's value, or a derived mapping date — a
                         // labelled value, never a disabled control
@@ -126,8 +139,8 @@ export const DetailsTab: Component<DetailsTabProps> = props => {
                           variant="field"
                           label={
                             <>
-                              {row.definition.name}
-                              <Show when={row.fromCatalogue}>
+                              {row().definition.name}
+                              <Show when={row().fromCatalogue}>
                                 <InfoTooltip
                                   text={t('messages.catalogue-property')}
                                 />
@@ -135,23 +148,25 @@ export const DetailsTab: Component<DetailsTabProps> = props => {
                             </>
                           }
                         >
-                          {row.value === null || row.value === ''
+                          {row().value === null || row().value === ''
                             ? ABSENT
-                            : String(row.value)}
+                            : String(row().value)}
                         </LabelledValue>
                       }
                     >
                       <PropertyField
-                        row={row}
+                        row={row()}
                         disabled={props.disabled}
-                        onChange={value => setValue(row.definition.key, value)}
+                        onChange={value =>
+                          setValue(row().definition.key, value)
+                        }
                       />
                     </Show>
                   )}
-                </For>
+                </Index>
               </FormRow>
             )}
-          </For>
+          </Index>
         </Show>
       </FormSection>
     </ContentContainer>

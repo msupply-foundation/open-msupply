@@ -3,6 +3,7 @@ import { t, localisedDate, formatFileSize } from '../../../intl';
 import { openDocument } from '../../../platform/openDocument';
 import { FileIcon, TrashIcon } from '../../icons';
 import { Alert } from '../feedback/Alert';
+import { ConfirmDialog } from '../feedback/ConfirmDialog';
 import { Spinner } from '../feedback/Spinner';
 import { IconButton } from '../buttons/IconButton';
 import { Text } from '../typography/Text';
@@ -37,6 +38,13 @@ export interface DocumentUploadPanelProps {
   /** Accept list + per-file size limit, forwarded to the upload zone. */
   accept?: string;
   maxSize?: number;
+  /**
+   * Heading over the file list, already translated. Defaults to "Uploaded
+   * documents". Name it when the list is NOT the record's own uploads — the
+   * equipment detail shows the model's catalogue documents in a second panel
+   * beside them.
+   */
+  listHeading?: string;
 }
 
 const extensionOf = (name: string): string => {
@@ -60,8 +68,12 @@ const FileTypeIcon = (props: { fileName: string }): JSX.Element => (
  * upload zone above a plain file list (file-type icon, name link, date
  * uploaded, size, per-row delete). Not a DataTable — a semantic <ul> laid out
  * on a shared grid so headers and rows align. The caller owns the
- * upload/delete transport and refresh (they're record-specific); opening is
- * fully determined by the row's url + fileName, so the panel owns it —
+ * upload/delete transport and refresh (they're record-specific), but NOT the
+ * "are you sure?" that precedes a delete: removing a file is the same question
+ * whatever record holds it, so the panel asks it and hands `onDelete` only the
+ * confirmed removals. A consumer cannot forget the guard on a destructive
+ * action. Opening is fully determined by the row's url + fileName, so the panel
+ * owns that too —
  * routed through the openDocument platform capability (browser tab on web,
  * OS viewer on Android — kdd/capacitor-plugins). Modified clicks (new tab,
  * copy link) keep native anchor behaviour.
@@ -77,6 +89,7 @@ export const DocumentUploadPanel = (
     'canUpload',
     'accept',
     'maxSize',
+    'listHeading',
   ]);
 
   const showUpload = () => local.canUpload !== false && !!local.onUpload;
@@ -86,6 +99,9 @@ export const DocumentUploadPanel = (
   // and further opens are ignored until it lands. Cleared unconditionally so
   // no failure can leave it stuck.
   const [openingId, setOpeningId] = createSignal<string>();
+  // The row awaiting its removal confirmation — set by the delete button,
+  // cleared by either dialog answer.
+  const [pendingDelete, setPendingDelete] = createSignal<DocumentFile>();
 
   const onOpen = async (doc: DocumentFile, url: string) => {
     if (openingId()) return;
@@ -119,7 +135,7 @@ export const DocumentUploadPanel = (
 
       <div class={styles.list}>
         <Text variant="heading" level={3} class={styles.heading}>
-          {t('heading.uploaded-documents')}
+          {local.listHeading ?? t('heading.uploaded-documents')}
         </Text>
         <Show when={openError()}>
           <Alert severity="error" class={styles.openError}>
@@ -196,7 +212,7 @@ export const DocumentUploadPanel = (
                         variant="danger"
                         size="small"
                         data-testid="document-remove-button"
-                        onClick={() => local.onDelete?.(document)}
+                        onClick={() => setPendingDelete(document)}
                       />
                     </Show>
                   </span>
@@ -206,6 +222,18 @@ export const DocumentUploadPanel = (
           </ul>
         </Show>
       </div>
+      <ConfirmDialog
+        open={!!pendingDelete()}
+        message={t('messages.confirm-delete-document')}
+        // Destructive, so the confirm carries the danger tone; its LABEL stays
+        // the standard OK — only the tone is this action's own.
+        confirmVariant="danger"
+        onClose={() => setPendingDelete(undefined)}
+        onConfirm={() => {
+          const document = pendingDelete();
+          if (document) local.onDelete?.(document);
+        }}
+      />
     </div>
   );
 };

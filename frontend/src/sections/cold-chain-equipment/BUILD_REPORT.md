@@ -64,8 +64,9 @@ Two routed screens — the list and one asset's detail — serving **both** dest
 | **AC-M6 / AC-M7** imported mapping dates | _server-owned_ (`insertAsset` writes the synthetic entries) |
 | **AC-M8** the history's kind filter | `statusLog` (`logKindFilter`); **live** (the cold room offers the third option) |
 | **AC-M9** a mapping never displaces the status | `statusLog` (`isMapping`) |
-| **AC-D1 / AC-D2 / AC-D3** documents | _shared surface_ — [`internal-orders`](../../../spec/internal-orders/ui-surface.md#documents-tab); `DocumentsTab` supplies only the table name and caps; **live** (the panel renders with its empty state) |
-| **AC-D4** the catalogue half is empty | _structural_ — not built, see [deliberate differences](#deliberate-differences) |
+| **AC-D1 / AC-D3** documents | _shared surface_ — [`internal-orders`](../../../spec/internal-orders/ui-surface.md#documents-tab); `DocumentsTab` supplies only the table name and caps; **live** (upload, then the empty state once removed) |
+| **AC-D2** removal confirms first | `DocumentUploadPanel` (shared, see [shared code](#shared-code)); **live** — the remove button opens _Are you sure? / This will remove this document._, Cancel keeps the file and OK removes it |
+| **AC-D4** the catalogue half is empty | `DocumentsTab` (a list-only panel, `documents={[]}`); **live** — _Download catalogue documents_ beside the upload half, reading its empty state |
 | **AC-E1 / AC-E2** the save follows the draft | `assetEdit` (twelve fields, one at a time); **live**, both directions |
 | **AC-E3** the confirmation | **live** — _Are you sure? / Are you ready to save changes?_ |
 | **AC-E4** discard on leave | `createConfirmOnLeave` (shared); wired in `EquipmentDetailView` |
@@ -98,7 +99,6 @@ Two routed screens — the list and one asset's detail — serving **both** dest
 
 - **AC-S3, AC-S4, AC-L13 (server half), AC-N1–AC-N4, AC-P1–AC-P3, AC-P6, AC-P7, AC-X3–AC-X6, AC-M6, AC-M7** — server behaviour with no client path to exercise, or an effect that happens inside a mutation's own transaction. Each was fired directly at the running server during the reverse-spec pass and is recorded in [`contract.md`](../../../spec/cold-chain-equipment/contract.md); none has a colocated test because there is nothing in this code to drive it.
 - **AC-B1 – AC-B7 (scanning)** — **deliberately omitted from this build.** The barcode/GS1 path needs a scanner the shared library gates on (`AddFromScannerButton` renders nothing without one), and the spec itself carries it as source-only, unexercised territory. The one half that IS built is the locked-field consequence (AC-B5), because a scanned asset arriving by sync must still render read-only here. Owed to a follow-up once the scanner surface exists.
-- **AC-D4** — that the catalogue-documents half is empty is held by NOT building it; there is no code to test. See [deliberate differences](#deliberate-differences).
 - **AC-G4** — unauthenticated access is the shared startup gate, covered by that vertical.
 - **The print action** — `Print asset label` renders and is wired to nothing: the label endpoint needs a configured label printer, which neither the probe stack nor the spec's own known gaps cover. Listed as a follow-up.
 
@@ -121,14 +121,14 @@ None — the spec carries no `⚠️ VERIFY` markers.
 
 ### Shared code changed
 
-Five changes reaching past this vertical, each additive:
+Eight changes reaching past this vertical, each additive:
 
 - **`Dialog`'s body sets a fixed `--field-row-label`.** The var hook already existed in `FieldRow` for exactly this; the side and inset panels use it and a dialog did not, so every modal in the app was ragged. Affects every dialog that stacks `FieldRow`s — all of them for the better; `labelWidth="auto"` rows do not read the var and are untouched.
 - **`FieldRow` gains `align`**, default `center` (unchanged). `first-line` baseline-aligns the label with a multi-line control's first line of text.
 - **`DetailCard` gains `surface`**, default `raised` (unchanged). `bordered` trades the shadow for a hairline, for a long uniform run of cards; the two existing consumers keep the raised surface.
+- **`DocumentUploadPanel` confirms a removal before it happens.** The panel raises _Are you sure? / This will remove this document._ and hands `onDelete` only the confirmed removals; a cancel does nothing. The confirmation is specified once, at [`internal-orders` › S6](../../../spec/internal-orders/ui-surface.md#s6--confirmations--error-surfaces), and no consumer was asking it — so the guard on a destructive action was missing app-wide, in all five verticals that show documents. It belongs to the panel, not the caller: removing a file is the same question whatever record holds it, and a consumer cannot forget what it does not own.
+- **`DocumentUploadPanel` gains `listHeading`**, default _Uploaded documents_ (unchanged). The catalogue half here lists a MODEL's documents, not the record's own, so it needs its own heading; the four existing consumers pass nothing.
 - **`Timeline` / `TimelineItem` is a new shared component** (`ui/elements/display`) filling the new [record timeline](../../../spec/ui-standards/components.md#detail-views) role — a record's history as events on a rail. Nothing else consumes it yet; the activity-log panel is the obvious next one.
-
-
 - **`parseCsv` hoisted to `src/domain/reportFiles/csv.ts`**, beside the `toCsv` it is the counterpart of, and re-exported from the barrel. It was a local export of the names vertical's `propertyImport.ts`; a second importer made it shared code sitting in the wrong place. `propertyImport` and its test now import it from the barrel; behaviour is byte-identical.
 - **`locations` gains an optional `filter`**, and `fetchLocations` an optional second argument that forwards it. This field needs the store's locations that **no asset holds** (`assignedToAsset: false`), which is a filter the shared query never exposed. Omitted, the read is exactly what it always was — the four existing callers pass nothing and are untouched (three had to be re-wrapped from a bare `createResource(source, fetchLocations)` to `storeId => fetchLocations(storeId)`, because a resource fetcher's second argument is its own info object).
 - **No new theme tokens.** The six functional statuses wear the semantic `--success-main` / `--warning-main` / `--error-main` / `--gray-main`; the existing `--status-*` tokens name the invoice lifecycle, which these are not.
@@ -141,7 +141,6 @@ All built (no ⛔ roles): standard list screen · data table (list) · filter ba
 
 Each follows the spec rather than the reference screen, and each is worth a reviewer's eye:
 
-- **The Documents tab has one half, not two.** The reference app renders a "Download catalogue documents" panel beside the upload half and hands it a hardcoded empty list; `AssetCatalogueItemNode` exposes no documents field, so it can never list anything ([contract ⚠️ wire trap](../../../spec/cold-chain-equipment/contract.md#documents)). Building a permanently-empty panel would be building the bug's furniture — the behaviour it produces, no catalogue documents ever, is unchanged.
 - **Read-only property rows are labelled values, not disabled boxes.** Per [detail views › never-editable fields](../../../spec/ui-standards/detail-views.md#never-editable-fields-are-never-disabled-controls); the reference app disables the control instead.
 - **The Cold chain section on the Summary tab is absent, not disabled, where the assignment is not the acting store's to change.** The section *is* the assignment; an uneditable one has nothing to say.
 - **Nothing.** The status-history rail was briefly left unbuilt on the grounds that the registry named no role for it — the wrong read: the standard says a control the registry doesn't name is a **new registry row**, not a reason to drop the surface. The row exists now ([record timeline](../../../spec/ui-standards/components.md#detail-views)) and the surface is built.
