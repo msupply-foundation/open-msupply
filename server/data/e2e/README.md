@@ -47,6 +47,7 @@ every other suite. They therefore live here.
 | `E2E On-Hold Customer`, joined to GRY              | an on-hold customer, listed but not selectable in the customer picker |
 | `manage_vvm_status_for_stock` on GRY               | the outbound line table's VVM-status column                          |
 | `manage_vaccines_in_doses` on GRY                  | the outbound line table's doses-per-unit column                      |
+| `vaccine_module` on GRY                            | the Cold chain destinations (Monitoring, Sensors, Equipment) and the app-wide cold-chain notification band; the cold-chain monitoring suite seeds sensors, readings and breaches into GRY through the `/coldchain/v1` REST API, which writes to the login user's DEFAULT store, so the store Admin defaults to has to be the vaccine store |
 
 **`StockViewer`** holds `StoreAccess`, `StockLineQuery`, `StockLineMutate` and
 `LogQuery`. What it _lacks_ is the point: no `InventoryAdjustmentMutate`, no

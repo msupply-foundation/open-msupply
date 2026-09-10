@@ -83465,7 +83465,7 @@
     "stocktake_frequency": 1.0,
     "type": "StorePreferences",
     "use_consumption_and_stock_from_customers_for_internal_orders": true,
-    "vaccine_module": false
+    "vaccine_module": true
    },
    "sync_version": "V7",
    "app_version": null,
