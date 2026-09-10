@@ -228,7 +228,11 @@ mod test {
 
     #[test]
     fn outbound_is_editable_only_before_shipped() {
-        for status in [InvoiceStatus::New, InvoiceStatus::Allocated, InvoiceStatus::Picked] {
+        for status in [
+            InvoiceStatus::New,
+            InvoiceStatus::Allocated,
+            InvoiceStatus::Picked,
+        ] {
             assert!(
                 check_invoice_is_editable(&outbound(status.clone())),
                 "outbound should be editable at status {:?}",

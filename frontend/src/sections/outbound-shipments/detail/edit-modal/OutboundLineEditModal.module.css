@@ -135,3 +135,13 @@
 .variantPanel {
   max-width: 40rem;
 }
+
+/* Supplier comment on the header row — free text, so it needs real room, but
+   it is the row's LAST input and must not push Available or the issue group
+   onto a line of their own. It takes the slack the row has and drops to its
+   own line before it squeezes them, the same give-and-take .itemField makes at
+   the row's start. */
+.supplierCommentField {
+  flex: 1 1 20rem;
+  min-inline-size: min(14rem, 100%);
+}

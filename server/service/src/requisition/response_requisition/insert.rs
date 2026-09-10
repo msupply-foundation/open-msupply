@@ -101,9 +101,8 @@ fn generate(
         min_months_of_stock,
     }: InsertResponseRequisition,
 ) -> Result<RequisitionRow, RepositoryError> {
-    let other_party_store = StoreRepository::new(connection).query_one(
-        StoreFilter::new().name_id(EqualFilter::equal_to(other_party_id.clone())),
-    )?;
+    let other_party_store = StoreRepository::new(connection)
+        .query_one(StoreFilter::new().name_id(EqualFilter::equal_to(other_party_id.clone())))?;
 
     let result = RequisitionRow {
         id,

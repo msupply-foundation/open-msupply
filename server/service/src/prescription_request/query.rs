@@ -108,14 +108,12 @@ mod test {
         );
 
         assert_eq!(
-            ids(
-                PrescriptionRequestFilter::new().dynamic_filter(
-                    PrescriptionRequestCondition::CustomField::condition(
-                        "prescription_request_occupation",
-                        CustomFieldValueFilter::Text(GeneralFilter::Like("nurs".to_string())),
-                    )
+            ids(PrescriptionRequestFilter::new().dynamic_filter(
+                PrescriptionRequestCondition::CustomField::condition(
+                    "prescription_request_occupation",
+                    CustomFieldValueFilter::Text(GeneralFilter::Like("nurs".to_string())),
                 )
-            ),
+            )),
             ["req_a"]
         );
     }

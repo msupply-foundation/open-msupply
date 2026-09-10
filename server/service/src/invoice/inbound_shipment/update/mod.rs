@@ -2614,13 +2614,16 @@ mod test {
     #[actix_rt::test]
     async fn update_inbound_shipment_custom_fields() {
         use repository::{
-            CustomFieldDisplayMode, CustomFieldKind, CustomFieldScopeRow, CustomFieldScopeRowRepository,
-            CustomFieldRow, CustomFieldRowRepository, CustomFieldValueType,
+            CustomFieldDisplayMode, CustomFieldKind, CustomFieldRow, CustomFieldRowRepository,
+            CustomFieldScopeRow, CustomFieldScopeRowRepository, CustomFieldValueType,
         };
         use serde_json::json;
 
-        let (_, connection, connection_manager, _) =
-            setup_all("update_inbound_shipment_custom_fields", MockDataInserts::all()).await;
+        let (_, connection, connection_manager, _) = setup_all(
+            "update_inbound_shipment_custom_fields",
+            MockDataInserts::all(),
+        )
+        .await;
 
         // Seed one visible inbound shipment property so key validation passes.
         CustomFieldRowRepository::new(&connection)

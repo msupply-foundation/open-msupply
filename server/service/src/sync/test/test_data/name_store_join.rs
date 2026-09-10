@@ -81,7 +81,8 @@ fn name_store_join_2_delete_record() -> TestSyncIncomingRecord {
 
 fn name_store_join_2_inactive_pull_record() -> TestSyncIncomingRecord {
     let mut record = name_store_join_2_delete_record();
-    record.sync_buffer_row.data = SyncRecordData(serde_json::from_str(NAME_STORE_JOIN_INACTIVE_2.1).unwrap());
+    record.sync_buffer_row.data =
+        SyncRecordData(serde_json::from_str(NAME_STORE_JOIN_INACTIVE_2.1).unwrap());
     record
 }
 
