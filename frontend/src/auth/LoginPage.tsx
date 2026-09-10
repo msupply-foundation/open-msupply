@@ -12,11 +12,8 @@ import { TextField } from '../ui/elements/inputs/TextField';
 import { PasswordField } from '../ui/elements/inputs/PasswordField';
 import { Button } from '../ui/elements/buttons/Button';
 import { Alert } from '../ui/elements/feedback/Alert';
-import { ArrowRightIcon, ClockIcon, TransferHorizontalIcon } from '../ui/icons';
-import {
-  rememberedDiscoveryReturn,
-  withLng,
-} from '../discovery/discoveryReturn';
+import { ArrowRightIcon, ClockIcon } from '../ui/icons';
+import { ChangeServerAction } from '../ui/layout/ChangeServerAction';
 import { AppLogo } from '../ui/branding/AppLogo';
 import { LanguageSelector } from '../ui/layout/AppShell/LanguageSelector';
 import { changeLanguage, locale, t } from '../intl';
@@ -70,10 +67,6 @@ export const LoginPage: Component = () => {
 
   // Only decides WHERE the version line renders — see versionLine() below.
   const compact = useIsCompact();
-
-  // Set when the discovery page handed off to this server
-  // (src/discovery/discoveryReturn.ts) — offers the way back beneath the form.
-  const changeServerUrl = rememberedDiscoveryReturn(window.location.search);
 
   const submitting = () => submitState().kind === 'submitting';
   const submitError = () => {
@@ -226,21 +219,7 @@ export const LoginPage: Component = () => {
                     Absent the parameter (every browser/served deployment),
                     nothing renders. Read once: the URL is fixed while this
                     page shows. */}
-                <Show when={changeServerUrl}>
-                  {/* The href re-reads locale(): the way back carries the
-                      language ACTIVE at click time, so a change made here
-                      arrives back at discovery too. */}
-                  <a
-                    class={styles.secondaryAction}
-                    href={withLng(changeServerUrl!, locale())}
-                    data-testid="login-change-server"
-                  >
-                    <TransferHorizontalIcon
-                      class={styles.secondaryActionIcon}
-                    />
-                    {t('messages.change-server')}
-                  </a>
-                </Show>
+                <ChangeServerAction testId="login-change-server" />
                 <div class={styles.languageAction}>
                   <LanguageSelector
                     language={locale()}
