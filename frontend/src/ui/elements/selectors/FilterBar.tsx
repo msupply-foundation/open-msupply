@@ -19,6 +19,7 @@ import { NumberField } from '../inputs/NumberField';
 import { BareCheckbox } from '../inputs/BareCheckbox';
 import { DateRangeField } from '../inputs/DateRangeField';
 import {
+  localTodayIso,
   utcBoundsFromLocalDays,
   utcToLocalDay,
 } from '../inputs/dateTimeConvert';
@@ -990,6 +991,7 @@ export const FilterDateRange = (props: {
   /** The target field's wire scalar — governs conversion, not the UI. */
   type: 'date' | 'dateTime';
   label: string;
+  disableFuture?: boolean;
   /** `data-testid` for the trigger (FilterBar supplies
    *  `filter-input-<key>`). */
   testId?: string;
@@ -1023,6 +1025,7 @@ export const FilterDateRange = (props: {
           start: toLocal(props.value?.afterOrEqualTo),
           end: toLocal(props.value?.beforeOrEqualTo),
         }}
+        max={props.disableFuture ? localTodayIso() : undefined}
         onChange={({ start, end }) => props.onChange(toWire(start, end))}
       />
     </span>
@@ -1051,6 +1054,7 @@ export const FilterDateTimeRange = (props: {
   onChange: (value: IsoDateTimeRange) => void;
   fromLabel: string;
   toLabel: string;
+  disableFuture?: boolean;
   /** `data-testid` stem for the two fields (FilterBar supplies
    *  `filter-input-<key>`), stamped on each field's DATE input as
    *  `<testId>-from` / `<testId>-to`. */
@@ -1069,6 +1073,7 @@ export const FilterDateTimeRange = (props: {
         testId={props.testId && `${props.testId}-from`}
         focusTarget={chipFocus}
         value={props.value.start}
+        max={props.disableFuture ? new Date().toISOString() : undefined}
         onChange={start => props.onChange({ ...props.value, start })}
       />
       <span aria-hidden="true">–</span>
@@ -1078,6 +1083,7 @@ export const FilterDateTimeRange = (props: {
         size="small"
         testId={props.testId && `${props.testId}-to`}
         value={props.value.end}
+        max={props.disableFuture ? new Date().toISOString() : undefined}
         onChange={end => props.onChange({ ...props.value, end })}
       />
     </span>
@@ -1094,6 +1100,7 @@ export const FilterDate = (props: {
   value: string;
   onInput: (value: string) => void;
   label: string;
+  disableFuture?: boolean;
   /**
    * `data-testid` for the input (FilterBar's render supplies
    * `filter-input-<key>`).
@@ -1112,6 +1119,7 @@ export const FilterDate = (props: {
         data-testid={props.testId}
         ref={(el: HTMLInputElement) => chipFocus?.ref(el)}
         value={props.value}
+        max={props.disableFuture ? localTodayIso() : undefined}
         aria-label={props.label}
         onInput={e => props.onInput(e.currentTarget.value)}
       />

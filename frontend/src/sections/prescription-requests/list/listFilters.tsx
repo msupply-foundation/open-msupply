@@ -51,6 +51,8 @@ const FILTERS: Filter<PrescriptionRequestFilter>[] =
         />
       ),
     },
+    // Both date ranges filter recorded facts, so future days are unselectable
+    // (ui-standards/list-views.md § Filters).
     prescriptionDatetime: {
       label: () => t('label.prescription-date'),
       render: props => (
@@ -58,6 +60,7 @@ const FILTERS: Filter<PrescriptionRequestFilter>[] =
           type="dateTime"
           label={t('label.prescription-date')}
           testId={props.testId}
+          disableFuture
           value={props.filter().prescriptionDatetime}
           onChange={value =>
             props.setPartialFilter({ prescriptionDatetime: value })
@@ -76,6 +79,7 @@ const FILTERS: Filter<PrescriptionRequestFilter>[] =
           type="dateTime"
           label={t('label.dispensed-date')}
           testId={props.testId}
+          disableFuture
           value={props.filter().dispensedDatetime}
           onChange={value =>
             props.setPartialFilter({ dispensedDatetime: value })
