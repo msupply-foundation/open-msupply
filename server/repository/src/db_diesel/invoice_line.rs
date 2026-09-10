@@ -506,8 +506,10 @@ impl InvoiceLineType {
 mod test {
     use super::*;
     use crate::{
-        mock::{mock_item_a, mock_item_b, mock_item_c, mock_name_a, mock_store_a, MockData,
-            MockDataInserts},
+        mock::{
+            mock_item_a, mock_item_b, mock_item_c, mock_name_a, mock_store_a, MockData,
+            MockDataInserts,
+        },
         requisition_row::{RequisitionRow, RequisitionType},
         test_db::setup_all_with_data,
         InvoiceLineRow, InvoiceRow, InvoiceType, RequisitionLineRow,
@@ -540,15 +542,14 @@ mod test {
             item_id,
             ..Default::default()
         };
-        let requisition_line = |id: &str, item_id: String, requested_quantity: f64| {
-            RequisitionLineRow {
+        let requisition_line =
+            |id: &str, item_id: String, requested_quantity: f64| RequisitionLineRow {
                 id: id.to_string(),
                 requisition_id: requisition.id.clone(),
                 item_id,
                 requested_quantity,
                 ..Default::default()
-            }
-        };
+            };
 
         let (_, connection, _, _) = setup_all_with_data(
             "test_invoice_line_sort_by_requested_quantity",
@@ -581,9 +582,10 @@ mod test {
             InvoiceLineRepository::new(&connection)
                 .query(
                     Pagination::all(),
-                    Some(InvoiceLineFilter::new().invoice_id(EqualFilter::equal_to(
-                        invoice.id.clone(),
-                    ))),
+                    Some(
+                        InvoiceLineFilter::new()
+                            .invoice_id(EqualFilter::equal_to(invoice.id.clone())),
+                    ),
                     Some(sort),
                 )
                 .unwrap()

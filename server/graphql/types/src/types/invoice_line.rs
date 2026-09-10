@@ -347,10 +347,7 @@ impl InvoiceLineNode {
     /// ⚠️ `InvoiceRow.requisition_id` is not store-scoped: a link that arrived
     /// by sync can resolve another store's requisition. `requestedQuantity`
     /// means the same on both sides of a pair, so the figure stays right.
-    pub async fn requisition_line(
-        &self,
-        ctx: &Context<'_>,
-    ) -> Result<Option<RequisitionLineNode>> {
+    pub async fn requisition_line(&self, ctx: &Context<'_>) -> Result<Option<RequisitionLineNode>> {
         let Some(requisition_id) = &self.invoice_line.invoice_row.requisition_id else {
             return Ok(None);
         };
