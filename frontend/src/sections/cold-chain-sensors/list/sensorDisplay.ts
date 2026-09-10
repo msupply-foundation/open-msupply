@@ -43,7 +43,7 @@ export const SENSOR_TYPES: readonly SensorType[] = [
  * The server already strips the manufacturer from the stored `"<identity> |
  * <MANUFACTURER>"`, but its regex is anchored at the pipe, so the separator's
  * leading space survives — `"AA:BB:CC:DD:EE:01 "` (contract ⚠️ wire trap,
- * AC-V3). Invisible on screen but real in the value, so it is trimmed once
+ * OMS-REG-CCE-03.38). Invisible on screen but real in the value, so it is trimmed once
  * here rather than at each place the serial is shown, compared, or copied.
  */
 export const displaySerial = (serial: string): string => serial.trim();
@@ -53,7 +53,7 @@ export const displaySerial = (serial: string): string => serial.trim();
  * shape. The wire enum pairs them in one member (`HOT_CONSECUTIVE`), except
  * `EXCURSION`, which carries neither — so it reads as a cold consecutive
  * breach, exactly as the current app renders it (rules › derived values,
- * AC-D7). Captured as-is: the excursion kind has no presentation of its own.
+ * .48). Captured as-is: the excursion kind has no presentation of its own.
  */
 export const breachParts = (
   breach: BreachType
@@ -72,7 +72,7 @@ export const ABSENT = '\u2014';
 /**
  * The breach's FULL name — the marker's accessible label, so the tone never
  * carries the meaning alone. `EXCURSION` has no name of its own and reads as a
- * cold consecutive breach (AC-D7).
+ * cold consecutive breach (.48).
  */
 export const fullBreachLabelKey = (breach: BreachType): LocaleKey => {
   const { hot, cumulative } = breachParts(breach);
@@ -88,7 +88,7 @@ export const breachLabelKey = (breach: BreachType): LocaleKey =>
  * The most recent reading's temperature, or undefined when the sensor has
  * never reported. `nodes` holds at most the newest one — its `totalCount`
  * counts every reading the sensor ever took and must never be read as a
- * has-a-reading count (contract ⚠️ wire trap, AC-D1/AC-D2).
+ * has-a-reading count (contract ⚠️ wire trap, .42/.43).
  */
 export const latestTemperature = (row: SensorRow): number | undefined =>
   row.latestTemperatureLog?.nodes[0]?.temperature;
@@ -100,7 +100,7 @@ export const latestReadingDatetime = (row: SensorRow): string | undefined =>
 /**
  * The cold chain equipment at the sensor's location, comma-separated. Empty
  * when the sensor has no location, because equipment is recorded against the
- * location and not against the sensor (AC-D5/AC-D6).
+ * location and not against the sensor (.46/.47).
  */
 export const equipmentNumbers = (row: SensorRow): string =>
   row.assets.nodes

@@ -10,60 +10,62 @@ One routed screen (the list) and one modal over it, plus its save confirmation. 
 
 `listState` = `list/listState.test.ts` · `sensorEdit` = `list/sensorEdit.test.ts` · `sensorDisplay` = `list/sensorDisplay.test.ts` · `access` = `access.test.ts` · `volume` = `src/domain/location/volume.test.ts` (the shared picker's own tests, where this field's behaviour lives). **live** = driven through the built screen against a real `remote_server` (v3.02.00) on seeded data — see [Live verification](#live-verification).
 
-| AC                                                       | Covered by                                                                                                           |
-| -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| **AC-S1** store scope                                    | `listState` — storeId sent, no filter key can widen it; **live**                                                     |
-| **AC-S2** another store                                  | _server-owned_ — see [exemptions](#exempt-but-listed)                                                                |
-| **AC-S3** no such sensor                                 | _server-owned_ — see [exemptions](#exempt-but-listed)                                                                |
-| **AC-L1** default order                                  | `listState`; **live** (serial ↓ on arrival)                                                                          |
-| **AC-L2** sortable set                                   | `listState` — `SORTABLE_KEYS` is exactly name + serial, and the columns read it; **live**                            |
-| **AC-L3** name filter honoured, unsurfaced               | `listState`                                                                                                          |
-| **AC-L4** type filter                                    | `listState`; **live**                                                                                                |
-| **AC-L5** location filter                                | `listState`; **live**                                                                                                |
-| **AC-L6** serial filter                                  | `listState`; **live**                                                                                                |
-| **AC-L7** active-only default                            | `listState`; **live**                                                                                                |
-| **AC-L8** revealing inactive                             | `listState` — sends no `isActive`, never `false`; **live**                                                           |
-| **AC-L9** empty state                                    | `listState` (empty chips never query as blanks); **live** (`nothing-here`)                                           |
-| **AC-L10** page ≥ 1 row                                  | `listState` (client never sends < 1); server rejection _server-owned_                                                |
-| **AC-L11** exact serial finds nothing                    | `listState` — the screen only ever sends `like`                                                                      |
-| **AC-N1 / AC-N2** who may be renamed                     | `sensorEdit`, all four kinds; **live** (Berlinger enabled, mSupply disabled)                                         |
-| **AC-N3** rename lands                                   | `sensorEdit` (input shape); **live** (saved, list refreshed)                                                         |
-| **AC-N4** names are not unique                           | `sensorEdit`                                                                                                         |
-| **AC-E1 / AC-E2** confirm follows the draft              | `sensorEdit`, both directions; **live**                                                                              |
-| **AC-E3** confirmation before the write                  | **live** — `confirmation-modal` with the specified copy                                                              |
-| **AC-E4** dismiss discards                               | `sensorEdit` (nothing built until confirm); **live**                                                                 |
-| **AC-P1** picker offers this store only                  | **live** — three store locations offered, another store's absent                                                     |
-| **AC-P2** assign                                         | `sensorEdit` (`{value: id}`); **live**                                                                               |
-| **AC-P3** clear                                          | `sensorEdit` (`{value: null}`, never omitted); **live**                                                              |
-| **AC-P4** assignment re-attributes history               | **live** — the sensor's existing reading re-pointed at the new location                                              |
-| **AC-P5** clearing does not                              | **live** — the reading stayed on the old location                                                                    |
-| **AC-P6 / AC-P7** activity trail, both ways              | **live** — two `SENSOR_LOCATION_CHANGED` rows with from/to                                                           |
-| **AC-P8** picker shows % used, offers no fullness filter | `volume` — a suppressed filter narrows nothing; **live** — `0% used` per option, no `location-fullness-*` control    |
-| **AC-V1** device values read-only                        | `sensorEdit` (draft holds three keys); **live** (a11y tree: no inputs for them)                                      |
-| **AC-V2** a save moves neither battery nor interval      | `sensorEdit` — the input carries four keys and no more                                                               |
-| **AC-V3** serial trimmed                                 | `sensorDisplay`; **live**                                                                                            |
-| **AC-A1 / AC-A2** retire and restore                     | `sensorEdit`; **live**, both directions                                                                              |
-| **AC-A3** nothing deletes a sensor                       | _structural_ — no delete operation exists in the schema, so none is built; **live** (no affordance on list or modal) |
-| **AC-D1 / AC-D2** latest reading, incl. a genuine 0      | `sensorDisplay`; **live**                                                                                            |
-| **AC-D3 / AC-D4** ongoing breach only                    | `sensorDisplay`; **live** (open breach shows, ended one does not)                                                    |
-| **AC-D5 / AC-D6** equipment at the location              | `sensorDisplay`; **live**                                                                                            |
-| **AC-D7** excursion reads as cold consecutive            | `sensorDisplay`                                                                                                      |
-| **AC-I1** hand-off opens the editor                      | **live** — `?edit=<id>` opened it, pre-loaded                                                                        |
-| **AC-I2** hand-off is single-use                         | **live** — param stripped; a re-render did not re-open it                                                            |
-| **AC-G1** read permission withheld                       | `access` — nav entry absent, route `denied`; server refusal _server-owned_                                           |
-| **AC-G2** change permission withheld                     | _server-owned_ — the client has no separate gate for it                                                              |
-| **AC-G3** unauthenticated                                | _owned by [`startup/`](../../../spec/startup/)_ — the shared auth path, not this vertical                            |
-| **AC-G4** both permissions held                          | `access`; **live** (the whole screen)                                                                                |
-| **AC-F1** name and place an arrival                      | **live** — hand-off → rename → assign → confirm, and the readings followed                                           |
-| **AC-F2** move to another fridge                         | **live** — assign, re-attribution, activity trail                                                                    |
-| **AC-F3** retire and bring back                          | **live**                                                                                                             |
-| **AC-F4** discard an edit                                | `sensorEdit`; **live**                                                                                               |
+Anchors are `OMS-REG-CCE-03.<n>` — the behaviours of [`spec/cold-chain-sensors/cases/`](../../../spec/cold-chain-sensors/cases/). The `AC-*` criteria this vertical was built from were folded into that case; [`acceptance.md`](../../../spec/cold-chain-sensors/acceptance.md) holds the retired-ID mapping.
+
+| Behaviour                                                        | Covered by                                                                                                           |
+| ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| **.1** store scope                                               | `listState` — storeId sent, no filter key can widen it; **live**                                                     |
+| AC-S2 _(retired)_ another store                                  | _server-owned_ — see [exemptions](#exempt-but-listed)                                                                |
+| AC-S3 _(retired)_ no such sensor                                 | _server-owned_ — see [exemptions](#exempt-but-listed)                                                                |
+| **.14** default order                                            | `listState`; **live** (serial ↓ on arrival)                                                                          |
+| **.3** / **.4** sortable set                                     | `listState` — `SORTABLE_KEYS` is exactly name + serial, and the columns read it; **live**                            |
+| AC-L3 _(retired)_ name filter honoured, unsurfaced               | `listState`                                                                                                          |
+| **.15** type filter                                              | `listState`; **live**                                                                                                |
+| **.16** location filter                                          | `listState`; **live**                                                                                                |
+| **.17** serial filter                                            | `listState`; **live**                                                                                                |
+| **.18** active-only default                                      | `listState`; **live**                                                                                                |
+| **.19** revealing inactive                                       | `listState` — sends no `isActive`, never `false`; **live**                                                           |
+| **.20** empty state                                              | `listState` (empty chips never query as blanks); **live** (`nothing-here`)                                           |
+| AC-L10 _(retired)_ page ≥ 1 row                                  | `listState` (client never sends < 1); server rejection _server-owned_                                                |
+| **.17** exact serial finds nothing                               | `listState` — the screen only ever sends `like`                                                                      |
+| **.21** / **.22** who may be renamed                             | `sensorEdit`, all four kinds; **live** (Berlinger enabled, mSupply disabled)                                         |
+| **.23** rename lands                                             | `sensorEdit` (input shape); **live** (saved, list refreshed)                                                         |
+| **.24** names are not unique                                     | `sensorEdit`                                                                                                         |
+| **.25** / **.26** confirm follows the draft                      | `sensorEdit`, both directions; **live**                                                                              |
+| **.27** confirmation before the write                            | **live** — `confirmation-modal` with the specified copy                                                              |
+| **.28** dismiss discards                                         | `sensorEdit` (nothing built until confirm); **live**                                                                 |
+| **.29** picker offers this store only                            | **live** — three store locations offered, another store's absent                                                     |
+| **.11** / **.12** / **.13** assign                               | `sensorEdit` (`{value: id}`); **live**                                                                               |
+| **.30** clear                                                    | `sensorEdit` (`{value: null}`, never omitted); **live**                                                              |
+| **.31** assignment re-attributes history                         | **live** — the sensor's existing reading re-pointed at the new location                                              |
+| **.32** clearing does not                                        | **live** — the reading stayed on the old location                                                                    |
+| **.33** / **.34** activity trail, both ways                      | **live** — two `SENSOR_LOCATION_CHANGED` rows with from/to                                                           |
+| **.35** / **.36** picker shows % used, offers no fullness filter | `volume` — a suppressed filter narrows nothing; **live** — `0% used` per option, no `location-fullness-*` control    |
+| **.10** device values read-only                                  | `sensorEdit` (draft holds three keys); **live** (a11y tree: no inputs for them)                                      |
+| **.37** a save moves neither battery nor interval                | `sensorEdit` — the input carries four keys and no more                                                               |
+| **.38** serial trimmed                                           | `sensorDisplay`; **live**                                                                                            |
+| **.39** / **.40** retire and restore                             | `sensorEdit`; **live**, both directions                                                                              |
+| **.41** nothing deletes a sensor                                 | _structural_ — no delete operation exists in the schema, so none is built; **live** (no affordance on list or modal) |
+| **.42** / **.43** latest reading, incl. a genuine 0              | `sensorDisplay`; **live**                                                                                            |
+| **.44** / **.45** ongoing breach only                            | `sensorDisplay`; **live** (open breach shows, ended one does not)                                                    |
+| **.46** / **.47** equipment at the location                      | `sensorDisplay`; **live**                                                                                            |
+| **.48** excursion reads as cold consecutive                      | `sensorDisplay`                                                                                                      |
+| **.49** hand-off opens the editor                                | **live** — `?edit=<id>` opened it, pre-loaded                                                                        |
+| **.50** hand-off is single-use                                   | **live** — param stripped; a re-render did not re-open it                                                            |
+| AC-G1 _(retired)_ read permission withheld                       | `access` — nav entry absent, route `denied`; server refusal _server-owned_                                           |
+| AC-G2 _(retired)_ change permission withheld                     | _server-owned_ — the client has no separate gate for it                                                              |
+| AC-G3 _(retired)_ unauthenticated                                | _owned by [`startup/`](../../../spec/startup/)_ — the shared auth path, not this vertical                            |
+| AC-G4 _(retired)_ both permissions held                          | `access`; **live** (the whole screen)                                                                                |
+| Flow — name and place an arrival                                 | **live** — hand-off → rename → assign → confirm, and the readings followed                                           |
+| Flow — move to another fridge                                    | **live** — assign, re-attribution, activity trail                                                                    |
+| Flow — retire and bring back                                     | **live**                                                                                                             |
+| Flow — discard an edit                                           | `sensorEdit`; **live**                                                                                               |
 
 ### Exempt but listed
 
-- **AC-S2, AC-S3, AC-L10 (server half), AC-G2** — a server rejection with no client path to reach it. The list only ever shows the active store's sensors, so the UI cannot address another store's sensor or a non-existent id, and it never sends a page below one. Each was fired directly at the running server during the reverse-spec pass and is recorded in [`contract.md`](../../../spec/cold-chain-sensors/contract.md#the-error-union-is-decorative); none has a colocated test because there is nothing in this code to exercise.
-- **AC-G3** — unauthenticated access is the shared startup gate, covered by that vertical.
-- **AC-P8, second half** — that the fullness tabs are not _rendered_ needs a rendered widget, and vitest here runs in the node environment with no DOM and no component-render harness at all, so no colocated test can hold it. Its consequence is held instead: `visibleLocations` proves a suppressed filter narrows nothing, which is the half that fails invisibly. The render half is live-verified and owed to the e2e suite, which already contracts `location-fullness-*` ids for it.
+- **AC-S2, AC-S3, AC-L10, AC-G2** (all retired into rules/contract, not behaviours — [mapping](../../../spec/cold-chain-sensors/acceptance.md)) — a server rejection with no client path to reach it. The list only ever shows the active store's sensors, so the UI cannot address another store's sensor or a non-existent id, and it never sends a page below one. Each was fired directly at the running server during the reverse-spec pass and is recorded in [`contract.md`](../../../spec/cold-chain-sensors/contract.md#the-error-union-is-decorative); none has a colocated test because there is nothing in this code to exercise.
+- **AC-G3** (retired; owned by startup) — unauthenticated access is the shared startup gate, covered by that vertical.
+- **`.36`** — that the fullness tabs are not _rendered_ needs a rendered widget, and vitest here runs in the node environment with no DOM and no component-render harness at all, so no colocated test can hold it. Its consequence is held instead: `visibleLocations` proves a suppressed filter narrows nothing, which is the half that fails invisibly. The render half is live-verified and owed to the e2e suite, which already contracts `location-fullness-*` ids for it.
 
 ## Flags
 
@@ -76,7 +78,7 @@ Date time with the blanks — what this build already rendered), and its naming 
 the current app's **Remove** entry rather than the clearing affordance the role
 owns (closed by `b51d78d5`). This list holds the gaps that still stand.
 
-1. **A genuine 0 °C reading is unspecified.** AC-D2 covers a sensor that has _never_ reported; it does not say what a real reading of exactly 0 shows. Built to show `0°C` — see [deliberate differences](#deliberate-differences-from-the-current-app).
+1. **A genuine 0 °C reading is unspecified.** `.43` covers a sensor that has _never_ reported; it does not say what a real reading of exactly 0 shows. Built to show `0°C` — see [deliberate differences](#deliberate-differences-from-the-current-app).
 2. **The active-only control's placement is not reproducible as written.** `ui-surface.md` puts it at the toolbar's trailing end; in this library that end is the table's own control cluster (Columns · Settings · full screen), which a vertical does not compose into. It is rendered at the trailing end of the **filter region** instead — the same bar, inside the slot a vertical owns.
 
 ### `⚠️ VERIFY` items encountered
