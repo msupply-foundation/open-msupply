@@ -123,8 +123,12 @@ export const TemperatureChart = (props: TemperatureChartProps) => {
     ) % SERIES_STYLES;
 
   return (
-    <div class={styles.block}>
-      <div class={styles.wrap} ref={wrap} data-testid="temperature-chart">
+    // The chart region — plot AND legend — is the e2e contract's
+    // `temperature-chart` (e2e/TESTIDS.md § Cold chain › Monitoring): the
+    // suites read the legend's sensor names from it, so the id sits on the
+    // block rather than on the measured plot wrapper.
+    <div class={styles.block} data-testid="temperature-chart">
+      <div class={styles.wrap} ref={wrap}>
         <Show when={width() > 0}>
           <svg
             class={styles.chart}
@@ -275,6 +279,7 @@ export const TemperatureChart = (props: TemperatureChartProps) => {
                 class={styles.tooltip}
                 style={{ left: `${x(m().time)}px`, top: `${PAD.top}px` }}
                 role="status"
+                data-testid="chart-tooltip"
               >
                 <div class={styles.tooltipHead}>
                   {localisedDateTime(m().time)}

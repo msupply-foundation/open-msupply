@@ -362,6 +362,10 @@ export const FilterBar = <
         <button
           type="button"
           class={styles.clearAll}
+          // Same id as the current app's "Remove all filters" menu entry — the
+          // e2e suites locate the action, not its placement (e2e/TESTIDS.md
+          // § Shared ids).
+          data-testid="filters-clear-all"
           // As on a chip's ✕: taking the caret out of an editor shrinks it and
           // shifts this button mid-press, losing the click.
           onMouseDown={e => e.preventDefault()}
