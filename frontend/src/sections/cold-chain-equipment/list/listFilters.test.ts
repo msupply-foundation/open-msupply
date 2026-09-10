@@ -110,4 +110,11 @@ describe('the filter set the list offers', () => {
   it('dismisses the catalogue-item filter — no control on the screen sets one', () => {
     expect(build().map(f => f.key)).not.toContain('catalogueItemId');
   });
+
+  it('AC-L10 / AC-L16 / AC-L17 offers the non-catalogue question all three answers', () => {
+    // The question has three answers — either kind, neither, or both — and the
+    // wire's bare Boolean reaches all three. A flag could only reach two.
+    const chip = build().find(f => f.key === 'isNonCatalogue');
+    expect(chip).toBeDefined();
+  });
 });

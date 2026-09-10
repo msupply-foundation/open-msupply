@@ -25,7 +25,7 @@ Two routed screens — the list and one asset's detail — serving **both** dest
 | **AC-L5 / AC-L6** category and its types | `listFilters` options are the category's; **live** (chips render) |
 | **AC-L7** a type outside the category is cleared | `listState` — incl. not clearing while the list is still loading |
 | **AC-L8 / AC-L9** functional-status filter, and no match for an asset with none | `listState` |
-| **AC-L10** non-catalogue | `listState` (both directions) · `equipment` (`isNonCatalogue`) |
+| **AC-L10 / AC-L16 / AC-L17** the three answers of the non-catalogue filter | `listState` (all three: `true`, `false`, and absent-on-All) · `equipment` (`isNonCatalogue`) · `listFilters` (the chip offers exactly the three) |
 | **AC-L12** empty state | _table-owned_ — the shared `emptyMessage`; **live** on a filtered-to-nothing list |
 | **AC-L13** page ≥ 1 row | `listState` (the client never sends < 1); the server rejection is _server-owned_ |
 | **AC-L14** row click opens the detail | **live** |
