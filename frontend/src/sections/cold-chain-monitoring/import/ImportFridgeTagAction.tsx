@@ -85,8 +85,7 @@ export const ImportFridgeTagAction: Component<
       }
       props.onNarrow({
         sensorName,
-        fromStart: startDatetime,
-        toStart: endDatetime,
+        startDatetime: { start: startDatetime, end: endDatetime },
         unacknowledged: null,
       });
       return;

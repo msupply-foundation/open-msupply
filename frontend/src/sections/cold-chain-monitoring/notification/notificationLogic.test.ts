@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   NOTIFICATION_PERMISSION,
   POLL_INTERVAL_MS,
+  bandRow,
   bandRows,
   detailsFilter,
   detailsTab,
@@ -77,6 +78,20 @@ describe('OMS-REG-CCE-02.24 — the band appears while breaches or excursions ar
     expect(bandRows(undefined)).toEqual([]);
   });
 
+  it('answers each kind’s row on its own, so the band can hold two fixed blocks', () => {
+    const both = data(
+      { total: 2, node: alert() },
+      { total: 1, node: excursion() }
+    );
+    expect(bandRow(both, 'breach')).toMatchObject({ kind: 'breach', total: 2 });
+    expect(bandRow(both, 'excursion')).toMatchObject({
+      kind: 'excursion',
+      total: 1,
+    });
+    expect(bandRow(data({ total: 0 }, { total: 0 }), 'breach')).toBeUndefined();
+    expect(bandRow(undefined, 'excursion')).toBeUndefined();
+  });
+
   it('needs the vaccine module AND the read’s own permission', () => {
     const holding = (p: string) => p === NOTIFICATION_PERMISSION;
     expect(notificationGate(true, holding)).toBe(true);
@@ -138,8 +153,7 @@ describe('the way through to the tab that shows each kind', () => {
   it('narrows to the alert’s sensor by name, with no date bounds imposed', () => {
     expect(detailsFilter(alert())).toEqual({
       sensorName: 'Fridge A',
-      fromStart: null,
-      toStart: null,
+      startDatetime: null,
       unacknowledged: null,
     });
     expect(detailsFilter(alert({ sensor: null })).sensorName).toBeNull();

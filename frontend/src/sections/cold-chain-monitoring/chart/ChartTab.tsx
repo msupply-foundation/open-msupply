@@ -3,11 +3,13 @@ import type { Component } from 'solid-js';
 import { graphqlFetch } from '@/api/graphql';
 import { gated } from '@/api/gated';
 import { t } from '@/intl';
+import { ContentContainer } from '@/ui/layout/ContentContainer/ContentContainer';
 import { Stack } from '@/ui/layout/Stack/Stack';
 import { Text } from '@/ui/elements/typography/Text';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { EmptyState } from '@/ui/elements/feedback/EmptyState';
 import { Spinner } from '@/ui/elements/feedback/Spinner';
+import { FilterBar } from '@/ui/elements/selectors/FilterBar';
 import { TemperatureLogs } from '../monitoring.generated';
 import type { TemperatureLogsVariables } from '../monitoring.generated';
 import {
@@ -16,19 +18,26 @@ import {
   type ListedBreach,
   type MonitoringFilter,
 } from '../monitoring/monitoringState';
+import { filterFields } from '../monitoring/monitoringFilters';
 import { buildSeries, isTruncated, timeExtent } from './chartData';
 import { TemperatureChart } from './TemperatureChart';
 import { BreachSummary } from './BreachSummary';
 
-// T1 — the Chart tab (spec/cold-chain-monitoring ui-surface T1): the plot
-// titled "Temperature by sensor", its truncation notice, its empty state and
-// its loading spinner. Reads the log connector over the chart's window at the
-// data-point cap; the per-sensor series and the breach markers are shaped by
-// chart/chartData.
+// T1 — the Chart tab (spec/cold-chain-monitoring ui-surface T1): the shared
+// filter bar, then the plot titled "Temperature by sensor", its truncation
+// notice, its empty state and its loading spinner. Reads the log connector
+// over the chart's window at the data-point cap; the per-sensor series and the
+// breach markers are shaped by chart/chartData.
+//
+// The filter bar stands above the plot because this tab has no table toolbar
+// to host it (ui-standards › tables › toolbar puts a bar with its table); the
+// two table tabs carry the same bar in theirs, over the same URL-backed state.
 
 export interface ChartTabProps {
   storeId: string;
   filter: MonitoringFilter;
+  /** The screen's one filter edit — every tab's bar writes through it. */
+  onFilterChange: (filter: MonitoringFilter) => void;
   /** Bumped by the screen when something outside the filters changed the
    *  record (a fridge-sensor import), so the plot re-reads in place. */
   refreshVersion: number;
@@ -82,49 +91,60 @@ export const ChartTab: Component<ChartTabProps> = props => {
     };
 
   return (
-    <Stack gap="md">
-      <Text variant="heading" level={2}>
-        {t('heading.chart')}
-      </Text>
-      <Show when={truncated()}>
-        {/* The window holds more readings than were requested: what is
-            plotted is incomplete, and the chart MUST say so (rules › the
-            chart). A warning in the error tone (ui-surface T1). */}
-        <Alert severity="error" testId="chart-truncated">
-          {t('error.too-many-datapoints')}
-        </Alert>
-      </Show>
-      <Show
-        when={connector()}
-        fallback={
-          <Show when={data.loading} fallback={null}>
-            <Spinner center />
-          </Show>
-        }
-      >
+    // `padded` supplies the body's edge padding the screen's fillBody Page
+    // strips (the table tabs are full-bleed); the wide measure keeps a
+    // 20rem-tall plot from stretching edge to edge on a wide monitor; `start`
+    // hugs the reading edge so the bar sits where the tables' toolbars put it.
+    <ContentContainer size="wide" padded align="start">
+      <Stack gap="md">
+        <FilterBar
+          filters={filterFields()}
+          filter={props.filter}
+          onChange={props.onFilterChange}
+        />
+        <Text variant="heading" level={2}>
+          {t('heading.chart')}
+        </Text>
+        <Show when={truncated()}>
+          {/* The window holds more readings than were requested: what is
+              plotted is incomplete, and the chart MUST say so (rules › the
+              chart). A warning notice (ui-surface T1). */}
+          <Alert severity="warning" testId="chart-truncated">
+            {t('error.too-many-datapoints')}
+          </Alert>
+        </Show>
         <Show
-          when={series().length > 0}
+          when={connector()}
           fallback={
-            <EmptyState
-              message={t('error.no-temperature-logs')}
-              data-testid="nothing-here"
-            />
+            <Show when={data.loading} fallback={null}>
+              <Spinner center />
+            </Show>
           }
         >
-          <TemperatureChart
-            series={series()}
-            window={window()}
-            markerContent={(breachId, close) => (
-              <BreachSummary
-                storeId={props.storeId}
-                breachId={breachId}
-                close={close}
-                onViewAllBreaches={props.onViewAllBreaches}
+          <Show
+            when={series().length > 0}
+            fallback={
+              <EmptyState
+                message={t('error.no-temperature-logs')}
+                data-testid="nothing-here"
               />
-            )}
-          />
+            }
+          >
+            <TemperatureChart
+              series={series()}
+              window={window()}
+              markerContent={(breachId, close) => (
+                <BreachSummary
+                  storeId={props.storeId}
+                  breachId={breachId}
+                  close={close}
+                  onViewAllBreaches={props.onViewAllBreaches}
+                />
+              )}
+            />
+          </Show>
         </Show>
-      </Show>
-    </Stack>
+      </Stack>
+    </ContentContainer>
   );
 };

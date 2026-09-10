@@ -46,11 +46,10 @@ describe('store scoping — every read belongs to the active store', () => {
   });
 });
 
-describe('the shared filter set arrives with its three default chips', () => {
-  it('seeds both start bounds and the Unacknowledged switch present but empty', () => {
+describe('the shared filter set arrives with its two default chips', () => {
+  it('seeds the start window and the Unacknowledged switch present but empty', () => {
     expect(DEFAULT_STATE.filter).toEqual({
-      fromStart: null,
-      toStart: null,
+      startDatetime: null,
       unacknowledged: null,
     });
   });
@@ -84,12 +83,12 @@ describe('OMS-REG-CCE-02.11 / .1 — the default 24-hour window and its address'
     );
   });
 
-  it('writes the last 24 hours, ending now, into the two bound chips', () => {
+  it('writes the last 24 hours, ending now, into the window chip’s two bounds', () => {
     const seeded = withDefaultWindow(DEFAULT_STATE.filter, NOW);
-    expect(seeded.toStart).toBe(NOW.toISOString());
-    expect(seeded.fromStart).toBe(
-      new Date(NOW.getTime() - DEFAULT_WINDOW_MS).toISOString()
-    );
+    expect(seeded.startDatetime).toEqual({
+      start: new Date(NOW.getTime() - DEFAULT_WINDOW_MS).toISOString(),
+      end: NOW.toISOString(),
+    });
     // The switch chip rides along untouched.
     expect(seeded.unacknowledged).toBeNull();
   });
@@ -97,8 +96,10 @@ describe('OMS-REG-CCE-02.11 / .1 — the default 24-hour window and its address'
   it('plots both bounds as given, however narrow or wide', () => {
     const window = chartWindow(
       {
-        fromStart: '2026-09-01T00:00:00.000Z',
-        toStart: '2026-09-08T00:00:00.000Z',
+        startDatetime: {
+          start: '2026-09-01T00:00:00.000Z',
+          end: '2026-09-08T00:00:00.000Z',
+        },
       },
       NOW
     );
@@ -110,7 +111,7 @@ describe('OMS-REG-CCE-02.11 / .1 — the default 24-hour window and its address'
 
   it('takes the start as 24 hours before an end given alone', () => {
     const end = '2026-09-07T12:00:00.000Z';
-    expect(chartWindow({ toStart: end }, NOW)).toEqual({
+    expect(chartWindow({ startDatetime: { start: null, end } }, NOW)).toEqual({
       start: Date.parse(end) - DEFAULT_WINDOW_MS,
       end: Date.parse(end),
     });
@@ -118,19 +119,25 @@ describe('OMS-REG-CCE-02.11 / .1 — the default 24-hour window and its address'
 
   it('runs a start given alone up to now, and has no window with no bounds', () => {
     const start = '2026-09-07T12:00:00.000Z';
-    expect(chartWindow({ fromStart: start }, NOW)).toEqual({
+    expect(chartWindow({ startDatetime: { start, end: null } }, NOW)).toEqual({
       start: Date.parse(start),
       end: NOW.getTime(),
     });
     expect(chartWindow({}, NOW)).toBeUndefined();
+    // The chip added but empty, and the chip with both sides cleared.
+    expect(chartWindow({ startDatetime: null }, NOW)).toBeUndefined();
     expect(
-      chartWindow({ fromStart: null, toStart: null }, NOW)
+      chartWindow({ startDatetime: { start: null, end: null } }, NOW)
     ).toBeUndefined();
   });
 
   it('sends the derived start on the wire for an end-only range', () => {
     const end = '2026-09-07T12:00:00.000Z';
-    const vars = buildChartVariables({ toStart: end }, STORE, NOW);
+    const vars = buildChartVariables(
+      { startDatetime: { start: null, end } },
+      STORE,
+      NOW
+    );
     expect(vars.filter?.datetime).toEqual({
       afterOrEqualTo: new Date(
         Date.parse(end) - DEFAULT_WINDOW_MS
@@ -141,7 +148,11 @@ describe('OMS-REG-CCE-02.11 / .1 — the default 24-hour window and its address'
 
   it('leaves a start-only range open-ended on the wire', () => {
     const start = '2026-09-07T12:00:00.000Z';
-    const vars = buildChartVariables({ fromStart: start }, STORE, NOW);
+    const vars = buildChartVariables(
+      { startDatetime: { start, end: null } },
+      STORE,
+      NOW
+    );
     expect(vars.filter?.datetime).toEqual({ afterOrEqualTo: start });
   });
 });
@@ -252,8 +263,10 @@ describe('OMS-REG-CCE-02.7 — the marker’s way through lists the selected bre
   // breach that began before the window — marked on the chart at its first
   // in-window reading — would otherwise fall off the list it hands to.
   const window = {
-    fromStart: '2026-09-07T02:40:00.000Z',
-    toStart: '2026-09-08T02:40:00.000Z',
+    startDatetime: {
+      start: '2026-09-07T02:40:00.000Z',
+      end: '2026-09-08T02:40:00.000Z',
+    },
     unacknowledged: null,
   };
 
@@ -264,13 +277,16 @@ describe('OMS-REG-CCE-02.7 — the marker’s way through lists the selected bre
     });
     expect(widened).toEqual({
       ...window,
-      fromStart: '2026-09-06T21:45:37.000Z',
+      startDatetime: {
+        ...window.startDatetime,
+        start: '2026-09-06T21:45:37.000Z',
+      },
     });
     // …so the Breaches read now admits it (the bound is inclusive).
     const vars = buildBreachesVariables(withFilter(widened), STORE);
     expect(vars.filter?.startDatetime).toEqual({
       afterOrEqualTo: '2026-09-06T21:45:37.000Z',
-      beforeOrEqualTo: window.toStart,
+      beforeOrEqualTo: window.startDatetime.end,
     });
   });
 
@@ -303,7 +319,10 @@ describe('OMS-REG-CCE-02.7 — the marker’s way through lists the selected bre
   it('keeps a start bound already at or before the breach’s start (the bound is inclusive)', () => {
     const atStart = {
       ...window,
-      fromStart: '2026-09-06T21:45:37.000Z',
+      startDatetime: {
+        ...window.startDatetime,
+        start: '2026-09-06T21:45:37.000Z',
+      },
     };
     expect(
       widenToInclude(atStart, {
@@ -326,7 +345,10 @@ describe('OMS-REG-CCE-02.7 — the marker’s way through lists the selected bre
     });
     expect(widened).toEqual({
       ...chips,
-      fromStart: '2026-09-01T00:00:00.000Z',
+      startDatetime: {
+        ...chips.startDatetime,
+        start: '2026-09-01T00:00:00.000Z',
+      },
     });
     expect(
       widenToInclude(chips, {
@@ -338,11 +360,13 @@ describe('OMS-REG-CCE-02.7 — the marker’s way through lists the selected bre
 });
 
 describe('the date range binds to a breach’s START, never its end', () => {
-  it('maps both bound chips onto startDatetime for breaches', () => {
+  it('maps the window chip’s two bounds onto startDatetime for breaches', () => {
     const vars = buildBreachesVariables(
       withFilter({
-        fromStart: '2026-09-07T00:00:00.000Z',
-        toStart: '2026-09-08T00:00:00.000Z',
+        startDatetime: {
+          start: '2026-09-07T00:00:00.000Z',
+          end: '2026-09-08T00:00:00.000Z',
+        },
       }),
       STORE
     );
@@ -354,19 +378,27 @@ describe('the date range binds to a breach’s START, never its end', () => {
     expect(vars.filter).not.toHaveProperty('endDatetime');
   });
 
-  it('sends a one-sided range as one bound, and two empty chips as no range', () => {
+  it('sends a one-sided range as one bound, and an empty chip as no range', () => {
     const oneSided = buildBreachesVariables(
-      withFilter({ fromStart: '2026-09-07T00:00:00.000Z', toStart: null }),
+      withFilter({
+        startDatetime: { start: '2026-09-07T00:00:00.000Z', end: null },
+      }),
       STORE
     );
     expect(oneSided.filter?.startDatetime).toEqual({
       afterOrEqualTo: '2026-09-07T00:00:00.000Z',
     });
-    const empty = buildBreachesVariables(
-      withFilter({ fromStart: null, toStart: null }),
+    // The chip added but empty, and the chip with both sides cleared.
+    const added = buildBreachesVariables(
+      withFilter({ startDatetime: null }),
       STORE
     );
-    expect(empty.filter).not.toHaveProperty('startDatetime');
+    expect(added.filter).not.toHaveProperty('startDatetime');
+    const cleared = buildBreachesVariables(
+      withFilter({ startDatetime: { start: null, end: null } }),
+      STORE
+    );
+    expect(cleared.filter).not.toHaveProperty('startDatetime');
   });
 });
 
@@ -417,11 +449,13 @@ describe('OMS-REG-CCE-02.29 / .30 / .31 / .32 — the log narrows on the shared 
     });
   });
 
-  it('maps the same two bound chips onto the reading’s timestamp', () => {
+  it('maps the same window chip onto the reading’s timestamp', () => {
     const vars = buildLogsVariables(
       withFilter({
-        fromStart: '2026-09-07T00:00:00.000Z',
-        toStart: '2026-09-08T00:00:00.000Z',
+        startDatetime: {
+          start: '2026-09-07T00:00:00.000Z',
+          end: '2026-09-08T00:00:00.000Z',
+        },
       }),
       STORE
     );

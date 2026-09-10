@@ -56,6 +56,18 @@ export const bandRows = (data: NotificationData | undefined): BandRow[] => {
 };
 
 /**
+ * One kind's row, or undefined while that kind has nothing outstanding. The
+ * band renders its two rows as two fixed blocks over this, so a poll that
+ * changes a count updates a row's text in place rather than replacing the
+ * row — the polite live region announces the change, and a focused control
+ * on the row keeps its focus.
+ */
+export const bandRow = (
+  data: NotificationData | undefined,
+  kind: AlertKind
+): BandRow | undefined => bandRows(data).find(row => row.kind === kind);
+
+/**
  * The outstanding count is stated only when MORE THAN ONE is outstanding —
  * with a single alert the row itself is the count (rules; `.25`).
  */
@@ -121,7 +133,6 @@ export const viewDetailsWithheld = (
  */
 export const detailsFilter = (alert: AlertNode): MonitoringFilter => ({
   sensorName: alert.sensor?.name ?? null,
-  fromStart: null,
-  toStart: null,
+  startDatetime: null,
   unacknowledged: null,
 });

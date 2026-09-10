@@ -3,8 +3,10 @@ import {
   ACCEPTED_FILE_TYPES,
   FILE_FIELD,
   classifyResponse,
+  failedOf,
   importFridgeTag,
   importUrl,
+  importedOf,
   type ImportResponse,
 } from './importFridgeTag';
 
@@ -177,5 +179,16 @@ describe('OMS-REG-CCE-02.36 — an invalid file shows an alert carrying the reas
     // comes back 200 with zero counts, so it is reported through the same
     // "no data imported" alert as an empty one.
     expect(classifyResponse(response()).kind).toBe('empty');
+  });
+
+  it('narrows each outcome to its member for the screen, or to null', () => {
+    const imported = classifyResponse(response({ numberOfLogs: 3 }));
+    const empty = classifyResponse(response());
+    const failed = { kind: 'failed' as const, message: 'nope' };
+    expect(importedOf(imported)?.response.numberOfLogs).toBe(3);
+    expect(importedOf(empty)).toBeNull();
+    expect(importedOf(failed)).toBeNull();
+    expect(failedOf(failed)?.message).toBe('nope');
+    expect(failedOf(imported)).toBeNull();
   });
 });

@@ -1,5 +1,6 @@
 import { stripEmpty } from '@/typeHelpers';
 import { DEFAULT_PAGE_SIZE } from '@/list/pageSize';
+import type { IsoDateTimeRange } from '@/ui/elements/selectors/FilterBar';
 import type {
   TemperatureBreachRowFragment,
   TemperatureBreachesVariables,
@@ -21,6 +22,10 @@ import type {
 // (contract › the monitoring screen). Neither generated input can hold the
 // other's keys, so the URL holds the five domain facts and each read maps them.
 // The mapped output is exactly the generated shape (kdd/type-safety).
+//
+// The date range is a `{ start, end }` pair of UTC ISO instants — the shape the
+// filter bar's date-TIME range chip holds (the items Ledger tab's precedent),
+// so the vertical binds its one chip straight onto this key.
 
 export type BreachRow = TemperatureBreachRowFragment;
 export type BreachType = BreachRow['type'];
@@ -44,9 +49,10 @@ export const OFFERED_BREACH_TYPES: readonly BreachType[] = [
  *
  * `null` members are FilterBar's "added but empty" marker — the chip is on the
  * bar with nothing entered — and every one of them maps to NO wire filter.
- * The two date bounds are separate members because they are separate chips,
- * each removable on its own (ui-surface S1 § filters lists them as two
- * filters, both shown by default). Both are UTC ISO instants.
+ * `startDatetime` is ONE chip holding both bounds of the breach-start window
+ * (ui-surface S1 § filters: shown by default); either side may be null, so a
+ * one-sided window is expressible without removing the chip. Both are UTC
+ * ISO instants.
  *
  * `unacknowledged` is the boolean chip: `true` narrows to unacknowledged
  * breaches; `null` (the chip unticked) or absent lists both.
@@ -60,8 +66,7 @@ export const OFFERED_BREACH_TYPES: readonly BreachType[] = [
 export type MonitoringFilter = {
   sensorName?: string | null;
   locationCode?: string | null;
-  fromStart?: string | null;
-  toStart?: string | null;
+  startDatetime?: IsoDateTimeRange | null;
   breachType?: BreachType | null;
   unacknowledged?: boolean | null;
 };
@@ -106,7 +111,7 @@ export type MonitoringState = {
 };
 
 /**
- * Arrival state. The two start bounds and the Unacknowledged switch are
+ * Arrival state. The start-window chip and the Unacknowledged switch are
  * seeded PRESENT-but-empty — `null` is an added-but-empty chip — so they sit
  * on the bar from arrival with no menu step (ui-surface S1 § filters: shown
  * "by default"). Sensor name, Location and Breach type are added from the
@@ -116,7 +121,7 @@ export type MonitoringState = {
  * breaches, › the log).
  */
 export const DEFAULT_STATE: MonitoringState = {
-  filter: { fromStart: null, toStart: null, unacknowledged: null },
+  filter: { startDatetime: null, unacknowledged: null },
   breachSort: [{ key: 'startDatetime', desc: true }],
   breachOffset: 0,
   logSort: [{ key: 'datetime', desc: false }],
@@ -140,14 +145,16 @@ export const needsArrivalWindow = (
   rawQueryParam: string | undefined
 ): boolean => rawQueryParam === undefined || rawQueryParam === '';
 
-/** The filter with the default window written into its two bounds. */
+/** The filter with the default window written into the chip's two bounds. */
 export const withDefaultWindow = (
   filter: MonitoringFilter,
   now: Date
 ): MonitoringFilter => ({
   ...filter,
-  fromStart: new Date(now.getTime() - DEFAULT_WINDOW_MS).toISOString(),
-  toStart: now.toISOString(),
+  startDatetime: {
+    start: new Date(now.getTime() - DEFAULT_WINDOW_MS).toISOString(),
+    end: now.toISOString(),
+  },
 });
 
 /**
@@ -163,8 +170,9 @@ export const chartWindow = (
   filter: MonitoringFilter,
   now: Date
 ): { start: number; end: number } | undefined => {
-  const from = filter.fromStart ? Date.parse(filter.fromStart) : undefined;
-  const to = filter.toStart ? Date.parse(filter.toStart) : undefined;
+  const range = filter.startDatetime;
+  const from = range?.start ? Date.parse(range.start) : undefined;
+  const to = range?.end ? Date.parse(range.end) : undefined;
   if (from !== undefined && to !== undefined) return { start: from, end: to };
   if (to !== undefined) return { start: to - DEFAULT_WINDOW_MS, end: to };
   if (from !== undefined)
@@ -195,12 +203,9 @@ export const widenToInclude = (
 ): MonitoringFilter => {
   const next = { ...filter };
   const start = Date.parse(breach.startDatetime);
-  if (
-    next.fromStart &&
-    Number.isFinite(start) &&
-    Date.parse(next.fromStart) > start
-  )
-    next.fromStart = new Date(start).toISOString();
+  const range = next.startDatetime;
+  if (range?.start && Number.isFinite(start) && Date.parse(range.start) > start)
+    next.startDatetime = { ...range, start: new Date(start).toISOString() };
   if (next.unacknowledged === true && !breach.unacknowledged)
     next.unacknowledged = null;
   return next;
@@ -224,12 +229,13 @@ const sensorFilter = (f: MonitoringFilter): SensorFilter | null =>
 const locationFilter = (f: MonitoringFilter): LocationFilter | null =>
   f.locationCode ? { code: { like: f.locationCode } } : null;
 
-// The two chips as inclusive bounds; an empty chip contributes nothing, and a
-// pair of empty chips is no filter at all (stripEmpty drops the empty object).
+// The chip's two bounds as inclusive bounds; an empty side contributes
+// nothing, and an empty chip is no filter at all (stripEmpty drops the empty
+// object).
 const startBounds = (f: MonitoringFilter): DatetimeBounds =>
   stripEmpty({
-    afterOrEqualTo: f.fromStart || null,
-    beforeOrEqualTo: f.toStart || null,
+    afterOrEqualTo: f.startDatetime?.start || null,
+    beforeOrEqualTo: f.startDatetime?.end || null,
   });
 
 /**
@@ -322,7 +328,9 @@ export const buildChartVariables = (
             // An open-ended start plots up to now but is not capped at it on
             // the wire — a reading a few seconds ahead of this device's clock
             // is still a reading.
-            ...(filter.toStart ? { beforeOrEqualTo: filter.toStart } : {}),
+            ...(filter.startDatetime?.end
+              ? { beforeOrEqualTo: filter.startDatetime.end }
+              : {}),
           }
         : null,
       temperatureBreach: filter.breachType
