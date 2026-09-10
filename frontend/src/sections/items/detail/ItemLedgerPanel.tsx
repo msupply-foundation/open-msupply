@@ -184,8 +184,11 @@ const buildLedgerFilters = (): Filter<LedgerFilter>[] =>
       render: props => (
         <FilterDateTimeRange
           // Both bounds live in this one chip, so the group label is the chip's
-          // and each field keeps its own accessible name.
+          // and each field keeps its own accessible name. Ledger entries are
+          // recorded instants, so days after today are unselectable
+          // (ui-standards/list-views.md § Filters).
           value={props.filter().datetime ?? { start: null, end: null }}
+          max={new Date().toISOString()}
           onChange={range => props.setPartialFilter({ datetime: range })}
           fromLabel={t('label.from-datetime')}
           toLabel={t('label.to-datetime')}

@@ -8,6 +8,7 @@ import {
   constructFilters,
   type Filter,
 } from '../../../ui/elements/selectors/FilterBar';
+import { localTodayIso } from '@/ui/elements/inputs/dateTimeConvert';
 import { stripEmpty } from '../../../typeHelpers';
 import { inboundShipmentPreferences } from '../../../store/storeContext';
 import type { InboundScope } from '../inboundShipmentScope';
@@ -233,6 +234,7 @@ const FILTERS: Filter<InboundListFilter>[] =
           type="dateTime"
           label={t('label.created')}
           testId={props.testId}
+          max={localTodayIso()}
           value={props.filter().createdDatetime}
           onChange={value => props.setPartialFilter({ createdDatetime: value })}
         />
@@ -245,6 +247,7 @@ const FILTERS: Filter<InboundListFilter>[] =
           type="dateTime"
           label={t('label.delivered')}
           testId={props.testId}
+          max={localTodayIso()}
           value={props.filter().deliveredDatetime}
           onChange={value =>
             props.setPartialFilter({ deliveredDatetime: value })
