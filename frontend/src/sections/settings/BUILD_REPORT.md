@@ -116,9 +116,10 @@ front ends**.
 The e2e rows stub the local print service at its loopback origin, and the
 network route's delivery response, in `e2e/helpers/labelPrinter.ts` — they
 assert **which route was taken, which device was selected and what was handed
-over**, never that paper appears. Mutation-checked: breaking the
-`connection === 'usb'` match, removing the not-configured gate, and swallowing
-the print service's refusal each turn the matching test red.
+over**, never that paper appears. Each is mutation-checked — breaking the
+`connection === 'usb'` match reddens `.42`, removing the not-configured gate
+reddens `.43`, and swallowing the network route's non-2xx reddens both of the
+prescriptions suite's `.71` tests.
 
 **`.22` stays out of the e2e suite, for a corrected reason.** The header had it
 as "needs a second device", which isn't true — a second browser context is one.
