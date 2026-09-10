@@ -21,7 +21,7 @@ export type PropertyValues = Record<string, string | number | boolean | null>;
  * `locationIds` is `undefined`, not `[]`, when the assignment is not this
  * screen's to change: on a central server an asset held by another store shows
  * its locations but cannot edit them, because they belong to that store
- * (rules › the store boundary, AC-S5).
+ * (rules › the store boundary, OMS-REG-CCE-05.24).
  */
 export type AssetFormState = {
   assetNumber: string;
@@ -58,7 +58,7 @@ export const parseProperties = (json: string | null | undefined) => {
 };
 
 /**
- * Whether the asset's storage locations are this screen's to change (AC-S5).
+ * Whether the asset's storage locations are this screen's to change (OMS-REG-CCE-05.24).
  * Locations belong to the asset's own store, so an acting store that is not it
  * cannot see them to choose among them.
  */
@@ -93,7 +93,7 @@ export const formFromAsset = (
 /**
  * Whether the draft still matches the asset as loaded. The save action is
  * unavailable while it does, so an opened-and-closed screen cannot write
- * (AC-E1/AC-E2).
+ * (OMS-REG-CCE-06.1/.2).
  */
 export const isUnchanged = (
   form: AssetFormState,
@@ -133,9 +133,9 @@ const nullable = (value: string) => ({ value: value || null });
  *
  * `assetNumber`, `notes`, `properties` and `needsReplacement` are NOT partial
  * fields: the service assigns each straight onto the stored row, so omitting
- * one ERASES it (contract ⚠️ wire trap, AC-E6). There is no shape that leaves
+ * one ERASES it (contract ⚠️ wire trap, OMS-REG-CCE-06.8). There is no shape that leaves
  * them alone, which is why this builds from a form seeded with the asset's
- * whole current state and always sends all four (AC-E7).
+ * whole current state and always sends all four (OMS-REG-CCE-06.7).
  *
  * The eight nullable-update fields carry the three-state wrapper: `{value: x}`
  * sets and `{value: null}` clears. This screen always states them explicitly —
@@ -144,7 +144,7 @@ const nullable = (value: string) => ({ value: value || null });
  *
  * `locationIds` is the one field that IS omitted when absent: the assignment is
  * wholesale, so sending `[]` would release every location, and that is not what
- * "you cannot edit these" means (AC-S5).
+ * "you cannot edit these" means (OMS-REG-CCE-05.24).
  *
  * `properties` carries the asset's OWN object, never the catalogue's — writing
  * the catalogue's values onto the asset would freeze a snapshot of the model
@@ -177,7 +177,7 @@ export const buildUpdateInput = (
  *
  * Every field a GS1 barcode supplied is read-only: the physical label is the
  * authority and a typo would silently disagree with it. Only a server
- * administrator may override one (rules › scanning, AC-B5).
+ * administrator may override one (rules › scanning, OMS-REG-CCE-04.35).
  *
  * A frontend obligation only — the server never consults `lockedFields`, and no
  * input can change it after insert (contract ⚠️ wire trap).

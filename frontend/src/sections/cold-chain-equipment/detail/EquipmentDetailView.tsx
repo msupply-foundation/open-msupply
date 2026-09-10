@@ -53,7 +53,7 @@ import { StatusActions } from './StatusActions';
 // together behind a confirmation.
 //
 // The whole draft is written on every save: four of the update's fields are
-// not partial, so omitting one ERASES it (rules › editing an asset, AC-E6).
+// not partial, so omitting one ERASES it (rules › editing an asset, OMS-REG-CCE-06.8).
 // That obligation lives in assetEdit.buildUpdateInput; this screen's job is to
 // seed the draft from the asset as loaded and hand the whole thing over.
 
@@ -121,7 +121,7 @@ const EquipmentDetailView: Component = () => {
     setForm(formFromAsset(record, params.storeId, central()));
   });
 
-  // Leaving with unsaved changes raises the app-wide discard prompt (AC-E4) —
+  // Leaving with unsaved changes raises the app-wide discard prompt (OMS-REG-CCE-06.4) —
   // a route change, a tab switch, browser back, or a reload. Confirming
   // re-seeds the draft from the asset, so a "leave" that stays mounted really
   // discards.
@@ -153,7 +153,7 @@ const EquipmentDetailView: Component = () => {
     // Every rejection this vertical can produce is untyped — the mutation's
     // declared error members are all unreachable, so a failure fails the whole
     // request and the global error path has already surfaced it (contract ›
-    // the error union). Stay put so the draft isn't lost (AC-E8).
+    // the error union). Stay put so the draft isn't lost (OMS-REG-CCE-06.9).
     if (result.kind !== 'success') return;
     void refetch();
   };
@@ -172,7 +172,7 @@ const EquipmentDetailView: Component = () => {
 
   const onDelete = () => {
     // Deleting needs ASSET_MUTATE; without it the user is told rather than
-    // shown a dead control (AC-G2).
+    // shown a dead control (OMS-REG-CCE-07.23).
     if (!hasPermission('ASSET_MUTATE')) {
       reportPermissionDenied(['AssetMutate']);
       return;
@@ -307,7 +307,7 @@ const EquipmentDetailView: Component = () => {
                     </Button>
                     {/* Inert until the draft differs from the asset as loaded,
                       so an opened-and-closed screen cannot write
-                      (AC-E1/AC-E2). */}
+                      (OMS-REG-CCE-06.1/.2). */}
                     <Button
                       variant="primary"
                       data-testid="save-button"
@@ -361,7 +361,7 @@ const EquipmentDetailView: Component = () => {
                 />
               </TabPanel>
               <TabPanel value="log">
-                {/* Oldest first (AC-AL3): the trail reads as the story of
+                {/* Oldest first (OMS-REG-CCE-06.48): the trail reads as the story of
                     what happened to the machine in the order it happened. The
                     panel's default is newest-first — the four other verticals
                     whose spec mandates this order pass the same prop. */}
@@ -373,7 +373,7 @@ const EquipmentDetailView: Component = () => {
               </TabPanel>
 
               {/* S7 — the save confirmation. Nothing is written until it is
-                accepted (AC-E3). */}
+                accepted (OMS-REG-CCE-06.3). */}
               <ConfirmDialog
                 open={confirmingSave()}
                 onClose={() => setConfirmingSave(false)}
@@ -382,7 +382,7 @@ const EquipmentDetailView: Component = () => {
                 onConfirm={() => void save()}
               />
               {/* The app-wide unsaved-changes prompt, not one of this
-                vertical's (AC-E4). */}
+                vertical's (OMS-REG-CCE-06.4). */}
               <ConfirmDialog
                 open={leaveGuard.open()}
                 title={t('heading.are-you-sure')}

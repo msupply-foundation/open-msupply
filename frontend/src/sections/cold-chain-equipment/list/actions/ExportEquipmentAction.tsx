@@ -17,7 +17,7 @@ import { equipmentToCsv } from '../equipmentToCsv';
 // only the query.
 //
 // ⚠️ The export covers the WHOLE REGISTER, not the filtered list and not the
-// active store's assets: its filter is `classId` alone (rules › export, AC-Z1,
+// active store's assets: its filter is `classId` alone (rules › export, OMS-REG-CCE-07.13,
 // contract ⚠️ wire trap). Captured as-is from the reference app, and the one
 // place this screen departs from the list-view standard — see BUILD_REPORT,
 // which carries it as the vertical's first candidate spec refinement.

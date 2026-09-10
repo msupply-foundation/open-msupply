@@ -54,7 +54,7 @@ const catalogueItemLabel = (item: CatalogueItem): string =>
 
 export interface CreateAssetModalProps {
   storeId: string;
-  /** Central + Manage only: which store will hold the asset (AC-S6). */
+  /** Central + Manage only: which store will hold the asset (OMS-REG-CCE-04.17). */
   showStorePicker: boolean;
   onClose: () => void;
   /** The asset was created — the list navigates to its detail screen. */
@@ -65,7 +65,7 @@ export const CreateAssetModal: Component<CreateAssetModalProps> = props => {
   const [form, setForm] = createSignal<CreateAssetForm>(emptyCreateForm());
   const [saving, setSaving] = createSignal(false);
   // The one rejection this modal names: an asset number already in use. Every
-  // other failure is untyped and reads as the generic message (AC-N1).
+  // other failure is untyped and reads as the generic message (OMS-REG-CCE-05.9).
   const [errorKey, setErrorKey] = createSignal<
     'error.cce-asset-number-already-used' | 'error.unable-to-create-cce' | null
   >(null);
@@ -87,7 +87,7 @@ export const CreateAssetModal: Component<CreateAssetModalProps> = props => {
   });
   const categories = () => gated(categoryData) ?? [];
 
-  // The chosen category's types — the bare-type path's second choice (AC-C3).
+  // The chosen category's types — the bare-type path's second choice (OMS-REG-CCE-05.4).
   const [typeData] = createResource(
     () => form().categoryId,
     async categoryId => {
@@ -122,7 +122,7 @@ export const CreateAssetModal: Component<CreateAssetModalProps> = props => {
   };
 
   const save = async () => {
-    if (saving() || !canCreate(form())) return; // re-entry guard + AC-N5
+    if (saving() || !canCreate(form())) return; // re-entry guard + OMS-REG-CCE-05.13
     setSaving(true);
     setErrorKey(null);
     const assetId = generateUUID();
@@ -151,7 +151,7 @@ export const CreateAssetModal: Component<CreateAssetModalProps> = props => {
       );
       return;
     }
-    // The opening status entry (AC-C5) — a SEPARATE call, not part of the
+    // The opening status entry (OMS-REG-CCE-05.6) — a SEPARATE call, not part of the
     // insert's transaction, so an insert that lands and a log that fails leaves
     // an asset with no status history (contract › where an asset comes from).
     // The asset exists either way, so the user is taken to it regardless.
@@ -188,7 +188,7 @@ export const CreateAssetModal: Component<CreateAssetModalProps> = props => {
           </Show>
           {/* Inert until an asset number is entered AND the asset is
               classified — an unclassified insert fails as an unexplained
-              storage failure (AC-N5, AC-C7). */}
+              storage failure (OMS-REG-CCE-05.13, OMS-REG-CCE-05.8). */}
           <OkButton
             data-testid="dialog-button-ok"
             loading={saving()}
@@ -252,7 +252,7 @@ export const CreateAssetModal: Component<CreateAssetModalProps> = props => {
               label={t('label.type')}
               hideLabel
               testId="type-select"
-              // Needs a category first (AC-C3).
+              // Needs a category first (OMS-REG-CCE-05.4).
               disabled={!isTypeChoosable(form()) || saving()}
               value={form().typeId}
               options={types().map(type => ({

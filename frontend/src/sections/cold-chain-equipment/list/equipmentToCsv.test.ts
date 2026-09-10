@@ -33,7 +33,7 @@ const row = (over: Partial<ExportRow> = {}): ExportRow =>
 const header = (csv: string) => csv.split('\r\n')[0] ?? '';
 const firstRow = (csv: string) => csv.split('\r\n')[1] ?? '';
 
-describe('AC-Z2 one column per specification key', () => {
+describe('OMS-REG-CCE-07.14 — one column per specification key', () => {
   it('appends a column per key, de-duplicated', () => {
     // The property catalogue returns one row per scope, so the same key recurs.
     const csv = equipmentToCsv(

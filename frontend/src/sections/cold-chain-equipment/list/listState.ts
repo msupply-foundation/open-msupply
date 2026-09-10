@@ -5,7 +5,7 @@ import type { AssetsListVariables } from '../equipment.generated';
 
 // The equipment list's URL-backed state and its mapping onto the GraphQL
 // variables — extracted from the view so the class pinning, the destination's
-// store restriction, sort and pagination (AC-S1, AC-S2, AC-L1, AC-L2) are
+// store restriction, sort and pagination (OMS-REG-CCE-04.15, OMS-REG-CCE-04.16, OMS-REG-CCE-04.19, OMS-REG-CCE-04.20) are
 // testable in node vitest. Filter and sort are exactly the generated GraphQL
 // shapes (kdd/type-safety: no remapping).
 
@@ -13,7 +13,7 @@ export type AssetFilter = NonNullable<AssetsListVariables['filter']>;
 
 /**
  * The sort keys the list offers. The generated union carries seven, but only
- * three columns are sortable on screen (AC-L2) — the rest have no header
+ * three columns are sortable on screen (OMS-REG-CCE-04.20) — the rest have no header
  * affordance. Exported so the view's columns and the test read one list.
  */
 export type AssetSortKey = NonNullable<
@@ -57,7 +57,7 @@ export type EquipmentListState = {
 };
 
 /**
- * Default: installation date ascending (AC-L1) — the reference screen's own
+ * Default: installation date ascending (OMS-REG-CCE-04.19) — the reference screen's own
  * default, which it sends explicitly. Absent a sort the server orders by id, a
  * UUID, so the default is never left to the server.
  *
@@ -79,7 +79,7 @@ export const DEFAULT_STATE: EquipmentListState = {
 };
 
 /**
- * The interactive half of AC-L7: a type belongs to exactly one category, so
+ * The interactive half of OMS-REG-CCE-04.23: a type belongs to exactly one category, so
  * changing the CATEGORY always invalidates a chosen type.
  *
  * Decided from the two filters alone, with NO reference to the type list. The
@@ -98,7 +98,7 @@ export const clearTypeOnCategoryChange = (
 };
 
 /**
- * The arriving half of AC-L7: a URL that already carries a type from another
+ * The arriving half of OMS-REG-CCE-04.23: a URL that already carries a type from another
  * category never passes through {@link clearTypeOnCategoryChange}, so the
  * contradiction is caught once the category's own type list lands.
  *
@@ -119,10 +119,10 @@ export const clearTypeOutsideCategory = (
  * URL state + the destination → the query variables.
  *
  * - `classId` is merged in unconditionally: this register only ever lists
- *   cold-chain-equipment assets (AC-S1).
+ *   cold-chain-equipment assets (OMS-REG-CCE-04.15).
  * - `filter.storeId` is what makes Cold chain › Equipment the active store's
- *   register (AC-S2). The manage destination sends none, so it lists every
- *   store's equipment — captured as-is (AC-S6/AC-S7).
+ *   register (OMS-REG-CCE-04.16). The manage destination sends none, so it lists every
+ *   store's equipment — captured as-is (OMS-REG-CCE-04.17/.18).
  * - `stripEmpty` drops added-but-empty filter chips so the query carries only
  *   live filters.
  * - `sort` is a single-element list: the server evaluates exactly one entry,

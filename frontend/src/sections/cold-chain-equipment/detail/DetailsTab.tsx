@@ -34,8 +34,8 @@ import {
 //
 // A property the CATALOGUE answers is the model's, not the store's: its value
 // is what shows and the row is read-only, marked as coming from the catalogue
-// (AC-R1/AC-R3). The two mapping-date rows are read-only too — they are derived
-// from the temperature-mapping history, not typed in (AC-R6). Both render as
+// (OMS-REG-CCE-06.11/.13). The two mapping-date rows are read-only too — they are derived
+// from the temperature-mapping history, not typed in (OMS-REG-CCE-06.16). Both render as
 // LABELLED VALUES rather than disabled boxes (ui-standards/detail-views).
 
 export interface DetailsTabProps {
@@ -134,7 +134,7 @@ export const DetailsTab: Component<DetailsTabProps> = props => {
                       fallback={
                         // The catalogue's value, or a derived mapping date — a
                         // labelled value, never a disabled control
-                        // (AC-R1/AC-R6).
+                        // (OMS-REG-CCE-06.11/.16).
                         <LabelledValue
                           variant="field"
                           label={

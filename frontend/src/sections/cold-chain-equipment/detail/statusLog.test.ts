@@ -45,7 +45,7 @@ const form = (over: Partial<StatusFormState> = {}): StatusFormState => ({
   ...over,
 });
 
-describe('AC-FS2 a status is required', () => {
+describe('OMS-REG-CCE-06.19 — a status is required', () => {
   it('refuses an entry with no status chosen', () => {
     expect(canSubmitStatus(form(), REASONS)).toBe(false);
   });
@@ -57,7 +57,7 @@ describe('AC-FS2 a status is required', () => {
   });
 });
 
-describe('AC-FS3 the reasons offered belong to the chosen status', () => {
+describe('OMS-REG-CCE-06.20 — the reasons offered belong to the chosen status', () => {
   it('offers only that status’s reasons', () => {
     expect(
       reasonsForStatus(REASONS, 'NOT_FUNCTIONING').map(r => r.id)
@@ -73,7 +73,7 @@ describe('AC-FS3 the reasons offered belong to the chosen status', () => {
   });
 });
 
-describe('AC-FS4 changing the status clears the reason', () => {
+describe('OMS-REG-CCE-06.21 — changing the status clears the reason', () => {
   it('drops a reason chosen under the previous status', () => {
     const chosen = form({ status: 'NOT_FUNCTIONING', reasonId: 'nf-1' });
     expect(withStatus(chosen, 'FUNCTIONING').reasonId).toBe('');
@@ -85,7 +85,7 @@ describe('AC-FS4 changing the status clears the reason', () => {
   });
 });
 
-describe('AC-FS5 Not Functioning always carries a reason', () => {
+describe('OMS-REG-CCE-06.22 — Not Functioning always carries a reason', () => {
   it('refuses it with no reason', () => {
     expect(canSubmitStatus(form({ status: 'NOT_FUNCTIONING' }), REASONS)).toBe(
       false
@@ -106,7 +106,7 @@ describe('AC-FS5 Not Functioning always carries a reason', () => {
   });
 });
 
-describe('AC-FS7 a reason may demand observations', () => {
+describe('OMS-REG-CCE-06.24 — a reason may demand observations', () => {
   const chosen = form({ status: 'NOT_IN_USE', reasonId: 'nu-1' });
 
   it('reports the requirement so the field can mark itself', () => {
@@ -129,7 +129,7 @@ describe('AC-FS7 a reason may demand observations', () => {
   });
 });
 
-describe('AC-FS1 the status entry input', () => {
+describe('OMS-REG-CCE-06.18 — the status entry input', () => {
   it('carries the status, the reason and the note', () => {
     const input = buildStatusLogInput(
       form({ status: 'NOT_FUNCTIONING', reasonId: 'nf-1', comment: ' cold ' }),
@@ -174,7 +174,7 @@ describe('AC-FS1 the status entry input', () => {
   });
 });
 
-describe('AC-M3 the temperature mapping input', () => {
+describe('OMS-REG-CCE-06.33 — the temperature mapping input', () => {
   it('names the mapping type explicitly — absent it the entry is refused', () => {
     const input = buildMappingLogInput('2026-09-08', 'all good', 'a', 'l');
     expect(input.type).toBe('TEMPERATURE_MAPPING');
@@ -202,14 +202,14 @@ describe('AC-M3 the temperature mapping input', () => {
 
   it('clamps to now rather than sending an instant the server would refuse', () => {
     // Between local midnight and 00:00Z on the same day, the picked day's UTC
-    // start is still in the future (AC-FS8).
+    // start is still in the future (OMS-REG-CCE-06.25).
     const now = new Date('2026-09-07T13:00:00Z');
     const input = buildMappingLogInput('2026-09-08', '', 'a', 'l', now);
     expect(input.logDatetime).toBe(now.toISOString());
   });
 });
 
-describe('AC-FS8 / AC-FS9 a mapping may be backdated, never postdated', () => {
+describe('OMS-REG-CCE-06.25 / .26 — a mapping may be backdated, never postdated', () => {
   // Local noon, so the assertions read the same calendar day in every zone the
   // suite might run in — the comparison is over days, not instants.
   const now = new Date(2026, 8, 8, 12, 0, 0);
@@ -239,7 +239,7 @@ describe('AC-FS8 / AC-FS9 a mapping may be backdated, never postdated', () => {
   });
 });
 
-describe('AC-M8 the history’s kind filter', () => {
+describe('OMS-REG-CCE-06.38 — the history’s kind filter', () => {
   it('narrows to status entries by enumerating all six statuses', () => {
     // There is no "has a status" predicate, and `type: STATUS_UPDATE` would
     // also match the historical rows carrying no type (contract › temperature
@@ -260,7 +260,7 @@ describe('AC-M8 the history’s kind filter', () => {
   });
 });
 
-describe('AC-M9 a mapping never displaces the functional status', () => {
+describe('OMS-REG-CCE-06.40 — a mapping never displaces the functional status', () => {
   it('tells the two kinds apart', () => {
     expect(isMapping({ type: 'TEMPERATURE_MAPPING' })).toBe(true);
     expect(isMapping({ type: 'STATUS_UPDATE' })).toBe(false);

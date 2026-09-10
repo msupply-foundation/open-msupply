@@ -13,8 +13,8 @@ import { TemperatureMappingModal } from './TemperatureMappingModal';
 //
 // A cold room or freezer room ALSO records temperature mappings, so it gets a
 // split button whose main action is Update status and whose second option is
-// Temperature mapping (AC-M1). Every other asset gets the plain button — a
-// mapping is not something it records (AC-M2).
+// Temperature mapping (OMS-REG-CCE-06.31). Every other asset gets the plain button — a
+// mapping is not something it records (OMS-REG-CCE-06.32).
 //
 // Recording a status needs ASSET_MUTATE **or** ASSET_STATUS_MUTATE. The second
 // is a client-side concept: `insertAssetLog` itself asks only for the first, so
@@ -38,7 +38,7 @@ export const StatusActions: Component<StatusActionsProps> = props => {
     hasPermission('ASSET_MUTATE') || hasPermission('ASSET_STATUS_MUTATE');
 
   const trigger = (action: Action) => {
-    // Told, not shown a dead control (AC-G3).
+    // Told, not shown a dead control (OMS-REG-CCE-06.49).
     if (!permitted()) {
       reportPermissionDenied(['AssetMutate', 'AssetStatusMutate']);
       return;

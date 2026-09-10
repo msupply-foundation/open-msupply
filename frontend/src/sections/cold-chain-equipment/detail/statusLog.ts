@@ -36,12 +36,12 @@ export const emptyStatusForm = (): StatusFormState => ({
  * because the UI mirrors server-enforced rules rather than assuming it is the
  * only guard (spec/IMPLEMENTING § behaviour):
  *
- * - A status MUST be chosen (AC-FS2); without one the server answers
+ * - A status MUST be chosen (OMS-REG-CCE-06.19); without one the server answers
  *   _no status_.
  * - **Not Functioning requires a reason** — a machine reported broken with no
- *   explanation tells the next person nothing (AC-FS5).
+ *   explanation tells the next person nothing (OMS-REG-CCE-06.22).
  * - A reason configured to require observations must have a non-blank note
- *   (AC-FS7).
+ *   (OMS-REG-CCE-06.24).
  *
  * The reason-must-match guard is not here: the picker only ever offers the
  * chosen status's reasons, so a mismatched one is unreachable from the screen
@@ -61,7 +61,7 @@ export const canSubmitStatus = (
 /**
  * The reasons offered for a status. Each configured reason belongs to exactly
  * one status, so a status with none configured offers none — and the reason
- * control is then inert rather than empty-and-clickable (AC-FS3).
+ * control is then inert rather than empty-and-clickable (OMS-REG-CCE-06.20).
  */
 export const reasonsForStatus = (
   reasons: readonly LogReason[],
@@ -72,14 +72,14 @@ export const reasonsForStatus = (
 /**
  * Changing the status clears any reason already picked — a reason belongs to
  * one status, so one chosen under the old status can only be wrong under the
- * new one (AC-FS4).
+ * new one (OMS-REG-CCE-06.21).
  */
 export const withStatus = (
   form: StatusFormState,
   status: AssetStatus | ''
 ): StatusFormState => ({ ...form, status, reasonId: '' });
 
-/** Whether the chosen reason demands a non-blank note (AC-FS7). */
+/** Whether the chosen reason demands a non-blank note (OMS-REG-CCE-06.24). */
 export const commentRequired = (
   form: StatusFormState,
   reasons: readonly LogReason[]
@@ -137,7 +137,7 @@ export const buildMappingLogInput = (
  * the reference app does.
  *
  * Hence the picked day at 00:00 **UTC**, clamped to now so the server's
- * future-date guard can never refuse it (AC-FS8). The clamp bites only in the
+ * future-date guard can never refuse it (OMS-REG-CCE-06.25). The clamp bites only in the
  * hours between local midnight and 00:00Z on the same day — the one window the
  * server's date-from-an-instant derivation cannot represent at all.
  */
@@ -150,7 +150,7 @@ const mappingInstant = (date: string, now: Date): string => {
 /**
  * Whether a mapping's date is submittable. An entry MAY be backdated but never
  * postdated — the server rejects a datetime in the future, so the picker caps
- * at today and this mirrors the cap (AC-FS8/AC-FS9).
+ * at today and this mirrors the cap (OMS-REG-CCE-06.25/.26).
  *
  * Compared as CALENDAR DAYS in the user's own zone, not as instants: the field
  * takes a day, not a moment (ui-standards/inputs § timezone authority). An

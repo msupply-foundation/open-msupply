@@ -92,8 +92,8 @@ const EquipmentList: Component = () => {
   const destination = () =>
     location.pathname.includes('/manage/') ? 'all-stores' : 'store';
   // The Store column and filter belong to the wider view on a central server
-  // (AC-S6). On any other site Manage › Equipment is just as unscoped, without
-  // them — captured as-is (AC-S7).
+  // (OMS-REG-CCE-04.17). On any other site Manage › Equipment is just as unscoped, without
+  // them — captured as-is (OMS-REG-CCE-04.18).
   const showStore = () => isCentralServer() && destination() === 'all-stores';
 
   const { query, setQuery } = useUrlQueryState<EquipmentListState>({
@@ -111,7 +111,7 @@ const EquipmentList: Component = () => {
   });
 
   // The category and type options the two enum filters offer. Categories are
-  // the cold-chain class's; types narrow to the chosen category (AC-L6).
+  // the cold-chain class's; types narrow to the chosen category (OMS-REG-CCE-04.22).
   const [categoryData] = createResource(
     () => params.storeId,
     async () => {
@@ -178,7 +178,7 @@ const EquipmentList: Component = () => {
     setQuery({ ...query(), sort: [{ key, desc }], offset: 0 });
 
   // A type left over from a category that no longer contains it is dropped
-  // rather than left contradicting the category beside it (AC-L7).
+  // rather than left contradicting the category beside it (OMS-REG-CCE-04.23).
   /*
    * The filter definitions, built ONCE. FilterBar re-reads `props.filters`
    * whenever the filter value changes, and its `<For>` is keyed by object
@@ -200,12 +200,12 @@ const EquipmentList: Component = () => {
       ...query(),
       // Compared against the filter being REPLACED, not against the loaded
       // type list: that list is keyed on the category the user is leaving, so
-      // it would vouch for a type the new category does not contain (AC-L7).
+      // it would vouch for a type the new category does not contain (OMS-REG-CCE-04.23).
       filter: clearTypeOnCategoryChange(query().filter, filter),
       offset: 0,
     });
 
-  // The other half of AC-L7, for a type that arrives in the URL rather than
+  // The other half of OMS-REG-CCE-04.23, for a type that arrives in the URL rather than
   // through the chip above: once the category's OWN type list is ready, a type
   // it does not contain is dropped. Gated on `ready` because an empty list
   // mid-fetch means "not known yet", not "contains nothing".
@@ -229,7 +229,7 @@ const EquipmentList: Component = () => {
   // reactive scope to re-translate on a language switch.
   const columns = (): Column<AssetRow, SortKey>[] => [
     // Central server, Manage › Equipment only — which store holds the asset
-    // (AC-S6). Elsewhere the list is unscoped without it (AC-S7).
+    // (OMS-REG-CCE-04.17). Elsewhere the list is unscoped without it (OMS-REG-CCE-04.18).
     ...(showStore()
       ? [
           {
@@ -279,7 +279,7 @@ const EquipmentList: Component = () => {
     {
       // The latest status entry's status. Blank when the asset has none — its
       // functional status is a projection of the history, not a stored field
-      // (AC-FS10/AC-FS11). The chip's WORD carries the meaning; the tone only
+      // (OMS-REG-CCE-06.27/.28). The chip's WORD carries the meaning; the tone only
       // reinforces it (ui-standards/accessibility).
       c: { accessor: row => row.statusLog?.status ?? '', id: 'functionalStatus' },
       header: () => t('label.functional-status'),
@@ -305,7 +305,7 @@ const EquipmentList: Component = () => {
     },
     {
       // The flag, not a Yes/No word: a non-catalogue asset is one with no
-      // catalogue item at all (AC-L10).
+      // catalogue item at all (OMS-REG-CCE-04.7).
       c: { accessor: isNonCatalogue, id: 'nonCatalogue' },
       header: () => t('label.non-catalogue'),
       ...getFlagCell<AssetRow>(t('label.non-catalogue')),

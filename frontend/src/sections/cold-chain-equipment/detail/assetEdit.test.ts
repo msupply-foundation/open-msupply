@@ -70,7 +70,7 @@ describe('the specification is a JSON string, not a structured field', () => {
   });
 });
 
-describe('AC-E6 / AC-E7 a save writes the WHOLE draft', () => {
+describe('OMS-REG-CCE-06.8 / .7 — a save writes the WHOLE draft', () => {
   const form = formFromAsset(asset(), STORE, false);
 
   it('always sends the four non-partial fields, even unchanged', () => {
@@ -137,7 +137,7 @@ describe('the nullable-update fields carry the three-state wrapper', () => {
   });
 });
 
-describe('AC-S5 locations are only editable on the asset’s own store', () => {
+describe('OMS-REG-CCE-05.24 — locations are only editable on the asset’s own store', () => {
   it('is editable on a non-central site, whoever holds the asset', () => {
     expect(canEditLocations({ storeId: 'other' }, STORE, false)).toBe(true);
   });
@@ -173,7 +173,7 @@ describe('AC-S5 locations are only editable on the asset’s own store', () => {
   });
 });
 
-describe('AC-E1 / AC-E2 the save action follows the draft', () => {
+describe('OMS-REG-CCE-06.1 / .2 — the save action follows the draft', () => {
   const record = asset();
   const seed = formFromAsset(record, STORE, false);
 
@@ -217,7 +217,7 @@ describe('AC-E1 / AC-E2 the save action follows the draft', () => {
   });
 });
 
-describe('AC-B5 a scan-locked field is read-only', () => {
+describe('OMS-REG-CCE-04.35 — a scan-locked field is read-only', () => {
   const locked = asset({
     lockedFields: {
       serialNumber: true,

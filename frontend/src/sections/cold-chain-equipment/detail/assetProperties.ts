@@ -13,7 +13,7 @@ export type PropertyDefinition =
 /**
  * The two mapping-date properties. They are derived from the temperature-
  * mapping history, not typed in, so they are read-only wherever they appear
- * (rules › properties, AC-R6).
+ * (rules › properties, OMS-REG-CCE-06.16).
  *
  * Keyed on the literal property keys, which is how the reference app
  * recognises them too — they are ordinary property rows on the wire, with
@@ -25,7 +25,7 @@ export const MAPPING_DATE_KEYS: readonly string[] = [
 ] as const;
 
 /**
- * The definitions that apply to one asset, each appearing once (AC-R4).
+ * The definitions that apply to one asset, each appearing once (OMS-REG-CCE-06.14).
  *
  * `assetProperties` returns ONE ROW PER SCOPE, so the same `key` recurs — a
  * property scoped to a class and again to a category comes back twice
@@ -65,7 +65,7 @@ export type PropertyRow = {
  *
  * Where both the catalogue item and the asset answer a key, **the catalogue's
  * value is what is shown** and the row is read-only — the specification of a
- * model is the model's, not the store's (AC-R1/AC-R3). The asset's own value is
+ * model is the model's, not the store's (OMS-REG-CCE-06.11/.13). The asset's own value is
  * kept (the draft still carries it) but not displayed.
  */
 export const propertyRows = (

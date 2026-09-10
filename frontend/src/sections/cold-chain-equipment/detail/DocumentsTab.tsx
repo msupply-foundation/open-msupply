@@ -29,7 +29,7 @@ import styles from './DocumentsTab.module.css';
 // table by the asset's id.
 //
 // The leading half is the CATALOGUE's documents: the model's manual, its
-// specification sheet. It is always empty, and specified that way (AC-D4) —
+// specification sheet. It is always empty, and specified that way (OMS-REG-CCE-06.44) —
 // `AssetCatalogueItemNode` exposes no documents field, so there is nothing for
 // it to read (contract ⚠️ wire trap). It is still rendered: the half tells a
 // user where a model's paperwork would appear and that this model has none,

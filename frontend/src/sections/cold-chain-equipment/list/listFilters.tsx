@@ -46,7 +46,7 @@ export const equipmentFilters = (options: {
   categories: () => FilterOption[];
   types: () => FilterOption[];
   /**
-   * Central + Manage only: the store column and its filter (AC-S6/AC-S7). Read
+   * Central + Manage only: the store column and its filter (OMS-REG-CCE-04.17/.18). Read
    * at build time — it decides whether the key is in the map at all — so a
    * caller's memo re-runs when it flips, which it does at most once.
    */
@@ -70,7 +70,7 @@ export const equipmentFilters = (options: {
           ]}
           // Exactly one status, or none — the empty choice clears the filter
           // rather than sending `{ equalTo: '' }`. An asset with no status
-          // entry matches NO value of it (AC-L9).
+          // entry matches NO value of it (OMS-REG-CCE-04.25).
           onChange={value =>
             props.setPartialFilter({
               functionalStatus: value ? { equalTo: value } : null,
@@ -166,9 +166,9 @@ export const equipmentFilters = (options: {
           label={t('label.type')}
           testId={props.testId}
           value={props.filter().typeId?.equalTo ?? ''}
-          // Only the types of the chosen category (AC-L6). Choosing a category
+          // Only the types of the chosen category (OMS-REG-CCE-04.22). Choosing a category
           // that does not contain the chosen type clears it — that is
-          // `clearTypeOutsideCategory`, applied by the list (AC-L7).
+          // `clearTypeOutsideCategory`, applied by the list (OMS-REG-CCE-04.23).
           options={[
             { value: '', label: t('label.all') },
             ...options
@@ -227,7 +227,7 @@ export const equipmentFilters = (options: {
         />
       ),
     },
-    // Offered only where the Store column is (AC-S6): a central server's
+    // Offered only where the Store column is (OMS-REG-CCE-04.17): a central server's
     // Manage › Equipment. Matches the store's code OR its name.
     storeCodeOrName: options.showStore()
       ? {

@@ -22,7 +22,7 @@ describe('the catalogue path is the default', () => {
   });
 });
 
-describe('AC-C4 toggling the switch clears the choice beneath it', () => {
+describe('OMS-REG-CCE-05.5 — toggling the switch clears the choice beneath it', () => {
   it('drops a catalogue item when the catalogue is turned off', () => {
     const chosen = form({ catalogueItemId: 'cat-1' });
     expect(withCatalogueMode(chosen, false).catalogueItemId).toBe('');
@@ -41,7 +41,7 @@ describe('AC-C4 toggling the switch clears the choice beneath it', () => {
   });
 });
 
-describe('AC-C3 the type picker needs a category first', () => {
+describe('OMS-REG-CCE-05.4 — the type picker needs a category first', () => {
   it('is not choosable with no category', () => {
     expect(isTypeChoosable(form({ useCatalogue: false }))).toBe(false);
   });
@@ -63,7 +63,7 @@ describe('AC-C3 the type picker needs a category first', () => {
   });
 });
 
-describe('AC-N5 / AC-C7 the confirm follows the draft', () => {
+describe('OMS-REG-CCE-05.13 / .8 — the confirm follows the draft', () => {
   it('is unavailable with no asset number', () => {
     expect(canCreate(form({ catalogueItemId: 'item-1' }))).toBe(false);
     expect(
@@ -96,7 +96,7 @@ describe('AC-N5 / AC-C7 the confirm follows the draft', () => {
   });
 });
 
-describe('AC-C1 / AC-C2 / AC-C7 the insert input', () => {
+describe('OMS-REG-CCE-05.1 / .3 / OMS-REG-CCE-05.8 the insert input', () => {
   it('always names the cold-chain class', () => {
     // An insert naming neither a catalogue item nor all three ids fails as a
     // foreign-key error, not a stated one (contract ⚠️ wire trap).
@@ -178,7 +178,7 @@ describe('AC-C1 / AC-C2 / AC-C7 the insert input', () => {
   });
 });
 
-describe('AC-C5 a created asset opens its status history', () => {
+describe('OMS-REG-CCE-05.6 — a created asset opens its status history', () => {
   it('records a Functioning entry with the created comment', () => {
     const input = buildCreatedLogInput('asset-1', 'log-1', 'Asset created');
     expect(input).toMatchObject({
