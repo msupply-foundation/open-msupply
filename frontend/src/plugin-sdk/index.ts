@@ -216,6 +216,7 @@ export {
   lowStockItemsPath,
   outboundShipmentListPath,
   outOfStockItemsPath,
+  dispensingListPath,
   prescriptionListPath,
   stockListPath,
   stocktakeListPath,

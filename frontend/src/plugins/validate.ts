@@ -4,7 +4,11 @@ import {
 } from '../plugin-sdk/apiVersion';
 import { HOST_NAV_SECTION_IDS } from '../plugin-sdk/types';
 import type { PluginModule, SlotId } from '../plugin-sdk/types';
-import { DASHBOARD_LEGACY_PATH, navDestinations } from '../nav/navConfig';
+import {
+  DASHBOARD_LEGACY_PATH,
+  DISPENSING_LEGACY_PATH,
+  navDestinations,
+} from '../nav/navConfig';
 
 /*
  * The gate every loaded bundle passes before the host trusts it
@@ -81,11 +85,12 @@ export const pathsCollide = (a: string, b: string): boolean =>
 
 // The host's own address space: every registry destination, plus the routes
 // the router owns outside the registry (Home's empty path is unreachable by a
-// valid section path; the dashboard legacy redirect is declared beside the
-// registry so it cannot drift from App.tsx's route).
+// valid section path; the legacy redirects are declared beside the registry so
+// they cannot drift from App.tsx's routes).
 const HOST_RESERVED_PATHS: readonly string[] = [
   ...navDestinations.map(dest => dest.path).filter(path => path !== ''),
   DASHBOARD_LEGACY_PATH,
+  DISPENSING_LEGACY_PATH,
 ];
 
 // The two gates share one shape wherever they appear (a page, a nav section),
