@@ -83,8 +83,7 @@ mod tests {
     use repository::{
         mock::MockDataInserts,
         sync_file_reference_row::{
-            SyncFileDirection, SyncFileReferenceRow, SyncFileReferenceRowRepository,
-            SyncFileStatus,
+            SyncFileDirection, SyncFileReferenceRow, SyncFileReferenceRowRepository, SyncFileStatus,
         },
         test_db::setup_all,
     };

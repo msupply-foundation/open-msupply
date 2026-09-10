@@ -1,5 +1,8 @@
 use chrono::{NaiveDate, NaiveTime};
-use repository::{sync_buffer::SyncRecordData, SyncBufferRow, SyncMessageRow, SyncMessageRowStatus, SyncMessageRowType};
+use repository::{
+    sync_buffer::SyncRecordData, SyncBufferRow, SyncMessageRow, SyncMessageRowStatus,
+    SyncMessageRowType,
+};
 use serde_json::json;
 
 use crate::sync::{

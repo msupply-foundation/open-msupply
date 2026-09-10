@@ -81,14 +81,19 @@ fn generate(
     let existing_og_id = existing_site.as_ref().and_then(|s| s.og_id.clone());
     let existing_code = existing_site.as_ref().map(|s| s.code.clone());
     let existing_hardware_id = existing_site.as_ref().and_then(|s| s.hardware_id.clone());
-    let existing_is_multi_device = existing_site.as_ref().map(|s| s.is_multi_device).unwrap_or(false);
+    let existing_is_multi_device = existing_site
+        .as_ref()
+        .map(|s| s.is_multi_device)
+        .unwrap_or(false);
     let existing_token = existing_site.as_ref().and_then(|s| s.token.clone());
     let existing_sync_version = existing_site.as_ref().map(|s| s.sync_version);
     // Sync metadata is authored from v7 sync activity, not from this admin upsert;
     // preserve it so a name/password/code edit doesn't wipe it (#11784).
     let existing_app_name = existing_site.as_ref().and_then(|s| s.app_name.clone());
     let existing_app_version = existing_site.as_ref().and_then(|s| s.app_version.clone());
-    let existing_last_connection = existing_site.as_ref().and_then(|s| s.last_connection_datetime);
+    let existing_last_connection = existing_site
+        .as_ref()
+        .and_then(|s| s.last_connection_datetime);
     let existing_last_sync = existing_site.as_ref().and_then(|s| s.last_sync_datetime);
     let existing_first_sync = existing_site.as_ref().and_then(|s| s.first_sync_datetime);
 

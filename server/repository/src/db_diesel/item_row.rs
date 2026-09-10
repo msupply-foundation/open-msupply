@@ -4,8 +4,8 @@ use crate::{
 };
 
 use super::{
-    clinician_link_row::clinician_link, item_link_row::item_link, item_row::item::dsl::*,
-    location_type_row::location_type, custom_fields_json::JsonValue, unit_row::unit, ItemLinkRow,
+    clinician_link_row::clinician_link, custom_fields_json::JsonValue, item_link_row::item_link,
+    item_row::item::dsl::*, location_type_row::location_type, unit_row::unit, ItemLinkRow,
     ItemLinkRowRepository, RepositoryError, StorageConnection,
 };
 
@@ -208,10 +208,8 @@ impl<'a> ItemRowRepository<'a> {
     }
 
     pub fn check_exists_by_id(&self, item_id: &str) -> Result<bool, RepositoryError> {
-        let exists: bool = diesel::select(diesel::dsl::exists(
-            item.filter(id.eq(item_id)),
-        ))
-        .get_result(self.connection.lock().connection())?;
+        let exists: bool = diesel::select(diesel::dsl::exists(item.filter(id.eq(item_id))))
+            .get_result(self.connection.lock().connection())?;
         Ok(exists)
     }
 
