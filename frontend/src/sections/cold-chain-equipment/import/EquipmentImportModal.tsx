@@ -11,7 +11,7 @@ import { Text } from '@/ui/elements/typography/Text';
 import { Stack } from '@/ui/layout/Stack/Stack';
 import { ProgressList } from '@/ui/sync/ProgressList';
 import { UploadZone } from '@/ui/elements/inputs/UploadZone';
-import { DownloadIcon } from '@/ui/icons';
+import { DownloadIcon, ExportIcon } from '@/ui/icons';
 import { DataTable, type Column } from '@/ui/elements/table/DataTable';
 import { getFlagCell, getTextCell } from '@/ui/elements/table/tableHelpers';
 import { remToPx } from '@/ui/utils/rem';
@@ -388,7 +388,7 @@ export const EquipmentImportModal: Component<
               from a clean file (ui-surface S4 § footer). */}
           <Button
             variant="secondary"
-            icon={<DownloadIcon />}
+            icon={<ExportIcon />}
             disabled={!hasErrors(rows()) || importing()}
             onClick={() => void exportFailed()}
             data-testid="dialog-button-export"

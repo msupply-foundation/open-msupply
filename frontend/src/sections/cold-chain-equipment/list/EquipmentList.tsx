@@ -172,6 +172,22 @@ const EquipmentList: Component = () => {
 
   // A type left over from a category that no longer contains it is dropped
   // rather than left contradicting the category beside it (AC-L7).
+  /*
+   * The filter definitions, built ONCE. FilterBar re-reads `props.filters`
+   * whenever the filter value changes, and its `<For>` is keyed by object
+   * identity — so handing it a freshly-built array per read remounts every
+   * chip on every keystroke and the box being typed into loses focus
+   * mid-word (kdd/solid-reactivity-pitfalls § no remounts on interaction).
+   *
+   * The memo reads only `showStore()`, so it re-runs at most once — when the
+   * server-info signal resolves. The category and type option lists are passed
+   * as ACCESSORS and read lazily inside each chip's `render`, so they populate
+   * without rebuilding the array.
+   */
+  const filters = createMemo(() =>
+    equipmentFilters({ categories, types, showStore })
+  );
+
   const onFilterChange = (filter: AssetUserFilter) =>
     setQuery({
       ...query(),
@@ -325,11 +341,7 @@ const EquipmentList: Component = () => {
         filters={
           <HStack justify="between" wrap>
             <FilterBar
-              filters={equipmentFilters({
-                categories,
-                types,
-                showStore: showStore(),
-              })}
+              filters={filters()}
               filter={query().filter}
               onChange={onFilterChange}
             />

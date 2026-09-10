@@ -151,7 +151,9 @@ export const SunIcon = (props: IconProps) => (
   </Stroke>
 );
 
-/* Export / download — arrow pointing down into the tray */
+/* Download — arrow pointing down into the tray. The LITERAL act of saving a
+   file onto the device: a report, a help document, a CSV template. Not the
+   Export half of an Import/Export pair — that is ExportIcon below. */
 /* Hugeicons: Download01Icon */
 export const DownloadIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
@@ -160,7 +162,9 @@ export const DownloadIcon = (props: IconProps) => (
   </Stroke>
 );
 
-/* Import / upload — arrow pointing up out of the tray */
+/* Upload — arrow pointing up out of the tray. The LITERAL act of sending a
+   file from the device: a drop zone, a document upload. Not the Import half of
+   an Import/Export pair — that is ImportIcon below. */
 /* Hugeicons: Upload01Icon */
 export const UploadIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
@@ -168,6 +172,25 @@ export const UploadIcon = (props: IconProps) => (
     <path d="M16.5 7.49993C16.5 7.49993 13.1858 2.99997 12 2.99996C10.8141 2.99995 7.50002 7.49996 7.50002 7.49996M12 3.99996V16" />
   </Stroke>
 );
+
+/*
+ * Import / Export — the data-transfer PAIR, aliased by INTENT rather than by
+ * arrow direction (ui-standards/components § icons: "a screen names an icon by
+ * intent").
+ *
+ * Which way each arrow points is a product decision, not a reading of the
+ * glyph, and screens kept getting the pair inverted because they reached for
+ * the direction words instead: import means data coming IN, so it takes the
+ * arrow pointing INTO the tray, and export means data going OUT. Deciding it
+ * once, here, is what stops the two halves drifting apart across call sites —
+ * and matches the reference app, whose Import shows a down arrow and Export an
+ * up one.
+ *
+ * Use these for the Import/Export pair. Keep DownloadIcon / UploadIcon for the
+ * literal file acts they name — downloading a report is not an export.
+ */
+export const ImportIcon = DownloadIcon;
+export const ExportIcon = UploadIcon;
 
 /* Inbox tray — where an order arrives from the party it was placed
    with, as distinct from CustomersIcon (the party dispensed TO). Named

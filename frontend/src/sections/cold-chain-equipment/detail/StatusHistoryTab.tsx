@@ -4,6 +4,7 @@ import { graphqlFetch } from '@/api/graphql';
 import { gated } from '@/api/gated';
 import { localisedDate, t } from '@/intl';
 import { Stack } from '@/ui/layout/Stack/Stack';
+import { ContentContainer } from '@/ui/layout/ContentContainer/ContentContainer';
 import { HStack } from '@/ui/layout/Stack/HStack';
 import { Text } from '@/ui/elements/typography/Text';
 import { DateField } from '@/ui/elements/inputs/DateField';
@@ -87,46 +88,50 @@ export const StatusHistoryTab: Component<StatusHistoryTabProps> = props => {
   ];
 
   return (
-    <Stack>
-      <HStack gap="md" wrap>
-        <DateField
-          label={t('label.from-date')}
-          width="short"
-          value={fromDate() || null}
-          onChange={value => setFromDate(value ?? '')}
-        />
-        <DateField
-          label={t('label.to-date')}
-          width="short"
-          value={toDate() || null}
-          onChange={value => setToDate(value ?? '')}
-        />
-        <Select
-          label={t('label.event')}
-          width="short"
-          testId="log-event-select"
-          value={kind()}
-          options={kindOptions()}
-          onValueChange={value => setKind(value as LogEventFilter)}
-        />
-      </HStack>
+    // The page is fillBody for its table tabs, so the timeline brings the body
+    // padding it would otherwise inherit.
+    <ContentContainer size="wide" padded>
+      <Stack>
+        <HStack gap="md" wrap>
+          <DateField
+            label={t('label.from-date')}
+            width="short"
+            value={fromDate() || null}
+            onChange={value => setFromDate(value ?? '')}
+          />
+          <DateField
+            label={t('label.to-date')}
+            width="short"
+            value={toDate() || null}
+            onChange={value => setToDate(value ?? '')}
+          />
+          <Select
+            label={t('label.event')}
+            width="short"
+            testId="log-event-select"
+            value={kind()}
+            options={kindOptions()}
+            onValueChange={value => setKind(value as LogEventFilter)}
+          />
+        </HStack>
 
-      <Show when={!data.loading} fallback={<Spinner />}>
-        <Show
-          when={logs().length > 0}
-          fallback={
-            <EmptyState
-              message={t('messages.no-status-logs')}
-              data-testid="nothing-here"
-            />
-          }
-        >
-          <Stack>
-            <For each={logs()}>{log => <LogEntry log={log} />}</For>
-          </Stack>
+        <Show when={!data.loading} fallback={<Spinner />}>
+          <Show
+            when={logs().length > 0}
+            fallback={
+              <EmptyState
+                message={t('messages.no-status-logs')}
+                data-testid="nothing-here"
+              />
+            }
+          >
+            <Stack>
+              <For each={logs()}>{log => <LogEntry log={log} />}</For>
+            </Stack>
+          </Show>
         </Show>
-      </Show>
-    </Stack>
+      </Stack>
+    </ContentContainer>
   );
 };
 
@@ -178,7 +183,11 @@ const LogEntry: Component<{ log: AssetLogRowFragment }> = props => {
       <LabelledValue size="small" layout="inline" label={t('label.reason')}>
         {props.log.reason?.reason ?? ABSENT}
       </LabelledValue>
-      <LabelledValue size="small" layout="inline" label={t('label.observations')}>
+      <LabelledValue
+        size="small"
+        layout="inline"
+        label={t('label.observations')}
+      >
         {props.log.comment ?? ABSENT}
       </LabelledValue>
       {/* The entry's own files, attached when it was recorded and not

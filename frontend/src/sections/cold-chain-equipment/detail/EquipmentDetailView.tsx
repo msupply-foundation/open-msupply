@@ -171,7 +171,13 @@ const EquipmentDetailView: Component = () => {
     <Show
       when={!data.loading || asset()}
       fallback={
-        <Page header={<Header><Breadcrumb crumbs={[{ label: t('equipment') }]} /></Header>}>
+        <Page
+          header={
+            <Header>
+              <Breadcrumb crumbs={[{ label: t('equipment') }]} />
+            </Header>
+          }
+        >
           <Spinner />
         </Page>
       }
@@ -197,91 +203,96 @@ const EquipmentDetailView: Component = () => {
         }
       >
         {record => (
-          <Page
-            header={
-              <Header>
-                <Breadcrumb
-                  crumbs={[
-                    { label: t('equipment'), to: listPath() },
-                    { label: record().assetNumber ?? '' },
-                  ]}
-                />
-                <HeaderButtons>
-                  <StatusActions
-                    storeId={params.storeId}
-                    assetId={record().id}
-                    isColdRoom={isColdRoom(record().assetCategory?.id)}
-                    onRecorded={() => void refetch()}
+          <Tabs value={tab()} onValueChange={value => setTab(value as Tab)}>
+            <Page
+              fillBody
+              header={
+                <Header>
+                  <Breadcrumb
+                    crumbs={[
+                      { label: t('equipment'), to: listPath() },
+                      { label: record().assetNumber ?? '' },
+                    ]}
                   />
-                  <Button
-                    variant="secondary"
-                    icon={<PrinterIcon />}
-                    data-testid="print-label-button"
-                  >
-                    {t('button.print-asset-label')}
-                  </Button>
-                </HeaderButtons>
-                {/* The catalogue item's identity — absent entirely for a
+                  <HeaderButtons>
+                    <StatusActions
+                      storeId={params.storeId}
+                      assetId={record().id}
+                      isColdRoom={isColdRoom(record().assetCategory?.id)}
+                      onRecorded={() => void refetch()}
+                    />
+                    <Button
+                      variant="secondary"
+                      icon={<PrinterIcon />}
+                      data-testid="print-label-button"
+                    >
+                      {t('button.print-asset-label')}
+                    </Button>
+                  </HeaderButtons>
+                  {/* The catalogue item's identity — absent entirely for a
                     non-catalogue asset, which has none (ui-surface S2). */}
-                <Show when={record().catalogueItem}>
-                  {item => (
-                    <HeaderToolbar>
-                      <LabelledValue
-                        size="small"
-                        layout="inline"
-                        label={t('label.manufacturer')}
-                      >
-                        {item().manufacturer ?? ''}
-                      </LabelledValue>
-                      <LabelledValue
-                        size="small"
-                        layout="inline"
-                        label={t('label.model')}
-                      >
-                        {item().model}
-                      </LabelledValue>
-                    </HeaderToolbar>
-                  )}
-                </Show>
-              </Header>
-            }
-            contentFooter={
-              <ContentFooter>
-                <ContentFooterActions>
-                  <Button
-                    variant="secondary"
-                    icon={<XCircleIcon />}
-                    data-testid="close-button"
-                    onClick={() => navigate(listPath())}
-                  >
-                    {t('button.close')}
-                  </Button>
-                  <Button
-                    variant="danger"
-                    icon={<TrashIcon />}
-                    data-testid="delete-button"
-                    onClick={onDelete}
-                  >
-                    {t('button.delete')}
-                  </Button>
-                  {/* Inert until the draft differs from the asset as loaded,
+                  <Show when={record().catalogueItem}>
+                    {item => (
+                      <HeaderToolbar>
+                        <LabelledValue
+                          size="small"
+                          layout="inline"
+                          label={t('label.manufacturer')}
+                        >
+                          {item().manufacturer ?? ''}
+                        </LabelledValue>
+                        <LabelledValue
+                          size="small"
+                          layout="inline"
+                          label={t('label.model')}
+                        >
+                          {item().model}
+                        </LabelledValue>
+                      </HeaderToolbar>
+                    )}
+                  </Show>
+                  {/* The tab strip claims the header's BOTTOM EDGE — a TabList as
+                    the Header's last child (src/ui/CLAUDE.md), which is why
+                    <Tabs> wraps the whole Page rather than sitting in its
+                    body. */}
+                  <TabList tabs={tabs()} />
+                </Header>
+              }
+              contentFooter={
+                <ContentFooter>
+                  <ContentFooterActions>
+                    <Button
+                      variant="secondary"
+                      icon={<XCircleIcon />}
+                      data-testid="close-button"
+                      onClick={() => navigate(listPath())}
+                    >
+                      {t('button.close')}
+                    </Button>
+                    <Button
+                      variant="danger"
+                      icon={<TrashIcon />}
+                      data-testid="delete-button"
+                      onClick={onDelete}
+                    >
+                      {t('button.delete')}
+                    </Button>
+                    {/* Inert until the draft differs from the asset as loaded,
                       so an opened-and-closed screen cannot write
                       (AC-E1/AC-E2). */}
-                  <Button
-                    variant="primary"
-                                        data-testid="save-button"
-                    loading={saving()}
-                    disabled={!dirty() || saving()}
-                    onClick={() => setConfirmingSave(true)}
-                  >
-                    {t('button.save')}
-                  </Button>
-                </ContentFooterActions>
-              </ContentFooter>
-            }
-          >
-            <Tabs value={tab()} onValueChange={value => setTab(value as Tab)}>
-              <TabList tabs={tabs()} label={t('label.details')} />
+                    <Button
+                      variant="primary"
+                      data-testid="save-button"
+                      loading={saving()}
+                      disabled={!dirty() || saving()}
+                      onClick={() => setConfirmingSave(true)}
+                    >
+                      {t('button.save')}
+                    </Button>
+                  </ContentFooterActions>
+                </ContentFooter>
+              }
+            >
               <TabPanel value="summary">
                 <Show when={form()}>
                   {draft => (
@@ -327,39 +338,39 @@ const EquipmentDetailView: Component = () => {
                   recordId={record().id}
                 />
               </TabPanel>
-            </Tabs>
 
-            {/* S7 — the save confirmation. Nothing is written until it is
+              {/* S7 — the save confirmation. Nothing is written until it is
                 accepted (AC-E3). */}
-            <ConfirmDialog
-              open={confirmingSave()}
-              onClose={() => setConfirmingSave(false)}
-              title={t('heading.are-you-sure')}
-              message={t('messages.confirm-save-generic')}
-              onConfirm={() => void save()}
-            />
-            {/* The app-wide unsaved-changes prompt, not one of this
+              <ConfirmDialog
+                open={confirmingSave()}
+                onClose={() => setConfirmingSave(false)}
+                title={t('heading.are-you-sure')}
+                message={t('messages.confirm-save-generic')}
+                onConfirm={() => void save()}
+              />
+              {/* The app-wide unsaved-changes prompt, not one of this
                 vertical's (AC-E4). */}
-            <ConfirmDialog
-              open={leaveGuard.open()}
-              title={t('heading.are-you-sure')}
-              message={t('messages.discard-changes')}
-              confirmLabel={t('button.discard')}
-              onConfirm={leaveGuard.confirm}
-              onClose={leaveGuard.cancel}
-            />
-            {/* S7 — the delete confirmation. Its wording says the asset is
+              <ConfirmDialog
+                open={leaveGuard.open()}
+                title={t('heading.are-you-sure')}
+                message={t('messages.discard-changes')}
+                confirmLabel={t('button.discard')}
+                onConfirm={leaveGuard.confirm}
+                onClose={leaveGuard.cancel}
+              />
+              {/* S7 — the delete confirmation. Its wording says the asset is
                 permanently removed; deleting is a WITHDRAWAL and an edit brings
                 it back (rules › deletion) — the copy is cited as found. */}
-            <ConfirmDialog
-              open={confirmingDelete()}
-              onClose={() => setConfirmingDelete(false)}
-              title={t('heading.are-you-sure')}
-              confirmVariant="danger"
-              message={t('messages.confirm-delete-assets_one', { count: 1 })}
-              onConfirm={() => void remove()}
-            />
-          </Page>
+              <ConfirmDialog
+                open={confirmingDelete()}
+                onClose={() => setConfirmingDelete(false)}
+                title={t('heading.are-you-sure')}
+                confirmVariant="danger"
+                message={t('messages.confirm-delete-assets_one', { count: 1 })}
+                onConfirm={() => void remove()}
+              />
+            </Page>
+          </Tabs>
         )}
       </Show>
     </Show>
