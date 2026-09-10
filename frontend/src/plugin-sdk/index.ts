@@ -124,6 +124,10 @@ export { Select } from '../ui/elements/selectors/Select';
 export type { SelectOption } from '../ui/elements/selectors/Select';
 export { FormColumn } from '../ui/layout/Form/FormColumn';
 export { FormColumns } from '../ui/layout/Form/FormColumns';
+export { FormSection } from '../ui/layout/Form/FormSection';
+export type { FormSectionProps } from '../ui/layout/Form/FormSection';
+export { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
+export type { ContentContainerProps } from '../ui/layout/ContentContainer/ContentContainer';
 // The settings-form set — what the Stocktake Helper's Settings screen needs
 // (plugins/cook_islands, #489): save/discard actions, the numeric thresholds,
 // the item search box, and the per-item Essential toggle.
@@ -133,6 +137,7 @@ export { FormColumns } from '../ui/layout/Form/FormColumns';
 // CSS-bearing modules in the SDK chunk (measured: kdd/bundle-size-by-pr).
 export { Button } from '../ui/elements/buttons/Button';
 export type { ButtonProps } from '../ui/elements/buttons/Button';
+export { SaveButton } from '../ui/elements/buttons/StandardButtons';
 export { NumberField } from '../ui/elements/inputs/NumberField';
 export type { NumberFieldProps } from '../ui/elements/inputs/NumberField';
 export { TextField } from '../ui/elements/inputs/TextField';
