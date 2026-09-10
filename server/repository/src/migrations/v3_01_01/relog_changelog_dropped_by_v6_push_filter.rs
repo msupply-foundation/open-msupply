@@ -3,8 +3,37 @@ use crate::{
     migrations::*,
     KeyType, KeyValueStoreRepository, StorageConnection,
 };
-use diesel::{prelude::*, sql_types::BigInt};
+use diesel::{
+    dsl::max,
+    prelude::*,
+    sql_types::{Integer, Nullable},
+};
 use strum::IntoEnumIterator;
+
+// Minimal local table definitions for the columns this migration reads and writes, as
+// they exist in the 3.02.0 schema. The crate's own definitions track the current
+// schema and could drift away from what a database at this version actually has.
+table! {
+    changelog (cursor) {
+        cursor -> BigInt,
+        table_name -> Text,
+        record_id -> Text,
+        row_action -> Text,
+        store_id -> Nullable<Text>,
+        is_sync_update -> Bool,
+        source_site_id -> Nullable<Integer>,
+        transfer_store_id -> Nullable<Text>,
+        patient_link_id -> Nullable<Text>,
+    }
+}
+
+table! {
+    site (id) {
+        id -> Integer,
+    }
+}
+
+diesel::alias!(changelog as latest: Latest);
 
 pub(crate) struct Migrate;
 
@@ -57,30 +86,33 @@ impl MigrationFragment for Migrate {
             return Ok(());
         };
 
-        let table_list = remote_authored_v6_tables()
-            .iter()
-            .map(|table| format!("'{table}'"))
-            .collect::<Vec<_>>()
-            .join(", ");
+        let tables = remote_authored_v6_tables();
 
-        // Latest changelog row per record this site authored. Pre-v7 local edits have
-        // a null source_site_id and is_sync_update = false; v7-era local edits carry
-        // this site's id.
-        let latest_authored_here = format!(
-            "SELECT table_name, record_id, MAX(cursor) AS cursor \
-             FROM changelog \
-             WHERE table_name IN ({table_list}) \
-                 AND ( \
-                     (source_site_id IS NULL AND is_sync_update = FALSE) \
-                     OR source_site_id = {site_id} \
-                 ) \
-             GROUP BY table_name, record_id"
-        );
+        // Cursor of the latest changelog row per record this site authored. Pre-v7
+        // local edits have a null source_site_id and is_sync_update = false; v7-era
+        // local edits carry this site's id. Aliased because it is used as a subquery
+        // against the same table.
+        let latest_authored_here = || {
+            latest
+                .filter(latest.field(changelog::table_name).eq_any(&tables))
+                .filter(
+                    latest
+                        .field(changelog::source_site_id)
+                        .is_null()
+                        .and(latest.field(changelog::is_sync_update).eq(false))
+                        .or(latest.field(changelog::source_site_id).eq(site_id)),
+                )
+                .group_by((
+                    latest.field(changelog::table_name),
+                    latest.field(changelog::record_id),
+                ))
+                .select(max(latest.field(changelog::cursor)).assume_not_null())
+        };
 
-        let to_insert = count(
-            connection,
-            &format!("SELECT COUNT(*) AS value FROM ({latest_authored_here}) latest"),
-        )?;
+        let to_insert: i64 = changelog::table
+            .filter(changelog::cursor.eq_any(latest_authored_here()))
+            .count()
+            .get_result(connection.lock().connection())?;
         if to_insert == 0 {
             return Ok(());
         }
@@ -95,21 +127,31 @@ impl MigrationFragment for Migrate {
             },
         )?;
 
-        sql!(
-            connection,
-            r#"
-            INSERT INTO changelog (
-                table_name, record_id, row_action, store_id, source_site_id,
-                transfer_store_id, patient_link_id
-            )
-            SELECT
-                c.table_name, c.record_id, c.row_action, c.store_id, {site_id},
-                c.transfer_store_id, c.patient_link_id
-            FROM changelog c
-            JOIN ({latest_authored_here}) latest ON latest.cursor = c.cursor
-            ORDER BY c.cursor;
-            "#
-        )?;
+        let fresh_rows = changelog::table
+            .filter(changelog::cursor.eq_any(latest_authored_here()))
+            .order(changelog::cursor)
+            .select((
+                changelog::table_name,
+                changelog::record_id,
+                changelog::row_action,
+                changelog::store_id,
+                Some(site_id).into_sql::<Nullable<Integer>>(),
+                changelog::transfer_store_id,
+                changelog::patient_link_id,
+            ));
+
+        diesel::insert_into(changelog::table)
+            .values(fresh_rows)
+            .into_columns((
+                changelog::table_name,
+                changelog::record_id,
+                changelog::row_action,
+                changelog::store_id,
+                changelog::source_site_id,
+                changelog::transfer_store_id,
+                changelog::patient_link_id,
+            ))
+            .execute(connection.lock().connection())?;
 
         Ok(())
     }
@@ -143,17 +185,10 @@ fn is_central_server(connection: &StorageConnection) -> anyhow::Result<bool> {
     }
 
     // Site rows are only integrated on the central server (see SiteTranslation).
-    Ok(count(connection, "SELECT COUNT(*) AS value FROM site")? > 0)
-}
-
-fn count(connection: &StorageConnection, query: &str) -> anyhow::Result<i64> {
-    #[derive(QueryableByName)]
-    struct Count {
-        #[diesel(sql_type = BigInt)]
-        value: i64,
-    }
-    let row: Count = diesel::sql_query(query).get_result(connection.lock().connection())?;
-    Ok(row.value)
+    let sites: i64 = site::table
+        .count()
+        .get_result(connection.lock().connection())?;
+    Ok(sites > 0)
 }
 
 #[cfg(test)]
@@ -162,18 +197,9 @@ mod tests {
         migrations::{v3_00_00::V3_00_00, v3_01_01::V3_01_01, *},
         test_db::*,
     };
-    use diesel::{connection::SimpleConnection, prelude::*, RunQueryDsl};
+    use diesel::{connection::SimpleConnection, prelude::*};
 
-    table! {
-        changelog (cursor) {
-            cursor -> BigInt,
-            table_name -> Text,
-            record_id -> Text,
-            row_action -> Text,
-            store_id -> Nullable<Text>,
-            source_site_id -> Nullable<Integer>,
-        }
-    }
+    use super::changelog;
 
     const THIS_SITE_ID: i32 = 5;
     const CENTRAL_SITE_ID: i32 = 42;
