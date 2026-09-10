@@ -6,6 +6,7 @@ import {
   constructFilters,
   type Filter,
 } from '../../../ui/elements/selectors/FilterBar';
+import { localTodayIso } from '@/ui/elements/inputs/dateTimeConvert';
 import { patientPreferences } from '../../../store/storeContext';
 import { genderOptions, type Gender } from '../../../domain/patient';
 import type { PatientsVariables } from './patients.generated';
@@ -77,12 +78,15 @@ const FILTERS: Filter<PatientFilter>[] = constructFilters<PatientFilter>({
   },
 
   // ─ addable ─
+  // A recorded date, so the calendar offers no future day
+  // (ui-standards/list-views.md § Filters).
   dateOfBirth: {
     label: () => t('label.date-of-birth'),
     render: props => (
       <FilterDate
         label={t('label.date-of-birth')}
         testId={props.testId}
+        max={localTodayIso()}
         value={props.filter().dateOfBirth?.equalTo ?? ''}
         onInput={value =>
           props.setPartialFilter({

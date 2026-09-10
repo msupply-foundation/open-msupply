@@ -6,6 +6,7 @@ import {
   constructFilters,
   type Filter,
 } from '../../../ui/elements/selectors/FilterBar';
+import { localTodayIso } from '@/ui/elements/inputs/dateTimeConvert';
 import { STATUS_LABELS } from '../outboundStatus';
 import { allowedStatuses } from '../outboundStatusOptions';
 import type { OutboundShipmentsVariables } from './outboundShipments.generated';
@@ -113,6 +114,7 @@ const FILTERS: Filter<OutboundFilter>[] = constructFilters<OutboundFilter>({
         type="dateTime"
         label={t('label.created')}
         testId={props.testId}
+        max={localTodayIso()}
         value={props.filter().createdDatetime}
         onChange={value => props.setPartialFilter({ createdDatetime: value })}
       />
@@ -125,6 +127,7 @@ const FILTERS: Filter<OutboundFilter>[] = constructFilters<OutboundFilter>({
         type="dateTime"
         label={t('label.shipped')}
         testId={props.testId}
+        max={localTodayIso()}
         value={props.filter().shippedDatetime}
         onChange={value => props.setPartialFilter({ shippedDatetime: value })}
       />

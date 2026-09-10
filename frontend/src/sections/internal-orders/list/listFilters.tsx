@@ -7,6 +7,7 @@ import {
   constructFilters,
   type Filter,
 } from '../../../ui/elements/selectors/FilterBar';
+import { localTodayIso } from '@/ui/elements/inputs/dateTimeConvert';
 import type { InternalOrdersVariables } from './internalOrders.generated';
 
 // The filter object exactly as GraphQL expects it (kdd/type-safety — no
@@ -106,6 +107,7 @@ const FILTERS: Filter<InternalOrderFilter>[] =
           type="dateTime"
           label={t('label.created')}
           testId={props.testId}
+          max={localTodayIso()}
           value={props.filter().createdDatetime}
           onChange={value => props.setPartialFilter({ createdDatetime: value })}
         />
