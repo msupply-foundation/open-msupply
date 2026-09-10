@@ -122,6 +122,8 @@ export { Select } from '../ui/elements/selectors/Select';
 export type { SelectOption } from '../ui/elements/selectors/Select';
 export { FormColumn } from '../ui/layout/Form/FormColumn';
 export { FormColumns } from '../ui/layout/Form/FormColumns';
+export { SidePanelSection } from '../ui/layout/SidePanel/SidePanel';
+export type { SidePanelSectionProps } from '../ui/layout/SidePanel/SidePanel';
 
 // ── UI kit — icons that carry meaning ───────────────────────────────────────
 /*
