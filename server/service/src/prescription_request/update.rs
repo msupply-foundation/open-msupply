@@ -594,7 +594,9 @@ mod test {
                 ..Default::default()
             })
             .map(|_| ()),
-            Err(UpdatePrescriptionError::CannotChangePrescriberField("patient"))
+            Err(UpdatePrescriptionError::CannotChangePrescriberField(
+                "patient"
+            ))
         );
         assert_eq!(
             update(UpdatePrescription {
@@ -645,14 +647,16 @@ mod test {
         // The prescribed quantity is the prescriber's too, and is written
         // through its own mutation rather than the header's.
         let set_prescribed = |quantity: f64| {
-            service_provider.invoice_line_service.set_prescribed_quantity(
-                &ctx,
-                SetPrescribedQuantity {
-                    invoice_id: invoice_id.clone(),
-                    item_id: mock_item_a().id,
-                    prescribed_quantity: quantity,
-                },
-            )
+            service_provider
+                .invoice_line_service
+                .set_prescribed_quantity(
+                    &ctx,
+                    SetPrescribedQuantity {
+                        invoice_id: invoice_id.clone(),
+                        item_id: mock_item_a().id,
+                        prescribed_quantity: quantity,
+                    },
+                )
         };
 
         assert_eq!(

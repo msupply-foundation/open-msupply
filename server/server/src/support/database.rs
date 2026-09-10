@@ -94,15 +94,12 @@ fn get_postgres_database(
             io::ErrorKind::NotFound => actix_web::error::ErrorInternalServerError(format!(
                 "pg_dump not found in configured pg_bin_dir: {pg_bin_dir}"
             )),
-            _ => actix_web::error::ErrorInternalServerError(format!(
-                "Failed to run pg_dump: {e}"
-            )),
+            _ => actix_web::error::ErrorInternalServerError(format!("Failed to run pg_dump: {e}")),
         })?;
 
     if !result.status.success() {
         let stderr = String::from_utf8_lossy(&result.stderr);
-        return Ok(HttpResponse::InternalServerError()
-            .body(format!("pg_dump failed: {stderr}")));
+        return Ok(HttpResponse::InternalServerError().body(format!("pg_dump failed: {stderr}")));
     }
 
     let response = fs::NamedFile::open(&export_path)?

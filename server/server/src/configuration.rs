@@ -199,4 +199,3 @@ impl From<VarError> for SettingsError {
         SettingsError::Environment(err)
     }
 }
-

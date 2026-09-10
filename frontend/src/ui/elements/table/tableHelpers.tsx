@@ -270,6 +270,11 @@ export const AbsentValue = (props: { label: string }) => (
  * (an unlabelled iconic header would leave the column nameless to a screen
  * reader). `title` gives the same word on hover, for the sighted reader who
  * doesn't recognise the glyph.
+ *
+ * One glyph per table, then: a table carrying a SECOND comment column (the
+ * inbound line table's supplier comment beside the line's own note) spells that
+ * one out in words. Two identical glyphs would be indistinguishable at a
+ * glance, and a hover title is no way to tell two columns apart.
  */
 export const CommentHeader = () => (
   <span

@@ -72,7 +72,10 @@ pub(crate) fn apply_merge(
         ChangelogTableName::Name => apply_name_merge(connection, &data),
         ChangelogTableName::Item => apply_item_merge(connection, &data),
         ChangelogTableName::Clinician => apply_clinician_merge(connection, &data),
-        _ => Err(anyhow::anyhow!("Unsupported merge table: {:?}", body.table_name)),
+        _ => Err(anyhow::anyhow!(
+            "Unsupported merge table: {:?}",
+            body.table_name
+        )),
     }
 }
 
@@ -88,10 +91,7 @@ pub(crate) fn apply_name_merge(
     let indirect_link = name_link_repo
         .find_one_by_id(&data.merge_id_to_keep)?
         .ok_or_else(|| {
-            anyhow::anyhow!(
-                "Could not find name link with id {}",
-                data.merge_id_to_keep
-            )
+            anyhow::anyhow!("Could not find name link with id {}", data.merge_id_to_keep)
         })?;
 
     let mut operations: Vec<IntegrationOperation> = name_links
@@ -110,8 +110,7 @@ pub(crate) fn apply_name_merge(
 
     let name_store_join_repo = NameStoreJoinRepository::new(connection);
     let name_store_joins_for_delete = name_store_join_repo.query_by_filter(
-        NameStoreJoinFilter::new()
-            .name_id(EqualFilter::equal_to(data.merge_id_to_delete.clone())),
+        NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(data.merge_id_to_delete.clone())),
     )?;
     let name_store_joins_for_keep = name_store_join_repo.query_by_filter(
         NameStoreJoinFilter::new().name_id(EqualFilter::equal_to(data.merge_id_to_keep.clone())),
@@ -204,10 +203,7 @@ pub(crate) fn apply_item_merge(
     let indirect_link = item_link_repo
         .find_one_by_id(&data.merge_id_to_keep)?
         .ok_or_else(|| {
-            anyhow::anyhow!(
-                "Could not find item link with id {}",
-                data.merge_id_to_keep
-            )
+            anyhow::anyhow!("Could not find item link with id {}", data.merge_id_to_keep)
         })?;
 
     let operations = item_links

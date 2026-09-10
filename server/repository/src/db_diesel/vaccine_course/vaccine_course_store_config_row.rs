@@ -1,7 +1,7 @@
 use super::vaccine_course_store_config_row::vaccine_course_store_config::dsl::*;
 use crate::{
-    ChangelogRepository, ChangelogSyncType,
-    RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
+    ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType, SourceSiteId,
+    StorageConnection, Upsert,
 };
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -68,7 +68,10 @@ impl<'a> VaccineCourseStoreConfigRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<VaccineCourseStoreConfigRow>, RepositoryError> {
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<VaccineCourseStoreConfigRow>, RepositoryError> {
         Ok(vaccine_course_store_config::table
             .filter(vaccine_course_store_config::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
