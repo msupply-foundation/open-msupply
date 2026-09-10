@@ -164,6 +164,7 @@ export const UpdateStatusModal: Component<UpdateStatusModalProps> = props => {
       <FieldRow
         label={t('label.observations')}
         required={commentRequired(form(), reasons())}
+        align="first-line"
       >
         <TextArea
           label={t('label.observations')}

@@ -104,7 +104,7 @@ export const TemperatureMappingModal: Component<
           onChange={value => setDate(value ?? '')}
         />
       </FieldRow>
-      <FieldRow label={t('label.observations')}>
+      <FieldRow label={t('label.observations')} align="first-line">
         <TextArea
           ref={commentField.ref}
           label={t('label.observations')}

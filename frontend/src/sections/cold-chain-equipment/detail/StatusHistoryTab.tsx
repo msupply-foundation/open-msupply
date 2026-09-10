@@ -12,7 +12,10 @@ import { Select } from '@/ui/elements/selectors/Select';
 import { StatusChip } from '@/ui/elements/feedback/StatusChip';
 import { EmptyState } from '@/ui/elements/feedback/EmptyState';
 import { Spinner } from '@/ui/elements/feedback/Spinner';
-import { LabelledValue } from '@/ui/elements/typography/LabelledValue';
+import { DetailCard } from '@/ui/layout/Detail/DetailCard';
+import { DetailSection } from '@/ui/layout/Detail/DetailSection';
+import { DetailRow } from '@/ui/layout/Detail/DetailRow';
+import { UserLabel } from '@/ui/elements/typography/UserLabel';
 import { syncFileUrl } from '@/domain/syncFiles';
 import {
   ABSENT,
@@ -136,78 +139,95 @@ export const StatusHistoryTab: Component<StatusHistoryTabProps> = props => {
 };
 
 /**
- * One entry. Its status reads as a toned chip — or, for a temperature mapping,
- * a neutral chip naming the kind, because a mapping carries no status at all
- * (rules › temperature mapping).
+ * One entry — a [detail card](../../../ui/layout/Detail/DetailCard.tsx), the
+ * registry's role for several records of the same kind stacked as cards. The
+ * card is what separates one entry from the next; flat stacked text ran them
+ * together with no telling where an entry ended.
+ *
+ * Its title is the entry's date and its header-end action the status — or, for
+ * a temperature mapping, a neutral chip naming the kind, because a mapping
+ * carries no status at all (rules › temperature mapping).
  */
 const LogEntry: Component<{ log: AssetLogRowFragment }> = props => {
-  const fullName = () =>
-    [props.log.user?.firstName, props.log.user?.lastName]
-      .filter(Boolean)
-      .join(' ');
-
+  const status = () => props.log.status;
   return (
-    <Stack>
-      <HStack gap="md" align="center" wrap>
-        <Text variant="subtitle">{localisedDate(props.log.logDatetime)}</Text>
-        <Show when={props.log.status}>
-          {status => (
+    <DetailCard
+      title={localisedDate(props.log.logDatetime)}
+      actions={
+        <>
+          <Show when={status()}>
+            {value => (
+              <StatusChip
+                label={t(statusLabelKey(value()))}
+                colour={statusColour(value())}
+              />
+            )}
+          </Show>
+          <Show when={isMapping(props.log)}>
             <StatusChip
-              label={t(statusLabelKey(status()))}
-              colour={statusColour(status())}
+              label={t('label.temperature-mapping')}
+              colour="var(--gray-main)"
             />
-          )}
-        </Show>
-        <Show when={isMapping(props.log)}>
-          <StatusChip
-            label={t('label.temperature-mapping')}
-            colour="var(--gray-main)"
+          </Show>
+        </>
+      }
+    >
+      <DetailSection>
+        {/* The recorded user, through the shared role — a hand-rolled
+            name-and-icon pair is a bespoke look-alike (registry § recorded
+            user). */}
+        <DetailRow
+          label={t('label.user')}
+          align="start"
+          control={
+            <UserLabel
+              username={props.log.user?.username}
+              label={t('label.user')}
+            />
+          }
+        />
+        {/* Plain text through the `control` slot, NOT the `value` prop: a
+            never-editable field renders as text and never as a disabled input
+            (ui-standards/detail-views § never-editable fields), and DetailRow's
+            `value` puts one in a disabled TextField. An empty one shows a dash
+            — beside a label, blank reads as a rendering fault. */}
+        <DetailRow
+          label={t('label.reason')}
+          align="start"
+          control={<Text>{props.log.reason?.reason ?? ABSENT}</Text>}
+        />
+        <DetailRow
+          label={t('label.observations')}
+          align="start"
+          full
+          control={<Text>{props.log.comment ?? ABSENT}</Text>}
+        />
+        {/* The entry's own files, attached when it was recorded and not
+            changeable afterwards (rules › documents, AC-FS13). */}
+        <Show when={props.log.documents.nodes.length > 0}>
+          <DetailRow
+            label={t('label.documents')}
+            align="start"
+            full
+            control={
+              <Stack>
+                <For each={props.log.documents.nodes}>
+                  {document => (
+                    <a
+                      href={syncFileUrl('asset_log', props.log.id, document.id)}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      {document.fileName}
+                    </a>
+                  )}
+                </For>
+              </Stack>
+            }
           />
         </Show>
-      </HStack>
-      <HStack gap="md" wrap>
-        <LabelledValue size="small" layout="inline" label={t('label.user')}>
-          {props.log.user?.username ?? ABSENT}
-        </LabelledValue>
-        <Show when={fullName()}>
-          {name => (
-            <LabelledValue size="small" layout="inline" label={t('label.name')}>
-              {name()}
-              <Show when={props.log.user?.jobTitle}>
-                {title => <>, {title()}</>}
-              </Show>
-            </LabelledValue>
-          )}
-        </Show>
-      </HStack>
-      <LabelledValue size="small" layout="inline" label={t('label.reason')}>
-        {props.log.reason?.reason ?? ABSENT}
-      </LabelledValue>
-      <LabelledValue
-        size="small"
-        layout="inline"
-        label={t('label.observations')}
-      >
-        {props.log.comment ?? ABSENT}
-      </LabelledValue>
-      {/* The entry's own files, attached when it was recorded and not
-          changeable afterwards (rules › documents, AC-FS13). */}
-      <Show when={props.log.documents.nodes.length > 0}>
-        <Stack>
-          <For each={props.log.documents.nodes}>
-            {document => (
-              <a
-                href={syncFileUrl('asset_log', props.log.id, document.id)}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {document.fileName}
-              </a>
-            )}
-          </For>
-        </Stack>
-      </Show>
-    </Stack>
+      </DetailSection>
+    </DetailCard>
   );
 };
 
