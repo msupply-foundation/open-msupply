@@ -1,4 +1,6 @@
-use crate::{get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult};
+use crate::{
+    get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
+};
 use repository::{PaginationOption, SiteFilter, SiteRepository, SiteRow, SiteSort};
 
 pub fn get_sites(

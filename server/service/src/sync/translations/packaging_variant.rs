@@ -4,8 +4,7 @@ use repository::{ChangelogRow, ChangelogTableName, Row, StorageConnection, SyncB
 use crate::sync::translations::item_variant::ItemVariantTranslation;
 
 use super::{
-    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
-    ToSyncRecordTranslationType,
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
 
 // Needs to be added to all_translators()
@@ -36,7 +35,11 @@ impl SyncTranslation for PackagingVariantTranslation {
         let check_fk = fk_checker.with_table_required(connection, "packaging_variant", &row.id);
 
         let result = PackagingVariantRow {
-            item_variant_id: check_fk(row.item_variant_id, "item_variant_id", FkField::ItemVariant)?,
+            item_variant_id: check_fk(
+                row.item_variant_id,
+                "item_variant_id",
+                FkField::ItemVariant,
+            )?,
             ..row
         };
 
@@ -95,11 +98,8 @@ mod tests {
         use crate::sync::test::test_data::packaging_variant as test_data;
         let translator = PackagingVariantTranslation;
 
-        let (_, connection, _, _) = setup_all(
-            "test_packaging_variant_translation",
-            MockDataInserts::all(),
-        )
-        .await;
+        let (_, connection, _, _) =
+            setup_all("test_packaging_variant_translation", MockDataInserts::all()).await;
 
         // Seed the item_variant parent the packaging variant's required FK points at.
         ItemVariantRowRepository::new(&connection)

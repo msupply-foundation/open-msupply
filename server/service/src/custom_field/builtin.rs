@@ -338,11 +338,7 @@ fn soft_delete_removed(
     // migration that added the column.
     let live_scope_ids: Vec<String> = definitions
         .iter()
-        .flat_map(|d| {
-            d.scopes
-                .iter()
-                .map(move |scope| scope_row_id(d.key, scope))
-        })
+        .flat_map(|d| d.scopes.iter().map(move |scope| scope_row_id(d.key, scope)))
         .collect();
 
     for scope_row in scope_repo.find_many_by_custom_field_ids(&builtin_ids)? {
@@ -515,8 +511,7 @@ mod tests {
 
     #[actix_rt::test]
     async fn removed_builtins_soft_delete_and_returning_ones_come_back() {
-        let (_, connection, _, _) =
-            setup_all("builtin_soft_delete", MockDataInserts::none()).await;
+        let (_, connection, _, _) = setup_all("builtin_soft_delete", MockDataInserts::none()).await;
 
         let field_repo = CustomFieldRowRepository::new(&connection);
         let option_repo = CustomFieldOptionRowRepository::new(&connection);

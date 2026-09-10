@@ -4,7 +4,7 @@ use graphql_core::{
     ContextExt,
 };
 use graphql_types::types::period_schedule::{
-    PeriodScheduleFilterInput, PeriodScheduleConnector, PeriodScheduleResponse,
+    PeriodScheduleFilterInput, PeriodScheduleRowConnector, PeriodScheduleRowResponse,
 };
 use service::auth::{Resource, ResourceAccessRequest};
 use service::period_schedule::get_period_schedules;
@@ -13,7 +13,7 @@ pub fn period_schedules(
     ctx: &Context<'_>,
     store_id: String,
     filter: Option<PeriodScheduleFilterInput>,
-) -> Result<PeriodScheduleResponse> {
+) -> Result<PeriodScheduleRowResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {
@@ -31,7 +31,7 @@ pub fn period_schedules(
     )
     .map_err(StandardGraphqlError::from_repository_error)?;
 
-    Ok(PeriodScheduleResponse::Response(
-        PeriodScheduleConnector::from_domain(result),
+    Ok(PeriodScheduleRowResponse::Response(
+        PeriodScheduleRowConnector::from_domain(result),
     ))
 }

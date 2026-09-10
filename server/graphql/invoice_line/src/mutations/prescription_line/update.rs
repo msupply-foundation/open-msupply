@@ -94,6 +94,7 @@ impl UpdateInput {
             note,
         } = self;
         ServiceInput {
+            transfer_comment: None,
             id,
             r#type: Some(StockOutType::Prescription),
             stock_line_id,

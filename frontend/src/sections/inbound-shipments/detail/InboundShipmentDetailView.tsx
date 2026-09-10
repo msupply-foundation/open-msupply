@@ -29,6 +29,7 @@ import {
   type SplitButtonOption,
 } from '../../../ui/elements/buttons/SplitButton';
 import { Alert } from '../../../ui/elements/feedback/Alert';
+import { Comment } from '../../../ui/elements/feedback/Comment';
 import { Spinner } from '../../../ui/elements/feedback/Spinner';
 import { CloseIcon, PlusCircleIcon, SidebarIcon } from '../../../ui/icons';
 import {
@@ -104,6 +105,7 @@ import { InboundCurrencyPanel } from './tabs/InboundCurrencyPanel';
 import { InboundFinancialPanel } from './tabs/InboundFinancialPanel';
 import { InboundDeliveryPanel } from './tabs/InboundDeliveryPanel';
 import { InboundShipmentLineEditModal } from './edit-modal/InboundShipmentLineEditModal';
+import { showsInternalOrderContext } from './internalOrderContext';
 import { AddFromMasterListModal } from './modals/AddFromMasterListModal';
 import { AddFromInternalOrderModal } from './modals/AddFromInternalOrderModal';
 import {
@@ -146,7 +148,9 @@ const NARROW_HIDDEN: Record<string, boolean> = {
   unitName: false,
   dosesPerUnit: false,
   difference: false,
-  unitQuantity: false,
+  unitsReceived: false,
+  requested: false,
+  supplierComment: false,
   doses: false,
   costPricePerPack: false,
   sellPricePerPack: false,
@@ -396,6 +400,10 @@ const InboundShipmentDetailView: Component = () => {
   const statusLocked = () =>
     writeBlocked() || !canChangeStatus(current()?.status ?? '');
   const isExternal = () => isExternalScope(scope());
+  // The rule, and why a PO-linked shipment is excluded, lives in
+  // ./internalOrderContext.
+  const showsOrderContext = () =>
+    showsInternalOrderContext(!!current()?.requisition, isExternal());
 
   const refetchAll = () => {
     void refetchInfo();
@@ -788,16 +796,98 @@ const InboundShipmentDetailView: Component = () => {
         header: () => t('label.difference'),
         ...getCellDefinition('difference'),
       },
-      // Unit quantity (H6) — pack size × pack quantity; manual shipments only.
+      // Units received (H6) — received pack size × packs received. `isManual`
+      // IS "not purchase-order-linked" here: the two inbound scopes split on
+      // purchaseOrderId alone (inboundShipmentScope.ts).
       ...(isManual
         ? [
             {
               c: {
                 accessor: line => line.packSize * line.numberOfPacks,
-                id: 'unitQuantity',
+                id: 'unitsReceived',
               },
-              header: () => t('label.unit-quantity'),
+              // The generic word stands in for {{unit}}: one column spans items
+              // of differing units.
+              header: () =>
+                t('label.units-received', { unit: t('label.units') }),
+              // `unitQuantity` preset: the same 5rem two-word measurement as
+              // "Packs received" beside it.
               ...getCellDefinition('unitQuantity'),
+            } satisfies Column<Line, SortKey>,
+          ]
+        : []),
+      // The discrepancy pair (spec S3 cols 15-16), gated as one on the
+      // SHIPMENT's internal-order link so that within a table every row has
+      // both or no row has either.
+      //
+      // Requested (col 15) — the units requested for this line's ITEM,
+      // so every batch of one item shows the same figure. Never summed: a
+      // per-item figure repeated down an item's batches would total to a
+      // multiple of itself.
+      //
+      // An item with no line on the order gets an EM DASH — the exception the
+      // house blank-by-default rule allows (ui-standards/tables › empty
+      // treatment). In a column of quantities sitting beside the receiver's own
+      // typed figures, a blank reads as a figure that failed to load and a `0`
+      // reads as a counted zero; neither says "never asked for". A genuine
+      // requested ZERO is a real figure and still renders `0`, and the number
+      // cell passes the dash straight through (it formats numbers only).
+      ...(showsOrderContext()
+        ? [
+            {
+              c: {
+                accessor: line =>
+                  line.requisitionLine?.requestedQuantity ?? '—',
+                id: 'requested',
+              },
+              // Sorted server-side on the linked order line's figure, so a page
+              // of lines orders against the WHOLE shipment, not the page
+              // (InvoiceLineSortField::RequestedQuantity). A line whose item
+              // has no order line has no figure and sorts last ascending — the
+              // dash is a rendering, and never reaches the sort.
+              sortKey: 'requestedQuantity',
+              header: () => t('label.requested-quantity'),
+              ...getCellDefinition('requestedQuantity'),
+            } satisfies Column<Line, SortKey>,
+            // Supplier comment (spec S3 col 16) — the supplying store's own
+            // explanation of a difference, read-only at every status: nothing
+            // on an inbound shipment writes it, the supplying side authors it.
+            // It rides on the LINE, so every batch of an item repeats the one
+            // text written for that item. Inside the SAME gate as Requested —
+            // the two that read the discrepancy arrive and leave together. Not
+            // sortable (rules § requested quantity and supplier comment).
+            {
+              c: {
+                accessor: line => line.transferComment,
+                id: 'supplierComment',
+              },
+              // The WORDS, where every other comment column takes the bare
+              // glyph (CommentHeader): column 1 is already a comment column,
+              // and two identical icons over icon cells are indistinguishable —
+              // a hover title is no way to tell a reader which is which. The
+              // cells stay iconic, so only the header pays for the name.
+              header: () => t('label.supplier-comment'),
+              // The header is the binding constraint, not the cell: the
+              // comment preset is 3.5rem, sized for a glyph over a glyph. 5rem
+              // gives the wrapped "Supplier / comment" a text box wider than
+              // its longest word (the same reasoning as `numberOfPacks` in the
+              // width config), and the preset's 5rem growth CAP has to go with
+              // it or the column lands on its cap and can't be dragged (#601).
+              // textLabel overrides the preset's "Comment" for the Columns
+              // popover and the card's field label.
+              ...getCellDefinition('comment', {
+                textLabel: () => t('label.supplier-comment'),
+              }),
+              size: remToPx(5),
+              maxSize: remToPx(12),
+              // The popover's own heading and the trigger's accessible name —
+              // "Comment" by default, which is the other column's word.
+              cell: info => (
+                <Comment
+                  comment={info.getValue<string | null>()}
+                  label={t('label.supplier-comment')}
+                />
+              ),
             } satisfies Column<Line, SortKey>,
           ]
         : []),
@@ -822,7 +912,7 @@ const InboundShipmentDetailView: Component = () => {
         : []),
       // Auth status — gated by the authorisation preference. Header "Auth
       // status" (not the generic "Status"); values humanised from the raw
-      // PENDING/PASSED/REJECTED enum (spec col 16 / M6).
+      // PENDING/PASSED/REJECTED enum (spec col 18 / M6).
       ...(prefs().externalInboundShipmentLinesMustBeAuthorised
         ? [
             {
@@ -1257,6 +1347,11 @@ const InboundShipmentDetailView: Component = () => {
                 initialItemId={editState()?.itemId}
                 initialLineId={editState()?.lineId}
                 purchaseOrderId={node().purchaseOrderId ?? undefined}
+                // Gates the editor's internal-order banner, on the same rule as
+                // the Requested column so the two can't disagree.
+                requisitionId={
+                  showsOrderContext() ? node().requisition?.id : undefined
+                }
                 // Cost price is read-only only when the shipment carries a
                 // source link — a purchase order or a linked shipment (a
                 // transfer) — NOT merely because the supplier is another store

@@ -1,4 +1,4 @@
-import { For, Show, type Component } from 'solid-js';
+import { createMemo, For, Show, type Component } from 'solid-js';
 import { t, localisedDate } from '../../../intl';
 import { formatNumber } from '../../../intl/formatNumber';
 import { homeCurrency } from '../../../intl/currency';
@@ -22,6 +22,12 @@ import {
   inboundShipmentHref,
   scopeOf,
 } from '@/sections/inbound-shipments/inboundShipmentScope';
+import { PluginSlotOutlet } from '../../../ui/elements/plugins/PluginSlotOutlet';
+import {
+  contributionId,
+  visibleContributions,
+} from '../../../plugins/PluginSlot';
+import { toInternalOrderView, toLineView } from './pluginViews';
 import { approvalStatusLabel } from '../list/internalOrderStatus';
 import type { InternalOrderInfoFragment } from './internalOrderDetail.generated';
 import { type HeaderEditFields } from './InternalOrderToolbar';
@@ -31,7 +37,8 @@ import { DeleteInternalOrderAction } from './actions/DeleteInternalOrderAction';
 // order: Order info (approval, gated) · Program info (program orders) ·
 // Additional info (entered-by / created / colour / comment) · Related documents
 // (fulfilling inbound shipments + the gated source requisition) · Pricing (the
-// indicative grand total, gated) · Actions (Delete + Copy). The two editable
+// indicative grand total, gated) · the plugin side-panel region (S8; nothing
+// when no plugin contributes) · Actions (Delete + Copy). The two editable
 // fields — colour and comment — are disabled off Draft; the reads show on every
 // status.
 
@@ -78,6 +85,32 @@ export const InternalOrderSidePanel: Component<
     `${t('messages.inbound-shipment-created-on', {
       date: localisedDate(createdDatetime),
     })} ${t('messages.by-user', { username: username ?? '—' })}`;
+
+  // --- The plugin side-panel region (ui-surface § S8 › side-panel section
+  // region) ---
+  //
+  // ONE memo, as every slot region: the registry hands back a fresh array on
+  // every read, so anything the outlet's <For> could see directly would tear
+  // down live contributions on unrelated updates
+  // (kdd/solid-reactivity-pitfalls). `visibleContributions` applies each
+  // contribution's `when` gate, so a session-hidden contribution never mounts.
+  const sectionContributions = createMemo(() =>
+    visibleContributions('internalOrder.sidePanelSection').map(
+      contribution => ({
+        id: contributionId(contribution),
+        Component: contribution.Component,
+      })
+    )
+  );
+
+  // The published views a contribution reads (pluginViews.ts — the vertical's
+  // one sanctioned remap). Memoised so the outlet's getter-bound props re-read
+  // a mapped value rather than re-running the mapping per prop access, and a
+  // node splice reaches LIVE contributions as a prop change, never a remount.
+  const slotOrder = createMemo(() =>
+    toInternalOrderView(props.node, props.editable)
+  );
+  const slotLines = createMemo(() => props.node.lines.nodes.map(toLineView));
 
   return (
     <>
@@ -247,6 +280,17 @@ export const InternalOrderSidePanel: Component<
           </FieldRow>
         </SidePanelSection>
       </Show>
+
+      {/* The plugin side-panel region (spec S8 › side-panel section region):
+          read-only decoration between the panel's own sections and Actions.
+          No wrapper, no heading, no border — an invisible seam, so with
+          nothing contributing the panel is exactly the panel above
+          (spec/plugins § S1). */}
+      <PluginSlotOutlet
+        contributions={sectionContributions()}
+        slotProps={() => ({ order: slotOrder(), lines: slotLines() })}
+        errorFallback={t('error.plugin-unavailable')}
+      />
 
       {/* Actions — Delete (Draft only) + Copy (always). */}
       <SidePanelSection value="actions" title={t('heading.actions')}>
