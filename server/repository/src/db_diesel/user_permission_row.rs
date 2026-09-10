@@ -139,7 +139,6 @@ impl PermissionType {
         use strum::IntoEnumIterator;
         PermissionType::iter().filter(|p| !matches!(p, PermissionType::Unknown(_)))
     }
-
 }
 
 impl UserPermissionRow {

@@ -21,7 +21,10 @@ import {
 
 /*
  * The props-carrying outlet (spec/plugins/sdk-contract § the info-panel slot,
- * spec/plugins/acceptance AC-PLUG-N1/N2/E1, `OMS-REG-REPL-16.6`/`.7`/`.8`).
+ * spec/plugins/acceptance AC-PLUG-N1/N2/E1, `OMS-REG-REPL-16.6`/`.7`/`.8` for
+ * the line editor's region and `.9`/`.10`/`.11` for the side panel's — both
+ * regions render through this outlet, so each behaviour's mechanism half is
+ * proven here; the regions' PLACEMENT is the host's and stays with the case).
  *
  * The load-bearing assertion is `.7` / AC-PLUG-N2: a slot-props change must
  * reach a live contribution WITHOUT remounting it. That is exactly what the
@@ -60,14 +63,14 @@ const mount = (
 };
 
 describe('PluginSlotOutlet', () => {
-  it('renders nothing at all for an empty contribution set (OMS-REG-REPL-16.6)', () => {
+  it('renders nothing at all for an empty contribution set (OMS-REG-REPL-16.6, .9)', () => {
     const { render, dispose } = mount([], () => ({ value: 'a' }));
     // No wrapper, no placeholder, no reserved space — literally no output.
     expect(render()).toEqual([]);
     dispose();
   });
 
-  it('reaches a live contribution with a changed slot prop, and mounts it exactly once (OMS-REG-REPL-16.7, AC-PLUG-N2)', () => {
+  it('reaches a live contribution with a changed slot prop, and mounts it exactly once (OMS-REG-REPL-16.7, .10, AC-PLUG-N2)', () => {
     const seen: string[] = [];
     let mounts = 0;
     let cleanups = 0;
@@ -128,7 +131,7 @@ describe('PluginSlotOutlet', () => {
     dispose();
   });
 
-  it('contains a throwing contribution to its own place, leaving its sibling live (AC-PLUG-E1, OMS-REG-REPL-16.8)', () => {
+  it('contains a throwing contribution to its own place, leaving its sibling live (AC-PLUG-E1, OMS-REG-REPL-16.8, .11)', () => {
     const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
     const seen: string[] = [];
     let mounts = 0;

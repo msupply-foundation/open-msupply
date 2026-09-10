@@ -195,7 +195,7 @@ mod test {
                     other_party_id: "invalid".to_string(),
                     ..Default::default()
                 },
-            InboundShipmentType::InboundShipment,
+                InboundShipmentType::InboundShipment,
             ),
             Err(ServiceError::OtherPartyDoesNotExist)
         );
@@ -208,7 +208,7 @@ mod test {
                     other_party_id: not_visible().id,
                     ..Default::default()
                 },
-            InboundShipmentType::InboundShipment,
+                InboundShipmentType::InboundShipment,
             ),
             Err(ServiceError::OtherPartyNotVisible)
         );
@@ -221,7 +221,7 @@ mod test {
                     other_party_id: not_a_supplier().id,
                     ..Default::default()
                 },
-            InboundShipmentType::InboundShipment,
+                InboundShipmentType::InboundShipment,
             ),
             Err(ServiceError::OtherPartyNotASupplier)
         );
@@ -274,7 +274,7 @@ mod test {
                     other_party_id: supplier().id,
                     ..Default::default()
                 },
-            InboundShipmentType::InboundShipment,
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -330,7 +330,7 @@ mod test {
                     other_party_id: mock_name_linked_to_store_join().name_id.clone(),
                     ..Default::default()
                 },
-                    InboundShipmentType::InboundShipment,
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 
@@ -356,7 +356,7 @@ mod test {
                     other_party_id: mock_name_not_linked_to_store().id.clone(),
                     ..Default::default()
                 },
-                    InboundShipmentType::InboundShipment,
+                InboundShipmentType::InboundShipment,
             )
             .unwrap();
 

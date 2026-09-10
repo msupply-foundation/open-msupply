@@ -192,6 +192,7 @@ describe('validateLoadedModule', () => {
       'dashboard.panel',
       'dashboard.stat',
       'dashboard.widget',
+      'internalOrder.sidePanelSection',
       'internalOrderLine.column',
       'internalOrderLine.infoPanel',
       'prescription.paymentForm',
@@ -429,9 +430,9 @@ describe('validateLoadedModule — pages & nav sections', () => {
 
   it('refuses a page without an id, and a duplicate page id', () => {
     expect(pagesRefusal([page({ id: '' })])).toContain('has no id');
-    expect(
-      pagesRefusal([page(), page({ path: 'other' })])
-    ).toContain('duplicate page id');
+    expect(pagesRefusal([page(), page({ path: 'other' })])).toContain(
+      'duplicate page id'
+    );
   });
 
   it('refuses a page or nav section without a labelKey', () => {
@@ -448,10 +449,16 @@ describe('validateLoadedModule — pages & nav sections', () => {
   });
 
   it('refuses a path colliding with a host destination, at any depth', () => {
-    // Exact, below a host destination, and the off-registry legacy redirect —
-    // the router judges by deepest prefix, so nesting would inherit or shadow
-    // the host's own gates.
-    for (const path of ['inventory', 'inventory/stock/extra', 'dashboard']) {
+    // Exact, below a host destination, and the two off-registry legacy
+    // redirects (Home's, and the dispensing vertical's pre-#551 segment) — the
+    // router judges by deepest prefix, so nesting would inherit or shadow the
+    // host's own gates.
+    for (const path of [
+      'inventory',
+      'inventory/stock/extra',
+      'dashboard',
+      'dispensary/prescription',
+    ]) {
       expect(pagesRefusal([page({ path })])).toContain(
         'collides with the host destination'
       );
@@ -483,18 +490,18 @@ describe('validateLoadedModule — pages & nav sections', () => {
     expect(pagesRefusal([page()], [navSection({ when: true })])).toContain(
       'non-function when gate'
     );
-    expect(pagesRefusal([page()], [navSection({ permissions: [''] })])).toContain(
-      'invalid permissions list'
-    );
+    expect(
+      pagesRefusal([page()], [navSection({ permissions: [''] })])
+    ).toContain('invalid permissions list');
   });
 
   it('refuses a nav section without an id, and a duplicate nav section id', () => {
     expect(pagesRefusal([page()], [navSection({ id: '' })])).toContain(
       'has no id'
     );
-    expect(
-      pagesRefusal([page()], [navSection(), navSection()])
-    ).toContain('duplicate nav section id');
+    expect(pagesRefusal([page()], [navSection(), navSection()])).toContain(
+      'duplicate nav section id'
+    );
   });
 
   it('refuses a nav section id that shadows a host section id', () => {
@@ -512,7 +519,7 @@ describe('validateLoadedModule — pages & nav sections', () => {
   // surface degrades to a clear diagnostic instead of misregistering.
   it('refuses an `in` id that is neither a plugin nav section nor a host section, naming the known set (AC-PLUG-P5)', () => {
     expect(pagesRefusal([page({ nav: { in: 'no-such-section' } })])).toContain(
-      'neither one of this plugin\'s nav sections nor a host section'
+      "neither one of this plugin's nav sections nor a host section"
     );
     expect(pagesRefusal([page({ nav: { in: 'no-such-section' } })])).toContain(
       '"inventory"'
