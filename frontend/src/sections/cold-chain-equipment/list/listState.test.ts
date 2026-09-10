@@ -130,22 +130,26 @@ describe('AC-L3 / AC-L4 / AC-L8 / AC-L11 a live filter reaches the query', () =>
   });
 });
 
-describe('AC-L10 the non-catalogue filter', () => {
-  it('sends a plain boolean, both ways', () => {
-    expect(
-      buildListVariables(
-        state({ filter: { isNonCatalogue: true } }),
-        STORE,
-        'store'
-      ).filter?.isNonCatalogue
-    ).toBe(true);
-    expect(
-      buildListVariables(
-        state({ filter: { isNonCatalogue: false } }),
-        STORE,
-        'store'
-      ).filter?.isNonCatalogue
-    ).toBe(false);
+describe('AC-L10 / AC-L16 / AC-L17 the non-catalogue filter has three answers', () => {
+  const sent = (isNonCatalogue: boolean | null) =>
+    buildListVariables(state({ filter: { isNonCatalogue } }), STORE, 'store')
+      .filter;
+
+  it('AC-L10 asks for the assets with no catalogue item', () => {
+    expect(sent(true)?.isNonCatalogue).toBe(true);
+  });
+
+  it('AC-L16 asks for the ones that have one', () => {
+    // `false` is a real answer here, not an absent filter — which is why the
+    // chip cannot be a flag.
+    expect(sent(false)?.isNonCatalogue).toBe(false);
+  });
+
+  it('AC-L17 narrows nothing on All, without the chip being removed', () => {
+    // An added-but-empty chip is `null`, and `stripEmpty` keeps it out of the
+    // query — so the filter is absent, not `false`, which would be the
+    // catalogue-only list.
+    expect(sent(null)).not.toHaveProperty('isNonCatalogue');
   });
 });
 
