@@ -1,6 +1,6 @@
 use repository::{
-    rnr_form_row::RnRFormRow,
-    ChangelogRow, ChangelogTableName, RnRFormDelete, Row, StorageConnection, SyncBufferRow,
+    rnr_form_row::RnRFormRow, ChangelogRow, ChangelogTableName, RnRFormDelete, Row,
+    StorageConnection, SyncBufferRow,
 };
 
 use crate::sync::translations::{
@@ -11,7 +11,8 @@ use crate::sync::translations::{
 
 use super::{
     utils::{from_renamed_keys_str, to_renamed_keys_value, RenamedKeys},
-    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
+    ToSyncRecordTranslationType,
 };
 
 /// FK column renamed during the name_link abstraction. Central emits both the canonical

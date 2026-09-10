@@ -3,8 +3,9 @@ use super::{
     store_row::store, StorageConnection,
 };
 use crate::{
-    db_diesel::changelog::changelog::RowOrId, diesel_macros::define_linked_tables, ChangelogRepository, ChangelogSyncType, Delete,
-    RepositoryError, RowActionType, SourceSiteId, Upsert,
+    db_diesel::changelog::changelog::RowOrId, diesel_macros::define_linked_tables,
+    ChangelogRepository, ChangelogSyncType, Delete, RepositoryError, RowActionType, SourceSiteId,
+    Upsert,
 };
 
 use chrono::NaiveDateTime;

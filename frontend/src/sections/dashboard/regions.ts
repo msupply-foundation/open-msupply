@@ -84,7 +84,30 @@ export const DASHBOARD_IDS = {
       totalItems: 'inventory.stock-levels.total-items',
     },
   },
+  prescriptions: {
+    id: 'prescriptions',
+    requests: {
+      id: 'prescriptions.requests',
+      readyToDispense: 'prescriptions.requests.ready-to-dispense',
+      dispensedThisWeek: 'prescriptions.requests.dispensed-this-week',
+    },
+  },
 } as const;
+
+/**
+ * The published id of a built-in PANEL — the keys of the visibility map
+ * `panelVisibility` builds (regionBuiltIns), derived from the registry so a
+ * panel added above cannot be left out of the map without failing to compile.
+ */
+export type DashboardPanelId =
+  | typeof DASHBOARD_IDS.replenishment.inbound.id
+  | typeof DASHBOARD_IDS.replenishment.inboundExternal.id
+  | typeof DASHBOARD_IDS.replenishment.internalOrder.id
+  | typeof DASHBOARD_IDS.distribution.shipments.id
+  | typeof DASHBOARD_IDS.distribution.customerRequisition.id
+  | typeof DASHBOARD_IDS.inventory.expiringStock.id
+  | typeof DASHBOARD_IDS.inventory.stockLevels.id
+  | typeof DASHBOARD_IDS.prescriptions.requests.id;
 
 // ── Region model ─────────────────────────────────────────────────────────────
 
@@ -206,6 +229,15 @@ export interface AppliedSuppression {
   applied: ReadonlySet<string>;
   /** Suppressed widget ids obeying which would have emptied the body. */
   ignored: readonly string[];
+  /**
+   * Nothing renders in the widget region and dropping suppressions cannot
+   * change that: every built-in widget is hidden by its OWN gates — in
+   * practice a user holding none of the count permissions — and no widget
+   * contribution is visible. The body shows its empty state rather than a
+   * blank grid (OMS-REG-DB-01.62). False whenever a contribution is visible,
+   * so a plugin-contributed widget alone is a non-empty body.
+   */
+  empty: boolean;
 }
 
 /**
@@ -245,11 +277,16 @@ export const applicableSuppressions = (
     .filter(widget => widget.hidden !== true && suppressed.has(widget.id))
     .map(widget => widget.id);
   if (wouldRender || recoverable.length === 0) {
-    return { applied: suppressed, ignored: [] };
+    return {
+      applied: suppressed,
+      ignored: [],
+      // Nothing to render and nothing suppression could bring back.
+      empty: !wouldRender,
+    };
   }
   const applied = new Set(suppressed);
   for (const id of recoverable) applied.delete(id);
-  return { applied, ignored: recoverable };
+  return { applied, ignored: recoverable, empty: false };
 };
 
 /**
