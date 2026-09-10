@@ -4,6 +4,7 @@ import {
   DEFAULT_STATE,
   SORTABLE_KEYS,
   buildListVariables,
+  clearTypeOnCategoryChange,
   clearTypeOutsideCategory,
   type EquipmentListState,
 } from './listState';
@@ -150,6 +151,49 @@ describe('AC-L10 / AC-L16 / AC-L17 the non-catalogue filter has three answers', 
     // query — so the filter is absent, not `false`, which would be the
     // catalogue-only list.
     expect(sent(null)).not.toHaveProperty('isNonCatalogue');
+  });
+});
+
+describe('AC-L7 changing the category clears the type', () => {
+  /*
+   * The interactive half, and why it cannot consult the type list: that list
+   * is fetched FOR the category being left, so at the moment the category
+   * changes it still describes the old one and would vouch for a type the new
+   * category does not contain. The two filters are enough on their own.
+   */
+  it('clears the type when the category changes under it', () => {
+    const next = clearTypeOnCategoryChange(
+      { categoryId: { equalTo: 'cat-1' }, typeId: { equalTo: 'type-1' } },
+      { categoryId: { equalTo: 'cat-2' }, typeId: { equalTo: 'type-1' } }
+    );
+    expect(next.typeId).toBeNull();
+    expect(next.categoryId).toEqual({ equalTo: 'cat-2' });
+  });
+
+  it('leaves the type alone while the category holds still', () => {
+    const filter = {
+      categoryId: { equalTo: 'cat-1' },
+      typeId: { equalTo: 'type-1' },
+      notes: { like: 'x' },
+    };
+    expect(clearTypeOnCategoryChange({ ...filter, notes: null }, filter)).toBe(
+      filter
+    );
+  });
+
+  it('clears the type when the category is removed entirely', () => {
+    const next = clearTypeOnCategoryChange(
+      { categoryId: { equalTo: 'cat-1' }, typeId: { equalTo: 'type-1' } },
+      { categoryId: null, typeId: { equalTo: 'type-1' } }
+    );
+    expect(next.typeId).toBeNull();
+  });
+
+  it('has nothing to clear when no type is chosen', () => {
+    const filter = { categoryId: { equalTo: 'cat-2' } };
+    expect(
+      clearTypeOnCategoryChange({ categoryId: { equalTo: 'cat-1' } }, filter)
+    ).toBe(filter);
   });
 });
 

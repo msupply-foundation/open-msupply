@@ -1,4 +1,10 @@
-import { createMemo, createResource, createSignal, Show } from 'solid-js';
+import {
+  createEffect,
+  createMemo,
+  createResource,
+  createSignal,
+  Show,
+} from 'solid-js';
 import type { Component } from 'solid-js';
 import { useLocation, useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '@/api/graphql';
@@ -46,6 +52,7 @@ import {
   DEFAULT_STATE,
   SORTABLE_KEYS,
   buildListVariables,
+  clearTypeOnCategoryChange,
   clearTypeOutsideCategory,
   type AssetSortKey,
   type AssetUserFilter,
@@ -191,9 +198,25 @@ const EquipmentList: Component = () => {
   const onFilterChange = (filter: AssetUserFilter) =>
     setQuery({
       ...query(),
-      filter: clearTypeOutsideCategory(filter, types()),
+      // Compared against the filter being REPLACED, not against the loaded
+      // type list: that list is keyed on the category the user is leaving, so
+      // it would vouch for a type the new category does not contain (AC-L7).
+      filter: clearTypeOnCategoryChange(query().filter, filter),
       offset: 0,
     });
+
+  // The other half of AC-L7, for a type that arrives in the URL rather than
+  // through the chip above: once the category's OWN type list is ready, a type
+  // it does not contain is dropped. Gated on `ready` because an empty list
+  // mid-fetch means "not known yet", not "contains nothing".
+  createEffect(() => {
+    if (typeData.state !== 'ready') return;
+    const loaded = typeData();
+    if (!loaded || loaded.length === 0) return;
+    const current = query().filter;
+    const cleared = clearTypeOutsideCategory(current, loaded);
+    if (cleared !== current) setQuery({ ...query(), filter: cleared, offset: 0 });
+  });
 
   const openRow = (row: AssetRow) => navigate(row.id);
 
@@ -328,7 +351,12 @@ const EquipmentList: Component = () => {
             <CreateAssetAction onOpen={() => setCreateOpen(true)} />
             <ExportEquipmentAction
               storeId={params.storeId}
-              isCentral={showStore()}
+              // The store column belongs to a CENTRAL SERVER's file, whichever
+              // destination produced it — `showStore()` is also false on the
+              // cold-chain destination of a central server, which would drop
+              // the column from a file that should carry it (rules › export).
+              isCentral={isCentralServer()}
+              sort={variables().sort}
             />
           </HeaderButtons>
         </Header>

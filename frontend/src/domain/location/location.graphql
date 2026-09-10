@@ -6,9 +6,11 @@
 # (repository/src/db_diesel/location.rs). Every surface that lists locations
 # wants them alphabetical, so the sort belongs here rather than at each caller.
 #
-# `locations` — code + name only. Backs the volume-BLIND picker (LocationSelect),
-# used where a location is merely referenced (scoping a stocktake count, a list
-# filter). No capacity fetched.
+# `locations` — code, name and storage type. Backs the volume-BLIND picker
+# (LocationSelect), used where a location is merely referenced (scoping a
+# stocktake count, a list filter). No capacity fetched. The type is named
+# because a picker that offers cold storage must say WHAT each place is —
+# `+5°C` alone does not distinguish a fridge from a cold room.
 #
 # The optional `filter` is for callers that need a narrower set than "every
 # location in the store": cold-chain Equipment asks for the ones no asset holds
@@ -22,6 +24,10 @@ query locations($storeId: String!, $filter: LocationFilterInput) {
         id
         code
         name
+        locationType {
+          id
+          name
+        }
       }
     }
   }
@@ -50,8 +56,11 @@ query locationsWithVolume($storeId: String!) {
         volumeUsed
         # The storage type, for pickers that must honour an item's restricted
         # location type (the stock-movement destination — its rules § lines).
+        # Named as well as identified, so this shape stays a superset of the
+        # plain one above — the two are passed to the same pickers.
         locationType {
           id
+          name
         }
         stock {
           ... on StockLineConnector {

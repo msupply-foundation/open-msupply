@@ -94,14 +94,28 @@ fragment AssetDetail on AssetNode {
       reason
     }
   }
+  # Selected as the store LOOKUP's option shape, not just for display: the
+  # Summary tab seeds its picker with this, so a central-server user sees which
+  # store holds the asset before deciding to move it.
   store {
+    __typename
     id
     code
     storeName
+    siteId
   }
+  # Likewise the donor lookup's option shape.
   donor(storeId: $storeId) {
+    __typename
     id
     name
+    code
+    isSupplier
+    isDonor
+    isOnHold
+    store {
+      id
+    }
   }
   # The storage places the asset HOLDS. Created for it at insert from its
   # declared storage capacities, then chosen by hand (contract › storage

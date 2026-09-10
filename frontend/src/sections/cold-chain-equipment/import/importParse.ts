@@ -3,7 +3,7 @@ import { parseCsv, toCsv } from '@/domain/reportFiles';
 import { ASSET_STATUSES, statusLabelKey } from '../equipment';
 import type { AssetStatus } from '../equipment';
 import type { PropertyDefinition } from '../detail/assetProperties';
-import { applicableProperties } from '../detail/assetProperties';
+import { allowedValues, applicableProperties } from '../detail/assetProperties';
 import type { PropertyValues } from '../detail/assetEdit';
 
 /*
@@ -141,6 +141,51 @@ export const parseImportStatus = (value: string): AssetStatus => {
   return match ?? 'FUNCTIONING';
 };
 
+/**
+ * A property cell → the value its DEFINITION declares, or `undefined` where the
+ * cell does not answer it.
+ *
+ * Stored raw, every value would be a string — and a string is not what the
+ * screen or the wire expect: a boolean property imported as `"true"` renders
+ * unchecked on the Details tab (the checkbox tests for `true`, not for the
+ * word), and a number imported as text sorts and totals as text. A cell
+ * outside a property's allowed values is refused rather than stored, because
+ * the value would be one nothing else in the app can produce.
+ *
+ * Soft, like the dates: an unreadable cell warns and is dropped, never failing
+ * the row (AC-I6).
+ */
+export const parsePropertyCell = (
+  raw: string,
+  definition: Pick<PropertyDefinition, 'valueType' | 'allowedValues'>
+): string | number | boolean | undefined => {
+  const value = raw.trim();
+  if (!value) return undefined;
+
+  if (definition.valueType === 'BOOLEAN') {
+    if (/^(true|yes|y|1)$/i.test(value)) return true;
+    if (/^(false|no|n|0)$/i.test(value)) return false;
+    return undefined;
+  }
+
+  if (definition.valueType === 'INTEGER' || definition.valueType === 'FLOAT') {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) return undefined;
+    return definition.valueType === 'INTEGER' ? Math.trunc(parsed) : parsed;
+  }
+
+  // A text property that declares a fixed list only accepts one of them,
+  // matched case-insensitively and returned in the catalogue's own spelling so
+  // the stored value matches what the picker offers.
+  const permitted = allowedValues(definition);
+  if (permitted) {
+    return permitted.find(
+      option => option.toLowerCase() === value.toLowerCase()
+    );
+  }
+  return value;
+};
+
 /** The replacement flag reads as set for any value containing "true". */
 export const parseNeedsReplacement = (value: string): boolean =>
   /true/i.test(value);
@@ -257,7 +302,14 @@ export const parseImportFile = (
     for (const definition of definitions) {
       // A property column is headed by the property's own display name.
       const raw = cell(cells, definition.name);
-      if (raw) properties[definition.key] = raw;
+      if (raw) {
+        const value = parsePropertyCell(raw, definition);
+        if (value === undefined)
+          warnings.push(
+            t('warning.field-not-parsed', { field: definition.name })
+          );
+        else properties[definition.key] = value;
+      }
     }
 
     return {
@@ -338,8 +390,25 @@ export const rowToInsertInput = (
 });
 
 /**
+ * A stored ISO day (`YYYY-MM-DD`) back to the `DD/MM/YYYY` the import reads.
+ *
+ * The failed-rows file is meant to be FIXED and re-uploaded, so every cell it
+ * writes must be one {@link parseImportDate} accepts — an ISO day would come
+ * back as a warning and an empty date, quietly losing what the user got right.
+ */
+const toImportDate = (iso: string | null): string => {
+  if (!iso) return '';
+  const [year, month, day] = iso.split('-');
+  return year && month && day ? `${day}/${month}/${year}` : '';
+};
+
+/**
  * The failed rows as a CSV for fixing offline (AC-I10) — the import's own
  * columns, plus the line number and the reason each row was refused.
+ *
+ * Every cell round-trips through this module's own parsers: the file exists to
+ * be corrected and re-uploaded, and a column it writes in a shape the import
+ * cannot read loses the user's data on the way back in.
  */
 export const failedRowsToCsv = (
   rows: readonly ImportRow[],
@@ -357,17 +426,77 @@ export const failedRowsToCsv = (
     ...(isCentral ? [row.storeCode] : []),
     row.assetNumber,
     row.catalogueItemCode,
-    row.installationDate ?? '',
-    row.replacementDate ?? '',
-    row.warrantyStart ?? '',
-    row.warrantyEnd ?? '',
+    toImportDate(row.installationDate),
+    toImportDate(row.replacementDate),
+    toImportDate(row.warrantyStart),
+    toImportDate(row.warrantyEnd),
     row.serialNumber,
     t(statusLabelKey(row.status)),
-    row.needsReplacement ? 'X' : '',
+    // The word the flag's own parser looks for, not a tick: `X` reads back as
+    // false.
+    row.needsReplacement ? 'true' : '',
     row.notes,
     row.lineNumber,
     ...keys.map(key => String(row.properties[key] ?? '')),
     row.errors.join(', '),
   ]);
   return toCsv(fields, data);
+};
+
+/**
+ * What the review table sorts by — the parsed row's own fields, not the wire's
+ * (nothing here has reached the server yet).
+ */
+export type ReviewSortKey =
+  | 'storeCode'
+  | 'assetNumber'
+  | 'catalogueItemCode'
+  | 'installationDate'
+  | 'replacementDate'
+  | 'warrantyStart'
+  | 'warrantyEnd'
+  | 'serialNumber'
+  | 'status'
+  | 'needsReplacement'
+  | 'notes';
+
+/** Every cell of a row as one lowercase haystack, for the review search. */
+export const reviewRowText = (row: ImportRow): string =>
+  [
+    row.storeCode,
+    row.assetNumber,
+    row.catalogueItemCode,
+    row.serialNumber,
+    row.notes,
+    t(statusLabelKey(row.status)),
+    row.installationDate ?? '',
+    row.replacementDate ?? '',
+    row.warrantyStart ?? '',
+    row.warrantyEnd ?? '',
+    ...Object.values(row.properties).map(value => String(value ?? '')),
+    ...row.errors,
+    ...row.warnings,
+  ]
+    .join(' ')
+    .toLowerCase();
+
+/**
+ * Order two review rows by one key.
+ *
+ * Dates are held as ISO days, which sort correctly as text; the flag sorts
+ * set-last so "which of these will be replaced" reads as a block; everything
+ * else compares as text, case-insensitively, the way a user reads it.
+ */
+export const compareReviewRows = (
+  a: ImportRow,
+  b: ImportRow,
+  key: ReviewSortKey
+): number => {
+  if (key === 'needsReplacement')
+    return Number(a.needsReplacement) - Number(b.needsReplacement);
+  const text = (row: ImportRow): string => {
+    if (key === 'status') return t(statusLabelKey(row.status));
+    return String(row[key] ?? '');
+  };
+  return text(a).localeCompare(text(b), undefined, { sensitivity: 'base' });
 };

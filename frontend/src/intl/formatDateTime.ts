@@ -91,6 +91,16 @@ export const localisedTime = (value: Date | string | number): string =>
 export const localisedDateTime = (value: Date | string | number): string =>
   format(toDate(value), 'Pp', { locale: dateFnsLocale() });
 
+/**
+ * A timestamp in UTC, for a field that is LABELLED as UTC — an export column,
+ * a machine-read log line. Never for a date a user reads as "when this
+ * happened": that is their own day, and {@link localisedDateTime} is what says
+ * so. The format is fixed (`YYYY-MM-DD HH:mm`) rather than locale-aware,
+ * because the point of the value is to be the same for every reader.
+ */
+export const utcDateTime = (value: Date | string | number): string =>
+  toDate(value).toISOString().slice(0, 16).replace('T', ' ');
+
 export const customDate = (
   value: Date | string | number,
   formatString: string

@@ -1,8 +1,8 @@
-import { createResource, createSignal, Show } from 'solid-js';
+import { createResource, createSignal, For, Show } from 'solid-js';
 import type { Component } from 'solid-js';
 import { graphqlFetch } from '@/api/graphql';
 import { gated } from '@/api/gated';
-import { t } from '@/intl';
+import { formatFileSize, t } from '@/intl';
 import { generateUUID } from '@/uuid';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { CancelButton, OkButton } from '@/ui/elements/buttons/StandardButtons';
@@ -13,7 +13,19 @@ import { UploadZone } from '@/ui/elements/inputs/UploadZone';
 import { Combobox } from '@/ui/elements/selectors/Combobox';
 import { Stack } from '@/ui/layout/Stack/Stack';
 import { Text } from '@/ui/elements/typography/Text';
+import { Alert } from '@/ui/elements/feedback/Alert';
+import { IconButton } from '@/ui/elements/buttons/IconButton';
+import { TrashIcon } from '@/ui/icons';
+import { HStack } from '@/ui/layout/Stack/HStack';
+import type { FileRejection } from '@/ui/elements/inputs/uploadFiles';
 import { uploadSyncFiles } from '@/domain/syncFiles';
+import {
+  ACCEPT,
+  batchTooLarge,
+  describeRejections,
+  MAX_BATCH_BYTES,
+  MAX_FILE_BYTES,
+} from './documentUploads';
 import { ASSET_STATUSES, statusLabelKey, type AssetStatus } from '../equipment';
 import { AssetLogReasonsList, InsertAssetLog } from '../equipment.generated';
 import {
@@ -43,6 +55,12 @@ export interface UpdateStatusModalProps {
 
 export const UpdateStatusModal: Component<UpdateStatusModalProps> = props => {
   const [form, setForm] = createSignal<StatusFormState>(emptyStatusForm());
+  // A file the user picked that this vertical will not take, and — separately —
+  // an upload that failed after the entry had already saved.
+  const [fileError, setFileError] = createSignal<string>();
+  const [uploadError, setUploadError] = createSignal<string>();
+  // The entry reached the server. Nothing may submit twice after that.
+  const [recorded, setRecorded] = createSignal(false);
   const [saving, setSaving] = createSignal(false);
   const statusField = createFocusTarget();
 
@@ -69,6 +87,31 @@ export const UpdateStatusModal: Component<UpdateStatusModalProps> = props => {
 
   const statuses = () => [...ASSET_STATUSES];
 
+  /*
+   * Files ACCUMULATE. UploadZone hands over only the batch just picked, so
+   * assigning it would drop everything chosen before — a user attaching two
+   * inspection photos one at a time would silently keep only the second.
+   * A batch that takes the entry over the per-request cap is refused whole.
+   */
+  const addFiles = (picked: File[]) => {
+    setFileError(undefined);
+    const next = [...form().files, ...picked];
+    if (batchTooLarge(next)) {
+      setFileError(
+        t('error.upload-too-large', {
+          maxSize: formatFileSize(MAX_BATCH_BYTES),
+        })
+      );
+      return;
+    }
+    setForm({ ...form(), files: next });
+  };
+
+  const removeFile = (file: File) => {
+    setFileError(undefined);
+    setForm({ ...form(), files: form().files.filter(each => each !== file) });
+  };
+
   const save = async () => {
     if (saving() || !canSubmitStatus(form(), reasons())) return;
     setSaving(true);
@@ -84,10 +127,21 @@ export const UpdateStatusModal: Component<UpdateStatusModalProps> = props => {
       return;
     }
     // The entry's files upload AFTER it saves, keyed on the new entry's id: a
-    // log that saves and an upload that fails leaves the entry with no files
-    // (contract › documents).
+    // log that saves and an upload that fails leaves the entry with no files,
+    // and MUST report the upload's error (contract › documents).
     if (form().files.length > 0) {
-      await uploadSyncFiles('asset_log', logId, form().files);
+      const uploaded = await uploadSyncFiles('asset_log', logId, form().files);
+      if (!uploaded.ok) {
+        // The ENTRY is recorded; only its evidence is missing. Closing here
+        // would claim the files were attached, and re-submitting would record
+        // the entry a second time — so the modal stays open saying what
+        // happened, with nothing left to do but close.
+        setSaving(false);
+        setRecorded(true);
+        setUploadError(uploaded.message);
+        props.onRecorded();
+        return;
+      }
     }
     setSaving(false);
     props.onRecorded();
@@ -105,8 +159,18 @@ export const UpdateStatusModal: Component<UpdateStatusModalProps> = props => {
       // Room for the status picker's open listbox: it sits at the top with two
       // rows and the upload zone below it.
       minBodyHeightRem={28}
+      actionsLead={
+        <Show when={uploadError() ?? fileError()}>
+          {message => <Alert severity="error">{message()}</Alert>}
+        </Show>
+      }
       actions={
-        <>
+        <Show
+          when={!recorded()}
+          fallback={
+            <OkButton data-testid="dialog-button-ok" onClick={props.onClose} />
+          }
+        >
           <Show when={!saving()}>
             <CancelButton
               data-testid="dialog-button-cancel"
@@ -121,7 +185,7 @@ export const UpdateStatusModal: Component<UpdateStatusModalProps> = props => {
             disabled={!canSubmitStatus(form(), reasons()) || saving()}
             onClick={() => void save()}
           />
-        </>
+        </Show>
       }
     >
       <FieldRow label={t('label.new-functional-status')} required>
@@ -180,16 +244,37 @@ export const UpdateStatusModal: Component<UpdateStatusModalProps> = props => {
       <Stack>
         <UploadZone
           inputTestId="status-files-input"
-          disabled={saving()}
-          onFiles={files => setForm({ ...form(), files })}
+          disabled={saving() || recorded()}
+          // The same accepted types and the same caps as the asset's own
+          // documents — one rule for attaching a file to this machine, wherever
+          // the user does it (rules › documents).
+          accept={ACCEPT}
+          maxSize={MAX_FILE_BYTES}
+          onFiles={addFiles}
+          onRejected={(rejections: FileRejection<File>[]) =>
+            setFileError(describeRejections(rejections))
+          }
         />
-        <Show when={form().files.length > 0}>
-          <Text variant="bodySmall">
-            {form()
-              .files.map(file => file.name)
-              .join(', ')}
-          </Text>
-        </Show>
+        {/* Each pick listed and removable: a user attaching two photos one at
+            a time must keep both, and be able to drop the wrong one without
+            starting the entry over (ui-surface S5). */}
+        <Stack>
+          <For each={form().files}>
+            {file => (
+              <HStack gap="sm" align="center">
+                <Text variant="bodySmall">{file.name}</Text>
+                <IconButton
+                  icon={<TrashIcon />}
+                  label={t('button.remove-file')}
+                  variant="danger"
+                  size="small"
+                  disabled={saving() || recorded()}
+                  onClick={() => removeFile(file)}
+                />
+              </HStack>
+            )}
+          </For>
+        </Stack>
       </Stack>
     </Dialog>
   );

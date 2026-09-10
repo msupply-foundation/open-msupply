@@ -13,6 +13,13 @@ import {
   uploadSyncFiles,
 } from '@/domain/syncFiles';
 import type { AssetDetailFragment } from '../equipment.generated';
+import {
+  ACCEPT,
+  batchTooLarge,
+  describeRejections,
+  MAX_BATCH_BYTES,
+  MAX_FILE_BYTES,
+} from './documentUploads';
 import styles from './DocumentsTab.module.css';
 
 // S2.4 — the Documents tab (ui-surface S2.4): two halves side by side.
@@ -29,12 +36,6 @@ import styles from './DocumentsTab.module.css';
 // which a missing half does not.
 const TABLE_NAME = 'asset';
 
-// Accepted types: PDF/DOCX/XLSX/CSV/TXT/ODT/ODS/JPEG/PNG/WEBP, matched on
-// extension (the shared client-side accept list — the server stores any type).
-const ACCEPT = '.pdf,.docx,.xlsx,.csv,.txt,.odt,.ods,.jpeg,.jpg,.png,.webp';
-const MAX_FILE_BYTES = 50 * 1024 * 1024; // 50MB per file
-const MAX_BATCH_BYTES = 100 * 1024 * 1024; // 100MB per request
-
 export const DocumentsTab: Component<{
   asset: AssetDetailFragment;
   /** Re-read the asset so the new documents list shows. */
@@ -44,9 +45,7 @@ export const DocumentsTab: Component<{
 
   const onUpload = async (files: File[]) => {
     setErrorMessage(undefined);
-    // A batch at/over 100MB is refused whole before anything is sent.
-    const total = files.reduce((sum, file) => sum + file.size, 0);
-    if (total >= MAX_BATCH_BYTES) {
+    if (batchTooLarge(files)) {
       setErrorMessage(
         t('error.upload-too-large', {
           maxSize: formatFileSize(MAX_BATCH_BYTES),
@@ -70,24 +69,8 @@ export const DocumentsTab: Component<{
     else setErrorMessage(result.message);
   };
 
-  // Per-file rejections: each unacceptable file named with its reason;
-  // acceptable files still upload (UploadZone hands them on separately).
-  const onRejected = (rejections: FileRejection<File>[]) => {
-    setErrorMessage(
-      rejections
-        .map(rejection =>
-          rejection.reason === 'size'
-            ? t('error.file-exceeds-size-limit', {
-                filename: rejection.file.name,
-                maxSize: formatFileSize(MAX_FILE_BYTES),
-              })
-            : t('error.file-type-not-supported', {
-                filename: rejection.file.name,
-              })
-        )
-        .join('\n')
-    );
-  };
+  const onRejected = (rejections: FileRejection<File>[]) =>
+    setErrorMessage(describeRejections(rejections));
 
   return (
     // The page is fillBody for its table tabs, so this content brings the

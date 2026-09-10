@@ -302,9 +302,13 @@ export const navConfig: NavItem[] = [
         path: 'manage/global-preferences',
       },
       {
+        // The same register as Cold chain › Equipment, unscoped by store — so
+        // it takes the same read permission. Without it the entry offers a
+        // real screen to a user whose first query the server refuses.
         labelKey: 'manage-equipment',
         path: 'manage/equipment',
         gate: 'vaccineModule',
+        permission: 'ASSET_QUERY',
       },
       { labelKey: 'campaigns', path: 'manage/campaigns' },
       {

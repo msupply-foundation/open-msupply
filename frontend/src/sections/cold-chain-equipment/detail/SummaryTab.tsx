@@ -16,7 +16,7 @@ import { MultiSelect } from '@/ui/elements/selectors/MultiSelect';
 import { LabelledValue } from '@/ui/elements/typography/LabelledValue';
 import { StatusChip } from '@/ui/elements/feedback/StatusChip';
 import { InfoTooltip } from '@/ui/elements/feedback/InfoTooltip';
-import { NameSearch, type NameOption } from '@/domain/name';
+import { NameSearch, toNameOption, type NameOption } from '@/domain/name';
 import { StoreSearch, type StoreOption } from '@/domain/store';
 import { fetchLocations } from '@/domain/location';
 import { ABSENT, statusColour, statusLabelKey } from '../equipment';
@@ -47,7 +47,12 @@ export interface SummaryTabProps {
   disabled: boolean;
 }
 
-type LocationOption = { id: string; code: string; name: string };
+type LocationOption = {
+  id: string;
+  code: string;
+  name: string;
+  locationType?: { name: string } | null;
+};
 
 export const SummaryTab: Component<SummaryTabProps> = props => {
   // Only a server administrator may override a scan lock (AC-B5).
@@ -97,11 +102,43 @@ export const SummaryTab: Component<SummaryTabProps> = props => {
     options().filter(option => props.form.locationIds?.includes(option.id));
 
   // `<code> (<location type>)`, or the code alone where it has none — the
-  // option's own composition, not this vertical's copy.
-  const optionLabel = (option: LocationOption) => option.code;
+  // option's own composition, not this vertical's copy. The type is what
+  // distinguishes the places: a code like `+5°C` names a temperature, not
+  // whether the user is choosing a fridge shelf or a cold room.
+  const optionLabel = (option: LocationOption) =>
+    option.locationType
+      ? `${option.code} (${option.locationType.name})`
+      : option.code;
 
-  const [donor, setDonor] = createSignal<NameOption | undefined>();
-  const [store, setStore] = createSignal<StoreOption | undefined>();
+  /*
+   * The two party lookups show what the DRAFT holds, not what was last picked
+   * in this session. The draft carries the id; the label comes from whichever
+   * source knows it — the option the user just picked, or the asset's own
+   * record, which the detail fragment selects in the picker's option shape for
+   * exactly this. Seeded from the asset alone, a pick would not show; seeded
+   * from the pick alone, an asset opened with a donor already recorded would
+   * render blank and read as having none.
+   */
+  const [donorPick, setDonorPick] = createSignal<NameOption | undefined>();
+  const [storePick, setStorePick] = createSignal<StoreOption | undefined>();
+
+  const donor = (): NameOption | undefined => {
+    const id = props.form.donorNameId;
+    if (!id) return undefined;
+    const picked = donorPick();
+    if (picked?.id === id) return picked;
+    const own = props.asset.donor;
+    return own?.id === id ? toNameOption(own) : undefined;
+  };
+
+  const store = (): StoreOption | undefined => {
+    const id = props.form.storeId;
+    if (!id) return undefined;
+    const picked = storePick();
+    if (picked?.id === id) return picked;
+    const own = props.asset.store;
+    return own?.id === id ? own : undefined;
+  };
 
   const status = () => props.asset.statusLog?.status;
 
@@ -119,7 +156,7 @@ export const SummaryTab: Component<SummaryTabProps> = props => {
                 disabled={props.disabled}
                 selected={store()}
                 onSelect={picked => {
-                  setStore(picked ?? undefined);
+                  setStorePick(picked ?? undefined);
                   props.onChange({ storeId: picked?.id ?? '' });
                 }}
               />
@@ -276,7 +313,7 @@ export const SummaryTab: Component<SummaryTabProps> = props => {
               disabled={props.disabled}
               selected={donor()}
               onSelect={picked => {
-                setDonor(picked ?? undefined);
+                setDonorPick(picked ?? undefined);
                 props.onChange({ donorNameId: picked?.id ?? '' });
               }}
             />

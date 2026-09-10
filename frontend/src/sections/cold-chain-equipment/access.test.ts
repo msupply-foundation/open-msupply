@@ -54,12 +54,15 @@ describe('the destination declares both of its gates', () => {
     expect(entry?.permission).toBe('ASSET_QUERY');
   });
 
-  it('names the second destination under Manage, behind the same capability', () => {
+  it('names the second destination under Manage, behind BOTH gates', () => {
     // The two are the same screens; only the store scope differs (rules › the
-    // two destinations).
+    // two destinations). So the read permission is the same too — a Manage
+    // entry gated on the capability alone offers the register to a user whose
+    // very first query the server refuses.
     const section = navConfig.find(item => item.path === 'manage');
     const entry = section?.children?.find(child => child.path === MANAGE);
     expect(entry?.gate).toBe('vaccineModule');
+    expect(entry?.permission).toBe('ASSET_QUERY');
   });
 });
 
@@ -86,6 +89,20 @@ describe('the vaccine module gates the whole Cold chain section', () => {
   it('withholds the destination from a store without it, permission or not', () => {
     state.permissions = new Set(['ASSET_QUERY']);
     expect(offeredPaths()).not.toContain(COLD_CHAIN);
+  });
+});
+
+describe('AC-G1 the second destination is withheld without the permission too', () => {
+  it('withholds it from a central-server user who lacks the read permission', () => {
+    state.central = true;
+    state.vaccineModule = true;
+    expect(offeredPaths()).not.toContain(MANAGE);
+  });
+
+  it('refuses the URL rather than redirecting', () => {
+    state.central = true;
+    state.vaccineModule = true;
+    expect(routeAccess(MANAGE)).toEqual({ kind: 'denied' });
   });
 });
 
