@@ -125,6 +125,7 @@ Five changes reaching past this vertical, each additive:
 
 - **`Dialog`'s body sets a fixed `--field-row-label`.** The var hook already existed in `FieldRow` for exactly this; the side and inset panels use it and a dialog did not, so every modal in the app was ragged. Affects every dialog that stacks `FieldRow`s — all of them for the better; `labelWidth="auto"` rows do not read the var and are untouched.
 - **`FieldRow` gains `align`**, default `center` (unchanged). `first-line` baseline-aligns the label with a multi-line control's first line of text.
+- **`DetailCard` gains `surface`**, default `raised` (unchanged). `bordered` trades the shadow for a hairline, for a long uniform run of cards; the two existing consumers keep the raised surface.
 - **`Timeline` / `TimelineItem` is a new shared component** (`ui/elements/display`) filling the new [record timeline](../../../spec/ui-standards/components.md#detail-views) role — a record's history as events on a rail. Nothing else consumes it yet; the activity-log panel is the obvious next one.
 
 
