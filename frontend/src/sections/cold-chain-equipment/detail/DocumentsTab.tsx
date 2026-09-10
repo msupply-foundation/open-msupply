@@ -4,6 +4,8 @@ import { DocumentUploadPanel } from '@/ui/elements/display/DocumentUploadPanel';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { Stack } from '@/ui/layout/Stack/Stack';
 import { ContentContainer } from '@/ui/layout/ContentContainer/ContentContainer';
+import { FormColumns } from '@/ui/layout/Form/FormColumns';
+import { FormColumn } from '@/ui/layout/Form/FormColumn';
 import type { FileRejection } from '@/ui/elements/inputs/uploadFiles';
 import {
   deleteSyncFile,
@@ -12,17 +14,18 @@ import {
 } from '@/domain/syncFiles';
 import type { AssetDetailFragment } from '../equipment.generated';
 
-// S2.4 — the Documents tab (ui-surface S2.4): the shared record-documents
-// panel over the sync-file REST store, keyed to the "asset" table by the
-// asset's id.
+// S2.4 — the Documents tab (ui-surface S2.4): two halves side by side.
 //
-// The tab's catalogue half — a list of the MODEL's own documents — is
-// deliberately absent: it can never hold anything. The reference app renders it
-// with a hardcoded empty list, and `AssetCatalogueItemNode` exposes no
-// documents field for it to read (rules › documents, AC-D4, contract ⚠️ wire
-// trap). Building a permanently-empty panel would be building the bug's
-// furniture; the behaviour it produces — no catalogue documents, ever — is
-// unchanged.
+// The trailing half is the record's own paperwork — the shared
+// record-documents panel over the sync-file REST store, keyed to the "asset"
+// table by the asset's id.
+//
+// The leading half is the CATALOGUE's documents: the model's manual, its
+// specification sheet. It is always empty, and specified that way (AC-D4) —
+// `AssetCatalogueItemNode` exposes no documents field, so there is nothing for
+// it to read (contract ⚠️ wire trap). It is still rendered: the half tells a
+// user where a model's paperwork would appear and that this model has none,
+// which a missing half does not.
 const TABLE_NAME = 'asset';
 
 // Accepted types: PDF/DOCX/XLSX/CSV/TXT/ODT/ODS/JPEG/PNG/WEBP, matched on
@@ -93,20 +96,32 @@ export const DocumentsTab: Component<{
         <Show when={errorMessage()}>
           {message => <Alert severity="error">{message()}</Alert>}
         </Show>
-        <DocumentUploadPanel
-          documents={props.asset.documents.nodes.map(document => ({
-            id: document.id,
-            fileName: document.fileName,
-            createdDatetime: document.createdDatetime,
-            totalBytes: document.totalBytes,
-            url: syncFileUrl(TABLE_NAME, props.asset.id, document.id),
-          }))}
-          accept={ACCEPT}
-          maxSize={MAX_FILE_BYTES}
-          onUpload={files => void onUpload(files)}
-          onDelete={document => void onDelete(document)}
-          onRejected={onRejected}
-        />
+        <FormColumns>
+          <FormColumn>
+            {/* The catalogue half — list only, no upload zone: a model's
+                documents are the catalogue's to publish, not this store's. */}
+            <DocumentUploadPanel
+              documents={[]}
+              listHeading={t('heading.download-catalogue-documents')}
+            />
+          </FormColumn>
+          <FormColumn>
+            <DocumentUploadPanel
+              documents={props.asset.documents.nodes.map(document => ({
+                id: document.id,
+                fileName: document.fileName,
+                createdDatetime: document.createdDatetime,
+                totalBytes: document.totalBytes,
+                url: syncFileUrl(TABLE_NAME, props.asset.id, document.id),
+              }))}
+              accept={ACCEPT}
+              maxSize={MAX_FILE_BYTES}
+              onUpload={files => void onUpload(files)}
+              onDelete={document => void onDelete(document)}
+              onRejected={onRejected}
+            />
+          </FormColumn>
+        </FormColumns>
       </Stack>
     </ContentContainer>
   );
