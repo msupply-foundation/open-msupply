@@ -73,6 +73,9 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     private static String chosenHardwareId = "";
     private static int chosenPort;
     private static boolean chosenIsLocal;
+    // The same choice in the shape connectedServer() has always answered with
+    // — see there for why.
+    private static JSObject chosenServerData;
 
     static void chosenServer(String url, String origin, String hardwareId, int port, boolean isLocal) {
         chosenUrl = url;
@@ -80,6 +83,26 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         chosenHardwareId = hardwareId;
         chosenPort = port;
         chosenIsLocal = isLocal;
+        chosenServerData = serverData(origin, hardwareId, port, isLocal);
+    }
+
+    /** The chosen server as a FrontEndHost's data, built from what the page
+     * stated. Only the fields the answer is used for: the old front end
+     * displays the address (frontEndHostUrl) and keys nothing else off it. */
+    private static JSObject serverData(String origin, String hardwareId, int port, boolean isLocal) {
+        JSObject data = new JSObject();
+        try {
+            URL parsed = new URL(origin);
+            data.put("protocol", parsed.getProtocol());
+            data.put("ip", parsed.getHost());
+        } catch (Exception e) {
+            return null;
+        }
+        data.put("port", port);
+        data.put("clientVersion", "");
+        data.put("hardwareId", hardwareId);
+        data.put("isLocal", isLocal);
+        return data;
     }
 
     /** The exact URL the discovery page navigated to, or null if it has not.
@@ -438,9 +461,25 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
         call.resolve(result);
     }
 
+    /**
+     * Which server this WebView is on, for whichever front end is asking.
+     *
+     * The old front end asks so it can show the address and offer "change
+     * server" beside it (host/src/components/SiteInfo.tsx renders that row
+     * only when this answers). It used to be populated only by the fused
+     * connectToServer below — which the discovery page never calls, since it
+     * drives probe -> record -> navigate itself. So an old front end reached
+     * THROUGH the page had no way back to discovery at all: no row, and
+     * nothing else on its login screen offers one. Answer from the page's
+     * choice when the fused path has not run.
+     */
     @PluginMethod()
     public void connectedServer(PluginCall call) {
-        call.resolve(connectedServer == null ? null : connectedServer.data);
+        if (connectedServer != null) {
+            call.resolve(connectedServer.data);
+            return;
+        }
+        call.resolve(chosenServerData);
     }
 
     private void onConnectToServer(FrontEndHost server) {
