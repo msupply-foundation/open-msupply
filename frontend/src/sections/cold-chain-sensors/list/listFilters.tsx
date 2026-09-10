@@ -18,6 +18,8 @@ import type { SensorUserFilter } from './listState';
  * key and this map stops compiling until we decide expose-or-dismiss (the
  * reference vertical's pattern).
  *
+ * Anchors: spec/cold-chain-sensors/cases/OMS-REG-CCE-03 — `.n` below.
+ *
  * Built once at module load: a stable const, so FilterBar's <For> never
  * remounts a chip on a filter edit (kdd/solid-reactivity-pitfalls § no
  * remounts). Labels are ACCESSORS read in FilterBar's JSX, so they
@@ -36,7 +38,7 @@ const FILTERS: Filter<SensorUserFilter>[] = constructFilters<SensorUserFilter>({
         // `like`, never `equalTo`: the filter matches the STORED serial, which
         // still carries the manufacturer the screen strips, so an exact match
         // on the serial as displayed finds nothing (contract ⚠️ wire trap,
-        // AC-L6/AC-L11). Blank box → null, never { like: '' } — an empty
+        // .17). Blank box → null, never { like: '' } — an empty
         // `like` would wrongly match everything.
         onInput={value =>
           props.setPartialFilter({ serial: value ? { like: value } : null })
@@ -52,7 +54,7 @@ const FILTERS: Filter<SensorUserFilter>[] = constructFilters<SensorUserFilter>({
         testId={props.testId}
         placeholder={t('placeholder.search')}
         // Matches the location's CODE, which is also what the Location column
-        // shows (AC-L5).
+        // shows (.16).
         value={props.filter().locationCode?.like ?? ''}
         onInput={value =>
           props.setPartialFilter({
@@ -77,7 +79,7 @@ const FILTERS: Filter<SensorUserFilter>[] = constructFilters<SensorUserFilter>({
           })),
         ]}
         // Exactly one kind, or none — the empty choice clears the filter rather
-        // than sending `{ equalTo: '' }` (AC-L4).
+        // than sending `{ equalTo: '' }` (.15).
         onChange={value =>
           props.setPartialFilter({ type: value ? { equalTo: value } : null })
         }
@@ -88,7 +90,7 @@ const FILTERS: Filter<SensorUserFilter>[] = constructFilters<SensorUserFilter>({
   // ─ dismissed (not user-facing) ───────────────────────────────────────────
   // The list read honours a name filter, but the screen offers no control that
   // sets one — captured as-is from the current app (rules › reading the list,
-  // AC-L3). Dismissed here rather than exposed, so the built screen matches the
+  // rules § reading the list). Dismissed here rather than exposed, so the built screen matches the
   // one the spec describes.
   name: null,
 });

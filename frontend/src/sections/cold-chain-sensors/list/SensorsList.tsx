@@ -61,27 +61,29 @@ import { SensorEditModal } from './SensorEditModal';
 // list screen: data + URL-backed filter/sort/pagination state from the
 // vertical, UI from the library components, no page CSS.
 //
+// Anchors: spec/cold-chain-sensors/cases/OMS-REG-CCE-03 — `.n` below.
+//
 // Deliberately absent (ui-surface S1 § layout): page actions — devices register
 // themselves, so there is nothing to create here and nothing to export; row
 // selection and bulk actions — there is nothing to do to sensors in bulk, and
-// no delete exists anywhere in the schema (AC-A3). A row click opens the
+// no delete exists anywhere in the schema (.41). A row click opens the
 // details modal (S2); there is no detail screen.
 
 // Sortable columns are typed to the generated sort-field union — only serial
-// and name exist (AC-L2; kdd/type-safety). SORTABLE_KEYS is the same set as a
+// and name exist (.3/.4; kdd/type-safety). SORTABLE_KEYS is the same set as a
 // value, so the column definitions below and the test read one list.
 type SortKey = SensorSortKey;
 
 /**
  * The arrival hand-off (rules › arrival from an import): the fridge-tag import
  * navigates here with the newly registered sensor's id in `edit`, so the user
- * lands with its editor already open, ready to name and place it (AC-I1).
+ * lands with its editor already open, ready to name and place it (.49).
  */
 const EDIT_PARAM = 'edit';
 
 const SensorsList: Component = () => {
   // storeId is guaranteed present: this section renders only inside
-  // StoreGuardLayout. The query is store-scoped server-side by it (AC-S1), and
+  // StoreGuardLayout. The query is store-scoped server-side by it (.1), and
   // the destination's own gates — the vaccine module, then SENSOR_QUERY — are
   // applied before this screen by the router (spec/navigation); this vertical
   // renders no permission state of its own.
@@ -138,7 +140,7 @@ const SensorsList: Component = () => {
   });
 
   /*
-   * The hand-off, consumed ONCE (AC-I2). The id is cleared from the URL as the
+   * The hand-off, consumed ONCE (.50). The id is cleared from the URL as the
    * modal opens, so re-reading, resharing or restoring the address does not
    * re-open it — and closing the modal cannot re-trigger this, because the
    * parameter it reads is already gone.
@@ -180,7 +182,7 @@ const SensorsList: Component = () => {
     },
     {
       // In service or retired. The WORD carries the state — a sensor is never
-      // deleted, so this column is how a retired one reads (AC-A1/AC-A2).
+      // deleted, so this column is how a retired one reads (.39/.40).
       c: {
         accessor: row =>
           row.isActive ? t('label.active') : t('label.inactive'),
@@ -192,7 +194,7 @@ const SensorsList: Component = () => {
     },
     {
       // The equipment recorded AT the sensor's location — empty when it has no
-      // location, because equipment hangs off the location (AC-D5/AC-D6).
+      // location, because equipment hangs off the location (.46/.47).
       c: { accessor: equipmentNumbers, id: 'cce' },
       header: () => t('label.cce'),
       ...getTextCell(),
@@ -207,7 +209,7 @@ const SensorsList: Component = () => {
     },
     {
       // Identity part only; the server's strip leaves a trailing space
-      // (AC-V3, contract ⚠️ wire trap).
+      // (.38, contract ⚠️ wire trap).
       c: { accessor: row => displaySerial(row.serial), id: 'serial' },
       sortKey: SORTABLE_KEYS[1],
       header: () => t('label.serial'),
@@ -230,7 +232,7 @@ const SensorsList: Component = () => {
     },
     {
       // Degrees Celsius, two decimals, formatted for the locale. Dash when the
-      // sensor has never reported (AC-D1/AC-D2).
+      // sensor has never reported (.42/.43).
       c: {
         accessor: row => {
           const temperature = latestTemperature(row);
@@ -275,7 +277,7 @@ const SensorsList: Component = () => {
       size: remToPx(7),
     },
     {
-      // The ONGOING breach only — empty when nothing is ongoing (AC-D4). The
+      // The ONGOING breach only — empty when nothing is ongoing (.45). The
       // toned marker distinguishes hot from cold and carries the breach's full
       // name as its accessible label, so the tone is never the only carrier;
       // the visible word is the duration half.
