@@ -1,4 +1,10 @@
-import { createEffect, createResource, createSignal, Show } from 'solid-js';
+import {
+  createEffect,
+  createResource,
+  createSignal,
+  Show,
+  untrack,
+} from 'solid-js';
 import type { Component } from 'solid-js';
 import { useLocation, useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch, reportPermissionDenied } from '@/api/graphql';
@@ -86,19 +92,34 @@ const EquipmentDetailView: Component = () => {
   const asset = (): AssetDetailFragment | undefined => gated(data);
   const central = () => isCentralServer();
 
-  // Seed the draft once the asset lands, and re-seed after a save re-reads it.
-  createEffect(() => {
-    const record = asset();
-    if (!record) return;
-    setForm(formFromAsset(record, params.storeId, central()));
-  });
-
   const dirty = () => {
     const record = asset();
     const draft = form();
     if (!record || !draft) return false;
     return !isUnchanged(draft, record, params.storeId, central());
   };
+
+  // Seed the draft once the asset lands, and re-seed on a re-read that has
+  // nothing to overwrite.
+  //
+  // A re-read is NOT always a save: recording a status entry and uploading a
+  // document both re-read the asset, and either can happen while the user has
+  // unsaved edits open on another tab. Re-seeding there would discard them
+  // silently — and `dirty()` would go false with them, so even the leave guard
+  // would have nothing left to warn about. So an unsaved draft for the SAME
+  // asset survives the re-read; a different asset always re-seeds, and after a
+  // save the draft matches the record and the seed is a no-op anyway.
+  let seededId: string | undefined;
+  createEffect(() => {
+    const record = asset();
+    if (!record) return;
+    // `untrack`: whether the draft is dirty decides nothing about WHEN this
+    // effect runs — tracked, it would make the effect a listener of every
+    // keystroke in the form.
+    if (record.id === seededId && untrack(dirty)) return;
+    seededId = record.id;
+    setForm(formFromAsset(record, params.storeId, central()));
+  });
 
   // Leaving with unsaved changes raises the app-wide discard prompt (AC-E4) —
   // a route change, a tab switch, browser back, or a reload. Confirming
@@ -221,9 +242,16 @@ const EquipmentDetailView: Component = () => {
                       isColdRoom={isColdRoom(record().assetCategory?.id)}
                       onRecorded={() => void refetch()}
                     />
+                    {/* Disabled, and saying why: the label endpoint needs a
+                        configured label printer, which is a setting the user
+                        CAN change — so the control stays visible and explains
+                        itself rather than dying silently under a click
+                        (ui-standards/controls § blocked affordances). */}
                     <Button
                       variant="secondary"
                       icon={<PrinterIcon />}
+                      disabled
+                      title={t('error.label-printer-not-configured')}
                       data-testid="print-label-button"
                     >
                       {t('button.print-asset-label')}

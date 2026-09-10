@@ -33,6 +33,7 @@ export {
   localisedDate,
   localisedTime,
   localisedDateTime,
+  utcDateTime,
   customDate,
   localisedTimeAgo,
   getDisplayAge,

@@ -1,4 +1,4 @@
-import { localisedDate, localisedDateTime, t } from '@/intl';
+import { localisedDate, t, utcDateTime } from '@/intl';
 import { toCsv } from '@/domain/reportFiles';
 import { statusLabelKey } from '../equipment';
 import { parseProperties } from '../detail/assetEdit';
@@ -75,8 +75,10 @@ export const equipmentToCsv = (
       status ? t(statusLabelKey(status)) : '',
       row.needsReplacement ? t('messages.yes') : t('messages.no'),
       row.notes ?? '',
-      localisedDateTime(row.createdDatetime),
-      localisedDateTime(row.modifiedDatetime),
+      // These two columns are HEADED "(UTC)", so they carry UTC: a localised
+      // time under that header is wrong for every reader outside it.
+      utcDateTime(row.createdDatetime),
+      utcDateTime(row.modifiedDatetime),
       // A property value may be a boolean or a number; the CSV writer takes
       // strings and numbers, so a flag renders as its own text.
       ...keys.map(key => {

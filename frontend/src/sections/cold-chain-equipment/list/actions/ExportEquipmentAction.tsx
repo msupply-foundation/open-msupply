@@ -4,7 +4,10 @@ import { graphqlFetch } from '@/api/graphql';
 import { gated } from '@/api/gated';
 import { ListExportAction } from '@/domain/reportFiles/ListExportAction';
 import { CCE_CLASS_ID } from '../../equipment';
-import { AssetsExport } from '../../equipment.generated';
+import {
+  AssetsExport,
+  type AssetsExportVariables,
+} from '../../equipment.generated';
 import { AssetPropertiesList } from '../../catalogue.generated';
 import { equipmentToCsv } from '../equipmentToCsv';
 
@@ -22,6 +25,8 @@ import { equipmentToCsv } from '../equipmentToCsv';
 export const ExportEquipmentAction: Component<{
   storeId: string;
   isCentral: boolean;
+  /** The list's active sort — the export carries it (contract › export). */
+  sort: AssetsExportVariables['sort'];
 }> = props => {
   // The specification columns the file carries — the property catalogue's keys.
   // Read once, non-suspending: the export is an interaction on an already-open
@@ -37,7 +42,10 @@ export const ExportEquipmentAction: Component<{
     const result = await graphqlFetch(AssetsExport, {
       storeId: props.storeId,
       filter: { classId: { equalTo: CCE_CLASS_ID } },
-      sort: [{ key: 'installationDate', desc: false }],
+      // The list's own sort, not a fixed one: the export drops the screen's
+      // filters (the wire trap above) but it does carry its ORDER, so the file
+      // reads in the order the user arranged the register (contract › export).
+      sort: props.sort,
     });
     if (result.kind !== 'success') return null;
     const nodes = result.data.assets.nodes;

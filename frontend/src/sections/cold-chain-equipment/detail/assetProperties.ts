@@ -95,7 +95,7 @@ export const propertyRows = (
  * none (in which case the row is plain text).
  */
 export const allowedValues = (
-  definition: PropertyDefinition
+  definition: Pick<PropertyDefinition, 'allowedValues'>
 ): string[] | undefined => {
   const raw = definition.allowedValues?.trim();
   if (!raw) return undefined;

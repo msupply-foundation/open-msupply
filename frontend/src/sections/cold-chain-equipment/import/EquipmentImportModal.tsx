@@ -11,8 +11,13 @@ import { Text } from '@/ui/elements/typography/Text';
 import { Stack } from '@/ui/layout/Stack/Stack';
 import { ProgressList } from '@/ui/sync/ProgressList';
 import { UploadZone } from '@/ui/elements/inputs/UploadZone';
+import { TextField } from '@/ui/elements/inputs/TextField';
 import { DownloadIcon, ExportIcon } from '@/ui/icons';
-import { DataTable, type Column } from '@/ui/elements/table/DataTable';
+import {
+  DataTable,
+  type Column,
+  type SortState,
+} from '@/ui/elements/table/DataTable';
 import { getFlagCell, getTextCell } from '@/ui/elements/table/tableHelpers';
 import { remToPx } from '@/ui/utils/rem';
 import { CCE_CLASS_ID, statusLabelKey } from '../equipment';
@@ -35,7 +40,10 @@ import {
   isCsvFileName,
   parseImportFile,
   rowToInsertInput,
+  compareReviewRows,
+  reviewRowText,
   type ImportRow,
+  type ReviewSortKey,
 } from './importParse';
 
 /*
@@ -183,9 +191,19 @@ export const EquipmentImportModal: Component<
             { background: true, returnGraphqlErrors: true }
           );
           if (inserted.kind !== 'success') {
+            // The server's own text, not a generic stand-in: the failed-rows
+            // review and its CSV exist so a user can see WHY each row was
+            // refused — AssetNumberAlreadyExists reads differently from
+            // InvalidMappingDate, and only the message tells them apart
+            // (AC-I10). Anything without a message (a connection failure) is
+            // the one case that falls back.
             return {
               ...row,
-              errors: [t('messages.unknown-error')],
+              errors: [
+                inserted.kind === 'graphqlError' && inserted.message
+                  ? inserted.message
+                  : t('messages.unknown-error'),
+              ],
             } satisfies ImportRow;
           }
           // The opening status entry, at the status the row named.
@@ -254,86 +272,124 @@ export const EquipmentImportModal: Component<
     ];
   };
 
+  /*
+   * The review table sorts and filters IN PLACE (ui-surface S4): the whole file
+   * is already parsed and in memory, so there is no server to ask and no page
+   * to turn. A user scanning a few hundred rows for the ones that failed needs
+   * to be able to order them and narrow them; without it the only way through
+   * a long file is to scroll it.
+   */
+  const [sort, setSort] = createSignal<SortState<ReviewSortKey>>({
+    key: 'assetNumber',
+    desc: false,
+  });
+  const [search, setSearch] = createSignal('');
+
+  const visibleRows = createMemo(() => {
+    const needle = search().trim().toLowerCase();
+    const matched = needle
+      ? rows().filter(row => reviewRowText(row).includes(needle))
+      : rows();
+    const { key, desc } = sort();
+    // A copy: `rows()` is the parsed file, and sorting it in place would
+    // reorder what the import iterates and what the line numbers refer to.
+    return [...matched].sort((a, b) => {
+      const compared = compareReviewRows(a, b, key);
+      return desc ? -compared : compared;
+    });
+  });
+
   // One column per specification key the parsed rows actually carry — the file
   // decides which, so the review table follows it rather than the catalogue.
   const propertyKeys = createMemo(() => [
     ...new Set(rows().flatMap(row => Object.keys(row.properties))),
   ]);
 
-  const columns = (): Column<ImportRow, never>[] => [
+  const columns = (): Column<ImportRow, ReviewSortKey>[] => [
     ...(props.isCentral
       ? [
           {
             c: { key: 'storeCode' as const },
+            sortKey: 'storeCode',
             header: () => t('label.store'),
             ...getTextCell<ImportRow>(),
             size: remToPx(7),
-          } as Column<ImportRow, never>,
+          } as Column<ImportRow, ReviewSortKey>,
         ]
       : []),
     {
       c: { key: 'assetNumber' },
+      sortKey: 'assetNumber',
       header: () => t('label.asset-number'),
       ...getTextCell(),
       size: remToPx(8),
     },
     {
       c: { key: 'catalogueItemCode' },
+      sortKey: 'catalogueItemCode',
       header: () => t('label.catalogue-item-code'),
       ...getTextCell(),
       size: remToPx(10),
     },
     {
       c: { accessor: row => row.installationDate ?? '', id: 'installationDate' },
+      sortKey: 'installationDate',
       header: () => t('label.installation-date'),
       ...getTextCell(),
       size: remToPx(8),
     },
     {
       c: { accessor: row => row.replacementDate ?? '', id: 'replacementDate' },
+      sortKey: 'replacementDate',
       header: () => t('label.replacement-date'),
       ...getTextCell(),
       size: remToPx(8),
     },
     {
       c: { accessor: row => row.warrantyStart ?? '', id: 'warrantyStart' },
+      sortKey: 'warrantyStart',
       header: () => t('label.warranty-start-date'),
       ...getTextCell(),
       size: remToPx(8),
     },
     {
       c: { accessor: row => row.warrantyEnd ?? '', id: 'warrantyEnd' },
+      sortKey: 'warrantyEnd',
       header: () => t('label.warranty-end-date'),
       ...getTextCell(),
       size: remToPx(8),
     },
     {
       c: { key: 'serialNumber' },
+      sortKey: 'serialNumber',
       header: () => t('label.serial'),
       ...getTextCell(),
       size: remToPx(8),
     },
     {
       c: { accessor: row => t(statusLabelKey(row.status)), id: 'status' },
+      sortKey: 'status',
       header: () => t('label.functional-status'),
       ...getTextCell(),
       size: remToPx(10),
     },
     {
       c: { key: 'needsReplacement' },
+      sortKey: 'needsReplacement',
       header: () => t('label.needs-replacement'),
       ...getFlagCell<ImportRow>(t('label.needs-replacement')),
       size: remToPx(8),
     },
     {
       c: { key: 'notes' },
+      sortKey: 'notes',
       header: () => t('label.asset-notes'),
       ...getTextCell(),
       size: remToPx(10),
     },
     // One column per specification key the file carries, headed by the key.
     ...propertyKeys().map(
-      (key): Column<ImportRow, never> => ({
+      (key): Column<ImportRow, ReviewSortKey> => ({
         c: {
           accessor: row => String(row.properties[key] ?? ''),
           id: `property-${key}`,
@@ -351,7 +407,7 @@ export const EquipmentImportModal: Component<
             header: () => t('label.warning-message'),
             ...getTextCell<ImportRow>(),
             size: remToPx(14),
-          } as Column<ImportRow, never>,
+          } as Column<ImportRow, ReviewSortKey>,
         ]
       : []),
     ...(hasErrors(rows())
@@ -361,7 +417,7 @@ export const EquipmentImportModal: Component<
             header: () => t('label.error-message'),
             ...getTextCell<ImportRow>(),
             size: remToPx(14),
-          } as Column<ImportRow, never>,
+          } as Column<ImportRow, ReviewSortKey>,
         ]
       : []),
   ];
@@ -449,6 +505,11 @@ export const EquipmentImportModal: Component<
               multiple={false}
               inputTestId="import-file-input"
               onFiles={files => files[0] && void onFile(files[0])}
+              // A file the accept list refuses reaches onRejected and NOT
+              // onFiles, so without this a wrong file type is swallowed with
+              // nothing shown — the name check inside onFile never sees it
+              // (AC-I1).
+              onRejected={() => setUploadError(t('messages.invalid-file'))}
             />
             <Text>
               {t('messages.template-download-text')}
@@ -473,8 +534,19 @@ export const EquipmentImportModal: Component<
           </Show>
           <DataTable
             columns={columns()}
-            rows={rows()}
+            rows={visibleRows()}
             rowKey={row => row.id}
+            sort={sort()}
+            onSort={(key, desc) => setSort({ key, desc })}
+            filters={
+              <TextField
+                label={t('label.search')}
+                width="short"
+                data-testid="import-review-search"
+                value={search()}
+                onInput={e => setSearch(e.currentTarget.value)}
+              />
+            }
             emptyMessage={t('error.no-items-to-display')}
           />
         </Show>

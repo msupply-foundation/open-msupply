@@ -8,7 +8,11 @@ import type { PropertyDefinition } from '../detail/assetProperties';
 import {
   buildTemplateCsv,
   canImport,
+  compareReviewRows,
   failedRowsToCsv,
+  parsePropertyCell,
+  reviewRowText,
+  type ImportRow,
   hasErrors,
   hasWarnings,
   isCsvFileName,
@@ -238,6 +242,61 @@ describe('specification columns', () => {
   });
 });
 
+describe('a property cell is read as the type its definition declares', () => {
+  const def = (
+    valueType: string,
+    allowed: string | null = null
+  ): Parameters<typeof parsePropertyCell>[1] =>
+    ({ valueType, allowedValues: allowed }) as Parameters<
+      typeof parsePropertyCell
+    >[1];
+
+  it('reads a boolean as a boolean, not the word', () => {
+    // The Details tab's checkbox tests for `true`; the string renders it
+    // unchecked however the file spelled it.
+    expect(parsePropertyCell('true', def('BOOLEAN'))).toBe(true);
+    expect(parsePropertyCell('Yes', def('BOOLEAN'))).toBe(true);
+    expect(parsePropertyCell('no', def('BOOLEAN'))).toBe(false);
+    expect(parsePropertyCell('maybe', def('BOOLEAN'))).toBeUndefined();
+  });
+
+  it('reads numbers as numbers, whole ones for an integer', () => {
+    expect(parsePropertyCell('12.7', def('FLOAT'))).toBe(12.7);
+    expect(parsePropertyCell('12.7', def('INTEGER'))).toBe(12);
+    expect(parsePropertyCell('-4', def('FLOAT'))).toBe(-4);
+    expect(parsePropertyCell('lots', def('INTEGER'))).toBeUndefined();
+  });
+
+  it('holds a fixed-list property to its list, in the catalogue’s spelling', () => {
+    const zone = def('STRING', 'Frozen, Chilled');
+    expect(parsePropertyCell('chilled', zone)).toBe('Chilled');
+    expect(parsePropertyCell('Tepid', zone)).toBeUndefined();
+  });
+
+  it('leaves free text alone', () => {
+    expect(parsePropertyCell(' Danfoss ', def('STRING'))).toBe('Danfoss');
+  });
+
+  it('warns and drops an unreadable cell rather than failing the row', () => {
+    const body = ['A-1', 'E003/059', '', '', '', '', '', '', '', '', 'nowhere'];
+    const source = `${H},Climate zone\n${body.join(',')}\n`;
+    const [row] = parseImportFile(
+      source,
+      lookup({
+        properties: [
+          {
+            ...property('zone', 'Climate zone'),
+            allowedValues: 'Frozen, Chilled',
+          } as PropertyDefinition,
+        ],
+      })
+    );
+    expect(row?.errors).toEqual([]);
+    expect(row?.warnings).toContain('warning.field-not-parsed');
+    expect(row?.properties.zone).toBeUndefined();
+  });
+});
+
 describe('the store column', () => {
   const centralHeader = ['label.store', H].join(',');
 
@@ -329,6 +388,28 @@ describe('AC-I10 the failed rows export', () => {
     const rows = parseImportFile(`${H}\n,NOPE,,,,,,,,\n`, lookup());
     expect(failedRowsToCsv(rows, [], false)).toContain('2');
   });
+
+  /*
+   * The file exists to be corrected and re-uploaded, so what it writes must be
+   * what the import reads. A cell written in a shape the parser rejects loses
+   * data the user already had right — silently, because a bad date is a soft
+   * warning rather than a refusal.
+   */
+  it('round-trips through the import: the dates and the flag survive', () => {
+    const source = `${H}\nA-1,E003/059,05/10/2024,,,,SER-1,label.status-functioning,true,\n`;
+    const [first] = parseImportFile(source, lookup());
+    expect(first?.installationDate).toBe('2024-10-05');
+    expect(first?.needsReplacement).toBe(true);
+
+    // Straight back out and in again — no hand-editing in between.
+    const [round] = parseImportFile(
+      failedRowsToCsv([first as ImportRow], [], false),
+      lookup()
+    );
+    expect(round?.installationDate).toBe('2024-10-05');
+    expect(round?.needsReplacement).toBe(true);
+    expect(round?.assetNumber).toBe('A-1');
+  });
 });
 
 describe('AC-I11 the template', () => {
@@ -359,5 +440,41 @@ describe('AC-I11 the template', () => {
   it('round-trips: its own header parses back to one example row', () => {
     const rows = parseImportFile(buildTemplateCsv([], false), lookup());
     expect(rows).toHaveLength(1);
+  });
+});
+
+describe('the review table sorts and filters in place', () => {
+  const parse = (body: string) => parseImportFile(`${H}\n${body}`, lookup());
+
+  it('orders rows by a column, both ways', () => {
+    const rows = parse(
+      'B-2,E003/059,,,,,,,,\nA-1,E003/059,,,,,,,,\n'
+    );
+    const ascending = [...rows].sort((a, b) =>
+      compareReviewRows(a, b, 'assetNumber')
+    );
+    expect(ascending.map(row => row.assetNumber)).toEqual(['A-1', 'B-2']);
+    // Descending is the same comparison read backwards — the table negates it
+    // rather than keeping a second ordering.
+    expect(
+      [...ascending].reverse().map(row => row.assetNumber)
+    ).toEqual(['B-2', 'A-1']);
+  });
+
+  it('sorts the replacement flag set-last, so the marked rows group', () => {
+    const rows = parse(
+      'A-1,E003/059,,,,,,,true,\nB-2,E003/059,,,,,,,,\n'
+    );
+    const sorted = [...rows].sort((a, b) =>
+      compareReviewRows(a, b, 'needsReplacement')
+    );
+    expect(sorted.map(row => row.needsReplacement)).toEqual([false, true]);
+  });
+
+  it('searches every cell, including the reason a row was refused', () => {
+    const [row] = parse(',NOPE,,,,,,,,\n');
+    const text = reviewRowText(row as ImportRow);
+    expect(text).toContain('nope');
+    expect(text).toContain('error.code-no-match');
   });
 });

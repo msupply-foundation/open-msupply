@@ -126,17 +126,26 @@ export const CreateAssetModal: Component<CreateAssetModalProps> = props => {
     setSaving(true);
     setErrorKey(null);
     const assetId = generateUUID();
-    const inserted = await graphqlFetch(InsertAsset, {
-      storeId: props.storeId,
-      input: buildInsertInput(form(), assetId),
-    });
+    // `returnGraphqlErrors`: every declared error member is unreachable — the
+    // failure arrives as a TOP-LEVEL GraphQL error (contract ⚠️ wire trap), and
+    // the default path turns that into a bare `unexpectedError` whose message
+    // lives on the global signal rather than on the result. Opting in is what
+    // puts the server's text in reach, so the one case worth naming can be
+    // recognised at all — and it keeps the global modal from firing over this
+    // modal's own inline message (api/graphql § unexpectedError).
+    const inserted = await graphqlFetch(
+      InsertAsset,
+      {
+        storeId: props.storeId,
+        input: buildInsertInput(form(), assetId),
+      },
+      { returnGraphqlErrors: true }
+    );
     if (inserted.kind !== 'success') {
       setSaving(false);
-      // Every declared error member is unreachable — the failure arrives as a
-      // top-level GraphQL error (contract ⚠️ wire trap). The one case worth
-      // naming is recognised by its message, exactly as the reference app does.
       setErrorKey(
-        /AssetNumberAlreadyExists/.test(errorText(inserted))
+        inserted.kind === 'graphqlError' &&
+          /AssetNumberAlreadyExists/.test(inserted.message)
           ? 'error.cce-asset-number-already-used'
           : 'error.unable-to-create-cce'
       );
@@ -298,7 +307,3 @@ export const CreateAssetModal: Component<CreateAssetModalProps> = props => {
     </Dialog>
   );
 };
-
-/** The raw text of a failed fetch, for the one message worth recognising. */
-const errorText = (result: { kind: string; [key: string]: unknown }): string =>
-  JSON.stringify(result);

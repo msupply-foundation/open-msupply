@@ -79,12 +79,31 @@ export const DEFAULT_STATE: EquipmentListState = {
 };
 
 /**
- * A type chosen under a category that no longer contains it is cleared, rather
- * than left contradicting the category it sits beside (AC-L7).
+ * The interactive half of AC-L7: a type belongs to exactly one category, so
+ * changing the CATEGORY always invalidates a chosen type.
  *
- * `types` is the category's own type list; an empty list while the catalogue is
- * still loading MUST NOT clear the choice, or a page load would silently drop
- * a filter the URL carries.
+ * Decided from the two filters alone, with NO reference to the type list. The
+ * loaded list describes the category being LEFT — it is keyed on the filter
+ * that is only now changing — so asking it whether the new category contains
+ * the chosen type always answers yes, and the contradiction survives.
+ * {@link clearTypeOutsideCategory} covers the other half.
+ */
+export const clearTypeOnCategoryChange = (
+  previous: AssetUserFilter,
+  next: AssetUserFilter
+): AssetUserFilter => {
+  if (!next.typeId?.equalTo) return next;
+  if (previous.categoryId?.equalTo === next.categoryId?.equalTo) return next;
+  return { ...next, typeId: null };
+};
+
+/**
+ * The arriving half of AC-L7: a URL that already carries a type from another
+ * category never passes through {@link clearTypeOnCategoryChange}, so the
+ * contradiction is caught once the category's own type list lands.
+ *
+ * An empty list while the catalogue is still loading MUST NOT clear the choice,
+ * or a page load would silently drop a filter the URL carries.
  */
 export const clearTypeOutsideCategory = (
   filter: AssetUserFilter,
