@@ -743,6 +743,7 @@
   "filename.outstanding-purchase-order-lines": "outstanding-purchase-order-lines",
   "filename.patients": "patients",
   "filename.pol": "Purchase order lines upload template",
+  "filename.prescription-requests": "Prescriptions",
   "filename.prescriptions": "Dispensing",
   "filename.purchase-order": "purchase-order",
   "filename.purchase-order-line-failed-uploads": "Purchase order line failed uploads",
