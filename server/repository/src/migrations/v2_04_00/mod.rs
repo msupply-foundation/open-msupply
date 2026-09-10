@@ -75,6 +75,11 @@ async fn migration_2_04_00() {
     .await;
 
     // Run this migration
-    migrate(&connection, Some(version.clone()), MigrationConfig::default()).unwrap();
+    migrate(
+        &connection,
+        Some(version.clone()),
+        MigrationConfig::default(),
+    )
+    .unwrap();
     assert_eq!(get_database_version(&connection), version);
 }

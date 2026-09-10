@@ -1,8 +1,7 @@
 use crate::sync::translations::store::StoreTranslation;
 
 use super::{
-    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation,
-    ToSyncRecordTranslationType,
+    FkField, PullTranslateResult, PushTranslateResult, SyncTranslation, ToSyncRecordTranslationType,
 };
 use repository::{
     ChangelogRow, ChangelogTableName, PreferenceRow, PreferenceRowDelete, Row, StorageConnection,

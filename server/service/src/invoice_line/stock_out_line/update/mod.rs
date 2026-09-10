@@ -31,6 +31,9 @@ pub struct UpdateStockOutLine {
     pub vvm_status_id: Option<String>,
     pub received_number_of_packs: Option<NullableUpdate<f64>>,
     pub reason_option_id: Option<NullableUpdate<String>>,
+    /// `None` leaves the stored value alone; `Some(NullableUpdate { value:
+    /// None })` clears it.
+    pub transfer_comment: Option<NullableUpdate<String>>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -640,7 +643,9 @@ mod test {
             ..Default::default()
         };
 
-        InvoiceRowRepository::new(&connection).upsert_one(&earlier_stock_in_invoice).unwrap();
+        InvoiceRowRepository::new(&connection)
+            .upsert_one(&earlier_stock_in_invoice)
+            .unwrap();
 
         // Current invoice (1 minute ago)
         let datetime = chrono::Utc::now().naive_utc() - chrono::Duration::minutes(1);
@@ -658,7 +663,9 @@ mod test {
             ..Default::default()
         };
 
-        InvoiceRowRepository::new(&context.connection).upsert_one(&current_invoice).unwrap();
+        InvoiceRowRepository::new(&context.connection)
+            .upsert_one(&current_invoice)
+            .unwrap();
 
         // Create a stock line for the item
         let stock_line_id = "stock_line_id".to_string();
@@ -673,7 +680,9 @@ mod test {
             ..Default::default()
         };
 
-        StockLineRowRepository::new(&context.connection).upsert_one(&stock_line).unwrap();
+        StockLineRowRepository::new(&context.connection)
+            .upsert_one(&stock_line)
+            .unwrap();
 
         // Add the invoice lines (each invoice introduces 10 packs)
 
@@ -690,7 +699,9 @@ mod test {
             ..Default::default()
         };
 
-        InvoiceLineRowRepository::new(&context.connection).upsert_one(&invoice_line).unwrap();
+        InvoiceLineRowRepository::new(&context.connection)
+            .upsert_one(&invoice_line)
+            .unwrap();
 
         // Current invoice
         let invoice_line = InvoiceLineRow {
@@ -705,7 +716,9 @@ mod test {
             ..Default::default()
         };
 
-        InvoiceLineRowRepository::new(&context.connection).upsert_one(&invoice_line).unwrap();
+        InvoiceLineRowRepository::new(&context.connection)
+            .upsert_one(&invoice_line)
+            .unwrap();
 
         // Create a backdated prescription (2 days ago)
         let prescription_id = "prescription_id".to_string();
@@ -725,7 +738,9 @@ mod test {
             ..Default::default()
         };
 
-        InvoiceRowRepository::new(&context.connection).upsert_one(&prescription_invoice).unwrap();
+        InvoiceRowRepository::new(&context.connection)
+            .upsert_one(&prescription_invoice)
+            .unwrap();
 
         // Add a stock out line to the prescription (using half available stock)
         invoice_line_service
@@ -836,7 +851,9 @@ mod test {
             ..Default::default()
         };
 
-        InvoiceRowRepository::new(&context.connection).upsert_one(&prescription).unwrap();
+        InvoiceRowRepository::new(&context.connection)
+            .upsert_one(&prescription)
+            .unwrap();
 
         // insert a stock out line to the prescription
         let stock_out_line = InsertStockOutLine {
@@ -893,7 +910,9 @@ mod test {
             ..Default::default()
         };
 
-        InvoiceRowRepository::new(&context.connection).upsert_one(&outbound1).unwrap();
+        InvoiceRowRepository::new(&context.connection)
+            .upsert_one(&outbound1)
+            .unwrap();
 
         let stock_out_line = InsertStockOutLine {
             id: "outbound_invoice-1-1".to_string(),
@@ -927,7 +946,9 @@ mod test {
             ..Default::default()
         };
 
-        InvoiceRowRepository::new(&context.connection).upsert_one(&prescription1).unwrap();
+        InvoiceRowRepository::new(&context.connection)
+            .upsert_one(&prescription1)
+            .unwrap();
 
         let stock_out_line = InsertStockOutLine {
             id: "prescription_invoice-1-1".to_string(),
@@ -977,7 +998,9 @@ mod test {
             ..Default::default()
         };
 
-        InvoiceRowRepository::new(&context.connection).upsert_one(&prescription).unwrap();
+        InvoiceRowRepository::new(&context.connection)
+            .upsert_one(&prescription)
+            .unwrap();
 
         // insert a stock out line to the prescription
         let stock_out_line = InsertStockOutLine {

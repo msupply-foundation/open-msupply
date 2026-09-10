@@ -307,7 +307,11 @@ fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
         apply_string_filter!(query, their_reference, invoice::their_reference);
         apply_equal_filter!(query, requisition_id, invoice::requisition_id);
         apply_equal_filter!(query, purchase_order_id, invoice::purchase_order_id);
-        apply_equal_filter!(query, prescription_request_id, invoice::prescription_request_id);
+        apply_equal_filter!(
+            query,
+            prescription_request_id,
+            invoice::prescription_request_id
+        );
 
         if let Some(purchase_order_number) = purchase_order_number {
             let mut po_subquery = purchase_order::table

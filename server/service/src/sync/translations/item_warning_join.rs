@@ -74,11 +74,8 @@ mod tests {
         use crate::sync::test::test_data::item_warning_join as test_data;
         let translator = ItemWarningJoinTranslation {};
 
-        let (_, connection, _, _) = setup_all(
-            "test_item_warning_join_translation",
-            MockDataInserts::all(),
-        )
-        .await;
+        let (_, connection, _, _) =
+            setup_all("test_item_warning_join_translation", MockDataInserts::all()).await;
 
         // Seed the item_link + warning parents the join's required FKs point at.
         ItemLinkRowRepository::new(&connection)

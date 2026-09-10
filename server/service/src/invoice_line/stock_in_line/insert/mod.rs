@@ -159,9 +159,8 @@ mod test {
             mock_inbound_shipment_e, mock_item_a, mock_item_restricted_location_type_b,
             mock_location_with_restricted_location_type_a, mock_name_customer_a, mock_name_store_b,
             mock_outbound_shipment_e, mock_purchase_order_a, mock_purchase_order_a_line_1,
-            mock_shipment_variance_reason_option, mock_store_a, mock_store_b,
-            mock_user_account_a, mock_vaccine_item_a,
-            mock_vvm_status_a, MockData, MockDataInserts,
+            mock_shipment_variance_reason_option, mock_store_a, mock_store_b, mock_user_account_a,
+            mock_vaccine_item_a, mock_vvm_status_a, MockData, MockDataInserts,
         },
         test_db::{setup_all, setup_all_with_data},
         vvm_status::{
@@ -941,8 +940,11 @@ mod test {
 
     #[actix_rt::test]
     async fn insert_stock_in_line_persists_reason() {
-        let (_, connection, connection_manager, _) =
-            setup_all("insert_stock_in_line_persists_reason", MockDataInserts::all()).await;
+        let (_, connection, connection_manager, _) = setup_all(
+            "insert_stock_in_line_persists_reason",
+            MockDataInserts::all(),
+        )
+        .await;
 
         let service_provider = ServiceProvider::new(connection_manager);
         let context = service_provider

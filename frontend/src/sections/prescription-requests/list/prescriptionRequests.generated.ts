@@ -46,6 +46,11 @@ export type PrescriptionRequestsVariables = {
     beforeOrEqualTo?: string | null;
     afterOrEqualTo?: string | null;
   } | null;
+    dispensedDatetime?: {
+    equalTo?: string | null;
+    beforeOrEqualTo?: string | null;
+    afterOrEqualTo?: string | null;
+  } | null;
     username?: {
     equalTo?: string | null;
     like?: string | null;
