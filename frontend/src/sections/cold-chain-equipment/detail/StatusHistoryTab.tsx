@@ -161,6 +161,9 @@ const LogEntry: Component<{ log: AssetLogRowFragment }> = props => {
   return (
     <TimelineItem icon={bySystem() ? <SettingsIcon /> : <UserIcon />}>
       <DetailCard
+        // A hairline, not a shadow: a history is a long uniform run of cards,
+        // and a shadow per entry stacks into noise down the rail.
+        surface="bordered"
         title={localisedDate(props.log.logDatetime)}
         actions={
           <>

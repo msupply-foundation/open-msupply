@@ -1,5 +1,5 @@
-/* A titled card with header actions — see DetailCard.tsx. Same surface as
-   DashboardCard (raised, radius-lg, shadow-2); the header adds an
+/* A titled card with header actions — see DetailCard.tsx. The default surface
+   is DashboardCard's (raised, radius-lg, shadow-2); the header adds an
    actions slot the sibling Detail components don't need. */
 .card {
   display: flex;
@@ -9,6 +9,14 @@
   background: var(--surface-raised);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-2);
+}
+
+/* The bordered surface: a hairline instead of the shadow. For a long, uniform
+   run of cards — a record's history down a timeline — where a shadow per card
+   stacks into noise and each edge only needs stating once. */
+.card[data-surface='bordered'] {
+  box-shadow: none;
+  border: 1px solid var(--color-border-value);
 }
 
 .header {
