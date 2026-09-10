@@ -4,7 +4,6 @@ import {
   constructFilters,
   type Filter,
 } from '@/ui/elements/selectors/FilterBar';
-import { localTodayIso } from '@/ui/elements/inputs/dateTimeConvert';
 import type { RnrFormsVariables } from './rnrForms.generated';
 
 // The filter object exactly as GraphQL expects it (kdd/type-safety: no
@@ -36,7 +35,7 @@ const FILTERS: Filter<RnrFormFilter>[] = constructFilters<RnrFormFilter>({
         type="dateTime"
         label={t('label.created')}
         testId={props.testId}
-        max={localTodayIso()}
+        disableFuture
         value={props.filter().createdDatetime}
         onChange={value => props.setPartialFilter({ createdDatetime: value })}
       />

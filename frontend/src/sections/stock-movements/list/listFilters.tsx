@@ -7,7 +7,6 @@ import {
   constructFilters,
   type Filter,
 } from '@/ui/elements/selectors/FilterBar';
-import { localTodayIso } from '@/ui/elements/inputs/dateTimeConvert';
 import { STATUS_LABELS } from '../detail/stockMovementStatus';
 import type { StockMovementsVariables } from './stockMovements.generated';
 
@@ -97,7 +96,7 @@ const FILTERS: Filter<StockMovementFilter>[] =
           type="dateTime"
           label={t('label.created')}
           testId={props.testId}
-          max={localTodayIso()}
+          disableFuture
           value={props.filter().createdDatetime}
           onChange={value => props.setPartialFilter({ createdDatetime: value })}
         />

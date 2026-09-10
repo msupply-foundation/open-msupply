@@ -188,7 +188,7 @@ const buildLedgerFilters = (): Filter<LedgerFilter>[] =>
           // recorded instants, so days after today are unselectable
           // (ui-standards/list-views.md § Filters).
           value={props.filter().datetime ?? { start: null, end: null }}
-          max={new Date().toISOString()}
+          disableFuture
           onChange={range => props.setPartialFilter({ datetime: range })}
           fromLabel={t('label.from-datetime')}
           toLabel={t('label.to-datetime')}
