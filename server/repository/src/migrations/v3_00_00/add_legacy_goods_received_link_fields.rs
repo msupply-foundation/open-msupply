@@ -235,7 +235,10 @@ mod test {
 
         // Invoice lines: same matrix on the line side.
         let mut lines = invoice_line::table
-            .select((invoice_line::id, invoice_line::legacy_goods_received_line_id))
+            .select((
+                invoice_line::id,
+                invoice_line::legacy_goods_received_line_id,
+            ))
             .load::<(String, Option<String>)>(connection.lock().connection())
             .unwrap();
         lines.sort();

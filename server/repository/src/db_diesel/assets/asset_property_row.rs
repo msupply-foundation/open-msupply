@@ -62,10 +62,7 @@ impl<'a> AssetPropertyRowRepository<'a> {
         Ok(())
     }
 
-    pub fn upsert_one(
-        &self,
-        asset_property_row: &AssetPropertyRow,
-    ) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, asset_property_row: &AssetPropertyRow) -> Result<(), RepositoryError> {
         self._upsert_one(asset_property_row)?;
         let changelog = AssetPropertyRow::generate_changelog(
             asset_property_row.id.clone(),
@@ -99,7 +96,10 @@ impl<'a> AssetPropertyRowRepository<'a> {
         Ok(())
     }
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<AssetPropertyRow>, RepositoryError> {
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<AssetPropertyRow>, RepositoryError> {
         Ok(asset_property::table
             .filter(asset_property::id.eq_any(ids))
             .load(self.connection.lock().connection())?)

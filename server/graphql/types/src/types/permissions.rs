@@ -112,9 +112,7 @@ impl UserPermission {
             PermissionType::PrescriptionQuery => UserPermission::PrescriptionQuery,
             PermissionType::PrescriptionMutate => UserPermission::PrescriptionMutate,
             PermissionType::PrescriptionRequestQuery => UserPermission::PrescriptionRequestQuery,
-            PermissionType::PrescriptionRequestMutate => {
-                UserPermission::PrescriptionRequestMutate
-            }
+            PermissionType::PrescriptionRequestMutate => UserPermission::PrescriptionRequestMutate,
             PermissionType::CancelFinalisedInvoices => UserPermission::CancelFinalisedInvoices,
             PermissionType::PurchaseOrderQuery => UserPermission::PurchaseOrderQuery,
             PermissionType::PurchaseOrderMutate => UserPermission::PurchaseOrderMutate,

@@ -58,8 +58,7 @@ pub fn validate(
             InvoiceRowStatusError::CannotReverseInvoiceStatus => CannotReverseInvoiceStatus,
         })?;
 
-        let lines =
-            InvoiceLineRowRepository::new(connection).find_many_by_invoice_id(&patch.id)?;
+        let lines = InvoiceLineRowRepository::new(connection).find_many_by_invoice_id(&patch.id)?;
         if lines.is_empty() {
             return Err(CannotIssueCustomerReturnWithNoLines);
         }
