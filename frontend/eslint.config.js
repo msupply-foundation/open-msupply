@@ -104,12 +104,12 @@ export default tseslint.config(
       '**/*.generated.ts',
       '**/*.css.d.ts',
       'codegen/**', // CommonJS (.cjs) with its own node:test suite
-      // The COUNTRY plugins' backend halves: BoaJS code built by the
-      // open-msupply client toolchain, plus its prebuilt shipped artifact —
-      // vendored, so not this repo's lint domain
-      // (plugins/civ/backend/README.md). The reference backend plugin
-      // (examples/*/backend) is ours and IS linted, below.
-      'plugins/*/backend/**',
+      // Built elsewhere and shipped verbatim, so not this repo's lint domain
+      // (plugins/civ/backend/README.md). Backend halves written HERE are
+      // linted, below — hence naming this one rather than globbing.
+      'plugins/civ/backend/**',
+      // A prebuilt bundle is a build artifact wherever it appears.
+      'plugins/*/backend/prebuilt/**',
     ],
   },
 
@@ -225,11 +225,17 @@ export default tseslint.config(
    * for the same reason — there is no console in the engine, so a stray
    * `console.log` is already an error here, and `log()` is the way out.
    *
-   * The country plugins' vendored backend halves are ignored above; this one
-   * is ours and builds in this repo, so it answers to the shared rules.
+   * These build in this repo, so they answer to the shared rules.
    */
   {
-    files: ['examples/*/backend/**/*.ts'],
+    files: [
+      'examples/*/backend/**/*.ts',
+      'plugins/cook_islands/backend/**/*.ts',
+      // The wire contract both halves import. Type-only, so it needs the TS
+      // parser and nothing else — and it sits outside `src/`, the only plugin
+      // path the app block covers.
+      'plugins/cook_islands/shared/**/*.ts',
+    ],
     extends: [js.configs.recommended, tseslint.configs.recommended],
     languageOptions: {
       parserOptions: { ecmaVersion: 2022, sourceType: 'module' },
@@ -254,6 +260,8 @@ export default tseslint.config(
     files: [
       'src/**/*.{ts,tsx}',
       'plugins/*/src/**/*.{ts,tsx}',
+      'plugins/cook_islands/backend/**/*.ts',
+      'plugins/cook_islands/shared/**/*.ts',
       'examples/**/*.{ts,tsx}',
       '*.config.{ts,js}',
       'scripts/**/*.mjs',
