@@ -51,22 +51,13 @@ import {
   type FieldError,
 } from '../ui/layout/Form/formValidation';
 import { SaveServerLogLink } from '../platform/SaveServerLogLink';
-import { TransferHorizontalIcon } from '../ui/icons';
-import {
-  rememberedDiscoveryReturn,
-  withLng,
-} from '../discovery/discoveryReturn';
+import { ChangeServerAction } from '../ui/layout/ChangeServerAction';
 import styles from '../ui/styles/LoginInitLayout.module.css';
 import pageStyles from './Initialisation.module.css';
 
 export const InitialisationPage: Component<{
   onComplete: () => void;
 }> = props => {
-  // Set when the discovery page handed off to this server
-  // (src/discovery/discoveryReturn.ts) — offers the way back among the
-  // secondary controls. Read once: the URL is fixed while this page shows.
-  const changeServerUrl = rememberedDiscoveryReturn(window.location.search);
-
   // The tab names this screen too (spec/chrome § document title): an
   // un-initialised site is the whole app until it finishes.
   createDocumentTitle(() => 'initialise.form-heading');
@@ -786,20 +777,7 @@ export const InitialisationPage: Component<{
                     may simply be the wrong one — the hand-off's return URL is
                     the way back to choose another. Same affordance as the
                     login page's; renders nothing without the parameter. */}
-                <Show when={changeServerUrl}>
-                  {/* href re-reads locale(): the way back carries the language
-                      active at click time (the login page's reasoning). */}
-                  <a
-                    class={styles.secondaryAction}
-                    href={withLng(changeServerUrl!, locale())}
-                    data-testid="initialisation-change-server"
-                  >
-                    <TransferHorizontalIcon
-                      class={styles.secondaryActionIcon}
-                    />
-                    {t('messages.change-server')}
-                  </a>
-                </Show>
+                <ChangeServerAction testId="initialisation-change-server" />
                 <div class={styles.languageAction}>
                   <LanguageSelector
                     language={locale()}
