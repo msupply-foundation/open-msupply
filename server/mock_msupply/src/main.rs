@@ -64,33 +64,31 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         let state = state.clone();
-        App::new()
-            .app_data(web::Data::from(state))
-            .service(
-                web::scope("/sync/v5")
-                    .route("/site", web::get().to(handlers::get_site))
-                    .route("/site_status", web::get().to(handlers::get_site_status))
-                    .route("/initialise", web::post().to(handlers::post_initialise))
-                    .route(
-                        "/queued_records",
-                        web::get().to(handlers::get_queued_records),
-                    )
-                    .route(
-                        "/queued_records",
-                        web::post().to(handlers::post_queued_records),
-                    )
-                    .route(
-                        "/acknowledged_records",
-                        web::post().to(handlers::post_acknowledged_records),
-                    )
-                    .route(
-                        "/central_records",
-                        web::get().to(handlers::get_central_records),
-                    )
-                    .route("/test/create_site", web::post().to(handlers::create_site))
-                    .route("/test/upsert", web::post().to(handlers::post_test_upsert))
-                    .route("/test/delete", web::post().to(handlers::post_test_delete)),
-            )
+        App::new().app_data(web::Data::from(state)).service(
+            web::scope("/sync/v5")
+                .route("/site", web::get().to(handlers::get_site))
+                .route("/site_status", web::get().to(handlers::get_site_status))
+                .route("/initialise", web::post().to(handlers::post_initialise))
+                .route(
+                    "/queued_records",
+                    web::get().to(handlers::get_queued_records),
+                )
+                .route(
+                    "/queued_records",
+                    web::post().to(handlers::post_queued_records),
+                )
+                .route(
+                    "/acknowledged_records",
+                    web::post().to(handlers::post_acknowledged_records),
+                )
+                .route(
+                    "/central_records",
+                    web::get().to(handlers::get_central_records),
+                )
+                .route("/test/create_site", web::post().to(handlers::create_site))
+                .route("/test/upsert", web::post().to(handlers::post_test_upsert))
+                .route("/test/delete", web::post().to(handlers::post_test_delete)),
+        )
     })
     .bind(("127.0.0.1", port))?
     .run()

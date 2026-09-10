@@ -944,9 +944,10 @@ pub fn validate_auth(
             )));
         }
     };
-    let mut session_store = auth_data.session_store.write().map_err(|e| {
-        AuthError::InternalError(format!("Session store lock poisoned: {e}"))
-    })?;
+    let mut session_store = auth_data
+        .session_store
+        .write()
+        .map_err(|e| AuthError::InternalError(format!("Session store lock poisoned: {e}")))?;
     match session_store.validate_and_slide(auth_token) {
         Some(session) => Ok(ValidatedUserAuth {
             user_id: session.user_id,
@@ -1496,11 +1497,7 @@ mod permission_validation_test {
             debug_no_access_control: false,
         };
         let user_id = "test_user_id";
-        let token = auth_data
-            .session_store
-            .write()
-            .unwrap()
-            .create(user_id);
+        let token = auth_data.session_store.write().unwrap().create(user_id);
 
         let (_, _, connection_manager, _) = setup_all(
             "basic_permission_validation",
@@ -1695,11 +1692,7 @@ mod permission_validation_test {
             debug_no_access_control: false,
         };
 
-        let token = auth_data
-            .session_store
-            .write()
-            .unwrap()
-            .create(&user().id);
+        let token = auth_data.session_store.write().unwrap().create(&user().id);
 
         assert!(service_provider
             .validation_service

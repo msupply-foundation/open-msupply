@@ -127,9 +127,9 @@ export { FormColumns } from '../ui/layout/Form/FormColumns';
 
 // ── UI kit — icons that carry meaning ───────────────────────────────────────
 /*
- * The six the Cook Islands navigator names for its tiles (plugins/cook_islands
- * ui-surface.md § S2/S3): patient, inbox tray, truck, box-out, document, stock
- * — in that order below. That file describes the PICTURE and never names an
+ * The five the Cook Islands navigator names for its tiles (plugins/cook_islands
+ * ui-surface.md § S2/S3): patient, open package, truck, document, stock — in
+ * that order below. That file describes the PICTURE and never names an
  * export, so this list is the mapping; keep the two in step.
  * Re-exported rather than copied into the plugin, so a fix to a path, an RTL
  * flip or an a11y attribute on the host icon reaches the contributed surface
@@ -145,9 +145,8 @@ export { FormColumns } from '../ui/layout/Form/FormColumns';
  */
 export {
   CustomersIcon,
-  InboxIcon,
+  ReplenishmentIcon,
   TruckIcon,
-  UploadIcon,
   FileIcon,
   StockIcon,
 } from '../ui/icons';

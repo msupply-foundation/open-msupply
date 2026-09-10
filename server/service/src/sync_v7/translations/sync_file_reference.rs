@@ -24,7 +24,10 @@ pub fn translate_sync_file_reference(
     let existing = SyncFileReferenceRowRepository::new(connection).find_one_by_id(&wire.id)?;
     let merged = wire.into_row(existing);
 
-    Ok(vec![(Box::new(merged) as Box<dyn Upsert>, changelog_insert)])
+    Ok(vec![(
+        Box::new(merged) as Box<dyn Upsert>,
+        changelog_insert,
+    )])
 }
 
 #[cfg(test)]

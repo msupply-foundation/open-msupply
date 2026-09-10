@@ -442,8 +442,7 @@ mod test_related_program_indicators {
         )
         .await;
 
-        let mut result =
-            related_program_indicator_ids(&connection, &[pi_cs().id]).unwrap();
+        let mut result = related_program_indicator_ids(&connection, &[pi_cs().id]).unwrap();
         result.sort();
         assert_eq!(result, vec![pi_cs().id, pi_district().id]);
 
@@ -481,8 +480,7 @@ mod test_related_program_indicators {
         )
         .await;
 
-        let result =
-            related_program_indicator_ids(&connection, &[bare_pi.id.clone()]).unwrap();
+        let result = related_program_indicator_ids(&connection, &[bare_pi.id.clone()]).unwrap();
         assert_eq!(result, vec![bare_pi.id]);
     }
 

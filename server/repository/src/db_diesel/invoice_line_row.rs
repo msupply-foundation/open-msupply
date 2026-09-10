@@ -4,6 +4,7 @@ use super::{
     vvm_status::vvm_status_row::vvm_status, StorageConnection,
 };
 
+use crate::db_diesel::requisition_line::requisition_line_row::requisition_line;
 use crate::diesel_macros::define_linked_tables;
 use crate::item_row::item;
 use crate::repository_error::RepositoryError;
@@ -58,6 +59,7 @@ define_linked_tables! {
         received_number_of_packs -> Nullable<Double>,
         linked_invoice_line_id -> Nullable<Text>,
         legacy_goods_received_line_id -> Nullable<Text>,
+        transfer_comment -> Nullable<Text>,
     },
     links: {
         item_link_id -> item_id,
@@ -91,6 +93,13 @@ allow_tables_to_appear_in_same_query!(invoice_line_stats, location);
 allow_tables_to_appear_in_same_query!(invoice_line_stats, stock_line);
 allow_tables_to_appear_in_same_query!(invoice_line_stats, reason_option);
 allow_tables_to_appear_in_same_query!(invoice_line_stats, item);
+// Sorting invoice lines by the linked requisition's requested quantity
+// (InvoiceLineSortField::RequestedQuantity) puts a requisition_line subquery
+// alongside this query's tables. The rest of the pairing is declared globally
+// in diesel_schema.rs; these two tables are local to this module, so they are
+// declared here.
+allow_tables_to_appear_in_same_query!(invoice_line_stats, requisition_line);
+allow_tables_to_appear_in_same_query!(reason_option, requisition_line);
 
 #[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, serde::Serialize, serde::Deserialize)]
 #[DbValueStyle = "SCREAMING_SNAKE_CASE"]
@@ -153,6 +162,12 @@ pub struct InvoiceLineRow {
     /// goods_received_line translator can find the invoice_line spawned by a
     /// finalised GR line without scanning sync_buffer. Internal only — never synced.
     pub legacy_goods_received_line_id: Option<String>,
+    /// The supplying store's explanation of why the quantity sent differs from
+    /// the quantity requested. Written only on the stock-out (outbound /
+    /// customer invoice) side and copied onto the receiving store's stock-in
+    /// line by the shipment-transfer processor — nothing on the inbound side
+    /// ever sets it. Legacy mSupply's `trans_line.transfer_comment`.
+    pub transfer_comment: Option<String>,
     // Resolved from link tables - must be last to match view column order
     pub item_id: String,
     pub donor_id: Option<String>,
@@ -328,10 +343,9 @@ impl<'a> InvoiceLineRowRepository<'a> {
     }
 
     pub fn check_exists_by_id(&self, record_id: &str) -> Result<bool, RepositoryError> {
-        let exists: bool = diesel::select(diesel::dsl::exists(
-            invoice_line.filter(id.eq(record_id)),
-        ))
-        .get_result(self.connection.lock().connection())?;
+        let exists: bool =
+            diesel::select(diesel::dsl::exists(invoice_line.filter(id.eq(record_id))))
+                .get_result(self.connection.lock().connection())?;
         Ok(exists)
     }
 }

@@ -33,6 +33,7 @@ describe('toSaveLineInputs', () => {
         receivedNumberOfPacks: 3,
         reasonOptionId: 'r1',
         vvmStatusId: null,
+        transferComment: null,
       },
     ]);
   });
@@ -60,5 +61,33 @@ describe('toSaveLineInputs', () => {
   it('a received count of zero is a recorded value, not blank', () => {
     const [input] = toSaveLineInputs([line({ receivedNumberOfPacks: 0 })]);
     expect(input?.receivedNumberOfPacks).toBe(0);
+  });
+
+  // OMS-REG-DIST-03.41 — the comment belongs to the ITEM, so the one value the
+  // editor holds is written onto EVERY line of the item; its batches can never
+  // disagree about the reason.
+  it("writes the item's supplier comment onto every line of the item", () => {
+    const inputs = toSaveLineInputs(
+      [line({ id: 'a' }), line({ id: 'b' }), line({ id: 'c' })],
+      'Short supply'
+    );
+    expect(inputs.map(i => i.transferComment)).toEqual([
+      'Short supply',
+      'Short supply',
+      'Short supply',
+    ]);
+  });
+
+  // OMS-REG-DIST-03.43 — the set-save OVERWRITES transferComment like every
+  // other line field (contract § supplier comment wire trap), so a comment the
+  // user never touched has to be echoed back rather than omitted.
+  it('echoes an untouched supplier comment back unchanged', () => {
+    const [input] = toSaveLineInputs([line()], 'Back order until March');
+    expect(input?.transferComment).toBe('Back order until March');
+  });
+
+  it('no comment sends null — the wire has no empty-string state', () => {
+    const [input] = toSaveLineInputs([line()], '');
+    expect(input?.transferComment).toBeNull();
   });
 });

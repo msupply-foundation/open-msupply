@@ -24,7 +24,17 @@ joinable!(temperature_breach_config -> store (store_id));
 
 allow_tables_to_appear_in_same_query!(temperature_breach_config, temperature_log);
 
-#[derive(Clone, Queryable, Insertable, AsChangeset, Debug, PartialEq, Default, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Clone,
+    Queryable,
+    Insertable,
+    AsChangeset,
+    Debug,
+    PartialEq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[diesel(treat_none_as_null = true)]
 #[diesel(table_name = temperature_breach_config)]
 pub struct TemperatureBreachConfigRow {
