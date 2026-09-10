@@ -6,6 +6,7 @@ import {
   constructFilters,
   type Filter,
 } from '../../../ui/elements/selectors/FilterBar';
+import { localTodayIso } from '@/ui/elements/inputs/dateTimeConvert';
 import { prescriptionPreferences } from '../../../store/storeContext';
 import {
   STATUS_LABEL_KEYS,
@@ -61,7 +62,8 @@ const FILTERS: Filter<PrescriptionFilter>[] =
     },
     // Prescription date — a DateTime field (created-or-backdated coalescence,
     // AC-L1); FilterDateRange (type="dateTime") owns the local ⇄ UTC
-    // conversion (#456).
+    // conversion (#456). A recorded fact, so future days are unselectable
+    // (ui-standards/list-views.md § Filters).
     createdOrBackdatedDatetime: {
       label: () => t('label.dispensed-date'),
       render: props => (
@@ -69,6 +71,7 @@ const FILTERS: Filter<PrescriptionFilter>[] =
           type="dateTime"
           label={t('label.dispensed-date')}
           testId={props.testId}
+          max={localTodayIso()}
           value={props.filter().createdOrBackdatedDatetime}
           onChange={value =>
             props.setPartialFilter({ createdOrBackdatedDatetime: value })
