@@ -24,7 +24,7 @@ use crate::store_preference::store_preferences;
 use graphql_types::types::{
     AbbreviationNode, CurrenciesResponse, CurrencyFilterInput, CurrencySortInput,
     CustomFieldsResponse, DiagnosisNode, MasterListFilterInput, PeriodScheduleFilterInput,
-    PeriodScheduleResponse, StorePreferenceNode,
+    PeriodScheduleRowResponse, StorePreferenceNode,
 };
 use mutations::{
     barcode::{insert_barcode, BarcodeInput},
@@ -186,7 +186,7 @@ impl GeneralQueries {
         ctx: &Context<'_>,
         store_id: String,
         filter: Option<PeriodScheduleFilterInput>,
-    ) -> Result<PeriodScheduleResponse> {
+    ) -> Result<PeriodScheduleRowResponse> {
         period_schedules(ctx, store_id, filter)
     }
 

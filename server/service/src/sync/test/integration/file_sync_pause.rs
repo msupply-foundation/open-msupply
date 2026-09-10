@@ -49,9 +49,7 @@ mod tests {
             test::integration::{
                 bandwidth_harness::ToxiproxyProxy,
                 create_site,
-                driver_harness::{
-                    record_many, wait_until_uploading, RemoteDrivers, UploadTrace,
-                },
+                driver_harness::{record_many, wait_until_uploading, RemoteDrivers, UploadTrace},
                 FullSiteConfig,
             },
             test_util_set_central_server_url, CentralServerConfig,
@@ -165,8 +163,7 @@ mod tests {
 
         let upstream = central_upstream_addr();
         let proxy =
-            ToxiproxyProxy::create("file_sync_baseline_driver", "127.0.0.1:22220", &upstream)
-                .await;
+            ToxiproxyProxy::create("file_sync_baseline_driver", "127.0.0.1:22220", &upstream).await;
         proxy.set_bandwidth_kbps(THROTTLE_KBPS).await;
         redirect_central_to_proxy(&proxy);
 

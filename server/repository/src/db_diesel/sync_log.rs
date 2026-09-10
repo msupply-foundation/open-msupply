@@ -51,7 +51,10 @@ impl<'a> SyncLogV5V6Repository<'a> {
         Ok(self.query(Pagination::one(), Some(filter), None)?.pop())
     }
 
-    pub fn query_by_filter(&self, filter: SyncLogV5V6Filter) -> Result<Vec<SyncLog>, RepositoryError> {
+    pub fn query_by_filter(
+        &self,
+        filter: SyncLogV5V6Filter,
+    ) -> Result<Vec<SyncLog>, RepositoryError> {
         self.query(Pagination::new(), Some(filter), None)
     }
 

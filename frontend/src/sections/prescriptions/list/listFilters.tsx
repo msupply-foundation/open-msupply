@@ -63,11 +63,11 @@ const FILTERS: Filter<PrescriptionFilter>[] =
     // AC-L1); FilterDateRange (type="dateTime") owns the local ⇄ UTC
     // conversion (#456).
     createdOrBackdatedDatetime: {
-      label: () => t('label.prescription-date'),
+      label: () => t('label.dispensed-date'),
       render: props => (
         <FilterDateRange
           type="dateTime"
-          label={t('label.prescription-date')}
+          label={t('label.dispensed-date')}
           testId={props.testId}
           value={props.filter().createdOrBackdatedDatetime}
           onChange={value =>

@@ -1,5 +1,6 @@
 use async_graphql::{dataloader::DataLoader, *};
 use chrono::NaiveDate;
+use graphql_core::loader::ReasonOptionLoader;
 use graphql_core::{
     loader::{
         CampaignByIdLoader, ItemVariantByItemVariantIdLoader, LocationByIdLoader, NameByIdLoader,
@@ -7,7 +8,6 @@ use graphql_core::{
     },
     ContextExt,
 };
-use graphql_core::loader::ReasonOptionLoader;
 use service::invoice_line::get_draft_outbound_lines::DraftStockOutLine;
 
 use crate::types::{program_node::ProgramNode, ReasonOptionNode};
@@ -208,6 +208,13 @@ impl DraftStockOutLineNode {
 
     pub async fn received_number_of_packs(&self) -> Option<f64> {
         self.shipment_line.received_number_of_packs
+    }
+
+    /// The item's supplier comment, repeated on every draft row of that item so
+    /// the editor can show one field and echo it back on save. Null on a batch
+    /// with no invoice line yet.
+    pub async fn transfer_comment(&self) -> &Option<String> {
+        &self.shipment_line.transfer_comment
     }
 
     pub async fn reason_option(&self, ctx: &Context<'_>) -> Result<Option<ReasonOptionNode>> {
