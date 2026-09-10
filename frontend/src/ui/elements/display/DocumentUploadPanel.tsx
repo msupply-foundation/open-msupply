@@ -142,20 +142,23 @@ export const DocumentUploadPanel = (
             {openError()}
           </Alert>
         </Show>
-        <div class={styles.headerRow}>
-          <span />
-          <span>{t('label.file-name')}</span>
-          <span>{t('label.date-uploaded')}</span>
-          <span>{t('label.size')}</span>
-          <span />
-        </div>
-
         <Show
           when={local.documents.length > 0}
           fallback={
             <p class={styles.empty}>{t('messages.no-documents-uploaded')}</p>
           }
         >
+          {/* The header row belongs to the POPULATED list, not the empty one:
+              column names over nothing describe a table that isn't there, and
+              read as a list that failed to load rather than one with no files
+              in it. */}
+          <div class={styles.headerRow}>
+            <span />
+            <span>{t('label.file-name')}</span>
+            <span>{t('label.date-uploaded')}</span>
+            <span>{t('label.size')}</span>
+            <span />
+          </div>
           <ul class={styles.rows}>
             <For each={local.documents}>
               {document => (
