@@ -3047,6 +3047,12 @@ export type DraftStockOutLineNode = {
   sellPricePerPack: Scalars['Float']['output'];
   stockLineId: Scalars['String']['output'];
   stockLineOnHold: Scalars['Boolean']['output'];
+  /**
+   * The item's supplier comment, repeated on every draft row of that item so
+   * the editor can show one field and echo it back on save. Null on a batch
+   * with no invoice line yet.
+   */
+  transferComment?: Maybe<Scalars['String']['output']>;
   volumePerPack?: Maybe<Scalars['Float']['output']>;
   vvmStatus?: Maybe<VvmstatusNode>;
   vvmStatusId?: Maybe<Scalars['String']['output']>;
@@ -5204,6 +5210,17 @@ export type InvoiceLineNode = {
   purchaseOrderLine?: Maybe<PurchaseOrderLineNode>;
   reasonOption?: Maybe<ReasonOptionNode>;
   receivedNumberOfPacks?: Maybe<Scalars['Float']['output']>;
+  /**
+   * The line of the shipment's linked requisition carrying the same item.
+   * Null when the shipment has no requisition link, or the order has no line
+   * for the item. Matched on item alone — there is no per-line link — so
+   * every batch of one item resolves the same order line.
+   *
+   * ⚠️ `InvoiceRow.requisition_id` is not store-scoped: a link that arrived
+   * by sync can resolve another store's requisition. `requestedQuantity`
+   * means the same on both sides of a pair, so the figure stays right.
+   */
+  requisitionLine?: Maybe<RequisitionLineNode>;
   /** @deprecated Since 2.8.0. Use reason_option instead */
   returnReason?: Maybe<ReturnReasonNode>;
   /** @deprecated Since 2.8.0. Use reason_option instead */
@@ -5216,6 +5233,14 @@ export type InvoiceLineNode = {
   taxPercentage?: Maybe<Scalars['Float']['output']>;
   totalAfterTax: Scalars['Float']['output'];
   totalBeforeTax: Scalars['Float']['output'];
+  /**
+   * The supplying store's explanation of why the quantity sent differs from
+   * the quantity requested (spec/inbound-shipments rules.md § requested
+   * quantity and supplier comment). Authored on the outbound side and
+   * carried across by the shipment transfer — read-only on an inbound
+   * shipment: no inbound mutation input accepts it.
+   */
+  transferComment?: Maybe<Scalars['String']['output']>;
   type: InvoiceLineNodeType;
   volumePerPack: Scalars['Float']['output'];
   vvmStatus?: Maybe<VvmstatusNode>;
@@ -5248,6 +5273,8 @@ export enum InvoiceLineSortFieldInput {
   LocationName = 'locationName',
   /** Invoice line pack size */
   PackSize = 'packSize',
+  /** Units requested for the line's item on the invoice's linked requisition */
+  RequestedQuantity = 'requestedQuantity',
 }
 
 export type InvoiceLineSortInput = {
@@ -7532,6 +7559,13 @@ export type OutboundShipmentLineInput = {
   reasonOptionId?: InputMaybe<Scalars['String']['input']>;
   receivedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   stockLineId: Scalars['String']['input'];
+  /**
+   * This store's reason for issuing a different quantity than the customer
+   * requested. One value per ITEM — send the same one on every line of the
+   * item. ⚠️ Like `receivedNumberOfPacks`, the set-save OVERWRITES it, so
+   * omitting it on an updated line CLEARS the stored value.
+   */
+  transferComment?: InputMaybe<Scalars['String']['input']>;
   vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
