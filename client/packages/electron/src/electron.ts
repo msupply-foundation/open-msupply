@@ -207,6 +207,10 @@ let chosenServer: {
   isLocal: boolean;
 } | null = null;
 
+// The same choice as a FrontEndHost — see the CONNECTED_SERVER handler for
+// why the old front end needs it.
+let chosenFrontEndHost: FrontEndHost | null = null;
+
 // The served discovery page's URL, once the loopback server is listening.
 let discoveryPageUrl = '';
 let hasLoadingError = false;
@@ -397,7 +401,22 @@ const start = async (): Promise<void> => {
     }
   );
 
-  ipcMain.handle(IPC_MESSAGES.CONNECTED_SERVER, async () => connectedServer);
+  /**
+   * Which server this window is on, for whichever front end is asking.
+   *
+   * The old front end asks so it can show the address and offer "change
+   * server" beside it (host/src/components/SiteInfo.tsx renders that row only
+   * when this answers). `connectedServer` is set only by the fused
+   * CONNECT_TO_SERVER — which the discovery page never calls, since it drives
+   * probe -> record -> navigate itself. So an old front end reached THROUGH
+   * the page had no way back to discovery at all: no row, and nothing else on
+   * its login screen offers one. Answer from the page's choice when the fused
+   * path has not run. Matches the Android host (NativeApi.connectedServer).
+   */
+  ipcMain.handle(
+    IPC_MESSAGES.CONNECTED_SERVER,
+    async () => connectedServer ?? chosenFrontEndHost
+  );
 
   // --- The new front end's discovery host contract -------------------------
   // Facts and native capabilities only; every decision is the page's.
@@ -486,16 +505,17 @@ const start = async (): Promise<void> => {
       // fused CONNECT_TO_SERVER — which the page never uses. Left unwritten,
       // an install that changes server here would be sent back to the old one
       // on every relaunch, with the page's own record never consulted.
-      storePreviousServer({
+      chosenFrontEndHost = {
         protocol: target.protocol === 'http:' ? 'http' : 'https',
         ip: target.hostname,
         port: server.port,
         // Not announced over the bridge; nothing this record is used for reads
-        // it (§ isServerAlive, § connectToServer).
+        // it (§ isServerAlive, § connectToServer, § CONNECTED_SERVER).
         clientVersion: '',
         hardwareId: server.hardwareId,
         isLocal: server.isLocal,
-      });
+      };
+      storePreviousServer(chosenFrontEndHost);
       discovery.stop();
       window.loadURL(url);
     }
