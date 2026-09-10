@@ -12,8 +12,7 @@ mod test {
     use service::service_provider::{ServiceContext, ServiceProvider};
 
     use crate::InvoiceQueries;
-    type GetInvoiceByNumber =
-        dyn Fn(u32) -> Result<Option<Invoice>, RepositoryError> + Sync + Send;
+    type GetInvoiceByNumber = dyn Fn(u32) -> Result<Option<Invoice>, RepositoryError> + Sync + Send;
 
     pub struct TestService(pub Box<GetInvoiceByNumber>);
 

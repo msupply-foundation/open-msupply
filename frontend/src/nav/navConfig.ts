@@ -352,6 +352,13 @@ export const flattenNav = (config: NavItem[]): NavItem[] =>
 
 export const navDestinations: NavItem[] = flattenNav(navConfig);
 
+// Home's pre-move address (CK-1.7 moved Home to the store root): App.tsx keeps
+// a redirect route for it, OUTSIDE the registry. Declared here, beside the
+// registry, because the plugin validation gate reserves the host's whole
+// address space (validate.ts HOST_RESERVED_PATHS) — a literal in either file
+// alone would let the two drift and hand a plugin a path the router owns.
+export const DASHBOARD_LEGACY_PATH = 'dashboard';
+
 // The trail from the top-level section down to a destination, root first — the
 // breadcrumb a page shows (e.g. 'inventory/stocktakes' → [Inventory,
 // Stocktakes]). A top-level destination is its own single-crumb trail; an

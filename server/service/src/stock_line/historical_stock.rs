@@ -78,11 +78,21 @@ pub fn get_historical_stock_lines_available_quantity(
     Ok(min_available_and_pack_size
         .into_iter()
         .map(
-            |(stock_line_id, MinAvailableAndPackSize { min, pack_size, total })| {
-                (stock_line_id, HistoricalQuantities {
-                    min_available: min / pack_size,
-                    total: total / pack_size,
-                })
+            |(
+                stock_line_id,
+                MinAvailableAndPackSize {
+                    min,
+                    pack_size,
+                    total,
+                },
+            )| {
+                (
+                    stock_line_id,
+                    HistoricalQuantities {
+                        min_available: min / pack_size,
+                        total: total / pack_size,
+                    },
+                )
             },
         )
         .collect())
@@ -110,11 +120,13 @@ pub fn get_historical_stock_lines(
         filter = filter.is_available(true);
     }
 
-    let mut stock_lines = get_stock_lines(ctx, None, Some(filter), None, Some(store_id.to_string()))
-    .map_err(|e| match e {
-        ListError::DatabaseError(e) => e,
-        _ => RepositoryError::NotFound, // Shouldn't happen happen as we don't have any pagination in our request
-    })?;
+    let mut stock_lines =
+        get_stock_lines(ctx, None, Some(filter), None, Some(store_id.to_string())).map_err(
+            |e| match e {
+                ListError::DatabaseError(e) => e,
+                _ => RepositoryError::NotFound, // Shouldn't happen happen as we don't have any pagination in our request
+            },
+        )?;
 
     let historic_quantities = get_historical_stock_lines_available_quantity(
         &ctx.connection,

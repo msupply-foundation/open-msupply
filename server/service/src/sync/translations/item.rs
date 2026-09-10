@@ -185,7 +185,8 @@ impl SyncTranslation for ItemTranslation {
 
         // Custom fields import is central-only (see `legacy_custom_fields_if_central`).
         // Computed before `data`'s fields are moved into `item_row` below.
-        let custom_fields = legacy_custom_fields_if_central(|| build_legacy_item_custom_fields(&data));
+        let custom_fields =
+            legacy_custom_fields_if_central(|| build_legacy_item_custom_fields(&data));
 
         let mut integration_operations = Vec::new();
 

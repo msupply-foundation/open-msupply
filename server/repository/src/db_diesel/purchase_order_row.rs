@@ -1,9 +1,8 @@
 use crate::{
-    db_diesel::{
-        changelog::changelog::RowOrId, item_link_row::item_link, item_row::item,
-    },
-    diesel_macros::define_linked_tables, ChangelogRepository, ChangelogSyncType, Delete,
-    RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
+    db_diesel::{changelog::changelog::RowOrId, item_link_row::item_link, item_row::item},
+    diesel_macros::define_linked_tables,
+    ChangelogRepository, ChangelogSyncType, Delete, RepositoryError, RowActionType, SourceSiteId,
+    StorageConnection, Upsert,
 };
 use chrono::{NaiveDate, NaiveDateTime};
 use diesel::prelude::*;
@@ -139,10 +138,7 @@ impl<'a> PurchaseOrderRowRepository<'a> {
         PurchaseOrderRowRepository { connection }
     }
 
-    pub fn upsert_one(
-        &self,
-        purchase_order_row: &PurchaseOrderRow,
-    ) -> Result<(), RepositoryError> {
+    pub fn upsert_one(&self, purchase_order_row: &PurchaseOrderRow) -> Result<(), RepositoryError> {
         self._upsert(purchase_order_row)?;
         let changelog = PurchaseOrderRow::generate_changelog(
             RowOrId::Row(purchase_order_row),
@@ -203,7 +199,10 @@ impl<'a> PurchaseOrderRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<PurchaseOrderRow>, RepositoryError> {
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<PurchaseOrderRow>, RepositoryError> {
         Ok(purchase_order::table
             .filter(purchase_order::id.eq_any(ids))
             .load(self.connection.lock().connection())?)

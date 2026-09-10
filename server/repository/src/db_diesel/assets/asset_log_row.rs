@@ -2,8 +2,8 @@ use super::asset_log_row::asset_log::dsl::*;
 
 use crate::asset_row::asset;
 use crate::{
-    ChangelogRepository, ChangelogSyncType,
-    RepositoryError, RowActionType, SourceSiteId, StorageConnection, Upsert,
+    ChangelogRepository, ChangelogSyncType, RepositoryError, RowActionType, SourceSiteId,
+    StorageConnection, Upsert,
 };
 
 use chrono::NaiveDateTime;
