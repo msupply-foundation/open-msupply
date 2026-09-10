@@ -7,8 +7,9 @@ import {
 import type { StoreContextResult } from '@/store/storeContext.generated';
 
 // The dashboard display gates and label slots (spec/dashboard/rules.md §
-// display gates / § thresholds). Behaviours cited from
-// spec/dashboard/cases/.
+// display gates / § thresholds). The other gate family — each panel's read
+// permission — is tested where it is stated, in regionBuiltIns.test.ts.
+// Behaviours cited from spec/dashboard/cases/.
 
 type Preferences = StoreContextResult['preferences'];
 type StorePreferences = StoreContextResult['storePreferences'];
