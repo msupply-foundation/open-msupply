@@ -25,7 +25,7 @@
 
 ### Shared documents changed (approved)
 
-- **e2e** — [`cold-chain-monitoring-regression.spec.ts`](../../../e2e/specs/cold-chain-monitoring-regression.spec.ts) `dateChip()` locates `filter-input-startDatetime-from/-to` here and still `filter-input-datetime-from/-to` on the current app. The legacy-picker detection and every other id are unchanged. **The suite has not been re-run against a server** — see [Verify](#verify).
+- **e2e** — [`cold-chain-monitoring-regression.spec.ts`](../../../e2e/specs/cold-chain-monitoring-regression.spec.ts) `dateChip()` locates `filter-input-startDatetime-from/-to` here and still `filter-input-datetime-from/-to` on the current app. The legacy-picker detection and every other id are unchanged. Re-run hermetically against this front end after the change: **43 passed** — see [Verify](#verify).
 - **`e2e/TESTIDS.md`** § Cold chain › Monitoring — the date-filter row now describes one grouped chip on both front ends and names the two id stems; the "structurally different, no id can fix it" paragraph is gone because it is no longer true.
 
 ### Decisions taken (yours)
@@ -112,7 +112,8 @@ Flagged, not fixed — the migration does not change shared components (the one 
 - prettier — every touched file clean.
 - `check-reactivity` on the working diff — **clean**. Every new `<Show>` passes an accessor without `keyed` (the band rows and the import outcome update in place); the three `FilterBar`s read `props.filter` / `props.state.filter` through lazy prop getters; `importedOf`/`failedOf` return the same reference, so a `<Match>` never re-creates its child; both column arrays are `createMemo`.
 - `pnpm build` — green. The vertical's two lazy chunks: `MonitoringScreen` 8.92 KB gzip (8.7 at the build report — the Chart tab now pulls `ContentContainer` and the modal `FormSection` into the chunk), `ColdChainNotification` 1.61 KB (1.6). `FilterDateTime` left the shared `FilterBar` graph. Record the PR-level delta in `kdd/bundle-size-by-pr.md` when the PR is cut.
-- **Not run:** the deterministic e2e suite against a server (`pnpm e2e:local cold-chain-monitoring`). The only id change is `dateChip()`'s, and `setDateRange()` fills the same DATE inputs it did before, but the suite is shared with the current app and should be greened on both before the PR merges.
+- **e2e, this front end** — `OMS_DIR=/Users/carl/GitHub/open-msupply-internal pnpm e2e:local cold-chain-monitoring-regression`: **43 passed, 0 failed** (42.8 s) against the monorepo's own server and `server/data/e2e` datafile, which is where the suite's backend side lives (GRY's `vaccine_module`, the current app's test ids — commit `4d6cefde0e`). The runner's default `OMS_DIR` of `../open-msupply` predates the monorepo move: pointed at a separate `develop` clone it restores a datafile with GRY's vaccine module **off**, the Cold chain section never renders, and the suite fails at its first navigation — a stale default, not a regression. Worth fixing in `scripts/e2e/run-e2e.sh` and `e2e/README.md` (the worklog already flags it).
+- **Not run:** the same suite against the current app (`cd ../client && FE_SUITES_DIR=/Users/carl/GitHub/open-msupply-internal/frontend E2E_RUN_TAG=oms yarn e2e:local cold-chain-monitoring-regression`). The only shared-code change is `dateChip()`, whose current-app arm (`filter-input-datetime-from/-to`) is untouched, so the risk is low — but the suite is shared and should be greened on both before the PR merges.
 
 ### Your visual pass — required, the skill cannot sign it off
 
