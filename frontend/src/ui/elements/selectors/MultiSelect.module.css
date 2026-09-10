@@ -61,10 +61,10 @@
   box-shadow: var(--focus-ring);
 }
 
-/* READ-ONLY (not disabled): the muted fill the disabled inputs use, so the
-   field reads as locked — but it still focuses and still opens, because its
-   summary hides values the reader would otherwise never reach. */
-.field[data-readonly='true'] .control {
+/* Disabled: the same muted fill the disabled inputs use, so the field reads as
+   locked (as Combobox.module.css). The tags stay rendered inside the control —
+   they wrap, so every chosen value is readable without opening it (#581). */
+.control:has(.input:disabled) {
   background: var(--bg-disabled);
 }
 
@@ -205,12 +205,6 @@
      overrun becomes a horizontal scrollbar over the options (#1041) — see
      Combobox.module.css for why `anywhere` and not `break-word`. */
   overflow-wrap: anywhere;
-}
-
-/* A listed-but-disabled option — the whole list while the field is read-only.
-   Visible for context, not selectable; as Combobox.module.css `.item`. */
-.item[data-disabled] {
-  color: var(--text-disabled);
 }
 
 .item[data-highlighted] {
