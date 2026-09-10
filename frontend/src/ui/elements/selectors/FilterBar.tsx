@@ -362,6 +362,10 @@ export const FilterBar = <
         <button
           type="button"
           class={styles.clearAll}
+          // Same id as the current app's "Remove all filters" menu entry — the
+          // e2e suites locate the action, not its placement (e2e/TESTIDS.md
+          // § Shared ids).
+          data-testid="filters-clear-all"
           // As on a chip's ✕: taking the caret out of an editor shrinks it and
           // shifts this button mid-press, losing the click.
           onMouseDown={e => e.preventDefault()}
@@ -1041,10 +1045,12 @@ export interface IsoDateTimeRange {
  * de-boxed onto the chip pill via .bareField. Unlike FilterDateRange (one
  * corvu range-mode calendar, date-only), there is no shared range primitive
  * that also picks time, so this composes two whole fields rather than
- * extending DateRangeField — the items Ledger tab is the first caller
- * (spec/items/ui-surface.md § Ledger tab: "From date/time" / "To date/time").
- * Value is a `{ start, end }` pair of UTC ISO instants; the caller maps it
- * onto its filter's bounds (e.g. after/beforeOrEqualTo).
+ * extending DateRangeField. Callers: the items Ledger tab
+ * (spec/items/ui-surface.md § Ledger tab: "From date/time" / "To date/time")
+ * and the cold-chain monitoring screen's breach-start window. Either side
+ * clears on its own, so a one-sided range is one chip, not two. Value is a
+ * `{ start, end }` pair of UTC ISO instants; the caller maps it onto its
+ * filter's bounds (e.g. after/beforeOrEqualTo).
  */
 export const FilterDateTimeRange = (props: {
   value: IsoDateTimeRange;
