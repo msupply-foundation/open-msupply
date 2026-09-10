@@ -8,14 +8,14 @@ pub struct PeriodScheduleRowNode {
 }
 
 #[derive(SimpleObject)]
-pub struct PeriodScheduleConnector {
+pub struct PeriodScheduleRowConnector {
     pub nodes: Vec<PeriodScheduleRowNode>,
     pub total_count: u32,
 }
 
 #[derive(Union)]
-pub enum PeriodScheduleResponse {
-    Response(PeriodScheduleConnector),
+pub enum PeriodScheduleRowResponse {
+    Response(PeriodScheduleRowConnector),
 }
 
 #[Object]
@@ -39,9 +39,9 @@ impl PeriodScheduleRowNode {
     }
 }
 
-impl PeriodScheduleConnector {
-    pub fn from_domain(schedules: ListResult<PeriodScheduleRow>) -> PeriodScheduleConnector {
-        PeriodScheduleConnector {
+impl PeriodScheduleRowConnector {
+    pub fn from_domain(schedules: ListResult<PeriodScheduleRow>) -> PeriodScheduleRowConnector {
+        PeriodScheduleRowConnector {
             nodes: schedules
                 .rows
                 .into_iter()
