@@ -342,6 +342,32 @@ export type InternalOrderLineInfoPanelProps = {
   readonly order: InternalOrderView;
 };
 
+// ── The internal-order side-panel section ───────────────────────────────────
+// The order DETAIL screen's side panel (internal-orders ui-surface § S8 ›
+// side-panel section region) — the record-level surface of the info-panel
+// kind: read-only decoration between the panel's own sections and its actions.
+
+/**
+ * The props an `internalOrder.sidePanelSection` contribution receives: the
+ * order the side panel describes and its full line set, as published view
+ * DTOs — the same views the line slots receive, so every internal-order
+ * surface shows one order one way.
+ *
+ * Both update IN PLACE as the order changes under an open panel (a saved
+ * line, a header save, a status change), so a contribution MUST read them
+ * through `props` on every render rather than destructuring them once — the
+ * host never remounts the section for a prop change (the info-panel props
+ * carry the same rule).
+ *
+ * A `type`, not an interface, so it carries an implicit index signature and is
+ * usable as the `P` of the uniform `Contribution<P>`.
+ */
+export type InternalOrderSidePanelSectionProps = {
+  readonly order: InternalOrderView;
+  /** Every line of the order — the detail screen's unpaginated set. */
+  readonly lines: readonly InternalOrderLineView[];
+};
+
 // ── Form participation ──────────────────────────────────────────────────────
 // The dirty/validity/veto/after-save handshake between a contribution and the
 // editable host form it sits in (sdk-contract § form participation). Save
@@ -433,6 +459,7 @@ export interface SlotPropsMap {
   'dashboard.body': DashboardSlotProps;
   'internalOrderLine.column': ColumnCellProps<InternalOrderLineView>;
   'internalOrderLine.infoPanel': InternalOrderLineInfoPanelProps;
+  'internalOrder.sidePanelSection': InternalOrderSidePanelSectionProps;
   'prescription.paymentForm': PrescriptionPaymentFormProps;
 }
 
@@ -475,6 +502,9 @@ export interface SlotPlacement {
   'dashboard.body': NoPlacement;
   'internalOrderLine.column': ColumnDeclaration<InternalOrderLineView>;
   'internalOrderLine.infoPanel': NoPlacement;
+  // The side panel's region is one fixed place too — after the panel's own
+  // sections, before its actions — so there is no anchor to name.
+  'internalOrder.sidePanelSection': NoPlacement;
   'prescription.paymentForm': NoPlacement;
 }
 
@@ -492,6 +522,9 @@ export interface SlotRender {
   'internalOrderLine.column': ColumnRender<InternalOrderLineView>;
   'internalOrderLine.infoPanel': {
     Component: Component<InternalOrderLineInfoPanelProps>;
+  };
+  'internalOrder.sidePanelSection': {
+    Component: Component<InternalOrderSidePanelSectionProps>;
   };
   'prescription.paymentForm': {
     Component: Component<PrescriptionPaymentFormProps>;
