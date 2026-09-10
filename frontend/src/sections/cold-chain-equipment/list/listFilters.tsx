@@ -21,8 +21,20 @@ import type { AssetUserFilter } from './listState';
  * Which of these the user sees FIRST is `DEFAULT_STATE` in listState (the four
  * seeded as empty chips); the rest are added from the filter menu.
  *
- * The category and type filters need the catalogue's own options, so the array
- * is built per render from them rather than being a module const.
+ * ⚠️ THE RETURNED ARRAY MUST BE STABLE. FilterBar renders its chips with
+ * `<For each={activeFilters(props.filters, props.filter)}>`, and that reads
+ * `props.filters` again on every filter change — so a caller that rebuilds the
+ * array per read hands <For> brand-new Filter objects on every keystroke, <For>
+ * remounts every chip, and the input being typed into is destroyed and
+ * recreated mid-word (kdd/solid-reactivity-pitfalls § no remounts on
+ * interaction). Callers memoise this; see EquipmentList.
+ *
+ * Everything variable is therefore an ACCESSOR read lazily inside `render`,
+ * never a value captured at build time — the category and type option lists
+ * arrive from the catalogue after this array is built, and must not rebuild it
+ * when they do. `showStore` is the one exception: it decides whether a key is
+ * in the map at all, so it is read at build time and a caller's memo re-runs
+ * the once it can flip.
  */
 
 export interface FilterOption {
@@ -33,8 +45,12 @@ export interface FilterOption {
 export const equipmentFilters = (options: {
   categories: () => FilterOption[];
   types: () => FilterOption[];
-  /** Central + Manage only: the store column and its filter (AC-S6/AC-S7). */
-  showStore: boolean;
+  /**
+   * Central + Manage only: the store column and its filter (AC-S6/AC-S7). Read
+   * at build time — it decides whether the key is in the map at all — so a
+   * caller's memo re-runs when it flips, which it does at most once.
+   */
+  showStore: () => boolean;
 }): Filter<AssetUserFilter>[] =>
   constructFilters<AssetUserFilter>({
     // ─ user-facing, in display order ───────────────────────────────────────
@@ -213,7 +229,7 @@ export const equipmentFilters = (options: {
     },
     // Offered only where the Store column is (AC-S6): a central server's
     // Manage › Equipment. Matches the store's code OR its name.
-    storeCodeOrName: options.showStore
+    storeCodeOrName: options.showStore()
       ? {
           label: () => t('label.store'),
           render: props => (

@@ -3,6 +3,7 @@ import { formatFileSize, t } from '@/intl';
 import { DocumentUploadPanel } from '@/ui/elements/display/DocumentUploadPanel';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { Stack } from '@/ui/layout/Stack/Stack';
+import { ContentContainer } from '@/ui/layout/ContentContainer/ContentContainer';
 import type { FileRejection } from '@/ui/elements/inputs/uploadFiles';
 import {
   deleteSyncFile,
@@ -43,7 +44,9 @@ export const DocumentsTab: Component<{
     const total = files.reduce((sum, file) => sum + file.size, 0);
     if (total >= MAX_BATCH_BYTES) {
       setErrorMessage(
-        t('error.upload-too-large', { maxSize: formatFileSize(MAX_BATCH_BYTES) })
+        t('error.upload-too-large', {
+          maxSize: formatFileSize(MAX_BATCH_BYTES),
+        })
       );
       return;
     }
@@ -83,24 +86,28 @@ export const DocumentsTab: Component<{
   };
 
   return (
-    <Stack>
-      <Show when={errorMessage()}>
-        {message => <Alert severity="error">{message()}</Alert>}
-      </Show>
-      <DocumentUploadPanel
-        documents={props.asset.documents.nodes.map(document => ({
-          id: document.id,
-          fileName: document.fileName,
-          createdDatetime: document.createdDatetime,
-          totalBytes: document.totalBytes,
-          url: syncFileUrl(TABLE_NAME, props.asset.id, document.id),
-        }))}
-        accept={ACCEPT}
-        maxSize={MAX_FILE_BYTES}
-        onUpload={files => void onUpload(files)}
-        onDelete={document => void onDelete(document)}
-        onRejected={onRejected}
-      />
-    </Stack>
+    // The page is fillBody for its table tabs, so this content brings the
+    // body padding it would otherwise inherit.
+    <ContentContainer size="wide" padded>
+      <Stack>
+        <Show when={errorMessage()}>
+          {message => <Alert severity="error">{message()}</Alert>}
+        </Show>
+        <DocumentUploadPanel
+          documents={props.asset.documents.nodes.map(document => ({
+            id: document.id,
+            fileName: document.fileName,
+            createdDatetime: document.createdDatetime,
+            totalBytes: document.totalBytes,
+            url: syncFileUrl(TABLE_NAME, props.asset.id, document.id),
+          }))}
+          accept={ACCEPT}
+          maxSize={MAX_FILE_BYTES}
+          onUpload={files => void onUpload(files)}
+          onDelete={document => void onDelete(document)}
+          onRejected={onRejected}
+        />
+      </Stack>
+    </ContentContainer>
   );
 };

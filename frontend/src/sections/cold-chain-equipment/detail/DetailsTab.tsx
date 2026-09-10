@@ -3,9 +3,9 @@ import type { Component } from 'solid-js';
 import { graphqlFetch } from '@/api/graphql';
 import { gated } from '@/api/gated';
 import { t } from '@/intl';
-import { Stack } from '@/ui/layout/Stack/Stack';
+import { ContentContainer } from '@/ui/layout/ContentContainer/ContentContainer';
 import { FormSection } from '@/ui/layout/Form/FormSection';
-import { FieldRow } from '@/ui/elements/inputs/FieldRow';
+import { FormRow } from '@/ui/layout/Form/FormRow';
 import { TextField } from '@/ui/elements/inputs/TextField';
 import { NumberField } from '@/ui/elements/inputs/NumberField';
 import { DateField } from '@/ui/elements/inputs/DateField';
@@ -18,10 +18,19 @@ import { AssetPropertiesList } from '../catalogue.generated';
 import { ABSENT } from '../equipment';
 import type { AssetDetailFragment } from '../equipment.generated';
 import { parseProperties, type AssetFormState } from './assetEdit';
-import { allowedValues, propertyRows, type PropertyRow } from './assetProperties';
+import {
+  allowedValues,
+  propertyRows,
+  type PropertyRow,
+} from './assetProperties';
 
 // S2.2 — the Details tab (ui-surface S2.2): the machine's specification, one
 // labelled row per applicable property.
+//
+// Composed as the app's other detail forms are (kdd/form-layout): a
+// ContentContainer measure inside the fillBody page, one FormSection, and each
+// control carrying its OWN label above it — the label-leading FieldRow is the
+// dialog row, not the detail-form one.
 //
 // A property the CATALOGUE answers is the model's, not the store's: its value
 // is what shows and the row is read-only, marked as coming from the catalogue
@@ -83,52 +92,69 @@ export const DetailsTab: Component<DetailsTabProps> = props => {
   const setValue = (key: string, value: string | number | boolean | null) =>
     props.onChange({ properties: { ...props.form.properties, [key]: value } });
 
+  // Two fields per row, as the reference detail forms lay their sections out.
+  // A cold room carries eighteen properties; one per full-width row would run
+  // the tab several screens long and leave the measure half empty.
+  const pairs = () => {
+    const all = rows();
+    return Array.from({ length: Math.ceil(all.length / 2) }, (_, i) =>
+      all.slice(i * 2, i * 2 + 2)
+    );
+  };
+
   return (
-    <Stack>
+    // `padded`: the page is fillBody so its table tabs can own their scroll,
+    // which strips the body's edge padding this form would otherwise inherit.
+    <ContentContainer size="form" padded>
       <FormSection title={t('label.asset-properties')}>
         <Show
           when={rows().length > 0}
           fallback={<Text>{t('messages.no-properties')}</Text>}
         >
-          <For each={rows()}>
-            {row => (
-              <Show
-                when={row.editable}
-                fallback={
-                  // The catalogue's value, or a derived mapping date — a
-                  // labelled value, never a disabled control (AC-R1/AC-R6).
-                  <LabelledValue
-                    variant="field"
-                    label={
-                      <>
-                        {row.definition.name}
-                        <Show when={row.fromCatalogue}>
-                          <InfoTooltip
-                            text={t('messages.catalogue-property')}
-                          />
-                        </Show>
-                      </>
-                    }
-                  >
-                    {row.value === null || row.value === ''
-                      ? ABSENT
-                      : String(row.value)}
-                  </LabelledValue>
-                }
-              >
-                <FieldRow label={row.definition.name}>
-                  <PropertyField
-                    row={row}
-                    disabled={props.disabled}
-                    onChange={value => setValue(row.definition.key, value)}
-                  />
-                </FieldRow>
-              </Show>
+          <For each={pairs()}>
+            {pair => (
+              <FormRow>
+                <For each={pair}>
+                  {row => (
+                    <Show
+                      when={row.editable}
+                      fallback={
+                        // The catalogue's value, or a derived mapping date — a
+                        // labelled value, never a disabled control
+                        // (AC-R1/AC-R6).
+                        <LabelledValue
+                          variant="field"
+                          label={
+                            <>
+                              {row.definition.name}
+                              <Show when={row.fromCatalogue}>
+                                <InfoTooltip
+                                  text={t('messages.catalogue-property')}
+                                />
+                              </Show>
+                            </>
+                          }
+                        >
+                          {row.value === null || row.value === ''
+                            ? ABSENT
+                            : String(row.value)}
+                        </LabelledValue>
+                      }
+                    >
+                      <PropertyField
+                        row={row}
+                        disabled={props.disabled}
+                        onChange={value => setValue(row.definition.key, value)}
+                      />
+                    </Show>
+                  )}
+                </For>
+              </FormRow>
             )}
           </For>
         </Show>
       </FormSection>
-    </Stack>
+    </ContentContainer>
   );
 };
 
@@ -162,7 +188,6 @@ const PropertyField: Component<{
         fallback={
           <DateField
             label={label()}
-            hideLabel
             disabled={props.disabled}
             value={props.row.value ? String(props.row.value) : null}
             onChange={value => props.onChange(value)}
@@ -177,13 +202,10 @@ const PropertyField: Component<{
           fallback={
             <NumberField
               label={label()}
-              hideLabel
               disabled={props.disabled}
               // An integer property takes whole numbers; a float takes up to
               // five places, as the shared property input does.
-              decimalLimit={
-                props.row.definition.valueType === 'FLOAT' ? 5 : 0
-              }
+              decimalLimit={props.row.definition.valueType === 'FLOAT' ? 5 : 0}
               value={
                 props.row.value === null || props.row.value === ''
                   ? undefined
@@ -198,7 +220,6 @@ const PropertyField: Component<{
             fallback={
               <TextField
                 label={label()}
-                hideLabel
                 disabled={props.disabled}
                 value={props.row.value === null ? '' : String(props.row.value)}
                 onInput={e => props.onChange(e.currentTarget.value)}
@@ -208,7 +229,6 @@ const PropertyField: Component<{
             {values => (
               <Combobox<string>
                 label={label()}
-                hideLabel
                 clearable
                 disabled={props.disabled}
                 items={values()}

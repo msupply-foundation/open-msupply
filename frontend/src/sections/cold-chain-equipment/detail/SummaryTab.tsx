@@ -3,10 +3,11 @@ import type { Component } from 'solid-js';
 import { gated } from '@/api/gated';
 import { hasPermission } from '@/store/storeContext';
 import { localisedDate, t } from '@/intl';
+import { ContentContainer } from '@/ui/layout/ContentContainer/ContentContainer';
 import { FormColumns } from '@/ui/layout/Form/FormColumns';
-import { Stack } from '@/ui/layout/Stack/Stack';
+import { FormColumn } from '@/ui/layout/Form/FormColumn';
 import { FormSection } from '@/ui/layout/Form/FormSection';
-import { FieldRow } from '@/ui/elements/inputs/FieldRow';
+import { FormRow } from '@/ui/layout/Form/FormRow';
 import { TextField } from '@/ui/elements/inputs/TextField';
 import { TextArea } from '@/ui/elements/inputs/TextArea';
 import { DateField } from '@/ui/elements/inputs/DateField';
@@ -25,6 +26,12 @@ import { isLockedField, type AssetFormState } from './assetEdit';
 // S2.1 — the Summary tab (ui-surface S2.1). Two columns of form sections: the
 // asset's identity and where its stock goes on the left, its condition, notes
 // and donor on the right.
+//
+// Composed as the app's other detail forms are (kdd/form-layout, and the
+// reference verticals): a ContentContainer measure inside the fillBody page,
+// FormColumns → FormColumn → FormSection, and each control carrying its OWN
+// label above it — paired two-up in a FormRow where the fields are short.
+// The label-leading FieldRow is the DIALOG row, not the detail-form one.
 //
 // Read-only rows render as LABELLED VALUES, never disabled inputs
 // (ui-standards/detail-views § never-editable fields) — except the scan-locked
@@ -77,12 +84,14 @@ export const SummaryTab: Component<SummaryTabProps> = props => {
   // so they are added back from what the asset itself reports.
   const options = (): LocationOption[] => {
     const seen = new Set<string>();
-    return [...(gated(locationData) ?? []), ...props.asset.locations.nodes]
-      .filter(location => {
-        if (seen.has(location.id)) return false;
-        seen.add(location.id);
-        return true;
-      });
+    return [
+      ...(gated(locationData) ?? []),
+      ...props.asset.locations.nodes,
+    ].filter(location => {
+      if (seen.has(location.id)) return false;
+      seen.add(location.id);
+      return true;
+    });
   };
   const selected = () =>
     options().filter(option => props.form.locationIds?.includes(option.id));
@@ -97,11 +106,13 @@ export const SummaryTab: Component<SummaryTabProps> = props => {
   const status = () => props.asset.statusLog?.status;
 
   return (
-    <FormColumns>
-      <Stack>
-        <FormSection title={t('heading.asset-identification')}>
-          <Show when={props.isCentral}>
-            <FieldRow label={t('label.store')}>
+    // `padded`: the page is fillBody so its table tabs can own their scroll,
+    // which strips the body's edge padding this form would otherwise inherit.
+    <ContentContainer size="form" padded>
+      <FormColumns>
+        <FormColumn>
+          <FormSection title={t('heading.asset-identification')}>
+            <Show when={props.isCentral}>
               <StoreSearch
                 label={t('label.store')}
                 inputTestId="store-input"
@@ -112,20 +123,17 @@ export const SummaryTab: Component<SummaryTabProps> = props => {
                   props.onChange({ storeId: picked?.id ?? '' });
                 }}
               />
-            </FieldRow>
-          </Show>
-          {/* Fixed after creation — a labelled value, not a disabled box
+            </Show>
+            {/* Fixed after creation — a labelled value, not a disabled box
               (AC-C6). */}
-          <LabelledValue variant="field" label={t('label.category')}>
-            {props.asset.assetCategory?.name ?? ABSENT}
-          </LabelledValue>
-          <LabelledValue variant="field" label={t('label.type')}>
-            {props.asset.assetType?.name ?? ABSENT}
-          </LabelledValue>
-          <FieldRow label={t('label.serial')}>
+            <LabelledValue variant="field" label={t('label.category')}>
+              {props.asset.assetCategory?.name ?? ABSENT}
+            </LabelledValue>
+            <LabelledValue variant="field" label={t('label.type')}>
+              {props.asset.assetType?.name ?? ABSENT}
+            </LabelledValue>
             <TextField
               label={t('label.serial')}
-              hideLabel
               data-testid="serial-input"
               disabled={props.disabled || locked('serialNumber')}
               labelInfo={
@@ -138,11 +146,8 @@ export const SummaryTab: Component<SummaryTabProps> = props => {
                 props.onChange({ serialNumber: e.currentTarget.value })
               }
             />
-          </FieldRow>
-          <FieldRow label={t('label.asset-number')}>
             <TextField
               label={t('label.asset-number')}
-              hideLabel
               data-testid="asset-number-input"
               disabled={props.disabled}
               value={props.form.assetNumber}
@@ -150,68 +155,61 @@ export const SummaryTab: Component<SummaryTabProps> = props => {
                 props.onChange({ assetNumber: e.currentTarget.value })
               }
             />
-          </FieldRow>
-          <FieldRow label={t('label.installation-date')}>
-            <DateField
-              label={t('label.installation-date')}
-              hideLabel
-              disabled={props.disabled}
-              value={props.form.installationDate || null}
-              onChange={value =>
-                props.onChange({ installationDate: value ?? '' })
-              }
-            />
-          </FieldRow>
-          <FieldRow label={t('label.replacement-date')}>
-            <DateField
-              label={t('label.replacement-date')}
-              hideLabel
-              disabled={props.disabled}
-              value={props.form.replacementDate || null}
-              onChange={value =>
-                props.onChange({ replacementDate: value ?? '' })
-              }
-            />
-          </FieldRow>
-          <FieldRow label={t('label.warranty-start-date')}>
-            <DateField
-              label={t('label.warranty-start-date')}
-              hideLabel
-              disabled={props.disabled || locked('warrantyStart')}
-              labelInfo={
-                locked('warrantyStart') ? (
-                  <InfoTooltip text={t('tooltip.defined-by-gs1-matrix')} />
-                ) : undefined
-              }
-              value={props.form.warrantyStart || null}
-              onChange={value => props.onChange({ warrantyStart: value ?? '' })}
-            />
-          </FieldRow>
-          <FieldRow label={t('label.warranty-end-date')}>
-            <DateField
-              label={t('label.warranty-end-date')}
-              hideLabel
-              disabled={props.disabled || locked('warrantyEnd')}
-              labelInfo={
-                locked('warrantyEnd') ? (
-                  <InfoTooltip text={t('tooltip.defined-by-gs1-matrix')} />
-                ) : undefined
-              }
-              value={props.form.warrantyEnd || null}
-              onChange={value => props.onChange({ warrantyEnd: value ?? '' })}
-            />
-          </FieldRow>
-        </FormSection>
+            {/* The two date pairs sit two-up: four short fields stacked
+                would run this section far past the column beside it. */}
+            <FormRow>
+              <DateField
+                label={t('label.installation-date')}
+                disabled={props.disabled}
+                value={props.form.installationDate || null}
+                onChange={value =>
+                  props.onChange({ installationDate: value ?? '' })
+                }
+              />
+              <DateField
+                label={t('label.replacement-date')}
+                disabled={props.disabled}
+                value={props.form.replacementDate || null}
+                onChange={value =>
+                  props.onChange({ replacementDate: value ?? '' })
+                }
+              />
+            </FormRow>
+            <FormRow>
+              <DateField
+                label={t('label.warranty-start-date')}
+                disabled={props.disabled || locked('warrantyStart')}
+                labelInfo={
+                  locked('warrantyStart') ? (
+                    <InfoTooltip text={t('tooltip.defined-by-gs1-matrix')} />
+                  ) : undefined
+                }
+                value={props.form.warrantyStart || null}
+                onChange={value =>
+                  props.onChange({ warrantyStart: value ?? '' })
+                }
+              />
+              <DateField
+                label={t('label.warranty-end-date')}
+                disabled={props.disabled || locked('warrantyEnd')}
+                labelInfo={
+                  locked('warrantyEnd') ? (
+                    <InfoTooltip text={t('tooltip.defined-by-gs1-matrix')} />
+                  ) : undefined
+                }
+                value={props.form.warrantyEnd || null}
+                onChange={value => props.onChange({ warrantyEnd: value ?? '' })}
+              />
+            </FormRow>
+          </FormSection>
 
-        {/* Absent entirely when the assignment is not this screen's to change
+          {/* Absent entirely when the assignment is not this screen's to change
             (AC-S5) — the section is the assignment, so an uneditable one has
             nothing to show. */}
-        <Show when={canEditLocations()}>
-          <FormSection title={t('heading.cold-chain')}>
-            <FieldRow label={t('label.location')}>
+          <Show when={canEditLocations()}>
+            <FormSection title={t('heading.cold-chain')}>
               <MultiSelect<LocationOption>
                 label={t('label.location')}
-                hideLabel
                 inputTestId="location-input"
                 items={options()}
                 itemToString={optionLabel}
@@ -223,32 +221,30 @@ export const SummaryTab: Component<SummaryTabProps> = props => {
                   props.onChange({ locationIds: items.map(item => item.id) })
                 }
               />
-            </FieldRow>
-          </FormSection>
-        </Show>
-      </Stack>
+            </FormSection>
+          </Show>
+        </FormColumn>
 
-      <Stack>
-        <FormSection title={t('heading.functional-status')}>
-          <LabelledValue variant="field" label={t('label.current-status')}>
-            <Show when={status()} fallback={ABSENT}>
-              {value => (
-                <StatusChip
-                  label={t(statusLabelKey(value()))}
-                  colour={statusColour(value())}
-                />
-              )}
-            </Show>
-          </LabelledValue>
-          <LabelledValue variant="field" label={t('label.last-updated')}>
-            {props.asset.statusLog
-              ? localisedDate(props.asset.statusLog.logDatetime)
-              : ABSENT}
-          </LabelledValue>
-          <LabelledValue variant="field" label={t('label.reason')}>
-            {props.asset.statusLog?.reason?.reason ?? ABSENT}
-          </LabelledValue>
-          <FieldRow label={t('label.needs-replacement')}>
+        <FormColumn>
+          <FormSection title={t('heading.functional-status')}>
+            <LabelledValue variant="field" label={t('label.current-status')}>
+              <Show when={status()} fallback={ABSENT}>
+                {value => (
+                  <StatusChip
+                    label={t(statusLabelKey(value()))}
+                    colour={statusColour(value())}
+                  />
+                )}
+              </Show>
+            </LabelledValue>
+            <LabelledValue variant="field" label={t('label.last-updated')}>
+              {props.asset.statusLog
+                ? localisedDate(props.asset.statusLog.logDatetime)
+                : ABSENT}
+            </LabelledValue>
+            <LabelledValue variant="field" label={t('label.reason')}>
+              {props.asset.statusLog?.reason?.reason ?? ABSENT}
+            </LabelledValue>
             <Checkbox
               label={t('label.needs-replacement')}
               testId="needs-replacement-checkbox"
@@ -258,25 +254,20 @@ export const SummaryTab: Component<SummaryTabProps> = props => {
                 props.onChange({ needsReplacement })
               }
             />
-          </FieldRow>
-        </FormSection>
+          </FormSection>
 
-        <FormSection title={t('label.additional-info')}>
-          <FieldRow label={t('label.notes')}>
+          <FormSection title={t('label.additional-info')}>
             <TextArea
               label={t('label.notes')}
-              hideLabel
               data-testid="notes-input"
               rows={4}
               disabled={props.disabled}
               value={props.form.notes}
               onInput={e => props.onChange({ notes: e.currentTarget.value })}
             />
-          </FieldRow>
-        </FormSection>
+          </FormSection>
 
-        <FormSection title={t('label.donor')}>
-          <FieldRow label={t('label.donor')}>
+          <FormSection title={t('label.donor')}>
             <NameSearch
               label={t('label.donor')}
               storeId={props.storeId}
@@ -289,9 +280,9 @@ export const SummaryTab: Component<SummaryTabProps> = props => {
                 props.onChange({ donorNameId: picked?.id ?? '' });
               }}
             />
-          </FieldRow>
-        </FormSection>
-      </Stack>
-    </FormColumns>
+          </FormSection>
+        </FormColumn>
+      </FormColumns>
+    </ContentContainer>
   );
 };

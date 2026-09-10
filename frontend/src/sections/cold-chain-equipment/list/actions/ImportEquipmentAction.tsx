@@ -3,7 +3,7 @@ import { t } from '@/intl';
 import { reportPermissionDenied } from '@/api/graphql';
 import { hasPermission } from '@/store/storeContext';
 import { Button } from '@/ui/elements/buttons/Button';
-import { UploadIcon } from '@/ui/icons';
+import { ImportIcon } from '@/ui/icons';
 
 // The list's Import action (ui-surface S1 § layout). Its label reads _Import_,
 // not "Upload assets" — that is the key's own text.
@@ -24,7 +24,7 @@ export const ImportEquipmentAction: Component<{
   return (
     <Button
       variant="secondary"
-      icon={<UploadIcon />}
+      icon={<ImportIcon />}
       data-testid="import-equipment-button"
       onClick={onClick}
     >
