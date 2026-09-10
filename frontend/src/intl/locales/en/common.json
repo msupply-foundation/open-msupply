@@ -3209,7 +3209,7 @@
   "report-code.outbound-invoice-portrait-with-logo": "Outbound Shipment (portrait)",
   "report-code.outbound-shipments": "Outbound Shipments",
   "report-code.pending-encounters": "Pending Encounters",
-  "report-code.prescription-receipt": "Prescription Receipt",
+  "report-code.prescription-receipt": "Dispensing Receipt",
   "report-code.repack": "Repack",
   "report-code.requisition": "Requisition",
   "report-code.stock-delivery-record": "Stock & Delivery Record",
