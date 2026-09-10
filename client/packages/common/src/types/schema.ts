@@ -4441,11 +4441,11 @@ export type InsertPrescriptionLineResponseWithId = {
 };
 
 export type InsertPrescriptionRequestInput = {
+  clinicianId?: InputMaybe<Scalars['String']['input']>;
   diagnosisId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   patientId: Scalars['String']['input'];
   prescriptionDatetime?: InputMaybe<Scalars['DateTime']['input']>;
-  programId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertPrescriptionRequestResponse = PrescriptionRequestNode;
@@ -8005,6 +8005,14 @@ export type PrescriptionRequestLineNode = {
 
 export type PrescriptionRequestNode = {
   __typename: 'PrescriptionRequestNode';
+  clinician?: Maybe<ClinicianNode>;
+  /**
+   * The clinician the request names — resolved through `clinician_link`,
+   * so this is the clinician's own id and stays right across a merge. Null
+   * when none was chosen; distinct from `user`, which is who entered the
+   * request (spec/prescription-requests § who is recorded).
+   */
+  clinicianId?: Maybe<Scalars['String']['output']>;
   comment?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['DateTime']['output'];
   /**
@@ -8029,16 +8037,13 @@ export type PrescriptionRequestNode = {
   patientId: Scalars['String']['output'];
   prescriptionDatetime: Scalars['DateTime']['output'];
   prescriptionRequestNumber: Scalars['Int']['output'];
-  program?: Maybe<ProgramNode>;
-  programId?: Maybe<Scalars['String']['output']>;
   readyDatetime?: Maybe<Scalars['DateTime']['output']>;
   status: PrescriptionRequestNodeStatus;
   storeId: Scalars['String']['output'];
   /**
-   * The user who entered the request — and so, the prescriber
-   * (spec/prescription-requests § who prescribed). There is no clinician
-   * field on this node: the picker was removed, and `created_by` is the
-   * sole record of who prescribed.
+   * The account that ENTERED the request. Never presented as the
+   * prescriber, and not the same fact as `clinician`
+   * (spec/prescription-requests § who is recorded).
    */
   user?: Maybe<UserNode>;
 };
@@ -12276,12 +12281,11 @@ export type UpdatePrescriptionLineResponseWithId = {
 
 export type UpdatePrescriptionRequestInput = {
   /**
-   * The clinician the generated dispensation names. Read ONLY alongside
-   * `status: READY_TO_DISPENSE` — a request holds no clinician of its own,
-   * so without the hand-over there is nothing for this to write and it is
-   * dropped.
+   * The clinician the request names — an ordinary editable field, like the
+   * patient beside it, and what fills the generated dispensation's own
+   * clinician at the hand-over.
    */
-  clinicianId?: InputMaybe<Scalars['String']['input']>;
+  clinicianId?: InputMaybe<NullableStringUpdate>;
   comment?: InputMaybe<NullableStringUpdate>;
   /**
    * Patch of customFields key -> value; a JSON null deletes that key. Keys
@@ -12292,7 +12296,6 @@ export type UpdatePrescriptionRequestInput = {
   id: Scalars['String']['input'];
   patientId?: InputMaybe<Scalars['String']['input']>;
   prescriptionDatetime?: InputMaybe<Scalars['DateTime']['input']>;
-  programId?: InputMaybe<NullableStringUpdate>;
   status?: InputMaybe<UpdatePrescriptionRequestStatusInput>;
 };
 
