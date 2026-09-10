@@ -721,6 +721,12 @@ export const Combobox = <T,>(props: ComboboxProps<T>) => {
           <button
             type="button"
             class={styles.clear}
+            // Derived from the field's own id, the way a dialog's close button
+            // is (e2e/TESTIDS.md) — a suite that can name the input can name
+            // its clear affordance without a second prop.
+            data-testid={
+              props.inputTestId ? `${props.inputTestId}-clear` : undefined
+            }
             disabled={props.disabled}
             aria-label="Clear selection"
             onClick={() => {
