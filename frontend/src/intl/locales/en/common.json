@@ -1987,6 +1987,7 @@
   "label.supplier": "Supplier",
   "label.supplier-agent": "Supplier's agent",
   "label.supplier-code": "Supplier code",
+  "label.supplier-comment": "Supplier comment",
   "label.supplier-discount-amount": "Supplier discount amount",
   "label.supplier-discount-percentage": "Supplier discount percentage",
   "label.supplier-item-code": "Supplier item code",
@@ -2678,6 +2679,7 @@
   "messages.internal-order-created-on": "Internal order created on {{date}}",
   "messages.invalid-file": "Invalid file",
   "messages.inventory-adjustment-saved": "Inventory adjustment saved 🥳",
+  "messages.item-not-on-internal-order": "This item is not on the linked internal order",
   "messages.item-variant-saved": "Item variant saved successfully",
   "messages.last-successful-sync-time-and-duration": "Last successful sync {{time}} (completed in {{duration}})",
   "messages.last-temperature": "Last temperature reading: {{temperature}} °C",
@@ -3781,7 +3783,5 @@
   "warning.insufficient-recent-stocktake-items": "You have not completed stocktake(s) containing at least {{ minItems }} items within the last {{maxAge}} days. Your stock levels may not be accurate. Are you sure that you want to continue?",
   "warning.manual-store-requisition": "Entering a requisition for this store may result in duplicates if the store also submits an internal order.",
   "warning.nothing-to-supply": "Nothing left to supply!",
-  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested",
-  "label.supplier-comment": "Supplier comment",
-  "messages.item-not-on-internal-order": "This item is not on the linked internal order"
+  "warning.requested-exceeds-suggested": "Your requested quantity is higher than the suggested"
 }
