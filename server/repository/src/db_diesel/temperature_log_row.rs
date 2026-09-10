@@ -1,8 +1,6 @@
 use super::{sensor_row::sensor, store_row::store, StorageConnection};
 
-use crate::{
-    repository_error::RepositoryError, ChangelogSyncType, SourceSiteId, Upsert,
-};
+use crate::{repository_error::RepositoryError, ChangelogSyncType, SourceSiteId, Upsert};
 use crate::{ChangelogRepository, RowActionType};
 
 use chrono::NaiveDateTime;

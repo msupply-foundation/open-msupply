@@ -13,16 +13,14 @@ use crate::sync::{
         test_data::{get_all_push_test_records, get_all_sync_v6_records},
         TestSyncOutgoingRecord,
     },
-    translations::{
-        translate_rows_to_sync_records, PushSyncRecord, ToSyncRecordTranslationType,
-    },
+    translations::{translate_rows_to_sync_records, PushSyncRecord, ToSyncRecordTranslationType},
 };
 use pretty_assertions::assert_eq;
 use repository::{
     mock::{mock_store_b, MockData, MockDataInserts},
     system_log_row::{SystemLogRowRepository, SystemLogType},
-    test_db, ChangelogRepository, ChangelogTableName, KeyType, KeyValueStoreRow, SyncBufferRepository, SyncBufferRow,
-    SyncBufferRowInsert,
+    test_db, ChangelogRepository, ChangelogTableName, KeyType, KeyValueStoreRow,
+    SyncBufferRepository, SyncBufferRow, SyncBufferRowInsert,
 };
 
 // TODO fix test v7
@@ -48,10 +46,7 @@ async fn test_sync_pull_and_push() {
     .await;
 
     // Get push cursor before inserting pull data (so that we can test push, excluding inserted mock data)
-    let push_cursor = ChangelogRepository::new(&connection)
-        .max_cursor()
-        .unwrap()
-        + 1;
+    let push_cursor = ChangelogRepository::new(&connection).max_cursor().unwrap() + 1;
 
     // PULL UPSERT
     let test_records = vec![

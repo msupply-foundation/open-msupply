@@ -62,12 +62,12 @@ pub fn get_draft_stock_out_lines(
     item_id: &str,
     invoice_id: &str,
 ) -> Result<(Vec<DraftStockOutLine>, DraftStockOutItemData), ListError> {
-    let invoice = get_invoice(ctx, Some(store_id), invoice_id, None)?.ok_or(ListError::DatabaseError(
-        RepositoryError::DBError {
+    let invoice = get_invoice(ctx, Some(store_id), invoice_id, None)?.ok_or(
+        ListError::DatabaseError(RepositoryError::DBError {
             msg: "Invoice not found".to_string(),
             extra: invoice_id.to_string(),
-        },
-    ))?;
+        }),
+    )?;
 
     let historical_stock_lines = get_historical_available_stock_lines(
         ctx,

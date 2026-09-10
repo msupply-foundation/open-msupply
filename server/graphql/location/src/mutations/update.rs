@@ -114,11 +114,9 @@ fn map_error(error: ServiceError) -> Result<UpdateLocationErrorInterface> {
             ))
         }
         ServiceError::LocationDoesNotBelongToCurrentStore => {
-            return Ok(
-                UpdateLocationErrorInterface::RecordBelongsToAnotherStore(
-                    RecordBelongsToAnotherStore,
-                ),
-            )
+            return Ok(UpdateLocationErrorInterface::RecordBelongsToAnotherStore(
+                RecordBelongsToAnotherStore,
+            ))
         }
         // Standard Graphql Errors
         ServiceError::UpdatedRecordNotFound => InternalError(formatted_error),

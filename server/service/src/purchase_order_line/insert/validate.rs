@@ -98,7 +98,9 @@ pub fn validate(
                     return Err(InsertPurchaseOrderLineError::OtherPartyNotAManufacturer)
                 }
                 OtherPartyErrors::DatabaseError(repository_error) => {
-                    return Err(InsertPurchaseOrderLineError::DatabaseError(repository_error))
+                    return Err(InsertPurchaseOrderLineError::DatabaseError(
+                        repository_error,
+                    ))
                 }
             },
         };

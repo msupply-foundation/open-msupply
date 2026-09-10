@@ -144,7 +144,7 @@ export type UpdatePrescriptionResult = {
   __typename: "UpdatePrescriptionError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CanOnlyChangeToPickedWhenNoUnallocatedLines" | "CannotReverseInvoiceStatus" | "InvalidStockSelection" | "InvoiceIsNotEditable" | "RecordNotFound";
   description: string;
 };
 }) | ({
@@ -170,7 +170,7 @@ export type DeletePrescriptionResult = {
   id: string;
 }) | ({
   error: {
-  __typename: string;
+  __typename: "CannotDeleteGeneratedDispensation" | "CannotDeleteInvoiceWithLines" | "CannotEditInvoice" | "RecordNotFound";
   description: string;
 };
 });
@@ -209,7 +209,7 @@ export type DeletePrescriptionLinesResult = {
   id: string;
 }) | ({
   error: {
-  __typename: string;
+  __typename: "CannotEditInvoice" | "ForeignKeyError" | "RecordNotFound";
   description: string;
 };
 });
@@ -244,10 +244,9 @@ export type SourcePrescriptionRequestVariables = {
 export type SourcePrescriptionRequestResult = {
   prescriptionRequest: ({
   __typename: "PrescriptionRequestNode";
+} & {
   id: string;
   prescriptionRequestNumber: number;
-}) | ({
-  __typename: "RecordNotFound";
 });
 };
 

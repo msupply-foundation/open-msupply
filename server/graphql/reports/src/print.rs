@@ -394,8 +394,8 @@ async fn fetch_data(
         // The executor runs them sequentially on one connection; see `ReportQueryExecutor::run`.
         let executor =
             ReportQueryExecutor::new(&ctx.get_settings().database, ctx.get_connection_manager());
-        let results = tokio::task::spawn_blocking(move || executor.run(sql_queries, &variables))
-            .await??;
+        let results =
+            tokio::task::spawn_blocking(move || executor.run(sql_queries, &variables)).await??;
         for (name, rows) in results {
             data.insert(name, serde_json::Value::Array(rows));
         }
