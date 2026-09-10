@@ -16,9 +16,9 @@ import { buildMappingLogInput, isMappingDateValid } from './statusLog';
 // room's temperature distribution was surveyed — no status and no reason: a
 // mapping is an observation, not a judgement of condition.
 //
-// Reachable only from a cold room or freezer room (AC-M2). Recording one
+// Reachable only from a cold room or freezer room (OMS-REG-CCE-06.32). Recording one
 // recalculates the asset's two mapping-date properties, server-side, from the
-// whole history (AC-M3/AC-M4).
+// whole history (OMS-REG-CCE-06.33/.34).
 
 /** Today, as the ISO day the picker and the cap both speak. */
 const todayIso = (): string => {
@@ -46,7 +46,7 @@ export const TemperatureMappingModal: Component<
   const commentField = createFocusTarget();
 
   // A mapping MAY be backdated but never postdated: the picker caps at today
-  // and the guard mirrors the cap (AC-FS8/AC-FS9).
+  // and the guard mirrors the cap (OMS-REG-CCE-06.25/.26).
   const valid = () => isMappingDateValid(date(), new Date());
 
   const save = async () => {

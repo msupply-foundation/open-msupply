@@ -7,8 +7,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 // (store context + server info); this drives those directly, as
 // navGates.test.ts does.
 //
-// The client half only. The server stays the real guard — AC-G1 names a server
-// refusal, and that leg is recorded as a C2 gap in BUILD_REPORT.
+// The client half only. The gate itself is navigation's, so it carries no
+// OMS-REG-CCE-04/05/06/07 behaviour of its own
+// (spec/cold-chain-equipment/acceptance.md records the two retired criteria
+// that named it). The server stays the real guard, and that leg is recorded
+// as a C2 gap in BUILD_REPORT.
 
 const state = {
   vaccineModule: false,
@@ -66,7 +69,7 @@ describe('the destination declares both of its gates', () => {
   });
 });
 
-describe('AC-G1 the screen is withheld without the asset read permission', () => {
+describe('the screen is withheld without the asset read permission', () => {
   it('withholds the nav entry from a user who lacks it', () => {
     state.vaccineModule = true;
     expect(offeredPaths()).not.toContain(COLD_CHAIN);
@@ -92,7 +95,7 @@ describe('the vaccine module gates the whole Cold chain section', () => {
   });
 });
 
-describe('AC-G1 the second destination is withheld without the permission too', () => {
+describe('the second destination is withheld without the permission too', () => {
   it('withholds it from a central-server user who lacks the read permission', () => {
     state.central = true;
     state.vaccineModule = true;
@@ -106,7 +109,7 @@ describe('AC-G1 the second destination is withheld without the permission too', 
   });
 });
 
-describe('AC-S6 Manage › Equipment is a central-server destination', () => {
+describe('OMS-REG-CCE-04.17 — Manage › Equipment is a central-server destination', () => {
   it('is withheld on a site that is not central', () => {
     state.vaccineModule = true;
     state.permissions = new Set(['ASSET_QUERY']);
@@ -121,7 +124,7 @@ describe('AC-S6 Manage › Equipment is a central-server destination', () => {
   });
 });
 
-describe('AC-G5 the register is reachable with the read permission held', () => {
+describe('the register is reachable with the read permission held', () => {
   it('offers the destination and admits the URL', () => {
     state.vaccineModule = true;
     state.permissions = new Set(['ASSET_QUERY', 'ASSET_MUTATE']);

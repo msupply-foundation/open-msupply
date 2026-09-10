@@ -59,7 +59,7 @@ const lookup = (over: Partial<Parameters<typeof parseImportFile>[1]> = {}) => ({
   ...over,
 });
 
-describe('AC-I1 only a CSV is accepted', () => {
+describe('OMS-REG-CCE-07.1 — only a CSV is accepted', () => {
   it('accepts a .csv file, whatever its case', () => {
     expect(isCsvFileName('assets.csv')).toBe(true);
     expect(isCsvFileName('ASSETS.CSV')).toBe(true);
@@ -71,7 +71,7 @@ describe('AC-I1 only a CSV is accepted', () => {
   });
 });
 
-describe('AC-I2 a clean file parses every row', () => {
+describe('OMS-REG-CCE-07.2 — a clean file parses every row', () => {
   it('reads each body row with its values', () => {
     const rows = parseImportFile(
       `${H}\nCCE-1,E003/059,01/02/2024,,,,SN-1,,,a note\n`,
@@ -108,7 +108,7 @@ describe('AC-I2 a clean file parses every row', () => {
   });
 });
 
-describe('AC-I3 the asset number is required', () => {
+describe('OMS-REG-CCE-07.3 — the asset number is required', () => {
   it('fails a row with none', () => {
     const rows = parseImportFile(`${H}\n,E003/059,,,,,,,,\n`, lookup());
     expect(rows[0]?.errors).toContain('error.field-must-be-specified');
@@ -116,7 +116,7 @@ describe('AC-I3 the asset number is required', () => {
   });
 });
 
-describe('AC-I4 asset numbers are unique within the file', () => {
+describe('OMS-REG-CCE-07.4 — asset numbers are unique within the file', () => {
   it('fails BOTH sides of a duplicate', () => {
     const rows = parseImportFile(
       `${H}\nCCE-1,E003/059,,,,,,,,\nCCE-1,E003/059,,,,,,,,\n`,
@@ -143,7 +143,7 @@ describe('AC-I4 asset numbers are unique within the file', () => {
   });
 });
 
-describe('AC-I5 the catalogue item code must match', () => {
+describe('OMS-REG-CCE-07.5 — the catalogue item code must match', () => {
   it('fails a row whose code matches nothing', () => {
     const rows = parseImportFile(`${H}\nCCE-1,NOPE,,,,,,,,\n`, lookup());
     expect(rows[0]?.errors).toContain('error.code-no-match');
@@ -161,7 +161,7 @@ describe('AC-I5 the catalogue item code must match', () => {
   });
 });
 
-describe('AC-I6 / AC-I7 the four dates are soft', () => {
+describe('OMS-REG-CCE-07.6 / .7 — the four dates are soft', () => {
   it('warns rather than fails on a blank date, and still imports', () => {
     const rows = parseImportFile(`${H}\nCCE-1,E003/059,,,,,,,,\n`, lookup());
     expect(rows[0]?.errors).toEqual([]);
@@ -200,7 +200,7 @@ describe('AC-I6 / AC-I7 the four dates are soft', () => {
   });
 });
 
-describe('AC-I8 an unreadable status falls back to Functioning', () => {
+describe('OMS-REG-CCE-07.8 — an unreadable status falls back to Functioning', () => {
   it('matches a status by its own label, case-insensitively', () => {
     expect(parseImportStatus('status.not-in-use')).toBe('NOT_IN_USE');
     expect(parseImportStatus('STATUS.NOT-IN-USE')).toBe('NOT_IN_USE');
@@ -335,7 +335,7 @@ describe('the store column', () => {
   });
 });
 
-describe('AC-I9 a parsed row becomes an insert', () => {
+describe('OMS-REG-CCE-07.9 — a parsed row becomes an insert', () => {
   it('always names the cold-chain class', () => {
     const rows = parseImportFile(`${H}\nCCE-1,E003/059,,,,,,,,\n`, lookup());
     expect(rowToInsertInput(rows[0]!, CCE_CLASS_ID).classId).toBe(
@@ -374,7 +374,7 @@ describe('AC-I9 a parsed row becomes an insert', () => {
   });
 });
 
-describe('AC-I10 the failed rows export', () => {
+describe('OMS-REG-CCE-07.10 — the failed rows export', () => {
   it('appends the line number and the reason', () => {
     const rows = parseImportFile(`${H}\n,NOPE,,,,,,,,\n`, lookup());
     const csv = failedRowsToCsv(rows, [], false);
@@ -412,7 +412,7 @@ describe('AC-I10 the failed rows export', () => {
   });
 });
 
-describe('AC-I11 the template', () => {
+describe('OMS-REG-CCE-07.12 — the template', () => {
   it('carries the import’s own columns', () => {
     const header = buildTemplateCsv([], false).split('\r\n')[0] ?? '';
     expect(header).toContain('label.asset-number');

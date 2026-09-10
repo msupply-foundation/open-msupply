@@ -178,7 +178,7 @@ export const UpdateStatusModal: Component<UpdateStatusModalProps> = props => {
             />
           </Show>
           {/* Inert until a status is chosen, and while a required reason or
-              required observations are missing (AC-FS2/AC-FS5/AC-FS7). */}
+              required observations are missing (OMS-REG-CCE-06.19/.22/OMS-REG-CCE-06.24). */}
           <OkButton
             data-testid="dialog-button-ok"
             loading={saving()}
@@ -201,7 +201,7 @@ export const UpdateStatusModal: Component<UpdateStatusModalProps> = props => {
           itemToValue={status => status}
           value={form().status || undefined}
           // Choosing a status clears any reason already picked — a reason
-          // belongs to one status (AC-FS4).
+          // belongs to one status (OMS-REG-CCE-06.21).
           onChange={status => setForm(withStatus(form(), status ?? ''))}
         />
       </FieldRow>
@@ -214,7 +214,7 @@ export const UpdateStatusModal: Component<UpdateStatusModalProps> = props => {
           hideLabel
           clearable
           inputTestId="reason-input"
-          // Inert while the chosen status has no reasons configured (AC-FS3).
+          // Inert while the chosen status has no reasons configured (OMS-REG-CCE-06.20).
           disabled={saving() || reasons().length === 0}
           items={reasons()}
           itemToString={reason => reason.reason}

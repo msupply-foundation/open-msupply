@@ -57,7 +57,7 @@ import {
  * created with one insertAsset (+ its opening status entry) per row, a hundred
  * at a time, with no transaction across them. Partial application is the
  * contract — which is why a run with any failure returns to Review carrying
- * exactly the failed rows and their reasons (AC-I10).
+ * exactly the failed rows and their reasons (OMS-REG-CCE-07.10).
  */
 
 type Step = 'upload' | 'review' | 'import';
@@ -108,7 +108,7 @@ export const EquipmentImportModal: Component<
         // Every store, for the file's optional store-code column. The shared
         // paginated fetcher's first page is enough for the codes a file names
         // in practice; a code beyond it reads as no match, which is the same
-        // outcome as a typo (AC-I5 sibling).
+        // outcome as a typo (OMS-REG-CCE-07.5 sibling).
         props.isCentral ? storePageFetcher()('', 0) : Promise.resolve(undefined),
       ]);
       return {
@@ -142,7 +142,7 @@ export const EquipmentImportModal: Component<
   const onFile = async (file: File) => {
     setUploadError(undefined);
     setImportError(undefined);
-    // Judged by the file's NAME, before anything is parsed (AC-I1).
+    // Judged by the file's NAME, before anything is parsed (OMS-REG-CCE-07.1).
     if (!isCsvFileName(file.name))
       return setUploadError(t('messages.invalid-file'));
     try {
@@ -157,7 +157,7 @@ export const EquipmentImportModal: Component<
       });
       if (parsed.length === 0) return setUploadError(t('messages.invalid-file'));
       setRows(parsed);
-      // Review is reachable only NOW — once a file has parsed (AC-I2).
+      // Review is reachable only NOW — once a file has parsed (OMS-REG-CCE-07.2).
       setStep('review');
     } catch (error) {
       setUploadError(String(error));
@@ -166,7 +166,7 @@ export const EquipmentImportModal: Component<
 
   /*
    * Import. Rows are created INDEPENDENTLY, a hundred at a time, so rows that
-   * succeed are created even when others fail (AC-I9/AC-I10). Each created
+   * succeed are created even when others fail (OMS-REG-CCE-07.9/.10). Each created
    * asset also opens its status history at the row's own status.
    */
   const runImport = async () => {
@@ -195,7 +195,7 @@ export const EquipmentImportModal: Component<
             // review and its CSV exist so a user can see WHY each row was
             // refused — AssetNumberAlreadyExists reads differently from
             // InvalidMappingDate, and only the message tells them apart
-            // (AC-I10). Anything without a message (a connection failure) is
+            // (OMS-REG-CCE-07.10). Anything without a message (a connection failure) is
             // the one case that falls back.
             return {
               ...row,
@@ -236,7 +236,7 @@ export const EquipmentImportModal: Component<
       return;
     }
     // A failed run stays open on Review, showing exactly the rows that failed
-    // with the reason each was refused (AC-I10).
+    // with the reason each was refused (OMS-REG-CCE-07.10).
     setImportError(t('messages.import-error'));
     setRows(failures);
     setStep('review');
@@ -452,7 +452,7 @@ export const EquipmentImportModal: Component<
             {t('button.export')}
           </Button>
           {/* Disabled until at least one row has parsed with no errors
-              (AC-I2/AC-I3). */}
+              (OMS-REG-CCE-07.2/.3). */}
           <Button
             variant="primary"
             confirms="plain"
@@ -483,7 +483,7 @@ export const EquipmentImportModal: Component<
             </Alert>
           )}
         </Show>
-        {/* Any row error blocks the import; warnings do not (AC-I3/AC-I6). */}
+        {/* Any row error blocks the import; warnings do not (OMS-REG-CCE-07.3/.6). */}
         <Show when={!importError() && rows().length > 0 && hasErrors(rows())}>
           <Alert severity="error">{t('messages.import-error-on-upload')}</Alert>
         </Show>
@@ -508,7 +508,7 @@ export const EquipmentImportModal: Component<
               // A file the accept list refuses reaches onRejected and NOT
               // onFiles, so without this a wrong file type is swallowed with
               // nothing shown — the name check inside onFile never sees it
-              // (AC-I1).
+              // (OMS-REG-CCE-07.1).
               onRejected={() => setUploadError(t('messages.invalid-file'))}
             />
             <Text>

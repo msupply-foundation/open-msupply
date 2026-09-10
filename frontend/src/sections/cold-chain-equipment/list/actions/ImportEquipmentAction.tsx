@@ -9,7 +9,7 @@ import { ImportIcon } from '@/ui/icons';
 // not "Upload assets" — that is the key's own text.
 //
 // Never disabled, for the same reason as create: a user without ASSET_MUTATE is
-// told so rather than shown a dead control (AC-G2).
+// told so rather than shown a dead control (OMS-REG-CCE-07.23).
 export const ImportEquipmentAction: Component<{
   onOpen: () => void;
 }> = props => {

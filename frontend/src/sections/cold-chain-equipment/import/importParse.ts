@@ -19,7 +19,7 @@ import type { PropertyValues } from '../detail/assetEdit';
  * application is therefore the contract, not a failure mode.
  */
 
-/** Only a comma-separated-values file is accepted, judged by its NAME (AC-I1). */
+/** Only a comma-separated-values file is accepted, judged by its NAME (OMS-REG-CCE-07.1). */
 export const isCsvFileName = (fileName: string): boolean =>
   fileName.trim().toLowerCase().endsWith('.csv');
 
@@ -30,7 +30,7 @@ export const IMPORT_BATCH_SIZE = 100;
 
 /**
  * A parsed row. `errors` block the import; `warnings` do not — a blank or
- * unreadable date costs the row that value and nothing more (AC-I6).
+ * unreadable date costs the row that value and nothing more (OMS-REG-CCE-07.6).
  */
 export type ImportRow = {
   /** The client-side id the asset will be created with. */
@@ -73,7 +73,7 @@ export const importColumnKeys = (isCentral: boolean): string[] => [
 ];
 
 /**
- * The downloadable template (AC-I11): a header row of the import's own columns
+ * The downloadable template (OMS-REG-CCE-07.12): a header row of the import's own columns
  * plus one per specification key, and a single example row showing the date
  * format each date column expects.
  */
@@ -106,7 +106,7 @@ export const buildTemplateCsv = (
  *
  * `DD/MM/YYYY`, and the **year must be four digits** — a two-digit year is
  * exactly what this rule exists to catch, because `05/10/24` would otherwise
- * import as the year 24 (AC-I7).
+ * import as the year 24 (OMS-REG-CCE-07.7).
  */
 export const parseImportDate = (value: string): string | null => {
   const parts = value.trim().split('/');
@@ -130,7 +130,7 @@ export const parseImportDate = (value: string): string | null => {
 /**
  * A status cell → one of the six, matched against their own catalog labels
  * case-insensitively. Anything that matches none falls back to _Functioning_
- * (AC-I8) — an unreadable status is not worth failing a row over.
+ * (OMS-REG-CCE-07.8) — an unreadable status is not worth failing a row over.
  */
 export const parseImportStatus = (value: string): AssetStatus => {
   const normalised = value.trim().toLowerCase();
@@ -153,7 +153,7 @@ export const parseImportStatus = (value: string): AssetStatus => {
  * the value would be one nothing else in the app can produce.
  *
  * Soft, like the dates: an unreadable cell warns and is dropped, never failing
- * the row (AC-I6).
+ * the row (OMS-REG-CCE-07.6).
  */
 export const parsePropertyCell = (
   raw: string,
@@ -231,7 +231,7 @@ export const parseImportFile = (
   );
   const definitions = applicableProperties(lookup.properties);
 
-  // Asset numbers must be unique WITHIN THE FILE (AC-I4), so both sides of a
+  // Asset numbers must be unique WITHIN THE FILE (OMS-REG-CCE-07.4), so both sides of a
   // duplicate are named — a first pass counts them.
   const numberCounts = new Map<string, number>();
   for (const cells of body) {
@@ -283,7 +283,7 @@ export const parseImportFile = (
     }
 
     // The four dates are SOFT: a blank or unreadable one warns and the row
-    // imports without it (AC-I6/AC-I7).
+    // imports without it (OMS-REG-CCE-07.6/.7).
     const softDate = (label: string): string | null => {
       const raw = cell(cells, label);
       if (!raw) {
@@ -339,7 +339,7 @@ export const parseImportFile = (
   });
 };
 
-/** Any row error blocks the import; warnings do not (AC-I3/AC-I6). */
+/** Any row error blocks the import; warnings do not (OMS-REG-CCE-07.3/.6). */
 export const hasErrors = (rows: readonly ImportRow[]): boolean =>
   rows.some(row => row.errors.length > 0);
 
@@ -403,7 +403,7 @@ const toImportDate = (iso: string | null): string => {
 };
 
 /**
- * The failed rows as a CSV for fixing offline (AC-I10) — the import's own
+ * The failed rows as a CSV for fixing offline (OMS-REG-CCE-07.10) — the import's own
  * columns, plus the line number and the reason each row was refused.
  *
  * Every cell round-trips through this module's own parsers: the file exists to

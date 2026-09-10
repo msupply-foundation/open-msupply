@@ -17,7 +17,7 @@ describe('the register is pinned to one class', () => {
   });
 });
 
-describe('AC-M1 / AC-M2 only a cold room records a temperature mapping', () => {
+describe('OMS-REG-CCE-06.31 / .32 — only a cold room records a temperature mapping', () => {
   it('recognises the cold-rooms category', () => {
     expect(isColdRoom(COLD_ROOM_CATEGORY_ID)).toBe(true);
   });
@@ -65,7 +65,7 @@ describe('the six functional statuses', () => {
   });
 });
 
-describe('AC-L10 catalogue vs non-catalogue', () => {
+describe('OMS-REG-CCE-04.7 — catalogue vs non-catalogue', () => {
   it('reads an asset with no catalogue item as non-catalogue', () => {
     expect(isNonCatalogue({ catalogueItemId: null })).toBe(true);
     expect(isNonCatalogue({})).toBe(true);

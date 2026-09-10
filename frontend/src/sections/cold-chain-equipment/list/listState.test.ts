@@ -15,7 +15,7 @@ const state = (over: Partial<EquipmentListState> = {}): EquipmentListState => ({
   ...over,
 });
 
-describe('AC-S1 only cold-chain-equipment assets are listed', () => {
+describe('OMS-REG-CCE-04.15 — only cold-chain-equipment assets are listed', () => {
   it('pins the class on every read, on both destinations', () => {
     for (const destination of ['store', 'all-stores'] as const) {
       const variables = buildListVariables(state(), STORE, destination);
@@ -35,7 +35,7 @@ describe('AC-S1 only cold-chain-equipment assets are listed', () => {
   });
 });
 
-describe('AC-S2 / AC-S6 / AC-S7 the destination decides the store scope', () => {
+describe('OMS-REG-CCE-04.16 / .17 / OMS-REG-CCE-04.18 the destination decides the store scope', () => {
   it('pins Cold chain › Equipment to the active store', () => {
     const variables = buildListVariables(state(), STORE, 'store');
     expect(variables.filter?.storeId).toEqual({ equalTo: STORE });
@@ -55,7 +55,7 @@ describe('AC-S2 / AC-S6 / AC-S7 the destination decides the store scope', () => 
   });
 });
 
-describe('AC-L1 default order', () => {
+describe('OMS-REG-CCE-04.19 — default order', () => {
   it('orders by installation date ascending, sent explicitly', () => {
     // Never left to the server: absent a sort it orders by id, a UUID.
     expect(DEFAULT_STATE.sort).toEqual([
@@ -69,7 +69,7 @@ describe('AC-L1 default order', () => {
   });
 });
 
-describe('AC-L2 the sortable set', () => {
+describe('OMS-REG-CCE-04.20 — the sortable set', () => {
   it('offers exactly asset number, serial number and installation date', () => {
     expect([...SORTABLE_KEYS]).toEqual([
       'assetNumber',
@@ -100,7 +100,7 @@ describe('the four default filters are on the bar from arrival', () => {
   });
 });
 
-describe('AC-L3 / AC-L4 / AC-L8 / AC-L11 a live filter reaches the query', () => {
+describe('OMS-REG-CCE-04.5 / .21 / OMS-REG-CCE-04.24 / .9 a live filter reaches the query', () => {
   it('sends a text filter as a contains match', () => {
     const variables = buildListVariables(
       state({ filter: { assetNumber: { like: 'RSPEC' } } }),
@@ -131,22 +131,22 @@ describe('AC-L3 / AC-L4 / AC-L8 / AC-L11 a live filter reaches the query', () =>
   });
 });
 
-describe('AC-L10 / AC-L16 / AC-L17 the non-catalogue filter has three answers', () => {
+describe('OMS-REG-CCE-04.7 / .26 / OMS-REG-CCE-04.27 the non-catalogue filter has three answers', () => {
   const sent = (isNonCatalogue: boolean | null) =>
     buildListVariables(state({ filter: { isNonCatalogue } }), STORE, 'store')
       .filter;
 
-  it('AC-L10 asks for the assets with no catalogue item', () => {
+  it('OMS-REG-CCE-04.7 asks for the assets with no catalogue item', () => {
     expect(sent(true)?.isNonCatalogue).toBe(true);
   });
 
-  it('AC-L16 asks for the ones that have one', () => {
+  it('OMS-REG-CCE-04.26 asks for the ones that have one', () => {
     // `false` is a real answer here, not an absent filter — which is why the
     // chip cannot be a flag.
     expect(sent(false)?.isNonCatalogue).toBe(false);
   });
 
-  it('AC-L17 narrows nothing on All, without the chip being removed', () => {
+  it('OMS-REG-CCE-04.27 narrows nothing on All, without the chip being removed', () => {
     // An added-but-empty chip is `null`, and `stripEmpty` keeps it out of the
     // query — so the filter is absent, not `false`, which would be the
     // catalogue-only list.
@@ -154,7 +154,7 @@ describe('AC-L10 / AC-L16 / AC-L17 the non-catalogue filter has three answers', 
   });
 });
 
-describe('AC-L7 changing the category clears the type', () => {
+describe('OMS-REG-CCE-04.23 — changing the category clears the type', () => {
   /*
    * The interactive half, and why it cannot consult the type list: that list
    * is fetched FOR the category being left, so at the moment the category
@@ -197,7 +197,7 @@ describe('AC-L7 changing the category clears the type', () => {
   });
 });
 
-describe('AC-L7 a type outside the chosen category is cleared', () => {
+describe('OMS-REG-CCE-04.23 — a type outside the chosen category is cleared', () => {
   const TYPES = [{ id: 'type-1' }, { id: 'type-2' }];
 
   it('clears a type the category does not contain', () => {
@@ -226,7 +226,7 @@ describe('AC-L7 a type outside the chosen category is cleared', () => {
   });
 });
 
-describe('AC-L13 pagination', () => {
+describe('rules § reading the list — pagination', () => {
   it('never asks for fewer than one row', () => {
     const variables = buildListVariables(state(), STORE, 'store');
     expect(variables.page?.first).toBeGreaterThanOrEqual(1);

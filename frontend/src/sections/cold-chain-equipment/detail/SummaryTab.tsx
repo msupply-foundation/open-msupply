@@ -36,7 +36,7 @@ import { isLockedField, type AssetFormState } from './assetEdit';
 // Read-only rows render as LABELLED VALUES, never disabled inputs
 // (ui-standards/detail-views § never-editable fields) — except the scan-locked
 // ones, which ARE controls the user simply may not use, and carry a standing
-// explanation of why (AC-B5).
+// explanation of why (OMS-REG-CCE-04.35).
 
 export interface SummaryTabProps {
   storeId: string;
@@ -55,7 +55,7 @@ type LocationOption = {
 };
 
 export const SummaryTab: Component<SummaryTabProps> = props => {
-  // Only a server administrator may override a scan lock (AC-B5).
+  // Only a server administrator may override a scan lock (OMS-REG-CCE-04.35).
   const isServerAdmin = () => hasPermission('SERVER_ADMIN');
   const locked = (
     field: 'serialNumber' | 'warrantyStart' | 'warrantyEnd'
@@ -63,7 +63,7 @@ export const SummaryTab: Component<SummaryTabProps> = props => {
 
   // Whether the storage locations are this screen's to change: on a central
   // server an asset held by another store shows them but cannot edit them
-  // (AC-S5). `locationIds` is undefined exactly then.
+  // (OMS-REG-CCE-05.24). `locationIds` is undefined exactly then.
   const canEditLocations = () => props.form.locationIds !== undefined;
 
   /*
@@ -74,14 +74,14 @@ export const SummaryTab: Component<SummaryTabProps> = props => {
    *
    * The server would accept a location of any store; keeping the picker to the
    * asset's own is the frontend's obligation, and it is also the only set the
-   * server will store (AC-P7, AC-P8).
+   * server will store (OMS-REG-CCE-05.21, OMS-REG-CCE-05.22).
    */
   const [locationData] = createResource(
     () => props.asset.storeId ?? props.storeId,
     storeId =>
       // Only the locations NO asset holds — one held by another asset never
       // appears, so the "already held" rejection is unreachable from the
-      // screen (AC-P6/AC-P8).
+      // screen (OMS-REG-CCE-05.20/.22).
       fetchLocations(storeId, { assignedToAsset: false })
   );
   // The store's unassigned locations PLUS the ones this asset already holds:
@@ -162,7 +162,7 @@ export const SummaryTab: Component<SummaryTabProps> = props => {
               />
             </Show>
             {/* Fixed after creation — a labelled value, not a disabled box
-              (AC-C6). */}
+              (OMS-REG-CCE-05.7). */}
             <LabelledValue variant="field" label={t('label.category')}>
               {props.asset.assetCategory?.name ?? ABSENT}
             </LabelledValue>
@@ -241,7 +241,7 @@ export const SummaryTab: Component<SummaryTabProps> = props => {
           </FormSection>
 
           {/* Absent entirely when the assignment is not this screen's to change
-            (AC-S5) — the section is the assignment, so an uneditable one has
+            (OMS-REG-CCE-05.24) — the section is the assignment, so an uneditable one has
             nothing to show. */}
           <Show when={canEditLocations()}>
             <FormSection title={t('heading.cold-chain')}>
@@ -253,7 +253,7 @@ export const SummaryTab: Component<SummaryTabProps> = props => {
                 itemToValue={option => option.id}
                 selectedItems={selected()}
                 // The set the user leaves is the set the asset holds — the
-                // assignment is WHOLESALE (AC-P9).
+                // assignment is WHOLESALE (OMS-REG-CCE-05.23).
                 onChange={items =>
                   props.onChange({ locationIds: items.map(item => item.id) })
                 }

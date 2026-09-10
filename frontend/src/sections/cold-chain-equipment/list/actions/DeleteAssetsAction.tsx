@@ -10,7 +10,7 @@ import { TrashIcon } from '@/ui/icons';
 import { DeleteAsset } from '../../equipment.generated';
 
 // The list's bulk delete (ui-surface S1 § layout, S7): the selection-footer
-// button and its confirmation (AC-X2).
+// button and its confirmation (OMS-REG-CCE-07.17).
 //
 // Deleting is a WITHDRAWAL, not an erasure — the record stops being listed but
 // is not destroyed, and its status history and documents survive it (rules ›
@@ -34,7 +34,7 @@ export const DeleteAssetsAction: Component<DeleteAssetsActionProps> = props => {
 
   const onClick = () => {
     // Deleting needs ASSET_MUTATE; without it the user is told rather than
-    // shown a dead control (AC-G2).
+    // shown a dead control (OMS-REG-CCE-07.23).
     if (!hasPermission('ASSET_MUTATE')) {
       reportPermissionDenied(['AssetMutate']);
       return;

@@ -37,7 +37,7 @@ export const emptyCreateForm = (): CreateAssetForm => ({
 });
 
 /**
- * Toggling the switch clears whichever of the two the user had chosen (AC-C4).
+ * Toggling the switch clears whichever of the two the user had chosen (OMS-REG-CCE-05.5).
  * The two paths answer "what machine is this" differently, so a choice made
  * under one is never a valid answer under the other.
  */
@@ -62,12 +62,12 @@ export const withCategory = (
 ): CreateAssetForm => ({ ...form, categoryId, typeId: '', catalogueItemId: '' });
 
 /**
- * Whether the create may be confirmed (AC-N5).
+ * Whether the create may be confirmed (OMS-REG-CCE-05.13).
  *
  * An asset number is required here — the frontend's own rule, not the server's,
  * which accepts an asset with none (rules › identity). And the asset MUST be
  * classified: without a catalogue item or a type, the insert fails as an
- * unexplained storage failure (AC-C7, contract ⚠️ wire trap), so the modal
+ * unexplained storage failure (OMS-REG-CCE-05.8, contract ⚠️ wire trap), so the modal
  * never lets one be submitted.
  */
 export const canCreate = (form: CreateAssetForm): boolean => {
@@ -75,7 +75,7 @@ export const canCreate = (form: CreateAssetForm): boolean => {
   return form.useCatalogue ? !!form.catalogueItemId : !!form.typeId;
 };
 
-/** Whether the type picker is live yet — it needs a category first (AC-C3). */
+/** Whether the type picker is live yet — it needs a category first (OMS-REG-CCE-05.4). */
 export const isTypeChoosable = (form: CreateAssetForm): boolean =>
   !!form.categoryId;
 
@@ -111,7 +111,7 @@ export const buildInsertInput = (
 });
 
 /**
- * The opening status entry every created asset gets (AC-C5): a _Functioning_
+ * The opening status entry every created asset gets (OMS-REG-CCE-05.6): a _Functioning_
  * entry commented _Asset created_, so a new machine reads as working rather
  * than as unknown.
  *

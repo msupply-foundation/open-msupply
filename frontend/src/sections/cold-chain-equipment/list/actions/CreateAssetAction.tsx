@@ -9,7 +9,7 @@ import { ALT_N } from '@/ui/utils/shortcuts';
 // The list's New asset action (ui-surface S1 § layout).
 //
 // Never disabled: creating needs ASSET_MUTATE, and a user without it is TOLD
-// so rather than shown a dead control (rules › permissions, AC-G2;
+// so rather than shown a dead control (rules › permissions, OMS-REG-CCE-05.25;
 // ui-standards/controls § blocked affordances). The server enforces the same
 // resource on the write regardless.
 export const CreateAssetAction: Component<{ onOpen: () => void }> = props => {

@@ -33,13 +33,13 @@ import { isMapping, logKindFilter, type LogEventFilter } from './statusLog';
 // time, newest first, with the temperature mappings alongside where the asset
 // records them.
 //
-// Entries are never edited and never deleted (AC-FS12) — there is no mutation
+// Entries are never edited and never deleted (OMS-REG-CCE-06.29) — there is no mutation
 // for either anywhere in the schema, so there is no affordance to withhold.
 
 export interface StatusHistoryTabProps {
   storeId: string;
   assetId: string;
-  /** Only a cold room records mappings, so only it offers that kind (AC-M8). */
+  /** Only a cold room records mappings, so only it offers that kind (OMS-REG-CCE-06.38). */
   isColdRoom: boolean;
 }
 
@@ -215,7 +215,7 @@ const LogEntry: Component<{ log: AssetLogRowFragment }> = props => {
             control={<Text>{props.log.comment ?? ABSENT}</Text>}
           />
           {/* The entry's own files, attached when it was recorded and not
-            changeable afterwards (rules › documents, AC-FS13). */}
+            changeable afterwards (rules › documents, OMS-REG-CCE-06.45). */}
           <Show when={props.log.documents.nodes.length > 0}>
             <DetailRow
               label={t('label.documents')}

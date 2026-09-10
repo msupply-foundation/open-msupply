@@ -17,7 +17,7 @@ export type AssetStatus = NonNullable<
 /**
  * The cold-chain-equipment class. This register is pinned to it and MUST show
  * only assets of it — an asset of another class exists in the same store and is
- * invisible here (rules › what this register holds, AC-S1).
+ * invisible here (rules › what this register holds, OMS-REG-CCE-04.15).
  *
  * A migration constant, not a lookup: seeded by the reference-data migration
  * and hardcoded in the reference client too (contract › what this register
@@ -28,11 +28,11 @@ export const CCE_CLASS_ID = 'fad280b6-8384-41af-84cf-c7b6b4526ef0';
 /**
  * The _Cold rooms and freezer rooms_ category — the same kind of migration
  * constant. Its members are the only assets that record a temperature mapping
- * (rules › temperature mapping, AC-M1/AC-M2).
+ * (rules › temperature mapping, OMS-REG-CCE-06.31/.32).
  */
 export const COLD_ROOM_CATEGORY_ID = '7db32eb6-5929-4dd1-a5e9-01e36baa73ad';
 
-/** Whether this asset records temperature mappings (AC-M1/AC-M2). */
+/** Whether this asset records temperature mappings (OMS-REG-CCE-06.31/.32). */
 export const isColdRoom = (categoryId: string | null | undefined): boolean =>
   categoryId === COLD_ROOM_CATEGORY_ID;
 
@@ -110,7 +110,7 @@ export const ABSENT = '—';
 /**
  * Whether an asset is a NON-catalogue asset — one with no catalogue item, so no
  * manufacturer, no model, and a specification wholly its own (rules › where an
- * asset comes from, AC-L10).
+ * asset comes from, OMS-REG-CCE-04.7).
  */
 export const isNonCatalogue = (row: {
   catalogueItemId?: string | null;

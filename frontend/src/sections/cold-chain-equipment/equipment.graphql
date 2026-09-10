@@ -143,7 +143,7 @@ fragment AssetDetail on AssetNode {
   }
   # Advisory only: the server never consults it, and there is no input to change
   # it after insert. The read-only presentation is the frontend's obligation
-  # (contract ⚠️ wire trap, AC-B5).
+  # (contract ⚠️ wire trap, OMS-REG-CCE-04.35).
   lockedFields {
     serialNumber
     catalogueItemId

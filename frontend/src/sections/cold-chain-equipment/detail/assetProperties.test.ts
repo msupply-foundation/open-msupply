@@ -27,7 +27,7 @@ const definition = (
     ...over,
   }) as PropertyDefinition;
 
-describe('AC-R4 each applicable property appears once', () => {
+describe('OMS-REG-CCE-06.14 — each applicable property appears once', () => {
   it('de-duplicates the same key returned under several scopes', () => {
     // The read returns ONE ROW PER SCOPE (contract ⚠️ wire trap).
     const rows = applicableProperties([
@@ -47,7 +47,7 @@ describe('AC-R4 each applicable property appears once', () => {
   });
 });
 
-describe('AC-R1 / AC-R3 the catalogue’s value wins and is read-only', () => {
+describe('OMS-REG-CCE-06.11 / .13 — the catalogue’s value wins and is read-only', () => {
   const definitions = [definition('climate_zone'), definition('site_notes')];
 
   it('shows the catalogue’s value where the catalogue answers the key', () => {
@@ -81,7 +81,7 @@ describe('AC-R1 / AC-R3 the catalogue’s value wins and is read-only', () => {
   });
 });
 
-describe('AC-R2 an unanswered property is the store’s to fill in', () => {
+describe('OMS-REG-CCE-06.12 — an unanswered property is the store’s to fill in', () => {
   it('offers an empty editable row where neither side answers', () => {
     const rows = propertyRows([definition('site_notes')], {}, {});
     expect(rows[0]?.value).toBeNull();
@@ -89,7 +89,7 @@ describe('AC-R2 an unanswered property is the store’s to fill in', () => {
   });
 });
 
-describe('AC-R6 the mapping dates are never typed in', () => {
+describe('OMS-REG-CCE-06.16 — the mapping dates are never typed in', () => {
   it('names both derived keys', () => {
     expect([...MAPPING_DATE_KEYS]).toEqual([
       'initial_mapping_date',
@@ -112,7 +112,7 @@ describe('AC-R6 the mapping dates are never typed in', () => {
   });
 });
 
-describe('AC-R5 an asset with no specification', () => {
+describe('OMS-REG-CCE-06.15 — an asset with no specification', () => {
   it('produces no rows when nothing applies', () => {
     expect(propertyRows([], {}, {})).toEqual([]);
   });
