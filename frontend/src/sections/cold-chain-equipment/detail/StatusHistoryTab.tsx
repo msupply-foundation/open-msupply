@@ -12,6 +12,8 @@ import { Select } from '@/ui/elements/selectors/Select';
 import { StatusChip } from '@/ui/elements/feedback/StatusChip';
 import { EmptyState } from '@/ui/elements/feedback/EmptyState';
 import { Spinner } from '@/ui/elements/feedback/Spinner';
+import { Timeline, TimelineItem } from '@/ui/elements/display/Timeline';
+import { SettingsIcon, UserIcon } from '@/ui/icons';
 import { DetailCard } from '@/ui/layout/Detail/DetailCard';
 import { DetailSection } from '@/ui/layout/Detail/DetailSection';
 import { DetailRow } from '@/ui/layout/Detail/DetailRow';
@@ -128,9 +130,9 @@ export const StatusHistoryTab: Component<StatusHistoryTabProps> = props => {
               />
             }
           >
-            <Stack>
+            <Timeline testId="status-history-timeline">
               <For each={logs()}>{log => <LogEntry log={log} />}</For>
-            </Stack>
+            </Timeline>
           </Show>
         </Show>
       </Stack>
@@ -139,95 +141,107 @@ export const StatusHistoryTab: Component<StatusHistoryTabProps> = props => {
 };
 
 /**
- * One entry — a [detail card](../../../ui/layout/Detail/DetailCard.tsx), the
- * registry's role for several records of the same kind stacked as cards. The
- * card is what separates one entry from the next; flat stacked text ran them
- * together with no telling where an entry ended.
+ * One entry — a card on the timeline's rail (ui-surface S2.3): a marker joined
+ * to the entries above and below, and the entry's own record beside it.
  *
- * Its title is the entry's date and its header-end action the status — or, for
- * a temperature mapping, a neutral chip naming the kind, because a mapping
- * carries no status at all (rules › temperature mapping).
+ * The marker's glyph says WHO recorded it: a system glyph for the entries the
+ * server writes itself (the import's synthetic mapping entries), a person for
+ * everything a user did.
+ *
+ * The card is the registry's role for several records of the same kind stacked
+ * as cards. Its title is the entry's date and its header-end action the status
+ * — or, for a temperature mapping, a neutral chip naming the kind, because a
+ * mapping carries no status at all (rules › temperature mapping).
  */
+const SYSTEM_USER = 'omsupply_system';
+
 const LogEntry: Component<{ log: AssetLogRowFragment }> = props => {
   const status = () => props.log.status;
+  const bySystem = () => props.log.user?.username === SYSTEM_USER;
   return (
-    <DetailCard
-      title={localisedDate(props.log.logDatetime)}
-      actions={
-        <>
-          <Show when={status()}>
-            {value => (
+    <TimelineItem icon={bySystem() ? <SettingsIcon /> : <UserIcon />}>
+      <DetailCard
+        title={localisedDate(props.log.logDatetime)}
+        actions={
+          <>
+            <Show when={status()}>
+              {value => (
+                <StatusChip
+                  label={t(statusLabelKey(value()))}
+                  colour={statusColour(value())}
+                />
+              )}
+            </Show>
+            <Show when={isMapping(props.log)}>
               <StatusChip
-                label={t(statusLabelKey(value()))}
-                colour={statusColour(value())}
+                label={t('label.temperature-mapping')}
+                colour="var(--gray-main)"
               />
-            )}
-          </Show>
-          <Show when={isMapping(props.log)}>
-            <StatusChip
-              label={t('label.temperature-mapping')}
-              colour="var(--gray-main)"
-            />
-          </Show>
-        </>
-      }
-    >
-      <DetailSection>
-        {/* The recorded user, through the shared role — a hand-rolled
+            </Show>
+          </>
+        }
+      >
+        <DetailSection>
+          {/* The recorded user, through the shared role — a hand-rolled
             name-and-icon pair is a bespoke look-alike (registry § recorded
             user). */}
-        <DetailRow
-          label={t('label.user')}
-          align="start"
-          control={
-            <UserLabel
-              username={props.log.user?.username}
-              label={t('label.user')}
-            />
-          }
-        />
-        {/* Plain text through the `control` slot, NOT the `value` prop: a
+          <DetailRow
+            label={t('label.user')}
+            align="start"
+            control={
+              <UserLabel
+                username={props.log.user?.username}
+                label={t('label.user')}
+              />
+            }
+          />
+          {/* Plain text through the `control` slot, NOT the `value` prop: a
             never-editable field renders as text and never as a disabled input
             (ui-standards/detail-views § never-editable fields), and DetailRow's
             `value` puts one in a disabled TextField. An empty one shows a dash
             — beside a label, blank reads as a rendering fault. */}
-        <DetailRow
-          label={t('label.reason')}
-          align="start"
-          control={<Text>{props.log.reason?.reason ?? ABSENT}</Text>}
-        />
-        <DetailRow
-          label={t('label.observations')}
-          align="start"
-          full
-          control={<Text>{props.log.comment ?? ABSENT}</Text>}
-        />
-        {/* The entry's own files, attached when it was recorded and not
-            changeable afterwards (rules › documents, AC-FS13). */}
-        <Show when={props.log.documents.nodes.length > 0}>
           <DetailRow
-            label={t('label.documents')}
+            label={t('label.reason')}
+            align="start"
+            control={<Text>{props.log.reason?.reason ?? ABSENT}</Text>}
+          />
+          <DetailRow
+            label={t('label.observations')}
             align="start"
             full
-            control={
-              <Stack>
-                <For each={props.log.documents.nodes}>
-                  {document => (
-                    <a
-                      href={syncFileUrl('asset_log', props.log.id, document.id)}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      {document.fileName}
-                    </a>
-                  )}
-                </For>
-              </Stack>
-            }
+            control={<Text>{props.log.comment ?? ABSENT}</Text>}
           />
-        </Show>
-      </DetailSection>
-    </DetailCard>
+          {/* The entry's own files, attached when it was recorded and not
+            changeable afterwards (rules › documents, AC-FS13). */}
+          <Show when={props.log.documents.nodes.length > 0}>
+            <DetailRow
+              label={t('label.documents')}
+              align="start"
+              full
+              control={
+                <Stack>
+                  <For each={props.log.documents.nodes}>
+                    {document => (
+                      <a
+                        href={syncFileUrl(
+                          'asset_log',
+                          props.log.id,
+                          document.id
+                        )}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {document.fileName}
+                      </a>
+                    )}
+                  </For>
+                </Stack>
+              }
+            />
+          </Show>
+        </DetailSection>
+      </DetailCard>
+    </TimelineItem>
   );
 };
 
