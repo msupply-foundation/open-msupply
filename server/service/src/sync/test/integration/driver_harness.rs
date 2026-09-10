@@ -74,8 +74,7 @@ impl RemoteDrivers {
         // Construct a SyncTrigger but never spawn the driver — its sender is
         // kept alive only so callers that store it (e.g. for symmetry with
         // `spawn`) don't get `SendError` when calling trigger().
-        let (sync_trigger, _unused_driver) =
-            SynchroniserDriver::init(file_sync_trigger.clone());
+        let (sync_trigger, _unused_driver) = SynchroniserDriver::init(file_sync_trigger.clone());
 
         file_sync_trigger.start();
         let file_sync_task = tokio::spawn(file_sync_driver.run(provider));
@@ -139,7 +138,10 @@ impl UploadTrace {
                 .find_one_by_id(file_id)
                 .expect("DB read failed during UploadTrace::record")
                 .unwrap_or_else(|| {
-                    panic!("{}", format!("sync_file_reference {} disappeared mid-trace", file_id))
+                    panic!(
+                        "{}",
+                        format!("sync_file_reference {} disappeared mid-trace", file_id)
+                    )
                 });
 
             let sample = UploadSample {
@@ -149,9 +151,7 @@ impl UploadTrace {
             };
             let terminal = matches!(
                 sample.status,
-                SyncFileStatus::Done
-                    | SyncFileStatus::PermanentFailure
-                    | SyncFileStatus::Error
+                SyncFileStatus::Done | SyncFileStatus::PermanentFailure | SyncFileStatus::Error
             );
             samples.push(sample);
 
@@ -236,9 +236,7 @@ pub(super) async fn wait_until_uploading(
         let row = repo
             .find_one_by_id(file_id)
             .expect("DB read failed in wait_until_uploading")
-            .unwrap_or_else(|| {
-                panic!("{}", format!("sync_file_reference {} not found", file_id))
-            });
+            .unwrap_or_else(|| panic!("{}", format!("sync_file_reference {} not found", file_id)));
         if row.uploaded_bytes > 0 || row.status != SyncFileStatus::New {
             return row;
         }

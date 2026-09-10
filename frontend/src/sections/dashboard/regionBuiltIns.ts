@@ -1,9 +1,15 @@
-import { DASHBOARD_IDS, type RegionBuiltIn } from './regions';
+import {
+  DASHBOARD_IDS,
+  type DashboardPanelId,
+  type RegionBuiltIn,
+} from './regions';
+import type { UserPermission } from '@/store/storeContext';
 import type { DashboardGates } from './dashboardGates';
 
 /*
- * The built-ins each dashboard region contains, in RENDER order, with the
- * preference gate that currently hides each one
+ * The built-ins each dashboard region contains, in RENDER order, with the gate
+ * that currently hides each one — a preference, a read permission, or (for a
+ * widget) every one of its panels being hidden
  * (spec/dashboard/ui-surface.md § S3).
  *
  * `mergeRegion` needs exactly this to resolve a contribution's anchor: the
@@ -19,44 +25,111 @@ import type { DashboardGates } from './dashboardGates';
 
 const ids = DASHBOARD_IDS;
 
-/** The card grid: the three built-in widgets. */
-export const widgetBuiltIns = (): readonly RegionBuiltIn[] => [
-  { id: ids.replenishment.id },
-  { id: ids.distribution.id },
-  { id: ids.inventory.id },
-];
+/** Whether each built-in panel renders, by published id. */
+export type PanelVisibility = Readonly<Record<DashboardPanelId, boolean>>;
+
+/**
+ * The ONE statement of whether a built-in panel renders: the permission its
+ * counts need, AND its store gate where it has one (rules.md § permission
+ * gates, § display gates). The page's <Show>, the region built-ins' `hidden`
+ * flags, and each count resource's fetch all read this, so they cannot drift.
+ *
+ * Each panel names its own permission here rather than through a parallel
+ * vocabulary of count families — the panel is what a user sees, and the
+ * permission is one of the two conditions deciding whether they see it. Two
+ * permissions serve two panels each, which is a fact about the server's
+ * resources and reads fine stated twice.
+ *
+ * `can` is the permission predicate (the reactive `hasPermission`) and
+ * `dispensary` the store's mode; both are passed in, so this stays pure and
+ * unit-testable. Exhaustive over `DashboardPanelId` — a panel added to the
+ * registry does not compile until its rule is stated here.
+ */
+export const panelVisibility = (
+  gates: DashboardGates | undefined,
+  can: (permission: UserPermission) => boolean,
+  dispensary: boolean
+): PanelVisibility => ({
+  [ids.replenishment.inbound.id]: can('INBOUND_SHIPMENT_QUERY'),
+  // The external read AND the procurement preference (OMS-REG-DB-01.36):
+  // `gates` undefined is the unresolved context, which shows the plainer
+  // surface.
+  [ids.replenishment.inboundExternal.id]:
+    can('INBOUND_SHIPMENT_EXTERNAL_QUERY') &&
+    gates?.externalInboundPanel === true,
+  // Both requisition panels ride RequisitionQuery — the contract's wire trap:
+  // the server's resource is named RequisitionStats, the permission it checks
+  // is RequisitionQuery.
+  [ids.replenishment.internalOrder.id]: can('REQUISITION_QUERY'),
+  [ids.distribution.shipments.id]: can('OUTBOUND_SHIPMENT_QUERY'),
+  [ids.distribution.customerRequisition.id]: can('REQUISITION_QUERY'),
+  // One permission, two panels: `stockCounts` and `itemCounts` authorise
+  // against the same StockCount resource.
+  [ids.inventory.expiringStock.id]: can('STOCK_LINE_QUERY'),
+  [ids.inventory.stockLevels.id]: can('STOCK_LINE_QUERY'),
+  // The permission alone would offer a widget whose links lead into a section
+  // a non-dispensary store does not have.
+  [ids.prescriptions.requests.id]:
+    can('PRESCRIPTION_REQUEST_QUERY') && dispensary,
+});
 
 /** The panels of one widget, in render order. */
 export const panelBuiltIns = (
   widget: string,
-  gates: DashboardGates | undefined
+  panels: PanelVisibility
 ): readonly RegionBuiltIn[] => {
+  const panel = (id: DashboardPanelId): RegionBuiltIn => ({
+    id,
+    hidden: !panels[id],
+  });
   switch (widget) {
     case ids.replenishment.id:
       return [
-        { id: ids.replenishment.inbound.id },
-        {
-          id: ids.replenishment.inboundExternal.id,
-          hidden: !gates?.externalInboundPanel,
-        },
-        { id: ids.replenishment.internalOrder.id },
+        panel(ids.replenishment.inbound.id),
+        panel(ids.replenishment.inboundExternal.id),
+        panel(ids.replenishment.internalOrder.id),
       ];
     case ids.distribution.id:
       return [
-        { id: ids.distribution.shipments.id },
-        { id: ids.distribution.customerRequisition.id },
+        panel(ids.distribution.shipments.id),
+        panel(ids.distribution.customerRequisition.id),
       ];
     case ids.inventory.id:
       return [
-        { id: ids.inventory.expiringStock.id },
-        { id: ids.inventory.stockLevels.id },
+        panel(ids.inventory.expiringStock.id),
+        panel(ids.inventory.stockLevels.id),
       ];
+    case ids.prescriptions.id:
+      return [panel(ids.prescriptions.requests.id)];
     default:
       // A plugin widget's panel region: its built-ins are the plugin's own,
       // which this host module knows nothing about.
       return [];
   }
 };
+
+/**
+ * A widget renders while at least one of its panels does
+ * (OMS-REG-DB-01.61) — `hidden` here means hidden by the piece's OWN gates,
+ * never by suppression: `applicableSuppressions` reads these flags to decide
+ * suppression, so deriving them from suppression would make that circular.
+ */
+export const widgetShowsPanel = (
+  widget: string,
+  panels: PanelVisibility
+): boolean =>
+  panelBuiltIns(widget, panels).some(panel => panel.hidden !== true);
+
+/** The card grid: the four built-in widgets. */
+export const widgetBuiltIns = (
+  panels: PanelVisibility
+): readonly RegionBuiltIn[] =>
+  [
+    ids.replenishment.id,
+    ids.distribution.id,
+    ids.inventory.id,
+    ids.prescriptions.id,
+  ].map(id => ({ id, hidden: !widgetShowsPanel(id, panels) }));
 
 /** The statistics of one panel, in render order. */
 export const statBuiltIns = (
@@ -87,6 +160,13 @@ export const statBuiltIns = (
           id: ids.distribution.customerRequisition.emergency,
           hidden: !gates?.emergencyStat,
         },
+      ];
+    case ids.prescriptions.requests.id:
+      // Neither stat carries a gate of its own: both ride the panel's, which
+      // is the permission plus the dispensary store.
+      return [
+        { id: ids.prescriptions.requests.readyToDispense },
+        { id: ids.prescriptions.requests.dispensedThisWeek },
       ];
     case ids.inventory.expiringStock.id:
       return [

@@ -142,17 +142,18 @@ pub(crate) fn generate(
         None
     };
 
-    let mut update_lines = if update_invoice.tax_percentage.is_some() || input_currency_rate.is_some() {
-        Some(generate_update_for_lines(
-            connection,
-            &update_invoice.id,
-            update_invoice.tax_percentage,
-            update_invoice.currency_id.clone(),
-            &update_invoice.currency_rate,
-        )?)
-    } else {
-        None
-    };
+    let mut update_lines =
+        if update_invoice.tax_percentage.is_some() || input_currency_rate.is_some() {
+            Some(generate_update_for_lines(
+                connection,
+                &update_invoice.id,
+                update_invoice.tax_percentage,
+                update_invoice.currency_id.clone(),
+                &update_invoice.currency_rate,
+            )?)
+        } else {
+            None
+        };
 
     let mut lines_to_trim = lines_to_trim(connection, &existing_invoice, &input_status)?;
 
