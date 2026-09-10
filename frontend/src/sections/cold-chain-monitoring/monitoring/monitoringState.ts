@@ -172,6 +172,40 @@ export const chartWindow = (
   return undefined;
 };
 
+/** What a marker's way through needs to know about its breach. */
+export type ListedBreach = Pick<BreachRow, 'startDatetime' | 'unacknowledged'>;
+
+/**
+ * The filter a marker's "View all breaches" hands to the Breaches tab (rules ›
+ * the chart): the screen's filters, widened only as far as needed for the
+ * selected breach to be listed. Two facts can exclude it, and only these two:
+ *
+ * - a start bound later than the breach's start — the breach began before the
+ *   window, and its marker sits at its first in-window reading — moves back to
+ *   that start (the bound is inclusive);
+ * - the unacknowledged-only switch, for an acknowledged breach, is released.
+ *
+ * Every other chip already matches the breach, because the marker was drawn
+ * from that breach's own readings under those same chips. A breach whose start
+ * cannot be parsed changes nothing.
+ */
+export const widenToInclude = (
+  filter: MonitoringFilter,
+  breach: ListedBreach
+): MonitoringFilter => {
+  const next = { ...filter };
+  const start = Date.parse(breach.startDatetime);
+  if (
+    next.fromStart &&
+    Number.isFinite(start) &&
+    Date.parse(next.fromStart) > start
+  )
+    next.fromStart = new Date(start).toISOString();
+  if (next.unacknowledged === true && !breach.unacknowledged)
+    next.unacknowledged = null;
+  return next;
+};
+
 type SensorFilter = NonNullable<
   NonNullable<TemperatureBreachesVariables['filter']>['sensor']
 >;

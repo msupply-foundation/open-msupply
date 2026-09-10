@@ -12,6 +12,7 @@ import {
   chartWindow,
   needsArrivalWindow,
   tabFromParam,
+  widenToInclude,
   withDefaultWindow,
   type MonitoringFilter,
   type MonitoringState,
@@ -241,6 +242,98 @@ describe('OMS-REG-CCE-02.13 / .14 — breaches sort on start and end only', () =
       expect(vars.sort).toEqual([{ key, desc: false }]);
       expect(vars.sort).toHaveLength(1);
     }
+  });
+});
+
+describe('OMS-REG-CCE-02.7 — the marker’s way through lists the selected breach', () => {
+  // Anchors: OMS-REG-CCE-02.7 (rules › the chart: the way through carries the
+  // screen's filters, widened only as far as needed for that breach to be
+  // listed). The Breaches read binds the range to a breach's START, so a
+  // breach that began before the window — marked on the chart at its first
+  // in-window reading — would otherwise fall off the list it hands to.
+  const window = {
+    fromStart: '2026-09-07T02:40:00.000Z',
+    toStart: '2026-09-08T02:40:00.000Z',
+    unacknowledged: null,
+  };
+
+  it('moves the start bound back to a breach that began before the window, and only that bound', () => {
+    const widened = widenToInclude(window, {
+      startDatetime: '2026-09-06T21:45:37+00:00',
+      unacknowledged: true,
+    });
+    expect(widened).toEqual({
+      ...window,
+      fromStart: '2026-09-06T21:45:37.000Z',
+    });
+    // …so the Breaches read now admits it (the bound is inclusive).
+    const vars = buildBreachesVariables(withFilter(widened), STORE);
+    expect(vars.filter?.startDatetime).toEqual({
+      afterOrEqualTo: '2026-09-06T21:45:37.000Z',
+      beforeOrEqualTo: window.toStart,
+    });
+  });
+
+  it('leaves a breach that began inside the window exactly as filtered', () => {
+    const inside = {
+      startDatetime: '2026-09-07T10:00:00Z',
+      unacknowledged: true,
+    };
+    expect(widenToInclude(window, inside)).toEqual(window);
+    const noBounds = { sensorName: 'Fridge', unacknowledged: null };
+    expect(widenToInclude(noBounds, inside)).toEqual(noBounds);
+  });
+
+  it('releases the unacknowledged-only switch for an acknowledged breach, and keeps it for an unacknowledged one', () => {
+    const ticked = { ...window, unacknowledged: true };
+    expect(
+      widenToInclude(ticked, {
+        startDatetime: '2026-09-07T10:00:00Z',
+        unacknowledged: false,
+      }).unacknowledged
+    ).toBeNull();
+    expect(
+      widenToInclude(ticked, {
+        startDatetime: '2026-09-07T10:00:00Z',
+        unacknowledged: true,
+      }).unacknowledged
+    ).toBe(true);
+  });
+
+  it('keeps a start bound already at or before the breach’s start (the bound is inclusive)', () => {
+    const atStart = {
+      ...window,
+      fromStart: '2026-09-06T21:45:37.000Z',
+    };
+    expect(
+      widenToInclude(atStart, {
+        startDatetime: '2026-09-06T21:45:37+00:00',
+        unacknowledged: true,
+      })
+    ).toEqual(atStart);
+  });
+
+  it('touches no other chip, and ignores a start it cannot parse', () => {
+    const chips = {
+      ...window,
+      sensorName: 'Seeded',
+      locationCode: '1231',
+      breachType: 'HOT_CUMULATIVE' as const,
+    };
+    const widened = widenToInclude(chips, {
+      startDatetime: '2026-09-01T00:00:00Z',
+      unacknowledged: true,
+    });
+    expect(widened).toEqual({
+      ...chips,
+      fromStart: '2026-09-01T00:00:00.000Z',
+    });
+    expect(
+      widenToInclude(chips, {
+        startDatetime: 'not-a-date',
+        unacknowledged: true,
+      })
+    ).toEqual(chips);
   });
 });
 

@@ -13,6 +13,7 @@ import type { TemperatureLogsVariables } from '../monitoring.generated';
 import {
   buildChartVariables,
   chartWindow,
+  type ListedBreach,
   type MonitoringFilter,
 } from '../monitoring/monitoringState';
 import { buildSeries, isTruncated, timeExtent } from './chartData';
@@ -31,8 +32,9 @@ export interface ChartTabProps {
   /** Bumped by the screen when something outside the filters changed the
    *  record (a fridge-sensor import), so the plot re-reads in place. */
   refreshVersion: number;
-  /** A marker's "View all breaches" — the Breaches tab, sorted by start. */
-  onViewAllBreaches: () => void;
+  /** A marker's "View all breaches" — the Breaches tab, sorted by start,
+   *  with the shared filters widened so the selected breach is listed. */
+  onViewAllBreaches: (breach: ListedBreach) => void;
 }
 
 export const ChartTab: Component<ChartTabProps> = props => {

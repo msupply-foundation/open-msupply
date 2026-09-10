@@ -24,7 +24,9 @@ import {
   DEFAULT_TAB,
   needsArrivalWindow,
   tabFromParam,
+  widenToInclude,
   withDefaultWindow,
+  type ListedBreach,
   type MonitoringFilter,
   type MonitoringState,
 } from './monitoringState';
@@ -102,15 +104,23 @@ const MonitoringScreen: Component = () => {
   };
   onCleanup(() => outcomeTimer && clearTimeout(outcomeTimer));
 
-  // A marker's "View all breaches": the Breaches tab, sorted by breach start.
-  const viewAllBreaches = () => {
-    setQuery({
-      ...query(),
-      breachSort: [{ key: 'startDatetime', desc: true }],
-      breachOffset: 0,
-    });
-    setTab('breaches');
-  };
+  // A marker's "View all breaches": the Breaches tab, sorted by breach start,
+  // under the shared filters widened only as far as needed for THAT breach to
+  // be listed (rules › the chart) — a breach that began before the window is
+  // marked on the chart but starts outside the Breaches read's bounds.
+  // The tab travels in the SAME navigation as the state: a second
+  // setSearchParams call would be built from the address before this one
+  // and win, dropping the widened filter and the sort reset.
+  const viewAllBreaches = (breach: ListedBreach) =>
+    setQuery(
+      {
+        ...query(),
+        filter: widenToInclude(query().filter, breach),
+        breachSort: [{ key: 'startDatetime', desc: true }],
+        breachOffset: 0,
+      },
+      { params: { tab: 'breaches' } }
+    );
 
   const tabDefs = () => [
     { value: 'chart', label: t('label.chart') },

@@ -13,6 +13,7 @@ import { Spinner } from '@/ui/elements/feedback/Spinner';
 import { CloseIcon } from '@/ui/icons';
 import { BreachSummary as BreachSummaryQuery } from '../monitoring.generated';
 import { BreachGlyphMarker } from '../monitoring/BreachTypeCell';
+import type { ListedBreach } from '../monitoring/monitoringState';
 
 // S2 — the breach summary popover's content (spec/cold-chain-monitoring
 // ui-surface S2): identify the breach behind a chart marker without leaving
@@ -26,8 +27,9 @@ export interface BreachSummaryProps {
   breachId: string;
   /** Dismiss the popover. */
   close: () => void;
-  /** Switch to the Breaches tab, sorted by breach start. */
-  onViewAllBreaches: () => void;
+  /** Switch to the Breaches tab, sorted by breach start, with the shared
+   *  filters widened so THIS breach is listed (rules › the chart). */
+  onViewAllBreaches: (breach: ListedBreach) => void;
 }
 
 export const BreachSummary: Component<BreachSummaryProps> = props => {
@@ -98,7 +100,7 @@ export const BreachSummary: Component<BreachSummaryProps> = props => {
                   data-testid="view-all-breaches-button"
                   onClick={() => {
                     props.close();
-                    props.onViewAllBreaches();
+                    props.onViewAllBreaches(b());
                   }}
                 >
                   {t('button.view-all-breaches')}
