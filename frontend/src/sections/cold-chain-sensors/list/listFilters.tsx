@@ -89,9 +89,9 @@ const FILTERS: Filter<SensorUserFilter>[] = constructFilters<SensorUserFilter>({
 
   // ─ dismissed (not user-facing) ───────────────────────────────────────────
   // The list read honours a name filter, but the screen offers no control that
-  // sets one — captured as-is from the current app (rules › reading the list,
-  // rules § reading the list). Dismissed here rather than exposed, so the built screen matches the
-  // one the spec describes.
+  // sets one — captured as-is from the current app (rules › reading the list).
+  // Dismissed here rather than exposed, so the built screen matches the one the
+  // spec describes.
   name: null,
 });
 
