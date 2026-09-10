@@ -284,7 +284,7 @@ export const CreateAssetModal: Component<CreateAssetModalProps> = props => {
           }
         />
       </FieldRow>
-      <FieldRow label={t('label.notes')}>
+      <FieldRow label={t('label.notes')} align="first-line">
         <TextArea
           data-testid="notes-input"
           label={t('label.notes')}
