@@ -1,0 +1,43 @@
+# The Prescriptions widget's two counts (spec/dashboard/contract.md § the
+# prescription counts). Unlike the six count families, prescription requests
+# have no count query on the wire: these are the vertical's own LIST query read
+# for `totalCount` alone, with a minimal page and no `nodes` — the windowed
+# count read pattern (plugins/cook_islands/src/navigator/dispensedToday.graphql).
+#
+# ONE operation, two aliases, deliberately: both aliases authorise against
+# PrescriptionRequestQuery on the same root field, so they share one failure
+# unit — and that unit is exactly one panel, which is what the dashboard's
+# one-family-one-resource-one-panel-state rule needs. The cook_islands figure
+# keeps its own document for the opposite reason: there, one unauthorised alias
+# would have nulled a response shared with figures on OTHER permissions.
+#
+# `dispensedThisWeek` windows on `dispensedDatetime` and NEVER on
+# `status: DISPENSED`: a status advances, so a status-windowed figure would fall
+# as records progress. The datetime is null until the hand-over sets it, so the
+# window alone already excludes everything not yet dispensed.
+#
+# Store-scoped by the `storeId` argument (a store filter sent alongside is
+# overwritten server-side), and read-only like every other dashboard read.
+query prescriptionRequestCounts(
+  $storeId: String!
+  $dispensedDatetime: DatetimeFilterInput
+) {
+  readyToDispense: prescriptionRequests(
+    storeId: $storeId
+    filter: { status: { equalTo: READY_TO_DISPENSE } }
+    page: { first: 1 }
+  ) {
+    ... on PrescriptionRequestConnector {
+      totalCount
+    }
+  }
+  dispensedThisWeek: prescriptionRequests(
+    storeId: $storeId
+    filter: { dispensedDatetime: $dispensedDatetime }
+    page: { first: 1 }
+  ) {
+    ... on PrescriptionRequestConnector {
+      totalCount
+    }
+  }
+}

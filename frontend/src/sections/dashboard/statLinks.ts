@@ -46,6 +46,7 @@ import {
 import type { InboundListFilter } from '@/sections/inbound-shipments/list/listFilters';
 import type { InternalOrderFilter } from '@/sections/internal-orders/list/listFilters';
 import type { OutboundFilter } from '@/sections/outbound-shipments/list/listFilters';
+import type { PrescriptionRequestFilter } from '@/sections/prescription-requests/list/listFilters';
 import type { RequisitionFilter } from '@/sections/requisitions/list/listFilters';
 import type { ItemsListFilter } from '@/sections/items/list/itemFilter';
 
@@ -59,6 +60,16 @@ export { DAYS_TILL_EXPIRED } from '@/plugin-sdk/deepLinks';
 // windows (stock expiry) live with the promoted builders.
 const dayRange = (from: Date, to: Date) =>
   utcBoundsFromLocalDays(dateToIsoDate(from), dateToIsoDate(to));
+
+/**
+ * "This week" — Monday to the end of Sunday, the ISO week the counts are
+ * bounded by (rules.md § time windows). Exported because the prescription
+ * counts send this window as a query VARIABLE while their stat link restates
+ * it as a filter: one expression, so the number and the list it opens cannot
+ * disagree.
+ */
+export const thisWeekWindow = (today: Date) =>
+  dayRange(startOfWeek(today), addDays(startOfWeek(today), 6));
 
 // One link shape for every stat: the entered store prefixed onto the
 // store-relative list target (path + `?query=` filter — the SDK's listPath,
@@ -103,7 +114,7 @@ export const inboundThisWeekHref = (
   external = false
 ): string =>
   listHref(storeId, inboundShipmentListPath(), {
-    createdDatetime: dayRange(startOfWeek(today), addDays(startOfWeek(today), 6)),
+    createdDatetime: thisWeekWindow(today),
     ...inboundKind(external),
   } satisfies InboundListFilter);
 
@@ -163,6 +174,36 @@ export const customerRequisitionEmergencyHref = (storeId: string): string =>
     status: { equalAny: ['NEW'] },
     isEmergency: true,
   } satisfies RequisitionFilter);
+
+// ── Prescriptions ────────────────────────────────────────────────────────────
+// The prescriber's own record (spec/prescription-requests), which the
+// navigation registry labels "Prescriptions"; the dispensing list is a
+// different destination. Store-relative path spelled here rather than promoted
+// to the SDK, like the customer-requisition links above — no plugin target
+// commits to it yet.
+const PRESCRIPTION_REQUEST_LIST = 'dispensary/prescription-request';
+
+export const prescriptionRequestListHref = (storeId: string): string =>
+  listHref(storeId, PRESCRIPTION_REQUEST_LIST);
+
+// Ready to dispense = requests in that status, the list's multi-select status
+// filter with one value ticked (OMS-REG-DB-01.63).
+export const prescriptionRequestsReadyHref = (storeId: string): string =>
+  listHref(storeId, PRESCRIPTION_REQUEST_LIST, {
+    status: { equalAny: ['READY_TO_DISPENSE'] },
+  } satisfies PrescriptionRequestFilter);
+
+// Dispensed this week = the dispensed-datetime window, and NOTHING else
+// (OMS-REG-DB-01.64): the same window the count sends, and no status key —
+// only a dispensed request has the datetime at all, so adding `status` would
+// narrow neither set while inviting the two to disagree.
+export const prescriptionRequestsDispensedThisWeekHref = (
+  storeId: string,
+  today: Date
+): string =>
+  listHref(storeId, PRESCRIPTION_REQUEST_LIST, {
+    dispensedDatetime: thisWeekWindow(today),
+  } satisfies PrescriptionRequestFilter);
 
 // ── Inventory ────────────────────────────────────────────────────────────────
 // The stock and item-level links are the promoted SDK builders, store-wrapped;
