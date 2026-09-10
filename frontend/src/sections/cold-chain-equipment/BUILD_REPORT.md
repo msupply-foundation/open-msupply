@@ -86,7 +86,7 @@ Two routed screens — the list and one asset's detail — serving **both** dest
 | **AC-Z2** a column per specification key | `csv`, incl. the catalogue-wins rule |
 | **AC-B1 – AC-B7** scanning | _not built_ — see [exemptions](#exempt-but-listed) |
 | **AC-B5** locked fields read-only | `assetEdit` (`isLockedField`, incl. the server-admin override); `SummaryTab` renders the standing explanation |
-| **AC-AL1 / AC-AL2** the activity log | _shared surface_ — `ActivityLogPanel`; **live** (the trail renders with before/after values) |
+| **AC-AL1 / AC-AL2 / AC-AL3** the activity log | _shared surface_ — `ActivityLogPanel`, passed `order="oldest-first"`; **live** (the trail renders with before/after values, oldest first) |
 | **AC-G1** read permission withheld | `access` — nav entry absent, route `denied`; the server refusal is _server-owned_ |
 | **AC-G2** change permission withheld | `CreateAssetAction` / `ImportEquipmentAction` / `DeleteAssetsAction` / the detail's delete each check and explain |
 | **AC-G3** status permission withheld | `StatusActions` checks both permissions and explains |

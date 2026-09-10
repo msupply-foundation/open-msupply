@@ -333,9 +333,14 @@ const EquipmentDetailView: Component = () => {
                 />
               </TabPanel>
               <TabPanel value="log">
+                {/* Oldest first (AC-AL3): the trail reads as the story of
+                    what happened to the machine in the order it happened. The
+                    panel's default is newest-first — the four other verticals
+                    whose spec mandates this order pass the same prop. */}
                 <ActivityLogPanel
                   storeId={params.storeId}
                   recordId={record().id}
+                  order="oldest-first"
                 />
               </TabPanel>
 
