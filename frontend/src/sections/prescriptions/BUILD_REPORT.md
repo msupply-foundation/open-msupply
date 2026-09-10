@@ -41,7 +41,7 @@ Scoped build of the prescriptions vertical (`spec/prescriptions`) — the dispen
 | AC-Y1/Y2 payment window                                           | `PaymentsModal`                                                     | ⚠️ built; not exercisable (no insurance providers on the probe store)                                                                 |
 | AC-X2/X3 cancel restores stock / reversal invisible               | server-enforced                                                     | ⚠️ server behaviour (probed in reverse spec)                                                                                          |
 | AC-E1 report selector                                             | screens                                                             | ⚠️ built, live-verified                                                                                                               |
-| AC-E2 label printing (`.47`, `.71`)                               | `labels.test.ts` · `printLabels.test.ts` · e2e (see follow-up)      | ✅ tested — delivery and both failure reports; see the USB follow-up below                                                            |
+| AC-E2 label printing (`.47`, `.71`)                               | `labels.test.ts` · `printLabels.test.ts` · e2e (see follow-up)      | ✅ tested — delivery on both routes, and a server-rejected print; see the follow-up below                                             |
 
 ### Verification beyond unit tests
 
@@ -77,12 +77,28 @@ printed.
   **where** the report lands (in place on the control that started it, plus the
   shared dialog).
 
-| Behaviour                                                | Where                                                                    |
-| -------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `.47` labels reach the printer over the device's route   | e2e `prescriptions-regression` (USB delivery: device selected, ZPL sent) |
-| `.47` nothing configured → told to configure one         | e2e (pre-existing) · settings `.43` for the nothing-sent half            |
-| `.71` a refused print is never silent, from the bulk bar | e2e `prescriptions-regression` · `LabelPrintOutcomeDialog.test.ts`       |
-| `.47` all three entry points reach the same action       | e2e — app bar (above), bulk bar (`.71`), and **Alt+L**                   |
+| Behaviour                                              | Where                                                                                                            |
+| ------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| `.47` labels reach the printer over the device's route | e2e `prescriptions-regression` (USB delivery: device selected, ZPL sent)                                         |
+| `.47` nothing configured → told to configure one       | e2e (pre-existing) · settings `.43` for the nothing-sent half                                                    |
+| `.71` a print the SERVER rejects is never silent       | e2e `prescriptions-regression`, one test per entry point (app bar, bulk bar) · `LabelPrintOutcomeDialog.test.ts` |
+| `.47` all three entry points reach the same action     | e2e — app bar (above), bulk bar (`.71`), and **Alt+L**                                                           |
+
+`.71` is the **network** route: it names a print "the server rejects" and "the
+server's own message". Both its tests stub a non-2xx from the label endpoint.
+They were first written against a USB print-service refusal — a different actor,
+and one already covered at the cheapest layer (`printLabels.test.ts` turns the
+refusal into a `failed` outcome carrying its detail; `LabelPrintOutcomeDialog.test.ts`
+renders it), so driving it through a browser too was dropped rather than kept.
+
+"Shows busy while it runs" is asserted on the **bulk bar only**. The current
+app's app-bar control is a SplitButton whose `isLoadingType` is never set by
+`AppBarButton`, so the `isLoading` it is passed is a dead prop and no busy state
+renders — a gap there, not a missing test id. On the bulk bar both front ends
+hold the flag across an awaited request. (It is not sound on the USB route at
+all: `printViaUsb` clears `isPrinting` in a `finally` that runs as soon as the
+callback-style `getLocalDevices` is _called_, so busy ends before the print
+does — asserted there it passed in isolation and failed in a full run.)
 
 **Alt+L had no test of any kind.** `ALT_L` appeared in exactly two files —
 `src/ui/utils/shortcuts.ts` and `PrescriptionDetailView.tsx` — and in no unit or
