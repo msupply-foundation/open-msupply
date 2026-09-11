@@ -43,7 +43,8 @@ Anchors are `OMS-REG-CCE-03.<n>` — the behaviours of [`spec/cold-chain-sensors
 | **.33** / **.34** activity trail, both ways                      | **live** — two `SENSOR_LOCATION_CHANGED` rows with from/to                                                           |
 | **.35** / **.36** picker shows % used, offers no fullness filter | `volume` — a suppressed filter narrows nothing; **live** — `0% used` per option, no `location-fullness-*` control    |
 | **.10** device values read-only                                  | `sensorEdit` (draft holds three keys); **live** (a11y tree: no inputs for them)                                      |
-| **.37** a save moves neither battery nor interval                | `sensorEdit` — the input carries four keys and no more                                                               |
+| **.37** a save moves neither battery nor interval                | `sensorEdit` — the writable surface is four keys and no more                                                         |
+| **.52** a save carries only what changed                         | `sensorEdit` — a sparse patch, one case per field; e2e (a concurrent move survives an unrelated save)                |
 | **.38** serial trimmed                                           | `sensorDisplay`; **live**                                                                                            |
 | **.39** / **.40** retire and restore                             | `sensorEdit`; **live**, both directions                                                                              |
 | **.41** nothing deletes a sensor                                 | _structural_ — no delete operation exists in the schema, so none is built; **live** (no affordance on list or modal) |
