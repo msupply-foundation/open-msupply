@@ -85373,6 +85373,58 @@
    "patient_id": null,
    "reference_id": null,
    "is_integrated": false
+  },
+  {
+   "cursor": 2398,
+   "record_id": "e2e_reason_nf_obs",
+   "received_datetime": "2026-07-09T00:00:00",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "asset_log_reason",
+   "action": "Upsert",
+   "data": {
+    "id": "e2e_reason_nf_obs",
+    "asset_log_status": "NOT_FUNCTIONING",
+    "reason": "E2E needs written observations",
+    "deleted_datetime": null,
+    "comments_required": true
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": null,
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
+  },
+  {
+   "cursor": 2399,
+   "record_id": "e2e_perm_limited_AssetQuery",
+   "received_datetime": "2026-07-09T00:00:00",
+   "integration_started_datetime": null,
+   "integration_datetime": null,
+   "integration_error": null,
+   "integration_result": null,
+   "table_name": "user_permission",
+   "action": "Upsert",
+   "data": {
+    "id": "e2e_perm_limited_AssetQuery",
+    "user_id": "e2e_user_limited",
+    "store_id": "80004C94067A4CE5A34FC343EB1B4306",
+    "permission": "AssetQuery",
+    "context_id": null
+   },
+   "sync_version": "V7",
+   "app_version": null,
+   "source_site_id": 6,
+   "store_id": "80004C94067A4CE5A34FC343EB1B4306",
+   "transfer_store_id": null,
+   "patient_id": null,
+   "reference_id": null,
+   "is_integrated": false
   }
  ],
  "users": [],
