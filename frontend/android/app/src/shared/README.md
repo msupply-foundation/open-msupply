@@ -23,8 +23,15 @@ must not reference anything project-specific. Where the plugin needs something
 from its host activity it asks through `DiscoveryHostActivity`, which each
 project's `MainActivity` implements.
 
-`FileTransferPlugin`, `PrintPlugin`, `ReadLogPlugin` and `RemoteServer` are
-still a copy each. They are older than this arrangement and have drifted
-(`RemoteServer` most of all — the new shell treats the JNI library as
-optional), so moving them here is its own piece of work rather than a rename.
-This directory is where they should end up.
+Everything the new front end needs is here, because it needs it from BOTH
+bundles — the plugins it calls have to exist in the transition APK as well as
+this one.
+
+Two files stay out:
+
+- `MainActivity` — each project has its own, same fully qualified name. That
+  is the reason `src/main/java` as a whole cannot be the shared root.
+- `RemoteServer` — the two have genuinely drifted rather than merely diverged
+  in comments: this shell treats the JNI library as optional (the dev loop
+  bundles no `.so`), the transition APK hard-loads it. Reconciling them is a
+  behaviour change, not a rename, so it is its own piece of work.

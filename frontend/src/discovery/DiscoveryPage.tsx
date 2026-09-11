@@ -18,7 +18,7 @@ import { Spinner } from '../ui/elements/feedback/Spinner';
 import { Button } from '../ui/elements/buttons/Button';
 import { IconButton } from '../ui/elements/buttons/IconButton';
 import { TextField } from '../ui/elements/inputs/TextField';
-import { HomeIcon, RefreshIcon } from '../ui/icons';
+import { HomeIcon, RefreshIcon, TransferHorizontalIcon } from '../ui/icons';
 import { AppLogo } from '../ui/branding/AppLogo';
 import { LanguageSelector } from '../ui/layout/AppShell/LanguageSelector';
 import type { DiscoveryHostApi, HostInfo } from './hostContract';
@@ -72,7 +72,12 @@ import styles from './Discovery.module.css';
 // its own html entry, so App.tsx's owner never runs here): driven by the real
 // i18n locale (RTL for ar/prs/ps), flipped live by the footer
 // LanguageSelector.
-const DiscoveryFrame: Component<{ children: JSX.Element }> = props => {
+const DiscoveryFrame: Component<{
+  children: JSX.Element;
+  /** A low-key action beside the language selector, in the same row the
+   * login and initialisation screens put "change server" in. */
+  secondaryAction?: JSX.Element;
+}> = props => {
   // The tab names this screen too — the shell's window title while no server
   // is chosen.
   createDocumentTitle(() => 'discovery.heading');
@@ -102,6 +107,7 @@ const DiscoveryFrame: Component<{ children: JSX.Element }> = props => {
             {props.children}
 
             <div class={layout.formActions}>
+              {props.secondaryAction}
               <div class={layout.languageAction}>
                 <LanguageSelector
                   language={locale()}
@@ -140,6 +146,12 @@ export const DiscoveryPage: Component<{ host: DiscoveryHostApi }> = props => {
   // when the user answers, so without this the re-ask case cannot be answered
   // at all (discovery.ts § shouldAskInstallMode / § effectiveFlags).
   const [answered, setAnswered] = createSignal(false);
+  // Asked for from the list, rather than by the rules below. A stored role is
+  // a CHOICE and has to stay changeable: client mode is never re-asked
+  // automatically (returning to the list is the common path and an extra step
+  // every time would be wrong), which left clearing app data as the only way
+  // back to the question.
+  const [reopen, setReopen] = createSignal(false);
 
   // This machine serves everyone iff the install was built that way
   // (standalone=true, AC-DT20) OR its user said so. The launch flag wins:
@@ -149,8 +161,15 @@ export const DiscoveryPage: Component<{ host: DiscoveryHostApi }> = props => {
     effectiveFlags(flags, mode(), answered());
   const servesItself = () => effective().standalone;
 
-  // Whether to ask the role (discovery.ts § shouldAskInstallMode).
-  const undecided = () => shouldAskInstallMode(flags, mode(), answered());
+  // Whether to ask the role (discovery.ts § shouldAskInstallMode), or the
+  // user asked for it back.
+  const undecided = () =>
+    reopen() || shouldAskInstallMode(flags, mode(), answered());
+
+  // Whether the question is this install's to answer at all: a desktop client
+  // was never offered it, and a standalone install must never be (AC-DT20).
+  // The same conditions shouldAskInstallMode gates on.
+  const roleIsChoosable = flags.canHostServer && !flags.standalone;
 
   // Where the landing screen can send the user back to (AC-DT16): this page,
   // told not to bounce straight back and told the install's mode, so a
@@ -167,11 +186,26 @@ export const DiscoveryPage: Component<{ host: DiscoveryHostApi }> = props => {
     batch(() => {
       setMode(chosen);
       setAnswered(true);
+      setReopen(false);
     });
   };
 
   return (
-    <DiscoveryFrame>
+    <DiscoveryFrame
+      secondaryAction={
+        <Show when={roleIsChoosable && !undecided()}>
+          <button
+            type="button"
+            class={layout.secondaryAction}
+            onClick={() => setReopen(true)}
+            data-testid="discovery-change-mode"
+          >
+            <TransferHorizontalIcon class={layout.secondaryActionIcon} />
+            {t('discovery.change-mode')}
+          </button>
+        </Show>
+      }
+    >
       <Switch>
         {/* Asked once, on a machine that could serve or be served. */}
         <Match when={undecided()}>

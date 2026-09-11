@@ -71,6 +71,7 @@ class CertWebViewClient extends ExtendedWebViewClient {
         // Only a server the discovery page sent us to: the old front end's
         // connect path has its own error handling and must not be yanked here.
         if (chosenUrl == null || !failed.startsWith(chosenUrl)) return;
+        if (chosenServerIsLocal()) return;
         this.nativeApi.returnToDiscovery(true);
     }
 
@@ -117,9 +118,31 @@ class CertWebViewClient extends ExtendedWebViewClient {
         // connect path has its own error handling and must not be yanked here.
         String chosenUrl = NativeApi.getChosenUrl();
         if (chosenUrl == null || !failed.startsWith(chosenUrl)) return;
+        if (chosenServerIsLocal()) return;
         Log.w(NativeApi.OM_SUPPLY, "Chosen server answered " + status + " for " + failed
                 + " — no app is served there, returning to discovery");
         this.nativeApi.returnToDiscovery(true);
+    }
+
+    /**
+     * Whether the server the page chose is THIS DEVICE'S OWN.
+     *
+     * Both recoveries above stop here, because a local server failing is the
+     * local server dying: the readiness poll and ErrorPage own that, and
+     * reloading discovery cannot fix it.
+     *
+     * Asked of the IDENTITY the page stated, never of how the address happens
+     * to be spelled. A prefix test against localUrl (https://localhost:8000)
+     * misses both spellings the page actually hands off with — 127.0.0.1 for a
+     * device in server mode (discovery.ts STANDALONE_LOCAL_SERVER) and the LAN
+     * address for a discovered local server (toFrontEndHost § address
+     * rewriting) — so the guard would silently never fire. This is the same
+     * address-versus-identity trap that navigate(url, server) exists to
+     * remove; chosenIsLocal is already recorded, and certificate trust already
+     * uses it.
+     */
+    private static boolean chosenServerIsLocal() {
+        return NativeApi.getChosenIsLocal();
     }
 
     private Certificate get_self_signed_cert() {
