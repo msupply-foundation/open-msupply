@@ -187,7 +187,7 @@ export type DeleteInternalOrdersResult = {
   __typename: "DeleteRequestRequisitionError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotDeleteRequisitionWithLines" | "CannotEditRequisition" | "RecordNotFound";
   description: string;
 };
 });
@@ -212,6 +212,9 @@ export type UpdateInternalOrderColourVariables = {
     otherPartyId?: string | null;
     expectedDeliveryDate?: string | null;
     destinationCustomerId?: {
+    value?: string | null;
+  } | null;
+    originalCustomerId?: {
     value?: string | null;
   } | null;
   };

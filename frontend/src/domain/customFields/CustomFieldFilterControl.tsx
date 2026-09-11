@@ -9,8 +9,9 @@ import {
 } from '../../ui/elements/selectors/FilterBar';
 import { t } from '../../intl';
 import {
-  ancestorIds,
-  optionAndDescendantIds,
+  applyOptionToggle,
+  type CustomFieldOption,
+  type OrderedOption,
   type ParsedCustomField,
 } from './parse';
 import type { CustomFieldFilterValue } from './filter';
@@ -40,6 +41,8 @@ export const CustomFieldFilterControl = (props: {
       : '';
   const asOptionIds = () =>
     props.value?.kind === 'option' ? props.value.optionIds : [];
+  const asMultiOptionIds = () =>
+    props.value?.kind === 'multiOption' ? props.value.optionIds : [];
   const asNumber = () =>
     props.value?.kind === 'number' ? props.value : undefined;
   const asDate = () => (props.value?.kind === 'date' ? props.value : undefined);
@@ -78,90 +81,70 @@ export const CustomFieldFilterControl = (props: {
       </Match>
 
       <Match when={props.field.kind === 'option' && props.field}>
-        {optionField => {
-          const opts = () => optionField().def.options;
-          // Trigger summary: the TOP-MOST selected nodes (a selected node whose
-          // parent is also selected is implied, so it isn't listed), capped so
-          // a large selection stays "A, B, C +N more".
-          const summary = () => {
-            const set = new Set(asOptionIds());
-            const roots = optionField()
-              .options.filter(
-                o =>
-                  set.has(o.option.id) &&
-                  (!o.option.parentOptionId ||
-                    !set.has(o.option.parentOptionId))
+        {optionField => (
+          <OptionSelectionFilter
+            label={name()}
+            testId={props.testId}
+            options={optionField().def.options}
+            ordered={optionField().options}
+            values={asOptionIds()}
+            onChange={optionIds =>
+              props.onChange(
+                optionIds.length ? { kind: 'option', optionIds } : null
               )
-              .map(o => o.option.name);
-            const CAP = 3;
-            return roots.length <= CAP
-              ? roots.join(', ')
-              : `${roots.slice(0, CAP).join(', ')} ${t('custom-fields.filter-more', { count: roots.length - CAP })}`;
-          };
-          return (
-            <FilterMultiSelect
-              label={name()}
-              placeholder={t('label.any')}
-              testId={props.testId}
-              summary={summary}
-              values={asOptionIds()}
-              options={optionField().options.map(o => ({
-                value: o.option.id,
-                label: `${'  '.repeat(o.depth)}${o.option.name}`,
-              }))}
-              onChange={newIds => {
-                // Selection is a DIFF, so ticking/unticking one option doesn't
-                // re-lock the rest: adding a node selects its whole subtree;
-                // removing a node clears its subtree AND its ancestors (a
-                // parent is only selected while every descendant is), keeping
-                // siblings.
-                const prev = new Set(asOptionIds());
-                const next = new Set<string>(newIds);
-                for (const id of newIds.filter(i => !prev.has(i)))
-                  for (const d of optionAndDescendantIds(opts(), id))
-                    next.add(d);
-                for (const id of [...prev].filter(i => !next.has(i))) {
-                  for (const d of optionAndDescendantIds(opts(), id))
-                    next.delete(d);
-                  for (const a of ancestorIds(opts(), id)) next.delete(a);
-                }
-                const optionIds = [...next];
-                props.onChange(
-                  optionIds.length ? { kind: 'option', optionIds } : null
-                );
-              }}
-            />
-          );
-        }}
+            }
+          />
+        )}
       </Match>
 
-      <Match when={props.field.kind === 'number'}>
-        <Range
-          from={
-            <FilterNumberInput
-              label={t('label.from')}
-              placeholder={t('label.from')}
-              value={asNumber()?.min}
-              onChange={min =>
-                props.onChange(
-                  cleanRange({ kind: 'number', min, max: asNumber()?.max })
-                )
-              }
-            />
-          }
-          to={
-            <FilterNumberInput
-              label={t('label.to')}
-              placeholder={t('label.to')}
-              value={asNumber()?.max}
-              onChange={max =>
-                props.onChange(
-                  cleanRange({ kind: 'number', min: asNumber()?.min, max })
-                )
-              }
-            />
-          }
-        />
+      <Match when={props.field.kind === 'multiOption' && props.field}>
+        {multiField => (
+          <OptionSelectionFilter
+            label={name()}
+            testId={props.testId}
+            options={multiField().def.options}
+            ordered={multiField().options}
+            values={asMultiOptionIds()}
+            onChange={optionIds =>
+              props.onChange(
+                optionIds.length ? { kind: 'multiOption', optionIds } : null
+              )
+            }
+          />
+        )}
+      </Match>
+
+      <Match when={props.field.kind === 'number' && props.field}>
+        {numberField => (
+          <Range
+            from={
+              <FilterNumberInput
+                label={t('label.from')}
+                placeholder={t('label.from')}
+                decimalLimit={numberField().integer ? 0 : 6}
+                value={asNumber()?.min}
+                onChange={min =>
+                  props.onChange(
+                    cleanRange({ kind: 'number', min, max: asNumber()?.max })
+                  )
+                }
+              />
+            }
+            to={
+              <FilterNumberInput
+                label={t('label.to')}
+                placeholder={t('label.to')}
+                decimalLimit={numberField().integer ? 0 : 6}
+                value={asNumber()?.max}
+                onChange={max =>
+                  props.onChange(
+                    cleanRange({ kind: 'number', min: asNumber()?.min, max })
+                  )
+                }
+              />
+            }
+          />
+        )}
       </Match>
 
       <Match when={props.field.kind === 'date'}>
@@ -191,6 +174,58 @@ export const CustomFieldFilterControl = (props: {
         />
       </Match>
     </Switch>
+  );
+};
+// The OPTION-hierarchy selection filter, shared by the single-valued OPTION
+// field and the multi-valued MULTI_OPTION one — the two ask the same question
+// of the user ("which of these options?") and differ only in the condition
+// they end up as, so they must not offer two different tick behaviours.
+//
+// Selection is a DIFF (parse › applyOptionToggle, shared with the editable
+// MULTI_OPTION control): adding a node selects its whole subtree, removing one
+// clears its subtree AND its ancestors, so ticking or unticking one option
+// doesn't re-lock the rest. What the state holds is exactly what is ticked;
+// widening it for the query is the condition builder's job (filter.ts).
+const OptionSelectionFilter = (props: {
+  label: string;
+  testId?: string;
+  options: CustomFieldOption[];
+  ordered: OrderedOption[];
+  values: string[];
+  onChange: (optionIds: string[]) => void;
+}) => {
+  // Trigger summary: the TOP-MOST selected nodes (a selected node whose parent
+  // is also selected is implied, so it isn't listed), capped so a large
+  // selection stays "A, B, C +N more".
+  const summary = () => {
+    const set = new Set(props.values);
+    const roots = props.ordered
+      .filter(
+        o =>
+          set.has(o.option.id) &&
+          (!o.option.parentOptionId || !set.has(o.option.parentOptionId))
+      )
+      .map(o => o.option.name);
+    const CAP = 3;
+    return roots.length <= CAP
+      ? roots.join(', ')
+      : `${roots.slice(0, CAP).join(', ')} ${t('custom-fields.filter-more', { count: roots.length - CAP })}`;
+  };
+  return (
+    <FilterMultiSelect
+      label={props.label}
+      placeholder={t('label.any')}
+      testId={props.testId}
+      summary={summary}
+      values={props.values}
+      options={props.ordered.map(o => ({
+        value: o.option.id,
+        label: `${'  '.repeat(o.depth)}${o.option.name}`,
+      }))}
+      onChange={newIds =>
+        props.onChange(applyOptionToggle(props.options, props.values, newIds))
+      }
+    />
   );
 };
 

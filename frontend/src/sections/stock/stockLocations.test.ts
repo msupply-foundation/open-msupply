@@ -35,7 +35,7 @@ const LOCS: StockLocation[] = [
     id: '1',
     code: 'COLD-1',
     name: 'Cold room 1',
-    locationType: { id: 'cold' },
+    locationType: { id: 'cold', name: 'Cold' },
     volume: 200,
     volumeUsed: 50,
     stock: { __typename: 'StockLineConnector', totalCount: 3 },
@@ -44,7 +44,7 @@ const LOCS: StockLocation[] = [
     id: '2',
     code: 'AMB-1',
     name: 'Ambient 1',
-    locationType: { id: 'ambient' },
+    locationType: { id: 'ambient', name: 'Ambient' },
   }),
   loc({ id: '3', code: 'NO-TYPE', name: 'Untyped' }),
 ];

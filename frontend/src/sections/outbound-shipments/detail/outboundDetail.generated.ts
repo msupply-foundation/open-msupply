@@ -251,6 +251,13 @@ export type OutboundLinesVariables = {
     equalAnyOrNull?: Array<string> | null;
     notEqualAll?: Array<string> | null;
   } | null;
+    inventoryAdjustmentReason?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
     verifiedDatetime?: {
     equalTo?: string | null;
     beforeOrEqualTo?: string | null;
@@ -266,7 +273,7 @@ export type OutboundLinesVariables = {
     isProgramInvoice?: boolean | null;
   } | null;
   sort?: Array<{
-    key: "itemCode" | "itemName" | "batch" | "expiryDate" | "packSize" | "locationName";
+    key: "itemCode" | "itemName" | "batch" | "expiryDate" | "packSize" | "locationName" | "requestedQuantity";
     desc?: boolean | null;
   }> | null;
 };
@@ -388,7 +395,7 @@ export type UpdateOutboundShipmentNameResult = {
   __typename: "UpdateOutboundShipmentNameError";
 } & {
   error: {
-  __typename: string;
+  __typename: "InvoiceIsNotEditable" | "NotAnOutboundShipmentError" | "OtherPartyNotACustomer" | "OtherPartyNotVisible" | "RecordNotFound";
   description: string;
 };
 });
@@ -412,7 +419,7 @@ export type DeleteOutboundShipmentResult = {
   __typename: "DeleteOutboundShipmentError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotDeleteInvoiceWithLines" | "CannotEditInvoice" | "RecordNotFound";
   description: string;
 };
 });
@@ -512,7 +519,7 @@ export type AllocateOutboundLineResult = {
   __typename: "AllocateOutboundShipmentUnallocatedLineError";
 } & {
   error: {
-  __typename: string;
+  __typename: "RecordNotFound";
   description: string;
 };
 });
@@ -540,7 +547,7 @@ export type UpdateOutboundUnallocatedLineResult = {
   __typename: "UpdateOutboundShipmentUnallocatedLineError";
 } & {
   error: {
-  __typename: string;
+  __typename: "ForeignKeyError" | "RecordNotFound";
   description: string;
 };
 });
@@ -565,7 +572,7 @@ export type AddToOutboundFromMasterListResult = {
   __typename: "AddToOutboundShipmentFromMasterListError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotEditInvoice" | "MasterListNotFoundForThisName" | "RecordNotFound";
   description: string;
 };
 });

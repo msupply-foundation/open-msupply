@@ -4,7 +4,7 @@ mod upsert;
 mod validate;
 
 use crate::{service_provider::ServiceContext, ListError, ListResult};
-pub use delete::{delete_campaign, DeleteCampaign, DeleteCampaignError};
+pub use delete::{delete_campaign, delete_campaigns, DeleteCampaign, DeleteCampaignError};
 pub use query::get_campaigns;
 use repository::{
     campaign::campaign::{Campaign, CampaignFilter, CampaignSort},
@@ -38,6 +38,14 @@ pub trait CampaignServiceTrait: Send + Sync {
         input: DeleteCampaign,
     ) -> Result<String, DeleteCampaignError> {
         delete_campaign(ctx, input)
+    }
+
+    fn delete_campaigns(
+        &self,
+        ctx: &ServiceContext,
+        ids: Vec<String>,
+    ) -> Result<Vec<String>, DeleteCampaignError> {
+        delete_campaigns(ctx, ids)
     }
 }
 

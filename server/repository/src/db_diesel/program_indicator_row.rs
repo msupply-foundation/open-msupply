@@ -16,7 +16,18 @@ table! {
     }
 }
 
-#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Eq, Default, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Clone,
+    Insertable,
+    Queryable,
+    Debug,
+    PartialEq,
+    AsChangeset,
+    Eq,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[diesel(table_name = program_indicator)]
 pub struct ProgramIndicatorRow {
     pub id: String,

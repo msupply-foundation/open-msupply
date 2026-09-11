@@ -167,6 +167,9 @@ export type UpdateInternalOrderVariables = {
     destinationCustomerId?: {
     value?: string | null;
   } | null;
+    originalCustomerId?: {
+    value?: string | null;
+  } | null;
   };
 };
 
@@ -215,7 +218,7 @@ export type RefreshAncillaryItemsResult = {
   __typename: "RefreshAncillaryItemsError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotEditRequisition" | "ForeignKeyError";
   description: string;
 };
 });
@@ -237,7 +240,7 @@ export type UseSuggestedQuantitiesResult = {
   __typename: "UseSuggestedQuantityError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotEditRequisition" | "RecordNotFound";
   description: string;
 };
 });

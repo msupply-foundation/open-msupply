@@ -1,12 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import {
   ancestorIds,
+  applyOptionToggle,
+  collapseSelectionToStored,
+  expandStoredToSelection,
+  filterQueryIds,
+  liveOptions,
+  multiOptionIds,
   optionAndDescendantIds,
   orderOptionsHierarchically,
   parseCustomField,
   parseCustomFields,
   partitionCustomFields,
   shownCustomFields,
+  topMostIds,
   type CustomFieldDef,
   type CustomFieldOption,
 } from './parse';
@@ -27,6 +34,7 @@ const option = (over: Partial<CustomFieldOption> = {}): CustomFieldOption => ({
   key: 'o1',
   name: 'Option 1',
   parentOptionId: null,
+  deletedDatetime: null,
   ...over,
 });
 
@@ -49,6 +57,9 @@ describe('parseCustomField — value type → kind', () => {
     );
     expect(parseCustomField(def({ valueType: 'DATE' })).kind).toBe('date');
     expect(parseCustomField(def({ valueType: 'OPTION' })).kind).toBe('option');
+    expect(parseCustomField(def({ valueType: 'MULTI_OPTION' })).kind).toBe(
+      'multiOption'
+    );
     const int = parseCustomField(def({ valueType: 'INTEGER' }));
     const real = parseCustomField(def({ valueType: 'REAL' }));
     expect(int.kind === 'number' && int.integer).toBe(true);
@@ -128,6 +139,135 @@ describe('option hierarchy', () => {
   });
 });
 
+// MULTI_OPTION stores the MINIMAL covering set — a parent stands for its whole
+// subtree — while the picker works in the expanded set. These pin the round
+// trip between the two, since every surface depends on it: what displays, what
+// is stored, and what the filter asks the server.
+describe('deleted options: resolvable, never offered', () => {
+  // The server returns deleted options deliberately (a stored value is only an
+  // id), so the split has to be enforced client-side.
+  const def = (): CustomFieldDef =>
+    ({
+      id: 'cf',
+      key: 'k',
+      name: 'Field',
+      valueType: 'OPTION',
+      kind: 'STANDARD',
+      displayMode: 'VISIBLE',
+      options: [
+        option({ id: 'live', name: 'Live' }),
+        option({ id: 'gone', name: 'Gone', deletedDatetime: '2026-01-01T00:00:00' }),
+      ],
+    }) as CustomFieldDef;
+
+  it('drops deleted options from the offered list', () => {
+    expect(liveOptions(def().options).map(o => o.id)).toEqual(['live']);
+  });
+
+  it('keeps them out of what a picker renders', () => {
+    const parsed = parseCustomField(def());
+    expect(
+      parsed.kind === 'option' ? parsed.options.map(o => o.option.id) : []
+    ).toEqual(['live']);
+  });
+
+  it('still resolves a stored deleted id to its name, not a raw id', () => {
+    expect(
+      customFieldDisplayString(parseCustomField(def()), { k: 'gone' })
+    ).toBe('Gone');
+  });
+});
+
+describe('multi-option: the minimal covering set', () => {
+  const options = [
+    option({ id: 'root', parentOptionId: null }),
+    option({ id: 'child', parentOptionId: 'root' }),
+    option({ id: 'sibling', parentOptionId: 'root' }),
+    option({ id: 'grandchild', parentOptionId: 'child' }),
+    option({ id: 'flat', parentOptionId: null }),
+  ];
+
+  it('reads only an array of strings as a value', () => {
+    expect(multiOptionIds(['a', 'b'])).toEqual(['a', 'b']);
+    expect(multiOptionIds([])).toEqual([]);
+    // A scalar is what a field retyped from OPTION leaves behind; a mixed
+    // array is not this field's value either.
+    expect(multiOptionIds('a')).toEqual([]);
+    expect(multiOptionIds(['a', 2])).toEqual([]);
+    expect(multiOptionIds(null)).toEqual([]);
+  });
+
+  it('expands a stored parent to every node beneath it', () => {
+    expect(expandStoredToSelection(options, ['child']).sort()).toEqual([
+      'child',
+      'grandchild',
+    ]);
+    expect(expandStoredToSelection(options, ['flat'])).toEqual(['flat']);
+  });
+
+  it('collapses a fully ticked subtree back to its parent', () => {
+    expect(
+      collapseSelectionToStored(options, [
+        'root',
+        'child',
+        'sibling',
+        'grandchild',
+      ])
+    ).toEqual(['root']);
+    // A partially ticked parent stores its ticked children, in configured
+    // order rather than tick order.
+    expect(collapseSelectionToStored(options, ['flat', 'sibling'])).toEqual([
+      'sibling',
+      'flat',
+    ]);
+  });
+
+  it('survives the round trip, and keeps an id the definition does not know', () => {
+    const stored = ['child', 'flat'];
+    expect(
+      collapseSelectionToStored(
+        options,
+        expandStoredToSelection(options, stored)
+      )
+    ).toEqual(stored);
+    expect(topMostIds(options, ['ghost'])).toEqual(['ghost']);
+  });
+
+  it('ticking a node takes its subtree; unticking one takes its ancestors', () => {
+    // Ticking `child` also ticks `grandchild` …
+    expect(applyOptionToggle(options, [], ['child']).sort()).toEqual([
+      'child',
+      'grandchild',
+    ]);
+    // … and unticking `grandchild` releases `child`, which is no longer fully
+    // selected, while leaving a sibling selection alone.
+    expect(
+      applyOptionToggle(
+        options,
+        ['root', 'child', 'grandchild', 'sibling'],
+        ['root', 'child', 'sibling']
+      ).sort()
+    ).toEqual(['sibling']);
+  });
+
+  it('expands a filter both ways so minimal storage still matches', () => {
+    // Down: filtering on `root` finds a record stored as `grandchild`.
+    // Up: filtering on `grandchild` finds a record stored, minimally, as
+    // `root`.
+    expect(filterQueryIds(options, ['grandchild']).sort()).toEqual([
+      'child',
+      'grandchild',
+      'root',
+    ]);
+    expect(filterQueryIds(options, ['root']).sort()).toEqual([
+      'child',
+      'grandchild',
+      'root',
+      'sibling',
+    ]);
+  });
+});
+
 describe('buildCustomFieldDynamicFilter — typed AST per kind', () => {
   it('emits the right operator for each value kind', () => {
     expect(
@@ -172,6 +312,49 @@ describe('buildCustomFieldDynamicFilter — typed AST per kind', () => {
     });
   });
 
+  it('expands a MULTI_OPTION condition against the definition it is given', () => {
+    const options = [
+      option({ id: 'root', parentOptionId: null }),
+      option({ id: 'child', parentOptionId: 'root' }),
+    ];
+    const category = def({
+      key: 'category',
+      valueType: 'MULTI_OPTION',
+      options,
+    });
+    expect(
+      buildCustomFieldDynamicFilter(
+        { category: { kind: 'multiOption', optionIds: ['child'] } },
+        [category]
+      )
+    ).toEqual({
+      And: [
+        {
+          CustomField: {
+            key: 'category',
+            filter: { MultiOption: { In: ['child', 'root'] } },
+          },
+        },
+      ],
+    });
+    // Without the definition there is no tree to walk: the chosen ids stand as
+    // they are — a narrower filter, never a wrong one.
+    expect(
+      buildCustomFieldDynamicFilter({
+        category: { kind: 'multiOption', optionIds: ['child'] },
+      })
+    ).toEqual({
+      And: [
+        {
+          CustomField: {
+            key: 'category',
+            filter: { MultiOption: { In: ['child'] } },
+          },
+        },
+      ],
+    });
+  });
+
   it('drops empty values and returns undefined for a no-op filter', () => {
     expect(
       buildCustomFieldDynamicFilter({
@@ -209,6 +392,55 @@ describe('cell text vs read-only field text', () => {
     // checkbox hides, since an unchecked box means both things).
     expect(customFieldFormText(flag, { flag: false })).toBe('messages.no');
     expect(customFieldFormText(flag, {})).toBe(EMPTY_FIELD_VALUE);
+  });
+
+  it('a multi-option reads as its names, a stored parent as the parent', () => {
+    const cat = parsed({
+      key: 'cat',
+      valueType: 'MULTI_OPTION',
+      options: [
+        option({ id: 'root', name: 'Vulnerable' }),
+        option({ id: 'child', name: 'Under-5', parentOptionId: 'root' }),
+        option({ id: 'flat', name: 'Pregnant' }),
+      ],
+    });
+    // Configured order, comma-space joined — not tick order.
+    expect(customFieldDisplayString(cat, { cat: ['flat', 'child'] })).toBe(
+      'Under-5, Pregnant'
+    );
+    // A stored parent stands for its subtree and reads as the parent: the
+    // shorter true statement, and one that doesn't rewrite itself when an
+    // option is added beneath it. A non-minimal value reads the same way.
+    expect(customFieldDisplayString(cat, { cat: ['root'] })).toBe('Vulnerable');
+    expect(customFieldDisplayString(cat, { cat: ['root', 'child'] })).toBe(
+      'Vulnerable'
+    );
+    // An empty selection is emptiness, in each surface's own convention.
+    expect(customFieldDisplayString(cat, { cat: [] })).toBe('');
+    expect(customFieldFormText(cat, { cat: [] })).toBe(EMPTY_FIELD_VALUE);
+  });
+
+  it('shows nothing for a value whose shape is not what its type means', () => {
+    // What a definition retyped on central leaves behind, and what the server
+    // now refuses to write: a bare id under a multi-valued field, a list under
+    // a single-valued one, a number under text.
+    const multi = parsed({
+      key: 'cat',
+      valueType: 'MULTI_OPTION',
+      options: [option({ id: 'o1', name: 'Pregnant' })],
+    });
+    expect(customFieldDisplayString(multi, { cat: 'o1' })).toBe('');
+    expect(customFieldFormText(multi, { cat: 'o1' })).toBe(EMPTY_FIELD_VALUE);
+    const single = parsed({
+      key: 'cat',
+      valueType: 'OPTION',
+      options: [option({ id: 'o1', name: 'Pregnant' })],
+    });
+    expect(customFieldFormText(single, { cat: ['o1'] })).toBe(
+      EMPTY_FIELD_VALUE
+    );
+    const text = parsed({ key: 'note' });
+    expect(customFieldDisplayString(text, { note: 42 })).toBe('');
   });
 
   it('a field resolves an option to its name, and localises numbers', () => {

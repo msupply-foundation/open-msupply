@@ -57,31 +57,6 @@
      3px is the smallest that still reads as a bar rather than a border at a
      glance down a long list. */
   --table-accent-bar: 3px;
-
-  /* The keyboard row focus ring (KB-N1 — see tr[data-row-focused] below): bars
-     across the row's block edges, drawn INSET on each cell because an outline
-     around a full-width row reads as a table border. One source of truth
-     because a cell that also draws a frozen-block seam has to restate the ring
-     alongside it — box-shadow is a single property, so the two cues compose in
-     one declaration or not at all.
-
-     NEUTRAL, not --primary-main. The brand orange was reported as too vibrant
-     for a transient keyboard position (Mark, PR #1114) — it competes with the
-     status/tone vocabulary the rows already carry, and the row is not a control
-     taking the app's blue focus ring either (blue is the SELECTION tint here,
-     so a blue ring on a row would read as selection). A grey rule states "the
-     keyboard is here" without claiming a meaning.
-
-     --gray-main, not the near-black --text-secondary the first pass used: at
-     2px across a full row width a text-weight grey still read as a hard rule
-     (second review pass on the same PR). The mid-grey is where softening stops,
-     not a free dial — 3.1:1 on white, and the geometry is already the minimum
-     that reads as a bar, so a lighter token or a 1px line would put a focus
-     indicator under the 3:1 that non-text contrast asks for. Dark is roomier
-     (5.1:1) but takes the same token, because two greys would be two rules to
-     keep in step for no visible gain. */
-  --row-focus-ring:
-    inset 0 2px 0 0 var(--gray-main), inset 0 -2px 0 0 var(--gray-main);
 }
 
 /* Fills the remaining height between the toolbar and the footer bar, so the
@@ -593,7 +568,7 @@ tr[data-row-state='disabled']:not(.rowClickable) {
    order keeps the selection tint winning while a selected row is
    hovered. :where(tbody) scopes body rows only (the header/footer
    select cells share .selectCell) at zero added specificity. */
-:where(tbody) tr:hover > .td {
+:where(tbody) tr:is(:hover, [data-row-focused]) > .td {
   background: color-mix(in srgb, var(--text-body) 4%, transparent);
 }
 
@@ -699,9 +674,11 @@ tr[data-row-state='disabled']:not(.rowClickable) {
    lower-specificity, so it can't outrank these). Selected/state tints
    still win while hovered — their hover rules match these on specificity
    and sit later in the file. */
-:where(tbody) tr:not([data-row-state='disabled']):hover > .td[data-pinned],
 :where(tbody)
-  tr:not([data-row-state='disabled']):hover
+  tr:not([data-row-state='disabled']):is(:hover, [data-row-focused])
+  > .td[data-pinned],
+:where(tbody)
+  tr:not([data-row-state='disabled']):is(:hover, [data-row-focused])
   > .selectCell[data-pinned] {
   background: color-mix(in srgb, var(--text-body) 4%, var(--bg-white));
 }
@@ -786,64 +763,38 @@ tr[data-tint='error'] > .selectCell {
    indicated by a background DISTINCT FROM ROW STRIPING… the indication is a
    focus state, not a meaning".
 
-   TWO channels, because focus and selection are orthogonal states that must
-   both stay readable on the same row: the row's own HOVER WASH as the
-   background, plus a neutral inset ring. The ring is a DIFFERENT PROPERTY, so
-   it never contends with the selection background — a selected row that also
-   holds keyboard focus keeps showing where the keyboard is, which the
-   background alone cannot do, since the selection rules legitimately outrank
-   this one (they carry an extra :not()) and out-specifying them needed either a
-   meaningless :not() or a duplicated attribute. Lives here, before the density
-   block, for the same ascending-specificity reason as the disabled tint above.
+   There is no rule of its own here, and that is the point: the keyboard
+   highlight IS the pointer's hover stop, so every hover rule above carries
+   `:is(:hover, [data-row-focused])` rather than this block restating the
+   colours. A keyboard position is the keyboard's equivalent of the pointer
+   being somewhere, so it earns the same weight (Mark, PR #1114) — and taking
+   the SELECTOR rather than a copy of the declaration means the whole matrix
+   follows for free: plain, pinned, selected, status-tinted, and each of their
+   deepened stops. `:is()` takes the specificity of its most specific argument,
+   and `[data-row-focused]` matches `:hover` exactly, so no rule's rank moves
+   and the file's ascending order is untouched.
 
-   The background is the SAME grey the pointer draws, deliberately (Mark, PR
-   #1114): a keyboard position is the keyboard's equivalent of the pointer being
-   somewhere, so it earns the same weight rather than a colour of its own. The
-   opaque --surface-raised base is what the hover wash's own pinned-cell variant
-   uses further up — one declaration covers ordinary and pinned cells here.
+   What used to be here — an OPAQUE grey mixed over --surface-raised plus a 2px
+   inset ring on each cell — is issue #397: the opaque base replaced the row's
+   own colour instead of tinting it (a selected or toned row went flat grey),
+   and the bars read as a border rather than a highlight. The hover wash is
+   translucent and composes, which is what "respects the current background
+   colour" asks for. The frozen block's outer column no longer restates
+   anything either: with no ring to compose with, its 1px seam
+   ([data-frozen-edge] above) applies to a focused row untouched.
 
-   The ring is what the current app lacks, and it is why the two cues are not
-   fully collapsed into one: there, hover and keyboard focus are near-identical
-   washes, so a pointer resting on row 3 while the arrows sit on row 7 shows two
-   rows looking the same, and neither says which one Enter will open. The ring
-   also keeps the state visible on the rows whose own fill outranks the wash —
-   selected, toned, read-only.
+   Two things the ring did are therefore gone, and both are deliberate: a
+   pointer resting on row 3 while the arrows sit on row 7 now shows two rows
+   looking alike, and a DISABLED row — the one row kind with no hover stop
+   (flat grey, no deepen) — shows nothing while focused. Raise a follow-up if
+   either bites; the fix is a cue in a different channel from the background,
+   not a heavier one in the same channel. */
 
-   Colour is never the only signal: the row is simultaneously the focused
-   element. The ring is on the CELLS, not an outline on the <tr>, because a
-   focus ring around a full-width row reads as a table border, not as focus. */
-tr[data-row-focused] > .td,
-tr[data-row-focused] > .selectCell {
-  background: color-mix(in srgb, var(--text-body) 4%, var(--surface-raised));
-  box-shadow: var(--row-focus-ring);
-}
-
-/* The frozen block's outer column draws its 1px seam with box-shadow too (see
-   [data-frozen-edge] above), and box-shadow is ONE property: the seam's selector
-   outranks the ring's, so that single cell lost its bars and the highlight read
-   as a notch punched out of the row over the pinned Code column (reported on the
-   internal-order detail view). Both cues are wanted there, so the ring is
-   restated WITH the seam — which is why it is a variable rather than three
-   copies of the same two shadows. The hidden-edge state needs no partner rule:
-   once content is under the block the seam is withdrawn (that same
-   `:not([data-hidden-*])`) and its shadow is drawn on a pseudo-element, so the
-   ring above applies untouched. */
-.tableScroll:not([data-hidden-left])
-  tr[data-row-focused]
-  > [data-frozen-edge='left']:not(.selectCell) {
-  box-shadow:
-    var(--row-focus-ring),
-    inset -1px 0 0 0 var(--color-divider);
-}
-
-.tableScroll:not([data-hidden-right])
-  tr[data-row-focused]
-  > [data-frozen-edge='right'] {
-  box-shadow:
-    var(--row-focus-ring),
-    inset 1px 0 0 0 var(--color-divider);
-}
-
+/* The row is a real focus destination (tabindex=-1, see createRowFocus.ts), so
+   the UA would draw its own outline around it. Suppressed for the reason the
+   custom ring was drawn inset rather than around the row in the first place,
+   and the reason #397 was raised about the ring: an outline around a
+   full-width row reads as a table border, not as focus. */
 tr[data-row-focused]:focus {
   outline: none;
 }
@@ -1013,8 +964,8 @@ tr[data-selected][data-tint='error'] > .selectCell {
 
 /* Hover deepens whichever selection tint is showing (spec: blue 8 → 12%,
    verified 8 → 12%, warning 10 → 15%). Disabled has no deepen — flat. */
-:where(tbody) tr[data-selected]:not([data-row-state]):hover > .td,
-:where(tbody) tr[data-selected]:not([data-row-state]):hover > .selectCell {
+:where(tbody) tr[data-selected]:not([data-row-state]):is(:hover, [data-row-focused]) > .td,
+:where(tbody) tr[data-selected]:not([data-row-state]):is(:hover, [data-row-focused]) > .selectCell {
   background: color-mix(
     in srgb,
     var(--secondary-main) 12%,
@@ -1022,8 +973,8 @@ tr[data-selected][data-tint='error'] > .selectCell {
   );
 }
 
-:where(tbody) tr[data-selected][data-row-state='verified']:hover > .td,
-:where(tbody) tr[data-selected][data-row-state='verified']:hover > .selectCell {
+:where(tbody) tr[data-selected][data-row-state='verified']:is(:hover, [data-row-focused]) > .td,
+:where(tbody) tr[data-selected][data-row-state='verified']:is(:hover, [data-row-focused]) > .selectCell {
   background: color-mix(
     in srgb,
     var(--status-verified) 12%,
@@ -1031,8 +982,8 @@ tr[data-selected][data-tint='error'] > .selectCell {
   );
 }
 
-:where(tbody) tr[data-selected][data-row-state='warning']:hover > .td,
-:where(tbody) tr[data-selected][data-row-state='warning']:hover > .selectCell {
+:where(tbody) tr[data-selected][data-row-state='warning']:is(:hover, [data-row-focused]) > .td,
+:where(tbody) tr[data-selected][data-row-state='warning']:is(:hover, [data-row-focused]) > .selectCell {
   background: color-mix(
     in srgb,
     var(--color-warning) 15%,
@@ -1043,8 +994,8 @@ tr[data-selected][data-tint='error'] > .selectCell {
 /* Selected + status-tinted rows keep their own deepened tint on hover too —
    without these the blue hover rule above (same specificity, earlier… but
    matching :not([data-row-state])) would flash blue over the status tint. */
-:where(tbody) tr[data-selected][data-tint='success']:hover > .td,
-:where(tbody) tr[data-selected][data-tint='success']:hover > .selectCell {
+:where(tbody) tr[data-selected][data-tint='success']:is(:hover, [data-row-focused]) > .td,
+:where(tbody) tr[data-selected][data-tint='success']:is(:hover, [data-row-focused]) > .selectCell {
   background: color-mix(
     in srgb,
     var(--success-main) 12%,
@@ -1052,8 +1003,8 @@ tr[data-selected][data-tint='error'] > .selectCell {
   );
 }
 
-:where(tbody) tr[data-selected][data-tint='warning']:hover > .td,
-:where(tbody) tr[data-selected][data-tint='warning']:hover > .selectCell {
+:where(tbody) tr[data-selected][data-tint='warning']:is(:hover, [data-row-focused]) > .td,
+:where(tbody) tr[data-selected][data-tint='warning']:is(:hover, [data-row-focused]) > .selectCell {
   background: color-mix(
     in srgb,
     var(--warning-main) 15%,
@@ -1061,8 +1012,8 @@ tr[data-selected][data-tint='error'] > .selectCell {
   );
 }
 
-:where(tbody) tr[data-selected][data-tint='unfinished']:hover > .td,
-:where(tbody) tr[data-selected][data-tint='unfinished']:hover > .selectCell {
+:where(tbody) tr[data-selected][data-tint='unfinished']:is(:hover, [data-row-focused]) > .td,
+:where(tbody) tr[data-selected][data-tint='unfinished']:is(:hover, [data-row-focused]) > .selectCell {
   background: color-mix(
     in srgb,
     var(--marking-unfinished) 21%,
@@ -1070,8 +1021,8 @@ tr[data-selected][data-tint='error'] > .selectCell {
   );
 }
 
-:where(tbody) tr[data-selected][data-tint='error']:hover > .td,
-:where(tbody) tr[data-selected][data-tint='error']:hover > .selectCell {
+:where(tbody) tr[data-selected][data-tint='error']:is(:hover, [data-row-focused]) > .td,
+:where(tbody) tr[data-selected][data-tint='error']:is(:hover, [data-row-focused]) > .selectCell {
   background: color-mix(in srgb, var(--error-main) 12%, var(--surface-raised));
 }
 
@@ -1081,8 +1032,8 @@ tr[data-selected][data-tint='error'] > .selectCell {
    onRowClick) keep flat tints — hover means nothing there. Deeper than the
    selected mixes above so the pointer's row stands out of a selection too;
    AFTER them so the hover wins on a selected clickable row. */
-:where(tbody) tr.rowClickable[data-tint='success']:hover > .td,
-:where(tbody) tr.rowClickable[data-tint='success']:hover > .selectCell {
+:where(tbody) tr.rowClickable[data-tint='success']:is(:hover, [data-row-focused]) > .td,
+:where(tbody) tr.rowClickable[data-tint='success']:is(:hover, [data-row-focused]) > .selectCell {
   background: color-mix(
     in srgb,
     var(--success-main) 14%,
@@ -1090,8 +1041,8 @@ tr[data-selected][data-tint='error'] > .selectCell {
   );
 }
 
-:where(tbody) tr.rowClickable[data-tint='warning']:hover > .td,
-:where(tbody) tr.rowClickable[data-tint='warning']:hover > .selectCell {
+:where(tbody) tr.rowClickable[data-tint='warning']:is(:hover, [data-row-focused]) > .td,
+:where(tbody) tr.rowClickable[data-tint='warning']:is(:hover, [data-row-focused]) > .selectCell {
   background: color-mix(
     in srgb,
     var(--warning-main) 17%,
@@ -1099,8 +1050,8 @@ tr[data-selected][data-tint='error'] > .selectCell {
   );
 }
 
-:where(tbody) tr.rowClickable[data-tint='unfinished']:hover > .td,
-:where(tbody) tr.rowClickable[data-tint='unfinished']:hover > .selectCell {
+:where(tbody) tr.rowClickable[data-tint='unfinished']:is(:hover, [data-row-focused]) > .td,
+:where(tbody) tr.rowClickable[data-tint='unfinished']:is(:hover, [data-row-focused]) > .selectCell {
   background: color-mix(
     in srgb,
     var(--marking-unfinished) 16%,
@@ -1108,9 +1059,28 @@ tr[data-selected][data-tint='error'] > .selectCell {
   );
 }
 
-:where(tbody) tr.rowClickable[data-tint='error']:hover > .td,
-:where(tbody) tr.rowClickable[data-tint='error']:hover > .selectCell {
+:where(tbody) tr.rowClickable[data-tint='error']:is(:hover, [data-row-focused]) > .td,
+:where(tbody) tr.rowClickable[data-tint='error']:is(:hover, [data-row-focused]) > .selectCell {
   background: color-mix(in srgb, var(--error-main) 14%, var(--surface-raised));
+}
+
+/* The ONE hole in taking the pointer's stops (see the keyboard-row-focus note
+   above): a DISABLED row is deliberately flat under the cursor — no deepen —
+   so hover parity alone leaves a focused one with no indication whatever,
+   while its UA outline stays suppressed. Verified on the table showcase, whose
+   second row is exactly this. So it takes the same 4% wash, mixed into its own
+   grey fill instead of white: still a background, never the border #397 asked
+   us to drop, and pointer behaviour is untouched — this is focus-only.
+
+   Scoped to .rowClickable because that is precisely the set that can hold row
+   focus (rowNavigation defaults to `onRowClick !== undefined`, the same
+   condition that stamps the class), and it lands the rule at the specificity
+   its neighbours here carry, which is what keeps the file's ascending order. */
+:where(tbody) tr.rowClickable[data-row-state='disabled'][data-row-focused] > .td,
+:where(tbody)
+  tr.rowClickable[data-row-state='disabled'][data-row-focused]
+  > .selectCell {
+  background: color-mix(in srgb, var(--text-body) 4%, var(--bg-toolbar));
 }
 
 /* A frozen block's freeze cue, as ONE continuous shadow down the whole column:
@@ -1424,19 +1394,19 @@ tr[data-accent='error'] > :first-child::before {
   color: var(--text-secondary);
 }
 
-/* Card view's half of the keyboard row focus (KB-N1/AC-KB37 — the table-view
-   half is the cell background + inset ring further up): the CARD takes the
-   ring, since it already sits on its own surface and an inset cell ring would
-   land inside the card's padding instead of around it. The same neutral
-   --gray-main as table view's ring, so the two views read as one
-   indication, and it outranks the selection border above by rule order — a
-   selected card that also holds the keyboard still shows where the keyboard is.
+/* Card view's half of the keyboard row focus (KB-N1/AC-KB37). The two views no
+   longer paint the highlight alike: table view took the pointer's own hover
+   wash (#397 — see the keyboard-row-focus note further up), and a card list has
+   no hover stop to take, so the cue here stays a ring. It is drawn on the CARD,
+   which already sits on its own surface — an inset cell ring would land inside
+   the card's padding rather than around it — and it outranks the selection
+   border above by rule order, so a selected card that also holds the keyboard
+   still shows where the keyboard is.
 
    A card is already a bordered box, so the cue is that border restated in the
-   focus colour, doubled to 2px by a 1px shadow sitting exactly on it — the
-   same weight as table view's bars. NOT the 2px halo standing off the card
-   that the first build drew: the halo is what read as vibrant (PR #1114),
-   where a thicker edge reads as an edge. */
+   neutral focus colour, doubled to 2px by a 1px shadow sitting exactly on it.
+   NOT the 2px halo standing off the card that the first build drew: the halo is
+   what read as vibrant (PR #1114), where a thicker edge reads as an edge. */
 .cardRow[data-row-focused] > .cardCell > .card {
   border-color: var(--gray-main);
   box-shadow: 0 0 0 1px var(--gray-main);
