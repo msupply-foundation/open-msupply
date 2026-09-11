@@ -18,7 +18,11 @@ export {
   type CurrencyModalProps,
   type CurrencySaveResult,
 } from './CurrencyModal';
-export { filterByStatusPreference, currentStep } from './statusGate';
+export {
+  filterByStatusPreference,
+  trackStages,
+  currentStep,
+} from './statusGate';
 export { deleteRejection, type DeleteRejection } from './deleteRejection';
 export {
   DeleteReturnsAction,

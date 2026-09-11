@@ -6,7 +6,7 @@ import { StatusIndicator } from '../../../ui/elements/feedback/StatusIndicator';
 import { ContentFooter } from '../../../ui/layout/ContentFooter/ContentFooter';
 import { ContentFooterActions } from '../../../ui/layout/ContentFooter/ContentFooterActions';
 import { StatusChangeAction } from './actions/StatusChangeAction';
-import { currentStep, filterByStatusPreference } from '@/domain/invoice';
+import { currentStep, trackStages } from '@/domain/invoice';
 import { returnKind, statusFlow, statusSteps } from './returnStatus';
 import type { CustomerReturnInfoFragment } from './customerReturnDetail.generated';
 
@@ -43,10 +43,11 @@ export const CustomerReturnStatusFooter: Component<
   const kind = () => returnKind(props.node);
   const holding = () => props.node.onHold;
   // The kind's flow narrowed by the invoice-status-options preference (rules
-  // § preference gates); an excluded current status highlights the nearest
-  // included earlier stage.
+  // § preference gates), keeping the return's own stage when the preference
+  // hides it — the current stage always has a step to mark.
   const flow = () => statusFlow(kind());
-  const offered = () => filterByStatusPreference(flow(), props.statusOptions);
+  const offered = () =>
+    trackStages(flow(), props.statusOptions, props.node.status);
 
   return (
     <ContentFooter>
@@ -64,7 +65,7 @@ export const CustomerReturnStatusFooter: Component<
 
       <StatusIndicator
         steps={statusSteps(offered(), props.node)}
-        current={currentStep(flow(), offered(), props.node.status)}
+        current={currentStep(offered(), props.node.status)}
       />
 
       {/* One inline-end cluster: the Confirm-status split button alone. No
