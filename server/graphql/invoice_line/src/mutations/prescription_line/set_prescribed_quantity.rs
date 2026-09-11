@@ -112,6 +112,7 @@ fn map_error(error: ServiceError) -> Result<SetPrescribedQuantityErrorInterface>
         ServiceError::NotAStockItem => BadUserInput(formatted_error),
         ServiceError::NotThisStoreInvoice => BadUserInput(formatted_error),
         ServiceError::NotAPrescription => BadUserInput(formatted_error),
+        ServiceError::CannotChangePrescribedQuantity => BadUserInput(formatted_error),
         ServiceError::NewlyCreatedLineDoesNotExist => InternalError(formatted_error),
         ServiceError::DatabaseError(_) => InternalError(formatted_error),
     };

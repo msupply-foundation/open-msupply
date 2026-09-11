@@ -33,7 +33,18 @@ table! {
     }
 }
 
-#[derive(Clone, Eq, Insertable, Queryable, Debug, PartialEq, AsChangeset, Default, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Clone,
+    Eq,
+    Insertable,
+    Queryable,
+    Debug,
+    PartialEq,
+    AsChangeset,
+    Default,
+    serde::Serialize,
+    serde::Deserialize,
+)]
 #[diesel(table_name = indicator_line)]
 pub struct IndicatorLineRow {
     pub id: String,

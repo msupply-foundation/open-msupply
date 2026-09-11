@@ -15,11 +15,7 @@ pub enum DeleteResponse {
     Response(GenericDeleteResponse),
 }
 
-pub fn delete_plugin_data(
-    ctx: &Context<'_>,
-    store_id: &str,
-    id: String,
-) -> Result<DeleteResponse> {
+pub fn delete_plugin_data(ctx: &Context<'_>, store_id: &str, id: String) -> Result<DeleteResponse> {
     validate_auth(
         ctx,
         &ResourceAccessRequest {

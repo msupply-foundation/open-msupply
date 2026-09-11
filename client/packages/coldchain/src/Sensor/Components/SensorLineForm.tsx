@@ -33,6 +33,7 @@ export const SensorLineForm: FC<UseDraftSensorControl> = ({
             value={draft.name ?? ''}
             onChange={e => onUpdate({ name: e.target.value })}
             disabled={isSensorNameEditDisabled(draft)}
+            slotProps={{ htmlInput: { 'data-testid': 'sensor-name-input' } }}
           />
         }
       />
@@ -46,6 +47,7 @@ export const SensorLineForm: FC<UseDraftSensorControl> = ({
             disabled={false}
             selectedLocation={draft.location ?? null}
             width={180}
+            inputTestId="sensor-location-input"
             onChange={location => {
               onUpdate({ location });
             }}
@@ -110,6 +112,7 @@ export const SensorLineForm: FC<UseDraftSensorControl> = ({
             checked={draft.isActive}
             onChange={(_, checked) => onUpdate({ isActive: checked })}
             labelPlacement="end"
+            testId="sensor-active-toggle"
           />
         }
       />

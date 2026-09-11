@@ -1,4 +1,4 @@
-import { localisedDate, t } from '../../../intl';
+import { exportDate, t } from '../../../intl';
 import { toCsv } from '../../../domain/reportFiles';
 import { statusLabel } from '../outboundStatus';
 import type { OutboundShipmentsResult } from './outboundShipments.generated';
@@ -26,7 +26,7 @@ export const shipmentsToCsv = (rows: ShipmentRow[]): string => {
     row.otherPartyName,
     statusLabel(row.status),
     row.invoiceNumber,
-    localisedDate(row.createdDatetime),
+    exportDate(row.createdDatetime),
     row.theirReference,
     row.comment,
     row.pricing.totalAfterTax,
