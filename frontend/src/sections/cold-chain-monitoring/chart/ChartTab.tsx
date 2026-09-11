@@ -7,7 +7,6 @@ import { ContentContainer } from '@/ui/layout/ContentContainer/ContentContainer'
 import { Stack } from '@/ui/layout/Stack/Stack';
 import { Text } from '@/ui/elements/typography/Text';
 import { Alert } from '@/ui/elements/feedback/Alert';
-import { EmptyState } from '@/ui/elements/feedback/EmptyState';
 import { Spinner } from '@/ui/elements/feedback/Spinner';
 import { FilterBar } from '@/ui/elements/selectors/FilterBar';
 import { TemperatureLogs } from '../monitoring.generated';
@@ -25,9 +24,11 @@ import { BreachSummary } from './BreachSummary';
 
 // T1 — the Chart tab (spec/cold-chain-monitoring ui-surface T1): the shared
 // filter bar, then the plot titled "Temperature by sensor", its truncation
-// notice, its empty state and its loading spinner. Reads the log connector
-// over the chart's window at the data-point cap; the per-sensor series and the
-// breach markers are shaped by chart/chartData.
+// notice and its loading spinner. A window with no reading draws a BLANK
+// chart — axes and bands with nothing plotted, an empty legend — never a
+// placeholder in the chart's place (rules › the chart). Reads the log
+// connector over the chart's window at the data-point cap; the per-sensor
+// series and the breach markers are shaped by chart/chartData.
 //
 // The filter bar stands above the plot because this tab has no table toolbar
 // to host it (ui-standards › tables › toolbar puts a bar with its table); the
@@ -117,28 +118,18 @@ export const ChartTab: Component<ChartTabProps> = props => {
             </Show>
           }
         >
-          <Show
-            when={series().length > 0}
-            fallback={
-              <EmptyState
-                message={t('error.no-temperature-logs')}
-                data-testid="nothing-here"
+          <TemperatureChart
+            series={series()}
+            window={window()}
+            markerContent={(breachId, close) => (
+              <BreachSummary
+                storeId={props.storeId}
+                breachId={breachId}
+                close={close}
+                onViewAllBreaches={props.onViewAllBreaches}
               />
-            }
-          >
-            <TemperatureChart
-              series={series()}
-              window={window()}
-              markerContent={(breachId, close) => (
-                <BreachSummary
-                  storeId={props.storeId}
-                  breachId={breachId}
-                  close={close}
-                  onViewAllBreaches={props.onViewAllBreaches}
-                />
-              )}
-            />
-          </Show>
+            )}
+          />
         </Show>
       </Stack>
     </ContentContainer>

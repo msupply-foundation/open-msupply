@@ -185,7 +185,7 @@ The detail behind each fix, kept as the record. `file:line` references are to th
 - `OkButton` as the acknowledge confirm — [`controls.md`](../../../spec/ui-standards/controls.md#footer-button-identity) reserves OK for a confirm that "genuinely isn't a save"; acknowledging is a confirmation with a required comment, the spec and reference app label it OK, and the e2e suite locates `dialog-button-ok`.
 - Status, Breach start/end, Duration, Type and Max/Min columns use an explicit helper plus a `size` — `CELL_TYPES.md`'s rule for a type with no preset key; `sensorName` and `location` use the presets.
 - The card model (`compact: { viewMode: 'card' }`, one primary header column) matches the family sibling `SensorsList`.
-- `EmptyState data-testid="nothing-here"` on the Chart tab — screen-placed where no `DataTable` emits it; documented.
+- The Chart tab carries no empty-state placeholder: a window with no reading draws a blank chart (rules › the chart), and the shared `nothing-here` empty state belongs to the two tables alone.
 - No breadcrumb icon — the shell supplies the section glyph; `SensorsList` passes none either.
 - The Status column as text, not a `StatusChip` — the spec types it text, the reference app and `SensorsList` render text; the chip is the lifecycle-status role.
 - `BreachSummary`'s close `IconButton` in an `HStack justify="end"` — `Popover` has no close facility; three sibling panels compose one the same way.
