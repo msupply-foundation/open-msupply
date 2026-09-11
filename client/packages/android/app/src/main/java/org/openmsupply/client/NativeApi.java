@@ -472,19 +472,29 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
      * THROUGH the page had no way back to discovery at all: no row, and
      * nothing else on its login screen offers one. Answer from the page's
      * choice when the fused path has not run.
+     *
+     * Whichever path navigated LAST wins, because the question is "where is
+     * this WebView now". Preferring either outright answers with a stale
+     * server: boot connects to A through the fused path, the user changes
+     * server to B through the page, and the address shown beside the
+     * change-server button is still A's. So onConnectToServer clears the
+     * page's choice and it takes precedence here when it has not run.
      */
     @PluginMethod()
     public void connectedServer(PluginCall call) {
-        if (connectedServer != null) {
-            call.resolve(connectedServer.data);
+        if (chosenServerData != null) {
+            call.resolve(chosenServerData);
             return;
         }
-        call.resolve(chosenServerData);
+        call.resolve(connectedServer == null ? null : connectedServer.data);
     }
 
     private void onConnectToServer(FrontEndHost server) {
         stopServerDiscovery();
         connectedServer = server;
+        // This WebView is on THIS server now, so the page's earlier choice is
+        // no longer where we are (§ connectedServer above).
+        chosenServerData = null;
 
         String url = isDebug ? localUrl
                 : server.getUrl();

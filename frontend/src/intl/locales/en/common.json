@@ -341,6 +341,7 @@
   "description.unit-quantity": "Total quantity in number of units",
   "description.used-in-auto-allocation": "Will be used in auto-allocation",
   "discovery.body": "To get started, please select the server that you want to connect to.\nOnce selected, we'll reconnect automatically if that server is available, so you won't need to do this again.\nThe 🏠 icon beside a server shows you that this is your local computer.",
+  "discovery.change-mode": "Change how this device is used",
   "discovery.connecting": "Connecting…",
   "discovery.connecting-standalone": "Connecting to this machine's server…",
   "discovery.heading": "Welcome",

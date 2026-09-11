@@ -323,6 +323,9 @@ const connectToServer = (window: BrowserWindow, server: FrontEndHost) => {
   }
   discovery.stop();
   connectedServer = server;
+  // This window is on THIS server now, so the page's earlier choice is no
+  // longer where we are (§ CONNECTED_SERVER).
+  chosenFrontEndHost = null;
 
   const url = getDebugHost() || frontEndHostUrl(server);
   window.loadURL(url);
@@ -412,10 +415,18 @@ const start = async (): Promise<void> => {
    * the page had no way back to discovery at all: no row, and nothing else on
    * its login screen offers one. Answer from the page's choice when the fused
    * path has not run. Matches the Android host (NativeApi.connectedServer).
+   *
+   * Whichever path navigated LAST wins, because the question is "where is this
+   * window now". Preferring either variable outright answers with a stale
+   * server: launch auto-connects to A (setting connectedServer), the user
+   * changes server to B through the page (setting chosenFrontEndHost), and the
+   * address shown beside the change-server button is still A's. So the page's
+   * choice is cleared when the fused path runs (§ connectToServer) and takes
+   * precedence here when it has not.
    */
   ipcMain.handle(
     IPC_MESSAGES.CONNECTED_SERVER,
-    async () => connectedServer ?? chosenFrontEndHost
+    async () => chosenFrontEndHost ?? connectedServer
   );
 
   // --- The new front end's discovery host contract -------------------------
