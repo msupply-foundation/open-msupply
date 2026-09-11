@@ -1,6 +1,6 @@
 # Cold chain › Monitoring — UI migration report
 
-**Status: MIGRATION COMPLETE — visual pass done (2026-09-11): the chip-label and acknowledge-action tweaks are applied; the end-only date range is a chart-rule question, ruled on separately.** Every finding the audit raised is fixed or ruled on; `pnpm check`, `pnpm test`, eslint and prettier are green, and the reactivity review of the diff is clean. Scope was the whole vertical (every file under `src/sections/cold-chain-monitoring/`, including the shell-mounted notification band), plus the one library deletion and the two shared documents (`e2e/TESTIDS.md`, the e2e suite) the filter change reached. The audit findings are kept as [an appendix](#appendix--the-audit-findings) so the reasoning survives.
+**Status: MIGRATION COMPLETE — visual pass done (2026-09-11): the chip-label and acknowledge-action tweaks are applied; the end-only date range is ruled open on the chart (rules › the chart).** Every finding the audit raised is fixed or ruled on; `pnpm check`, `pnpm test`, eslint and prettier are green, and the reactivity review of the diff is clean. Scope was the whole vertical (every file under `src/sections/cold-chain-monitoring/`, including the shell-mounted notification band), plus the one library deletion and the two shared documents (`e2e/TESTIDS.md`, the e2e suite) the filter change reached. The audit findings are kept as [an appendix](#appendix--the-audit-findings) so the reasoning survives.
 
 ## Outcome
 
