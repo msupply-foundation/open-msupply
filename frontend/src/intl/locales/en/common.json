@@ -2706,6 +2706,7 @@
   "messages.loading-report": "Loading report...",
   "messages.location": "Location:",
   "messages.location-in-use": "Location {{code}} is in use and cannot be deleted ({{stockLines}} stock lines, {{invoiceLines}} transaction lines)",
+  "messages.location-in-use-unspecified": "Location {{code}} is in use and cannot be deleted",
   "messages.locations-restricted": "Some selected items can only be stored in specific locations. Available options may be limited below.",
   "messages.log-saved-successfully": "Log saved successfully",
   "messages.logout-confirm": "This will log you out.",
