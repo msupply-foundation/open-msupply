@@ -40,8 +40,10 @@ import {
 //
 // Three rows are controls — the name, the location, and whether the sensor is
 // in service. Everything else the device reports or the readings derive, shown
-// as read-only labelled values, never as disabled inputs (AC-V1;
+// as read-only labelled values, never as disabled inputs (.10;
 // ui-standards/detail-views § never-editable fields).
+//
+// Anchors: spec/cold-chain-sensors/cases/OMS-REG-CCE-03 — `.n` below.
 
 export interface SensorEditModalProps {
   storeId: string;
@@ -60,7 +62,7 @@ export const SensorEditModal: Component<SensorEditModalProps> = props => {
   // and blocks re-entry / dismissal (ui-standards/controls § dialogs).
   const [saving, setSaving] = createSignal(false);
   // The S3 "Are you sure?" step. Confirming the modal asks first; nothing is
-  // written until that is accepted (AC-E3).
+  // written until that is accepted (.27).
   const [confirming, setConfirming] = createSignal(false);
 
   // The modal's initial focus. The name field where it is editable; otherwise
@@ -72,9 +74,9 @@ export const SensorEditModal: Component<SensorEditModalProps> = props => {
   /*
    * The location picker's options — the ACTIVE STORE's locations, which is the
    * frontend's own obligation: the server accepts any location it is sent,
-   * including another store's (rules › assigning a location, AC-P1).
+   * including another store's (rules › assigning a location, .29).
    *
-   * Read WITH capacity (AC-P8): each option shows its proportion used, so the
+   * Read WITH capacity (.35/.36): each option shows its proportion used, so the
    * heavier `locationsWithVolume` read is the one this field needs. `volumeUsed`
    * is server-computed and shifts as stock moves, so it is fetched per open
    * rather than cached (see the domain module).
@@ -96,7 +98,7 @@ export const SensorEditModal: Component<SensorEditModalProps> = props => {
   const readingDatetime = () => latestReadingDatetime(props.sensor);
 
   const save = async () => {
-    if (saving() || unchanged()) return; // re-entry guard + AC-E1
+    if (saving() || unchanged()) return; // re-entry guard + .25
     setSaving(true);
     const result = await graphqlFetch(UpdateSensor, {
       storeId: props.storeId,
@@ -133,7 +135,7 @@ export const SensorEditModal: Component<SensorEditModalProps> = props => {
               />
             </Show>
             {/* Inert until the draft differs from the sensor as loaded, so an
-                opened-and-closed editor cannot write (AC-E1/AC-E2). */}
+                opened-and-closed editor cannot write (.25/.26). */}
             <OkButton
               data-testid="dialog-button-ok"
               loading={saving()}
@@ -153,7 +155,7 @@ export const SensorEditModal: Component<SensorEditModalProps> = props => {
             label={t('label.sensor-name')}
             hideLabel
             // A device-named kind names itself; the frontend never offers to
-            // edit it (AC-N2). Not a validation — there is nothing to correct,
+            // edit it (.22). Not a validation — there is nothing to correct,
             // the value simply is not the user's.
             disabled={!nameEditable() || saving()}
             value={form().name}
@@ -170,13 +172,13 @@ export const SensorEditModal: Component<SensorEditModalProps> = props => {
             loading={locationData.loading}
             disabled={saving()}
             value={form().locationId || undefined}
-            // Options carry each location's % used (AC-P8) — which cold room
+            // Options carry each location's % used (.35/.36) — which cold room
             // is in use is worth seeing when placing a sensor. The fullness
             // filter is not: it asks where stock will fit, and a sensor places
             // none (ui-surface S2).
             fullnessFilter={false}
             // Clearable, because the assignment is optional — clearing it is
-            // how a sensor comes off a location (AC-P3).
+            // how a sensor comes off a location (.30).
             onChange={location =>
               setForm({ ...form(), locationId: location?.id ?? '' })
             }
@@ -221,7 +223,7 @@ export const SensorEditModal: Component<SensorEditModalProps> = props => {
         </FieldRow>
       </Dialog>
       {/* S3 — the save confirmation. Declining returns to S2 with the draft
-          intact; accepting saves and closes both (AC-E3). */}
+          intact; accepting saves and closes both (.27). */}
       <ConfirmDialog
         open={confirming()}
         onClose={() => setConfirming(false)}

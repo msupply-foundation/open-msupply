@@ -158,26 +158,40 @@ export const withDefaultWindow = (
 });
 
 /**
- * The window the chart plots, in epoch milliseconds (rules › the chart):
+ * The window the chart's axis spans, in epoch milliseconds (rules › the
+ * chart). A bound the chip gives is honoured as given, however narrow or wide
+ * the result; a bound left empty leaves that side open, and the readings
+ * plotted supply it:
  *
- * - both bounds → as given, however narrow or wide;
- * - an end but no start → the 24 hours before that end;
+ * - both bounds → as given;
  * - a start but no end → from that start up to now;
- * - neither → `undefined`: nothing bounds the read, and the plot spans the
- *   readings it receives.
+ * - an end but no start → from the first reading plotted up to that end;
+ * - neither → the readings' own extent.
+ *
+ * Nothing narrows a one-sided range silently: an end alone reaches back to
+ * the first reading the store holds, bounded only by the read's cap. With
+ * nothing plotted, an open side falls back to a day ending at the bound it
+ * has (or now) — the axis of an empty chart, which the empty state replaces.
  */
 export const chartWindow = (
   filter: MonitoringFilter,
-  now: Date
-): { start: number; end: number } | undefined => {
+  now: Date,
+  readings: { start: number; end: number } | undefined
+): { start: number; end: number } => {
   const range = filter.startDatetime;
   const from = range?.start ? Date.parse(range.start) : undefined;
   const to = range?.end ? Date.parse(range.end) : undefined;
   if (from !== undefined && to !== undefined) return { start: from, end: to };
-  if (to !== undefined) return { start: to - DEFAULT_WINDOW_MS, end: to };
   if (from !== undefined)
     return { start: from, end: Math.max(now.getTime(), from) };
-  return undefined;
+  if (to !== undefined)
+    return { start: readings?.start ?? to - DEFAULT_WINDOW_MS, end: to };
+  return (
+    readings ?? {
+      start: now.getTime() - DEFAULT_WINDOW_MS,
+      end: now.getTime(),
+    }
+  );
 };
 
 /** What a marker's way through needs to know about its breach. */
@@ -308,36 +322,25 @@ export const CHART_POINT_CAP = 8640;
 
 /**
  * The chart's query variables: the log read, ascending by time, at the cap,
- * over {@link chartWindow} — so an end-only range reaches the wire with its
- * derived start, and no range reaches it unbounded.
+ * over the chip's bounds exactly as given — an absent side is open on the
+ * wire (rules › the chart). So an end alone reads every reading up to it; a
+ * start alone every reading from it, not capped at now (a reading a few
+ * seconds ahead of this device's clock is still a reading); and no range
+ * reads unbounded. The cap and the truncation notice bound what is shown.
  */
 export const buildChartVariables = (
   filter: MonitoringFilter,
-  storeId: string,
-  now: Date
-): TemperatureLogsVariables => {
-  const window = chartWindow(filter, now);
-  return {
-    storeId,
-    filter: stripEmpty({
-      sensor: sensorFilter(filter),
-      location: locationFilter(filter),
-      datetime: window
-        ? {
-            afterOrEqualTo: new Date(window.start).toISOString(),
-            // An open-ended start plots up to now but is not capped at it on
-            // the wire — a reading a few seconds ahead of this device's clock
-            // is still a reading.
-            ...(filter.startDatetime?.end
-              ? { beforeOrEqualTo: filter.startDatetime.end }
-              : {}),
-          }
-        : null,
-      temperatureBreach: filter.breachType
-        ? { type: { equalTo: filter.breachType } }
-        : null,
-    }),
-    sort: [{ key: 'datetime', desc: false }],
-    page: { first: CHART_POINT_CAP, offset: 0 },
-  };
-};
+  storeId: string
+): TemperatureLogsVariables => ({
+  storeId,
+  filter: stripEmpty({
+    sensor: sensorFilter(filter),
+    location: locationFilter(filter),
+    datetime: startBounds(filter),
+    temperatureBreach: filter.breachType
+      ? { type: { equalTo: filter.breachType } }
+      : null,
+  }),
+  sort: [{ key: 'datetime', desc: false }],
+  page: { first: CHART_POINT_CAP, offset: 0 },
+});

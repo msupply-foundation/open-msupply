@@ -41,7 +41,7 @@ export const SensorEditModal: FC<SensorEditModalProps> = ({
   onClose,
 }) => {
   const t = useTranslation();
-  const { Modal } = useDialog({ isOpen, onClose });
+  const { Modal } = useDialog({ isOpen, onClose, testId: 'sensor-edit-modal' });
   const { draft, onSave, onUpdate } = useDraftSensor(sensor);
   const getConfirmation = useConfirmationModal({
     title: t('heading.are-you-sure'),
