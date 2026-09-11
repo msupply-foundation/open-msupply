@@ -99,6 +99,7 @@ export const TemperatureMappingModal: Component<
           // Nothing later than today is selectable — the server refuses a
           // datetime in the future.
           max={todayIso()}
+          testId="mapping-date-input"
           disabled={saving()}
           value={date() || null}
           onChange={value => setDate(value ?? '')}
