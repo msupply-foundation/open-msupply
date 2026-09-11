@@ -81,6 +81,10 @@ const Boom = () => {
 
 const flag = (name: string) => new URLSearchParams(location.search).has(name);
 
+// See the pages contribution below: its gate must survive in-app navigation,
+// which drops the query string, so this one is a boot-time fact.
+const pagesFlagAtBoot = flag('pluginPages');
+
 /*
  * The internal-order line COLUMN slot (plugins sdk-contract § the column
  * slot). Three contributions, one per thing the slot has to prove:
@@ -293,6 +297,10 @@ export default definePlugin({
       loading: '…',
       'nav.stock': 'Stock (link)',
       'nav.items': 'Items (from code)',
+      'pages.section': 'Hello world',
+      'pages.hello': 'Hello page',
+      'pages.blurb':
+        'This whole screen is a plugin page: the menu section, the route, the breadcrumb and this body all came from one pages declaration.',
       'column.total-stock': 'Total stock',
       'column.total-stock-description': 'Initial stock on hand plus incoming',
       'column.arrivals': 'Arrivals',
@@ -323,6 +331,10 @@ export default definePlugin({
       loading: '…',
       'nav.stock': 'Stock (lien)',
       'nav.items': 'Articles (depuis le code)',
+      'pages.section': 'Bonjour le monde',
+      'pages.hello': 'Page bonjour',
+      'pages.blurb':
+        'Cet écran entier est une page de plugin : la section du menu, la route, le fil d’Ariane et ce corps proviennent d’une seule déclaration de pages.',
       'column.total-stock': 'Stock total',
       'column.total-stock-description': 'Stock initial plus arrivages',
       'column.arrivals': 'Arrivages',
@@ -348,6 +360,56 @@ export default definePlugin({
       'body.not-mounted': 'non montés — aucune requête de comptage émise',
     },
   },
+  /*
+   * The PAGE contribution (plugins sdk-contract § the page contribution),
+   * behind `?pluginPages`: a routed screen placed in a labelled nav section
+   * of the plugin's own.
+   * What it proves: the page joins the menu and the command palette, the
+   * route mounts under the host frame, and the page's code — its own module,
+   * inlined into this bundle by the build but a real chunk in dev — is
+   * imported on first navigation, never at startup (AC-PLUG-P2). The gate here
+   * is a demo flag; a real plugin gates on the session context it is handed
+   * (`ctx.storeMode === 'dispensary'`), and MAY add `permissions` to guard the
+   * nav entry and the URL with one condition (AC-PLUG-P1).
+   */
+  navSections: [
+    {
+      // A menu group is a menu object, not a page: it has no path and no
+      // route of its own — pages join it by naming its id in their `nav.in`,
+      // and a group nothing offered is placed in simply does not render.
+      id: 'helloSection',
+      labelKey: 'pages.section',
+      // Placement against a published host section id (one shape, every
+      // anchored surface): the section renders just above Inventory. An anchor
+      // naming a section the store's gates hide falls to the end of the upper
+      // list, named in diagnostics — placement is a preference, never a gate.
+      anchor: { before: 'inventory' },
+      // The flag is captured at module evaluation (boot, when the query string
+      // is still in the URL), NOT read live: in-app navigation rewrites the
+      // URL without the query, so a live read would fail its own gate the
+      // moment the user follows the menu entry it enabled — bouncing them off
+      // the page while the menu still lists it. A real plugin gates on the
+      // ctx it is handed, which never has this problem. A group gate composes
+      // with each placed page's own, on every surface at once.
+      when: () => pagesFlagAtBoot,
+    },
+  ],
+  pages: [
+    {
+      id: 'hello',
+      // The page's FULL store-relative path — routing is the page's own,
+      // independent of where (or whether) its menu entry is placed.
+      path: 'hello-world/hello',
+      labelKey: 'pages.hello',
+      load: () => import('./HelloPage'),
+      // The placement: inside the plugin's own group above. `{ in }` also
+      // takes a published host section id; `{ root: true }` is a top-level
+      // entry of its own; absent means routed with no menu entry (a detail
+      // screen). An `in` id the host and the plugin both lack refuses the
+      // plugin at validation, by name (AC-PLUG-P5).
+      nav: { in: 'helloSection' },
+    },
+  ],
   contributions: [
     {
       slot: 'dashboard.stat',

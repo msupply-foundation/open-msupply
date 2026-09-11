@@ -78,6 +78,7 @@ impl SavePrescriptionLinesInput {
             lines: lines
                 .into_iter()
                 .map(|line| SaveStockOutInvoiceLine {
+                    transfer_comment: None,
                     id: line.id,
                     number_of_packs: line.number_of_packs,
                     stock_line_id: line.stock_line_id,

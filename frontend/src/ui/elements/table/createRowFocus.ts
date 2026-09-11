@@ -87,7 +87,10 @@ const originIsRow = (event: KeyboardEvent): boolean => {
  * #1114: "every row click now focuses the clicked row before navigating on
  * mouse up"). A pointer already has its own indication, the hover wash under
  * the cursor; the row highlight means "this is where the arrows are", which a
- * click does not establish.
+ * click does not establish. That gate matters more since #397, not less: the
+ * highlight is now painted in the hover wash itself, so a row that kept it
+ * after a click would read as hovered from wherever the pointer had moved on
+ * to.
  *
  * `:focus-visible` is the browser's own keyboard-vs-pointer heuristic, and
  * asking the element rather than tracking the last input device ourselves keeps

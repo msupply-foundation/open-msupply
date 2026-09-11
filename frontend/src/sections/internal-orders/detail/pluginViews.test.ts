@@ -13,7 +13,9 @@ import {
 
 // The internal-order slot boundary (plugins sdk-contract § SDK surface):
 // host GraphQL data → the SDK's published view DTO. Behaviours cited from
-// OMS-REG-REPL-16.4 (a contributed column reads the line's published view).
+// OMS-REG-REPL-16.4 (a contributed column reads the line's published view) and
+// .9 (a side-panel section reads the same order view and line views, read-only,
+// with editability published as a fact).
 
 const line = (
   overrides: Partial<InternalOrderLineFragment> = {}
@@ -215,7 +217,7 @@ describe('toLineViewFromEditor (OMS-REG-REPL-16.7)', () => {
   });
 });
 
-describe('toInternalOrderView', () => {
+describe('toInternalOrderView (OMS-REG-REPL-16.9)', () => {
   it('publishes the order flattened, in domain words', () => {
     expect(toInternalOrderView(order(), true)).toEqual({
       id: 'req-1',

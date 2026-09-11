@@ -96,7 +96,7 @@ const ItemsList: Component = () => {
     filter: {
       ...buildItemFilter(query().filter),
       // Custom-field filters become the dynamicFilter AST (undefined = no-op).
-      dynamicFilter: buildCustomFieldDynamicFilter(query().cf),
+      dynamicFilter: buildCustomFieldDynamicFilter(query().cf, cfDefs()),
     },
     sort: query().sort,
     page: { first: query().first, offset: query().offset },

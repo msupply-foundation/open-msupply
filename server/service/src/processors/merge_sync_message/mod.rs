@@ -73,8 +73,9 @@ impl Processor for MergeSyncMessageProcessor {
             ))
         })?;
 
-        let outcome = apply_merge(&ctx.connection, &body)
-            .map_err(|e| ProcessorError::OtherError(format!("Merge failed for {}: {e}", message.id)))?;
+        let outcome = apply_merge(&ctx.connection, &body).map_err(|e| {
+            ProcessorError::OtherError(format!("Merge failed for {}: {e}", message.id))
+        })?;
 
         let summary = match outcome {
             MergeOutcome::Operations(ops) => {

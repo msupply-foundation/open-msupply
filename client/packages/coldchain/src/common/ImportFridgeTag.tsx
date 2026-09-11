@@ -82,13 +82,13 @@ export const ImportFridgeTag = ({
 
       // forces a refetch of logs, breach, chart data and sensors
       queryClient.invalidateQueries({
-        queryKey: breachApi.keys.base()
+        queryKey: breachApi.keys.base(),
       });
       queryClient.invalidateQueries({
-        queryKey: logApi.keys.base()
+        queryKey: logApi.keys.base(),
       });
       queryClient.invalidateQueries({
-        queryKey: [SENSOR]
+        queryKey: [SENSOR],
       });
 
       // if the user is on mobile - redirect to monitoring page
@@ -139,8 +139,12 @@ export const ImportFridgeTag = ({
         ref={hiddenFileInput}
         style={{ display: 'none' }} // Make the file input element invisible
         accept=".txt,.csv"
+        // e2e contract ids (frontend/e2e/TESTIDS.md § Cold chain ›
+        // Monitoring): the suites set the file on the input directly.
+        data-testid="import-fridge-tag-input"
       />
       <LoadingButton
+        data-testid="import-fridge-tag-button"
         variant="outlined"
         shouldShrink={shouldShrink}
         title={t('tooltip.import-fridge-tag')}

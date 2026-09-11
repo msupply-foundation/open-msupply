@@ -118,6 +118,7 @@ impl From<RepositoryError> for InsertStocktakeLineError {
 mod stocktake_line_test {
     use chrono::NaiveDate;
     use repository::{
+        campaign::campaign_row::CampaignRow,
         mock::{
             mock_donor_a, mock_item_a, mock_item_a_lines,
             mock_location_with_restricted_location_type_a, mock_locked_stocktake,
@@ -126,7 +127,6 @@ mod stocktake_line_test {
             mock_stocktake_finalised, mock_stocktake_line_a, mock_store_a,
             program_master_list_store, MockData, MockDataInserts,
         },
-        campaign::campaign_row::CampaignRow,
         test_db::{setup_all, setup_all_with_data},
         EqualFilter, NameRow, ReasonOptionRow, ReasonOptionType, StockLineFilter,
         StockLineRepository, StockLineRow, StockLineRowRepository, StocktakeLineRow, StocktakeRow,

@@ -1,4 +1,6 @@
-use crate::sync::translations::{name::NameTranslation, FkField, PullTranslateResult, SyncTranslation};
+use crate::sync::translations::{
+    name::NameTranslation, FkField, PullTranslateResult, SyncTranslation,
+};
 use repository::db_diesel::contact_row::ContactRowDelete;
 use repository::{ContactRow, StorageConnection, SyncBufferRow};
 use serde::Deserialize;

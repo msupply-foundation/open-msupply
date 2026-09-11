@@ -103,6 +103,8 @@ impl UpdateInput {
             reason_option_id,
         } = self;
         ServiceInput {
+            // Edited per ITEM on the set-save; None leaves it alone.
+            transfer_comment: None,
             id,
             r#type: Some(StockOutType::OutboundShipment),
             stock_line_id,
@@ -190,6 +192,7 @@ fn map_error(error: ServiceError) -> Result<UpdateErrorInterface> {
         | ReasonOptionDoesNotExist
         | ReasonOptionIsNotActive
         | ReasonOptionTypeInvalid
+        | CannotChangePrescribedQuantity
         | LineDoesNotReferenceStockLine => StandardGraphqlError::BadUserInput(formatted_error),
         AutoPickFailed(_) | DatabaseError(_) | UpdatedLineDoesNotExist => {
             StandardGraphqlError::InternalError(formatted_error)

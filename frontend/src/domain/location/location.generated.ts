@@ -4,6 +4,43 @@ import type { TypedDocument } from "../../api/graphql";
 
 export type LocationsVariables = {
   storeId: string;
+  filter?: {
+    name?: {
+    equalTo?: string | null;
+    like?: string | null;
+  } | null;
+    code?: {
+    equalTo?: string | null;
+    like?: string | null;
+  } | null;
+    codeOrName?: {
+    equalTo?: string | null;
+    like?: string | null;
+  } | null;
+    onHold?: boolean | null;
+    assignedToAsset?: boolean | null;
+    storeId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+    id?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+    locationTypeId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+  } | null;
 };
 
 export type LocationsResult = {
@@ -14,12 +51,16 @@ export type LocationsResult = {
   id: string;
   code: string;
   name: string;
+  locationType: {
+  id: string;
+  name: string;
+} | null;
 }>;
 });
 };
 
 export const Locations = {
-  query: "query locations($storeId: String!) {\n  locations(storeId: $storeId) {\n    ... on LocationConnector {\n      __typename\n      nodes {\n        id\n        code\n        name\n      }\n    }\n  }\n}",
+  query: "query locations($storeId: String!, $filter: LocationFilterInput) {\n  locations(storeId: $storeId, filter: $filter, sort: [{key: name}]) {\n    ... on LocationConnector {\n      __typename\n      nodes {\n        id\n        code\n        name\n        locationType {\n          id\n          name\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<LocationsResult, LocationsVariables>;
 
 export type LocationsWithVolumeVariables = {
@@ -39,6 +80,7 @@ export type LocationsWithVolumeResult = {
   volumeUsed: number;
   locationType: {
   id: string;
+  name: string;
 } | null;
   stock: {
   __typename: "StockLineConnector";
@@ -49,5 +91,5 @@ export type LocationsWithVolumeResult = {
 };
 
 export const LocationsWithVolume = {
-  query: "query locationsWithVolume($storeId: String!) {\n  locations(storeId: $storeId) {\n    ... on LocationConnector {\n      __typename\n      nodes {\n        id\n        code\n        name\n        onHold\n        volume\n        volumeUsed\n        locationType {\n          id\n        }\n        stock {\n          ... on StockLineConnector {\n            __typename\n            totalCount\n          }\n        }\n      }\n    }\n  }\n}",
+  query: "query locationsWithVolume($storeId: String!) {\n  locations(storeId: $storeId, sort: [{key: name}]) {\n    ... on LocationConnector {\n      __typename\n      nodes {\n        id\n        code\n        name\n        onHold\n        volume\n        volumeUsed\n        locationType {\n          id\n          name\n        }\n        stock {\n          ... on StockLineConnector {\n            __typename\n            totalCount\n          }\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<LocationsWithVolumeResult, LocationsWithVolumeVariables>;

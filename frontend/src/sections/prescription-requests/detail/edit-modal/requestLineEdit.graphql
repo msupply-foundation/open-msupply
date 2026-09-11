@@ -1,0 +1,48 @@
+# Line writes (spec/prescription-requests/contract.md § lines): id + request +
+# item + numberOfUnits + directions. Rejections are generic (contract §
+# wire traps) and show in-dialog.
+mutation upsertPrescriptionRequestLine(
+  $storeId: String!
+  $input: UpsertPrescriptionRequestLineInput!
+) {
+  upsertPrescriptionRequestLine(storeId: $storeId, input: $input) {
+    ... on PrescriptionRequestLineNode {
+      id
+    }
+  }
+}
+
+mutation deletePrescriptionRequestLine($storeId: String!, $id: String!) {
+  deletePrescriptionRequestLine(storeId: $storeId, id: $id) {
+    ... on DeleteResponse {
+      id
+    }
+  }
+}
+
+# The configured abbreviations for directions expansion (consumed read — the
+# same list dispensing's line editor uses; rules § lines, AC-N3).
+query requestAbbreviations {
+  abbreviations {
+    id
+    text
+    expansion
+  }
+}
+
+# The picked item's canned directions (consumed read; rules § lines) — click
+# to apply, then expanded like typed text.
+query requestItemDirections($storeId: String!, $itemId: String!) {
+  items(storeId: $storeId, filter: { id: { equalTo: $itemId } }) {
+    ... on ItemConnector {
+      nodes {
+        id
+        itemDirections {
+          id
+          directions
+          priority
+        }
+      }
+    }
+  }
+}

@@ -5,7 +5,9 @@ use crate::{
     check_item_variant_exists, check_location_exists, check_location_type_is_valid,
     common::{check_stock_line_exists, CommonStockLineError},
     service_provider::ServiceContext,
-    validate::{check_date_is_not_in_future, check_other_party, CheckOtherPartyType, OtherPartyErrors},
+    validate::{
+        check_date_is_not_in_future, check_other_party, CheckOtherPartyType, OtherPartyErrors,
+    },
     NullableUpdate, SingleRecordError,
 };
 use chrono::{NaiveDate, Utc};

@@ -104,11 +104,13 @@ export default tseslint.config(
       '**/*.generated.ts',
       '**/*.css.d.ts',
       'codegen/**', // CommonJS (.cjs) with its own node:test suite
-      // The COUNTRY plugins' backend halves: BoaJS code built by the
-      // open-msupply client toolchain, plus its prebuilt shipped artifact —
-      // vendored, so not this repo's lint domain
+      // The COUNTRY plugins' backend halves. They now BUILD here
+      // (vite/backendPluginBuild.ts) and are type-checked here
+      // (tsconfig.backend-plugins.json), but they are still SYNCED source:
+      // msupply-foundation/civ-plugins is upstream, so a lint fix applied here
+      // is a conflict to re-resolve on the next sync
       // (plugins/civ/backend/README.md). The reference backend plugin
-      // (examples/*/backend) is ours and IS linted, below.
+      // (examples/*/backend) is ours outright and IS linted, below.
       'plugins/*/backend/**',
     ],
   },
@@ -225,8 +227,9 @@ export default tseslint.config(
    * for the same reason — there is no console in the engine, so a stray
    * `console.log` is already an error here, and `log()` is the way out.
    *
-   * The country plugins' vendored backend halves are ignored above; this one
-   * is ours and builds in this repo, so it answers to the shared rules.
+   * The country plugins' backend halves build here too, but they are synced
+   * from upstream and stay lint-ignored above; this one is ours outright, so
+   * it answers to the shared rules.
    */
   {
     files: ['examples/*/backend/**/*.ts'],
