@@ -1,5 +1,5 @@
 import { t } from '../../../intl';
-import { localisedDate } from '../../../intl';
+import { exportDate } from '../../../intl';
 import { toCsv } from '../../../domain/reportFiles';
 import type { StockLineRowFragment } from './stock.generated';
 
@@ -37,8 +37,8 @@ export const stockToCsv = (rows: StockLineRowFragment[]): string => {
     l.itemName,
     (l.item.masterLists ?? []).map(m => m.name).join('; '),
     l.batch ?? '',
-    l.expiryDate ? localisedDate(l.expiryDate) : '',
-    l.manufactureDate ? localisedDate(l.manufactureDate) : '',
+    l.expiryDate ? exportDate(l.expiryDate) : '',
+    l.manufactureDate ? exportDate(l.manufactureDate) : '',
     l.item.isVaccine ? (l.vvmStatus?.description ?? '') : '',
     l.location?.code ?? '',
     l.location?.name ?? l.locationName ?? '',

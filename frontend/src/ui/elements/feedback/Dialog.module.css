@@ -134,6 +134,26 @@
   /* The panel takes initial focus on open (tabindex=-1 + autofocus, see
      Dialog.tsx) — a container holding programmatic focus shows no ring. */
   outline: none;
+
+  /* A FIXED label track for every FieldRow in the dialog (the var hook in
+     FieldRow.module.css). A dialog body stacks rows with mixed-length labels,
+     and FieldRow's default track is sized PER ROW — so one long label ("New
+     functional status", "Last recording date/time") shoves its own control
+     clear of the column its siblings share, and the form reads as a ragged
+     staircase. Fixed, every control lines up and a long label wraps within the
+     track instead. The side and inset panels each set their own for the same
+     reason; a dialog had none, so every modal in the app was ragged.
+
+     Wider than the panels' (8 / 9.5rem) because dialog labels are the app's
+     longest. Rows that opt out with labelWidth="auto" don't read this var.
+
+     Capped as a SHARE of the row as well: a default-width dialog on a 320px
+     screen is narrower than 10rem + the control's own 8rem minimum, and a
+     fixed track there pushes the body wider than the dialog and scrolls it
+     sideways. `min()` keeps the alignment everywhere it fits and yields the
+     track on the narrowest screens, where alignment is worth less than a form
+     that fits. */
+  --field-row-label: min(10rem, 40%);
   /* Reserve a minimum height (Dialog's minBodyHeightRem) so a dialog whose content changes
      size doesn't jump; inherits the default (0) or the caller's inline override from .dialog. */
   min-block-size: var(--dialog-min-body-height);
