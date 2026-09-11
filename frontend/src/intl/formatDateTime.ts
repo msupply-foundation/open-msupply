@@ -143,6 +143,20 @@ export const customDate = (
   formatString: string
 ): string => format(toDate(value), formatString, { locale: dateFnsLocale() });
 
+/**
+ * A date for a FILE rather than a screen — the CSV exports, and anything else
+ * a machine reads back. Same shape as {@link localisedDate}, so a user opening
+ * the export still sees the date order their locale writes, but its digits
+ * stay Latin for two reasons: the figures beside it in an export are raw values
+ * that never went through Intl, so localising only the date would put two
+ * numbering systems in one row; and a spreadsheet that meets Arabic-Indic
+ * digits in a date column reads the whole column as text.
+ *
+ * Anything a user reads on screen wants {@link localisedDate} instead.
+ */
+export const exportDate = (value: Date | string | number): string =>
+  format(toDate(value), 'P', { locale: dateFnsLocale() });
+
 /*
  * The BCP-47 tag to hand Intl for a supported language. Mirrors the date-fns
  * substitutions above, so the two formatters never disagree about which
@@ -196,19 +210,40 @@ export const localisedTimeAgo = (
   const then = toDate(value);
   const elapsed = now.getTime() - then.getTime();
   const tag = INTL_TAGS[locale()];
-  const rtf = (numeric: 'always' | 'auto') =>
-    new Intl.RelativeTimeFormat(tag, { style: 'narrow', numeric });
+  /*
+   * Every rung goes through `localiseDigits`, not just the date one. The rungs
+   * disagree otherwise: INTL_TAGS names a LANGUAGE, and ICU resolves a bare
+   * `ar` to Latin digits, while `numberLocale` pins Arabic to `ar-u-nu-arab`.
+   * Left alone an Arabic indicator reads `قبل 3 ساعات` for three hours and
+   * `١٤ أغسطس` once it ages past a day — the same row, two digit systems, an
+   * hour apart. Mapping here makes `localiseDigits` the module's one answer to
+   * "which digits", whatever the two tag tables say; it is a no-op wherever
+   * they already agree (Dari and Pashto format through `fa-AF`, which is
+   * already extended-Arabic, and every Latin locale resolves to "nothing to
+   * do").
+   */
+  const ago = (
+    numeric: 'always' | 'auto',
+    value: number,
+    unit: Intl.RelativeTimeFormatUnit
+  ): string =>
+    localiseDigits(
+      new Intl.RelativeTimeFormat(tag, { style: 'narrow', numeric }).format(
+        value,
+        unit
+      )
+    );
 
   // A clock skewed into the future reads as the present, never as a countdown.
   if (elapsed < MINUTE_MS) return t('label.just-now');
   if (elapsed < HOUR_MS)
-    return rtf('always').format(-Math.floor(elapsed / MINUTE_MS), 'minute');
+    return ago('always', -Math.floor(elapsed / MINUTE_MS), 'minute');
   if (elapsed < 24 * HOUR_MS)
-    return rtf('always').format(-Math.floor(elapsed / HOUR_MS), 'hour');
+    return ago('always', -Math.floor(elapsed / HOUR_MS), 'hour');
   // Past a day, "yesterday" is a CALENDAR fact: 30 hours ago can be two dates
   // back, and calling that yesterday would be wrong.
   const days = differenceInCalendarDays(now, then);
-  if (days === 1) return rtf('auto').format(-1, 'day');
+  if (days === 1) return ago('auto', -1, 'day');
   return localiseDigits(format(then, 'd MMM', { locale: dateFnsLocale() }));
 };
 

@@ -1,4 +1,4 @@
-import { localisedDate, t, utcDateTime } from '@/intl';
+import { exportDate, t, utcDateTime } from '@/intl';
 import { toCsv } from '@/domain/reportFiles';
 import { statusLabelKey } from '../equipment';
 import { parseProperties } from '../detail/assetEdit';
@@ -67,10 +67,10 @@ export const equipmentToCsv = (
       ...(isCentral ? [row.store?.code ?? ''] : []),
       row.assetNumber ?? '',
       row.catalogueItem?.code ?? '',
-      row.installationDate ? localisedDate(row.installationDate) : '',
-      row.replacementDate ? localisedDate(row.replacementDate) : '',
-      row.warrantyStart ? localisedDate(row.warrantyStart) : '',
-      row.warrantyEnd ? localisedDate(row.warrantyEnd) : '',
+      row.installationDate ? exportDate(row.installationDate) : '',
+      row.replacementDate ? exportDate(row.replacementDate) : '',
+      row.warrantyStart ? exportDate(row.warrantyStart) : '',
+      row.warrantyEnd ? exportDate(row.warrantyEnd) : '',
       row.serialNumber ?? '',
       status ? t(statusLabelKey(status)) : '',
       row.needsReplacement ? t('messages.yes') : t('messages.no'),

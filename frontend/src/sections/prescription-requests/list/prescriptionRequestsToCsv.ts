@@ -1,5 +1,5 @@
 import { t } from '../../../intl';
-import { localisedDate } from '../../../intl';
+import { exportDate } from '../../../intl';
 import { toCsv } from '../../../domain/reportFiles';
 // The helper is taken from its own file, not the module's index: this
 // serialiser is pure and node-tested, and the index also re-exports the
@@ -41,8 +41,8 @@ export const prescriptionRequestsToCsv = (
     row.prescriptionRequestNumber,
     row.patient.name,
     statusLabel(asRequestStatus(row.status)),
-    localisedDate(row.prescriptionDatetime),
-    localisedDate(row.createdDatetime),
+    exportDate(row.prescriptionDatetime),
+    exportDate(row.createdDatetime),
     row.user?.username ?? '',
     row.comment ?? '',
     ...cf.values(row.customFields),
