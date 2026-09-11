@@ -84,8 +84,11 @@ fn map_error(error: ServiceError) -> Result<DeleteLocationErrorInterface> {
             // this inventory mutation depend on that one to list them would be
             // the wrong way round. What matters to a client is that the refusal
             // is TYPED — before the sensor check existed it arrived as an
-            // internal error naming a foreign key. Surfacing which sensors
-            // wants SensorNode moved into graphql_types first.
+            // internal error naming a foreign key.
+            //
+            // TODO: surface which sensors. Wants SensorNode moved into
+            // graphql_types first, so this crate can name one without
+            // depending on the cold-chain GraphQL crate.
             return Ok(DeleteLocationErrorInterface::LocationInUse(LocationInUse {
                 stock_lines: StockLineConnector::from_vec(location_in_use.stock_lines),
                 invoice_lines: InvoiceLineConnector::from_vec(location_in_use.invoice_lines),

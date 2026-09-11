@@ -1,13 +1,14 @@
 #[cfg(test)]
 mod query {
-    use repository::mock::{mock_sensor_1, mock_store_a};
+    use repository::mock::{mock_sensor_1, mock_stock_line_a, mock_store_a};
     use repository::EqualFilter;
     use repository::{
         location::{LocationFilter, LocationRepository},
         mock::MockDataInserts,
         test_db::setup_all,
-        InvoiceLineFilter, InvoiceLineRepository, SensorFilter, SensorRepository,
-        SensorRowRepository, StockLineFilter, StockLineRepository,
+        InvoiceLineFilter, InvoiceLineRepository, LocationMovementRow,
+        LocationMovementRowRepository, SensorFilter, SensorRepository, SensorRowRepository,
+        StockLineFilter, StockLineRepository,
     };
 
     use crate::{
@@ -135,6 +136,63 @@ mod query {
             }))
         );
     }
+    /// A reference `check_location_in_use` does not enumerate still stops the
+    /// delete, and must be reported as the location being in use rather than as
+    /// a database fault. `location_movement` is the case the locations spec
+    /// calls out by name (OMS-REG-INV-01.35): stock that has ever entered or
+    /// left a location pins it even once the location is empty.
+    #[actix_rt::test]
+    async fn location_service_delete_unenumerated_reference_is_in_use() {
+        let (_, _, connection_manager, _) = setup_all(
+            "location_service_delete_unenumerated_reference_is_in_use",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let connection = connection_manager.connection().unwrap();
+        let location_repository = LocationRepository::new(&connection);
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider
+            .context(mock_store_a().id, "".to_string())
+            .unwrap();
+        let service = service_provider.location_service;
+
+        // `location_2` is the one the success test deletes, so nothing
+        // `check_location_in_use` looks at references it. A movement does.
+        let location_id = "location_2".to_string();
+        LocationMovementRowRepository::new(&connection)
+            .upsert_one(&LocationMovementRow {
+                id: "location_2_movement".to_string(),
+                store_id: mock_store_a().id,
+                stock_line_id: mock_stock_line_a().id,
+                location_id: Some(location_id.clone()),
+                enter_datetime: None,
+                exit_datetime: None,
+            })
+            .unwrap();
+
+        // Nothing to list — the check does not know about movements — but the
+        // refusal is still the typed one, not DatabaseError.
+        assert_eq!(
+            service.delete_location(
+                &context,
+                DeleteLocation {
+                    id: location_id.clone()
+                }
+            ),
+            Err(DeleteLocationError::LocationInUse(LocationInUse::default()))
+        );
+
+        // And the location survives the refused delete.
+        assert_eq!(
+            location_repository
+                .query_by_filter(LocationFilter::new().id(EqualFilter::equal_to(location_id)))
+                .unwrap()
+                .len(),
+            1
+        );
+    }
+
     #[actix_rt::test]
     async fn location_service_delete_success() {
         let (_, _, connection_manager, _) =
