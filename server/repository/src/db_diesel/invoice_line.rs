@@ -1,6 +1,7 @@
 use super::{
     invoice_line_row::invoice_line, invoice_line_stats, invoice_row::invoice, item_row::item,
-    location_row::location, reason_option_row::reason_option, stock_line_row::stock_line, DBType,
+    location_row::location, reason_option_row::reason_option,
+    requisition_line::requisition_line_row::requisition_line, stock_line_row::stock_line, DBType,
     DatetimeFilter, InvoiceLineRow, InvoiceLineStatsRow, InvoiceLineType, InvoiceRow, LocationRow,
     ReasonOptionRow, StorageConnection,
 };
@@ -14,10 +15,7 @@ use crate::{
     EqualFilter, InvoiceStatus, InvoiceType, ItemRow, Pagination, Sort, StockLineRow, StringFilter,
 };
 
-use diesel::{
-    dsl::IntoBoxed,
-    prelude::*,
-};
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 table! {
     invoice_stats (invoice_id) {
@@ -73,6 +71,8 @@ pub enum InvoiceLineSortField {
     PackSize,
     /// Invoice line item stock location name
     LocationName,
+    /// Units requested for the line's item on the invoice's linked requisition
+    RequestedQuantity,
 }
 
 pub type InvoiceLineSort = Sort<InvoiceLineSortField>;
@@ -277,6 +277,35 @@ impl<'a> InvoiceLineRepository<'a> {
                 InvoiceLineSortField::LocationName => {
                     apply_sort_no_case!(query, sort, location::name);
                 }
+                InvoiceLineSortField::RequestedQuantity => {
+                    // Mirrors `InvoiceLineNode::requisition_line`: the figure
+                    // shown belongs to the line of the invoice's LINKED
+                    // requisition carrying the same item, so every batch of one
+                    // item sorts on the same value. Lines whose item has no
+                    // order line sort last ascending (NULL).
+                    //
+                    // A correlated subquery, not a join. Nothing constrains a
+                    // requisition to one line per item: there is no unique index,
+                    // and `requisition_line_view` resolves item_link_id -> item_id,
+                    // so an item merge collapses two links onto one item_id. A
+                    // join would emit a row per match and push real lines off a
+                    // paginated page; `single_value` is LIMIT 1, so the row count
+                    // is whatever it was.
+                    //
+                    // Ordered so a duplicate resolves to one figure rather than
+                    // whichever the database reaches first.
+                    let requested_quantity = requisition_line::table
+                        .select(requisition_line::requested_quantity)
+                        .filter(
+                            requisition_line::requisition_id
+                                .nullable()
+                                .eq(invoice::requisition_id),
+                        )
+                        .filter(requisition_line::item_id.eq(invoice_line::item_id))
+                        .order(requisition_line::id.desc())
+                        .single_value();
+                    apply_sort_asc_nulls_last!(query, sort, requested_quantity);
+                }
             };
         }
 
@@ -470,5 +499,114 @@ impl InvoiceLineType {
             not_equal_to: Some(self.clone()),
             ..Default::default()
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::{
+        mock::{
+            mock_item_a, mock_item_b, mock_item_c, mock_name_a, mock_store_a, MockData,
+            MockDataInserts,
+        },
+        requisition_row::{RequisitionRow, RequisitionType},
+        test_db::setup_all_with_data,
+        InvoiceLineRow, InvoiceRow, InvoiceType, RequisitionLineRow,
+    };
+
+    /// Sorting by requested quantity reads the linked requisition's line for
+    /// the invoice line's ITEM. Three lines: one whose item was requested in
+    /// quantity 5, one requested in quantity 20, and one for an item the order
+    /// never carried — which has no figure and so sorts last ascending.
+    #[actix_rt::test]
+    async fn test_invoice_line_sort_by_requested_quantity() {
+        let requisition = RequisitionRow {
+            id: "sort_requisition".to_string(),
+            name_id: mock_name_a().id,
+            store_id: mock_store_a().id,
+            r#type: RequisitionType::Request,
+            ..Default::default()
+        };
+        let invoice = InvoiceRow {
+            id: "sort_invoice".to_string(),
+            name_id: mock_name_a().id,
+            store_id: mock_store_a().id,
+            r#type: InvoiceType::InboundShipment,
+            requisition_id: Some(requisition.id.clone()),
+            ..Default::default()
+        };
+        let line = |id: &str, item_id: String| InvoiceLineRow {
+            id: id.to_string(),
+            invoice_id: invoice.id.clone(),
+            item_id,
+            ..Default::default()
+        };
+        let requisition_line =
+            |id: &str, item_id: String, requested_quantity: f64| RequisitionLineRow {
+                id: id.to_string(),
+                requisition_id: requisition.id.clone(),
+                item_id,
+                requested_quantity,
+                ..Default::default()
+            };
+
+        let (_, connection, _, _) = setup_all_with_data(
+            "test_invoice_line_sort_by_requested_quantity",
+            MockDataInserts::none().names().stores().units().items(),
+            MockData {
+                requisitions: vec![requisition.clone()],
+                requisition_lines: vec![
+                    requisition_line("sort_requisition_line_a", mock_item_a().id, 5.0),
+                    // A second order line for item A, same quantity: nothing
+                    // stops a requisition holding one (no unique index, and an
+                    // item merge collapses two item links onto one item_id in
+                    // requisition_line_view). Matching quantities keep which one
+                    // is read out of it — this only holds the sort to one row
+                    // per shipment line.
+                    requisition_line("sort_requisition_line_a_merged", mock_item_a().id, 5.0),
+                    requisition_line("sort_requisition_line_b", mock_item_b().id, 20.0),
+                ],
+                invoices: vec![invoice.clone()],
+                invoice_lines: vec![
+                    line("sort_line_b", mock_item_b().id),
+                    line("sort_line_unordered", mock_item_c().id),
+                    line("sort_line_a", mock_item_a().id),
+                ],
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let ids = |sort: InvoiceLineSort| {
+            InvoiceLineRepository::new(&connection)
+                .query(
+                    Pagination::all(),
+                    Some(
+                        InvoiceLineFilter::new()
+                            .invoice_id(EqualFilter::equal_to(invoice.id.clone())),
+                    ),
+                    Some(sort),
+                )
+                .unwrap()
+                .into_iter()
+                .map(|l| l.invoice_line_row.id)
+                .collect::<Vec<_>>()
+        };
+
+        assert_eq!(
+            ids(InvoiceLineSort {
+                key: InvoiceLineSortField::RequestedQuantity,
+                desc: None,
+            }),
+            vec!["sort_line_a", "sort_line_b", "sort_line_unordered"]
+        );
+        assert_eq!(
+            ids(InvoiceLineSort {
+                key: InvoiceLineSortField::RequestedQuantity,
+                desc: Some(true),
+            }),
+            vec!["sort_line_unordered", "sort_line_b", "sort_line_a"]
+        );
     }
 }

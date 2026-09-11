@@ -42,8 +42,11 @@ impl SyncTranslation for VaccineCourseStoreConfigTranslation {
         let check_fk =
             fk_checker.with_table_required(connection, "vaccine_course_store_config", &row.id);
 
-        row.vaccine_course_id =
-            check_fk(row.vaccine_course_id, "vaccine_course_id", FkField::VaccineCourse)?;
+        row.vaccine_course_id = check_fk(
+            row.vaccine_course_id,
+            "vaccine_course_id",
+            FkField::VaccineCourse,
+        )?;
         row.store_id = check_fk(row.store_id, "store_id", FkField::Store)?;
 
         Ok(PullTranslateResult::upsert(row))

@@ -12,6 +12,7 @@ import {
   lowStockItemsPath,
   outboundShipmentListPath,
   outOfStockItemsPath,
+  dispensingListPath,
   prescriptionListPath,
   stockListPath,
   stocktakeListPath,
@@ -51,7 +52,9 @@ describe('task-list targets', () => {
     expect(inboundShipmentListPath()).toBe('replenishment/inbound-shipment');
     expect(outboundShipmentListPath()).toBe('distribution/outbound-shipment');
     expect(internalOrderListPath()).toBe('replenishment/internal-order');
-    expect(prescriptionListPath()).toBe('dispensary/prescription');
+    expect(dispensingListPath()).toBe('dispensary/dispensing');
+    // The pre-#551 name stays exported so built plugins keep resolving it.
+    expect(prescriptionListPath()).toBe('dispensary/dispensing');
     expect(stocktakeListPath()).toBe('inventory/stocktakes');
   });
 });

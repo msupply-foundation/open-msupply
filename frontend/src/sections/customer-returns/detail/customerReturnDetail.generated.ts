@@ -76,7 +76,7 @@ export type CustomerReturnDetailResult = {
   __typename: "NodeError";
 } & {
   error: {
-  __typename: string;
+  __typename: "DatabaseError" | "RecordNotFound";
   description: string;
 };
 });
@@ -194,6 +194,13 @@ export type CustomerReturnLinesVariables = {
     equalAnyOrNull?: Array<string> | null;
     notEqualAll?: Array<string> | null;
   } | null;
+    inventoryAdjustmentReason?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
     verifiedDatetime?: {
     equalTo?: string | null;
     beforeOrEqualTo?: string | null;
@@ -209,7 +216,7 @@ export type CustomerReturnLinesVariables = {
     isProgramInvoice?: boolean | null;
   } | null;
   sort?: Array<{
-    key: "itemCode" | "itemName" | "batch" | "expiryDate" | "packSize" | "locationName";
+    key: "itemCode" | "itemName" | "batch" | "expiryDate" | "packSize" | "locationName" | "requestedQuantity";
     desc?: boolean | null;
   }> | null;
   page?: {
@@ -252,7 +259,7 @@ export type UpdateCustomerReturnResult = {
   __typename: "UpdateCustomerReturnError";
 } & {
   error: {
-  __typename: string;
+  __typename: "OtherPartyNotACustomer" | "OtherPartyNotVisible";
   description: string;
 };
 });

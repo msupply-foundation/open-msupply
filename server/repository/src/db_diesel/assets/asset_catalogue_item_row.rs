@@ -110,15 +110,22 @@ impl<'a> AssetCatalogueItemRowRepository<'a> {
         ChangelogRepository::new(self.connection).insert(&changelog)
     }
 
-    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<AssetCatalogueItemRow>, RepositoryError> {
+    pub fn find_many_by_id(
+        &self,
+        ids: &[String],
+    ) -> Result<Vec<AssetCatalogueItemRow>, RepositoryError> {
         Ok(asset_catalogue_item::table
             .filter(asset_catalogue_item::id.eq_any(ids))
             .load(self.connection.lock().connection())?)
     }
 
-    pub fn check_exists_by_id(&self, asset_catalogue_item_id: &str) -> Result<bool, RepositoryError> {
+    pub fn check_exists_by_id(
+        &self,
+        asset_catalogue_item_id: &str,
+    ) -> Result<bool, RepositoryError> {
         let exists: bool = diesel::select(diesel::dsl::exists(
-            asset_catalogue_item::table.filter(asset_catalogue_item::id.eq(asset_catalogue_item_id)),
+            asset_catalogue_item::table
+                .filter(asset_catalogue_item::id.eq(asset_catalogue_item_id)),
         ))
         .get_result(self.connection.lock().connection())?;
         Ok(exists)
