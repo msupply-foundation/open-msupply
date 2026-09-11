@@ -1,6 +1,6 @@
 use super::{
-    requisition_row::requisition,
-    RequisitionFilter, RequisitionRow, RequisitionSort, RequisitionSortField,
+    requisition_row::requisition, RequisitionFilter, RequisitionRow, RequisitionSort,
+    RequisitionSortField,
 };
 
 use crate::{
@@ -17,10 +17,7 @@ use crate::{
 };
 
 use crate::Pagination;
-use diesel::{
-    dsl::IntoBoxed,
-    prelude::*,
-};
+use diesel::{dsl::IntoBoxed, prelude::*};
 
 pub type RequisitionJoin = (
     RequisitionRow,

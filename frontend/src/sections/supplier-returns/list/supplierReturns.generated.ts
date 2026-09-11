@@ -152,6 +152,13 @@ export type SupplierReturnsVariables = {
     equalAnyOrNull?: Array<string> | null;
     notEqualAll?: Array<string> | null;
   } | null;
+    prescriptionRequestId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
     purchaseOrderNumber?: {
     equalTo?: number | null;
     equalAny?: Array<number> | null;
@@ -238,7 +245,7 @@ export type InsertSupplierReturnResult = {
   __typename: "InsertSupplierReturnError";
 } & {
   error: {
-  __typename: string;
+  __typename: "OtherPartyNotASupplier" | "OtherPartyNotVisible";
   description: string;
 };
 });
@@ -281,7 +288,7 @@ export type DeleteSupplierReturnResult = {
   __typename: "DeleteSupplierReturnError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotDeleteInvoiceWithLines" | "CannotEditInvoice" | "RecordNotFound";
   description: string;
 };
 });

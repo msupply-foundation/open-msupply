@@ -37,8 +37,10 @@ export interface NavLeaf {
   to: string;
   /** Capability gate (see navConfig NavItem.gate). */
   gate?: NavCapability;
-  /** Permission-gated read — visible, refused on activation (navConfig). */
+  /** Permission-gated read — withheld without it (navConfig). */
   permission?: NavConfigItem['permission'];
+  /** Supporting destination — offered only with its principals (navConfig). */
+  supporting?: NavConfigItem['supporting'];
 }
 
 export interface NavItem {
@@ -48,7 +50,7 @@ export interface NavItem {
   icon: Component<IconProps>;
   /** Capability gate (see navConfig NavItem.gate). */
   gate?: NavCapability;
-  /** Permission-gated read — visible, refused on activation (navConfig). */
+  /** Permission-gated read — withheld without it (navConfig). */
   permission?: NavConfigItem['permission'];
   /** Present → expandable parent section. Absent → a leaf link. */
   children?: NavLeaf[];
@@ -107,14 +109,15 @@ const toNavItem = (item: NavConfigItem): NavItem => ({
     to: child.path,
     gate: child.gate,
     permission: child.permission,
+    supporting: child.supporting,
   })),
 });
-
-const items = navConfig.map(toNavItem);
 
 // Sync is NOT a menu entry (issue #9229): it never navigated anywhere, and its
 // status now lives in the bottom bar's sync cell (spec/chrome § sync status),
 // where one click starts a run and a second control opens the modal.
+const items = navConfig.map(toNavItem);
+
 export const upperNav: NavItem[] = items.filter(
   item => !LOWER_IDS.has(item.id)
 );
@@ -137,6 +140,25 @@ export const navLeaves: NavLeaf[] = items.flatMap(item =>
 );
 
 /**
+ * The one leaf-matching rule: the exact entry, or the deepest one the path
+ * sits beneath. Shared with the plugin half of the registry
+ * (src/plugins/pluginPages.tsx), so a plugin page's record screens highlight
+ * by exactly the rule a host detail screen does.
+ *
+ * The `/` in the prefix test keeps it on segment boundaries (`inventory/stock`
+ * must not claim `inventory/stocktakes/1`), and the longest match wins so a
+ * deeper entry beats the shallower one it nests under.
+ */
+export const matchLeaf = (
+  leaves: readonly NavLeaf[],
+  relativePath: string
+): NavLeaf | undefined =>
+  leaves.find(leaf => leaf.to === relativePath) ??
+  leaves
+    .filter(leaf => relativePath.startsWith(`${leaf.to}/`))
+    .sort((a, b) => b.to.length - a.to.length)[0];
+
+/**
  * The menu entry a route belongs to — its own, or the one it sits beneath.
  *
  * A record screen has no menu entry of its own: `inventory/stocktakes/{id}` is
@@ -144,13 +166,6 @@ export const navLeaves: NavLeaf[] = items.flatMap(item =>
  * (ui-standards/layout § app bar), so the menu must keep showing Stocktakes.
  * Matching the path exactly left every detail screen in the app with nothing
  * highlighted at all — no entry, and no section either.
- *
- * The `/` in the prefix test keeps it on segment boundaries (`inventory/stock`
- * must not claim `inventory/stocktakes/1`), and the longest match wins so a
- * deeper entry beats the shallower one it nests under.
  */
 export const findLeafByPath = (relativePath: string): NavLeaf | undefined =>
-  navLeaves.find(leaf => leaf.to === relativePath) ??
-  navLeaves
-    .filter(leaf => relativePath.startsWith(`${leaf.to}/`))
-    .sort((a, b) => b.to.length - a.to.length)[0];
+  matchLeaf(navLeaves, relativePath);

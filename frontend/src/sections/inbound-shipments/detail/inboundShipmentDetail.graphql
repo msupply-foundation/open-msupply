@@ -124,6 +124,17 @@ fragment InboundLine on InvoiceLineNode {
   totalAfterTax
   taxPercentage
   note
+  # The supplying store's reason for a short supply — read-only here (spec
+  # rules § requested quantity and supplier comment). Per ITEM, so every batch
+  # of one item carries the same value.
+  transferComment
+  # The linked internal order's line for this line's item — the source of the
+  # Requested column and the line editor's internal-order band. Null when the
+  # shipment has no internal-order link, or the order has no line for the item.
+  requisitionLine {
+    id
+    requestedQuantity
+  }
   volumePerPack
   status
   linkedInvoiceId

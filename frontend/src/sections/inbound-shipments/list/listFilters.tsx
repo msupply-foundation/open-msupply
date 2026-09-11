@@ -233,6 +233,7 @@ const FILTERS: Filter<InboundListFilter>[] =
           type="dateTime"
           label={t('label.created')}
           testId={props.testId}
+          disableFuture
           value={props.filter().createdDatetime}
           onChange={value => props.setPartialFilter({ createdDatetime: value })}
         />
@@ -245,6 +246,7 @@ const FILTERS: Filter<InboundListFilter>[] =
           type="dateTime"
           label={t('label.delivered')}
           testId={props.testId}
+          disableFuture
           value={props.filter().deliveredDatetime}
           onChange={value =>
             props.setPartialFilter({ deliveredDatetime: value })
@@ -287,6 +289,7 @@ const FILTERS: Filter<InboundListFilter>[] =
     isProgramInvoice: null,
     purchaseOrderId: null,
     purchaseOrderNumber: null,
+    prescriptionRequestId: null,
     programId: null,
   });
 

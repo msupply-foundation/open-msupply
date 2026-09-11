@@ -7,11 +7,20 @@ import { WidgetCard } from '../ui/elements/display/WidgetCard';
 import { DocumentFrame } from '../ui/elements/display/DocumentFrame';
 import { StatComparisonTile } from '../ui/elements/display/StatComparisonTile';
 import { QrCode } from '../ui/elements/display/QrCode';
+import { Timeline, TimelineItem } from '../ui/elements/display/Timeline';
+import { DetailCard } from '../ui/layout/Detail/DetailCard';
 import { LabelledValue } from '../ui/elements/typography/LabelledValue';
 import { StatusChip } from '../ui/elements/feedback/StatusChip';
 import { NumberField } from '../ui/elements/inputs/NumberField';
 import { TextField } from '../ui/elements/inputs/TextField';
-import { ReportsIcon, StockIcon, TruckIcon, PrinterIcon } from '../ui/icons';
+import {
+  ReportsIcon,
+  SettingsIcon,
+  StockIcon,
+  TruckIcon,
+  PrinterIcon,
+  UserIcon,
+} from '../ui/icons';
 import { Lead, Note, Row, SectionTOC } from './common';
 import type { PageMetadata } from './metadata';
 import styles from './DisplayShowcase.module.css';
@@ -68,6 +77,11 @@ export const displayMetadata: PageMetadata = {
       id: 'display-qr-code',
       title: 'QR code',
       searchTerms: ['qr', 'server', 'url', 'scan', 'pair', 'encode'],
+    },
+    {
+      id: 'display-timeline',
+      title: 'Timeline',
+      searchTerms: ['history', 'rail', 'events', 'log', 'status history'],
     },
   ],
 };
@@ -356,6 +370,48 @@ export const DisplayShowcase = () => {
             <span class={styles.qrCaption}>Click to enlarge</span>
             <QrCode value={qrValue()} title="QR code for the encoded value" />
           </div>
+        </DashboardCard>
+
+        <DashboardCard
+          id="display-timeline"
+          title="Timeline — a record's history on a rail"
+        >
+          <Lead>
+            Past events, each already happened, joined top to bottom by a
+            connector. The marker's glyph says <strong>who or what</strong>{' '}
+            recorded the entry; it is decoration, so a screen reader hears only
+            the entry's own content. Each entry brings whatever it likes beside
+            the rail — here a bordered detail card.
+          </Lead>
+          <Note>
+            Not the determinate progress list, which shares the picture and
+            nothing else: that one models a multi-phase <em>operation</em> and
+            derives everything from progression. A history has no current step —
+            every row is a past fact.
+          </Note>
+          <Timeline>
+            <TimelineItem icon={<UserIcon />}>
+              <DetailCard
+                surface="bordered"
+                title="24 June 2026"
+                actions={<StatusChip label="Functioning" colour="var(--success-main)" />}
+              >
+                <Stack gap="sm">
+                  <LabelledValue label="User">gburns</LabelledValue>
+                  <LabelledValue label="Observations">
+                    Back in service after the compressor swap.
+                  </LabelledValue>
+                </Stack>
+              </DetailCard>
+            </TimelineItem>
+            <TimelineItem icon={<SettingsIcon />}>
+              <DetailCard surface="bordered" title="2 June 2026">
+                <LabelledValue label="Observations">
+                  Recorded by the server when the register was imported.
+                </LabelledValue>
+              </DetailCard>
+            </TimelineItem>
+          </Timeline>
         </DashboardCard>
       </Stack>
     </ContentContainer>

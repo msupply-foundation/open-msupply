@@ -69,6 +69,11 @@ const Body = (
   const [phase, setPhase] = createSignal<Phase>(
     refused ? 'refused' : 'confirm'
   );
+  // The rejection to show — set from the server's typed error when one
+  // arrives; a client-side refusal has nothing more specific to say.
+  const [errorMessage, setErrorMessage] = createSignal(
+    t('messages.cant-delete-generic')
+  );
   const count = props.selectedIds().length;
 
   const run = async () => {
@@ -83,8 +88,20 @@ const Body = (
       return;
     }
     const items = result.data.batchPrescription.deletePrescriptions ?? [];
-    const failed = items.some(i => 'error' in i.response);
-    if (failed) {
+    const errors = items.flatMap(i =>
+      'error' in i.response ? [i.response.error] : []
+    );
+    if (errors.length > 0) {
+      // Reacting to the server's verdict, keyed to its cause (ui-standards §
+      // validation, controls § action feedback). A dispensing record
+      // generated from a prescription request refuses at any status, and
+      // nothing on the row shows it — so the generic line would leave the
+      // user with a dead end. Every other refusal keeps it.
+      setErrorMessage(
+        errors.some(e => e.__typename === 'CannotDeleteGeneratedDispensation')
+          ? t('messages.cant-delete-generated-dispensation')
+          : t('messages.cant-delete-generic')
+      );
       setPhase('error');
       return;
     }
@@ -109,9 +126,12 @@ const Body = (
       description={
         <Show
           when={phase() === 'refused' || phase() === 'error'}
-          fallback={tPlural('messages.confirm-delete-prescriptions', count)}
+          fallback={tPlural(
+            'messages.confirm-delete-dispensing-records',
+            count
+          )}
         >
-          <Alert severity="error">{t('messages.cant-delete-generic')}</Alert>
+          <Alert severity="error">{errorMessage()}</Alert>
         </Show>
       }
       actions={

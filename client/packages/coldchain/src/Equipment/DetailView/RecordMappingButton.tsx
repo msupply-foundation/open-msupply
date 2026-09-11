@@ -86,7 +86,11 @@ export const RecordMappingModal = ({
     500
   );
 
-  const { Modal } = useDialog({ onClose, isOpen });
+  const { Modal } = useDialog({
+    onClose,
+    isOpen,
+    testId: 'temperature-mapping-modal',
+  });
 
   const onOk = async () => {
     await insertLog(draft)
@@ -138,6 +142,7 @@ export const RecordMappingModal = ({
               format="P"
               maxDate={today}
               width="100%"
+              textFieldTestId="mapping-date-input"
               onChange={date =>
                 setDraft(prev => ({
                   ...prev,
@@ -157,6 +162,9 @@ export const RecordMappingModal = ({
               rows={3}
               fullWidth
               onChange={e => debouncedSetComment(e.target.value)}
+              slotProps={{
+                htmlInput: { 'data-testid': 'mapping-observations-input' },
+              }}
             />
           </Row>
         </Box>

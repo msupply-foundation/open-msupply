@@ -134,7 +134,7 @@ export type DeleteStocktakesResult = {
   __typename: "DeleteStocktakeError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotEditStocktake";
 };
 });
 }> | null;

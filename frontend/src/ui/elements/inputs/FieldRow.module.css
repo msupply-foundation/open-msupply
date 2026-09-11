@@ -21,6 +21,15 @@
   gap: var(--space-2) var(--space-3);
 }
 
+/* align="first-line": line the label up with the control's first line of text
+   rather than the middle of its box. Baseline alignment does it without a
+   magic offset — it finds the control's own first text baseline, whatever the
+   box's height, border and padding turn out to be. Only a multi-line control
+   needs it; against a single-line box, centre and first-line coincide. */
+.row[data-align='first-line'] {
+  align-items: baseline;
+}
+
 /* labelWidth="auto": reserve nothing for the label — it takes its natural width
    and the control sits right after it (a lone row with no siblings to align
    to, e.g. a card header field). */

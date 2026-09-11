@@ -22,6 +22,11 @@ query customFieldDefinitions($scope: String!) {
           key
           name
           parentOptionId
+          # Deleted options are returned deliberately — a stored value is only
+          # ever an option id, so dropping them would render raw ids on records
+          # that still hold one. Resolvable, but never offered: see
+          # `liveOptions` in parse.ts.
+          deletedDatetime
         }
       }
     }

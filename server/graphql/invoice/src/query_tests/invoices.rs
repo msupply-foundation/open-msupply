@@ -3,14 +3,15 @@ mod test {
     use async_graphql::EmptyMutation;
     use chrono::{DateTime, Utc};
     use graphql_core::test_helpers::setup_graphql_test;
-    use graphql_core::{assert_graphql_query, assert_standard_graphql_error, get_invoice_lines_inline};
+    use graphql_core::{
+        assert_graphql_query, assert_standard_graphql_error, get_invoice_lines_inline,
+    };
     use repository::EqualFilter;
     use repository::{
         mock::{mock_inbound_shipment_a, MockDataInserts},
-        InvoiceFilter, InvoiceRepository, InvoiceRow, InvoiceRowRepository, CustomFieldDisplayMode,
-        CustomFieldKind, CustomFieldScopeRow, CustomFieldScopeRowRepository, CustomFieldRow,
-        CustomFieldRowRepository,
-        CustomFieldValueType,
+        CustomFieldDisplayMode, CustomFieldKind, CustomFieldRow, CustomFieldRowRepository,
+        CustomFieldScopeRow, CustomFieldScopeRowRepository, CustomFieldValueType, InvoiceFilter,
+        InvoiceRepository, InvoiceRow, InvoiceRowRepository,
     };
     use serde_json::json;
 

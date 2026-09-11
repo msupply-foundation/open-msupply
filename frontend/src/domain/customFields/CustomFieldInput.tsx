@@ -5,16 +5,12 @@ import { NumberField } from '../../ui/elements/inputs/NumberField';
 import { DateField } from '../../ui/elements/inputs/DateField';
 import { t } from '../../intl';
 import { CustomFieldOptionSelect } from './CustomFieldOptionSelect';
-import type { ParsedCustomField } from './parse';
-
-// A number-typed stored value coerced back to a number for the NumberField;
-// undefined (empty) for anything non-numeric.
-const asNumber = (value: unknown): number | undefined => {
-  if (typeof value === 'number') return value;
-  if (value == null || value === '') return undefined;
-  const n = Number(value);
-  return Number.isFinite(n) ? n : undefined;
-};
+import { CustomFieldOptionMultiSelect } from './CustomFieldOptionMultiSelect';
+import {
+  multiOptionIds,
+  shapeMatchedValue,
+  type ParsedCustomField,
+} from './parse';
 
 // The editable control for ONE custom field — the interpreter's edit surface:
 // a single Switch over the parsed `field.kind`, each arm an explicit library
@@ -42,6 +38,18 @@ export const CustomFieldInput = (props: {
 }) => {
   const testId = () => props.testId ?? `custom-field-${props.field.def.key}`;
   const name = () => props.field.def.name;
+  // Shape-matched or nothing (parse › shapeMatchedValue): a value that isn't
+  // what its type means renders as unset, here as everywhere. The control's
+  // own next save writes a well-shaped one in its place.
+  const value = () => shapeMatchedValue(props.field, props.value);
+  const asText = () => {
+    const matched = value();
+    return typeof matched === 'string' ? matched : '';
+  };
+  const asNumber = () => {
+    const matched = value();
+    return typeof matched === 'number' ? matched : undefined;
+  };
   return (
     <Switch
       fallback={
@@ -59,7 +67,7 @@ export const CustomFieldInput = (props: {
       <Match when={props.field.kind === 'boolean'}>
         <Checkbox
           label={name()}
-          checked={Boolean(props.value)}
+          checked={value() === true}
           disabled={props.disabled}
           testId={testId()}
           onChange={checked => props.onChange(checked)}
@@ -70,7 +78,7 @@ export const CustomFieldInput = (props: {
           label={name()}
           hideLabel={props.hideLabel}
           size={props.size}
-          value={props.value == null ? '' : String(props.value)}
+          value={asText()}
           disabled={props.disabled}
           data-testid={testId()}
           onInput={e => props.onChange(e.currentTarget.value)}
@@ -84,7 +92,7 @@ export const CustomFieldInput = (props: {
             size={props.size}
             allowNegative
             decimalLimit={numberField().integer ? 0 : 6}
-            value={asNumber(props.value)}
+            value={asNumber()}
             disabled={props.disabled}
             onChange={n => props.onChange(n ?? null)}
           />
@@ -95,16 +103,31 @@ export const CustomFieldInput = (props: {
           label={name()}
           hideLabel={props.hideLabel}
           size={props.size}
-          value={typeof props.value === 'string' ? props.value : null}
+          value={asText() || null}
           disabled={props.disabled}
           onChange={d => props.onChange(d)}
         />
+      </Match>
+      <Match when={props.field.kind === 'multiOption' && props.field}>
+        {multiField => (
+          <CustomFieldOptionMultiSelect
+            def={multiField().def}
+            value={multiOptionIds(value())}
+            disabled={props.disabled}
+            hideLabel={props.hideLabel}
+            size={props.size}
+            testId={testId()}
+            // Cleared emits null, not [] — as the other cleared values do, so
+            // the server's patch-merge removes the key.
+            onChange={ids => props.onChange(ids.length ? ids : null)}
+          />
+        )}
       </Match>
       <Match when={props.field.kind === 'option' && props.field}>
         {optionField => (
           <CustomFieldOptionSelect
             def={optionField().def}
-            value={props.value == null ? '' : String(props.value)}
+            value={asText()}
             disabled={props.disabled}
             hideLabel={props.hideLabel}
             size={props.size}

@@ -39,6 +39,22 @@ interface MultiSelectProps<T> {
    * isn't part of the control's accessible name. As TextField.
    */
   labelInfo?: JSX.Element;
+  /**
+   * Name the input with `aria-label` instead of rendering the label element —
+   * for a surrounding row (a toolbar FieldRow) that already shows the label.
+   * As <Combobox>: same accessible name, no duplicate text node.
+   */
+  hideLabel?: boolean;
+  /** `data-testid` for the input. As <Combobox>'s inputTestId. */
+  inputTestId?: string;
+  /**
+   * Locked shut, as <Combobox>'s disabled: the list can't be opened, nothing
+   * can be ticked, no tag can be removed. The tags still render in the control
+   * (they wrap, so nothing is hidden) — a locked record's field stays readable
+   * without needing to open (spec/ui-standards/custom-fields › value types,
+   * #581).
+   */
+  disabled?: boolean;
   class?: string;
 }
 
@@ -100,6 +116,7 @@ export const MultiSelect = <T,>(props: MultiSelectProps<T>) => {
       defaultFilter={(item, input) => matches(item as T, input)}
       value={props.selectedItems}
       onChange={items => props.onChange(items)}
+      disabled={props.disabled}
       onInputChange={setInputValue}
       allowsEmptyCollection
       // Open the listbox as soon as the field is focused/clicked, as <Combobox>
@@ -127,7 +144,11 @@ export const MultiSelect = <T,>(props: MultiSelectProps<T>) => {
       <Show
         when={props.labelInfo}
         fallback={
-          <KCombobox.Label class={styles.label}>{props.label}</KCombobox.Label>
+          <Show when={!props.hideLabel}>
+            <KCombobox.Label class={styles.label}>
+              {props.label}
+            </KCombobox.Label>
+          </Show>
         }
       >
         {/* labelInfo sits OUTSIDE the label element, as a sibling: nested in it
@@ -148,18 +169,24 @@ export const MultiSelect = <T,>(props: MultiSelectProps<T>) => {
                     <span class={styles.tagLabel}>
                       {props.itemToString(item)}
                     </span>
-                    <button
-                      type="button"
-                      class={styles.tagRemove}
-                      aria-label={`Remove ${props.itemToString(item)}`}
-                      onClick={() => state.remove(item)}
-                    >
-                      <CloseIcon />
-                    </button>
+                    <Show when={!props.disabled}>
+                      <button
+                        type="button"
+                        class={styles.tagRemove}
+                        aria-label={`Remove ${props.itemToString(item)}`}
+                        onClick={() => state.remove(item)}
+                      >
+                        <CloseIcon />
+                      </button>
+                    </Show>
                   </span>
                 )}
               </For>
-              <KCombobox.Input class={styles.input} />
+              <KCombobox.Input
+                class={styles.input}
+                data-testid={props.inputTestId}
+                aria-label={props.hideLabel ? props.label : undefined}
+              />
             </div>
             <KCombobox.Trigger
               class={styles.toggle}
