@@ -4,7 +4,7 @@ use chrono::NaiveDateTime;
 use graphql_core::loader::CustomFieldOptionsByCustomFieldIdLoader;
 use graphql_core::standard_graphql_error::StandardGraphqlError;
 use graphql_core::ContextExt;
-use repository::{CustomFieldDisplayMode, CustomFieldOptionRow, CustomField, CustomFieldRow};
+use repository::{CustomField, CustomFieldDisplayMode, CustomFieldOptionRow, CustomFieldRow};
 use serde::Serialize;
 use service::ListResult;
 
@@ -173,7 +173,10 @@ impl CustomFieldNode {
             .await
             .map_err(StandardGraphqlError::from_repository_error)?
             .unwrap_or_default();
-        Ok(options.into_iter().map(CustomFieldOptionNode::from_domain).collect())
+        Ok(options
+            .into_iter()
+            .map(CustomFieldOptionNode::from_domain)
+            .collect())
     }
 }
 
@@ -223,7 +226,11 @@ impl CustomFieldConnector {
     pub fn from_domain(result: ListResult<CustomField>) -> CustomFieldConnector {
         CustomFieldConnector {
             total_count: result.count,
-            nodes: result.rows.into_iter().map(CustomFieldNode::from_domain).collect(),
+            nodes: result
+                .rows
+                .into_iter()
+                .map(CustomFieldNode::from_domain)
+                .collect(),
         }
     }
 }
@@ -265,7 +272,10 @@ mod tests {
     fn drops_stray_keys() {
         let raw = json!({ "custom_1": "abc", "stray": "xyz" });
         let allowed = allowed(&["custom_1"]);
-        assert_eq!(filter_custom_fields(raw, &allowed), json!({ "custom_1": "abc" }));
+        assert_eq!(
+            filter_custom_fields(raw, &allowed),
+            json!({ "custom_1": "abc" })
+        );
     }
 
     #[test]

@@ -51,7 +51,7 @@ export interface NavigateOptions {
 /**
  * An href for a host screen BELOW the store root, from the path as the
  * navigation registry spells it — `'inventory/stock'`,
- * `'dispensary/prescription'`, `''` for the store's landing screen — plus any
+ * `'dispensary/dispensing'`, `''` for the store's landing screen — plus any
  * query string of its own (`'inventory/stock?query=…'`, or `'?query=…'` on the
  * landing screen itself). A leading slash is tolerated; the path is
  * store-relative either way.

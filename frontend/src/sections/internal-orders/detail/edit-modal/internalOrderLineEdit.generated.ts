@@ -72,6 +72,9 @@ export type AddInternalOrderLineVariables = {
     destinationCustomerId?: {
     value?: string | null;
   } | null;
+    originalCustomerId?: {
+    value?: string | null;
+  } | null;
   }> | null;
     deleteRequestRequisitions?: Array<{
     id: string;
@@ -85,7 +88,7 @@ export type AddInternalOrderLineResult = {
   insertRequestRequisitionLines: Array<{
   id: string;
   response: {
-  __typename: string;
+  __typename: "InsertRequestRequisitionLineError" | "RequisitionLineNode";
 };
 }> | null;
   updateRequestRequisitionLines: Array<{
@@ -98,7 +101,7 @@ export type AddInternalOrderLineResult = {
   __typename: "UpdateRequestRequisitionLineError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotEditRequisition" | "ForeignKeyError" | "RecordNotFound" | "RequisitionReasonNotProvided";
   description: string;
 };
 });
@@ -129,7 +132,7 @@ export type DeleteInternalOrderLinesResult = {
   __typename: "DeleteRequestRequisitionLineError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotEditRequisition" | "RecordNotFound";
   description: string;
 };
 });
@@ -160,7 +163,7 @@ export type UpdateInternalOrderLineResult = {
   __typename: "UpdateRequestRequisitionLineError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotEditRequisition" | "ForeignKeyError" | "RecordNotFound" | "RequisitionReasonNotProvided";
   description: string;
 };
 });

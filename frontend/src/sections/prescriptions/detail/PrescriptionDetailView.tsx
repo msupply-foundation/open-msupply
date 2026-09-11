@@ -529,7 +529,7 @@ const PrescriptionDetailView: Component = () => {
   const crumbs = (node?: PrescriptionFieldsFragment) => [
     {
       label: t('dispensing'),
-      to: `/${params.storeId}/dispensary/prescription`,
+      to: `/${params.storeId}/dispensary/dispensing`,
     },
     { label: node ? `${node.invoiceNumber}` : '…' },
   ];
@@ -650,7 +650,7 @@ const PrescriptionDetailView: Component = () => {
                   })
                 }
                 onDeleted={() =>
-                  navigate(`/${params.storeId}/dispensary/prescription`, {
+                  navigate(`/${params.storeId}/dispensary/dispensing`, {
                     replace: true,
                   })
                 }
@@ -831,7 +831,7 @@ const PrescriptionDetailView: Component = () => {
             onClose={() => setDeleteLinesConfirm(false)}
             title={t('heading.are-you-sure')}
             message={tPlural(
-              'messages.confirm-delete-lines',
+              'messages.confirm-delete-dispensing-lines',
               selectedIds().length
             )}
             confirmVariant="danger"

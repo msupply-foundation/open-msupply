@@ -29,6 +29,22 @@ vi.mock('../api/serverInfo', () => ({
   isCentralServer: () => state.central,
 }));
 
+// The plugin half of the registry (spec/navigation § plugin destinations) is
+// its own unit (src/plugins/pluginPages.test.ts); here only the SEAM is under
+// test — routeAccess consults it exactly for paths the static registry does
+// not claim.
+const pluginState = vi.hoisted(() => ({
+  verdict: undefined as
+    { kind: 'ok' } | { kind: 'blocked' } | { kind: 'denied' } | undefined,
+  asked: [] as string[],
+}));
+vi.mock('../plugins/pluginPages', () => ({
+  pluginRouteAccess: (relativePath: string) => {
+    pluginState.asked.push(relativePath);
+    return pluginState.verdict;
+  },
+}));
+
 import { navConfig } from './navConfig';
 import { gateNav, routeAccess } from './navGates';
 
@@ -313,10 +329,10 @@ describe('prescription requests, gated like anything else', () => {
     // and a dispenser the reverse.
     state.permissions = new Set(['PRESCRIPTION_REQUEST_QUERY']);
     expect(gatedPaths()).toContain('dispensary/prescription-request');
-    expect(gatedPaths()).not.toContain('dispensary/prescription');
+    expect(gatedPaths()).not.toContain('dispensary/dispensing');
 
     state.permissions = new Set(['PRESCRIPTION_QUERY']);
-    expect(gatedPaths()).toContain('dispensary/prescription');
+    expect(gatedPaths()).toContain('dispensary/dispensing');
     expect(gatedPaths()).not.toContain('dispensary/prescription-request');
   });
 
@@ -356,5 +372,29 @@ describe('prescription requests, gated like anything else', () => {
     expect(paths).toContain('');
     expect(paths).toContain('settings');
     expect(paths).toContain('help');
+  });
+});
+
+describe('plugin destinations (spec/navigation § plugin destinations)', () => {
+  beforeEach(() => {
+    pluginState.verdict = undefined;
+    pluginState.asked = [];
+  });
+
+  it('hands a path the static registry does not claim to the plugin half', () => {
+    pluginState.verdict = { kind: 'denied' };
+    expect(routeAccess('stock-count/count')).toEqual({ kind: 'denied' });
+    expect(pluginState.asked).toEqual(['stock-count/count']);
+  });
+
+  it('never consults the plugin half for a host destination', () => {
+    // Their address spaces are disjoint by validation, so this is a
+    // fallthrough, not a tie-break.
+    routeAccess('inventory/stock');
+    expect(pluginState.asked).toEqual([]);
+  });
+
+  it('leaves a path no one claims to the not-found page, as before', () => {
+    expect(routeAccess('no-such-destination')).toEqual({ kind: 'ok' });
   });
 });

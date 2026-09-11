@@ -1,8 +1,8 @@
 use super::{
-    item_category_row::item_category_join, item_row::item,
-    master_list_line_row::master_list_line, master_list_name_join::master_list_name_join,
-    master_list_row::master_list, program_row::program, stock_on_hand::store_stock_on_hand,
-    store_row::store, unit_row::unit, DBType, ItemRow, ItemType, StorageConnection, UnitRow,
+    item_category_row::item_category_join, item_row::item, master_list_line_row::master_list_line,
+    master_list_name_join::master_list_name_join, master_list_row::master_list,
+    program_row::program, stock_on_hand::store_stock_on_hand, store_row::store, unit_row::unit,
+    DBType, ItemRow, ItemType, StorageConnection, UnitRow,
 };
 
 use diesel::{

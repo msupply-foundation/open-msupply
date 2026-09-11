@@ -7,6 +7,7 @@ import {
   Show,
   untrack,
 } from 'solid-js';
+import { createStore, produce, reconcile, unwrap } from 'solid-js/store';
 import { graphqlFetch } from '../../api/graphql';
 import { gated } from '../../api/gated';
 import { saveBlob } from '../../platform/openDocument';
@@ -100,7 +101,13 @@ export const CustomTranslationsModal = (props: {
   // eslint-disable-next-line solid/reactivity
   const [nested, setNested] = createSignal<CustomTranslationsV2>(props.value);
   const [namespace, setNamespace] = createSignal<string>(DEFAULT_NAMESPACE);
-  const [rows, setRows] = createSignal<TranslationRow[]>([]);
+  /* The edited rows are a STORE, written field-by-field — never by
+     replacing a row object (solid-reactivity-pitfalls § 5, and § no
+     remounts on interaction rule 2). <For> is keyed by reference, so a
+     replaced row is a NEW row: its cells are torn down and rebuilt, and
+     the focused textarea dies on every keystroke. A leaf write re-runs
+     only that cell's binding, so the row keeps its focus. */
+  const [rows, setRows] = createStore<TranslationRow[]>([]);
   const [filter, setFilter] = createSignal('');
   const [notice, setNotice] = createSignal<Notice | undefined>();
   const [showValidation, setShowValidation] = createSignal(false);
@@ -199,18 +206,20 @@ export const CustomTranslationsModal = (props: {
       if (!loaded) return;
       if (!untrack(seeded)) {
         setSeeded(true);
-        setRows(viewFor(untrack(namespace), untrack(nested), untrack(legacy)));
+        setRows(
+          reconcile(
+            viewFor(untrack(namespace), untrack(nested), untrack(legacy))
+          )
+        );
         return;
       }
       const ns = untrack(namespace);
-      setRows(current =>
-        current.map(row => {
-          const resolvedDefault = getDefault(ns, row.key);
-          return {
-            ...row,
-            default: resolvedDefault,
-            isInvalid: isInvalidCustom(resolvedDefault, row.custom),
-          };
+      setRows(
+        produce(current => {
+          for (const row of current) {
+            row.default = getDefault(ns, row.key);
+            row.isInvalid = isInvalidCustom(row.default, row.custom);
+          }
         })
       );
     })
@@ -225,13 +234,14 @@ export const CustomTranslationsModal = (props: {
     nested: CustomTranslationsV2;
     legacy: Record<string, string>;
   } => {
-    if (isLegacy()) return { nested: nested(), legacy: rowsToFlatMap(rows()) };
+    if (isLegacy())
+      return { nested: nested(), legacy: rowsToFlatMap(unwrap(rows)) };
     return {
       nested: setNamespaceTranslations(
         nested(),
         editingLanguage,
         namespace(),
-        rowsToNamespaceMap(rows())
+        rowsToNamespaceMap(unwrap(rows))
       ),
       legacy: legacy(),
     };
@@ -244,7 +254,7 @@ export const CustomTranslationsModal = (props: {
     setNested(committed.nested);
     setLegacy(committed.legacy);
     setNamespace(next);
-    setRows(viewFor(next, committed.nested, committed.legacy));
+    setRows(reconcile(viewFor(next, committed.nested, committed.legacy)));
     setFilter('');
   };
 
@@ -253,7 +263,7 @@ export const CustomTranslationsModal = (props: {
 
   const addOptions = (): TranslationOption[] => {
     const loaded = loadedBundles();
-    const existing = new Set(rows().map(row => row.key));
+    const existing = new Set(rows.map(row => row.key));
     let keys: string[];
     if (namespace() === DEFAULT_NAMESPACE || isLegacy())
       keys = Object.keys(loaded?.enCommon ?? {});
@@ -275,32 +285,40 @@ export const CustomTranslationsModal = (props: {
   const addRows = (option: TranslationOption | null) => {
     if (!option) return;
     const family = pluralisationFamily(option, addOptions());
-    setRows(current => [
-      ...family.map(member => ({
-        id: member.key,
-        key: member.key,
-        default: member.default,
-        custom: member.default,
-        isNew: true,
-      })),
-      ...current,
-    ]);
+    setRows(
+      produce(current =>
+        current.unshift(
+          ...family.map(member => ({
+            id: member.key,
+            key: member.key,
+            default: member.default,
+            custom: member.default,
+            isNew: true,
+          }))
+        )
+      )
+    );
     setAddResetKey(key => key + 1);
   };
 
   const updateCustom = (id: string, custom: string) => {
-    setRows(current =>
-      current.map(row =>
-        row.id === id
-          ? { ...row, custom, isInvalid: isInvalidCustom(row.default, custom) }
-          : row
-      )
+    setRows(
+      row => row.id === id,
+      produce(row => {
+        row.custom = custom;
+        row.isInvalid = isInvalidCustom(row.default, custom);
+      })
     );
   };
 
   const deleteRow = (id: string) => {
     if (isLegacy()) setLegacyDirty(true);
-    setRows(current => current.filter(row => row.id !== id));
+    setRows(
+      produce(current => {
+        const index = current.findIndex(row => row.id === id);
+        if (index >= 0) current.splice(index, 1);
+      })
+    );
   };
 
   // ---------------------------------------------------------------------
@@ -359,7 +377,7 @@ export const CustomTranslationsModal = (props: {
       }
       setNested(nextNested);
       setLegacy(nextLegacy);
-      setRows(viewFor(namespace(), nextNested, nextLegacy));
+      setRows(reconcile(viewFor(namespace(), nextNested, nextLegacy)));
     } else {
       // A plain flat file lands in the current view (OMS-REG-GPREF-01.24).
       if (!isValidFlatImport(parsed)) {
@@ -369,9 +387,13 @@ export const CustomTranslationsModal = (props: {
         });
         return;
       }
-      const imported = mapToRows(parsed, key => getDefault(namespace(), key));
+      // One deliberate snapshot read of the namespace, hoisted out of the
+      // callback (as viewFor and the seed effect do) — mapToRows calls it
+      // synchronously, so there is nothing to keep live.
+      const ns = namespace();
+      const imported = mapToRows(parsed, key => getDefault(ns, key));
       if (isLegacy()) setLegacyDirty(true);
-      setRows(current => mergeRows(current, imported, mode));
+      setRows(reconcile(mergeRows(unwrap(rows), imported, mode)));
     }
     setNotice({ kind: 'loaded' });
   };
@@ -379,7 +401,7 @@ export const CustomTranslationsModal = (props: {
   const deleteAll = () => {
     setDeleteAllOpen(false);
     if (isLegacy()) setLegacyDirty(true);
-    setRows([]);
+    setRows(reconcile([]));
   };
 
   /* Stage the legacy entries into the current language + namespace, keeping
@@ -388,7 +410,7 @@ export const CustomTranslationsModal = (props: {
     const imported = mapToRows(legacy(), key =>
       getDefault(DEFAULT_NAMESPACE, key)
     );
-    setRows(current => mergeRows(current, imported, 'keep-existing'));
+    setRows(reconcile(mergeRows(unwrap(rows), imported, 'keep-existing')));
     setNotice({ kind: 'loaded' });
   };
 
@@ -399,7 +421,7 @@ export const CustomTranslationsModal = (props: {
     // Never save under a changed app language — the rows belong to the
     // language the modal opened with.
     if (languageChanged()) return;
-    if (rows().some(row => row.isInvalid)) {
+    if (rows.some(row => row.isInvalid)) {
       setShowValidation(true);
       setNotice({
         kind: 'error',
@@ -445,13 +467,17 @@ export const CustomTranslationsModal = (props: {
     // A just-emptied legacy view is no longer offered — fall back to common.
     if (isLegacy() && Object.keys(committed.legacy).length === 0) {
       setNamespace(DEFAULT_NAMESPACE);
-      setRows(viewFor(DEFAULT_NAMESPACE, committed.nested, committed.legacy));
+      setRows(
+        reconcile(
+          viewFor(DEFAULT_NAMESPACE, committed.nested, committed.legacy)
+        )
+      );
     }
     if (closeAfter) props.onClose();
     else setNotice({ kind: 'saved' });
   };
 
-  const visibleRows = () => filterRows(rows(), filter());
+  const visibleRows = () => filterRows(rows, filter());
 
   return (
     <>

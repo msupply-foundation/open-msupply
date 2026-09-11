@@ -12,12 +12,11 @@ use crate::{
     test_db::{self, setup_all, setup_all_with_data},
     ChangelogCondition, ChangelogFilter, ChangelogRepository, ChangelogRow, ChangelogSyncType,
     ChangelogTableName, CurrencyRow, CursorAndLimit, FilterBuilder, InvoiceLineRow,
-    InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, KeyType,
-    KeyValueStoreRepository, LocationRowRepository, NameRow, RequisitionLineRow,
-    RequisitionLineRowRepository, RequisitionRow, RequisitionRowRepository, RowActionType,
-    ShippingMethodRow, ShippingMethodRowRepository, StocktakeRow, StorageConnection, StoreRow,
-    StoreRowRepository, Upsert, VaccinationRow,
-    VaccinationRowRepository,
+    InvoiceLineRowRepository, InvoiceRow, InvoiceRowRepository, KeyType, KeyValueStoreRepository,
+    LocationRowRepository, NameRow, RequisitionLineRow, RequisitionLineRowRepository,
+    RequisitionRow, RequisitionRowRepository, RowActionType, ShippingMethodRow,
+    ShippingMethodRowRepository, StocktakeRow, StorageConnection, StoreRow, StoreRowRepository,
+    Upsert, VaccinationRow, VaccinationRowRepository,
 };
 
 fn delete_all_changelog(connection: &StorageConnection) {

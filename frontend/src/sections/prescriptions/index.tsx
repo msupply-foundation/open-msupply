@@ -4,7 +4,7 @@ import type { RouteSectionProps } from '@solidjs/router';
 import { isDispensary } from '../../store/storeContext';
 
 // The prescriptions vertical routes (spec/prescriptions), mounted under the
-// navConfig path 'dispensary/prescription' in App.tsx. Views are lazy so the
+// navConfig path 'dispensary/dispensing' in App.tsx. Views are lazy so the
 // section is its own bundle: '/' = the list, '/:prescriptionId' = the detail.
 const PrescriptionsList = lazy(() => import('./list/PrescriptionsList'));
 const PrescriptionDetailView = lazy(
