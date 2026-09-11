@@ -1,18 +1,15 @@
-use crate::{
-    db_diesel::changelog::{ensure_partition_lookahead, Authoring, ChangelogTableName},
-    migrations::*,
-    KeyType, KeyValueStoreRepository, StorageConnection,
-};
+use crate::{db_diesel::changelog::ensure_partition_lookahead, migrations::*, StorageConnection};
 use diesel::{
-    dsl::max,
+    dsl::{max, sql},
     prelude::*,
-    sql_types::{Integer, Nullable},
+    sql_types::{Bool, Integer, Nullable},
 };
-use strum::IntoEnumIterator;
 
 // Minimal local table definitions for the columns this migration reads and writes, as
-// they exist in the 3.02.0 schema. The crate's own definitions track the current
-// schema and could drift away from what a database at this version actually has.
+// they exist in the 3.01.1 schema. The crate's own definitions track the current
+// schema and could drift away from what a database at this version actually has. The
+// same applies to key_value_store, which is read with literal key strings below rather
+// than through `KeyType`, whose variants can be renamed or removed.
 table! {
     changelog (cursor) {
         cursor -> BigInt,
@@ -24,12 +21,6 @@ table! {
         source_site_id -> Nullable<Integer>,
         transfer_store_id -> Nullable<Text>,
         patient_link_id -> Nullable<Text>,
-    }
-}
-
-table! {
-    site (id) {
-        id -> Integer,
     }
 }
 
@@ -66,27 +57,34 @@ impl MigrationFragment for Migrate {
     /// re-pushing records that did make it to central is an idempotent upsert, and
     /// `query_with_data` dedups by record so the extra rows cost nothing.
     ///
-    /// Skipped on central servers: central does not push, and re-logging its own
-    /// records would only re-broadcast them to every remote. Central is detected by
-    /// the `site` table having rows (site rows are only ever integrated on central) or
-    /// the standalone-central flag.
+    /// Known side effect: re-integrating a `contact_form` on central writes a new
+    /// changelog row there, and the contact form processor emails the Foundation's
+    /// support/feedback inboxes for every contact_form changelog row without dedup. So
+    /// every form ever submitted is emailed once more. Accepted, since the form is
+    /// rarely used and the recipients are our own team.
+    ///
+    /// Only runs on a site that has pushed over v6 or v7, which is exactly the set that
+    /// could have dropped rows. Central does not push, and re-logging its own records
+    /// would only re-broadcast them to every remote; a remote that never pushed starts
+    /// its first push from cursor zero with the fixed filter, so nothing was skipped.
+    /// Central cannot be detected any other way on a database upgrading from 2.x or
+    /// earlier: the `site` table is only filled by sync after startup, and the
+    /// standalone-central flag did not exist before 3.x.
     fn migrate_with_config(
         &self,
         connection: &StorageConnection,
         config: &MigrationConfig,
     ) -> anyhow::Result<()> {
-        if is_central_server(connection)? {
+        if !has_pushed_over_v6_or_v7(connection)? || is_standalone_central(connection)? {
             return Ok(());
         }
 
-        let Some(site_id) =
-            KeyValueStoreRepository::new(connection).get_i32(KeyType::SettingsSyncSiteId)?
-        else {
+        let Some(site_id) = site_id(connection)? else {
             // Not initialised yet, nothing was ever authored here.
             return Ok(());
         };
 
-        let tables = remote_authored_v6_tables();
+        let tables = REMOTE_AUTHORED_V6_TABLES;
 
         // Cursor of the latest changelog row per record this site authored. Pre-v7
         // local edits have a null source_site_id and is_sync_update = false; v7-era
@@ -94,7 +92,7 @@ impl MigrationFragment for Migrate {
         // against the same table.
         let latest_authored_here = || {
             latest
-                .filter(latest.field(changelog::table_name).eq_any(&tables))
+                .filter(latest.field(changelog::table_name).eq_any(tables))
                 .filter(
                     latest
                         .field(changelog::source_site_id)
@@ -157,38 +155,60 @@ impl MigrationFragment for Migrate {
     }
 }
 
-/// Tables that sync only over v6 (i.e. owned by OMS central rather than legacy
-/// mSupply) and that a remote site is allowed to author. Central-only tables never
-/// had anything to push from a remote.
-fn remote_authored_v6_tables() -> Vec<String> {
-    ChangelogTableName::iter()
-        .filter(|table| !matches!(table, ChangelogTableName::Other(_)))
-        .filter(|table| {
-            let style = table.sync_style();
-            let v6_only = style.transport.is_v6 && !style.transport.is_v5;
-            let remote_can_author = style
-                .authoring
-                .iter()
-                .any(|authoring| !matches!(authoring, Authoring::Central | Authoring::LegacyOnly));
-            v6_only && remote_can_author
-        })
-        .map(|table| table.to_string())
-        .collect()
+/// Tables that, as of 3.01.1, sync only over v6 (owned by OMS central rather than
+/// legacy mSupply) and that a remote site is allowed to author. Central-only tables
+/// never had anything to push from a remote. Hard-coded rather than derived from
+/// `ChangelogTableName::sync_style()` so that later changes to a table's transport or
+/// authoring do not alter what this migration does to an older database.
+const REMOTE_AUTHORED_V6_TABLES: &[&str] = &[
+    "asset",
+    "asset_internal_location",
+    "asset_log",
+    "contact_form",
+    "contact_trace",
+    "encounter",
+    "name_oms_fields",
+    "plugin_data",
+    "preference",
+    "rnr_form",
+    "rnr_form_line",
+    "sync_file_reference",
+    "system_log",
+    "vaccination",
+];
+
+/// `SETTINGS_SYNC_SITE_ID` from key_value_store, null when the site is not initialised.
+fn site_id(connection: &StorageConnection) -> anyhow::Result<Option<i32>> {
+    // A scalar subquery so that a missing row reads as null rather than NotFound. The
+    // key is an inline literal because on Postgres the id column is the `key_type`
+    // enum, which does not compare with a text bind parameter.
+    let site_id = diesel::select(sql::<Nullable<Integer>>(
+        "(SELECT value_int FROM key_value_store WHERE id = 'SETTINGS_SYNC_SITE_ID')",
+    ))
+    .get_result(connection.lock().connection())?;
+    Ok(site_id)
 }
 
-fn is_central_server(connection: &StorageConnection) -> anyhow::Result<bool> {
-    let is_standalone_central = KeyValueStoreRepository::new(connection)
-        .get_bool(KeyType::IsStandaloneCentral)?
-        .unwrap_or(false);
-    if is_standalone_central {
-        return Ok(true);
-    }
+/// Whether a v6 or v7 push cursor has ever been written. Only the remote sync clients
+/// write them, at first initialisation and on every push; the central server never
+/// runs those clients (in 2.x or 3.x), so it never has either key.
+fn has_pushed_over_v6_or_v7(connection: &StorageConnection) -> anyhow::Result<bool> {
+    let cursor_key: Option<i32> = diesel::select(sql::<Nullable<Integer>>(
+        "(SELECT 1 FROM key_value_store \
+            WHERE id IN ('SYNC_PUSH_CURSOR_V6', 'SYNC_PUSH_CURSOR_V7') LIMIT 1)",
+    ))
+    .get_result(connection.lock().connection())?;
+    Ok(cursor_key.is_some())
+}
 
-    // Site rows are only integrated on the central server (see SiteTranslation).
-    let sites: i64 = site::table
-        .count()
-        .get_result(connection.lock().connection())?;
-    Ok(sites > 0)
+/// Belt and braces: a standalone central never pushes, so it fails the cursor check
+/// anyway, but the flag is explicit and cheap.
+fn is_standalone_central(connection: &StorageConnection) -> anyhow::Result<bool> {
+    let is_standalone_central: Option<bool> = diesel::select(sql::<Nullable<Bool>>(
+        "(SELECT value_bool FROM key_value_store WHERE id = 'IS_STANDALONE_CENTRAL')",
+    ))
+    .get_result(connection.lock().connection())?;
+    Ok(is_standalone_central.unwrap_or(false))
 }
 
 #[cfg(test)]
@@ -284,7 +304,8 @@ mod tests {
             &format!(
                 "INSERT INTO key_value_store (id, value_int) VALUES
                     ('SETTINGS_SYNC_SITE_ID', {THIS_SITE_ID}),
-                    ('SETTINGS_SYNC_CENTRAL_SERVER_SITE_ID', {CENTRAL_SITE_ID});"
+                    ('SETTINGS_SYNC_CENTRAL_SERVER_SITE_ID', {CENTRAL_SITE_ID}),
+                    ('SYNC_PUSH_CURSOR_V6', 100);"
             ),
         );
         seed(&connection, SEED_CHANGELOG);
@@ -329,6 +350,27 @@ mod tests {
     }
 
     #[actix_rt::test]
+    async fn relogs_on_site_that_only_pushed_over_v7() {
+        let connection = setup("migration_relog_v6_dropped_v7_only").await;
+        seed(
+            &connection,
+            &format!(
+                "INSERT INTO key_value_store (id, value_int) VALUES
+                    ('SETTINGS_SYNC_SITE_ID', {THIS_SITE_ID}),
+                    ('SYNC_PUSH_CURSOR_V7', 100);"
+            ),
+        );
+        seed(&connection, SEED_CHANGELOG);
+        let before = max_cursor(&connection);
+
+        run(&connection);
+
+        assert_eq!(rows_after(&connection, before).len(), 3);
+    }
+
+    /// A central server (of any origin version) has a site id but has never run the
+    /// v6 or v7 push, so it has no push cursor.
+    #[actix_rt::test]
     async fn skips_central_server() {
         let connection = setup("migration_relog_v6_dropped_central").await;
         seed(
@@ -336,8 +378,7 @@ mod tests {
             &format!(
                 "INSERT INTO key_value_store (id, value_int) VALUES
                     ('SETTINGS_SYNC_SITE_ID', {THIS_SITE_ID}),
-                    ('SETTINGS_SYNC_CENTRAL_SERVER_SITE_ID', {CENTRAL_SITE_ID});
-                 INSERT INTO site (id, code, name) VALUES (7, 'REMOTE_A', 'Remote A');"
+                    ('SETTINGS_SYNC_CENTRAL_SERVER_SITE_ID', {CENTRAL_SITE_ID});"
             ),
         );
         seed(&connection, SEED_CHANGELOG);
@@ -355,7 +396,8 @@ mod tests {
             &connection,
             &format!(
                 "INSERT INTO key_value_store (id, value_int) VALUES
-                    ('SETTINGS_SYNC_SITE_ID', {THIS_SITE_ID});
+                    ('SETTINGS_SYNC_SITE_ID', {THIS_SITE_ID}),
+                    ('SYNC_PUSH_CURSOR_V7', 100);
                  INSERT INTO key_value_store (id, value_bool) VALUES
                     ('IS_STANDALONE_CENTRAL', TRUE);"
             ),
