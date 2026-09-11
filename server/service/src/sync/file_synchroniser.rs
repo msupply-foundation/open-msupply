@@ -15,8 +15,8 @@ use repository::{
 
 use crate::static_files::{StaticFile, StaticFileCategory};
 use crate::sync::api::SyncApiV5;
-use crate::sync::api_v6::SyncApiV6;
 use crate::sync::api_v6::upload_file::UploadOutcome;
+use crate::sync::api_v6::SyncApiV6;
 use crate::sync::settings::SYNC_V5_VERSION;
 use crate::sync_v7::api::SyncApiV7;
 use crate::{service_provider::ServiceProvider, static_files::StaticFileService};

@@ -45,6 +45,8 @@ pub struct DraftStockOutLine {
     pub volume_per_pack: f64,
     pub received_number_of_packs: Option<f64>,
     pub reason_option_id: Option<String>,
+    /// From the existing invoice line; a batch with no line yet carries none.
+    pub transfer_comment: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -60,12 +62,12 @@ pub fn get_draft_stock_out_lines(
     item_id: &str,
     invoice_id: &str,
 ) -> Result<(Vec<DraftStockOutLine>, DraftStockOutItemData), ListError> {
-    let invoice = get_invoice(ctx, Some(store_id), invoice_id, None)?.ok_or(ListError::DatabaseError(
-        RepositoryError::DBError {
+    let invoice = get_invoice(ctx, Some(store_id), invoice_id, None)?.ok_or(
+        ListError::DatabaseError(RepositoryError::DBError {
             msg: "Invoice not found".to_string(),
             extra: invoice_id.to_string(),
-        },
-    ))?;
+        }),
+    )?;
 
     let historical_stock_lines = get_historical_available_stock_lines(
         ctx,
@@ -324,6 +326,7 @@ impl DraftStockOutLine {
             volume_per_pack,
             received_number_of_packs: None,
             reason_option_id: None,
+            transfer_comment: None,
         }
     }
 
@@ -345,6 +348,7 @@ impl DraftStockOutLine {
             program_id,
             received_number_of_packs,
             reason_option_id,
+            transfer_comment,
             ..
         } = line.invoice_line_row;
 
@@ -394,6 +398,7 @@ impl DraftStockOutLine {
             volume_per_pack,
             received_number_of_packs,
             reason_option_id,
+            transfer_comment,
         })
     }
 }

@@ -96,7 +96,7 @@ export type StocktakeDetailResult = {
   __typename: "NodeError";
 } & {
   error: {
-  __typename: string;
+  __typename: "DatabaseError" | "RecordNotFound";
   description: string;
 };
 });
@@ -192,6 +192,7 @@ export type BatchStocktakeLinesVariables = {
     costPricePerPack?: number | null;
     sellPricePerPack?: number | null;
     note?: string | null;
+    inventoryAdjustmentReasonId?: string | null;
     itemVariantId?: string | null;
     donorId?: string | null;
     manufacturerId?: string | null;
@@ -220,6 +221,7 @@ export type BatchStocktakeLinesVariables = {
     costPricePerPack?: number | null;
     sellPricePerPack?: number | null;
     note?: string | null;
+    inventoryAdjustmentReasonId?: string | null;
     itemVariantId?: {
     value?: string | null;
   } | null;
@@ -384,7 +386,7 @@ export type FullStocktakeResult = {
   __typename: "NodeError";
 } & {
   error: {
-  __typename: string;
+  __typename: "DatabaseError" | "RecordNotFound";
   description: string;
 };
 });
@@ -412,7 +414,7 @@ export type DeleteStocktakeResult = {
   __typename: "DeleteStocktakeError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotEditStocktake";
 };
 });
 }> | null;

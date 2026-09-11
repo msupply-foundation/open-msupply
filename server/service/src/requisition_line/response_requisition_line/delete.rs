@@ -84,9 +84,10 @@ fn validate(
             .requisition_id(EqualFilter::equal_to(requisition_row.id.to_string())),
     )?;
 
-    if invoice_lines.iter().any(|invoice_line| {
-        requisition_line_row.item_id == invoice_line.invoice_line_row.item_id
-    }) {
+    if invoice_lines
+        .iter()
+        .any(|invoice_line| requisition_line_row.item_id == invoice_line.invoice_line_row.item_id)
+    {
         return Err(OutError::CannotDeleteLineLinkedToShipment);
     }
 

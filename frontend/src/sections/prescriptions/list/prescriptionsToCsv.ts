@@ -33,7 +33,7 @@ export const prescriptionsToCsv = (
     t('label.name'),
     t('label.status'),
     t('label.invoice-number'),
-    t('label.prescription-date'),
+    t('label.dispensed-date'),
     t('label.reference'),
     t('label.comment'),
     ...cf.fields,

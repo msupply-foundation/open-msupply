@@ -133,13 +133,6 @@ export const PrescriptionRequestSidePanel: Component<
         <FieldRow label={t('label.code')}>
           <Text variant="body">{props.node.patient?.code ?? '—'}</Text>
         </FieldRow>
-        <FieldRow label={t('label.date-of-birth')}>
-          <Text variant="body">
-            {props.node.patient?.dateOfBirth
-              ? localisedDate(props.node.patient.dateOfBirth)
-              : '—'}
-          </Text>
-        </FieldRow>
       </SidePanelSection>
 
       {/* The generated dispensation — reachable from the request (AC-R4). Past
@@ -162,7 +155,7 @@ export const PrescriptionRequestSidePanel: Component<
                   data-testid="related-dispensation-link"
                   onClick={() =>
                     navigate(
-                      `/${props.storeId}/dispensary/prescription/${dispensation.id}`
+                      `/${props.storeId}/dispensary/dispensing/${dispensation.id}`
                     )
                   }
                 >

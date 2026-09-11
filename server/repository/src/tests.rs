@@ -309,9 +309,8 @@ mod repository_test {
             mock_test_master_list_name_filter3, mock_test_master_list_store1, MockDataInserts,
         },
         requisition_row::RequisitionStatus,
-        test_db, ActivityLogRowRepository, CurrencyRowRepository, InvoiceFilter,
-        InvoiceLineFilter, InvoiceLineRepository, InvoiceLineRowRepository, InvoiceRepository,
-        InvoiceRow,
+        test_db, ActivityLogRowRepository, CurrencyRowRepository, InvoiceFilter, InvoiceLineFilter,
+        InvoiceLineRepository, InvoiceLineRowRepository, InvoiceRepository, InvoiceRow,
         InvoiceRowRepository, InvoiceStatus, InvoiceType, ItemLinkRowRepository, ItemRow,
         ItemRowRepository, KeyType, KeyValueStoreRepository, MasterListFilter,
         MasterListLineFilter, MasterListLineRepository, MasterListLineRowRepository,
@@ -886,8 +885,10 @@ mod repository_test {
             .unwrap();
         assert_eq!(
             {
-                let mut ids: Vec<String> =
-                    by_code.iter().map(|l| l.invoice_line_row.id.clone()).collect();
+                let mut ids: Vec<String> = by_code
+                    .iter()
+                    .map(|l| l.invoice_line_row.id.clone())
+                    .collect();
                 ids.sort();
                 ids
             },

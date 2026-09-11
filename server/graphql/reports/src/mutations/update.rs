@@ -21,10 +21,7 @@ pub struct UpdateReportNode {
     pub is_active: bool,
 }
 
-pub fn update_report(
-    ctx: &Context<'_>,
-    input: UpdateReportInput,
-) -> Result<UpdateReportNode> {
+pub fn update_report(ctx: &Context<'_>, input: UpdateReportInput) -> Result<UpdateReportNode> {
     let UpdateReportInput { id, is_active } = input;
 
     validate_auth(

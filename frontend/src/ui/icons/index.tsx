@@ -202,21 +202,6 @@ export const UploadIcon = (props: IconProps) => (
  */
 export const ImportIcon = DownloadIcon;
 export const ExportIcon = UploadIcon;
-
-/* Inbox tray — where an order arrives from the party it was placed
-   with, as distinct from CustomersIcon (the party dispensed TO). Named
-   for the picture, like TruckIcon and FileIcon: no section owns it, and
-   the Cook Islands navigator's Internal Order tile (its first consumer)
-   maps a tile icon to the ACT rather than to that section's menu glyph,
-   which is ReplenishmentIcon. */
-/* Hugeicons: InboxIcon */
-export const InboxIcon = (props: IconProps) => (
-  <Stroke viewBox="0 0 24 24" {...props}>
-    <path d="M2.5 12C2.5 7.52166 2.5 5.28249 3.89124 3.89124C5.28249 2.5 7.52166 2.5 12 2.5C16.4783 2.5 18.7175 2.5 20.1088 3.89124C21.5 5.28249 21.5 7.52166 21.5 12C21.5 16.4783 21.5 18.7175 20.1088 20.1088C18.7175 21.5 16.4783 21.5 12 21.5C7.52166 21.5 5.28249 21.5 3.89124 20.1088C2.5 18.7175 2.5 16.4783 2.5 12Z" />
-    <path d="M21.5 13.5H16.5743C15.7322 13.5 15.0706 14.2036 14.6995 14.9472C14.2963 15.7551 13.4889 16.5 12 16.5C10.5111 16.5 9.70373 15.7551 9.30054 14.9472C8.92942 14.2036 8.26777 13.5 7.42566 13.5H2.5" />
-  </Stroke>
-);
-
 /* Save */
 /* Hugeicons: FloppyDiskIcon */
 export const SaveIcon = (props: IconProps) => (
@@ -403,16 +388,6 @@ export const InfoIcon = (props: IconProps) => (
  * --- Navigation icons (from the current app; added as the menu bar needs
  * them) ---
  */
-
-/* Dashboard */
-/* Hugeicons: DashboardSpeed01Icon */
-export const DashboardIcon = (props: IconProps) => (
-  <Stroke viewBox="0 0 24 24" {...props}>
-    <path d="M13.5 13L17 9M14 15C14 16.1046 13.1046 17 12 17C10.8954 17 10 16.1046 10 15C10 13.8954 10.8954 13 12 13C13.1046 13 14 13.8954 14 15Z" />
-    <path d="M6 12C6 8.68629 8.68629 6 12 6C13.0929 6 14.1175 6.29218 15 6.80269" />
-    <path d="M2.50006 12.0001C2.50006 7.52172 2.50006 5.28255 3.8913 3.8913C5.28255 2.50006 7.52172 2.50006 12.0001 2.50006C16.4784 2.50006 18.7176 2.50006 20.1088 3.8913C21.5001 5.28255 21.5001 7.52172 21.5001 12.0001C21.5001 16.4784 21.5001 18.7176 20.1088 20.1088C18.7176 21.5001 16.4784 21.5001 12.0001 21.5001C7.52172 21.5001 5.28255 21.5001 3.8913 20.1088C2.50006 18.7176 2.50006 16.4784 2.50006 12.0001Z" />
-  </Stroke>
-);
 
 /* Inventory */
 /* Hugeicons: PackageProcessIcon */
@@ -689,14 +664,6 @@ export const ArrowRightIcon = (props: IconProps) => (
 );
 
 /* Pagination pager arrows — data-flip-rtl mirrors them in RTL. */
-/* Hugeicons: ArrowLeftDoubleIcon */
-export const FirstPageIcon = (props: IconProps) => (
-  <Stroke viewBox="0 0 24 24" data-flip-rtl="" {...props}>
-    <path d="M11.5 18C11.5 18 5.50001 13.5811 5.5 12C5.49999 10.4188 11.5 6 11.5 6" />
-    <path d="M18.5 18C18.5 18 12.5 13.5811 12.5 12C12.5 10.4188 18.5 6 18.5 6" />
-  </Stroke>
-);
-
 /* Hugeicons: ArrowLeft01Icon */
 export const NavigateBeforeIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" data-flip-rtl="" {...props}>
@@ -708,14 +675,6 @@ export const NavigateBeforeIcon = (props: IconProps) => (
 export const NavigateNextIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" data-flip-rtl="" {...props}>
     <path d="M9.00005 6C9.00005 6 15 10.4189 15 12C15 13.5812 9 18 9 18" />
-  </Stroke>
-);
-
-/* Hugeicons: ArrowRightDoubleIcon */
-export const LastPageIcon = (props: IconProps) => (
-  <Stroke viewBox="0 0 24 24" data-flip-rtl="" {...props}>
-    <path d="M12.5 18C12.5 18 18.5 13.5811 18.5 12C18.5 10.4188 12.5 6 12.5 6" />
-    <path d="M5.50005 18C5.50005 18 11.5 13.5811 11.5 12C11.5 10.4188 5.5 6 5.5 6" />
   </Stroke>
 );
 
@@ -735,17 +694,6 @@ export const MaximiseIcon = (props: IconProps) => (
 export const MinimiseIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
     <path d="M6.5023 10.7365C7.34671 10.7485 10.1432 11.3294 10.7361 10.7365C11.329 10.1436 10.7481 7.34708 10.7361 6.50267M13.2685 17.5027C13.2565 16.6583 12.6756 13.8618 13.2685 13.2689C13.8614 12.676 16.6579 13.2569 17.5023 13.2689M20.9991 21.001L13.6102 13.6188M10.3691 10.3763L2.99998 2.99902" />
-  </Stroke>
-);
-
-// Columns — the column-management control (a framed set of vertical columns;
-// ui-standards § tables → column management). TableViewIcon minus its row
-// line, so the two read as siblings but stay distinguishable.
-export const ColumnsIcon = (props: IconProps) => (
-  <Stroke viewBox="0 0 24 24" {...props}>
-    <path d="M3.89124 20.1088C2.5 18.7175 2.5 16.4783 2.5 12C2.5 7.52166 2.5 5.28249 3.89124 3.89124C5.28248 2.5 7.52166 2.5 12 2.5C16.4783 2.5 18.7175 2.5 20.1088 3.89124C21.5 5.28248 21.5 7.52166 21.5 12C21.5 16.4783 21.5 18.7175 20.1088 20.1088C18.7175 21.5 16.4783 21.5 12 21.5C7.52166 21.5 5.28249 21.5 3.89124 20.1088Z" />
-    <path d="M15.5 21.5L15.5 2.5" />
-    <path d="M8.5 21.4998L8.5 2.49976" />
   </Stroke>
 );
 
@@ -866,17 +814,6 @@ export const PinRightIcon = (props: IconProps) => (
       fill="currentColor"
       stroke="none"
     />
-  </Stroke>
-);
-
-// Table/rows view — the "switch to table" control (a framed grid of rows/cols).
-/* Hugeicons: LayoutTable01Icon */
-export const TableViewIcon = (props: IconProps) => (
-  <Stroke viewBox="0 0 24 24" {...props}>
-    <path d="M3.89124 20.1088C2.5 18.7175 2.5 16.4783 2.5 12C2.5 7.52166 2.5 5.28249 3.89124 3.89124C5.28248 2.5 7.52166 2.5 12 2.5C16.4783 2.5 18.7175 2.5 20.1088 3.89124C21.5 5.28248 21.5 7.52166 21.5 12C21.5 16.4783 21.5 18.7175 20.1088 20.1088C18.7175 21.5 16.4783 21.5 12 21.5C7.52166 21.5 5.28249 21.5 3.89124 20.1088Z" />
-    <path d="M2.5 9L21.5 9" />
-    <path d="M16 21.5L16 2.5" />
-    <path d="M8 21.4998L8 2.49976" />
   </Stroke>
 );
 

@@ -104,7 +104,7 @@ export type PrescriptionDetailResult = {
 };
 
 export const PrescriptionDetail = {
-  query: "query prescriptionDetail($storeId: String!, $id: String!) {\n  invoice(storeId: $storeId, id: $id) {\n    __typename\n    ... on InvoiceNode {\n      ...PrescriptionFields\n    }\n    ... on NodeError {\n      error {\n        description\n      }\n    }\n  }\n}\n\nfragment PrescriptionFields on InvoiceNode {\n  id\n  invoiceNumber\n  prescriptionRequestId\n  status\n  isCancellation\n  createdDatetime\n  pickedDatetime\n  verifiedDatetime\n  cancelledDatetime\n  backdatedDatetime\n  comment\n  colour\n  theirReference\n  clinicianId\n  clinician {\n    id\n    firstName\n    lastName\n  }\n  patient {\n    id\n    name\n    code\n    dateOfBirth\n    gender\n  }\n  programId\n  program {\n    id\n    name\n  }\n  diagnosisId\n  nameInsuranceJoinId\n  insuranceDiscountAmount\n  insuranceDiscountPercentage\n  customFields\n  insurancePolicy {\n    policyNumber\n    discountPercentage\n    insuranceProviders {\n      providerName\n    }\n  }\n  pricing {\n    totalAfterTax\n  }\n  user {\n    username\n    email\n  }\n  lines {\n    totalCount\n    nodes {\n      id\n      type\n      itemId\n      itemName\n      itemCode\n      batch\n      expiryDate\n      locationName\n      packSize\n      numberOfPacks\n      prescribedQuantity\n      note\n      sellPricePerPack\n      costPricePerPack\n      totalAfterTax\n      item {\n        id\n        code\n        name\n        unitName\n        isVaccine\n        doses\n      }\n      stockLine {\n        id\n      }\n    }\n  }\n}",
+  query: "query prescriptionDetail($storeId: String!, $id: String!) {\n  invoice(storeId: $storeId, id: $id, type: PRESCRIPTION) {\n    __typename\n    ... on InvoiceNode {\n      ...PrescriptionFields\n    }\n    ... on NodeError {\n      error {\n        description\n      }\n    }\n  }\n}\n\nfragment PrescriptionFields on InvoiceNode {\n  id\n  invoiceNumber\n  prescriptionRequestId\n  status\n  isCancellation\n  createdDatetime\n  pickedDatetime\n  verifiedDatetime\n  cancelledDatetime\n  backdatedDatetime\n  comment\n  colour\n  theirReference\n  clinicianId\n  clinician {\n    id\n    firstName\n    lastName\n  }\n  patient {\n    id\n    name\n    code\n    dateOfBirth\n    gender\n  }\n  programId\n  program {\n    id\n    name\n  }\n  diagnosisId\n  nameInsuranceJoinId\n  insuranceDiscountAmount\n  insuranceDiscountPercentage\n  customFields\n  insurancePolicy {\n    policyNumber\n    discountPercentage\n    insuranceProviders {\n      providerName\n    }\n  }\n  pricing {\n    totalAfterTax\n  }\n  user {\n    username\n    email\n  }\n  lines {\n    totalCount\n    nodes {\n      id\n      type\n      itemId\n      itemName\n      itemCode\n      batch\n      expiryDate\n      locationName\n      packSize\n      numberOfPacks\n      prescribedQuantity\n      note\n      sellPricePerPack\n      costPricePerPack\n      totalAfterTax\n      item {\n        id\n        code\n        name\n        unitName\n        isVaccine\n        doses\n      }\n      stockLine {\n        id\n      }\n    }\n  }\n}",
 } as TypedDocument<PrescriptionDetailResult, PrescriptionDetailVariables>;
 
 export type UpdatePrescriptionVariables = {
@@ -144,7 +144,7 @@ export type UpdatePrescriptionResult = {
   __typename: "UpdatePrescriptionError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CanOnlyChangeToPickedWhenNoUnallocatedLines" | "CannotReverseInvoiceStatus" | "InvalidStockSelection" | "InvoiceIsNotEditable" | "RecordNotFound";
   description: string;
 };
 }) | ({
@@ -170,7 +170,7 @@ export type DeletePrescriptionResult = {
   id: string;
 }) | ({
   error: {
-  __typename: string;
+  __typename: "CannotDeleteGeneratedDispensation" | "CannotDeleteInvoiceWithLines" | "CannotEditInvoice" | "RecordNotFound";
   description: string;
 };
 });
@@ -209,7 +209,7 @@ export type DeletePrescriptionLinesResult = {
   id: string;
 }) | ({
   error: {
-  __typename: string;
+  __typename: "CannotEditInvoice" | "ForeignKeyError" | "RecordNotFound";
   description: string;
 };
 });
@@ -244,10 +244,9 @@ export type SourcePrescriptionRequestVariables = {
 export type SourcePrescriptionRequestResult = {
   prescriptionRequest: ({
   __typename: "PrescriptionRequestNode";
+} & {
   id: string;
   prescriptionRequestNumber: number;
-}) | ({
-  __typename: "RecordNotFound";
 });
 };
 

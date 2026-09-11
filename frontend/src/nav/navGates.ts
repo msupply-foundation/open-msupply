@@ -6,6 +6,7 @@ import {
   isDispensary,
 } from '../store/storeContext';
 import { isCentralServer } from '../api/serverInfo';
+import { pluginRouteAccess } from '../plugins/pluginPages';
 import {
   navDestinations,
   navTrail,
@@ -168,10 +169,12 @@ export const routeAccess = (relativePath: string): RouteAccess => {
   const dest = destinationsByDepth.find(
     d => relativePath === d.path || relativePath.startsWith(`${d.path}/`)
   );
-  // Unknown to the registry — the catch-all not-found page's business, not the
-  // gates'. An unknown path under a gated section is still judged by that
-  // section, since the section matches as a prefix (D70).
-  if (!dest) return { kind: 'ok' };
+  // Not the static registry's — a plugin page may claim it (their address
+  // spaces are disjoint by validation, so this is a fallthrough, never a
+  // tie-break). Failing that, unknown paths are the catch-all not-found page's
+  // business, not the gates'. An unknown path under a gated section is still
+  // judged by that section, since the section matches as a prefix (D70).
+  if (!dest) return pluginRouteAccess(relativePath) ?? { kind: 'ok' };
 
   // navTrail resolves a destination to [section, child?]; compose their gates.
   // Capability is judged first: a function the store does not have redirects
