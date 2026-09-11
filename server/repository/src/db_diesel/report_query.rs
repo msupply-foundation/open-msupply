@@ -191,9 +191,7 @@ impl From<rusqlite::Error> for RepositoryError {
 ///
 /// SQLite only - on a Postgres build `connection_string()` returns a Postgres URL and this is
 /// never called.
-fn report_connection(
-    settings: &DatabaseSettings,
-) -> Result<rusqlite::Connection, RepositoryError> {
+fn report_connection(settings: &DatabaseSettings) -> Result<rusqlite::Connection, RepositoryError> {
     let conn = rusqlite::Connection::open(settings.connection_string())?;
     conn.busy_timeout(std::time::Duration::from_millis(SQLITE_LOCKWAIT_MS.into()))?;
     Ok(conn)

@@ -8,7 +8,7 @@ import { Button } from '../../ui/elements/buttons/Button';
 import { Dialog } from '../../ui/elements/feedback/Dialog';
 import { Alert } from '../../ui/elements/feedback/Alert';
 import { ErrorDetails } from '../../ui/elements/feedback/ErrorDetails';
-import { AlertCircleIcon, CheckIcon, DownloadIcon } from '../../ui/icons';
+import { AlertCircleIcon, CheckIcon, ExportIcon } from '../../ui/icons';
 import { createFlash } from '../../ui/utils/createFlash';
 import { saveBlob } from '../../platform/openDocument';
 import { storeCodeOf } from '../../auth/authContext';
@@ -160,7 +160,7 @@ export const ListExportAction: Component<ListExportActionProps> = props => {
     ) : feedback.value() === 'failed' ? (
       <AlertCircleIcon />
     ) : (
-      <DownloadIcon />
+      <ExportIcon />
     );
 
   return (

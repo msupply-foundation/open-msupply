@@ -21,7 +21,9 @@ const Block = (props: { n: number }) => (
  * `minColumnWidth` as the width allows and wraps the rest — no breakpoint
  * maths (principle #7). Shown here with plain coloured blocks standing in for
  * cards so the grid's reflow is what's on display; resize the panel to watch
- * columns add/drop and the blocks wrap. (Its first real consumer, the
+ * columns add/drop and the blocks wrap. The third example is the knob for a
+ * VARIABLE item count — capping the card rather than the column, so a grid
+ * left holding one card still shows a card. (Its first real consumer, the
  * dashboard, is demoed under Statistics laying out DashboardCards.)
  */
 export const cardGridMetadata: PageMetadata = {
@@ -38,6 +40,11 @@ export const cardGridMetadata: PageMetadata = {
       id: 'card-grid-narrow',
       title: 'Narrower columns',
       searchTerms: ['min column width', 'dense', 'small'],
+    },
+    {
+      id: 'card-grid-item-cap',
+      title: 'Capped card width',
+      searchTerms: ['max item width', 'variable count', 'one card', 'sprawl'],
     },
   ],
 };
@@ -73,6 +80,28 @@ export const CardGridShowcase = () => (
           grid wraps.
         </Lead>
         <CardGrid minColumnWidth="10rem">
+          <For each={blocks}>{n => <Block n={n} />}</For>
+        </CardGrid>
+      </DashboardCard>
+
+      <DashboardCard
+        id="card-grid-item-cap"
+        title="CardGrid — capped card width via maxItemWidth"
+      >
+        <Lead>
+          For a grid whose item count varies at runtime — the dashboard, whose
+          widgets depend on the store's preferences and the user's permissions.
+          A <code>1fr</code> column hands its whole share to the only card in
+          it, so one card would stretch the full width and read as a banner;{' '}
+          <code>maxItemWidth</code> caps the card inside its column instead, so
+          it looks the same however many siblings it has. Cap the{' '}
+          <em>column</em> (<code>maxColumnWidth</code>) and you change how many
+          columns fit; cap the <em>item</em> and you don't.
+        </Lead>
+        <CardGrid maxItemWidth="12rem">
+          <Block n={1} />
+        </CardGrid>
+        <CardGrid maxItemWidth="12rem">
           <For each={blocks}>{n => <Block n={n} />}</For>
         </CardGrid>
       </DashboardCard>

@@ -36,7 +36,7 @@ export type SaveOutboundServiceLinesResult = {
   __typename: "InsertOutboundShipmentServiceLineError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotEditInvoice" | "ForeignKeyError";
   description: string;
 };
 });
@@ -47,7 +47,7 @@ export type SaveOutboundServiceLinesResult = {
   __typename: "UpdateOutboundShipmentServiceLineError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotEditInvoice" | "ForeignKeyError" | "RecordNotFound";
   description: string;
 };
 });
@@ -58,7 +58,7 @@ export type SaveOutboundServiceLinesResult = {
   __typename: "DeleteOutboundShipmentServiceLineError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotEditInvoice" | "ForeignKeyError" | "RecordNotFound";
   description: string;
 };
 });

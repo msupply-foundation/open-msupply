@@ -1,8 +1,7 @@
 use super::{
-    item_row::item, location_row::location, name_row::name,
-    reason_option_row::reason_option, stock_line_row::stock_line,
-    stocktake_line_row::stocktake_line, LocationRow, NameRow, ReasonOptionRow,
-    StockLineRow, StocktakeLineRow, StorageConnection,
+    item_row::item, location_row::location, name_row::name, reason_option_row::reason_option,
+    stock_line_row::stock_line, stocktake_line_row::stocktake_line, LocationRow, NameRow,
+    ReasonOptionRow, StockLineRow, StocktakeLineRow, StorageConnection,
 };
 
 use diesel::{dsl::IntoBoxed, prelude::*};

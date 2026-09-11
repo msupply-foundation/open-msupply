@@ -3,6 +3,7 @@ import {
   Locations,
   LocationsWithVolume,
   type LocationsResult,
+  type LocationsVariables,
   type LocationsWithVolumeResult,
 } from './location.generated';
 
@@ -26,9 +27,16 @@ export type LocationWithVolume =
 
 // Volume-blind fetch (code + name).
 export const fetchLocations = async (
-  storeId: string
+  storeId: string,
+  /**
+   * Narrow the set below "every location in the store". Cold-chain Equipment
+   * asks for the ones no asset holds (`assignedToAsset: false`) — a storage
+   * location is held by at most one asset. Omitted, the read is exactly what it
+   * always was, so the four existing callers are untouched.
+   */
+  filter?: LocationsVariables['filter']
 ): Promise<Location[] | undefined> => {
-  const result = await graphqlFetch(Locations, { storeId });
+  const result = await graphqlFetch(Locations, { storeId, filter });
   return result.kind === 'success' ? result.data.locations.nodes : undefined;
 };
 

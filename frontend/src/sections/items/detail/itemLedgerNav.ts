@@ -34,7 +34,7 @@ export const ledgerRowHref = (
     case 'CUSTOMER_RETURN':
       return `/${storeId}/distribution/customer-return/${row.invoiceId}`;
     case 'PRESCRIPTION':
-      return `/${storeId}/dispensary/prescription/${row.invoiceId}`;
+      return `/${storeId}/dispensary/dispensing/${row.invoiceId}`;
     case 'INVENTORY_ADDITION':
     case 'INVENTORY_REDUCTION':
     case 'SUPPLIER_RETURN':

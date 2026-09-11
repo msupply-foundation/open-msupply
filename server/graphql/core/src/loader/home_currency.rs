@@ -20,11 +20,7 @@ impl Loader<()> for HomeCurrencyLoader {
         let connection = self.connection_manager.connection()?;
         let repo = CurrencyRepository::new(&connection);
         let home_currency = repo
-            .query_by_filter(
-                CurrencyFilter::new()
-                    .is_home_currency(true)
-                    .is_active(true),
-            )?
+            .query_by_filter(CurrencyFilter::new().is_home_currency(true).is_active(true))?
             .pop();
 
         let mut result = HashMap::new();

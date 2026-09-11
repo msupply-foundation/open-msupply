@@ -63,7 +63,7 @@ export const ExpiringStockSummary = ({
       testId="dashboard-panel-inventory.expiring-stock"
       stats={[
         {
-          label: t('label.expired', {
+          label: t('label.expired-batches', {
             count: Math.round(stats?.expired || 0),
           }),
           value: formatNumber.round(stats?.expired),
@@ -77,7 +77,7 @@ export const ExpiringStockSummary = ({
           testId: 'dashboard-stat-inventory.expiring-stock.expired',
         },
         {
-          label: t('label.expiring-soon', {
+          label: t('label.batches-expiring-soon', {
             count: Math.round(stats?.expiringSoon || 0),
           }),
           value: formatNumber.round(stats?.expiringSoon),

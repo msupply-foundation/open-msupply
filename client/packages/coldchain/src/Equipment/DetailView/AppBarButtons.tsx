@@ -77,6 +77,7 @@ export const ColdRoomActionButton = ({
         onClick={triggerAction}
         Icon={<PlusCircleIcon />}
         openFrom="bottom"
+        testId="status-split-button"
       />
 
       {StatusModal}
@@ -124,6 +125,7 @@ export const AppBarButtonsComponent = () => {
           onClick={onClick}
           label={t('button.print-asset-label')}
           variant="outlined"
+          data-testid="print-label-button"
         />
       </Grid>
     </AppBarButtonsPortal>
