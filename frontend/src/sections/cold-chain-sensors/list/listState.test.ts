@@ -9,14 +9,16 @@ import {
 // Logic-level coverage of the sensor list's query shape (spec/cold-chain-
 // sensors). Behaviour that has a backend is validated at the query-shape level
 // here; the live-backend leg (C2) and the rendered-UI/a11y leg (C4) are
-// recorded as gaps in BUILD_REPORT. Tests cite the AC they exercise.
+// recorded as gaps in BUILD_REPORT.
+//
+// Anchors: spec/cold-chain-sensors/cases/OMS-REG-CCE-03.
 
 const state = (over: Partial<SensorsListState> = {}): SensorsListState => ({
   ...DEFAULT_STATE,
   ...over,
 });
 
-describe('AC-S1 the list shows only the active store’s sensors', () => {
+describe('OMS-REG-CCE-03.1 — the list shows only the active store’s sensors', () => {
   it('scopes the query to the store in the path', () => {
     expect(buildListVariables(state(), 'storeA').storeId).toBe('storeA');
   });
@@ -30,7 +32,7 @@ describe('AC-S1 the list shows only the active store’s sensors', () => {
   });
 });
 
-describe('AC-L1 default order is serial number descending', () => {
+describe('OMS-REG-CCE-03.14 — default order is serial number descending', () => {
   it('defaults sort to serial descending', () => {
     expect(DEFAULT_STATE.sort).toEqual([{ key: 'serial', desc: true }]);
     expect(buildListVariables(state(), 'storeA').sort).toEqual([
@@ -47,7 +49,7 @@ describe('AC-L1 default order is serial number descending', () => {
   });
 });
 
-describe('AC-L2 only Name and Serial number are sortable', () => {
+describe('OMS-REG-CCE-03.3 / .4 — only Name and Serial number are sortable', () => {
   it('offers exactly those two sort keys', () => {
     expect([...SORTABLE_KEYS].sort()).toEqual(['name', 'serial']);
   });
@@ -63,7 +65,7 @@ describe('AC-L2 only Name and Serial number are sortable', () => {
   });
 });
 
-describe('AC-L7 the list shows only active sensors', () => {
+describe('OMS-REG-CCE-03.18 — the list shows only active sensors', () => {
   it('sends the active-only restriction by default', () => {
     expect(DEFAULT_STATE.activeOnly).toBe(true);
     expect(buildListVariables(state(), 'storeA').filter?.isActive).toBe(true);
@@ -82,7 +84,7 @@ describe('AC-L7 the list shows only active sensors', () => {
   });
 });
 
-describe('AC-L8 turning the restriction off reveals inactive sensors', () => {
+describe('OMS-REG-CCE-03.19 — turning the restriction off reveals inactive sensors', () => {
   it('sends no isActive at all — not isActive:false', () => {
     const vars = buildListVariables(state({ activeOnly: false }), 'storeA');
     expect(vars.filter).not.toHaveProperty('isActive');
@@ -97,7 +99,7 @@ describe('AC-L8 turning the restriction off reveals inactive sensors', () => {
   });
 });
 
-describe('AC-L3 a name filter is honoured by the read', () => {
+describe('rules § reading the list — a name filter is honoured by the read', () => {
   it('passes a name filter through when the state carries one', () => {
     // No control on the screen sets this (see listFilters — `name` is
     // dismissed); the read still honours it, captured as-is.
@@ -109,7 +111,7 @@ describe('AC-L3 a name filter is honoured by the read', () => {
   });
 });
 
-describe('AC-L4 / AC-L5 / AC-L6 the filters the screen offers', () => {
+describe('OMS-REG-CCE-03.15 / .16 / .17 — the filters the screen offers', () => {
   it('sends the sensor type as an exact match', () => {
     const vars = buildListVariables(
       state({ filter: { type: { equalTo: 'LOG_TAG' } } }),
@@ -127,7 +129,7 @@ describe('AC-L4 / AC-L5 / AC-L6 the filters the screen offers', () => {
   });
 
   it('sends the serial filter as a contains match, never an exact one', () => {
-    // AC-L11: the filter runs against the STORED serial, which still carries
+    // .17's second half: the filter runs against the STORED serial, which still carries
     // the manufacturer the screen strips — an exact match on the displayed
     // serial finds nothing, so the screen only ever sends `like`.
     const vars = buildListVariables(
@@ -139,7 +141,7 @@ describe('AC-L4 / AC-L5 / AC-L6 the filters the screen offers', () => {
   });
 });
 
-describe('AC-L9 an empty result is not an error', () => {
+describe('OMS-REG-CCE-03.20 — an empty result is not an error', () => {
   it('drops added-but-empty filter chips so they never query as blanks', () => {
     const vars = buildListVariables(
       state({ filter: { serial: null, locationCode: { like: 'RS' } } }),
@@ -163,7 +165,7 @@ describe('the filter bar arrives with the two text filters on it', () => {
   });
 });
 
-describe('AC-L10 a page must request at least one row', () => {
+describe('contract § reading the list — a page must request at least one row', () => {
   it('never sends a page size below one', () => {
     expect(DEFAULT_STATE.first).toBeGreaterThanOrEqual(1);
     const vars = buildListVariables(state({ first: 20, offset: 40 }), 'storeA');

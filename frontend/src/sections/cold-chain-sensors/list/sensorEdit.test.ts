@@ -9,7 +9,9 @@ import {
 import type { SensorType } from './sensorDisplay';
 
 // Logic-level coverage of the sensor editor (spec/cold-chain-sensors § what the
-// user owns / naming / assigning a location). Tests cite the AC they exercise.
+// user owns / naming / assigning a location).
+//
+// Anchors: spec/cold-chain-sensors/cases/OMS-REG-CCE-03.
 
 const sensor = (over: Partial<SensorRow> = {}): SensorRow => ({
   __typename: 'SensorNode',
@@ -28,7 +30,7 @@ const sensor = (over: Partial<SensorRow> = {}): SensorRow => ({
 
 const AT_LOCATION = { id: 'loc-1', code: 'RS-FR1', name: 'Freezer 1' };
 
-describe('AC-N1 / AC-N2 which sensors may be renamed', () => {
+describe('OMS-REG-CCE-03.21 / .22 — which sensors may be renamed', () => {
   it.each<[SensorType, boolean]>([
     ['BERLINGER', true],
     ['LOG_TAG', true],
@@ -39,7 +41,7 @@ describe('AC-N1 / AC-N2 which sensors may be renamed', () => {
   });
 });
 
-describe('AC-V1 / AC-V2 the device’s own values are never written', () => {
+describe('OMS-REG-CCE-03.10 / .37 — the device’s own values are never written', () => {
   it('offers only name, location and active state as a draft', () => {
     expect(Object.keys(formFromSensor(sensor())).sort()).toEqual([
       'isActive',
@@ -68,7 +70,7 @@ describe('AC-V1 / AC-V2 the device’s own values are never written', () => {
   });
 });
 
-describe('AC-E1 / AC-E2 the confirming action follows the draft', () => {
+describe('OMS-REG-CCE-03.25 / .26 — the confirming action follows the draft', () => {
   it('is inert while the draft matches the sensor as loaded', () => {
     const row = sensor({ location: AT_LOCATION });
     expect(isUnchanged(formFromSensor(row), row)).toBe(true);
@@ -92,7 +94,7 @@ describe('AC-E1 / AC-E2 the confirming action follows the draft', () => {
   });
 });
 
-describe('AC-P2 / AC-P3 assigning and clearing a location', () => {
+describe('OMS-REG-CCE-03.11 / .30 — assigning and clearing a location', () => {
   it('seeds the draft from the sensor’s current assignment', () => {
     expect(formFromSensor(sensor({ location: AT_LOCATION })).locationId).toBe(
       'loc-1'
@@ -100,7 +102,7 @@ describe('AC-P2 / AC-P3 assigning and clearing a location', () => {
     expect(formFromSensor(sensor()).locationId).toBe('');
   });
 
-  it('assigns with the wrapper’s value set (AC-P2)', () => {
+  it('assigns with the wrapper’s value set (.11)', () => {
     const input = buildUpdateInput(
       { name: 'Berlinger 1', locationId: 'loc-1', isActive: true },
       'sensor-1'
@@ -108,7 +110,7 @@ describe('AC-P2 / AC-P3 assigning and clearing a location', () => {
     expect(input.locationId).toEqual({ value: 'loc-1' });
   });
 
-  it('clears with the wrapper’s value null, never by omitting it (AC-P3)', () => {
+  it('clears with the wrapper’s value null, never by omitting it (.30)', () => {
     // Omitting `locationId` means "leave unchanged" on the wire, so a cleared
     // location would silently survive the save (contract › assigning a
     // location).
@@ -120,7 +122,7 @@ describe('AC-P2 / AC-P3 assigning and clearing a location', () => {
   });
 });
 
-describe('AC-A1 / AC-A2 retirement is a state, not a deletion', () => {
+describe('OMS-REG-CCE-03.39 / .40 — retirement is a state, not a deletion', () => {
   it('carries the active state both ways', () => {
     const off = buildUpdateInput(
       { name: 'n', locationId: '', isActive: false },
@@ -135,7 +137,7 @@ describe('AC-A1 / AC-A2 retirement is a state, not a deletion', () => {
   });
 });
 
-describe('AC-N4 names are not unique', () => {
+describe('OMS-REG-CCE-03.24 — names are not unique', () => {
   it('sends a colliding name unchanged — there is nothing to reject it', () => {
     const input = buildUpdateInput(
       { name: 'Fridge Tag BM 1', locationId: '', isActive: true },
