@@ -7,8 +7,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 // (store context + server info); this drives those directly, as
 // navGates.test.ts does.
 //
-// The client half only. The server stays the real guard — AC-G1/AC-G2 name a
-// server refusal, and that leg is recorded as a C2 gap in BUILD_REPORT.
+// The client half only. The server stays the real guard — rules § permissions
+// names the server refusal, and that leg is recorded as a C2 gap in
+// BUILD_REPORT. The gate itself is navigation's, so it carries no
+// OMS-REG-CCE-03 behaviour of its own (spec/cold-chain-sensors/acceptance.md,
+// where the retired AC-G1/AC-G2 are mapped).
 
 const state = { vaccineModule: false, permissions: new Set<string>() };
 
@@ -49,7 +52,7 @@ describe('the destination declares both of its gates', () => {
   });
 });
 
-describe('AC-G1 the screen is withheld without the sensor read permission', () => {
+describe('the screen is withheld without the sensor read permission', () => {
   it('withholds the nav entry from a user who lacks it', () => {
     state.vaccineModule = true;
     expect(offeredPaths()).not.toContain(PATH);
