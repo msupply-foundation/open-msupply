@@ -50,7 +50,21 @@ export interface ConfirmOnLeaveOptions {
    * switch) is truly discarded; a view that unmounts on leave can omit it.
    */
   onDiscard?: () => void;
+  /**
+   * Treat a navigation that keeps the current pathname — a query-only change
+   * such as a `?tab=` switch or a filter edit — as NOT a leave. For a guard
+   * over work that survives such changes (an upload in flight on a tabbed
+   * screen), where prompting would warn about abandoning something the change
+   * does not abandon. Default false: every route navigation is a leave.
+   */
+  sameRouteIsNotLeave?: boolean;
 }
+
+// The destination's pathname — the part a query-only change keeps. `to` is a
+// number for a history delta (back/forward), whose destination is not known
+// here; that is a leave.
+const destinationPathname = (to: string | number): string | undefined =>
+  typeof to === 'string' ? to.split(/[?#]/)[0] : undefined;
 
 export interface ConfirmOnLeave {
   /** Whether the discard prompt should show. Bind to the dialog's `open`. */
@@ -71,6 +85,11 @@ export const createConfirmOnLeave = (
 
   useBeforeLeave(e => {
     if (!options.isDirty() || e.defaultPrevented) return;
+    if (
+      options.sameRouteIsNotLeave &&
+      destinationPathname(e.to) === e.from.pathname
+    )
+      return;
     e.preventDefault();
     setPending(() => () => e.retry(true));
     setOpen(true);

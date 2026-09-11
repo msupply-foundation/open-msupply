@@ -202,6 +202,9 @@ pub enum Permissions {
     ConfirmInternalOrderSent,
     ColdChainApi,
     EditCentralData,
+    /// Legacy 205, "Restrict to prescriptions" (msupply 655443ac, #18622).
+    /// A RESTRICTION, not a grant — see the mapping below.
+    RestrictToPrescriptions,
 }
 
 pub fn permission_mapping() -> HashMap<i16, Permissions> {
@@ -392,6 +395,7 @@ pub fn permission_mapping() -> HashMap<i16, Permissions> {
         (201, Permissions::ColdChainApi),
         (202, Permissions::EditCentralData),
         (203, Permissions::AddAssetsViaDataMatrix),
+        (205, Permissions::RestrictToPrescriptions),
         (501, Permissions::HISAddPatients),
         (502, Permissions::HISEditPatientsInfo),
         (503, Permissions::HISCreateEncounters),
@@ -611,6 +615,22 @@ pub fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permissio
             Permissions::FinaliseSupplierInvoices => {
                 output.insert(PermissionType::InboundShipmentVerify);
             }
+            // Slot 205, "Restrict to prescriptions" — the prescriber's
+            // vertical (spec/prescription-requests). Legacy phrased it as a
+            // restriction because it had no way to say "may prescribe"; here it
+            // is read as the grant it always meant, and a prescriber's cut-down
+            // navigation follows from the permissions they are NOT given rather
+            // than from one that takes capability away.
+            //
+            // It keeps its own slot rather than borrowing 13
+            // (`LogOnInDispensaryMode`), which is ticked for ordinary dispensary
+            // staff: prescribing and dispensing are separate jobs, and a site
+            // may grant either without the other.
+            Permissions::RestrictToPrescriptions => {
+                output.insert(PermissionType::PrescriptionRequestQuery);
+                output.insert(PermissionType::PrescriptionRequestMutate);
+            }
+            //
             // Remaining `Permissions` variants are legacy mSupply permissions
             // with no equivalent in open mSupply's `PermissionType` — e.g. they
             // gate features that don't exist here (builds, tenders, drug
@@ -621,4 +641,48 @@ pub fn permissions_to_domain(permissions: Vec<Permissions>) -> HashSet<Permissio
         }
     }
     output
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    /// spec/prescription-requests § permissions.
+    ///
+    /// Legacy slot 205 ("Restrict to prescriptions", msupply 655443ac) is the
+    /// only way the prescription-request permissions can reach a site from
+    /// central, and it grants BOTH halves: legacy has one tick for the whole
+    /// job, so a prescriber who can open the list can also write to it.
+    ///
+    /// The "nothing else does" half matters as much: a slot quietly standing in
+    /// for 205 would hand the prescriber's vertical to ordinary dispensary
+    /// staff on upgrade.
+    #[test]
+    fn legacy_205_grants_the_prescription_request_pair_and_nothing_else_does() {
+        // The wire is a bool per slot, 1-indexed, so 205 sits at index 204
+        let mut payload = vec![false; 205];
+        payload[204] = true;
+        let granted = permissions_to_domain(map_api_permissions(payload));
+
+        assert!(
+            granted.contains(&PermissionType::PrescriptionRequestQuery)
+                && granted.contains(&PermissionType::PrescriptionRequestMutate),
+            "legacy 205 must grant both prescription-request permissions"
+        );
+
+        for slot in 1..=600usize {
+            if slot == 205 {
+                continue;
+            }
+            let mut payload = vec![false; slot];
+            payload[slot - 1] = true;
+            let granted = permissions_to_domain(map_api_permissions(payload));
+            assert!(
+                !granted.contains(&PermissionType::PrescriptionRequestQuery)
+                    && !granted.contains(&PermissionType::PrescriptionRequestMutate),
+                "legacy {} must not grant the prescription-request permissions",
+                slot
+            );
+        }
+    }
 }

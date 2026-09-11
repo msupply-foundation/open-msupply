@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { parseCsv } from '@/domain/reportFiles';
 import {
   IMPORT_BATCH_SIZE,
   allowedValues,
@@ -8,7 +9,6 @@ import {
   isCsvFileName,
   matchColumns,
   outcomeSucceeded,
-  parseCsv,
   parseImportFile,
   parseProperties,
   summariseOutcome,

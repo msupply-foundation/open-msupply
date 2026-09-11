@@ -18,9 +18,10 @@ spec/schema.graphql
 # compare byte-for-byte against the (non-Prettier) generator output.
 codegen
 
-# Backend plugin halves — built and formatted by the open-msupply client
-# toolchain (webpack/BoaJS), not this repo's; prebuilt/ carries the shipped
-# artifact byte-for-byte (see plugins/civ/backend/README.md)
+# The country plugins' backend halves. They build and type-check here, but the
+# source is SYNCED from msupply-foundation/civ-plugins — reformatting it would
+# turn every future sync into a conflict (see plugins/civ/backend/README.md).
+# The reference backend plugin (examples/*/backend) is ours and IS formatted.
 plugins/*/backend
 
 # Lockfile

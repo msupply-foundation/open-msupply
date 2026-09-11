@@ -49,7 +49,7 @@ export type BulkDeleteResultFragment = {
   __typename: "DeleteInboundShipmentError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotDeleteInvoiceWithLines" | "CannotEditInvoice" | "RecordNotFound";
   description: string;
 };
 });
@@ -204,6 +204,13 @@ export type InboundShipmentsVariables = {
   } | null;
     isProgramInvoice?: boolean | null;
     purchaseOrderId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
+    prescriptionRequestId?: {
     equalTo?: string | null;
     equalAny?: Array<string> | null;
     notEqualTo?: string | null;

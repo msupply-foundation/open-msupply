@@ -150,7 +150,7 @@ export type CreateShipmentFromRequisitionResult = {
   __typename: "CreateRequisitionShipmentError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotEditRequisition" | "NothingRemainingToSupply" | "RecordNotFound";
   description: string;
 };
 });
@@ -218,7 +218,7 @@ export type AddRequisitionFromMasterListResult = {
   __typename: "ResponseAddFromMasterListError";
 } & {
   error: {
-  __typename: string;
+  __typename: "MasterListNotFoundForThisStore";
   description: string;
 };
 });
@@ -244,7 +244,7 @@ export type SupplyRequestedQuantityResult = {
   __typename: "SupplyRequestedQuantityError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotEditRequisition" | "RecordNotFound";
   description: string;
 };
 });
