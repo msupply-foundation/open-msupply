@@ -38,7 +38,7 @@ describe('store scoping — every read belongs to the active store', () => {
   it('sends the store on all three reads and offers no store key to widen it', () => {
     const breaches = buildBreachesVariables(state(), STORE);
     const logs = buildLogsVariables(state(), STORE);
-    const chart = buildChartVariables(DEFAULT_STATE.filter, STORE, NOW);
+    const chart = buildChartVariables(DEFAULT_STATE.filter, STORE);
     for (const vars of [breaches, logs, chart]) {
       expect(vars.storeId).toBe(STORE);
       expect(Object.keys(vars.filter ?? {})).not.toContain('storeId');
@@ -73,6 +73,12 @@ describe('the shared filter set arrives with its two default chips', () => {
 });
 
 describe('OMS-REG-CCE-02.11 / .1 — the default 24-hour window and its address', () => {
+  // The extent of what a read returned, for the axis to fill an open side.
+  const READINGS = {
+    start: Date.parse('2026-09-01T06:00:00.000Z'),
+    end: Date.parse('2026-09-07T11:45:00.000Z'),
+  };
+
   it('adopts the default window only on a pristine arrival', () => {
     expect(needsArrivalWindow(undefined)).toBe(true);
     expect(needsArrivalWindow('')).toBe(true);
@@ -101,7 +107,8 @@ describe('OMS-REG-CCE-02.11 / .1 — the default 24-hour window and its address'
           end: '2026-09-08T00:00:00.000Z',
         },
       },
-      NOW
+      NOW,
+      READINGS
     );
     expect(window).toEqual({
       start: Date.parse('2026-09-01T00:00:00.000Z'),
@@ -109,57 +116,66 @@ describe('OMS-REG-CCE-02.11 / .1 — the default 24-hour window and its address'
     });
   });
 
-  it('takes the start as 24 hours before an end given alone', () => {
+  it('runs an end given alone back to the first reading plotted', () => {
     const end = '2026-09-07T12:00:00.000Z';
-    expect(chartWindow({ startDatetime: { start: null, end } }, NOW)).toEqual({
+    expect(
+      chartWindow({ startDatetime: { start: null, end } }, NOW, READINGS)
+    ).toEqual({ start: READINGS.start, end: Date.parse(end) });
+    // Nothing plotted: a day ending at the end — the axis the empty state
+    // replaces.
+    expect(
+      chartWindow({ startDatetime: { start: null, end } }, NOW, undefined)
+    ).toEqual({
       start: Date.parse(end) - DEFAULT_WINDOW_MS,
       end: Date.parse(end),
     });
   });
 
-  it('runs a start given alone up to now, and has no window with no bounds', () => {
+  it('runs a start given alone up to now, and spans the readings with no bounds', () => {
     const start = '2026-09-07T12:00:00.000Z';
-    expect(chartWindow({ startDatetime: { start, end: null } }, NOW)).toEqual({
-      start: Date.parse(start),
+    expect(
+      chartWindow({ startDatetime: { start, end: null } }, NOW, READINGS)
+    ).toEqual({ start: Date.parse(start), end: NOW.getTime() });
+    expect(chartWindow({}, NOW, READINGS)).toEqual(READINGS);
+    // The chip added but empty, and the chip with both sides cleared.
+    expect(chartWindow({ startDatetime: null }, NOW, READINGS)).toEqual(
+      READINGS
+    );
+    expect(
+      chartWindow({ startDatetime: { start: null, end: null } }, NOW, READINGS)
+    ).toEqual(READINGS);
+    // Nothing plotted and nothing bounded: a day ending now.
+    expect(chartWindow({}, NOW, undefined)).toEqual({
+      start: NOW.getTime() - DEFAULT_WINDOW_MS,
       end: NOW.getTime(),
     });
-    expect(chartWindow({}, NOW)).toBeUndefined();
-    // The chip added but empty, and the chip with both sides cleared.
-    expect(chartWindow({ startDatetime: null }, NOW)).toBeUndefined();
-    expect(
-      chartWindow({ startDatetime: { start: null, end: null } }, NOW)
-    ).toBeUndefined();
   });
 
-  it('sends the derived start on the wire for an end-only range', () => {
+  it('sends an end-only range as its end bound alone on the wire', () => {
     const end = '2026-09-07T12:00:00.000Z';
     const vars = buildChartVariables(
       { startDatetime: { start: null, end } },
-      STORE,
-      NOW
+      STORE
     );
-    expect(vars.filter?.datetime).toEqual({
-      afterOrEqualTo: new Date(
-        Date.parse(end) - DEFAULT_WINDOW_MS
-      ).toISOString(),
-      beforeOrEqualTo: end,
-    });
+    expect(vars.filter?.datetime).toEqual({ beforeOrEqualTo: end });
   });
 
-  it('leaves a start-only range open-ended on the wire', () => {
+  it('leaves a start-only range open-ended on the wire, and no range unbounded', () => {
     const start = '2026-09-07T12:00:00.000Z';
     const vars = buildChartVariables(
       { startDatetime: { start, end: null } },
-      STORE,
-      NOW
+      STORE
     );
     expect(vars.filter?.datetime).toEqual({ afterOrEqualTo: start });
+    expect(
+      buildChartVariables({ startDatetime: null }, STORE).filter
+    ).not.toHaveProperty('datetime');
   });
 });
 
 describe('OMS-REG-CCE-02.1 — the chart reads every sensor’s readings, bounded', () => {
   it('requests readings ascending by time, at the data-point cap, from offset 0', () => {
-    const vars = buildChartVariables(DEFAULT_STATE.filter, STORE, NOW);
+    const vars = buildChartVariables(DEFAULT_STATE.filter, STORE);
     expect(vars.sort).toEqual([{ key: 'datetime', desc: false }]);
     expect(vars.page).toEqual({ first: CHART_POINT_CAP, offset: 0 });
     expect(CHART_POINT_CAP).toBe(8640);
@@ -168,22 +184,18 @@ describe('OMS-REG-CCE-02.1 — the chart reads every sensor’s readings, bounde
 
 describe('OMS-REG-CCE-02.8 / .9 / .10 — the chart narrows on the shared filters', () => {
   it('filters by sensor name as a substring match', () => {
-    const vars = buildChartVariables({ sensorName: 'Fridge' }, STORE, NOW);
+    const vars = buildChartVariables({ sensorName: 'Fridge' }, STORE);
     expect(vars.filter?.sensor).toEqual({ name: { like: 'Fridge' } });
   });
 
   it('filters by the location CODE, never its name', () => {
-    const vars = buildChartVariables({ locationCode: '1231' }, STORE, NOW);
+    const vars = buildChartVariables({ locationCode: '1231' }, STORE);
     expect(vars.filter?.location).toEqual({ code: { like: '1231' } });
     expect(vars.filter?.location).not.toHaveProperty('name');
   });
 
   it('filters by breach type through the reading’s breach', () => {
-    const vars = buildChartVariables(
-      { breachType: 'HOT_CUMULATIVE' },
-      STORE,
-      NOW
-    );
+    const vars = buildChartVariables({ breachType: 'HOT_CUMULATIVE' }, STORE);
     expect(vars.filter?.temperatureBreach).toEqual({
       type: { equalTo: 'HOT_CUMULATIVE' },
     });

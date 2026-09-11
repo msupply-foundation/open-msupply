@@ -47,15 +47,15 @@ export interface ChartTabProps {
 }
 
 export const ChartTab: Component<ChartTabProps> = props => {
-  // "Now" is fixed per filter change so the default window does not drift
-  // between the query and the axis on every re-render.
+  // "Now" is fixed per filter change so a start-only range's axis end does
+  // not drift on every re-render.
   const now = createMemo(() => {
     void props.filter;
     void props.refreshVersion;
     return new Date();
   });
   const variables = createMemo<TemperatureLogsVariables>(() =>
-    buildChartVariables(props.filter, props.storeId, now())
+    buildChartVariables(props.filter, props.storeId)
   );
 
   // The resource SOURCE is the serialised variables plus the refresh version,
@@ -81,14 +81,10 @@ export const ChartTab: Component<ChartTabProps> = props => {
     const c = connector();
     return c ? isTruncated(c.totalCount, c.nodes.length) : false;
   };
-  // The axis window: the filter's, or — with no bounds at all — the readings'
-  // own extent, or an empty day ending now.
-  const window = () =>
-    chartWindow(props.filter, now()) ??
-    timeExtent(series()) ?? {
-      start: now().getTime() - 24 * 60 * 60 * 1000,
-      end: now().getTime(),
-    };
+  // The axis window (rules › the chart): the chip's bounds where given, the
+  // plotted readings' extent for an open side — so an end alone runs back to
+  // the first reading, and no bounds at all span whatever came back.
+  const window = () => chartWindow(props.filter, now(), timeExtent(series()));
 
   return (
     // `padded` supplies the body's edge padding the screen's fillBody Page
