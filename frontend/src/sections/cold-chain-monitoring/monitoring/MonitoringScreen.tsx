@@ -1,7 +1,8 @@
 import {
+  createEffect,
   createSignal,
+  on,
   onCleanup,
-  onMount,
   Show,
   Switch,
   Match,
@@ -73,16 +74,24 @@ const MonitoringScreen: Component = () => {
   const setTab = (value: string) =>
     setSearchParams({ tab: value === DEFAULT_TAB ? undefined : value });
 
-  // A pristine arrival adopts the default 24-hour window and records it in
-  // the address, so every tab then shares it (rules › the chart). An address
-  // that already names a filter is honoured as written.
-  onMount(() => {
-    if (needsArrivalWindow(searchParams.query))
-      setQuery({
-        ...query(),
-        filter: withDefaultWindow(query().filter, new Date()),
-      });
-  });
+  // A pristine address adopts the default 24-hour window and records it in
+  // the address, so every tab then shares it (rules › the chart). That is
+  // every arrival, not only the first: the menu item selected again while
+  // this screen is open navigates to the bare route without remounting it,
+  // so the rule watches the address rather than running once on mount. An
+  // address that already names a filter is honoured as written.
+  createEffect(
+    on(
+      () => searchParams.query,
+      raw => {
+        if (needsArrivalWindow(raw))
+          setQuery({
+            ...query(),
+            filter: withDefaultWindow(query().filter, new Date()),
+          });
+      }
+    )
+  );
 
   // A filter edit resets both tables to their first page.
   const onFilterChange = (filter: MonitoringFilter) =>
