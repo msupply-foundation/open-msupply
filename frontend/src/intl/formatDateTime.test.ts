@@ -1,5 +1,13 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
-import { getDisplayAge, localisedTimeAgo } from './formatDateTime';
+import {
+  customDate,
+  getDisplayAge,
+  loadDateFnsLocale,
+  localisedDate,
+  localisedDateTime,
+  localisedTime,
+  localisedTimeAgo,
+} from './formatDateTime';
 import { setDictionaries, setLocale } from './intl';
 import commonEn from './locales/en/common.json';
 
@@ -112,5 +120,36 @@ describe('localisedTimeAgo — the sync line’s timing half', () => {
     expect(localisedTimeAgo(new Date(now.getTime() + 5 * MINUTE), now)).toBe(
       'just now'
     );
+  });
+});
+
+describe('digit systems match the numbers beside them', () => {
+  // date-fns emits Latin digits in every language, while the numbers on the
+  // same row go through Intl with the locale's own numbering system — so an
+  // Arabic row read `٤٠%` battery beside a `06/09/2026` date, two scripts in
+  // one line (cold-chain sensors exploratory run, CCS-20260911-F8).
+  const AT = new Date(2026, 8, 6, 21, 20);
+
+  afterAll(() => setLocale('en'));
+
+  it('renders an Arabic date and time in Arabic-Indic digits', async () => {
+    await loadDateFnsLocale('ar');
+    setLocale('ar');
+    expect(localisedDate(AT)).toMatch(/[٠-٩]/);
+    expect(localisedDate(AT)).not.toMatch(/[0-9]/);
+    expect(localisedTime(AT)).not.toMatch(/[0-9]/);
+    expect(localisedDateTime(AT)).not.toMatch(/[0-9]/);
+  });
+
+  it('leaves a Latin-digit locale exactly as date-fns wrote it', () => {
+    setLocale('en');
+    expect(localisedDate(AT)).toBe('06/09/2026');
+    setLocale('fr');
+    expect(localisedDate(AT)).toMatch(/^[0-9]{2}\/[0-9]{2}\/[0-9]{4}$/);
+  });
+
+  it('leaves an explicit pattern in Latin digits — it is not for reading', () => {
+    setLocale('ar');
+    expect(customDate(AT, 'yyyy-MM-dd')).toBe('2026-09-06');
   });
 });
