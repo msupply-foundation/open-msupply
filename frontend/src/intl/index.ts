@@ -35,6 +35,7 @@ export {
   localisedDateTime,
   utcDateTime,
   customDate,
+  exportDate,
   localisedTimeAgo,
   getDisplayAge,
 } from './formatDateTime';
