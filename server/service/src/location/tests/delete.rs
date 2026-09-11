@@ -1,12 +1,13 @@
 #[cfg(test)]
 mod query {
-    use repository::mock::mock_store_a;
+    use repository::mock::{mock_sensor_1, mock_store_a};
     use repository::EqualFilter;
     use repository::{
         location::{LocationFilter, LocationRepository},
         mock::MockDataInserts,
         test_db::setup_all,
-        InvoiceLineFilter, InvoiceLineRepository, StockLineFilter, StockLineRepository,
+        InvoiceLineFilter, InvoiceLineRepository, SensorFilter, SensorRepository,
+        SensorRowRepository, StockLineFilter, StockLineRepository,
     };
 
     use crate::{
@@ -77,7 +78,8 @@ mod query {
             service.delete_location(&context, DeleteLocation { id: location_id }),
             Err(DeleteLocationError::LocationInUse(LocationInUse {
                 stock_lines,
-                invoice_lines
+                invoice_lines,
+                sensors: vec![]
             }))
         );
 
@@ -100,7 +102,36 @@ mod query {
             service.delete_location(&context, DeleteLocation { id: location_id }),
             Err(DeleteLocationError::LocationInUse(LocationInUse {
                 stock_lines,
-                invoice_lines
+                invoice_lines,
+                sensors: vec![]
+            }))
+        );
+
+        // Location is not empty (a cold-chain sensor is assigned to it). Before
+        // this was checked, the delete reached the foreign key and came back as
+        // an internal error naming a constraint, which is nothing a user can
+        // act on.
+        let location_id = "location_3".to_string();
+        let mut sensor = mock_sensor_1();
+        sensor.location_id = Some(location_id.clone());
+        SensorRowRepository::new(&connection)
+            .upsert_one(&sensor)
+            .unwrap();
+
+        let sensors = SensorRepository::new(&connection)
+            .query_by_filter(
+                SensorFilter::new()
+                    .location(LocationFilter::new().id(EqualFilter::equal_to(location_id.clone()))),
+            )
+            .unwrap();
+        assert_eq!(sensors.len(), 1);
+
+        assert_eq!(
+            service.delete_location(&context, DeleteLocation { id: location_id }),
+            Err(DeleteLocationError::LocationInUse(LocationInUse {
+                stock_lines: vec![],
+                invoice_lines: vec![],
+                sensors
             }))
         );
     }
