@@ -31,9 +31,15 @@ export type UrlQueryState<T> = {
    * Replace the query state. Passing the default (or an object that serialises
    * to it) clears the param so a pristine list has a clean URL. Navigation is
    * a replace by default (filter/sort/page changes are not distinct history
-   * entries); pass { push: true } to add a history entry.
+   * entries); pass { push: true } to add a history entry. Other search params
+   * that must change together with the state (a `?tab=`) go in `params`, so
+   * they ride the same navigation — a separate setSearchParams call would be
+   * built from the address before this one and undo it.
    */
-  setQuery: (next: T, options?: { push?: boolean }) => void;
+  setQuery: (
+    next: T,
+    options?: { push?: boolean; params?: Record<string, string | undefined> }
+  ) => void;
 };
 
 export function useUrlQueryState<T extends object>(
@@ -85,7 +91,10 @@ export function useUrlQueryState<T extends object>(
     }
   };
 
-  const setQuery = (next: T, options?: { push?: boolean }) => {
+  const setQuery = (
+    next: T,
+    options?: { push?: boolean; params?: Record<string, string | undefined> }
+  ) => {
     // Hold it, so a change made alongside this one builds on it rather than on
     // the address bar it has left behind.
     if (latestState === undefined)
@@ -95,8 +104,12 @@ export function useUrlQueryState<T extends object>(
     // A state equal to the default is represented by the absence of the param.
     const serialisedOrNull =
       serialised === JSON.stringify(defaultState) ? null : serialised;
+    // Any other search params that must change WITH the state (a `?tab=`, say)
+    // travel in this same navigation: the router builds every address from
+    // the location as it still reads and carries out only the last one asked
+    // for, so a separate setSearchParams call would undo this one.
     setSearchParams(
-      { [QUERY_PARAM]: serialisedOrNull },
+      { ...options?.params, [QUERY_PARAM]: serialisedOrNull },
       { replace: !options?.push }
     );
   };

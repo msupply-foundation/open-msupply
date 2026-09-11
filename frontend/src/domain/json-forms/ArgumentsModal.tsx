@@ -209,7 +209,9 @@ export const ArgumentsModal = (props: ArgumentsModalProps) => {
   // — the location domain owns none anymore). Volume-blind: a report filter
   // only references a location. Non-suspending read so a pending fetch never
   // trips an ancestor <Suspense>.
-  const [locationsData] = createResource(currentStoreId, fetchLocations);
+  const [locationsData] = createResource(currentStoreId, storeId =>
+    fetchLocations(storeId)
+  );
   const locations = (): Location[] => gated(locationsData) ?? [];
 
   // Programs for a `programSearch`-kind argument (AC-R12), fetched locally in
