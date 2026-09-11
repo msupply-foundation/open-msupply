@@ -63,19 +63,28 @@ impl MigrationFragment for Migrate {
     /// every form ever submitted is emailed once more. Accepted, since the form is
     /// rarely used and the recipients are our own team.
     ///
-    /// Only runs on a site that has pushed over v6 or v7, which is exactly the set that
-    /// could have dropped rows. Central does not push, and re-logging its own records
-    /// would only re-broadcast them to every remote; a remote that never pushed starts
-    /// its first push from cursor zero with the fixed filter, so nothing was skipped.
-    /// Central cannot be detected any other way on a database upgrading from 2.x or
-    /// earlier: the `site` table is only filled by sync after startup, and the
-    /// standalone-central flag did not exist before 3.x.
+    /// Skipped on central: central does not push, and re-logging its own records would
+    /// only re-broadcast them to every remote. Central cannot be detected directly on a
+    /// database upgrading from 2.x or earlier (the `site` table is only filled by sync
+    /// after startup, and the standalone-central flag did not exist before 3.x), so
+    /// instead run when the site has pushed over v6 or v7, which only remotes do.
+    ///
+    /// A database that started this upgrade below 2.0 has no push cursor either, but
+    /// it also cannot be a central, since OMS central arrived with v6 in 2.0. Its
+    /// locally authored rows in these tables (and the encounter/vaccination changelog
+    /// rows the 2.14 migration inserts with a null source) would never pass the fixed
+    /// push filter, so it is included too.
     fn migrate_with_config(
         &self,
         connection: &StorageConnection,
         config: &MigrationConfig,
     ) -> anyhow::Result<()> {
-        if !has_pushed_over_v6_or_v7(connection)? || is_standalone_central(connection)? {
+        let started_before_v6 = config
+            .starting_database_version
+            .as_ref()
+            .is_some_and(|version| *version < Version::from_str("2.0.0"));
+        let is_remote = started_before_v6 || has_pushed_over_v6_or_v7(connection)?;
+        if !is_remote || is_standalone_central(connection)? {
             return Ok(());
         }
 
@@ -368,8 +377,34 @@ mod tests {
         assert_eq!(rows_after(&connection, before).len(), 3);
     }
 
-    /// A central server (of any origin version) has a site id but has never run the
-    /// v6 or v7 push, so it has no push cursor.
+    /// A database that started the upgrade below 2.0 predates OMS central, so it is a
+    /// remote even without a push cursor.
+    #[actix_rt::test]
+    async fn relogs_on_database_that_started_before_v6() {
+        let connection = setup("migration_relog_v6_dropped_pre_v6").await;
+        seed(
+            &connection,
+            &format!(
+                "INSERT INTO key_value_store (id, value_int) VALUES
+                    ('SETTINGS_SYNC_SITE_ID', {THIS_SITE_ID});"
+            ),
+        );
+        seed(&connection, SEED_CHANGELOG);
+        let before = max_cursor(&connection);
+
+        let config = MigrationConfig {
+            starting_database_version: Some(Version::from_str("1.7.0")),
+            ..Default::default()
+        };
+        super::Migrate
+            .migrate_with_config(&connection, &config)
+            .unwrap();
+
+        assert_eq!(rows_after(&connection, before).len(), 3);
+    }
+
+    /// A central server (of any origin version from 2.0 on) has a site id but has
+    /// never run the v6 or v7 push, so it has no push cursor.
     #[actix_rt::test]
     async fn skips_central_server() {
         let connection = setup("migration_relog_v6_dropped_central").await;

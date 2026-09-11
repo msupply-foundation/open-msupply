@@ -380,6 +380,7 @@ pub async fn start_server(
     let changelog_dedup_settings = settings.changelog_dedup.clone().unwrap_or_default();
     let migration_config = MigrationConfig {
         changelog_partition: changelog_partition_settings.to_migration_config(),
+        starting_database_version: None,
     };
     let (version, messages) = match migrate(&connection, None, migration_config) {
         Ok(result) => result,
