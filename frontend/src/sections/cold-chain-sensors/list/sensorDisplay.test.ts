@@ -16,7 +16,8 @@ import {
 
 // Logic-level coverage of how a sensor's device-owned and derived values are
 // presented (spec/cold-chain-sensors § what the device owns / derived values).
-// Tests cite the AC they exercise.
+//
+// Anchors: spec/cold-chain-sensors/cases/OMS-REG-CCE-03.
 
 const sensor = (over: Partial<SensorRow> = {}): SensorRow => ({
   __typename: 'SensorNode',
@@ -33,7 +34,7 @@ const sensor = (over: Partial<SensorRow> = {}): SensorRow => ({
   ...over,
 });
 
-describe('AC-V3 only the identity part of the serial is shown', () => {
+describe('OMS-REG-CCE-03.38 — only the identity part of the serial is shown', () => {
   it('drops the trailing space the server’s manufacturer strip leaves behind', () => {
     // The stored serial is "AA:BB:CC:DD:EE:01 | BLUE_MAESTRO"; the resolver's
     // regex is anchored at the pipe, so the separator's leading space survives
@@ -56,7 +57,7 @@ describe('the device kind is labelled, never named by its wire value', () => {
     expect(sensorTypeLabelKey(type)).toBe(key);
   });
 
-  it('offers every kind in the type filter (AC-L4)', () => {
+  it('offers every kind in the type filter (.15)', () => {
     expect([...SENSOR_TYPES].sort()).toEqual([
       'BERLINGER',
       'BLUE_MAESTRO',
@@ -66,7 +67,7 @@ describe('the device kind is labelled, never named by its wire value', () => {
   });
 });
 
-describe('AC-D1 / AC-D2 the latest reading', () => {
+describe('OMS-REG-CCE-03.42 / .43 — the latest reading', () => {
   it('reads the temperature of the newest reading', () => {
     const row = sensor({
       latestTemperatureLog: {
@@ -98,7 +99,7 @@ describe('AC-D1 / AC-D2 the latest reading', () => {
   });
 });
 
-describe('AC-D3 / AC-D4 / AC-D7 the ongoing breach', () => {
+describe('OMS-REG-CCE-03.44 / .45 / .48 — the ongoing breach', () => {
   it.each<[BreachType, boolean, boolean]>([
     ['HOT_CONSECUTIVE', true, false],
     ['HOT_CUMULATIVE', true, true],
@@ -118,7 +119,7 @@ describe('AC-D3 / AC-D4 / AC-D7 the ongoing breach', () => {
     expect(fullBreachLabelKey('COLD_CUMULATIVE')).toBe('label.cold-cumulative');
   });
 
-  it('reads an excursion as a cold consecutive breach (AC-D7)', () => {
+  it('reads an excursion as a cold consecutive breach (.48)', () => {
     // Captured as-is: the wire enum pairs direction and duration in one member
     // except EXCURSION, which carries neither.
     expect(breachParts('EXCURSION')).toEqual({ hot: false, cumulative: false });
@@ -127,7 +128,7 @@ describe('AC-D3 / AC-D4 / AC-D7 the ongoing breach', () => {
   });
 });
 
-describe('AC-D5 / AC-D6 the equipment at the sensor’s location', () => {
+describe('OMS-REG-CCE-03.46 / .47 — the equipment at the sensor’s location', () => {
   it('is empty when the sensor has no location', () => {
     expect(equipmentNumbers(sensor())).toBe('');
   });
