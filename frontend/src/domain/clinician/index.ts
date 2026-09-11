@@ -4,6 +4,8 @@
 export {
   cliniciansResource,
   clinicianName,
+  clinicianForUsername,
+  clinicianMatchingUser,
   type Clinician,
 } from './clinicianResource';
 export { ClinicianSelect, type ClinicianSelectProps } from './ClinicianSelect';

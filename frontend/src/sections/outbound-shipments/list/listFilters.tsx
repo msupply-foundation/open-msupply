@@ -113,6 +113,7 @@ const FILTERS: Filter<OutboundFilter>[] = constructFilters<OutboundFilter>({
         type="dateTime"
         label={t('label.created')}
         testId={props.testId}
+        disableFuture
         value={props.filter().createdDatetime}
         onChange={value => props.setPartialFilter({ createdDatetime: value })}
       />
@@ -125,6 +126,7 @@ const FILTERS: Filter<OutboundFilter>[] = constructFilters<OutboundFilter>({
         type="dateTime"
         label={t('label.shipped')}
         testId={props.testId}
+        disableFuture
         value={props.filter().shippedDatetime}
         onChange={value => props.setPartialFilter({ shippedDatetime: value })}
       />

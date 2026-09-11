@@ -40,7 +40,7 @@ describe('ledgerRowHref (CAT-04.23/.43)', () => {
 
   it('routes a prescription', () => {
     expect(ledgerRowHref('store-1', row('PRESCRIPTION'))).toBe(
-      '/store-1/dispensary/prescription/inv-1'
+      '/store-1/dispensary/dispensing/inv-1'
     );
   });
 

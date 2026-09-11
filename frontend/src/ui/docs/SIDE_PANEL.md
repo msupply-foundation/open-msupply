@@ -24,6 +24,7 @@ Compose `SidePanelSection` + `FieldRow` + `SidePanelSubheading` + `SidePanelActi
 3. **A calculated figure that belongs to an input is its `helperText`** (sits below the input), never a value floated to the right of the row — that breaks the value-alignment column.
 4. **Inline edit affordances are small icon-only** `IconButton`s (`bordered size="small"`), pinned to the row's inline-end. Never a text `Button` with an "Edit" label inside a row.
 5. **Record actions go in the last section** (`value="actions"`, `title={t('heading.actions')}`) inside `SidePanelActions` — labelled buttons, one per row, Delete first. This cluster is the one place labelled buttons belong.
+6. **A plugin slot region (where the vertical's spec grants one) sits between the panel's own sections and the actions section** — a bare [`PluginSlotOutlet`](../elements/plugins/PluginSlotOutlet.tsx), no wrapper `SidePanelSection`, no heading: the seam is invisible when nothing contributes, and a contribution owns its own look ([spec/plugins/ui-surface](../../../spec/plugins/ui-surface.md) S1). The contributions array comes from **one `createMemo`** over `visibleContributions(...)` and the slot props read memoised view DTOs, so an order update reaches live contributions in place ([kdd/solid-reactivity-pitfalls](../../../kdd/solid-reactivity-pitfalls/draft-kdd.md)). Live reference: [`InternalOrderSidePanel`](../../sections/internal-orders/detail/InternalOrderSidePanel.tsx). The panel's CSS already tolerates the interleaved child — the section divider is the general-sibling `.section ~ .section`, so Actions keeps its top divider with a contribution in front of it; don't reintroduce the adjacent `+` form.
 
 ## Anatomy
 
@@ -33,6 +34,9 @@ SidePanel label=… onClose=…                       ← <aside>, sticky header
 │  ├─ FieldRow label=…            → value / control      (label : value row)
 │  ├─ SidePanelSubheading action=…  → group of FieldRows (bold ruled <h3>)
 │  └─ …
+├─ PluginSlotOutlet …               ← plugin slot region, only where the spec
+│                                     grants one (rule 6); renders nothing when
+│                                     no plugin contributes
 └─ SidePanelSection value="actions" title=…         ← pinned at the panel's foot
    └─ SidePanelActions            → Delete · Make a copy · Copy to clipboard
 ```
@@ -156,4 +160,5 @@ Before considering a panel done, confirm every item — this is the contract:
 - [ ] Any figure calculated from an input is that input's `helperText`, not a value to its right (rule 3).
 - [ ] Inline edit affordances are small icon-only `IconButton`s, inline-end (rule 4).
 - [ ] Record actions are labelled buttons in the last `value="actions"` section (rule 5).
+- [ ] A plugin slot region, if the panel has one, is a bare `PluginSlotOutlet` between the panel's own sections and the actions section, fed by a single `createMemo` of `visibleContributions` (rule 6).
 - [ ] `pnpm check` is green **and** the panel has been rendered (showcase or vertical) — value alignment and helper/label centring are visual and the type-check can't see them.
