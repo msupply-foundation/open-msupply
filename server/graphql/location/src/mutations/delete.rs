@@ -79,6 +79,13 @@ fn map_error(error: ServiceError) -> Result<DeleteLocationErrorInterface> {
     let graphql_error = match error {
         // Structured Errors
         ServiceError::LocationInUse(location_in_use) => {
+            // `location_in_use.sensors` is deliberately not on the wire: a
+            // SensorConnector lives in the cold-chain GraphQL crate, and having
+            // this inventory mutation depend on that one to list them would be
+            // the wrong way round. What matters to a client is that the refusal
+            // is TYPED — before the sensor check existed it arrived as an
+            // internal error naming a foreign key. Surfacing which sensors
+            // wants SensorNode moved into graphql_types first.
             return Ok(DeleteLocationErrorInterface::LocationInUse(LocationInUse {
                 stock_lines: StockLineConnector::from_vec(location_in_use.stock_lines),
                 invoice_lines: InvoiceLineConnector::from_vec(location_in_use.invoice_lines),
@@ -269,6 +276,7 @@ mod test {
                     campaign_row: None,
                 }],
                 invoice_lines: vec![successful_invoice_line()],
+                sensors: vec![],
             }))
         }));
 
