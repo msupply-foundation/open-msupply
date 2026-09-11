@@ -4,6 +4,7 @@ import {
   formFromSensor,
   isNameEditable,
   isUnchanged,
+  type SensorFormState,
   type SensorRow,
 } from './sensorEdit';
 import type { SensorType } from './sensorDisplay';
@@ -51,9 +52,12 @@ describe('OMS-REG-CCE-03.10 / .37 — the device’s own values are never writte
   });
 
   it('sends no battery level or logging interval on a save', () => {
+    const row = sensor({ location: AT_LOCATION });
+    // Everything a user can touch, changed at once — the widest input the
+    // editor can possibly build.
     const input = buildUpdateInput(
-      { name: 'renamed', locationId: '', isActive: true },
-      'sensor-1'
+      { name: 'renamed', locationId: 'loc-2', isActive: false },
+      row
     );
     expect(Object.keys(input).sort()).toEqual([
       'id',
@@ -64,9 +68,45 @@ describe('OMS-REG-CCE-03.10 / .37 — the device’s own values are never writte
   });
 
   it('never carries the serial or the sensor type', () => {
-    const input = buildUpdateInput(formFromSensor(sensor()), 'sensor-1');
+    const row = sensor();
+    const input = buildUpdateInput(
+      { ...formFromSensor(row), name: 'renamed' },
+      row
+    );
     expect(input).not.toHaveProperty('serial');
     expect(input).not.toHaveProperty('type');
+  });
+});
+
+describe('OMS-REG-CCE-03.52 — a save writes only what the editor changed', () => {
+  it('carries nothing but the id when the draft is untouched', () => {
+    const row = sensor({ location: AT_LOCATION });
+    expect(buildUpdateInput(formFromSensor(row), row)).toEqual({
+      id: 'sensor-1',
+    });
+  });
+
+  it.each<[string, Partial<SensorFormState>, string]>([
+    ['a rename', { name: 'renamed' }, 'name'],
+    ['a move', { locationId: 'loc-2' }, 'locationId'],
+    ['a retirement', { isActive: false }, 'isActive'],
+  ])('%s carries that field and no other', (_, patch, key) => {
+    const row = sensor({ location: AT_LOCATION });
+    const input = buildUpdateInput({ ...formFromSensor(row), ...patch }, row);
+    expect(Object.keys(input).sort()).toEqual(['id', key].sort());
+  });
+
+  it('leaves the location out of a rename, so a concurrent move survives', () => {
+    // The editor loaded the sensor at loc-1; someone else moved it to loc-3
+    // while the modal sat open. A rename must not put it back (the whole point
+    // of the sparse patch — omitting the key means "leave it alone" on the
+    // wire).
+    const row = sensor({ location: AT_LOCATION });
+    const input = buildUpdateInput(
+      { ...formFromSensor(row), name: 'renamed' },
+      row
+    );
+    expect(input).not.toHaveProperty('locationId');
   });
 });
 
@@ -103,9 +143,10 @@ describe('OMS-REG-CCE-03.11 / .30 — assigning and clearing a location', () => 
   });
 
   it('assigns with the wrapper’s value set (.11)', () => {
+    const row = sensor();
     const input = buildUpdateInput(
-      { name: 'Berlinger 1', locationId: 'loc-1', isActive: true },
-      'sensor-1'
+      { ...formFromSensor(row), locationId: 'loc-1' },
+      row
     );
     expect(input.locationId).toEqual({ value: 'loc-1' });
   });
@@ -113,10 +154,12 @@ describe('OMS-REG-CCE-03.11 / .30 — assigning and clearing a location', () => 
   it('clears with the wrapper’s value null, never by omitting it (.30)', () => {
     // Omitting `locationId` means "leave unchanged" on the wire, so a cleared
     // location would silently survive the save (contract › assigning a
-    // location).
+    // location). This is the one case where the sparse patch MUST still send
+    // the key — the draft changed, it just changed to "none".
+    const row = sensor({ location: AT_LOCATION });
     const input = buildUpdateInput(
-      { name: 'Berlinger 1', locationId: '', isActive: true },
-      'sensor-1'
+      { ...formFromSensor(row), locationId: '' },
+      row
     );
     expect(input.locationId).toEqual({ value: null });
   });
@@ -124,24 +167,25 @@ describe('OMS-REG-CCE-03.11 / .30 — assigning and clearing a location', () => 
 
 describe('OMS-REG-CCE-03.39 / .40 — retirement is a state, not a deletion', () => {
   it('carries the active state both ways', () => {
-    const off = buildUpdateInput(
-      { name: 'n', locationId: '', isActive: false },
-      'sensor-1'
-    );
-    expect(off.isActive).toBe(false);
-    const on = buildUpdateInput(
-      { name: 'n', locationId: '', isActive: true },
-      'sensor-1'
-    );
-    expect(on.isActive).toBe(true);
+    const live = sensor({ isActive: true });
+    expect(
+      buildUpdateInput({ ...formFromSensor(live), isActive: false }, live)
+        .isActive
+    ).toBe(false);
+    const retired = sensor({ isActive: false });
+    expect(
+      buildUpdateInput({ ...formFromSensor(retired), isActive: true }, retired)
+        .isActive
+    ).toBe(true);
   });
 });
 
 describe('OMS-REG-CCE-03.24 — names are not unique', () => {
   it('sends a colliding name unchanged — there is nothing to reject it', () => {
+    const row = sensor();
     const input = buildUpdateInput(
-      { name: 'Fridge Tag BM 1', locationId: '', isActive: true },
-      'sensor-1'
+      { ...formFromSensor(row), name: 'Fridge Tag BM 1' },
+      row
     );
     expect(input.name).toBe('Fridge Tag BM 1');
   });

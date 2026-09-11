@@ -65,25 +65,35 @@ export const isUnchanged = (
 };
 
 /**
- * The draft as an update input.
+ * The draft as an update input — **only the fields the user actually changed**.
+ *
+ * Every key of `UpdateSensorInput` is optional and absence means "leave this
+ * alone" (server `sensor/update.rs` → `generate`), so a sparse patch is the
+ * shape that says what the user did. Sending the whole draft instead would
+ * write back every field as the editor loaded it, and quietly undo anything a
+ * second session changed while the modal sat open — a rename here would put the
+ * sensor back on the fridge somebody else had just moved it off, with nothing
+ * on screen to say so (`.52`).
  *
  * `locationId` is the one field with three states: `{value: id}` assigns,
  * `{value: null}` clears, and omitting it leaves the assignment unchanged
- * (contract › assigning a location). The editor always states the assignment
- * explicitly — it is a field the user just looked at, so "unchanged" is not a
- * shape this form needs, and sending it means a cleared location really clears
- * (.30).
+ * (contract › assigning a location). Clearing therefore MUST send the wrapper
+ * with a null value — the one thing it must never do is fall back to omitting
+ * the key, which would read as "unchanged" and silently keep the location
+ * (`.30`).
  *
- * `name` and `isActive` are sent as the draft holds them. Nothing else is
- * writable: battery level and logging interval have no input field at all, so
- * a save from here cannot move them (.37).
+ * Nothing else is writable: battery level and logging interval have no input
+ * field at all, so a save from here cannot move them (`.37`).
  */
 export const buildUpdateInput = (
   form: SensorFormState,
-  sensorId: string
-): UpdateSensorVariables['input'] => ({
-  id: sensorId,
-  name: form.name,
-  isActive: form.isActive,
-  locationId: { value: form.locationId || null },
-});
+  sensor: SensorRow
+): UpdateSensorVariables['input'] => {
+  const seed = formFromSensor(sensor);
+  const input: UpdateSensorVariables['input'] = { id: sensor.id };
+  if (form.name !== seed.name) input.name = form.name;
+  if (form.isActive !== seed.isActive) input.isActive = form.isActive;
+  if (form.locationId !== seed.locationId)
+    input.locationId = { value: form.locationId || null };
+  return input;
+};

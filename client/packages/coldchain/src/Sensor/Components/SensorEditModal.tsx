@@ -26,7 +26,7 @@ const useDraftSensor = (seed: SensorFragment): UseDraftSensorControl => {
     setSensor({ ...sensor, ...patch });
   };
 
-  const onSave = async () => mutate(sensor);
+  const onSave = async () => mutate({ draft: sensor, seed });
 
   return {
     draft: sensor,

@@ -102,7 +102,7 @@ export const SensorEditModal: Component<SensorEditModalProps> = props => {
     setSaving(true);
     const result = await graphqlFetch(UpdateSensor, {
       storeId: props.storeId,
-      input: buildUpdateInput(form(), props.sensor.id),
+      input: buildUpdateInput(form(), props.sensor),
     });
     setSaving(false);
     // Every rejection this vertical can produce is untyped — the mutation's
