@@ -63,8 +63,10 @@ export interface SlotContext {
    */
   storeId: string | undefined;
   /**
-   * The user's permissions in the entered store, as the server's PascalCase
-   * `UserPermission` names (e.g. 'RequisitionMutate').
+   * The user's permissions in the entered store, as the wire's SCREAMING_SNAKE
+   * `UserPermission` enum values (e.g. 'REQUISITION_MUTATE') — NOT the
+   * PascalCase resource names the server's auth ERRORS carry
+   * ('RequisitionMutate').
    */
   permissions: readonly string[];
   /**
