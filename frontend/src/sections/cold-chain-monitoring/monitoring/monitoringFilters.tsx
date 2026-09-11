@@ -63,17 +63,19 @@ const FILTERS: Filter<MonitoringFilter>[] = constructFilters<MonitoringFilter>({
       />
     ),
   },
-  // The breach-start window: ONE chip holding both date-time bounds, as the
-  // reference client groups them and as the items Ledger tab composes the same
-  // shape. Either side clears on its own, so a one-sided window never needs
-  // the chip removed. On the bar from arrival (monitoringState ›
-  // DEFAULT_STATE).
+  // The date-time window: ONE chip holding both bounds, as the reference
+  // client groups them and as the items Ledger tab composes the same shape.
+  // Labelled as a plain date/time range because the same bounds are the
+  // breach's start on the Breaches tab and the reading's time on the Log tab
+  // and the chart (monitoringState), so no one tab's noun fits. Either side
+  // clears on its own, so a one-sided window never needs the chip removed. On
+  // the bar from arrival (monitoringState › DEFAULT_STATE).
   startDatetime: {
-    label: () => t('label.start-datetime'),
+    label: () => t('label.datetime-range'),
     render: props => (
       <FilterDateTimeRange
-        fromLabel={t('label.from-start-datetime')}
-        toLabel={t('label.to-start-datetime')}
+        fromLabel={t('label.from-datetime')}
+        toLabel={t('label.to-datetime')}
         testId={props.testId}
         value={props.filter().startDatetime ?? { start: null, end: null }}
         onChange={range => props.setPartialFilter({ startDatetime: range })}

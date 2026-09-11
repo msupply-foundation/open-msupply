@@ -22,7 +22,7 @@ import {
 import { Comment } from '@/ui/elements/feedback/Comment';
 import { IconButton } from '@/ui/elements/buttons/IconButton';
 import { FilterBar } from '@/ui/elements/selectors/FilterBar';
-import { AlertCircleIcon } from '@/ui/icons';
+import { AlertTriangleIcon } from '@/ui/icons';
 import { remToPx } from '@/ui/utils/rem';
 import { createTableConfig } from '@/api/createTableConfig';
 import { clampPageOffset, settledTotal } from '@/list/clampPageOffset';
@@ -72,8 +72,12 @@ const commentOf = (cell: StatusCell): string | null =>
 /**
  * Column 1's content: the acknowledge action, the comment, or nothing — by
  * the breach's state (rules › acknowledging a breach). The acknowledge action
- * is an alert glyph in the error tone; the comment is the shared hover
- * popover headed "Comment".
+ * is a caution glyph in the error tone on an OUTLINED icon-only button — the
+ * border is what makes it read as a control rather than a status mark beside
+ * the word Unacknowledged. Small, as every row action is: the comfortable
+ * row's content box is exactly that tall, and a taller box would push its
+ * row past its neighbours. The comment is the shared hover popover headed
+ * "Comment".
  */
 const StatusActionCell: Component<{
   breach: BreachRow;
@@ -84,9 +88,10 @@ const StatusActionCell: Component<{
     <Switch>
       <Match when={cell().kind === 'acknowledge'}>
         <IconButton
-          icon={<AlertCircleIcon />}
+          icon={<AlertTriangleIcon />}
           label={t('button.acknowledge')}
           variant="danger"
+          bordered
           size="small"
           data-testid="acknowledge-breach-button"
           onClick={() => props.onAcknowledge()}
