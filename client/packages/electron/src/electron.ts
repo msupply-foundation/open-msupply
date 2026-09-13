@@ -10,7 +10,9 @@ import {
   webContents,
 } from 'electron';
 import dnssd from 'dnssd';
+import type { MessageBoxOptions } from 'electron';
 import { IPC_MESSAGES } from './shared';
+import { createSharedPrompt } from './sharedPrompt';
 import { address as getIpAddress, isV4Format } from 'ip';
 import {
   FrontEndHost,
@@ -738,9 +740,57 @@ process.on('uncaughtException', error => {
  */
 });
 
+// One prompt per server and certificate, however many requests raise the
+// error. `certificate-error` fires per REQUEST — the document, every script
+// and stylesheet, and every GraphQL call each arrive separately — so awaiting
+// a message box in the handler stacks a dialog per request, and a changed
+// certificate left the user dismissing dozens of identical windows one at a
+// time (#544).
+//
+// Concurrent events share the FIRST event's answer: they await the same
+// promise and then resolve their own callback with it, because each event has
+// its own callback and every one of them has to be answered. Keyed by server
+// AND fingerprint, so accepting one changed certificate does not silently
+// accept a different one later. The entry lives only while the prompt is in
+// flight — once it settles the stored fingerprint has been updated, so later
+// events take the matches-the-store path and never ask again.
+const sharedCertificatePrompt = createSharedPrompt<boolean>();
+
+const acceptChangedCertificate = (
+  parent: BrowserWindow | null,
+  identifier: string,
+  fingerprint: string
+): Promise<boolean> =>
+  // Keyed by server AND fingerprint, so accepting one changed certificate does
+  // not silently accept a different one later.
+  sharedCertificatePrompt(`${identifier}:${fingerprint}`, async () => {
+    const options: MessageBoxOptions = {
+      type: 'warning',
+      buttons: ['No', 'Yes'],
+      title: 'SSL Error',
+      message:
+        'The security certificate on the server has changed!\r\n\r\nThis can happen when the server is reinstalled, so may be normal, but please check with your IT department if you are unsure.\r\n\r\nWould you like to accept the new certificate? ',
+    };
+
+    // Parented to the window that raised the error, so the prompt is modal to
+    // the app instead of floating free of it.
+    const { response } = parent
+      ? await dialog.showMessageBox(parent, options)
+      : await dialog.showMessageBox(options);
+    const accepted = response === 1;
+
+    // Both of these happen ONCE for the shared answer, not once per event.
+    if (accepted) {
+      store.set(identifier, fingerprint);
+    } else {
+      ipcMain.emit(IPC_MESSAGES.GO_BACK_TO_DISCOVERY);
+    }
+    return accepted;
+  });
+
 app.addListener(
   'certificate-error',
-  async (event, _webContents, url, error, certificate, callback) => {
+  async (event, errorWebContents, url, error, certificate, callback) => {
     // We are only handling self signed certificate errors
     if (
       error != 'net::ERR_CERT_INVALID' &&
@@ -785,23 +835,15 @@ app.addListener(
       store.set(identifier, storedFingerprint);
       // If fingerprint does not match
     } else if (storedFingerprint != certificate.fingerprint) {
-      // Display error message and go back to discovery
-      const returnValue = await dialog.showMessageBox({
-        type: 'warning',
-        buttons: ['No', 'Yes'],
-        title: 'SSL Error',
-        message:
-          'The security certificate on the server has changed!\r\n\r\nThis can happen when the server is reinstalled, so may be normal, but please check with your IT department if you are unsure.\r\n\r\nWould you like to accept the new certificate? ',
-      });
-
-      if (returnValue.response === 0) {
-        ipcMain.emit(IPC_MESSAGES.GO_BACK_TO_DISCOVERY);
-        return callback(false);
-      }
-
-      // Update stored fingerprint
-      storedFingerprint = certificate.fingerprint;
-      store.set(identifier, storedFingerprint);
+      // Ask once for this certificate, however many requests raised the
+      // error, then answer every one of them with that same decision. The
+      // prompt itself stores the new fingerprint or returns to discovery.
+      const accepted = await acceptChangedCertificate(
+        BrowserWindow.fromWebContents(errorWebContents),
+        identifier,
+        certificate.fingerprint
+      );
+      if (!accepted) return callback(false);
     }
 
     // storedFingerprint did not exist or it matched certificate fingerprint
