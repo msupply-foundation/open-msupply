@@ -100,7 +100,9 @@ export function ColumnSettings<T>(props: {
   };
 
   return (
-    <div class={styles.panel}>
+    // `table-columns-panel` scopes a suite's per-column toggle to this panel
+    // (a column's name also heads the table) — e2e/TESTIDS.md § Shared ids.
+    <div class={styles.panel} data-testid="table-columns-panel">
       {/* Bulk actions — Show all / Hide all scope to the columns this view lists
           (see setAllListedVisible; only hideable columns are touched, so
           structural columns are safe); Reset order and Unpin all clear the

@@ -329,10 +329,10 @@ describe('prescription requests, gated like anything else', () => {
     // and a dispenser the reverse.
     state.permissions = new Set(['PRESCRIPTION_REQUEST_QUERY']);
     expect(gatedPaths()).toContain('dispensary/prescription-request');
-    expect(gatedPaths()).not.toContain('dispensary/prescription');
+    expect(gatedPaths()).not.toContain('dispensary/dispensing');
 
     state.permissions = new Set(['PRESCRIPTION_QUERY']);
-    expect(gatedPaths()).toContain('dispensary/prescription');
+    expect(gatedPaths()).toContain('dispensary/dispensing');
     expect(gatedPaths()).not.toContain('dispensary/prescription-request');
   });
 

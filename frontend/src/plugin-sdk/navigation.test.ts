@@ -108,9 +108,9 @@ describe.each(mounts)('storeHref (%s)', (_name, base) => {
 describe('navigateTo', () => {
   it('navigates to the resolved href, mount and store included', async () => {
     const { navigateTo } = await at('/rc/');
-    navigateTo('dispensary/prescription');
+    navigateTo('dispensary/dispensing');
     expect(navigated).toHaveBeenCalledWith(
-      '/rc/store-a/dispensary/prescription',
+      '/rc/store-a/dispensary/dispensing',
       undefined
     );
   });
@@ -128,7 +128,7 @@ describe('navigateTo', () => {
     const { navigateTo } = await at('/rc/');
     state.storeId = undefined;
 
-    navigateTo('dispensary/prescription');
+    navigateTo('dispensary/dispensing');
 
     // The redirect still happens (the root guard re-enters a store), but the
     // named path was dropped to get there — never silently: an href rendered

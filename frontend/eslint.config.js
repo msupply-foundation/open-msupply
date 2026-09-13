@@ -104,9 +104,13 @@ export default tseslint.config(
       '**/*.generated.ts',
       '**/*.css.d.ts',
       'codegen/**', // CommonJS (.cjs) with its own node:test suite
-      // Built elsewhere and shipped verbatim, so not this repo's lint domain
-      // (plugins/civ/backend/README.md). Backend halves written HERE are
-      // linted, below — hence naming this one rather than globbing.
+      // CIV's backend half. It BUILDS here (vite/backendPluginBuild.ts) and
+      // is type-checked here (tsconfig.backend-plugins.json), but its source
+      // arrived from msupply-foundation/civ-plugins formatted to that repo's
+      // conventions; #417 carries bringing it under ESLint and Prettier,
+      // first reformat and all (plugins/civ/backend/README.md). Named rather
+      // than globbed as `plugins/*/backend/**`: backend halves written HERE —
+      // the reference plugin's and cook_islands' — are linted, below.
       'plugins/civ/backend/**',
       // A prebuilt bundle is a build artifact wherever it appears.
       'plugins/*/backend/prebuilt/**',
@@ -216,16 +220,19 @@ export default tseslint.config(
   },
 
   /*
-   * The reference BACKEND plugin (examples/<code>/backend) — the half that
-   * runs in the server's BoaJS engine. No Solid, no DOM, and deliberately NO
-   * `globals.browser`: the only globals it has are the host functions the
-   * engine binds, which the plugin declares ambiently (its `host.d.ts`), so an
-   * accidental `document` or `window` should be an undefined-variable error
-   * rather than something the config quietly permits. `no-console` is absent
+   * The BACKEND halves written here — the reference plugin
+   * (examples/<code>/backend) and cook_islands' — which run in the server's
+   * BoaJS engine. No Solid, no DOM, and deliberately NO `globals.browser`:
+   * the only globals they have are the host functions the engine binds, which
+   * each plugin declares ambiently (its `host.d.ts`), so an accidental
+   * `document` or `window` should be an undefined-variable error rather than
+   * something the config quietly permits. `no-console` is absent
    * for the same reason — there is no console in the engine, so a stray
    * `console.log` is already an error here, and `log()` is the way out.
    *
-   * These build in this repo, so they answer to the shared rules.
+   * These are written in this repo and owned outright, so they answer to the
+   * shared rules. CIV's backend half builds here too, but stays lint-ignored
+   * above until #417 reformats the source it arrived with.
    */
   {
     files: [

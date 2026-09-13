@@ -65,6 +65,11 @@ pub struct PrescriptionRequestFilterInput {
     pub patient_name: Option<StringFilterInput>,
     pub created_datetime: Option<DatetimeFilterInput>,
     pub prescription_datetime: Option<DatetimeFilterInput>,
+    /// When the request was dispensed — set by the hand-over's status flip, so
+    /// it is null on everything not yet dispensed. Window a "dispensed in
+    /// period" count on THIS, never on `status`: a status advances, so a
+    /// status-windowed figure falls as records progress.
+    pub dispensed_datetime: Option<DatetimeFilterInput>,
     /// The prescriber — the username of the account that created the request
     pub username: Option<StringFilterInput>,
 
@@ -88,6 +93,7 @@ impl PrescriptionRequestFilterInput {
             patient_name: self.patient_name.map(StringFilter::from),
             created_datetime: self.created_datetime.map(DatetimeFilter::from),
             prescription_datetime: self.prescription_datetime.map(DatetimeFilter::from),
+            dispensed_datetime: self.dispensed_datetime.map(DatetimeFilter::from),
             username: self.username.map(StringFilter::from),
             // Parsed and key-validated at the query boundary, not here
             dynamic_filter: None,

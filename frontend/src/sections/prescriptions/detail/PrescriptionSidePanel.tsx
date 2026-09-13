@@ -434,7 +434,7 @@ export const PrescriptionSidePanel: Component<
             description={
               <Show
                 when={phase() === 'error'}
-                fallback={t('messages.confirm-delete-prescription', {
+                fallback={t('messages.confirm-delete-dispensing-record', {
                   number: `${props.node.invoiceNumber}`,
                 })}
               >

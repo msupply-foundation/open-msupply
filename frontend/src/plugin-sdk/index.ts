@@ -74,6 +74,7 @@ export type {
   InternalOrderLineView,
   InternalOrderView,
   InternalOrderLineInfoPanelProps,
+  InternalOrderSidePanelSectionProps,
   ColumnId,
   ColumnAnchor,
   ColumnValue,
@@ -124,6 +125,29 @@ export { Select } from '../ui/elements/selectors/Select';
 export type { SelectOption } from '../ui/elements/selectors/Select';
 export { FormColumn } from '../ui/layout/Form/FormColumn';
 export { FormColumns } from '../ui/layout/Form/FormColumns';
+export { FormSection } from '../ui/layout/Form/FormSection';
+export type { FormSectionProps } from '../ui/layout/Form/FormSection';
+export { ContentContainer } from '../ui/layout/ContentContainer/ContentContainer';
+export type { ContentContainerProps } from '../ui/layout/ContentContainer/ContentContainer';
+// The settings-form set — what the Stocktake Helper's Settings screen needs
+// (plugins/cook_islands, #489): save/discard actions, the numeric thresholds,
+// the item search box, and the per-item Essential toggle.
+// NumberField and TextField are already in this barrel's graph (CurrencyField
+// wraps NumberField, which renders through TextField), so exporting them keeps
+// two modules alive that ship regardless; Button and ToggleSwitch are new
+// CSS-bearing modules in the SDK chunk (measured: kdd/bundle-size-by-pr).
+export { Button } from '../ui/elements/buttons/Button';
+export type { ButtonProps } from '../ui/elements/buttons/Button';
+export { SaveButton } from '../ui/elements/buttons/StandardButtons';
+export { NumberField } from '../ui/elements/inputs/NumberField';
+export type { NumberFieldProps } from '../ui/elements/inputs/NumberField';
+export { TextField } from '../ui/elements/inputs/TextField';
+export type { TextFieldProps } from '../ui/elements/inputs/TextField';
+export { ToggleSwitch } from '../ui/elements/inputs/ToggleSwitch';
+export type { ToggleSwitchProps } from '../ui/elements/inputs/ToggleSwitch';
+export { matchesSearch } from '../ui/utils/searchText';
+export { SidePanelSection } from '../ui/layout/SidePanel/SidePanel';
+export type { SidePanelSectionProps } from '../ui/layout/SidePanel/SidePanel';
 
 // ── UI kit — icons that carry meaning ───────────────────────────────────────
 /*
@@ -193,6 +217,7 @@ export {
   lowStockItemsPath,
   outboundShipmentListPath,
   outOfStockItemsPath,
+  dispensingListPath,
   prescriptionListPath,
   stockListPath,
   stocktakeListPath,

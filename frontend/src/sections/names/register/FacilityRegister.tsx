@@ -10,7 +10,7 @@ import { HeaderButtons } from '@/ui/layout/Header/HeaderButtons';
 import { Toolbar } from '@/ui/layout/Header/Toolbar';
 import { Button } from '@/ui/elements/buttons/Button';
 import { Alert } from '@/ui/elements/feedback/Alert';
-import { UploadIcon } from '@/ui/icons';
+import { ImportIcon } from '@/ui/icons';
 import {
   DataTable,
   type Column,
@@ -222,7 +222,7 @@ const FacilityRegister: Component = () => {
                   in flight; with none configured it refuses in place rather
                   than opening an empty modal (`.33`). */}
               <Button
-                icon={<UploadIcon />}
+                icon={<ImportIcon />}
                 data-testid="import-properties-button"
                 disabled={definitionsData.loading}
                 onClick={onImport}

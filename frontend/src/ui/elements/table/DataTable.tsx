@@ -1304,6 +1304,9 @@ export function DataTable<T, K extends string, G extends string = never>(
           trigger={<Columns3CogIcon />}
           triggerLabel={t('table.edit-columns')}
           triggerProps={{ title: t('table.edit-columns') }}
+          // The panel's contents carry ids (`table-show-all-columns`, …); so
+          // must what opens them (e2e/TESTIDS.md § Shared ids).
+          triggerTestId="table-columns"
           triggerClass={styles.controlButton}
           class={styles.controlPopover}
         >
