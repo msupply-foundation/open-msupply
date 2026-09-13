@@ -116,7 +116,10 @@ export const CreateStocktakeModal = (props: {
   // scopes which stock to count, so capacity is irrelevant. Read WITHOUT
   // suspending (this modal renders under AppShell's <Suspense>; a pending read
   // there would remount + reset the form — see the estimate resource below).
-  const [locationsData] = createResource(() => params.storeId, fetchLocations);
+  const [locationsData] = createResource(
+    () => params.storeId,
+    storeId => fetchLocations(storeId)
+  );
   const locations = (): Location[] => gated(locationsData) ?? [];
 
   const [form, setForm] = createSignal<FormState>(EMPTY_FORM);

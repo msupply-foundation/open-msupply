@@ -205,11 +205,12 @@ export const navConfig: NavItem[] = [
         permission: 'PRESCRIPTION_REQUEST_QUERY',
       },
       {
-        // The dispensing vertical, relabelled "Dispensing" (its path and spec
-        // folder keep their old names) — "Prescriptions" names the prescriber's
-        // side above.
+        // The dispensing vertical, relabelled "Dispensing" and moved onto a
+        // matching path (issue #551; the old segment redirects, see App.tsx).
+        // Its spec folder keeps the old `prescriptions/` name —
+        // "Prescriptions" now names the prescriber's side above.
         labelKey: 'dispensing',
-        path: 'dispensary/prescription',
+        path: 'dispensary/dispensing',
         permission: 'PRESCRIPTION_QUERY',
       },
       {
@@ -225,7 +226,7 @@ export const navConfig: NavItem[] = [
         // (spec/navigation › supporting destinations).
         supporting: [
           'dispensary/prescription-request',
-          'dispensary/prescription',
+          'dispensary/dispensing',
           'dispensary/encounter',
         ],
       },
@@ -302,9 +303,13 @@ export const navConfig: NavItem[] = [
         path: 'manage/global-preferences',
       },
       {
+        // The same register as Cold chain › Equipment, unscoped by store — so
+        // it takes the same read permission. Without it the entry offers a
+        // real screen to a user whose first query the server refuses.
         labelKey: 'manage-equipment',
         path: 'manage/equipment',
         gate: 'vaccineModule',
+        permission: 'ASSET_QUERY',
       },
       { labelKey: 'campaigns', path: 'manage/campaigns' },
       {
@@ -358,6 +363,12 @@ export const navDestinations: NavItem[] = flattenNav(navConfig);
 // address space (validate.ts HOST_RESERVED_PATHS) — a literal in either file
 // alone would let the two drift and hand a plugin a path the router owns.
 export const DASHBOARD_LEGACY_PATH = 'dashboard';
+
+// The dispensing vertical's pre-#551 address, for the same reason: it was
+// relabelled "Dispensing" and its path moved with the label, leaving App.tsx a
+// redirect route for the old segment — the list and every detail beneath it —
+// outside the registry, and so outside what the registry reserves.
+export const DISPENSING_LEGACY_PATH = 'dispensary/prescription';
 
 // The trail from the top-level section down to a destination, root first — the
 // breadcrumb a page shows (e.g. 'inventory/stocktakes' → [Inventory,

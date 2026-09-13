@@ -113,11 +113,7 @@ export const CustomFieldInput = (props: {
           <CustomFieldOptionMultiSelect
             def={multiField().def}
             value={multiOptionIds(value())}
-            // A locked record renders this one READ-ONLY rather than disabled:
-            // the trigger only summarises the selection, so a control that
-            // can't be opened would hide values (spec/ui-standards/
-            // custom-fields › value types).
-            readOnly={props.disabled}
+            disabled={props.disabled}
             hideLabel={props.hideLabel}
             size={props.size}
             testId={testId()}

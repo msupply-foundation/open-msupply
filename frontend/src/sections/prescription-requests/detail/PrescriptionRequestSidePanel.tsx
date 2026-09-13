@@ -155,7 +155,7 @@ export const PrescriptionRequestSidePanel: Component<
                   data-testid="related-dispensation-link"
                   onClick={() =>
                     navigate(
-                      `/${props.storeId}/dispensary/prescription/${dispensation.id}`
+                      `/${props.storeId}/dispensary/dispensing/${dispensation.id}`
                     )
                   }
                 >

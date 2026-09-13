@@ -114,7 +114,13 @@ export const outboundShipmentListPath = (): string =>
 export const internalOrderListPath = (): string =>
   'replenishment/internal-order';
 
-export const prescriptionListPath = (): string => 'dispensary/prescription';
+// Named for the record it reaches, which the UI calls a dispensing record
+// (issue #551). The export keeps its original name so plugins built against it
+// keep compiling; it is the returned path that moved.
+export const dispensingListPath = (): string => 'dispensary/dispensing';
+
+/** @deprecated Use {@link dispensingListPath} — the vertical is "Dispensing". */
+export const prescriptionListPath = dispensingListPath;
 
 export const stocktakeListPath = (): string => 'inventory/stocktakes';
 
@@ -160,7 +166,10 @@ export const expiringBetweenThresholdsStockPath = (
   secondDays: number
 ): string =>
   listPath(stockListPath(), {
-    expiryDate: dateRange(addDays(today, firstDays), addDays(today, secondDays)),
+    expiryDate: dateRange(
+      addDays(today, firstDays),
+      addDays(today, secondDays)
+    ),
   } satisfies StockFilter);
 
 // ── Items ────────────────────────────────────────────────────────────────────

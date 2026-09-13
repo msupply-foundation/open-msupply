@@ -91,6 +91,8 @@ const BreachModal = ({
       }
       slideAnimation={false}
       title={t('heading.acknowledgeBreach')}
+      // e2e contract ids (frontend/e2e/TESTIDS.md § Cold chain › Monitoring).
+      testId="acknowledge-breach-modal"
     >
       <Box display="flex" flexDirection="column" padding={2}>
         {!!breach && (
@@ -141,7 +143,7 @@ const BreachModal = ({
           </>
         )}
         {!breach?.endDatetime ? (
-          <Box paddingTop={3}>
+          <Box paddingTop={3} data-testid="breach-ongoing-notice">
             <ErrorWithDetails
               error={t('messages.breach-ongoing')}
               details={''}
@@ -159,6 +161,9 @@ const BreachModal = ({
               onChange={event => setComment(event.target.value)}
               value={comment}
               helperText={t('messages.acknowledge-breach-helptext')}
+              slotProps={{
+                htmlInput: { 'data-testid': 'acknowledge-breach-comment' },
+              }}
             />
           </Box>
         )}
