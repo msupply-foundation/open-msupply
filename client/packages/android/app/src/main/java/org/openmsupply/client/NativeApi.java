@@ -124,7 +124,7 @@ public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
     }
 
     /** Fingerprint-store key for the chosen server, matching the identifier
-     * CertWebViewClient.validateNonLocalCertificate has always used, so a
+     * CertWebViewClient.nonLocalFingerprintKey has always spelled, so a
      * server already trusted on this device is still recognised. */
     public static String getChosenFingerprintKey() {
         return chosenHardwareId + "-" + chosenPort;
