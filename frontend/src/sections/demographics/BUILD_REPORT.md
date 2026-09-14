@@ -1,0 +1,125 @@
+# Demographics — build report
+
+**Target stack:** SolidJS + Vite, shared component library in [`src/ui/`](../../ui/), roles resolved through [`spec/ui-standards/components.md`](../../../spec/ui-standards/components.md). Built from [`spec/demographics`](../../../spec/demographics/README.md) (`rules.md` → `contract.md` → `acceptance.md` → `ui-surface.md`), pattern-matched to the reference vertical `src/sections/stocktakes/`, to `src/sections/custom-fields/` (the other draft-edited central grid) and to the patient editor (`src/sections/patients/detail/patientEditor.ts`, the logic-module shape).
+
+**Shape.** One screen (`ui-surface` S1) plus the shared leave confirmation (S2). The whole screen is one draft over one grid, so the vertical is a calculation, a draft store and a save:
+
+| File                    | What it is                                                                                               |
+| ----------------------- | -------------------------------------------------------------------------------------------------------- |
+| `demographics.graphql`  | the two reads and the four writes, with each wire trap noted at its call site                            |
+| `draft.ts`              | the calculation, the grid order, the draft model and the save inputs (pure)                              |
+| `demographicsApi.ts`    | the load and the parallel-then-rates save, in the fixed data-access shape                                |
+| `demographicsEditor.ts` | the screen's behaviour minus rendering: load/seed, edits, New indicator, Cancel, Save, permission mirror |
+| `DemographicsPage.tsx`  | S1 (the grid with in-place cells and header rate inputs, the footer) + S2                                |
+| `index.tsx`             | the route; no guard of its own — both gates are navigation's                                             |
+
+One locale key was minted: `server-error.DemographicIndicatorAlreadyExistsForThisYear` (en only, the spec's wording) — the one domain rejection the screen's own flow can reach that the catalogue lacked (`…HasNoName` was already there). The Manage nav entry and its gates pre-existed in `navConfig`; the build only registers the section in `App.tsx`.
+
+## Anchor coverage
+
+Behaviour anchors: [`spec/demographics/acceptance.md`](../../../spec/demographics/acceptance.md) (`AC-*`; the vertical is not yet reconciled to cases — `OMS-REG-MNG-03` is owed).
+
+| Anchor         | Statement (abbrev.)                                                 | Test                                                                                                                                                      |
+| -------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **A1**         | off-central, the grid still loads by URL                            | `access.test.ts` (client half — see exemptions: this FE redirects instead)                                                                                |
+| **A2**         | off-central, a save is refused as _not a central server_            | `demographicsApi.test.ts` › the off-central refusal reaches the notice as the server's own text                                                           |
+| **A3**         | New indicator refused up front without the permission               | `demographicsEditor.test.ts` › New indicator is refused up front… (+ live, C2)                                                                            |
+| **A4**         | Save refused up front, nothing sent                                 | `demographicsEditor.test.ts` › Save is refused up front and nothing is sent (+ live, C2)                                                                  |
+| **A5**         | the server's own no-permission refusal                              | `demographicsApi.test.ts` › the server's own no-permission refusal raises the permission-denied modal                                                     |
+| **G1**         | general row first, the rest in case-insensitive name order          | `draft.test.ts` › pins the general population row first…; live: the reloaded order (C2)                                                                   |
+| **G2**         | which cells are editable on which row                               | ⚠️ rendering — live a11y tree (C4): `textbox "Current population"` only on row 1, `textbox "Name"` on the rest                                            |
+| **G3**         | the general row reads the screen's label whatever is stored         | ⚠️ rendering — live (C2): stored `General population`, rendered from `label.general-population`                                                           |
+| **G4**         | stored rates show in the headers                                    | `draft.test.ts` › stored rates reach the headers…; `demographicsApi.test.ts` › answers the indicators…                                                    |
+| **G5**         | no stored rates → 0 and flat                                        | `draft.test.ts` (two tests); `demographicsApi.test.ts` › reads the typed RecordNotFound miss…                                                             |
+| **G6**         | more than twenty indicators all listed, no pager                    | live (C2): 33 indicators, 33 rows, no pager; the read's single page is asserted in the api test                                                           |
+| **G7**         | an indicator of another base year is listed and computed alike      | live (C2): `rspec Kids` (2025) and `rspec Neg` (2030) rows compute against the 2024 baseline and rates                                                    |
+| **C1 – C3**    | the arithmetic and per-year rounding                                | `draft.test.ts` › the calculation (three tests, the spec's own figures)                                                                                   |
+| **C4 – C6**    | what a baseline / rate / share change recalculates                  | `draft.test.ts` › a later year's rate…; `demographicsEditor.test.ts` (two tests); live (C2) all three                                                     |
+| **C7**         | a cleared rate reads 0                                              | `demographicsEditor.test.ts` › a cleared rate (or share, or baseline) reads as zero                                                                       |
+| **C8**         | a negative share reads as negative figures                          | `draft.test.ts` › a negative share…; live: the `rspec Neg` row (−50 · −55 · −61 · −67 · −74)                                                              |
+| **C9**         | digit grouping                                                      | rendering — `formatNumber` (`src/intl/formatNumber.test.ts`); live: `1,000` · `1,100` … `2,197`                                                           |
+| **I1 – I6**    | the typed bounds                                                    | the `NumberField` contract (`numberFieldLogic.test.ts`); every one driven live by keystroke (C2)                                                          |
+| **N1**         | New indicator appends a blank row, draft dirty                      | `draft.test.ts` › a blank editable row…; `demographicsEditor.test.ts` › New indicator appends…                                                            |
+| **N2**         | a new row persists and lists in name order after reload             | `draft.test.ts` › a new row is created with…; live (C2): created, reloaded into name order                                                                |
+| **N3**         | blank name → _no name_, nothing created                             | `draft.test.ts` › a blank name is OMITTED…; `demographicsApi.test.ts` › a rejected row does not undo…                                                     |
+| **N4**         | duplicate name → _already exists for this year_                     | `demographicsApi.test.ts` › names the duplicate-name rejection…; live (C2) twice                                                                          |
+| **N5, N6, N8** | case variants distinct; twin years share a group; rename collision  | server rules, confirmed live at spec time; the client sends the name as typed (`draft.test.ts`)                                                           |
+| **N7**         | nothing removes an indicator                                        | by construction — no delete in the schema, no control on the screen                                                                                       |
+| **D1 – D4**    | the group follows the indicator; the general row's label is written | `draft.test.ts` › the general population row is written back under the screen's own label (D4); D1–D3 are the server's, confirmed live at spec time       |
+| **P1**         | first save creates the rates record                                 | `draft.test.ts` › with no record stored…; `demographicsApi.test.ts` + `demographicsEditor.test.ts` › AC-P1                                                |
+| **P2**         | the stored record is updated                                        | `draft.test.ts` › the stored growth-rate record is updated…; live (C2): year 5 → 11 persisted                                                             |
+| **P3**         | a second record for the year is refused                             | `demographicsApi.test.ts` › a rates rejection is reported the same way… (the wire shape; unreachable from the screen)                                     |
+| **P4**         | out-of-range stored rates show and are used                         | `draft.test.ts` › stored rates reach the headers as stored, out-of-range or not                                                                           |
+| **S1**         | pristine → Save and Cancel unavailable                              | `demographicsEditor.test.ts` › a freshly loaded grid is not dirty; live a11y: both `[disabled]`                                                           |
+| **S2**         | Save writes every row then the rates, reloads, clean                | `demographicsApi.test.ts` › writes every row, then the rates…; `demographicsEditor.test.ts` › Save sends the whole draft…                                 |
+| **S3**         | a save that half lands                                              | `demographicsApi.test.ts` › a rejected row does not undo the others…; `demographicsEditor.test.ts` › new rows the server accepted…; live on the wire (C2) |
+| **S4**         | after a failed save the draft stays dirty                           | `demographicsEditor.test.ts` › a rejected save keeps the draft on screen and dirty…; live (C2)                                                            |
+| **S5**         | Cancel restores everything                                          | `demographicsEditor.test.ts` › Cancel returns every value…; live (C2)                                                                                     |
+| **S6, S7**     | the leave confirmation: decline stays, confirm leaves and discards  | ⚠️ dialog interaction — live (C2); the guard is the shared `createConfirmOnLeave`                                                                         |
+| **S8**         | a reload with a dirty draft is held by the browser                  | ⚠️ browser prompt — live (C2): `beforeunload` `defaultPrevented` true while dirty, false when clean                                                       |
+
+### Exemptions (C1: listed, never dropped)
+
+| Anchor                      | Why it is not a colocated test                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **A1**                      | Its premise does not hold in this FE. The destination's two gates are **capability** gates, and navigation's rule for those is that the URL **redirects** (D70; `navGates.routeAccess` → `blocked`), so off-central the grid is never reached by URL — `access.test.ts` asserts exactly that. The server half (the reads answer off-central) was confirmed live at spec time. The demographics spec's "still answers by URL" describes the reference app; a candidate refinement below. |
+| **G2, G3**                  | Which control a cell renders is a rendering fact; `vitest` here is node-only. Read off the running screen's accessibility tree instead (C4 below).                                                                                                                                                                                                                                                                                                                                      |
+| **I1 – I6**                 | The bounds are `NumberField`'s contract (`min`/`max`/`decimalLimit`, the keystroke gate, the blur canonicalisation), owned and unit-tested by the library (`src/ui/elements/inputs/numberFieldLogic.test.ts`). This screen only declares them; every one was driven live by keystroke (C2).                                                                                                                                                                                             |
+| **N5, N6, N8, D1 – D3, P3** | Server behaviour with no client obligation beyond sending the name as typed and the rates as stored — each was fired live against the server at spec time (`contract.md`). Cross-record effects (a group's share reaching a vaccine course) are other verticals' surfaces.                                                                                                                                                                                                              |
+| **S6 – S8**                 | Dialog and browser-prompt interactions — no node-testable seam beyond the shared `createConfirmOnLeave`. Driven live (C2); they belong in the `e2e/` suite this vertical still lacks.                                                                                                                                                                                                                                                                                                   |
+
+## C2 — real-backend legs actually driven
+
+Against the probe central server (`:8070`, `APP__SERVER__OVERRIDE_IS_CENTRAL_SERVER=true`, the throwaway `server/rspec_demog.sqlite` from the spec pass — 33 indicators, rates 10 % every year, `check` granted `EDIT_CENTRAL_DATA`), with the Vite dev server at `:3055` proxied to it, driven headless with Playwright (store SMS Liquica, vaccine module on):
+
+- **The load** — 33 rows, the general population row first (stored name `General population`, rendered from the label), then the read's case-insensitive name order; the header inputs read the stored `10` five times; Save and Cancel disabled. No pager, no row count, no filter bar.
+- **The figures** — general row `1,000` → `1,100 · 1,210 · 1,331 · 1,464 · 1,610` (AC-C2); the 33.33 % row `333` → `366 · 403 · 443 · 487 · 536` (AC-C1/C3); `rspec Neg` at −5 % → `−50 · −55 · −61 · −67 · −74` (AC-C8); `rspec Over` at 150 % → `1,500 …` (a stored out-of-range share, shown as sent).
+- **Recalculation** — baseline `2000` moved every row at once (general `2,200 …`, the 33.33 % row `667` → `734 …`) and enabled Save (AC-C4); year 3 → `0` changed years 3–5 on every row and left 1–2 alone (AC-C5); a share edit moved its row alone (AC-C6).
+- **The typed bounds** — growth `150` → `100`, `2.345` → `2.35` (AC-I5); share `150` → `100`, `−5` → `5`, `12.345` → `12.35` (AC-I1–I3); baseline `12.7` typed → `127` (AC-I4; **pasted** `12.7` rounds to `13` — the field's paste-repair path, not a typed entry); letters on a blank row's share → `0` (AC-I6).
+- **Cancel** — baseline, rate and share back to their loaded values, the unsaved row gone, Save and Cancel disabled (AC-S5).
+- **New indicator** — appended last: blank name, `0 %`, current population `0`, Save enabled (AC-N1).
+- **A save that half lands (AC-S3/S4, twice)** — a changed share (`rspec Kids` 12 → 13), a changed rate (year 4 → 12) and a new row named `rspec Children`: Save answered the footer notice **An error occurred: Demographic indicator already exists for this year** with the raw `DemographicIndicatorAlreadyExistsForThisYear` behind **More information**; Save and Cancel stayed enabled, the rate stayed `12` on screen. A page reload then showed the share **persisted at 13**, the rate **still 10** (the rates were never sent) and the rejected row gone — the partial-persistence rule on the wire. (Share restored to 12 through the screen.)
+- **Correct and retry (AC-N2/P2/S2)** — renaming the rejected row and saving again created it (share 7 → `70 · 77 · 85 · 94 · 103`) and wrote the rates; the grid reloaded with Save disabled, no notice, the new row in name order (`RSPEC CHILDREN` · `rspec Build …` · `rspec Children`), year 5 reading the saved `11`.
+- **The leave guard (AC-S6/S7/S8)** — with a dirty baseline, clicking Manage › Stores raised **Are you sure? / You will lose any changes you have made to this form / Cancel · OK**; Cancel stayed on the grid with `999` intact and Save enabled; OK navigated to Stores, and the grid on return read `1,000` with Save disabled. `beforeunload` is prevented while dirty and not once clean.
+- **An unpermitted user (AC-A3/A4)** — with `check`'s `EDIT_CENTRAL_DATA` row deleted from the datafile and a fresh login: the grid read all 34 rows; New indicator raised **Permission denied — You do not have permission to do that. Missing permission: Edit central data. OK** and added no row; a dirty draft's Save raised the same modal; **no insert or update request left the browser** (request log). Permission re-granted afterwards.
+- **Accessibility (C4)** — the running screen's tree: `navigation "Breadcrumb"` with **Demographics** as the `h1`; `button "New indicator"`; a real `table` with eight `columnheader`s, each year header exposing `textbox "Year N"` (the header text is the input's name); 34 `row`s, the first with `textbox "Current population"` and plain `cell "General population"` / `cell "100%"`, every other with `textbox "Name"` and `textbox "Percentage"` and plain figure cells; `button "Cancel" [disabled]` · `button "Save" [disabled]`. **Zero console errors or warnings** across every run.
+
+**Left unprobed:** the first-save-creates-the-rates leg (the datafile already carries a 2024 record; the insert path is unit-tested at both layers); a genuinely off-central server (the spec pass restarted the server without its central pin — the route redirects here anyway); a read failure on a healthy server; the card view below the compact breakpoint, where the year headers — and so the rate inputs — do not render (a phone-width admin cannot edit growth rates; noted below).
+
+**Probe residue** (`server/rspec_demog.sqlite`, the spec pass's throwaway copy): the 2024 rates were restored to `10` and the probe's `rspec Build …` indicator and its demographic group were deleted by SQL, so the datafile reads as the spec pass left it; activity-log entries for the probe writes remain. No shared database was touched.
+
+## Flags
+
+### Spec gaps hit
+
+- **AC-A1 contradicts navigation's gate model** (above). The demographics `rules.md` § access says a hidden destination "still answers by URL"; navigation's capability gates redirect. Nothing to build for — the redirect is the shared shell's — but the spec should say which it means. Recorded as a candidate refinement.
+- **Every operation, type and locale key named in `contract.md` / `ui-surface.md` resolved.** One en key minted (above); no other catalogue touched. `⚠️ VERIFY` items: none — the spec carries none.
+
+### Roles not built
+
+None needed. Every slot resolved to a ✅ registry role: `Page` / `Header` / `Breadcrumb` / `HeaderButtons` / `DataTable` (detail lines, in-place cells via `cell`) / `TextField` / `NumberField` / `Button` / `ContentFooter` + `ContentFooterActions` / `Alert` + `ErrorDetails` / `ConfirmDialog` / `HStack`.
+
+Two library-side notes, neither an improvisation:
+
+- **A header carrying a control.** The year headers compose the label and a `NumberField` inside the header template (the R&R form's info-tooltip headers are the precedent). The label uses a no-break space so it never wraps beside the input, and `meta.textLabel` names the column in words for the Columns popover. `DataTable` has no declared slot for a header control; if a second screen wants one, that is the registry row to add.
+- **Card view loses the rate inputs.** Below the compact breakpoint the table becomes cards, which have no header row — so the five growth rates are read-only there. Acceptable for a central-admin desktop screen; worth a line in `ui-surface.md` if it is meant.
+
+### Deliberate shapes, per the spec
+
+- **Success is the reload, not a toast** — Save's busy state holds through the reload; the settled grid (Save/Cancel disabled) is the confirmation (`ui-surface` S1 § saved; controls › action feedback). `success.data-saved` stays unused.
+- **The draft stays dirty after a failed save** (rules § saving the draft) — the reference app's release-after-failure is the captured-as-is behaviour the spec did not carry. One consequence the spec does not spell out: new rows the server **accepted** alongside a rejected one now exist, so the editor flips them off `isNew` and a retry updates them (a re-insert would be refused as _already exists_). `demographicsEditor.test.ts` › AC-S3 pins it.
+- **The failure notice stays until the next Save or Cancel**, not until the next edit — the reason is what the correction is made against. (Custom fields clears on the next choice; either reading fits the spec.)
+- **The permission mirror gates the two writes, not the cells** — an unpermitted user can type (the draft dirties, Save enables) and is refused at Save, exactly as AC-A4 states.
+- **The general population row's `100%`** renders through the library's percentage-cell convention (`formatNumber(100)%`, no space) where the spec prose writes _100 %_.
+
+### Decisions the spec could make (candidate refinements)
+
+1. **AC-A1's URL premise** (above): state that on this FE the destination redirects off-central, and move the "reads work off-central" fact to the server-side contract, where it already lives.
+2. **The paste path of the bounds.** `rules.md` § input bounds and AC-I4 describe typed entry ("a decimal separator is not taken"); a pasted `12.7` is repaired to `13` by the field's documented paste path. Worth one clause so a tester with a clipboard is not surprised.
+3. **Accepted-then-retried new rows** (above) — the spec's partial-persistence rule implies it; saying it keeps a second implementation from re-inserting.
+4. **Growth rates on a phone** (card view) — say whether read-only there is intended.
+
+### Follow-ups
+
+- **No `e2e/` suite yet.** The ids are contracted in [`e2e/TESTIDS.md` § Demographics](../../../e2e/TESTIDS.md#demographics) as built (`new-indicator-button`, `growth-rate-year-<n>`, `save-button` / `cancel-button`, `save-error`, the column ids); the suite — where AC-S6–S8, G2, G3 and the keystroke bounds belong — is the next DoD step, along with `/reconcile-behaviours demographics` (OMS-REG-MNG-03) and the exploratory workflow.
+- **Pre-existing, not this build:** `pnpm test` has one red test on this branch's base, `plugins/cook_islands/backend/src/manifest.test.ts` (backend manifest `3.0.0` vs frontend `3.02.00`), and `pnpm lint` carries nine pre-existing errors in plugin test files (`camelcase`, `no-control-regex`). Neither file is touched here; the section's own lint is clean.
