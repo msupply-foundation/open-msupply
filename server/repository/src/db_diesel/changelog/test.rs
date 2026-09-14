@@ -1438,6 +1438,50 @@ async fn test_update_source_site_id_removes_rows_from_legacy_push() {
     .await;
     delete_all_changelog(&connection);
 
+    fn insert_changelog_with_source_site_id(
+        connection: &StorageConnection,
+        cursor: i64,
+        record_id: &str,
+        source_site_id: Option<i32>,
+    ) {
+        #[derive(Insertable)]
+        #[diesel(table_name = changelog_with_links)]
+        struct TestChangelogInsert<'a> {
+            cursor: i64,
+            table_name: ChangelogTableName,
+            record_id: &'a str,
+            row_action: RowActionType,
+            source_site_id: Option<i32>,
+        }
+
+        diesel::insert_into(changelog_with_links::table)
+            .values(&TestChangelogInsert {
+                cursor,
+                table_name: ChangelogTableName::Item,
+                record_id,
+                row_action: RowActionType::Upsert,
+                source_site_id,
+            })
+            .execute(connection.lock().connection())
+            .unwrap();
+    }
+
+    fn source_site_ids_by_record(connection: &StorageConnection) -> Vec<(String, Option<i32>)> {
+        ChangelogRepository::new(connection)
+            .query(
+                ChangelogCondition::True(),
+                CursorAndLimit {
+                    cursor: 0,
+                    limit: 100,
+                },
+            )
+            .unwrap()
+            .rows
+            .into_iter()
+            .map(|row| (row.record_id, row.source_site_id))
+            .collect()
+    }
+
     const CENTRAL_SITE_ID: i32 = 1;
     KeyValueStoreRepository::new(&connection)
         .set_i32(
@@ -1506,48 +1550,4 @@ async fn test_update_source_site_id_removes_rows_from_legacy_push() {
 
     // Idempotent: a second pass has nothing to do.
     assert_eq!(repo.update_source_site_id(0, CENTRAL_SITE_ID).unwrap(), 0);
-}
-
-fn insert_changelog_with_source_site_id(
-    connection: &StorageConnection,
-    cursor: i64,
-    record_id: &str,
-    source_site_id: Option<i32>,
-) {
-    #[derive(Insertable)]
-    #[diesel(table_name = changelog_with_links)]
-    struct TestChangelogInsert<'a> {
-        cursor: i64,
-        table_name: ChangelogTableName,
-        record_id: &'a str,
-        row_action: RowActionType,
-        source_site_id: Option<i32>,
-    }
-
-    diesel::insert_into(changelog_with_links::table)
-        .values(&TestChangelogInsert {
-            cursor,
-            table_name: ChangelogTableName::Item,
-            record_id,
-            row_action: RowActionType::Upsert,
-            source_site_id,
-        })
-        .execute(connection.lock().connection())
-        .unwrap();
-}
-
-fn source_site_ids_by_record(connection: &StorageConnection) -> Vec<(String, Option<i32>)> {
-    ChangelogRepository::new(connection)
-        .query(
-            ChangelogCondition::True(),
-            CursorAndLimit {
-                cursor: 0,
-                limit: 100,
-            },
-        )
-        .unwrap()
-        .rows
-        .into_iter()
-        .map(|row| (row.record_id, row.source_site_id))
-        .collect()
 }
