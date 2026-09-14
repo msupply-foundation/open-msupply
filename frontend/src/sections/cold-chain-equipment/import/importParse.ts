@@ -104,12 +104,30 @@ export const buildTemplateCsv = (
 /**
  * A date cell → the ISO day the wire wants, or null.
  *
- * `DD/MM/YYYY`, and the **year must be four digits** — a two-digit year is
+ * Three shapes, because three are what a spreadsheet actually hands back:
+ * `DD/MM/YYYY` (what our template asks for), `DD-MM-YYYY` (the same day with
+ * the separator Excel substitutes under many Windows locales), and
+ * `YYYY-MM-DD` (ISO, which the server itself already accepts for the mapping
+ * dates — see contract § temperature mapping, so refusing it here made the
+ * client stricter than the wire it writes to).
+ *
+ * `MM/DD/YYYY` is deliberately NOT read: `05/10/2026` is a real date under both
+ * readings and nothing in the file says which was meant, so guessing would
+ * silently import the wrong day. It falls to the warning path, where the user
+ * sees the value was dropped.
+ *
+ * Whichever shape, the **year must be four digits** — a two-digit year is
  * exactly what this rule exists to catch, because `05/10/24` would otherwise
  * import as the year 24 (OMS-REG-CCE-07.7).
  */
 export const parseImportDate = (value: string): string | null => {
-  const parts = value.trim().split('/');
+  const trimmed = value.trim();
+  // ISO leads with its four-digit year, which is what tells it apart from a
+  // dash-separated day-first date — no ambiguity to resolve.
+  const iso = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(trimmed);
+  const parts = iso
+    ? [iso[3]!, iso[2]!, iso[1]!]
+    : trimmed.split(/[/-]/);
   if (parts.length !== 3) return null;
   const [day, month, year] = parts;
   if (!year || year.length !== 4) return null;
@@ -200,11 +218,45 @@ type Lookup = {
 };
 
 /**
+ * Which row of the file names the columns.
+ *
+ * Normally the first — but a spreadsheet does not always leave it there. Excel
+ * and Power Query write a banner row of their own (`Column1 … ColumnN`) above
+ * the real names when a file has been through a text-to-columns step, and that
+ * row is not something the user can see is wrong: on screen it looks like the
+ * file they were given.
+ *
+ * So the header is the first row naming at least one column the import knows.
+ * That is a decision, not a guess — the names are our own, written by our own
+ * template — and it fails loudly rather than silently: a file where NO row
+ * names a known column returns -1, and the caller refuses the whole file
+ * instead of reporting every row as missing values it plainly has.
+ *
+ * Only the first few rows are considered; a banner is a line or two, and
+ * scanning further would start finding "headers" in data.
+ */
+const HEADER_SCAN_ROWS = 5;
+
+export const findHeaderRow = (
+  table: readonly string[][],
+  knownColumns: readonly string[]
+): number => {
+  const known = new Set(knownColumns.map(name => name.trim().toLowerCase()));
+  const limit = Math.min(table.length, HEADER_SCAN_ROWS);
+  for (let index = 0; index < limit; index++) {
+    const names = table[index] ?? [];
+    if (names.some(name => known.has(name.trim().toLowerCase()))) return index;
+  }
+  return -1;
+};
+
+/**
  * Parse the uploaded file into rows, each carrying its own errors and warnings.
  *
  * Header matching is by column NAME, so a column the file does not carry simply
  * reads as blank — which is why the required columns are checked per row rather
- * than up front.
+ * than up front. An empty result means the file itself is unusable (no rows, or
+ * no row naming a column the import knows), which the caller reports as such.
  */
 export const parseImportFile = (
   text: string,
@@ -212,7 +264,9 @@ export const parseImportFile = (
 ): ImportRow[] => {
   const table = parseCsv(text);
   if (table.length < 2) return [];
-  const [header = [], ...body] = table;
+  const headerIndex = findHeaderRow(table, importColumnKeys(lookup.isCentral));
+  if (headerIndex === -1) return [];
+  const [header = [], ...body] = table.slice(headerIndex);
   const columnAt = new Map(
     header.map((name, index) => [name.trim().toLowerCase(), index])
   );
@@ -314,9 +368,11 @@ export const parseImportFile = (
 
     return {
       id: lookup.newId(index),
-      // +2: the header is line 1 and rows are 1-based, so the first body row
-      // is the file's line 2 — the number a user reads in their spreadsheet.
-      lineNumber: index + 2,
+      // The number a user reads in their spreadsheet: rows are 1-based, the
+      // header sits at `headerIndex`, and the first body row is the line after
+      // it. Counted from the header's real position rather than from 1, so a
+      // banner row above it does not shift every reported line by one.
+      lineNumber: headerIndex + index + 2,
       assetNumber,
       catalogueItemCode,
       catalogueItemId,

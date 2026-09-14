@@ -22,14 +22,48 @@ export const toCsv = (
   [fields, ...rows].map(row => row.map(escapeCell).join(',')).join('\r\n');
 
 /*
- * A minimal RFC-4180 reader — quoted fields (with embedded commas, newlines and
- * doubled quotes), CRLF or LF line endings, and a leading BOM. Own the simple:
- * the app already writes its CSVs by hand (domain/reportFiles § toCsv), and a
- * parser dependency would cost more bundle than these thirty lines
- * (CLAUDE.md § keep the bundle small).
+ * Which character separates the fields, decided from the file's FIRST line.
+ *
+ * We write `,`, but a spreadsheet does not read the file back that way: Excel
+ * uses the machine's list separator, which on a great many Windows locales is
+ * `;`. A user who opens one of our templates, fills it in and saves it gets a
+ * semicolon-delimited file that is still, to them, the file we gave them. Read
+ * with a fixed comma it parses as ONE column per row, every header lookup
+ * misses, and every row fails for a missing value it plainly has.
+ *
+ * Decided on the header line alone, and only between the three separators a
+ * spreadsheet actually emits. A quoted cell further down may contain any of
+ * them, but the header is a row of plain column names, so counting there is
+ * safe. A tie, or a file with none of them, stays a comma — one column.
  */
-export const parseCsv = (text: string): string[][] => {
+const SEPARATORS = [',', ';', '\t'] as const;
+
+const sniffSeparator = (source: string): string => {
+  const [header = ''] = source.split(/\r?\n/, 1);
+  let best = ',';
+  let bestCount = 0;
+  for (const candidate of SEPARATORS) {
+    const count = header.split(candidate).length - 1;
+    if (count > bestCount) {
+      best = candidate;
+      bestCount = count;
+    }
+  }
+  return best;
+};
+
+/*
+ * A minimal RFC-4180 reader — quoted fields (with embedded separators, newlines
+ * and doubled quotes), CRLF or LF line endings, and a leading BOM. Own the
+ * simple: the app already writes its CSVs by hand (domain/reportFiles § toCsv),
+ * and a parser dependency would cost more bundle than these forty lines
+ * (CLAUDE.md § keep the bundle small).
+ *
+ * The separator is sniffed per file unless the caller names one.
+ */
+export const parseCsv = (text: string, separator?: string): string[][] => {
   const source = text.replace(/^\uFEFF/, '');
+  const sep = separator ?? sniffSeparator(source);
   const rows: string[][] = [];
   let row: string[] = [];
   let field = '';
@@ -57,7 +91,7 @@ export const parseCsv = (text: string): string[][] => {
       continue;
     }
     if (char === '"') quoted = true;
-    else if (char === ',') endField();
+    else if (char === sep) endField();
     else if (char === '\n') endRow();
     else if (char === '\r') {
       // Swallow the CR of a CRLF; a lone CR also ends the row.
