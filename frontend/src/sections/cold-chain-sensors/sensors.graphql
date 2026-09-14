@@ -1,0 +1,84 @@
+# Cold chain — Sensors (spec/cold-chain-sensors). Two operations: the store's
+# sensor list, and the one mutation this vertical owns. There is no insert and
+# no delete anywhere in the schema for this entity — a device registers itself
+# through the cold-chain API, and retirement is `isActive: false`
+# (contract › retirement).
+
+fragment SensorRow on SensorNode {
+  __typename
+  id
+  name
+  serial
+  type
+  isActive
+  batteryLevel
+  # `location` is the assignment; `assets` is the equipment recorded AT that
+  # location, so it is empty whenever `location` is null (contract › derived
+  # values).
+  location {
+    id
+    code
+    name
+  }
+  assets {
+    ... on AssetConnector {
+      __typename
+      nodes {
+        id
+        assetNumber
+      }
+    }
+  }
+  # The most recent reading only: `nodes` holds at most one, while `totalCount`
+  # counts EVERY reading the sensor has recorded — never read it as a has-a-
+  # reading count (contract ⚠️ wire trap). Hence no totalCount here.
+  latestTemperatureLog {
+    nodes {
+      temperature
+      datetime
+    }
+  }
+  # The ONGOING breach: the resolver answers only a breach that has not ended
+  # (contract › derived values).
+  breach
+}
+
+# The S1 list population. Store-scoped server-side by `storeId` — the resolver
+# intersects any filter with the requested store, and SensorFilterInput carries
+# no store field, so the scope cannot be widened from here. Exactly ONE sort
+# entry is evaluated, and it is the LAST — the schema's own description says
+# "first", but the resolver pops the list (contract ⚠️ wire trap). Send a
+# single-element list and the two readings coincide.
+query sensorsList(
+  $storeId: String!
+  $filter: SensorFilterInput
+  $sort: [SensorSortInput!]
+  $page: PaginationInput
+) {
+  sensors(storeId: $storeId, filter: $filter, sort: $sort, page: $page) {
+    ... on SensorConnector {
+      __typename
+      totalCount
+      nodes {
+        ...SensorRow
+      }
+    }
+  }
+}
+
+# The vertical's only write. `locationId` is a NullableStringUpdate: `{value:
+# id}` assigns, `{value: null}` clears, and OMITTING it leaves the assignment
+# unchanged — the one field on this input with three states.
+#
+# The response union declares UpdateSensorError, but every declared member of
+# UpdateSensorErrorInterface is unreachable: the resolver raises a top-level
+# GraphQL error instead (contract › the error union is decorative). So this
+# selects the success shape only — a failure never reaches the error branch,
+# it fails the whole request and surfaces through the global error path.
+mutation updateSensor($storeId: String!, $input: UpdateSensorInput!) {
+  updateSensor(storeId: $storeId, input: $input) {
+    ... on SensorNode {
+      ...SensorRow
+    }
+  }
+}

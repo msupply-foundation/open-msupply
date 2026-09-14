@@ -73,11 +73,8 @@ mod tests {
         use crate::sync::test::test_data::program_indicator;
         let translator = ProgramIndicatorTranslation;
 
-        let (_, connection, _, _) = setup_all(
-            "test_program_indicator_translation",
-            MockDataInserts::all(),
-        )
-        .await;
+        let (_, connection, _, _) =
+            setup_all("test_program_indicator_translation", MockDataInserts::all()).await;
 
         program_indicator::test_pull_upsert_records()
             .into_iter()

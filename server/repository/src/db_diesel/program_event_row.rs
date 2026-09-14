@@ -3,9 +3,7 @@ use super::StorageConnection;
 use crate::db_diesel::{name_link_row::name_link, name_row::name};
 use crate::diesel_macros::define_linked_tables;
 use crate::repository_error::RepositoryError;
-use crate::{
-    ChangelogRepository, ChangelogSyncType, RowActionType, SourceSiteId, Upsert,
-};
+use crate::{ChangelogRepository, ChangelogSyncType, RowActionType, SourceSiteId, Upsert};
 
 use chrono::NaiveDateTime;
 use diesel::prelude::*;
@@ -93,10 +91,7 @@ impl<'a> ProgramEventRowRepository<'a> {
         Ok(result)
     }
 
-    pub fn find_many_by_id(
-        &self,
-        ids: &[String],
-    ) -> Result<Vec<ProgramEventRow>, RepositoryError> {
+    pub fn find_many_by_id(&self, ids: &[String]) -> Result<Vec<ProgramEventRow>, RepositoryError> {
         Ok(program_event::dsl::program_event
             .filter(program_event::dsl::id.eq_any(ids))
             .load(self.connection.lock().connection())?)

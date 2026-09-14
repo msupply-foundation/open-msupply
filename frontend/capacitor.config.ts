@@ -46,7 +46,36 @@ const config: CapacitorConfig = {
           cleartext: true,
         },
       }
-    : {}),
+    : {
+        // NO allowNavigation, deliberately. Client mode navigates the WebView
+        // to the CHOSEN server's own origin (spec/desktop AC-DT19's Android
+        // sibling; DiscoveryHostPlugin navigate) — any LAN address or name,
+        // undecidable at build time. A wildcard is not the way to say that:
+        // Capacitor feeds allowNavigation to TWO mechanisms and '*' misfires
+        // in both.
+        //
+        // 1. It joins `allowedOriginRules`, which scopes the native bridge
+        //    (Bridge.setAllowedOriginRules → MessageHandler's
+        //    addWebMessageListener) — '*' becomes 'https://*', handing every
+        //    registered plugin to every https origin the WebView reaches.
+        // 2. It joins `authorities`, which registers WebViewLocalServer
+        //    handlers (UriMatcher marks an authority containing '*' as MASK,
+        //    matching every host) — so every text/html navigation to the
+        //    connected server would be fetched in Java by handleProxyRequest,
+        //    on HttpURLConnection's default trust manager. That is the stock
+        //    proxy kdd/android § remote-UI bridge injection rejected, and
+        //    MainActivity's onReceivedSslError cannot rescue it: a
+        //    self-signed server throws there, not in the WebView.
+        //
+        // The chosen server's own links and redirects are granted at RUNTIME
+        // instead, for exactly that one host — DiscoveryHostPlugin's
+        // shouldOverrideLoad, which Bridge.launchIntent consults before its
+        // own mask. cleartext stays for http servers (dev/LAN deployments
+        // announce protocol=http).
+        server: {
+          cleartext: true,
+        },
+      }),
 };
 
 export default config;

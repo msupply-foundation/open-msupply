@@ -163,9 +163,10 @@ impl SessionStore {
     /// alone; the first login that does find a usable hash revokes once, which is the
     /// safe direction - it is also what covers a *second* reset inside the same window.
     pub fn revoke_for_credentials_changed_at_central(&mut self, user_id: &str) -> bool {
-        let previous = self
-            .issued_against
-            .insert(user_id.to_string(), IssuedAgainst::PasswordAcceptedByCentral);
+        let previous = self.issued_against.insert(
+            user_id.to_string(),
+            IssuedAgainst::PasswordAcceptedByCentral,
+        );
 
         match previous {
             Some(IssuedAgainst::StoredHash(_)) => {

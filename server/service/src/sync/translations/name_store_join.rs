@@ -1,8 +1,8 @@
 use repository::{
-    ChangelogRow, ChangelogTableName, EqualFilter, InvoiceFilter, InvoiceRepository,
-    InvoiceType, NameRowRepository, NameRowType, NameStoreJoin, NameStoreJoinFilter,
-    NameStoreJoinRepository, NameStoreJoinRow, NameStoreJoinRowDelete, Row, StorageConnection,
-    StoreFilter, StoreRepository, SyncBufferRow,
+    ChangelogRow, ChangelogTableName, EqualFilter, InvoiceFilter, InvoiceRepository, InvoiceType,
+    NameRowRepository, NameRowType, NameStoreJoin, NameStoreJoinFilter, NameStoreJoinRepository,
+    NameStoreJoinRow, NameStoreJoinRowDelete, Row, StorageConnection, StoreFilter, StoreRepository,
+    SyncBufferRow,
 };
 
 use serde::{Deserialize, Serialize};
@@ -274,7 +274,9 @@ mod tests {
     /// the full source matrix is covered by that translator's test.
     #[actix_rt::test]
     async fn name_store_join_relay_to_legacy_routed_by_source_site() {
-        use repository::{KeyType, KeyValueStoreRepository, SiteRow, SiteRowRepository, SyncVersion};
+        use repository::{
+            KeyType, KeyValueStoreRepository, SiteRow, SiteRowRepository, SyncVersion,
+        };
 
         let (_, connection, _, _) = setup_all(
             "name_store_join_relay_to_legacy_routed_by_source_site",
@@ -702,5 +704,4 @@ mod tests {
             )
         );
     }
-
 }

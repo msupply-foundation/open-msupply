@@ -151,7 +151,20 @@ export const SunIcon = (props: IconProps) => (
   </Stroke>
 );
 
-/* Export / download — arrow pointing down into the tray */
+/* Cold — the cold half of a temperature breach kind (cold-chain monitoring),
+   paired with SunIcon for hot so the direction is never colour alone */
+/* Hugeicons: SnowIcon */
+export const SnowflakeIcon = (props: IconProps) => (
+  <Stroke viewBox="0 0 24 24" {...props}>
+    <path d="M12 2V22M12 2L9.5 4.5M12 2L14.5 4.5M12 22L9.5 19.5M12 22L14.5 19.5" />
+    <path d="M3.33984 7L20.6603 17M3.33984 7L2.42462 10.4151M3.33984 7L6.75491 6.08478M20.6603 17L21.5755 13.5849M20.6603 17L17.2452 17.9152" />
+    <path d="M3.33984 17L20.6603 7M3.33984 17L6.75491 17.9152M3.33984 17L2.42462 13.5849M20.6603 7L17.2452 6.08478M20.6603 7L21.5755 10.4151" />
+  </Stroke>
+);
+
+/* Download — arrow pointing down into the tray. The LITERAL act of saving a
+   file onto the device: a report, a help document, a CSV template. Not the
+   Export half of an Import/Export pair — that is ExportIcon below. */
 /* Hugeicons: Download01Icon */
 export const DownloadIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
@@ -160,7 +173,9 @@ export const DownloadIcon = (props: IconProps) => (
   </Stroke>
 );
 
-/* Import / upload — arrow pointing up out of the tray */
+/* Upload — arrow pointing up out of the tray. The LITERAL act of sending a
+   file from the device: a drop zone, a document upload. Not the Import half of
+   an Import/Export pair — that is ImportIcon below. */
 /* Hugeicons: Upload01Icon */
 export const UploadIcon = (props: IconProps) => (
   <Stroke viewBox="0 0 24 24" {...props}>
@@ -169,6 +184,24 @@ export const UploadIcon = (props: IconProps) => (
   </Stroke>
 );
 
+/*
+ * Import / Export — the data-transfer PAIR, aliased by INTENT rather than by
+ * arrow direction (ui-standards/components § icons: "a screen names an icon by
+ * intent").
+ *
+ * Which way each arrow points is a product decision, not a reading of the
+ * glyph, and screens kept getting the pair inverted because they reached for
+ * the direction words instead: import means data coming IN, so it takes the
+ * arrow pointing INTO the tray, and export means data going OUT. Deciding it
+ * once, here, is what stops the two halves drifting apart across call sites —
+ * and matches the reference app, whose Import shows a down arrow and Export an
+ * up one.
+ *
+ * Use these for the Import/Export pair. Keep DownloadIcon / UploadIcon for the
+ * literal file acts they name — downloading a report is not an export.
+ */
+export const ImportIcon = DownloadIcon;
+export const ExportIcon = UploadIcon;
 /* Save */
 /* Hugeicons: FloppyDiskIcon */
 export const SaveIcon = (props: IconProps) => (

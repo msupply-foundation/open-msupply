@@ -2,7 +2,6 @@ import { graphqlFetch } from '../../api/graphql';
 import type { Page } from '../../ui/utils/createPaginatedSearch';
 import {
   SearchNames,
-  type SearchNamesResult,
   type SearchNamesVariables,
 } from './name.generated';
 
@@ -23,11 +22,6 @@ export type NameOption = {
   isOnHold: boolean;
   isStore: boolean;
 };
-
-type NameNode = Extract<
-  SearchNamesResult['names'],
-  { __typename: 'NameConnector' }
->['nodes'][number];
 
 // Which role the picker narrows to — a customer / supplier / donor /
 // manufacturer are all just `names` filtered by the corresponding
@@ -78,8 +72,22 @@ export const roleFilter = (role: NameRole): NameFilter => {
  * createPaginatedSearch a plain (search, offset) => Page fetcher — the same
  * shape ItemSearch uses (reusing the item module's paginated-search primitive).
  */
-// One name node → the option shape (shared by the pager and the by-id fetch).
-const toOption = (node: NameNode): NameOption => ({
+/**
+ * One name node → the option shape, shared by the pager, the by-id fetch, and
+ * any caller that already HOLDS the name because its own record fetched it —
+ * a picker seeded from a record's stored party shouldn't need a second query
+ * to learn its label. Structurally typed rather than tied to this query's
+ * generated node, so any selection carrying these fields can use it.
+ */
+export const toNameOption = (node: {
+  id: string;
+  name: string;
+  code: string;
+  isSupplier: boolean;
+  isDonor: boolean;
+  isOnHold: boolean;
+  store?: { id: string } | null;
+}): NameOption => ({
   id: node.id,
   name: node.name,
   code: node.code,
@@ -106,7 +114,7 @@ export const fetchNameById = async (
   });
   if (result.kind !== 'success') return undefined;
   const node = result.data.names.nodes[0];
-  return node ? toOption(node) : undefined;
+  return node ? toNameOption(node) : undefined;
 };
 
 export const namePageFetcher =
@@ -146,7 +154,7 @@ export const namePageFetcher =
 
     const { names } = result.data;
     return {
-      nodes: names.nodes.map(toOption),
+      nodes: names.nodes.map(toNameOption),
       totalCount: names.totalCount,
     };
   };

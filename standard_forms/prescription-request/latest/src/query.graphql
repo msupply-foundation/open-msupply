@@ -1,0 +1,44 @@
+query PrescriptionRequestQuery($dataId: String!, $storeId: String!) {
+  prescriptionRequest(storeId: $storeId, id: $dataId) {
+    ... on PrescriptionRequestNode {
+      id
+      prescriptionRequestNumber
+      prescriptionDatetime
+      comment
+      patient {
+        firstName
+        lastName
+        code
+        dateOfBirth
+      }
+      clinician {
+        firstName
+        lastName
+      }
+      diagnosis {
+        description
+      }
+      user {
+        firstName
+        lastName
+      }
+      lines {
+        nodes {
+          numberOfUnits
+          note
+          item {
+            code
+            name
+            unitName
+          }
+        }
+      }
+    }
+  }
+  store(id: $storeId) {
+    ... on StoreNode {
+      id
+      storeName
+    }
+  }
+}

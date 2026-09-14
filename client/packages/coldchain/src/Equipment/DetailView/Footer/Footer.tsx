@@ -61,6 +61,7 @@ export const FooterComponent = ({
                 color="secondary"
                 sx={{ fontSize: '12px' }}
                 onClick={() => navigateUpOne()}
+                data-testid="close-button"
               />
               <ButtonWithIcon
                 shrinkThreshold="lg"
@@ -69,6 +70,7 @@ export const FooterComponent = ({
                 color="error"
                 sx={{ fontSize: '12px' }}
                 onClick={handleDelete}
+                data-testid="delete-button"
               />
               <LoadingButton
                 color="secondary"
@@ -80,6 +82,7 @@ export const FooterComponent = ({
                 startIcon={<SaveIcon />}
                 onClick={showSaveConfirmation}
                 label={t('button.save')}
+                data-testid="save-button"
               />
             </Box>
           </Box>

@@ -1,6 +1,7 @@
 use repository::{
-    CustomFieldDisplayMode, CustomFieldKind, CustomFieldScopeRow, CustomFieldScopeRowRepository,
-    CustomFieldRow, CustomFieldRowRepository, CustomFieldValueType, RepositoryError, StorageConnection,
+    CustomFieldDisplayMode, CustomFieldKind, CustomFieldRow, CustomFieldRowRepository,
+    CustomFieldScopeRow, CustomFieldScopeRowRepository, CustomFieldValueType, RepositoryError,
+    StorageConnection,
 };
 
 /// Stable string identifiers for the code-defined legacy mapping custom_fields.
@@ -418,8 +419,11 @@ mod tests {
 
     #[actix_rt::test]
     async fn seeds_mapping_custom_fields_idempotently() {
-        let (_, connection, _, _) =
-            setup_all("seed_central_mapping_custom_fields", MockDataInserts::none()).await;
+        let (_, connection, _, _) = setup_all(
+            "seed_central_mapping_custom_fields",
+            MockDataInserts::none(),
+        )
+        .await;
 
         let custom_field_repo = CustomFieldRowRepository::new(&connection);
         let table_repo = CustomFieldScopeRowRepository::new(&connection);
@@ -435,7 +439,10 @@ mod tests {
             .find_one_by_id("custom_1")
             .unwrap()
             .expect("missing custom_1");
-        assert_eq!(name_1.id, name_1.key, "key is the id for legacy custom_fields");
+        assert_eq!(
+            name_1.id, name_1.key,
+            "key is the id for legacy custom_fields"
+        );
         assert_eq!(name_1.key, "custom_1");
         assert_eq!(name_1.kind, CustomFieldKind::Legacy);
         assert_eq!(name_1.value_type, CustomFieldValueType::Text);
@@ -470,7 +477,10 @@ mod tests {
             .expect("missing custom_1__patient mapping");
         assert_eq!(patient_mapping.custom_field_id, "custom_1");
         assert_eq!(patient_mapping.scope, "patient");
-        assert_eq!(patient_mapping.display_mode, CustomFieldDisplayMode::Visible);
+        assert_eq!(
+            patient_mapping.display_mode,
+            CustomFieldDisplayMode::Visible
+        );
 
         // sort_order ranks fields by their position in `mapping_custom_fields()`;
         // assert the resulting per-scope display order matches the intended order

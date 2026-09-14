@@ -13,6 +13,7 @@ import { PasswordField } from '../ui/elements/inputs/PasswordField';
 import { Button } from '../ui/elements/buttons/Button';
 import { Alert } from '../ui/elements/feedback/Alert';
 import { ArrowRightIcon, ClockIcon } from '../ui/icons';
+import { ChangeServerAction } from '../ui/layout/ChangeServerAction';
 import { AppLogo } from '../ui/branding/AppLogo';
 import { LanguageSelector } from '../ui/layout/AppShell/LanguageSelector';
 import { changeLanguage, locale, t } from '../intl';
@@ -209,6 +210,16 @@ export const LoginPage: Component = () => {
                   <ClockIcon class={styles.secondaryActionIcon} />
                   {t('login.use-old-interface')}
                 </a>
+                {/* Arriving from the desktop discovery page (spec/desktop §
+                    server selection, AC-DT16): the hand-off names its return
+                    URL in the query string, and this becomes the way to leave
+                    this server for another. A plain anchor — the discovery
+                    page may be a different origin (the shell's own bundled
+                    page), so this is a document navigation, not the router's.
+                    Absent the parameter (every browser/served deployment),
+                    nothing renders. Read once: the URL is fixed while this
+                    page shows. */}
+                <ChangeServerAction testId="login-change-server" />
                 <div class={styles.languageAction}>
                   <LanguageSelector
                     language={locale()}
