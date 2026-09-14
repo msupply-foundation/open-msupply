@@ -1,4 +1,10 @@
-import { createResource, createSignal, For, Show, type Component } from 'solid-js';
+import {
+  createResource,
+  createSignal,
+  For,
+  Show,
+  type Component,
+} from 'solid-js';
 import { useNavigate } from '@solidjs/router';
 import { t } from '../../../intl';
 import { localisedDate } from '../../../intl/formatDateTime';
@@ -16,7 +22,12 @@ import { CopyToClipboardButton } from '../../../ui/elements/buttons/CopyToClipbo
 import { TrashIcon } from '../../../ui/icons';
 import { graphqlFetch } from '../../../api/graphql';
 import { gated } from '../../../api/gated';
-import { asRequestStatus, isEditable } from '../prescriptionRequestStatus';
+import { hasPermission } from '../../../store/storeContext';
+import {
+  asRequestStatus,
+  isEditable,
+  readsDispensations,
+} from '../prescriptionRequestStatus';
 import {
   DeletePrescriptionRequestById,
   GeneratedDispensations,
@@ -56,11 +67,16 @@ export const PrescriptionRequestSidePanel: Component<
   // The generated dispensation(s) — the back-link lookup (contract § the
   // hand-over), keyed on the request + its status so the hand-over refetches.
   // Read non-suspending: the panel lives under the already-open detail.
+  //
+  // GATED ON THE DISPENSING VERTICAL'S OWN READ as well as on the status
+  // (readsDispensations): a prescriber need not hold PRESCRIPTION_QUERY, and
+  // asking without it raises the global permission-denied modal the instant the
+  // hand-over flips the status (issue #637).
   const [dispensations] = createResource(
     () =>
-      isEditable(status())
-        ? undefined
-        : { id: props.node.id, status: status() },
+      readsDispensations(status(), hasPermission)
+        ? { id: props.node.id, status: status() }
+        : undefined,
     async ({ id }) => {
       const result = await graphqlFetch(GeneratedDispensations, {
         storeId: props.storeId,
