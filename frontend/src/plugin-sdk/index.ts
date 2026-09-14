@@ -145,9 +145,35 @@ export { TextField } from '../ui/elements/inputs/TextField';
 export type { TextFieldProps } from '../ui/elements/inputs/TextField';
 export { ToggleSwitch } from '../ui/elements/inputs/ToggleSwitch';
 export type { ToggleSwitchProps } from '../ui/elements/inputs/ToggleSwitch';
-export { matchesSearch } from '../ui/utils/searchText';
+// foldForSearch rides along free: it is matchesSearch's own module, already
+// eager — exported so a plugin filtering thousands of rows can fold its query
+// once per pass instead of paying matchesSearch's per-call query fold.
+export { foldForSearch, matchesSearch } from '../ui/utils/searchText';
 export { SidePanelSection } from '../ui/layout/SidePanel/SidePanel';
 export type { SidePanelSectionProps } from '../ui/layout/SidePanel/SidePanel';
+
+// ── UI kit — host-owned lazy wrappers ───────────────────────────────────────
+/*
+ * Heavy components load as their own host chunk on first render, never as
+ * eager SDK weight (sdk-contract § code splitting; see ./lazyComponents.ts).
+ * Added for the Stocktake Helper's Count log (#491) — a screen's own
+ * sortable/resizable/paged row set is a DataTable, and its date filters are
+ * DateFields (spec/ui-standards/{components,inputs}.md). The type re-exports
+ * are erased at build, so they add nothing eager.
+ */
+export { DataTable, DateField } from './lazyComponents';
+export type { DataTableProps } from '../ui/elements/table/DataTable';
+export type {
+  Column,
+  ColumnIdentity,
+  SortState,
+} from '../ui/elements/table/columnTypes';
+export type {
+  TableConfig,
+  TableConfigKey,
+} from '../ui/elements/table/tableConfig';
+export type { PaginationProps } from '../ui/elements/table/Pagination';
+export type { DateFieldProps } from '../ui/elements/inputs/DateField';
 
 // ── UI kit — icons that carry meaning ───────────────────────────────────────
 /*
@@ -221,6 +247,7 @@ export {
   prescriptionListPath,
   stockListPath,
   stocktakeListPath,
+  stocktakeDetailPath,
 } from './deepLinks';
 
 // ── Data access — the core schema ───────────────────────────────────────────
