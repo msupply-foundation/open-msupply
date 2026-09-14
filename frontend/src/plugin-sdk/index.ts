@@ -157,13 +157,12 @@ export type { SidePanelSectionProps } from '../ui/layout/SidePanel/SidePanel';
  * Heavy components load as their own host chunk on first render, never as
  * eager SDK weight (sdk-contract § code splitting; see ./lazyComponents.ts).
  * Added for the Stocktake Helper's Count log (#491) — a screen's own
- * sortable/resizable/paged row set is a DataTable, and its date filters are
- * DateFields (spec/ui-standards/{components,inputs}.md). The type re-exports
- * are erased at build, so they add nothing eager.
+ * sortable/resizable/paged row set is a DataTable, and its filtering is the
+ * FilterBar chip model (spec/ui-standards/components.md § tables, § filter
+ * bar). The type re-exports are erased at build, so they add nothing eager.
  */
 export {
   DataTable,
-  DateField,
   FilterBar,
   FilterDateRange,
   FilterSelect,
@@ -189,7 +188,6 @@ export type {
   TableConfigKey,
 } from '../ui/elements/table/tableConfig';
 export type { PaginationProps } from '../ui/elements/table/Pagination';
-export type { DateFieldProps } from '../ui/elements/inputs/DateField';
 
 // ── UI kit — icons that carry meaning ───────────────────────────────────────
 /*

@@ -14,7 +14,6 @@
 import { lazy } from 'solid-js';
 import type { Component, JSX } from 'solid-js';
 import type { DataTableProps } from '../ui/elements/table/DataTable';
-import type { DateFieldProps } from '../ui/elements/inputs/DateField';
 import type {
   FilterBarProps,
   FilterDateRangeProps,
@@ -46,18 +45,6 @@ export const DataTable = LazyDataTable as unknown as <
 >(
   props: DataTableProps<T, K, G>
 ) => JSX.Element;
-
-/**
- * The host's calendar-date input (typed entry + corvu calendar popover), as a
- * lazy wrapper — the sanctioned date field; a controlled `value` on a native
- * `<input type="date">` destroys mid-edit segments (kdd/solid-reactivity-
- * pitfalls § binding gotchas) and MUST NOT be used instead.
- */
-export const DateField: Component<DateFieldProps> = lazy(() =>
-  import('../ui/elements/inputs/DateField').then(m => ({
-    default: m.DateField,
-  }))
-);
 
 /*
  * The filter bar family (spec/ui-standards/components.md § Filter bar): the
