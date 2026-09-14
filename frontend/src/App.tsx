@@ -9,7 +9,13 @@ import {
   Switch,
 } from 'solid-js';
 import type { Component, JSX } from 'solid-js';
-import { Navigate, Route, Router, useParams } from '@solidjs/router';
+import {
+  Navigate,
+  Route,
+  Router,
+  useLocation,
+  useParams,
+} from '@solidjs/router';
 import { graphqlFetch } from './api/graphql';
 import { detectLocale, initialiseLocale, isRtl, locale, t } from './intl';
 import { InitialisationStatus } from './api/initialisation.generated';
@@ -18,7 +24,12 @@ import { fetchDisplaySettings } from './api/displaySettings';
 import { authUser, checkAuth, startActivityTracking } from './auth/authContext';
 import { InitialisationPage } from './initialisation/InitialisationPage';
 import { resolveStorePath, StoreGuardLayout } from './store/StoreGuardLayout';
-import { DASHBOARD_LEGACY_PATH, navDestinations } from './nav/navConfig';
+import {
+  DASHBOARD_LEGACY_PATH,
+  DISPENSING_LEGACY_PATH,
+  navDestinations,
+} from './nav/navConfig';
+import { dispensingHref, storeHomeHref } from './nav/legacyPaths';
 import { routerBase } from './nav/storeRelativePath';
 import { DashboardPage } from './sections/dashboard';
 import { stocktakesRoutes } from './sections/stocktakes';
@@ -40,6 +51,9 @@ import { rnrFormsRoutes } from './sections/rnr-forms';
 import { itemsRoutes } from './sections/items';
 import { patientsRoutes } from './sections/patients';
 import { cliniciansRoutes } from './sections/clinicians';
+import { coldChainSensorsRoutes } from './sections/cold-chain-sensors';
+import { coldChainMonitoringRoutes } from './sections/cold-chain-monitoring';
+import { coldChainEquipmentRoutes } from './sections/cold-chain-equipment';
 import { prescriptionsRoutes } from './sections/prescriptions';
 import { prescriptionRequestsRoutes } from './sections/prescription-requests';
 import { masterListsRoutes } from './sections/master-lists';
@@ -99,7 +113,14 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'catalogue/master-lists': masterListsRoutes,
   'dispensary/patients': patientsRoutes,
   'dispensary/clinicians': cliniciansRoutes,
-  'dispensary/prescription': prescriptionsRoutes,
+  // ONE section, TWO destinations: the same list and detail screens, differing
+  // only in whether the list is pinned to the active store (spec/cold-chain-
+  // equipment › rules § the two destinations).
+  'cold-chain/equipment': coldChainEquipmentRoutes,
+  'manage/equipment': coldChainEquipmentRoutes,
+  'cold-chain/sensors': coldChainSensorsRoutes,
+  'cold-chain/monitoring': coldChainMonitoringRoutes,
+  'dispensary/dispensing': prescriptionsRoutes,
   'dispensary/prescription-request': prescriptionRequestsRoutes,
   reports: reportsRoutes,
   settings: settingsRoutes,
@@ -119,11 +140,33 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
  * The legacy `/{storeId}/dashboard` address, answered with the screen it names.
  * Home moved to the store root (spec/navigation § the registry), so this keeps
  * every bookmark, shared link and printed URL made before the move working —
- * arriving at the canonical URL rather than at the not-found page.
+ * arriving at the canonical URL rather than at the not-found page. The query
+ * and fragment ride along, so nothing the address was carrying is dropped on
+ * the way (`location` supplies both).
  */
 const DashboardRedirect: Component = () => {
   const params = useParams();
-  return <Navigate href={`/${params['storeId']}`} />;
+  const location = useLocation();
+  return <Navigate href={storeHomeHref(params['storeId'] ?? '', location)} />;
+};
+
+/**
+ * The legacy `/{storeId}/dispensary/prescription` addresses, answered with the
+ * screen they name. The dispensing vertical was relabelled "Dispensing" and its
+ * path moved with the label (issue #551), so this keeps every bookmark, shared
+ * link and plugin deep link made under the old segment working — including the
+ * detail addresses, whose trailing segments are carried across unchanged, and
+ * the `?query=…` a filtered, sorted or paged list keeps its state in, which
+ * would otherwise be answered with the unfiltered list.
+ */
+const DispensingRedirect: Component = () => {
+  const params = useParams();
+  const location = useLocation();
+  return (
+    <Navigate
+      href={dispensingHref(params['storeId'] ?? '', params['rest'], location)}
+    />
+  );
 };
 
 export const App: Component = () => {
@@ -267,6 +310,17 @@ export const App: Component = () => {
                          cannot drift apart. */
                       path={`/${DASHBOARD_LEGACY_PATH}`}
                       component={DashboardRedirect}
+                    />
+                    {/* Likewise for the dispensing vertical's old segment
+                      (issue #551) — both the list and any detail beneath it,
+                      and likewise through the reserved constant. */}
+                    <Route
+                      path={`/${DISPENSING_LEGACY_PATH}/*rest`}
+                      component={DispensingRedirect}
+                    />
+                    <Route
+                      path={`/${DISPENSING_LEGACY_PATH}`}
+                      component={DispensingRedirect}
                     />
                     <For each={Object.entries(sectionRoutes)}>
                       {([path, routes]) => (

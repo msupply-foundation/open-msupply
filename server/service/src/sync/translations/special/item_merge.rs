@@ -3,7 +3,9 @@ use repository::{ChangelogTableName, StorageConnection, SyncBufferRow};
 use crate::sync::{
     translations::{
         item::ItemTranslation,
-        special::merge::{apply_item_merge, build_central_merge_message, MergeMessageBody, MergeOutcome},
+        special::merge::{
+            apply_item_merge, build_central_merge_message, MergeMessageBody, MergeOutcome,
+        },
         IntegrationOperation, PullTranslateResult, SyncTranslation,
     },
     CentralServerConfig,
@@ -49,9 +51,7 @@ impl SyncTranslation for ItemMergeTranslation {
 
 #[cfg(test)]
 mod tests {
-    use crate::sync::{
-        synchroniser::integrate_and_translate_sync_buffer,
-    };
+    use crate::sync::synchroniser::integrate_and_translate_sync_buffer;
 
     use repository::{
         mock::MockDataInserts, test_db::setup_all, ItemLinkRow, ItemLinkRowRepository, SyncAction,
@@ -109,8 +109,7 @@ mod tests {
         SyncBufferRepository::new(&connection)
             .insert_many(&sync_records)
             .unwrap();
-        integrate_and_translate_sync_buffer(&connection, None, 0, true)
-            .unwrap();
+        integrate_and_translate_sync_buffer(&connection, None, 0, true).unwrap();
 
         let item_link_repo = ItemLinkRowRepository::new(&connection);
         let mut item_links = item_link_repo.find_many_by_item_id("item_c").unwrap();
@@ -129,8 +128,7 @@ mod tests {
             .insert_many(&sync_records)
             .unwrap();
 
-        integrate_and_translate_sync_buffer(&connection, None, 0, true)
-            .unwrap();
+        integrate_and_translate_sync_buffer(&connection, None, 0, true).unwrap();
 
         let item_link_repo = ItemLinkRowRepository::new(&connection);
         let mut item_links = item_link_repo.find_many_by_item_id("item_c").unwrap();

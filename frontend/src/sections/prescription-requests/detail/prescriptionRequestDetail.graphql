@@ -87,6 +87,12 @@ query requestDiagnosesActive {
 # The generated dispensation (contract § the hand-over): the dispensing list
 # read filtered by the back-link. The top-level type argument selects the
 # prescription permission, matching the dispensing list's own read.
+#
+# ⚠️ THE CALLER MUST GATE THIS ON `PRESCRIPTION_QUERY` (readsDispensations).
+# That is the DISPENSING vertical's read, which this vertical's own users need
+# not hold (contract § permissions), so an ungated call answers Forbidden and
+# raises the global permission-denied modal — issue #637, which it did the
+# instant the hand-over flipped the status.
 query generatedDispensations(
   $storeId: String!
   $prescriptionRequestId: EqualFilterStringInput!

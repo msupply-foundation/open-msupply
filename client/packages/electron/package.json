@@ -10,7 +10,9 @@
     "package": "electron-forge package",
     "premake": "electron-rebuild",
     "make": "node updateElectronVersion.js && prettier --write package.json && electron-forge make",
-    "eslint": "eslint ./src"
+    "eslint": "eslint ./src",
+    "//stage-discovery-page": "Packaging stages the discovery page through a forge prePackage hook (forge.config.ts) so it runs for `make` too, not just `package`. This script is for staging it by hand.",
+    "stage-discovery-page": "node ../../../frontend/scripts/prune-discovery-dist.mjs ../../../frontend/dist ./discovery-page"
   },
   "author": {
     "name": "mSupply Foundation"

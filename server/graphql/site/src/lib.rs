@@ -24,11 +24,7 @@ impl CentralSiteMutations {
         upsert_site(ctx, input)
     }
 
-    pub async fn delete_site(
-        &self,
-        ctx: &Context<'_>,
-        site_id: i32,
-    ) -> Result<DeleteSiteResponse> {
+    pub async fn delete_site(&self, ctx: &Context<'_>, site_id: i32) -> Result<DeleteSiteResponse> {
         delete_site(ctx, site_id)
     }
 

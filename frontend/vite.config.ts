@@ -111,6 +111,21 @@ export default defineConfig(({ mode }) => {
     // every asset reference to match and exposes it at runtime as
     // import.meta.env.BASE_URL (read by <Router base> in src/App.tsx).
     base: process.env.VITE_BASE_PATH || '/',
+    build: {
+      // The two pages of the one build (kdd/bundling § Second entry): the
+      // served app (index) and the shells' bundled discovery page
+      // (spec/desktop) — one module graph, one tree-shake, so the page shares
+      // the app's intl/UI chunks instead of duplicating them in a second
+      // build. sharedModulesPlugin appends its facade entries to this map and
+      // injects the plugin import map into the `index` page only.
+      // The manifest drives scripts/prune-discovery-dist.mjs (the desktop
+      // shell's payload) and scripts/bundle-size.mjs (the bundle ledger's
+      // per-page measurement, kdd/bundle-size-by-pr.md).
+      manifest: true,
+      rollupOptions: {
+        input: { index: 'index.html', discovery: 'discovery.html' },
+      },
+    },
     define: {
       LANG_VERSION: JSON.stringify(
         mode === 'production' ? String(Date.now()) : 'dev'

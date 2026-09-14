@@ -1,9 +1,4 @@
-import {
-  createResource,
-  createSignal,
-  Show,
-  type Component,
-} from 'solid-js';
+import { createResource, createSignal, Show, type Component } from 'solid-js';
 import { useNavigate, useParams } from '@solidjs/router';
 import { graphqlFetch } from '../../../api/graphql';
 import { gated } from '../../../api/gated';
@@ -55,6 +50,7 @@ import {
   type PrescriptionRequestEditFields,
 } from './PrescriptionRequestSidePanel';
 import { PrescriptionRequestStatusFooter } from './PrescriptionRequestStatusFooter';
+import { ExportPrintAction } from './actions/ExportPrintAction';
 import { RequestLineEditModal } from './edit-modal/RequestLineEditModal';
 import { EditPatientModal } from '../../patients';
 
@@ -98,7 +94,8 @@ const PrescriptionRequestDetailView: Component = () => {
             : undefined,
       });
       if (result.kind !== 'success') return undefined;
-      return result.data.prescriptionRequest.__typename === 'PrescriptionRequestNode'
+      return result.data.prescriptionRequest.__typename ===
+        'PrescriptionRequestNode'
         ? result.data.prescriptionRequest
         : undefined;
     }
@@ -113,9 +110,7 @@ const PrescriptionRequestDetailView: Component = () => {
   const rows = (): Line[] =>
     (info()?.lines.nodes ?? [])
       .slice()
-      .sort((a, b) =>
-        (a.item?.name ?? '').localeCompare(b.item?.name ?? '')
-      );
+      .sort((a, b) => (a.item?.name ?? '').localeCompare(b.item?.name ?? ''));
 
   const tableConfig = createTableConfig({
     tableId: 'prescription-request-detail',
@@ -249,6 +244,12 @@ const PrescriptionRequestDetailView: Component = () => {
                       {t('button.add-item')}
                     </Button>
                   </Show>
+                  {/* Export/Print — a read, so offered at every status
+                      (AC-E1). */}
+                  <ExportPrintAction
+                    requestId={node().id}
+                    leadingAction={disabled()}
+                  />
                   <Show when={!sidePanelOpen()}>
                     <Button
                       variant="secondary"

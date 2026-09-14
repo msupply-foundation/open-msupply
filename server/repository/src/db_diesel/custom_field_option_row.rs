@@ -185,12 +185,7 @@ mod tests {
         let repo = CustomFieldOptionRowRepository::new(&connection);
         // id order is a/b/c/d; ranks reorder to c, a, b, with unranked `d` (`''`)
         // sorting before all of them (empty string < any digit string).
-        for (opt_id, rank) in [
-            ("a", "000002"),
-            ("b", "000003"),
-            ("c", "000001"),
-            ("d", ""),
-        ] {
+        for (opt_id, rank) in [("a", "000002"), ("b", "000003"), ("c", "000001"), ("d", "")] {
             repo.upsert_one(&CustomFieldOptionRow {
                 id: opt_id.to_string(),
                 custom_field_id: "field".to_string(),

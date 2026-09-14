@@ -136,8 +136,8 @@ impl<'a> MasterListLineRepository<'a> {
                         .filter(item_store_join::store_id.eq(store_id));
                 }
 
-                query = query
-                    .filter(master_list_line::item_id.eq_any(item_ids_for_ignore_for_orders));
+                query =
+                    query.filter(master_list_line::item_id.eq_any(item_ids_for_ignore_for_orders));
             }
         }
 

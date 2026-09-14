@@ -22,6 +22,10 @@ import {
   itemsOutOfStockRecentlyUsedHref,
   itemsOverstockedHref,
   outboundNotShippedHref,
+  prescriptionRequestListHref,
+  prescriptionRequestsDispensedThisWeekHref,
+  prescriptionRequestsReadyHref,
+  thisWeekWindow,
 } from './statLinks';
 
 // The stat links' navigation correspondence (spec/dashboard/rules.md §
@@ -149,6 +153,53 @@ describe('distribution links', () => {
     expect(filterOf(customerRequisitionEmergencyHref('s1'))).toMatchObject(
       filterOf(customerRequisitionNewHref('s1'))
     );
+  });
+});
+
+describe('prescription links', () => {
+  // OMS-REG-DB-01.65 — the panel title opens the prescriber's own list
+  // (the navigation registry's "Prescriptions"), unfiltered.
+  it('the prescriptions panel title opens the request list unfiltered', () => {
+    expect(prescriptionRequestListHref('s1')).toBe(
+      '/s1/dispensary/prescription-request'
+    );
+  });
+
+  // OMS-REG-DB-01.63 — ready to dispense is a status, in the list's own
+  // multi-select vocabulary.
+  it('OMS-REG-DB-01.63: ready-to-dispense filters status to Ready to dispense', () => {
+    expect(filterOf(prescriptionRequestsReadyHref('s1'))).toEqual({
+      status: { equalAny: ['READY_TO_DISPENSE'] },
+    });
+  });
+
+  // OMS-REG-DB-01.64 — dispensed this week is the dispensed-datetime
+  // window and nothing else: no status key, since only a dispensed request
+  // carries the datetime at all.
+  it('OMS-REG-DB-01.64: dispensed-this-week is the dispensed window, with no status', () => {
+    const filter = filterOf(
+      prescriptionRequestsDispensedThisWeekHref('s1', wednesday)
+    );
+    expect(filter).toEqual({
+      dispensedDatetime: {
+        afterOrEqualTo: new Date(2026, 6, 20).toISOString(),
+        beforeOrEqualTo: new Date(2026, 6, 26, 23, 59, 59, 999).toISOString(),
+      },
+    });
+    expect(filter).not.toHaveProperty('status');
+  });
+
+  // The count sends this window as a variable while the link restates it as a
+  // filter: one expression, so a number and its list cannot disagree — and it
+  // is the same week the inbound stat is bounded by.
+  it('shares one week window with the inbound this-week link', () => {
+    expect(
+      filterOf(prescriptionRequestsDispensedThisWeekHref('s1', wednesday))
+        .dispensedDatetime
+    ).toEqual(thisWeekWindow(wednesday));
+    expect(
+      filterOf(inboundThisWeekHref('s1', wednesday)).createdDatetime
+    ).toEqual(thisWeekWindow(wednesday));
   });
 });
 

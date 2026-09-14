@@ -3047,6 +3047,12 @@ export type DraftStockOutLineNode = {
   sellPricePerPack: Scalars['Float']['output'];
   stockLineId: Scalars['String']['output'];
   stockLineOnHold: Scalars['Boolean']['output'];
+  /**
+   * The item's supplier comment, repeated on every draft row of that item so
+   * the editor can show one field and echo it back on save. Null on a batch
+   * with no invoice line yet.
+   */
+  transferComment?: Maybe<Scalars['String']['output']>;
   volumePerPack?: Maybe<Scalars['Float']['output']>;
   vvmStatus?: Maybe<VvmstatusNode>;
   vvmStatusId?: Maybe<Scalars['String']['output']>;
@@ -4441,11 +4447,11 @@ export type InsertPrescriptionLineResponseWithId = {
 };
 
 export type InsertPrescriptionRequestInput = {
+  clinicianId?: InputMaybe<Scalars['String']['input']>;
   diagnosisId?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['String']['input'];
   patientId: Scalars['String']['input'];
   prescriptionDatetime?: InputMaybe<Scalars['DateTime']['input']>;
-  programId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type InsertPrescriptionRequestResponse = PrescriptionRequestNode;
@@ -5204,6 +5210,17 @@ export type InvoiceLineNode = {
   purchaseOrderLine?: Maybe<PurchaseOrderLineNode>;
   reasonOption?: Maybe<ReasonOptionNode>;
   receivedNumberOfPacks?: Maybe<Scalars['Float']['output']>;
+  /**
+   * The line of the shipment's linked requisition carrying the same item.
+   * Null when the shipment has no requisition link, or the order has no line
+   * for the item. Matched on item alone — there is no per-line link — so
+   * every batch of one item resolves the same order line.
+   *
+   * ⚠️ `InvoiceRow.requisition_id` is not store-scoped: a link that arrived
+   * by sync can resolve another store's requisition. `requestedQuantity`
+   * means the same on both sides of a pair, so the figure stays right.
+   */
+  requisitionLine?: Maybe<RequisitionLineNode>;
   /** @deprecated Since 2.8.0. Use reason_option instead */
   returnReason?: Maybe<ReturnReasonNode>;
   /** @deprecated Since 2.8.0. Use reason_option instead */
@@ -5216,6 +5233,14 @@ export type InvoiceLineNode = {
   taxPercentage?: Maybe<Scalars['Float']['output']>;
   totalAfterTax: Scalars['Float']['output'];
   totalBeforeTax: Scalars['Float']['output'];
+  /**
+   * The supplying store's explanation of why the quantity sent differs from
+   * the quantity requested (spec/inbound-shipments rules.md § requested
+   * quantity and supplier comment). Authored on the outbound side and
+   * carried across by the shipment transfer — read-only on an inbound
+   * shipment: no inbound mutation input accepts it.
+   */
+  transferComment?: Maybe<Scalars['String']['output']>;
   type: InvoiceLineNodeType;
   volumePerPack: Scalars['Float']['output'];
   vvmStatus?: Maybe<VvmstatusNode>;
@@ -5248,6 +5273,8 @@ export enum InvoiceLineSortFieldInput {
   LocationName = 'locationName',
   /** Invoice line pack size */
   PackSize = 'packSize',
+  /** Units requested for the line's item on the invoice's linked requisition */
+  RequestedQuantity = 'requestedQuantity',
 }
 
 export type InvoiceLineSortInput = {
@@ -7532,6 +7559,13 @@ export type OutboundShipmentLineInput = {
   reasonOptionId?: InputMaybe<Scalars['String']['input']>;
   receivedNumberOfPacks?: InputMaybe<Scalars['Float']['input']>;
   stockLineId: Scalars['String']['input'];
+  /**
+   * This store's reason for issuing a different quantity than the customer
+   * requested. One value per ITEM — send the same one on every line of the
+   * item. ⚠️ Like `receivedNumberOfPacks`, the set-save OVERWRITES it, so
+   * omitting it on an updated line CLEARS the stored value.
+   */
+  transferComment?: InputMaybe<Scalars['String']['input']>;
   vvmStatusId?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -8005,6 +8039,14 @@ export type PrescriptionRequestLineNode = {
 
 export type PrescriptionRequestNode = {
   __typename: 'PrescriptionRequestNode';
+  clinician?: Maybe<ClinicianNode>;
+  /**
+   * The clinician the request names — resolved through `clinician_link`,
+   * so this is the clinician's own id and stays right across a merge. Null
+   * when none was chosen; distinct from `user`, which is who entered the
+   * request (spec/prescription-requests § who is recorded).
+   */
+  clinicianId?: Maybe<Scalars['String']['output']>;
   comment?: Maybe<Scalars['String']['output']>;
   createdDatetime: Scalars['DateTime']['output'];
   /**
@@ -8029,16 +8071,13 @@ export type PrescriptionRequestNode = {
   patientId: Scalars['String']['output'];
   prescriptionDatetime: Scalars['DateTime']['output'];
   prescriptionRequestNumber: Scalars['Int']['output'];
-  program?: Maybe<ProgramNode>;
-  programId?: Maybe<Scalars['String']['output']>;
   readyDatetime?: Maybe<Scalars['DateTime']['output']>;
   status: PrescriptionRequestNodeStatus;
   storeId: Scalars['String']['output'];
   /**
-   * The user who entered the request — and so, the prescriber
-   * (spec/prescription-requests § who prescribed). There is no clinician
-   * field on this node: the picker was removed, and `created_by` is the
-   * sole record of who prescribed.
+   * The account that ENTERED the request. Never presented as the
+   * prescriber, and not the same fact as `clinician`
+   * (spec/prescription-requests § who is recorded).
    */
   user?: Maybe<UserNode>;
 };
@@ -9845,6 +9884,7 @@ export enum ReportContext {
   OutboundShipment = 'OUTBOUND_SHIPMENT',
   Patient = 'PATIENT',
   Prescription = 'PRESCRIPTION',
+  PrescriptionRequest = 'PRESCRIPTION_REQUEST',
   PurchaseOrder = 'PURCHASE_ORDER',
   Repack = 'REPACK',
   Report = 'REPORT',
@@ -12276,12 +12316,11 @@ export type UpdatePrescriptionLineResponseWithId = {
 
 export type UpdatePrescriptionRequestInput = {
   /**
-   * The clinician the generated dispensation names. Read ONLY alongside
-   * `status: READY_TO_DISPENSE` — a request holds no clinician of its own,
-   * so without the hand-over there is nothing for this to write and it is
-   * dropped.
+   * The clinician the request names — an ordinary editable field, like the
+   * patient beside it, and what fills the generated dispensation's own
+   * clinician at the hand-over.
    */
-  clinicianId?: InputMaybe<Scalars['String']['input']>;
+  clinicianId?: InputMaybe<NullableStringUpdate>;
   comment?: InputMaybe<NullableStringUpdate>;
   /**
    * Patch of customFields key -> value; a JSON null deletes that key. Keys
@@ -12292,7 +12331,6 @@ export type UpdatePrescriptionRequestInput = {
   id: Scalars['String']['input'];
   patientId?: InputMaybe<Scalars['String']['input']>;
   prescriptionDatetime?: InputMaybe<Scalars['DateTime']['input']>;
-  programId?: InputMaybe<NullableStringUpdate>;
   status?: InputMaybe<UpdatePrescriptionRequestStatusInput>;
 };
 

@@ -104,12 +104,16 @@ export default tseslint.config(
       '**/*.generated.ts',
       '**/*.css.d.ts',
       'codegen/**', // CommonJS (.cjs) with its own node:test suite
-      // The COUNTRY plugins' backend halves: BoaJS code built by the
-      // open-msupply client toolchain, plus its prebuilt shipped artifact —
-      // vendored, so not this repo's lint domain
-      // (plugins/civ/backend/README.md). The reference backend plugin
-      // (examples/*/backend) is ours and IS linted, below.
-      'plugins/*/backend/**',
+      // CIV's backend half. It BUILDS here (vite/backendPluginBuild.ts) and
+      // is type-checked here (tsconfig.backend-plugins.json), but its source
+      // arrived from msupply-foundation/civ-plugins formatted to that repo's
+      // conventions; #417 carries bringing it under ESLint and Prettier,
+      // first reformat and all (plugins/civ/backend/README.md). Named rather
+      // than globbed as `plugins/*/backend/**`: backend halves written HERE —
+      // the reference plugin's and cook_islands' — are linted, below.
+      'plugins/civ/backend/**',
+      // A prebuilt bundle is a build artifact wherever it appears.
+      'plugins/*/backend/prebuilt/**',
     ],
   },
 
@@ -216,20 +220,29 @@ export default tseslint.config(
   },
 
   /*
-   * The reference BACKEND plugin (examples/<code>/backend) — the half that
-   * runs in the server's BoaJS engine. No Solid, no DOM, and deliberately NO
-   * `globals.browser`: the only globals it has are the host functions the
-   * engine binds, which the plugin declares ambiently (its `host.d.ts`), so an
-   * accidental `document` or `window` should be an undefined-variable error
-   * rather than something the config quietly permits. `no-console` is absent
+   * The BACKEND halves written here — the reference plugin
+   * (examples/<code>/backend) and cook_islands' — which run in the server's
+   * BoaJS engine. No Solid, no DOM, and deliberately NO `globals.browser`:
+   * the only globals they have are the host functions the engine binds, which
+   * each plugin declares ambiently (its `host.d.ts`), so an accidental
+   * `document` or `window` should be an undefined-variable error rather than
+   * something the config quietly permits. `no-console` is absent
    * for the same reason — there is no console in the engine, so a stray
    * `console.log` is already an error here, and `log()` is the way out.
    *
-   * The country plugins' vendored backend halves are ignored above; this one
-   * is ours and builds in this repo, so it answers to the shared rules.
+   * These are written in this repo and owned outright, so they answer to the
+   * shared rules. CIV's backend half builds here too, but stays lint-ignored
+   * above until #417 reformats the source it arrived with.
    */
   {
-    files: ['examples/*/backend/**/*.ts'],
+    files: [
+      'examples/*/backend/**/*.ts',
+      'plugins/cook_islands/backend/**/*.ts',
+      // The wire contract both halves import. Type-only, so it needs the TS
+      // parser and nothing else — and it sits outside `src/`, the only plugin
+      // path the app block covers.
+      'plugins/cook_islands/shared/**/*.ts',
+    ],
     extends: [js.configs.recommended, tseslint.configs.recommended],
     languageOptions: {
       parserOptions: { ecmaVersion: 2022, sourceType: 'module' },
@@ -254,6 +267,8 @@ export default tseslint.config(
     files: [
       'src/**/*.{ts,tsx}',
       'plugins/*/src/**/*.{ts,tsx}',
+      'plugins/cook_islands/backend/**/*.ts',
+      'plugins/cook_islands/shared/**/*.ts',
       'examples/**/*.{ts,tsx}',
       '*.config.{ts,js}',
       'scripts/**/*.mjs',
