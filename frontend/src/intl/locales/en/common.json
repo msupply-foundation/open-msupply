@@ -490,6 +490,7 @@
   "error.go-to-home": "Go to Home",
   "error.help-document-title-required": "Please enter a title before uploading a file.",
   "error.immunisations-not-found": "Immunizations not found",
+  "error.import-columns-not-recognised": "The file's columns were not recognised. Its heading row must name the columns as the template does — download the template to compare.",
   "error.import-failed": "Import failed: {{error}}",
   "error.inbound-shipment-not-editable": "Inbound shipment is not editable.",
   "error.inbound-shipments-not-verified": "Cannot finalise this purchase order because there are external inbound shipments that have not been verified.",

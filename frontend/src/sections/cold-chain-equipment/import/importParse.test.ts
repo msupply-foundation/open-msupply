@@ -195,8 +195,128 @@ describe('OMS-REG-CCE-07.6 / .7 — the four dates are soft', () => {
   });
 
   it('refuses a value that is not three parts', () => {
-    expect(parseImportDate('2024-02-01')).toBeNull();
     expect(parseImportDate('')).toBeNull();
+    expect(parseImportDate('2024')).toBeNull();
+    expect(parseImportDate('01/02')).toBeNull();
+  });
+
+  /*
+   * Three shapes are read, because three are what a spreadsheet hands back. The
+   * dash form is the same day-first date with the separator Excel substitutes
+   * under many Windows locales; ISO is what the server itself already accepts
+   * for the mapping dates, so refusing it here made the client stricter than
+   * the wire it writes to.
+   */
+  it('reads a dash-separated day-first date, as Excel writes it', () => {
+    expect(parseImportDate('14-09-2026')).toBe('2026-09-14');
+    expect(parseImportDate('01-02-2024')).toBe('2024-02-01');
+  });
+
+  it('reads ISO, which the server already accepts for the mapping dates', () => {
+    expect(parseImportDate('2024-02-01')).toBe('2024-02-01');
+    expect(parseImportDate('2026-09-14')).toBe('2026-09-14');
+  });
+
+  it('tells ISO from a dashed day-first date by which end carries the year', () => {
+    // Four digits leading = ISO; four digits trailing = day-first. Neither
+    // reading is a guess.
+    expect(parseImportDate('2024-03-05')).toBe('2024-03-05');
+    expect(parseImportDate('05-03-2024')).toBe('2024-03-05');
+  });
+
+  it('still refuses a two-digit year in every shape', () => {
+    expect(parseImportDate('05-10-24')).toBeNull();
+    expect(parseImportDate('24-10-05')).toBeNull();
+  });
+
+  it('still refuses an impossible day in the dash and ISO shapes', () => {
+    expect(parseImportDate('31-02-2024')).toBeNull();
+    expect(parseImportDate('2024-02-31')).toBeNull();
+    expect(parseImportDate('2024-13-01')).toBeNull();
+  });
+});
+
+describe('a file that has been round-tripped through Excel', () => {
+  /*
+   * All three at once, which is what a real returned template looks like: the
+   * banner row, semicolons for separators, and dashes in the dates. Taken from
+   * a file a user could not import (2026-09-15); each defect alone was enough
+   * to fail every row in it.
+   */
+  const EXCEL = [
+    'Column1;Column2;Column3;Column4;Column5;Column6;Column7;Column8;Column9;Column10',
+    H.split(',').join(';'),
+    'CCE-1;E003/059;14-09-2026;14-09-2036;14-09-2026;14-09-2027;ADF123568;status.functioning;;',
+    'CCE-2;E003/059;15-09-2026;;;;ADF123569;status.functioning;;',
+  ].join('\r\n');
+
+  it('imports, where any one of the three defects failed every row', () => {
+    const rows = parseImportFile(EXCEL, lookup());
+    expect(rows).toHaveLength(2);
+    expect(hasErrors(rows)).toBe(false);
+    expect(canImport(rows)).toBe(true);
+  });
+
+  it('reads the values, not just the shape', () => {
+    const [first] = parseImportFile(EXCEL, lookup());
+    expect(first?.assetNumber).toBe('CCE-1');
+    expect(first?.catalogueItemId).toBe('item-1');
+    expect(first?.serialNumber).toBe('ADF123568');
+    expect(first?.installationDate).toBe('2026-09-14');
+    expect(first?.warrantyEnd).toBe('2027-09-14');
+    expect(first?.status).toBe('FUNCTIONING');
+  });
+
+  it('numbers its lines as the spreadsheet shows them', () => {
+    const rows = parseImportFile(EXCEL, lookup());
+    expect(rows.map(row => row.lineNumber)).toEqual([3, 4]);
+  });
+});
+
+describe('the heading row is found, not assumed to be first', () => {
+  /*
+   * A spreadsheet writes a banner row of its own (`Column1 … ColumnN`) above
+   * the real names when a file has been through a text-to-columns step. The
+   * user cannot see that it is wrong — on screen it is still the file we gave
+   * them — so taking row 1 on faith reported every row as missing an asset
+   * number it plainly had.
+   */
+  const BANNER = 'Column1,Column2,Column3,Column4,Column5,Column6,Column7,Column8,Column9,Column10';
+
+  it('reads past a spreadsheet banner row to the real heading', () => {
+    const rows = parseImportFile(
+      `${BANNER}\n${H}\nCCE-1,E003/059,,,,,,,,\n`,
+      lookup()
+    );
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.assetNumber).toBe('CCE-1');
+    expect(rows[0]?.errors).toEqual([]);
+  });
+
+  it('numbers the line as the spreadsheet does, counting the banner', () => {
+    const rows = parseImportFile(
+      `${BANNER}\n${H}\nCCE-1,E003/059,,,,,,,,\n`,
+      lookup()
+    );
+    // banner = 1, heading = 2, first body row = 3.
+    expect(rows[0]?.lineNumber).toBe(3);
+  });
+
+  it('still numbers from 2 when the heading is where it belongs', () => {
+    const rows = parseImportFile(`${H}\nCCE-1,E003/059,,,,,,,,\n`, lookup());
+    expect(rows[0]?.lineNumber).toBe(2);
+  });
+
+  it('refuses a file whose rows name no column it knows', () => {
+    // Loudly — not as a hundred rows each "missing" a value they carry.
+    expect(parseImportFile(`${BANNER}\nC1,C1,,,,,,,,\n`, lookup())).toEqual([]);
+  });
+
+  it('does not go hunting past the first few rows for a heading', () => {
+    const padding = Array(8).fill(BANNER).join('\n');
+    expect(
+      parseImportFile(`${padding}\n${H}\nCCE-1,E003/059,,,,,,,,\n`, lookup())
+    ).toEqual([]);
   });
 });
 
