@@ -37,6 +37,10 @@ export default defineConfig({
       'src/**/*.test.ts',
       'vite/**/*.test.ts',
       'plugins/*/src/**/*.test.ts',
+      // cook_islands' backend half, named rather than globbed: civ's backend
+      // tests are jest-style and import `@common/*`, so they would fail the
+      // run on sight.
+      'plugins/cook_islands/backend/src/**/*.test.ts',
     ],
     environment: 'node',
   },
