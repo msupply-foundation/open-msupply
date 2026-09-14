@@ -161,8 +161,24 @@ export type { SidePanelSectionProps } from '../ui/layout/SidePanel/SidePanel';
  * DateFields (spec/ui-standards/{components,inputs}.md). The type re-exports
  * are erased at build, so they add nothing eager.
  */
-export { DataTable, DateField } from './lazyComponents';
+export {
+  DataTable,
+  DateField,
+  FilterBar,
+  FilterDateRange,
+  FilterSelect,
+  FilterTextInput,
+} from './lazyComponents';
 export type { DataTableProps } from '../ui/elements/table/DataTable';
+export type {
+  Filter,
+  FilterBarProps,
+  FilterDateRangeProps,
+  FilterDef,
+  FilterSelectProps,
+  FilterTextInputProps,
+  RangeBounds,
+} from '../ui/elements/selectors/FilterBar';
 export type {
   Column,
   ColumnIdentity,
