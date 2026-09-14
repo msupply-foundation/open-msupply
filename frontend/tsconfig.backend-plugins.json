@@ -15,10 +15,17 @@
   // above — `Duplicate identifier 'fetch'` in backendCommon. The tests still
   // run (the `backend-plugins` vitest project); they are not type-checked.
   //
-  // The reference backend plugin (`examples/hello_backend`) is deliberately NOT
-  // here: it declares the host globals itself in `host.d.ts` rather than
-  // importing `@common/types`, and two declarations of `var sql` in one program
-  // do not compile. It is type-checked by tsconfig.plugins.json.
+  // Two backend halves are deliberately NOT here: the reference plugin
+  // (`examples/hello_backend`) and `plugins/cook_islands/backend`. Both
+  // declare the host globals themselves in a `host.d.ts` rather than importing
+  // `@common/types`, and two declarations of `sql` in one program do not
+  // compile. Both are type-checked by tsconfig.plugins.json instead — which is
+  // why the include below is a glob but the exclude names cook_islands: a
+  // backend half that carries its own `host.d.ts` belongs over there.
+  //
+  // `plugins/cook_islands/shared` goes with it: the wire contract is imported
+  // by both of that plugin's halves, so it is type-checked once, alongside the
+  // frontend half that also consumes it.
   //
   // Line comments, not block comments: rolldown reads this file as the build's
   // tsconfig (via the per-plugin one that extends it) and its JSONC parser
@@ -46,5 +53,9 @@
     "paths": { "@common/*": ["../client/packages/plugins/backendCommon/*"] }
   },
   "include": ["plugins/*/backend/src/**/*.ts", "plugins/*/shared/**/*.ts"],
-  "exclude": ["**/*.test.ts"]
+  "exclude": [
+    "**/*.test.ts",
+    "plugins/cook_islands/backend/**",
+    "plugins/cook_islands/shared/**"
+  ]
 }

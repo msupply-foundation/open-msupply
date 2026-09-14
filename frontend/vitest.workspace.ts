@@ -14,13 +14,17 @@ import { BACKEND_COMMON } from './vite/backendPluginBuild';
  *   The environment stays `node`: components under test render no DOM (they
  *   return values and run effects), so nothing needs a document, and the suite
  *   costs no jsdom dependency.
- * - `backend-plugins`: the BoaJS halves of the country plugins
- *   (`plugins/<name>/backend/src`). Two differences, both about running code
- *   written for another host: the `@common` specifier resolves to the
- *   server-generated `backendCommon`, and `globals: true` lets the suites keep
- *   the bare `describe`/`it`/`expect` they arrive with — these files are SYNCED
- *   from msupply-foundation/civ-plugins, so every edit made to suit this repo
- *   is an edit to redo on the next sync.
+ * - `backend-plugins`: CIV's BoaJS half (`plugins/civ/backend/src`). Two
+ *   differences, both about running code written for another host: the
+ *   `@common` specifier resolves to the server-generated `backendCommon`, and
+ *   `globals: true` lets the suites keep the bare `describe`/`it`/`expect`
+ *   they arrived with from msupply-foundation/civ-plugins.
+ *
+ *   Named rather than globbed across every plugin, for the same reason
+ *   tsconfig.backend-plugins.json carries an exclude: cook_islands' half
+ *   needs neither — it imports no `@common` module, and imports its test
+ *   functions from `vitest` explicitly — so it runs in the `node` project
+ *   with everything else, and a glob here would run it a second time.
  *
  *   `@common` comes from vite/backendPluginBuild.ts's own constant rather than
  *   a second copy of the path: what the suites import has to be what the build
@@ -48,7 +52,7 @@ export default defineWorkspace([
     resolve: { alias: { '@common': BACKEND_COMMON } },
     test: {
       name: 'backend-plugins',
-      include: ['plugins/*/backend/src/**/*.test.ts'],
+      include: ['plugins/civ/backend/src/**/*.test.ts'],
       globals: true,
       environment: 'node',
     },
