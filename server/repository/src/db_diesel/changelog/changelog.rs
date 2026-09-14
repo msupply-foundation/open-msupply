@@ -374,6 +374,19 @@ impl<'a> ChangelogRepository<'a> {
         Ok(())
     }
 
+    /// Whether any row has this `source_site_id`. Backed by `index_changelog_source_site_id`,
+    /// so it stays a single lookup on a large changelog - `repair_source_site_id` runs it on
+    /// every sync cycle.
+    pub fn any_with_source_site_id(&self, source_site_id: i32) -> Result<bool, RepositoryError> {
+        let found = changelog_with_links::table
+            .filter(changelog_with_links::source_site_id.eq(source_site_id))
+            .select(changelog_with_links::cursor)
+            .first::<i64>(self.connection.lock().connection())
+            .optional()?;
+
+        Ok(found.is_some())
+    }
+
     /// Rewrite one `source_site_id` to another, returning the number of rows changed.
     /// Not a general purpose update: it exists for `repair_source_site_id`, which corrects the
     /// `0` stamped by the backfills in `repository/src/migrations/v3_00_00/` (notably
@@ -385,6 +398,9 @@ impl<'a> ChangelogRepository<'a> {
     /// record across ~40 tables, and one statement of that size holds locks and builds WAL for
     /// its whole duration. Windowing on the primary key keeps each statement bounded and lets
     /// Postgres prune changelog partitions, which are ranged on `cursor`.
+    ///
+    /// `repair_source_site_id` gates this on `any_with_source_site_id`, so the walk only runs
+    /// when there is something to restamp.
     pub fn update_source_site_id(&self, from: i32, to: i32) -> Result<usize, RepositoryError> {
         let max_cursor = self.max_cursor()? as i64;
         let mut changed = 0;

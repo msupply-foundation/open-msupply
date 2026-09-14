@@ -26,7 +26,13 @@ use crate::activity_log::system_log;
 ///
 /// Both updates walk their table in cursor windows rather than running as one statement, so a
 /// central with a row per record across ~40 tables doesn't take a long lock on its first sync.
-/// Once nothing is stamped `0` the windows match nothing and the pass is cheap.
+///
+/// A central stays on v5/v6, so it runs this every sync cycle for the life of the site. The
+/// changelog probe is the gate because it is indexed, where `sync_buffer` indexes
+/// `source_site_id` for pending rows only. A clean changelog implies a clean buffer: the
+/// changelog backfills stamped a row per record unconditionally, while `rebuild_sync_buffer`
+/// kept any `source_site_id` a row already had. The buffer is restamped first, so a failure
+/// between the two leaves the gate set.
 pub(crate) fn repair_source_site_id(
     connection: &StorageConnection,
     central_site_id: i32,
@@ -37,10 +43,14 @@ pub(crate) fn repair_source_site_id(
         return Ok(());
     }
 
-    let changelog_rows =
-        ChangelogRepository::new(connection).update_source_site_id(0, central_site_id)?;
+    if !ChangelogRepository::new(connection).any_with_source_site_id(0)? {
+        return Ok(());
+    }
+
     let sync_buffer_rows =
         SyncBufferRepository::new(connection).update_source_site_id(0, central_site_id)?;
+    let changelog_rows =
+        ChangelogRepository::new(connection).update_source_site_id(0, central_site_id)?;
 
     if changelog_rows == 0 && sync_buffer_rows == 0 {
         return Ok(());
@@ -156,6 +166,26 @@ mod tests {
             })
             .count();
         assert_eq!(repair_logs, 1);
+    }
+
+    /// A clean changelog stops the pass, buffer row or not.
+    #[actix_rt::test]
+    async fn repair_skips_when_changelog_has_nothing_to_repair() {
+        let (_, connection, _, _) = setup_all(
+            "repair_skips_when_changelog_has_nothing_to_repair",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        // Base seed data leaves changelog rows at 0, so clear the gate before testing that it
+        // stops the second pass.
+        repair_source_site_id(&connection, CENTRAL_SITE_ID).unwrap();
+
+        insert_sync_buffer(&connection, "backfilled", 0);
+
+        repair_source_site_id(&connection, CENTRAL_SITE_ID).unwrap();
+
+        assert_eq!(sync_buffer_source_site_id(&connection, "backfilled"), 0);
     }
 
     /// If legacy central ever reported site id 0, `0` would be a legitimate stamp rather than
