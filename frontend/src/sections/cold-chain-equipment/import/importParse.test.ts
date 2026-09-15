@@ -3,6 +3,7 @@
    are data, not identifiers this app chooses, so the fixtures below spell them
    exactly as the catalogue serves them. */
 import { describe, expect, it } from 'vitest';
+import { t } from '@/intl';
 import { CCE_CLASS_ID } from '../equipment';
 import type { PropertyDefinition } from '../detail/assetProperties';
 import {
@@ -341,6 +342,22 @@ describe('the replacement flag', () => {
   it('reads as unset otherwise', () => {
     expect(parseNeedsReplacement('')).toBe(false);
     expect(parseNeedsReplacement('X')).toBe(false);
+  });
+
+  /*
+   * The EXPORT writes this column as Yes/No, so an asset exported and
+   * re-imported used to come back with its flag silently cleared. The two
+   * files this vertical produces must both read back into it.
+   */
+  it('reads the Yes the list export writes', () => {
+    expect(parseNeedsReplacement(t('messages.yes'))).toBe(true);
+    expect(parseNeedsReplacement(t('messages.no'))).toBe(false);
+  });
+
+  it('reads a plain yes, whatever its case', () => {
+    expect(parseNeedsReplacement('Yes')).toBe(true);
+    expect(parseNeedsReplacement('y')).toBe(true);
+    expect(parseNeedsReplacement('no')).toBe(false);
   });
 });
 

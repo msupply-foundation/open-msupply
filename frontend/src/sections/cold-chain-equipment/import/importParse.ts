@@ -204,9 +204,28 @@ export const parsePropertyCell = (
   return value;
 };
 
-/** The replacement flag reads as set for any value containing "true". */
-export const parseNeedsReplacement = (value: string): boolean =>
-  /true/i.test(value);
+/**
+ * The replacement flag.
+ *
+ * Reads the vocabulary a user's file actually carries, not one spelling of it.
+ * `true` is what the import's own failed-rows file writes; **`Yes` is what the
+ * list EXPORT writes**, so without it an asset exported and re-imported came
+ * back with the flag silently cleared — a round trip that loses data is worse
+ * than one that refuses. The translated yes is matched too, so a file exported
+ * in the user's own language re-imports in it.
+ *
+ * Purely additive: every value that set the flag before still sets it.
+ */
+export const parseNeedsReplacement = (value: string): boolean => {
+  // Unchanged: anything containing "true", which is what the import's own
+  // failed-rows file writes.
+  if (/true/i.test(value)) return true;
+  const normalised = value.trim().toLowerCase();
+  if (!normalised) return false;
+  // Added: the affirmative the EXPORT writes, in the reader's own language.
+  if (normalised === t('messages.yes').trim().toLowerCase()) return true;
+  return /^(yes|y)$/.test(normalised);
+};
 
 type Lookup = {
   catalogueItems: readonly { id: string; code: string }[];
