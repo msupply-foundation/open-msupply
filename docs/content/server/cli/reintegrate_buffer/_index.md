@@ -126,6 +126,7 @@ scoped run can fail or produce incomplete data if a dependency wasn't already in
 | `--skip-buffer-reset` | Skip resetting the buffer's integration state — only retry rows that are still pending. |
 | `-e`, `--errors-only` | Only reintegrate records that previously errored — the reset clears integration state for rows with an `integration_error` (excluding deliberately-ignored rows, which also carry an error message) and leaves successful rows untouched. Errored rows are already integrated (not pending), so this needs a reset and therefore **conflicts with `--skip-buffer-reset`**. |
 | `--tables` | Restrict integration to these comma-separated `sync_buffer.table_name` values (e.g. `item,name`). Defaults to all tables. |
+| `--as-central` | Translate and integrate as the central server. Many translators branch on `CentralServerConfig::is_central_server()` (custom fields, categories, merges, patient `name_store_join`s, `site`, ...), so a buffer dumped from a central server must be replayed as central to reproduce what central produced. Also enabled by `server.override_is_central_server: true` in the config file, matching the server. Defaults to remote-site behaviour. The effective mode is logged at the start of the run. |
 
 ### Extra
 
