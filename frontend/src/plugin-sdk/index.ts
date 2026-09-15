@@ -120,6 +120,19 @@ export type { InfoTooltipProps } from '../ui/elements/feedback/InfoTooltip';
 // audited country plugins' FORM surfaces use
 // (kdd/plugin-loading/evidence/interface-audits/).
 export { CurrencyField } from '../ui/elements/inputs/CurrencyField';
+// The expiry field on the Stocktake Helper's count screen (#495), which was
+// hand-rolling a native <input type="date"> for want of this — per-browser
+// chrome and a forced yyyy-MM-dd, where the host's field is a corvu calendar
+// that renders the same everywhere and follows the display `format`.
+// kdd/bundling files date pickers under the lazy() wrappers, but that rule is
+// for components the startup path does not already carry. This one it does:
+// FilterBar statically imports DateRangeField/DateTimeField, so DatePickerPanel
+// (with @corvu/calendar) is modulepreloaded from index.html already, and
+// DateField with it. Measured: the SDK-only startup delta moves 4.7 -> 4.8 KB
+// gz and no new stylesheet is linked. Revisit if the eager path ever sheds the
+// calendar — then this becomes the first lazy() wrapper.
+export { DateField } from '../ui/elements/inputs/DateField';
+export type { DateFieldProps } from '../ui/elements/inputs/DateField';
 export { FieldRow } from '../ui/elements/inputs/FieldRow';
 export { Select } from '../ui/elements/selectors/Select';
 export type { SelectOption } from '../ui/elements/selectors/Select';
