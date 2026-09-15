@@ -184,6 +184,10 @@ export {
   FileIcon,
   StockIcon,
 } from '../ui/icons';
+// The back affordance on the Stocktake Helper's drill-in views (#490) —
+// RTL-flipping, and already alive in this graph (the date picker's month
+// navigation uses it), so re-exporting costs nothing.
+export { ChevronLeftIcon } from '../ui/icons';
 // Needed to hold one in a typed table of tiles (Component<IconProps>); a type
 // export, so it weighs nothing at runtime.
 export type { IconProps } from '../ui/icons';
