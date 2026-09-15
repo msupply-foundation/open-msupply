@@ -84,6 +84,9 @@ export type {
   ColumnContribution,
 } from './types';
 
+// ── Slot API — the internal-orders new-order gate ───────────────────────────
+export type { NewOrderGateResolver } from './types';
+
 // ── Slot API — the prescription payment-form slot ───────────────────────────
 export type {
   FieldValidity,
