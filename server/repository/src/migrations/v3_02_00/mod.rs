@@ -1,0 +1,72 @@
+use super::{version::Version, Migration, MigrationFragment};
+use crate::StorageConnection;
+
+mod add_clinician_to_prescription_request;
+mod add_custom_field_scope_deleted_datetime;
+mod add_prescription_request_activity_log_types;
+mod add_prescription_request_id_to_invoice;
+mod add_prescription_request_report_context;
+mod add_prescription_request_status_processor_cursor_pg_enum;
+mod add_prescription_request_tables;
+mod add_transfer_comment_to_invoice_line;
+mod remove_program_from_prescription_request;
+mod restore_stocktake_line_indexes;
+mod seed_prescription_request_status_processor_cursor;
+
+pub(crate) struct V3_02_00;
+
+impl Migration for V3_02_00 {
+    fn version(&self) -> Version {
+        Version::from_str("3.02.0")
+    }
+
+    fn migrate(&self, _connection: &StorageConnection) -> anyhow::Result<()> {
+        Ok(())
+    }
+
+    fn migrate_fragments(&self) -> Vec<Box<dyn MigrationFragment>> {
+        vec![
+            Box::new(add_prescription_request_tables::Migrate),
+            Box::new(add_prescription_request_id_to_invoice::Migrate),
+            Box::new(add_prescription_request_status_processor_cursor_pg_enum::Migrate),
+            Box::new(seed_prescription_request_status_processor_cursor::Migrate),
+            Box::new(add_prescription_request_activity_log_types::Migrate),
+            Box::new(add_custom_field_scope_deleted_datetime::Migrate),
+            Box::new(add_clinician_to_prescription_request::Migrate),
+            Box::new(remove_program_from_prescription_request::Migrate),
+            Box::new(add_transfer_comment_to_invoice_line::Migrate),
+            Box::new(restore_stocktake_line_indexes::Migrate),
+            Box::new(add_prescription_request_report_context::Migrate),
+        ]
+    }
+}
+
+#[cfg(test)]
+mod test {
+    #[actix_rt::test]
+    async fn migration_3_02_00() {
+        use crate::migrations::*;
+        use crate::test_db::*;
+        use v3_00_00::V3_00_00;
+        use v3_02_00::V3_02_00;
+
+        let previous_version = V3_00_00.version();
+        let version = V3_02_00.version();
+
+        let SetupResult { connection, .. } = setup_test(SetupOption {
+            db_name: &format!("migration_{version}"),
+            version: Some(previous_version.clone()),
+            ..Default::default()
+        })
+        .await;
+
+        // Run this migration
+        migrate(
+            &connection,
+            Some(version.clone()),
+            MigrationConfig::default(),
+        )
+        .unwrap();
+        assert_eq!(get_database_version(&connection), version);
+    }
+}

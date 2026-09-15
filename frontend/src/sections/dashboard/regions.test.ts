@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Component } from 'solid-js';
 import {
+  applicableSuppressions,
   DASHBOARD_IDS,
   mergeRegion,
   publishedIds,
@@ -28,19 +29,20 @@ const ids = (region: ReturnType<typeof mergeRegion>) =>
 const NONE: ReadonlySet<string> = new Set();
 
 describe('published ids (OMS-REG-DB-01.58, OMS-REG-DB-02.1, ui-surface § S3)', () => {
-  // OMS-REG-DB-01.58 / OMS-REG-DB-02.1 — the built-in set is exactly the three
+  // OMS-REG-DB-01.58 / OMS-REG-DB-02.1 — the built-in set is exactly the four
   // widgets with their documented panels and stats; the ids are the stable
   // public API a contribution anchors to or suppresses.
-  it('OMS-REG-DB-01.58: exposes exactly the three built-in widgets', () => {
+  it('OMS-REG-DB-01.58: exposes exactly the four built-in widgets', () => {
     expect(DASHBOARD_IDS.replenishment.id).toBe('replenishment');
     expect(DASHBOARD_IDS.distribution.id).toBe('distribution');
     expect(DASHBOARD_IDS.inventory.id).toBe('inventory');
+    expect(DASHBOARD_IDS.prescriptions.id).toBe('prescriptions');
   });
 
   it('OMS-REG-DB-02.1: every published id is unique and dot-scoped under its widget', () => {
     const all = publishedIds();
-    // Documented count: 3 widgets + 7 panels + 21 stats = 31 (ui-surface § S3).
-    expect(all).toHaveLength(31);
+    // Documented count: 4 widgets + 8 panels + 23 stats = 35 (ui-surface § S3).
+    expect(all).toHaveLength(35);
     expect(new Set(all).size).toBe(all.length); // all unique
     // A stat id prefixes its panel, which prefixes its widget.
     expect(all).toContain('inventory.stock-levels.low-stock');
@@ -187,5 +189,99 @@ describe('mergeRegion — suppression (OMS-REG-DB-02.6–.8)', () => {
     );
     expect(ids(region)).toEqual(['a', 'c']);
     expect(region.diagnostics).toHaveLength(1);
+  });
+});
+
+describe('applicableSuppressions — the never-blank body (OMS-REG-DB-02.18)', () => {
+  // Suppression is site-wide (registry § suppressedPieces), so obeying a set
+  // that empties the widget region would blank the dashboard of every store on
+  // the server — including the ones a plugin's own contributions exclude. The
+  // set is refused instead, and named. A screen only some stores should see is
+  // the body region's, which needs no suppression at all.
+  const widgets = builtIns('replenishment', 'distribution', 'inventory');
+
+  it('applies an ordinary suppression untouched', () => {
+    const suppressed = new Set(['replenishment']);
+    const result = applicableSuppressions(widgets, 0, suppressed);
+    expect(result.applied).toBe(suppressed); // the same set, not a copy
+    expect(result.ignored).toEqual([]);
+  });
+
+  it('OMS-REG-DB-02.18: ignores a set that would leave nothing to render', () => {
+    const result = applicableSuppressions(
+      widgets,
+      0,
+      new Set(['replenishment', 'distribution', 'inventory'])
+    );
+    expect([...result.applied]).toEqual([]);
+    expect([...result.ignored].sort()).toEqual([
+      'distribution',
+      'inventory',
+      'replenishment',
+    ]);
+  });
+
+  it('obeys the same set once a contributed widget fills the body', () => {
+    // Something renders, so the body is not blank and nothing is refused: a
+    // plugin MAY clear the built-ins to put its own widget in their place.
+    const suppressed = new Set(['replenishment', 'distribution', 'inventory']);
+    const result = applicableSuppressions(widgets, 1, suppressed);
+    expect(result.applied).toBe(suppressed);
+    expect(result.ignored).toEqual([]);
+  });
+
+  it('recovers only the widgets, leaving nested suppressions obeyed', () => {
+    const result = applicableSuppressions(
+      widgets,
+      0,
+      new Set([
+        'replenishment',
+        'distribution',
+        'inventory',
+        'inventory.stock-levels',
+      ])
+    );
+    // The widgets come back; the panel inside one of them stays suppressed —
+    // it could not have emptied the body, so nothing about it is in doubt.
+    expect([...result.applied]).toEqual(['inventory.stock-levels']);
+    expect(result.ignored).not.toContain('inventory.stock-levels');
+  });
+
+  it('OMS-REG-DB-01.62: reports an empty body only when nothing can render', () => {
+    // `empty` is what the page shows its empty state on: nothing renders AND
+    // suppression cannot bring anything back.
+    const gated: RegionBuiltIn[] = widgets.map(w => ({ ...w, hidden: true }));
+    expect(applicableSuppressions(gated, 0, NONE).empty).toBe(true);
+    // A visible contribution is a non-empty body, whatever the built-ins do.
+    expect(applicableSuppressions(gated, 1, NONE).empty).toBe(false);
+    // Ordinary bodies, and one whose suppressions were refused, are not empty.
+    expect(applicableSuppressions(widgets, 0, NONE).empty).toBe(false);
+    expect(
+      applicableSuppressions(
+        widgets,
+        0,
+        new Set(['replenishment', 'distribution', 'inventory'])
+      ).empty
+    ).toBe(false);
+  });
+
+  it('does not pretend to recover a built-in its own gate hides', () => {
+    // Ignoring a suppression only helps where the built-in would then render.
+    // A region of gate-hidden built-ins is empty for a reason suppression
+    // cannot fix, so nothing is refused and nothing is reported.
+    const gated: RegionBuiltIn[] = [
+      { id: 'replenishment', hidden: true },
+      { id: 'distribution', hidden: true },
+    ];
+    const result = applicableSuppressions(
+      gated,
+      0,
+      new Set(['replenishment', 'distribution'])
+    );
+    expect(result.ignored).toEqual([]);
+    expect([...result.applied].sort()).toEqual([
+      'distribution',
+      'replenishment',
+    ]);
   });
 });

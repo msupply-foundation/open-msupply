@@ -1,0 +1,50 @@
+use super::*;
+use crate::migrations::sql;
+
+pub(crate) struct ViewMigration;
+
+impl ViewMigrationFragment for ViewMigration {
+    fn drop_view(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        sql!(
+            connection,
+            r#"
+                DROP VIEW IF EXISTS latest_asset_log;
+            "#
+        )?;
+
+        Ok(())
+    }
+
+    fn rebuild_view(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        // Only status-update entries are considered the "latest" for an asset —
+        // TemperatureMapping and other event-type logs leave status NULL. Filtering on
+        // status rather than type keeps the predicate correct for pre-enum historical
+        // rows where type is still NULL.
+        sql!(
+            connection,
+            r#"
+            CREATE VIEW latest_asset_log AS
+    SELECT al.id,
+      al.asset_id,
+      al.user_id,
+      al.comment,
+      al.type,
+      al.log_datetime,
+      al.status,
+      al.reason_id,
+      al.created_datetime
+    FROM (
+      SELECT asset_id, MAX(log_datetime) AS latest_log_datetime
+      FROM asset_log
+      WHERE status IS NOT NULL
+      GROUP BY asset_id
+    ) grouped
+    INNER JOIN asset_log al
+      ON al.asset_id = grouped.asset_id AND al.log_datetime = grouped.latest_log_datetime
+      AND al.status IS NOT NULL;
+            "#
+        )?;
+
+        Ok(())
+    }
+}

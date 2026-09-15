@@ -89,7 +89,6 @@ The case is `status: proposed` — the id is **pending QA sign-off** (see the sp
 - **A deterministic `e2e/` suite for `manage/campaigns`** — the durable home for the eleven behaviours above that only a running UI can assert (columns, empty state, both dialogs' lifecycles, the count-pluralised confirmation, the partial-delete notice). The testid contract is already in `e2e/TESTIDS.md`; the suite needs a central-server fixture, which the current hermetic stack does not obviously provide.
 - **An exploratory workflow** at `exploratory/workflows/campaigns.md` — none exists; the case is the walk until one is written.
 - **The six backend gaps** in [`contract.md`](../../../spec/campaigns/contract.md#backend-gaps--capabilities-the-frontend-needs) are still unfiled upstream. The two that shape this screen: `name.like` is ignored (so the register can offer no search — the reason the filter slot is empty), and the out-of-order-dates rejection has no typed member (so the editor has to read `extensions.details`). Both are worked around here, neither is fixed.
-- **`OMS-REG-SMV-09` is defined twice** (tmf-testing "Validate Backdating Prescriptions" vs `spec/stock-movements/cases/`). Pre-existing, untouched by this build, and cheap to fix while that id is still pending sign-off — flagged in the PR body, not this vertical's problem.
 
 ## Probe residue
 

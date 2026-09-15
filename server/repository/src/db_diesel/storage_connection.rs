@@ -1,0 +1,404 @@
+use std::collections::HashSet;
+use std::sync::{Arc, Mutex, MutexGuard, RwLock};
+
+use super::{get_connection, DBBackendConnection, DBConnection};
+
+use crate::db_diesel::changelog::ChangelogCursorTracker;
+use crate::repository_error::RepositoryError;
+
+use diesel::{
+    connection::{AnsiTransactionManager, SimpleConnection, TransactionManager},
+    r2d2::{ConnectionManager, Pool},
+};
+use log::error;
+use util::uuid::uuid;
+
+// feature sqlite
+#[cfg(not(feature = "postgres"))]
+const BEGIN_TRANSACTION_STATEMENT: &str = "BEGIN IMMEDIATE;";
+// feature postgres
+#[cfg(feature = "postgres")]
+const BEGIN_TRANSACTION_STATEMENT: &str = "BEGIN";
+
+/// Helper class to avoid deref_mut() calls, which would require to import DerefMut everywhere we
+/// want to use a connection.
+/// For example, without it, it would look like:
+/// let con: &mut DBConnection = connection.raw_connection.lock().unwrap().deref_mut();
+pub struct LockedConnection<'a> {
+    raw_connection: MutexGuard<'a, DBConnection>,
+}
+
+impl<'a> LockedConnection<'a> {
+    pub fn connection(&mut self) -> &mut DBConnection {
+        &mut self.raw_connection
+    }
+
+    /// Current level of nested transaction.
+    /// For example:
+    /// 0 => no transaction
+    /// 1 => in transaction
+    /// 2 => 1st nested transaction
+    /// 3 => 2nd nested transaction
+    pub fn transaction_level<E>(&mut self) -> Result<i32, TransactionError<E>> {
+        let con: &mut DBBackendConnection = &mut self.raw_connection;
+        let level = match AnsiTransactionManager::transaction_manager_status_mut(con) {
+            diesel::connection::TransactionManagerStatus::Valid(l) => l.transaction_depth(),
+            diesel::connection::TransactionManagerStatus::InError => {
+                return Err(TransactionError::Transaction {
+                    msg: "Failed to get transaction depth".to_string(),
+                    level: -1,
+                })
+            }
+        };
+        Ok(match level {
+            Some(l) => {
+                let l: u32 = l.into();
+                l as i32
+            }
+            None => 0,
+        })
+    }
+}
+
+#[derive(Clone, Hash, Eq, PartialEq)]
+pub enum TransactionNotification {
+    ChangelogInsert,
+}
+
+pub struct StorageConnection {
+    raw_connection: Mutex<DBConnection>,
+    on_commit: Option<Arc<dyn Fn(&TransactionNotification) + Send + Sync>>,
+    pending_notifications: RwLock<HashSet<TransactionNotification>>,
+    /// Identifies this connection in the `ChangelogCursorTracker`. Generated once at
+    /// construction; reused across transactions on the same connection.
+    uuid: String,
+    changelog_cursor_tracker: Arc<ChangelogCursorTracker>,
+}
+
+impl StorageConnection {
+    pub fn lock(&self) -> LockedConnection<'_> {
+        LockedConnection {
+            raw_connection: self.raw_connection.lock().unwrap(),
+        }
+    }
+
+    pub fn uuid(&self) -> &str {
+        &self.uuid
+    }
+
+    pub fn changelog_cursor_tracker(&self) -> &ChangelogCursorTracker {
+        &self.changelog_cursor_tracker
+    }
+
+    /// Execute a raw SQL statement (or batch of statements) directly against the underlying
+    /// connection. Useful for backend-specific statements that diesel doesn't model — e.g. sqlite's
+    /// `VACUUM INTO 'path'`. Caller is responsible for any quoting/escaping in the SQL string.
+    pub fn batch_execute(&self, sql: &str) -> Result<(), RepositoryError> {
+        self.lock()
+            .connection()
+            .batch_execute(sql)
+            .map_err(RepositoryError::from)
+    }
+
+    /// Queue a notification to be fired after the transaction commits.
+    pub fn notify(&self, notification: TransactionNotification) {
+        if self.on_commit.is_some() {
+            self.pending_notifications
+                .write()
+                .unwrap()
+                .insert(notification);
+        }
+    }
+
+    /// Fire all pending notifications. Called after outermost transaction commits.
+    fn flush_notifications(&self) {
+        let notifications: HashSet<_> = {
+            let mut pending = self.pending_notifications.write().unwrap();
+            std::mem::take(&mut *pending)
+        };
+        if let Some(on_commit) = &self.on_commit {
+            for notification in &notifications {
+                on_commit(notification);
+            }
+        }
+    }
+}
+
+#[derive(Debug)]
+pub enum TransactionError<E> {
+    Transaction {
+        msg: String,
+        /// Transaction level of the failing transaction
+        level: i32,
+    },
+    /// Error from the transaction
+    Inner(E),
+}
+
+impl<E> TransactionError<E> {
+    pub fn to_inner_error(self) -> E
+    where
+        E: From<RepositoryError>,
+    {
+        match self {
+            TransactionError::Transaction { msg, level } => {
+                RepositoryError::TransactionError { msg, level }.into()
+            }
+            TransactionError::Inner(e) => e,
+        }
+    }
+}
+
+impl From<TransactionError<RepositoryError>> for RepositoryError {
+    fn from(error: TransactionError<RepositoryError>) -> Self {
+        match error {
+            TransactionError::Transaction { msg, level } => {
+                RepositoryError::TransactionError { msg, level }
+            }
+            TransactionError::Inner(e) => e,
+        }
+    }
+}
+
+impl Drop for StorageConnection {
+    /// Safety net: ensure this connection is removed from the cursor tracker even if a
+    /// transaction path missed the explicit untrack (e.g. early return, panic).
+    fn drop(&mut self) {
+        ChangelogCursorTracker::untrack(self);
+    }
+}
+
+impl StorageConnection {
+    pub fn new(
+        connection: DBConnection,
+        changelog_cursor_tracker: Arc<ChangelogCursorTracker>,
+    ) -> StorageConnection {
+        StorageConnection {
+            raw_connection: Mutex::new(connection),
+            on_commit: None,
+            pending_notifications: RwLock::new(HashSet::new()),
+            uuid: uuid(),
+            changelog_cursor_tracker,
+        }
+    }
+
+    pub fn with_on_commit(
+        mut self,
+        callback: Arc<dyn Fn(&TransactionNotification) + Send + Sync>,
+    ) -> Self {
+        self.on_commit = Some(callback);
+        self
+    }
+
+    /// Executes operations in transaction. A new transaction is only started if not already in a
+    /// transaction.
+    pub fn transaction_sync<T, E, F>(&self, f: F) -> Result<T, TransactionError<E>>
+    where
+        F: FnOnce(&StorageConnection) -> Result<T, E>,
+    {
+        self.transaction_sync_etc(f, true)
+    }
+
+    /// # Arguments
+    /// * `reuse_tx` - if true and the connection is currently in a transaction no new nested
+    ///     transaction is started.
+    pub fn transaction_sync_etc<T, E, F>(
+        &self,
+        f: F,
+        reuse_tx: bool,
+    ) -> Result<T, TransactionError<E>>
+    where
+        F: FnOnce(&StorageConnection) -> Result<T, E>,
+    {
+        // Lock is dropped in this line
+        let current_level = self.lock().transaction_level()?;
+
+        // If we are re-using transaction just call the underlying function, error will propagate
+        // to the original closure for the transaction.
+        if current_level > 0 && reuse_tx {
+            return match f(self) {
+                Ok(ok) => Ok(ok),
+                Err(err) => Err(TransactionError::Inner(err)),
+            };
+        }
+
+        // Start a new outer or inner transaction, acquire lock that will be dropped when block exits
+        {
+            let mut guard = self.lock();
+            let con: &mut DBBackendConnection = guard.connection();
+            if current_level == 0 {
+                // sqlite can only have 1 writer, so to avoid concurrency issues,
+                // the first level transaction for sqlite, needs to run 'BEGIN IMMEDIATE' to start the transaction in WRITE mode.
+                AnsiTransactionManager::begin_transaction_sql(con, BEGIN_TRANSACTION_STATEMENT)
+            } else {
+                AnsiTransactionManager::begin_transaction(con)
+            }
+            .map_err(|e| map_begin_transaction_error(e, current_level))?;
+        };
+
+        let inner_result = f(self);
+
+        // Commit or rollback based on the inner result.
+        let result = match inner_result {
+            Ok(value) => {
+                let mut guard = self.raw_connection.lock().unwrap();
+                let con: &mut DBBackendConnection = &mut guard;
+                match AnsiTransactionManager::commit_transaction(con) {
+                    Ok(_) => Ok(value),
+                    Err(err) => {
+                        error!("Failed to end tx: {err:?}");
+                        Err(TransactionError::Transaction {
+                            msg: format!("Failed to end tx: {err}"),
+                            level: current_level + 1,
+                        })
+                    }
+                }
+            }
+            Err(e) => {
+                let mut guard = self.raw_connection.lock().unwrap();
+                let con: &mut DBBackendConnection = &mut guard;
+                match AnsiTransactionManager::rollback_transaction(con) {
+                    Ok(_) => Err(TransactionError::Inner(e)),
+                    Err(err) => {
+                        error!("Failed to rollback tx: {err:?}");
+                        Err(TransactionError::Transaction {
+                            msg: format!("Failed to rollback tx: {err}"),
+                            level: current_level + 1,
+                        })
+                    }
+                }
+            }
+        };
+
+        // When closing off the outermost transaction, untrack this connection's in-flight
+        // changelog cursor and then fire pending notifications. Untrack runs first (on both
+        // commit and rollback) so a processor task woken by the on-commit hook sees the
+        // just-committed rows with an un-clamped tracker.
+        if current_level == 0 {
+            ChangelogCursorTracker::untrack(self);
+            if result.is_ok() {
+                self.flush_notifications();
+            }
+        }
+
+        result
+    }
+}
+
+fn map_begin_transaction_error<T>(
+    e: diesel::result::Error,
+    current_level: i32,
+) -> TransactionError<T> {
+    error!("Failed to begin tx: {e:?}");
+    TransactionError::Transaction {
+        msg: format!("Failed to begin tx: {e}"),
+        level: current_level + 1,
+    }
+}
+
+#[derive(Clone)]
+pub struct StorageConnectionManager {
+    pool: Pool<ConnectionManager<DBBackendConnection>>,
+    on_commit: Option<Arc<dyn Fn(&TransactionNotification) + Send + Sync>>,
+    /// Shared with every `StorageConnection` produced by this manager.
+    changelog_cursor_tracker: Arc<ChangelogCursorTracker>,
+}
+
+impl StorageConnectionManager {
+    pub fn new(pool: Pool<ConnectionManager<DBBackendConnection>>) -> Self {
+        StorageConnectionManager {
+            pool,
+            on_commit: None,
+            changelog_cursor_tracker: ChangelogCursorTracker::new(),
+        }
+    }
+
+    pub fn set_on_commit(&mut self, callback: Arc<dyn Fn(&TransactionNotification) + Send + Sync>) {
+        self.on_commit = Some(callback);
+    }
+
+    pub fn connection(&self) -> Result<StorageConnection, RepositoryError> {
+        let conn = StorageConnection::new(
+            get_connection(&self.pool)?,
+            self.changelog_cursor_tracker.clone(),
+        );
+        match &self.on_commit {
+            Some(callback) => Ok(conn.with_on_commit(callback.clone())),
+            None => Ok(conn),
+        }
+    }
+
+    // Note, this method is only needed for an Android workaround to avoid adding a diesel
+    // dependency to the server crate.
+    pub fn execute(&self, sql: &str) -> Result<(), RepositoryError> {
+        let mut con = get_connection(&self.pool)?;
+        con.batch_execute(sql)?;
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod connection_manager_tests {
+    use crate::{test_db, RepositoryError, TransactionError};
+
+    #[actix_rt::test]
+    async fn test_nested_tx() {
+        let settings = test_db::get_test_db_settings("omsupply-nested-tx");
+        let connection_manager = test_db::setup(&settings).await;
+        let connection = connection_manager.connection().unwrap();
+
+        assert_eq!(
+            connection
+                .lock()
+                .transaction_level::<RepositoryError>()
+                .unwrap(),
+            0
+        );
+        let _result: Result<(), TransactionError<RepositoryError>> = connection
+            .transaction_sync_etc(
+                |con| {
+                    assert_eq!(con.lock().transaction_level()?, 1);
+                    con.transaction_sync_etc(
+                        |con| {
+                            assert_eq!(con.lock().transaction_level()?, 2);
+                            // reuse previous tx
+                            con.transaction_sync(|con| {
+                                assert_eq!(con.lock().transaction_level()?, 2);
+                                Ok(())
+                            })?;
+                            assert_eq!(con.lock().transaction_level()?, 2);
+                            Ok(())
+                        },
+                        false,
+                    )?;
+                    assert_eq!(con.lock().transaction_level()?, 1);
+                    Ok(())
+                },
+                false,
+            );
+        assert_eq!(
+            connection
+                .lock()
+                .transaction_level::<RepositoryError>()
+                .unwrap(),
+            0
+        );
+
+        // test that new tx is started if there is none but reuse_tx was request
+        let _result: Result<(), TransactionError<RepositoryError>> = connection
+            .transaction_sync_etc(
+                |con| {
+                    assert_eq!(con.lock().transaction_level()?, 1);
+                    Ok(())
+                },
+                true,
+            );
+        assert_eq!(
+            connection
+                .lock()
+                .transaction_level::<RepositoryError>()
+                .unwrap(),
+            0
+        );
+    }
+}

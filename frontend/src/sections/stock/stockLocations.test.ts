@@ -8,9 +8,15 @@ import {
 } from '../../domain/location/volume';
 
 // The location-picker narrowing (spec/stock S2/S3 — the location lookup is
-// restricted to the item's location type when one is set; AC-E4 has the server
+// restricted to the item's location type when one is set; `.43` has the server
 // enforce IncorrectLocationType regardless), and the capacity fields the
-// volume-aware picker reads off each node (spec/stock AC-LV1).
+// volume-aware picker reads off each node (`.56`).
+//
+// Anchors: spec/stock/cases/OMS-REG-INV-02.
+//   .43 — a location of the wrong type is rejected for a restricted item;
+//         the picker narrows client-side, the server enforces regardless
+//   .56 — the placement field lists code, name and % used, and offers the
+//         All / Empty / Available fullness filter
 
 const loc = (over: Partial<StockLocation> & Pick<StockLocation, 'id'>) =>
   ({
@@ -29,7 +35,7 @@ const LOCS: StockLocation[] = [
     id: '1',
     code: 'COLD-1',
     name: 'Cold room 1',
-    locationType: { id: 'cold' },
+    locationType: { id: 'cold', name: 'Cold' },
     volume: 200,
     volumeUsed: 50,
     stock: { __typename: 'StockLineConnector', totalCount: 3 },
@@ -38,7 +44,7 @@ const LOCS: StockLocation[] = [
     id: '2',
     code: 'AMB-1',
     name: 'Ambient 1',
-    locationType: { id: 'ambient' },
+    locationType: { id: 'ambient', name: 'Ambient' },
   }),
   loc({ id: '3', code: 'NO-TYPE', name: 'Untyped' }),
 ];

@@ -1,0 +1,159 @@
+import React, { FC, ReactNode, useState, useEffect, useCallback } from 'react';
+import TabContext from '@mui/lab/TabContext';
+import { Box } from '@mui/material';
+import {
+  UrlQueryObject,
+  UrlQuerySort,
+  useDetailPanelStore,
+  useDrawer,
+  useIsExtraSmallScreen,
+} from '@common/hooks';
+import { LocaleKey, useTranslation } from '@common/intl';
+import { AppBarTabsPortal } from '../../portals';
+import { DetailTab } from './DetailTab';
+import { ShortTabList, Tab } from './Tabs';
+import { useUrlQuery } from '@common/hooks';
+import { useConfirmationModal } from '../../modals';
+
+export type TabDefinition = {
+  Component: ReactNode;
+  value: string;
+  confirmOnLeaving?: boolean;
+  sort?: UrlQuerySort;
+};
+interface DetailTabsProps {
+  tabs: TabDefinition[];
+  requiresConfirmation?: (tab: string) => boolean;
+  overwriteQuery?: boolean;
+  restoreTabQuery?: boolean;
+}
+
+export const DetailTabs: FC<DetailTabsProps> = ({
+  tabs,
+  requiresConfirmation = () => false,
+  overwriteQuery = true,
+  restoreTabQuery = true,
+}) => {
+  const isValidTab = useCallback(
+    (tab?: string): tab is string =>
+      !!tab && tabs.some(({ value }) => value === tab),
+    [tabs]
+  );
+
+  const { urlQuery, updateQuery } = useUrlQuery();
+  const t = useTranslation();
+  const currentUrlTab = urlQuery['tab'] as string | undefined;
+  const currentTab = isValidTab(currentUrlTab)
+    ? currentUrlTab
+    : (tabs[0]?.value ?? '');
+
+  const showConfirmation = useConfirmationModal({
+    title: t('heading.are-you-sure'),
+    message: t('messages.confirm-cancel-generic'),
+  });
+
+  // Inelegant hack to force the "Underline" indicator for the currently active
+  // tab to re-render in the correct position when one of the side "drawers" is
+  // expanded. See issue #777 for more detail.
+  const { isOpen: detailPanelOpen } = useDetailPanelStore();
+  const { isOpen: drawerOpen } = useDrawer();
+  useEffect(() => {
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 100);
+  }, [detailPanelOpen, drawerOpen]);
+
+  const [tabQueryParams, setTabQueryParams] = useState<
+    Record<string, UrlQueryObject>
+  >({});
+
+  const getDefaultTabQueryParams = (tab: string): UrlQueryObject => {
+    const tabDefinition = tabs.find(({ value }) => value === tab);
+    const sort = tabDefinition?.sort;
+    const query: UrlQueryObject = sort
+      ? { tab, sort: sort.key, dir: sort.dir }
+      : { tab };
+    return query;
+  };
+
+  const onChange = (_: React.SyntheticEvent, tab: string) => {
+    const tabConfirm = tabs.find(({ value }) => value === currentTab);
+
+    // restore the query params for the tab
+    const query: UrlQueryObject = restoreTabQuery
+      ? (tabQueryParams[tab] ?? getDefaultTabQueryParams(tab))
+      : { tab };
+
+    if (!!tabConfirm?.confirmOnLeaving && requiresConfirmation(currentTab)) {
+      showConfirmation({ onConfirm: () => updateQuery(query, overwriteQuery) });
+    } else {
+      updateQuery(query, overwriteQuery);
+    }
+  };
+
+  useEffect(() => {
+    const tab = urlQuery['tab'] as string | undefined;
+    if (isValidTab(tab)) {
+      // store the query params for the current tab
+      setTabQueryParams(value => {
+        return {
+          ...value,
+          [tab]: urlQuery,
+        };
+      });
+    }
+  }, [isValidTab, urlQuery]);
+
+  const isExtraSmallScreen = useIsExtraSmallScreen();
+
+  const tabList = (
+    <Box flex={1}>
+      <ShortTabList value={currentTab} centered onChange={onChange}>
+        {tabs.map(({ value }) => (
+          <Tab
+            key={value}
+            value={value}
+            data-testid={`tab-${value.toLowerCase().replace(/\s+/g, '-')}`}
+            label={t(`label.${value.toLowerCase()}` as LocaleKey, {
+              defaultValue: value,
+            })}
+          />
+        ))}
+      </ShortTabList>
+    </Box>
+  );
+
+  const tabPanels = tabs.map(({ Component, value }) => (
+    <DetailTab value={value} key={value}>
+      {Component}
+    </DetailTab>
+  ));
+
+  if (isExtraSmallScreen) {
+    // On mobile, render tabs inline (AppBarTabsPortal has no target)
+    // and wrap in a column-flex container so tabs sit above the content
+    return (
+      <TabContext value={currentTab}>
+        <Box display="flex" flexDirection="column" flex={1} width="100%">
+          {tabList}
+          {tabPanels}
+        </Box>
+      </TabContext>
+    );
+  }
+
+  return (
+    <TabContext value={currentTab}>
+      <AppBarTabsPortal
+        sx={{
+          display: 'flex',
+          flex: 1,
+          justifyContent: 'center',
+        }}
+      >
+        {tabList}
+      </AppBarTabsPortal>
+      {tabPanels}
+    </TabContext>
+  );
+};

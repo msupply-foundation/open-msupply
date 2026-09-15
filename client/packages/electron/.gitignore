@@ -1,0 +1,5 @@
+# Webpack
+.webpack/
+
+# Electron-Forge
+out/

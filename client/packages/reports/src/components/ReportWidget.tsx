@@ -1,0 +1,132 @@
+import React, { PropsWithChildren } from 'react';
+import { ChevronDownIcon, SvgIconProps } from '@common/icons';
+import { ReportRowFragment } from '@openmsupply-client/system';
+import {
+  BasicSpinner,
+  Link,
+  LocaleKey,
+  RouteBuilder,
+  Card,
+  Grid,
+  Typography,
+  useTranslation,
+} from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
+
+interface ReportWidgetProps {
+  maxWidth?: number | string;
+  title: string;
+  Icon: (props: SvgIconProps & { stroke?: string }) => JSX.Element;
+  reports: ReportRowFragment[] | undefined;
+  onReportClick: (report: ReportRowFragment) => void;
+  hasReports: boolean;
+}
+
+export const ReportWidget: React.FC<PropsWithChildren<ReportWidgetProps>> = ({
+  maxWidth,
+  title,
+  Icon,
+  reports,
+  onReportClick,
+  hasReports = false,
+}) => {
+  const t = useTranslation();
+  if (!hasReports) return null;
+
+  return (
+    <Card
+      sx={{
+        borderRadius: 4,
+        maxWidth,
+        padding: 3,
+        display: 'flex',
+        flexDirection: 'column',
+        flex: 1,
+        boxShadow: 'none',
+        border: '1px solid',
+        borderColor: 'border',
+      }}
+    >
+      <Grid container alignItems="center">
+        <Grid
+          display="flex"
+          alignItems="center"
+          justifyContent="center"
+          sx={{
+            width: 64,
+            backgroundColor: 'background.icon',
+            borderRadius: 4,
+            height: 64,
+            marginRight: 1.5,
+          }}
+        >
+          <Icon color="primary" />
+        </Grid>
+        <Typography sx={{ fontSize: '24px', fontWeight: 'bold' }}>
+          {title}
+        </Typography>
+      </Grid>
+
+      <React.Suspense fallback={<BasicSpinner inline />}>
+        {reports && (
+          <Grid
+            display="flex"
+            justifyContent="flex-start"
+            flexDirection="column"
+            paddingTop={2}
+            sx={{ overflowY: 'auto' }}
+          >
+            {reports.map((report, index) => (
+              <React.Fragment key={`${report.id}_${index}`}>
+                <Link
+                  style={{
+                    textDecoration: 'none',
+                  }}
+                  onClick={() => {
+                    onReportClick(report);
+                  }}
+                  to={
+                    report.argumentSchema
+                      ? ''
+                      : RouteBuilder.create(AppRoute.Reports)
+                          .addPart(report.id)
+                          .build()
+                  }
+                >
+                  <Grid
+                    sx={{
+                      display: 'flex',
+                      paddingLeft: 1,
+                    }}
+                  >
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        color: 'secondary.main',
+                        fontWeight: 'bold',
+                        paddingBottom: 1.5,
+                      }}
+                    >
+                      {/* Cast is safe — i18next falls back to report.name if key doesn't exist */}
+                      {t(
+                        `report-code.${report.code}` as LocaleKey,
+                        report.name
+                      )}
+                    </Typography>
+                    <ChevronDownIcon
+                      color="secondary"
+                      sx={{
+                        transform: 'rotate(-90deg)',
+                        marginLeft: 1,
+                      }}
+                    />
+                  </Grid>
+                </Link>
+              </React.Fragment>
+            ))}
+          </Grid>
+        )}
+      </React.Suspense>
+    </Card>
+  );
+};

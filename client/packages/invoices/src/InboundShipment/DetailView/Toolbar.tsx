@@ -1,0 +1,167 @@
+import React from 'react';
+import {
+  AppBarContentPortal,
+  Box,
+  InputWithLabelRow,
+  Grid,
+  useTranslation,
+  InvoiceNodeStatus,
+  InvoiceNodeType,
+  Alert,
+  Tooltip,
+  BufferedTextArea,
+  Link,
+  RouteBuilder,
+  DisabledStoreNotice,
+  useDebounceCallback,
+} from '@openmsupply-client/common';
+import { AppRoute } from '@openmsupply-client/config';
+import { SupplierSearchInput } from '@openmsupply-client/system';
+import { InboundRowFragment, useInboundShipment } from '../api';
+import { InvoiceToolbarCustomFields } from '../../common';
+import { ReceivedDateInput } from './ReceivedDateInput';
+
+const InboundInfoPanel = ({
+  shipment,
+}: {
+  shipment: InboundRowFragment | undefined;
+}) => {
+  const t = useTranslation();
+  const loadMessage = (shipment: InboundRowFragment | undefined) => {
+    if (!shipment?.linkedShipment?.id) {
+      return t('info.manual-shipment');
+    }
+    if (shipment?.status === InvoiceNodeStatus.Shipped) {
+      return `${t('info.automatic-shipment')} ${t(
+        'info.automatic-shipment-no-edit'
+      )}`;
+    }
+    return t('info.automatic-shipment');
+  };
+
+  return <Alert severity="info">{loadMessage(shipment)}</Alert>;
+};
+
+export const Toolbar = () => {
+  const t = useTranslation();
+
+  const {
+    query: { data: shipment },
+    draft,
+    isDisabled,
+    isExternal,
+    updatePatch,
+    update: { update, saveDraft },
+  } = useInboundShipment();
+
+  const { otherParty, theirReference, purchaseOrder } = draft || {};
+  const debouncedSave = useDebounceCallback(saveDraft, [saveDraft]);
+
+  const isTransfer = !!shipment?.linkedShipment?.id;
+
+  return (
+    <AppBarContentPortal sx={{ display: 'flex', flex: 1, marginBottom: 1 }}>
+      <Grid container spacing={2} width="100%">
+        <Grid>
+          <Box display="flex" flexDirection="column" gap={1}>
+            {otherParty && (
+              <InputWithLabelRow
+                label={t('label.supplier-name')}
+                labelWidth="9rem"
+                Input={
+                  <SupplierSearchInput
+                    disabled={isDisabled || isTransfer || isExternal}
+                    value={otherParty}
+                    onChange={name => {
+                      update({ otherParty: name ?? undefined });
+                    }}
+                  />
+                }
+              />
+            )}
+            <InputWithLabelRow
+              label={t('label.supplier-reference')}
+              labelWidth="9rem"
+              Input={
+                <Tooltip title={theirReference} placement="bottom-start">
+                  <BufferedTextArea
+                    disabled={isDisabled}
+                    size="small"
+                    sx={{ width: 250 }}
+                    value={theirReference ?? ''}
+                    onChange={event => {
+                      updatePatch({ theirReference: event.target.value });
+                      debouncedSave();
+                    }}
+                    onBlur={saveDraft}
+                    inputProps={{ 'data-testid': 'supplier-reference-field' }}
+                    maxRows={2}
+                    minRows={1}
+                    slotProps={{
+                      input: {
+                        sx: {
+                          backgroundColor: theme =>
+                            isDisabled
+                              ? theme.palette.background.input.disabled
+                              : theme.palette.background.input.main,
+                        },
+                      },
+                    }}
+                  />
+                </Tooltip>
+              }
+            />
+          </Box>
+        </Grid>
+        {purchaseOrder && (
+          <Grid>
+            <Box display="flex" flex={1} flexDirection="column" gap={1}>
+              <InputWithLabelRow
+                label={t('label.purchase-order-number')}
+                Input={
+                  <Link
+                    to={RouteBuilder.create(AppRoute.Replenishment)
+                      .addPart(AppRoute.PurchaseOrder)
+                      .addPart(purchaseOrder?.id ?? '')
+                      .build()}
+                  >{`#${purchaseOrder?.number}`}</Link>
+                }
+                sx={{
+                  width: 200,
+                  height: 35,
+                }}
+              />
+              <InputWithLabelRow
+                label={t('label.purchase-order-reference')}
+                Input={`${purchaseOrder?.reference ?? ''}`}
+                sx={{
+                  width: 200,
+                  height: 35,
+                }}
+              />
+            </Box>
+          </Grid>
+        )}
+        <Grid>
+          <ReceivedDateInput />
+        </Grid>
+        <Grid>
+          <Box display="flex" flexDirection="column" gap={1}>
+            <InvoiceToolbarCustomFields
+              invoiceType={InvoiceNodeType.InboundShipment}
+              customFields={shipment?.customFields}
+              onUpdate={patch => update({ customFields: patch })}
+              disabled={isDisabled}
+            />
+          </Box>
+        </Grid>
+        <Grid size={12}>
+          <DisabledStoreNotice otherParty={otherParty} />
+        </Grid>
+        <Grid size={12}>
+          <InboundInfoPanel shipment={shipment} />
+        </Grid>
+      </Grid>
+    </AppBarContentPortal>
+  );
+};

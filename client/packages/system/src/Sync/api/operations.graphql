@@ -1,0 +1,220 @@
+fragment SyncSettings on SyncSettingsNode {
+  __typename
+  intervalSeconds
+  url
+  username
+  centralServerSiteId
+  syncSiteId
+  batchSize
+}
+
+query syncSettings {
+  syncSettings {
+    ...SyncSettings
+  }
+}
+
+fragment SyncError on SyncErrorNode {
+  __typename
+  variant
+  fullError
+}
+
+mutation initialiseSite($syncSettings: SyncSettingsInput!) {
+  initialiseSite(input: $syncSettings) {
+    __typename
+    ... on SyncSettingsNode {
+      ...SyncSettings
+    }
+    ... on SyncErrorNode {
+      ...SyncError
+    }
+    ... on SyncErrorV7Node {
+      ...SyncErrorV7
+    }
+  }
+}
+
+mutation updateSyncSettings($syncSettings: SyncSettingsInput!) {
+  updateSyncSettings(input: $syncSettings) {
+    __typename
+    ... on SyncSettingsNode {
+      ...SyncSettings
+    }
+    ... on SyncErrorNode {
+      ...SyncError
+    }
+    ... on SyncErrorV7Node {
+      ...SyncErrorV7
+    }
+  }
+}
+
+fragment SyncStatus on SyncStatusNode {
+  __typename
+  finished
+  started
+}
+
+fragment SyncStatusWithProgress on SyncStatusWithProgressNode {
+  __typename
+  finished
+  started
+  done
+  total
+}
+
+fragment FullSyncStatusV5V6 on FullSyncStatusV5V6Node {
+  __typename
+  error {
+    ...SyncError
+  }
+  integration {
+    ...SyncStatusWithProgress
+  }
+  isSyncing
+  prepareInitial {
+    ...SyncStatus
+  }
+  pullCentral {
+    ...SyncStatusWithProgress
+  }
+  pullRemote {
+    ...SyncStatusWithProgress
+  }
+  push {
+    ...SyncStatusWithProgress
+  }
+  pullV6 {
+    ...SyncStatusWithProgress
+  }
+  pushV6 {
+    ...SyncStatusWithProgress
+  }
+  summary {
+    ...SyncStatus
+  }
+  lastSuccessfulSync {
+    ...SyncStatus
+  }
+  errorThreshold
+  warningThreshold
+}
+
+fragment SyncErrorV7 on SyncErrorV7Node {
+  __typename
+  variantV7: variant
+  fullError
+}
+
+fragment SyncStatusV7 on SyncStatusV7Node {
+  __typename
+  finished
+  started
+}
+
+fragment SyncStatusWithProgressV7 on SyncStatusWithProgressV7Node {
+  __typename
+  finished
+  started
+  done
+  total
+}
+
+fragment FullSyncStatusV7 on FullSyncStatusV7Node {
+  __typename
+  error {
+    ...SyncErrorV7
+  }
+  integration {
+    ...SyncStatusWithProgressV7
+  }
+  isSyncing
+  push {
+    ...SyncStatusWithProgressV7
+  }
+  pull {
+    ...SyncStatusWithProgressV7
+  }
+  waitingForIntegration {
+    ...SyncStatusV7
+  }
+  summary {
+    ...SyncStatusV7
+  }
+  lastSuccessfulSync {
+    ...SyncStatus
+  }
+  errorThreshold
+  warningThreshold
+  linkedDescriptions {
+    __typename
+    ... on AllStoreDataDescription {
+      storeName
+    }
+    ... on TableNameDescription {
+      tableName
+    }
+  }
+}
+
+query syncInfo {
+  syncStatus: latestSyncStatus {
+    __typename
+    ... on FullSyncStatusV5V6Node {
+      ...FullSyncStatusV5V6
+    }
+    ... on FullSyncStatusV7Node {
+      ...FullSyncStatusV7
+    }
+  }
+  numberOfRecordsInPushQueue
+}
+
+query syncStatus {
+  syncStatus: latestSyncStatus {
+    __typename
+    ... on FullSyncStatusV5V6Node {
+      ...FullSyncStatusV5V6
+    }
+    ... on FullSyncStatusV7Node {
+      ...FullSyncStatusV7
+    }
+  }
+}
+
+mutation manualSync($fetchPatientId: String) {
+  manualSync(fetchPatientId: $fetchPatientId)
+}
+
+mutation initialiseAsCentralServer(
+  $input: InitialiseAsCentralServerInputNode!
+) {
+  initialiseAsCentralServer(input: $input) {
+    __typename
+    ... on StandaloneCentralInitialisedNode {
+      success
+    }
+    ... on InitialiseAsCentralServerError {
+      error {
+        __typename
+        description
+      }
+    }
+  }
+}
+
+subscription syncInfoUpdated {
+  syncInfoUpdated {
+    syncStatus {
+      __typename
+      ... on FullSyncStatusV5V6Node {
+        ...FullSyncStatusV5V6
+      }
+      ... on FullSyncStatusV7Node {
+        ...FullSyncStatusV7
+      }
+    }
+    numberOfRecordsInPushQueue
+  }
+}

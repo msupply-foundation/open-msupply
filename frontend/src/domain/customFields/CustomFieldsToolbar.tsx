@@ -70,7 +70,9 @@ export const CustomFieldsToolbar = (props: {
             // and a date are short fixed-length values, so they take a
             // below-average share and leave the surplus to the long free-text
             // and name fields beside them. Free text (and an `unsupported`
-            // field's disabled placeholder) keeps the row's equal share.
+            // field's disabled placeholder) keeps the row's equal share — as
+            // does a MULTI_OPTION, whose value is a list of tags and so is not
+            // a short fixed-length value at all.
             // The 9.5rem floor stays just under the row's own 10rem so promoting
             // a field can only ever move the cluster's wrap point outward — a
             // header must not gain a line on a narrower screen than it used to.

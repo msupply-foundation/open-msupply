@@ -1,0 +1,775 @@
+//! Tus 1.0.0 resumable file upload protocol — https://tus.io/protocols/resumable-upload
+//!
+//! Mounted under `/central/sync/files`. Replaces the legacy `/central/sync/upload_file` route.
+//! Supports the `creation` extension; intermediate uploads carry auth via `Upload-Metadata` on
+//! every request (HEAD and PATCH included) since this is server-to-server traffic with no session.
+//!
+//! Endpoints:
+//! - `OPTIONS /central/sync/files` — advertise protocol support
+//! - `POST    /central/sync/files` — create an upload session for a known file_id
+//! - `HEAD    /central/sync/files/{file_id}` — report current Upload-Offset
+//! - `PATCH   /central/sync/files/{file_id}` — append bytes at the given offset
+//!
+//! Auth — two schemes, selected by the presence of an `Authorization` header (see
+//! `authenticate`):
+//! - v7 remotes send the standard v7 auth headers (bearer token + hardware id) on every
+//!   request; validated against central's own site table (works on standalone central).
+//! - v5/v6-era remotes embed `sync_v5_settings` (base64 of the SyncApiSettings JSON) in
+//!   `Upload-Metadata` on every request; validated by forwarding to the legacy central.
+//!
+//! Other Upload-Metadata pairs we expect:
+//! - `file_id`, `table_name`, `record_id`, `file_name` — required on POST when the
+//!   sync_file_reference row hasn't yet synced from the remote (we'll create a stop-gap row).
+
+use std::{collections::HashMap, fmt::Display};
+
+use actix_web::{
+    dev::HttpServiceFactory,
+    head,
+    http::{
+        header::{HeaderMap, AUTHORIZATION},
+        StatusCode,
+    },
+    options, patch, post,
+    web::{self, Bytes, Data, Payload},
+    HttpRequest, HttpResponse, ResponseError,
+};
+use base64::{prelude::BASE64_STANDARD, Engine};
+use chrono::Utc;
+use futures::StreamExt;
+use repository::{
+    SyncFileDirection, SyncFileReferenceRow, SyncFileReferenceRowRepository, SyncFileStatus,
+};
+use serde::Deserialize;
+use service::{
+    service_provider::{ServiceContext, ServiceProvider},
+    settings::Settings,
+    static_files::{InvalidFilePath, StaticFileCategory, StaticFileService},
+    sync::{
+        api::{validate_site_auth, SyncApiSettings},
+        CentralServerConfig,
+    },
+    sync_v7::sync_on_central::validate_v7_site_auth,
+};
+use tokio::io::AsyncWriteExt;
+
+const TUS_VERSION: &str = "1.0.0";
+const TUS_EXTENSIONS: &str = "creation";
+/// Soft cap reported to clients. We don't enforce it in PATCH — the per-file row carries the
+/// real total_bytes — but advertising helps client-side validation.
+const TUS_MAX_SIZE: u64 = 10 * 1024 * 1024 * 1024; // 10 GiB
+
+pub fn tus_on_central() -> impl HttpServiceFactory {
+    web::scope("files")
+        .service(options)
+        .service(create)
+        .service(head_offset)
+        .service(patch_chunk)
+}
+
+/// Authenticate a tus request. Two schemes, selected by the presence of an
+/// `Authorization` header:
+/// - v7 remotes send the standard v7 auth headers (bearer token + hardware id),
+///   validated against central's own site table — works on standalone central.
+/// - v5/v6-era remotes embed `sync_v5_settings` in `Upload-Metadata`, validated by
+///   forwarding to the legacy central server.
+///
+/// No cross-scheme fallback: a v7 client with a bad token should hear Unauthorized,
+/// not have possibly-stale v5 credentials tried against the legacy server.
+async fn authenticate(
+    req: &HttpRequest,
+    metadata: &HashMap<String, String>,
+    ctx: &ServiceContext,
+    service_provider: &ServiceProvider,
+) -> Result<(), TusError> {
+    if req.headers().contains_key(AUTHORIZATION) {
+        let common = super::sync_v7::extract_common(req).map_err(|_| TusError::Unauthorized)?;
+        validate_v7_site_auth(service_provider, &common).map_err(|_| TusError::Unauthorized)?;
+        return Ok(());
+    }
+
+    let auth_settings = decode_sync_v5_settings(metadata)?;
+    validate_site_auth(ctx, &auth_settings)
+        .await
+        .map_err(|_| TusError::Unauthorized)?;
+    Ok(())
+}
+
+// ---------------------------------------------------------------------------
+// Handlers
+// ---------------------------------------------------------------------------
+
+#[options("")]
+async fn options() -> HttpResponse {
+    HttpResponse::NoContent()
+        .insert_header(("Tus-Resumable", TUS_VERSION))
+        .insert_header(("Tus-Version", TUS_VERSION))
+        .insert_header(("Tus-Extension", TUS_EXTENSIONS))
+        .insert_header(("Tus-Max-Size", TUS_MAX_SIZE.to_string()))
+        .finish()
+}
+
+#[post("")]
+async fn create(
+    req: HttpRequest,
+    settings: Data<Settings>,
+    service_provider: Data<ServiceProvider>,
+) -> Result<HttpResponse, TusError> {
+    require_tus_resumable(req.headers())?;
+    require_central()?;
+
+    let upload_length = parse_upload_length(req.headers())?;
+    let metadata = parse_metadata(req.headers())?;
+
+    let ctx = service_provider.basic_context().map_err(internal)?;
+    authenticate(&req, &metadata, &ctx, &service_provider).await?;
+
+    let file_id = require_metadata(&metadata, "file_id")?;
+
+    let repo = SyncFileReferenceRowRepository::new(&ctx.connection);
+    let sync_file_reference = match repo.find_one_by_id(&file_id).map_err(internal)? {
+        Some(row) => {
+            // Row already synced from remote — total_bytes must match the client's claim
+            if row.total_bytes as u64 != upload_length {
+                return Err(TusError::BadRequest(format!(
+                    "Upload-Length ({}) does not match sync_file_reference.total_bytes ({})",
+                    upload_length, row.total_bytes
+                )));
+            }
+            row
+        }
+        None => create_stopgap_row(&ctx, &metadata, upload_length, &file_id)?,
+    };
+
+    let file_service = StaticFileService::new(&settings.server.base_dir).map_err(internal)?;
+    let category = StaticFileCategory::SyncFile(
+        sync_file_reference.table_name.clone(),
+        sync_file_reference.record_id.clone(),
+    );
+    let file = file_service
+        .reserve_file(
+            &sync_file_reference.file_name,
+            &category,
+            Some(file_id.clone()),
+        )
+        .map_err(file_path_error)?;
+
+    // Create an empty file at the reserved path — subsequent PATCHes will append to it.
+    // If a partial file already exists from a previous abandoned upload at the same file_id,
+    // we keep it: HEAD will report its current size and the client resumes from there.
+    if !std::path::Path::new(&file.path).exists() {
+        std::fs::File::create(&file.path).map_err(internal)?;
+    }
+
+    Ok(HttpResponse::Created()
+        .insert_header(("Tus-Resumable", TUS_VERSION))
+        .insert_header(("Location", format!("/central/sync/files/{}", file_id)))
+        .finish())
+}
+
+#[head("/{file_id}")]
+async fn head_offset(
+    req: HttpRequest,
+    path: web::Path<String>,
+    settings: Data<Settings>,
+    service_provider: Data<ServiceProvider>,
+) -> Result<HttpResponse, TusError> {
+    require_tus_resumable(req.headers())?;
+    require_central()?;
+
+    let metadata = parse_metadata(req.headers())?;
+
+    let ctx = service_provider.basic_context().map_err(internal)?;
+    authenticate(&req, &metadata, &ctx, &service_provider).await?;
+
+    let file_id = path.into_inner();
+    let repo = SyncFileReferenceRowRepository::new(&ctx.connection);
+    let row = repo
+        .find_one_by_id(&file_id)
+        .map_err(internal)?
+        .ok_or_else(|| TusError::NotFound(file_id.clone()))?;
+
+    let offset = current_offset(&settings, &row, &file_id)?;
+
+    Ok(HttpResponse::Ok()
+        .insert_header(("Tus-Resumable", TUS_VERSION))
+        .insert_header(("Upload-Offset", offset.to_string()))
+        .insert_header(("Upload-Length", row.total_bytes.to_string()))
+        .insert_header(("Cache-Control", "no-store"))
+        .finish())
+}
+
+#[patch("/{file_id}")]
+async fn patch_chunk(
+    req: HttpRequest,
+    path: web::Path<String>,
+    settings: Data<Settings>,
+    service_provider: Data<ServiceProvider>,
+    mut body: Payload,
+) -> Result<HttpResponse, TusError> {
+    require_tus_resumable(req.headers())?;
+    require_central()?;
+    require_header_value(
+        req.headers(),
+        "content-type",
+        "application/offset+octet-stream",
+    )?;
+
+    let client_offset = parse_upload_offset(req.headers())?;
+    let metadata = parse_metadata(req.headers())?;
+
+    let ctx = service_provider.basic_context().map_err(internal)?;
+    authenticate(&req, &metadata, &ctx, &service_provider).await?;
+
+    let file_id = path.into_inner();
+    let repo = SyncFileReferenceRowRepository::new(&ctx.connection);
+    let row = repo
+        .find_one_by_id(&file_id)
+        .map_err(internal)?
+        .ok_or_else(|| TusError::NotFound(file_id.clone()))?;
+
+    let file_service = StaticFileService::new(&settings.server.base_dir).map_err(internal)?;
+    let category = StaticFileCategory::SyncFile(row.table_name.clone(), row.record_id.clone());
+    let file = file_service
+        .reserve_file(&row.file_name, &category, Some(file_id.clone()))
+        .map_err(file_path_error)?;
+
+    // The file is expected to exist (created at POST). If absent — e.g. someone PATCHed without
+    // POSTing first, or the server was restarted with a wiped base_dir — refuse rather than
+    // silently re-create with the wrong offset.
+    let server_offset = match std::fs::metadata(&file.path) {
+        Ok(m) => m.len(),
+        Err(_) => {
+            return Err(TusError::NotFound(format!(
+                "no partial file for {} — POST first",
+                file_id
+            )))
+        }
+    };
+
+    if server_offset != client_offset {
+        return Err(TusError::Conflict(format!(
+            "Upload-Offset {} does not match server offset {}",
+            client_offset, server_offset
+        )));
+    }
+
+    // Append the streaming body. Per-chunk RAM is bounded by the underlying TCP chunk size.
+    let mut handle = tokio::fs::OpenOptions::new()
+        .append(true)
+        .open(&file.path)
+        .await
+        .map_err(internal)?;
+
+    let mut written: u64 = 0;
+    while let Some(chunk) = body.next().await {
+        let chunk: Bytes =
+            chunk.map_err(|e| TusError::BadRequest(format!("payload error: {e}")))?;
+        handle.write_all(&chunk).await.map_err(internal)?;
+        written += chunk.len() as u64;
+    }
+    handle.flush().await.map_err(internal)?;
+    drop(handle);
+
+    let new_offset = client_offset + written;
+
+    // Cap at total_bytes — a buggy client could send more than promised.
+    if new_offset > row.total_bytes as u64 {
+        return Err(TusError::BadRequest(format!(
+            "received {} bytes but Upload-Length is {}",
+            new_offset, row.total_bytes
+        )));
+    }
+
+    // When the file is complete, mirror the legacy handler's behaviour: set local uploaded_bytes
+    // without producing a changelog. The remote's terminal status (Done) is the source of truth
+    // and reaches central via the regular sync push.
+    if new_offset == row.total_bytes as u64 {
+        repo.upsert_without_changelog(&SyncFileReferenceRow {
+            uploaded_bytes: row.total_bytes,
+            ..row
+        })
+        .map_err(internal)?;
+    }
+
+    Ok(HttpResponse::NoContent()
+        .insert_header(("Tus-Resumable", TUS_VERSION))
+        .insert_header(("Upload-Offset", new_offset.to_string()))
+        .finish())
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+fn require_central() -> Result<(), TusError> {
+    if !CentralServerConfig::is_central_server() {
+        return Err(TusError::Forbidden("not a central server".into()));
+    }
+    Ok(())
+}
+
+fn require_tus_resumable(headers: &HeaderMap) -> Result<(), TusError> {
+    match headers.get("tus-resumable").and_then(|v| v.to_str().ok()) {
+        Some(v) if v == TUS_VERSION => Ok(()),
+        Some(other) => Err(TusError::PreconditionFailed(format!(
+            "unsupported Tus-Resumable: {}",
+            other
+        ))),
+        None => Err(TusError::BadRequest("missing Tus-Resumable header".into())),
+    }
+}
+
+fn require_header_value(headers: &HeaderMap, name: &str, expected: &str) -> Result<(), TusError> {
+    match headers.get(name).and_then(|v| v.to_str().ok()) {
+        Some(v) if v.eq_ignore_ascii_case(expected) => Ok(()),
+        _ => Err(TusError::BadRequest(format!("expected {name}: {expected}"))),
+    }
+}
+
+fn parse_upload_length(headers: &HeaderMap) -> Result<u64, TusError> {
+    headers
+        .get("upload-length")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| v.parse::<u64>().ok())
+        .ok_or_else(|| TusError::BadRequest("missing or invalid Upload-Length".into()))
+}
+
+fn parse_upload_offset(headers: &HeaderMap) -> Result<u64, TusError> {
+    headers
+        .get("upload-offset")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|v| v.parse::<u64>().ok())
+        .ok_or_else(|| TusError::BadRequest("missing or invalid Upload-Offset".into()))
+}
+
+/// Parse a tus Upload-Metadata header. Format: `key1 b64value1,key2 b64value2,...` (the value is
+/// optional for some keys per the spec, but for our purposes every key carries a base64 value).
+fn parse_metadata(headers: &HeaderMap) -> Result<HashMap<String, String>, TusError> {
+    let raw = headers
+        .get("upload-metadata")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+
+    let mut out = HashMap::new();
+    if raw.is_empty() {
+        return Ok(out);
+    }
+    for pair in raw.split(',') {
+        let pair = pair.trim();
+        if pair.is_empty() {
+            continue;
+        }
+        let mut parts = pair.splitn(2, ' ');
+        let key = parts
+            .next()
+            .ok_or_else(|| TusError::BadRequest("malformed Upload-Metadata pair".into()))?
+            .to_string();
+        let b64 = parts.next().unwrap_or("");
+        let decoded = BASE64_STANDARD
+            .decode(b64)
+            .map_err(|e| TusError::BadRequest(format!("base64 decode failed for {key}: {e}")))?;
+        let value = String::from_utf8(decoded).map_err(|e| {
+            TusError::BadRequest(format!("metadata value for {key} is not utf-8: {e}"))
+        })?;
+        out.insert(key, value);
+    }
+    Ok(out)
+}
+
+fn require_metadata(meta: &HashMap<String, String>, key: &str) -> Result<String, TusError> {
+    meta.get(key)
+        .cloned()
+        .ok_or_else(|| TusError::BadRequest(format!("missing Upload-Metadata key: {key}")))
+}
+
+fn decode_sync_v5_settings(meta: &HashMap<String, String>) -> Result<SyncApiSettings, TusError> {
+    let json = require_metadata(meta, "sync_v5_settings")?;
+    serde_json::from_str::<SyncApiSettings>(&json)
+        .map_err(|e| TusError::BadRequest(format!("sync_v5_settings JSON parse failed: {e}")))
+}
+
+/// When the file_reference row hasn't yet synced from the remote we still want the upload to
+/// proceed — record-id, table-name, file-name come from Upload-Metadata. The row is written via
+/// `upsert_without_changelog` so it stays local; the proper row arrives via sync later and is
+/// merged (preserving our local-only fields).
+fn create_stopgap_row(
+    ctx: &ServiceContext,
+    meta: &HashMap<String, String>,
+    upload_length: u64,
+    file_id: &str,
+) -> Result<SyncFileReferenceRow, TusError> {
+    let table_name = require_metadata(meta, "table_name")?;
+    let record_id = require_metadata(meta, "record_id")?;
+    let file_name = require_metadata(meta, "file_name")?;
+
+    let row = SyncFileReferenceRow {
+        id: file_id.to_string(),
+        file_name,
+        table_name,
+        record_id,
+        uploaded_bytes: 0,
+        downloaded_bytes: 0,
+        total_bytes: upload_length as i32,
+        status: SyncFileStatus::New,
+        error: None,
+        mime_type: None,
+        retries: 0,
+        retry_at: None,
+        direction: SyncFileDirection::Upload,
+        created_datetime: Utc::now().naive_utc(),
+        deleted_datetime: None,
+    };
+    SyncFileReferenceRowRepository::new(&ctx.connection)
+        .upsert_without_changelog(&row)
+        .map_err(internal)?;
+    Ok(row)
+}
+
+fn current_offset(
+    settings: &Settings,
+    row: &SyncFileReferenceRow,
+    file_id: &str,
+) -> Result<u64, TusError> {
+    let file_service = StaticFileService::new(&settings.server.base_dir).map_err(internal)?;
+    let category = StaticFileCategory::SyncFile(row.table_name.clone(), row.record_id.clone());
+    let file = file_service
+        .reserve_file(&row.file_name, &category, Some(file_id.to_string()))
+        .map_err(file_path_error)?;
+    match std::fs::metadata(&file.path) {
+        Ok(m) => Ok(m.len()),
+        Err(_) => Ok(0),
+    }
+}
+
+fn internal<E: Display>(e: E) -> TusError {
+    TusError::Internal(e.to_string())
+}
+
+/// For the static file service, whose path components come from the request: a segment
+/// that can't be one is the client's fault, so it gets a 400 rather than a 500.
+fn file_path_error(e: anyhow::Error) -> TusError {
+    if InvalidFilePath::is_in(&e) {
+        TusError::BadRequest(e.to_string())
+    } else {
+        internal(e)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Errors
+// ---------------------------------------------------------------------------
+
+#[derive(Debug, Deserialize)]
+pub enum TusError {
+    BadRequest(String),
+    Unauthorized,
+    Forbidden(String),
+    NotFound(String),
+    Conflict(String),
+    PreconditionFailed(String),
+    Internal(String),
+}
+
+impl Display for TusError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TusError::BadRequest(m) => write!(f, "{m}"),
+            TusError::Unauthorized => write!(f, "unauthorized"),
+            TusError::Forbidden(m) => write!(f, "{m}"),
+            TusError::NotFound(m) => write!(f, "{m}"),
+            TusError::Conflict(m) => write!(f, "{m}"),
+            TusError::PreconditionFailed(m) => write!(f, "{m}"),
+            TusError::Internal(m) => write!(f, "{m}"),
+        }
+    }
+}
+
+impl ResponseError for TusError {
+    fn status_code(&self) -> StatusCode {
+        match self {
+            TusError::BadRequest(_) => StatusCode::BAD_REQUEST,
+            TusError::Unauthorized => StatusCode::UNAUTHORIZED,
+            TusError::Forbidden(_) => StatusCode::FORBIDDEN,
+            TusError::NotFound(_) => StatusCode::NOT_FOUND,
+            TusError::Conflict(_) => StatusCode::CONFLICT,
+            TusError::PreconditionFailed(_) => StatusCode::PRECONDITION_FAILED,
+            TusError::Internal(_) => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
+
+    fn error_response(&self) -> HttpResponse {
+        HttpResponse::build(self.status_code())
+            .insert_header(("Tus-Resumable", TUS_VERSION))
+            .body(self.to_string())
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use actix_web::http::header::{HeaderName, HeaderValue};
+
+    fn header(pairs: &[(&str, &str)]) -> HeaderMap {
+        let mut map = HeaderMap::new();
+        for (name, value) in pairs {
+            map.insert(
+                HeaderName::from_bytes(name.as_bytes()).unwrap(),
+                HeaderValue::from_str(value).unwrap(),
+            );
+        }
+        map
+    }
+
+    /// A path component that came in on the request is the request's fault. Before this
+    /// the traversal guard's rejections came back as 500s, which reads as a server bug.
+    #[test]
+    fn file_path_error_answers_bad_request_for_a_refused_segment() {
+        let service = StaticFileService::new(".").unwrap();
+        let error = service
+            .reserve_file(
+                "payload.js",
+                &StaticFileCategory::SyncFile("../../escaped".to_string(), "rec".to_string()),
+                Some("file-id".to_string()),
+            )
+            .expect_err("a traversing table name should be refused");
+
+        assert!(matches!(file_path_error(error), TusError::BadRequest(_)));
+    }
+
+    #[test]
+    fn file_path_error_leaves_everything_else_a_server_error() {
+        assert!(matches!(
+            file_path_error(anyhow::anyhow!("disk on fire")),
+            TusError::Internal(_)
+        ));
+    }
+
+    #[test]
+    fn parse_metadata_handles_multiple_pairs() {
+        let headers = header(&[(
+            "upload-metadata",
+            // file_id=abc, file_name=hello.bin (base64)
+            "file_id YWJj,file_name aGVsbG8uYmlu",
+        )]);
+        let parsed = parse_metadata(&headers).unwrap();
+        assert_eq!(parsed.get("file_id"), Some(&"abc".to_string()));
+        assert_eq!(parsed.get("file_name"), Some(&"hello.bin".to_string()));
+    }
+
+    #[test]
+    fn parse_metadata_handles_missing_header() {
+        let headers = HeaderMap::new();
+        let parsed = parse_metadata(&headers).unwrap();
+        assert!(parsed.is_empty());
+    }
+
+    #[test]
+    fn parse_metadata_rejects_bad_base64() {
+        let headers = header(&[("upload-metadata", "file_id !!!not-base64!!!")]);
+        let result = parse_metadata(&headers);
+        assert!(matches!(result, Err(TusError::BadRequest(_))));
+    }
+
+    #[test]
+    fn parse_upload_length_ok() {
+        let headers = header(&[("upload-length", "12345")]);
+        assert_eq!(parse_upload_length(&headers).unwrap(), 12345);
+    }
+
+    #[test]
+    fn parse_upload_length_rejects_non_numeric() {
+        let headers = header(&[("upload-length", "abc")]);
+        assert!(matches!(
+            parse_upload_length(&headers),
+            Err(TusError::BadRequest(_))
+        ));
+    }
+
+    #[test]
+    fn parse_upload_offset_ok() {
+        let headers = header(&[("upload-offset", "0")]);
+        assert_eq!(parse_upload_offset(&headers).unwrap(), 0);
+        let headers = header(&[("upload-offset", "4194304")]);
+        assert_eq!(parse_upload_offset(&headers).unwrap(), 4194304);
+    }
+
+    #[test]
+    fn require_tus_resumable_accepts_correct_version() {
+        let headers = header(&[("tus-resumable", "1.0.0")]);
+        assert!(require_tus_resumable(&headers).is_ok());
+    }
+
+    #[test]
+    fn require_tus_resumable_rejects_other_version() {
+        let headers = header(&[("tus-resumable", "0.9.0")]);
+        assert!(matches!(
+            require_tus_resumable(&headers),
+            Err(TusError::PreconditionFailed(_))
+        ));
+    }
+
+    #[test]
+    fn require_tus_resumable_rejects_missing() {
+        let headers = HeaderMap::new();
+        assert!(matches!(
+            require_tus_resumable(&headers),
+            Err(TusError::BadRequest(_))
+        ));
+    }
+
+    #[test]
+    fn require_header_value_is_case_insensitive() {
+        let headers = header(&[("content-type", "Application/Offset+Octet-Stream")]);
+        assert!(
+            require_header_value(&headers, "content-type", "application/offset+octet-stream")
+                .is_ok()
+        );
+    }
+
+    #[test]
+    fn tus_error_response_includes_resumable_header() {
+        let err = TusError::Conflict("offset 0 vs 100".to_string());
+        let response = err.error_response();
+        assert_eq!(response.status(), StatusCode::CONFLICT);
+        assert_eq!(
+            response.headers().get("Tus-Resumable").unwrap(),
+            HeaderValue::from_static(TUS_VERSION)
+        );
+    }
+
+    /// Full-route tests for the dual auth dispatch in `authenticate`: an
+    /// `Authorization` header selects v7 bearer-token validation (local to
+    /// central's DB); otherwise the legacy `sync_v5_settings` metadata path runs.
+    mod auth_dispatch {
+        use super::*;
+        use actix_web::{http::header::AUTHORIZATION, test, App};
+        use repository::{
+            migrations::Version, mock::MockDataInserts, test_db::setup_all, SiteRow,
+            SiteRowRepository, SyncVersion,
+        };
+        use service::{settings::test_settings, sync::test_util_set_is_central_server};
+
+        async fn app_parts(
+            db_name: &str,
+        ) -> (Data<ServiceProvider>, Data<Settings>, tempfile::TempDir) {
+            let (_, connection, connection_manager, database_settings) =
+                setup_all(db_name, MockDataInserts::none()).await;
+            test_util_set_is_central_server(true);
+
+            SiteRowRepository::new(&connection)
+                .upsert(&SiteRow {
+                    id: 1,
+                    code: "test_code".into(),
+                    name: "test_site".into(),
+                    hashed_password: "unused".into(),
+                    hardware_id: Some("hw-1".into()),
+                    is_multi_device: false,
+                    token: Some("test_token".into()),
+                    sync_version: SyncVersion::V7,
+                    ..Default::default()
+                })
+                .unwrap();
+
+            let temp_dir = tempfile::tempdir().unwrap();
+            let mut settings = test_settings(database_settings, None);
+            settings.server.base_dir = temp_dir.path().to_string_lossy().into_owned();
+
+            (
+                Data::new(service::service_provider::ServiceProvider::new(
+                    connection_manager,
+                )),
+                Data::new(settings),
+                temp_dir,
+            )
+        }
+
+        /// tus creation request with the metadata a stop-gap row needs; auth is
+        /// added by the caller (or not, for the fallback test).
+        fn create_request() -> test::TestRequest {
+            let metadata = [
+                ("file_id", "file1"),
+                ("file_name", "hello.txt"),
+                ("table_name", "asset"),
+                ("record_id", "rec1"),
+            ]
+            .iter()
+            .map(|(k, v)| format!("{} {}", k, BASE64_STANDARD.encode(v)))
+            .collect::<Vec<_>>()
+            .join(",");
+
+            test::TestRequest::post()
+                .uri("/files")
+                .insert_header(("Tus-Resumable", TUS_VERSION))
+                .insert_header(("Upload-Length", "11"))
+                .insert_header(("Upload-Metadata", metadata))
+        }
+
+        fn with_v7_auth(req: test::TestRequest, token: &str) -> test::TestRequest {
+            req.insert_header((AUTHORIZATION, format!("Bearer {token}")))
+                .insert_header(("hardware-id", "hw-1"))
+                .insert_header(("app-version", Version::from_package_json().to_string()))
+                .insert_header(("app-name", "Open mSupply Desktop"))
+        }
+
+        #[actix_rt::test]
+        async fn create_accepts_v7_bearer_auth() {
+            let (sp, settings, _temp_dir) = app_parts("tus_v7_auth_ok").await;
+            let app = test::init_service(
+                App::new()
+                    .app_data(sp)
+                    .app_data(settings)
+                    .service(tus_on_central()),
+            )
+            .await;
+
+            let response = test::call_service(
+                &app,
+                with_v7_auth(create_request(), "test_token").to_request(),
+            )
+            .await;
+            assert_eq!(response.status(), StatusCode::CREATED);
+        }
+
+        #[actix_rt::test]
+        async fn create_rejects_unknown_v7_token() {
+            let (sp, settings, _temp_dir) = app_parts("tus_v7_auth_bad_token").await;
+            let app = test::init_service(
+                App::new()
+                    .app_data(sp)
+                    .app_data(settings)
+                    .service(tus_on_central()),
+            )
+            .await;
+
+            let response = test::call_service(
+                &app,
+                with_v7_auth(create_request(), "wrong_token").to_request(),
+            )
+            .await;
+            assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+        }
+
+        // No Authorization header → the v5 metadata scheme is selected; without
+        // sync_v5_settings in Upload-Metadata that's a BadRequest (and proves a bad
+        // v7 token can't silently fall through to the legacy path).
+        #[actix_rt::test]
+        async fn create_without_auth_header_requires_v5_metadata() {
+            let (sp, settings, _temp_dir) = app_parts("tus_v5_fallback").await;
+            let app = test::init_service(
+                App::new()
+                    .app_data(sp)
+                    .app_data(settings)
+                    .service(tus_on_central()),
+            )
+            .await;
+
+            let response = test::call_service(&app, create_request().to_request()).await;
+            assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        }
+    }
+}

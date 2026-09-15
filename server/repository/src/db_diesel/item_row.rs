@@ -1,0 +1,415 @@
+use crate::{
+    db_diesel::changelog::ChangelogRepository, ChangelogSyncType, ChangelogTableName, Delete,
+    RowActionType, SourceSiteId, Upsert,
+};
+
+use super::{
+    clinician_link_row::clinician_link, custom_fields_json::JsonValue, item_link_row::item_link,
+    item_row::item::dsl::*, location_type_row::location_type, unit_row::unit, ItemLinkRow,
+    ItemLinkRowRepository, RepositoryError, StorageConnection,
+};
+
+use diesel::prelude::*;
+use diesel_derive_enum::DbEnum;
+use serde::{Deserialize, Serialize};
+use ts_rs::TS;
+
+table! {
+    item (id) {
+        id -> Text,
+        name -> Text,
+        code -> Text,
+        unit_id -> Nullable<Text>,
+        strength -> Nullable<Text>,
+        ven_category -> crate::db_diesel::item_row::VENCategoryMapping,
+        default_pack_size -> Double,
+        #[sql_name = "type"] type_ -> crate::db_diesel::item_row::ItemTypeMapping,
+        // TODO, this is temporary, remove
+        legacy_record -> Text,
+        is_active -> Bool,
+        is_vaccine -> Bool,
+        vaccine_doses -> Integer,
+        restricted_location_type_id ->  Nullable<Text>,
+        volume_per_pack -> Double,
+        universal_code -> Nullable<Text>,
+        custom_fields -> Nullable<crate::db_diesel::custom_fields_json::CustomFieldsJson>,
+    }
+}
+
+table! {
+    item_is_visible (id) {
+        id -> Text,
+        is_visible -> Bool,
+    }
+}
+
+joinable!(item -> unit (unit_id));
+joinable!(item_is_visible -> item (id));
+allow_tables_to_appear_in_same_query!(item, item_link);
+allow_tables_to_appear_in_same_query!(item, clinician_link);
+allow_tables_to_appear_in_same_query!(item, location_type);
+
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, TS, Deserialize, Serialize)]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum ItemType {
+    Stock,
+    Service,
+    NonStock,
+}
+
+#[derive(DbEnum, Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[DbValueStyle = "SCREAMING_SNAKE_CASE"]
+pub enum VENCategory {
+    V,
+    E,
+    N,
+    #[default]
+    NotAssigned,
+}
+
+#[derive(Clone, Insertable, Queryable, Debug, PartialEq, AsChangeset, Serialize, Deserialize)]
+#[diesel(treat_none_as_null = true)]
+#[diesel(table_name = item)]
+pub struct ItemRow {
+    pub id: String,
+    pub name: String,
+    pub code: String,
+    pub unit_id: Option<String>,
+    pub strength: Option<String>,
+    pub ven_category: VENCategory,
+    pub default_pack_size: f64,
+    #[diesel(column_name = type_)]
+    pub r#type: ItemType,
+    // TODO, this is temporary, remove
+    pub legacy_record: String,
+    pub is_active: bool,
+    pub is_vaccine: bool,
+    pub vaccine_doses: i32,
+    pub restricted_location_type_id: Option<String>,
+    pub volume_per_pack: f64,
+    pub universal_code: Option<String>,
+    /// Properties v2 values keyed by `custom_field.key`. Imported from legacy
+    /// mSupply `[item]user_field_1..7` via the v5 sync translator; central-only
+    /// and never edited in OMS. See docs/content/server/service/properties/_index.md.
+    pub custom_fields: Option<JsonValue>,
+}
+
+impl ItemRow {
+    pub fn table_name() -> ChangelogTableName {
+        ChangelogTableName::Item
+    }
+    pub fn record_id(&self) -> String {
+        self.id.clone()
+    }
+}
+
+impl Default for ItemRow {
+    fn default() -> Self {
+        Self {
+            id: Default::default(),
+            name: Default::default(),
+            code: Default::default(),
+            unit_id: Default::default(),
+            default_pack_size: Default::default(),
+            r#type: ItemType::Stock,
+            legacy_record: Default::default(),
+            is_active: true,
+            is_vaccine: false,
+            strength: Default::default(),
+            ven_category: VENCategory::NotAssigned,
+            vaccine_doses: 0,
+            restricted_location_type_id: None,
+            volume_per_pack: 0.0,
+            universal_code: None,
+            custom_fields: None,
+        }
+    }
+}
+
+pub struct ItemRowRepository<'a> {
+    connection: &'a StorageConnection,
+}
+
+fn insert_or_ignore_item_link(
+    connection: &StorageConnection,
+    item_row: &ItemRow,
+) -> Result<(), RepositoryError> {
+    let item_link_row = ItemLinkRow {
+        id: item_row.id.clone(),
+        item_id: item_row.id.clone(),
+    };
+    ItemLinkRowRepository::new(connection).insert_one_or_ignore(&item_link_row)?;
+    Ok(())
+}
+
+impl<'a> ItemRowRepository<'a> {
+    pub fn new(connection: &'a StorageConnection) -> Self {
+        ItemRowRepository { connection }
+    }
+
+    fn _upsert_one(&self, item_row: &ItemRow) -> Result<(), RepositoryError> {
+        diesel::insert_into(item)
+            .values(item_row)
+            .on_conflict(id)
+            .do_update()
+            .set(item_row)
+            .execute(self.connection.lock().connection())?;
+
+        insert_or_ignore_item_link(self.connection, item_row)?;
+        Ok(())
+    }
+
+    pub fn upsert_one(&self, item_row: &ItemRow) -> Result<(), RepositoryError> {
+        self._upsert_one(item_row)?;
+        let changelog = ItemRow::generate_changelog(
+            item_row.id.clone(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
+    }
+
+    pub async fn insert_one(&self, item_row: &ItemRow) -> Result<(), RepositoryError> {
+        diesel::insert_into(item)
+            .values(item_row)
+            .execute(self.connection.lock().connection())?;
+
+        insert_or_ignore_item_link(self.connection, item_row)?;
+        Ok(())
+    }
+
+    pub async fn find_all(&mut self) -> Result<Vec<ItemRow>, RepositoryError> {
+        let result = item.load(self.connection.lock().connection());
+        Ok(result?)
+    }
+
+    pub fn find_one_by_code(&self, item_code: &str) -> Result<Option<ItemRow>, RepositoryError> {
+        let result = item
+            .filter(code.eq(item_code))
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
+    }
+
+    pub fn find_active_by_id(&self, item_id: &str) -> Result<Option<ItemRow>, RepositoryError> {
+        let result = self
+            .find_one_by_id(item_id)?
+            .and_then(|r| r.is_active.then_some(r));
+        Ok(result)
+    }
+
+    pub fn find_one_by_id(&self, item_id: &str) -> Result<Option<ItemRow>, RepositoryError> {
+        let result = item
+            .filter(id.eq(item_id))
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result)
+    }
+
+    pub fn check_exists_by_id(&self, item_id: &str) -> Result<bool, RepositoryError> {
+        let exists: bool = diesel::select(diesel::dsl::exists(item.filter(id.eq(item_id))))
+            .get_result(self.connection.lock().connection())?;
+        Ok(exists)
+    }
+
+    pub fn find_one_by_item_link_id(
+        &self,
+        item_link_id: &str,
+    ) -> Result<Option<ItemRow>, RepositoryError> {
+        let result: Option<(ItemRow, ItemLinkRow)> = item
+            .inner_join(item_link::table)
+            .filter(item_link::id.eq(item_link_id))
+            .first(self.connection.lock().connection())
+            .optional()?;
+        Ok(result.map(|r| r.0))
+    }
+
+    pub fn find_many_by_id(&self, ids: &Vec<String>) -> Result<Vec<ItemRow>, RepositoryError> {
+        let result = item
+            .filter(id.eq_any(ids))
+            .load(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
+    pub fn find_many_active_by_id(
+        &self,
+        ids: &Vec<String>,
+    ) -> Result<Vec<ItemRow>, RepositoryError> {
+        let result = item
+            .filter(id.eq_any(ids))
+            .filter(is_active.eq(true))
+            .load(self.connection.lock().connection())?;
+        Ok(result)
+    }
+
+    fn _mark_deleted(&self, item_id: &str) -> Result<(), RepositoryError> {
+        diesel::update(item.filter(id.eq(item_id)))
+            .set(is_active.eq(false))
+            .execute(self.connection.lock().connection())?;
+        Ok(())
+    }
+
+    pub fn mark_deleted(&self, item_id: &str) -> Result<(), RepositoryError> {
+        self._mark_deleted(item_id)?;
+        // Soft delete keeps the row, so emit Upsert so receivers re-query and see is_active=false.
+        let changelog = ItemRow::generate_changelog(
+            item_id.to_string(),
+            self.connection,
+            RowActionType::Upsert,
+            SourceSiteId::CurrentSiteId,
+        )?;
+        ChangelogRepository::new(self.connection).insert(&changelog)
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct ItemRowDelete(pub String);
+impl Delete for ItemRowDelete {
+    fn delete_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        let repo = ItemRowRepository::new(con);
+        repo._mark_deleted(&self.0)?;
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => ItemRow::generate_changelog(
+                self.0.clone(),
+                con,
+                // Soft delete: keep row, emit Upsert so receivers see is_active=false.
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
+    // Test only
+    fn assert_deleted(&self, con: &StorageConnection) {
+        assert!(matches!(
+            ItemRowRepository::new(con).find_one_by_id(&self.0),
+            Ok(Some(ItemRow {
+                is_active: false,
+                ..
+            })) | Ok(None)
+        ));
+    }
+}
+
+impl Upsert for ItemRow {
+    fn upsert_sync(
+        &self,
+        con: &StorageConnection,
+        sync_type: ChangelogSyncType,
+    ) -> Result<(), RepositoryError> {
+        ItemRowRepository::new(con)._upsert_one(self)?;
+        let changelog = match sync_type {
+            ChangelogSyncType::SyncTypeV5V6 { source_site_id } => ItemRow::generate_changelog(
+                self.id.clone(),
+                con,
+                RowActionType::Upsert,
+                SourceSiteId::SourceSiteId(source_site_id),
+            )?,
+            ChangelogSyncType::SyncTypeV7 { changelog_row } => changelog_row,
+        };
+        ChangelogRepository::new(con).insert(&changelog)?;
+        Ok(())
+    }
+    // Test only
+    fn assert_upserted(&self, con: &StorageConnection) {
+        assert_eq!(
+            ItemRowRepository::new(con).find_active_by_id(&self.id),
+            Ok(Some(self.clone()))
+        )
+    }
+}
+
+#[cfg(test)]
+mod test {
+
+    use crate::{mock::MockDataInserts, test_db::setup_all, ItemRow, ItemRowRepository, ItemType};
+
+    #[actix_rt::test]
+    async fn nullable_restricted_item_type() {
+        let (_, connection, _, _) = setup_all(
+            "restricted_item_type",
+            MockDataInserts::none()
+                .stores()
+                .names()
+                .items()
+                .location_types()
+                .locations(),
+        )
+        .await;
+
+        let repo = ItemRowRepository::new(&connection);
+
+        let item_with_restriction = ItemRow {
+            id: "restricted_location_test_item".to_string(),
+            name: "restricted_location_test_item".to_string(),
+            code: "code".to_string(),
+            unit_id: None,
+            r#type: ItemType::Stock,
+            legacy_record: "{}".to_string(),
+            default_pack_size: 2.0,
+            is_active: true,
+            is_vaccine: false,
+            vaccine_doses: 0,
+            restricted_location_type_id: Some("location_type_a_id".to_string()),
+            ..Default::default()
+        };
+
+        repo.upsert_one(&item_with_restriction).unwrap();
+        let item_with_restriction_stored = repo
+            .find_one_by_id("restricted_location_test_item")
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            item_with_restriction_stored.restricted_location_type_id,
+            Some("location_type_a_id".to_string())
+        );
+
+        let item_without_restriction = ItemRow {
+            restricted_location_type_id: None, // remove the restriction on the same item
+            ..item_with_restriction
+        };
+
+        repo.upsert_one(&item_without_restriction).unwrap();
+        let updated_item = repo
+            .find_one_by_id("restricted_location_test_item")
+            .unwrap()
+            .unwrap();
+        assert_eq!(updated_item.restricted_location_type_id, None);
+    }
+
+    // Round-trip the properties-v2 JSONB column through ItemRow on both PG
+    // (native Jsonb) and SQLite (TEXT Json) — mirrors `name_row_properties_round_trip`.
+    #[actix_rt::test]
+    async fn item_row_properties_round_trip() {
+        let (_, connection, _, _) =
+            setup_all("item_row_properties_round_trip", MockDataInserts::none()).await;
+
+        let repo = ItemRowRepository::new(&connection);
+
+        let properties = serde_json::json!({
+            "user_field_1": "Cold chain",
+            "user_field_5": 12.5,
+            "user_field_7": true,
+        });
+        let row = ItemRow {
+            id: "item_properties_round_trip".to_string(),
+            name: "name".to_string(),
+            code: "code".to_string(),
+            r#type: ItemType::Stock,
+            custom_fields: Some(properties.clone()),
+            ..Default::default()
+        };
+
+        repo.upsert_one(&row).unwrap();
+
+        let fetched = repo.find_one_by_id(&row.id).unwrap().unwrap();
+        assert_eq!(fetched.custom_fields, Some(properties));
+    }
+}

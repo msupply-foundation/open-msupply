@@ -1,5 +1,12 @@
-import { graphqlFetch, type GraphqlErrorItem } from '../../../api/graphql';
+import {
+  graphqlFetch,
+  isForbidden,
+  missingPermissions,
+  reportPermissionDenied,
+  type GraphqlErrorItem,
+} from '../../../api/graphql';
 import { translateServerError } from '../../../intl/intlUtils';
+import { deleteRejection } from '@/domain/invoice';
 import {
   UpdateInboundShipment,
   UpdateInboundShipmentExternal,
@@ -211,13 +218,19 @@ const summariseBatch = (batch: BatchResultFragment): BatchOutcome => {
 };
 
 // Delete a whole shipment (side panel). Picks the twin; returns the server's
-// rejection message on a typed error OR an untyped top-level rejection, or
-// undefined on success/transport-fail (the latter already surfaced globally).
+// rejection on a typed error OR an untyped top-level rejection (message, plus
+// the raw text when the server only gave a debug dump), or nothing on
+// success/transport-fail (the latter already surfaced globally).
 export const deleteInboundShipment = async (
   storeId: string,
   isExternal: boolean,
   id: string
-): Promise<{ ok: boolean; message?: string }> => {
+): Promise<{
+  ok: boolean;
+  message?: string;
+  detail?: string;
+  forbidden?: true;
+}> => {
   const result = isExternal
     ? await graphqlFetch(
         DeleteInboundShipmentExternal,
@@ -229,8 +242,16 @@ export const deleteInboundShipment = async (
         { storeId, input: { id } },
         { returnGraphqlErrors: true }
       );
-  if (result.kind === 'graphqlError')
-    return { ok: false, message: untypedRejectionMessage(result.errors) };
+  if (result.kind === 'graphqlError') {
+    // Opting into graphql errors also intercepts Forbidden, which owes the user
+    // the global permission-denied modal (D38) rather than an inline rejection
+    // — a delete they may not perform is not a property of this shipment.
+    if (isForbidden(result.errors)) {
+      reportPermissionDenied(missingPermissions(result.errors));
+      return { ok: false, forbidden: true };
+    }
+    return { ok: false, ...deleteRejection(result.errors) };
+  }
   if (result.kind !== 'success') return { ok: false };
   const response =
     'deleteInboundShipmentExternal' in result.data

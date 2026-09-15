@@ -16,6 +16,11 @@
 // explicit JSX) is the page's. `Component` is the only Solid type referenced
 // (it is what a contribution carries), so the merge logic stays unit-testable
 // as plain data.
+//
+// These are the three PIECE regions. The dashboard's fourth region is
+// screen-level — one contribution in place of the whole body — and its
+// semantics live in `bodyRegion.ts`; what stays here is the rule that ties the
+// two together: suppression may not empty the body (`applicableSuppressions`).
 
 import type { Component } from 'solid-js';
 import { anchorMerge } from '../../plugins/anchorMerge';
@@ -79,7 +84,30 @@ export const DASHBOARD_IDS = {
       totalItems: 'inventory.stock-levels.total-items',
     },
   },
+  prescriptions: {
+    id: 'prescriptions',
+    requests: {
+      id: 'prescriptions.requests',
+      readyToDispense: 'prescriptions.requests.ready-to-dispense',
+      dispensedThisWeek: 'prescriptions.requests.dispensed-this-week',
+    },
+  },
 } as const;
+
+/**
+ * The published id of a built-in PANEL — the keys of the visibility map
+ * `panelVisibility` builds (regionBuiltIns), derived from the registry so a
+ * panel added above cannot be left out of the map without failing to compile.
+ */
+export type DashboardPanelId =
+  | typeof DASHBOARD_IDS.replenishment.inbound.id
+  | typeof DASHBOARD_IDS.replenishment.inboundExternal.id
+  | typeof DASHBOARD_IDS.replenishment.internalOrder.id
+  | typeof DASHBOARD_IDS.distribution.shipments.id
+  | typeof DASHBOARD_IDS.distribution.customerRequisition.id
+  | typeof DASHBOARD_IDS.inventory.expiringStock.id
+  | typeof DASHBOARD_IDS.inventory.stockLevels.id
+  | typeof DASHBOARD_IDS.prescriptions.requests.id;
 
 // ── Region model ─────────────────────────────────────────────────────────────
 
@@ -193,19 +221,87 @@ export const mergeRegion = (
 };
 
 /**
+ * What the widget region's suppressions come to once the never-blank rule is
+ * applied: the set actually obeyed, plus the ids ignored so they can be named
+ * in diagnostics.
+ */
+export interface AppliedSuppression {
+  applied: ReadonlySet<string>;
+  /** Suppressed widget ids obeying which would have emptied the body. */
+  ignored: readonly string[];
+  /**
+   * Nothing renders in the widget region and dropping suppressions cannot
+   * change that: every built-in widget is hidden by its OWN gates — in
+   * practice a user holding none of the count permissions — and no widget
+   * contribution is visible. The body shows its empty state rather than a
+   * blank grid (OMS-REG-DB-01.62). False whenever a contribution is visible,
+   * so a plugin-contributed widget alone is a non-empty body.
+   */
+  empty: boolean;
+}
+
+/**
+ * The suppressions the built-in dashboard body actually applies
+ * (OMS-REG-DB-02.18, ui-surface § region semantics — "suppression may not empty
+ * the body").
+ *
+ * Suppression is site-wide and store-blind (registry § `suppressedPieces`),
+ * so a plugin clearing the built-ins to make room for a screen only some stores
+ * should see would blank the dashboard of every OTHER store on the server. That
+ * screen belongs in the body region, which replaces the body only where it
+ * renders. So the degenerate case is refused rather than obeyed: if the union
+ * of every plugin's suppressions would leave the widget region with nothing at
+ * all to render, the widget-level suppressions are dropped and named — the
+ * built-ins render, and the dashboard is never blank.
+ *
+ * Only WIDGET suppressions are recoverable, because only they can empty the
+ * body; nested-piece suppressions are obeyed either way (a suppressed panel
+ * stays suppressed inside a widget this rule brought back). Called from the
+ * built-in body only — while a body contribution occupies the region there are
+ * no built-ins to empty (ui-surface § body-region semantics § precedence).
+ */
+export const applicableSuppressions = (
+  widgetBuiltIns: readonly RegionBuiltIn[],
+  /** How many widget contributions are visible in this store. */
+  widgetContributions: number,
+  suppressed: ReadonlySet<string>
+): AppliedSuppression => {
+  const wouldRender =
+    widgetContributions > 0 ||
+    widgetBuiltIns.some(
+      widget => widget.hidden !== true && !suppressed.has(widget.id)
+    );
+  // A built-in its own gate hides is not recoverable: ignoring its suppression
+  // would not put anything on the screen.
+  const recoverable = widgetBuiltIns
+    .filter(widget => widget.hidden !== true && suppressed.has(widget.id))
+    .map(widget => widget.id);
+  if (wouldRender || recoverable.length === 0) {
+    return {
+      applied: suppressed,
+      ignored: [],
+      // Nothing to render and nothing suppression could bring back.
+      empty: !wouldRender,
+    };
+  }
+  const applied = new Set(suppressed);
+  for (const id of recoverable) applied.delete(id);
+  return { applied, ignored: recoverable, empty: false };
+};
+
+/**
  * Every published id, flattened — the id-stability surface (ui-surface § S3).
  */
 export const publishedIds = (): string[] => {
   const ids: string[] = [];
   for (const widget of Object.values(DASHBOARD_IDS)) {
-    for (const [key, value] of Object.entries(widget)) {
-      if (key === 'id') {
-        ids.push(value as string);
-      } else if (typeof value === 'object') {
-        for (const [innerKey, innerValue] of Object.entries(value)) {
-          if (typeof innerValue === 'string' && innerKey !== undefined)
-            ids.push(innerValue);
-        }
+    for (const value of Object.values(widget)) {
+      if (typeof value === 'string') {
+        ids.push(value);
+        continue;
+      }
+      for (const innerValue of Object.values(value)) {
+        if (typeof innerValue === 'string') ids.push(innerValue);
       }
     }
   }

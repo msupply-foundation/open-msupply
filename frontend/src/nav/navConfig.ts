@@ -7,6 +7,11 @@
 // Paths are relative to the store root (/{storeId}). A section's own `path` is
 // a landing destination; its `children` are the inner sub-menu entries.
 //
+// Home's path is the EMPTY string, which is not a special case but the literal
+// reading of the line above: Home IS the store root, so its store-relative path
+// is nothing. The brand mark has always gone there, so giving the menu entry
+// the same target is what stops one screen from having two URLs.
+//
 // Labels are i18n keys, not English (kdd/type-safety: LocaleKey is derived from
 // the catalog, so a typo or an un-added key stops compiling); each key is the
 // one spec/navigation cites from the reference app's call sites. Every renderer
@@ -47,11 +52,23 @@ export type NavItem = {
   /**
    * The user permission the destination's primary read requires
    * (spec/navigation › permission gates, values per its contract). Failing it
-   * does NOT hide the entry — the store has the function, so the user should
-   * see it — but activating it (menu, palette, or direct URL) refuses with the
-   * permission-denied dialog instead of navigating (D94).
+   * withholds the entry for that user — absent from menu and palette — but
+   * differs at the URL: where a capability-gated route redirects, this one
+   * stays as typed and shows a no-permission notice in place of the screen,
+   * with no dialog (D94). The server stays the real guard.
    */
   permission?: UserPermission;
+  /**
+   * Marks a SUPPORTING destination — reference data in service of other
+   * destinations' workflow, carrying no query permission of its own
+   * (spec/navigation › supporting destinations). Offered only while at least
+   * one destination it supports (a principal) is offered: `true` names every
+   * non-supporting sibling in its section; a path list names exactly those
+   * destinations (Clinicians lists the records a clinician appears on, so a
+   * Patients-only user is not offered it). The derived gate is evaluated in
+   * navGates, like the others.
+   */
+  supporting?: true | string[];
   /**
    * OVERRIDE for the command palette's name, complete with its "Go to:" prefix
    * (spec/keyboard ui-surface S1 § Action names).
@@ -70,7 +87,11 @@ export type NavItem = {
 };
 
 export const navConfig: NavItem[] = [
-  { labelKey: 'dashboard', path: 'dashboard' },
+  // Home — the store root itself (see the empty-path note above). `label.home`
+  // is the key the brand mark's accessible name already used, so the logo and
+  // the menu entry name one destination with one word. Every surface that
+  // shows it (menu, palette, breadcrumb, tab title) reads this one key.
+  { labelKey: 'label.home', path: '' },
   {
     labelKey: 'replenishment',
     path: 'replenishment',
@@ -105,6 +126,7 @@ export const navConfig: NavItem[] = [
       {
         labelKey: 'suppliers',
         path: 'replenishment/suppliers',
+        supporting: true,
       },
     ],
   },
@@ -121,6 +143,7 @@ export const navConfig: NavItem[] = [
       {
         labelKey: 'locations',
         path: 'inventory/locations',
+        supporting: true,
       },
       {
         labelKey: 'stocktakes',
@@ -157,6 +180,7 @@ export const navConfig: NavItem[] = [
       {
         labelKey: 'customers',
         path: 'distribution/customers',
+        supporting: true,
       },
     ],
   },
@@ -171,8 +195,22 @@ export const navConfig: NavItem[] = [
         permission: 'PATIENT_QUERY',
       },
       {
+        // "Prescriptions" — the PRESCRIBER's record, upstream of dispensing
+        // (spec/prescription-requests). Offered to whoever holds its read, like
+        // every other destination: a clinic user granted this and little else
+        // simply sees this, which is what the old prescriber MODE arranged with
+        // a second registry (D94).
         labelKey: 'prescriptions',
-        path: 'dispensary/prescription',
+        path: 'dispensary/prescription-request',
+        permission: 'PRESCRIPTION_REQUEST_QUERY',
+      },
+      {
+        // The dispensing vertical, relabelled "Dispensing" and moved onto a
+        // matching path (issue #551; the old segment redirects, see App.tsx).
+        // Its spec folder keeps the old `prescriptions/` name —
+        // "Prescriptions" now names the prescriber's side above.
+        labelKey: 'dispensing',
+        path: 'dispensary/dispensing',
         permission: 'PRESCRIPTION_QUERY',
       },
       {
@@ -180,7 +218,18 @@ export const navConfig: NavItem[] = [
         path: 'dispensary/encounter',
         gate: 'programModule',
       },
-      { labelKey: 'clinicians', path: 'dispensary/clinicians' },
+      {
+        labelKey: 'clinicians',
+        path: 'dispensary/clinicians',
+        // The records a clinician appears on — NOT patients, so a
+        // patients-only user is not offered the clinician register
+        // (spec/navigation › supporting destinations).
+        supporting: [
+          'dispensary/prescription-request',
+          'dispensary/dispensing',
+          'dispensary/encounter',
+        ],
+      },
     ],
   },
   {
@@ -254,9 +303,13 @@ export const navConfig: NavItem[] = [
         path: 'manage/global-preferences',
       },
       {
+        // The same register as Cold chain › Equipment, unscoped by store — so
+        // it takes the same read permission. Without it the entry offers a
+        // real screen to a user whose first query the server refuses.
         labelKey: 'manage-equipment',
         path: 'manage/equipment',
         gate: 'vaccineModule',
+        permission: 'ASSET_QUERY',
       },
       { labelKey: 'campaigns', path: 'manage/campaigns' },
       {
@@ -299,20 +352,35 @@ export const navConfig: NavItem[] = [
 
 // Flattened list of every destination (sections + inner entries) — used to
 // generate one route each.
-export const navDestinations: NavItem[] = navConfig.flatMap(item => [
-  item,
-  ...(item.children ?? []),
-]);
+export const flattenNav = (config: NavItem[]): NavItem[] =>
+  config.flatMap(item => [item, ...(item.children ?? [])]);
+
+export const navDestinations: NavItem[] = flattenNav(navConfig);
+
+// Home's pre-move address (CK-1.7 moved Home to the store root): App.tsx keeps
+// a redirect route for it, OUTSIDE the registry. Declared here, beside the
+// registry, because the plugin validation gate reserves the host's whole
+// address space (validate.ts HOST_RESERVED_PATHS) — a literal in either file
+// alone would let the two drift and hand a plugin a path the router owns.
+export const DASHBOARD_LEGACY_PATH = 'dashboard';
+
+// The dispensing vertical's pre-#551 address, for the same reason: it was
+// relabelled "Dispensing" and its path moved with the label, leaving App.tsx a
+// redirect route for the old segment — the list and every detail beneath it —
+// outside the registry, and so outside what the registry reserves.
+export const DISPENSING_LEGACY_PATH = 'dispensary/prescription';
 
 // The trail from the top-level section down to a destination, root first — the
 // breadcrumb a page shows (e.g. 'inventory/stocktakes' → [Inventory,
 // Stocktakes]). A top-level destination is its own single-crumb trail; an
 // unknown path has none.
-export const navTrail = (path: string): NavItem[] => {
-  for (const section of navConfig) {
+export const trailIn = (config: NavItem[], path: string): NavItem[] => {
+  for (const section of config) {
     if (section.path === path) return [section];
     const child = section.children?.find(entry => entry.path === path);
     if (child) return [section, child];
   }
   return [];
 };
+
+export const navTrail = (path: string): NavItem[] => trailIn(navConfig, path);

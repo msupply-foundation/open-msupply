@@ -1,0 +1,1732 @@
+use std::collections::HashMap;
+
+use repository::{
+    EqualFilter, Pagination, PermissionType, RepositoryError, UserPermissionFilter,
+    UserPermissionRepository, UserPermissionRow,
+};
+use util::{
+    constants::{PATIENT_CONTEXT_ID, PLUGIN_USER_ID},
+    uuid::uuid,
+};
+
+use crate::{auth_data::AuthData, service_provider::ServiceContext};
+
+#[derive(Debug, Clone)]
+pub enum PermissionDSL {
+    HasPermission(PermissionType),
+    /// The matching permission context for the Permission will be extracted and added to the user's
+    /// capabilities.
+    HasDynamicPermission(PermissionType),
+    NoPermissionRequired,
+    HasStoreAccess,
+    And(Vec<PermissionDSL>),
+    Any(Vec<PermissionDSL>),
+}
+
+/// Resources for permission checks
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum Resource {
+    RouteMe,
+    // name
+    QueryName,
+    MutateNameProperties,
+    ConfigureNameProperties,
+    // location
+    QueryLocation,
+    MutateLocation,
+    // sensor
+    QuerySensor,
+    MutateSensor,
+    // temperature log
+    QueryTemperatureLog,
+    // temperature breach
+    QueryTemperatureBreach,
+    MutateTemperatureBreach,
+    // store
+    QueryStore,
+    StoreAccess,
+    // master list
+    QueryMasterList,
+    // items
+    QueryItems,
+    MutateItems,
+    MutateItemNamesCodesAndUnits,
+    // stock
+    StockCount,
+    QueryStockLine,
+    MutateStockLine,
+    CreateRepack,
+    // contact
+    QueryContact,
+    // stocktake
+    QueryStocktake,
+    MutateStocktake,
+    // inventory adjustment
+    MutateInventoryAdjustment,
+    // requisition
+    QueryRequisition,
+    MutateRequisition,
+    RequisitionChart,
+    RequisitionStats,
+    RequisitionSend,
+    CreateOutboundShipmentFromRequisition,
+    // stock take line
+    InsertStocktakeLine,
+    UpdateStocktakeLine,
+    DeleteStocktakeLine,
+    // invoice
+    InvoiceCount, // Deprecated: requires all invoice count permissions combined
+    QueryInvoice,
+    QueryOutboundShipment,
+    QueryInboundShipment,
+    QueryPrescription,
+    QueryPrescriptionRequest,
+    QuerySupplierReturn,
+    QueryCustomerReturn,
+    // outbound shipment
+    MutateOutboundShipment,
+    // inbound shipment
+    MutateInboundShipment,
+    VerifyInboundShipment,
+    // supplier return
+    MutateSupplierReturn,
+    // customer return
+    MutateCustomerReturn,
+    // prescription
+    MutatePrescription,
+    MutatePrescriptionRequest,
+    // reporting
+    Report,
+    ReportDev,
+    QueryLog,
+    // view/edit server setting
+    ServerAdmin,
+    // clinician
+    QueryClinician,
+    MutateClinician,
+
+    // document
+    QueryDocument,
+    MutateDocument,
+    QueryDocumentRegistry,
+    MutateDocumentRegistry,
+    QueryJsonSchema,
+    MutateJsonSchema,
+    // patient
+    QueryPatient,
+    MutatePatient,
+    // patient program
+    QueryProgram,
+    QueryEncounter,
+    QueryContactTrace,
+    MutateProgram,
+    MutateEncounter,
+    MutateContactTrace,
+    // RnR
+    QueryRnRForms,
+    MutateRnRForms,
+
+    SyncInfo,
+    ManualSync,
+    QueryReasonOptions,
+    QueryStorePreferences,
+    ColdChainApi,
+    // assets
+    AddAsset,
+    EditAsset,
+    MutateAssetCatalogueItem,
+    QueryAsset,
+    MutateAssetStatus,
+    // demographic
+    QueryDemographic,
+    MutateDemographic,
+    // vaccine course
+    MutateVaccineCourse,
+    QueryVaccineCourse,
+    MutateImmunisationProgram,
+    // contact form
+    MutateContactForm,
+    NoPermissionRequired,
+    // Plugin data
+    MutatePluginData,
+    ReadPluginData,
+    // Configure plugin
+    ConfigurePlugin,
+    // Plugin Graphql
+    PluginGraphql,
+    // Preferences
+    MutatePreferences,
+    QueryVvmStatus,
+    MutateVvmStatus,
+    // Campaigns
+    QueryCampaigns,
+    MutateCampaigns,
+    // Custom fields (config)
+    QueryCustomFieldConfig,
+    MutateCustomFieldConfig,
+    // Purchase Order
+    QueryPurchaseOrder,
+    MutatePurchaseOrder,
+    AuthorisePurchaseOrder,
+    FinalisePurchaseOrder,
+    // Inbound Shipment External
+    MutateInboundShipmentExternal,
+    QueryInboundShipmentExternal,
+    AuthoriseInboundShipmentExternal,
+    VerifyInboundShipmentExternal,
+    // Help documents
+    QueryHelpDocuments,
+    MutateHelpDocuments,
+
+    MutateSites,
+}
+
+fn all_permissions() -> HashMap<Resource, PermissionDSL> {
+    // TODO use match instead of map (unless there is a specific case for map)
+    let mut map = HashMap::new();
+    // me: No permission needed
+    map.insert(Resource::RouteMe, PermissionDSL::NoPermissionRequired);
+    map.insert(
+        Resource::ServerAdmin,
+        PermissionDSL::HasPermission(PermissionType::ServerAdmin),
+    );
+
+    // name
+    map.insert(Resource::QueryName, PermissionDSL::HasStoreAccess);
+    map.insert(
+        Resource::MutateNameProperties,
+        PermissionDSL::HasPermission(PermissionType::NamePropertiesMutate),
+    );
+
+    map.insert(
+        Resource::ConfigureNameProperties,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasPermission(PermissionType::EditCentralData),
+            PermissionDSL::HasPermission(PermissionType::NamePropertiesMutate),
+        ]),
+    );
+
+    // location
+    map.insert(Resource::QueryLocation, PermissionDSL::HasStoreAccess);
+    map.insert(
+        Resource::MutateLocation,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::LocationMutate),
+        ]),
+    );
+
+    // sensor
+    map.insert(
+        Resource::QuerySensor,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::SensorQuery),
+        ]),
+    );
+    map.insert(
+        Resource::MutateSensor,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::SensorMutate),
+        ]),
+    );
+
+    // temperature breach (uses sensor permissions)
+    map.insert(
+        Resource::QueryTemperatureBreach,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::SensorQuery),
+        ]),
+    );
+
+    map.insert(
+        Resource::MutateTemperatureBreach,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::SensorMutate),
+        ]),
+    );
+
+    // temperature log (uses sensor permissions)
+    map.insert(
+        Resource::QueryTemperatureLog,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::SensorQuery),
+        ]),
+    );
+
+    // store: No permission needed
+    map.insert(Resource::QueryStore, PermissionDSL::NoPermissionRequired);
+    map.insert(Resource::StoreAccess, PermissionDSL::HasStoreAccess);
+    // master list
+    map.insert(Resource::QueryMasterList, PermissionDSL::HasStoreAccess);
+
+    // items
+    map.insert(Resource::QueryItems, PermissionDSL::HasStoreAccess);
+    map.insert(
+        Resource::MutateItems,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::ItemMutate),
+        ]),
+    );
+    map.insert(
+        Resource::MutateItemNamesCodesAndUnits,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::ItemNamesCodesAndUnitsMutate),
+        ]),
+    );
+
+    // stock
+    map.insert(
+        Resource::StockCount,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::StockLineQuery),
+        ]),
+    );
+    map.insert(
+        Resource::QueryStockLine,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::StockLineQuery),
+        ]),
+    );
+    map.insert(
+        Resource::MutateStockLine,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::StockLineMutate),
+        ]),
+    );
+    map.insert(
+        Resource::MutateInventoryAdjustment,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::InventoryAdjustmentMutate),
+        ]),
+    );
+    map.insert(
+        Resource::CreateRepack,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::CreateRepack),
+        ]),
+    );
+    // contact
+    map.insert(
+        Resource::QueryContact,
+        PermissionDSL::And(vec![PermissionDSL::HasStoreAccess]),
+    );
+    // stocktake
+    map.insert(
+        Resource::QueryStocktake,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::StocktakeQuery),
+        ]),
+    );
+    map.insert(
+        Resource::MutateStocktake,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::StocktakeMutate),
+        ]),
+    );
+    // stock take line
+    map.insert(
+        Resource::InsertStocktakeLine,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::StocktakeMutate),
+        ]),
+    );
+    map.insert(
+        Resource::UpdateStocktakeLine,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::StocktakeMutate),
+        ]),
+    );
+    map.insert(
+        Resource::DeleteStocktakeLine,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::StocktakeMutate),
+        ]),
+    );
+    // requisition
+    map.insert(
+        Resource::QueryRequisition,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::RequisitionQuery),
+        ]),
+    );
+    map.insert(
+        Resource::MutateRequisition,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::RequisitionMutate),
+        ]),
+    );
+    map.insert(
+        Resource::RequisitionChart,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::RequisitionQuery),
+        ]),
+    );
+    map.insert(
+        Resource::RequisitionStats,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::RequisitionQuery),
+        ]),
+    );
+    map.insert(
+        Resource::RequisitionSend,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::RequisitionSend),
+        ]),
+    );
+
+    map.insert(
+        Resource::CreateOutboundShipmentFromRequisition,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::RequisitionCreateOutboundShipment),
+        ]),
+    );
+    // r&r form
+    map.insert(
+        Resource::QueryRnRForms,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::RnrFormQuery),
+        ]),
+    );
+    map.insert(
+        Resource::MutateRnRForms,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::RnrFormMutate),
+        ]),
+    );
+    // invoice
+    map.insert(
+        Resource::QueryInvoice,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::OutboundShipmentQuery),
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentQuery),
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentExternalQuery),
+            PermissionDSL::HasPermission(PermissionType::PrescriptionQuery),
+            PermissionDSL::HasPermission(PermissionType::SupplierReturnQuery),
+            PermissionDSL::HasPermission(PermissionType::CustomerReturnQuery),
+        ]),
+    );
+    map.insert(
+        Resource::QueryOutboundShipment,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::OutboundShipmentQuery),
+        ]),
+    );
+    map.insert(
+        Resource::QueryInboundShipment,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentQuery),
+        ]),
+    );
+    map.insert(
+        Resource::QueryPrescription,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::PrescriptionQuery),
+        ]),
+    );
+    map.insert(
+        Resource::QueryPrescriptionRequest,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::PrescriptionRequestQuery),
+        ]),
+    );
+    map.insert(
+        Resource::QuerySupplierReturn,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::SupplierReturnQuery),
+        ]),
+    );
+    map.insert(
+        Resource::QueryCustomerReturn,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::CustomerReturnQuery),
+        ]),
+    );
+    // Deprecated: combined invoice count resource requiring all query permissions
+    map.insert(
+        Resource::InvoiceCount,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::OutboundShipmentQuery),
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentQuery),
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentExternalQuery),
+        ]),
+    );
+    // outbound shipment
+    map.insert(
+        Resource::MutateOutboundShipment,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::OutboundShipmentMutate),
+        ]),
+    );
+    // inbound shipment
+    map.insert(
+        Resource::MutateInboundShipment,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentMutate),
+        ]),
+    );
+    map.insert(
+        Resource::VerifyInboundShipment,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentVerify),
+        ]),
+    );
+    // inbound shipment external
+    map.insert(
+        Resource::QueryInboundShipmentExternal,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentExternalQuery),
+        ]),
+    );
+    map.insert(
+        Resource::MutateInboundShipmentExternal,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentExternalMutate),
+        ]),
+    );
+    map.insert(
+        Resource::VerifyInboundShipmentExternal,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentExternalVerify),
+        ]),
+    );
+    map.insert(
+        Resource::AuthoriseInboundShipmentExternal,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::InboundShipmentExternalAuthorise),
+        ]),
+    );
+    // Supplier return
+    map.insert(
+        Resource::MutateSupplierReturn,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::SupplierReturnMutate),
+        ]),
+    );
+    // Customer return
+    map.insert(
+        Resource::MutateCustomerReturn,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::CustomerReturnMutate),
+        ]),
+    );
+    // prescription
+    map.insert(
+        Resource::MutatePrescription,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::PrescriptionMutate),
+        ]),
+    );
+    map.insert(
+        Resource::MutatePrescriptionRequest,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::PrescriptionRequestMutate),
+        ]),
+    );
+
+    // report
+    map.insert(
+        Resource::Report,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::Report),
+        ]),
+    );
+    // report development
+    map.insert(
+        Resource::ReportDev,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            // SQL reports can do raw queries, i.e. you need to be server admin
+            PermissionDSL::HasPermission(PermissionType::ServerAdmin),
+        ]),
+    );
+
+    map.insert(
+        Resource::QueryLog,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::LogQuery),
+        ]),
+    );
+
+    map.insert(Resource::QueryClinician, PermissionDSL::HasStoreAccess);
+
+    map.insert(
+        Resource::MutateClinician,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::MutateClinician),
+        ]),
+    );
+
+    // TODO add permissions from central
+    map.insert(
+        Resource::QueryDocument,
+        PermissionDSL::HasDynamicPermission(PermissionType::DocumentQuery),
+    );
+    map.insert(
+        Resource::MutateDocument,
+        PermissionDSL::HasDynamicPermission(PermissionType::DocumentMutate),
+    );
+    map.insert(
+        Resource::QueryDocumentRegistry,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasDynamicPermission(PermissionType::DocumentQuery),
+            PermissionDSL::HasStoreAccess,
+        ]),
+    );
+    map.insert(
+        Resource::MutateDocumentRegistry,
+        PermissionDSL::HasDynamicPermission(PermissionType::DocumentMutate),
+    );
+    map.insert(
+        Resource::QueryJsonSchema,
+        PermissionDSL::NoPermissionRequired,
+    );
+    map.insert(
+        Resource::MutateJsonSchema,
+        PermissionDSL::NoPermissionRequired,
+    );
+
+    // patient
+    map.insert(
+        Resource::QueryPatient,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::PatientQuery),
+            PermissionDSL::HasDynamicPermission(PermissionType::DocumentQuery),
+        ]),
+    );
+    map.insert(
+        Resource::MutatePatient,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::PatientMutate),
+            // permission to read the related doc types when reading the mutated patient
+            PermissionDSL::HasDynamicPermission(PermissionType::DocumentQuery),
+        ]),
+    );
+    map.insert(
+        Resource::QueryProgram,
+        PermissionDSL::Any(vec![
+            PermissionDSL::And(vec![
+                PermissionDSL::HasStoreAccess,
+                PermissionDSL::HasDynamicPermission(PermissionType::DocumentQuery),
+            ]),
+            PermissionDSL::HasPermission(PermissionType::EditCentralData),
+        ]),
+    );
+    map.insert(
+        Resource::QueryEncounter,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasDynamicPermission(PermissionType::DocumentQuery),
+        ]),
+    );
+    map.insert(
+        Resource::QueryContactTrace,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasDynamicPermission(PermissionType::DocumentQuery),
+        ]),
+    );
+    map.insert(
+        Resource::MutateProgram,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasDynamicPermission(PermissionType::DocumentMutate),
+        ]),
+    );
+    map.insert(
+        Resource::MutateEncounter,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasDynamicPermission(PermissionType::DocumentMutate),
+        ]),
+    );
+    map.insert(
+        Resource::MutateContactTrace,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasDynamicPermission(PermissionType::DocumentMutate),
+        ]),
+    );
+    map.insert(
+        Resource::ColdChainApi,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasDynamicPermission(PermissionType::ColdChainApi),
+        ]),
+    );
+
+    // sync info and manual sync, not permission needed
+    map.insert(Resource::SyncInfo, PermissionDSL::NoPermissionRequired);
+    map.insert(Resource::ManualSync, PermissionDSL::NoPermissionRequired);
+
+    map.insert(
+        Resource::QueryReasonOptions,
+        PermissionDSL::NoPermissionRequired,
+    );
+    map.insert(
+        Resource::QueryStorePreferences,
+        PermissionDSL::HasStoreAccess,
+    );
+
+    map.insert(
+        Resource::AddAsset,
+        PermissionDSL::Any(vec![
+            PermissionDSL::And(vec![PermissionDSL::Any(vec![
+                PermissionDSL::HasPermission(PermissionType::AssetMutate),
+                PermissionDSL::HasPermission(PermissionType::AssetMutateViaDataMatrix),
+            ])]),
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::EditCentralData),
+        ]),
+    );
+
+    map.insert(
+        Resource::EditAsset,
+        PermissionDSL::Any(vec![
+            // Central edit: must have BOTH AssetMutate AND EditCentralData
+            PermissionDSL::And(vec![
+                PermissionDSL::HasPermission(PermissionType::AssetMutate),
+                PermissionDSL::HasPermission(PermissionType::EditCentralData),
+            ]),
+            // Local edit: must have BOTH AssetMutate AND HasStoreAccess
+            PermissionDSL::And(vec![
+                PermissionDSL::HasPermission(PermissionType::AssetMutate),
+                PermissionDSL::HasStoreAccess,
+            ]),
+        ]),
+    );
+
+    map.insert(
+        Resource::MutateAssetCatalogueItem,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasPermission(PermissionType::AssetCatalogueItemMutate),
+            PermissionDSL::HasPermission(PermissionType::EditCentralData),
+        ]),
+    );
+
+    map.insert(
+        Resource::MutateAssetStatus,
+        PermissionDSL::And(vec![
+            PermissionDSL::Any(vec![
+                PermissionDSL::HasPermission(PermissionType::AssetMutate),
+                PermissionDSL::HasPermission(PermissionType::AssetStatusMutate),
+            ]),
+            PermissionDSL::Any(vec![
+                PermissionDSL::HasStoreAccess,
+                PermissionDSL::HasPermission(PermissionType::EditCentralData),
+            ]),
+        ]),
+    );
+
+    map.insert(
+        Resource::QueryAsset,
+        PermissionDSL::HasPermission(PermissionType::AssetQuery),
+    );
+    map.insert(
+        Resource::QueryDemographic,
+        PermissionDSL::NoPermissionRequired,
+    );
+    map.insert(
+        Resource::MutateDemographic,
+        PermissionDSL::HasPermission(PermissionType::EditCentralData),
+    );
+    map.insert(
+        Resource::MutateVaccineCourse,
+        PermissionDSL::HasPermission(PermissionType::EditCentralData),
+    );
+    map.insert(
+        Resource::MutateImmunisationProgram,
+        PermissionDSL::HasPermission(PermissionType::EditCentralData),
+    );
+    map.insert(
+        Resource::QueryVaccineCourse,
+        PermissionDSL::NoPermissionRequired,
+    );
+    map.insert(
+        Resource::NoPermissionRequired,
+        PermissionDSL::NoPermissionRequired,
+    );
+
+    // contact form
+    map.insert(Resource::MutateContactForm, PermissionDSL::HasStoreAccess);
+
+    // plugin data
+    map.insert(
+        Resource::MutatePluginData,
+        PermissionDSL::Any(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::ServerAdmin), // Server admins can add data without store-relationship
+        ]),
+    );
+    map.insert(
+        Resource::ReadPluginData,
+        PermissionDSL::NoPermissionRequired, // Plugin data doesn't get any special protections...
+    );
+    map.insert(
+        Resource::MutatePreferences,
+        PermissionDSL::HasPermission(PermissionType::EditCentralData),
+    );
+
+    // configure
+    map.insert(
+        Resource::ConfigurePlugin,
+        PermissionDSL::HasPermission(PermissionType::ServerAdmin), // Server admins can install plugins
+    );
+
+    // plugin graphql
+    map.insert(Resource::PluginGraphql, PermissionDSL::HasStoreAccess);
+
+    // vvm status - queries only need authentication
+    map.insert(
+        Resource::QueryVvmStatus,
+        PermissionDSL::NoPermissionRequired,
+    );
+
+    // vvm status - mutations need permission
+    map.insert(
+        Resource::MutateVvmStatus,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::ViewAndEditVvmStatus),
+        ]),
+    );
+
+    map.insert(
+        Resource::MutateCampaigns,
+        PermissionDSL::HasPermission(PermissionType::EditCentralData),
+    );
+
+    map.insert(Resource::QueryCampaigns, PermissionDSL::HasStoreAccess);
+
+    // Help documents (uploaded centrally, listed on the Help page on every site).
+    // Read is open to any authenticated user; write is ServerAdmin only.
+    map.insert(
+        Resource::QueryHelpDocuments,
+        PermissionDSL::NoPermissionRequired,
+    );
+    map.insert(
+        Resource::MutateHelpDocuments,
+        PermissionDSL::HasPermission(PermissionType::ServerAdmin),
+    );
+
+    // Custom field config is a central-server admin screen — restricted to
+    // server admins (the client nav is gated the same way, see ManageNav).
+    map.insert(
+        Resource::QueryCustomFieldConfig,
+        PermissionDSL::HasPermission(PermissionType::ServerAdmin),
+    );
+    map.insert(
+        Resource::MutateCustomFieldConfig,
+        PermissionDSL::HasPermission(PermissionType::ServerAdmin),
+    );
+
+    map.insert(
+        Resource::QueryPurchaseOrder,
+        PermissionDSL::HasPermission(PermissionType::PurchaseOrderQuery),
+    );
+    map.insert(
+        Resource::MutatePurchaseOrder,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::PurchaseOrderMutate),
+        ]),
+    );
+    map.insert(
+        Resource::AuthorisePurchaseOrder,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::PurchaseOrderAuthorise),
+        ]),
+    );
+    map.insert(
+        Resource::FinalisePurchaseOrder,
+        PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::HasPermission(PermissionType::PurchaseOrderFinalise),
+        ]),
+    );
+
+    map.insert(
+        Resource::MutateSites,
+        PermissionDSL::HasPermission(PermissionType::EditCentralData),
+    );
+
+    map
+}
+
+#[derive(Debug)]
+pub enum AuthDeniedKind {
+    NotAuthenticated(String),
+    InsufficientPermission {
+        msg: String,
+        required_permissions: PermissionDSL,
+    },
+}
+
+#[derive(Debug)]
+pub enum AuthError {
+    Denied(AuthDeniedKind),
+    InternalError(String),
+}
+
+#[derive(Debug)]
+pub struct ValidatedUserAuth {
+    pub user_id: String,
+}
+
+/// Validates user is auth (no permissions checked).
+///
+/// Looks up the opaque session token in [`SessionStore`] and slides its expiry forward on every
+/// successful call. There is no JWT to decode and no separate refresh token — the token is just
+/// a key into the in-memory session table.
+pub fn validate_auth(
+    auth_data: &AuthData,
+    auth_token: &Option<String>,
+) -> Result<ValidatedUserAuth, AuthError> {
+    let auth_token = match auth_token {
+        Some(token) => token,
+        None => {
+            if auth_data.debug_no_access_control {
+                return Ok(ValidatedUserAuth {
+                    user_id: "dummy_user".to_string(),
+                });
+            }
+            return Err(AuthError::Denied(AuthDeniedKind::NotAuthenticated(
+                "Missing auth token".to_string(),
+            )));
+        }
+    };
+    let mut session_store = auth_data
+        .session_store
+        .write()
+        .map_err(|e| AuthError::InternalError(format!("Session store lock poisoned: {e}")))?;
+    match session_store.validate_and_slide(auth_token) {
+        Some(session) => Ok(ValidatedUserAuth {
+            user_id: session.user_id,
+        }),
+        None => Err(AuthError::Denied(AuthDeniedKind::NotAuthenticated(
+            "Invalid or expired session".to_string(),
+        ))),
+    }
+}
+
+pub struct ValidatedUser {
+    pub user_id: String,
+    /// Contains a list of user permission contexts
+    capabilities: Vec<String>,
+}
+
+impl<'a> ValidatedUser {
+    pub fn capabilities(&'a self) -> &'a Vec<String> {
+        &self.capabilities
+    }
+}
+
+/// Information about the resource a user wants to access
+#[derive(Debug, Clone)]
+pub struct ResourceAccessRequest {
+    pub resource: Resource,
+    /// The store id if specified
+    pub store_id: Option<String>,
+    /// For endpoints that configure central data in mixed configurations.
+    pub require_central_standalone: bool,
+}
+
+fn validate_resource_permissions(
+    _user_id: &str,
+    user_permissions: &[UserPermissionRow],
+    resource_request: &ResourceAccessRequest,
+    required_permissions: &PermissionDSL,
+    dynamic_permissions: &mut Vec<String>,
+) -> Result<(), String> {
+    // When this code runs, user_permissions have already been filtered by store (if specified).
+    // It is possible to mis-configure an API call and not specify a store_id when it is required which could result in incorrect permission evaluation.
+    // We use a StoreAccess permission to catch this case (As it checks both the permission and the store in the request)
+
+    // println!(
+    //     "validate_resource_permissions() user_permissions {:?} required {:?}",
+    //     user_permissions, resource_permission
+    // );
+
+    match required_permissions {
+        PermissionDSL::HasPermission(permission) => {
+            if user_permissions.iter().any(|p| &p.permission == permission) {
+                return Ok(());
+            }
+            return Err(format!("Missing permission: {permission:?}"));
+        }
+        PermissionDSL::HasDynamicPermission(permission) => {
+            let user_permissions = user_permissions
+                .iter()
+                .filter(|p| &p.permission == permission)
+                .collect::<Vec<_>>();
+            if user_permissions.is_empty() {
+                return Err(format!("Missing permission: {permission:?}"));
+            }
+            let mut contexts = user_permissions
+                .iter()
+                .filter_map(|p| p.context_id.clone())
+                .collect::<Vec<_>>();
+
+            dynamic_permissions.append(&mut contexts);
+
+            return Ok(());
+        }
+        PermissionDSL::NoPermissionRequired => {
+            return Ok(());
+        }
+        PermissionDSL::HasStoreAccess => {
+            // The user_permissions are already filtered by store_id if resource_request.store_id
+            // is specified. What remains to be checked is:
+            // 1) that store_id is set, i.e. validate_auth() is used correctly with the required
+            // parameters
+            // 2) the filtered user_permissions contain StoreAccess
+            let store_id = match &resource_request.store_id {
+                Some(id) => id,
+                None => return Err("Store id not specified in request".to_string()),
+            };
+            if user_permissions
+                .iter()
+                .any(|p| p.permission == PermissionType::StoreAccess)
+            {
+                return Ok(());
+            }
+
+            return Err(format!("Missing access to store: {store_id}"));
+        }
+        PermissionDSL::And(children) => {
+            for child in children {
+                validate_resource_permissions(
+                    _user_id,
+                    user_permissions,
+                    resource_request,
+                    child,
+                    dynamic_permissions,
+                )?
+            }
+        }
+        PermissionDSL::Any(children) => {
+            let mut found_any = false;
+            for child in children {
+                if validate_resource_permissions(
+                    _user_id,
+                    user_permissions,
+                    resource_request,
+                    child,
+                    dynamic_permissions,
+                )
+                .is_ok()
+                {
+                    found_any = true;
+                    // We could stop iterating children here but we want to collect all
+                    // HasDynamicPermission instances that are valid in this Any list.
+                }
+            }
+            if !found_any {
+                return Err(format!("No permissions for any of: {children:?}"));
+            }
+            return Ok(());
+        }
+    };
+    Ok(())
+}
+
+pub trait AuthServiceTrait: Send + Sync {
+    fn validate(
+        &self,
+        ctx: &ServiceContext,
+        auth_data: &AuthData,
+        auth_token: &Option<String>,
+        override_user_id: &Option<String>,
+        resource_request: &ResourceAccessRequest,
+    ) -> Result<ValidatedUser, AuthError>;
+}
+
+pub struct AuthService {
+    pub resource_permissions: HashMap<Resource, PermissionDSL>,
+}
+
+impl Default for AuthService {
+    fn default() -> Self {
+        AuthService {
+            resource_permissions: all_permissions(),
+        }
+    }
+}
+
+impl AuthService {
+    pub fn new() -> Self {
+        Self::default()
+    }
+}
+
+impl AuthServiceTrait for AuthService {
+    fn validate(
+        &self,
+        context: &ServiceContext,
+        auth_data: &AuthData,
+        auth_token: &Option<String>,
+        override_user_id: &Option<String>,
+        resource_request: &ResourceAccessRequest,
+    ) -> Result<ValidatedUser, AuthError> {
+        let user_id = if let Some(override_user_id) = override_user_id {
+            log::info!("Overriding user id with: {override_user_id}");
+            override_user_id.clone()
+        } else {
+            validate_auth(auth_data, auth_token)?.user_id
+        };
+
+        let connection = &context.connection;
+
+        let mut permission_filter =
+            UserPermissionFilter::new().user_id(EqualFilter::equal_to(user_id.to_string()));
+        if let Some(store_id) = &resource_request.store_id {
+            permission_filter =
+                permission_filter.store_id(EqualFilter::equal_to(store_id.to_string()));
+        }
+        let mut user_permissions = UserPermissionRepository::new(connection).query(
+            Pagination::all(),
+            Some(permission_filter),
+            None,
+        )?;
+
+        // Dynamically add Patient context permissions if the user has PatientQuery/PatientMutate
+        // permissions.
+        if user_permissions
+            .iter()
+            .any(|item| item.permission == PermissionType::PatientQuery)
+        {
+            user_permissions.push(UserPermissionRow {
+                id: uuid(),
+                user_id: context.user_id.clone(),
+                store_id: Some(context.store_id.clone()),
+                permission: PermissionType::DocumentQuery,
+                context_id: Some(PATIENT_CONTEXT_ID.to_string()),
+            })
+        }
+        if user_permissions
+            .iter()
+            .any(|item| item.permission == PermissionType::PatientMutate)
+        {
+            user_permissions.push(UserPermissionRow {
+                id: uuid(),
+                user_id: context.user_id.clone(),
+                store_id: Some(context.store_id.clone()),
+                permission: PermissionType::DocumentMutate,
+                context_id: Some(PATIENT_CONTEXT_ID.to_string()),
+            })
+        }
+
+        let required_permissions = match self.resource_permissions.get(&resource_request.resource) {
+            Some(required_permissions) => required_permissions,
+            None => {
+                //The requested resource doesn't have a permission mapping assigned (server error)
+                return Err(AuthError::InternalError(format!(
+                    "Unable to identify required permissions for resource {:?}",
+                    &resource_request.resource
+                )));
+            }
+        };
+
+        let mut dynamic_permissions = Vec::new();
+        match validate_resource_permissions(
+            &user_id,
+            &user_permissions,
+            resource_request,
+            required_permissions,
+            &mut dynamic_permissions,
+        ) {
+            Ok(_) => {}
+            Err(msg) => {
+                if auth_data.debug_no_access_control {
+                    return Ok(ValidatedUser {
+                        user_id,
+                        capabilities: Vec::new(),
+                    });
+                }
+
+                // This is only possible with override_user_id, used for plugins, i.e. for processors
+                // we would use plugin user, overriding permissions.
+                // TODO permissions to be configured for individual plugins, see carry over issue
+                if user_id == PLUGIN_USER_ID {
+                    return Ok(ValidatedUser {
+                        user_id,
+                        capabilities: Vec::new(),
+                    });
+                }
+
+                return Err(AuthError::Denied(AuthDeniedKind::InsufficientPermission {
+                    msg,
+                    required_permissions: required_permissions.clone(),
+                }));
+            }
+        };
+
+        Ok(ValidatedUser {
+            user_id,
+            capabilities: dynamic_permissions,
+        })
+    }
+}
+
+impl From<RepositoryError> for AuthError {
+    fn from(error: RepositoryError) -> Self {
+        AuthError::InternalError(format!("{error:#?}"))
+    }
+}
+
+#[cfg(test)]
+mod validate_resource_permissions_test {
+    use repository::{PermissionType, UserPermissionRow};
+
+    use super::{validate_resource_permissions, PermissionDSL, Resource, ResourceAccessRequest};
+
+    #[actix_rt::test]
+    async fn test_validate_resource_permissions() {
+        let user_id = "test_user_id";
+        let store_id = "test_store_id";
+
+        let user_permissions: Vec<UserPermissionRow> = vec![];
+        let resource_request = ResourceAccessRequest {
+            resource: Resource::MutateLocation,
+            store_id: Some(store_id.to_string()),
+            require_central_standalone: false,
+        };
+        let required_permissions = PermissionDSL::HasPermission(PermissionType::ServerAdmin);
+
+        //Ensure validation fails if user has no permissions
+        let validation_result = validate_resource_permissions(
+            user_id,
+            &user_permissions,
+            &resource_request,
+            &required_permissions,
+            &mut Vec::new(),
+        );
+        assert!(validation_result.is_err());
+
+        //Ensure validation succeeds if user has single required permission
+        let user_permissions: Vec<UserPermissionRow> = vec![UserPermissionRow {
+            id: "dummy_id".to_string(),
+            user_id: user_id.to_string(),
+            permission: PermissionType::ServerAdmin,
+            store_id: None,
+            context_id: None,
+        }];
+        let validation_result = validate_resource_permissions(
+            user_id,
+            &user_permissions,
+            &resource_request,
+            &required_permissions,
+            &mut Vec::new(),
+        );
+        assert!(validation_result.is_ok());
+
+        //Test DSL user has 1 out of any 1 permission - any(1 perm)
+        let required_permissions = PermissionDSL::Any(vec![PermissionDSL::HasPermission(
+            PermissionType::ServerAdmin,
+        )]);
+        let validation_result = validate_resource_permissions(
+            user_id,
+            &user_permissions,
+            &resource_request,
+            &required_permissions,
+            &mut Vec::new(),
+        );
+        assert!(validation_result.is_ok());
+
+        //Test DSL user has 1 out of any 2 permissions - any(2 perm)
+        let required_permissions = PermissionDSL::Any(vec![
+            PermissionDSL::HasPermission(PermissionType::ServerAdmin),
+            PermissionDSL::HasPermission(PermissionType::StocktakeMutate),
+        ]);
+        let validation_result = validate_resource_permissions(
+            user_id,
+            &user_permissions,
+            &resource_request,
+            &required_permissions,
+            &mut Vec::new(),
+        );
+        assert!(validation_result.is_ok());
+
+        //Test DSL user has 0 out of any 1 permission - any(1 perm)
+        let required_permissions = PermissionDSL::Any(vec![PermissionDSL::HasPermission(
+            PermissionType::StocktakeMutate,
+        )]);
+        let validation_result = validate_resource_permissions(
+            user_id,
+            &user_permissions,
+            &resource_request,
+            &required_permissions,
+            &mut Vec::new(),
+        );
+        assert!(validation_result.is_err());
+
+        //Test DSL user has 1 out of 2 required permission - And(2 perm)
+        let user_permissions: Vec<UserPermissionRow> = vec![UserPermissionRow {
+            id: "dummy_id2".to_string(),
+            user_id: user_id.to_string(),
+            permission: PermissionType::StocktakeMutate,
+            store_id: Some(store_id.to_string()),
+            context_id: None,
+        }];
+        let required_permissions = PermissionDSL::And(vec![
+            PermissionDSL::HasPermission(PermissionType::ServerAdmin),
+            PermissionDSL::HasPermission(PermissionType::StocktakeMutate),
+        ]);
+        let validation_result = validate_resource_permissions(
+            user_id,
+            &user_permissions,
+            &resource_request,
+            &required_permissions,
+            &mut Vec::new(),
+        );
+        assert!(validation_result.is_err());
+
+        //Test DSL user has 2 out of 2 required permission - And(2 perm)
+        let user_permissions: Vec<UserPermissionRow> = vec![
+            UserPermissionRow {
+                id: "dummy_id1".to_string(),
+                user_id: user_id.to_string(),
+                permission: PermissionType::ServerAdmin,
+                store_id: None,
+                context_id: None,
+            },
+            UserPermissionRow {
+                id: "dummy_id2".to_string(),
+                user_id: user_id.to_string(),
+                permission: PermissionType::StocktakeMutate,
+                store_id: Some(store_id.to_string()),
+                context_id: None,
+            },
+        ];
+        let required_permissions = PermissionDSL::And(vec![
+            PermissionDSL::HasPermission(PermissionType::ServerAdmin),
+            PermissionDSL::HasPermission(PermissionType::StocktakeMutate),
+        ]);
+        let validation_result = validate_resource_permissions(
+            user_id,
+            &user_permissions,
+            &resource_request,
+            &required_permissions,
+            &mut Vec::new(),
+        );
+        assert!(validation_result.is_ok());
+
+        //Test DSL user has Any(1,And(1,2))
+        let required_permissions = PermissionDSL::Any(vec![
+            PermissionDSL::HasPermission(PermissionType::ServerAdmin),
+            PermissionDSL::And(vec![
+                PermissionDSL::HasPermission(PermissionType::StocktakeMutate),
+                PermissionDSL::HasStoreAccess,
+            ]),
+        ]);
+        let user_permissions: Vec<UserPermissionRow> = vec![
+            UserPermissionRow {
+                id: "dummy_id2".to_string(),
+                user_id: user_id.to_string(),
+                permission: PermissionType::StocktakeMutate,
+                store_id: Some(store_id.to_string()),
+                context_id: None,
+            },
+            UserPermissionRow {
+                id: "dummy_id2".to_string(),
+                user_id: user_id.to_string(),
+                permission: PermissionType::StoreAccess,
+                store_id: Some(store_id.to_string()),
+                context_id: None,
+            },
+        ];
+        let validation_result = validate_resource_permissions(
+            user_id,
+            &user_permissions,
+            &resource_request,
+            &required_permissions,
+            &mut Vec::new(),
+        );
+        assert!(validation_result.is_ok());
+
+        let required_permissions = PermissionDSL::Any(vec![
+            PermissionDSL::HasPermission(PermissionType::ServerAdmin),
+            PermissionDSL::And(vec![
+                PermissionDSL::HasPermission(PermissionType::StocktakeMutate),
+                PermissionDSL::HasStoreAccess,
+            ]),
+        ]);
+        let user_permissions: Vec<UserPermissionRow> = vec![UserPermissionRow {
+            id: "dummy_id2".to_string(),
+            user_id: user_id.to_string(),
+            permission: PermissionType::ServerAdmin,
+            store_id: None,
+            context_id: None,
+        }];
+        let validation_result = validate_resource_permissions(
+            user_id,
+            &user_permissions,
+            &resource_request,
+            &required_permissions,
+            &mut Vec::new(),
+        );
+        assert!(validation_result.is_ok());
+
+        //Test DSL user has And(1,Any(1,2))
+        let required_permissions = PermissionDSL::And(vec![
+            PermissionDSL::HasStoreAccess,
+            PermissionDSL::Any(vec![
+                PermissionDSL::HasPermission(PermissionType::ServerAdmin),
+                PermissionDSL::HasPermission(PermissionType::StocktakeMutate),
+            ]),
+        ]);
+        let user_permissions: Vec<UserPermissionRow> = vec![
+            UserPermissionRow {
+                id: "dummy_id2".to_string(),
+                user_id: user_id.to_string(),
+                permission: PermissionType::StocktakeMutate,
+                store_id: Some(store_id.to_string()),
+                context_id: None,
+            },
+            UserPermissionRow {
+                id: "dummy_id2".to_string(),
+                user_id: user_id.to_string(),
+                permission: PermissionType::StoreAccess,
+                store_id: Some(store_id.to_string()),
+                context_id: None,
+            },
+        ];
+        let validation_result = validate_resource_permissions(
+            user_id,
+            &user_permissions,
+            &resource_request,
+            &required_permissions,
+            &mut Vec::new(),
+        );
+        assert!(validation_result.is_ok());
+
+        let user_permissions: Vec<UserPermissionRow> = vec![
+            UserPermissionRow {
+                id: "dummy_id2".to_string(),
+                user_id: user_id.to_string(),
+                permission: PermissionType::ServerAdmin,
+                store_id: None,
+                context_id: None,
+            },
+            UserPermissionRow {
+                id: "dummy_id2".to_string(),
+                user_id: user_id.to_string(),
+                permission: PermissionType::StoreAccess,
+                store_id: Some(store_id.to_string()),
+                context_id: None,
+            },
+        ];
+        let validation_result = validate_resource_permissions(
+            user_id,
+            &user_permissions,
+            &resource_request,
+            &required_permissions,
+            &mut Vec::new(),
+        );
+        assert!(validation_result.is_ok());
+    }
+}
+
+#[cfg(test)]
+mod permission_validation_test {
+    use std::sync::{Arc, RwLock};
+
+    use super::*;
+    use crate::{service_provider::ServiceProvider, session_store::SessionStore};
+    use repository::{
+        mock::{mock_user_account_a, MockData, MockDataInserts},
+        test_db::{setup_all, setup_all_with_data},
+        NameRow, StoreRow, UserAccountRow, UserPermissionRowRepository,
+    };
+
+    #[actix_rt::test]
+    async fn test_basic_permission_validation() {
+        let auth_data = AuthData {
+            session_store: Arc::new(RwLock::new(SessionStore::new())),
+            cookie_suffix: "test".to_string(),
+            no_ssl: true,
+            debug_no_access_control: false,
+        };
+        let user_id = "test_user_id";
+        let token = auth_data.session_store.write().unwrap().create(user_id);
+
+        let (_, _, connection_manager, _) = setup_all(
+            "basic_permission_validation",
+            MockDataInserts::none().names().stores().user_accounts(),
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager.clone());
+        let context = service_provider
+            .context("".to_string(), user_id.to_string())
+            .unwrap();
+        let permission_repo = UserPermissionRowRepository::new(&context.connection);
+
+        let mut service = AuthService::new();
+        service.resource_permissions.clear();
+
+        // validate user doesn't has access without resource -> permissions mapping
+        assert!(service
+            .validate(
+                &context,
+                &auth_data,
+                &Some(token.to_owned()),
+                &None,
+                &ResourceAccessRequest {
+                    resource: Resource::QueryStocktake,
+                    store_id: None,
+                    require_central_standalone: false,
+                }
+            )
+            .is_err());
+
+        service.resource_permissions.insert(
+            Resource::QueryStocktake,
+            PermissionDSL::And(vec![
+                PermissionDSL::HasStoreAccess,
+                PermissionDSL::HasPermission(PermissionType::StocktakeQuery),
+            ]),
+        );
+
+        // validate user doesn't has access
+        assert!(service
+            .validate(
+                &context,
+                &auth_data,
+                &Some(token.to_owned()),
+                &None,
+                &ResourceAccessRequest {
+                    resource: Resource::QueryStocktake,
+                    store_id: None,
+                    require_central_standalone: false,
+                }
+            )
+            .is_err());
+
+        // validate user can't log in with wrong permission
+        permission_repo
+            .upsert_one(&UserPermissionRow {
+                id: "permission1".to_string(),
+                user_id: mock_user_account_a().id,
+                store_id: Some("store_a".to_string()),
+                permission: PermissionType::InboundShipmentMutate,
+                context_id: None,
+            })
+            .unwrap();
+        assert!(service
+            .validate(
+                &context,
+                &auth_data,
+                &Some(token.to_owned()),
+                &None,
+                &ResourceAccessRequest {
+                    resource: Resource::QueryStocktake,
+                    store_id: Some("store_a".to_string()),
+                    require_central_standalone: false,
+                }
+            )
+            .is_err());
+
+        // validate user can't log in with right permission but wrong store
+        permission_repo
+            .upsert_one(&UserPermissionRow {
+                id: "permission1".to_string(),
+                user_id: mock_user_account_a().id,
+                store_id: Some("store_a".to_string()),
+                permission: PermissionType::StocktakeQuery,
+                context_id: None,
+            })
+            .unwrap();
+        assert!(service
+            .validate(
+                &context,
+                &auth_data,
+                &Some(token.to_owned()),
+                &None,
+                &ResourceAccessRequest {
+                    resource: Resource::QueryStocktake,
+                    store_id: Some("store_b".to_string()),
+                    require_central_standalone: false,
+                }
+            )
+            .is_err());
+
+        // validate user can log in with right permission and right store
+        assert!(service
+            .validate(
+                &context,
+                &auth_data,
+                &Some(token.to_owned()),
+                &None,
+                &ResourceAccessRequest {
+                    resource: Resource::QueryStocktake,
+                    store_id: Some("store_a".to_string()),
+                    require_central_standalone: false,
+                }
+            )
+            .is_err());
+    }
+
+    #[actix_rt::test]
+    async fn test_basic_user_store_permissions() {
+        fn name() -> NameRow {
+            NameRow {
+                id: "name".to_string(),
+                ..Default::default()
+            }
+        }
+
+        fn store() -> StoreRow {
+            StoreRow {
+                id: "store".to_string(),
+                name_id: name().id,
+                code: "n/a".to_string(),
+                ..Default::default()
+            }
+        }
+
+        fn user() -> UserAccountRow {
+            UserAccountRow {
+                id: "user".to_string(),
+                username: "user".to_string(),
+                ..Default::default()
+            }
+        }
+
+        fn user_without_permission() -> UserAccountRow {
+            UserAccountRow {
+                id: "user_without_permission".to_string(),
+                username: "user".to_string(),
+                ..Default::default()
+            }
+        }
+
+        fn permissions() -> Vec<UserPermissionRow> {
+            vec![
+                UserPermissionRow {
+                    id: "permission_requisition_mutation".to_string(),
+                    user_id: user().id,
+                    store_id: Some(store().id),
+                    permission: PermissionType::RequisitionMutate,
+                    context_id: None,
+                },
+                UserPermissionRow {
+                    id: "permission_store_access".to_string(),
+                    user_id: user().id,
+                    store_id: Some(store().id),
+                    permission: PermissionType::StoreAccess,
+                    context_id: None,
+                },
+            ]
+        }
+
+        let (_, _, connection_manager, _) = setup_all_with_data(
+            "test_basic_user_store_permissions",
+            MockDataInserts::all(),
+            MockData {
+                stores: vec![store()],
+                names: vec![name()],
+                user_accounts: vec![user(), user_without_permission()],
+                user_permissions: permissions(),
+                ..Default::default()
+            },
+        )
+        .await;
+
+        let service_provider = ServiceProvider::new(connection_manager);
+        let context = service_provider.basic_context().unwrap();
+
+        let auth_data = AuthData {
+            session_store: Arc::new(RwLock::new(SessionStore::new())),
+            cookie_suffix: "test".to_string(),
+            no_ssl: true,
+            debug_no_access_control: false,
+        };
+
+        let token = auth_data.session_store.write().unwrap().create(&user().id);
+
+        assert!(service_provider
+            .validation_service
+            .validate(
+                &context,
+                &auth_data,
+                &Some(token),
+                &None,
+                &ResourceAccessRequest {
+                    resource: Resource::MutateRequisition,
+                    store_id: Some(store().id),
+                    require_central_standalone: false,
+                }
+            )
+            .is_ok());
+
+        let token = auth_data
+            .session_store
+            .write()
+            .unwrap()
+            .create(&user_without_permission().id);
+        assert!(service_provider
+            .validation_service
+            .validate(
+                &context,
+                &auth_data,
+                &Some(token),
+                &None,
+                &ResourceAccessRequest {
+                    resource: Resource::MutateRequisition,
+                    store_id: Some(store().id),
+                    require_central_standalone: false,
+                }
+            )
+            .is_err());
+    }
+}

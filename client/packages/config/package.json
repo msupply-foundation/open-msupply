@@ -1,0 +1,11 @@
+{
+  "name": "@openmsupply-client/config",
+  "main": "./src/index.ts",
+  "version": "0.0.0",
+  "sideEffects": false,
+  "private": true,
+  "scripts": {
+    "tsc": "tsc",
+    "eslint": "eslint ./src"
+  }
+}

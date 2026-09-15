@@ -21,6 +21,11 @@
     "moduleResolution": "bundler",
     "paths": { "@openmsupply/plugin-sdk": ["./src/plugin-sdk/index.ts"] },
     "allowImportingTsExtensions": true,
+    // One divergence from tsconfig.app.json: a plugin imports its identity
+    // (name, version) from its own package.json — the same file the pack step
+    // and the server's install gate read — instead of restating it as
+    // literals that can drift.
+    "resolveJsonModule": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
     "noEmit": true,
@@ -45,6 +50,12 @@
     "examples/**/*.tsx",
     "plugins/*/src/**/*.ts",
     "plugins/*/src/**/*.tsx",
+    // cook_islands' BACKEND half, plus the `shared/` wire contract both
+    // halves import. Named rather than globbed as `plugins/*/backend`,
+    // because civ's half compiles only against its own toolchain's
+    // `@common/*` and so must stay out.
+    "plugins/cook_islands/backend/src/**/*.ts",
+    "plugins/cook_islands/shared/**/*.ts",
     "src/globals.d.ts",
     "src/intl/globals.d.ts"
   ]

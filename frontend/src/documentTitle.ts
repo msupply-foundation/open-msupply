@@ -8,6 +8,7 @@
 import { createEffect } from 'solid-js';
 import { t, type LocaleKey } from './intl';
 import { navTrail } from './nav/navConfig';
+import { pluginScreenLabelKey } from './plugins/pluginPages';
 import { findLeafByPath } from './ui/layout/AppShell/navModel';
 
 /**
@@ -20,7 +21,7 @@ export const pageTitle = (screenKey: LocaleKey | undefined): string =>
 
 /**
  * The key naming the screen at a store-relative path ('' = the store root =
- * the dashboard); absent for a path that is no destination.
+ * Home); absent for a path that is no destination.
  *
  * Derived from the same registry the menu and the breadcrumb read
  * (spec/navigation § one registry): the destination's own menu label, or — for
@@ -28,9 +29,15 @@ export const pageTitle = (screenKey: LocaleKey | undefined): string =>
  * sits beneath, resolved exactly as the menu highlight resolves it.
  */
 export const screenTitleKey = (relativePath: string): LocaleKey | undefined => {
-  const path = relativePath || 'dashboard';
-  const trail = navTrail(path);
-  return trail[trail.length - 1]?.labelKey ?? findLeafByPath(path)?.labelKey;
+  const trail = navTrail(relativePath);
+  return (
+    trail[trail.length - 1]?.labelKey ??
+    findLeafByPath(relativePath)?.labelKey ??
+    // A plugin-contributed page's own label, from the registry's plugin half
+    // (spec/navigation § plugin destinations) — a namespaced key t() resolves
+    // through the plugin's registered catalogue, like every surface showing it.
+    pluginScreenLabelKey(relativePath)
+  );
 };
 
 /**

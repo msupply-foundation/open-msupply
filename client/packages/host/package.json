@@ -1,0 +1,47 @@
+{
+  "name": "@openmsupply-client/host",
+  "version": "0.0.0",
+  "sideEffects": false,
+  "main": "./src/index.ts",
+  "private": true,
+  "devDependencies": {
+    "@capacitor-community/keep-awake": "^5.0.0",
+    "copy-webpack-plugin": "^12.0.2",
+    "find-up": "^7.0.0",
+    "html-webpack-plugin": "^5.5.0",
+    "react-refresh": "0.14.2",
+    "serve": "^14.2.0",
+    "webpack": "^5.88.1",
+    "webpack-cli": "^5.0.1",
+    "webpack-dev-server": "^5.0.4"
+  },
+  "scripts": {
+    "start": "webpack-cli serve",
+    "start-remote": "webpack-cli serve --env API_HOST=https://demo-open.msupply.org",
+    "start-local": "webpack-cli serve",
+    "build": "webpack --env production",
+    "build-stats": "webpack --env stats --env production",
+    "serve": "serve dist -p 3003",
+    "tsc": "tsc",
+    "eslint": "eslint ./src"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "^5.0.19",
+    "@openmsupply-client/coldchain": "^0.0.0",
+    "@openmsupply-client/common": "^0.0.1",
+    "@openmsupply-client/config": "^0.0.0",
+    "@openmsupply-client/dashboard": "^0.0.0",
+    "@openmsupply-client/inventory": "^0.0.0",
+    "@openmsupply-client/invoices": "^0.0.0",
+    "@openmsupply-client/reports": "^0.0.0",
+    "@openmsupply-client/requisitions": "^0.0.0",
+    "@openmsupply-client/system": "^0.0.0",
+    "@pmmmwh/react-refresh-webpack-plugin": "^0.5.4",
+    "history": "^5.1.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-qr-code": "^2.0.12",
+    "swc-loader": "^0.2.0",
+    "webpack-bundle-analyzer": "^4.9.0"
+  }
+}

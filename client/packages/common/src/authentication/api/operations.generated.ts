@@ -1,0 +1,630 @@
+import * as Types from '@openmsupply-client/common';
+
+import { GraphQLClient, RequestOptions } from 'graphql-request';
+import gql from 'graphql-tag';
+type GraphQLClientRequestHeaders = RequestOptions['requestHeaders'];
+export type UserStoreNodeFragment = {
+  __typename: 'UserStoreNode';
+  code: string;
+  id: string;
+  nameId: string;
+  name: string;
+  storeMode: Types.StoreModeNodeType;
+  createdDate?: string | null;
+  homeCurrencyCode?: string | null;
+  isDisabled: boolean;
+  preferences: {
+    __typename: 'StorePreferenceNode';
+    id: string;
+    responseRequisitionRequiresAuthorisation: boolean;
+    requestRequisitionRequiresAuthorisation: boolean;
+    packToOne: boolean;
+    omProgramModule: boolean;
+    vaccineModule: boolean;
+    issueInForeignCurrency: boolean;
+    monthlyConsumptionLookBackPeriod: number;
+    monthsLeadTime: number;
+    monthsOverstock: number;
+    monthsUnderstock: number;
+    monthsItemsExpire: number;
+    stocktakeFrequency: number;
+    extraFieldsInRequisition: boolean;
+    keepRequisitionLinesWithZeroRequestedQuantityOnFinalised: boolean;
+    manuallyLinkInternalOrderToInboundShipment: boolean;
+    useConsumptionAndStockFromCustomersForInternalOrders: boolean;
+    editPrescribedQuantityOnPrescription: boolean;
+  };
+};
+
+export type AuthTokenQueryVariables = Types.Exact<{
+  username: Types.Scalars['String']['input'];
+  password: Types.Scalars['String']['input'];
+}>;
+
+export type AuthTokenQuery = {
+  __typename: 'Queries';
+  authToken:
+    | { __typename: 'AuthToken'; token: string }
+    | {
+        __typename: 'AuthTokenError';
+        error:
+          | {
+              __typename: 'AccountBlocked';
+              description: string;
+              timeoutRemaining: number;
+            }
+          | { __typename: 'CentralSyncRequired'; description: string }
+          | { __typename: 'InvalidCredentials'; description: string }
+          | { __typename: 'NoSiteAccess'; description: string };
+      };
+};
+
+export type MeQueryVariables = Types.Exact<{ [key: string]: never }>;
+
+export type MeQuery = {
+  __typename: 'Queries';
+  me: {
+    __typename: 'UserNode';
+    email?: string | null;
+    language: Types.LanguageTypeNode;
+    username: string;
+    userId: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    phoneNumber?: string | null;
+    jobTitle?: string | null;
+    defaultStore?: {
+      __typename: 'UserStoreNode';
+      code: string;
+      id: string;
+      nameId: string;
+      name: string;
+      storeMode: Types.StoreModeNodeType;
+      createdDate?: string | null;
+      homeCurrencyCode?: string | null;
+      isDisabled: boolean;
+      preferences: {
+        __typename: 'StorePreferenceNode';
+        id: string;
+        responseRequisitionRequiresAuthorisation: boolean;
+        requestRequisitionRequiresAuthorisation: boolean;
+        packToOne: boolean;
+        omProgramModule: boolean;
+        vaccineModule: boolean;
+        issueInForeignCurrency: boolean;
+        monthlyConsumptionLookBackPeriod: number;
+        monthsLeadTime: number;
+        monthsOverstock: number;
+        monthsUnderstock: number;
+        monthsItemsExpire: number;
+        stocktakeFrequency: number;
+        extraFieldsInRequisition: boolean;
+        keepRequisitionLinesWithZeroRequestedQuantityOnFinalised: boolean;
+        manuallyLinkInternalOrderToInboundShipment: boolean;
+        useConsumptionAndStockFromCustomersForInternalOrders: boolean;
+        editPrescribedQuantityOnPrescription: boolean;
+      };
+    } | null;
+    stores: {
+      __typename: 'UserStoreConnector';
+      totalCount: number;
+      nodes: Array<{
+        __typename: 'UserStoreNode';
+        code: string;
+        id: string;
+        nameId: string;
+        name: string;
+        storeMode: Types.StoreModeNodeType;
+        createdDate?: string | null;
+        homeCurrencyCode?: string | null;
+        isDisabled: boolean;
+        preferences: {
+          __typename: 'StorePreferenceNode';
+          id: string;
+          responseRequisitionRequiresAuthorisation: boolean;
+          requestRequisitionRequiresAuthorisation: boolean;
+          packToOne: boolean;
+          omProgramModule: boolean;
+          vaccineModule: boolean;
+          issueInForeignCurrency: boolean;
+          monthlyConsumptionLookBackPeriod: number;
+          monthsLeadTime: number;
+          monthsOverstock: number;
+          monthsUnderstock: number;
+          monthsItemsExpire: number;
+          stocktakeFrequency: number;
+          extraFieldsInRequisition: boolean;
+          keepRequisitionLinesWithZeroRequestedQuantityOnFinalised: boolean;
+          manuallyLinkInternalOrderToInboundShipment: boolean;
+          useConsumptionAndStockFromCustomersForInternalOrders: boolean;
+          editPrescribedQuantityOnPrescription: boolean;
+        };
+      }>;
+    };
+  };
+};
+
+export type IsCentralServerQueryVariables = Types.Exact<{
+  [key: string]: never;
+}>;
+
+export type IsCentralServerQuery = {
+  __typename: 'Queries';
+  isCentralServer: boolean;
+};
+
+export type IsCentralStandaloneQueryVariables = Types.Exact<{
+  [key: string]: never;
+}>;
+
+export type IsCentralStandaloneQuery = {
+  __typename: 'Queries';
+  isCentralStandalone: boolean;
+};
+
+export type LogoutQueryVariables = Types.Exact<{ [key: string]: never }>;
+
+export type LogoutQuery = {
+  __typename: 'Queries';
+  logout: { __typename: 'Logout'; userId: string };
+};
+
+export type PermissionsQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type PermissionsQuery = {
+  __typename: 'Queries';
+  me: {
+    __typename: 'UserNode';
+    username: string;
+    permissions: {
+      __typename: 'UserStorePermissionConnector';
+      totalCount: number;
+      nodes: Array<{
+        __typename: 'UserStorePermissionNode';
+        permissions: Array<Types.UserPermission>;
+        storeId: string;
+      }>;
+    };
+  };
+};
+
+export type PreferencesQueryVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+}>;
+
+export type PreferencesQuery = {
+  __typename: 'Queries';
+  preferences: {
+    __typename: 'PreferencesNode';
+    adjustForNumberOfDaysOutOfStock: boolean;
+    allowTrackingOfStockByDonor: boolean;
+    authorisePurchaseOrder: boolean;
+    blindStocktake: boolean;
+    canCreateInternalOrderFromARequisition: boolean;
+    customTranslations: any;
+    daysInMonth: number;
+    disableManualReturns: boolean;
+    firstThresholdForExpiringItems: number;
+    genderOptions: Array<Types.GenderTypeNode>;
+    manageVaccinesInDoses: boolean;
+    manageVvmStatusForStock: boolean;
+    numberOfMonthsThresholdToShowLowStockAlertsForProducts: number;
+    numberOfMonthsThresholdToShowOverStockAlertsForProducts: number;
+    numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts: number;
+    orderInPacks: boolean;
+    preventTransfersMonthsBeforeInitialisation: number;
+    requisitionAutoFinalise: boolean;
+    secondThresholdForExpiringItems: number;
+    selectDestinationStoreForAnInternalOrder: boolean;
+    showContactTracing: boolean;
+    sortByVvmStatusThenExpiry: boolean;
+    storeCustomColour: string;
+    syncRecordsDisplayThreshold: number;
+    useProcurementFunctionality: boolean;
+    useSimplifiedMobileUi: boolean;
+    expiredStockPreventIssue: boolean;
+    expiredStockIssueThreshold: number;
+    displayPopulationBasedForecasting: boolean;
+    warningForExcessRequest: boolean;
+    externalInboundShipmentLinesMustBeAuthorised: boolean;
+    invoiceStatusOptions: Array<Types.InvoiceNodeStatus>;
+    itemMarginOverridesSupplierMargin: boolean;
+    showIndicativePriceInRequisitions: boolean;
+    isGaps: boolean;
+    globalTableConfigs: any;
+    warnWhenMissingRecentStocktake: {
+      __typename: 'WarnWhenMissingRecentStocktakeDataNode';
+      enabled: boolean;
+      maxAge: number;
+      minItems: number;
+    };
+    backdating: {
+      __typename: 'BackdatingNode';
+      shipmentsEnabled: boolean;
+      inventoryAdjustmentsEnabled: boolean;
+      maxDays: number;
+    };
+  };
+};
+
+export type SaveGlobalTableConfigsMutationVariables = Types.Exact<{
+  storeId: Types.Scalars['String']['input'];
+  input: Types.UpsertPreferencesInput;
+}>;
+
+export type SaveGlobalTableConfigsMutation = {
+  __typename: 'Mutations';
+  centralServer: {
+    __typename: 'CentralServerMutationNode';
+    preferences: {
+      __typename: 'PreferenceMutations';
+      upsertPreferences: { __typename: 'OkResponse'; ok: boolean };
+    };
+  };
+};
+
+export const UserStoreNodeFragmentDoc = gql`
+  fragment UserStoreNode on UserStoreNode {
+    code
+    id
+    nameId
+    name
+    storeMode
+    preferences {
+      id
+      responseRequisitionRequiresAuthorisation
+      requestRequisitionRequiresAuthorisation
+      packToOne
+      omProgramModule
+      vaccineModule
+      issueInForeignCurrency
+      monthlyConsumptionLookBackPeriod
+      monthsLeadTime
+      monthsOverstock
+      monthsUnderstock
+      monthsItemsExpire
+      stocktakeFrequency
+      extraFieldsInRequisition
+      keepRequisitionLinesWithZeroRequestedQuantityOnFinalised
+      manuallyLinkInternalOrderToInboundShipment
+      useConsumptionAndStockFromCustomersForInternalOrders
+      editPrescribedQuantityOnPrescription
+    }
+    createdDate
+    homeCurrencyCode
+    isDisabled
+  }
+`;
+export const AuthTokenDocument = gql`
+  query authToken($username: String!, $password: String!) {
+    authToken(password: $password, username: $username) {
+      ... on AuthTokenError {
+        __typename
+        error {
+          ... on InvalidCredentials {
+            __typename
+            description
+          }
+          ... on NoSiteAccess {
+            __typename
+            description
+          }
+          ... on AccountBlocked {
+            __typename
+            description
+            timeoutRemaining
+          }
+          ... on CentralSyncRequired {
+            __typename
+            description
+          }
+          description
+        }
+      }
+      ... on AuthToken {
+        __typename
+        token
+      }
+    }
+  }
+`;
+export const MeDocument = gql`
+  query me {
+    me {
+      ... on UserNode {
+        __typename
+        email
+        defaultStore {
+          ...UserStoreNode
+        }
+        language
+        stores {
+          totalCount
+          nodes {
+            __typename
+            ...UserStoreNode
+          }
+        }
+        username
+        userId
+        firstName
+        lastName
+        phoneNumber
+        jobTitle
+      }
+    }
+  }
+  ${UserStoreNodeFragmentDoc}
+`;
+export const IsCentralServerDocument = gql`
+  query isCentralServer {
+    isCentralServer
+  }
+`;
+export const IsCentralStandaloneDocument = gql`
+  query isCentralStandalone {
+    isCentralStandalone
+  }
+`;
+export const LogoutDocument = gql`
+  query logout {
+    logout {
+      ... on Logout {
+        __typename
+        userId
+      }
+    }
+  }
+`;
+export const PermissionsDocument = gql`
+  query permissions($storeId: String!) {
+    me {
+      ... on UserNode {
+        __typename
+        username
+        permissions(storeId: $storeId) {
+          nodes {
+            permissions
+            storeId
+          }
+          totalCount
+        }
+      }
+    }
+  }
+`;
+export const PreferencesDocument = gql`
+  query preferences($storeId: String!) {
+    preferences(storeId: $storeId) {
+      adjustForNumberOfDaysOutOfStock
+      allowTrackingOfStockByDonor
+      authorisePurchaseOrder
+      blindStocktake
+      canCreateInternalOrderFromARequisition
+      customTranslations
+      daysInMonth
+      disableManualReturns
+      firstThresholdForExpiringItems
+      genderOptions
+      manageVaccinesInDoses
+      manageVvmStatusForStock
+      numberOfMonthsThresholdToShowLowStockAlertsForProducts
+      numberOfMonthsThresholdToShowOverStockAlertsForProducts
+      numberOfMonthsToCheckForConsumptionWhenCalculatingOutOfStockProducts
+      orderInPacks
+      preventTransfersMonthsBeforeInitialisation
+      requisitionAutoFinalise
+      secondThresholdForExpiringItems
+      selectDestinationStoreForAnInternalOrder
+      showContactTracing
+      sortByVvmStatusThenExpiry
+      storeCustomColour
+      syncRecordsDisplayThreshold
+      useProcurementFunctionality
+      useSimplifiedMobileUi
+      expiredStockPreventIssue
+      expiredStockIssueThreshold
+      displayPopulationBasedForecasting
+      warnWhenMissingRecentStocktake {
+        enabled
+        maxAge
+        minItems
+      }
+      warningForExcessRequest
+      externalInboundShipmentLinesMustBeAuthorised
+      invoiceStatusOptions
+      itemMarginOverridesSupplierMargin
+      showIndicativePriceInRequisitions
+      isGaps
+      globalTableConfigs
+      backdating {
+        shipmentsEnabled
+        inventoryAdjustmentsEnabled
+        maxDays
+      }
+    }
+  }
+`;
+export const SaveGlobalTableConfigsDocument = gql`
+  mutation saveGlobalTableConfigs(
+    $storeId: String!
+    $input: UpsertPreferencesInput!
+  ) {
+    centralServer {
+      preferences {
+        upsertPreferences(storeId: $storeId, input: $input) {
+          ok
+        }
+      }
+    }
+  }
+`;
+
+export type SdkFunctionWrapper = <T>(
+  action: (requestHeaders?: Record<string, string>) => Promise<T>,
+  operationName: string,
+  operationType?: string,
+  variables?: any
+) => Promise<T>;
+
+const defaultWrapper: SdkFunctionWrapper = (
+  action,
+  _operationName,
+  _operationType,
+  _variables
+) => action();
+
+export function getSdk(
+  client: GraphQLClient,
+  withWrapper: SdkFunctionWrapper = defaultWrapper
+) {
+  return {
+    authToken(
+      variables: AuthTokenQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<AuthTokenQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<AuthTokenQuery>({
+            document: AuthTokenDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'authToken',
+        'query',
+        variables
+      );
+    },
+    me(
+      variables?: MeQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<MeQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<MeQuery>({
+            document: MeDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'me',
+        'query',
+        variables
+      );
+    },
+    isCentralServer(
+      variables?: IsCentralServerQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<IsCentralServerQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<IsCentralServerQuery>({
+            document: IsCentralServerDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'isCentralServer',
+        'query',
+        variables
+      );
+    },
+    isCentralStandalone(
+      variables?: IsCentralStandaloneQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<IsCentralStandaloneQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<IsCentralStandaloneQuery>({
+            document: IsCentralStandaloneDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'isCentralStandalone',
+        'query',
+        variables
+      );
+    },
+    logout(
+      variables?: LogoutQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<LogoutQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<LogoutQuery>({
+            document: LogoutDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'logout',
+        'query',
+        variables
+      );
+    },
+    permissions(
+      variables: PermissionsQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<PermissionsQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<PermissionsQuery>({
+            document: PermissionsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'permissions',
+        'query',
+        variables
+      );
+    },
+    preferences(
+      variables: PreferencesQueryVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<PreferencesQuery> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<PreferencesQuery>({
+            document: PreferencesDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'preferences',
+        'query',
+        variables
+      );
+    },
+    saveGlobalTableConfigs(
+      variables: SaveGlobalTableConfigsMutationVariables,
+      requestHeaders?: GraphQLClientRequestHeaders,
+      signal?: RequestInit['signal']
+    ): Promise<SaveGlobalTableConfigsMutation> {
+      return withWrapper(
+        wrappedRequestHeaders =>
+          client.request<SaveGlobalTableConfigsMutation>({
+            document: SaveGlobalTableConfigsDocument,
+            variables,
+            requestHeaders: { ...requestHeaders, ...wrappedRequestHeaders },
+            signal,
+          }),
+        'saveGlobalTableConfigs',
+        'mutation',
+        variables
+      );
+    },
+  };
+}
+export type Sdk = ReturnType<typeof getSdk>;

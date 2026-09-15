@@ -1,0 +1,364 @@
+import { useCallback } from 'react';
+import { getLocale, useIntlUtils, useTranslation } from '@common/intl';
+import {
+  addMinutes,
+  addDays,
+  addMonths,
+  addYears,
+  addHours,
+  isValid,
+  differenceInDays,
+  differenceInMonths,
+  differenceInMinutes,
+  differenceInYears,
+  getDaysInMonth,
+  isPast,
+  isFuture,
+  isThisWeek,
+  isToday,
+  isThisMonth,
+  isAfter,
+  isBefore,
+  isEqual,
+  isSameDay,
+  format,
+  parse,
+  parseISO,
+  fromUnixTime,
+  getUnixTime,
+  startOfToday,
+  startOfDay,
+  endOfDay,
+  startOfYear,
+  formatRelative,
+  formatDistance,
+  formatDistanceToNow,
+  formatRFC3339,
+  previousMonday,
+  endOfWeek,
+  setMilliseconds,
+  addMilliseconds,
+  getYear,
+  Locale,
+  FirstWeekContainsDate,
+  ParseOptions,
+  startOfMonth,
+  isMatch,
+} from 'date-fns';
+import { getTimezoneOffset } from 'date-fns-tz';
+
+export const MINIMUM_EXPIRY_MONTHS = 3;
+
+const URL_QUERY_DATE = 'yyyy-MM-dd';
+const URL_QUERY_DATE_TIME = 'yyyy-MM-dd HH:mm';
+
+const dateInputHandler = (date: Date | string | number): Date => {
+  // Assume a string is an ISO date-time string
+  if (typeof date === 'string') {
+    // Any dates we receive from the server without timezone information are
+    // assumed to be in UTC time
+    const tIndex = date.indexOf('T');
+    const needsUtcSuffix =
+      tIndex !== -1 &&
+      !date.endsWith('Z') &&
+      !/[+-]/.test(date.substring(tIndex));
+    return parseISO(needsUtcSuffix ? date + 'Z' : date);
+  }
+  // Assume a number is a UNIX timestamp
+  if (typeof date === 'number') return fromUnixTime(date);
+  return date as Date;
+};
+
+const formatIfValid = (
+  date: Date | number,
+  dateFormat: string,
+  options?: {
+    locale: Locale;
+    weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
+    firstWeekContainsDate?: FirstWeekContainsDate;
+    useAdditionalWeekYearTokens?: boolean;
+    useAdditionalDayOfYearTokens?: boolean;
+  }
+): string => (isValid(date) ? format(date, dateFormat, options) : '');
+
+/** Adds the current time to a date object (that presumably has 00:00 as its
+ * time component) -- does not mutate input Date object
+ */
+const addCurrentTime = (date: Date | null): Date | null => {
+  if (date === null) return date;
+  const d = new Date();
+  const msSinceMidnight = d.getTime() - new Date(d).setHours(0, 0, 0, 0);
+  const newDate = new Date(date);
+  newDate.setTime(newDate.setHours(0, 0, 0, 0) + msSinceMidnight);
+  return newDate;
+};
+
+// Time constants in [ms]
+const SECOND = 1000;
+const MINUTE = 60 * SECOND;
+const HOUR = 60 * MINUTE;
+const DAY = 24 * HOUR;
+
+export const DateUtils = {
+  differenceInMinutes,
+  differenceInDays,
+  addMinutes,
+  addDays,
+  addHours,
+  addMonths,
+  addYears,
+  addCurrentTime,
+  getDateOrNull: (
+    date?: Date | string | null,
+    format?: string,
+    options?: Parameters<typeof parse>[3]
+  ): Date | null => {
+    if (!date) return null;
+    if (date instanceof Date) return date;
+    const maybeDate =
+      format && typeof date === 'string'
+        ? parse(date, format, new Date(), options)
+        : new Date(date);
+    return isValid(maybeDate) ? maybeDate : null;
+  },
+  getDaysInMonth,
+  /**
+   * While getDateOrNull is naive to the timezone, the timezone will still
+   * change. When converting from the assumed naive zone of GMT to the local
+   * timezone, the dateTime will be wrong if the timezone is behind GMT.
+   * For example: for a user in -10 timezone, a date of 24-02-2024 will become
+   * 2024-02-23T13:00:00.000Z when rendered for mui datepicker.
+   * This function acts in the same way as getDateOrNull, but will create a
+   * datetime of start of day local time rather than start of day GMT by
+   * subtracting the local timezone offset.
+   * You can use this function anytime you need a datetime for mui date picker
+   * to be created from a date only string. This includes date of birth, date of
+   * death or any other date which is time and timezone agnostic.
+   */
+  getNaiveDate: (
+    date?: Date | string | null,
+    format?: string,
+    options?: ParseOptions,
+    timeZone?: string
+  ): Date | null => {
+    // tz passed as props options for testing purposes
+    const tz = timeZone ?? new Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const UTCDateWithoutTime = DateUtils.getDateOrNull(date, format, options);
+    const offset = UTCDateWithoutTime
+      ? getTimezoneOffset(tz, UTCDateWithoutTime)
+      : 0;
+    return UTCDateWithoutTime
+      ? addMilliseconds(UTCDateWithoutTime, -offset)
+      : null;
+  },
+  minDate: (...dates: (Date | null)[]) => {
+    const maybeDate = fromUnixTime(
+      Math.min(
+        // Ignore nulls, as they'll return a minimum of 0
+        ...dates.filter(d => d !== null).map(d => getUnixTime(d as Date))
+      )
+    );
+    return isValid(maybeDate) ? maybeDate : null;
+  },
+
+  maxDate: (...dates: (Date | null)[]) =>
+    fromUnixTime(Math.max(...dates.map(d => getUnixTime(d as Date)))),
+  isPast,
+  isFuture,
+  isExpired: (expiryDate: Date | string | number): boolean =>
+    isPast(expiryDate),
+  isAlmostExpired: (
+    expiryDate: Date | string | number,
+    threshold = MINIMUM_EXPIRY_MONTHS
+  ): boolean => differenceInMonths(expiryDate, Date.now()) <= threshold,
+  isSameDay,
+  isThisWeek,
+  isToday,
+  isThisMonth,
+  isAfter,
+  isBefore,
+  isEqual,
+  isValid,
+  formatRFC3339: (date: Date | null | undefined) =>
+    isValid(date) ? formatRFC3339(date as Date) : undefined,
+  age: (date: Date) => differenceInYears(startOfToday(), startOfDay(date)),
+  ageInDays: (date: Date | string) =>
+    differenceInDays(Date.now(), dateInputHandler(date)),
+  ageInMonthsAndDays: (date: Date | string) => {
+    // from: 01-03-2024 to 02-08-2024 = 5 months, 1 day
+    // from: 03-03-2024 to 02-08-2024 = 4 months, 30 days
+    const months = differenceInMonths(Date.now(), date);
+    const days = differenceInDays(Date.now(), addMonths(date, months));
+    return { months, days };
+  },
+  startOfDay,
+  startOfToday,
+  endOfDayOrNull: (date?: Date | string | number | null): Date | null => {
+    if (!date) return null;
+
+    const d = dateInputHandler(date);
+    return isValid(d) ? endOfDay(d) : null;
+  },
+  endOfDay,
+  startOfMonth,
+  startOfYear,
+  previousMonday,
+  endOfWeek,
+  setMilliseconds,
+  getCurrentYear: () => getYear(new Date()),
+  formatDuration: (
+    date: Date | string | number,
+    formatString: string = 'HH:mm:ss'
+  ): string => formatIfValid(dateInputHandler(date), formatString),
+
+  /**
+   * Whole seconds elapsed between `start` and `end`. Returns 0 if either is
+   * missing or the result would be negative.
+   */
+  durationInSeconds: (
+    start: Date | string | number | null | undefined,
+    end: Date | string | number | null | undefined
+  ): number => {
+    if (!start || !end) return 0;
+    const startMs = dateInputHandler(start).getTime();
+    const endMs = dateInputHandler(end).getTime();
+    return Math.max(0, Math.floor((endMs - startMs) / 1000));
+  },
+
+  /**
+   * Pack a number of seconds into a Date (year/month/day = 0). Useful with
+   * `getHours()`/`getMinutes()`/`getSeconds()` to break a duration into parts:
+   * 3725s → Date with hours=1 minutes=2 seconds=5.
+   */
+  secondsAsDate: (seconds: number): Date => new Date(0, 0, 0, 0, 0, seconds),
+
+  /** Number of milliseconds in one second, i.e. SECOND = 1000*/
+  SECOND,
+  /** Number of milliseconds in one minute */
+  MINUTE,
+  /** Number of milliseconds in one hour */
+  HOUR,
+  /** Number of milliseconds in one day */
+  DAY,
+  isUrlQueryDateTime: (date: string) => isMatch(date, URL_QUERY_DATE_TIME),
+};
+
+export const useFormatDateTime = () => {
+  const { currentLanguage } = useIntlUtils();
+  const locale = getLocale(currentLanguage);
+  const t = useTranslation();
+
+  const localisedDate = useCallback(
+    (date: Date | string | number): string =>
+      formatIfValid(dateInputHandler(date), 'P', { locale }),
+    [locale]
+  );
+
+  const localisedTime = useCallback(
+    (date: Date | string | number): string =>
+      formatIfValid(dateInputHandler(date), 'p', { locale }),
+    [locale]
+  );
+
+  const localisedDateTime = useCallback(
+    (date: Date | string | number): string =>
+      format(dateInputHandler(date), 'P p', { locale }),
+    [locale]
+  );
+
+  const dayMonthShort = useCallback(
+    (date: Date | string | number): string =>
+      formatIfValid(dateInputHandler(date), 'dd MMM', { locale }),
+    [locale]
+  );
+
+  const dayMonthTime = useCallback(
+    (date: Date | string | number): string =>
+      formatIfValid(dateInputHandler(date), 'dd/MM HH:mm', { locale }),
+    [locale]
+  );
+
+  const customDate = useCallback(
+    (date: Date | string | number, formatString: string): string =>
+      formatIfValid(dateInputHandler(date), formatString, { locale }),
+    [locale]
+  );
+
+  const relativeDateTime = useCallback(
+    (
+      date: Date | string | number,
+      baseDate: Date = new Date()
+    ): string => {
+      const d = dateInputHandler(date);
+      return isValid(d) ? formatRelative(d, baseDate, { locale }) : '';
+    },
+    [locale]
+  );
+
+  const localisedDistanceToNow = useCallback(
+    (date: Date | string | number) => {
+      const d = dateInputHandler(date);
+      return isValid(d) ? formatDistanceToNow(d, { locale }) : '';
+    },
+    [locale]
+  );
+
+  const localisedDistance = useCallback(
+    (
+      startDate: Date | string | number,
+      endDate: Date | string | number
+    ) => {
+      const from = dateInputHandler(startDate);
+      const to = dateInputHandler(endDate);
+      return isValid(from) && isValid(to)
+        ? formatDistance(from, to, { locale })
+        : '';
+    },
+    [locale]
+  );
+
+  // Returns a formatted age for the input date (of birth) relative to the
+  // current date. Will format as whole number of years unless the age is less
+  // than one year old, in which case it will format as months/days:
+  // e.g:
+  // - DOB is 2 years in the past => "2"
+  // - DOB is 9 months and 2 days ago => "9 months, 2 days"
+  // - DOB is 5 days ago => "5 days"
+  const getDisplayAge = useCallback(
+    (dob: Date | null | undefined): string => {
+      if (!dob) return '';
+      const patientAge = DateUtils.age(dob);
+      const { months, days } = DateUtils.ageInMonthsAndDays(dob ?? '');
+
+      if (patientAge >= 1) {
+        return `${t('label.age-years', { count: patientAge })}`;
+      } else
+        return `${months > 0 ? t('label.age-months-and', { count: months }) : ''}${t('label.age-days', { count: days })}`;
+    },
+    [t]
+  );
+
+  const formatDaysFromToday = useCallback(
+    (days?: number): string => {
+      const date = days ? DateUtils.addDays(new Date(), days) : new Date();
+      return customDate(date, URL_QUERY_DATE);
+    },
+    [customDate]
+  );
+
+  return {
+    urlQueryDate: URL_QUERY_DATE,
+    urlQueryDateTime: URL_QUERY_DATE_TIME,
+    customDate,
+    dayMonthShort,
+    dayMonthTime,
+    localisedDate,
+    localisedDateTime,
+    localisedDistance,
+    localisedDistanceToNow,
+    localisedTime,
+    relativeDateTime,
+    getDisplayAge,
+    formatDaysFromToday,
+  };
+};

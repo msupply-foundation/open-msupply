@@ -40,6 +40,7 @@ import {
 } from './columnTypes';
 import { HeaderCell } from './HeaderCell';
 import { TableRow } from './TableRow';
+import { createRowFocus } from './createRowFocus';
 import { InTableCellContext } from './inTableCell';
 import { CardView } from './CardView';
 import {
@@ -50,6 +51,8 @@ import {
 } from './tableConfig';
 import { pxToRem, remToPx } from '../../utils/rem';
 import { useIsNavOverlay, useIsCompact } from '../../utils/createMediaQuery';
+import { isTextEntry } from '../../utils/isTextEntry';
+import { useSurfaceActive } from '../../utils/surfaceActive';
 import { useFullScreen } from '../../layout/AppShell/shellContext';
 import {
   CardViewIcon,
@@ -157,6 +160,24 @@ export type DataTableProps<T, K extends string, G extends string = never> = {
    * edit
    *  modal. Rows get a pointer cursor only when this is set. */
   onRowClick?: (row: T) => void;
+  /**
+   * Arrow-key row navigation: `ArrowDown`/`ArrowUp` move a row highlight
+   * (clamped at the ends, scrolled into view), `Enter` opens the highlighted
+   * row through the SAME `onRowClick` a mouse click uses, `Escape` clears the
+   * highlight (spec/keyboard KB-N1/KB-E5, AC-KB37–40; issue #1006).
+   *
+   * DEFAULTS to whether `onRowClick` is set, so every list table answers the
+   * arrows without its page opting in — a table whose rows open nothing has
+   * nothing for `Enter` to do, and a highlight there would promise an action it
+   * cannot perform. Pass `false` to opt a clickable table out (nothing does
+   * today), or `true` to give a non-clickable one the highlight.
+   *
+   * The table also SEEDS itself once its first rows land (KB-F1: "a list screen
+   * seeds its table, making arrow-key row navigation available immediately"),
+   * which is what makes the arrows work on arrival without a click — see
+   * `seedKeyboard` below for the three things it yields to.
+   */
+  rowNavigation?: boolean;
   /**
    * Semantic row state (ui-standards § tables row states), derived by the
    * page from the record's own facts — 'disabled' from the vertical's
@@ -684,6 +705,79 @@ export function DataTable<T, K extends string, G extends string = never>(
     })
   );
 
+  // --- Keyboard row navigation (KB-N1/KB-E5, issue #1006) ---
+  // Table-owned, unlike sort/selection which the page owns — row focus is
+  // ephemeral keyboard position, not URL state (kdd/table-state). `Enter` opens
+  // the focused row through the SAME onRowClick a mouse uses, so the two paths
+  // cannot diverge (KB-E5). See createRowFocus.ts for why the TABLE is the tab
+  // stop and the rows are not.
+  let tableEl: HTMLTableElement | undefined;
+  const rowNavigation = () =>
+    props.rowNavigation ?? props.onRowClick !== undefined;
+  const rowKeys = createMemo(() => table.getRowModel().rows.map(row => row.id));
+  const rowFocus = createRowFocus({
+    onOpenRow: key => {
+      const row = table
+        .getRowModel()
+        .rows.find(candidate => candidate.id === key);
+      if (row) props.onRowClick?.(row.original);
+    },
+  });
+
+  // A highlight that outlives its row is dropped (a filter, a page change, a
+  // delete, a reordering refetch). `on` so it fires on the row set changing and
+  // not on the focus signal keepInRange itself writes.
+  createEffect(
+    on(rowKeys, keys => {
+      if (rowNavigation()) rowFocus.keepInRange(keys, tableEl);
+    })
+  );
+
+  /*
+   * KB-F1: "A list screen seeds its table, making arrow-key row navigation
+   * available immediately… It MUST NOT steal focus from a text field that
+   * already holds it — an arrival that races a search field or a just-dismissed
+   * palette yields to the field" (AC-KB28/AC-KB29).
+   *
+   * Done HERE rather than by each page handing in a focus target (the shape
+   * that was removed with the first build): the seed is the same on all ~30
+   * list screens, and one that every page must remember is one that a new page
+   * silently lacks — which is the state issue #1006 reports.
+   *
+   * Three things it yields to, each a case where the keyboard is already
+   * claimed: a text field mid-word (the spec's own carve-out, which covers the
+   * command palette's search since the palette is still up while the route
+   * commits), anything inside a table (a second table on the same screen, or
+   * this table's own filter bar), and a table inside a dialog — there the
+   * dialog's `initialFocus` decides where the keyboard lands, and the surface
+   * context is how a component knows it is in one.
+   */
+  const inDialogSurface = useSurfaceActive() !== undefined;
+  let seeded = false;
+  /*
+   * The seed is a starting position, not a focus the user asked for, so it must
+   * not draw the table's focus ring — `:focus-visible` alone cannot tell the
+   * two apart (it reports "keyboard" for a programmatic focus whenever the last
+   * input was a key, which is exactly how a user arrives at the next list).
+   * This flag says "this focus is the seed"; the ring is suppressed while it is
+   * set (DataTable.module.css) and it is dropped below on the first key or the
+   * first focus change, so a later Tab onto the table shows the ring normally.
+   */
+  const [focusSeeded, setFocusSeeded] = createSignal(false);
+  const seedKeyboard = () => {
+    const active = document.activeElement;
+    if (isTextEntry(active)) return;
+    if (active?.closest('[data-datatable]')) return;
+    setFocusSeeded(true);
+    tableEl?.focus({ preventScroll: true });
+  };
+  createEffect(() => {
+    if (seeded || inDialogSurface || !rowNavigation()) return;
+    if (rowKeys().length === 0) return;
+    seeded = true;
+    seedKeyboard();
+  });
+
   // --- Column pinning: freeze a pinned column against the left/right edge on
   // horizontal scroll --- TanStack tracks WHICH columns are pinned
   // (columnPinning state, set via ColumnSettings); it's on us to make them
@@ -778,7 +872,8 @@ export function DataTable<T, K extends string, G extends string = never>(
     for (const cell of [...headerRow.children] as HTMLElement[]) {
       const label = cell.querySelector<HTMLElement>(`.${styles.thText}`);
       if (!label) continue; // the leading select cell carries no label
-      // The clamp hides whole LINES, so an over-long label overflows vertically.
+      // The clamp hides whole LINES, so an over-long label overflows
+      // vertically.
       if (label.scrollHeight > label.clientHeight) {
         cell.dataset.clipped = 'true';
         cell.title = label.textContent ?? '';
@@ -1209,6 +1304,9 @@ export function DataTable<T, K extends string, G extends string = never>(
           trigger={<Columns3CogIcon />}
           triggerLabel={t('table.edit-columns')}
           triggerProps={{ title: t('table.edit-columns') }}
+          // The panel's contents carry ids (`table-show-all-columns`, …); so
+          // must what opens them (e2e/TESTIDS.md § Shared ids).
+          triggerTestId="table-columns"
           triggerClass={styles.controlButton}
           class={styles.controlPopover}
         >
@@ -1359,7 +1457,45 @@ export function DataTable<T, K extends string, G extends string = never>(
               per <td> (see inTableCell.ts); <Dialog> resets it, so a line editor
               opened from a row does not inherit it. */}
           <InTableCellContext.Provider value={true}>
-            <table class={styles.table} data-density={viewDensity()}>
+            <table
+              class={styles.table}
+              data-density={viewDensity()}
+              ref={tableEl}
+              /*
+               * The table is the list's ONE tab stop and the keyboard's
+               * landing place (KB-N1; KB-T1 permits only 0 and -1, and KB-T2
+               * keeps cells out of the tab order — the rows carry -1, see
+               * TableRow). From here ArrowDown moves to the first row.
+               */
+              tabindex={rowNavigation() ? 0 : undefined}
+              /*
+               * KB-N1's rung. `on:keydown` (a real listener on this element),
+               * not the delegated `onKeyDown`: Solid delegates keydown at
+               * `document`, so a delegated handler runs after the event
+               * already reached there and could not stop the window-level
+               * Escape tail.
+               *
+               * Consumes with preventDefault AND stopPropagation, because
+               * stopPropagation alone does not CONSUME Escape — and without
+               * the preventDefault, clearing row focus inside a line-edit
+               * modal would ALSO let the UA close request through and shut the
+               * modal, losing the draft. Arrow keys prevent the default page
+               * scroll for the same reason the highlight moves instead.
+               */
+              on:keydown={event => {
+                // Any key ends the seeded state, matched or not: the user is
+                // driving the table now, so its focus ring is theirs again.
+                setFocusSeeded(false);
+                if (!rowNavigation()) return;
+                if (!rowFocus.handleKey(event, rowKeys())) return;
+                event.preventDefault();
+                event.stopPropagation();
+              }}
+              // …as does focus leaving, so a Tab back onto the table shows the
+              // ring: by then this is a focus the user performed.
+              onFocusOut={() => setFocusSeeded(false)}
+              data-focus-seeded={focusSeeded() ? '' : undefined}
+            >
               <Show when={viewMode() === 'table'}>
                 <thead>
                   <For each={table.getHeaderGroups()}>
@@ -1395,11 +1531,12 @@ export function DataTable<T, K extends string, G extends string = never>(
                                   table.getIsAllRowsSelected() ||
                                   table.getIsSomeRowsSelected();
                                 table.toggleAllRowsSelected(!anySelected);
-                                // The native click already flipped the DOM box to
-                                // checked; toggling OFF from indeterminate leaves
-                                // the controlled `checked` value false→false, so
-                                // Solid's binding never re-runs to undo it. Sync
-                                // the box to the state we just set.
+                                // The native click already flipped the DOM box
+                                // to checked; toggling OFF from indeterminate
+                                // leaves the controlled `checked` value
+                                // false→false, so Solid's binding never re-runs
+                                // to undo it. Sync the box to the state we just
+                                // set.
                                 e.currentTarget.checked = !anySelected;
                               }}
                             />
@@ -1443,6 +1580,16 @@ export function DataTable<T, K extends string, G extends string = never>(
                         rowTone={row =>
                           (props.cardTone ?? props.rowTone)?.(row)
                         }
+                        rowFocus={row =>
+                          rowNavigation()
+                            ? {
+                                // Lazy, for the reason TableRow's prop doc
+                                // gives.
+                                focused: () => rowFocus.focusedKey() === row.id,
+                                onFocus: () => rowFocus.setFocused(row.id),
+                              }
+                            : undefined
+                        }
                         rowState={props.rowState}
                       />
                     </Match>
@@ -1451,6 +1598,21 @@ export function DataTable<T, K extends string, G extends string = never>(
                         {row => (
                           <TableRow
                             row={row}
+                            rowFocus={
+                              rowNavigation()
+                                ? {
+                                    // LAZY. Reading the signals as this object
+                                    // is built makes Solid memoize the whole
+                                    // prop expression, and the row's own
+                                    // onFocus then reads it from a bare native
+                                    // listener with no owner in scope. See
+                                    // TableRow's prop doc.
+                                    focused: () =>
+                                      rowFocus.focusedKey() === row.id,
+                                    onFocus: () => rowFocus.setFocused(row.id),
+                                  }
+                                : undefined
+                            }
                             enableSelection={props.enableSelection ?? false}
                             selectionDisabled={props.selectionDisabled ?? false}
                             onRowClick={props.onRowClick}

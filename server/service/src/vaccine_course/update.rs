@@ -1,0 +1,361 @@
+use super::{
+    query::get_vaccine_course,
+    validate::{check_dose_min_ages_are_in_order, check_vaccine_course_name_exists_for_program},
+};
+use crate::{
+    activity_log::activity_log_entry, demographic::validate::check_demographic_exists,
+    nullable_update, service_provider::ServiceContext,
+    vaccine_course::validate::check_vaccine_course_exists, NullableUpdate, SingleRecordError,
+};
+use repository::{
+    vaccine_course::{
+        vaccine_course_dose::{VaccineCourseDoseFilter, VaccineCourseDoseRepository},
+        vaccine_course_dose_row::{VaccineCourseDoseRow, VaccineCourseDoseRowRepository},
+        vaccine_course_item::{VaccineCourseItemFilter, VaccineCourseItemRepository},
+        vaccine_course_item_row::{VaccineCourseItemRow, VaccineCourseItemRowRepository},
+        vaccine_course_row::{VaccineCourseRow, VaccineCourseRowRepository},
+        vaccine_course_store_config::{
+            VaccineCourseStoreConfigFilter, VaccineCourseStoreConfigRepository,
+        },
+        vaccine_course_store_config_row::{
+            VaccineCourseStoreConfigRow, VaccineCourseStoreConfigRowRepository,
+        },
+    },
+    ActivityLogType, EqualFilter, RepositoryError, StorageConnection, VaccinationRepository,
+};
+
+#[derive(PartialEq, Debug)]
+pub enum UpdateVaccineCourseError {
+    VaccineCourseNameExistsForThisProgram,
+    VaccineCourseDoesNotExist,
+    DoseMinAgesAreNotInOrder,
+    CreatedRecordNotFound,
+    DemographicDoesNotExist,
+    VaccineDosesInUse,
+    DatabaseError(RepositoryError),
+}
+
+#[derive(PartialEq, Debug, Clone, Default)]
+pub struct VaccineCourseItemInput {
+    pub id: String,
+    pub item_id: String,
+}
+
+impl VaccineCourseItemInput {
+    pub fn to_domain(self, vaccine_course_id: String) -> VaccineCourseItemRow {
+        VaccineCourseItemRow {
+            id: self.id,
+            item_id: self.item_id,
+            vaccine_course_id,
+            deleted_datetime: None,
+        }
+    }
+}
+
+#[derive(PartialEq, Debug, Clone, Default)]
+pub struct VaccineCourseDoseInput {
+    pub id: String,
+    pub label: String,
+    pub min_age: f64,
+    pub max_age: f64,
+    pub custom_age_label: Option<String>,
+    pub min_interval_days: i32,
+}
+
+impl VaccineCourseDoseInput {
+    pub fn to_domain(self, vaccine_course_id: String) -> VaccineCourseDoseRow {
+        VaccineCourseDoseRow {
+            id: self.id,
+            label: self.label,
+            vaccine_course_id,
+            min_age: self.min_age,
+            max_age: self.max_age,
+            min_interval_days: self.min_interval_days,
+            custom_age_label: self.custom_age_label,
+            deleted_datetime: None,
+        }
+    }
+}
+
+#[derive(PartialEq, Debug, Clone, Default)]
+pub struct VaccineCourseStoreConfigInput {
+    pub id: String,
+    pub store_id: String,
+    pub wastage_rate: Option<NullableUpdate<f64>>,
+    pub coverage_rate: Option<NullableUpdate<f64>>,
+}
+
+#[derive(PartialEq, Debug, Clone, Default)]
+pub struct UpdateVaccineCourse {
+    pub id: String,
+    pub name: Option<String>,
+    pub vaccine_items: Vec<VaccineCourseItemInput>,
+    pub doses: Vec<VaccineCourseDoseInput>,
+    pub store_configs: Vec<VaccineCourseStoreConfigInput>,
+    pub demographic_id: Option<String>,
+    pub coverage_rate: f64,
+    pub use_in_gaps_calculations: bool,
+    pub wastage_rate: f64,
+    pub can_skip_dose: Option<bool>,
+}
+
+pub fn update_vaccine_course(
+    ctx: &ServiceContext,
+    input: UpdateVaccineCourse,
+) -> Result<VaccineCourseRow, UpdateVaccineCourseError> {
+    let vaccine_course = ctx
+        .connection
+        .transaction_sync(|connection| {
+            let (old_row, doses_to_delete) = validate(&input, connection)?;
+            let GenerateResult {
+                updated_course,
+                vaccine_items_to_delete,
+                vaccine_items_to_add,
+                store_config_rows,
+            } = generate(connection, old_row, input.clone())?;
+            VaccineCourseRowRepository::new(connection).upsert_one(&updated_course)?;
+
+            // Update Items
+            // Can't delete and recreate due to foreign key constraints - we'll soft delete the explicitly deleted items, and upsert the rest
+            let item_repo = VaccineCourseItemRowRepository::new(connection);
+            // Delete any existing items that were not in the new list
+            for id in vaccine_items_to_delete {
+                item_repo.mark_deleted(&id)?;
+            }
+
+            // Insert the new vaccine course items
+            for item in vaccine_items_to_add {
+                item_repo.upsert_one(&item.to_domain(input.clone().id))?;
+            }
+
+            // Update Doses
+            // Can't delete and recreate due to foreign key constraints - we'll soft delete the explicitly deleted doses, and upsert the rest
+            let dose_repo = VaccineCourseDoseRowRepository::new(connection);
+
+            // Delete any existing doses that were not in the new list
+            for id in doses_to_delete {
+                dose_repo.mark_deleted(&id)?;
+            }
+
+            // Upsert the vaccine course doses
+            for dose in input.clone().doses {
+                dose_repo.upsert_one(&dose.to_domain(input.clone().id))?;
+            }
+
+            let store_config_repo = VaccineCourseStoreConfigRowRepository::new(connection);
+            for config_row in store_config_rows {
+                store_config_repo.upsert_one(&config_row)?;
+            }
+
+            activity_log_entry(
+                ctx,
+                ActivityLogType::VaccineCourseUpdated,
+                Some(updated_course.id.clone()),
+                None,
+                None,
+            )?;
+
+            get_vaccine_course(&ctx.connection, updated_course.id)
+                .map_err(UpdateVaccineCourseError::from)
+        })
+        .map_err(|error| error.to_inner_error())?;
+    Ok(vaccine_course)
+}
+
+pub fn validate(
+    input: &UpdateVaccineCourse,
+    connection: &StorageConnection,
+) -> Result<(VaccineCourseRow, Vec<String>), UpdateVaccineCourseError> {
+    let result = check_vaccine_course_exists(&input.id, connection)?;
+
+    let old_row = match result {
+        Some(vaccine_course) => vaccine_course,
+        None => return Err(UpdateVaccineCourseError::VaccineCourseDoesNotExist),
+    };
+
+    if let Some(demographic_id) = &input.demographic_id {
+        if check_demographic_exists(demographic_id, connection)?.is_none() {
+            return Err(UpdateVaccineCourseError::DemographicDoesNotExist);
+        }
+    }
+
+    let name = match &(input.name) {
+        Some(name) => name,
+        None => &old_row.name,
+    };
+
+    if !check_vaccine_course_name_exists_for_program(
+        name,
+        // Using old row program id. If in future vaccine courses can change to different
+        // program, then this will need to change
+        &old_row.program_id,
+        Some(old_row.id.to_string()),
+        connection,
+    )? {
+        return Err(UpdateVaccineCourseError::VaccineCourseNameExistsForThisProgram);
+    }
+
+    if !check_dose_min_ages_are_in_order(&input.doses) {
+        return Err(UpdateVaccineCourseError::DoseMinAgesAreNotInOrder);
+    }
+
+    let (doses_in_use, doses_to_delete) =
+        vaccine_course_dose_in_use_and_to_delete(connection, &input.id, &input.doses)?;
+
+    if doses_in_use {
+        return Err(UpdateVaccineCourseError::VaccineDosesInUse);
+    }
+
+    Ok((old_row, doses_to_delete))
+}
+
+struct GenerateResult {
+    updated_course: VaccineCourseRow,
+    vaccine_items_to_delete: Vec<String>,
+    vaccine_items_to_add: Vec<VaccineCourseItemInput>,
+    store_config_rows: Vec<VaccineCourseStoreConfigRow>,
+}
+
+fn generate(
+    connection: &StorageConnection,
+    old_row: VaccineCourseRow,
+    UpdateVaccineCourse {
+        id,
+        name,
+        vaccine_items,
+        doses: _,
+        store_configs,
+        demographic_id,
+        coverage_rate,
+        use_in_gaps_calculations,
+        wastage_rate,
+        can_skip_dose,
+    }: UpdateVaccineCourse,
+) -> Result<GenerateResult, RepositoryError> {
+    let updated_course = VaccineCourseRow {
+        id: id.clone(),
+        name: name.unwrap_or(old_row.name),
+        program_id: old_row.program_id,
+        demographic_id,
+        coverage_rate,
+        use_in_gaps_calculations,
+        wastage_rate,
+        deleted_datetime: None,
+        can_skip_dose: can_skip_dose.unwrap_or(old_row.can_skip_dose),
+    };
+
+    let items_for_course = VaccineCourseItemRepository::new(connection).query_by_filter(
+        VaccineCourseItemFilter::new().vaccine_course_id(EqualFilter::equal_to(id.to_string())),
+    )?;
+
+    // Should remove any items that are not in the new list
+    let vaccine_items_to_delete = items_for_course
+        .clone()
+        .into_iter()
+        .filter_map(|item| {
+            if !vaccine_items
+                .iter()
+                .any(|new_item| new_item.id == item.vaccine_course_item.id)
+            {
+                Some(item.vaccine_course_item.id)
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    // Should add any items that don't yet exist
+    let vaccine_items_to_add = vaccine_items
+        .into_iter()
+        .filter(|item| {
+            !items_for_course
+                .iter()
+                .any(|existing_item| existing_item.vaccine_course_item.id == item.id)
+        })
+        .collect();
+
+    // Generate store config rows, merging with existing rows for nullable fields
+    let existing_store_configs = VaccineCourseStoreConfigRepository::new(connection)
+        .query_by_filter(
+            VaccineCourseStoreConfigFilter::new()
+                .vaccine_course_id(EqualFilter::equal_to(id.clone())),
+        )?;
+
+    let store_config_rows = store_configs
+        .into_iter()
+        .map(|config| {
+            let existing_config = existing_store_configs
+                .iter()
+                .find(|existing| existing.id == config.id);
+
+            VaccineCourseStoreConfigRow {
+                id: config.id,
+                vaccine_course_id: id.clone(),
+                store_id: config.store_id,
+                wastage_rate: nullable_update(
+                    &config.wastage_rate,
+                    existing_config.and_then(|c| c.wastage_rate),
+                ),
+                coverage_rate: nullable_update(
+                    &config.coverage_rate,
+                    existing_config.and_then(|c| c.coverage_rate),
+                ),
+            }
+        })
+        .collect();
+
+    Ok(GenerateResult {
+        updated_course,
+        vaccine_items_to_delete,
+        vaccine_items_to_add,
+        store_config_rows,
+    })
+}
+
+impl From<RepositoryError> for UpdateVaccineCourseError {
+    fn from(error: RepositoryError) -> Self {
+        UpdateVaccineCourseError::DatabaseError(error)
+    }
+}
+
+impl From<SingleRecordError> for UpdateVaccineCourseError {
+    fn from(error: SingleRecordError) -> Self {
+        use UpdateVaccineCourseError::*;
+        match error {
+            SingleRecordError::DatabaseError(error) => DatabaseError(error),
+            SingleRecordError::NotFound(_) => CreatedRecordNotFound,
+        }
+    }
+}
+
+fn vaccine_course_dose_in_use_and_to_delete(
+    connection: &StorageConnection,
+    vaccine_course_id: &str,
+    doses: &Vec<VaccineCourseDoseInput>,
+) -> Result<(bool, Vec<String>), RepositoryError> {
+    let doses_in_course = VaccineCourseDoseRepository::new(connection)
+        .query_by_filter(
+            VaccineCourseDoseFilter::new()
+                .vaccine_course_id(EqualFilter::equal_to(vaccine_course_id.to_string())),
+        )?
+        .iter()
+        .map(|dose| dose.vaccine_course_dose_row.id.clone())
+        .collect::<Vec<String>>();
+
+    // Should delete any doses that are not in the new list
+    let doses_to_delete = doses_in_course
+        .into_iter()
+        .filter(|dose_id| !doses.iter().any(|new_dose| &new_dose.id == dose_id))
+        .collect::<Vec<String>>();
+
+    let doses_in_use = VaccinationRepository::new(connection)
+        .query_by_filter(
+            repository::VaccinationFilter::default()
+                .vaccine_course_dose_id(EqualFilter::equal_any(doses_to_delete.clone())),
+        )?
+        .iter()
+        .map(|vaccination| vaccination.vaccination_row.vaccine_course_dose_id.clone())
+        .collect::<Vec<String>>();
+
+    Ok((!doses_in_use.is_empty(), doses_to_delete))
+}

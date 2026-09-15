@@ -32,16 +32,22 @@ export interface PluginIntl {
   ) => string;
 }
 
-export const pluginIntl = (code: string): PluginIntl => {
-  // `as LocaleKey` — the host's key union is generated from its own catalogue,
-  // so a plugin key is never in it. Trusted-layer cast (kdd/type-safety): the
-  // namespace prefix is what makes the widened key safe.
-  const namespaced = (key: string) => `${code}:${key}` as LocaleKey;
-  return {
-    t: (key, vars) => t(namespaced(key), vars),
-    tPlural: (key, count, vars) => tPlural(namespaced(key), count, vars),
-  };
-};
+/**
+ * A plugin key under its plugin's namespace — the ONE spelling of the
+ * cross-boundary contract, shared with the host side of the pages contribution
+ * (src/plugins/pluginPages.tsx names menu entries, breadcrumbs and tab titles
+ * with it). `as LocaleKey` — the host's key union is generated from its own
+ * catalogue, so a plugin key is never in it. Trusted-layer cast
+ * (kdd/type-safety): the namespace prefix is what makes the widened key safe.
+ */
+export const namespacedPluginKey = (code: string, key: string): LocaleKey =>
+  `${code}:${key}` as LocaleKey;
+
+export const pluginIntl = (code: string): PluginIntl => ({
+  t: (key, vars) => t(namespacedPluginKey(code, key), vars),
+  tPlural: (key, count, vars) =>
+    tPlural(namespacedPluginKey(code, key), count, vars),
+});
 
 /*
  * Formatting and direction, re-exported unchanged: a plugin MUST format

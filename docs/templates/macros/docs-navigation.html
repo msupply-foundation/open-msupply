@@ -1,0 +1,44 @@
+{% macro docs_navigation(section) %}
+  {% if section.ancestors | length > 1 %}
+    {% set parent_path = section.ancestors | last %}
+    {% set parent = get_section(path=parent_path) %}
+
+    {% set_global prev_section = false %}
+    {% set_global next_section = false %}
+    {% set_global found_current = false %}
+
+    {% for s in parent.subsections %}
+      {% set sibling = get_section(path=s) %}
+      {% if found_current and not next_section %}
+        {% set_global next_section = sibling %}
+      {% endif %}
+      {% if sibling.permalink == section.permalink %}
+        {% set_global found_current = true %}
+      {% endif %}
+      {% if not found_current %}
+        {% set_global prev_section = sibling %}
+      {% endif %}
+    {% endfor %}
+
+    {% if prev_section or next_section %}
+    <nav class="docs-nav-footer" aria-label="Page navigation">
+      <div class="docs-nav-prev">
+        {% if prev_section %}
+          <a href="{{ prev_section.permalink | safe }}">
+            <span class="docs-nav-label">&larr; Previous</span>
+            <span class="docs-nav-title">{{ prev_section.title | split(pat="/") | last }}</span>
+          </a>
+        {% endif %}
+      </div>
+      <div class="docs-nav-next">
+        {% if next_section %}
+          <a href="{{ next_section.permalink | safe }}">
+            <span class="docs-nav-label">Next &rarr;</span>
+            <span class="docs-nav-title">{{ next_section.title | split(pat="/") | last }}</span>
+          </a>
+        {% endif %}
+      </div>
+    </nav>
+    {% endif %}
+  {% endif %}
+{% endmacro %}

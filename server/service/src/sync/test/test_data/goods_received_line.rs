@@ -1,0 +1,148 @@
+use crate::sync::test::TestSyncIncomingRecord;
+use repository::mock::MockData;
+use repository::*;
+
+const TABLE_NAME: &str = "Goods_received_line";
+
+// Line for a non-finalized GR — should create an invoice line
+const GR_LINE_NON_FINALISED: (&str, &str) = (
+    "gr_line_test_1",
+    r#"{
+        "ID": "gr_line_test_1",
+        "goods_received_ID": "gr_non_finalised_test",
+        "item_ID": "item_a",
+        "item_name": "Item A",
+        "pack_received": 10.0,
+        "quantity_received": 5.0,
+        "cost_price": 2.5,
+        "batch_received": "BATCH001",
+        "expiry_date": "2025-12-31",
+        "comment": "line comment",
+        "location_ID": "",
+        "volume_per_pack": 0.5,
+        "order_line_ID": "po_line_1"
+    }"#,
+);
+
+fn gr_line_non_finalised_pull_record() -> TestSyncIncomingRecord {
+    let mut record = TestSyncIncomingRecord::new_pull_upsert(
+        TABLE_NAME,
+        GR_LINE_NON_FINALISED,
+        InvoiceLineRow {
+            id: "gr_line_test_1".to_string(),
+            invoice_id: "gr_non_finalised_test".to_string(),
+            item_id: "item_a".to_string(),
+            item_name: "Item A".to_string(),
+            item_code: "item_a_code".to_string(),
+            pack_size: 10.0,
+            cost_price_per_pack: 2.5,
+            sell_price_per_pack: 2.5,
+            total_before_tax: 12.5,
+            total_after_tax: 12.5,
+            r#type: InvoiceLineType::StockIn,
+            number_of_packs: 5.0,
+            note: Some("line comment".to_string()),
+            volume_per_pack: 0.5,
+            batch: Some("BATCH001".to_string()),
+            expiry_date: chrono::NaiveDate::from_ymd_opt(2025, 12, 31),
+            purchase_order_line_id: Some("po_line_1".to_string()),
+            ..Default::default()
+        },
+    );
+    // Parent invoice must exist (id == goods_received_ID) so the translator routes
+    // through the non-finalised branch — this is the invoice the GR translator creates
+    // for a non-finalised GR.
+    record.extra_data = Some(MockData {
+        invoices: vec![InvoiceRow {
+            id: "gr_non_finalised_test".to_string(),
+            name_id: "name_a".to_string(),
+            store_id: "store_a".to_string(),
+            invoice_number: 100,
+            r#type: InvoiceType::InboundShipment,
+            status: InvoiceStatus::New,
+            created_datetime: chrono::NaiveDate::from_ymd_opt(2024, 3, 10)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap(),
+            ..Default::default()
+        }],
+        ..Default::default()
+    });
+    record
+}
+
+// Line for a finalised GR — should update the existing invoice_line (linked via
+// `legacy_goods_received_line_id`) with the purchase_order_line_id.
+const GR_LINE_FINALISED: (&str, &str) = (
+    "gr_line_finalised_test",
+    r#"{
+        "ID": "gr_line_finalised_test",
+        "goods_received_ID": "gr_finalised_test",
+        "item_ID": "item_a",
+        "item_name": "Item A",
+        "pack_received": 10.0,
+        "quantity_received": 5.0,
+        "cost_price": 2.5,
+        "batch_received": "",
+        "expiry_date": "0000-00-00",
+        "comment": "",
+        "location_ID": "",
+        "volume_per_pack": 0.0,
+        "order_line_ID": "po_line_1"
+    }"#,
+);
+
+fn gr_line_finalised_pull_record() -> TestSyncIncomingRecord {
+    let existing_invoice = InvoiceRow {
+        id: "gr_existing_si".to_string(),
+        name_id: "name_a".to_string(),
+        store_id: "store_a".to_string(),
+        invoice_number: 99,
+        r#type: InvoiceType::InboundShipment,
+        status: InvoiceStatus::Verified,
+        created_datetime: chrono::NaiveDate::from_ymd_opt(2024, 3, 10)
+            .unwrap()
+            .and_hms_opt(0, 0, 0)
+            .unwrap(),
+        ..Default::default()
+    };
+
+    let existing_line = InvoiceLineRow {
+        id: "gr_existing_line".to_string(),
+        invoice_id: "gr_existing_si".to_string(),
+        item_id: "item_a".to_string(),
+        item_name: "Item A".to_string(),
+        item_code: "item_a_code".to_string(),
+        pack_size: 10.0,
+        cost_price_per_pack: 2.5,
+        sell_price_per_pack: 2.5,
+        total_before_tax: 12.5,
+        total_after_tax: 12.5,
+        r#type: InvoiceLineType::StockIn,
+        number_of_packs: 5.0,
+        legacy_goods_received_line_id: Some("gr_line_finalised_test".to_string()),
+        ..Default::default()
+    };
+
+    let mut expected_line = existing_line.clone();
+    expected_line.purchase_order_line_id = Some("po_line_1".to_string());
+
+    let mut record =
+        TestSyncIncomingRecord::new_pull_upsert(TABLE_NAME, GR_LINE_FINALISED, expected_line);
+    // No invoice exists with id == goods_received_ID ("gr_finalised_test"); existing_invoice
+    // uses a different id ("gr_existing_si"). The absence of that invoice routes the translator
+    // through the finalised branch, which finds the spawned line via legacy_goods_received_line_id.
+    record.extra_data = Some(MockData {
+        invoices: vec![existing_invoice],
+        invoice_lines: vec![existing_line],
+        ..Default::default()
+    });
+    record
+}
+
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
+    vec![
+        gr_line_non_finalised_pull_record(),
+        gr_line_finalised_pull_record(),
+    ]
+}

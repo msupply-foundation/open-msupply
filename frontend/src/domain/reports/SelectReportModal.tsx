@@ -106,7 +106,7 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
   // banner (spec/reports S5). Every generation fault surfaces there too, typed
   // (`dataError`) or not (`error` — e.g. a PDF render on a server with no
   // Chrome binary): the dialog stays open with the message, because the screen
-  // behind it is healthy and the global modal's Reload/Dashboard would only
+  // behind it is healthy and the global modal's Reload/Home would only
   // re-run the same failure or lose the user's place (AC-G6). A `failed`
   // result is a request that never completed — already on the global modal —
   // so we just drop back to idle.
@@ -127,7 +127,12 @@ export const SelectReportModal: Component<SelectReportModalProps> = props => {
     if (result.kind === 'error') {
       return fail('error.failed-to-generate-report', result.message);
     }
-    if (result.kind === 'failed') {
+    // `failed` is already on the global modal; `aborted` was cancelled on
+    // purpose. Neither is the dialog's to describe, so both just release the
+    // busy state. (This dialog passes no signal today — it cannot be dismissed
+    // mid-generation — so `aborted` is unreachable; handled so that adding
+    // cancellation here stays a safe change.)
+    if (result.kind === 'failed' || result.kind === 'aborted') {
       setPhase('idle');
       return;
     }

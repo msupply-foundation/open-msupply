@@ -1,0 +1,57 @@
+use repository::{InvoiceLine, InvoiceRow, InvoiceType, ItemRow, ItemType, StorageConnection};
+
+use crate::{
+    invoice::{
+        check_invoice_exists, check_invoice_lines_are_editable, check_invoice_type, check_store,
+        inbound_shipment::InboundShipmentType,
+    },
+    invoice_line::validate::{check_item_exists, check_line_belongs_to_invoice, check_line_exists},
+    validate::check_other_party_store_is_disabled,
+};
+
+use super::{UpdateInboundShipmentServiceLine, UpdateInboundShipmentServiceLineError};
+
+pub fn validate(
+    input: &UpdateInboundShipmentServiceLine,
+    store_id: &str,
+    connection: &StorageConnection,
+    inbound_shipment_type: Option<InboundShipmentType>,
+) -> Result<(InvoiceLine, InvoiceRow, ItemRow), UpdateInboundShipmentServiceLineError> {
+    use UpdateInboundShipmentServiceLineError::*;
+
+    let line = check_line_exists(connection, &input.id)?.ok_or(LineDoesNotExist)?;
+    let invoice = check_invoice_exists(&line.invoice_line_row.invoice_id, connection)?
+        .ok_or(InvoiceDoesNotExist)?;
+
+    let item = if let Some(item_id) = &input.item_id {
+        check_item_exists(connection, item_id)?.ok_or(ItemNotFound)?
+    } else {
+        line.item_row.clone()
+    };
+    if item.r#type != ItemType::Service {
+        return Err(UpdateInboundShipmentServiceLineError::NotAServiceItem);
+    }
+
+    if !check_store(&invoice, store_id) {
+        return Err(NotThisStoreInvoice);
+    }
+    if !check_invoice_type(&invoice, InvoiceType::InboundShipment) {
+        return Err(NotAnInboundShipment);
+    }
+    if let Some(inbound_type) = inbound_shipment_type {
+        if !inbound_type.matches_input(invoice.purchase_order_id.is_some()) {
+            return Err(WrongInboundShipmentType);
+        }
+    }
+    if !check_invoice_lines_are_editable(&invoice) {
+        return Err(CannotEditInvoice);
+    }
+    if check_other_party_store_is_disabled(connection, store_id, &invoice.name_id)? {
+        return Err(CannotEditInvoice);
+    }
+    if !check_line_belongs_to_invoice(&line.invoice_line_row, &invoice) {
+        return Err(NotThisInvoiceLine(line.invoice_line_row.invoice_id));
+    }
+
+    Ok((line, invoice, item))
+}

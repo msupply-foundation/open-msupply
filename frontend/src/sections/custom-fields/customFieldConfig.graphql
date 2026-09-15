@@ -1,0 +1,82 @@
+# Custom-field CONFIGURATION read (spec/custom-fields contract § what the screen
+# lists). `customFieldScopeConfig` is the ONLY read in the app that keeps
+# `HIDDEN` placements — the shared display read (`customFields`, see
+# src/domain/customFields) drops them, and without this one an admin could never
+# bring a hidden field back.
+#
+# Wire traps this selection lives with (contract.md):
+#   • `scope` is a free-form String, NOT an enum. An unknown, mis-cased or empty
+#     scope answers an EMPTY connector with no error, indistinguishable from a
+#     scope that genuinely has no fields — so the client hard-codes the nine
+#     scope strings (scopes.ts) and never composes one.
+#   • The response is NOT paginated, sorted or filtered beyond the scope: there
+#     is no sort input and no PaginationInput here. The per-scope configured
+#     rank lives on the server's scope row and is applied as RESPONSE ORDER
+#     only, so a client must preserve node order and cannot re-derive it.
+#   • `displayMode` is populated only because this read names a SINGLE scope;
+#     an unfiltered or `equalAny` read returns null for every node.
+#   • The union has exactly one member, so no failure can arrive through it —
+#     a rejection is a top-level GraphQL error (see the mutation below).
+#
+# `options` is deliberately not selected (the screen configures placement, not
+# option content) and neither is `kind` (nothing on this screen renders
+# provenance; the server already excludes the definitions it cannot type).
+query customFieldScopeConfig($scope: String!) {
+  centralServer {
+    customField {
+      customFieldScopeConfig(scope: $scope) {
+        ... on CustomFieldConnector {
+          __typename
+          totalCount
+          nodes {
+            id
+            key
+            name
+            valueType
+            displayMode
+          }
+        }
+      }
+    }
+  }
+}
+
+# The placement write (spec/custom-fields contract § choosing and saving). One
+# scope per call, carrying only the placements that actually changed; the
+# service writes them all inside ONE transaction, so a rejected element undoes
+# the rest (all-or-nothing, OMS-REG-CF-02.11).
+#
+# It answers the WHOLE scope's fresh configuration, not just the changed rows —
+# so the caller reseeds its rows from the response instead of re-reading.
+#
+# Wire traps (contract.md):
+#   • `CustomFieldsResponse` has no error member: targeting a (definition,
+#     scope) pair with no placement comes back as a TOP-LEVEL GraphQL error
+#     ("Bad user input", extensions.details `ScopeRowDoesNotExist("<id>")`) with
+#     the whole centralServer selection null. The caller reads GraphQL errors
+#     itself (returnGraphqlErrors) so the pending changes survive to be retried.
+#   • `CustomFieldNodeDisplayMode.OTHER` is accepted on input and SILENTLY
+#     coerced to VISIBLE. Never send it — the pending-change type excludes it
+#     (placement.ts § SettableDisplayMode).
+#   • The whole `centralServer` namespace fails with an untyped "Not a central
+#     server" off central, before any child field resolves — hence the
+#     client-side central + server-admin gate on the route (index.tsx).
+mutation updateCustomFieldScopes($input: UpdateCustomFieldScopesInput!) {
+  centralServer {
+    customField {
+      updateScopes(input: $input) {
+        ... on CustomFieldConnector {
+          __typename
+          totalCount
+          nodes {
+            id
+            key
+            name
+            valueType
+            displayMode
+          }
+        }
+      }
+    }
+  }
+}

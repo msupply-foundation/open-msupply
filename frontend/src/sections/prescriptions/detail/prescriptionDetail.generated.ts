@@ -5,6 +5,7 @@ import type { TypedDocument } from "../../../api/graphql";
 export type PrescriptionFieldsFragment = {
   id: string;
   invoiceNumber: number;
+  prescriptionRequestId: string | null;
   status: "NEW" | "ALLOCATED" | "PICKED" | "SHIPPED" | "DELIVERED" | "RECEIVED" | "VERIFIED" | "CANCELLED";
   isCancellation: boolean;
   createdDatetime: string;
@@ -103,7 +104,7 @@ export type PrescriptionDetailResult = {
 };
 
 export const PrescriptionDetail = {
-  query: "query prescriptionDetail($storeId: String!, $id: String!) {\n  invoice(storeId: $storeId, id: $id) {\n    __typename\n    ... on InvoiceNode {\n      ...PrescriptionFields\n    }\n    ... on NodeError {\n      error {\n        description\n      }\n    }\n  }\n}\n\nfragment PrescriptionFields on InvoiceNode {\n  id\n  invoiceNumber\n  status\n  isCancellation\n  createdDatetime\n  pickedDatetime\n  verifiedDatetime\n  cancelledDatetime\n  backdatedDatetime\n  comment\n  colour\n  theirReference\n  clinicianId\n  clinician {\n    id\n    firstName\n    lastName\n  }\n  patient {\n    id\n    name\n    code\n    dateOfBirth\n    gender\n  }\n  programId\n  program {\n    id\n    name\n  }\n  diagnosisId\n  nameInsuranceJoinId\n  insuranceDiscountAmount\n  insuranceDiscountPercentage\n  customFields\n  insurancePolicy {\n    policyNumber\n    discountPercentage\n    insuranceProviders {\n      providerName\n    }\n  }\n  pricing {\n    totalAfterTax\n  }\n  user {\n    username\n    email\n  }\n  lines {\n    totalCount\n    nodes {\n      id\n      type\n      itemId\n      itemName\n      itemCode\n      batch\n      expiryDate\n      locationName\n      packSize\n      numberOfPacks\n      prescribedQuantity\n      note\n      sellPricePerPack\n      costPricePerPack\n      totalAfterTax\n      item {\n        id\n        code\n        name\n        unitName\n        isVaccine\n        doses\n      }\n      stockLine {\n        id\n      }\n    }\n  }\n}",
+  query: "query prescriptionDetail($storeId: String!, $id: String!) {\n  invoice(storeId: $storeId, id: $id, type: PRESCRIPTION) {\n    __typename\n    ... on InvoiceNode {\n      ...PrescriptionFields\n    }\n    ... on NodeError {\n      error {\n        description\n      }\n    }\n  }\n}\n\nfragment PrescriptionFields on InvoiceNode {\n  id\n  invoiceNumber\n  prescriptionRequestId\n  status\n  isCancellation\n  createdDatetime\n  pickedDatetime\n  verifiedDatetime\n  cancelledDatetime\n  backdatedDatetime\n  comment\n  colour\n  theirReference\n  clinicianId\n  clinician {\n    id\n    firstName\n    lastName\n  }\n  patient {\n    id\n    name\n    code\n    dateOfBirth\n    gender\n  }\n  programId\n  program {\n    id\n    name\n  }\n  diagnosisId\n  nameInsuranceJoinId\n  insuranceDiscountAmount\n  insuranceDiscountPercentage\n  customFields\n  insurancePolicy {\n    policyNumber\n    discountPercentage\n    insuranceProviders {\n      providerName\n    }\n  }\n  pricing {\n    totalAfterTax\n  }\n  user {\n    username\n    email\n  }\n  lines {\n    totalCount\n    nodes {\n      id\n      type\n      itemId\n      itemName\n      itemCode\n      batch\n      expiryDate\n      locationName\n      packSize\n      numberOfPacks\n      prescribedQuantity\n      note\n      sellPricePerPack\n      costPricePerPack\n      totalAfterTax\n      item {\n        id\n        code\n        name\n        unitName\n        isVaccine\n        doses\n      }\n      stockLine {\n        id\n      }\n    }\n  }\n}",
 } as TypedDocument<PrescriptionDetailResult, PrescriptionDetailVariables>;
 
 export type UpdatePrescriptionVariables = {
@@ -143,7 +144,7 @@ export type UpdatePrescriptionResult = {
   __typename: "UpdatePrescriptionError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CanOnlyChangeToPickedWhenNoUnallocatedLines" | "CannotReverseInvoiceStatus" | "InvalidStockSelection" | "InvoiceIsNotEditable" | "RecordNotFound";
   description: string;
 };
 }) | ({
@@ -156,7 +157,7 @@ export type UpdatePrescriptionResult = {
 };
 
 export const UpdatePrescription = {
-  query: "mutation updatePrescription($storeId: String!, $input: UpdatePrescriptionInput!) {\n  updatePrescription(storeId: $storeId, input: $input) {\n    __typename\n    ... on InvoiceNode {\n      ...PrescriptionFields\n    }\n    ... on UpdatePrescriptionError {\n      error {\n        __typename\n        description\n      }\n    }\n    ... on NodeError {\n      error {\n        description\n      }\n    }\n  }\n}\n\nfragment PrescriptionFields on InvoiceNode {\n  id\n  invoiceNumber\n  status\n  isCancellation\n  createdDatetime\n  pickedDatetime\n  verifiedDatetime\n  cancelledDatetime\n  backdatedDatetime\n  comment\n  colour\n  theirReference\n  clinicianId\n  clinician {\n    id\n    firstName\n    lastName\n  }\n  patient {\n    id\n    name\n    code\n    dateOfBirth\n    gender\n  }\n  programId\n  program {\n    id\n    name\n  }\n  diagnosisId\n  nameInsuranceJoinId\n  insuranceDiscountAmount\n  insuranceDiscountPercentage\n  customFields\n  insurancePolicy {\n    policyNumber\n    discountPercentage\n    insuranceProviders {\n      providerName\n    }\n  }\n  pricing {\n    totalAfterTax\n  }\n  user {\n    username\n    email\n  }\n  lines {\n    totalCount\n    nodes {\n      id\n      type\n      itemId\n      itemName\n      itemCode\n      batch\n      expiryDate\n      locationName\n      packSize\n      numberOfPacks\n      prescribedQuantity\n      note\n      sellPricePerPack\n      costPricePerPack\n      totalAfterTax\n      item {\n        id\n        code\n        name\n        unitName\n        isVaccine\n        doses\n      }\n      stockLine {\n        id\n      }\n    }\n  }\n}",
+  query: "mutation updatePrescription($storeId: String!, $input: UpdatePrescriptionInput!) {\n  updatePrescription(storeId: $storeId, input: $input) {\n    __typename\n    ... on InvoiceNode {\n      ...PrescriptionFields\n    }\n    ... on UpdatePrescriptionError {\n      error {\n        __typename\n        description\n      }\n    }\n    ... on NodeError {\n      error {\n        description\n      }\n    }\n  }\n}\n\nfragment PrescriptionFields on InvoiceNode {\n  id\n  invoiceNumber\n  prescriptionRequestId\n  status\n  isCancellation\n  createdDatetime\n  pickedDatetime\n  verifiedDatetime\n  cancelledDatetime\n  backdatedDatetime\n  comment\n  colour\n  theirReference\n  clinicianId\n  clinician {\n    id\n    firstName\n    lastName\n  }\n  patient {\n    id\n    name\n    code\n    dateOfBirth\n    gender\n  }\n  programId\n  program {\n    id\n    name\n  }\n  diagnosisId\n  nameInsuranceJoinId\n  insuranceDiscountAmount\n  insuranceDiscountPercentage\n  customFields\n  insurancePolicy {\n    policyNumber\n    discountPercentage\n    insuranceProviders {\n      providerName\n    }\n  }\n  pricing {\n    totalAfterTax\n  }\n  user {\n    username\n    email\n  }\n  lines {\n    totalCount\n    nodes {\n      id\n      type\n      itemId\n      itemName\n      itemCode\n      batch\n      expiryDate\n      locationName\n      packSize\n      numberOfPacks\n      prescribedQuantity\n      note\n      sellPricePerPack\n      costPricePerPack\n      totalAfterTax\n      item {\n        id\n        code\n        name\n        unitName\n        isVaccine\n        doses\n      }\n      stockLine {\n        id\n      }\n    }\n  }\n}",
 } as TypedDocument<UpdatePrescriptionResult, UpdatePrescriptionVariables>;
 
 export type DeletePrescriptionVariables = {
@@ -169,7 +170,7 @@ export type DeletePrescriptionResult = {
   id: string;
 }) | ({
   error: {
-  __typename: string;
+  __typename: "CannotDeleteGeneratedDispensation" | "CannotDeleteInvoiceWithLines" | "CannotEditInvoice" | "RecordNotFound";
   description: string;
 };
 });
@@ -208,7 +209,7 @@ export type DeletePrescriptionLinesResult = {
   id: string;
 }) | ({
   error: {
-  __typename: string;
+  __typename: "CannotEditInvoice" | "ForeignKeyError" | "RecordNotFound";
   description: string;
 };
 });
@@ -220,17 +221,20 @@ export const DeletePrescriptionLines = {
   query: "mutation deletePrescriptionLines($storeId: String!, $ids: [DeletePrescriptionLineInput!]!) {\n  batchPrescription(storeId: $storeId, input: {deletePrescriptionLines: $ids}) {\n    deletePrescriptionLines {\n      id\n      response {\n        ... on DeleteResponse {\n          id\n        }\n        ... on DeletePrescriptionLineError {\n          error {\n            __typename\n            description\n          }\n        }\n      }\n    }\n  }\n}",
 } as TypedDocument<DeletePrescriptionLinesResult, DeletePrescriptionLinesVariables>;
 
-export type LabelPrinterSettingsVariables = Record<string, never>;
-
-export type LabelPrinterSettingsResult = {
-  labelPrinterSettings: {
-  address: string;
-  port: number;
-  labelHeight: number;
-  labelWidth: number;
-} | null;
+export type SourcePrescriptionRequestVariables = {
+  storeId: string;
+  id: string;
 };
 
-export const LabelPrinterSettings = {
-  query: "query labelPrinterSettings {\n  labelPrinterSettings {\n    address\n    port\n    labelHeight\n    labelWidth\n  }\n}",
-} as TypedDocument<LabelPrinterSettingsResult, LabelPrinterSettingsVariables>;
+export type SourcePrescriptionRequestResult = {
+  prescriptionRequest: ({
+  __typename: "PrescriptionRequestNode";
+} & {
+  id: string;
+  prescriptionRequestNumber: number;
+});
+};
+
+export const SourcePrescriptionRequest = {
+  query: "query sourcePrescriptionRequest($storeId: String!, $id: String!) {\n  prescriptionRequest(storeId: $storeId, id: $id) {\n    __typename\n    ... on PrescriptionRequestNode {\n      id\n      prescriptionRequestNumber\n    }\n  }\n}",
+} as TypedDocument<SourcePrescriptionRequestResult, SourcePrescriptionRequestVariables>;

@@ -1,0 +1,82 @@
+{
+  "arguments": {
+    "monthlyConsumptionLookBackPeriod": 3,
+    "monthsItemsExpire": 3,
+    "monthsOverstock": 6,
+    "monthsUnderstock": 3,
+    "timezone": "Pacific/Auckland"
+  },
+  "data": {
+    "purchaseOrder": {
+      "confirmedDatetime": "2025-07-28T00:00:00",
+      "foreignExchangeRate": 1,
+      "id": "AA2E9B330AEF425980D711CD0CD7351D",
+      "lines": {
+        "nodes": {
+          "0": {
+            "comment": "Second PO comment dolutegravir.",
+            "expectedDeliveryDate": "2026-09-02",
+            "item": {
+              "code": "AR33328",
+              "name": "DOLUTEGRAVIR /LAMIVUDINE/TENOFOVIR 50/300/300 mg comp.",
+              "unitName": "Comprime"
+            },
+            "lineNumber": 2,
+            "pricePerPackAfterDiscount": 1.98,
+            "requestedNumberOfUnits": 242,
+            "requestedPackSize": 11,
+            "supplierItemCode": null
+          },
+          "1": {
+            "comment": "Third PO comment salbutamol.",
+            "expectedDeliveryDate": "2026-09-02",
+            "item": {
+              "code": "89893",
+              "name": "Salbutamol Inhaler",
+              "unitName": null
+            },
+            "lineNumber": 3,
+            "pricePerPackAfterDiscount": 4.9,
+            "requestedNumberOfUnits": 250,
+            "requestedPackSize": 5,
+            "supplierItemCode": null
+          },
+          "2": {
+            "comment": "This is a PO comment.",
+            "expectedDeliveryDate": "2026-09-02",
+            "item": {
+              "code": "030453",
+              "name": "Amoxicillin 250mg tabs",
+              "unitName": "Tab"
+            },
+            "lineNumber": 1,
+            "pricePerPackAfterDiscount": 0.95,
+            "requestedNumberOfUnits": 10000,
+            "requestedPackSize": 1000,
+            "supplierItemCode": null
+          },
+          "length": 3
+        }
+      },
+      "number": 3,
+      "orderTotalAfterDiscount": 298.06,
+      "status": "CONFIRMED",
+      "store": {
+        "logo": null,
+        "name": {
+          "address1": null,
+          "address2": null,
+          "email": null,
+          "phone": null
+        },
+        "storeName": "Kamo Regional Warehouse"
+      },
+      "supplier": {
+        "address1": null,
+        "address2": null,
+        "code": "123456",
+        "name": "Test Name"
+      }
+    }
+  }
+}

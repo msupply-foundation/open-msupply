@@ -1,0 +1,1385 @@
+#[cfg(test)]
+mod repository_test {
+    mod data {
+        use chrono::{DateTime, NaiveDate};
+
+        use crate::db_diesel::*;
+
+        pub fn name_1() -> NameRow {
+            NameRow {
+                id: "name1".to_string(),
+                name: "name_1".to_string(),
+                code: "code1".to_string(),
+                ..Default::default()
+            }
+        }
+
+        pub fn store_1() -> StoreRow {
+            StoreRow {
+                id: "store1".to_string(),
+                name_id: "name1".to_string(),
+                code: "code1".to_string(),
+                ..Default::default()
+            }
+        }
+
+        pub fn item_1() -> ItemRow {
+            ItemRow {
+                id: "item1".to_string(),
+                name: "name1".to_string(),
+                code: "code1".to_string(),
+                r#type: ItemType::Stock,
+                ..Default::default()
+            }
+        }
+
+        pub fn item_2() -> ItemRow {
+            ItemRow {
+                id: "item2".to_string(),
+                name: "item-2".to_string(),
+                code: "code2".to_string(),
+                r#type: ItemType::Stock,
+                ..Default::default()
+            }
+        }
+
+        pub fn item_service_1() -> ItemRow {
+            ItemRow {
+                id: "item_service_1".to_string(),
+                name: "item_service_name_1".to_string(),
+                code: "item_service_code_1".to_string(),
+                r#type: ItemType::Service,
+                ..Default::default()
+            }
+        }
+
+        pub fn stock_line_1() -> StockLineRow {
+            StockLineRow {
+                id: "StockLine1".to_string(),
+                item_id: "item1".to_string(),
+                store_id: "store1".to_string(),
+                batch: Some("batch1".to_string()),
+                available_number_of_packs: 6.0,
+                pack_size: 1.0,
+                cost_price_per_pack: 0.0,
+                sell_price_per_pack: 0.0,
+                total_number_of_packs: 1.0,
+                expiry_date: Some(NaiveDate::from_ymd_opt(2021, 12, 13).unwrap()),
+                on_hold: false,
+                note: None,
+                location_id: None,
+                supplier_id: Some(String::from("name1")),
+                ..Default::default()
+            }
+        }
+
+        pub fn master_list_1() -> MasterListRow {
+            MasterListRow {
+                id: "masterlist1".to_string(),
+                name: "Master List 1".to_string(),
+                code: "ML Code 1".to_string(),
+                description: "ML Description 1".to_string(),
+                is_active: true,
+                ..Default::default()
+            }
+        }
+
+        pub fn master_list_upsert_1() -> MasterListRow {
+            MasterListRow {
+                id: "masterlist1".to_string(),
+                name: "Master List 1".to_string(),
+                code: "ML Code 1".to_string(),
+                description: "ML Description 1".to_string(),
+                is_active: true,
+                ..Default::default()
+            }
+        }
+
+        pub fn master_list_line_1() -> MasterListLineRow {
+            MasterListLineRow {
+                id: "masterlistline1".to_string(),
+                item_id: item_1().id.to_string(),
+                master_list_id: master_list_1().id.to_string(),
+                ..Default::default()
+            }
+        }
+
+        pub fn master_list_line_upsert_1() -> MasterListLineRow {
+            MasterListLineRow {
+                id: "masterlistline1".to_string(),
+                item_id: item_2().id.to_string(),
+                master_list_id: master_list_1().id.to_string(),
+                ..Default::default()
+            }
+        }
+
+        pub fn master_list_name_join_1() -> MasterListNameJoinRow {
+            MasterListNameJoinRow {
+                id: "masterlistnamejoin1".to_string(),
+                master_list_id: master_list_1().id.to_string(),
+                name_id: name_1().id.to_string(),
+            }
+        }
+
+        pub fn invoice_1() -> InvoiceRow {
+            InvoiceRow {
+                id: "invoice1".to_string(),
+                name_id: name_1().id.to_string(),
+                store_id: store_1().id.to_string(),
+                invoice_number: 12,
+                r#type: InvoiceType::InboundShipment,
+                status: InvoiceStatus::New,
+                comment: Some("".to_string()),
+                their_reference: Some("".to_string()),
+                // Note: keep nsecs small enough for Postgres which has limited precision;
+                created_datetime: DateTime::from_timestamp(1000, 0).unwrap().naive_utc(),
+                ..Default::default()
+            }
+        }
+
+        pub fn invoice_2() -> InvoiceRow {
+            InvoiceRow {
+                id: "invoice2".to_string(),
+                name_id: name_1().id.to_string(),
+                store_id: store_1().id.to_string(),
+                invoice_number: 12,
+                r#type: InvoiceType::OutboundShipment,
+                status: InvoiceStatus::New,
+                comment: Some("".to_string()),
+                their_reference: Some("".to_string()),
+                created_datetime: DateTime::from_timestamp(2000, 0).unwrap().naive_utc(),
+                ..Default::default()
+            }
+        }
+
+        pub fn invoice_line_1() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "test1".to_string(),
+                item_id: item_1().id.to_string(),
+                item_name: item_1().name.to_string(),
+                item_code: item_1().code.to_string(),
+                invoice_id: invoice_1().id.to_string(),
+                stock_line_id: None,
+                batch: Some("".to_string()),
+                expiry_date: Some(NaiveDate::from_ymd_opt(2020, 9, 1).unwrap()),
+                pack_size: 10.0,
+                cost_price_per_pack: 0.0,
+                sell_price_per_pack: 0.0,
+                total_before_tax: 1.0,
+                total_after_tax: 1.0,
+                tax_percentage: None,
+                r#type: InvoiceLineType::StockIn,
+                number_of_packs: 2.0,
+                volume_per_pack: 0.5,
+                ..Default::default()
+            }
+        }
+        pub fn invoice_line_2() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "test2-with-optional".to_string(),
+                item_id: item_1().id.to_string(),
+                item_name: item_1().name.to_string(),
+                item_code: item_1().code.to_string(),
+                invoice_id: invoice_1().id.to_string(),
+                stock_line_id: None,
+                batch: Some("".to_string()),
+                expiry_date: Some(NaiveDate::from_ymd_opt(2020, 9, 3).unwrap()),
+                pack_size: 1.0,
+                cost_price_per_pack: 0.0,
+                sell_price_per_pack: 0.0,
+                total_before_tax: 2.0,
+                total_after_tax: 2.0,
+                tax_percentage: None,
+                r#type: InvoiceLineType::StockOut,
+                number_of_packs: 1.0,
+                ..Default::default()
+            }
+        }
+
+        pub fn invoice_line_3() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "test3".to_string(),
+                item_id: item_2().id.to_string(),
+                item_name: item_2().name.to_string(),
+                item_code: item_2().code.to_string(),
+                invoice_id: invoice_2().id.to_string(),
+                stock_line_id: None,
+                batch: Some("".to_string()),
+                expiry_date: Some(NaiveDate::from_ymd_opt(2020, 9, 5).unwrap()),
+                pack_size: 1.0,
+                cost_price_per_pack: 0.0,
+                sell_price_per_pack: 0.0,
+                total_before_tax: 3.0,
+                total_after_tax: 3.0,
+                tax_percentage: None,
+                r#type: InvoiceLineType::StockOut,
+                number_of_packs: 1.0,
+                ..Default::default()
+            }
+        }
+
+        pub fn invoice_line_placeholder() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "test_placeholder".to_string(),
+                item_id: item_1().id.to_string(),
+                item_name: item_1().name.to_string(),
+                item_code: item_1().code.to_string(),
+                invoice_id: invoice_1().id.to_string(),
+                stock_line_id: None,
+                batch: None,
+                expiry_date: None,
+                pack_size: 1.0,
+                cost_price_per_pack: 0.0,
+                sell_price_per_pack: 0.0,
+                total_before_tax: 0.0,
+                total_after_tax: 0.0,
+                tax_percentage: None,
+                r#type: InvoiceLineType::UnallocatedStock,
+                number_of_packs: 5.0,
+                // Non-zero so the stats assertion pins that placeholder
+                // volume is excluded from total_volume
+                volume_per_pack: 2.0,
+                ..Default::default()
+            }
+        }
+
+        pub fn invoice_line_service() -> InvoiceLineRow {
+            InvoiceLineRow {
+                id: "test_service_item".to_string(),
+                item_id: item_service_1().id.to_string(),
+                item_name: item_service_1().name.to_string(),
+                item_code: item_service_1().code.to_string(),
+                invoice_id: invoice_1().id.to_string(),
+                stock_line_id: None,
+                batch: Some("".to_string()),
+                expiry_date: Some(NaiveDate::from_ymd_opt(2021, 12, 6).unwrap()),
+                pack_size: 1.0,
+                cost_price_per_pack: 0.0,
+                sell_price_per_pack: 0.0,
+                total_before_tax: 10.0,
+                total_after_tax: 15.0,
+                tax_percentage: None,
+                r#type: InvoiceLineType::Service,
+                number_of_packs: 1.0,
+                ..Default::default()
+            }
+        }
+
+        pub fn user_account_1() -> UserAccountRow {
+            UserAccountRow {
+                id: "user1".to_string(),
+                username: "user 1".to_string(),
+                hashed_password: "p1".to_string(),
+                email: Some("email".to_string()),
+                ..UserAccountRow::default()
+            }
+        }
+
+        pub fn user_account_2() -> UserAccountRow {
+            UserAccountRow {
+                id: "user2".to_string(),
+                username: "user 2".to_string(),
+                hashed_password: "p2".to_string(),
+                ..UserAccountRow::default()
+            }
+        }
+
+        pub fn activity_log_1() -> ActivityLogRow {
+            ActivityLogRow {
+                id: "activity_log1".to_string(),
+                r#type: ActivityLogType::UserLoggedIn,
+                user_id: Some(user_account_1().id.to_string()),
+                store_id: None,
+                record_id: None,
+                datetime: DateTime::from_timestamp(2000, 0).unwrap().naive_utc(),
+                changed_to: None,
+                changed_from: None,
+            }
+        }
+    }
+
+    use crate::{
+        mock::{
+            currency_a, mock_draft_request_requisition_line, mock_draft_request_requisition_line2,
+            mock_inbound_shipment_number_store_a, mock_item_link_from_item,
+            mock_master_list_master_list_line_filter_test, mock_outbound_shipment_number_store_a,
+            mock_request_draft_requisition, mock_request_draft_requisition2,
+            mock_test_master_list_name1, mock_test_master_list_name2,
+            mock_test_master_list_name_filter1, mock_test_master_list_name_filter2,
+            mock_test_master_list_name_filter3, mock_test_master_list_store1, MockDataInserts,
+        },
+        requisition_row::RequisitionStatus,
+        test_db, ActivityLogRowRepository, CurrencyRowRepository, InvoiceFilter, InvoiceLineFilter,
+        InvoiceLineRepository, InvoiceLineRowRepository, InvoiceRepository, InvoiceRow,
+        InvoiceRowRepository, InvoiceStatus, InvoiceType, ItemLinkRowRepository, ItemRow,
+        ItemRowRepository, KeyType, KeyValueStoreRepository, MasterListFilter,
+        MasterListLineFilter, MasterListLineRepository, MasterListLineRowRepository,
+        MasterListNameJoinRepository, MasterListRepository, MasterListRowRepository,
+        NameRowRepository, NumberRowRepository, NumberRowType, PricingRow, RequisitionFilter,
+        RequisitionLineFilter, RequisitionLineRepository, RequisitionLineRowRepository,
+        RequisitionRepository, RequisitionRowRepository, StockLineFilter, StockLineRepository,
+        StockLineRowRepository, StorageConnection, StoreRowRepository, UserAccountRowRepository,
+    };
+    use crate::{DateFilter, EqualFilter, StringFilter};
+    use chrono::Duration;
+    use diesel::{sql_query, sql_types::Text, RunQueryDsl};
+
+    #[actix_rt::test]
+    async fn test_name_repository() {
+        let settings = test_db::get_test_db_settings("omsupply-database-name-repository");
+        let connection_manager = test_db::setup(&settings).await;
+        let connection = connection_manager.connection().unwrap();
+
+        let name_1 = data::name_1();
+        NameRowRepository::new(&connection)
+            .insert_one(&name_1)
+            .await
+            .unwrap();
+        let loaded_item = NameRowRepository::new(&connection)
+            .find_one_by_id(name_1.id.as_str())
+            .unwrap()
+            .unwrap();
+        assert_eq!(name_1, loaded_item);
+    }
+
+    #[actix_rt::test]
+    async fn test_store_repository() {
+        let settings = test_db::get_test_db_settings("omsupply-database-store-repository");
+        let connection_manager = test_db::setup(&settings).await;
+        let connection = connection_manager.connection().unwrap();
+
+        // setup
+        NameRowRepository::new(&connection)
+            .insert_one(&data::name_1())
+            .await
+            .unwrap();
+
+        let repo = StoreRowRepository::new(&connection);
+        let store_1 = data::store_1();
+        repo.insert_one(&store_1).await.unwrap();
+        let loaded_item = repo.find_one_by_id(store_1.id.as_str()).unwrap().unwrap();
+        assert_eq!(store_1, loaded_item);
+    }
+
+    async fn insert_item_and_link(item: &ItemRow, connection: &StorageConnection) {
+        ItemRowRepository::new(connection)
+            .insert_one(item)
+            .await
+            .unwrap();
+
+        ItemLinkRowRepository::new(connection)
+            .insert_one_or_ignore(&mock_item_link_from_item(item))
+            .unwrap();
+    }
+
+    #[actix_rt::test]
+    async fn test_stock_line() {
+        let settings = test_db::get_test_db_settings("omsupply-database-item-line-repository");
+        let connection_manager = test_db::setup(&settings).await;
+        let connection = connection_manager.connection().unwrap();
+
+        // setup
+        insert_item_and_link(&data::item_1(), &connection).await;
+
+        NameRowRepository::new(&connection)
+            .insert_one(&data::name_1())
+            .await
+            .unwrap();
+        StoreRowRepository::new(&connection)
+            .insert_one(&data::store_1())
+            .await
+            .unwrap();
+
+        // test insert
+        let stock_line = data::stock_line_1();
+        let stock_line_repo = StockLineRowRepository::new(&connection);
+        stock_line_repo.upsert_one(&stock_line).unwrap();
+        let loaded_item = stock_line_repo
+            .find_one_by_id(stock_line.id.as_str())
+            .unwrap()
+            .unwrap();
+        assert_eq!(stock_line, loaded_item);
+    }
+
+    #[actix_rt::test]
+    async fn test_stock_line_query() {
+        let settings =
+            test_db::get_test_db_settings("omsupply-database-item-line-query-repository");
+        let connection_manager = test_db::setup(&settings).await;
+        let connection = connection_manager.connection().unwrap();
+
+        // setup
+        insert_item_and_link(&data::item_1(), &connection).await;
+
+        NameRowRepository::new(&connection)
+            .insert_one(&data::name_1())
+            .await
+            .unwrap();
+        StoreRowRepository::new(&connection)
+            .insert_one(&data::store_1())
+            .await
+            .unwrap();
+        let stock_line = data::stock_line_1();
+        StockLineRowRepository::new(&connection)
+            .upsert_one(&stock_line)
+            .unwrap();
+
+        // test expiry data filter
+        let expiry_date = stock_line.expiry_date.unwrap();
+        let result = StockLineRepository::new(&connection)
+            .query_by_filter(
+                StockLineFilter::new().expiry_date(DateFilter {
+                    equal_to: None,
+                    before_or_equal_to: Some(expiry_date - Duration::days(1)),
+                    after_or_equal_to: None,
+                }),
+                Some(data::store_1().id),
+            )
+            .unwrap();
+        assert_eq!(result.len(), 0);
+        let result = StockLineRepository::new(&connection)
+            .query_by_filter(
+                StockLineFilter::new().expiry_date(DateFilter {
+                    equal_to: None,
+                    before_or_equal_to: Some(expiry_date),
+                    after_or_equal_to: None,
+                }),
+                Some(data::store_1().id),
+            )
+            .unwrap();
+        assert_eq!(result.len(), 1);
+        let result = StockLineRepository::new(&connection)
+            .query_by_filter(
+                StockLineFilter::new().expiry_date(DateFilter {
+                    equal_to: None,
+                    before_or_equal_to: Some(expiry_date + Duration::days(1)),
+                    after_or_equal_to: None,
+                }),
+                Some(data::store_1().id),
+            )
+            .unwrap();
+        assert_eq!(result.len(), 1);
+    }
+
+    #[actix_rt::test]
+    async fn test_master_list_row_repository() {
+        let settings = test_db::get_test_db_settings("test_master_list_row_repository");
+        let connection_manager = test_db::setup(&settings).await;
+        let connection = connection_manager.connection().unwrap();
+
+        let repo = MasterListRowRepository::new(&connection);
+
+        let master_list_1 = data::master_list_1();
+        repo.upsert_one(&master_list_1).unwrap();
+        let loaded_item = repo
+            .find_one_by_id(master_list_1.id.as_str())
+            .unwrap()
+            .unwrap();
+        assert_eq!(master_list_1, loaded_item);
+
+        let master_list_upsert_1 = data::master_list_upsert_1();
+        repo.upsert_one(&master_list_upsert_1).unwrap();
+        let loaded_item = repo
+            .find_one_by_id(master_list_upsert_1.id.as_str())
+            .unwrap()
+            .unwrap();
+        assert_eq!(master_list_upsert_1, loaded_item);
+    }
+
+    #[actix_rt::test]
+    async fn test_master_list_repository() {
+        let (_, connection, _, _) =
+            test_db::setup_all("test_master_list_repository", MockDataInserts::all()).await;
+        let repo = MasterListRepository::new(&connection);
+
+        let id_rows: Vec<String> = repo
+            .query_by_filter(
+                MasterListFilter::new()
+                    .exists_for_name_id(EqualFilter::equal_to(mock_test_master_list_name1().id)),
+            )
+            .unwrap()
+            .into_iter()
+            .map(|r| r.id)
+            .collect();
+
+        assert_eq!(
+            id_rows,
+            vec![
+                mock_test_master_list_name_filter1().master_list.id,
+                mock_test_master_list_name_filter3().master_list.id
+            ]
+        );
+
+        let id_rows: Vec<String> = repo
+            .query_by_filter(
+                MasterListFilter::new()
+                    .exists_for_name_id(EqualFilter::equal_to(mock_test_master_list_name2().id)),
+            )
+            .unwrap()
+            .into_iter()
+            .map(|r| r.id)
+            .collect();
+
+        assert_eq!(
+            id_rows,
+            vec![
+                mock_test_master_list_name_filter1().master_list.id,
+                mock_test_master_list_name_filter2().master_list.id
+            ]
+        );
+
+        let id_rows: Vec<String> = repo
+            .query_by_filter(
+                MasterListFilter::new()
+                    .exists_for_store_id(EqualFilter::equal_to(mock_test_master_list_store1().id)),
+            )
+            .unwrap()
+            .into_iter()
+            .map(|r| r.id)
+            .collect();
+
+        assert_eq!(
+            id_rows,
+            vec![
+                mock_test_master_list_name_filter2().master_list.id,
+                mock_test_master_list_name_filter3().master_list.id
+            ]
+        );
+
+        let id_rows: Vec<String> = repo
+            .query_by_filter(
+                MasterListFilter::new()
+                    .exists_for_name(StringFilter::like("test_master_list_name")),
+            )
+            .unwrap()
+            .into_iter()
+            .map(|r| r.id)
+            .collect();
+
+        assert_eq!(
+            id_rows,
+            vec![
+                mock_test_master_list_name_filter1().master_list.id,
+                mock_test_master_list_name_filter2().master_list.id,
+                mock_test_master_list_name_filter3().master_list.id
+            ]
+        )
+    }
+
+    #[actix_rt::test]
+    async fn test_master_list_line_repository() {
+        let settings =
+            test_db::get_test_db_settings("omsupply-database-master-list-line-repository");
+        let connection_manager = test_db::setup(&settings).await;
+        let connection = connection_manager.connection().unwrap();
+
+        // setup
+        insert_item_and_link(&data::item_1(), &connection).await;
+        insert_item_and_link(&data::item_2(), &connection).await;
+
+        MasterListRowRepository::new(&connection)
+            .upsert_one(&data::master_list_1())
+            .unwrap();
+
+        let repo = MasterListLineRowRepository::new(&connection);
+        let master_list_line_1 = data::master_list_line_1();
+        repo.upsert_one(&master_list_line_1).unwrap();
+        let loaded_item = repo
+            .find_one_by_id(master_list_line_1.id.as_str())
+            .unwrap()
+            .unwrap();
+        assert_eq!(master_list_line_1, loaded_item);
+
+        let master_list_line_upsert_1 = data::master_list_line_upsert_1();
+        repo.upsert_one(&master_list_line_upsert_1).unwrap();
+        let loaded_item = repo
+            .find_one_by_id(master_list_line_upsert_1.id.as_str())
+            .unwrap()
+            .unwrap();
+        assert_eq!(master_list_line_upsert_1, loaded_item);
+    }
+
+    #[actix_rt::test]
+    async fn test_master_list_name_join_repository() {
+        let settings =
+            test_db::get_test_db_settings("omsupply-database-master-list-name-join-repository");
+        let connection_manager = test_db::setup(&settings).await;
+        let connection = connection_manager.connection().unwrap();
+
+        // setup
+        NameRowRepository::new(&connection)
+            .insert_one(&data::name_1())
+            .await
+            .unwrap();
+        MasterListRowRepository::new(&connection)
+            .upsert_one(&data::master_list_1())
+            .unwrap();
+
+        let master_list_name_join_1 = data::master_list_name_join_1();
+        MasterListNameJoinRepository::new(&connection)
+            .upsert_one(&master_list_name_join_1)
+            .unwrap();
+        let loaded_item = MasterListNameJoinRepository::new(&connection)
+            .find_one_by_id(master_list_name_join_1.id.as_str())
+            .unwrap()
+            .unwrap();
+        assert_eq!(master_list_name_join_1, loaded_item);
+    }
+
+    #[actix_rt::test]
+    async fn test_invoice_repository() {
+        let settings = test_db::get_test_db_settings("omsupply-database-invoice-repository");
+        let connection_manager = test_db::setup(&settings).await;
+        let connection = connection_manager.connection().unwrap();
+
+        // setup
+        NameRowRepository::new(&connection)
+            .insert_one(&data::name_1())
+            .await
+            .unwrap();
+        StoreRowRepository::new(&connection)
+            .insert_one(&data::store_1())
+            .await
+            .unwrap();
+        CurrencyRowRepository::new(&connection)
+            .upsert_one(&currency_a())
+            .unwrap();
+
+        let item1 = data::invoice_1();
+        InvoiceRowRepository::new(&connection)
+            .upsert_one(&item1)
+            .unwrap();
+        let loaded_item = InvoiceRowRepository::new(&connection)
+            .find_one_by_id(item1.id.as_str())
+            .unwrap()
+            .unwrap();
+        assert_eq!(item1, loaded_item);
+
+        // outbound shipment
+        let item1 = data::invoice_2();
+        InvoiceRowRepository::new(&connection)
+            .upsert_one(&item1)
+            .unwrap();
+        let invoice_repo = InvoiceRepository::new(&connection);
+        let loaded_item = invoice_repo
+            .query_by_filter(
+                InvoiceFilter::new()
+                    .r#type(InvoiceType::OutboundShipment.equal_to())
+                    .name_id(EqualFilter::equal_to(item1.name_id.to_string())),
+            )
+            .unwrap();
+        assert_eq!(1, loaded_item.len());
+
+        let loaded_item = invoice_repo
+            .query_by_filter(
+                InvoiceFilter::new()
+                    .r#type(InvoiceType::OutboundShipment.equal_to())
+                    .store_id(EqualFilter::equal_to(item1.store_id.to_string())),
+            )
+            .unwrap();
+        assert_eq!(1, loaded_item.len());
+    }
+
+    #[actix_rt::test]
+    async fn test_invoice_number_or_status_filter() {
+        let settings =
+            test_db::get_test_db_settings("omsupply-database-invoice-number-or-status-filter");
+        let connection_manager = test_db::setup(&settings).await;
+        let connection = connection_manager.connection().unwrap();
+
+        NameRowRepository::new(&connection)
+            .insert_one(&data::name_1())
+            .await
+            .unwrap();
+        StoreRowRepository::new(&connection)
+            .insert_one(&data::store_1())
+            .await
+            .unwrap();
+        CurrencyRowRepository::new(&connection)
+            .upsert_one(&currency_a())
+            .unwrap();
+
+        let shipped = InvoiceRow {
+            id: "number_or_status_shipped".to_string(),
+            invoice_number: 100,
+            status: InvoiceStatus::Shipped,
+            ..data::invoice_1()
+        };
+        let verified = InvoiceRow {
+            id: "number_or_status_verified".to_string(),
+            invoice_number: 200,
+            status: InvoiceStatus::Verified,
+            ..data::invoice_1()
+        };
+        let invoice_row_repo = InvoiceRowRepository::new(&connection);
+        invoice_row_repo.upsert_one(&shipped).unwrap();
+        invoice_row_repo.upsert_one(&verified).unwrap();
+
+        let invoice_repo = InvoiceRepository::new(&connection);
+        let search = |term: &str| {
+            invoice_repo
+                .query_by_filter(
+                    InvoiceFilter::new().invoice_number_or_status(StringFilter::like(term)),
+                )
+                .unwrap()
+        };
+
+        let result = search("100");
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].invoice_row.id, shipped.id);
+        assert_eq!(search("200").len(), 1);
+
+        let result = search("verified");
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].invoice_row.id, verified.id);
+
+        let result = search("SHIP");
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].invoice_row.id, shipped.id);
+
+        assert_eq!(search("does-not-exist").len(), 0);
+    }
+
+    #[actix_rt::test]
+    async fn test_invoice_line_repository() {
+        let settings = test_db::get_test_db_settings("omsupply-database-invoice-line-repository");
+        let connection_manager = test_db::setup(&settings).await;
+        let connection = connection_manager.connection().unwrap();
+
+        // setup
+        insert_item_and_link(&data::item_1(), &connection).await;
+        insert_item_and_link(&data::item_2(), &connection).await;
+
+        NameRowRepository::new(&connection)
+            .insert_one(&data::name_1())
+            .await
+            .unwrap();
+        StoreRowRepository::new(&connection)
+            .insert_one(&data::store_1())
+            .await
+            .unwrap();
+        StockLineRowRepository::new(&connection)
+            .upsert_one(&data::stock_line_1())
+            .unwrap();
+        CurrencyRowRepository::new(&connection)
+            .upsert_one(&currency_a())
+            .unwrap();
+
+        InvoiceRowRepository::new(&connection)
+            .upsert_one(&data::invoice_1())
+            .unwrap();
+        InvoiceRowRepository::new(&connection)
+            .upsert_one(&data::invoice_2())
+            .unwrap();
+
+        let repo = InvoiceLineRowRepository::new(&connection);
+        let item1 = data::invoice_line_1();
+        repo.upsert_one(&item1).unwrap();
+        let loaded_item = repo.find_one_by_id(item1.id.as_str()).unwrap().unwrap();
+        assert_eq!(item1, loaded_item);
+
+        // row with optional field
+        let item2_optional = data::invoice_line_2();
+        repo.upsert_one(&item2_optional).unwrap();
+        let loaded_item = repo
+            .find_one_by_id(item2_optional.id.as_str())
+            .unwrap()
+            .unwrap();
+        assert_eq!(item2_optional, loaded_item);
+
+        // find_many_by_invoice_id:
+        // add item that shouldn't end up in the results:
+        let item3 = data::invoice_line_3();
+        repo.upsert_one(&item3).unwrap();
+        let all_items = repo.find_many_by_invoice_id(&item1.invoice_id).unwrap();
+        assert_eq!(2, all_items.len());
+    }
+
+    #[actix_rt::test]
+    async fn test_invoice_line_query_repository() {
+        let settings =
+            test_db::get_test_db_settings("omsupply-database-invoice-line-query-repository");
+        let connection_manager = test_db::setup(&settings).await;
+        let connection = connection_manager.connection().unwrap();
+
+        // setup
+        insert_item_and_link(&data::item_1(), &connection).await;
+        insert_item_and_link(&data::item_2(), &connection).await;
+        insert_item_and_link(&data::item_service_1(), &connection).await;
+
+        NameRowRepository::new(&connection)
+            .insert_one(&data::name_1())
+            .await
+            .unwrap();
+        StoreRowRepository::new(&connection)
+            .insert_one(&data::store_1())
+            .await
+            .unwrap();
+        StockLineRowRepository::new(&connection)
+            .upsert_one(&data::stock_line_1())
+            .unwrap();
+        CurrencyRowRepository::new(&connection)
+            .upsert_one(&currency_a())
+            .unwrap();
+        InvoiceRowRepository::new(&connection)
+            .upsert_one(&data::invoice_1())
+            .unwrap();
+        InvoiceRowRepository::new(&connection)
+            .upsert_one(&data::invoice_2())
+            .unwrap();
+
+        let item1 = data::invoice_line_1();
+        InvoiceLineRowRepository::new(&connection)
+            .upsert_one(&item1)
+            .unwrap();
+        let item2 = data::invoice_line_2();
+        InvoiceLineRowRepository::new(&connection)
+            .upsert_one(&item2)
+            .unwrap();
+        let item3 = data::invoice_line_3();
+        InvoiceLineRowRepository::new(&connection)
+            .upsert_one(&item3)
+            .unwrap();
+        let service_item = data::invoice_line_service();
+        InvoiceLineRowRepository::new(&connection)
+            .upsert_one(&service_item)
+            .unwrap();
+        let placeholder_item = data::invoice_line_placeholder();
+        InvoiceLineRowRepository::new(&connection)
+            .upsert_one(&placeholder_item)
+            .unwrap();
+
+        // line stats
+        let invoice_1_id = data::invoice_1().id;
+        let result = InvoiceLineRepository::new(&connection)
+            .stats(&[invoice_1_id.clone()])
+            .unwrap();
+        let stats_invoice_1 = result
+            .into_iter()
+            .find(|row| row.invoice_id == invoice_1_id)
+            .unwrap();
+        assert_eq!(
+            stats_invoice_1,
+            PricingRow {
+                invoice_id: invoice_1_id,
+                total_before_tax: 13.0,
+                total_after_tax: 18.0,
+                stock_total_before_tax: 3.0,
+                stock_total_after_tax: 3.0,
+                service_total_before_tax: 10.0,
+                service_total_after_tax: 15.0,
+                // The volume total covers stock lines only: line1
+                // (2 packs × 0.5/pack) + line2 (0); the placeholder
+                // (5 packs × 2.0/pack) and the service line are excluded.
+                total_volume: 1.0,
+                ..stats_invoice_1.clone()
+            }
+        );
+
+        // item_code_or_name filters on the joined item's code OR name
+        let repo = InvoiceLineRepository::new(&connection);
+        let by_code = repo
+            .query_by_filter(
+                InvoiceLineFilter::new().item_code_or_name(StringFilter::like("code1")),
+            )
+            .unwrap();
+        assert_eq!(
+            {
+                let mut ids: Vec<String> = by_code
+                    .iter()
+                    .map(|l| l.invoice_line_row.id.clone())
+                    .collect();
+                ids.sort();
+                ids
+            },
+            vec![
+                "test1".to_string(),
+                "test2-with-optional".to_string(),
+                "test_placeholder".to_string()
+            ]
+        );
+        let by_name = repo
+            .query_by_filter(
+                InvoiceLineFilter::new().item_code_or_name(StringFilter::like("item-2")),
+            )
+            .unwrap();
+        assert_eq!(
+            by_name
+                .iter()
+                .map(|l| l.invoice_line_row.id.clone())
+                .collect::<Vec<_>>(),
+            vec!["test3".to_string()]
+        );
+        // The (code OR name) pair must AND with the other filters — item-2 is
+        // only on invoice_2, so scoping to invoice_1 yields nothing (guards
+        // the or_filter grouping: it ORs against the whole existing clause,
+        // so item_code_or_name must be applied first).
+        let scoped = repo
+            .query_by_filter(
+                InvoiceLineFilter::new()
+                    .invoice_id(EqualFilter::equal_to(data::invoice_1().id))
+                    .item_code_or_name(StringFilter::like("item-2")),
+            )
+            .unwrap();
+        assert_eq!(scoped.len(), 0);
+    }
+
+    #[actix_rt::test]
+    async fn test_user_account_repository() {
+        let settings = test_db::get_test_db_settings("omsupply-database-user-account-repository");
+        let connection_manager = test_db::setup(&settings).await;
+        let connection = connection_manager.connection().unwrap();
+
+        let repo = UserAccountRowRepository::new(&connection);
+        let item1 = data::user_account_1();
+        repo.insert_one(&item1).unwrap();
+        let loaded_item = repo.find_one_by_id(item1.id.as_str()).unwrap();
+        assert_eq!(item1, loaded_item.unwrap());
+
+        // optional email
+        let item2 = data::user_account_2();
+        repo.insert_one(&item2).unwrap();
+        let loaded_item = repo.find_one_by_id(item2.id.as_str()).unwrap();
+        assert_eq!(item2, loaded_item.unwrap());
+    }
+
+    #[actix_rt::test]
+    async fn test_number() {
+        let (_, connection, _, _) = test_db::setup_all("test_number", MockDataInserts::all()).await;
+
+        let repo = NumberRowRepository::new(&connection);
+
+        let inbound_shipment_store_a_number = mock_inbound_shipment_number_store_a();
+        let outbound_shipment_store_b_number = mock_outbound_shipment_number_store_a();
+
+        let result = repo
+            .find_one_by_type_and_store(&NumberRowType::InboundShipment, "store_a")
+            .unwrap();
+        assert_eq!(result, Some(inbound_shipment_store_a_number));
+
+        let result = repo
+            .find_one_by_type_and_store(&NumberRowType::OutboundShipment, "store_a")
+            .unwrap();
+        assert_eq!(result, Some(outbound_shipment_store_b_number));
+
+        // Test not existing
+        let result = repo
+            .find_one_by_type_and_store(&NumberRowType::OutboundShipment, "store_b")
+            .unwrap();
+        assert_eq!(result, None);
+    }
+
+    #[actix_rt::test]
+    async fn test_master_list_line_repository_filter() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "test_master_list_line_repository_filter",
+            MockDataInserts::all(),
+        )
+        .await;
+
+        let repo = MasterListLineRepository::new(&connection);
+
+        // Test filter by master_list_id
+        let lines = repo
+            .query_by_filter(
+                MasterListLineFilter::new().master_list_id(EqualFilter::equal_any(vec![
+                    "master_list_master_list_line_filter_test".to_string(),
+                ])),
+                None,
+            )
+            .unwrap();
+
+        for (count, line) in mock_master_list_master_list_line_filter_test()
+            .lines
+            .iter()
+            .enumerate()
+        {
+            assert_eq!(lines[count].id, line.id)
+        }
+    }
+
+    #[derive(QueryableByName, Queryable, PartialEq, Debug)]
+    struct Id {
+        #[diesel(sql_type = Text)]
+        id: String,
+    }
+    #[actix_rt::test]
+    async fn test_requisition_repository() {
+        let (_, connection, _, _) =
+            test_db::setup_all("test_requisition_repository", MockDataInserts::all()).await;
+
+        // Test insert
+        let mut update_test_row = mock_request_draft_requisition();
+        update_test_row.comment = Some("unique_comment".to_string());
+        RequisitionRowRepository::new(&connection)
+            .upsert_one(&update_test_row)
+            .unwrap();
+
+        // Test delete
+        RequisitionRowRepository::new(&connection)
+            .delete(&mock_request_draft_requisition2().id)
+            .unwrap();
+
+        // Test query by id
+        let result = RequisitionRepository::new(&connection)
+            .query_by_filter(
+                RequisitionFilter::new()
+                    .id(EqualFilter::equal_to(mock_request_draft_requisition2().id)),
+            )
+            .unwrap();
+
+        let raw_result = sql_query(format!(
+            r#"select id from requisition where id = '{}'"#,
+            mock_request_draft_requisition2().id
+        ))
+        .load::<Id>(connection.lock().connection())
+        .unwrap();
+
+        assert_eq!(
+            raw_result,
+            result
+                .into_iter()
+                .map(|requisition| Id {
+                    id: requisition.requisition_row.id
+                })
+                .collect::<Vec<Id>>()
+        );
+
+        // Test query by name
+        let result = RequisitionRepository::new(&connection)
+            .query_by_filter(RequisitionFilter::new().name(StringFilter::equal_to("name_a")))
+            .unwrap();
+
+        let raw_result = sql_query(
+            r#"select requisition.id
+                    from requisition
+                    join name_link on requisition.name_link_id = name_link.id
+                    join name on name_link.name_id = name.id
+                    where name.name = 'name_a'
+                    order by requisition.id asc"#,
+        )
+        .load::<Id>(connection.lock().connection())
+        .unwrap();
+
+        assert!(!raw_result.is_empty()); // Sanity check
+        assert_eq!(
+            raw_result,
+            result
+                .into_iter()
+                .map(|requisition| Id {
+                    id: requisition.requisition_row.id
+                })
+                .collect::<Vec<Id>>()
+        );
+
+        // Test query by type and comment
+        let result = RequisitionRepository::new(&connection)
+            .query_by_filter(
+                RequisitionFilter::new()
+                    .status(RequisitionStatus::Draft.equal_to())
+                    .comment(StringFilter::like("iquE_coMme")),
+            )
+            .unwrap();
+
+        let raw_result = sql_query(
+            r#"select id from requisition where status = 'DRAFT' and comment = 'unique_comment'"#,
+        )
+        .load::<Id>(connection.lock().connection())
+        .unwrap();
+
+        assert!(!raw_result.is_empty()); // Sanity check
+        assert_eq!(
+            raw_result,
+            result
+                .into_iter()
+                .map(|requisition| Id {
+                    id: requisition.requisition_row.id
+                })
+                .collect::<Vec<Id>>()
+        );
+    }
+
+    #[actix_rt::test]
+    async fn test_requisition_line_repository() {
+        let (_, connection, _, _) =
+            test_db::setup_all("test_requisition_line_repository", MockDataInserts::all()).await;
+
+        // Test insert
+        let mut update_test_row = mock_draft_request_requisition_line();
+        update_test_row.requested_quantity = 99.0;
+        RequisitionLineRowRepository::new(&connection)
+            .upsert_one(&update_test_row)
+            .unwrap();
+
+        // Test delete
+        RequisitionLineRowRepository::new(&connection)
+            .delete(&mock_draft_request_requisition_line2().id)
+            .unwrap();
+
+        // Test query by id
+        let result = RequisitionLineRepository::new(&connection)
+            .query_by_filter(RequisitionLineFilter::new().id(EqualFilter::equal_to(
+                mock_draft_request_requisition_line2().id,
+            )))
+            .unwrap();
+
+        let raw_result = sql_query(format!(
+            r#"SELECT id from requisition_line where id = '{}'"#,
+            mock_draft_request_requisition_line2().id
+        ))
+        .load::<Id>(connection.lock().connection())
+        .unwrap();
+
+        assert!(raw_result.is_empty()); // Record was deleted
+        assert_eq!(
+            raw_result,
+            result
+                .into_iter()
+                .map(|requisition_line| Id {
+                    id: requisition_line.requisition_line_row.id
+                })
+                .collect::<Vec<Id>>()
+        );
+
+        // Test query by requisition_id and requested_quantity
+        let result = RequisitionLineRepository::new(&connection)
+            .query_by_filter(
+                RequisitionLineFilter::new()
+                    .requisition_id(EqualFilter::equal_to(
+                        mock_draft_request_requisition_line()
+                            .requisition_id
+                            .to_owned(),
+                    ))
+                    .requested_quantity(EqualFilter::equal_to(99.0)),
+            )
+            .unwrap();
+
+        let raw_result = sql_query(format!(
+            r#"SELECT id from requisition_line where requisition_id = '{}' and requested_quantity = 99"#,
+            mock_draft_request_requisition_line().requisition_id
+        ))
+        .load::<Id>(connection.lock().connection())
+        .unwrap();
+
+        assert!(!raw_result.is_empty()); // Sanity check
+        assert_eq!(
+            raw_result,
+            result
+                .into_iter()
+                .map(|requisition_line| Id {
+                    id: requisition_line.requisition_line_row.id
+                })
+                .collect::<Vec<Id>>()
+        );
+    }
+
+    #[actix_rt::test]
+    async fn test_key_value_store() {
+        let (_, connection, _, _) =
+            test_db::setup_all("key_value_store", MockDataInserts::none()).await;
+
+        let repo = KeyValueStoreRepository::new(&connection);
+
+        // access a non-existing row
+        let result = repo.get_string(KeyType::CentralSyncPullCursor).unwrap();
+        assert_eq!(result, None);
+
+        // write a string value
+        repo.set_string(KeyType::CentralSyncPullCursor, Some("test".to_string()))
+            .unwrap();
+        let result = repo.get_string(KeyType::CentralSyncPullCursor).unwrap();
+        assert_eq!(result, Some("test".to_string()));
+
+        // unset a value
+        repo.set_string(KeyType::CentralSyncPullCursor, None)
+            .unwrap();
+        let result = repo.get_string(KeyType::CentralSyncPullCursor).unwrap();
+        assert_eq!(result, None);
+
+        // write a i32 value
+        repo.set_i32(KeyType::CentralSyncPullCursor, Some(50))
+            .unwrap();
+        let result = repo.get_i32(KeyType::CentralSyncPullCursor).unwrap();
+        assert_eq!(result, Some(50));
+
+        // write a i64 value
+        repo.set_i64(KeyType::CentralSyncPullCursor, Some(500))
+            .unwrap();
+        let result = repo.get_i64(KeyType::CentralSyncPullCursor).unwrap();
+        assert_eq!(result, Some(500));
+
+        // write a f64 value
+        repo.set_f64(KeyType::CentralSyncPullCursor, Some(600.0))
+            .unwrap();
+        let result = repo.get_f64(KeyType::CentralSyncPullCursor).unwrap();
+        assert_eq!(result, Some(600.0));
+
+        // write a bool value
+        repo.set_bool(KeyType::CentralSyncPullCursor, Some(true))
+            .unwrap();
+        let result = repo.get_bool(KeyType::CentralSyncPullCursor).unwrap();
+        assert_eq!(result, Some(true));
+    }
+
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn test_tx_deadlock() {
+        use crate::{ItemRow, RepositoryError, TransactionError};
+        use std::time::SystemTime;
+
+        let (_, _, connection_manager, _) =
+            test_db::setup_all("tx_deadlock", MockDataInserts::none()).await;
+
+        /*
+            Issue Description...
+
+            From https://sqlite.org/forum/info/e4f30c1ed10b1cb5
+            Connection A starts as a reader and does some processing.
+            Connection B starts as a reader and wants to upgrade to a writer; it needs to wait for connectionA to finish.
+            Connection A now wants to upgrade too. This is a deadlock...
+        */
+        /*
+            NOTE: If you want to verify this test is working properly, you can set SQLITE_LOCKWAIT_MS to 0 in test_db.rs (It will only fail on sqlite, postgres should succeed)
+        */
+        /*
+            Test Scenario
+
+            Process A starts a transaction, does a read, then sleeps for a 1000 milliseconds before continuing to write from within the same transaction.
+            Concurrently Process B tries to do a similar thing.
+        */
+        /*
+            Expected behaviour for this test in SQLite...
+
+            Both Connection A and B start a transaction in 'IMMEDIATE' mode,
+            Connection B will wait for Connection A to finish it's transaction before it can begin it's own transaction.
+            (E.g All transactions are serialised, while read only queries can happen concurrently)
+
+            Output:
+                A: transaction acquired
+                A: read
+                A: sleeping
+                B: Ready to start transaction
+                <~100ms wait>
+                A: write
+                A: written
+                B: transaction acquired
+                B: read
+                B: write 1
+                B: write 2
+        */
+        /*
+            Expected behaviour for this test in Postgresql...
+
+            Output:
+                A: transaction acquired
+                A: read
+                A: sleeping
+                B: Ready to start transaction
+                B: transaction acquired
+                B: read
+                B: write 1
+                B: write 2
+                <~100ms wait>
+                A: write
+                A: written
+        */
+        let manager_a = connection_manager.clone();
+        let process_a = tokio::spawn(async move {
+            let connection = manager_a.connection().unwrap();
+            let result: Result<(), TransactionError<RepositoryError>> = connection
+                .transaction_sync(|con| {
+                    println!("A: transaction started");
+                    let repo = ItemRowRepository::new(con);
+                    let _ = repo.find_active_by_id("tx_deadlock_id")?;
+                    println!("A: read");
+                    println!("A: Sleeping for 100ms");
+                    let start_dt = SystemTime::now();
+                    std::thread::sleep(core::time::Duration::from_millis(100));
+                    //Recording sleep duration here, as if the thread is blocked by something other than sleep you should see the duration significantly greater than 100ms
+                    let sleep_duration = SystemTime::now()
+                        .duration_since(start_dt)
+                        .expect("Time went backwards");
+                    println!("A: Slept for {sleep_duration:?}");
+                    println!("A: writing");
+                    repo.upsert_one(&ItemRow {
+                        id: "tx_deadlock_id2".to_string(),
+                        name: "name_a".to_string(),
+                        ..Default::default()
+                    })?;
+                    println!("A: written");
+                    Ok(())
+                });
+            result
+        });
+        let manager_b = connection_manager.clone();
+        let process_b = tokio::spawn(async move {
+            //Wait for process a to get a transaction started
+            let connection = manager_b.connection().unwrap();
+            println!("B: Ready to start transaction");
+            // println!("Starting transaction in blocking thread...");
+            let result: Result<(), TransactionError<RepositoryError>> = connection
+                .transaction_sync(|con| {
+                    println!("B: transaction started");
+                    let repo = ItemRowRepository::new(con);
+                    let _ = repo.find_active_by_id("tx_deadlock_id")?;
+                    println!("B: read");
+                    repo.upsert_one(&ItemRow {
+                        id: "tx_deadlock_id".to_string(),
+                        name: "name_b".to_string(),
+                        ..Default::default()
+                    })?;
+                    println!("B: write 1");
+
+                    repo.upsert_one(&ItemRow {
+                        id: "tx_deadlock_id".to_string(),
+                        name: "name_b_2".to_string(),
+                        ..Default::default()
+                    })?;
+                    println!("B: write 2");
+                    Ok(())
+                });
+            println!("B: Returning {result:?}");
+            result
+        });
+
+        let a = process_a.await.unwrap();
+        let b = process_b.await.unwrap();
+
+        a.unwrap();
+        b.unwrap();
+
+        //Verify the database was updated correctly
+        let connection = connection_manager.connection().unwrap();
+        let repo = ItemRowRepository::new(&connection);
+
+        //tx_deadlock_id should now have name:name_b_2
+        let tx_deadlock_item = repo
+            .find_active_by_id("tx_deadlock_id")
+            .unwrap()
+            .expect("tx_deadlock_id record didn't get created!");
+        assert!("name_b_2" == tx_deadlock_item.name);
+
+        //tx_deadlock_id2 should now have name:name_a
+        let tx_deadlock_item2 = repo
+            .find_active_by_id("tx_deadlock_id2")
+            .unwrap()
+            .expect("tx_deadlock_id2 record didn't get created!");
+        assert!("name_a" == tx_deadlock_item2.name);
+    }
+
+    #[actix_rt::test]
+    async fn test_activity_log_row_repository() {
+        let settings = test_db::get_test_db_settings("omsupply-database-store-repository");
+        let connection_manager = test_db::setup(&settings).await;
+        let connection = connection_manager.connection().unwrap();
+
+        let repo = ActivityLogRowRepository::new(&connection);
+
+        let activity_log1 = data::activity_log_1();
+        repo.insert_one(&activity_log1).unwrap();
+        let loaded_item = repo
+            .find_one_by_id(activity_log1.id.as_str())
+            .unwrap()
+            .unwrap();
+        assert_eq!(activity_log1, loaded_item);
+    }
+}

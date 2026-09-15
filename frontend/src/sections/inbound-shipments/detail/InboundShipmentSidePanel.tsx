@@ -35,7 +35,11 @@ import {
   runInboundBatch,
   updateInboundShipment,
 } from './inboundShipmentUpdate';
-import { sourceLinkOf, supplierIsStore } from './inboundShipmentStatus';
+import {
+  deleteRemovesStock,
+  sourceLinkOf,
+  supplierIsStore,
+} from './inboundShipmentStatus';
 import { isExternalScope, type InboundScope } from '../inboundShipmentScope';
 import { DeleteInboundShipmentAction } from './actions/DeleteInboundShipmentAction';
 import { DuplicateInboundShipmentAction } from './actions/DuplicateInboundShipmentAction';
@@ -61,6 +65,12 @@ export interface InboundShipmentSidePanelProps {
   open: boolean;
   /** True once Verified (global edit lock). */
   disabled: boolean;
+  /**
+   * Whether the shipment holds any stock-bearing lines — only those carry
+   * stock, so this and the status together decide the delete confirmation's
+   * stock warning.
+   */
+  hasLines: boolean;
   /**
    * The shipment's permission scope, from the route (see
    * inboundShipmentScope). Selects `type` on the whole-shipment copy read and
@@ -457,17 +467,22 @@ export const InboundShipmentSidePanel: Component<
           heading + padding as the info sections above. */}
       <SidePanelSection value="actions" title={t('heading.actions')}>
         <SidePanelActions>
-          {/* Delete only while New (client narrowing). */}
-          <Show when={props.node.status === 'NEW'}>
-            <DeleteInboundShipmentAction
-              storeId={props.storeId}
-              invoiceId={props.node.id}
-              isExternal={isExternal()}
-              number={() => props.node.invoiceNumber}
-              disabled={false}
-              onDeleted={props.onDeleted}
-            />
-          </Show>
+          {/* Delete — offered at every status, matching the list's bulk
+              delete: it is submitted and the server's own reason surfaced,
+              never pre-screened here (issue #1134). The confirmation warns
+              that the shipment's stock goes with it ONLY where the delete
+              would actually take stock: Received (Verified is refused
+              outright), and holding at least one line. */}
+          <DeleteInboundShipmentAction
+            storeId={props.storeId}
+            invoiceId={props.node.id}
+            isExternal={isExternal()}
+            number={() => props.node.invoiceNumber}
+            removesStock={() =>
+              deleteRemovesStock(props.node.status) && props.hasLines
+            }
+            onDeleted={props.onDeleted}
+          />
           <DuplicateInboundShipmentAction
             invoiceId={props.node.id}
             number={() => props.node.invoiceNumber}

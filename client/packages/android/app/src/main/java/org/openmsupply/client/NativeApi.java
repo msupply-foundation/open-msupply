@@ -1,0 +1,856 @@
+package org.openmsupply.client;
+
+import static android.content.Context.NSD_SERVICE;
+
+import android.app.Activity;
+import android.net.nsd.NsdManager;
+import android.net.nsd.NsdServiceInfo;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.SystemClock;
+import android.util.Log;
+import android.view.KeyEvent;
+import android.webkit.WebView;
+
+import androidx.annotation.MainThread;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
+
+import com.getcapacitor.Bridge;
+import com.getcapacitor.JSArray;
+import com.getcapacitor.JSObject;
+import com.getcapacitor.Logger;
+import com.getcapacitor.Plugin;
+import com.getcapacitor.PluginCall;
+import com.getcapacitor.PluginMethod;
+import com.getcapacitor.annotation.CapacitorPlugin;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.InetAddress;
+import java.net.MalformedURLException;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.Enumeration;
+
+import javax.net.ssl.SSLHandshakeException;
+
+@CapacitorPlugin(name = "NativeApi")
+public class NativeApi extends Plugin implements NsdManager.DiscoveryListener {
+    private static final String LOG_FILE_NAME = "remote_server.log";
+
+    // This comes from Java_org_openmsupply_client_RemoteServer_startServer - if
+    // it's changed there, it will need to be changed here too...
+    private static final String DB_FILE_NAME = "omsupply-database";
+
+    public static final String OM_SUPPLY = "omSupply";
+
+    DiscoveryConstants discoveryConstants;
+    JSArray discoveredServers;
+    Deque<NsdServiceInfo> serversToResolve;
+    FrontEndHost connectedServer;
+
+    // The server the DISCOVERY PAGE chose (hostContract.ts § ConnectedServer,
+    // delivered via MainActivity.onServerChosen). The page drives connections
+    // as probe → record → navigate, so the fused connectToServer below — and
+    // the `connectedServer` it populated — never runs on that path, and
+    // certificate trust would have nothing to key on. Static because the
+    // choice belongs to the app's session, not to a plugin instance.
+    //
+    // Kept ALONGSIDE connectedServer rather than replacing it: the old front
+    // end at /old-ui/ still connects through connectToServer, and both paths
+    // must keep working while both front ends ship.
+    private static String chosenUrl;
+    private static String chosenOrigin;
+    private static String chosenHardwareId = "";
+    private static int chosenPort;
+    private static boolean chosenIsLocal;
+    // The same choice in the shape connectedServer() has always answered with
+    // — see there for why.
+    private static JSObject chosenServerData;
+
+    static void chosenServer(String url, String origin, String hardwareId, int port, boolean isLocal) {
+        chosenUrl = url;
+        chosenOrigin = origin;
+        chosenHardwareId = hardwareId;
+        chosenPort = port;
+        chosenIsLocal = isLocal;
+        chosenServerData = serverData(origin, hardwareId, port, isLocal);
+    }
+
+    /** The chosen server as a FrontEndHost's data, built from what the page
+     * stated. Only the fields the answer is used for: the old front end
+     * displays the address (frontEndHostUrl) and keys nothing else off it. */
+    private static JSObject serverData(String origin, String hardwareId, int port, boolean isLocal) {
+        JSObject data = new JSObject();
+        try {
+            URL parsed = new URL(origin);
+            data.put("protocol", parsed.getProtocol());
+            data.put("ip", parsed.getHost());
+        } catch (Exception e) {
+            return null;
+        }
+        data.put("port", port);
+        data.put("clientVersion", "");
+        data.put("hardwareId", hardwareId);
+        data.put("isLocal", isLocal);
+        return data;
+    }
+
+    /** The exact URL the discovery page navigated to, or null if it has not.
+     * The hand-off itself — used by the failed-load duty (AC-DT4), which is
+     * about THIS load failing, not a later navigation on a server the user is
+     * already signed in to. Certificate trust wants getChosenOrigin(). */
+    public static String getChosenUrl() {
+        return chosenUrl;
+    }
+
+    /** scheme://host[:port] of that URL, or null. What certificate trust
+     * matches on: the SSL error is raised per REQUEST — the document, then
+     * every script, style and GraphQL call — so matching the full URL would
+     * answer only the first and leave the rest of the page to the default
+     * refusal. Origin-scoped is also what the old front end's path has always
+     * been (FrontEndHost.getUrl()). */
+    public static String getChosenOrigin() {
+        return chosenOrigin;
+    }
+
+    /** Fingerprint-store key for the chosen server, matching the identifier
+     * CertWebViewClient.nonLocalFingerprintKey has always spelled, so a
+     * server already trusted on this device is still recognised. */
+    public static String getChosenFingerprintKey() {
+        return chosenHardwareId + "-" + chosenPort;
+    }
+
+    public static boolean getChosenIsLocal() {
+        return chosenIsLocal;
+    }
+    NsdManager discoveryManager;
+    boolean isDebug;
+    boolean isAdvertising;
+    static final String DISCOVERY_PATH = "/discovery.html";
+    String localUrl;
+    String serverUrl;
+    boolean isDiscovering;
+    boolean isResolvingServer;
+    boolean shouldRestartDiscovery;
+    // Cold-start bootstrap state (see handleOnStart). Written from the poll
+    // thread, read on the main thread, hence volatile.
+    volatile boolean frontendLoaded;
+    volatile boolean frontendLoadInFlight;
+
+    CertWebViewClient client;
+
+    @Override
+    public void load() {
+        super.load();
+
+        client = new CertWebViewClient(this.getBridge(), this.getContext().getFilesDir(), this);
+        bridge.setWebViewClient(client);
+
+        serversToResolve = new ArrayDeque<NsdServiceInfo>();
+        isResolvingServer = false;
+        discoveryConstants = new DiscoveryConstants(this.getActivity().getContentResolver());
+        discoveryManager = (NsdManager) this.getActivity()
+                .getSystemService(NSD_SERVICE);
+
+        String debugUrl = getConfig().getString("debugUrl");
+        isDebug = debugUrl != null && !debugUrl.equals("");
+        localUrl = isDebug ? debugUrl : "https://localhost:" + discoveryConstants.PORT;
+        isAdvertising = false;
+        isDiscovering = false;
+        shouldRestartDiscovery = false;
+    }
+
+    public boolean getIsDebug() {
+        return isDebug;
+    }
+
+    public FrontEndHost getConnectedServer() {
+        return connectedServer;
+    }
+
+    public String getLocalUrl() {
+        return localUrl;
+    }
+
+    public String getServerUrl() {
+        return serverUrl;
+    }
+
+    private void sleep(int delay) {
+        try {
+            Thread.sleep(delay);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    protected void handleOnStart() {
+        Logger.debug("NativeAPI.handleOnStart()");
+        WebView webView = this.getBridge().getWebView();
+
+        // Normally javascript would be loaded by Capacitor by loading the generated
+        // javascript from WEBVIEW_SERVER_URL
+        // However we'd get an SSL issue with this approach, so we need to generate it
+        // ourselves and inject it later.
+
+        // NOTE: There have been various timing issues with this javascript injection
+        // loading
+        // We do the actual injection during onPageStarted in ExtendedWebViewClient
+        // We call it here as well as in ExtendedWebViewClient as this gives more time
+        // for it to be generated before the webview loads
+        // Potentially avoiding issues if it takes too long to generate.
+        client.loadJsInject();
+
+        // handleOnStart fires on cold start AND on every warm resume (app
+        // switcher, system file picker, screen off/on). The readiness poll
+        // below is cold-start bootstrap only: re-running it on resume
+        // force-navigates to /android, kicking the user out of whatever page
+        // they were on (open-msupply-frontend#905). Once the frontend has
+        // loaded there is nothing to re-check — the server's lifetime is tied
+        // to the activity. A FAILED startup (error page showing) is still
+        // retried on the next start, since the error page has no retry button.
+        if (frontendLoaded || frontendLoadInFlight)
+            return;
+        frontendLoadInFlight = true;
+        Thread thread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Boolean isServerRunning = false;
+                // Generous budget — the LoadingPage is visible to the user while we wait,
+                // so erring long is cheap and helps slow devices succeed without an error page.
+                Integer retryCount = 30;
+                int attempt = 0;
+                String readySignal = null;
+                final long pollStart = System.currentTimeMillis();
+                Log.i(OM_SUPPLY, "Readiness poll start url=" + localUrl + " retryBudget=" + retryCount);
+                while (!isServerRunning && retryCount > 0) {
+                    attempt++;
+                    try {
+                        URL url = new URL(localUrl);
+                        HttpURLConnection urlc = (HttpURLConnection) url.openConnection();
+                        // actually no point - the timeout only applies when trying to find a server
+                        // when using localhost it returns immediately even if the server isn't
+                        // responding
+                        urlc.setConnectTimeout(1000);
+                        urlc.connect();
+                        int code = urlc.getResponseCode();
+                        Log.i(OM_SUPPLY, "Readiness poll attempt=" + attempt + " connect ok responseCode=" + code);
+                        if (code == 200) {
+                            isServerRunning = true;
+                            readySignal = "HTTP 200";
+                        }
+                    } catch (SSLHandshakeException e) {
+                        Throwable cause = e.getCause();
+                        String causeDesc = cause == null
+                                ? "null"
+                                : cause.getClass().getName() + ":" + cause.getMessage();
+                        Log.i(OM_SUPPLY, "Readiness poll attempt=" + attempt
+                                + " SSLHandshakeException msg=" + e.getMessage()
+                                + " cause=" + causeDesc);
+                        // server is running and responding with an SSL error
+                        // which we will ignore, so ok to proceed
+                        isServerRunning = true;
+                        readySignal = "SSLHandshakeException(cause="
+                                + (cause == null ? "null" : cause.getClass().getSimpleName()) + ")";
+                    } catch (Exception e) {
+                        Throwable cause = e.getCause();
+                        String causeDesc = cause == null
+                                ? "null"
+                                : cause.getClass().getName() + ":" + cause.getMessage();
+                        Log.e(OM_SUPPLY, "Readiness poll attempt=" + attempt
+                                + " " + e.getClass().getName()
+                                + " msg=" + e.getMessage()
+                                + " cause=" + causeDesc);
+                        isServerRunning = false;
+                    }
+                    retryCount--;
+                    sleep(1000);
+                }
+
+                final long pollElapsed = System.currentTimeMillis() - pollStart;
+                Log.i(OM_SUPPLY, "Readiness poll end isServerRunning=" + isServerRunning
+                        + " readySignal=" + readySignal + " elapsedMs=" + pollElapsed);
+
+                final Handler handler = new Handler(Looper.getMainLooper());
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        AppState.getInstance().setWebViewReady(true);
+                    }
+                }, 250);
+
+                // .post to run on UI thread in the two calls below
+                if (isServerRunning) {
+                    // The discovery page decides what happens next: the mode
+                    // chooser on a first run, this device's own server, or the
+                    // LAN list (frontend/src/discovery/DiscoveryPage.tsx).
+                    final String targetUrl = discoveryUrl(true, false);
+                    Log.i(OM_SUPPLY, "Loading WebView url=" + targetUrl);
+                    frontendLoaded = true;
+                    webView.post(() -> {
+                        // Host duty (AC-DT16, AC-AN20): the boot lands on
+                        // discovery from the static loading page, so without
+                        // pinning history here hardware back resurrects that
+                        // page — which only ever spins, since the readiness
+                        // poll that drives it has already finished. Same clear
+                        // the new frontend's shell does on its client-mode
+                        // boot; every host-initiated navigation is a fresh
+                        // start.
+                        // NativeApi.this, not this: the lambda sits inside
+                        // the readiness poll's Runnable.
+                        Activity bootActivity = NativeApi.this.getActivity();
+                        if (bootActivity instanceof DiscoveryHostActivity) {
+                            ((DiscoveryHostActivity) bootActivity)
+                                .clearHistoryWhenLoaded(localUrl + DISCOVERY_PATH);
+                        }
+                        webView.loadUrl(targetUrl);
+                    });
+                } else {
+                    Log.e(OM_SUPPLY, "Server not running, displaying error page");
+                    final ErrorPage errorPage = new ErrorPage(getContext(), localUrl);
+                    webView.post(() -> webView.addJavascriptInterface(errorPage, "ErrorPageInject"));
+                    webView.post(() -> webView.loadUrl(ErrorPage.URL));
+                }
+                frontendLoadInFlight = false;
+            }
+        });
+        thread.start();
+    }
+
+    @Override
+    protected void handleOnStop() {
+        stopServerDiscovery();
+    }
+
+    /** The bundled discovery page, served by the local server as a second page
+     * of the new front end's build (frontend/src/discovery). Replaces the old
+     * front end's /discovery and /android routes, which the new front end does
+     * not have.
+     *
+     * `canhost=true` says this machine could run the server everyone uses OR
+     * connect to someone else's — this app always ships the server library, so
+     * it always could be either, and that is what lets the page ask once and
+     * remember the answer (AC-AN21) instead of the retired /android chooser. */
+    String discoveryUrl(boolean autoconnect, boolean timedout) {
+        String url = localUrl + DISCOVERY_PATH + "?canhost=true";
+        if (!autoconnect) url += "&autoconnect=false";
+        if (timedout) url += "&timedout=true";
+        return url;
+    }
+
+    /** Send the WebView back to discovery, never bouncing straight back to the
+     * server just left (AC-DT16). `timedout` seeds the could-not-connect
+     * notice (AC-DT2/AC-DT4). */
+    void returnToDiscovery(boolean timedout) {
+        WebView webView = this.getBridge().getWebView();
+        String url = discoveryUrl(false, timedout);
+        webView.post(() -> {
+            Activity activity = this.getActivity();
+            if (activity instanceof DiscoveryHostActivity) {
+                ((DiscoveryHostActivity) activity).clearHistoryWhenLoaded(localUrl + DISCOVERY_PATH);
+            }
+            webView.loadUrl(url);
+        });
+    }
+
+    /** The old front end's own chooser, the boot target this shell used before
+     * the page existed. Reached only when the web bundle in THIS build has no
+     * discovery.html — a debug build stages the old UI alone
+     * (capacitor.config.ts § webDir) — so that a debug build still boots to a
+     * server chooser rather than to the server's 404
+     * (CertWebViewClient.onReceivedHttpError). A release bundle always carries
+     * the page and never comes here. */
+    void loadLegacyDiscovery() {
+        WebView webView = this.getBridge().getWebView();
+        String url = localUrl + "/android";
+        webView.post(() -> webView.loadUrl(url));
+    }
+
+    @PluginMethod()
+    public void goBackToDiscovery(PluginCall call) {
+        this.returnToDiscovery(false);
+    }
+
+    // Advertise local remote server on network
+    @PluginMethod()
+    public void advertiseService(PluginCall call) {
+        if (isAdvertising) {
+            return;
+        }
+        NsdServiceInfo serviceInfo = createLocalServiceInfo();
+
+        discoveryManager = (NsdManager) this.getActivity()
+                .getSystemService(NSD_SERVICE);
+
+        discoveryManager.registerService(serviceInfo, NsdManager.PROTOCOL_DNS_SD,
+                new NsdManager.RegistrationListener() {
+                    @Override
+                    public void onServiceRegistered(NsdServiceInfo NsdServiceInfo) {
+                    }
+
+                    @Override
+                    public void onRegistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
+                    }
+
+                    @Override
+                    public void onServiceUnregistered(NsdServiceInfo arg0) {
+                    }
+
+                    @Override
+                    public void onUnregistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
+                    }
+                });
+        isAdvertising = true;
+        // See method comment
+        addLocalServerToDiscovery();
+    }
+
+    private void stopServerDiscovery() {
+        if (!isDiscovering) {
+            return;
+        }
+
+        try {
+            discoveryManager.stopServiceDiscovery(this);
+        } catch (Exception e) {
+            Logger.error("Service discovery cannot be stopped " + e);
+        }
+    }
+
+    @PluginMethod()
+    public void startServerDiscovery(PluginCall call) {
+        if (isDiscovering) {
+            shouldRestartDiscovery = true;
+            stopServerDiscovery();
+            return;
+        }
+
+        shouldRestartDiscovery = false;
+        discoveredServers = new JSArray();
+
+        // Some navigation events may cause server discovery to still be ongoing
+        try {
+            // `this` would be NsdManager.DiscoveryListener, and main method is
+            // onServiceFound
+            discoveryManager.discoverServices(discoveryConstants.SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, this);
+        } catch (Exception e) {
+            Logger.error("Cannot start server discovery " + e);
+        }
+    }
+
+    // Return discoveredServers and reset discoveredServers array
+    // (to avoid large array being sent to client,
+    // since duplicates in discoveredServers are frequent)
+    @PluginMethod()
+    public void discoveredServers(PluginCall call) {
+        JSObject result = new JSObject();
+        result.put("servers", discoveredServers);
+        discoveredServers = new JSArray();
+
+        call.resolve(result);
+    }
+
+    /**
+     * Which server this WebView is on, for whichever front end is asking.
+     *
+     * The old front end asks so it can show the address and offer "change
+     * server" beside it (host/src/components/SiteInfo.tsx renders that row
+     * only when this answers). It used to be populated only by the fused
+     * connectToServer below — which the discovery page never calls, since it
+     * drives probe -> record -> navigate itself. So an old front end reached
+     * THROUGH the page had no way back to discovery at all: no row, and
+     * nothing else on its login screen offers one. Answer from the page's
+     * choice when the fused path has not run.
+     *
+     * Whichever path navigated LAST wins, because the question is "where is
+     * this WebView now". Preferring either outright answers with a stale
+     * server: boot connects to A through the fused path, the user changes
+     * server to B through the page, and the address shown beside the
+     * change-server button is still A's. So onConnectToServer clears the
+     * page's choice and it takes precedence here when it has not run.
+     */
+    @PluginMethod()
+    public void connectedServer(PluginCall call) {
+        if (chosenServerData != null) {
+            call.resolve(chosenServerData);
+            return;
+        }
+        call.resolve(connectedServer == null ? null : connectedServer.data);
+    }
+
+    private void onConnectToServer(FrontEndHost server) {
+        stopServerDiscovery();
+        connectedServer = server;
+        // This WebView is on THIS server now, so the page's earlier choice is
+        // no longer where we are (§ connectedServer above).
+        chosenServerData = null;
+
+        String url = isDebug ? localUrl
+                : server.getUrl();
+
+        Bridge bridge = this.getBridge();
+        WebView webView = bridge.getWebView();
+        this.serverUrl = url;
+        // .post to run on UI thread
+        webView.post(() -> webView.loadUrl(orDebugUrl(server.getConnectionUrl())));
+    }
+
+    private String orDebugUrl(String url) {
+        return isDebug ? localUrl : url;
+    }
+
+    @PluginMethod()
+    public void connectToServer(PluginCall call) throws MalformedURLException {
+        FrontEndHost server = new FrontEndHost(call.getData());
+        JSObject response = new JSObject();
+
+        try {
+            URL url = new URL(orDebugUrl(server.getConnectionUrl()));
+            HttpURLConnection urlc = (HttpURLConnection) url.openConnection();
+            urlc.setRequestMethod("GET");
+            urlc.connect();
+            int status = urlc.getResponseCode();
+
+            if (status == 200) {
+                onConnectToServer(server);
+                response.put("success", true);
+            } else {
+                response.put("success", false);
+                response.put("error", "Connecting to server: response code=" + status);
+            }
+        } catch (SSLHandshakeException e) {
+            // server is running and responding with an SSL error
+            // which we will ignore, so ok to proceed
+            onConnectToServer(server);
+            response.put("success", true);
+        } catch (IOException e) {
+            response.put("success", false);
+            response.put("error", e.getMessage());
+        }
+        call.resolve(response);
+    }
+
+    @PluginMethod()
+    public void sendTabKeyPress(PluginCall call) {
+        long downTime = SystemClock.uptimeMillis();
+        long eventTime = SystemClock.uptimeMillis();
+        WebView webView = this.getBridge().getWebView();
+
+        KeyEvent tabDownEvent = new KeyEvent(
+                downTime,
+                eventTime,
+                KeyEvent.ACTION_DOWN,
+                KeyEvent.KEYCODE_TAB,
+                0);
+
+        KeyEvent tabUpEvent = new KeyEvent(
+                downTime,
+                eventTime + 50,
+                KeyEvent.ACTION_UP,
+                KeyEvent.KEYCODE_TAB,
+                0);
+
+        // Dispatch the events
+        webView.post(() -> webView.dispatchKeyEvent(tabDownEvent));
+        webView.post(() -> webView.dispatchKeyEvent(tabUpEvent));
+    }
+
+    // NsdManager.DiscoveryListener
+    @Override
+    public void onServiceFound(NsdServiceInfo serviceInfo) {
+        if (!serviceInfo.getServiceName().startsWith(discoveryConstants.SERVICE_NAME)) {
+            return;
+        }
+
+        serversToResolve.push(serviceInfo);
+        tryResolveServer();
+    }
+
+    private void tryResolveServer() {
+        if (isResolvingServer) {
+            return;
+        }
+
+        isResolvingServer = true;
+
+        if (serversToResolve.peek() == null) {
+            isResolvingServer = false;
+            return;
+        }
+
+        NsdServiceInfo serviceInfo = serversToResolve.pop();
+
+        discoveryManager.resolveService(serviceInfo, new NsdManager.ResolveListener() {
+            @Override
+            public void onServiceResolved(NsdServiceInfo serviceInfo) {
+                if (!serviceInfo.getServiceName().startsWith(discoveryConstants.SERVICE_NAME)) {
+                    return;
+                }
+
+                JSObject server = serviceInfoToObject(serviceInfo);
+
+                discoveredServers.put(server);
+                isResolvingServer = false;
+                tryResolveServer();
+            }
+
+            // NsdManager.ResolveListener
+            @Override
+            public void onResolveFailed(NsdServiceInfo serviceInfo, int errorCode) {
+                isResolvingServer = false;
+                tryResolveServer();
+            }
+        });
+    }
+
+    // Attempt to get a non-loopback address for the local server
+    // and fallback to loopback if there is an error
+    private String getHostAddress(NsdServiceInfo serviceInfo, Boolean isLocal) {
+        if (!isLocal) {
+            return serviceInfo.getHost().getHostAddress();
+        }
+        try {
+            for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
+                NetworkInterface ni = en.nextElement();
+                for (Enumeration<InetAddress> enumIpAddr = ni.getInetAddresses(); enumIpAddr.hasMoreElements();) {
+                    InetAddress inetAddress = enumIpAddr.nextElement();
+                    if (!inetAddress.isLoopbackAddress() && !inetAddress.isLinkLocalAddress()
+                            && inetAddress.isSiteLocalAddress()) {
+                        return inetAddress.getHostAddress();
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            Log.e(OM_SUPPLY, ex.toString());
+        }
+        InetAddress host = serviceInfo.getHost();
+        // this will happen if there is no network interface available
+        if (host == null) {
+            return "127.0.0.1";
+        }
+        return host.getHostAddress();
+    }
+
+    private JSObject serviceInfoToObject(NsdServiceInfo serviceInfo) {
+        String serverHardwareId = parseAttribute(serviceInfo, discoveryConstants.HARDWARE_ID_KEY);
+        Boolean isLocal = serverHardwareId.equals(discoveryConstants.hardwareId);
+        return new JSObject()
+                .put("protocol", parseAttribute(serviceInfo, discoveryConstants.PROTOCOL_KEY))
+                .put("clientVersion", parseAttribute(serviceInfo, discoveryConstants.CLIENT_VERSION_KEY))
+                .put("port", serviceInfo.getPort())
+                .put("ip", getHostAddress(serviceInfo, isLocal))
+                .put("hardwareId", serverHardwareId)
+                .put("isLocal", isLocal);
+
+    }
+
+    private NsdServiceInfo createLocalServiceInfo() {
+        NsdServiceInfo serviceInfo = new NsdServiceInfo();
+        serviceInfo.setServiceName(discoveryConstants.SERVICE_NAME);
+        serviceInfo.setServiceType(discoveryConstants.SERVICE_TYPE);
+        serviceInfo.setPort(discoveryConstants.PORT);
+        serviceInfo.setAttribute(discoveryConstants.PROTOCOL_KEY, "https");
+        serviceInfo.setAttribute(discoveryConstants.CLIENT_VERSION_KEY, "unspecified");
+        serviceInfo.setAttribute(discoveryConstants.HARDWARE_ID_KEY, discoveryConstants.hardwareId);
+        return serviceInfo;
+    }
+
+    // Had issues resolving local server when wifi and mobile data is off
+    // getting onResolveFailed with errorCode = 0 (internal error) with no more
+    // information
+    // manually adding this server should work
+    private void addLocalServerToDiscovery() {
+        if (isAdvertising && isDiscovering && discoveredServers != null) {
+            try {
+                NsdServiceInfo serviceInfo = createLocalServiceInfo();
+                serviceInfo.setHost(InetAddress.getByName("localhost"));
+                discoveredServers.put(serviceInfoToObject(serviceInfo));
+            } catch (Exception E) {
+                Log.d(OM_SUPPLY, "problem adding localhost to discovery");
+            }
+        }
+    }
+
+    private String parseAttribute(NsdServiceInfo serviceInfo, String name) {
+        byte[] attributeBytes = serviceInfo.getAttributes().get(name);
+        if (attributeBytes == null) {
+            throw new RuntimeException();
+        }
+        return new String(attributeBytes, StandardCharsets.UTF_8);
+    }
+
+    // NsdManager.DiscoveryListener
+    @Override
+    public void onServiceLost(NsdServiceInfo service) {
+    }
+
+    // NsdManager.DiscoveryListener
+    @Override
+    public void onStartDiscoveryFailed(String serviceType, int errorCode) {
+    }
+
+    // NsdManager.DiscoveryListener
+    @Override
+    public void onStopDiscoveryFailed(String serviceType, int errorCode) {
+    }
+
+    // NsdManager.DiscoveryListener
+    @Override
+    public void onDiscoveryStarted(String serviceType) {
+        isDiscovering = true;
+        // See method comment
+        addLocalServerToDiscovery();
+    }
+
+    // NsdManager.DiscoveryListener
+    @Override
+    public void onDiscoveryStopped(String serviceType) {
+        isDiscovering = false;
+        if (shouldRestartDiscovery) {
+            startServerDiscovery(null);
+        }
+    }
+
+    @PluginMethod()
+    public void readLog(PluginCall call) {
+        JSObject response = new JSObject();
+        StringBuilder sb = new StringBuilder();
+
+        try {
+            File file = new File(getContext().getFilesDir(), LOG_FILE_NAME);
+            BufferedReader br = new BufferedReader(new FileReader(file));
+            String line;
+
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+                sb.append("\n");
+            }
+            br.close();
+            response.put("log", sb.toString());
+        } catch (IOException e) {
+            response.put("log", "Error: Unable to read log file!");
+            response.put("error", e.getMessage());
+        }
+        call.resolve(response);
+    }
+
+    @PluginMethod()
+    public void saveFile(@NonNull PluginCall call) {
+        JSObject data = call.getData();
+        JSObject response = new JSObject();
+
+        String filename = data.getString("filename", LOG_FILE_NAME);
+        String content = data.getString("content");
+        Boolean isBinaryData = data.getBoolean("isBinaryData", false);
+        String mimeType = data.getString("mimeType", "text/plain");
+        String successMessage = data.getString("successMessage", "Saved successfully");
+
+        if (content == null) {
+            response.put("error", "No content");
+            response.put("success", false);
+        } else {
+            MainActivity mainActivity = (MainActivity) getActivity();
+
+            // Check if provided data should be handled as binary format
+            if (Boolean.TRUE.equals(isBinaryData)) {
+                try {
+                    // Convert from base64 string to byte array
+                    byte[] binaryData = android.util.Base64.decode(content, android.util.Base64.DEFAULT);
+
+                    mainActivity.SaveBinaryFile(filename, binaryData, mimeType, successMessage);
+                    response.put("success", true);
+                } catch (Exception e) {
+                    response.put("error", "Error processing binary data: " + e.getMessage());
+                    response.put("success", false);
+                }
+            } else {
+               mainActivity.SaveFile(filename, content, mimeType, successMessage);
+               response.put("success", true);
+            }
+        }
+
+        call.resolve(response);
+    }
+
+    @PluginMethod()
+    public void saveDatabase(@NonNull PluginCall call) {
+        JSObject data = call.getData();
+        JSObject response = new JSObject();
+
+        MainActivity mainActivity = (MainActivity) getActivity();
+
+        File file = new File(getContext().getFilesDir(), DB_FILE_NAME);
+        mainActivity.SaveDatabase(file);
+        response.put("success", true);
+
+        call.resolve(response);
+    }
+
+    /** Helper class to get access to the JS FrontEndHost data */
+    public class FrontEndHost {
+        JSObject data;
+
+        public FrontEndHost(JSObject data) {
+            String ip = data.getString("ip");
+            // attempt to translate loopback addresses to an actual IP address
+            // so that we can display the local server IP for users to connect to the API
+            if (data.getBool("isLocal") && (ip.equals("127.0.0.1") || ip.equals("localhost"))) {
+                NsdServiceInfo serviceInfo = createLocalServiceInfo();
+                data.put("ip", getHostAddress(serviceInfo, true));
+            }
+            this.data = data;
+        }
+
+        /**
+         * Constructs the server's base url string including protocol, ip and port,
+         * e.g. https://127.0.0.1:8000
+         */
+        public String getUrl() {
+            String host = data.getBool("isLocal") ? "localhost" : data.getString("ip");
+            Integer port = data.getInteger("port");
+            // A port of 0 (or unspecified) means "use the protocol's default port"
+            // (e.g. 443 for https, 80 for http), so it's omitted from the URL.
+            // This mirrors the frontEndHostUrl helper in the TS client. Appending
+            // ":0" produces an invalid URL (INVALID_PORT) and the connection fails.
+            if (port == null || port == 0) {
+                return data.getString("protocol") + "://" + host;
+            }
+            return data.getString("protocol") + "://" + host + ":" + port;
+        }
+
+        /**
+         * Constructs the url to be used when connecting to a server,
+         * e.g. https://127.0.0.1:8000/login
+         */
+        public String getConnectionUrl() {
+            String path = "";
+            if (data.getString("path") != null) {
+                path = "/" + data.getString("path");
+            }
+            return getUrl() + path;
+        }
+
+        public boolean isLocal() {
+            return data.getBool("isLocal");
+        }
+
+        public String getHardwareId() {
+            return data.getString("hardwareId");
+        }
+
+        public int getPort() {
+            return data.getInteger("port");
+        }
+    }
+}

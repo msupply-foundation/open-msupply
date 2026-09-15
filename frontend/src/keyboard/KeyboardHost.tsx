@@ -7,7 +7,7 @@ import { startKeyboardDispatcher } from './keyboardDispatcher';
 import { createAction } from '../ui/utils/keyActions';
 import { MOD_K } from '../ui/utils/shortcuts';
 import { useFullScreen } from '../ui/layout/AppShell/shellContext';
-import { storeRelativePath } from '../nav/storeRelativePath';
+import { storePath, storeRelativePath } from '../nav/storeRelativePath';
 
 /*
  * Where the keyboard layer is switched on (spec/keyboard). Mounted inside
@@ -47,7 +47,11 @@ export const KeyboardHost = (props: KeyboardHostProps) => {
   const relativePath = (): string =>
     storeRelativePath(location.pathname, params.storeId);
 
-  const go = (path: string) => navigate(`/${params.storeId}/${path}`);
+  // Same URL rule as the menu's, by construction — the shared join
+  // (storeRelativePath § storePath): Home's path is empty, and `/{store}/`
+  // would be a second spelling of `/{store}` — one screen, one address
+  // (OMS-REG-NAV-01.22).
+  const go = (path: string) => navigate(storePath(params.storeId, path));
 
   /*
    * KB-X5: "navigates up one level — from a detail screen to its list, and so
@@ -55,7 +59,7 @@ export const KeyboardHost = (props: KeyboardHostProps) => {
    *
    * One segment off the path, which IS the hierarchy the routes already encode:
    * a detail's id drops to its list, a list drops to its section's entry page,
-   * and the last segment drops to the store root (which is the dashboard).
+   * and the last segment drops to the store root (which is Home).
    * Deriving it from the URL rather than keeping a stack means it stays correct
    * however the user arrived — deep link, back button, or a palette jump.
    */

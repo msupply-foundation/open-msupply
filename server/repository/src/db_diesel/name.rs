@@ -1,0 +1,818 @@
+use super::{
+    name_row::name, name_store_join::name_store_join, store_row::store, DBType, NameRow,
+    NameStoreJoinRow, StorageConnection, StoreRow,
+};
+
+use crate::{
+    diesel_macros::{
+        apply_equal_filter, apply_sort_no_case, apply_string_filter, apply_string_or_filter,
+    },
+    dynamic_query_filter::create_condition,
+    name_oms_fields_alias,
+    repository_error::RepositoryError,
+    EqualFilter, NameOmsFieldsRow, NameRowType, Pagination, Sort, StoreFilter, StoreRepository,
+    StringFilter,
+};
+
+use diesel::{dsl::IntoBoxed, prelude::*};
+use util::constants::SYSTEM_NAME_CODES;
+
+#[derive(PartialEq, Debug, Clone, Default)]
+pub struct Name {
+    pub name_row: NameRow,
+    pub name_store_join_row: Option<NameStoreJoinRow>,
+    pub store_row: Option<StoreRow>,
+    pub properties: Option<String>,
+}
+
+#[derive(Clone, Default, PartialEq, Debug)]
+pub enum NameType {
+    Facility,
+    Invad,
+    Repack,
+    #[default]
+    Store,
+}
+#[derive(Clone, Default, PartialEq, Debug)]
+pub struct NameFilter {
+    pub id: Option<EqualFilter<String>>,
+    pub name: Option<StringFilter>,
+    pub code: Option<StringFilter>,
+    pub is_customer: Option<bool>,
+    pub is_supplier: Option<bool>,
+    pub is_manufacturer: Option<bool>,
+    pub is_donor: Option<bool>,
+    pub is_store: Option<bool>,
+    pub store_code: Option<StringFilter>,
+    pub is_visible: Option<bool>,
+    pub is_system_name: Option<bool>,
+    pub r#type: Option<EqualFilter<NameType>>,
+    pub supplying_store_id: Option<EqualFilter<String>>,
+
+    pub phone: Option<StringFilter>,
+    pub address1: Option<StringFilter>,
+    pub address2: Option<StringFilter>,
+    pub country: Option<StringFilter>,
+    pub email: Option<StringFilter>,
+
+    pub code_or_name: Option<StringFilter>,
+    pub store: Option<StoreFilter>,
+
+    /// Client-provided dynamic filter AST (currently property conditions only).
+    /// ANDs with the other filters. Keys must be validated against the table
+    /// scope's allowed property keys in the service layer.
+    pub dynamic_filter: Option<NameCondition::Inner>,
+
+    /// Store can be disabled due to merge or due to it actually being disabled
+    /// by user.
+    pub include_disabled: Option<bool>,
+}
+
+#[derive(PartialEq, Debug)]
+pub enum NameSortField {
+    Name,
+    Code,
+    Phone,
+    Address1,
+    Address2,
+    Country,
+    Email,
+}
+
+pub type NameSort = Sort<NameSortField>;
+
+type NameAndNameStoreJoin = (
+    NameRow,
+    Option<NameStoreJoinRow>,
+    Option<StoreRow>,
+    NameOmsFieldsRow,
+);
+
+pub struct NameRepository<'a> {
+    connection: &'a StorageConnection,
+}
+
+impl<'a> NameRepository<'a> {
+    pub fn new(connection: &'a StorageConnection) -> Self {
+        NameRepository { connection }
+    }
+
+    pub fn count(
+        &self,
+        store_id: &str,
+        filter: Option<NameFilter>,
+    ) -> Result<i64, RepositoryError> {
+        let query = Self::create_filtered_query(store_id.to_string(), filter);
+
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
+    }
+
+    pub fn query_by_filter(
+        &self,
+        store_id: &str,
+        filter: NameFilter,
+    ) -> Result<Vec<Name>, RepositoryError> {
+        self.query(store_id, Pagination::new(), Some(filter), None)
+    }
+
+    pub fn query_one(
+        &self,
+        store_id: &str,
+        filter: NameFilter,
+    ) -> Result<Option<Name>, RepositoryError> {
+        Ok(self.query_by_filter(store_id, filter)?.pop())
+    }
+
+    pub fn query(
+        &self,
+        store_id: &str,
+        pagination: Pagination,
+        filter: Option<NameFilter>,
+        sort: Option<NameSort>,
+    ) -> Result<Vec<Name>, RepositoryError> {
+        let mut query = Self::create_filtered_query(store_id.to_string(), filter);
+
+        if let Some(sort) = sort {
+            match sort.key {
+                NameSortField::Name => {
+                    apply_sort_no_case!(query, sort, name::name_);
+                }
+                NameSortField::Code => {
+                    apply_sort_no_case!(query, sort, name::code);
+                }
+                NameSortField::Phone => apply_sort_no_case!(query, sort, name::phone),
+                NameSortField::Address1 => apply_sort_no_case!(query, sort, name::address1),
+                NameSortField::Address2 => apply_sort_no_case!(query, sort, name::address2),
+                NameSortField::Country => apply_sort_no_case!(query, sort, name::country),
+                NameSortField::Email => apply_sort_no_case!(query, sort, name::email),
+            }
+        }
+
+        // Stable tiebreaker so paginated results don't shuffle or drop rows
+        // when the primary sort column has ties.
+        let final_query = query
+            .then_order_by(name::id.asc())
+            .offset(pagination.offset as i64)
+            .limit(pagination.limit as i64);
+
+        // Debug diesel query
+        // println!(
+        //     "{}",
+        //     diesel::debug_query::<DBType, _>(&final_query).to_string()
+        // );
+
+        let result =
+            final_query.load::<NameAndNameStoreJoin>(self.connection.lock().connection())?;
+
+        Ok(result.into_iter().map(Name::from_join).collect())
+    }
+
+    /// Returns a list of names left joined to name_store_join (for name_store_joins matching store_id parameter)
+    /// Names will still be present in result even if name_store_join doesn't match store_id in parameters
+    /// but it's considered invisible in subsequent filters.
+    pub fn create_filtered_query(store_id: String, filter: Option<NameFilter>) -> BoxedNameQuery {
+        let mut query = query(store_id)
+            .into_boxed()
+            .filter(name::type_.ne(NameRowType::Patient));
+
+        let include_disabled = filter
+            .as_ref()
+            .and_then(|f| f.include_disabled)
+            .unwrap_or(false);
+        if !include_disabled {
+            query = query.filter(
+                store::is_disabled
+                    .is_null()
+                    .or(store::is_disabled.eq(false)),
+            );
+        }
+
+        if let Some(f) = filter {
+            let NameFilter {
+                id,
+                name,
+                code,
+                is_customer,
+                is_supplier,
+                is_manufacturer,
+                is_donor,
+                is_store,
+                store_code,
+                is_visible,
+                is_system_name,
+                r#type,
+                phone,
+                address1,
+                address2,
+                country,
+                email,
+                code_or_name,
+                supplying_store_id,
+                store,
+                dynamic_filter,
+                include_disabled: _,
+            } = f;
+
+            // or filter need to be applied before and filters
+            if code_or_name.is_some() {
+                apply_string_filter!(query, code_or_name.clone(), name::code);
+                apply_string_or_filter!(query, code_or_name, name::name_);
+            }
+
+            apply_equal_filter!(query, id, name::id);
+            apply_string_filter!(query, code, name::code);
+
+            apply_string_filter!(query, name, name::name_);
+            apply_string_filter!(query, store_code, store::code);
+
+            let r#type = r#type.map(|r| r.convert_filter::<NameRowType>());
+            apply_equal_filter!(query, r#type, name::type_);
+
+            apply_string_filter!(query, phone, name::phone);
+            apply_string_filter!(query, address1, name::address1);
+            apply_string_filter!(query, address2, name::address2);
+            apply_string_filter!(query, country, name::country);
+            apply_string_filter!(query, email, name::email);
+            apply_equal_filter!(query, supplying_store_id, name::supplying_store_id);
+
+            if let Some(is_customer) = is_customer {
+                query = query.filter(name_store_join::name_is_customer.eq(is_customer));
+            }
+            if let Some(is_supplier) = is_supplier {
+                query = query.filter(name_store_join::name_is_supplier.eq(is_supplier));
+            }
+            if let Some(is_manufacturer) = is_manufacturer {
+                query = query.filter(name::is_manufacturer.eq(is_manufacturer));
+            }
+
+            query = match is_donor {
+                Some(bool) => query.filter(name::is_donor.eq(bool)),
+                None => query,
+            };
+
+            query = match is_visible {
+                Some(true) => query.filter(name_store_join::id.is_not_null()),
+                Some(false) => query.filter(name_store_join::id.is_null()),
+                None => query,
+            };
+
+            query = match is_system_name {
+                Some(true) => query.filter(name::code.eq_any(SYSTEM_NAME_CODES)),
+                Some(false) => query.filter(name::code.ne_all(SYSTEM_NAME_CODES)),
+                None => query,
+            };
+
+            query = match is_store {
+                Some(true) => query.filter(store::id.is_not_null()),
+                Some(false) => query.filter(store::id.is_null()),
+                None => query,
+            };
+
+            if store.is_some() {
+                let store_ids = StoreRepository::create_filtered_query(store).select(store::id);
+                query = query.filter(store::id.eq_any(store_ids));
+            }
+
+            // The condition compiles against the bare name table, so apply it
+            // to this joined query through a sub-select
+            if let Some(condition) = dynamic_filter {
+                let name_ids = name::table
+                    .filter(condition.to_boxed())
+                    .select(name::id)
+                    .into_boxed();
+                query = query.filter(name::id.eq_any(name_ids));
+            }
+        };
+
+        // Only return active (not deleted) names
+        query = query.filter(name::deleted_datetime.is_null());
+        query
+    }
+}
+
+impl Name {
+    pub fn from_join(
+        (name_row, name_store_join_row, store_row, name_oms_fields): NameAndNameStoreJoin,
+    ) -> Name {
+        Name {
+            name_row,
+            name_store_join_row,
+            store_row,
+            properties: name_oms_fields.properties,
+        }
+    }
+
+    pub fn custom_data(&self) -> Result<Option<serde_json::Value>, serde_json::Error> {
+        self.name_row
+            .custom_data_string
+            .as_ref()
+            .map(|custom_data_string| serde_json::from_str(custom_data_string))
+            .transpose()
+    }
+}
+
+#[diesel::dsl::auto_type]
+fn query(store_id: String) -> _ {
+    name::table
+        .left_join(
+            name_store_join::table.on(name_store_join::name_id
+                .eq(name::id)
+                .and(name_store_join::store_id.eq(store_id))),
+        )
+        .left_join(store::table)
+        .inner_join(name_oms_fields_alias)
+}
+
+type BoxedNameQuery = IntoBoxed<'static, query, DBType>;
+
+// Dynamic query filter for the name table. Shared by the name and patient
+// repositories (patients are name rows), and applied to joined queries via a
+// `name::id.eq_any(subquery)` sub-select.
+create_condition!(
+    NameCondition,
+    name::table,
+    (CustomField, custom_fields, name::custom_fields),
+);
+
+impl NameFilter {
+    pub fn new() -> NameFilter {
+        NameFilter::default()
+    }
+
+    pub fn id(mut self, filter: EqualFilter<String>) -> Self {
+        self.id = Some(filter);
+        self
+    }
+
+    pub fn code(mut self, filter: StringFilter) -> Self {
+        self.code = Some(filter);
+        self
+    }
+
+    pub fn name(mut self, filter: StringFilter) -> Self {
+        self.name = Some(filter);
+        self
+    }
+
+    pub fn match_is_supplier(mut self, value: bool) -> Self {
+        self.is_supplier = Some(value);
+        self
+    }
+
+    pub fn is_visible(mut self, value: bool) -> Self {
+        self.is_visible = Some(value);
+        self
+    }
+
+    pub fn is_system_name(mut self, value: bool) -> Self {
+        self.is_system_name = Some(value);
+        self
+    }
+
+    pub fn is_store(mut self, value: bool) -> Self {
+        self.is_store = Some(value);
+        self
+    }
+
+    pub fn store_code(mut self, filter: StringFilter) -> Self {
+        self.store_code = Some(filter);
+        self
+    }
+
+    pub fn is_customer(mut self, value: bool) -> Self {
+        self.is_customer = Some(value);
+        self
+    }
+
+    pub fn r#type(mut self, filter: EqualFilter<NameType>) -> Self {
+        self.r#type = Some(filter);
+        self
+    }
+
+    pub fn code_or_name(mut self, filter: StringFilter) -> Self {
+        self.code_or_name = Some(filter);
+        self
+    }
+
+    pub fn supplying_store_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.supplying_store_id = Some(filter);
+        self
+    }
+
+    pub fn store(mut self, filter: StoreFilter) -> Self {
+        self.store = Some(filter);
+        self
+    }
+
+    pub fn dynamic_filter(mut self, condition: NameCondition::Inner) -> Self {
+        self.dynamic_filter = Some(condition);
+        self
+    }
+
+    pub fn include_disabled(mut self, value: bool) -> Self {
+        self.include_disabled = Some(value);
+        self
+    }
+}
+
+impl Name {
+    pub fn is_customer(&self) -> bool {
+        self.name_store_join_row
+            .as_ref()
+            .map(|name_store_join_row| name_store_join_row.name_is_customer)
+            .unwrap_or(false)
+    }
+
+    pub fn is_supplier(&self) -> bool {
+        self.name_store_join_row
+            .as_ref()
+            .map(|name_store_join_row| name_store_join_row.name_is_supplier)
+            .unwrap_or(false)
+    }
+
+    pub fn is_manufacturer(&self) -> bool {
+        self.name_row.is_manufacturer
+    }
+
+    pub fn is_donor(&self) -> bool {
+        self.name_row.is_donor
+    }
+
+    pub fn is_visible(&self) -> bool {
+        self.name_store_join_row.is_some()
+    }
+
+    /// Name store's disabled based on merge or user action
+    pub fn is_disabled(&self) -> bool {
+        self.store_row
+            .as_ref()
+            .map(|store_row| store_row.is_disabled)
+            .unwrap_or(false)
+    }
+
+    pub fn is_system_name(&self) -> bool {
+        SYSTEM_NAME_CODES
+            .iter()
+            .any(|system_name_code| self.name_row.code == *system_name_code)
+    }
+
+    pub fn store_id(&self) -> Option<&str> {
+        self.store_row
+            .as_ref()
+            .map(|store_row| store_row.id.as_str())
+    }
+}
+
+impl NameType {
+    pub fn equal_to(&self) -> EqualFilter<Self> {
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            ..Default::default()
+        }
+    }
+}
+
+impl From<NameType> for NameRowType {
+    fn from(from_value: NameType) -> NameRowType {
+        use NameRowType as to;
+        use NameType as from;
+        match from_value {
+            from::Facility => to::Facility,
+            from::Invad => to::Invad,
+            from::Repack => to::Repack,
+            from::Store => to::Store,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use util::constants::INVENTORY_ADJUSTMENT_NAME_CODE;
+
+    use crate::{
+        mock::{
+            mock_name_1, mock_test_name_query_store_1, mock_test_name_query_store_2,
+            MockDataInserts,
+        },
+        test_db, NameFilter, NameRepository, NameRow, NameRowRepository, Pagination, StringFilter,
+    };
+
+    use std::convert::TryFrom;
+
+    use super::{Name, NameSort, NameSortField};
+
+    fn data() -> (Vec<NameRow>, Vec<Name>) {
+        let mut rows = Vec::new();
+        let mut queries = Vec::new();
+        for index in 0..200 {
+            rows.push(NameRow {
+                id: format!("id{index:05}"),
+                name: format!("name{index}"),
+                code: format!("code{index}"),
+                is_customer: true,
+                is_supplier: true,
+                ..Default::default()
+            });
+
+            queries.push(Name {
+                name_row: NameRow {
+                    id: format!("id{index:05}"),
+                    name: format!("name{index}"),
+                    code: format!("code{index}"),
+                    is_customer: true,
+                    is_supplier: true,
+                    ..Default::default()
+                },
+                name_store_join_row: None,
+                store_row: None,
+                properties: None,
+            });
+        }
+        (rows, queries)
+    }
+
+    #[actix_rt::test]
+    async fn test_name_query_repository() {
+        // Prepare
+        let (_, storage_connection, _, _) =
+            test_db::setup_all("test_name_query_repository", MockDataInserts::none()).await;
+
+        let (rows, queries) = data();
+        for row in rows {
+            NameRowRepository::new(&storage_connection)
+                .upsert_one(&row)
+                .unwrap();
+        }
+
+        let store_id = "store_a";
+
+        // Test
+        // .count()
+        assert_eq!(
+            usize::try_from(
+                NameRepository::new(&storage_connection)
+                    .count(store_id, None)
+                    .unwrap()
+            )
+            .unwrap(),
+            queries.len()
+        );
+
+        // .query, no pagination (default) - gets all names
+        assert_eq!(
+            NameRepository::new(&storage_connection)
+                .query(store_id, Pagination::new(), None, None)
+                .unwrap()
+                .len(),
+            queries.len()
+        );
+
+        // .query, pagination (offset 10)
+        let result = NameRepository::new(&storage_connection)
+            .query(
+                store_id,
+                Pagination {
+                    offset: 10,
+                    limit: 100,
+                },
+                None,
+                None,
+            )
+            .unwrap();
+        assert_eq!(result.len(), 100);
+        assert_eq!(result[0], queries[10]);
+        assert_eq!(result[99], queries[109]);
+
+        // .query, pagination (first 10)
+        let result = NameRepository::new(&storage_connection)
+            .query(
+                store_id,
+                Pagination {
+                    offset: 0,
+                    limit: 10,
+                },
+                None,
+                None,
+            )
+            .unwrap();
+        assert_eq!(result.len(), 10);
+        assert_eq!(*result.last().unwrap(), queries[9]);
+
+        // .query, pagination (offset 150, first 90) <- more then records in table
+        let result = NameRepository::new(&storage_connection)
+            .query(
+                store_id,
+                Pagination {
+                    offset: 150,
+                    limit: 90,
+                },
+                None,
+                None,
+            )
+            .unwrap();
+        assert_eq!(result.len(), queries.len() - 150);
+        assert_eq!(result.last().unwrap(), queries.last().unwrap());
+    }
+
+    // TODO need to test name_store_join, but it also requires 'store' records to be add and name_store_join helpers
+    // which i think might be too much for this test ? Ideally we would have a database snapshot to load in tests
+    // I've tested locally with graphIQL, seems to work
+
+    #[actix_rt::test]
+    async fn test_name_query_sort() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "test_name_query_sort",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+        let repo = NameRepository::new(&connection);
+
+        let store_id = "store_a";
+        let mut names = repo.query(store_id, Pagination::new(), None, None).unwrap();
+
+        let sorted = repo
+            .query(
+                store_id,
+                Pagination::new(),
+                None,
+                Some(NameSort {
+                    key: NameSortField::Name,
+                    desc: None,
+                }),
+            )
+            .unwrap();
+
+        names.sort_by(|a, b| {
+            a.name_row
+                .name
+                .to_lowercase()
+                .cmp(&b.name_row.name.to_lowercase())
+        });
+
+        for (count, name) in names.iter().enumerate() {
+            assert_eq!(
+                name.name_row.name.clone().to_lowercase(),
+                sorted[count].name_row.name.clone().to_lowercase(),
+            );
+        }
+
+        let sorted = repo
+            .query(
+                store_id,
+                Pagination::new(),
+                None,
+                Some(NameSort {
+                    key: NameSortField::Code,
+                    desc: Some(true),
+                }),
+            )
+            .unwrap();
+
+        names.sort_by(|b, a| {
+            a.name_row
+                .code
+                .to_lowercase()
+                .cmp(&b.name_row.code.to_lowercase())
+        });
+
+        for (count, name) in names.iter().enumerate() {
+            assert_eq!(
+                name.name_row.code.clone().to_lowercase(),
+                sorted[count].name_row.code.clone().to_lowercase(),
+            );
+        }
+    }
+
+    #[actix_rt::test]
+    async fn test_name_query_repository_all_filter_sort() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "test_name_query_repository_all_filter_sort",
+            MockDataInserts::none().names().stores().name_store_joins(),
+        )
+        .await;
+        let repo = NameRepository::new(&connection);
+
+        let store_id = &mock_test_name_query_store_1().id;
+        // test filter:
+
+        // Two matched, name_2 and name_3
+
+        let result = repo
+            .query_by_filter(
+                store_id,
+                NameFilter::new()
+                    .is_visible(true)
+                    .name(StringFilter::like("me_")),
+            )
+            .unwrap();
+        assert_eq!(result.len(), 2);
+
+        // case insensitive search
+        // Two matched, name_2 and name_3
+
+        let result = repo
+            .query_by_filter(
+                store_id,
+                NameFilter::new()
+                    .is_visible(true)
+                    .name(StringFilter::like("mE_")),
+            )
+            .unwrap();
+        assert_eq!(result.len(), 2);
+
+        // case insensitive search with umlaut
+        // Works for postgres but not for sqlite:
+        #[cfg(feature = "postgres")]
+        {
+            let result = repo
+                .query_by_filter(
+                    store_id,
+                    NameFilter::new().name(StringFilter::like("T_Ää_N")),
+                )
+                .unwrap();
+            assert_eq!(result.len(), 1);
+        }
+
+        // Test system names
+
+        let result = repo
+            .query_by_filter(
+                store_id,
+                NameFilter::new()
+                    .is_system_name(true)
+                    .code(StringFilter::equal_to(INVENTORY_ADJUSTMENT_NAME_CODE)),
+            )
+            .unwrap();
+        assert_eq!(result.len(), 1);
+        assert_eq!(
+            result.first().unwrap().name_row.code,
+            INVENTORY_ADJUSTMENT_NAME_CODE
+        );
+
+        let result = repo
+            .query_by_filter(
+                store_id,
+                NameFilter::new()
+                    .is_visible(true)
+                    .is_system_name(true)
+                    .code(StringFilter::equal_to(INVENTORY_ADJUSTMENT_NAME_CODE)),
+            )
+            .unwrap();
+        assert_eq!(result.len(), 0);
+
+        // Test is store
+
+        let result = repo
+            .query_by_filter(store_id, NameFilter::new().is_visible(true).is_store(true))
+            .unwrap();
+        assert_eq!(result.len(), 1);
+        assert_eq!(
+            result.first().unwrap().name_row.id,
+            mock_test_name_query_store_2().name_id
+        );
+
+        // Test is visible
+        // Visibility is determined by having name_store_join
+
+        let result = repo
+            .query_by_filter(
+                &mock_test_name_query_store_2().id,
+                NameFilter::new().is_visible(true),
+            )
+            .unwrap();
+        assert_eq!(result.len(), 2);
+
+        // Test is supplier
+
+        let result = repo
+            .query_by_filter(store_id, NameFilter::new().match_is_supplier(true))
+            .unwrap();
+        assert_eq!(result.len(), 3);
+
+        let result = repo
+            .query_by_filter(
+                &mock_test_name_query_store_2().id,
+                NameFilter::new().match_is_supplier(true),
+            )
+            .unwrap();
+        assert_eq!(result.len(), 1);
+        assert_eq!(result.first().unwrap().name_row.id, mock_name_1().id);
+
+        // Test sort
+
+        let result = repo
+            .query(
+                store_id,
+                Pagination::new(),
+                Some(NameFilter::new().is_visible(true)),
+                Some(NameSort {
+                    key: NameSortField::Code,
+                    desc: Some(true),
+                }),
+            )
+            .unwrap();
+        assert_eq!(result.first().unwrap().name_row.code, "code3");
+    }
+}

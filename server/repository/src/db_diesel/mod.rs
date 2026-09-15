@@ -1,0 +1,719 @@
+use crate::repository_error::RepositoryError;
+
+pub mod abbreviation;
+pub mod abbreviation_row;
+pub mod activity_log;
+pub mod activity_log_row;
+pub mod adjustment;
+pub mod ancillary_item;
+pub mod ancillary_item_row;
+pub mod assets;
+pub mod backend_plugin_row;
+pub mod barcode;
+mod barcode_row;
+pub mod campaign;
+pub mod category_row;
+pub mod changelog;
+pub mod clinician;
+mod clinician_link_row;
+pub mod clinician_row;
+mod clinician_store_join_row;
+pub mod consumption;
+pub mod contact_form;
+pub mod contact_form_row;
+pub mod contact_row;
+pub mod contact_trace;
+pub mod contact_trace_row;
+mod context_row;
+pub mod currency;
+mod currency_row;
+pub mod custom_field;
+pub mod custom_field_option_row;
+pub mod custom_field_row;
+pub mod custom_field_scope_row;
+pub mod custom_fields_json;
+pub mod days_out_of_stock;
+pub mod days_out_of_stock_query;
+pub mod demographic;
+pub mod demographic_indicator;
+pub mod demographic_indicator_row;
+pub mod demographic_projection;
+pub mod demographic_projection_row;
+pub mod demographic_row;
+pub mod diagnosis;
+pub mod diagnosis_row;
+pub mod diesel_schema;
+pub mod document;
+pub mod document_registry;
+mod document_registry_config;
+pub mod document_registry_row;
+pub mod email_queue_row;
+pub mod encounter;
+pub mod encounter_row;
+mod filter_restriction;
+mod filter_sort_pagination;
+pub mod form_schema;
+mod form_schema_row;
+pub mod frontend_plugin_row;
+pub mod help_document;
+pub mod help_document_row;
+pub mod indicator_column;
+mod indicator_column_row;
+pub mod indicator_line;
+pub mod indicator_line_row;
+pub mod indicator_value;
+mod indicator_value_row;
+pub mod insurance_provider_row;
+pub mod invoice;
+pub mod invoice_line;
+pub mod invoice_line_row;
+pub mod invoice_row;
+pub mod item;
+pub mod item_category;
+pub mod item_category_row;
+pub mod item_direction;
+pub mod item_direction_row;
+pub mod item_ledger;
+mod item_link_row;
+pub mod item_row;
+pub mod item_store_join;
+pub mod item_variant;
+pub mod item_warning_join;
+pub mod item_warning_join_row;
+pub mod json_custom_field_filter;
+pub mod key_value_store;
+pub mod location;
+pub mod location_movement;
+mod location_movement_row;
+mod location_row;
+pub mod location_type;
+mod location_type_row;
+pub mod master_list;
+pub mod master_list_line;
+mod master_list_line_row;
+pub mod master_list_name_join;
+mod master_list_row;
+mod migration_fragment_log;
+pub mod name;
+pub mod name_insurance_join_row;
+mod name_link_row;
+pub mod name_property;
+pub mod name_property_row;
+pub mod name_row;
+pub mod name_store_join;
+pub mod name_tag;
+pub mod name_tag_join;
+mod name_tag_row;
+mod number_row;
+pub mod patient;
+pub mod period;
+pub mod plugin_data;
+pub mod plugin_data_row;
+pub mod preference;
+mod preference_row;
+pub mod prescription_request;
+pub mod prescription_request_line_row;
+pub mod prescription_request_row;
+pub mod printer;
+pub mod printer_row;
+pub mod program_enrolment;
+mod program_enrolment_row;
+pub mod program_event;
+mod program_event_row;
+pub mod program_indicator;
+mod program_indicator_row;
+mod program_requisition;
+pub mod property;
+pub mod property_row;
+pub mod purchase_order;
+pub mod purchase_order_line;
+pub mod purchase_order_line_row;
+pub mod purchase_order_row;
+pub mod reason_option;
+pub mod reason_option_row;
+pub mod replenishment;
+pub mod report;
+mod report_query;
+pub mod report_row;
+pub mod requisition;
+pub mod requisition_line;
+pub mod rnr_form;
+pub mod rnr_form_line;
+pub mod rnr_form_line_row;
+pub mod rnr_form_row;
+pub mod sensor;
+pub mod sensor_row;
+pub mod shipping_method;
+pub mod shipping_method_row;
+pub mod site;
+pub mod site_row;
+pub mod stock_line;
+pub mod stock_line_ledger;
+pub mod stock_line_ledger_discrepancy;
+mod stock_line_row;
+pub mod stock_movement;
+pub mod stock_on_hand;
+pub mod stock_relocation;
+pub mod stock_relocation_line_row;
+pub mod stock_relocation_row;
+pub mod stocktake;
+pub mod stocktake_line;
+mod stocktake_line_row;
+pub mod stocktake_row;
+mod storage_connection;
+pub mod store;
+mod store_preference_row;
+pub mod store_row;
+pub mod sync_buffer;
+pub mod sync_file_reference;
+pub mod sync_file_reference_row;
+pub mod sync_log;
+mod sync_log_row;
+pub mod sync_log_v7;
+pub mod sync_message;
+pub mod sync_message_row;
+pub mod sync_request;
+pub mod system_log_row;
+pub mod temperature_breach;
+pub mod temperature_breach_config;
+mod temperature_breach_config_row;
+pub mod temperature_breach_row;
+mod temperature_excursion;
+pub mod temperature_log;
+mod temperature_log_row;
+mod unit_row;
+mod user;
+pub mod user_permission;
+pub mod user_permission_row;
+pub mod user_row;
+mod user_store_join_row;
+pub mod vaccination;
+pub mod vaccination_card;
+pub mod vaccination_course;
+pub mod vaccination_row;
+pub mod vaccine_course;
+pub mod vvm_status;
+pub mod warning;
+pub mod warning_row;
+
+pub use abbreviation_row::*;
+pub use activity_log_row::*;
+pub use adjustment::*;
+pub use ancillary_item::*;
+pub use ancillary_item_row::*;
+pub use assets::*;
+pub use backend_plugin_row::*;
+pub use barcode_row::*;
+pub use campaign::*;
+pub use category_row::*;
+pub use changelog::*;
+pub use clinician::*;
+pub use clinician_link_row::*;
+pub use clinician_row::*;
+pub use clinician_store_join_row::*;
+pub use consumption::*;
+pub use contact_form_row::*;
+pub use contact_row::*;
+pub use context_row::*;
+pub use currency::*;
+pub use currency_row::*;
+pub use custom_field::*;
+pub use custom_field_option_row::*;
+pub use custom_field_row::*;
+pub use custom_field_scope_row::*;
+pub use custom_fields_json::*;
+pub use days_out_of_stock::*;
+pub use days_out_of_stock_query::*;
+pub use demographic_indicator::*;
+pub use demographic_indicator_row::*;
+pub use demographic_projection_row::*;
+pub use demographic_row::*;
+pub use diagnosis_row::*;
+pub use document::*;
+pub use document_registry::*;
+pub use document_registry_config::*;
+pub use document_registry_row::*;
+pub use encounter::*;
+pub use encounter_row::*;
+pub use filter_sort_pagination::*;
+pub use form_schema::*;
+pub use form_schema_row::*;
+pub use frontend_plugin_row::*;
+pub use help_document::*;
+pub use help_document_row::*;
+pub use indicator_column_row::*;
+pub use indicator_line_row::*;
+pub use indicator_value_row::*;
+pub use insurance_provider_row::*;
+pub use invoice::*;
+pub use invoice_line::*;
+pub use invoice_line_row::*;
+pub use invoice_row::*;
+pub use item::*;
+pub use item_direction_row::*;
+pub use item_ledger::*;
+pub use item_link_row::*;
+pub use item_row::*;
+pub use item_store_join::*;
+pub use item_variant::*;
+pub use item_warning_join::*;
+pub use item_warning_join_row::*;
+pub use json_custom_field_filter::*;
+pub use key_value_store::*;
+pub use location_movement_row::*;
+pub use location_row::*;
+pub use location_type::*;
+pub use location_type_row::*;
+pub use master_list::*;
+pub use master_list_line::*;
+pub use master_list_line_row::*;
+pub use master_list_name_join::*;
+pub use master_list_row::*;
+pub(crate) use migration_fragment_log::*;
+pub use name::*;
+pub use name_insurance_join_row::*;
+pub use name_link_row::*;
+pub use name_property::*;
+pub use name_property_row::*;
+pub use name_row::*;
+pub use name_store_join::*;
+pub use name_tag::*;
+pub use name_tag_join::*;
+pub use name_tag_row::*;
+pub use number_row::*;
+pub use patient::*;
+pub use period::*;
+pub use plugin_data::*;
+pub use plugin_data_row::*;
+pub use preference::*;
+pub use preference_row::*;
+pub use prescription_request::*;
+pub use prescription_request_line_row::*;
+pub use prescription_request_row::*;
+pub use printer_row::*;
+pub use program_enrolment::*;
+pub use program_enrolment_row::*;
+pub use program_event::*;
+pub use program_event_row::*;
+pub use program_indicator::*;
+pub use program_indicator_row::*;
+pub use program_requisition::*;
+pub use property_row::*;
+pub use purchase_order::*;
+pub use purchase_order_line::*;
+pub use purchase_order_line_row::*;
+pub use purchase_order_row::*;
+pub use reason_option::*;
+pub use reason_option_row::*;
+pub use replenishment::*;
+pub use report::*;
+pub use report_query::*;
+pub use report_row::*;
+pub use requisition::*;
+pub use requisition_line::*;
+pub use rnr_form::*;
+pub use rnr_form_line::*;
+pub use rnr_form_line_row::*;
+pub use rnr_form_row::*;
+pub use sensor::*;
+pub use sensor_row::*;
+pub use shipping_method::*;
+pub use shipping_method_row::*;
+pub use site::*;
+pub use site_row::*;
+pub use stock_line::*;
+pub use stock_line_row::*;
+pub use stock_movement::*;
+pub use stock_on_hand::*;
+pub use stock_relocation::*;
+pub use stock_relocation_line_row::*;
+pub use stock_relocation_row::*;
+pub use stocktake::*;
+pub use stocktake_line::*;
+pub use stocktake_line_row::*;
+pub use stocktake_row::*;
+pub use storage_connection::*;
+pub use store::*;
+pub use store_preference_row::*;
+pub use store_row::*;
+pub use sync_buffer::*;
+pub use sync_file_reference::*;
+pub use sync_file_reference_row::*;
+pub use sync_log::*;
+pub use sync_log_row::*;
+pub use sync_log_v7::*;
+pub use sync_message::*;
+pub use sync_message_row::*;
+pub use sync_request::*;
+pub use system_log_row::*;
+pub use temperature_breach::*;
+pub use temperature_breach_config::*;
+pub use temperature_breach_config_row::*;
+pub use temperature_breach_row::*;
+pub use temperature_excursion::*;
+pub use temperature_log::*;
+pub use temperature_log_row::*;
+pub use unit_row::*;
+pub use user::*;
+pub use user_permission::*;
+pub use user_permission_row::*;
+pub use user_row::*;
+pub use user_store_join_row::*;
+pub use vaccination::*;
+pub use vaccination_card::*;
+pub use vaccination_course::*;
+pub use vaccination_row::*;
+pub use vaccine_course::*;
+pub use vvm_status::*;
+pub use warning::*;
+pub use warning_row::*;
+
+use diesel::{
+    prelude::*,
+    r2d2::{ConnectionManager, Pool, PooledConnection},
+    result::{DatabaseErrorKind as DieselDatabaseErrorKind, Error as DieselError},
+    sql_query,
+    sql_types::Text,
+};
+
+#[cfg(not(feature = "postgres"))]
+pub type DBBackendConnection = SqliteConnection;
+
+#[cfg(feature = "postgres")]
+pub type DBBackendConnection = PgConnection;
+
+#[cfg(not(feature = "postgres"))]
+pub type DBType = diesel::sqlite::Sqlite;
+
+#[cfg(feature = "postgres")]
+pub type DBType = diesel::pg::Pg;
+
+pub type DBConnection = PooledConnection<ConnectionManager<DBBackendConnection>>;
+
+impl From<DieselError> for RepositoryError {
+    fn from(err: DieselError) -> Self {
+        use RepositoryError as Error;
+        match err {
+            DieselError::InvalidCString(extra) => {
+                Error::as_db_error("DIESEL_INVALID_C_STRING", extra)
+            }
+            DieselError::DatabaseError(err, extra) => {
+                let extra = format!(
+                    "{} {} {} {} {} {} {}",
+                    extra.message(),
+                    extra.details().unwrap_or_default(),
+                    extra.hint().unwrap_or_default(),
+                    extra.table_name().unwrap_or_default(),
+                    extra.column_name().unwrap_or_default(),
+                    extra.constraint_name().unwrap_or_default(),
+                    extra.statement_position().unwrap_or_default(),
+                );
+                match err {
+                    DieselDatabaseErrorKind::UniqueViolation => Error::UniqueViolation(extra),
+                    DieselDatabaseErrorKind::ForeignKeyViolation => {
+                        Error::ForeignKeyViolation(extra)
+                    }
+                    DieselDatabaseErrorKind::UnableToSendCommand => {
+                        Error::as_db_error("UNABLE_TO_SEND_COMMAND", extra)
+                    }
+                    DieselDatabaseErrorKind::SerializationFailure => {
+                        Error::as_db_error("SERIALIZATION_FAILURE", extra)
+                    }
+                    _ => Error::as_db_error("UNKNOWN", extra),
+                }
+            }
+            DieselError::NotFound => RepositoryError::NotFound,
+            DieselError::QueryBuilderError(extra) => {
+                Error::as_db_error("DIESEL_QUERY_BUILDER_ERROR", extra)
+            }
+            DieselError::DeserializationError(extra) => {
+                Error::as_db_error("DIESEL_DESERIALIZATION_ERROR", extra)
+            }
+            DieselError::SerializationError(extra) => {
+                Error::as_db_error("DIESEL_SERIALIZATION_ERROR", extra)
+            }
+            DieselError::RollbackTransaction => {
+                Error::as_db_error("DIESEL_ROLLBACK_TRANSACTION", "")
+            }
+            DieselError::AlreadyInTransaction => {
+                Error::as_db_error("DIESEL_ALREADY_IN_TRANSACTION", "")
+            }
+            _ => {
+                // try to get a more detailed diesel msg:
+                let diesel_msg = format!("{err}");
+                Error::as_db_error("DIESEL_UNKNOWN", diesel_msg)
+            }
+        }
+    }
+}
+
+fn get_connection(
+    pool: &Pool<ConnectionManager<DBBackendConnection>>,
+) -> Result<DBConnection, RepositoryError> {
+    let state = pool.state();
+    let available = state.idle_connections;
+    let total = state.connections;
+    let max = pool.max_size();
+
+    if available == 0 {
+        log::warn!(
+            "DB pool exhausted: {}/{} connections in use, max={}",
+            total - available,
+            total,
+            max,
+        );
+    }
+
+    let start = std::time::Instant::now();
+    let result = pool.get();
+    let wait_ms = start.elapsed().as_millis();
+
+    if wait_ms > 500 {
+        log::warn!(
+            "DB pool: waited {}ms for connection (available={}, total={}, max={})",
+            wait_ms,
+            available,
+            total,
+            max,
+        );
+    }
+
+    result.map_err(|error| {
+        log::error!(
+            "DB pool: failed to get connection after {}ms (available={}, total={}, max={}): {:?}",
+            wait_ms,
+            available,
+            total,
+            max,
+            error,
+        );
+        RepositoryError::DBError {
+            msg: "Failed to open Connection".to_string(),
+            extra: format!("{:?}", error),
+        }
+    })
+}
+
+#[derive(QueryableByName, Debug, PartialEq)]
+pub struct JsonRawRow {
+    #[diesel(sql_type = Text)]
+    pub json_row: String,
+}
+/// Runs an arbitrary statement with nothing standing between it and the database.
+///
+/// `pub(crate)` on purpose: `raw_query_read_only` is the only entry point that should be
+/// reachable from outside this crate, and the two sit next to each other. Making this one
+/// public again would put the guard one `use` away from being bypassed by the next
+/// binding that wants raw SQL.
+// TODO should accept parameters
+pub(crate) fn raw_query(
+    connection: &StorageConnection,
+    query: String,
+) -> Result<Vec<JsonRawRow>, RepositoryError> {
+    Ok(sql_query(&query).get_results::<JsonRawRow>(connection.lock().connection())?)
+}
+
+/// `raw_query` with writes refused by the database itself.
+///
+/// Used for statements from backend plugins, which are arbitrary strings from a bundle
+/// (see `service::boajs::methods::sql`). The database enforces this rather than a SQL
+/// parser: a parser has to be kept correct against two dialects, and on postgres a
+/// statement that looks like a read can still write —
+/// `WITH x AS (INSERT … RETURNING *) SELECT …` begins with `WITH`.
+///
+/// Only the statement is read-only, not the connection. Plugins have a narrow,
+/// deliberate write path through `use_repository` (plugin_data, sync_message) that must
+/// keep working, and the connection here is often lent by the caller
+/// (`service::boajs::context::with_shared_connection`), so any state this sets has to be
+/// undone before returning.
+///
+/// # The connection must not already be in a transaction
+///
+/// Enforced below, because on postgres it is what keeps the read-only setting from
+/// escaping. `transaction_sync_etc(_, false)` opens a `SAVEPOINT` rather than a fresh
+/// transaction when one is already open, and `SET TRANSACTION READ ONLY` applies to the
+/// whole enclosing transaction and outlives the `RELEASE` — so the caller's transaction
+/// would be left read-only for the rest of its life.
+///
+/// The plugin path never arrives in a transaction: `with_shared_connection` refuses to
+/// lend an in-transaction connection and the fallback checks out a fresh one.
+pub fn raw_query_read_only(
+    connection: &StorageConnection,
+    query: String,
+) -> Result<Vec<JsonRawRow>, RepositoryError> {
+    let transaction_level = connection
+        .lock()
+        .transaction_level::<RepositoryError>()
+        .map_err(TransactionError::to_inner_error)?;
+    if transaction_level > 0 {
+        return Err(RepositoryError::DBError {
+            msg: "Refusing to run a read-only query on a connection that is already in a \
+                  transaction"
+                .to_string(),
+            extra: format!("transaction level {transaction_level}"),
+        });
+    }
+
+    if cfg!(feature = "postgres") {
+        // `SET TRANSACTION READ ONLY` applies to the transaction it opens and ends with it,
+        // so nothing leaks back to a lent connection. It must be the first statement in the
+        // transaction, which is why this opens its own rather than reusing an outer one —
+        // and why the check above insists there is no outer one to reuse.
+        connection
+            .transaction_sync_etc(
+                |connection| -> Result<Vec<JsonRawRow>, RepositoryError> {
+                    sql_query("SET TRANSACTION READ ONLY")
+                        .execute(connection.lock().connection())?;
+                    raw_query(connection, query)
+                },
+                false,
+            )
+            .map_err(|error| error.to_inner_error())
+    } else {
+        // sqlite has no read-only transaction, but `query_only` is a connection flag that
+        // makes the engine refuse every write for as long as it is set.
+        struct QueryOnlyGuard<'a>(&'a StorageConnection);
+        impl Drop for QueryOnlyGuard<'_> {
+            fn drop(&mut self) {
+                if let Err(error) =
+                    sql_query("PRAGMA query_only = 0").execute(self.0.lock().connection())
+                {
+                    // A connection stuck in query_only would fail every later write on it, so
+                    // this is worth shouting about even though there is no way to recover here.
+                    log::error!("Failed to clear query_only after a plugin query: {error}");
+                }
+            }
+        }
+
+        sql_query("PRAGMA query_only = 1").execute(connection.lock().connection())?;
+        // Cleared even if the query panics or returns early.
+        let _guard = QueryOnlyGuard(connection);
+
+        raw_query(connection, query)
+    }
+}
+
+#[cfg(test)]
+mod raw_query_test {
+    use super::*;
+    use crate::{
+        mock::MockDataInserts, test_db, StoreRowRepository, UserAccountRow,
+        UserAccountRowRepository,
+    };
+
+    /// Security audit DS-3: `sql()` runs plugin-supplied statements, so writes must be
+    /// refused by the database rather than by trying to recognise them.
+    #[actix_rt::test]
+    async fn raw_query_read_only_refuses_writes() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "raw_query_read_only_refuses_writes",
+            MockDataInserts::none(),
+        )
+        .await;
+
+        UserAccountRowRepository::new(&connection)
+            .insert_one(&UserAccountRow {
+                id: "user-1".to_string(),
+                username: "user-1".to_string(),
+                hashed_password: "ORIGINAL-HASH".to_string(),
+                ..Default::default()
+            })
+            .unwrap();
+
+        let writes = [
+            "UPDATE user_account SET hashed_password = 'OWNED'",
+            "DELETE FROM user_account",
+            "INSERT INTO user_account (id, username, hashed_password) VALUES ('x', 'x', 'x')",
+            "CREATE TABLE plugin_owned (id TEXT)",
+            "DROP TABLE user_account",
+        ];
+
+        for write in writes {
+            assert!(
+                raw_query_read_only(&connection, write.to_string()).is_err(),
+                "plugin sql() accepted a write: {}",
+                write
+            );
+        }
+
+        // Nothing landed
+        let user = UserAccountRowRepository::new(&connection)
+            .find_one_by_id("user-1")
+            .unwrap()
+            .unwrap();
+        assert_eq!(user.hashed_password, "ORIGINAL-HASH");
+    }
+
+    /// The read-only setting is transaction-scoped on postgres, and `transaction_sync_etc`
+    /// gives an already-in-transaction connection a `SAVEPOINT` whose `RELEASE` would not
+    /// undo it - so a connection with a transaction open is refused outright rather than
+    /// left read-only for the rest of the caller's transaction.
+    #[actix_rt::test]
+    async fn raw_query_read_only_refuses_a_connection_already_in_a_transaction() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "raw_query_read_only_refuses_in_transaction",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        connection
+            .transaction_sync(|transaction_connection| {
+                assert!(
+                    raw_query_read_only(transaction_connection, "SELECT 1".to_string()).is_err(),
+                    "read-only query accepted a connection already in a transaction"
+                );
+                Ok(()) as Result<(), RepositoryError>
+            })
+            .unwrap();
+
+        // The caller's transaction was not left read-only by the refusal
+        let store = StoreRowRepository::new(&connection)
+            .find_one_by_id("store_a")
+            .unwrap()
+            .unwrap();
+        StoreRowRepository::new(&connection)
+            .upsert_one(&store)
+            .unwrap();
+    }
+
+    /// The reads plugins actually make must still work, and the connection must be usable
+    /// for writes afterwards — plugins keep a deliberate write path via `use_repository`,
+    /// and this connection is often lent by the caller.
+    #[actix_rt::test]
+    async fn raw_query_read_only_allows_reads_and_leaves_the_connection_writable() {
+        let (_, connection, _, _) = test_db::setup_all(
+            "raw_query_read_only_allows_reads",
+            MockDataInserts::none().names().stores(),
+        )
+        .await;
+
+        // The shape every plugin uses: the sqlQuery helper wraps statements as
+        // SELECT json_object(...) FROM (...)
+        let json_object = if cfg!(feature = "postgres") {
+            "json_build_object"
+        } else {
+            "json_object"
+        };
+        let rows = raw_query_read_only(
+            &connection,
+            format!(
+                "SELECT {json_object}('id', inner_statement.id) AS json_row
+                 FROM (SELECT id FROM store) AS inner_statement"
+            ),
+        )
+        .unwrap();
+        assert!(!rows.is_empty(), "read returned nothing");
+
+        // A read-only statement that failed must not leave the connection read-only either
+        assert!(raw_query_read_only(&connection, "SELECT * FROM nope".to_string()).is_err());
+
+        // The caller's connection still writes
+        let store = StoreRowRepository::new(&connection)
+            .find_one_by_id("store_a")
+            .unwrap()
+            .unwrap();
+        StoreRowRepository::new(&connection)
+            .upsert_one(&store)
+            .unwrap();
+    }
+}

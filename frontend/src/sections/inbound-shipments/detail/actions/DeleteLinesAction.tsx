@@ -76,7 +76,13 @@ const Body = (props: LineActionProps & { onClose: () => void }) => {
       onClose={props.onClose}
       icon={<TrashIcon />}
       testId="confirmation-modal"
-      title={t('heading.are-you-sure')}
+      // The title tracks the phase — a rejection is not a question
+      // (kdd/action-modal).
+      title={
+        phase() === 'error'
+          ? t('heading.cannot-do-that')
+          : t('heading.are-you-sure')
+      }
       description={
         <Switch
           fallback={tPlural('messages.confirm-delete-shipment-lines', count)}

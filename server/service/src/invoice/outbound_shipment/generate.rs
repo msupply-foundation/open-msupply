@@ -1,0 +1,64 @@
+use repository::db_diesel::InvoiceLineType;
+use repository::{InvoiceLineRow, InvoiceRow, ItemRowRepository, RepositoryError};
+use util::uuid::uuid;
+
+use crate::service_provider::ServiceContext;
+
+pub fn generate_unallocated_invoice_lines(
+    ctx: &ServiceContext,
+    invoice_row: &InvoiceRow,
+    item_ids: Vec<String>,
+) -> Result<Vec<InvoiceLineRow>, RepositoryError> {
+    let mut result: Vec<InvoiceLineRow> = Vec::new();
+
+    item_ids.into_iter().for_each(|item_id| {
+        match ItemRowRepository::new(&ctx.connection).find_active_by_id(&item_id) {
+            Ok(Some(item)) => {
+                result.push(InvoiceLineRow {
+                    id: uuid(),
+                    invoice_id: invoice_row.id.clone(),
+                    item_id: item.id.clone(),
+                    item_name: item.name.clone(),
+                    item_code: item.code.clone(),
+                    stock_line_id: None,
+                    location_id: None,
+                    batch: None,
+                    expiry_date: None,
+                    manufacture_date: None,
+                    purchase_order_line_id: None,
+                    pack_size: 1.0,
+                    cost_price_per_pack: 0.0,
+                    sell_price_per_pack: 0.0,
+                    total_before_tax: 0.0,
+                    total_after_tax: 0.0,
+                    tax_percentage: None,
+                    r#type: InvoiceLineType::UnallocatedStock,
+                    number_of_packs: 0.0,
+                    prescribed_quantity: None,
+                    note: None,
+                    foreign_currency_price_before_tax: None,
+                    item_variant_id: None,
+                    linked_invoice_id: None,
+                    donor_id: None,
+                    manufacturer_id: None,
+                    legacy_goods_received_line_id: None,
+                    transfer_comment: None,
+                    vvm_status_id: None,
+                    reason_option_id: None,
+                    campaign_id: None,
+                    program_id: None,
+                    shipped_number_of_packs: None,
+                    volume_per_pack: 0.0,
+                    shipped_pack_size: None,
+                    status: None,
+                    received_number_of_packs: None,
+                    linked_invoice_line_id: None,
+                });
+            }
+            Ok(None) => {}
+            Err(_error) => {}
+        };
+    });
+
+    Ok(result)
+}

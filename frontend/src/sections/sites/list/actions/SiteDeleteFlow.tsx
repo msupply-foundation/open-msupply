@@ -6,6 +6,7 @@ import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { Button } from '@/ui/elements/buttons/Button';
 import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
+import { Stack } from '@/ui/layout/Stack/Stack';
 import { TrashIcon } from '@/ui/icons';
 import { DeleteSite } from '../sites.generated';
 import {
@@ -121,7 +122,17 @@ export const SiteDeleteFlow: Component<SiteDeleteFlowProps> = props => {
       onClose={props.onCancel}
       icon={<TrashIcon />}
       testId="confirmation-modal"
-      title={t('heading.are-you-sure')}
+      // The title tracks the phase: the report is never a question
+      // (kdd/action-modal). It only opens because a site was refused, but the
+      // deletes are independent — when some sites DID go, "Can't do that!"
+      // would sit over a report saying they are gone.
+      title={
+        phase().kind !== 'report'
+          ? t('heading.are-you-sure')
+          : (report()?.deletedCount ?? 0) > 0
+            ? t('heading.some-not-deleted')
+            : t('heading.cannot-do-that')
+      }
       description={
         <Switch
           // Confirm / deleting: the count-aware confirmation. The editor's own
@@ -131,7 +142,7 @@ export const SiteDeleteFlow: Component<SiteDeleteFlowProps> = props => {
         >
           <Match when={report()}>
             {summary => (
-              <>
+              <Stack gap="sm">
                 <Show when={summary().deletedCount > 0}>
                   <p>
                     {tPlural('messages.deleted-sites', summary().deletedCount)}
@@ -146,7 +157,7 @@ export const SiteDeleteFlow: Component<SiteDeleteFlowProps> = props => {
                     </Alert>
                   )}
                 </For>
-              </>
+              </Stack>
             )}
           </Match>
         </Switch>

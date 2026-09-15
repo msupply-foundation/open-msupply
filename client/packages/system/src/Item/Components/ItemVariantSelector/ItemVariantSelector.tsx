@@ -1,0 +1,66 @@
+import React, { PropsWithChildren } from 'react';
+import {
+  PaperPopoverSection,
+  useTranslation,
+  NothingHere,
+  PaperPopover,
+  useSimpleMaterialTable,
+  MaterialTable,
+} from '@openmsupply-client/common';
+import { useItemVariantSelectorColumns } from './columns';
+import { ItemVariantFragment } from '../../api';
+
+interface ItemVariantSelectorProps {
+  selectedId?: string | null;
+  variants: ItemVariantFragment[];
+  isLoading?: boolean;
+  onVariantSelected: (itemVariantId: string | null) => void;
+  disabled?: boolean;
+  isVaccine?: boolean;
+}
+
+export const ItemVariantSelector = ({
+  children,
+  selectedId,
+  variants,
+  isLoading = false,
+  disabled = false,
+  onVariantSelected,
+  isVaccine,
+}: ItemVariantSelectorProps & PropsWithChildren) => {
+  const t = useTranslation();
+
+  const columns = useItemVariantSelectorColumns({
+    selectedId,
+    onVariantSelected,
+    isVaccine,
+  });
+
+  const table = useSimpleMaterialTable<ItemVariantFragment>({
+    tableId: 'item-variant-selector',
+    columns,
+    data: variants,
+    isLoading,
+    getIsRestrictedRow: disabled ? () => true : undefined,
+    enableBottomToolbar: false,
+    noDataElement: <NothingHere body={t('messages.no-item-variants')} />,
+  });
+
+  return (
+    <PaperPopover
+      mode="click"
+      placement={{
+        vertical: 'bottom',
+        horizontal: 'center',
+      }}
+      width={850}
+      Content={
+        <PaperPopoverSection>
+          <MaterialTable table={table} />
+        </PaperPopoverSection>
+      }
+    >
+      {children}
+    </PaperPopover>
+  );
+};
