@@ -348,7 +348,7 @@ fn mapping_custom_fields() -> Vec<MappingCustomField> {
 /// field-label sync once created), and the `custom_field_scope` mapping is only
 /// created when **absent**, so a later display-mode edit (`display_mode`) is
 /// preserved rather than reset here.
-pub(crate) fn seed_central_mapping_custom_fields(
+pub fn seed_central_mapping_custom_fields(
     connection: &StorageConnection,
 ) -> Result<(), RepositoryError> {
     let custom_field_repo = CustomFieldRowRepository::new(connection);

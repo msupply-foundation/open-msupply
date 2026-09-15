@@ -8,8 +8,8 @@ use repository::{
 use service::{
     settings::Settings,
     sync::{
-        sync_status::logger::SyncLogger, synchroniser::integrate_and_translate_sync_buffer,
-        CentralServerConfig,
+        seed_central_mapping_custom_fields, sync_status::logger::SyncLogger,
+        synchroniser::integrate_and_translate_sync_buffer, CentralServerConfig,
     },
 };
 
@@ -77,13 +77,25 @@ pub fn reintegrate_buffer(
         info!("Finished applying database migrations");
     }
 
+    let connection = connection_manager.connection()?;
+
+    // The server seeds these right after it learns it is central and before it integrates
+    // anything (see `SynchroniserV5V6::sync`). The category translators emit
+    // `custom_field_option` rows whose `custom_field_id` is one of the mapping keys, so on a
+    // fresh replay database (initialise-database + pg_restore of the buffer) every category row
+    // would fail the foreign key without this. The seeder is idempotent and change-aware, so
+    // on a real central that has already synced this is a no-op.
+    if CentralServerConfig::is_central_server() {
+        info!("Seeding central mapping custom fields");
+        seed_central_mapping_custom_fields(&connection)?;
+    }
+
     if !skip_buffer_reset {
         reset_sync_buffer(&connection_manager, errors_only, tables.as_deref())?;
     } else {
         info!("Skipping sync buffer reset")
     }
 
-    let connection = connection_manager.connection()?;
     let total_pending = SyncBufferRepository::new(&connection).count_pending(
         source_site_id,
         SyncVersion::V5V6,
