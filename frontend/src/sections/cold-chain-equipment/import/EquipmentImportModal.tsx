@@ -261,6 +261,19 @@ export const EquipmentImportModal: Component<
     setStep('review');
   };
 
+  /*
+   * The rows the user has to correct, written back out with the reason beside
+   * each — and named for what the file actually holds, which is two different
+   * things at the two points this action is reachable from.
+   *
+   * BEFORE an import runs, `rows()` is the whole file and nothing has been
+   * created, so the user must fix and re-upload ALL of it; the clean rows
+   * belong in the file and "failed to upload" would be a lie about them.
+   * AFTER a run that partly failed, `rows()` is only the refusals — the rest
+   * were created — and that name is exactly right.
+   *
+   * `importError()` is set only by a failed run, so it is the discriminator.
+   */
   const exportFailed = async () => {
     const { properties } = await loadCatalogue();
     const csv = failedRowsToCsv(
@@ -268,9 +281,12 @@ export const EquipmentImportModal: Component<
       properties.map(property => property.key),
       props.isCentral
     );
+    const name = importError()
+      ? t('filename.cce-failed-uploads')
+      : t('filename.cce-rows-to-fix');
     await saveBlob(
       new Blob([csv], { type: 'text/csv;charset=utf-8;' }),
-      `${t('filename.cce-failed-uploads')}.csv`
+      `${name}.csv`
     );
   };
 

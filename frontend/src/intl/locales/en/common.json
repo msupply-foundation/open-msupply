@@ -745,6 +745,7 @@
   "filename.asset-import-example": "Example asset item import",
   "filename.cce": "equipment upload template",
   "filename.cce-failed-uploads": "Assets failed to upload",
+  "filename.cce-rows-to-fix": "Assets to fix",
   "filename.cold-chain-equipment": "cold-chain-equipment",
   "filename.customer-returns": "customer-returns",
   "filename.facilities-properties": "facilities-properties-import",

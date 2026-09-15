@@ -451,14 +451,19 @@ export const parseImportFile = (text: string, lookup: Lookup): ImportRow[] => {
       } else storeId = store.id;
     }
 
-    // The four dates are SOFT: a blank or unreadable one warns and the row
-    // imports without it (OMS-REG-CCE-07.6/.7).
+    /*
+     * The four dates are SOFT: an unreadable one warns and the row imports
+     * without it (OMS-REG-CCE-07.6/.7).
+     *
+     * An EMPTY one says nothing at all. All four are optional, so a blank is an
+     * answer — "no warranty recorded" — not a value we failed to read, and
+     * warning about it fired the banner on the most ordinary file there is. A
+     * warning every user learns to dismiss is worse than no warning, because it
+     * takes the real ones down with it.
+     */
     const softDate = (label: string): string | null => {
       const raw = cell(cells, label);
-      if (!raw) {
-        warnings.push(t('warning.field-not-parsed', { field: label }));
-        return null;
-      }
+      if (!raw) return null;
       const parsed = parseImportDate(raw);
       if (!parsed) {
         warnings.push(t('warning.field-not-parsed', { field: label }));
