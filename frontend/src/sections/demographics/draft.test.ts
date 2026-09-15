@@ -5,6 +5,7 @@ import {
   ZERO_RATES,
   baselineOf,
   currentPopulation,
+  emptyDraft,
   newIndicator,
   pinGeneralFirst,
   projectYears,
@@ -142,6 +143,17 @@ describe('the grid order (rules § the grid)', () => {
     const draft = toDraft([general(0)], undefined);
     expect(draft.rates).toEqual(ZERO_RATES);
     expect(draft.projectionId).toBeUndefined();
+  });
+
+  it('OMS-REG-MNG-03.43 — every seed hands out a FRESH zero-rates object, never the constant', () => {
+    // The draft is a Solid store, which writes through to the object it was
+    // given: a shared constant would take the first edit and hand it back on
+    // Cancel (the deterministic suite caught exactly that on a datafile with no
+    // rates record).
+    expect(ratesOf(undefined)).not.toBe(ratesOf(undefined));
+    expect(ratesOf(undefined)).not.toBe(ZERO_RATES);
+    expect(emptyDraft().rates).not.toBe(ZERO_RATES);
+    expect(toDraft([general(0)], undefined).rates).not.toBe(ZERO_RATES);
   });
 
   it('OMS-REG-MNG-03.2 — stored rates reach the headers as stored, out-of-range or not', () => {

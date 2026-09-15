@@ -78,9 +78,15 @@ export const ZERO_RATES: GrowthRates = {
   year5: 0,
 };
 
+// Always a FRESH rates object — never the ZERO_RATES constant itself. The
+// draft lives in a Solid store, and a store writes through to the object it
+// was given: seeding the constant and then editing a rate would silently
+// mutate ZERO_RATES, so the next seed (a Cancel, a reload with no record)
+// would "restore" the edited figures. Caught by the deterministic suite on
+// the reference datafile, which has no growth-rate record.
 export const emptyDraft = (): Draft => ({
   indicators: [],
-  rates: ZERO_RATES,
+  rates: { ...ZERO_RATES },
   projectionId: undefined,
   newRowBaseYear: BASE_YEAR,
 });
@@ -140,7 +146,10 @@ export const pinGeneralFirst = <T extends { id: string }>(
   ...nodes.filter(node => !isGeneralRow(node)),
 ];
 
-/** The rates a stored record carries, or zero everywhere when there is none. */
+/**
+ * The rates a stored record carries, or zero everywhere when there is none —
+ * a fresh object either way (see emptyDraft: the store writes through).
+ */
 export const ratesOf = (projection: ProjectionNode | undefined): GrowthRates =>
   projection
     ? {
@@ -150,7 +159,7 @@ export const ratesOf = (projection: ProjectionNode | undefined): GrowthRates =>
         year4: projection.year4,
         year5: projection.year5,
       }
-    : ZERO_RATES;
+    : { ...ZERO_RATES };
 
 /**
  * Seed a draft from what the server answered (rules § editing the draft):

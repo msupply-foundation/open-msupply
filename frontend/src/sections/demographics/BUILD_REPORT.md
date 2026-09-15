@@ -120,7 +120,11 @@ Two library-side notes, neither an improvisation:
 3. **Accepted-then-retried new rows** (above) — the spec's partial-persistence rule implies it; saying it keeps a second implementation from re-inserting.
 4. **Growth rates on a phone** (card view) — say whether read-only there is intended.
 
+### Found by the deterministic suite
+
+- **The zero-rates seed was a shared constant, and the store wrote through it.** `ratesOf(undefined)` and `emptyDraft()` handed the draft store the module-level `ZERO_RATES` object; a Solid store mutates the object it wraps, so the first rate edit on an installation with **no growth-rate record** rewrote the constant, and the next seed — Cancel, or the reload after a save — "restored" the edited figures. Invisible on the probe datafile (it has a record, so the seed was always a fresh object); the suite's first run on the reference datafile, which has none, failed `.43` with the headers still reading 10 after Cancel. Both now return a fresh object; `draft.test.ts` and `demographicsEditor.test.ts` pin it.
+
 ### Follow-ups
 
-- **No `e2e/` suite yet.** The ids are contracted in [`e2e/TESTIDS.md` § Demographics](../../../e2e/TESTIDS.md#demographics) as built (`new-indicator-button`, `growth-rate-year-<n>`, `save-button` / `cancel-button`, `save-error`, the column ids); the suite — where AC-S6–S8, G2, G3 and the keystroke bounds belong — is the next DoD step, along with `/reconcile-behaviours demographics` (OMS-REG-MNG-03) and the exploratory workflow.
+- **The `e2e/` suite exists** — `e2e/specs/demographics-regression.spec.ts`, anchored to `OMS-REG-MNG-03`, green on both front ends (its header lists the out-of-scope anchors with their reasons); the ids are contracted in [`e2e/TESTIDS.md` § Demographics](../../../e2e/TESTIDS.md#demographics). The vertical is reconciled (`spec/demographics/cases/`); the exploratory workflow is `exploratory/workflows/demographics.md`.
 - **Pre-existing, not this build:** `pnpm test` has one red test on this branch's base, `plugins/cook_islands/backend/src/manifest.test.ts` (backend manifest `3.0.0` vs frontend `3.02.00`), and `pnpm lint` carries nine pre-existing errors in plugin test files (`camelcase`, `no-control-regex`). Neither file is touched here; the section's own lint is clean.
