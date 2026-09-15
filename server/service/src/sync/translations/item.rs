@@ -2,11 +2,14 @@ use chrono::Utc;
 use repository::{
     item_category::{ItemCategoryFilter, ItemCategoryRepository},
     item_category_row::ItemCategoryJoinRow,
-    ChangelogRow, ChangelogTableName, EqualFilter, ItemRow, ItemRowDelete, ItemType, Row,
-    StorageConnection, SyncBufferRow, VENCategory,
+    ChangelogRow, ChangelogTableName, EqualFilter, ItemRow, ItemRowDelete, ItemRowRepository,
+    ItemType, Row, StorageConnection, SyncBufferRow, VENCategory,
 };
 use serde::{Deserialize, Serialize};
 
+use std::sync::LazyLock;
+
+use crate::sync::central_mapping_custom_fields::{keys, legacy_owned_keys_for_scopes};
 use crate::sync::{
     translations::{
         category::CategoryTranslation, location_type::LocationTypeTranslation,
@@ -18,7 +21,7 @@ use crate::sync::{
 use util::sync_serde::empty_str_as_option_string;
 
 use super::{
-    utils::{legacy_custom_fields_if_central, LegacyCustomFieldsBuilder},
+    utils::{merge_legacy_custom_fields, LegacyCustomFieldsBuilder},
     IntegrationOperation, PullTranslateResult, PushTranslateResult, SyncTranslation,
 };
 
@@ -81,6 +84,20 @@ pub struct LegacyItemRow {
     user_field_7: Option<bool>,
 }
 
+/// `custom_fields` keys the legacy OG→OMS item import owns — derived from the
+/// mapping registry rather than retyped, so there is one list of OG-owned keys
+/// (`central_mapping_custom_fields`) instead of a second copy here to drift out of
+/// step with it. Every item mapping definition is seeded onto the `item` scope, so
+/// that scope *is* the item importer's owned set.
+///
+/// On a v5 re-import these keys are refreshed from OG; every other key in the blob
+/// is preserved. See [`merge_legacy_custom_fields`].
+///
+/// Computed once: the registry is rebuilt on each call and the import reads this
+/// per item row.
+static LEGACY_ITEM_OWNED_KEYS: LazyLock<Vec<&'static str>> =
+    LazyLock::new(|| legacy_owned_keys_for_scopes(&["item"]));
+
 /// Build the `item.custom_fields` JSONB from legacy `[item]user_field_1..7`.
 ///
 /// Each field is stored under its wire key (`user_field_N`, matching the central
@@ -91,7 +108,6 @@ pub struct LegacyItemRow {
 /// so default-only items keep `custom_fields` NULL rather than carrying noise
 /// rows that 4D would otherwise emit for every item.
 fn build_legacy_item_custom_fields(legacy: &LegacyItemRow) -> Option<serde_json::Value> {
-    use crate::sync::central_mapping_custom_fields::keys;
     LegacyCustomFieldsBuilder::new()
         .text(keys::ITEM_USER_FIELD_1, legacy.user_field_1.as_deref())
         .text(keys::ITEM_USER_FIELD_2, legacy.user_field_2.as_deref())
@@ -183,9 +199,26 @@ impl SyncTranslation for ItemTranslation {
     ) -> Result<PullTranslateResult, anyhow::Error> {
         let data = sync_record.deserialize::<LegacyItemRow>()?;
 
-        // Custom fields import is central-only (see `legacy_custom_fields_if_central`).
+        // Preserve any existing `custom_fields` rather than overwriting the whole
+        // blob: keys the legacy importer doesn't own are authored elsewhere (a
+        // deployment's own item fields, a future OMS write path), and a v5 re-pull
+        // of an OG record must not wipe them. On central we refresh the owned keys
+        // (`user_field_*`, `item_category_*`) from OG and keep the rest; off central
+        // we leave `custom_fields` untouched — it arrives via v7 instead.
+        //
         // Computed before `data`'s fields are moved into `item_row` below.
-        let custom_fields = legacy_custom_fields_if_central(|| build_legacy_item_custom_fields(&data));
+        let existing_custom_fields = ItemRowRepository::new(connection)
+            .find_one_by_id(&data.ID)?
+            .and_then(|row| row.custom_fields);
+        let custom_fields = if CentralServerConfig::is_central_server() {
+            merge_legacy_custom_fields(
+                existing_custom_fields,
+                build_legacy_item_custom_fields(&data),
+                &LEGACY_ITEM_OWNED_KEYS,
+            )
+        } else {
+            existing_custom_fields
+        };
 
         let mut integration_operations = Vec::new();
 
@@ -606,17 +639,34 @@ mod tests {
         use crate::sync::test_util_set_is_central_server;
         let legacy = legacy_with(Some("Cold chain"), None, Some(12.5), Some(true));
 
-        // A V5V6 remote must not derive item custom fields locally.
+        // Replicates the pull translator's branch: off central the existing blob is
+        // preserved untouched (no local derivation); on central the owned keys are
+        // refreshed from OG and merged into whatever else the blob holds.
+        let derive = |existing: Option<serde_json::Value>| {
+            if CentralServerConfig::is_central_server() {
+                merge_legacy_custom_fields(
+                    existing,
+                    build_legacy_item_custom_fields(&legacy),
+                    &LEGACY_ITEM_OWNED_KEYS,
+                )
+            } else {
+                existing
+            }
+        };
+
+        // A V5V6 remote must not derive item custom fields locally — and must not
+        // blank what v7 put there either.
         test_util_set_is_central_server(false);
+        assert_eq!(derive(None), None);
         assert_eq!(
-            legacy_custom_fields_if_central(|| build_legacy_item_custom_fields(&legacy)),
-            None
+            derive(Some(serde_json::json!({ "include_in_report": true }))),
+            Some(serde_json::json!({ "include_in_report": true }))
         );
 
         // The central server derives custom fields (and fans them out over v7).
         test_util_set_is_central_server(true);
         assert_eq!(
-            legacy_custom_fields_if_central(|| build_legacy_item_custom_fields(&legacy)),
+            derive(None),
             Some(serde_json::json!({
                 "user_field_1": "Cold chain",
                 "user_field_5": 12.5,
@@ -625,6 +675,103 @@ mod tests {
         );
 
         // Reset shared state for other tests (cargo test runs in-process).
+        test_util_set_is_central_server(false);
+    }
+
+    /// The builder and the mapping registry must stay in lock-step — the owned set is
+    /// now derived from the registry, so this asserts the two ends agree (the invoice
+    /// equivalent is `transaction_category_mappings_stay_in_lock_step`).
+    ///
+    /// A key the builder emits with no `item`-scoped definition behind it isn't in the
+    /// owned set, so it goes stale on OG — cleared there, kept here forever — and is
+    /// filtered out on read besides. An `item`-scoped definition the builder never
+    /// emits is deleted from every item on every import.
+    #[test]
+    fn legacy_item_owned_keys_match_what_the_builder_emits() {
+        // Every custom-field-bearing legacy column set to a non-default value, so
+        // the builder emits its full key set (defaults are omitted by design).
+        let legacy = LegacyItemRow {
+            user_field_1: Some("1".to_string()),
+            user_field_2: Some("2".to_string()),
+            user_field_3: Some("3".to_string()),
+            user_field_4: Some(true),
+            user_field_5: Some(5.0),
+            user_field_6: Some("6".to_string()),
+            user_field_7: Some(true),
+            category_ID: Some("c1".to_string()),
+            category2_ID: Some("c2".to_string()),
+            category3_ID: Some("c3".to_string()),
+            ..legacy_with(None, None, None, None)
+        };
+
+        let emitted = build_legacy_item_custom_fields(&legacy).expect("builder emits something");
+        let mut emitted: Vec<&str> = emitted
+            .as_object()
+            .expect("blob is an object")
+            .keys()
+            .map(String::as_str)
+            .collect();
+        emitted.sort_unstable();
+
+        let mut owned = LEGACY_ITEM_OWNED_KEYS.to_vec();
+        owned.sort_unstable();
+
+        assert_eq!(emitted, owned);
+    }
+
+    /// The regression this merge exists for: a v5 re-import refreshes the OG-owned
+    /// keys and leaves everything else alone. Before the merge the blob was rebuilt
+    /// from the legacy row and written whole, so `include_in_report` vanished on the
+    /// next OG change to the item.
+    #[test]
+    fn legacy_item_custom_fields_preserve_non_owned_keys() {
+        use crate::sync::test_util_set_is_central_server;
+        test_util_set_is_central_server(true);
+
+        let existing = Some(serde_json::json!({
+            // Not owned by the importer — must survive.
+            "include_in_report": true,
+            // Owned, and stale: OG now says something else.
+            "user_field_1": "OLD",
+            // Owned, and cleared on OG: must be dropped, not left stale.
+            "user_field_2": "GONE",
+        }));
+
+        let legacy = legacy_with(Some("NEW"), None, None, None);
+        assert_eq!(
+            merge_legacy_custom_fields(
+                existing,
+                build_legacy_item_custom_fields(&legacy),
+                &LEGACY_ITEM_OWNED_KEYS
+            ),
+            Some(serde_json::json!({
+                "include_in_report": true,
+                "user_field_1": "NEW",
+            }))
+        );
+
+        // An item with nothing set on OG used to null the column outright; now it
+        // only clears the owned keys.
+        let empty = legacy_with(None, None, None, None);
+        assert_eq!(
+            merge_legacy_custom_fields(
+                Some(serde_json::json!({ "include_in_report": true })),
+                build_legacy_item_custom_fields(&empty),
+                &LEGACY_ITEM_OWNED_KEYS
+            ),
+            Some(serde_json::json!({ "include_in_report": true }))
+        );
+
+        // ... and an item with nothing on either side still leaves the column NULL.
+        assert_eq!(
+            merge_legacy_custom_fields(
+                None,
+                build_legacy_item_custom_fields(&empty),
+                &LEGACY_ITEM_OWNED_KEYS
+            ),
+            None
+        );
+
         test_util_set_is_central_server(false);
     }
 }
