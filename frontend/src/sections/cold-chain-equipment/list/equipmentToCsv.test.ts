@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { equipmentToCsv, type ExportRow } from './equipmentToCsv';
+import { format } from 'date-fns';
+import { es, fr, ru } from 'date-fns/locale';
+import {
+  parseImportDate,
+  parseNeedsReplacement,
+} from '../import/importParse';
+import { t } from '@/intl';
 
 const row = (over: Partial<ExportRow> = {}): ExportRow =>
   ({
@@ -97,5 +104,36 @@ describe('the fixed columns', () => {
   it('leaves an absent date blank rather than printing a placeholder', () => {
     const csv = equipmentToCsv([row({ replacementDate: null })], [], false);
     expect(firstRow(csv)).not.toContain('Invalid');
+  });
+});
+
+
+/*
+ * The export and the import are two halves of one round trip, and they drifted:
+ * the export writes dates in the READER's locale and the flag as a word, while
+ * the import read one date notation and one spelling of the flag. A user who
+ * exported a register and fed it back got dates dropped as warnings and the
+ * replacement flag silently cleared.
+ *
+ * `exportDate` is date-fns `P`, so these are the shapes it actually produces —
+ * pinned here rather than in the import's own tests, because it is the PAIRING
+ * that has to hold, and only this file knows what the export writes.
+ */
+describe('what the export writes, the import reads back', () => {
+  const day = new Date(2026, 8, 14); // 14 September 2026
+
+  it('every locale’s short date', () => {
+    for (const locale of [es, fr, ru]) {
+      const written = format(day, 'P', { locale });
+      expect(
+        parseImportDate(written),
+        `the import must read "${written}"`
+      ).toBe('2026-09-14');
+    }
+  });
+
+  it('the replacement flag, as the word the export writes', () => {
+    expect(parseNeedsReplacement(t('messages.yes'))).toBe(true);
+    expect(parseNeedsReplacement(t('messages.no'))).toBe(false);
   });
 });

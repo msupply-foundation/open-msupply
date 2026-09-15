@@ -11,6 +11,7 @@ import {
   canImport,
   compareReviewRows,
   failedRowsToCsv,
+  parseImportNumber,
   parsePropertyCell,
   reviewRowText,
   type ImportRow,
@@ -213,6 +214,13 @@ describe('OMS-REG-CCE-07.6 / .7 — the four dates are soft', () => {
     expect(parseImportDate('01-02-2024')).toBe('2024-02-01');
   });
 
+  it('reads a dot-separated day-first date — what our own ru export writes', () => {
+    // exportDate under `ru` produces 14.09.2026, so refusing the dot meant our
+    // own exported file could not be imported back.
+    expect(parseImportDate('14.09.2026')).toBe('2026-09-14');
+    expect(parseImportDate('01.02.2024')).toBe('2024-02-01');
+  });
+
   it('reads ISO, which the server already accepts for the mapping dates', () => {
     expect(parseImportDate('2024-02-01')).toBe('2024-02-01');
     expect(parseImportDate('2026-09-14')).toBe('2026-09-14');
@@ -376,6 +384,59 @@ describe('specification columns', () => {
       lookup({ properties: [property('climate_zone', 'Climate zone')] })
     );
     expect(rows[0]?.properties).toEqual({});
+  });
+});
+
+describe('numbers are read in the convention the FILE is written in', () => {
+  /*
+   * The same Windows locale that writes `;` between fields writes `12,5` for
+   * twelve and a half — the separators exist precisely so the comma can be the
+   * decimal mark, so the two always travel together.
+   */
+  it('reads a decimal comma when the file is not comma-separated', () => {
+    expect(parseImportNumber('12,5', true)).toBe(12.5);
+    expect(parseImportNumber('0,75', true)).toBe(0.75);
+  });
+
+  it('reads a decimal point, as it always did', () => {
+    expect(parseImportNumber('12.5')).toBe(12.5);
+    expect(parseImportNumber('-4')).toBe(-4);
+  });
+
+  it('treats a comma as a group mark in a comma-separated file', () => {
+    // A quoted "1,234" in a comma-delimited file is a thousand-odd, not 1.234.
+    expect(parseImportNumber('1,234')).toBe(1234);
+  });
+
+  it('needs no convention when BOTH marks are present — the last one decides', () => {
+    expect(parseImportNumber('1.234,56', true)).toBe(1234.56);
+    expect(parseImportNumber('1,234.56')).toBe(1234.56);
+    // And the answer does not depend on which file it came from.
+    expect(parseImportNumber('1.234,56', false)).toBe(1234.56);
+    expect(parseImportNumber('1,234.56', true)).toBe(1234.56);
+  });
+
+  it('ignores the spacing a spreadsheet groups with', () => {
+    expect(parseImportNumber('1 234,5', true)).toBe(1234.5);
+    expect(parseImportNumber('1\u00a0234.5')).toBe(1234.5);
+  });
+
+  it('refuses text', () => {
+    expect(parseImportNumber('lots')).toBeUndefined();
+    expect(parseImportNumber('')).toBeUndefined();
+    expect(parseImportNumber('12kg')).toBeUndefined();
+  });
+
+  it('carries the file’s convention into a semicolon-separated import', () => {
+    const header = `${H.split(',').join(';')};Capacity`;
+    const row = 'CCE-1;E003/059;;;;;;;;;12,5';
+    const [parsed] = parseImportFile(`${header}\n${row}\n`, lookup({
+      properties: [
+        { ...property('cap', 'Capacity'), valueType: 'FLOAT' } as PropertyDefinition,
+      ],
+    }));
+    expect(parsed?.errors).toEqual([]);
+    expect(parsed?.properties.cap).toBe(12.5);
   });
 });
 
