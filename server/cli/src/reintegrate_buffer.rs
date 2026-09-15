@@ -7,7 +7,10 @@ use repository::{
 };
 use service::{
     settings::Settings,
-    sync::{sync_status::logger::SyncLogger, synchroniser::integrate_and_translate_sync_buffer},
+    sync::{
+        sync_status::logger::SyncLogger, synchroniser::integrate_and_translate_sync_buffer,
+        CentralServerConfig,
+    },
 };
 
 /// Re-runs sync buffer translation + integration against the `sync_buffer` already in the database.
@@ -17,6 +20,14 @@ use service::{
 /// `errors_only` narrow which rows are reset to pending, and integration only ever processes
 /// pending (`is_integrated = false`) rows — so the production integration path is untouched. The
 /// integrator logs per-batch progress at `info` level.
+///
+/// Central-server mode is enabled by `as_central` (the `--as-central` flag) or by
+/// `server.override_is_central_server` in the config file — the same setting the server honours
+/// at startup. Either flips the process-global [`CentralServerConfig`] to central before anything
+/// is translated. Translators consult it directly, and nothing in this process ever syncs (which
+/// is what would otherwise overwrite it from site info), so the setting holds for the whole run.
+/// Without either the CLI translates as a remote site — the historical behaviour.
+#[allow(clippy::too_many_arguments)]
 pub fn reintegrate_buffer(
     settings: &Settings,
     source_site_id: i32,
@@ -25,7 +36,24 @@ pub fn reintegrate_buffer(
     skip_buffer_reset: bool,
     errors_only: bool,
     tables: Option<Vec<String>>,
+    as_central: bool,
 ) -> anyhow::Result<()> {
+    if as_central {
+        info!("Central server mode requested via --as-central");
+        CentralServerConfig::set_is_central_server_on_startup();
+    } else if settings.server.override_is_central_server {
+        info!("Central server mode requested via server.override_is_central_server in config");
+        CentralServerConfig::set_is_central_server_on_startup();
+    }
+    info!(
+        "Reintegrating as {}",
+        if CentralServerConfig::is_central_server() {
+            "central server"
+        } else {
+            "remote site"
+        }
+    );
+
     let connection_manager = get_storage_connection_manager(&settings.database);
 
     if should_migrate {
