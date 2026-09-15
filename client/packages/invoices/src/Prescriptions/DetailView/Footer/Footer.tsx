@@ -90,6 +90,7 @@ export const FooterComponent = ({
       icon: <PrinterIcon />,
       onClick: handlePrintLabels,
       loading: isPrintingLabels,
+      testId: 'print-labels-button',
     },
   ];
 
