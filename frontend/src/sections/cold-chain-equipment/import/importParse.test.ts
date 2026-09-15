@@ -165,11 +165,27 @@ describe('OMS-REG-CCE-07.5 — the catalogue item code must match', () => {
 });
 
 describe('OMS-REG-CCE-07.6 / .7 — the four dates are soft', () => {
-  it('warns rather than fails on a blank date, and still imports', () => {
+  /*
+   * All four dates are optional, so a blank is an ANSWER — "no warranty
+   * recorded" — not a value we failed to read. It used to warn, which fired the
+   * banner on the most ordinary file there is: one with no warranty dates. A
+   * warning every user learns to dismiss takes the real ones down with it.
+   */
+  it('says nothing about a blank date, and still imports', () => {
     const rows = parseImportFile(`${H}\nCCE-1,E003/059,,,,,,,,\n`, lookup());
     expect(rows[0]?.errors).toEqual([]);
-    expect(rows[0]?.warnings).toContain('warning.field-not-parsed');
+    expect(rows[0]?.warnings).toEqual([]);
+    expect(rows[0]?.installationDate).toBeNull();
     expect(canImport(rows)).toBe(true);
+    expect(hasWarnings(rows)).toBe(false);
+  });
+
+  it('still warns when a date is present but unreadable', () => {
+    const rows = parseImportFile(
+      `${H}\nCCE-1,E003/059,tuesday,,,,,,,\n`,
+      lookup()
+    );
+    expect(rows[0]?.warnings).toContain('warning.field-not-parsed');
     expect(hasWarnings(rows)).toBe(true);
   });
 
