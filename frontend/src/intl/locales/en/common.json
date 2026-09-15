@@ -2690,7 +2690,7 @@
   "messages.import-replaces-warning": "WARNING: importing translations will replace all the existing custom translations, please download first to avoid losing data.",
   "messages.import-warning-on-upload": "Warning some values failed to parse. Please fix or these will be ignored on upload",
   "messages.imported": "Imported",
-  "messages.inbound-automatic-info": "This shipment is updated automatically; its status follows the sending side.",
+  "messages.inbound-automatic-info": "This shipment was created automatically, as the result of an outbound shipment in another store. You are unable to edit details until the status is confirmed as Delivered.",
   "messages.inbound-manual-info": "This shipment was created manually; its delivery status will not update automatically.",
   "messages.inbound-shipment-created-on": "Inbound shipment created on {{date}}",
   "messages.inbound-shipment-line-saved": "Saved 🥳",
