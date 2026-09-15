@@ -1,5 +1,6 @@
 import { graphqlFetch } from '../../api/graphql';
 import { getLabelPrinterUseUsb } from '../../appData';
+import { isAndroid } from '../../platform';
 import { LabelPrinterSettings } from './labelPrinter.generated';
 
 // Delivering labels to the store's label printer, for any screen that has
@@ -256,11 +257,17 @@ const printViaNetwork = async (
  * Print `payload` through whichever route this device is set to. Never throws
  * (see "Reading an answer") — the caller reports the outcome on the control
  * that started it (spec/ui-standards/controls.md § action feedback).
+ *
+ * The Android term guards data, not the platform: 3.1 rendered the USB toggle
+ * there, so a tablet can be carrying a stored flag, and 3.2 hides the row it
+ * would use to undo it. Nothing can set it on Android from 3.2 on, but the
+ * stored value outlives every upgrade. The reference app needs none; its
+ * toggle never rendered.
  */
 export const printLabels = async (
   endpoint: string,
   payload: LabelPayload
 ): Promise<LabelPrintOutcome> =>
-  getLabelPrinterUseUsb()
+  !isAndroid() && getLabelPrinterUseUsb()
     ? printViaUsb(endpoint, payload)
     : printViaNetwork(endpoint, payload);
