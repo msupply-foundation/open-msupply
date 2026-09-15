@@ -195,6 +195,7 @@ describe('validateLoadedModule', () => {
       'internalOrder.sidePanelSection',
       'internalOrderLine.column',
       'internalOrderLine.infoPanel',
+      'internalOrders.newOrderGate',
       'prescription.paymentForm',
     ]);
   });
@@ -262,6 +263,59 @@ describe('validateLoadedModule', () => {
     });
     expect(refusal(validateLoadedModule('demo', asModule(module)))).toContain(
       'no Component function'
+    );
+  });
+
+  it('accepts a new-order gate contribution — a resolver, no Component', () => {
+    const module = definePlugin({
+      manifest: { code: 'demo', version: '1.0.0', pluginApiVersion: 1 },
+      contributions: [
+        {
+          slot: 'internalOrders.newOrderGate',
+          id: 'freshness',
+          supersedes: () => true,
+        },
+      ],
+    });
+    expect(validateLoadedModule('demo', asModule(module)).kind).toBe('ok');
+  });
+
+  it('refuses a new-order gate with no supersedes resolver — a Component cannot stand in', () => {
+    // The gate is consulted, never rendered (sdk-contract § the new-order gate
+    // slot): a bundle offering a Component there was built against a surface
+    // this host does not have.
+    const module = definePlugin({
+      manifest: { code: 'demo', version: '1.0.0', pluginApiVersion: 1 },
+      contributions: [
+        {
+          slot: 'internalOrders.newOrderGate',
+          id: 'freshness',
+          Component,
+        } as unknown as never,
+      ],
+    });
+    expect(refusal(validateLoadedModule('demo', asModule(module)))).toContain(
+      'has no supersedes function'
+    );
+  });
+
+  it('refuses a new-order gate that ALSO carries a Component — a consulted slot never renders', () => {
+    // Silently dropping the render half would hide from the author that the
+    // surface they built against does not exist here; the wrong form refuses
+    // whole, as everywhere (sdk-contract § contributions).
+    const module = definePlugin({
+      manifest: { code: 'demo', version: '1.0.0', pluginApiVersion: 1 },
+      contributions: [
+        {
+          slot: 'internalOrders.newOrderGate',
+          id: 'freshness',
+          supersedes: () => true,
+          Component,
+        } as unknown as never,
+      ],
+    });
+    expect(refusal(validateLoadedModule('demo', asModule(module)))).toContain(
+      'consulted, never rendered'
     );
   });
 

@@ -35,6 +35,7 @@ const SLOT_IDS: Record<SlotId, true> = {
   'internalOrderLine.column': true,
   'internalOrderLine.infoPanel': true,
   'internalOrder.sidePanelSection': true,
+  'internalOrders.newOrderGate': true,
   'prescription.paymentForm': true,
 };
 
@@ -44,6 +45,18 @@ const SLOT_IDS: Record<SlotId, true> = {
  * slot). Everywhere else a `Component` is the only rendering there is.
  */
 const VALUE_RENDERING_SLOTS: readonly string[] = ['internalOrderLine.column'];
+
+/**
+ * The slots that are CONSULTED rather than rendered — a resolver function is
+ * their whole contribution, and a `Component` cannot stand in for it
+ * (sdk-contract § the new-order gate slot): a bundle offering one there was
+ * built against a surface this host does not have. `SlotId`-keyed like
+ * `SLOT_IDS`, so a mistyped or renamed slot id here is a type error rather
+ * than a silent fall-through to the Component check.
+ */
+const RESOLVER_SLOTS: Readonly<Partial<Record<SlotId, string>>> = {
+  'internalOrders.newOrderGate': 'supersedes',
+};
 
 /** Every slot id the host recognises; anything else is refused. */
 export const KNOWN_SLOT_IDS = Object.keys(SLOT_IDS) as readonly SlotId[];
@@ -321,20 +334,44 @@ export const validateLoadedModule = (
           message: `contribution in slot "${slot}" has no id`,
         };
       }
-      // Something must render the contribution. A column slot accepts either
-      // form; every other slot has only `Component`, so a bundle offering a
-      // bare `value` there was built against a surface this host does not have.
-      const hasComponent = typeof entry['Component'] === 'function';
-      const hasValue =
-        VALUE_RENDERING_SLOTS.includes(slot) &&
-        typeof entry['value'] === 'function';
-      if (!hasComponent && !hasValue) {
-        return {
-          kind: 'refused',
-          message: VALUE_RENDERING_SLOTS.includes(slot)
-            ? `contribution "${slot}/${id}" has neither a Component nor a value function`
-            : `contribution "${slot}/${id}" has no Component function`,
-        };
+      // Something must render — or, for a consulted slot, answer — the
+      // contribution. A column slot accepts either rendering form; a resolver
+      // slot takes only its named resolver; every other slot has only
+      // `Component`. A bundle offering the wrong form was built against a
+      // surface this host does not have.
+      // The KNOWN_SLOT_IDS check above is what makes this assertion sound.
+      const resolverField = RESOLVER_SLOTS[slot as SlotId];
+      if (resolverField !== undefined) {
+        if (typeof entry[resolverField] !== 'function') {
+          return {
+            kind: 'refused',
+            message: `contribution "${slot}/${id}" has no ${resolverField} function`,
+          };
+        }
+        // A consulted slot renders nothing, ever — a contribution ALSO
+        // carrying a rendering form was built against a surface this host
+        // does not have (sdk-contract § the new-order gate slot: "a
+        // `Component` there is refused"), and silently dropping the render
+        // half would hide that from its author.
+        if (entry['Component'] !== undefined || entry['value'] !== undefined) {
+          return {
+            kind: 'refused',
+            message: `contribution "${slot}/${id}" carries a rendering form — the slot is consulted, never rendered`,
+          };
+        }
+      } else {
+        const hasComponent = typeof entry['Component'] === 'function';
+        const hasValue =
+          VALUE_RENDERING_SLOTS.includes(slot) &&
+          typeof entry['value'] === 'function';
+        if (!hasComponent && !hasValue) {
+          return {
+            kind: 'refused',
+            message: VALUE_RENDERING_SLOTS.includes(slot)
+              ? `contribution "${slot}/${id}" has neither a Component nor a value function`
+              : `contribution "${slot}/${id}" has no Component function`,
+          };
+        }
       }
       const key = `${slot}/${id}`;
       if (seen.has(key)) {
