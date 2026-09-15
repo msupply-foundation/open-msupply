@@ -187,6 +187,19 @@ export {
   FileIcon,
   StockIcon,
 } from '../ui/icons';
+/*
+ * The standing "this opens something" chevron on a whole-row/whole-card
+ * target — the Stocktake Helper's worklist rows (#495), which are cards whose
+ * only affordance is the card itself. WidgetCard carries its own ArrowRightIcon
+ * for exactly this job, but a worklist row is not a widget card, and a chevron
+ * hand-drawn in the plugin would miss `data-flip-rtl` and so point the wrong
+ * way in Arabic.
+ *
+ * Same "already in the graph" bargain as the five above — Select pulls
+ * ChevronDownIcon from this module eagerly, so this is one more small
+ * component in a module that ships regardless.
+ */
+export { ChevronRightIcon } from '../ui/icons';
 // Needed to hold one in a typed table of tiles (Component<IconProps>); a type
 // export, so it weighs nothing at runtime.
 export type { IconProps } from '../ui/icons';
