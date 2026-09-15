@@ -27,7 +27,7 @@ export type DemographicIndicatorsResult = {
 };
 
 export const DemographicIndicators = {
-  query: "query demographicIndicators($storeId: String!) {\n  demographicIndicators(storeId: $storeId, page: {first: 1000, offset: 0}) {\n    ... on DemographicIndicatorConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        name\n        baseYear\n        basePopulation\n        populationPercentage\n        year1Projection\n        year2Projection\n        year3Projection\n        year4Projection\n        year5Projection\n      }\n    }\n  }\n}",
+  query: "query demographicIndicators($storeId: String!) {\n  demographicIndicators(\n    storeId: $storeId\n    page: {first: 1000, offset: 0}\n    sort: [{key: name, desc: false}]\n  ) {\n    ... on DemographicIndicatorConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        name\n        baseYear\n        basePopulation\n        populationPercentage\n        year1Projection\n        year2Projection\n        year3Projection\n        year4Projection\n        year5Projection\n      }\n    }\n  }\n}",
 } as TypedDocument<DemographicIndicatorsResult, DemographicIndicatorsVariables>;
 
 export type DemographicProjectionByBaseYearVariables = {

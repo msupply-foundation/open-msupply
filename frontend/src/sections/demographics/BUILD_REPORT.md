@@ -72,7 +72,7 @@ Behaviour anchors: [`spec/demographics/acceptance.md`](../../../spec/demographic
 
 Against the probe central server (`:8070`, `APP__SERVER__OVERRIDE_IS_CENTRAL_SERVER=true`, the throwaway `server/rspec_demog.sqlite` from the spec pass — 33 indicators, rates 10 % every year, `check` granted `EDIT_CENTRAL_DATA`), with the Vite dev server at `:3055` proxied to it, driven headless with Playwright (store SMS Liquica, vaccine module on):
 
-- **The load** — 33 rows, the general population row first (stored name `General population`, rendered from the label), then the read's case-insensitive name order; the header inputs read the stored `10` five times; Save and Cancel disabled. No pager, no row count, no filter bar.
+- **The load** — 33 rows, the general population row first (stored name `General population`, rendered from the label), then the explicit sort's case-insensitive name order (re-verified after the sort fix: `rspec bulk 1` … `rspec bulk 9`, `rspec Children`, `RSPEC CHILDREN`, `rspec Kids` …, matching the reference app's first twenty row for row); the header inputs read the stored `10` five times; Save and Cancel disabled. No pager, no row count, no filter bar.
 - **The figures** — general row `1,000` → `1,100 · 1,210 · 1,331 · 1,464 · 1,610` (AC-C2); the 33.33 % row `333` → `366 · 403 · 443 · 487 · 536` (AC-C1/C3); `rspec Neg` at −5 % → `−50 · −55 · −61 · −67 · −74` (AC-C8); `rspec Over` at 150 % → `1,500 …` (a stored out-of-range share, shown as sent).
 - **Recalculation** — baseline `2000` moved every row at once (general `2,200 …`, the 33.33 % row `667` → `734 …`) and enabled Save (AC-C4); year 3 → `0` changed years 3–5 on every row and left 1–2 alone (AC-C5); a share edit moved its row alone (AC-C6).
 - **The typed bounds** — growth `150` → `100`, `2.345` → `2.35` (AC-I5); share `150` → `100`, `−5` → `5`, `12.345` → `12.35` (AC-I1–I3); baseline `12.7` typed → `127` (AC-I4; **pasted** `12.7` rounds to `13` — the field's paste-repair path, not a typed entry); letters on a blank row's share → `0` (AC-I6).
@@ -92,6 +92,7 @@ Against the probe central server (`:8070`, `APP__SERVER__OVERRIDE_IS_CENTRAL_SER
 
 ### Spec gaps hit
 
+- **The read's no-sort default is NOT the case-insensitive name order** `contract.md` described. Found by comparing the two front ends side by side on the 33-row datafile: with no `sort` argument the server orders by the raw name column (byte order — `RSPEC CHILDREN`, `rspec Children`, `rspec Kids` … ahead of `rspec bulk 1`), and only an explicit `name` sort is case-insensitive. The reference client sends the explicit sort; the first build did not and showed the byte order. Fixed in the same branch: the read now sends `sort: [{ key: name, desc: false }]`, `contract.md` records the trap under § indicators and § the grid, and `demographicsApi.test.ts` pins the argument.
 - **AC-A1 contradicts navigation's gate model** (above). The demographics `rules.md` § access says a hidden destination "still answers by URL"; navigation's capability gates redirect. Nothing to build for — the redirect is the shared shell's — but the spec should say which it means. Recorded as a candidate refinement.
 - **Every operation, type and locale key named in `contract.md` / `ui-surface.md` resolved.** One en key minted (above); no other catalogue touched. `⚠️ VERIFY` items: none — the spec carries none.
 
