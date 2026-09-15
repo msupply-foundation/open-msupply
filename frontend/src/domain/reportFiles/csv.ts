@@ -22,6 +22,30 @@ export const toCsv = (
   [fields, ...rows].map(row => row.map(escapeCell).join(',')).join('\r\n');
 
 /*
+ * Read an uploaded CSV as text, in whatever encoding it was saved in.
+ *
+ * `File.text()` always decodes UTF-8, and Excel on Windows does not save UTF-8
+ * — it writes the machine's legacy code page, which for Western European
+ * installs is windows-1252. A file with one accented character in a name or a
+ * note then arrives mojibaked, or throws, and the user sees nothing that
+ * explains why.
+ *
+ * Decided by TRYING, not by guessing: a strict UTF-8 decode rejects byte
+ * sequences that are not valid UTF-8, and legacy-encoded text almost always
+ * contains some. Text that decodes cleanly as UTF-8 is treated as UTF-8 —
+ * which is right, because ASCII and real UTF-8 both pass — and only text that
+ * fails falls back to windows-1252, which by design decodes any byte at all.
+ */
+export const readCsvFile = async (file: Blob): Promise<string> => {
+  const bytes = await file.arrayBuffer();
+  try {
+    return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+  } catch {
+    return new TextDecoder('windows-1252').decode(bytes);
+  }
+};
+
+/*
  * Which character separates the fields, decided from the file's FIRST line.
  *
  * We write `,`, but a spreadsheet does not read the file back that way: Excel
@@ -38,7 +62,7 @@ export const toCsv = (
  */
 const SEPARATORS = [',', ';', '\t'] as const;
 
-const sniffSeparator = (source: string): string => {
+export const sniffSeparator = (source: string): string => {
   const [header = ''] = source.split(/\r?\n/, 1);
   let best = ',';
   let bestCount = 0;

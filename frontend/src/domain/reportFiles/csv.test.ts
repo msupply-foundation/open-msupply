@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseCsv, toCsv } from './csv';
+import { parseCsv, readCsvFile, toCsv } from './csv';
 
 /*
  * The reader's separator handling. We WRITE commas, but a spreadsheet does not
@@ -65,5 +65,29 @@ describe('the separator is sniffed from the header line', () => {
       ['a', 'b'],
       ['1', 'x,y'],
     ]);
+  });
+});
+
+/*
+ * Encoding. `File.text()` always decodes UTF-8, and Excel on Windows does not
+ * write UTF-8 — it writes the machine's legacy code page. One accented
+ * character in a name or a note is all it takes.
+ */
+describe('a CSV is read in the encoding it was saved in', () => {
+  const blobOf = (bytes: number[]) => new Blob([new Uint8Array(bytes)]);
+
+  it('reads UTF-8, including multi-byte characters', async () => {
+    const text = 'name,note\nCoût,Frigorífico\n';
+    expect(await readCsvFile(new Blob([text]))).toBe(text);
+  });
+
+  it('reads windows-1252, which is what Excel on Windows saves', async () => {
+    // "Coût" as cp1252: û is a single byte 0xFB, which is not valid UTF-8.
+    const bytes = [0x43, 0x6f, 0xfb, 0x74];
+    expect(await readCsvFile(blobOf(bytes))).toBe('Coût');
+  });
+
+  it('does not mistake plain ASCII for the legacy code page', async () => {
+    expect(await readCsvFile(blobOf([0x61, 0x2c, 0x62]))).toBe('a,b');
   });
 });

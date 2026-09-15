@@ -1,5 +1,5 @@
 import { t } from '@/intl';
-import { parseCsv, toCsv } from '@/domain/reportFiles';
+import { parseCsv, sniffSeparator, toCsv } from '@/domain/reportFiles';
 import { ASSET_STATUSES, statusLabelKey } from '../equipment';
 import type { AssetStatus } from '../equipment';
 import type { PropertyDefinition } from '../detail/assetProperties';
@@ -123,11 +123,9 @@ export const buildTemplateCsv = (
 export const parseImportDate = (value: string): string | null => {
   const trimmed = value.trim();
   // ISO leads with its four-digit year, which is what tells it apart from a
-  // dash-separated day-first date — no ambiguity to resolve.
-  const iso = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(trimmed);
-  const parts = iso
-    ? [iso[3]!, iso[2]!, iso[1]!]
-    : trimmed.split(/[/-]/);
+  // day-first date using the same separator — no ambiguity to resolve.
+  const iso = /^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/.exec(trimmed);
+  const parts = iso ? [iso[3]!, iso[2]!, iso[1]!] : trimmed.split(/[/\-.]/);
   if (parts.length !== 3) return null;
   const [day, month, year] = parts;
   if (!year || year.length !== 4) return null;
@@ -160,6 +158,48 @@ export const parseImportStatus = (value: string): AssetStatus => {
 };
 
 /**
+ * A numeric cell → a number, or `undefined` where it does not read as one.
+ *
+ * `decimalComma` says which convention the FILE is written in, and it is
+ * decided from the file itself rather than guessed per cell: a spreadsheet that
+ * separates fields with `;` or a tab is one whose locale writes `12,5` for
+ * twelve and a half, because those separators exist precisely so the comma can
+ * be the decimal mark. A comma-separated file is the other convention.
+ *
+ * Where a value carries BOTH marks the question does not arise — the LAST one
+ * is the decimal, whichever file it came from (`1.234,56` and `1,234.56` are
+ * the same number written twice).
+ */
+export const parseImportNumber = (
+  raw: string,
+  decimalComma = false
+): number | undefined => {
+  const value = raw.trim().replace(/\s|\u00a0/g, '');
+  if (!value) return undefined;
+  if (!/^[+-]?[\d.,]+$/.test(value)) return undefined;
+
+  const lastComma = value.lastIndexOf(',');
+  const lastDot = value.lastIndexOf('.');
+  let normalised: string;
+  if (lastComma !== -1 && lastDot !== -1) {
+    // Both present: the rightmost mark is the decimal point, the other groups.
+    normalised =
+      lastComma > lastDot
+        ? value.replace(/\./g, '').replace(',', '.')
+        : value.replace(/,/g, '');
+  } else if (lastComma !== -1) {
+    normalised = decimalComma
+      ? value.replace(',', '.')
+      : value.replace(/,/g, '');
+  } else {
+    normalised = value;
+  }
+
+  const parsed = Number(normalised);
+  return Number.isFinite(parsed) ? parsed : undefined;
+};
+
+/**
  * A property cell → the value its DEFINITION declares, or `undefined` where the
  * cell does not answer it.
  *
@@ -175,7 +215,8 @@ export const parseImportStatus = (value: string): AssetStatus => {
  */
 export const parsePropertyCell = (
   raw: string,
-  definition: Pick<PropertyDefinition, 'valueType' | 'allowedValues'>
+  definition: Pick<PropertyDefinition, 'valueType' | 'allowedValues'>,
+  decimalComma = false
 ): string | number | boolean | undefined => {
   const value = raw.trim();
   if (!value) return undefined;
@@ -187,8 +228,8 @@ export const parsePropertyCell = (
   }
 
   if (definition.valueType === 'INTEGER' || definition.valueType === 'FLOAT') {
-    const parsed = Number(value);
-    if (!Number.isFinite(parsed)) return undefined;
+    const parsed = parseImportNumber(value, decimalComma);
+    if (parsed === undefined) return undefined;
     return definition.valueType === 'INTEGER' ? Math.trunc(parsed) : parsed;
   }
 
@@ -277,12 +318,16 @@ export const findHeaderRow = (
  * than up front. An empty result means the file itself is unusable (no rows, or
  * no row naming a column the import knows), which the caller reports as such.
  */
-export const parseImportFile = (
-  text: string,
-  lookup: Lookup
-): ImportRow[] => {
+export const parseImportFile = (text: string, lookup: Lookup): ImportRow[] => {
   const table = parseCsv(text);
   if (table.length < 2) return [];
+  /*
+   * The file's own numeric convention, read off the separator it was written
+   * with. A spreadsheet only reaches for `;` or a tab BECAUSE its locale has
+   * taken the comma for the decimal mark, so the two travel together — which
+   * makes this a fact about the file rather than a guess about a cell.
+   */
+  const decimalComma = sniffSeparator(text) !== ',';
   const headerIndex = findHeaderRow(table, importColumnKeys(lookup.isCentral));
   if (headerIndex === -1) return [];
   const [header = [], ...body] = table.slice(headerIndex);
@@ -376,7 +421,7 @@ export const parseImportFile = (
       // A property column is headed by the property's own display name.
       const raw = cell(cells, definition.name);
       if (raw) {
-        const value = parsePropertyCell(raw, definition);
+        const value = parsePropertyCell(raw, definition, decimalComma);
         if (value === undefined)
           warnings.push(
             t('warning.field-not-parsed', { field: definition.name })
