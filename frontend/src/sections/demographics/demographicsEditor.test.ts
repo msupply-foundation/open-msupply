@@ -269,6 +269,19 @@ describe('saving (rules § saving the draft)', () => {
     dispose();
   });
 
+  it('OMS-REG-MNG-03.43 — with no rates stored, editing a rate and cancelling reads zero again', async () => {
+    state.loaded = { indicators: [general], projection: undefined };
+    const { editor, dispose } = await open();
+    editor.setRate(1, 10);
+    editor.setRate(4, 10);
+    expect(editor.draft.rates.year1).toBe(10);
+    editor.cancel();
+    // The zero-rates seed must not have been mutated through the store.
+    expect(editor.draft.rates).toEqual(ZERO_RATES);
+    expect(ZERO_RATES.year1).toBe(0);
+    dispose();
+  });
+
   it('OMS-REG-MNG-03.36 — with no rates stored, Save creates the record', async () => {
     state.loaded = { indicators: [general], projection: undefined };
     const { editor, dispose } = await open();
