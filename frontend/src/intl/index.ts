@@ -38,8 +38,10 @@ export {
   exportDate,
   localisedTimeAgo,
   getDisplayAge,
+  DATE_FNS_LOADERS,
 } from './formatDateTime';
 export { formatFileSize } from './formatFileSize';
+export { legacyCodePage } from './legacyCodePage';
 
 // Metadata / misc helpers
 export {

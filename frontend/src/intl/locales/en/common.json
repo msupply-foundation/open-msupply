@@ -492,6 +492,7 @@
   "error.immunisations-not-found": "Immunizations not found",
   "error.import-columns-not-recognised": "The file's columns were not recognised. Its heading row must name the columns as the template does — download the template to compare.",
   "error.import-failed": "Import failed: {{error}}",
+  "error.import-no-rows": "The file has a heading row but no rows beneath it to import.",
   "error.inbound-shipment-not-editable": "Inbound shipment is not editable.",
   "error.inbound-shipments-not-verified": "Cannot finalise this purchase order because there are external inbound shipments that have not been verified.",
   "error.integration-timeout-reached": "The central server took too long integrating pushed records. Please retry later.",
