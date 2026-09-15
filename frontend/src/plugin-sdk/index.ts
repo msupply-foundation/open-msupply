@@ -148,6 +148,16 @@ export type { ToggleSwitchProps } from '../ui/elements/inputs/ToggleSwitch';
 export { matchesSearch } from '../ui/utils/searchText';
 export { SidePanelSection } from '../ui/layout/SidePanel/SidePanel';
 export type { SidePanelSectionProps } from '../ui/layout/SidePanel/SidePanel';
+// The date-range filter — what the Stocktake Helper's past-reports list needs
+// (plugins/cook_islands, #490): a pick-only range whose `max` refuses future
+// dates and whose pick flow cannot produce an inverted range. New CSS-bearing
+// modules in the SDK chunk — the field, its DatePickerPanel and their shared
+// styles (measured: kdd/bundle-size-by-pr).
+export { DateRangeField } from '../ui/elements/inputs/DateRangeField';
+export type {
+  DateRangeFieldProps,
+  IsoDateRange,
+} from '../ui/elements/inputs/DateRangeField';
 
 // ── UI kit — icons that carry meaning ───────────────────────────────────────
 /*
@@ -204,7 +214,7 @@ export type { PluginIntl, SupportedLocale } from './intl';
  * NOT here: a raw (path, filter) pair is the hand-encoding the named builders
  * exist to prevent.
  */
-export { storeHref, navigateTo } from './navigation';
+export { storeHref, navigateTo, currentStorePath } from './navigation';
 export type { NavigateOptions } from './navigation';
 export {
   DAYS_TILL_EXPIRED,

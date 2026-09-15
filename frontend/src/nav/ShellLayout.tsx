@@ -32,6 +32,7 @@ import {
 } from '../plugins/pluginPages';
 import { createRegionDiagnostics } from '../plugins/diagnostics';
 import { bindHostNavigate, routerHostNavigate } from './hostNavigate';
+import { bindHostPathname } from './hostLocation';
 import { storePath, storeRelativePath } from './storeRelativePath';
 import { KeyboardHost } from '../keyboard/KeyboardHost';
 import { createDocumentTitle, screenTitleKey } from '../documentTitle';
@@ -85,6 +86,12 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   // shell is where navigation lives and it mounts once for the whole in-store
   // app, which every plugin contribution renders inside.
   bindHostNavigate(routerHostNavigate(navigate));
+
+  // The read half of the same surface: the SDK's `currentStorePath` derives a
+  // store-relative path from this reactive pathname, so a plugin page can
+  // interpret the paths below its own (src/nav/hostLocation.ts owns the
+  // binding contract).
+  bindHostPathname(() => location.pathname);
 
   // The path relative to the store root, e.g. '/{store}/inventory/stocktakes'
   // → 'inventory/stocktakes'. The empty (store root) path is Home's own.
