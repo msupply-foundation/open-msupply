@@ -41,8 +41,9 @@ export const printOutcomeReport = (outcome: LabelPrintOutcome): PrintReport => {
           message: t('error.label-printer-not-configured'),
         },
       };
-    // Actionable on its own (attach a printer, or install the print service),
-    // so it IS the message and carries no disclosure.
+    // The service listed nothing attached by USB. Actionable on its own —
+    // attach a printer — so it IS the message and carries no disclosure. An
+    // unreachable service is `failed`, so this advice is never misapplied.
     case 'no-usb-printer':
       return {
         flash: 'failed',

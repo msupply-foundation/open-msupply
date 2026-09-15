@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { printLabels } from './printLabels';
 
-// Label delivery over both routes (OMS-REG-SET-05.8, .42, .43).
+// Label delivery over both routes (OMS-REG-SET-05.8, .42, .43, .44).
 //
 // One subject per describe, and each fact asserted in exactly one of them: the
 // route choice, then each route's own requests. No printer and no print service
@@ -140,24 +140,38 @@ describe('the network route', () => {
     expect(JSON.parse(String(init.body))).toEqual(assetLabel);
   });
 
-  it.each([
-    [
-      'nothing is stored',
-      { kind: 'success', data: { labelPrinterSettings: null } },
-    ],
-    ['the settings cannot be read', { kind: 'error' }],
-  ])(
-    'reports not-configured and prints nothing when %s',
-    async (_case, answer) => {
-      graphqlFetch.mockResolvedValue(answer);
-      const fetchMock = alwaysRespond(new Response('Label printed'));
+  it('reports not-configured and prints nothing when nothing is stored', async () => {
+    graphqlFetch.mockResolvedValue({
+      kind: 'success',
+      data: { labelPrinterSettings: null },
+    });
+    const fetchMock = alwaysRespond(new Response('Label printed'));
 
-      expect(await printLabels(ENDPOINT, labels)).toEqual({
-        kind: 'not-configured',
-      });
-      expect(fetchMock).not.toHaveBeenCalled();
-    }
-  );
+    expect(await printLabels(ENDPOINT, labels)).toEqual({
+      kind: 'not-configured',
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('prints anyway when the settings cannot be read, and lets the endpoint answer', async () => {
+    // The gate is a courtesy: a read that failed has established nothing, so
+    // the endpoint — which reads the row itself — decides.
+    graphqlFetch.mockResolvedValue({ kind: 'unexpectedError' });
+    const fetchMock = alwaysRespond(new Response('Label printed'));
+
+    expect(await printLabels(ENDPOINT, labels)).toEqual({ kind: 'printed' });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('reads the settings in the background, so a failed read raises no modal of its own', async () => {
+    // Otherwise the user gets the global error modal AND this print's outcome.
+    printerConfigured();
+    alwaysRespond(new Response('Label printed'));
+
+    await printLabels(ENDPOINT, labels);
+
+    expect(graphqlFetch.mock.calls[0][2]).toMatchObject({ background: true });
+  });
 
   it("carries the server's refusal as the failure detail", async () => {
     printerConfigured();
@@ -254,6 +268,7 @@ describe('the USB route', () => {
     );
   });
 
+  // The service answered; nothing it listed is a USB printer — attach one.
   it.each([
     ['the listing is empty', () => devices([])],
     ['the listing has no printer key at all', () => new Response('{}')],
@@ -262,8 +277,6 @@ describe('the USB route', () => {
       'the USB device is not a printer',
       () => devices([{ ...usbPrinter, deviceType: 'scale' }]),
     ],
-    ['discovery is refused', () => new Response('', { status: 500 })],
-    ['the listing is not the shape we expect', () => new Response('nonsense')],
   ])('reports no-usb-printer when %s', async (_case, listing) => {
     const fetchMock = usbRouteAnswers({ listing: listing() });
 
@@ -273,7 +286,29 @@ describe('the USB route', () => {
     expect(fetchMock).toHaveBeenCalledTimes(2); // nothing was sent
   });
 
-  it('reports no-usb-printer when the print service is not installed', async () => {
+  // Nothing learned about what is attached, so "attach a printer" would be
+  // the wrong advice — the service itself is the problem.
+  it.each([
+    [
+      'discovery is refused',
+      () => new Response('nope', { status: 500 }),
+      'nope',
+    ],
+    [
+      'the listing is not the shape we expect',
+      () => new Response('nonsense'),
+      undefined,
+    ],
+  ])('reports failed when %s', async (_case, listing, detail) => {
+    const fetchMock = usbRouteAnswers({ listing: listing() });
+
+    const outcome = await printLabels(ENDPOINT, labels);
+    expect(outcome.kind).toBe('failed');
+    if (detail) expect(outcome).toEqual({ kind: 'failed', detail });
+    expect(fetchMock).toHaveBeenCalledTimes(2); // nothing was sent
+  });
+
+  it('reports failed, with the transport error, when the print service is not running', async () => {
     // Connection refused on loopback — no status code to read.
     const fetchMock = vi
       .fn()
@@ -282,7 +317,8 @@ describe('the USB route', () => {
     vi.stubGlobal('fetch', fetchMock);
 
     expect(await printLabels(ENDPOINT, labels)).toEqual({
-      kind: 'no-usb-printer',
+      kind: 'failed',
+      detail: 'Failed to fetch',
     });
   });
 

@@ -133,22 +133,30 @@ const writeTarget = (device: ServiceDevice) => ({
 });
 
 /**
- * Ask the service what is attached. Every way this can go wrong — no service
- * listening, a refusal, a body that isn't the shape we expect — means the same
- * thing to the user, and none of them distinguishes "no service" from "no
- * printer" in a way they could act on differently.
+ * Ask the service what is attached. A listing with no USB printer means attach
+ * one; a service we could not reach at all means start it — different fixes,
+ * so different outcomes, as the current app also has them.
  */
-const findUsbPrinter = async (): Promise<ServiceDevice | undefined> => {
+type Discovery =
+  | { kind: 'found'; device: ServiceDevice }
+  | { kind: 'none-attached' }
+  | { kind: 'unavailable'; detail: string };
+
+const findUsbPrinter = async (): Promise<Discovery> => {
   const discovery = await request(`${PRINT_SERVICE_URL}/available`);
-  if (!discovery.ok) return undefined;
+  if (!discovery.ok) return { kind: 'unavailable', detail: discovery.detail };
+
   const listing = await readJson<{ printer?: ServiceDevice[] }>(
     discovery.response
   );
-  return listing.ok
-    ? listing.value.printer?.find(
-        device => device.connection === 'usb' && device.deviceType === 'printer'
-      )
-    : undefined;
+  // Answered, but not with a listing we can read — still nothing learned about
+  // what is attached.
+  if (!listing.ok) return { kind: 'unavailable', detail: listing.detail };
+
+  const device = listing.value.printer?.find(
+    device => device.connection === 'usb' && device.deviceType === 'printer'
+  );
+  return device ? { kind: 'found', device } : { kind: 'none-attached' };
 };
 
 /**
@@ -186,12 +194,17 @@ const printViaUsb = async (
   const rendered = await labelText(endpoint, payload);
   if (!rendered.ok) return { kind: 'failed', detail: rendered.detail };
 
-  const device = await findUsbPrinter();
-  if (!device) return { kind: 'no-usb-printer' };
+  const discovery = await findUsbPrinter();
+  if (discovery.kind === 'none-attached') return { kind: 'no-usb-printer' };
+  if (discovery.kind === 'unavailable')
+    return { kind: 'failed', detail: discovery.detail };
 
   const sent = await request(`${PRINT_SERVICE_URL}/write`, {
     method: 'POST',
-    body: JSON.stringify({ device: writeTarget(device), data: rendered.zpl }),
+    body: JSON.stringify({
+      device: writeTarget(discovery.device),
+      data: rendered.zpl,
+    }),
   });
   return sent.ok
     ? { kind: 'printed' }
@@ -209,9 +222,18 @@ const printViaNetwork = async (
   // the endpoint's raw settings-lookup error. The endpoint reads the stored row
   // itself, so a print can still fail for a missing printer after this answered
   // (spec/settings/contract.md § Devices — label printer, the wire trap).
-  const settings = await graphqlFetch(LabelPrinterSettings, {});
+  //
+  // Only a definite "nothing stored" refuses the print: a read we could not
+  // make has established nothing, so the endpoint's own answer decides.
+  // `background` so that read's failure raises no modal over this print's
+  // outcome.
+  const settings = await graphqlFetch(
+    LabelPrinterSettings,
+    {},
+    { background: true }
+  );
   if (
-    settings.kind !== 'success' ||
+    settings.kind === 'success' &&
     settings.data.labelPrinterSettings == null
   ) {
     return { kind: 'not-configured' };

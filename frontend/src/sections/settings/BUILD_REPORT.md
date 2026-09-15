@@ -103,15 +103,16 @@ front ends**.
 
 ### Behaviour coverage
 
-| Behaviour                                          | Where                                                                                                                                                                         |
-| -------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `.8` USB ignores the stored network settings       | `printLabels.test.ts` (USB route reads no settings) · e2e `prescriptions-regression` (network printer listed first, passed over)                                              |
-| `.41` Print via USB absent on Android              | `sectionVisibility.test.ts`                                                                                                                                                   |
-| `.42` no USB printer reachable → the user is told  | `printLabels.test.ts` · `LabelPrintOutcomeDialog.test.ts` · e2e `settings-regression`                                                                                         |
-| `.43` nothing configured → refused, nothing sent   | `LabelPrintOutcomeDialog.test.ts` · e2e `settings-regression` (the message, on both front ends, and that nothing is sent)                                                     |
-| `DIS-03.47` network route delivers when configured | e2e `settings-regression` › `Mutating` (POSTs the payload, USB service untouched; delivery response stubbed) — the other route of the same anchor the USB delivery test cites |
-| `.22` the preference never travels                 | `labelPrinterForm.test.ts` (the built input is exactly the four network fields) + `appData.ts` (localStorage only)                                                            |
-| four outcomes stated once                          | `LabelPrintOutcomeDialog.test.ts`                                                                                                                                             |
+| Behaviour                                                  | Where                                                                                                                                                                         |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.8` USB ignores the stored network settings               | `printLabels.test.ts` (USB route reads no settings) · e2e `prescriptions-regression` (network printer listed first, passed over)                                              |
+| `.41` Print via USB absent on Android                      | `sectionVisibility.test.ts`                                                                                                                                                   |
+| `.42` service listed nothing attached → told               | `printLabels.test.ts` · `LabelPrintOutcomeDialog.test.ts` · e2e `settings-regression`                                                                                         |
+| `.43` nothing configured → refused, nothing sent           | `LabelPrintOutcomeDialog.test.ts` · e2e `settings-regression` (the message, on both front ends, and that nothing is sent)                                                     |
+| `.44` service unreachable → failed, not "attach a printer" | `printLabels.test.ts` (transport failure and an unreadable listing) · e2e `settings-regression` (loopback aborted; the no-USB-printer wording asserted _absent_)              |
+| `DIS-03.47` network route delivers when configured         | e2e `settings-regression` › `Mutating` (POSTs the payload, USB service untouched; delivery response stubbed) — the other route of the same anchor the USB delivery test cites |
+| `.22` the preference never travels                         | `labelPrinterForm.test.ts` (the built input is exactly the four network fields) + `appData.ts` (localStorage only)                                                            |
+| four outcomes stated once                                  | `LabelPrintOutcomeDialog.test.ts`                                                                                                                                             |
 
 The e2e rows stub the local print service at its loopback origin, and the
 network route's delivery response, in `e2e/helpers/labelPrinter.ts` — they
@@ -133,8 +134,6 @@ removed.
 local print service installed and a printer attached — the leg no hermetic run
 can cover ([`OMS-REG-SET-05` Preconditions](<../../../spec/settings/cases/OMS-REG-SET-05 - Validate Devices Settings.md>)).
 
-### Flags
-
 - **Spec corrected, not just flagged:** `/write`'s `device.version` is the API
   level **the caller speaks**, not the device's — echo back the level
   `/available` advertises (observed: 5) instead of the `2` the vendor's client
@@ -144,6 +143,17 @@ can cover ([`OMS-REG-SET-05` Preconditions](<../../../spec/settings/cases/OMS-RE
   carries the trap
   ([contract § Devices — label printer](../../../spec/settings/contract.md#devices--label-printer)).
   This build pins 2 and the e2e asserts it, so a regeneration reproduces it.
+- **"No USB printer found" cannot cover a print service that is not running.**
+  The contract called the two indistinguishable; they are not — a rejected
+  fetch versus a `200` with an empty list — and the fix differs: start the
+  service, versus attach a printer. The reference app draws the same line.
+  Rules, contract and `.44` now state it.
+- **A settings read that failed is not "no printer configured".** The outcome
+  set read as if every non-success from `labelPrinterSettings` meant nothing was
+  stored; the reference app treats only `=== null` that way, and a failed read
+  falls through for the endpoint to answer. A non-background read also raised
+  the global unexpected-error modal over the print's own outcome. Now
+  `background`, and only `null` refuses; the contract's wire trap states it.
 - **`127.0.0.1`, not `localhost`** — the service binds IPv4 and `localhost` can
   resolve to `::1`. Loopback is a trustworthy origin, so plain HTTP is reachable
   from an HTTPS page without mixed-content blocking.
