@@ -189,6 +189,26 @@ export type {
 } from '../ui/elements/table/tableConfig';
 export type { PaginationProps } from '../ui/elements/table/Pagination';
 
+// ── List & table state — the URL and the stored column layout ───────────────
+/*
+ * Where a plugin list screen's state lives, so it remembers what a host one
+ * remembers: filter/sort/page in the URL, column layout in storage (see
+ * ./tableState.ts, which also records why these two are eager where a heavy
+ * component is lazy — ~1.3 kB gzipped between them, and both must be ready
+ * before first paint).
+ */
+export {
+  createPluginTableConfig,
+  createPluginUrlQueryState,
+  pluginTableId,
+} from './tableState';
+export type { UrlQueryState } from '../list/urlQueryStateCore';
+export type { TableConfigController } from '../api/createTableConfig';
+export type {
+  Band,
+  LayeredConfig,
+} from '../ui/elements/table/tableConfig';
+
 // ── UI kit — icons that carry meaning ───────────────────────────────────────
 /*
  * The five the Cook Islands navigator names for its tiles (plugins/cook_islands
