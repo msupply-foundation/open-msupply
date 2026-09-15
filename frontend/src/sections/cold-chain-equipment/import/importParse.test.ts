@@ -262,14 +262,18 @@ describe('OMS-REG-CCE-07.6 / .7 — the four dates are soft', () => {
   });
 });
 
-describe('a file that has been round-tripped through Excel', () => {
+describe('a returned template carrying all three shapes at once', () => {
   /*
-   * All three at once, which is what a real returned template looks like: the
-   * banner row, semicolons for separators, and dashes in the dates. Taken from
-   * a file a user could not import (2026-09-15); each defect alone was enough
-   * to fail every row in it.
+   * The banner row, semicolons for separators, and dashes in the dates —
+   * together, which is how they actually arrive. Taken byte for byte from a
+   * file a user could not import (2026-09-15); each shape alone was enough to
+   * fail every row in it.
+   *
+   * What produced it is NOT known — the reporter says they did not open it in a
+   * spreadsheet — so nothing here turns on the tool. The shapes are the fact;
+   * the provenance is not.
    */
-  const EXCEL = [
+  const RETURNED = [
     'Column1;Column2;Column3;Column4;Column5;Column6;Column7;Column8;Column9;Column10',
     H.split(',').join(';'),
     'CCE-1;E003/059;14-09-2026;14-09-2036;14-09-2026;14-09-2027;ADF123568;status.functioning;;',
@@ -277,14 +281,14 @@ describe('a file that has been round-tripped through Excel', () => {
   ].join('\r\n');
 
   it('imports, where any one of the three defects failed every row', () => {
-    const rows = parseImportFile(EXCEL, lookup());
+    const rows = parseImportFile(RETURNED, lookup());
     expect(rows).toHaveLength(2);
     expect(hasErrors(rows)).toBe(false);
     expect(canImport(rows)).toBe(true);
   });
 
   it('reads the values, not just the shape', () => {
-    const [first] = parseImportFile(EXCEL, lookup());
+    const [first] = parseImportFile(RETURNED, lookup());
     expect(first?.assetNumber).toBe('CCE-1');
     expect(first?.catalogueItemId).toBe('item-1');
     expect(first?.serialNumber).toBe('ADF123568');
@@ -294,7 +298,7 @@ describe('a file that has been round-tripped through Excel', () => {
   });
 
   it('numbers its lines as the spreadsheet shows them', () => {
-    const rows = parseImportFile(EXCEL, lookup());
+    const rows = parseImportFile(RETURNED, lookup());
     expect(rows.map(row => row.lineNumber)).toEqual([3, 4]);
   });
 });
