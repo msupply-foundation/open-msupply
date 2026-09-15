@@ -1,0 +1,56 @@
+use repository::{
+    BackendPluginRow, BackendPluginRowDelete, PluginType, PluginTypes, PluginVariantType,
+};
+use serde_json::json;
+
+// Data in this file is used in "test_backend_plugin_translation" and "test_sync_pull_and_push"
+use super::{TestSyncIncomingRecord, TestSyncOutgoingRecord};
+
+const TABLE_NAME: &str = "backend_plugin";
+
+const BACKEND_PLUGIN: (&str, &str) = (
+    "backend_plugin",
+    r#"{
+        "id":  "backend_plugin",
+        "bundle_base64": "bundle_base64",
+        "code": "code",
+        "types": ["average_monthly_consumption"],
+        "variant_type": "BOA_JS",
+        "version": "1.0.0"
+    }"#,
+);
+
+fn backend_plugin() -> BackendPluginRow {
+    BackendPluginRow {
+        id: BACKEND_PLUGIN.0.to_string(),
+        code: "code".to_string(),
+        bundle_base64: "bundle_base64".to_string(),
+        types: PluginTypes(vec![PluginType::AverageMonthlyConsumption]),
+        variant_type: PluginVariantType::BoaJs,
+        version: "1.0.0".to_string(),
+    }
+}
+
+pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
+    vec![TestSyncIncomingRecord::new_pull_upsert(
+        TABLE_NAME,
+        BACKEND_PLUGIN,
+        backend_plugin(),
+    )]
+}
+
+pub(crate) fn test_pull_delete_records() -> Vec<TestSyncIncomingRecord> {
+    vec![TestSyncIncomingRecord::new_pull_delete(
+        TABLE_NAME,
+        BACKEND_PLUGIN.0,
+        BackendPluginRowDelete(BACKEND_PLUGIN.0.to_string()),
+    )]
+}
+
+pub(crate) fn test_v6_push_records() -> Vec<TestSyncOutgoingRecord> {
+    vec![TestSyncOutgoingRecord {
+        table_name: TABLE_NAME.to_string(),
+        record_id: BACKEND_PLUGIN.0.to_string(),
+        push_data: json!(backend_plugin()),
+    }]
+}

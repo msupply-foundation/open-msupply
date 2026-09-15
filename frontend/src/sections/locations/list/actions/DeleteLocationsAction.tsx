@@ -6,6 +6,7 @@ import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
 import { Button } from '@/ui/elements/buttons/Button';
 import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
+import { Stack } from '@/ui/layout/Stack/Stack';
 import { TrashIcon } from '@/ui/icons';
 import { DeleteLocation } from '../locations.generated';
 import {
@@ -146,7 +147,17 @@ const Body = (props: DeleteLocationsActionProps & { onClose: () => void }) => {
       onClose={props.onClose}
       icon={<TrashIcon />}
       testId="confirmation-modal"
-      title={t('heading.are-you-sure')}
+      // The title tracks the phase: the report is never a question
+      // (kdd/action-modal). It only opens because something was refused, but
+      // these deletes are independent — when some members DID go, "Can't do
+      // that!" would sit over a report saying they are gone.
+      title={
+        phase().kind !== 'report'
+          ? t('heading.are-you-sure')
+          : (report()?.deletedCount ?? 0) > 0
+            ? t('heading.some-not-deleted')
+            : t('heading.cannot-do-that')
+      }
       description={
         <Switch
           // Confirm / deleting: how many will be deleted (OMS-REG-INV-01.34).
@@ -154,7 +165,7 @@ const Body = (props: DeleteLocationsActionProps & { onClose: () => void }) => {
         >
           <Match when={report()}>
             {summary => (
-              <>
+              <Stack gap="sm">
                 <Show when={summary().deletedCount > 0}>
                   <p>
                     {tPlural(
@@ -168,11 +179,21 @@ const Body = (props: DeleteLocationsActionProps & { onClose: () => void }) => {
                 <For each={summary().inUse}>
                   {blocked => (
                     <Alert severity="error" testId="location-in-use">
-                      {t('messages.location-in-use', {
-                        code: labelFor(blocked.id),
-                        stockLines: blocked.stockLines,
-                        invoiceLines: blocked.invoiceLines,
-                      })}
+                      {/* The counts are only worth printing when there are
+                          any. A sensor, or a reference the server's guard
+                          cannot enumerate, refuses with both connectors empty
+                          (contract.md ⚠️ the two deletion wire traps) — and
+                          "in use (0 stock lines, 0 transaction lines)"
+                          contradicts itself. Say the refusal alone. */}
+                      {blocked.stockLines + blocked.invoiceLines > 0
+                        ? t('messages.location-in-use', {
+                            code: labelFor(blocked.id),
+                            stockLines: blocked.stockLines,
+                            invoiceLines: blocked.invoiceLines,
+                          })
+                        : t('messages.location-in-use-unspecified', {
+                            code: labelFor(blocked.id),
+                          })}
                     </Alert>
                   )}
                 </For>
@@ -185,7 +206,7 @@ const Body = (props: DeleteLocationsActionProps & { onClose: () => void }) => {
                     )}
                   </Alert>
                 </Show>
-              </>
+              </Stack>
             )}
           </Match>
         </Switch>

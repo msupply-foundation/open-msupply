@@ -1,0 +1,12 @@
+<style>
+  {% include "style.css" %}
+</style>
+
+<body>
+  <h1>Example with query arguments</h1>
+
+  Arguments:
+  <pre>{{ arguments | json_encode(pretty=true) }}</pre>
+  Data:
+  <pre>"data": {{ data | json_encode(pretty=true) }}</pre>
+</body>

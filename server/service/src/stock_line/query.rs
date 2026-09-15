@@ -1,0 +1,67 @@
+use crate::{
+    get_pagination_or_default, i64_to_u32, service_provider::ServiceContext, ListError, ListResult,
+    Pagination, SingleRecordError,
+};
+use repository::{
+    EqualFilter, Item, ItemSort, PaginationOption, StockLine, StockLineFilter, StockLineRepository,
+    StockLineSort,
+};
+
+pub const MAX_LIMIT: u32 = 5000;
+pub const MIN_LIMIT: u32 = 1;
+
+pub fn get_stock_line(ctx: &ServiceContext, id: String) -> Result<StockLine, SingleRecordError> {
+    let mut result = StockLineRepository::new(&ctx.connection).query(
+        Pagination::one(),
+        Some(StockLineFilter::new().id(EqualFilter::equal_to(id.to_string()))),
+        None,
+        None,
+    )?;
+
+    if let Some(record) = result.pop() {
+        Ok(record)
+    } else {
+        Err(SingleRecordError::NotFound(id))
+    }
+}
+
+pub fn get_stock_lines(
+    ctx: &ServiceContext,
+    pagination: Option<PaginationOption>,
+    filter: Option<StockLineFilter>,
+    sort: Option<StockLineSort>,
+    store_id: Option<String>,
+) -> Result<ListResult<StockLine>, ListError> {
+    let pagination = get_pagination_or_default(pagination)?;
+    let repository = StockLineRepository::new(&ctx.connection);
+
+    Ok(ListResult {
+        rows: repository.query(pagination, filter.clone(), sort, store_id.clone())?,
+        count: i64_to_u32(repository.count(filter, store_id)?),
+    })
+}
+
+/// Returns items that have at least one stock_line matching `filter` in
+/// `store_id`. Companion to `get_stock_lines` — same filter shape, but the
+/// result is one row per item (sorted by item attributes), so it's safe to
+/// use as the source for a grouped/aggregated stock view.
+pub fn get_items_by_stock_line_filter(
+    ctx: &ServiceContext,
+    pagination: Option<PaginationOption>,
+    filter: Option<StockLineFilter>,
+    sort: Option<ItemSort>,
+    store_id: Option<String>,
+) -> Result<ListResult<Item>, ListError> {
+    let pagination = get_pagination_or_default(pagination)?;
+    let repository = StockLineRepository::new(&ctx.connection);
+
+    Ok(ListResult {
+        rows: repository.query_items_by_filter(
+            pagination,
+            filter.clone(),
+            sort,
+            store_id.clone(),
+        )?,
+        count: i64_to_u32(repository.count_items_by_filter(filter, store_id)?),
+    })
+}

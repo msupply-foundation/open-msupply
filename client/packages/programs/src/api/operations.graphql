@@ -1,0 +1,860 @@
+fragment DocumentRegistry on DocumentRegistryNode {
+  __typename
+  id
+  category
+  documentType
+  contextId
+  name
+  formSchemaId
+  jsonSchema
+  uiSchemaType
+  uiSchema
+}
+
+fragment Document on DocumentNode {
+  id
+  name
+  parents
+  user {
+    userId
+    username
+    email
+  }
+  timestamp
+  type
+  data
+  documentRegistry {
+    ...DocumentRegistry
+  }
+}
+
+fragment Program on ProgramNode {
+  id
+  elmisCode
+  name
+}
+
+query programs(
+  $storeId: String!
+  $first: Int
+  $offset: Int
+  $key: ProgramSortFieldInput!
+  $desc: Boolean
+  $filter: ProgramFilterInput
+) {
+  programs(
+    storeId: $storeId
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on ProgramConnector {
+      __typename
+      nodes {
+        __typename
+        ...Program
+      }
+      totalCount
+    }
+  }
+}
+
+query periods(
+  $storeId: String!
+  $programId: String
+  $first: Int
+  $offset: Int
+  $filter: PeriodFilterInput
+) {
+  periods(
+    storeId: $storeId
+    programId: $programId
+    page: { first: $first, offset: $offset }
+    filter: $filter
+  ) {
+    ... on PeriodConnector {
+      __typename
+      nodes {
+        __typename
+        ...Period
+      }
+      totalCount
+    }
+  }
+}
+
+query documentByName($name: String!, $storeId: String!) {
+  document(name: $name, storeId: $storeId) {
+    __typename
+    ... on DocumentNode {
+      ...Document
+    }
+  }
+}
+
+query documents(
+  $storeId: String!
+  $page: PaginationInput
+  $filter: DocumentFilterInput
+  $sort: DocumentSortInput
+) {
+  documents(storeId: $storeId, page: $page, filter: $filter, sort: $sort) {
+    __typename
+    ... on DocumentConnector {
+      nodes {
+        ...Document
+      }
+    }
+  }
+}
+
+query documentRegistries(
+  $filter: DocumentRegistryFilterInput
+  $sort: [DocumentRegistrySortInput!]
+  $storeId: String!
+) {
+  documentRegistries(filter: $filter, sort: $sort, storeId: $storeId) {
+    ... on DocumentRegistryConnector {
+      __typename
+      nodes {
+        ...DocumentRegistry
+      }
+      totalCount
+    }
+  }
+}
+
+query getDocumentHistory($storeId: String!, $name: String!) {
+  documentHistory(storeId: $storeId, name: $name) {
+    __typename
+    ... on DocumentConnector {
+      totalCount
+      nodes {
+        __typename
+        user {
+          userId
+          username
+          email
+        }
+        data
+        id
+        name
+        parents
+        timestamp
+        type
+      }
+    }
+  }
+}
+
+mutation allocateProgramNumber($numberName: String!, $storeId: String!) {
+  allocateProgramNumber(input: { numberName: $numberName }, storeId: $storeId) {
+    ... on NumberNode {
+      __typename
+      number
+    }
+  }
+}
+
+fragment EncounterFields on EncounterFieldsNode {
+  fields
+  encounter {
+    name
+    startDatetime
+    endDatetime
+  }
+}
+
+fragment ProgramEvent on ProgramEventNode {
+  activeStartDatetime
+  type
+  data
+  documentName
+}
+
+query encounterFields(
+  $storeId: String!
+  $patientId: String!
+  $fields: [String!]!
+) {
+  encounterFields(
+    input: { fields: $fields }
+    storeId: $storeId
+    sort: { key: startDatetime }
+    filter: { patientId: { equalTo: $patientId } }
+  ) {
+    ... on EncounterFieldsConnector {
+      __typename
+      nodes {
+        __typename
+        ...EncounterFields
+      }
+    }
+  }
+}
+
+fragment EncounterDocumentRegistry on DocumentRegistryNode {
+  category
+  documentType
+  contextId
+  formSchemaId
+  id
+  jsonSchema
+  name
+  uiSchema
+  uiSchemaType
+}
+
+fragment Encounter on EncounterNode {
+  id
+  contextId
+  type
+  name
+  status
+  patient {
+    id
+    firstName
+    lastName
+    code
+    code2
+    name
+    dateOfBirth
+  }
+  clinician {
+    id
+    firstName
+    lastName
+  }
+  programEnrolment {
+    id
+    isImmunisationProgram
+    document {
+      type
+      name
+    }
+  }
+  createdDatetime
+  startDatetime
+  endDatetime
+  document {
+    ...Document
+  }
+}
+
+query encountersWithDocument(
+  $storeId: String!
+  $key: EncounterSortFieldInput!
+  $desc: Boolean
+  $filter: EncounterFilterInput
+  $page: PaginationInput
+) {
+  encounters(
+    storeId: $storeId
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+    page: $page
+  ) {
+    ... on EncounterConnector {
+      __typename
+      nodes {
+        __typename
+        ...Encounter
+      }
+      totalCount
+    }
+  }
+}
+
+query encounterById($storeId: String!, $encounterId: String!) {
+  encounters(
+    storeId: $storeId
+    filter: { id: { equalTo: $encounterId }, includeDeleted: true }
+  ) {
+    ... on EncounterConnector {
+      __typename
+      nodes {
+        ...Encounter
+      }
+      totalCount
+    }
+  }
+}
+
+query encounterByDocName($storeId: String!, $documentName: String!) {
+  encounters(
+    storeId: $storeId
+    filter: { documentName: { equalTo: $documentName } }
+  ) {
+    ... on EncounterConnector {
+      __typename
+      nodes {
+        ...Encounter
+      }
+      totalCount
+    }
+  }
+}
+
+fragment EncounterRow on EncounterNode {
+  id
+  document {
+    documentRegistry {
+      name
+    }
+  }
+  contextId
+  startDatetime
+  endDatetime
+  status
+  name
+  type
+  patient {
+    id
+    firstName
+    lastName
+    name
+  }
+  activeProgramEvents(at: $eventTime, filter: { isCurrentEncounter: true }) {
+    ... on ProgramEventConnector {
+      nodes {
+        __typename
+        ...ProgramEvent
+      }
+    }
+  }
+}
+
+query encounters(
+  $storeId: String!
+  $key: EncounterSortFieldInput!
+  $desc: Boolean
+  $filter: EncounterFilterInput
+  $page: PaginationInput
+  $eventTime: DateTime
+) {
+  encounters(
+    storeId: $storeId
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+    page: $page
+  ) {
+    ... on EncounterConnector {
+      __typename
+      nodes {
+        __typename
+        ...EncounterRow
+      }
+      totalCount
+    }
+  }
+}
+
+mutation insertEncounter($storeId: String!, $input: InsertEncounterInput!) {
+  insertEncounter(storeId: $storeId, input: $input) {
+    ... on EncounterNode {
+      __typename
+      ...Encounter
+    }
+  }
+}
+
+mutation updateEncounter($storeId: String!, $input: UpdateEncounterInput!) {
+  updateEncounter(storeId: $storeId, input: $input) {
+    ... on EncounterNode {
+      __typename
+      ...Encounter
+    }
+  }
+}
+
+# program enrolment without document data but with events
+fragment ProgramEnrolmentRow on ProgramEnrolmentNode {
+  id
+  type
+  programEnrolmentId
+  patientId
+  contextId
+  isImmunisationProgram
+  name
+  enrolmentDatetime
+  status
+  document {
+    documentRegistry {
+      id
+      name
+    }
+  }
+  activeProgramEvents(at: $eventTime) {
+    ... on ProgramEventConnector {
+      nodes {
+        __typename
+        ...ProgramEvent
+      }
+    }
+  }
+}
+
+query programEnrolments(
+  $storeId: String!
+  $key: ProgramEnrolmentSortFieldInput!
+  $desc: Boolean
+  $filter: ProgramEnrolmentFilterInput
+  $eventTime: DateTime
+) {
+  programEnrolments(
+    storeId: $storeId
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on ProgramEnrolmentConnector {
+      __typename
+      nodes {
+        ...ProgramEnrolmentRow
+      }
+      totalCount
+    }
+  }
+}
+
+# program enrolment with document
+fragment ProgramEnrolment on ProgramEnrolmentNode {
+  type
+  programEnrolmentId
+  patientId
+  name
+  enrolmentDatetime
+  status
+  document {
+    ...Document
+  }
+}
+
+query programEnrolmentByDocName($storeId: String!, $documentName: String!) {
+  programEnrolments(
+    storeId: $storeId
+    filter: { documentName: { equalTo: $documentName } }
+  ) {
+    ... on ProgramEnrolmentConnector {
+      __typename
+      nodes {
+        ...ProgramEnrolment
+      }
+      totalCount
+    }
+  }
+}
+
+mutation insertProgramEnrolment(
+  $storeId: String!
+  $input: InsertProgramEnrolmentInput!
+) {
+  insertProgramEnrolment(storeId: $storeId, input: $input) {
+    ... on ProgramEnrolmentNode {
+      __typename
+      ...ProgramEnrolment
+    }
+  }
+}
+
+mutation updateProgramEnrolment(
+  $storeId: String!
+  $input: UpdateProgramEnrolmentInput!
+) {
+  updateProgramEnrolment(storeId: $storeId, input: $input) {
+    ... on ProgramEnrolmentNode {
+      __typename
+      ...ProgramEnrolment
+    }
+  }
+}
+
+fragment Clinician on ClinicianNode {
+  address1
+  address2
+  code
+  email
+  firstName
+  id
+  initials
+  gender
+  lastName
+  mobile
+  phone
+}
+
+query clinicians(
+  $storeId: String!
+  $key: ClinicianSortFieldInput!
+  $desc: Boolean
+  $filter: ClinicianFilterInput
+  $page: PaginationInput
+) {
+  clinicians(
+    storeId: $storeId
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+    page: $page
+  ) {
+    ... on ClinicianConnector {
+      __typename
+      nodes {
+        __typename
+        ...Clinician
+      }
+      totalCount
+    }
+  }
+}
+
+fragment FormSchema on FormSchemaNode {
+  id
+  jsonSchema
+  type
+  uiSchema
+}
+
+query formSchemas($filter: FormSchemaFilterInput) {
+  formSchemas(filter: $filter) {
+    ... on FormSchemaConnector {
+      __typename
+      nodes {
+        __typename
+        ...FormSchema
+      }
+    }
+  }
+}
+
+query activeProgramEvents(
+  $at: DateTime
+  $storeId: String!
+  $filter: ProgramEventFilterInput
+  $page: PaginationInput
+) {
+  activeProgramEvents(
+    at: $at
+    storeId: $storeId
+    filter: $filter
+    page: $page
+  ) {
+    ... on ProgramEventConnector {
+      __typename
+      totalCount
+      nodes {
+        __typename
+        ...ProgramEvent
+      }
+    }
+  }
+}
+
+fragment ContactTraceRow on ContactTraceNode {
+  __typename
+  contactTraceId
+  storeId
+  datetime
+  document {
+    name
+    type
+    id
+  }
+  documentId
+  id
+  firstName
+  lastName
+  gender
+  dateOfBirth
+  age
+  patientId
+  relationship
+  patient {
+    id
+    name
+    firstName
+    lastName
+  }
+  contactPatient {
+    id
+    name
+    firstName
+    lastName
+  }
+  program {
+    id
+    name
+  }
+}
+
+query contactTraces(
+  $storeId: String!
+  $key: ContactTraceSortFieldInput!
+  $desc: Boolean
+  $filter: ContactTraceFilterInput
+  $page: PaginationInput
+) {
+  contactTraces(
+    storeId: $storeId
+    filter: $filter
+    sort: { key: $key, desc: $desc }
+    page: $page
+  ) {
+    ... on ContactTraceConnector {
+      nodes {
+        ...ContactTraceRow
+      }
+      totalCount
+    }
+  }
+}
+
+fragment ContactTrace on ContactTraceNode {
+  id
+  document {
+    ...Document
+  }
+}
+
+mutation insertContactTrace(
+  $storeId: String!
+  $input: InsertContactTraceInput!
+) {
+  insertContactTrace(storeId: $storeId, input: $input) {
+    ... on ContactTraceNode {
+      __typename
+      ...ContactTrace
+    }
+  }
+}
+
+mutation updateContactTrace(
+  $storeId: String!
+  $input: UpdateContactTraceInput!
+) {
+  updateContactTrace(storeId: $storeId, input: $input) {
+    ... on ContactTraceNode {
+      __typename
+      ...ContactTrace
+    }
+  }
+}
+
+fragment ImmunisationProgram on ProgramNode {
+  id
+  name
+  vaccineCourses {
+    name
+  }
+}
+
+fragment VaccineCourseDose on VaccineCourseDoseNode {
+  id
+  label
+  minAgeMonths
+  maxAgeMonths
+  minIntervalDays
+  customAgeLabel
+}
+
+fragment VaccineCourseItem on VaccineCourseItemNode {
+  id
+  itemId
+  name
+}
+
+query immunisationPrograms(
+  $storeId: String!
+  $first: Int
+  $offset: Int
+  $key: ProgramSortFieldInput!
+  $desc: Boolean
+  $filter: ProgramFilterInput
+) {
+  programs(
+    storeId: $storeId
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on ProgramConnector {
+      __typename
+      nodes {
+        __typename
+        ...ImmunisationProgram
+      }
+      totalCount
+    }
+  }
+}
+
+fragment VaccineCourseStoreConfig on VaccineCourseStoreConfigNode {
+  id
+  vaccineCourseId
+  storeId
+  wastageRate
+  coverageRate
+}
+
+fragment VaccineCourseRow on VaccineCourseNode {
+  id
+  name
+  programId
+  demographic {
+    name
+    id
+  }
+  vaccineCourseDoses {
+    ...VaccineCourseDose
+  }
+}
+
+fragment VaccineCourse on VaccineCourseNode {
+  id
+  name
+  programId
+  demographicId
+  coverageRate
+  wastageRate
+  useInGapsCalculations
+  canSkipDose
+  demographic {
+    name
+    id
+  }
+  vaccineCourseItems {
+    ...VaccineCourseItem
+  }
+  vaccineCourseDoses {
+    ...VaccineCourseDose
+  }
+  storeConfigs {
+    ...VaccineCourseStoreConfig
+  }
+}
+
+query vaccineCourseList(
+  $first: Int
+  $offset: Int
+  $key: VaccineCourseSortFieldInput!
+  $desc: Boolean
+  $filter: VaccineCourseFilterInput
+) {
+  vaccineCourses(
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on VaccineCourseConnector {
+      __typename
+      nodes {
+        ...VaccineCourseRow
+      }
+      totalCount
+    }
+  }
+}
+
+query vaccineCourses(
+  $first: Int
+  $offset: Int
+  $key: VaccineCourseSortFieldInput!
+  $desc: Boolean
+  $filter: VaccineCourseFilterInput
+) {
+  vaccineCourses(
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on VaccineCourseConnector {
+      __typename
+      nodes {
+        ...VaccineCourse
+      }
+      totalCount
+    }
+  }
+}
+
+mutation insertVaccineCourse(
+  $input: InsertVaccineCourseInput!
+  $storeId: String!
+) {
+  centralServer {
+    vaccineCourse {
+      insertVaccineCourse(input: $input, storeId: $storeId) {
+        __typename
+        ... on VaccineCourseNode {
+          ...VaccineCourse
+        }
+        ... on InsertVaccineCourseError {
+          __typename
+          error {
+            ... on RecordAlreadyExist {
+              __typename
+              description
+            }
+            ... on RecordProgramCombinationAlreadyExists {
+              __typename
+              description
+            }
+            description
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation updateVaccineCourse(
+  $input: UpdateVaccineCourseInput!
+  $storeId: String!
+) {
+  centralServer {
+    vaccineCourse {
+      updateVaccineCourse(input: $input, storeId: $storeId) {
+        __typename
+        ... on VaccineCourseNode {
+          __typename
+          ...VaccineCourse
+        }
+        ... on UpdateVaccineCourseError {
+          __typename
+          error {
+            ... on VaccineDosesInUse {
+              __typename
+              description
+            }
+            ... on RecordProgramCombinationAlreadyExists {
+              __typename
+              description
+            }
+            description
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation deleteVaccineCourse($vaccineCourseId: String!) {
+  centralServer {
+    vaccineCourse {
+      deleteVaccineCourse(vaccineCourseId: $vaccineCourseId) {
+        ... on DeleteResponse {
+          __typename
+          id
+        }
+        ... on DeleteVaccineCourseError {
+          __typename
+          error {
+            description
+            ... on VaccineCourseInUse {
+              __typename
+              description
+            }
+          }
+        }
+      }
+    }
+  }
+}

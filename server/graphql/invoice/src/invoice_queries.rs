@@ -1,0 +1,395 @@
+use async_graphql::*;
+use graphql_core::{
+    dynamic_filter::{parse_dynamic_filter, validate_custom_field_filter_keys},
+    generic_filters::{
+        DatetimeFilterInput, EqualFilterBigNumberInput, EqualFilterStringInput, StringFilterInput,
+    },
+    map_filter,
+    pagination::PaginationInput,
+    simple_generic_errors::{NodeError, NodeErrorInterface},
+    standard_graphql_error::{validate_auth, StandardGraphqlError},
+    ContextExt,
+};
+use graphql_types::types::{
+    EqualFilterInvoiceStatusInput, EqualFilterInvoiceTypeInput, InvoiceConnector, InvoiceNode,
+};
+use repository::{
+    DatetimeFilter, EqualFilter, InvoiceCondition, InvoiceFilter, InvoiceSort, InvoiceSortField,
+    InvoiceStatus, InvoiceType, PaginationOption, StringFilter,
+};
+use service::auth::{Resource, ResourceAccessRequest};
+use service::invoice::invoice_custom_field_scope;
+
+#[derive(Union)]
+pub enum InvoiceResponse {
+    Error(NodeError),
+    Response(InvoiceNode),
+}
+
+#[derive(Union)]
+pub enum InvoicesResponse {
+    Response(InvoiceConnector),
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(rename_items = "camelCase")]
+#[graphql(remote = "repository::db_diesel::invoice::InvoiceSortField")]
+pub enum InvoiceSortFieldInput {
+    Type,
+    OtherPartyName,
+    InvoiceNumber,
+    Comment,
+    Status,
+    CreatedDatetime,
+    InvoiceDatetime,
+    AllocatedDatetime,
+    PickedDatetime,
+    ShippedDatetime,
+    DeliveredDatetime,
+    VerifiedDatetime,
+    TheirReference,
+    TransportReference,
+}
+
+#[derive(InputObject)]
+pub struct InvoiceSortInput {
+    /// Sort query result by `key`
+    key: InvoiceSortFieldInput,
+    /// Sort query result is sorted descending or ascending (if not provided the default is
+    /// ascending)
+    desc: Option<bool>,
+}
+
+#[derive(Enum, Copy, Clone, PartialEq, Eq)]
+#[graphql(rename_items = "SCREAMING_SNAKE_CASE")]
+pub enum InvoiceTypeInput {
+    OutboundShipment,
+    InboundShipment,
+    InboundShipmentExternal,
+    Prescription,
+    SupplierReturn,
+    CustomerReturn,
+}
+
+impl InvoiceTypeInput {
+    pub fn resource(&self) -> Resource {
+        match self {
+            InvoiceTypeInput::OutboundShipment => Resource::QueryOutboundShipment,
+            InvoiceTypeInput::InboundShipment => Resource::QueryInboundShipment,
+            InvoiceTypeInput::InboundShipmentExternal => Resource::QueryInboundShipmentExternal,
+            InvoiceTypeInput::Prescription => Resource::QueryPrescription,
+            InvoiceTypeInput::SupplierReturn => Resource::QuerySupplierReturn,
+            InvoiceTypeInput::CustomerReturn => Resource::QueryCustomerReturn,
+        }
+    }
+
+    fn invoice_type(&self) -> InvoiceType {
+        match self {
+            InvoiceTypeInput::OutboundShipment => InvoiceType::OutboundShipment,
+            InvoiceTypeInput::InboundShipment | InvoiceTypeInput::InboundShipmentExternal => {
+                InvoiceType::InboundShipment
+            }
+            InvoiceTypeInput::Prescription => InvoiceType::Prescription,
+            InvoiceTypeInput::SupplierReturn => InvoiceType::SupplierReturn,
+            InvoiceTypeInput::CustomerReturn => InvoiceType::CustomerReturn,
+        }
+    }
+}
+
+fn apply_type_filters(filter: &mut InvoiceFilter, types: &[InvoiceTypeInput]) {
+    // Collect the underlying InvoiceType values (deduplicating InboundShipment/External)
+    let mut invoice_types: Vec<InvoiceType> = Vec::new();
+    for t in types {
+        let invoice_type = t.invoice_type();
+        if !invoice_types.contains(&invoice_type) {
+            invoice_types.push(invoice_type);
+        }
+    }
+
+    if invoice_types.len() == 1 {
+        filter.r#type = Some(invoice_types.remove(0).equal_to());
+    } else {
+        filter.r#type = Some(EqualFilter::equal_any(invoice_types));
+    }
+
+    let has_inbound = types.contains(&InvoiceTypeInput::InboundShipment);
+    let has_external = types.contains(&InvoiceTypeInput::InboundShipmentExternal);
+
+    // Only apply purchase_order_id filter if exactly one of inbound/external is requested
+    if has_inbound && !has_external {
+        filter
+            .purchase_order_id
+            .get_or_insert_with(Default::default)
+            .is_null = Some(true);
+    } else if has_external && !has_inbound {
+        filter
+            .purchase_order_id
+            .get_or_insert_with(Default::default)
+            .is_null = Some(false);
+    }
+    // If both are requested, no purchase_order_id filter needed
+}
+
+#[derive(InputObject, Clone)]
+pub struct InvoiceFilterInput {
+    pub id: Option<EqualFilterStringInput>,
+    pub name_id: Option<EqualFilterStringInput>,
+    pub invoice_number: Option<EqualFilterBigNumberInput>,
+    pub invoice_number_or_status: Option<StringFilterInput>,
+    pub other_party_name: Option<StringFilterInput>,
+    pub other_party_id: Option<EqualFilterStringInput>,
+    pub store_id: Option<EqualFilterStringInput>,
+    pub user_id: Option<EqualFilterStringInput>,
+    pub r#type: Option<EqualFilterInvoiceTypeInput>,
+    pub status: Option<EqualFilterInvoiceStatusInput>,
+    pub on_hold: Option<bool>,
+    pub comment: Option<StringFilterInput>,
+    pub their_reference: Option<StringFilterInput>,
+    pub transport_reference: Option<EqualFilterStringInput>,
+    pub created_datetime: Option<DatetimeFilterInput>,
+    pub allocated_datetime: Option<DatetimeFilterInput>,
+    pub picked_datetime: Option<DatetimeFilterInput>,
+    pub shipped_datetime: Option<DatetimeFilterInput>,
+    pub delivered_datetime: Option<DatetimeFilterInput>,
+    pub received_datetime: Option<DatetimeFilterInput>,
+    pub verified_datetime: Option<DatetimeFilterInput>,
+    pub created_or_backdated_datetime: Option<DatetimeFilterInput>,
+    pub colour: Option<EqualFilterStringInput>,
+    pub requisition_id: Option<EqualFilterStringInput>,
+    pub linked_invoice_id: Option<EqualFilterStringInput>,
+    pub is_program_invoice: Option<bool>,
+    pub purchase_order_id: Option<EqualFilterStringInput>,
+    pub prescription_request_id: Option<EqualFilterStringInput>,
+    pub purchase_order_number: Option<EqualFilterBigNumberInput>,
+    pub linked_order_number: Option<EqualFilterBigNumberInput>,
+    pub program_id: Option<EqualFilterStringInput>,
+
+    /// Dynamic filter condition AST, currently supporting property conditions
+    /// on keys visible for the requested invoice type's scope, e.g.
+    /// `{"And": [{"CustomField": {"key": "k", "filter": {"Text": {"Like": "abc"}}}}]}`.
+    /// Requires the query's `type` argument to pin a single supported invoice
+    /// type (the custom fields scope is per type).
+    pub dynamic_filter: Option<serde_json::Value>,
+}
+
+pub fn get_invoice(
+    ctx: &Context<'_>,
+    store_id: Option<String>,
+    id: &str,
+    r#type: Option<InvoiceTypeInput>,
+) -> Result<InvoiceResponse> {
+    let resource = r#type
+        .map(|s| s.resource())
+        .unwrap_or(Resource::QueryInvoice);
+
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource,
+            store_id: store_id.clone(),
+            require_central_standalone: false,
+        },
+    )?;
+
+    let service_provider = ctx.service_provider();
+    let service_context =
+        service_provider.context(store_id.clone().unwrap_or("".to_string()), user.user_id)?;
+    let invoice_service = &service_provider.invoice_service;
+
+    let type_filter = r#type.map(|s| {
+        let mut f = InvoiceFilter::default();
+        apply_type_filters(&mut f, &[s]);
+        f
+    });
+    let invoice_option =
+        invoice_service.get_invoice(&service_context, store_id.as_deref(), id, type_filter)?;
+
+    let response = match invoice_option {
+        Some(invoice) => InvoiceResponse::Response(InvoiceNode::from_domain(invoice)),
+        None => InvoiceResponse::Error(NodeError {
+            error: NodeErrorInterface::record_not_found(),
+        }),
+    };
+
+    Ok(response)
+}
+
+pub fn get_invoices(
+    ctx: &Context<'_>,
+    store_id: String,
+    page: Option<PaginationInput>,
+    filter: Option<InvoiceFilterInput>,
+    sort: Option<Vec<InvoiceSortInput>>,
+    r#type: Option<Vec<InvoiceTypeInput>>,
+) -> Result<InvoicesResponse> {
+    // Validate auth for each requested type (or all permissions if none specified)
+    let resources: Vec<Resource> = r#type
+        .as_ref()
+        .filter(|types| !types.is_empty())
+        .map(|types| types.iter().map(|t| t.resource()).collect())
+        .unwrap_or_else(|| vec![Resource::QueryInvoice]);
+
+    let mut user = None;
+    for resource in &resources {
+        user = Some(validate_auth(
+            ctx,
+            &ResourceAccessRequest {
+                resource: resource.clone(),
+                store_id: Some(store_id.clone()),
+                require_central_standalone: false,
+            },
+        )?);
+    }
+    let user = user.expect("resources should never be empty");
+
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+
+    let dynamic_filter_input = filter.as_ref().and_then(|f| f.dynamic_filter.clone());
+    let mut domain_filter = filter.map(|filter| filter.to_domain()).unwrap_or_default();
+    if let Some(types) = &r#type {
+        apply_type_filters(&mut domain_filter, types);
+    }
+
+    // Property filters validate against the requested invoice type's properties
+    // scope, so the query must pin exactly one supported scope. List views
+    // request their type via either the top-level `type` argument or the
+    // filter's `type` field — both have landed on the domain filter by here.
+    let dynamic_filter: Option<InvoiceCondition::Inner> =
+        parse_dynamic_filter(dynamic_filter_input)?;
+    if let Some(condition) = &dynamic_filter {
+        let requested_types: Vec<InvoiceType> = domain_filter
+            .r#type
+            .iter()
+            .flat_map(|t| t.equal_to.iter().chain(t.equal_any.iter().flatten()))
+            .cloned()
+            .collect();
+        let mut scopes: Vec<&str> = requested_types
+            .iter()
+            .filter_map(invoice_custom_field_scope)
+            .collect();
+        scopes.sort_unstable();
+        scopes.dedup();
+        let [scope] = scopes[..] else {
+            return Err(StandardGraphqlError::BadUserInput(
+                "dynamicFilter requires the invoice type (argument or filter) to specify a single invoice type with custom field support".to_string(),
+            )
+            .extend());
+        };
+        validate_custom_field_filter_keys(
+            &service_context.connection,
+            scope,
+            &condition.custom_field_conditions(),
+        )?;
+    }
+    domain_filter.dynamic_filter = dynamic_filter;
+
+    let invoices = service_provider
+        .invoice_service
+        .get_invoices(
+            &service_context,
+            Some(&store_id),
+            page.map(PaginationOption::from),
+            Some(domain_filter),
+            // Currently only one sort option is supported, use the first from the list.
+            sort.and_then(|mut sort_list| sort_list.pop())
+                .map(|sort| sort.to_domain()),
+        )
+        .map_err(StandardGraphqlError::from_list_error)?;
+
+    Ok(InvoicesResponse::Response(InvoiceConnector::from_domain(
+        invoices,
+    )))
+}
+
+pub fn get_invoice_by_number(
+    ctx: &Context<'_>,
+    store_id: String,
+    invoice_number: u32,
+    r#type: InvoiceTypeInput,
+) -> Result<InvoiceResponse> {
+    let user = validate_auth(
+        ctx,
+        &ResourceAccessRequest {
+            resource: r#type.resource(),
+            store_id: Some(store_id.clone()),
+            require_central_standalone: false,
+        },
+    )?;
+
+    let service_provider = ctx.service_provider();
+    let service_context = service_provider.context(store_id.clone(), user.user_id)?;
+    let invoice_service = &service_provider.invoice_service;
+
+    let mut type_filter = InvoiceFilter::default();
+    apply_type_filters(&mut type_filter, &[r#type]);
+    let invoice_option = invoice_service.get_invoice_by_number(
+        &service_context,
+        &store_id,
+        invoice_number,
+        type_filter,
+    )?;
+
+    let response = match invoice_option {
+        Some(invoice) => InvoiceResponse::Response(InvoiceNode::from_domain(invoice)),
+        None => InvoiceResponse::Error(NodeError {
+            error: NodeErrorInterface::record_not_found(),
+        }),
+    };
+
+    Ok(response)
+}
+
+impl InvoiceFilterInput {
+    pub fn to_domain(self) -> InvoiceFilter {
+        InvoiceFilter {
+            id: self.id.map(EqualFilter::from),
+            invoice_number: self.invoice_number.map(EqualFilter::from),
+            invoice_number_or_status: self.invoice_number_or_status.map(StringFilter::from),
+            name_id: self.other_party_id.map(EqualFilter::from),
+            name: self.other_party_name.map(StringFilter::from),
+            store_id: self.store_id.map(EqualFilter::from),
+            user_id: self.user_id.map(EqualFilter::from),
+            r#type: self.r#type.map(|t| map_filter!(t, InvoiceType::from)),
+            status: self.status.map(|t| map_filter!(t, InvoiceStatus::from)),
+            on_hold: self.on_hold,
+            comment: self.comment.map(StringFilter::from),
+            their_reference: self.their_reference.map(StringFilter::from),
+            transport_reference: self.transport_reference.map(EqualFilter::from),
+            created_datetime: self.created_datetime.map(DatetimeFilter::from),
+            allocated_datetime: self.allocated_datetime.map(DatetimeFilter::from),
+            picked_datetime: self.picked_datetime.map(DatetimeFilter::from),
+            shipped_datetime: self.shipped_datetime.map(DatetimeFilter::from),
+            delivered_datetime: self.delivered_datetime.map(DatetimeFilter::from),
+            received_datetime: self.received_datetime.map(DatetimeFilter::from),
+            verified_datetime: self.verified_datetime.map(DatetimeFilter::from),
+            created_or_backdated_datetime: self
+                .created_or_backdated_datetime
+                .map(DatetimeFilter::from),
+            colour: self.colour.map(EqualFilter::from),
+            requisition_id: self.requisition_id.map(EqualFilter::from),
+            linked_invoice_id: self.linked_invoice_id.map(EqualFilter::from),
+            is_program_invoice: self.is_program_invoice,
+            program_id: self.program_id.map(EqualFilter::from),
+            stock_line_id: None,
+            is_cancellation: None,
+            purchase_order_id: self.purchase_order_id.map(EqualFilter::from),
+            prescription_request_id: self.prescription_request_id.map(EqualFilter::from),
+            purchase_order_number: self.purchase_order_number.map(EqualFilter::from),
+            linked_order_number: self.linked_order_number.map(EqualFilter::from),
+            // Parsed from the JSON `dynamicFilter` input in the resolver (a
+            // serde error there must surface as BadUserInput, so the infallible
+            // to_domain can't do it)
+            dynamic_filter: None,
+        }
+    }
+}
+
+impl InvoiceSortInput {
+    pub fn to_domain(self) -> InvoiceSort {
+        InvoiceSort {
+            key: InvoiceSortField::from(self.key),
+            desc: self.desc,
+        }
+    }
+}

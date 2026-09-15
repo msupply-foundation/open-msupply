@@ -1,0 +1,220 @@
+use crate::common::check_program_exists;
+use crate::invoice::inbound_shipment::InboundShipmentType;
+use crate::{
+    campaign::check_campaign_exists_including_deleted,
+    check_item_variant_exists, check_location_exists, check_location_type_is_valid,
+    check_vvm_status_exists,
+    invoice::{
+        check_invoice_exists, check_invoice_lines_are_editable, check_invoice_type, check_store,
+    },
+    invoice_line::{
+        stock_in_line::{check_batch, check_pack_size},
+        validate::{
+            check_item_exists, check_line_belongs_to_invoice, check_line_exists,
+            check_number_of_packs, check_price_is_not_negative,
+        },
+    },
+    validate::{
+        check_date_is_not_in_future, check_other_party, check_other_party_store_is_disabled,
+        CheckOtherPartyType, OtherPartyErrors,
+    },
+    NullableUpdate,
+};
+use repository::{
+    InvoiceLine, InvoiceRow, ItemRow, ReasonOptionRowRepository, ReasonOptionType,
+    StorageConnection,
+};
+
+use util::f64_approx_eq;
+
+use super::{UpdateStockInLine, UpdateStockInLineError};
+
+pub fn validate(
+    input: &UpdateStockInLine,
+    store_id: &str,
+    connection: &StorageConnection,
+    inbound_shipment_type: Option<InboundShipmentType>,
+) -> Result<(InvoiceLine, Option<ItemRow>, InvoiceRow), UpdateStockInLineError> {
+    use UpdateStockInLineError::*;
+
+    let line = check_line_exists(connection, &input.id)?.ok_or(LineDoesNotExist)?;
+    let line_row = &line.invoice_line_row;
+
+    if !check_pack_size(input.pack_size) {
+        return Err(PackSizeBelowOne);
+    }
+    if !check_number_of_packs(input.number_of_packs) {
+        return Err(NumberOfPacksBelowZero);
+    }
+    if !check_price_is_not_negative(input.sell_price_per_pack) {
+        return Err(SellPricePerPackBelowZero);
+    }
+    if !check_price_is_not_negative(input.cost_price_per_pack) {
+        return Err(CostPricePerPackBelowZero);
+    }
+
+    if let Some(NullableUpdate {
+        value: Some(manufacture_date),
+    }) = &input.manufacture_date
+    {
+        if !check_date_is_not_in_future(manufacture_date) {
+            return Err(CannotSetManufactureDateInFuture);
+        }
+    }
+
+    let item = check_item_option(&input.item_id, connection)?;
+
+    let invoice =
+        check_invoice_exists(&line_row.invoice_id, connection)?.ok_or(InvoiceDoesNotExist)?;
+
+    if !check_invoice_type(&invoice, input.r#type.to_domain()) {
+        return Err(NotAStockIn);
+    }
+    if let Some(inbound_type) = inbound_shipment_type {
+        if !inbound_type.matches_input(invoice.purchase_order_id.is_some()) {
+            return Err(WrongInboundShipmentType);
+        }
+    }
+    if !check_invoice_lines_are_editable(&invoice) {
+        return Err(CannotEditFinalised);
+    }
+    if check_other_party_store_is_disabled(connection, store_id, &invoice.name_id)? {
+        return Err(OtherPartyStoreDisabled);
+    }
+    if !check_store(&invoice, store_id) {
+        return Err(NotThisStoreInvoice);
+    }
+
+    if !check_batch(line_row, connection)? {
+        return Err(BatchIsReserved);
+    }
+    if let Some(NullableUpdate {
+        value: Some(ref location),
+    }) = &input.location
+    {
+        if !check_location_exists(connection, store_id, location)? {
+            return Err(LocationDoesNotExist);
+        }
+
+        if let Some(item_restricted_type) = &line.item_row.restricted_location_type_id {
+            if !check_location_type_is_valid(connection, store_id, location, item_restricted_type)?
+            {
+                return Err(IncorrectLocationType);
+            }
+        }
+    }
+    if let Some(NullableUpdate {
+        value: Some(item_variant_id),
+    }) = &input.item_variant_id
+    {
+        if check_item_variant_exists(connection, item_variant_id)?.is_none() {
+            return Err(ItemVariantDoesNotExist);
+        }
+    }
+
+    if let Some(NullableUpdate {
+        value: Some(vvm_status_id),
+    }) = &input.vvm_status_id
+    {
+        if check_vvm_status_exists(connection, vvm_status_id)?.is_none() {
+            return Err(VVMStatusDoesNotExist);
+        }
+    }
+
+    if !check_line_belongs_to_invoice(line_row, &invoice) {
+        return Err(NotThisInvoiceLine(line.invoice_line_row.invoice_id));
+    }
+
+    if let Some(NullableUpdate {
+        value: Some(program_id),
+    }) = &input.program_id
+    {
+        if check_program_exists(connection, program_id)?.is_none() {
+            return Err(ProgramDoesNotExist);
+        }
+    }
+
+    if let Some(NullableUpdate {
+        value: Some(manufacturer_id),
+    }) = &input.manufacturer_id
+    {
+        match check_other_party(
+            connection,
+            store_id,
+            manufacturer_id,
+            CheckOtherPartyType::Manufacturer,
+        ) {
+            Ok(_) => {}
+            Err(e) => match e {
+                OtherPartyErrors::OtherPartyDoesNotExist => return Err(ManufacturerDoesNotExist),
+                // Invisible manufacturers are allowed - they can be configured centrally (e.g. on
+                // an item variant) or inherited from stock without being visible in this store
+                OtherPartyErrors::OtherPartyNotVisible => {}
+                OtherPartyErrors::TypeMismatched => return Err(ManufacturerIsNotAManufacturer),
+                OtherPartyErrors::DatabaseError(repository_error) => {
+                    return Err(DatabaseError(repository_error))
+                }
+            },
+        };
+    };
+
+    if let Some(NullableUpdate {
+        value: Some(campaign_id),
+    }) = &input.campaign_id
+    {
+        if !check_campaign_exists_including_deleted(connection, campaign_id)? {
+            return Err(CampaignDoesNotExist);
+        }
+    }
+
+    // Cost price is read-only for PO-linked shipments and auto-generated transfer shipments.
+    // Use epsilon comparison to allow unchanged values that may have drifted
+    // through floating point serialization (Rust f64 → JSON → JS Number → JSON → f64).
+    if let Some(new_cost_price) = input.cost_price_per_pack {
+        if (invoice.linked_invoice_id.is_some() || invoice.purchase_order_id.is_some())
+            && !f64_approx_eq(new_cost_price, line_row.cost_price_per_pack)
+        {
+            return Err(CannotEditCostPrice);
+        }
+    }
+
+    if let Some(NullableUpdate {
+        value: Some(reason_option_id),
+    }) = &input.reason_option_id
+    {
+        let reason = ReasonOptionRowRepository::new(connection)
+            .find_one_by_id(reason_option_id)?
+            .ok_or(UpdateStockInLineError::ReasonOptionDoesNotExist)?;
+        if reason.r#type != ReasonOptionType::ShipmentVariance {
+            return Err(UpdateStockInLineError::ReasonOptionTypeInvalid);
+        }
+    }
+
+    if input
+        .status
+        .as_ref()
+        .is_some_and(|s| s.value != line_row.status)
+    {
+        use repository::InvoiceStatus::*;
+        // Verified is already excluded by check_invoice_lines_are_editable (invoice is no longer editable once verified).
+        // Can't change line status once invoice is received as stock lines may have already been allocated so rejecting a line at that point could cause issues with stock management.
+        if invoice.status == Received {
+            return Err(CannotChangeLineStatusOfReceivedInvoice);
+        }
+    }
+
+    Ok((line, item, invoice))
+}
+
+fn check_item_option(
+    item_id_option: &Option<String>,
+    connection: &StorageConnection,
+) -> Result<Option<ItemRow>, UpdateStockInLineError> {
+    if let Some(item_id) = item_id_option {
+        Ok(Some(
+            check_item_exists(connection, item_id)?.ok_or(UpdateStockInLineError::ItemNotFound)?,
+        ))
+    } else {
+        Ok(None)
+    }
+}

@@ -152,6 +152,13 @@ export type SupplierReturnsVariables = {
     equalAnyOrNull?: Array<string> | null;
     notEqualAll?: Array<string> | null;
   } | null;
+    prescriptionRequestId?: {
+    equalTo?: string | null;
+    equalAny?: Array<string> | null;
+    notEqualTo?: string | null;
+    equalAnyOrNull?: Array<string> | null;
+    notEqualAll?: Array<string> | null;
+  } | null;
     purchaseOrderNumber?: {
     equalTo?: number | null;
     equalAny?: Array<number> | null;
@@ -200,13 +207,16 @@ export type SupplierReturnsResult = {
   theirReference: string | null;
   colour: string | null;
   onHold: boolean;
+  lines: {
+  totalCount: number;
+};
   customFields: unknown | null;
 }>;
 });
 };
 
 export const SupplierReturns = {
-  query: "query supplierReturns($storeId: String!, $filter: InvoiceFilterInput, $sort: [InvoiceSortInput!], $page: PaginationInput) {\n  invoices(\n    storeId: $storeId\n    filter: $filter\n    sort: $sort\n    page: $page\n    type: [SUPPLIER_RETURN]\n  ) {\n    ... on InvoiceConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        otherPartyName\n        status\n        invoiceNumber\n        createdDatetime\n        comment\n        theirReference\n        colour\n        onHold\n        customFields\n      }\n    }\n  }\n}",
+  query: "query supplierReturns($storeId: String!, $filter: InvoiceFilterInput, $sort: [InvoiceSortInput!], $page: PaginationInput) {\n  invoices(\n    storeId: $storeId\n    filter: $filter\n    sort: $sort\n    page: $page\n    type: [SUPPLIER_RETURN]\n  ) {\n    ... on InvoiceConnector {\n      __typename\n      totalCount\n      nodes {\n        id\n        otherPartyName\n        status\n        invoiceNumber\n        createdDatetime\n        comment\n        theirReference\n        colour\n        onHold\n        lines {\n          totalCount\n        }\n        customFields\n      }\n    }\n  }\n}",
 } as TypedDocument<SupplierReturnsResult, SupplierReturnsVariables>;
 
 export type InsertSupplierReturnVariables = {
@@ -235,7 +245,7 @@ export type InsertSupplierReturnResult = {
   __typename: "InsertSupplierReturnError";
 } & {
   error: {
-  __typename: string;
+  __typename: "OtherPartyNotASupplier" | "OtherPartyNotVisible";
   description: string;
 };
 });
@@ -278,7 +288,7 @@ export type DeleteSupplierReturnResult = {
   __typename: "DeleteSupplierReturnError";
 } & {
   error: {
-  __typename: string;
+  __typename: "CannotDeleteInvoiceWithLines" | "CannotEditInvoice" | "RecordNotFound";
   description: string;
 };
 });

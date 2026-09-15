@@ -1,0 +1,682 @@
+use super::{
+    clinician_link_row::clinician_link, clinician_row::clinician, invoice_line_row::invoice_line,
+    invoice_row::invoice, name_row::name, purchase_order_row::purchase_order,
+    requisition::requisition_row::requisition, store_row::store, ClinicianRow, DBType, InvoiceRow,
+    InvoiceStatus, InvoiceType, NameRow, RepositoryError, StorageConnection, StoreRow,
+};
+
+use crate::{
+    diesel_extensions::datetime_coalesce,
+    diesel_macros::{
+        apply_date_time_filter, apply_equal_filter, apply_equal_or_filter, apply_sort,
+        apply_sort_no_case, apply_string_filter,
+    },
+    dynamic_query_filter::create_condition,
+    ClinicianLinkRow,
+};
+
+use strum::IntoEnumIterator;
+
+use crate::{DatetimeFilter, EqualFilter, Pagination, Sort, StringFilter};
+
+use diesel::{dsl::IntoBoxed, prelude::*};
+
+#[derive(PartialEq, Debug, Clone, Default)]
+pub struct Invoice {
+    pub invoice_row: InvoiceRow,
+    pub name_row: NameRow,
+    pub store_row: StoreRow,
+    pub clinician_row: Option<ClinicianRow>,
+}
+#[derive(Clone, Default)]
+pub struct InvoiceFilter {
+    pub id: Option<EqualFilter<String>>,
+    pub invoice_number: Option<EqualFilter<i64>>,
+    pub invoice_number_or_status: Option<StringFilter>,
+    pub name_id: Option<EqualFilter<String>>,
+    pub name: Option<StringFilter>,
+    pub store_id: Option<EqualFilter<String>>,
+    pub user_id: Option<EqualFilter<String>>,
+    pub r#type: Option<EqualFilter<InvoiceType>>,
+    pub status: Option<EqualFilter<InvoiceStatus>>,
+    pub on_hold: Option<bool>,
+    pub comment: Option<StringFilter>,
+    pub their_reference: Option<StringFilter>,
+    pub transport_reference: Option<EqualFilter<String>>,
+    pub created_datetime: Option<DatetimeFilter>,
+    pub allocated_datetime: Option<DatetimeFilter>,
+    pub picked_datetime: Option<DatetimeFilter>,
+    pub shipped_datetime: Option<DatetimeFilter>,
+    pub delivered_datetime: Option<DatetimeFilter>,
+    pub received_datetime: Option<DatetimeFilter>,
+    pub verified_datetime: Option<DatetimeFilter>,
+    pub created_or_backdated_datetime: Option<DatetimeFilter>,
+    pub colour: Option<EqualFilter<String>>,
+    pub requisition_id: Option<EqualFilter<String>>,
+    pub linked_invoice_id: Option<EqualFilter<String>>,
+    pub stock_line_id: Option<String>,
+    pub is_program_invoice: Option<bool>,
+    pub is_cancellation: Option<bool>,
+    pub purchase_order_id: Option<EqualFilter<String>>,
+    pub prescription_request_id: Option<EqualFilter<String>>,
+    pub purchase_order_number: Option<EqualFilter<i64>>,
+    pub linked_order_number: Option<EqualFilter<i64>>,
+    pub program_id: Option<EqualFilter<String>>,
+    pub dynamic_filter: Option<InvoiceCondition::Inner>,
+}
+
+pub enum InvoiceSortField {
+    Type,
+    OtherPartyName,
+    InvoiceNumber,
+    Comment,
+    Status,
+    CreatedDatetime,
+    AllocatedDatetime,
+    PickedDatetime,
+    ShippedDatetime,
+    DeliveredDatetime,
+    VerifiedDatetime,
+    TheirReference,
+    TransportReference,
+    InvoiceDatetime,
+}
+
+pub type InvoiceSort = Sort<InvoiceSortField>;
+
+pub struct InvoiceRepository<'a> {
+    connection: &'a StorageConnection,
+}
+
+type InvoiceJoin = (
+    InvoiceRow,
+    NameRow,
+    StoreRow,
+    Option<(ClinicianLinkRow, ClinicianRow)>,
+);
+
+impl<'a> InvoiceRepository<'a> {
+    pub fn new(connection: &'a StorageConnection) -> Self {
+        InvoiceRepository { connection }
+    }
+
+    pub fn count(&self, filter: Option<InvoiceFilter>) -> Result<i64, RepositoryError> {
+        // TODO (beyond M1), check that store_id matches current store
+        let query = create_filtered_query(filter);
+
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
+    }
+
+    pub fn query_by_filter(&self, filter: InvoiceFilter) -> Result<Vec<Invoice>, RepositoryError> {
+        self.query(Pagination::all(), Some(filter), None)
+    }
+
+    pub fn query_one(&self, filter: InvoiceFilter) -> Result<Option<Invoice>, RepositoryError> {
+        Ok(self.query_by_filter(filter)?.pop())
+    }
+
+    /// Gets all invoices
+    pub fn query(
+        &self,
+        pagination: Pagination,
+        filter: Option<InvoiceFilter>,
+        sort: Option<InvoiceSort>,
+    ) -> Result<Vec<Invoice>, RepositoryError> {
+        let mut query = create_filtered_query(filter);
+
+        if let Some(sort) = sort {
+            match sort.key {
+                InvoiceSortField::Type => {
+                    apply_sort!(query, sort, invoice::type_);
+                }
+                InvoiceSortField::Status => {
+                    apply_sort!(query, sort, invoice::status);
+                }
+                InvoiceSortField::CreatedDatetime => {
+                    apply_sort!(query, sort, invoice::created_datetime);
+                }
+                InvoiceSortField::InvoiceDatetime => {
+                    apply_sort!(
+                        query,
+                        sort,
+                        datetime_coalesce::coalesce(
+                            invoice::backdated_datetime,
+                            invoice::created_datetime
+                        )
+                    );
+                }
+                InvoiceSortField::AllocatedDatetime => {
+                    apply_sort!(query, sort, invoice::allocated_datetime);
+                }
+                InvoiceSortField::PickedDatetime => {
+                    apply_sort!(query, sort, invoice::picked_datetime);
+                }
+                InvoiceSortField::ShippedDatetime => {
+                    apply_sort!(query, sort, invoice::shipped_datetime);
+                }
+                InvoiceSortField::DeliveredDatetime => {
+                    apply_sort!(query, sort, invoice::delivered_datetime);
+                }
+                InvoiceSortField::VerifiedDatetime => {
+                    apply_sort!(query, sort, invoice::verified_datetime);
+                }
+                InvoiceSortField::OtherPartyName => {
+                    apply_sort_no_case!(query, sort, name::name_);
+                }
+                InvoiceSortField::InvoiceNumber => {
+                    apply_sort!(query, sort, invoice::invoice_number);
+                }
+                InvoiceSortField::Comment => {
+                    apply_sort_no_case!(query, sort, invoice::comment);
+                }
+                InvoiceSortField::TheirReference => {
+                    apply_sort_no_case!(query, sort, invoice::their_reference);
+                }
+                InvoiceSortField::TransportReference => {
+                    apply_sort_no_case!(query, sort, invoice::transport_reference);
+                }
+            }
+        }
+
+        // Debug diesel query
+        // println!("{}", diesel::debug_query::<DBType, _>(&query).to_string());
+
+        // Stable tiebreaker so paginated results don't shuffle or drop rows
+        // when the primary sort column has ties (e.g. many invoices sharing
+        // the same status or created_datetime).
+        let result = query
+            .then_order_by(invoice::id.asc())
+            .offset(pagination.offset as i64)
+            .limit(pagination.limit as i64)
+            .load::<InvoiceJoin>(self.connection.lock().connection())?;
+
+        Ok(result.into_iter().map(to_domain).collect())
+    }
+
+    pub fn find_one_by_id(&self, record_id: &str) -> Result<InvoiceJoin, RepositoryError> {
+        Ok(invoice::table
+            .filter(invoice::id.eq(record_id))
+            .inner_join(name::table)
+            .inner_join(store::table)
+            .left_join(clinician_link::table.inner_join(clinician::table))
+            .first::<InvoiceJoin>(self.connection.lock().connection())?)
+    }
+}
+
+fn to_domain((invoice_row, name_row, store_row, clinician_link_join): InvoiceJoin) -> Invoice {
+    Invoice {
+        invoice_row,
+        name_row,
+        store_row,
+        clinician_row: clinician_link_join.map(|(_, clinician_row)| clinician_row),
+    }
+}
+
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    invoice::table
+        .inner_join(name::table)
+        .inner_join(store::table)
+        .left_join(clinician_link::table.inner_join(clinician::table))
+}
+
+type BoxedInvoiceQuery = IntoBoxed<'static, query, DBType>;
+
+// Dynamic query filter for the invoice table (customFields list filters).
+// Compiles against the bare invoice table, applied to the joined query via a
+// `invoice::id.eq_any(subquery)` sub-select — same pattern as `NameCondition`.
+create_condition!(
+    InvoiceCondition,
+    invoice::table,
+    (CustomField, custom_fields, invoice::custom_fields),
+);
+
+fn create_filtered_query(filter: Option<InvoiceFilter>) -> BoxedInvoiceQuery {
+    let mut query = query().into_boxed();
+
+    if let Some(f) = filter {
+        let InvoiceFilter {
+            id,
+            invoice_number,
+            invoice_number_or_status,
+            name_id,
+            name,
+            store_id,
+            user_id,
+            r#type,
+            status,
+            on_hold,
+            comment,
+            their_reference,
+            transport_reference,
+            created_datetime,
+            allocated_datetime,
+            picked_datetime,
+            shipped_datetime,
+            delivered_datetime,
+            received_datetime,
+            verified_datetime,
+            created_or_backdated_datetime,
+            colour,
+            requisition_id,
+            linked_invoice_id,
+            stock_line_id,
+            is_program_invoice,
+            is_cancellation,
+            purchase_order_id,
+            prescription_request_id,
+            purchase_order_number,
+            linked_order_number,
+            program_id,
+            dynamic_filter,
+        } = f;
+
+        // OR filters must be applied before AND filters to work correctly.
+        if let Some(string_filter) = invoice_number_or_status {
+            let search = string_filter
+                .like
+                .or(string_filter.equal_to)
+                .unwrap_or_default();
+            let search = search.trim();
+
+            if !search.is_empty() {
+                let number_filter = search.parse::<i64>().ok().map(EqualFilter::equal_to);
+
+                let lowercase_search = search.to_lowercase();
+                let matching_statuses = InvoiceStatus::iter()
+                    .filter(|status| {
+                        format!("{status:?}")
+                            .to_lowercase()
+                            .contains(&lowercase_search)
+                    })
+                    .collect();
+                let status_filter = Some(EqualFilter::equal_any(matching_statuses));
+
+                apply_equal_filter!(query, number_filter, invoice::invoice_number);
+                apply_equal_or_filter!(query, status_filter, invoice::status);
+            }
+        }
+
+        apply_equal_filter!(query, id, invoice::id);
+        apply_equal_filter!(query, invoice_number, invoice::invoice_number);
+        apply_equal_filter!(query, name_id, name::id);
+        apply_string_filter!(query, name, name::name_);
+        apply_equal_filter!(query, store_id, invoice::store_id);
+        apply_string_filter!(query, their_reference, invoice::their_reference);
+        apply_equal_filter!(query, requisition_id, invoice::requisition_id);
+        apply_equal_filter!(query, purchase_order_id, invoice::purchase_order_id);
+        apply_equal_filter!(
+            query,
+            prescription_request_id,
+            invoice::prescription_request_id
+        );
+
+        if let Some(purchase_order_number) = purchase_order_number {
+            let mut po_subquery = purchase_order::table
+                .select(purchase_order::id.nullable())
+                .into_boxed();
+            apply_equal_filter!(
+                po_subquery,
+                Some(purchase_order_number),
+                purchase_order::purchase_order_number
+            );
+            query = query.filter(invoice::purchase_order_id.eq_any(po_subquery));
+        }
+
+        if let Some(linked_order_number) = linked_order_number {
+            if let Some(number) = linked_order_number.equal_to {
+                let po_subquery = purchase_order::table
+                    .select(purchase_order::id.nullable())
+                    .filter(purchase_order::purchase_order_number.eq(number))
+                    .into_boxed();
+
+                let req_subquery = requisition::table
+                    .select(requisition::id.nullable())
+                    .filter(requisition::requisition_number.eq(number))
+                    .into_boxed();
+
+                query = query.filter(
+                    invoice::purchase_order_id
+                        .eq_any(po_subquery)
+                        .or(invoice::requisition_id.eq_any(req_subquery)),
+                );
+            }
+        }
+
+        apply_string_filter!(query, comment, invoice::comment);
+        apply_equal_filter!(query, linked_invoice_id, invoice::linked_invoice_id);
+        apply_equal_filter!(query, user_id, invoice::user_id);
+        apply_equal_filter!(query, transport_reference, invoice::transport_reference);
+        apply_equal_filter!(query, colour, invoice::colour);
+
+        apply_equal_filter!(query, r#type, invoice::type_);
+        apply_equal_filter!(query, status, invoice::status);
+
+        if let Some(value) = on_hold {
+            query = query.filter(invoice::on_hold.eq(value));
+        }
+
+        apply_date_time_filter!(query, created_datetime, invoice::created_datetime);
+        apply_date_time_filter!(query, allocated_datetime, invoice::allocated_datetime);
+        apply_date_time_filter!(query, picked_datetime, invoice::picked_datetime);
+        apply_date_time_filter!(query, shipped_datetime, invoice::shipped_datetime);
+        apply_date_time_filter!(query, delivered_datetime, invoice::delivered_datetime);
+        apply_date_time_filter!(query, received_datetime, invoice::received_datetime);
+        apply_date_time_filter!(query, verified_datetime, invoice::verified_datetime);
+        apply_date_time_filter!(
+            query,
+            created_or_backdated_datetime,
+            datetime_coalesce::coalesce(invoice::backdated_datetime, invoice::created_datetime)
+        );
+
+        if let Some(stock_line_id) = stock_line_id {
+            let invoice_line_query = invoice_line::table
+                .filter(invoice_line::stock_line_id.eq(stock_line_id))
+                .select(invoice_line::invoice_id);
+
+            query = query.filter(invoice::id.eq_any(invoice_line_query));
+        }
+
+        if is_program_invoice.is_some() {
+            query = query.filter(invoice::program_id.is_not_null());
+        }
+
+        if let Some(value) = is_cancellation {
+            query = query.filter(invoice::is_cancellation.eq(value));
+        }
+
+        apply_equal_filter!(query, program_id, invoice::program_id);
+
+        // The condition compiles against the bare invoice table, so apply it
+        // to this joined query through a sub-select
+        if let Some(condition) = dynamic_filter {
+            let invoice_ids = invoice::table
+                .filter(condition.to_boxed())
+                .select(invoice::id)
+                .into_boxed();
+            query = query.filter(invoice::id.eq_any(invoice_ids));
+        }
+    }
+    query
+}
+
+impl InvoiceStatus {
+    pub fn equal_to(&self) -> EqualFilter<Self> {
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            ..Default::default()
+        }
+    }
+
+    pub fn not_equal_to(&self) -> EqualFilter<Self> {
+        EqualFilter {
+            not_equal_to: Some(self.clone()),
+            ..Default::default()
+        }
+    }
+
+    pub fn equal_any(value: Vec<Self>) -> EqualFilter<Self> {
+        EqualFilter {
+            equal_any: Some(value),
+            ..Default::default()
+        }
+    }
+}
+
+impl InvoiceType {
+    pub fn equal_to(&self) -> EqualFilter<Self> {
+        EqualFilter {
+            equal_to: Some(self.clone()),
+            ..Default::default()
+        }
+    }
+
+    pub fn not_equal_to(&self) -> EqualFilter<Self> {
+        EqualFilter {
+            not_equal_to: Some(self.clone()),
+            ..Default::default()
+        }
+    }
+
+    pub fn equal_any(value: Vec<Self>) -> EqualFilter<Self> {
+        EqualFilter {
+            equal_any: Some(value),
+            ..Default::default()
+        }
+    }
+}
+
+impl InvoiceFilter {
+    pub fn new() -> InvoiceFilter {
+        InvoiceFilter::default()
+    }
+
+    pub fn id(mut self, filter: EqualFilter<String>) -> Self {
+        self.id = Some(filter);
+        self
+    }
+
+    pub fn dynamic_filter(mut self, condition: InvoiceCondition::Inner) -> Self {
+        self.dynamic_filter = Some(condition);
+        self
+    }
+
+    pub fn user_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.user_id = Some(filter);
+        self
+    }
+
+    pub fn r#type(mut self, filter: EqualFilter<InvoiceType>) -> Self {
+        self.r#type = Some(filter);
+        self
+    }
+
+    pub fn invoice_number(mut self, filter: EqualFilter<i64>) -> Self {
+        self.invoice_number = Some(filter);
+        self
+    }
+
+    pub fn invoice_number_or_status(mut self, filter: StringFilter) -> Self {
+        self.invoice_number_or_status = Some(filter);
+        self
+    }
+
+    pub fn status(mut self, filter: EqualFilter<InvoiceStatus>) -> Self {
+        self.status = Some(filter);
+        self
+    }
+
+    pub fn on_hold(mut self, filter: bool) -> Self {
+        self.on_hold = Some(filter);
+        self
+    }
+
+    pub fn transport_reference(mut self, filter: EqualFilter<String>) -> Self {
+        self.transport_reference = Some(filter);
+        self
+    }
+
+    pub fn created_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.created_datetime = Some(filter);
+        self
+    }
+
+    pub fn allocated_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.allocated_datetime = Some(filter);
+        self
+    }
+
+    pub fn picked_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.picked_datetime = Some(filter);
+        self
+    }
+
+    pub fn shipped_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.shipped_datetime = Some(filter);
+        self
+    }
+
+    pub fn delivered_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.delivered_datetime = Some(filter);
+        self
+    }
+    pub fn received_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.received_datetime = Some(filter);
+        self
+    }
+
+    pub fn verified_datetime(mut self, filter: DatetimeFilter) -> Self {
+        self.verified_datetime = Some(filter);
+        self
+    }
+
+    pub fn colour(mut self, filter: EqualFilter<String>) -> Self {
+        self.colour = Some(filter);
+        self
+    }
+
+    pub fn requisition_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.requisition_id = Some(filter);
+        self
+    }
+
+    pub fn linked_invoice_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.linked_invoice_id = Some(filter);
+        self
+    }
+
+    pub fn store_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.store_id = Some(filter);
+        self
+    }
+
+    pub fn name_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.name_id = Some(filter);
+        self
+    }
+
+    pub fn name(mut self, filter: StringFilter) -> Self {
+        self.name = Some(filter);
+        self
+    }
+
+    pub fn their_reference(mut self, filter: StringFilter) -> Self {
+        self.their_reference = Some(filter);
+        self
+    }
+
+    pub fn by_id(id: &str) -> InvoiceFilter {
+        InvoiceFilter::new().id(EqualFilter::equal_to(id.to_string()))
+    }
+
+    pub fn new_match_linked_invoice_id(id: &str) -> InvoiceFilter {
+        InvoiceFilter::new().linked_invoice_id(EqualFilter::equal_to(id.to_string()))
+    }
+
+    pub fn stock_line_id(mut self, stock_line_id: String) -> Self {
+        self.stock_line_id = Some(stock_line_id);
+        self
+    }
+
+    pub fn is_cancellation(mut self, filter: bool) -> Self {
+        self.is_cancellation = Some(filter);
+        self
+    }
+
+    pub fn purchase_order_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.purchase_order_id = Some(filter);
+        self
+    }
+
+    pub fn prescription_request_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.prescription_request_id = Some(filter);
+        self
+    }
+
+    pub fn purchase_order_number(mut self, filter: EqualFilter<i64>) -> Self {
+        self.purchase_order_number = Some(filter);
+        self
+    }
+}
+
+impl InvoiceStatus {
+    pub fn index(&self) -> u8 {
+        match self {
+            InvoiceStatus::New => 1,
+            InvoiceStatus::Allocated => 2,
+            InvoiceStatus::Picked => 3,
+            InvoiceStatus::Shipped => 4,
+            InvoiceStatus::Delivered => 5,
+            InvoiceStatus::Received => 6,
+            InvoiceStatus::Verified => 7,
+            InvoiceStatus::Cancelled => 8,
+        }
+    }
+}
+
+impl Invoice {
+    pub fn other_party_name(&self) -> &str {
+        &self.name_row.name
+    }
+    pub fn other_party_id(&self) -> &str {
+        &self.name_row.id
+    }
+    pub fn other_party_store_id(&self) -> &Option<String> {
+        &self.invoice_row.name_store_id
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::cmp::Ordering;
+
+    use super::{InvoiceRepository, InvoiceSort, InvoiceSortField};
+    use crate::Pagination;
+    use crate::{mock::MockDataInserts, test_db};
+
+    #[actix_rt::test]
+    async fn test_invoice_query_sort() {
+        let (_, connection, _, _) =
+            test_db::setup_all("test_invoice_query_sort", MockDataInserts::all()).await;
+        let repo = InvoiceRepository::new(&connection);
+
+        let mut invoices = repo.query(Pagination::new(), None, None).unwrap();
+
+        let sorted = repo
+            .query(
+                Pagination::new(),
+                None,
+                Some(InvoiceSort {
+                    key: InvoiceSortField::Comment,
+                    desc: None,
+                }),
+            )
+            .unwrap();
+
+        invoices.sort_by(
+            |a, b| match (&a.invoice_row.comment, &b.invoice_row.comment) {
+                (None, None) => Ordering::Equal,
+                (Some(_), None) => Ordering::Greater,
+                (None, Some(_)) => Ordering::Less,
+                (Some(a), Some(b)) => a.to_lowercase().cmp(&b.to_lowercase()),
+            },
+        );
+
+        for (count, invoice) in invoices.iter().enumerate() {
+            assert_eq!(
+                invoice
+                    .invoice_row
+                    .comment
+                    .clone()
+                    .map(|comment| comment.to_lowercase()),
+                sorted[count]
+                    .invoice_row
+                    .comment
+                    .clone()
+                    .map(|comment| comment.to_lowercase()),
+            );
+        }
+    }
+}

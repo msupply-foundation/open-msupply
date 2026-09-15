@@ -1,0 +1,88 @@
+fragment CampaignRow on CampaignNode {
+  __typename
+  id
+  name
+  startDate
+  endDate
+}
+
+query campaigns(
+  $sort: [CampaignSortInput!]
+  $first: Int
+  $offset: Int
+  $filter: CampaignFilterInput
+  $storeId: String!
+) {
+  campaigns(
+    sort: $sort
+    page: { first: $first, offset: $offset }
+    filter: $filter
+    storeId: $storeId
+  ) {
+    __typename
+    ... on CampaignConnector {
+      __typename
+      totalCount
+      nodes {
+        __typename
+        ...CampaignRow
+      }
+    }
+  }
+}
+
+mutation upsertCampaign($input: UpsertCampaignInput!) {
+  centralServer {
+    campaign {
+      upsertCampaign(input: $input) {
+        ... on UpsertCampaignError {
+          __typename
+          error {
+            description
+            ... on DatabaseError {
+              __typename
+              description
+              fullError
+            }
+            ... on InternalError {
+              __typename
+              description
+              fullError
+            }
+            ... on UniqueValueViolation {
+              __typename
+              description
+              field
+            }
+          }
+        }
+        ... on CampaignNode {
+          ...CampaignRow
+        }
+      }
+    }
+  }
+}
+mutation deleteCampaign($id: String!) {
+  centralServer {
+    campaign {
+      deleteCampaign(input: { id: $id }) {
+        ... on DeleteCampaignError {
+          __typename
+          error {
+            description
+            ... on DatabaseError {
+              __typename
+              description
+              fullError
+            }
+          }
+        }
+        ... on DeleteCampaignSuccess {
+          __typename
+          id
+        }
+      }
+    }
+  }
+}

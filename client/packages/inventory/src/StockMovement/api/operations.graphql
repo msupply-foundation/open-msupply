@@ -1,0 +1,265 @@
+fragment StockMovementRow on StockRelocationNode {
+  __typename
+  id
+  stockMovementNumber
+  status
+  comment
+  createdDatetime
+  confirmedDatetime
+  finalisedDatetime
+  lineCount
+  user {
+    __typename
+    username
+  }
+}
+
+fragment StockMovementLine on StockRelocationLineNode {
+  __typename
+  id
+  stockRelocationId
+  stockLineId
+  numberOfPacks
+  stockLine {
+    __typename
+    id
+    itemId
+    batch
+    expiryDate
+    packSize
+    availableNumberOfPacks
+    totalNumberOfPacks
+    item {
+      __typename
+      id
+      code
+      name
+      unitName
+    }
+  }
+  sourceLocation {
+    __typename
+    id
+    code
+    name
+  }
+  destinationLocation {
+    __typename
+    id
+    code
+    name
+  }
+}
+
+fragment StockMovement on StockRelocationNode {
+  __typename
+  id
+  stockMovementNumber
+  status
+  comment
+  createdDatetime
+  confirmedDatetime
+  user {
+    __typename
+    username
+    email
+  }
+  finalisedDatetime
+  lineCount
+  lines {
+    __typename
+    totalCount
+    nodes {
+      ...StockMovementLine
+    }
+  }
+}
+
+query stockRelocations(
+  $storeId: String!
+  $filter: StockRelocationFilterInput
+  $page: PaginationInput
+  $sort: [StockRelocationSortInput!]
+) {
+  stockRelocations(
+    storeId: $storeId
+    filter: $filter
+    page: $page
+    sort: $sort
+  ) {
+    __typename
+    ... on StockRelocationConnector {
+      __typename
+      totalCount
+      nodes {
+        ...StockMovementRow
+      }
+    }
+  }
+}
+
+query stockRelocation($storeId: String!, $id: String!) {
+  stockRelocation(storeId: $storeId, id: $id) {
+    __typename
+    ... on StockRelocationNode {
+      ...StockMovement
+    }
+    ... on RecordNotFound {
+      __typename
+      description
+    }
+  }
+}
+
+mutation insertStockRelocation(
+  $input: InsertStockRelocationInput!
+  $storeId: String!
+) {
+  insertStockRelocation(input: $input, storeId: $storeId) {
+    __typename
+    ... on StockRelocationNode {
+      id
+    }
+  }
+}
+
+mutation updateStockRelocation(
+  $input: UpdateStockRelocationInput!
+  $storeId: String!
+) {
+  updateStockRelocation(input: $input, storeId: $storeId) {
+    __typename
+    ... on StockRelocationNode {
+      ...StockMovement
+    }
+    ... on UpdateStockRelocationError {
+      __typename
+      error {
+        __typename
+        description
+        ... on NotEnoughStock {
+          stockLineId
+        }
+        ... on LocationOnHold {
+          locationId
+        }
+      }
+    }
+  }
+}
+
+mutation deleteStockRelocation(
+  $input: DeleteStockRelocationInput!
+  $storeId: String!
+) {
+  deleteStockRelocation(input: $input, storeId: $storeId) {
+    __typename
+    ... on DeleteResponse {
+      __typename
+      id
+    }
+  }
+}
+
+mutation deleteStockRelocations($ids: [String!]!, $storeId: String!) {
+  deleteStockRelocations(ids: $ids, storeId: $storeId) {
+    __typename
+    ... on DeleteStockRelocationsNode {
+      __typename
+      ids
+    }
+  }
+}
+
+fragment StockMovementDraftLine on DraftStockRelocationLineNode {
+  __typename
+  id
+  itemId
+  itemCode
+  itemName
+  restrictedLocationTypeId
+  stockLineId
+  batch
+  expiryDate
+  packSize
+  availableNumberOfPacks
+  totalNumberOfPacks
+  onHold
+  numberOfPacks
+  sourceLocation {
+    __typename
+    id
+    code
+    name
+    onHold
+  }
+  destinationLocation {
+    __typename
+    id
+    name
+    onHold
+    code
+    volume
+    volumeUsed
+    locationType {
+      id
+      name
+      maxTemperature
+      minTemperature
+    }
+    stock {
+      ... on StockLineConnector {
+        totalCount
+      }
+    }
+  }
+}
+
+query stockRelocationDraftLines(
+  $storeId: String!
+  $input: StockRelocationDraftLinesInput!
+) {
+  stockRelocationDraftLines(storeId: $storeId, input: $input) {
+    __typename
+    ...StockMovementDraftLine
+  }
+}
+
+mutation batchStockRelocationLine(
+  $storeId: String!
+  $input: BatchStockRelocationLineInput!
+) {
+  batchStockRelocationLine(storeId: $storeId, input: $input) {
+    __typename
+    upsert {
+      __typename
+      id
+      response {
+        __typename
+        ... on UpsertStockRelocationLineError {
+          __typename
+          error {
+            __typename
+            description
+            ... on NotEnoughStock {
+              stockLineId
+            }
+            ... on LocationOnHold {
+              locationId
+            }
+          }
+        }
+      }
+    }
+    delete {
+      __typename
+      id
+      response {
+        __typename
+        ... on DeleteResponse {
+          id
+        }
+      }
+    }
+  }
+}

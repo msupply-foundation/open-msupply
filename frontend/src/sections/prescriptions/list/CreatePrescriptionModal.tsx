@@ -92,7 +92,7 @@ export const CreatePrescriptionModal: Component<
     if (result.kind === 'success') {
       const id = result.data.insertPrescription.id;
       close();
-      navigate(`/${params.storeId}/dispensary/prescription/${id}`);
+      navigate(`/${params.storeId}/dispensary/dispensing/${id}`);
       return;
     }
     setError(

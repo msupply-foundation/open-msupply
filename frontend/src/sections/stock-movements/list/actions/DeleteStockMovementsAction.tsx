@@ -1,8 +1,15 @@
 import { createSignal, Show, type Component } from 'solid-js';
 import { t, tPlural } from '@/intl';
-import { graphqlFetch } from '@/api/graphql';
+import {
+  graphqlFetch,
+  isForbidden,
+  missingPermissions,
+  reportPermissionDenied,
+} from '@/api/graphql';
+import { rejectionFrom } from '@/api/rejection';
 import { Dialog } from '@/ui/elements/feedback/Dialog';
 import { Alert } from '@/ui/elements/feedback/Alert';
+import { ErrorDetails } from '@/ui/elements/feedback/ErrorDetails';
 import { Button } from '@/ui/elements/buttons/Button';
 import { CancelButton } from '@/ui/elements/buttons/StandardButtons';
 import { TrashIcon } from '@/ui/icons';
@@ -18,10 +25,21 @@ export interface DeleteStockMovementsActionProps {
 // The list's bulk delete — button + confirm → deleting → error dialog
 // (the DeleteStocktakesAction shape). The backend owns what can be deleted;
 // the batch is ALL-OR-NOTHING with no per-id results (contract § deletion):
-// one finalised movement in the selection refuses the whole delete as a
-// single untyped top-level error, so on failure we show OUR translated
-// refusal (rules § deletion / OMS-REG-SMV-10.28/.30), selection kept.
-// Success closes the dialog — closure is the confirmation (D21).
+// any rejection refuses the whole delete as a single untyped top-level error
+// (rules § deletion / OMS-REG-SMV-10.28/.30), selection kept.
+//
+// Untyped is not unreadable: the server writes the service-error variant into
+// extensions.details, and every refusal this mutation raises is a unit variant
+// — RelocationAlreadyFinalised, RelocationDoesNotExist, NotThisStoreRelocation
+// (server graphql/stock_relocation → mutations/delete.rs `map_error`) — so
+// rejectionFrom translates the actual cause. It names the finalised case ONLY
+// when that is the case; hard-coding it reported a reason that was not the
+// user's, and a blanket refusal reported none at all. Anything unrecognised
+// falls back to the generic refusal with the server's text behind a
+// disclosure. Permission denials are separated out first: those owe the user
+// the global permission-denied modal (D38), which opting into GraphQL errors
+// would otherwise swallow. Success closes the dialog — closure is the
+// confirmation (D21). Mirrors the stock-movement detail view's own line delete.
 type Phase = 'confirm' | 'deleting' | 'error';
 
 export const DeleteStockMovementsAction: Component<
@@ -49,6 +67,10 @@ const Body = (
   props: DeleteStockMovementsActionProps & { onClose: () => void }
 ) => {
   const [phase, setPhase] = createSignal<Phase>('confirm');
+  // The refusal: the server's own reason where it named one, and the raw text
+  // behind a disclosure where it did not.
+  const [errorMessage, setErrorMessage] = createSignal<string>();
+  const [errorDetail, setErrorDetail] = createSignal<string>();
   const count = props.selectedIds().length;
 
   const run = async () => {
@@ -63,6 +85,19 @@ const Body = (
       { returnGraphqlErrors: true }
     );
     if (result.kind === 'graphqlError') {
+      // A permission denial is not a delete refusal — hand it to the global
+      // permission-denied modal (D38) and close, as the default path would.
+      if (isForbidden(result.errors)) {
+        reportPermissionDenied(missingPermissions(result.errors));
+        props.onClose();
+        return;
+      }
+      const rejection = rejectionFrom(
+        result.errors,
+        t('messages.cant-delete-generic')
+      );
+      setErrorMessage(rejection.message);
+      setErrorDetail(rejection.detail);
       setPhase('error');
       return;
     }
@@ -81,14 +116,23 @@ const Body = (
       onClose={props.onClose}
       icon={<TrashIcon />}
       testId="confirmation-modal"
-      title={t('heading.are-you-sure')}
+      // The title tracks the phase — a rejection is not a question
+      // (kdd/action-modal).
+      title={
+        phase() === 'error'
+          ? t('heading.cannot-do-that')
+          : t('heading.are-you-sure')
+      }
       description={
         <Show
           when={phase() === 'error'}
           fallback={tPlural('messages.confirm-delete-stock-movements', count)}
         >
           <Alert severity="error">
-            {t('messages.cant-delete-finalised-stock-movements')}
+            {errorMessage()}
+            <Show when={errorDetail()}>
+              {detail => <ErrorDetails detail={detail()} />}
+            </Show>
           </Alert>
         </Show>
       }
@@ -112,7 +156,11 @@ const Body = (
             </>
           }
         >
-          <CancelButton onClick={props.onClose} />
+          {/* Nothing was deleted, so there is nothing to cancel — the error
+              phase is acknowledged, not aborted. */}
+          <Button variant="secondary" confirms="plain" onClick={props.onClose}>
+            {t('button.close')}
+          </Button>
         </Show>
       }
     />

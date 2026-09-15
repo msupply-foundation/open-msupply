@@ -184,7 +184,7 @@ export type DeleteRequisitionsResult = {
   __typename: "DeleteResponseRequisitionError";
 } & {
   error: {
-  __typename: string;
+  __typename: "FinalisedRequisition" | "LineDeleteError" | "RecordNotFound" | "RequisitionWithShipment" | "TransferredRequisition";
   description: string;
 };
 });

@@ -1,0 +1,182 @@
+use crate::sync::{
+    test::integration::{
+        central_server_configurations::NewSiteProperties, SyncRecordTester, TestStepData,
+    },
+    translations::IntegrationOperation,
+};
+use chrono::NaiveDate;
+use repository::{
+    requisition_row::{RequisitionStatus, RequisitionType},
+    RequisitionLineRow, RequisitionLineRowDelete, RequisitionRow, RequisitionRowDelete,
+};
+use serde_json::json;
+use util::uuid::uuid;
+
+pub(crate) struct RequisitionRecordTester;
+impl SyncRecordTester for RequisitionRecordTester {
+    fn test_step_data(&self, new_site_properties: &NewSiteProperties) -> Vec<TestStepData> {
+        let mut result = Vec::new();
+        let store_id = &new_site_properties.store_id;
+
+        // STEP 1 - insert
+        let base_requisition_row = RequisitionRow {
+            id: uuid(),
+            store_id: store_id.to_string(),
+            user_id: None,
+            requisition_number: 456,
+            name_id: uuid(),
+            r#type: RequisitionType::Request,
+            status: RequisitionStatus::Draft,
+            created_datetime: NaiveDate::from_ymd_opt(2022, 03, 23)
+                .unwrap()
+                .and_hms_opt(8, 53, 0)
+                .unwrap(),
+            sent_datetime: None,
+            finalised_datetime: None,
+            expected_delivery_date: None,
+            colour: None,
+            comment: None,
+            their_reference: None,
+            max_months_of_stock: 10.0,
+            min_months_of_stock: 5.0,
+            linked_requisition_id: None,
+            approval_status: None,
+            program_id: None,
+            period_id: None,
+            order_type: None,
+            is_emergency: false,
+            created_from_requisition_id: None,
+            destination_customer_id: None,
+            name_store_id: None,
+        };
+        let requisition_row_1 = base_requisition_row.clone();
+        let requisition_line_row_1 = RequisitionLineRow {
+            id: uuid(),
+            requisition_id: requisition_row_1.id.clone(),
+            item_id: uuid(),
+            item_name: "test item".to_string(),
+            requested_quantity: 50.0,
+            suggested_quantity: 10.0,
+            supply_quantity: 5.0,
+            available_stock_on_hand: 10.0,
+            average_monthly_consumption: 15.0,
+            comment: None,
+            snapshot_datetime: None,
+            approved_quantity: 0.0,
+            approval_comment: None,
+            // 4D recalculates this to match available_stock_on_hand for Draft requisitions.
+            initial_stock_on_hand_units: 10.0,
+            incoming_units: 5.0,
+            outgoing_units: 5.0,
+            loss_in_units: 5.0,
+            addition_in_units: 5.0,
+            expiring_units: 5.0,
+            days_out_of_stock: 5.0,
+            option_id: None,
+            price_per_unit: None,
+            available_volume: None,
+            location_type_id: None,
+            forecast_total_units: None,
+            forecast_total_doses: None,
+            vaccine_courses: None,
+        };
+
+        let mut requisition_row_2 = base_requisition_row.clone();
+        requisition_row_2.id = uuid();
+        requisition_row_2.r#type = RequisitionType::Response;
+        requisition_row_2.status = RequisitionStatus::New;
+
+        let mut requisition_row_3 = base_requisition_row.clone();
+        requisition_row_3.id = uuid();
+        requisition_row_3.status = RequisitionStatus::Sent;
+
+        let mut requisition_row_4 = base_requisition_row.clone();
+        requisition_row_4.id = uuid();
+        requisition_row_4.status = RequisitionStatus::Finalised;
+
+        result.push(TestStepData {
+            central_upsert: json!({
+                "item": [{
+                    "ID": requisition_line_row_1.item_id,
+                    "type_of": "general"
+                }],
+                "name": [{
+                    "ID": base_requisition_row.name_id,
+                    "type": "store"
+                }],
+            }),
+            integration_records: vec![
+                IntegrationOperation::upsert(requisition_row_1.clone()),
+                IntegrationOperation::upsert(requisition_row_2.clone()),
+                IntegrationOperation::upsert(requisition_row_3),
+                IntegrationOperation::upsert(requisition_row_4),
+                IntegrationOperation::upsert(requisition_line_row_1.clone()),
+            ],
+            ..Default::default()
+        });
+
+        // STEP 2 - mutate
+        let mut requisition_row_1 = requisition_row_1.clone();
+        requisition_row_1.user_id = Some("test user 2".to_string());
+        requisition_row_1.r#type = RequisitionType::Response;
+        requisition_row_1.status = RequisitionStatus::Finalised;
+        requisition_row_1.comment = Some("requisition comment".to_string());
+        requisition_row_1.their_reference = Some("requisition their ref".to_string());
+        requisition_row_1.colour = Some("#1A1919".to_string());
+        requisition_row_1.sent_datetime = NaiveDate::from_ymd_opt(2022, 03, 24)
+            .unwrap()
+            .and_hms_opt(8, 53, 0);
+        requisition_row_1.finalised_datetime = NaiveDate::from_ymd_opt(2022, 03, 25)
+            .unwrap()
+            .and_hms_opt(8, 53, 0);
+        requisition_row_1.expected_delivery_date = NaiveDate::from_ymd_opt(2022, 03, 28);
+        requisition_row_1.max_months_of_stock = 15.0;
+        requisition_row_1.min_months_of_stock = 10.0;
+        requisition_row_1.linked_requisition_id = Some(requisition_row_2.id.clone());
+
+        let mut requisition_row_2 = requisition_row_2.clone();
+        requisition_row_2.linked_requisition_id = Some(requisition_row_1.id.clone());
+
+        let mut requisition_line_row_1 = requisition_line_row_1.clone();
+        requisition_line_row_1.requested_quantity = 55.0;
+        requisition_line_row_1.suggested_quantity = 15.0;
+        requisition_line_row_1.supply_quantity = 15.0;
+        requisition_line_row_1.available_stock_on_hand = 15.0;
+        requisition_line_row_1.average_monthly_consumption = 10.0;
+        requisition_line_row_1.comment = Some("some comment".to_string());
+        requisition_line_row_1.snapshot_datetime = NaiveDate::from_ymd_opt(2022, 03, 20)
+            .unwrap()
+            .and_hms_opt(12, 13, 14);
+        // 4D recalculates this to match available_stock_on_hand.
+        requisition_line_row_1.initial_stock_on_hand_units = 15.0;
+        requisition_line_row_1.incoming_units = 5.0;
+        requisition_line_row_1.outgoing_units = 5.0;
+        requisition_line_row_1.loss_in_units = 5.0;
+        requisition_line_row_1.addition_in_units = 5.0;
+        requisition_line_row_1.expiring_units = 5.0;
+        requisition_line_row_1.days_out_of_stock = 5.0;
+
+        result.push(TestStepData {
+            integration_records: vec![
+                IntegrationOperation::upsert(requisition_row_1.clone()),
+                IntegrationOperation::upsert(requisition_row_2.clone()),
+                IntegrationOperation::upsert(requisition_line_row_1.clone()),
+            ],
+            ..Default::default()
+        });
+        // STEP 3 - delete
+        let mut requisition_row_2 = requisition_row_2.clone();
+        requisition_row_2.linked_requisition_id = None;
+        result.push(TestStepData {
+            integration_records: vec![
+                IntegrationOperation::upsert(requisition_row_2),
+                IntegrationOperation::delete(RequisitionLineRowDelete(
+                    requisition_line_row_1.id.clone(),
+                )),
+                IntegrationOperation::delete(RequisitionRowDelete(requisition_row_1.id.clone())),
+            ],
+            ..Default::default()
+        });
+        result
+    }
+}

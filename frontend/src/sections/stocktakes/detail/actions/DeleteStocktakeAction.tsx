@@ -100,7 +100,13 @@ export const DeleteStocktakeAction: Component<
           onClose={close}
           icon={<TrashIcon />}
           testId="confirmation-modal"
-          title={t('heading.are-you-sure')}
+          // The title tracks the phase — a rejection is not a question
+          // (kdd/action-modal).
+          title={
+            phase() === 'error'
+              ? t('heading.cannot-do-that')
+              : t('heading.are-you-sure')
+          }
           description={
             <Switch
               fallback={t('messages.confirm-delete-stocktake', {
@@ -138,6 +144,7 @@ export const DeleteStocktakeAction: Component<
                 </>
               }
             >
+              {/* Nothing was deleted, so this is acknowledged, not confirmed. */}
               <Match when={phase() === 'error'}>
                 <Button
                   variant="secondary"
@@ -145,7 +152,7 @@ export const DeleteStocktakeAction: Component<
                   data-testid="dialog-button-ok"
                   onClick={close}
                 >
-                  {t('button.ok')}
+                  {t('button.close')}
                 </Button>
               </Match>
             </Switch>

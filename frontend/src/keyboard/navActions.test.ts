@@ -15,6 +15,9 @@ const state = {
   vaccineModule: false,
   procurement: false,
   central: false,
+  // Permissions default to all-granted so the capability-gate tests read
+  // clean; the permission-gate test opts out (navGates.test does the same).
+  grantAll: true,
   permissions: new Set<string>(),
 };
 
@@ -23,16 +26,11 @@ vi.mock('../store/storeContext', () => ({
   hasProgramModule: () => state.programModule,
   hasVaccineModule: () => state.vaccineModule,
   hasProcurement: () => state.procurement,
-  hasPermission: (permission: string) => state.permissions.has(permission),
+  hasPermission: (permission: string) =>
+    state.grantAll || state.permissions.has(permission),
 }));
 vi.mock('../api/serverInfo', () => ({
   isCentralServer: () => state.central,
-}));
-
-const reportPermissionDenied = vi.fn();
-vi.mock('../api/graphql', () => ({
-  reportPermissionDenied: (permissions: string[]) =>
-    reportPermissionDenied(permissions),
 }));
 
 import { navConfig } from '../nav/navConfig';
@@ -55,8 +53,8 @@ beforeEach(() => {
   state.vaccineModule = false;
   state.procurement = false;
   state.central = false;
+  state.grantAll = true;
   state.permissions = new Set();
-  reportPermissionDenied.mockClear();
 });
 
 // Registration is ownerless here, so each test disposes what it made — the
@@ -73,7 +71,14 @@ const withActions = (
   }
 };
 
-const names = (actions: KeyAction[]) => actions.map(actionName);
+// The rows the palette LISTS — its own per-open rule: a disabled action is
+// inert and unlisted. The gates live in `disabled` and are read here, at
+// asking time, so these names track the state as it is NOW, not as it was
+// when the set was registered.
+const names = (actions: KeyAction[]) =>
+  actions
+    .filter(action => action.disabled?.() !== true)
+    .map(actionName);
 
 // What the menu offers this store, leaves only — the same shape navActions
 // derives, computed here from the registry rather than transcribed.
@@ -87,7 +92,7 @@ describe('palette destinations', () => {
     // Whatever the registry is made to hold, the two counts move together —
     // which is the guarantee, and what an enumerated allowlist could not give.
     withActions(actions => {
-      expect(actions).toHaveLength(offeredLeafPaths().length);
+      expect(names(actions)).toHaveLength(offeredLeafPaths().length);
     });
 
     state.dispensary = true;
@@ -95,7 +100,7 @@ describe('palette destinations', () => {
     state.central = true;
     state.procurement = true;
     withActions(actions => {
-      expect(actions).toHaveLength(offeredLeafPaths().length);
+      expect(names(actions)).toHaveLength(offeredLeafPaths().length);
     });
   });
 
@@ -131,11 +136,15 @@ describe('palette destinations', () => {
     });
   });
 
-  it('carries Alt+D for Dashboard and Alt+H for Help', () => {
+  it('carries Alt+D for Home and Alt+H for Help', () => {
     withActions(actions => {
-      const dashboard = actions.find(a => actionName(a) === 'Go to: Dashboard');
+      // Alt+D is keyed on the destination's PATH, which CK-1.7 moved from
+      // 'dashboard' to '' (Home IS the store root). The binding moved with it,
+      // so the shortcut a user's fingers know is unchanged while the row it
+      // names is the renamed one.
+      const home = actions.find(a => actionName(a) === 'Go to: Home');
       const help = actions.find(a => actionName(a) === 'Go to: Help');
-      expect(dashboard?.shortcut).toBe(ALT_D);
+      expect(home?.shortcut).toBe(ALT_D);
       expect(help?.shortcut).toBe(ALT_H);
       // One row each — the defect that comes of registering a destination in
       // both navActions and globalActions.
@@ -145,31 +154,72 @@ describe('palette destinations', () => {
 
   it('drops a destination whose capability gate fails, with the menu', () => {
     withActions(actions => {
-      expect(names(actions)).not.toContain('Go to: Prescriptions');
+      expect(names(actions)).not.toContain('Go to: Dispensing');
     });
     state.dispensary = true;
+    withActions(actions => {
+      expect(names(actions)).toContain('Go to: Dispensing');
+    });
+  });
+
+  it('lists the prescriber vertical for whoever holds its read', () => {
+    // Prescriptions is one row of the one registry now, so the palette derives
+    // it like any other (D107) and its own permission decides — no second
+    // registry for the palette to disagree with the menu about.
+    state.dispensary = true;
+    state.grantAll = false;
+    withActions(actions => {
+      expect(names(actions)).not.toContain('Go to: Prescriptions');
+    });
+
+    state.permissions = new Set(['PRESCRIPTION_REQUEST_QUERY']);
     withActions(actions => {
       expect(names(actions)).toContain('Go to: Prescriptions');
     });
   });
 
-  it('lists a permission-gated destination but refuses on activation', () => {
-    withActions((actions, navigate) => {
-      const stocktakes = actions.find(
-        a => actionName(a) === 'Go to: Stocktakes'
-      );
-      expect(stocktakes).toBeDefined();
-
-      // D94: visible, refused when fired.
-      stocktakes?.run();
-      expect(navigate).not.toHaveBeenCalled();
-      expect(reportPermissionDenied).toHaveBeenCalledWith(['StocktakeQuery']);
+  it('drops a permission-gated destination the user lacks, with the menu', () => {
+    // D94: hidden, exactly as the menu hides it — no listed-but-refused rows.
+    state.grantAll = false;
+    withActions(actions => {
+      expect(names(actions)).not.toContain('Go to: Stocktakes');
     });
 
     state.permissions = new Set(['STOCKTAKE_QUERY']);
     withActions((actions, navigate) => {
       actions.find(a => actionName(a) === 'Go to: Stocktakes')?.run();
       expect(navigate).toHaveBeenCalledWith('inventory/stocktakes');
+    });
+  });
+
+  it('drops a destination whose permission is withdrawn AFTER registration', () => {
+    // The sync scenario: the actions are registered once for the shell's
+    // lifetime, then the post-sync context refresh revokes a permission. The
+    // menu's memo re-runs; the palette must agree at its next open — which it
+    // does because the gate is each row's `disabled`, read per open, never a
+    // fact baked in at registration (OMS-REG-NAV-01.15/.17).
+    state.grantAll = false;
+    state.permissions = new Set(['STOCKTAKE_QUERY']);
+    withActions(actions => {
+      expect(names(actions)).toContain('Go to: Stocktakes');
+
+      state.permissions = new Set();
+      expect(names(actions)).not.toContain('Go to: Stocktakes');
+      // The row is withheld, not gone: granting the permission back (another
+      // sync, another login) re-lists it without any re-registration.
+      state.permissions = new Set(['STOCKTAKE_QUERY']);
+      expect(names(actions)).toContain('Go to: Stocktakes');
+    });
+  });
+
+  it('drops a destination whose capability gate turns off after registration', () => {
+    // Same mechanism, other gate class: a store preference switched off by
+    // sync takes the row with it at the palette's next open.
+    state.vaccineModule = true;
+    withActions(actions => {
+      expect(names(actions)).toContain('Go to: Cold chain equipment');
+      state.vaccineModule = false;
+      expect(names(actions)).not.toContain('Go to: Cold chain equipment');
     });
   });
 });

@@ -1,0 +1,74 @@
+import React from 'react';
+import { MRT_ColumnDef, MRT_RowData } from 'material-react-table';
+import { ColumnType } from './useGetColumnDefDefaults';
+
+export type ColumnDef<T extends MRT_RowData> = MRT_ColumnDef<T> & {
+  /** Short explanation of the column. Displays in the column menu */
+  description?: string;
+
+  /** Maps common column types to sensible display defaults (e.g. right
+   * alignment & rounding for numbers). Defaults to string.*/
+  columnType?: ColumnType;
+
+  /** The number of decimal places to display. Defaults to 2. */
+  decimalLimit?: number;
+
+  /** Display the column in the table. Use to handle columns only included for
+   * certain preferences or permissions. Defaults to true */
+  includeColumn?: boolean;
+
+  /** When simplified mobile UI preference is enabled, hide the column by
+   * default for small devices. User can still unhide it in the table settings.
+   * Defaults to false */
+  defaultHideOnMobile?: boolean;
+
+  /** Hide the column by default. User can unhide it in the table settings,
+   * or a global table config can show it by default. Defaults to false */
+  defaultHidden?: boolean;
+
+  /**  Make the column sticky to a side of the table. User can unpin */
+  pin?: 'left' | 'right';
+
+  align?: 'left' | 'center' | 'right';
+
+  /** Specify the filter key for backend filtering, where a column's data accessor key and filtering key might vary */
+  filterKey?: string;
+
+  /** For date filters, specifies whether to update the URL (and subsequently
+   * what it passed to GraphQL query) with a full date-time string or just a
+   * (naive) date */
+  dateFilterFormat?: 'date' | 'date-time'; // defaults to date-time
+
+  /** Function to determine if cell should be marked as error. Cell will be
+   * highlighted in red. */
+  getIsError?: (row: T) => boolean;
+
+  /** Customise the default index of the column. Used by plugins. */
+  columnIndex?: number;
+
+  /** Logical grouping for the column (e.g. 'quantities', 'pricing', 'other').
+   * Used for organising columns in combined table views. */
+  columnGroup?: string;
+
+  /** Show this column's value as read-only summary text in the card heading.
+   * The column still appears as an editable field in its group.
+   * Receives the row data and returns a formatted summary string
+   * (e.g. "Batch abc", "2 Packs Received"). */
+  cardSummary?: (row: T) => React.ReactNode;
+
+  /** Sort order for card summary items. Lower numbers appear first (left).
+   * Columns without this property are ordered after those with it,
+   * in their original definition order. */
+  cardSummaryOrder?: number;
+
+  /** Number of grid columns to span in card view. Defaults to 1. */
+  cardSpan?: number;
+};
+
+export type DefaultCellProps<T extends MRT_RowData> = Parameters<
+  NonNullable<ColumnDef<T>['Cell']>
+>[0];
+
+export type ColumnDataSetter<T> = (
+  rowData: Partial<T> & { id: string }
+) => void;

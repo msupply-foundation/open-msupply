@@ -1,11 +1,11 @@
-import { createEffect, createMemo, type JSX } from 'solid-js';
+import { createMemo, type JSX } from 'solid-js';
 import { t } from '../../intl';
 import type { DashboardSlotId } from '../../plugin-sdk/types';
-import { recordPluginDiagnostic } from '../../plugins/diagnostics';
+import { createRegionDiagnostics } from '../../plugins/diagnostics';
 import { suppressedPieces } from '../../plugins/registry';
 import { contributionId, visibleContributions } from '../../plugins/PluginSlot';
 import { PluginRegionOutlet } from '../../ui/elements/plugins/PluginRegionOutlet';
-import { dashboardGates } from './dashboardPreferences';
+import { dashboardGates, dashboardPanels } from './dashboardPreferences';
 import {
   mergeRegion,
   type MergedEntry,
@@ -37,12 +37,11 @@ import { panelBuiltIns, statBuiltIns, widgetBuiltIns } from './regionBuiltIns';
  */
 
 const builtInsFor = (slot: DashboardSlotId, container: string | undefined) => {
-  const gates = dashboardGates();
-  if (slot === 'dashboard.widget') return widgetBuiltIns();
+  if (slot === 'dashboard.widget') return widgetBuiltIns(dashboardPanels());
   if (container === undefined) return [];
   return slot === 'dashboard.panel'
-    ? panelBuiltIns(container, gates)
-    : statBuiltIns(container, gates);
+    ? panelBuiltIns(container, dashboardPanels())
+    : statBuiltIns(container, dashboardGates());
 };
 
 export const PluginRegion = (props: {
@@ -75,22 +74,12 @@ export const PluginRegion = (props: {
   });
 
   // Diagnostics out of the merge, not from inside it: recording is a write,
-  // and a memo's body must stay a pure computation. Deduped per region instance
-  // so a re-merge (a gate resolving, a plugin loading) cannot spam the same
-  // broken anchor.
-  const reported = new Set<string>();
-  createEffect(() => {
-    for (const diagnostic of merged().diagnostics) {
-      const key = `${diagnostic.contributionId}:${diagnostic.message}`;
-      if (reported.has(key)) continue;
-      reported.add(key);
-      recordPluginDiagnostic({
-        level: 'warning',
-        pluginCode: diagnostic.contributionId.split('.')[0],
-        message: `${props.slot}: ${diagnostic.contributionId} — ${diagnostic.message}`,
-      });
-    }
-  });
+  // and a memo's body must stay a pure computation. Deduping is the shared
+  // helper's (src/plugins/diagnostics).
+  createRegionDiagnostics(
+    () => merged().diagnostics,
+    () => props.slot
+  );
 
   const rendered = createMemo(() =>
     merged()

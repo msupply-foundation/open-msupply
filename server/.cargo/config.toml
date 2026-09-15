@@ -1,0 +1,16 @@
+[target.x86_64-pc-windows-msvc]
+# Link with rust-lld — the LLD that ships inside the toolchain — rather than
+# MSVC's link.exe. lld-link is multi-threaded where link.exe largely isn't,
+# which matters twice: the release build links seven big crt-static binaries
+# (four sqlite + three postgres) on one serialised build box, and every
+# rebuild-after-a-one-line-change ends in a full link, the part incremental
+# compilation can't shrink.
+#
+# Nothing to install and nothing extra to pin: rustc resolves this name from
+# <sysroot>/lib/rustlib/x86_64-pc-windows-msvc/bin/, so the linker version is
+# pinned by rust-toolchain.toml alongside rustc instead of being whichever
+# MSVC Build Tools happen to be installed on the build box. rustc selects the
+# lld-link (MSVC-compatible) flavour automatically for this target, so no
+# linker-flavor is needed. Deleting this one line goes back to link.exe.
+linker = "rust-lld.exe"
+rustflags = ["-C", "target-feature=+crt-static"]

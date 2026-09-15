@@ -1,9 +1,10 @@
 import { t } from '../../../intl';
-import { localisedDate } from '../../../intl';
+import { exportDate } from '../../../intl';
 import { toCsv } from '../../../domain/reportFiles';
 import type { StockLineRowFragment } from './stock.generated';
 
-// The stock list → CSV (spec/stock AC-L6). Columns match the list's fields
+// The stock list → CSV (spec/stock OMS-REG-INV-02.8). Columns match the
+// list's fields
 // (spec/stock S1). Headers translated, dates localised, computed units/value
 // columns derived (packs × pack size / cost). Master lists join with "; ";
 // blank supplier renders the fixed "Inventory adjustment" text (list parity).
@@ -36,8 +37,8 @@ export const stockToCsv = (rows: StockLineRowFragment[]): string => {
     l.itemName,
     (l.item.masterLists ?? []).map(m => m.name).join('; '),
     l.batch ?? '',
-    l.expiryDate ? localisedDate(l.expiryDate) : '',
-    l.manufactureDate ? localisedDate(l.manufactureDate) : '',
+    l.expiryDate ? exportDate(l.expiryDate) : '',
+    l.manufactureDate ? exportDate(l.manufactureDate) : '',
     l.item.isVaccine ? (l.vvmStatus?.description ?? '') : '',
     l.location?.code ?? '',
     l.location?.name ?? l.locationName ?? '',

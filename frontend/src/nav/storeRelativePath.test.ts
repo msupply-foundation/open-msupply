@@ -82,3 +82,37 @@ describe.each(mounts)('storeRelativePath (%s)', (_label, base) => {
     expect(`${routerBase}/STORE1`).not.toContain('//');
   });
 });
+
+/*
+ * The join back (router-space, so mount-independent): three builders share it
+ * — the menu (ShellLayout § storeHref), the keyboard (KeyboardHost § go), and
+ * the SDK (plugin-sdk/navigation § storeHref) — precisely so one screen cannot
+ * acquire a second spelling through any one of them (OMS-REG-NAV-01.22).
+ */
+describe('storePath', () => {
+  it('joins a store-relative path below the store root', async () => {
+    const { storePath } = await at('/');
+    expect(storePath('STORE1', 'inventory/stock')).toBe(
+      '/STORE1/inventory/stock'
+    );
+    // A leading slash is tolerated; the path is store-relative either way.
+    expect(storePath('STORE1', '/inventory/stock')).toBe(
+      '/STORE1/inventory/stock'
+    );
+  });
+
+  it('gives the landing screen exactly one spelling, query or not', async () => {
+    const { storePath } = await at('/');
+    // No trailing slash for Home, and no slash before a query-only path —
+    // either would be a second URL for the same screen.
+    expect(storePath('STORE1', '')).toBe('/STORE1');
+    expect(storePath('STORE1', '?query=a')).toBe('/STORE1?query=a');
+  });
+
+  it('keeps a path-borne query attached', async () => {
+    const { storePath } = await at('/');
+    expect(storePath('STORE1', 'inventory/stock?query=a')).toBe(
+      '/STORE1/inventory/stock?query=a'
+    );
+  });
+});

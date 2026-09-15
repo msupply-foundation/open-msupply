@@ -19,6 +19,7 @@ const LANGUAGE_ENDONYM: Record<SupportedLocale, string> = {
   es: 'Español',
   fr: 'Français',
   'fr-DJ': 'Français (Djibouti)',
+  lo: 'ລາວ',
   ps: 'پښتو',
   pt: 'Português',
   ru: 'Русский',

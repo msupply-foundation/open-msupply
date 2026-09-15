@@ -5,9 +5,18 @@
  * hairline border + focus outline + the shadow offsets in the tokens).
  */
 
+/* A column: the icon + title/subtitle header row, then the optional content
+   slot full-width beneath it. With no content the card holds just the header,
+   so justify-content: center keeps it vertically centred when a grid stretches
+   the card — exactly the old single-row rendering. */
 .card {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  /* Explicit, not left to the UA: Chromium's stylesheet gives <button>
+     align-items: flex-start, which would shrink-wrap the header and slot on
+     the onClick variant only — stretch keeps both variants full-width. */
+  align-items: stretch;
+  justify-content: center;
   gap: var(--space-3);
   inline-size: 100%;
   padding: var(--space-4);
@@ -16,6 +25,8 @@
   background: var(--surface-raised);
   box-shadow: var(--shadow-1);
   color: var(--text-body);
+  /* Anchors the go-arrow, which is out of flow at the card's top corner. */
+  position: relative;
   font-family: inherit;
   text-align: start;
   text-decoration: none;
@@ -26,16 +37,38 @@
     transform var(--motion-fast) ease;
 }
 
+/* The border + shadow change on every pointer: a latched tint after a tap is
+   inert, and it is the only press feedback a touch user gets (no :hover here
+   would leave a tapped tile visually dead). */
 .card:hover {
   border-color: var(--primary-main);
   box-shadow: var(--shadow-3);
-  transform: translateY(-0.125rem);
+}
+
+/* Only the LIFT is gated: on a touch device :hover latches after a tap and
+   leaves the card stuck mid-lift (#317), and for reduced-motion users the card
+   would jump under the cursor — both suppressed in the query itself, not by a
+   later override the cascade could lose. The border/shadow above still change,
+   so hover is never signalled by motion alone. */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .card:hover {
+    transform: translateY(-0.125rem);
+  }
 }
 
 .card:focus-visible {
   outline: none;
   border-color: var(--primary-main);
   box-shadow: var(--focus-ring);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  /* The go-arrow is out of flow, so nothing else reserves its column: without
+     this a long title runs underneath it. Its own size plus the card's gutter. */
+  padding-inline-end: var(--space-5);
 }
 
 .icon {
@@ -71,11 +104,55 @@
   overflow-wrap: anywhere;
 }
 
-/* Beyond zeroing the transition (--motion-fast does that): drop the hover LIFT
-   itself, so the card doesn't jump a few pixels under the cursor. The shadow
-   and border still change, so hover is never signalled by motion alone. */
-@media (prefers-reduced-motion: reduce) {
-  .card:hover {
-    transform: none;
-  }
+/* The content slot — a full-width block under the header (flex blockifies the
+   span). The consumer owns what's inside; the card owns one unconditional
+   guarantee: an unbreakable token (a grouped figure, an id) wraps rather than
+   bursting the border — .subtitle's rule. Where the slot sits when the card is
+   stretched past its content is `contentPlacement`'s call, below. */
+.content {
+  overflow-wrap: anywhere;
+}
+
+/* The auto margin absorbs the card's free space before justify-content sees it,
+   pinning the slot to the bottom edge — see `contentPlacement`. Under
+   'grouped' there is no margin, so the free space stays split above and below
+   and justify-content centres header and content together. */
+.card[data-content-placement='spread'] .content {
+  margin-block-start: auto;
+}
+
+/* size="lg" — the card that LEADS a grid, given more room than its
+   neighbours. Emphasis is carried by the icon chip and the title only: the
+   subtitle, the content slot and every piece of chrome stay the family's, so
+   a large card still reads as the same component rather than a second one. */
+.card[data-size='lg'] .icon {
+  inline-size: 3rem;
+  block-size: 3rem;
+  font-size: 1.75rem;
+}
+
+/* --text-lg, not --text-xl: the figure in the content slot is --text-xl, and a
+   title at the same size would compete with the number it introduces. */
+.card[data-size='lg'] .title {
+  font-size: var(--text-lg);
+}
+
+/* The go-arrow (WidgetCard.tsx): the card's own top corner, out of flow, so a
+   centred header cannot drag it to the middle of the card. Inset by the card's
+   own padding, so it lines up with the content rather than the border. Muted by
+   default — a standing affordance, not a call to action — and it takes the
+   action tone with the rest of the card's hover chrome. */
+.go {
+  position: absolute;
+  inset-block-start: var(--space-4);
+  inset-inline-end: var(--space-4);
+  display: inline-flex;
+  color: var(--text-secondary);
+  font-size: 1.125rem;
+  transition: color var(--motion-fast) ease;
+}
+
+.card:hover .go,
+.card:focus-visible .go {
+  color: var(--primary-main);
 }

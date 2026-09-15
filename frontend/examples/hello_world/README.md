@@ -71,6 +71,41 @@ export default definePlugin({
 - **A contribution that throws is contained** to its own slot. `?pluginBoom`
   turns this plugin's throwing stat on, so you can see it happen.
 
+### The dashboard body
+
+`dashboard.body` is the only **screen-level** slot: its occupant _is_ the
+dashboard body, rather than a piece joining a region of host siblings. Open it
+with **`?pluginBody`**:
+
+```text
+http://localhost:3005/<store>/dashboard?pluginBody
+```
+
+The built-in card grid is not beside it and not behind it — it is **never
+mounted**, so none of its six count queries is issued (watch the network tab).
+The frame around the body stays the host's: app frame, page header, breadcrumb,
+navigation menu, all unchanged.
+
+| Fixture detail                                                           | What it proves                                                                                                                                                                                |
+| ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mount-N` beside a click counter (`data-body-mount`, `data-body-clicks`) | the host does not **remount** the occupant when the registry or the store context churns around it — switch language, or save a store preference, and the stamp and counter survive           |
+| the facts table is an SDK `Table`; the plugin ships no CSS               | SDK components carry the host's styling across the boundary even when the contribution owns the whole screen                                                                                  |
+| `?pluginBodyBoom` **on its own**                                         | a body that throws falls back to the **built-in body**, not to the neutral piece-region text — which in a whole-body region would leave the screen empty. The failure is named in diagnostics |
+
+Two rules the slot enforces, worth knowing before you claim it:
+
+- **One occupant.** Where several contributions claim the body, the registry's
+  deterministic order (contribution `order`, then plugin code, then contribution
+  id) picks the first and **names every one passed over** in diagnostics — two
+  plugins both claiming it is a deployment mistake, not a race. With both flags
+  above on, `body` wins the id tie-break and `bodyBoom` is the one named.
+- **`when(ctx)`, never `suppress`.** A body needs no suppression to clear what it
+  replaces, and suppression could not do the job anyway: it is site-wide and
+  store-blind, so suppressing the built-in widgets to make room for a screen only
+  some stores should see would blank the dashboard of every other store on the
+  server. The host refuses that set and says so. Gate the body on `when(ctx)`
+  instead — it replaces the body only where it renders.
+
 ### Columns
 
 This plugin also contributes three columns to the internal-order line table
@@ -121,6 +156,80 @@ Two rules a real panel must follow, both visible here:
   and keep `when(ctx)` for session facts only — store, permissions, preferences.
   A `when` that depended on the record would add and remove the contribution as
   the user steps, which is a remount by another name.
+
+### A page and its navigation section
+
+`pages` is not a slot: it contributes **whole routed screens**, flat — each
+`PluginPage` carries its own full path, its own gates, and one optional `nav`
+placement: inside a menu group of the plugin's own (declared under
+`navSections`), inside a host section, at the root of the upper list, or none
+at all (routed, no menu entry)
+([`sdk-contract` § the page contribution](../../spec/plugins/sdk-contract.md#the-page-contribution-specified-in-full)).
+A placement the host does not provide is refused, naming it (AC-PLUG-P5). Turn
+this plugin's section on with **`?pluginPages`**:
+
+```text
+http://localhost:3005/<store>/?pluginPages
+```
+
+A **Hello world** group appears in the menu just above Inventory
+(`anchor: { before: 'inventory' }`; without an anchor it would sit at the end
+of the upper list, above the pinned bottom cluster) holding one page,
+reachable from the menu, from the command palette ("Go to: Hello page"), and at
+`/<store>/hello-world/hello` directly — one registry, three surfaces.
+
+| Fixture detail                                            | What it proves                                                                                                                                                                                                |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| the page body lives in its own module (`HelloPage.tsx`)   | **page code loads on first navigation, never at startup** (AC-PLUG-P2): its console line prints on the first visit, not at boot. The build inlines it into the one bundle; the dev loop keeps it a real chunk |
+| the header, breadcrumb and menu are untouched host chrome | the host owns the app frame and page frame; the contribution is the **body only**, like a dashboard body occupant                                                                                             |
+| `when: () => pagesFlagAtBoot` (the flag, captured at boot) | the group-level withhold, composed with each placed page's own: absent from menu and palette, and the URL **redirects** — a real plugin gates on `ctx` (`ctx.storeMode === 'dispensary'`), same context, same behaviour. Captured at boot because in-app navigation drops the query string |
+| `nav: { in: 'helloSection' }`                              | the placement — one field of one shape. `{ in }` also takes a published host section id (the entry joins that section's children); `{ root: true }` is a top-level entry; absent means routed with no menu entry, like a host record screen               |
+| `anchor: { before: 'inventory' }`                          | menu placement against a published host section id — the same `{ before / after / end }` shape the dashboard slots use. An anchor naming a gate-hidden section degrades to the end of the upper list, named in diagnostics                              |
+| labels are keys (`pages.section`, `pages.hello`)          | nav labels, the breadcrumb and the tab title all resolve from the plugin's own catalogue, per locale                                                                                                          |
+
+Add `permissions: ['...']` to the page (or the group — the two compose) to
+guard the nav entry and direct navigation with **one** condition (AC-PLUG-P1):
+without the permission the entry is absent and the URL shows the host's
+no-permission notice in place of the screen.
+
+## Navigation
+
+Two primitives, both over a path **below the store root**, spelled as the
+navigation registry spells it — `'inventory/stock'`, `'catalogue/items'`, `''`
+for the store's landing screen — plus any query string of its own:
+
+- `storeHref(path)` — the href. Put it on an `<a>` and you get a real link:
+  middle-click, open in a new tab, the link role and keyboard activation, and
+  the host's router turns the click into a client-side navigation.
+- `navigateTo(path, { replace })` — the same destination from code, for when
+  there is no anchor to click (after creating a record, say). Prefer the link
+  wherever the user is choosing to go somewhere.
+
+**Never build a host URL by hand.** Two things you would have to encode are the
+host's and both move: the entered store, and where the app is _mounted_ — the
+deployed `/rc/` track and every branch deploy sit under their own prefix, and a
+link missing it is one the router declines to intercept, so it 404s instead of
+navigating. `storeHref` reads the entered store reactively, so an href read in
+your JSX re-resolves when the user switches store.
+
+An href goes on a raw `<a>`, and only there. Should an SDK component ever take a
+destination, it will take the **path** instead — host link components resolve
+the mount themselves, so handing one a resolved href applies it twice. Same
+input either way; you never choose.
+
+**Styling a link is yours.** The host sets no global anchor style — its own
+links are styled per component — so an `<a>` of yours renders in the browser's
+default link colour until you say otherwise. Style it in your own bundle
+(bespoke styles must be self-contained) and reach for the host's design tokens
+so it stays in key: `var(--secondary-main)` is the action blue the host's own
+record links use, `var(--primary-main)` the brand accent, `var(--text-body)`
+body text — each following the active theme, light or dark. Nothing here depends
+on a host class name; those aren't yours to use. The greeting stat's link shows
+the whole of it.
+
+The reference plugin's greeting stat has one of each, both carrying a
+`data-testid` so a session driving the app can tell them apart (example-plugin
+ids: they are not part of `e2e/TESTIDS.md`, which is the app's own contract).
 
 ## Data
 

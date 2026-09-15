@@ -1,0 +1,143 @@
+use super::{
+    item_row::item, requisition_line_row::requisition_line, rnr_form_line_row::rnr_form_line,
+    DBType, RepositoryError, StorageConnection,
+};
+
+use crate::{
+    diesel_macros::{apply_equal_filter, apply_sort_no_case},
+    EqualFilter, ItemRow, Pagination, RequisitionLineRow, RnRFormLineRow, Sort,
+};
+
+use diesel::{dsl::IntoBoxed, prelude::*};
+
+#[derive(PartialEq, Debug, Clone, Default)]
+pub struct RnRFormLine {
+    pub rnr_form_line_row: RnRFormLineRow,
+    pub requisition_line_row: Option<RequisitionLineRow>,
+    pub item_row: ItemRow,
+}
+#[derive(Clone, Default)]
+pub struct RnRFormLineFilter {
+    pub rnr_form_id: Option<EqualFilter<String>>,
+    pub requisition_line_id: Option<EqualFilter<String>>,
+}
+
+pub enum RnRFormLineSortField {
+    ItemName,
+}
+
+pub type RnRFormLineSort = Sort<RnRFormLineSortField>;
+
+pub struct RnRFormLineRepository<'a> {
+    connection: &'a StorageConnection,
+}
+
+type RnRFormLineJoin = (RnRFormLineRow, ItemRow, Option<RequisitionLineRow>);
+
+impl<'a> RnRFormLineRepository<'a> {
+    pub fn new(connection: &'a StorageConnection) -> Self {
+        RnRFormLineRepository { connection }
+    }
+
+    pub fn count(&self, filter: Option<RnRFormLineFilter>) -> Result<i64, RepositoryError> {
+        let query = create_filtered_query(filter);
+
+        Ok(query
+            .count()
+            .get_result(self.connection.lock().connection())?)
+    }
+
+    pub fn query_by_filter(
+        &self,
+        filter: RnRFormLineFilter,
+    ) -> Result<Vec<RnRFormLine>, RepositoryError> {
+        self.query(Pagination::all(), Some(filter), None)
+    }
+
+    pub fn query_one(
+        &self,
+        filter: RnRFormLineFilter,
+    ) -> Result<Option<RnRFormLine>, RepositoryError> {
+        Ok(self.query_by_filter(filter)?.pop())
+    }
+
+    pub fn query(
+        &self,
+        pagination: Pagination,
+        filter: Option<RnRFormLineFilter>,
+        sort: Option<RnRFormLineSort>,
+    ) -> Result<Vec<RnRFormLine>, RepositoryError> {
+        let mut query = create_filtered_query(filter);
+
+        if let Some(sort) = sort {
+            match sort.key {
+                RnRFormLineSortField::ItemName => {
+                    apply_sort_no_case!(query, sort, item::name);
+                }
+            }
+        } else {
+            query = query.order_by(item::name.asc());
+        }
+
+        let result = query
+            // Stable tiebreaker so paginated results don't shuffle or drop rows
+            // when the primary sort column has ties.
+            .then_order_by(rnr_form_line::id.asc())
+            .offset(pagination.offset as i64)
+            .limit(pagination.limit as i64)
+            .load::<RnRFormLineJoin>(self.connection.lock().connection())?;
+
+        Ok(result.into_iter().map(to_domain).collect())
+    }
+}
+
+fn to_domain((rnr_form_line_row, item_row, requisition_line_row): RnRFormLineJoin) -> RnRFormLine {
+    RnRFormLine {
+        rnr_form_line_row,
+        requisition_line_row,
+        item_row,
+    }
+}
+#[diesel::dsl::auto_type]
+fn query() -> _ {
+    rnr_form_line::table
+        .inner_join(item::table)
+        .left_join(requisition_line::table)
+}
+
+type BoxedRnRFormLineQuery = IntoBoxed<'static, query, DBType>;
+
+fn create_filtered_query(filter: Option<RnRFormLineFilter>) -> BoxedRnRFormLineQuery {
+    let mut query = query().into_boxed();
+
+    if let Some(f) = filter {
+        let RnRFormLineFilter {
+            rnr_form_id,
+            requisition_line_id,
+        } = f;
+
+        apply_equal_filter!(query, rnr_form_id, rnr_form_line::rnr_form_id);
+        apply_equal_filter!(
+            query,
+            requisition_line_id,
+            rnr_form_line::requisition_line_id
+        );
+    }
+    query
+}
+
+impl RnRFormLineFilter {
+    pub fn new() -> RnRFormLineFilter {
+        RnRFormLineFilter::default()
+    }
+
+    pub fn rnr_form_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.rnr_form_id = Some(filter);
+        self
+    }
+
+    pub fn requisition_line_id(mut self, filter: EqualFilter<String>) -> Self {
+        self.requisition_line_id = Some(filter);
+        self
+    }
+}

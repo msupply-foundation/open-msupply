@@ -1,0 +1,78 @@
+query databaseSettings {
+  databaseSettings {
+    ... on DatabaseSettingsNode {
+      databaseType
+    }
+  }
+}
+
+query displaySettings($input: DisplaySettingsHash!) {
+  displaySettings(input: $input) {
+    customTheme {
+      value
+      hash
+    }
+    customLogo {
+      value
+      hash
+    }
+  }
+}
+
+query labelPrinterSettings {
+  labelPrinterSettings {
+    __typename
+    address
+    labelHeight
+    labelWidth
+    port
+  }
+}
+
+mutation updateDisplaySettings($displaySettings: DisplaySettingsInput!) {
+  updateDisplaySettings(input: $displaySettings) {
+    __typename
+    ... on UpdateResult {
+      __typename
+      theme
+      logo
+    }
+    ... on UpdateDisplaySettingsError {
+      __typename
+      error
+    }
+  }
+}
+
+mutation updateLabelPrinterSettings(
+  $labelPrinterSettings: LabelPrinterSettingsInput!
+) {
+  updateLabelPrinterSettings(input: $labelPrinterSettings) {
+    ... on LabelPrinterUpdateResult {
+      __typename
+      success
+    }
+  }
+}
+
+mutation configureNameProperties($input: [ConfigureNamePropertyInput!]!) {
+  centralServer {
+    general {
+      configureNameProperties(input: $input) {
+        __typename
+        ... on Success {
+          __typename
+          success
+        }
+      }
+    }
+  }
+}
+
+mutation insertContactForm($input: InsertContactFormInput!, $storeId: String!) {
+  insertContactForm(input: $input, storeId: $storeId) {
+    ... on InsertResponse {
+      id
+    }
+  }
+}

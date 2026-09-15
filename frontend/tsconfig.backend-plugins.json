@@ -1,0 +1,61 @@
+{
+  // The BACKEND halves of the in-repo country plugins (`plugins/<name>/backend`).
+  //
+  // A separate project from tsconfig.plugins.json because the two halves do not
+  // run in the same place: this code runs in the server's BoaJS engine, so
+  // there is no DOM and no `@types/node`. Dropping @types/node is load-bearing
+  // — its promise-based `fetch` would clash with the synchronous `fetch` global
+  // `@common/types` declares for the engine (the same reason
+  // client/packages/plugins/backend-tsconfig.json sets `types: []`).
+  //
+  // That is also why the co-located `*.test.ts` are EXCLUDED rather than
+  // checked here (upstream's own tsconfig excludes them too): typing their bare
+  // `describe`/`it`/`expect` means `types: ["vitest/globals"]`, vitest's types
+  // pull in @types/node, and its promise-based `fetch` is exactly the clash
+  // above — `Duplicate identifier 'fetch'` in backendCommon. The tests still
+  // run (the `backend-plugins` vitest project); they are not type-checked.
+  //
+  // Two backend halves are deliberately NOT here: the reference plugin
+  // (`examples/hello_backend`) and `plugins/cook_islands/backend`. Both
+  // declare the host globals themselves in a `host.d.ts` rather than importing
+  // `@common/types`, and two declarations of `sql` in one program do not
+  // compile. Both are type-checked by tsconfig.plugins.json instead — which is
+  // why the include below is a glob but the exclude names cook_islands: a
+  // backend half that carries its own `host.d.ts` belongs over there.
+  //
+  // `plugins/cook_islands/shared` goes with it: the wire contract is imported
+  // by both of that plugin's halves, so it is type-checked once, alongside the
+  // frontend half that also consumes it.
+  //
+  // Line comments, not block comments: rolldown reads this file as the build's
+  // tsconfig (via the per-plugin one that extends it) and its JSONC parser
+  // rejects `/* */`.
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.backend-plugins.tsbuildinfo",
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "lib": ["ESNext"],
+    "types": [],
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "noEmit": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "noFallthroughCasesInSwitch": true,
+
+    // The server-generated backend-plugin surface, shared with every
+    // out-of-tree plugin. Emitted by `remote_server_cli
+    // generate-plugin-typescript-types`; the build preset
+    // (vite/backendPluginBuild.ts) aliases the same specifier to the same
+    // directory, so what type-checks is what bundles.
+    "paths": { "@common/*": ["../client/packages/plugins/backendCommon/*"] }
+  },
+  "include": ["plugins/*/backend/src/**/*.ts", "plugins/*/shared/**/*.ts"],
+  "exclude": [
+    "**/*.test.ts",
+    "plugins/cook_islands/backend/**",
+    "plugins/cook_islands/shared/**"
+  ]
+}

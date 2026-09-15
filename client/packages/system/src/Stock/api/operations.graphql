@@ -1,0 +1,467 @@
+fragment StockLineRow on StockLineNode {
+  availableNumberOfPacks
+  batch
+  costPricePerPack
+  expiryDate
+  manufactureDate
+  id
+  itemId
+  locationId
+  vvmStatusId
+  locationName
+  onHold
+  packSize
+  sellPricePerPack
+  storeId
+  totalNumberOfPacks
+  supplierName
+  volumePerPack
+  totalVolume
+  location {
+    ...LocationRow
+  }
+  item {
+    code
+    name
+    unitName
+    masterLists(storeId: $storeId) {
+      name
+    }
+    isVaccine
+    doses
+    restrictedLocationTypeId
+    defaultPackSize
+    itemStoreProperties(storeId: $storeId) {
+      defaultSellPricePerPack
+    }
+  }
+  barcode
+  vvmStatusLogs {
+    nodes {
+      ...VVMStatusLogRow
+    }
+  }
+  vvmStatus {
+    __typename
+    id
+    priority
+    unusable
+    description
+  }
+  donor(storeId: $storeId) {
+    id
+  }
+  manufacturer(storeId: $storeId) {
+    ...NameRow
+  }
+  program {
+    id
+    name
+  }
+  campaign {
+    id
+    name
+  }
+
+  itemVariant {
+    __typename
+    id
+    packagingVariants {
+      __typename
+      id
+      packSize
+      volumePerUnit
+    }
+  }
+}
+
+# Lean fragment for the paginated stock list (ungrouped + grouped) and CSV
+# export. Carries only the fields those views render (including campaign, for
+# the campaign column). The full StockLineRow fragment above is kept for the
+# detail/edit queries (stockLine, insert/update) which also need vvmStatusLogs,
+# itemVariant, donor, program and itemStoreProperties.
+fragment StockLineListRow on StockLineNode {
+  availableNumberOfPacks
+  batch
+  costPricePerPack
+  expiryDate
+  manufactureDate
+  id
+  itemId
+  locationId
+  vvmStatusId
+  locationName
+  onHold
+  packSize
+  sellPricePerPack
+  storeId
+  totalNumberOfPacks
+  supplierName
+  volumePerPack
+  totalVolume
+  barcode
+  location {
+    ...LocationRow
+  }
+  item {
+    code
+    name
+    unitName
+    masterLists(storeId: $storeId) {
+      name
+    }
+    isVaccine
+    doses
+    restrictedLocationTypeId
+    defaultPackSize
+  }
+  vvmStatus {
+    __typename
+    id
+    priority
+    unusable
+    description
+  }
+  manufacturer(storeId: $storeId) {
+    ...NameRow
+  }
+  campaign {
+    id
+    name
+  }
+}
+
+fragment RepackStockLine on RepackStockLineNode {
+  location {
+    ...LocationRow
+  }
+  packSize
+  numberOfPacks
+}
+
+fragment Repack on RepackNode {
+  id
+  datetime
+  repackId
+  from {
+    ...RepackStockLine
+  }
+  to {
+    ...RepackStockLine
+  }
+}
+
+fragment InvoiceRow on InvoiceNode {
+  id
+  lines {
+    nodes {
+      id
+      itemName
+      numberOfPacks
+      itemCode
+      stockLine {
+        id
+      }
+    }
+  }
+}
+
+fragment LedgerRow on LedgerNode {
+  datetime
+  id
+  invoiceType
+  invoiceNumber
+  itemId
+  name
+  quantity
+  reason
+  stockLineId
+  storeId
+  runningBalance
+  user {
+    username
+  }
+}
+
+fragment VVMStatusLogRow on VvmstatusLogNode {
+  id
+  createdDatetime
+  user {
+    firstName
+    lastName
+    username
+  }
+  status {
+    id
+    description
+    code
+    priority
+  }
+  createdDatetime
+  comment
+}
+
+query stockLines(
+  $first: Int
+  $offset: Int
+  $key: StockLineSortFieldInput!
+  $desc: Boolean
+  $filter: StockLineFilterInput
+  $storeId: String!
+) {
+  stockLines(
+    storeId: $storeId
+    filter: $filter
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+  ) {
+    ... on StockLineConnector {
+      __typename
+      nodes {
+        __typename
+        ...StockLineListRow
+      }
+      totalCount
+    }
+  }
+}
+
+query stockLine($id: String!, $storeId: String!) {
+  stockLines(storeId: $storeId, filter: { id: { equalTo: $id } }) {
+    ... on StockLineConnector {
+      __typename
+      nodes {
+        __typename
+        ...StockLineRow
+      }
+      totalCount
+    }
+  }
+}
+
+query stockLinesCount($filter: StockLineFilterInput, $storeId: String!) {
+  stockLines(storeId: $storeId, filter: $filter) {
+    ... on StockLineConnector {
+      __typename
+      totalCount
+    }
+  }
+}
+
+query ledger(
+  $key: LedgerSortFieldInput!
+  $desc: Boolean
+  $filter: LedgerFilterInput
+  $storeId: String!
+) {
+  ledger(
+    storeId: $storeId
+    filter: $filter
+    # page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+  ) {
+    ... on LedgerConnector {
+      __typename
+      nodes {
+        __typename
+        ...LedgerRow
+      }
+      totalCount
+    }
+  }
+}
+
+mutation updateStockLine($input: UpdateStockLineInput!, $storeId: String!) {
+  updateStockLine(input: $input, storeId: $storeId) {
+    ... on StockLineNode {
+      __typename
+      ...StockLineRow
+    }
+  }
+}
+
+query repack($invoiceId: String!, $storeId: String!) {
+  repack(invoiceId: $invoiceId, storeId: $storeId) {
+    ... on RepackNode {
+      __typename
+      ...Repack
+    }
+  }
+}
+
+query repacksByStockLine($stockLineId: String!, $storeId: String!) {
+  repacksByStockLine(stockLineId: $stockLineId, storeId: $storeId) {
+    ... on RepackConnector {
+      nodes {
+        ...Repack
+      }
+      totalCount
+    }
+  }
+}
+
+query vvmStatus($storeId: String!) {
+  activeVvmStatuses(storeId: $storeId) {
+    ... on VvmstatusConnector {
+      __typename
+      nodes {
+        __typename
+        ...VVMStatus
+      }
+    }
+  }
+}
+
+mutation insertRepack($input: InsertRepackInput!, $storeId: String!) {
+  insertRepack(input: $input, storeId: $storeId) {
+    ... on InvoiceNode {
+      __typename
+      ...InvoiceRow
+    }
+    ... on InsertRepackError {
+      __typename
+      error {
+        description
+        ... on StockLineReducedBelowZero {
+          __typename
+          description
+        }
+        ... on CannotHaveFractionalPack {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}
+
+mutation createInventoryAdjustment(
+  $input: CreateInventoryAdjustmentInput!
+  $storeId: String!
+) {
+  createInventoryAdjustment(input: $input, storeId: $storeId) {
+    __typename
+    ... on InvoiceNode {
+      __typename
+      ...InvoiceRow
+    }
+    ... on CreateInventoryAdjustmentError {
+      __typename
+      error {
+        __typename
+        description
+        ... on StockLineReducedBelowZero {
+          __typename
+          description
+        }
+        ... on LedgerWouldGoBelowZero {
+          __typename
+          description
+        }
+        ... on AdjustmentReasonNotProvided {
+          __typename
+          description
+        }
+      }
+    }
+  }
+}
+
+mutation insertStockLine($input: InsertStockLineInput!, $storeId: String!) {
+  insertStockLine(input: $input, storeId: $storeId) {
+    ... on StockLineNode {
+      __typename
+      ...StockLineRow
+    }
+    ... on InsertStockLineError {
+      __typename
+      error {
+        __typename
+        ... on AdjustmentReasonNotProvided {
+          __typename
+        }
+      }
+    }
+  }
+}
+
+fragment VVMStatus on VvmstatusNode {
+  __typename
+  description
+  id
+  priority
+  reasonId
+  unusable
+}
+
+query activeVvmStatuses($storeId: String!) {
+  activeVvmStatuses(storeId: $storeId) {
+    ... on VvmstatusConnector {
+      __typename
+      nodes {
+        ...VVMStatus
+      }
+    }
+  }
+}
+
+mutation insertVvmStatusLog(
+  $input: InsertVVMStatusLogInput!
+  $storeId: String!
+) {
+  insertVvmStatusLog(input: $input, storeId: $storeId) {
+    ... on VvmstatusLogNode {
+      id
+      status {
+        id
+        code
+      }
+    }
+  }
+}
+
+mutation updateVvmStatusLog(
+  $input: UpdateVVMStatusLogInput!
+  $storeId: String!
+) {
+  updateVvmStatusLog(input: $input, storeId: $storeId) {
+    ... on IdResponse {
+      id
+    }
+  }
+}
+
+query itemsByStockLineFilter(
+  $first: Int
+  $offset: Int
+  $key: ItemSortFieldInput!
+  $desc: Boolean
+  $filter: StockLineFilterInput
+  $storeId: String!
+) {
+  itemsByStockLineFilter(
+    storeId: $storeId
+    page: { first: $first, offset: $offset }
+    sort: { key: $key, desc: $desc }
+    filter: $filter
+  ) {
+    ... on ItemConnector {
+      __typename
+      nodes {
+        __typename
+        id
+        code
+        name
+        availableBatches(storeId: $storeId) {
+          __typename
+          totalCount
+          nodes {
+            __typename
+            ...StockLineListRow
+          }
+        }
+      }
+      totalCount
+    }
+  }
+}

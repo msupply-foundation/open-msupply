@@ -63,3 +63,28 @@ export const storeRelativePath = (
     : belowMount;
   return rest.replace(/^\/+|\/+$/g, '');
 };
+
+/**
+ * The opposite direction: a router-space path for a screen below the store
+ * root, from the store-relative path as the nav registry spells it — `''` for
+ * the landing screen, `'inventory/stock'`, or a path carrying its own query
+ * (`'inventory/stock?query=…'`, `'?query=…'` on the landing screen itself). A
+ * leading slash is tolerated.
+ *
+ * This is the ONE spelling of a store address (OMS-REG-NAV-01.22): an empty or
+ * query-only path joins the store root directly, because a slash first would
+ * spell the landing screen `/{store}/` or `/{store}/?query=…` alongside
+ * `/{store}` — the same screen at two URLs. Every builder of a store address
+ * (the menu's, the keyboard's, the SDK's) shares this join so their spellings
+ * cannot drift apart.
+ *
+ * Router-space, not a document href: the mount is NOT included, which is what
+ * the router's own `<A>`/`navigate` expect. The SDK's `storeHref` prefixes
+ * `routerBase` to make a document href of it.
+ */
+export const storePath = (storeId: string, path: string): string => {
+  const relative = path.replace(/^\/+/, '');
+  const root = `/${storeId}`;
+  if (relative === '' || relative.startsWith('?')) return `${root}${relative}`;
+  return `${root}/${relative}`;
+};

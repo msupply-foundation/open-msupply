@@ -9,7 +9,13 @@ import {
   Switch,
 } from 'solid-js';
 import type { Component, JSX } from 'solid-js';
-import { Navigate, Route, Router } from '@solidjs/router';
+import {
+  Navigate,
+  Route,
+  Router,
+  useLocation,
+  useParams,
+} from '@solidjs/router';
 import { graphqlFetch } from './api/graphql';
 import { detectLocale, initialiseLocale, isRtl, locale, t } from './intl';
 import { InitialisationStatus } from './api/initialisation.generated';
@@ -18,12 +24,21 @@ import { fetchDisplaySettings } from './api/displaySettings';
 import { authUser, checkAuth, startActivityTracking } from './auth/authContext';
 import { InitialisationPage } from './initialisation/InitialisationPage';
 import { resolveStorePath, StoreGuardLayout } from './store/StoreGuardLayout';
-import { navDestinations } from './nav/navConfig';
+import {
+  DASHBOARD_LEGACY_PATH,
+  DISPENSING_LEGACY_PATH,
+  navDestinations,
+} from './nav/navConfig';
+import { dispensingHref, storeHomeHref } from './nav/legacyPaths';
 import { routerBase } from './nav/storeRelativePath';
-import { DashboardPage, dashboardRoutes } from './sections/dashboard';
+import { DashboardPage } from './sections/dashboard';
 import { stocktakesRoutes } from './sections/stocktakes';
 import { stockMovementsRoutes } from './sections/stock-movements';
-import { customersRoutes, suppliersRoutes } from './sections/names';
+import {
+  customersRoutes,
+  suppliersRoutes,
+  facilityRegisterRoutes,
+} from './sections/names';
 import { locationsRoutes } from './sections/locations';
 import { customerReturnsRoutes } from './sections/customer-returns';
 import { supplierReturnsRoutes } from './sections/supplier-returns';
@@ -36,7 +51,11 @@ import { rnrFormsRoutes } from './sections/rnr-forms';
 import { itemsRoutes } from './sections/items';
 import { patientsRoutes } from './sections/patients';
 import { cliniciansRoutes } from './sections/clinicians';
+import { coldChainSensorsRoutes } from './sections/cold-chain-sensors';
+import { coldChainMonitoringRoutes } from './sections/cold-chain-monitoring';
+import { coldChainEquipmentRoutes } from './sections/cold-chain-equipment';
 import { prescriptionsRoutes } from './sections/prescriptions';
+import { prescriptionRequestsRoutes } from './sections/prescription-requests';
 import { masterListsRoutes } from './sections/master-lists';
 import { campaignsRoutes } from './sections/campaigns';
 import { reportsRoutes } from './sections/reports';
@@ -44,6 +63,8 @@ import { settingsRoutes } from './sections/settings';
 import { sitesRoutes } from './sections/sites';
 import { helpRoutes, helpDocumentsRoutes } from './sections/help';
 import { globalPreferencesRoutes } from './sections/global-preferences';
+import { customFieldsRoutes } from './sections/custom-fields';
+import { syncMessageRoutes } from './sections/sync-message';
 import { ShellLayout } from './nav/ShellLayout';
 import { EntryPage } from './nav/EntryPage';
 import { LoginPage } from './auth/LoginPage';
@@ -56,6 +77,7 @@ import { StaleBundleModal } from './StaleBundleModal';
 import { startStaleBundleWatch } from './staleBundle';
 import { startUpdateWatch } from './appUpdate';
 import { PluginGate } from './plugins/PluginGate';
+import { pluginPageRoutes } from './plugins/pluginPages';
 import styles from './ui/styles/shared.module.css';
 
 // 'failed' is what the loading phase becomes once a startup pass cannot
@@ -72,7 +94,8 @@ type Phase = 'loading' | 'failed' | 'initialisation' | 'operational';
 // section's nested route tree (list + detail etc.), whose view components are
 // lazy. Every other destination falls back to EntryPage.
 const sectionRoutes: Record<string, () => JSX.Element> = {
-  dashboard: dashboardRoutes,
+  // Home is the store root, so its registry path is '' and its route is the
+  // `/` below — it takes no entry here (see the Home route in the tree).
   'inventory/stocktakes': stocktakesRoutes,
   'inventory/stock-movement': stockMovementsRoutes,
   'distribution/customers': customersRoutes,
@@ -90,7 +113,15 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'catalogue/master-lists': masterListsRoutes,
   'dispensary/patients': patientsRoutes,
   'dispensary/clinicians': cliniciansRoutes,
-  'dispensary/prescription': prescriptionsRoutes,
+  // ONE section, TWO destinations: the same list and detail screens, differing
+  // only in whether the list is pinned to the active store (spec/cold-chain-
+  // equipment › rules § the two destinations).
+  'cold-chain/equipment': coldChainEquipmentRoutes,
+  'manage/equipment': coldChainEquipmentRoutes,
+  'cold-chain/sensors': coldChainSensorsRoutes,
+  'cold-chain/monitoring': coldChainMonitoringRoutes,
+  'dispensary/dispensing': prescriptionsRoutes,
+  'dispensary/prescription-request': prescriptionRequestsRoutes,
   reports: reportsRoutes,
   settings: settingsRoutes,
   'manage/sites': sitesRoutes,
@@ -98,6 +129,44 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   help: helpRoutes,
   'manage/campaigns': campaignsRoutes,
   'manage/help-documents': helpDocumentsRoutes,
+  'manage/custom-fields': customFieldsRoutes,
+  'manage/sync-message': syncMessageRoutes,
+  // The central server's facility register (spec/names S5) — the third list
+  // over the name entity, under Manage rather than a store-scoped section.
+  'manage/stores': facilityRegisterRoutes,
+};
+
+/**
+ * The legacy `/{storeId}/dashboard` address, answered with the screen it names.
+ * Home moved to the store root (spec/navigation § the registry), so this keeps
+ * every bookmark, shared link and printed URL made before the move working —
+ * arriving at the canonical URL rather than at the not-found page. The query
+ * and fragment ride along, so nothing the address was carrying is dropped on
+ * the way (`location` supplies both).
+ */
+const DashboardRedirect: Component = () => {
+  const params = useParams();
+  const location = useLocation();
+  return <Navigate href={storeHomeHref(params['storeId'] ?? '', location)} />;
+};
+
+/**
+ * The legacy `/{storeId}/dispensary/prescription` addresses, answered with the
+ * screen they name. The dispensing vertical was relabelled "Dispensing" and its
+ * path moved with the label (issue #551), so this keeps every bookmark, shared
+ * link and plugin deep link made under the old segment working — including the
+ * detail addresses, whose trailing segments are carried across unchanged, and
+ * the `?query=…` a filtered, sorted or paged list keeps its state in, which
+ * would otherwise be answered with the unfiltered list.
+ */
+const DispensingRedirect: Component = () => {
+  const params = useParams();
+  const location = useLocation();
+  return (
+    <Navigate
+      href={dispensingHref(params['storeId'] ?? '', params['rest'], location)}
+    />
+  );
 };
 
 export const App: Component = () => {
@@ -225,10 +294,34 @@ export const App: Component = () => {
                   (empty) entry page until a real section is registered above. */}
                 <Route path="/:storeId" component={StoreGuardLayout}>
                   <Route path="/" component={ShellLayout}>
-                    {/* The store root is the landing screen — the dashboard
-                      (spec/dashboard S1), same page as the nav's `dashboard`
-                      destination. */}
+                    {/* Home: the store root IS the landing screen
+                      (spec/dashboard S1, spec/navigation § the registry). One
+                      screen, one URL — the nav entry, the brand mark and a
+                      bare store link all resolve here. */}
                     <Route path="/" component={DashboardPage} />
+                    {/* Bookmarks and links made before Home moved off its own
+                      segment. Without this the old address falls through to
+                      the not-found catch-all below, which is a worse answer
+                      than the screen the user asked for. */}
+                    <Route
+                      /* The shared constant, not a literal: validate.ts
+                         reserves this path against plugin pages through the
+                         same export, so the redirect and the reservation
+                         cannot drift apart. */
+                      path={`/${DASHBOARD_LEGACY_PATH}`}
+                      component={DashboardRedirect}
+                    />
+                    {/* Likewise for the dispensing vertical's old segment
+                      (issue #551) — both the list and any detail beneath it,
+                      and likewise through the reserved constant. */}
+                    <Route
+                      path={`/${DISPENSING_LEGACY_PATH}/*rest`}
+                      component={DispensingRedirect}
+                    />
+                    <Route
+                      path={`/${DISPENSING_LEGACY_PATH}`}
+                      component={DispensingRedirect}
+                    />
                     <For each={Object.entries(sectionRoutes)}>
                       {([path, routes]) => (
                         <Route path={`/${path}`}>{routes()}</Route>
@@ -236,13 +329,37 @@ export const App: Component = () => {
                     </For>
                     <For
                       each={navDestinations.filter(
-                        dest => !sectionRoutes[dest.path]
+                        // Home's route is the `/` above, not a generated one:
+                        // its path is '' and would generate a second `/`.
+                        dest => dest.path !== '' && !sectionRoutes[dest.path]
                       )}
                     >
                       {dest => (
                         <Route
                           path={`/${dest.path}`}
                           component={() => <EntryPage dest={dest} />}
+                        />
+                      )}
+                    </For>
+                    {/* Plugin-contributed pages (spec/plugins/rules.md § pages
+                      & navigation): one route per page a loaded plugin
+                      declares — the set is settled here, since PluginGate has
+                      already opened. Each component is the host frame around
+                      the plugin's lazy body, and the gates are ShellLayout's
+                      reactive routeAccess verdict, exactly as for the routes
+                      above. A plugin nav group has no path and no route: an
+                      unclaimed prefix falls to the catch-all below. */}
+                    <For each={pluginPageRoutes()}>
+                      {route => (
+                        <Route
+                          /* Exact path AND everything below it: paths below a
+                             page are the page's own to interpret (sdk-contract
+                             § Paths) — a plugin's record screen at
+                             `.../count/item-7` must mount the page, not fall
+                             through to the not-found catch-all the highlight
+                             and tab title already disown. */
+                          path={[`/${route.path}`, `/${route.path}/*`]}
+                          component={route.Component}
                         />
                       )}
                     </For>

@@ -1,4 +1,4 @@
-import { t, localisedDate } from '../../../intl';
+import { t, exportDate } from '../../../intl';
 import { toCsv } from '../../../domain/reportFiles';
 import { statusLabel } from '../detail/inboundShipmentStatus';
 import type { InboundRowFragment } from './inboundShipments.generated';
@@ -22,8 +22,8 @@ export const inboundShipmentsToCsv = (rows: InboundRowFragment[]): string => {
     statusLabel(row.status),
     row.otherPartyName,
     row.theirReference ?? '',
-    localisedDate(row.createdDatetime),
-    row.deliveredDatetime ? localisedDate(row.deliveredDatetime) : '',
+    exportDate(row.createdDatetime),
+    row.deliveredDatetime ? exportDate(row.deliveredDatetime) : '',
     row.comment ?? '',
     row.pricing.totalAfterTax,
   ]);

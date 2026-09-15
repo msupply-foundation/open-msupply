@@ -1,0 +1,72 @@
+use crate::migrations::*;
+
+/// Prescriber-authored prescription (distinct from the dispensing record,
+/// which is an invoice of type PRESCRIPTION). When the prescriber sets the
+/// request to READY_TO_DISPENSE a dispensing invoice is generated from it
+/// (invoice.prescription_request_id points back here).
+///
+/// `created_by` records the account that ENTERED the request; the clinician it
+/// is written on behalf of arrives later, in
+/// `add_clinician_to_prescription_request`.
+pub(crate) struct Migrate;
+
+impl MigrationFragment for Migrate {
+    fn identifier(&self) -> &'static str {
+        "add_prescription_request_tables"
+    }
+
+    fn migrate(&self, connection: &StorageConnection) -> anyhow::Result<()> {
+        let status_type = if cfg!(feature = "postgres") {
+            sql!(
+                connection,
+                r#"
+                CREATE TYPE prescription_request_status AS ENUM ('NEW', 'READY_TO_DISPENSE', 'DISPENSED');
+                "#
+            )?;
+            "prescription_request_status"
+        } else {
+            "TEXT"
+        };
+
+        sql!(
+            connection,
+            r#"
+                CREATE TABLE prescription_request (
+                    id TEXT NOT NULL PRIMARY KEY,
+                    store_id TEXT NOT NULL REFERENCES store(id),
+                    prescription_request_number BIGINT NOT NULL,
+                    status {status_type} NOT NULL,
+                    patient_link_id TEXT NOT NULL REFERENCES name_link(id),
+                    diagnosis_id TEXT REFERENCES diagnosis(id),
+                    program_id TEXT REFERENCES program(id),
+                    created_datetime {DATETIME} NOT NULL,
+                    prescription_datetime {DATETIME} NOT NULL,
+                    ready_datetime {DATETIME},
+                    dispensed_datetime {DATETIME},
+                    created_by TEXT NOT NULL,
+                    comment TEXT,
+                    custom_fields {JSONB}
+                );
+
+                CREATE TABLE prescription_request_line (
+                    id TEXT NOT NULL PRIMARY KEY,
+                    prescription_request_id TEXT NOT NULL REFERENCES prescription_request(id),
+                    item_link_id TEXT NOT NULL REFERENCES item_link(id),
+                    number_of_units {DOUBLE} NOT NULL,
+                    note TEXT
+                );
+
+                CREATE INDEX index_prescription_request_store_id
+                    ON prescription_request (store_id);
+                CREATE INDEX index_prescription_request_patient_link_id
+                    ON prescription_request (patient_link_id);
+                CREATE INDEX index_prescription_request_line_prescription_request_id
+                    ON prescription_request_line (prescription_request_id);
+                CREATE INDEX index_prescription_request_line_item_link_id
+                    ON prescription_request_line (item_link_id);
+            "#
+        )?;
+
+        Ok(())
+    }
+}

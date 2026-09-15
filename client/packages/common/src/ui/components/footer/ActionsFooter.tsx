@@ -1,0 +1,96 @@
+import React, { ReactElement, ReactNode } from 'react';
+import {
+  Stack,
+  useTranslation,
+  Typography,
+  FlatButton,
+  MinusCircleIcon,
+  Tooltip,
+} from '@openmsupply-client/common';
+
+export interface Action {
+  label: string;
+  icon: ReactNode;
+  onClick: () => void;
+  disabled?: boolean;
+  loading?: boolean;
+  shouldShrink?: boolean;
+  tooltip?: string;
+  testId?: string;
+}
+
+interface ActionsFooterProps {
+  actions: Action[];
+  selectedRowCount: number;
+  resetRowSelection: () => void;
+}
+
+export const ActionsFooter = ({
+  actions,
+  selectedRowCount,
+  resetRowSelection,
+}: ActionsFooterProps): ReactElement => {
+  const t = useTranslation();
+
+  return (
+    <Stack
+      data-testid="actions-footer"
+      direction="row"
+      alignItems="center"
+      height={64}
+      gap={4}
+      sx={{
+        p: 4,
+        mx: '-20px',
+        boxShadow: theme => `0 -5px 10px -5px ${theme.palette.grey[400]}`,
+        justifyContent: 'space-between',
+      }}
+    >
+      <Stack direction="row" alignItems="center" gap={4}>
+        <Typography
+          data-testid="selected-rows-count"
+          sx={{
+            pr: 1,
+            fontWeight: 'bold',
+          }}
+        >
+          {selectedRowCount} {t('label.selected')}
+        </Typography>
+        {actions.map(
+          ({
+            label,
+            icon,
+            onClick,
+            disabled,
+            shouldShrink,
+            loading,
+            tooltip,
+            testId,
+          }) => (
+            <Tooltip key={label} title={tooltip ?? ''}>
+              <span>
+                <FlatButton
+                  startIcon={icon}
+                  label={label}
+                  disabled={disabled}
+                  loading={loading}
+                  onClick={onClick}
+                  testId={testId}
+                  // Flatbutton doesn't shrink by default but we want it to in actions footer
+                  shouldShrink={shouldShrink ?? true}
+                />
+              </span>
+            </Tooltip>
+          )
+        )}
+      </Stack>
+      <FlatButton
+        startIcon={<MinusCircleIcon />}
+        label={t('label.clear-selection')}
+        onClick={resetRowSelection}
+        shouldShrink={true}
+        color="secondary"
+      />
+    </Stack>
+  );
+};

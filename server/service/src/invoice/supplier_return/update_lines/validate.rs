@@ -1,0 +1,33 @@
+use repository::{InvoiceType, StorageConnection};
+
+use crate::invoice::{
+    check_invoice_exists, check_invoice_is_editable, check_invoice_type, check_store,
+};
+use crate::validate::check_other_party_store_is_disabled;
+
+use super::UpdateSupplierReturnLinesError;
+
+pub fn validate(
+    connection: &StorageConnection,
+    store_id: &str,
+    id: &str,
+) -> Result<(), UpdateSupplierReturnLinesError> {
+    use UpdateSupplierReturnLinesError::*;
+
+    let return_row = check_invoice_exists(id, connection)?.ok_or(ReturnDoesNotExist)?;
+
+    if !check_store(&return_row, store_id) {
+        return Err(ReturnDoesNotBelongToCurrentStore);
+    }
+    if !check_invoice_is_editable(&return_row) {
+        return Err(ReturnIsNotEditable);
+    }
+    if check_other_party_store_is_disabled(connection, store_id, &return_row.name_id)? {
+        return Err(ReturnIsNotEditable);
+    }
+    if !check_invoice_type(&return_row, InvoiceType::SupplierReturn) {
+        return Err(NotAnSupplierReturn);
+    }
+
+    Ok(())
+}

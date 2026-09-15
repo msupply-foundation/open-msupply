@@ -7,7 +7,7 @@ import { round } from '../../intl/formatNumber';
 import { type LocationWithVolume } from './locationResource';
 import {
   getVolumeUsedPercentage,
-  passesFullness,
+  visibleLocations,
   type Fullness,
 } from './volume';
 import styles from './LocationVolumeSelect.module.css';
@@ -30,6 +30,8 @@ export interface LocationVolumeSelectProps {
   disabled?: boolean;
   error?: string;
   placeholder?: string;
+  /** `data-testid` for the text input (locale-stable test hook, e2e/TESTIDS.md). */
+  inputTestId?: string;
   /**
    * Control size, forwarded to the Combobox — `small` matches the compact
    * inputs a dense row (a line editor's batch card) puts beside it. Without
@@ -65,6 +67,18 @@ export interface LocationVolumeSelectProps {
    * fullness filter still narrows independently of it.
    */
   itemDisabledReason?: (l: LocationWithVolume) => string | undefined;
+  /**
+   * Offer the All / Empty / Available fullness filter inside the dropdown.
+   * Default true — every stock-placing field wants it.
+   *
+   * Set false on a field that references a location **without placing stock in
+   * it** (a sensor's assignment): the percentages still inform — which cold
+   * room is in use — but "where will this fit" is not a question that field
+   * asks, so the filter is noise there. The reference app draws the same line,
+   * gating its filter on whether a volume is being placed
+   * (spec/ui-standards/components.md → Location lookup (volume-aware)).
+   */
+  fullnessFilter?: boolean;
 }
 
 /*
@@ -73,10 +87,12 @@ export interface LocationVolumeSelectProps {
  * from the plain LocationSelect in two ways:
  *   1. Each option shows its "% used" (right-aligned, muted) — volumeUsed ÷
  *      volume, suppressed when that figure would be misleading (see volume.ts).
- *   2. A fullness filter (All / Empty / Available) is always offered as a tab
- *      strip pinned inside the dropdown. "Empty" keeps locations holding no
- *      stock; "Available" keeps those that are not on hold and have room for
- *      the volume being placed (requiredVolume — not-full when none is given).
+ *   2. A fullness filter (All / Empty / Available) offered as a tab strip
+ *      pinned inside the dropdown — by default; `fullnessFilter={false}`
+ *      suppresses it for a field that places no stock (a sensor's location).
+ *      "Empty" keeps locations holding no stock; "Available" keeps those that
+ *      are not on hold and have room for the volume being placed
+ *      (requiredVolume — not-full when none is given).
  *      Two locations are exempt so the filter can never hide a valid choice:
  *      the currently-selected one (under every mode, so an already-placed line
  *      can be re-saved unchanged) and, under "Available", the one the stock is
@@ -92,19 +108,19 @@ export const LocationVolumeSelect = (
 ): JSX.Element => {
   const [fullness, setFullness] = createSignal<Fullness>('all');
 
-  const filtered = createMemo<LocationWithVolume[]>(() => {
-    const mode = fullness();
-    if (mode === 'all') return props.locations;
-    // The filter and both its exemptions are the pure `passesFullness`
-    // (./volume) so they can be unit-tested away from this widget.
-    return props.locations.filter(l =>
-      passesFullness(l, mode, {
-        selectedId: props.value,
-        originalLocationId: props.originalLocationId,
-        requiredVolume: props.requiredVolume,
-      })
-    );
-  });
+  const showFullness = () => props.fullnessFilter ?? true;
+
+  // The filter, its two exemptions and the suppression gate are all the pure
+  // `visibleLocations` (./volume), so they can be unit-tested away from this
+  // widget — each is invisible when wrong (a location merely goes missing).
+  const filtered = createMemo<LocationWithVolume[]>(() =>
+    visibleLocations(props.locations, fullness(), {
+      selectedId: props.value,
+      originalLocationId: props.originalLocationId,
+      requiredVolume: props.requiredVolume,
+      fullnessFilter: props.fullnessFilter,
+    })
+  );
 
   const percentUsedLabel = (l: LocationWithVolume): string => {
     const pct = getVolumeUsedPercentage(l);
@@ -153,6 +169,7 @@ export const LocationVolumeSelect = (
       disabled={props.disabled}
       error={props.error}
       placeholder={props.placeholder}
+      inputTestId={props.inputTestId}
       focusTarget={props.focusTarget}
       onChange={l => props.onChange(l)}
       itemDisabled={
@@ -164,7 +181,7 @@ export const LocationVolumeSelect = (
       // code + name (and % used) stay readable rather than truncating to the
       // field width.
       matchTriggerWidth={false}
-      listboxHeader={filterHeader}
+      listboxHeader={showFullness() ? filterHeader : undefined}
       renderItem={l => {
         const reason = props.itemDisabledReason?.(l);
         return (

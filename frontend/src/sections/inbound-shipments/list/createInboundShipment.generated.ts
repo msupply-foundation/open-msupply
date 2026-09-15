@@ -40,7 +40,7 @@ export type InsertInboundShipmentResult = {
   __typename: "InsertInboundShipmentError";
 } & {
   error: {
-  __typename: string;
+  __typename: "OtherPartyNotASupplier" | "OtherPartyNotVisible";
   description: string;
 };
 });
@@ -75,7 +75,7 @@ export type InsertInboundShipmentExternalResult = {
   __typename: "InsertInboundShipmentError";
 } & {
   error: {
-  __typename: string;
+  __typename: "OtherPartyNotASupplier" | "OtherPartyNotVisible";
   description: string;
 };
 });
@@ -103,7 +103,7 @@ export type DuplicateInboundShipmentResult = {
   __typename: "DuplicateInboundShipmentError";
 } & {
   error: {
-  __typename: string;
+  __typename: "SupplierIsInactive";
   description: string;
 };
 });

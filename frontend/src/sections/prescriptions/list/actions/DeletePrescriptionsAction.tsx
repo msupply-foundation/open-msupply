@@ -4,7 +4,8 @@ import { graphqlFetch } from '../../../../api/graphql';
 import { Dialog } from '../../../../ui/elements/feedback/Dialog';
 import { Alert } from '../../../../ui/elements/feedback/Alert';
 import { Button } from '../../../../ui/elements/buttons/Button';
-import { TrashIcon, XCircleIcon } from '../../../../ui/icons';
+import { CancelButton } from '../../../../ui/elements/buttons/StandardButtons';
+import { TrashIcon } from '../../../../ui/icons';
 import {
   asPrescriptionStatus,
   canDeletePrescription,
@@ -68,6 +69,11 @@ const Body = (
   const [phase, setPhase] = createSignal<Phase>(
     refused ? 'refused' : 'confirm'
   );
+  // The rejection to show — set from the server's typed error when one
+  // arrives; a client-side refusal has nothing more specific to say.
+  const [errorMessage, setErrorMessage] = createSignal(
+    t('messages.cant-delete-generic')
+  );
   const count = props.selectedIds().length;
 
   const run = async () => {
@@ -82,8 +88,20 @@ const Body = (
       return;
     }
     const items = result.data.batchPrescription.deletePrescriptions ?? [];
-    const failed = items.some(i => 'error' in i.response);
-    if (failed) {
+    const errors = items.flatMap(i =>
+      'error' in i.response ? [i.response.error] : []
+    );
+    if (errors.length > 0) {
+      // Reacting to the server's verdict, keyed to its cause (ui-standards §
+      // validation, controls § action feedback). A dispensing record
+      // generated from a prescription request refuses at any status, and
+      // nothing on the row shows it — so the generic line would leave the
+      // user with a dead end. Every other refusal keeps it.
+      setErrorMessage(
+        errors.some(e => e.__typename === 'CannotDeleteGeneratedDispensation')
+          ? t('messages.cant-delete-generated-dispensation')
+          : t('messages.cant-delete-generic')
+      );
       setPhase('error');
       return;
     }
@@ -98,13 +116,22 @@ const Body = (
       onClose={props.onClose}
       icon={<TrashIcon />}
       testId="confirmation-modal"
-      title={t('heading.are-you-sure')}
+      // The title tracks the phase — neither a refused selection nor a
+      // rejection is a question (kdd/action-modal).
+      title={
+        phase() === 'refused' || phase() === 'error'
+          ? t('heading.cannot-do-that')
+          : t('heading.are-you-sure')
+      }
       description={
         <Show
           when={phase() === 'refused' || phase() === 'error'}
-          fallback={tPlural('messages.confirm-delete-prescriptions', count)}
+          fallback={tPlural(
+            'messages.confirm-delete-dispensing-records',
+            count
+          )}
         >
-          <Alert severity="error">{t('messages.cant-delete-generic')}</Alert>
+          <Alert severity="error">{errorMessage()}</Alert>
         </Show>
       }
       actions={
@@ -113,18 +140,14 @@ const Body = (
           fallback={
             <>
               <Show when={phase() === 'confirm'}>
-                <Button
-                  variant="secondary"
-                  icon={<XCircleIcon />}
-                  confirms="cancel"
-                  onClick={props.onClose}
-                >
-                  {t('button.cancel')}
-                </Button>
+                <CancelButton onClick={props.onClose} />
               </Show>
+              {/* A dialog footer is read as verbs in a fixed position, not a
+                  toolbar: the standard icon-less buttons, with the destructive
+                  confirm carrying the danger tone
+                  (ui-standards/controls.md § footer button identity). */}
               <Button
-                variant="secondary"
-                icon={<TrashIcon />}
+                variant="danger"
                 confirms="plain"
                 data-testid="confirmation-modal-ok"
                 loading={phase() === 'deleting'}
@@ -135,12 +158,7 @@ const Body = (
             </>
           }
         >
-          <Button
-            variant="secondary"
-            icon={<XCircleIcon />}
-            confirms="plain"
-            onClick={props.onClose}
-          >
+          <Button variant="secondary" confirms="plain" onClick={props.onClose}>
             {t('button.close')}
           </Button>
         </Show>

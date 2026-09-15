@@ -1,5 +1,18 @@
-import type { SlotContext } from '../plugin-sdk/types';
-import { currentStoreId, storeContext } from '../store/storeContext';
+import type { SlotContext, SlotStoreMode } from '../plugin-sdk/types';
+import {
+  currentStoreId,
+  currentStoreMode,
+  storeContext,
+  type StoreMode,
+} from '../store/storeContext';
+
+// The host's wire `storeMode` → the SDK's domain word. A total map, keyed off
+// the host's own generated union, so a mode added to the schema fails THIS
+// build rather than silently arriving at plugins as the wrong word.
+const slotStoreModes: Record<StoreMode, SlotStoreMode> = {
+  STORE: 'store',
+  DISPENSARY: 'dispensary',
+};
 
 /*
  * The session facts a contribution's `when` gate reads
@@ -18,6 +31,7 @@ import { currentStoreId, storeContext } from '../store/storeContext';
 export const slotContext = (): SlotContext => {
   const context = storeContext();
   const me = context?.me;
+  const mode = currentStoreMode();
   return {
     storeId: currentStoreId(),
     // Passed through as the wire's own `UserPermission` values (SCREAMING_CASE)
@@ -27,6 +41,13 @@ export const slotContext = (): SlotContext => {
       me && me.__typename === 'UserNode'
         ? me.permissions.nodes.flatMap(node => node.permissions)
         : [],
+    // The entered store's mode, from the me/login store list (no query of its
+    // own). Undefined while the store is unresolved — the boundary reports "not
+    // known", it does not guess a mode, which is what preserves the host's
+    // safe-default-OFF rule for a positive gate (`=== 'dispensary'` is false
+    // until the mode lands, so a gated contribution never flashes in).
+    // Reactive: a store switch re-evaluates every `when`.
+    storeMode: mode && slotStoreModes[mode],
     storePreferences: {
       // The CIV aggregate-AMC gate, from the guard-3 store-preference read.
       // `false` while the context is unresolved — the safe default is OFF, so a
@@ -36,6 +57,12 @@ export const slotContext = (): SlotContext => {
       useConsumptionAndStockFromCustomersForInternalOrders:
         context?.storePreferences
           .useConsumptionAndStockFromCustomersForInternalOrders ?? false,
+      // The low-stock threshold, from the same guard-3 read. NOT defaulted:
+      // a threshold is a number a figure is computed from and a label states,
+      // so "not known yet" must stay distinguishable from a real value —
+      // `undefined` holds the consumer at its dash rather than letting it
+      // count against a guess. Reactive, like the flag above.
+      monthsUnderstock: context?.storePreferences.monthsUnderstock,
     },
   };
 };

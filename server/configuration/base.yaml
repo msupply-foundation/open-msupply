@@ -1,0 +1,35 @@
+server:
+  port: 8000
+  #   one of: Auto | Enabled | Disabled - Auto will enable discovery if the server is running in development mode
+  # discovery: Auto
+  # debug_no_access_control: true # enable this if you want to ignore API authorisation (dummy user will be used for all operations)
+  # danger_allow_http: true # allow http in production mode
+  cors_origins: [
+      http://localhost:3003,
+      https://demo-open.msupply.org,
+      http://localhost:8000,
+    ] # Used to set the allowed Origin in Cross Origin Request Security
+  base_dir: "app_data"
+  # Directory the web frontend is served from, relative to the working directory.
+  # Packaging ships the built frontend bundle here.
+  frontend_dir: "frontend"
+  # The legacy ("old UI") frontend is served under /old-ui/ from the old-ui
+  # subdirectory of frontend_dir, when present (by convention — not configurable).
+database:
+  host: "localhost"
+  port: 5432
+  username: "postgres"
+  password: "password"
+  database_name: "omsupply-database"
+  connection_pool_max_connections: 10
+  connection_pool_min_idle: 2
+  connection_pool_timeout_seconds: 30
+logging:
+  #   one of: All | Console | File
+  mode: File
+  #   one of:  Off | Error | Warn | Info (default) | Debug | Trace
+  level: Info
+  directory: log
+  filename: remote_server.log
+  max_file_count: 10
+  max_file_size: 1

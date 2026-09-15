@@ -1,0 +1,374 @@
+fragment StocktakeRow on StocktakeNode {
+  __typename
+  id
+  comment
+  description
+  createdDatetime
+  finalisedDatetime
+  stocktakeNumber
+  status
+  isLocked
+  isInitialStocktake
+}
+
+fragment StocktakeLine on StocktakeLineNode {
+  __typename
+  stocktakeId
+  batch
+  itemId
+  itemName
+  id
+  expiryDate
+  manufactureDate
+  packSize
+  snapshotNumberOfPacks
+  countedNumberOfPacks
+  sellPricePerPack
+  costPricePerPack
+  comment
+  volumePerPack
+
+  donorId
+  donorName
+
+  manufacturer(storeId: $storeId) {
+    ...NameRow
+  }
+
+  location {
+    __typename
+    id
+    name
+    code
+    onHold
+    locationType {
+      id
+      name
+    }
+  }
+
+  stockLine {
+    __typename
+    id
+  }
+
+  item {
+    __typename
+    id
+    code
+    name
+    unitName
+    isVaccine
+    doses
+    defaultPackSize
+    restrictedLocationTypeId
+    itemStoreProperties(storeId: $storeId) {
+      defaultSellPricePerPack
+    }
+  }
+
+  itemVariantId
+
+  vvmStatus {
+    ...VVMStatus
+  }
+
+  itemVariant {
+    __typename
+    id
+    packagingVariants {
+      __typename
+      id
+      packSize
+      volumePerUnit
+    }
+  }
+
+  reasonOption {
+    reason
+    type
+    isActive
+    id
+  }
+
+  campaign {
+    id
+    name
+  }
+
+  program {
+    id
+    name
+  }
+}
+
+fragment Stocktake on StocktakeNode {
+  __typename
+  id
+  stocktakeNumber
+  comment
+  createdDatetime
+  finalisedDatetime
+  status
+  description
+  isLocked
+  countedBy
+  verifiedBy
+  isInitialStocktake
+
+  user {
+    __typename
+    username
+    email
+  }
+
+  lines {
+    __typename
+    totalCount
+    nodes {
+      ...StocktakeLine
+    }
+  }
+
+  documents {
+    __typename
+    nodes {
+      ...SyncFileReference
+    }
+  }
+}
+
+query stocktakes(
+  $storeId: String!
+  $filter: StocktakeFilterInput
+  $page: PaginationInput
+  $sort: [StocktakeSortInput!]
+) {
+  stocktakes(storeId: $storeId, filter: $filter, page: $page, sort: $sort) {
+    __typename
+    ... on StocktakeConnector {
+      __typename
+      totalCount
+      nodes {
+        ...StocktakeRow
+      }
+    }
+  }
+}
+
+query stocktake($stocktakeId: String!, $storeId: String!) {
+  stocktake(id: $stocktakeId, storeId: $storeId) {
+    __typename
+    ... on StocktakeNode {
+      ...Stocktake
+    }
+  }
+}
+
+query stocktakeByNumber($stocktakeNumber: Int!, $storeId: String!) {
+  stocktakeByNumber(stocktakeNumber: $stocktakeNumber, storeId: $storeId) {
+    __typename
+    ... on StocktakeNode {
+      ...Stocktake
+    }
+  }
+}
+
+query stocktakeLines(
+  $stocktakeId: String!
+  $storeId: String!
+  $page: PaginationInput
+  $sort: [StocktakeLineSortInput!]
+  $filter: StocktakeLineFilterInput
+) {
+  stocktakeLines(
+    stocktakeId: $stocktakeId
+    storeId: $storeId
+    page: $page
+    sort: $sort
+    filter: $filter
+  ) {
+    ... on StocktakeLineConnector {
+      __typename
+      totalCount
+      nodes {
+        ...StocktakeLine
+      }
+    }
+  }
+}
+
+fragment StockLineReducedBelowZeroError on StockLineReducedBelowZero {
+  __typename
+  stockLine {
+    id
+    itemId
+    itemName
+    batch
+    item {
+      code
+    }
+    totalNumberOfPacks
+    availableNumberOfPacks
+  }
+  description
+}
+
+fragment AdjustmentReasonNotProvidedError on AdjustmentReasonNotProvided {
+  __typename
+  description
+}
+
+fragment AdjustmentReasonNotValidError on AdjustmentReasonNotValid {
+  __typename
+  description
+}
+
+fragment SnapshotCountCurrentCountMismatchLineError on SnapshotCountCurrentCountMismatchLine {
+  __typename
+  stocktakeLine {
+    id
+    itemId
+    itemName
+    batch
+    item {
+      code
+    }
+    stockLine {
+      id
+    }
+  }
+  description
+}
+
+mutation upsertStocktakeLines(
+  $storeId: String!
+  $deleteStocktakeLines: [DeleteStocktakeLineInput!]
+  $updateStocktakeLines: [UpdateStocktakeLineInput!]
+  $insertStocktakeLines: [InsertStocktakeLineInput!]
+) {
+  batchStocktake(
+    storeId: $storeId
+    input: {
+      deleteStocktakeLines: $deleteStocktakeLines
+      updateStocktakeLines: $updateStocktakeLines
+      insertStocktakeLines: $insertStocktakeLines
+    }
+  ) {
+    __typename
+    ... on BatchStocktakeResponse {
+      __typename
+      deleteStocktakeLines {
+        __typename
+        id
+        response {
+          ... on DeleteStocktakeLineError {
+            __typename
+            error {
+              description
+              ... on CannotEditStocktake {
+                __typename
+                description
+              }
+            }
+          }
+          ... on DeleteResponse {
+            __typename
+            id
+          }
+        }
+      }
+      insertStocktakeLines {
+        __typename
+        id
+        response {
+          __typename
+          ... on InsertStocktakeLineError {
+            error {
+              __typename
+              description
+              ...StockLineReducedBelowZeroError
+              ...AdjustmentReasonNotProvidedError
+              ...AdjustmentReasonNotValidError
+            }
+          }
+        }
+      }
+      updateStocktakeLines {
+        __typename
+        id
+        response {
+          __typename
+          ... on UpdateStocktakeLineError {
+            error {
+              __typename
+              description
+              ...StockLineReducedBelowZeroError
+              ...AdjustmentReasonNotProvidedError
+              ...AdjustmentReasonNotValidError
+              ...SnapshotCountCurrentCountMismatchLineError
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+mutation deleteStocktakes($storeId: String!, $ids: [DeleteStocktakeInput!]) {
+  batchStocktake(storeId: $storeId, input: { deleteStocktakes: $ids }) {
+    __typename
+    ... on BatchStocktakeResponse {
+      deleteStocktakes {
+        __typename
+        id
+      }
+    }
+  }
+}
+
+fragment StockLinesReducedBelowZeroError on StockLinesReducedBelowZero {
+  __typename
+  errors {
+    ...StockLineReducedBelowZeroError
+  }
+  description
+}
+
+fragment SnapshotCountCurrentCountMismatchError on SnapshotCountCurrentCountMismatch {
+  __typename
+  lines {
+    ...SnapshotCountCurrentCountMismatchLineError
+  }
+}
+
+mutation updateStocktake($input: UpdateStocktakeInput!, $storeId: String!) {
+  updateStocktake(input: $input, storeId: $storeId) {
+    __typename
+    ... on UpdateStocktakeError {
+      error {
+        __typename
+        description
+        ... on StockLinesReducedBelowZero {
+          ...StockLinesReducedBelowZeroError
+        }
+        ... on SnapshotCountCurrentCountMismatch {
+          ...SnapshotCountCurrentCountMismatchError
+        }
+      }
+    }
+    ... on StocktakeNode {
+      id
+    }
+  }
+}
+
+mutation insertStocktake($input: InsertStocktakeInput!, $storeId: String!) {
+  insertStocktake(input: $input, storeId: $storeId) {
+    ... on StocktakeNode {
+      __typename
+      id
+      stocktakeNumber
+    }
+  }
+}

@@ -1,0 +1,62 @@
+import React, { useState } from 'react';
+import { IconButton, StandardTextFieldProps } from '@mui/material';
+import { BasicTextInput } from './BasicTextInput';
+import { EyeIcon, EyeOffIcon } from '@common/icons';
+import { useTranslation } from '@common/intl';
+
+export type PasswordTextInputProps = StandardTextFieldProps & {
+  fixedHeight?: boolean;
+  /** Deterministic e2e hook on the show/hide-password toggle button. */
+  visibilityToggleTestId?: string;
+};
+
+export const PasswordTextInput = React.forwardRef<
+  HTMLDivElement,
+  PasswordTextInputProps
+>((props, ref) => {
+  // if the helper text is a space then the height of the component doesn't change
+  // when the helper text is shown / removed
+  const { fixedHeight, visibilityToggleTestId, ...rest } = props;
+  const defaultWarning = fixedHeight ? ' ' : '';
+  const [showPassword, setShowPassword] = useState(false);
+  const [warning, setWarning] = useState(defaultWarning);
+  const t = useTranslation();
+  const visibilityInputButton = (
+    <IconButton
+      aria-label="toggle password visibility"
+      disabled={props.disabled}
+      data-testid={visibilityToggleTestId}
+      title={t('label.toggle-password-visibility')}
+      onClick={() => {
+        setShowPassword(!showPassword);
+      }}
+      style={{ padding: 0 }}
+    >
+      {showPassword ? <EyeOffIcon /> : <EyeIcon />}
+    </IconButton>
+  );
+
+  return (
+    <BasicTextInput
+      {...rest}
+      type={showPassword ? 'text' : 'password'}
+      slotProps={{
+        inputLabel: { shrink: true },
+        input: {
+          endAdornment: visibilityInputButton,
+          onKeyUp: event =>
+            setWarning(
+              event.getModifierState('CapsLock')
+                ? t('warning.caps-lock')
+                : defaultWarning
+            ),
+          ...props.slotProps?.input,
+        },
+        htmlInput: props.slotProps?.htmlInput,
+        formHelperText: { error: true },
+      }}
+      ref={ref}
+      helperText={warning}
+    />
+  );
+});
