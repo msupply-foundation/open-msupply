@@ -9,7 +9,8 @@ import type { LoadedDemographics, SaveOutcome } from './demographicsApi';
 // the footer, the dialog) is the page's, exercised live (BUILD_REPORT.md § C2)
 // and by the e2e suite to come.
 //
-// Behaviour anchors: spec/demographics/acceptance.md (AC-*).
+// Behaviour anchors: spec/demographics/cases/OMS-REG-MNG-03 (behaviour ids,
+// cited as `.n`; the former AC-* ids map to them in acceptance.md).
 
 const state = {
   permissions: new Set<string>(['EDIT_CENTRAL_DATA']),
@@ -96,7 +97,7 @@ beforeEach(() => {
 });
 
 describe('loading (rules § the grid)', () => {
-  it('AC-S1 — a freshly loaded grid is not dirty', async () => {
+  it('OMS-REG-MNG-03.39 — a freshly loaded grid is not dirty', async () => {
     const { editor, dispose } = await open();
     expect(editor.loading()).toBe(false);
     expect(editor.dirty()).toBe(false);
@@ -119,7 +120,7 @@ describe('loading (rules § the grid)', () => {
 });
 
 describe('editing the draft (rules § editing the draft, § the calculation)', () => {
-  it('AC-C4 — the baseline is the general population row’s current population, live', async () => {
+  it('OMS-REG-MNG-03.6 — the baseline is the general population row’s current population, live', async () => {
     const { editor, dispose } = await open();
     editor.setBaseline(2000);
     expect(editor.baseline()).toBe(2000);
@@ -127,7 +128,7 @@ describe('editing the draft (rules § editing the draft, § the calculation)', (
     dispose();
   });
 
-  it('AC-C6 — a share edit lands on that row alone', async () => {
+  it('OMS-REG-MNG-03.22 — a share edit lands on that row alone', async () => {
     const { editor, dispose } = await open();
     editor.setShare('a', 33.33);
     expect(editor.draft.indicators[1]?.populationPercentage).toBe(33.33);
@@ -135,7 +136,7 @@ describe('editing the draft (rules § editing the draft, § the calculation)', (
     dispose();
   });
 
-  it('AC-C7 — a cleared rate (or share, or baseline) reads as zero', async () => {
+  it('OMS-REG-MNG-03.23 — a cleared rate (or share, or baseline) reads as zero', async () => {
     const { editor, dispose } = await open();
     editor.setRate(2, undefined);
     editor.setShare('a', undefined);
@@ -152,7 +153,7 @@ describe('editing the draft (rules § editing the draft, § the calculation)', (
     dispose();
   });
 
-  it('AC-N1 — New indicator appends a blank unsaved row at the end and dirties the draft', async () => {
+  it('OMS-REG-MNG-03.11 — New indicator appends a blank unsaved row at the end and dirties the draft', async () => {
     const { editor, dispose } = await open();
     editor.addIndicator();
     const rows = editor.draft.indicators;
@@ -169,7 +170,7 @@ describe('editing the draft (rules § editing the draft, § the calculation)', (
     dispose();
   });
 
-  it('AC-S5 — Cancel returns every value to its loaded state and drops the new rows', async () => {
+  it('OMS-REG-MNG-03.43 — Cancel returns every value to its loaded state and drops the new rows', async () => {
     const { editor, dispose } = await open();
     editor.setBaseline(5);
     editor.setRate(1, 99);
@@ -188,7 +189,7 @@ describe('editing the draft (rules § editing the draft, § the calculation)', (
 });
 
 describe('the permission mirror (rules § access)', () => {
-  it('AC-A3 — New indicator is refused up front without the central-data permission', async () => {
+  it('OMS-REG-MNG-03.13 — New indicator is refused up front without the central-data permission', async () => {
     state.permissions = new Set(['SERVER_ADMIN']);
     const { editor, dispose } = await open();
     expect(editor.canEdit()).toBe(false);
@@ -199,7 +200,7 @@ describe('the permission mirror (rules § access)', () => {
     dispose();
   });
 
-  it('AC-A4 — Save is refused up front and nothing is sent', async () => {
+  it('OMS-REG-MNG-03.14 — Save is refused up front and nothing is sent', async () => {
     state.permissions = new Set();
     const { editor, dispose } = await open();
     editor.setBaseline(5); // the grid stays editable; only the writes refuse
@@ -213,7 +214,7 @@ describe('the permission mirror (rules § access)', () => {
 });
 
 describe('saving (rules § saving the draft)', () => {
-  it('AC-S2 — Save sends the whole draft under the screen’s general-population label, then reloads', async () => {
+  it('OMS-REG-MNG-03.40 — Save sends the whole draft under the screen’s general-population label, then reloads', async () => {
     const { editor, dispose } = await open();
     editor.setBaseline(2000);
     editor.setRate(1, 5);
@@ -268,7 +269,7 @@ describe('saving (rules § saving the draft)', () => {
     dispose();
   });
 
-  it('AC-P1 — with no rates stored, Save creates the record', async () => {
+  it('OMS-REG-MNG-03.36 — with no rates stored, Save creates the record', async () => {
     state.loaded = { indicators: [general], projection: undefined };
     const { editor, dispose } = await open();
     expect(editor.draft.rates).toEqual(ZERO_RATES);
@@ -283,7 +284,7 @@ describe('saving (rules § saving the draft)', () => {
     dispose();
   });
 
-  it('AC-S4 — a rejected save keeps the draft on screen and dirty, with the reason', async () => {
+  it('OMS-REG-MNG-03.42 — a rejected save keeps the draft on screen and dirty, with the reason', async () => {
     state.saveOutcome = {
       kind: 'rejected',
       rejection: { message: 'Demographic indicator has no name' },
@@ -308,7 +309,7 @@ describe('saving (rules § saving the draft)', () => {
     dispose();
   });
 
-  it('AC-S3 — new rows the server accepted alongside a rejected one are updated, not re-inserted, on retry', async () => {
+  it('OMS-REG-MNG-03.41 — new rows the server accepted alongside a rejected one are updated, not re-inserted, on retry', async () => {
     const { editor, dispose } = await open();
     editor.addIndicator(); // new-1 (accepted)
     editor.addIndicator(); // new-2 (rejected)

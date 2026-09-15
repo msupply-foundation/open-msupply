@@ -7,8 +7,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 // gates the destination: reading needs none (rules § access), the write
 // permission is mirrored at the click, not the route.
 //
-// Behaviour anchors: spec/demographics/acceptance.md AC-A1 (the client half —
-// see BUILD_REPORT.md for why a direct URL off-central is redirected here).
+// Behaviour anchors: none of OMS-REG-MNG-03's own — the gates are navigation's
+// (OMS-REG-NAV-01); the former AC-A1 was not folded because a capability gate
+// redirects here (spec/demographics/acceptance.md § mapping, rules § access).
 
 const state = {
   central: false,

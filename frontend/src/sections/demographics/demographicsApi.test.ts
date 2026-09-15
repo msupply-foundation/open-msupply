@@ -23,7 +23,8 @@ import {
 // refusal — drives the screen's behaviour. The same legs were driven against
 // a running central server; see BUILD_REPORT.md § C2.
 //
-// Behaviour anchors: spec/demographics/acceptance.md (AC-*).
+// Behaviour anchors: spec/demographics/cases/OMS-REG-MNG-03 (behaviour ids,
+// cited as `.n`; the former AC-* ids map to them in acceptance.md).
 
 type Call = {
   operation: string;
@@ -235,7 +236,7 @@ beforeEach(() => {
 });
 
 describe('loading the grid (contract § the grid, § growth rates)', () => {
-  it('AC-G4 — answers the indicators, whole, and the base year’s stored rates', async () => {
+  it('OMS-REG-MNG-03.2 — answers the indicators, whole, and the base year’s stored rates', async () => {
     answers = {
       demographicIndicators: indicatorsAnswer([generalNode]),
       demographicProjectionByBaseYear: {
@@ -248,9 +249,9 @@ describe('loading the grid (contract § the grid, § growth rates)', () => {
       indicators: [generalNode],
       projection: projectionNode,
     });
-    // One generous page (AC-G6: the reference client's first: 20 is the
+    // One generous page (OMS-REG-MNG-03.1: the reference client's first: 20 is the
     // capture, not the rule), with the name sort sent EXPLICITLY — without it
-    // the server orders by raw name and upper-case names come first (AC-G1;
+    // the server orders by raw name and upper-case names come first (OMS-REG-MNG-03.16;
     // contract wire trap).
     const read = sent('demographicIndicators')[0];
     expect(read?.variables).toEqual({ storeId: 'store-1' });
@@ -261,7 +262,7 @@ describe('loading the grid (contract § the grid, § growth rates)', () => {
     });
   });
 
-  it('AC-G5 — reads the typed RecordNotFound miss as "no record yet", not as a failure', async () => {
+  it('OMS-REG-MNG-03.19 — reads the typed RecordNotFound miss as "no record yet", not as a failure', async () => {
     answers = {
       demographicIndicators: indicatorsAnswer([generalNode]),
       demographicProjectionByBaseYear: notFound,
@@ -297,7 +298,7 @@ describe('loading the grid (contract § the grid, § growth rates)', () => {
 });
 
 describe('saving the draft (rules § saving the draft)', () => {
-  it('AC-S2 — writes every row, then the rates once every row was accepted', async () => {
+  it('OMS-REG-MNG-03.40 — writes every row, then the rates once every row was accepted', async () => {
     answers = {
       updateDemographicIndicator: node('updateDemographicIndicator'),
       insertDemographicIndicator: node('insertDemographicIndicator'),
@@ -327,7 +328,7 @@ describe('saving the draft (rules § saving the draft)', () => {
     ).toBe(true);
   });
 
-  it('AC-P1 — creates the growth-rate record when none is stored', async () => {
+  it('OMS-REG-MNG-03.36 — creates the growth-rate record when none is stored', async () => {
     answers = {
       updateDemographicIndicator: node('updateDemographicIndicator'),
       insertDemographicIndicator: node('insertDemographicIndicator'),
@@ -347,7 +348,7 @@ describe('saving the draft (rules § saving the draft)', () => {
     expect(sent('updateDemographicProjection')).toHaveLength(0);
   });
 
-  it('AC-S3 / AC-N3 — a rejected row does not undo the others, and the rates are not written', async () => {
+  it('OMS-REG-MNG-03.41 / OMS-REG-MNG-03.26 — a rejected row does not undo the others, and the rates are not written', async () => {
     answers = {
       updateDemographicIndicator: node('updateDemographicIndicator'),
       // The blank-named new row is refused; the named one is accepted.
@@ -373,7 +374,7 @@ describe('saving the draft (rules § saving the draft)', () => {
     expect(sent('updateDemographicProjection')).toHaveLength(0);
   });
 
-  it('AC-N4 — names the duplicate-name rejection in the screen’s words', async () => {
+  it('OMS-REG-MNG-03.27 — names the duplicate-name rejection in the screen’s words', async () => {
     answers = {
       updateDemographicIndicator: node('updateDemographicIndicator'),
       insertDemographicIndicator: badInput(
@@ -389,7 +390,7 @@ describe('saving the draft (rules § saving the draft)', () => {
     });
   });
 
-  it('AC-P3 — a rates rejection is reported the same way, after the rows landed', async () => {
+  it('OMS-REG-MNG-03.37 — a rates rejection is reported the same way, after the rows landed', async () => {
     answers = {
       updateDemographicIndicator: node('updateDemographicIndicator'),
       insertDemographicIndicator: node('insertDemographicIndicator'),
@@ -409,7 +410,7 @@ describe('saving the draft (rules § saving the draft)', () => {
     });
   });
 
-  it('AC-A2 — the off-central refusal reaches the notice as the server’s own text', async () => {
+  it('OMS-REG-MNG-03.12 — the off-central refusal reaches the notice as the server’s own text', async () => {
     answers = {
       updateDemographicIndicator: notCentral,
       insertDemographicIndicator: notCentral,
@@ -423,7 +424,7 @@ describe('saving the draft (rules § saving the draft)', () => {
     expect(sent('updateDemographicProjection')).toHaveLength(0);
   });
 
-  it('AC-A5 — the server’s own no-permission refusal raises the permission-denied modal, not the notice', async () => {
+  it('OMS-REG-MNG-03.15 — the server’s own no-permission refusal raises the permission-denied modal, not the notice', async () => {
     answers = {
       updateDemographicIndicator: forbidden,
       insertDemographicIndicator: forbidden,

@@ -17,7 +17,7 @@ One locale key was minted: `server-error.DemographicIndicatorAlreadyExistsForThi
 
 ## Anchor coverage
 
-Behaviour anchors: [`spec/demographics/acceptance.md`](../../../spec/demographics/acceptance.md) (`AC-*`; the vertical is not yet reconciled to cases — `OMS-REG-MNG-03` is owed).
+Behaviour anchors at build time: the vertical's `AC-*` criteria, shown below by their short ids. The vertical has since been reconciled: the case [`OMS-REG-MNG-03`](../../../spec/demographics/cases/OMS-REG-MNG-03%20-%20Validate%20Demographics%20Management.md) carries them as `.n` behaviours, the AC → `.n` mapping is [`acceptance.md`](../../../spec/demographics/acceptance.md), and the colocated tests cite the `.n` ids.
 
 | Anchor         | Statement (abbrev.)                                                 | Test                                                                                                                                                      |
 | -------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -93,7 +93,7 @@ Against the probe central server (`:8070`, `APP__SERVER__OVERRIDE_IS_CENTRAL_SER
 ### Spec gaps hit
 
 - **The read's no-sort default is NOT the case-insensitive name order** `contract.md` described. Found by comparing the two front ends side by side on the 33-row datafile: with no `sort` argument the server orders by the raw name column (byte order — `RSPEC CHILDREN`, `rspec Children`, `rspec Kids` … ahead of `rspec bulk 1`), and only an explicit `name` sort is case-insensitive. The reference client sends the explicit sort; the first build did not and showed the byte order. Fixed in the same branch: the read now sends `sort: [{ key: name, desc: false }]`, `contract.md` records the trap under § indicators and § the grid, and `demographicsApi.test.ts` pins the argument.
-- **AC-A1 contradicts navigation's gate model** (above). The demographics `rules.md` § access says a hidden destination "still answers by URL"; navigation's capability gates redirect. Nothing to build for — the redirect is the shared shell's — but the spec should say which it means. Recorded as a candidate refinement.
+- **AC-A1 contradicts navigation's gate model** (above). The demographics `rules.md` § access says a hidden destination "still answers by URL"; navigation's capability gates redirect. Nothing to build for — the redirect is the shared shell's — but the spec should say which it means. Recorded as a candidate refinement, and **settled in the reconcile**: rules § access now states the redirect, and the case's mapping stub records the criterion as not folded.
 - **Every operation, type and locale key named in `contract.md` / `ui-surface.md` resolved.** One en key minted (above); no other catalogue touched. `⚠️ VERIFY` items: none — the spec carries none.
 
 ### Roles not built
@@ -115,7 +115,7 @@ Two library-side notes, neither an improvisation:
 
 ### Decisions the spec could make (candidate refinements)
 
-1. **AC-A1's URL premise** (above): state that on this FE the destination redirects off-central, and move the "reads work off-central" fact to the server-side contract, where it already lives.
+1. **AC-A1's URL premise** (above) — done in the reconcile: rules § access states the redirect; the server-side fact stays in contract § access.
 2. **The paste path of the bounds.** `rules.md` § input bounds and AC-I4 describe typed entry ("a decimal separator is not taken"); a pasted `12.7` is repaired to `13` by the field's documented paste path. Worth one clause so a tester with a clipboard is not surprised.
 3. **Accepted-then-retried new rows** (above) — the spec's partial-persistence rule implies it; saying it keeps a second implementation from re-inserting.
 4. **Growth rates on a phone** (card view) — say whether read-only there is intended.
