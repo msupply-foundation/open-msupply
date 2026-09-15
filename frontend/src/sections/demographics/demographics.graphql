@@ -2,18 +2,27 @@
 # in ONE generous page — the grid is a bounded working set edited as one draft
 # (rules § the grid), so it is loaded whole, never paged. `first: 1000` is the
 # help screens' established single-page figure; `first: 1001` was accepted
-# live, so no ceiling binds. No sort argument: the read's default is `name`
-# ascending, case-insensitive, and the client pins `generalRow` to the top
-# after the fetch. The reference client's `first: 20` with no pager is the
-# first-page capture the spec README records.
+# live, so no ceiling binds. The `name` sort is sent EXPLICITLY (below) and the
+# client pins `generalRow` to the top after the fetch. The reference client's
+# `first: 20` with no pager is the first-page capture the spec README records.
 #
 # Wire traps this selection lives with (contract.md):
+#   • ⚠️ The read's ORDER depends on whether a sort is sent. With no `sort`
+#     argument the server orders by the raw name — byte order, so every
+#     upper-case name sorts before every lower-case one (`RSPEC CHILDREN`
+#     ahead of `rspec bulk 1`). Only an explicit `sort: [{ key: name }]` gives
+#     the case-insensitive order the rules state (rules § the grid), which is
+#     what the reference client sends too. Never drop this argument.
 #   • `storeId` is required but NOT validated — the data is installation-wide
 #     and unfiltered by store; the argument exists for the auth plumbing. Any
 #     store id answers the same rows.
 #   • The union has exactly one member, so no failure arrives through it.
 query demographicIndicators($storeId: String!) {
-  demographicIndicators(storeId: $storeId, page: { first: 1000, offset: 0 }) {
+  demographicIndicators(
+    storeId: $storeId
+    page: { first: 1000, offset: 0 }
+    sort: [{ key: name, desc: false }]
+  ) {
     ... on DemographicIndicatorConnector {
       __typename
       totalCount

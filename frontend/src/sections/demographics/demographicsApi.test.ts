@@ -25,7 +25,12 @@ import {
 //
 // Behaviour anchors: spec/demographics/acceptance.md (AC-*).
 
-type Call = { operation: string; variables: unknown; options: unknown };
+type Call = {
+  operation: string;
+  query: string;
+  variables: unknown;
+  options: unknown;
+};
 const calls: Call[] = [];
 // Answers by operation name; a function gets the variables.
 let answers: Record<
@@ -48,7 +53,7 @@ vi.mock('../../api/graphql', async importOriginal => {
       options: unknown
     ) => {
       const operation = operationName(document.query);
-      calls.push({ operation, variables, options });
+      calls.push({ operation, query: document.query, variables, options });
       const answer = answers[operation];
       if (!answer) throw new Error(`no stubbed answer for ${operation}`);
       return Promise.resolve(
@@ -243,11 +248,14 @@ describe('loading the grid (contract § the grid, § growth rates)', () => {
       indicators: [generalNode],
       projection: projectionNode,
     });
-    // One generous page in the read's default name order, no sort or filter
-    // (AC-G6: the reference client's first: 20 is the capture, not the rule).
-    expect(sent('demographicIndicators')[0]?.variables).toEqual({
-      storeId: 'store-1',
-    });
+    // One generous page (AC-G6: the reference client's first: 20 is the
+    // capture, not the rule), with the name sort sent EXPLICITLY — without it
+    // the server orders by raw name and upper-case names come first (AC-G1;
+    // contract wire trap).
+    const read = sent('demographicIndicators')[0];
+    expect(read?.variables).toEqual({ storeId: 'store-1' });
+    expect(read?.query).toMatch(/first: 1000/);
+    expect(read?.query).toMatch(/sort: \[\{key: name, desc: false\}\]/);
     expect(sent('demographicProjectionByBaseYear')[0]?.variables).toEqual({
       baseYear: BASE_YEAR,
     });
