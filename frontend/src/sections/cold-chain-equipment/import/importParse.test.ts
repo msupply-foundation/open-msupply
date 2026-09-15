@@ -11,6 +11,7 @@ import {
   canImport,
   compareReviewRows,
   failedRowsToCsv,
+  importFileFailure,
   parseImportNumber,
   parsePropertyCell,
   reviewRowText,
@@ -290,7 +291,8 @@ describe('the heading row is found, not assumed to be first', () => {
    * them — so taking row 1 on faith reported every row as missing an asset
    * number it plainly had.
    */
-  const BANNER = 'Column1,Column2,Column3,Column4,Column5,Column6,Column7,Column8,Column9,Column10';
+  const BANNER =
+    'Column1,Column2,Column3,Column4,Column5,Column6,Column7,Column8,Column9,Column10';
 
   it('reads past a spreadsheet banner row to the real heading', () => {
     const rows = parseImportFile(
@@ -319,6 +321,24 @@ describe('the heading row is found, not assumed to be first', () => {
   it('refuses a file whose rows name no column it knows', () => {
     // Loudly — not as a hundred rows each "missing" a value they carry.
     expect(parseImportFile(`${BANNER}\nC1,C1,,,,,,,,\n`, lookup())).toEqual([]);
+  });
+
+  /*
+   * Two files yield no rows for two different reasons, and the modal must not
+   * tell the second user to compare a heading that already matches.
+   */
+  it('says WHY a file yields nothing: unknown heading, or a known one with no rows', () => {
+    expect(importFileFailure(`${BANNER}\nC1,C1,,,,,,,,\n`, false)).toBe(
+      'no-header'
+    );
+    // The template with its example row deleted, or an empty register's export.
+    expect(importFileFailure(`${H}\n`, false)).toBe('no-rows');
+    expect(importFileFailure(`${BANNER}\n${H}\n`, false)).toBe('no-rows');
+    expect(importFileFailure('', false)).toBe('no-header');
+    // And nothing to say about a file that yields rows.
+    expect(importFileFailure(`${H}\nCCE-1,E003/059,,,,,,,,\n`, false)).toBe(
+      null
+    );
   });
 
   it('does not go hunting past the first few rows for a heading', () => {
@@ -387,25 +407,47 @@ describe('specification columns', () => {
   });
 });
 
-describe('numbers are read in the convention the FILE is written in', () => {
+describe('numbers: a comma is the decimal mark unless it is plainly grouping', () => {
   /*
    * The same Windows locale that writes `;` between fields writes `12,5` for
    * twelve and a half — the separators exist precisely so the comma can be the
-   * decimal mark, so the two always travel together.
+   * decimal mark. But the converse does not hold: Google Sheets downloads a
+   * comma-separated file whatever the sheet's locale, cells as displayed, so a
+   * `12,5` turns up in comma files too. Stripping the comma there imported 125
+   * with no warning — worse than the refusal it replaced.
    */
   it('reads a decimal comma when the file is not comma-separated', () => {
     expect(parseImportNumber('12,5', true)).toBe(12.5);
     expect(parseImportNumber('0,75', true)).toBe(0.75);
+    // In a `;` file the comma is never a group mark, so this is one-and-a-bit.
+    expect(parseImportNumber('1,234', true)).toBe(1.234);
+  });
+
+  it('reads a decimal comma in a comma-separated file too, where it cannot be grouping', () => {
+    // None of these is a grouped number in any convention.
+    expect(parseImportNumber('12,5')).toBe(12.5);
+    expect(parseImportNumber('0,5')).toBe(0.5);
+    expect(parseImportNumber('-12,5')).toBe(-12.5);
+    expect(parseImportNumber('1 234,5')).toBe(1234.5);
   });
 
   it('reads a decimal point, as it always did', () => {
     expect(parseImportNumber('12.5')).toBe(12.5);
     expect(parseImportNumber('-4')).toBe(-4);
+    // A dot is the decimal mark in EITHER kind of file — the separator is not
+    // trusted to turn 1.234 into a thousand.
+    expect(parseImportNumber('1.234', true)).toBe(1.234);
   });
 
-  it('treats a comma as a group mark in a comma-separated file', () => {
+  it('treats a comma as a group mark only when the digits group in threes, in a comma file', () => {
     // A quoted "1,234" in a comma-delimited file is a thousand-odd, not 1.234.
     expect(parseImportNumber('1,234')).toBe(1234);
+    expect(parseImportNumber('12,345,678')).toBe(12345678);
+  });
+
+  it('refuses commas that are neither', () => {
+    expect(parseImportNumber('1,2,3')).toBeUndefined();
+    expect(parseImportNumber('1,23,456')).toBeUndefined();
   });
 
   it('needs no convention when BOTH marks are present — the last one decides', () => {
@@ -430,11 +472,17 @@ describe('numbers are read in the convention the FILE is written in', () => {
   it('carries the file’s convention into a semicolon-separated import', () => {
     const header = `${H.split(',').join(';')};Capacity`;
     const row = 'CCE-1;E003/059;;;;;;;;;12,5';
-    const [parsed] = parseImportFile(`${header}\n${row}\n`, lookup({
-      properties: [
-        { ...property('cap', 'Capacity'), valueType: 'FLOAT' } as PropertyDefinition,
-      ],
-    }));
+    const [parsed] = parseImportFile(
+      `${header}\n${row}\n`,
+      lookup({
+        properties: [
+          {
+            ...property('cap', 'Capacity'),
+            valueType: 'FLOAT',
+          } as PropertyDefinition,
+        ],
+      })
+    );
     expect(parsed?.errors).toEqual([]);
     expect(parsed?.properties.cap).toBe(12.5);
   });
@@ -536,9 +584,7 @@ describe('the store column', () => {
 describe('OMS-REG-CCE-07.9 — a parsed row becomes an insert', () => {
   it('always names the cold-chain class', () => {
     const rows = parseImportFile(`${H}\nCCE-1,E003/059,,,,,,,,\n`, lookup());
-    expect(rowToInsertInput(rows[0]!, CCE_CLASS_ID).classId).toBe(
-      CCE_CLASS_ID
-    );
+    expect(rowToInsertInput(rows[0]!, CCE_CLASS_ID).classId).toBe(CCE_CLASS_ID);
   });
 
   it('carries the catalogue item, the dates and the specification', () => {
@@ -645,24 +691,21 @@ describe('the review table sorts and filters in place', () => {
   const parse = (body: string) => parseImportFile(`${H}\n${body}`, lookup());
 
   it('orders rows by a column, both ways', () => {
-    const rows = parse(
-      'B-2,E003/059,,,,,,,,\nA-1,E003/059,,,,,,,,\n'
-    );
+    const rows = parse('B-2,E003/059,,,,,,,,\nA-1,E003/059,,,,,,,,\n');
     const ascending = [...rows].sort((a, b) =>
       compareReviewRows(a, b, 'assetNumber')
     );
     expect(ascending.map(row => row.assetNumber)).toEqual(['A-1', 'B-2']);
     // Descending is the same comparison read backwards — the table negates it
     // rather than keeping a second ordering.
-    expect(
-      [...ascending].reverse().map(row => row.assetNumber)
-    ).toEqual(['B-2', 'A-1']);
+    expect([...ascending].reverse().map(row => row.assetNumber)).toEqual([
+      'B-2',
+      'A-1',
+    ]);
   });
 
   it('sorts the replacement flag set-last, so the marked rows group', () => {
-    const rows = parse(
-      'A-1,E003/059,,,,,,,true,\nB-2,E003/059,,,,,,,,\n'
-    );
+    const rows = parse('A-1,E003/059,,,,,,,true,\nB-2,E003/059,,,,,,,,\n');
     const sorted = [...rows].sort((a, b) =>
       compareReviewRows(a, b, 'needsReplacement')
     );

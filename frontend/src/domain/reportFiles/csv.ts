@@ -1,3 +1,5 @@
+import { legacyCodePage, locale } from '@/intl';
+
 // Minimal CSV serialisation for list-screen exports (spec/reports
 // "Cross-cutting" / AC-F3). Dependency-free — the app carries no papaparse, and
 // the shape we emit (a header row + string cells) needs only RFC-4180 quoting.
@@ -25,28 +27,36 @@ export const toCsv = (
  * Read an uploaded CSV as text, in whatever encoding it was saved in.
  *
  * `File.text()` always decodes UTF-8, and Excel on Windows does not save UTF-8
- * — it writes the machine's legacy code page, which for Western European
- * installs is windows-1252. A file with one accented character in a name or a
- * note then arrives mojibaked, or throws, and the user sees nothing that
- * explains why.
+ * — it writes the machine's legacy code page. A file with one accented or
+ * non-Latin character in a name or a note then arrives mojibaked, or throws,
+ * and the user sees nothing that explains why.
  *
  * Decided by TRYING, not by guessing: a strict UTF-8 decode rejects byte
  * sequences that are not valid UTF-8, and legacy-encoded text almost always
  * contains some. Text that decodes cleanly as UTF-8 is treated as UTF-8 —
  * which is right, because ASCII and real UTF-8 both pass — and only text that
- * fails falls back to windows-1252, which by design decodes any byte at all.
+ * fails falls back to a legacy code page.
+ *
+ * WHICH code page cannot be sniffed: every one of them decodes any byte at
+ * all, so the wrong one produces plausible-looking wrong text rather than an
+ * error. It follows the language the user is working in instead — a Russian
+ * user's spreadsheet wrote windows-1251, an Arabic user's windows-1256
+ * (intl § legacyCodePage). A caller may name one explicitly.
  */
-export const readCsvFile = async (file: Blob): Promise<string> => {
+export const readCsvFile = async (
+  file: Blob,
+  fallbackEncoding: string = legacyCodePage(locale())
+): Promise<string> => {
   const bytes = await file.arrayBuffer();
   try {
     return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
   } catch {
-    return new TextDecoder('windows-1252').decode(bytes);
+    return new TextDecoder(fallbackEncoding).decode(bytes);
   }
 };
 
 /*
- * Which character separates the fields, decided from the file's FIRST line.
+ * Which character separates the fields, decided from the file's heading line.
  *
  * We write `,`, but a spreadsheet does not read the file back that way: Excel
  * uses the machine's list separator, which on a great many Windows locales is
@@ -55,25 +65,34 @@ export const readCsvFile = async (file: Blob): Promise<string> => {
  * with a fixed comma it parses as ONE column per row, every header lookup
  * misses, and every row fails for a missing value it plainly has.
  *
- * Decided on the header line alone, and only between the three separators a
- * spreadsheet actually emits. A quoted cell further down may contain any of
- * them, but the header is a row of plain column names, so counting there is
- * safe. A tie, or a file with none of them, stays a comma — one column.
+ * Decided on ONE line — the first of the opening few that carries any of the
+ * three separators a spreadsheet actually emits — and only between those
+ * three. A quoted cell further down may contain any of them, but a heading is
+ * a row of plain column names, so counting there is safe. Lines with none of
+ * them are skipped rather than trusted: a title a user typed above the heading
+ * is a single cell, and deciding on it would read the whole file as one
+ * column. A tie, or a file with none of them anywhere, stays a comma.
  */
 const SEPARATORS = [',', ';', '\t'] as const;
 
+/** How many opening lines may sit above the heading and still be seen past. */
+const SNIFF_LINES = 5;
+
 export const sniffSeparator = (source: string): string => {
-  const [header = ''] = source.split(/\r?\n/, 1);
-  let best = ',';
-  let bestCount = 0;
-  for (const candidate of SEPARATORS) {
-    const count = header.split(candidate).length - 1;
-    if (count > bestCount) {
-      best = candidate;
-      bestCount = count;
+  const lines = source.split(/\r?\n/, SNIFF_LINES);
+  for (const line of lines) {
+    let best = ',';
+    let bestCount = 0;
+    for (const candidate of SEPARATORS) {
+      const count = line.split(candidate).length - 1;
+      if (count > bestCount) {
+        best = candidate;
+        bestCount = count;
+      }
     }
+    if (bestCount > 0) return best;
   }
-  return best;
+  return ',';
 };
 
 /*

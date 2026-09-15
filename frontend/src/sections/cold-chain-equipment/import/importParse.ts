@@ -160,11 +160,20 @@ export const parseImportStatus = (value: string): AssetStatus => {
 /**
  * A numeric cell → a number, or `undefined` where it does not read as one.
  *
- * `decimalComma` says which convention the FILE is written in, and it is
- * decided from the file itself rather than guessed per cell: a spreadsheet that
- * separates fields with `;` or a tab is one whose locale writes `12,5` for
- * twelve and a half, because those separators exist precisely so the comma can
- * be the decimal mark. A comma-separated file is the other convention.
+ * A dot is always the decimal mark. A comma is the decimal mark too — `12,5`
+ * is twelve and a half — UNLESS it is doing a thousands separator's job, which
+ * only one shape can be: digits grouped in threes (`1,234`, `12,345,678`) in a
+ * file that is itself comma-separated. That last condition matters because the
+ * grouped shape is genuinely ambiguous (`1,234` is also one-and-a-bit in half
+ * of Europe), and the file's own separator is the best evidence there is: a
+ * spreadsheet writing `;` between fields does so BECAUSE its locale took the
+ * comma for the decimal mark. `decimalComma` is that fact about the file.
+ *
+ * What the separator is NOT allowed to do is turn an unambiguous decimal into a
+ * thousand: `12,5` cannot be a grouped number in any convention, so it reads as
+ * 12.5 in a comma file too. Google Sheets writes exactly that — it always
+ * downloads comma-separated CSV whatever the sheet's locale, with cells as
+ * displayed — and stripping the comma there would import 125 without a word.
  *
  * Where a value carries BOTH marks the question does not arise — the LAST one
  * is the decimal, whichever file it came from (`1.234,56` and `1,234.56` are
@@ -174,7 +183,8 @@ export const parseImportNumber = (
   raw: string,
   decimalComma = false
 ): number | undefined => {
-  const value = raw.trim().replace(/\s|\u00a0/g, '');
+  // `\s` already covers the no-break space a spreadsheet groups with.
+  const value = raw.trim().replace(/\s/g, '');
   if (!value) return undefined;
   if (!/^[+-]?[\d.,]+$/.test(value)) return undefined;
 
@@ -188,9 +198,10 @@ export const parseImportNumber = (
         ? value.replace(/\./g, '').replace(',', '.')
         : value.replace(/,/g, '');
   } else if (lastComma !== -1) {
-    normalised = decimalComma
-      ? value.replace(',', '.')
-      : value.replace(/,/g, '');
+    // The one shape a thousands separator can take, in the one kind of file
+    // where the comma is free to be one.
+    const grouped = !decimalComma && /^[+-]?\d{1,3}(,\d{3})+$/.test(value);
+    normalised = grouped ? value.replace(/,/g, '') : value.replace(',', '.');
   } else {
     normalised = value;
   }
@@ -311,26 +322,66 @@ export const findHeaderRow = (
 };
 
 /**
+ * Why a file yields no rows — or `null` when it would yield some.
+ *
+ * Two faults look the same from the outside (an empty review) and need
+ * different remedies, so the modal asks which before it says anything:
+ * `no-header` is a file in which no row names a column the import knows (a
+ * spreadsheet's `Column1 … ColumnN` banner with nothing real beneath it, or a
+ * file exported under another language); `no-rows` is a heading the import DOES
+ * know with nothing under it — the template with its example row deleted, or
+ * an export of an empty register. Telling the second user their columns are
+ * wrong would send them to compare a heading that already matches.
+ */
+export type ImportFileFailure = 'no-header' | 'no-rows';
+
+type ImportTable = {
+  header: string[];
+  body: string[][];
+  /** Where the heading sits in the file, 0-based. */
+  headerIndex: number;
+  /** The file writes `12,5` for twelve and a half (see parseImportNumber). */
+  decimalComma: boolean;
+};
+
+/*
+ * Read the file into its heading and body, or say why it cannot be. The
+ * separator is sniffed ONCE here and handed to the reader, then kept, because
+ * it also says which numeric convention the file is written in.
+ */
+const readImportTable = (
+  text: string,
+  isCentral: boolean
+): ImportTable | ImportFileFailure => {
+  const separator = sniffSeparator(text);
+  const table = parseCsv(text, separator);
+  const headerIndex = findHeaderRow(table, importColumnKeys(isCentral));
+  if (headerIndex === -1) return 'no-header';
+  const [header = [], ...body] = table.slice(headerIndex);
+  if (body.length === 0) return 'no-rows';
+  return { header, body, headerIndex, decimalComma: separator !== ',' };
+};
+
+export const importFileFailure = (
+  text: string,
+  isCentral: boolean
+): ImportFileFailure | null => {
+  const read = readImportTable(text, isCentral);
+  return typeof read === 'string' ? read : null;
+};
+
+/**
  * Parse the uploaded file into rows, each carrying its own errors and warnings.
  *
  * Header matching is by column NAME, so a column the file does not carry simply
  * reads as blank — which is why the required columns are checked per row rather
- * than up front. An empty result means the file itself is unusable (no rows, or
- * no row naming a column the import knows), which the caller reports as such.
+ * than up front. An empty result means the file itself is unusable; the caller
+ * asks {@link importFileFailure} which way, and says so.
  */
 export const parseImportFile = (text: string, lookup: Lookup): ImportRow[] => {
-  const table = parseCsv(text);
-  if (table.length < 2) return [];
-  /*
-   * The file's own numeric convention, read off the separator it was written
-   * with. A spreadsheet only reaches for `;` or a tab BECAUSE its locale has
-   * taken the comma for the decimal mark, so the two travel together — which
-   * makes this a fact about the file rather than a guess about a cell.
-   */
-  const decimalComma = sniffSeparator(text) !== ',';
-  const headerIndex = findHeaderRow(table, importColumnKeys(lookup.isCentral));
-  if (headerIndex === -1) return [];
-  const [header = [], ...body] = table.slice(headerIndex);
+  const read = readImportTable(text, lookup.isCentral);
+  if (typeof read === 'string') return [];
+  const { header, body, headerIndex, decimalComma } = read;
   const columnAt = new Map(
     header.map((name, index) => [name.trim().toLowerCase(), index])
   );
