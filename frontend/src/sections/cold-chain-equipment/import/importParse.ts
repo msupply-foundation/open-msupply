@@ -291,11 +291,13 @@ type Lookup = {
 /**
  * Which row of the file names the columns.
  *
- * Normally the first — but a spreadsheet does not always leave it there. Excel
- * and Power Query write a banner row of their own (`Column1 … ColumnN`) above
- * the real names when a file has been through a text-to-columns step, and that
- * row is not something the user can see is wrong: on screen it looks like the
- * file they were given.
+ * Normally the first — but files arrive with a generic banner row of their own
+ * (`Column1 … ColumnN`) above the real names, written by whatever tool last
+ * handled them; Power Query does it when a header is not promoted, and it is
+ * not a shape a user can see is wrong, because on screen the file still looks
+ * like the one they were given. We have a real file that arrived this way
+ * whose author says they did not put the row there, so this treats the shape
+ * as something to read past rather than a particular tool's signature.
  *
  * So the header is the first row naming at least one column the import knows.
  * That is a decision, not a guess — the names are our own, written by our own
