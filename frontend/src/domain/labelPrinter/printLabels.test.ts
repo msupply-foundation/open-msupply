@@ -10,6 +10,9 @@ import { printLabels } from './printLabels';
 const getLabelPrinterUseUsb = vi.hoisted(() => vi.fn());
 vi.mock('../../appData', () => ({ getLabelPrinterUseUsb }));
 
+const isAndroid = vi.hoisted(() => vi.fn());
+vi.mock('../../platform', () => ({ isAndroid }));
+
 const graphqlFetch = vi.hoisted(() => vi.fn());
 vi.mock('../../api/graphql', () => ({ graphqlFetch }));
 
@@ -81,6 +84,8 @@ const printerConfigured = () =>
 beforeEach(() => {
   getLabelPrinterUseUsb.mockReset();
   graphqlFetch.mockReset();
+  isAndroid.mockReset();
+  isAndroid.mockReturnValue(false);
 });
 
 afterEach(() => {
@@ -108,6 +113,18 @@ describe('the route is the device’s choice', () => {
     expect(await printLabels(ENDPOINT, labels)).toEqual({ kind: 'printed' });
     expect(graphqlFetch).toHaveBeenCalled();
     expect(fetchMock).toHaveBeenCalledTimes(1); // the endpoint, nothing local
+  });
+
+  it('takes the network route on Android even with the preference stored on', async () => {
+    // A flag 3.1 let a tablet store, which 3.2 hides the row to undo.
+    isAndroid.mockReturnValue(true);
+    getLabelPrinterUseUsb.mockReturnValue(true);
+    printerConfigured();
+    const fetchMock = alwaysRespond(new Response('Label printed'));
+
+    expect(await printLabels(ENDPOINT, labels)).toEqual({ kind: 'printed' });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toBe(ENDPOINT);
   });
 });
 

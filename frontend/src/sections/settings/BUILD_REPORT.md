@@ -154,6 +154,13 @@ can cover ([`OMS-REG-SET-05` Preconditions](<../../../spec/settings/cases/OMS-RE
   falls through for the endpoint to answer. A non-background read also raised
   the global unexpected-error modal over the print's own outcome. Now
   `background`, and only `null` refuses; the contract's wire trap states it.
+- **A departure from the reference client:** `printLabels` ignores the stored
+  USB preference on Android. The reference reads it unguarded and is safe
+  because its toggle never rendered there; this app's 3.1 did render it, so a
+  tablet can carry a flag 3.2 hides the row to undo. Nothing can set it on
+  Android from 3.2 on, so it guards no future state — but the stored value
+  outlives every upgrade, so the term is permanent. Unit-covered in
+  `printLabels.test.ts`; no behaviour minted, since `.41` already implies it.
 - **`127.0.0.1`, not `localhost`** — the service binds IPv4 and `localhost` can
   resolve to `::1`. Loopback is a trustworthy origin, so plain HTTP is reachable
   from an HTTPS page without mixed-content blocking.
