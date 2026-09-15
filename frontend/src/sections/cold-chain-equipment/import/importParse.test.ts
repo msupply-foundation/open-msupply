@@ -262,6 +262,59 @@ describe('OMS-REG-CCE-07.6 / .7 — the four dates are soft', () => {
   });
 });
 
+describe('the CURRENT app’s export imports here', () => {
+  /*
+   * The migration requirement: a register exported from the app people are
+   * moving off must import into this one. Its export
+   * (`packages/coldchain/src/Equipment/utils.ts` § assetsToCsv) is
+   * comma-separated with the same columns, `dd/MM/yyyy` dates via
+   * Formatter.csvDateString, and the replacement flag as a RAW BOOLEAN —
+   * `true`/`false`, where this app's own export writes `Yes`/`No`. Both have to
+   * read, which is why the flag takes either.
+   */
+  const CURRENT_APP_EXPORT = [
+    [
+      'id',
+      'label.asset-number',
+      'label.catalogue-item-code',
+      'label.installation-date',
+      'label.replacement-date',
+      'label.warranty-start-date',
+      'label.warranty-end-date',
+      'label.serial',
+      'label.functional-status',
+      'label.needs-replacement',
+      'label.asset-notes',
+      'label.created-datetime-UTC',
+      'label.modified-datetime-UTC',
+    ].join(','),
+    'a1,OLD-1,E003/059,14/09/2026,14/09/2036,14/09/2026,14/09/2027,SER-1,status.functioning,true,from the current app,01/01/2024 00:00:00,01/01/2024 00:00:00',
+    'a2,OLD-2,E003/059,15/09/2026,,,,SER-2,status.functioning,false,no flag,01/01/2024 00:00:00,01/01/2024 00:00:00',
+  ].join('\r\n');
+
+  it('reads every value, with no errors and no warnings', () => {
+    const rows = parseImportFile(CURRENT_APP_EXPORT, lookup());
+    expect(rows).toHaveLength(2);
+    expect(hasErrors(rows)).toBe(false);
+    expect(hasWarnings(rows)).toBe(false);
+    expect(rows[0]?.assetNumber).toBe('OLD-1');
+    expect(rows[0]?.installationDate).toBe('2026-09-14');
+    expect(rows[0]?.warrantyEnd).toBe('2027-09-14');
+  });
+
+  it('reads its raw-boolean replacement flag, both ways', () => {
+    const rows = parseImportFile(CURRENT_APP_EXPORT, lookup());
+    expect(rows.map(row => row.needsReplacement)).toEqual([true, false]);
+  });
+
+  it('ignores the columns it carries that the import has no use for', () => {
+    // `id` and the two UTC timestamps are looked up by name, so a column the
+    // import does not know simply never gets read.
+    const [first] = parseImportFile(CURRENT_APP_EXPORT, lookup());
+    expect(first?.errors).toEqual([]);
+  });
+});
+
 describe('a returned template carrying all three shapes at once', () => {
   /*
    * The banner row, semicolons for separators, and dashes in the dates —
