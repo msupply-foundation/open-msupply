@@ -88,6 +88,23 @@ const assetParsers = {
   }),
 };
 
+// What this register is reading, in one place: the class pinning that makes it
+// the cold chain register, the store restriction the Cold chain destination
+// carries (the server scopes neither), and the screen's own filters. The list
+// and the export MUST build it identically or the file stops matching the
+// screen that produced it.
+const assetListFilter = (
+  storeId: string,
+  filterBy?: FilterBy | null,
+  storeCode?: string,
+  isColdChain?: boolean
+) => ({
+  ...filterBy,
+  ...(storeCode ? { store: { equalTo: storeCode } } : {}),
+  ...(isColdChain ? { storeId: { equalTo: storeId } } : {}),
+  classId: { equalTo: CCE_CLASS_ID },
+});
+
 export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
   get: {
     byId: async (assetId: string) => {
@@ -125,24 +142,26 @@ export const getAssetQueries = (sdk: Sdk, storeId: string) => ({
         key: assetParsers.toSortField(sortBy),
         desc: sortBy.isDesc,
         storeId,
-        filter: {
-          ...filterBy,
-          ...(storeCode ? { store: { equalTo: storeCode } } : {}),
-          ...(isColdChain ? { storeId: { equalTo: storeId } } : {}),
-          classId: { equalTo: CCE_CLASS_ID },
-        },
+        filter: assetListFilter(storeId, filterBy, storeCode, isColdChain),
       });
 
       const items = result?.assets;
 
       return items;
     },
-    listAll: async ({ sortBy }: ListParams<AssetFragment>) => {
+    // The export. Same filter as the list, unpaginated — so the file is the
+    // list the user is looking at, and in particular a cold chain export
+    // carries this store's equipment rather than every store's.
+    listAll: async (
+      { sortBy, filterBy }: ListParams<AssetFragment>,
+      storeCode?: string,
+      isColdChain?: boolean
+    ) => {
       const result = await sdk.assets({
         key: assetParsers.toSortField(sortBy),
         desc: sortBy.isDesc,
         storeId,
-        filter: { classId: { equalTo: CCE_CLASS_ID } },
+        filter: assetListFilter(storeId, filterBy, storeCode, isColdChain),
       });
 
       const items = result?.assets;
