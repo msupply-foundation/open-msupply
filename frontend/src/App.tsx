@@ -64,6 +64,7 @@ import { sitesRoutes } from './sections/sites';
 import { helpRoutes, helpDocumentsRoutes } from './sections/help';
 import { globalPreferencesRoutes } from './sections/global-preferences';
 import { customFieldsRoutes } from './sections/custom-fields';
+import { demographicsRoutes } from './sections/demographics';
 import { syncMessageRoutes } from './sections/sync-message';
 import { ShellLayout } from './nav/ShellLayout';
 import { EntryPage } from './nav/EntryPage';
@@ -130,6 +131,7 @@ const sectionRoutes: Record<string, () => JSX.Element> = {
   'manage/campaigns': campaignsRoutes,
   'manage/help-documents': helpDocumentsRoutes,
   'manage/custom-fields': customFieldsRoutes,
+  'manage/indicators-demographics': demographicsRoutes,
   'manage/sync-message': syncMessageRoutes,
   // The central server's facility register (spec/names S5) — the third list
   // over the name entity, under Manage rather than a store-scoped section.
