@@ -71,6 +71,106 @@ save → reopen → restore) was driven live against `localhost:8000`.
   — label above each control in one column, coordinates as read-only labelled
   values — so no label column has to fit names that are data.
 
+## Follow-up build — USB label-print route (issue #257)
+
+The Devices toggle existed and was remembered, but nothing read it: every label
+print went over the network regardless. It now **selects the delivery route**
+for every label print in the app, which makes this vertical the owner of a
+mechanism other verticals consume.
+
+The route and its outcomes live in a new shared domain module,
+`src/domain/labelPrinter/` — `printLabels(endpoint, payload)` takes a
+consuming vertical's own endpoint and payload and returns one of four outcomes
+(`printed` · `not-configured` · `no-usb-printer` · `failed` + detail), and
+`LabelPrintOutcomeDialog` is the single surface that says what an attempt that
+did not print means. A consuming screen decides only **what** is printed and
+**when**, and where its report lands — never what it says
+([rules § Devices — label printer](../../../spec/settings/rules.md#devices--label-printer)).
+In this vertical the only code change is `DevicesSection` hiding the toggle on
+Android (`showPrintViaUsbRow`).
+
+**The USB transport is ours, not the vendor's.** The local print service is
+driven over plain HTTP on loopback (two requests: `/available`, then `/write`)
+rather than by vendoring Zebra's `BrowserPrint` library, which the current app
+ships as a 7.7 kB minified script in `public/`, loaded by a `<script>` tag in
+`index.html` and reached through a `window.BrowserPrint` global. What it buys
+over two `fetch` calls is a callback-style device wrapper; what it costs is an
+un-typed, un-versioned global on every page load and a vendored file no one
+here can patch. The e2e differential now evidences the two are
+indistinguishable at the wire — the delivery test asserts the device selected,
+the pinned API level and the ZPL payload, and passes **unchanged against both
+front ends**.
+
+### Behaviour coverage
+
+| Behaviour                                                  | Where                                                                                                                                                                         |
+| ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.8` USB ignores the stored network settings               | `printLabels.test.ts` (USB route reads no settings) · e2e `prescriptions-regression` (network printer listed first, passed over)                                              |
+| `.41` Print via USB absent on Android                      | `sectionVisibility.test.ts`                                                                                                                                                   |
+| `.42` service listed nothing attached → told               | `printLabels.test.ts` · `LabelPrintOutcomeDialog.test.ts` · e2e `settings-regression`                                                                                         |
+| `.43` nothing configured → refused, nothing sent           | `LabelPrintOutcomeDialog.test.ts` · e2e `settings-regression` (the message, on both front ends, and that nothing is sent)                                                     |
+| `.44` service unreachable → failed, not "attach a printer" | `printLabels.test.ts` (transport failure and an unreadable listing) · e2e `settings-regression` (loopback aborted; the no-USB-printer wording asserted _absent_)              |
+| `DIS-03.47` network route delivers when configured         | e2e `settings-regression` › `Mutating` (POSTs the payload, USB service untouched; delivery response stubbed) — the other route of the same anchor the USB delivery test cites |
+| `.22` the preference never travels                         | `labelPrinterForm.test.ts` (the built input is exactly the four network fields) + `appData.ts` (localStorage only)                                                            |
+| four outcomes stated once                                  | `LabelPrintOutcomeDialog.test.ts`                                                                                                                                             |
+
+The e2e rows stub the local print service at its loopback origin, and the
+network route's delivery response, in `e2e/helpers/labelPrinter.ts` — they
+assert **which route was taken, which device was selected and what was handed
+over**, never that paper appears. Each is mutation-checked — breaking the
+`connection === 'usb'` match reddens `.42`, removing the not-configured gate
+reddens `.43`, and swallowing the network route's non-2xx reddens both of the
+prescriptions suite's `.71` tests.
+
+**`.22` stays out of the e2e suite, for a corrected reason.** The header had it
+as "needs a second device", which isn't true — a second browser context is one.
+But the fact that matters is that the preference is never on the wire, and that
+is already pinned at the unit layer (`labelPrinterForm.test.ts` + `appData.ts`).
+Driving a second context to watch the consequence duplicates a logic assertion
+through the browser, which AUTHORING rules out; it was written that way and
+removed.
+
+**Manual, with hardware:** a label was physically printed over USB, with the
+local print service installed and a printer attached — the leg no hermetic run
+can cover ([`OMS-REG-SET-05` Preconditions](<../../../spec/settings/cases/OMS-REG-SET-05 - Validate Devices Settings.md>)).
+
+- **Spec corrected, not just flagged:** `/write`'s `device.version` is the API
+  level **the caller speaks**, not the device's — echo back the level
+  `/available` advertises (observed: 5) instead of the `2` the vendor's client
+  pins and the service accepts the job, answers `{}` with a `200`, and prints
+  nothing. The contract said `device` was "the entry from `available`", which is
+  precisely the wrong instruction; it now spells out the constructed shape and
+  carries the trap
+  ([contract § Devices — label printer](../../../spec/settings/contract.md#devices--label-printer)).
+  This build pins 2 and the e2e asserts it, so a regeneration reproduces it.
+- **"No USB printer found" cannot cover a print service that is not running.**
+  The contract called the two indistinguishable; they are not — a rejected
+  fetch versus a `200` with an empty list — and the fix differs: start the
+  service, versus attach a printer. The reference app draws the same line.
+  Rules, contract and `.44` now state it.
+- **A settings read that failed is not "no printer configured".** The outcome
+  set read as if every non-success from `labelPrinterSettings` meant nothing was
+  stored; the reference app treats only `=== null` that way, and a failed read
+  falls through for the endpoint to answer. A non-background read also raised
+  the global unexpected-error modal over the print's own outcome. Now
+  `background`, and only `null` refuses; the contract's wire trap states it.
+- **A departure from the reference client:** `printLabels` ignores the stored
+  USB preference on Android. The reference reads it unguarded and is safe
+  because its toggle never rendered there; this app's 3.1 did render it, so a
+  tablet can carry a flag 3.2 hides the row to undo. Nothing can set it on
+  Android from 3.2 on, so it guards no future state — but the stored value
+  outlives every upgrade, so the term is permanent. Unit-covered in
+  `printLabels.test.ts`; no behaviour minted, since `.41` already implies it.
+- **`127.0.0.1`, not `localhost`** — the service binds IPv4 and `localhost` can
+  resolve to `::1`. Loopback is a trustworthy origin, so plain HTTP is reachable
+  from an HTTPS page without mixed-content blocking.
+- **No new locale keys** — every outcome reuses an existing catalogue key
+  (`error.label-printer-not-configured`, `error.no-usb-printer-found`,
+  `error.printing-label`, `heading.unable-to-print`).
+- **Unchanged and still true:** the USB preference remains device-local and is
+  never part of `LabelPrinterSettingsInput` (AC-LP3 above) — which is `.22`,
+  covered at the unit layer as noted above.
+
 ## Styling pass (vs. the reference app at runtime)
 
 Compared side-by-side against the running reference open-mSupply settings page and aligned within this app's own tokens/components: the section stack width-capped at `--measure-form` and **start-aligned** like the reference column (plain section CSS — deliberately not `ContentContainer`, whose centring the reference layout doesn't have and which no other in-tree screen uses); section headings given a leading intent icon (`SunIcon` added to `src/ui/icons`, the others existing) with the accordion's own neutral trigger treatment — the reference's accent-coloured headings deliberately not copied (component appearance is the library's; a consumer class override was tried and backed out); the Synchronisation form converted from stacked labelled inputs to `FieldRow` rows — which is also what ui-surface § Layout mandates; form action clusters (Test/Save, Save) inline-end aligned. A follow-up composition audit against `src/ui/docs/PAGES.md` + `kdd/form-layout` then replaced hand-rolled pieces with the defined vocabulary: sub-groups (Devices' two halves, S2's three groups) are now `FormSection` titled field groups — **neutral** headings per the library's own rule, deliberately not the reference's accent colour; the heading outline is corrected (breadcrumb h1 → `AccordionTrigger as="h2"` → `FormSection` h3); and S3's log viewer is a `readonly TextArea` (the registry's multi-line role, which ui-surface cites) instead of a bespoke `<pre>` — a C3 fix. Deliberately NOT copied: the reference's bordered card surface around the section list (our flat hairline-divider accordion is the library's established look), its right-flushed input column (FieldRow's grid geometry is the library's), and MUI colour values (tokens only).
