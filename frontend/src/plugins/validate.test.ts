@@ -342,6 +342,25 @@ describe('validateLoadedModule', () => {
     );
   });
 
+  it('refuses a warning suppression naming no warning at all — a missing field is not an unknown id', () => {
+    // The refusal must say the field is absent (and name the published set),
+    // not claim an unknown warning called "undefined" — the author's defect is
+    // a missing declaration, not a bad name.
+    const module = definePlugin({
+      manifest: { code: 'demo', version: '1.0.0', pluginApiVersion: 1 },
+      contributions: [
+        {
+          slot: 'host.warningSuppression',
+          id: 'freshness',
+          suppresses: () => true,
+        } as unknown as never,
+      ],
+    });
+    expect(refusal(validateLoadedModule('demo', asModule(module)))).toContain(
+      'names no warning to suppress'
+    );
+  });
+
   it('refuses an empty contribution id', () => {
     const module = definePlugin({
       manifest: {

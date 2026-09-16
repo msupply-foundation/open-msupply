@@ -362,14 +362,12 @@ export const DashboardBuiltInBody: Component = () => {
     try {
       const { recentStocktakeGateShows } =
         await import('@/sections/internal-orders/list/create/createInternalOrder');
-      if (
-        await recentStocktakeGateShows(
-          params.storeId,
-          warn.maxAge,
-          warn.minItems
-        )
-      )
-        setStocktakeGateOpen(true);
+      const shows = await recentStocktakeGateShows(
+        params.storeId,
+        warn.maxAge,
+        warn.minItems
+      );
+      if (shows) setStocktakeGateOpen(true);
       else setInternalOrderCreateOpen(true);
     } finally {
       setOrderMoreChecking(false);

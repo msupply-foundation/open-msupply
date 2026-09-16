@@ -213,14 +213,12 @@ const InternalOrdersList: Component = () => {
     // code — the finally guarantees a fault can never leave the button
     // disabled for good.
     try {
-      if (
-        await recentStocktakeGateShows(
-          params.storeId,
-          warn.maxAge,
-          warn.minItems
-        )
-      )
-        setGateOpen(true);
+      const shows = await recentStocktakeGateShows(
+        params.storeId,
+        warn.maxAge,
+        warn.minItems
+      );
+      if (shows) setGateOpen(true);
       else setCreateOpen(true);
     } finally {
       setChecking(false);

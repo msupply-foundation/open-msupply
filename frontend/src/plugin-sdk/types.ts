@@ -2,8 +2,10 @@
  * The plugin module contract, as types (spec/plugins/sdk-contract.md).
  *
  * Everything here is public API for out-of-tree plugins: additive-only within
- * a PLUGIN_API_VERSION major, and a rename is a version bump. Type-only
- * module — it must stay free of runtime code so importing it costs nothing.
+ * a PLUGIN_API_VERSION major, and a rename is a version bump. Types first:
+ * the only runtime values are the published id catalogues
+ * (HOST_NAV_SECTION_IDS, HOST_WARNING_IDS) — string literals, so importing
+ * this module still costs next to nothing; keep any other runtime code out.
  */
 import type { Component } from 'solid-js';
 import type { SupportedLocale } from '../intl';
@@ -400,7 +402,7 @@ export type HostWarningId = (typeof HOST_WARNING_IDS)[number];
  * item-level count freshness replacing the store-wide recent-stocktake
  * warning). The host consults every visible contribution naming the warning
  * at the moment the warning would otherwise show; any `true` suppresses it
- * for that invocation, and the create-or-whatever flow proceeds directly.
+ * for that invocation, and the host's flow proceeds directly.
  *
  * `false` — and equally a thrown error or a rejected promise — leaves the
  * warning to the host's own behaviour: a failing plugin can never strip a
