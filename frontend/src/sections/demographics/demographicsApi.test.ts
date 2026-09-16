@@ -7,9 +7,9 @@ import {
   it,
   vi,
 } from 'vitest';
-import type { GraphqlResult } from '../../api/graphql';
-import { setDictionaries, setLocale } from '../../intl/intl';
-import commonEn from '../../intl/locales/en/common.json';
+import type { GraphqlResult } from '@/api/graphql';
+import { setDictionaries, setLocale } from '@/intl/intl';
+import commonEn from '@/intl/locales/en/common.json';
 import {
   BASE_YEAR,
   GENERAL_ROW_ID,
@@ -43,8 +43,8 @@ const denied = vi.fn<(permissions: string[]) => void>();
 const operationName = (query: string) =>
   /(query|mutation)\s+(\w+)/.exec(query)?.[2] ?? 'anonymous';
 
-vi.mock('../../api/graphql', async importOriginal => {
-  const actual = await importOriginal<typeof import('../../api/graphql')>();
+vi.mock('@/api/graphql', async importOriginal => {
+  const actual = await importOriginal<typeof import('@/api/graphql')>();
   return {
     ...actual,
     reportPermissionDenied: (permissions: string[]) => denied(permissions),
@@ -249,10 +249,10 @@ describe('loading the grid (contract § the grid, § growth rates)', () => {
       indicators: [generalNode],
       projection: projectionNode,
     });
-    // One generous page (OMS-REG-MNG-03.1: the reference client's first: 20 is the
-    // capture, not the rule), with the name sort sent EXPLICITLY — without it
-    // the server orders by raw name and upper-case names come first (OMS-REG-MNG-03.16;
-    // contract wire trap).
+    // One generous page (OMS-REG-MNG-03.1: the reference client's first: 20
+    // is the capture, not the rule), with the name sort sent EXPLICITLY —
+    // without it the server orders by raw name and upper-case names come
+    // first (OMS-REG-MNG-03.16; contract wire trap).
     const read = sent('demographicIndicators')[0];
     expect(read?.variables).toEqual({ storeId: 'store-1' });
     expect(read?.query).toMatch(/first: 1000/);

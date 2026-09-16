@@ -9,6 +9,7 @@ import {
   newIndicator,
   pinGeneralFirst,
   projectYears,
+  projectionShare,
   projectionWrite,
   ratesOf,
   saveInputs,
@@ -109,6 +110,18 @@ describe('the calculation (rules § the calculation)', () => {
       1234567
     );
   });
+
+  it('the general population row projects at 100 %, not at the share stored against it', () => {
+    // The server treats that row as any indicator, so another client can
+    // store a share on it (rules § the general population row). The screen
+    // shows 100 % and the rule says it projects at 100 % — so the figures and
+    // what Save writes read the rule, never the field.
+    const tampered = { ...general(1000), populationPercentage: 50 };
+    expect(projectionShare(tampered)).toBe(100);
+    expect(currentPopulation(1000, projectionShare(tampered))).toBe(1000);
+    // Every other row keeps its own share.
+    expect(projectionShare(indicator('a', 'A', 60))).toBe(60);
+  });
 });
 
 describe('the grid order (rules § the grid)', () => {
@@ -157,8 +170,9 @@ describe('the grid order (rules § the grid)', () => {
   });
 
   it('OMS-REG-MNG-03.2 — stored rates reach the headers as stored, out-of-range or not', () => {
-    // OMS-REG-MNG-03.38: the server validates no range, so a record another client wrote
-    // can carry a negative rate or one above 100 — shown and used as-is.
+    // OMS-REG-MNG-03.38: the server validates no range, so a record another
+    // client wrote can carry a negative rate or one above 100 — shown and
+    // used as-is.
     const rates = { ...ZERO_RATES, year1: -5, year2: 250.5 };
     expect(ratesOf(projection(rates))).toEqual(rates);
   });
@@ -228,6 +242,23 @@ describe('what a save sends (rules § saving the draft; contract § indicators)'
       id: GENERAL_ROW_ID,
       name: 'Population générale',
       populationPercentage: 100,
+      basePopulation: 1000,
+      year1Projection: 1100,
+      year5Projection: 1610,
+    });
+  });
+
+  it('the general population row is written with 100 %-based projections whatever share is stored on it', () => {
+    const tampered = draft();
+    tampered.indicators[0] = {
+      ...tampered.indicators[0]!,
+      populationPercentage: 50,
+    };
+    const { updates } = saveInputs(tampered, 'General population', () => 'x');
+    expect(updates[0]).toMatchObject({
+      // The stored share itself is written back untouched (this screen never
+      // edits it); only the projections read the rule.
+      populationPercentage: 50,
       basePopulation: 1000,
       year1Projection: 1100,
       year5Projection: 1610,

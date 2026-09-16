@@ -102,6 +102,20 @@ const wholePersons = (value: number): number => {
 };
 
 /**
+ * The share a row PROJECTS at (rules § the calculation): its own, except the
+ * general population row, which projects "like any other row, at a share of
+ * 100 %" — so 100 whatever share is stored against it. The server treats that
+ * row as any indicator and its share IS changeable on the wire (rules § the
+ * general population row), so reading the field instead of the rule would let
+ * a stored 50 halve the row the screen shows as 100 %, on the grid and in what
+ * Save writes. On an untouched installation the two agree.
+ */
+export const projectionShare = (row: {
+  id: string;
+  populationPercentage: number;
+}): number => (isGeneralRow(row) ? 100 : row.populationPercentage);
+
+/**
  * Year 0 of a row (rules § the calculation): the baseline scaled by the row's
  * share. The general population row's share is 100, so its current population
  * is the baseline itself.
@@ -134,10 +148,11 @@ export const baselineOf = (
 
 /**
  * The rows in grid order (rules § the grid): the general population row pinned
- * first, the rest exactly as the read returned them — already `name`
- * ascending, case-insensitive, by the read's default sort (contract §
- * indicators). Nothing is re-sorted here: the server's collation is the
- * order, this only pins.
+ * first, the rest exactly as the read returned them — `name` ascending,
+ * case-insensitive, because the read ASKS for that sort. Its default is raw
+ * byte order (upper-case names first), so the sort is sent explicitly
+ * (contract § indicators). Nothing is re-sorted here: the server's collation
+ * is the order, this only pins.
  */
 export const pinGeneralFirst = <T extends { id: string }>(
   nodes: readonly T[]
@@ -214,7 +229,7 @@ const savedFigures = (
   rates: GrowthRates
 ) => {
   const [year1, year2, year3, year4, year5] = projectYears(
-    currentPopulation(baseline, row.populationPercentage),
+    currentPopulation(baseline, projectionShare(row)),
     rates
   );
   return {

@@ -23,13 +23,13 @@ const saves = vi.fn<(inputs: unknown) => Promise<SaveOutcome>>();
 const denied = vi.fn<(permissions: string[]) => void>();
 let nextId = 0;
 
-vi.mock('../../store/storeContext', () => ({
+vi.mock('@/store/storeContext', () => ({
   hasPermission: (permission: string) => state.permissions.has(permission),
 }));
-vi.mock('../../api/graphql', () => ({
+vi.mock('@/api/graphql', () => ({
   reportPermissionDenied: (permissions: string[]) => denied(permissions),
 }));
-vi.mock('../../uuid', () => ({
+vi.mock('@/uuid', () => ({
   generateUUID: () => `new-${++nextId}`,
 }));
 vi.mock('./demographicsApi', () => ({
@@ -117,6 +117,30 @@ describe('loading (rules § the grid)', () => {
     expect(editor.draft.indicators).toEqual([]);
     dispose();
   });
+
+  // The page withdraws New indicator and Save while this is true, so a draft
+  // built on nothing can never be sent: with no general population row the
+  // baseline would save as 0, and the rate write would INSERT a second record
+  // for the base year, which the server refuses.
+  it('a reload that fails withdraws the writes and leaves Cancel a way out', async () => {
+    const { editor, dispose } = await open();
+    expect(editor.loadFailed()).toBe(false);
+
+    state.loaded = undefined;
+    editor.setBaseline(5);
+    await editor.save();
+    await settle();
+
+    expect(editor.loadFailed()).toBe(true);
+    // Cancel has no answer to return to, so it empties the draft rather than
+    // doing nothing — the leave guard has to be clearable.
+    editor.cancel();
+    expect(editor.dirty()).toBe(false);
+    expect(editor.draft.indicators).toEqual([]);
+    expect(editor.draft.rates).toEqual(ZERO_RATES);
+    expect(editor.rejection()).toBeUndefined();
+    dispose();
+  });
 });
 
 describe('editing the draft (rules § editing the draft, § the calculation)', () => {
@@ -192,7 +216,6 @@ describe('the permission mirror (rules § access)', () => {
   it('OMS-REG-MNG-03.13 — New indicator is refused up front without the central-data permission', async () => {
     state.permissions = new Set(['SERVER_ADMIN']);
     const { editor, dispose } = await open();
-    expect(editor.canEdit()).toBe(false);
     editor.addIndicator();
     expect(denied).toHaveBeenCalledWith(['EditCentralData']);
     expect(editor.draft.indicators).toHaveLength(2);

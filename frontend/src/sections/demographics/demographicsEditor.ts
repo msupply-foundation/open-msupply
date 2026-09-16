@@ -7,10 +7,10 @@ import {
   type Accessor,
 } from 'solid-js';
 import { createStore, type Store } from 'solid-js/store';
-import { reportPermissionDenied } from '../../api/graphql';
-import type { Rejection } from '../../api/rejection';
-import { hasPermission } from '../../store/storeContext';
-import { generateUUID } from '../../uuid';
+import { reportPermissionDenied } from '@/api/graphql';
+import type { Rejection } from '@/api/rejection';
+import { hasPermission } from '@/store/storeContext';
+import { generateUUID } from '@/uuid';
 import {
   loadDemographics,
   saveDemographics,
@@ -63,9 +63,6 @@ export interface DemographicsEditor {
   saving: Accessor<boolean>;
   /** The last Save's domain rejection, until the next Save or Cancel. */
   rejection: Accessor<Rejection | undefined>;
-  /** Whether this user holds the central-data permission (the standing
-   * mirror). */
-  canEdit: Accessor<boolean>;
   /** The general population row's current population. */
   baseline: Accessor<number>;
   setName: (id: string, name: string) => void;
@@ -190,9 +187,22 @@ export const createDemographicsEditor = (
     touch();
   };
 
+  // Cancel throws the draft away and goes back to the server's last answer.
+  // When there ISN'T one — the load failed — it empties the draft instead of
+  // doing nothing: a click that visibly does nothing is a blocked affordance
+  // (ui-standards controls § blocked affordances), and leaving a dirty draft
+  // behind would have the leave guard prompt on every navigation with no way
+  // to clear it. The page keeps Cancel unavailable while the draft is clean,
+  // so this is reached only by a save whose RELOAD then failed.
   const cancel = () => {
     const data = settled();
-    if (data) seed(data);
+    if (data) {
+      seed(data);
+      return;
+    }
+    setDraft(emptyDraft());
+    setDirty(false);
+    setRejection(undefined);
   };
 
   // Save writes every row, then the rates; success is the RELOAD — the grid
@@ -233,7 +243,6 @@ export const createDemographicsEditor = (
     dirty,
     saving,
     rejection,
-    canEdit,
     baseline,
     setName,
     setShare,
