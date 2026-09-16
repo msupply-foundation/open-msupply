@@ -15,8 +15,13 @@
 # front end, tears everything down. Store-local data (stock) is arranged
 # by e2e/specs/data.setup.ts through the API.
 #
-# The open-msupply checkout supplies the server + reference datafile only
-# (the suites live here). It needs three specific capabilities, each
+# The server + reference datafile come from a checkout that carries
+# `server/` (the suites live here). The front end and the server now share
+# ONE repository, and that is this one, so nothing needs setting; the
+# separate pre-merge `open-msupply` checkout stays accepted as a fallback,
+# and OMS_DIR overrides both.
+#
+# Whichever it resolves to needs three specific capabilities, each
 # preflighted below with its own message. A branch name is not the
 # requirement — any branch carrying all three works:
 #
@@ -31,7 +36,8 @@
 #      token leaves every UI step in the suites unauthenticated.
 #
 # Knobs (all optional):
-#   OMS_DIR           open-msupply checkout (default: ../open-msupply)
+#   OMS_DIR           the checkout supplying server/ (default: this repo,
+#                     then a pre-merge ../open-msupply — see below)
 #   E2E_SERVER_PORT   backend port (discovery uses port+1)
 #   E2E_FE_PORT       front-end port
 #     When neither port is set, a free pair is picked automatically
@@ -49,22 +55,39 @@ SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 FE_DIR=$(cd "$SCRIPT_DIR/../.." && pwd)
 OMS_DIR=${OMS_DIR:-}
 if [[ -z "$OMS_DIR" ]]; then
-  OMS_DIR=$FE_DIR/../open-msupply
-  if [[ ! -d "$OMS_DIR/server/data/e2e" ]]; then
-    # A git worktree nested inside the main checkout (.worktrees/<name>)
-    # has no ../open-msupply sibling of its own — fall back to next to the
-    # main working tree, so worktree runs need no OMS_DIR.
-    COMMON_DIR=$(git -C "$FE_DIR" rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)
-    [[ -n "$COMMON_DIR" ]] && OMS_DIR=$(dirname "$COMMON_DIR")/../open-msupply
-  fi
+  # Candidates in order; the first one carrying server/data/e2e wins.
+  #
+  # THIS REPO FIRST. The front end and the server share one repository now,
+  # so its own server/ is both the nearest and the only one guaranteed to
+  # match the branch under test. A separate pre-merge `open-msupply`
+  # checkout still works and is still tried — but it is no longer the
+  # default, because those have drifted: an out-of-date datafile shows up
+  # as the app redirecting away from a gated screen, which reads as a
+  # SUITE failure rather than the setup problem it is.
+  #
+  # The main-working-tree entries are for a git worktree that is sparse or
+  # nested (.worktrees/<name>) and so has no server/ or no sibling of its
+  # own — worktree runs need no OMS_DIR either way.
+  COMMON_DIR=$(git -C "$FE_DIR" rev-parse --path-format=absolute --git-common-dir 2>/dev/null || true)
+  MAIN_TREE=${COMMON_DIR:+$(dirname "$COMMON_DIR")}
+  for candidate in \
+    "$FE_DIR/.." \
+    ${MAIN_TREE:+"$MAIN_TREE"} \
+    "$FE_DIR/../../open-msupply" \
+    ${MAIN_TREE:+"$MAIN_TREE/../open-msupply"}; do
+    [[ -d "$candidate/server/data/e2e" ]] && OMS_DIR=$candidate && break
+  done
+  # Nothing matched: name the nearest candidate, so the error below points
+  # somewhere useful rather than at an empty string.
+  OMS_DIR=${OMS_DIR:-$FE_DIR/..}
 fi
 if [[ ! -d "$OMS_DIR/server/data/e2e" ]]; then
   echo "MISSING DEPENDENCY: the e2e datafile export." >&2
   echo "  Expected: $OMS_DIR/server/data/e2e/ (export.json + users.txt)" >&2
-  echo "  OMS_DIR does not look like an open-msupply checkout at all, or it is" >&2
-  echo "  on a revision predating the e2e datafile." >&2
-  echo "  git clone https://github.com/msupply-foundation/open-msupply" >&2
-  echo "  — then set OMS_DIR if the checkout isn't ../open-msupply" >&2
+  echo "  Neither this repo's own server/ nor a pre-merge ../open-msupply" >&2
+  echo "  checkout carries it — this working tree may be sparse, or on a" >&2
+  echo "  revision predating the e2e datafile. Set OMS_DIR to a checkout" >&2
+  echo "  that has server/data/e2e/." >&2
   exit 1
 fi
 # Named separately from the directory: a checkout that HAS data/e2e but is
