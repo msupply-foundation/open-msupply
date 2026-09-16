@@ -119,7 +119,7 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
     isEdit ? undefined : structuredClone(unwrap(draft))
   );
 
-  // An edit loads the course whole (AC-D5). Read NON-SUSPENDING: this dialog
+  // An edit loads the course whole (OMS-REG-IMM-01.16). Read NON-SUSPENDING: this dialog
   // sits on an open screen, and the read through the authenticated list
   // operation answers no node for a deleted course.
   const [course] = createResource(
@@ -232,13 +232,13 @@ export const CourseEditModal: Component<CourseEditModalProps> = props => {
     return base !== undefined && isDirty(draft, base);
   });
   // On create Save is always offered — pressing it is how the checks report
-  // (AC-C2); on edit only once the draft differs (AC-E1).
+  // (OMS-REG-IMM-01.34); on edit only once the draft differs (OMS-REG-IMM-01.42).
   const canSave = () => !isEdit || dirty();
 
   const save = async () => {
     if (saving()) return; // re-entry guard
     // Refused up front for a user without the central-data permission (rules §
-    // access; AC-A5) — before the checks, so nothing is reported for a save
+    // access; OMS-REG-IMM-01.71) — before the checks, so nothing is reported for a save
     // that could never be sent.
     if (!props.guardEdit()) return;
     setAttempted(true);

@@ -24,25 +24,25 @@ import {
 } from './courseEditor';
 
 // Anchors: spec/immunisation-programs/acceptance.md — the editor.
-//   AC-C1  a new course opens blank with its defaults
-//   AC-C2  a blank Save lists name / item / dose as required, sends nothing
-//   AC-C4  a duplicate name is refused as such, the draft kept
-//   AC-C7  a demographic can be chosen and cleared
-//   AC-C9  store overrides travel and come back per store
-//   AC-C12 cleared rates are required
-//   AC-D5  an edit opens the course whole
-//   AC-E1  Save is not offered until the draft differs
-//   AC-E4  clearing the demographic sends none
-//   AC-E5  clearing a store override sends a null rate on the kept row
-//   AC-E6  a rename to a sibling's name is refused
-//   AC-S1  the first dose's defaults
-//   AC-S2  the second dose's defaults
-//   AC-S3  a blank dose label is required
-//   AC-S4  a from age not greater than the previous dose's is refused
-//   AC-S5  a to age below the from age is refused
-//   AC-S8  ages are months on the wire, years + months on screen
-//   AC-U1  removing an in-use dose is refused as such
-//   AC-I3  a wastage rate above 100 is too large
+//   OMS-REG-IMM-01.31  a new course opens blank with its defaults
+//   OMS-REG-IMM-01.34  a blank Save lists name / item / dose as required, sends nothing
+//   OMS-REG-IMM-01.36  a duplicate name is refused as such, the draft kept
+//   OMS-REG-IMM-01.9  a demographic can be chosen and cleared
+//   OMS-REG-IMM-01.39  store overrides travel and come back per store
+//   OMS-REG-IMM-01.35 cleared rates are required
+//   OMS-REG-IMM-01.16  an edit opens the course whole
+//   OMS-REG-IMM-01.42  Save is not offered until the draft differs
+//   OMS-REG-IMM-01.45  clearing the demographic sends none
+//   OMS-REG-IMM-01.46  clearing a store override sends a null rate on the kept row
+//   OMS-REG-IMM-01.47  a rename to a sibling's name is refused
+//   OMS-REG-IMM-01.50  the first dose's defaults
+//   OMS-REG-IMM-01.51  the second dose's defaults
+//   OMS-REG-IMM-01.52  a blank dose label is required
+//   OMS-REG-IMM-01.53  a from age not greater than the previous dose's is refused
+//   OMS-REG-IMM-01.54  a to age below the from age is refused
+//   OMS-REG-IMM-01.56  ages are months on the wire, years + months on screen
+//   OMS-REG-IMM-01.58  removing an in-use dose is refused as such
+//   OMS-REG-IMM-01.64  a wastage rate above 100 is too large
 // The editor's rules live in pure functions, so each is pinned at the cheapest
 // layer: the draft, its defaults and checks, the draft → input mapping (what
 // the whole-course write actually sends) and the mapping of the writes'
@@ -90,7 +90,7 @@ const valid = (draft: CourseDraft): ValidCourseDraft => {
   return v.draft;
 };
 
-describe('AC-C1 — a new course opens blank with its defaults', () => {
+describe('OMS-REG-IMM-01.31 — a new course opens blank with its defaults', () => {
   it('starts with coverage 100, wastage 0, GAPS on, skip off, nothing chosen', () => {
     const draft = newCourseDraft('new-id', 'prog-1');
     expect(draft).toMatchObject({
@@ -109,7 +109,7 @@ describe('AC-C1 — a new course opens blank with its defaults', () => {
   });
 });
 
-describe('AC-D5 — an edit opens the course whole', () => {
+describe('OMS-REG-IMM-01.16 — an edit opens the course whole', () => {
   it('carries every field, item, dose and override of the course', () => {
     const draft = draftFromCourse(course);
     expect(draft).toMatchObject({
@@ -137,7 +137,7 @@ describe('AC-D5 — an edit opens the course whole', () => {
   });
 });
 
-describe('AC-C2 — a blank Save lists what is missing and sends nothing', () => {
+describe('OMS-REG-IMM-01.34 — a blank Save lists what is missing and sends nothing', () => {
   it('names the course name, at least one item and at least one dose', () => {
     const v = validateDraft(newCourseDraft('id', 'prog-1'));
     expect(v.ok).toBe(false);
@@ -169,7 +169,7 @@ describe('AC-C2 — a blank Save lists what is missing and sends nothing', () =>
   });
 });
 
-describe('AC-C12 / AC-I3 — the rates', () => {
+describe('OMS-REG-IMM-01.35 / OMS-REG-IMM-01.64 — the rates', () => {
   it('lists a cleared coverage or wastage rate as required', () => {
     const v = validateDraft({
       ...draftFromCourse(course),
@@ -205,7 +205,7 @@ describe('AC-C12 / AC-I3 — the rates', () => {
   });
 });
 
-describe('AC-S1 / AC-S2 — a new dose is born from the last one', () => {
+describe('OMS-REG-IMM-01.50 / OMS-REG-IMM-01.51 — a new dose is born from the last one', () => {
   it('the first dose: "<name> 1", 0 → 1 month, 30 days, blank custom label', () => {
     const draft = { ...newCourseDraft('id', 'prog-1'), name: 'Polio' };
     expect(nextDose(draft, 'd-new')).toEqual({
@@ -242,7 +242,7 @@ describe('AC-S1 / AC-S2 — a new dose is born from the last one', () => {
   });
 });
 
-describe('AC-S3 / AC-S4 / AC-S5 — the dose checks, grouped per dose', () => {
+describe('OMS-REG-IMM-01.52 / OMS-REG-IMM-01.53 / OMS-REG-IMM-01.54 — the dose checks, grouped per dose', () => {
   it('a blank label is required, named by dose number', () => {
     const draft = draftFromCourse(course);
     draft.vaccineCourseDoses = draft.vaccineCourseDoses.map((d, i) =>
@@ -301,7 +301,7 @@ describe('AC-S3 / AC-S4 / AC-S5 — the dose checks, grouped per dose', () => {
   });
 });
 
-describe('AC-S8 — ages are months on the wire, years + months on screen', () => {
+describe('OMS-REG-IMM-01.56 — ages are months on the wire, years + months on screen', () => {
   it('splits 15 months into 1 year 3 months and 9.5 into 0 years 9.5 months', () => {
     expect(splitMonths(15)).toEqual({ years: 1, months: 3 });
     expect(splitMonths(9.5)).toEqual({ years: 0, months: 9.5 });
@@ -314,7 +314,7 @@ describe('AC-S8 — ages are months on the wire, years + months on screen', () =
   });
 });
 
-describe('AC-C9 / AC-E5 — store overrides', () => {
+describe('OMS-REG-IMM-01.39 / OMS-REG-IMM-01.46 — store overrides', () => {
   it("reads a store's override, and none where the row has no rate", () => {
     const configs = draftFromCourse(course).storeConfigs;
     expect(storeRate(configs, 'store-a', 'wastageRate')).toBe(5);
@@ -358,7 +358,7 @@ describe('AC-C9 / AC-E5 — store overrides', () => {
   });
 });
 
-describe('AC-E1 — Save is offered only once the draft differs', () => {
+describe('OMS-REG-IMM-01.42 — Save is offered only once the draft differs', () => {
   it('a freshly opened course is clean', () => {
     expect(isDirty(draftFromCourse(course), draftFromCourse(course))).toBe(
       false
@@ -449,7 +449,7 @@ describe('the write inputs (contract § the editor)', () => {
     });
   });
 
-  it('an edit carries the whole course too — no programId, demographicId sent even when none (AC-E4), a cleared override as { value: null } (AC-E5)', () => {
+  it('an edit carries the whole course too — no programId, demographicId sent even when none (OMS-REG-IMM-01.45), a cleared override as { value: null } (OMS-REG-IMM-01.46)', () => {
     const base = draftFromCourse(course);
     const draft = valid({
       ...base,
@@ -535,7 +535,7 @@ const updateRefused = (
   },
 });
 
-describe('AC-C4 / AC-E6 — a name another course of the program carries', () => {
+describe('OMS-REG-IMM-01.36 / OMS-REG-IMM-01.47 — a name another course of the program carries', () => {
   it('is the typed duplicate on create and on edit', () => {
     expect(
       insertOutcome(
@@ -560,7 +560,7 @@ describe('AC-C4 / AC-E6 — a name another course of the program carries', () =>
   });
 });
 
-describe('AC-U1 — removing an in-use dose', () => {
+describe('OMS-REG-IMM-01.58 — removing an in-use dose', () => {
   it('is the typed doses-in-use refusal on edit', () => {
     expect(
       updateOutcome(

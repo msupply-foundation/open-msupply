@@ -67,7 +67,7 @@ export type DeleteRun = {
 
 /**
  * Delete each id in turn, in the order given, stopping at the first that is
- * not deleted (rules § deleting courses; AC-X5). `deleteOne` is the wire call,
+ * not deleted (rules § deleting courses; OMS-REG-IMM-01.67). `deleteOne` is the wire call,
  * injected so the run is testable without a backend.
  */
 export const runDeletes = async (

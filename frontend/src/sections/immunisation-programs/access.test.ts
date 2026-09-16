@@ -8,8 +8,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 // PERMISSION gates the destination: reading needs none (rules § access), the
 // write permission is mirrored at the click, not the route.
 //
-// Anchors: AC-A1 (reads answer everywhere they are reached), and the
-// navigation half of AC-A8 (every user reaches the screen).
+// Anchors: rules § access (AC-A1, not folded) (reads answer everywhere they are reached), and the
+// navigation half of OMS-REG-IMM-01.74 (every user reaches the screen).
 
 const state = {
   central: false,
@@ -69,7 +69,7 @@ describe('where the destination is offered', () => {
     expect(offeredPaths()).not.toContain('programs');
   });
 
-  it('is offered to EVERY user on a central server with the vaccine module on — reading needs no permission (AC-A8)', () => {
+  it('is offered to EVERY user on a central server with the vaccine module on — reading needs no permission (OMS-REG-IMM-01.74)', () => {
     state.central = true;
     state.vaccineModule = true;
     expect(offeredPaths()).toContain(PATH);
