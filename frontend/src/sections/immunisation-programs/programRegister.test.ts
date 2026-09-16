@@ -6,19 +6,19 @@ import {
 } from './programRegister';
 
 // Anchors: spec/immunisation-programs/acceptance.md — the program list.
-//   AC-L1  only immunisation programs are listed
-//   AC-L3  name ascending, case-insensitive, is the default order
-//   AC-L4  the name sort reverses and is what the read carries
-//   AC-L5  the name filter is a contains match
-//   AC-L6  the courses column names the live courses only
-//   AC-L7  a program with no course shows a blank cell
-//   AC-L10 twenty to a page
+//   OMS-REG-IMM-01.1  only immunisation programs are listed
+//   OMS-REG-IMM-01.19  name ascending, case-insensitive, is the default order
+//   OMS-REG-IMM-01.20  the name sort reverses and is what the read carries
+//   OMS-REG-IMM-01.21  the name filter is a contains match
+//   OMS-REG-IMM-01.22  the courses column names the live courses only
+//   OMS-REG-IMM-01.23  a program with no course shows a blank cell
+//   OMS-REG-IMM-01.25 twenty to a page
 // The list's rules live in pure functions, so each is pinned at the wire
 // mapping the screen sends (contract.md § the program list).
 
 const STORE = 'store-1';
 
-describe('AC-L1 — only immunisation programs are listed', () => {
+describe('OMS-REG-IMM-01.1 — only immunisation programs are listed', () => {
   it('forces isImmunisation: true onto every read, whatever the filter', () => {
     expect(programVariables(STORE, DEFAULT_REGISTER_STATE).filter).toEqual({
       isImmunisation: true,
@@ -38,7 +38,7 @@ describe('AC-L1 — only immunisation programs are listed', () => {
   });
 });
 
-describe('AC-L3 — name ascending is the default, and is SENT', () => {
+describe('OMS-REG-IMM-01.19 — name ascending is the default, and is SENT', () => {
   it('sends the name sort rather than relying on the server default (id order)', () => {
     expect(programVariables(STORE, DEFAULT_REGISTER_STATE).sort).toEqual({
       key: 'name',
@@ -47,7 +47,7 @@ describe('AC-L3 — name ascending is the default, and is SENT', () => {
   });
 });
 
-describe('AC-L4 — reversing the sort reverses the read', () => {
+describe('OMS-REG-IMM-01.20 — reversing the sort reverses the read', () => {
   it('carries desc: true', () => {
     expect(
       programVariables(STORE, {
@@ -58,7 +58,7 @@ describe('AC-L4 — reversing the sort reverses the read', () => {
   });
 });
 
-describe('AC-L5 — the name filter is a contains match', () => {
+describe('OMS-REG-IMM-01.21 — the name filter is a contains match', () => {
   it('sends name.like, and drops an added-but-empty chip', () => {
     expect(
       programVariables(STORE, {
@@ -75,7 +75,7 @@ describe('AC-L5 — the name filter is a contains match', () => {
   });
 });
 
-describe('AC-L6 / AC-L7 — the Vaccine courses cell', () => {
+describe('OMS-REG-IMM-01.22 / OMS-REG-IMM-01.23 — the Vaccine courses cell', () => {
   it('names the live courses, comma-separated, in the order answered', () => {
     expect(
       courseNames({
@@ -93,7 +93,7 @@ describe('AC-L6 / AC-L7 — the Vaccine courses cell', () => {
   });
 });
 
-describe('AC-L10 — twenty to a page', () => {
+describe('OMS-REG-IMM-01.25 — twenty to a page', () => {
   it('defaults to a page of 20 from offset 0, and carries the page it is given', () => {
     expect(programVariables(STORE, DEFAULT_REGISTER_STATE).page).toEqual({
       first: 20,

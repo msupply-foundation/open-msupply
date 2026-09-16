@@ -8,15 +8,15 @@ import {
 } from './courseList';
 
 // Anchors: spec/immunisation-programs/acceptance.md — the program detail.
-//   AC-D1  each row shows the name, the demographic's name and the live
+//   OMS-REG-IMM-01.5  each row shows the name, the demographic's name and the live
 //          dose count
-//   AC-D2  a course with no demographic shows a blank Target demographic
-//   AC-D3  name ascending, case-insensitive, is the default order
-//   AC-D4  the name sort reverses
-//   AC-D7  the list holds this program's courses only
-//   AC-X5  a bulk delete runs in list order
+//   OMS-REG-IMM-01.26  a course with no demographic shows a blank Target demographic
+//   OMS-REG-IMM-01.27  name ascending, case-insensitive, is the default order
+//   OMS-REG-IMM-01.28  the name sort reverses
+//   OMS-REG-IMM-01.30  the list holds this program's courses only
+//   OMS-REG-IMM-01.67  a bulk delete runs in list order
 
-describe("AC-D7 — the program's courses only", () => {
+describe("OMS-REG-IMM-01.30 — the program's courses only", () => {
   it('filters the read by the program id', () => {
     expect(
       courseListVariables('prog-1', DEFAULT_COURSE_LIST_STATE).filter
@@ -24,7 +24,7 @@ describe("AC-D7 — the program's courses only", () => {
   });
 });
 
-describe('AC-D3 / AC-D4 — the name sort, always sent, exactly one entry', () => {
+describe('OMS-REG-IMM-01.27 / OMS-REG-IMM-01.28 — the name sort, always sent, exactly one entry', () => {
   it('defaults to name ascending and pages by 20', () => {
     const variables = courseListVariables('prog-1', DEFAULT_COURSE_LIST_STATE);
     expect(variables.sort).toEqual([{ key: 'name', desc: false }]);
@@ -51,7 +51,7 @@ describe('AC-D3 / AC-D4 — the name sort, always sent, exactly one entry', () =
   });
 });
 
-describe('AC-D1 / AC-D2 — the derived cells', () => {
+describe('OMS-REG-IMM-01.5 / OMS-REG-IMM-01.26 — the derived cells', () => {
   it('counts the live doses the read answers (none → 0)', () => {
     expect(doseCount({ vaccineCourseDoses: [{ id: 'a' }, { id: 'b' }] })).toBe(
       2
@@ -68,7 +68,7 @@ describe('AC-D1 / AC-D2 — the derived cells', () => {
   });
 });
 
-describe('AC-X5 — a selection in list order', () => {
+describe('OMS-REG-IMM-01.67 — a selection in list order', () => {
   const rows = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
 
   it('orders the selected ids as the rows are shown, whatever order they were ticked in', () => {

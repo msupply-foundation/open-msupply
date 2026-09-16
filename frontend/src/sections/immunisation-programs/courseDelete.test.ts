@@ -9,9 +9,9 @@ import {
 
 // Anchors: spec/immunisation-programs/acceptance.md — deleting courses and
 // the in-use guard.
-//   AC-U4  a course with a vaccination recorded is refused as _course in use_
-//   AC-X4  one unused course deletes
-//   AC-X5  a run stops at the first refusal: the courses before it are gone,
+//   OMS-REG-IMM-01.61  a course with a vaccination recorded is refused as _course in use_
+//   OMS-REG-IMM-01.17  one unused course deletes
+//   OMS-REG-IMM-01.67  a run stops at the first refusal: the courses before it are gone,
 //          the refused and later ones remain
 // The run and the outcome mapping are pure, so both are pinned here; the
 // dialog lifecycle around them is exercised in the UI.
@@ -49,13 +49,13 @@ const refused = (
   },
 });
 
-describe('AC-X4 — a delete that went through', () => {
+describe('OMS-REG-IMM-01.17 — a delete that went through', () => {
   it('reads DeleteResponse as deleted', () => {
     expect(deleteOutcome(deleted('c1'))).toEqual({ kind: 'deleted' });
   });
 });
 
-describe('AC-U4 — the in-use refusal is the typed member', () => {
+describe('OMS-REG-IMM-01.61 — the in-use refusal is the typed member', () => {
   it('reads VaccineCourseInUse as in-use', () => {
     expect(
       deleteOutcome(
@@ -125,7 +125,7 @@ describe('the untyped refusals (contract § rejections)', () => {
   });
 });
 
-describe('AC-X5 — the run stops at the first refusal, in order', () => {
+describe('OMS-REG-IMM-01.67 — the run stops at the first refusal, in order', () => {
   const outcomes: Record<string, DeleteCourseOutcome> = {
     a: { kind: 'deleted' },
     b: { kind: 'in-use' },
