@@ -32,6 +32,7 @@ import {
 } from '../plugins/pluginPages';
 import { createRegionDiagnostics } from '../plugins/diagnostics';
 import { bindHostNavigate, routerHostNavigate } from './hostNavigate';
+import { bindHostSearch } from './hostSearch';
 import { storePath, storeRelativePath } from './storeRelativePath';
 import { KeyboardHost } from '../keyboard/KeyboardHost';
 import { createDocumentTitle, screenTitleKey } from '../documentTitle';
@@ -85,6 +86,10 @@ export const ShellLayout: Component<RouteSectionProps> = props => {
   // shell is where navigation lives and it mounts once for the whole in-store
   // app, which every plugin contribution renders inside.
   bindHostNavigate(routerHostNavigate(navigate));
+  // The query string for the SDK's usePageSearch, on the same one-writer
+  // contract — location.search is the router's reactive signal, so a page
+  // reading through the SDK tracks query-only navigations.
+  bindHostSearch(() => location.search);
 
   // The path relative to the store root, e.g. '/{store}/inventory/stocktakes'
   // → 'inventory/stocktakes'. The empty (store root) path is Home's own.
