@@ -6,10 +6,12 @@ import { t } from '../intl';
 // document tap means "look at this"; an export/download means "keep this"):
 //
 // - openDocument(url, fileName): view a server-stored file addressed by URL
-//   (a domain/syncFiles link). Web: the browser handles it in a new tab.
-//   Android: the WebView would render it inline (or silently do nothing for
-//   PDFs) with no way back, so it's downloaded natively and handed to the OS
-//   viewer, falling back to the share sheet.
+//   (a domain/syncFiles link). Web: the browser handles it in a new tab, or in
+//   place where a new one is refused. Android: the WebView would render it
+//   inline (or silently do nothing for PDFs) with no way back, so it's
+//   downloaded natively and handed to the OS viewer, falling back to the share
+//   sheet. A caller rendering a real anchor SHOULD leave it alone off Android
+//   rather than call this — an anchor is what a host shell can intercept.
 // - openBlob(blob, fileName): view a file the app already holds. Web: a plain
 //   browser download (browsers have no "view a blob" affordance). Android:
 //   OS viewer, falling back to the share sheet.
@@ -229,7 +231,13 @@ export const openDocument = async (
   fileName: string
 ): Promise<OpenDocumentResult> => {
   if (!isAndroid()) {
-    window.open(url, '_blank', 'noreferrer');
+    // A WebView that does not support multiple windows drops the request and
+    // answers null, and reporting ok for that is how a tap comes to do nothing
+    // at all with nothing said about it (#692). Navigating in place is the one
+    // move a host shell can see: the current app's shell watches for a
+    // sync-file address and hands it to the OS viewer, which is exactly how
+    // that app opens a document on Android.
+    if (!window.open(url, '_blank', 'noreferrer')) window.location.assign(url);
     return { ok: true };
   }
   try {
