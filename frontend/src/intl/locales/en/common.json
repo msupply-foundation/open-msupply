@@ -3411,6 +3411,7 @@
   "server-error.CannotSetShippedStatusOnManualInboundShipment": "A manual shipment can't be set to Shipped",
   "server-error.CannotUpdateStatusAndDonorAtTheSameTime": "Change the donor and the status in separate steps",
   "server-error.CurrencyRateMustBePositive": "The currency rate must be greater than zero",
+  "server-error.DemographicIndicatorAlreadyExistsForThisYear": "Demographic indicator already exists for this year",
   "server-error.DemographicIndicatorHasNoName": "Demographic indicator has no name",
   "server-error.ExceedsMaximumBackdatingDays": "That date is further back than this store allows",
   "server-error.InvalidDates": "Invalid dates",
