@@ -24,6 +24,7 @@ pub(crate) fn test_pull_upsert_records() -> Vec<TestSyncIncomingRecord> {
             name: "Cool Room".to_string(),
             min_temperature: 1.0,
             max_temperature: 4.0,
+            code: "Cool Room".to_string(),
         },
     )]
 }

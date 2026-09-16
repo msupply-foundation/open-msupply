@@ -13,6 +13,7 @@ table! {
         name -> Text,
         min_temperature -> Double,
         max_temperature -> Double,
+        code -> Text,
     }
 }
 
@@ -33,6 +34,8 @@ pub struct LocationTypeRow {
     pub name: String,
     pub min_temperature: f64,
     pub max_temperature: f64,
+    #[serde(default)]
+    pub code: String,
 }
 
 impl LocationTypeRow {
