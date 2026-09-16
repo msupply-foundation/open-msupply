@@ -136,10 +136,23 @@ export const buildListVariables = (
 ): AssetsListVariables => ({
   storeId,
   filter: {
-    ...stripEmpty(state.filter),
+    ...buildExportFilter(state),
     ...(destination === 'store' ? { storeId: { equalTo: storeId } } : {}),
-    classId: { equalTo: CCE_CLASS_ID },
   },
   sort: state.sort,
   page: { first: state.first, offset: state.offset },
+});
+
+/**
+ * What the CSV export reads: the user's own filters and the class pinning —
+ * the list's filter minus the destination's store restriction.
+ *
+ * The export deliberately covers **every store's** equipment, from either
+ * destination, so a file is a register-wide extract rather than a copy of the
+ * screen (rules › export). Its filters still apply, so the file matches the
+ * chips the user set; only the store pin is dropped.
+ */
+export const buildExportFilter = (state: EquipmentListState): AssetFilter => ({
+  ...stripEmpty(state.filter),
+  classId: { equalTo: CCE_CLASS_ID },
 });

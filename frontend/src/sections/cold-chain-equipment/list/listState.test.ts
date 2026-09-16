@@ -3,6 +3,7 @@ import { CCE_CLASS_ID } from '../equipment';
 import {
   DEFAULT_STATE,
   SORTABLE_KEYS,
+  buildExportFilter,
   buildListVariables,
   clearTypeOnCategoryChange,
   clearTypeOutsideCategory,
@@ -13,6 +14,33 @@ const STORE = 'store-a';
 const state = (over: Partial<EquipmentListState> = {}): EquipmentListState => ({
   ...DEFAULT_STATE,
   ...over,
+});
+
+describe('OMS-REG-CCE-07.13/.33 — what the CSV export reads', () => {
+  it('carries the active filters, so the file matches the chips on screen', () => {
+    const filtered = state({
+      filter: { assetNumber: { like: 'FRIDGE' }, functionalStatus: null },
+    });
+    expect(buildExportFilter(filtered).assetNumber).toEqual({ like: 'FRIDGE' });
+    // An added-but-empty chip is not a filter and must not reach the query.
+    expect(buildExportFilter(filtered).functionalStatus).toBeUndefined();
+  });
+
+  it('pins the class, so an export is never widened past this register', () => {
+    expect(buildExportFilter(state()).classId).toEqual({
+      equalTo: CCE_CLASS_ID,
+    });
+  });
+
+  it('drops the store restriction the LIST carries — every store is exported', () => {
+    // The decision this register departs from the list-view standard on: the
+    // cold-chain destination scopes the SCREEN to the active store, but an
+    // export is a register-wide extract from either destination.
+    expect(buildExportFilter(state()).storeId).toBeUndefined();
+    expect(
+      buildListVariables(state(), STORE, 'store').filter?.storeId
+    ).toEqual({ equalTo: STORE });
+  });
 });
 
 describe('OMS-REG-CCE-04.15 — only cold-chain-equipment assets are listed', () => {

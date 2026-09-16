@@ -1,16 +1,15 @@
 import { useMutation, useUrlQueryParams } from '@openmsupply-client/common';
 import { useAssetApi } from '../utils/useAssetApi';
-import { ASSET_LIST_FILTERS, useAssetListScope } from './useAssets';
+import { ASSET_LIST_FILTERS } from './useAssets';
 
-// The CSV/Excel export. It reads the SAME url filters and the same destination
-// scope as the list, so the file holds the rows on screen rather than every
-// cold chain asset the server has.
+// The CSV/Excel export. It reads the SAME url filters as the list, so the file
+// matches the chips on screen — but deliberately NOT the destination's store
+// scope: an export covers every store's equipment.
 export const useAssetsAll = () => {
-  const { isColdChain, storeCode } = useAssetListScope();
   const { queryParams } = useUrlQueryParams({ filters: ASSET_LIST_FILTERS });
   const api = useAssetApi();
   const result = useMutation({
-    mutationFn: () => api.get.listAll(queryParams, storeCode, isColdChain),
+    mutationFn: () => api.get.listAll(queryParams),
   });
 
   return {

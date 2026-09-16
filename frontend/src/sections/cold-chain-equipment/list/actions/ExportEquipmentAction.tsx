@@ -15,17 +15,18 @@ import { equipmentToCsv } from '../equipmentToCsv';
 // state and the outcome report all live in ListExportAction — this file owns
 // only the query.
 //
-// The file is the list the user is looking at, unpaginated: the SAME filter the
-// screen is reading through, so the destination's store restriction and every
-// active filter chip both reach the file (rules › export, OMS-REG-CCE-07.13).
+// The file carries the screen's active filters, unpaginated — but NOT the
+// destination's store restriction: an export is a register-wide extract, so it
+// covers every store's equipment from either destination, narrowed only by the
+// chips the user set (rules › export, OMS-REG-CCE-07.13/.33).
 
 export const ExportEquipmentAction: Component<{
   storeId: string;
   isCentral: boolean;
   /**
-   * The list's own filter, class pinning and store restriction included — not
-   * a filter built here, which is how the export came to cover every store's
-   * equipment (contract › export).
+   * The list's filters and class pinning, store restriction deliberately
+   * omitted — `buildExportFilter`, never a filter built here (contract ›
+   * export).
    */
   filter: AssetsExportVariables['filter'];
   /** The list's active sort — the export carries it (contract › export). */

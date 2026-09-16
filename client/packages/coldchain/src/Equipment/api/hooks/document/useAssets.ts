@@ -25,18 +25,13 @@ export const ASSET_LIST_FILTERS = [
   { key: 'functionalStatus', condition: 'equalTo' },
 ];
 
-// Which destination is mounted, and whose equipment it therefore shows. Shared
-// with the export for the same reason as the keys above.
-export const useAssetListScope = () => {
+export const useAssets = () => {
+  // Which destination is mounted, and whose equipment it therefore shows. The
+  // LIST's concern only — the export covers every store (useAssetsAll).
   const isColdChain = usePathnameIncludes('cold-chain');
   const { store } = useAuthContext();
   const isCentralServer = useCentralServerCallback();
-
-  return { isColdChain, storeCode: isCentralServer ? undefined : store?.code };
-};
-
-export const useAssets = () => {
-  const { isColdChain, storeCode } = useAssetListScope();
+  const storeCode = isCentralServer ? undefined : store?.code;
 
   const { queryParams } = useUrlQueryParams({
     filters: ASSET_LIST_FILTERS,
