@@ -1,4 +1,7 @@
-use repository::{ChangelogTableName, LocationTypeRow, StorageConnection, SyncBufferRow};
+use repository::{
+    ChangelogTableName, LocationTypeRow, LocationTypeRowRepository, StorageConnection,
+    SyncBufferRow,
+};
 use serde::{Deserialize, Serialize};
 
 use super::{PullTranslateResult, SyncTranslation};
@@ -36,7 +39,7 @@ impl SyncTranslation for LocationTypeTranslation {
 
     fn try_translate_from_upsert_sync_record(
         &self,
-        _: &StorageConnection,
+        connection: &StorageConnection,
         _fk_checker: &crate::sync::translations::FkChecker,
         sync_record: &SyncBufferRow,
     ) -> Result<PullTranslateResult, anyhow::Error> {
@@ -47,11 +50,17 @@ impl SyncTranslation for LocationTypeTranslation {
             temperature_max,
         } = sync_record.deserialize()?;
 
+        let code = match LocationTypeRowRepository::new(connection).find_one_by_id(&id)? {
+            Some(existing) if !existing.code.is_empty() => existing.code,
+            _ => description.clone(),
+        };
+
         let result = LocationTypeRow {
             id,
             name: description,
             min_temperature: temperature_min,
             max_temperature: temperature_max,
+            code,
         };
 
         Ok(PullTranslateResult::upsert(result))
